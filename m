@@ -1,51 +1,43 @@
-From: Greg KH <gregkh@linuxfoundation.org>
+From: Alan Cox <alan@linux.intel.com>
 Subject: Re: Deterministic behavior for TTY serial
-Date: Wed, 18 Apr 2012 17:14:07 -0700
-Message-ID: <20120419001407.GA24710@kroah.com>
+Date: Thu, 19 Apr 2012 12:19:38 +0100
+Message-ID: <20120419121938.1215b8c1@bob.linux.org.uk>
 References: <CAMSQXEENByqSmK2bSxMngY2WuV86AAcX_LxTbA5JSOjT3ta_FA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
 To: Ivo Sieben <meltedpianoman@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:34207 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751605Ab2DSAOL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Apr 2012 20:14:11 -0400
-Received: by pbcun15 with SMTP id un15so9555595pbc.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Apr 2012 17:14:10 -0700 (PDT)
-Content-Disposition: inline
+Return-path: <linux-serial-owner@vger.kernel.org>
 In-Reply-To: <CAMSQXEENByqSmK2bSxMngY2WuV86AAcX_LxTbA5JSOjT3ta_FA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Apr 17, 2012 at 04:38:30PM +0200, Ivo Sieben wrote:
-> Hello,
-> 
-> We are currently using the TTY framework for serial communication.
-> 
 > We are wondering if it is possible to give the TTY device in more
 > deterministic behavior (as in "less locks & no sleeping")
-
-What specifically are you looking for?
-
 > So in case of non blocking read/write behavior:
 > - We want directly write data to the serial_core transmit buffer and
 > return immediately.
 
-What is "immediately"?
+If you have the tty in raw mode then that is basically what the ldisc
+code does (plus any flow control you may have selected).
 
 > - Incoming data should be buffered, on a read data is read directly
 > from that buffer and when no data available return immediately
 
-That doesn't happen today?
+Ditto in raw mode, and you can use O_NDELAY or the VMIN/VTIME fields to
+optimise block transfer behaviour. We do actually do an additional
+memcpy but memory copies of cached memory are so cheap it should be
+irrelevant unless trying to do megabit speeds on low end embedded
+processors.
 
-What type of latencies are you seeing today that is bothering you?  What
-hardware are you expecting to work in this manner?  What exact UART are
-you using?  What happens when the UART buffers data?
+> We have the idea that the default N_TTY line discipline introduces too
 
-thanks,
+Based upon what analysis ?
 
-greg k-h
+> much overhead & locking behavior what makes it less suitable for
+> deterministic serial communication on a PREEMT_RT platform.
+
+Are you using USB ports ?
+
+Alan
