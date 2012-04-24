@@ -1,53 +1,30 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.16-rt27
-Date: Mon, 23 Apr 2012 17:18:07 -0400
-Message-ID: <1335215887.28106.123.camel@gandalf.stny.rr.com>
+From: Anisha Kaul <born.rebel.83@gmail.com>
+Subject: Hard real time in user space with preempt_rt patch
+Date: Tue, 24 Apr 2012 11:16:42 +0530
+Message-ID: <CAM1yFZ_MLVNK8xPGg5Ad3suQh_AR18k6coyDqX9EurCkh9j9pg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:20103 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753785Ab2DWVSI (ORCPT
+Received: from mail-ob0-f174.google.com ([209.85.214.174]:33373 "EHLO
+	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750889Ab2DXFqn (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Apr 2012 17:18:08 -0400
+	Tue, 24 Apr 2012 01:46:43 -0400
+Received: by obbta14 with SMTP id ta14so607304obb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 23 Apr 2012 22:46:43 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: https://rt.wiki.kernel.org/articles/f/r/e/Frequently_Asked_Questions_7407.html
 
-Dear RT Folks,
+> Real-time only has impact on the kernel; Userspace does not notice the difference except for better real time behavior.
 
-I'm pleased to announce the 3.2.16-rt27 stable release.
+Does it mean that if we write the applications in user space, they
+won't get the hard real time effect?
+The threads running in the userspace won't get the hard real time effect?
 
+I am not able to understand the English behind the quote. Please clarify.
 
-This release is just an update to the new stable 3.2.16 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: b0abc660848cf2fdc08231982a641c8cd5da2393
-
-
-Or to build 3.2.16-rt27 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.16.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.16-rt27.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
+Regards,
+Anisha
