@@ -1,186 +1,122 @@
-From: Lars Segerlund <lars.segerlund@gmail.com>
-Subject: Re: Hard real time in user space with preempt_rt patch
-Date: Tue, 24 Apr 2012 21:20:30 +0200
-Message-ID: <CAF-VNapqGkH62v6xh_KUcjQkpiaGu79-D10=1Ah5pbhuO+COuw@mail.gmail.com>
-References: <CAM1yFZ_MLVNK8xPGg5Ad3suQh_AR18k6coyDqX9EurCkh9j9pg@mail.gmail.com>
-	<4F966AFC.7070803@cfl.rr.com>
-	<CAF-VNaq3bkC=LCB-Emsx20xTm-Vm1v3kduC5MpyXQA_GS6SOhg@mail.gmail.com>
-	<4F967574.8030104@cfl.rr.com>
-	<BA425197-1889-4161-8726-860E30EC943A@thebigcorporation.com>
-	<4F96E220.6010506@compro.net>
+From: "Harald Stocker" <Harald.Stocker@berghof.com>
+Subject: Linux 3.2.16-rt27 - BUG: scheduling while atomic
+Date: Wed, 25 Apr 2012 11:00:30 +0200
+Message-ID: <OF399A3B46.F4610F11-ONC12579EB.00315EDA-C12579EB.00317C16@LocalDomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: markh@compro.net, linux-rt-users@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lpp01m010-f46.google.com ([209.85.215.46]:51784 "EHLO
-	mail-lpp01m010-f46.google.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756746Ab2DXTUc convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Apr 2012 15:20:32 -0400
-Received: by lahj13 with SMTP id j13so922319lah.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 24 Apr 2012 12:20:31 -0700 (PDT)
-In-Reply-To: <4F96E220.6010506@compro.net>
+Received: from mail92.messagelabs.com ([194.106.220.51]:62546 "HELO
+	mail92.messagelabs.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1756691Ab2DYJAc convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Apr 2012 05:00:32 -0400
+Received: from zhsrv03.be-int.local (zhsrv03.be-int [10.255.255.245])
+	by pegasus.berghof.com (8.13.8/8.13.8) with ESMTP id q3P90UD6020292
+	for <linux-rt-users@vger.kernel.org>; Wed, 25 Apr 2012 11:00:30 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
- Hi , I'm the nasty person that pointed out that the rt-preempt
-patches DOES provide and strive to provide deterministic HARD realtime
-for the linux kernel.
+Hello,
 
- Hard realtime is as you pointed out bounded by being deterministic,
-so all talk about microseconds and relative latencies are not really
-relevant per your own definition.
+we use the kernel 3.2.16-rt27  on our powerpc board (MPC5200).
+At our load tests we got a kernel Oops message:
 
- On a good system worst case latencies of around 10-20 usec is on par
-with RTAI or RT-Linux, they have lower averages, but more jitter so
-about the same worst cases, and since worst case is what limits the
-system they are somewhat comparable, hardware makes a bigger
-difference.
+[   72.958944] sched: RT throttling activated
+[  216.604657] BUG: scheduling while atomic:=20
+codesyscontrol/1165/0x00010001
+[  216.604675] Modules linked in:
+[  216.604691] NIP: 101ceb6c LR: 484026e4 CTR: 101b83a4
+[  216.604711] REGS: c6a01f50 TRAP: 0901   Not tainted  (3.2.16-rt27)
+[  216.604724] MSR: 0000f932 <EE,PR,FP,ME,IR,DR>  CR: 84002484  XER:=20
+00000000
+[  216.604764] TASK =3D c6e20130[1165] 'codesyscontrol' THREAD: c6a0000=
+0
+[  216.604778] GPR00: 4826ab84 4826ab5c 48272920 4826ab84 0efe95d8=20
+0efe95e8 0efe95f0 0efb9858
+[  216.604812] GPR08: 0efe95e0 4826ab84 000000f4 4826ab64 84002484
+[  216.604847] NIP [101ceb6c] 0x101ceb6c
+[  216.604862] LR [484026e4] 0x484026e4
+[  216.604872] Call Trace:
+[  216.604965] ------------[ cut here ]------------
+[  216.604990] Kernel BUG at c004f978 [verbose debug info unavailable]
+[  216.605014] Oops: Exception in kernel mode, sig: 5 [#1]
+[  216.605025] PREEMPT mpc5200-simple-platform
+[  216.605039] Modules linked in:
+[  216.605054] NIP: c004f978 LR: c004f970 CTR: c001db40
+[  216.605072] REGS: c6a01d40 TRAP: 0700   Not tainted  (3.2.16-rt27)
+[  216.605085] MSR: 00029032 <EE,ME,CE,IR,DR>  CR: 24002424  XER: 00000=
+000
+[  216.605120] TASK =3D c6e20130[1165] 'codesyscontrol' THREAD: c6a0000=
+0
+[  216.605134] GPR00: 00000001 c6a01df0 c6e20130 00000000 c74411f0=20
+00000000 00000000 00000000
+[  216.605166] GPR08: c6e20130 0000005a 00000000 c0495c08 24002482=20
+10279110 00000000 c4653600
+[  216.605199] GPR16: 7fffffff ffffffff 7fffffff c04951d8 c6a00000=20
+c0494900 000000d8 23c36491
+[  216.605233] GPR24: c005eda0 ffffffff 3b9ac9ff 00000001 c6a01f50=20
+00000000 00000001 c6e20130
+[  216.605295] NIP [c004f978] run_posix_cpu_timers+0x20/0x104
+[  216.605316] LR [c004f970] run_posix_cpu_timers+0x18/0x104
+[  216.605328] Call Trace:
+[  216.605349] [c6a01df0] [c004f970] run_posix_cpu_timers+0x18/0x104=20
+(unreliable)
+[  216.605385] [c6a01e00] [c0039a28] update_process_times+0x48/0x5c
+[  216.605424] [c6a01e20] [c005ee00] tick_sched_timer+0x60/0xd4
+[  216.605452] [c6a01e50] [c00507ec] __run_hrtimer+0x9c/0x2a8
+[  216.605480] [c6a01e80] [c0051a74] hrtimer_interrupt+0x158/0x4ac
+[  216.605509] [c6a01f20] [c000c424] timer_interrupt+0x17c/0x2a8
+[  216.605544] [c6a01f40] [c00117e8] ret_from_except+0x0/0x14
+[  216.605560] Instruction dump:
+[  216.605573] 419effec 38000000 90020000 4bffffac 9421fff0 7c0802a6=20
+93e1000c 7c7f1b78
+[  216.605606] 90010014 481ab93d 7c0000a6 54008ffe <0f000000> 3d60c049=20
+800b4894 392b4894
+[  216.826417] Kernel panic - not syncing: Fatal exception in interrupt
 
- Now if were talking hardware, no regular PC with virtual memory,
-superscalar execution and multitasking will ever provide much less
-than some usec's ... due to hardware latencies.
+The same in kernel 3.2.15-rt26...
 
- You said that preempt-rt doesn't provide hard realtime and never
-will, to and I pointed out in an email that that was your opinion and
-that I considered that FUD, and sent a link to the osadl.org site wich
-have a test rack to track worst case latencies on systems run under
-long time and high load, if that is not deterministic I don't know
-what is, as far as discussing a common PC.
+The problem occurs in overload situations only. So previously we also g=
+ot=20
+the message that rt throttling is getting enabled.
 
- I also pointed out that is was quite rude to make such a statement on
-the linux-rt list, since most people here are working on getting
-rt-preempt as good as possible with the goal of exactly hard realtime.
+The problem seems to be dependent on the realtime patch because with a=20
+untouched kernel 3.2.16 we cant reproduce it.=20
+To locate the problem, additionally  we try to disable switching to=20
+"throttling mode" by uncommenting "rt_rq->rt_throttled =3D 1;" in sched=
+_rt.c
+but it still occurs.
 
- So difference of opinion is totally acceptable, but stating that
-opinions are the truth is something else, now statements like
-lala-land is just degoratory and are clearly meant to be insulting.
-
- I do consider you misinformed and wrong in opinion based on your
-statement that the definition of hard realtime is if it has a
-deterministic worst case behaviour or not, but I do hope that I
-haven't been rude.
-
- / regards, Lars Segerlund.
+If the kernel is configured to be tickless the problem occurs less ofte=
+n.
 
 
-2012/4/24 Mark Hounschell <markh@compro.net>:
-> On 04/24/2012 12:26 PM, Sven-Thorsten Dietrich wrote:
->>>
->>>
->>> Your in lala land. The Linux kernel, even with the RT patch has so =
-much
->>> "per CPU" crap in it, there is no way to prevent it from steeling u=
-secs from
->>> your application. The per CPU timer interrupt alone takes a few use=
-cs away
->>> from your application every HZ. A hard RT env is one in which you c=
-an
->>> always, every time, do a predefined work in the same amount of time=
-=2E Fast or
->>> slow isn't the key. It's determinism. The timer interrupt alone pre=
-vents
->>> that. And it's not the only thing. I've got 8 cpus on my machine bu=
-t the
->>> kernel has to have a piece of every one of them. Until there is iso=
-lation
->>> from the kernel, there cannot be "Hard RT". This is fact.
->>>
->>
->>
->> Mark,
->>
->> there is a big difference between real-time processing and bare-meta=
-l
->> processing.
->>
->> In bare metal, we do care about individual cycles, but not all real-=
-time
->> is bare-metal.
->>
->> Determinism , or "RT requirements" is defined by the application.
->>
->> Many applications, with critical functionality, that we an define as=
- hard
->> real-time,
->> can exist fine using the Linux kernel as infrastructure and meet dea=
-dlines
->> in a time-critical manner.
->>
->> The OS meets deterministic hard-real-time requirements, if the appli=
-cation
->> is not late to execute.
->>
->> Generally, hard real-time is defined as the value of the computation=
- being
->> at most 0 when executed late.
->>
->> Soft real time implies a diminished value.
->>
->> Bare metal today, since you bring up counting cycles, is a bit hard =
-to
->> reach with all the caching layers, pipelining, memory and bus archit=
-ecture
->> and so on, all aimed at throughput.
->>
->> You will be hard pressed to find predictable behavior in anything bu=
-t the
->> simplest loops, bare-bones CPUs, and even then, pressure to differen=
-tiate in
->> the market ends up with odd designs making CPUs do funky things.
->>
->> Please do refrain from making such broad and sweeping statements, su=
-ch as
->> calling people in lala land (I have been there and its quite nice bt=
-w).
->>
->
-> Yea, I've been there too. But go back to the OP. I then was simply in=
-forming
-> him of what Hard RT (you may call it bare-bones if you like) was and =
-still
-> is in my opinion. I was then accused of spreading FUD by someone name=
-d Lars.
-> The response you quoted above was my response to being accused of spr=
-eading
-> FUD when I gave my opinion of what Hard-RT and the RT patch set is.
->
-> I've been in the Hard and Soft RT business since the 70s and understa=
-nd what
-> it is, why it is, how programmers in the past have done things consid=
-ered
-> wrong now, simply because they could then, and that there really isn'=
-t any
-> hardware designed for it these days. But even if there was, what you =
-quoted
-> above would still be true.
->
-> I will have to admit though that processing speed has certainly helpe=
-d in
-> recent years. We are able to replace _some_ of these old "designed fo=
-r HRT"
-> machines with modern boxes simply because they are so fast. Maybe whe=
-n they
-> are fast enough to handle timer interrupts in less than a usec or so,=
- I'll
-> be able to replace more of them.
->
-> But, as my original response to the original OP was, the RT kernel pa=
-tch is
-> NOT making the kernel capable of HARD RT but certainly gives good Sof=
-t RT
-> results. If ya lower the bar, you'll never get to the top of the pole=
-=2E
->
-> Regards
->
-> Mark
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =A0http://vger.kernel.org/majordomo-info.html
+Any hints? any ideas?
+
+Thanks
+Harald
+
+
+
+
+
+
+
+
+Hannover Messe 2012   =97 Berghof stellt aus :   Industrial Automation =
+ Halle 9 / Stand D62   und   MobiliTec Halle 25 / Stand K03/1=20
+Neugierig auf: "Web- und Target-Visualisierungen =97 Schneller als CoDe=
+Sys erlaubt" oder "Test- und Konditioniersysteme"?=20
+Infos und Ihr   kostenloses   pers=F6nliches Messeticket   unter:   www=
+=2Eberghof.com/HMI=20
+
+______________________________________________________________________
+This email has been scanned by the Symantec Email Security.cloud servic=
+e.
+=46or more information please visit http://www.symanteccloud.com
+______________________________________________________________________
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
