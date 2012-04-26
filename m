@@ -1,92 +1,39 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: Deterministic behavior for TTY serial
-Date: Thu, 26 Apr 2012 16:27:56 +0200
-Message-ID: <CAMSQXEEN=6M59CR3riNA5-kFFv7QAsn_g3PHi3A8P9mh3SfdeQ@mail.gmail.com>
-References: <CAMSQXEENByqSmK2bSxMngY2WuV86AAcX_LxTbA5JSOjT3ta_FA@mail.gmail.com>
-	<20120419001407.GA24710@kroah.com>
-	<CAMSQXEEkssPGWYgC4dkpKEhfrB4s8yOoxiNNVdRRX7r+b91EMQ@mail.gmail.com>
-	<20120419154609.GA9263@kroah.com>
+From: Lars Segerlund <lars.segerlund@gmail.com>
+Subject: some rt-preempt help if possible.
+Date: Thu, 26 Apr 2012 22:27:30 +0200
+Message-ID: <CAF-VNap+wE=dPy-J7BcZhS7K9AZRBW61TC0-7gAVuoqUzu-e_g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Greg KH <gregkh@linuxfoundation.org>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <20120419154609.GA9263@kroah.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lpp01m010-f46.google.com ([209.85.215.46]:54691 "EHLO
+	mail-lpp01m010-f46.google.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1758892Ab2DZU1c (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Apr 2012 16:27:32 -0400
+Received: by lahj13 with SMTP id j13so9608lah.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 26 Apr 2012 13:27:30 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+ Hi Everyone,
 
->> We use a self written serial_core device uart driver that implements=
- a
->> driver for a UART peripheral in a FPGA on our target board..
->
-> Do you have a pointer to the driver anywhere? =A0Why isn't it submitt=
-ed
-> for inclusion in the main kernel tree?
+ The linux cnc is trying to port their software to rt preempt, however
+there is a patched version for emc 2.4 that works ok, and when these
+patches are brought to emc 2.5 it hangs on startup.
 
-This driver is work in progress and not yet mature enough for
-inclusion in the main kernel tree.
+ Aparently it's a mutex that hangs.
 
-> Have you done profiling to determine exactly what it taking "too long=
-"
-> for you?  If so, what is the delay?  If not, you should do this :)
->
+ Now any help or pointers would be appreciated, particulary on how to
+debug a mutex hang ....
 
-I did some analyses using the ftrace 'function_graph' tracer to find
-out what causes the TTY read to take longer than expected.
-I use a test application, running on RT prioirty 99 that writes bursts
-of 24 Bytes data to a my TTY device. A loop back connector is used, so
-the application also reads back these 24 bytes. Non blocking reads &
-writes are used.
+ Roughly the same code runs ok in the old version, and most people on
+the linuxcnc list are only familiar with RTLinux and RTAI. Any help
+appreciated, since the code is still 'wet', so this is a small call
+for help is someone feels like it.
 
-This analyses is still ongoing...
-But I found two issues that you might can help me to explain (but  as
-I said: I still need to "dive" further into the source)
+ If it's of topic, or not interesting please ignore.
 
-1)
-In some cases the tty_flush_to_ldisc() function (called by
-drivers/tty/n_tty.c, line 1599) takes a rather long time than with
-other TTY reads...
-=46or trace see: http://pastebin.com/zXCYTLNj
+http://news.gmane.org/gmane.linux.distributions.emc.devel
 
-If I understand it correctly, the TTY flip buffer uses a workqueue to
-transfer receive read data from the TTY flip buffer into the buffer of
-the line discipline. It seems like the N_TTY line discipline tries to
-actively flush data from the TTY flip buffer into the line discipline
-buffer. But my serial device drive initiates a tty_flip_buffer_push()
-every time after a number of bytes were received (this is intiated
-from threaded irq context by the way).
-
-In the case of this trace: is the workqueue currently already busy
-transferring data to the ldisc because of the UART receive interrupt
-handling has queued that a new work item? So is the N_TTY read()
-function actually waiting for that work item to be finished? I guess
-in that case for non blocking reads you would like to return with an
-EAGAIN, and try to read the data the next time you call the read
-function... right?
-
-2)
-In some cases the tty_ldisc_deref() function (called by
-drivers/tty/tty_io.c, line 977) takes a rather long time than with
-other TTY reads
-=46or trace see: http://pastebin.com/Nuh5cLGv
-
-After a successful read from the N_TTY line discipline, the TTY
-framework dereferences the line discipline.
-Can the TTY read() block here because other processes are currently
-try to get or release a reference to the N_TTY line discpline at the
-same time?
-So in that case: does the high priority TTY read has to wait for a
-lower priority TTY read/write operation (e.g. from the terminal I/O).
-
-
-Regards,
-Ivo Sieben
---
-To unsubscribe from this list: send the line "unsubscribe linux-serial"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ / regards, Lars Segerlund
