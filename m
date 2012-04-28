@@ -1,61 +1,106 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH RT] [scsi-qla2xxx] Fix BUG: sleeping function called from invalid context
-Date: Fri, 27 Apr 2012 12:48:46 +0200
-Message-ID: <1335523726-10024-1-git-send-email-jkacur@redhat.com>
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	David Sommerseth <davids@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	lkml <linux-kernel@vger.kernel.org>
+From: Jean-Christophe DUBOIS <jcd@tribudubois.net>
+Subject: latency issue on wait_event/wake_up calls.
+Date: Sat, 28 Apr 2012 12:30:43 +0200
+Message-ID: <4F9BC6D3.8030203@tribudubois.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:38314 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753968Ab2D0KtL (ORCPT
+Received: from zose-mta-15.w4a.fr ([176.31.217.10]:48146 "EHLO
+	zose-mta15.web4all.fr" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753059Ab2D1KkU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 Apr 2012 06:49:11 -0400
+	Sat, 28 Apr 2012 06:40:20 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by zose-mta15.web4all.fr (Postfix) with ESMTP id 09FE72C177
+	for <linux-rt-users@vger.kernel.org>; Sat, 28 Apr 2012 12:32:38 +0200 (CEST)
+Received: from zose-mta15.web4all.fr ([127.0.0.1])
+	by localhost (zose-mta15.web4all.fr [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id rMeofM0T7qKC for <linux-rt-users@vger.kernel.org>;
+	Sat, 28 Apr 2012 12:32:36 +0200 (CEST)
+Received: from [192.168.1.104] (smm49-1-78-235-240-156.fbx.proxad.net [78.235.240.156])
+	by zose-mta15.web4all.fr (Postfix) with ESMTPA id A230C2C021
+	for <linux-rt-users@vger.kernel.org>; Sat, 28 Apr 2012 12:32:35 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The relevant part of the traceback follows
-[   11.307652]  [<ffffffff81077b27>] __might_sleep+0xe7/0x110
-[   11.307663]  [<ffffffff8150e524>] rt_spin_lock+0x24/0x60
-[   11.307670]  [<ffffffff8150da78>] ? rt_spin_lock_slowunlock+0x78/0x90
-[   11.307703]  [<ffffffffa0272d83>] qla24xx_intr_handler+0x63/0x2d0 [qla2xxx]
-[   11.307736]  [<ffffffffa0262307>] qla2x00_poll+0x67/0x90 [qla2xxx]
+Hello,
 
-Function qla2x00_poll does local_irq_save() before calling qla24xx_intr_handler
-which has a spinlock. Since spinlocks are sleepable on rt, it is not allowed
-to call them with interrupts disabled. Therefore we use local_irq_save_nort()
-instead which saves flags without disabling interrupts.
+I need help/advice on a little "performance" problem I have:
 
-This fix needs to be applied to v3.0-rt, v3.2-rt and v3.4-rt
+I am using linux 3.0.3 with the related RT patch on an ARM9 processor.
 
-Suggested-by: Thomas Gleixner
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- drivers/scsi/qla2xxx/qla_inline.h |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
+I have a RT task which is reading from a driver. The RT task is blocked 
+on wait_event_interruptible() and the driver interrupt handler is 
+releasing the waiting task using wake_up_interruptible() when there is 
+data available.
 
-diff --git a/drivers/scsi/qla2xxx/qla_inline.h b/drivers/scsi/qla2xxx/qla_inline.h
-index 6e45764..28d9a8d 100644
---- a/drivers/scsi/qla2xxx/qla_inline.h
-+++ b/drivers/scsi/qla2xxx/qla_inline.h
-@@ -36,12 +36,12 @@ qla2x00_poll(struct rsp_que *rsp)
- {
- 	unsigned long flags;
- 	struct qla_hw_data *ha = rsp->hw;
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	if (IS_QLA82XX(ha))
- 		qla82xx_poll(0, rsp);
- 	else
- 		ha->isp_ops->intr_handler(0, rsp);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
- }
- 
- static inline uint8_t *
--- 
-1.7.1
+By default on linux RT, driver IRQ handlers are run in threads with a 
+priority of 50.
 
+At first I setup my RT task with a priority of 10.
+
+When some data are received by the system, I can see the following 
+scheduling (using LTTng).
+
+- irq_handler
+- my_driver_irq_handler (priority 50)
+- my_task (priority 10)
+
+This is all good but I really need "my_task" to be high priority. Once 
+an event is received, it need to process it immediately without being 
+interrupted by further events coming on the device.
+
+So now, I set my_task priority to 80. Now when data is received, I can 
+see the following scheduling (still using LTTng).
+
+- irq_handler
+- my_driver_irq_handler (priority 50)
+- my_task (priority 80) // this is a short run. I assume the task is 
+checking the wait() "condition"
+- my_driver_irq_handler (priority 80) // here there seems to be an 
+"automatic" priority inversion to allow the handler to run and finish 
+the wake_up call
+- my_task (priority 80) // run until it blocks again
+- my_driver_irq_handler (priority 50) // end of the interrupt handler.
+
+What is good is that now, "my_task" cannot be interrupted by another 
+interrupt handler processing when it runs. But because of the 2 
+additional context switches when the interrupt handler wake_up() 
+"my_task", I now experience an additional latency and this is not expected.
+
+On average the latency performance is better when "my_task" priority is 
+10 but the real-time behavior is better when "my_task" priority is 80.
+
+The latency difference is mainly due to the additional context switches 
+we have when the interrupt handler wake_up() "my_task". So the question 
+I have: Are these additional context switches mandatory? Is there a way 
+to avoid them.
+
+As an exercise I raised (programatically) the interrupt handler priority 
+to 99 before doing the wake_up() and lower it to 50 just after the 
+wake_up. With this change, I now have (with LTTng):
+
+- irq_handler
+- my_driver_irq_handler (priority 50 then 99) // run until the priority 
+is set back to 50
+- my_task (priority 80) // run until it blocks again
+- my_driver_irq_handler (priority 50) // end of the interrupt handler.
+
+Setting the irq handler priority is fast and cost almost nothing 
+(compared to context switch). As a result, I don't have the additional 
+latency cause by the 2 context switches of the previous example and I 
+get the best of both worlds: A short latency and the expected real-time 
+behavior (I am not interrupted by later interrupt handler).
+
+But I feel that changing explicitly/dynamically the driver irq handler 
+priority to get the expected behavior might not be the appropriate 
+solution.
+
+Am I missing something? Is there a better way to prevent the additional 
+context switches?
+
+Thanks for any advice/hint you may have.
+
+JC
