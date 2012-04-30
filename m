@@ -1,106 +1,64 @@
-From: Jean-Christophe DUBOIS <jcd@tribudubois.net>
-Subject: latency issue on wait_event/wake_up calls.
-Date: Sat, 28 Apr 2012 12:30:43 +0200
-Message-ID: <4F9BC6D3.8030203@tribudubois.net>
+From: Esben Nielsen <nielsen.esben@googlemail.com>
+Subject: Re: Hard real time in user space with preempt_rt patch
+Date: Mon, 30 Apr 2012 15:18:26 +0200
+Message-ID: <CA+gSDyShhShO=tVx=QwssFMUQ1gZK++P=X5L+iBt=fbxhqPeOA@mail.gmail.com>
+References: <CAM1yFZ_MLVNK8xPGg5Ad3suQh_AR18k6coyDqX9EurCkh9j9pg@mail.gmail.com>
+	<4F966AFC.7070803@cfl.rr.com>
+	<CAF-VNaq3bkC=LCB-Emsx20xTm-Vm1v3kduC5MpyXQA_GS6SOhg@mail.gmail.com>
+	<4F967574.8030104@cfl.rr.com>
+	<BA425197-1889-4161-8726-860E30EC943A@thebigcorporation.com>
+	<4F96E220.6010506@compro.net>
+	<CAF-VNapqGkH62v6xh_KUcjQkpiaGu79-D10=1Ah5pbhuO+COuw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: markh@compro.net, linux-rt-users@vger.kernel.org
+To: Lars Segerlund <lars.segerlund@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from zose-mta-15.w4a.fr ([176.31.217.10]:48146 "EHLO
-	zose-mta15.web4all.fr" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753059Ab2D1KkU (ORCPT
+Received: from mail-yw0-f46.google.com ([209.85.213.46]:45232 "EHLO
+	mail-yw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753352Ab2D3NS1 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Apr 2012 06:40:20 -0400
-Received: from localhost (localhost [127.0.0.1])
-	by zose-mta15.web4all.fr (Postfix) with ESMTP id 09FE72C177
-	for <linux-rt-users@vger.kernel.org>; Sat, 28 Apr 2012 12:32:38 +0200 (CEST)
-Received: from zose-mta15.web4all.fr ([127.0.0.1])
-	by localhost (zose-mta15.web4all.fr [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id rMeofM0T7qKC for <linux-rt-users@vger.kernel.org>;
-	Sat, 28 Apr 2012 12:32:36 +0200 (CEST)
-Received: from [192.168.1.104] (smm49-1-78-235-240-156.fbx.proxad.net [78.235.240.156])
-	by zose-mta15.web4all.fr (Postfix) with ESMTPA id A230C2C021
-	for <linux-rt-users@vger.kernel.org>; Sat, 28 Apr 2012 12:32:35 +0200 (CEST)
+	Mon, 30 Apr 2012 09:18:27 -0400
+Received: by yhmm54 with SMTP id m54so1335064yhm.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Apr 2012 06:18:26 -0700 (PDT)
+In-Reply-To: <CAF-VNapqGkH62v6xh_KUcjQkpiaGu79-D10=1Ah5pbhuO+COuw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+On Tue, Apr 24, 2012 at 9:20 PM, Lars Segerlund
+<lars.segerlund@gmail.com> wrote:
+> =A0Hi , I'm the nasty person that pointed out that the rt-preempt
+> patches DOES provide and strive to provide deterministic HARD realtim=
+e
+> for the linux kernel.
+>
+> =A0Hard realtime is as you pointed out bounded by being deterministic=
+,
+> so all talk about microseconds and relative latencies are not really
+> relevant per your own definition.
+>
+> <a lot of other stuff cut>
 
-I need help/advice on a little "performance" problem I have:
+I have seen these discussions before:
+One camp equal hard real time with highly safety critical,
+deterministic systems. The Linux kernel can of course never be that.
+But Linux with preempt realtime is "hard realtime" in the sense
+meeting deadlines are deterministic and testable. I.e. you can use it
+as a platform for a system where not meeting a deadline is "bug" of
+equal severity as say a segmentation fault: You can be as sure to meet
+your deadlines if you have tested it in the lab as you can be sure not
+to have any other kind of bug. And no, it is not mathematically
+proven, and the kernel and your applications might have bugs still to
+be discovered.
 
-I am using linux 3.0.3 with the related RT patch on an ARM9 processor.
+>
+> =A0/ regards, Lars Segerlund.
+>
 
-I have a RT task which is reading from a driver. The RT task is blocked 
-on wait_event_interruptible() and the driver interrupt handler is 
-releasing the waiting task using wake_up_interruptible() when there is 
-data available.
-
-By default on linux RT, driver IRQ handlers are run in threads with a 
-priority of 50.
-
-At first I setup my RT task with a priority of 10.
-
-When some data are received by the system, I can see the following 
-scheduling (using LTTng).
-
-- irq_handler
-- my_driver_irq_handler (priority 50)
-- my_task (priority 10)
-
-This is all good but I really need "my_task" to be high priority. Once 
-an event is received, it need to process it immediately without being 
-interrupted by further events coming on the device.
-
-So now, I set my_task priority to 80. Now when data is received, I can 
-see the following scheduling (still using LTTng).
-
-- irq_handler
-- my_driver_irq_handler (priority 50)
-- my_task (priority 80) // this is a short run. I assume the task is 
-checking the wait() "condition"
-- my_driver_irq_handler (priority 80) // here there seems to be an 
-"automatic" priority inversion to allow the handler to run and finish 
-the wake_up call
-- my_task (priority 80) // run until it blocks again
-- my_driver_irq_handler (priority 50) // end of the interrupt handler.
-
-What is good is that now, "my_task" cannot be interrupted by another 
-interrupt handler processing when it runs. But because of the 2 
-additional context switches when the interrupt handler wake_up() 
-"my_task", I now experience an additional latency and this is not expected.
-
-On average the latency performance is better when "my_task" priority is 
-10 but the real-time behavior is better when "my_task" priority is 80.
-
-The latency difference is mainly due to the additional context switches 
-we have when the interrupt handler wake_up() "my_task". So the question 
-I have: Are these additional context switches mandatory? Is there a way 
-to avoid them.
-
-As an exercise I raised (programatically) the interrupt handler priority 
-to 99 before doing the wake_up() and lower it to 50 just after the 
-wake_up. With this change, I now have (with LTTng):
-
-- irq_handler
-- my_driver_irq_handler (priority 50 then 99) // run until the priority 
-is set back to 50
-- my_task (priority 80) // run until it blocks again
-- my_driver_irq_handler (priority 50) // end of the interrupt handler.
-
-Setting the irq handler priority is fast and cost almost nothing 
-(compared to context switch). As a result, I don't have the additional 
-latency cause by the 2 context switches of the previous example and I 
-get the best of both worlds: A short latency and the expected real-time 
-behavior (I am not interrupted by later interrupt handler).
-
-But I feel that changing explicitly/dynamically the driver irq handler 
-priority to get the expected behavior might not be the appropriate 
-solution.
-
-Am I missing something? Is there a better way to prevent the additional 
-context switches?
-
-Thanks for any advice/hint you may have.
-
-JC
+Esben
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
