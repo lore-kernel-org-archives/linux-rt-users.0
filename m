@@ -1,64 +1,69 @@
-From: Esben Nielsen <nielsen.esben@googlemail.com>
-Subject: Re: Hard real time in user space with preempt_rt patch
-Date: Mon, 30 Apr 2012 15:18:26 +0200
-Message-ID: <CA+gSDyShhShO=tVx=QwssFMUQ1gZK++P=X5L+iBt=fbxhqPeOA@mail.gmail.com>
-References: <CAM1yFZ_MLVNK8xPGg5Ad3suQh_AR18k6coyDqX9EurCkh9j9pg@mail.gmail.com>
-	<4F966AFC.7070803@cfl.rr.com>
-	<CAF-VNaq3bkC=LCB-Emsx20xTm-Vm1v3kduC5MpyXQA_GS6SOhg@mail.gmail.com>
-	<4F967574.8030104@cfl.rr.com>
-	<BA425197-1889-4161-8726-860E30EC943A@thebigcorporation.com>
-	<4F96E220.6010506@compro.net>
-	<CAF-VNapqGkH62v6xh_KUcjQkpiaGu79-D10=1Ah5pbhuO+COuw@mail.gmail.com>
+From: Ivo Sieben <meltedpianoman@gmail.com>
+Subject: Re: Deterministic behavior for TTY serial
+Date: Tue, 1 May 2012 16:30:10 +0200
+Message-ID: <CAMSQXEGb9moJbCQwwXgEq7H-HvaSiuS5JBL55jr0ZhEEeAmqzw@mail.gmail.com>
+References: <CAMSQXEENByqSmK2bSxMngY2WuV86AAcX_LxTbA5JSOjT3ta_FA@mail.gmail.com>
+	<20120419001407.GA24710@kroah.com>
+	<CAMSQXEEkssPGWYgC4dkpKEhfrB4s8yOoxiNNVdRRX7r+b91EMQ@mail.gmail.com>
+	<20120419154609.GA9263@kroah.com>
+	<CAMSQXEEN=6M59CR3riNA5-kFFv7QAsn_g3PHi3A8P9mh3SfdeQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: markh@compro.net, linux-rt-users@vger.kernel.org
-To: Lars Segerlund <lars.segerlund@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f46.google.com ([209.85.213.46]:45232 "EHLO
-	mail-yw0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753352Ab2D3NS1 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Apr 2012 09:18:27 -0400
-Received: by yhmm54 with SMTP id m54so1335064yhm.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Apr 2012 06:18:26 -0700 (PDT)
-In-Reply-To: <CAF-VNapqGkH62v6xh_KUcjQkpiaGu79-D10=1Ah5pbhuO+COuw@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Greg KH <gregkh@linuxfoundation.org>
+Return-path: <linux-serial-owner@vger.kernel.org>
+In-Reply-To: <CAMSQXEEN=6M59CR3riNA5-kFFv7QAsn_g3PHi3A8P9mh3SfdeQ@mail.gmail.com>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Apr 24, 2012 at 9:20 PM, Lars Segerlund
-<lars.segerlund@gmail.com> wrote:
-> =A0Hi , I'm the nasty person that pointed out that the rt-preempt
-> patches DOES provide and strive to provide deterministic HARD realtim=
-e
-> for the linux kernel.
->
-> =A0Hard realtime is as you pointed out bounded by being deterministic=
-,
-> so all talk about microseconds and relative latencies are not really
-> relevant per your own definition.
->
-> <a lot of other stuff cut>
+Hello,
 
-I have seen these discussions before:
-One camp equal hard real time with highly safety critical,
-deterministic systems. The Linux kernel can of course never be that.
-But Linux with preempt realtime is "hard realtime" in the sense
-meeting deadlines are deterministic and testable. I.e. you can use it
-as a platform for a system where not meeting a deadline is "bug" of
-equal severity as say a segmentation fault: You can be as sure to meet
-your deadlines if you have tested it in the lab as you can be sure not
-to have any other kind of bug. And no, it is not mathematically
-proven, and the kernel and your applications might have bugs still to
-be discovered.
-
+2012/4/26 Ivo Sieben <meltedpianoman@gmail.com>:
 >
-> =A0/ regards, Lars Segerlund.
+> I did some analyses using the ftrace 'function_graph' tracer to find
+> out what causes the TTY read to take longer than expected.
+> I use a test application, running on RT prioirty 99 that writes bursts
+> of 24 Bytes data to a my TTY device. A loop back connector is used, so
+> the application also reads back these 24 bytes. Non blocking reads &
+> writes are used.
 >
+> This analyses is still ongoing...
+> Regards,
+> Ivo Sieben
 
-Esben
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I've proceeded with my analyses, and I think I've found one cause for
+the non deterministic read behavior ...
+(there is also an issue with the flip buffer read handling, but I'm
+still investigating that)
+
+On line 47 of tty_ldisc.c a Spin Lock is defined that guards the line
+discipline administration.
+It protects two reference counters:
+"users", atomic counter in the tty_ldisc struct, that holds the number
+of active users of the ldisc in each tty instance. Used for "idle"
+handling.
+"refcount", counter in the tty_ldisc_ops struct, that holds the number
+of lines using the discipline. (when the user count of a line reaches
+0, the refcount of the line discipline is decreased by one) Only when
+the refcount is 0, it is allowed to unregister the line discipline.
+
+This Spin Lock is defined globally, This causes that my high priority
+process to get blocked because of a lower priority process that holds
+this spin lock. Of course you get priority inheritance, but this adds
+quite a lot of extra execution time to the read function (because of
+additional spin lock behavior, and scheduling to the lower priority
+process)
+
+Since the "user" and "refcount" reference counters have combined
+behavior (refcount is decremented when users reaches zero), I don't
+see a way to remove this global lock. Any ideas how this can be
+improved?
+
+We are considering to implement our UART device driver as a "normal"
+character device driver and bypass the TTY framework. But that would
+be a pitty, since we would have to re-implement some functionality
+that is already in the TTY framework.
+
+Regards,
+Ivo Sieben
