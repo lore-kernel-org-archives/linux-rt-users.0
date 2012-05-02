@@ -1,7 +1,7 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH 2/4] rt-tests: cyclictest segfault with '-a'
-Date: Tue, 1 May 2012 19:44:17 -0700
-Message-ID: <4FA09F81.3000506@am.sony.com>
+Subject: [PATCH 3/4] rt-tests: cyclictest avoid unneeded warning
+Date: Tue, 1 May 2012 19:45:00 -0700
+Message-ID: <4FA09FAC.8030505@am.sony.com>
 References: <4FA09D6A.2050101@am.sony.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
@@ -12,45 +12,39 @@ Cc: "jkacur@redhat.com" <jkacur@redhat.com>,
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"williams@redhat.com" <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe003.messaging.microsoft.com ([216.32.180.13]:33673
-	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1757388Ab2EBCol (ORCPT
+Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:40311 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1758162Ab2EBCpZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 May 2012 22:44:41 -0400
+	Tue, 1 May 2012 22:45:25 -0400
 In-Reply-To: <4FA09D6A.2050101@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This fixes a segfault on ARM when the '-a' option is used.
+Avoid annoying warning message when tracing is not requested and the debug
+file system is not available. 
 
-man sched_setaffinity says to use pthread_setaffinity_np() when using the
-POSIX threads API.
+The same test already protects against calling event_enable_all().
 
 Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
 ---
- src/cyclictest/cyclictest.c |    4 	3 +	1 -	0 !
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ src/cyclictest/cyclictest.c |    5 	3 +	2 -	0 !
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 Index: b/src/cyclictest/cyclictest.c
 ===================================================================
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -612,6 +612,7 @@ void *timerthread(void *param)
- 	struct thread_stat *stat = par->stats;
- 	int stopped = 0;
- 	cpu_set_t mask;
-+	pthread_t thread;
+@@ -1605,8 +1605,9 @@ int main(int argc, char **argv)
+ 	if (trace_fd >= 0)
+ 		close(trace_fd);
  
- 	/* if we're running in numa mode, set our memory node */
- 	if (par->node != -1)
-@@ -620,7 +621,8 @@ void *timerthread(void *param)
- 	if (par->cpu != -1) {
- 		CPU_ZERO(&mask);
- 		CPU_SET(par->cpu, &mask);
--		if(sched_setaffinity(0, sizeof(mask), &mask) == -1)
-+		thread = pthread_self();
-+		if(pthread_setaffinity_np(thread, sizeof(mask), &mask) == -1)
- 			warn("Could not set CPU affinity to CPU #%d\n", par->cpu);
- 	}
+-	/* turn off all events */
+-	event_disable_all();
++	if (enable_events)
++		/* turn off all events */
++		event_disable_all();
  
+ 	/* turn off the function tracer */
+ 	fileprefix = procfileprefix;
 
