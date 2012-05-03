@@ -1,95 +1,57 @@
 From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH 3/3] RFC: Solved unnecessary schedule latency in the TTY layer (3/3)
-Date: Thu, 3 May 2012 14:37:43 +0200
-Message-ID: <1336048663-21882-3-git-send-email-meltedpianoman@gmail.com>
-References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
+Subject: Re: Deterministic behavior for TTY serial
+Date: Thu, 3 May 2012 17:28:47 +0200
+Message-ID: <CAMSQXEEnvpBoq7m5hMTtYObj4FsMAtUbpEaiftZ1CDmF56LZAQ@mail.gmail.com>
+References: <CAMSQXEENByqSmK2bSxMngY2WuV86AAcX_LxTbA5JSOjT3ta_FA@mail.gmail.com>
+	<20120419001407.GA24710@kroah.com>
+	<CAMSQXEEkssPGWYgC4dkpKEhfrB4s8yOoxiNNVdRRX7r+b91EMQ@mail.gmail.com>
+	<20120419154609.GA9263@kroah.com>
+	<CAMSQXEEN=6M59CR3riNA5-kFFv7QAsn_g3PHi3A8P9mh3SfdeQ@mail.gmail.com>
+	<CAMSQXEGb9moJbCQwwXgEq7H-HvaSiuS5JBL55jr0ZhEEeAmqzw@mail.gmail.com>
+	<20120501160456.3b0b5e34@pyramind.ukuu.org.uk>
+	<CAMSQXEHAyPOF6YghsYmqqyx+N0oMgn5E=znhgFyspMUnaH78ig@mail.gmail.com>
+	<CAMSQXEHHOHeNYPJZT0b4s62T3uuNXSt9WucSrGOTfjXOU_guzg@mail.gmail.com>
+	<CAMSQXEG+O86t10AF5gN875RoEHkMcGFQE_-G6TdeYVc4NJoBLw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Ivo Sieben <meltedpianoman@gmail.com>
-To: Greg KH <gregkh@linuxfoundation.org>,
-	<linux-serial@vger.kernel.org>, Alan Cox <alan@linux.intel.com>,
+Content-Type: text/plain; charset=ISO-8859-1
+To: Greg KH <gregkh@linuxfoundation.org>, linux-serial@vger.kernel.org,
+	Alan Cox <alan@linux.intel.com>,
 	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ob0-f174.google.com ([209.85.214.174]:50753 "EHLO
+	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755992Ab2ECP2x (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 May 2012 11:28:53 -0400
+In-Reply-To: <CAMSQXEG+O86t10AF5gN875RoEHkMcGFQE_-G6TdeYVc4NJoBLw@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Solved unnecessary schedule latency in the TTY layer when used in
-realtime context:
-The global wait_queue that is used for line discipline idle handling is
-moved to a separate wait_queue for each line instance. This prevents
-unnecessary blocking on one line, because of idle handling on another
-line.
+Hi,
 
-Note: In a PREEMPT_RT system "normal" spin locks behave like mutexes and
-no interrupts (and therefor no scheduling) is disabled.
+>
+> The PREEMPT_RT uses mutexes for "normal" spin locks that do not
+> disable interrupts...
+> I'll try to use raw spinlocks in this code section and for the tty flip buffer
+> See if that can solve my problem.
+>
+> If you have other ideas... let me know!
+>
+> Regards,
+> Ivo
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
----
- drivers/tty/tty_ldisc.c   |    7 ++++---
- include/linux/tty_ldisc.h |    2 ++
- 2 files changed, 6 insertions(+), 3 deletions(-)
+I've changed some small things to the tty layer (see my other 3 RFC
+patches I've send).
+Performance increased with my loopback stress test:
+- Old situation: average read call last for 50us, with peaks up to 230 us
+- New situation: average read call still 50us, peak up to 60 us
+- Write was stable in both situations: average of 90 us, peak up to 100 us
 
-diff --git a/drivers/tty/tty_ldisc.c b/drivers/tty/tty_ldisc.c
-index 30836cc..77eb299 100644
---- a/drivers/tty/tty_ldisc.c
-+++ b/drivers/tty/tty_ldisc.c
-@@ -28,7 +28,6 @@
- 
- static DEFINE_RAW_SPINLOCK(tty_ldisc_lock);
- static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_wait);
--static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_idle);
- /* Line disc dispatch table */
- static struct tty_ldisc_ops *tty_ldiscs[NR_LDISCS];
- 
-@@ -65,7 +64,7 @@ static void put_ldisc(struct tty_ldisc *ld)
- 		return;
- 	}
- 	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
--	wake_up(&tty_ldisc_idle);
-+	wake_up(&ld->wq_idle);
- }
- 
- /**
-@@ -200,6 +199,8 @@ static struct tty_ldisc *tty_ldisc_get(int disc)
- 
- 	ld->ops = ldops;
- 	atomic_set(&ld->users, 1);
-+	init_waitqueue_head(&ld->wq_idle);
-+
- 	return ld;
- }
- 
-@@ -538,7 +539,7 @@ static void tty_ldisc_flush_works(struct tty_struct *tty)
- static int tty_ldisc_wait_idle(struct tty_struct *tty, long timeout)
- {
- 	long ret;
--	ret = wait_event_timeout(tty_ldisc_idle,
-+	ret = wait_event_timeout(tty->ldisc->wq_idle,
- 			atomic_read(&tty->ldisc->users) == 1, timeout);
- 	return ret > 0 ? 0 : -EBUSY;
- }
-diff --git a/include/linux/tty_ldisc.h b/include/linux/tty_ldisc.h
-index ff7dc08..fb79dd8 100644
---- a/include/linux/tty_ldisc.h
-+++ b/include/linux/tty_ldisc.h
-@@ -110,6 +110,7 @@
- #include <linux/fs.h>
- #include <linux/wait.h>
- #include <linux/pps_kernel.h>
-+#include <linux/wait.h>
- 
- struct tty_ldisc_ops {
- 	int	magic;
-@@ -154,6 +155,7 @@ struct tty_ldisc_ops {
- struct tty_ldisc {
- 	struct tty_ldisc_ops *ops;
- 	atomic_t users;
-+	wait_queue_head_t wq_idle;
- };
- 
- #define TTY_LDISC_MAGIC	0x5403
--- 
-1.7.0.4
+Only the very first read & write took extra time (128 us for read, 143
+for write)
+I'm still investigating that...
 
+Feedback is very appreciated.
 
+Regards,
+Ivo Sieben
