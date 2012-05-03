@@ -1,30 +1,45 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH 2/3] RFC: Solved unnecessary schedule latency in the TTY
- layer (2/3)
-Date: Thu, 3 May 2012 09:25:29 -0700
-Message-ID: <20120503162529.GB3063@kroah.com>
-References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
- <1336048663-21882-2-git-send-email-meltedpianoman@gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH v2] rt-tests: printf format compile warning
+Date: Thu, 3 May 2012 12:48:48 -0700
+Message-ID: <4FA2E120.1020909@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Ivo Sieben <meltedpianoman@gmail.com>
-Return-path: <linux-serial-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1336048663-21882-2-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: <jkacur@redhat.com>, <dvhart@linux.intel.com>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	<williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:59386
+	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751933Ab2ECTuj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 May 2012 15:50:39 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 03, 2012 at 02:37:42PM +0200, Ivo Sieben wrote:
-> Solved unnecessary schedule latency in the TTY layer when used in
-> realtime context:
-> The global "normal" spin lock that guards the line discipline
-> administration is replaced by a raw spin lock.
 
-Why, what does this cause to have happen?  What's the difference here
-that causes any speedups or latency fixes?
+V2: use type casting instead of ugly constant in format string
 
-thanks,
 
-greg k-h
+Fix printf format string to fix compile warning for ARM 32 bit target.
+
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ src/cyclictest/cyclictest.c |    2 	1 +	1 -	0 !
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: b/src/cyclictest/cyclictest.c
+===================================================================
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1575,7 +1575,7 @@ int main(int argc, char **argv)
+ 		print_tids(parameters, num_threads);
+ 		if (break_thread_id) {
+ 			printf("# Break thread: %d\n", break_thread_id);
+-			printf("# Break value: %lu\n", break_thread_value);
++			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
+ 		}
+ 	}
+ 	
+
