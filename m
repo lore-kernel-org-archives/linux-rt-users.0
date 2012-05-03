@@ -1,7 +1,7 @@
 From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH 2/3] RFC: Solved unnecessary schedule latency in the TTY layer (2/3)
-Date: Thu, 3 May 2012 14:37:42 +0200
-Message-ID: <1336048663-21882-2-git-send-email-meltedpianoman@gmail.com>
+Subject: [PATCH 3/3] RFC: Solved unnecessary schedule latency in the TTY layer (3/3)
+Date: Thu, 3 May 2012 14:37:43 +0200
+Message-ID: <1336048663-21882-3-git-send-email-meltedpianoman@gmail.com>
 References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -9,143 +9,86 @@ Cc: Ivo Sieben <meltedpianoman@gmail.com>
 To: Greg KH <gregkh@linuxfoundation.org>,
 	<linux-serial@vger.kernel.org>, Alan Cox <alan@linux.intel.com>,
 	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe006.messaging.microsoft.com ([216.32.181.186]:49867
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754830Ab2ECMiG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 May 2012 08:38:06 -0400
+Return-path: <linux-serial-owner@vger.kernel.org>
 In-Reply-To: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 Solved unnecessary schedule latency in the TTY layer when used in
 realtime context:
-The global "normal" spin lock that guards the line discipline
-administration is replaced by a raw spin lock.
+The global wait_queue that is used for line discipline idle handling is
+moved to a separate wait_queue for each line instance. This prevents
+unnecessary blocking on one line, because of idle handling on another
+line.
 
 Note: In a PREEMPT_RT system "normal" spin locks behave like mutexes and
 no interrupts (and therefor no scheduling) is disabled.
 
 Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
-
-Conflicts:
-
-	drivers/tty/tty_ldisc.c
 ---
- drivers/tty/tty_ldisc.c |   30 +++++++++++++++---------------
- 1 files changed, 15 insertions(+), 15 deletions(-)
+ drivers/tty/tty_ldisc.c   |    7 ++++---
+ include/linux/tty_ldisc.h |    2 ++
+ 2 files changed, 6 insertions(+), 3 deletions(-)
 
 diff --git a/drivers/tty/tty_ldisc.c b/drivers/tty/tty_ldisc.c
-index 24b95db..30836cc 100644
+index 30836cc..77eb299 100644
 --- a/drivers/tty/tty_ldisc.c
 +++ b/drivers/tty/tty_ldisc.c
-@@ -26,7 +26,7 @@
-  *	callers who will do ldisc lookups and cannot sleep.
-  */
+@@ -28,7 +28,6 @@
  
--static DEFINE_SPINLOCK(tty_ldisc_lock);
-+static DEFINE_RAW_SPINLOCK(tty_ldisc_lock);
+ static DEFINE_RAW_SPINLOCK(tty_ldisc_lock);
  static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_wait);
- static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_idle);
+-static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_idle);
  /* Line disc dispatch table */
-@@ -53,18 +53,18 @@ static void put_ldisc(struct tty_ldisc *ld)
- 	 * We really want an "atomic_dec_and_lock_irqsave()",
- 	 * but we don't have it, so this does it by hand.
- 	 */
--	local_irq_save(flags);
--	if (atomic_dec_and_lock(&ld->users, &tty_ldisc_lock)) {
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	if (atomic_dec_and_test(&ld->users)) {
- 		struct tty_ldisc_ops *ldo = ld->ops;
+ static struct tty_ldisc_ops *tty_ldiscs[NR_LDISCS];
  
- 		ldo->refcount--;
- 		module_put(ldo->owner);
--		spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+		raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 		kfree(ld);
+@@ -65,7 +64,7 @@ static void put_ldisc(struct tty_ldisc *ld)
  		return;
  	}
--	local_irq_restore(flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 	wake_up(&tty_ldisc_idle);
- }
- 
-@@ -89,11 +89,11 @@ int tty_register_ldisc(int disc, struct tty_ldisc_ops *new_ldisc)
- 	if (disc < N_TTY || disc >= NR_LDISCS)
- 		return -EINVAL;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	tty_ldiscs[disc] = new_ldisc;
- 	new_ldisc->num = disc;
- 	new_ldisc->refcount = 0;
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 	return ret;
- }
-@@ -119,12 +119,12 @@ int tty_unregister_ldisc(int disc)
- 	if (disc < N_TTY || disc >= NR_LDISCS)
- 		return -EINVAL;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	if (tty_ldiscs[disc]->refcount)
- 		ret = -EBUSY;
- 	else
- 		tty_ldiscs[disc] = NULL;
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 	return ret;
- }
-@@ -135,7 +135,7 @@ static struct tty_ldisc_ops *get_ldops(int disc)
- 	unsigned long flags;
- 	struct tty_ldisc_ops *ldops, *ret;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ret = ERR_PTR(-EINVAL);
- 	ldops = tty_ldiscs[disc];
- 	if (ldops) {
-@@ -145,7 +145,7 @@ static struct tty_ldisc_ops *get_ldops(int disc)
- 			ret = ldops;
- 		}
- 	}
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 	return ret;
- }
- 
-@@ -153,10 +153,10 @@ static void put_ldops(struct tty_ldisc_ops *ldops)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ldops->refcount--;
- 	module_put(ldops->owner);
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
+ 	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
+-	wake_up(&tty_ldisc_idle);
++	wake_up(&ld->wq_idle);
  }
  
  /**
-@@ -286,11 +286,11 @@ static struct tty_ldisc *tty_ldisc_try(struct tty_struct *tty)
- 	unsigned long flags;
- 	struct tty_ldisc *ld;
+@@ -200,6 +199,8 @@ static struct tty_ldisc *tty_ldisc_get(int disc)
  
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ld = NULL;
- 	if (test_bit(TTY_LDISC, &tty->flags))
- 		ld = get_ldisc(tty->ldisc);
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
+ 	ld->ops = ldops;
+ 	atomic_set(&ld->users, 1);
++	init_waitqueue_head(&ld->wq_idle);
++
  	return ld;
  }
  
+@@ -538,7 +539,7 @@ static void tty_ldisc_flush_works(struct tty_struct *tty)
+ static int tty_ldisc_wait_idle(struct tty_struct *tty, long timeout)
+ {
+ 	long ret;
+-	ret = wait_event_timeout(tty_ldisc_idle,
++	ret = wait_event_timeout(tty->ldisc->wq_idle,
+ 			atomic_read(&tty->ldisc->users) == 1, timeout);
+ 	return ret > 0 ? 0 : -EBUSY;
+ }
+diff --git a/include/linux/tty_ldisc.h b/include/linux/tty_ldisc.h
+index ff7dc08..fb79dd8 100644
+--- a/include/linux/tty_ldisc.h
++++ b/include/linux/tty_ldisc.h
+@@ -110,6 +110,7 @@
+ #include <linux/fs.h>
+ #include <linux/wait.h>
+ #include <linux/pps_kernel.h>
++#include <linux/wait.h>
+ 
+ struct tty_ldisc_ops {
+ 	int	magic;
+@@ -154,6 +155,7 @@ struct tty_ldisc_ops {
+ struct tty_ldisc {
+ 	struct tty_ldisc_ops *ops;
+ 	atomic_t users;
++	wait_queue_head_t wq_idle;
+ };
+ 
+ #define TTY_LDISC_MAGIC	0x5403
 -- 
 1.7.0.4
 
