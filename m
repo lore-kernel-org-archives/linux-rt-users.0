@@ -1,66 +1,91 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: Deterministic behavior for TTY serial
-Date: Fri, 4 May 2012 17:32:57 -0700
-Message-ID: <20120505003257.GA5169@kroah.com>
-References: <20120419001407.GA24710@kroah.com>
- <CAMSQXEEkssPGWYgC4dkpKEhfrB4s8yOoxiNNVdRRX7r+b91EMQ@mail.gmail.com>
- <20120419154609.GA9263@kroah.com>
- <CAMSQXEEN=6M59CR3riNA5-kFFv7QAsn_g3PHi3A8P9mh3SfdeQ@mail.gmail.com>
- <CAMSQXEGb9moJbCQwwXgEq7H-HvaSiuS5JBL55jr0ZhEEeAmqzw@mail.gmail.com>
- <20120501160456.3b0b5e34@pyramind.ukuu.org.uk>
- <CAMSQXEHAyPOF6YghsYmqqyx+N0oMgn5E=znhgFyspMUnaH78ig@mail.gmail.com>
- <CAMSQXEHHOHeNYPJZT0b4s62T3uuNXSt9WucSrGOTfjXOU_guzg@mail.gmail.com>
- <CAMSQXEG+O86t10AF5gN875RoEHkMcGFQE_-G6TdeYVc4NJoBLw@mail.gmail.com>
- <CAMSQXEEnvpBoq7m5hMTtYObj4FsMAtUbpEaiftZ1CDmF56LZAQ@mail.gmail.com>
+From: Venkat Subbiah <vsubbiah@caviumnetworks.com>
+Subject: patch to fix early printks with PREMPT_RT_FULL
+Date: Fri, 04 May 2012 18:07:22 -0700
+Message-ID: <4FA47D4A.6020009@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Ivo Sieben <meltedpianoman@gmail.com>
+Content-Type: multipart/mixed;
+ boundary="------------030600090005020403040804"
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:44134 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758329Ab2EEAdB (ORCPT
+Received: from mail3.caviumnetworks.com ([12.108.191.235]:5825 "EHLO
+	mail3.caviumnetworks.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753083Ab2EEBHX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 May 2012 20:33:01 -0400
-Received: by pbbrp8 with SMTP id rp8so4436282pbb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 04 May 2012 17:33:00 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <CAMSQXEEnvpBoq7m5hMTtYObj4FsMAtUbpEaiftZ1CDmF56LZAQ@mail.gmail.com>
+	Fri, 4 May 2012 21:07:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 03, 2012 at 05:28:47PM +0200, Ivo Sieben wrote:
-> Hi,
-> 
-> >
-> > The PREEMPT_RT uses mutexes for "normal" spin locks that do not
-> > disable interrupts...
-> > I'll try to use raw spinlocks in this code section and for the tty flip buffer
-> > See if that can solve my problem.
-> >
-> > If you have other ideas... let me know!
-> >
-> > Regards,
-> > Ivo
-> 
-> I've changed some small things to the tty layer (see my other 3 RFC
-> patches I've send).
-> Performance increased with my loopback stress test:
-> - Old situation: average read call last for 50us, with peaks up to 230 us
-> - New situation: average read call still 50us, peak up to 60 us
-> - Write was stable in both situations: average of 90 us, peak up to 100 us
-> 
-> Only the very first read & write took extra time (128 us for read, 143
-> for write)
-> I'm still investigating that...
-> 
-> Feedback is very appreciated.
+This is a multi-part message in MIME format.
+--------------030600090005020403040804
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 
-Why are raw spinlocks "faster" here?  I like the end-result of what you
-have accomplished, but I had some questions on your patches, care to
-answer them?
+Hello,
 
-thanks,
+With PREMPT_RT_FULL I notice couple of issues when early printk is turned on
 
-greg k-h
+1)  printks show up only after the full console is enabled
+2)  There are double prints for each of the prinkts before the full 
+console was enabled.
+
+The attached patch seem to fix the issue, but I am not sure whether this 
+is completely with
+the lock being acquired in console_trylock_for_printk().
+
+Thanks,
+Venkat
+
+
+--------------030600090005020403040804
+Content-Type: text/x-patch;
+ name="0001-printk-Allow-early-console-prints-with-PREEMPT_RT_FU.patch"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename*0="0001-printk-Allow-early-console-prints-with-PREEMPT_RT_FU.pa";
+ filename*1="tch"
+
+>From 876c0653e4482357823d1d36858aed7b5cd8d1fa Mon Sep 17 00:00:00 2001
+From: Venkat Subbiah <venkat.subbiah@cavium.com>
+Date: Fri, 4 May 2012 17:53:16 -0700
+Subject: [PATCH] printk: Allow early console prints with PREEMPT_RT_FULL
+
+Signed-off-by: Venkat Subbiah <venkat.subbiah@cavium.com>
+---
+ kernel/printk.c |    5 ++++-
+ 1 files changed, 4 insertions(+), 1 deletions(-)
+
+diff --git a/kernel/printk.c b/kernel/printk.c
+index d3f22ec..d2dda2f 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -832,6 +832,8 @@ static inline int can_use_console(unsigned int cpu)
+ 	return cpu_online(cpu) || have_callable_console();
+ }
+ 
++static int boot_console_active = 1;
++
+ /*
+  * Try to get console ownership to actually show the kernel
+  * messages from a 'printk'. Return true (and with the
+@@ -848,7 +850,7 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ 	int retval = 0, wake = 0;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	int lock = (!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+-		!preempt_count()) || sysrq_in_progress;
++		!preempt_count()) || sysrq_in_progress || boot_console_active;
+ #else
+ 	int lock = 1;
+ #endif
+@@ -1653,6 +1655,7 @@ void register_console(struct console *newcon)
+ 		 */
+ 		printk(KERN_INFO "console [%s%d] enabled, bootconsole disabled\n",
+ 			newcon->name, newcon->index);
++		boot_console_active = 0;
+ 		for_each_console(bcon)
+ 			if (bcon->flags & CON_BOOT)
+ 				unregister_console(bcon);
+-- 
+1.7.7.6
+
+
+--------------030600090005020403040804--
