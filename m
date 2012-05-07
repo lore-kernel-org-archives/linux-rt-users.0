@@ -1,57 +1,60 @@
 From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: [PATCH 2/3] RFC: Solved unnecessary schedule latency in the TTY
- layer (2/3)
-Date: Mon, 7 May 2012 09:45:51 +0200
-Message-ID: <CAMSQXEEofb_4mLjNffTK1ZEHXA0UcY1dXm5NR-GD1jJzDgDu+w@mail.gmail.com>
+Subject: Re: [PATCH 1/3] RFC: Solved unnecessary schedule latency in the TTY
+ layer (1/3)
+Date: Mon, 7 May 2012 16:10:15 +0200
+Message-ID: <CAMSQXEEczyknnRaPhktaDj3e6GPCo6YpVFC-Nczk6uDpO6-ytA@mail.gmail.com>
 References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
-	<1336048663-21882-2-git-send-email-meltedpianoman@gmail.com>
-	<20120503162529.GB3063@kroah.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-serial@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
+Cc: Ivo Sieben <meltedpianoman@gmail.com>
+To: Greg KH <gregkh@linuxfoundation.org>, linux-serial@vger.kernel.org,
+	Alan Cox <alan@linux.intel.com>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Greg KH <gregkh@linuxfoundation.org>
 Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <20120503162529.GB3063@kroah.com>
+In-Reply-To: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
 Sender: linux-serial-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 Hi,
 
-2012/5/3 Greg KH <gregkh@linuxfoundation.org>:
+2012/5/3 Ivo Sieben <meltedpianoman@gmail.com>:
+> --- a/drivers/tty/tty_buffer.c
+> +++ b/drivers/tty/tty_buffer.c
+> @@ -317,12 +317,7 @@ EXPORT_SYMBOL(tty_insert_flip_string_flags);
 >
-> Why, what does this cause to have happen? =A0What's the difference he=
-re
-> that causes any speedups or latency fixes?
+> =A0void tty_schedule_flip(struct tty_struct *tty)
+> =A0{
+> - =A0 =A0 =A0 unsigned long flags;
+> - =A0 =A0 =A0 spin_lock_irqsave(&tty->buf.lock, flags);
+> - =A0 =A0 =A0 if (tty->buf.tail !=3D NULL)
+> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 tty->buf.tail->commit =3D tty->buf.tail=
+->used;
+> - =A0 =A0 =A0 spin_unlock_irqrestore(&tty->buf.lock, flags);
+> - =A0 =A0 =A0 schedule_work(&tty->buf.work);
+> + =A0 =A0 =A0 tty_flip_buffer_push(tty);
+> =A0}
+> =A0EXPORT_SYMBOL(tty_schedule_flip);
 >
 
-This patch solves the following scenario:
-- A low priority process starts to send data to serial port A
-- In order to do this, the low priority process calls the
-tty_ldisc_ref_wait() function to retrieve a reference to its line
-discipline.
-- In the tty_ldisc_ref_wait() function, the global ldisc spinlock is lo=
-cked.
-- While the spin lock is still locked, a context switch takes place
-and a second process on high real-time priority starts reading data
-from another serial port B (this is a possible scenario on a
-PREEMPT_RT system where a "normal" spin lock behaves like a mutex and
-no interrupts are actually disabled, although the "irqsave" postfix in
-the spinlock function name suggests otherwise)
-- The second project also calls the tty_ldisc_ref_wait() function, and
-therefor gets blocked on the global ldisc spin lock.
-- As a result priority inversion takes place, and the second process
-is scheduled out, the first process is scheduled in on high priority.
-After the first process has released the spin lock, the second process
-is scheduled again.
+I have an additional question on the above change in the patch that I'v=
+e send:
 
-The above scenario is not wrong, it works fine... but the scheduling &
-mutex handling requires a lot of extra processing time what makes that
-a normal read operation of about 50us sometimes can last up to 230us.
-By using raw spin locks this situation is prevented. I think it is
-legitimate to use raw spin locks because the critical sections in
-ldisc are small.
+I found that two functions in drivers/tty/tty_buffer.c implement
+almost the same functionality:
+- tty_schedule_flip
+- tty_flip_buffer_push
+
+Only difference was that tty_schedule_flip() always uses the work
+queue, while the tty_flip_buffer_push only uses the work queue in case
+of a non prempt_rt system and low_latency flag unset.
+
+But is my change correct? I see that most serial drivers use the
+tty_flip_buffer_push() function. But still a number of drivers use the
+tty_schedule_flip() function. I even found one driver that uses both
+(drivers/staging/serqt_usb2/serqt_usb2.c). Does my patch introduce
+bugs to these drivers? Or is the tty_schedule_flip() a legacy
+function, and would it be better to remove it completely?
 
 Regards,
 Ivo Sieben
