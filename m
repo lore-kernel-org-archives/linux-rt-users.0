@@ -1,65 +1,63 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: [PATCH 1/3] RFC: Solved unnecessary schedule latency in the TTY
- layer (1/3)
-Date: Mon, 7 May 2012 16:10:15 +0200
-Message-ID: <CAMSQXEEczyknnRaPhktaDj3e6GPCo6YpVFC-Nczk6uDpO6-ytA@mail.gmail.com>
-References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] rt-tests: incorrect first latency value for --verbose
+ option
+Date: Mon, 7 May 2012 23:41:50 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1205072322250.3886@tycho>
+References: <4FA1CB20.5000209@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Ivo Sieben <meltedpianoman@gmail.com>
-To: Greg KH <gregkh@linuxfoundation.org>, linux-serial@vger.kernel.org,
-	Alan Cox <alan@linux.intel.com>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	williams@redhat.com, jkacur@redhat.com
+To: Frank Rowand <frank.rowand@am.sony.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f172.google.com ([209.85.212.172]:37521 "EHLO
+	mail-wi0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757530Ab2EGVmJ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 May 2012 17:42:09 -0400
+Received: by wibhj6 with SMTP id hj6so26876wib.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 May 2012 14:42:07 -0700 (PDT)
+In-Reply-To: <4FA1CB20.5000209@am.sony.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
 
-2012/5/3 Ivo Sieben <meltedpianoman@gmail.com>:
-> --- a/drivers/tty/tty_buffer.c
-> +++ b/drivers/tty/tty_buffer.c
-> @@ -317,12 +317,7 @@ EXPORT_SYMBOL(tty_insert_flip_string_flags);
->
-> =A0void tty_schedule_flip(struct tty_struct *tty)
-> =A0{
-> - =A0 =A0 =A0 unsigned long flags;
-> - =A0 =A0 =A0 spin_lock_irqsave(&tty->buf.lock, flags);
-> - =A0 =A0 =A0 if (tty->buf.tail !=3D NULL)
-> - =A0 =A0 =A0 =A0 =A0 =A0 =A0 tty->buf.tail->commit =3D tty->buf.tail=
-->used;
-> - =A0 =A0 =A0 spin_unlock_irqrestore(&tty->buf.lock, flags);
-> - =A0 =A0 =A0 schedule_work(&tty->buf.work);
-> + =A0 =A0 =A0 tty_flip_buffer_push(tty);
-> =A0}
-> =A0EXPORT_SYMBOL(tty_schedule_flip);
->
 
-I have an additional question on the above change in the patch that I'v=
-e send:
+On Wed, 2 May 2012, Frank Rowand wrote:
 
-I found that two functions in drivers/tty/tty_buffer.c implement
-almost the same functionality:
-- tty_schedule_flip
-- tty_flip_buffer_push
+> 
+> When the --verbose option is selected, the first value for each thread is
+> incorrectly reported as zero.
+> 
+> This is because when collecting the first value, the index into stat->values is
+> incremented from zero to one before storing the value.  But when printing the
+> values, the first value printed is stat->values[0], which has been initialized
+> to zero.
 
-Only difference was that tty_schedule_flip() always uses the work
-queue, while the tty_flip_buffer_push only uses the work queue in case
-of a non prempt_rt system and low_latency flag unset.
+Hi Frank
 
-But is my change correct? I see that most serial drivers use the
-tty_flip_buffer_push() function. But still a number of drivers use the
-tty_schedule_flip() function. I even found one driver that uses both
-(drivers/staging/serqt_usb2/serqt_usb2.c). Does my patch introduce
-bugs to these drivers? Or is the tty_schedule_flip() a legacy
-function, and would it be better to remove it completely?
+Ok, no more posting from me after winning a bottle of whiskey at the Irish 
+Pub on quiz night. :)
 
-Regards,
-Ivo Sieben
---
-To unsubscribe from this list: send the line "unsubscribe linux-serial"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I've been looking at this one, and I'm not sure about it.
+According to the help output, 
+
+"-v       --verbose         output values on stdout for statistics
+                           format: n:c:v n=tasknum c=count v=value in us"
+
+./cyclictest --verbose -p99 -t | awk '$2~/^0/{ print }' 
+
+       0:       0:       0
+       1:       0:       0
+       2:       0:       0
+       3:       0:       0
+       4:       0:       0
+       5:       0:       0
+       6:       0:       0
+       7:       0:       0
+
+So, it looks like the values are 0 at count 0, doesn't that make sense?
+
+Thanks
+
+John Kacur
