@@ -1,107 +1,65 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH] rt-tests: incorrect first latency value for --verbose
- option
-Date: Mon, 7 May 2012 15:13:59 -0700
-Message-ID: <4FA84927.8010803@am.sony.com>
-References: <4FA1CB20.5000209@am.sony.com> <alpine.LFD.2.02.1205072322250.3886@tycho> <4FA8428B.4050809@am.sony.com> <alpine.LFD.2.02.1205072353210.3886@tycho>
-Reply-To: <frank.rowand@am.sony.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: Re: [PATCH 1/2] RFC cyclictest: clean up --latency ordering in getopt
+Date: Mon, 7 May 2012 21:30:59 -0300
+Message-ID: <20120508003059.GH5429@uudg.org>
+References: <4FA841B4.20701@am.sony.com>
+ <4FA842F3.60204@am.sony.com>
+ <4FA845F1.4080205@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"williams@redhat.com" <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
+	"williams@redhat.com" <williams@redhat.com>,
+	"jkacur@redhat.com" <jkacur@redhat.com>,
+	"dvhart@linux.intel.com" <dvhart@linux.intel.com>
+To: Frank Rowand <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:51365 "EHLO
-	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752760Ab2EGWO3 (ORCPT
+Received: from mail-pb0-f46.google.com ([209.85.160.46]:57620 "EHLO
+	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750995Ab2EHAf0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 May 2012 18:14:29 -0400
-In-Reply-To: <alpine.LFD.2.02.1205072353210.3886@tycho>
+	Mon, 7 May 2012 20:35:26 -0400
+Received: by pbbrp8 with SMTP id rp8so7331678pbb.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 May 2012 17:35:26 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <4FA845F1.4080205@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/07/12 15:03, John Kacur wrote:
-> 
-> 
-> On Mon, 7 May 2012, Frank Rowand wrote:
-> 
->> On 05/07/12 14:41, John Kacur wrote:
->>>
->>>
->>> On Wed, 2 May 2012, Frank Rowand wrote:
->>>
->>>>
->>>> When the --verbose option is selected, the first value for each thread is
->>>> incorrectly reported as zero.
->>>>
->>>> This is because when collecting the first value, the index into stat->values is
->>>> incremented from zero to one before storing the value.  But when printing the
->>>> values, the first value printed is stat->values[0], which has been initialized
->>>> to zero.
->>>
->>> Hi Frank
->>>
->>> Ok, no more posting from me after winning a bottle of whiskey at the Irish 
->>> Pub on quiz night. :)
->>
->> Or if you do, you should share a bit of the whiskey with me.
-> 
-> You get the bottle and 30 shot glasses and share it with everyone at the 
-> pub, so if you want some you have to come, and then help my team win too 
-> :)
+On Mon, May 07, 2012 at 03:00:17PM -0700, Frank Rowand wrote:
+| This is the resulting message on the ARM panda with a 'bad'
+| 32khz timer:
+| 
+| 
+|   # cyclictest -q -p 80 -t -n -l 10 -h ${hist_bins} -R 100
+|   reported clock resolution: 1 nsec
+|   measured clock resolution less than: 30517 nsec
 
-Hmmm, that's a long way to go for a shot.
+How about using a fixed loop size (say 1000000 clock reads) to define
+the average cost of reading the clock (the second value presented above)
+instead of a variable amount of iterations? Reading the clock twice and
+calculating the average could lead to wrong impressions. Also, it would
+be interesting to run such test under a real time priority (FIFO:2, maybe?)
+to avoid too much external interference on the readings, mainly involuntary
+context switches.
 
-> 
->  > 
->>>
->>> I've been looking at this one, and I'm not sure about it.
->>> According to the help output, 
->>>
->>> "-v       --verbose         output values on stdout for statistics
->>>                            format: n:c:v n=tasknum c=count v=value in us"
->>>
->>> ./cyclictest --verbose -p99 -t | awk '$2~/^0/{ print }' 
->>>
->>>        0:       0:       0
->>>        1:       0:       0
->>>        2:       0:       0
->>>        3:       0:       0
->>>        4:       0:       0
->>>        5:       0:       0
->>>        6:       0:       0
->>>        7:       0:       0
->>>
->>> So, it looks like the values are 0 at count 0, doesn't that make sense?
->>
->> Nope.  The event for count == 0 is the first event.  And the first event
->> has an actual latency that is not zero on the system I tested it on.
->>
-> 
-> Hmmm, this may be a quibble about definitions. I know that in the c-world 
-> we're used to start counting at 0, but to me, count == 0 is before the 
-> first event. You're not losing any data here, it's just that the first 
-> event is stored in the first count. Or am I still missing something here?
+Having too different values called 'clock resolution' may be a good source
+of confusion. The value of clock_getres() is the resolution, as per the
+system jargon, and the second value should be granularity, reading cost,
+the-average-time-it-takes-to-read-the-clock or something alike.
+ 
+| A possible follow on patch would be to generate a hard
+| error (fail the test) if the measured resolution was
+| above some unreasonable value (perhaps > 1 msec), but
+| allow the hard fail to be overridden with yet another
+| command line option.  Any opinions about that?
 
-In that case, there is no value in reporting event zero for each thread,
-because it will always be:  0:   0:   0
+My suggestion is to keep the current behavior and add an option to
+stop/complain case the clock has a poor resolution or has a reading
+cost too high.
 
-Another thing that points to reporting latency == 0 is not intended is
-that the summary does not report a 'Min' of zero, even when the trace
-shows the first event having a latency of zero:
-
-  # cyclictest -q --verbose -p99 -t -l 3
-  Thread 0 Interval: 1500
-  Thread 1 Interval: 2000
-         0:       0:       0
-         0:       1:     190
-         0:       2:     166
-         1:       0:       0
-         1:       1:     178
-         1:       2:     173
-  T: 0 (  633) P:99 I:1000 C:      3 Min:    166 Act:  173 Avg:  176 Max:     190
-  T: 1 (  634) P:98 I:1500 C:      3 Min:    138 Act:  138 Avg:  163 Max:     178
+Luis
+-- 
+[ Luis Claudio R. Goncalves             Red Hat  -  Realtime Team ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
 
