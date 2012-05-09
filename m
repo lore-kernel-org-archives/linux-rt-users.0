@@ -1,154 +1,163 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: cyclictest problem/bug as non-root
-Date: Wed, 9 May 2012 15:19:27 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1205091459260.3981@tycho>
-References: <20120210115721.GA13313@opentech.at>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: [PATCH] rt-tests / cyclictest: Make cyclictest fail if it cannot run with requested priority.
+Date: Wed,  9 May 2012 16:03:03 +0200
+Message-ID: <1336572183-6889-1-git-send-email-jkacur@redhat.com>
+Cc: Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Nicholas Mc Guire <der.herr@hofr.at>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f46.google.com ([209.85.214.46]:43801 "EHLO
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:56652 "EHLO
 	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756310Ab2EINTp (ORCPT
+	with ESMTP id S1755727Ab2EIODf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 May 2012 09:19:45 -0400
-Received: by bkcji2 with SMTP id ji2so259332bkc.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 May 2012 06:19:44 -0700 (PDT)
-In-Reply-To: <20120210115721.GA13313@opentech.at>
+	Wed, 9 May 2012 10:03:35 -0400
+Received: by bkcji2 with SMTP id ji2so308555bkc.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 May 2012 07:03:34 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Currently if a non-root user requests a priority higher than the soft limit in
+/etc/security/limits.conf
+the call to sched_setscheduler will silently fail and the user will be running
+with priority of 0. Cyclictest will not complain, and display the
+requested priority resulting in seemingly poor results.
 
+The following patch fixes this by doing two things.
 
-On Fri, 10 Feb 2012, Nicholas Mc Guire wrote:
+1. If the requested priority is higher than the soft limit but lower than the
+hard limit, it will raise the soft limit to the requested priority.
 
-> 
-> HI !
-> 
->  minor bug in cyclictest but potential causing confusion on cyclictest 
->  resuults when running as non-root user.
-> 
-> Setup:
->  if one sets the rtprio in /etc/security/limits.conf to something below
->  prio max - like:
-> 
->  @hofrat          hard    rtprio          10
->  @hofrat          soft    rtprio          10
-> 
->  but then starts cylictest with -p 80 cyclictest will not fuss and also
->  display priority 80 (as it uses par->prio in print_stat) but effectively 
->  runs with prio 0 as the return value of sched_setscheduler is not being
->  checked in timerthread), resulting in semingly bad scheduling jitter values.
-> 
->  So maybe cyclictest should take the effective maximum schduling priority
->  of the user and not the scheduling policy maximum. Not sur if the check
->  in timerthread is actually really needed - but it should not hurt ither.
->  patch below (against current git) at "works for me" quality.
-> 
-> thx!
-> hofrat
-> 
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 731b4bd..fa89502 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -33,6 +33,7 @@
->  #include <sys/time.h>
->  #include <sys/utsname.h>
->  #include <sys/mman.h>
-> +#include <sys/resource.h>
->  #include "rt_numa.h"
->  
->  #include "rt-utils.h"
-> @@ -641,7 +642,10 @@ void *timerthread(void *param)
->  
->  	memset(&schedp, 0, sizeof(schedp));
->  	schedp.sched_priority = par->prio;
-> -	sched_setscheduler(0, par->policy, &schedp);
-> +	if(sched_setscheduler(0, par->policy, &schedp) == -1){
-> +		fprintf(stderr,"sched_setscheduler prio %d failed\n",par->prio);
-> +		par->prio=0; 
-> +	}
->  
->  	/* Get current time */
->  	clock_gettime(par->clock, &now);
-> @@ -943,6 +947,7 @@ static void process_options (int argc, char *argv[])
->  {
->  	int error = 0;
->  	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
-> +	struct rlimit rlim;
->  
->  	for (;;) {
->  		int option_index = 0;
-> @@ -1145,6 +1150,15 @@ static void process_options (int argc, char *argv[])
->  		policy = SCHED_FIFO;
->  	}
->  
-> +	/* check against rlimit see /etc/security/limits.conf */
-> +	getrlimit(RLIMIT_RTPRIO, &rlim);
-> +	if ( priority > rlim.rlim_max){
-> +		fprintf(stderr, "defaulting realtime priority to %d\n", 
-> +			(int) rlim.rlim_max);
-> +		priority = rlim.rlim_max;
-> +	}
-> +
-> +
->  	if ((policy == SCHED_FIFO || policy == SCHED_RR) && priority == 0) {
->  		fprintf(stderr, "defaulting realtime priority to %d\n", 
->  			num_threads+1);
-> 
-> --
+2. If the requested priority is higher than the hard limit, it will fail with a
+warning.
 
-Hi Nicholas!
+The patch should not affect privileged users.
 
-You're the fellow who told me not to worry if the power went out in that 
-Prague dungeon-like restaurant, that we could just follow you out, right?
+Reported-by: Nicholas Mc Guire <der.herr@hofr.at>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/cyclictest/cyclictest.c |   80 ++++++++++++++++++++++++++++++++++++++++++-
+ 1 files changed, 79 insertions(+), 1 deletions(-)
 
-First of all, thank you for pointing out the bug in cyclictest, sorry it 
-has taken me so long to reply.
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index e8649c7..c44df6a 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -12,6 +12,7 @@
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
++
+ #include <stdint.h>
+ #include <stdarg.h>
+ #include <unistd.h>
+@@ -31,6 +32,7 @@
+ #include <sys/sysinfo.h>
+ #include <sys/types.h>
+ #include <sys/time.h>
++#include <sys/resource.h>
+ #include <sys/utsname.h>
+ #include <sys/mman.h>
+ #include "rt_numa.h"
+@@ -586,6 +588,79 @@ parse_time_string(char *val)
+ }
+ 
+ /*
++ * Raise the soft priority limit up to prio, if that is less than or equal
++ * to the hard limit
++ * if a call fails, return the error
++ * if successful return 0
++ * if fails, return -1
++*/
++static int raise_soft_prio(int policy, const struct sched_param *param)
++{
++	int err;
++	int policy_max;	/* max for scheduling policy such as SCHED_FIFO */
++	int soft_max;
++	int hard_max;
++	int prio;
++	struct rlimit rlim;
++
++	prio = param->sched_priority;
++
++	policy_max = sched_get_priority_max(policy);
++	if (policy_max == -1) {
++		err = errno;
++		err_msg("WARN: no such policy\n");
++		return err;
++	}
++
++	err = getrlimit(RLIMIT_RTPRIO, &rlim);
++	if (err) {
++		err = errno;
++		err_msg_n(err, "WARN: getrlimit failed\n");
++		return err;
++	}
++
++	soft_max = (rlim.rlim_cur == RLIM_INFINITY) ? policy_max : rlim.rlim_cur;
++	hard_max = (rlim.rlim_max == RLIM_INFINITY) ? policy_max : rlim.rlim_max;
++
++	if (prio > soft_max && prio <= hard_max) {
++		rlim.rlim_cur = prio;
++		err = setrlimit(RLIMIT_RTPRIO, &rlim);
++		if (err) {
++			err = errno;
++			err_msg_n(err, "WARN: setrlimit failed\n");
++			/* return err; */
++		}
++	} else {
++		err = -1;
++	}
++
++	return err;
++}
++
++/*
++ * Check the error status of sched_setscheduler
++ * If an error can be corrected by raising the soft limit priority to
++ * a priority less than or equal to the hard limit, then do so.
++ */
++static int setscheduler(pid_t pid, int policy, const struct sched_param *param)
++{
++	int err = 0;
++
++try_again:
++	err = sched_setscheduler(pid, policy, param);
++	if (err) {
++		err = errno;
++		if (err == EPERM) {
++			int err1;
++			err1 = raise_soft_prio(policy, param);
++			if (!err1) goto try_again;
++		}
++	}
++
++	return err;
++}
++
++/*
+  * timer thread
+  *
+  * Modes:
+@@ -599,6 +674,7 @@ parse_time_string(char *val)
+  */
+ void *timerthread(void *param)
+ {
++	int err;
+ 	struct thread_param *par = param;
+ 	struct sched_param schedp;
+ 	struct sigevent sigev;
+@@ -643,7 +719,9 @@ void *timerthread(void *param)
+ 
+ 	memset(&schedp, 0, sizeof(schedp));
+ 	schedp.sched_priority = par->prio;
+-	sched_setscheduler(0, par->policy, &schedp);
++	err = setscheduler(0, par->policy, &schedp);
++	if (err)
++		fatal("Couldn't raise priority to %d\n", schedp.sched_priority);
+ 
+ 	/* Get current time */
+ 	clock_gettime(par->clock, &now);
+-- 
+1.7.7.6
 
-The bug is real, but unfortunately there are a few problems with your 
-solution.
-
-1. If you are a privileged process you will override whatever is in 
-/etc/security/limits.conf when calling sched_setscheduler, but getrlimit 
-will dumbly report what is in limits.conf. So, the above patch could set 
-the maximum priority at a lower value for privileged processes if 
-limits.conf has some nonsense in it.
-
-2. getrlimit can return RLIM_INFINITY meaning unlimited. But RLIM_INFINITY 
-is -1, so that will be less than the requested prio so the above would set 
-the prio to -1.
-
-3. The kernel will enforce the soft limit not the hard limit, so you can't 
-just set the priority to the rlim_max. For example if limits.conf has
-
- @hofrat          hard    rtprio          20
- @hofrat          soft    rtprio          10
-
-you cannot set the prio to 20 without first calling setrlimit to raise the 
-soft limit (rlim_cur)
-
-There is a philosophical problem here as well. Should software fail if it
-cannot do what the user requests, or should it try to do the next best 
-thing. I can see both arguments, but in this case I would prefer that if a 
-user requests a prio and the software cannot do it, then it should fail 
-with a warning rather than simply take the next best prio. (which is easy 
-to overlook)
-
-So, I have a patch that will do the following.
-
-1. If the user requests a prio lower than the hard limit but higher than 
-the soft limit, it will adjust the prio up the hard limit, in order to try 
-to do what the user requests.
-
-2. If the user requests a prio higher than the hard limit, it will fail 
-with a warning.
-
-I'll send the patch in a separate mail.
-
-Thanks
-
-John
