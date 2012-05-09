@@ -1,96 +1,82 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: BUG - "scheduling while atomic" on a irq handler (s3c-mci)
-Date: Wed, 9 May 2012 19:49:31 +0200
-Message-ID: <20120509174931.GB31844@pengutronix.de>
-References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Christophe Huriaux <c.huriaux@gmail.com>
+From: Grant Edwards <grant.b.edwards@gmail.com>
+Subject: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
+Date: Wed, 9 May 2012 21:18:10 +0000 (UTC)
+Message-ID: <joemui$6v0$1@dough.gmane.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:50279 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758335Ab2EIRtd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 May 2012 13:49:33 -0400
-Content-Disposition: inline
-In-Reply-To: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
+Received: from plane.gmane.org ([80.91.229.3]:50815 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756355Ab2EIVUE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 May 2012 17:20:04 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1SSEIl-0001o6-Em
+	for linux-rt-users@vger.kernel.org; Wed, 09 May 2012 23:20:03 +0200
+Received: from dsl.comtrol.com ([64.122.56.22])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 May 2012 23:20:03 +0200
+Received: from grant.b.edwards by dsl.comtrol.com with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Wed, 09 May 2012 23:20:03 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Christophe,
 
-On Wed, May 09, 2012 at 04:07:13PM +0200, Christophe Huriaux wrote:
->    I am facing a problem while trying to run a rt-patched 3.2.y kerne=
-l
-> with PREEMPT_RT_FULL on a mini2440 board (ARM based s3c2440 SoC) :
-> whilst a vanilla kernel (with PREEMPT_LL) works like a charm,
-> PREEMPT_RTB and PREEMPT_RT_FULL makes the MMC/SD driver  (s3cmci)
-> hang, which result in the kernel waiting indefinitely for the root fs
-> to mount.
->=20
->   I think that the IRQ handling of the driver is somehow disturbed by
-> the changes made by the RT patch. When using PREEMPT_RTB I can see th=
-e
-> following message in the console :
->=20
-> BUG: scheduling while atomic: irq/37-s3c-mci/253/0x00000102
-> Modules linked in:
-> Function entered at [<c000e90c>] from [<c029f478>]
-> Function entered at [<c029f478>] from [<c029fc3c>]
-> Function entered at [<c029fc3c>] from [<c00559c0>]
-> Function entered at [<c00559c0>] from [<c01dd4c8>]
-> Function entered at [<c01dd4c8>] from [<c0024a0c>]
-> Function entered at [<c0024a0c>] from [<c0024d9c>]
-> Function entered at [<c0024d9c>] from [<c0024fe8>]
-> Function entered at [<c0024fe8>] from [<c0025140>]
-> Function entered at [<c0025140>] from [<c00549f0>]
-> Function entered at [<c00549f0>] from [<c00547c4>]
-> Function entered at [<c00547c4>] from [<c0039954>]
-> Function entered at [<c0039954>] from [<c000a120>]
+I've been doing some interrupt latency testing using a board running a
+400MHz ARM9 (an Atmel at19sam9g20).  I'm measuring interrupt latency
+of an ISR attached to external interrupt pin IRQ0.
 
-If you enable CONFIG_KALLSYMS you get a more usable backtrace.
-Alternatively you can use
+I built three kernels from scratch and ran the same test on all three:
 
-	$CROSS_COMPILE-addr2line -e vmlinux 0xc000e90c
+ 2.6.30          
+ 2.6.33.7        
+ 2.6.33.7-rt30  
 
-to get the file and line that resulted in the code at that address.
+All kernels are built using the standard AT91 patches from
+http://maxim.org.za/at91_26.html.  The 2.6.30 kernel also has a set of
+patches distributed by Atmel.
 
->   When I run the kernel under Qemu, debug through gdb and put a
-> breakpoint on unwind_backtace the details of the previous backtrace i=
-s
-> :
->=20
-> #0  unwind_backtrace (regs=3D0x0, tsk=3D0x0) at arch/arm/kernel/unwin=
-d.c:409
-> #1  0xc029f478 in schedule_debug (prev=3D<optimized out>) at kernel/s=
-ched.c:4357
-> #2  __schedule () at kernel/sched.c:4537
-> #3  0xc029fc3c in schedule () at kernel/sched.c:4625
-> #4  0xc00559c0 in synchronize_irq (irq=3D<optimized out>) at
-> kernel/irq/manage.c:73
-> Backtrace stopped: previous frame inner to this frame (corrupt stack?=
-)
->=20
->   I don't see the "bug" message with PREEMPT_RT_FULL, the kernel just
-> hang waiting for the rootfs. The problem did not occur in the 2.6.y
-> tree AFAIK.
-My guess is that for PREEMPT_RT_FULL the printk just doesn't make it to
-your console driver because the data would only be given to it when the
-atomic block is done.
+The 2.6.33.7-rt30 kernel is built from the same sources as the 2.6.33.7
+kernel with the addition of the 2.6.33.6-rt30 patch.
 
-Best regards
-Uwe
+I don't have enough data to say much about worst-case latency, but
+after looking a few thousand samples I can say that...
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ * 2.6.30 and 2.6.33.7 are pretty much the same: there is as much
+   variation between test runs as there is between kernels.
+
+ * Typical latency with RT patch is 3X the latency without it.
+
+ * CPU idle time during test is 10% with RT patch and 30% without.
+
+IOW: the real-time patch for 2.6.33.7 makes both the typical interrupt
+latency and the CPU usage significantly worse.
+
+Typical latency without the RT patch is 5-15us.
+
+Typical latency with is 15-50us (I've never seen latency below 15us
+with the RT patch).
+
+Is this the expected behavior?
+
+I don't have enough data to state conclusively what the worst-case
+latencies are, but it looks like in all cases they're 200-250us.
+
+In all cases the kernel was configured to be the most preemptible it
+could be.  In the 2.6.33.7-rt30 kernel I don't have any of the tracers
+enabled.
+
+The kernel configurations are as identical as I could make them.  In
+the 2.6.33.7-rt30 case, I started with the .config file used to build
+the other 2.6.33.7 kernel and ran old-config making sure to select the
+"fully preemptible" option when it asked.
+
+Why would a "vanilla" 2.6.33.7 AT91 kernel perform so much better than
+one with the RT patch?
+
+-- 
+Grant Edwards               grant.b.edwards        Yow! RHAPSODY in Glue!
+                                  at
+                               gmail.com
+
