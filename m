@@ -1,56 +1,46 @@
-From: Grant Edwards <grant.b.edwards@gmail.com>
+From: Joachim Achtzehnter <joachima@netacquire.com>
 Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
-Date: Wed, 9 May 2012 22:00:00 +0000 (UTC)
-Message-ID: <joepd0$e4f$1@dough.gmane.org>
-References: <joemui$6v0$1@dough.gmane.org>
-To: linux-rt-users@vger.kernel.org
+Date: Wed, 09 May 2012 15:13:07 -0700
+Message-ID: <4FAAEBF3.10907@netacquire.com>
+References: <joemui$6v0$1@dough.gmane.org> <joepd0$e4f$1@dough.gmane.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:47887 "EHLO plane.gmane.org"
+Received: from penguin.kraut.ca ([209.53.201.119]:48749 "EHLO penguin.kraut.ca"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759747Ab2EIWAP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 May 2012 18:00:15 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1SSEvd-0007Xm-JB
-	for linux-rt-users@vger.kernel.org; Thu, 10 May 2012 00:00:13 +0200
-Received: from dsl.comtrol.com ([64.122.56.22])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 May 2012 00:00:13 +0200
-Received: from grant.b.edwards by dsl.comtrol.com with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 May 2012 00:00:13 +0200
+	id S1756028Ab2EIWzE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 May 2012 18:55:04 -0400
+Received: from s216-232-14-254.bc.hsia.telus.net ([216.232.14.254] helo=[205.159.216.152])
+	by penguin.kraut.ca with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
+	(Exim 4.77)
+	(envelope-from <joachima@netacquire.com>)
+	id 1SSF8D-0006hZ-FG
+	for linux-rt-users@vger.kernel.org; Wed, 09 May 2012 15:13:14 -0700
+In-Reply-To: <joepd0$e4f$1@dough.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2012-05-09, Grant Edwards <grant.b.edwards@gmail.com> wrote:
+Grant Edwards wrote:
 
-> IOW: the real-time patch for 2.6.33.7 makes both the typical interrupt
-> latency and the CPU usage significantly worse.
->
-> Typical latency without the RT patch is 5-15us.
->
-> Typical latency with is 15-50us (I've never seen latency below 15us
-> with the RT patch).
->
-> Is this the expected behavior?
+> I've been loaned a clue by somebody on the OSADL mailing list: the RT
+> patches are for improving _user_space_ reponse, and may do so at the
+> expense of both CPU usage and interrupt latency.
 
-I've been loaned a clue by somebody on the OSADL mailing list: the RT
-patches are for improving _user_space_ reponse, and may do so at the
-expense of both CPU usage and interrupt latency.
+The RT patches improve *worst case* latency. They are primarily intended 
+for applications that must *always* meet their deadlines, not merely 
+most of the time. In return you tend to get increased average latency as 
+well as reduced throughput.
 
-As a result, I'm better off without the RT patch if what I care about
-is interrupt latency.
+> As a result, I'm better off without the RT patch if what I care
+> about is interrupt latency.
 
-Am right I correct in the following conclusions?
+Yes, if you only care about *typical* interrupt latency but don't mind 
+the occasional long delay.
 
-  * In 2.6.33.7, ISRs are really ISRs
+Joachim
 
-  * In 2.6.33.7-rt30, ISRs are kernel threads.
-
-  
 -- 
-Grant Edwards               grant.b.edwards        Yow! Don't hit me!!  I'm in
-                                  at               the Twilight Zone!!!
-                              gmail.com            
-
+joachima@netacquire.com http://www.netacquire.com
