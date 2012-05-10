@@ -1,64 +1,47 @@
-From: Grant Edwards <grant.b.edwards@gmail.com>
-Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
-Date: Thu, 10 May 2012 08:53:20 -0500
-Message-ID: <20120510135320.GA9568@grante>
-References: <joemui$6v0$1@dough.gmane.org>
- <joepd0$e4f$1@dough.gmane.org>
- <4FAAEBF3.10907@netacquire.com>
- <joetve$hm5$1@dough.gmane.org>
- <CANqCtQJsr6xV9aU5LbXuOOtYTvcHT6113cy0+6smKBtZAdcRGA@mail.gmail.com>
+From: Alan Cox <alan@linux.intel.com>
+Subject: Re: [PATCH 1/3] RFC: Solved unnecessary schedule latency in the TTY
+ layer (1/3)
+Date: Thu, 10 May 2012 16:26:21 +0100
+Message-ID: <20120510162621.4b5d7907@bob.linux.org.uk>
+References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Remy Bohmer <linux@bohmer.net>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Greg KH <gregkh@linuxfoundation.org>,
+	<linux-serial@vger.kernel.org>, RT <linux-rt-users@vger.kernel.org>
+To: Ivo Sieben <meltedpianoman@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f49.google.com ([209.85.216.49]:63742 "EHLO
-	mail-qa0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754122Ab2EJNx0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 10 May 2012 09:53:26 -0400
-Received: by qabj40 with SMTP id j40so637420qab.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 May 2012 06:53:25 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <CANqCtQJsr6xV9aU5LbXuOOtYTvcHT6113cy0+6smKBtZAdcRGA@mail.gmail.com>
+Received: from mga09.intel.com ([134.134.136.24]:28634 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757948Ab2EJPLA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 10 May 2012 11:11:00 -0400
+In-Reply-To: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 10, 2012 at 11:46:26AM +0200, Remy Bohmer wrote:
-> 2012/5/10 Grant Edwards <grant.b.edwards@gmail.com>:
->
->> Unfortunately, the requirements are a bit fuzzy -- I've got an ISR
->> deadline of about 20us that I'm trying to meet [I wouldn't mind a
->> little chat with the person who designed _that_ requirement into the
->> hardware]. =A0What I don't know is how hard that deadline is. =A0Wit=
-h the
->> RT patch (and without IRQF_NODELAY), I miss the deadline most of the
->> time (I'd guess about 80% of the time).
->=20
-> Given my experience with these cores and the RT patch: This 20usec is
-> too close.
+> Note: In a PREEMPT_RT system "normal" spin locks behave like mutexes
+> and no interrupts (and therefor no scheduling) is disabled.
+> 
+> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
 
-That's pretty much what I've decided.
+(Coming back round to these patches now the urgent stuff is buried for
+a bit)
 
-> There are some places in the code that have interrupt disable section
-> of about 30usec (also process ctx-switch cache flush have high
-> impact)
->
-> So, I expect you will not get this very robust.
->
-> If the 20usec requirement is hard, you can also look at using an FIQ.
+>  void tty_schedule_flip(struct tty_struct *tty)
+>  {
+> -	unsigned long flags;
+> -	spin_lock_irqsave(&tty->buf.lock, flags);
+> -	if (tty->buf.tail != NULL)
+> -		tty->buf.tail->commit = tty->buf.tail->used;
+> -	spin_unlock_irqrestore(&tty->buf.lock, flags);
+> -	schedule_work(&tty->buf.work);
+> +	tty_flip_buffer_push(tty);
+>  }
 
-Does the normal AT91 kernel not use FIQs at all?  If so, I might be
-able to dedicate the FIQ to this function and have it happen without
-the Linux kernel knowing about it (or affecting it).  Any
-communication between it and a normal user-task would have to be
-handled carefully...
+You'd need to ifdef both of these for non RT cases. I think it may be
+right for RT although I'm not 100% sure on the locking.
 
---=20
-Grant
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+At this point I think we'd be better off sorting out our tty locking in
+general before tackling RT optimisations. However as an RT patch it
+looks good and its interesting to see RT simplifying code not making it
+more complex.
