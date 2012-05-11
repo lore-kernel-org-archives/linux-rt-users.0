@@ -1,80 +1,51 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests v0.84
-Date: Fri, 11 May 2012 16:47:53 +0200
-Message-ID: <1336747673-14602-1-git-send-email-jkacur@redhat.com>
-Cc: Clark Williams <williams@redhat.com>,
-	Darren Hart <dvhart@linux.intel.com>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Markus Kohlhase <mail@markus-kohlhase.de>,
-	Nicholas Mc Guire <der.herr@hofr.at>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: rt-users <linux-rt-users@vger.kernel.org>
+From: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
+Date: Fri, 11 May 2012 20:46:12 +0200
+Message-ID: <201205112046.12453.tim01@vlsi.informatik.tu-darmstadt.de>
+References: <joemui$6v0$1@dough.gmane.org> <CANqCtQ+HbGMUqJuZN-weX1CbK9ecTgfdenV4WgZiDQQ_ZAYSUA@mail.gmail.com> <joj5q6$e3h$1@dough.gmane.org>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=iso-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Grant Edwards <grant.b.edwards@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ey0-f174.google.com ([209.85.215.174]:58913 "EHLO
-	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753213Ab2EKOsI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 May 2012 10:48:08 -0400
-Received: by eaaq12 with SMTP id q12so997428eaa.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 May 2012 07:48:06 -0700 (PDT)
+Received: from lnx503.hrz.tu-darmstadt.de ([130.83.156.232]:35541 "EHLO
+	lnx503.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756373Ab2EKS4A convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 May 2012 14:56:00 -0400
+In-Reply-To: <joj5q6$e3h$1@dough.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-It's been a while since we've released a new rt-tests.
-Clark silently pushed v0.84 to git, so this note is to let you know.
-This release is git only - at least for now.
+Hi
+> > No, the kernel does not use the FIQ at all. It is free for you to u=
+se
+> > as you want. Communication with the FIQ handler can be done using a
+> > queue based on atomic instructions.
+Well i think there is some FIQ infrastructure in the kernel and even an=
+ FIQ=20
+switch. But the only thing it does is reserving the infrastructure. Not=
+ more=20
+not less. I have been toying around with the FIQ interrupt. On our HW (=
+i.mx35)=20
+we still have about 30=B5s interrupt jitter i would like to reduce. But=
+ the=20
+Memory for the FIQ was to small and i didn't manage to jump to some c h=
+andler=20
+code within the driver. Does anybody know has some examples how to do t=
+hat.
 
-Repo: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-Branch: master
-Tag: v0.84
+=46urther since the FIQ is an own mode i thought the only thing one cou=
+ld use is=20
+memory accesses? But when working within the TCM or FIQ memory the jitt=
+er was=20
+very good (it was about 5ns if i can trust my memory).
 
-I also collect patches in my own repo to push to our fearless leader. :)
-
-This is at
- git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
-
-Where I've started branch rt-tests-0.84-devel
-
-Thanks, enjoy!
-
-Clark Williams (5):
-  [cyclictest] added priority spreading option --priospread
-  Revert "cyclictest problem/bug as non-root"
-  report number of samples written in hwlatdetect
-  change cyclictest measurement thread to check returns and exit on
-    error
-  version bump to 0.84
-
-Darren Hart (1):
-  Makefile: Support user supplied CFLAGS and LDFLAGS
-
-Frank Rowand (6):
-  rt-tests: cyclictest segfault with '-a'
-  rt-tests: cyclictest avoid unneeded warning
-  rt-tests: cyclictest warn of interaction between '-a', '--smp', and
-    '--numa'
-  rt-tests: Makefile get machinetype from compiler instead of uname
-  rt-tests: incorrect first latency value for --verbose option
-  rt-tests: printf format compile warning
-
-John Kacur (7):
-  gitignore: differentiate between program names and directories
-  pi_stress: Check the status of sched_getaffinity
-  Makefile: Introduce a static library
-  Move info, warn, and fatal functions to error.[ch]
-  install: Fix failed to create symbolic link hwlatdetect file exists
-  install: Fix failed to create symbolic link hwlatdetect file exists
-  rt-tests / cyclictest: Make cyclictest fail if it cannot run with
-    requested priority.
-
-Markus Kohlhase (1):
-  added description from osadl.org
-
-Nicholas Mc Guire (1):
-  cyclictest problem/bug as non-root
-
-Steven Rostedt (1):
-  rt-tests: Update rt-migrate-test to use ftrace infrastructure
-
+Best regards
+Tim
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
