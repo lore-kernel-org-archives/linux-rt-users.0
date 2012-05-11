@@ -1,217 +1,52 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH 1/2] V2: cyclictest: report large measured clock latency
-Date: Thu, 10 May 2012 18:02:49 -0700
-Message-ID: <4FAC6539.5070101@am.sony.com>
-References: <4FAC647C.4090609@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Remy Bohmer <linux@bohmer.net>
+Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
+Date: Fri, 11 May 2012 15:42:45 +0200
+Message-ID: <CANqCtQ+HbGMUqJuZN-weX1CbK9ecTgfdenV4WgZiDQQ_ZAYSUA@mail.gmail.com>
+References: <joemui$6v0$1@dough.gmane.org>
+	<joepd0$e4f$1@dough.gmane.org>
+	<4FAAEBF3.10907@netacquire.com>
+	<joetve$hm5$1@dough.gmane.org>
+	<CANqCtQJsr6xV9aU5LbXuOOtYTvcHT6113cy0+6smKBtZAdcRGA@mail.gmail.com>
+	<20120510135320.GA9568@grante>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "jkacur@redhat.com" <jkacur@redhat.com>,
-	"dvhart@linux.intel.com" <dvhart@linux.intel.com>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"williams@redhat.com" <williams@redhat.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Grant Edwards <grant.b.edwards@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe004.messaging.microsoft.com ([216.32.181.184]:51461
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756799Ab2EKBDU (ORCPT
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:61548 "EHLO
+	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751842Ab2EKNmr convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 10 May 2012 21:03:20 -0400
-In-Reply-To: <4FAC647C.4090609@am.sony.com>
+	Fri, 11 May 2012 09:42:47 -0400
+Received: by bkcji2 with SMTP id ji2so2248495bkc.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 May 2012 06:42:45 -0700 (PDT)
+In-Reply-To: <20120510135320.GA9568@grante>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
-V2: suggested by "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-    Change iterations over calling clock_gettime() from a loop count
-    to a time duration.
+2012/5/10 Grant Edwards <grant.b.edwards@gmail.com>:
+>> If the 20usec requirement is hard, you can also look at using an FIQ=
+=2E
+>
+> Does the normal AT91 kernel not use FIQs at all? =A0If so, I might be
+> able to dedicate the FIQ to this function and have it happen without
+> the Linux kernel knowing about it (or affecting it). =A0Any
+> communication between it and a normal user-task would have to be
+> handled carefully...
 
+No, the kernel does not use the FIQ at all.
+It is free for you to use as you want.
+Communication with the FIQ handler can be done using a queue based on
+atomic instructions.
 
-cyclictest: ARM panda clock resolution will be ~30 usec unless
-CONFIG_OMAP_32K_TIMER=n, resulting in a poor latency report.
+Kind regards,
 
-This patch does _not_ fix the problem, it merely provides the
-instrumentation to make it visible.  The value of measured
-resolution is useful information for any system.
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
----
- src/cyclictest/cyclictest.c |  110 	109 +	1 -	0 !
- 1 file changed, 109 insertions(+), 1 deletion(-)
-
-Index: b/src/cyclictest/cyclictest.c
-===================================================================
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -174,6 +174,8 @@ static int use_nsecs = 0;
- static int refresh_on_max;
- static int force_sched_other;
- static int priospread = 0;
-+static int check_clock_resolution;
-+static int ct_debug;
- 
- static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
- static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
-@@ -944,6 +946,9 @@ static void display_help(int error)
- 	       "-q       --quiet           print only a summary on exit\n"
- 	       "-Q       --priospread       spread priority levels starting at specified value\n"
- 	       "-r       --relative        use relative timer instead of absolute\n"
-+	       "-R       --resolution      check clock resolution, calling clock_gettime() many\n"
-+	       "                           times.  list of clock_gettime() values will be\n"
-+	       "                           reported with -X\n"
- 	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
- 	       "-S       --smp             Standard SMP testing: options -a -t -n and\n"
- 	       "                           same priority of all threads\n"
-@@ -960,6 +965,7 @@ static void display_help(int error)
- 	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
- 	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
- 	       "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
-+	       "-X       --dbg_cyclictest  print info useful for debugging cyclictest\n"
- 	       "-y POLI  --policy=POLI     policy of realtime thread, POLI may be fifo(default) or rr\n"
- 	       "                           format: --policy=fifo(default) or --policy=rr\n",
- 	       tracers
-@@ -1076,6 +1082,7 @@ static void process_options (int argc, c
- 			{"quiet",            no_argument,       NULL, 'q'},
- 			{"priospread",       no_argument,       NULL, 'Q'},
- 			{"relative",         no_argument,       NULL, 'r'},
-+			{"resolution",       no_argument,       NULL, 'R'},
- 			{"system",           no_argument,       NULL, 's'},
- 			{"smp",              no_argument,       NULL, 'S'},
- 			{"threads",          optional_argument, NULL, 't'},
-@@ -1085,11 +1092,12 @@ static void process_options (int argc, c
- 			{"verbose",          no_argument,       NULL, 'v'},
- 			{"wakeup",           no_argument,       NULL, 'w'},
- 			{"wakeuprt",         no_argument,       NULL, 'W'},
-+			{"dbg_cyclictest",   no_argument,       NULL, 'X'},
- 			{"policy",           required_argument, NULL, 'y'},
- 			{"help",             no_argument,       NULL, '?'},
- 			{NULL, 0, NULL, 0}
- 		};
--		int c = getopt_long(argc, argv, "a::b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrsSt::uUvD:wWT:y:",
-+		int c = getopt_long(argc, argv, "a::b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrRsSt::uUvD:wWXT:y:",
- 				    long_options, &option_index);
- 		if (c == -1)
- 			break;
-@@ -1158,6 +1166,7 @@ static void process_options (int argc, c
- 		case 'q': quiet = 1; break;
- 		case 'Q': priospread = 1; break;
- 		case 'r': timermode = TIMER_RELTIME; break;
-+		case 'R': check_clock_resolution = 1; break;
- 		case 's': use_system = MODE_SYS_OFFSET; break;
- 		case 'S':  /* SMP testing */
- 			if (numa)
-@@ -1202,6 +1211,7 @@ static void process_options (int argc, c
- 		case 'v': verbose = 1; break;
- 		case 'w': tracetype = WAKEUP; break;
- 		case 'W': tracetype = WAKEUPRT; break;
-+		case 'X': ct_debug = 1; break;
- 		case 'y': handlepolicy(optarg); break;
- 
- 		case '?': display_help(0); break;
-@@ -1483,6 +1493,104 @@ int main(int argc, char **argv)
- 	if (check_timer())
- 		warn("High resolution timers not available\n");
- 
-+	if (check_clock_resolution) {
-+		int clock;
-+		uint64_t diff;
-+		int k;
-+		uint64_t min_non_zero_diff = UINT64_MAX;
-+		struct timespec now;
-+		struct timespec prev;
-+		uint64_t reported_resolution = UINT64_MAX;
-+		struct timespec res;
-+		struct timespec *time;
-+		int times;
-+		int zero_diff = 0;
-+
-+		clock = clocksources[clocksel];
-+
-+		if (clock_getres(clock, &res)) {
-+			warn("clock_getres failed");
-+		} else {
-+			reported_resolution = (NSEC_PER_SEC * res.tv_sec) + res.tv_nsec;
-+		}
-+
-+
-+		/*
-+		 * Calculate how many calls to clock_gettime are needed.
-+		 * Then call it that many times.
-+		 * Goal is to collect timestamps for ~ 0.001 sec.
-+		 * This will reliably capture resolution <= 500 usec.
-+		 */
-+		times = 1000;
-+		clock_gettime(clock, &prev);
-+		for (k=0; k < times; k++) {
-+			clock_gettime(clock, &now);
-+		}
-+
-+		diff = calcdiff_ns(now, prev);
-+		if (diff == 0) {
-+			/*
-+			 * No clock rollover occurred.
-+			 * Use the default value for times.
-+			 */
-+			times = -1;
-+		} else {
-+			int call_time;
-+			call_time = diff / times;         /* duration 1 call */
-+			times = NSEC_PER_SEC / call_time; /* calls per second */
-+			times /= 1000;                    /* calls per msec */
-+			if (times < 1000)
-+				times = 1000;
-+		}
-+		/* sanity check */
-+		if ((times <= 0) || (times > 100000))
-+			times = 100000;
-+
-+		time = calloc(times, sizeof(*time));
-+
-+		for (k=0; k < times; k++) {
-+			clock_gettime(clock, &time[k]);
-+		}
-+
-+		if (ct_debug) {
-+			fprintf(stderr, "\n\nFor %d consecutive calls to clock_gettime():\n\n", times);
-+			fprintf(stderr, "time, delta time (nsec)\n\n");
-+		}
-+
-+		prev = time[0];
-+		for (k=1; k < times; k++) {
-+
-+			diff = calcdiff_ns(time[k], prev);
-+			prev = time[k];
-+
-+			if (diff == 0) {
-+				zero_diff = 1;
-+			} else if (diff < min_non_zero_diff) {
-+				min_non_zero_diff = diff;
-+			}
-+
-+			if (ct_debug)
-+				fprintf(stderr, "%ld.%06ld  %5llu\n", time[k].tv_sec, time[k].tv_nsec, diff);
-+		}
-+
-+		free(time);
-+
-+
-+		if (verbose ||
-+		    (min_non_zero_diff && (min_non_zero_diff > reported_resolution))) {
-+		    	/*
-+			 * Measured clock resolution includes the time to call
-+			 * clock_gettime(), so it will be slightly larger than
-+			 * actual resolution.
-+			 */
-+			fprintf(stderr, "reported clock resolution: %lld nsec\n",
-+				reported_resolution);
-+			fprintf(stderr, "measured clock resolution approximately: %llu nsec\n",
-+				min_non_zero_diff);
-+		}
-+
-+	}
-+
- 	mode = use_nanosleep + use_system;
- 
- 	sigemptyset(&sigset);
-
+Remy
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
