@@ -1,52 +1,80 @@
-From: Grant Edwards <grant.b.edwards@gmail.com>
-Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
-Date: Fri, 11 May 2012 13:56:22 +0000 (UTC)
-Message-ID: <joj5q6$e3h$1@dough.gmane.org>
-References: <joemui$6v0$1@dough.gmane.org> <joepd0$e4f$1@dough.gmane.org>
- <4FAAEBF3.10907@netacquire.com> <joetve$hm5$1@dough.gmane.org>
- <CANqCtQJsr6xV9aU5LbXuOOtYTvcHT6113cy0+6smKBtZAdcRGA@mail.gmail.com>
- <20120510135320.GA9568@grante>
- <CANqCtQ+HbGMUqJuZN-weX1CbK9ecTgfdenV4WgZiDQQ_ZAYSUA@mail.gmail.com>
-To: linux-rt-users@vger.kernel.org
+From: John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rt-tests v0.84
+Date: Fri, 11 May 2012 16:47:53 +0200
+Message-ID: <1336747673-14602-1-git-send-email-jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+	Darren Hart <dvhart@linux.intel.com>,
+	Frank Rowand <frank.rowand@am.sony.com>,
+	Markus Kohlhase <mail@markus-kohlhase.de>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:41978 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753475Ab2EKN4i (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 May 2012 09:56:38 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1SSqKh-0007Y7-D9
-	for linux-rt-users@vger.kernel.org; Fri, 11 May 2012 15:56:35 +0200
-Received: from dsl.comtrol.com ([64.122.56.22])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 May 2012 15:56:35 +0200
-Received: from grant.b.edwards by dsl.comtrol.com with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 May 2012 15:56:35 +0200
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:58913 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753213Ab2EKOsI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 May 2012 10:48:08 -0400
+Received: by eaaq12 with SMTP id q12so997428eaa.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 May 2012 07:48:06 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2012-05-11, Remy Bohmer <linux@bohmer.net> wrote:
-> Hi,
->
-> 2012/5/10 Grant Edwards <grant.b.edwards@gmail.com>:
->>> If the 20usec requirement is hard, you can also look at using an FIQ.
->>
->> Does the normal AT91 kernel not use FIQs at all? ?If so, I might be
->> able to dedicate the FIQ to this function and have it happen without
->> the Linux kernel knowing about it (or affecting it). ?Any
->> communication between it and a normal user-task would have to be
->> handled carefully...
->
-> No, the kernel does not use the FIQ at all. It is free for you to use
-> as you want. Communication with the FIQ handler can be done using a
-> queue based on atomic instructions.
+It's been a while since we've released a new rt-tests.
+Clark silently pushed v0.84 to git, so this note is to let you know.
+This release is git only - at least for now.
 
-Thanks!  I was about to start looking into that...
+Repo: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+Branch: master
+Tag: v0.84
 
--- 
-Grant Edwards               grant.b.edwards        Yow! I just forgot my whole
-                                  at               philosophy of life!!!
-                              gmail.com            
+I also collect patches in my own repo to push to our fearless leader. :)
+
+This is at
+ git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
+
+Where I've started branch rt-tests-0.84-devel
+
+Thanks, enjoy!
+
+Clark Williams (5):
+  [cyclictest] added priority spreading option --priospread
+  Revert "cyclictest problem/bug as non-root"
+  report number of samples written in hwlatdetect
+  change cyclictest measurement thread to check returns and exit on
+    error
+  version bump to 0.84
+
+Darren Hart (1):
+  Makefile: Support user supplied CFLAGS and LDFLAGS
+
+Frank Rowand (6):
+  rt-tests: cyclictest segfault with '-a'
+  rt-tests: cyclictest avoid unneeded warning
+  rt-tests: cyclictest warn of interaction between '-a', '--smp', and
+    '--numa'
+  rt-tests: Makefile get machinetype from compiler instead of uname
+  rt-tests: incorrect first latency value for --verbose option
+  rt-tests: printf format compile warning
+
+John Kacur (7):
+  gitignore: differentiate between program names and directories
+  pi_stress: Check the status of sched_getaffinity
+  Makefile: Introduce a static library
+  Move info, warn, and fatal functions to error.[ch]
+  install: Fix failed to create symbolic link hwlatdetect file exists
+  install: Fix failed to create symbolic link hwlatdetect file exists
+  rt-tests / cyclictest: Make cyclictest fail if it cannot run with
+    requested priority.
+
+Markus Kohlhase (1):
+  added description from osadl.org
+
+Nicholas Mc Guire (1):
+  cyclictest problem/bug as non-root
+
+Steven Rostedt (1):
+  rt-tests: Update rt-migrate-test to use ftrace infrastructure
 
