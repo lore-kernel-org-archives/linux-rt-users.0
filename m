@@ -1,75 +1,53 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: [PATCH 1/3] RFC: Solved unnecessary schedule latency in the TTY
- layer (1/3)
-Date: Mon, 14 May 2012 14:25:58 +0200
-Message-ID: <CAMSQXEG5okiqKasmh3_niGh_WCKNvekiwK9oSDnQkokcMPqArg@mail.gmail.com>
-References: <1336048663-21882-1-git-send-email-meltedpianoman@gmail.com>
-	<20120510162621.4b5d7907@bob.linux.org.uk>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.0.31-rt51
+Date: Mon, 14 May 2012 12:33:34 -0400
+Message-ID: <1337013214.14207.278.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Greg KH <gregkh@linuxfoundation.org>, linux-serial@vger.kernel.org,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Alan Cox <alan@linux.intel.com>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <20120510162621.4b5d7907@bob.linux.org.uk>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:20980 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750769Ab2ENQdh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 May 2012 12:33:37 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
 
-2012/5/10 Alan Cox <alan@linux.intel.com>:
->
-> You'd need to ifdef both of these for non RT cases. I think it may be
-> right for RT although I'm not 100% sure on the locking.
+Dear RT Folks,
 
-Alan, I don't completely understand what you mean with "ifdef both".
+I'm pleased to announce the 3.0.31-rt51 stable release.
 
-Regarding the following two functions defined in drivers/tty/tty_buffer.c
-- tty_schedule_flip
-- tty_flip_buffer_push
 
-They both implement almost the same functionality:
+This release is just an update to the new stable 3.0.31 version
+and no RT specific changes have been made.
 
-void tty_schedule_flip(struct tty_struct *tty)
-{
-	unsigned long flags;
-	spin_lock_irqsave(&tty->buf.lock, flags);
-	if (tty->buf.tail != NULL)
-		tty->buf.tail->commit = tty->buf.tail->used;
-	spin_unlock_irqrestore(&tty->buf.lock, flags);
-	schedule_work(&tty->buf.work);
-}
 
-void tty_flip_buffer_push(struct tty_struct *tty)
-{
-	unsigned long flags;
-	spin_lock_irqsave(&tty->buf.lock, flags);
-	if (tty->buf.tail != NULL)
-		tty->buf.tail->commit = tty->buf.tail->used;
-	spin_unlock_irqrestore(&tty->buf.lock, flags);
+You can get this release via the git tree at:
 
-#ifndef CONFIG_PREEMPT_RT_FULL
-	if (tty->low_latency)
-		flush_to_ldisc(&tty->buf.work);
-	else
-		schedule_work(&tty->buf.work);
-#else
-	flush_to_ldisc(&tty->buf.work);
-#endif
-}
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-Only difference is that tty_schedule_flip() always uses the work
-queue, while the tty_flip_buffer_push only uses the work queue in case
-of a non prempt_rt system and low_latency flag unset.
+  Head SHA1: f4162227ef21455c1b1bd74565e49e4c596cecb0
 
-I see that most serial drivers use the tty_flip_buffer_push()
-function. But still a number of drivers use the tty_schedule_flip()
-function. I even found one driver that uses both
-(drivers/staging/serqt_usb2/serqt_usb2.c). Is is there a reason for
-these two functions implementing slightly different behavior?
 
-If not, I think it would be better to remove the tty_schedule_flip()
-function completely in a separate patch...
+Or to build 3.0.31-rt51 directly, the following patches should be applied:
 
-Regards,
-Ivo Sieben
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.31.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.31-rt51.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+
