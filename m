@@ -1,256 +1,57 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 1/2] V2: cyclictest: report large measured clock
- latency
-Date: Wed, 16 May 2012 00:08:00 +0200 (CEST)
-Message-ID: <alpine.LFD.2.00.1205160003430.8989@localhost6.localdomain6>
-References: <4FAC647C.4090609@am.sony.com> <4FAC6539.5070101@am.sony.com>
+From: Josh Cartwright <joshc@linux.com>
+Subject: Re: [PATCH -rt] mm: protect activate_mm() by
+ preempt_[disable|enable]_rt()
+Date: Tue, 15 May 2012 17:36:19 -0400
+Message-ID: <20120515213619.GA8880@joshcartwright.net>
+References: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="-1463806030-872893125-1337119682=:8989"
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"williams@redhat.com" <williams@redhat.com>,
-	"jkacur@redhat.com" <jkacur@redhat.com>,
-	"dvhart@linux.intel.com" <dvhart@linux.intel.com>,
-	"lclaudio@uudg.org" <lclaudio@uudg.org>
-To: Frank Rowand <frank.rowand@am.sony.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Yong Zhang <yong.zhang0@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f46.google.com ([209.85.214.46]:58870 "EHLO
-	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932881Ab2EOWIF (ORCPT
+Received: from joshcartwright.net ([69.164.192.171]:33669 "EHLO
+	li107-171.members.linode.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S964948Ab2EOWM3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 18:08:05 -0400
-Received: by bkcji2 with SMTP id ji2so59328bkc.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 May 2012 15:08:04 -0700 (PDT)
-In-Reply-To: <4FAC6539.5070101@am.sony.com>
+	Tue, 15 May 2012 18:12:29 -0400
+Content-Disposition: inline
+In-Reply-To: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Tue, May 15, 2012 at 01:53:56PM +0800, Yong Zhang wrote:
+> From: Yong Zhang <yong.zhang@windriver.com>
+>
+> Otherwise there will be warning on ARM like below:
+>
+> WARNING: at build/linux/kernel/smp.c:459 smp_call_function_many+0x98/0x264()
+> Modules linked in:
+> [<c0013bb4>] (unwind_backtrace+0x0/0xe4) from [<c001be94>] (warn_slowpath_common+0x4c/0x64)
+> [<c001be94>] (warn_slowpath_common+0x4c/0x64) from [<c001bec4>] (warn_slowpath_null+0x18/0x1c)
+> [<c001bec4>] (warn_slowpath_null+0x18/0x1c) from [<c0053ff8>](smp_call_function_many+0x98/0x264)
+> [<c0053ff8>] (smp_call_function_many+0x98/0x264) from [<c0054364>] (smp_call_function+0x44/0x6c)
+> [<c0054364>] (smp_call_function+0x44/0x6c) from [<c0017d50>] (__new_context+0xbc/0x124)
+> [<c0017d50>] (__new_context+0xbc/0x124) from [<c009e49c>] (flush_old_exec+0x460/0x5e4)
+> [<c009e49c>] (flush_old_exec+0x460/0x5e4) from [<c00d61ac>] (load_elf_binary+0x2e0/0x11ac)
+> [<c00d61ac>] (load_elf_binary+0x2e0/0x11ac) from [<c009d060>] (search_binary_handler+0x94/0x2a4)
+> [<c009d060>] (search_binary_handler+0x94/0x2a4) from [<c009e8fc>] (do_execve+0x254/0x364)
+> [<c009e8fc>] (do_execve+0x254/0x364) from [<c0010e84>] (sys_execve+0x34/0x54)
+> [<c0010e84>] (sys_execve+0x34/0x54) from [<c000da00>] (ret_fast_syscall+0x0/0x30)
+> ---[ end trace 0000000000000002 ]---
+>
+> The reason is that ARM need irq enabled when doing activate_mm().
+> According to mm-protect-activate-switch-mm.patch, actually
+> preempt_[disable|enable]_rt() is sufficient.
 
----1463806030-872893125-1337119682=:8989
-Content-Type: TEXT/PLAIN; charset=ISO-8859-7
-Content-Transfer-Encoding: 8BIT
+Frank Rowand posted a very similar fix in December of last year that
+we've been carrying to fix the same issue:
 
+   http://permalink.gmane.org/gmane.linux.kernel/1229806
 
+It looks like there was some deliberation as to whether or not it should
+be pulled into stable-rt.  Perhaps its time to revisit this discussion?
 
-On Thu, 10 May 2012, Frank Rowand wrote:
-
-> 
-> V2: suggested by "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
->     Change iterations over calling clock_gettime() from a loop count
->     to a time duration.
-> 
-> 
-> cyclictest: ARM panda clock resolution will be ~30 usec unless
-> CONFIG_OMAP_32K_TIMER=n, resulting in a poor latency report.
-> 
-> This patch does _not_ fix the problem, it merely provides the
-> instrumentation to make it visible.  The value of measured
-> resolution is useful information for any system.
-> 
-> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-> ---
->  src/cyclictest/cyclictest.c |  110 	109 +	1 -	0 !
->  1 file changed, 109 insertions(+), 1 deletion(-)
-> 
-> Index: b/src/cyclictest/cyclictest.c
-> ===================================================================
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -174,6 +174,8 @@ static int use_nsecs = 0;
->  static int refresh_on_max;
->  static int force_sched_other;
->  static int priospread = 0;
-> +static int check_clock_resolution;
-> +static int ct_debug;
->  
->  static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
->  static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
-> @@ -944,6 +946,9 @@ static void display_help(int error)
->  	       "-q       --quiet           print only a summary on exit\n"
->  	       "-Q       --priospread       spread priority levels starting at specified value\n"
->  	       "-r       --relative        use relative timer instead of absolute\n"
-> +	       "-R       --resolution      check clock resolution, calling clock_gettime() many\n"
-> +	       "                           times.  list of clock_gettime() values will be\n"
-> +	       "                           reported with -X\n"
->  	       "-s       --system          use sys_nanosleep and sys_setitimer\n"
->  	       "-S       --smp             Standard SMP testing: options -a -t -n and\n"
->  	       "                           same priority of all threads\n"
-> @@ -960,6 +965,7 @@ static void display_help(int error)
->  	       "                           format: n:c:v n=tasknum c=count v=value in us\n"
->  	       "-w       --wakeup          task wakeup tracing (used with -b)\n"
->  	       "-W       --wakeuprt        rt task wakeup tracing (used with -b)\n"
-> +	       "-X       --dbg_cyclictest  print info useful for debugging cyclictest\n"
->  	       "-y POLI  --policy=POLI     policy of realtime thread, POLI may be fifo(default) or rr\n"
->  	       "                           format: --policy=fifo(default) or --policy=rr\n",
->  	       tracers
-> @@ -1076,6 +1082,7 @@ static void process_options (int argc, c
->  			{"quiet",            no_argument,       NULL, 'q'},
->  			{"priospread",       no_argument,       NULL, 'Q'},
->  			{"relative",         no_argument,       NULL, 'r'},
-> +			{"resolution",       no_argument,       NULL, 'R'},
->  			{"system",           no_argument,       NULL, 's'},
->  			{"smp",              no_argument,       NULL, 'S'},
->  			{"threads",          optional_argument, NULL, 't'},
-> @@ -1085,11 +1092,12 @@ static void process_options (int argc, c
->  			{"verbose",          no_argument,       NULL, 'v'},
->  			{"wakeup",           no_argument,       NULL, 'w'},
->  			{"wakeuprt",         no_argument,       NULL, 'W'},
-> +			{"dbg_cyclictest",   no_argument,       NULL, 'X'},
->  			{"policy",           required_argument, NULL, 'y'},
->  			{"help",             no_argument,       NULL, '?'},
->  			{NULL, 0, NULL, 0}
->  		};
-> -		int c = getopt_long(argc, argv, "a::b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrsSt::uUvD:wWT:y:",
-> +		int c = getopt_long(argc, argv, "a::b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrRsSt::uUvD:wWXT:y:",
->  				    long_options, &option_index);
->  		if (c == -1)
->  			break;
-> @@ -1158,6 +1166,7 @@ static void process_options (int argc, c
->  		case 'q': quiet = 1; break;
->  		case 'Q': priospread = 1; break;
->  		case 'r': timermode = TIMER_RELTIME; break;
-> +		case 'R': check_clock_resolution = 1; break;
->  		case 's': use_system = MODE_SYS_OFFSET; break;
->  		case 'S':  /* SMP testing */
->  			if (numa)
-> @@ -1202,6 +1211,7 @@ static void process_options (int argc, c
->  		case 'v': verbose = 1; break;
->  		case 'w': tracetype = WAKEUP; break;
->  		case 'W': tracetype = WAKEUPRT; break;
-> +		case 'X': ct_debug = 1; break;
->  		case 'y': handlepolicy(optarg); break;
->  
->  		case '?': display_help(0); break;
-> @@ -1483,6 +1493,104 @@ int main(int argc, char **argv)
->  	if (check_timer())
->  		warn("High resolution timers not available\n");
->  
-> +	if (check_clock_resolution) {
-> +		int clock;
-> +		uint64_t diff;
-> +		int k;
-> +		uint64_t min_non_zero_diff = UINT64_MAX;
-> +		struct timespec now;
-> +		struct timespec prev;
-> +		uint64_t reported_resolution = UINT64_MAX;
-> +		struct timespec res;
-> +		struct timespec *time;
-> +		int times;
-> +		int zero_diff = 0;
-> +
-> +		clock = clocksources[clocksel];
-> +
-> +		if (clock_getres(clock, &res)) {
-> +			warn("clock_getres failed");
-> +		} else {
-> +			reported_resolution = (NSEC_PER_SEC * res.tv_sec) + res.tv_nsec;
-> +		}
-> +
-> +
-> +		/*
-> +		 * Calculate how many calls to clock_gettime are needed.
-> +		 * Then call it that many times.
-> +		 * Goal is to collect timestamps for ~ 0.001 sec.
-> +		 * This will reliably capture resolution <= 500 usec.
-> +		 */
-> +		times = 1000;
-> +		clock_gettime(clock, &prev);
-> +		for (k=0; k < times; k++) {
-> +			clock_gettime(clock, &now);
-> +		}
-> +
-> +		diff = calcdiff_ns(now, prev);
-> +		if (diff == 0) {
-> +			/*
-> +			 * No clock rollover occurred.
-> +			 * Use the default value for times.
-> +			 */
-> +			times = -1;
-> +		} else {
-> +			int call_time;
-> +			call_time = diff / times;         /* duration 1 call */
-> +			times = NSEC_PER_SEC / call_time; /* calls per second */
-> +			times /= 1000;                    /* calls per msec */
-> +			if (times < 1000)
-> +				times = 1000;
-> +		}
-> +		/* sanity check */
-> +		if ((times <= 0) || (times > 100000))
-> +			times = 100000;
-> +
-> +		time = calloc(times, sizeof(*time));
-> +
-> +		for (k=0; k < times; k++) {
-> +			clock_gettime(clock, &time[k]);
-> +		}
-> +
-> +		if (ct_debug) {
-> +			fprintf(stderr, "\n\nFor %d consecutive calls to clock_gettime():\n\n", times);
-> +			fprintf(stderr, "time, delta time (nsec)\n\n");
-> +		}
-> +
-> +		prev = time[0];
-> +		for (k=1; k < times; k++) {
-> +
-> +			diff = calcdiff_ns(time[k], prev);
-> +			prev = time[k];
-> +
-> +			if (diff == 0) {
-> +				zero_diff = 1;
-> +			} else if (diff < min_non_zero_diff) {
-> +				min_non_zero_diff = diff;
-> +			}
-> +
-> +			if (ct_debug)
-> +				fprintf(stderr, "%ld.%06ld  %5llu\n", time[k].tv_sec, time[k].tv_nsec, diff);
-> +		}
-> +
-> +		free(time);
-> +
-> +
-> +		if (verbose ||
-> +		    (min_non_zero_diff && (min_non_zero_diff > reported_resolution))) {
-> +		    	/*
-> +			 * Measured clock resolution includes the time to call
-> +			 * clock_gettime(), so it will be slightly larger than
-> +			 * actual resolution.
-> +			 */
-> +			fprintf(stderr, "reported clock resolution: %lld nsec\n",
-> +				reported_resolution);
-> +			fprintf(stderr, "measured clock resolution approximately: %llu nsec\n",
-> +				min_non_zero_diff);
-> +		}
-> +
-> +	}
-> +
->  	mode = use_nanosleep + use_system;
->  
->  	sigemptyset(&sigset);
-> 
-> --
-
-I've tested it and it seems okay on the whole.
-
-A few comments. Could you use the src/lib/error.c functions instead of 
-fprintf?
-
-Also there are a few compile warnings, you're probably not compiling on 
-64-bits?
-
-src/cyclictest/cyclictest.c:1573: warning: format ¡%5llu¢ expects type 
-¡long long unsigned int¢, but argument 5 has type ¡uint64_t¢
-src/cyclictest/cyclictest.c:1587: warning: format ¡%lld¢ expects type 
-¡long long int¢, but argument 3 has type ¡uint64_t¢
-src/cyclictest/cyclictest.c:1589: warning: format ¡%llu¢ expects type 
-¡long long unsigned int¢, but argument 3 has type ¡uint64_t¢
-
-Could you please fix those up?
-
-Also, there is some slightly funky formatting for 80-char screens. Not 
-sure how much other's care about it.
-
-Thanks
-
-John
----1463806030-872893125-1337119682=:8989--
+-- 
+                                             joshc
