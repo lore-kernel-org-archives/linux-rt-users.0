@@ -1,56 +1,46 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
- reader rt locks
-Date: Tue, 15 May 2012 19:31:36 +0200
-Message-ID: <1337103096.27694.94.camel@twins>
-References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
-	 <1337094383.27694.62.camel@twins>
-	 <1337096542.14207.315.camel@gandalf.stny.rr.com>
-	 <1337102732.14207.336.camel@gandalf.stny.rr.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
+Date: Tue, 15 May 2012 13:33:12 -0400
+Message-ID: <1337103192.14207.340.camel@gandalf.stny.rr.com>
+References: <joemui$6v0$1@dough.gmane.org> <joepd0$e4f$1@dough.gmane.org>
+	 <4FAAEBF3.10907@netacquire.com> <joetve$hm5$1@dough.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Grant Edwards <grant.b.edwards@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:36422 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758281Ab2EORbn convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:4433 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S966052Ab2EORdO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 13:31:43 -0400
-In-Reply-To: <1337102732.14207.336.camel@gandalf.stny.rr.com>
+	Tue, 15 May 2012 13:33:14 -0400
+In-Reply-To: <joetve$hm5$1@dough.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-05-15 at 13:25 -0400, Steven Rostedt wrote:
-> On Tue, 2012-05-15 at 11:42 -0400, Steven Rostedt wrote:
-> > On Tue, 2012-05-15 at 17:06 +0200, Peter Zijlstra wrote:
-> > > On Tue, 2012-05-15 at 10:03 -0400, Steven Rostedt wrote:
-> > > > 
-> > > > where readers may nest (the same task may grab the same rwsem for
-> > > > read multiple times), but only one task may hold the rwsem at any
-> > > > given
-> > > > time (for read or write).
-> > > 
-> > > Humm, that sounds iffy, rwsem isn't a recursive read lock only rwlock_t
-> > > is.
-> > 
-> > In that case, current -rt is broken. As it has it being a recursive lock
-> > (without my patch).
+On Wed, 2012-05-09 at 23:18 +0000, Grant Edwards wrote:
 
-Nah not broken, just pointless. A recursive lock that's not used
-recursively is fine.
+> I eventually figured out that my increased interrupt latency is due to
+> my ISR being run in a kernel thread instead of as a real ISR.  Adding
+> the IRQF_NODELAY flag gets me the same average latency I had without
+> the RT patch.  [It looks like that flag has a different name in 2.6.39
+> and later?]
 
-> 
-> Why wouldn't it be recursive. If two different tasks are allowed to grab
-> a read lock at the same time, why can't the same task grab a read lock
-> twice? As long as it releases it the same amount of times.
-> 
-> Now you can't grab a read lock if you have the write lock.
+Note, adding a IRQF_NODELAY is very dangerous. To keep the kernel fully
+preemptible (well mostly), spin-locks have been converted into mutexes.
+If the irq handler has one of these spinlocks that have been converted,
+it may schedule in the interrupt handler and crash the kernel. You can
+not schedule in interrupt context, which is why the RT kernel makes the
+interrupt handlers into threads.
 
-rwsem is fifo-fair, if a writer comes in between the second read
-acquisition (even by the same task) would block and you'd be a deadlock
-since the write won't succeed since you're still holding a reader.
+Also note, you may get better response if you up the interrupt thread's
+priority. Up it to 98, and you should see much better responses.
+
+Now I don't think you will make the 20us under load, but you won't do
+that in the non-RT patch either.
+
+-- Steve
+
+
+
