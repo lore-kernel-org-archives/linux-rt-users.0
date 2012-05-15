@@ -1,40 +1,61 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
- reader rt locks
-Date: Tue, 15 May 2012 14:14:43 -0400
-Message-ID: <1337105683.14207.344.camel@gandalf.stny.rr.com>
-References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
-	 <alpine.LFD.2.00.1205151956500.8461@localhost6.localdomain6>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH] compile fix for brcm80211 on v3.2.17
+Date: Tue, 15 May 2012 14:04:13 -0500
+Message-ID: <20120515140413.04c19fad@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/OtPXcnm=hvV_02p2QT8jnsf"; protocol="application/pgp-signature"
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: John Kacur <jkacur@redhat.com>
+	Steven Rostedt <rostedt@goodmis.org>
+To: Ben Hutchings <ben@decadent.org.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:5972 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932887Ab2EOSOp (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 14:14:45 -0400
-In-Reply-To: <alpine.LFD.2.00.1205151956500.8461@localhost6.localdomain6>
+Received: from mx1.redhat.com ([209.132.183.28]:7943 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S966394Ab2EOTE0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 May 2012 15:04:26 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-05-15 at 20:00 +0200, John Kacur wrote:
-> 
+--Sig_/OtPXcnm=hvV_02p2QT8jnsf
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> It looks interesting. I wanted to compile it and test it, but started 
-> running into some problems, I fixed two simple things, but wanted to wait
-> to see if you would follow Peter's suggestion for lockdep before
-> proceeding too far.
+Ben,
 
-I wouldn't bother compiling it with lockdep (yet), as it is completely
-broken. I'll need to implement Peter's suggestion.
+Found this while building v3.2.17-rt28:
 
--- Steve
+diff --git a/drivers/net/wireless/brcm80211/brcmsmac/main.c b/drivers/net/w=
+ireless/brcm80211/brcmsmac/main.c
+index f98becc..833cbef 100644
+--- a/drivers/net/wireless/brcm80211/brcmsmac/main.c
++++ b/drivers/net/wireless/brcm80211/brcmsmac/main.c
+@@ -7879,7 +7879,7 @@ brcms_c_recvctl(struct brcms_c_info *wlc, struct d11r=
+xhdr *rxh,
+        if (wlc->hw->suspended_fifos) {
+                hdr =3D (struct ieee80211_hdr *)p->data;
+                if (ieee80211_is_beacon(hdr->frame_control))
+-                       brcms_b_mute(wlc->hw, false);
++                       brcms_b_mute(wlc->hw, false, 0);
+        }
+=20
+        memcpy(IEEE80211_SKB_RXCB(p), &rx_status, sizeof(rx_status));
 
+Not sure if that's completely correct but I found another call site for
+brcms_b_mute() that also passed 0 flags.=20
 
+Clark
+
+--Sig_/OtPXcnm=hvV_02p2QT8jnsf
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.18 (GNU/Linux)
+
+iEYEARECAAYFAk+yqK0ACgkQHyuj/+TTEp1zwACfed7XsLddK2dD+K495IiUfMkG
+0pgAoK9X2ziojlgJxDMkUhMlQKMH11id
+=A1lT
+-----END PGP SIGNATURE-----
+
+--Sig_/OtPXcnm=hvV_02p2QT8jnsf--
