@@ -1,46 +1,72 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
-Date: Tue, 15 May 2012 13:33:12 -0400
-Message-ID: <1337103192.14207.340.camel@gandalf.stny.rr.com>
-References: <joemui$6v0$1@dough.gmane.org> <joepd0$e4f$1@dough.gmane.org>
-	 <4FAAEBF3.10907@netacquire.com> <joetve$hm5$1@dough.gmane.org>
+Subject: Re: BUG - "scheduling while atomic" on a irq handler (s3c-mci)
+Date: Tue, 15 May 2012 13:38:48 -0400
+Message-ID: <1337103528.14207.342.camel@gandalf.stny.rr.com>
+References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
+	 <20120509174931.GB31844@pengutronix.de>
+	 <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Grant Edwards <grant.b.edwards@gmail.com>
+Cc: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>, linux-rt-users@vger.kernel.org
+To: Christophe Huriaux <c.huriaux@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:4433 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13980 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S966052Ab2EORdO (ORCPT
+	with ESMTP id S966103Ab2EORit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 13:33:14 -0400
-In-Reply-To: <joetve$hm5$1@dough.gmane.org>
+	Tue, 15 May 2012 13:38:49 -0400
+In-Reply-To: <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-05-09 at 23:18 +0000, Grant Edwards wrote:
+On Thu, 2012-05-10 at 15:17 +0200, Christophe Huriaux wrote:
 
-> I eventually figured out that my increased interrupt latency is due to
-> my ISR being run in a kernel thread instead of as a real ISR.  Adding
-> the IRQF_NODELAY flag gets me the same average latency I had without
-> the RT patch.  [It looks like that flag has a different name in 2.6.39
-> and later?]
+> 
+> From: Christophe Huriaux <c.huriaux@gmail.com>
+> Subject: [PATCH] Fix scheduling while atomic bug in pio_tasklet
+> Signed-off-by: Christophe Huriaux <c.huriaux@gmail.com>
+> ---
+>  drivers/mmc/host/s3cmci.c |    8 ++++++++
+>  1 file changed, 8 insertions(+)
+> 
+> diff --git a/drivers/mmc/host/s3cmci.c b/drivers/mmc/host/s3cmci.c
+> index 720f993..9978ad6 100644
+> --- a/drivers/mmc/host/s3cmci.c
+> +++ b/drivers/mmc/host/s3cmci.c
+> @@ -329,7 +329,11 @@ static void s3cmci_enable_irq(struct s3cmci_host
+> *host, bool more)
+>                 if (enable)
+>                         enable_irq(host->irq);
+>                 else
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +                       disable_irq_nosync(host->irq);
+> +#else
+>                         disable_irq(host->irq);
+> +#endif
+>         }
+> 
+>         local_irq_restore(flags);
+> @@ -350,7 +354,11 @@ static void s3cmci_disable_irq(struct s3cmci_host
+> *host, bool transfer)
+> 
+>         if (transfer && host->irq_state) {
+>                 host->irq_state = false;
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +               disable_irq_nosync(host->irq);
+> +#else
+>                 disable_irq(host->irq);
+> +#endif
+>         }
+> 
+>         local_irq_restore(flags);
 
-Note, adding a IRQF_NODELAY is very dangerous. To keep the kernel fully
-preemptible (well mostly), spin-locks have been converted into mutexes.
-If the irq handler has one of these spinlocks that have been converted,
-it may schedule in the interrupt handler and crash the kernel. You can
-not schedule in interrupt context, which is why the RT kernel makes the
-interrupt handlers into threads.
+What happens if you instead convert the local_irq_save/restore() to
+local_irq_save_nort/restore_nort()?
 
-Also note, you may get better response if you up the interrupt thread's
-priority. Up it to 98, and you should see much better responses.
-
-Now I don't think you will make the 20us under load, but you won't do
-that in the non-RT patch either.
+Does that work too?
 
 -- Steve
-
 
 
