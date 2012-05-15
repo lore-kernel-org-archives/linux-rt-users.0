@@ -1,207 +1,51 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
  reader rt locks
-Date: Tue, 15 May 2012 12:26:20 -0400
-Message-ID: <1337099180.14207.321.camel@gandalf.stny.rr.com>
+Date: Tue, 15 May 2012 13:25:32 -0400
+Message-ID: <1337102732.14207.336.camel@gandalf.stny.rr.com>
 References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
+	 <1337094383.27694.62.camel@twins>
+	 <1337096542.14207.315.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="=-vSY4GtLXS2ilbwo+h0lb"
-Cc: RT <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: LKML <linux-kernel@vger.kernel.org>
+	Clark Williams <williams@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:9333 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:7668 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933102Ab2EOQ0X (ORCPT
+	with ESMTP id S965223Ab2EORZd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 12:26:23 -0400
-In-Reply-To: <1337090625.14207.304.camel@gandalf.stny.rr.com>
+	Tue, 15 May 2012 13:25:33 -0400
+In-Reply-To: <1337096542.14207.315.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
---=-vSY4GtLXS2ilbwo+h0lb
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-
-On Tue, 2012-05-15 at 10:03 -0400, Steven Rostedt wrote:
-
-> I'll see if I can get some numbers to see how this fixes the issues with
-> multi threads on big boxes.
+On Tue, 2012-05-15 at 11:42 -0400, Steven Rostedt wrote:
+> On Tue, 2012-05-15 at 17:06 +0200, Peter Zijlstra wrote:
+> > On Tue, 2012-05-15 at 10:03 -0400, Steven Rostedt wrote:
+> > > 
+> > > where readers may nest (the same task may grab the same rwsem for
+> > > read multiple times), but only one task may hold the rwsem at any
+> > > given
+> > > time (for read or write).
+> > 
+> > Humm, that sounds iffy, rwsem isn't a recursive read lock only rwlock_t
+> > is.
+> 
+> In that case, current -rt is broken. As it has it being a recursive lock
+> (without my patch).
 > 
 
-I couldn't get access to the big box, so I wrote my own test. The
-attached program is what I used. It creates 400 threads and allocates a
-memory range (with mmap) of 10 gigs. Then it runs all 400 threads, where
-each is fighting to read this new memory. Causing lots of page faults.
+Why wouldn't it be recursive. If two different tasks are allowed to grab
+a read lock at the same time, why can't the same task grab a read lock
+twice? As long as it releases it the same amount of times.
 
-I tested on a 4 CPU box with 3.4.0-rc7-rt6:
-
-Without the patch:
-
-map=10737418240
-time = 11302617 usecs
-map=10737418240
-time = 11229341 usecs
-map=10737418240
-time = 11171463 usecs
-map=10737418240
-time = 11435549 usecs
-map=10737418240
-time = 11299086 usecs
-
-
-With the patch:
-
-map=10737418240
-time = 6493796 usecs
-map=10737418240
-time = 6726186 usecs
-map=10737418240
-time = 3978194 usecs
-map=10737418240
-time = 6796688 usecs
-
-
-So it went from roughly 11 secs to 6 secs (even had one 4sec run). This
-shows that it sped up the fault access by almost half.
-
+Now you can't grab a read lock if you have the write lock.
 
 -- Steve
 
-
---=-vSY4GtLXS2ilbwo+h0lb
-Content-Disposition: attachment; filename="faultme.c"
-Content-Type: text/x-csrc; name="faultme.c"; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-
-/*
- * Copyright 2012, Steven Rostedt
- */
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <sched.h>
-#include <pthread.h>
-#include <signal.h>
-#include <time.h>
-#include <sys/time.h>
-#include <sys/mman.h>
-
-#define THREADS 400
-//#define MEM (4096ULL*400)
-#define MEM (10ULL*4096*1024*1024/4)
-
-#define nano2sec(nan) (nan / 1000000000ULL)
-#define nano2ms(nan) (nan / 1000000ULL)
-#define nano2usec(nan) (nan / 1000ULL)
-#define usec2nano(sec) (sec * 1000ULL)
-#define ms2nano(ms) (ms * 1000000ULL)
-#define sec2nano(sec) (sec * 1000000000ULL)
-#define sec2usec(sec) (sec * 1000000ULL)
-
-static char *data;
-
-static pthread_barrier_t start_barrier;
-static pthread_barrier_t stop_barrier;
-
-static void perr(char *fmt, ...)
-{
-	char buffer[BUFSIZ];
-	va_list ap;
-
-	va_start(ap, fmt);
-	vsnprintf(buffer, BUFSIZ, fmt, ap);
-	va_end(ap);
-
-	perror(buffer);
-	fflush(stderr);
-	exit(-1);
-}
-
-void *func(void *dat)
-{
-	unsigned long id = (unsigned long)dat;
-	static char x;
-	unsigned long i;
-
-	pthread_barrier_wait(&start_barrier);
-
-	for (i = id * 4096; i < MEM; i += 4096 * THREADS) {
-		x = data[i];
-	}
-
-	pthread_barrier_wait(&stop_barrier);
-
-	return NULL;
-}
-
-static unsigned long long get_time(void)
-{
-	struct timeval tv;
-	unsigned long long time;
-
-	gettimeofday(&tv, NULL);
-
-	time = sec2usec(tv.tv_sec);
-	time += tv.tv_usec;
-
-	return time;
-}
-
-void run_test(int threads)
-{
-	pthread_t t[threads];
-	unsigned long long start, end;
-	unsigned long i;
-
-	for (i=0; i < threads; i++) {
-		if (pthread_create(&t[i], NULL, func, (void *)i)) {
-			perror("pthread_creat");
-			exit(-1);
-		}
-	}
-
-	start = get_time();
-	pthread_barrier_wait(&start_barrier);
-	pthread_barrier_wait(&stop_barrier);
-	end = get_time();
-
-	printf("time = %lld usecs\n", end - start);
-
-	 for (i=0; i < threads; i++) {
-		 pthread_join(t[i], NULL);
-	 }
-}
-
-int main (int argc, char **argv)
-{
-	int threads = THREADS;
-	int ret;
-
-	ret = pthread_barrier_init(&start_barrier, NULL, threads + 1);
-	if (ret < 0)
-		perr("pthread_barrier_init");
-
-	ret = pthread_barrier_init(&stop_barrier, NULL, threads + 1);
-	if (ret < 0)
-		perr("pthread_barrier_init");
-
-	printf("map=%lld\n", MEM);
-	data = mmap(NULL, MEM, PROT_READ, MAP_ANONYMOUS | MAP_PRIVATE, -1, 0);
-	if (data == MAP_FAILED)
-		perr("mmap");
-
-	run_test(threads);
-	
-	exit(0);
-	
-	return 0;
-}
-
---=-vSY4GtLXS2ilbwo+h0lb--
 
