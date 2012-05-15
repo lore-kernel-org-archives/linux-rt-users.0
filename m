@@ -1,57 +1,62 @@
-From: Josh Cartwright <joshc@linux.com>
-Subject: Re: [PATCH -rt] mm: protect activate_mm() by
- preempt_[disable|enable]_rt()
-Date: Tue, 15 May 2012 17:36:19 -0400
-Message-ID: <20120515213619.GA8880@joshcartwright.net>
-References: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
+From: Grant Edwards <grant.b.edwards@gmail.com>
+Subject: Re: Using patch-2.6.33.7.2-rt30 increases latency and CPU usage?
+Date: Tue, 15 May 2012 17:58:41 -0500
+Message-ID: <20120515225841.GA25360@grante>
+References: <joemui$6v0$1@dough.gmane.org>
+ <joepd0$e4f$1@dough.gmane.org>
+ <4FAAEBF3.10907@netacquire.com>
+ <joetve$hm5$1@dough.gmane.org>
+ <1337103192.14207.340.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Yong Zhang <yong.zhang0@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from joshcartwright.net ([69.164.192.171]:33669 "EHLO
-	li107-171.members.linode.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S964948Ab2EOWM3 (ORCPT
+Received: from mail-yx0-f174.google.com ([209.85.213.174]:49428 "EHLO
+	mail-yx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S966436Ab2EOW6s (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 18:12:29 -0400
+	Tue, 15 May 2012 18:58:48 -0400
+Received: by yenm10 with SMTP id m10so132638yen.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 May 2012 15:58:48 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
+In-Reply-To: <1337103192.14207.340.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, May 15, 2012 at 01:53:56PM +0800, Yong Zhang wrote:
-> From: Yong Zhang <yong.zhang@windriver.com>
->
-> Otherwise there will be warning on ARM like below:
->
-> WARNING: at build/linux/kernel/smp.c:459 smp_call_function_many+0x98/0x264()
-> Modules linked in:
-> [<c0013bb4>] (unwind_backtrace+0x0/0xe4) from [<c001be94>] (warn_slowpath_common+0x4c/0x64)
-> [<c001be94>] (warn_slowpath_common+0x4c/0x64) from [<c001bec4>] (warn_slowpath_null+0x18/0x1c)
-> [<c001bec4>] (warn_slowpath_null+0x18/0x1c) from [<c0053ff8>](smp_call_function_many+0x98/0x264)
-> [<c0053ff8>] (smp_call_function_many+0x98/0x264) from [<c0054364>] (smp_call_function+0x44/0x6c)
-> [<c0054364>] (smp_call_function+0x44/0x6c) from [<c0017d50>] (__new_context+0xbc/0x124)
-> [<c0017d50>] (__new_context+0xbc/0x124) from [<c009e49c>] (flush_old_exec+0x460/0x5e4)
-> [<c009e49c>] (flush_old_exec+0x460/0x5e4) from [<c00d61ac>] (load_elf_binary+0x2e0/0x11ac)
-> [<c00d61ac>] (load_elf_binary+0x2e0/0x11ac) from [<c009d060>] (search_binary_handler+0x94/0x2a4)
-> [<c009d060>] (search_binary_handler+0x94/0x2a4) from [<c009e8fc>] (do_execve+0x254/0x364)
-> [<c009e8fc>] (do_execve+0x254/0x364) from [<c0010e84>] (sys_execve+0x34/0x54)
-> [<c0010e84>] (sys_execve+0x34/0x54) from [<c000da00>] (ret_fast_syscall+0x0/0x30)
-> ---[ end trace 0000000000000002 ]---
->
-> The reason is that ARM need irq enabled when doing activate_mm().
-> According to mm-protect-activate-switch-mm.patch, actually
-> preempt_[disable|enable]_rt() is sufficient.
+On Tue, May 15, 2012 at 01:33:12PM -0400, Steven Rostedt wrote:
+> On Wed, 2012-05-09 at 23:18 +0000, Grant Edwards wrote:
+> 
+> > I eventually figured out that my increased interrupt latency is due to
+> > my ISR being run in a kernel thread instead of as a real ISR.  Adding
+> > the IRQF_NODELAY flag gets me the same average latency I had without
+> > the RT patch.  [It looks like that flag has a different name in 2.6.39
+> > and later?]
+> 
+> Note, adding a IRQF_NODELAY is very dangerous. To keep the kernel
+> fully preemptible (well mostly), spin-locks have been converted into
+> mutexes. If the irq handler has one of these spinlocks that have been
+> converted, it may schedule in the interrupt handler and crash the
+> kernel. You can not schedule in interrupt context, which is why the
+> RT kernel makes the interrupt handlers into threads.
 
-Frank Rowand posted a very similar fix in December of last year that
-we've been carrying to fix the same issue:
+Noted.  Since the IRQF_NODELAY approach still misses the deadline 2-3%
+of the time, that approach is probably off the list anyway.  Right now
+we're looking at using either FIQ interrupt or Xenomai.
 
-   http://permalink.gmane.org/gmane.linux.kernel/1229806
+> Also note, you may get better response if you up the interrupt
+> thread's priority. Up it to 98, and you should see much better
+> responses.
 
-It looks like there was some deliberation as to whether or not it should
-be pulled into stable-rt.  Perhaps its time to revisit this discussion?
+Thanks for the tip.  I'll keep that in mind for some other projects
+that would need latency times in the 100-200us range, which should be
+doable.
+
+> Now I don't think you will make the 20us under load, but you won't do
+> that in the non-RT patch either.
+
+Right.  With the non-RT patch, the average response is about the same,
+but the worst-case numbers are 2X-3X.
 
 -- 
-                                             joshc
+Grant
