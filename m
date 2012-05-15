@@ -1,87 +1,357 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH -rt] mm: protect activate_mm() by preempt_[disable|enable]_rt()
-Date: Tue, 15 May 2012 13:53:56 +0800
-Message-ID: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
-Cc: Yong Zhang <yong.zhang0@gmail.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
+ reader rt locks
+Date: Tue, 15 May 2012 10:03:45 -0400
+Message-ID: <1337090625.14207.304.camel@gandalf.stny.rr.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:26535 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753705Ab2EOODr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 May 2012 10:03:47 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Yong Zhang <yong.zhang@windriver.com>
+The RT patch has been having lots of trouble lately with large machines
+and applications running lots of threads. This usually boils down to a
+bottle neck of a single lock: the mm->mmap_sem.
 
-Otherwise there will be warning on ARM like below:
+The mmap_sem is a rwsem, which can sleep, but it also can be taken with
+a read/write lock, where a read lock can be taken by several tasks at
+the same time and the write lock can be only taken by a single task.
 
-WARNING: at build/linux/kernel/smp.c:459 smp_call_function_many+0x98/0x264()
-Modules linked in:
-[<c0013bb4>] (unwind_backtrace+0x0/0xe4) from [<c001be94>] (warn_slowpath_common+0x4c/0x64)
-[<c001be94>] (warn_slowpath_common+0x4c/0x64) from [<c001bec4>] (warn_slowpath_null+0x18/0x1c)
-[<c001bec4>] (warn_slowpath_null+0x18/0x1c) from [<c0053ff8>](smp_call_function_many+0x98/0x264)
-[<c0053ff8>] (smp_call_function_many+0x98/0x264) from [<c0054364>] (smp_call_function+0x44/0x6c)
-[<c0054364>] (smp_call_function+0x44/0x6c) from [<c0017d50>] (__new_context+0xbc/0x124)
-[<c0017d50>] (__new_context+0xbc/0x124) from [<c009e49c>] (flush_old_exec+0x460/0x5e4)
-[<c009e49c>] (flush_old_exec+0x460/0x5e4) from [<c00d61ac>] (load_elf_binary+0x2e0/0x11ac)
-[<c00d61ac>] (load_elf_binary+0x2e0/0x11ac) from [<c009d060>] (search_binary_handler+0x94/0x2a4)
-[<c009d060>] (search_binary_handler+0x94/0x2a4) from [<c009e8fc>] (do_execve+0x254/0x364)
-[<c009e8fc>] (do_execve+0x254/0x364) from [<c0010e84>] (sys_execve+0x34/0x54)
-[<c0010e84>] (sys_execve+0x34/0x54) from [<c000da00>] (ret_fast_syscall+0x0/0x30)
----[ end trace 0000000000000002 ]---
+But due to priority inheritance, having multiple readers makes the code
+much more complex, thus the -rt patch converts all rwsems into a single
+mutex, where readers may nest (the same task may grab the same rwsem for
+read multiple times), but only one task may hold the rwsem at any given
+time (for read or write).
 
-The reason is that ARM need irq enabled when doing activate_mm().
-According to mm-protect-activate-switch-mm.patch, actually
-preempt_[disable|enable]_rt() is sufficient.
+When we have lots of threads, the rwsem may be taken often, either for
+memory allocation or filling in page faults. This becomes a bottle neck
+for threads as only one thread at a time may grab the mmap_sem (which is
+shared by all threads of a process).
 
-Inspired-by: Steven Rostedt <rostedt@goodmis.org>
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
----
- fs/exec.c        |    4 ++--
- mm/mmu_context.c |    4 ++--
- 2 files changed, 4 insertions(+), 4 deletions(-)
+Previous attempts of adding multiple readers became too complex and was
+error prone. This approach takes on a much more simpler technique, one
+that is actually used by per cpu locks.
 
-diff --git a/fs/exec.c b/fs/exec.c
-index db02d76..9384953 100644
---- a/fs/exec.c
-+++ b/fs/exec.c
-@@ -840,12 +840,12 @@ static int exec_mmap(struct mm_struct *mm)
- 		}
- 	}
- 	task_lock(tsk);
--	local_irq_disable_rt();
-+	preempt_disable_rt();
- 	active_mm = tsk->active_mm;
- 	tsk->mm = mm;
- 	tsk->active_mm = mm;
- 	activate_mm(active_mm, mm);
--	local_irq_enable_rt();
-+	preempt_enable_rt();
- 	task_unlock(tsk);
- 	arch_pick_mmap_layout(mm);
- 	if (old_mm) {
-diff --git a/mm/mmu_context.c b/mm/mmu_context.c
-index 8ca7e6b..1385e48 100644
---- a/mm/mmu_context.c
-+++ b/mm/mmu_context.c
-@@ -26,7 +26,7 @@ void use_mm(struct mm_struct *mm)
- 	struct task_struct *tsk = current;
+The idea here is to have an rwsem create a rt_mutex for each CPU.
+Actually, it creates a rwsem for each CPU that can only be acquired by
+one task at a time. This allows for readers on separate CPUs to take
+only the per cpu lock. When a writer needs to take a lock, it must grab
+all CPU locks before continuing.
+
+This approach does nothing special with the rt_mutex or priority
+inheritance code. That stays the same, and works normally (thus less
+error prone). The trick here is that when a reader takes a rwsem for
+read, it must disable migration, that way it can unlock the rwsem
+without needing any special searches (which lock did it take?).
+
+I've tested this a bit, and so far it works well. I haven't found a nice
+way to initialize the locks, so I'm using the silly initialize_rwsem()
+at all places that acquire the lock. But we can work on this later.
+
+Also, I don't use per_cpu sections for the locks, which means we have
+cache line collisions, but a normal (mainline) rwsem has that as well.
+
+These are all room for improvement (and why this is just an RFC patch).
+
+I'll see if I can get some numbers to see how this fixes the issues with
+multi threads on big boxes.
+
+Thoughts?
+
+-- Steve
+
+Not-yet-signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
+index 802c690..cd0c812 100644
+--- a/include/linux/rwsem_rt.h
++++ b/include/linux/rwsem_rt.h
+@@ -18,7 +18,7 @@
  
- 	task_lock(tsk);
--	local_irq_disable_rt();
-+	preempt_disable_rt();
- 	active_mm = tsk->active_mm;
- 	if (active_mm != mm) {
- 		atomic_inc(&mm->mm_count);
-@@ -34,7 +34,7 @@ void use_mm(struct mm_struct *mm)
- 	}
- 	tsk->mm = mm;
- 	switch_mm(active_mm, mm, tsk);
--	local_irq_enable_rt();
-+	preempt_enable_rt();
- 	task_unlock(tsk);
+ #include <linux/rtmutex.h>
  
- 	if (active_mm != mm)
--- 
-1.7.5.4
+-struct rw_semaphore {
++struct __rw_semaphore {
+ 	struct rt_mutex		lock;
+ 	int			read_depth;
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+@@ -26,22 +26,40 @@ struct rw_semaphore {
+ #endif
+ };
+ 
++struct rw_semaphore {
++	int			initialized;
++	struct __rw_semaphore	lock[NR_CPUS];
++#ifdef CONFIG_DEBUG_LOCK_ALLOC
++	const char		*name;
++	struct lock_class_key	__key[NR_CPUS];
++#endif
++};
++
++#ifdef CONFIG_DEBUG_LOCK_ALLOC
++#define __RWSEM_INITIALIZER(_name) \
++	{ .name = _name }
++#else
+ #define __RWSEM_INITIALIZER(name) \
+-	{ .lock = __RT_MUTEX_INITIALIZER(name.lock), \
+-	  RW_DEP_MAP_INIT(name) }
++	{  }
++
++#endif
+ 
+ #define DECLARE_RWSEM(lockname) \
+ 	struct rw_semaphore lockname = __RWSEM_INITIALIZER(lockname)
+ 
+-extern void  __rt_rwsem_init(struct rw_semaphore *rwsem, char *name,
++extern void  __rt_rwsem_init(struct __rw_semaphore *rwsem, char *name,
+ 				     struct lock_class_key *key);
+ 
+-# define rt_init_rwsem(sem)				\
+-do {							\
+-	static struct lock_class_key __key;		\
+-							\
+-	rt_mutex_init(&(sem)->lock);			\
+-	__rt_rwsem_init((sem), #sem, &__key);		\
++# define rt_init_rwsem(sem)						\
++do {									\
++	static struct lock_class_key __key[NR_CPUS];			\
++	int ____i;							\
++									\
++	for (____i = 0; ____i < NR_CPUS; ____i++) {			\
++		rt_mutex_init(&((sem)->lock[____i]).lock);		\
++		__rt_rwsem_init(&((sem)->lock[____i]), #sem, &__key[____i]); \
++	}								\
++	(sem)->initialized = 1;						\
+ } while (0)
+ 
+ extern void  rt_down_write(struct rw_semaphore *rwsem);
+@@ -55,7 +73,11 @@ extern void  rt_up_write(struct rw_semaphore *rwsem);
+ extern void  rt_downgrade_write(struct rw_semaphore *rwsem);
+ 
+ #define init_rwsem(sem)		rt_init_rwsem(sem)
+-#define rwsem_is_locked(s)	rt_mutex_is_locked(&(s)->lock)
++/*
++ * Use raw_smp_processor_id(), as readlocks use migrate disable,
++ * and write locks lock all of them (we don't care which one we test.
++ */
++#define rwsem_is_locked(s)	rt_mutex_is_locked(&(s)->lock[raw_smp_processor_id()].lock)
+ 
+ static inline void down_read(struct rw_semaphore *sem)
+ {
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 092d6b3..f8dab27 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -306,18 +306,52 @@ EXPORT_SYMBOL(__rt_rwlock_init);
+  * rw_semaphores
+  */
+ 
++static void __initialize_rwsem(struct rw_semaphore *rwsem)
++{
++	int i;
++
++	/* TODO add spinlock here? */
++	rwsem->initialized = 1;
++
++	for (i = 0; i < NR_CPUS; i++) {
++		rt_mutex_init(&rwsem->lock[i].lock);
++		__rt_rwsem_init(&rwsem->lock[i],
++#ifdef CONFIG_DEBUG_LOCK_ALLOC
++				rwsem->name, &rwsem->key[i]
++#else
++				"", 0
++#endif
++			);
++	}
++}
++
++#define initialize_rwsem(rwsem)				\
++	do {						\
++		if (unlikely(!rwsem->initialized))	\
++			__initialize_rwsem(rwsem);	\
++	} while (0)
++
+ void  rt_up_write(struct rw_semaphore *rwsem)
+ {
+-	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	rt_mutex_unlock(&rwsem->lock);
++	int i;
++
++	for_each_possible_cpu(i) {
++		rwsem_release(&rwsem->lock[i].dep_map, 1, _RET_IP_);
++		rt_mutex_unlock(&rwsem->lock[i].lock);
++	}
+ }
+ EXPORT_SYMBOL(rt_up_write);
+ 
+ void  rt_up_read(struct rw_semaphore *rwsem)
+ {
+-	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	if (--rwsem->read_depth == 0)
+-		rt_mutex_unlock(&rwsem->lock);
++	int cpu;
++
++	cpu = smp_processor_id();
++	rwsem_release(&rwsem->lock[cpu].dep_map, 1, _RET_IP_);
++	if (--rwsem->lock[cpu].read_depth == 0) {
++		rt_mutex_unlock(&rwsem->lock[cpu].lock);
++		migrate_enable();
++	}
+ }
+ EXPORT_SYMBOL(rt_up_read);
+ 
+@@ -327,67 +361,112 @@ EXPORT_SYMBOL(rt_up_read);
+  */
+ void  rt_downgrade_write(struct rw_semaphore *rwsem)
+ {
+-	BUG_ON(rt_mutex_owner(&rwsem->lock) != current);
+-	rwsem->read_depth = 1;
++	int cpu;
++	int i;
++
++	migrate_disable();
++	cpu = smp_processor_id();
++	for_each_possible_cpu(i) {
++		if (cpu == i) {
++			BUG_ON(rt_mutex_owner(&rwsem->lock[i].lock) != current);
++			rwsem->lock[i].read_depth = 1;
++		} else {
++			rwsem_release(&rwsem->lock[i].dep_map, 1, _RET_IP_);
++			rt_mutex_unlock(&rwsem->lock[i].lock);
++		}
++	}
+ }
+ EXPORT_SYMBOL(rt_downgrade_write);
+ 
+ int  rt_down_write_trylock(struct rw_semaphore *rwsem)
+ {
+-	int ret = rt_mutex_trylock(&rwsem->lock);
++	int ret;
++	int i;
+ 
+-	if (ret)
+-		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+-	return ret;
++	initialize_rwsem(rwsem);
++
++	for_each_possible_cpu(i) {
++		ret = rt_mutex_trylock(&rwsem->lock[i].lock);
++		if (ret)
++			rwsem_acquire(&rwsem->lock[i].dep_map, 0, 1, _RET_IP_);
++		else
++			goto release;
++	}
++	return 1;
++ release:
++	while (--i >= 0) {
++		rwsem_release(&rwsem->lock[i].dep_map, 1, _RET_IP_);
++		rt_mutex_unlock(&rwsem->lock[i].lock);
++	}
++	return 0;
+ }
+ EXPORT_SYMBOL(rt_down_write_trylock);
+ 
+ void  rt_down_write(struct rw_semaphore *rwsem)
+ {
+-	rwsem_acquire(&rwsem->dep_map, 0, 0, _RET_IP_);
+-	rt_mutex_lock(&rwsem->lock);
++	int i;
++	initialize_rwsem(rwsem);
++	for_each_possible_cpu(i) {
++		rwsem_acquire(&rwsem->lock[i].dep_map, 0, 0, _RET_IP_);
++		rt_mutex_lock(&rwsem->lock[i].lock);
++	}
+ }
+ EXPORT_SYMBOL(rt_down_write);
+ 
+ void  rt_down_write_nested(struct rw_semaphore *rwsem, int subclass)
+ {
+-	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
+-	rt_mutex_lock(&rwsem->lock);
++	int i;
++
++	initialize_rwsem(rwsem);
++	for_each_possible_cpu(i) {
++		rwsem_acquire(&rwsem->lock[i].dep_map, subclass, 0, _RET_IP_);
++		rt_mutex_lock(&rwsem->lock[i].lock);
++	}
+ }
+ EXPORT_SYMBOL(rt_down_write_nested);
+ 
+ int  rt_down_read_trylock(struct rw_semaphore *rwsem)
+ {
+-	struct rt_mutex *lock = &rwsem->lock;
++	struct rt_mutex *lock;
+ 	int ret = 1;
++	int cpu;
+ 
++	initialize_rwsem(rwsem);
++	migrate_disable();
++	cpu = smp_processor_id();
++	lock = &rwsem->lock[cpu].lock;
+ 	/*
+ 	 * recursive read locks succeed when current owns the rwsem,
+ 	 * but not when read_depth == 0 which means that the rwsem is
+ 	 * write locked.
+ 	 */
+ 	if (rt_mutex_owner(lock) != current)
+-		ret = rt_mutex_trylock(&rwsem->lock);
+-	else if (!rwsem->read_depth)
++		ret = rt_mutex_trylock(lock);
++	else if (!rwsem->lock[cpu].read_depth)
+ 		ret = 0;
+ 
+ 	if (ret) {
+-		rwsem->read_depth++;
+-		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+-	}
++		rwsem->lock[cpu].read_depth++;
++		rwsem_acquire(&rwsem->lock[cpu].dep_map, 0, 1, _RET_IP_);
++	} else
++		migrate_enable();
+ 	return ret;
+ }
+ EXPORT_SYMBOL(rt_down_read_trylock);
+ 
+ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
+ {
+-	struct rt_mutex *lock = &rwsem->lock;
++	struct rt_mutex *lock;
++	int cpu;
+ 
+-	rwsem_acquire_read(&rwsem->dep_map, subclass, 0, _RET_IP_);
++	migrate_disable();
++	cpu = smp_processor_id();
++	lock = &rwsem->lock[cpu].lock;
++	rwsem_acquire_read(&rwsem->lock[cpu].dep_map, subclass, 0, _RET_IP_);
+ 
+ 	if (rt_mutex_owner(lock) != current)
+-		rt_mutex_lock(&rwsem->lock);
+-	rwsem->read_depth++;
++		rt_mutex_lock(lock);
++	rwsem->lock[cpu].read_depth++;
+ }
+ 
+ void  rt_down_read(struct rw_semaphore *rwsem)
+@@ -402,7 +481,7 @@ void  rt_down_read_nested(struct rw_semaphore *rwsem, int subclass)
+ }
+ EXPORT_SYMBOL(rt_down_read_nested);
+ 
+-void  __rt_rwsem_init(struct rw_semaphore *rwsem, char *name,
++void  __rt_rwsem_init(struct __rw_semaphore *rwsem, char *name,
+ 			      struct lock_class_key *key)
+ {
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+
+
