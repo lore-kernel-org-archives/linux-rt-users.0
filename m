@@ -1,71 +1,67 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: BUG - "scheduling while atomic" on a irq handler (s3c-mci)
-Date: Tue, 15 May 2012 13:38:48 -0400
-Message-ID: <1337103528.14207.342.camel@gandalf.stny.rr.com>
-References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
-	 <20120509174931.GB31844@pengutronix.de>
-	 <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
+ reader rt locks
+Date: Tue, 15 May 2012 13:43:15 -0400
+Message-ID: <1337103795.14207.343.camel@gandalf.stny.rr.com>
+References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
+	 <1337094383.27694.62.camel@twins>
+	 <1337096542.14207.315.camel@gandalf.stny.rr.com>
+	 <1337102732.14207.336.camel@gandalf.stny.rr.com>
+	 <1337103096.27694.94.camel@twins>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Uwe =?ISO-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>, linux-rt-users@vger.kernel.org
-To: Christophe Huriaux <c.huriaux@gmail.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13980 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11981 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S966103Ab2EORit (ORCPT
+	with ESMTP id S966101Ab2EORnQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 13:38:49 -0400
-In-Reply-To: <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+	Tue, 15 May 2012 13:43:16 -0400
+In-Reply-To: <1337103096.27694.94.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-05-10 at 15:17 +0200, Christophe Huriaux wrote:
+On Tue, 2012-05-15 at 19:31 +0200, Peter Zijlstra wrote:
+> On Tue, 2012-05-15 at 13:25 -0400, Steven Rostedt wrote:
+> > On Tue, 2012-05-15 at 11:42 -0400, Steven Rostedt wrote:
+> > > On Tue, 2012-05-15 at 17:06 +0200, Peter Zijlstra wrote:
+> > > > On Tue, 2012-05-15 at 10:03 -0400, Steven Rostedt wrote:
+> > > > > 
+> > > > > where readers may nest (the same task may grab the same rwsem for
+> > > > > read multiple times), but only one task may hold the rwsem at any
+> > > > > given
+> > > > > time (for read or write).
+> > > > 
+> > > > Humm, that sounds iffy, rwsem isn't a recursive read lock only rwlock_t
+> > > > is.
+> > > 
+> > > In that case, current -rt is broken. As it has it being a recursive lock
+> > > (without my patch).
+> 
+> Nah not broken, just pointless. A recursive lock that's not used
+> recursively is fine.
+
+Heh, sure :-) But as -rt keeps it recursive, I didn't want to change
+that.
 
 > 
-> From: Christophe Huriaux <c.huriaux@gmail.com>
-> Subject: [PATCH] Fix scheduling while atomic bug in pio_tasklet
-> Signed-off-by: Christophe Huriaux <c.huriaux@gmail.com>
-> ---
->  drivers/mmc/host/s3cmci.c |    8 ++++++++
->  1 file changed, 8 insertions(+)
+> > 
+> > Why wouldn't it be recursive. If two different tasks are allowed to grab
+> > a read lock at the same time, why can't the same task grab a read lock
+> > twice? As long as it releases it the same amount of times.
+> > 
+> > Now you can't grab a read lock if you have the write lock.
 > 
-> diff --git a/drivers/mmc/host/s3cmci.c b/drivers/mmc/host/s3cmci.c
-> index 720f993..9978ad6 100644
-> --- a/drivers/mmc/host/s3cmci.c
-> +++ b/drivers/mmc/host/s3cmci.c
-> @@ -329,7 +329,11 @@ static void s3cmci_enable_irq(struct s3cmci_host
-> *host, bool more)
->                 if (enable)
->                         enable_irq(host->irq);
->                 else
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +                       disable_irq_nosync(host->irq);
-> +#else
->                         disable_irq(host->irq);
-> +#endif
->         }
-> 
->         local_irq_restore(flags);
-> @@ -350,7 +354,11 @@ static void s3cmci_disable_irq(struct s3cmci_host
-> *host, bool transfer)
-> 
->         if (transfer && host->irq_state) {
->                 host->irq_state = false;
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +               disable_irq_nosync(host->irq);
-> +#else
->                 disable_irq(host->irq);
-> +#endif
->         }
-> 
->         local_irq_restore(flags);
+> rwsem is fifo-fair, if a writer comes in between the second read
+> acquisition (even by the same task) would block and you'd be a deadlock
+> since the write won't succeed since you're still holding a reader.
 
-What happens if you instead convert the local_irq_save/restore() to
-local_irq_save_nort/restore_nort()?
-
-Does that work too?
+Yep agreed. And this patch didn't change that either.
 
 -- Steve
 
