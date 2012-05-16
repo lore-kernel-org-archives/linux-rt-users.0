@@ -1,80 +1,43 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: good load / stress suite?
-Date: Tue, 15 May 2012 21:55:37 -0400
-Message-ID: <1337133337.6724.24.camel@gandalf.stny.rr.com>
-References: <4FB2E1DD.7020203@gmto.org>
+Subject: Re: [PATCH -rt] mm: protect activate_mm() by
+ preempt_[disable|enable]_rt()
+Date: Tue, 15 May 2012 21:56:50 -0400
+Message-ID: <1337133410.6724.25.camel@gandalf.stny.rr.com>
+References: <1337061236-1766-1-git-send-email-yong.zhang0@gmail.com>
+	 <20120515213619.GA8880@joshcartwright.net> <20120516013802.GA8829@zhy>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Clark Williams <clark@redhat.com>
-To: Matthieu Bec <mbec@gmto.org>
+Cc: Josh Cartwright <joshc@linux.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Yong Zhang <yong.zhang0@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14570 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:5661 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756527Ab2EPBzi (ORCPT
+	with ESMTP id S1757223Ab2EPB4w (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 May 2012 21:55:38 -0400
-In-Reply-To: <4FB2E1DD.7020203@gmto.org>
+	Tue, 15 May 2012 21:56:52 -0400
+In-Reply-To: <20120516013802.GA8829@zhy>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-05-15 at 16:08 -0700, Matthieu Bec wrote:
-> Hello all,
+On Wed, 2012-05-16 at 09:38 +0800, Yong Zhang wrote:
+> On Tue, May 15, 2012 at 05:36:19PM -0400, Josh Cartwright wrote:
+> > Frank Rowand posted a very similar fix in December of last year that
+> > we've been carrying to fix the same issue:
+> > 
+> >    http://permalink.gmane.org/gmane.linux.kernel/1229806
+> > 
+> > It looks like there was some deliberation as to whether or not it should
+> > be pulled into stable-rt.  Perhaps its time to revisit this discussion?
 > 
-> I was wondering what people used to check RT_PREEMPT behavior under 
-> load/stress?
-
-There is a test suite that Red Hat uses called rt-eval (I believe).
-Clark can give you more info on that.
-
-> 
-> I'm trying to test the accuracy of my timers and have a test where I 
-> setup a kernel module with an hr-timer flipping RTS bit on serial COM0 
-> periodically, which I can look on an oscilloscope. the scope triggers on 
-> rising edge, I call jitter what shows on the falling side:
-> under no specific load I get ~ 10 us (worst case waiting a long time)
-> 
-> 
-> My initial idea for stressing the system was to compile a kernel, make 
-> -j 8 (#cores) that I thought would exercise CPU and IO if anything. As 
-> it happens, it's "mostly good" but I do get occasional (but repeatable) 
-> wild excursions (>100us)
-
-The tests I do is the following:
-
-I run "cyclictest -n -p 80 -t -i 250" then in another window I run a
-kernel compile using distcc (to stress the network as well) with make
--j40, it basically does:
-
-while :; make clean; make -j40; done
-
-Then I also run hackbench (written by Rusty Russell), with:
-
-while :; hackbench 50 ; done
-
-I run the above on a single machine, while on another machine I run
-ktest against the -rt kernel to test different configs (with and without
-PREEMPT_RT enabled and such). I do this for both i386 and x86_64.
-
-
-> 
-> Looking around, I found a tool called 'stress' - 
-> http://weather.ou.edu/~apw/projects/stress/
-> Under these new conditions, the system behaves really well again ~20 us 
-> stable all the way.
-> 
-> So both tests give different result, I'm not sure which to trust.
-> I was thinking maybe there is some weird interaction with the kernel and 
-> building the kernel that make the 'bad' test invalid?
-> 
-> I have RT_PREEMPT 3.0.18-rt34 SMP x86_64
+> Yeah, thanks for pointing it out, I didn't know there is discussion about
+> it.
 > 
 
-Now, I run the above stress tests that I mentioned for several hours
-before I release a stable kernel. I run this on a 2.6GHz xeon core2, and
-I may hit at most 70us latency with cyclictest. That's a high, it
-usually stays below 50us. We consider >100us on this type of hardware a
-bug which needs to be fixed.
+I believe we can go with Yong's patch. I don't think the #ifdef is
+necessary. Just do the preempt_disable_rt().
 
 -- Steve
 
