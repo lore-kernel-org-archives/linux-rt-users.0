@@ -1,105 +1,76 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
  reader rt locks
-Date: Thu, 17 May 2012 13:08:38 -0700
-Message-ID: <20120517200838.GL2567@linux.vnet.ibm.com>
+Date: Thu, 17 May 2012 22:20:40 +0200
+Message-ID: <1337286040.4281.85.camel@twins>
 References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
- <20120517151838.GA8692@linux.vnet.ibm.com>
- <1337268779.4281.38.camel@twins>
- <20120517154755.GG2567@linux.vnet.ibm.com>
- <1337271467.4281.43.camel@twins>
-Reply-To: paulmck@linux.vnet.ibm.com
+	 <20120517151838.GA8692@linux.vnet.ibm.com> <1337268779.4281.38.camel@twins>
+	 <20120517154755.GG2567@linux.vnet.ibm.com> <1337271467.4281.43.camel@twins>
+	 <20120517200838.GL2567@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
 Cc: Steven Rostedt <rostedt@goodmis.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Clark Williams <williams@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e7.ny.us.ibm.com ([32.97.182.137]:44616 "EHLO e7.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S966008Ab2EQUJA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 16:09:00 -0400
-Received: from /spool/local
-	by e7.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Thu, 17 May 2012 16:08:59 -0400
-Content-Disposition: inline
-In-Reply-To: <1337271467.4281.43.camel@twins>
+Received: from merlin.infradead.org ([205.233.59.134]:38830 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757930Ab2EQUU6 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 May 2012 16:20:58 -0400
+In-Reply-To: <20120517200838.GL2567@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 17, 2012 at 06:17:47PM +0200, Peter Zijlstra wrote:
-> On Thu, 2012-05-17 at 08:47 -0700, Paul E. McKenney wrote:
-> > On Thu, May 17, 2012 at 05:32:59PM +0200, Peter Zijlstra wrote:
-> > > On Thu, 2012-05-17 at 08:18 -0700, Paul E. McKenney wrote:
-> > > > Some researchers at MIT RCU-ified this lock:
-> > > > 
-> > > > http://people.csail.mit.edu/nickolai/papers/clements-bonsai.pdf 
-> > > 
-> > > Ah, as have I [1].. and they seem to have gotten about as far as I have,
-> > > which means almost there but not quite [2] :-)
-> > 
-> > I had forgotten about that -- that was the first call for call_srcu(),
-> > if I remember correctly.
-> > 
-> > > The most interesting case is file maps and they simply ignored those.
-> > > While I appreciate that from an academic pov, -- they can still write a
-> > > paper on the other interesting bits -- I don't really like it from a
-> > > practical point.
-> > > 
-> > > [1] https://lkml.org/lkml/2010/1/4/257
-> > > [2] https://lkml.org/lkml/2010/1/4/532
-> > 
-> > Hmmm...  Do the recent dcache changes cover some of the things that
-> > Linus called out?  Probably not, but some at least.
+On Thu, 2012-05-17 at 13:08 -0700, Paul E. McKenney wrote:
+> I don't claim to understand all of the code, but I am also unafraid to
+> ask stupid questions.  ;-)
 > 
-> No, and the points viro made:
+> So, is it possible to do something like the following?
 > 
->   https://lkml.org/lkml/2010/1/5/194
-> 
-> are still very much an issue, you really don't want to do fput() from an
-> asynchronous context. Which means you have to do synchronize_rcu() or
-> similar from munmap() which will be rather unpopular :/
+> 1.      Schedule a workqueue from an RCU callback, and to have that
+>         workqueue do the fput.
 
-I don't claim to understand all of the code, but I am also unafraid to
-ask stupid questions.  ;-)
+Possible yes, but also undesirable, fput() can do a lot of work. Viro
+very much didn't want this.
 
-So, is it possible to do something like the following?
+> 2.      Make things like unmount() do rcu_barrier() followed by
+>         flush_workqueue(), or probably multiple flush_workqueue()s.
 
-1.	Schedule a workqueue from an RCU callback, and to have that
-	workqueue do the fput.
+For unmount() we could get away with this, unmount() isn't usually
+(ever?) a critical path. However, as noted by viro the fput() which is
+still required can itself cause a tremendous amount of work, even if
+only synced against an unmount, having this work done from an async
+context isn't desired.
 
-2.	Make things like unmount() do rcu_barrier() followed by
-	flush_workqueue(), or probably multiple flush_workqueue()s.
+> 3.      If someone concurrently does munmap() and a write to the
+>         to-be-unmapped region, then the write can legally happen.
 
-3.	If someone concurrently does munmap() and a write to the
-	to-be-unmapped region, then the write can legally happen.
+Not entirely different from the current situation -- the timing changes
+between the RCU and current implementation, but imagine the write
+happens while the unmap() is in progress but hasn't quite reached the
+range we write to.
 
-4.	Acquire mmap_sem in the fault path, but only if the fault
-	requires blocking, and recheck the situation under
-	mmap_sem -- the hope being to prevent long-lived page
-	faults from messing things up.
+Anyway, this is all firmly in 'undefined' territory so anybody breaking
+from this change deserves all the pain (and probably more) they get.
 
-Fire away!  ;-)
+As already stated, any fault in a region that's being unmapped is the
+result of an ill-formed program.
 
-> Since we should not use per-cpu data for either files or processes
-> (there are simply too many of those around) the alternative is
-> horrendously hideous things like:
-> 
->   https://lkml.org/lkml/2010/1/6/136
-> 
-> which one cannot get away with either.
-> 
-> The whole thing is very vexing indeed since all of this is only needed
-> for ill-behaved applications since a well-constructed application will
-> never fault in a range it is concurrently unmapping.
-> 
-> Most annoying.
+> 4.      Acquire mmap_sem in the fault path, but only if the fault
+>         requires blocking, and recheck the situation under
+>         mmap_sem -- the hope being to prevent long-lived page
+>         faults from messing things up.
 
-No argument there!!!
+Not relevant, a fault might not need to block but could still extend the
+refcount lifetime of the file object beyond unmap and thus bear the
+responsibility of the final fput, which we cannot know a-priori.
 
-							Thanx, Paul
-
+Its all made much more complex by the fact that we're avoiding taking
+the refcount from the speculative fault in order to avoid the 'global'
+synchronization on that cacheline -- which is the real problem
+really :-)
