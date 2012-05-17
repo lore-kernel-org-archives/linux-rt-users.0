@@ -1,74 +1,27 @@
-From: Ralf Baechle <ralf@linux-mips.org>
-Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
- spinlock
-Date: Thu, 17 May 2012 22:50:03 +0200
-Message-ID: <20120517205003.GE16397@linux-mips.org>
-References: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
- <4FB527B2.2010800@gmail.com>
+From: Venkat Subbiah <vsubbiah@caviumnetworks.com>
+Subject: Real time micro benchmark suite - thread priority fix
+Date: Thu, 17 May 2012 14:15:52 -0700
+Message-ID: <4FB56A88.7050705@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Yong Zhang <yong.zhang0@gmail.com>, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, david.daney@cavium.com,
-	tglx@linutronix.de
-To: David Daney <ddaney.cavm@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from eddie.linux-mips.org ([78.24.191.182]:35637 "EHLO
-	cvs.linux-mips.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756145Ab2EQUuO (ORCPT
+Received: from mail3.caviumnetworks.com ([12.108.191.235]:18632 "EHLO
+	mail3.caviumnetworks.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758845Ab2EQVPx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 16:50:14 -0400
-Content-Disposition: inline
-In-Reply-To: <4FB527B2.2010800@gmail.com>
+	Thu, 17 May 2012 17:15:53 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 17, 2012 at 09:30:42AM -0700, David Daney wrote:
-> Date:   Thu, 17 May 2012 09:30:42 -0700
-> From: David Daney <ddaney.cavm@gmail.com>
-> To: Yong Zhang <yong.zhang0@gmail.com>, ralf@linux-mips.org
-> CC: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
->  david.daney@cavium.com, tglx@linutronix.de
-> Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
->  spinlock
-> Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-> 
-> On 05/17/2012 03:15 AM, Yong Zhang wrote:
-> >From: Yong Zhang<yong.zhang@windriver.com>
-> >
-> >Because __cpu_disable is called in atomic context and spinlock
-> >is a mutex on -rt.
-> >
-> >Signed-off-by: Yong Zhang<yong.zhang0@gmail.com>
-> >---
-> >  arch/mips/cavium-octeon/smp.c |    6 +++---
-> >  1 files changed, 3 insertions(+), 3 deletions(-)
-> >
-> >diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
-> >index ef9c34a..473c72b 100644
-> >--- a/arch/mips/cavium-octeon/smp.c
-> >+++ b/arch/mips/cavium-octeon/smp.c
-> >@@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
-> >
-> >  extern void fixup_irqs(void);
-> >
-> >-static DEFINE_SPINLOCK(smp_reserve_lock);
-> >+static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
-> >
-> 
-> Ralf added this in 773cb77d (MIPS: Cavium: Add CPU hotplugging code.)
-> 
-> I'm not even sure what this lock is supposed to be protecting, so I
-> would like Ralf to take a look.
-> 
-> You can add an Acked-by: from me for either this patch as is, or if
-> Ralf thinks it is OK, removing the lock entirely.
-> 
-> In any event we can merge this via Ralf's tree.
+Not sure whether Real time micro benchmark suite is still being 
+maintained at http://sourceforge.net/projects/rtmicrobench. The latest 
+code from sourceforge has issues while running rtmb_c tests. It fails 
+complaining about not being able to set thread priority.  Here's a fix 
+for it.
 
-The 773cb77d patch has a long history but I think I first worked on it for
-Wind River Linux 2.0 which was 2.6.21-based, then broke it out and pushed
-it upstream.  In 2.6.21 it was probably infected by the the smp_reserve_lock
-virus in the s390 code for no good reason.  So I agree, the lock can
-be dropped and I'm queueing a patch to do so for 3.5.
+https://github.com/vsubbiah/rtmb/commit/2a6714030a4009b50b76e99a83bf4b042cc82780
 
-  Ralf
+Thanks,
+Venkat
