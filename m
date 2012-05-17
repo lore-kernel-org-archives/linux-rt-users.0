@@ -1,69 +1,38 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH RT 2/2] fix printk flush of messages
-Date: Wed, 16 May 2012 18:09:36 -0700
-Message-ID: <4FB44FD0.4090800@am.sony.com>
-References: <4FB44EF1.9050809@am.sony.com>
+Subject: Re: [PATCH RT 2/2] fix printk flush of messages
+Date: Wed, 16 May 2012 18:17:26 -0700
+Message-ID: <4FB451A6.4030306@am.sony.com>
+References: <4FB44EF1.9050809@am.sony.com> <4FB44FD0.4090800@am.sony.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
+To: "tglx@linutronix.de" <tglx@linutronix.de>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Rowand, Frank" <Frank_Rowand@sonyusa.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <4FB44EF1.9050809@am.sony.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from tx2ehsobe002.messaging.microsoft.com ([65.55.88.12]:20880 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752442Ab2EQBRs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 May 2012 21:17:48 -0400
+In-Reply-To: <4FB44FD0.4090800@am.sony.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+The patches were tested on an ARM panda board for linux-3.4-rc5-rt6.
 
-Updates console-make-rt-friendly.patch
+The panda board has a compile error in linux-3.4-rc5, which is fixed
+by commit 13176a89e1c4a0011bd9f576730b0338ecb619ff in linux-3.4-rc6.
 
-#ifdef CONFIG_PREEMPT_RT_FULL, printk() output is never flushed by
-printk() because:
+Without the patch, the printk() output from the following commands
+does not appear on the console, until flushed by 'echo >/dev/console'
 
-   # some liberties taken in this pseudo-code to make it easier to follow
-   printk()
-      vprintk()
-         raw_spin_lock(&logbuf_lock)
-            # increment preempt_count():
-            preempt_disable()
-      result = console_trylock_for_printk()
-         retval = 0
-         # lock will always be false, because preempt_count() will be >= 1
-         lock = ... && !preempt_count()
-         if (lock)
-            retval = 1
-         return retval
-      # result will always be false since lock will always be false
-      if (result)
-         console_unlock()
-            # this is where the printk() output would be flushed
+   echo h >/proc/sysrq-trigger
+   echo p >/proc/sysrq-trigger
+   echo m >/proc/sysrq-trigger
 
+With the patch, the output flushes to the console immediately.
 
-On system boot some printk() output is flushed because register_console()
-and tty_open() call console_unlock().
+-Frank
 
-
-This change also fixes the problem that was previously fixed by
-preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-
----
- kernel/printk.c |    2 	1 +	1 -	0 !
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-Index: b/kernel/printk.c
-===================================================================
---- a/kernel/printk.c
-+++ b/kernel/printk.c
-@@ -847,7 +847,7 @@ static int console_trylock_for_printk(un
- 	int retval = 0, wake = 0;
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	int lock = !early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
--		!preempt_count();
-+		(preempt_count() <= 1);
- #else
- 	int lock = 1;
- #endif
