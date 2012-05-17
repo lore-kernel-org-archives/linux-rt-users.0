@@ -1,127 +1,163 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: good load / stress suite?
-Date: Wed, 16 May 2012 10:55:01 -0500
-Message-ID: <20120516105501.17018110@redhat.com>
-References: <4FB2E1DD.7020203@gmto.org>
-	<1337133337.6724.24.camel@gandalf.stny.rr.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH RT 1/2] fix printk flush of messages
+Date: Wed, 16 May 2012 18:05:53 -0700
+Message-ID: <4FB44EF1.9050809@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/38F6UM=FwPibx5zSxT6cSay"; protocol="application/pgp-signature"
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: Matthieu Bec <mbec@gmto.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:17419 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755997Ab2EPPzJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 May 2012 11:55:09 -0400
-In-Reply-To: <1337133337.6724.24.camel@gandalf.stny.rr.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+To: <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/38F6UM=FwPibx5zSxT6cSay
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
 
-On Tue, 15 May 2012 21:55:37 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Reverse preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
 
-> On Tue, 2012-05-15 at 16:08 -0700, Matthieu Bec wrote:
-> > Hello all,
-> >=20
-> > I was wondering what people used to check RT_PREEMPT behavior under=20
-> > load/stress?
->=20
-> There is a test suite that Red Hat uses called rt-eval (I believe).
-> Clark can give you more info on that.
+The problem addressed by that patch does not exist after applying
+console-make-rt-friendly-update.patch
 
-It's called rteval and I have a git tree here:
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
 
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rteval.git
+---
+ drivers/tty/serial/cpm_uart/cpm_uart_core.c |    2 	1 +	1 -	0 !
+ drivers/tty/sysrq.c                         |   23 	0 +	23 -	0 !
+ include/linux/sysrq.h                       |    5 	0 +	5 -	0 !
+ kernel/printk.c                             |    5 	2 +	3 -	0 !
+ lib/Kconfig.debug                           |   22 	0 +	22 -	0 !
+ 5 files changed, 3 insertions(+), 54 deletions(-)
 
-It's basically some python scripting to do much of what Steven describes
-below. When it starts up it kicks off a kernel make with 2* the number
-of available processors (make -j <n*2>) and runs hackbench, both in
-loop. Then it kicks off cyclictest to measure the system latency under
-load.=20
-
-I usually run it like this:
-
-	$ sudo rteval --duration=3D12h
-
-At the end it summarizes the results of the run.
-
->=20
-> >=20
-> > I'm trying to test the accuracy of my timers and have a test where I=20
-> > setup a kernel module with an hr-timer flipping RTS bit on serial COM0=
-=20
-> > periodically, which I can look on an oscilloscope. the scope triggers o=
-n=20
-> > rising edge, I call jitter what shows on the falling side:
-> > under no specific load I get ~ 10 us (worst case waiting a long time)
-> >=20
-> >=20
-> > My initial idea for stressing the system was to compile a kernel, make=
-=20
-> > -j 8 (#cores) that I thought would exercise CPU and IO if anything. As=
-=20
-> > it happens, it's "mostly good" but I do get occasional (but repeatable)=
-=20
-> > wild excursions (>100us)
->=20
-> The tests I do is the following:
->=20
-> I run "cyclictest -n -p 80 -t -i 250" then in another window I run a
-> kernel compile using distcc (to stress the network as well) with make
-> -j40, it basically does:
->=20
-> while :; make clean; make -j40; done
->=20
-> Then I also run hackbench (written by Rusty Russell), with:
->=20
-> while :; hackbench 50 ; done
->=20
-> I run the above on a single machine, while on another machine I run
-> ktest against the -rt kernel to test different configs (with and without
-> PREEMPT_RT enabled and such). I do this for both i386 and x86_64.
->=20
->=20
-> >=20
-> > Looking around, I found a tool called 'stress' -=20
-> > http://weather.ou.edu/~apw/projects/stress/
-> > Under these new conditions, the system behaves really well again ~20 us=
-=20
-> > stable all the way.
-> >=20
-> > So both tests give different result, I'm not sure which to trust.
-> > I was thinking maybe there is some weird interaction with the kernel an=
-d=20
-> > building the kernel that make the 'bad' test invalid?
-> >=20
-> > I have RT_PREEMPT 3.0.18-rt34 SMP x86_64
-> >=20
->=20
-> Now, I run the above stress tests that I mentioned for several hours
-> before I release a stable kernel. I run this on a 2.6GHz xeon core2, and
-> I may hit at most 70us latency with cyclictest. That's a high, it
-> usually stays below 50us. We consider >100us on this type of hardware a
-> bug which needs to be fixed.
->=20
-> -- Steve
->=20
->=20
-
---Sig_/38F6UM=FwPibx5zSxT6cSay
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.18 (GNU/Linux)
-
-iEYEARECAAYFAk+zzdUACgkQHyuj/+TTEp0i1ACgjDeJj7B7fx+U9vrFMxjG4ZzQ
-VfwAoMm3lmNGlO65caHnImmJyIYq5hVa
-=V4ys
------END PGP SIGNATURE-----
-
---Sig_/38F6UM=FwPibx5zSxT6cSay--
+Index: b/drivers/tty/serial/cpm_uart/cpm_uart_core.c
+===================================================================
+--- a/drivers/tty/serial/cpm_uart/cpm_uart_core.c
++++ b/drivers/tty/serial/cpm_uart/cpm_uart_core.c
+@@ -1226,7 +1226,7 @@ static void cpm_uart_console_write(struc
+ {
+ 	struct uart_cpm_port *pinfo = &cpm_uart_ports[co->index];
+ 	unsigned long flags;
+-	int nolock = oops_in_progress || sysrq_in_progress;
++	int nolock = oops_in_progress;
+ 
+ 	if (unlikely(nolock)) {
+ 		local_irq_save(flags);
+Index: b/drivers/tty/sysrq.c
+===================================================================
+--- a/drivers/tty/sysrq.c
++++ b/drivers/tty/sysrq.c
+@@ -495,23 +495,6 @@ static void __sysrq_put_key_op(int key, 
+                 sysrq_key_table[i] = op_p;
+ }
+ 
+-#ifdef CONFIG_MAGIC_SYSRQ_FORCE_PRINTK
+-
+-int sysrq_in_progress;
+-
+-static void set_sysrq_in_progress(int value)
+-{
+-	sysrq_in_progress = value;
+-}
+-
+-#else
+-
+-static void set_sysrq_in_progress(int value)
+-{
+-}
+-
+-#endif
+-
+ void __handle_sysrq(int key, bool check_mask)
+ {
+ 	struct sysrq_key_op *op_p;
+@@ -520,9 +503,6 @@ void __handle_sysrq(int key, bool check_
+ 	unsigned long flags;
+ 
+ 	spin_lock_irqsave(&sysrq_key_table_lock, flags);
+-
+-	set_sysrq_in_progress(1);
+-
+ 	/*
+ 	 * Raise the apparent loglevel to maximum so that the sysrq header
+ 	 * is shown to provide the user with positive feedback.  We do not
+@@ -564,9 +544,6 @@ void __handle_sysrq(int key, bool check_
+ 		printk("\n");
+ 		console_loglevel = orig_log_level;
+ 	}
+-
+-	set_sysrq_in_progress(0);
+-
+ 	spin_unlock_irqrestore(&sysrq_key_table_lock, flags);
+ }
+ 
+Index: b/include/linux/sysrq.h
+===================================================================
+--- a/include/linux/sysrq.h
++++ b/include/linux/sysrq.h
+@@ -38,11 +38,6 @@ struct sysrq_key_op {
+ 	int enable_mask;
+ };
+ 
+-#ifdef CONFIG_MAGIC_SYSRQ_FORCE_PRINTK
+-extern int sysrq_in_progress;
+-#else
+-#define sysrq_in_progress 0
+-#endif
+ #ifdef CONFIG_MAGIC_SYSRQ
+ 
+ /* Generic SysRq interface -- you may call it from any device driver, supplying
+Index: b/kernel/printk.c
+===================================================================
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -21,7 +21,6 @@
+ #include <linux/tty.h>
+ #include <linux/tty_driver.h>
+ #include <linux/console.h>
+-#include <linux/sysrq.h>
+ #include <linux/init.h>
+ #include <linux/jiffies.h>
+ #include <linux/nmi.h>
+@@ -847,8 +846,8 @@ static int console_trylock_for_printk(un
+ {
+ 	int retval = 0, wake = 0;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-	int lock = (!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+-		!preempt_count()) || sysrq_in_progress;
++	int lock = !early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
++		!preempt_count();
+ #else
+ 	int lock = 1;
+ #endif
+Index: b/lib/Kconfig.debug
+===================================================================
+--- a/lib/Kconfig.debug
++++ b/lib/Kconfig.debug
+@@ -62,28 +62,6 @@ config MAGIC_SYSRQ
+ 	  keys are documented in <file:Documentation/sysrq.txt>. Don't say Y
+ 	  unless you really know what this hack does.
+ 
+-config MAGIC_SYSRQ_FORCE_PRINTK
+-	bool "Force printk from Magic SysRq"
+-	depends on MAGIC_SYSRQ && PREEMPT_RT_FULL
+-	default n
+-	help
+-	  Allow the output from Magic SysRq to be output immediately, even if
+-	  this causes large latencies.  This can cause performance problems
+-	  for real-time processes.
+-
+-	  If PREEMPT_RT_FULL, printk() will not try to acquire the console lock
+-	  when interrupts or preemption are disabled.  If the console lock is
+-	  not acquired the printk() output will be buffered, but will not be
+-	  output immediately.  Some drivers call into the Magic SysRq code
+-	  with interrupts or preemption disabled, so the output of Magic SysRq
+-	  will be buffered instead of printing immediately if this option is
+-	  not selected.
+-
+-	  Even with this option selected, Magic SysRq output will be delayed
+-	  if the attempt to acquire the console lock fails.
+-
+-	  Don't say Y unless you really know what this hack does.
+-
+ config STRIP_ASM_SYMS
+ 	bool "Strip assembler-generated symbols during link"
+ 	default n
