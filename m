@@ -1,83 +1,59 @@
-From: Priyanka Jain <Priyanka.Jain@freescale.com>
-Subject: [PATCH][UPSTREAM]net,RT:Remove preemption disabling in netif_rx()
-Date: Thu, 17 May 2012 09:35:11 +0530
-Message-ID: <1337227511-2271-1-git-send-email-Priyanka.Jain@freescale.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <tglx@linutronix.de>, <rostedt@goodmis.orgn>,
-	<Rajan.Srivastava@freescale.com>,
-	Priyanka Jain <Priyanka.Jain@freescale.com>
-To: <linux-rt-users@vger.kernel.org>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw spinlock
+Date: Thu, 17 May 2012 18:15:09 +0800
+Message-ID: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
+Cc: ralf@linux-mips.org, david.daney@cavium.com, tglx@linutronix.de
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe002.messaging.microsoft.com ([65.55.88.12]:49197 "EHLO
-	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750744Ab2EQEFh (ORCPT
+Received: from mail-pz0-f46.google.com ([209.85.210.46]:58823 "EHLO
+	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761445Ab2EQKPZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 00:05:37 -0400
+	Thu, 17 May 2012 06:15:25 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-1)enqueue_to_backlog() (called from netif_rx) should be
-  bind to a particluar CPU. This can be achieved by
-  disabling migration. No need to disable preemption
+From: Yong Zhang <yong.zhang@windriver.com>
 
-2)Fixes crash "BUG: scheduling while atomic: ksoftirqd"
-  in case of RT.
-  If preemption is disabled, enqueue_to_backog() is called
-  in atomic context. And if backlog exceeds its count,
-  kfree_skb() is called. But in RT, kfree_skb() might
-  gets scheduled out, so it expects non atomic context.
+Because __cpu_disable is called in atomic context and spinlock
+is a mutex on -rt.
 
-3)When CONFIG_PREEMPT_RT_FULL is not defined,
- migrate_enable(), migrate_disable() maps to
- preempt_enable() and preempt_disable(), so no
- change in functionality in case of non-RT.
-
--Replace preempt_enable(), preempt_disable() with
- migrate_enable(), migrate_disable() respectively
--Replace get_cpu(), put_cpu() with get_cpu_light(),
- put_cpu_light() respectively
-
-Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
-Acked-by: Rajan Srivastava <Rajan.Srivastava@freescale.com>
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
 ---
- Testing: Tested successfully on p4080ds(8-core SMP system)  
+ arch/mips/cavium-octeon/smp.c |    6 +++---
+ 1 files changed, 3 insertions(+), 3 deletions(-)
 
- net/core/dev.c |    8 ++++----
- 1 files changed, 4 insertions(+), 4 deletions(-)
-
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 452db70..4017820 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2940,7 +2940,7 @@ int netif_rx(struct sk_buff *skb)
- 		struct rps_dev_flow voidflow, *rflow = &voidflow;
- 		int cpu;
+diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
+index ef9c34a..473c72b 100644
+--- a/arch/mips/cavium-octeon/smp.c
++++ b/arch/mips/cavium-octeon/smp.c
+@@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
  
--		preempt_disable();
-+		migrate_disable();
- 		rcu_read_lock();
+ extern void fixup_irqs(void);
  
- 		cpu = get_rps_cpu(skb->dev, skb, &rflow);
-@@ -2950,13 +2950,13 @@ int netif_rx(struct sk_buff *skb)
- 		ret = enqueue_to_backlog(skb, cpu, &rflow->last_qtail);
+-static DEFINE_SPINLOCK(smp_reserve_lock);
++static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
  
- 		rcu_read_unlock();
--		preempt_enable();
-+		migrate_enable();
- 	} else
- #endif
- 	{
- 		unsigned int qtail;
--		ret = enqueue_to_backlog(skb, get_cpu(), &qtail);
--		put_cpu();
-+		ret = enqueue_to_backlog(skb, get_cpu_light(), &qtail);
-+		put_cpu_light();
- 	}
- 	return ret;
+ static int octeon_cpu_disable(void)
+ {
+@@ -266,7 +266,7 @@ static int octeon_cpu_disable(void)
+ 	if (cpu == 0)
+ 		return -EBUSY;
+ 
+-	spin_lock(&smp_reserve_lock);
++	raw_spin_lock(&smp_reserve_lock);
+ 
+ 	set_cpu_online(cpu, false);
+ 	cpu_clear(cpu, cpu_callin_map);
+@@ -277,7 +277,7 @@ static int octeon_cpu_disable(void)
+ 	flush_cache_all();
+ 	local_flush_tlb_all();
+ 
+-	spin_unlock(&smp_reserve_lock);
++	raw_spin_unlock(&smp_reserve_lock);
+ 
+ 	return 0;
  }
 -- 
-1.7.4.1
-
-
+1.7.1
 
