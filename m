@@ -1,76 +1,74 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
- reader rt locks
-Date: Thu, 17 May 2012 22:20:40 +0200
-Message-ID: <1337286040.4281.85.camel@twins>
-References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
-	 <20120517151838.GA8692@linux.vnet.ibm.com> <1337268779.4281.38.camel@twins>
-	 <20120517154755.GG2567@linux.vnet.ibm.com> <1337271467.4281.43.camel@twins>
-	 <20120517200838.GL2567@linux.vnet.ibm.com>
+From: Ralf Baechle <ralf@linux-mips.org>
+Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
+ spinlock
+Date: Thu, 17 May 2012 22:50:03 +0200
+Message-ID: <20120517205003.GE16397@linux-mips.org>
+References: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
+ <4FB527B2.2010800@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Cc: Yong Zhang <yong.zhang0@gmail.com>, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, david.daney@cavium.com,
+	tglx@linutronix.de
+To: David Daney <ddaney.cavm@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:38830 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757930Ab2EQUU6 convert rfc822-to-8bit (ORCPT
+Received: from eddie.linux-mips.org ([78.24.191.182]:35637 "EHLO
+	cvs.linux-mips.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756145Ab2EQUuO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 16:20:58 -0400
-In-Reply-To: <20120517200838.GL2567@linux.vnet.ibm.com>
+	Thu, 17 May 2012 16:50:14 -0400
+Content-Disposition: inline
+In-Reply-To: <4FB527B2.2010800@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-05-17 at 13:08 -0700, Paul E. McKenney wrote:
-> I don't claim to understand all of the code, but I am also unafraid to
-> ask stupid questions.  ;-)
+On Thu, May 17, 2012 at 09:30:42AM -0700, David Daney wrote:
+> Date:   Thu, 17 May 2012 09:30:42 -0700
+> From: David Daney <ddaney.cavm@gmail.com>
+> To: Yong Zhang <yong.zhang0@gmail.com>, ralf@linux-mips.org
+> CC: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+>  david.daney@cavium.com, tglx@linutronix.de
+> Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
+>  spinlock
+> Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 > 
-> So, is it possible to do something like the following?
+> On 05/17/2012 03:15 AM, Yong Zhang wrote:
+> >From: Yong Zhang<yong.zhang@windriver.com>
+> >
+> >Because __cpu_disable is called in atomic context and spinlock
+> >is a mutex on -rt.
+> >
+> >Signed-off-by: Yong Zhang<yong.zhang0@gmail.com>
+> >---
+> >  arch/mips/cavium-octeon/smp.c |    6 +++---
+> >  1 files changed, 3 insertions(+), 3 deletions(-)
+> >
+> >diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
+> >index ef9c34a..473c72b 100644
+> >--- a/arch/mips/cavium-octeon/smp.c
+> >+++ b/arch/mips/cavium-octeon/smp.c
+> >@@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
+> >
+> >  extern void fixup_irqs(void);
+> >
+> >-static DEFINE_SPINLOCK(smp_reserve_lock);
+> >+static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
+> >
 > 
-> 1.      Schedule a workqueue from an RCU callback, and to have that
->         workqueue do the fput.
+> Ralf added this in 773cb77d (MIPS: Cavium: Add CPU hotplugging code.)
+> 
+> I'm not even sure what this lock is supposed to be protecting, so I
+> would like Ralf to take a look.
+> 
+> You can add an Acked-by: from me for either this patch as is, or if
+> Ralf thinks it is OK, removing the lock entirely.
+> 
+> In any event we can merge this via Ralf's tree.
 
-Possible yes, but also undesirable, fput() can do a lot of work. Viro
-very much didn't want this.
+The 773cb77d patch has a long history but I think I first worked on it for
+Wind River Linux 2.0 which was 2.6.21-based, then broke it out and pushed
+it upstream.  In 2.6.21 it was probably infected by the the smp_reserve_lock
+virus in the s390 code for no good reason.  So I agree, the lock can
+be dropped and I'm queueing a patch to do so for 3.5.
 
-> 2.      Make things like unmount() do rcu_barrier() followed by
->         flush_workqueue(), or probably multiple flush_workqueue()s.
-
-For unmount() we could get away with this, unmount() isn't usually
-(ever?) a critical path. However, as noted by viro the fput() which is
-still required can itself cause a tremendous amount of work, even if
-only synced against an unmount, having this work done from an async
-context isn't desired.
-
-> 3.      If someone concurrently does munmap() and a write to the
->         to-be-unmapped region, then the write can legally happen.
-
-Not entirely different from the current situation -- the timing changes
-between the RCU and current implementation, but imagine the write
-happens while the unmap() is in progress but hasn't quite reached the
-range we write to.
-
-Anyway, this is all firmly in 'undefined' territory so anybody breaking
-from this change deserves all the pain (and probably more) they get.
-
-As already stated, any fault in a region that's being unmapped is the
-result of an ill-formed program.
-
-> 4.      Acquire mmap_sem in the fault path, but only if the fault
->         requires blocking, and recheck the situation under
->         mmap_sem -- the hope being to prevent long-lived page
->         faults from messing things up.
-
-Not relevant, a fault might not need to block but could still extend the
-refcount lifetime of the file object beyond unmap and thus bear the
-responsibility of the final fput, which we cannot know a-priori.
-
-Its all made much more complex by the fact that we're avoiding taking
-the refcount from the speculative fault in order to avoid the 'global'
-synchronization on that cacheline -- which is the real problem
-really :-)
+  Ralf
