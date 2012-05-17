@@ -1,79 +1,105 @@
-From: David Daney <ddaney.cavm@gmail.com>
-Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw spinlock
-Date: Thu, 17 May 2012 09:30:42 -0700
-Message-ID: <4FB527B2.2010800@gmail.com>
-References: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [RFC][PATCH RT] rwsem_rt: Another (more sane) approach to mulit
+ reader rt locks
+Date: Thu, 17 May 2012 13:08:38 -0700
+Message-ID: <20120517200838.GL2567@linux.vnet.ibm.com>
+References: <1337090625.14207.304.camel@gandalf.stny.rr.com>
+ <20120517151838.GA8692@linux.vnet.ibm.com>
+ <1337268779.4281.38.camel@twins>
+ <20120517154755.GG2567@linux.vnet.ibm.com>
+ <1337271467.4281.43.camel@twins>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	david.daney@cavium.com, tglx@linutronix.de
-To: Yong Zhang <yong.zhang0@gmail.com>, ralf@linux-mips.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:59566 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932968Ab2EQQaq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 12:30:46 -0400
-In-Reply-To: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
+Received: from e7.ny.us.ibm.com ([32.97.182.137]:44616 "EHLO e7.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S966008Ab2EQUJA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 May 2012 16:09:00 -0400
+Received: from /spool/local
+	by e7.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Thu, 17 May 2012 16:08:59 -0400
+Content-Disposition: inline
+In-Reply-To: <1337271467.4281.43.camel@twins>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/17/2012 03:15 AM, Yong Zhang wrote:
-> From: Yong Zhang<yong.zhang@windriver.com>
->
-> Because __cpu_disable is called in atomic context and spinlock
-> is a mutex on -rt.
->
-> Signed-off-by: Yong Zhang<yong.zhang0@gmail.com>
-> ---
->   arch/mips/cavium-octeon/smp.c |    6 +++---
->   1 files changed, 3 insertions(+), 3 deletions(-)
->
-> diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
-> index ef9c34a..473c72b 100644
-> --- a/arch/mips/cavium-octeon/smp.c
-> +++ b/arch/mips/cavium-octeon/smp.c
-> @@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
->
->   extern void fixup_irqs(void);
->
-> -static DEFINE_SPINLOCK(smp_reserve_lock);
-> +static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
->
+On Thu, May 17, 2012 at 06:17:47PM +0200, Peter Zijlstra wrote:
+> On Thu, 2012-05-17 at 08:47 -0700, Paul E. McKenney wrote:
+> > On Thu, May 17, 2012 at 05:32:59PM +0200, Peter Zijlstra wrote:
+> > > On Thu, 2012-05-17 at 08:18 -0700, Paul E. McKenney wrote:
+> > > > Some researchers at MIT RCU-ified this lock:
+> > > > 
+> > > > http://people.csail.mit.edu/nickolai/papers/clements-bonsai.pdf 
+> > > 
+> > > Ah, as have I [1].. and they seem to have gotten about as far as I have,
+> > > which means almost there but not quite [2] :-)
+> > 
+> > I had forgotten about that -- that was the first call for call_srcu(),
+> > if I remember correctly.
+> > 
+> > > The most interesting case is file maps and they simply ignored those.
+> > > While I appreciate that from an academic pov, -- they can still write a
+> > > paper on the other interesting bits -- I don't really like it from a
+> > > practical point.
+> > > 
+> > > [1] https://lkml.org/lkml/2010/1/4/257
+> > > [2] https://lkml.org/lkml/2010/1/4/532
+> > 
+> > Hmmm...  Do the recent dcache changes cover some of the things that
+> > Linus called out?  Probably not, but some at least.
+> 
+> No, and the points viro made:
+> 
+>   https://lkml.org/lkml/2010/1/5/194
+> 
+> are still very much an issue, you really don't want to do fput() from an
+> asynchronous context. Which means you have to do synchronize_rcu() or
+> similar from munmap() which will be rather unpopular :/
 
-Ralf added this in 773cb77d (MIPS: Cavium: Add CPU hotplugging code.)
+I don't claim to understand all of the code, but I am also unafraid to
+ask stupid questions.  ;-)
 
-I'm not even sure what this lock is supposed to be protecting, so I 
-would like Ralf to take a look.
+So, is it possible to do something like the following?
 
-You can add an Acked-by: from me for either this patch as is, or if Ralf 
-thinks it is OK, removing the lock entirely.
+1.	Schedule a workqueue from an RCU callback, and to have that
+	workqueue do the fput.
 
-In any event we can merge this via Ralf's tree.
+2.	Make things like unmount() do rcu_barrier() followed by
+	flush_workqueue(), or probably multiple flush_workqueue()s.
 
-Thanks,
-David Daney
+3.	If someone concurrently does munmap() and a write to the
+	to-be-unmapped region, then the write can legally happen.
 
+4.	Acquire mmap_sem in the fault path, but only if the fault
+	requires blocking, and recheck the situation under
+	mmap_sem -- the hope being to prevent long-lived page
+	faults from messing things up.
 
->   static int octeon_cpu_disable(void)
->   {
-> @@ -266,7 +266,7 @@ static int octeon_cpu_disable(void)
->   	if (cpu == 0)
->   		return -EBUSY;
->
-> -	spin_lock(&smp_reserve_lock);
-> +	raw_spin_lock(&smp_reserve_lock);
->
->   	set_cpu_online(cpu, false);
->   	cpu_clear(cpu, cpu_callin_map);
-> @@ -277,7 +277,7 @@ static int octeon_cpu_disable(void)
->   	flush_cache_all();
->   	local_flush_tlb_all();
->
-> -	spin_unlock(&smp_reserve_lock);
-> +	raw_spin_unlock(&smp_reserve_lock);
->
->   	return 0;
->   }
+Fire away!  ;-)
+
+> Since we should not use per-cpu data for either files or processes
+> (there are simply too many of those around) the alternative is
+> horrendously hideous things like:
+> 
+>   https://lkml.org/lkml/2010/1/6/136
+> 
+> which one cannot get away with either.
+> 
+> The whole thing is very vexing indeed since all of this is only needed
+> for ill-behaved applications since a well-constructed application will
+> never fault in a range it is concurrently unmapping.
+> 
+> Most annoying.
+
+No argument there!!!
+
+							Thanx, Paul
 
