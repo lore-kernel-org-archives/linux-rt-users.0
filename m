@@ -1,51 +1,80 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: patch to fix early printks with PREMPT_RT_FULL
-Date: Thu, 17 May 2012 18:30:46 -0700
-Message-ID: <4FB5A646.7060803@am.sony.com>
-References: <4FA47D4A.6020009@caviumnetworks.com> <4FB56EA1.4040609@caviumnetworks.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
+ spinlock
+Date: Fri, 18 May 2012 10:29:32 +0800
+Message-ID: <20120518022932.GA6003@zhy>
+References: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
+ <4FB527B2.2010800@gmail.com>
+ <20120517205003.GE16397@linux-mips.org>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Venkat Subbiah <vsubbiah@caviumnetworks.com>
+Content-Type: text/plain; charset=utf-8
+Cc: David Daney <ddaney.cavm@gmail.com>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	david.daney@cavium.com, tglx@linutronix.de
+To: Ralf Baechle <ralf@linux-mips.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from am1ehsobe005.messaging.microsoft.com ([213.199.154.208]:16827
-	"EHLO am1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S965134Ab2ERBbI (ORCPT
+Received: from mail-qc0-f174.google.com ([209.85.216.174]:51947 "EHLO
+	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S966624Ab2ERC3p (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 21:31:08 -0400
-In-Reply-To: <4FB56EA1.4040609@caviumnetworks.com>
+	Thu, 17 May 2012 22:29:45 -0400
+Content-Disposition: inline
+In-Reply-To: <20120517205003.GE16397@linux-mips.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/17/12 14:33, Venkat Subbiah wrote:
-> Thomas,
-> Is this patch going to make it to a release or should this sent be sent 
-> to more folks for review?
-> Thanks,
-> Venkat
+On Thu, May 17, 2012 at 10:50:03PM +0200, Ralf Baechle wrote:
+> On Thu, May 17, 2012 at 09:30:42AM -0700, David Daney wrote:
+> > Date:   Thu, 17 May 2012 09:30:42 -0700
+> > From: David Daney <ddaney.cavm@gmail.com>
+> > To: Yong Zhang <yong.zhang0@gmail.com>, ralf@linux-mips.org
+> > CC: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+> >  david.daney@cavium.com, tglx@linutronix.de
+> > Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
+> >  spinlock
+> > Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+> > 
+> > On 05/17/2012 03:15 AM, Yong Zhang wrote:
+> > >From: Yong Zhang<yong.zhang@windriver.com>
+> > >
+> > >Because __cpu_disable is called in atomic context and spinlock
+> > >is a mutex on -rt.
+> > >
+> > >Signed-off-by: Yong Zhang<yong.zhang0@gmail.com>
+> > >---
+> > >  arch/mips/cavium-octeon/smp.c |    6 +++---
+> > >  1 files changed, 3 insertions(+), 3 deletions(-)
+> > >
+> > >diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
+> > >index ef9c34a..473c72b 100644
+> > >--- a/arch/mips/cavium-octeon/smp.c
+> > >+++ b/arch/mips/cavium-octeon/smp.c
+> > >@@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
+> > >
+> > >  extern void fixup_irqs(void);
+> > >
+> > >-static DEFINE_SPINLOCK(smp_reserve_lock);
+> > >+static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
+> > >
+> > 
+> > Ralf added this in 773cb77d (MIPS: Cavium: Add CPU hotplugging code.)
+> > 
+> > I'm not even sure what this lock is supposed to be protecting, so I
+> > would like Ralf to take a look.
+> > 
+> > You can add an Acked-by: from me for either this patch as is, or if
+> > Ralf thinks it is OK, removing the lock entirely.
+> > 
+> > In any event we can merge this via Ralf's tree.
 > 
-> On 05/04/2012 06:07 PM, Venkat Subbiah wrote:
->> Hello,
->>
->> With PREMPT_RT_FULL I notice couple of issues when early printk is turned on
->>
->> 1)  printks show up only after the full console is enabled
->> 2)  There are double prints for each of the prinkts before the full
->> console was enabled.
+> The 773cb77d patch has a long history but I think I first worked on it for
+> Wind River Linux 2.0 which was 2.6.21-based, then broke it out and pushed
+> it upstream.  In 2.6.21 it was probably infected by the the smp_reserve_lock
+> virus in the s390 code for no good reason.  So I agree, the lock can
+> be dropped and I'm queueing a patch to do so for 3.5.
 
-Venkat,
+I'm OK with dropping it ;-)
 
-Do my patches from yesterday solve problem #1 for you?  (I can't
-test for your problem, because I don't see it on my ARM system.)
-
-   http://marc.info/?l=linux-rt-users&m=133721694105947&w=2
-
-   http://marc.info/?l=linux-rt-users&m=133721717706004&w=2
-
-For problem #2, does that also exist without the RT patches?
-
--Frank
-
+Thanks,
+Yong
