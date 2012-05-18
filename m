@@ -1,80 +1,58 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
- spinlock
-Date: Fri, 18 May 2012 10:29:32 +0800
-Message-ID: <20120518022932.GA6003@zhy>
-References: <1337249709-7346-1-git-send-email-yong.zhang0@gmail.com>
- <4FB527B2.2010800@gmail.com>
- <20120517205003.GE16397@linux-mips.org>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: Preemption test
+Date: Fri, 18 May 2012 14:49:04 +0200
+Message-ID: <CAONaPpEvdJJOfrZo_Z=M2n62U-gzY2JyR58YO6nAoNE4kN_h7w@mail.gmail.com>
+References: <4FB2BCFC.7040104@caviumnetworks.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: David Daney <ddaney.cavm@gmail.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	david.daney@cavium.com, tglx@linutronix.de
-To: Ralf Baechle <ralf@linux-mips.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Venkat Subbiah <vsubbiah@caviumnetworks.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f174.google.com ([209.85.216.174]:51947 "EHLO
-	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S966624Ab2ERC3p (ORCPT
+Received: from mail-vb0-f46.google.com ([209.85.212.46]:37391 "EHLO
+	mail-vb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759720Ab2ERMtG convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 May 2012 22:29:45 -0400
-Content-Disposition: inline
-In-Reply-To: <20120517205003.GE16397@linux-mips.org>
+	Fri, 18 May 2012 08:49:06 -0400
+Received: by vbbff1 with SMTP id ff1so2487384vbb.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 May 2012 05:49:04 -0700 (PDT)
+In-Reply-To: <4FB2BCFC.7040104@caviumnetworks.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 17, 2012 at 10:50:03PM +0200, Ralf Baechle wrote:
-> On Thu, May 17, 2012 at 09:30:42AM -0700, David Daney wrote:
-> > Date:   Thu, 17 May 2012 09:30:42 -0700
-> > From: David Daney <ddaney.cavm@gmail.com>
-> > To: Yong Zhang <yong.zhang0@gmail.com>, ralf@linux-mips.org
-> > CC: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-> >  david.daney@cavium.com, tglx@linutronix.de
-> > Subject: Re: [PATCH -rt] MIPS: Octeon: convert smp_reserve_lock to raw
-> >  spinlock
-> > Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-> > 
-> > On 05/17/2012 03:15 AM, Yong Zhang wrote:
-> > >From: Yong Zhang<yong.zhang@windriver.com>
-> > >
-> > >Because __cpu_disable is called in atomic context and spinlock
-> > >is a mutex on -rt.
-> > >
-> > >Signed-off-by: Yong Zhang<yong.zhang0@gmail.com>
-> > >---
-> > >  arch/mips/cavium-octeon/smp.c |    6 +++---
-> > >  1 files changed, 3 insertions(+), 3 deletions(-)
-> > >
-> > >diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
-> > >index ef9c34a..473c72b 100644
-> > >--- a/arch/mips/cavium-octeon/smp.c
-> > >+++ b/arch/mips/cavium-octeon/smp.c
-> > >@@ -257,7 +257,7 @@ DEFINE_PER_CPU(int, cpu_state);
-> > >
-> > >  extern void fixup_irqs(void);
-> > >
-> > >-static DEFINE_SPINLOCK(smp_reserve_lock);
-> > >+static DEFINE_RAW_SPINLOCK(smp_reserve_lock);
-> > >
-> > 
-> > Ralf added this in 773cb77d (MIPS: Cavium: Add CPU hotplugging code.)
-> > 
-> > I'm not even sure what this lock is supposed to be protecting, so I
-> > would like Ralf to take a look.
-> > 
-> > You can add an Acked-by: from me for either this patch as is, or if
-> > Ralf thinks it is OK, removing the lock entirely.
-> > 
-> > In any event we can merge this via Ralf's tree.
-> 
-> The 773cb77d patch has a long history but I think I first worked on it for
-> Wind River Linux 2.0 which was 2.6.21-based, then broke it out and pushed
-> it upstream.  In 2.6.21 it was probably infected by the the smp_reserve_lock
-> virus in the s390 code for no good reason.  So I agree, the lock can
-> be dropped and I'm queueing a patch to do so for 3.5.
+On Tue, May 15, 2012 at 10:30 PM, Venkat Subbiah
+<vsubbiah@caviumnetworks.com> wrote:
+> Trying to compile Preepmtion test with instructions from
+> https://rt.wiki.kernel.org/index.php/Preemption_Test and I run into t=
+he
+> error below
+>
+> g++ preempt-test.cc -g -lboost_thread-mt -lboost_program_options -o
+> preempt-test
+> preempt-test.cc:57:40: error: boost/thread/detail/lock.hpp: No such f=
+ile or
+> directory
+>
+> Is there a later version than v4 from
+> ftp://ftp.novell.com/dev/ghaskins/preempt-test-latest.tar.bz2
+>
+> The git link
+> =A0git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/preempt-tes=
+t.git
+> doesn't exist. Is there a git repo some where else.
+>
 
-I'm OK with dropping it ;-)
+No idea if anyone is actively maintaining the "Preemption Test".
+Most folks here use the rt-tests suite. The Wiki page for Preemption
+Test acknowledges rt-migration-test for ideas in it's own development.
+The rt-migration-test itself is now actively maintained as part of the
+rt-test suite.
+I updated the wiki to reflect that fact with a link to rt-tests.
 
-Thanks,
-Yong
+Thanks
+John
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
