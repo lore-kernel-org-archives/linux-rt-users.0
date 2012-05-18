@@ -1,56 +1,47 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: Preemption test
-Date: Fri, 18 May 2012 14:49:04 +0200
-Message-ID: <CAONaPpEvdJJOfrZo_Z=M2n62U-gzY2JyR58YO6nAoNE4kN_h7w@mail.gmail.com>
-References: <4FB2BCFC.7040104@caviumnetworks.com>
+Subject: Re: Real time micro benchmark suite - thread priority fix
+Date: Fri, 18 May 2012 14:54:01 +0200
+Message-ID: <CAONaPpFi8M7tutcvyMaTeCk5gYk2UjVBKJkorssAKYSEAzJYPw@mail.gmail.com>
+References: <4FB56A88.7050705@caviumnetworks.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: RT <linux-rt-users@vger.kernel.org>
 To: Venkat Subbiah <vsubbiah@caviumnetworks.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vb0-f46.google.com ([209.85.212.46]:37391 "EHLO
+Received: from mail-vb0-f46.google.com ([209.85.212.46]:62593 "EHLO
 	mail-vb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759720Ab2ERMtG convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1759720Ab2ERMyC convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 May 2012 08:49:06 -0400
-Received: by vbbff1 with SMTP id ff1so2487384vbb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 18 May 2012 05:49:04 -0700 (PDT)
-In-Reply-To: <4FB2BCFC.7040104@caviumnetworks.com>
+	Fri, 18 May 2012 08:54:02 -0400
+Received: by vbbff1 with SMTP id ff1so2490827vbb.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 18 May 2012 05:54:01 -0700 (PDT)
+In-Reply-To: <4FB56A88.7050705@caviumnetworks.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, May 15, 2012 at 10:30 PM, Venkat Subbiah
+On Thu, May 17, 2012 at 11:15 PM, Venkat Subbiah
 <vsubbiah@caviumnetworks.com> wrote:
-> Trying to compile Preepmtion test with instructions from
-> https://rt.wiki.kernel.org/index.php/Preemption_Test and I run into t=
-he
-> error below
+> Not sure whether Real time micro benchmark suite is still being maint=
+ained
+> at http://sourceforge.net/projects/rtmicrobench. The latest code from
+> sourceforge has issues while running rtmb_c tests. It fails complaini=
+ng
+> about not being able to set thread priority. =A0Here's a fix for it.
 >
-> g++ preempt-test.cc -g -lboost_thread-mt -lboost_program_options -o
-> preempt-test
-> preempt-test.cc:57:40: error: boost/thread/detail/lock.hpp: No such f=
-ile or
-> directory
+> https://github.com/vsubbiah/rtmb/commit/2a6714030a4009b50b76e99a83bf4=
+b042cc82780
 >
-> Is there a later version than v4 from
-> ftp://ftp.novell.com/dev/ghaskins/preempt-test-latest.tar.bz2
->
-> The git link
-> =A0git://git.kernel.org/pub/scm/linux/kernel/git/ghaskins/preempt-tes=
-t.git
-> doesn't exist. Is there a git repo some where else.
->
+> Thanks,
+> Venkat
 
-No idea if anyone is actively maintaining the "Preemption Test".
-Most folks here use the rt-tests suite. The Wiki page for Preemption
-Test acknowledges rt-migration-test for ideas in it's own development.
-The rt-migration-test itself is now actively maintained as part of the
-rt-test suite.
-I updated the wiki to reflect that fact with a link to rt-tests.
+Are you on some kind of a quest to seek out obscure benchmarks? You
+need to track down Mike Fulton and ask him if he is maintaining it,
+no-one here is.
 
 Thanks
-John
+
+John Kacur
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
