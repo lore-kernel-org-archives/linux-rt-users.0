@@ -1,114 +1,53 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH v2] genirq: don't sync irq thread if current happen to be
- the very irq thread
-Date: Sun, 20 May 2012 20:19:26 +0800
-Message-ID: <20120520121926.GA24585@zhy>
-References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
- <20120509174931.GB31844@pengutronix.de>
- <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
- <20120520052731.GA3864@zhy>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: Yoann LE BARS <yoann@le-bars.net>
+Subject: Re: Non-free firmware and proprietary Radeon driver on OSADL kernel
+Date: Sun, 20 May 2012 17:46:01 +0200
+Message-ID: <4FB911B9.7030103@le-bars.net>
+References: <4FB6D30A.4030902@le-bars.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Uwe =?utf-8?Q?Kleine-K=EF=BF=BDnig?=
-	<u.kleine-koenig@pengutronix.de>, linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Andreas Mohr <andi@lisas.de>
-To: Christophe Huriaux <c.huriaux@gmail.com>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:44083 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754200Ab2ETMTh (ORCPT
+Received: from 85-171-141-56.rev.numericable.fr ([85.171.141.56]:39384 "EHLO
+	obm.le-bars.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751985Ab2ETPqK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 May 2012 08:19:37 -0400
-Content-Disposition: inline
-In-Reply-To: <20120520052731.GA3864@zhy>
+	Sun, 20 May 2012 11:46:10 -0400
+Received: from localhost (localhost [127.0.0.1])
+	by obm.le-bars.net (Postfix) with ESMTP id 1BDF8F6852
+	for <linux-rt-users@vger.kernel.org>; Sun, 20 May 2012 17:55:36 +0200 (CEST)
+Received: from obm.le-bars.net ([127.0.0.1])
+	by localhost (obm.le-bars.net [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id ZaRo76GBxu-q for <linux-rt-users@vger.kernel.org>;
+	Sun, 20 May 2012 17:55:33 +0200 (CEST)
+Received: from [192.168.1.22] (18.239.77.86.rev.sfr.net [86.77.239.18])
+	(Authenticated sender: yoann@le-bars.net)
+	by obm.le-bars.net (Postfix) with ESMTPA id 6DB96F683D
+	for <linux-rt-users@vger.kernel.org>; Sun, 20 May 2012 17:55:33 +0200 (CEST)
+In-Reply-To: <4FB6D30A.4030902@le-bars.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, May 20, 2012 at 01:27:31PM +0800, Yong Zhang wrote:
-> --- a/kernel/irq/manage.c
-> +++ b/kernel/irq/manage.c
-> @@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
->  void synchronize_irq(unsigned int irq)
->  {
->  	struct irq_desc *desc = irq_to_desc(irq);
-> +	struct irqaction *action = desc->action;
 
-Bad time for dereferencing *action.
+Hello everybody out there!
 
----
-From: Yong Zhang <yong.zhang@windriver.com>
-Date: Sun, 20 May 2012 12:56:46 +0800
-Subject: [PATCH v2] genirq: don't sync irq thread if current happen to be the very irq thread
+	After reading a few messages from this list, I am not certain it is th=
+e
+best place to ask my question. Also, I guess the reason nobody answers
+is either nobody knows how sole my problem or have enough times to help
+me. Anyway, I try and revive this topic: can anybody help me? Do I need
+to give more information?
 
-Christophe reported against -rt http://marc.info/?l=linux-rt-users&m=133665600214984&w=2
-BUG: scheduling while atomic: irq/37-s3c-mci/253/0x00000102
-Modules linked in:
-[<c000e9fc>] (unwind_backtrace+0x0/0x12c) from [<c029b82c>] (__schedule+0x58/0x2c0)
-[<c029b82c>] (__schedule+0x58/0x2c0) from [<c029bc10>] (schedule+0x8c/0xb0)
-[<c029bc10>] (schedule+0x8c/0xb0) from [<c0055614>] (synchronize_irq+0xbc/0xd8)
-[<c0055614>] (synchronize_irq+0xbc/0xd8) from [<c01db6b0>] (pio_tasklet+0x34/0x11c)
-[<c01db6b0>] (pio_tasklet+0x34/0x11c) from [<c0024914>] (__tasklet_action+0x68/0x80)
-[<c0024914>] (__tasklet_action+0x68/0x80) from [<c0024ca4>] (__do_softirq+0x88/0x130)
-[<c0024ca4>] (__do_softirq+0x88/0x130) from [<c0024ef0>] (do_softirq+0x48/0x54)
-[<c0024ef0>] (do_softirq+0x48/0x54) from [<c0025048>] (local_bh_enable+0x8c/0xc0)
-[<c0025048>] (local_bh_enable+0x8c/0xc0) from [<c0054678>] (irq_forced_thread_fn+0x4c/0x54)
-[<c0054678>] (irq_forced_thread_fn+0x4c/0x54) from [<c0054454>] (irq_thread+0xa0/0x1c0)
-[<c0054454>] (irq_thread+0xa0/0x1c0) from [<c0038628>] (kthread+0x84/0x8c)
-[<c0038628>] (kthread+0x84/0x8c) from [<c000a100>] (kernel_thread_exit+0x0/0x8)
+	Regards.
 
-Whe looking at this issue, I find that there is a typical deadlock
-scenario with forced treaded irq,
+							Yoann
 
-irq_forced_thread_fn()
-  local_bh_enable();
-    do_softirq();
-      disable_irq();
-        synchronize_irq();
-          wait_event();
-          /*DEAD*/
-
-Cure it by unsync if current happen to be the very irq thread.
-
-Reported-by: Christophe Huriaux <c.huriaux@gmail.com>
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
----
- kernel/irq/manage.c |   10 ++++++++++
- 1 files changed, 10 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 89a3ea8..7a48f74 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
- void synchronize_irq(unsigned int irq)
- {
- 	struct irq_desc *desc = irq_to_desc(irq);
-+	struct irqaction *action;
- 	bool inprogress;
- 
- 	if (!desc)
-@@ -67,7 +68,16 @@ void synchronize_irq(unsigned int irq)
- 	/*
- 	 * We made sure that no hardirq handler is running. Now verify
- 	 * that no threaded handlers are active.
-+	 * But for theaded irq, we don't sync if current happens to be
-+	 * the irq thread; otherwise we could deadlock.
- 	 */
-+	action = desc->action;
-+	while (action) {
-+		if (action->thread && action->thread == current)
-+			return;
-+		action = action->next;
-+	}
-+
- 	wait_event(desc->wait_for_threads, !atomic_read(&desc->threads_active));
- }
- EXPORT_SYMBOL(synchronize_irq);
--- 
-1.7.1
-
+-- Vous utilisez la version libre et gratuite d'OBM, d=E9velopp=E9e et
+support=E9e par Linagora. Contribuez =E0 la R&D du produit en souscriva=
+nt =E0
+une offre entreprise. http://pro.obm.com/ - http://www.linagora.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
