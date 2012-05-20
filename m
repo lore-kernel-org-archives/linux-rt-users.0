@@ -1,11 +1,12 @@
 From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [PATCH] genirq: don't sync irq thread if current happen to be the
- very irq thread
-Date: Sun, 20 May 2012 13:27:31 +0800
-Message-ID: <20120520052731.GA3864@zhy>
+Subject: [PATCH v2] genirq: don't sync irq thread if current happen to be
+ the very irq thread
+Date: Sun, 20 May 2012 20:19:26 +0800
+Message-ID: <20120520121926.GA24585@zhy>
 References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
  <20120509174931.GB31844@pengutronix.de>
  <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+ <20120520052731.GA3864@zhy>
 Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -13,46 +14,36 @@ Cc: Uwe =?utf-8?Q?Kleine-K=EF=BF=BDnig?=
 	<u.kleine-koenig@pengutronix.de>, linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org
+	linux-kernel@vger.kernel.org, Andreas Mohr <andi@lisas.de>
 To: Christophe Huriaux <c.huriaux@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:63632 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750984Ab2ETF1n (ORCPT
+Received: from mail-pz0-f46.google.com ([209.85.210.46]:44083 "EHLO
+	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754200Ab2ETMTh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 May 2012 01:27:43 -0400
+	Sun, 20 May 2012 08:19:37 -0400
 Content-Disposition: inline
-In-Reply-To: <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+In-Reply-To: <20120520052731.GA3864@zhy>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 10, 2012 at 03:17:17PM +0200, Christophe Huriaux wrote:
-> 2012/5/9 Uwe Kleine-K?nig <u.kleine-koenig@pengutronix.de>:
-> > If you enable CONFIG_KALLSYMS you get a more usable backtrace.
-> > Alternatively you can use
-> >
-> > ? ? ? ?$CROSS_COMPILE-addr2line -e vmlinux 0xc000e90c
-> >
-> > to get the file and line that resulted in the code at that address.
-> >
-> 
->   Thanks, I was wondering which config option would enable that. The
-> complete backtrace is much more usable :
+On Sun, May 20, 2012 at 01:27:31PM +0800, Yong Zhang wrote:
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
+>  void synchronize_irq(unsigned int irq)
+>  {
+>  	struct irq_desc *desc = irq_to_desc(irq);
+> +	struct irqaction *action = desc->action;
 
-Actually I don't think this is a -rt issue, you could also trigger this
-warning with vanilla if you boot your kernel with 'threadirqs'.
-
-Could you pleaes try the follow patch?
-
-Thanks,
-Yong
+Bad time for dereferencing *action.
 
 ---
 From: Yong Zhang <yong.zhang@windriver.com>
 Date: Sun, 20 May 2012 12:56:46 +0800
-Subject: [PATCH] genirq: don't sync irq thread if current happen to be the very irq thread
+Subject: [PATCH v2] genirq: don't sync irq thread if current happen to be the very irq thread
 
-Christophe reported against -rt:
+Christophe reported against -rt http://marc.info/?l=linux-rt-users&m=133665600214984&w=2
 BUG: scheduling while atomic: irq/37-s3c-mci/253/0x00000102
 Modules linked in:
 [<c000e9fc>] (unwind_backtrace+0x0/0x12c) from [<c029b82c>] (__schedule+0x58/0x2c0)
@@ -86,28 +77,29 @@ Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/irq/manage.c |    9 +++++++++
- 1 files changed, 9 insertions(+), 0 deletions(-)
+ kernel/irq/manage.c |   10 ++++++++++
+ 1 files changed, 10 insertions(+), 0 deletions(-)
 
 diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 89a3ea8..d5b96e7 100644
+index 89a3ea8..7a48f74 100644
 --- a/kernel/irq/manage.c
 +++ b/kernel/irq/manage.c
 @@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
  void synchronize_irq(unsigned int irq)
  {
  	struct irq_desc *desc = irq_to_desc(irq);
-+	struct irqaction *action = desc->action;
++	struct irqaction *action;
  	bool inprogress;
  
  	if (!desc)
-@@ -67,7 +68,15 @@ void synchronize_irq(unsigned int irq)
+@@ -67,7 +68,16 @@ void synchronize_irq(unsigned int irq)
  	/*
  	 * We made sure that no hardirq handler is running. Now verify
  	 * that no threaded handlers are active.
 +	 * But for theaded irq, we don't sync if current happens to be
 +	 * the irq thread; otherwise we could deadlock.
  	 */
++	action = desc->action;
 +	while (action) {
 +		if (action->thread && action->thread == current)
 +			return;
