@@ -1,140 +1,122 @@
-From: Matthieu Bec <mbec@gmto.org>
-Subject: Re: good load / stress suite?
-Date: Fri, 18 May 2012 17:17:27 -0700
-Message-ID: <4FB6E697.6010709@gmto.org>
-References: <4FB2E1DD.7020203@gmto.org> <1337133337.6724.24.camel@gandalf.stny.rr.com> <20120516105501.17018110@redhat.com>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: [PATCH] genirq: don't sync irq thread if current happen to be the
+ very irq thread
+Date: Sun, 20 May 2012 13:27:31 +0800
+Message-ID: <20120520052731.GA3864@zhy>
+References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
+ <20120509174931.GB31844@pengutronix.de>
+ <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: Uwe =?utf-8?Q?Kleine-K=EF=BF=BDnig?=
+	<u.kleine-koenig@pengutronix.de>, linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-kernel@vger.kernel.org
+To: Christophe Huriaux <c.huriaux@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rainbow.obs.carnegiescience.edu ([192.91.178.46]:46887 "EHLO
-	rainbow.gmto.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756862Ab2ESARc (ORCPT
+Received: from mail-pb0-f46.google.com ([209.85.160.46]:63632 "EHLO
+	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750984Ab2ETF1n (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 May 2012 20:17:32 -0400
-In-Reply-To: <20120516105501.17018110@redhat.com>
+	Sun, 20 May 2012 01:27:43 -0400
+Content-Disposition: inline
+In-Reply-To: <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Thu, May 10, 2012 at 03:17:17PM +0200, Christophe Huriaux wrote:
+> 2012/5/9 Uwe Kleine-K?nig <u.kleine-koenig@pengutronix.de>:
+> > If you enable CONFIG_KALLSYMS you get a more usable backtrace.
+> > Alternatively you can use
+> >
+> > ? ? ? ?$CROSS_COMPILE-addr2line -e vmlinux 0xc000e90c
+> >
+> > to get the file and line that resulted in the code at that address.
+> >
+> 
+>   Thanks, I was wondering which config option would enable that. The
+> complete backtrace is much more usable :
 
-Hello,
+Actually I don't think this is a -rt issue, you could also trigger this
+warning with vanilla if you boot your kernel with 'threadirqs'.
 
-Thanks for the tip for testing.
+Could you pleaes try the follow patch?
 
-I guess I should open a new thread because what follows is more about 
-the result that the testing procedure.
+Thanks,
+Yong
 
-Quick recap on my original test, I have a kernel module timer (clock 
-monotonic, absolute) flipping a bit with some outb(val, 0x3f8 + COM_MCR)
+---
+From: Yong Zhang <yong.zhang@windriver.com>
+Date: Sun, 20 May 2012 12:56:46 +0800
+Subject: [PATCH] genirq: don't sync irq thread if current happen to be the very irq thread
 
-I ran 'cyclictest' in parallel with all the load (make -jN) with a local 
-kernel tree and another on nfs, both give similar results: cyclictest is 
-spot on, my timer does occasional excursion.
+Christophe reported against -rt:
+BUG: scheduling while atomic: irq/37-s3c-mci/253/0x00000102
+Modules linked in:
+[<c000e9fc>] (unwind_backtrace+0x0/0x12c) from [<c029b82c>] (__schedule+0x58/0x2c0)
+[<c029b82c>] (__schedule+0x58/0x2c0) from [<c029bc10>] (schedule+0x8c/0xb0)
+[<c029bc10>] (schedule+0x8c/0xb0) from [<c0055614>] (synchronize_irq+0xbc/0xd8)
+[<c0055614>] (synchronize_irq+0xbc/0xd8) from [<c01db6b0>] (pio_tasklet+0x34/0x11c)
+[<c01db6b0>] (pio_tasklet+0x34/0x11c) from [<c0024914>] (__tasklet_action+0x68/0x80)
+[<c0024914>] (__tasklet_action+0x68/0x80) from [<c0024ca4>] (__do_softirq+0x88/0x130)
+[<c0024ca4>] (__do_softirq+0x88/0x130) from [<c0024ef0>] (do_softirq+0x48/0x54)
+[<c0024ef0>] (do_softirq+0x48/0x54) from [<c0025048>] (local_bh_enable+0x8c/0xc0)
+[<c0025048>] (local_bh_enable+0x8c/0xc0) from [<c0054678>] (irq_forced_thread_fn+0x4c/0x54)
+[<c0054678>] (irq_forced_thread_fn+0x4c/0x54) from [<c0054454>] (irq_thread+0xa0/0x1c0)
+[<c0054454>] (irq_thread+0xa0/0x1c0) from [<c0038628>] (kthread+0x84/0x8c)
+[<c0038628>] (kthread+0x84/0x8c) from [<c000a100>] (kernel_thread_exit+0x0/0x8)
 
-So I looked at cyclictest and thought let's do it the same way. now I 
-have now another cdev module giving user land access to flip COM0  with 
-some IOCTL... and to my surprise: that does perform well.
+Whe looking at this issue, I find that there is a typical deadlock
+scenario with forced treaded irq,
 
-I'm a new comer to these matters but I find it counter-intuitive my RT 
-tasks (set priority 99) "works better" than my kernel timer. I'm looking 
-at understanding this better. Is it just expected? some params I can set 
-to harden things in my kernel timer? any pointers to understand this 
-would be great.
+irq_forced_thread_fn()
+  local_bh_enable();
+    do_softirq();
+      disable_irq();
+        synchronize_irq();
+          wait_event();
+          /*DEAD*/
 
-Regards,
-Matthieu
+Cure it by unsync if current happen to be the very irq thread.
 
+Reported-by: Christophe Huriaux <c.huriaux@gmail.com>
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/irq/manage.c |    9 +++++++++
+ 1 files changed, 9 insertions(+), 0 deletions(-)
 
-
-On 05/16/12 08:55, Clark Williams wrote:
-> On Tue, 15 May 2012 21:55:37 -0400
-> Steven Rostedt<rostedt@goodmis.org>  wrote:
->
->> On Tue, 2012-05-15 at 16:08 -0700, Matthieu Bec wrote:
->>> Hello all,
->>>
->>> I was wondering what people used to check RT_PREEMPT behavior under
->>> load/stress?
->>
->> There is a test suite that Red Hat uses called rt-eval (I believe).
->> Clark can give you more info on that.
->
-> It's called rteval and I have a git tree here:
->
-> git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rteval.git
->
-> It's basically some python scripting to do much of what Steven describes
-> below. When it starts up it kicks off a kernel make with 2* the number
-> of available processors (make -j<n*2>) and runs hackbench, both in
-> loop. Then it kicks off cyclictest to measure the system latency under
-> load.
->
-> I usually run it like this:
->
-> 	$ sudo rteval --duration=12h
->
-> At the end it summarizes the results of the run.
->
->>
->>>
->>> I'm trying to test the accuracy of my timers and have a test where I
->>> setup a kernel module with an hr-timer flipping RTS bit on serial COM0
->>> periodically, which I can look on an oscilloscope. the scope triggers on
->>> rising edge, I call jitter what shows on the falling side:
->>> under no specific load I get ~ 10 us (worst case waiting a long time)
->>>
->>>
->>> My initial idea for stressing the system was to compile a kernel, make
->>> -j 8 (#cores) that I thought would exercise CPU and IO if anything. As
->>> it happens, it's "mostly good" but I do get occasional (but repeatable)
->>> wild excursions (>100us)
->>
->> The tests I do is the following:
->>
->> I run "cyclictest -n -p 80 -t -i 250" then in another window I run a
->> kernel compile using distcc (to stress the network as well) with make
->> -j40, it basically does:
->>
->> while :; make clean; make -j40; done
->>
->> Then I also run hackbench (written by Rusty Russell), with:
->>
->> while :; hackbench 50 ; done
->>
->> I run the above on a single machine, while on another machine I run
->> ktest against the -rt kernel to test different configs (with and without
->> PREEMPT_RT enabled and such). I do this for both i386 and x86_64.
->>
->>
->>>
->>> Looking around, I found a tool called 'stress' -
->>> http://weather.ou.edu/~apw/projects/stress/
->>> Under these new conditions, the system behaves really well again ~20 us
->>> stable all the way.
->>>
->>> So both tests give different result, I'm not sure which to trust.
->>> I was thinking maybe there is some weird interaction with the kernel and
->>> building the kernel that make the 'bad' test invalid?
->>>
->>> I have RT_PREEMPT 3.0.18-rt34 SMP x86_64
->>>
->>
->> Now, I run the above stress tests that I mentioned for several hours
->> before I release a stable kernel. I run this on a 2.6GHz xeon core2, and
->> I may hit at most 70us latency with cyclictest. That's a high, it
->> usually stays below 50us. We consider>100us on this type of hardware a
->> bug which needs to be fixed.
->>
->> -- Steve
->>
->>
-
-
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 89a3ea8..d5b96e7 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
+ void synchronize_irq(unsigned int irq)
+ {
+ 	struct irq_desc *desc = irq_to_desc(irq);
++	struct irqaction *action = desc->action;
+ 	bool inprogress;
+ 
+ 	if (!desc)
+@@ -67,7 +68,15 @@ void synchronize_irq(unsigned int irq)
+ 	/*
+ 	 * We made sure that no hardirq handler is running. Now verify
+ 	 * that no threaded handlers are active.
++	 * But for theaded irq, we don't sync if current happens to be
++	 * the irq thread; otherwise we could deadlock.
+ 	 */
++	while (action) {
++		if (action->thread && action->thread == current)
++			return;
++		action = action->next;
++	}
++
+ 	wait_event(desc->wait_for_threads, !atomic_read(&desc->threads_active));
+ }
+ EXPORT_SYMBOL(synchronize_irq);
 -- 
-Matthieu Bec                GMTO Corp.
-cell:  +1 626 354 9367      P.O. Box 90933
-phone: +1 626 204 0527      Pasadena, CA 91109-0933
+1.7.1
 
