@@ -1,74 +1,84 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH v2] genirq: don't sync irq thread if current happen to
- be the very irq thread
-Date: Tue, 22 May 2012 15:50:38 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1205221548010.3231@ionos>
-References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com> <20120509174931.GB31844@pengutronix.de> <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com> <20120520052731.GA3864@zhy> <20120520121926.GA24585@zhy>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.18-rt29
+Date: Tue, 22 May 2012 11:01:48 -0400
+Message-ID: <1337698908.13348.48.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Christophe Huriaux <c.huriaux@gmail.com>,
-	Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Andreas Mohr <andi@lisas.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Yong Zhang <yong.zhang0@gmail.com>
+Content-Type: multipart/signed; micalg="pgp-sha1"; protocol="application/pgp-signature";
+	boundary="=-gDu268//3w/6F7Fvh5WR"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37894 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753405Ab2EVNul (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3293 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757562Ab2EVPBy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 May 2012 09:50:41 -0400
-In-Reply-To: <20120520121926.GA24585@zhy>
+	Tue, 22 May 2012 11:01:54 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 20 May 2012, Yong Zhang wrote:
-> On Sun, May 20, 2012 at 01:27:31PM +0800, Yong Zhang wrote:
-> > --- a/kernel/irq/manage.c
-> > +++ b/kernel/irq/manage.c
-> > @@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
-> >  void synchronize_irq(unsigned int irq)
-> >  {
-> >  	struct irq_desc *desc = irq_to_desc(irq);
-> > +	struct irqaction *action = desc->action;
-> 
-> Bad time for dereferencing *action.
 
-You meant dereferencing *desc :)
- 
->  	/*
->  	 * We made sure that no hardirq handler is running. Now verify
->  	 * that no threaded handlers are active.
-> +	 * But for theaded irq, we don't sync if current happens to be
-> +	 * the irq thread; otherwise we could deadlock.
->  	 */
-> +	action = desc->action;
+--=-gDu268//3w/6F7Fvh5WR
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: quoted-printable
 
-And dereferencing action w/o being protected by desc->lock is buggy.
 
-+	while (action) {
-> +		if (action->thread && action->thread == current)
-> +			return;
-> +		action = action->next;
-> +	}
-> +
+Dear RT Folks,
 
-Aside of that I really do not like that change. It'll hide real
-deadlocks when disable_irq() is called from the interrupt handler.
+I'm pleased to announce the 3.2.18-rt29 stable release.
 
-Also this will not cure all problems of that MMC driver on RT or with
-forced threaded interrupts.
 
-Assume that tasklet code runs from the softirq thread so it will
-schedule when desc->threads_active > 0. This will trigger a
-"scheduling while atomic" warning.
+This release is just an update to the new stable 3.2.18 version
+and no RT specific changes have been made.
 
-The irq_enable/disable dance in that driver is amazing. I have no time
-at the moment to grok the logic behind this, but it bet this can be
-done way simpler and less horrible.
 
-Thanks,
+You can get this release via the git tree at:
 
-	tglx
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: c96da77dcbdad05e0d707f443328e708f7cb024a
+
+
+Or to build 3.2.18-rt29 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.18.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.18-rt29.=
+patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+
+--=-gDu268//3w/6F7Fvh5WR
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+Content-Transfer-Encoding: 7bit
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAABAgAGBQJPu6pcAAoJEIy3vGnGbaoAPucQAJXM8QQgL/nk7pLI0oEDF+f2
+SwZCIexjhMBCFU17NLKFUn7qdymFBVB+HrdioLUNCuHufGnhwJMaJHdcMJCmNm1f
+5eEBBZ3PWAfgmnHOddE+gWpvLVIDkb8aieEk7Dvx1xg3aau6bqK0172liLq2lpwP
+VNBRChZZXxA9B6Ljzn1YmedmnbgkrAHsGA9jpupNLxXzSRosQxi9FBcj9dpXDSci
+FdqdDFQ218zagdePQLxdZTyPWls73eEtR2blbF414Czbxt1K1nyzSWNuAabV/nlv
+ol4vfw/iTozOrXRNiwiP5/a/0Pzk0v9DmIZN13iA29tVfdUTDAWQw/OibvAgaiCf
+HhhwTTyghSReTPEhBRza8t5+PsPObBTsilfq7plSTf81kZiZQWbzrU+BN4ThgmiR
+GXXlBaC05dfwbk0QazELAmURYkEP1YMrx2Ipx+GBSY5jXNUZ++GrTa5slLUL6num
+6R215OIi2BQWgH8WOug6jAz0eSAJDbJiw2sf7UY51IlCziCu0BRoaZbQDmlO7hcV
+sBM/u1ef2kkRNqyGyOl2emDii3secQCIXhvnTECfPnodWNSA4XSPBK/d3qI9mbIr
+BNpteBYPHTFMLeYNzrzSKDCsfmpyKvr1pgDOBfByvRUjnbo7P65rlewBZ6Zmkt94
+emK4qJdYmEf+STuZQxBx
+=ZCWD
+-----END PGP SIGNATURE-----
+
+--=-gDu268//3w/6F7Fvh5WR--
 
