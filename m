@@ -1,53 +1,88 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.32-rt52
-Date: Tue, 22 May 2012 16:19:36 -0400
-Message-ID: <1337717976.13348.117.camel@gandalf.stny.rr.com>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: [PATCH v2] genirq: don't sync irq thread if current happen to be
+ the very irq thread
+Date: Wed, 23 May 2012 14:54:58 +0800
+Message-ID: <20120523065458.GA24852@zhy>
+References: <CAEOomG9NEoQKqp=pMx0NpzGaFpHBimALwhemnZL4F-8g7XURkA@mail.gmail.com>
+ <20120509174931.GB31844@pengutronix.de>
+ <CAEOomG9FZD9TEQZZKhCrNrq8SNXi3otWB2mDX69i3tWh5YQenw@mail.gmail.com>
+ <20120520052731.GA3864@zhy>
+ <20120520121926.GA24585@zhy>
+ <alpine.LFD.2.02.1205221548010.3231@ionos>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Christophe Huriaux <c.huriaux@gmail.com>,
+	Uwe Kleine-Koenig <u.kleine-koenig@pengutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Mohr <andi@lisas.de>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:24453 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932296Ab2EVUTi (ORCPT
+Received: from mail-qa0-f49.google.com ([209.85.216.49]:44215 "EHLO
+	mail-qa0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751899Ab2EWGzK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 May 2012 16:19:38 -0400
+	Wed, 23 May 2012 02:55:10 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1205221548010.3231@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Tue, May 22, 2012 at 03:50:38PM +0200, Thomas Gleixner wrote:
+> On Sun, 20 May 2012, Yong Zhang wrote:
+> > On Sun, May 20, 2012 at 01:27:31PM +0800, Yong Zhang wrote:
+> > > --- a/kernel/irq/manage.c
+> > > +++ b/kernel/irq/manage.c
+> > > @@ -41,6 +41,7 @@ early_param("threadirqs", setup_forced_irqthreads);
+> > >  void synchronize_irq(unsigned int irq)
+> > >  {
+> > >  	struct irq_desc *desc = irq_to_desc(irq);
+> > > +	struct irqaction *action = desc->action;
+> > 
+> > Bad time for dereferencing *action.
+> 
+> You meant dereferencing *desc :)
 
-Dear RT Folks,
+Ah, yes :)
 
-I'm pleased to announce the 3.0.32-rt52 stable release.
+>  
+> >  	/*
+> >  	 * We made sure that no hardirq handler is running. Now verify
+> >  	 * that no threaded handlers are active.
+> > +	 * But for theaded irq, we don't sync if current happens to be
+> > +	 * the irq thread; otherwise we could deadlock.
+> >  	 */
+> > +	action = desc->action;
+> 
+> And dereferencing action w/o being protected by desc->lock is buggy.
+> 
+> +	while (action) {
+> > +		if (action->thread && action->thread == current)
+> > +			return;
+> > +		action = action->next;
+> > +	}
+> > +
+> 
+> Aside of that I really do not like that change. It'll hide real
+> deadlocks when disable_irq() is called from the interrupt handler.
+> 
+> Also this will not cure all problems of that MMC driver on RT or with
+> forced threaded interrupts.
+> 
+> Assume that tasklet code runs from the softirq thread so it will
+> schedule when desc->threads_active > 0. This will trigger a
+> "scheduling while atomic" warning.
 
+Yes.
 
-This release is just an update to the new stable 3.0.32 version
-and no RT specific changes have been made.
+> 
+> The irq_enable/disable dance in that driver is amazing. I have no time
+> at the moment to grok the logic behind this, but it bet this can be
+> done way simpler and less horrible.
 
+I'll reconsider this issue and try to find the simpler way.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 63166b1a384148473180f7bef83e71409e38de14
-
-
-Or to build 3.0.32-rt52 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.32.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.32-rt52.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
+Thanks,
+Yong
