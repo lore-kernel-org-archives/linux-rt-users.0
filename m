@@ -1,51 +1,73 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH] RFC - rt-tools: Detect whether numa is available at build
- time
-Date: Mon, 28 May 2012 17:49:36 -0700
-Message-ID: <4FC41D20.1010105@am.sony.com>
-References: <1337989189-17563-1-git-send-email-jkacur@redhat.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: RE: [PATCH][UPSTREAM]net,RT:Remove preemption disabling in
+ netif_rx()
+Date: Tue, 29 May 2012 09:59:29 +0200
+Message-ID: <1338278369.14636.12.camel@twins>
+References: <1337227511-2271-1-git-send-email-Priyanka.Jain@freescale.com>
+	 <AC83832D6324604BB08FAE5A33553F19079E17C8@039-SN2MPN1-011.039d.mgd.msft.net>
+	 <1337865466.13348.175.camel@gandalf.stny.rr.com>
+	 <alpine.LFD.2.02.1205260028480.3231@ionos>
+	 <1337985836.13348.272.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	"Rowand, Frank" <Frank_Rowand@sonyusa.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Jain Priyanka-B32167 <B32167@freescale.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Srivastava Rajan-B34330 <B34330@freescale.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe001.messaging.microsoft.com ([216.32.180.11]:8696 "EHLO
-	va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751423Ab2E2AuE (ORCPT
+Received: from casper.infradead.org ([85.118.1.10]:50790 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752388Ab2E2H7k convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 28 May 2012 20:50:04 -0400
-In-Reply-To: <1337989189-17563-1-git-send-email-jkacur@redhat.com>
+	Tue, 29 May 2012 03:59:40 -0400
+In-Reply-To: <1337985836.13348.272.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/25/12 16:39, John Kacur wrote:
-> This is a preliminary hack, I need to clean it up a little, but incase you
-> want to give it a try, here is the alpha version.
+On Fri, 2012-05-25 at 18:43 -0400, Steven Rostedt wrote:
+> On Sat, 2012-05-26 at 00:31 +0200, Thomas Gleixner wrote:
+> > On Thu, 24 May 2012, Steven Rostedt wrote:
+> > 
+> > > On Thu, 2012-05-24 at 04:28 +0000, Jain Priyanka-B32167 wrote:
+> > > > Waiting for review comments on this.
+> > > > 
+> > > 
+> > > > diff --git a/net/core/dev.c b/net/core/dev.c index 452db70..4017820 100644
+> > > > --- a/net/core/dev.c
+> > > > +++ b/net/core/dev.c
+> > > > @@ -2940,7 +2940,7 @@ int netif_rx(struct sk_buff *skb)
+> > > >  		struct rps_dev_flow voidflow, *rflow = &voidflow;
+> > > >  		int cpu;
+> > > >  
+> > > > -		preempt_disable();
+> > > > +		migrate_disable();
+> > > 
+> > > I really want to avoid placing open coded migrate_disable() around the
+> > > kernel. Perhaps we should use "get_cpu_light()" here too.
+> > 
+> > No. get_cpu_light() and migrate_disable() are different.
+> > 
+> > Following your argument we would have to replace preempt_disable()
+> > with get_cpu() all over the place.
+> > 
 > 
-> Note - I stole this methodology from tools/perf
+> I didn't like the get_cpu_light either, but I thought it was Peter that
+> was against a 'migrate-disable()' API leaking all over the kernel.
 > 
-> Signed-off-by: John Kacur <jkacur@redhat.com>
+> IIRC, he gave in when it was part of a locking internal infrastructure.
+> Now it's coming to what he was against. Maybe he changed his mind. I'll
+> let him speak for himself.
 
-I knew I would regret suggesting this fix.
+Ah, right, so I've mapped migrate_disable() to preempt_disable() for !
+PREEMPT_RT. This to make sure people don't do stupid things with it :-)
 
-It works fine on my fedora 12 x86_64 system for native build.
+Then again, people do lots of stupid things with preempt_disable() too,
+but at least we don't grow actual migrate_disable() abuse.
 
-It works fine on my fedora 12 x86_64 system for crossbuild for ARM.
+I think I've done one or two migrate_disable() site like the proposed in
+-rt already.
 
-The NUMA=0 option is still useful (thank you for leaving that
-in place).  I have a second ARM target board, where the cross
-linker does not complain about libnuma, so cyclictest is
-build with libnuma.  But my run time environment does not have
-a libnuma.  Ah the joy of pre-release file systems.  The NUMA=0
-option allowed me to properly build cyclictest to run on this
-not quite yet finished file system.
-
-Tested-by: Frank Rowand <frank.rowand@am.sony.com>
-
--Frank
-
+The thing I really want to avoid is introducing a migrate_disable() that
+can schedule for !rt.
