@@ -1,57 +1,34 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: Re: [RFC PATCH] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6
- and later
-Date: Thu, 31 May 2012 20:50:12 +0800
-Message-ID: <20120531125012.GA3741@zhy>
-References: <1338364287-11614-1-git-send-email-yong.zhang0@gmail.com>
- <20120531012450.GA8506@mudshark.cambridge.arm.com>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+From: Yang Honggang <eagle.rtlinux@gmail.com>
+Subject: file system bug
+Date: Thu, 31 May 2012 10:02:46 -0400
+Message-ID: <4FC77A06.2090706@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Russell King <rmk+kernel@arm.linux.org.uk>,
-	Nicolas Pitre <nico@linaro.org>,
-	Catalin Marinas <Catalin.Marinas@arm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"linux-arm-kernel@lists.infradead.org"
-	<linux-arm-kernel@lists.infradead.org>
-To: Will Deacon <will.deacon@arm.com>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: rtlinux@163.com, =?UTF-8?B?5p2o5rCR5by6?= <mqyoung@gmail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:65448 "EHLO
+Received: from mail-pb0-f46.google.com ([209.85.160.46]:64055 "EHLO
 	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757290Ab2EaMu0 (ORCPT
+	with ESMTP id S932403Ab2EaOBy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 May 2012 08:50:26 -0400
-Content-Disposition: inline
-In-Reply-To: <20120531012450.GA8506@mudshark.cambridge.arm.com>
+	Thu, 31 May 2012 10:01:54 -0400
+Received: by pbbrp8 with SMTP id rp8so1502663pbb.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 31 May 2012 07:01:54 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, May 31, 2012 at 02:24:50AM +0100, Will Deacon wrote:
-> Hello,
-> 
-> On Wed, May 30, 2012 at 08:51:26AM +0100, Yong Zhang wrote:
-> > diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-> > index 7eb18c1..a91b44e 100644
-> > --- a/arch/arm/include/asm/cmpxchg.h
-> > +++ b/arch/arm/include/asm/cmpxchg.h
-> > @@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
-> >  
-> >  #else	/* min ARCH >= ARMv6 */
-> >  
-> > +#define __HAVE_ARCH_CMPXCHG 1
-> > +
-> >  extern void __bad_cmpxchg(volatile void *ptr, int size);
-> 
-> As long as this only requires 4-byte cmpxchg support then I think this is
-> fine. It looks like that's currently the case, so:
+Hello,
 
-Yes and thanks for review.
+There is no rt patch from 2.6.34  until 3.0. It said that the reason is 
+that there
+is a serious file system bug which will cause file corruption.
+And the bug is fixed by Thomas until the version 2.6.38??
 
-Yong
+It will be very grateful if  some detail information about this bug can 
+be given.
 
-> 
-> Acked-by: Will Deacon <will.deacon@arm.com>
-> 
-> Will
+
+Best Regards,
+
+Joseph
