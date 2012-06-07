@@ -1,10 +1,11 @@
-From: David Daney <ddaney.cavm@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 3/4] mips-remove-smp-reserve-lock.patch
-Date: Thu, 07 Jun 2012 10:50:49 -0700
-Message-ID: <4FD0E9F9.60906@gmail.com>
-References: <20120607155148.698959275@goodmis.org> <20120607155221.836885041@goodmis.org>
+Date: Thu, 07 Jun 2012 14:56:39 -0400
+Message-ID: <1339095399.13377.2.camel@gandalf.stny.rr.com>
+References: <20120607155148.698959275@goodmis.org>
+	 <20120607155221.836885041@goodmis.org> <4FD0E9F9.60906@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -12,68 +13,40 @@ Cc: linux-kernel@vger.kernel.org,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
 	Ralf Baechle <ralf@linux-mips.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: David Daney <ddaney.cavm@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pz0-f46.google.com ([209.85.210.46]:34510 "EHLO
-	mail-pz0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759633Ab2FGRuw (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:27576 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754428Ab2FGS4l (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Jun 2012 13:50:52 -0400
-In-Reply-To: <20120607155221.836885041@goodmis.org>
+	Thu, 7 Jun 2012 14:56:41 -0400
+In-Reply-To: <4FD0E9F9.60906@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/07/2012 08:51 AM, Steven Rostedt wrote:
-> From: Thomas Gleixner<tglx@linutronix.de>
->
-> Instead of making the lock raw, remove it as it protects nothing.
+On Thu, 2012-06-07 at 10:50 -0700, David Daney wrote:
+> On 06/07/2012 08:51 AM, Steven Rostedt wrote:
+> > From: Thomas Gleixner<tglx@linutronix.de>
+> >
+> > Instead of making the lock raw, remove it as it protects nothing.
+> 
+> I don't know how you guys are managing the RT branch, but this seems 
+> quite similar to:
+> 
+> a3c8b4faeeccb33dbad6969bc9e50bf409f167e7 (MIPS: Cavium: Remove 
+> smp_reserve_lock.)
 
-I don't know how you guys are managing the RT branch, but this seems 
-quite similar to:
+Great! Then we don't need to worry about it :-)
 
-a3c8b4faeeccb33dbad6969bc9e50bf409f167e7 (MIPS: Cavium: Remove 
-smp_reserve_lock.)
+But as it doesn't seem that this patch was marked as stable, we will be
+carrying it in -rt where we support older kernels.
 
-David Daney
+Should it go to mainline stable?
 
+-- Steve
 
->
-> Signed-off-by: Thomas Gleixner<tglx@linutronix.de>
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Steven Rostedt<rostedt@goodmis.org>
-> ---
->   arch/mips/cavium-octeon/smp.c |    6 ------
->   1 file changed, 6 deletions(-)
->
-> diff --git a/arch/mips/cavium-octeon/smp.c b/arch/mips/cavium-octeon/smp.c
-> index efcfff4..86fce15 100644
-> --- a/arch/mips/cavium-octeon/smp.c
-> +++ b/arch/mips/cavium-octeon/smp.c
-> @@ -257,8 +257,6 @@ DEFINE_PER_CPU(int, cpu_state);
->
->   extern void fixup_irqs(void);
->
-> -static DEFINE_SPINLOCK(smp_reserve_lock);
-> -
->   static int octeon_cpu_disable(void)
->   {
->   	unsigned int cpu = smp_processor_id();
-> @@ -266,8 +264,6 @@ static int octeon_cpu_disable(void)
->   	if (cpu == 0)
->   		return -EBUSY;
->
-> -	spin_lock(&smp_reserve_lock);
-> -
->   	cpu_clear(cpu, cpu_online_map);
->   	cpu_clear(cpu, cpu_callin_map);
->   	local_irq_disable();
-> @@ -277,8 +273,6 @@ static int octeon_cpu_disable(void)
->   	flush_cache_all();
->   	local_flush_tlb_all();
->
-> -	spin_unlock(&smp_reserve_lock);
-> -
->   	return 0;
->   }
->
+> 
+> David Daney
+> 
+
 
