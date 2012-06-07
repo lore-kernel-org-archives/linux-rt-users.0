@@ -1,66 +1,69 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/4] scsi: qla2xxx: Use local_irq_save_nort() in qla2x00_poll
-Date: Thu, 07 Jun 2012 11:42:23 -0400
-Message-ID: <20120607154313.336714561@goodmis.org>
-References: <20120607154222.443210802@goodmis.org>
+Subject: [PATCH RT 0/4] [ANNOUNCE] 3.2.19-rt31-rc1
+Date: Thu, 07 Jun 2012 11:42:22 -0400
+Message-ID: <20120607154222.443210802@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	David Sommerseth <davids@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-scsi-qla2xxx-Use-local_irq_save_nort-in-qla2x00_poll.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: John Kacur <jkacur@redhat.com>
 
-RT triggers the following:
+Dear RT Folks,
 
-[   11.307652]  [<ffffffff81077b27>] __might_sleep+0xe7/0x110
-[   11.307663]  [<ffffffff8150e524>] rt_spin_lock+0x24/0x60
-[   11.307670]  [<ffffffff8150da78>] ? rt_spin_lock_slowunlock+0x78/0x90
-[   11.307703]  [<ffffffffa0272d83>] qla24xx_intr_handler+0x63/0x2d0 [qla2xxx]
-[   11.307736]  [<ffffffffa0262307>] qla2x00_poll+0x67/0x90 [qla2xxx]
+This is the RT stable review cycle of patch 3.2.19-rt31-rc1.
 
-Function qla2x00_poll does local_irq_save() before calling qla24xx_intr_handler
-which has a spinlock. Since spinlocks are sleepable on rt, it is not allowed
-to call them with interrupts disabled. Therefore we use local_irq_save_nort()
-instead which saves flags without disabling interrupts.
+Please scream at me if I messed something up. Please test the patches too.
 
-This fix needs to be applied to v3.0-rt, v3.2-rt and v3.4-rt
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Suggested-by: Thomas Gleixner
-Signed-off-by: John Kacur <jkacur@redhat.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: David Sommerseth <davids@redhat.com>
-Link: http://lkml.kernel.org/r/1335523726-10024-1-git-send-email-jkacur@redhat.com
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 6/12/2012.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.19-rt31-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.19.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.19-rt31-rc1.patch.xz
+
+You can also build from 3.2.19-rt30 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.19-rt30-rt31-rc1.patch.xz
+
+
+Changes from 3.2.19-rt30:
+
 ---
- drivers/scsi/qla2xxx/qla_inline.h |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/scsi/qla2xxx/qla_inline.h b/drivers/scsi/qla2xxx/qla_inline.h
-index 9902834..6d01db6 100644
---- a/drivers/scsi/qla2xxx/qla_inline.h
-+++ b/drivers/scsi/qla2xxx/qla_inline.h
-@@ -36,12 +36,12 @@ qla2x00_poll(struct rsp_que *rsp)
- {
- 	unsigned long flags;
- 	struct qla_hw_data *ha = rsp->hw;
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	if (IS_QLA82XX(ha))
- 		qla82xx_poll(0, rsp);
- 	else
- 		ha->isp_ops->intr_handler(0, rsp);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
- }
- 
- static inline uint8_t *
--- 
-1.7.10
+
+John Kacur (1):
+      scsi: qla2xxx: Use local_irq_save_nort() in qla2x00_poll
+
+Priyanka Jain (1):
+      net,RT:REmove preemption disabling in netif_rx()
+
+Steven Rostedt (1):
+      Linux 3.2.19-rt31-rc1
+
+Thomas Gleixner (1):
+      mips-remove-smp-reserve-lock.patch
+
+----
+ arch/mips/cavium-octeon/smp.c     |    6 ------
+ drivers/scsi/qla2xxx/qla_inline.h |    4 ++--
+ localversion-rt                   |    2 +-
+ net/core/dev.c                    |    8 ++++----
+ 4 files changed, 7 insertions(+), 13 deletions(-)
