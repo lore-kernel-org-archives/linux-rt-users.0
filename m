@@ -1,83 +1,66 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] net,RT:REmove preemption disabling in netif_rx()
-Date: Thu, 07 Jun 2012 11:42:24 -0400
-Message-ID: <20120607154313.536321748@goodmis.org>
+Subject: [PATCH RT 1/4] scsi: qla2xxx: Use local_irq_save_nort() in qla2x00_poll
+Date: Thu, 07 Jun 2012 11:42:23 -0400
+Message-ID: <20120607154313.336714561@goodmis.org>
 References: <20120607154222.443210802@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
-	Priyanka Jain <Priyanka.Jain@freescale.com>,
-	Rajan Srivastava <Rajan.Srivastava@freescale.com>
+	David Sommerseth <davids@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-net-RT-REmove-preemption-disabling-in-netif_rx.patch
+Content-Disposition: inline; filename=0001-scsi-qla2xxx-Use-local_irq_save_nort-in-qla2x00_poll.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Priyanka Jain <Priyanka.Jain@freescale.com>
+From: John Kacur <jkacur@redhat.com>
 
-1)enqueue_to_backlog() (called from netif_rx) should be
-  bind to a particluar CPU. This can be achieved by
-  disabling migration. No need to disable preemption
+RT triggers the following:
 
-2)Fixes crash "BUG: scheduling while atomic: ksoftirqd"
-  in case of RT.
-  If preemption is disabled, enqueue_to_backog() is called
-  in atomic context. And if backlog exceeds its count,
-  kfree_skb() is called. But in RT, kfree_skb() might
-  gets scheduled out, so it expects non atomic context.
+[   11.307652]  [<ffffffff81077b27>] __might_sleep+0xe7/0x110
+[   11.307663]  [<ffffffff8150e524>] rt_spin_lock+0x24/0x60
+[   11.307670]  [<ffffffff8150da78>] ? rt_spin_lock_slowunlock+0x78/0x90
+[   11.307703]  [<ffffffffa0272d83>] qla24xx_intr_handler+0x63/0x2d0 [qla2xxx]
+[   11.307736]  [<ffffffffa0262307>] qla2x00_poll+0x67/0x90 [qla2xxx]
 
-3)When CONFIG_PREEMPT_RT_FULL is not defined,
- migrate_enable(), migrate_disable() maps to
- preempt_enable() and preempt_disable(), so no
- change in functionality in case of non-RT.
+Function qla2x00_poll does local_irq_save() before calling qla24xx_intr_handler
+which has a spinlock. Since spinlocks are sleepable on rt, it is not allowed
+to call them with interrupts disabled. Therefore we use local_irq_save_nort()
+instead which saves flags without disabling interrupts.
 
--Replace preempt_enable(), preempt_disable() with
- migrate_enable(), migrate_disable() respectively
--Replace get_cpu(), put_cpu() with get_cpu_light(),
- put_cpu_light() respectively
+This fix needs to be applied to v3.0-rt, v3.2-rt and v3.4-rt
 
-Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
-Acked-by: Rajan Srivastava <Rajan.Srivastava@freescale.com>
-Cc: <rostedt@goodmis.orgn>
-Link: http://lkml.kernel.org/r/1337227511-2271-1-git-send-email-Priyanka.Jain@freescale.com
+Suggested-by: Thomas Gleixner
+Signed-off-by: John Kacur <jkacur@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: David Sommerseth <davids@redhat.com>
+Link: http://lkml.kernel.org/r/1335523726-10024-1-git-send-email-jkacur@redhat.com
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ drivers/scsi/qla2xxx/qla_inline.h |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 811100d..578a74d 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -3030,7 +3030,7 @@ int netif_rx(struct sk_buff *skb)
- 		struct rps_dev_flow voidflow, *rflow = &voidflow;
- 		int cpu;
+diff --git a/drivers/scsi/qla2xxx/qla_inline.h b/drivers/scsi/qla2xxx/qla_inline.h
+index 9902834..6d01db6 100644
+--- a/drivers/scsi/qla2xxx/qla_inline.h
++++ b/drivers/scsi/qla2xxx/qla_inline.h
+@@ -36,12 +36,12 @@ qla2x00_poll(struct rsp_que *rsp)
+ {
+ 	unsigned long flags;
+ 	struct qla_hw_data *ha = rsp->hw;
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	if (IS_QLA82XX(ha))
+ 		qla82xx_poll(0, rsp);
+ 	else
+ 		ha->isp_ops->intr_handler(0, rsp);
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
+ }
  
--		preempt_disable();
-+		migrate_disable();
- 		rcu_read_lock();
- 
- 		cpu = get_rps_cpu(skb->dev, skb, &rflow);
-@@ -3040,13 +3040,13 @@ int netif_rx(struct sk_buff *skb)
- 		ret = enqueue_to_backlog(skb, cpu, &rflow->last_qtail);
- 
- 		rcu_read_unlock();
--		preempt_enable();
-+		migrate_enable();
- 	}
- #else
- 	{
- 		unsigned int qtail;
--		ret = enqueue_to_backlog(skb, get_cpu(), &qtail);
--		put_cpu();
-+		ret = enqueue_to_backlog(skb, get_cpu_light(), &qtail);
-+		put_cpu_light();
- 	}
- #endif
- 	return ret;
+ static inline uint8_t *
 -- 
 1.7.10
