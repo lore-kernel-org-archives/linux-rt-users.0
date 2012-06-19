@@ -1,135 +1,140 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
 Subject: Re: How do embedded linux-rt systems fill their entropy/randomness
- pools?
-Date: Tue, 19 Jun 2012 00:08:01 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1206182321070.3086@ionos>
-References: <CAM7vvUeRQ0K5J-wtir4JmJcPRfFJtmvxn-yud16BG7KZupFNKg@mail.gmail.com>
+	pools?
+Date: Tue, 19 Jun 2012 09:09:07 +0200
+Message-ID: <20120619070907.GA9459@opentech.at>
+References: <CAM7vvUeRQ0K5J-wtir4JmJcPRfFJtmvxn-yud16BG7KZupFNKg@mail.gmail.com> <alpine.LFD.2.02.1206182321070.3086@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Richard Tollerton <richard.tollerton@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Robin Getz <rgetz@blackfin.uclinux.org>,
 	Matt Mackall <mpm@selenic.com>,
-	Nicholas Mc Guire <der.herr@hofr.at>,
 	linux-security-module@vger.kernel.org
-To: Richard Tollerton <richard.tollerton@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAM7vvUeRQ0K5J-wtir4JmJcPRfFJtmvxn-yud16BG7KZupFNKg@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:55906 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752632Ab2FSHTr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Jun 2012 03:19:47 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1206182321070.3086@ionos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Richard,
+On Tue, 19 Jun 2012, Thomas Gleixner wrote:
 
-On Mon, 18 Jun 2012, Richard Tollerton wrote:
-> Your "genirq: Disable random call on preempt-rt" commit on Jul 21 2009
-> removes interrupt timings as a potential source of randomness for the
-> kernel entropy pool, if CONFIG_PREEMPT_RT_FULL  is set. I have no qualms
-> with this change, per se; manipulating the entropy pool is clearly
-> something that shouldn't be happening at IRQ priority.
+<snip>
 > 
-> However: on an embedded linux-rt system with solid-state storage,
-> add_input_randomness() ought to contribute no entropy at all, and
-> add_disk_randomness() likely contributes a marginal amount of entropy,
-> since SSD seek timings have little variance. That leaves ioctl(/dev/random,
-> RNDADDENTROPY) as the only remaining entropy source. But no kernel drivers
-> appear to use that, and few distributions have egd set up out-of-the-box.
-
-Well, to be clear. Just do a 
-
-  git grep IRQF_SAMPLE_RANDOM
- 
-over the mainline Linux source and you will find out, that this is
-really not a RT problem.
-
-That's a total of 28 places which have IRQF_SAMPLE_RANDOM set on their
-interrupt request call.
-
-You can see the very interesting file which matches that pattern:
-
-Documentation/feature-removal-schedule.txt:What:        IRQF_SAMPLE_RANDOM
-Documentation/feature-removal-schedule.txt:Check:       IRQF_SAMPLE_RANDOM
-Documentation/feature-removal-schedule.txt:Why: Many of IRQF_SAMPLE_RANDOM users are technically bogus as entropy
-
-Now obviosly neither that misfeature has been removed, nor one of the
-folks who are interested in security, randomness etc. has come up with
-any useful replacement.
-
-> Thus, for a stock linux-rt kernel, it appears to be the case that **NOTHING
-> POPULATES THE ENTROPY POOL**. I can readily reproduce this on a live
-> linux-rt ARM system: after boot, /proc/sys/kernel/random/entropy_avail is
-> 0, and stays there.
-
-s/stock linux-rt kernel/stock linux kernel/ and I'm with you :)
-
-> This, to me, seems to be a severe problem. In particular, if the embedded
-> RT system is responsible for generating its own RSA keys for e.g. SSH/SSL
-> on first boot, then the lack of entropy leaves it susceptible to
-> catastrophic factorization attacks as documented in "Ron was wrong, Whit is
-> right", http://eprint.iacr.org/2012/064.pdf, which made the news 3 months
-> or so ago.
+> There are enough papers out there, which cover the inherent randomness
+> of todays cpu systems, so go wild with finding the relevant points
+> which can be abused to a stick some value into the pools fast
+> path.
 > 
-> Do you agree with this analysis?
+> Thanks,
+> 
+> 	tglx
 
-I agree that the lack of randomization is idiotic though I don't agree
-that this is a RT problem. I have access to enough systems where RT
-and mainline have exactly the same issue.
+Here a quick shot of the current state of our ESRNG (Embarrasingly Simple Random Number Generator) - a trivial entropy extracter. There actually are not random number generators on this planet - they all just extract entropy from some poison process - but the name "generator" seems to be accepted.... this is unfortunately work stalled in progress - no more than prototype code and some early papers.
 
-> Would anybody (else) be interested in pursing a realtime-safe way to use
-> interrupt timings as an entropy source?
+Here is a run on my current working box from this morning.
 
-s/realtime-safe/proper/ and I'm all ear and probably a lot of other
-folks as well.
+idle system:
 
-Though I doubt that interrupt timings are going to solve the
-problem. Just look at /proc/interrupts on your headless SSD equipped
-entropy challenged system.
+hofrat@debian:/tmp$ time ./esrng -t 2 -c 4000 -r 5000 -j 9000 -q 0 -p 10000 -s 3 -l 1 -u 10000
+min:1,max:22306,wsize:4216
+r: 167347, d: 152621 N:7361 (data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.3)
+real    0m33.942s
+user    0m8.141s
+sys     0m7.708s
+hofrat@debian:/tmp$ /home/hofrat/ESRNG/test_code/ent data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.3
+Entropy = 7.998823 bits per byte.
 
-There is not much which can add to the entropy, really. And that's why
-IRQF_SAMPLE_RANDOM is pretty useless and any attempt to make it useful
-is probably as useless as well.
+Optimum compression would reduce the size
+of this 167347 byte file by 0 percent.
 
-And I really disagree with the way how the randomness stuff is done
-today. We feed crap into the random generator whether we need it or
-not. Look at the code path, then you know _WHY_ I disabled it on RT
-(aside of the RT specific locking issues). This stuff is really wrong,
-independent of RT.
+Chi square distribution for 167347 samples is 273.57, and randomly
+would exceed this value 20.26 percent of the times.
 
-We need to provide randomness when a consumer needs it, but we don't
-have to do expensive randomness calculations when there is no consumer
-at all. So why not moving off the expensive computations into the
-context of those who need it?
+Arithmetic mean value of data bytes is 127.2821 (127.5 = random).
+Monte Carlo value for Pi is 3.136495644 (error 0.16 percent).
+Serial correlation coefficient is 0.014924 (totally uncorrelated = 0.0).
 
-Some time ago I did some experiments on implementing a lockless per
-cpu "ring buffer" which could be fed fast and w/o overhead with random
-values. Unfortunatly I lost those patches while debugging some weird
-file system corruption issue on RT and I never bothered to reimplement
-them due to lack of bandwidth :(
+so 5k/s on an idle system - note that the entropy extraction rate goes down on
+loaded systems as the entropy extraction is proportional to the execution time
+of the extratro so if it gets no CPU time then it extract little entropy - but
+in general highly loaded systems have sufficient sources of entropy.
 
-But it shouldn't be that hard to reimplement something like that which
-is fast and halfways deep (e.g. at least 4k samples per cpu) which can
-be fed into the random generator consumer side on demand w/o affecting
-the producers. The nice thing is that due to randomness you don't have
-to care about races. It does not matter whether a producer overwrites
-the value while the consumer side is reading it. And the consumer
-side, which is the "slow" path can be a producer as well. It's code
-pathes are equally random as any other ones chosen to be a producer.
+loaded system (io load)
 
-For me that approach with a few producers sprinkled into frequently
-used, but not crucial hot code pathes solved the annoying problem of
-missing randomness in my embedded headless systems quite well, w/o
-enforcing a braindamaged user space daemon which sucks energy forever
-just to fix that shortcoming.
+hofrat@debian:/tmp$ time ./esrng -t 2 -c 4000 -r 5000 -j 9000 -q 0 -p 10000 -s 4 -l 1 -u 10000
+min:1,max:39148,wsize:4218
+r: 167931, d: 152037 N:7420 (data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.4)real    0m34.505s
+user    0m8.241s
+sys     0m7.656s
+hofrat@debian:/tmp$ uptime
+ 14:48:37 up 10 days, 15:17,  9 users,  load average: 8.46, 3.20, 1.17
+hofrat@debian:/tmp$ /home/hofrat/ESRNG/test_code/ent data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.4
+Entropy = 7.998924 bits per byte.
 
-I know that it's not going to be a mathematically provable random
-generator on the producer side, but I really don't care. As long as it
-passes the various tests on the consumer side, I don't worry about
-that theoretical part :)
+Optimum compression would reduce the size
+of this 167931 byte file by 0 percent.
 
-There are enough papers out there, which cover the inherent randomness
-of todays cpu systems, so go wild with finding the relevant points
-which can be abused to a stick some value into the pools fast
-path.
+Chi square distribution for 167931 samples is 250.41, and randomly
+would exceed this value 56.93 percent of the times.
 
-Thanks,
+Arithmetic mean value of data bytes is 127.3719 (127.5 = random).
+Monte Carlo value for Pi is 3.141346291 (error 0.01 percent).
+Serial correlation coefficient is 0.019616 (totally uncorrelated = 0.0).
 
-	tglx
+loaded system (CPU load of 16++ on a 8 core box)
+
+hofrat@debian:/tmp$ time ./esrng -t 2 -c 4000 -r 5000 -j 9000 -q 0 -p 10000 -s 5 -l 1 -u 10000
+wmove: 35870min:1,max:117000,wsize:63174
+r: 28762, d: 291206 N:1 (data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.5)
+real    63m51.208s
+user    43m53.533s
+sys     81m43.550s
+hofrat@debian:/tmp$ /home/hofrat/ESRNG/test_code/ent data_int_10000_2t_jw10q0_c4000_r5000_N3000_j9000.5
+Entropy = 7.993978 bits per byte.
+
+Optimum compression would reduce the size
+of this 28762 byte file by 0 percent.
+
+Chi square distribution for 28762 samples is 238.02, and randomly
+would exceed this value 77.02 percent of the times.
+
+Arithmetic mean value of data bytes is 127.2472 (127.5 = random).
+Monte Carlo value for Pi is 3.129563947 (error 0.38 percent).
+Serial correlation coefficient is 0.005237 (totally uncorrelated = 0.0).
+
+
+Parameters:
+
+the somewhat ugly list of arguments to esrng is due to the lack of 
+autocalibration (a still unsolved issue really) and so this nees some manual
+tuning. Keeping the extraction stable is done by the runtime control loop
+(a windowing controler using the occurence of a race condition as the feedback
+signal to adjust the loop length (statistical race "control") to race on)
+
+Summary: on an idle MP system or io-loaded system a few kilobyte per second is
+resonable - on UP this can be much less (on some embedded UP processors it can
+go down to 100byte/s). for high CPU load it will fade more or less to 0 (it
+is running with the lowest priority in the system in user-space at the moment)
+
+If anybody has time to play with this and test it - I would be greatful for
+input - works for me and if you have enough time (weeks...) to generate GB size
+samples you can (provided the calibration was correct) pass the NIST test-suit
+- atleast some of our data sets did pass - but at this point consider it 
+insecure until proven otherwise. The test-outputs shown above are from ent
+ (random.org test-suit). But if you have no RNG/entropy source at all I'm 
+comfortable claiming this is better than nothing :) 
+
+for those interested - just dumped the current state of ESRNG code (after
+adding comments in the code) to http://www.opentech.at/papers/ESRNG.tar.bz2 
+
+  have fun - get confused !
+
+thx!
+hofrat
