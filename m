@@ -1,38 +1,47 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Compilation fails
-Date: Thu, 21 Jun 2012 08:47:01 -0400
-Message-ID: <1340282821.27036.132.camel@gandalf.stny.rr.com>
-References: <4FE20F1E.3010306@albentia.com> <4FE2BE4F.6080000@c-s.fr>
+Subject: [PATCH][RT] spinlock: Add include for BUG() in spinlock_rt.h
+Date: Thu, 21 Jun 2012 09:37:58 -0400
+Message-ID: <1340285878.27036.138.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Iratxo Pichel Ortiz <ipichel@albentia.com>,
-	linux-rt-users@vger.kernel.org, David Garcia <dgarcia@albentia.com>
-To: leroy christophe <christophe.leroy@c-s.fr>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	leroy christophe <christophe.leroy@c-s.fr>,
+	Iratxo Pichel Ortiz <ipichel@albentia.com>,
+	David Garcia <dgarcia@albentia.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:15464 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31256 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759526Ab2FUMrF (ORCPT
+	with ESMTP id S1759655Ab2FUNiA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Jun 2012 08:47:05 -0400
-In-Reply-To: <4FE2BE4F.6080000@c-s.fr>
+	Thu, 21 Jun 2012 09:38:00 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-06-21 at 08:25 +0200, leroy christophe wrote:
-> Hi
-> 
-> I had the same problem with
-> * Kernel 3.4.2
-> * Patch 3.4.2 rt 10
-> * make for a mpc8xx custom board
-> 
-> As far as I remember I added an #include to <asm/bug.h> in 
-> include/linux/spinlock.h and it worked
+spinlock_rt.h references BUG(), but it does not include bug.h, and on
+some architectures (powerpc) this can cause a build failure.
 
-Either should work, but since only spinlock_rt.h references BUG(), it
-should go in that file.
+Reported-by: Iratxo Pichel Ortiz <ipichel@albentia.com>
+Reported-by: leroy christophe <christophe.leroy@c-s.fr>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+----
+[ Thomas, can you add this patch to your queue so that I can add it to
+stable. Please, let me know when you have. Thanks! ]
 
--- Steve
+diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
+index 3b555b4..0618387 100644
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -5,6 +5,8 @@
+ #error Do not include directly. Use spinlock.h
+ #endif
+ 
++#include <linux/bug.h>
++
+ extern void
+ __rt_spin_lock_init(spinlock_t *lock, char *name, struct lock_class_key *key);
+ 
 
 
