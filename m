@@ -1,29 +1,41 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/3] Linux 3.4.3-rt12-rc1
-Date: Fri, 22 Jun 2012 23:05:51 -0400
-Message-ID: <20120623030639.334215003@goodmis.org>
+Subject: [PATCH RT 1/3] spinlock/rt: Include bug.h in spinlock_rt.h to satisfy BUG() usage
+Date: Fri, 22 Jun 2012 23:05:49 -0400
+Message-ID: <20120623030638.813391214@goodmis.org>
 References: <20120623030548.500374594@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-Linux-3.4.3-rt12-rc1.patch
+Content-Disposition: inline; filename=0001-spinlock-rt-Include-bug.h-in-spinlock_rt.h-to-satisf.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Steven Rostedt <srostedt@redhat.com>
 
----
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Some archs (powerpc) failed to compile because of the reference to
+BUG() in spinlock_rt.h. Although bug.h is included in many headers,
+if spinlock.h is included in a C file before that, it will fail to
+compile.
 
-diff --git a/localversion-rt b/localversion-rt
-index 05c35cb..818ad14 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt11
-+-rt12-rc1
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ include/linux/spinlock_rt.h |    2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
+index 3b555b4..0618387 100644
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -5,6 +5,8 @@
+ #error Do not include directly. Use spinlock.h
+ #endif
+ 
++#include <linux/bug.h>
++
+ extern void
+ __rt_spin_lock_init(spinlock_t *lock, char *name, struct lock_class_key *key);
+ 
 -- 
 1.7.10
