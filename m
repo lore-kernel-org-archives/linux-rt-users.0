@@ -1,45 +1,45 @@
-From: richard -rw- weinberger <richard.weinberger@gmail.com>
-Subject: Re: Debugging kernel lockups
-Date: Mon, 25 Jun 2012 23:15:07 +0200
-Message-ID: <CAFLxGvzmZ0-fKV9FwRoFaFgSXJb3KqwCYegree1OntOkJFPBYw@mail.gmail.com>
-References: <CAFSh4UyHVU8Su47mRf9cCEZiUywBB4D2qeN0bNYfKvuAHO1uvA@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.21-rt33
+Date: Mon, 25 Jun 2012 17:18:58 -0400
+Message-ID: <1340659138.26736.4.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Tom Cook <tom.k.cook@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f174.google.com ([209.85.217.174]:64191 "EHLO
-	mail-lb0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756594Ab2FYVPJ convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jun 2012 17:15:09 -0400
-Received: by lbbgm6 with SMTP id gm6so7057376lbb.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jun 2012 14:15:07 -0700 (PDT)
-In-Reply-To: <CAFSh4UyHVU8Su47mRf9cCEZiUywBB4D2qeN0bNYfKvuAHO1uvA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jun 25, 2012 at 5:17 PM, Tom Cook <tom.k.cook@gmail.com> wrote:
-> Hi,
->
-> Sorry for asking newbie questions here, but I'm, well, a newbie at
-> this. =A0I'm trying to get the 3.2.20-rt32 patch to boot on a Raspber=
-ry
-> Pi, but it seems the patch breaks the SD/MMC card driver and so the
-> root filesystem can't be mounted. =A0I've built a 3.2.20 source tree =
-and
-> it boots fine, then I apply 3.2.20-rt32 patch and the boot halts
-> trying to find the SD card for the root FS.
 
-You can try the "rootwait" kernel parameter.
-But as Sven said, the boot log would be nice to have.
+Dear RT Folks,
 
---=20
-Thanks,
-//richard
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I'm pleased to announce the 3.2.21-rt33 stable release.
+
+
+This release is just an update to the new stable 3.2.21 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 0d2f57e8256e6fc4e4d4d9c28f97eff81274fbc9
+
+
+Or to build 3.2.21-rt33 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.21.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.21-rt33.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
