@@ -1,30 +1,30 @@
-From: "George C. Huntington, III" <george.huntingtoniii@gmail.com>
-Subject: USB ethernet and USB WIFI
-Date: Wed, 27 Jun 2012 09:08:56 -0400
-Message-ID: <CAFu+nvEmetwKSY8Mxi35cTb_WKC29EDisWsUcmPmvFYajjM0tg@mail.gmail.com>
+From: Thomas Sattler <sattler@med.uni-frankfurt.de>
+Subject: Re: Fwd: BUG: scheduling while atomic: chcpu/6197/0x00000002
+Date: Wed, 27 Jun 2012 15:32:06 +0200
+Message-ID: <4FEB0B56.9050509@med.uni-frankfurt.de>
+References: <4FDF00CB.7090703@med.uni-frankfurt.de>  <4FDF201E.2090408@med.uni-frankfurt.de>  <4FE19494.6000303@med.uni-frankfurt.de>  <4FE86067.9010408@med.uni-frankfurt.de>  <4FEAF165.9090008@med.uni-frankfurt.de>  <CAFLxGvzYE=PctjXJkEvfYBqe2sDsiJW_PW0tYMjvXnUJGou9HQ@mail.gmail.com> <1340800622.16702.1.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+Cc: richard -rw- weinberger <richard.weinberger@gmail.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vc0-f174.google.com ([209.85.220.174]:36725 "EHLO
-	mail-vc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750811Ab2F0NI5 (ORCPT
+Received: from mailout.rz.uni-frankfurt.de ([141.2.22.233]:40757 "EHLO
+	mailout.rz.uni-frankfurt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756040Ab2F0NwZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Jun 2012 09:08:57 -0400
-Received: by vcbf11 with SMTP id f11so666557vcb.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Jun 2012 06:08:56 -0700 (PDT)
+	Wed, 27 Jun 2012 09:52:25 -0400
+In-Reply-To: <1340800622.16702.1.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I have been having a bear of a time getting USB WIFI dongles to work
-with the realtime kernel.  I have been working with a 2.6.33 kernel.
+> I believe CPU hotplug is still an issue with -rt, and
+> this is a known problem.
 
-The drivers seems to work, but never actually connect to a network or
-allow traffic to pass through them.  out of desperation I also tried a
-usb to ethernet dongle, but it wouldn't connect to the network either.
- Is there some known problem or reason why this might not work on the
-realtime kernel?
+Is there an (un-)official list of known problems? I'd
+like to help by reporting issues without repeating
+already known issues over and over again. :-)
 
-any help or info is greatly appreciated!
-thanks,
--george
+Thomas
