@@ -1,76 +1,171 @@
 From: PRINGLE Chris <chris.pringle@miranda.com>
-Subject: RE: kmem_cache_destroy issue with RT12 patch on v3.0.3 (perhaps
- related to thread 3.0.4 + rt12: deadlock?)
-Date: Thu, 28 Jun 2012 17:40:29 +0000
-Message-ID: <E7D6489E57008E4088E37F78D30C62E60B9F2D@LB-OPS-EXCH01.miranda.com>
-References: <FBCF5AA02BB36243866FEDBD9889FC720637233484@uk-ops-exch01>
- <1315310330.12533.2.camel@twins>
+Subject: Lookaside cache with high volume of objects hangs the kernel on
+ destruction (deadlock)
+Date: Fri, 29 Jun 2012 08:08:42 +0000
+Message-ID: <E7D6489E57008E4088E37F78D30C62E60BAB7A@LB-OPS-EXCH01.miranda.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: Peter Zijlstra <peterz@infradead.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stanmail.omnibus.co.uk ([194.201.223.253]:16961 "EHLO
+Received: from stanmail.omnibus.co.uk ([194.201.223.253]:32038 "EHLO
 	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753772Ab2F1RqI (ORCPT
+	with ESMTP id S1750714Ab2F2IJB convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Jun 2012 13:46:08 -0400
-In-Reply-To: <1315310330.12533.2.camel@twins>
+	Fri, 29 Jun 2012 04:09:01 -0400
 Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-RGVhciBBbGwsDQoNCldlJ3ZlIGp1c3QgdHJpZWQgdjMuMC4zNC1ydDU1IG9uIGEgUG93ZXJQQyBh
-bmQgd2UndmUgZ290IHRoZSBzYW1lIHJlc3VsdHMgdGhhdCB3ZSBoYWQgb24gdGhlIGk2ODYgbmVh
-cmx5IGEgeWVhciBhZ28uIFRoZSBPT1BTIGlzIGFzIGZvbGxvd3M6DQoNCi0tLS0tLS0tLS0tLVsg
-Y3V0IGhlcmUgXS0tLS0tLS0tLS0tLQ0Ka2VybmVsIEJVRyBhdCBrZXJuZWwvcnRtdXRleC5jOjcy
-NSENCk9vcHM6IEV4Y2VwdGlvbiBpbiBrZXJuZWwgbW9kZSwgc2lnOiA1IFsjMV0NClBSRUVNUFQg
-U01QIE5SX0NQVVM9OCBDUEMtMzgwMQ0KTW9kdWxlcyBsaW5rZWQgaW46IGNwYygtKSBbbGFzdCB1
-bmxvYWRlZDogY3BjXQ0KTklQOiBjMDRlNTA1OCBMUjogYzA0ZTUwM2MgQ1RSOiAwMDAwMDAwMA0K
-UkVHUzogZTgwNDNjMDAgVFJBUDogMDcwMCAgIE5vdCB0YWludGVkICAoMy4wLjM0LXJ0NTUpDQpN
-U1I6IDAwMDI5MDAyIDxFRSxNRSxDRT4gIENSOiA4MjAwMDg0MiAgWEVSOiAyMDAwMDAwMA0KVEFT
-SyA9IGU4MDIwN2YwWzkwNl0gJ3JtbW9kJyBUSFJFQUQ6IGU4MDQyMDAwIENQVTogMw0KR1BSMDA6
-IDAwMDAwMDAxIGU4MDQzY2IwIGU4MDIwN2YwIDAwMDAwMDAwIGU4MDIwN2YwIDAwMDAwMDAwIDAw
-MDAwMDAxIDAwMDAwMDAwIA0KR1BSMDg6IGU4MDIwN2YwIGU4MDIwN2YwIGU4MDIwN2YwIGU4MDIw
-N2YxIDAwMDAwMDAxIDEwMDFhNTM0IGJmZjY1NTYwIDAwMDAwMDAwIA0KR1BSMTY6IDAwMDAwMDA0
-IDAwMDAwMDAwIDAwMDAwMDIwIDAwMDAwMDAwIDAwMDAwMDA0IDAwMDAwMDAwIDAwMDAwMDIwIDAw
-MDAwMDAwIA0KR1BSMjQ6IGMwNjVkMjM0IGU5YjAyNjI4IDAwMTAwMTAwIGMwNjViMzQ4IGU5Zjhj
-ZjIwIGMwNjJkYzI0IGU4MDIwN2YwIGMwY2ZkYzI0IA0KTklQIFtjMDRlNTA1OF0gcnRfc3Bpbl9s
-b2NrX3Nsb3dsb2NrKzB4ODAvMHgyNzgNCkxSIFtjMDRlNTAzY10gcnRfc3Bpbl9sb2NrX3Nsb3ds
-b2NrKzB4NjQvMHgyNzgNCkNhbGwgVHJhY2U6DQpbZTgwNDNjYjBdIFtjMDRlNTAzY10gcnRfc3Bp
-bl9sb2NrX3Nsb3dsb2NrKzB4NjQvMHgyNzggKHVucmVsaWFibGUpDQpbZTgwNDNkMjBdIFtjMDBk
-YWE1OF0ga21lbV9jYWNoZV9mcmVlKzB4NzQvMHgxMWMNCltlODA0M2Q0MF0gW2MwMGRhZDNjXSBm
-cmVlX2Jsb2NrKzB4MWE0LzB4MWIwDQpbZTgwNDNkNzBdIFtjMDBkYWZhY10gZG9fZHJhaW4rMHg5
-NC8weDEyNA0KW2U4MDQzZGIwXSBbYzAwZDllZjhdIHNsYWJfb25fZWFjaF9jcHUrMHg0OC8weDkw
-DQpbZTgwNDNkZDBdIFtjMDBkYjNiNF0gX19jYWNoZV9zaHJpbmsrMHgyOC8weGM4DQpbZTgwNDNk
-ZTBdIFtjMDBkYjY2NF0ga21lbV9jYWNoZV9kZXN0cm95KzB4NzQvMHgxMTgNCltlODA0M2RmMF0g
-W2YzMDQxODk0XSBjcGNfY29tbWFuZF9idWZmZXJfdGVybSsweDQwLzB4ZDQgW2NwY10NCltlODA0
-M2UwMF0gW2YzMDQyZjM0XSBjcGNfY29tbWFuZF9idWZmZXJfcXVldWVfdGVybSsweDM4LzB4Njgg
-W2NwY10NCltlODA0M2UxMF0gW2YzMDQ5NzNjXSBjcGNfcmVtb3ZlKzB4MzgvMHgxYmMgW2NwY10N
-CltlODA0M2UzMF0gW2MwMjhiN2U0XSBwY2lfZGV2aWNlX3JlbW92ZSsweDM4LzB4NzQNCltlODA0
-M2U0MF0gW2MwMmM4YTg4XSBfX2RldmljZV9yZWxlYXNlX2RyaXZlcisweDZjLzB4ZDANCltlODA0
-M2U1MF0gW2MwMmM4YmQwXSBkcml2ZXJfZGV0YWNoKzB4ZTQvMHhlOA0KW2U4MDQzZTcwXSBbYzAy
-Yzc5NTBdIGJ1c19yZW1vdmVfZHJpdmVyKzB4OWMvMHgxMTQNCltlODA0M2U5MF0gW2MwMmM5NGY0
-XSBkcml2ZXJfdW5yZWdpc3RlcisweDYwLzB4OGMNCltlODA0M2VhMF0gW2MwMjhiYjBjXSBwY2lf
-dW5yZWdpc3Rlcl9kcml2ZXIrMHg1OC8weGYwDQpbZTgwNDNlYzBdIFtmMzA0OTZmNF0gY3BjX2V4
-aXQrMHgxOC8weDI4IFtjcGNdDQpbZTgwNDNlZDBdIFtjMDA4MzJmNF0gc3lzX2RlbGV0ZV9tb2R1
-bGUrMHgxOTgvMHgyMzgNCltlODA0M2Y0MF0gW2MwMDBmMTBjXSByZXRfZnJvbV9zeXNjYWxsKzB4
-MC8weDNjDQotLS0gRXhjZXB0aW9uOiBjMDEgYXQgMHhmZTlhYTJjDQogICBMUiA9IDB4MTAwMDE5
-OGMNCkluc3RydWN0aW9uIGR1bXA6DQo3ZmUzZmI3OCA3ZmM0ZjM3OCAzOGEwMDAwMCAzOGMwMDAw
-MSA0YmI5NzI1ZCAyZjgzMDAwMCA0MDllMDE3NCA4MDFmMDAxMCANCjU0MDAwMDNjIDdmYzAwMjc4
-IDdjMDAwMDM0IDU0MDBkOTdlIDwwZjAwMDAwMD4gM2JiZTA1MDAgM2I4MTAwMDggN2ZhM2ViNzgg
-DQotLS1bIGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAyIF0tLS0NCm5vdGU6IHJtbW9kWzkwNl0g
-ZXhpdGVkIHdpdGggcHJlZW1wdF9jb3VudCAxDQoNCg0KRG9lcyBhbnlvbmUgaGF2ZSBhbnkgaWRl
-YXMgd2hhdCB0aGlzIG1pZ2h0IGJlPyBUaGUgcHJvYmxlbSBvbmx5IG9jY3VycyB3aGVuIGNhbGxp
-bmcga21lbV9jYWNoZV9kZXN0cm95IGFmdGVyIGEgbGFyZ2Ugdm9sdW1lIG9mIG9iamVjdHMgaGF2
-ZSBwYXNzZWQgdGhyb3VnaCBpdC4NCg0KQ2hlZXJzLA0KQ2hyaXMNCg0KDQoNCg0KLS0tLS1Pcmln
-aW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFBldGVyIFppamxzdHJhIFttYWlsdG86cGV0ZXJ6QGlu
-ZnJhZGVhZC5vcmddIA0KU2VudDogMDYgU2VwdGVtYmVyIDIwMTEgMTI6NTkNClRvOiBQUklOR0xF
-IENocmlzDQpDYzogbGludXgtcnQtdXNlcnNAdmdlci5rZXJuZWwub3JnDQpTdWJqZWN0OiBSZTog
-a21lbV9jYWNoZV9kZXN0cm95IGlzc3VlIHdpdGggUlQxMiBwYXRjaCBvbiB2My4wLjMgKHBlcmhh
-cHMgcmVsYXRlZCB0byB0aHJlYWQgMy4wLjQgKyBydDEyOiBkZWFkbG9jaz8pDQoNCk9uIEZyaSwg
-MjAxMS0wOS0wMiBhdCAxMjowMiArMDEwMCwgUFJJTkdMRSBDaHJpcyB3cm90ZToNCg0KPiBUaGUg
-Zm9sbG93aW5nIGNvZGUgY2F1c2VzIHRoZSBhIGtlcm5lbCBPT1BTIGF0IHRoZSBwb2ludCB3aGVy
-ZSBJIGNhbGwNCj4ga21lbV9jYWNoZV9kZXN0cm95Og0KPiANCg0KDQpXaGF0IGRvZXMgdGhhdCBv
-b3BzIGxvb2sgbGlrZT8NCg==
+Dear All,
+
+I posted about this a little while ago but ran out of time to look at the problem; unfortunately our problem has now resurfaced and I'm looking for some advice as to what might be going wrong.
+
+We have a device driver that utilises lookaside caches; some of those caches are subject to a fairly high volume of objects. During normal operation there isn't a problem, however on destruction (when we unload the driver) the kernel hangs. I've tried this on v3.0.3 on 32 bit i686 with rt12 (9 months ago), and I've also tried it on PowerPC kernel v3.0.34 with rt55 (this week); both exhibit the same behaviour. Without the RT patches, everything appears to be okay; the code also appears to work on older 2.6.33 kernels (with the rt patch).
+
+As far as I can tell, it looks like kmem_cache_free is trying to acquire a lock that it already has and the system subsequently deadlocks; I'm no expert on the PI code and I'm not entirely sure what is wrong, but it looks like it's the RT patches that have created the problem.
+
+The following simplified driver reproduces the issue:
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+#include <linux/init.h>
+#include <linux/module.h>
+#include <linux/poll.h>
+#include <linux/version.h>
+#include <linux/signal.h>
+#include <linux/sched.h>
+#include <linux/delay.h>
+#include <linux/slab.h>
+
+MODULE_DESCRIPTION("test - driver module for Development Testing");
+MODULE_AUTHOR("Chris Pringle");
+MODULE_LICENSE("GPL");
+
+struct test_struct
+{
+    unsigned int test[4096];
+};
+
+#define NUM_TESTS 1000
+
+void test_func(void)
+{
+    struct kmem_cache* testcache;
+    struct test_struct** structs;
+    int i;
+
+    structs= (struct test_struct**)kmalloc(sizeof(struct test_struct*) * NUM_TESTS, GFP_KERNEL);
+    if (structs == NULL)
+    {
+        printk(KERN_ERR "%s: Unable to allocate memory\n", __func__);
+        return;
+    }
+
+    printk(KERN_ERR "Creating\n");
+    testcache= KMEM_CACHE(test_struct, 0);
+    if (testcache == NULL)
+    {
+        printk(KERN_ERR "ERROR: %s: Failed to allocate lookaside cache \n", __func__);
+        kfree(structs);
+        return;
+    }
+
+    printk(KERN_ERR "Allocating\n");
+    for (i= 0; i < NUM_TESTS; i++)
+    {
+        structs[i]= kmem_cache_alloc(testcache, GFP_KERNEL);
+        if (structs[i] == NULL)
+        {
+            printk(KERN_ERR "ERROR: Failed to allocate\n");
+        }
+    }
+
+    printk(KERN_ERR "Freeing\n");
+    for (i= 0; i < NUM_TESTS; i++)
+    {
+        if (structs[i])
+            kmem_cache_free(testcache, structs[i]);
+    }
+
+    printk(KERN_ERR "Shrinking\n");
+    kmem_cache_shrink(testcache);
+    printk(KERN_ERR "Destroying\n");
+    kmem_cache_destroy(testcache);
+
+    kfree(structs);
+}
+
+
+static int __init test_init(void)
+{
+    int ret= 0;
+
+    test_func();
+
+    if (ret == 0)
+        printk(KERN_INFO "test driver version loaded\n");
+    return (ret);
+}
+
+static void __exit test_exit(void)
+{
+}
+
+module_init(test_init);
+module_exit(test_exit);
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+Upon insertion of the driver, the following output & OOPS is generated:
+
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+Creating
+Allocating
+Freeing
+Shrinking
+------------[ cut here ]------------
+kernel BUG at kernel/rtmutex.c:725!
+Oops: Exception in kernel mode, sig: 5 [#1]
+PREEMPT SMP NR_CPUS=8 TEST
+Modules linked in: test(+)
+NIP: c04e5058 LR: c04e503c CTR: 00000000
+REGS: e9af3cd0 TRAP: 0700   Not tainted  (3.0.34-rt55)
+MSR: 00029002 <EE,ME,CE>  CR: 84000882  XER: 20000000
+TASK = e9c533b0[325] 'insmod' THREAD: e9af2000 CPU: 0
+GPR00: 00000001 e9af3d80 e9c533b0 00000000 e9c533b0 00000000 00000001 0000383a 
+GPR08: e9c533b0 e9c533b0 e9c533b0 e9c533b1 24000822 10019904 10007234 100176e0 
+GPR16: 00000001 1001a964 1001a960 10008bc1 10008b91 10008bcd 10008bcf 10008aa1 
+GPR24: c065d234 ebc87728 00100100 c065b348 eb7c1b40 c062dc24 e9c533b0 c0ce5c24 
+NIP [c04e5058] rt_spin_lock_slowlock+0x80/0x278
+LR [c04e503c] rt_spin_lock_slowlock+0x64/0x278
+Call Trace:
+[e9af3d80] [c04e503c] rt_spin_lock_slowlock+0x64/0x278 (unreliable)
+[e9af3df0] [c00daa58] kmem_cache_free+0x74/0x11c
+[e9af3e10] [c00dad3c] free_block+0x1a4/0x1b0
+[e9af3e40] [c00dafac] do_drain+0x94/0x124
+[e9af3e80] [c00d9ef8] slab_on_each_cpu+0x48/0x90
+[e9af3ea0] [c00db3b4] __cache_shrink+0x28/0xc8
+[e9af3eb0] [c00db4a0] kmem_cache_shrink+0x4c/0x7c
+[e9af3ec0] [f11dd160] test_func+0x160/0x180 [test]
+[e9af3ee0] [f11f1010] test_init+0x10/0x50 [test]
+[e9af3ef0] [c0001fa4] do_one_initcall+0x50/0x1ec
+[e9af3f20] [c0082ff4] sys_init_module+0xc8/0x1d4
+[e9af3f40] [c000f10c] ret_from_syscall+0x0/0x3c
+--- Exception: c01 at 0xfe9ab08
+    LR = 0x1000143c
+Instruction dump:
+7fe3fb78 7fc4f378 38a00000 38c00001 4bb9725d 2f830000 409e0174 801f0010 
+5400003c 7fc00278 7c000034 5400d97e <0f000000> 3bbe0500 3b810008 7fa3eb78
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+The call always fails when calling __cache_shrink (regardless of whether it's from kmem_cache_shrink or kmem_cache_destroy).
+
+Does anyone have any idea what this might be? 
+
+Cheers,
+Chris
+
+
