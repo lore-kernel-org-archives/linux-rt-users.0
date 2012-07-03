@@ -1,158 +1,68 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: 14th Real Time Linux Workshop - 2nd Call for Papers
-Date: Mon, 2 Jul 2012 20:59:53 +0200
-Message-ID: <20120702185953.GA8171@opentech.at>
+From: Dong Liu <dliu.cn@gmail.com>
+Subject: Re: cpu stall and hyperthread
+Date: Tue, 03 Jul 2012 16:10:46 -0400
+Message-ID: <4FF351C6.3000100@gmail.com>
+References: <4FEBCDDE.60503@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:36462 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750881Ab2GBS75 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Jul 2012 14:59:57 -0400
-Content-Disposition: inline
+Received: from mail-ey0-f174.google.com ([209.85.215.174]:44764 "EHLO
+	mail-ey0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754567Ab2GCUKk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Jul 2012 16:10:40 -0400
+Received: by eaak11 with SMTP id k11so2655555eaa.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Jul 2012 13:10:39 -0700 (PDT)
+In-Reply-To: <4FEBCDDE.60503@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
+After reading the RCU cpu stall doc. I thought that CONFIG_NO_HZ might 
+have something to do with this problem. And I think the NO_HZ config is 
+not good for RT performance, so I made a new kernel without NO_HZ. It 
+lasted longer but eventually cpu stalls happened again.
 
+I then disable the cpu stall checking by set
 
-                      14th Real Time Linux Workshop
-                            2nd Call for Papers
+/sys/module/rcutree/parameters/rcu_cpu_stall_suppress
 
-                           October 18-20, 2012
-                      Department of Computer Science
-                University of North Carolina at Chapel Hill
-                               Chapel Hill
-                                   USA
+to "1", but it did not solve the problem. Instead of cpu stall I had
 
-Following the meetings of academics, developers and users of real-time
-and embedded Linux at the previous 13 Real Time Linux Workshops held
-world-wide (Vienna, Orlando, Milano, Boston, Valencia, Singapore, Lille,
-Lanzhou, Linz, Guadalajara, Dresden, Nairobi and Prague) - the Real Time
-Linux Workshop for 2012 will come to the University of North Carolina at
-Chapel Hill in the US. It will be held from October 18 to 20, 2012.
+BUG: soft lockup - CPU#0 stuck for 279s! [swapper/0:0]
 
-Rationale
-Real-time systems have evolved over the past decades in a relatively
-calm manner - performance has increased, one can say dramatically, but
-the main paradigms were pretty stable since the mid 80s. This has
-changed now. The big change that is moving into the embedded field is
-multicore - and that is not an adaptation of our current methods but a
-re-design from scratch in quite a few cases - notably of our way of
-thinking about real-time. Precisely this area of real-time embedded
-multicore has been a long-time focus of James Anderson's Real-Time
-Systems Group from the Department of Computer Science, University of
-North Carolina at Chapel Hill, covering a wide range from multicore RT,
-embedded applications, testing to certification issues. OSADL and the
-Real Time Linux Foundation Working Group gratefully acknowledge Prof.
-Anderson's offer to host this year's workshop at the University of North
-Carolina at Chapel Hill.
+And even I disabled Hyper-Threading, I also got cpu stall now.
 
-Linux in embedded systems is well established, ranging from consumer
-electronics to network devices and increasingly industrial applications
-including safety related systems. The technological resources suitable
-for high-availability, real-time, and safety critical systems have been
-continuously expanding and improving - allowing to cover the entire
-development life cycle of industrial projects based on open-source
-tools. At the core of this development is the availability of stable
-operating systems with reliable real-time properties. Extending and
-improving these real-time properties of Open Source RTOS is continuous
-research and development effort that OSADL documents in the form of the
-annual Real-Time Linux Workshop.
+CPU stalls also occurred in KVM guest OS as well.
 
-Call for papers
-Authors from regulatory bodies, academics, industry as well as the
-user-community are invited to submit original work dealing with general
-topics related to Open Source and Free Software based real-time systems
-research, experiments and case studies, as well as issues of integration
-of open-source real-time and embedded OS. A special focus will be on
-industrial case studies and safety related systems. Topics of interest
-include, but are not limited to:
- - Modifications and variants of the GNU/Linux operating system
-   extending its real-time capabilities,
- - Contributions to real-time Linux variants, drivers and extensions,
- - Tools for the verification and validation of real-time properties,
- - User-mode real-time concepts, implementation and experience,
- - Real-time Linux applications, in academia, research and industry,
- - Safety related FLOSS systems
- - Work in progress reports, covering recent developments,
- - Educational material on real-time Linux,
- - RTOS core concepts, RT-safe synchronization mechanisms,
- - RT-safe IPC mechanisms for RT and non RT components,
- - Analysis and Benchmarking methods and results of real-time
-   GNU/Linux variants,
- - Debugging techniques and tools, both for code and temporal
-   debugging of core RTOS components, drivers and real-time
-   applications,
- - Real-time related extensions to development environments,
- - Linux platform concepts and design.
+But I never get cpu stall when I'm running the normal kernel without -rt 
+patch.
 
-Abstract submission
-If you wish to present a paper at the workshop, please submit an
-abstract using the submission page at
-https://www.osadl.org/RTLWS14-Abstract.submission-form.0.html.
+Is the cpu stall a known issue with the rt patch?
 
-Final paper to be included into the RTLWS14 Proceedings
-Upon acceptance of an abstract by the RTLWS14 Program Committee, the
-author will be invited to submit a full paper in a form defined by
-https://www.osadl.org/paper.tgz. A detailed description of the editing
-and formatting process will be provided along with the notification
-email.
+Thanks,
 
-Further information: http://www.osadl.org/RTLWS
+Dong
 
-Important dates
-July 23, 2012 - Abstract submission deadline
-August 31, 2012 - Notification of acceptance
-September 28, 2012 - Submission of final paper
-October 18-20, 2012 - Workshop
+On 6/27/12 11:22 PM, Dong Liu wrote:
+> Hi,
+>
+> I'm running 3.4.3-rt11 and 3.2.18-rt29 on a system with Intel I7 860, I
+> noticed that with hyperthread enabled, I'm getting kernel error
+>
+> rcu_preempt detected stalls on CPUs/tasks: { 3} (detected by 5, t=60002
+> jiffies)
+>
+> But with hyperthread disabled, no such error.
+>
+> Is preempt_rt not supposed to be used with hyperthread?
+>
+> Thanks,
+>
+> Dong
+>
+> P.S.
 
-Organization committee:
-
-Local organizers:
- - James H. Anderson, University of North Carolina at Chapel Hill, USA
-
-OSADL/RTLF
- - Carsten Emde, OSADL
- - Nicholas Mc Guire, OSADL
- - Andreas Platschek, Vienna Inst. for System Safety Engineering, Austria
-
-Program committee:
- - Alexey Khoroshilov, ISPRAS, Russia
- - Alfons Crespo, University Valencia, Spain
- - Andrea Bastoni, MBDA, Italy
- - Andreas Platschek, VISSE, Austria
- - Bernhard Noelte, IQSE TueV SueD Rail, Germany
- - Bernhard Zagar, Johannes Keppler Universitaet, Austria
- - Bjoern B. Brandenburg, MPI, Germany
- - Carsten Emde, OSADL, Germany
- - Frank Mueller, NCSU, USA
- - Georg Schiesser, OpenTech, Austria
- - Herman Haertig, Technische Universitaet Dresden, Germany
- - James H. Anderson, University of North Carolina at Chapel Hill, USA
- - Julia Lawall, Laboratory of Computer Sciences, Paris 6, France
- - Klaus Reichl, Base Systems Technology Thales, Austria
- - Michael Friess, AdaCore, France
- - Nicholas Mc Guire, OpenTech EDV Research GmbH, Austria
- - Paul E. McKenney, Linux Technology Center IBM, USA
- - Peter Okech, University of Nairobi, Kenya
- - Peter Zijlstra, RedHat, Netherlands
- - Roberto Bucher, SUSPI, Switzerland
- - Shawn Choo, Weslab, Singapur
- - Shinpei Kato, Systems Research Lab UCSC, USA
- - Stefan Schoenegger, B&R, Austria
- - Thomas Gleixner, Linutronix, Germany
- - Tommaso Cucinotta, Scuola Superiore Sant'Anna, Italy
- - Wolfgang Kuechlin, Informatik Symbolisches Rechnen, Uni Tuebingen, Germany
- - Yutaka Matsuno, ITC University of Tokyo, Japan
- - Zhou Qingguo, DSLab, Lanzhou University, China
-
-Workshop organizers:
- - Department of Computer Science, University of North Carolina at Chapel Hill
- - Open Source Automation Development Lab (OSADL)
-
-Jim Anderson
-Carsten Emde
-Nicholas Mc Guire
-Andreas Platschek
