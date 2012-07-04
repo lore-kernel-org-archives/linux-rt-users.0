@@ -1,191 +1,206 @@
-From: PRINGLE Chris <chris.pringle@miranda.com>
-Subject: RE: Lookaside cache with high volume of objects hangs the kernel on
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: Re: Lookaside cache with high volume of objects hangs the kernel on
  destruction (deadlock)
-Date: Wed, 4 Jul 2012 12:55:17 +0000
-Message-ID: <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com>
+Date: Wed, 4 Jul 2012 10:15:20 -0300
+Message-ID: <20120704131520.GH9200@uudg.org>
 References: <E7D6489E57008E4088E37F78D30C62E60BAB7A@LB-OPS-EXCH01.miranda.com>
  <E7D6489E57008E4088E37F78D30C62E60BC983@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: PRINGLE Chris <chris.pringle@miranda.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stanmail.omnibus.co.uk ([194.201.223.253]:33212 "EHLO
-	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1750941Ab2GDMzi convert rfc822-to-8bit (ORCPT
+Received: from mail-yx0-f174.google.com ([209.85.213.174]:64344 "EHLO
+	mail-yx0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750886Ab2GDNVu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Jul 2012 08:55:38 -0400
-In-Reply-To: <E7D6489E57008E4088E37F78D30C62E60BC983@LB-OPS-EXCH01.miranda.com>
-Content-Language: en-US
+	Wed, 4 Jul 2012 09:21:50 -0400
+Received: by yenl2 with SMTP id l2so6413927yen.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 04 Jul 2012 06:21:48 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Is anyone able to give the test driver demonstrating the problem a try? If more information is needed please let me know and I'll try and supply it. All you need is a Linux kernel with full preemption enabled and you'll see the issue with my test driver.
 
-Thanks,
-Chris
+On Wed, Jul 04, 2012 at 12:55:17PM +0000, PRINGLE Chris wrote:
+| Is anyone able to give the test driver demonstrating the problem a try? If more information is needed please let me know and I'll try and supply it. All you need is a Linux kernel with full preemption enabled and you'll see the issue with my test driver.
+| 
+| Thanks,
+| Chris
 
+Yes, I was able to reproduce the issue on 3.4.4-rt13. I ran a few tests
+under ftrace and got a bit more of information.
 
------Original Message-----
-From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of PRINGLE Chris
-Sent: 29 June 2012 11:41
-To: linux-rt-users@vger.kernel.org
-Subject: RE: Lookaside cache with high volume of objects hangs the kernel on destruction (deadlock)
+The problem seems to happen in kmem_cache_free(), at this piece of code:
 
-FYI: This also happens with 3.4.4 with rt13 on i686 (cannot verify on PowerPC at the moment but it's consistent across architectures so I've no reason to believe it won't be the same).
+        local_lock_irqsave(slab_lock, flags);
+        __cache_free(cachep, objp, __builtin_return_address(0));
+        unlock_slab_and_free_delayed(flags);
 
-The problem shown below occurs with Full preemption; with basic RT preemption the system just hangs (no output whatsoever), and with low-latency desktop preemption the issue appears to go away.
+It seems to fail at the local_lock_irqsave() statement with:
 
-Disabling SMP doesn't fix the issue but the OOPS stack trace changes a bit, although it's the same up to rt_spin_lock.
+	[  149.328013] kernel BUG at kernel/rtmutex.c:725!
+	[  149.328013] invalid opcode: 0000 [#1] PREEMPT SMP
 
-In all cases, the kernel consistently prints out an OOPS at "BUG_ON(rt_mutex_owner(lock) == self)" in rt_spin_lock_slowlock and then hangs.
+And by the end I see:
 
-Any suggestions anyone could offer would be great.
+	[  149.420228] note: insmod[2801] exited with preempt_count 1
 
-Cheers,
-C
+Here it is the ftrace log followed by the backtrace:
 
-
-
------Original Message-----
-From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of PRINGLE Chris
-Sent: 29 June 2012 09:09
-To: linux-rt-users@vger.kernel.org
-Subject: Lookaside cache with high volume of objects hangs the kernel on destruction (deadlock)
-
-Dear All,
-
-I posted about this a little while ago but ran out of time to look at the problem; unfortunately our problem has now resurfaced and I'm looking for some advice as to what might be going wrong.
-
-We have a device driver that utilises lookaside caches; some of those caches are subject to a fairly high volume of objects. During normal operation there isn't a problem, however on destruction (when we unload the driver) the kernel hangs. I've tried this on v3.0.3 on 32 bit i686 with rt12 (9 months ago), and I've also tried it on PowerPC kernel v3.0.34 with rt55 (this week); both exhibit the same behaviour. Without the RT patches, everything appears to be okay; the code also appears to work on older 2.6.33 kernels (with the rt patch).
-
-As far as I can tell, it looks like kmem_cache_free is trying to acquire a lock that it already has and the system subsequently deadlocks; I'm no expert on the PI code and I'm not entirely sure what is wrong, but it looks like it's the RT patches that have created the problem.
-
-The following simplified driver reproduces the issue:
-
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-
-#include <linux/init.h>
-#include <linux/module.h>
-#include <linux/poll.h>
-#include <linux/version.h>
-#include <linux/signal.h>
-#include <linux/sched.h>
-#include <linux/delay.h>
-#include <linux/slab.h>
-
-MODULE_DESCRIPTION("test - driver module for Development Testing"); MODULE_AUTHOR("Chris Pringle"); MODULE_LICENSE("GPL");
-
-struct test_struct
-{
-    unsigned int test[4096];
-};
-
-#define NUM_TESTS 1000
-
-void test_func(void)
-{
-    struct kmem_cache* testcache;
-    struct test_struct** structs;
-    int i;
-
-    structs= (struct test_struct**)kmalloc(sizeof(struct test_struct*) * NUM_TESTS, GFP_KERNEL);
-    if (structs == NULL)
-    {
-        printk(KERN_ERR "%s: Unable to allocate memory\n", __func__);
-        return;
-    }
-
-    printk(KERN_ERR "Creating\n");
-    testcache= KMEM_CACHE(test_struct, 0);
-    if (testcache == NULL)
-    {
-        printk(KERN_ERR "ERROR: %s: Failed to allocate lookaside cache \n", __func__);
-        kfree(structs);
-        return;
-    }
-
-    printk(KERN_ERR "Allocating\n");
-    for (i= 0; i < NUM_TESTS; i++)
-    {
-        structs[i]= kmem_cache_alloc(testcache, GFP_KERNEL);
-        if (structs[i] == NULL)
-        {
-            printk(KERN_ERR "ERROR: Failed to allocate\n");
-        }
-    }
-
-    printk(KERN_ERR "Freeing\n");
-    for (i= 0; i < NUM_TESTS; i++)
-    {
-        if (structs[i])
-            kmem_cache_free(testcache, structs[i]);
-    }
-
-    printk(KERN_ERR "Shrinking\n");
-    kmem_cache_shrink(testcache);
-    printk(KERN_ERR "Destroying\n");
-    kmem_cache_destroy(testcache);
-
-    kfree(structs);
-}
+[  149.262424] Creating
+[  149.264768] Allocating
+[  149.306679] Freeing
+[  149.324816] Shrinking
+[  149.327237] ------------[ cut here ]------------
 
 
-static int __init test_init(void)
-{
-    int ret= 0;
+[  149.328013]   insmod-2801    1..... 49497848us : kmem_cache_shrink <-test_func
+[  149.328013]   insmod-2801    1..... 49497849us : get_online_cpus <-kmem_cache_shrink
+[  149.328013]   insmod-2801    1..... 49497850us : rt_spin_lock <-get_online_cpus
+[  149.328013]   insmod-2801    1..... 49497850us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1..... 49497850us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...1. 49497851us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...1. 49497851us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...1. 49497852us : _raw_spin_unlock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1..... 49497853us : rt_spin_unlock <-get_online_cpus
+[  149.328013]   insmod-2801    1..... 49497853us : rt_spin_lock_slowunlock <-rt_spin_unlock
+[  149.328013]   insmod-2801    1..... 49497854us : _raw_spin_lock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1...1. 49497854us : _raw_spin_unlock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1..... 49497855us : _mutex_lock <-kmem_cache_shrink
+[  149.328013]   insmod-2801    1..... 49497855us : rt_mutex_lock <-_mutex_lock
+[  149.328013]   insmod-2801    1..... 49497856us : rt_mutex_slowlock <-rt_mutex_lock
+[  149.328013]   insmod-2801    1..... 49497856us : _raw_spin_lock <-rt_mutex_slowlock
+[  149.328013]   insmod-2801    1...1. 49497857us : __try_to_take_rt_mutex <-rt_mutex_slowlock
+[  149.328013]   insmod-2801    1...1. 49497857us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...1. 49497858us : _raw_spin_unlock <-rt_mutex_slowlock
+[  149.328013]   insmod-2801    1..... 49497858us : __cache_shrink <-kmem_cache_shrink
+[  149.328013]   insmod-2801    1..... 49497859us : do_drain <-__cache_shrink
+[  149.328013]   insmod-2801    1..... 49497859us : migrate_disable <-do_drain
+[  149.328013]   insmod-2801    1...1. 49497860us : pin_current_cpu <-migrate_disable
+[  149.328013]   insmod-2801    1....1 49497860us : rt_spin_lock <-do_drain
+[  149.328013]   insmod-2801    1....1 49497860us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1....1 49497860us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...11 49497861us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...11 49497862us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...11 49497862us : _raw_spin_unlock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1....1 49497863us : migrate_disable <-do_drain
+[  149.328013]   insmod-2801    1....2 49497863us : rt_spin_lock <-do_drain
+[  149.328013]   insmod-2801    1....2 49497863us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1....2 49497864us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...12 49497864us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...12 49497865us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...12 49497865us : _raw_spin_unlock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1....2 49497866us : free_block <-do_drain
+[  149.328013]   insmod-2801    1....2 49497866us : rt_spin_unlock <-do_drain
+[  149.328013]   insmod-2801    1....2 49497867us : rt_spin_lock_slowunlock <-rt_spin_unlock
+[  149.328013]   insmod-2801    1....2 49497867us : _raw_spin_lock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1...12 49497867us : _raw_spin_unlock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1....2 49497868us : migrate_enable <-do_drain
+[  149.328013]   insmod-2801    1....1 49497868us : rt_spin_unlock <-do_drain
+[  149.328013]   insmod-2801    1....1 49497869us : rt_spin_lock_slowunlock <-rt_spin_unlock
+[  149.328013]   insmod-2801    1....1 49497869us : _raw_spin_lock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1...11 49497870us : _raw_spin_unlock <-rt_spin_lock_slowunlock
+[  149.328013]   insmod-2801    1....1 49497870us : migrate_enable <-do_drain
+[  149.328013]   insmod-2801    1...1. 49497871us : unpin_current_cpu <-migrate_enable
+[  149.328013]   insmod-2801    1..... 49497871us : free_delayed <-do_drain
+[  149.328013]   insmod-2801    1..... 49497871us : do_drain <-__cache_shrink
+[  149.328013]   insmod-2801    1..... 49497872us : migrate_disable <-do_drain
+[  149.328013]   insmod-2801    1...1. 49497872us : pin_current_cpu <-migrate_disable
+[  149.328013]   insmod-2801    1....1 49497872us : rt_spin_lock <-do_drain
+[  149.328013]   insmod-2801    1....1 49497873us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1....1 49497873us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...11 49497873us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...11 49497874us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...11 49497874us : _raw_spin_unlock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1....1 49497875us : migrate_disable <-do_drain
+[  149.328013]   insmod-2801    1....2 49497875us : rt_spin_lock <-do_drain
+[  149.328013]   insmod-2801    1....2 49497875us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1....2 49497876us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...12 49497876us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...12 49497877us : rt_mutex_set_owner <-__try_to_take_rt_mutex
+[  149.328013]   insmod-2801    1...12 49497877us : _raw_spin_unlock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1....2 49497878us : free_block <-do_drain
+[  149.328013]   insmod-2801    1....2 49497878us : __phys_addr <-virt_to_head_page
+[  149.328013]   insmod-2801    1....2 49497879us : slab_destroy <-free_block
+[  149.328013]   insmod-2801    1....2 49497879us : kmem_freepages <-slab_destroy
+[  149.328013]   insmod-2801    1....2 49497879us : __phys_addr <-kmem_freepages
+[  149.328013]   insmod-2801    1....2 49497879us : mod_zone_page_state <-kmem_freepages
+[  149.328013]   insmod-2801    1....2 49497880us : kmem_cache_free <-slab_destroy
+[  149.328013]   insmod-2801    1....2 49497880us : migrate_disable <-kmem_cache_free
+[  149.328013]   insmod-2801    1....3 49497881us : migrate_disable <-__local_lock_irq
+[  149.328013]   insmod-2801    1....4 49497881us : rt_spin_lock <-__local_lock_irq
+[  149.328013]   insmod-2801    1....4 49497881us : rt_spin_lock_slowlock <-rt_spin_lock
+[  149.328013]   insmod-2801    1....4 49497882us : _raw_spin_lock <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1...14 49497882us : __try_to_take_rt_mutex <-rt_spin_lock_slowlock
+[  149.328013]   insmod-2801    1d..14 49497883us : do_invalid_op <-invalid_op
+[  149.328013]   insmod-2801    1d..14 49497883us : atomic_notifier_call_chain <-notify_die
+[  149.328013]   insmod-2801    1d..14 49497883us : __atomic_notifier_call_chain <-atomic_notifier_call_chain
+[  149.328013]   insmod-2801    1d..14 49497884us : __rcu_read_lock <-__atomic_notifier_call_chain
+[  149.328013]   insmod-2801    1d..14 49497884us : notifier_call_chain <-__atomic_notifier_call_chain
+[  149.328013]   insmod-2801    1d..14 49497885us : hw_breakpoint_exceptions_notify <-notifier_call_chain
+[  149.328013]   insmod-2801    1d..14 49497886us : kprobe_exceptions_notify <-notifier_call_chain
+[  149.328013]   insmod-2801    1d..14 49497886us : __rcu_read_unlock <-__atomic_notifier_call_chain
+[  149.328013]   insmod-2801    1...14 49497887us : do_trap <-do_invalid_op
+[  149.328013]   insmod-2801    1...14 49497887us : fixup_exception <-do_trap
+[  149.328013]   insmod-2801    1...14 49497888us : search_exception_tables <-fixup_exception
+[  149.328013]   insmod-2801    1...14 49497889us : search_module_extables <-search_exception_tables
+[  149.328013]   insmod-2801    1...14 49497895us : die <-do_trap
+[  149.328013]   insmod-2801    1...14 49497896us : oops_begin <-die
+[  149.328013]   insmod-2801    1...14 49497896us : oops_enter <-oops_begin
+[  149.328013] ---------------------------------
+[  149.328013] kernel BUG at kernel/rtmutex.c:725!
+[  149.328013] invalid opcode: 0000 [#1] PREEMPT SMP 
+[  149.328013] CPU 1 
+[  149.328013] Modules linked in: lookaside_cache_BUG_reproducer_ftrace(O+) ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat ipta]
+[  149.328013] 
+[  149.328013] Pid: 2801, comm: insmod Tainted: G           O 3.4.4-rt13+ #53 LENOVO 8810A56/LENOVO
+[  149.328013] RIP: 0010:[<ffffffff813e0df1>]  [<ffffffff813e0df1>] rt_spin_lock_slowlock+0x80/0x287
+[  149.328013] RSP: 0018:ffff880075d5fb58  EFLAGS: 00010246
+[  149.328013] RAX: ffff880076d21c00 RBX: ffff88007edce6c0 RCX: 0000000000000001
+[  149.328013] RDX: ffff880076d21c01 RSI: ffff880076d21c00 RDI: ffff88007edce6c0
+[  149.328013] RBP: ffff880075d5fc38 R08: 0000000000000000 R09: ffffffff813e0db9
+[  149.328013] R10: ffff88007f6ab800 R11: ffff88007f6ab800 R12: ffff880076d21c00
+[  149.328013] R13: 00000000001ce6c0 R14: ffff880075d5fb88 R15: ffff88003742cc90
+[  149.328013] FS:  00007fedbd024700(0000) GS:ffff88007ec00000(0000) knlGS:0000000000000000
+[  149.328013] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[  149.328013] CR2: 00007fadc5862e30 CR3: 0000000077285000 CR4: 00000000000007e0
+[  149.328013] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[  149.328013] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[  149.328013] Process insmod (pid: 2801, threadinfo ffff880075d5e000, task ffff880076d21c00)
+[  149.328013] Stack:
+[  149.328013]  ffffffff8110468f ffffffff813e1433 ffff880075d5fb88 ffffffff810a9c0a
+[  149.328013]  0000000000000000 ffff880077181a30 111111110000008c ffff880075d5fb90
+[  149.328013]  ffff880075d5fb90 ffff880075d5fba0 ffff880075d5fba0 111111110000008c
+[  149.328013] Call Trace:
+[  149.328013]  [<ffffffff8110468f>] ? __local_lock_irq+0x22/0x75
+[  149.328013]  [<ffffffff813e1433>] ? rt_spin_lock+0x9/0x40
+[  149.328013]  [<ffffffff810a9c0a>] ? ring_buffer_unlock_commit+0x39/0x5e
+[  149.328013]  [<ffffffff813e1440>] rt_spin_lock+0x16/0x40
+[  149.328013]  [<ffffffff8110468f>] __local_lock_irq+0x22/0x75
+[  149.328013]  [<ffffffff811046fd>] __local_lock_irqsave+0x1b/0x2d
+[  149.328013]  [<ffffffff81105782>] kmem_cache_free+0x3e/0xa4
+[  149.328013]  [<ffffffff8110583e>] slab_destroy+0x56/0x5b
+[  149.328013]  [<ffffffff81105298>] free_block+0xb8/0x100
+[  149.328013]  [<ffffffff81105c14>] do_drain+0x92/0xf7
+[  149.328013]  [<ffffffff81107c94>] __cache_shrink+0x28/0x158
+[  149.328013]  [<ffffffff813e1595>] ? _mutex_lock+0x3c/0x43
+[  149.328013]  [<ffffffff81107e12>] kmem_cache_shrink+0x4e/0x6c
+[  149.328013]  [<ffffffffa001211d>] test_func+0x11d/0x148 [lookaside_cache_BUG_reproducer_ftrace]
+[  149.328013]  [<ffffffffa001c000>] ? 0xffffffffa001bfff
+[  149.328013]  [<ffffffffa001c009>] test_init+0x9/0x1b [lookaside_cache_BUG_reproducer_ftrace]
+[  149.328013]  [<ffffffff81000241>] do_one_initcall+0x7f/0x136
+[  149.328013]  [<ffffffff81080a30>] sys_init_module+0x15f7/0x1877
+[  149.328013]  [<ffffffff813e7ca9>] system_call_fastpath+0x16/0x1b
+[  149.328013] Code: 00 00 4c 89 e6 48 89 df e8 ce 8d c9 ff 85 c0 74 0d 48 89 df e8 1b 10 00 00 e9 02 02 00 00 48 8b 43 58 48 83 e0 fe  
+[  149.328013] RIP  [<ffffffff813e0df1>] rt_spin_lock_slowlock+0x80/0x287
+[  149.328013]  RSP <ffff880075d5fb58>
+[  149.420215] ---[ end trace 0000000000000002 ]---
+[  149.420228] note: insmod[2801] exited with preempt_count 1
 
-    test_func();
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
 
-    if (ret == 0)
-        printk(KERN_INFO "test driver version loaded\n");
-    return (ret);
-}
-
-static void __exit test_exit(void)
-{
-}
-
-module_init(test_init);
-module_exit(test_exit);
-
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-Upon insertion of the driver, the following output & OOPS is generated:
-
-<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
-Creating
-Allocating
-Freeing
-Shrinking
-------------[ cut here ]------------
-kernel BUG at kernel/rtmutex.c:725!
-Oops: Exception in kernel mode, sig: 5 [#1] PREEMPT SMP NR_CPUS=8 TEST Modules linked in: test(+)
-NIP: c04e5058 LR: c04e503c CTR: 00000000
-REGS: e9af3cd0 TRAP: 0700   Not tainted  (3.0.34-rt55)
-MSR: 00029002 <EE,ME,CE>  CR: 84000882  XER: 20000000 TASK = e9c533b0[325] 'insmod' THREAD: e9af2000 CPU: 0
-GPR00: 00000001 e9af3d80 e9c533b0 00000000 e9c533b0 00000000 00000001 0000383a
-GPR08: e9c533b0 e9c533b0 e9c533b0 e9c533b1 24000822 10019904 10007234 100176e0
-GPR16: 00000001 1001a964 1001a960 10008bc1 10008b91 10008bcd 10008bcf 10008aa1
-GPR24: c065d234 ebc87728 00100100 c065b348 eb7c1b40 c062dc24 e9c533b0 c0ce5c24 NIP [c04e5058] rt_spin_lock_slowlock+0x80/0x278 LR [c04e503c] rt_spin_lock_slowlock+0x64/0x278 Call Trace:
-[e9af3d80] [c04e503c] rt_spin_lock_slowlock+0x64/0x278 (unreliable) [e9af3df0] [c00daa58] kmem_cache_free+0x74/0x11c [e9af3e10] [c00dad3c] free_block+0x1a4/0x1b0 [e9af3e40] [c00dafac] do_drain+0x94/0x124 [e9af3e80] [c00d9ef8] slab_on_each_cpu+0x48/0x90 [e9af3ea0] [c00db3b4] __cache_shrink+0x28/0xc8 [e9af3eb0] [c00db4a0] kmem_cache_shrink+0x4c/0x7c [e9af3ec0] [f11dd160] test_func+0x160/0x180 [test] [e9af3ee0] [f11f1010] test_init+0x10/0x50 [test] [e9af3ef0] [c0001fa4] do_one_initcall+0x50/0x1ec [e9af3f20] [c0082ff4] sys_init_module+0xc8/0x1d4 [e9af3f40] [c000f10c] ret_from_syscall+0x0/0x3c
---- Exception: c01 at 0xfe9ab08
-    LR = 0x1000143c
-Instruction dump:
-7fe3fb78 7fc4f378 38a00000 38c00001 4bb9725d 2f830000 409e0174 801f0010 5400003c 7fc00278 7c000034 5400d97e <0f000000> 3bbe0500 3b810008 7fa3eb78
-
->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-
-The call always fails when calling __cache_shrink (regardless of whether it's from kmem_cache_shrink or kmem_cache_destroy).
-
-Does anyone have any idea what this might be? 
-
-Cheers,
-Chris
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
