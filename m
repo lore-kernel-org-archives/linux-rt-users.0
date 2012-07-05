@@ -1,423 +1,796 @@
 From: Dong Liu <dliu.cn@gmail.com>
 Subject: Re: cpu stall and hyperthread
-Date: Thu, 05 Jul 2012 14:41:32 -0400
-Message-ID: <4FF5DFDC.9010501@gmail.com>
-References: <4FEBCDDE.60503@gmail.com> <4FF351C6.3000100@gmail.com> <4FF4C94A.6040105@osadl.org>
+Date: Thu, 05 Jul 2012 14:48:54 -0400
+Message-ID: <4FF5E196.3060003@gmail.com>
+References: <4FEBCDDE.60503@gmail.com>
 Mime-Version: 1.0
 Content-Type: multipart/mixed;
- boundary="------------000109070805040001050703"
-Cc: linux-rt-users@vger.kernel.org
-To: Carsten Emde <C.Emde@osadl.org>
+ boundary="------------020008070302050707010006"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:44066 "EHLO
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:32937 "EHLO
 	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753792Ab2GESl3 (ORCPT
+	with ESMTP id S1754055Ab2GESsw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Jul 2012 14:41:29 -0400
-Received: by eeit10 with SMTP id t10so3356223eei.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2012 11:41:28 -0700 (PDT)
-In-Reply-To: <4FF4C94A.6040105@osadl.org>
+	Thu, 5 Jul 2012 14:48:52 -0400
+Received: by eeit10 with SMTP id t10so3358307eei.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2012 11:48:50 -0700 (PDT)
+In-Reply-To: <4FEBCDDE.60503@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 This is a multi-part message in MIME format.
---------------000109070805040001050703
+--------------020008070302050707010006
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
 
-Hi Carsten,
+I was running the pretty new kernel on CentOS 6.2, so I thought there 
+might be some API incompatible issues. So I freshly installed Fedora 16 
+on the same system, and built and run  3.2.18-rt29 on it. I got the same 
+cpu stalls again.
 
-I tried to disable CONFIG_RT_GROUP_SCHED, but I still got cpu stalls!
+dmesg showed that it occured at the same place menu_select()
 
-Is there a recommended config for the RT patch?
 
-kernel msg attached, it looks like that the stall occurred at the same 
-place "menu_select"
+The cpu stall seems always happening when I trying to run some KVM 
+guests. There might be something not working together between  KVM and 
+the RT patch?
 
-Thanks,
+Thanks!
 
 Dong
 
-On 7/4/12 6:52 PM, Carsten Emde wrote:
-> Dong Liu,
->
->> [..]
->> BUG: soft lockup - CPU#0 stuck for 279s! [swapper/0:0]
-> Just a wild guess: Please check your configuration for
-> CONFIG_RT_GROUP_SCHED=y. Is it there? If so, disable it and try whether
-> this solves your problem.
->
-> -Carsten.
+PS. dmesg attached.
 
 
---------------000109070805040001050703
+On 6/27/12 11:22 PM, Dong Liu wrote:
+> Hi,
+>
+> I'm running 3.4.3-rt11 and 3.2.18-rt29 on a system with Intel I7 860, I
+> noticed that with hyperthread enabled, I'm getting kernel error
+>
+> rcu_preempt detected stalls on CPUs/tasks: { 3} (detected by 5, t=60002
+> jiffies)
+>
+> But with hyperthread disabled, no such error.
+>
+> Is preempt_rt not supposed to be used with hyperthread?
+>
+> Thanks,
+>
+> Dong
+>
+> P.S.
+
+
+--------------020008070302050707010006
 Content-Type: text/plain; charset=UTF-8;
- name="no-rt-group-sched-stalls.txt"
+ name="fc16-cpu-stall-dmesg.txt"
 Content-Transfer-Encoding: 7bit
 Content-Disposition: attachment;
- filename="no-rt-group-sched-stalls.txt"
+ filename="fc16-cpu-stall-dmesg.txt"
 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606416] INFO: rcu_preempt detected stalls on CPUs/tasks: { 3} (detected by 2, t=60002 jiffies)
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606424] sending NMI to all CPUs:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606478] NMI backtrace for cpu 6
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606481] CPU 6 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606483] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606553] 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606557] Pid: 0, comm: swapper/6 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606563] RIP: 0010:[<ffffffff81324d76>]  [<ffffffff81324d76>] intel_idle+0xb6/0x150
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606573] RSP: 0018:ffff880122903e58  EFLAGS: 00000046
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606576] RAX: 0000000000000020 RBX: 0000000000000008 RCX: 0000000000000001
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606579] RDX: 0000000000000000 RSI: ffff880122903fd8 RDI: ffffffff81c16100
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606582] RBP: ffff880122903eb8 R08: 0000000000000000 R09: 0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606586] R10: 00000002fc14952a R11: 0000000000000002 R12: 0000000000000003
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606589] R13: ffff88012fd98a70 R14: 0000000000000020 R15: 129dd6d92c4690d9
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606593] FS:  0000000000000000(0000) GS:ffff88012fd80000(0000) knlGS:0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606597] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606600] CR2: 00007f1976ba8e30 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606603] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606607] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606611] Process swapper/6 (pid: 0, threadinfo ffff880122902000, task ffff880122900380)
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606613] Stack:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606615]  ffff880122903eb8 ffffffff814af709 0000000000000000 00000000000c60bf
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606621]  0000000000000000 00000006000c60bf 00000000ffffffff ffff88012fd98a70
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606627]  ffffffff81c76b20 0000000000000000 0000000000000003 0000000000000006
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606632] Call Trace:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606639]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606645]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606652]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606658]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606661] Code: c7 48 8d 86 38 e0 ff ff 83 e2 08 75 1e 31 d2 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> 15 cf d7 ff 4c 29 f8 48 89 c7 e8 1a 46 d5 ff 49 89 c6 49 89 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606699] Call Trace:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606703]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606708]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606713]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606717]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606722] NMI backtrace for cpu 7
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606725] CPU 7 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606727] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606773] 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606777] Pid: 0, comm: swapper/7 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606783] RIP: 0010:[<ffffffff81324d76>]  [<ffffffff81324d76>] intel_idle+0xb6/0x150
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606790] RSP: 0018:ffff880122943e58  EFLAGS: 00000046
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606794] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606797] RDX: 0000000000000000 RSI: ffff880122943fd8 RDI: ffffffff81c16100
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606800] RBP: ffff880122943eb8 R08: 0000000000000000 R09: 0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606803] R10: 000000001e4a6002 R11: 0000000000000002 R12: 0000000000000002
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606807] R13: ffff88012fdd8a70 R14: 0000000000000010 R15: 129dd6d92c4696f8
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606811] FS:  0000000000000000(0000) GS:ffff88012fdc0000(0000) knlGS:0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606814] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606818] CR2: 00007fb094d1b000 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606821] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606824] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606828] Process swapper/7 (pid: 0, threadinfo ffff880122942000, task ffff880122940500)
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606831] Stack:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606833]  ffff880122943eb8 ffffffff814af709 0000000000000000 00000000000c5e6a
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606838]  0000000000000000 00000007000c5e6a 00000000ffffffff ffff88012fdd8a70
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606843]  ffffffff81c76b20 0000000000000000 0000000000000002 0000000000000007
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606849] Call Trace:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606854]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606860]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606866]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606871]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606875] Code: c7 48 8d 86 38 e0 ff ff 83 e2 08 75 1e 31 d2 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> 15 cf d7 ff 4c 29 f8 48 89 c7 e8 1a 46 d5 ff 49 89 c6 49 89 
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606912] Call Trace:
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606916]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606921]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606926]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606930]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606935] NMI backtrace for cpu 3
-Jul  5 01:05:31 upmc-svr1 kernel: [  130.606937] CPU 3 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606940] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606978] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606981] Pid: 0, comm: swapper/3 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606985] RIP: 0010:[<ffffffff81324d76>]  [<ffffffff81324d76>] intel_idle+0xb6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606990] RSP: 0018:ffff88012285fe58  EFLAGS: 00000046
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606992] RAX: 0000000000000020 RBX: 0000000000000008 RCX: 0000000000000001
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606995] RDX: 0000000000000000 RSI: ffff88012285ffd8 RDI: ffffffff81c16100
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606997] RBP: ffff88012285feb8 R08: 0000000000000000 R09: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.606999] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000003
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607002] R13: ffff88012fcd8a70 R14: 0000000000000020 R15: 129dd6d92c463b5c
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607004] FS:  0000000000000000(0000) GS:ffff88012fcc0000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607007] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607009] CR2: 00000000006d43c4 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607012] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607014] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607017] Process swapper/3 (pid: 0, threadinfo ffff88012285e000, task ffff88012285c680)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607019] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607020]  ffff88012285feb8 ffffffff814af709 ffffffffffffffc3 0000000005f43cb6
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607024]  ffffffffffffffc3 0000000305f43cb6 00000000ffffffff ffff88012fcd8a70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607028]  ffffffff81c76b20 0000000000000000 0000000000000003 0000000000000003
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607031] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607035]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607039]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607043]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607046]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607049] Code: c7 48 8d 86 38 e0 ff ff 83 e2 08 75 1e 31 d2 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> 15 cf d7 ff 4c 29 f8 48 89 c7 e8 1a 46 d5 ff 49 89 c6 49 89 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607074] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607077]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607081]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607084]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607087]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607091] NMI backtrace for cpu 2
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607092] CPU 2 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607093] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607140] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607144] Pid: 0, comm: swapper/2 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607150] RIP: 0010:[<ffffffff812d68a4>]  [<ffffffff812d68a4>] delay_tsc+0x64/0xf0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607157] RSP: 0018:ffff88012fc83c48  EFLAGS: 00000046
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607160] RAX: 0000000400000000 RBX: 00000000b886f88b RCX: 00000000b8876797
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607163] RDX: 000000000000005d RSI: 0000000000000000 RDI: 0000000000000001
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607166] RBP: ffff88012fc83c78 R08: 0000000000000004 R09: 000000000000000a
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607169] R10: 0000000000000006 R11: 0000000000000001 R12: ffff88012281e010
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607172] R13: 00000000002a9c55 R14: 0000000000000002 R15: 00000000b8876797
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607176] FS:  0000000000000000(0000) GS:ffff88012fc80000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607180] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607183] CR2: 00007fc3f21d7210 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607186] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607189] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607193] Process swapper/2 (pid: 0, threadinfo ffff88012281e000, task ffff88012281c500)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607195] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607197]  0000000000000046 0000000000000001 ffffffff81c37380 ffffffff81c37480
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607202]  0000000000000001 ffffffff81c38480 ffff88012fc83c88 ffffffff812d683d
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607207]  ffff88012fc83ca8 ffffffff81035a2d 000000000000fffb ffff88012fc8cf40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607212] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607214]  <IRQ> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607218]  [<ffffffff812d683d>] __const_udelay+0x2d/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607225]  [<ffffffff81035a2d>] arch_trigger_all_cpu_backtrace+0x6d/0xa0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607232]  [<ffffffff810ef4df>] __rcu_pending+0x40f/0x510
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607238]  [<ffffffff810ef88a>] rcu_check_callbacks+0x2aa/0x2c0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607244]  [<ffffffff81082cbd>] update_process_times+0x4d/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607251]  [<ffffffff810a9973>] tick_sched_timer+0x63/0xc0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607257]  [<ffffffff8109c486>] __run_hrtimer+0x76/0x270
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607262]  [<ffffffff810a9910>] ? tick_nohz_handler+0x110/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607267]  [<ffffffff8109c960>] hrtimer_interrupt+0xf0/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607274]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607280]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607285]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607290]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607296]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607300]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607307]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607314]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607317]  <EOI> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607321]  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607326]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607331]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607336]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607340]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607344] Code: 4c 8b 24 25 48 a4 00 00 89 c3 49 81 ec c8 1f 00 00 eb 2c 0f 1f 40 00 bf 01 00 00 00 e8 36 89 32 00 49 8b 04 24 a8 08 75 5a f3 90 <bf> 01 00 00 00 e8 f2 89 32 00 e8 1d 70 00 00 41 39 c6 75 4b 66 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607386] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607388]  <IRQ>  [<ffffffff812d683d>] __const_udelay+0x2d/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607401]  [<ffffffff81035a2d>] arch_trigger_all_cpu_backtrace+0x6d/0xa0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607406]  [<ffffffff810ef4df>] __rcu_pending+0x40f/0x510
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607412]  [<ffffffff810ef88a>] rcu_check_callbacks+0x2aa/0x2c0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607417]  [<ffffffff81082cbd>] update_process_times+0x4d/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607422]  [<ffffffff810a9973>] tick_sched_timer+0x63/0xc0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607426]  [<ffffffff8109c486>] __run_hrtimer+0x76/0x270
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607431]  [<ffffffff810a9910>] ? tick_nohz_handler+0x110/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607435]  [<ffffffff8109c960>] hrtimer_interrupt+0xf0/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607441]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607445]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607450]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607455]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607460]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607464]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607469]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607474]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607476]  <EOI>  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607484]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607489]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607494]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607498]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607504] NMI backtrace for cpu 0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607508] CPU 0 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607511] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607571] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607575] Pid: 0, comm: swapper/0 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607583] RIP: 0010:[<ffffffff8103dd2c>]  [<ffffffff8103dd2c>] hpet_msi_next_event+0x1c/0x50
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607593] RSP: 0018:ffff88012fc03db8  EFLAGS: 00000002
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607597] RAX: 0000000000000002 RBX: ffff88012241b000 RCX: 0000000000000020
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607602] RDX: 000000006fa8b1a6 RSI: ffff88012241b000 RDI: 000000000000333e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607606] RBP: ffff88012fc03db8 R08: 00000000000f4240 R09: 0000001e699e4940
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607610] R10: 0000000000000001 R11: 0000000000000001 R12: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607615] R13: 00000000000dfadd R14: 0000001e69ad8b80 R15: 0000001e69ad8b80
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607620] FS:  0000000000000000(0000) GS:ffff88012fc00000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607625] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607629] CR2: 0000003643a13000 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607634] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607638] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607643] Process swapper/0 (pid: 0, threadinfo ffffffff81c00000, task ffffffff81c10020)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607647] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607649]  ffff88012fc03de8 ffffffff810a7e34 ffff88012fc03df8 ffff88012fc0c9d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607657]  0000000000000000 ffff88012fc0c8e0 ffff88012fc03df8 ffffffff810a92d4
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607664]  ffff88012fc03e78 ffffffff8109c9b9 0000000000000001 ffff88012fc0caa0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607671] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607674]  <IRQ> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607681]  [<ffffffff810a7e34>] clockevents_program_event+0x74/0x120
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607688]  [<ffffffff810a92d4>] tick_program_event+0x24/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607695]  [<ffffffff8109c9b9>] hrtimer_interrupt+0x149/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607703]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607710]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607717]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607724]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607730]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607737]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607744]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607752]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607755]  <EOI> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607761]  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607767]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607775]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607781]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607789]  [<ffffffff815e1345>] rest_init+0x85/0x90
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607797]  [<ffffffff81cf3d94>] start_kernel+0x3d3/0x3de
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607804]  [<ffffffff81cf3346>] x86_64_start_reservations+0x131/0x135
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607810]  [<ffffffff81cf344d>] x86_64_start_kernel+0x103/0x112
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607814] Code: 46 04 00 00 00 00 c9 c3 0f 1f 80 00 00 00 00 55 48 89 e5 66 66 66 66 90 48 8b 15 e0 e0 ea 00 8b 86 c0 00 00 00 8b 92 f0 00 00 00 <c1> e0 05 8d 3c 3a 05 08 01 00 00 89 c0 48 03 05 c0 e0 ea 00 89 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607864] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607866]  <IRQ>  [<ffffffff810a7e34>] clockevents_program_event+0x74/0x120
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607877]  [<ffffffff810a92d4>] tick_program_event+0x24/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607884]  [<ffffffff8109c9b9>] hrtimer_interrupt+0x149/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607891]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607897]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607903]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607910]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607916]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607923]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607929]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607935]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607938]  <EOI>  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607949]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607956]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607962]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607968]  [<ffffffff815e1345>] rest_init+0x85/0x90
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607974]  [<ffffffff81cf3d94>] start_kernel+0x3d3/0x3de
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607981]  [<ffffffff81cf3346>] x86_64_start_reservations+0x131/0x135
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607987]  [<ffffffff81cf344d>] x86_64_start_kernel+0x103/0x112
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607993] NMI backtrace for cpu 4
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607996] CPU 4 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.607998] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608048] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608051] Pid: 0, comm: swapper/4 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608057] RIP: 0010:[<ffffffff8103dd2c>]  [<ffffffff8103dd2c>] hpet_msi_next_event+0x1c/0x50
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608064] RSP: 0018:ffff88012fd03db8  EFLAGS: 00000002
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608067] RAX: 0000000000000006 RBX: ffff88012241b400 RCX: 0000000000000020
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608070] RDX: 000000006fa8ae32 RSI: ffff88012241b400 RDI: 000000000000333e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608073] RBP: ffff88012fd03db8 R08: 00000000000f4240 R09: 0000001e699e4940
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608076] R10: 0000000000000001 R11: 0000000000000001 R12: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608079] R13: 00000000000dfad7 R14: 0000001e69ad8b80 R15: 0000001e69ad8b80
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608083] FS:  0000000000000000(0000) GS:ffff88012fd00000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608087] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608090] CR2: 00007f34268e20a0 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608093] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608096] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608100] Process swapper/4 (pid: 0, threadinfo ffff8801228a0000, task ffff88012289e080)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608102] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608104]  ffff88012fd03de8 ffffffff810a7e34 ffff88012fd03df8 ffff88012fd0c9d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608109]  0000000000000000 ffff88012fd0c8e0 ffff88012fd03df8 ffffffff810a92d4
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608114]  ffff88012fd03e78 ffffffff8109c9b9 0000000000000001 ffff88012fd0caa0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608119] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608121]  <IRQ> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608125]  [<ffffffff810a7e34>] clockevents_program_event+0x74/0x120
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608131]  [<ffffffff810a92d4>] tick_program_event+0x24/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608135]  [<ffffffff8109c9b9>] hrtimer_interrupt+0x149/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608141]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608146]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608151]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608156]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608161]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608165]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608170]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608175]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608178]  <EOI> 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608182]  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608187]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608192]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608197]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608201]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608205] Code: 46 04 00 00 00 00 c9 c3 0f 1f 80 00 00 00 00 55 48 89 e5 66 66 66 66 90 48 8b 15 e0 e0 ea 00 8b 86 c0 00 00 00 8b 92 f0 00 00 00 <c1> e0 05 8d 3c 3a 05 08 01 00 00 89 c0 48 03 05 c0 e0 ea 00 89 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608238] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608240]  <IRQ>  [<ffffffff810a7e34>] clockevents_program_event+0x74/0x120
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608248]  [<ffffffff810a92d4>] tick_program_event+0x24/0x30
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608253]  [<ffffffff8109c9b9>] hrtimer_interrupt+0x149/0x230
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608258]  [<ffffffff8105e1dd>] ? enqueue_task_rt+0x14d/0x200
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608263]  [<ffffffff8103e2b6>] hpet_interrupt_handler+0x16/0x40
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608268]  [<ffffffff810e7482>] handle_irq_event_percpu+0x72/0x220
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608273]  [<ffffffff810e767b>] handle_irq_event+0x4b/0x70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608277]  [<ffffffff810eae20>] handle_edge_irq+0x80/0x140
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608282]  [<ffffffff810173c6>] handle_irq+0x46/0xb0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608287]  [<ffffffff81605a2d>] do_IRQ+0x5d/0xe0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608291]  [<ffffffff815fbeee>] common_interrupt+0x6e/0x6e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608294]  <EOI>  [<ffffffff81324da0>] ? intel_idle+0xe0/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608301]  [<ffffffff81324d86>] ? intel_idle+0xc6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608307]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608311]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608315]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608322] NMI backtrace for cpu 1
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608326] CPU 1 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608328] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608388] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608393] Pid: 0, comm: swapper/1 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608401] RIP: 0010:[<ffffffff81324d76>]  [<ffffffff81324d76>] intel_idle+0xb6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608410] RSP: 0018:ffff880122ffde58  EFLAGS: 00000046
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608414] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608419] RDX: 0000000000000000 RSI: ffff880122ffdfd8 RDI: ffffffff81c16100
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608423] RBP: ffff880122ffdeb8 R08: 0000000000000000 R09: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608427] R10: 00000000ba9e6aab R11: 0000000000000002 R12: 0000000000000002
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608432] R13: ffff88012fc58a70 R14: 0000000000000010 R15: 129dd6d92c467f0e
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608437] FS:  0000000000000000(0000) GS:ffff88012fc40000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608442] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608446] CR2: 00000000006df2d0 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608451] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608455] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608460] Process swapper/1 (pid: 0, threadinfo ffff880122ffc000, task ffff880122ffa380)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608464] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608467]  ffff880122ffdeb8 ffffffff814af709 0000000000000000 00000000000c6fab
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608474]  0000000000000000 00000001000c6fab 00000000ffffffff ffff88012fc58a70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608481]  ffffffff81c76b20 0000000000000000 0000000000000002 0000000000000001
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608488] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608495]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608503]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608510]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608516]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608521] Code: c7 48 8d 86 38 e0 ff ff 83 e2 08 75 1e 31 d2 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> 15 cf d7 ff 4c 29 f8 48 89 c7 e8 1a 46 d5 ff 49 89 c6 49 89 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608570] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608576]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608583]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608589]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608594]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608601] NMI backtrace for cpu 5
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608604] CPU 5 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608606] Modules linked in: ip6table_filter ip6_tables ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_state nf_conntrack xt_CHECKSUM iptable_mangle 8021q garp sunrpc bridge stp llc binfmt_misc vhost_net macvtap macvlan tun kvm_intel kvm uinput joydev microcode serio_raw pcspkr i7core_edac edac_core i2c_i801 iTCO_wdt iTCO_vendor_support r8169 mii snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm snd_timer snd soundcore snd_page_alloc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608656] 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608660] Pid: 0, comm: swapper/5 Not tainted 3.2.18-3.el6.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608665] RIP: 0010:[<ffffffff81324d76>]  [<ffffffff81324d76>] intel_idle+0xb6/0x150
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608672] RSP: 0018:ffff8801228e1e58  EFLAGS: 00000046
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608675] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608678] RDX: 0000000000000000 RSI: ffff8801228e1fd8 RDI: ffffffff81c16100
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608681] RBP: ffff8801228e1eb8 R08: 0000000000000000 R09: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608684] R10: 000000008d9076a9 R11: 0000000000000002 R12: 0000000000000002
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608687] R13: ffff88012fd58a70 R14: 0000000000000010 R15: 129dd6d92c469937
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608691] FS:  0000000000000000(0000) GS:ffff88012fd40000(0000) knlGS:0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608695] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608698] CR2: 00007f35cdc4eb70 CR3: 0000000001c08000 CR4: 00000000000026e0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608701] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608704] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608708] Process swapper/5 (pid: 0, threadinfo ffff8801228e0000, task ffff8801228de200)
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608710] Stack:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608712]  ffff8801228e1eb8 ffffffff814af709 0000000000000000 00000000000c55d2
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608717]  0000000000000000 00000005000c55d2 00000000ffffffff ffff88012fd58a70
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608722]  ffffffff81c76b20 0000000000000000 0000000000000002 0000000000000005
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608727] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608732]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608737]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608742]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608746]  [<ffffffff815f3738>] start_secondary+0x230/0x237
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608750] Code: c7 48 8d 86 38 e0 ff ff 83 e2 08 75 1e 31 d2 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> 15 cf d7 ff 4c 29 f8 48 89 c7 e8 1a 46 d5 ff 49 89 c6 49 89 
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608783] Call Trace:
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608787]  [<ffffffff814af709>] ? menu_select+0xf9/0x3b0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608792]  [<ffffffff814ae4a1>] cpuidle_idle_call+0xd1/0x1d0
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608797]  [<ffffffff81014a5a>] cpu_idle+0xba/0x110
-Jul  5 01:05:32 upmc-svr1 kernel: [  130.608801]  [<ffffffff815f3738>] start_secondary+0x230/0x237
+[ 1013.787101] INFO: rcu_preempt detected stalls on CPUs/tasks: { 2} (detected by 3, t=60002 jiffies)
+[ 1013.787109] sending NMI to all CPUs:
+[ 1013.787117] NMI backtrace for cpu 1
+[ 1013.787121] CPU 1 
+[ 1013.787123] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787197] 
+[ 1013.787202] Pid: 12, comm: ksoftirqd/1 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787210] RIP: 0010:[<ffffffff81061026>]  [<ffffffff81061026>] find_busiest_group+0x556/0xbb0
+[ 1013.787222] RSP: 0018:ffff880122ff5b10  EFLAGS: 00000046
+[ 1013.787225] RAX: ffff880122ff5e0c RBX: 0000000000000000 RCX: 0000000000000000
+[ 1013.787230] RDX: 0000000000000001 RSI: 0000000000000000 RDI: ffff880122920400
+[ 1013.787234] RBP: ffff880122ff5c90 R08: 0000000000000001 R09: 0000000000000000
+[ 1013.787238] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000001
+[ 1013.787242] R13: ffff8801228822c0 R14: 0000000000000000 R15: ffff8801228821d8
+[ 1013.787247] FS:  0000000000000000(0000) GS:ffff88012fc40000(0000) knlGS:0000000000000000
+[ 1013.787252] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787256] CR2: 00007fcef3d6c540 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787260] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787264] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787269] Process ksoftirqd/1 (pid: 12, threadinfo ffff880122ff4000, task ffff880122ff2300)
+[ 1013.787273] Stack:
+[ 1013.787275]  0000000000000000 ffff880122ff5d70 ffff880122ff5e0c 0000000000000002
+[ 1013.787283]  0000000100000000 ffff880122920400 0000000000000008 ffffffff00000000
+[ 1013.787289]  0000000000000000 0000000000000000 ffff88012fc4c320 ffff880122ff5c20
+[ 1013.787296] Call Trace:
+[ 1013.787307]  [<ffffffff810674b9>] load_balance+0xe9/0xa60
+[ 1013.787318]  [<ffffffff810eaecc>] ? force_qs_rnp+0x11c/0x160
+[ 1013.787321]  [<ffffffff8105f99a>] ? dequeue_rt_stack+0x20a/0x300
+[ 1013.787324]  [<ffffffff812c9bdf>] ? plist_del+0x4f/0x80
+[ 1013.787327]  [<ffffffff810601d8>] ? dequeue_task_rt+0x38/0x50
+[ 1013.787331]  [<ffffffff815f7f89>] __schedule+0x769/0x870
+[ 1013.787334]  [<ffffffff8107a98d>] ? __do_softirq_common+0x12d/0x2b0
+[ 1013.787337]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787339]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787342]  [<ffffffff8107ae15>] run_ksoftirqd+0x1a5/0x1d0
+[ 1013.787345]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1013.787349]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1013.787353]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1013.787357]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1013.787360]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1013.787362]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1013.787364] Code: fe ff ff 48 8b 8d e0 fe ff ff 85 ff 0f 94 c3 83 bd 98 fe ff ff 02 41 0f 94 c4 74 08 84 db 0f 84 8e 02 00 00 48 8b bd a8 fe ff ff <f6> 47 4d 08 0f 84 7d 02 00 00 48 85 c9 0f 84 8b 04 00 00 48 8d 
+[ 1013.787383] Call Trace:
+[ 1013.787387]  [<ffffffff810674b9>] load_balance+0xe9/0xa60
+[ 1013.787389]  [<ffffffff810eaecc>] ? force_qs_rnp+0x11c/0x160
+[ 1013.787392]  [<ffffffff8105f99a>] ? dequeue_rt_stack+0x20a/0x300
+[ 1013.787394]  [<ffffffff812c9bdf>] ? plist_del+0x4f/0x80
+[ 1013.787396]  [<ffffffff810601d8>] ? dequeue_task_rt+0x38/0x50
+[ 1013.787399]  [<ffffffff815f7f89>] __schedule+0x769/0x870
+[ 1013.787401]  [<ffffffff8107a98d>] ? __do_softirq_common+0x12d/0x2b0
+[ 1013.787404]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787406]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787408]  [<ffffffff8107ae15>] run_ksoftirqd+0x1a5/0x1d0
+[ 1013.787411]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1013.787413]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1013.787416]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1013.787419]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1013.787422]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1013.787424]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1013.787427] NMI backtrace for cpu 4
+[ 1013.787428] CPU 4 
+[ 1013.787429] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787457] 
+[ 1013.787459] Pid: 0, comm: swapper/4 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787462] RIP: 0010:[<ffffffff815f7d60>]  [<ffffffff815f7d60>] __schedule+0x540/0x870
+[ 1013.787466] RSP: 0018:ffff8801228a1e48  EFLAGS: 00000006
+[ 1013.787468] RAX: ffff88012fd11dc0 RBX: ffff88012fd11dc0 RCX: 0000000000000004
+[ 1013.787470] RDX: 0000000000000000 RSI: ffff88012289a040 RDI: ffff88012289e080
+[ 1013.787472] RBP: ffff8801228a1ec8 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.787473] R10: 0000000000000001 R11: 0000000000000000 R12: 0000000000000000
+[ 1013.787475] R13: ffff88011ddec400 R14: 0000000000000004 R15: 0000000000000000
+[ 1013.787477] FS:  0000000000000000(0000) GS:ffff88012fd00000(0000) knlGS:0000000000000000
+[ 1013.787479] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787481] CR2: 00000000009f94f8 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787482] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787484] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787486] Process swapper/4 (pid: 0, threadinfo ffff8801228a0000, task ffff88012289e080)
+[ 1013.787488] Stack:
+[ 1013.787488]  0000000000000000 0000000000000000 ffff8801228a1fd8 ffff8801228a1fd8
+[ 1013.787492]  ffff8801228a1fd8 ffff8801228a1fd8 ffff88012289a040 ffff88012289e080
+[ 1013.787494]  ffff88012fd18a70 0000000000000000 ffff8801228a1ef8 ffff88012289e080
+[ 1013.787497] Call Trace:
+[ 1013.787500]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787503]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787507]  [<ffffffff81015248>] cpu_idle+0xe8/0x100
+[ 1013.787510]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787512] Code: b2 90 08 00 00 e9 f6 fc ff ff 90 48 89 df e8 c8 27 a6 ff e9 19 fc ff ff 0f 1f 00 48 8b 75 b0 4c 89 ae a8 02 00 00 f0 41 ff 45 54 <65> 8b 04 25 88 1d 01 00 83 f8 01 0f 85 1e fe ff ff 65 c7 04 25 
+[ 1013.787531] Call Trace:
+[ 1013.787534]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787536]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787538]  [<ffffffff81015248>] cpu_idle+0xe8/0x100
+[ 1013.787541]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787543] NMI backtrace for cpu 0
+[ 1013.787545] CPU 0 
+[ 1013.787545] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787566] 
+[ 1013.787567] Pid: 0, comm: swapper/0 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787569] RIP: 0010:[<ffffffff815f7d60>]  [<ffffffff815f7d60>] __schedule+0x540/0x870
+[ 1013.787572] RSP: 0018:ffffffff81c01e28  EFLAGS: 00000006
+[ 1013.787573] RAX: ffff88012fc11dc0 RBX: ffff88012fc11dc0 RCX: 0000000000000000
+[ 1013.787574] RDX: 0000000000000000 RSI: ffff880122f220c0 RDI: ffffffff81c10020
+[ 1013.787576] RBP: ffffffff81c01ea8 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.787577] R10: 0000000000000001 R11: 0000000000000000 R12: 0000000000000000
+[ 1013.787578] R13: ffff8800b7f34c00 R14: 0000000000000000 R15: 000000000008c000
+[ 1013.787580] FS:  0000000000000000(0000) GS:ffff88012fc00000(0000) knlGS:0000000000000000
+[ 1013.787581] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787582] CR2: 00007f14c421e000 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787584] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787585] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787587] Process swapper/0 (pid: 0, threadinfo ffffffff81c00000, task ffffffff81c10020)
+[ 1013.787588] Stack:
+[ 1013.787588]  0000000000000000 0000000000000000 ffffffff81c01fd8 ffffffff81c01fd8
+[ 1013.787590]  ffffffff81c01fd8 ffffffff81c01fd8 ffff880122f220c0 ffffffff81c10020
+[ 1013.787592]  ffff88012fc18a70 0000000000000000 ffffffff81c01ed8 ffffffff81c10020
+[ 1013.787594] Call Trace:
+[ 1013.787597]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787598]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787600]  [<ffffffff81015248>] cpu_idle+0xe8/0x100
+[ 1013.787603]  [<ffffffff815d749c>] rest_init+0x80/0x84
+[ 1013.787607]  [<ffffffff81cf3c16>] start_kernel+0x3d1/0x3de
+[ 1013.787609]  [<ffffffff81cf3347>] x86_64_start_reservations+0x132/0x136
+[ 1013.787611]  [<ffffffff81cf3140>] ? early_idt_handlers+0x140/0x140
+[ 1013.787613]  [<ffffffff81cf344d>] x86_64_start_kernel+0x102/0x111
+[ 1013.787615] Code: b2 90 08 00 00 e9 f6 fc ff ff 90 48 89 df e8 c8 27 a6 ff e9 19 fc ff ff 0f 1f 00 48 8b 75 b0 4c 89 ae a8 02 00 00 f0 41 ff 45 54 <65> 8b 04 25 88 1d 01 00 83 f8 01 0f 85 1e fe ff ff 65 c7 04 25 
+[ 1013.787628] Call Trace:
+[ 1013.787630]  [<ffffffff815f811e>] schedule+0x2e/0xa0
+[ 1013.787631]  [<ffffffff815f8768>] schedule_preempt_disabled+0x18/0x30
+[ 1013.787633]  [<ffffffff81015248>] cpu_idle+0xe8/0x100
+[ 1013.787635]  [<ffffffff815d749c>] rest_init+0x80/0x84
+[ 1013.787637]  [<ffffffff81cf3c16>] start_kernel+0x3d1/0x3de
+[ 1013.787639]  [<ffffffff81cf3347>] x86_64_start_reservations+0x132/0x136
+[ 1013.787641]  [<ffffffff81cf3140>] ? early_idt_handlers+0x140/0x140
+[ 1013.787643]  [<ffffffff81cf344d>] x86_64_start_kernel+0x102/0x111
+[ 1013.787645] NMI backtrace for cpu 5
+[ 1013.787646] CPU 5 
+[ 1013.787647] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787667] 
+[ 1013.787668] Pid: 0, comm: swapper/5 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787671] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1013.787674] RSP: 0018:ffff8801228e1e38  EFLAGS: 00000046
+[ 1013.787675] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
+[ 1013.787676] RDX: 0000000000000000 RSI: ffff8801228e1fd8 RDI: ffffffff81c160c0
+[ 1013.787677] RBP: ffff8801228e1e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.787678] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000002
+[ 1013.787680] R13: ffff88012fd58a70 R14: 0000000000000010 R15: 129dff83427e27db
+[ 1013.787681] FS:  0000000000000000(0000) GS:ffff88012fd40000(0000) knlGS:0000000000000000
+[ 1013.787683] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787684] CR2: 00000000017fc058 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787685] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787687] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787688] Process swapper/5 (pid: 0, threadinfo ffff8801228e0000, task ffff8801228de200)
+[ 1013.787689] Stack:
+[ 1013.787690]  ffff8801228e1e98 ffffffff814a6aa9 0000000000000000 00000000000ca23b
+[ 1013.787692]  0000000000000000 00000005000ca23b ffff8801228e1e98 ffff88012fd58a70
+[ 1013.787694]  00000000fffffff0 0000000000000002 0000000000000005 0000000000000000
+[ 1013.787696] Call Trace:
+[ 1013.787699]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.787701]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787704]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787706]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787707] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1013.787721] Call Trace:
+[ 1013.787722]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.787724]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787726]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787728]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787730] NMI backtrace for cpu 7
+[ 1013.787731] CPU 7 
+[ 1013.787732] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787759] 
+[ 1013.787761] Pid: 0, comm: swapper/7 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787764] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1013.787768] RSP: 0018:ffff880122943e38  EFLAGS: 00000046
+[ 1013.787770] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
+[ 1013.787772] RDX: 0000000000000000 RSI: ffff880122943fd8 RDI: ffffffff81c160c0
+[ 1013.787773] RBP: ffff880122943e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.787775] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000002
+[ 1013.787777] R13: ffff88012fdd8a70 R14: 0000000000000010 R15: 129dff83427ee5af
+[ 1013.787779] FS:  0000000000000000(0000) GS:ffff88012fdc0000(0000) knlGS:0000000000000000
+[ 1013.787781] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787782] CR2: 00000000006d8a18 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787784] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787786] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787788] Process swapper/7 (pid: 0, threadinfo ffff880122942000, task ffff880122940500)
+[ 1013.787789] Stack:
+[ 1013.787790]  ffff880122943e98 ffffffff814a6aa9 0000000000000000 00000000000be1df
+[ 1013.787793]  0000000000000000 00000007000be1df ffff880122943e98 ffff88012fdd8a70
+[ 1013.787796]  00000000fffffff0 0000000000000002 0000000000000007 0000000000000000
+[ 1013.787799] Call Trace:
+[ 1013.787801]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.787804]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787808]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787810]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787812] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1013.787833] Call Trace:
+[ 1013.787835]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.787837]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787839]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787841]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787843] NMI backtrace for cpu 3
+[ 1013.787844] CPU 3 
+[ 1013.787845] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.787862] 
+[ 1013.787863] Pid: 0, comm: swapper/3 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.787865] RIP: 0010:[<ffffffff812d1fd0>]  [<ffffffff812d1fd0>] __ndelay+0x30/0x30
+[ 1013.787868] RSP: 0018:ffff88012fcc3c80  EFLAGS: 00000847
+[ 1013.787870] RAX: 0000000043707440 RBX: 0000000000002710 RCX: 0000000000000004
+[ 1013.787871] RDX: 00000000002a9c44 RSI: 0000000000000100 RDI: 00000000002a9c45
+[ 1013.787872] RBP: ffff88012fcc3c88 R08: 0000000000000000 R09: 0000000000000000
+[ 1013.787873] R10: 000000000000000a R11: 0000000000000000 R12: ffffffff81c35100
+[ 1013.787874] R13: ffffffff81c35200 R14: 0000000000000001 R15: ffffffff81c36200
+[ 1013.787875] FS:  0000000000000000(0000) GS:ffff88012fcc0000(0000) knlGS:0000000000000000
+[ 1013.787877] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.787878] CR2: 0000000001a3f328 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.787879] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.787880] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.787881] Process swapper/3 (pid: 0, threadinfo ffff88012285e000, task ffff88012285c680)
+[ 1013.787882] Stack:
+[ 1013.787883]  ffffffff812d1f6d ffff88012fcc3ca8 ffffffff81036262 0000000000000000
+[ 1013.787885]  ffff88012fcccce0 ffff88012fcc3cf8 ffffffff810ecb08 0000000000000006
+[ 1013.787886]  000000000000ea62 ffff88012fcc3cf8 0000000000000003 000000000000cce0
+[ 1013.787888] Call Trace:
+[ 1013.787889]  <IRQ> 
+[ 1013.787891]  [<ffffffff812d1f6d>] ? __const_udelay+0x2d/0x30
+[ 1013.787893]  [<ffffffff81036262>] arch_trigger_all_cpu_backtrace+0x72/0xa0
+[ 1013.787896]  [<ffffffff810ecb08>] __rcu_pending+0x3b8/0x430
+[ 1013.787898]  [<ffffffff810ed15a>] rcu_check_callbacks+0x2da/0x2f0
+[ 1013.787901]  [<ffffffff81084c6d>] update_process_times+0x4d/0x70
+[ 1013.787903]  [<ffffffff810a8eb5>] tick_sched_timer+0x65/0xc0
+[ 1013.787906]  [<ffffffff8109bb86>] __run_hrtimer+0x76/0x260
+[ 1013.787907]  [<ffffffff810a8e50>] ? tick_nohz_handler+0x110/0x110
+[ 1013.787909]  [<ffffffff8101d6c9>] ? read_tsc+0x9/0x20
+[ 1013.787911]  [<ffffffff8109c4b6>] hrtimer_interrupt+0xf6/0x250
+[ 1013.787913]  [<ffffffff8103e766>] hpet_interrupt_handler+0x16/0x40
+[ 1013.787915]  [<ffffffff810e5333>] handle_irq_event_percpu+0x63/0x250
+[ 1013.787917]  [<ffffffff8101dc02>] ? native_sched_clock+0x22/0x80
+[ 1013.787918]  [<ffffffff810e556b>] handle_irq_event+0x4b/0x70
+[ 1013.787920]  [<ffffffff810e876a>] handle_edge_irq+0x7a/0x120
+[ 1013.787922]  [<ffffffff81018266>] handle_irq+0x46/0xb0
+[ 1013.787924]  [<ffffffff816043aa>] do_IRQ+0x5a/0xd0
+[ 1013.787927]  [<ffffffff815fa82e>] common_interrupt+0x6e/0x6e
+[ 1013.787927]  <EOI> 
+[ 1013.787929]  [<ffffffff8131f9de>] ? intel_idle+0xee/0x150
+[ 1013.787930]  [<ffffffff8131f9c0>] ? intel_idle+0xd0/0x150
+[ 1013.787932]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787934]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787936]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787937] Code: 66 66 66 90 65 48 8b 14 25 18 1d 01 00 48 8d 04 bf 48 69 d2 fa 00 00 00 48 c1 e0 02 f7 e2 48 8d 7a 01 ff 15 eb 1c 9a 00 5d c3 90 <55> 48 89 e5 41 57 41 56 41 55 41 54 53 48 83 ec 08 66 66 66 66 
+[ 1013.787949] Call Trace:
+[ 1013.787949]  <IRQ>  [<ffffffff812d1f6d>] ? __const_udelay+0x2d/0x30
+[ 1013.787952]  [<ffffffff81036262>] arch_trigger_all_cpu_backtrace+0x72/0xa0
+[ 1013.787954]  [<ffffffff810ecb08>] __rcu_pending+0x3b8/0x430
+[ 1013.787956]  [<ffffffff810ed15a>] rcu_check_callbacks+0x2da/0x2f0
+[ 1013.787958]  [<ffffffff81084c6d>] update_process_times+0x4d/0x70
+[ 1013.787959]  [<ffffffff810a8eb5>] tick_sched_timer+0x65/0xc0
+[ 1013.787961]  [<ffffffff8109bb86>] __run_hrtimer+0x76/0x260
+[ 1013.787963]  [<ffffffff810a8e50>] ? tick_nohz_handler+0x110/0x110
+[ 1013.787964]  [<ffffffff8101d6c9>] ? read_tsc+0x9/0x20
+[ 1013.787966]  [<ffffffff8109c4b6>] hrtimer_interrupt+0xf6/0x250
+[ 1013.787967]  [<ffffffff8103e766>] hpet_interrupt_handler+0x16/0x40
+[ 1013.787972]  [<ffffffff810e5333>] handle_irq_event_percpu+0x63/0x250
+[ 1013.787974]  [<ffffffff8101dc02>] ? native_sched_clock+0x22/0x80
+[ 1013.787976]  [<ffffffff810e556b>] handle_irq_event+0x4b/0x70
+[ 1013.787977]  [<ffffffff810e876a>] handle_edge_irq+0x7a/0x120
+[ 1013.787979]  [<ffffffff81018266>] handle_irq+0x46/0xb0
+[ 1013.787981]  [<ffffffff816043aa>] do_IRQ+0x5a/0xd0
+[ 1013.787983]  [<ffffffff815fa82e>] common_interrupt+0x6e/0x6e
+[ 1013.787984]  <EOI>  [<ffffffff8131f9de>] ? intel_idle+0xee/0x150
+[ 1013.787987]  [<ffffffff8131f9c0>] ? intel_idle+0xd0/0x150
+[ 1013.787989]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.787991]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.787992]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.787995] NMI backtrace for cpu 6
+[ 1013.787997] CPU 6 
+[ 1013.787999] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.788032] 
+[ 1013.788034] Pid: 0, comm: swapper/6 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.788039] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1013.788044] RSP: 0018:ffff880122903e38  EFLAGS: 00000046
+[ 1013.788046] RAX: 0000000000000020 RBX: 0000000000000008 RCX: 0000000000000001
+[ 1013.788049] RDX: 0000000000000000 RSI: ffff880122903fd8 RDI: ffffffff81c160c0
+[ 1013.788051] RBP: ffff880122903e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.788054] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000003
+[ 1013.788056] R13: ffff88012fd98a70 R14: 0000000000000020 R15: 129dff83427f344a
+[ 1013.788059] FS:  0000000000000000(0000) GS:ffff88012fd80000(0000) knlGS:0000000000000000
+[ 1013.788062] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.788064] CR2: 0000000001edf1f0 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.788067] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.788069] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.788072] Process swapper/6 (pid: 0, threadinfo ffff880122902000, task ffff880122900380)
+[ 1013.788074] Stack:
+[ 1013.788076]  ffff880122903e98 ffffffff814a6aa9 0000000000000000 00000000000b92c8
+[ 1013.788080]  0000000000000000 00000006000b92c8 ffff880122903e98 ffff88012fd98a70
+[ 1013.788083]  00000000fffffff0 0000000000000003 0000000000000006 0000000000000000
+[ 1013.788087] Call Trace:
+[ 1013.788090]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.788094]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.788097]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.788101]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.788103] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1013.788125] Call Trace:
+[ 1013.788127]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.788130]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.788134]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.788140]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.788143] NMI backtrace for cpu 2
+[ 1013.788144] CPU 2 
+[ 1013.788145] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1013.788166] 
+[ 1013.788167] Pid: 0, comm: swapper/2 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1013.788171] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1013.788173] RSP: 0018:ffff88012281fe38  EFLAGS: 00000046
+[ 1013.788175] RAX: 0000000000000020 RBX: 0000000000000008 RCX: 0000000000000001
+[ 1013.788177] RDX: 0000000000000000 RSI: ffff88012281ffd8 RDI: ffffffff81c160c0
+[ 1013.788178] RBP: ffff88012281fe98 R08: 0000000000000000 R09: 0000000000000001
+[ 1013.788180] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000003
+[ 1013.788181] R13: ffff88012fc98a70 R14: 0000000000000020 R15: 129dff83427ec97b
+[ 1013.788183] FS:  0000000000000000(0000) GS:ffff88012fc80000(0000) knlGS:0000000000000000
+[ 1013.788185] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1013.788187] CR2: 00007f718de2908c CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1013.788189] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1013.788190] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1013.788192] Process swapper/2 (pid: 0, threadinfo ffff88012281e000, task ffff88012281c500)
+[ 1013.788194] Stack:
+[ 1013.788194]  ffff88012281fe98 ffffffff814a6aa9 ffffffffffffffc4 00000000002a1fe7
+[ 1013.788197]  ffffffffffffffc4 00000002002a1fe7 000000000000f640 ffff88012fc98a70
+[ 1013.788199]  00000000fffffff0 0000000000000003 0000000000000002 0000000000000000
+[ 1013.788201] Call Trace:
+[ 1013.788203]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.788205]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.788208]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.788210]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1013.788211] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1013.788225] Call Trace:
+[ 1013.788227]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1013.788229]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1013.788231]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1013.788233]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.519667] INFO: rcu_preempt detected stalls on CPUs/tasks: { 2} (detected by 3, t=240034 jiffies)
+[ 1193.519676] sending NMI to all CPUs:
+[ 1193.519684] NMI backtrace for cpu 1
+[ 1193.519687] CPU 1 
+[ 1193.519689] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.519762] 
+[ 1193.519767] Pid: 12, comm: ksoftirqd/1 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.519775] RIP: 0010:[<ffffffff8107a944>]  [<ffffffff8107a944>] __do_softirq_common+0xe4/0x2b0
+[ 1193.519788] RSP: 0018:ffff880122ff5dd0  EFLAGS: 00000282
+[ 1193.519792] RAX: ffff880122ff5fd8 RBX: ffffffff81c04488 RCX: 0000000000000000
+[ 1193.519797] RDX: ffff880122ff2300 RSI: 0000000000000003 RDI: ffff880122fd0000
+[ 1193.519801] RBP: ffff880122ff5e40 R08: 0000000000000000 R09: 0000000000000001
+[ 1193.519805] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000001
+[ 1193.519809] R13: 0000000000000101 R14: ffff880122ff5fd8 R15: 0000000000000000
+[ 1193.519814] FS:  0000000000000000(0000) GS:ffff88012fc40000(0000) knlGS:0000000000000000
+[ 1193.519819] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.519823] CR2: 00007fbe88762000 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.519827] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.519831] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.519836] Process ksoftirqd/1 (pid: 12, threadinfo ffff880122ff4000, task ffff880122ff2300)
+[ 1193.519840] Stack:
+[ 1193.519842]  ffff880122ff5fd8 ffff880122ff5fd8 0000000100000001 ffff880122ff5fd8
+[ 1193.519851]  ffff880122ff5fd8 ffff880100000000 ffff880122ff5fd8 0000000000000001
+[ 1193.519853]  ffff880122ff5e40 ffff88012fc4c480 0000000000000001 000000000000c480
+[ 1193.519856] Call Trace:
+[ 1193.519860]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.519863]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.519865]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.519870]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.519874]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.519879]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.519882]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.519885]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.519886] Code: 49 c1 ec 03 44 89 e2 48 89 55 c8 65 ff 04 95 98 c2 00 00 66 66 66 66 90 48 89 df ff 13 66 66 66 66 90 65 4c 8b 34 25 c8 a4 00 00 <8b> 45 b8 41 3b 86 44 e0 ff ff 0f 85 78 01 00 00 8b 55 a4 85 d2 
+[ 1193.519905] Call Trace:
+[ 1193.519908]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.519910]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.519913]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.519915]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.519918]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.519921]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.519924]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.519926]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.519928] NMI backtrace for cpu 0
+[ 1193.519930] CPU 0 
+[ 1193.519931] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.519959] 
+[ 1193.519961] Pid: 3, comm: ksoftirqd/0 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.519964] RIP: 0010:[<ffffffff812d7451>]  [<ffffffff812d7451>] find_next_bit+0x1/0xd0
+[ 1193.519970] RSP: 0018:ffff880122f25ad0  EFLAGS: 00000057
+[ 1193.519971] RAX: 0000000000000000 RBX: ffff8800b7e7e080 RCX: 0000000000000001
+[ 1193.519973] RDX: 0000000000000000 RSI: 0000000000000100 RDI: ffff88012292bfd8
+[ 1193.519975] RBP: ffff880122f25bb0 R08: ffff88012fc0c530 R09: 0000000000000004
+[ 1193.519976] R10: 0000000000000001 R11: 0000000000000000 R12: ffff88012292bfd8
+[ 1193.519978] R13: ffff88012292bfc0 R14: 0000000000011dc0 R15: ffff88012292a600
+[ 1193.519980] FS:  0000000000000000(0000) GS:ffff88012fc00000(0000) knlGS:0000000000000000
+[ 1193.519982] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.519984] CR2: 00007f2320016208 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.519986] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.519987] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.519989] Process ksoftirqd/0 (pid: 3, threadinfo ffff880122f24000, task ffff880122f220c0)
+[ 1193.519991] Stack:
+[ 1193.519992]  ffff880122f25bb0 ffffffff8105e3b6 ffff880122f25b00 ffffffff812c5ac6
+[ 1193.519995]  0000000000000000 0000000000000000 ffff880122f25c90 ffffffff81060c41
+[ 1193.519998]  0000000000000000 ffff880122f25d70 ffff880122f25e0c 0000000000000002
+[ 1193.520000] Call Trace:
+[ 1193.520004]  [<ffffffff8105e3b6>] ? select_task_rq_fair+0x466/0xba0
+[ 1193.520009]  [<ffffffff812c5ac6>] ? cpumask_next_and+0x36/0x50
+[ 1193.520011]  [<ffffffff81060c41>] ? find_busiest_group+0x171/0xbb0
+[ 1193.520014]  [<ffffffff81065781>] ? get_parent_ip+0x11/0x50
+[ 1193.520017]  [<ffffffff8106828c>] try_to_wake_up+0x15c/0x3d0
+[ 1193.520020]  [<ffffffff81068575>] wake_up_process+0x15/0x20
+[ 1193.520022]  [<ffffffff8108e6f4>] wake_up_worker+0x24/0x30
+[ 1193.520025]  [<ffffffff8108f380>] insert_work+0x70/0x80
+[ 1193.520027]  [<ffffffff8108fab2>] ___queue_work+0x92/0x210
+[ 1193.520030]  [<ffffffff8108fd2b>] __queue_work+0xfb/0x280
+[ 1193.520033]  [<ffffffff8108feef>] delayed_work_timer_fn+0x3f/0x50
+[ 1193.520036]  [<ffffffff8108369a>] run_timer_softirq+0x14a/0x480
+[ 1193.520038]  [<ffffffff8108feb0>] ? __queue_work+0x280/0x280
+[ 1193.520041]  [<ffffffff8107a936>] __do_softirq_common+0xd6/0x2b0
+[ 1193.520044]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.520047]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.520049]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.520052]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.520055]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.520058]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.520061]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.520064]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.520065] Code: 34 d7 75 18 66 0f 1f 44 00 00 48 85 d2 74 19 48 83 ea 01 48 8b 34 d7 48 85 f6 74 ee 48 c1 e2 06 48 0f bd f6 48 8d 04 32 5d c3 55 <48> 39 f2 48 89 f0 48 89 e5 73 79 48 89 d1 49 89 d1 48 c1 e9 06 
+[ 1193.520084] Call Trace:
+[ 1193.520087]  [<ffffffff8105e3b6>] ? select_task_rq_fair+0x466/0xba0
+[ 1193.520090]  [<ffffffff812c5ac6>] ? cpumask_next_and+0x36/0x50
+[ 1193.520092]  [<ffffffff81060c41>] ? find_busiest_group+0x171/0xbb0
+[ 1193.520094]  [<ffffffff81065781>] ? get_parent_ip+0x11/0x50
+[ 1193.520097]  [<ffffffff8106828c>] try_to_wake_up+0x15c/0x3d0
+[ 1193.520100]  [<ffffffff81068575>] wake_up_process+0x15/0x20
+[ 1193.520102]  [<ffffffff8108e6f4>] wake_up_worker+0x24/0x30
+[ 1193.520104]  [<ffffffff8108f380>] insert_work+0x70/0x80
+[ 1193.520106]  [<ffffffff8108fab2>] ___queue_work+0x92/0x210
+[ 1193.520109]  [<ffffffff8108fd2b>] __queue_work+0xfb/0x280
+[ 1193.520111]  [<ffffffff8108feef>] delayed_work_timer_fn+0x3f/0x50
+[ 1193.520114]  [<ffffffff8108369a>] run_timer_softirq+0x14a/0x480
+[ 1193.520116]  [<ffffffff8108feb0>] ? __queue_work+0x280/0x280
+[ 1193.520119]  [<ffffffff8107a936>] __do_softirq_common+0xd6/0x2b0
+[ 1193.520121]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.520124]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.520126]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.520129]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.520131]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.520134]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.520137]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.520140]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.520141] NMI backtrace for cpu 4
+[ 1193.520143] CPU 4 
+[ 1193.520143] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520165] 
+[ 1193.520166] Pid: 28, comm: ksoftirqd/4 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520169] RIP: 0010:[<ffffffff812d7450>]  [<ffffffff812d7450>] find_last_bit+0x50/0x50
+[ 1193.520171] RSP: 0018:ffff88012289dad8  EFLAGS: 00000057
+[ 1193.520172] RAX: 0000000000000000 RBX: ffff8800b7f025c0 RCX: 0000000000000010
+[ 1193.520174] RDX: 0000000000000000 RSI: 0000000000000100 RDI: ffff88012292bfd8
+[ 1193.520175] RBP: ffff88012289dbb0 R08: ffff88012fd0c530 R09: 0000000000000004
+[ 1193.520176] R10: 0000000000000001 R11: 0000000000000000 R12: ffff88012292bfd8
+[ 1193.520178] R13: ffff88012292bfc0 R14: 0000000000011dc0 R15: ffff88012292ce00
+[ 1193.520179] FS:  0000000000000000(0000) GS:ffff88012fd00000(0000) knlGS:0000000000000000
+[ 1193.520181] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520182] CR2: 0000000000a00338 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520183] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520185] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520186] Process ksoftirqd/4 (pid: 28, threadinfo ffff88012289c000, task ffff88012289a040)
+[ 1193.520187] Stack:
+[ 1193.520188]  ffffffff8105e3b6 ffff88012289db00 ffffffff812c5ac6 0000000000000000
+[ 1193.520190]  0000000000000000 ffff88012289dc90 ffffffff81060c41 0000000000000000
+[ 1193.520192]  ffff88012289dd70 ffff88012289de0c 0000000000000002 ffff8800b7f025c0
+[ 1193.520194] Call Trace:
+[ 1193.520196]  [<ffffffff8105e3b6>] ? select_task_rq_fair+0x466/0xba0
+[ 1193.520198]  [<ffffffff812c5ac6>] ? cpumask_next_and+0x36/0x50
+[ 1193.520200]  [<ffffffff81060c41>] ? find_busiest_group+0x171/0xbb0
+[ 1193.520202]  [<ffffffff81065781>] ? get_parent_ip+0x11/0x50
+[ 1193.520204]  [<ffffffff8106828c>] try_to_wake_up+0x15c/0x3d0
+[ 1193.520206]  [<ffffffff81068575>] wake_up_process+0x15/0x20
+[ 1193.520208]  [<ffffffff8108e6f4>] wake_up_worker+0x24/0x30
+[ 1193.520210]  [<ffffffff8108f380>] insert_work+0x70/0x80
+[ 1193.520211]  [<ffffffff8108fab2>] ___queue_work+0x92/0x210
+[ 1193.520213]  [<ffffffff8108fd2b>] __queue_work+0xfb/0x280
+[ 1193.520215]  [<ffffffff8108feef>] delayed_work_timer_fn+0x3f/0x50
+[ 1193.520217]  [<ffffffff8108369a>] run_timer_softirq+0x14a/0x480
+[ 1193.520219]  [<ffffffff8108feb0>] ? __queue_work+0x280/0x280
+[ 1193.520221]  [<ffffffff8107a936>] __do_softirq_common+0xd6/0x2b0
+[ 1193.520223]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.520225]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.520227]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.520229]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.520232]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.520234]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.520236]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.520238]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.520239] Code: 23 34 d7 75 18 66 0f 1f 44 00 00 48 85 d2 74 19 48 83 ea 01 48 8b 34 d7 48 85 f6 74 ee 48 c1 e2 06 48 0f bd f6 48 8d 04 32 5d c3 <55> 48 39 f2 48 89 f0 48 89 e5 73 79 48 89 d1 49 89 d1 48 c1 e9 
+[ 1193.520252] Call Trace:
+[ 1193.520254]  [<ffffffff8105e3b6>] ? select_task_rq_fair+0x466/0xba0
+[ 1193.520256]  [<ffffffff812c5ac6>] ? cpumask_next_and+0x36/0x50
+[ 1193.520258]  [<ffffffff81060c41>] ? find_busiest_group+0x171/0xbb0
+[ 1193.520260]  [<ffffffff81065781>] ? get_parent_ip+0x11/0x50
+[ 1193.520262]  [<ffffffff8106828c>] try_to_wake_up+0x15c/0x3d0
+[ 1193.520264]  [<ffffffff81068575>] wake_up_process+0x15/0x20
+[ 1193.520265]  [<ffffffff8108e6f4>] wake_up_worker+0x24/0x30
+[ 1193.520267]  [<ffffffff8108f380>] insert_work+0x70/0x80
+[ 1193.520269]  [<ffffffff8108fab2>] ___queue_work+0x92/0x210
+[ 1193.520271]  [<ffffffff8108fd2b>] __queue_work+0xfb/0x280
+[ 1193.520272]  [<ffffffff8108feef>] delayed_work_timer_fn+0x3f/0x50
+[ 1193.520274]  [<ffffffff8108369a>] run_timer_softirq+0x14a/0x480
+[ 1193.520276]  [<ffffffff8108feb0>] ? __queue_work+0x280/0x280
+[ 1193.520278]  [<ffffffff8107a936>] __do_softirq_common+0xd6/0x2b0
+[ 1193.520280]  [<ffffffff8107ac25>] __thread_do_softirq+0x115/0x160
+[ 1193.520282]  [<ffffffff8107ad44>] run_ksoftirqd+0xd4/0x1d0
+[ 1193.520284]  [<ffffffff8107ac70>] ? __thread_do_softirq+0x160/0x160
+[ 1193.520286]  [<ffffffff81096c8c>] kthread+0x8c/0xa0
+[ 1193.520288]  [<ffffffff8105a9d9>] ? finish_task_switch+0x49/0xf0
+[ 1193.520290]  [<ffffffff81603a34>] kernel_thread_helper+0x4/0x10
+[ 1193.520292]  [<ffffffff81096c00>] ? __init_kthread_worker+0x60/0x60
+[ 1193.520294]  [<ffffffff81603a30>] ? gs_change+0x13/0x13
+[ 1193.520296] NMI backtrace for cpu 7
+[ 1193.520298] CPU 7 
+[ 1193.520298] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520326] 
+[ 1193.520328] Pid: 0, comm: swapper/7 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520331] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1193.520335] RSP: 0018:ffff880122943e38  EFLAGS: 00000046
+[ 1193.520337] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
+[ 1193.520338] RDX: 0000000000000000 RSI: ffff880122943fd8 RDI: ffffffff81c160c0
+[ 1193.520340] RBP: ffff880122943e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1193.520342] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000002
+[ 1193.520343] R13: ffff88012fdd8a70 R14: 0000000000000010 R15: 129dffad2d3d8482
+[ 1193.520345] FS:  0000000000000000(0000) GS:ffff88012fdc0000(0000) knlGS:0000000000000000
+[ 1193.520347] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520349] CR2: 00000000006d8a18 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520351] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520353] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520355] Process swapper/7 (pid: 0, threadinfo ffff880122942000, task ffff880122940500)
+[ 1193.520356] Stack:
+[ 1193.520357]  ffff880122943e98 ffffffff814a6aa9 0000000000000000 00000000000b901f
+[ 1193.520360]  0000000000000000 00000007000b901f ffff880122943e98 ffff88012fdd8a70
+[ 1193.520363]  00000000fffffff0 0000000000000002 0000000000000007 0000000000000000
+[ 1193.520365] Call Trace:
+[ 1193.520369]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520372]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520376]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520380]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520382] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1193.520401] Call Trace:
+[ 1193.520403]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520406]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520408]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520411]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520414] NMI backtrace for cpu 5
+[ 1193.520415] CPU 5 
+[ 1193.520415] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520435] 
+[ 1193.520436] Pid: 0, comm: swapper/5 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520439] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1193.520441] RSP: 0018:ffff8801228e1e38  EFLAGS: 00000046
+[ 1193.520443] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
+[ 1193.520444] RDX: 0000000000000000 RSI: ffff8801228e1fd8 RDI: ffffffff81c160c0
+[ 1193.520445] RBP: ffff8801228e1e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1193.520446] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000002
+[ 1193.520448] R13: ffff88012fd58a70 R14: 0000000000000010 R15: 129dffad2d3ce7ba
+[ 1193.520449] FS:  0000000000000000(0000) GS:ffff88012fd40000(0000) knlGS:0000000000000000
+[ 1193.520451] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520452] CR2: 00007eff8e593540 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520453] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520454] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520456] Process swapper/5 (pid: 0, threadinfo ffff8801228e0000, task ffff8801228de200)
+[ 1193.520457] Stack:
+[ 1193.520458]  ffff8801228e1e98 ffffffff814a6aa9 0000000000000000 00000000000c3559
+[ 1193.520460]  0000000000000000 00000005000c3559 ffff8801228e1e98 ffff88012fd58a70
+[ 1193.520462]  00000000fffffff0 0000000000000002 0000000000000005 0000000000000000
+[ 1193.520464] Call Trace:
+[ 1193.520466]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520468]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520471]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520473]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520475] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1193.520488] Call Trace:
+[ 1193.520490]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520491]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520493]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520495]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520497] NMI backtrace for cpu 3
+[ 1193.520498] CPU 3 
+[ 1193.520499] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520517] 
+[ 1193.520518] Pid: 0, comm: swapper/3 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520521] RIP: 0010:[<ffffffff812d1f52>]  [<ffffffff812d1f52>] __const_udelay+0x12/0x30
+[ 1193.520524] RSP: 0018:ffff88012fcc3c88  EFLAGS: 00000046
+[ 1193.520526] RAX: 0000000000000000 RBX: 0000000000002710 RCX: 0000000000000004
+[ 1193.520527] RDX: 00000000002a9c2f RSI: 0000000000000100 RDI: 0000000000418958
+[ 1193.520528] RBP: ffff88012fcc3c88 R08: 0000000000000000 R09: 0000000000000000
+[ 1193.520530] R10: 000000000000000a R11: 0000000000000000 R12: ffffffff81c35100
+[ 1193.520531] R13: ffffffff81c35200 R14: 0000000000000001 R15: ffffffff81c36200
+[ 1193.520532] FS:  0000000000000000(0000) GS:ffff88012fcc0000(0000) knlGS:0000000000000000
+[ 1193.520534] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520535] CR2: 0000000001b0e778 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520536] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520538] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520539] Process swapper/3 (pid: 0, threadinfo ffff88012285e000, task ffff88012285c680)
+[ 1193.520540] Stack:
+[ 1193.520541]  ffff88012fcc3ca8 ffffffff81036262 0000000000000000 ffff88012fcccce0
+[ 1193.520543]  ffff88012fcc3cf8 ffffffff810ecb08 0000000000000006 000000000003a9a2
+[ 1193.520545]  ffff88012fcc3cf8 0000000000000003 000000000000cce0 0000000000000003
+[ 1193.520547] Call Trace:
+[ 1193.520548]  <IRQ> 
+[ 1193.520551]  [<ffffffff81036262>] arch_trigger_all_cpu_backtrace+0x72/0xa0
+[ 1193.520554]  [<ffffffff810ecb08>] __rcu_pending+0x3b8/0x430
+[ 1193.520556]  [<ffffffff810ed15a>] rcu_check_callbacks+0x2da/0x2f0
+[ 1193.520559]  [<ffffffff81084c6d>] update_process_times+0x4d/0x70
+[ 1193.520562]  [<ffffffff810a8eb5>] tick_sched_timer+0x65/0xc0
+[ 1193.520564]  [<ffffffff8109bb86>] __run_hrtimer+0x76/0x260
+[ 1193.520566]  [<ffffffff810a8e50>] ? tick_nohz_handler+0x110/0x110
+[ 1193.520568]  [<ffffffff8101d6c9>] ? read_tsc+0x9/0x20
+[ 1193.520570]  [<ffffffff8109c4b6>] hrtimer_interrupt+0xf6/0x250
+[ 1193.520573]  [<ffffffff8103e766>] hpet_interrupt_handler+0x16/0x40
+[ 1193.520575]  [<ffffffff810e5333>] handle_irq_event_percpu+0x63/0x250
+[ 1193.520577]  [<ffffffff8101dc02>] ? native_sched_clock+0x22/0x80
+[ 1193.520579]  [<ffffffff810e556b>] handle_irq_event+0x4b/0x70
+[ 1193.520581]  [<ffffffff810e876a>] handle_edge_irq+0x7a/0x120
+[ 1193.520583]  [<ffffffff81018266>] handle_irq+0x46/0xb0
+[ 1193.520585]  [<ffffffff816043aa>] do_IRQ+0x5a/0xd0
+[ 1193.520588]  [<ffffffff815fa82e>] common_interrupt+0x6e/0x6e
+[ 1193.520590]  <EOI> 
+[ 1193.520591]  [<ffffffff8131f9de>] ? intel_idle+0xee/0x150
+[ 1193.520593]  [<ffffffff8131f9c0>] ? intel_idle+0xd0/0x150
+[ 1193.520595]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520598]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520600]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520601] Code: 66 90 ff 15 89 1d 9a 00 5d c3 66 66 66 66 66 66 2e 0f 1f 84 00 00 00 00 00 55 48 89 e5 66 66 66 66 90 65 48 8b 14 25 18 1d 01 00 <48> 8d 04 bd 00 00 00 00 48 69 d2 fa 00 00 00 f7 e2 48 8d 7a 01 
+[ 1193.520615] Call Trace:
+[ 1193.520615]  <IRQ>  [<ffffffff81036262>] arch_trigger_all_cpu_backtrace+0x72/0xa0
+[ 1193.520619]  [<ffffffff810ecb08>] __rcu_pending+0x3b8/0x430
+[ 1193.520621]  [<ffffffff810ed15a>] rcu_check_callbacks+0x2da/0x2f0
+[ 1193.520623]  [<ffffffff81084c6d>] update_process_times+0x4d/0x70
+[ 1193.520625]  [<ffffffff810a8eb5>] tick_sched_timer+0x65/0xc0
+[ 1193.520627]  [<ffffffff8109bb86>] __run_hrtimer+0x76/0x260
+[ 1193.520628]  [<ffffffff810a8e50>] ? tick_nohz_handler+0x110/0x110
+[ 1193.520630]  [<ffffffff8101d6c9>] ? read_tsc+0x9/0x20
+[ 1193.520632]  [<ffffffff8109c4b6>] hrtimer_interrupt+0xf6/0x250
+[ 1193.520637]  [<ffffffff8103e766>] hpet_interrupt_handler+0x16/0x40
+[ 1193.520638]  [<ffffffff810e5333>] handle_irq_event_percpu+0x63/0x250
+[ 1193.520640]  [<ffffffff8101dc02>] ? native_sched_clock+0x22/0x80
+[ 1193.520641]  [<ffffffff810e556b>] handle_irq_event+0x4b/0x70
+[ 1193.520643]  [<ffffffff810e876a>] handle_edge_irq+0x7a/0x120
+[ 1193.520644]  [<ffffffff81018266>] handle_irq+0x46/0xb0
+[ 1193.520646]  [<ffffffff816043aa>] do_IRQ+0x5a/0xd0
+[ 1193.520648]  [<ffffffff815fa82e>] common_interrupt+0x6e/0x6e
+[ 1193.520649]  <EOI>  [<ffffffff8131f9de>] ? intel_idle+0xee/0x150
+[ 1193.520651]  [<ffffffff8131f9c0>] ? intel_idle+0xd0/0x150
+[ 1193.520653]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520655]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520656]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520659] NMI backtrace for cpu 6
+[ 1193.520660] CPU 6 
+[ 1193.520661] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520692] 
+[ 1193.520694] Pid: 0, comm: swapper/6 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520699] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1193.520703] RSP: 0018:ffff880122903e38  EFLAGS: 00000046
+[ 1193.520705] RAX: 0000000000000010 RBX: 0000000000000004 RCX: 0000000000000001
+[ 1193.520708] RDX: 0000000000000000 RSI: ffff880122903fd8 RDI: ffffffff81c160c0
+[ 1193.520710] RBP: ffff880122903e98 R08: 0000000000000000 R09: 0000000000000001
+[ 1193.520713] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000002
+[ 1193.520715] R13: ffff88012fd98a70 R14: 0000000000000010 R15: 129dffad2d3dca5c
+[ 1193.520718] FS:  0000000000000000(0000) GS:ffff88012fd80000(0000) knlGS:0000000000000000
+[ 1193.520721] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520723] CR2: 00000000006d8a18 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520726] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520728] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520731] Process swapper/6 (pid: 0, threadinfo ffff880122902000, task ffff880122900380)
+[ 1193.520733] Stack:
+[ 1193.520734]  ffff880122903e98 ffffffff814a6aa9 0000000000000000 00000000000b4c95
+[ 1193.520738]  0000000000000000 00000006000b4c95 ffff880122903e98 ffff88012fd98a70
+[ 1193.520741]  00000000fffffff0 0000000000000002 0000000000000006 0000000000000000
+[ 1193.520744] Call Trace:
+[ 1193.520747]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520751]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520754]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520757]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520760] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1193.520779] Call Trace:
+[ 1193.520781]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520784]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520787]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520790]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520793] NMI backtrace for cpu 2
+[ 1193.520794] CPU 2 
+[ 1193.520795] Modules linked in: ebtable_nat ebtables ipt_MASQUERADE iptable_nat nf_nat nf_conntrack_ipv4 nf_defrag_ipv4 xt_CHECKSUM iptable_mangle fcoe libfcoe libfc scsi_transport_fc scsi_tgt lockd 8021q garp bridge stp llc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 xt_state nf_conntrack ip6table_filter ip6_tables snd_hda_codec_realtek snd_hda_intel snd_hda_codec snd_hwdep i7core_edac vhost_net snd_seq snd_seq_device snd_pcm macvtap joydev snd_timer snd soundcore iTCO_wdt iTCO_vendor_support microcode macvlan tun r8169 snd_page_alloc edac_core mii i2c_i801 serio_raw pcspkr kvm_intel kvm uinput sunrpc firewire_ohci firewire_core crc_itu_t nouveau ttm drm_kms_helper drm i2c_algo_bit i2c_core mxm_wmi wmi video [last unloaded: scsi_wait_scan]
+[ 1193.520816] 
+[ 1193.520817] Pid: 0, comm: swapper/2 Not tainted 3.2.18-1.fc16.alu_preempt_rt.x86_64-rt29 #1 Hewlett-Packard HP Elite 7100 Microtower PC/2A9Ch
+[ 1193.520820] RIP: 0010:[<ffffffff8131f9b0>]  [<ffffffff8131f9b0>] intel_idle+0xc0/0x150
+[ 1193.520822] RSP: 0018:ffff88012281fe38  EFLAGS: 00000046
+[ 1193.520824] RAX: 0000000000000020 RBX: 0000000000000008 RCX: 0000000000000001
+[ 1193.520825] RDX: 0000000000000000 RSI: ffff88012281ffd8 RDI: ffffffff81c160c0
+[ 1193.520826] RBP: ffff88012281fe98 R08: 0000000000000000 R09: 0000000000000001
+[ 1193.520828] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000003
+[ 1193.520829] R13: ffff88012fc98a70 R14: 0000000000000020 R15: 129dffad2d3d5f5a
+[ 1193.520831] FS:  0000000000000000(0000) GS:ffff88012fc80000(0000) knlGS:0000000000000000
+[ 1193.520833] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+[ 1193.520834] CR2: 0000000002701e00 CR3: 0000000001c08000 CR4: 00000000000026e0
+[ 1193.520835] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 1193.520837] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 1193.520838] Process swapper/2 (pid: 0, threadinfo ffff88012281e000, task ffff88012281c500)
+[ 1193.520839] Stack:
+[ 1193.520840]  ffff88012281fe98 ffffffff814a6aa9 ffffffffffffff11 00000000314709df
+[ 1193.520842]  ffffffffffffff11 00000002314709df 000000000000f640 ffff88012fc98a70
+[ 1193.520845]  00000000fffffff0 0000000000000003 0000000000000002 0000000000000000
+[ 1193.520847] Call Trace:
+[ 1193.520849]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520851]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520853]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520855]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
+[ 1193.520856] Code: 28 e0 ff ff 83 e2 08 75 22 31 d2 48 83 c0 10 48 89 d1 0f 01 c8 0f ae f0 48 8b 86 38 e0 ff ff a8 08 75 08 b1 01 4c 89 f0 0f 01 c9 <e8> bb 18 d8 ff 4c 29 f8 48 89 c7 e8 c0 9b d5 ff 4c 69 f0 40 42 
+[ 1193.520870] Call Trace:
+[ 1193.520871]  [<ffffffff814a6aa9>] ? menu_select+0xf9/0x380
+[ 1193.520873]  [<ffffffff814a5631>] cpuidle_idle_call+0xc1/0x350
+[ 1193.520875]  [<ffffffff8101520a>] cpu_idle+0xaa/0x100
+[ 1193.520877]  [<ffffffff815e8fb3>] start_secondary+0x24d/0x254
 
---------------000109070805040001050703--
+--------------020008070302050707010006--
