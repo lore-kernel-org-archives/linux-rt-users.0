@@ -1,64 +1,49 @@
-From: Dong Liu <dliu.cn@gmail.com>
-Subject: Re: cpu stall and hyperthread
-Date: Fri, 06 Jul 2012 02:20:06 -0400
-Message-ID: <4FF68396.2010904@gmail.com>
-References: <4FEBCDDE.60503@gmail.com>
+From: PRINGLE Chris <chris.pringle@miranda.com>
+Subject: RE: Lookaside cache with high volume of objects hangs the kernel on
+ destruction (deadlock)
+Date: Fri, 6 Jul 2012 09:34:54 +0000
+Message-ID: <E7D6489E57008E4088E37F78D30C62E60C4957@LB-OPS-EXCH01.miranda.com>
+References: <E7D6489E57008E4088E37F78D30C62E60BAB7A@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E60BC983@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com>
+ <20120704131520.GH9200@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f53.google.com ([209.85.216.53]:45325 "EHLO
-	mail-qa0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750696Ab2GFGUK (ORCPT
+Received: from stanmail.omnibus.co.uk ([194.201.223.253]:19879 "EHLO
+	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1752549Ab2GFJfP convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Jul 2012 02:20:10 -0400
-Received: by qaas11 with SMTP id s11so244597qaa.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2012 23:20:09 -0700 (PDT)
-In-Reply-To: <4FEBCDDE.60503@gmail.com>
+	Fri, 6 Jul 2012 05:35:15 -0400
+In-Reply-To: <20120704131520.GH9200@uudg.org>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I can quite reliably trigger this cpu stall error now. Just try to start 
-several KVM guests.
+> Yes, I was able to reproduce the issue on 3.4.4-rt13. I ran a few tests under
+> ftrace and got a bit more of information.
+> 
+> The problem seems to happen in kmem_cache_free(), at this piece of code:
+> 
+>         local_lock_irqsave(slab_lock, flags);
+>         __cache_free(cachep, objp, __builtin_return_address(0));
+>         unlock_slab_and_free_delayed(flags);
+> 
+> It seems to fail at the local_lock_irqsave() statement with:
+> 
+> 	[  149.328013] kernel BUG at kernel/rtmutex.c:725!
+> 	[  149.328013] invalid opcode: 0000 [#1] PREEMPT SMP
+> 
+> And by the end I see:
+> 
+> 	[  149.420228] note: insmod[2801] exited with preempt_count 1 
 
-It seems the kvm progress uses too much CPU?
+Thanks for this. Any ideas where we might go from here? This used to work in 2.6.33 but got broken between 2.6.33 and 3.0; unfortunately there don't appear to be any RT patch releases between those two versions so it's hard to see what might have been broken.
 
-Since ps -efl showed that the priority of the kvm kernel thread was -20. 
-So I tried,
+It worries me a bit because this could potentially go wrong during runtime if the kernel ever reaps the lookaside cache for memory; this will then crash the entire system.
 
-CONFIG_RCU_BOOST=y
-CONFIG_RCU_BOOST_PRIO=50
-CONFIG_RCU_BOOST_DELAY=500
-
-But I still got the same error :(
-
-Are there any way I can use to narrow down this error?
-
-Is it possible to non-preemptible RCU in PREEMPT_RT kernel? I know it 
-will reduce the system's RT performance, but we can make sure the reason 
-of this cpu stall error is the preemptible RCU
-
-Thanks,
-
-Dong
-
-On 6/27/12 11:22 PM, Dong Liu wrote:
-> Hi,
->
-> I'm running 3.4.3-rt11 and 3.2.18-rt29 on a system with Intel I7 860, I
-> noticed that with hyperthread enabled, I'm getting kernel error
->
-> rcu_preempt detected stalls on CPUs/tasks: { 3} (detected by 5, t=60002
-> jiffies)
->
-> But with hyperthread disabled, no such error.
->
-> Is preempt_rt not supposed to be used with hyperthread?
->
-> Thanks,
->
-> Dong
->
-> P.S.
-
+Cheers,
+Chris
