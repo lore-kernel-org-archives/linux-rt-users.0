@@ -1,59 +1,64 @@
 From: Dong Liu <dliu.cn@gmail.com>
 Subject: Re: cpu stall and hyperthread
-Date: Fri, 06 Jul 2012 02:07:12 -0400
-Message-ID: <4FF68090.5050605@gmail.com>
-References: <4FEBCDDE.60503@gmail.com> <4FF351C6.3000100@gmail.com> <4FF4C94A.6040105@osadl.org> <4FF5DFDC.9010501@gmail.com> <4FF619D5.3090206@osadl.org>
+Date: Fri, 06 Jul 2012 02:20:06 -0400
+Message-ID: <4FF68396.2010904@gmail.com>
+References: <4FEBCDDE.60503@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Carsten Emde <C.Emde@osadl.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f46.google.com ([209.85.216.46]:44381 "EHLO
-	mail-qa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751309Ab2GFGHQ (ORCPT
+Received: from mail-qa0-f53.google.com ([209.85.216.53]:45325 "EHLO
+	mail-qa0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750696Ab2GFGUK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Jul 2012 02:07:16 -0400
-Received: by qadb17 with SMTP id b17so241542qad.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2012 23:07:15 -0700 (PDT)
-In-Reply-To: <4FF619D5.3090206@osadl.org>
+	Fri, 6 Jul 2012 02:20:10 -0400
+Received: by qaas11 with SMTP id s11so244597qaa.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Jul 2012 23:20:09 -0700 (PDT)
+In-Reply-To: <4FEBCDDE.60503@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Carsten,
+I can quite reliably trigger this cpu stall error now. Just try to start 
+several KVM guests.
 
-Thanks! I'll try to take a look at these systems.
+It seems the kvm progress uses too much CPU?
 
-Cheers!
+Since ps -efl showed that the priority of the kvm kernel thread was -20. 
+So I tried,
+
+CONFIG_RCU_BOOST=y
+CONFIG_RCU_BOOST_PRIO=50
+CONFIG_RCU_BOOST_DELAY=500
+
+But I still got the same error :(
+
+Are there any way I can use to narrow down this error?
+
+Is it possible to non-preemptible RCU in PREEMPT_RT kernel? I know it 
+will reduce the system's RT performance, but we can make sure the reason 
+of this cpu stall error is the preemptible RCU
+
+Thanks,
 
 Dong
 
-On 7/5/12 6:48 PM, Carsten Emde wrote:
-> Hi Dong,
+On 6/27/12 11:22 PM, Dong Liu wrote:
+> Hi,
 >
->> I tried to disable CONFIG_RT_GROUP_SCHED, but I still got cpu stalls!
-> Hmm, sorry. I hoped it would work.
+> I'm running 3.4.3-rt11 and 3.2.18-rt29 on a system with Intel I7 860, I
+> noticed that with hyperthread enabled, I'm getting kernel error
 >
->> Is there a recommended config for the RT patch?
-> Not really. In the x86 distro case, we base everything on the distro
-> configuration, e.g. using
-> cp /boot/config-`uname -r` .config
+> rcu_preempt detected stalls on CPUs/tasks: { 3} (detected by 5, t=60002
+> jiffies)
 >
-> We then disable CONFIG_RT_GROUP_SCHED and CONFIG_DEBUG_STACKOVERFLOW,
-> because they are known to cause trouble and long latencies,
-> respectively. In addition, we enable diagnostics such a latency
-> histograms. That's all.
+> But with hyperthread disabled, no such error.
 >
-> An alternative approach would be to select a QA farm system that is
-> close to your hardware and distro and use the same settings on your
-> system. A list of all farm systems sorted by distro is here ->
-> https://www.osadl.org/?id=1070; clicking on the system name in the first
-> row of this table will display its entire profile. This includes kernel
-> parameter, hardware data and, of course, the kernel configuration.
-> Sometimes, there is also a quilt series, in case we temporarily use
-> off-tree patches that are on their way to mainline. Would be interesting
-> to see whether your system also stalls when a configuration is used that
-> is successful here.
+> Is preempt_rt not supposed to be used with hyperthread?
 >
-> -Carsten.
+> Thanks,
+>
+> Dong
+>
+> P.S.
 
