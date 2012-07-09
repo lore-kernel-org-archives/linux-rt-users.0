@@ -1,56 +1,94 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: RE: Lookaside cache with high volume of objects hangs the kernel on
  destruction (deadlock)
-Date: Mon, 9 Jul 2012 12:11:37 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1207091211060.32033@ionos>
+Date: Mon, 9 Jul 2012 15:40:23 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1207091539190.32033@ionos>
 References: <E7D6489E57008E4088E37F78D30C62E60BAB7A@LB-OPS-EXCH01.miranda.com> <E7D6489E57008E4088E37F78D30C62E60BC983@LB-OPS-EXCH01.miranda.com> <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com> <20120704131520.GH9200@uudg.org>
- <E7D6489E57008E4088E37F78D30C62E60C4957@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E60C4957@LB-OPS-EXCH01.miranda.com> <alpine.LFD.2.02.1207091211060.32033@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 To: PRINGLE Chris <chris.pringle@miranda.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49591 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:50653 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751746Ab2GIKLl (ORCPT
+	with ESMTP id S1753731Ab2GINk1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jul 2012 06:11:41 -0400
-In-Reply-To: <E7D6489E57008E4088E37F78D30C62E60C4957@LB-OPS-EXCH01.miranda.com>
+	Mon, 9 Jul 2012 09:40:27 -0400
+In-Reply-To: <alpine.LFD.2.02.1207091211060.32033@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 6 Jul 2012, PRINGLE Chris wrote:
+Chris,
 
-> > Yes, I was able to reproduce the issue on 3.4.4-rt13. I ran a few tests under
-> > ftrace and got a bit more of information.
-> > 
-> > The problem seems to happen in kmem_cache_free(), at this piece of code:
-> > 
-> >         local_lock_irqsave(slab_lock, flags);
-> >         __cache_free(cachep, objp, __builtin_return_address(0));
-> >         unlock_slab_and_free_delayed(flags);
-> > 
-> > It seems to fail at the local_lock_irqsave() statement with:
-> > 
-> > 	[  149.328013] kernel BUG at kernel/rtmutex.c:725!
-> > 	[  149.328013] invalid opcode: 0000 [#1] PREEMPT SMP
-> > 
-> > And by the end I see:
-> > 
-> > 	[  149.420228] note: insmod[2801] exited with preempt_count 1 
+On Mon, 9 Jul 2012, Thomas Gleixner wrote:
+> On Fri, 6 Jul 2012, PRINGLE Chris wrote:
+> > It worries me a bit because this could potentially go wrong during
+> > runtime if the kernel ever reaps the lookaside cache for memory;
+> > this will then crash the entire system.
 > 
-> Thanks for this. Any ideas where we might go from here? This used to
-> work in 2.6.33 but got broken between 2.6.33 and 3.0; unfortunately
-> there don't appear to be any RT patch releases between those two
-> versions so it's hard to see what might have been broken.
->
-> It worries me a bit because this could potentially go wrong during
-> runtime if the kernel ever reaps the lookaside cache for memory;
-> this will then crash the entire system.
+> Found the root cause, working on a fix.
 
-Found the root cause, working on a fix.
+Does the patch below work for you?
 
 Thanks,
 
 	tglx
+
+Index: linux-stable-rt/mm/slab.c
+===================================================================
+--- linux-stable-rt.orig/mm/slab.c
++++ linux-stable-rt/mm/slab.c
+@@ -743,8 +743,26 @@ slab_on_each_cpu(void (*func)(void *arg,
+ {
+ 	unsigned int i;
+ 
++	get_cpu_light();
+ 	for_each_online_cpu(i)
+ 		func(arg, i);
++	put_cpu_light();
++}
++
++static void lock_slab_on(unsigned int cpu)
++{
++	if (cpu == smp_processor_id())
++		local_lock_irq(slab_lock);
++	else
++		local_spin_lock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
++}
++
++static void unlock_slab_on(unsigned int cpu)
++{
++	if (cpu == smp_processor_id())
++		local_unlock_irq(slab_lock);
++	else
++		local_spin_unlock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
+ }
+ #endif
+ 
+@@ -2692,10 +2710,10 @@ static void do_drain(void *arg, int cpu)
+ {
+ 	LIST_HEAD(tmp);
+ 
+-	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
++	lock_slab_on(cpu);
+ 	__do_drain(arg, cpu);
+ 	list_splice_init(&per_cpu(slab_free_list, cpu), &tmp);
+-	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
++	unlock_slab_on(cpu);
+ 	free_delayed(&tmp);
+ }
+ #endif
+@@ -4163,9 +4181,9 @@ static void do_ccupdate_local(void *info
+ #else
+ static void do_ccupdate_local(void *info, int cpu)
+ {
+-	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
++	lock_slab_on(cpu);
+ 	__do_ccupdate_local(info, cpu);
+-	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
++	unlock_slab_on(cpu);
+ }
+ #endif
+ 
