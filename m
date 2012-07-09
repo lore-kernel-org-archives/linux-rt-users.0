@@ -1,53 +1,99 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.22-rt34
-Date: Fri, 06 Jul 2012 21:58:58 -0400
-Message-ID: <1341626338.18602.1.camel@acer.local.home>
+From: Dong Liu <dliu.cn@gmail.com>
+Subject: Re: cpu stall and hyperthread
+Date: Mon, 09 Jul 2012 00:33:53 -0400
+Message-ID: <4FFA5F31.4030309@gmail.com>
+References: <4FEBCDDE.60503@gmail.com> <4FF68396.2010904@gmail.com> <4FF6CEA6.6080900@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <C.Emde@osadl.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:28648 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752685Ab2GGB7G (ORCPT
+Received: from mail-qc0-f174.google.com ([209.85.216.174]:64458 "EHLO
+	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750754Ab2GIEdx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Jul 2012 21:59:06 -0400
+	Mon, 9 Jul 2012 00:33:53 -0400
+Received: by qcro28 with SMTP id o28so6473801qcr.19
+        for <linux-rt-users@vger.kernel.org>; Sun, 08 Jul 2012 21:33:52 -0700 (PDT)
+In-Reply-To: <4FF6CEA6.6080900@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Carsten,
 
-Dear RT Folks,
+I tried your approach, just need to remove tail -100 in order to grep 
+the stall line.
 
-I'm pleased to announce the 3.2.22-rt34 stable release.
+I captured 4 seconds of tracing, so the place triggered cpu stall should 
+be in it. But I didn't find function print_cpu_stall :( And I'm not sure 
+what to look for.
 
+The capture is quite large, here is the URL for the kernel  trace
 
-This release is just an update to the new stable 3.2.22 version
-and no RT specific changes have been made.
+http://192.11.154.97:3333/project/trace-out.txt.bz2
 
+And here is the URL for kernel's .config
 
-You can get this release via the git tree at:
+http://192.11.154.97:3333/project/config-3.2.18-1.el6.preempt_rt.x86_64-rt29
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+Could someone help me to take a look at them?
 
-  Head SHA1: af3e91ebefe263747fd12212491d1a2dc3ef9ccc
+Again, I have intel i7 with Hyper-Threading, so the cpu has 8 logical 
+cores. I'm running 3.2.18-rt29 on CentOS 6.2. When I start KVM guest, 
+I'll get rcu_preempt detected stalls.
 
+Thanks,
 
-Or to build 3.2.22-rt34 directly, the following patches should be applied:
+Dong
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.22.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.22-rt34.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
+On 7/6/12 7:40 AM, Carsten Emde wrote:
+> Hi Dong,
+>
+>> I can quite reliably trigger this cpu stall error now. Just try to start
+>> several KVM guests.
+> Good. BTW, we do repeated long-term tests 14 times per day with a single
+> kvm guest that runs on two cores and conducts a number of CPU
+> benchmarks. (https://www.osadl.org/?id=931) - never had this problem. So
+> it may be related to running more than a single kvm guest.
+>
+>> [..]
+>> Are there any way I can use to narrow down this error?
+> cd /sys/kernel/debug/tracing/
+> echo 0 >tracing_on
+> echo 1 >events/enable
+> echo function >current_tracer
+> echo 14080 >buffer_size_kb
+> echo 1 >tracing_on
+> while true
+> do
+> if dmesg | tail -100 | grep -q "rcu_preempt detected stalls"
+> then
+> echo 0 >tracing_on
+> break
+> fi
+> sleep 1
+> done
+>
+> Then start the kvm quests.
+>
+> Alternatively, you may use the kernel parameter ftrace_dump_on_oops.
+>
+> If the problem no longer occurs or behaves differently, try to reduce
+> the debug output step be step, e.g. disable less important events and
+> specify selected available_filter_functions in set_ftrace_filter.
+>
+> When the problem can be reproduced and the system stalls the way you
+> observed earlier, enter
+>
+> cat trace >/tmp/trace.txt
+>
+> and try to find out what is going on. If you need help, compress the trace
+>
+> bzip2 trace.txt
+>
+> upload trace.txt.bz2 to the Internet for inspection and post the related
+> URL.
+>
+> -Carsten.
 
