@@ -1,94 +1,53 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: RE: Lookaside cache with high volume of objects hangs the kernel on
- destruction (deadlock)
-Date: Mon, 9 Jul 2012 15:40:23 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1207091539190.32033@ionos>
-References: <E7D6489E57008E4088E37F78D30C62E60BAB7A@LB-OPS-EXCH01.miranda.com> <E7D6489E57008E4088E37F78D30C62E60BC983@LB-OPS-EXCH01.miranda.com> <E7D6489E57008E4088E37F78D30C62E60C0120@LB-OPS-EXCH01.miranda.com> <20120704131520.GH9200@uudg.org>
- <E7D6489E57008E4088E37F78D30C62E60C4957@LB-OPS-EXCH01.miranda.com> <alpine.LFD.2.02.1207091211060.32033@ionos>
+From: Dong Liu <dliu.cn@gmail.com>
+Subject: Re: cpu stall and hyperthread
+Date: Mon, 09 Jul 2012 10:46:48 -0400
+Message-ID: <4FFAEED8.5010108@gmail.com>
+References: <4FEBCDDE.60503@gmail.com> <4FF68396.2010904@gmail.com> <4FF6CEA6.6080900@osadl.org> <4FFA5F31.4030309@gmail.com> <4FFA7FF9.2030004@osadl.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: PRINGLE Chris <chris.pringle@miranda.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:50653 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753731Ab2GINk1 (ORCPT
+Received: from mail-bk0-f46.google.com ([209.85.214.46]:43701 "EHLO
+	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754384Ab2GIOqs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jul 2012 09:40:27 -0400
-In-Reply-To: <alpine.LFD.2.02.1207091211060.32033@ionos>
+	Mon, 9 Jul 2012 10:46:48 -0400
+Received: by bkwj10 with SMTP id j10so6039226bkw.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Jul 2012 07:46:47 -0700 (PDT)
+In-Reply-To: <4FFA7FF9.2030004@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Chris,
+I tried remove CONFIG_RT_GROUP_SCHED=y, it still had cpu stall, so I 
+just captured the original config.
 
-On Mon, 9 Jul 2012, Thomas Gleixner wrote:
-> On Fri, 6 Jul 2012, PRINGLE Chris wrote:
-> > It worries me a bit because this could potentially go wrong during
-> > runtime if the kernel ever reaps the lookaside cache for memory;
-> > this will then crash the entire system.
-> 
-> Found the root cause, working on a fix.
+Ok, here is capture of the kernel without CONFIG_RT_GROUP_SCHED=y
 
-Does the patch below work for you?
+The directory URL is here,
+
+http://192.11.154.97:3333/project/
+
+3.2.18-2.el6.preempt_rt.x86_64-rt29
+
+is the system config.
+
+I have kernel function capture and dmesg output.
+
+BTW, the system will lock up and cpu stall repeatly after the initial 
+one. Even "cat /sys/kernel/debug/tracing/trace > trace-out.txt" takes 
+very long time.
 
 Thanks,
 
-	tglx
+Dong
 
-Index: linux-stable-rt/mm/slab.c
-===================================================================
---- linux-stable-rt.orig/mm/slab.c
-+++ linux-stable-rt/mm/slab.c
-@@ -743,8 +743,26 @@ slab_on_each_cpu(void (*func)(void *arg,
- {
- 	unsigned int i;
- 
-+	get_cpu_light();
- 	for_each_online_cpu(i)
- 		func(arg, i);
-+	put_cpu_light();
-+}
-+
-+static void lock_slab_on(unsigned int cpu)
-+{
-+	if (cpu == smp_processor_id())
-+		local_lock_irq(slab_lock);
-+	else
-+		local_spin_lock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
-+}
-+
-+static void unlock_slab_on(unsigned int cpu)
-+{
-+	if (cpu == smp_processor_id())
-+		local_unlock_irq(slab_lock);
-+	else
-+		local_spin_unlock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
- }
- #endif
- 
-@@ -2692,10 +2710,10 @@ static void do_drain(void *arg, int cpu)
- {
- 	LIST_HEAD(tmp);
- 
--	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
-+	lock_slab_on(cpu);
- 	__do_drain(arg, cpu);
- 	list_splice_init(&per_cpu(slab_free_list, cpu), &tmp);
--	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
-+	unlock_slab_on(cpu);
- 	free_delayed(&tmp);
- }
- #endif
-@@ -4163,9 +4181,9 @@ static void do_ccupdate_local(void *info
- #else
- static void do_ccupdate_local(void *info, int cpu)
- {
--	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
-+	lock_slab_on(cpu);
- 	__do_ccupdate_local(info, cpu);
--	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
-+	unlock_slab_on(cpu);
- }
- #endif
- 
+On 7/9/12 2:53 AM, Carsten Emde wrote:
+> On 07/09/2012 06:33 AM, Dong Liu wrote:
+>> And here is the URL for kernel's .config
+> CONFIG_RT_GROUP_SCHED=y
+> Why is this?
+>
+> -Carsten.
+
