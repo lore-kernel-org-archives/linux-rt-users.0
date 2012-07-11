@@ -1,84 +1,33 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [patch RT 7/7] perf: Make swevent hrtimer run in irq instead of
- softirq
-Date: Wed, 11 Jul 2012 22:05:21 -0000
-Message-ID: <20120711215612.277149292@linutronix.de>
-References: <20120711214552.036760674@linutronix.de>
+Subject: [patch RT 0/7] Various fixes for the stable RT series - part I
+Date: Wed, 11 Jul 2012 22:05:17 -0000
+Message-ID: <20120711214552.036760674@linutronix.de>
 Cc: Steven Rostedt <rostedt@goodmis.org>,
 	RT-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <cbe@osadl.org>,
-	Yong Zhang <yong.zhang0@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Carsten Emde <cbe@osadl.org>
 To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline;
- filename=perf-make-swevent-hrtimer-run-in-irq-instead-of-softirq.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Yong Zhang <yong.zhang@windriver.com>
+The following patch series is a collection of bug fixes, which should
+go into the 3.x based stable RT trees.
 
-Otherwise we get a deadlock like below:
+I have them locally applied to my 3.5 devel queue, but I'm still
+distracted by other events (leap seconds and the like) to get a 3.5
+devel queue released.
 
-[ 1044.042749] BUG: scheduling while atomic: ksoftirqd/21/141/0x00010003
-[ 1044.042752] INFO: lockdep is turned off.
-[ 1044.042754] Modules linked in:
-[ 1044.042757] Pid: 141, comm: ksoftirqd/21 Tainted: G        W    3.4.0-rc2-rt3-23676-ga723175-dirty #29
-[ 1044.042759] Call Trace:
-[ 1044.042761]  <IRQ>  [<ffffffff8107d8e5>] __schedule_bug+0x65/0x80
-[ 1044.042770]  [<ffffffff8168978c>] __schedule+0x83c/0xa70
-[ 1044.042775]  [<ffffffff8106bdd2>] ? prepare_to_wait+0x32/0xb0
-[ 1044.042779]  [<ffffffff81689a5e>] schedule+0x2e/0xa0
-[ 1044.042782]  [<ffffffff81071ebd>] hrtimer_wait_for_timer+0x6d/0xb0
-[ 1044.042786]  [<ffffffff8106bb30>] ? wake_up_bit+0x40/0x40
-[ 1044.042790]  [<ffffffff81071f20>] hrtimer_cancel+0x20/0x40
-[ 1044.042794]  [<ffffffff8111da0c>] perf_swevent_cancel_hrtimer+0x3c/0x50
-[ 1044.042798]  [<ffffffff8111da31>] task_clock_event_stop+0x11/0x40
-[ 1044.042802]  [<ffffffff8111da6e>] task_clock_event_del+0xe/0x10
-[ 1044.042805]  [<ffffffff8111c568>] event_sched_out+0x118/0x1d0
-[ 1044.042809]  [<ffffffff8111c649>] group_sched_out+0x29/0x90
-[ 1044.042813]  [<ffffffff8111ed7e>] __perf_event_disable+0x18e/0x200
-[ 1044.042817]  [<ffffffff8111c343>] remote_function+0x63/0x70
-[ 1044.042821]  [<ffffffff810b0aae>] generic_smp_call_function_single_interrupt+0xce/0x120
-[ 1044.042826]  [<ffffffff81022bc7>] smp_call_function_single_interrupt+0x27/0x40
-[ 1044.042831]  [<ffffffff8168d50c>] call_function_single_interrupt+0x6c/0x80
-[ 1044.042833]  <EOI>  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
-[ 1044.042840]  [<ffffffff8168b970>] ? _raw_spin_unlock_irq+0x30/0x70
-[ 1044.042844]  [<ffffffff8168b976>] ? _raw_spin_unlock_irq+0x36/0x70
-[ 1044.042848]  [<ffffffff810702e2>] run_hrtimer_softirq+0xc2/0x200
-[ 1044.042853]  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
-[ 1044.042857]  [<ffffffff81045265>] __do_softirq_common+0xf5/0x3a0
-[ 1044.042862]  [<ffffffff81045c3d>] __thread_do_softirq+0x15d/0x200
-[ 1044.042865]  [<ffffffff81045dda>] run_ksoftirqd+0xfa/0x210
-[ 1044.042869]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
-[ 1044.042873]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
-[ 1044.042877]  [<ffffffff8106b596>] kthread+0xb6/0xc0
-[ 1044.042881]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
-[ 1044.042886]  [<ffffffff8168d994>] kernel_thread_helper+0x4/0x10
-[ 1044.042889]  [<ffffffff8107d98c>] ? finish_task_switch+0x8c/0x110
-[ 1044.042894]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
-[ 1044.042897]  [<ffffffff8168bd5d>] ? retint_restore_args+0xe/0xe
-[ 1044.042900]  [<ffffffff8106b4e0>] ? kthreadd+0x1e0/0x1e0
-[ 1044.042902]  [<ffffffff8168d990>] ? gs_change+0xb/0xb
+Steven, please pick up the lot.
 
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/1341476476-5666-1-git-send-email-yong.zhang0@gmail.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
----
- kernel/events/core.c |    1 +
- 1 file changed, 1 insertion(+)
+I have a part II series pending which is addressing the widely
+observed CPU hotplug issue. I'm going to send that out soon, despite
+the fact that I fundamentaly hate it. Though the hotplug rework which
+I have in the queue has turned out to be more work than expected and
+there is no real way to backport all of the necessary changes into any
+of the existing 3.x based RT trees. So I bite the bullet and go with
+the workarounds to get rid of the last obstacles in the 3.x based RT
+series.
 
-Index: linux-stable-rt/kernel/events/core.c
-===================================================================
---- linux-stable-rt.orig/kernel/events/core.c
-+++ linux-stable-rt/kernel/events/core.c
-@@ -5403,6 +5403,7 @@ static void perf_swevent_init_hrtimer(st
- 
- 	hrtimer_init(&hwc->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
- 	hwc->hrtimer.function = perf_swevent_hrtimer;
-+	hwc->hrtimer.irqsafe = 1;
- 
- 	/*
- 	 * Since hrtimers have a fixed rate, we can do a static freq->period
+Thanks,
+
+	tglx
