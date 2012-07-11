@@ -1,73 +1,84 @@
-From: "Arnaud B." <discipleze1@gmail.com>
-Subject: Possible kernel regression between 3.0.31-rt51 and 3.4.x on PPC64 ?
-Date: Wed, 11 Jul 2012 18:02:32 +0200
-Message-ID: <CAJVbuyqRZqtBat9hGWqK=EN1U4LA3uuQbwBmeazV83AuAP+Crg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f42.google.com ([74.125.82.42]:41179 "EHLO
-	mail-wg0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932467Ab2GKQCd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Jul 2012 12:02:33 -0400
-Received: by wgbds11 with SMTP id ds11so4712612wgb.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 Jul 2012 09:02:32 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [patch RT 7/7] perf: Make swevent hrtimer run in irq instead of
+ softirq
+Date: Wed, 11 Jul 2012 22:05:21 -0000
+Message-ID: <20120711215612.277149292@linutronix.de>
+References: <20120711214552.036760674@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	RT-users <linux-rt-users@vger.kernel.org>,
+	Carsten Emde <cbe@osadl.org>,
+	Yong Zhang <yong.zhang0@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline;
+ filename=perf-make-swevent-hrtimer-run-in-irq-instead-of-softirq.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+From: Yong Zhang <yong.zhang@windriver.com>
 
-I got a *big* issue with my current setup, and perhaps someone could
-have a nice idea (or at least it will be helpful to have a bug report
-from me :) )
+Otherwise we get a deadlock like below:
 
-I'm working on freescale P5020 with a 64bits kernel (ppc64) with
-preempt-rt (kernel version 3.4.4 rt13)
-And I got an issue, and couldn't find a solution yet.
-I also try on another ppc64 board (my old MacPro G5 ) and I got the same issue !
+[ 1044.042749] BUG: scheduling while atomic: ksoftirqd/21/141/0x00010003
+[ 1044.042752] INFO: lockdep is turned off.
+[ 1044.042754] Modules linked in:
+[ 1044.042757] Pid: 141, comm: ksoftirqd/21 Tainted: G        W    3.4.0-rc2-rt3-23676-ga723175-dirty #29
+[ 1044.042759] Call Trace:
+[ 1044.042761]  <IRQ>  [<ffffffff8107d8e5>] __schedule_bug+0x65/0x80
+[ 1044.042770]  [<ffffffff8168978c>] __schedule+0x83c/0xa70
+[ 1044.042775]  [<ffffffff8106bdd2>] ? prepare_to_wait+0x32/0xb0
+[ 1044.042779]  [<ffffffff81689a5e>] schedule+0x2e/0xa0
+[ 1044.042782]  [<ffffffff81071ebd>] hrtimer_wait_for_timer+0x6d/0xb0
+[ 1044.042786]  [<ffffffff8106bb30>] ? wake_up_bit+0x40/0x40
+[ 1044.042790]  [<ffffffff81071f20>] hrtimer_cancel+0x20/0x40
+[ 1044.042794]  [<ffffffff8111da0c>] perf_swevent_cancel_hrtimer+0x3c/0x50
+[ 1044.042798]  [<ffffffff8111da31>] task_clock_event_stop+0x11/0x40
+[ 1044.042802]  [<ffffffff8111da6e>] task_clock_event_del+0xe/0x10
+[ 1044.042805]  [<ffffffff8111c568>] event_sched_out+0x118/0x1d0
+[ 1044.042809]  [<ffffffff8111c649>] group_sched_out+0x29/0x90
+[ 1044.042813]  [<ffffffff8111ed7e>] __perf_event_disable+0x18e/0x200
+[ 1044.042817]  [<ffffffff8111c343>] remote_function+0x63/0x70
+[ 1044.042821]  [<ffffffff810b0aae>] generic_smp_call_function_single_interrupt+0xce/0x120
+[ 1044.042826]  [<ffffffff81022bc7>] smp_call_function_single_interrupt+0x27/0x40
+[ 1044.042831]  [<ffffffff8168d50c>] call_function_single_interrupt+0x6c/0x80
+[ 1044.042833]  <EOI>  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
+[ 1044.042840]  [<ffffffff8168b970>] ? _raw_spin_unlock_irq+0x30/0x70
+[ 1044.042844]  [<ffffffff8168b976>] ? _raw_spin_unlock_irq+0x36/0x70
+[ 1044.042848]  [<ffffffff810702e2>] run_hrtimer_softirq+0xc2/0x200
+[ 1044.042853]  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
+[ 1044.042857]  [<ffffffff81045265>] __do_softirq_common+0xf5/0x3a0
+[ 1044.042862]  [<ffffffff81045c3d>] __thread_do_softirq+0x15d/0x200
+[ 1044.042865]  [<ffffffff81045dda>] run_ksoftirqd+0xfa/0x210
+[ 1044.042869]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
+[ 1044.042873]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
+[ 1044.042877]  [<ffffffff8106b596>] kthread+0xb6/0xc0
+[ 1044.042881]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
+[ 1044.042886]  [<ffffffff8168d994>] kernel_thread_helper+0x4/0x10
+[ 1044.042889]  [<ffffffff8107d98c>] ? finish_task_switch+0x8c/0x110
+[ 1044.042894]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
+[ 1044.042897]  [<ffffffff8168bd5d>] ? retint_restore_args+0xe/0xe
+[ 1044.042900]  [<ffffffff8106b4e0>] ? kthreadd+0x1e0/0x1e0
+[ 1044.042902]  [<ffffffff8168d990>] ? gs_change+0xb/0xb
 
-Last thing to note:
-  . it works ok with a 32bits kernel on P5020.
-  . What is strange is that if I take 3.0 kernel (3.0.31-rt51) it's ok
-(yes, even with a 64bit kernel)
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Link: http://lkml.kernel.org/r/1341476476-5666-1-git-send-email-yong.zhang0@gmail.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/events/core.c |    1 +
+ 1 file changed, 1 insertion(+)
 
-So, here are the issue:
-Kernel crash randomly. Often in udev. If it pass udev, it could run ok
-for a while, but will fail eventually in the middle of LTP.
-
-If in the kernel I put DEBUG_RT_MUTEXES, it will fail just after
-registering perf monitor.
-I tried was to put raw spin lock in plist, as it seems it fails
-somewhere when dealing with that. No success :(
-
-At this point the rtmutex plist is trashed. Data are bad when it crash
-as pointer is not pointing to RAM anymore ;)
-I tried add  call to plist_check_head at some place, and eventually I
-got always a data access in init_lists (rtmutex.c). So at this point
-plist is already corrupted.
-
-
-So here is the call stack. Remember, it's alway the same :)
-
-cpu 0x0: Vector: 700 (Program Check) at [c0000000fb0e7830]
-pc: c0000000000a2ba4: .__try_to_take_rt_mutex+0x74/0x1b0
-lr: c0000000007d9f10: .rt_spin_lock_slowlock+0xa4/0x414
-sp: c0000000fb0e7ab0
-msr: 80029000
-current = 0xc0000000fb0e20c0
-paca = 0xc00000000fff9000 softe: 0 irq_happened: 0x01
-pid = 3, comm = ksoftirqd/0
-*kernel BUG at
-/home/arnaud/ALU/KERNEL_34/HOME/build/linux/kernel/rtmutex_common.h:75!*
-0:mon>  t
-[c0000000fb0e7b60] c0000000007d9f10 .rt_spin_lock_slowlock+0xa4/0x414
-[c0000000fb0e7cb0] c0000000007da6c0 .rt_spin_lock+0x20/0x30
-[c0000000fb0e7d30] c00000000004532c .__thread_do_softirq+0xc4/0x1b4
-[c0000000fb0e7dc0] c0000000000454dc .run_ksoftirqd+0xc0/0x208
-[c0000000fb0e7e70] c00000000006becc .kthread+0xb8/0xc4
-
-If you need an more information, I got all this boards in front of me :)
-
-TIA,
-/Arnaud.
+Index: linux-stable-rt/kernel/events/core.c
+===================================================================
+--- linux-stable-rt.orig/kernel/events/core.c
++++ linux-stable-rt/kernel/events/core.c
+@@ -5403,6 +5403,7 @@ static void perf_swevent_init_hrtimer(st
+ 
+ 	hrtimer_init(&hwc->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+ 	hwc->hrtimer.function = perf_swevent_hrtimer;
++	hwc->hrtimer.irqsafe = 1;
+ 
+ 	/*
+ 	 * Since hrtimers have a fixed rate, we can do a static freq->period
