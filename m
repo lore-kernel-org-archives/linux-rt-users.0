@@ -1,53 +1,73 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: patch-2.6.33.9-rt31 problem
-Date: Wed, 11 Jul 2012 08:43:52 -0400
-Message-ID: <1342010632.14828.28.camel@gandalf.stny.rr.com>
-References: <4FFC915C.80202@gmail.com>
+From: "Arnaud B." <discipleze1@gmail.com>
+Subject: Possible kernel regression between 3.0.31-rt51 and 3.4.x on PPC64 ?
+Date: Wed, 11 Jul 2012 18:02:32 +0200
+Message-ID: <CAJVbuyqRZqtBat9hGWqK=EN1U4LA3uuQbwBmeazV83AuAP+Crg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Dong Liu <dliu.cn@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:19389 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754494Ab2GKMny (ORCPT
+Received: from mail-wg0-f42.google.com ([74.125.82.42]:41179 "EHLO
+	mail-wg0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932467Ab2GKQCd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Jul 2012 08:43:54 -0400
-In-Reply-To: <4FFC915C.80202@gmail.com>
+	Wed, 11 Jul 2012 12:02:33 -0400
+Received: by wgbds11 with SMTP id ds11so4712612wgb.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Jul 2012 09:02:32 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-07-10 at 16:32 -0400, Dong Liu wrote:
-> Hi All,
-> 
-> Because I could not find a solution for the cpu stall problem on kernel 
-> 3.2.18-rt29. I thought I might try an older kernel. So I download 
-> linux-2.6.33.9 and patch-2.6.33.9-rt31. But 2.6.33 doesn't have 
-> vhost_net, so I ported vhost_net from 2.6.34 back to 2.6.33.9.
-> 
-> The kernel was patched and built successfully. But when I boot, I got 
-> kernel NULL pointer dereference error. After the error, my system seems 
-> stable, I can start KVM client without CPU stalls. But very frequently, 
-> processes will locked up for long time, the wchan displayed by ps is 
-> either sync_page or synchronize_rcu. It looks that rcu still causes 
-> problem in the rt-kernel.
-> 
-> The dmesg out of NULL pointer is attached.
+Hi all,
 
-Um, when you get one of those 'kernel NULL pointer' crashes, the system
-is not in a good state. If the crash happened to a task that holds a
-mutex or worse a spinlock, it will never release it. That means, any new
-task that tries to take that same mutex or spinlock, will just block and
-sit there.
+I got a *big* issue with my current setup, and perhaps someone could
+have a nice idea (or at least it will be helpful to have a bug report
+from me :) )
 
-Thus, those processes that are stuck at either sync_page or
-synchronize_rcu, are probably waiting for that processes to release a
-mutex, or finish something else that it will never do.
+I'm working on freescale P5020 with a 64bits kernel (ppc64) with
+preempt-rt (kernel version 3.4.4 rt13)
+And I got an issue, and couldn't find a solution yet.
+I also try on another ppc64 board (my old MacPro G5 ) and I got the same issue !
 
-Basically, once you see a NULL pointer dereference, it's time to save
-the dmesg and reboot the box.
+Last thing to note:
+  . it works ok with a 32bits kernel on P5020.
+  . What is strange is that if I take 3.0 kernel (3.0.31-rt51) it's ok
+(yes, even with a 64bit kernel)
 
--- Steve
+So, here are the issue:
+Kernel crash randomly. Often in udev. If it pass udev, it could run ok
+for a while, but will fail eventually in the middle of LTP.
+
+If in the kernel I put DEBUG_RT_MUTEXES, it will fail just after
+registering perf monitor.
+I tried was to put raw spin lock in plist, as it seems it fails
+somewhere when dealing with that. No success :(
+
+At this point the rtmutex plist is trashed. Data are bad when it crash
+as pointer is not pointing to RAM anymore ;)
+I tried add  call to plist_check_head at some place, and eventually I
+got always a data access in init_lists (rtmutex.c). So at this point
+plist is already corrupted.
 
 
+So here is the call stack. Remember, it's alway the same :)
+
+cpu 0x0: Vector: 700 (Program Check) at [c0000000fb0e7830]
+pc: c0000000000a2ba4: .__try_to_take_rt_mutex+0x74/0x1b0
+lr: c0000000007d9f10: .rt_spin_lock_slowlock+0xa4/0x414
+sp: c0000000fb0e7ab0
+msr: 80029000
+current = 0xc0000000fb0e20c0
+paca = 0xc00000000fff9000 softe: 0 irq_happened: 0x01
+pid = 3, comm = ksoftirqd/0
+*kernel BUG at
+/home/arnaud/ALU/KERNEL_34/HOME/build/linux/kernel/rtmutex_common.h:75!*
+0:mon>  t
+[c0000000fb0e7b60] c0000000007d9f10 .rt_spin_lock_slowlock+0xa4/0x414
+[c0000000fb0e7cb0] c0000000007da6c0 .rt_spin_lock+0x20/0x30
+[c0000000fb0e7d30] c00000000004532c .__thread_do_softirq+0xc4/0x1b4
+[c0000000fb0e7dc0] c0000000000454dc .run_ksoftirqd+0xc0/0x208
+[c0000000fb0e7e70] c00000000006becc .kthread+0xb8/0xc4
+
+If you need an more information, I got all this boards in front of me :)
+
+TIA,
+/Arnaud.
