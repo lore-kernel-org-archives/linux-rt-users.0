@@ -1,80 +1,68 @@
-From: Chris Mason <chris.mason@fusionio.com>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM.. and a bonus rt_mutex
- deadlock report for absolutely free!
-Date: Thu, 12 Jul 2012 13:09:45 -0400
-Message-ID: <20120712170945.GJ32174@shiny>
-References: <1342072060.7338.102.camel@marge.simpson.net>
- <alpine.LFD.2.02.1207121253170.32033@ionos>
+From: Dong Liu <dliu.cn@gmail.com>
+Subject: Re: patch-2.6.33.9-rt31 problem
+Date: Thu, 12 Jul 2012 13:17:41 -0400
+Message-ID: <4FFF06B5.6060509@gmail.com>
+References: <4FFC915C.80202@gmail.com> <1342010632.14828.28.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: Mike Galbraith <efault@gmx.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1207121253170.32033@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:49691 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1161288Ab2GLRRm (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Jul 2012 13:17:42 -0400
+Received: by eekb15 with SMTP id b15so719905eek.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 12 Jul 2012 10:17:41 -0700 (PDT)
+In-Reply-To: <1342010632.14828.28.camel@gandalf.stny.rr.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jul 12, 2012 at 05:07:58AM -0600, Thomas Gleixner wrote:
-> On Thu, 12 Jul 2012, Mike Galbraith wrote:
-> > crash> struct rt_mutex 0xffff8801770601c8
-> > struct rt_mutex {
-> >   wait_lock = {
-> >     raw_lock = {
-> >       slock = 7966
-> >     }
-> >   }, 
-> >   wait_list = {
-> >     node_list = {
-> >       next = 0xffff880175eedbe0, 
-> >       prev = 0xffff880175eedbe0
-> >     }, 
-> >     rawlock = 0xffff880175eedbd8, 
-> 
-> Urgh. Here is something completely wrong. That should point to
-> wait_lock, i.e. the rt_mutex itself, but that points into lala land.
+Hi Steve,
 
-This is probably the memcpy you found later this morning, right?
+On 7/11/12 8:43 AM, Steven Rostedt wrote:
+> On Tue, 2012-07-10 at 16:32 -0400, Dong Liu wrote:
+>> Hi All,
+>>
+>> Because I could not find a solution for the cpu stall problem on kernel
+>> 3.2.18-rt29. I thought I might try an older kernel. So I download
+>> linux-2.6.33.9 and patch-2.6.33.9-rt31. But 2.6.33 doesn't have
+>> vhost_net, so I ported vhost_net from 2.6.34 back to 2.6.33.9.
+>>
+>> The kernel was patched and built successfully. But when I boot, I got
+>> kernel NULL pointer dereference error. After the error, my system seems
+>> stable, I can start KVM client without CPU stalls. But very frequently,
+>> processes will locked up for long time, the wchan displayed by ps is
+>> either sync_page or synchronize_rcu. It looks that rcu still causes
+>> problem in the rt-kernel.
+>>
+>> The dmesg out of NULL pointer is attached.
+>
+> Um, when you get one of those 'kernel NULL pointer' crashes, the system
+> is not in a good state. If the crash happened to a task that holds a
+> mutex or worse a spinlock, it will never release it. That means, any new
+> task that tries to take that same mutex or spinlock, will just block and
+> sit there.
+>
+> Thus, those processes that are stuck at either sync_page or
+> synchronize_rcu, are probably waiting for that processes to release a
+> mutex, or finish something else that it will never do.
+>
+> Basically, once you see a NULL pointer dereference, it's time to save
+> the dmesg and reboot the box.
+>
 
->  
-> > Reproducer2: dbench -t 30 8
-> > 
-> > [  692.857164] 
-> > [  692.857165] ============================================
-> > [  692.863963] [ BUG: circular locking deadlock detected! ]
-> > [  692.869264] Not tainted
-> > [  692.871708] --------------------------------------------
-> > [  692.877008] btrfs-delayed-m/1404 is deadlocking current task dbench/7937
-> > [  692.877009] 
-> > [  692.885183] 
-> > [  692.885184] 1) dbench/7937 is trying to acquire this lock:
-> > [  692.892149]  [ffff88014d6aea80] {&(&eb->lock)->lock}
-> > [  692.897102] .. ->owner: ffff880175808501
-> > [  692.901018] .. held by:   btrfs-delayed-m: 1404 [ffff880175808500, 120]
-> > [  692.907657] 
-> > [  692.907657] 2) btrfs-delayed-m/1404 is blocked on this lock:
-> > [  692.914797]  [ffff88014bf58d60] {&(&eb->lock)->lock}
-> > [  692.919751] .. ->owner: ffff880175186101
-> > [  692.923672] .. held by:            dbench: 7937 [ffff880175186100, 120]
-> > [  692.930309] 
-> > [  692.930309] btrfs-delayed-m/1404's [blocked] stackdump:
-> 
-> Hrmm. Both locks are rw_locks and we prevent multiple readers for the
-> known reasons in RT. No idea how to deal with that one :(
+I finally tracked down the NULL pointer is caused by
 
-The reader/writer part in btrfs is just an optimization.  If we need
-them to be all writer locks for RT purposes, that's not a problem.
+echo -n "0" > /sys/kernel/kexec_crash_size
 
-But, before we go down that road, we do annotations trying
-to make sure lockdep doesn't get confused about lock classes.  Basically
-the tree is locked level by level.  So its safe to take eb->lock while
-holding eb->lock as long as you follow the rules.
+in /etc/init/kexec-disable.conf.
 
-Are additional annotations required for RT?
+After I disabled, no more kernel NULL pointer dereference. But I still 
+got cpu stall :(
 
--chris
+Thanks,
+
+Dong
