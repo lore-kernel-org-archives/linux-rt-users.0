@@ -1,43 +1,90 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch RT 0/7] Various fixes for the stable RT series - part I
-Date: Wed, 11 Jul 2012 19:31:32 -0400
-Message-ID: <1342049492.14828.69.camel@gandalf.stny.rr.com>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: [patch RT 3/7] Disable RT_GROUP_SCHED in PREEMPT_RT_FULL
+Date: Thu, 12 Jul 2012 04:36:14 +0200
+Message-ID: <1342060574.7338.20.camel@marge.simpson.net>
 References: <20120711214552.036760674@linutronix.de>
+	 <20120711215611.837510935@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	RT-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <cbe@osadl.org>
+	Carsten Emde <C.Emde@osadl.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120711214552.036760674@linutronix.de>
+In-Reply-To: <20120711215611.837510935@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Wed, 2012-07-11 at 22:05 +0000, Thomas Gleixner wrote:
-> The following patch series is a collection of bug fixes, which should
-> go into the 3.x based stable RT trees.
+> plain text document attachment
+> (disable-rt_group_sched-in-preempt_rt_full.patch)
+> Strange CPU stalls have been observed in RT when RT_GROUP_SCHED
+> was configured.
 > 
-> I have them locally applied to my 3.5 devel queue, but I'm still
-> distracted by other events (leap seconds and the like) to get a 3.5
-> devel queue released.
+> Disable it for now.
 > 
-> Steven, please pick up the lot.
+> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 > 
-> I have a part II series pending which is addressing the widely
-> observed CPU hotplug issue. I'm going to send that out soon, despite
-> the fact that I fundamentaly hate it. Though the hotplug rework which
-> I have in the queue has turned out to be more work than expected and
-> there is no real way to backport all of the necessary changes into any
-> of the existing 3.x based RT trees. So I bite the bullet and go with
-> the workarounds to get rid of the last obstacles in the 3.x based RT
-> series.
+> ---
+>  init/Kconfig |    1 +
+>  1 file changed, 1 insertion(+)
+> 
+> Index: linux-3.4.4-rt13-64+/init/Kconfig
+> ===================================================================
+> --- linux-3.4.4-rt13-64+.orig/init/Kconfig
+> +++ linux-3.4.4-rt13-64+/init/Kconfig
+> @@ -746,6 +746,7 @@ config RT_GROUP_SCHED
+>  	bool "Group scheduling for SCHED_RR/FIFO"
+>  	depends on EXPERIMENTAL
+>  	depends on CGROUP_SCHED
+> +	depends on !PREEMPT_RT_FULL
+>  	default n
+>  	help
+>  	  This feature lets you explicitly allocate real CPU bandwidth
+> 
+> 
+> 
+> 
+> 
 
-I'll pull these in and start running my tests. I noticed that some of
-them are Signed-off-by Carsten first. Did he author them? If so, I'll
-make it so his name gets the git author.
+I turn the thing off because it doesn't make any sense to me for -rt,
+and because it's busted.  The below works around isolation bustage I
+encountered.  Peter didn't like it (what's to like?) but it saves the
+day, so shall live on in non-rt kernels until I hopefully someday see
+RT_GROUP_SCHED being fed into a Bitwolf-9000 ;-)
 
-Same for Mike Galbraith on patch 6. Only patch 7 has a 'From:' tag.
+sched,rt: fix isolated CPUs leaving root_task_group indefinitely throttled
 
--- Steve
+Root task group bandwidth replentishment must service all CPUs regardless of
+where it was last started.
+
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+---
+ kernel/sched/rt.c |   13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -782,6 +782,19 @@ static int do_sched_rt_period_timer(stru
+ 	const struct cpumask *span;
+ 
+ 	span = sched_rt_period_mask();
++#ifdef CONFIG_RT_GROUP_SCHED
++	/*
++	 * FIXME: isolated CPUs should really leave the root task group,
++	 * whether they are isolcpus or were isolated via cpusets, lest
++	 * the timer run on a CPU which does not service all runqueues,
++	 * potentially leaving other CPUs indefinitely throttled.  If
++	 * isolation is really required, the user will turn the throttle
++	 * off to kill the perturbations it causes anyway.  Meanwhile,
++	 * this maintains functionallity for boot and/or troubleshooting.
++	 */
++	if (rt_b == &root_task_group.rt_bandwidth)
++		span = cpu_online_mask;
++#endif
+ 	for_each_cpu(i, span) {
+ 		int enqueue = 0;
+ 		struct rt_rq *rt_rq = sched_rt_period_rt_rq(rt_b, i);
