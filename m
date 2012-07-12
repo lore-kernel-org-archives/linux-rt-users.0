@@ -1,33 +1,42 @@
-From: Dong Liu <dliu.cn@gmail.com>
-Subject: Re: cpu stall and hyperthread
-Date: Thu, 12 Jul 2012 16:27:47 -0400
-Message-ID: <4FFF3343.5030701@gmail.com>
-References: <4FEBCDDE.60503@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f46.google.com ([209.85.214.46]:43567 "EHLO
-	mail-bk0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755270Ab2GLU1q (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Jul 2012 16:27:46 -0400
-Received: by bkwj10 with SMTP id j10so2596447bkw.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 12 Jul 2012 13:27:45 -0700 (PDT)
-In-Reply-To: <4FEBCDDE.60503@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 3/8] Disable RT_GROUP_SCHED in PREEMPT_RT_FULL
+Date: Thu, 12 Jul 2012 19:18:30 -0400
+Message-ID: <20120712231956.179265047@goodmis.org>
+References: <20120712231827.084920483@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-Disable-RT_GROUP_SCHED-in-PREEMPT_RT_FULL.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-I installed the exact same system on a machine. This time the CPU is 
-Core 2 Quad Q9650.
+From: Carsten Emde <C.Emde@osadl.org>
 
-With 3.2.18-rt29, this system is very stable. I haven't encountered a 
-single CPU stall problem.
+Strange CPU stalls have been observed in RT when RT_GROUP_SCHED
+was configured.
 
-So it seems to me that the combination of PREEMPT_RT, i7 and KVM is not 
-the right combination :( It always causes cpu stall.
+Disable it for now.
 
-Thanks,
+Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ init/Kconfig |    1 +
+ 1 file changed, 1 insertion(+)
 
-Dong
+diff --git a/init/Kconfig b/init/Kconfig
+index dbc82d0..720c182 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -731,6 +731,7 @@ config RT_GROUP_SCHED
+ 	bool "Group scheduling for SCHED_RR/FIFO"
+ 	depends on EXPERIMENTAL
+ 	depends on CGROUP_SCHED
++	depends on !PREEMPT_RT_FULL
+ 	default n
+ 	help
+ 	  This feature lets you explicitly allocate real CPU bandwidth
+-- 
+1.7.10.4
