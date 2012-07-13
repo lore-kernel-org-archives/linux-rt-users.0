@@ -1,78 +1,64 @@
-From: Chris Mason <chris.mason@fusionio.com>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM.. and a bonus rt_mutex
- deadlock report for absolutely free!
-Date: Fri, 13 Jul 2012 06:47:41 -0400
-Message-ID: <20120713104741.GF30128@shiny>
-References: <1342072060.7338.102.camel@marge.simpson.net>
- <1342082648.7338.171.camel@marge.simpson.net>
- <1342086792.7707.9.camel@marge.simpson.net>
- <alpine.LFD.2.02.1207121310420.32033@ionos>
- <1342094233.7707.12.camel@marge.simpson.net>
- <alpine.LFD.2.02.1207121514240.32033@ionos>
- <1342161072.7380.65.camel@marge.simpson.net>
- <alpine.LFD.2.02.1207131142440.32033@ionos>
- <1342174485.7380.103.camel@marge.simpson.net>
- <alpine.LFD.2.02.1207131223240.32033@ionos>
+From: "Arnaud B." <discipleze1@gmail.com>
+Subject: Re: Possible kernel regression between 3.0.31-rt51 and 3.4.x on PPC64 ?
+Date: Fri, 13 Jul 2012 14:37:42 +0200
+Message-ID: <CAJVbuypRyUCtssU+f1v1NcpwLK-=e5MtvajJsJgQ7VusiYgw5Q@mail.gmail.com>
+References: <CAJVbuyqRZqtBat9hGWqK=EN1U4LA3uuQbwBmeazV83AuAP+Crg@mail.gmail.com>
+	<4FFDBE71.2000705@am.sony.com>
+	<CAJVbuyo3Y6=n6c-wyNsZgxAM0dkwiPrP7oN6aOMP=ozRtFJSug@mail.gmail.com>
+	<4FFF3877.6080007@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: Mike Galbraith <efault@gmx.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1207131223240.32033@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: frank.rowand@am.sony.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-we0-f174.google.com ([74.125.82.174]:63020 "EHLO
+	mail-we0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933135Ab2GMMho (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Jul 2012 08:37:44 -0400
+Received: by weyx8 with SMTP id x8so2443161wey.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 13 Jul 2012 05:37:42 -0700 (PDT)
+In-Reply-To: <4FFF3877.6080007@am.sony.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jul 13, 2012 at 04:26:26AM -0600, Thomas Gleixner wrote:
-> On Fri, 13 Jul 2012, Mike Galbraith wrote:
-> > On Fri, 2012-07-13 at 11:52 +0200, Thomas Gleixner wrote: 
-> > > On Fri, 13 Jul 2012, Mike Galbraith wrote:
-> > > > On Thu, 2012-07-12 at 15:31 +0200, Thomas Gleixner wrote: 
-> > > > > Bingo, that makes it more likely that this is caused by copying w/o
-> > > > > initializing the lock and then freeing the original structure.
-> > > > > 
-> > > > > A quick check for memcpy finds that __btrfs_close_devices() does a
-> > > > > memcpy of btrfs_device structs w/o initializing the lock in the new
-> > > > > copy, but I have no idea whether that's the place we are looking for.
-> > > > 
-> > > > Thanks a bunch Thomas.  I doubt I would have ever figured out that lala
-> > > > land resulted from _copying_ a lock.  That's one I won't be forgetting
-> > > > any time soon.  Box not only survived a few thousand xfstests 006 runs,
-> > > > dbench seemed disinterested in deadlocking virgin 3.0-rt.
-> > > 
-> > > Cute. It think that the lock copying caused the deadlock problem as
-> > > the list pointed to the wrong place, so we might have ended up with
-> > > following down the wrong chain when walking the list as long as the
-> > > original struct was not freed. That beast is freed under RCU so there
-> > > could be a rcu read side critical section fiddling with the old lock
-> > > and cause utter confusion.
-> > 
-> > Virgin 3.0-rt appears to really be solid.  But then it doesn't have
-> > pesky rwlocks.
-> 
-> Ah. So 3.0 is not having those rwlock thingies. Bummer.
->  
-> > > /me goes and writes a nastigram^W proper changelog
-> > > 
-> > > > btrfs still locks up in my enterprise kernel, so I suppose I had better
-> > > > plug your fix into 3.4-rt and see what happens, and go beat hell out of
-> > > > virgin 3.0-rt again to be sure box really really survives dbench.
-> > > 
-> > > A test against 3.4-rt sans enterprise mess might be nice as well.
-> > 
-> > Enterprise is 3.0-stable with um 555 btrfs patches (oh dear).
-> > 
-> > Virgin 3.4-rt and 3.2-rt deadlock gripe.  Enterprise doesn't gripe, but
-> > deadlocks, so I have another adventure in my future even if I figure out
-> > wth to do about rwlocks.
-> 
-> Hrmpf. /me goes to stare into fs/btrfs/ some more.
+Thanks anyway ;)
 
-Please post the deadlocks here, I'll help ;)
+I made another try : same test case fail on 3.2.22-rt35
+So the regression is between 3.0 and 3.2 !
 
--chris
+Is there any ppc64 user here ?
+
+/Arnaud.
+
+2012/7/12 Frank Rowand <frank.rowand@am.sony.com>:
+> On 07/12/12 06:11, Arnaud B. wrote:
+>> Here are 2 crash logs. One is normal booting, the other is with
+>> CONFIG_DEBUG_RT_MUTEXES choosen.
+>> for sure w in rt_mutex_top_waiter, return by plist_first_entry is
+>> corrupted. There is even ASCII in it from time to time :p
+>
+> < snip >
+>
+>> 2012/7/11 Frank Rowand <frank.rowand@am.sony.com>:
+>>> On 07/11/12 09:02, Arnaud B. wrote:
+>>>> Hi all,
+>
+> < snip >
+>
+>>>> If you need an more information, I got all this boards in front of me :)
+>>>
+>>> Can you show a little bit more of the messages aound the crash?  For example
+>>> the register contents.  Disassembly of the instruction at pc, and a few before
+>>> that.
+>>>
+>>> -Frank
+>
+> Thanks for the extra info.
+>
+> I was looking at a plist corruption issue on a 2.6.29 rt kernel, but it does not
+> look like your situation at all.  So I don't have anything useful to contribute
+> about your case.
+>
+> -Frank
