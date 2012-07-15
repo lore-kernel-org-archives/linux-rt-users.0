@@ -1,38 +1,41 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
- deadlock report for absolutely free!
-Date: Sat, 14 Jul 2012 15:38:16 +0200
-Message-ID: <1342273096.7368.57.camel@marge.simpson.net>
-References: <1342072060.7338.102.camel@marge.simpson.net>
-	 <20120713125043.GH30128@shiny>
+From: Dong Liu <dliu.cn@gmail.com>
+Subject: more Intel i7. kvm and CPU stall
+Date: Sun, 15 Jul 2012 01:02:02 -0400
+Message-ID: <50024ECA.7050004@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Chris Mason <chris.mason@fusionio.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120713125043.GH30128@shiny>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f172.google.com ([209.85.212.172]:39686 "EHLO
+	mail-wi0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750708Ab2GOFCI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 15 Jul 2012 01:02:08 -0400
+Received: by wibhm11 with SMTP id hm11so1781375wib.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 14 Jul 2012 22:02:05 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2012-07-13 at 08:50 -0400, Chris Mason wrote:
+Hi,
 
-> There is also a chunk of code in btrfs_clear_path_blocking that makes
-> sure to strictly honor top down locking order during the conversion.  It
-> only does this when lockdep is enabled because in non-RT kernels we
-> don't need to worry about it.  For RT we'll want to enable that as well.
+I have tried more configuration and patches on my i7 machine. Here is a 
+summary,
 
-Hm, _seems_ that alone is enough prevent deadlock.  Throughput really
-sucks though.  The other bits of my stab bump throughput for dbench 128
-from ~200 mb/s to ~360 mb/s (appears it's the paranoid trylock loops).
-ext3 does 775 mb/s with the same kernel.  Or, dbench 8 on ext3 gives
-~1800 mb/s and ~480 mb/s btrfs.  Not exactly wonderful.
+plain 2.6.33.9-rt31, 3.2.18-rt29 and 3.4.3-rt11 all gave me cpu stall 
+error when I started kvm guests
 
-Hohum, guess I'll wait and see what your patch looks like.  I bet it'll
-work a lot better than mine does :)
+kernel-rt-3.2.17-rt28-fc16 with all its patches from 
+http://pkgs.org/fedora-16/planet-ccrma-core-testing-x86_64/ also game me 
+cpu stall errors when I ran kvm guests.
 
--Mike
+The only patches and config doesn't give me cpu stall is 3.0.30-rt50 
+from http://glitesoft.cern.ch/cern/mrg/slc6X/x86_64/SRPMS/ But this 
+kernel won't boot inside a kvm guest.
+
+But the exact same 3.2.18-rt29 kernel works perfectly on a Core 2 Quad 
+machine. Both as the host and kvm guest!
+
+Thanks,
+
+dong
