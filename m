@@ -1,51 +1,112 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
- deadlock report for absolutely free!
-Date: Mon, 16 Jul 2012 18:16:47 +0200
-Message-ID: <1342455407.7659.86.camel@marge.simpson.net>
-References: <1342072060.7338.102.camel@marge.simpson.net>
-	 <20120713125043.GH30128@shiny> <1342260883.7368.30.camel@marge.simpson.net>
-	 <1342436144.7659.58.camel@marge.simpson.net>
-	 <20120716154304.GG25961@shiny.int.fusionio.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: "Chris L. Mason" <clmason@fusionio.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Chris Mason <chris.mason@fusionio.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120716154304.GG25961@shiny.int.fusionio.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 09/11] workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
+Date: Mon, 16 Jul 2012 14:43:19 -0400
+Message-ID: <20120716184355.467207736@goodmis.org>
+References: <20120716184310.223095720@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:12359 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753129Ab2GPSn5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2012 14:43:57 -0400
+Content-Disposition: inline; filename=0009-workqueue-Revert-workqueue-Fix-PF_THREAD_BOUND-abuse.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2012-07-16 at 11:43 -0400, Chris Mason wrote: 
-> On Mon, Jul 16, 2012 at 04:55:44AM -0600, Mike Galbraith wrote:
+From: Steven Rostedt <srostedt@redhat.com>
 
-> > Seems btrfs isn't entirely convinced either.
-> > 
-> > [ 2292.336229] use_block_rsv: 1810 callbacks suppressed
-> > [ 2292.336231] ------------[ cut here ]------------
-> > [ 2292.336255] WARNING: at fs/btrfs/extent-tree.c:6344 use_block_rsv+0x17d/0x190 [btrfs]()
-> > [ 2292.336257] Hardware name: System x3550 M3 -[7944K3G]-
-> > [ 2292.336259] btrfs: block rsv returned -28
-> 
-> This is unrelated.  You got far enough into the benchmark to hit an
-> ENOSPC warning.  This can be ignored (I just deleted it when we used 3.0
-> for oracle).
+Revert commit
 
-Ah great, thanks.  I'll whack it in my tree as well then.
+    Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
+    Date:   Mon Oct 3 12:43:25 2011 +0200
+    workqueue: Fix PF_THREAD_BOUND abuse
 
-> re: dbench performance.  dbench tends to penalize fairness.  I can
-> imagine RT making it slower in general.
+As TREAD_BOUND no longer affects cpu down, and this code introduced
+a lot of races with taking down a CPU.
 
-It seems to work just fine for my normal workloads, and cyclictest is
-happy, so I'm happy.  Zillion threads is 'keep the pieces' to me ;-)
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/workqueue.c |   29 +++++++++--------------------
+ 1 file changed, 9 insertions(+), 20 deletions(-)
 
-If you think the patch is ok as is, I'll go ahead and submit it after I
-let dbench hammer on it overnight at least.
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index bc867e8..1e7f9c7 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1283,14 +1283,8 @@ __acquires(&gcwq->lock)
+ 			return false;
+ 		if (task_cpu(task) == gcwq->cpu &&
+ 		    cpumask_equal(&current->cpus_allowed,
+-				  get_cpu_mask(gcwq->cpu))) {
+-			/*
+-			 * Since we're binding to a particular cpu and need to
+-			 * stay there for correctness, mark us PF_THREAD_BOUND.
+-			 */
+-			task->flags |= PF_THREAD_BOUND;
++				  get_cpu_mask(gcwq->cpu)))
+ 			return true;
+-		}
+ 		spin_unlock_irq(&gcwq->lock);
+ 
+ 		/*
+@@ -1304,18 +1298,6 @@ __acquires(&gcwq->lock)
+ 	}
+ }
+ 
+-static void worker_unbind_and_unlock(struct worker *worker)
+-{
+-	struct global_cwq *gcwq = worker->gcwq;
+-	struct task_struct *task = worker->task;
+-
+-	/*
+-	 * Its no longer required we're PF_THREAD_BOUND, the work is done.
+-	 */
+-	task->flags &= ~PF_THREAD_BOUND;
+-	spin_unlock_irq(&gcwq->lock);
+-}
+-
+ static struct worker *alloc_worker(void)
+ {
+ 	struct worker *worker;
+@@ -1378,9 +1360,15 @@ static struct worker *create_worker(struct global_cwq *gcwq, bool bind)
+ 	if (IS_ERR(worker->task))
+ 		goto fail;
+ 
++	/*
++	 * A rogue worker will become a regular one if CPU comes
++	 * online later on.  Make sure every worker has
++	 * PF_THREAD_BOUND set.
++	 */
+ 	if (bind && !on_unbound_cpu)
+ 		kthread_bind(worker->task, gcwq->cpu);
+ 	else {
++		worker->task->flags |= PF_THREAD_BOUND;
+ 		if (on_unbound_cpu)
+ 			worker->flags |= WORKER_UNBOUND;
+ 	}
+@@ -2057,7 +2045,7 @@ repeat:
+ 		if (keep_working(gcwq))
+ 			wake_up_worker(gcwq);
+ 
+-		worker_unbind_and_unlock(rescuer);
++		spin_unlock_irq(&gcwq->lock);
+ 	}
+ 
+ 	schedule();
+@@ -3007,6 +2995,7 @@ struct workqueue_struct *__alloc_workqueue_key(const char *fmt,
+ 		if (IS_ERR(rescuer->task))
+ 			goto err;
+ 
++		rescuer->task->flags |= PF_THREAD_BOUND;
+ 		wake_up_process(rescuer->task);
+ 	}
+ 
+-- 
+1.7.10.4
 
--Mike
+
