@@ -1,89 +1,79 @@
-From: Chris Mason <chris.mason@fusionio.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
  deadlock report for absolutely free!
-Date: Mon, 16 Jul 2012 11:43:04 -0400
-Message-ID: <20120716154304.GG25961@shiny.int.fusionio.com>
+Date: Mon, 16 Jul 2012 12:02:27 -0400
+Message-ID: <1342454547.5410.3.camel@gandalf.stny.rr.com>
 References: <1342072060.7338.102.camel@marge.simpson.net>
- <20120713125043.GH30128@shiny>
- <1342260883.7368.30.camel@marge.simpson.net>
- <1342436144.7659.58.camel@marge.simpson.net>
+	 <20120713125043.GH30128@shiny> <1342260883.7368.30.camel@marge.simpson.net>
+	 <20120715175612.GF25961@shiny.int.fusionio.com>
+	 <1342404140.7659.27.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: "Chris L. Mason" <clmason@fusionio.com>,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Chris Mason <chris.mason@fusionio.com>,
+	"Chris L. Mason" <clmason@fusionio.com>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
+	Thomas Gleixner <tglx@linutronix.de>
 To: Mike Galbraith <efault@gmx.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.fusionio.com ([66.114.96.30]:36619 "EHLO mx1.fusionio.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751261Ab2GPPnH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Jul 2012 11:43:07 -0400
-Content-Disposition: inline
-In-Reply-To: <1342436144.7659.58.camel@marge.simpson.net>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:26856 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751592Ab2GPQCa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2012 12:02:30 -0400
+In-Reply-To: <1342404140.7659.27.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Jul 16, 2012 at 04:55:44AM -0600, Mike Galbraith wrote:
-> On Sat, 2012-07-14 at 12:14 +0200, Mike Galbraith wrote: 
-> > On Fri, 2012-07-13 at 08:50 -0400, Chris Mason wrote: 
-> > > On Wed, Jul 11, 2012 at 11:47:40PM -0600, Mike Galbraith wrote:
-> > > > Greetings,
-> > > 
-> > > [ deadlocks with btrfs and the recent RT kernels ]
-> > > 
-> > > I talked with Thomas about this and I think the problem is the
-> > > single-reader nature of the RW rwlocks.  The lockdep report below
-> > > mentions that btrfs is calling:
-> > > 
-> > > > [  692.963099]  [<ffffffff811fabd2>] btrfs_clear_path_blocking+0x32/0x70
-> > > 
-> > > In this case, the task has a number of blocking read locks on the btrfs buffers,
-> > > and we're trying to turn them back into spinning read locks.  Even
-> > > though btrfs is taking the read rwlock, it doesn't think of this as a new
-> > > lock operation because we were blocking out new writers.
-> > > 
-> > > If the second task has taken the spinning read lock, it is going to
-> > > prevent that clear_path_blocking operation from progressing, even though
-> > > it would have worked on a non-RT kernel.
-> > > 
-> > > The solution should be to make the blocking read locks in btrfs honor the
-> > > single-reader semantics.  This means not allowing more than one blocking
-> > > reader and not allowing a spinning reader when there is a blocking
-> > > reader.  Strictly speaking btrfs shouldn't need recursive readers on a
-> > > single lock, so I wouldn't worry about that part.
-> > > 
-> > > There is also a chunk of code in btrfs_clear_path_blocking that makes
-> > > sure to strictly honor top down locking order during the conversion.  It
-> > > only does this when lockdep is enabled because in non-RT kernels we
-> > > don't need to worry about it.  For RT we'll want to enable that as well.
-> > > 
-> > > I'll give this a shot later today.
+On Mon, 2012-07-16 at 04:02 +0200, Mike Galbraith wrote:
+
+> > Great, thanks!  I got stuck in bug land on Friday.  You mentioned
+> > performance problems earlier on Saturday, did this improve performance?
+> 
+> Yeah, the read_trylock() seems to improve throughput.  That's not
+> heavily tested, but it certainly looks like it does.  No idea why.
+
+Ouch, you just turned the rt_read_lock() into a spin lock. If a higher
+priority process preempted a lower priority process that holds the same
+lock, it will deadlock.
+
+I'm not sure why you would get a performance benefit from this, as the
+mutex used is an adaptive one (failure to acquire the lock will only
+sleep if preempted or if the owner is not running).
+
+We should look at why this performs better (if it really does).
+
+-- Steve
+
+> 
+> WRT performance, dbench isn't thrilled, but btrfs seems to work just
+> fine for my routine usage, and spinning rust bucket is being all it can
+> be.  I hope I don't have to care overly much about dbench's opinon.  It
+> doesn't make happy multi-thread numbers with btrfs, but those numbers
+> suddenly look great if you rebase relative to xfs -rt throughput :)
+> 
+> > One other question:
 > > 
-> > I took a poke at it.  Did I do something similar to what you had in
-> > mind, or just hide behind performance stealing paranoid trylock loops?
-> > Box survived 1000 x xfstests 006 and dbench [-s] massive right off the
-> > bat, so it gets posted despite skepticism.
+> > >  again:
+> > > +#ifdef CONFIG_PREEMPT_RT_BASE
+> > > +	while (atomic_read(&eb->blocking_readers))
+> > > +		cpu_chill();
+> > > +	while(!read_trylock(&eb->lock))
+> > > +		cpu_chill();
+> > > +	if (atomic_read(&eb->blocking_readers)) {
+> > > +		read_unlock(&eb->lock);
+> > > +		goto again;
+> > > +	}
+> > 
+> > Why use read_trylock() in a loop instead of just trying to take the
+> > lock?  Is this an RTism or are there other reasons?
 > 
-> Seems btrfs isn't entirely convinced either.
+> First stab paranoia.  It worked, so I removed it.  It still worked but
+> lost throughput, removed all my bits leaving only the lockdep bits, it
+> still worked.
 > 
-> [ 2292.336229] use_block_rsv: 1810 callbacks suppressed
-> [ 2292.336231] ------------[ cut here ]------------
-> [ 2292.336255] WARNING: at fs/btrfs/extent-tree.c:6344 use_block_rsv+0x17d/0x190 [btrfs]()
-> [ 2292.336257] Hardware name: System x3550 M3 -[7944K3G]-
-> [ 2292.336259] btrfs: block rsv returned -28
+> -Mike
 
-This is unrelated.  You got far enough into the benchmark to hit an
-ENOSPC warning.  This can be ignored (I just deleted it when we used 3.0
-for oracle).
-
-re: dbench performance.  dbench tends to penalize fairness.  I can
-imagine RT making it slower in general.
-
-It also triggers lots of lock contention in btrfs because the dataset is
-fairly small and the trees don't fan out a lot.
-
--chris
 
