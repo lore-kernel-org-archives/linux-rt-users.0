@@ -1,82 +1,55 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/11] Latency histograms: Adjust timer, if already elapsed when programmed
-Date: Mon, 16 Jul 2012 14:43:12 -0400
-Message-ID: <20120716184353.853883147@goodmis.org>
+Subject: [PATCH RT 04/11] Latency histograms: Detect another yet overlooked sharedprio
+ condition
+Date: Mon, 16 Jul 2012 14:43:14 -0400
+Message-ID: <20120716184354.257786275@goodmis.org>
 References: <20120716184310.223095720@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-Latency-histograms-Adjust-timer-if-already-elapsed-w.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:2985 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752540Ab2GPSn4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2012 14:43:56 -0400
+Content-Disposition: inline; filename=0004-Latency-histograms-Detect-another-yet-overlooked-sha.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Carsten Emde <C.Emde@osadl.org>
 
-Nothing prevents a programmer from calling clock_nanosleep() with an
-already elapsed wakeup time in absolute time mode or with a too small
-delay in relative time mode. Such timers cannot wake up in time and,
-thus, should be corrected when entered into the missed timers latency
-histogram (CONFIG_MISSED_TIMERS_HIST).
+While waiting for an RT process to be woken up, the previous process may
+go to wait and switch to another one with the same priority which then
+becomes current. This condition was not correctly recognized and led to
+erroneously high latency recordings during periods of low CPU load.
 
-This patch marks such timers and uses a corrected expiration time.
+This patch correctly marks such latencies as sharedprio and prevents
+them from being recorded as actual system latency.
 
 Signed-off-by: Carsten Emde <C.Emde@osadl.org>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/hrtimer.h |    3 +++
- kernel/hrtimer.c        |   16 ++++++++++++++--
- 2 files changed, 17 insertions(+), 2 deletions(-)
+ kernel/trace/latency_hist.c |    3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 0e37086..7408760 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -113,6 +113,9 @@ struct hrtimer {
- 	unsigned long			state;
- 	struct list_head		cb_entry;
- 	int				irqsafe;
-+#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-+	ktime_t 			praecox;
-+#endif
- #ifdef CONFIG_TIMER_STATS
- 	int				start_pid;
- 	void				*start_site;
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 3991464..a080e62 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1021,6 +1021,17 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- #endif
+diff --git a/kernel/trace/latency_hist.c b/kernel/trace/latency_hist.c
+index d514eef..6a4c869 100644
+--- a/kernel/trace/latency_hist.c
++++ b/kernel/trace/latency_hist.c
+@@ -935,6 +935,9 @@ static notrace void probe_wakeup_latency_hist_stop(void *v,
+ 		goto out;
  	}
  
-+#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-+	{
-+		ktime_t now = new_base->get_time();
++	if (current->prio == cpu_wakeup_task->prio)
++		per_cpu(wakeup_sharedprio, cpu) = 1;
 +
-+		if (ktime_to_ns(tim) < ktime_to_ns(now))
-+			timer->praecox = now;
-+		else
-+			timer->praecox = ktime_set(0, 0);
-+	}
-+#endif
-+
- 	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
- 
- 	timer_stats_hrtimer_set_start_info(timer);
-@@ -1458,8 +1469,9 @@ retry:
- 			timer = container_of(node, struct hrtimer, node);
- 
- 			trace_hrtimer_interrupt(raw_smp_processor_id(),
--			    ktime_to_ns(ktime_sub(
--				hrtimer_get_expires(timer), basenow)),
-+			    ktime_to_ns(ktime_sub(ktime_to_ns(timer->praecox) ?
-+				timer->praecox : hrtimer_get_expires(timer),
-+				basenow)),
- 			    current,
- 			    timer->function == hrtimer_wakeup ?
- 			    container_of(timer, struct hrtimer_sleeper,
+ 	/*
+ 	 * The task we are waiting for is about to be switched to.
+ 	 * Calculate latency and store it in histogram.
 -- 
 1.7.10.4
+
+
