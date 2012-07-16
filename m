@@ -1,51 +1,89 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch RT 0/3] Stable rt updates - part II
-Date: Mon, 16 Jul 2012 09:14:35 -0400
-Message-ID: <1342444475.21617.2.camel@gandalf.stny.rr.com>
-References: <20120715090141.942753287@linutronix.de>
+From: Chris Mason <chris.mason@fusionio.com>
+Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
+ deadlock report for absolutely free!
+Date: Mon, 16 Jul 2012 11:43:04 -0400
+Message-ID: <20120716154304.GG25961@shiny.int.fusionio.com>
+References: <1342072060.7338.102.camel@marge.simpson.net>
+ <20120713125043.GH30128@shiny>
+ <1342260883.7368.30.camel@marge.simpson.net>
+ <1342436144.7659.58.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120715090141.942753287@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Cc: "Chris L. Mason" <clmason@fusionio.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.fusionio.com ([66.114.96.30]:36619 "EHLO mx1.fusionio.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751261Ab2GPPnH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 16 Jul 2012 11:43:07 -0400
+Content-Disposition: inline
+In-Reply-To: <1342436144.7659.58.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2012-07-16 at 08:07 +0000, Thomas Gleixner wrote:
-> Steven,
+On Mon, Jul 16, 2012 at 04:55:44AM -0600, Mike Galbraith wrote:
+> On Sat, 2012-07-14 at 12:14 +0200, Mike Galbraith wrote: 
+> > On Fri, 2012-07-13 at 08:50 -0400, Chris Mason wrote: 
+> > > On Wed, Jul 11, 2012 at 11:47:40PM -0600, Mike Galbraith wrote:
+> > > > Greetings,
+> > > 
+> > > [ deadlocks with btrfs and the recent RT kernels ]
+> > > 
+> > > I talked with Thomas about this and I think the problem is the
+> > > single-reader nature of the RW rwlocks.  The lockdep report below
+> > > mentions that btrfs is calling:
+> > > 
+> > > > [  692.963099]  [<ffffffff811fabd2>] btrfs_clear_path_blocking+0x32/0x70
+> > > 
+> > > In this case, the task has a number of blocking read locks on the btrfs buffers,
+> > > and we're trying to turn them back into spinning read locks.  Even
+> > > though btrfs is taking the read rwlock, it doesn't think of this as a new
+> > > lock operation because we were blocking out new writers.
+> > > 
+> > > If the second task has taken the spinning read lock, it is going to
+> > > prevent that clear_path_blocking operation from progressing, even though
+> > > it would have worked on a non-RT kernel.
+> > > 
+> > > The solution should be to make the blocking read locks in btrfs honor the
+> > > single-reader semantics.  This means not allowing more than one blocking
+> > > reader and not allowing a spinning reader when there is a blocking
+> > > reader.  Strictly speaking btrfs shouldn't need recursive readers on a
+> > > single lock, so I wouldn't worry about that part.
+> > > 
+> > > There is also a chunk of code in btrfs_clear_path_blocking that makes
+> > > sure to strictly honor top down locking order during the conversion.  It
+> > > only does this when lockdep is enabled because in non-RT kernels we
+> > > don't need to worry about it.  For RT we'll want to enable that as well.
+> > > 
+> > > I'll give this a shot later today.
+> > 
+> > I took a poke at it.  Did I do something similar to what you had in
+> > mind, or just hide behind performance stealing paranoid trylock loops?
+> > Box survived 1000 x xfstests 006 and dbench [-s] massive right off the
+> > bat, so it gets posted despite skepticism.
 > 
-> please pick the following three patches which address the CPU hotplug
-> nightmare on RT.
-
-OK, I'll process this after releasing v3.2.22-rt35 and v3.2.23-rt36.
-
+> Seems btrfs isn't entirely convinced either.
 > 
-> I still hate them, but we want to have that addressed in the stable
-> series.
+> [ 2292.336229] use_block_rsv: 1810 callbacks suppressed
+> [ 2292.336231] ------------[ cut here ]------------
+> [ 2292.336255] WARNING: at fs/btrfs/extent-tree.c:6344 use_block_rsv+0x17d/0x190 [btrfs]()
+> [ 2292.336257] Hardware name: System x3550 M3 -[7944K3G]-
+> [ 2292.336259] btrfs: block rsv returned -28
 
-I'm glad they were useful.
+This is unrelated.  You got far enough into the benchmark to hit an
+ENOSPC warning.  This can be ignored (I just deleted it when we used 3.0
+for oracle).
 
-> 
-> Aside of that there are the outstanding issues with btrfs and io unplug.
+re: dbench performance.  dbench tends to penalize fairness.  I can
+imagine RT making it slower in general.
 
-Right, I was holding off releasing a 3.0 series because of this.
+It also triggers lots of lock contention in btrfs because the dataset is
+fairly small and the trees don't fan out a lot.
 
-> 
-> The missing spin_lock_init() fix should reach you via mainline stable
-> updates. Mike and Chris are looking into that interesting locking
-> features.
-> 
-> The io unplug thing stays mysterious, but as I just wrote in that
-> thread, my patch to address it is fundamentally wrong. :(
-> 
-> I'm off for a week of vacation, so do not expect any further updates
-> from my side. If Mike and Chris come up with an agreed solution for
-> the locking issue, please pick it up yourself.
+-chris
 
-OK, but I'll be hounding you when you get back. Although I'll be off
-next week.
-
--- Steve
