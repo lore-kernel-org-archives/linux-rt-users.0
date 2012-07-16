@@ -1,48 +1,51 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus
- rt_mutex deadlock report for absolutely free!
-Date: Mon, 16 Jul 2012 13:03:15 -0400
-Message-ID: <1342458195.2783.5.camel@acer.local.home>
+From: Mike Galbraith <efault@gmx.de>
+Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
+ deadlock report for absolutely free!
+Date: Mon, 16 Jul 2012 18:16:47 +0200
+Message-ID: <1342455407.7659.86.camel@marge.simpson.net>
 References: <1342072060.7338.102.camel@marge.simpson.net>
 	 <20120713125043.GH30128@shiny> <1342260883.7368.30.camel@marge.simpson.net>
-	 <20120715175612.GF25961@shiny.int.fusionio.com>
-	 <1342404140.7659.27.camel@marge.simpson.net>
-	 <1342454547.5410.3.camel@gandalf.stny.rr.com>
-	 <1342455968.7659.93.camel@marge.simpson.net>
-	 <1342456567.7659.97.camel@marge.simpson.net>
+	 <1342436144.7659.58.camel@marge.simpson.net>
+	 <20120716154304.GG25961@shiny.int.fusionio.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Chris Mason <chris.mason@fusionio.com>,
-	"Chris L. Mason" <clmason@fusionio.com>,
+Cc: "Chris L. Mason" <clmason@fusionio.com>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <efault@gmx.de>
-Return-path: <linux-fsdevel-owner@vger.kernel.org>
-In-Reply-To: <1342456567.7659.97.camel@marge.simpson.net>
-Sender: linux-fsdevel-owner@vger.kernel.org
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Chris Mason <chris.mason@fusionio.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120716154304.GG25961@shiny.int.fusionio.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2012-07-16 at 18:36 +0200, Mike Galbraith wrote:
->  
-> > > Ouch, you just turned the rt_read_lock() into a spin lock. If a higher
-> > > priority process preempted a lower priority process that holds the same
-> > > lock, it will deadlock.
+On Mon, 2012-07-16 at 11:43 -0400, Chris Mason wrote: 
+> On Mon, Jul 16, 2012 at 04:55:44AM -0600, Mike Galbraith wrote:
+
+> > Seems btrfs isn't entirely convinced either.
 > > 
-> > Hm, how, it's doing cpu_chill()?
+> > [ 2292.336229] use_block_rsv: 1810 callbacks suppressed
+> > [ 2292.336231] ------------[ cut here ]------------
+> > [ 2292.336255] WARNING: at fs/btrfs/extent-tree.c:6344 use_block_rsv+0x17d/0x190 [btrfs]()
+> > [ 2292.336257] Hardware name: System x3550 M3 -[7944K3G]-
+> > [ 2292.336259] btrfs: block rsv returned -28
 > 
-> 'course PI is toast, so *poof*.  Since just enabling the lockdep bits
-> seems to fix it up, maybe that's the patchlet to submit (less is more).
+> This is unrelated.  You got far enough into the benchmark to hit an
+> ENOSPC warning.  This can be ignored (I just deleted it when we used 3.0
+> for oracle).
 
-There's that too. But the issue I was talking about is with all trylock
-loops. As holding an rt-mutex now disables migration, if a high priority
-process preempts a task that holds the lock, and then the high prio task
-starts spinning waiting for that lock to release, the lower priority
-process will never get to run to release it. The cpu_chill() doesn't
-help.
+Ah great, thanks.  I'll whack it in my tree as well then.
 
--- Steve
+> re: dbench performance.  dbench tends to penalize fairness.  I can
+> imagine RT making it slower in general.
 
+It seems to work just fine for my normal workloads, and cyclictest is
+happy, so I'm happy.  Zillion threads is 'keep the pieces' to me ;-)
 
+If you think the patch is ok as is, I'll go ahead and submit it after I
+let dbench hammer on it overnight at least.
+
+-Mike
