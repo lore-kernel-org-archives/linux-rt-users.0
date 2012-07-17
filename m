@@ -1,92 +1,111 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/12] perf: Make swevent hrtimer run in irq instead of softirq
-Date: Tue, 17 Jul 2012 11:31:22 -0400
-Message-ID: <20120717153244.051644274@goodmis.org>
+Subject: [PATCH RT 10/12] workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
+Date: Tue, 17 Jul 2012 11:31:25 -0400
+Message-ID: <20120717153244.715177134@goodmis.org>
 References: <20120717153115.606116459@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Yong Zhang <yong.zhang0@gmail.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8531 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14865 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752699Ab2GQPcr (ORCPT
+	with ESMTP id S1752078Ab2GQPcp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jul 2012 11:32:47 -0400
-Content-Disposition: inline; filename=0007-perf-Make-swevent-hrtimer-run-in-irq-instead-of-soft.patch
+	Tue, 17 Jul 2012 11:32:45 -0400
+Content-Disposition: inline; filename=0010-workqueue-Revert-workqueue-Fix-PF_THREAD_BOUND-abuse.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Yong Zhang <yong.zhang@windriver.com>
+From: Steven Rostedt <srostedt@redhat.com>
 
-Otherwise we get a deadlock like below:
+Revert commit
 
-[ 1044.042749] BUG: scheduling while atomic: ksoftirqd/21/141/0x00010003
-[ 1044.042752] INFO: lockdep is turned off.
-[ 1044.042754] Modules linked in:
-[ 1044.042757] Pid: 141, comm: ksoftirqd/21 Tainted: G        W    3.4.0-rc2-rt3-23676-ga723175-dirty #29
-[ 1044.042759] Call Trace:
-[ 1044.042761]  <IRQ>  [<ffffffff8107d8e5>] __schedule_bug+0x65/0x80
-[ 1044.042770]  [<ffffffff8168978c>] __schedule+0x83c/0xa70
-[ 1044.042775]  [<ffffffff8106bdd2>] ? prepare_to_wait+0x32/0xb0
-[ 1044.042779]  [<ffffffff81689a5e>] schedule+0x2e/0xa0
-[ 1044.042782]  [<ffffffff81071ebd>] hrtimer_wait_for_timer+0x6d/0xb0
-[ 1044.042786]  [<ffffffff8106bb30>] ? wake_up_bit+0x40/0x40
-[ 1044.042790]  [<ffffffff81071f20>] hrtimer_cancel+0x20/0x40
-[ 1044.042794]  [<ffffffff8111da0c>] perf_swevent_cancel_hrtimer+0x3c/0x50
-[ 1044.042798]  [<ffffffff8111da31>] task_clock_event_stop+0x11/0x40
-[ 1044.042802]  [<ffffffff8111da6e>] task_clock_event_del+0xe/0x10
-[ 1044.042805]  [<ffffffff8111c568>] event_sched_out+0x118/0x1d0
-[ 1044.042809]  [<ffffffff8111c649>] group_sched_out+0x29/0x90
-[ 1044.042813]  [<ffffffff8111ed7e>] __perf_event_disable+0x18e/0x200
-[ 1044.042817]  [<ffffffff8111c343>] remote_function+0x63/0x70
-[ 1044.042821]  [<ffffffff810b0aae>] generic_smp_call_function_single_interrupt+0xce/0x120
-[ 1044.042826]  [<ffffffff81022bc7>] smp_call_function_single_interrupt+0x27/0x40
-[ 1044.042831]  [<ffffffff8168d50c>] call_function_single_interrupt+0x6c/0x80
-[ 1044.042833]  <EOI>  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
-[ 1044.042840]  [<ffffffff8168b970>] ? _raw_spin_unlock_irq+0x30/0x70
-[ 1044.042844]  [<ffffffff8168b976>] ? _raw_spin_unlock_irq+0x36/0x70
-[ 1044.042848]  [<ffffffff810702e2>] run_hrtimer_softirq+0xc2/0x200
-[ 1044.042853]  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
-[ 1044.042857]  [<ffffffff81045265>] __do_softirq_common+0xf5/0x3a0
-[ 1044.042862]  [<ffffffff81045c3d>] __thread_do_softirq+0x15d/0x200
-[ 1044.042865]  [<ffffffff81045dda>] run_ksoftirqd+0xfa/0x210
-[ 1044.042869]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
-[ 1044.042873]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
-[ 1044.042877]  [<ffffffff8106b596>] kthread+0xb6/0xc0
-[ 1044.042881]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
-[ 1044.042886]  [<ffffffff8168d994>] kernel_thread_helper+0x4/0x10
-[ 1044.042889]  [<ffffffff8107d98c>] ? finish_task_switch+0x8c/0x110
-[ 1044.042894]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
-[ 1044.042897]  [<ffffffff8168bd5d>] ? retint_restore_args+0xe/0xe
-[ 1044.042900]  [<ffffffff8106b4e0>] ? kthreadd+0x1e0/0x1e0
-[ 1044.042902]  [<ffffffff8168d990>] ? gs_change+0xb/0xb
+    Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
+    Date:   Mon Oct 3 12:43:25 2011 +0200
+    workqueue: Fix PF_THREAD_BOUND abuse
 
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/1341476476-5666-1-git-send-email-yong.zhang0@gmail.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+As TREAD_BOUND no longer affects cpu down, and this code introduced
+a lot of races with taking down a CPU.
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/events/core.c |    1 +
- 1 file changed, 1 insertion(+)
+ kernel/workqueue.c |   29 +++++++++--------------------
+ 1 file changed, 9 insertions(+), 20 deletions(-)
 
-diff --git a/kernel/events/core.c b/kernel/events/core.c
-index fd126f8..451d452 100644
---- a/kernel/events/core.c
-+++ b/kernel/events/core.c
-@@ -5403,6 +5403,7 @@ static void perf_swevent_init_hrtimer(struct perf_event *event)
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index bc867e8..1e7f9c7 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1283,14 +1283,8 @@ __acquires(&gcwq->lock)
+ 			return false;
+ 		if (task_cpu(task) == gcwq->cpu &&
+ 		    cpumask_equal(&current->cpus_allowed,
+-				  get_cpu_mask(gcwq->cpu))) {
+-			/*
+-			 * Since we're binding to a particular cpu and need to
+-			 * stay there for correctness, mark us PF_THREAD_BOUND.
+-			 */
+-			task->flags |= PF_THREAD_BOUND;
++				  get_cpu_mask(gcwq->cpu)))
+ 			return true;
+-		}
+ 		spin_unlock_irq(&gcwq->lock);
  
- 	hrtimer_init(&hwc->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
- 	hwc->hrtimer.function = perf_swevent_hrtimer;
-+	hwc->hrtimer.irqsafe = 1;
+ 		/*
+@@ -1304,18 +1298,6 @@ __acquires(&gcwq->lock)
+ 	}
+ }
  
- 	/*
- 	 * Since hrtimers have a fixed rate, we can do a static freq->period
+-static void worker_unbind_and_unlock(struct worker *worker)
+-{
+-	struct global_cwq *gcwq = worker->gcwq;
+-	struct task_struct *task = worker->task;
+-
+-	/*
+-	 * Its no longer required we're PF_THREAD_BOUND, the work is done.
+-	 */
+-	task->flags &= ~PF_THREAD_BOUND;
+-	spin_unlock_irq(&gcwq->lock);
+-}
+-
+ static struct worker *alloc_worker(void)
+ {
+ 	struct worker *worker;
+@@ -1378,9 +1360,15 @@ static struct worker *create_worker(struct global_cwq *gcwq, bool bind)
+ 	if (IS_ERR(worker->task))
+ 		goto fail;
+ 
++	/*
++	 * A rogue worker will become a regular one if CPU comes
++	 * online later on.  Make sure every worker has
++	 * PF_THREAD_BOUND set.
++	 */
+ 	if (bind && !on_unbound_cpu)
+ 		kthread_bind(worker->task, gcwq->cpu);
+ 	else {
++		worker->task->flags |= PF_THREAD_BOUND;
+ 		if (on_unbound_cpu)
+ 			worker->flags |= WORKER_UNBOUND;
+ 	}
+@@ -2057,7 +2045,7 @@ repeat:
+ 		if (keep_working(gcwq))
+ 			wake_up_worker(gcwq);
+ 
+-		worker_unbind_and_unlock(rescuer);
++		spin_unlock_irq(&gcwq->lock);
+ 	}
+ 
+ 	schedule();
+@@ -3007,6 +2995,7 @@ struct workqueue_struct *__alloc_workqueue_key(const char *fmt,
+ 		if (IS_ERR(rescuer->task))
+ 			goto err;
+ 
++		rescuer->task->flags |= PF_THREAD_BOUND;
+ 		wake_up_process(rescuer->task);
+ 	}
+ 
 -- 
 1.7.10.4
 
