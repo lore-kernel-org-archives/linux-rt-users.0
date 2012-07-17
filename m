@@ -1,29 +1,82 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 12/12] Linux 3.4.4-rt14-rc2
-Date: Tue, 17 Jul 2012 11:31:27 -0400
-Message-ID: <20120717153245.206178010@goodmis.org>
+Subject: [PATCH RT 02/12] Latency histograms: Adjust timer, if already elapsed when programmed
+Date: Tue, 17 Jul 2012 11:31:17 -0400
+Message-ID: <20120717153242.943096035@goodmis.org>
 References: <20120717153115.606116459@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0012-Linux-3.4.4-rt14-rc2.patch
+Content-Disposition: inline; filename=0002-Latency-histograms-Adjust-timer-if-already-elapsed-w.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <srostedt@redhat.com>
+From: Carsten Emde <C.Emde@osadl.org>
 
+Nothing prevents a programmer from calling clock_nanosleep() with an
+already elapsed wakeup time in absolute time mode or with a too small
+delay in relative time mode. Such timers cannot wake up in time and,
+thus, should be corrected when entered into the missed timers latency
+histogram (CONFIG_MISSED_TIMERS_HIST).
+
+This patch marks such timers and uses a corrected expiration time.
+
+Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/hrtimer.h |    3 +++
+ kernel/hrtimer.c        |   16 ++++++++++++++--
+ 2 files changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 9f7d0bd..acd1f9c 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt13
-+-rt14-rc2
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 0e37086..7408760 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -113,6 +113,9 @@ struct hrtimer {
+ 	unsigned long			state;
+ 	struct list_head		cb_entry;
+ 	int				irqsafe;
++#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
++	ktime_t 			praecox;
++#endif
+ #ifdef CONFIG_TIMER_STATS
+ 	int				start_pid;
+ 	void				*start_site;
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 3991464..a080e62 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1021,6 +1021,17 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+ #endif
+ 	}
+ 
++#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
++	{
++		ktime_t now = new_base->get_time();
++
++		if (ktime_to_ns(tim) < ktime_to_ns(now))
++			timer->praecox = now;
++		else
++			timer->praecox = ktime_set(0, 0);
++	}
++#endif
++
+ 	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
+ 
+ 	timer_stats_hrtimer_set_start_info(timer);
+@@ -1458,8 +1469,9 @@ retry:
+ 			timer = container_of(node, struct hrtimer, node);
+ 
+ 			trace_hrtimer_interrupt(raw_smp_processor_id(),
+-			    ktime_to_ns(ktime_sub(
+-				hrtimer_get_expires(timer), basenow)),
++			    ktime_to_ns(ktime_sub(ktime_to_ns(timer->praecox) ?
++				timer->praecox : hrtimer_get_expires(timer),
++				basenow)),
+ 			    current,
+ 			    timer->function == hrtimer_wakeup ?
+ 			    container_of(timer, struct hrtimer_sleeper,
 -- 
 1.7.10.4
