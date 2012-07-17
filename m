@@ -1,82 +1,94 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/12] Latency histograms: Adjust timer, if already elapsed when programmed
-Date: Tue, 17 Jul 2012 11:31:17 -0400
-Message-ID: <20120717153242.943096035@goodmis.org>
-References: <20120717153115.606116459@goodmis.org>
+Subject: [PATCH RT 00/12] [ANNOUNCE] 3.4.4-rt14-rc2 stable review
+Date: Tue, 17 Jul 2012 11:31:15 -0400
+Message-ID: <20120717153115.606116459@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-Latency-histograms-Adjust-timer-if-already-elapsed-w.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Carsten Emde <C.Emde@osadl.org>
 
-Nothing prevents a programmer from calling clock_nanosleep() with an
-already elapsed wakeup time in absolute time mode or with a too small
-delay in relative time mode. Such timers cannot wake up in time and,
-thus, should be corrected when entered into the missed timers latency
-histogram (CONFIG_MISSED_TIMERS_HIST).
+Dear RT Folks,
 
-This patch marks such timers and uses a corrected expiration time.
+This is the RT stable review cycle of patch 3.4.4-rt14-rc2.
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/18/2012.
+
+What changed between -rc1:
+
+  Patch was added:
+    cpu/rt: Fix cpu_hotplug variable initialization
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.4.4-rt14-rc2 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.4.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.4-rt14-rc2.patch.xz
+
+You can also build from 3.4.4-rt13 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.4-rt13-rt14-rc2.patch.xz
+
+
+Changes from 3.4.4-rt13:
+
 ---
- include/linux/hrtimer.h |    3 +++
- kernel/hrtimer.c        |   16 ++++++++++++++--
- 2 files changed, 17 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 0e37086..7408760 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -113,6 +113,9 @@ struct hrtimer {
- 	unsigned long			state;
- 	struct list_head		cb_entry;
- 	int				irqsafe;
-+#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-+	ktime_t 			praecox;
-+#endif
- #ifdef CONFIG_TIMER_STATS
- 	int				start_pid;
- 	void				*start_site;
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 3991464..a080e62 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1021,6 +1021,17 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- #endif
- 	}
- 
-+#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
-+	{
-+		ktime_t now = new_base->get_time();
-+
-+		if (ktime_to_ns(tim) < ktime_to_ns(now))
-+			timer->praecox = now;
-+		else
-+			timer->praecox = ktime_set(0, 0);
-+	}
-+#endif
-+
- 	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
- 
- 	timer_stats_hrtimer_set_start_info(timer);
-@@ -1458,8 +1469,9 @@ retry:
- 			timer = container_of(node, struct hrtimer, node);
- 
- 			trace_hrtimer_interrupt(raw_smp_processor_id(),
--			    ktime_to_ns(ktime_sub(
--				hrtimer_get_expires(timer), basenow)),
-+			    ktime_to_ns(ktime_sub(ktime_to_ns(timer->praecox) ?
-+				timer->praecox : hrtimer_get_expires(timer),
-+				basenow)),
- 			    current,
- 			    timer->function == hrtimer_wakeup ?
- 			    container_of(timer, struct hrtimer_sleeper,
--- 
-1.7.10.4
+
+Carsten Emde (4):
+      Latency histogramms: Cope with backwards running local trace clock
+      Latency histograms: Adjust timer, if already elapsed when programmed
+      Disable RT_GROUP_SCHED in PREEMPT_RT_FULL
+      Latency histograms: Detect another yet overlooked sharedprio condition
+
+Mike Galbraith (1):
+      fs, jbd: pull your plug when waiting for space
+
+Steven Rostedt (5):
+      cpu/rt: Rework cpu down for PREEMPT_RT
+      cpu/rt: Fix cpu_hotplug variable initialization
+      workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
+      workqueue: Revert workqueue: Fix cpuhotplug trainwreck
+      Linux 3.4.4-rt14-rc2
+
+Thomas Gleixner (1):
+      slab: Prevent local lock deadlock
+
+Yong Zhang (1):
+      perf: Make swevent hrtimer run in irq instead of softirq
+
+----
+ fs/jbd/checkpoint.c         |    2 +
+ include/linux/cpu.h         |    6 +-
+ include/linux/hrtimer.h     |    3 +
+ include/linux/sched.h       |    9 +-
+ include/linux/workqueue.h   |    5 +-
+ init/Kconfig                |    1 +
+ kernel/cpu.c                |  240 ++++++++++++++----
+ kernel/events/core.c        |    1 +
+ kernel/hrtimer.c            |   16 +-
+ kernel/sched/core.c         |   82 +++++-
+ kernel/trace/latency_hist.c |   74 +++---
+ kernel/workqueue.c          |  578 +++++++++++++++++++++++++++++++------------
+ localversion-rt             |    2 +-
+ mm/slab.c                   |   26 +-
+ 14 files changed, 788 insertions(+), 257 deletions(-)
