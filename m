@@ -1,47 +1,111 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
- deadlock report for absolutely free!
-Date: Tue, 17 Jul 2012 06:46:14 +0200
-Message-ID: <1342500374.7353.47.camel@marge.simpson.net>
-References: <1342072060.7338.102.camel@marge.simpson.net>
-	 <20120713125043.GH30128@shiny> <1342260883.7368.30.camel@marge.simpson.net>
-	 <20120715175612.GF25961@shiny.int.fusionio.com>
-	 <1342404140.7659.27.camel@marge.simpson.net>
-	 <1342454547.5410.3.camel@gandalf.stny.rr.com>
-	 <1342455968.7659.93.camel@marge.simpson.net>
-	 <1342456567.7659.97.camel@marge.simpson.net>
-	 <1342458195.2783.5.camel@acer.local.home>
-	 <1342498722.7353.37.camel@marge.simpson.net>
-	 <1342499278.24525.13.camel@gandalf.stny.rr.com>
-	 <1342499648.24525.17.camel@gandalf.stny.rr.com>
+From: Ying Xue <ying.xue@windriver.com>
+Subject: [PATCH] sched/rt: Avoid updating RT entry timeout twice within one tick period
+Date: Tue, 17 Jul 2012 15:03:43 +0800
+Message-ID: <1342508623-2887-1-git-send-email-ying.xue@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Chris Mason <chris.mason@fusionio.com>,
-	"Chris L. Mason" <clmason@fusionio.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1342499648.24525.17.camel@gandalf.stny.rr.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: <peterz@infradead.org>, <tglx@linutronix.de>, <mingo@elte.hu>,
+	<rostedt@goodmis.org>, <yong.zhang0@gmail.com>
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail1.windriver.com ([147.11.146.13]:40395 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751491Ab2GQHEo (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Jul 2012 03:04:44 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-07-17 at 00:34 -0400, Steven Rostedt wrote: 
-> On Tue, 2012-07-17 at 00:27 -0400, Steven Rostedt wrote:
-> 
-> > Actually, I was mistaken. I forgot that we defined 'cpu_chill()' as
-> > msleep(1) on RT, which would keep a deadlock from happening.
-> 
-> Perhaps cpu_chill() isn't a good name, as it doesn't really explain what
-> is happening. Perhaps one of the following?
-> 
->   cpu_rest()
->   cpu_sleep()
->   cpu_deep_relax()
->   cpu_dream()
->   cpu_hypnotize()
+Firstly please pay attention to below issue which is found in a lower
+version(2.6.34-rt) rather than mainline rt kernel. Although some big
+changes have happened from that point to now, especially every softirq
+does not run as one thread any more, we believe in the latest upstream
+version the issue possibly exists. However, currently it's really hard
+to be triggered after all softirqs are pushed off to the ksoftirqd
+thread to complete them.
 
-(   cpu_waste_truckloads_of_time();)
+So please let me describe how to happen on 2.6.34-rt:
+
+On this version, each softirq has its own thread, it means there has at
+least one RT FIFO task per cpu. The priority of these tasks is set to 49
+by default. If user launches an RT FIFO task with priority lower than 49
+of softirq RT tasks, it's possible there have two RT FIFO tasks enqueued
+one cpu runqueue at one moment. By current strategy of balancing RT tasks,
+when it comes to RT tasks, we really need to put them off to a CPU that
+they can run on as soon as possible. Even if it means a bit of cache line
+flushing, but we can let RT task be run within the least latency.
+
+When the user RT FIFO task which is just launched before is running,
+the tick sched timer of current cpu happens. In this tick period, the
+timeout value of the user RT task will be updated once. Subsequently,
+we try to wake up one softirq RT task on its local cpu. As the priority
+of current user RT task is lower than the softirq RT task, the current
+task will be preempted by the higher priority softirq RT task. Before
+preemption, we check to see if current can readily move to a different
+cpu. If so, we will reschedule to allow RT push logic to try to move
+current somewhere else. Whenever the woken softirq RT task runs, it
+first tries to migrate the user FIFO RT task over to a cpu that is
+running a task of lesser priority. If migration is done, it will send
+an reschedule order to the found cpu by IPI interrupt. Once the target
+cpu responds the IPI interrupt, it will pick the migrated user RT task
+to preempt its current task. When the user RT task is running on the
+new cpu, the tick sched timer of the cpu fires. So it will tick the
+user RT task again. This also means the RT task timeout value will be
+updated again. As the migration may be done in one tick period, it means
+the user RT task timeout value will be updated twice within one tick.
+
+If we set a limit on the amount of cpu time for the user RT task by
+setrlimit(RLIMIT_RTTIME), the SIGXCPU signal should be posted upon
+reaching the soft limit.
+
+But when SIGXCPU signal should be sent depends on the RT task timeout
+value. In fact the timeout mechanism of sending SIGXCPU signal hopes
+the RT task timeout is increased once every tick. However, currently
+the timeout value may be added twice per tick. So it results in the
+SIGXCPU signal being sent earlier than our expected.
+
+To solve the issue, we prevent the timeout value from increasing twice
+within one tick time by remembering the jiffies value of lastly updating
+the timeout. As long as the RT task's jiffies is different with the
+global jiffies value, we allow its timeout to be updated.
+
+Signed-off-by: Ying Xue <ying.xue@windriver.com>
+Signed-off-by: Fan Du <fan.du@windriver.com>
+Reviewed-by: Yong Zhang <yong.zhang0@gmail.com>
+---
+ include/linux/sched.h |    1 +
+ kernel/sched/rt.c     |    6 +++++-
+ 2 files changed, 6 insertions(+), 1 deletions(-)
+
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 4a1f493..f0656a2 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1199,6 +1199,7 @@ struct sched_entity {
+ struct sched_rt_entity {
+ 	struct list_head run_list;
+ 	unsigned long timeout;
++	unsigned long watchdog_stamp;
+ 	unsigned int time_slice;
+ 
+ 	struct sched_rt_entity *back;
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 573e1ca..8240d4f 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1976,7 +1976,11 @@ static void watchdog(struct rq *rq, struct task_struct *p)
+ 	if (soft != RLIM_INFINITY) {
+ 		unsigned long next;
+ 
+-		p->rt.timeout++;
++		if (p->rt.watchdog_stamp != jiffies) {
++			p->rt.timeout++;
++			p->rt.watchdog_stamp = jiffies;
++		}
++
+ 		next = DIV_ROUND_UP(min(soft, hard), USEC_PER_SEC/HZ);
+ 		if (p->rt.timeout > next)
+ 			p->cputime_expires.sched_exp = p->se.sum_exec_runtime;
+-- 
+1.7.1
+
