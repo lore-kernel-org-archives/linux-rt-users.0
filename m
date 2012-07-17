@@ -1,8 +1,8 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Mike Galbraith <efault@gmx.de>
 Subject: Re: 3.4.4-rt13: btrfs + xfstests 006 = BOOM..  and a bonus rt_mutex
  deadlock report for absolutely free!
-Date: Tue, 17 Jul 2012 00:34:08 -0400
-Message-ID: <1342499648.24525.17.camel@gandalf.stny.rr.com>
+Date: Tue, 17 Jul 2012 06:44:43 +0200
+Message-ID: <1342500283.7353.46.camel@marge.simpson.net>
 References: <1342072060.7338.102.camel@marge.simpson.net>
 	 <20120713125043.GH30128@shiny> <1342260883.7368.30.camel@marge.simpson.net>
 	 <20120715175612.GF25961@shiny.int.fusionio.com>
@@ -14,7 +14,7 @@ References: <1342072060.7338.102.camel@marge.simpson.net>
 	 <1342498722.7353.37.camel@marge.simpson.net>
 	 <1342499278.24525.13.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Chris Mason <chris.mason@fusionio.com>,
 	"Chris L. Mason" <clmason@fusionio.com>,
@@ -22,32 +22,43 @@ Cc: Chris Mason <chris.mason@fusionio.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-fsdevel <linux-fsdevel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <efault@gmx.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:30049 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750851Ab2GQEeJ (ORCPT
+Received: from mailout-de.gmx.net ([213.165.64.23]:58759 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1751231Ab2GQEor (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Jul 2012 00:34:09 -0400
+	Tue, 17 Jul 2012 00:44:47 -0400
 In-Reply-To: <1342499278.24525.13.camel@gandalf.stny.rr.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-07-17 at 00:27 -0400, Steven Rostedt wrote:
-
+On Tue, 2012-07-17 at 00:27 -0400, Steven Rostedt wrote: 
+> On Tue, 2012-07-17 at 06:18 +0200, Mike Galbraith wrote:
+> >  
+> > > There's that too. But the issue I was talking about is with all trylock
+> > > loops. As holding an rt-mutex now disables migration, if a high priority
+> > > process preempts a task that holds the lock, and then the high prio task
+> > > starts spinning waiting for that lock to release, the lower priority
+> > > process will never get to run to release it. The cpu_chill() doesn't
+> > > help.
+> > 
+> > Hrm.  I better go make a testcase, this one definitely wants pounding
+> > through thick skull.
+> 
 > Actually, I was mistaken. I forgot that we defined 'cpu_chill()' as
 > msleep(1) on RT, which would keep a deadlock from happening.
 
-Perhaps cpu_chill() isn't a good name, as it doesn't really explain what
-is happening. Perhaps one of the following?
+Whew!  There are no stars and moons on my pointy hat, just plain white
+cone, so you had me worried I was missing something critical there.
 
-  cpu_rest()
-  cpu_sleep()
-  cpu_deep_relax()
-  cpu_dream()
-  cpu_hypnotize()
+> It doesn't explain the performance enhancement you get :-/
 
--- Steve
- 
+No, it doesn't.  The only thing I can think of is that while folks are
+timed sleeping, they aren't preempting and interleaving IO as much, but
+I'm pulling that out of thin air.  Timed sleep should be a lot longer
+than regular wakeup, so to my mind, there should be less interleave due
+to more thumb twiddling.
 
+-Mike
 
