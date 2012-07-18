@@ -1,89 +1,112 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/12] [ANNOUNCE] 3.0.36-rt58-rc1 stable review
-Date: Wed, 18 Jul 2012 18:39:10 -0400
-Message-ID: <20120718223910.898476857@goodmis.org>
+Subject: [PATCH RT 10/12] workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
+Date: Wed, 18 Jul 2012 18:39:20 -0400
+Message-ID: <20120718223959.583287226@goodmis.org>
+References: <20120718223910.898476857@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32693 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755140Ab2GRWkE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 18 Jul 2012 18:40:04 -0400
+Content-Disposition: inline; filename=0010-workqueue-Revert-workqueue-Fix-PF_THREAD_BOUND-abuse.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Steven Rostedt <srostedt@redhat.com>
 
-Dear RT Folks,
+Revert commit
 
-This is the RT stable review cycle of patch 3.0.36-rt58-rc1.
+    Author: Peter Zijlstra <a.p.zijlstra@chello.nl>
+    Date:   Mon Oct 3 12:43:25 2011 +0200
+    workqueue: Fix PF_THREAD_BOUND abuse
 
-Please scream at me if I messed something up. Please test the patches too.
+As TREAD_BOUND no longer affects cpu down, and this code introduced
+a lot of races with taking down a CPU.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 7/20/2012.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.0.36-rt58-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.36.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.36-rt58-rc1.patch.xz
-
-You can also build from 3.0.36-rt57 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.36-rt57-rt58-rc1.patch.xz
-
-
-Changes from 3.0.36-rt57:
-
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
+ kernel/workqueue.c |   29 +++++++++--------------------
+ 1 file changed, 9 insertions(+), 20 deletions(-)
+
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index a08a963..53268e3 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1287,14 +1287,8 @@ __acquires(&gcwq->lock)
+ 			return false;
+ 		if (task_cpu(task) == gcwq->cpu &&
+ 		    cpumask_equal(&current->cpus_allowed,
+-				  get_cpu_mask(gcwq->cpu))) {
+-			/*
+-			 * Since we're binding to a particular cpu and need to
+-			 * stay there for correctness, mark us PF_THREAD_BOUND.
+-			 */
+-			task->flags |= PF_THREAD_BOUND;
++				  get_cpu_mask(gcwq->cpu)))
+ 			return true;
+-		}
+ 		spin_unlock_irq(&gcwq->lock);
+ 
+ 		/*
+@@ -1308,18 +1302,6 @@ __acquires(&gcwq->lock)
+ 	}
+ }
+ 
+-static void worker_unbind_and_unlock(struct worker *worker)
+-{
+-	struct global_cwq *gcwq = worker->gcwq;
+-	struct task_struct *task = worker->task;
+-
+-	/*
+-	 * Its no longer required we're PF_THREAD_BOUND, the work is done.
+-	 */
+-	task->flags &= ~PF_THREAD_BOUND;
+-	spin_unlock_irq(&gcwq->lock);
+-}
+-
+ static struct worker *alloc_worker(void)
+ {
+ 	struct worker *worker;
+@@ -1382,9 +1364,15 @@ static struct worker *create_worker(struct global_cwq *gcwq, bool bind)
+ 	if (IS_ERR(worker->task))
+ 		goto fail;
+ 
++	/*
++	 * A rogue worker will become a regular one if CPU comes
++	 * online later on.  Make sure every worker has
++	 * PF_THREAD_BOUND set.
++	 */
+ 	if (bind && !on_unbound_cpu)
+ 		kthread_bind(worker->task, gcwq->cpu);
+ 	else {
++		worker->task->flags |= PF_THREAD_BOUND;
+ 		if (on_unbound_cpu)
+ 			worker->flags |= WORKER_UNBOUND;
+ 	}
+@@ -2061,7 +2049,7 @@ repeat:
+ 		if (keep_working(gcwq))
+ 			wake_up_worker(gcwq);
+ 
+-		worker_unbind_and_unlock(rescuer);
++		spin_unlock_irq(&gcwq->lock);
+ 	}
+ 
+ 	schedule();
+@@ -2957,6 +2945,7 @@ struct workqueue_struct *__alloc_workqueue_key(const char *name,
+ 		if (IS_ERR(rescuer->task))
+ 			goto err;
+ 
++		rescuer->task->flags |= PF_THREAD_BOUND;
+ 		wake_up_process(rescuer->task);
+ 	}
+ 
+-- 
+1.7.10.4
 
 
-Carsten Emde (4):
-      Latency histogramms: Cope with backwards running local trace clock
-      Latency histograms: Adjust timer, if already elapsed when programmed
-      Disable RT_GROUP_SCHED in PREEMPT_RT_FULL
-      Latency histograms: Detect another yet overlooked sharedprio condition
-
-Mike Galbraith (1):
-      fs, jbd: pull your plug when waiting for space
-
-Steven Rostedt (5):
-      cpu/rt: Rework cpu down for PREEMPT_RT
-      cpu/rt: Fix cpu_hotplug variable initialization
-      workqueue: Revert workqueue: Fix PF_THREAD_BOUND abuse
-      workqueue: Revert workqueue: Fix cpuhotplug trainwreck
-      Linux 3.0.36-rt58-rc1
-
-Thomas Gleixner (1):
-      slab: Prevent local lock deadlock
-
-Yong Zhang (1):
-      perf: Make swevent hrtimer run in irq instead of softirq
-
-----
- fs/jbd/checkpoint.c         |    2 +
- include/linux/cpu.h         |   14 +-
- include/linux/hrtimer.h     |    3 +
- include/linux/sched.h       |    9 +-
- include/linux/workqueue.h   |    5 +-
- init/Kconfig                |    1 +
- kernel/cpu.c                |  240 ++++++++++++++----
- kernel/events/core.c        |    1 +
- kernel/hrtimer.c            |   16 +-
- kernel/sched.c              |   82 +++++-
- kernel/trace/latency_hist.c |   74 +++---
- kernel/workqueue.c          |  578 +++++++++++++++++++++++++++++++------------
- localversion-rt             |    2 +-
- mm/slab.c                   |   26 +-
- 14 files changed, 792 insertions(+), 261 deletions(-)
