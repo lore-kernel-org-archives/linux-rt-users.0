@@ -1,48 +1,53 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/12] Latency histograms: Detect another yet overlooked sharedprio
- condition
-Date: Tue, 17 Jul 2012 11:31:19 -0400
-Message-ID: <20120717153243.340760961@goodmis.org>
-References: <20120717153115.606116459@goodmis.org>
+Subject: [ANNOUNCE] 3.2.23-rt36
+Date: Tue, 17 Jul 2012 21:09:10 -0400
+Message-ID: <1342573750.14939.1.camel@gandalf.stny.rr.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-Latency-histograms-Detect-another-yet-overlooked-sha.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:23234 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750789Ab2GRBJM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Jul 2012 21:09:12 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Carsten Emde <C.Emde@osadl.org>
 
-While waiting for an RT process to be woken up, the previous process may
-go to wait and switch to another one with the same priority which then
-becomes current. This condition was not correctly recognized and led to
-erroneously high latency recordings during periods of low CPU load.
+Dear RT Folks,
 
-This patch correctly marks such latencies as sharedprio and prevents
-them from being recorded as actual system latency.
+I'm pleased to announce the 3.2.23-rt36 stable release.
 
-Signed-off-by: Carsten Emde <C.Emde@osadl.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/trace/latency_hist.c |    3 +++
- 1 file changed, 3 insertions(+)
 
-diff --git a/kernel/trace/latency_hist.c b/kernel/trace/latency_hist.c
-index d514eef..6a4c869 100644
---- a/kernel/trace/latency_hist.c
-+++ b/kernel/trace/latency_hist.c
-@@ -935,6 +935,9 @@ static notrace void probe_wakeup_latency_hist_stop(void *v,
- 		goto out;
- 	}
- 
-+	if (current->prio == cpu_wakeup_task->prio)
-+		per_cpu(wakeup_sharedprio, cpu) = 1;
-+
- 	/*
- 	 * The task we are waiting for is about to be switched to.
- 	 * Calculate latency and store it in histogram.
--- 
-1.7.10.4
+This release is just an update to the new stable 3.2.23 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: e3ed9a9fcd5ec946f248118f3d3e7dec80d2256a
+
+
+Or to build 3.2.23-rt36 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.23.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.23-rt36.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+
