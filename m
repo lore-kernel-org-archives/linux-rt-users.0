@@ -1,45 +1,87 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/12] cpu/rt: Fix cpu_hotplug variable initialization
-Date: Wed, 18 Jul 2012 18:39:19 -0400
-Message-ID: <20120718223959.345484946@goodmis.org>
+Subject: [PATCH RT 05/12] slab: Prevent local lock deadlock
+Date: Wed, 18 Jul 2012 18:39:15 -0400
+Message-ID: <20120718223957.856443728@goodmis.org>
 References: <20120718223910.898476857@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-cpu-rt-Fix-cpu_hotplug-variable-initialization.patch
+Content-Disposition: inline; filename=0005-slab-Prevent-local-lock-deadlock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <srostedt@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-The commit "cpu/rt: Rework cpu down for PREEMPT_RT" changed the double
-meaning of the cpu_hotplug.lock, where it was a spinlock for RT and a
-mutex for non-RT, to just a mutex for both.  But the initialization of
-the variable was not updated to reflect this change.
+On RT we avoid the cross cpu function calls and take the per cpu local
+locks instead. Now the code missed that taking the local lock on the
+cpu which runs the code must use the proper local lock functions and
+not a simple spin_lock(). Otherwise it deadlocks later when trying to
+acquire the local lock with the proper function.
 
-Cc: stable-rt@vger.kernel.org
+Reported-and-tested-by: Chris Pringle <chris.pringle@miranda.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/cpu.c |    4 ----
- 1 file changed, 4 deletions(-)
+ mm/slab.c |   26 ++++++++++++++++++++++----
+ 1 file changed, 22 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 11e6e9a..3bcbf99 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -54,11 +54,7 @@ static struct {
- 	int refcount;
- } cpu_hotplug = {
- 	.active_writer = NULL,
--#ifdef CONFIG_PREEMPT_RT_FULL
--	.lock = __SPIN_LOCK_UNLOCKED(cpu_hotplug.lock),
--#else
- 	.lock = __MUTEX_INITIALIZER(cpu_hotplug.lock),
--#endif
- 	.refcount = 0,
- };
+diff --git a/mm/slab.c b/mm/slab.c
+index 5251b99..827e2d6 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -737,8 +737,26 @@ slab_on_each_cpu(void (*func)(void *arg, int this_cpu), void *arg)
+ {
+ 	unsigned int i;
+ 
++	get_cpu_light();
+ 	for_each_online_cpu(i)
+ 		func(arg, i);
++	put_cpu_light();
++}
++
++static void lock_slab_on(unsigned int cpu)
++{
++	if (cpu == smp_processor_id())
++		local_lock_irq(slab_lock);
++	else
++		local_spin_lock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
++}
++
++static void unlock_slab_on(unsigned int cpu)
++{
++	if (cpu == smp_processor_id())
++		local_unlock_irq(slab_lock);
++	else
++		local_spin_unlock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
+ }
+ #endif
+ 
+@@ -2625,10 +2643,10 @@ static void do_drain(void *arg, int cpu)
+ {
+ 	LIST_HEAD(tmp);
+ 
+-	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
++	lock_slab_on(cpu);
+ 	__do_drain(arg, cpu);
+ 	list_splice_init(&per_cpu(slab_free_list, cpu), &tmp);
+-	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
++	unlock_slab_on(cpu);
+ 	free_delayed(&tmp);
+ }
+ #endif
+@@ -4099,9 +4117,9 @@ static void do_ccupdate_local(void *info)
+ #else
+ static void do_ccupdate_local(void *info, int cpu)
+ {
+-	spin_lock_irq(&per_cpu(slab_lock, cpu).lock);
++	lock_slab_on(cpu);
+ 	__do_ccupdate_local(info, cpu);
+-	spin_unlock_irq(&per_cpu(slab_lock, cpu).lock);
++	unlock_slab_on(cpu);
+ }
+ #endif
  
 -- 
 1.7.10.4
