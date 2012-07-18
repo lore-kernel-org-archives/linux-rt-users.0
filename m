@@ -1,48 +1,86 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/12] fs, jbd: pull your plug when waiting for space
-Date: Wed, 18 Jul 2012 18:39:16 -0400
-Message-ID: <20120718223958.180273825@goodmis.org>
+Subject: [PATCH RT 07/12] perf: Make swevent hrtimer run in irq instead of softirq
+Date: Wed, 18 Jul 2012 18:39:17 -0400
+Message-ID: <20120718223958.434509550@goodmis.org>
 References: <20120718223910.898476857@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
-	Mike Galbraith <mgalbraith@suse.de>,
-	Theodore Tso <tytso@mit.edu>
+	Yong Zhang <yong.zhang0@gmail.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-fs-jbd-pull-your-plug-when-waiting-for-space.patch
+Content-Disposition: inline; filename=0007-perf-Make-swevent-hrtimer-run-in-irq-instead-of-soft.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Mike Galbraith <mgalbraith@suse.de>
+From: Yong Zhang <yong.zhang@windriver.com>
 
-With an -rt kernel, and a heavy sync IO load, tasks can jam
-up on journal locks without unplugging, which can lead to
-terminal IO starvation.  Unplug and schedule when waiting for space.
+Otherwise we get a deadlock like below:
 
-Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
+[ 1044.042749] BUG: scheduling while atomic: ksoftirqd/21/141/0x00010003
+[ 1044.042752] INFO: lockdep is turned off.
+[ 1044.042754] Modules linked in:
+[ 1044.042757] Pid: 141, comm: ksoftirqd/21 Tainted: G        W    3.4.0-rc2-rt3-23676-ga723175-dirty #29
+[ 1044.042759] Call Trace:
+[ 1044.042761]  <IRQ>  [<ffffffff8107d8e5>] __schedule_bug+0x65/0x80
+[ 1044.042770]  [<ffffffff8168978c>] __schedule+0x83c/0xa70
+[ 1044.042775]  [<ffffffff8106bdd2>] ? prepare_to_wait+0x32/0xb0
+[ 1044.042779]  [<ffffffff81689a5e>] schedule+0x2e/0xa0
+[ 1044.042782]  [<ffffffff81071ebd>] hrtimer_wait_for_timer+0x6d/0xb0
+[ 1044.042786]  [<ffffffff8106bb30>] ? wake_up_bit+0x40/0x40
+[ 1044.042790]  [<ffffffff81071f20>] hrtimer_cancel+0x20/0x40
+[ 1044.042794]  [<ffffffff8111da0c>] perf_swevent_cancel_hrtimer+0x3c/0x50
+[ 1044.042798]  [<ffffffff8111da31>] task_clock_event_stop+0x11/0x40
+[ 1044.042802]  [<ffffffff8111da6e>] task_clock_event_del+0xe/0x10
+[ 1044.042805]  [<ffffffff8111c568>] event_sched_out+0x118/0x1d0
+[ 1044.042809]  [<ffffffff8111c649>] group_sched_out+0x29/0x90
+[ 1044.042813]  [<ffffffff8111ed7e>] __perf_event_disable+0x18e/0x200
+[ 1044.042817]  [<ffffffff8111c343>] remote_function+0x63/0x70
+[ 1044.042821]  [<ffffffff810b0aae>] generic_smp_call_function_single_interrupt+0xce/0x120
+[ 1044.042826]  [<ffffffff81022bc7>] smp_call_function_single_interrupt+0x27/0x40
+[ 1044.042831]  [<ffffffff8168d50c>] call_function_single_interrupt+0x6c/0x80
+[ 1044.042833]  <EOI>  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
+[ 1044.042840]  [<ffffffff8168b970>] ? _raw_spin_unlock_irq+0x30/0x70
+[ 1044.042844]  [<ffffffff8168b976>] ? _raw_spin_unlock_irq+0x36/0x70
+[ 1044.042848]  [<ffffffff810702e2>] run_hrtimer_softirq+0xc2/0x200
+[ 1044.042853]  [<ffffffff811275b0>] ? perf_event_overflow+0x20/0x20
+[ 1044.042857]  [<ffffffff81045265>] __do_softirq_common+0xf5/0x3a0
+[ 1044.042862]  [<ffffffff81045c3d>] __thread_do_softirq+0x15d/0x200
+[ 1044.042865]  [<ffffffff81045dda>] run_ksoftirqd+0xfa/0x210
+[ 1044.042869]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
+[ 1044.042873]  [<ffffffff81045ce0>] ? __thread_do_softirq+0x200/0x200
+[ 1044.042877]  [<ffffffff8106b596>] kthread+0xb6/0xc0
+[ 1044.042881]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
+[ 1044.042886]  [<ffffffff8168d994>] kernel_thread_helper+0x4/0x10
+[ 1044.042889]  [<ffffffff8107d98c>] ? finish_task_switch+0x8c/0x110
+[ 1044.042894]  [<ffffffff8168b97b>] ? _raw_spin_unlock_irq+0x3b/0x70
+[ 1044.042897]  [<ffffffff8168bd5d>] ? retint_restore_args+0xe/0xe
+[ 1044.042900]  [<ffffffff8106b4e0>] ? kthreadd+0x1e0/0x1e0
+[ 1044.042902]  [<ffffffff8168d990>] ? gs_change+0xb/0xb
+
+Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
 Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Theodore Tso <tytso@mit.edu>
-Link: http://lkml.kernel.org/r/1341812414.7370.73.camel@marge.simpson.net
+Link: http://lkml.kernel.org/r/1341476476-5666-1-git-send-email-yong.zhang0@gmail.com
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/jbd/checkpoint.c |    2 ++
- 1 file changed, 2 insertions(+)
+ kernel/events/core.c |    1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/fs/jbd/checkpoint.c b/fs/jbd/checkpoint.c
-index e4b87bc..e24b2d5 100644
---- a/fs/jbd/checkpoint.c
-+++ b/fs/jbd/checkpoint.c
-@@ -123,6 +123,8 @@ void __log_wait_for_space(journal_t *journal)
- 		if (journal->j_flags & JFS_ABORT)
- 			return;
- 		spin_unlock(&journal->j_state_lock);
-+		if (current->plug)
-+			io_schedule();
- 		mutex_lock(&journal->j_checkpoint_mutex);
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+index 08315ad..1c876e02 100644
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -5702,6 +5702,7 @@ static void perf_swevent_init_hrtimer(struct perf_event *event)
  
- 		/*
+ 	hrtimer_init(&hwc->hrtimer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
+ 	hwc->hrtimer.function = perf_swevent_hrtimer;
++	hwc->hrtimer.irqsafe = 1;
+ 
+ 	/*
+ 	 * Since hrtimers have a fixed rate, we can do a static freq->period
 -- 
 1.7.10.4
