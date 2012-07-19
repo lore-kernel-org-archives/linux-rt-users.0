@@ -1,36 +1,22 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 00/12] [ANNOUNCE] 3.0.36-rt58-rc1 stable review
-Date: Thu, 19 Jul 2012 10:02:10 -0400
-Message-ID: <1342706530.12353.27.camel@gandalf.stny.rr.com>
-References: <20120718223910.898476857@goodmis.org>
-	 <1342670426.7342.8.camel@marge.simpson.net>
-	 <1342703141.12353.24.camel@gandalf.stny.rr.com>
-	 <1342705899.7342.42.camel@marge.simpson.net>
+From: PRINGLE Chris <chris.pringle@miranda.com>
+Subject: PowerPC, Full Preemption and HIGHMEM
+Date: Thu, 19 Jul 2012 15:54:08 +0000
+Message-ID: <E7D6489E57008E4088E37F78D30C62E60EAE91@LB-OPS-EXCH01.miranda.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <efault@gmx.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6032 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750748Ab2GSOCM (ORCPT
+Received: from stanmail.omnibus.co.uk ([194.201.223.253]:39269 "EHLO
+	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751668Ab2GSPy3 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Jul 2012 10:02:12 -0400
-In-Reply-To: <1342705899.7342.42.camel@marge.simpson.net>
+	Thu, 19 Jul 2012 11:54:29 -0400
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2012-07-19 at 15:51 +0200, Mike Galbraith wrote:
+HIGHMEM support with full preemption has been disabled for quite some time on PowerPC; does anyone have any ideas as to what needs to be done to get it working again?
 
-> Every kernel I've fed you script to has died sooner or later, so I wish
-> him fair sailing.  Here there be sea monsters ;-)
-
-I'm curious. Can my script bring down a non-rt kernel?
-
--- Steve
-
-
+Thanks,
+Chris
