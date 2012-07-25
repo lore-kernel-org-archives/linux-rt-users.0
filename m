@@ -1,53 +1,178 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: rt & hotplug work....
-Date: Fri, 20 Jul 2012 17:24:09 -0700
-Message-ID: <20120721002404.GA2435@linux.vnet.ibm.com>
-References: <CAF-VNaoh=t50=6A-OXitYPJxz67Es_jFQeqsXcdJThexb8uHSg@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH RT] cpu unplug with PREEMPT_LL
+Date: Tue, 24 Jul 2012 17:58:50 -0700
+Message-ID: <500F44CA.40302@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: Lars Segerlund <lars.segerlund@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:46990 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752543Ab2GUAbl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Jul 2012 20:31:41 -0400
-Received: from /spool/local
-	by e33.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Fri, 20 Jul 2012 18:31:40 -0600
-Received: from d03relay01.boulder.ibm.com (d03relay01.boulder.ibm.com [9.17.195.226])
-	by d03dlp02.boulder.ibm.com (Postfix) with ESMTP id 7C5633E40026
-	for <linux-rt-users@vger.kernel.org>; Sat, 21 Jul 2012 00:31:37 +0000 (WET)
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay01.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id q6L0VbYY273024
-	for <linux-rt-users@vger.kernel.org>; Fri, 20 Jul 2012 18:31:37 -0600
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id q6L0Vbfo017653
-	for <linux-rt-users@vger.kernel.org>; Fri, 20 Jul 2012 18:31:37 -0600
-Content-Disposition: inline
-In-Reply-To: <CAF-VNaoh=t50=6A-OXitYPJxz67Es_jFQeqsXcdJThexb8uHSg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+To: <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jul 20, 2012 at 10:07:38PM +0200, Lars Segerlund wrote:
->  There was some cpu hotplug work recently, and I can't get my head
-> around what happens with a dual cpu system if one core is shut down,
-> specificly with spinlocks.
->  Won't it just hang or spin a lot ? I was thinking the locking was
-> different in the build for uni of multi processors, to eliminate the
-> deadlock risk on a uni processor.
-> 
->  I do realise this might not be rt specific, but I'll ask anyhow.
 
-When a CPU-hotplug operation takes a CPU offline, that CPU must release
-any true spinlocks before actually going away.  Therefore, when the
-surviving CPU attempts to acquire a spinlock, it is guaranteed to
-acquire it immediately.  (Some architectures go even farther and
-optimize away spinlock acquisitions when the system transitions to
-single-CPU operation.)
+With CONFIG_PREEMPT_LL, cpu unplug generates a bunch of
+  BUG: sleeping function called from invalid context
+  BUG: scheduling while atomic
 
-							Thanx, Paul
+To reproduce the problem:
+  echo 0 > /sys/devices/system/cpu/cpu1/online
 
+This patch is:
+
+  - UGLY
+  - lightly tested
+  - should maybe not be included in the RT patch set
+
+but it may be useful to anyone determined to use cpu hotplug with PREEMPT_LL.
+
+This patch was tested on 3.0.36-rt58 since that release has the latest
+hotplug patches.  I will re-test this on 3.5-rtX when that is available.
+
+Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+---
+ include/linux/preempt.h |    4 	4 +	0 -	0 !
+ include/linux/sched.h   |    6 	3 +	3 -	0 !
+ kernel/cpu.c            |   12 	12 +	0 -	0 !
+ kernel/sched.c          |   18 	17 +	1 -	0 !
+ 4 files changed, 36 insertions(+), 4 deletions(-)
+
+Index: b/include/linux/preempt.h
+===================================================================
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -122,6 +122,10 @@ do { \
+ # define preempt_enable_nort()		preempt_enable()
+ # define migrate_disable()		preempt_disable()
+ # define migrate_enable()		preempt_enable()
++#ifdef CONFIG_PREEMPT_LL
++   extern void __migrate_disable(void);
++   extern void __migrate_enable(void);
++#endif
+ #endif
+ 
+ #ifdef CONFIG_PREEMPT_NOTIFIERS
+Index: b/kernel/cpu.c
+===================================================================
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -500,11 +500,19 @@ static int __ref _cpu_down(unsigned int 
+ 	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
+ 	set_cpus_allowed_ptr(current, cpumask);
+ 	free_cpumask_var(cpumask);
++#ifdef CONFIG_PREEMPT_LL
++	__migrate_disable();
++#else
+ 	migrate_disable();
++#endif
+ 	mycpu = smp_processor_id();
+ 	if (mycpu == cpu) {
+ 		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
++#ifdef CONFIG_PREEMPT_LL
++		__migrate_enable();
++#else
+ 		migrate_enable();
++#endif
+ 		return -EBUSY;
+ 	}
+ 
+@@ -557,7 +565,11 @@ static int __ref _cpu_down(unsigned int 
+ out_release:
+ 	cpu_unplug_done(cpu);
+ out_cancel:
++#ifdef CONFIG_PREEMPT_LL
++	__migrate_enable();
++#else
+ 	migrate_enable();
++#endif
+ 	cpu_hotplug_done();
+ 	if (!err)
+ 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
+Index: b/kernel/sched.c
+===================================================================
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -4192,7 +4192,7 @@ static inline void schedule_debug(struct
+ 	schedstat_inc(this_rq(), sched_count);
+ }
+ 
+-#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_SMP)
++#if (defined(CONFIG_PREEMPT_RT_FULL) || defined(CONFIG_PREEMPT_LL)) && defined(CONFIG_SMP)
+ #define MIGRATE_DISABLE_SET_AFFIN	(1<<30) /* Can't make a negative */
+ #define migrate_disabled_updated(p)	((p)->migrate_disable & MIGRATE_DISABLE_SET_AFFIN)
+ #define migrate_disable_count(p)	((p)->migrate_disable & ~MIGRATE_DISABLE_SET_AFFIN)
+@@ -4228,7 +4228,11 @@ static inline void update_migrate_disabl
+ 	p->migrate_disable |= MIGRATE_DISABLE_SET_AFFIN;
+ }
+ 
++#ifdef CONFIG_PREEMPT_LL
++void __migrate_disable(void)
++#else
+ void migrate_disable(void)
++#endif
+ {
+ 	struct task_struct *p = current;
+ 
+@@ -4254,9 +4258,17 @@ void migrate_disable(void)
+ 	p->migrate_disable = 1;
+ 	preempt_enable();
+ }
++#ifdef CONFIG_PREEMPT_LL
++EXPORT_SYMBOL(__migrate_disable);
++#else
+ EXPORT_SYMBOL(migrate_disable);
++#endif
+ 
++#ifdef CONFIG_PREEMPT_LL
++void __migrate_enable(void)
++#else
+ void migrate_enable(void)
++#endif
+ {
+ 	struct task_struct *p = current;
+ 	const struct cpumask *mask;
+@@ -4306,7 +4318,11 @@ void migrate_enable(void)
+ 	unpin_current_cpu();
+ 	preempt_enable();
+ }
++#ifdef CONFIG_PREEMPT_LL
++EXPORT_SYMBOL(__migrate_enable);
++#else
+ EXPORT_SYMBOL(migrate_enable);
++#endif
+ #else
+ static inline void update_migrate_disable(struct task_struct *p) { }
+ #define migrate_disabled_updated(p)		0
+Index: b/include/linux/sched.h
+===================================================================
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1260,7 +1260,7 @@ struct task_struct {
+ #endif
+ 
+ 	unsigned int policy;
+-#ifdef CONFIG_PREEMPT_RT_FULL
++#if defined(CONFIG_PREEMPT_RT_FULL) || defined(CONFIG_PREEMPT_LL)
+ 	int migrate_disable;
+ #ifdef CONFIG_SCHED_DEBUG
+ 	int migrate_disable_atomic;
+@@ -2678,7 +2678,7 @@ static inline void set_task_cpu(struct t
+ 
+ static inline int __migrate_disabled(struct task_struct *p)
+ {
+-#ifdef CONFIG_PREEMPT_RT_FULL
++#if defined(CONFIG_PREEMPT_RT_FULL) || defined(CONFIG_PREEMPT_LL)
+ 	return p->migrate_disable;
+ #else
+ 	return 0;
+@@ -2688,7 +2688,7 @@ static inline int __migrate_disabled(str
+ /* Future-safe accessor for struct task_struct's cpus_allowed. */
+ static inline const struct cpumask *tsk_cpus_allowed(struct task_struct *p)
+ {
+-#ifdef CONFIG_PREEMPT_RT_FULL
++#if defined(CONFIG_PREEMPT_RT_FULL) || defined(CONFIG_PREEMPT_LL)
+ 	if (p->migrate_disable)
+ 		return cpumask_of(task_cpu(p));
+ #endif
