@@ -1,17 +1,24 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH RT] cpu unplug with PREEMPT_LL
-Date: Tue, 24 Jul 2012 17:58:50 -0700
-Message-ID: <500F44CA.40302@am.sony.com>
+Subject: [PATCH RT v2] cpu unplug with PREEMPT_LL
+Date: Thu, 26 Jul 2012 14:41:56 -0700
+Message-ID: <5011B9A4.7000801@am.sony.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-To: <tglx@linutronix.de>, <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: "tglx@linutronix.de" <tglx@linutronix.de>,
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from [213.199.154.142] ([213.199.154.142]:11039 "EHLO
+	db3outboundpool.messaging.microsoft.com" rhost-flags-FAIL-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1753170Ab2GZVoC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Jul 2012 17:44:02 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+
+v2: less UGLY (less intrusive in sched.c)
 
 With CONFIG_PREEMPT_LL, cpu unplug generates a bunch of
   BUG: sleeping function called from invalid context
@@ -20,30 +27,38 @@ With CONFIG_PREEMPT_LL, cpu unplug generates a bunch of
 To reproduce the problem:
   echo 0 > /sys/devices/system/cpu/cpu1/online
 
-This patch is:
-
-  - UGLY
-  - lightly tested
-  - should maybe not be included in the RT patch set
-
-but it may be useful to anyone determined to use cpu hotplug with PREEMPT_LL.
+This patch should maybe not be included in the RT patch set but it
+may be useful to anyone determined to use cpu hotplug with PREEMPT_LL.
 
 This patch was tested on 3.0.36-rt58 since that release has the latest
-hotplug patches.  I will re-test this on 3.5-rtX when that is available.
+hotplug patches.  I will rework and test this on 3.5-rtX when that is available.
 
 Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
 ---
- include/linux/preempt.h |    4 	4 +	0 -	0 !
+ include/linux/preempt.h |   10 	8 +	2 -	0 !
  include/linux/sched.h   |    6 	3 +	3 -	0 !
  kernel/cpu.c            |   12 	12 +	0 -	0 !
- kernel/sched.c          |   18 	17 +	1 -	0 !
- 4 files changed, 36 insertions(+), 4 deletions(-)
+ kernel/sched.c          |   10 	5 +	5 -	0 !
+ 4 files changed, 28 insertions(+), 10 deletions(-)
 
 Index: b/include/linux/preempt.h
 ===================================================================
 --- a/include/linux/preempt.h
 +++ b/include/linux/preempt.h
-@@ -122,6 +122,10 @@ do { \
+@@ -109,8 +109,10 @@ do { \
+ # define preempt_disable_nort()		do { } while (0)
+ # define preempt_enable_nort()		do { } while (0)
+ # ifdef CONFIG_SMP
+-   extern void migrate_disable(void);
+-   extern void migrate_enable(void);
++   extern void __migrate_disable(void);
++   extern void __migrate_enable(void);
++#  define migrate_disable()		__migrate_disable()
++#  define migrate_enable()		__migrate_enable()
+ # else /* CONFIG_SMP */
+ #  define migrate_disable()		do { } while (0)
+ #  define migrate_enable()		do { } while (0)
+@@ -122,6 +124,10 @@ do { \
  # define preempt_enable_nort()		preempt_enable()
  # define migrate_disable()		preempt_disable()
  # define migrate_enable()		preempt_enable()
@@ -103,45 +118,33 @@ Index: b/kernel/sched.c
  #define MIGRATE_DISABLE_SET_AFFIN	(1<<30) /* Can't make a negative */
  #define migrate_disabled_updated(p)	((p)->migrate_disable & MIGRATE_DISABLE_SET_AFFIN)
  #define migrate_disable_count(p)	((p)->migrate_disable & ~MIGRATE_DISABLE_SET_AFFIN)
-@@ -4228,7 +4228,11 @@ static inline void update_migrate_disabl
+@@ -4228,7 +4228,7 @@ static inline void update_migrate_disabl
  	p->migrate_disable |= MIGRATE_DISABLE_SET_AFFIN;
  }
  
-+#ifdef CONFIG_PREEMPT_LL
+-void migrate_disable(void)
 +void __migrate_disable(void)
-+#else
- void migrate_disable(void)
-+#endif
  {
  	struct task_struct *p = current;
  
-@@ -4254,9 +4258,17 @@ void migrate_disable(void)
+@@ -4254,9 +4254,9 @@ void migrate_disable(void)
  	p->migrate_disable = 1;
  	preempt_enable();
  }
-+#ifdef CONFIG_PREEMPT_LL
+-EXPORT_SYMBOL(migrate_disable);
 +EXPORT_SYMBOL(__migrate_disable);
-+#else
- EXPORT_SYMBOL(migrate_disable);
-+#endif
  
-+#ifdef CONFIG_PREEMPT_LL
+-void migrate_enable(void)
 +void __migrate_enable(void)
-+#else
- void migrate_enable(void)
-+#endif
  {
  	struct task_struct *p = current;
  	const struct cpumask *mask;
-@@ -4306,7 +4318,11 @@ void migrate_enable(void)
+@@ -4306,7 +4306,7 @@ void migrate_enable(void)
  	unpin_current_cpu();
  	preempt_enable();
  }
-+#ifdef CONFIG_PREEMPT_LL
+-EXPORT_SYMBOL(migrate_enable);
 +EXPORT_SYMBOL(__migrate_enable);
-+#else
- EXPORT_SYMBOL(migrate_enable);
-+#endif
  #else
  static inline void update_migrate_disable(struct task_struct *p) { }
  #define migrate_disabled_updated(p)		0
@@ -176,3 +179,4 @@ Index: b/include/linux/sched.h
  	if (p->migrate_disable)
  		return cpumask_of(task_cpu(p));
  #endif
+
