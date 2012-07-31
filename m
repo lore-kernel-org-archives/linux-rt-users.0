@@ -1,9 +1,11 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 05/12] slab: Prevent local lock deadlock
-Date: Mon, 30 Jul 2012 19:22:16 -0700
-Message-ID: <50174158.4000408@am.sony.com>
-References: <20120718223910.898476857@goodmis.org>	 <20120718223957.856443728@goodmis.org> <5011DD9B.1030901@am.sony.com> <1343697755.27983.17.camel@gandalf.stny.rr.com>
-Reply-To: <frank.rowand@am.sony.com>
+Date: Mon, 30 Jul 2012 22:32:15 -0400
+Message-ID: <1343701935.27983.18.camel@gandalf.stny.rr.com>
+References: <20120718223910.898476857@goodmis.org>
+		 <20120718223957.856443728@goodmis.org> <5011DD9B.1030901@am.sony.com>
+	 <1343697755.27983.17.camel@gandalf.stny.rr.com>
+	 <50174158.4000408@am.sony.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -13,29 +15,34 @@ Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: frank.rowand@am.sony.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1343697755.27983.17.camel@gandalf.stny.rr.com>
+In-Reply-To: <50174158.4000408@am.sony.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 07/30/12 18:22, Steven Rostedt wrote:
-> On Thu, 2012-07-26 at 17:15 -0700, Frank Rowand wrote:
+On Mon, 2012-07-30 at 19:22 -0700, Frank Rowand wrote:
+> On 07/30/12 18:22, Steven Rostedt wrote:
+> > On Thu, 2012-07-26 at 17:15 -0700, Frank Rowand wrote:
+> > 
+> >>
+> >> Config is from arch/arm/configs/omap2plus_defconfig
+> >> plus:
+> >>
+> >>    CONFIG_USB_EHCI_HCD=y
+> >>    CONFIG_USB_NET_SMSC95XX=y
+> >>    CONFIG_PREEMPT_RT_FULL=y
+> >>
+> > 
+> > Interesting, I just booted my panda board against 3.0.36-rt58 with that
+> > config and these three set, and I didn't get this error.
 > 
->>
->> Config is from arch/arm/configs/omap2plus_defconfig
->> plus:
->>
->>    CONFIG_USB_EHCI_HCD=y
->>    CONFIG_USB_NET_SMSC95XX=y
->>    CONFIG_PREEMPT_RT_FULL=y
->>
+> I don't know if it makes any difference, but my root fs is nfs mounted.
 > 
-> Interesting, I just booted my panda board against 3.0.36-rt58 with that
-> config and these three set, and I didn't get this error.
+> I'll try to look at this some more tomorrow.
+> 
 
-I don't know if it makes any difference, but my root fs is nfs mounted.
+Yeah, my root fs is on the sdcard. Did you get this bug every time or
+was it sporadic?
 
-I'll try to look at this some more tomorrow.
-
--Frank
+-- Steve
