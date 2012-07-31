@@ -1,27 +1,34 @@
-From: PRINGLE Chris <chris.pringle@miranda.com>
-Subject: RE: PowerPC, Full Preemption and HIGHMEM
-Date: Mon, 30 Jul 2012 13:30:55 +0000
-Message-ID: <E7D6489E57008E4088E37F78D30C62E60F0CFF@LB-OPS-EXCH01.miranda.com>
-References: <E7D6489E57008E4088E37F78D30C62E60EAE91@LB-OPS-EXCH01.miranda.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 05/12] slab: Prevent local lock deadlock
+Date: Mon, 30 Jul 2012 21:22:35 -0400
+Message-ID: <1343697755.27983.17.camel@gandalf.stny.rr.com>
+References: <20120718223910.898476857@goodmis.org>
+	 <20120718223957.856443728@goodmis.org> <5011DD9B.1030901@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stanmail.omnibus.co.uk ([194.201.223.253]:39116 "EHLO
-	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753411Ab2G3NbX convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Jul 2012 09:31:23 -0400
-In-Reply-To: <E7D6489E57008E4088E37F78D30C62E60EAE91@LB-OPS-EXCH01.miranda.com>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: tglx@linutronix.de, chris.pringle@miranda.com,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: frank.rowand@am.sony.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5011DD9B.1030901@am.sony.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+On Thu, 2012-07-26 at 17:15 -0700, Frank Rowand wrote:
 
 > 
-> HIGHMEM support with full preemption has been disabled for quite some
-> time on PowerPC; does anyone have any ideas as to what needs to be done
-> to get it working again?
+> Config is from arch/arm/configs/omap2plus_defconfig
+> plus:
+> 
+>    CONFIG_USB_EHCI_HCD=y
+>    CONFIG_USB_NET_SMSC95XX=y
+>    CONFIG_PREEMPT_RT_FULL=y
 > 
 
-Anyone got any ideas?
+Interesting, I just booted my panda board against 3.0.36-rt58 with that
+config and these three set, and I didn't get this error.
+
+-- Steve
