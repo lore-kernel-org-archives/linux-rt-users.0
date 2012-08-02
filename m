@@ -1,34 +1,53 @@
-From: PRINGLE Chris <chris.pringle@miranda.com>
-Subject: RE: PowerPC, Full Preemption and HIGHMEM
-Date: Wed, 1 Aug 2012 10:33:43 +0000
-Message-ID: <E7D6489E57008E4088E37F78D30C62E61013F3@LB-OPS-EXCH01.miranda.com>
-References: <E7D6489E57008E4088E37F78D30C62E60EAE91@LB-OPS-EXCH01.miranda.com>
- <E7D6489E57008E4088E37F78D30C62E60F0CFF@LB-OPS-EXCH01.miranda.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.24-rt38
+Date: Thu, 02 Aug 2012 18:42:20 -0400
+Message-ID: <1343947340.27983.102.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from stanmail.omnibus.co.uk ([194.201.223.253]:45743 "EHLO
-	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1754849Ab2HAKdu convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Aug 2012 06:33:50 -0400
-In-Reply-To: <E7D6489E57008E4088E37F78D30C62E60F0CFF@LB-OPS-EXCH01.miranda.com>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	john stultz <johnstul@us.ibm.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> >
-> > HIGHMEM support with full preemption has been disabled for quite some
-> > time on PowerPC; does anyone have any ideas as to what needs to be
-> > done to get it working again?
-> >
-> 
-> Anyone got any ideas?
 
-I've been looking into adjusting the LOWMEM size to provide a 2G/2G split so I can access at least ~2GB of memory; I've got something half working but I'm now having issues with hardware access on PCIe which leads me to believe there is a mapping issue somewhere.
+Dear RT Folks,
 
-I've adjusted PAGE_OFFSET to 0x80000000, KERNEL_START to 0x80000000, LOWMEM_SIZE to 0x70000000, LOWMEM_CAM_NUM to 7 and TASK_SIZE to 0x80000000. Linux boots and reports that it has ~1750MB RAM (as expected with the specified LOWMEM_SIZE) but these changes seem to cause issues with hardware access - no calls fail, but reads from registers on PCIe devices aren't giving correct values.
+I'm pleased to announce the 3.2.24-rt38 stable release.
 
-Has anyone tried adjusting the LOWMEM size on PowerPC before? Are there any other gotchas I should be looking at?
+Note, there were some non-trivial conflicts with leap-second backports.
+I believe I solved them correctly (and added a change to convert
+read_seqbegin to read_seqcount_begin() in ktime_get_update_offsets()).
+
+This release passed all my internal tests, but test it out anyway, and
+let me know if something fails for you.
+
+This release is an update to the new stable 3.2.24 version. Some fixes
+to the stable code (mentioned above) had to be done.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 860793bbc278575a33695cf1baa67be900f159ef
+
+
+Or to build 3.2.24-rt38 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.24.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.24-rt38.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
