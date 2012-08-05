@@ -1,49 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.39-rt59
-Date: Fri, 03 Aug 2012 09:13:36 -0400
-Message-ID: <1343999616.27983.111.camel@gandalf.stny.rr.com>
+From: Ben Kangsah <h1384151@rtrtr.com>
+Subject: Re: [RFC][Vortex86] high resolution timer
+Date: Sun, 5 Aug 2012 19:00:56 +0000 (UTC)
+Message-ID: <loom.20120805T205220-264@post.gmane.org>
+References: <4DCD3B43.3060806@greenseainc.com> <20110515235724.0b4f5216@mig>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	john stultz <johnstul@us.ibm.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from plane.gmane.org ([80.91.229.3]:40094 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754828Ab2HETFG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Aug 2012 15:05:06 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1Sy68O-0005C4-1T
+	for linux-rt-users@vger.kernel.org; Sun, 05 Aug 2012 21:05:04 +0200
+Received: from krsn-5d800af1.pool.mediaWays.net ([93.128.10.241])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 05 Aug 2012 21:05:03 +0200
+Received: from h1384151 by krsn-5d800af1.pool.mediaWays.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 05 Aug 2012 21:05:03 +0200
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi all,
 
-Dear RT Folks,
+I use the kernel parameter tsc=reliable for my vortex86.
+This somehow activate the high resolution timer.
 
-I'm pleased to announce the 3.0.39-rt59 stable release.
-
-Like the 3.2-rt and 3.4-rt kernel before, this one also had issues with
-the backport of the leap second. Please test to make sure it works for
-you.
-
-This release is an update to the new stable 3.0.39 version. Some fixes
-to the stable code (mentioned above) had to be done.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 0ab721484338f8d93d90135f0fbeb1057533b456
-
-
-Or to build 3.0.39-rt59 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.39.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.39-rt59.patch.xz
+Cheers,
+Ben
 
 
 
-Enjoy,
 
--- Steve
