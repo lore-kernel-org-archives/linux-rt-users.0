@@ -1,84 +1,51 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [RFC] looking for feedback on stable RT patch process
-Date: Wed, 8 Aug 2012 17:38:01 -0700
-Message-ID: <50230669.2070501@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: PRINGLE Chris <chris.pringle@miranda.com>
+Subject: RE: PowerPC, Full Preemption and HIGHMEM
+Date: Thu, 9 Aug 2012 09:11:58 +0000
+Message-ID: <E7D6489E57008E4088E37F78D30C62E611C741@LB-OPS-EXCH01.miranda.com>
+References: <E7D6489E57008E4088E37F78D30C62E60EAE91@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E60F0CFF@LB-OPS-EXCH01.miranda.com>
+ <E7D6489E57008E4088E37F78D30C62E61013F3@LB-OPS-EXCH01.miranda.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe003.messaging.microsoft.com ([216.32.181.183]:12361
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1758675Ab2HIAii (ORCPT
+Received: from stanmail.omnibus.co.uk ([194.201.223.253]:26775 "EHLO
+	exch-lb.miranda.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751270Ab2HIJMD convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Aug 2012 20:38:38 -0400
-Received: from mail146-ch1 (localhost [127.0.0.1])	by
- mail146-ch1-R.bigfish.com (Postfix) with ESMTP id 07263100381	for
- <linux-rt-users@vger.kernel.org>; Thu,  9 Aug 2012 00:38:37 +0000 (UTC)
-Received: from CH1EHSMHS005.bigfish.com (snatpool2.int.messaging.microsoft.com
- [10.43.68.235])	by mail146-ch1.bigfish.com (Postfix) with ESMTP id
- 2669B2A005F	for <linux-rt-users@vger.kernel.org>; Thu,  9 Aug 2012 00:38:36
- +0000 (UTC)
-Received: from usculsndmail13v.am.sony.com (usculsndmail13v.am.sony.com
- [146.215.230.104])	by usculsndmail04v.am.sony.com
- (Sentrion-MTA-4.2.2/Sentrion-MTA-4.2.2) with ESMTP id q790cYx8017847
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)	for
- <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2012 00:38:35 GMT
-Received: from mail1x.sjc.in.sel.sony.com (mailx.bc.in.sel.sony.com
- [43.134.1.112])	by usculsndmail13v.am.sony.com
- (Sentrion-MTA-4.2.2/Sentrion-MTA-4.2.2) with ESMTP id q790cXlG005296
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)	for
- <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2012 00:38:34 GMT
+	Thu, 9 Aug 2012 05:12:03 -0400
+In-Reply-To: <E7D6489E57008E4088E37F78D30C62E61013F3@LB-OPS-EXCH01.miranda.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi All,
-
-I'm going to be giving a presentation at Plumbers on the RT stable
-patch process and I would like for it to reflect more than just
-my personal experiences and biases.  If you have opinions and
-experiences, please email me directly (please do not reply
-to the list - I will send a summary to the list after Plumbers).
-
-If you have any additional questions that you think would be
-interesting, please post them to the list as a reply to this message.
-
-Please answer any or all of the following questions:
-
- 1) Have you downloaded any stable RT releases?  If so, approximately how many?
-    If not, why not?
-
- 2) How do you use the stable RT release?  To run on a single system?  To place
-    on a product that is sold / lent / given away?  To create a distribution?
-    Other?
-
- 3) Is the stable RT release useful and valuable?  (How many beers do we owe
-    to Steve when we run into him at conferences?)  Why is it useful and
-    valuable?
-
- 4) If the stable RT release is not useful, why isn't it?
-
- 5) What changes would make the RT release more useful?  Why would the changes
-    make it more useful?
-
- 6) What changes would make the RT release better?
-
- 7) What should _not_ change about the stable RT release?
-
- 8) How frequently do you test a stable RT release (percent of releases)?
-
- 9) How intensively do you test a stable RT release?  Boot?  Functional test?
-    Performance test(s)?  Other test(s)?  Single target (type of computer)?
-    Multiple targets?  How many different types of targets?
-
-10) Which series have been useful?  Which series is currently most useful (can
-    be more than one)?  (3.0.x, 3.2.x, 3.4.x)
-
-11) Any other random or useful comments or opinions?
+> 
+> > >
+> > > HIGHMEM support with full preemption has been disabled for quite
+> > > some time on PowerPC; does anyone have any ideas as to what needs to
+> > > be done to get it working again?
+> > >
+> >
+> > Anyone got any ideas?
+> 
+> I've been looking into adjusting the LOWMEM size to provide a 2G/2G split so
+> I can access at least ~2GB of memory; I've got something half working but I'm
+> now having issues with hardware access on PCIe which leads me to believe
+> there is a mapping issue somewhere.
+> 
+> I've adjusted PAGE_OFFSET to 0x80000000, KERNEL_START to 0x80000000,
+> LOWMEM_SIZE to 0x70000000, LOWMEM_CAM_NUM to 7 and TASK_SIZE to
+> 0x80000000. Linux boots and reports that it has ~1750MB RAM (as expected
+> with the specified LOWMEM_SIZE) but these changes seem to cause issues
+> with hardware access - no calls fail, but reads from registers on PCIe devices
+> aren't giving correct values.
+> 
+> Has anyone tried adjusting the LOWMEM size on PowerPC before? Are there
+> any other gotchas I should be looking at?
 
 
-Thanks for any and all input!
+Sorry to post again, but we're not making any progress with this. Is anyone with experience with PowerPC memory management able to help here? Either to advise on how we can get 2GB of lowmem working reliably, or how we can get HIGHMEM support working with the RT patches.
 
--Frank
-
+Thanks again.
+Chris
