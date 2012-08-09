@@ -1,240 +1,84 @@
-From: Jain Priyanka-B32167 <B32167@freescale.com>
-Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
-Date: Tue, 7 Aug 2012 04:02:13 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F1907A94309@039-SN2MPN1-012.039d.mgd.msft.net>
-References: <1343797643-10208-1-git-send-email-Priyanka.Jain@freescale.com>
-	<AC83832D6324604BB08FAE5A33553F1907A926BA@039-SN2MPN1-012.039d.mgd.msft.net>
- <20120806085929.6c5f8cd7@redhat.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [RFC] looking for feedback on stable RT patch process
+Date: Wed, 8 Aug 2012 17:38:01 -0700
+Message-ID: <50230669.2070501@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"dvhart@linux.intel.com" <dvhart@linux.intel.com>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	"tglx@linutronix.de" <tglx@linutronix.de>,
-	Srivastava Rajan-B34330 <B34330@freescale.com>,
-	Aggrwal Poonam-B10812 <B10812@freescale.com>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe005.messaging.microsoft.com ([216.32.180.31]:52233
-	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750702Ab2HGECS convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 Aug 2012 00:02:18 -0400
-In-Reply-To: <20120806085929.6c5f8cd7@redhat.com>
-Content-Language: en-US
+Received: from ch1ehsobe003.messaging.microsoft.com ([216.32.181.183]:12361
+	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1758675Ab2HIAii (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Aug 2012 20:38:38 -0400
+Received: from mail146-ch1 (localhost [127.0.0.1])	by
+ mail146-ch1-R.bigfish.com (Postfix) with ESMTP id 07263100381	for
+ <linux-rt-users@vger.kernel.org>; Thu,  9 Aug 2012 00:38:37 +0000 (UTC)
+Received: from CH1EHSMHS005.bigfish.com (snatpool2.int.messaging.microsoft.com
+ [10.43.68.235])	by mail146-ch1.bigfish.com (Postfix) with ESMTP id
+ 2669B2A005F	for <linux-rt-users@vger.kernel.org>; Thu,  9 Aug 2012 00:38:36
+ +0000 (UTC)
+Received: from usculsndmail13v.am.sony.com (usculsndmail13v.am.sony.com
+ [146.215.230.104])	by usculsndmail04v.am.sony.com
+ (Sentrion-MTA-4.2.2/Sentrion-MTA-4.2.2) with ESMTP id q790cYx8017847
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)	for
+ <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2012 00:38:35 GMT
+Received: from mail1x.sjc.in.sel.sony.com (mailx.bc.in.sel.sony.com
+ [43.134.1.112])	by usculsndmail13v.am.sony.com
+ (Sentrion-MTA-4.2.2/Sentrion-MTA-4.2.2) with ESMTP id q790cXlG005296
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=FAIL)	for
+ <linux-rt-users@vger.kernel.org>; Thu, 9 Aug 2012 00:38:34 GMT
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thanks Clark
+Hi All,
 
-Waiting for the results at your end.
+I'm going to be giving a presentation at Plumbers on the RT stable
+patch process and I would like for it to reflect more than just
+my personal experiences and biases.  If you have opinions and
+experiences, please email me directly (please do not reply
+to the list - I will send a summary to the list after Plumbers).
+
+If you have any additional questions that you think would be
+interesting, please post them to the list as a reply to this message.
+
+Please answer any or all of the following questions:
+
+ 1) Have you downloaded any stable RT releases?  If so, approximately how many?
+    If not, why not?
+
+ 2) How do you use the stable RT release?  To run on a single system?  To place
+    on a product that is sold / lent / given away?  To create a distribution?
+    Other?
+
+ 3) Is the stable RT release useful and valuable?  (How many beers do we owe
+    to Steve when we run into him at conferences?)  Why is it useful and
+    valuable?
+
+ 4) If the stable RT release is not useful, why isn't it?
+
+ 5) What changes would make the RT release more useful?  Why would the changes
+    make it more useful?
+
+ 6) What changes would make the RT release better?
+
+ 7) What should _not_ change about the stable RT release?
+
+ 8) How frequently do you test a stable RT release (percent of releases)?
+
+ 9) How intensively do you test a stable RT release?  Boot?  Functional test?
+    Performance test(s)?  Other test(s)?  Single target (type of computer)?
+    Multiple targets?  How many different types of targets?
+
+10) Which series have been useful?  Which series is currently most useful (can
+    be more than one)?  (3.0.x, 3.2.x, 3.4.x)
+
+11) Any other random or useful comments or opinions?
 
 
-Regards
-Priyanka
+Thanks for any and all input!
 
------Original Message-----
-From: Clark Williams [mailto:williams@redhat.com] 
-Sent: Monday, August 06, 2012 7:29 PM
-To: Jain Priyanka-B32167
-Cc: linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; Aggrwal Poonam-B10812
-Subject: Re: [PATCH 1/2][RFC] Add README_cyclicload
-
-Priyanka,
-
-For some reason all of us that work on rt-tests were busy last week.
-I'll apply these patches and try out cyclicload this week.
-
-Clark
-
-On Mon, 6 Aug 2012 04:00:15 +0000
-Jain Priyanka-B32167 <B32167@freescale.com> wrote:
-
-> Hi,
-> 
-> Waiting for the comments on this tool.
-> 
-> Thanks
-> Priyanka
-> 
-> -----Original Message-----
-> From: Jain Priyanka-B32167
-> Sent: Wednesday, August 01, 2012 10:37 AM
-> To: linux-rt-users@vger.kernel.org; williams@redhat.com; 
-> dvhart@linux.intel.com
-> Cc: rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; 
-> Aggrwal Poonam-B10812; Jain Priyanka-B32167
-> Subject: [PATCH 1/2][RFC] Add README_cyclicload
-> 
-> Cyclicload program is designed to simulate load at regular intervals in form of one or two threads.
-> 
-> Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
-> ---
->  src/cyclictest/README_cyclicload |  147 
-> ++++++++++++++++++++++++++++++++++++++
->  1 files changed, 147 insertions(+), 0 deletions(-)  create mode 
-> 100644 src/cyclictest/README_cyclicload
-> 
-> diff --git a/src/cyclictest/README_cyclicload 
-> b/src/cyclictest/README_cyclicload
-> new file mode 100644
-> index 0000000..f1e99bf
-> --- /dev/null
-> +++ b/src/cyclictest/README_cyclicload
-> @@ -0,0 +1,147 @@
-> +DESCRIPTION
-> +-------------
-> +
-> +The cyclicload program is developed above existing cyclictest application.
-> +It is basically designed to simulate specified load at regular 
-> +intervals in addition to cyclictest functionality.
-> +It can simulate one or two load threads.
-> +
-> +
-> +Why it is required?
-> +---------------------
-> +It is required to test system performance under a specified load 
-> +along with tracking latency of simulated load thread.
-> +
-> +
-> +Example use case
-> +--------------------
-> +For products like LTE, L2 layer runs in form of two threads.
-> +-MAC layer thread runs at highest RT priority producing a fixed load 
-> +at regular intervals and -second thread run at lower RT priority or 
-> +in non-rt priority  producing some load in each interval depending 
-> +upon availability of CPU.
-> +Requirement is to test system under this load as well as to track 
-> +latency of highest priority RT thread which is MAC thread in example 
-> +usecase.
-> +
-> +
-> +What does it do?
-> +------------------
-> +It creates one or two load generating thread/s.
-> +1)load1 thread (timer thread)
-> +2)load2 thread
-> +priority, nice value, load % as input via command line
-> +
-> +-cyclictest funcationality like latency measurement
-> +
-> +
-> +How does it work
-> +-----------------
-> +It uses generate_load loop function to simualte load.
-> +First it caliberate required loop_count per unit time per CPU.
-> +It stores this data in some file.
-> +For subsequent runs, it uses this caliberated data to generate load 
-> +if form of one or two threads .
-> +It keeps on tracking the latency of RT thread.
-> +More in Design Overview section.
-> +
-> +
-> +Recommended Settings
-> +----------------------
-> +-First run is recommended to be run with no or least load for accuracy.
-> +-should be run with sudo or root permission.
-> +-caliberation routine produces calinerate_ount file in runnign directory.
-> +	If one don't have permission in that dir, path should be changed in
-> +	FILENAME or one can exploit shared memory method.
-> +-Atleast one thread should be of RT priority. This thread takes priority of
-> +	cyclictest as its priority.
-> +-cyclictest applcication should be run with SCHED_OTHER policy.
-> +-recommended to run in quiet mode (-q) in background.
-> +TODO: add option to take filepath from cmd line
-> +
-> +
-> +Cmd line usage/examples
-> +------------------------
-> +New command line arguments:
-> + "-x       --load_t1         load in percentage for t1 thread\n"
-> + "-X       --load_t2         load in percentage for t2 thread\n"
-> + "-z       --priority_t2     priority of t2 thread\n"
-> + "-Z       --nice_t2         nice value of t2 thread\n"
-> +
-> +If both load_t1 and load_t2 are zero, it behaves as default 
-> +cyclictest application
-> +
-> +For uniprocessor:
-> +	#sudo ./cyclictest -p 99 -c 1 -d 0 -x 40 -X 30 -q -D 600&
-> +
-> +For multiprocessor:
-> +	#sudo ./cyclcitest -p 99 -c 1 -d 0 -x 40 -X 30 -q -D 600 -S&
-> +
-> +
-> +
-> +Future Enhancements
-> +-------------------
-> +Maintain statistics of average load produces.
-> +invalidate cache in each interval to make it close to actual scenario.
-> +can be scalable to produce n number of load threads.
-> +
-> +
-> +Design Overview
-> +--------------
-> +---------------
-> +
-> +The logic to simulate load has been added above existing cyclictest application.
-> +
-> +Threads
-> +--------
-> +cyclicload : main process
-> +--------------------------
-> +-parse input arguments.
-> +
-> +-for first run : create caliberate thread.
-> +	store caliberated count in caliberate_count file -for subsequent runs:
-> +	read caliberated count from file and use that count to simulate defined load.
-> +
-> +-create t load1threads (t depending on cmdlime args, for smp system = 
-> +num of cores, one thread per core)
-> +
-> +-update stats periodically while !shutdown -print stats periodically 
-> +depending on cmdline args while !shutdown
-> +
-> +
-> +caliberate thread
-> +------------------
-> +-is created only once for the first run of cyclicload -run at highest 
-> +RT priority.
-> +-affine itself turn by turn to each cpu. (for all cpus for multicore
-> +system) -caliberate count per unit (ms by default) per cpu -store per 
-> +cpu data in caliberate_count_array -recommended to be run with no or 
-> +least load.
-> +
-> +
-> +load1 thread(timer thread)
-> +---------------------------
-> +-run at priority parsed in main routine -recommended to run at 
-> +highest RT priority -creates load2_thread (optional only if on load2 
-> +is
-> +nonzero) -calculate number of loops to execute to generate defined 
-> +load by
-> +	using caliberate_count_array and load percentage parsed in main 
-> +routine -reduced interval = interval(window) - duration for load_t1 
-> +-while loop until !shutdown
-> +	-generate load_t1 load
-> +	-sleep for reduced interval
-> +	-calculate latency (cosumes around 1%-2% cpu)
-> +	-discard off remaining load if window expires
-> +	-set next_window_started flag to 1
-> +	-signal load2_thread about next window
-> +-overhead: consumes 1-2% cpu for latency maintainenance, etc 
-> +-variation in produced load : 0%-2% of full cpu utilization
-> +
-> +
-> +load2_thread
-> +------------
-> +generate load_t2 load
-> +wait for next window to start
-> +if window expires before generate load_t2 finishes,
-> +	discard off remaining load
-> +	restart generate load_t2 load
-> +variation in produced load : 0%-1% of full cpu utilization
-> --
-> 1.7.4.1
-> 
-> 
-> 
+-Frank
 
