@@ -1,13 +1,14 @@
 From: Jain Priyanka-B32167 <B32167@freescale.com>
 Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
-Date: Tue, 14 Aug 2012 08:36:26 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F1907A9FB9B@039-SN2MPN1-012.039d.mgd.msft.net>
+Date: Tue, 14 Aug 2012 10:15:28 +0000
+Message-ID: <AC83832D6324604BB08FAE5A33553F1907A9FD9F@039-SN2MPN1-012.039d.mgd.msft.net>
 References: <1343797643-10208-1-git-send-email-Priyanka.Jain@freescale.com>
  <AC83832D6324604BB08FAE5A33553F1907A926BA@039-SN2MPN1-012.039d.mgd.msft.net>
  <20120806085929.6c5f8cd7@redhat.com>
  <AC83832D6324604BB08FAE5A33553F1907A94309@039-SN2MPN1-012.039d.mgd.msft.net>
  <AC83832D6324604BB08FAE5A33553F1907A9E244@039-SN2MPN1-012.039d.mgd.msft.net>
  <alpine.LFD.2.02.1208131740280.8203@tycho>
+ <AC83832D6324604BB08FAE5A33553F1907A9FB9B@039-SN2MPN1-012.039d.mgd.msft.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
@@ -18,18 +19,28 @@ Cc: Clark Williams <williams@redhat.com>,
 	"tglx@linutronix.de" <tglx@linutronix.de>,
 	Srivastava Rajan-B34330 <B34330@freescale.com>,
 	Aggrwal Poonam-B10812 <B10812@freescale.com>
-To: John Kacur <jkacur@redhat.com>,
+To: Jain Priyanka-B32167 <B32167@freescale.com>,
+	John Kacur <jkacur@redhat.com>,
 	Frank Rowand <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:23463
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751684Ab2HNIgp convert rfc822-to-8bit
+Received: from co1ehsobe004.messaging.microsoft.com ([216.32.180.187]:9484
+	"EHLO co1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1755653Ab2HNKPk convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Aug 2012 04:36:45 -0400
-In-Reply-To: <alpine.LFD.2.02.1208131740280.8203@tycho>
+	Tue, 14 Aug 2012 06:15:40 -0400
+In-Reply-To: <AC83832D6324604BB08FAE5A33553F1907A9FB9B@039-SN2MPN1-012.039d.mgd.msft.net>
 Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+
+
+-----Original Message-----
+From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Jain Priyanka-B32167
+Sent: Tuesday, August 14, 2012 2:06 PM
+To: John Kacur; Frank Rowand
+Cc: Clark Williams; linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; Aggrwal Poonam-B10812
+Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
 
 
 Thanks John and Frank for going through it.
@@ -60,8 +71,8 @@ On Mon, 13 Aug 2012, Jain Priyanka-B32167 wrote:
 > Priyanka
 > 
 > -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org 
-> [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Jain 
+> From: linux-rt-users-owner@vger.kernel.org
+> [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Jain
 > Priyanka-B32167
 > Sent: Tuesday, August 07, 2012 9:32 AM
 > To: Clark Williams
@@ -254,7 +265,7 @@ On Mon, 13 Aug 2012, Jain Priyanka-B32167 wrote:
 > > +load1 thread(timer thread)
 > > +---------------------------
 > > +-run at priority parsed in main routine -recommended to run at 
-> > +highest RT priority -creates load2_thread (optional only if on 
+> > +highest RT priority -creates load2_thread (optional only if on
 > > +load2 is
 > > +nonzero) -calculate number of loops to execute to generate defined 
 > > +load by
@@ -303,9 +314,15 @@ rteval basically runs some standard benchmarks such as hackbench and then runs c
 You can fetch it here.
 git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rteval.git>
 [Priyanka] : Thanks for the link. I will explore this tool .
+[Priyanka]: Had a look at the tool. It is creating load on the system. But that load looks-like is not fixed.
+I have a requirement of creating fixed % load. Like a system having 20% of load of priority 99, 30% load of priority 75, then test system behavior under this load. Is this possible with this tool? 
 
 
 Thanks
 John 
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
 
