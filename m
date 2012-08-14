@@ -1,328 +1,147 @@
-From: Jain Priyanka-B32167 <B32167@freescale.com>
-Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
-Date: Tue, 14 Aug 2012 10:15:28 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F1907A9FD9F@039-SN2MPN1-012.039d.mgd.msft.net>
-References: <1343797643-10208-1-git-send-email-Priyanka.Jain@freescale.com>
- <AC83832D6324604BB08FAE5A33553F1907A926BA@039-SN2MPN1-012.039d.mgd.msft.net>
- <20120806085929.6c5f8cd7@redhat.com>
- <AC83832D6324604BB08FAE5A33553F1907A94309@039-SN2MPN1-012.039d.mgd.msft.net>
- <AC83832D6324604BB08FAE5A33553F1907A9E244@039-SN2MPN1-012.039d.mgd.msft.net>
- <alpine.LFD.2.02.1208131740280.8203@tycho>
- <AC83832D6324604BB08FAE5A33553F1907A9FB9B@039-SN2MPN1-012.039d.mgd.msft.net>
+From: Mike Galbraith <efault@gmx.de>
+Subject: [rfc patch] fs,reiserfs: unlock superblock before callling
+ reiserfs_quota_on_mount()
+Date: Tue, 14 Aug 2012 15:06:23 +0200
+Message-ID: <1344949583.14924.36.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: Clark Williams <williams@redhat.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"dvhart@linux.intel.com" <dvhart@linux.intel.com>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	"tglx@linutronix.de" <tglx@linutronix.de>,
-	Srivastava Rajan-B34330 <B34330@freescale.com>,
-	Aggrwal Poonam-B10812 <B10812@freescale.com>
-To: Jain Priyanka-B32167 <B32167@freescale.com>,
-	John Kacur <jkacur@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co1ehsobe004.messaging.microsoft.com ([216.32.180.187]:9484
-	"EHLO co1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755653Ab2HNKPk convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Aug 2012 06:15:40 -0400
-In-Reply-To: <AC83832D6324604BB08FAE5A33553F1907A9FB9B@039-SN2MPN1-012.039d.mgd.msft.net>
-Content-Language: en-US
+Received: from mailout-de.gmx.net ([213.165.64.22]:39273 "HELO
+	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with SMTP id S1755192Ab2HNNG2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 Aug 2012 09:06:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Greetings,
 
+Using openSUSE's "partitioner" gizmo to set up a reiserfs partition with
+quotas and whatnot enabled rewarded me with a deadlock.
 
------Original Message-----
-From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Jain Priyanka-B32167
-Sent: Tuesday, August 14, 2012 2:06 PM
-To: John Kacur; Frank Rowand
-Cc: Clark Williams; linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; Aggrwal Poonam-B10812
-Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
+In reiserfs/lock.c we see:
+... 
+* Also this lock is often released before a call that could block because
+ * reiserfs performances were partially based on the release while schedule()
+ * property of the Bkl.
+ */
+void reiserfs_write_lock(struct super_block *s)
 
+And in the problematic reiserfs_fill_super():
+        /*
+         * This function is called with the bkl, which also was the old
+         * locking used here.
+         * do_journal_begin() will soon check if we hold the lock (ie: was the
+         * bkl). This is likely because do_journal_begin() has several another
+         * callers because at this time, it doesn't seem to be necessary to
+         * protect against anything.
+         * Anyway, let's be conservative and lock for now.
+         */
+        reiserfs_write_lock(s);
 
-Thanks John and Frank for going through it.
+Given wishy-washy "be conservative for now", and "this lock is often
+released before a call that could block", it seemed reasonable to trade
+a little conservatism for a chance to return from the blocking
+function. 
 
-As Frank has suggested to make it separate application and  as John also pointed out that it is breaking some of cyclic-test features, and also the targeted use-case is different, so I think it's better to maintain it as separate tool. Please comments on this. 
+If we hold the super block lock while calling reiserfs_quota_on_mount(), we can
+deadlock - mount blocks kworker/3:2, and sleeps forever more.
 
-Other replies in-lined.
+crash> ps|grep UN
+    715      2   3  ffff880220734d30  UN   0.0       0      0  [kworker/3:2]
+   9369   9341   2  ffff88021ffb7560  UN   1.3  493404 123184  Xorg
+   9665   9664   3  ffff880225b92ab0  UN   0.0   47368    812  udisks-daemon
+  10635  10403   3  ffff880222f22c70  UN   0.0   14904    936  mount
+crash> bt ffff880220734d30
+PID: 715    TASK: ffff880220734d30  CPU: 3   COMMAND: "kworker/3:2"
+ #0 [ffff8802244c3c20] schedule at ffffffff8144584b
+ #1 [ffff8802244c3cc8] __rt_mutex_slowlock at ffffffff814472b3
+ #2 [ffff8802244c3d28] rt_mutex_slowlock at ffffffff814473f5
+ #3 [ffff8802244c3dc8] reiserfs_write_lock at ffffffffa05f28fd [reiserfs]
+ #4 [ffff8802244c3de8] flush_async_commits at ffffffffa05ec91d [reiserfs]
+ #5 [ffff8802244c3e08] process_one_work at ffffffff81073726
+ #6 [ffff8802244c3e68] worker_thread at ffffffff81073eba
+ #7 [ffff8802244c3ec8] kthread at ffffffff810782e0
+ #8 [ffff8802244c3f48] kernel_thread_helper at ffffffff81450064
 
-Thanks
-Priyanka
+crash> struct rt_mutex ffff880222e8f628
+struct rt_mutex {
+  wait_lock = {
+    raw_lock = {
+      slock = 65537
+    }
+  }, 
+  wait_list = {
+    node_list = {
+      next = 0xffff8802244c3d48, 
+      prev = 0xffff8802244c3d48
+    }
+  }, 
+  owner = 0xffff880222f22c71, 
+  save_state = 0
+}
+crash> bt 0xffff880222f22c70                                                                                                                                                                                                                
+PID: 10635  TASK: ffff880222f22c70  CPU: 3   COMMAND: "mount"                                                                                                                                                                               
+ #0 [ffff8802216a9868] schedule at ffffffff8144584b                                                                                                                                                                                         
+ #1 [ffff8802216a9910] schedule_timeout at ffffffff81446865                                                                                                                                                                                 
+ #2 [ffff8802216a99a0] wait_for_common at ffffffff81445f74
+ #3 [ffff8802216a9a30] flush_work at ffffffff810712d3
+ #4 [ffff8802216a9ab0] schedule_on_each_cpu at ffffffff81074463
+ #5 [ffff8802216a9ae0] invalidate_bdev at ffffffff81178aba
+ #6 [ffff8802216a9af0] vfs_load_quota_inode at ffffffff811a3632
+ #7 [ffff8802216a9b50] dquot_quota_on_mount at ffffffff811a375c
+ #8 [ffff8802216a9b80] finish_unfinished at ffffffffa05dd8b0 [reiserfs]
+ #9 [ffff8802216a9cc0] reiserfs_fill_super at ffffffffa05de825 [reiserfs]
+#10 [ffff8802216a9d90] mount_bdev at ffffffff8114c93f
+#11 [ffff8802216a9e00] mount_fs at ffffffff8114d035
+#12 [ffff8802216a9e50] vfs_kern_mount at ffffffff81167d36
+#13 [ffff8802216a9e90] do_kern_mount at ffffffff811692c3
+#14 [ffff8802216a9ed0] do_mount at ffffffff8116adb5
+#15 [ffff8802216a9f30] sys_mount at ffffffff8116b25a
+#16 [ffff8802216a9f80] system_call_fastpath at ffffffff8144ef12
+    RIP: 00007f7b9303997a  RSP: 00007ffff443c7a8  RFLAGS: 00010202
+    RAX: 00000000000000a5  RBX: ffffffff8144ef12  RCX: 00007f7b932e9ee0
+    RDX: 00007f7b93d9a400  RSI: 00007f7b93d9a3e0  RDI: 00007f7b93d9a3c0
+    RBP: 00007f7b93d9a2c0   R8: 00007f7b93d9a550   R9: 0000000000000001
+    R10: ffffffffc0ed040e  R11: 0000000000000202  R12: 000000000000040e
+    R13: 0000000000000000  R14: 00000000c0ed040e  R15: 00007ffff443ca20
+    ORIG_RAX: 00000000000000a5  CS: 0033  SS: 002b
 
------Original Message-----
-From: John Kacur [mailto:jkacur@gmail.com] On Behalf Of John Kacur
-Sent: Monday, August 13, 2012 9:19 PM
-To: Jain Priyanka-B32167
-Cc: Clark Williams; linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; Aggrwal Poonam-B10812
-Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
+Signed-off-by: Mike Galbraith <efault@gmx.de>
+---
+ fs/reiserfs/super.c |   10 +++++++++-
+ 1 file changed, 9 insertions(+), 1 deletion(-)
 
-
-
-On Mon, 13 Aug 2012, Jain Priyanka-B32167 wrote:
-
-> Hello Clark,
-> 
-> Did you have the chance to test the patch.
-> 
-> Thanks
-> Priyanka
-> 
-> -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org
-> [mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Jain
-> Priyanka-B32167
-> Sent: Tuesday, August 07, 2012 9:32 AM
-> To: Clark Williams
-> Cc: linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; 
-> rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; 
-> Aggrwal Poonam-B10812
-> Subject: RE: [PATCH 1/2][RFC] Add README_cyclicload
-> 
-> Thanks Clark
-> 
-> Waiting for the results at your end.
-> 
-> 
-> Regards
-> Priyanka
-> 
-> -----Original Message-----
-> From: Clark Williams [mailto:williams@redhat.com]
-> Sent: Monday, August 06, 2012 7:29 PM
-> To: Jain Priyanka-B32167
-> Cc: linux-rt-users@vger.kernel.org; dvhart@linux.intel.com; 
-> rostedt@goodmis.org; tglx@linutronix.de; Srivastava Rajan-B34330; 
-> Aggrwal Poonam-B10812
-> Subject: Re: [PATCH 1/2][RFC] Add README_cyclicload
-> 
-> Priyanka,
-> 
-> For some reason all of us that work on rt-tests were busy last week.
-> I'll apply these patches and try out cyclicload this week.
-> 
-> Clark
-> 
-> On Mon, 6 Aug 2012 04:00:15 +0000
-> Jain Priyanka-B32167 <B32167@freescale.com> wrote:
-> 
-> > Hi,
-> > 
-> > Waiting for the comments on this tool.
-> > 
-> > Thanks
-> > Priyanka
-> > 
-> > -----Original Message-----
-> > From: Jain Priyanka-B32167
-> > Sent: Wednesday, August 01, 2012 10:37 AM
-> > To: linux-rt-users@vger.kernel.org; williams@redhat.com; 
-> > dvhart@linux.intel.com
-> > Cc: rostedt@goodmis.org; tglx@linutronix.de; Srivastava 
-> > Rajan-B34330; Aggrwal Poonam-B10812; Jain Priyanka-B32167
-> > Subject: [PATCH 1/2][RFC] Add README_cyclicload
-> > 
-> > Cyclicload program is designed to simulate load at regular intervals in form of one or two threads.
-> > 
-> > Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
-> > ---
-> >  src/cyclictest/README_cyclicload |  147
-> > ++++++++++++++++++++++++++++++++++++++
-> >  1 files changed, 147 insertions(+), 0 deletions(-)  create mode
-> > 100644 src/cyclictest/README_cyclicload
-> > 
-> > diff --git a/src/cyclictest/README_cyclicload
-> > b/src/cyclictest/README_cyclicload
-> > new file mode 100644
-> > index 0000000..f1e99bf
-> > --- /dev/null
-> > +++ b/src/cyclictest/README_cyclicload
-> > @@ -0,0 +1,147 @@
-> > +DESCRIPTION
-> > +-------------
-> > +
-> > +The cyclicload program is developed above existing cyclictest application.
-> > +It is basically designed to simulate specified load at regular 
-> > +intervals in addition to cyclictest functionality.
-> > +It can simulate one or two load threads.
-> > +
-> > +
-> > +Why it is required?
-> > +---------------------
-> > +It is required to test system performance under a specified load 
-> > +along with tracking latency of simulated load thread.
-> > +
-> > +
-> > +Example use case
-> > +--------------------
-> > +For products like LTE, L2 layer runs in form of two threads.
-> > +-MAC layer thread runs at highest RT priority producing a fixed 
-> > +load at regular intervals and -second thread run at lower RT 
-> > +priority or in non-rt priority  producing some load in each 
-> > +interval depending upon availability of CPU.
-> > +Requirement is to test system under this load as well as to track 
-> > +latency of highest priority RT thread which is MAC thread in 
-> > +example usecase.
-> > +
-> > +
-> > +What does it do?
-> > +------------------
-> > +It creates one or two load generating thread/s.
-> > +1)load1 thread (timer thread)
-> > +2)load2 thread
-> > +priority, nice value, load % as input via command line
-> > +
-> > +-cyclictest funcationality like latency measurement
-> > +
-> > +
-> > +How does it work
-> > +-----------------
-> > +It uses generate_load loop function to simualte load.
-> > +First it caliberate required loop_count per unit time per CPU.
-> > +It stores this data in some file.
-> > +For subsequent runs, it uses this caliberated data to generate load 
-> > +if form of one or two threads .
-> > +It keeps on tracking the latency of RT thread.
-> > +More in Design Overview section.
-> > +
-> > +
-> > +Recommended Settings
-> > +----------------------
-> > +-First run is recommended to be run with no or least load for accuracy.
-> > +-should be run with sudo or root permission.
-> > +-caliberation routine produces calinerate_ount file in runnign directory.
-> > +	If one don't have permission in that dir, path should be changed in
-> > +	FILENAME or one can exploit shared memory method.
-> > +-Atleast one thread should be of RT priority. This thread takes priority of
-> > +	cyclictest as its priority.
-> > +-cyclictest applcication should be run with SCHED_OTHER policy.
-> > +-recommended to run in quiet mode (-q) in background.
-> > +TODO: add option to take filepath from cmd line
-> > +
-> > +
-> > +Cmd line usage/examples
-> > +------------------------
-> > +New command line arguments:
-> > + "-x       --load_t1         load in percentage for t1 thread\n"
-> > + "-X       --load_t2         load in percentage for t2 thread\n"
-> > + "-z       --priority_t2     priority of t2 thread\n"
-> > + "-Z       --nice_t2         nice value of t2 thread\n"
-> > +
-> > +If both load_t1 and load_t2 are zero, it behaves as default 
-> > +cyclictest application
-> > +
-> > +For uniprocessor:
-> > +	#sudo ./cyclictest -p 99 -c 1 -d 0 -x 40 -X 30 -q -D 600&
-> > +
-> > +For multiprocessor:
-> > +	#sudo ./cyclcitest -p 99 -c 1 -d 0 -x 40 -X 30 -q -D 600 -S&
-> > +
-> > +
-> > +
-> > +Future Enhancements
-> > +-------------------
-> > +Maintain statistics of average load produces.
-> > +invalidate cache in each interval to make it close to actual scenario.
-> > +can be scalable to produce n number of load threads.
-> > +
-> > +
-> > +Design Overview
-> > +--------------
-> > +---------------
-> > +
-> > +The logic to simulate load has been added above existing cyclictest application.
-> > +
-> > +Threads
-> > +--------
-> > +cyclicload : main process
-> > +--------------------------
-> > +-parse input arguments.
-> > +
-> > +-for first run : create caliberate thread.
-> > +	store caliberated count in caliberate_count file -for subsequent runs:
-> > +	read caliberated count from file and use that count to simulate defined load.
-> > +
-> > +-create t load1threads (t depending on cmdlime args, for smp system 
-> > += num of cores, one thread per core)
-> > +
-> > +-update stats periodically while !shutdown -print stats 
-> > +periodically depending on cmdline args while !shutdown
-> > +
-> > +
-> > +caliberate thread
-> > +------------------
-> > +-is created only once for the first run of cyclicload -run at 
-> > +highest RT priority.
-> > +-affine itself turn by turn to each cpu. (for all cpus for 
-> > +multicore
-> > +system) -caliberate count per unit (ms by default) per cpu -store 
-> > +per cpu data in caliberate_count_array -recommended to be run with 
-> > +no or least load.
-> > +
-> > +
-> > +load1 thread(timer thread)
-> > +---------------------------
-> > +-run at priority parsed in main routine -recommended to run at 
-> > +highest RT priority -creates load2_thread (optional only if on
-> > +load2 is
-> > +nonzero) -calculate number of loops to execute to generate defined 
-> > +load by
-> > +	using caliberate_count_array and load percentage parsed in main 
-> > +routine -reduced interval = interval(window) - duration for load_t1 
-> > +-while loop until !shutdown
-> > +	-generate load_t1 load
-> > +	-sleep for reduced interval
-> > +	-calculate latency (cosumes around 1%-2% cpu)
-> > +	-discard off remaining load if window expires
-> > +	-set next_window_started flag to 1
-> > +	-signal load2_thread about next window
-> > +-overhead: consumes 1-2% cpu for latency maintainenance, etc 
-> > +-variation in produced load : 0%-2% of full cpu utilization
-> > +
-> > +
-> > +load2_thread
-> > +------------
-> > +generate load_t2 load
-> > +wait for next window to start
-> > +if window expires before generate load_t2 finishes,
-> > +	discard off remaining load
-> > +	restart generate load_t2 load
-> > +variation in produced load : 0%-1% of full cpu utilization
-> > --
-> > 1.7.4.1
-> > 
-
-Okay, the patches apply cleanly, and it builds cleanly.
-I admit I didn't look closely at what you're trying to do, but I'm a little skeptical that this is a real load instead of just a task spinning at an rt prio, but I could be wrong.
-[Priyanka]: Yes John, intention is to create a real cpu load so that we can test the overall system behavior (performance, latency) in presence of this load.
-
-However, the major rule when doing stuff in rt-tests is don't break cyclictest!
-
-When I tried to run cyclictest with your patches applied, I immediately observed a lot of broken behaviour, even when I tried your -x0 and -X0 (although that shouldn't be necessary).
-
-Basically everything moved at a crawl. So, I'm not going to look any closer at this until cyclictest works exactly as before. Sorry.
-[Priyanka]Yes, Sorry for this . It might have broken some of cyclic-test functionalities. I hadn't done much testing around them as I was concentrating more on the target use-case and basic cyclictest functionality.  I hope basic commands like ./cyclictest -S -p 99 -c 1 -d 0 is working fine. Did you face any issues in this also ?
-I will do more testing around it, but if suggestion is to maintain it as separate application then basic functionality should be sufficient. Please comment.
-
-
-I know you are trying to simulate a specific load and not a generic one, however you might want to take a look at rteval.
-
-rteval basically runs some standard benchmarks such as hackbench and then runs cyclictest at the same time to see if we can break the behaviour of cyclictest. Have a look at that too please and see if it might meet your needs.
-
-You can fetch it here.
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rteval.git>
-[Priyanka] : Thanks for the link. I will explore this tool .
-[Priyanka]: Had a look at the tool. It is creating load on the system. But that load looks-like is not fixed.
-I have a requirement of creating fixed % load. Like a system having 20% of load of priority 99, 30% load of priority 75, then test system behavior under this load. Is this possible with this tool? 
-
-
-Thanks
-John 
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in the body of a message to majordomo@vger.kernel.org More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--- a/fs/reiserfs/super.c
++++ b/fs/reiserfs/super.c
+@@ -140,7 +140,13 @@ static int remove_save_link_only(struct
+ static int reiserfs_quota_on_mount(struct super_block *, int);
+ #endif
+ 
+-/* look for uncompleted unlinks and truncates and complete them */
++/*
++ *look for uncompleted unlinks and truncates and complete them
++ *
++ * Called with super_block write locked.  If quotas are enabled,
++ * we have to release/retake lest we call dquot_quota_on_mount(),
++ * proceed to schedule_on_each_cpu() and deadlock our own worker.
++ */
+ static int finish_unfinished(struct super_block *s)
+ {
+ 	INITIALIZE_PATH(path);
+@@ -187,7 +193,9 @@ static int finish_unfinished(struct supe
+ 				quota_enabled[i] = 0;
+ 				continue;
+ 			}
++			reiserfs_write_unlock(s);
+ 			ret = reiserfs_quota_on_mount(s, i);
++			reiserfs_write_lock(s);
+ 			if (ret < 0)
+ 				reiserfs_warning(s, "reiserfs-2500",
+ 						 "cannot turn on journaled "
 
 
