@@ -1,28 +1,37 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Using random in interrupts for RT
-Date: Tue, 14 Aug 2012 17:17:07 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1208141716170.32033@ionos>
-References: <1344954649.6724.13.camel@gandalf.stny.rr.com>
+Subject: Re: [rfc patch] fs,reiserfs: unlock superblock before callling
+ reiserfs_quota_on_mount()
+Date: Tue, 14 Aug 2012 17:18:24 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1208141717570.32033@ionos>
+References: <1344949583.14924.36.camel@marge.simpson.net>  <1344954183.6724.8.camel@gandalf.stny.rr.com>  <1344955168.14924.85.camel@marge.simpson.net> <1344956189.5477.1.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ben Hutchings <ben@decadent.org.uk>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59707 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752167Ab2HNPRJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Aug 2012 11:17:09 -0400
-In-Reply-To: <1344954649.6724.13.camel@gandalf.stny.rr.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Mike Galbraith <efault@gmx.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1344956189.5477.1.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 14 Aug 2012, Steven Rostedt wrote:
-> Ben Hutchings asked me if we still need "genirq: Disable random call on
-> preempt-rt" for -rt? With commit 902c098a366 "random: use lockless
-> techniques in the interrupt path" there is no more locks used. But does
-> it still produce high latencies?
+On Tue, 14 Aug 2012, Mike Galbraith wrote:
 
-Haven't tested it. Will put it on my ever growing todo list....
+> On Tue, 2012-08-14 at 16:39 +0200, Mike Galbraith wrote: 
+> > On Tue, 2012-08-14 at 10:23 -0400, Steven Rostedt wrote: 
+> > > On Tue, 2012-08-14 at 15:06 +0200, Mike Galbraith wrote:
+> > > > Greetings,
+> > > > 
+> > > > Using openSUSE's "partitioner" gizmo to set up a reiserfs partition with
+> > > > quotas and whatnot enabled rewarded me with a deadlock.
+> > > 
+> > > Is this just a -rt bug? Can't this deadlock also in mainline?
+> > 
+> > It didn't with a NOPREEMPT kernel the one time I tried it, which seemed
+> > mighty odd when I stared at the rt deadlock.  I'll give it another go, I
+> > likely just munged q/d NOPREEMPT test.
+> 
+> Nope, no screw-up.  Maybe it can deadlock, but it refused to do so.
+
+Lockdep should tell you if it could ...
