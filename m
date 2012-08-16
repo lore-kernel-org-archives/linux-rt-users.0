@@ -1,161 +1,45 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: [patch] fs,reiserfs: unlock superblock before callling
- reiserfs_quota_on_mount()
-Date: Thu, 16 Aug 2012 15:49:47 +0200
-Message-ID: <1345124987.4314.83.camel@marge.simpson.net>
-References: <1344949583.14924.36.camel@marge.simpson.net>
-	 <20120814151539.GA19716@somewhere>
-	 <1345121074.4314.69.camel@marge.simpson.net>
-	 <20120816130501.GH19716@somewhere>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.9-rt17
+Date: Thu, 16 Aug 2012 15:22:43 -0400
+Message-ID: <1345144963.3708.1.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	reiserfs-devel@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
-To: Frederic Weisbecker <fweisbec@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:33519 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1752655Ab2HPNtv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Aug 2012 09:49:51 -0400
-In-Reply-To: <20120816130501.GH19716@somewhere>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-On Thu, 2012-08-16 at 15:05 +0200, Frederic Weisbecker wrote: 
-> On Thu, Aug 16, 2012 at 02:44:34PM +0200, Mike Galbraith wrote:
-
-> > --- a/fs/reiserfs/super.c
-> > +++ b/fs/reiserfs/super.c
-> > @@ -184,7 +184,13 @@ static int remove_save_link_only(struct
-> >  static int reiserfs_quota_on_mount(struct super_block *, int);
-> >  #endif
-> >  
-> > -/* look for uncompleted unlinks and truncates and complete them */
-> > +/*
-> > + *look for uncompleted unlinks and truncates and complete them
-> > + *
-> > + * Called with super_block write locked.  If quotas are enabled,
-> > + * we have to release/retake lest we call dquot_quota_on_mount(),
-> > + * proceed to schedule_on_each_cpu() and deadlock our own worker.
-> 
-> Could you please mention in the comment that the real issue is that we wait for
-> the per cpu worklets to complete flush_async_commits() that in turn wait for
-> the superblock write lock? schedule_on_each_cpu() in itself is not the problem.
-> Otherwise it might sound confusing.
-> 
-> Thanks.
-
-Done (stealing your text).
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-If we hold the superblock lock while calling reiserfs_quota_on_mount(), we can
-deadlock our own worker - mount blocks kworker/3:2, sleeps forever more.
+Dear RT Folks,
 
-crash> ps|grep UN
-    715      2   3  ffff880220734d30  UN   0.0       0      0  [kworker/3:2]
-   9369   9341   2  ffff88021ffb7560  UN   1.3  493404 123184  Xorg
-   9665   9664   3  ffff880225b92ab0  UN   0.0   47368    812  udisks-daemon
-  10635  10403   3  ffff880222f22c70  UN   0.0   14904    936  mount
-crash> bt ffff880220734d30
-PID: 715    TASK: ffff880220734d30  CPU: 3   COMMAND: "kworker/3:2"
- #0 [ffff8802244c3c20] schedule at ffffffff8144584b
- #1 [ffff8802244c3cc8] __rt_mutex_slowlock at ffffffff814472b3
- #2 [ffff8802244c3d28] rt_mutex_slowlock at ffffffff814473f5
- #3 [ffff8802244c3dc8] reiserfs_write_lock at ffffffffa05f28fd [reiserfs]
- #4 [ffff8802244c3de8] flush_async_commits at ffffffffa05ec91d [reiserfs]
- #5 [ffff8802244c3e08] process_one_work at ffffffff81073726
- #6 [ffff8802244c3e68] worker_thread at ffffffff81073eba
- #7 [ffff8802244c3ec8] kthread at ffffffff810782e0
- #8 [ffff8802244c3f48] kernel_thread_helper at ffffffff81450064
-crash> rd ffff8802244c3cc8 10
-ffff8802244c3cc8:  ffffffff814472b3 ffff880222f23250   .rD.....P2."....
-ffff8802244c3cd8:  0000000000000000 0000000000000286   ................
-ffff8802244c3ce8:  ffff8802244c3d30 ffff880220734d80   0=L$.....Ms ....
-ffff8802244c3cf8:  ffff880222e8f628 0000000000000000   (.."............
-ffff8802244c3d08:  0000000000000000 0000000000000002   ................
-crash> struct rt_mutex ffff880222e8f628
-struct rt_mutex {
-  wait_lock = {
-    raw_lock = {
-      slock = 65537
-    }
-  }, 
-  wait_list = {
-    node_list = {
-      next = 0xffff8802244c3d48, 
-      prev = 0xffff8802244c3d48
-    }
-  }, 
-  owner = 0xffff880222f22c71, 
-  save_state = 0
-}
-crash> bt 0xffff880222f22c70                                                                                                                                                                                                                
-PID: 10635  TASK: ffff880222f22c70  CPU: 3   COMMAND: "mount"                                                                                                                                                                               
- #0 [ffff8802216a9868] schedule at ffffffff8144584b                                                                                                                                                                                         
- #1 [ffff8802216a9910] schedule_timeout at ffffffff81446865                                                                                                                                                                                 
- #2 [ffff8802216a99a0] wait_for_common at ffffffff81445f74
- #3 [ffff8802216a9a30] flush_work at ffffffff810712d3
- #4 [ffff8802216a9ab0] schedule_on_each_cpu at ffffffff81074463
- #5 [ffff8802216a9ae0] invalidate_bdev at ffffffff81178aba
- #6 [ffff8802216a9af0] vfs_load_quota_inode at ffffffff811a3632
- #7 [ffff8802216a9b50] dquot_quota_on_mount at ffffffff811a375c
- #8 [ffff8802216a9b80] finish_unfinished at ffffffffa05dd8b0 [reiserfs]
- #9 [ffff8802216a9cc0] reiserfs_fill_super at ffffffffa05de825 [reiserfs]
-#10 [ffff8802216a9d90] mount_bdev at ffffffff8114c93f
-#11 [ffff8802216a9e00] mount_fs at ffffffff8114d035
-#12 [ffff8802216a9e50] vfs_kern_mount at ffffffff81167d36
-#13 [ffff8802216a9e90] do_kern_mount at ffffffff811692c3
-#14 [ffff8802216a9ed0] do_mount at ffffffff8116adb5
-#15 [ffff8802216a9f30] sys_mount at ffffffff8116b25a
-#16 [ffff8802216a9f80] system_call_fastpath at ffffffff8144ef12
-    RIP: 00007f7b9303997a  RSP: 00007ffff443c7a8  RFLAGS: 00010202
-    RAX: 00000000000000a5  RBX: ffffffff8144ef12  RCX: 00007f7b932e9ee0
-    RDX: 00007f7b93d9a400  RSI: 00007f7b93d9a3e0  RDI: 00007f7b93d9a3c0
-    RBP: 00007f7b93d9a2c0   R8: 00007f7b93d9a550   R9: 0000000000000001
-    R10: ffffffffc0ed040e  R11: 0000000000000202  R12: 000000000000040e
-    R13: 0000000000000000  R14: 00000000c0ed040e  R15: 00007ffff443ca20
-    ORIG_RAX: 00000000000000a5  CS: 0033  SS: 002b
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Acked-by: Frederic Weisbecker <fweisbec@gmail.com>
-Cc: <stable@vger.kernel.org>
----
- fs/reiserfs/super.c |   12 +++++++++++-
- 1 files changed, 11 insertions(+), 1 deletions(-)
-
-diff --git a/fs/reiserfs/super.c b/fs/reiserfs/super.c
-index 7a37dab..50635a9 100644
---- a/fs/reiserfs/super.c
-+++ b/fs/reiserfs/super.c
-@@ -184,7 +184,15 @@ static int remove_save_link_only(struct super_block *s,
- static int reiserfs_quota_on_mount(struct super_block *, int);
- #endif
- 
--/* look for uncompleted unlinks and truncates and complete them */
-+/*
-+ *look for uncompleted unlinks and truncates and complete them
-+ *
-+ * Called with superblock write locked.  If quotas are enabled,
-+ * we have to release/retake lest we call dquot_quota_on_mount(),
-+ * proceed to schedule_on_each_cpu() and deadlock waiting for
-+ * the per cpu worklets to complete flush_async_commits() that
-+ * in turn wait for the superblock write lock.
-+ */
- static int finish_unfinished(struct super_block *s)
- {
- 	INITIALIZE_PATH(path);
-@@ -231,7 +239,9 @@ static int finish_unfinished(struct super_block *s)
- 				quota_enabled[i] = 0;
- 				continue;
- 			}
-+			reiserfs_write_unlock(s);
- 			ret = reiserfs_quota_on_mount(s, i);
-+			reiserfs_write_lock(s);
- 			if (ret < 0)
- 				reiserfs_warning(s, "reiserfs-2500",
- 						 "cannot turn on journaled "
+I'm pleased to announce the 3.4.9-rt17 stable release.
 
 
+This release is just an update to the new stable 3.4.9 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 7050e0bb86b8500446cc7379cd9bcbeff57ecd87
+
+
+Or to build 3.4.9-rt17 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.9.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.9-rt17.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
