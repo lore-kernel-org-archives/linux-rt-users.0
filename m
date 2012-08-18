@@ -1,85 +1,26 @@
-From: "David L. Craig" <dlc.usa@gmail.com>
-Subject: Re: linux rt 3.4.8-rt16 and nv 302.17, and system freezes, does
- nvidia strike again?
-Date: Sat, 18 Aug 2012 07:06:37 -0400
-Message-ID: <20120818110637.GA30911@dlc-dt.home>
-References: <CAOLSsAw3QG40xSokZ8spMa1_J81n2L9fb2g68jEo-r0iCMP8gA@mail.gmail.com>
- <1345264436.8439.15.camel@marge.simpson.net>
- <20120818070110.GA26476@dlc-dt.home>
- <CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
-Reply-To: "David L. Craig" <dlc@radix.net>
+From: sonia <sonialife2@yahoo.com>
+Subject: hii
+Date: Sat, 18 Aug 2012 20:35:53 +0200 (CEST)
+Message-ID: <30647644.7759651345314953899.JavaMail.defaultUser@defaultHost>
+Reply-To: sonia <sonialife2@yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: "David L. Craig" <dlc@radix.net>, Mike Galbraith <efault@gmx.de>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Javier Sanz <jsanza@gmail.com>
+Content-Type: text/plain;charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+To: sonialife2@yahoo.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f174.google.com ([209.85.216.174]:51186 "EHLO
-	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752816Ab2HRLGk (ORCPT
+Received: from outrelay02.libero.it ([212.52.84.102]:45990 "EHLO
+	outrelay02.libero.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751201Ab2HRSgD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 18 Aug 2012 07:06:40 -0400
-Received: by qcro28 with SMTP id o28so3628598qcr.19
-        for <linux-rt-users@vger.kernel.org>; Sat, 18 Aug 2012 04:06:40 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
+	Sat, 18 Aug 2012 14:36:03 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12Aug18:1152+0200, Javier Sanz wrote:
-
-> Yes, i got the same problem, black screen, no mouse, no keyboard ...
-> i didnt  change any config file from X or nvidia ... only rt patch
-> applied  ...  :(
-> I'll try with nvidia 304.37 ... no patch required ? ... i'll test ...
-> 
-> thank you
-
-Just to be sure you didn't misunderstand the situation,
-I do not have any rt kernel working with nvidia
-except the Linux Mint Debian XFCE 13 distribution.
-Debian considers this an important bug but nVidia's
-assessment is unknown to date.
-
-Perhaps another rt-kernel lister can offer a quality
-suggestion about a likely fruitful approach to finding
-people able and willing to dig into what the kern.log
-shows is going on and direct further resolution
-activities.  Such people are probably rt-kernel and/or
-nVidia developers.  I could probably do it myself after
-three months of nothing but working on it (including
-in my sleep ;-) ).  I'd hazard a guess the following
-has a lot to do with the problem:
-
-[    6.993495] Disabling lock debugging due to kernel taint
-
-I don't know what the long-term outlook for nVidia market
-share in the FLOSS area is.  I saw hardware acceleration
-is apparently required for GNOME Unity.  That's good for
-the hardware vendors, I suppose, but problematic for folks
-who take the L in FLOSS very seriously.  I think we all
-wish the vendors would choose to make these problems go
-away by distributing their source.  As RMS says, they
-won't if they don't have to, so we shouldn't be pragmatic,
-just say no thank you.  Can I live without FlightGear?
-Why should I have to, nVidia (BTW, I was given your
-hardware--I wouldn't buy it)?  If the gamers really are
-becoming Windows 8 refugees, I guess there's hope for the
-future.  But if the governments start locking up systems
-programming, doling out practioner licenses, and making
-libre software illegal, then not.
-
-But to hopefully get back on topic, I have the impression
-I NEED the rt kernel because FG frame updates get
-behind without it.  I've heard JACK audio works well
-enough without rt these days (but I don't believe it
-yet--soon enough I will be able to prove it to myself,
-unless I get a job).
--- 
-May the LORD God bless you exceedingly abundantly!
-
-Dave_Craig______________________________________________
-"So the universe is not quite as you thought it was.
- You'd better rearrange your beliefs, then.
- Because you certainly can't rearrange the universe."
-__--from_Nightfall_by_Asimov/Silverberg_________________
+Hello my dear
+How was your living life today i hope all is well, am Sonia by name i just
+went into your profile at this site linux-archive.org and saw how you have
+pest
+your explanation over it i feel to know who your are so that we can shear one
+thing or the
+other from there i can send you my photo you can know who am ok . i am waiting
+for your reply yours Sonia
