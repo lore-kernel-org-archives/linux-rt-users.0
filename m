@@ -1,26 +1,42 @@
-From: sonia <sonialife2@yahoo.com>
-Subject: hii
-Date: Sat, 18 Aug 2012 20:35:53 +0200 (CEST)
-Message-ID: <30647644.7759651345314953899.JavaMail.defaultUser@defaultHost>
-Reply-To: sonia <sonialife2@yahoo.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Using random in interrupts for RT
+Date: Tue, 21 Aug 2012 14:12:13 -0400
+Message-ID: <1345572733.5069.9.camel@gandalf.local.home>
+References: <1344954649.6724.13.camel@gandalf.stny.rr.com>
 Mime-Version: 1.0
-Content-Type: text/plain;charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-To: sonialife2@yahoo.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from outrelay02.libero.it ([212.52.84.102]:45990 "EHLO
-	outrelay02.libero.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751201Ab2HRSgD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 18 Aug 2012 14:36:03 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Ben Hutchings <ben@decadent.org.uk>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Theodore Tso <tedtso@gmail.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1344954649.6724.13.camel@gandalf.stny.rr.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello my dear
-How was your living life today i hope all is well, am Sonia by name i just
-went into your profile at this site linux-archive.org and saw how you have
-pest
-your explanation over it i feel to know who your are so that we can shear one
-thing or the
-other from there i can send you my photo you can know who am ok . i am waiting
-for your reply yours Sonia
+On Tue, 2012-08-14 at 10:30 -0400, Steven Rostedt wrote:
+> Thomas,
+> 
+> Ben Hutchings asked me if we still need "genirq: Disable random call on
+> preempt-rt" for -rt? With commit 902c098a366 "random: use lockless
+> techniques in the interrupt path" there is no more locks used. But does
+> it still produce high latencies?
+
+Ben,
+
+Looks that the #ifndef can't be removed just yet. The code is not
+totally lockless...
+
+
+add_interrupt_randomness ->
+	credit_entropy_bits ->
+		kill_fasync ->
+			kill_fasync_rcu ->
+				spin_lock_irqsave(&fa->fa_lock, flags)
+
+to make things worse, that spinlock turns into a mutex on -rt, so it may
+crash the box if triggered.
+
+-- Steve
