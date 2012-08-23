@@ -1,63 +1,115 @@
-From: Gregoire Gentil <gregoire@gentil.com>
-Subject: Problem between rt-patches and OMAP SPI driver
-Date: Wed, 22 Aug 2012 12:49:46 -0700
-Message-ID: <503537DA.4070809@gentil.com>
-References: <1345144963.3708.1.camel@gandalf.local.home> <10950377.h1F1h7Gs2a@dabox>
-Reply-To: gregoire@gentil.com
+From: Javier Sanz <jsanza@gmail.com>
+Subject: Re: linux rt 3.4.8-rt16 and nv 302.17, and system freezes, does
+ nvidia strike again?
+Date: Thu, 23 Aug 2012 10:47:36 +0200
+Message-ID: <CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
+References: <CAOLSsAw3QG40xSokZ8spMa1_J81n2L9fb2g68jEo-r0iCMP8gA@mail.gmail.com>
+	<1345264436.8439.15.camel@marge.simpson.net>
+	<20120818070110.GA26476@dlc-dt.home>
+	<CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
+	<20120818110637.GA30911@dlc-dt.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: unlisted-recipients:; (no To-header on input)
+Content-Type: text/plain; charset=ISO-8859-1
+To: "David L. Craig" <dlc@radix.net>, Javier Sanz <jsanza@gmail.com>,
+	Mike Galbraith <efault@gmx.de>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.polytechnique.org ([129.104.30.34]:52485 "EHLO
-	mx1.polytechnique.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932089Ab2HVTza (ORCPT
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:57568 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751666Ab2HWIrh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Aug 2012 15:55:30 -0400
-Received: from [192.168.10.5] (c-69-181-223-70.hsd1.ca.comcast.net [69.181.223.70])
-	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
-	(No client certificate requested)
-	by ssl.polytechnique.org (Postfix) with ESMTPSA id 0480314045563
-	for <linux-rt-users@vger.kernel.org>; Wed, 22 Aug 2012 21:49:47 +0200 (CEST)
-In-Reply-To: <10950377.h1F1h7Gs2a@dabox>
+	Thu, 23 Aug 2012 04:47:37 -0400
+Received: by eeil10 with SMTP id l10so155349eei.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2012 01:47:36 -0700 (PDT)
+In-Reply-To: <20120818110637.GA30911@dlc-dt.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hello,
 
-When applying the rt patches, the OMAP SPI driver referenced below=20
-doesn't work well. It's working well without the rt patches.
+I can understand that there are many problems, nvidia drivers, rt
+kernel, and no collaboration between those involved, thereby
+ultimately harms the opensource community, etc., And in my case, the
+main thing is that I have no knowledge to fix them, or help to be
+corrected, for now all I can ask for help and hope someone help me.
 
-http://git.kernel.org/?p=3Dlinux/kernel/git/tmlind/linux-omap.git;a=3Db=
-lob;f=3Ddrivers/spi/omap2_mcspi.c;h=3D969cdd2fe124602d1e65c4218190ed3e7=
-d78ccf6;hb=3D02f8c6aee8df3cdc935e9bdd4f2d020306035dbe
+For example, how I can see where the problem occurs? because there is
+no trace in the files of nvidia, the dmesg, nowhere ...
+how can i get a document to help people to find theses problems? which
+files affected, boots modes, etc ...  show to people that there are a
+way to damm nvidia drivers ...
 
-More precisely, I'm getting a lot of "TXS timed out" and "RXS timed out=
-"=20
-on line 485/495.
+You say that there is a message,
+[6.993495] Disabling lock debugging due to kernel taint
 
-Q1. Has anyone made work OMAP SPI driver with rt patches?
+how do you get it ? have you sent this information any nvidia  forums?
+no answer?  how can we fix it ?
 
-Q2. How can I debug such problem? I have converted all the spin_lock_ir=
-q=20
-to raw_spin_lock_* without being sure if it's a good idea. But in any=20
-case, the result is the same.
+Yesterday, testing with kernel 3.4.9-rt17 with nvidia 304.37 drivers
+... nvidia gt 240 ...  all blocked .. i am at same point ...
 
-Q3. More generically, while considering a new driver, what needs to be=20
-watched and patched from the rt point of view to play nicely with the=20
-real-time architecture? All the mutex? Anything in the worker function?=
-=20
-I know that I won't become a RT expert overnight, but I'm trying to=20
-understand.
+So, what is the next step? mails? forums?
 
-Many thanks in advance for any help or pointer,
+What do you suggest?
 
-Gr=C3=A9goire
+TX
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+2012/8/18 David L. Craig <dlc.usa@gmail.com>:
+> On 12Aug18:1152+0200, Javier Sanz wrote:
+>
+>> Yes, i got the same problem, black screen, no mouse, no keyboard ...
+>> i didnt  change any config file from X or nvidia ... only rt patch
+>> applied  ...  :(
+>> I'll try with nvidia 304.37 ... no patch required ? ... i'll test ...
+>>
+>> thank you
+>
+> Just to be sure you didn't misunderstand the situation,
+> I do not have any rt kernel working with nvidia
+> except the Linux Mint Debian XFCE 13 distribution.
+> Debian considers this an important bug but nVidia's
+> assessment is unknown to date.
+>
+> Perhaps another rt-kernel lister can offer a quality
+> suggestion about a likely fruitful approach to finding
+> people able and willing to dig into what the kern.log
+> shows is going on and direct further resolution
+> activities.  Such people are probably rt-kernel and/or
+> nVidia developers.  I could probably do it myself after
+> three months of nothing but working on it (including
+> in my sleep ;-) ).  I'd hazard a guess the following
+> has a lot to do with the problem:
+>
+> [    6.993495] Disabling lock debugging due to kernel taint
+>
+> I don't know what the long-term outlook for nVidia market
+> share in the FLOSS area is.  I saw hardware acceleration
+> is apparently required for GNOME Unity.  That's good for
+> the hardware vendors, I suppose, but problematic for folks
+> who take the L in FLOSS very seriously.  I think we all
+> wish the vendors would choose to make these problems go
+> away by distributing their source.  As RMS says, they
+> won't if they don't have to, so we shouldn't be pragmatic,
+> just say no thank you.  Can I live without FlightGear?
+> Why should I have to, nVidia (BTW, I was given your
+> hardware--I wouldn't buy it)?  If the gamers really are
+> becoming Windows 8 refugees, I guess there's hope for the
+> future.  But if the governments start locking up systems
+> programming, doling out practioner licenses, and making
+> libre software illegal, then not.
+>
+> But to hopefully get back on topic, I have the impression
+> I NEED the rt kernel because FG frame updates get
+> behind without it.  I've heard JACK audio works well
+> enough without rt these days (but I don't believe it
+> yet--soon enough I will be able to prove it to myself,
+> unless I get a job).
+> --
+> May the LORD God bless you exceedingly abundantly!
+>
+> Dave_Craig______________________________________________
+> "So the universe is not quite as you thought it was.
+>  You'd better rearrange your beliefs, then.
+>  Because you certainly can't rearrange the universe."
+> __--from_Nightfall_by_Asimov/Silverberg_________________
