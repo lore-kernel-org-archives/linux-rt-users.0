@@ -1,137 +1,93 @@
-From: Javier Sanz <jsanza@gmail.com>
+From: "David L. Craig" <dlc.usa@gmail.com>
 Subject: Re: linux rt 3.4.8-rt16 and nv 302.17, and system freezes, does
  nvidia strike again?
-Date: Thu, 23 Aug 2012 11:38:50 +0200
-Message-ID: <CAOLSsAz83vSDHGV+L++kCER7uLts8jwZeW6FDa02dtPCz-88Rg@mail.gmail.com>
+Date: Thu, 23 Aug 2012 18:50:44 -0400
+Message-ID: <20120823225044.GA14991@dlc-dt.home>
 References: <CAOLSsAw3QG40xSokZ8spMa1_J81n2L9fb2g68jEo-r0iCMP8gA@mail.gmail.com>
-	<1345264436.8439.15.camel@marge.simpson.net>
-	<20120818070110.GA26476@dlc-dt.home>
-	<CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
-	<20120818110637.GA30911@dlc-dt.home>
-	<CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
-	<E6340573-E735-4322-9D05-1F5CC33E039A@thebigcorporation.com>
+ <1345264436.8439.15.camel@marge.simpson.net>
+ <20120818070110.GA26476@dlc-dt.home>
+ <CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
+ <20120818110637.GA30911@dlc-dt.home>
+ <CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
+Reply-To: "David L. Craig" <dlc@radix.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: "David L. Craig" <dlc@radix.net>, MikeGalbraith <efault@gmx.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: "David L. Craig" <dlc@radix.net>, Mike Galbraith <efault@gmx.de>,
 	RT <linux-rt-users@vger.kernel.org>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+To: Javier Sanz <jsanza@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:62881 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932365Ab2HWJiw (ORCPT
+Received: from mail-qc0-f180.google.com ([209.85.216.180]:41357 "EHLO
+	mail-qc0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751905Ab2HWWuw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Aug 2012 05:38:52 -0400
-Received: by eeil10 with SMTP id l10so175967eei.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2012 02:38:50 -0700 (PDT)
-In-Reply-To: <E6340573-E735-4322-9D05-1F5CC33E039A@thebigcorporation.com>
+	Thu, 23 Aug 2012 18:50:52 -0400
+Received: by qcmv28 with SMTP id v28so835992qcm.11
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Aug 2012 15:50:51 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Yes, it is a "free" market, but there is "no free money" to make
-change as needed...
+On 12Aug23:1047+0200, Javier Sanz wrote:
+> 
+> You say that there is a message,
+> [6.993495] Disabling lock debugging due to kernel taint
+> 
+> how do you get it ?
 
+This and other pertinent messages are logged (under
+Debian) in /var/log/kern.log and are crucial for
+understanding what is going on.  Compare yours to the
+one I attached to the Debian bug report.
 
-2012/8/23 Sven-Thorsten Dietrich <sven@thebigcorporation.com>:
-> Can you use a product other than NVidia?
->
-> It's a free market:
->
-> Use what works, reject what doesn't.
->
-> Sven-Thorsten Dietrich
-> 415 4804180
->
-> On Aug 23, 2012, at 1:47, Javier Sanz <jsanza@gmail.com> wrote:
->
->> Hello,
->>
->> I can understand that there are many problems, nvidia drivers, rt
->> kernel, and no collaboration between those involved, thereby
->> ultimately harms the opensource community, etc., And in my case, the
->> main thing is that I have no knowledge to fix them, or help to be
->> corrected, for now all I can ask for help and hope someone help me.
->>
->> For example, how I can see where the problem occurs? because there is
->> no trace in the files of nvidia, the dmesg, nowhere ...
->> how can i get a document to help people to find theses problems? which
->> files affected, boots modes, etc ...  show to people that there are a
->> way to damm nvidia drivers ...
->>
->> You say that there is a message,
->> [6.993495] Disabling lock debugging due to kernel taint
->>
->> how do you get it ? have you sent this information any nvidia  forums?
->> no answer?  how can we fix it ?
->>
->> Yesterday, testing with kernel 3.4.9-rt17 with nvidia 304.37 drivers
->> ... nvidia gt 240 ...  all blocked .. i am at same point ...
->>
->> So, what is the next step? mails? forums?
->>
->> What do you suggest?
->>
->> TX
->>
->>
->> 2012/8/18 David L. Craig <dlc.usa@gmail.com>:
->>> On 12Aug18:1152+0200, Javier Sanz wrote:
->>>
->>>> Yes, i got the same problem, black screen, no mouse, no keyboard ...
->>>> i didnt  change any config file from X or nvidia ... only rt patch
->>>> applied  ...  :(
->>>> I'll try with nvidia 304.37 ... no patch required ? ... i'll test ...
->>>>
->>>> thank you
->>>
->>> Just to be sure you didn't misunderstand the situation,
->>> I do not have any rt kernel working with nvidia
->>> except the Linux Mint Debian XFCE 13 distribution.
->>> Debian considers this an important bug but nVidia's
->>> assessment is unknown to date.
->>>
->>> Perhaps another rt-kernel lister can offer a quality
->>> suggestion about a likely fruitful approach to finding
->>> people able and willing to dig into what the kern.log
->>> shows is going on and direct further resolution
->>> activities.  Such people are probably rt-kernel and/or
->>> nVidia developers.  I could probably do it myself after
->>> three months of nothing but working on it (including
->>> in my sleep ;-) ).  I'd hazard a guess the following
->>> has a lot to do with the problem:
->>>
->>> [    6.993495] Disabling lock debugging due to kernel taint
->>>
->>> I don't know what the long-term outlook for nVidia market
->>> share in the FLOSS area is.  I saw hardware acceleration
->>> is apparently required for GNOME Unity.  That's good for
->>> the hardware vendors, I suppose, but problematic for folks
->>> who take the L in FLOSS very seriously.  I think we all
->>> wish the vendors would choose to make these problems go
->>> away by distributing their source.  As RMS says, they
->>> won't if they don't have to, so we shouldn't be pragmatic,
->>> just say no thank you.  Can I live without FlightGear?
->>> Why should I have to, nVidia (BTW, I was given your
->>> hardware--I wouldn't buy it)?  If the gamers really are
->>> becoming Windows 8 refugees, I guess there's hope for the
->>> future.  But if the governments start locking up systems
->>> programming, doling out practioner licenses, and making
->>> libre software illegal, then not.
->>>
->>> But to hopefully get back on topic, I have the impression
->>> I NEED the rt kernel because FG frame updates get
->>> behind without it.  I've heard JACK audio works well
->>> enough without rt these days (but I don't believe it
->>> yet--soon enough I will be able to prove it to myself,
->>> unless I get a job).
->>> --
->>> May the LORD God bless you exceedingly abundantly!
->>>
->>> Dave_Craig______________________________________________
->>> "So the universe is not quite as you thought it was.
->>> You'd better rearrange your beliefs, then.
->>> Because you certainly can't rearrange the universe."
->>> __--from_Nightfall_by_Asimov/Silverberg_________________
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> have you sent this information any nvidia  forums?
+> no answer?  how can we fix it ?
+> 
+> Yesterday, testing with kernel 3.4.9-rt17 with nvidia
+> 304.37 drivers ... nvidia gt 240 ...  all blocked ..
+> i am at same point ...
+> 
+> So, what is the next step? mails? forums?
+> 
+> What do you suggest?
+
+The nvidia driver, not being libre source, "taints"
+the kernel environment, and policy mandates disabling
+spin lock debugging logic as a consequence.  Some
+interaction between nvidia and the rt kernel is the
+most likely cause of the blocking encountered since
+it doesn't manifest with comparable non-rt kernels.
+Also, the problem has been introduced since the code
+levels in the Linux Mint environment I documented in
+the Debian bug report.  This is an area programmed
+and debugged by well-studied kernel developers.
+Mere mortals are not equipped to tackle such matters.
+
+I have already done what I suggested in my previous
+messages.  If an rt and/or nvidia developer does
+not take an interest in this behaviour, it must be
+hoped the misbehavior induces other problems they are
+motivated to investigate.  I have asked for suggestions
+on this list and in the Debian bug report about
+next steps but thus far have received no responses.
+While I do think I could learn enough to expertly
+dig into this in a couple man-months, I do not think
+I will be compelled to actually make it a priority
+unless my circumstances significantly change; e.g.,
+somebody offers me some financial incentive to do so.
+
+I'll ask this list again: should this become an rt
+kernel or nvidia bug report somewhere or should I
+just let it percolate up from Debian?
+
+In the meantime I don't use nvidia with the rt kernel
+except with my Linux Mint partition, and that only to
+run FlightGear (not very often anymore).
+-- 
+May the LORD God bless you exceedingly abundantly!
+
+Dave_Craig______________________________________________
+"So the universe is not quite as you thought it was.
+ You'd better rearrange your beliefs, then.
+ Because you certainly can't rearrange the universe."
+__--from_Nightfall_by_Asimov/Silverberg_________________
