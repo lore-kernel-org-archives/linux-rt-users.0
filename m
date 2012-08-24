@@ -1,41 +1,64 @@
-From: Mike Galbraith <efault@gmx.de>
-Subject: Re: linux rt 3.4.8-rt16 and nv 302.17, and system freezes, does
- nvidia strike again?
-Date: Fri, 24 Aug 2012 08:26:33 +0200
-Message-ID: <1345789593.4331.42.camel@marge.simpson.net>
-References: <CAOLSsAw3QG40xSokZ8spMa1_J81n2L9fb2g68jEo-r0iCMP8gA@mail.gmail.com>
-	 <1345264436.8439.15.camel@marge.simpson.net>
-	 <20120818070110.GA26476@dlc-dt.home>
-	 <CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
-	 <20120818110637.GA30911@dlc-dt.home>
-	 <CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
-	 <20120823225044.GA14991@dlc-dt.home>
+From: "Tim Sander" <tim.sander@hbm.com>
+Subject: Re: [ANNOUNCE] 3.4.9-rt17
+Date: Fri, 24 Aug 2012 10:32:14 +0200
+Message-ID: <1494830.WYyVmtosNh@dabox>
+References: <1345144963.3708.1.camel@gandalf.local.home> <10950377.h1F1h7Gs2a@dabox> <1843545.6vtXSYEOLB@dabox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Javier Sanz <jsanza@gmail.com>, RT <linux-rt-users@vger.kernel.org>
-To: "David L. Craig" <dlc@radix.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout-de.gmx.net ([213.165.64.22]:36491 "HELO
-	mailout-de.gmx.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1751647Ab2HXG0h (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2012 02:26:37 -0400
-In-Reply-To: <20120823225044.GA14991@dlc-dt.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "Steven Rostedt" <rostedt@goodmis.org>,
+	"LKML" <linux-kernel@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
+To: "RT" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Class: urn:content-classes:message
+In-Reply-To: <1843545.6vtXSYEOLB@dabox>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2012-08-23 at 18:50 -0400, David L. Craig wrote:
+Hi=20
 
-> I have asked for suggestions
-> on this list and in the Debian bug report about
-> next steps but thus far have received no responses.
+After fixing the realtime prios which got shuffled due to other irq thr=
+ead names
+I just tested the realtime latency for interrupts on the i.mx35. With o=
+ur own=20
+systemtimer which does not get into the way of  the measurement interru=
+pt this=20
+kernel has 30=B5s worst time (caveat: short measurement period) interru=
+pt=20
+latency and usermode can keep up with a 2400kHz interrupt rate. While t=
+he=20
+usermode performance seems to be largely unchanged (but i haven't teste=
+d very=20
+thoroughly) the interrupt latency went down about 10=B5s coming from th=
+e 3.0-rt=20
+series. Its really nice to see that kind of improvement.=20
 
-Once you report a black box (proprietary) driver problem to black box
-manufacturer, your next and only step is to wait for same to produce a
-new black box.  Nobody else can fix the problem, even if the source of
-that problem lies in the well illuminated kernel.  It's dark inside the
-black box, and only it's manufacturer can flip the light switch.
+Thanks
+Tim
 
--Mike
+Ignore the legalese please:
 
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, =
+Germany | www.hbm.com=20
+
+Registered as GmbH (German limited liability corporation) in the commer=
+cial register at the local court of Darmstadt, HRB 1147 =20
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of =
+the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregist=
+er des Amtsgerichts Darmstadt unter HRB 1147=20
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhor=
+st | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely fo=
+r the addressee. If you are not the intended recipient, please let me k=
+now and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und ledigli=
+ch f=FCr den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Emp=
+faenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail=
+=2E
