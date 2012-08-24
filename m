@@ -1,73 +1,82 @@
-From: "David L. Craig" <dlc.usa@gmail.com>
-Subject: Re: linux rt 3.4.8-rt16 and nv 302.17, and system freezes, does
- nvidia strike again?
-Date: Fri, 24 Aug 2012 08:01:27 -0400
-Message-ID: <20120824120127.GB11693@dlc-dt.home>
-References: <CAOLSsAw3QG40xSokZ8spMa1_J81n2L9fb2g68jEo-r0iCMP8gA@mail.gmail.com>
- <1345264436.8439.15.camel@marge.simpson.net>
- <20120818070110.GA26476@dlc-dt.home>
- <CAOLSsAwG-KNdOwWxGSQmRA8mrA+mTvCgDLS4oneYOsguk8mzDQ@mail.gmail.com>
- <20120818110637.GA30911@dlc-dt.home>
- <CAOLSsAx3z9CY1Y8H6TqfFMJ49OS0E2XrE6LXKp5MZn-JF-86uw@mail.gmail.com>
- <20120823225044.GA14991@dlc-dt.home>
- <1345789593.4331.42.camel@marge.simpson.net>
- <20120824114803.GA11693@dlc-dt.home>
-Reply-To: "David L. Craig" <dlc@radix.net>
+From: =?UTF-8?B?UmFsZiBSw7ZzY2g=?= <rtlinux@cantastic.org>
+Subject: Memory leak in 3.4.x-rt ?
+Date: Fri, 24 Aug 2012 14:38:11 +0200
+Message-ID: <503775B3.4080504@cantastic.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: Mike Galbraith <efault@gmx.de>, "David L. Craig" <dlc@radix.net>,
-	Javier Sanz <jsanza@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f174.google.com ([209.85.216.174]:56962 "EHLO
-	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754087Ab2HXMBf (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2012 08:01:35 -0400
-Received: by qcro28 with SMTP id o28so1139890qcr.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Aug 2012 05:01:34 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20120824114803.GA11693@dlc-dt.home>
+Received: from rs1.rw-gmbh.net ([213.239.201.58]:50230 "EHLO rs1.rw-gmbh.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757771Ab2HXNPb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Aug 2012 09:15:31 -0400
+Received: from p50992dee.dip0.t-ipconnect.de ([80.153.45.238] helo=[192.168.178.112])
+	by rs1.rw-gmbh.net with esmtpsa (TLS1.0:DHE_RSA_CAMELLIA_256_CBC_SHA1:256)
+	(Exim 4.80)
+	(envelope-from <rtlinux@cantastic.org>)
+	id 1T4t9k-0005S5-FL
+	for linux-rt-users@vger.kernel.org; Fri, 24 Aug 2012 14:38:32 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12Aug24:0748-0400, David L. Craig wrote:
+Hi,
 
-> On 12Aug24:0826+0200, Mike Galbraith wrote:
-> 
-> > On Thu, 2012-08-23 at 18:50 -0400, David L. Craig wrote:
-> > 
-> > > I have asked for suggestions
-> > > on this list and in the Debian bug report about
-> > > next steps but thus far have received no responses.
-> > 
-> > Once you report a black box (proprietary) driver problem to black box
-> > manufacturer, your next and only step is to wait for same to produce a
-> > new black box.  Nobody else can fix the problem, even if the source of
-> > that problem lies in the well illuminated kernel.  It's dark inside the
-> > black box, and only it's manufacturer can flip the light switch.
-> 
-> Unless the black box is fine and it's the well-illuminated kernel
-> that needs to be patched, n'est pas?  And, yes, I'm aware of how
-> likely that is to be true. :-)
+we work on our TX4938 (Toshiba Mips, little endian mode) based embedded 
+system (motion control)
+running successfully a 3.2 RT patched kernel for month now.
 
-I'm too tired after a long night attending to many things
-other than computing problems, so I should have been more
-careful in answering.  My point was nvidia probably cannot
-diagnose and fix problems outside their proprietary code
-completely without any external help, nor can outside
-expertise directly come to bear on problems inside their
-proprietary code.  If a fix to the kernel is involved,
-non-nvidia people will doubtless be involved.
+I just give a try to a 3.4 RT patched kernel and detected a memory 
+problem as you can see from the logs below:
 
-BTW, the citation is not mine, you missed one level of
-attribution in your editing.  Perhaps you also were
-having a long night (but mine's LONGER! ;-) ). :-)
--- 
-May the LORD God bless you exceedingly abundantly!
+3.2 with RT FULL PREEMPT is o.k
+3.4 without RT FULL PREEMPT is .ok.
+3.4 with RT FULL PREEMPT is not o.k.
 
-Dave_Craig______________________________________________
-"So the universe is not quite as you thought it was.
- You'd better rearrange your beliefs, then.
- Because you certainly can't rearrange the universe."
-__--from_Nightfall_by_Asimov/Silverberg_________________
+Can anyone give me hint in which direction I could go to detect the 
+problem or has anyone else the same problem?
+
+Thanks and regards
+Ralf
+
+
+Linux MCU 3.2.27-rt40-00027-g8fd8396 #36 PREEMPT RT Mon Aug 20 16:21:04 
+CEST 2012 mips GNU/Linux
+[root@MCU:/opt]# watch -n 1 cat /proc/meminfo  | grep MemFree
+MemFree:          216992 kB
+MemFree:          216992 kB
+MemFree:          216944 kB
+MemFree:          216992 kB
+MemFree:          216992 kB
+MemFree:          216992 kB
+MemFree:          216992 kB
+
+uname -a
+Linux MCU 3.4.9-rt17-11244-gb12622a #23 PREEMPT RT Fri Aug 24 12:15:49 
+CEST 2012 mips GNU/Linux
+[root@MCU:/opt]# watch -n 1 cat /proc/meminfo  | grep MemFree
+MemFree:          204304 kB
+MemFree:          204208 kB
+MemFree:          204112 kB
+MemFree:          204064 kB
+MemFree:          203968 kB
+MemFree:          203920 kB
+MemFree:          203824 kB
+MemFree:          203776 kB
+
+uname -a
+Linux MCU 3.4.9-rt17-11244-gb12622a #24 PREEMPT Fri Aug 24 14:15:04 CEST 
+2012 mips GNU/Linux
+[root@MCU:/opt]# watch -n 1 cat /proc/meminfo  | grep MemFree
+MemFree:          222240 kB
+MemFree:          222192 kB
+MemFree:          222192 kB
+MemFree:          222192 kB
+MemFree:          222144 kB
+MemFree:          222144 kB
+MemFree:          222192 kB
+MemFree:          222144 kB
+MemFree:          222192 kB
+MemFree:          222144 kB
+
+
