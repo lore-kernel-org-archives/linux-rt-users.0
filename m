@@ -1,32 +1,45 @@
-From: Dong Liu <dliu.cn@gmail.com>
-Subject: Question about making linux KVM real-time
-Date: Fri, 24 Aug 2012 15:52:02 -0400
-Message-ID: <5037DB62.3050808@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.27-rt40
+Date: Fri, 24 Aug 2012 22:37:34 -0400
+Message-ID: <1345862254.19067.0.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:39648 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760132Ab2HXTwH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2012 15:52:07 -0400
-Received: by eekc1 with SMTP id c1so346185eek.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Aug 2012 12:52:06 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-I read Jan Kiszka's Towards Linux as a Real-Time Hypervisor at lwn 
-http://lwn.net/images/conf/rtlws11/papers/proc/p18.pdf
+Dear RT Folks,
 
-In that article Jan Kiszka mentioned they implemented paravirtualized 
-scheduling with good results. He also mentioned they're going to release 
-the source code. Have anyone known if the source code is released? I 
-tried to email Jan but did not get any reply :(
+I'm pleased to announce the 3.2.27-rt40 stable release.
 
-Thanks,
 
-Dong
+This release is just an update to the new stable 3.2.27 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 31f85ffc3a341b9377ac66702947bbc0e5ca008d
+
+
+Or to build 3.2.27-rt40 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.27-rt40.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
