@@ -1,34 +1,28 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2] Linux 3.0.41-rt62-rc1
-Date: Fri, 24 Aug 2012 23:49:02 -0400
-Message-ID: <20120825035052.108090193@goodmis.org>
+From: Michael Thalmeier <michael.thalmeier@hale.at>
+Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.41-rt62-rc1 stable review
+Date: Mon, 27 Aug 2012 10:15:06 +0200
+Message-ID: <503B2C8A.4020508@hale.at>
 References: <20120825034900.144648579@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:19796 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754124Ab2HYDux (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Aug 2012 23:50:53 -0400
-Content-Disposition: inline; filename=0002-Linux-3.0.41-rt62-rc1.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120825034900.144648579@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
----
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+Hi,
 
-diff --git a/localversion-rt b/localversion-rt
-index 9b7de93..fef6b3c 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt61
-+-rt62-rc1
--- 
-1.7.10.4
+I have tested this patch on our board (custom i.MX31 ARMv6 based) and
+everything seems to be working as expected.
 
+Thanks,
+Michael
 
+--
+Scanned by MailScanner.
