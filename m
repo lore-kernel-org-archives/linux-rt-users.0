@@ -1,28 +1,45 @@
-From: Michael Thalmeier <michael.thalmeier@hale.at>
-Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.41-rt62-rc1 stable review
-Date: Mon, 27 Aug 2012 10:15:06 +0200
-Message-ID: <503B2C8A.4020508@hale.at>
-References: <20120825034900.144648579@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.10-rt18
+Date: Mon, 27 Aug 2012 16:22:53 -0400
+Message-ID: <1346098973.19381.14.camel@pippen.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120825034900.144648579@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
 
-I have tested this patch on our board (custom i.MX31 ARMv6 based) and
-everything seems to be working as expected.
+Dear RT Folks,
 
-Thanks,
-Michael
+I'm pleased to announce the 3.4.10-rt18 stable release.
 
---
-Scanned by MailScanner.
+
+This release is just an update to the new stable 3.4.10 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 42e3cde63a908fcc3a74fc26424e9560fe74a46f
+
+
+Or to build 3.4.10-rt18 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.10.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.10-rt18.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
