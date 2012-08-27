@@ -1,49 +1,62 @@
-From: Sankara Muthukrishnan <sankara.m@gmail.com>
-Subject: [PATCH RFC] irq: Honor /proc/irq core affinity when an IRQ thread is created
-Date: Mon, 27 Aug 2012 17:27:17 -0500
-Message-ID: <CAFQPvXe0siyupbZvnEVFQi-nog4qObGejX9HxgxeVgOphJoyTA@mail.gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.41-rt62-rc1 stable review
+Date: Mon, 27 Aug 2012 15:54:48 -0700
+Message-ID: <503BFAB8.4070708@am.sony.com>
+References: <20120825034900.144648579@goodmis.org>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:45164 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754322Ab2H0W1R (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 27 Aug 2012 18:27:17 -0400
-Received: by pbbrr13 with SMTP id rr13so8202087pbb.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 27 Aug 2012 15:27:17 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, <michael.thalmeier@hale.at>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20120825034900.144648579@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi everyone,
+On 08/24/12 20:49, Steven Rostedt wrote:
+> 
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 3.0.41-rt62-rc1.
+> 
+> Please scream at me if I messed something up. Please test the patches too.
 
-I would like to get some feedback from the RT community before
-submitting to the mainline.
+I should have looked harder when Michael requested my patch be applied to the
+stable series.
 
-Currently, by writing to /proc/irq/../smp_affinity file, core affinity
-of already running IRQ threads can be modified. However, after writing
-to the /proc file, an IRQ thread that gets created later does not
-inherit the affinity specified in the file. This happens because the
-irq action is registered in irq description only after setup_affinity
-function is called. This patch addresses this problem by calling
-setup_affinity function after the irq action is updated in the irq
-description structure. It looks like the existing behavior (without
-this patch) is inconsistent because in the case of multiple action
-handlers for an irq, the IRQ thread associated with the new action
-handler that is being registered does not inherit the core affinity
-from the /proc file, however, the IRQ threads of the existing action
-handlers do inherit the affinity.
+My patch was part of a two patch series, sent 5/16.  The first patch was
+a reversal of preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 87dc0539cebb26bd7122e1f2a608be7325ade437..05c64c5fc2be5c2db34e74e5a5f4d3c6f9c74bca
-100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -1083,9 +1083,6 @@ __setup_irq(unsigned int irq, struct irq_desc
-*desc, struct irqaction *new)
-         if (new->flags & IRQF_NO_SOFTIRQ_CALL)
-             irq_settings_set_no_softirq_call(desc);
+The second patch works fine without the first patch.  But the second patch (the one
+in 3.0.41-rt62-rc1) removes the need for
+preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
 
--        /* Set default affinity mask once everything is setup */
--        setup_affinity(irq, desc, mask);
+It is not a big deal if the reversal patch gets left out of the stable releases,
+but it is cleaner if it is included.
+
+This also applies to 3.2.28-rt42-rc1
+
+< snip >
+
+> Changes from 3.0.41-rt61:
+> 
+> ---
+> 
+> 
+> Frank Rowand (1):
+>       fix printk flush of messages
+> 
+> Steven Rostedt (1):
+>       Linux 3.0.41-rt62-rc1
+> 
+> ----
+>  kernel/printk.c |    2 +-
+>  localversion-rt |    2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
+
+-Frank
