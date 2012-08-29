@@ -1,62 +1,53 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.41-rt62-rc1 stable review
-Date: Mon, 27 Aug 2012 15:54:48 -0700
-Message-ID: <503BFAB8.4070708@am.sony.com>
-References: <20120825034900.144648579@goodmis.org>
-Reply-To: <frank.rowand@am.sony.com>
+From: =?ISO-8859-15?Q?Daniel_Gl=F6ckner?= <dg@emlix.com>
+Subject: Issue with sched-no-work-when-pi-blocked.patch
+Date: Wed, 29 Aug 2012 18:04:58 +0200
+Message-ID: <503E3DAA.10309@emlix.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <michael.thalmeier@hale.at>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120825034900.144648579@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.emlix.com ([193.175.82.238]:48816 "EHLO mx1.emlix.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753895Ab2H2QNZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 29 Aug 2012 12:13:25 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/24/12 20:49, Steven Rostedt wrote:
-> 
-> Dear RT Folks,
-> 
-> This is the RT stable review cycle of patch 3.0.41-rt62-rc1.
-> 
-> Please scream at me if I messed something up. Please test the patches too.
+Hi,
 
-I should have looked harder when Michael requested my patch be applied to the
-stable series.
+on a system running 3.2.23-rt37 the boot time is increased by two
+minutes because of commit 4b03ee27 (sched-no-work-when-pi-blocked.patch=
+)
+when booting with ip=3Ddhcp. This is due to ic_open_devs taking rtnl_mu=
+tex
+before it ups the network interfaces. The ndo_open function then calls
+netif_carrier_off which queues a work that as well takes rtnl_mutex. Th=
+is
+stalls the workqueue (tsk_is_pi_blocked()) and prevents phy_state_machi=
+ne
+and thus netif_carrier_on from being run. ic_open_devs waits for two mi=
+nutes
+for a link before it gives up and releases rtnl_mutex.
 
-My patch was part of a two patch series, sent 5/16.  The first patch was
-a reversal of preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
+So, what is the rationale behind sched-no-work-when-pi-blocked.patch?
 
-The second patch works fine without the first patch.  But the second patch (the one
-in 3.0.41-rt62-rc1) removes the need for
-preempt-rt-allow-immediate-magic-sysrq-output-for-preempt_rt_full.patch
+On the other hand, I think I'll just drop rtnl_mutex in ic_open_devs
+while it is waiting for a link.
 
-It is not a big deal if the reversal patch gets left out of the stable releases,
-but it is cleaner if it is included.
+  Daniel
 
-This also applies to 3.2.28-rt42-rc1
+--=20
+Dipl.-Math. Daniel Gl=F6ckner, emlix GmbH, http://www.emlix.com
+=46on +49 551 30664-0, Fax +49 551 30664-11,
+Bertha-von-Suttner-Stra=DFe 9, 37085 G=F6ttingen, Germany
+Sitz der Gesellschaft: G=F6ttingen, Amtsgericht G=F6ttingen HR B 3160
+Gesch=E4ftsf=FChrer: Dr. Uwe Kracke, Ust-IdNr.: DE 205 198 055
 
-< snip >
-
-> Changes from 3.0.41-rt61:
-> 
-> ---
-> 
-> 
-> Frank Rowand (1):
->       fix printk flush of messages
-> 
-> Steven Rostedt (1):
->       Linux 3.0.41-rt62-rc1
-> 
-> ----
->  kernel/printk.c |    2 +-
->  localversion-rt |    2 +-
->  2 files changed, 2 insertions(+), 2 deletions(-)
-
--Frank
+emlix - your embedded linux partner
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
