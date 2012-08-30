@@ -1,53 +1,57 @@
-From: =?ISO-8859-15?Q?Daniel_Gl=F6ckner?= <dg@emlix.com>
-Subject: Issue with sched-no-work-when-pi-blocked.patch
-Date: Wed, 29 Aug 2012 18:04:58 +0200
-Message-ID: <503E3DAA.10309@emlix.com>
+From: Priyanka Jain <Priyanka.Jain@freescale.com>
+Subject: [PATCH 0/4] Add cyclicload testtool support
+Date: Thu, 30 Aug 2012 15:26:43 +0530
+Message-ID: <1346320607-6691-1-git-send-email-Priyanka.Jain@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain
+Cc: <Poonam.Aggrwal@freescale.com>,
+	Priyanka Jain <Priyanka.Jain@freescale.com>
+To: <jkacur@redhat.com>, <williams@redhat.com>,
+	<frank.rowand@am.sony.com>, <linux-rt-users@vger.kernel.org>,
+	<dvhart@linux.intel.com>, <Rajan.Srivastava@freescale.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.emlix.com ([193.175.82.238]:48816 "EHLO mx1.emlix.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753895Ab2H2QNZ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Aug 2012 12:13:25 -0400
+Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:1444
+	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751307Ab2H3J56 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Aug 2012 05:57:58 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+*** BLURB HERE ***
 
-on a system running 3.2.23-rt37 the boot time is increased by two
-minutes because of commit 4b03ee27 (sched-no-work-when-pi-blocked.patch=
-)
-when booting with ip=3Ddhcp. This is due to ic_open_devs taking rtnl_mu=
-tex
-before it ups the network interfaces. The ndo_open function then calls
-netif_carrier_off which queues a work that as well takes rtnl_mutex. Th=
-is
-stalls the workqueue (tsk_is_pi_blocked()) and prevents phy_state_machi=
-ne
-and thus netif_carrier_on from being run. ic_open_devs waits for two mi=
-nutes
-for a link before it gives up and releases rtnl_mutex.
+Cyclicload test-tool is designed to simulate
+load in form of one or two load threads.
+It uses cyclictest as its base code.
 
-So, what is the rationale behind sched-no-work-when-pi-blocked.patch?
+But as cyclictest and cyclicload are targeted
+for different test cases, cyclicload is coded as separate tool.
+For easy code maintenance, source code of cyclictest is first
+duplicated as cyclicload code and then calibration and load generation
+logic has been added above that.
+Plan is to move common code to library later on.
 
-On the other hand, I think I'll just drop rtnl_mutex in ic_open_devs
-while it is waiting for a link.
+Developed against
+	git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+	commitID: 857cdd5320ce1f293f5dbcbec79cc8fe22b0bebf
 
-  Daniel
+Priyanka Jain (4):
+  Add README for cyclicload test tool
+  Duplicates cyclictest code as cyclicload
+  Add cyclicload calibration & load generation feature
+  Add cyclicload manual page
 
---=20
-Dipl.-Math. Daniel Gl=F6ckner, emlix GmbH, http://www.emlix.com
-=46on +49 551 30664-0, Fax +49 551 30664-11,
-Bertha-von-Suttner-Stra=DFe 9, 37085 G=F6ttingen, Germany
-Sitz der Gesellschaft: G=F6ttingen, Amtsgericht G=F6ttingen HR B 3160
-Gesch=E4ftsf=FChrer: Dr. Uwe Kracke, Ust-IdNr.: DE 205 198 055
+ Makefile                    |    7 +-
+ src/cyclicload/README       |  273 ++++++
+ src/cyclicload/cyclicload.8 |  206 ++++
+ src/cyclicload/cyclicload.c | 2259 +++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 2744 insertions(+), 1 deletions(-)
+ create mode 100644 src/cyclicload/README
+ create mode 100644 src/cyclicload/cyclicload.8
+ create mode 100644 src/cyclicload/cyclicload.c
 
-emlix - your embedded linux partner
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+1.7.4.1
+
+
+
