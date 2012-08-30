@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.28-rt42
-Date: Thu, 30 Aug 2012 13:00:44 -0400
-Message-ID: <1346346044.3198.3.camel@acer.local.home>
+Subject: [ANNOUNCE] 3.0.41-rt62
+Date: Thu, 30 Aug 2012 14:24:57 -0400
+Message-ID: <1346351097.3198.5.camel@acer.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -16,28 +16,28 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.28-rt42 stable release.
+I'm pleased to announce the 3.0.41-rt62 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: 76992f6057bf6cf0005c93228a7e433ac2e780cc
+  Head SHA1: 27770766f5425b466d3a61025350f9829840e5e9
 
 
-Or to build 3.2.28-rt42 directly, the following patches should be applied:
+Or to build 3.0.41-rt62 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.28.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.41.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.28-rt42.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.41-rt62.patch.xz
 
 
-You can also build from 3.2.28-rt41 by applying the incremental patch:
+You can also build from 3.0.41-rt61 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.28-rt41-rt42.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.41-rt61-rt62.patch.xz
 
 
 
@@ -46,7 +46,7 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.2.28-rt41:
+Changes from 3.0.41-rt61:
 
 ---
 
@@ -54,7 +54,7 @@ Frank Rowand (1):
       fix printk flush of messages
 
 Steven Rostedt (1):
-      Linux 3.2.28-rt42
+      Linux 3.0.41-rt62
 
 ----
  kernel/printk.c |    2 +-
@@ -62,11 +62,11 @@ Steven Rostedt (1):
  2 files changed, 2 insertions(+), 2 deletions(-)
 ---------------------------
 diff --git a/kernel/printk.c b/kernel/printk.c
-index 9eabbbb..66e83e5 100644
+index 60f4290..f2c459f 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
-@@ -836,7 +836,7 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
- 	int retval = 0, wake = 0;
+@@ -835,7 +835,7 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ {
  #ifdef CONFIG_PREEMPT_RT_FULL
  	int lock = (!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
 -		!preempt_count()) || sysrq_in_progress;
@@ -75,9 +75,9 @@ index 9eabbbb..66e83e5 100644
  	int lock = 1;
  #endif
 diff --git a/localversion-rt b/localversion-rt
-index 629e0b4..8bdfb9a 100644
+index 9b7de93..40d81d8 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt41
-+-rt42
+--rt61
++-rt62
