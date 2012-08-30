@@ -1,247 +1,83 @@
-From: Priyanka Jain <Priyanka.Jain@freescale.com>
-Subject: [PATCH 4/4] Add cyclicload manual page
-Date: Thu, 30 Aug 2012 15:26:47 +0530
-Message-ID: <1346320607-6691-5-git-send-email-Priyanka.Jain@freescale.com>
-References: <1346320607-6691-1-git-send-email-Priyanka.Jain@freescale.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.28-rt42
+Date: Thu, 30 Aug 2012 13:00:44 -0400
+Message-ID: <1346346044.3198.3.camel@acer.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <Poonam.Aggrwal@freescale.com>,
-	Priyanka Jain <Priyanka.Jain@freescale.com>
-To: <jkacur@redhat.com>, <williams@redhat.com>,
-	<frank.rowand@am.sony.com>, <linux-rt-users@vger.kernel.org>,
-	<dvhart@linux.intel.com>, <Rajan.Srivastava@freescale.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co1ehsobe004.messaging.microsoft.com ([216.32.180.187]:8636
-	"EHLO co1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752378Ab2H3J66 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Aug 2012 05:58:58 -0400
-In-Reply-To: <1346320607-6691-1-git-send-email-Priyanka.Jain@freescale.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
+
+Dear RT Folks,
+
+I'm pleased to announce the 3.2.28-rt42 stable release.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 76992f6057bf6cf0005c93228a7e433ac2e780cc
+
+
+Or to build 3.2.28-rt42 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.28.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.28-rt42.patch.xz
+
+
+You can also build from 3.2.28-rt41 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.28-rt41-rt42.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from 3.2.28-rt41:
+
 ---
- Use cyclictest manual page as base
 
- src/cyclicload/cyclicload.8 |  206 +++++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 206 insertions(+), 0 deletions(-)
- create mode 100644 src/cyclicload/cyclicload.8
+Frank Rowand (1):
+      fix printk flush of messages
 
-diff --git a/src/cyclicload/cyclicload.8 b/src/cyclicload/cyclicload.8
-new file mode 100644
-index 0000000..aada025
---- /dev/null
-+++ b/src/cyclicload/cyclicload.8
-@@ -0,0 +1,206 @@
-+.\"                                      Hey, EMACS: -*- nroff -*-
-+.TH CYCLICLOAD 8 "August 30, 2012"
-+.\" Based on cyclictest.8.
-+.\" Please adjust this date whenever revising the manpage.
-+.\"
-+.\" Some roff macros, for reference:
-+.\" .nh        disable hyphenation
-+.\" .hy        enable hyphenation
-+.\" .ad l      left justify
-+.\" .ad b      justify to both left and right margins
-+.\" .nf        disable filling
-+.\" .fi        enable filling
-+.\" .br        insert line break
-+.\" .sp <n>    insert n+1 empty lines
-+.\" for manpage-specific macros, see man(7)
-+.SH NAME
-+cyclicload \- Load generation test program
-+.SH SYNOPSIS
-+.B cyclicload
-+.RI "[ \-hfmnqrsvMS ] [\-a " proc " ] [\-b " usec " ] [\-c " clock " ] [\-d " dist " ] \
-+[\-h " histogram " ] [\-i " intv " ] [\-l " loop " ] [\-o " red " ] [\-p " prio " ] \
-+[\-t " num " ] [\-D " time "] [\-w] [\-W] [\-y " policy " ] [ \-S | \-U ] \
-+[\-x " load_t1 " ] [\-X " load_t2 "] [\-z " priority_t2 "] [\-Z " nice_t2 " ]"
-+
-+.\" .SH DESCRIPTION
-+.\" This manual page documents briefly the
-+.\" .B cyclictest commands.
-+.\" .PP
-+.\" \fI<whatever>\fP escape sequences to invode bold face and italics, respectively.
-+.\" \fBcyclicload\fP is a program that...
-+.SH OPTIONS
-+These programs follow the usual GNU command line syntax, with long
-+options starting with two dashes ('\-\-').
-+.br
-+A summary of options is included below.
-+.\" For a complete description, see the Info files.
-+.TP
-+.B \-a, \-\-affinity[=PROC]
-+Run all threads on procesor number PROC. If PROC is not specified, run thread #N on processor #N.
-+.TP
-+.B \-b, \-\-breaktrace=USEC
-+Send break trace command when latency > USEC. This is a debugging option to control the latency tracer in the realtime preemption patch.
-+It is useful to track down unexpected large latencies on a system. This option does only work with following kernel config options.
-+
-+    For kernel < 2.6.24:
-+.br
-+    * CONFIG_PREEMPT_RT=y
-+.br
-+    * CONFIG_WAKEUP_TIMING=y
-+.br
-+    * CONFIG_LATENCY_TRACE=y
-+.br
-+    * CONFIG_CRITICAL_PREEMPT_TIMING=y
-+.br
-+    * CONFIG_CRITICAL_IRQSOFF_TIMING=y
-+.sp 1
-+    For kernel >= 2.6.24:
-+.br
-+    * CONFIG_PREEMPT_RT=y
-+.br
-+    * CONFIG_FTRACE
-+.br
-+    * CONFIG_IRQSOFF_TRACER=y
-+.br
-+    * CONFIG_PREEMPT_TRACER=y
-+.br
-+    * CONFIG_SCHED_TRACER=y
-+.br
-+    * CONFIG_WAKEUP_LATENCY_HIST
-+
-+
-+kernel configuration options enabled. The USEC parameter to the \-b option defines a maximum latency value, which is compared against the actual latencies of the test. Once the measured latency is higher than the given maximum, the kernel tracer and cyclictest is stopped. The trace can be read from /proc/latency_trace. Please be aware that the tracer adds significant overhead to the kernel, so the latencies will be much higher than on a kernel with latency tracing disabled.
-+.TP
-+.B \-c, \-\-clock=CLOCK
-+Selects the clock, which is used:
-+
-+    * 0 selects CLOCK_MONOTONIC, which is the monotonic increasing system time (default).
-+    * 1 selects CLOCK_REALTIME, which is the time of day time.
-+
-+CLOCK_REALTIME can be set by settimeofday, while CLOCK_MONOTONIC can not be modified by the user.
-+This option has no influence when the \-s option is given.
-+.TP
-+.B \-C, \-\-context
-+context switch tracing (used with \-b)
-+.TP
-+.B \-d, \-\-distance=DIST
-+Set the distance of thread intervals in microseconds (default is 500us). When cyclictest is called with the \-t option and more than one thread is created, then this distance value is added to the interval of the threads: Interval(thread N) = Interval(thread N\-1) + DIST
-+.TP
-+.B \-E, \-\-event
-+event tracing (used with \-b)
-+.TP
-+.B \-f, \-\-ftrace
-+Enable function tracing using ftrace as tracer. This option is available only with \-b.
-+.TP
-+.B \-h, \-\-histogram=MAXLATENCYINUS
-+Dump latency histogram to stdout. US means the max time to be be tracked in microseconds. When you use \-h option to get histogram data, Cyclictest runs many threads with same priority without priority\-\-.
-+.TP
-+.B \-H, \-\-histofall=MAXLATENCYINUS
-+Same as -h except that an additional histogram column is displayed at the right that contains summary data of all thread histograms. If cyclictest runs a single thread only, the -H option is equivalent to -h.
-+.TP
-+.B \-i, \-\-interval=INTV
-+Set the base interval of the thread(s) in microseconds (default is 1000us). This sets the interval of the first thread. See also \-d.
-+.TP
-+.B \-l, \-\-loops=LOOPS
-+Set the number of loops. The default is 0 (endless). This option is useful for automated tests with a given number of test cycles. Cyclictest is stopped once the number of timer intervals has been reached.
-+.TP
-+.B \-n, \-\-nanosleep
-+Use clock_nanosleep instead of posix interval timers. Setting this option runs the tests with clock_nanosleep instead of posix interval timers.
-+.TP
-+.B \-N, \-\-nsecs
-+Show results in nanoseconds instead of microseconds, which is the default unit.
-+.TP
-+.B \-o, \-\-oscope=RED
-+Oscilloscope mode, reduce verbose output by RED.
-+.TP
-+.B \-O, \-\-traceopt=TRACING_OPTION
-+Used to pass tracing options to ftrace tracers. May be invoked mutiple
-+times for multiple trace options. For example trace options look at /sys/kernel/debug/tracing/trace_options
-+.TP
-+.B \-p, \-\-prio=PRIO
-+Set the priority of the first thread. The given priority is set to the first test thread. Each further thread gets a lower priority:
-+Priority(Thread N) = max(Priority(Thread N\-1) \- 1, 0)
-+.TP
-+.B \-q, \-\-quiet
-+Run the tests quiet and print only a summary on exit. Useful for automated tests, where only the summary output needs to be captured.
-+.TP
-+.B \-r, \-\-relative
-+Use relative timers instead of absolute. The default behaviour of the tests is to use absolute timers. This option is there for completeness and should not be used for reproducible tests.
-+.TP
-+.B \-s, \-\-system
-+Use sys_nanosleep and sys_setitimer instead of posix timers. Note, that \-s can only be used with one thread because itimers are per process and not per thread. \-s in combination with \-n uses the nanosleep syscall and is not restricted to one thread.
-+.TP
-+.B \-T, \-\-tracer=TRACEFUNC
-+set the ftrace tracer function. Used with the \-b option. Must be one
-+of the trace functions available from <debugfs-mountpoint>/kernel/debug/tracing/available_tracers
-+.TP
-+.B \-t, \-\-threads[=NUM]
-+Set the number of test threads (default is 1). Create NUM test threads. If NUM is not specified, NUM is set to
-+the number of available CPUs. See \-d, \-i and \-p for further information.
-+.TP
-+.B \-m, \-\-mlockall
-+Lock current and future memory allocations to prevent being paged out
-+.TP
-+.B \-v, \-\-verbose
-+Output values on stdout for statistics. This option is used to gather statistical information about the latency distribution. The output is sent to stdout. The output format is:
-+
-+n:c:v
-+
-+where n=task number c=count v=latency value in us. Use this option in combination with \-l
-+.TP
-+.B \\-D, \-\-duration=TIME
-+Run the test for the specified time, which defaults to seconds. Append 'm', 'h', or 'd' to specify minutes, hours or days
-+.TP
-+.B \\-w, \-\-wakeup
-+task wakeup tracing (used with \-b)
-+.TP
-+.B \\-W, \-\-wakeuprt
-+rt-task wakeup tracing (used with \-b)
-+.TP
-+.B \\-y, \-\-policy=NAME
-+set the scheduler policy of the measurement threads
-+where NAME is one of: other, normal, batch, idle, fifo, rr
-+.TP
-+.B \\-M, \-\-refresh_on_max
-+delay updating the screen until a new max latency is hit (useful for
-+running cyclictest on low-bandwidth connections)
-+.TP
-+.B \\-S, \-\-smp
-+Set options for standard testing on SMP systems. Equivalent to using
-+the options: "\-t \-a \-n" as well keeping any specified priority
-+equal across all threads
-+.TP
-+.B \\-U, \-\-numa
-+Similar to the above \-\-smp option, this implies the "\-t \-a \-n"
-+options, as well as a constant measurement interval, but also forces
-+memory allocations using the numa(3) policy library. Thread stacks and
-+data structures are allocated from the NUMA node local to the core to
-+which the thread is bound. Requires the underlying kernel to have NUMA
-+support compiled in.
-+.TP
-+.B \-x, \-\-load_t1
-+set the %load for load1 that needs to be simulated at priority 'p'
-+.TP
-+.B \-X, \-\-load_t2
-+set the %load for load2 that needs to be simulated at priority_t2.
-+If priority_t2=0 implying non-rt task then
-+it simulates load2 for nice value nice_t2.
-+.TP
-+.B \-z, \-\-priority_t2
-+set the priority of load2 thread
-+.TP
-+.B \-Z, \-\-nice_t2
-+set the nice value of load2 thread if its priority is zero
-+.\" .SH SEE ALSO
-+.\" .BR bar (1),
-+.\" .BR baz (1).
-+.\" .br
-+.\" The programs are documented fully by
-+.\" .IR "The Rise and Fall of a Fooish Bar" ,
-+.\" available via the Info system.
-+.SH AUTHOR
-+cyclicload was written by Priyanka Jain <Priyanka.Jain@freescale.com>
-+based on cyclictest code by Thomas Gleixner <tglx@linuxtronix.de>.
-+.PP
-+This manual page was written by Priyanka Jain <Priyanka.Jain@freescale.com>
-+based on cyclicload.8 by Alessio Igor Bogani <abogani@texware.it>
--- 
-1.7.4.1
+Steven Rostedt (1):
+      Linux 3.2.28-rt42
 
-
-
+----
+ kernel/printk.c |    2 +-
+ localversion-rt |    2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
+---------------------------
+diff --git a/kernel/printk.c b/kernel/printk.c
+index 9eabbbb..66e83e5 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -836,7 +836,7 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ 	int retval = 0, wake = 0;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	int lock = (!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+-		!preempt_count()) || sysrq_in_progress;
++		(preempt_count() <= 1)) || sysrq_in_progress;
+ #else
+ 	int lock = 1;
+ #endif
+diff --git a/localversion-rt b/localversion-rt
+index 629e0b4..8bdfb9a 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt41
++-rt42
