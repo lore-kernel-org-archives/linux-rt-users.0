@@ -1,46 +1,50 @@
-From: Sankara Muthukrishnan <sankara.m@gmail.com>
-Subject: [PATCH RFC] irq: Set CPU affinity as soon as the irq thread is created
-Date: Wed, 5 Sep 2012 18:07:12 -0500
-Message-ID: <CAFQPvXckDMhH6MCkXC44wF0t13Ov=yQwER8GZgRRA4aq5=_w9w@mail.gmail.com>
+From: Darren Hart <dvhart@linux.intel.com>
+Subject: Pthread Condition Variables and Priority Inversion
+Date: Wed, 05 Sep 2012 16:17:37 -0700
+Message-ID: <5047DD91.3030402@linux.intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: Frank Rowand <frank.rowand@am.sony.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Jan Kiszka <jan.kiszka@siemens.com>
+To: Michael Kerrisk <mtk.manpages@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:57899 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759847Ab2IEXHM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Sep 2012 19:07:12 -0400
-Received: by pbbrr13 with SMTP id rr13so1680360pbb.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 05 Sep 2012 16:07:12 -0700 (PDT)
+Received: from mga09.intel.com ([134.134.136.24]:12777 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755126Ab2IEXSK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 5 Sep 2012 19:18:10 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi there,
+Hi Michael,
 
-As irq_thread_check_affinity is called inside the while loop in the
-IRQ thread, the core affinity is set only when an interrupt happens.
-It does not seem to be a bad idea to set the core affinity soon after
-the thread is created also (as shown in the patch).
-irq_thread_check_affinity calls kmalloc_node that can sleep. In an
-embedded target where IRQ affinities are pre-configured during
-boot-time (and not modified through /proc/irq/../smp_affinity) during
-run-time, the extra latency due to irq_thread_check_affinity can be
-avoided during processing of the first interrupt with this patch.
-Thoughts?
+I've tried many times over the last several years to get proper priority
+inheritance support for pthread condition variables added to glibc.
+Unfortunately, I haven't convinced the powers that be to incorporate the
+proposed fixes. Since the failure scenario involves an opaque type and
+is rather non-intuitive, it was suggested (thanks Frank) that I attempt
+to at least document the behavior. The goal is to discourage the use of
+condition variables in real-time applications as they have the potential
+for catastrophic system failure which could lead to loss of life - at
+least until such time as support is incorporated into the C library.
 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 87dc053..bf2cdc2 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -791,6 +791,7 @@ static int irq_thread(void *data)
+I understand PTHREAD_COND_TIMEDWAIT(3P) is not Linux specific. I wonder
+if you could recommend an appropriate document for the following blurb:
 
-        sched_setscheduler(current, SCHED_FIFO, &param);
-        current->irqaction = action;
-+       irq_thread_check_affinity(desc, action);
+While the Linux kernel, since 2.6.31, supports requeueing of
+priority-inheritance (PI) aware mutexes via the FUTEX_WAIT_REQUEUE_PI
+and FUTEX_CMP_REQUEUE_PI futex operations, the glibc implementation does
+not yet take full advantage of this. Specifically, the condvar internal
+data lock remains a non-PI aware mutex, regardless of the type of the
+pthread_mutex associated with the condvar. This can lead to an unbounded
+priority inversion on the internal data lock even when associating a PI
+aware pthread_mutex with a condvar during a pthread_cond*_wait
+operation. For this reason, it is not recommended to rely on priority
+inheritance when using pthread condition variables.
 
-        while (!irq_wait_for_interrupt(action)) {
-
-- Sankara
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Technical Lead - Linux Kernel
