@@ -1,41 +1,60 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: Pthread Condition Variables and Priority Inversion
-Date: Wed, 5 Sep 2012 16:59:05 -0700
-Message-ID: <5047E749.3040507@am.sony.com>
-References: <5047DD91.3030402@linux.intel.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RFC] irq: Set CPU affinity as soon as the irq thread is
+ created
+Date: Wed, 05 Sep 2012 20:09:15 -0400
+Message-ID: <1346890155.27919.80.camel@gandalf.local.home>
+References: <CAFQPvXckDMhH6MCkXC44wF0t13Ov=yQwER8GZgRRA4aq5=_w9w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Darren Hart <dvhart@linux.intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe001.messaging.microsoft.com ([65.55.88.11]:48889 "EHLO
-	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755182Ab2IEX7F (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Sep 2012 19:59:05 -0400
-In-Reply-To: <5047DD91.3030402@linux.intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sankara Muthukrishnan <sankara.m@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAFQPvXckDMhH6MCkXC44wF0t13Ov=yQwER8GZgRRA4aq5=_w9w@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 09/05/12 16:17, Darren Hart wrote:
-> Hi Michael,
+On Wed, 2012-09-05 at 18:07 -0500, Sankara Muthukrishnan wrote:
+> Hi there,
+
+This also affects mainline. Please Cc LKML (as I did).
+
 > 
-> I've tried many times over the last several years to get proper priority
-> inheritance support for pthread condition variables added to glibc.
-> Unfortunately, I haven't convinced the powers that be to incorporate the
-> proposed fixes. Since the failure scenario involves an opaque type and
-> is rather non-intuitive, it was suggested (thanks Frank) that I attempt
-> to at least document the behavior.
+> As irq_thread_check_affinity is called inside the while loop in the
+> IRQ thread, the core affinity is set only when an interrupt happens.
+> It does not seem to be a bad idea to set the core affinity soon after
+> the thread is created also (as shown in the patch).
+> irq_thread_check_affinity calls kmalloc_node that can sleep.
 
-< snip >
+Note, it only calls kmalloc if you enable CONFIG_CPUMASK_OFFSTACK, which
+you probably don't on an embedded device. But you might. Your embedded
+device may have more than 32 or 64 CPUs.
 
-That reminds me...  someone at Plumbers (I'm pretty sure it was Thomas)
-told me that the glibc maintainers have become much more responsive,
-so maybe I should encourage you to try once again, when you find some
-spare time :-), submitting to glibc.
+I'd be more worried about calling set_cpus_allowed_ptr() than kmalloc().
 
--Frank
+>  In an
+> embedded target where IRQ affinities are pre-configured during
+> boot-time (and not modified through /proc/irq/../smp_affinity) during
+> run-time, the extra latency due to irq_thread_check_affinity can be
+> avoided during processing of the first interrupt with this patch.
+> Thoughts?
+> 
+> diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+> index 87dc053..bf2cdc2 100644
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -791,6 +791,7 @@ static int irq_thread(void *data)
+> 
+>         sched_setscheduler(current, SCHED_FIFO, &param);
+>         current->irqaction = action;
+> +       irq_thread_check_affinity(desc, action);
+> 
+>         while (!irq_wait_for_interrupt(action)) {
 
+I see no problem with this patch.
+
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+
+-- Steve
