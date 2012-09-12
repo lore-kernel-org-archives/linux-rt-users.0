@@ -1,19 +1,45 @@
 From: Darren Hart <dvhart@linux.intel.com>
-Subject: [PATCH 0/2] rt-tests: Makefile fixes for PYLIB and hwlatdetect
-Date: Tue, 11 Sep 2012 17:41:51 -0700
-Message-ID: <1347410513-23165-1-git-send-email-dvhart@linux.intel.com>
+Subject: [PATCH 1/2] rt-tests: Allow for user-specified PYLIB
+Date: Tue, 11 Sep 2012 17:41:52 -0700
+Message-ID: <66765522b634952346f1a3ab7d00c7222a1f9361.1347410497.git.dvhart@linux.intel.com>
+References: <1347410513-23165-1-git-send-email-dvhart@linux.intel.com>
 Cc: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
+	Clark Williams <williams@redhat.com>,
+	Darren Hart <dvhart@linux.intel.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga03.intel.com ([143.182.124.21]:51659 "EHLO mga03.intel.com"
+Received: from mga11.intel.com ([192.55.52.93]:4450 "EHLO mga11.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751154Ab2ILAmd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	id S1751342Ab2ILAmd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Tue, 11 Sep 2012 20:42:33 -0400
+In-Reply-To: <1347410513-23165-1-git-send-email-dvhart@linux.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-For cross-build-systems, it is necessary to specify the PYLIB path. It is also
-useful to treat hwlatdetect separately from the rest of the tests as it pulls in
-a number of python dependencies.
+Allow users (build systems) to specify PYLIB. This allows for a
+cross-build-system to specify the target PYLIB rather than the host
+PYLIB.
+
+Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+CC: Clark Williams <williams@redhat.com>
+CC: John Kacur <jkacur@redhat.com>
+---
+ Makefile | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile b/Makefile
+index 3a82407..61e2f9f 100644
+--- a/Makefile
++++ b/Makefile
+@@ -23,7 +23,7 @@ endif
+ CFLAGS ?= -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
+ LDFLAGS ?=
+ 
+-PYLIB  := $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
++PYLIB  ?= $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
+ 
+ ifndef DEBUG
+ 	CFLAGS	+= -O2
+-- 
+1.7.11.4
 
