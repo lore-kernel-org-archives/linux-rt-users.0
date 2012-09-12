@@ -1,83 +1,121 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: Improving ARM7 platform performance with CONFIG_PREEMPT_RT
-Date: Wed, 12 Sep 2012 13:39:00 +0200
-Message-ID: <50507454.2030607@osadl.org>
-References: <CA+69FtBGGHQykr8DiOizeR0pWA+5ifeN1LtzZ2n2LmeA6+TWRg@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] hwlat_detector: Check the outer side of the loop
+Date: Wed, 12 Sep 2012 10:34:11 -0400
+Message-ID: <1347460451.10751.57.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Hartmut Behrens <hartmut.behrens@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:46279 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751112Ab2ILLlJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 12 Sep 2012 07:41:09 -0400
-In-Reply-To: <CA+69FtBGGHQykr8DiOizeR0pWA+5ifeN1LtzZ2n2LmeA6+TWRg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>, Jon Masters <jcm@redhat.com>,
+	Darren Hart <dvhart@linux.intel.com>,
+	Clark Williams <clark@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hartmut,
+The hwlat_detector performs the following test:
 
-> I have patched a 3.2 kernel for a OMAP compatible processor (ARM
-> Cortex A8) to be used on an Gumstix Overo with the CONFIG_PREEMPT_RT
-> patch.
->
-> I have noticed that the latency of the patched kernel on this platform
-> is<300usec (using cyclictest), similar to what is reported for the
-> ARM9 platforms at
-> https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch
->
-> Is this the best performance that can be expected from ARM7/9 platforms?
-No, some of them have latencies below 100 us.
+	t1 = ktime_get();
+	t2 = ktime_get();
 
-For a comparison of the various ARM platforms, revisions and versions, 
-you may refer to the OSADL QA Farm.
+	[ do the checks of t2 - t1 ]
 
-Relatively long latencies (this is a know CPU cache issue):
-- Rack #2, Slot #1
-   ARM926EJ-S rev 4 (v5l), Phytec/phyCARD-i.MX27
-   Latency plot -> https://www.osadl.org/?id=990
-- Rack #2, Slot #2
-   ARMv7 rev 3 (v7l), Phytec/phyCARD-L OMAP3525
-   Latency plot -> https://www.osadl.org/?id=988
+It can detect things like SMIs if it occurs between the t1 and t2
+timestamps, as there will be a large difference between the two.
 
-Short latencies:
-- Rack #0, Slot #5
-   ARMv7 rev 5 (v7l), Freescale/MX53 Quickstart Board (LOCO)
-   Latency plot -> https://www.osadl.org/?id=1351
-- Rack #1, Slot #7
-   ARMv6-compatible rev 3 (v6l), (undisclosed)
-   Latency plot -> https://www.osadl.org/?id=1335
-- Rack #2, Slot #3
-   ARMv7 rev 7 (v7l), Texas Instruments/OMAP3517/AM3517 EVM
-   Latency plot -> https://www.osadl.org/?id=887
-- Rack #2, Slot #8
-   ARMv6-compatible rev 3 (v6l), Phytec/PhyCARD-M pca101
-   Latency plot -> https://www.osadl.org/?id=920
-- Rack #4, Slot #4
-   ARMv7 Processor rev 10 (v7l)x2, Texas Instruments OMAP4/Pandaboard
-   Latency plot -> https://www.osadl.org/?id=911
-- Rack #5, Slot #5
-   Feroceon 88FR131 rev 1 (v5l), Marvell/SheevaPlug
-   Latency plot -> https://www.osadl.org/?id=881
+The problem is that it doesn't catch anything if there's a SMI between
+the t2 of one iteration and the t1 of the next. As this part of the
+count does the calculations, there's more time between t2 and the next
+t1 than there is between t1 and t2. This means that if an SMI is
+triggered, it is more likely to happen between t2 and the next t1 than
+between t1 and t2 and will probably be missed. Especially if the SMI
+only goes off once in a while (like one every two minutes).
 
-> Could it be improved by using different kernel config settings - e.g.
-> CONFIG_LATENCY_TRACE=n  -
-> https://rt.wiki.kernel.org/index.php/Cyclictest mentions that latency
-> tracing adds significant kernel overhead?
-CONFIG_LATENCY_TRACE no longer is a valid kernel configuration item. But 
-even if you configure a valid tracing configuration, this will not lead 
-to a relevant increase of the system's latencies, since tracing must 
-explicitly be enabled to become effective, such as
-# echo <your tracer here> >/sys/kernel/debug/tracing/current_tracer
-or using cyclictest's trace options.
+Recording the time between t2 and the next t1 will cover this as well.
+The output will now show three columns:
 
-Of course, a particular kernel config may lead to long latencies. To 
-check your kernel configuration, you may compare it to the kernel 
-configurations of the OSADL QA Farm systems that are given at the bottom 
-of the system profiles, the overview is here -> 
-https://www.osadl.org/?id=1084.
+<timestamp>	<t2-t1 delta>	<t1-last_t2 delta>
 
-Hope this helps,
-	-Carsten.
+where the third column shows the delta of the outer part of the loop,
+and is reported if that is greater than the threshold.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index b7b7c90..b53bdfa 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -143,6 +143,7 @@ static void detector_exit(void);
+ struct sample {
+ 	u64		seqnum;		/* unique sequence */
+ 	u64		duration;	/* ktime delta */
++	u64		outer_duration;	/* ktime delta (outer loop) */
+ 	struct timespec	timestamp;	/* wall time */
+ 	unsigned long   lost;
+ };
+@@ -219,11 +220,13 @@ static struct sample *buffer_get_sample(struct sample *sample)
+  */
+ static int get_sample(void *unused)
+ {
+-	ktime_t start, t1, t2;
++	ktime_t start, t1, t2, last_t2;
+ 	s64 diff, total = 0;
+ 	u64 sample = 0;
++	u64 outer_sample = 0;
+ 	int ret = 1;
+ 
++	last_t2.tv64 = 0;
+ 	start = ktime_get(); /* start timestamp */
+ 
+ 	do {
+@@ -231,6 +234,18 @@ static int get_sample(void *unused)
+ 		t1 = ktime_get();	/* we'll look for a discontinuity */
+ 		t2 = ktime_get();
+ 
++		if (last_t2.tv64) {
++			diff = ktime_to_us(ktime_sub(t1, last_t2));
++			/* This shouldn't happen */
++			if (diff < 0) {
++				printk(KERN_ERR BANNER "time running backwards\n");
++				goto out;
++			}
++			if (diff > outer_sample)
++				outer_sample = diff;
++		}
++		last_t2 = t2;
++
+ 		total = ktime_to_us(ktime_sub(t2, start)); /* sample width */
+ 		diff = ktime_to_us(ktime_sub(t2, t1));     /* current diff */
+ 
+@@ -246,12 +261,13 @@ static int get_sample(void *unused)
+ 	} while (total <= data.sample_width);
+ 
+ 	/* If we exceed the threshold value, we have found a hardware latency */
+-	if (sample > data.threshold) {
++	if (sample > data.threshold || outer_sample > data.threshold) {
+ 		struct sample s;
+ 
+ 		data.count++;
+ 		s.seqnum = data.count;
+ 		s.duration = sample;
++		s.outer_duration = outer_sample;
+ 		s.timestamp = CURRENT_TIME;
+ 		__buffer_add_sample(&s);
+ 
+@@ -738,10 +754,11 @@ static ssize_t debug_sample_fread(struct file *filp, char __user *ubuf,
+ 		}
+ 	}
+ 
+-	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\n",
+-		      sample->timestamp.tv_sec,
+-		      sample->timestamp.tv_nsec,
+-		      sample->duration);
++	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\t%llu\n",
++		       sample->timestamp.tv_sec,
++		       sample->timestamp.tv_nsec,
++		       sample->duration,
++		       sample->outer_duration);
+ 
+ 
+ 	/* handling partial reads is more trouble than it's worth */
