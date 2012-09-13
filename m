@@ -1,55 +1,88 @@
-From: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>
+From: Adrian Knoth <adi@drcomp.erfurt.thur.de>
 Subject: Re: clock_nanosleep and NTP drift correction
-Date: Thu, 13 Sep 2012 12:59:15 +0000
-Message-ID: <F9467A784CC48947B1D879F07370839E0EBB71D2@fe20099s.ecn.etasgroup.com>
+Date: Thu, 13 Sep 2012 17:22:27 +0200
+Message-ID: <5051FA33.7050205@drcomp.erfurt.thur.de>
+References: <F9467A784CC48947B1D879F07370839E0EBB712C@fe20099s.ecn.etasgroup.com> <20120913120922.GA5341@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp2-v.fe.bosch.de ([139.15.237.6]:39063 "EHLO
-	smtp2-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757973Ab2IMM7T convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Sep 2012 08:59:19 -0400
-Content-Language: de-DE
+Received: from ltw.loris.tv ([188.40.101.23]:47500 "EHLO ltw.loris.tv"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754463Ab2IMPai (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Sep 2012 11:30:38 -0400
+In-Reply-To: <20120913120922.GA5341@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> On Thu, Sep 13, 2012 at 11:20:24AM +0000, Koehrer Mathias (ETAS/ESS2) wrote:
-> | I have two x86 PCs running with the RT_PREEMPT patch (2.6.33.x).
-> | Both PCs run a real time application with a thread that will be executed periodically
-> every 1ms.
-> | For this I use a
+On 09/13/2012 02:09 PM, Luis Claudio R. Goncalves wrote:
+
 > | clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
 > | within the application's main loop.
 > | The value of "ts" will be incremented after every call.
-> |
-> | Both PCs (PC-A, PC-B) are connected via Ethernet to a third PC (PC-C) that acts as
-> NTP time server for the other PCs (PC-A and PC-B).
-> |
-> | My question is now:
-> | Does clock_nanosleep() consider a potential time drift that is corrected by NTP?
-> | Or: Will there be a significant drift between both PCs (PC-A, PC-B) by using this
-> approach?
-> 
+> | 
 > CLOCK_MONOTONIC is not affected by NTP nor any adjusts to date and time
 > that the admin/user may perform.
-> 
-> The only problem you could face would happen if the 'ts' value, third
-> parameter passed to clock_nanosleep, was coming from one system and being
-> used on both. Then, any difference between the clocks could lead to shorter
-> sleep times. Other than that, as far as manpages go, you seem to be safe.
-I want to ensure that after one day the very same number of cycles have
-been executed on PC-A and PC-B.
-Even if the internal clock of PC-A has a drift of 2s/day against that of PC-B.
-Using NTP the real time clock will be corrected - however the used
-function clock_nanosleep using CLOCK_MONOTONIC will not.
-Does this mean that I will have 2000 more millisecond cycles on the "faster PC" during
-a whole day?
 
-Regards
+I beg to differ. CLOCK_MONOTONIC is frequency adjusted. Though it won't
+jump, it will slew. From man clock_gettime:
 
-Mathias
+  CLOCK_MONOTONIC
+         Clock  that  cannot  be  set and represents monotonic time since
+         some unspecified starting point.  This clock is not affected  by
+         discontinuous  jumps  in  the  system  time (e.g., if the system
+         administrator manually changes the clock), but  is  affected  by
+         the incremental adjustments performed by adjtime(3) and NTP.
 
+
+Which means it's more or less what the original poster wants.
+
+
+Though it's LaTeX, here's a table I've created a couple of months ago:
+
+\begin{table}
+  \begin{tabular*}{\textwidth}{l@{\extracolsep{\fill}}ccccc}
+    \toprule
+    {\scshape clock name}& {\scshape posix}& {\scshape set}& {\scshape
+adjust}&
+{\scshape jump} &
+{\scshape slew}\\
+    \midrule
+\texttt{CLOCK_REALTIME}& yes& yes& yes& yes& yes\\
+\texttt{CLOCK_MONOTONIC}& yes& no& yes& no& yes\\
+\texttt{CLOCK_MONOTONIC_RAW}& no& no& no& no& no\\
+\texttt{CLOCK_PROCESS_CPUTIME_ID}& yes& no& no& SMP& no\\
+\texttt{CLOCK_THREAD_CPUTIME_ID}& yes& no& no& SMP& no\\
+\bottomrule
+  \end{tabular*}
+\caption{Multiple clock sources as required by
+POSIX and the Linux-specific \texttt{CLOCK_MONOTONIC_RAW}.
+Only \texttt{CLOCK_REALTIME}, the clock shown to the user as system
+time, can be set
+explicitly.
+It is not monotonic, the clock
+can jump back and forth or slew when being frequency adjusted. In
+contrast, \texttt{CLOCK_MONOTONIC} is strictly monotonic, but can still
+be frequency adjusted and will hence slew.
+\texttt{CLOCK_MONOTONIC_RAW} does not exhibit any of
+these deficiencies, but has no relation to UTC at all.
+It is ideal for reliably tracking foreign clocks, e.g., timestamps in
+networked or FireWire audio.
+The two CPUTIME clocks
+accumulate the time a process or thread has spent running on the
+CPU. Since these clocks rely on registers that can be local to an
+individual CPU or core, care must be taken on SMP systems.}
+  \label{tab:clocks}
+\end{table}
+
+(the adjust and slew columns are somewhat redundant)
+
+
+
+Side note: if NTP is too coarse, maybe it's worth having a look at PTP.
+
+
+HTH
