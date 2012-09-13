@@ -1,65 +1,50 @@
-From: Hartmut Behrens <hartmut.behrens@gmail.com>
-Subject: Re: Improving ARM7 platform performance with CONFIG_PREEMPT_RT
-Date: Thu, 13 Sep 2012 08:58:03 +0200
-Message-ID: <CA+69FtA+9LeKTsPJFHfDwJw1UBdV0PCvaSmjMRxy2AWhxfsMAw@mail.gmail.com>
-References: <CA+69FtBGGHQykr8DiOizeR0pWA+5ifeN1LtzZ2n2LmeA6+TWRg@mail.gmail.com>
-	<F97B0B2A-C7D7-4EF5-AF59-74BEA56FEA09@thebigcorporation.com>
+From: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>
+Subject: clock_nanosleep and NTP drift correction
+Date: Thu, 13 Sep 2012 11:20:24 +0000
+Message-ID: <F9467A784CC48947B1D879F07370839E0EBB712C@fe20099s.ecn.etasgroup.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org
-To: Sven-Thorsten Dietrich <thebigcorporation@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f174.google.com ([209.85.214.174]:64520 "EHLO
-	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752288Ab2IMG6E (ORCPT
+Received: from smtp2-v.fe.bosch.de ([139.15.237.6]:36059 "EHLO
+	smtp2-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756062Ab2IMLU0 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Sep 2012 02:58:04 -0400
-Received: by obbuo13 with SMTP id uo13so4016215obb.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 12 Sep 2012 23:58:03 -0700 (PDT)
-In-Reply-To: <F97B0B2A-C7D7-4EF5-AF59-74BEA56FEA09@thebigcorporation.com>
+	Thu, 13 Sep 2012 07:20:26 -0400
+Received: from vsmta12.fe.internet.bosch.com (unknown [10.4.98.52])
+	by imta24.fe.bosch.de (Postfix) with ESMTP id 061E8B00017
+	for <linux-rt-users@vger.kernel.org>; Thu, 13 Sep 2012 13:20:26 +0200 (CEST)
+Received: from localhost (vsgw1.fe.internet.bosch.com [10.4.98.15])
+	by vsmta12.fe.internet.bosch.com (Postfix) with SMTP id DE2201AC07A7
+	for <linux-rt-users@vger.kernel.org>; Thu, 13 Sep 2012 13:20:25 +0200 (CEST)
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-It's really quite trivial:
+Hi all!
 
-The kernel in question i used is available at
-git://www.sakoman.com/git/linux-omap-2.6.git.
-I used the omap-3.2 branch, commit 33128932803c3f8c35fe8dae257901deb60db2aa
+I have two x86 PCs running with the RT_PREEMPT patch (2.6.33.x).
+Both PCs run a real time application with a thread that will be executed periodically every 1ms.
+For this I use a
+clock_nanosleep(CLOCK_MONOTONIC, TIMER_ABSTIME, &ts, NULL);
+within the application's main loop.
+The value of "ts" will be incremented after every call.
 
-I applied patch-3.2.28 from http://www.kernel.org/pub/linux/kernel/v3.x/
+Both PCs (PC-A, PC-B) are connected via Ethernet to a third PC (PC-C) that acts as NTP time server for the other PCs (PC-A and PC-B).
 
-The only change required to patch-3.2.28 in order for it to apply cleanly is:
+My question is now:
+Does clock_nanosleep() consider a potential time drift that is corrected by NTP?
+Or: Will there be a significant drift between both PCs (PC-A, PC-B) by using this approach?
 
---- patch-3.2.28        2012-09-13 06:15:07.000000000 +0200
-+++ patch-3.2.28.patch  2012-09-13 06:15:09.000000000 +0200
-@@ -3176,6 +3176,7 @@
-        outer_cache.inv_all = l2x0_inv_all;
-        outer_cache.disable = l2x0_disable;
- -      outer_cache.set_debug = l2x0_set_debug;
-+       outer_cache.clean_all = l2x0_clean_all;
+As the application runs very long (hours or even days) I am looking for a solution that avoids 
+large drifts between the two systems.
+Deltas of 1 or 2 ms are acceptable, but no time differences in tens of milliseconds.
 
-        printk(KERN_INFO "%s cache controller enabled\n", type);
-        printk(KERN_INFO "l2x0: %d ways, CACHE_ID 0x%08x, AUX_CTRL
-0x%08x, Cache size: %d B\n",
+Thanks for any help or feedback on this question
 
-Following this, the patch-3.2.28-rt42 from
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/ applies
-cleanly as well.
+Best regards
 
-On Wed, Sep 12, 2012 at 10:22 PM, Sven-Thorsten Dietrich
-<thebigcorporation@gmail.com> wrote:
->
-> On Sep 12, 2012, at 3:20 AM, Hartmut Behrens <hartmut.behrens@gmail.com> wrote:
->
->> Hi,
->>
->> I have patched a 3.2 kernel for a OMAP compatible processor (ARM
->> Cortex A8) to be used on an Gumstix Overo with the CONFIG_PREEMPT_RT
->> patch.
->>
->
-> Any interest in sending the patches to the list?
->
-> Thanks
->
-> Sven
+Mathias
+
+
