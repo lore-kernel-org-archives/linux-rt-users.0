@@ -1,46 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.2.28-rt43-rc1 stable review
-Date: Thu, 13 Sep 2012 16:21:59 -0400
-Message-ID: <1347567719.10751.85.camel@gandalf.local.home>
-References: <20120913185721.264108744@goodmis.org>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.42-rt64-rc1 stable review
+Date: Thu, 13 Sep 2012 15:45:47 -0700
+Message-ID: <5052621B.6020204@am.sony.com>
+References: <20120913185234.912247144@goodmis.org>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-kernel@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120913185721.264108744@goodmis.org>
+In-Reply-To: <20120913185234.912247144@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2012-09-13 at 14:57 -0400, Steven Rostedt wrote:
+On 09/13/12 11:52, Steven Rostedt wrote:
+> 
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 3.0.42-rt64-rc1.
 
-> ----
-> Note: The patches have not been uploaded to kernel.org yet. I've
-> recently changed the subkey that I use to sign the patches as the
-> old subkey is about to expire. But unfortunately, kernel.org has
-> not updated its key ring, and is refusing my current subkey.
-> 
-> I have a ticket open with kernel.org to resolve the issue. But until
-> then, this mailing is the only place the patches exist.
-> ----
+Tested on:
 
-Issue is solved, patches are up.
+  - ARM mpcore
+  - ARM panda
 
--- Steve
+For configurations:
 
+  - SMP CONFIG_PREEMPT_NONE
+  - UP  CONFIG_PREEMPT_NONE
+  - SMP CONFIG_PREEMPT_RT_FULL
+  - UP  CONFIG_PREEMPT_RT_FULL
 
-> To build 3.2.28-rt43-rc1 directly, the following patches should be applied:
-> 
->   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-> 
->   http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.28.xz
-> 
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.28-rt43-rc1.patch.xz
-> 
-> You can also build from 3.2.28-rt42 by applying the incremental patch:
-> 
-> http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.28-rt42-rt43-rc1.patch.xz
-> 
+Tests:
+
+  - build
+  - boot
+  - magic SYSRQ prints on serial console
+
+As expected, panda SMP CONFIG_PREEMPT_RT_FULL still has the
+lock warning on boot.  (tglx is looking into this.)
+
+-Frank
