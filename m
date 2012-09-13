@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.0.42-rt64-rc1 stable review
-Date: Thu, 13 Sep 2012 16:21:02 -0400
-Message-ID: <1347567662.10751.84.camel@gandalf.local.home>
-References: <20120913185234.912247144@goodmis.org>
+Subject: Re: [PATCH RT 0/2] [ANNOUNCE] 3.2.28-rt43-rc1 stable review
+Date: Thu, 13 Sep 2012 16:21:59 -0400
+Message-ID: <1347567719.10751.85.camel@gandalf.local.home>
+References: <20120913185721.264108744@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -11,11 +11,11 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20120913185234.912247144@goodmis.org>
+In-Reply-To: <20120913185721.264108744@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2012-09-13 at 14:52 -0400, Steven Rostedt wrote:
+On Thu, 2012-09-13 at 14:57 -0400, Steven Rostedt wrote:
 
 > ----
 > Note: The patches have not been uploaded to kernel.org yet. I've
@@ -31,17 +31,16 @@ Issue is solved, patches are up.
 
 -- Steve
 
+
+> To build 3.2.28-rt43-rc1 directly, the following patches should be applied:
 > 
-> To build 3.0.42-rt64-rc1 directly, the following patches should be applied:
+>   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 > 
->   http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+>   http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.28.xz
 > 
->   http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.42.xz
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.28-rt43-rc1.patch.xz
 > 
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.42-rt64-rc1.patch.xz
+> You can also build from 3.2.28-rt42 by applying the incremental patch:
 > 
-> You can also build from 3.0.42-rt63 by applying the incremental patch:
-> 
-> http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.42-rt63-rt64-rc1.patch.xz
-> 
+> http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.28-rt42-rt43-rc1.patch.xz
 > 
