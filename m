@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.28-rt43
-Date: Mon, 17 Sep 2012 13:27:16 -0400
-Message-ID: <1347902836.13080.21.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.42-rt64
+Date: Mon, 17 Sep 2012 13:33:43 -0400
+Message-ID: <1347903223.13080.22.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -16,28 +16,28 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.28-rt43 stable release.
+I'm pleased to announce the 3.0.42-rt64 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: 46186fd78b95d2a02232485597ec03771527710d
+  Head SHA1: 7b682c62b958de42ec7fad108929e1dc10841758
 
 
-Or to build 3.2.28-rt43 directly, the following patches should be applied:
+Or to build 3.0.42-rt64 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.28.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.42.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.28-rt43.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.42-rt64.patch.xz
 
 
-You can also build from 3.2.28-rt42 by applying the incremental patch:
+You can also build from 3.0.42-rt63 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.28-rt42-rt43.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.42-rt63-rt64.patch.xz
 
 
 
@@ -46,7 +46,7 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.2.28-rt42:
+Changes from 3.0.42-rt63:
 
 ---
 
@@ -54,7 +54,7 @@ Frank Rowand (1):
       fix printk flush of messages
 
 Steven Rostedt (1):
-      Linux 3.2.28-rt43
+      Linux 3.0.42-rt64
 
 ----
  drivers/tty/serial/cpm_uart/cpm_uart_core.c |    2 +-
@@ -66,10 +66,10 @@ Steven Rostedt (1):
  6 files changed, 4 insertions(+), 55 deletions(-)
 ---------------------------
 diff --git a/drivers/tty/serial/cpm_uart/cpm_uart_core.c b/drivers/tty/serial/cpm_uart/cpm_uart_core.c
-index a8b0559..b418947 100644
+index 2a75c84..9488da7 100644
 --- a/drivers/tty/serial/cpm_uart/cpm_uart_core.c
 +++ b/drivers/tty/serial/cpm_uart/cpm_uart_core.c
-@@ -1226,7 +1226,7 @@ static void cpm_uart_console_write(struct console *co, const char *s,
+@@ -1225,7 +1225,7 @@ static void cpm_uart_console_write(struct console *co, const char *s,
  {
  	struct uart_cpm_port *pinfo = &cpm_uart_ports[co->index];
  	unsigned long flags;
@@ -143,7 +143,7 @@ index d224c0b..7faf933 100644
  
  /* Generic SysRq interface -- you may call it from any device driver, supplying
 diff --git a/kernel/printk.c b/kernel/printk.c
-index 66e83e5..85d8795 100644
+index f2c459f..ea71fae 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
 @@ -21,7 +21,6 @@
@@ -154,9 +154,9 @@ index 66e83e5..85d8795 100644
  #include <linux/init.h>
  #include <linux/jiffies.h>
  #include <linux/nmi.h>
-@@ -835,8 +834,8 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+@@ -834,8 +833,8 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ 	__releases(&logbuf_lock)
  {
- 	int retval = 0, wake = 0;
  #ifdef CONFIG_PREEMPT_RT_FULL
 -	int lock = (!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
 -		(preempt_count() <= 1)) || sysrq_in_progress;
@@ -166,7 +166,7 @@ index 66e83e5..85d8795 100644
  	int lock = 1;
  #endif
 diff --git a/lib/Kconfig.debug b/lib/Kconfig.debug
-index 13a937b..c347db3 100644
+index 383b565..1685473 100644
 --- a/lib/Kconfig.debug
 +++ b/lib/Kconfig.debug
 @@ -62,28 +62,6 @@ config MAGIC_SYSRQ
@@ -199,9 +199,9 @@ index 13a937b..c347db3 100644
  	bool "Strip assembler-generated symbols during link"
  	default n
 diff --git a/localversion-rt b/localversion-rt
-index 8bdfb9a..41f7b99 100644
+index b0e8dd7..1047404 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt42
-+-rt43
+--rt63
++-rt64
