@@ -1,73 +1,44 @@
 From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH] RFC: sched: Prevent wakeup to enter critical section needlessly
-Date: Mon, 24 Sep 2012 15:06:37 +0200
-Message-ID: <1348491997-30898-1-git-send-email-meltedpianoman@gmail.com>
+Subject: Re: [PATCH] tty: cleanup duplicate functions in tty_buffer
+Date: Tue, 25 Sep 2012 13:28:35 +0200
+Message-ID: <CAMSQXEFoJa++iWqyx2v44CPDO1FXvt8y=MaUgV20bH337Ard8g@mail.gmail.com>
+References: <1348149223-4281-1-git-send-email-meltedpianoman@gmail.com>
+	<20120920171717.04ee9098@bob.linux.org.uk>
+	<CAMSQXEHkjWubwNXiCd_bBnUdzQ2M+sa8HPs2KCzwcOOp2dSsBw@mail.gmail.com>
+	<20120924102547.62581af4@pyramind.ukuu.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Ivo Sieben <meltedpianoman@gmail.com>
-To: <linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	<linux-serial@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Alan Cox <alan@linux.intel.com>,
-	Greg KH <gregkh@linuxfoundation.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Alan Cox <alan@linux.intel.com>,
+	Greg KH <gregkh@linuxfoundation.org>,
+	linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>,
+	Jiri Slaby <jslaby@suse.cz>,
+	Heiko Carstens <heiko.carstens@de.ibm.com>
+To: Alan Cox <alan@lxorguk.ukuu.org.uk>
 Return-path: <linux-serial-owner@vger.kernel.org>
+In-Reply-To: <20120924102547.62581af4@pyramind.ukuu.org.uk>
 Sender: linux-serial-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Check the waitqueue task list to be non empty before entering the critical
-section. This prevents locking the spin lock needlessly in case the queue
-was empty, and therefor also prevent scheduling overhead on a PREEMPT_RT
-system.
+Hi
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
----
+2012/9/24 Alan Cox <alan@lxorguk.ukuu.org.uk>:
+>
+> flush_to_ldisc calls into the tty core code which sleeps. The rule is
+> that you may not call flush_to_ldisc except from a workqueue context.
+>
+> If you break that rule then various bad things will occur (eg rx ->
+> flush_to_ldisc -> n_tty -> flow control -> tx -> deadlock) in a lot of
+> drivers.
+>
+>
+> Several of them are ones that shouldn't.
+>
 
- Request for comments:
- - Does this make any sense?
- - I assume that I can safely use the list_empty_careful() function here, but is
-   that correct?
+OK, I now understand what you mean with "pile that has needs to move
+the other way"
+I'll abandon this patch.
 
- Background to this patch:
- Testing on a PREEMPT_RT system with TTY serial communication. Each time the TTY
- line discipline is dereferenced the Idle handling wait queue is woken up (see
- function put_ldisc in /drivers/tty/tty_ldisc.c)
- However line discipline idle handling is not used very often so the wait queue
- is empty most of the time. But still the wake_up() function enters the critical
- section guarded by spin locks. This causes additional scheduling overhead when
- a lower priority thread has control of that same lock.
+Thank you all for reviewing
 
- kernel/sched/core.c |   16 +++++++++++++---
- 1 file changed, 13 insertions(+), 3 deletions(-)
-
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 649c9f8..6436eb8 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3631,9 +3631,19 @@ void __wake_up(wait_queue_head_t *q, unsigned int mode,
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&q->lock, flags);
--	__wake_up_common(q, mode, nr_exclusive, 0, key);
--	spin_unlock_irqrestore(&q->lock, flags);
-+	/*
-+	 * We can check for list emptiness outside the lock by using the
-+	 * "careful" check that verifies both the next and prev pointers, so
-+	 * that there cannot be any half-pending updates in progress.
-+	 *
-+	 * This prevents the wake up to enter the critical section needlessly
-+	 * when the task list is empty.
-+	 */
-+	if (!list_empty_careful(&q->task_list)) {
-+		spin_lock_irqsave(&q->lock, flags);
-+		__wake_up_common(q, mode, nr_exclusive, 0, key);
-+		spin_unlock_irqrestore(&q->lock, flags);
-+	}
- }
- EXPORT_SYMBOL(__wake_up);
- 
--- 
-1.7.9.5
-
-
+Regards,
+Ivo Sieben
