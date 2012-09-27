@@ -1,53 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.30-rt45
-Date: Thu, 27 Sep 2012 08:59:05 -0400
-Message-ID: <1348750745.22822.71.camel@gandalf.local.home>
+From: Alan Cox <alan@lxorguk.ukuu.org.uk>
+Subject: Re: [PATCH-v3] tty: prevent unnecessary work queue lock checking on
+ flip buffer copy
+Date: Thu, 27 Sep 2012 14:15:22 +0100
+Message-ID: <20120927141522.7d3e26de@pyramind.ukuu.org.uk>
+References: <20120925154707.33aa2fa4@pyramind.ukuu.org.uk>
+	<1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: Alan Cox <alan@linux.intel.com>,
+	Greg KH <gregkh@linuxfoundation.org>,
+	<linux-serial@vger.kernel.org>, RT <linux-rt-users@vger.kernel.org>
+To: Ivo Sieben <meltedpianoman@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:15721 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751071Ab2I0M7J (ORCPT
+Received: from lxorguk.ukuu.org.uk ([81.2.110.251]:46224 "EHLO
+	lxorguk.ukuu.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750793Ab2I0NKe (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Sep 2012 08:59:09 -0400
+	Thu, 27 Sep 2012 09:10:34 -0400
+In-Reply-To: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Thu, 27 Sep 2012 13:58:21 +0200
+Ivo Sieben <meltedpianoman@gmail.com> wrote:
 
-Dear RT Folks,
+> When low_latency flag is set the TTY receive flip buffer is copied to the
+> line discipline directly instead of using a work queue in the background.
+> Therefor only in case a workqueue is actually used for copying data to the
+> line discipline we'll have to flush the workqueue.
+> 
+> This prevents unnecessary spin lock/unlock on the workqueue spin lock that
+> can cause additional scheduling overhead on a PREEMPT_RT system. On a 200
+> MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
+> overhead on the TTY read call.
+> 
+> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
 
-I'm pleased to announce the 3.2.30-rt45 stable release.
+Acked-by: Alan Cox <alan@linux.intel.com>
 
-
-This release is just an update to the new stable 3.2.30 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 6674e5257742c7852038926912dc22d88468990b
-
-
-Or to build 3.2.30-rt45 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.30.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.30-rt45.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
+(but for 3.8 not 3.7 ...)
