@@ -1,83 +1,53 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH-v3] tty: prevent unnecessary work queue lock checking on flip buffer copy
-Date: Thu, 27 Sep 2012 14:02:05 +0200
-Message-ID: <1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
-References: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.2.30-rt45
+Date: Thu, 27 Sep 2012 08:59:05 -0400
+Message-ID: <1348750745.22822.71.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Ivo Sieben <meltedpianoman@gmail.com>
-To: Alan Cox <alan@linux.intel.com>,
-	Greg KH <gregkh@linuxfoundation.org>,
-	<linux-serial@vger.kernel.org>, RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from db3ehsobe006.messaging.microsoft.com ([213.199.154.144]:46480
-	"EHLO db3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752089Ab2I0MCT (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:15721 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751071Ab2I0M7J (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Sep 2012 08:02:19 -0400
-In-Reply-To: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
+	Thu, 27 Sep 2012 08:59:09 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-When low_latency flag is set the TTY receive flip buffer is copied to the
-line discipline directly instead of using a work queue in the background.
-Therefor only in case a workqueue is actually used for copying data to the
-line discipline we'll have to flush the workqueue.
 
-This prevents unnecessary spin lock/unlock on the workqueue spin lock that
-can cause additional scheduling overhead on a PREEMPT_RT system. On a 200
-MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
-overhead on the TTY read call.
+Dear RT Folks,
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
----
- v3:
- Prevented the flush the easy way: workque is not flused when low latency
- flag is set. This means that drivers that use the tty_schedule_flip()
- functions instead of the tty_flip_buffer_push() should never have the
- low_latency flag set, otherwise the workqueue won't be flushed. Added a
- WARN_ON() to detect those drivers.
+I'm pleased to announce the 3.2.30-rt45 stable release.
 
- For PREEMPT_RT systems: this optimization will only work when the user has
- actually enabled the ASYNC_LOW_LATENCY option for the serial driver, otherwise
- the workqueue will still be flushed although it is not used since the PREMPT_RT
- patch makes the tty_flip_buffer_push() function to always bypass the workqueue.
 
- drivers/tty/tty_buffer.c |    6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+This release is just an update to the new stable 3.2.30 version
+and no RT specific changes have been made.
 
-diff --git a/drivers/tty/tty_buffer.c b/drivers/tty/tty_buffer.c
-index 6146e8b..b952de1 100644
---- a/drivers/tty/tty_buffer.c
-+++ b/drivers/tty/tty_buffer.c
-@@ -342,6 +342,8 @@ EXPORT_SYMBOL(tty_insert_flip_string_flags);
-  *	Takes any pending buffers and transfers their ownership to the
-  *	ldisc side of the queue. It then schedules those characters for
-  *	processing by the line discipline.
-+ *	Note that this function can only be used when the low_latency flag
-+ *	is unset. Otherwise the workqueue won't be flushed.
-  *
-  *	Locking: Takes tty->buf.lock
-  */
-@@ -349,6 +351,7 @@ EXPORT_SYMBOL(tty_insert_flip_string_flags);
- void tty_schedule_flip(struct tty_struct *tty)
- {
- 	unsigned long flags;
-+	WARN_ON(tty->low_latency);
- 	spin_lock_irqsave(&tty->buf.lock, flags);
- 	if (tty->buf.tail != NULL)
- 		tty->buf.tail->commit = tty->buf.tail->used;
-@@ -514,7 +517,8 @@ static void flush_to_ldisc(struct work_struct *work)
-  */
- void tty_flush_to_ldisc(struct tty_struct *tty)
- {
--	flush_work(&tty->buf.work);
-+	if (!tty->low_latency)
-+		flush_work(&tty->buf.work);
- }
- 
- /**
--- 
-1.7.9.5
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 6674e5257742c7852038926912dc22d88468990b
+
+
+Or to build 3.2.30-rt45 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.30.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.30-rt45.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
 
 
