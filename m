@@ -1,51 +1,51 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] Stable RT tarballs... Back by popular demand!!!!
-Date: Thu, 27 Sep 2012 18:19:49 -0400
-Message-ID: <1348784389.22822.85.camel@gandalf.local.home>
+From: vomlehn@texas.net
+Subject: msleep_interruptible() sleeps *way* too long on PowerPC
+Date: Mon, 01 Oct 2012 12:35:52 -0500
+Message-ID: <1349112952.5069d4780f4ae@webmail.texas.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Frank Rowand <frank.rowand@am.sony.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:17470 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753287Ab2I0WTw (ORCPT
+Received: from local.serv2.aus.datafoundry.com ([209.99.125.32]:59803 "EHLO
+	local.serv2.aus.datafoundry.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750910Ab2JAR7B (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Sep 2012 18:19:52 -0400
+	Mon, 1 Oct 2012 13:59:01 -0400
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by local.serv2.aus.datafoundry.com (Postfix) with ESMTP id A1383438053
+	for <linux-rt-users@vger.kernel.org>; Mon,  1 Oct 2012 12:35:52 -0500 (CDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I stated that I would be willing to put back the stable tarballs to
-kernel.org at Linux Plumbers. Well, I finally had time to finish my
-tarball script, which basically just does what the README tells you to
-do:
+When I run a command from the Busybox shell (ash), I sometimes experience a
+very long delay, on a system with the RT patches enabled (fully-preempible),
+before the prompt appears. Busybox calls tcdrain() prior to printing the
+prompt, which eventually winds up in uart_wait_until_sent(). This function
+uses msleep_interruptible() to wait for a millisecond, but doesn't actually
+complete for many seconds, even minutes, on an otherwise idle system.
 
- $ git checkout v3.4.1-rt9-rebase
- $ mkdir patches
- $ git format-patch -o patches v3.4.1
- $ ls patches > series
- $ mv series patches
+when I change the preemption model to low-latency desktop, the system behaves
+as I would expect it to. It's worth mentioning that this is on a PowerPC
+processor, which handles timer interrupts through a slightly different path
+than other interrupts, but I don't see an issue with this yet.
 
+Another observation which seems pretty vital--if I send a ping packet to one
+of the network interfaces, the msleep_interruptible() completes. It is as
+though it queued the timer and didn't realize it while timer interrupts were
+happening (lost in softIRQ processing?). Then, when the network interrupt
+happened, it went through some queue and processed the timeout.
 
-And packages it all up nicely into a tarball. I will be pushing up the
-tarballs as I do the rebase branches, as they are based off of the
-rebase branch.
+I've verified that the struct timer_list is added and it looks to be in the
+right place.
 
-The current tarballs are:
+There is an IPI-related PowerPC patch that went into 3.2.30 that sounded a lot
+like this, commit 241ee90a69ede9cf9255df1a18036210beeb8adf, but our
+configuration doesn't use this and it appears as though this happens when the
+task queueing the timer is still on the same processor when it gets the
+wakeup. Thus IPIs don't appear to be an issue.
 
-http://kernel.org/pub/linux/kernel/projects/rt/3.0/patches-3.0.43-rt65.tar.xz
-
-http://kernel.org/pub/linux/kernel/projects/rt/3.2/patches-3.2.30-rt45.tar.xz
-
-http://kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.4.11-rt19.tar.xz
-
-Enjoy,
-
--- Steve
-
+Any thoughts would be appreciated!
+--
+David VL
 
