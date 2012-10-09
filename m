@@ -1,80 +1,37 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RFC] irq: Set CPU affinity as soon as the irq thread is
- created
-Date: Tue, 9 Oct 2012 22:25:36 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210092224480.10988@ionos>
-References: <CAFQPvXckDMhH6MCkXC44wF0t13Ov=yQwER8GZgRRA4aq5=_w9w@mail.gmail.com> <1346890155.27919.80.camel@gandalf.local.home>
+From: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+Subject: Re: [ANNOUNCE] 3.6.1-rt1
+Date: Tue, 9 Oct 2012 23:28:22 +0200
+Message-ID: <201210092328.22862.tim01@vlsi.informatik.tu-darmstadt.de>
+References: <alpine.LFD.2.02.1210091535140.10988@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sankara Muthukrishnan <sankara.m@gmail.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	"linux-rt-users" <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40483 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753761Ab2JIUZl (ORCPT
+Received: from lnx141.hrz.tu-darmstadt.de ([130.83.156.236]:50431 "EHLO
+	lnx141.hrz.tu-darmstadt.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754600Ab2JIVeT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2012 16:25:41 -0400
-In-Reply-To: <1346890155.27919.80.camel@gandalf.local.home>
+	Tue, 9 Oct 2012 17:34:19 -0400
+In-Reply-To: <alpine.LFD.2.02.1210091535140.10988@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 5 Sep 2012, Steven Rostedt wrote:
+Hi Thomas
+> I'm pleased to announce the 3.6.1-rt1 release.
+I also have to second the big thanks of Steven!
 
-> On Wed, 2012-09-05 at 18:07 -0500, Sankara Muthukrishnan wrote:
-> > Hi there,
-> 
-> This also affects mainline. Please Cc LKML (as I did).
-> 
-> > 
-> > As irq_thread_check_affinity is called inside the while loop in the
-> > IRQ thread, the core affinity is set only when an interrupt happens.
-> > It does not seem to be a bad idea to set the core affinity soon after
-> > the thread is created also (as shown in the patch).
-> > irq_thread_check_affinity calls kmalloc_node that can sleep.
-> 
-> Note, it only calls kmalloc if you enable CONFIG_CPUMASK_OFFSTACK, which
-> you probably don't on an embedded device. But you might. Your embedded
-> device may have more than 32 or 64 CPUs.
-> 
-> I'd be more worried about calling set_cpus_allowed_ptr() than kmalloc().
-> 
-> >  In an
-> > embedded target where IRQ affinities are pre-configured during
-> > boot-time (and not modified through /proc/irq/../smp_affinity) during
-> > run-time, the extra latency due to irq_thread_check_affinity can be
-> > avoided during processing of the first interrupt with this patch.
-> > Thoughts?
+>    * Fix for a potential deadlock in mm/slab.c. This had been reported
+>      as lockdep splats several times and stupidly ignored as a false
+>      positive, but in fact it's a real (though almost impossible to
+>      trigger) deadlock lurking.
+Mh, just an unverified (i.e. i haven't had the time to dig into it) 
+information from my side: I think i have been seeing a total lockup on an OOM 
+condition. Is it possible that this possible deadlock
+might have been triggered in such a condition more "reliably"?
 
-Yes, this needs a proper Signed-off-by and an update against current
-mainline.
-
-Thanks,
-
-	tglx
-
-> > diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-> > index 87dc053..bf2cdc2 100644
-> > --- a/kernel/irq/manage.c
-> > +++ b/kernel/irq/manage.c
-> > @@ -791,6 +791,7 @@ static int irq_thread(void *data)
-> > 
-> >         sched_setscheduler(current, SCHED_FIFO, &param);
-> >         current->irqaction = action;
-> > +       irq_thread_check_affinity(desc, action);
-> > 
-> >         while (!irq_wait_for_interrupt(action)) {
-> 
-> I see no problem with this patch.
-> 
-> Acked-by: Steven Rostedt <rostedt@goodmis.org>
-> 
-> -- Steve
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> 
+Best regards
+Tim
