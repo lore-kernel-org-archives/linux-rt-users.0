@@ -1,48 +1,85 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.1-rt1
-Date: Tue, 9 Oct 2012 19:32:16 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210091925340.10988@ionos>
-References: <alpine.LFD.2.02.1210091535140.10988@ionos>  <1349795389.24256.20.camel@gandalf.local.home>  <alpine.LFD.2.02.1210091811540.10988@ionos> <1349802833.24256.25.camel@gandalf.local.home>
+Subject: Re: [PATCH-v2] tty: Use raw spin lock to protect RX flip buffer
+Date: Tue, 9 Oct 2012 19:43:49 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210091934010.10988@ionos>
+References: <1348478680-11505-1-git-send-email-meltedpianoman@gmail.com> <1349781313-8670-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <cbe@osadl.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39629 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756486Ab2JIRcS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2012 13:32:18 -0400
-In-Reply-To: <1349802833.24256.25.camel@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-serial@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
+	Greg KH <gregkh@linuxfoundation.org>
+To: Ivo Sieben <meltedpianoman@gmail.com>
+Return-path: <linux-serial-owner@vger.kernel.org>
+In-Reply-To: <1349781313-8670-1-git-send-email-meltedpianoman@gmail.com>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 9 Oct 2012, Steven Rostedt wrote:
-> On Tue, 2012-10-09 at 18:19 +0200, Thomas Gleixner wrote:
-> >  
-> > > I've started looking at playing with the NAPI code again, and trying to
-> > > see if I can add an ENAPI interface (Even Newer API), where the driver
-> > > uses its own interrupt thread, and instead of having the polling in the
-> > > network softirq, it can do the polling in its own thread.
-> > 
-> > It's pretty close to the behaviour I enforced with this change. Let's
-> > play with that and figure out what influence it has on the network
-> > throughput performance on RT. That needs probably a different
-> > scheduling scheme than what Carsten needs for his deterministic
-> > behaviour.
-> > 
+On Tue, 9 Oct 2012, Ivo Sieben wrote:
+> The "normal" spin lock that guards the RX flip buffer is replaced by a raw
+> spin lock.
 > 
-> I was actually looking at the change for mainline, not for -rt ;-)
+> On a PREEMP_RT system this prevents unwanted scheduling overhead when data is
+> read at the same time as data is being received: while RX IRQ threaded handling
+> is busy a TTY read call is performed from a RT priority > threaded IRQ priority.
+> The read call tries to take the flip buffer spin lock (held by the threaded IRQ)
+> which blocks and causes a context switch to/from the threaded IRQ handler until
+> the spin lock is unlocked.
+> 
+> On a 200 MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
+> overhead on the TTY read call.
 
-I know, but you can utilize RT for figuring out what kind of
-performance impact (in whatever direction) this modus operandi
-has. That gives us a better understanding and hopefully improvements
-for RT, but at the same time a lot of insight in how we should handle
-this scenario on a non RT kernel. You might try to make the softirq
-split lock scheme work in CONFIG_RT_BASE as this gives us a way better
-comparison to mainline behaviour.
+Cute, but ...
+ 
+> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+> ---
+> 
+> @Thomas Gleixner & Steven Rostedt:
+> Alan Cox has responded to this patch: "I've no real opinion on the spin/raw_spin
+> choices as it's basically an RT question not a tty one so if the rt folks are
+> happy with it so am I." Do you agree?
+> 
+> v2:
+> Patch was based on another - abandoned - patch om mine, what introduced a bug in
+> the tty_schedule_flip() function. Fixed this and rebased it on the latest kernel
+> tree.
+> 
+> 
+>  drivers/tty/tty_buffer.c |   44 ++++++++++++++++++++++----------------------
+>  include/linux/kbd_kern.h |    4 ++--
+>  include/linux/tty.h      |    2 +-
+>  2 files changed, 25 insertions(+), 25 deletions(-)
+> 
+> diff --git a/drivers/tty/tty_buffer.c b/drivers/tty/tty_buffer.c
+> index 91e326f..70cf324 100644
+> --- a/drivers/tty/tty_buffer.c
+> +++ b/drivers/tty/tty_buffer.c
+> @@ -135,20 +135,20 @@ static void __tty_buffer_flush(struct tty_struct *tty)
+>  void tty_buffer_flush(struct tty_struct *tty)
+>  {
+>  	unsigned long flags;
+> -	spin_lock_irqsave(&tty->buf.lock, flags);
+> +	raw_spin_lock_irqsave(&tty->buf.lock, flags);
+>  
+>  	/* If the data is being pushed to the tty layer then we can't
+>  	   process it here. Instead set a flag and the flush_to_ldisc
+>  	   path will process the flush request before it exits */
+>  	if (test_bit(TTY_FLUSHING, &tty->flags)) {
+>  		set_bit(TTY_FLUSHPENDING, &tty->flags);
+> -		spin_unlock_irqrestore(&tty->buf.lock, flags);
+> +		raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
+>  		wait_event(tty->read_wait,
+>  				test_bit(TTY_FLUSHPENDING, &tty->flags) == 0);
+>  		return;
+>  	} else
+>  		__tty_buffer_flush(tty);
+
+__tty_buffer_flush() can call tty_buffer_free() which in turn can call
+kfree(), which is a nono on RT with preemption and interrupts
+disabled. Enabling CONFIG_DEBUG_ATOMIC_SLEEP and extensive testing
+should have told you that.
+
+I did not look at the other places where this lock is used, but I
+suspect there is more fallout lurking.
 
 Thanks,
 
