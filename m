@@ -1,53 +1,39 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.45-rt67
-Date: Tue, 09 Oct 2012 13:49:21 -0400
-Message-ID: <1349804961.24256.27.camel@gandalf.local.home>
+Subject: Re: [ANNOUNCE] 3.6.1-rt1
+Date: Tue, 09 Oct 2012 14:08:49 -0400
+Message-ID: <1349806129.24256.28.camel@gandalf.local.home>
+References: <alpine.LFD.2.02.1210091535140.10988@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:21073 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32215 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756508Ab2JIRtW (ORCPT
+	with ESMTP id S1756702Ab2JISIv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2012 13:49:22 -0400
+	Tue, 9 Oct 2012 14:08:51 -0400
+In-Reply-To: <alpine.LFD.2.02.1210091535140.10988@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Tue, 2012-10-09 at 15:46 +0200, Thomas Gleixner wrote:
 
-Dear RT Folks,
+> The RT patch against 3.6.1 can be found here:
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.1-rt1.patch.xz
+> 
+> The split quilt queue is available at:
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.6.1-rt1.tar.xz
+> 
 
-I'm pleased to announce the 3.0.45-rt67 stable release.
+I think you meant:
 
-
-This release is just an update to the new stable 3.0.45 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 52f216aa838163d892de6b8b3ec7d63cceb70adf
-
-
-Or to build 3.0.45-rt67 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.45.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.45-rt67.patch.xz
-
-
-
-Enjoy,
+    http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.1-rt1.tar.xz
 
 -- Steve
-
 
 
