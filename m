@@ -1,57 +1,38 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.6.1-rt1
-Date: Tue, 09 Oct 2012 14:28:58 -0400
-Message-ID: <1349807338.24256.37.camel@gandalf.local.home>
-References: <alpine.LFD.2.02.1210091535140.10988@ionos>
-	 <1349806792.24256.34.camel@gandalf.local.home>
+Date: Tue, 9 Oct 2012 21:03:25 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210092102460.10988@ionos>
+References: <alpine.LFD.2.02.1210091535140.10988@ionos> <1349806129.24256.28.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14329 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750883Ab2JIS27 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:40220 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752871Ab2JITD2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2012 14:28:59 -0400
-In-Reply-To: <1349806792.24256.34.camel@gandalf.local.home>
+	Tue, 9 Oct 2012 15:03:28 -0400
+In-Reply-To: <1349806129.24256.28.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-10-09 at 14:19 -0400, Steven Rostedt wrote:
+On Tue, 9 Oct 2012, Steven Rostedt wrote:
+
 > On Tue, 2012-10-09 at 15:46 +0200, Thomas Gleixner wrote:
-> > Dear RT Folks,
+> 
+> > The RT patch against 3.6.1 can be found here:
 > > 
-> > I'm pleased to announce the 3.6.1-rt1 release.
+> >   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.1-rt1.patch.xz
 > > 
-> > This is a pretty straight forward move from the 3.4-rt series which
-> > includes a few significant updates which need to be backported to the
-> > 3.x-rt stable series:
+> > The split quilt queue is available at:
+> > 
+> >   http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.6.1-rt1.tar.xz
+> > 
 > 
-> My scripts detected these patches to be pulled into stable. It detects
-> any patch that has a Cc: to stable-rt@vger.kernel.org that does not
-> already exist in stable. It also adds the '000x-' prefix to keep the
-> order.
+> I think you meant:
 > 
-> 0000-scsi-qla2xxx-fix-bug-sleeping-function-called-from-invalid-context.patch
-> 0001-upstream-net-rt-remove-preemption-disabling-in-netif_rx.patch
+>     http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.1-rt1.tar.xz
 
-The above seem to be already applied (at least to 3.4-rt). Not sure why
-my scripts missed it. Perhaps these were the ones added directly, and
-the names of the patch that I used did not match your names. My script
-saves off what it already applied, to know what it can skip for later
-pulls.
-
--- Steve
-
-> 0002-random-make-it-work-on-rt.patch
-> 0003-softirq-init-softirq-local-lock-after-per-cpu-section-is-set-up.patch
-> 0004-mm-slab-fix-potential-deadlock.patch
-> 0005-mm-page-alloc-use-local-lock-on-target-cpu.patch
-> 0006-rt-rw-lockdep-annotations.patch
-> 0007-stomp-machine-deal-clever-with-stopper-lock.patch
-> 
-
-
+Bah. Copy and paste should be something which can be disabled :)
