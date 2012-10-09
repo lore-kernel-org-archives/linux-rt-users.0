@@ -1,253 +1,208 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH-v2] tty: Use raw spin lock to protect RX flip buffer
-Date: Tue, 9 Oct 2012 13:15:13 +0200
-Message-ID: <1349781313-8670-1-git-send-email-meltedpianoman@gmail.com>
-References: <1348478680-11505-1-git-send-email-meltedpianoman@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.6.1-rt1
+Date: Tue, 9 Oct 2012 15:46:46 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210091535140.10988@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Alan Cox <alan@linux.intel.com>,
-	Greg KH <gregkh@linuxfoundation.org>,
-	Ivo Sieben <meltedpianoman@gmail.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	<linux-serial@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <1348478680-11505-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:38450 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755636Ab2JINqs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Oct 2012 09:46:48 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The "normal" spin lock that guards the RX flip buffer is replaced by a raw
-spin lock.
+Dear RT Folks,
 
-On a PREEMP_RT system this prevents unwanted scheduling overhead when data is
-read at the same time as data is being received: while RX IRQ threaded handling
-is busy a TTY read call is performed from a RT priority > threaded IRQ priority.
-The read call tries to take the flip buffer spin lock (held by the threaded IRQ)
-which blocks and causes a context switch to/from the threaded IRQ handler until
-the spin lock is unlocked.
+I'm pleased to announce the 3.6.1-rt1 release.
 
-On a 200 MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
-overhead on the TTY read call.
+This is a pretty straight forward move from the 3.4-rt series which
+includes a few significant updates which need to be backported to the
+3.x-rt stable series:
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
----
+   * Make interrupt randomness work again on RT. Based on the 3.x.y
+     stable updates in that area. Should be applicable to all 3.x-rt
+     series with almost no modifications.
 
-@Thomas Gleixner & Steven Rostedt:
-Alan Cox has responded to this patch: "I've no real opinion on the spin/raw_spin
-choices as it's basically an RT question not a tty one so if the rt folks are
-happy with it so am I." Do you agree?
+   * RT softirq initialization sequence fix (Steven Rostedt)
 
-v2:
-Patch was based on another - abandoned - patch om mine, what introduced a bug in
-the tty_schedule_flip() function. Fixed this and rebased it on the latest kernel
-tree.
+   * Fix for a potential deadlock in mm/slab.c. This had been reported
+     as lockdep splats several times and stupidly ignored as a false
+     positive, but in fact it's a real (though almost impossible to
+     trigger) deadlock lurking.
 
+   * Use the proper local_lock primitives in mm/page_alloc.c. That's
+     not a real bug, but this fixes an inconsistency which helps
+     debugability and therefore is worthwhile to be backported.
 
- drivers/tty/tty_buffer.c |   44 ++++++++++++++++++++++----------------------
- include/linux/kbd_kern.h |    4 ++--
- include/linux/tty.h      |    2 +-
- 2 files changed, 25 insertions(+), 25 deletions(-)
+   * RT-rwlock/rwsem annotations:
 
-diff --git a/drivers/tty/tty_buffer.c b/drivers/tty/tty_buffer.c
-index 91e326f..70cf324 100644
---- a/drivers/tty/tty_buffer.c
-+++ b/drivers/tty/tty_buffer.c
-@@ -135,20 +135,20 @@ static void __tty_buffer_flush(struct tty_struct *tty)
- void tty_buffer_flush(struct tty_struct *tty)
- {
- 	unsigned long flags;
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 
- 	/* If the data is being pushed to the tty layer then we can't
- 	   process it here. Instead set a flag and the flush_to_ldisc
- 	   path will process the flush request before it exits */
- 	if (test_bit(TTY_FLUSHING, &tty->flags)) {
- 		set_bit(TTY_FLUSHPENDING, &tty->flags);
--		spin_unlock_irqrestore(&tty->buf.lock, flags);
-+		raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 		wait_event(tty->read_wait,
- 				test_bit(TTY_FLUSHPENDING, &tty->flags) == 0);
- 		return;
- 	} else
- 		__tty_buffer_flush(tty);
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- }
- 
- /**
-@@ -238,9 +238,9 @@ int tty_buffer_request_room(struct tty_struct *tty, size_t size)
- 	unsigned long flags;
- 	int length;
- 
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 	length = __tty_buffer_request_room(tty, size);
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 	return length;
- }
- EXPORT_SYMBOL_GPL(tty_buffer_request_room);
-@@ -268,18 +268,18 @@ int tty_insert_flip_string_fixed_flag(struct tty_struct *tty,
- 		unsigned long flags;
- 		struct tty_buffer *tb;
- 
--		spin_lock_irqsave(&tty->buf.lock, flags);
-+		raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 		space = __tty_buffer_request_room(tty, goal);
- 		tb = tty->buf.tail;
- 		/* If there is no space then tb may be NULL */
- 		if (unlikely(space == 0)) {
--			spin_unlock_irqrestore(&tty->buf.lock, flags);
-+			raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 			break;
- 		}
- 		memcpy(tb->char_buf_ptr + tb->used, chars, space);
- 		memset(tb->flag_buf_ptr + tb->used, flag, space);
- 		tb->used += space;
--		spin_unlock_irqrestore(&tty->buf.lock, flags);
-+		raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 		copied += space;
- 		chars += space;
- 		/* There is a small chance that we need to split the data over
-@@ -313,18 +313,18 @@ int tty_insert_flip_string_flags(struct tty_struct *tty,
- 		unsigned long __flags;
- 		struct tty_buffer *tb;
- 
--		spin_lock_irqsave(&tty->buf.lock, __flags);
-+		raw_spin_lock_irqsave(&tty->buf.lock, __flags);
- 		space = __tty_buffer_request_room(tty, goal);
- 		tb = tty->buf.tail;
- 		/* If there is no space then tb may be NULL */
- 		if (unlikely(space == 0)) {
--			spin_unlock_irqrestore(&tty->buf.lock, __flags);
-+			raw_spin_unlock_irqrestore(&tty->buf.lock, __flags);
- 			break;
- 		}
- 		memcpy(tb->char_buf_ptr + tb->used, chars, space);
- 		memcpy(tb->flag_buf_ptr + tb->used, flags, space);
- 		tb->used += space;
--		spin_unlock_irqrestore(&tty->buf.lock, __flags);
-+		raw_spin_unlock_irqrestore(&tty->buf.lock, __flags);
- 		copied += space;
- 		chars += space;
- 		flags += space;
-@@ -349,10 +349,10 @@ EXPORT_SYMBOL(tty_insert_flip_string_flags);
- void tty_schedule_flip(struct tty_struct *tty)
- {
- 	unsigned long flags;
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 	if (tty->buf.tail != NULL)
- 		tty->buf.tail->commit = tty->buf.tail->used;
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 	schedule_work(&tty->buf.work);
- }
- EXPORT_SYMBOL(tty_schedule_flip);
-@@ -379,7 +379,7 @@ int tty_prepare_flip_string(struct tty_struct *tty, unsigned char **chars,
- 	unsigned long flags;
- 	struct tty_buffer *tb;
- 
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 	space = __tty_buffer_request_room(tty, size);
- 
- 	tb = tty->buf.tail;
-@@ -388,7 +388,7 @@ int tty_prepare_flip_string(struct tty_struct *tty, unsigned char **chars,
- 		memset(tb->flag_buf_ptr + tb->used, TTY_NORMAL, space);
- 		tb->used += space;
- 	}
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 	return space;
- }
- EXPORT_SYMBOL_GPL(tty_prepare_flip_string);
-@@ -416,7 +416,7 @@ int tty_prepare_flip_string_flags(struct tty_struct *tty,
- 	unsigned long __flags;
- 	struct tty_buffer *tb;
- 
--	spin_lock_irqsave(&tty->buf.lock, __flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, __flags);
- 	space = __tty_buffer_request_room(tty, size);
- 
- 	tb = tty->buf.tail;
-@@ -425,7 +425,7 @@ int tty_prepare_flip_string_flags(struct tty_struct *tty,
- 		*flags = tb->flag_buf_ptr + tb->used;
- 		tb->used += space;
- 	}
--	spin_unlock_irqrestore(&tty->buf.lock, __flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, __flags);
- 	return space;
- }
- EXPORT_SYMBOL_GPL(tty_prepare_flip_string_flags);
-@@ -455,7 +455,7 @@ static void flush_to_ldisc(struct work_struct *work)
- 	if (disc == NULL)	/*  !TTY_LDISC */
- 		return;
- 
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 
- 	if (!test_and_set_bit(TTY_FLUSHING, &tty->flags)) {
- 		struct tty_buffer *head;
-@@ -484,10 +484,10 @@ static void flush_to_ldisc(struct work_struct *work)
- 			char_buf = head->char_buf_ptr + head->read;
- 			flag_buf = head->flag_buf_ptr + head->read;
- 			head->read += count;
--			spin_unlock_irqrestore(&tty->buf.lock, flags);
-+			raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 			disc->ops->receive_buf(tty, char_buf,
- 							flag_buf, count);
--			spin_lock_irqsave(&tty->buf.lock, flags);
-+			raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 		}
- 		clear_bit(TTY_FLUSHING, &tty->flags);
- 	}
-@@ -499,7 +499,7 @@ static void flush_to_ldisc(struct work_struct *work)
- 		clear_bit(TTY_FLUSHPENDING, &tty->flags);
- 		wake_up(&tty->read_wait);
- 	}
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 
- 	tty_ldisc_deref(disc);
- }
-@@ -533,10 +533,10 @@ void tty_flush_to_ldisc(struct tty_struct *tty)
- void tty_flip_buffer_push(struct tty_struct *tty)
- {
- 	unsigned long flags;
--	spin_lock_irqsave(&tty->buf.lock, flags);
-+	raw_spin_lock_irqsave(&tty->buf.lock, flags);
- 	if (tty->buf.tail != NULL)
- 		tty->buf.tail->commit = tty->buf.tail->used;
--	spin_unlock_irqrestore(&tty->buf.lock, flags);
-+	raw_spin_unlock_irqrestore(&tty->buf.lock, flags);
- 
- 	if (tty->low_latency)
- 		flush_to_ldisc(&tty->buf.work);
-@@ -557,7 +557,7 @@ EXPORT_SYMBOL(tty_flip_buffer_push);
- 
- void tty_buffer_init(struct tty_struct *tty)
- {
--	spin_lock_init(&tty->buf.lock);
-+	raw_spin_lock_init(&tty->buf.lock);
- 	tty->buf.head = NULL;
- 	tty->buf.tail = NULL;
- 	tty->buf.free = NULL;
-diff --git a/include/linux/tty.h b/include/linux/tty.h
-index 4f6c59a..c6299c5 100644
---- a/include/linux/tty.h
-+++ b/include/linux/tty.h
-@@ -87,7 +87,7 @@ struct tty_buffer {
- 
- struct tty_bufhead {
- 	struct work_struct work;
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct tty_buffer *head;	/* Queue head */
- 	struct tty_buffer *tail;	/* Active buffer */
- 	struct tty_buffer *free;	/* Free queue head */
--- 
-1.7.9.5
+     RT does not allow multiple readers on rwlocks and rwsems. The
+     lockdep annotations did not yet consider that fact. One might
+     think that this is a complete RT specific issue, but it's
+     not. The FIFO fair rwsem/lock modifications in mainline made
+     reader/writer primitives prone to very subtle deadlock problems
+     which cannot be detected by the current lockdep annotations in
+     mainline. The reason is that if a writer interleaves with two
+     readers it will block the second reader from proceeding in order
+     not to allow writer starvation. The restricted RWlocks semantics
+     of RT allow an easy detection of that problem. We already
+     triggered a real deadlock in RT (see:
+     peterz-srcu-crypto-chain.patch) which could result in a hard to
+     trigger, but mainline relevant deadlock. Wait for more
+     interesting problems in that area.
+
+   * The output of might_sleep debugging is silent about the possible
+     causes vs. the preempt count. Contrary to interrupt disabling
+     there is zero information about what disabled preemption
+     last. Again, not strictly a bugfix, but debuggability is key.
+
+   * Fix a potentially deadly sto(m)p_machine deadlock. A CPU which
+     calls that code from its inactive state (don't ask me for the
+     ghastly deatils why this is necessary) can run into a contended
+     state of the stomp machine mutex which would cause a rather
+     awkward issue of idle scheduling itself away to idle as the only
+     possible task on that upcoming cpu. Not pretty ....
 
 
+There is also a worth to mention fundamental change in this release:
+
+   * Split softirq locks
+
+     In the pre 3,x-RT versions we spawned a separate thread for each
+     softirq on each CPU. This served the PER_CPUness requirements,
+     but did not provide any means against priority inversions
+     vs. softirqs.
+
+     With the start of the 3.0-rt series I decided to drop the per
+     softirq threads for simplicity reasons as I had to deal with all
+     the fallout of the migration disabling design I had taken course
+     to.
+
+     I got several complaints about the missing softirq thread split
+     since then and a few patches to reestablish them. I refused to
+     take those patches for a simple reason: configuration. It's
+     extremly hard to get the parameters right for a RT system in
+     general. Adding something which is obscure as soft interrupts to
+     the system designers todo list is a bad idea.
+
+     Now I spent quite some time on analysing the most urgent issues
+     on RT:
+
+     	  throughpout  versus  deterministism
+
+     The interested observer may have noticed that deterministic
+     behaviour and throughput are mutually exclusive properties, but
+     in the 2.6 based RT series the split softirq implementation at
+     least allowed some mitigation of this problem by adjusting the
+     priorities, while the 3.x RT series did not provide a user
+     tunable knob at all. Though the untunable behaviour of the 3.x RT
+     series behaved in general better than the untuned 2.6 RT at least
+     in terms of throughput.
+
+     The reason is that 3.x RT put a big focus on dealing with the
+     increasing PER_CPUness of data in the mainline kernel. The
+     migrate_disable based ability of executing pending soft
+     interrupts in any thread context which had raised a soft
+     interrupt made RT a bit more similar to the mainline behaviour,
+     but did not provide any serious means of controlling that
+     behaviour.
+
+     My new approach of split softirq locks is another (sigh) futile
+     attempt to deal with the current (non)existing softirq semantics
+     of the mainline kernel.
+
+     What's the meaning of soft interrupt processing in Linux today?
+
+     First of all, it's a conglomorate of mostly unrelated jobs, which
+     run in the context of a randomly chosen victim w/o the ability to
+     put any control on them. Softirq processing happens in three
+     contexts:
+
+     - Return from hard interrupt context. Basically the same as the
+       hard interrupt context except that interrupts are enabled.
+
+     - In the context of a thread which reenables softirq processing
+       via local_bh_enable or *_unlock_bh. Interestingly enough
+       reenabling interrupts does not have the same effect, though
+       disabling interrupts prevents softirq processing as well and
+       there are places which raise soft interrupt in interrupt
+       disabled regions which delegates them to ksoftirqd or to the
+       next random context which happens to reach a softirq processing
+       context before ksoftirqd.
+
+     - ksoftirqd. The invocation of ksoftirqd is not well defined. It
+       happens when the above two contexts looped extensivly in the
+       softirq processing or if a softirq gets raised outside of a
+       hard interrupt context in a bottom half enabled region. Now
+       even in the case that ksoftirqd has been woken up there is no
+       guarantee, that it will actually process softinterrupts at all
+       because the other two contexts can be invoked (again) before
+       ksoftirqd gets scheduled in.
+
+     Quite a set of imprecise rules and unclear semantics which
+     explain the pain RT has with softirq processing.
+
+     The pre 3.0-RT approach of delegating all softirq processing to
+     separate per softirq threads is only a partial solution to the
+     problem and introduces a hard to configure set of softirq thread
+     scheduling policy and priority questions. Aside of that it does
+     not allow to process soft interrupts from the tail of the
+     interrupt threads or softirq enabling code.
+
+     The 3.x-RT approach of allowing the softirq processing from the
+     tail of interrupt threads or softirq enabling code gave us a
+     throughput enhancement and got rid of the configuration
+     complexity, but we lost the ability to optimize for specific use
+     cases (e.g. deterministic networking).
+     
+     After studying the softirq behaviour I came to the conclusion
+     that it might be interesting to try a different approach.
+     Especially networking handles the softirq processing either in
+     the interrupt tail or from bh enabling thread contexts.
+
+     So instead of splitting the softirq threads I split the softirq
+     locks so different softirqs can be handled seperately. If a
+     softirq is raised in the context of a thread, then its noted in
+     the task struct and when the thread leaves the bh disabled
+     section it handles this particular soft interrupt in its own
+     context. This removes the burden of running completely unrelated
+     softirqs like timers, tasklets etc. from a context which raised a
+     network soft interrupt. That way the softirq processing is
+     coupled to the originating thread and its scheduling properties,
+     so the need for finding optimal parameters should be gone.
+
+     Now this only works for soft interrupts which are raised in the
+     context of a thread. Unfortunately there is no way to do the same
+     for soft interrupts which are raised in hard interrupt context
+     (e.g. RCU, timers). They have no thread associated and are
+     therefor delegated to ksoftirqd. This is ok, except that it does
+     not help people who want to use signal based timers, but that
+     problem needs to be solved by moving the complex handling into
+     the context of the thread which is going to receive the signal
+     and should vanish from the softirq processing completely.
+     
+     In principle we should have even in mainline a clear separation
+     of which soft interrupts are disabled by a particular code region
+     instead of disabling them wholesale. Though the nicest solution
+     would be to get rid of them completely :)
+ 
+     Give it proper testing and lemme know whether this solves your
+     particular problems which arised from giving up the separate
+     softirq threads. Don't complain about signal based timers - see
+     above!
+
+The RT patch against 3.6.1 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.1-rt1.patch.xz
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patches-3.6.1-rt1.tar.xz
+
+Enjoy,
+
+	tglx
