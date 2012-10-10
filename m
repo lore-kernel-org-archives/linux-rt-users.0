@@ -1,137 +1,136 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/6] mm: slab: Fix potential deadlock
-Date: Wed, 10 Oct 2012 09:38:03 -0400
-Message-ID: <20121010133842.809440374@goodmis.org>
+Subject: [PATCH RT 4/6] rt: rwsem/rwlock: lockdep annotations
+Date: Wed, 10 Oct 2012 09:38:05 -0400
+Message-ID: <20121010133843.078036683@goodmis.org>
 References: <20121010133801.331863565@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-mm-slab-Fix-potential-deadlock.patch
+Content-Disposition: inline; filename=0004-rt-rwsem-rwlock-lockdep-annotations.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
- =============================================
-[ INFO: possible recursive locking detected ]
- 3.6.0-rt1+ #49 Not tainted
- ---------------------------------------------
- swapper/0/1 is trying to acquire lock:
- lock_slab_on+0x72/0x77
-
- but task is already holding lock:
- __local_lock_irq+0x24/0x77
-
- other info that might help us debug this:
-  Possible unsafe locking scenario:
-
-        CPU0
-        ----
-   lock(&per_cpu(slab_lock, __cpu).lock);
-   lock(&per_cpu(slab_lock, __cpu).lock);
-
-  *** DEADLOCK ***
-
-  May be due to missing lock nesting notation
-
- 2 locks held by swapper/0/1:
- kmem_cache_create+0x33/0x89
- __local_lock_irq+0x24/0x77
-
- stack backtrace:
- Pid: 1, comm: swapper/0 Not tainted 3.6.0-rt1+ #49
- Call Trace:
- __lock_acquire+0x9a4/0xdc4
- ? __local_lock_irq+0x24/0x77
- ? lock_slab_on+0x72/0x77
- lock_acquire+0xc4/0x108
- ? lock_slab_on+0x72/0x77
- ? unlock_slab_on+0x5b/0x5b
- rt_spin_lock+0x36/0x3d
- ? lock_slab_on+0x72/0x77
- ? migrate_disable+0x85/0x93
- lock_slab_on+0x72/0x77
- do_ccupdate_local+0x19/0x44
- slab_on_each_cpu+0x36/0x5a
- do_tune_cpucache+0xc1/0x305
- enable_cpucache+0x8c/0xb5
- setup_cpu_cache+0x28/0x182
- __kmem_cache_create+0x34b/0x380
- ? shmem_mount+0x1a/0x1a
- kmem_cache_create+0x4a/0x89
- ? shmem_mount+0x1a/0x1a
- shmem_init+0x3e/0xd4
- kernel_init+0x11c/0x214
- kernel_thread_helper+0x4/0x10
- ? retint_restore_args+0x13/0x13
- ? start_kernel+0x3bc/0x3bc
- ? gs_change+0x13/0x13
-
-It's not a missing annotation. It's simply wrong code and needs to be
-fixed. Instead of nesting the local and the remote cpu lock simply
-acquire only the remote cpu lock, which is sufficient protection for
-this procedure.
+rwlocks and rwsems on RT do not allow multiple readers. Annotate the
+lockdep acquire functions accordingly.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/locallock.h |    8 ++++++++
- mm/slab.c                 |   10 ++--------
- 2 files changed, 10 insertions(+), 8 deletions(-)
+ kernel/rt.c |   46 +++++++++++++++++++++++++---------------------
+ 1 file changed, 25 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 8fbc393..0161fbb 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -96,6 +96,9 @@ static inline void __local_lock_irq(struct local_irq_lock *lv)
- #define local_lock_irq(lvar)						\
- 	do { __local_lock_irq(&get_local_var(lvar)); } while (0)
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 092d6b3..aa10504 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -216,15 +216,17 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	 * write locked.
+ 	 */
+ 	migrate_disable();
+-	if (rt_mutex_owner(lock) != current)
++	if (rt_mutex_owner(lock) != current) {
+ 		ret = rt_mutex_trylock(lock);
+-	else if (!rwlock->read_depth)
++		if (ret)
++			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
++	} else if (!rwlock->read_depth) {
+ 		ret = 0;
++	}
  
-+#define local_lock_irq_on(lvar, cpu)					\
-+	do { __local_lock_irq(&per_cpu(lvar, cpu)); } while (0)
-+
- static inline void __local_unlock_irq(struct local_irq_lock *lv)
- {
- 	LL_WARN(!lv->nestcnt);
-@@ -111,6 +114,11 @@ static inline void __local_unlock_irq(struct local_irq_lock *lv)
- 		put_local_var(lvar);					\
- 	} while (0)
+-	if (ret) {
++	if (ret)
+ 		rwlock->read_depth++;
+-		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
+-	} else
++	else
+ 		migrate_enable();
  
-+#define local_unlock_irq_on(lvar, cpu)					\
-+	do {								\
-+		__local_unlock_irq(&per_cpu(lvar, cpu));		\
-+	} while (0)
-+
- static inline int __local_lock_irqsave(struct local_irq_lock *lv)
+ 	return ret;
+@@ -242,13 +244,13 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
  {
- 	if (lv->owner != current) {
-diff --git a/mm/slab.c b/mm/slab.c
-index f451650..d7cdccb 100644
---- a/mm/slab.c
-+++ b/mm/slab.c
-@@ -745,18 +745,12 @@ slab_on_each_cpu(void (*func)(void *arg, int this_cpu), void *arg)
+ 	struct rt_mutex *lock = &rwlock->lock;
  
- static void lock_slab_on(unsigned int cpu)
- {
--	if (cpu == smp_processor_id())
--		local_lock_irq(slab_lock);
--	else
--		local_spin_lock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
-+	local_lock_irq_on(slab_lock, cpu);
+-	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+-
+ 	/*
+ 	 * recursive read locks succeed when current owns the lock
+ 	 */
+-	if (rt_mutex_owner(lock) != current)
++	if (rt_mutex_owner(lock) != current) {
++		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 		__rt_spin_lock(lock);
++	}
+ 	rwlock->read_depth++;
  }
  
- static void unlock_slab_on(unsigned int cpu)
+@@ -264,11 +266,11 @@ EXPORT_SYMBOL(rt_write_unlock);
+ 
+ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
  {
--	if (cpu == smp_processor_id())
--		local_unlock_irq(slab_lock);
--	else
--		local_spin_unlock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
-+	local_unlock_irq_on(slab_lock, cpu);
+-	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+-
+ 	/* Release the lock only when read_depth is down to 0 */
+-	if (--rwlock->read_depth == 0)
++	if (--rwlock->read_depth == 0) {
++		rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 		__rt_spin_unlock(&rwlock->lock);
++	}
  }
- #endif
+ EXPORT_SYMBOL(rt_read_unlock);
+ 
+@@ -315,9 +317,10 @@ EXPORT_SYMBOL(rt_up_write);
+ 
+ void  rt_up_read(struct rw_semaphore *rwsem)
+ {
+-	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	if (--rwsem->read_depth == 0)
++	if (--rwsem->read_depth == 0) {
++		rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+ 		rt_mutex_unlock(&rwsem->lock);
++	}
+ }
+ EXPORT_SYMBOL(rt_up_read);
+ 
+@@ -366,15 +369,16 @@ int  rt_down_read_trylock(struct rw_semaphore *rwsem)
+ 	 * but not when read_depth == 0 which means that the rwsem is
+ 	 * write locked.
+ 	 */
+-	if (rt_mutex_owner(lock) != current)
++	if (rt_mutex_owner(lock) != current) {
+ 		ret = rt_mutex_trylock(&rwsem->lock);
+-	else if (!rwsem->read_depth)
++		if (ret)
++			rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
++	} else if (!rwsem->read_depth) {
+ 		ret = 0;
++	}
+ 
+-	if (ret) {
++	if (ret)
+ 		rwsem->read_depth++;
+-		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+-	}
+ 	return ret;
+ }
+ EXPORT_SYMBOL(rt_down_read_trylock);
+@@ -383,10 +387,10 @@ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
+ {
+ 	struct rt_mutex *lock = &rwsem->lock;
+ 
+-	rwsem_acquire_read(&rwsem->dep_map, subclass, 0, _RET_IP_);
+-
+-	if (rt_mutex_owner(lock) != current)
++	if (rt_mutex_owner(lock) != current) {
++		rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
+ 		rt_mutex_lock(&rwsem->lock);
++	}
+ 	rwsem->read_depth++;
+ }
  
 -- 
 1.7.10.4
