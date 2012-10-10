@@ -1,46 +1,28 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.6.1-rt1
-Date: Tue, 09 Oct 2012 21:51:18 -0400
-Message-ID: <1349833878.24256.49.camel@gandalf.local.home>
-References: <alpine.LFD.2.02.1210091535140.10988@ionos>
-	 <1349806792.24256.34.camel@gandalf.local.home>
-	 <1349828517.24256.47.camel@gandalf.local.home>
+From: Lars Segerlund <lars.segerlund@gmail.com>
+Subject: Patch to set kernel cpu affinity
+Date: Wed, 10 Oct 2012 11:11:02 +0200
+Message-ID: <CAF-VNaoXNHYQGXXfwVpw0xkri8t4pi9_WUxTt64J-jyVq7_R3Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6303 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755250Ab2JJBvU (ORCPT
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:50624 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751329Ab2JJJLD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Oct 2012 21:51:20 -0400
-In-Reply-To: <1349828517.24256.47.camel@gandalf.local.home>
+	Wed, 10 Oct 2012 05:11:03 -0400
+Received: by mail-ee0-f46.google.com with SMTP id b15so181055eek.19
+        for <linux-rt-users@vger.kernel.org>; Wed, 10 Oct 2012 02:11:02 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-10-09 at 20:21 -0400, Steven Rostedt wrote:
+ Hi,
 
-> > 0007-stomp-machine-deal-clever-with-stopper-lock.patch
-> 
-> With this one, things have changed quite a bit. I'll take a deeper look
-> at what you did and figure out how this applies to v3.0-rt.
+ I am looking for a patch I saw a while ago to bind the kernel and all
+threads to a single cpu, however googling like mad I am unable to find
+it.
+ It was for rt-preempt, but I can't remeber where I saw it.
 
-It doesn't look like this patch is needed for v3.0-rt as the patch
-addresses the new stop_machine_from_inactive_cpu() API used by the mtrr
-code added by this commit:
+ Have anyone seen it or have any pointers for it ?
 
-commit 192d8857427dd23707d5f0b86ca990c3af6f2d74
-Author: Suresh Siddha <suresh.b.siddha@intel.com>
-Date:   Thu Jun 23 11:19:29 2011 -0700
-
-    x86, mtrr: use stop_machine APIs for doing MTRR rendezvous
-
-
-This was added in 3.1 so the patch is still required for v3.2-rt.
-
--- Steve
-
-
+ / regards, Lars Segerlund.
