@@ -1,74 +1,29 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/6] mm: page_alloc: Use local_lock_on() instead of plain spinlock
-Date: Wed, 10 Oct 2012 09:38:04 -0400
-Message-ID: <20121010133842.940659869@goodmis.org>
+Subject: [PATCH RT 6/6] Linux 3.0.45-rt68-rc1
+Date: Wed, 10 Oct 2012 09:38:07 -0400
+Message-ID: <20121010133843.341664414@goodmis.org>
 References: <20121010133801.331863565@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-mm-page_alloc-Use-local_lock_on-instead-of-plain-spi.patch
+Content-Disposition: inline; filename=0006-Linux-3.0.45-rt68-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <srostedt@redhat.com>
 
-The plain spinlock while sufficient does not update the local_lock
-internals. Use a proper local_lock function instead to ease debugging.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/locallock.h |   11 +++++++++++
- mm/page_alloc.c           |    4 ++--
- 2 files changed, 13 insertions(+), 2 deletions(-)
+ localversion-rt |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 0161fbb..f1804a3 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -137,6 +137,12 @@ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
- 		_flags = __get_cpu_var(lvar).flags;			\
- 	} while (0)
- 
-+#define local_lock_irqsave_on(lvar, _flags, cpu)			\
-+	do {								\
-+		__local_lock_irqsave(&per_cpu(lvar, cpu));		\
-+		_flags = per_cpu(lvar, cpu).flags;			\
-+	} while (0)
-+
- static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
- 					    unsigned long flags)
- {
-@@ -156,6 +162,11 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
- 			put_local_var(lvar);				\
- 	} while (0)
- 
-+#define local_unlock_irqrestore_on(lvar, flags, cpu)			\
-+	do {								\
-+		__local_unlock_irqrestore(&per_cpu(lvar, cpu), flags);	\
-+	} while (0)
-+
- #define local_spin_trylock_irq(lvar, lock)				\
- 	({								\
- 		int __locked;						\
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 47d939e..c645e07 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -227,9 +227,9 @@ static DEFINE_LOCAL_IRQ_LOCK(pa_lock);
- 
- #ifdef CONFIG_PREEMPT_RT_BASE
- # define cpu_lock_irqsave(cpu, flags)		\
--	spin_lock_irqsave(&per_cpu(pa_lock, cpu).lock, flags)
-+	local_lock_irqsave_on(pa_lock, flags, cpu)
- # define cpu_unlock_irqrestore(cpu, flags)		\
--	spin_unlock_irqrestore(&per_cpu(pa_lock, cpu).lock, flags)
-+	local_unlock_irqrestore_on(pa_lock, flags, cpu)
- #else
- # define cpu_lock_irqsave(cpu, flags)		local_irq_save(flags)
- # define cpu_unlock_irqrestore(cpu, flags)	local_irq_restore(flags)
+diff --git a/localversion-rt b/localversion-rt
+index 5513b84..970646d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt67
++-rt68-rc1
 -- 
 1.7.10.4
