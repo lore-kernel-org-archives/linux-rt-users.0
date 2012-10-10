@@ -1,75 +1,92 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 7/8] stomp_machine: Use mutex_trylock when called from inactive cpu
-Date: Wed, 10 Oct 2012 09:34:13 -0400
-Message-ID: <20121010133523.959048417@goodmis.org>
+Subject: [PATCH RT 6/8] sched: Better debug output for might sleep
+Date: Wed, 10 Oct 2012 09:34:12 -0400
+Message-ID: <20121010133523.816809880@goodmis.org>
 References: <20121010133406.053812290@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-stomp_machine-Use-mutex_trylock-when-called-from-ina.patch
+Content-Disposition: inline; filename=0006-sched-Better-debug-output-for-might-sleep.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-If the stop machinery is called from inactive CPU we cannot use
-mutex_lock, because some other stomp machine invokation might be in
-progress and the mutex can be contended. We cannot schedule from this
-context, so trylock and loop.
+might sleep can tell us where interrupts have been disabled, but we
+have no idea what disabled preemption. Add some debug infrastructure.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/stop_machine.c |   13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
+ include/linux/sched.h |    4 ++++
+ kernel/sched/core.c   |   23 +++++++++++++++++++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
-index 561ba3a..e98c70b 100644
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -158,7 +158,7 @@ static DEFINE_PER_CPU(struct cpu_stop_work, stop_cpus_work);
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 6f342d8..f291347 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1655,6 +1655,10 @@ struct task_struct {
+ 	int kmap_idx;
+ 	pte_t kmap_pte[KM_TYPE_NR];
+ #endif
++
++#ifdef CONFIG_DEBUG_PREEMPT
++	unsigned long preempt_disable_ip;
++#endif
+ };
  
- static void queue_stop_cpus_work(const struct cpumask *cpumask,
- 				 cpu_stop_fn_t fn, void *arg,
--				 struct cpu_stop_done *done)
-+				 struct cpu_stop_done *done, bool inactive)
- {
- 	struct cpu_stop_work *work;
- 	unsigned int cpu;
-@@ -175,7 +175,12 @@ static void queue_stop_cpus_work(const struct cpumask *cpumask,
- 	 * Make sure that all work is queued on all cpus before we
- 	 * any of the cpus can execute it.
- 	 */
--	mutex_lock(&stopper_lock);
-+	if (!inactive) {
-+		mutex_lock(&stopper_lock);
-+	} else {
-+		while (!mutex_trylock(&stopper_lock))
-+			cpu_relax();
+ #ifdef CONFIG_PREEMPT_RT_FULL
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 66d4dea..263fd96 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3215,8 +3215,13 @@ void __kprobes add_preempt_count(int val)
+ 	DEBUG_LOCKS_WARN_ON((preempt_count() & PREEMPT_MASK) >=
+ 				PREEMPT_MASK - 10);
+ #endif
+-	if (preempt_count() == val)
+-		trace_preempt_off(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
++	if (preempt_count() == val) {
++		unsigned long ip = get_parent_ip(CALLER_ADDR1);
++#ifdef CONFIG_DEBUG_PREEMPT
++		current->preempt_disable_ip = ip;
++#endif
++		trace_preempt_off(CALLER_ADDR0, ip);
 +	}
- 	for_each_cpu(cpu, cpumask)
- 		cpu_stop_queue_work(&per_cpu(cpu_stopper, cpu),
- 				    &per_cpu(stop_cpus_work, cpu));
-@@ -188,7 +193,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
- 	struct cpu_stop_done done;
- 
- 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
--	queue_stop_cpus_work(cpumask, fn, arg, &done);
-+	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
- 	wait_for_stop_done(&done);
- 	return done.executed ? done.ret : -ENOENT;
  }
-@@ -601,7 +606,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
- 	set_state(&smdata, STOPMACHINE_PREPARE);
- 	cpu_stop_init_done(&done, num_active_cpus());
- 	queue_stop_cpus_work(cpu_active_mask, stop_machine_cpu_stop, &smdata,
--			     &done);
-+			     &done, true);
- 	ret = stop_machine_cpu_stop(&smdata);
+ EXPORT_SYMBOL(add_preempt_count);
  
- 	/* Busy wait for completion. */
+@@ -3259,6 +3264,13 @@ static noinline void __schedule_bug(struct task_struct *prev)
+ 	print_modules();
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(prev);
++#ifdef DEBUG_PREEMPT
++	if (in_atomic_preempt_off()) {
++		pr_err("Preemption disabled at:");
++		print_ip_sym(current->preempt_disable_ip);
++		pr_cont("\n");
++	}
++#endif
+ 	dump_stack();
+ }
+ 
+@@ -7479,6 +7491,13 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+ 	debug_show_held_locks(current);
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(current);
++#ifdef DEBUG_PREEMPT
++	if (!preempt_count_equals(preempt_offset)) {
++		pr_err("Preemption disabled at:");
++		print_ip_sym(current->preempt_disable_ip);
++		pr_cont("\n");
++	}
++#endif
+ 	dump_stack();
+ }
+ EXPORT_SYMBOL(__might_sleep);
 -- 
 1.7.10.4
