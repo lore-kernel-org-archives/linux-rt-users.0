@@ -1,76 +1,150 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/6] [ANNOUNCE] 3.0.45-rt68-rc1 stable review
-Date: Wed, 10 Oct 2012 09:38:01 -0400
-Message-ID: <20121010133801.331863565@goodmis.org>
+Subject: [PATCH RT 1/6] softirq: Init softirq local lock after per cpu section is set up
+Date: Wed, 10 Oct 2012 09:38:02 -0400
+Message-ID: <20121010133842.677457524@goodmis.org>
+References: <20121010133801.331863565@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Clark Williams <clark@redhat.com>, Carsten Emde <cbe@osadl.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:25172 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754086Ab2JJNin (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Oct 2012 09:38:43 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-softirq-Init-softirq-local-lock-after-per-cpu-sectio.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Dear RT Folks,
+I discovered this bug when booting 3.4-rt on my powerpc box. It crashed
+with the following report:
 
-This is the RT stable review cycle of patch 3.0.45-rt68-rc1.
+------------[ cut here ]------------
+kernel BUG at /work/rt/stable-rt.git/kernel/rtmutex_common.h:75!
+Oops: Exception in kernel mode, sig: 5 [#1]
+PREEMPT SMP NR_CPUS=64 NUMA PA Semi PWRficient
+Modules linked in:
+NIP: c0000000004aa03c LR: c0000000004aa01c CTR: c00000000009b2ac
+REGS: c00000003e8d7950 TRAP: 0700   Not tainted  (3.4.11-test-rt19)
+MSR: 9000000000029032 <SF,HV,EE,ME,IR,DR,RI>  CR: 24000082  XER: 20000000
+SOFTE: 0
+TASK = c00000003e8fdcd0[11] 'ksoftirqd/1' THREAD: c00000003e8d4000 CPU: 1
+GPR00: 0000000000000001 c00000003e8d7bd0 c000000000d6cbb0 0000000000000000
+GPR04: c00000003e8fdcd0 0000000000000000 0000000024004082 c000000000011454
+GPR08: 0000000000000000 0000000080000001 c00000003e8fdcd1 0000000000000000
+GPR12: 0000000024000084 c00000000fff0280 ffffffffffffffff 000000003ffffad8
+GPR16: ffffffffffffffff 000000000072c798 0000000000000060 0000000000000000
+GPR20: 0000000000642741 000000000072c858 000000003ffffaf0 0000000000000417
+GPR24: 000000000072dcd0 c00000003e7ff990 0000000000000000 0000000000000001
+GPR28: 0000000000000000 c000000000792340 c000000000ccec78 c000000001182338
+NIP [c0000000004aa03c] .wakeup_next_waiter+0x44/0xb8
+LR [c0000000004aa01c] .wakeup_next_waiter+0x24/0xb8
+Call Trace:
+[c00000003e8d7bd0] [c0000000004aa01c] .wakeup_next_waiter+0x24/0xb8 (unreliable)
+[c00000003e8d7c60] [c0000000004a0320] .rt_spin_lock_slowunlock+0x8c/0xe4
+[c00000003e8d7ce0] [c0000000004a07cc] .rt_spin_unlock+0x54/0x64
+[c00000003e8d7d60] [c0000000000636bc] .__thread_do_softirq+0x130/0x174
+[c00000003e8d7df0] [c00000000006379c] .run_ksoftirqd+0x9c/0x1a4
+[c00000003e8d7ea0] [c000000000080b68] .kthread+0xa8/0xb4
+[c00000003e8d7f90] [c00000000001c2f8] .kernel_thread+0x54/0x70
+Instruction dump:
+60000000 e86d01c8 38630730 4bff7061 60000000 ebbf0008 7c7c1b78 e81d0040
+7fe00278 7c000074 7800d182 68000001 <0b000000> e88d01c8 387d0010 38840738
 
-Please scream at me if I messed something up. Please test the patches too.
+The rtmutex_common.h:75 is:
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+rt_mutex_top_waiter(struct rt_mutex *lock)
+{
+	struct rt_mutex_waiter *w;
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+	w = plist_first_entry(&lock->wait_list, struct rt_mutex_waiter,
+			       list_entry);
+	BUG_ON(w->lock != lock);
 
-If all goes well, this patch will be converted to the next main release
-on 10/15/2012.
+	return w;
+}
 
-Enjoy,
+Where the waiter->lock is corrupted. I saw various other random bugs
+that all had to with the softirq lock and plist. As plist needs to be
+initialized before it is used I investigated how this lock is
+initialized. It's initialized with:
 
--- Steve
+void __init softirq_early_init(void)
+{
+	local_irq_lock_init(local_softirq_lock);
+}
 
+Where:
 
-To build 3.0.45-rt68-rc1 directly, the following patches should be applied:
+	do {								\
+		int __cpu;						\
+		for_each_possible_cpu(__cpu)				\
+			spin_lock_init(&per_cpu(lvar, __cpu).lock);	\
+	} while (0)
 
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+As the softirq lock is a local_irq_lock, which is a per_cpu lock, the
+initialization is done to all per_cpu versions of the lock. But lets
+look at where the softirq_early_init() is called from.
 
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.45.xz
+In init/main.c: start_kernel()
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.45-rt68-rc1.patch.xz
+/*
+ * Interrupts are still disabled. Do necessary setups, then
+ * enable them
+ */
+	softirq_early_init();
+	tick_init();
+	boot_cpu_init();
+	page_address_init();
+	printk(KERN_NOTICE "%s", linux_banner);
+	setup_arch(&command_line);
+	mm_init_owner(&init_mm, &init_task);
+	mm_init_cpumask(&init_mm);
+	setup_command_line(command_line);
+	setup_nr_cpu_ids();
+	setup_per_cpu_areas();
+	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
 
-You can also build from 3.0.45-rt67 by applying the incremental patch:
+One of the first things that is called is the initialization of the
+softirq lock. But if you look further down, we see the per_cpu areas
+have not been set up yet. Thus initializing a local_irq_lock() before
+the per_cpu section is set up, may not work as it is initializing the
+per cpu locks before the per cpu exists.
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.45-rt67-rt68-rc1.patch.xz
+By moving the softirq_early_init() right after setup_per_cpu_areas(),
+the kernel boots fine.
 
-
-Changes from 3.0.45-rt67:
-
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Clark Williams <clark@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Carsten Emde <cbe@osadl.org>
+Cc: vomlehn@texas.net
+Cc: stable-rt@vger.kernel.org
+Link: http://lkml.kernel.org/r/1349362924.6755.18.camel@gandalf.local.home
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
+ init/main.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Steven Rostedt (2):
-      softirq: Init softirq local lock after per cpu section is set up
-      Linux 3.0.45-rt68-rc1
-
-Thomas Gleixner (4):
-      mm: slab: Fix potential deadlock
-      mm: page_alloc: Use local_lock_on() instead of plain spinlock
-      rt: rwsem/rwlock: lockdep annotations
-      sched: Better debug output for might sleep
-
-----
- include/linux/locallock.h |   19 +++++++++++++++++++
- include/linux/sched.h     |    4 ++++
- init/main.c               |    2 +-
- kernel/rt.c               |   46 ++++++++++++++++++++++++---------------------
- kernel/sched.c            |   23 +++++++++++++++++++++--
- localversion-rt           |    2 +-
- mm/page_alloc.c           |    4 ++--
- mm/slab.c                 |   10 ++--------
- 8 files changed, 75 insertions(+), 35 deletions(-)
+diff --git a/init/main.c b/init/main.c
+index 2713360..2f96fad 100644
+--- a/init/main.c
++++ b/init/main.c
+@@ -490,6 +490,7 @@ asmlinkage void __init start_kernel(void)
+ 	setup_command_line(command_line);
+ 	setup_nr_cpu_ids();
+ 	setup_per_cpu_areas();
++	softirq_early_init();
+ 	smp_prepare_boot_cpu();	/* arch-specific boot-cpu hooks */
+ 
+ 	build_all_zonelists(NULL);
+@@ -500,7 +501,6 @@ asmlinkage void __init start_kernel(void)
+ 	parse_args("Booting kernel", static_command_line, __start___param,
+ 		   __stop___param - __start___param,
+ 		   &unknown_bootoption);
+-	softirq_early_init();
+ 	/*
+ 	 * These use large bootmem allocations and must precede
+ 	 * kmem_cache_init()
+-- 
+1.7.10.4
