@@ -1,145 +1,137 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/8] random: Make it work on rt
-Date: Wed, 10 Oct 2012 09:34:07 -0400
-Message-ID: <20121010133523.194434423@goodmis.org>
+Subject: [PATCH RT 3/8] mm: slab: Fix potential deadlock
+Date: Wed, 10 Oct 2012 09:34:09 -0400
+Message-ID: <20121010133523.438476409@goodmis.org>
 References: <20121010133406.053812290@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:23969 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754081Ab2JJNfZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Oct 2012 09:35:25 -0400
-Content-Disposition: inline; filename=0001-random-Make-it-work-on-rt.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-mm-slab-Fix-potential-deadlock.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Delegate the random insertion to the forced threaded interrupt
-handler. Store the return IP of the hard interrupt handler in the irq
-descriptor and feed it into the random generator as a source of
-entropy.
+ =============================================
+[ INFO: possible recursive locking detected ]
+ 3.6.0-rt1+ #49 Not tainted
+ ---------------------------------------------
+ swapper/0/1 is trying to acquire lock:
+ lock_slab_on+0x72/0x77
+
+ but task is already holding lock:
+ __local_lock_irq+0x24/0x77
+
+ other info that might help us debug this:
+  Possible unsafe locking scenario:
+
+        CPU0
+        ----
+   lock(&per_cpu(slab_lock, __cpu).lock);
+   lock(&per_cpu(slab_lock, __cpu).lock);
+
+  *** DEADLOCK ***
+
+  May be due to missing lock nesting notation
+
+ 2 locks held by swapper/0/1:
+ kmem_cache_create+0x33/0x89
+ __local_lock_irq+0x24/0x77
+
+ stack backtrace:
+ Pid: 1, comm: swapper/0 Not tainted 3.6.0-rt1+ #49
+ Call Trace:
+ __lock_acquire+0x9a4/0xdc4
+ ? __local_lock_irq+0x24/0x77
+ ? lock_slab_on+0x72/0x77
+ lock_acquire+0xc4/0x108
+ ? lock_slab_on+0x72/0x77
+ ? unlock_slab_on+0x5b/0x5b
+ rt_spin_lock+0x36/0x3d
+ ? lock_slab_on+0x72/0x77
+ ? migrate_disable+0x85/0x93
+ lock_slab_on+0x72/0x77
+ do_ccupdate_local+0x19/0x44
+ slab_on_each_cpu+0x36/0x5a
+ do_tune_cpucache+0xc1/0x305
+ enable_cpucache+0x8c/0xb5
+ setup_cpu_cache+0x28/0x182
+ __kmem_cache_create+0x34b/0x380
+ ? shmem_mount+0x1a/0x1a
+ kmem_cache_create+0x4a/0x89
+ ? shmem_mount+0x1a/0x1a
+ shmem_init+0x3e/0xd4
+ kernel_init+0x11c/0x214
+ kernel_thread_helper+0x4/0x10
+ ? retint_restore_args+0x13/0x13
+ ? start_kernel+0x3bc/0x3bc
+ ? gs_change+0x13/0x13
+
+It's not a missing annotation. It's simply wrong code and needs to be
+fixed. Instead of nesting the local and the remote cpu lock simply
+acquire only the remote cpu lock, which is sufficient protection for
+this procedure.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/char/random.c   |   10 ++++++----
- include/linux/irqdesc.h |    1 +
- include/linux/random.h  |    2 +-
- kernel/irq/handle.c     |    7 +++++--
- kernel/irq/manage.c     |    6 ++++++
- 5 files changed, 19 insertions(+), 7 deletions(-)
+ include/linux/locallock.h |    8 ++++++++
+ mm/slab.c                 |   10 ++--------
+ 2 files changed, 10 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/char/random.c b/drivers/char/random.c
-index feae549..f786798 100644
---- a/drivers/char/random.c
-+++ b/drivers/char/random.c
-@@ -745,18 +745,16 @@ EXPORT_SYMBOL_GPL(add_input_randomness);
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 8fbc393..0161fbb 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -96,6 +96,9 @@ static inline void __local_lock_irq(struct local_irq_lock *lv)
+ #define local_lock_irq(lvar)						\
+ 	do { __local_lock_irq(&get_local_var(lvar)); } while (0)
  
- static DEFINE_PER_CPU(struct fast_pool, irq_randomness);
- 
--void add_interrupt_randomness(int irq, int irq_flags)
-+void add_interrupt_randomness(int irq, int irq_flags, __u64 ip)
++#define local_lock_irq_on(lvar, cpu)					\
++	do { __local_lock_irq(&per_cpu(lvar, cpu)); } while (0)
++
+ static inline void __local_unlock_irq(struct local_irq_lock *lv)
  {
- 	struct entropy_store	*r;
- 	struct fast_pool	*fast_pool = &__get_cpu_var(irq_randomness);
--	struct pt_regs		*regs = get_irq_regs();
- 	unsigned long		now = jiffies;
- 	__u32			input[4], cycles = get_cycles();
+ 	LL_WARN(!lv->nestcnt);
+@@ -111,6 +114,11 @@ static inline void __local_unlock_irq(struct local_irq_lock *lv)
+ 		put_local_var(lvar);					\
+ 	} while (0)
  
- 	input[0] = cycles ^ jiffies;
- 	input[1] = irq;
--	if (regs) {
--		__u64 ip = instruction_pointer(regs);
-+	if (ip) {
- 		input[2] = ip;
- 		input[3] = ip >> 32;
- 	}
-@@ -770,7 +768,11 @@ void add_interrupt_randomness(int irq, int irq_flags)
- 	fast_pool->last = now;
- 
- 	r = nonblocking_pool.initialized ? &input_pool : &nonblocking_pool;
-+#ifndef CONFIG_PREEMPT_RT_FULL
- 	__mix_pool_bytes(r, &fast_pool->pool, sizeof(fast_pool->pool), NULL);
-+#else
-+	mix_pool_bytes(r, &fast_pool->pool, sizeof(fast_pool->pool), NULL);
-+#endif
- 	/*
- 	 * If we don't have a valid cycle counter, and we see
- 	 * back-to-back timer interrupts, then skip giving credit for
-diff --git a/include/linux/irqdesc.h b/include/linux/irqdesc.h
-index 9a323d1..5bf5add 100644
---- a/include/linux/irqdesc.h
-+++ b/include/linux/irqdesc.h
-@@ -52,6 +52,7 @@ struct irq_desc {
- 	unsigned int		irq_count;	/* For detecting broken IRQs */
- 	unsigned long		last_unhandled;	/* Aging timer for unhandled count */
- 	unsigned int		irqs_unhandled;
-+	u64			random_ip;
- 	raw_spinlock_t		lock;
- 	struct cpumask		*percpu_enabled;
- #ifdef CONFIG_SMP
-diff --git a/include/linux/random.h b/include/linux/random.h
-index ac621ce..9ae01e2 100644
---- a/include/linux/random.h
-+++ b/include/linux/random.h
-@@ -51,7 +51,7 @@ struct rnd_state {
- extern void add_device_randomness(const void *, unsigned int);
- extern void add_input_randomness(unsigned int type, unsigned int code,
- 				 unsigned int value);
--extern void add_interrupt_randomness(int irq, int irq_flags);
-+extern void add_interrupt_randomness(int irq, int irq_flags, __u64 ip);
- 
- extern void get_random_bytes(void *buf, int nbytes);
- extern void get_random_bytes_arch(void *buf, int nbytes);
-diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
-index 311c4e6..7f50c55 100644
---- a/kernel/irq/handle.c
-+++ b/kernel/irq/handle.c
-@@ -132,6 +132,8 @@ static void irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
- irqreturn_t
- handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
++#define local_unlock_irq_on(lvar, cpu)					\
++	do {								\
++		__local_unlock_irq(&per_cpu(lvar, cpu));		\
++	} while (0)
++
+ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
  {
-+	struct pt_regs *regs = get_irq_regs();
-+	u64 ip = regs ? instruction_pointer(regs) : 0;
- 	irqreturn_t retval = IRQ_NONE;
- 	unsigned int flags = 0, irq = desc->irq_data.irq;
+ 	if (lv->owner != current) {
+diff --git a/mm/slab.c b/mm/slab.c
+index 64eb636..09addf6 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -751,18 +751,12 @@ slab_on_each_cpu(void (*func)(void *arg, int this_cpu), void *arg)
  
-@@ -173,8 +175,9 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
- 	} while (action);
+ static void lock_slab_on(unsigned int cpu)
+ {
+-	if (cpu == smp_processor_id())
+-		local_lock_irq(slab_lock);
+-	else
+-		local_spin_lock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
++	local_lock_irq_on(slab_lock, cpu);
+ }
  
- #ifndef CONFIG_PREEMPT_RT_FULL
--	/* FIXME: Can we unbreak that ? */
--	add_interrupt_randomness(irq, flags);
-+	add_interrupt_randomness(irq, flags, ip);
-+#else
-+	desc->random_ip = ip;
+ static void unlock_slab_on(unsigned int cpu)
+ {
+-	if (cpu == smp_processor_id())
+-		local_unlock_irq(slab_lock);
+-	else
+-		local_spin_unlock_irq(slab_lock, &per_cpu(slab_lock, cpu).lock);
++	local_unlock_irq_on(slab_lock, cpu);
+ }
  #endif
- 
- 	if (!noirqdebug)
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index ede56ac..90bf44a 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -814,6 +814,12 @@ static int irq_thread(void *data)
- 		if (!noirqdebug)
- 			note_interrupt(action->irq, desc, action_ret);
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		migrate_disable();
-+		add_interrupt_randomness(action->irq, 0,
-+					 desc->random_ip ^ (u64) action);
-+		migrate_enable();
-+#endif
- 		wake_threads_waitq(desc);
- 	}
  
 -- 
 1.7.10.4
-
-
