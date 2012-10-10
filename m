@@ -1,136 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/6] rt: rwsem/rwlock: lockdep annotations
-Date: Wed, 10 Oct 2012 09:38:05 -0400
-Message-ID: <20121010133843.078036683@goodmis.org>
+Subject: [PATCH RT 3/6] mm: page_alloc: Use local_lock_on() instead of plain spinlock
+Date: Wed, 10 Oct 2012 09:38:04 -0400
+Message-ID: <20121010133842.940659869@goodmis.org>
 References: <20121010133801.331863565@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-rt-rwsem-rwlock-lockdep-annotations.patch
+Content-Disposition: inline; filename=0003-mm-page_alloc-Use-local_lock_on-instead-of-plain-spi.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-rwlocks and rwsems on RT do not allow multiple readers. Annotate the
-lockdep acquire functions accordingly.
+The plain spinlock while sufficient does not update the local_lock
+internals. Use a proper local_lock function instead to ease debugging.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rt.c |   46 +++++++++++++++++++++++++---------------------
- 1 file changed, 25 insertions(+), 21 deletions(-)
+ include/linux/locallock.h |   11 +++++++++++
+ mm/page_alloc.c           |    4 ++--
+ 2 files changed, 13 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/rt.c b/kernel/rt.c
-index 092d6b3..aa10504 100644
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -216,15 +216,17 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	 * write locked.
- 	 */
- 	migrate_disable();
--	if (rt_mutex_owner(lock) != current)
-+	if (rt_mutex_owner(lock) != current) {
- 		ret = rt_mutex_trylock(lock);
--	else if (!rwlock->read_depth)
-+		if (ret)
-+			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-+	} else if (!rwlock->read_depth) {
- 		ret = 0;
-+	}
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 0161fbb..f1804a3 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -137,6 +137,12 @@ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
+ 		_flags = __get_cpu_var(lvar).flags;			\
+ 	} while (0)
  
--	if (ret) {
-+	if (ret)
- 		rwlock->read_depth++;
--		rwlock_acquire_read(&rwlock->dep_map, 0, 1, _RET_IP_);
--	} else
-+	else
- 		migrate_enable();
- 
- 	return ret;
-@@ -242,13 +244,13 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
++#define local_lock_irqsave_on(lvar, _flags, cpu)			\
++	do {								\
++		__local_lock_irqsave(&per_cpu(lvar, cpu));		\
++		_flags = per_cpu(lvar, cpu).flags;			\
++	} while (0)
++
+ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 					    unsigned long flags)
  {
- 	struct rt_mutex *lock = &rwlock->lock;
+@@ -156,6 +162,11 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 			put_local_var(lvar);				\
+ 	} while (0)
  
--	rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
--
- 	/*
- 	 * recursive read locks succeed when current owns the lock
- 	 */
--	if (rt_mutex_owner(lock) != current)
-+	if (rt_mutex_owner(lock) != current) {
-+		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 		__rt_spin_lock(lock);
-+	}
- 	rwlock->read_depth++;
- }
++#define local_unlock_irqrestore_on(lvar, flags, cpu)			\
++	do {								\
++		__local_unlock_irqrestore(&per_cpu(lvar, cpu), flags);	\
++	} while (0)
++
+ #define local_spin_trylock_irq(lvar, lock)				\
+ 	({								\
+ 		int __locked;						\
+diff --git a/mm/page_alloc.c b/mm/page_alloc.c
+index 47d939e..c645e07 100644
+--- a/mm/page_alloc.c
++++ b/mm/page_alloc.c
+@@ -227,9 +227,9 @@ static DEFINE_LOCAL_IRQ_LOCK(pa_lock);
  
-@@ -264,11 +266,11 @@ EXPORT_SYMBOL(rt_write_unlock);
- 
- void __lockfunc rt_read_unlock(rwlock_t *rwlock)
- {
--	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
--
- 	/* Release the lock only when read_depth is down to 0 */
--	if (--rwlock->read_depth == 0)
-+	if (--rwlock->read_depth == 0) {
-+		rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 		__rt_spin_unlock(&rwlock->lock);
-+	}
- }
- EXPORT_SYMBOL(rt_read_unlock);
- 
-@@ -315,9 +317,10 @@ EXPORT_SYMBOL(rt_up_write);
- 
- void  rt_up_read(struct rw_semaphore *rwsem)
- {
--	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
--	if (--rwsem->read_depth == 0)
-+	if (--rwsem->read_depth == 0) {
-+		rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
- 		rt_mutex_unlock(&rwsem->lock);
-+	}
- }
- EXPORT_SYMBOL(rt_up_read);
- 
-@@ -366,15 +369,16 @@ int  rt_down_read_trylock(struct rw_semaphore *rwsem)
- 	 * but not when read_depth == 0 which means that the rwsem is
- 	 * write locked.
- 	 */
--	if (rt_mutex_owner(lock) != current)
-+	if (rt_mutex_owner(lock) != current) {
- 		ret = rt_mutex_trylock(&rwsem->lock);
--	else if (!rwsem->read_depth)
-+		if (ret)
-+			rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
-+	} else if (!rwsem->read_depth) {
- 		ret = 0;
-+	}
- 
--	if (ret) {
-+	if (ret)
- 		rwsem->read_depth++;
--		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
--	}
- 	return ret;
- }
- EXPORT_SYMBOL(rt_down_read_trylock);
-@@ -383,10 +387,10 @@ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
- {
- 	struct rt_mutex *lock = &rwsem->lock;
- 
--	rwsem_acquire_read(&rwsem->dep_map, subclass, 0, _RET_IP_);
--
--	if (rt_mutex_owner(lock) != current)
-+	if (rt_mutex_owner(lock) != current) {
-+		rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
- 		rt_mutex_lock(&rwsem->lock);
-+	}
- 	rwsem->read_depth++;
- }
- 
+ #ifdef CONFIG_PREEMPT_RT_BASE
+ # define cpu_lock_irqsave(cpu, flags)		\
+-	spin_lock_irqsave(&per_cpu(pa_lock, cpu).lock, flags)
++	local_lock_irqsave_on(pa_lock, flags, cpu)
+ # define cpu_unlock_irqrestore(cpu, flags)		\
+-	spin_unlock_irqrestore(&per_cpu(pa_lock, cpu).lock, flags)
++	local_unlock_irqrestore_on(pa_lock, flags, cpu)
+ #else
+ # define cpu_lock_irqsave(cpu, flags)		local_irq_save(flags)
+ # define cpu_unlock_irqrestore(cpu, flags)	local_irq_restore(flags)
 -- 
 1.7.10.4
