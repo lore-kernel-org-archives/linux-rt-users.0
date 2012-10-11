@@ -1,45 +1,43 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RT-3.6] trivial fixes for git-am and fix for !RT_FULL
-Date: Thu, 11 Oct 2012 22:14:43 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210112210320.2779@ionos>
-References: <20121010164719.GA14314@windriver.com>
+Subject: Re: Using patch-3.2-rt10, kernel won't compile with
+ CONFIG_PREEMPT_RT_FULL=y
+Date: Thu, 11 Oct 2012 22:20:21 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210112217520.2779@ionos>
+References: <CAOARjkOT0ZndTxyvAq-Yj8QN6EJ5JnodGcfHq4XooHNPKRadXQ@mail.gmail.com> <CAP=VYLpUWqF5nztH-ZyC4v+GNYi997vVcZdJ_zpptmOJh4jYpA@mail.gmail.com> <CAOARjkM49dJaDT3x9uLZpqGSFD174MeN6ayp_7CWAxsRUJxTOw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1874724239-1349986822=:2779"
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-15?Q?Andr=E9_Bachmann?= <andrebachmann.dd@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:51564 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:51605 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752648Ab2JKUOr (ORCPT
+	with ESMTP id S1755431Ab2JKUUZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2012 16:14:47 -0400
-In-Reply-To: <20121010164719.GA14314@windriver.com>
+	Thu, 11 Oct 2012 16:20:25 -0400
+In-Reply-To: <CAOARjkM49dJaDT3x9uLZpqGSFD174MeN6ayp_7CWAxsRUJxTOw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Paul,
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-On Wed, 10 Oct 2012, Paul Gortmaker wrote:
+--8323328-1874724239-1349986822=:2779
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-> I've used the 3.6 RT patches as a baseline for a git repo of patches
-> (identical to how stable kernels are managed) since I like how it gives
-> visibility into how each patch evolves and adds tracking to the series.
+On Thu, 11 Oct 2012, André Bachmann wrote:
+> 2012/10/11 Paul Gortmaker <paul.gortmaker@windriver.com>:
 > 
-> On that baseline I've layered on some trivial fixes (bad ordering in the
-> From/Subject line, missing subjects etc) that trip up git-am and would
-> need fixing anyway before considering them for mainlining.  Aside from
-> two whitespace things, these changes don't alter the final source at all.
-> 
-> There is one build fix which I've added for the !RT_FULL case; trivial
-> missing ifdef usage.
-> 
-> I'll keep the master branch in this repo to track directly the exact
-> content released by Thomas in his tarballs.  The fixes I've done are on
-> the v3.6.1-rt1-fixes branch that can be browsed here:
+> Well I must be completely blind to miss this. Thank you! Now the
+> kernel compiles successfully.
+> But now the question arises: Why I don't get this error when not using
+> "CONFIG_PREEMPT_RT_FULL=y"?
 
-Nice service. I grabbed it and replaced my own series with it, so we
-all can enjoy the fixed patch files in the next release.
+You have to look at the preprocessor output. It's probably covered up
+by some magic macro expansion.
 
 Thanks,
 
 	tglx
+--8323328-1874724239-1349986822=:2779--
