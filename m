@@ -1,110 +1,64 @@
-From: =?UTF-8?Q?Andr=C3=A9_Bachmann?= <andrebachmann.dd@gmail.com>
-Subject: Re: Using patch-3.2-rt10, kernel won't compile with CONFIG_PREEMPT_RT_FULL=y
-Date: Thu, 11 Oct 2012 17:58:06 +0200
-Message-ID: <CAOARjkM49dJaDT3x9uLZpqGSFD174MeN6ayp_7CWAxsRUJxTOw@mail.gmail.com>
-References: <CAOARjkOT0ZndTxyvAq-Yj8QN6EJ5JnodGcfHq4XooHNPKRadXQ@mail.gmail.com>
-	<CAP=VYLpUWqF5nztH-ZyC4v+GNYi997vVcZdJ_zpptmOJh4jYpA@mail.gmail.com>
+From: Oguz Yarimtepe <oguzyarimtepe@gmail.com>
+Subject: PF_RING compilation error at rt kernel
+Date: Thu, 11 Oct 2012 19:31:57 +0300
+Message-ID: <20121011193157.16c940c8643f04ac04bb63d3@gmail.com>
+Reply-To: linux-rt-users@vger.kernel.org
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f172.google.com ([209.85.212.172]:37799 "EHLO
-	mail-wi0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750784Ab2JKP6I convert rfc822-to-8bit (ORCPT
+Received: from mail-ea0-f174.google.com ([209.85.215.174]:45555 "EHLO
+	mail-ea0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758614Ab2JKQcJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2012 11:58:08 -0400
-Received: by mail-wi0-f172.google.com with SMTP id hq12so8969499wib.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 11 Oct 2012 08:58:07 -0700 (PDT)
-In-Reply-To: <CAP=VYLpUWqF5nztH-ZyC4v+GNYi997vVcZdJ_zpptmOJh4jYpA@mail.gmail.com>
+	Thu, 11 Oct 2012 12:32:09 -0400
+Received: by mail-ea0-f174.google.com with SMTP id c13so378112eaa.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 11 Oct 2012 09:32:08 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2012/10/11 Paul Gortmaker <paul.gortmaker@windriver.com>:
-> On Thu, Oct 11, 2012 at 10:39 AM, Andr=C3=A9 Bachmann
-> <andrebachmann.dd@gmail.com> wrote:
->> Hi all,
->>
->> here I have a TI Sitara AM335X with its latest SDK v05.05.00. I
->> installed it and I'm able to compile my kernels. Kernel 3.2.0 is
->> shipped with this SDK.
->>
->> However, I want to use the official RT patches from
->> http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/older/. Since
->> kernel 3.2.0 is delivered with this SDK, I chose
->> http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/older/patch-3=
-=2E2-rt10.patch.bz2
->> as the correct patch. With it, I patched my kernel sources - no erro=
-rs
->> here. After that, I checked if there are any problems by compiling
->> this patched kernel. No problems, my board still boots fine.
->>
->> Then I really wanted to use the new RT features, so I backed up the
->> default config file tisdk_am335x-evm_defconfig and changed the optio=
-n
->> "CONFIG_PREEMPT_NONE=3Dy" to "CONFIG_PREEMPT_RT_FULL=3Dy". No furthe=
-r
->> changes.
->>
->> If I now compile this, I get an error when compiling drivers/pwm/pwm=
-=2Ec:
->>
->> ...
->> CC drivers/pwm/pwm.o
->> drivers/pwm/pwm.c: In function 'pwm_set_frequency':
->> drivers/pwm/pwm.c:291:2: error: expected expression before 'do'
->> make[3]: *** [drivers/pwm/pwm.o] Error 1
->> make[2]: *** [drivers/pwm] Error 2
->> make[1]: *** [drivers] Error 2
->> make[1]: Leaving directory
->> `/home/user/ti-sdk-am335x-evm-05.05.00.00/board-support/linux-3.2.0-=
-psp04.06.00.08.sdk'
->> make: *** [linux] Error 2
->>
->> This is the function near this line in pwm.c:
->>
->> 282 int pwm_set_frequency(struct pwm_device *p, unsigned long freq)
->> 283 {
->> 284 struct pwm_config c;
->> 285
->> 286 if (!freq)
->> 287 return -EINVAL;
->> 288
->> 289 c.config_mask =3D BIT(PWM_CONFIG_PERIOD_TICKS),
->> 290 c.period_ticks =3D pwm_ns_to_ticks(p, (NSEC_PER_SEC / freq)),
->
-> Nothing to do with RT.  Whoever coded up this pwm.c file (presumably
-> a part of the non-upstream SDK?) should learn the difference between
-> "," and ";" on the above two lines.
->
-> Paul.
-> --
+Hi,
 
-Well I must be completely blind to miss this. Thank you! Now the
-kernel compiles successfully.
-But now the question arises: Why I don't get this error when not using
-"CONFIG_PREEMPT_RT_FULL=3Dy"?
+I installed PREEMPTIVE kernel to my Debian squeeze base system by follo=
+wing the instructions http://www.pengutronix.de/software/linux-rt/debia=
+n_en.html adress. My current kernel is 2.6.33.7.2-rt30-1-686 after i in=
+stalled linux-image-2.6-rt-osadl-${ARCH}.
 
->
->> 291 spin_lock(&p->pwm_lock);
->> 292 p->period_ns =3D NSEC_PER_SEC / freq;
->> 293 spin_unlock(&p->pwm_lock);
->> 294 return pwm_config(p, &c);
->> 295 }
->> 296 EXPORT_SYMBOL(pwm_set_frequency);
->>
->> So the error seems to be related with the call of spin_lock, which
->> surely gets changed by the RT patch. Has anyone a hint for me? I'm
->> quite new to this matter... :(
->> I appreciate any help!
->>
->> Andr=C3=A9
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
-sers" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I checked out PF_RING from ntop site and tried make command after i ins=
+talled flex, bison and build-essential package. Below is the error mess=
+age i got:
+
+$ make
+make -C /lib/modules/2.6.33.7.2-rt30-1-686/build SUBDIRS=3D/home/oguz/P=
+=46_RING/kernel EXTRA_CFLAGS=3D'-I/home/oguz/PF_RING/kernel -DSVN_REV=3D=
+"\"5743\""' modules
+make[1]: Entering directory `/usr/src/linux-headers-2.6.33.7.2-rt30-1-6=
+86'
+  CC [M]  /home/oguz/PF_RING/kernel/pf_ring.o
+/home/oguz/PF_RING/kernel/pf_ring.c: In function =E2=80=98init_ring_rea=
+ders=E2=80=99:
+/home/oguz/PF_RING/kernel/pf_ring.c:257: error: expected expression bef=
+ore =E2=80=98{=E2=80=99 token
+/home/oguz/PF_RING/kernel/pf_ring.c: In function =E2=80=98init_lockless=
+_list=E2=80=99:
+/home/oguz/PF_RING/kernel/pf_ring.c:466: error: expected expression bef=
+ore =E2=80=98{=E2=80=99 token
+make[4]: *** [/home/oguz/PF_RING/kernel/pf_ring.o] Error 1
+make[3]: *** [_module_/home/oguz/PF_RING/kernel] Error 2
+make[2]: *** [sub-make] Error 2
+make[1]: *** [all] Error 2
+make[1]: Leaving directory `/usr/src/linux-headers-2.6.33.7.2-rt30-1-68=
+6'
+make: *** [all] Error 2
+
+What can be the reason for it?=20
+
+Cheers.
+
+--=20
+Oguz Yarimtepe <oguzyarimtepe@gmail.com>
+http://about.me/oguzy
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
