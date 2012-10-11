@@ -1,44 +1,82 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: Crap, ksoftirqd/0 looping forever in softirq
-Date: Thu, 11 Oct 2012 10:21:31 -0400
-Message-ID: <20121011142130.GA22583@windriver.com>
-References: <20121011001637.GA18628@windriver.com>
+From: =?UTF-8?Q?Andr=C3=A9_Bachmann?= <andrebachmann.dd@gmail.com>
+Subject: Using patch-3.2-rt10, kernel won't compile with CONFIG_PREEMPT_RT_FULL=y
+Date: Thu, 11 Oct 2012 16:39:42 +0200
+Message-ID: <CAOARjkOT0ZndTxyvAq-Yj8QN6EJ5JnodGcfHq4XooHNPKRadXQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:48169 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932177Ab2JKOVm (ORCPT
+Received: from mail-we0-f174.google.com ([74.125.82.174]:52995 "EHLO
+	mail-we0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750958Ab2JKOjn convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2012 10:21:42 -0400
-Content-Disposition: inline
-In-Reply-To: <20121011001637.GA18628@windriver.com>
+	Thu, 11 Oct 2012 10:39:43 -0400
+Received: by mail-we0-f174.google.com with SMTP id t9so1058341wey.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 11 Oct 2012 07:39:42 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[Crap, ksoftirqd/0 looping forever in softirq] On 10/10/2012 (Wed 20:16) Paul Gortmaker wrote:
+Hi all,
 
-> Seeing the above message, I added a trivial change to print out the
-> Mask and Pending, and I consistently saw it was (both p/m) in every
-> case `was __IRQF_TIMER (0x200).
+here I have a TI Sitara AM335X with its latest SDK v05.05.00. I
+installed it and I'm able to compile my kernels. Kernel 3.2.0 is
+shipped with this SDK.
 
-Of cource it helps if I look up the value in the right list.
-I guess the ffs had me thinking "bits", instead of looking up
-the value in the softirq enum list.
+However, I want to use the official RT patches from
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/older/. Since
+kernel 3.2.0 is delivered with this SDK, I chose
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/older/patch-3.2-=
+rt10.patch.bz2
+as the correct patch. With it, I patched my kernel sources - no errors
+here. After that, I checked if there are any problems by compiling
+this patched kernel. No problems, my board still boots fine.
 
-When I add a change to record the last vecs used and dump them
-out when the Crap message is triggered (using softirq_to_name
-instead of looking things up in random tables!)  I get this:
+Then I really wanted to use the new RT features, so I backed up the
+default config file tisdk_am335x-evm_defconfig and changed the option
+"CONFIG_PREEMPT_NONE=3Dy" to "CONFIG_PREEMPT_RT_FULL=3Dy". No further
+changes.
 
-[   20.887137] Crap, ksoftirqd/0 looping forever in softirq
-[   20.887150] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
-[   20.920168] Crap, ksoftirqd/0 looping forever in softirq
-[   20.920179] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
-[   20.954200] Crap, ksoftirqd/0 looping forever in softirq
-[   20.954213] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
+If I now compile this, I get an error when compiling drivers/pwm/pwm.c:
 
-Which makes my previous guess complete garbage...
+=2E..
+CC drivers/pwm/pwm.o
+drivers/pwm/pwm.c: In function 'pwm_set_frequency':
+drivers/pwm/pwm.c:291:2: error: expected expression before 'do'
+make[3]: *** [drivers/pwm/pwm.o] Error 1
+make[2]: *** [drivers/pwm] Error 2
+make[1]: *** [drivers] Error 2
+make[1]: Leaving directory
+`/home/user/ti-sdk-am335x-evm-05.05.00.00/board-support/linux-3.2.0-psp=
+04.06.00.08.sdk'
+make: *** [linux] Error 2
 
-Paul.
+This is the function near this line in pwm.c:
+
+282 int pwm_set_frequency(struct pwm_device *p, unsigned long freq)
+283 {
+284 struct pwm_config c;
+285
+286 if (!freq)
+287 return -EINVAL;
+288
+289 c.config_mask =3D BIT(PWM_CONFIG_PERIOD_TICKS),
+290 c.period_ticks =3D pwm_ns_to_ticks(p, (NSEC_PER_SEC / freq)),
+291 spin_lock(&p->pwm_lock);
+292 p->period_ns =3D NSEC_PER_SEC / freq;
+293 spin_unlock(&p->pwm_lock);
+294 return pwm_config(p, &c);
+295 }
+296 EXPORT_SYMBOL(pwm_set_frequency);
+
+So the error seems to be related with the call of spin_lock, which
+surely gets changed by the RT patch. Has anyone a hint for me? I'm
+quite new to this matter... :(
+I appreciate any help!
+
+Andr=C3=A9
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
