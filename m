@@ -1,230 +1,145 @@
-From: Bhavesh Davda <bhavesh@vmware.com>
-Subject: Re: [PATCH] cyclictest histogram overflow instance tracking
-Date: Thu, 11 Oct 2012 13:59:09 -0700
-Message-ID: <9C1EE6A5-2B57-45AC-B4D7-5AF7F56A7BCA@vmware.com>
-References: <21A665E0-66F4-4C7E-BDB2-820DDC5398C8@vmware.com>
- <507724B2.5050103@am.sony.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=Windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Garrett Smith <garrett@vmware.com>,
-	Lenin Singaravelu <lsingara@vmware.com>
-To: "frank.rowand@am.sony.com" <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 1/8] random: Make it work on rt
+Date: Thu, 11 Oct 2012 21:20:25 -0400
+Message-ID: <20121012012125.771525547@goodmis.org>
+References: <20121012012024.056658930@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-outbound-1.vmware.com ([208.91.2.12]:33556 "EHLO
-	smtp-outbound-1.vmware.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1758876Ab2JKVHz convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Oct 2012 17:07:55 -0400
-In-Reply-To: <507724B2.5050103@am.sony.com>
-Content-Language: en-US
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3253 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752931Ab2JLBV1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Oct 2012 21:21:27 -0400
+Content-Disposition: inline; filename=0001-random-Make-it-work-on-rt.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thanks for the review, Frank.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-On Oct 11, 2012, at 12:57 PM, Frank Rowand wrote:
-> Nice idea=85
-Thanks
+Delegate the random insertion to the forced threaded interrupt
+handler. Store the return IP of the hard interrupt handler in the irq
+descriptor and feed it into the random generator as a source of
+entropy.
 
-> Suggest:
->        printf("# Histogram Overflows at cycle number:");
->=20
-Done
-
->> - 		printf(" %05lu", par[j]->stats->hist_overflow);
->> +		printf(" %05lu", par[j]->stats->hist_overflow);
->=20
-> Am I blind, or is that a whitespace change?  (The latest version I ha=
-ve does not seem
-> to have any white space issues in that line.)
->=20
-Turns out I had removed extraneous whitespace. My vim settings allow me=
- to see extraneous whitespaces in red, so I get annoyed by them and can=
- fix them up. So I've removed a few more in the revised diffs (sorry!)
-
-> Suggest:
->=20
->  +             printf("# thread %d:", j);
->=20
-Done
-
-> Nit: You don't need stats->outliers_overflow.  You can calculate it f=
-rom
-> stats->hist_overflow - stats->num_outliers:
->=20
-Nice catch! I've removed outliers_overflow now.
-
-
-=46rom: Bhavesh Davda <bhavesh@vmware.com>
-
-Add feature to cyclictest histogram mode to track cycle counts every ti=
-me a
-sample overflows the histogram limit. This should help identify if ther=
-e is a
-timing pattern to jitters in cyclictest runs.
-
-Example output (with -h 10):
-  ...
-  Histogram Overflows: 00000 00253 00000 00005 00000 00024 00003 00005
-  Histogram Overflow at cycle number:
-  Thread 0:
-  Thread 1: 00023 00028 00337 00338 00339 00340 00341 00342 00343 00344=
- # 00243 others
-  Thread 2:
-  Thread 3: 10486 10487 10488 10489 10490
-  Thread 4:
-  Thread 5: 00002 00004 00008 00012 00178 10458 10459 10460 10461 10462=
- # 00014 others
-  Thread 6: 05954 08954 29955
-  Thread 7: 20536 20537 20538 20539 20540
-  ...
-
-Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- src/cyclictest/cyclictest.c |   38 +++++++++++++++++++++++++++++------=
----
- 1 files changed, 29 insertions(+), 9 deletions(-)
+ drivers/char/random.c   |   10 ++++++----
+ include/linux/irqdesc.h |    1 +
+ include/linux/random.h  |    2 +-
+ kernel/irq/handle.c     |    7 +++++--
+ kernel/irq/manage.c     |    6 ++++++
+ 5 files changed, 19 insertions(+), 7 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 731b4bd..dc985de 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -147,6 +147,7 @@ struct thread_stat {
- 	double avg;
- 	long *values;
- 	long *hist_array;
-+        unsigned long *outliers;
- 	pthread_t thread;
- 	int threadstarted;
- 	int tid;
-@@ -154,6 +155,7 @@ struct thread_stat {
- 	long redmax;
- 	long cycleofmax;
- 	long hist_overflow;
-+        long num_outliers;
- };
-=20
- static int shutdown;
-@@ -756,8 +758,11 @@ void *timerthread(void *param)
-=20
- 		/* Update the histogram */
- 		if (histogram) {
--			if (diff >=3D histogram)
-+			if (diff >=3D histogram) {
- 				stat->hist_overflow++;
-+				if (stat->num_outliers < histogram)
-+					stat->outliers[stat->num_outliers++] =3D stat->cycles - 1;
-+			}
- 			else
- 				stat->hist_array[diff]++;
- 		}
-@@ -811,7 +816,7 @@ static void display_help(int error)
- 		if (kernvar(O_RDONLY, "available_tracers", tracers, sizeof(tracers))=
-)
- 			strcpy(tracers, "none");
- 	}
--	=09
-+
- 	printf("cyclictest V %1.2f\n", VERSION_STRING);
- 	printf("Usage:\n"
- 	       "cyclictest <options>\n\n"
-@@ -1188,7 +1193,7 @@ static int check_kernel(void)
- 		kv =3D KV_30;
- 		strcpy(functiontracer, "function");
- 		strcpy(traceroptions, "trace_options");
--	=09
-+
- 	} else
- 		kv =3D KV_NOT_SUPPORTED;
-=20
-@@ -1226,7 +1231,7 @@ static void print_tids(struct thread_param *par[]=
-, int nthreads)
-=20
- static void print_hist(struct thread_param *par[], int nthreads)
+diff --git a/drivers/char/random.c b/drivers/char/random.c
+index d38af32..66c8a0f 100644
+--- a/drivers/char/random.c
++++ b/drivers/char/random.c
+@@ -767,18 +767,16 @@ EXPORT_SYMBOL_GPL(add_input_randomness);
+ 
+ static DEFINE_PER_CPU(struct fast_pool, irq_randomness);
+ 
+-void add_interrupt_randomness(int irq, int irq_flags)
++void add_interrupt_randomness(int irq, int irq_flags, __u64 ip)
  {
--	int i, j;
-+	int i, j, k;
- 	unsigned long long int log_entries[nthreads+1];
- 	unsigned long maxmax, alloverflows;
-=20
-@@ -1270,7 +1275,7 @@ static void print_hist(struct thread_param *par[]=
-, int nthreads)
- 	printf("# Max Latencies:");
- 	maxmax =3D 0;
- 	for (j =3D 0; j < nthreads; j++) {
-- 		printf(" %05lu", par[j]->stats->max);
-+		printf(" %05lu", par[j]->stats->max);
- 		if (par[j]->stats->max > maxmax)
- 			maxmax =3D par[j]->stats->max;
+ 	struct entropy_store	*r;
+ 	struct fast_pool	*fast_pool = &__get_cpu_var(irq_randomness);
+-	struct pt_regs		*regs = get_irq_regs();
+ 	unsigned long		now = jiffies;
+ 	__u32			input[4], cycles = get_cycles();
+ 
+ 	input[0] = cycles ^ jiffies;
+ 	input[1] = irq;
+-	if (regs) {
+-		__u64 ip = instruction_pointer(regs);
++	if (ip) {
+ 		input[2] = ip;
+ 		input[3] = ip >> 32;
  	}
-@@ -1280,9 +1285,20 @@ static void print_hist(struct thread_param *par[=
-], int nthreads)
- 	printf("# Histogram Overflows:");
- 	alloverflows =3D 0;
- 	for (j =3D 0; j < nthreads; j++) {
-- 		printf(" %05lu", par[j]->stats->hist_overflow);
-+		printf(" %05lu", par[j]->stats->hist_overflow);
- 		alloverflows +=3D par[j]->stats->hist_overflow;
- 	}
-+	printf("\n");
-+	printf("# Histogram Overflow at cycle number:\n");
-+	for (j =3D 0; j < nthreads; j++) {
-+		printf("# Thread %d:", j);
-+		for (k =3D 0; k < par[j]->stats->num_outliers; k++)
-+			printf(" %05lu", par[j]->stats->outliers[k]);
-+		if (par[j]->stats->num_outliers < par[j]->stats->hist_overflow)
-+			printf(" # %05lu others", par[j]->stats->hist_overflow - par[j]->st=
-ats->num_outliers);
-+                printf("\n");
-+        }
-+
- 	if (histofall && nthreads > 1)
- 		printf(" %05lu", alloverflows);
- 	printf("\n");
-@@ -1434,10 +1450,12 @@ int main(int argc, char **argv)
- 			int bufsize =3D histogram * sizeof(long);
-=20
- 			stat->hist_array =3D threadalloc(bufsize, node);
--			if (stat->hist_array =3D=3D NULL)
-+			stat->outliers =3D threadalloc(bufsize, node);
-+			if (stat->hist_array =3D=3D NULL || stat->outliers =3D=3D NULL)
- 				fatal("failed to allocate histogram of size %d on node %d\n",
- 				      histogram, i);
- 			memset(stat->hist_array, 0, bufsize);
-+			memset(stat->outliers, 0, bufsize);
+@@ -792,7 +790,11 @@ void add_interrupt_randomness(int irq, int irq_flags)
+ 	fast_pool->last = now;
+ 
+ 	r = nonblocking_pool.initialized ? &input_pool : &nonblocking_pool;
++#ifndef CONFIG_PREEMPT_RT_FULL
+ 	__mix_pool_bytes(r, &fast_pool->pool, sizeof(fast_pool->pool), NULL);
++#else
++	mix_pool_bytes(r, &fast_pool->pool, sizeof(fast_pool->pool), NULL);
++#endif
+ 	/*
+ 	 * If we don't have a valid cycle counter, and we see
+ 	 * back-to-back timer interrupts, then skip giving credit for
+diff --git a/include/linux/irqdesc.h b/include/linux/irqdesc.h
+index f1e2527..5f4f091 100644
+--- a/include/linux/irqdesc.h
++++ b/include/linux/irqdesc.h
+@@ -53,6 +53,7 @@ struct irq_desc {
+ 	unsigned int		irq_count;	/* For detecting broken IRQs */
+ 	unsigned long		last_unhandled;	/* Aging timer for unhandled count */
+ 	unsigned int		irqs_unhandled;
++	u64			random_ip;
+ 	raw_spinlock_t		lock;
+ 	struct cpumask		*percpu_enabled;
+ #ifdef CONFIG_SMP
+diff --git a/include/linux/random.h b/include/linux/random.h
+index 29e217a..3995b33 100644
+--- a/include/linux/random.h
++++ b/include/linux/random.h
+@@ -53,7 +53,7 @@ extern void rand_initialize_irq(int irq);
+ extern void add_device_randomness(const void *, unsigned int);
+ extern void add_input_randomness(unsigned int type, unsigned int code,
+ 				 unsigned int value);
+-extern void add_interrupt_randomness(int irq, int irq_flags);
++extern void add_interrupt_randomness(int irq, int irq_flags, __u64 ip);
+ 
+ extern void get_random_bytes(void *buf, int nbytes);
+ extern void get_random_bytes_arch(void *buf, int nbytes);
+diff --git a/kernel/irq/handle.c b/kernel/irq/handle.c
+index a768885..f6b91bc 100644
+--- a/kernel/irq/handle.c
++++ b/kernel/irq/handle.c
+@@ -116,6 +116,8 @@ static void irq_wake_thread(struct irq_desc *desc, struct irqaction *action)
+ irqreturn_t
+ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
+ {
++	struct pt_regs *regs = get_irq_regs();
++	u64 ip = regs ? instruction_pointer(regs) : 0;
+ 	irqreturn_t retval = IRQ_NONE;
+ 	unsigned int flags = 0, irq = desc->irq_data.irq;
+ 
+@@ -157,8 +159,9 @@ handle_irq_event_percpu(struct irq_desc *desc, struct irqaction *action)
+ 	} while (action);
+ 
+ #ifndef CONFIG_PREEMPT_RT_FULL
+-	/* FIXME: Can we unbreak that ? */
+-	add_interrupt_randomness(irq, flags);
++	add_interrupt_randomness(irq, flags, ip);
++#else
++	desc->random_ip = ip;
+ #endif
+ 
+ 	if (!noirqdebug)
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 87dc053..2204340 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -816,6 +816,12 @@ static int irq_thread(void *data)
+ 			action_ret = handler_fn(desc, action);
+ 			if (!noirqdebug)
+ 				note_interrupt(action->irq, desc, action_ret);
++#ifdef CONFIG_PREEMPT_RT_FULL
++			migrate_disable();
++			add_interrupt_randomness(action->irq, 0,
++						 desc->random_ip ^ (u64) action);
++			migrate_enable();
++#endif
  		}
-=20
- 		if (verbose) {
-@@ -1553,8 +1571,10 @@ int main(int argc, char **argv)
-=20
- 	if (histogram) {
- 		print_hist(parameters, num_threads);
--		for (i =3D 0; i < num_threads; i++)
-+		for (i =3D 0; i < num_threads; i++) {
- 			threadfree(statistics[i]->hist_array, histogram*sizeof(long), param=
-eters[i]->node);
-+			threadfree(statistics[i]->outliers, histogram*sizeof(long), paramet=
-ers[i]->node);
-+                }
- 	}
-=20
- 	if (tracelimit) {
-@@ -1564,7 +1584,7 @@ int main(int argc, char **argv)
- 			printf("# Break value: %lu\n", break_thread_value);
- 		}
- 	}
--=09
-+
-=20
- 	for (i=3D0; i < num_threads; i++) {
- 		if (!statistics[i])
---=20
-1.7.1
+ 
+ 		wake = atomic_dec_and_test(&desc->threads_active);
+-- 
+1.7.10.4
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
