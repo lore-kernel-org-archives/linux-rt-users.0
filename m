@@ -1,74 +1,92 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/8] mm: page_alloc: Use local_lock_on() instead of plain spinlock
-Date: Thu, 11 Oct 2012 21:20:28 -0400
-Message-ID: <20121012012126.241147167@goodmis.org>
+Subject: [PATCH RT 6/8] sched: Better debug output for might sleep
+Date: Thu, 11 Oct 2012 21:20:30 -0400
+Message-ID: <20121012012126.512162328@goodmis.org>
 References: <20121012012024.056658930@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-mm-page_alloc-Use-local_lock_on-instead-of-plain-spi.patch
+Content-Disposition: inline; filename=0006-sched-Better-debug-output-for-might-sleep.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-The plain spinlock while sufficient does not update the local_lock
-internals. Use a proper local_lock function instead to ease debugging.
+might sleep can tell us where interrupts have been disabled, but we
+have no idea what disabled preemption. Add some debug infrastructure.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/locallock.h |   11 +++++++++++
- mm/page_alloc.c           |    4 ++--
- 2 files changed, 13 insertions(+), 2 deletions(-)
+ include/linux/sched.h |    4 ++++
+ kernel/sched.c        |   23 +++++++++++++++++++++--
+ 2 files changed, 25 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 0161fbb..f1804a3 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -137,6 +137,12 @@ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
- 		_flags = __get_cpu_var(lvar).flags;			\
- 	} while (0)
- 
-+#define local_lock_irqsave_on(lvar, _flags, cpu)			\
-+	do {								\
-+		__local_lock_irqsave(&per_cpu(lvar, cpu));		\
-+		_flags = per_cpu(lvar, cpu).flags;			\
-+	} while (0)
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 03498cc..12317b6 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1612,6 +1612,10 @@ struct task_struct {
+ 	int kmap_idx;
+ 	pte_t kmap_pte[KM_TYPE_NR];
+ #endif
 +
- static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
- 					    unsigned long flags)
- {
-@@ -156,6 +162,11 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
- 			put_local_var(lvar);				\
- 	} while (0)
++#ifdef CONFIG_DEBUG_PREEMPT
++	unsigned long preempt_disable_ip;
++#endif
+ };
  
-+#define local_unlock_irqrestore_on(lvar, flags, cpu)			\
-+	do {								\
-+		__local_unlock_irqrestore(&per_cpu(lvar, cpu), flags);	\
-+	} while (0)
-+
- #define local_spin_trylock_irq(lvar, lock)				\
- 	({								\
- 		int __locked;						\
-diff --git a/mm/page_alloc.c b/mm/page_alloc.c
-index 67202bc..8678a7f 100644
---- a/mm/page_alloc.c
-+++ b/mm/page_alloc.c
-@@ -227,9 +227,9 @@ static DEFINE_LOCAL_IRQ_LOCK(pa_lock);
+ #ifdef CONFIG_PREEMPT_RT_FULL
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 87654e6..cdf9484 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -4487,8 +4487,13 @@ void __kprobes add_preempt_count(int val)
+ 	DEBUG_LOCKS_WARN_ON((preempt_count() & PREEMPT_MASK) >=
+ 				PREEMPT_MASK - 10);
+ #endif
+-	if (preempt_count() == val)
+-		trace_preempt_off(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
++	if (preempt_count() == val) {
++		unsigned long ip = get_parent_ip(CALLER_ADDR1);
++#ifdef CONFIG_DEBUG_PREEMPT
++		current->preempt_disable_ip = ip;
++#endif
++		trace_preempt_off(CALLER_ADDR0, ip);
++	}
+ }
+ EXPORT_SYMBOL(add_preempt_count);
  
- #ifdef CONFIG_PREEMPT_RT_BASE
- # define cpu_lock_irqsave(cpu, flags)		\
--	spin_lock_irqsave(&per_cpu(pa_lock, cpu).lock, flags)
-+	local_lock_irqsave_on(pa_lock, flags, cpu)
- # define cpu_unlock_irqrestore(cpu, flags)		\
--	spin_unlock_irqrestore(&per_cpu(pa_lock, cpu).lock, flags)
-+	local_unlock_irqrestore_on(pa_lock, flags, cpu)
- #else
- # define cpu_lock_irqsave(cpu, flags)		local_irq_save(flags)
- # define cpu_unlock_irqrestore(cpu, flags)	local_irq_restore(flags)
+@@ -4530,6 +4535,13 @@ static noinline void __schedule_bug(struct task_struct *prev)
+ 	print_modules();
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(prev);
++#ifdef DEBUG_PREEMPT
++	if (in_atomic_preempt_off()) {
++		pr_err("Preemption disabled at:");
++		print_ip_sym(current->preempt_disable_ip);
++		pr_cont("\n");
++	}
++#endif
+ 
+ 	if (regs)
+ 		show_regs(regs);
+@@ -8912,6 +8924,13 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+ 	debug_show_held_locks(current);
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(current);
++#ifdef DEBUG_PREEMPT
++	if (!preempt_count_equals(preempt_offset)) {
++		pr_err("Preemption disabled at:");
++		print_ip_sym(current->preempt_disable_ip);
++		pr_cont("\n");
++	}
++#endif
+ 	dump_stack();
+ }
+ EXPORT_SYMBOL(__might_sleep);
 -- 
 1.7.10.4
