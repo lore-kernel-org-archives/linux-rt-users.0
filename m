@@ -1,95 +1,253 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: Crap, ksoftirqd/0 looping forever in softirq
-Date: Mon, 15 Oct 2012 06:36:48 -0700
-Message-ID: <20121015133648.GA2527@linux.vnet.ibm.com>
-References: <20121011001637.GA18628@windriver.com>
- <20121011142130.GA22583@windriver.com>
- <20121011153413.GB22583@windriver.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Bhavesh Davda <bhavesh@vmware.com>
+Subject: Re: [PATCH] cyclictest histogram overflow instance tracking
+Date: Mon, 15 Oct 2012 09:38:26 -0700
+Message-ID: <6B64752A-B20A-4C14-A402-5859EF84D02B@vmware.com>
+References: <21A665E0-66F4-4C7E-BDB2-820DDC5398C8@vmware.com>
+ <507724B2.5050103@am.sony.com>
+ <9C1EE6A5-2B57-45AC-B4D7-5AF7F56A7BCA@vmware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset=Windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Garrett Smith <garrett@vmware.com>,
+	Lenin Singaravelu <lsingara@vmware.com>
+To: "frank.rowand@am.sony.com" <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e38.co.us.ibm.com ([32.97.110.159]:54251 "EHLO
-	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753209Ab2JONjQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Oct 2012 09:39:16 -0400
-Received: from /spool/local
-	by e38.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Mon, 15 Oct 2012 07:39:14 -0600
-Received: from d03relay05.boulder.ibm.com (d03relay05.boulder.ibm.com [9.17.195.107])
-	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id E66091FF004F
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Oct 2012 07:39:02 -0600 (MDT)
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by d03relay05.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id q9FDcW9u243506
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Oct 2012 07:38:34 -0600
-Received: from d03av01.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id q9FDarZC013087
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Oct 2012 07:36:57 -0600
-Content-Disposition: inline
-In-Reply-To: <20121011153413.GB22583@windriver.com>
+Received: from smtp-outbound-1.vmware.com ([208.91.2.12]:54485 "EHLO
+	smtp-outbound-1.vmware.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751002Ab2JOQi3 convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Oct 2012 12:38:29 -0400
+In-Reply-To: <9C1EE6A5-2B57-45AC-B4D7-5AF7F56A7BCA@vmware.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Oct 11, 2012 at 11:34:14AM -0400, Paul Gortmaker wrote:
-> [Re: Crap, ksoftirqd/0 looping forever in softirq] On 11/10/2012 (Thu 10:21) Paul Gortmaker wrote:
-> 
-> > [Crap, ksoftirqd/0 looping forever in softirq] On 10/10/2012 (Wed 20:16) Paul Gortmaker wrote:
-> > 
-> > > Seeing the above message, I added a trivial change to print out the
-> > > Mask and Pending, and I consistently saw it was (both p/m) in every
-> > > case `was __IRQF_TIMER (0x200).
-> > 
-> > Of cource it helps if I look up the value in the right list.
-> > I guess the ffs had me thinking "bits", instead of looking up
-> > the value in the softirq enum list.
-> > 
-> > When I add a change to record the last vecs used and dump them
-> > out when the Crap message is triggered (using softirq_to_name
-> > instead of looking things up in random tables!)  I get this:
-> > 
-> > [   20.887137] Crap, ksoftirqd/0 looping forever in softirq
-> > [   20.887150] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
-> > [   20.920168] Crap, ksoftirqd/0 looping forever in softirq
-> > [   20.920179] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
-> > [   20.954200] Crap, ksoftirqd/0 looping forever in softirq
-> > [   20.954213] Last: RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU RCU
-> 
-> Here is a trace, which I think shows us that we call the
-> RCU softirq, which eventually calls invoke_rcu_core, which
-> is just "raise_softirq(RCU_SOFTIRQ);" so the loop which is
-> testing on current->softirqs_raised will never see it zero.
-> 
-> We clear it on entry with:
-> 	 current->softirqs_raised &= ~mask;
-> but after we call:
-> 	 do_single_softirq(i, need_rcu_bh_qs);
-> it will be re-armed by invoke_rcu_core.
-> 
->   0xffffffff81044d9d in __raise_softirq_irqoff (nr=9) at kernel/softirq.c:608
->   0xffffffff81044e29 in raise_softirq_irqoff (nr=<optimized out>) at kernel/softirq.c:618
->   0xffffffff810452e1 in raise_softirq (nr=<optimized out>) at kernel/softirq.c:744
->   0xffffffff810bd4e1 in invoke_rcu_core () at kernel/rcutree.c:1878
->   rcu_do_batch (rdp=0xffff880017c0bf80, rsp=<optimized out>) at kernel/rcutree.c:1635
->   invoke_rcu_callbacks (rdp=0xffff880017c0bf80, rsp=0xffffffff81c2b140) at kernel/rcutree.c:1870
->   __rcu_process_callbacks (rsp=0xffffffff81c2b140) at kernel/rcutree.c:1842
->   rcu_process_callbacks (unused=<optimized out>) at kernel/rcutree.c:1854
->   0xffffffff8104466b in handle_softirq (need_rcu_bh_qs=1, cpu=0, vec_nr=9) at kernel/softirq.c:149
->   do_single_softirq (need_rcu_bh_qs=1, which=9) at kernel/softirq.c:457
->   do_current_softirqs (need_rcu_bh_qs=1) at kernel/softirq.c:500
-> 
-> Does that sound right?
+Hello Frank,
 
-(Following up on IRC discussion)
+=46riendly ping, to make sure this doesn't fall through the cracks.
 
-Yep, if a given CPU has a large number of callbacks, it will execute
-them in batches of 10 (controlled by rcutree.blimit module parameter).
-It will re-raise RCU_SOFTIRQ at the end of each batch.  The point is
-to allow other softirq handlers to run.
+Thanks
 
-							Thanx, Paul
+- Bhavesh
 
+On Oct 11, 2012, at 1:59 PM, Bhavesh Davda wrote:
+
+> Thanks for the review, Frank.
+>=20
+> On Oct 11, 2012, at 12:57 PM, Frank Rowand wrote:
+>> Nice idea=85
+> Thanks
+>=20
+>> Suggest:
+>>       printf("# Histogram Overflows at cycle number:");
+>>=20
+> Done
+>=20
+>>> - 		printf(" %05lu", par[j]->stats->hist_overflow);
+>>> +		printf(" %05lu", par[j]->stats->hist_overflow);
+>>=20
+>> Am I blind, or is that a whitespace change?  (The latest version I h=
+ave does not seem
+>> to have any white space issues in that line.)
+>>=20
+> Turns out I had removed extraneous whitespace. My vim settings allow =
+me to see extraneous whitespaces in red, so I get annoyed by them and c=
+an fix them up. So I've removed a few more in the revised diffs (sorry!=
+)
+>=20
+>> Suggest:
+>>=20
+>> +             printf("# thread %d:", j);
+>>=20
+> Done
+>=20
+>> Nit: You don't need stats->outliers_overflow.  You can calculate it =
+from
+>> stats->hist_overflow - stats->num_outliers:
+>>=20
+> Nice catch! I've removed outliers_overflow now.
+>=20
+>=20
+> From: Bhavesh Davda <bhavesh@vmware.com>
+>=20
+> Add feature to cyclictest histogram mode to track cycle counts every =
+time a
+> sample overflows the histogram limit. This should help identify if th=
+ere is a
+> timing pattern to jitters in cyclictest runs.
+>=20
+> Example output (with -h 10):
+>  ...
+>  Histogram Overflows: 00000 00253 00000 00005 00000 00024 00003 00005
+>  Histogram Overflow at cycle number:
+>  Thread 0:
+>  Thread 1: 00023 00028 00337 00338 00339 00340 00341 00342 00343 0034=
+4 # 00243 others
+>  Thread 2:
+>  Thread 3: 10486 10487 10488 10489 10490
+>  Thread 4:
+>  Thread 5: 00002 00004 00008 00012 00178 10458 10459 10460 10461 1046=
+2 # 00014 others
+>  Thread 6: 05954 08954 29955
+>  Thread 7: 20536 20537 20538 20539 20540
+>  ...
+>=20
+> Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
+> ---
+> src/cyclictest/cyclictest.c |   38 +++++++++++++++++++++++++++++-----=
+----
+> 1 files changed, 29 insertions(+), 9 deletions(-)
+>=20
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.=
+c
+> index 731b4bd..dc985de 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -147,6 +147,7 @@ struct thread_stat {
+> 	double avg;
+> 	long *values;
+> 	long *hist_array;
+> +        unsigned long *outliers;
+> 	pthread_t thread;
+> 	int threadstarted;
+> 	int tid;
+> @@ -154,6 +155,7 @@ struct thread_stat {
+> 	long redmax;
+> 	long cycleofmax;
+> 	long hist_overflow;
+> +        long num_outliers;
+> };
+>=20
+> static int shutdown;
+> @@ -756,8 +758,11 @@ void *timerthread(void *param)
+>=20
+> 		/* Update the histogram */
+> 		if (histogram) {
+> -			if (diff >=3D histogram)
+> +			if (diff >=3D histogram) {
+> 				stat->hist_overflow++;
+> +				if (stat->num_outliers < histogram)
+> +					stat->outliers[stat->num_outliers++] =3D stat->cycles - 1;
+> +			}
+> 			else
+> 				stat->hist_array[diff]++;
+> 		}
+> @@ -811,7 +816,7 @@ static void display_help(int error)
+> 		if (kernvar(O_RDONLY, "available_tracers", tracers, sizeof(tracers)=
+))
+> 			strcpy(tracers, "none");
+> 	}
+> -	=09
+> +
+> 	printf("cyclictest V %1.2f\n", VERSION_STRING);
+> 	printf("Usage:\n"
+> 	       "cyclictest <options>\n\n"
+> @@ -1188,7 +1193,7 @@ static int check_kernel(void)
+> 		kv =3D KV_30;
+> 		strcpy(functiontracer, "function");
+> 		strcpy(traceroptions, "trace_options");
+> -	=09
+> +
+> 	} else
+> 		kv =3D KV_NOT_SUPPORTED;
+>=20
+> @@ -1226,7 +1231,7 @@ static void print_tids(struct thread_param *par=
+[], int nthreads)
+>=20
+> static void print_hist(struct thread_param *par[], int nthreads)
+> {
+> -	int i, j;
+> +	int i, j, k;
+> 	unsigned long long int log_entries[nthreads+1];
+> 	unsigned long maxmax, alloverflows;
+>=20
+> @@ -1270,7 +1275,7 @@ static void print_hist(struct thread_param *par=
+[], int nthreads)
+> 	printf("# Max Latencies:");
+> 	maxmax =3D 0;
+> 	for (j =3D 0; j < nthreads; j++) {
+> - 		printf(" %05lu", par[j]->stats->max);
+> +		printf(" %05lu", par[j]->stats->max);
+> 		if (par[j]->stats->max > maxmax)
+> 			maxmax =3D par[j]->stats->max;
+> 	}
+> @@ -1280,9 +1285,20 @@ static void print_hist(struct thread_param *pa=
+r[], int nthreads)
+> 	printf("# Histogram Overflows:");
+> 	alloverflows =3D 0;
+> 	for (j =3D 0; j < nthreads; j++) {
+> - 		printf(" %05lu", par[j]->stats->hist_overflow);
+> +		printf(" %05lu", par[j]->stats->hist_overflow);
+> 		alloverflows +=3D par[j]->stats->hist_overflow;
+> 	}
+> +	printf("\n");
+> +	printf("# Histogram Overflow at cycle number:\n");
+> +	for (j =3D 0; j < nthreads; j++) {
+> +		printf("# Thread %d:", j);
+> +		for (k =3D 0; k < par[j]->stats->num_outliers; k++)
+> +			printf(" %05lu", par[j]->stats->outliers[k]);
+> +		if (par[j]->stats->num_outliers < par[j]->stats->hist_overflow)
+> +			printf(" # %05lu others", par[j]->stats->hist_overflow - par[j]->=
+stats->num_outliers);
+> +                printf("\n");
+> +        }
+> +
+> 	if (histofall && nthreads > 1)
+> 		printf(" %05lu", alloverflows);
+> 	printf("\n");
+> @@ -1434,10 +1450,12 @@ int main(int argc, char **argv)
+> 			int bufsize =3D histogram * sizeof(long);
+>=20
+> 			stat->hist_array =3D threadalloc(bufsize, node);
+> -			if (stat->hist_array =3D=3D NULL)
+> +			stat->outliers =3D threadalloc(bufsize, node);
+> +			if (stat->hist_array =3D=3D NULL || stat->outliers =3D=3D NULL)
+> 				fatal("failed to allocate histogram of size %d on node %d\n",
+> 				      histogram, i);
+> 			memset(stat->hist_array, 0, bufsize);
+> +			memset(stat->outliers, 0, bufsize);
+> 		}
+>=20
+> 		if (verbose) {
+> @@ -1553,8 +1571,10 @@ int main(int argc, char **argv)
+>=20
+> 	if (histogram) {
+> 		print_hist(parameters, num_threads);
+> -		for (i =3D 0; i < num_threads; i++)
+> +		for (i =3D 0; i < num_threads; i++) {
+> 			threadfree(statistics[i]->hist_array, histogram*sizeof(long), para=
+meters[i]->node);
+> +			threadfree(statistics[i]->outliers, histogram*sizeof(long), param=
+eters[i]->node);
+> +                }
+> 	}
+>=20
+> 	if (tracelimit) {
+> @@ -1564,7 +1584,7 @@ int main(int argc, char **argv)
+> 			printf("# Break value: %lu\n", break_thread_value);
+> 		}
+> 	}
+> -=09
+> +
+>=20
+> 	for (i=3D0; i < num_threads; i++) {
+> 		if (!statistics[i])
+> --=20
+> 1.7.1
+>=20
+
+--
+Bhavesh Davda
+bhavesh@vmware.com
+
+
+
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
