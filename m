@@ -1,7 +1,7 @@
 From: Bhavesh Davda <bhavesh@vmware.com>
-Subject: [PATCH RT-TESTS] cyclictest: whitespace cleanup
-Date: Tue, 16 Oct 2012 09:39:56 -0700
-Message-ID: <F285BDD9-9A4A-4B58-B69F-90F18B9D7B4D@vmware.com>
+Subject: [PATCH RT-TESTS] cyclictest: histogram overflow instance tracking
+Date: Tue, 16 Oct 2012 10:02:53 -0700
+Message-ID: <3BC12164-17B6-4F1A-94F8-A65C2A11BEAD@vmware.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
@@ -9,184 +9,117 @@ Cc: John Kacur <jkacur@redhat.com>,
 	Frank Rowand <frank.rowand@am.sony.com>
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:43954 "EHLO
+Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:54000 "EHLO
 	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754742Ab2JPQj5 convert rfc822-to-8bit
+	by vger.kernel.org with ESMTP id S1753912Ab2JPRCy convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Oct 2012 12:39:57 -0400
+	Tue, 16 Oct 2012 13:02:54 -0400
 Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Bhavesh Davda <bhavesh@vmware.com>
 
-Cosmetic whitespace cleanup
+Add feature to cyclictest histogram mode to track cycle counts every time a
+sample overflows the histogram limit. This should help identify if there is a
+timing pattern to jitters in cyclictest runs.
+
+Example output (with -h 10):
+ ...
+ Histogram Overflows: 00001 00007 00000 00009 00004 00007 00000 00001
+ Histogram Overflow at cycle number:
+ Thread 0: 09964
+ Thread 1: 00000 00004 00006 00008 00010 09962 11594
+ Thread 2:
+ Thread 3: 01169 04698 06782 09033 10299 11561 21517 28734 29532
+ Thread 4: 11574 11580 11583 11586
+ Thread 5: 00020 09448 13954 14954 18954 20587 24973
+ Thread 6:
+ Thread 7: 18950
+ ...
 
 Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
 ---
- src/cyclictest/cyclictest.c |   40 ++++++++++++++++++++--------------------
- 1 files changed, 20 insertions(+), 20 deletions(-)
+ src/cyclictest/cyclictest.c |   26 +++++++++++++++++++++++---
+ 1 files changed, 23 insertions(+), 3 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 11b6cea..418538f 100644
+index 418538f..824544f 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -200,12 +200,12 @@ static int32_t latency_target_value = 0;
+@@ -150,6 +150,7 @@ struct thread_stat {
+ 	double avg;
+ 	long *values;
+ 	long *hist_array;
++        long *outliers;
+ 	pthread_t thread;
+ 	int threadstarted;
+ 	int tid;
+@@ -157,6 +158,7 @@ struct thread_stat {
+ 	long redmax;
+ 	long cycleofmax;
+ 	long hist_overflow;
++        long num_outliers;
+ };
  
- /* Latency trick
-  * if the file /dev/cpu_dma_latency exists,
-- * open it and write a zero into it. This will tell 
-- * the power management system not to transition to 
-+ * open it and write a zero into it. This will tell
-+ * the power management system not to transition to
-  * a high cstate (in fact, the system acts like idle=poll)
-  * When the fd to /dev/cpu_dma_latency is closed, the behavior
-  * goes back to the system default.
-- * 
-+ *
-  * Documentation/power/pm_qos_interface.txt
-  */
- static void set_latency_target(void)
-@@ -380,7 +380,7 @@ void tracing(int on)
- 		switch (kernelversion) {
- 		case KV_26_LT18: gettimeofday(0,(struct timezone *)1); break;
- 		case KV_26_LT24: prctl(0, 1); break;
--		case KV_26_33: 
-+		case KV_26_33:
- 		case KV_30:
- 			write(trace_fd, "1", 1);
- 			break;
-@@ -390,7 +390,7 @@ void tracing(int on)
- 		switch (kernelversion) {
- 		case KV_26_LT18: gettimeofday(0,0); break;
- 		case KV_26_LT24: prctl(0, 0); break;
--		case KV_26_33: 
-+		case KV_26_33:
- 		case KV_30:
- 			write(trace_fd, "0", 1);
- 			break;
-@@ -720,7 +720,7 @@ void *timerthread(void *param)
+ static int shutdown;
+@@ -850,8 +852,11 @@ void *timerthread(void *param)
  
- 	memset(&schedp, 0, sizeof(schedp));
- 	schedp.sched_priority = par->prio;
--	if (setscheduler(0, par->policy, &schedp)) 
-+	if (setscheduler(0, par->policy, &schedp))
- 		fatal("timerthread%d: failed to set priority to %d\n", par->cpu, par->prio);
- 
- 	/* Get current time */
-@@ -907,7 +907,7 @@ static void display_help(int error)
- 		if (kernvar(O_RDONLY, "available_tracers", tracers, sizeof(tracers)))
- 			strcpy(tracers, "none");
- 	}
--		
-+
- 	printf("cyclictest V %1.2f\n", VERSION_STRING);
- 	printf("Usage:\n"
- 	       "cyclictest <options>\n\n"
-@@ -933,7 +933,7 @@ static void display_help(int error)
- 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
- 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
- 	       "-m       --mlockall        lock current and future memory allocations\n"
--	       "-M       --refresh_on_max  delay updating the screen until a new max latency is hit\n" 
-+	       "-M       --refresh_on_max  delay updating the screen until a new max latency is hit\n"
- 	       "-n       --nanosleep       use clock_nanosleep\n"
- 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
- 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
-@@ -1043,7 +1043,7 @@ static void process_options (int argc, char *argv[])
- 	int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
- 
- 	for (;;) {
-- 		int option_index = 0;
-+		int option_index = 0;
- 		/** Options for getopt */
- 		static struct option long_options[] = {
- 			{"affinity", optional_argument, NULL, 'a'},
-@@ -1128,8 +1128,8 @@ static void process_options (int argc, char *argv[])
- 		case 'N': use_nsecs = 1; break;
- 		case 'o': oscope_reduction = atoi(optarg); break;
- 		case 'O': traceopt(optarg); break;
--		case 'p': 
--			priority = atoi(optarg); 
-+		case 'p':
-+			priority = atoi(optarg);
- 			if (policy != SCHED_FIFO && policy != SCHED_RR)
- 				policy = SCHED_FIFO;
- 			break;
-@@ -1158,9 +1158,9 @@ static void process_options (int argc, char *argv[])
+ 		/* Update the histogram */
+ 		if (histogram) {
+-			if (diff >= histogram)
++			if (diff >= histogram) {
+ 				stat->hist_overflow++;
++                                if (stat->num_outliers < histogram)
++					stat->outliers[stat->num_outliers++] = stat->cycles;
++			}
  			else
- 				num_threads = max_cpus;
- 			break;
--		case 'T': 
-+		case 'T':
- 			tracetype = CUSTOM;
--			strncpy(tracer, optarg, sizeof(tracer)); 
-+			strncpy(tracer, optarg, sizeof(tracer));
- 			break;
- 		case 'u': setvbuf(stdout, NULL, _IONBF, 0); break;
- 		case 'v': verbose = 1; break;
-@@ -1250,7 +1250,7 @@ static void process_options (int argc, char *argv[])
- 		error = 1;
- 
- 	if (priospread && priority == 0) {
--		fprintf(stderr, "defaulting realtime priority to %d\n", 
-+		fprintf(stderr, "defaulting realtime priority to %d\n",
- 			num_threads+1);
- 		priority = num_threads+1;
- 	}
-@@ -1261,7 +1261,7 @@ static void process_options (int argc, char *argv[])
- 	}
- 
- 	if ((policy == SCHED_FIFO || policy == SCHED_RR) && priority == 0) {
--		fprintf(stderr, "defaulting realtime priority to %d\n", 
-+		fprintf(stderr, "defaulting realtime priority to %d\n",
- 			num_threads+1);
- 		priority = num_threads+1;
- 	}
-@@ -1303,7 +1303,7 @@ static int check_kernel(void)
- 		kv = KV_30;
- 		strcpy(functiontracer, "function");
- 		strcpy(traceroptions, "trace_options");
--		
-+
- 	} else
- 		kv = KV_NOT_SUPPORTED;
- 
-@@ -1385,7 +1385,7 @@ static void print_hist(struct thread_param *par[], int nthreads)
- 	printf("# Max Latencies:");
- 	maxmax = 0;
- 	for (j = 0; j < nthreads; j++) {
-- 		printf(" %05lu", par[j]->stats->max);
-+		printf(" %05lu", par[j]->stats->max);
- 		if (par[j]->stats->max > maxmax)
- 			maxmax = par[j]->stats->max;
- 	}
-@@ -1395,7 +1395,7 @@ static void print_hist(struct thread_param *par[], int nthreads)
- 	printf("# Histogram Overflows:");
- 	alloverflows = 0;
- 	for (j = 0; j < nthreads; j++) {
-- 		printf(" %05lu", par[j]->stats->hist_overflow);
-+		printf(" %05lu", par[j]->stats->hist_overflow);
- 		alloverflows += par[j]->stats->hist_overflow;
- 	}
- 	if (histofall && nthreads > 1)
-@@ -1416,7 +1416,7 @@ static void print_stat(struct thread_param *par, int index, int verbose)
- 			else
-                                 fmt = "T:%2d (%5d) P:%2d I:%ld C:%7lu "
- 					"Min:%7ld Act:%5ld Avg:%5ld Max:%8ld\n";
--                        printf(fmt, index, stat->tid, par->prio, 
-+                        printf(fmt, index, stat->tid, par->prio,
-                                par->interval, stat->cycles, stat->min, stat->act,
- 			       stat->cycles ?
- 			       (long)(stat->avg/stat->cycles) : 0, stat->max);
-@@ -1679,7 +1679,7 @@ int main(int argc, char **argv)
- 			printf("# Break value: %llu\n", (unsigned long long)break_thread_value);
+ 				stat->hist_array[diff]++;
  		}
- 	}
--	
+@@ -1401,6 +1406,17 @@ static void print_hist(struct thread_param *par[], int nthreads)
+ 	if (histofall && nthreads > 1)
+ 		printf(" %05lu", alloverflows);
+ 	printf("\n");
 +
++	printf("# Histogram Overflow at cycle number:\n");
++	for (i = 0; i < nthreads; i++) {
++		printf("# Thread %d:", i);
++		for (j = 0; j < par[i]->stats->num_outliers; j++)
++			printf(" %05lu", par[i]->stats->outliers[j]);
++		if (par[i]->stats->num_outliers < par[i]->stats->hist_overflow)
++			printf(" # %05lu others", par[i]->stats->hist_overflow - par[i]->stats->num_outliers);
++		printf("\n");
++	}
++	printf("\n");
+ }
  
- 	for (i=0; i < num_threads; i++) {
- 		if (!statistics[i])
+ static void print_stat(struct thread_param *par, int index, int verbose)
+@@ -1549,10 +1565,12 @@ int main(int argc, char **argv)
+ 			int bufsize = histogram * sizeof(long);
+ 
+ 			stat->hist_array = threadalloc(bufsize, node);
+-			if (stat->hist_array == NULL)
++			stat->outliers = threadalloc(bufsize, node);
++			if (stat->hist_array == NULL || stat->outliers == NULL)
+ 				fatal("failed to allocate histogram of size %d on node %d\n",
+ 				      histogram, i);
+ 			memset(stat->hist_array, 0, bufsize);
++			memset(stat->outliers, 0, bufsize);
+ 		}
+ 
+ 		if (verbose) {
+@@ -1668,8 +1686,10 @@ int main(int argc, char **argv)
+ 
+ 	if (histogram) {
+ 		print_hist(parameters, num_threads);
+-		for (i = 0; i < num_threads; i++)
++		for (i = 0; i < num_threads; i++) {
+ 			threadfree(statistics[i]->hist_array, histogram*sizeof(long), parameters[i]->node);
++			threadfree(statistics[i]->outliers, histogram*sizeof(long), parameters[i]->node);
++		}
+ 	}
+ 
+ 	if (tracelimit) {
 -- 
 1.7.1
 
