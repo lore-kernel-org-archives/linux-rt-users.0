@@ -1,58 +1,33 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: [PATCH-v2] tty: Use raw spin lock to protect RX flip buffer
-Date: Tue, 16 Oct 2012 08:55:40 +0200
-Message-ID: <CAMSQXEF8peQofy5bbgT5aW2eYoR7KVb8neoK34ZZS+uwjubPNA@mail.gmail.com>
-References: <1348478680-11505-1-git-send-email-meltedpianoman@gmail.com>
-	<1349781313-8670-1-git-send-email-meltedpianoman@gmail.com>
-	<alpine.LFD.2.02.1210091934010.10988@ionos>
+From: Lars Segerlund <lars.segerlund@gmail.com>
+Subject: tracefs .. idea
+Date: Tue, 16 Oct 2012 12:44:50 +0200
+Message-ID: <CAF-VNaq+CpDLzLXVg2o2KAZ7fyQfhvxAs6wRWrgvHh3jJ9+2fQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-serial@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, Alan Cox <alan@linux.intel.com>,
-	Greg KH <gregkh@linuxfoundation.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1210091934010.10988@ionos>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ea0-f174.google.com ([209.85.215.174]:47163 "EHLO
+	mail-ea0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753528Ab2JPKov (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 16 Oct 2012 06:44:51 -0400
+Received: by mail-ea0-f174.google.com with SMTP id c13so1434974eaa.19
+        for <linux-rt-users@vger.kernel.org>; Tue, 16 Oct 2012 03:44:50 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+ I was thinking of tracking locks and above all interrupt disable
+through debugfs.
 
-2012/10/9 Thomas Gleixner <tglx@linutronix.de>:
->
-> __tty_buffer_flush() can call tty_buffer_free() which in turn can call
-> kfree(), which is a nono on RT with preemption and interrupts
-> disabled. Enabling CONFIG_DEBUG_ATOMIC_SLEEP and extensive testing
-> should have told you that.
->
-> I did not look at the other places where this lock is used, but I
-> suspect there is more fallout lurking.
->
-> Thanks,
->
->         tglx
+ Something along the lines of a buffer with the top offenders in it,
+and thus getting a list of the longest latency introducing sections.
+ Or would it be 'better' to instrument with something like kprobes and
+have a utility for this functionality ?
 
-OK, this is a big lesson for me to start using the Kernel Hacking
-options more in the future, and especially before sending patches to
-the mailing list... Sorry for bothering you with a patch that I could
-find out myself was incorrect.
+ Any further idea of stuff to trace ? or has this already been done
+and I am unaware of it ?
 
-After your remarks, I had some more discussion & reviews with a
-colleague of mine. And we finally came to the point where we figured
-out that this patch actually tries to solve an issue that is not there
-at all... All RX flip buffer handling is initiated from the threaded
-IRQ handling: filling the buffer, pushing the buffer and in case of
-the low_latency handling (always enabled for PREEMP_RT) also the
-copying of the buffer to the line discipline. Therefore the spin lock
-was only locked/unlocked by the RX irq thread during "normal" read
-operation.
+ I basicly want a list of the sections in the kernel that disables
+preemption for the longest time.
 
-So I skrewed up: I thought I had seen measurements that this patch
-improved performance, but after reverting this changeset and redoing
-the measurements it proves it has no performance impact at all.
-
-I'll abandon this patch
-Thank you very much for reviewing
-
-Regards,
-Ivo Sieben
+ / regards, Lars Segerlund.
