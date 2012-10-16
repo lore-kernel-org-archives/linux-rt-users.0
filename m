@@ -1,235 +1,76 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [PATCH] rt: Replace rt spin lock to raw one in res_counter
-Date: Tue, 16 Oct 2012 12:37:21 -0700
-Message-ID: <1350416241-4719-1-git-send-email-yang.shi@windriver.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [ANNOUNCE] 3.6.1-rt2
+Date: Tue, 16 Oct 2012 16:09:16 -0400
+Message-ID: <CAP=VYLoHhtth2+BwQAsd7uyW8N+rJj6zznP9sNjczTj_0Uqk9w@mail.gmail.com>
+References: <alpine.LFD.2.02.1210162037380.2811@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <srostedt@redhat.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:34870 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755966Ab2JPTix (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Oct 2012 15:38:53 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.02.1210162037380.2811@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-res_counter_charge/uncharge are called where the thread can sleep and IRQ is
-disabled. When enabling DEBUG_ATOMIC_SLEEP and running ksm03, which is a
-test case about Kernel Samepage Merging for Memory Resource Controller,
-rt kernel reports below BUG.
+On Tue, Oct 16, 2012 at 2:41 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.6.1-rt2 release.
+>
+> Changes since 3.6.1-rt1:
+>
+>         * Picked up Pauls git friendly quilt queue
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:646
-in_atomic(): 1, irqs_disabled(): 0, pid: 17730, name: ksm03
-Pid: 17730, comm: ksm03 Tainted: G        WC   3.4.10-rt17 #8
-Call Trace:
- [<ffffffff8106708c>] __might_sleep+0xcc/0xf0
- [<ffffffff817adc24>] rt_spin_lock+0x24/0x50
- [<ffffffff810a14c2>] res_counter_uncharge_until+0x32/0x60
- [<ffffffff8113abf2>] drain_stock.isra.13+0x62/0xa0
- [<ffffffff8113ac60>] drain_local_stock+0x30/0x40
- [<ffffffff8113ade4>] drain_all_stock+0x174/0x190
- [<ffffffff8113f0d1>] mem_cgroup_force_empty+0xd1/0x5e0
- [<ffffffff817b1dbd>] ? sub_preempt_count+0x9d/0xd0
- [<ffffffff81069e97>] ? migrate_enable+0x87/0x1b0
- [<ffffffff8113f5f4>] mem_cgroup_pre_destroy+0x14/0x20
- [<ffffffff8109b2fe>] cgroup_rmdir+0xbe/0x560
- [<ffffffff8105a1d0>] ? __init_waitqueue_head+0x50/0x50
- [<ffffffff81152665>] vfs_rmdir+0xd5/0x140
- [<ffffffff811527db>] do_rmdir+0x10b/0x120
- [<ffffffff81153f66>] sys_rmdir+0x16/0x20
- [<ffffffff817b5812>] system_call_fastpath+0x16/0x1b
+Which is a "linux-stable" like queue of patches stored in git.
+So you can see what patches change, how the series file
+changes and so on.  Like this for the latest rt2:
 
-Since res_counter is not in hot paths and the lock is not held for long time,
-replace res_counter rt spin lock to raw spin lock to avoid the BUG report.
+       new file:   crypto-make-core-static-and-init-scru-early.patch
+       modified:   fix-rt-int3-x86_32-3.2-rt.patch
+       modified:   futex-requeue-pi-fix.patch
+       renamed:
+hrtimer-add-missing-debug_activate-aid-was-re-announce-3-0-6-rt17.patch
+-> hrtimer-add-missing-debug_activate-aid.patch
+       modified:   latency-hist.patch
+       modified:   oleg-signal-rt-fix.patch
+       modified:   panic-disable-random-on-rt.patch
+       modified:   ping-sysrq.patch
+       new file:   rcu-tiny-solve-rt-mistery.patch
+       modified:   series
+       renamed:    softirq-preempt-fix-3-re.txt ->
+softirq-preempt-fix-3-re.patch
+       new file:   timer.c-fix-build-fail-for-RT_FULL.patch
 
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
----
- include/linux/res_counter.h |   26 +++++++++++++-------------
- kernel/res_counter.c        |   26 +++++++++++++-------------
- 2 files changed, 26 insertions(+), 26 deletions(-)
+http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git;a=summary
 
-diff --git a/include/linux/res_counter.h b/include/linux/res_counter.h
-index da81af0..b4cfd6b 100644
---- a/include/linux/res_counter.h
-+++ b/include/linux/res_counter.h
-@@ -46,7 +46,7 @@ struct res_counter {
- 	 * the lock to protect all of the above.
- 	 * the routines below consider this to be IRQ-safe
- 	 */
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	/*
- 	 * Parent counter, used for hierarchial resource accounting
- 	 */
-@@ -147,12 +147,12 @@ static inline unsigned long long res_counter_margin(struct res_counter *cnt)
- 	unsigned long long margin;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->limit > cnt->usage)
- 		margin = cnt->limit - cnt->usage;
- 	else
- 		margin = 0;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return margin;
- }
- 
-@@ -169,12 +169,12 @@ res_counter_soft_limit_excess(struct res_counter *cnt)
- 	unsigned long long excess;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->usage <= cnt->soft_limit)
- 		excess = 0;
- 	else
- 		excess = cnt->usage - cnt->soft_limit;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return excess;
- }
- 
-@@ -182,18 +182,18 @@ static inline void res_counter_reset_max(struct res_counter *cnt)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->max_usage = cnt->usage;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- }
- 
- static inline void res_counter_reset_failcnt(struct res_counter *cnt)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->failcnt = 0;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- }
- 
- static inline int res_counter_set_limit(struct res_counter *cnt,
-@@ -202,12 +202,12 @@ static inline int res_counter_set_limit(struct res_counter *cnt,
- 	unsigned long flags;
- 	int ret = -EBUSY;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->usage <= limit) {
- 		cnt->limit = limit;
- 		ret = 0;
- 	}
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return ret;
- }
- 
-@@ -217,9 +217,9 @@ res_counter_set_soft_limit(struct res_counter *cnt,
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->soft_limit = soft_limit;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return 0;
- }
- 
-diff --git a/kernel/res_counter.c b/kernel/res_counter.c
-index 402f91a..540ce63 100644
---- a/kernel/res_counter.c
-+++ b/kernel/res_counter.c
-@@ -16,7 +16,7 @@
- 
- void res_counter_init(struct res_counter *counter, struct res_counter *parent)
- {
--	spin_lock_init(&counter->lock);
-+	raw_spin_lock_init(&counter->lock);
- 	counter->limit = RESOURCE_MAX;
- 	counter->soft_limit = RESOURCE_MAX;
- 	counter->parent = parent;
-@@ -45,9 +45,9 @@ int res_counter_charge(struct res_counter *counter, unsigned long val,
- 	*limit_fail_at = NULL;
- 	local_irq_save_nort(flags);
- 	for (c = counter; c != NULL; c = c->parent) {
--		spin_lock(&c->lock);
-+		raw_spin_lock(&c->lock);
- 		ret = res_counter_charge_locked(c, val);
--		spin_unlock(&c->lock);
-+		raw_spin_unlock(&c->lock);
- 		if (ret < 0) {
- 			*limit_fail_at = c;
- 			goto undo;
-@@ -57,9 +57,9 @@ int res_counter_charge(struct res_counter *counter, unsigned long val,
- 	goto done;
- undo:
- 	for (u = counter; u != c; u = u->parent) {
--		spin_lock(&u->lock);
-+		raw_spin_lock(&u->lock);
- 		res_counter_uncharge_locked(u, val);
--		spin_unlock(&u->lock);
-+		raw_spin_unlock(&u->lock);
- 	}
- done:
- 	local_irq_restore_nort(flags);
-@@ -77,11 +77,11 @@ int res_counter_charge_nofail(struct res_counter *counter, unsigned long val,
- 	*limit_fail_at = NULL;
- 	local_irq_save(flags);
- 	for (c = counter; c != NULL; c = c->parent) {
--		spin_lock(&c->lock);
-+		raw_spin_lock(&c->lock);
- 		r = res_counter_charge_locked(c, val);
- 		if (r)
- 			c->usage += val;
--		spin_unlock(&c->lock);
-+		raw_spin_unlock(&c->lock);
- 		if (r < 0 && ret == 0) {
- 			*limit_fail_at = c;
- 			ret = r;
-@@ -106,9 +106,9 @@ void res_counter_uncharge(struct res_counter *counter, unsigned long val)
- 
- 	local_irq_save_nort(flags);
- 	for (c = counter; c != NULL; c = c->parent) {
--		spin_lock(&c->lock);
-+		raw_spin_lock(&c->lock);
- 		res_counter_uncharge_locked(c, val);
--		spin_unlock(&c->lock);
-+		raw_spin_unlock(&c->lock);
- 	}
- 	local_irq_restore_nort(flags);
- }
-@@ -157,9 +157,9 @@ u64 res_counter_read_u64(struct res_counter *counter, int member)
- 	unsigned long flags;
- 	u64 ret;
- 
--	spin_lock_irqsave(&counter->lock, flags);
-+	raw_spin_lock_irqsave(&counter->lock, flags);
- 	ret = *res_counter_member(counter, member);
--	spin_unlock_irqrestore(&counter->lock, flags);
-+	raw_spin_unlock_irqrestore(&counter->lock, flags);
- 
- 	return ret;
- }
-@@ -207,9 +207,9 @@ int res_counter_write(struct res_counter *counter, int member,
- 		if (*end != '\0')
- 			return -EINVAL;
- 	}
--	spin_lock_irqsave(&counter->lock, flags);
-+	raw_spin_lock_irqsave(&counter->lock, flags);
- 	val = res_counter_member(counter, member);
- 	*val = tmp;
--	spin_unlock_irqrestore(&counter->lock, flags);
-+	raw_spin_unlock_irqrestore(&counter->lock, flags);
- 	return 0;
- }
--- 
-1.7.5.4
+Paul.
+--
 
+>
+>         * Compile fix for !RT_FULL (Paul Gortemaker)
+>
+>         * Crypto init order fix
+>
+>         * Tiny RCU fix which affects UP and is a long standing bug
+>           affecting 3.2 and 3.4-rt as well.
+>
+> The delta patch against 3.6.1-rt1 is appended below and can be found here
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.1-rt1-rt2.patch.xz
+>
+> The RT patch against 3.6.1 can be found here:
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.1-rt2.patch.xz
+>
+> The split quilt queue is available at:
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.1-rt2.tar.xz
+>
+> Enjoy,
+>
+>         tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
