@@ -1,171 +1,72 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [REPOST] tty: Use raw spin lock to protect TTY ldisc administration
-Date: Wed, 17 Oct 2012 14:03:14 +0200
-Message-ID: <1350475394-3747-1-git-send-email-meltedpianoman@gmail.com>
-References: <1348149928-4681-1-git-send-email-meltedpianoman@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] slab: Fix up stable merge of slab init_lock_keys()
+Date: Thu, 18 Oct 2012 09:40:01 -0400
+Message-ID: <1350567601.19292.69.camel@pippen.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Alan Cox <alan@linux.intel.com>,
-	Greg KH <gregkh@linuxfoundation.org>,
-	Ivo Sieben <meltedpianoman@gmail.com>
-To: <linux-serial@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe005.messaging.microsoft.com ([216.32.180.31]:3549 "EHLO
-	va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756689Ab2JQMD0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Oct 2012 08:03:26 -0400
-In-Reply-To: <1348149928-4681-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	John Kacur <jkacur@redhat.com>
+To: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-The global "normal" spin lock that guards the line discipline
-administration is replaced by a raw spin lock. On a PREEMPT_RT system this
-prevents unwanted scheduling overhead around the line discipline administration.
+Peter,
 
-On a 200 MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
-overhead on a TTY read or write call.
+There was a little conflict with my merge of 3.4.14 due to the backport
+of this patch:
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+commit 947ca1856a7e60aa6d20536785e6a42dff25aa6e
+Author: Michael Wang <wangyun@linux.vnet.ibm.com>
+Date:   Wed Sep 5 10:33:18 2012 +0800
+
+    slab: fix the DEADLOCK issue on l3 alien lock
+
+Could you just confirm that my fix is correct.
+
+Thanks,
+
+-- Steve
+
+
+>From 741c5d3c42ad58b577d0ee602dd1f0bb52b7b92b Mon Sep 17 00:00:00 2001
+From: Steven Rostedt <srostedt@redhat.com>
+Date: Tue, 16 Oct 2012 17:00:19 -0400
+Subject: [PATCH] slab: Fix up stable merge of slab init_lock_keys()
+
+There was a stable fix that moved the init_lock_keys() to after
+the enable_cpucache(). But -rt changed this function to
+init_cachep_lock_keys(). This moves the init afterwards to
+match the stable fix.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ mm/slab.c |    5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
 
- Repost:
-
- @Thomas Gleixner & Steven Rostedt:
- I think this patch makes sense... a global spin lock causes additional
- scheduling overhead. Since the critical section is small a raw spinlock
- can be used here.
-
- I tested this on a 3.0.43-rt65 kernel, with the following Kernel Hacking
- options enabled:
- - CONFIG_DEBUG_RT_MUTEXES
- - CONFIG_DEBUG_SPINLOCK
- - CONFIG_DEBUG_MUTEXES
- - CONFIG_DEBUG_LOCK_ALLOC
- - CONFIG_PROVE_LOCKING
- - CONFIG_DEBUG_SPINLOCK_SLEEP
-
- drivers/tty/tty_ldisc.c |   32 ++++++++++++++++----------------
- 1 file changed, 16 insertions(+), 16 deletions(-)
-
-diff --git a/drivers/tty/tty_ldisc.c b/drivers/tty/tty_ldisc.c
-index 0f2a2c5..4eb24b1 100644
---- a/drivers/tty/tty_ldisc.c
-+++ b/drivers/tty/tty_ldisc.c
-@@ -26,7 +26,7 @@
-  *	callers who will do ldisc lookups and cannot sleep.
-  */
- 
--static DEFINE_SPINLOCK(tty_ldisc_lock);
-+static DEFINE_RAW_SPINLOCK(tty_ldisc_lock);
- static DECLARE_WAIT_QUEUE_HEAD(tty_ldisc_wait);
- /* Line disc dispatch table */
- static struct tty_ldisc_ops *tty_ldiscs[NR_LDISCS];
-@@ -49,21 +49,21 @@ static void put_ldisc(struct tty_ldisc *ld)
- 	 * If this is the last user, free the ldisc, and
- 	 * release the ldisc ops.
- 	 *
--	 * We really want an "atomic_dec_and_lock_irqsave()",
-+	 * We really want an "atomic_dec_and_raw_lock_irqsave()",
- 	 * but we don't have it, so this does it by hand.
- 	 */
--	local_irq_save(flags);
--	if (atomic_dec_and_lock(&ld->users, &tty_ldisc_lock)) {
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	if (atomic_dec_and_test(&ld->users)) {
- 		struct tty_ldisc_ops *ldo = ld->ops;
- 
- 		ldo->refcount--;
- 		module_put(ldo->owner);
--		spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+		raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 		kfree(ld);
- 		return;
+diff --git a/mm/slab.c b/mm/slab.c
+index 119969a..27a194c 100644
+--- a/mm/slab.c
++++ b/mm/slab.c
+@@ -1763,15 +1763,12 @@ void __init kmem_cache_init_late(void)
+ 	/* 6) resize the head arrays to their final sizes */
+ 	mutex_lock(&cache_chain_mutex);
+ 	list_for_each_entry(cachep, &cache_chain, next) {
+-		init_cachep_lock_keys(cachep);
+ 		if (enable_cpucache(cachep, GFP_NOWAIT))
+ 			BUG();
++		init_cachep_lock_keys(cachep);
  	}
--	local_irq_restore(flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 	wake_up(&ld->wq_idle);
- }
+ 	mutex_unlock(&cache_chain_mutex);
  
-@@ -88,11 +88,11 @@ int tty_register_ldisc(int disc, struct tty_ldisc_ops *new_ldisc)
- 	if (disc < N_TTY || disc >= NR_LDISCS)
- 		return -EINVAL;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	tty_ldiscs[disc] = new_ldisc;
- 	new_ldisc->num = disc;
- 	new_ldisc->refcount = 0;
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 	return ret;
- }
-@@ -118,12 +118,12 @@ int tty_unregister_ldisc(int disc)
- 	if (disc < N_TTY || disc >= NR_LDISCS)
- 		return -EINVAL;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	if (tty_ldiscs[disc]->refcount)
- 		ret = -EBUSY;
- 	else
- 		tty_ldiscs[disc] = NULL;
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 
- 	return ret;
- }
-@@ -134,7 +134,7 @@ static struct tty_ldisc_ops *get_ldops(int disc)
- 	unsigned long flags;
- 	struct tty_ldisc_ops *ldops, *ret;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ret = ERR_PTR(-EINVAL);
- 	ldops = tty_ldiscs[disc];
- 	if (ldops) {
-@@ -144,7 +144,7 @@ static struct tty_ldisc_ops *get_ldops(int disc)
- 			ret = ldops;
- 		}
- 	}
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 	return ret;
- }
- 
-@@ -152,10 +152,10 @@ static void put_ldops(struct tty_ldisc_ops *ldops)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ldops->refcount--;
- 	module_put(ldops->owner);
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- }
- 
- /**
-@@ -287,11 +287,11 @@ static struct tty_ldisc *tty_ldisc_try(struct tty_struct *tty)
- 	unsigned long flags;
- 	struct tty_ldisc *ld;
- 
--	spin_lock_irqsave(&tty_ldisc_lock, flags);
-+	raw_spin_lock_irqsave(&tty_ldisc_lock, flags);
- 	ld = NULL;
- 	if (test_bit(TTY_LDISC, &tty->flags))
- 		ld = get_ldisc(tty->ldisc);
--	spin_unlock_irqrestore(&tty_ldisc_lock, flags);
-+	raw_spin_unlock_irqrestore(&tty_ldisc_lock, flags);
- 	return ld;
- }
+-	/* Annotate slab for lockdep -- annotate the malloc caches */
+-	init_lock_keys();
+-
+ 	/* Done! */
+ 	g_cpucache_up = FULL;
  
 -- 
-1.7.9.5
-
-
+1.7.10.4
