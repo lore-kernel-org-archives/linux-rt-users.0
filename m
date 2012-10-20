@@ -1,45 +1,76 @@
-From: Darren Hart <dvhart@infradead.org>
-Subject: New PREEMPT_RT Bugzilla
-Date: Sat, 20 Oct 2012 15:01:12 -0400
-Message-ID: <5082F4F8.6010107@infradead.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: SLAB leaks filep in 3.4.13-rt21 with PREEMPT_RT_FULL
+Date: Sat, 20 Oct 2012 21:30:53 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210202125560.2719@ionos>
+References: <5082C7B9.9010502@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Stanislav Meduna <stano@meduna.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:35843 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754451Ab2JTTCR (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:34004 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754446Ab2JTTa6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 20 Oct 2012 15:02:17 -0400
-Received: from guest-2-00251.dhcp.unc.edu ([204.84.8.251] helo=envy.home)
-	by casper.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
-	id 1TPeJM-0007CY-73
-	for linux-rt-users@vger.kernel.org; Sat, 20 Oct 2012 19:02:16 +0000
+	Sat, 20 Oct 2012 15:30:58 -0400
+In-Reply-To: <5082C7B9.9010502@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The Kernel.org Bugzilla (http://bugzilla.kernel.org) is now available to
-track bugs against the PREEMPT_RT Linux kernel. When submitting a new
-bug, select the Product and Component appropriate for the area in which
-the bug occurs (e.g. Networking/IPV4), select PREEMPT_RT for the Tree
-field, and provide the exact version you are running in the Kernel
-Version field.
+On Sat, 20 Oct 2012, Stanislav Meduna wrote:
+> Looking at the slabtop output the "filp" is responsible for
+> most of the allocations, but there are more, even the "pid"
+> is rising although the number of threads in the system stays
+> the same.
 
-When reporting bugs, please include as much information as possible in
-order to assist developers in reproducing the issue. Include the
-hardware platform you are using, your Linux kernel .config file, any
-relevant log output, and ideally a simple testcase to reproduce the
-error in source form. As always, please search the existing bug list and
-consider posting the issue to this list before opening a new defect.
+It's a UP problem in tiny RCU. Fix is below.
 
-If you would like to have access to the saved searches defined for
-PREEMPT_RT, which provide RSS feeds and whine emails (opt-in of course),
-please contact Darren Hart <dvhart@infradead.org> or Clark Williams
-<williams@redhat.com>. They will need your bugzilla login ID and will
-add you to the PREEMPT_RT group.
+Thanks,
 
--- 
-Darren Hart
-Intel Open Source Technology Center
-Yocto Project - Linux Kernel
+	tglx
+
+-------------------------->
+Subject: rcu: rcutiny: Prevent RCU stall
+From: Thomas Gleixner <tglx@linutronix.de>
+Date: Tue, 16 Oct 2012 18:36:51 +0200
+
+rcu_read_unlock_special() checks in_serving_softirq() and leaves early
+when true. On RT this is obviously wrong as softirq processing context
+can be preempted and therefor such a task can be on the gp_tasks
+list. Leaving early here will leave the task on the list and therefor
+block RCU processing forever.
+
+This cannot happen on mainline because softirq processing context
+cannot be preempted and therefor this can never happen at all.
+
+In fact this check looks quite questionable in general. Neither irq
+context nor softirq processing context in mainline can ever be
+preempted in mainline so the special unlock case should not ever be
+invoked in such context. Now the only explanation might be a
+rcu_read_unlock() being interrupted and therefor leave the rcu nest
+count at 0 before the special unlock bit has been cleared. That looks
+fragile. At least it's missing a big fat comment. Paul ????
+
+See mainline commits: ec433f0c5 and 8762705a for further enlightment.
+
+Reported-by: Kristian Lehmann <krleit00@hs-esslingen.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+
+---
+ kernel/rcutiny_plugin.h |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+Index: linux-stable/kernel/rcutiny_plugin.h
+===================================================================
+--- linux-stable.orig/kernel/rcutiny_plugin.h
++++ linux-stable/kernel/rcutiny_plugin.h
+@@ -560,7 +560,7 @@ void rcu_read_unlock_special(struct task
+ 		rcu_preempt_cpu_qs();
+ 
+ 	/* Hardware IRQ handlers cannot block. */
+-	if (in_irq() || in_serving_softirq()) {
++	if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
+ 		local_irq_restore(flags);
+ 		return;
+ 	}
