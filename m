@@ -1,64 +1,141 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: RE: [PATCH 3/4] Add cyclicload calibration & load generation
- feature
-Date: Fri, 19 Oct 2012 11:39:38 -0400 (EDT)
-Message-ID: <alpine.LFD.2.02.1210191125480.3251@tycho>
-References: <1346320607-6691-1-git-send-email-Priyanka.Jain@freescale.com> <1346320607-6691-4-git-send-email-Priyanka.Jain@freescale.com> <AC83832D6324604BB08FAE5A33553F190B175EC1@039-SN2MPN1-011.039d.mgd.msft.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Build bug because of binutils 2.21
+Date: Sat, 20 Oct 2012 12:06:10 -0400
+Message-ID: <1350749170.2980.25.camel@pippen.local.home>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "williams@redhat.com" <williams@redhat.com>,
-	Aggrwal Poonam-B10812 <B10812@freescale.com>,
-	"jkacur@redhat.com" <jkacur@redhat.com>,
-	"frank.rowand@am.sony.com" <frank.rowand@am.sony.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Srivastava Rajan-B34330 <B34330@freescale.com>,
-	"dvhart@linux.intel.com" <dvhart@linux.intel.com>
-To: Jain Priyanka-B32167 <B32167@freescale.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gg0-f174.google.com ([209.85.161.174]:34449 "EHLO
-	mail-gg0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759088Ab2JSPiV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 19 Oct 2012 11:38:21 -0400
-Received: by mail-gg0-f174.google.com with SMTP id k5so92725ggd.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 19 Oct 2012 08:38:21 -0700 (PDT)
-In-Reply-To: <AC83832D6324604BB08FAE5A33553F190B175EC1@039-SN2MPN1-011.039d.mgd.msft.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: "H. Peter Anvin" <hpa@zytor.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+Peter,
 
+Thomas suggested that I email you to decide if a bug I stumbled on with
+binutils should be cause to blacklist version 2.21. Note, testing
+against 2.22 does not show this issue.
 
-On Fri, 19 Oct 2012, Jain Priyanka-B32167 wrote:
+A couple of days ago I went to test 3.6.1-rt2 and while building the
+i386 kernel, the build failed. I first thought it was a bug in the -rt
+patch, but then I tested vanilla 3.6.1 and that failed too. I then went
+to debug this in my non -rt development repo but the build completed
+without failure.
 
-> Dear Clark,
-> 
-> Its along time that since I have send patches for cyclicload.
-> I can see patch for cyclicload integrated into work branch on rt-test git tree.
-> Did you have any feedback on its working.
-> 
-> Also I have made some improvements on it. Should I send the next version of the cyclicload patch or a new patch for the changes based on the 'work' branch code.
-> 
-> Regards
-> Priyanka
-> 
->
- 
-------------->o SNIP
+With more investigation, it seemed that one repo would cause the issue
+but the other did not. A diff -r showed that the two repos were
+identical (besides the .git files and my patches directory).
 
-Personally I think you should send the next version of the new patch, and 
-not based on Clark's work branch. (a working branch is just that, a 
-working place to store patches, no guarantees)
+The build was basically:
 
-I think I should warn you that we have been discussing how difficult it is 
-to make an artifical load. I worry that your program just adds a thread or 
-threads spinning at another prio level, (which you can do already with 
-cyclictest) but not adding any real load. I wouldn't like for you to do
- a lot of work only to have it ultimately rejected.
+  cd good
+  make ARCH=i386 O=/work/build clean
+  make ARCH=i386 O=/work/build
+  <works>
+  cd ../bad
+  make ARCH=i386 O=/work/build clean
+  make ARCH=i386 O=/work/build
+  <fails build>
 
-Why don't you submit the next version of your work, and then perhaps talk 
-a little more about what you intend to do, and see what other people on 
-the mailing list here think about that.
+The error was:
 
-Thanks
+lib/lib.a(decompress.o):(.rodata+0x44): undefined reference to `unlzo'
 
-John Kacur
+In desperation to figure out what was happening, I did the following:
+
+ cp -r bad test
+ cd test
+ make ARCH=i386 O=/work/build
+
+And it worked! Note, I could go back and forth between the directories
+and the test always worked and the 'bad' directory always failed.
+
+Doing a make V=1, I was able to find that the problem happened during
+the compile of decompress_unlzo.c. Strange that the file was identical
+in both directories. I even removed the file from the good directory and
+made it a softlink to the bad one, and the good directory still worked.
+I even removed it again and made it a hard link and it still worked!
+
+Finally I found that the output of the assembly from decompress_unlzo.c
+was slightly different. By doing the make V=1 code by hand, I could
+start with the output of the .s (by making it with the -S gcc option)
+that .s created by the good directory would succeed the final link, and
+the .s created by the bad directory would fail the final link.
+
+Here's the diff between the two .s files:
+
+--- lib/decompress_unlzo.stable-rt.git.s        2012-10-20 09:37:22.000000000 -0400
++++ lib/decompress_unlzo.stable-xt.git.s        2012-10-20 09:37:22.000000000 -0400
+@@ -63,7 +63,7 @@
+        .type   parse_header, @function
+ parse_header:
+ .LFB1043:
+-       .file 3 "/work/rt/stable-rt.git/lib/decompress_unlzo.c"
++       .file 3 "/work/rt/stable-xt.git/lib/decompress_unlzo.c"
+        .loc 3 55 0
+        .cfi_startproc
+ .LVL3:
+@@ -3942,6 +3942,8 @@
+        .string "GNU C 4.6.0"
+ .LASF187:
+        .string "acpi_disabled"
++.LASF204:
++       .string "/work/rt/stable-xt.git/lib/decompress_unlzo.c"
+ .LASF87:
+        .string "NR_INACTIVE_FILE"
+ .LASF42:
+@@ -3996,8 +3998,6 @@
+        .string "long long int"
+ .LASF101:
+        .string "NR_BOUNCE"
+-.LASF57:
+-       .string "PCPU_FC_EMBED"
+ .LASF182:
+        .string "ioport_resource"
+ .LASF119:
+@@ -4308,8 +4308,8 @@
+        .string "kmalloc"
+ .LASF147:
+        .string "unlzo"
+-.LASF204:
+-       .string "/work/rt/stable-rt.git/lib/decompress_unlzo.c"
++.LASF57:
++       .string "PCPU_FC_EMBED"
+ .LASF192:
+        .string "x86_bios_cpu_apicid"
+ .LASF77:
+
+Note, the stable-rt.git file was the 'bad' directory and the
+'stable-xt.git' file was from the good copied directory.
+
+I tarballed all the necessary files and placed them here:
+http://rostedt.homelinux.com/private/broken.tar.bz2
+
+If you untar this and go into the broken directory, you will find a
+'compile' file. Edit the GCC_PATH and GCC_PREFIX to point to a gcc with
+2.21 binutils and you should be able to see this same bug. Note, my gcc
+and my binutils were compiled from scratch, and I've been using this for
+years and this is the first time I've had issues with it. I tested this
+on both a Debian box and a Fedora F14 box, and they both showed the
+issue (same version of gcc/binutils for both as I built them
+individually for both boxes).
+
+If you run ./compile with no arguments, it will compile, archive and
+link the good .s file and should succeed. If you run ./compile with an
+argument (any argument), it will compile, archive and link the bad .s
+file and should give you that error message. If you run it with an
+argument but also define GCC_AR_PATH and GCC_AR_PREFIX to be the path
+and prefix of ar from binutils 2.22, it will then work.
+
+It looks like there is a bug with 'ar' in binutils 2.21 that can cause
+linking issues with these .s files.
+
+As I said, Thomas suggested to ask you if this should be cause to
+blacklist 2.21 as a 'reliable' toolchain for building the kernel. Makes
+no difference to me. I've just finished upgrading my distcc farm to
+2.22.
+
+-- Steve
