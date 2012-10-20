@@ -1,45 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.32-rt48
-Date: Sat, 20 Oct 2012 14:38:43 -0400
-Message-ID: <1350758323.2980.28.camel@pippen.local.home>
+From: Darren Hart <dvhart@infradead.org>
+Subject: New PREEMPT_RT Bugzilla
+Date: Sat, 20 Oct 2012 15:01:12 -0400
+Message-ID: <5082F4F8.6010107@infradead.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from casper.infradead.org ([85.118.1.10]:35843 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754451Ab2JTTCR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 20 Oct 2012 15:02:17 -0400
+Received: from guest-2-00251.dhcp.unc.edu ([204.84.8.251] helo=envy.home)
+	by casper.infradead.org with esmtpsa (Exim 4.76 #1 (Red Hat Linux))
+	id 1TPeJM-0007CY-73
+	for linux-rt-users@vger.kernel.org; Sat, 20 Oct 2012 19:02:16 +0000
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+The Kernel.org Bugzilla (http://bugzilla.kernel.org) is now available to
+track bugs against the PREEMPT_RT Linux kernel. When submitting a new
+bug, select the Product and Component appropriate for the area in which
+the bug occurs (e.g. Networking/IPV4), select PREEMPT_RT for the Tree
+field, and provide the exact version you are running in the Kernel
+Version field.
 
-Dear RT Folks,
+When reporting bugs, please include as much information as possible in
+order to assist developers in reproducing the issue. Include the
+hardware platform you are using, your Linux kernel .config file, any
+relevant log output, and ideally a simple testcase to reproduce the
+error in source form. As always, please search the existing bug list and
+consider posting the issue to this list before opening a new defect.
 
-I'm pleased to announce the 3.2.32-rt48 stable release.
+If you would like to have access to the saved searches defined for
+PREEMPT_RT, which provide RSS feeds and whine emails (opt-in of course),
+please contact Darren Hart <dvhart@infradead.org> or Clark Williams
+<williams@redhat.com>. They will need your bugzilla login ID and will
+add you to the PREEMPT_RT group.
 
-
-This release is just an update to the new stable 3.2.32 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 1b091c287c08b6a18510926dff6424e65391541e
-
-
-Or to build 3.2.32-rt48 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.32.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.32-rt48.patch.xz
-
-
-
-Enjoy,
-
--- Steve
+-- 
+Darren Hart
+Intel Open Source Technology Center
+Yocto Project - Linux Kernel
