@@ -1,71 +1,34 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] 3.6.2-rt4
-Date: Sat, 20 Oct 2012 21:40:42 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210202133470.2719@ionos>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: SLAB leaks filep in 3.4.13-rt21 with PREEMPT_RT_FULL
+Date: Mon, 22 Oct 2012 18:10:32 +0200
+Message-ID: <50856FF8.60407@meduna.org>
+References: <5082C7B9.9010502@meduna.org> <alpine.LFD.2.02.1210202125560.2719@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.meduna.org ([92.240.244.38]:34469 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755543Ab2JVQKo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Oct 2012 12:10:44 -0400
+In-Reply-To: <alpine.LFD.2.02.1210202125560.2719@ionos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+On 20.10.2012 21:30, Thomas Gleixner wrote:
 
-I'm pleased to announce the 3.6.2-rt4 release. rt4 is just an update
-to 3.6.2. The not announced 3.6.1-rt3 is an intermediate release with
-a single change.
+>> Looking at the slabtop output the "filp" is responsible for
+>> most of the allocations, but there are more, even the "pid"
+>> is rising although the number of threads in the system stays
+>> the same.
+> 
+> It's a UP problem in tiny RCU. Fix is below.
 
-Changes since 3.6.1-rt2:
+Many thanks, the fix helped.
 
-	* Remove the softirq noise printk
+Best regards
+-- 
+                                       Stano
 
-The delta patch against 3.6.1-rt2 is appended below and can be found here
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.1-rt2-rt3.patch.xz
-
-The RT patch against 3.6.2 can be found here:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.2-rt4.patch.xz
-
-The split quilt queue is available at:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.2-rt4.tar.xz
-
-Enjoy,
-
-	tglx
-
----------->
-
-Index: linux-stable/kernel/softirq.c
-===================================================================
---- linux-stable.orig/kernel/softirq.c
-+++ linux-stable/kernel/softirq.c
-@@ -468,8 +468,6 @@ static void do_single_softirq(int which,
-  */
- static void do_current_softirqs(int need_rcu_bh_qs)
- {
--	int retry = 0;
--
- 	while (current->softirqs_raised) {
- 		int i = __ffs(current->softirqs_raised);
- 		unsigned int pending, mask = (1U << i);
-@@ -496,10 +494,6 @@ static void do_current_softirqs(int need
- 		}
- 		unlock_softirq(i);
- 		WARN_ON(current->softirq_nestcnt != 1);
--		if (++retry == 20) {
--			printk(KERN_ERR "Crap, %s looping forever in softirq\n",
--			       current->comm);
--		}
- 	}
- }
- 
-Index: linux-stable/localversion-rt
-===================================================================
---- linux-stable.orig/localversion-rt
-+++ linux-stable/localversion-rt
-@@ -1 +1 @@
---rt2
-+-rt3
