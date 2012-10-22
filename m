@@ -1,99 +1,39 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Mon, 22 Oct 2012 17:54:24 -0400
-Message-ID: <CAP=VYLr9c13w+CWTDUfgT2dFbmXTBUfBWrJ43u731q9weBmjSg@mail.gmail.com>
-References: <alpine.LFD.2.02.1210202133470.2719@ionos>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH-v3] tty: prevent unnecessary work queue lock checking on
+ flip buffer copy
+Date: Mon, 22 Oct 2012 16:47:46 -0700
+Message-ID: <20121022234746.GA12743@kroah.com>
+References: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
+ <1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1210202133470.2719@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Alan Cox <alan@linux.intel.com>, linux-serial@vger.kernel.org,
+	RT <linux-rt-users@vger.kernel.org>
+To: Ivo Sieben <meltedpianoman@gmail.com>
+Return-path: <linux-serial-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
+Sender: linux-serial-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, Oct 20, 2012 at 3:40 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> Dear RT Folks,
->
-> I'm pleased to announce the 3.6.2-rt4 release. rt4 is just an update
-> to 3.6.2. The not announced 3.6.1-rt3 is an intermediate release with
-> a single change.
+On Thu, Sep 27, 2012 at 02:02:05PM +0200, Ivo Sieben wrote:
+> When low_latency flag is set the TTY receive flip buffer is copied to the
+> line discipline directly instead of using a work queue in the background.
+> Therefor only in case a workqueue is actually used for copying data to the
+> line discipline we'll have to flush the workqueue.
+> 
+> This prevents unnecessary spin lock/unlock on the workqueue spin lock that
+> can cause additional scheduling overhead on a PREEMPT_RT system. On a 200
+> MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
+> overhead on the TTY read call.
+> 
+> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
 
-I've updated the repo of patches to have rt3 and rt4 on master branch.
+Note, I took out the WARN_ON() in this patch, as what is that really
+going to help here?  It also will conflict with a patch from Jiri I'll
+ba applying after this one, so if you think it's needed, care to send a
+follow-on patch based on linux-next in a few days?
 
-In my fixes branch (now v3.6.2-rt4-fixes) there is only the cosmetic fix
-of adding a subject to the power-use-generic-rwsem-on-rt.patch,
-everything else is in the main tarballs.
+thanks,
 
-There is a gregkh v3.6.3 release - the series applies onto that with
-only a trivial patch refresh required to kgb-serial-hackaround.patch
-
-In fact, quilt may not even bother to warn about it, but git-am will
-stop and ask you to double check things.  If git-am still fails when
-we get to v3.6.3-rt5, then I'll refresh it on the -fixes branch.
-
-http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git;a=summary
-
-Paul.
---
-
->
-> Changes since 3.6.1-rt2:
->
->         * Remove the softirq noise printk
->
-> The delta patch against 3.6.1-rt2 is appended below and can be found here
->
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.1-rt2-rt3.patch.xz
->
-> The RT patch against 3.6.2 can be found here:
->
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.2-rt4.patch.xz
->
-> The split quilt queue is available at:
->
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.2-rt4.tar.xz
->
-> Enjoy,
->
->         tglx
->
-> ---------->
->
-> Index: linux-stable/kernel/softirq.c
-> ===================================================================
-> --- linux-stable.orig/kernel/softirq.c
-> +++ linux-stable/kernel/softirq.c
-> @@ -468,8 +468,6 @@ static void do_single_softirq(int which,
->   */
->  static void do_current_softirqs(int need_rcu_bh_qs)
->  {
-> -       int retry = 0;
-> -
->         while (current->softirqs_raised) {
->                 int i = __ffs(current->softirqs_raised);
->                 unsigned int pending, mask = (1U << i);
-> @@ -496,10 +494,6 @@ static void do_current_softirqs(int need
->                 }
->                 unlock_softirq(i);
->                 WARN_ON(current->softirq_nestcnt != 1);
-> -               if (++retry == 20) {
-> -                       printk(KERN_ERR "Crap, %s looping forever in softirq\n",
-> -                              current->comm);
-> -               }
->         }
->  }
->
-> Index: linux-stable/localversion-rt
-> ===================================================================
-> --- linux-stable.orig/localversion-rt
-> +++ linux-stable/localversion-rt
-> @@ -1 +1 @@
-> --rt2
-> +-rt3
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+greg k-h
