@@ -1,60 +1,99 @@
-From: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Mon, 22 Oct 2012 23:05:08 +0200
-Message-ID: <op.wmll6ue46426ze@localhost.localdomain>
+Date: Mon, 22 Oct 2012 17:54:24 -0400
+Message-ID: <CAP=VYLr9c13w+CWTDUfgT2dFbmXTBUfBWrJ43u731q9weBmjSg@mail.gmail.com>
 References: <alpine.LFD.2.02.1210202133470.2719@ionos>
- <op.wmk8f6m96426ze@localhost.localdomain>
- <alpine.LFD.2.02.1210222029480.2756@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7BIT
-Cc: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp.getmail.no ([84.208.15.66]:54642 "EHLO smtp.getmail.no"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755282Ab2JVVFU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Oct 2012 17:05:20 -0400
-Received: from get-mta-scan04.get.basefarm.net ([10.5.16.4])
- by get-mta-out01.get.basefarm.net
- (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
- with ESMTP id <0MCB001KYBWVMN70@get-mta-out01.get.basefarm.net> for
- linux-rt-users@vger.kernel.org; Mon, 22 Oct 2012 23:05:19 +0200 (MEST)
-Received: from get-mta-scan04.get.basefarm.net
- (localhost.localdomain [127.0.0.1])	by localhost (Email Security Appliance)
- with SMTP id 31AC31F46C55_85B88DB	for <linux-rt-users@vger.kernel.org>; Mon,
- 22 Oct 2012 21:20:13 +0000 (GMT)
-Received: from smtp.getmail.no (unknown [10.5.16.4])
-	by get-mta-scan04.get.basefarm.net (Sophos Email Appliance)
- with ESMTP id 0AC8B1F46C38_85B88DF	for <linux-rt-users@vger.kernel.org>; Mon,
- 22 Oct 2012 21:20:13 +0000 (GMT)
-Received: from localhost.localdomain ([84.211.57.6])
- by get-mta-in03.get.basefarm.net
- (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
- with ESMTP id <0MCB00NX3BWK2Q10@get-mta-in03.get.basefarm.net> for
- linux-rt-users@vger.kernel.org; Mon, 22 Oct 2012 23:05:18 +0200 (MEST)
-In-reply-to: <alpine.LFD.2.02.1210222029480.2756@ionos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.02.1210202133470.2719@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 22 Oct 2012 20:33:25 +0200, Thomas Gleixner <tglx@linutronix.de>  
-wrote:
-
-> On Mon, 22 Oct 2012, Uwaysi Bin Kareem wrote:
+On Sat, Oct 20, 2012 at 3:40 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> Dear RT Folks,
 >
->> I tried it. Just low-latency desktop, seems slighty of less jitter, than
->> mainline.
->> Unfortunately the problem of threadedirqs continue, they never worked  
->> on my
->> machine.
+> I'm pleased to announce the 3.6.2-rt4 release. rt4 is just an update
+> to 3.6.2. The not announced 3.6.1-rt3 is an intermediate release with
+> a single change.
+
+I've updated the repo of patches to have rt3 and rt4 on master branch.
+
+In my fixes branch (now v3.6.2-rt4-fixes) there is only the cosmetic fix
+of adding a subject to the power-use-generic-rwsem-on-rt.patch,
+everything else is in the main tarballs.
+
+There is a gregkh v3.6.3 release - the series applies onto that with
+only a trivial patch refresh required to kgb-serial-hackaround.patch
+
+In fact, quilt may not even bother to warn about it, but git-am will
+stop and ask you to double check things.  If git-am still fails when
+we get to v3.6.3-rt5, then I'll refresh it on the -fixes branch.
+
+http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git;a=summary
+
+Paul.
+--
+
 >
-> What does not work?
+> Changes since 3.6.1-rt2:
 >
-
-When enabling threaded irqs in mainline kernel, booting does not proceed,  
-but stops quite soon after a few messages, and drops to shell.
-
-This is the same thing that happens on rt patch also, when enabling higher  
-preemption that "low latency desktop".
-
-Peace Be With You.
+>         * Remove the softirq noise printk
+>
+> The delta patch against 3.6.1-rt2 is appended below and can be found here
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.1-rt2-rt3.patch.xz
+>
+> The RT patch against 3.6.2 can be found here:
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.2-rt4.patch.xz
+>
+> The split quilt queue is available at:
+>
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.2-rt4.tar.xz
+>
+> Enjoy,
+>
+>         tglx
+>
+> ---------->
+>
+> Index: linux-stable/kernel/softirq.c
+> ===================================================================
+> --- linux-stable.orig/kernel/softirq.c
+> +++ linux-stable/kernel/softirq.c
+> @@ -468,8 +468,6 @@ static void do_single_softirq(int which,
+>   */
+>  static void do_current_softirqs(int need_rcu_bh_qs)
+>  {
+> -       int retry = 0;
+> -
+>         while (current->softirqs_raised) {
+>                 int i = __ffs(current->softirqs_raised);
+>                 unsigned int pending, mask = (1U << i);
+> @@ -496,10 +494,6 @@ static void do_current_softirqs(int need
+>                 }
+>                 unlock_softirq(i);
+>                 WARN_ON(current->softirq_nestcnt != 1);
+> -               if (++retry == 20) {
+> -                       printk(KERN_ERR "Crap, %s looping forever in softirq\n",
+> -                              current->comm);
+> -               }
+>         }
+>  }
+>
+> Index: linux-stable/localversion-rt
+> ===================================================================
+> --- linux-stable.orig/localversion-rt
+> +++ linux-stable/localversion-rt
+> @@ -1 +1 @@
+> --rt2
+> +-rt3
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
