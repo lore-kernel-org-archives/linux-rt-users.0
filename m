@@ -1,48 +1,26 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Tue, 23 Oct 2012 08:52:39 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210230850450.2756@ionos>
-References: <alpine.LFD.2.02.1210202133470.2719@ionos> <op.wmk8f6m96426ze@localhost.localdomain> <alpine.LFD.2.02.1210222029480.2756@ionos> <op.wmll6ue46426ze@localhost.localdomain>
+From: Alan Cox <alan@linux.intel.com>
+Subject: Re: [PATCH-v3] tty: prevent unnecessary work queue lock checking on
+ flip buffer copy
+Date: Tue, 23 Oct 2012 11:16:59 +0100
+Message-ID: <20121023111659.6f4427c7@bob.linux.org.uk>
+References: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
+	<1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
+	<20121022234746.GA12743@kroah.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:41500 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752355Ab2JWGwl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2012 02:52:41 -0400
-In-Reply-To: <op.wmll6ue46426ze@localhost.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Ivo Sieben <meltedpianoman@gmail.com>,
+	linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
+To: Greg KH <gregkh@linuxfoundation.org>
+Return-path: <linux-serial-owner@vger.kernel.org>
+In-Reply-To: <20121022234746.GA12743@kroah.com>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 22 Oct 2012, Uwaysi Bin Kareem wrote:
+> Note, I took out the WARN_ON() in this patch, as what is that really
+> going to help here?  It also will conflict with a patch from Jiri I'll
+> ba applying after this one, so if you think it's needed, care to send
+> a follow-on patch based on linux-next in a few days?
 
-> On Mon, 22 Oct 2012 20:33:25 +0200, Thomas Gleixner <tglx@linutronix.de>
-> wrote:
-> 
-> > On Mon, 22 Oct 2012, Uwaysi Bin Kareem wrote:
-> > 
-> > > I tried it. Just low-latency desktop, seems slighty of less jitter, than
-> > > mainline.
-> > > Unfortunately the problem of threadedirqs continue, they never worked on
-> > > my
-> > > machine.
-> > 
-> > What does not work?
-> > 
-> 
-> When enabling threaded irqs in mainline kernel, booting does not proceed, but
-> stops quite soon after a few messages, and drops to shell.
-
-If it drops to a shell, then it's way up in user space already. Can
-you provide the full dmesg output or the bootlog captured via serial
-console for such a case? It looks like one of your devices is not too
-happy with the forced irq threading.
-
-Thanks,
-
-	tglx
-
-
+It catches anyone flipping low_latency wrongly or in other places. It's
+fairly important as WARN_ON() goes !
