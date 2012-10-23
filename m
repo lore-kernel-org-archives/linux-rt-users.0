@@ -1,46 +1,99 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: [PATCH RT-TESTS] cyclictest: histogram overflow instance  tracking
-Date: Tue, 23 Oct 2012 12:59:05 -0700
-Message-ID: <C34CF7BC-7050-4050-B15B-6E9A1F5DA327@thebigcorporation.com>
-References: <1802256036.5241288.1351020331171.JavaMail.root@redhat.com> <5086F64C.20802@am.sony.com>
-Mime-Version: 1.0 (Mac OS X Mail 6.2 \(1499\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Cc: John Kacur <jkacur@redhat.com>, Bhavesh Davda <bhavesh@vmware.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"Rowand, Frank" <Frank_Rowand@sonyusa.com>
-To: <frank.rowand@am.sony.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:36468 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756945Ab2JWT7L convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Oct 2012 15:59:11 -0400
-Received: by mail-pb0-f46.google.com with SMTP id rr4so682278pbb.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 23 Oct 2012 12:59:11 -0700 (PDT)
-In-Reply-To: <5086F64C.20802@am.sony.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.6.3-rt6
+Date: Tue, 23 Oct 2012 23:06:21 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210232301160.2756@ionos>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+Dear RT Folks,
 
-On Oct 23, 2012, at 12:55 PM, Frank Rowand <frank.rowand@am.sony.com> wrote:
+I'm pleased to announce the 3.6.3-rt6 release. rt6 is just an update
+to 3.6.3. The not announced 3.6.2-rt5 is an intermediate release with
+a single change.
 
-> On 10/23/12 12:25, John Kacur wrote:
->> 
-> 
-> < snip >
-> 
->> Let's not overdo it here, I've actually already added these patches
->> in my private repo. I only want to hear if there are functional
->> problems. I'm wondering if this is fine with histograms by default or
->> if we want to protect it with an option? Or do we need to add
->> something to make it easy to filter out?
-> 
-> OK.  I'll apply the patches, test the result, and do a review.\
+Changes since 3.6.2-rt4:
 
-At one point the overflows were already being tracked.
+	* Make the early printk changes work (hopefully) everywhere
 
-In any case it is helpful along with the max to adjust the histogram range and buckets as needed.
+The new patch queue also contains a non code change (according to
+Pauls) which adds a missing subject line to a powerpc patch.
 
-Sven
+The delta patch against 3.6.2-rt4 is appended below and can be found
+here:
 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.2-rt4-rt5.patch.xz
+
+The RT patch against 3.6.3 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.3-rt6.patch.xz
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.3-rt6.tar.xz
+
+Enjoy,
+
+	tglx
+
+---------->
+Index: linux-stable/arch/mips/kernel/early_printk.c
+===================================================================
+--- linux-stable.orig/arch/mips/kernel/early_printk.c
++++ linux-stable/arch/mips/kernel/early_printk.c
+@@ -8,6 +8,7 @@
+  *   written by Ralf Baechle (ralf@linux-mips.org)
+  */
+ #include <linux/console.h>
++#include <linux/printk.h>
+ #include <linux/init.h>
+ 
+ #include <asm/setup.h>
+Index: linux-stable/arch/tile/kernel/early_printk.c
+===================================================================
+--- linux-stable.orig/arch/tile/kernel/early_printk.c
++++ linux-stable/arch/tile/kernel/early_printk.c
+@@ -17,6 +17,7 @@
+ #include <linux/init.h>
+ #include <linux/string.h>
+ #include <linux/irqflags.h>
++#include <linux/printk.h>
+ #include <asm/setup.h>
+ #include <hv/hypervisor.h>
+ 
+Index: linux-stable/include/linux/printk.h
+===================================================================
+--- linux-stable.orig/include/linux/printk.h
++++ linux-stable/include/linux/printk.h
+@@ -98,6 +98,7 @@ int no_printk(const char *fmt, ...)
+ #ifdef CONFIG_EARLY_PRINTK
+ extern asmlinkage __printf(1, 2)
+ void early_printk(const char *fmt, ...);
++void early_vprintk(const char *fmt, va_list ap);
+ extern void printk_kill(void);
+ #else
+ static inline __printf(1, 2) __cold
+Index: linux-stable/kernel/printk.c
+===================================================================
+--- linux-stable.orig/kernel/printk.c
++++ linux-stable/kernel/printk.c
+@@ -1228,7 +1228,7 @@ SYSCALL_DEFINE3(syslog, int, type, char 
+ #ifdef CONFIG_EARLY_PRINTK
+ struct console *early_console;
+ 
+-static void early_vprintk(const char *fmt, va_list ap)
++void early_vprintk(const char *fmt, va_list ap)
+ {
+ 	if (early_console) {
+ 		char buf[512];
+Index: linux-stable/localversion-rt
+===================================================================
+--- linux-stable.orig/localversion-rt
++++ linux-stable/localversion-rt
+@@ -1 +1 @@
+--rt4
++-rt5
