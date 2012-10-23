@@ -1,39 +1,51 @@
-From: Greg KH <gregkh@linuxfoundation.org>
-Subject: Re: [PATCH-v3] tty: prevent unnecessary work queue lock checking on
- flip buffer copy
-Date: Mon, 22 Oct 2012 16:47:46 -0700
-Message-ID: <20121022234746.GA12743@kroah.com>
-References: <1348747101-13462-1-git-send-email-meltedpianoman@gmail.com>
- <1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH RT-TESTS] cyclictest: whitespace cleanup
+Date: Mon, 22 Oct 2012 18:12:58 -0700
+Message-ID: <5085EF1A.7060503@am.sony.com>
+References: <F285BDD9-9A4A-4B58-B69F-90F18B9D7B4D@vmware.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Alan Cox <alan@linux.intel.com>, linux-serial@vger.kernel.org,
-	RT <linux-rt-users@vger.kernel.org>
-To: Ivo Sieben <meltedpianoman@gmail.com>
-Return-path: <linux-serial-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1348747325-13539-1-git-send-email-meltedpianoman@gmail.com>
-Sender: linux-serial-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>,
+	"Rowand, Frank" <Frank_Rowand@sonyusa.com>
+To: Bhavesh Davda <bhavesh@vmware.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from db3ehsobe002.messaging.microsoft.com ([213.199.154.140]:8704
+	"EHLO db3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756293Ab2JWBNF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Oct 2012 21:13:05 -0400
+In-Reply-To: <F285BDD9-9A4A-4B58-B69F-90F18B9D7B4D@vmware.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Sep 27, 2012 at 02:02:05PM +0200, Ivo Sieben wrote:
-> When low_latency flag is set the TTY receive flip buffer is copied to the
-> line discipline directly instead of using a work queue in the background.
-> Therefor only in case a workqueue is actually used for copying data to the
-> line discipline we'll have to flush the workqueue.
+On 10/16/12 09:39, Bhavesh Davda wrote:
+> From: Bhavesh Davda <bhavesh@vmware.com>
 > 
-> This prevents unnecessary spin lock/unlock on the workqueue spin lock that
-> can cause additional scheduling overhead on a PREEMPT_RT system. On a 200
-> MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
-> overhead on the TTY read call.
+> Cosmetic whitespace cleanup
 > 
-> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+> Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
 
-Note, I took out the WARN_ON() in this patch, as what is that really
-going to help here?  It also will conflict with a patch from Jiri I'll
-ba applying after this one, so if you think it's needed, care to send a
-follow-on patch based on linux-next in a few days?
+>From checkpatch:
 
-thanks,
 
-greg k-h
+ERROR: code indent should use tabs where possible
+#161: FILE: src/cyclictest/cyclictest.c:1419:
++                        printf(fmt, index, stat->tid, par->prio,$
+
+WARNING: please, no spaces at the start of a line
+#161: FILE: src/cyclictest/cyclictest.c:1419:
++                        printf(fmt, index, stat->tid, par->prio,$
+
+total: 1 errors, 1 warnings, 140 lines checked
+
+
+You did not add leading white space - it was already there and your
+noble effort to remove the trailing white space led to this line
+getting caught by checkpatch.  Anyway, it is a good practice to
+be checkpatch clean, even it rt-tests are not the linux kernel.
+
+-Frank
+
