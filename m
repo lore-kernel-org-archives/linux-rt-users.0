@@ -1,51 +1,50 @@
-From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: [PATCH] [tty]: Report warning when low_latency flag is wrongly used
-Date: Wed, 24 Oct 2012 14:35:42 +0200
-Message-ID: <1351082142-28633-1-git-send-email-meltedpianoman@gmail.com>
-References: <20121023111659.6f4427c7@bob.linux.org.uk>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.6.2-rt4
+Date: Wed, 24 Oct 2012 16:27:54 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210241621060.2756@ionos>
+References: <alpine.LFD.2.02.1210202133470.2719@ionos> <op.wmk8f6m96426ze@localhost.localdomain> <alpine.LFD.2.02.1210222029480.2756@ionos> <op.wmnlvqm76426ze@localhost.localdomain> <1B7B1319-351B-4E55-9BC7-DC8659605594@thebigcorporation.com>
+ <op.wmobxtv66426ze@localhost.localdomain> <alpine.LFD.2.02.1210241156380.2756@ionos> <op.wmoiyqew6426ze@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Ivo Sieben <meltedpianoman@gmail.com>
-To: Greg KH <gregkh@linuxfoundation.org>,
-	<linux-serial@vger.kernel.org>, RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: sven@thebigcorporation.com, linux-rt-users@vger.kernel.org
+To: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:51178
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1758524Ab2JXMf6 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:51087 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934939Ab2JXO2A (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Oct 2012 08:35:58 -0400
-In-Reply-To: <20121023111659.6f4427c7@bob.linux.org.uk>
+	Wed, 24 Oct 2012 10:28:00 -0400
+In-Reply-To: <op.wmoiyqew6426ze@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-When a driver has the low_latency flag set and uses the schedule_flip()
-function to initiate copying data to the line discipline, a workqueue is
-scheduled in but never actually flushed. This is incorrect use of the
-low_latency flag (driver should not support the low_latency flag, or use
-the tty_flip_buffer_push() function instead). Make sure a warning is
-reported to catch incorrect use of the low_latency flag.
+On Wed, 24 Oct 2012, Uwaysi Bin Kareem wrote:
+> On Wed, 24 Oct 2012 11:59:38 +0200, Thomas Gleixner <tglx@linutronix.de>
+> wrote:
+> > In any case it would be helpful if you provide the full dmesg output
+> > of a failing boot.
+> 
+> Ok, you reall want to know. Well I can do anything to help you with that. Does
+> dmseg contain info from last boot? Or can it be accessed from the
+> console-thingy?
 
-This patch goes with: cee4ad1ed90a0959fc29f9d30a2526e5e9522cfa
+If you have a serial port on that machine, then you can enable the
+serial console with "console=ttyS0,115200" on the kernel command
+line. Use a second machine to record the data.
 
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
-
----
- drivers/tty/tty_buffer.c |    1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/drivers/tty/tty_buffer.c b/drivers/tty/tty_buffer.c
-index 06725f5..6cf87d7 100644
---- a/drivers/tty/tty_buffer.c
-+++ b/drivers/tty/tty_buffer.c
-@@ -365,6 +365,7 @@ void tty_schedule_flip(struct tty_struct *tty)
- {
- 	struct tty_bufhead *buf = &tty->port->buf;
- 	unsigned long flags;
-+	WARN_ON(tty->low_latency);
+If you don't have a serial, then you should be able to do something
+from the initrd shell. Your ethernet driver should be loaded already,
+if not just compile it into the kernel instead into a module. Now you
+can get it out over the net from that shell.
  
- 	spin_lock_irqsave(&buf->lock, flags);
- 	if (buf->tail != NULL)
--- 
-1.7.9.5
+A third option is to use netconsole. Do this on mainline with the
+"threadirqs" option, as I haven't tried netconsole on RT.
+See Documentation/networking/netconsole.txt
 
+> Mainline does also not work with threadirq.
 
+Good. So it's not RT wreckage :)
+
+Thanks,
+
+	tglx
