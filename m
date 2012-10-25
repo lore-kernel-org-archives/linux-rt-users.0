@@ -1,32 +1,34 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Thu, 25 Oct 2012 23:21:11 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210252319520.2756@ionos>
-References: <alpine.LFD.2.02.1210202133470.2719@ionos> <op.wmk8f6m96426ze@localhost.localdomain> <alpine.LFD.2.02.1210222029480.2756@ionos> <op.wmnlvqm76426ze@localhost.localdomain> <1B7B1319-351B-4E55-9BC7-DC8659605594@thebigcorporation.com>
- <op.wmobxtv66426ze@localhost.localdomain> <alpine.LFD.2.02.1210241156380.2756@ionos> <op.wmoiyqew6426ze@localhost.localdomain> <alpine.LFD.2.02.1210241621060.2756@ionos> <op.wmo0g1qc6426ze@localhost.localdomain> <alpine.LFD.2.02.1210242037440.2756@ionos>
- <op.wmo45bu46426ze@localhost.localdomain> <alpine.LFD.2.02.1210242123570.2756@ionos> <op.wmo67vqb6426ze@localhost.localdomain> <alpine.LFD.2.02.1210242147550.2756@ionos> <op.wmo8dkvt6426ze@localhost.localdomain>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH RT-TESTS] cyclictest: whitespace cleanup
+Date: Thu, 25 Oct 2012 14:26:09 -0700
+Message-ID: <5089AE71.7070500@am.sony.com>
+References: <F285BDD9-9A4A-4B58-B69F-90F18B9D7B4D@vmware.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: sven@thebigcorporation.com, linux-rt-users@vger.kernel.org
-To: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@redhat.com>,
+	"Rowand, Frank" <Frank_Rowand@sonyusa.com>
+To: Bhavesh Davda <bhavesh@vmware.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59372 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750970Ab2JYVVR (ORCPT
+Received: from tx2ehsobe003.messaging.microsoft.com ([65.55.88.13]:20049 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1749667Ab2JYV0P (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Oct 2012 17:21:17 -0400
-In-Reply-To: <op.wmo8dkvt6426ze@localhost.localdomain>
+	Thu, 25 Oct 2012 17:26:15 -0400
+In-Reply-To: <F285BDD9-9A4A-4B58-B69F-90F18B9D7B4D@vmware.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 24 Oct 2012, Uwaysi Bin Kareem wrote:
+On 10/16/12 09:39, Bhavesh Davda wrote:
+> From: Bhavesh Davda <bhavesh@vmware.com>
 > 
-> I`ll have full dmesg in a minute.
+> Cosmetic whitespace cleanup
+> 
+> Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
 
-Can you provide your .config file please?
+Reviewed-by: Frank Rowand <frank.rowand@am.sony.com>
 
-Are you having any other patches on top of -RT ?
+Tested-by: Frank Rowand <frank.rowand@am.sony.com>
 
-Thanks,
-
-	tglx
