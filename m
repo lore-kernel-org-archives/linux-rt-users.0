@@ -1,87 +1,143 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Fri, 26 Oct 2012 10:24:46 -0400
-Message-ID: <CAP=VYLo2HGsuS6wBaU9_d3Es7P2MEW4s1xzmFGbSkDeRyHf-UQ@mail.gmail.com>
-References: <alpine.LFD.2.02.1210202133470.2719@ionos> <op.wmk8f6m96426ze@localhost.localdomain>
- <alpine.LFD.2.02.1210222029480.2756@ionos> <op.wmnlvqm76426ze@localhost.localdomain>
- <1B7B1319-351B-4E55-9BC7-DC8659605594@thebigcorporation.com>
- <op.wmobxtv66426ze@localhost.localdomain> <alpine.LFD.2.02.1210241156380.2756@ionos>
- <op.wmoiyqew6426ze@localhost.localdomain> <alpine.LFD.2.02.1210241621060.2756@ionos>
- <op.wmo0g1qc6426ze@localhost.localdomain> <alpine.LFD.2.02.1210242037440.2756@ionos>
- <op.wmo45bu46426ze@localhost.localdomain> <alpine.LFD.2.02.1210242123570.2756@ionos>
- <op.wmo67vqb6426ze@localhost.localdomain> <alpine.LFD.2.02.1210242147550.2756@ionos>
- <op.wmo8dkvt6426ze@localhost.localdomain>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: loading pages to memory causes high latency
+Date: Fri, 26 Oct 2012 20:00:47 +0200
+Message-ID: <508ACFCF.8040001@meduna.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Thomas Gleixner <tglx@linutronix.de>, sven@thebigcorporation.com,
-	linux-rt-users@vger.kernel.org
-To: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:40841 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933218Ab2JZOZQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Oct 2012 10:25:16 -0400
-Received: by mail-pb0-f46.google.com with SMTP id rr4so2809759pbb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Oct 2012 07:25:16 -0700 (PDT)
-In-Reply-To: <op.wmo8dkvt6426ze@localhost.localdomain>
+Received: from www.meduna.org ([92.240.244.38]:53864 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S965545Ab2JZSBH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Oct 2012 14:01:07 -0400
+Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
+	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
+	(Exim 4.72)
+	(envelope-from <stano@meduna.org>)
+	id 1TRoDE-0000gn-Kk
+	for linux-rt-users@vger.kernel.org; Fri, 26 Oct 2012 20:01:03 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Oct 24, 2012 at 3:57 PM, Uwaysi Bin Kareem
-<uwaysi.bin.kareem@paradoxuncreated.com> wrote:
+Hi all,
 
-[boot failure with sata_nv...]
+I have an application that absolutely has to meet a 100 ms deadline.
+All threads of the application are SCHED_RR ones with priority
+that is higher than any other userspace process in the system and
+also than the irq handler of the PATA controller.
 
->
-> 00:0e.0 IDE interface: NVIDIA Corporation MCP51 Serial ATA Controller (rev
-> a1) (prog-if 85 [Master SecO PriO])
->         Subsystem: Micro-Star International Co., Ltd. Device 7380
->         Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop- ParErr-
-> Stepping- SERR- FastB2B- DisINTx-
->         Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort-
-> <TAbort- <MAbort- >SERR- <PERR- INTx-
->         Latency: 0 (750ns min, 250ns max)
->         Interrupt: pin A routed to IRQ 21
->         Region 0: I/O ports at d800 [size=8]
->         Region 1: I/O ports at d480 [size=4]
->         Region 2: I/O ports at d400 [size=8]
->         Region 3: I/O ports at d080 [size=4]
->         Region 4: I/O ports at d000 [size=16]
->         Region 5: Memory at f9ffd000 (32-bit, non-prefetchable) [size=4K]
->         Capabilities: <access denied>
->         Kernel driver in use: sata_nv
->         Kernel modules: sata_nv
->
+The command
 
-I've booted 3.6.3-rt6 on nearly identical hardware:
+ sync ; echo 3 > /proc/sys/vm/drop_caches ; cat /var/log/* > /dev/null
 
-00:0e.0 IDE interface: nVidia Corporation MCP51 Serial ATA Controller
-(rev f1) (prog-if 85 [Master SecO PriO])
-        Subsystem: Hewlett-Packard Company Device 30b5
-        Control: I/O+ Mem+ BusMaster+ SpecCycle- MemWINV- VGASnoop-
-ParErr- Stepping- SERR- FastB2B- DisINTx-
-        Status: Cap+ 66MHz+ UDF- FastB2B+ ParErr- DEVSEL=fast >TAbort-
-<TAbort- <MAbort- >SERR- <PERR- INTx-
-        Latency: 0 (750ns min, 250ns max)
-        Interrupt: pin A routed to IRQ 18
-        Region 0: I/O ports at 30b0 [size=8]
-        Region 1: I/O ports at 30a4 [size=4]
-        Region 2: I/O ports at 30a8 [size=8]
-        Region 3: I/O ports at 30a0 [size=4]
-        Region 4: I/O ports at 3090 [size=16]
-        Region 5: Memory at b0006000 (32-bit, non-prefetchable) [size=4K]
-        Capabilities: <access denied>
-        Kernel driver in use: sata_nv
+which is around 6 MB of data needed to fetch from a CF card:
 
-So there must be something wrong in your configuration, or your
-hardware,or something happening in the build.   Without more
-information, like your .config file, the output of "gcc -v", and ideally
-a picture of the error messages from the screen just as they start
-happening, there isn't much more anyone can do to help you further.
+- immediately causes [sched_delayed] sched: RT throttling activated,
+  even if there is _no_ RT application started yet. That means
+  that it is probably the irq task itself that is triggering it,
+  penalizing all other good-behaving RT tasks
 
-You probably need to intercept the grub menu at early boot and
-delete the "quiet" and "splash" options to get the normal boot
-messages to show up on the screen.
+# ps -eLo pid,class,rtprio,comm  | egrep 'RR|FF'
+    3 FF       1 ksoftirqd/0
+    6 FF      99 posixcputmr/0
+   27 FF      22 irq/14-pata_cs5
+   32 FF      50 irq/15-ehci_hcd
+   33 FF      50 irq/15-ohci_hcd
+   34 FF      50 irq/8-rtc0
+  417 FF      50 irq/5-eth0
+  438 FF      50 irq/15-eth1
 
-Paul.
+
+- causes the process to block for a time that is much longer
+  than I am comfortable with.
+
+The command
+  echo 1000000 > /proc/sys/kernel/sched_rt_runtime_us
+fixes the problem but is not really something I want
+to enable when developing a real-time capable system
+that will be running in remote locations. With 980000
+I still get negligible latencies. With 970000 I get 4 ms.
+With 960000 I get 15 ms latencies. So it is indeed
+the throttling that is firing here.
+
+Data with the application running and sched_rt_runtime_us
+at 960000:
+
+# head -3 /sys/kernel/debug/tracing/latency_hist/wakeup/CPU0
+#Minimum latency: 13 microseconds
+#Average latency: 25 microseconds
+#Maximum latency: 24011 microseconds
+
+# cat /sys/kernel/debug/tracing/latency_hist/wakeup/max_latency-CPU0
+605 25 24011 (0) myApp <- 0 -21 swapper 2802.650022
+
+# cat /sys/kernel/debug/tracing/trace
+
+#
+# wakeup_rt latency trace v1.1.5 on 3.4.15-rt24+
+# --------------------------------------------------------------------
+# latency: 24011 us, #4/4, CPU#0 | (M:preempt VP:0, KP:0, SP:0 HP:0)
+#    -----------------
+#    | task: myApp-605 (uid:0 nice:0 policy:2 rt_prio:25)
+#    -----------------
+#
+#                  _------=> CPU#
+#                 / _-----=> irqs-off
+#                | / _----=> need-resched
+#                || / _---=> hardirq/softirq
+#                ||| / _--=> preempt-depth
+#                |||| / _--=> migrate-disable
+#                ||||| /     delay
+#  cmd     pid   |||||| time  |   caller
+#     \   /      |||||  \   |   /
+irq/14-p-27      0d.h3.    1us+:     27: 95:R   + [000]   605: 74:S myApp
+irq/14-p-27      0d.h3.    3us!: try_to_wake_up <-wake_up_process
+  <idle>-0       0d..3. 24007us+: __schedule <-preempt_schedule
+  <idle>-0       0d..3. 24010us :      0:120:R ==> [000]   605: 74:R myApp
+
+The cyclictest or sigwaittest record similar highest numbers.
+Setting all of the irq threads to the lower priority does
+not matter.
+
+Is this the expected behaviour? Does this point to a problem
+in kernel or more likely to a problem in the PATA driver?
+The 'd' does not seem right, does it?
+
+Other latencies than wakeup seem to be fine
+
+# head -3 latency_hist/irqsoff/CPU0
+#Minimum latency: 0 microseconds
+#Average latency: 1 microseconds
+#Maximum latency: 77 microseconds
+
+# head -3 latency_hist/preemptirqsoff/CPU0
+#Minimum latency: 0 microseconds
+#Average latency: 2 microseconds
+#Maximum latency: 115 microseconds
+
+#  head -3 latency_hist/preemptoff/CPU0
+#Minimum latency: 3 microseconds
+#Average latency: 21 microseconds
+#Maximum latency: 105 microseconds
+
+
+Note: I do not have high-precision timers; my board's ACPI
+is not recognized and all of the MFGPT  timers on the CS5536
+are probably taken by the BIOS. current_clocksource is TSC.
+Could this matter?
+
+
+Geode LX 500 MHz
+256 MB RAM, 205 MB free
+3.4.15-rt24 + tglx's tiny RCU fix from a week ago
+PREEMPT_FULL
+e100 network driver
+CS5536 companion device which does the PATA (CONFIG_PATA_CS5536)
+the CF CARD is detected and used as PIO4
+mlockall() for the application
+no swap configured
+
+Thanks
+-- 
+                               Stano
