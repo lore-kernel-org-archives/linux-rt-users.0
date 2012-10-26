@@ -1,92 +1,66 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: loading pages to memory causes high latency
-Date: Fri, 26 Oct 2012 23:04:54 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1210262254560.2756@ionos>
-References: <508ACFCF.8040001@meduna.org>
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Subject: Re: Process Hang in __read_seqcount_begin
+Date: Fri, 26 Oct 2012 23:05:52 +0200
+Message-ID: <1351285552.30380.20.camel@edumazet-glaptop>
+References: <CAN8Q1EdobyFuAvtajGRSqNsCG+XoPA+FkwN=2j_H126mmfEjTQ@mail.gmail.com>
+	 <1350925299.8609.978.camel@edumazet-glaptop>
+	 <CAN8Q1EeqmHMHD-VUgr7Wzv0Z_DAD1SrEniftg==L14d+hGwu+Q@mail.gmail.com>
+	 <CAN8Q1EcTRsHjCJD90q0bKRJFMvi7Vn8YRsyQTAHNtTFVuuNdWQ@mail.gmail.com>
+	 <CAN8Q1EeB2kC6A_YP9zdtp_qYHMG5FF7-Usjx7Rz5pv--bjhqkQ@mail.gmail.com>
+	 <1351053164.6537.95.camel@edumazet-glaptop>
+	 <CAN8Q1Ef9sCAG8-KNWXEeuRUcmFNcg93mMG=HRQw6i3UuGtJCVg@mail.gmail.com>
+	 <1351270087.30380.9.camel@edumazet-glaptop>
+	 <CAN8Q1Ed1J-jmO9LppcA=rFXPvxFkk-J9mMb2-NhDYyAQKO2jvQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Stanislav Meduna <stano@meduna.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:36142 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934045Ab2JZVE4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Oct 2012 17:04:56 -0400
-In-Reply-To: <508ACFCF.8040001@meduna.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	netfilter@vger.kernel.org
+To: Peter LaDow <petela@gocougs.wsu.edu>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAN8Q1Ed1J-jmO9LppcA=rFXPvxFkk-J9mMb2-NhDYyAQKO2jvQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 26 Oct 2012, Stanislav Meduna wrote:
-> Hi all,
+On Fri, 2012-10-26 at 11:51 -0700, Peter LaDow wrote:
+> (I've added netfilter and linux-rt-users to try to pull in more help).
 > 
-> I have an application that absolutely has to meet a 100 ms deadline.
-> All threads of the application are SCHED_RR ones with priority
-> that is higher than any other userspace process in the system and
-> also than the irq handler of the PATA controller.
+> On Fri, Oct 26, 2012 at 9:48 AM, Eric Dumazet <eric.dumazet@gmail.com> wrote:
+> > Upstream kernel is fine, there is no race, as long as :
+> >
+> > local_bh_disable() disables BH and preemption.
 > 
-> The command
+> Looking at the unpatched code in net/ipv4/netfilter/ip_tables.c, it
+> doesn't appear that any of the code checks the return value for
+> xt_write_receq_begin to determine if it is safe to write.  And neither
+> does the newly patched code.  How did the mainline code prevent
+> corruption of the tables it is updating?
 > 
->  sync ; echo 3 > /proc/sys/vm/drop_caches ; cat /var/log/* > /dev/null
+
+Do you know what is per cpu data in linux kernel ?
+
+> Why isn't there something like
 > 
-> which is around 6 MB of data needed to fetch from a CF card:
+>   while ( (addend = xt_write_recseq_begin()) == 0 );
 > 
-> - immediately causes [sched_delayed] sched: RT throttling activated,
->   even if there is _no_ RT application started yet. That means
->   that it is probably the irq task itself that is triggering it,
->   penalizing all other good-behaving RT tasks
+> To make sure that only one person has write access to the tables?
+> Better yet, why not use a seqlock_t instead?
 > 
-> # ps -eLo pid,class,rtprio,comm  | egrep 'RR|FF'
->     3 FF       1 ksoftirqd/0
->     6 FF      99 posixcputmr/0
->    27 FF      22 irq/14-pata_cs5
->    32 FF      50 irq/15-ehci_hcd
->    33 FF      50 irq/15-ohci_hcd
->    34 FF      50 irq/8-rtc0
->   417 FF      50 irq/5-eth0
->   438 FF      50 irq/15-eth1
-> 
-> 
-> - causes the process to block for a time that is much longer
->   than I am comfortable with.
-> 
-> The command
->   echo 1000000 > /proc/sys/kernel/sched_rt_runtime_us
-> fixes the problem but is not really something I want
-> to enable when developing a real-time capable system
-> that will be running in remote locations. With 980000
-> I still get negligible latencies. With 970000 I get 4 ms.
-> With 960000 I get 15 ms latencies. So it is indeed
-> the throttling that is firing here.
 
-Right. So that means that the pata irq or something else loops in
-circles for whatever reasons.
+Because its not needed. Really I dont know why you want that.
 
-For a simple test, can you just set the pata irq thread to SCHED_OTHER
-with chrt? Does that cure the problem?
+Once you are sure a thread cannot be interrupted by a softirq, and
+cannot migrate to another cpu, access to percpu data doesnt need other
+synchronization at all.
 
-Aside of that I'd really like to see a full function trace of that
-scenario. Can you please apply the patch below and run that with the
-function tracer enabled. The throttling will stop the trace right at
-the point.
+Following sequence is safe :
 
-Thanks,
+addend = (__this_cpu_read(xt_recseq.sequence) + 1) & 1;
+/*
+ * This is kind of a write_seqcount_begin(), but addend is 0 or 1
+ * We dont check addend value to avoid a test and conditional jump,
+ * since addend is most likely 1
+ */
+__this_cpu_add(xt_recseq.sequence, addend);
 
-	tglx
-
------------>
-
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -868,6 +868,7 @@ static int sched_rt_runtime_exceeded(struct rt_rq *rt_rq)
- 			static bool once = false;
- 
- 			rt_rq->rt_throttled = 1;
-+			tracing_off();
- 
- 			if (!once) {
- 				once = true;
-
-
-
-
+Because any other thread will use a different percpu data.
