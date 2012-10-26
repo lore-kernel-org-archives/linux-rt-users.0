@@ -1,61 +1,60 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/2] [ANNOUNCE] 3.4.15-rt25-rc1 stable review
-Date: Fri, 26 Oct 2012 18:28:35 -0400
-Message-ID: <20121026222835.523598217@goodmis.org>
+Subject: [PATCH RT 1/2] rcu: rcutiny: Prevent RCU stall
+Date: Fri, 26 Oct 2012 18:28:36 -0400
+Message-ID: <20121026222932.512114600@goodmis.org>
+References: <20121026222835.523598217@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Kristian Lehmann <krleit00@hs-esslingen.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-rcu-rcutiny-Prevent-RCU-stall.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Dear RT Folks,
+rcu_read_unlock_special() checks in_serving_softirq() and leaves early
+when true. On RT this is obviously wrong as softirq processing context
+can be preempted and therefor such a task can be on the gp_tasks
+list. Leaving early here will leave the task on the list and therefor
+block RCU processing forever.
 
-This is the RT stable review cycle of patch 3.4.15-rt25-rc1.
+This cannot happen on mainline because softirq processing context
+cannot be preempted and therefor this can never happen at all.
 
-Please scream at me if I messed something up. Please test the patches too.
+In fact this check looks quite questionable in general. Neither irq
+context nor softirq processing context in mainline can ever be
+preempted in mainline so the special unlock case should not ever be
+invoked in such context. Now the only explanation might be a
+rcu_read_unlock() being interrupted and therefor leave the rcu nest
+count at 0 before the special unlock bit has been cleared. That looks
+fragile. At least it's missing a big fat comment. Paul ????
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+See mainline commits: ec433f0c5 and 8762705a for further enlightment.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 10/29/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.4.15-rt25-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.15.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.15-rt25-rc1.patch.xz
-
-You can also build from 3.4.15-rt24 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.15-rt24-rt25-rc1.patch.xz
-
-
-Changes from 3.4.15-rt24:
-
+Reported-by: Kristian Lehmann <krleit00@hs-esslingen.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Steven Rostedt (1):
-      Linux 3.4.15-rt25-rc1
-
-Thomas Gleixner (1):
-      rcu: rcutiny: Prevent RCU stall
-
-----
  kernel/rcutiny_plugin.h |    2 +-
- localversion-rt         |    2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
+index 22ecea0..97e359b 100644
+--- a/kernel/rcutiny_plugin.h
++++ b/kernel/rcutiny_plugin.h
+@@ -572,7 +572,7 @@ static noinline void rcu_read_unlock_special(struct task_struct *t)
+ 		rcu_preempt_cpu_qs();
+ 
+ 	/* Hardware IRQ handlers cannot block. */
+-	if (in_irq() || in_serving_softirq()) {
++	if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
+ 		local_irq_restore(flags);
+ 		return;
+ 	}
+-- 
+1.7.10.4
