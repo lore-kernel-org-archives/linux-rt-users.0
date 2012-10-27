@@ -1,58 +1,39 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: loading pages to memory causes high latency
-Date: Sat, 27 Oct 2012 11:06:26 +0200
-Message-ID: <508BA412.5020708@meduna.org>
-References: <508ACFCF.8040001@meduna.org> <alpine.LFD.2.02.1210262254560.2756@ionos> <alpine.LFD.2.02.1210271029370.2756@ionos>
+From: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
+Subject: Re: [ANNOUNCE] 3.6.2-rt4
+Date: Sat, 27 Oct 2012 11:41:04 +0200
+Message-ID: <op.wmtzuquh6426ze@millennium.getinternet.no>
+References: <op.wms2phwb6426ze@millennium.getinternet.no>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=iso-8859-15; format=flowed; delsp=yes
+Content-Transfer-Encoding: 7BIT
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:44272 "EHLO meduna.org"
+Received: from smtp.getmail.no ([84.208.15.66]:55267 "EHLO smtp.getmail.no"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750730Ab2J0JGn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Oct 2012 05:06:43 -0400
-Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
-	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
-	(Exim 4.72)
-	(envelope-from <stano@meduna.org>)
-	id 1TS2Lh-0000uH-6J
-	for linux-rt-users@vger.kernel.org; Sat, 27 Oct 2012 11:06:39 +0200
-In-Reply-To: <alpine.LFD.2.02.1210271029370.2756@ionos>
+	id S1751338Ab2J0JjV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Oct 2012 05:39:21 -0400
+Received: from get-mta-scan02.get.basefarm.net ([10.5.16.4])
+ by get-mta-out03.get.basefarm.net
+ (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
+ with ESMTP id <0MCJ00DERPHJTV80@get-mta-out03.get.basefarm.net> for
+ linux-rt-users@vger.kernel.org; Sat, 27 Oct 2012 11:39:19 +0200 (MEST)
+Received: from get-mta-scan02.get.basefarm.net
+ (localhost.localdomain [127.0.0.1])	by localhost (Email Security Appliance)
+ with SMTP id 752CB1EA6B22_8BABC7B	for <linux-rt-users@vger.kernel.org>; Sat,
+ 27 Oct 2012 09:39:19 +0000 (GMT)
+Received: from smtp.getmail.no (unknown [10.5.16.4])
+	by get-mta-scan02.get.basefarm.net (Sophos Email Appliance)
+ with ESMTP id 618451EA382E_8BABC7F	for <linux-rt-users@vger.kernel.org>; Sat,
+ 27 Oct 2012 09:39:19 +0000 (GMT)
+Received: from millennium.getinternet.no ([84.211.32.31])
+ by get-mta-in03.get.basefarm.net
+ (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
+ with ESMTP id <0MCJ008FTPHJ7M10@get-mta-in03.get.basefarm.net> for
+ linux-rt-users@vger.kernel.org; Sat, 27 Oct 2012 11:39:19 +0200 (MEST)
+In-reply-to: <op.wms2phwb6426ze@millennium.getinternet.no>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 27.10.2012 10:38, Thomas Gleixner wrote:
+..config matching the original config..
 
-> There is not much we can do about that unless we want to do a major
-> surgery on that pata driver code.
-> 
-> So either you disable the throttler or you reconfigure the pata irq
-> thread to SCHED_OTHER, which will slow it down a bit, but avoids the
-> hogging of the machine with a RT task going wild.
-
-Thank you for the analysis. Yep I'll reconfigure it to SCHED_OTHER -
-file access is a totally low-prio thing in my application and I was more
-afraid of a possibility where someone fetching logfiles or something
-like that will bring the application to the knees.
-
-BTW what granularity does the throttler have? I cannot live with
-50 ms lag once in a second, but in my case I can well live with
-5 ms lag once in 100 ms (even if that means that the throttler
-would be activated more often).
-
-Right now I have
-
-CONFIG_TICK_ONESHOT=y
-CONFIG_NO_HZ=y
-CONFIG_HZ=1000
-CONFIG_SCHED_HRTICK=y
-
-and lacking better choices my clock source is TSC. I admit that
-I do not know what precisely each setting does - the NO_HZ combined
-with HZ=1000 looks a bit weird ;)
-
-Best regards
--- 
-                                      Stano
-
+Yes, that is what it is.
