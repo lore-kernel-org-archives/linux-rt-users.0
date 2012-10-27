@@ -1,70 +1,76 @@
-From: Uwaysi Bin Kareem <uwaysi.bin.kareem@paradoxuncreated.com>
-Subject: Re: [ANNOUNCE] 3.6.2-rt4
-Date: Sat, 27 Oct 2012 11:50:37 +0200
-Message-ID: <op.wmt0antg6426ze@millennium.getinternet.no>
-References: <op.wms2phwb6426ze@millennium.getinternet.no>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: loading pages to memory causes high latency
+Date: Sat, 27 Oct 2012 11:56:03 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1210271147280.2756@ionos>
+References: <508ACFCF.8040001@meduna.org> <alpine.LFD.2.02.1210262254560.2756@ionos> <alpine.LFD.2.02.1210271029370.2756@ionos> <508BA412.5020708@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-15; format=flowed; delsp=yes
-Content-Transfer-Encoding: 7BIT
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org
+To: Stanislav Meduna <stano@meduna.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp.getmail.no ([84.208.15.66]:56294 "EHLO smtp.getmail.no"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751620Ab2J0Jsw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Oct 2012 05:48:52 -0400
-Received: from get-mta-scan02.get.basefarm.net ([10.5.16.4])
- by get-mta-out03.get.basefarm.net
- (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
- with ESMTP id <0MCJ00DVHPXFTV80@get-mta-out03.get.basefarm.net> for
- linux-rt-users@vger.kernel.org; Sat, 27 Oct 2012 11:48:51 +0200 (MEST)
-Received: from get-mta-scan02.get.basefarm.net
- (localhost.localdomain [127.0.0.1])	by localhost (Email Security Appliance)
- with SMTP id EC5711EA681B_8BAE02B	for <linux-rt-users@vger.kernel.org>; Sat,
- 27 Oct 2012 09:48:50 +0000 (GMT)
-Received: from smtp.getmail.no (unknown [10.5.16.4])
-	by get-mta-scan02.get.basefarm.net (Sophos Email Appliance)
- with ESMTP id 78B211EA65E6_8BAE02F	for <linux-rt-users@vger.kernel.org>; Sat,
- 27 Oct 2012 09:48:50 +0000 (GMT)
-Received: from millennium.getinternet.no ([84.211.32.31])
- by get-mta-in03.get.basefarm.net
- (Sun Java(tm) System Messaging Server 7.0-0.04 64bit (built Jun 20 2008))
- with ESMTP id <0MCJ008W0PXE7M10@get-mta-in03.get.basefarm.net> for
- linux-rt-users@vger.kernel.org; Sat, 27 Oct 2012 11:48:50 +0200 (MEST)
-In-reply-to: <op.wms2phwb6426ze@millennium.getinternet.no>
+Received: from www.linutronix.de ([62.245.132.108]:37180 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751701Ab2J0J4G (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Oct 2012 05:56:06 -0400
+In-Reply-To: <508BA412.5020708@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I did some small edits, but not really any difference to how the kernel  
-works. Such as a 90hz timer. Which seemed to work the best here, for  
-lowest jitter in OpenGL. I have actually had a lot of fun with the kernel,  
-and games are indeed much more immersive with low-jitter. It just creates  
-a higher expectation to quality, and for some games also make some  
-paradigms a bit outdated. Such as some horrorscenes in doom 3. Doom 3  
-plays extremely well here now though. Also improving the action on the  
-fastest bus (PCIe), seem to generally improve the whole system.  
-Videojitter is lower, although ofcourse it needs to be completely fixed  
-with sync and refresh rate changes. System is more responsive. So I  
-believe that reducing jitter, seems central to a good computing experience.
+On Sat, 27 Oct 2012, Stanislav Meduna wrote:
+> On 27.10.2012 10:38, Thomas Gleixner wrote:
+> 
+> > There is not much we can do about that unless we want to do a major
+> > surgery on that pata driver code.
+> > 
+> > So either you disable the throttler or you reconfigure the pata irq
+> > thread to SCHED_OTHER, which will slow it down a bit, but avoids the
+> > hogging of the machine with a RT task going wild.
+> 
+> Thank you for the analysis. Yep I'll reconfigure it to SCHED_OTHER -
+> file access is a totally low-prio thing in my application and I was more
+> afraid of a possibility where someone fetching logfiles or something
+> like that will bring the application to the knees.
+> 
+> BTW what granularity does the throttler have? I cannot live with
+> 50 ms lag once in a second, but in my case I can well live with
+> 5 ms lag once in 100 ms (even if that means that the throttler
+> would be activated more often).
 
-Will be fun to try rt patch also, although current mainline is very close  
-to doing 0.2ms latency, there is just a few clicks at 0.3 (without  
-realtime threads) here. Meaning that os-jitter on average is lower than  
-0.2ms. Having used an amiga500, and knowing how that feels. 0.3ms feels  
-close, but maybe just a bit lower. So 0.2ms. And that is the kind of  
-computer I want.
+The granularity is microseconds. 
 
-I am also building a machine particulary for low-jitter.  
-http://paradoxuncreated.com/Blog/wordpress/?p=4176
+sched_rt_period  defaults to 1000000	== 1.00s
+sched_rt_runtime defaults to  950000	== 0.95s
 
-So if we can`t get RT running on this one, and it seems many are getting  
-it to work, atleast maybe it will work on the new. And if mainline does  
-maxjitter/latency below 0.2ms on the new machine, which will be very  
-specifically tuned for low latency hardware-wise, I ofcourse don`t need  
-rt, unless there should be an argument of better performance still, which  
-most seem to think there isn`t.
+The mechanics of the throttler is that it gives SCHED_OTHER a chance
+to run for sched_rt_period - sched_rt_runtime (default 0.05s == 50ms)
+if RT tasks hogged the cpu for more than sched_rt_runtime in a row.
 
-So anyway down to 0.2ms is where I care. I think. Great job on doing RT  
-though, but unfortunately it hasn`t worked here. Actually I could try a  
-live RT distro, on my mac mini also. :)
+This is a safety belt, so you have a chance to kill your RT task which
+got lost in a while(1) loop :)
 
-Peace Be With You.
+> Right now I have
+> 
+> CONFIG_TICK_ONESHOT=y
+> CONFIG_NO_HZ=y
+> CONFIG_HZ=1000
+> CONFIG_SCHED_HRTICK=y
+> 
+> and lacking better choices my clock source is TSC. I admit that
+> I do not know what precisely each setting does - the NO_HZ combined
+> with HZ=1000 looks a bit weird ;)
+
+HZ is the scheduler tick frequency. That's used for timeslicing
+SCHED_OTHER tasks.
+
+NO_HZ is only affecting idle. When the machine goes idle and the next
+timer expires AFTER the next scheduler tick, then the scheduler tick
+is stopped and the timer device is armed to the timer expiry. That's a
+power saving feature as it allows the CPU to stay in deeper
+powerstates for a longer time, instead of waking up with HZ frequency
+just to see that there is nothing to do, which is silly as we know
+that right when we go idle :)
+
+Thanks,
+
+	tglx
