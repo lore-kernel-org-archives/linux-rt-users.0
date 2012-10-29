@@ -1,155 +1,64 @@
-From: Tvrtko Ursulin <tvrtko-9sj9WOxYP5jR7s880joybQ@public.gmane.org>
-Subject: Re: cryptsetup not working under 3.6 - RT patch set seem
- to break it
-Date: Mon, 29 Oct 2012 20:45:38 +0000
-Message-ID: <508EEAF2.4090506@ursulin.net>
-References: <50830D33.5050807@ursulin.net> <5083C61C.5090807@gmail.com>
- <5083E4A8.3060501@ursulin.net> <5083E87B.2080908@gmail.com>
- <5083EC61.8070505@ursulin.net> <50844D01.9090805@gmail.com>
- <5084551E.5040304@ursulin.net> <508ED985.5060301@ursulin.net>
- <508EDD6E.7030908@gmail.com> <508EE395.9010709@ursulin.net>
+From: Ove Karlsen <ove.karlsen@paradoxuncreated.com>
+Subject: Re: [ANNOUNCE] 3.6.2-rt4
+Date: Mon, 29 Oct 2012 21:39:49 +0100
+Message-ID: <508EE995.3030109@paradoxuncreated.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"; Format="flowed"
-Content-Transfer-Encoding: 7bit
-Cc: dm-crypt-4q3lyFh4P1g@public.gmane.org, okozina-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
- linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-In-Reply-To: <508EE395.9010709-9sj9WOxYP5jR7s880joybQ@public.gmane.org>
-List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://www.saout.de/pipermail/dm-crypt/>
-List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
-List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
-List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
- <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
-Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
-Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: tglx@linutronix.de, linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp.domeneshop.no ([194.63.252.54]:48121 "EHLO
+	smtp.domeneshop.no" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932224Ab2J2U4Q (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Oct 2012 16:56:16 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 29/10/12 20:14, Tvrtko Ursulin wrote:
-> On 29/10/12 19:47, Milan Broz wrote:
->> On 10/29/2012 08:31 PM, Tvrtko Ursulin wrote:
->>> Just tried 3.6.4 and it is still broken. Is there anything else I could
->>> try to debug this?
->>
->> See response from response from Ondra on dmcrypt list - your kernel
->> config
->> is perhaps broken.
->
-> I don't think that reached me - perhaps I was not copied.
->
-> Weird yes, I mean no one can spot anything bad with my config...
->
->> Please use fresh checkout, run make oldconfig and try again.
->> (Many people use 3.6 already and there is no other report.)
->
-> ... and I just used it today to configure a fresh 3.6.4 (plus -rt10
-> patches) without a problem.
->
-> Unless RT patchset is the culprit. Hm.. that would be unexpected, but I
-> guess it is worth a shot. I'll let you know what happens without -rt.
+Hiya, I am switching email-client currently, so excuse a bit of chaos.
 
-Ha, this is exciting, vanilla 3.6.4 works, with -rt10 patch it does not.
+I am reading=20
+https://rt.wiki.kernel.org/index.php/Frequently_Asked_Questions#What_so=
+rt_of_real-time_performance_should_I_expect.3F
 
-Copying in linux-rt-users.
+I think it sounds really interesting that you have 10-30uS latencies=20
+back in 2007. The concept sounds thorough and tried then. So I shouldn`=
+t=20
+expect any big SMI messing things up, on my core2duo right?
 
-To recap, 3.6 RT seems to break dm-crypt. Try it like this:
+I think I really wanna get this to work. No solutions? :)
 
-cryptsetup --debug --key-file=- luksOpen /some/luks/formatted/file any-label
+I am reading more here:
 
-And kernel will fail like this:
+https://rt.wiki.kernel.org/index.php/CONFIG_PREEMPT_RT_Patch
 
-Kernel says this:
-      device-mapper: table: 252:1: crypt: Error allocating crypto tfm
-      device-mapper: ioctl: error adding target to table
+"Works ok, but frequency scaling has to be turned off for decent=20
+results. A task run at 1 kHz repetition rate with low load was found to=
+=20
+be t-distributed with 4 degrees of freedom, with 1% value 0.9842 ms, 99=
+%=20
+value 1.0103 ms (ideal realtime performance would get exactly 1 ms for=20
+both values), with the frequency governor set to "performance"."
 
-I think crypto modules are not getting auto loaded for some reason, but 
-even if I load them manually before hand and still breaks in the same way.
+Quite low. So he has got it running with low jitter, on a core 2 quad.
 
-Maybe someone will have a "ah yes" moment? Here is the diff between 
-working (vanilla 3.6.4) and non-working (3.6.4-rt10) configs:
+SMI sounds not much of a problem then. I want this guys. Altough as sai=
+d=20
+I am buying a computer, particulary for low-jitter, we can always try=20
+and make this work on my older box in the mean time.
 
---- 1	2012-10-29 20:37:49.472306922 +0000
-+++ 2	2012-10-29 20:37:52.319732779 +0000
-@@ -892,7 +892,6 @@
-  # CONFIG_DEBUG_SECTION_MISMATCH is not set
-  # CONFIG_DEBUG_SET_MODULE_RONX is not set
-  # CONFIG_DEBUG_SG is not set
--# CONFIG_DEBUG_SHIRQ is not set
-  # CONFIG_DEBUG_SPINLOCK is not set
-  # CONFIG_DEBUG_STACKOVERFLOW is not set
-  # CONFIG_DEBUG_STACK_USAGE is not set
-@@ -1810,7 +1809,7 @@
-  CONFIG_MTRR_SANITIZER=y
-  CONFIG_MTRR=y
-  # CONFIG_MULTICORE_RAID456 is not set
--CONFIG_MUTEX_SPIN_ON_OWNER=y
-+# CONFIG_MUTEX_SPIN_ON_OWNER is not set
-  # CONFIG_MWAVE is not set
-  CONFIG_NAMESPACES=y
-  CONFIG_NATIONAL_PHY=y
-@@ -1842,7 +1841,6 @@
-  CONFIG_NET_CLS_TCINDEX=m
-  CONFIG_NET_CLS_U32=m
-  CONFIG_NET_CLS=y
--# CONFIG_NETCONSOLE is not set
-  CONFIG_NET_CORE=y
-  CONFIG_NETDEVICES=y
-  # CONFIG_NET_DSA is not set
-@@ -2260,9 +2258,13 @@
-  CONFIG_PPP=y
-  # CONFIG_PPS is not set
-  CONFIG_PREEMPT_COUNT=y
-+# CONFIG_PREEMPT__LL is not set
-  # CONFIG_PREEMPT_NONE is not set
-  CONFIG_PREEMPT_NOTIFIERS=y
-  CONFIG_PREEMPT_RCU=y
-+CONFIG_PREEMPT_RT_BASE=y
-+# CONFIG_PREEMPT_RTB is not set
-+CONFIG_PREEMPT_RT_FULL=y
-  # CONFIG_PREEMPT_VOLUNTARY is not set
-  CONFIG_PREEMPT=y
-  CONFIG_PREVENT_FIRMWARE_BUILD=y
-@@ -2368,11 +2370,10 @@
-  CONFIG_RTC_INTF_PROC=y
-  CONFIG_RTC_INTF_SYSFS=y
-  CONFIG_RTC_LIB=y
--# CONFIG_RT_GROUP_SCHED is not set
-  CONFIG_RT_MUTEXES=y
-  # CONFIG_RT_MUTEX_TESTER is not set
--# CONFIG_RWSEM_GENERIC_SPINLOCK is not set
--CONFIG_RWSEM_XCHGADD_ALGORITHM=y
-+CONFIG_RWSEM_GENERIC_SPINLOCK=y
-+# CONFIG_RWSEM_XCHGADD_ALGORITHM is not set
-  # CONFIG_SAMPLES is not set
-  # CONFIG_SATA_ACARD_AHCI is not set
-  CONFIG_SATA_AHCI=m
-@@ -2851,7 +2852,6 @@
-  CONFIG_TRACE_IRQFLAGS_SUPPORT=y
-  # CONFIG_TRACE_SINK is not set
-  CONFIG_TRACING_SUPPORT=y
--# CONFIG_TRANSPARENT_HUGEPAGE is not set
-  CONFIG_TREE_PREEMPT_RCU=y
-  # CONFIG_TREE_RCU_TRACE is not set
-  CONFIG_TUN=y
-@@ -2867,7 +2867,6 @@
-  CONFIG_UID16=y
-  # CONFIG_UIO is not set
-  # CONFIG_ULTRIX_PARTITION is not set
--CONFIG_UNINLINE_SPIN_UNLOCK=y
-  CONFIG_UNIX98_PTYS=y
-  CONFIG_UNIX_DIAG=y
-  # CONFIG_UNIXWARE_DISKLABEL is not set
+Remember the prob is with threadirqs on mainline aswell. Could it be=20
+some clockproblem? A task for the thirsty bughunter, and patch-glory to=
+=20
+mainline.
 
-No crypto related differences.
-
-Tvrtko
-
-
-
-
-_______________________________________________
-dm-crypt mailing list
-dm-crypt-4q3lyFh4P1g@public.gmane.org
-http://www.saout.de/mailman/listinfo/dm-crypt
+--=20
+=46red v=E6re med deg / Peace Be with You,
+Ove Karlsen
+http://www.paradoxuncreated.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
