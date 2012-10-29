@@ -1,49 +1,155 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Priority inheritance?
-Date: Mon, 29 Oct 2012 14:00:34 +0100
-Message-ID: <508E7DF2.1040301@meduna.org>
+From: Tvrtko Ursulin <tvrtko-9sj9WOxYP5jR7s880joybQ@public.gmane.org>
+Subject: Re: cryptsetup not working under 3.6 - RT patch set seem
+ to break it
+Date: Mon, 29 Oct 2012 20:45:38 +0000
+Message-ID: <508EEAF2.4090506@ursulin.net>
+References: <50830D33.5050807@ursulin.net> <5083C61C.5090807@gmail.com>
+ <5083E4A8.3060501@ursulin.net> <5083E87B.2080908@gmail.com>
+ <5083EC61.8070505@ursulin.net> <50844D01.9090805@gmail.com>
+ <5084551E.5040304@ursulin.net> <508ED985.5060301@ursulin.net>
+ <508EDD6E.7030908@gmail.com> <508EE395.9010709@ursulin.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
 Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:47837 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753073Ab2J2NAw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Oct 2012 09:00:52 -0400
-Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
-	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
-	(Exim 4.72)
-	(envelope-from <stano@meduna.org>)
-	id 1TSoxL-0001il-88
-	for linux-rt-users@vger.kernel.org; Mon, 29 Oct 2012 14:00:47 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: dm-crypt-4q3lyFh4P1g@public.gmane.org, okozina-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+ linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Milan Broz <gmazyland-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+In-Reply-To: <508EE395.9010709-9sj9WOxYP5jR7s880joybQ@public.gmane.org>
+List-Unsubscribe: <http://www.saout.de/mailman/options/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://www.saout.de/pipermail/dm-crypt/>
+List-Post: <mailto:dm-crypt-4q3lyFh4P1g@public.gmane.org>
+List-Help: <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=help>
+List-Subscribe: <http://www.saout.de/mailman/listinfo/dm-crypt>,
+ <mailto:dm-crypt-request-4q3lyFh4P1g@public.gmane.org?subject=subscribe>
+Errors-To: dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org
+Sender: "dm-crypt" <dm-crypt-bounces-4q3lyFh4P1g@public.gmane.org>
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On 29/10/12 20:14, Tvrtko Ursulin wrote:
+> On 29/10/12 19:47, Milan Broz wrote:
+>> On 10/29/2012 08:31 PM, Tvrtko Ursulin wrote:
+>>> Just tried 3.6.4 and it is still broken. Is there anything else I could
+>>> try to debug this?
+>>
+>> See response from response from Ondra on dmcrypt list - your kernel
+>> config
+>> is perhaps broken.
+>
+> I don't think that reached me - perhaps I was not copied.
+>
+> Weird yes, I mean no one can spot anything bad with my config...
+>
+>> Please use fresh checkout, run make oldconfig and try again.
+>> (Many people use 3.6 already and there is no other report.)
+>
+> ... and I just used it today to configure a fresh 3.6.4 (plus -rt10
+> patches) without a problem.
+>
+> Unless RT patchset is the culprit. Hm.. that would be unexpected, but I
+> guess it is worth a shot. I'll let you know what happens without -rt.
 
-strictly speaking not a linux-rt specific questions but I think
-that the folks here have the needed experience and knowledge:
-what is the relation of
-  pthread_mutexattr_setprotocol(&attr, PTHREAD_PRIO_INHERIT);
-and scheduler class used for a particular thread? Does the priority
-inheritance work across all threads in the system or is it limited
-to one scheduling class?
+Ha, this is exciting, vanilla 3.6.4 works, with -rt10 patch it does not.
 
-Specifically: my application has some SCHED_RR threads with fixed
-priorities and realtime needs and a few that are quite low-prio,
-actually have the SCHED_OTHER semantics and I don't want them
-to count against the time spent in RT (keyword: throttler).
+Copying in linux-rt-users.
 
-I need to occasionally queue data from from the RT-ones to
-the low-prio ones, so for short periods of time I need to lock
-a mutex. With it comes the question of priority inversion.
+To recap, 3.6 RT seems to break dm-crypt. Try it like this:
 
-Can I leave the low-prio threads at SCHED_OTHER and rely on
-the PTHREAD_PRIO_INHERIT to boost their priority in case they
-were preempted with the lock held and the RT-thread needs
-to lock it too, or do they have to be SCHED_RR too?
+cryptsetup --debug --key-file=- luksOpen /some/luks/formatted/file any-label
 
-Thanks
--- 
-                                    Stano
+And kernel will fail like this:
+
+Kernel says this:
+      device-mapper: table: 252:1: crypt: Error allocating crypto tfm
+      device-mapper: ioctl: error adding target to table
+
+I think crypto modules are not getting auto loaded for some reason, but 
+even if I load them manually before hand and still breaks in the same way.
+
+Maybe someone will have a "ah yes" moment? Here is the diff between 
+working (vanilla 3.6.4) and non-working (3.6.4-rt10) configs:
+
+--- 1	2012-10-29 20:37:49.472306922 +0000
++++ 2	2012-10-29 20:37:52.319732779 +0000
+@@ -892,7 +892,6 @@
+  # CONFIG_DEBUG_SECTION_MISMATCH is not set
+  # CONFIG_DEBUG_SET_MODULE_RONX is not set
+  # CONFIG_DEBUG_SG is not set
+-# CONFIG_DEBUG_SHIRQ is not set
+  # CONFIG_DEBUG_SPINLOCK is not set
+  # CONFIG_DEBUG_STACKOVERFLOW is not set
+  # CONFIG_DEBUG_STACK_USAGE is not set
+@@ -1810,7 +1809,7 @@
+  CONFIG_MTRR_SANITIZER=y
+  CONFIG_MTRR=y
+  # CONFIG_MULTICORE_RAID456 is not set
+-CONFIG_MUTEX_SPIN_ON_OWNER=y
++# CONFIG_MUTEX_SPIN_ON_OWNER is not set
+  # CONFIG_MWAVE is not set
+  CONFIG_NAMESPACES=y
+  CONFIG_NATIONAL_PHY=y
+@@ -1842,7 +1841,6 @@
+  CONFIG_NET_CLS_TCINDEX=m
+  CONFIG_NET_CLS_U32=m
+  CONFIG_NET_CLS=y
+-# CONFIG_NETCONSOLE is not set
+  CONFIG_NET_CORE=y
+  CONFIG_NETDEVICES=y
+  # CONFIG_NET_DSA is not set
+@@ -2260,9 +2258,13 @@
+  CONFIG_PPP=y
+  # CONFIG_PPS is not set
+  CONFIG_PREEMPT_COUNT=y
++# CONFIG_PREEMPT__LL is not set
+  # CONFIG_PREEMPT_NONE is not set
+  CONFIG_PREEMPT_NOTIFIERS=y
+  CONFIG_PREEMPT_RCU=y
++CONFIG_PREEMPT_RT_BASE=y
++# CONFIG_PREEMPT_RTB is not set
++CONFIG_PREEMPT_RT_FULL=y
+  # CONFIG_PREEMPT_VOLUNTARY is not set
+  CONFIG_PREEMPT=y
+  CONFIG_PREVENT_FIRMWARE_BUILD=y
+@@ -2368,11 +2370,10 @@
+  CONFIG_RTC_INTF_PROC=y
+  CONFIG_RTC_INTF_SYSFS=y
+  CONFIG_RTC_LIB=y
+-# CONFIG_RT_GROUP_SCHED is not set
+  CONFIG_RT_MUTEXES=y
+  # CONFIG_RT_MUTEX_TESTER is not set
+-# CONFIG_RWSEM_GENERIC_SPINLOCK is not set
+-CONFIG_RWSEM_XCHGADD_ALGORITHM=y
++CONFIG_RWSEM_GENERIC_SPINLOCK=y
++# CONFIG_RWSEM_XCHGADD_ALGORITHM is not set
+  # CONFIG_SAMPLES is not set
+  # CONFIG_SATA_ACARD_AHCI is not set
+  CONFIG_SATA_AHCI=m
+@@ -2851,7 +2852,6 @@
+  CONFIG_TRACE_IRQFLAGS_SUPPORT=y
+  # CONFIG_TRACE_SINK is not set
+  CONFIG_TRACING_SUPPORT=y
+-# CONFIG_TRANSPARENT_HUGEPAGE is not set
+  CONFIG_TREE_PREEMPT_RCU=y
+  # CONFIG_TREE_RCU_TRACE is not set
+  CONFIG_TUN=y
+@@ -2867,7 +2867,6 @@
+  CONFIG_UID16=y
+  # CONFIG_UIO is not set
+  # CONFIG_ULTRIX_PARTITION is not set
+-CONFIG_UNINLINE_SPIN_UNLOCK=y
+  CONFIG_UNIX98_PTYS=y
+  CONFIG_UNIX_DIAG=y
+  # CONFIG_UNIXWARE_DISKLABEL is not set
+
+No crypto related differences.
+
+Tvrtko
+
+
+
+
+_______________________________________________
+dm-crypt mailing list
+dm-crypt-4q3lyFh4P1g@public.gmane.org
+http://www.saout.de/mailman/listinfo/dm-crypt
