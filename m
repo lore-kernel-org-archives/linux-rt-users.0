@@ -1,56 +1,70 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: posixcputmr and ksoftirqd priorities
-Date: Tue, 30 Oct 2012 09:05:22 +0100
-Message-ID: <508F8A42.6040002@meduna.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [dm-crypt] cryptsetup not working under 3.6 - RT patch set seem
+ to break it
+Date: Tue, 30 Oct 2012 10:40:01 +0100
+Message-ID: <20121030094001.GV639@pengutronix.de>
+References: <5083C61C.5090807@gmail.com>
+ <5083E4A8.3060501@ursulin.net>
+ <5083E87B.2080908@gmail.com>
+ <5083EC61.8070505@ursulin.net>
+ <50844D01.9090805@gmail.com>
+ <5084551E.5040304@ursulin.net>
+ <508ED985.5060301@ursulin.net>
+ <508EDD6E.7030908@gmail.com>
+ <508EE395.9010709@ursulin.net>
+ <508EEAF2.4090506@ursulin.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:42030 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754987Ab2J3IFi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Oct 2012 04:05:38 -0400
-Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
-	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
-	(Exim 4.72)
-	(envelope-from <stano@meduna.org>)
-	id 1TT6pD-000248-JT
-	for linux-rt-users@vger.kernel.org; Tue, 30 Oct 2012 09:05:35 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Milan Broz <gmazyland@gmail.com>, dm-crypt@saout.de,
+	linux-kernel@vger.kernel.org, okozina@redhat.com,
+	linux-rt-users@vger.kernel.org
+To: Tvrtko Ursulin <tvrtko@ursulin.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <508EEAF2.4090506@ursulin.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Mon, Oct 29, 2012 at 08:45:38PM +0000, Tvrtko Ursulin wrote:
+> On 29/10/12 20:14, Tvrtko Ursulin wrote:
+> >On 29/10/12 19:47, Milan Broz wrote:
+> >>On 10/29/2012 08:31 PM, Tvrtko Ursulin wrote:
+> >>>Just tried 3.6.4 and it is still broken. Is there anything else I =
+could
+> >>>try to debug this?
+> >>
+> >>See response from response from Ondra on dmcrypt list - your kernel
+> >>config
+> >>is perhaps broken.
+> >
+> >I don't think that reached me - perhaps I was not copied.
+> >
+> >Weird yes, I mean no one can spot anything bad with my config...
+> >
+> >>Please use fresh checkout, run make oldconfig and try again.
+> >>(Many people use 3.6 already and there is no other report.)
+> >
+> >... and I just used it today to configure a fresh 3.6.4 (plus -rt10
+> >patches) without a problem.
+> >
+> >Unless RT patchset is the culprit. Hm.. that would be unexpected, bu=
+t I
+> >guess it is worth a shot. I'll let you know what happens without -rt=
+=2E
+>=20
+> Ha, this is exciting, vanilla 3.6.4 works, with -rt10 patch it does n=
+ot.
+I experienced that problem, too. This is on a laptop with encrypted
+rootfs, so debugging is a bit harder here. I am just setting up another
+machine to debug that.
 
-am I right in the suspicion that the events delivered
-by timer_create and timerfd_create are routed via ksoftirqd
-before being delivered to the application? Is there any
-special reason for this?
+Best regards
+Uwe
 
-In any case in the scenario
-- posixcputmr prio 99
-- thread A prio 45 with a timerfd loop or timer sigwait loop
-- thread B prio 25
-- ksoftirqd prio 1
-
-the thread A does not see the timer events until thread
-B is done, which is a classical priority inversion case.
-Boosting the priority of ksoftirqd to 40 solves it.
-
-Yes I have found the Steven's posting with "You can change
-the priority of ksoftirqd. In fact, we made the default
-for ksoftirqd poor, to force you to change it." Of course
-after pulling hair for a few hours and finally identifying
-the culprit myself.
-
-Would it be possible to somehow smuggle this important piece
-of information into timer_create and timerfd_create manpages?
-Otherwise everyone trying to use timers having at least
-one thread with lower prio than the thread using them will
-fall into it sooner or later. An application programmer
-should not have to have an intimate knowledge on how
-the events are routed between the kernel tasks...
-
-Regards
--- 
-                                         Stano
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
