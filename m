@@ -1,69 +1,40 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/4] [ANNOUNCE] 3.0.48-rt72-rc1 stable review
-Date: Tue, 30 Oct 2012 20:32:58 -0400
-Message-ID: <20121031003258.811955127@goodmis.org>
+Subject: [PATCH RT 2/4] rcu: Disable RCU_FAST_NO_HZ on RT
+Date: Tue, 30 Oct 2012 20:33:00 -0400
+Message-ID: <20121031003314.634541033@goodmis.org>
+References: <20121031003258.811955127@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-rcu-Disable-RCU_FAST_NO_HZ-on-RT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Dear RT Folks,
+This uses a timer_list timer from the irq disabled guts of the idle
+code. Disable it for now to prevent wreckage.
 
-This is the RT stable review cycle of patch 3.0.48-rt72-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/2/2012.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.0.48-rt72-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.48.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.48-rt72-rc1.patch.xz
-
-You can also build from 3.0.48-rt71 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.48-rt71-rt72-rc1.patch.xz
-
-
-Changes from 3.0.48-rt71:
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
 ---
+ init/Kconfig |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Steven Rostedt (1):
-      Linux 3.0.48-rt72-rc1
-
-Thomas Gleixner (2):
-      rcu: Disable RCU_FAST_NO_HZ on RT
-      net: netfilter: Serialize xt_write_recseq sections on RT
-
-Watanabe (1):
-      hrtimer: Raise softirq if hrtimer irq stalled
-
-----
- include/linux/locallock.h          |    4 ++++
- include/linux/netfilter/x_tables.h |    7 +++++++
- init/Kconfig                       |    2 +-
- kernel/hrtimer.c                   |    9 ++++-----
- localversion-rt                    |    2 +-
- net/netfilter/core.c               |    6 ++++++
- 6 files changed, 23 insertions(+), 7 deletions(-)
+diff --git a/init/Kconfig b/init/Kconfig
+index 5ed453f..948350f 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -469,7 +469,7 @@ config RCU_FANOUT_EXACT
+ 
+ config RCU_FAST_NO_HZ
+ 	bool "Accelerate last non-dyntick-idle CPU's grace periods"
+-	depends on TREE_RCU && NO_HZ && SMP
++	depends on TREE_RCU && NO_HZ && SMP && !PREEMPT_RT_FULL
+ 	default n
+ 	help
+ 	  This option causes RCU to attempt to accelerate grace periods
+-- 
+1.7.10.4
