@@ -1,29 +1,116 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/4] Linux 3.2.32-rt49-rc1
-Date: Tue, 30 Oct 2012 20:31:11 -0400
-Message-ID: <20121031003123.237578757@goodmis.org>
+Subject: [PATCH RT 3/4] net: netfilter: Serialize xt_write_recseq sections on RT
+Date: Tue, 30 Oct 2012 20:31:10 -0400
+Message-ID: <20121031003123.098798359@goodmis.org>
 References: <20121031003107.834398757@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Peter LaDow <petela@gocougs.wsu.edu>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-Linux-3.2.32-rt49-rc1.patch
+Content-Disposition: inline; filename=0003-net-netfilter-Serialize-xt_write_recseq-sections-on-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <srostedt@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
+The netfilter code relies only on the implicit semantics of
+local_bh_disable() for serializing wt_write_recseq sections. RT breaks
+that and needs explicit serialization here.
+
+Reported-by: Peter LaDow <petela@gocougs.wsu.edu>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
 ---
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/locallock.h          |    4 ++++
+ include/linux/netfilter/x_tables.h |    7 +++++++
+ net/netfilter/core.c               |    6 ++++++
+ 3 files changed, 17 insertions(+)
 
-diff --git a/localversion-rt b/localversion-rt
-index 2470798..623b4c9 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt48
-+-rt49-rc1
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index f1804a3..a5eea5d 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -25,6 +25,9 @@ struct local_irq_lock {
+ 	DEFINE_PER_CPU(struct local_irq_lock, lvar) = {			\
+ 		.lock = __SPIN_LOCK_UNLOCKED((lvar).lock) }
+ 
++#define DECLARE_LOCAL_IRQ_LOCK(lvar)					\
++	DECLARE_PER_CPU(struct local_irq_lock, lvar)
++
+ #define local_irq_lock_init(lvar)					\
+ 	do {								\
+ 		int __cpu;						\
+@@ -220,6 +223,7 @@ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ #else /* PREEMPT_RT_BASE */
+ 
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)		__typeof__(const int) lvar
++#define DECLARE_LOCAL_IRQ_LOCK(lvar)		extern __typeof__(const int) lvar
+ 
+ static inline void local_irq_lock_init(int lvar) { }
+ 
+diff --git a/include/linux/netfilter/x_tables.h b/include/linux/netfilter/x_tables.h
+index 32cddf7..bed90da2 100644
+--- a/include/linux/netfilter/x_tables.h
++++ b/include/linux/netfilter/x_tables.h
+@@ -186,6 +186,7 @@ struct xt_counters_info {
+ #ifdef __KERNEL__
+ 
+ #include <linux/netdevice.h>
++#include <linux/locallock.h>
+ 
+ /**
+  * struct xt_action_param - parameters for matches/targets
+@@ -466,6 +467,8 @@ extern void xt_free_table_info(struct xt_table_info *info);
+  */
+ DECLARE_PER_CPU(seqcount_t, xt_recseq);
+ 
++DECLARE_LOCAL_IRQ_LOCK(xt_write_lock);
++
+ /**
+  * xt_write_recseq_begin - start of a write section
+  *
+@@ -480,6 +483,9 @@ static inline unsigned int xt_write_recseq_begin(void)
+ {
+ 	unsigned int addend;
+ 
++	/* RT protection */
++	local_lock(xt_write_lock);
++
+ 	/*
+ 	 * Low order bit of sequence is set if we already
+ 	 * called xt_write_recseq_begin().
+@@ -510,6 +516,7 @@ static inline void xt_write_recseq_end(unsigned int addend)
+ 	/* this is kind of a write_seqcount_end(), but addend is 0 or 1 */
+ 	smp_wmb();
+ 	__this_cpu_add(xt_recseq.sequence, addend);
++	local_unlock(xt_write_lock);
+ }
+ 
+ /*
+diff --git a/net/netfilter/core.c b/net/netfilter/core.c
+index afca6c7..aa3f87b 100644
+--- a/net/netfilter/core.c
++++ b/net/netfilter/core.c
+@@ -20,11 +20,17 @@
+ #include <linux/proc_fs.h>
+ #include <linux/mutex.h>
+ #include <linux/slab.h>
++#include <linux/locallock.h>
+ #include <net/net_namespace.h>
+ #include <net/sock.h>
+ 
+ #include "nf_internals.h"
+ 
++#ifdef CONFIG_PREEMPT_RT_BASE
++DEFINE_LOCAL_IRQ_LOCK(xt_write_lock);
++EXPORT_PER_CPU_SYMBOL(xt_write_lock);
++#endif
++
+ static DEFINE_MUTEX(afinfo_mutex);
+ 
+ const struct nf_afinfo __rcu *nf_afinfo[NFPROTO_NUMPROTO] __read_mostly;
 -- 
 1.7.10.4
