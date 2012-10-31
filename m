@@ -1,72 +1,74 @@
-From: Peter LaDow <petela@gocougs.wsu.edu>
-Subject: Re: Process Hang in __read_seqcount_begin
-Date: Tue, 30 Oct 2012 16:09:24 -0700
-Message-ID: <CAN8Q1Ef1_OOTpqSrvPB6ja3A3e9-Lky-iceH4NKjWLw8HcW2AA@mail.gmail.com>
-References: <CAN8Q1EdobyFuAvtajGRSqNsCG+XoPA+FkwN=2j_H126mmfEjTQ@mail.gmail.com>
-	<1350925299.8609.978.camel@edumazet-glaptop>
-	<CAN8Q1EeqmHMHD-VUgr7Wzv0Z_DAD1SrEniftg==L14d+hGwu+Q@mail.gmail.com>
-	<CAN8Q1EcTRsHjCJD90q0bKRJFMvi7Vn8YRsyQTAHNtTFVuuNdWQ@mail.gmail.com>
-	<CAN8Q1EeB2kC6A_YP9zdtp_qYHMG5FF7-Usjx7Rz5pv--bjhqkQ@mail.gmail.com>
-	<1351053164.6537.95.camel@edumazet-glaptop>
-	<CAN8Q1Ef9sCAG8-KNWXEeuRUcmFNcg93mMG=HRQw6i3UuGtJCVg@mail.gmail.com>
-	<1351270087.30380.9.camel@edumazet-glaptop>
-	<CAN8Q1Ed1J-jmO9LppcA=rFXPvxFkk-J9mMb2-NhDYyAQKO2jvQ@mail.gmail.com>
-	<1351285552.30380.20.camel@edumazet-glaptop>
-	<CAN8Q1Ecx-pDR=NBQm4O=VaynQsxBU1wku9e_kcKkWB=xU0OtMA@mail.gmail.com>
-	<alpine.LFD.2.02.1210262351330.2756@ionos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Eric Dumazet <eric.dumazet@gmail.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	netfilter@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1210262351330.2756@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 0/4] [ANNOUNCE] 3.4.15-rt26-rc1 stable review
+Date: Tue, 30 Oct 2012 20:29:10 -0400
+Message-ID: <20121031002910.195421780@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:14294 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751822Ab2JaA3o (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Oct 2012 20:29:44 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Ok.  More of an update.  We've managed to create a scenario that
-exhibits the problem much earlier.  We can now cause the lockup to
-occur within a few hours (rather than the 12 to 24 hours in our other
-scenario).
 
- Our setup is to to have a a lot of traffic constantly being processed
-by the netfilter code.  After about 2 hours, any external attempt to
-read the table entries (such as with getsocktopt and
-IPT_SO_GET_ENTRIES) triggers the lockup.  What is strange is that this
-does not appear until after a couple of hours of heavy traffic.  We
-cannot trigger this problem in the first hour, rarely in the second
-hour, and always after the second hour.
+Dear RT Folks,
 
-Now, our original setup did not have as much traffic.  But based upon
-a quick, back of the napkin computation, it seems to occurring after a
-certain amount of traffic.  I can try to get more firm numbers.  But
-this kind of behavior hints less at a race condition between two
-writers, and is instead somehow dependent upon the amount of traffic.
-Indeed, my test program only uses IPT_SO_GET_ENTRIES which does not
-trigger the second path do do_add_counters.  So I'm no longer thinking
-the path through setsockopts is a cause of the problem.
+This is the RT stable review cycle of patch 3.4.15-rt26-rc1.
 
-So instead, it seems that the only way there could be multiple writers
-(assuming that is the problem), is if there are multiple contexts
-through which ipt_do_table() is called.  So far, my perusal of the
-code indicates only through the hooks in each of the iptables modules.
- And it isn't clear to me how these are called.  But it does seem that
-even with the patch Eric provided (which fixes the seqcount update),
-there is still a potential problem.
+Please scream at me if I messed something up. Please test the patches too.
 
-If indeed we have multiple contexts executing ipt_do_table(), it is
-possible for more than just the seqcount to be corrupted.  Indeed, it
-seems that any updates to the internal structures could cause
-problems.  It isn't clear to me if there is anything modified here,
-other than the counters, so I'm not sure if there are any other
-issues.  But regardless, if the counters could become corrupted, then
-it is possible to break any rules that use them.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Anyway, based on earlier discussion, is there any reason not to use a
-lock (presuming any solution properly takes into account possible
-recursion)?  I understand that the mainline is protected, but perhaps
-in the RT version we can use seqlock (and prevent a recursive lock)?
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Thanks,
-Pete LaDow
+If all goes well, this patch will be converted to the next main release
+on 11/2/2012.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.4.15-rt26-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.15.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.15-rt26-rc1.patch.xz
+
+You can also build from 3.4.15-rt25 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.15-rt25-rt26-rc1.patch.xz
+
+
+Changes from 3.4.15-rt25:
+
+---
+
+
+Steven Rostedt (1):
+      Linux 3.4.15-rt26-rc1
+
+Thomas Gleixner (2):
+      rcu: Disable RCU_FAST_NO_HZ on RT
+      net: netfilter: Serialize xt_write_recseq sections on RT
+
+Watanabe (1):
+      hrtimer: Raise softirq if hrtimer irq stalled
+
+----
+ include/linux/locallock.h          |    4 ++++
+ include/linux/netfilter/x_tables.h |    7 +++++++
+ init/Kconfig                       |    2 +-
+ kernel/hrtimer.c                   |    9 ++++-----
+ localversion-rt                    |    2 +-
+ net/netfilter/core.c               |    6 ++++++
+ 6 files changed, 23 insertions(+), 7 deletions(-)
