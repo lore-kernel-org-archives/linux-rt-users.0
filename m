@@ -1,44 +1,59 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.4-rt11
-Date: Wed, 31 Oct 2012 11:22:37 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1210311118300.2756@ionos>
-References: <alpine.LFD.2.02.1210310144210.2756@ionos> <20121031053708.GD25658@windriver.com>
+From: Scot Salmon <scot.salmon@ni.com>
+Subject: Detecting shift of CLOCK_REALTIME with clock_nanosleep (again)
+Date: Wed, 31 Oct 2012 10:54:26 -0500
+Message-ID: <OFB404C2D9.B6E5E0B9-ON86257AA8.0054900F-86257AA8.005761C4@ni.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset="US-ASCII"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Alexander Shishkin <virtuoso@slind.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55276 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933180Ab2JaKWl (ORCPT
+Received: from mailserver6.natinst.com ([130.164.80.6]:59715 "EHLO
+	spamkiller06.natinst.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935768Ab2JaQPz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 31 Oct 2012 06:22:41 -0400
-In-Reply-To: <20121031053708.GD25658@windriver.com>
+	Wed, 31 Oct 2012 12:15:55 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 31 Oct 2012, Paul Gortmaker wrote:
+At RTLWS, I talked to tglx about patching clock_nanosleep to detect shifts 
+in CLOCK_REALTIME.  He suggested I bring it up here for comments.
 
-> [[ANNOUNCE] 3.6.4-rt11] On 31/10/2012 (Wed 02:19) Thomas Gleixner wrote:
-> 
-> > Dear RT Folks,
-> > 
-> > I'm pleased to announce the 3.6.4-rt11 release.
-> 
-> The rt11 content is present on master in the 3.6-rt patch repo:
->   http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git
-> 
-> I've also created a v3.6.4-rt11-fixes branch, which contains a fix for
-> the preempt-lazy TIF test on x86_32 (please check this; I really should
-> not be left unattended, mucking around in .S files while on vacation).
-> It is queued in the series right after the preempt-lazy-support.patch.
+Alexander Shishkin proposed a patch for this a while back: 
+http://thread.gmane.org/gmane.linux.kernel/1110759/focus=1131917
 
-Duh. My tired brain saw the warning fly by without actually grasping
-it. Will fold it back for the next release.
+At that time Thomas rightly responded that hacking the POSIX 
+clock_nanosleep API (both overloading a parameter and adding a new return 
+value) was quite horrible.  The nanosleep use case in that thread seemed 
+somewhat speculative, with references to "weird" cron jobs, and Alexander 
+seemed satisfied when Thomas added this feature to timerfd.
 
-> [ quick link to TIF patch @kernel.org: http://goo.gl/7Gbtg ]
+I described a more concrete use case to Thomas that is not solved by 
+timerfd.  We have multiple devices running control loops using 
+clock_nanosleep and TIMER_ABSTIME to get good periodic wakeups.  The 
+clocks need to be synchronized across the controllers so that the loops 
+themselves can be in sync.  In order to use a synchronized clock we have 
+to use CLOCK_REALTIME.  But if the control loop starts, and then the time 
+sync protocol kicks in and shifts the clock, that breaks the control loop, 
+the most obvious case being if time shifts backwards and a loop that 
+should be running at 100us takes 100us + some arbitrary amount of time 
+shift, potentially measured in minutes or even days.  timerfd has the 
+behavior I need, but its performance is much worse than clock_nanosleep, 
+we believe because the wakeup goes through ksoftirqd.
 
-Good catch. Thanks,
+I applied Alexander's patches 2 and 3, which is the subset I care about 
+(avoiding 1 and 4, since we already implemented 1 as a first pass at this 
+issue, and Thomas already implemented 4 separately), and it does what I 
+need.  But, Thomas's objections are still valid so I am not sure I like 
+this solution.
 
-     tglx
+Could reworking the way that timerfd handles wakeups be an option?  We'd 
+like some guidance: if that's something you feel worth investigating, 
+we're willing to do so.
+
+-Scot
+
+------
+Scot Salmon (scot.salmon@ni.com)
+National Instruments, Austin, TX
+101010, 222, 52, ...
