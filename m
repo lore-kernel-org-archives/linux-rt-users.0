@@ -1,40 +1,53 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] rcu: Disable RCU_FAST_NO_HZ on RT
-Date: Tue, 30 Oct 2012 20:31:09 -0400
-Message-ID: <20121031003122.969515377@goodmis.org>
+Subject: [PATCH RT 1/4] hrtimer: Raise softirq if hrtimer irq stalled
+Date: Tue, 30 Oct 2012 20:31:08 -0400
+Message-ID: <20121031003122.830032824@goodmis.org>
 References: <20121031003107.834398757@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-rcu-Disable-RCU_FAST_NO_HZ-on-RT.patch
+Content-Disposition: inline; filename=0001-hrtimer-Raise-softirq-if-hrtimer-irq-stalled.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Watanabe <shunsuke.watanabe@tel.com>
 
-This uses a timer_list timer from the irq disabled guts of the idle
-code. Disable it for now to prevent wreckage.
+When the hrtimer stall detection hits the softirq is not raised.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 ---
- init/Kconfig |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/hrtimer.c |    9 ++++-----
+ 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/init/Kconfig b/init/Kconfig
-index 720c182..aa6545f 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -469,7 +469,7 @@ config RCU_FANOUT_EXACT
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index bca6928..9c09d02 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1527,11 +1527,7 @@ retry:
+ 	if (expires_next.tv64 == KTIME_MAX ||
+ 	    !tick_program_event(expires_next, 0)) {
+ 		cpu_base->hang_detected = 0;
+-
+-		if (raise)
+-			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+-
+-		return;
++		goto out;
+ 	}
  
- config RCU_FAST_NO_HZ
- 	bool "Accelerate last non-dyntick-idle CPU's grace periods"
--	depends on TREE_RCU && NO_HZ && SMP
-+	depends on TREE_RCU && NO_HZ && SMP && !PREEMPT_RT_FULL
- 	default n
- 	help
- 	  This option causes RCU to attempt to accelerate grace periods
+ 	/*
+@@ -1575,6 +1571,9 @@ retry:
+ 	tick_program_event(expires_next, 1);
+ 	printk_once(KERN_WARNING "hrtimer: interrupt took %llu ns\n",
+ 		    ktime_to_ns(delta));
++out:
++	if (raise)
++		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+ }
+ 
+ /*
 -- 
 1.7.10.4
