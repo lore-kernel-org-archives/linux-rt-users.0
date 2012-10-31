@@ -1,56 +1,67 @@
-From: Sankara Muthukrishnan <sankara.m@gmail.com>
-Subject: [PATCH 1/1] irq: Set CPU affinity soon after irq thread is created
-Date: Wed, 31 Oct 2012 15:41:23 -0500
-Message-ID: <CAFQPvXeVZ858WFYimEU5uvLNxLDd6bJMmqWihFmbCf3ntokz0A@mail.gmail.com>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Wakeup latency measured with SCHED_TRACER depends on HZ
+Date: Wed, 31 Oct 2012 22:41:19 +0100
+Message-ID: <50919AFF.3060602@meduna.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f46.google.com ([209.85.160.46]:41122 "EHLO
-	mail-pb0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754524Ab2JaUlY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 31 Oct 2012 16:41:24 -0400
+Received: from www.meduna.org ([92.240.244.38]:56972 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1759734Ab2JaVle (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 31 Oct 2012 17:41:34 -0400
+Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
+	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
+	(Exim 4.72)
+	(envelope-from <stano@meduna.org>)
+	id 1TTg2O-0002cu-Fh
+	for linux-rt-users@vger.kernel.org; Wed, 31 Oct 2012 22:41:31 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Sankara S Muthukrishnan <sankara.m@ni.com>
+Hi,
 
-As irq_thread_check_affinity is called ONLY inside the while loop in the
-irq thread, the core affinity is set only when an interrupt occurs.
-This patch sets the core affinity soon after the irq thread is created
-and before it waits for interrupts. In real-tiime targets that do not
-typically change the core affinity of irqs during run-time, this patch
-will save additional latency of an irq thread in setting the core
-affinity during the first interrupt occurrence for that irq.
+on an embedded platform using a Freescale i.MX28 ARM processor
+I am experiencing a strange phenomenon - the latencies reported
+are dependent of HZ in the way such as:
 
-Signed-off-by: Sankara S Muthukrishnan <sankara.m@ni.com>
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
----
-Hi Thomas,
+# cat timerandwakeup/max_latency-CPU0
 
-As we discussed in the original thread
-http://marc.info/?l=linux-kernel&m=134987001701683&w=2 , I am sending
-this patch against the current mainline.
+HZ 500:
+459 15 2499 (499) myApp <- 284 -6 mmcqd/1 273.436000
 
- kernel/irq/manage.c | 2 ++
- 1 file changed, 2 insertions(+)
+HZ 100:
+459 15 10453 (453) myApp <- 284 -6 mmcqd/1 273.436000
 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 4c69326..020b535 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -833,6 +833,8 @@ static int irq_thread(void *data)
- 	init_task_work(&on_exit_work, irq_thread_dtor);
- 	task_work_add(current, &on_exit_work, false);
 
-+	irq_thread_check_affinity(desc, action);
-+
- 	while (!irq_wait_for_interrupt(action)) {
- 		irqreturn_t action_ret;
+The wakeup/max_latency is always exactly one HZ tick
 
+# cat wakeup/max_latency-CPU0
+233 50 2000 (0) irq/101-imx28-f <- 0 -21 swapper 121.764000
+
+
+All the timestamps in e.g. dmesg output also exhibit the HZ
+granularity (this is definitely not the case on an x86),
+so I'd say the interpolation somehow does not work.
+The hardware counter itself increments at 32 kHz (at least
+clocksource_mmio_init is called with 32000 in hz parameter).
+
+Date +%N (show nanosecond part of current time) does not
+exhibit the same rounding.
+
+
+Anyone has an idea where to start the search? I understand
+that as I am probably the first one experimenting with RT
+on this platform I am basically on my own here, I'd just
+appreciate pointers to relevant information on the timing
+infrastructure.
+
+I am using 3.4.15-rt24 with some patches ported from an older
+non-RT kernel provided by the platform vendor. However, none
+of those patches touches clock/time handling, so these are from
+mainline (arch/arm/mach-mxs/timer.c etc).
+
+Thanks
 -- 
-1.7.11.4
+                                    Stano
