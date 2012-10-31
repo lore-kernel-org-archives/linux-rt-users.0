@@ -1,53 +1,69 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/4] hrtimer: Raise softirq if hrtimer irq stalled
-Date: Tue, 30 Oct 2012 20:31:08 -0400
-Message-ID: <20121031003122.830032824@goodmis.org>
-References: <20121031003107.834398757@goodmis.org>
+Subject: [PATCH RT 0/4] [ANNOUNCE] 3.2.32-rt49-rc1 stable review
+Date: Tue, 30 Oct 2012 20:31:07 -0400
+Message-ID: <20121031003107.834398757@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-hrtimer-Raise-softirq-if-hrtimer-irq-stalled.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Watanabe <shunsuke.watanabe@tel.com>
 
-When the hrtimer stall detection hits the softirq is not raised.
+Dear RT Folks,
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
+This is the RT stable review cycle of patch 3.2.32-rt49-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 11/2/2012.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.32-rt49-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.32.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.32-rt49-rc1.patch.xz
+
+You can also build from 3.2.32-rt48 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.32-rt48-rt49-rc1.patch.xz
+
+
+Changes from 3.2.32-rt48:
+
 ---
- kernel/hrtimer.c |    9 ++++-----
- 1 file changed, 4 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index bca6928..9c09d02 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1527,11 +1527,7 @@ retry:
- 	if (expires_next.tv64 == KTIME_MAX ||
- 	    !tick_program_event(expires_next, 0)) {
- 		cpu_base->hang_detected = 0;
--
--		if (raise)
--			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
--
--		return;
-+		goto out;
- 	}
- 
- 	/*
-@@ -1575,6 +1571,9 @@ retry:
- 	tick_program_event(expires_next, 1);
- 	printk_once(KERN_WARNING "hrtimer: interrupt took %llu ns\n",
- 		    ktime_to_ns(delta));
-+out:
-+	if (raise)
-+		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
- }
- 
- /*
--- 
-1.7.10.4
+
+Steven Rostedt (1):
+      Linux 3.2.32-rt49-rc1
+
+Thomas Gleixner (2):
+      rcu: Disable RCU_FAST_NO_HZ on RT
+      net: netfilter: Serialize xt_write_recseq sections on RT
+
+Watanabe (1):
+      hrtimer: Raise softirq if hrtimer irq stalled
+
+----
+ include/linux/locallock.h          |    4 ++++
+ include/linux/netfilter/x_tables.h |    7 +++++++
+ init/Kconfig                       |    2 +-
+ kernel/hrtimer.c                   |    9 ++++-----
+ localversion-rt                    |    2 +-
+ net/netfilter/core.c               |    6 ++++++
+ 6 files changed, 23 insertions(+), 7 deletions(-)
