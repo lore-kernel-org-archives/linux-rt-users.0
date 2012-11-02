@@ -1,111 +1,90 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: Wakeup latency measured with SCHED_TRACER depends on HZ
-Date: Fri, 02 Nov 2012 15:29:50 +0100
-Message-ID: <5093D8DE.70505@meduna.org>
-References: <50919AFF.3060602@meduna.org>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [ANNOUNCE] 3.6.5-rt14
+Date: Fri, 2 Nov 2012 12:58:35 -0400
+Message-ID: <20121102165835.GI25658@windriver.com>
+References: <alpine.LFD.2.02.1211012148170.2756@ionos>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------060407010504090007010905"
-Cc: shawn.guo@linaro.org, linux@arm.linux.org.uk,
-	linux-kernel@vger.kernel.org
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:39013 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751175Ab2KBOaW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Nov 2012 10:30:22 -0400
-In-Reply-To: <50919AFF.3060602@meduna.org>
+Received: from mail.windriver.com ([147.11.1.11]:52586 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759255Ab2KBQ6r (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Nov 2012 12:58:47 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1211012148170.2756@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------060407010504090007010905
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+[[ANNOUNCE] 3.6.5-rt14] On 01/11/2012 (Thu 21:57) Thomas Gleixner wrote:
 
-On 31.10.2012 22:41, Stanislav Meduna wrote:
+> Dear RT Folks,
+> 
+> I'm pleased to announce the 3.6.5-rt14 release. 3.6.4-rt12 is an
+> intermediate release with a few changes. 3.6.5-rt13 is an update to
+> 3.6.5 and 3.6.5-rt14 has a fix for my stupidity to release from the
+> wrong tree missing a fix for x86-32.
 
-> on an embedded platform using a Freescale i.MX28 ARM processor
-> I am experiencing a strange phenomenon - the latencies reported
-> are dependent of HZ
+The rt14 content is available at the split queue repo on the master
+branch.  I've also created a 3.6.5-rt14-fixes branch, which contains:
 
-OK, the problem is that the MXS platform does not setup
-the scheduler clock so the scheduler only sees the HZ one.
+1) another %cx --> %ecx mismatch warning fix
+2) fixes a bogus PREEMPT_LAZE in a select line
+3) pointless newline removal fix carried over from 3.6.4-rt11-fixes
 
-The patch in attach fixes this. I can only test the MX28 part -
-I don't have any timrot_is_v1() (MX23) hardware and I don't
-know whether a source that wraps after ~2 seconds is OK at all.
+All patches are fixed in-place directly within the existing patches
+without changing the series file (vs adding a separate patch for
+later folding).  So they should be a drop in for integration even
+if folks aren't using this git repo to provide history tracking.
+Patches on the 3.6.5-rt14-fixes pass a basic boot test on x86_32 UP.
 
-Please Cc: when replying, I am not subscribed to linux-kernel
-(only to linux-rt-users).
+For those who didn't catch one of the earlier posts[1] about the split
+patch queue repo, it is a history tracking repo of all the releases of
+the patches-3.6.X-rtY.tar.xz  (X=gregkh stable, Y=rt version).
 
-Regards
--- 
-                                      Stano
+Having the history repo allows you to track how each patch evolves,
+how the ordering changes and so on.
 
+You can use it just like a split queue tarball, in that you git am (or
+git quiltimport) the patches in the repo onto a gregkh stable tree, and
+then you can run "git blame path/to/somefile" to see seamless history
+across rt and back into stable/mainline as to who mangled what lines.
 
---------------060407010504090007010905
-Content-Type: text/plain; charset=windows-1252;
- name="0001-Setup-scheduler-clock-for-MXS.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="0001-Setup-scheduler-clock-for-MXS.patch"
+The plus is, that rather than download and untar each time, you just go
+into where you've cloned this repo, and issue a "git pull" to get the
+latest update.  Go to your kernel tree, checkout the appropriate gregkh
+stable baseline and reapply the patches and you are done.
 
->From ddeed3c83d48e8ce33b36bd964572756354e7feb Mon Sep 17 00:00:00 2001
-From: Stanislav Meduna <stano@meduna.org>
-Date: Fri, 2 Nov 2012 15:00:44 +0100
-Subject: [PATCH] Setup scheduler clock for MXS
+Folks can browse the repo at:
 
+http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git
+
+Paul.
+
+[1] http://permalink.gmane.org/gmane.linux.rt.user/8864
 ---
- arch/arm/mach-mxs/timer.c |   19 +++++++++++++++++++
- 1 files changed, 19 insertions(+), 0 deletions(-)
 
-diff --git a/arch/arm/mach-mxs/timer.c b/arch/arm/mach-mxs/timer.c
-index 564a632..0ab86a2 100644
---- a/arch/arm/mach-mxs/timer.c
-+++ b/arch/arm/mach-mxs/timer.c
-@@ -26,6 +26,7 @@
- #include <linux/clk.h>
- 
- #include <asm/mach/time.h>
-+#include <asm/sched_clock.h>
- #include <mach/mxs.h>
- #include <mach/common.h>
- 
-@@ -243,6 +244,16 @@ static int __init mxs_clocksource_init(struct clk *timer_clk)
- 	return 0;
- }
- 
-+static u32 notrace mxs_read_sched_clock_v1(void)
-+{
-+	return timrotv1_get_cycles(&clocksource_mxs);
-+}
-+
-+static u32 notrace mxs_read_sched_clock_v2(void)
-+{
-+	return ~readl_relaxed(mxs_timrot_base + HW_TIMROT_RUNNING_COUNTn(1));
-+}
-+
- void __init mxs_timer_init(struct clk *timer_clk, int irq)
- {
- 	clk_prepare_enable(timer_clk);
-@@ -285,6 +296,14 @@ void __init mxs_timer_init(struct clk *timer_clk, int irq)
- 	mxs_clocksource_init(timer_clk);
- 	mxs_clockevent_init(timer_clk);
- 
-+	/* Register scheduler clocksource */
-+	if (timrot_is_v1())
-+		setup_sched_clock(mxs_read_sched_clock_v1,
-+			16, clk_get_rate(timer_clk));
-+	else
-+		setup_sched_clock(mxs_read_sched_clock_v2,
-+			32, clk_get_rate(timer_clk));
-+
- 	/* Make irqs happen */
- 	setup_irq(irq, &mxs_timer_irq);
- }
--- 
-1.7.0.4
+The following changes since commit 3f2b22edd602ef42f77abf345a0a777ccd4033ac:
 
+  patches-3.6.5-rt14.tar.xz (2012-11-02 11:52:35 -0400)
 
---------------060407010504090007010905--
+are available in the git repository at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/paulg/3.6-rt-patches.git v3.6.5-rt14-fixes
+
+for you to fetch changes up to a1221218459505df9a2d6c63d29432c637804a91:
+
+  x86_32: fix %cx -> %ecx mismatch on testl (2012-11-02 12:27:51 -0400)
+
+----------------------------------------------------------------
+Paul Gortmaker (3):
+      preempt-lazy-support.patch: delete trailing newline addition
+      fix bogus HAVE_PREEMPT_LAZE in preempt-lazy-support.patch
+      x86_32: fix %cx -> %ecx mismatch on testl
+
+ preempt-lazy-support.patch | 7 ++-----
+ x86-preempt-lazy.patch     | 2 +-
+ 2 files changed, 3 insertions(+), 6 deletions(-)
