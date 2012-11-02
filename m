@@ -1,55 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Peter LaDow <petela@gocougs.wsu.edu>
 Subject: Re: [PATCH RT 3/4] net: netfilter: Serialize xt_write_recseq sections
  on RT
-Date: Fri, 2 Nov 2012 00:01:59 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1211012358280.2756@ionos>
-References: <20121031003258.811955127@goodmis.org> <20121031003314.763160265@goodmis.org> <CAN8Q1EcVfzJJh+XMeXMMk33kwyyyRoEWsuEbSQqVW0Vz3i3Vuw@mail.gmail.com> <alpine.LFD.2.02.1211012213460.2756@ionos>
- <CAN8Q1Ecq9T5HC60_ta8Xr9kKyAe8Fjrd8znV9MpDTYqkSSptOw@mail.gmail.com>
+Date: Thu, 1 Nov 2012 17:36:25 -0700
+Message-ID: <CAN8Q1EcHJyDMs-z8Vw_=cpnCL2FO_pATaGThh2UHv4ketC-_Jw@mail.gmail.com>
+References: <20121031003258.811955127@goodmis.org>
+	<20121031003314.763160265@goodmis.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Peter LaDow <petela@gocougs.wsu.edu>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35644 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S936148Ab2KAXCD (ORCPT
+Received: from mail-qa0-f46.google.com ([209.85.216.46]:63367 "EHLO
+	mail-qa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752829Ab2KBAg0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2012 19:02:03 -0400
-In-Reply-To: <CAN8Q1Ecq9T5HC60_ta8Xr9kKyAe8Fjrd8znV9MpDTYqkSSptOw@mail.gmail.com>
+	Thu, 1 Nov 2012 20:36:26 -0400
+In-Reply-To: <20121031003314.763160265@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 1 Nov 2012, Peter LaDow wrote:
+On Tue, Oct 30, 2012 at 5:33 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> From: Thomas Gleixner <tglx@linutronix.de>
+>
+> The netfilter code relies only on the implicit semantics of
+> local_bh_disable() for serializing wt_write_recseq sections. RT breaks
+> that and needs explicit serialization here.
+>
+> Reported-by: Peter LaDow <petela@gocougs.wsu.edu>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 
-> On Thu, Nov 1, 2012 at 2:26 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> > Cough. You are missing a boat load of crucial fixes. There is a damned
-> > good reason why 3.0.stable got 12 updates and the -rt version 14.
-> 
-> I don't doubt there are.  But we've only experienced one problem
-> between 3.0.36-rt58 and 3.0.48-rt72.  Indeed, it might be easier to
-> evaluate the risk if all the changelogs were readily available.  So
-> far, however, we haven't discovered any other issues that give us any
-> concerns.
-> 
-> > Your risk assessment is definitley interesting.
-> 
-> We have specifically tested 3.0.36-rt58 for performance in our
-> application.  Moving to 3.0.48-rt72 poses risk about whether would
-> still be able to meet our performance requirements.  And with regard
-> to stability, the only issue we've had since our earlier moved to
-> 3.0.36-rt58 was the netfilter problem.  We initially only saw the
-> problem on PPP related interfaces, so we reverted to 3.0.3 (non-rt)
-> for PPP related issues.
-> 
-> Now, if you think there are some issues that should raise eyebrows, or
-> can point me to a list of changelogs, I'd be happy to evaluate them.
+> diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+> index f1804a3..a5eea5d 100644
 
-git log v3.0.36-rt58..3.0.48-rt72
+> diff --git a/include/linux/netfilter/x_tables.h b/include/linux/netfilter/x_tables.h
+> index 32cddf7..bed90da2 100644
 
-That's what a source version control system is designed for AFAICT
+> diff --git a/net/netfilter/core.c b/net/netfilter/core.c
+> index 899b71c..5db16ea 100644
+
+I'm have a setup running 3.0.48-rt72.  It's been running about 8 hours
+so far, and tomorrow I'll know if there's been any problems.  I'm
+confident things will be fine tomorrow, and at that time I'll be glad
+to attach a Tested-by tag.
 
 Thanks,
-
-	tglx
+Pete
