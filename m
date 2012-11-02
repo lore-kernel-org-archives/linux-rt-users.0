@@ -1,90 +1,78 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [ANNOUNCE] 3.6.5-rt14
-Date: Fri, 2 Nov 2012 12:58:35 -0400
-Message-ID: <20121102165835.GI25658@windriver.com>
-References: <alpine.LFD.2.02.1211012148170.2756@ionos>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.6.5-rt15
+Date: Fri, 2 Nov 2012 23:11:03 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1211022303510.2756@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:52586 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759255Ab2KBQ6r (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:39384 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752199Ab2KBWLE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Nov 2012 12:58:47 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.02.1211012148170.2756@ionos>
+	Fri, 2 Nov 2012 18:11:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[[ANNOUNCE] 3.6.5-rt14] On 01/11/2012 (Thu 21:57) Thomas Gleixner wrote:
+Dear RT Folks,
 
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.6.5-rt14 release. 3.6.4-rt12 is an
-> intermediate release with a few changes. 3.6.5-rt13 is an update to
-> 3.6.5 and 3.6.5-rt14 has a fix for my stupidity to release from the
-> wrong tree missing a fix for x86-32.
+I'm pleased to announce the 3.6.5-rt15 brown paper bag release.
 
-The rt14 content is available at the split queue repo on the master
-branch.  I've also created a 3.6.5-rt14-fixes branch, which contains:
+Changes since 3.6.5-rt14:
 
-1) another %cx --> %ecx mismatch warning fix
-2) fixes a bogus PREEMPT_LAZE in a select line
-3) pointless newline removal fix carried over from 3.6.4-rt11-fixes
+   * Fix typos and other stupidities^Wcrimes committed by an
+     overworked and tired RT maintainer (courtesy Paul Gortmaker)
 
-All patches are fixed in-place directly within the existing patches
-without changing the series file (vs adding a separate patch for
-later folding).  So they should be a drop in for integration even
-if folks aren't using this git repo to provide history tracking.
-Patches on the 3.6.5-rt14-fixes pass a basic boot test on x86_32 UP.
+The embarrasing delta patch against 3.6.5-rt14 is appended below and
+can be found here:
 
-For those who didn't catch one of the earlier posts[1] about the split
-patch queue repo, it is a history tracking repo of all the releases of
-the patches-3.6.X-rtY.tar.xz  (X=gregkh stable, Y=rt version).
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.5-rt14-rt15.patch.xz
 
-Having the history repo allows you to track how each patch evolves,
-how the ordering changes and so on.
+The RT patch against 3.6.5 can be found here:
 
-You can use it just like a split queue tarball, in that you git am (or
-git quiltimport) the patches in the repo onto a gregkh stable tree, and
-then you can run "git blame path/to/somefile" to see seamless history
-across rt and back into stable/mainline as to who mangled what lines.
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.5-rt15.patch.xz
 
-The plus is, that rather than download and untar each time, you just go
-into where you've cloned this repo, and issue a "git pull" to get the
-latest update.  Go to your kernel tree, checkout the appropriate gregkh
-stable baseline and reapply the patches and you are done.
+The split quilt queue is available at:
 
-Folks can browse the repo at:
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.5-rt15.tar.xz
 
-http://git.kernel.org/?p=linux/kernel/git/paulg/3.6-rt-patches.git
+Enjoy,
 
-Paul.
+	tglx
 
-[1] http://permalink.gmane.org/gmane.linux.rt.user/8864
----
-
-The following changes since commit 3f2b22edd602ef42f77abf345a0a777ccd4033ac:
-
-  patches-3.6.5-rt14.tar.xz (2012-11-02 11:52:35 -0400)
-
-are available in the git repository at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/paulg/3.6-rt-patches.git v3.6.5-rt14-fixes
-
-for you to fetch changes up to a1221218459505df9a2d6c63d29432c637804a91:
-
-  x86_32: fix %cx -> %ecx mismatch on testl (2012-11-02 12:27:51 -0400)
-
-----------------------------------------------------------------
-Paul Gortmaker (3):
-      preempt-lazy-support.patch: delete trailing newline addition
-      fix bogus HAVE_PREEMPT_LAZE in preempt-lazy-support.patch
-      x86_32: fix %cx -> %ecx mismatch on testl
-
- preempt-lazy-support.patch | 7 ++-----
- x86-preempt-lazy.patch     | 2 +-
- 2 files changed, 3 insertions(+), 6 deletions(-)
+------------->
+Index: linux-stable/arch/x86/kernel/entry_32.S
+===================================================================
+--- linux-stable.orig/arch/x86/kernel/entry_32.S
++++ linux-stable/arch/x86/kernel/entry_32.S
+@@ -597,7 +597,7 @@ ENDPROC(system_call)
+ 	ALIGN
+ 	RING0_PTREGS_FRAME		# can't unwind into user space anyway
+ work_pending:
+-	testl $_TIF_NEED_RESCHED_MASK, %cx
++	testl $_TIF_NEED_RESCHED_MASK, %ecx
+ 	jz work_notifysig
+ work_resched:
+ 	call schedule
+Index: linux-stable/kernel/Kconfig.preempt
+===================================================================
+--- linux-stable.orig/kernel/Kconfig.preempt
++++ linux-stable/kernel/Kconfig.preempt
+@@ -10,7 +10,7 @@ config HAVE_PREEMPT_LAZY
+ 	bool
+ 
+ config PREEMPT_LAZY
+-	def_bool y if HAVE_PREEMPT_LAZE && PREEMPT_RT_FULL
++	def_bool y if HAVE_PREEMPT_LAZY && PREEMPT_RT_FULL
+ 
+ choice
+ 	prompt "Preemption Model"
+Index: linux-stable/kernel/sched/features.h
+===================================================================
+--- linux-stable.orig/kernel/sched/features.h
++++ linux-stable/kernel/sched/features.h
+@@ -76,4 +76,3 @@ SCHED_FEAT(PREEMPT_LAZY, true)
+ SCHED_FEAT(FORCE_SD_OVERLAP, false)
+ SCHED_FEAT(RT_RUNTIME_SHARE, true)
+ SCHED_FEAT(LB_MIN, false)
