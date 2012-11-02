@@ -1,50 +1,43 @@
 From: Peter LaDow <petela@gocougs.wsu.edu>
 Subject: Re: [PATCH RT 3/4] net: netfilter: Serialize xt_write_recseq sections
  on RT
-Date: Thu, 1 Nov 2012 17:36:25 -0700
-Message-ID: <CAN8Q1EcHJyDMs-z8Vw_=cpnCL2FO_pATaGThh2UHv4ketC-_Jw@mail.gmail.com>
+Date: Thu, 1 Nov 2012 17:40:28 -0700
+Message-ID: <CAN8Q1EcKiBG_S5NuKpw3viHFM7kW5WYuzvpVvL+Pnj1dekWUug@mail.gmail.com>
 References: <20121031003258.811955127@goodmis.org>
 	<20121031003314.763160265@goodmis.org>
+	<CAN8Q1EcVfzJJh+XMeXMMk33kwyyyRoEWsuEbSQqVW0Vz3i3Vuw@mail.gmail.com>
+	<alpine.LFD.2.02.1211012213460.2756@ionos>
+	<CAN8Q1Ecq9T5HC60_ta8Xr9kKyAe8Fjrd8znV9MpDTYqkSSptOw@mail.gmail.com>
+	<alpine.LFD.2.02.1211012358280.2756@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-kernel@vger.kernel.org,
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f46.google.com ([209.85.216.46]:63367 "EHLO
-	mail-qa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752829Ab2KBAg0 (ORCPT
+Received: from mail-qc0-f174.google.com ([209.85.216.174]:60222 "EHLO
+	mail-qc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751134Ab2KBAka (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Nov 2012 20:36:26 -0400
-In-Reply-To: <20121031003314.763160265@goodmis.org>
+	Thu, 1 Nov 2012 20:40:30 -0400
+In-Reply-To: <alpine.LFD.2.02.1211012358280.2756@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Oct 30, 2012 at 5:33 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> From: Thomas Gleixner <tglx@linutronix.de>
+> git log v3.0.36-rt58..3.0.48-rt72
 >
-> The netfilter code relies only on the implicit semantics of
-> local_bh_disable() for serializing wt_write_recseq sections. RT breaks
-> that and needs explicit serialization here.
->
-> Reported-by: Peter LaDow <petela@gocougs.wsu.edu>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> That's what a source version control system is designed for AFAICT
 
-> diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-> index f1804a3..a5eea5d 100644
+Thanks for the tip.  I (naively) presumed there were published
+changelogs and was looking for them.  Nor did I know the git logs were
+limited to releases, and didn't look there because I feared a huge
+number of mid-release commits.  Thanks for the pointer.
 
-> diff --git a/include/linux/netfilter/x_tables.h b/include/linux/netfilter/x_tables.h
-> index 32cddf7..bed90da2 100644
-
-> diff --git a/net/netfilter/core.c b/net/netfilter/core.c
-> index 899b71c..5db16ea 100644
-
-I'm have a setup running 3.0.48-rt72.  It's been running about 8 hours
-so far, and tomorrow I'll know if there's been any problems.  I'm
-confident things will be fine tomorrow, and at that time I'll be glad
-to attach a Tested-by tag.
+I've gone through all the commits from 3.0.36-rt58 to 3.0.48-rt72 and
+see a few items we need to pull in.  The majority are irrelevant to
+our platform/configuration (ALSA, SCSI, x86, etc).  But the few I did
+find point to us moving to rt72 when we can.
 
 Thanks,
 Pete
