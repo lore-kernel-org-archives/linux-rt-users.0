@@ -1,61 +1,92 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RFC] irq: Honor /proc/irq core affinity when an IRQ thread
- is created
-Date: Sat, 3 Nov 2012 11:50:28 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1211031132460.2756@ionos>
-References: <CAFQPvXe0siyupbZvnEVFQi-nog4qObGejX9HxgxeVgOphJoyTA@mail.gmail.com> <alpine.LFD.2.02.1209041738200.2754@ionos> <CAFQPvXdrxEpD-LSnsZGE-s7JVHWJz5qOP=ZPiwB+UC5nXAm5Dw@mail.gmail.com>
+From: Ove Karlsen <ove.karlsen@paradoxuncreated.com>
+Subject: Re: [ANNOUNCE] 3.6.5-rt14
+Date: Sat, 03 Nov 2012 20:04:58 +0100
+Message-ID: <50956ADA.6090108@paradoxuncreated.com>
+References: <alpine.LFD.2.02.1211012148170.2756@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sankara Muthukrishnan <sankara.m@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40280 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750846Ab2KCKub (ORCPT
+Received: from smtp.domeneshop.no ([194.63.252.54]:44149 "EHLO
+	smtp.domeneshop.no" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750896Ab2KCUEt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 Nov 2012 06:50:31 -0400
-In-Reply-To: <CAFQPvXdrxEpD-LSnsZGE-s7JVHWJz5qOP=ZPiwB+UC5nXAm5Dw@mail.gmail.com>
+	Sat, 3 Nov 2012 16:04:49 -0400
+In-Reply-To: <alpine.LFD.2.02.1211012148170.2756@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 5 Sep 2012, Sankara Muthukrishnan wrote:
-> On Tue, Sep 4, 2012 at 10:43 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> > Does the following patch fix the problem for both shared and non
-> > shared interrupts ?
-> 
-> Thanks Thomas. Your suggestion works for non-shared. I do not have
-> devices sharing interrupts on my board to quickly verify. However, I
-> hacked a kernel module to simulate shared irq's and the kernel source
-> (to set the affinity before waiting for interrupts in the irq thread)
-> and verified that it works for "shared interrupts" also.
-> 
-> However, I was wondering whether we are relaxing some checks that
-> setup_affinity does (like checking for flags such as
-> IRQD_NO_BALANCING) by setting the flag IRQTF_AFFINITY after creating
-> the kernel thread directly as you suggested. May be, it does not have
-> practical implications. But, I was wondering whether it is a good idea
-> to go through all the checks as the checks are done when someone
-> writes to /proc/irq/.../smp_affinity file for consistency. Is the
-> following patch a bad idea (basically call setup_affinity for both
-> shared and non-shared interrupts)? This also works in my testing. I am
-> curious why "setup_affinity" was called only under "if (!shared)" case
-> in the released kernel.
+Den 01.11.2012 21:57, skrev Thomas Gleixner:
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.6.5-rt14 release. 3.6.4-rt12 is an
+> intermediate release with a few changes. 3.6.5-rt13 is an update to
+> 3.6.5 and 3.6.5-rt14 has a fix for my stupidity to release from the
+> wrong tree missing a fix for x86-32.
+>
+> Changes since 3.6.3-rt11:
+>
+>     * Fix the fallout of preempt_lazy
+>
+>     * Add preempt_lazy support for ARM and POWERPC
+>
+>     * Fix a 32bit compile warning which got introduced with the
+>       random fixes.
+>
+>     * Fix a missing lock conversion in the decive tree code
+>
+> The delta patch against 3.6.4-rt11 is can be found here:
+>
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-=
+3.6.4-rt11-rt12.patch.xz
+>
+> The RT patch against 3.6.5 can be found here:
+>
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.5=
+-rt14.patch.xz
+>
+> The split quilt queue is available at:
+>
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6=
+=2E5-rt14.tar.xz
+>
+> Enjoy,
+>
+> 	tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kerne=
+l" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+>
 
-The reason is that it is sufficient to do that for the first interrupt
-which gets set up. If another interrupt handler gets registered in the
-shared case then its pointless to call setup_affinity() as everything
-is already in place. The only thing which does not follow is the
-shared thread.
-
-So now for the IRQTF_AFFINITY flag. We really want to set that
-unconditionally so all irq threads even if the NO_BALANCING flag is
-set move to the cpu(s) on which the interrupt is assigned
-to. NO_BALANCING is just making sure that the user space irq balancer
-cannot move around the interrupt, but it still has an affinity
-assigned.
-
-Thanks,
-
-	tglx
-
-
+Heya I see jitter is a focus on the RT patch.
+I was wondering, what settings in features.h gives the least jitter? (I=
+=20
+am a real perfectionist)
+Also what kind of threadpriorities gives the least jitter, particulary=20
+with a focus on OpenGL? (Should some kernelthreads be reniced, for=20
+instance softirqs etc)
+And have you given consideration to the fact that most distros and OS=20
+grow with some levels of bloat, and everyone can`t be an expert, so=20
+maybe one shold consider a (scheduler) queue for "bloat", and one queue=
+=20
+for main app, so that even bloated distros can run with the jitteramoun=
+t=20
+of a highly specialized distro? (for instance=20
+mainapp,service1,mainapp,service2,mainapp,service3), if bloat is on=20
+queue 2. Or is thins kind of thinking already in batch, or idle?
+--=20
+=46red v=E6re med deg / Peace Be with You,
+Ove Karlsen
+http://www.paradoxuncreated.com
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
