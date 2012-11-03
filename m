@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.32-rt49
-Date: Fri, 02 Nov 2012 21:53:24 -0400
-Message-ID: <1351907604.4004.155.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.48-rt72
+Date: Fri, 02 Nov 2012 21:53:53 -0400
+Message-ID: <1351907633.4004.157.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -10,39 +10,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:29184 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8996 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753686Ab2KCBx0 (ORCPT
+	with ESMTP id S1757467Ab2KCBxy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Nov 2012 21:53:26 -0400
+	Fri, 2 Nov 2012 21:53:54 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.32-rt49 stable release.
+I'm pleased to announce the 3.0.48-rt72 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: cbced358ac79dfeea8ec0be224edb6087730b112
+  Head SHA1: 23bdb6e166622c5129b716b0151afe1d543bc81e
 
 
-Or to build 3.2.32-rt49 directly, the following patches should be applied:
+Or to build 3.0.48-rt72 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.32.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.48.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.32-rt49.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.48-rt72.patch.xz
 
 
-You can also build from 3.2.32-rt48 by applying the incremental patch:
+You can also build from 3.0.48-rt71 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.32-rt48-rt49.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.48-rt71-rt72.patch.xz
 
 
 
@@ -51,12 +51,12 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.2.32-rt48:
+Changes from 3.0.48-rt71:
 
 ---
 
 Steven Rostedt (1):
-      Linux 3.2.32-rt49
+      Linux 3.0.48-rt72
 
 Thomas Gleixner (2):
       rcu: Disable RCU_FAST_NO_HZ on RT
@@ -136,7 +136,7 @@ index 32cddf7..bed90da2 100644
  
  /*
 diff --git a/init/Kconfig b/init/Kconfig
-index 720c182..aa6545f 100644
+index 5ed453f..948350f 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
 @@ -469,7 +469,7 @@ config RCU_FANOUT_EXACT
@@ -149,7 +149,7 @@ index 720c182..aa6545f 100644
  	help
  	  This option causes RCU to attempt to accelerate grace periods
 diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index bca6928..9c09d02 100644
+index 7327846..87b4917 100644
 --- a/kernel/hrtimer.c
 +++ b/kernel/hrtimer.c
 @@ -1527,11 +1527,7 @@ retry:
@@ -176,14 +176,14 @@ index bca6928..9c09d02 100644
  
  /*
 diff --git a/localversion-rt b/localversion-rt
-index 2470798..4b7dca6 100644
+index f38a3cc..2c95a3c 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt48
-+-rt49
+--rt71
++-rt72
 diff --git a/net/netfilter/core.c b/net/netfilter/core.c
-index afca6c7..aa3f87b 100644
+index 899b71c..5db16ea 100644
 --- a/net/netfilter/core.c
 +++ b/net/netfilter/core.c
 @@ -20,11 +20,17 @@
