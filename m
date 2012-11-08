@@ -1,53 +1,33 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.51-rt75
-Date: Wed, 07 Nov 2012 18:32:01 -0500
-Message-ID: <1352331121.29766.1.camel@acer.local.home>
+From: Lars Segerlund <lars.segerlund@gmail.com>
+Subject: scheduler idea ... any thoughts
+Date: Thu, 8 Nov 2012 21:39:20 +0100
+Message-ID: <CAF-VNaotHj4SinWsd0EsvqMiuEpHqDXimVL0w7hup_6AB8Ow5g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32164 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753901Ab2KGXcI (ORCPT
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:61899 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756631Ab2KHUjW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Nov 2012 18:32:08 -0500
+	Thu, 8 Nov 2012 15:39:22 -0500
+Received: by mail-ee0-f46.google.com with SMTP id b15so1802581eek.19
+        for <linux-rt-users@vger.kernel.org>; Thu, 08 Nov 2012 12:39:20 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+I have been looking at the linux scheduler ( mostly to understand it
+... ) and fiddling with sched_mc and assymetric packing.
 
-Dear RT Folks,
+I had the thought of using packing in a scheduler domain to bias rt to
+one end and regular tasks to the other. Possibly using using
+overcommit on userland .....
 
-I'm pleased to announce the 3.0.51-rt75 stable release.
+If packing on scheduler domains is working properly it wouldn't be too hard.
 
+An other option would be to bias userland to the higher numbered
+scheduling groups, and keep interrupts and timers on the lower one.
 
-This release is just an update to the new stable 3.0.51 version
-and no RT specific changes have been made.
+ Do you think it would be worh a shot ?
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 200e25f44a5e825c12359a55ee61a671b510f303
-
-
-Or to build 3.0.51-rt75 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.51.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.51-rt75.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-
+ / regards, Lars Segerlund.
