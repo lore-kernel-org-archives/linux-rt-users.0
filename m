@@ -1,53 +1,57 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: scheduler clock for MXS
-Date: Thu, 8 Nov 2012 22:11:13 +0000
-Message-ID: <20121108221113.GB28327@n2100.arm.linux.org.uk>
-References: <50978370.9060001@meduna.org> <20121105134655.GB27260@S2100-06.ap.freescale.net> <5097E4A9.3090008@meduna.org> <20121105222859.GI28327@n2100.arm.linux.org.uk> <5098CB9F.9030401@meduna.org> <20121106134630.GD27643@S2100-06.ap.freescale.net> <20121106202038.GB32398@n2100.arm.linux.org.uk> <50998F94.8000908@meduna.org> <20121106224624.GR28327@n2100.arm.linux.org.uk> <509C23DF.1020106@meduna.org>
+From: Till Straumann <strauman@slac.stanford.edu>
+Subject: How to unblock a thread from  a hard isr (IRQF_NO_THREAD)
+Date: Thu, 08 Nov 2012 16:28:48 -0600
+Message-ID: <509C3220.2050601@slac.stanford.edu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Shawn Guo <shawn.guo@linaro.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	linux-arm-kernel@lists.infradead.org
-To: Stanislav Meduna <stano@meduna.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from caramon.arm.linux.org.uk ([78.32.30.218]:39249 "EHLO
-	caramon.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757184Ab2KHWLn (ORCPT
+Received: from mailbox.alumni.tu-berlin.de ([130.149.4.13]:39635 "EHLO
+	mailbox.alumni.tu-berlin.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756985Ab2KHWp2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Nov 2012 17:11:43 -0500
-Content-Disposition: inline
-In-Reply-To: <509C23DF.1020106@meduna.org>
+	Thu, 8 Nov 2012 17:45:28 -0500
+Received: from [189.138.186.238] (helo=[192.168.1.67])
+	  by mailbox.alumni.tu-berlin.de (exim-4.76) with esmtpsa [TLSv1:DHE-RSA-AES256-SHA:256]
+	  for <linux-rt-users@vger.kernel.org>
+	  id 1TWaah-0005Bh-5n; Thu, 08 Nov 2012 23:28:51 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Nov 08, 2012 at 10:27:59PM +0100, Stanislav Meduna wrote:
-> What is actually the reason of round_jiffies there? The
-> http://kernel.org/doc/htmldocs/device-drivers/API-round-jiffies.html
-> mentions saving power, is it the only one?
-> 
-> I'd probably just leave the round_jiffies out at least for
-> wrap_ticks < around 16*HZ. Above that the error by possibly
-> rounding up can be ignored.
-> 
-> There is also a round_jiffies_up - unless I am too tired, as long as
-> we tick no faster than once per second, subtracting (HZ-1) and rounding
-> up should be the same as rounding down.
-> 
-> But: is the round_jiffies* safe at all for sub-second precision
-> at jiffies around 0xffffffff? From quick looking it does a modulo,
-> 0xffffffff % say 250 is 45, the next jiffy is at 0...
+Hello list.
 
-Well, the idea is to avoid having yet another random thing causing yet
-another wakeup from the idle modes.  If you've ever watched a LED
-indicating when the kernel is in the idle loop and when it isn't,
-you'll know exactly what I'm talking about; your normal Linux system
-sits there constantly being kicked out of idle several times a second
-while... idle to service various kernel tasks.
+I have a driver which is designed to do most work in user-space.
+The ISR is really simple. It just ACKs/clears the interrupt and
+then should unblock a waiting thread.
+It seems overkill (and costs me about 5-10us) to use a threaded
+interrupt in such a case (hard isr unblocks a kthread whose only
+'work' is unblocking another (user) thread).
 
-We really don't want to add to that; if we get enough of these events
-happening at random intervals, we will end up with things like cpu idle
-being completely thwarted by stuff like this.
+I have found some references where users try to do a similar
+thing via UIO
+(e.g.,
+http://article.gmane.org/gmane.linux.rt.user/7372/
+http://article.gmane.org/gmane.linux.rt.user/7676)
 
-As I have said, what we want is a version of round_jiffies() which
-rounds down to something, not up.
+However, the succinct answer was along the line 'that can't work with UIO'.
+
+IMHO it would be very helpful to get a more detailed explanation
+as to why it doesn't work (i.e., what things you are and are not
+allowed to do from a hard-isr under RT_PREEMPT). I suspect it is
+because UIO calls routines such as 'kill_fasync' which use
+ordinary (as opposed to raw) spinlocks which means that the
+caller could be preempted (under RT_PREEMPT), right?
+
+What *is* the recommended mechanism to wake up a thread from
+a hard-isr?
+
+It would IMHO be desirable to modify the UIO driver so that it
+is possible to support non-threaded handlers.
+
+Thanks for any enlightenment (and the fantastic rt-preempt patch
+in the first place)!
+
+- Till
+
+PS: Please CC me on any replies; I am currently not a subscriber.
