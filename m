@@ -1,97 +1,106 @@
-From: Till Straumann <strauman@slac.stanford.edu>
-Subject: Re: How to unblock a thread from  a hard isr (IRQF_NO_THREAD)
-Date: Fri, 09 Nov 2012 11:27:52 -0600
-Message-ID: <509D3D18.5040902@slac.stanford.edu>
-References: <509C3220.2050601@slac.stanford.edu> <201211090012.32207.tim01@vlsi.informatik.tu-darmstadt.de> <509C540F.3050108@slac.stanford.edu> <201211091518.36344.tim01@vlsi.informatik.tu-darmstadt.de>
+From: Shawn Guo <shawn.guo@linaro.org>
+Subject: Re: [PATCH] ARM: mxs: Setup scheduler clock
+Date: Mon, 12 Nov 2012 09:54:21 +0800
+Message-ID: <20121112015419.GB415@S2100-06.ap.freescale.net>
+References: <50919AFF.3060602@meduna.org>
+ <5093D8DE.70505@meduna.org>
+ <20121105025753.GA26528@S2100-06.ap.freescale.net>
+ <50978370.9060001@meduna.org>
+ <20121105134655.GB27260@S2100-06.ap.freescale.net>
+ <5097E4A9.3090008@meduna.org>
+ <20121105222859.GI28327@n2100.arm.linux.org.uk>
+ <5098CB9F.9030401@meduna.org>
+ <20121106134630.GD27643@S2100-06.ap.freescale.net>
+ <509C3619.30701@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	<linux-arm-kernel@lists.infradead.org>
+To: Stanislav Meduna <stano@meduna.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.alumni.tu-berlin.de ([130.149.4.13]:58720 "EHLO
-	mailbox.alumni.tu-berlin.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755117Ab2KIR15 (ORCPT
+Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:26930 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751142Ab2KLB2e (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Nov 2012 12:27:57 -0500
-In-Reply-To: <201211091518.36344.tim01@vlsi.informatik.tu-darmstadt.de>
+	Sun, 11 Nov 2012 20:28:34 -0500
+Content-Disposition: inline
+In-Reply-To: <509C3619.30701@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tim.
+On Thu, Nov 08, 2012 at 11:45:45PM +0100, Stanislav Meduna wrote:
+> Hi,
+> 
+> OK, as the problem with 16-bit fast ticking timer looks to
+> be more complicated, I'd like to submit the patch for the 32-bit
+> ones.
+> 
+> Thanks
+> -- 
+>                                     Stano
+> 
 
-Thanks very much for the example. Being paranoid, it raises
-one more question, though:
+> From 74092cc0217a5bab6f80ee07aa188a54f5792634 Mon Sep 17 00:00:00 2001
+> From: Stanislav Meduna <stano@meduna.org>
+> Date: Mon, 8 Nov 2012 23:39:14 +0100
+> Subject: [PATCH] ARM: mxs: Setup scheduler clock
+> 
+> Setup scheduler clock on ARM MXS platforms with a 32-bit timrot
+> such as MX.28. This allows the scheduler to use sub-jiffy resolution.
+> 
+s/MX.28/i.MX28
 
-You say
+I fixed it up and applied the patch.  Thanks.
 
-     priv->wakeupTask=current;
-     set_current_state(TASK_INTERRUPTIBLE);
-     schedule();
+Shawn
 
-but is it not necessary to take a raw_spin_lock_irqsave()
-around storing the task pointer and changing the task
-state? To be more precise: around starting the device
-and setting the task state. I would have thought I would
-have to code like this:
+> The corresponding change for 16-bit v1 timrots is not possible
+> at the moment due to rounding issues with clock values wrapping
+> faster than once per several seconds in the common ARM platform code.
+> 
+> Signed-off-by: Stanislav Meduna <stano@meduna.org>
+> ---
+>  arch/arm/mach-mxs/timer.c |   10 +++++++++-
+>  1 files changed, 9 insertions(+), 1 deletions(-)
+> 
+> diff --git a/arch/arm/mach-mxs/timer.c b/arch/arm/mach-mxs/timer.c
+> index 564a632..4b6e36c 100644
+> --- a/arch/arm/mach-mxs/timer.c
+> +++ b/arch/arm/mach-mxs/timer.c
+> @@ -26,6 +26,7 @@
+>  #include <linux/clk.h>
+>  
+>  #include <asm/mach/time.h>
+> +#include <asm/sched_clock.h>
+>  #include <mach/mxs.h>
+>  #include <mach/common.h>
+>  
+> @@ -230,15 +231,22 @@ static struct clocksource clocksource_mxs = {
+>  	.flags		= CLOCK_SOURCE_IS_CONTINUOUS,
+>  };
+>  
+> +static u32 notrace mxs_read_sched_clock_v2(void)
+> +{
+> +	return ~readl_relaxed(mxs_timrot_base + HW_TIMROT_RUNNING_COUNTn(1));
+> +}
+> +
+>  static int __init mxs_clocksource_init(struct clk *timer_clk)
+>  {
+>  	unsigned int c = clk_get_rate(timer_clk);
+>  
+>  	if (timrot_is_v1())
+>  		clocksource_register_hz(&clocksource_mxs, c);
+> -	else
+> +	else {
+>  		clocksource_mmio_init(mxs_timrot_base + HW_TIMROT_RUNNING_COUNTn(1),
+>  			"mxs_timer", c, 200, 32, clocksource_mmio_readl_down);
+> +		setup_sched_clock(mxs_read_sched_clock_v2, 32, c);
+> +	}
+>  
+>  	return 0;
+>  }
+> -- 
+> 1.7.0.4
+> 
 
-      priv->wakeupTask = current;
-      raw_spin_lock_irqsave(...)
-        start_device();
-        /* What happens if a fast device would interrupt here
-         * without the raw spinlock? Would I not sleep forever?
-         */
-        set_current_state(TASK_INTERRUPTIBLE);
-      raw_spin_unlock_irqrestore(...)
-      schedule();
-
-Assuming that an IRQ could happen any time once the device
-is started - don't I have to avoid giving the the hard-isr the
-chance of executing wake_up_process() before
-set_current_state(TASK_INTERRUPTIBLE) has finished?
-
-Thanks again
-- Till
-
-On 11/09/2012 08:18 AM, Tim Sander wrote:
-> Hi Till
->>>> What *is* the recommended mechanism to wake up a thread from
->>>> a hard-isr?
->>> I think its the waitqueue mechanism with the drawbacks you mentioned.
->> I thought I can't wake_up() from a hard-isr so that can hardly be
->> the recommended mechanism (unless you mean I *should* go
->> via the 'irq_thread' (kernel/irq/management.c) and wake my
->> user-land thread from there).
-> For multiple waiters i don't know any other solution than the irq-thread
-> mechanism with the additional delay.
->
->> The IRQ management code must use something to let the
->> hard-isr unblock the irq-handler kthread - I'd like to use the same
->> (or a similar) method to let the hard-isr unblock a user-land
->> thread.
->>
->>> If you only want to wake up *one* usermode thread there is a hack
->>> possible to save the context switch times to the bottom half interrupt
->>> thread?
->> What would such a hack be?
-> Credits go to Thomas Gleixner for this hack (Keep in mind it only works
-> for a *single* waiter, so your driver should probably only allow exclusive
-> opens of this device.)
-> Define a structure:
->
->      struct task_struct *wakeupTask;
->
-> In the read routine which should wait for the interrupt pulse:
-> 	priv->wakeupTask=current;
->      set_current_state(TASK_INTERRUPTIBLE);
->      schedule();
-> 	//i'll be back :-)
-> 	retval = copy_to_user(...);
-> 	__set_current_state(TASK_RUNNING);
->
-> And in isr context just do a:
-> 	wake_up_process(current_instance->wakeupTask);
->
-> Best regards
-> Tim
 
