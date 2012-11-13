@@ -1,12 +1,14 @@
-From: Nick Bowler <nbowler@elliptictech.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: Does anyone use CONFIG_TINY_PREEMPT_RCU?
-Date: Tue, 13 Nov 2012 16:47:20 -0500
-Message-ID: <20121113214720.GC13472@elliptictech.com>
+Date: Tue, 13 Nov 2012 14:25:22 -0800
+Message-ID: <20121113222521.GI2489@linux.vnet.ibm.com>
 References: <20121113004906.GA10557@linux.vnet.ibm.com>
  <20121113144620.GA27426@elliptictech.com>
  <20121113170804.GA2489@linux.vnet.ibm.com>
  <20121113175654.GA30119@elliptictech.com>
  <20121113211952.GC2489@linux.vnet.ibm.com>
+ <20121113214720.GC13472@elliptictech.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
@@ -16,45 +18,42 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	peterz@infradead.org, rostedt@goodmis.org, Valdis.Kletnieks@vt.edu,
 	dhowells@redhat.com, edumazet@google.com, darren@dvhart.com,
 	fweisbec@gmail.com, sbw@mit.edu, patches@linaro.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx.scalarmail.ca ([98.158.95.75]:6822 "EHLO
-	ironport-01.sms.scalar.ca" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751777Ab2KMVrW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Nov 2012 16:47:22 -0500
+To: Nick Bowler <nbowler@elliptictech.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20121113211952.GC2489@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20121113214720.GC13472@elliptictech.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2012-11-13 13:19 -0800, Paul E. McKenney wrote:
-> On Tue, Nov 13, 2012 at 12:56:54PM -0500, Nick Bowler wrote:
-> > On 2012-11-13 09:08 -0800, Paul E. McKenney wrote:
-> > > Suppose that TREE_PREEMPT_RCU was available for !SMP && PREEMPT builds.
-> > > Would that work for you?
+On Tue, Nov 13, 2012 at 04:47:20PM -0500, Nick Bowler wrote:
+> On 2012-11-13 13:19 -0800, Paul E. McKenney wrote:
+> > On Tue, Nov 13, 2012 at 12:56:54PM -0500, Nick Bowler wrote:
+> > > On 2012-11-13 09:08 -0800, Paul E. McKenney wrote:
+> > > > Suppose that TREE_PREEMPT_RCU was available for !SMP && PREEMPT builds.
+> > > > Would that work for you?
+> > > 
+> > > To be honest I don't really know what the difference is, other than what
+> > > the help text says, which is:
+> > > 
+> > >   [TINY_PREEMPT_RCU] greatly reduces the memory footprint of RCU.
+> > >   
+> > > "Greatly reduced memory footprint" sounds pretty useful...
 > > 
-> > To be honest I don't really know what the difference is, other than what
-> > the help text says, which is:
-> > 
-> >   [TINY_PREEMPT_RCU] greatly reduces the memory footprint of RCU.
-> >   
-> > "Greatly reduced memory footprint" sounds pretty useful...
+> > OK, so from your viewpoint, the only possible benefit is smaller
+> > memory?
 > 
-> OK, so from your viewpoint, the only possible benefit is smaller
-> memory?
+> Well, I have no idea.  If I was given the choice between TREE_PREEMPT_RCU
+> and TINY_PREEMPT_RCU, absent any information not in the description of
+> these options, I would choose TINY.  The description suggests that the
+> memory savings come at the expense of SMP support, which sounds like a
+> great tradeoff to make for a UP system.
+> 
+> > How much memory does your device have, if I may ask?
+> 
+> It's a (pretty old!) desktop.  I recently had to upgrade it to two
+> gigabytes due to unbearable thrashing with only one...
 
-Well, I have no idea.  If I was given the choice between TREE_PREEMPT_RCU
-and TINY_PREEMPT_RCU, absent any information not in the description of
-these options, I would choose TINY.  The description suggests that the
-memory savings come at the expense of SMP support, which sounds like a
-great tradeoff to make for a UP system.
+If you have two gigabytes (or even one gigabyte), you won't notice the
+few kilobytes of difference between TINY_PREEMPT_RCU and TREE_PREEMPT_RCU.
 
-> How much memory does your device have, if I may ask?
-
-It's a (pretty old!) desktop.  I recently had to upgrade it to two
-gigabytes due to unbearable thrashing with only one...
-
-Cheers,
--- 
-Nick Bowler, Elliptic Technologies (http://www.elliptictech.com/)
+							Thanx, Paul
