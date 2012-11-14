@@ -1,11 +1,15 @@
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: Does anyone use CONFIG_TINY_PREEMPT_RCU?
-Date: Tue, 13 Nov 2012 16:06:48 -0800
-Message-ID: <20121114000648.GN2489@linux.vnet.ibm.com>
+Date: Tue, 13 Nov 2012 16:05:34 -0800
+Message-ID: <20121114000534.GM2489@linux.vnet.ibm.com>
 References: <20121113004906.GA10557@linux.vnet.ibm.com>
- <201211132122.30259.tim01@vlsi.informatik.tu-darmstadt.de>
- <20121113212034.GD2489@linux.vnet.ibm.com>
- <201211140032.37320.tim01@vlsi.informatik.tu-darmstadt.de>
+ <20121113144620.GA27426@elliptictech.com>
+ <20121113170804.GA2489@linux.vnet.ibm.com>
+ <20121113175654.GA30119@elliptictech.com>
+ <20121113211952.GC2489@linux.vnet.ibm.com>
+ <20121113214720.GC13472@elliptictech.com>
+ <20121113222521.GI2489@linux.vnet.ibm.com>
+ <20121113224040.GA14594@elliptictech.com>
 Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -16,33 +20,67 @@ Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	peterz@infradead.org, rostedt@goodmis.org, Valdis.Kletnieks@vt.edu,
 	dhowells@redhat.com, edumazet@google.com, darren@dvhart.com,
 	fweisbec@gmail.com, sbw@mit.edu, patches@linaro.org
-To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
+To: Nick Bowler <nbowler@elliptictech.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:45923 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756079Ab2KNAW4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Nov 2012 19:22:56 -0500
+Received: from e7.ny.us.ibm.com ([32.97.182.137]:56479 "EHLO e7.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756018Ab2KNAZN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Nov 2012 19:25:13 -0500
 Received: from /spool/local
-	by e32.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	by e7.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
 	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Tue, 13 Nov 2012 17:22:56 -0700
+	Tue, 13 Nov 2012 19:25:10 -0500
 Content-Disposition: inline
-In-Reply-To: <201211140032.37320.tim01@vlsi.informatik.tu-darmstadt.de>
+In-Reply-To: <20121113224040.GA14594@elliptictech.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Nov 14, 2012 at 12:32:36AM +0100, Tim Sander wrote:
-> Hi Paul
+On Tue, Nov 13, 2012 at 05:40:40PM -0500, Nick Bowler wrote:
+> On 2012-11-13 14:25 -0800, Paul E. McKenney wrote:
+> > On Tue, Nov 13, 2012 at 04:47:20PM -0500, Nick Bowler wrote:
+> > > On 2012-11-13 13:19 -0800, Paul E. McKenney wrote:
+> > > > On Tue, Nov 13, 2012 at 12:56:54PM -0500, Nick Bowler wrote:
+> > > > > On 2012-11-13 09:08 -0800, Paul E. McKenney wrote:
+> > > > > > Suppose that TREE_PREEMPT_RCU was available for !SMP && PREEMPT builds.
+> > > > > > Would that work for you?
+> > > > > 
+> > > > > To be honest I don't really know what the difference is, other than what
+> > > > > the help text says, which is:
+> > > > > 
+> > > > >   [TINY_PREEMPT_RCU] greatly reduces the memory footprint of RCU.
+> > > > >   
+> > > > > "Greatly reduced memory footprint" sounds pretty useful...
+> > > > 
+> > > > OK, so from your viewpoint, the only possible benefit is smaller
+> > > > memory?
+> > > 
+> > > Well, I have no idea.  If I was given the choice between TREE_PREEMPT_RCU
+> > > and TINY_PREEMPT_RCU, absent any information not in the description of
+> > > these options, I would choose TINY.  The description suggests that the
+> > > memory savings come at the expense of SMP support, which sounds like a
+> > > great tradeoff to make for a UP system.
+> > > 
+> > > > How much memory does your device have, if I may ask?
+> > > 
+> > > It's a (pretty old!) desktop.  I recently had to upgrade it to two
+> > > gigabytes due to unbearable thrashing with only one...
+> > 
+> > If you have two gigabytes (or even one gigabyte), you won't notice the
+> > few kilobytes of difference between TINY_PREEMPT_RCU and TREE_PREEMPT_RCU.
 > 
-> Sorry english somehow i tried to shoehorn more than one sentence into one 
-> sentence in the last mail.
-> > OK, how much memory does your device have?
-> It's 128Mb of memory.
+> Well then TINY_PREEMPT_RCU doesn't sound all that useful for me!
+> Perhaps the help text could be improved... such as changing the words
+> "greatly reduced" to "marginally reduced" as a first step?
+> 
+> Is there no significant cache impact due to the larger implementation?
+> I don't really have the time or expertise to do measurements in this
+> regard, but if TREE_PREEMPT_RCU was actually a selectable option I could
+> at least choose it to see if anything explodes horribly...
 
-That is a bit on the smaller side.  But still quite large compared
-to the 15K difference between CONFIG_TREE_PREEMPT_RCU and
-CONFIG_TINY_PREEMPT_RCU.
+Indeed, if I do this, the first step would be to re-introduce the
+choice between CONFIG_TREE_PREEMPT_RCU and CONFIG_TINY_PREEMPT_RCU
+so that you could check for horrible explosions.  If the past is
+any guide, there would be at least a few.  ;-)
 
 							Thanx, Paul
 
