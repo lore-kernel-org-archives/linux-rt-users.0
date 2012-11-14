@@ -1,12 +1,14 @@
-From: Josh Triplett <josh@joshtriplett.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: Does anyone use CONFIG_TINY_PREEMPT_RCU?
-Date: Tue, 13 Nov 2012 16:36:42 -0800
-Message-ID: <20121114003641.GB7858@jtriplet-mobl1>
+Date: Tue, 13 Nov 2012 17:07:03 -0800
+Message-ID: <20121114010703.GR2489@linux.vnet.ibm.com>
 References: <20121113004906.GA10557@linux.vnet.ibm.com>
  <201211132122.30259.tim01@vlsi.informatik.tu-darmstadt.de>
  <20121113212034.GD2489@linux.vnet.ibm.com>
  <201211140032.37320.tim01@vlsi.informatik.tu-darmstadt.de>
  <20121114000648.GN2489@linux.vnet.ibm.com>
+ <20121114003641.GB7858@jtriplet-mobl1>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>,
@@ -17,32 +19,30 @@ Cc: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>,
 	rostedt@goodmis.org, Valdis.Kletnieks@vt.edu, dhowells@redhat.com,
 	edumazet@google.com, darren@dvhart.com, fweisbec@gmail.com,
 	sbw@mit.edu, patches@linaro.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay4-d.mail.gandi.net ([217.70.183.196]:41575 "EHLO
-	relay4-d.mail.gandi.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756056Ab2KNAgv (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Nov 2012 19:36:51 -0500
+To: Josh Triplett <josh@joshtriplett.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20121114000648.GN2489@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20121114003641.GB7858@jtriplet-mobl1>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Nov 13, 2012 at 04:06:48PM -0800, Paul E. McKenney wrote:
-> On Wed, Nov 14, 2012 at 12:32:36AM +0100, Tim Sander wrote:
-> > Hi Paul
+On Tue, Nov 13, 2012 at 04:36:42PM -0800, Josh Triplett wrote:
+> On Tue, Nov 13, 2012 at 04:06:48PM -0800, Paul E. McKenney wrote:
+> > On Wed, Nov 14, 2012 at 12:32:36AM +0100, Tim Sander wrote:
+> > > Hi Paul
+> > > 
+> > > Sorry english somehow i tried to shoehorn more than one sentence into one 
+> > > sentence in the last mail.
+> > > > OK, how much memory does your device have?
+> > > It's 128Mb of memory.
 > > 
-> > Sorry english somehow i tried to shoehorn more than one sentence into one 
-> > sentence in the last mail.
-> > > OK, how much memory does your device have?
-> > It's 128Mb of memory.
+> > That is a bit on the smaller side.  But still quite large compared
+> > to the 15K difference between CONFIG_TREE_PREEMPT_RCU and
+> > CONFIG_TINY_PREEMPT_RCU.
 > 
-> That is a bit on the smaller side.  But still quite large compared
-> to the 15K difference between CONFIG_TREE_PREEMPT_RCU and
-> CONFIG_TINY_PREEMPT_RCU.
+> I'd also expect CONFIG_TINY_PREEMPT_RCU to have marginally more
+> performance on a UP system, but probably not enough to matter.
 
-I'd also expect CONFIG_TINY_PREEMPT_RCU to have marginally more
-performance on a UP system, but probably not enough to matter.
+Agreed, I would expect this to be down in the noise.
 
-- Josh Triplett
+							Thanx, Paul
