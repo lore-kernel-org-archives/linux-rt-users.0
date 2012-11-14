@@ -1,37 +1,48 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH RT-TESTS] cyclictest: histogram overflow instance tracking
-Date: Wed, 14 Nov 2012 01:19:44 +0100
-Message-ID: <CAONaPpEa=5hAXF09Y96h2c_Q+mEwt2Pv3s6sRyyOZqM3UCNPiw@mail.gmail.com>
-References: <CAONaPpHVRb6Uw8=6di1R5+ah7LPa8ztypYCoObAf25pfj2ajnA@mail.gmail.com>
-	<186127385.49218418.1352852252623.JavaMail.root@vmware.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: Does anyone use CONFIG_TINY_PREEMPT_RCU?
+Date: Tue, 13 Nov 2012 16:06:48 -0800
+Message-ID: <20121114000648.GN2489@linux.vnet.ibm.com>
+References: <20121113004906.GA10557@linux.vnet.ibm.com>
+ <201211132122.30259.tim01@vlsi.informatik.tu-darmstadt.de>
+ <20121113212034.GD2489@linux.vnet.ibm.com>
+ <201211140032.37320.tim01@vlsi.informatik.tu-darmstadt.de>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org,
-	frank rowand <frank.rowand@am.sony.com>
-To: Bhavesh Davda <bhavesh@vmware.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	mingo@elte.hu, laijs@cn.fujitsu.com, dipankar@in.ibm.com,
+	akpm@linux-foundation.org, mathieu.desnoyers@efficios.com,
+	josh@joshtriplett.org, niv@us.ibm.com, tglx@linutronix.de,
+	peterz@infradead.org, rostedt@goodmis.org, Valdis.Kletnieks@vt.edu,
+	dhowells@redhat.com, edumazet@google.com, darren@dvhart.com,
+	fweisbec@gmail.com, sbw@mit.edu, patches@linaro.org
+To: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f46.google.com ([209.85.219.46]:52917 "EHLO
-	mail-oa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756071Ab2KNATp (ORCPT
+Received: from e32.co.us.ibm.com ([32.97.110.150]:45923 "EHLO
+	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756079Ab2KNAW4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Nov 2012 19:19:45 -0500
-Received: by mail-oa0-f46.google.com with SMTP id h16so8092976oag.19
-        for <linux-rt-users@vger.kernel.org>; Tue, 13 Nov 2012 16:19:44 -0800 (PST)
-In-Reply-To: <186127385.49218418.1352852252623.JavaMail.root@vmware.com>
+	Tue, 13 Nov 2012 19:22:56 -0500
+Received: from /spool/local
+	by e32.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Tue, 13 Nov 2012 17:22:56 -0700
+Content-Disposition: inline
+In-Reply-To: <201211140032.37320.tim01@vlsi.informatik.tu-darmstadt.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Nov 14, 2012 at 1:17 AM, Bhavesh Davda <bhavesh@vmware.com> wrote:
-> No disrespect intended, sorry if it came across as such.
->
-> And as I'm no cyclictest expert, I didn't quite catch the subtleties of Frank's important observation. I'll need to study the cyclictest code more carefully to really grok that, which I will.
->
-> Stay tuned for a patch...
->
+On Wed, Nov 14, 2012 at 12:32:36AM +0100, Tim Sander wrote:
+> Hi Paul
+> 
+> Sorry english somehow i tried to shoehorn more than one sentence into one 
+> sentence in the last mail.
+> > OK, how much memory does your device have?
+> It's 128Mb of memory.
 
-Glad to hear it - thank you. Btw, the norm for linux emails is to add
-your comments either inline, or at the end. (not prepended)
+That is a bit on the smaller side.  But still quite large compared
+to the 15K difference between CONFIG_TREE_PREEMPT_RCU and
+CONFIG_TINY_PREEMPT_RCU.
 
-Looking forward to your work, thanks.
+							Thanx, Paul
 
-John
