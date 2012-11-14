@@ -1,72 +1,47 @@
-From: Shuah Khan <shuah.khan@hp.com>
-Subject: Re: [PATCH 03/11] intel-iommu: Fix AB-BA lockdep report
-Date: Wed, 14 Nov 2012 08:58:46 -0700
-Message-ID: <1352908726.2883.0.camel@lorien2>
-References: <20111204185444.411298317@goodmis.org>
-	 <20111204190008.804987080@goodmis.org> <1352859923.7889.2.camel@lorien2>
-	 <1352862293.18025.52.camel@gandalf.local.home>
-	 <20121114033444.GA29560@kroah.com>
-Reply-To: shuah.khan@hp.com
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 3.6.6-rt17
+Date: Wed, 14 Nov 2012 11:56:13 -0800
+Message-ID: <50A3F75D.8090105@localhost>
+References: <alpine.LFD.2.02.1211122223300.10000@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	stable <stable@vger.kernel.org>, roland@purestorage.com,
-	linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	David Woodhouse <David.Woodhouse@intel.com>,
-	shuahkhan@gmail.com
-To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from g4t0015.houston.hp.com ([15.201.24.18]:4365 "EHLO
-	g4t0015.houston.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932713Ab2KNP6v (ORCPT
+Received: from smtp1.Stanford.EDU ([171.67.219.81]:43560 "EHLO
+	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1753526Ab2KNUCT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Nov 2012 10:58:51 -0500
-In-Reply-To: <20121114033444.GA29560@kroah.com>
+	Wed, 14 Nov 2012 15:02:19 -0500
+In-Reply-To: <alpine.LFD.2.02.1211122223300.10000@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2012-11-13 at 19:34 -0800, Greg Kroah-Hartman wrote:
-> On Tue, Nov 13, 2012 at 10:04:53PM -0500, Steven Rostedt wrote:
-> > On Tue, 2012-11-13 at 19:25 -0700, Shuah Khan wrote:
-> > > On Sun, 2011-12-04 at 13:54 -0500, Steven Rostedt wrote:
-> > > > From: Roland Dreier <roland@purestorage.com>
-> > > > 
-> > > > When unbinding a device so that I could pass it through to a KVM VM, I
-> > > > got the lockdep report below.  It looks like a legitimate lock
-> > > > ordering problem:
-> > > 
-> > > Did this patch not make it into stable releases other than 3.1. I
-> > > couldn't find it in any other stable tress prior to 3.1.
-> > 
-> > Ah, this was done in the early stable-rt releases. Where we took
-> > mainline fixes as long as they were in tglx's tree. But today the
-> > stable-rt tree waits for mainline fixes to come in via the stable tree
-> > so we don't do something like this. That is, miss getting a fix into
-> > stable.  Yeah, this should be added to 3.0. (looks to be already in 3.2
-> > and 3.4).
-> > 
-> > 
-> > Greg,
-> > 
-> > Can you add the following commit to the 3.0 stable tree. We've had this
-> > in v3.0-rt for some time now. :-/
-> > 
-> > commit 3e7abe2556b583e87dabda3e0e6178a67b20d06f
-> > Author: Roland Dreier <roland@purestorage.com>
-> > Date:   Wed Jul 20 06:22:21 2011 -0700
-> > 
-> >     intel-iommu: Fix AB-BA lockdep report
-> 
-> I had to edit the path to the file, but it looks like it applies
-> properly now, thanks.
+On 11/12/2012 01:28 PM, Thomas Gleixner wrote:
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.6.6-rt17 release. 3.6.6-rt16 is just a
+> not announced update release to 3.6.6.
+
+Got this:
+
+----
+net/nfc/llcp/llcp.c: In function 'nfc_llcp_register_device':
+net/nfc/llcp/llcp.c:1185:24: error: expected expression before '{' token
+net/nfc/llcp/llcp.c:1186:35: error: expected expression before '{' token
+----
+
+when building with CONFIG_NFC / CONFIG_NFS_LLCP (builds fine when those 
+are not set)
+-- Fernando
 
 
-Thanks,
--- Shuah
-
-
+> Changes since 3.6.6-rt16:
+>
+>     * Finally make the NOHZ softirq pending detection work with the new
+>       softirq scheme.
+>
+>     * Remove the WARN_ON from __raise_softirq_irqoff(). I got the
+>       information I want for now.
