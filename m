@@ -1,91 +1,47 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [ANNOUNCE] 3.6.6-rt17
-Date: Thu, 15 Nov 2012 09:06:41 -0500
-Message-ID: <50A4F6F1.8080405@windriver.com>
-References: <alpine.LFD.2.02.1211122223300.10000@ionos> <50A3F75D.8090105@localhost>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.6.5-rt15
+Date: Thu, 15 Nov 2012 18:59:54 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1211151858450.2701@ionos>
+References: <alpine.LFD.2.02.1211022303510.2756@ionos> <CACxGe6uau6HCa3jpSzw7uwNtufCNCPN=Pt3BuoFBuNE_D7WFAw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+To: Grant Likely <grant.likely@secretlab.ca>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:40159 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1767800Ab2KOOKT (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:36505 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1768575Ab2KOR74 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Nov 2012 09:10:19 -0500
-In-Reply-To: <50A3F75D.8090105@localhost>
+	Thu, 15 Nov 2012 12:59:56 -0500
+In-Reply-To: <CACxGe6uau6HCa3jpSzw7uwNtufCNCPN=Pt3BuoFBuNE_D7WFAw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12-11-14 02:56 PM, Fernando Lopez-Lezcano wrote:
-> On 11/12/2012 01:28 PM, Thomas Gleixner wrote:
->> Dear RT Folks,
->>
->> I'm pleased to announce the 3.6.6-rt17 release. 3.6.6-rt16 is just a
->> not announced update release to 3.6.6.
+On Wed, 14 Nov 2012, Grant Likely wrote:
+> Hey Thomas,
 > 
-> Got this:
+> I get a kernel bug when going from rt14 to rt15. It appears that
+> preempt_lazy on my ARM platform causes (or exposes) the following
+> backtrace on boot. I'm basing this on the only relevant change between
+> rt14 and rt15 is the typo fix that enables PREEMPT_LAZY. I also see
+> the problem on -rt16 and -rt17.
 > 
-> ----
-> net/nfc/llcp/llcp.c: In function 'nfc_llcp_register_device':
-> net/nfc/llcp/llcp.c:1185:24: error: expected expression before '{' token
-> net/nfc/llcp/llcp.c:1186:35: error: expected expression before '{' token
-> ----
+> (full boot log also attached below)
 > 
-> when building with CONFIG_NFC / CONFIG_NFS_LLCP (builds fine when those 
-> are not set)
-> -- Fernando
+> The actual backtrace changes every time, but it is always related to
+> an rt_spin_lock() call.
+> 
+> This is on a TI AM3894 platform which is equivalent to a TI8160
+> without the DSP. The board support isn't mainlined, but there is
+> nothing particularly exotic about the changes. It is primarily device
+> drivers and device driver data. Cortex-A8 platform.
+> 
+> Any thoughts on how to debug this?
 
-Locking init is broken in llcp.  You'll need this commit from mainline.
+Probably by staring at the patch to the ASM code in arch/arm. I bet I
+messed that up somehow :)
 
-commit fe235b58d517d623bf6d40c77afca1b0ee6fc85d
-Author: Szymon Janc <szymon.janc@tieto.com>
-Date:   Tue Sep 25 12:42:50 2012 +0200
+Thanks,
 
-    NFC: Use dynamic initialization for rwlocks
-    
-    If rwlock is dynamically allocated but statically initialized it is
-    missing proper lockdep annotation.
-    
-    INFO: trying to register non-static key.
-    the code is fine but needs lockdep annotation.
-    turning off the locking correctness validator.
-    Pid: 3352, comm: neard Not tainted 3.5.0-999-nfc+ #2
-    Call Trace:
-    [<ffffffff810c8526>] __lock_acquire+0x8f6/0x1bf0
-    [<ffffffff81739045>] ? printk+0x4d/0x4f
-    [<ffffffff810c9eed>] lock_acquire+0x9d/0x220
-    [<ffffffff81702bfe>] ? nfc_llcp_sock_from_sn+0x4e/0x160
-    [<ffffffff81746724>] _raw_read_lock+0x44/0x60
-    [<ffffffff81702bfe>] ? nfc_llcp_sock_from_sn+0x4e/0x160
-    [<ffffffff81702bfe>] nfc_llcp_sock_from_sn+0x4e/0x160
-    [<ffffffff817034a7>] nfc_llcp_get_sdp_ssap+0xa7/0x1b0
-    [<ffffffff81706353>] llcp_sock_bind+0x173/0x210
-    [<ffffffff815d9c94>] sys_bind+0xe4/0x100
-    [<ffffffff8139209e>] ? trace_hardirqs_on_thunk+0x3a/0x3f
-    [<ffffffff8174ea69>] system_call_fastpath+0x16/0x1b
-    
-    Signed-off-by: Szymon Janc <szymon.janc@tieto.com>
-    Signed-off-by: Samuel Ortiz <sameo@linux.intel.com>
-
-diff --git a/net/nfc/llcp/llcp.c b/net/nfc/llcp/llcp.c
-index 90ef4a1..d649fbf 100644
---- a/net/nfc/llcp/llcp.c
-+++ b/net/nfc/llcp/llcp.c
-@@ -1156,8 +1156,8 @@ int nfc_llcp_register_device(struct nfc_dev *ndev)
- 
-        INIT_WORK(&local->timeout_work, nfc_llcp_timeout_work);
- 
--       local->sockets.lock = __RW_LOCK_UNLOCKED(local->sockets.lock);
--       local->connecting_sockets.lock = __RW_LOCK_UNLOCKED(local->connecting_sockets.lock);
-+       rwlock_init(&local->sockets.lock);
-+       rwlock_init(&local->connecting_sockets.lock);
- 
-        nfc_llcp_build_gb(local);
- 
-
-
-
+	tglx
