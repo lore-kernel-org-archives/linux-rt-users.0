@@ -1,76 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.6-rt17
-Date: Thu, 15 Nov 2012 19:11:07 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1211151901300.2701@ionos>
-References: <alpine.LFD.2.02.1211122223300.10000@ionos> <50A3F75D.8090105@localhost>
+From: Scot Salmon <scot.salmon@ni.com>
+Subject: Re: Detecting shift of CLOCK_REALTIME with clock_nanosleep (again)
+Date: Thu, 15 Nov 2012 13:28:00 -0600
+Message-ID: <OF0AC62D08.8289F39F-ON86257AB7.0067DE83-86257AB7.006AEF36@ni.com>
+References: <OFB404C2D9.B6E5E0B9-ON86257AA8.0054900F-86257AA8.005761C4@ni.com> <alpine.LFD.2.02.1210311949400.2756@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Content-Type: text/plain; charset="US-ASCII"
+Cc: John Stultz <johnstul@us.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:36620 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1768597Ab2KOSLJ (ORCPT
+Received: from mailserver6.natinst.com ([130.164.80.6]:52522 "EHLO
+	spamkiller06.natinst.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1768765Ab2KOT2N (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Nov 2012 13:11:09 -0500
-In-Reply-To: <50A3F75D.8090105@localhost>
+	Thu, 15 Nov 2012 14:28:13 -0500
+In-Reply-To: <alpine.LFD.2.02.1210311949400.2756@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 14 Nov 2012, Fernando Lopez-Lezcano wrote:
+Thomas Gleixner <tglx@linutronix.de> wrote on 10/31/2012 03:08:45 PM:
+> What you are concerned about is keeping the machines in sync on a
+> common global timeline. Though your more fundamental requirement is
+> that you get the wakeup on each machine in the given cycle time. The
+> global synchronization mechanism just adjusts that local periodic
+> schedule.
+[...]
+> What you really want is an atomic readout facility for CLOCK_MONOTONIC
+> and CLOCK_REALTIME. That allows you to align the CLOCK_MONOTONIC based
+> timer with the global CLOCK_REALTIME based time line and in the event
+> that the CLOCK_REALTIME clock was set and jumped forward/backward you
+> have full software control over the aligning mechanism including the
+> ability to do sanity checking.
 
-> On 11/12/2012 01:28 PM, Thomas Gleixner wrote:
-> > Dear RT Folks,
-> > 
-> > I'm pleased to announce the 3.6.6-rt17 release. 3.6.6-rt16 is just a
-> > not announced update release to 3.6.6.
-> 
-> Got this:
-> 
-> ----
-> net/nfc/llcp/llcp.c: In function 'nfc_llcp_register_device':
-> net/nfc/llcp/llcp.c:1185:24: error: expected expression before '{' token
-> net/nfc/llcp/llcp.c:1186:35: error: expected expression before '{' token
-> ----
-> 
-> when building with CONFIG_NFC / CONFIG_NFS_LLCP (builds fine when those are
-> not set)
+This works for me.  We discussed it on IRC and agreed on "something
+like clock_gettime2(id, id, *t1, *t2) with a sanity check on the ids,
+that allows us other combinations than MONO/REAL as well".
 
-Grrr. Damned ignorants.
+-Scot
 
-Does that fix it for you ?
-
-Thanks,
-
-	tglx
-
------------->
-
-Subject: nfc: Use proper lock init functions
-From: Thomas Gleixner <tglx@linutronix.de>
-Date: Thu, 15 Nov 2012 19:03:20 +0100
-
-Grmbl. Why insist people on using static initializers if there are
-proper init functions? Just because they can?
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
----
- net/nfc/llcp/llcp.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-Index: linux-stable/net/nfc/llcp/llcp.c
-===================================================================
---- linux-stable.orig/net/nfc/llcp/llcp.c
-+++ linux-stable/net/nfc/llcp/llcp.c
-@@ -1182,8 +1182,8 @@ int nfc_llcp_register_device(struct nfc_
- 		goto err_rx_wq;
- 	}
- 
--	local->sockets.lock = __RW_LOCK_UNLOCKED(local->sockets.lock);
--	local->connecting_sockets.lock = __RW_LOCK_UNLOCKED(local->connecting_sockets.lock);
-+	rwlock_init(&local->sockets.lock);
-+	rwlock_init(&local->connecting_sockets.lock);
- 
- 	nfc_llcp_build_gb(local);
- 
