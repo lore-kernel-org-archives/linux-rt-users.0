@@ -1,21 +1,21 @@
 From: Bhavesh Davda <bhavesh@vmware.com>
 Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for
  histogram overflow instance tracking
-Date: Thu, 15 Nov 2012 17:56:31 -0800 (PST)
-Message-ID: <1376702282.1876429.1353030991353.JavaMail.root@vmware.com>
-References: <50A584BE.2000107@am.sony.com>
+Date: Thu, 15 Nov 2012 18:04:07 -0800 (PST)
+Message-ID: <1465858638.1880820.1353031447623.JavaMail.root@vmware.com>
+References: <1376702282.1876429.1353030991353.JavaMail.root@vmware.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
 To: frank rowand <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:42345 "EHLO
+Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:38288 "EHLO
 	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750784Ab2KPB4c (ORCPT
+	by vger.kernel.org with ESMTP id S1751209Ab2KPCEI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Nov 2012 20:56:32 -0500
-In-Reply-To: <50A584BE.2000107@am.sony.com>
+	Thu, 15 Nov 2012 21:04:08 -0500
+In-Reply-To: <1376702282.1876429.1353030991353.JavaMail.root@vmware.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -50,71 +50,14 @@ T: 3 (10981) P:99 I:1000 C:  29991 Min:      2 Act:    3 Avg:    3 Max:       8
   Thread 3: 0 1137 1149 3137 5137 7137 7405 8395 8396 8397 9137 11137 12643 12644 13137 15137 17137 17406 18395 18396 19137 21137 21227 21228 21229 23137 25137 27137 27406 28395 28396 29137
 
 Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
-
 ---
-
-> | Add a line to the histogram overflow cycle report that merges all
-> | threads into a single time line.  This is controlled by the -H
-> | option which already serves a similar purpose for histograms.
-> 
-> The merged data line is an enhancement.  If there is no strong
-> request
-> from anyone for the feature then no need to include.  But it seems
-> useful to me.
-
-I agree this is a useful feature request, but harder to implement, since I'll have to merge sort from the per-thread outliers to produce a single line merged outlier output. I hope it's okay if I punt on this one.
-
-> | Removed leading zeros from cycle values reported in the histogram
-> | overflow cycle report to make the values more readable.
-> 
-> I should have also mentioned that many programs interpret numbers
-> with leading zeros as octal.
-
-Fixed.
-
-> | Removed extra blank line printed at end of Histogram output.
-> 
-> Some graphing programs are sensitive to extraneous blank lines,
-> so I try to avoid adding additional blank lines.
-> 
-
-Fixed.
-
-> | One further thought...  The histogram overflow cycle report shows
-> | what cycle the overflow occurred in, not the actual time.  Adding
-> | the merged for all threads cycle times works because the histogram
-> | turns off the "different intervals for different threads" option:
-> | 
-> |                 if (!histogram) /* same interval on CPUs */
-> |                         interval += distance;
-> | 
-> | but if that ever changes then cycle is not a useful value to be
-> | reporting.
-> | 
-> | So it seems like it would be useful to convert cycle to a time
-> | in the report.  This is something that would have to be done
-> | anyway in post processing when trying to make use of the report.
-> 
-> This was probably the most important comment.
-
-Gotcha. I've attempted to change the outliers reported from the cycle count they occurred at to the time (in ms) that they occurred at. Please take a look.
-
-> This version of the patch addressed all of my inline comments.
-> 
-> But this version of the patch seems to have tabs converted to spaces,
-> so
-> it doesn't apply.  My email servers sometimes alter white space in
-> patches
-> so I double checked the patch on a list server at:
-
-It's not you, it's me :) I had used a different mailer and a different method to copy-paste the patch inline, which munged the tabs to spaces. Sorry about that. Hopefully it's back to tabs in this version.
-
+Argh! Missed one tabs v/s spaces issue from a previous commit as found by checkpatch!
 ---
  src/cyclictest/cyclictest.c |   34 +++++++++++++++++++++++++---------
  1 files changed, 25 insertions(+), 9 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index abf3e8b..0701ef9 100644
+index abf3e8b..141e79f 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
 @@ -91,6 +91,7 @@ extern int clock_nanosleep(clockid_t __clock_id, int __flags,
@@ -138,7 +81,7 @@ index abf3e8b..0701ef9 100644
  			if (diff >= histogram) {
  				stat->hist_overflow++;
 -                                if (stat->num_outliers < histogram)
-+                                if (stat->num_outliers < of_max)
++				if (stat->num_outliers < of_max)
  					stat->outliers[stat->num_outliers++] = stat->cycles;
  			}
  			else
@@ -239,3 +182,4 @@ index abf3e8b..0701ef9 100644
  
 -- 
 1.7.1
+
