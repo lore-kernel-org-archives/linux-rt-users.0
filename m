@@ -1,71 +1,109 @@
-From: =?UTF-8?q?Rapha=C3=ABl=20Beamonte?= <raphael.beamonte@gmail.com>
-Subject: [PATCH] Changes the getcmdpath method to use only python calls to find the paths
-Date: Wed, 21 Nov 2012 18:22:11 -0500
-Message-ID: <1353540131-18978-1-git-send-email-raphael.beamonte@gmail.com>
+From: Francesco Lavra <francescolavra.fl@gmail.com>
+Subject: genirq: Add default affinity mask command line option: optimization
+ and cleanup
+Date: Sat, 24 Nov 2012 15:58:36 +0100
+Message-ID: <50B0E09C.209@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, dsommers@redhat.com,
-	=?UTF-8?q?Rapha=C3=ABl=20Beamonte?= <raphael.beamonte@gmail.com>
-To: williams@redhat.com
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f174.google.com ([209.85.223.174]:47982 "EHLO
-	mail-ie0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756801Ab2KVUuX (ORCPT
+Received: from mail-ee0-f46.google.com ([74.125.83.46]:58807 "EHLO
+	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751343Ab2KXO7i (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Nov 2012 15:50:23 -0500
-Received: by mail-ie0-f174.google.com with SMTP id k11so2511242iea.19
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Nov 2012 12:50:23 -0800 (PST)
+	Sat, 24 Nov 2012 09:59:38 -0500
+Received: by mail-ee0-f46.google.com with SMTP id e53so3798379eek.19
+        for <linux-rt-users@vger.kernel.org>; Sat, 24 Nov 2012 06:59:36 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In my previous patches, I introduced a getcmdpath method which intended
-to replace the direct calls to binary from clear paths, using the which
-binary to locate the place of the searched one. This behavior was in
-fact not the finest as the method itself used the full path to the whic=
-h
-binary. In this patch, I corrected the getcmdpath command to use only
-python calls (os.path.isfile and os.access) to identify in the PATH
-environment variable the place where the binary is.
+Hi,
+I'd like to propose a couple of minor changes to the patch
+genirq-add-default-mask-cmdline-option, part of the RT patch series for
+3.4 and above.
 
-Signed-off-by: Rapha=C3=ABl Beamonte <raphael.beamonte@gmail.com>
----
- rteval/rteval.py |   12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+>From genirq-add-default-mask-cmdline-option.patch:
+> Subject: genirq: Add default affinity mask command line option
+> From: Thomas Gleixner <tglx@linutronix.de>
+> Date: Fri, 25 May 2012 16:59:47 +0200
+> 
+> If we isolate CPUs, then we don't want random device interrupts on
+> them. Even w/o the user space irq balancer enabled we can end up with
+> irqs on non boot cpus.
+> 
+> Allow to restrict the default irq affinity mask.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> ---
+>  Documentation/kernel-parameters.txt |    9 +++++++++
+>  kernel/irq/irqdesc.c                |   21 +++++++++++++++++++--
+>  2 files changed, 28 insertions(+), 2 deletions(-)
+> 
+> Index: linux-stable/Documentation/kernel-parameters.txt
+> ===================================================================
+> --- linux-stable.orig/Documentation/kernel-parameters.txt
+> +++ linux-stable/Documentation/kernel-parameters.txt
+> @@ -1157,6 +1157,15 @@ bytes respectively. Such letter suffixes
+>  			See comment before ip2_setup() in
+>  			drivers/char/ip2/ip2base.c.
+>  
+> +	irqaffinity=	[SMP] Set the default irq affinity mask
+> +			Format:
+> +			<cpu number>,...,<cpu number>
+> +			or
+> +			<cpu number>-<cpu number>
+> +			(must be a positive range in ascending order)
+> +			or a mixture
+> +			<cpu number>,...,<cpu number>-<cpu number>
+> +
+>  	irqfixup	[HW]
+>  			When an interrupt is not handled search all handlers
+>  			for it. Intended to get systems with badly broken
+> Index: linux-stable/kernel/irq/irqdesc.c
+> ===================================================================
+> --- linux-stable.orig/kernel/irq/irqdesc.c
+> +++ linux-stable/kernel/irq/irqdesc.c
+> @@ -23,10 +23,27 @@
+>  static struct lock_class_key irq_desc_lock_class;
+>  
+>  #if defined(CONFIG_SMP)
+> +static int __init irq_affinity_setup(char *str)
+> +{
+> +	zalloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
+> +	cpulist_parse(str, irq_default_affinity);
 
-diff --git a/rteval/rteval.py b/rteval/rteval.py
-index beba49f..5843d78 100644
---- a/rteval/rteval.py
-+++ b/rteval/rteval.py
-@@ -68,10 +68,16 @@ from cputopology import CPUtopology
-=20
- pathSave=3D{}
- def getcmdpath(which):
-+    """
-+    getcmdpath is a method which allows finding an executable in the P=
-ATH
-+    directories to call it from full path
-+    """
-     if not pathSave.has_key(which):
--        cmd =3D '/usr/bin/which %s' % which
--        c =3D subprocess.Popen(cmd, shell=3DTrue, stdout=3Dsubprocess.=
-PIPE)
--        pathSave[which] =3D c.stdout.read().strip()
-+        for path in os.environ['PATH'].split(':'):
-+            cmdfile =3D os.path.join(path, which)
-+            if os.path.isfile(cmdfile) and os.access(cmdfile, os.X_OK)=
-:
-+                pathSave[which] =3D cmdfile
-+                break
-         if not pathSave[which]:
-             raise RuntimeError, "Command '%s' is unknown on this syste=
-m" % which
-     return pathSave[which]
---=20
-1.7.10.4
+Since cpulist_parse() sets all the bits of its cpumask argument, it's
+not necessary to initialize them to zero during allocation, so I would
+use alloc_cpumask_var() instead of zalloc_cpumask_var().
+
+> +	/*
+> +	 * Set at least the boot cpu. We don't want to end up with
+> +	 * bugreports caused by random comandline masks
+> +	 */
+> +	cpumask_set_cpu(smp_processor_id(), irq_default_affinity);
+> +	return 1;
+> +}
+> +__setup("irqaffinity=", irq_affinity_setup);
+> +
+>  static void __init init_irq_default_affinity(void)
+>  {
+> -	alloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
+> -	cpumask_setall(irq_default_affinity);
+> +#ifdef CONFIG_CPUMASK_OFFSTACK
+> +	if (!irq_default_affinity)
+> +		zalloc_cpumask_var(&irq_default_affinity, GFP_NOWAIT);
+> +#endif
+
+The #ifdefery is not necessary here, because if CONFIG_CPUMASK_OFFSTACK
+is not defined irq_default_affinity cannot be NULL.
+
+> +	if (cpumask_empty(irq_default_affinity))
+> +		cpumask_setall(irq_default_affinity);
+>  }
+>  #else
+>  static void __init init_irq_default_affinity(void)
 
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Francesco
