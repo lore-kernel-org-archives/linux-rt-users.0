@@ -1,70 +1,51 @@
-From: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
-	instead of current one
-Date: Mon, 26 Nov 2012 09:15:39 -0800
-Message-ID: <20121126171539.GZ15971@htj.dyndns.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH V2 Resend 0/4] Create sched_select_cpu() and use it for
+ workqueues and timers
+Date: Mon, 26 Nov 2012 12:35:52 -0500
+Message-ID: <1353951352.6276.43.camel@gandalf.local.home>
 References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
+	 <CAKohponTxs983vVQV=6Q8zyesC1W1FhFkzfmpAVeEwU-cQXohA@mail.gmail.com>
+	 <1353948027.6276.38.camel@gandalf.local.home>
+	 <20121126170358.GE2474@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: venki-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linaro-dev-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, suresh.b.siddha-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org,
-	patches-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org,
-	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org,
-	paul.mckenney-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org,
-	pdsw-power-team-5wv7dgnIgG8@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Return-path: <linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-List-Unsubscribe: <http://lists.linaro.org/mailman/options/linaro-dev>,
-	<mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=unsubscribe>
-List-Archive: <http://lists.linaro.org/pipermail/linaro-dev>
-List-Post: <mailto:linaro-dev-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
-List-Help: <mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=help>
-List-Subscribe: <http://lists.linaro.org/mailman/listinfo/linaro-dev>,
-	<mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=subscribe>
-Sender: linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
-Errors-To: linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Viresh Kumar <viresh.kumar@linaro.org>, pjt@google.com,
+	paul.mckenney@linaro.org, tglx@linutronix.de, tj@kernel.org,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: paulmck@linux.vnet.ibm.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:12240 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933715Ab2KZRfy (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 26 Nov 2012 12:35:54 -0500
+In-Reply-To: <20121126170358.GE2474@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello, Viresh.
+On Mon, 2012-11-26 at 09:03 -0800, Paul E. McKenney wrote:
 
-On Tue, Nov 06, 2012 at 04:08:45PM +0530, Viresh Kumar wrote:
-> Workqueues queues work on current cpu, if the caller haven't passed a preferred
-> cpu. This may wake up an idle CPU, which is actually not required.
-> 
-> This work can be processed by any CPU and so we must select a non-idle CPU here.
-> This patch adds in support in workqueue framework to get preferred CPU details
-> from the scheduler, instead of using current CPU.
-> 
-> Most of the time when a work is queued, the current cpu isn't idle and so we
-> will choose it only. There are cases when a cpu is idle when it queues some
-> work. For example, consider following scenario:
-> - A cpu has programmed a timer and is IDLE now.
-> - CPU gets into interrupt handler due to timer and queues a work. As the CPU is
->   currently IDLE, we can queue this work to some other CPU.
 
-I'm pretty skeptical about this.  queue_work() w/o explicit CPU
-assignment has always guaranteed that the work item will be executed
-on the same CPU.  I don't think there are too many users depending on
-that but am not sure at all that there are none.  I asked you last
-time that you would at the very least need to audit most users but it
-doesn't seem like there has been any effort there.  Given the
-seemingly low rate of migration and subtlety of such bugs, things
-could get nasty to debug.
+> If I understand correctly (though also suffering turkey OD), the idea is
+> to offload work to more energy-efficient CPUs.
 
-That said, if the obtained benefit is big enough, sure, we can
-definitely change the behavior, which isn't all that great to begin
-with, and try to shake out the bugs quicky by e.g. forcing all work
-items to execute on different CPUs, but you're presenting a few
-percent of work items being migrated to a different CPU from an
-already active CPU, which doesn't seem like such a big benefit to me
-even if the migration target CPU is somewhat more efficient.  How much
-powersaving are we talking about?
+This is determined by a CPU that isn't running the idle task? Is it
+because a CPU that just woke up may be running at a lower freq, and thus
+not as efficient? But pushing off to another CPU may cause cache misses
+as well. Wouldn't that also be a factor in efficiencies, if a CPU is
+stalled waiting for memory to be loaded?
 
-Thanks.
+I should also ask the obvious. Has these patches shown real world
+efficiencies or is this just a theory? Do these patches actually improve
+battery life when applied?
 
--- 
-tejun
+Just asking.
+
+-- Steve
+
+
