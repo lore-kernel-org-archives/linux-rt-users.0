@@ -1,81 +1,68 @@
-From: Bhavesh Davda <bhavesh@vmware.com>
-Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for
- histogram overflow instance tracking
-Date: Mon, 26 Nov 2012 13:37:54 -0800 (PST)
-Message-ID: <1463873663.4023529.1353965874630.JavaMail.root@vmware.com>
-References: <50B3DBAC.90208@am.sony.com>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
+ instead of current one
+Date: Tue, 27 Nov 2012 10:49:54 +0530
+Message-ID: <CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
+	<20121126171539.GZ15971@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
-To: frank rowand <frank.rowand@am.sony.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, rostedt@goodmis.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>,
+	Vincent Guittot <vincent.guittot@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-outbound-1.vmware.com ([208.91.2.12]:51055 "EHLO
-	smtp-outbound-1.vmware.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754138Ab2KZVh5 (ORCPT
+Received: from mail-ie0-f174.google.com ([209.85.223.174]:58431 "EHLO
+	mail-ie0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751658Ab2K0FTz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Nov 2012 16:37:57 -0500
-In-Reply-To: <50B3DBAC.90208@am.sony.com>
+	Tue, 27 Nov 2012 00:19:55 -0500
+Received: by mail-ie0-f174.google.com with SMTP id k11so7644996iea.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2012 21:19:54 -0800 (PST)
+In-Reply-To: <20121126171539.GZ15971@htj.dyndns.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> On 11/16/12 18:41, Frank Rowand wrote:
-> > On 11/16/12 18:31, Frank Rowand wrote:
-> > 
-> > < snip >
-> >  
-> >> I graphed the results with the msec data and with the nanosecond
-> >> timestamps for an artificial test (two test runs for each case):
-> >>
-> >>   nanosecond:  junk7.gif    junk10.gif
-> >>   msec:        junk8_d.gif  junk9_d.gif
-> >>
-> >> The cyclictest latency disruptions seem more visible to me in the
-> >> nanosecond data graphs.  But that is just a first impression
-> >> without playing around with a lot of different data sets.
-> > 
-> > John, Bhavesh,
-> > 
-> > OK, so after all of that, I'm going on vacation for a week.
-> > I hope the rest of you are taking some time off too.
-> 
-> I'm back...  Bhavesh, have you had a chance to think about my last
-> several emails (my comments on your latest patch, my proposed patch,
-> and the email I'm responding to)?  Any comments?
+Hi Tejun,
 
-Hello Frank. Welcome back. I was out for the long weekend and am just getting back in the swing of things too, so sorry about the delay.
+On 26 November 2012 22:45, Tejun Heo <tj@kernel.org> wrote:
+> On Tue, Nov 06, 2012 at 04:08:45PM +0530, Viresh Kumar wrote:
 
-I do have real use cases for this "outlier" mode, that I've used effectively to identify sources of high latencies of cyclictest running in a Linux-rt kernel based VM on our VMware ESXi hypervisor. The patterns in the outliers, for various thresholds (e.g. 50 us) have helped me identify timers and callbacks in the hypervisor kernel (vmkernel) which have caused time to be "stolen" away from scheduling the virtual CPUs of the VM to do various housekeeping tasks, and to either move those timers out to other physical CPUs or to limit the time spend in those timers and callbacks to have a smaller impact on the cyclictest latencies.
+> I'm pretty skeptical about this.  queue_work() w/o explicit CPU
+> assignment has always guaranteed that the work item will be executed
+> on the same CPU.  I don't think there are too many users depending on
+> that but am not sure at all that there are none.  I asked you last
+> time that you would at the very least need to audit most users but it
+> doesn't seem like there has been any effort there.
 
-I'm hoping that others in the community find similar uses of this "outlier" feature of cyclictest.
+My bad. I completely missed/forgot that comment from your earlier mails.
+Will do it.
 
-That said, I realize that not every use cases might fit my exact mould and might require either different formatting, or different granularities of the "outliers" output. So I'm open to suggestions in that regard.
+> That said, if the obtained benefit is big enough, sure, we can
+> definitely change the behavior, which isn't all that great to begin
+> with, and try to shake out the bugs quicky by e.g. forcing all work
+> items to execute on different CPUs, but you're presenting a few
+> percent of work items being migrated to a different CPU from an
+> already active CPU, which doesn't seem like such a big benefit to me
+> even if the migration target CPU is somewhat more efficient.  How much
+> powersaving are we talking about?
 
-I'm going to respond to your proposed patch next.
+Hmm.. I actually implemented the problem discussed here:
+(I know you have seen this earlier :) )
 
-Thanks
+http://www.linuxplumbersconf.org/2012/wp-content/uploads/2012/08/lpc2012-sched-timer-workqueue.pdf
 
-- Bhavesh
+Specifically slides: 12 & 19.
 
-> 
-> > 
-> > My conclusion after my data creation and graphing exercise is that
-> > it might be good if people could play around with collecting and
-> > analyzing real histogram overflow data and see what data formats
-> > provide useful information.
-> > 
-> > I think we should not rush the patch into John's tree so that we
-> > aren't stuck with a format or type of data that is not optimal.
-> > 
-> > Bhavesh, if you created this feature based on a real world need
-> > (instead of just a brilliant mind exercise), it would be great
-> > if you could apply the latest iteration (or iterations in the
-> > near future) to your actual data collection and provide a real
-> > world example of how this feature makes cyclictest better.
-> > 
-> > Thanks,
-> > 
-> > Frank
-> 
-> 
-> 
+I haven't done much power calculations with it and have tested it more from
+functionality point of view.
+
+@Vincent: Can you add some comments here?
+
+--
+viresh
