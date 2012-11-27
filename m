@@ -1,68 +1,115 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
- instead of current one
-Date: Tue, 27 Nov 2012 10:49:54 +0530
-Message-ID: <CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g@mail.gmail.com>
+Subject: Re: [PATCH V2 Resend 0/4] Create sched_select_cpu() and use it for
+ workqueues and timers
+Date: Tue, 27 Nov 2012 11:55:19 +0530
+Message-ID: <CAKohpon_kUMQxtgTipcGm8qy35_C7_Y87KV1ohbexbeqwYSy5A@mail.gmail.com>
 References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
-	<20121126171539.GZ15971@htj.dyndns.org>
+	<CAKohponTxs983vVQV=6Q8zyesC1W1FhFkzfmpAVeEwU-cQXohA@mail.gmail.com>
+	<1353948027.6276.38.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
-	peterz@infradead.org, rostedt@goodmis.org, Arvind.Chauhan@arm.com,
+	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
+	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
 	linaro-dev@lists.linaro.org, patches@linaro.org,
 	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>,
-	Vincent Guittot <vincent.guittot@linaro.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f174.google.com ([209.85.223.174]:58431 "EHLO
+Received: from mail-ie0-f174.google.com ([209.85.223.174]:43060 "EHLO
 	mail-ie0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751658Ab2K0FTz (ORCPT
+	with ESMTP id S1754034Ab2K0GZU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2012 00:19:55 -0500
-Received: by mail-ie0-f174.google.com with SMTP id k11so7644996iea.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2012 21:19:54 -0800 (PST)
-In-Reply-To: <20121126171539.GZ15971@htj.dyndns.org>
+	Tue, 27 Nov 2012 01:25:20 -0500
+Received: by mail-ie0-f174.google.com with SMTP id k11so7696943iea.19
+        for <linux-rt-users@vger.kernel.org>; Mon, 26 Nov 2012 22:25:19 -0800 (PST)
+In-Reply-To: <1353948027.6276.38.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tejun,
+Hi Steven,
 
-On 26 November 2012 22:45, Tejun Heo <tj@kernel.org> wrote:
-> On Tue, Nov 06, 2012 at 04:08:45PM +0530, Viresh Kumar wrote:
+Thanks for sharing your opinion. :)
 
-> I'm pretty skeptical about this.  queue_work() w/o explicit CPU
-> assignment has always guaranteed that the work item will be executed
-> on the same CPU.  I don't think there are too many users depending on
-> that but am not sure at all that there are none.  I asked you last
-> time that you would at the very least need to audit most users but it
-> doesn't seem like there has been any effort there.
+As, this went out to be a long thread of discussion (thanks Paul), i will try to
+answer everything here.
 
-My bad. I completely missed/forgot that comment from your earlier mails.
-Will do it.
+On 26 November 2012 22:10, Steven Rostedt <rostedt@goodmis.org> wrote:
+> This is a really bad time of year to post new patches :-/
+> A lot of people are trying to get their own work done by year end and
+> then there's holidays and such that are also distractions. Not to
+> mention that a new merge window will be opening soon.
 
-> That said, if the obtained benefit is big enough, sure, we can
-> definitely change the behavior, which isn't all that great to begin
-> with, and try to shake out the bugs quicky by e.g. forcing all work
-> items to execute on different CPUs, but you're presenting a few
-> percent of work items being migrated to a different CPU from an
-> already active CPU, which doesn't seem like such a big benefit to me
-> even if the migration target CPU is somewhat more efficient.  How much
-> powersaving are we talking about?
+Patches are there since End of September and it was just a ping now (actually
+with bad timing - merge window).
 
-Hmm.. I actually implemented the problem discussed here:
-(I know you have seen this earlier :) )
+> As workqueues are set off by the CPU that queued it, what real benefit
+> does this give? A CPU was active when it queued the work and the work
+> should be done before it gets back to sleep.
+>
+> OK, an interrupt happens on an idle CPU and queues some work. That work
+> should execute before the CPU gets back to sleep, right? I fail to see
+> the benefit of trying to move that work elsewhere. The CPU had to wake
+> up to execute the interrupt. It's no longer in a deep sleep (or any
+> sleep for that matter).
+>
+> To me it seems best to avoid waking up an idle CPU in the first place.
+>
+> I'm still working off a turkey overdose, so maybe I'm missing something
+> obvious.
+
+Ok, here is the story behind these patches. The idea was first discussed
+by Vincent in LPC this year:
 
 http://www.linuxplumbersconf.org/2012/wp-content/uploads/2012/08/lpc2012-sched-timer-workqueue.pdf
 
 Specifically slides: 12 & 19.
 
-I haven't done much power calculations with it and have tested it more from
-functionality point of view.
+cpu idleness here means idleness from scheduler's perspective, i.e.
+For the scheduler CPU is idle, if all below are true:
+- current task is idle task
+- nr_running == 0
+- wake_list is empty
 
-@Vincent: Can you add some comments here?
+
+There are two use cases of workqueue patch 3/4:
+
+- queue-work from timer interrupt, which re-arms itself (slide 12):
+  Whether timer is deferred or not, it will queue the work on current
+cpu once cpu
+  wakes up. The cpu could have immediately gone back to idle state again, if the
+  work is not queued on it. So, because this cpu is idle (from
+schedulers point of
+  view), we can move this work to other cpu.
+
+- delayed-work, which rearm's itself (slide 19):
+  Again the same thing, we could have kept the cpu in idle state for
+some more time.
+
+There might not be many users with this behavior, but a single user can actually
+have significant impact.
+
+For now, it doesn't take care of big LITTLE stuff that Paul pointed
+out, but yes that
+is in plan. Some work is going on in that direction too:
+
+http://linux.kernel.narkive.com/mCyvFVUX/rfc-0-6-sched-packing-small-tasks
+
+The very first reason of having this patchset was to have a single
+preferred_cpu()
+routine, which can be used by all frameworks. Timers being the first
+user (already),
+workqueues tried to be the second one.
+
+I tested it more from functionality point of view rather than with
+power figures :(
+And i understood, that it is very much required.
+
+Having said that, I believe all the questions raised are on PATCH 3/4
+(workqueue).
+And other 3 patches should be fine. Can you share your opinion on those patches,
+I will then split this patchset and send workqueue stuff after doing some power
+measurements later.
 
 --
 viresh
