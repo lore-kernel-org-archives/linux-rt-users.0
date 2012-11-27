@@ -1,33 +1,87 @@
-From: Richard Cochran <richardcochran@gmail.com>
-Subject: Re: am33xx beaglebone mainline status?
-Date: Tue, 27 Nov 2012 13:58:05 +0100
-Message-ID: <20121127125805.GB31484@netboy.at.omicron.at>
-References: <201211270941.52055.tim01@iss.tu-darmstadt.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
+ instead of current one
+Date: Tue, 27 Nov 2012 08:26:10 -0500
+Message-ID: <1354022770.6276.63.camel@gandalf.local.home>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	 <ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux@arm.linux.org.uk,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
+	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
+	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Tim Sander <tim01@iss.tu-darmstadt.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:41885 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750771Ab2K0M6Q (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2012 07:58:16 -0500
-Content-Disposition: inline
-In-Reply-To: <201211270941.52055.tim01@iss.tu-darmstadt.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Nov 27, 2012 at 09:41:51AM +0100, Tim Sander wrote:
-> Hi
+On Tue, 2012-11-06 at 16:08 +0530, Viresh Kumar wrote:
+> Workqueues queues work on current cpu, if the caller haven't passed a preferred
+> cpu. This may wake up an idle CPU, which is actually not required.
 > 
-> I have been trying to get the 3.7-rc6 kernel to compile for a beaglebone board 
-> with device tree but it seems there are still bits missing. Especially it 
-> seems as if the sd card reader and network is not working properly?
+> This work can be processed by any CPU and so we must select a non-idle CPU here.
+> This patch adds in support in workqueue framework to get preferred CPU details
+> from the scheduler, instead of using current CPU.
+> 
+> Most of the time when a work is queued, the current cpu isn't idle and so we
+> will choose it only. There are cases when a cpu is idle when it queues some
+> work. For example, consider following scenario:
+> - A cpu has programmed a timer and is IDLE now.
+> - CPU gets into interrupt handler due to timer and queues a work. As the CPU is
+>   currently IDLE, we can queue this work to some other CPU.
+> 
+> Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+> ---
+>  kernel/workqueue.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+> index 042d221..d32efa2 100644
+> --- a/kernel/workqueue.c
+> +++ b/kernel/workqueue.c
+> @@ -1238,7 +1238,7 @@ static void __queue_work(unsigned int cpu, struct workqueue_struct *wq,
+>  		struct global_cwq *last_gcwq;
+>  
+>  		if (cpu == WORK_CPU_UNBOUND)
+> -			cpu = raw_smp_processor_id();
+> +			cpu = sched_select_cpu(0);
 
-The CPSW network driver is working in net-next, and so it will be
-working in v3.8. Don't know about SD, since I only boot with a ramfs.
+A couple of things. The sched_select_cpu() is not cheap. It has a double
+loop of domains/cpus looking for a non idle cpu. If we have 1024 CPUs,
+and we are CPU 1023 and all other CPUs happen to be idle, we could be
+searching 1023 CPUs before we come up with our own.
 
-HTH,
-Richard
+__queue_work() should be fast as there is a reason that it is delaying
+the work and not running it itself.
+
+Also, I really don't like this as a default behavior. It seems that this
+solution is for a very special case, and this can become very intrusive
+for the normal case.
+
+To be honest, I'm uncomfortable with this approach. It seems to be
+fighting a symptom and not the disease. I'd rather find a way to keep
+work from being queued on wrong CPU. If it is a timer, find a way to
+move the timer. If it is something else, lets work to fix that. Doing
+searches of possibly all CPUs (unlikely, but it is there), just seems
+wrong to me.
+
+-- Steve
+
+
+>  
+>  		/*
+>  		 * It's multi cpu.  If @work was previously on a different
+> @@ -1383,7 +1383,7 @@ static void __queue_delayed_work(int cpu, struct workqueue_struct *wq,
+>  		if (gcwq)
+>  			lcpu = gcwq->cpu;
+>  		if (lcpu == WORK_CPU_UNBOUND)
+> -			lcpu = raw_smp_processor_id();
+> +			lcpu = sched_select_cpu(0);
+>  	} else {
+>  		lcpu = WORK_CPU_UNBOUND;
+>  	}
