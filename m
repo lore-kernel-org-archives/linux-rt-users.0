@@ -1,22 +1,32 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.53-rt77
-Date: Tue, 27 Nov 2012 21:44:51 -0500
-Message-ID: <1354070691.6276.95.camel@gandalf.local.home>
+From: Fernando Gomes <fernando.gomes@efacec.com>
+Subject: Re: [ANNOUNCE] 3.0.53-rt77
+Date: Wed, 28 Nov 2012 08:25:39 +0000
+Message-ID: <qpoctfrhi1wdy2jpd299wj19.1354091136214@email.android.com>
+References: <1354070691.6276.95.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:25200 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751111Ab2K1Cox (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 Nov 2012 21:44:53 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	"John Kacur" <jkacur@redhat.com>
+To: =?iso-8859-15?Q?An=EDbal_Almeida_Pinto?= <anibal.pinto@efacec.com>,
+	=?iso-8859-15?Q?Jos=E9_Alexandre_Ventura?=
+	<jose.ventura@efacec.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1354070691.6276.95.camel@gandalf.local.home>
+Content-Language: en-US
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+Nova release do rt sobre o 3.0.53, nao sei se nao valera a pena ver o que tem vindo a mudar, segundo este post nao sao alteracoes especificas do rt.
+
+Abraco
+
+Fernando
+
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
 
 Dear RT Folks,
