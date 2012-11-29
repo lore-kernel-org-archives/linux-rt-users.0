@@ -1,47 +1,70 @@
-From: Louis Gorenfeld <louis.gorenfeld@gmail.com>
-Subject: USB audio in 3.4.x rt-kernel vs. 2.6.33
-Date: Wed, 28 Nov 2012 12:30:25 -0800
-Message-ID: <CAOKANFRQu2PvjBsFqA-W40ys2htWaLf8VYrHXXjucd2KZVE-hA@mail.gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: 3.6.7-rt18 ARM BUG_ON() at kernel/sched/core.c:3817
+Date: Wed, 28 Nov 2012 19:31:42 -0800
+Message-ID: <50B6D71E.30003@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f174.google.com ([209.85.217.174]:53628 "EHLO
-	mail-lb0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755792Ab2K1Ua1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Nov 2012 15:30:27 -0500
-Received: by mail-lb0-f174.google.com with SMTP id gi11so7954968lbb.19
-        for <linux-rt-users@vger.kernel.org>; Wed, 28 Nov 2012 12:30:25 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<grant.likely@secretlab.ca>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
-  I wrote to the Linux Audio User list and didn't get any bites, so I
-thought I'd see if anyone here has any advice on this problem I've
-been having.
+3.6.7-rt18:  kernel BUG at .../kernel/sched/core.c:3817!
 
-  I've been seeing noticeably worse performance with USB audio devices
-using 3.4.5 and 3.4.11 PlanetCCRMA fc17 kernels over my old 2.6.33
-PlanetCCRMA kernel, and I was wondering if anyone else has experienced
-this. Running seven instances of OP-X under WINE, for example,
-consumed about 10% more CPU. I didn't see a similar increase using PCI
-audio.
+Grant reported this same problem for 3.6.5-rt15.
 
-I also whipped out LatencyTOP to take some readings, and I see that
-poll_schedule_timeout and pipe_wait seem to be culprits. What is
-interesting is that the maximum milliseconds reading is staying
-roughly the same for poll_schedule_timeout, yet the percentage
-increases as much as 4x or more. I take this to mean that although the
-worst-case is about the same between the new kernel and the old, that
-on average it's waiting on this function longer. I'm also seeing
-consistently more page faults using perf stat.
+I am seeing it on a different arm board.
 
-The realtime priorities, in general, look sane, though there may be
-something I'm missing.
+Here is the BUG_ON():
 
-What else could I check? I know going from 2.6.33 to 3.4.x is a leap--
-have there been any major scheduler changes that might be impacting
-performance?
+   asmlinkage void __sched preempt_schedule_irq(void)
+   {
+        struct thread_info *ti = current_thread_info();
 
--Louis
+        /* Catch callers which need to be fixed */
+        BUG_ON(ti->preempt_count || !irqs_disabled());
+
+Putting in some extra printk(), the BUG_ON() is triggering because
+ti->preempt_count is non-zero.
+
+
+It appears that the cause is in arch/arm/kernel/entry-armv.S.
+
+The call to preempt_schedule_irq() is from svc_preempt:
+
+   #ifdef CONFIG_PREEMPT
+   svc_preempt:
+           mov     r8, lr
+   1:      bl      preempt_schedule_irq            @ irq en/disable is done inside
+
+
+svc_preempt is branched to from one of two possible places.  The first was
+present before the lazy preempt code was added.  The first appears ok to me.
+(Note that the first branch does not occur if preempt count is non-zero.)
+
+The second branch can occur even if the preempt count is non-zero (which is
+what the BUG_ON() is finding):
+
+   __irq_svc:
+           svc_entry
+           irq_handler
+
+   #ifdef CONFIG_PREEMPT
+           get_thread_info tsk
+           ldr     r8, [tsk, #TI_PREEMPT]          @ get preempt count
+           ldr     r0, [tsk, #TI_FLAGS]            @ get flags
+           teq     r8, #0                          @ if preempt count != 0
+           movne   r0, #0                          @ force flags to 0
+           tst     r0, #_TIF_NEED_RESCHED
+           blne    svc_preempt
+           ldr     r8, [tsk, #TI_PREEMPT_LAZY]     @ get preempt lazy count
+           ldr     r0, [tsk, #TI_FLAGS]            @ get flags
+           teq     r8, #0                          @ if preempt lazy count != 0
+           movne   r0, #0                          @ force flags to 0
+           tst     r0, #_TIF_NEED_RESCHED_LAZY
+           blne    svc_preempt
+   #endif
