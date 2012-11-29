@@ -1,100 +1,62 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: 3.6.7-rt18 ARM BUG_ON() at kernel/sched/core.c:3817
-Date: Thu, 29 Nov 2012 11:52:59 -0800
-Message-ID: <50B7BD1B.9010508@am.sony.com>
-References: <50B6D71E.30003@am.sony.com>
+Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for histogram
+ overflow instance tracking
+Date: Thu, 29 Nov 2012 11:57:58 -0800
+Message-ID: <50B7BE46.2000200@am.sony.com>
+References: <1299192438.6366388.1354210090961.JavaMail.root@vmware.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"grant.likely@secretlab.ca" <grant.likely@secretlab.ca>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <50B6D71E.30003@am.sony.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: "Rowand, Frank" <Frank_Rowand@sonyusa.com>,
+	John Kacur <jkacur@redhat.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Bhavesh Davda <bhavesh@vmware.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from co9ehsobe001.messaging.microsoft.com ([207.46.163.24]:46889
+	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751334Ab2K2T6F (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Nov 2012 14:58:05 -0500
+In-Reply-To: <1299192438.6366388.1354210090961.JavaMail.root@vmware.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/28/12 19:31, Frank Rowand wrote:
-> 3.6.7-rt18:  kernel BUG at .../kernel/sched/core.c:3817!
+On 11/29/12 09:28, Bhavesh Davda wrote:
+>>> I'm back...  Bhavesh, have you had a chance to think about my last
+>>> several emails (my comments on your latest patch, my proposed
+>>> patch,
+>>> and the email I'm responding to)?  Any comments?
+>>
+>> Hello Frank. Welcome back. I was out for the long weekend and am just
+>> getting back in the swing of things too, so sorry about the delay.
+>>
+>> I do have real use cases for this "outlier" mode, that I've used
+>> effectively to identify sources of high latencies of cyclictest
+> <snip> 
+>> I'm hoping that others in the community find similar uses of this
+>> "outlier" feature of cyclictest.
+>>
+> <snip>
+>> I'm going to respond to your proposed patch next.
 > 
-> Grant reported this same problem for 3.6.5-rt15.
+> Hello Frank,
 > 
-> I am seeing it on a different arm board.
+> I'm sorry I can't find your e-mail with a proposed patch on top of my patch posted on 
 > 
-> Here is the BUG_ON():
+> Date:       2012-11-16 2:04:07
 > 
->    asmlinkage void __sched preempt_schedule_irq(void)
->    {
->         struct thread_info *ti = current_thread_info();
+> with
 > 
->         /* Catch callers which need to be fixed */
->         BUG_ON(ti->preempt_count || !irqs_disabled());
+> Message-ID: 1465858638.1880820.1353031447623.JavaMail.root () vmware ! com
 > 
-> Putting in some extra printk(), the BUG_ON() is triggering because
-> ti->preempt_count is non-zero.
+> Can you please tell me which e-mail contained your proposed patch on top of this patch?
 > 
+> Thanks
 > 
-> It appears that the cause is in arch/arm/kernel/entry-armv.S.
-> 
-> The call to preempt_schedule_irq() is from svc_preempt:
-> 
->    #ifdef CONFIG_PREEMPT
->    svc_preempt:
->            mov     r8, lr
->    1:      bl      preempt_schedule_irq            @ irq en/disable is done inside
-> 
-> 
-> svc_preempt is branched to from one of two possible places.  The first was
-> present before the lazy preempt code was added.  The first appears ok to me.
-> (Note that the first branch does not occur if preempt count is non-zero.)
-> 
-> The second branch can occur even if the preempt count is non-zero (which is
-> what the BUG_ON() is finding):
-> 
->    __irq_svc:
->            svc_entry
->            irq_handler
-> 
->    #ifdef CONFIG_PREEMPT
->            get_thread_info tsk
->            ldr     r8, [tsk, #TI_PREEMPT]          @ get preempt count
->            ldr     r0, [tsk, #TI_FLAGS]            @ get flags
->            teq     r8, #0                          @ if preempt count != 0
->            movne   r0, #0                          @ force flags to 0
->            tst     r0, #_TIF_NEED_RESCHED
->            blne    svc_preempt
->            ldr     r8, [tsk, #TI_PREEMPT_LAZY]     @ get preempt lazy count
->            ldr     r0, [tsk, #TI_FLAGS]            @ get flags
->            teq     r8, #0                          @ if preempt lazy count != 0
->            movne   r0, #0                          @ force flags to 0
->            tst     r0, #_TIF_NEED_RESCHED_LAZY
->            blne    svc_preempt
->    #endif
+> - Bhavesh
 
-And here is a patch that fixes the symptom.  I'll have to look at how
-the preempt lazy count feature works to see if the patch is consistent
-with the feature.  I'll do that next.
+Strange, I don't find it in any of the archives I looked at.  I'll send it again.
 
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
----
- arch/arm/kernel/entry-armv.S |    4 	3 +	1 -	0 !
- 1 file changed, 3 insertions(+), 1 deletion(-)
+-Frank
 
-Index: b/arch/arm/kernel/entry-armv.S
-===================================================================
---- a/arch/arm/kernel/entry-armv.S
-+++ b/arch/arm/kernel/entry-armv.S
-@@ -221,8 +221,10 @@ __irq_svc:
- 	movne	r0, #0				@ force flags to 0
- 	tst	r0, #_TIF_NEED_RESCHED
- 	blne	svc_preempt
--	ldr	r8, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
- 	ldr	r0, [tsk, #TI_FLAGS]		@ get flags
-+	teq	r8, #0				@ if preempt count != 0
-+	movne	r0, #0				@ force flags to 0
-+	ldr	r8, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
- 	teq	r8, #0				@ if preempt lazy count != 0
- 	movne	r0, #0				@ force flags to 0
- 	tst	r0, #_TIF_NEED_RESCHED_LAZY
