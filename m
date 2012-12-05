@@ -1,47 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.54-rt78
-Date: Tue, 04 Dec 2012 16:51:25 -0500
-Message-ID: <1354657885.6276.207.camel@gandalf.local.home>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: [PATCH RT 0/2][RFC] fix RCU stall warning on ARM
+Date: Tue, 4 Dec 2012 20:47:22 -0800
+Message-ID: <50BED1DA.7070907@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<tglx@linutronix.de>, <paulmck@linux.vnet.ibm.com>,
+	<dipankar@in.ibm.com>, <linux-arm-kernel@lists.infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from [65.55.88.11] ([65.55.88.11]:5096 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-FAIL-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1753507Ab2LEEs0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Dec 2012 23:48:26 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+The RCU stall warning functions call trigger_all_cpu_backtrace()
+to print a backtrace on each cpu.  This function is only
+implemented for x86.  Add a version for ARM.
 
-Dear RT Folks,
+With CONFIG_PREEMPT_RT_FULL enabled, flushing the output from
+printk() is inhibited in some contexts to avoid increasing
+real time latencies.  The RCU stall warnings are inhibited
+on ARM due to this feature.  (I have not tested whether this
+is also the case on other architectures.)  Add back the
+oops_in_progress flag to allow the RCU stall warnings to
+print immediately.
 
-I'm pleased to announce the 3.0.54-rt78 stable release.
+A third patch contains test scaffolding to force the stall
+warnings to occur so that the other patches can be tested.
+The third patch should __not__ added to the mainline
+RT PREEMPT patch tree.
 
+These patches apply to 3.6.7-rt18.  They do not apply
+cleanly to 3.0.xx.
 
-This release is just an update to the new stable 3.0.54 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: fc2699303be3defb48bfa3259dba66dd2f763fc1
-
-
-Or to build 3.0.54-rt78 directly, the following patches should be
-applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.54.xz
-
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.54-rt78.patch.xz
-
-
-
-Enjoy,
-
--- Steve
