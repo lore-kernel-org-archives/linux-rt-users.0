@@ -1,7 +1,7 @@
 From: Frank Rowand <frank.rowand@am.sony.com>
 Subject: Re: [PATCH RT 0/2][RFC] fix RCU stall warning on ARM
-Date: Tue, 4 Dec 2012 20:52:48 -0800
-Message-ID: <50BED320.3060204@am.sony.com>
+Date: Tue, 4 Dec 2012 21:05:29 -0800
+Message-ID: <50BED619.8060102@am.sony.com>
 References: <50BED1DA.7070907@am.sony.com>
 Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
@@ -14,126 +14,59 @@ To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	"dipankar@in.ibm.com" <dipankar@in.ibm.com>,
 	"linux-arm-kernel@lists.infradead.org"
 	<linux-arm-kernel@lists.infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from tx2ehsobe003.messaging.microsoft.com ([65.55.88.13]:55328 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751148Ab2LEFFb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 5 Dec 2012 00:05:31 -0500
 In-Reply-To: <50BED1DA.7070907@am.sony.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+On 12/04/12 20:47, Frank Rowand wrote:
+> The RCU stall warning functions call trigger_all_cpu_backtrace()
+> to print a backtrace on each cpu.  This function is only
+> implemented for x86.  Add a version for ARM.
+> 
+> With CONFIG_PREEMPT_RT_FULL enabled, flushing the output from
+> printk() is inhibited in some contexts to avoid increasing
+> real time latencies.  The RCU stall warnings are inhibited
+> on ARM due to this feature.  (I have not tested whether this
+> is also the case on other architectures.)  Add back the
+> oops_in_progress flag to allow the RCU stall warnings to
+> print immediately.
+
+When I first implemented these patches on a locally modified
+3.0.27-rt67, the call to "bust_spinlocks(0)" that I added to
+print_cpu_stall() led to LOCKDEP warning of inconsistent
+lock state from a trylock in serial_omap_console_write():
+
+        else if (oops_in_progress)
+                locked = spin_trylock_irqsave(&up->port.lock, flags);
+
+If I understand correctly, the warning is triggered on the
+slow lock path.  Some more of the warning is:
+
+   inconsistent {HARDIRQ-ON-W} -> {IN-HARDIRQ-W} usage.
+   swapper/1/0 [HC1[1]:SC0[0]:HE0:SE1] takes:
+    (&(&(&port->lock)->lock)->wait_lock){?.+...}, at: [<c0478ed0>] rt_spin_trylock_irqsave+0x24/0xe0
+
+   ...
+
+   other info that might help us debug this:
+    Possible unsafe locking scenario:
+
+          CPU0
+          ----
+     lock(&(&(&port->lock)->lock)->wait_lock);
+     <Interrupt>
+       lock(&(&(&port->lock)->lock)->wait_lock);
 
 
-This patch should __not__ be committed to the RT_PREEMPT tree.
+I have not been able to trigger the warning on recent versions
+of the patches, but I suspect the latent problem might still
+exist.
 
-Test scaffolding to force printing of rcu detected stall.  Each time the
-specified value is echoed into the proc file, the routine to be tested
-will be called one time, from the context it would normally be called from.
+-Frank
 
-   # test print_cpu_stall()
-   echo 1 > /proc/sys/kernel/zzz_debug_print_stall_once
-   
-   # test print_other_cpu_stall()
-   echo 2 > /proc/sys/kernel/zzz_debug_print_stall_once
-
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
----
- kernel/rcutree.c |   26 	26 +	0 -	0 !
- kernel/sysctl.c  |   11 	11 +	0 -	0 !
- 2 files changed, 37 insertions(+)
-
-Index: b/kernel/rcutree.c
-===================================================================
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -738,6 +738,7 @@ static void record_gp_stall_check_time(s
- 	rsp->jiffies_stall = jiffies + jiffies_till_stall_check();
- }
- 
-+int zzz_debug_print_other_cpu_stall;
- static void print_other_cpu_stall(struct rcu_state *rsp)
- {
- 	int cpu;
-@@ -750,10 +751,12 @@ static void print_other_cpu_stall(struct
- 
- 	raw_spin_lock_irqsave(&rnp->lock, flags);
- 	delta = jiffies - rsp->jiffies_stall;
-+if (!zzz_debug_print_other_cpu_stall) {
- 	if (delta < RCU_STALL_RAT_DELAY || !rcu_gp_in_progress(rsp)) {
- 		raw_spin_unlock_irqrestore(&rnp->lock, flags);
- 		return;
- 	}
-+}
- 	rsp->jiffies_stall = jiffies + 3 * jiffies_till_stall_check() + 3;
- 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
- 
-@@ -792,6 +795,10 @@ static void print_other_cpu_stall(struct
- 	ndetected += rcu_print_task_stall(rnp);
- 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
- 
-+if (zzz_debug_print_other_cpu_stall) {
-+	ndetected += 1;
-+}
-+
- 	print_cpu_stall_info_end();
- 	printk(KERN_CONT "(detected by %d, t=%ld jiffies)\n",
- 	       smp_processor_id(), (long)(jiffies - rsp->gp_start));
-@@ -843,6 +850,7 @@ static void print_cpu_stall(struct rcu_s
- 	set_need_resched();  /* kick ourselves to get things going. */
- }
- 
-+int zzz_debug_print_stall_once;
- static void check_cpu_stall(struct rcu_state *rsp, struct rcu_data *rdp)
- {
- 	unsigned long j;
-@@ -851,6 +859,24 @@ static void check_cpu_stall(struct rcu_s
- 
- 	if (rcu_cpu_stall_suppress)
- 		return;
-+
-+	if (zzz_debug_print_stall_once) {
-+		int tmp = zzz_debug_print_stall_once;
-+		zzz_debug_print_stall_once = 0;
-+		if (tmp & 0x1) {
-+			pr_crit("\n\n*****  DEBUG -- test print_cpu_stall():\n\n");
-+			print_cpu_stall(rsp);
-+		}
-+		if (tmp & 0x2) {
-+			pr_crit("\n\n*****  DEBUG -- test print_other_cpu_stall():\n\n");
-+			zzz_debug_print_other_cpu_stall = 1;
-+			print_other_cpu_stall(rsp);
-+			zzz_debug_print_other_cpu_stall = 0;
-+		}
-+
-+		return;
-+	}
-+
- 	j = ACCESS_ONCE(jiffies);
- 	js = ACCESS_ONCE(rsp->jiffies_stall);
- 	rnp = rdp->mynode;
-Index: b/kernel/sysctl.c
-===================================================================
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -132,6 +132,8 @@ static int one_hundred = 100;
- static int ten_thousand = 10000;
- #endif
- 
-+extern int zzz_debug_print_stall_once;
-+
- /* this is needed for the proc_doulongvec_minmax of vm_dirty_bytes */
- static unsigned long dirty_bytes_min = 2 * PAGE_SIZE;
- 
-@@ -1000,6 +1002,15 @@ static struct ctl_table kern_table[] = {
- 		.proc_handler	= proc_dointvec,
- 	},
- #endif
-+#ifdef CONFIG_SMP
-+	{
-+		.procname	= "zzz_debug_print_stall_once",
-+		.data		= &zzz_debug_print_stall_once,
-+		.maxlen		= sizeof(int),
-+		.mode		= 0644,
-+		.proc_handler	= &proc_dointvec,
-+	},
-+#endif
- 	{ }
- };
- 
