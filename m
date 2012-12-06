@@ -1,82 +1,60 @@
-From: <jackie.huang@windriver.com>
-Subject: [PATCH RT-TESTS] rt-tests Makefile: Added missing dependencies
-Date: Thu, 6 Dec 2012 18:10:56 +0800
-Message-ID: <1354788656-26552-1-git-send-email-jackie.huang@windriver.com>
+From: Tim Sander <tstone@iss.tu-darmstadt.de>
+Subject: Re: [ANNOUNCE] 3.6.9-rt21
+Date: Thu, 6 Dec 2012 15:35:35 +0100
+Message-ID: <201212061535.37585.tstone@iss.tu-darmstadt.de>
+References: <alpine.LFD.2.02.1212051659160.2701@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <Jackie.Huang@windriver.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:44445 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932414Ab2LFKK7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Dec 2012 05:10:59 -0500
-Received: from ALA-HCA.corp.ad.wrs.com (ala-hca.corp.ad.wrs.com [147.11.189.40])
-	by mail.windriver.com (8.14.5/8.14.3) with ESMTP id qB6AAwhF027148
-	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=FAIL)
-	for <linux-rt-users@vger.kernel.org>; Thu, 6 Dec 2012 02:10:59 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: Text/Plain;
+  charset="iso-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	"linux-rt-users" <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.02.1212051659160.2701@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Jackie Huang <jackie.huang@windriver.com>
+Hi Thomas
+> I'm pleased to announce the 3.6.9-rt21 release. 3.6.7-rt18, 3.6.8-rt19
+> and 3.6.9-rt20 are not announced updates to the respective 3.6.y
+> stable releases without any RT changes
+There is some progress here. It boots but sometimes i see the backtrace below.
 
-Hi,
+Also: Has s.th. changed in respect to the modules. I have one module wich goes on an 
+endless interrupt loop freezing the device. The driver works fine for 3.0  - 3.4 preempt 
+rt kernels? This is a miscdev based driver. If someone is interested i can post the source 
+over here. But unfortunatly i have not figured out why this thing goes to an endless interrupt.
+The identical driver works flawless on 3.4.
 
-When I make with -j 4 option, I got the following error sometimes:
+As always i have some platform adaptation code applied but nothing serious/different from the 3.4 patches which work fine.
 
-cc -Wall -Wno-nonnull -O2 -DNUMA  -o pi_stress pi_stress.o -lrt -lpthread -lrttest -L.
-cc -Wall -Wno-nonnull -O2 -DNUMA  -o rt-migrate-test rt-migrate-test.o -lrt -lpthread -lrttest -L.
-cc -Wall -Wno-nonnull -O2 -DNUMA  -o hackbench hackbench.o -lrt -lpthread -lrttest -L.
-//usrusr/bin/ld: cannot find /-bin/ldlrttest:
- cannot find -collect2: lrttest
-collect2: ld returned 1 exit status
-ld returned 1 exit status
-/usr/bin/ld: cannot find -lrttest
-collect2: ld returned 1 exit status
+Backtrace: 
+[<c00114ec>] (dump_backtrace+0x0/0x110) from [<c029732c>] (dump_stack+0x18/0x1c)
+ r6:c0327ca9 r5:00000da5 r4:00000000 r3:c7846080
+[<c0297314>] (dump_stack+0x0/0x1c) from [<c001b910>] (warn_slowpath_common+0x54/0x6c)
+[<c001b8bc>] (warn_slowpath_common+0x0/0x6c) from [<c001b94c>] (warn_slowpath_null+0x24/0x2c)
+ r8:c03b0bc8 r7:c03c5f38 r6:c784e000 r5:60000013 r4:00000000
+r3:00000009
+[<c001b928>] (warn_slowpath_null+0x0/0x2c) from [<c00533cc>] (check_flags+0xcc/0x12c)
+[<c0053300>] (check_flags+0x0/0x12c) from [<c0054ef0>] (lock_is_held+0x3c/0xb4)
+[<c0054eb4>] (lock_is_held+0x0/0xb4) from [<c0043ff0>] (__might_sleep+0x40/0x1d0)
+ r8:c03b2440 r7:c03c5f38 r6:00000000 r5:c0327ce1 r4:00000481
+r3:00000000
+[<c0043fb0>] (__might_sleep+0x0/0x1d0) from [<c0299228>] (rt_mutex_lock+0x20/0x40)
+ r7:c784ff24 r6:c08c0e80 r5:c784e000 r4:c784ff20
+[<c0299208>] (rt_mutex_lock+0x0/0x40) from [<c0068a54>] (rcu_kthread+0x100/0x198)
+ r4:c784ff20 r3:c784ff40
+[<c0068954>] (rcu_kthread+0x0/0x198) from [<c003be14>] (kthread+0x90/0x9c)
+[<c003bd84>] (kthread+0x0/0x9c) from [<c00218e8>] (do_exit+0x0/0x2f0)
+ r7:00000013 r6:c00218e8 r5:c003bd84 r4:c782becc
+---[ end trace 0000000000000002 ]---
+possible reason: unannotated irqs-on.
+irq event stamp: 87282
+hardirqs last  enabled at (87281): [<c029a1a8>] _raw_spin_unlock_irqrestore+0x44/0x80
+hardirqs last disabled at (87282): [<c00541c8>] debug_check_no_locks_freed+0x44/0x154
+softirqs last  enabled at (0): [<c001a2fc>] copy_process+0x1f4/0xb78
+softirqs last disabled at (0): [<  (null)>]   (null)
 
-which indecates that the following targets missed dependency on librttest.a:
-pi_stress
-rt-migrate-test
-hackbench
-
-so this patch add these missing dependencies.
-
-Signed-off-by: Jackie Huang <jackie.huang@windriver.com>
----
- Makefile |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/Makefile b/Makefile
-index fd3cdb3..60707a7 100644
---- a/Makefile
-+++ b/Makefile
-@@ -68,14 +68,14 @@ cyclictest: cyclictest.o librttest.a
- signaltest: signaltest.o librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
- 
--pi_stress: pi_stress.o
-+pi_stress: pi_stress.o librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
- 
- hwlatdetect:  src/hwlatdetect/hwlatdetect.py
- 	chmod +x src/hwlatdetect/hwlatdetect.py
- 	ln -s src/hwlatdetect/hwlatdetect.py hwlatdetect
- 
--rt-migrate-test: rt-migrate-test.o
-+rt-migrate-test: rt-migrate-test.o librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
- 
- ptsematest: ptsematest.o librttest.a
-@@ -96,7 +96,7 @@ sendme: sendme.o librttest.a
- pip_stress: pip_stress.o librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
- 
--hackbench: hackbench.o
-+hackbench: hackbench.o librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^ $(LIBS)
- 
- librttest.a: rt-utils.o error.o rt-get_cpu.o
--- 
-1.7.9.5
-
+Best regards
+Tim
