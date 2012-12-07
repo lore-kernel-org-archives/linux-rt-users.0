@@ -1,30 +1,60 @@
-From: Tim Sander <tim01@vlsi.informatik.tu-darmstadt.de>
-Subject: Re: [ANNOUNCE] 3.6.9-rt21
-Date: Thu, 6 Dec 2012 21:52:17 +0100
-Message-ID: <201212062152.17589.tim01@vlsi.informatik.tu-darmstadt.de>
-References: <alpine.LFD.2.02.1212051659160.2701@ionos> <201212061535.37585.tstone@iss.tu-darmstadt.de>
-Mime-Version: 1.0
-Content-Type: Text/Plain;
-  charset="iso-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	"linux-rt-users" <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH RT 2/4] sched/rt: Try to migrate task if preempting pinned rt task
+Date: Fri, 07 Dec 2012 18:56:17 -0500
+Message-ID: <20121208000900.489002301@goodmis.org>
+References: <20121207235615.206108556@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	Ingo Molnar <mingo@kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <201212061535.37585.tstone@iss.tu-darmstadt.de>
+Content-Disposition: inline; filename=fix-post-sched-push.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi
-> Also: Has s.th. changed in respect to the modules. I have one module wich
-> goes on an endless interrupt loop freezing the device. The driver works
-> fine for 3.0  - 3.4 preempt rt kernels? This is a miscdev based driver. If
-> someone is interested i can post the source over here. But unfortunatly i
-> have not figured out why this thing goes to an endless interrupt. The
-> identical driver works flawless on 3.4.
+If a higher priority task is about to preempt a task that has been
+pinned to a CPU. Try to first see if the higher priority task can
+preempt another task instead.
 
-I have just crosschecked with 3.6.9. The same error as with the preempt rt 
-version. So it's not an preempt rt problem.
+That is, a high priority process wakes up on a CPU while a currently
+running task can still migrate, it will miss pushing that high priority
+task to another CPU. If by the time the task schedules, the task
+that it's about to preempt could have changed its affinity and
+is pinned. At this time, it may be better to move the task to another
+CPU if one exists that is currently running a lower priority task
+than the one about to be preempted.
 
-Best regards
-Tim
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Index: linux-rt.git/kernel/sched/rt.c
+===================================================================
+--- linux-rt.git.orig/kernel/sched/rt.c
++++ linux-rt.git/kernel/sched/rt.c
+@@ -1804,8 +1804,22 @@ skip:
+ 
+ static void pre_schedule_rt(struct rq *rq, struct task_struct *prev)
+ {
++	struct task_struct *p = prev;
++
++	/*
++	 * If we are preempting a migrate disabled task
++	 * see if we can push the higher tasks first.
++	 */
++	if (prev->on_rq && (prev->nr_cpus_allowed <= 1 || prev->migrate_disable) &&
++	    has_pushable_tasks(rq) && rq->rt.highest_prio.next < prev->prio) {
++		p = _pick_next_task_rt(rq);
++
++		if (p != prev && p->nr_cpus_allowed > 1 && push_rt_task(rq))
++			p = _pick_next_task_rt(rq);
++	}
++
+ 	/* Try to pull RT tasks here if we lower this rq's prio */
+-	if (rq->rt.highest_prio.curr > prev->prio)
++	if (rq->rt.highest_prio.curr > p->prio)
+ 		pull_rt_task(rq);
+ }
+ 
