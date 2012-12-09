@@ -1,46 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT 4/4] sched/rt: Initiate a pull when the priority of a task is lowered
-Date: Fri, 07 Dec 2012 18:56:19 -0500
-Message-ID: <20121208000900.747763148@goodmis.org>
-References: <20121207235615.206108556@goodmis.org>
+From: Ove Karlsen <ove.karlsen@paradoxuncreated.com>
+Subject: Re: [ANNOUNCE] 3.6.9-rt21
+Date: Sat, 08 Dec 2012 16:48:25 -0800
+Message-ID: <50C3DFD9.4000408@paradoxuncreated.com>
+References: <alpine.LFD.2.02.1212051659160.2701@ionos> <201212061535.37585.tstone@iss.tu-darmstadt.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Ingo Molnar <mingo@kernel.org>
-To: linux-kernel@vger.kernel.org,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=rt-migrate-redo.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: peoples@linuxlist
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp.domeneshop.no ([194.63.252.54]:60642 "EHLO
+	smtp.domeneshop.no" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933621Ab2LHPs2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 8 Dec 2012 10:48:28 -0500
+In-Reply-To: <201212061535.37585.tstone@iss.tu-darmstadt.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-If a task lowers its priority (say by losing priority inheritance)
-if a higher priority task is waiting on another CPU, initiate a pull.
+Heya. As some may remember, I said I was going to build an E5 machine. 
+Well I did, well atleast ordered the most similar to what I wanted, and 
+exchanged the graphics-card (pcie3.0) only. I was completely correct in 
+that this machine, would have low-jitter
+/low-latency. And it completely lives up to expectations. So if you want 
+low-jitter (think amiga, if that references means something to you), 
+definately get an E5 (with direct i/o).
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Threadirqs also works on this computer.
 
-Index: linux-rt.git/kernel/sched/rt.c
-===================================================================
---- linux-rt.git.orig/kernel/sched/rt.c
-+++ linux-rt.git/kernel/sched/rt.c
-@@ -997,6 +997,8 @@ inc_rt_prio(struct rt_rq *rt_rq, int pri
- 	inc_rt_prio_smp(rt_rq, prio, prev_prio);
- }
- 
-+static int pull_rt_task(struct rq *this_rq);
-+
- static void
- dec_rt_prio(struct rt_rq *rt_rq, int prio)
- {
-@@ -1021,6 +1023,9 @@ dec_rt_prio(struct rt_rq *rt_rq, int pri
- 		rt_rq->highest_prio.curr = MAX_RT_PRIO;
- 
- 	dec_rt_prio_smp(rt_rq, prio, prev_prio);
-+
-+	if (prev_prio < rt_rq->highest_prio.curr)
-+		pull_rt_task(rq_of_rt_rq(rt_rq));
- }
- 
- #else
+Peace Be With You.
+
+
