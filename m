@@ -1,48 +1,64 @@
-From: Ove Karlsen <ove.karlsen@paradoxuncreated.com>
-Subject: Re: [ANNOUNCE] 3.6.9-rt21
-Date: Sun, 09 Dec 2012 02:08:44 -0800
-Message-ID: <50C4632C.1070008@paradoxuncreated.com>
-References: <alpine.LFD.2.02.1212051659160.2701@ionos> <201212061535.37585.tstone@iss.tu-darmstadt.de> <50C3DFD9.4000408@paradoxuncreated.com> <50C3DB17.2010705@earthlink.net>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: =?UTF-8?q?backfire=3A=20fix=20build=20failure=20for=20modern=20kernels?=
+Date: Sun,  9 Dec 2012 23:44:44 +0100
+Message-ID: <1355093085-8436-1-git-send-email-u.kleine-koenig@pengutronix.de>
+References: <1136362490.243403.1352846502316.JavaMail.root@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: jdow <jdow@earthlink.net>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp.domeneshop.no ([194.63.252.54]:43441 "EHLO
-	smtp.domeneshop.no" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1030344Ab2LIBIt (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:36914 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759115Ab2LIWpM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 8 Dec 2012 20:08:49 -0500
-In-Reply-To: <50C3DB17.2010705@earthlink.net>
+	Sun, 9 Dec 2012 17:45:12 -0500
+In-Reply-To: <1136362490.243403.1352846502316.JavaMail.root@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/8/2012 4:28 PM, jdow wrote:
-> On 2012/12/08 16:48, Ove Karlsen wrote:
->> Heya. As some may remember, I said I was going to build an E5 
->> machine. Well I
->> did, well atleast ordered the most similar to what I wanted, and 
->> exchanged the
->> graphics-card (pcie3.0) only. I was completely correct in that this 
->> machine,
->> would have low-jitter
->> /low-latency. And it completely lives up to expectations. So if you want
->> low-jitter (think amiga, if that references means something to you), 
->> definately
->> get an E5 (with direct i/o).
->>
->> Threadirqs also works on this computer.
->
-> Ah, yes, we did do some surprising things with those old boxes. Richmond
-> Sound Design had some applications for assisting stage managers in
-> theatrical, theme park, and other presentation applications. The jitter
-> compared to latency was remarkably low considering the age of the boxes.
->
-> {^_-}   We you ever on BIX? (I don't recognize the name, though.)
->     Joanne
-Yeah, we have finally caught up, and that is a very good thing. No I was 
-never on BIX.
+SPIN_LOCK_UNLOCKED doesn't work any more since v2.6.39-rc1~511^2~11
+(locking: Remove deprecated lock initializers). DEFINE_SPINLOCK is
+available since v2.6.14-rc1~223, so it should be ok to depend on that.
+<linux/smp_lock.h> is gone since v2.6.39-rc1~467^2. Also <asm/system.h>
+is gone for most architectures since v3.4-rc1~54^2.
 
-Peace Be WIth You.
+The module builds fine for Debian's 2.6.32 and 3.6 kernels with this
+change.
+
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
+ src/backfire/backfire.c |    4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+--- a/src/backfire/backfire.c
++++ b/src/backfire/backfire.c
+@@ -24,7 +24,6 @@
+ #include <linux/sched.h>
+ #include <linux/cpumask.h>
+ #include <linux/time.h>
+-#include <linux/smp_lock.h>
+ #include <linux/types.h>
+ #include <linux/errno.h>
+ #include <linux/miscdevice.h>
+@@ -32,11 +31,10 @@
+ #include <linux/spinlock.h>
+=20
+ #include <asm/uaccess.h>
+-#include <asm/system.h>
+=20
+ #define BACKFIRE_MINOR MISC_DYNAMIC_MINOR
+=20
+-static spinlock_t backfire_state_lock =3D SPIN_LOCK_UNLOCKED;
++static DEFINE_SPINLOCK(backfire_state_lock);
+ static int backfire_open_cnt; /* #times opened */
+ static int backfire_open_mode; /* special open modes */
+ static struct timeval sendtime; /* when the most recent signal was sen=
+t */
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
