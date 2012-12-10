@@ -1,54 +1,105 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Shared interrupts and RT question
-Date: Mon, 10 Dec 2012 03:22:26 -0800
-Message-ID: <73621A3E-9310-43ED-92EB-4759BF977AA5@thebigcorporation.com>
-References: <50C5C0BD.9010600@meduna.org>
-Mime-Version: 1.0 (Mac OS X Mail 6.2 \(1499\))
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Stanislav Meduna <stano@meduna.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-da0-f46.google.com ([209.85.210.46]:37395 "EHLO
-	mail-da0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751128Ab2LJLWk convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Dec 2012 06:22:40 -0500
-Received: by mail-da0-f46.google.com with SMTP id p5so1197775dak.19
-        for <linux-rt-users@vger.kernel.org>; Mon, 10 Dec 2012 03:22:39 -0800 (PST)
-In-Reply-To: <50C5C0BD.9010600@meduna.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH RT 2/2][RFC] let RCU stall messages escape with
+ CONFIG_PREEMPT_RT_FULL
+Date: Mon, 10 Dec 2012 06:29:14 -0800
+Message-ID: <20121210142914.GP2516@linux.vnet.ibm.com>
+References: <50BED1DA.7070907@am.sony.com>
+ <50BED305.9090308@am.sony.com>
+Reply-To: paulmck@linux.vnet.ibm.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"tglx@linutronix.de" <tglx@linutronix.de>,
+	"dipankar@in.ibm.com" <dipankar@in.ibm.com>,
+	"linux-arm-kernel@lists.infradead.org"
+	<linux-arm-kernel@lists.infradead.org>
+To: Frank Rowand <frank.rowand@am.sony.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <50BED305.9090308@am.sony.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-
-On Dec 10, 2012, at 3:00 AM, Stanislav Meduna <stano@meduna.org> wrote:
-
-> Hi,
+On Tue, Dec 04, 2012 at 08:52:21PM -0800, Frank Rowand wrote:
 > 
-> I have a machine that puts several interrupts on one interrupt
-> line. As these are generally headless embedded machines bought
-> and installed by the customer, it is a bit problematic to tweak
-> the BIOS to assign them in an optimal way.
+> The printk()s in RCU stall warnings do not get flushed to the console
+> on ARM.  Add the oops_in_progress flag back into the special trylock case in
+> console_trylock_for_printk(), and set the flag using "bust_spinlocks(1)".
+> This allows the printk() output to be flushed to the console.
 > 
-> Now I am seeing latencies such as
+> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+
+Is bust_spinlocks(1) appropriate for all architectures, or should this
+be conditioned on architectures that need oops_in_progress to be set?
+
+							Thanx, Paul
+
+> ---
+>  kernel/printk.c  |    5 	3 +	2 -	0 !
+>  kernel/rcutree.c |   14 	14 +	0 -	0 !
+>  2 files changed, 17 insertions(+), 2 deletions(-)
 > 
-> Wakeup shared prio
-> 385 50 638 (0) irq/15-eth1 <- 28 50 irq/15-ata_piix 5147.373113
-> #Minimum latency: 1 microseconds
-> #Average latency: 4 microseconds
-> #Maximum latency: 638 microseconds
+> Index: b/kernel/printk.c
+> ===================================================================
+> --- a/kernel/printk.c
+> +++ b/kernel/printk.c
+> @@ -1390,8 +1390,9 @@ static int console_trylock_for_printk(un
+>  {
+>  	int retval = 0, wake = 0;
+>  #ifdef CONFIG_PREEMPT_RT_FULL
+> -	int lock = !early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+> -		(preempt_count() <= 1);
+> +	int lock = oops_in_progress || (
+> +		!early_boot_irqs_disabled && !irqs_disabled_flags(flags) &&
+> +		(preempt_count() <= 1));
+>  #else
+>  	int lock = 1;
+>  #endif
+> Index: b/kernel/rcutree.c
+> ===================================================================
+> --- a/kernel/rcutree.c
+> +++ b/kernel/rcutree.c
+> @@ -758,6 +758,11 @@ static void print_other_cpu_stall(struct
+>  	raw_spin_unlock_irqrestore(&rnp->lock, flags);
 > 
-> I don't care about the ATA, but eth1 is important. Is it
-> enough to adjust the priorities of the kernel threads
-> or are shared interrupts generally a recipe for problems
-> in the RT_FULL world?
+>  	/*
+> +	 * Allow printk() to flush to device
+> +	 */
+> +	bust_spinlocks(1);
+> +
+> +	/*
+>  	 * OK, time to rat on our buddy...
+>  	 * See Documentation/RCU/stallwarn.txt for info on how to debug
+>  	 * RCU CPU stall warnings.
+> @@ -799,6 +804,8 @@ static void print_other_cpu_stall(struct
 > 
-
-I think that the worst-case would occur when the eth1 irq is asserted right after the system has vectored to the ATA handler.
-
-I am not sure about the current state of things, but in the past, a shared IRQ line would not process another iRQ until the first one completes.
-
-To work around it, the ATA code must be modified to turn off the IRQ assert at the chip (this may have already been done)
-
-Sven
-
+>  	rcu_print_detail_task_stall(rsp);
+> 
+> +	bust_spinlocks(0);
+> +
+>  	force_quiescent_state(rsp, 0);  /* Kick them all. */
+>  }
+> 
+> @@ -808,6 +815,11 @@ static void print_cpu_stall(struct rcu_s
+>  	struct rcu_node *rnp = rcu_get_root(rsp);
+> 
+>  	/*
+> +	 * Allow printk() to flush to device
+> +	 */
+> +	bust_spinlocks(1);
+> +
+> +	/*
+>  	 * OK, time to rat on ourselves...
+>  	 * See Documentation/RCU/stallwarn.txt for info on how to debug
+>  	 * RCU CPU stall warnings.
+> @@ -820,6 +832,8 @@ static void print_cpu_stall(struct rcu_s
+>  	if (!trigger_all_cpu_backtrace())
+>  		dump_stack();
+> 
+> +	bust_spinlocks(0);
+> +
+>  	raw_spin_lock_irqsave(&rnp->lock, flags);
+>  	if (ULONG_CMP_GE(jiffies, rsp->jiffies_stall))
+>  		rsp->jiffies_stall = jiffies +
+> 
