@@ -1,64 +1,48 @@
-From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: =?UTF-8?q?backfire=3A=20fix=20build=20failure=20for=20modern=20kernels?=
-Date: Sun,  9 Dec 2012 23:44:44 +0100
-Message-ID: <1355093085-8436-1-git-send-email-u.kleine-koenig@pengutronix.de>
-References: <1136362490.243403.1352846502316.JavaMail.root@redhat.com>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Shared interrupts and RT question
+Date: Mon, 10 Dec 2012 12:00:13 +0100
+Message-ID: <50C5C0BD.9010600@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: John Kacur <jkacur@redhat.com>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:36914 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759115Ab2LIWpM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 9 Dec 2012 17:45:12 -0500
-In-Reply-To: <1136362490.243403.1352846502316.JavaMail.root@redhat.com>
+Received: from www.meduna.org ([92.240.244.38]:55985 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752547Ab2LJLA2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Dec 2012 06:00:28 -0500
+Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
+	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
+	(Exim 4.72)
+	(envelope-from <stano@meduna.org>)
+	id 1Ti15u-0003PD-61
+	for linux-rt-users@vger.kernel.org; Mon, 10 Dec 2012 12:00:25 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SPIN_LOCK_UNLOCKED doesn't work any more since v2.6.39-rc1~511^2~11
-(locking: Remove deprecated lock initializers). DEFINE_SPINLOCK is
-available since v2.6.14-rc1~223, so it should be ok to depend on that.
-<linux/smp_lock.h> is gone since v2.6.39-rc1~467^2. Also <asm/system.h>
-is gone for most architectures since v3.4-rc1~54^2.
+Hi,
 
-The module builds fine for Debian's 2.6.32 and 3.6 kernels with this
-change.
+I have a machine that puts several interrupts on one interrupt
+line. As these are generally headless embedded machines bought
+and installed by the customer, it is a bit problematic to tweak
+the BIOS to assign them in an optimal way.
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
----
- src/backfire/backfire.c |    4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+Now I am seeing latencies such as
 
---- a/src/backfire/backfire.c
-+++ b/src/backfire/backfire.c
-@@ -24,7 +24,6 @@
- #include <linux/sched.h>
- #include <linux/cpumask.h>
- #include <linux/time.h>
--#include <linux/smp_lock.h>
- #include <linux/types.h>
- #include <linux/errno.h>
- #include <linux/miscdevice.h>
-@@ -32,11 +31,10 @@
- #include <linux/spinlock.h>
-=20
- #include <asm/uaccess.h>
--#include <asm/system.h>
-=20
- #define BACKFIRE_MINOR MISC_DYNAMIC_MINOR
-=20
--static spinlock_t backfire_state_lock =3D SPIN_LOCK_UNLOCKED;
-+static DEFINE_SPINLOCK(backfire_state_lock);
- static int backfire_open_cnt; /* #times opened */
- static int backfire_open_mode; /* special open modes */
- static struct timeval sendtime; /* when the most recent signal was sen=
-t */
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Wakeup shared prio
+385 50 638 (0) irq/15-eth1 <- 28 50 irq/15-ata_piix 5147.373113
+#Minimum latency: 1 microseconds
+#Average latency: 4 microseconds
+#Maximum latency: 638 microseconds
+
+I don't care about the ATA, but eth1 is important. Is it
+enough to adjust the priorities of the kernel threads
+or are shared interrupts generally a recipe for problems
+in the RT_FULL world?
+
+If there is any docs discussing the principles of interrupt
+handling in a RT kernel, I'd appreciate a pointer.
+
+Thanks
+-- 
+                                        Stano
