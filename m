@@ -1,95 +1,93 @@
-From: Clark Williams <clark.williams@gmail.com>
-Subject: Re: [RFC][PATCH RT 0/4] sched/rt: Lower rq lock contention
- latencies on many CPU boxes
-Date: Mon, 10 Dec 2012 16:59:28 -0600
-Message-ID: <20121210165928.7ffd9a21@gmail.com>
-References: <20121207235615.206108556@goodmis.org>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [RFC][PATCH RT 3/4] sched/rt: Use IPI to trigger RT task push
+ migration instead of pulling
+Date: Mon, 10 Dec 2012 16:48:54 -0800
+Message-ID: <50C682F6.5030709@am.sony.com>
+References: <20121207235615.206108556@goodmis.org> <20121208000900.613917378@goodmis.org>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/YKRM+6.+zIgUYSZJAOMZUKf"; protocol="application/pgp-signature"
-Cc: linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
 	Ingo Molnar <mingo@kernel.org>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20121207235615.206108556@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ch1ehsobe002.messaging.microsoft.com ([216.32.181.182]:21161
+	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751470Ab2LKAuD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Dec 2012 19:50:03 -0500
+In-Reply-To: <20121208000900.613917378@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/YKRM+6.+zIgUYSZJAOMZUKf
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On 12/07/12 15:56, Steven Rostedt wrote:
+> When debugging the latencies on a 40 core box, where we hit 300 to
+> 500 microsecond latencies, I found there was a huge contention on the
+> runqueue locks.
+> 
+> Investigating it further, running ftrace, I found that it was due to
+> the pulling of RT tasks.
+> 
+> The test that was run was the following:
+> 
+>  cyclictest --numa -p95 -m -d0 -i100
+> 
+> This created a thread on each CPU, that would set its wakeup in interations
+> of 100 microseconds. The -d0 means that all the threads had the same
+> interval (100us). Each thread sleeps for 100us and wakes up and measures
+> its latencies.
+> 
+> What happened was another RT task would be scheduled on one of the CPUs
+> that was running our test, when the other CPUS test went to sleep and
+> scheduled idle. This cause the "pull" operation to execute on all
+> these CPUs. Each one of these saw the RT task that was overloaded on
+> the CPU of the test that was still running, and each one tried
+> to grab that task in a thundering herd way.
+> 
+> To grab the task, each thread would do a double rq lock grab, grabbing
+> its own lock as well as the rq of the overloaded CPU. As the sched
+> domains on this box was rather flat for its size, I saw up to 12 CPUs
+> block on this lock at once. This caused a ripple affect with the
+> rq locks. As these locks were blocked, any wakeups on these CPUs
+> would also block on these locks, and the wait time escalated.
+> 
+> I've tried various methods to lesson the load, but things like an
+> atomic counter to only let one CPU grab the task wont work, because
+> the task may have a limited affinity, and we may pick the wrong
+> CPU to take that lock and do the pull, to only find out that the
+> CPU we picked isn't in the task's affinity.
 
-On Fri, 07 Dec 2012 18:56:15 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+You are saying that the pulling CPU might not be in the pulled task's
+affinity?  But isn't that checked:
 
-> I've been debugging large latencies on a 40 core box and found a major
-> cause due to the thundering herd like grab of the rq lock due to the
-> pull_rt_task() logic.
->=20
-> Basically, if a large number of CPUs were to lower its priority roughly
-> the same time, they would all trigger a pull. If there happens to be
-> only one CPU available to get a task, all CPUs doing the pull will try
-> to grab it. In doing so, they will all contend on the rq lock of
-> the overloaded CPU. Only one CPU will succeed in pulling the task
-> and unfortunately, there's no quick way to know which, as it's dependent
-> on the affinitiy of the task that needs to be pulled, and to look at that,
-> we need to grab its rq lock!
->=20
-> Instead of having the pull logic grab the rq locks and do the work to
-> switch the task over to the pulling CPU, this patch series (well patch
-> #3) has the pulling CPU send an IPI to the overloaded CPU and that
-> CPU will do the push instead. The push logic uses the cpupri.c code
-> to quickly find the best CPU to offload the overloaded RT task to, so
-> it makes it quite efficient to do this.
->=20
-> Retrieving multiple IPIs has a much lower overhead than all the CPUs
-> grabbing the rq lock.
->=20
-> The other three patches are fixes/enhancements to the push/pull code
-> that I found while doing the debugging of the latencies.
->=20
-> Note, although this patch series is made for the -rt patch, the issues
-> apply to mainline as well. But because -rt has the migrate_disable() code,
-> this patch series is tailored to that. But if we can vet this out in
-> -rt, all this code should make its way quickly to mainline.
->=20
-> I tested this code out, but it probably needs some clean up and definitely
-> more comments. I'm only posting this as an RFC for now to get feedback
-> on the idea.
->=20
-> Thanks!
->=20
+  pull_rt_task()
+     pick_next_highest_task_rt()
+        pick_rt_task()
+           if ( ... || cpumask_test_cpu(cpu, tsk_cpus_allowed(p) ...
 
-Steve,
+> 
+> Instead of doing the PULL, I now have the CPUs that want the pull to
+> send over an IPI to the overloaded CPU, and let that CPU pick what
+> CPU to push the task to. No more need to grab the rq lock, and the
+> push/pull algorithm still works fine.
 
-I've been running this set of patches on my laptop+RT kernel since
-Friday with no ill-effects. I just applied it to v3.6.10+rt21 and it
-seems to be fine.
+That gives me the opposite of a warm fuzzy feeling.  Processing an IPI
+on the overloaded CPU is not free (I'm being ARM-centric), and this is
+putting more load on the already overloaded CPU.
 
-I've got rteval runs going on a 40-core and a 24-core box which will be
-done early Tuesday morning so I'll let you know results then.=20
+I do recognize that you have actual measurements below that show goodness
+for the pathological case you debugged.  I'm still mulling this all over...
 
-Clark
+> 
+> With this patch, the latency dropped to just 150us over a 20 hour run.
+> Without the patch, the huge latencies would trigger in seconds.
 
---Sig_/YKRM+6.+zIgUYSZJAOMZUKf
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
+-Frank
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQEcBAEBAgAGBQJQxmlUAAoJEOIu7msziWiGGdYH/0CPHr5GeaFpSzpHvRwOntiE
-5l2/QwC0j5xgYUJGdVWwxVSKhYYIkEog9F0nq+8wE63gu0fLBux/G3DDf+Nj/LX9
-MTXppMwy2aMRVqLwiMqIOd24IWPZgZtUT31W1KpcxMLyryDySlPaViAs7Iz1EgnD
-K5O3bFzdorFfLybMrQ+CFR4oh2hG6tz7Ua05oYWhPXNkvgyD60JDMmVqmWQ3ksYk
-7TfIL5oWXVgaUY8zhQ9mnWkHElIcV0ee/QZpXlaCAHnJ61XdOyG7YL8jq9quusJs
-0gNI6AkFWHepkUIt0t9lzRjlYTBozDcjqnuay9nVVY2H9aOThW2NMeogd/DUz7Q=
-=gw7a
------END PGP SIGNATURE-----
-
---Sig_/YKRM+6.+zIgUYSZJAOMZUKf--
