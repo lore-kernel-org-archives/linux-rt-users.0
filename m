@@ -1,84 +1,99 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for histogram
- overflow instance tracking
-Date: Tue, 11 Dec 2012 17:45:45 -0800
-Message-ID: <50C7E1C9.60102@am.sony.com>
-References: <1463873663.4023529.1353965874630.JavaMail.root@vmware.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Simon Falsig <simon@newtec.dk>
+Subject: RE: Real-time kernel thread performance and optimization
+Date: Wed, 12 Dec 2012 16:39:01 +0100
+Message-ID: <ce2a2c5c91e1f62aee4e59c3458ee697@mail.gmail.com>
+References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com>
+ <50B933A5.3020400@am.sony.com> d27143389b68c615c242b56c7cd4dd22@mail.gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Bhavesh Davda <bhavesh@vmware.com>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from am1ehsobe005.messaging.microsoft.com ([213.199.154.208]:40321
-	"EHLO am1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753593Ab2LLBpv (ORCPT
+Received: from eu1sys200aog109.obsmtp.com ([207.126.144.127]:57462 "HELO
+	eu1sys200aog109.obsmtp.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1752766Ab2LLPjF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Dec 2012 20:45:51 -0500
-In-Reply-To: <1463873663.4023529.1353965874630.JavaMail.root@vmware.com>
+	Wed, 12 Dec 2012 10:39:05 -0500
+Received: by mail-wg0-f70.google.com with SMTP id ds1so676700wgb.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 12 Dec 2012 07:39:03 -0800 (PST)
+In-Reply-To: d27143389b68c615c242b56c7cd4dd22@mail.gmail.com
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/26/12 13:37, Bhavesh Davda wrote:
->> On 11/16/12 18:41, Frank Rowand wrote:
->>> On 11/16/12 18:31, Frank Rowand wrote:
->>> 
->>> < snip >
->>> 
->>>> I graphed the results with the msec data and with the
->>>> nanosecond timestamps for an artificial test (two test runs for
->>>> each case):
->>>> 
->>>> nanosecond:  junk7.gif    junk10.gif msec:        junk8_d.gif
->>>> junk9_d.gif
->>>> 
->>>> The cyclictest latency disruptions seem more visible to me in
->>>> the nanosecond data graphs.  But that is just a first
->>>> impression without playing around with a lot of different data
->>>> sets.
->>> 
->>> John, Bhavesh,
->>> 
->>> OK, so after all of that, I'm going on vacation for a week. I
->>> hope the rest of you are taking some time off too.
->> 
->> I'm back...  Bhavesh, have you had a chance to think about my last 
->> several emails (my comments on your latest patch, my proposed
->> patch, and the email I'm responding to)?  Any comments?
-> 
-> Hello Frank. Welcome back. I was out for the long weekend and am just
-> getting back in the swing of things too, so sorry about the delay.
-> 
-> I do have real use cases for this "outlier" mode, that I've used
-> effectively to identify sources of high latencies of cyclictest
-> running in a Linux-rt kernel based VM on our VMware ESXi hypervisor.
-> The patterns in the outliers, for various thresholds (e.g. 50 us)
-> have helped me identify timers and callbacks in the hypervisor kernel
-> (vmkernel) which have caused time to be "stolen" away from scheduling
-> the virtual CPUs of the VM to do various housekeeping tasks, and to
-> either move those timers out to other physical CPUs or to limit the
-> time spend in those timers and callbacks to have a smaller impact on
-> the cyclictest latencies.
-> 
-> I'm hoping that others in the community find similar uses of this
-> "outlier" feature of cyclictest.
-> 
-> That said, I realize that not every use cases might fit my exact
-> mould and might require either different formatting, or different
-> granularities of the "outliers" output. So I'm open to suggestions in
-> that regard.
-> 
-> I'm going to respond to your proposed patch next.
-> 
-> Thanks
-> 
-> - Bhavesh
+And another tweak. Having looked at the actual code for usleep_range(),
+I'm now basically doing the same (calling schedule_hrtimeout_range()),
+although in absolute mode. This makes everything simpler, as I can then
+just keep forwarding my original timeout with 10ms, instead of having to
+keep track of how long my work took - and it minimizes drift also.
 
-ping....
+In addition to the below changes, I've also changed to a tickless kernel,
+btw.
 
-Thanks,
+static int bus_rt_timer_thread(void *arg)
+{
+	struct custombus_device_driver *cbdrv, *next_cbdrv;
+	
+	printk(KERN_INFO "RT Thread entering loop\n");
+	
+	ktime_t timeout = ktime_get();
+	while(!kthread_should_stop()) {
+				
+		rt_mutex_lock(&list_10ms_mutex);
+	
+list_for_each_entry_safe(cbdrv,next_cbdrv,&polling_10ms_list,poll_list) {
+			driver_for_each_device(&cbdrv->driver, NULL, NULL,
+cbdrv->poll_function);
+		}
+		rt_mutex_unlock(&list_10ms_mutex);
+				
+		timeout = ktime_add_us(timeout, 10000);
+		__set_current_state(TASK_UNINTERRUPTIBLE);
+		schedule_hrtimeout_range(&timeout, 100, HRTIMER_MODE_ABS);
+	}
+	printk(KERN_INFO "RT Thread exited\n");
 
-Frank
+	return 0;	
+}
 
+int __init bus_timer_interrupt_init(void)
+{
+	struct sched_param param = { .sched_priority = MAX_RT_PRIO - 1 };
+	
+	thread_10ms = kthread_create(bus_rt_timer_thread, NULL,
+"bus_10ms");
+	if (IS_ERR(thread_10ms)) {
+		printk(KERN_ERR "RT Failed to create RT thread\n");
+		return -ESRCH;
+	}
+
+	sched_setscheduler(thread_10ms, SCHED_FIFO, &param);
+
+	wake_up_process(thread_10ms);
+	
+	printk(KERN_INFO "RT Timer thread installed with standard priority
+%d.\n", param.sched_priority);
+	return 0;
+}
+
+
+This implementation is again even simpler, and also performs better.
+30-minute stress test results:
+
+Old implementation (original hr_timer):
+	Cycles over 10.3 ms:	3144
+	Cycles under 9.7 ms:	3852
+	Max. cycletime:	~56.5 ms
+
+New implementation (usleep_range):
+	Cycles over 10.3 ms:	26
+	Cycles under 9.7 ms:	0
+	Max. cycletime:	~10.4 m
+
+New new implementation (schedule_hrtimeout_range):
+	Cycles over 10.3 ms:	0
+	Cycles under 9.7 ms:	0
+	Max. cycletime:	~10.2 m
+
+
+Again, comments, questions, anything else is welcome,
+Best regards,
+Simon Falsig
