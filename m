@@ -1,9 +1,15 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT 4/4 v2] sched/rt: Use IPI to trigger RT task push migration instead of pulling
-Date: Wed, 12 Dec 2012 14:27:37 -0500
-Message-ID: <20121212193920.803917953@goodmis.org>
+Subject: Re: [RFC][PATCH RT 4/4 v2] sched/rt: Use IPI to trigger RT task
+ push migration instead of pulling
+Date: Wed, 12 Dec 2012 15:44:59 -0500
+Message-ID: <1355345099.17101.343.camel@gandalf.local.home>
 References: <20121212192733.221810086@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+	 <20121212193920.803917953@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>,
@@ -11,12 +17,20 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Ingo Molnar <mingo@kernel.org>,
 	Frank Rowand <frank.rowand@am.sony.com>,
 	Mike Galbraith <bitbucket@online.de>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=push-rt-task-ipi-v2.patch
+In-Reply-To: <20121212193920.803917953@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
+
+I'm doing these changes in quilt and not git. Thus, I'm hitting some of
+the silly old quilt bugs, like forgetting to do a quilt refresh :-p
+
+This one will actually compile and boot.
+
+-- Steve
+
+sched/rt: Use IPI to trigger RT task push migration instead of pulling
 
 When debugging the latencies on a 40 core box, where we hit 300 to
 500 microsecond latencies, I found there was a huge contention on the
@@ -95,7 +109,7 @@ Index: linux-rt.git/kernel/sched/core.c
  
  void scheduler_ipi(void)
  {
-+	if (sched_feat(RT_PULL_IPI))
++	if (sched_feat(RT_PUSH_IPI))
 +		sched_rt_push_check();
 +
  	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
