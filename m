@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH RT 4/4 v2] sched/rt: Use IPI to trigger RT task
  push migration instead of pulling
-Date: Wed, 12 Dec 2012 15:44:59 -0500
-Message-ID: <1355345099.17101.343.camel@gandalf.local.home>
+Date: Thu, 13 Dec 2012 14:53:16 -0500
+Message-ID: <1355428396.17101.382.camel@gandalf.local.home>
 References: <20121212192733.221810086@goodmis.org>
 	 <20121212193920.803917953@goodmis.org>
 Mime-Version: 1.0
@@ -18,17 +18,30 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Frank Rowand <frank.rowand@am.sony.com>,
 	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6883 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755786Ab2LMTxS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Dec 2012 14:53:18 -0500
 In-Reply-To: <20121212193920.803917953@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm doing these changes in quilt and not git. Thus, I'm hitting some of
-the silly old quilt bugs, like forgetting to do a quilt refresh :-p
+I didn't get a chance to test the latest IPI patch series on the 40 core
+box, and only had my 4 way box to test on. But I was able to test it
+last night and found some issues.
 
-This one will actually compile and boot.
+The RT_PUSH_IPI doesn't get automatically set because just doing the
+sched_feat_enable() wasn't enough. Below is the corrected patch.
 
--- Steve
+Also, for some reason patch 3 caused the box to hang. Perhaps it
+required the RT_PUSH_IPI set, because it worked with the original patch
+series. But that series only did the push ipi. I removed it on the 40
+core before noticing that the RT_PUSH_IPI wasn't being automatically
+enabled.
+
+Here's an update of patch 4:
 
 sched/rt: Use IPI to trigger RT task push migration instead of pulling
 
@@ -101,10 +114,10 @@ or
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-rt.git/kernel/sched/core.c
+Index: rt-linux.git/kernel/sched/core.c
 ===================================================================
---- linux-rt.git.orig/kernel/sched/core.c
-+++ linux-rt.git/kernel/sched/core.c
+--- rt-linux.git.orig/kernel/sched/core.c
++++ rt-linux.git/kernel/sched/core.c
 @@ -1538,6 +1538,9 @@ static void sched_ttwu_pending(void)
  
  void scheduler_ipi(void)
@@ -115,7 +128,7 @@ Index: linux-rt.git/kernel/sched/core.c
  	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
  		return;
  
-@@ -7533,6 +7536,19 @@ void __init sched_init_smp(void)
+@@ -7541,6 +7544,21 @@ void __init sched_init_smp(void)
  	free_cpumask_var(non_isolated_cpus);
  
  	init_sched_rt_class();
@@ -130,16 +143,18 @@ Index: linux-rt.git/kernel/sched/core.c
 +	 * send an IPI to the CPU that is overloaded so that it can
 +	 * do an efficent push.
 +	 */
-+	if (num_possible_cpus() > 16)
++	if (num_possible_cpus() > 16) {
 +		sched_feat_enable(__SCHED_FEAT_RT_PUSH_IPI);
++		sysctl_sched_features |= (1UL << __SCHED_FEAT_RT_PUSH_IPI);
++	}
  }
  #else
  void __init sched_init_smp(void)
-Index: linux-rt.git/kernel/sched/rt.c
+Index: rt-linux.git/kernel/sched/rt.c
 ===================================================================
---- linux-rt.git.orig/kernel/sched/rt.c
-+++ linux-rt.git/kernel/sched/rt.c
-@@ -1729,6 +1729,31 @@ static void push_rt_tasks(struct rq *rq)
+--- rt-linux.git.orig/kernel/sched/rt.c
++++ rt-linux.git/kernel/sched/rt.c
+@@ -1723,6 +1723,31 @@ static void push_rt_tasks(struct rq *rq)
  		;
  }
  
@@ -171,7 +186,7 @@ Index: linux-rt.git/kernel/sched/rt.c
  static int pull_rt_task(struct rq *this_rq)
  {
  	int this_cpu = this_rq->cpu, ret = 0, cpu;
-@@ -1756,6 +1781,18 @@ static int pull_rt_task(struct rq *this_
+@@ -1750,6 +1775,18 @@ static int pull_rt_task(struct rq *this_
  			continue;
  
  		/*
@@ -190,10 +205,10 @@ Index: linux-rt.git/kernel/sched/rt.c
  		 * We can potentially drop this_rq's lock in
  		 * double_lock_balance, and another CPU could
  		 * alter this_rq
-Index: linux-rt.git/kernel/sched/sched.h
+Index: rt-linux.git/kernel/sched/sched.h
 ===================================================================
---- linux-rt.git.orig/kernel/sched/sched.h
-+++ linux-rt.git/kernel/sched/sched.h
+--- rt-linux.git.orig/kernel/sched/sched.h
++++ rt-linux.git/kernel/sched/sched.h
 @@ -1111,6 +1111,8 @@ static inline void double_rq_unlock(stru
  		__release(rq2->lock);
  }
@@ -213,10 +228,10 @@ Index: linux-rt.git/kernel/sched/sched.h
  #endif
  
  extern struct sched_entity *__pick_first_entity(struct cfs_rq *cfs_rq);
-Index: linux-rt.git/kernel/sched/features.h
+Index: rt-linux.git/kernel/sched/features.h
 ===================================================================
---- linux-rt.git.orig/kernel/sched/features.h
-+++ linux-rt.git/kernel/sched/features.h
+--- rt-linux.git.orig/kernel/sched/features.h
++++ rt-linux.git/kernel/sched/features.h
 @@ -73,6 +73,20 @@ SCHED_FEAT(PREEMPT_LAZY, true)
  # endif
  #endif
@@ -238,3 +253,5 @@ Index: linux-rt.git/kernel/sched/features.h
  SCHED_FEAT(FORCE_SD_OVERLAP, false)
  SCHED_FEAT(RT_RUNTIME_SHARE, true)
  SCHED_FEAT(LB_MIN, false)
+
+
