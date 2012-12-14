@@ -1,257 +1,155 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH RT 4/4 v2] sched/rt: Use IPI to trigger RT task
- push migration instead of pulling
-Date: Thu, 13 Dec 2012 14:53:16 -0500
-Message-ID: <1355428396.17101.382.camel@gandalf.local.home>
-References: <20121212192733.221810086@goodmis.org>
-	 <20121212193920.803917953@goodmis.org>
+From: eg Engleder Gerhard <eg@keba.com>
+Subject: AW: [PATCH RT 1/2] sched: Queue RT tasks to head when prio drops
+Date: Fri, 14 Dec 2012 09:13:10 +0100
+Message-ID: <12C1B74BDFD05D40B2356A9B12DFA339629E283782@KEBMXSPMB01.keba.co.at>
+References: <20121212004557.110050982@goodmis.org>
+ <20121212004820.598190405@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Ingo Molnar <mingo@kernel.org>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Mike Galbraith <bitbucket@online.de>
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>
+To: 'Steven Rostedt' <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6883 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755786Ab2LMTxS (ORCPT
+Received: from xgmegw04.mdcs.at ([217.13.183.4]:58986 "EHLO xgmegw04.mdcs.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750986Ab2LNIVA convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Dec 2012 14:53:18 -0500
-In-Reply-To: <20121212193920.803917953@goodmis.org>
+	Fri, 14 Dec 2012 03:21:00 -0500
+In-Reply-To: <20121212004820.598190405@goodmis.org>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I didn't get a chance to test the latest IPI patch series on the 40 core
-box, and only had my 4 way box to test on. But I was able to test it
-last night and found some issues.
+Hello,
 
-The RT_PUSH_IPI doesn't get automatically set because just doing the
-sched_feat_enable() wasn't enough. Below is the corrected patch.
+we tested this patch successfully with 3.2.35-rt53-rc1. The failure
+could not be reproduced in a 16 hours test run, so we are pretty
+sure that the failure is gone.
 
-Also, for some reason patch 3 caused the box to hang. Perhaps it
-required the RT_PUSH_IPI set, because it worked with the original patch
-series. But that series only did the push ipi. I removed it on the 40
-core before noticing that the RT_PUSH_IPI wasn't being automatically
-enabled.
+Thanks for the quick inclusion of this pacth in stable-rt series!
 
-Here's an update of patch 4:
+Best Regards, Gerhard Engleder
 
-sched/rt: Use IPI to trigger RT task push migration instead of pulling
+-----Urspr=FCngliche Nachricht-----
+Von: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@=
+vger.kernel.org] Im Auftrag von Steven Rostedt
+Gesendet: Mittwoch, 12. Dezember 2012 01:46
+An: linux-kernel@vger.kernel.org; linux-rt-users
+Cc: Thomas Gleixner; Carsten Emde; John Kacur; stable@vger.kernel.org; =
+stable-rt@vger.kernel.org
+Betreff: [PATCH RT 1/2] sched: Queue RT tasks to head when prio drops
 
-When debugging the latencies on a 40 core box, where we hit 300 to
-500 microsecond latencies, I found there was a huge contention on the
-runqueue locks.
+=46rom: Thomas Gleixner <tglx@linutronix.de>
 
-Investigating it further, running ftrace, I found that it was due to
-the pulling of RT tasks.
+The following scenario does not work correctly:
 
-The test that was run was the following:
+Runqueue of CPU1 contains two runnable and pinned tasks:
+	 T1: SCHED_FIFO, prio 80
+	 T2: SCHED_FIFO, prio 80
 
- cyclictest --numa -p95 -m -d0 -i100
+T1 is on the cpu and executes the following syscalls (classic priority =
+ceiling scenario):
 
-This created a thread on each CPU, that would set its wakeup in interations
-of 100 microseconds. The -d0 means that all the threads had the same
-interval (100us). Each thread sleeps for 100us and wakes up and measures
-its latencies.
+ sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio =3D 90);  ...
+ sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio =3D 80);  ...
 
-What happened was another RT task would be scheduled on one of the CPUs
-that was running our test, when the other CPUS test went to sleep and
-scheduled idle. This cause the "pull" operation to execute on all
-these CPUs. Each one of these saw the RT task that was overloaded on
-the CPU of the test that was still running, and each one tried
-to grab that task in a thundering herd way.
+Now T1 gets preempted by T3 (SCHED_FIFO, prio 95). After T3 goes back t=
+o sleep the scheduler picks T2. Surprise!
 
-To grab the task, each thread would do a double rq lock grab, grabbing
-its own lock as well as the rq of the overloaded CPU. As the sched
-domains on this box was rather flat for its size, I saw up to 12 CPUs
-block on this lock at once. This caused a ripple affect with the
-rq locks. As these locks were blocked, any wakeups or load balanceing
-on these CPUs would also block on these locks, and the wait time escalated.
+The same happens w/o actual preemption when T1 is forced into the sched=
+uler due to a sporadic NEED_RESCHED event. The scheduler invokes
+pick_next_task() which returns T2. So T1 gets preempted and scheduled o=
+ut.
 
-I've tried various methods to lesson the load, but things like an
-atomic counter to only let one CPU grab the task wont work, because
-the task may have a limited affinity, and we may pick the wrong
-CPU to take that lock and do the pull, to only find out that the
-CPU we picked isn't in the task's affinity.
+This happens because sched_setscheduler() dequeues T1 from the prio 90 =
+list and then enqueues it on the tail of the prio 80 list behind T2.
+This violates the POSIX spec and surprises user space which relies on t=
+he guarantee that SCHED_FIFO tasks are not scheduled out unless they gi=
+ve the CPU up voluntarily or are preempted by a higher priority task. I=
+n the latter case the preempted task must get back on the CPU after the=
+ preempting task schedules out again.
 
-Instead of doing the PULL, I now have the CPUs that want the pull to
-send over an IPI to the overloaded CPU, and let that CPU pick what
-CPU to push the task to. No more need to grab the rq lock, and the
-push/pull algorithm still works fine.
+We fixed a similar issue already in commit 60db48c(sched: Queue a deboo=
+sted task to the head of the RT prio queue). The same treatment is nece=
+ssary for sched_setscheduler().
 
-With this patch, the latency dropped to just 150us over a 20 hour run.
-Without the patch, the huge latencies would trigger in seconds.
+While analyzing the problem I noticed that the fix in
+rt_mutex_setprio() is one off. The head queueing depends on old priorit=
+y greater than new priority (user space view), but in fact it needs to =
+have the same treatment for equal priority. Instead of blindly changing=
+ the condition to <=3D it's better to avoid the whole dequeue/requeue b=
+usiness for the equal priority case completely.
 
-Now, this issue only seems to apply to boxes with greater than 16 CPUs.
-We noticed this on a 24 CPU box, and things got much worse on 40 (and
-presumably more CPUs would get even worse yet). But running with 16
-CPUs and below, the lock contention caused by the pulling of RT tasks
-is not noticable.
-
-I've created a new sched feature called RT_PUSH_IPI, which by default
-on 16 and less core CPUs is disabled, and on 17 or more CPUs it is
-enabled. That seems to be heuristic limit where the pulling logic
-causes higher latencies than IPIs. Of course with all heuristics, things
-could be different with different architectures.
-
-When RT_PUSH_IPI is not enabled, the old method of grabbing the rq locks
-and having the pulling CPU do the work is implemented. When RT_PUSH_IPI
-is enabled, the IPI is sent to the overloaded CPU to do a push.
-
-To enabled or disable this at run time:
-
- # mount -t debugfs nodev /sys/kernel/debug
- # echo RT_PUSH_IPI > /sys/kernel/debug/sched_features
-or
- # echo NO_RT_PUSH_IPI > /sys/kernel/debug/sched_features
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable@vger.kernel.org
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ kernel/sched/core.c |   16 ++++++++++++----
+ 1 file changed, 12 insertions(+), 4 deletions(-)
 
-Index: rt-linux.git/kernel/sched/core.c
-===================================================================
---- rt-linux.git.orig/kernel/sched/core.c
-+++ rt-linux.git/kernel/sched/core.c
-@@ -1538,6 +1538,9 @@ static void sched_ttwu_pending(void)
- 
- void scheduler_ipi(void)
- {
-+	if (sched_feat(RT_PUSH_IPI))
-+		sched_rt_push_check();
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c index 1f9d6f5..0=
+54e669 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -4117,6 +4117,8 @@ void rt_mutex_setprio(struct task_struct *p, int =
+prio)
+=20
+ 	trace_sched_pi_setprio(p, prio);
+ 	oldprio =3D p->prio;
++	if (oldprio =3D=3D prio)
++		goto out_unlock;
+ 	prev_class =3D p->sched_class;
+ 	on_rq =3D p->on_rq;
+ 	running =3D task_current(rq, p);
+@@ -4472,6 +4474,13 @@ recheck:
+ 		task_rq_unlock(rq, p, &flags);
+ 		goto recheck;
+ 	}
 +
- 	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
- 		return;
- 
-@@ -7541,6 +7544,21 @@ void __init sched_init_smp(void)
- 	free_cpumask_var(non_isolated_cpus);
- 
- 	init_sched_rt_class();
++	p->sched_reset_on_fork =3D reset_on_fork;
 +
-+	/*
-+	 * To avoid heavy contention on large CPU boxes,
-+	 * when there is an RT overloaded CPU (two or more RT tasks
-+	 * queued to run on a CPU and one of the waiting RT tasks
-+	 * can migrate) and another CPU lowers its priority, instead
-+	 * of grabbing both rq locks of the CPUS (as many CPUs lowering
-+	 * their priority at the same time may create large latencies)
-+	 * send an IPI to the CPU that is overloaded so that it can
-+	 * do an efficent push.
-+	 */
-+	if (num_possible_cpus() > 16) {
-+		sched_feat_enable(__SCHED_FEAT_RT_PUSH_IPI);
-+		sysctl_sched_features |= (1UL << __SCHED_FEAT_RT_PUSH_IPI);
-+	}
- }
- #else
- void __init sched_init_smp(void)
-Index: rt-linux.git/kernel/sched/rt.c
-===================================================================
---- rt-linux.git.orig/kernel/sched/rt.c
-+++ rt-linux.git/kernel/sched/rt.c
-@@ -1723,6 +1723,31 @@ static void push_rt_tasks(struct rq *rq)
- 		;
- }
- 
-+/**
-+ * sched_rt_push_check - check if we can push waiting RT tasks
-+ *
-+ * Called from sched IPI when sched feature RT_PUSH_IPI is enabled.
-+ *
-+ * Checks if there is an RT task that can migrate and there exists
-+ * a CPU in its affinity that only has tasks lower in priority than
-+ * the waiting RT task. If so, then it will push the task off to that
-+ * CPU.
-+ */
-+void sched_rt_push_check(void)
-+{
-+	struct rq *rq = cpu_rq(smp_processor_id());
++	oldprio =3D p->prio;
++	if (oldprio =3D=3D param->sched_priority)
++		goto out;
 +
-+	if (WARN_ON_ONCE(!irqs_disabled()))
-+		return;
-+
-+	if (!has_pushable_tasks(rq))
-+		return;
-+
-+	raw_spin_lock(&rq->lock);
-+	push_rt_tasks(rq);
-+	raw_spin_unlock(&rq->lock);
-+}
-+
- static int pull_rt_task(struct rq *this_rq)
- {
- 	int this_cpu = this_rq->cpu, ret = 0, cpu;
-@@ -1750,6 +1775,18 @@ static int pull_rt_task(struct rq *this_
- 			continue;
- 
- 		/*
-+		 * When the RT_PUSH_IPI sched feature is enabled, instead
-+		 * of trying to grab the rq lock of the RT overloaded CPU
-+		 * send an IPI to that CPU instead. This prevents heavy
-+		 * contention from several CPUs lowering its priority
-+		 * and all trying to grab the rq lock of that overloaded CPU.
-+		 */
-+		if (sched_feat(RT_PUSH_IPI)) {
-+			smp_send_reschedule(cpu);
-+			continue;
-+		}
-+
-+		/*
- 		 * We can potentially drop this_rq's lock in
- 		 * double_lock_balance, and another CPU could
- 		 * alter this_rq
-Index: rt-linux.git/kernel/sched/sched.h
-===================================================================
---- rt-linux.git.orig/kernel/sched/sched.h
-+++ rt-linux.git/kernel/sched/sched.h
-@@ -1111,6 +1111,8 @@ static inline void double_rq_unlock(stru
- 		__release(rq2->lock);
- }
- 
-+void sched_rt_push_check(void);
-+
- #else /* CONFIG_SMP */
- 
- /*
-@@ -1144,6 +1146,9 @@ static inline void double_rq_unlock(stru
- 	__release(rq2->lock);
- }
- 
-+void sched_rt_push_check(void)
-+{
-+}
- #endif
- 
- extern struct sched_entity *__pick_first_entity(struct cfs_rq *cfs_rq);
-Index: rt-linux.git/kernel/sched/features.h
-===================================================================
---- rt-linux.git.orig/kernel/sched/features.h
-+++ rt-linux.git/kernel/sched/features.h
-@@ -73,6 +73,20 @@ SCHED_FEAT(PREEMPT_LAZY, true)
- # endif
- #endif
- 
-+/*
-+ * In order to avoid a thundering herd attack of CPUS that are
-+ * lowering their priorities at the same time, and there being
-+ * a single CPU that has an RT task that can migrate and is waiting
-+ * to run, where the other CPUs will try to take that CPUs
-+ * rq lock and possibly create a large contention, sending an
-+ * IPI to that CPU and let that CPU push the RT task to where
-+ * it should go may be a better scenario.
-+ *
-+ * This is default off for machines with <= 16 CPUs, and will
-+ * be turned on at boot up for machines with > 16 CPUs.
-+ */
-+SCHED_FEAT(RT_PUSH_IPI, false)
-+
- SCHED_FEAT(FORCE_SD_OVERLAP, false)
- SCHED_FEAT(RT_RUNTIME_SHARE, true)
- SCHED_FEAT(LB_MIN, false)
+ 	on_rq =3D p->on_rq;
+ 	running =3D task_current(rq, p);
+ 	if (on_rq)
+@@ -4479,18 +4488,17 @@ recheck:
+ 	if (running)
+ 		p->sched_class->put_prev_task(rq, p);
+=20
+-	p->sched_reset_on_fork =3D reset_on_fork;
+-
+-	oldprio =3D p->prio;
+ 	prev_class =3D p->sched_class;
+ 	__setscheduler(rq, p, policy, param->sched_priority);
+=20
+ 	if (running)
+ 		p->sched_class->set_curr_task(rq);
+ 	if (on_rq)
+-		enqueue_task(rq, p, 0);
++		enqueue_task(rq, p, oldprio < param->sched_priority ?
++			     ENQUEUE_HEAD : 0);
+=20
+ 	check_class_changed(rq, p, prev_class, oldprio);
++out:
+ 	task_rq_unlock(rq, p, &flags);
+=20
+ 	rt_mutex_adjust_pi(p);
+--
+1.7.10.4
 
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
