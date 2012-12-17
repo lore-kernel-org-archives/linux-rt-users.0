@@ -1,67 +1,42 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [ANNOUNCE] 3.6.9-rt21
-Date: Mon, 17 Dec 2012 18:09:36 +0100
-Message-ID: <1355764176.11540.19.camel@marge.simpson.net>
-References: <alpine.LFD.2.02.1212051659160.2701@ionos>
-	 <1355543529.20987.6.camel@marge.simpson.net>
-	 <alpine.LFD.2.02.1212171634070.3148@ionos>
+From: Bhavesh Davda <bhavesh@vmware.com>
+Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for
+ histogram overflow instance tracking
+Date: Mon, 17 Dec 2012 10:24:13 -0800 (PST)
+Message-ID: <1021286613.24677841.1355768653269.JavaMail.root@vmware.com>
+References: <50C7E1C9.60102@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.02.1212171634070.3148@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
+To: frank rowand <frank.rowand@am.sony.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:34368 "EHLO
+	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753523Ab2LQSYQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Dec 2012 13:24:16 -0500
+In-Reply-To: <50C7E1C9.60102@am.sony.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2012-12-17 at 16:35 +0100, Thomas Gleixner wrote: 
-> On Sat, 15 Dec 2012, Mike Galbraith wrote:
-> > On Wed, 2012-12-05 at 17:05 +0100, Thomas Gleixner wrote: 
-> > > Dear RT Folks,
-> > > 
-> > > I'm pleased to announce the 3.6.9-rt21 release. 3.6.7-rt18, 3.6.8-rt19
-> > > and 3.6.9-rt20 are not announced updates to the respective 3.6.y
-> > > stable releases without any RT changes
-> > > 
-> > > Changes since 3.6.9-rt20:
-> > > 
-> > >    * Fix the PREEMPT_LAZY implementation on ARM
-> > > 
-> > >    * Fix the RCUTINY issues
-> > > 
-> > >    * Fix a long standing scheduler bug (See commit log of
-> > >      sched-enqueue-to-head.patch)
+> > I'm going to respond to your proposed patch next.
 > > 
-> > That last has an oversight buglet.
+> > Thanks
 > > 
-> > sched: add missing userspace->kernel struct sched_param.sched_priority inversion
-> > 
-> > Signed-off-by: Mike Galbraith <bitbucket@online.de>
-> > ---
-> >  kernel/sched/core.c |    2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > --- a/kernel/sched/core.c
-> > +++ b/kernel/sched/core.c
-> > @@ -4624,7 +4624,7 @@ static int __sched_setscheduler(struct t
-> >  	p->sched_reset_on_fork = reset_on_fork;
-> >  
-> >  	oldprio = p->prio;
-> > -	if (oldprio == param->sched_priority)
-> > +	if (oldprio == (MAX_RT_PRIO - 1) - param->sched_priority)
-> >  		goto out;
-> >  
-> >  	on_rq = p->on_rq;
+> > - Bhavesh
 > 
-> Duh, yes. But there is another one here:
+> ping....
 > 
-> +               enqueue_task(rq, p, oldprio < param->sched_priority ?
-> +                            ENQUEUE_HEAD : 0);
+> Thanks,
 > 
-> Bah. This reverse user/kernel priority nonsense really should go away!
+> Frank
 
-Snort, I looked right at it too, looked perfectly fine :)
+Hello Frank,
 
--Mike
+Extremely sorry about the tardiness in reviewing your proposed change!
+
+Your change looks good to me. Again, did you want me to fold your proposed change into my original patch, or were you proposing applying your patch (of course without the #if 0's) on top of mine?
+
+Thanks for spending so much time reviewing my patches, trying them out, and suggesting ways to make it better!
+
+- Bhavesh
