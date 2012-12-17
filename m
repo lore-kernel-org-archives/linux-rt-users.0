@@ -1,63 +1,67 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Mike Galbraith <bitbucket@online.de>
 Subject: Re: [ANNOUNCE] 3.6.9-rt21
-Date: Mon, 17 Dec 2012 16:35:49 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1212171634070.3148@ionos>
-References: <alpine.LFD.2.02.1212051659160.2701@ionos> <1355543529.20987.6.camel@marge.simpson.net>
+Date: Mon, 17 Dec 2012 18:09:36 +0100
+Message-ID: <1355764176.11540.19.camel@marge.simpson.net>
+References: <alpine.LFD.2.02.1212051659160.2701@ionos>
+	 <1355543529.20987.6.camel@marge.simpson.net>
+	 <alpine.LFD.2.02.1212171634070.3148@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <bitbucket@online.de>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1355543529.20987.6.camel@marge.simpson.net>
+In-Reply-To: <alpine.LFD.2.02.1212171634070.3148@ionos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 15 Dec 2012, Mike Galbraith wrote:
-> On Wed, 2012-12-05 at 17:05 +0100, Thomas Gleixner wrote: 
-> > Dear RT Folks,
+On Mon, 2012-12-17 at 16:35 +0100, Thomas Gleixner wrote: 
+> On Sat, 15 Dec 2012, Mike Galbraith wrote:
+> > On Wed, 2012-12-05 at 17:05 +0100, Thomas Gleixner wrote: 
+> > > Dear RT Folks,
+> > > 
+> > > I'm pleased to announce the 3.6.9-rt21 release. 3.6.7-rt18, 3.6.8-rt19
+> > > and 3.6.9-rt20 are not announced updates to the respective 3.6.y
+> > > stable releases without any RT changes
+> > > 
+> > > Changes since 3.6.9-rt20:
+> > > 
+> > >    * Fix the PREEMPT_LAZY implementation on ARM
+> > > 
+> > >    * Fix the RCUTINY issues
+> > > 
+> > >    * Fix a long standing scheduler bug (See commit log of
+> > >      sched-enqueue-to-head.patch)
 > > 
-> > I'm pleased to announce the 3.6.9-rt21 release. 3.6.7-rt18, 3.6.8-rt19
-> > and 3.6.9-rt20 are not announced updates to the respective 3.6.y
-> > stable releases without any RT changes
+> > That last has an oversight buglet.
 > > 
-> > Changes since 3.6.9-rt20:
+> > sched: add missing userspace->kernel struct sched_param.sched_priority inversion
 > > 
-> >    * Fix the PREEMPT_LAZY implementation on ARM
+> > Signed-off-by: Mike Galbraith <bitbucket@online.de>
+> > ---
+> >  kernel/sched/core.c |    2 +-
+> >  1 file changed, 1 insertion(+), 1 deletion(-)
 > > 
-> >    * Fix the RCUTINY issues
-> > 
-> >    * Fix a long standing scheduler bug (See commit log of
-> >      sched-enqueue-to-head.patch)
+> > --- a/kernel/sched/core.c
+> > +++ b/kernel/sched/core.c
+> > @@ -4624,7 +4624,7 @@ static int __sched_setscheduler(struct t
+> >  	p->sched_reset_on_fork = reset_on_fork;
+> >  
+> >  	oldprio = p->prio;
+> > -	if (oldprio == param->sched_priority)
+> > +	if (oldprio == (MAX_RT_PRIO - 1) - param->sched_priority)
+> >  		goto out;
+> >  
+> >  	on_rq = p->on_rq;
 > 
-> That last has an oversight buglet.
+> Duh, yes. But there is another one here:
 > 
-> sched: add missing userspace->kernel struct sched_param.sched_priority inversion
+> +               enqueue_task(rq, p, oldprio < param->sched_priority ?
+> +                            ENQUEUE_HEAD : 0);
 > 
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
-> ---
->  kernel/sched/core.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -4624,7 +4624,7 @@ static int __sched_setscheduler(struct t
->  	p->sched_reset_on_fork = reset_on_fork;
->  
->  	oldprio = p->prio;
-> -	if (oldprio == param->sched_priority)
-> +	if (oldprio == (MAX_RT_PRIO - 1) - param->sched_priority)
->  		goto out;
->  
->  	on_rq = p->on_rq;
+> Bah. This reverse user/kernel priority nonsense really should go away!
 
-Duh, yes. But there is another one here:
+Snort, I looked right at it too, looked perfectly fine :)
 
-+               enqueue_task(rq, p, oldprio < param->sched_priority ?
-+                            ENQUEUE_HEAD : 0);
-
-Bah. This reverse user/kernel priority nonsense really should go away!
-
-Thanks,
-
-	tglx
+-Mike
