@@ -1,46 +1,79 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: Real-time kernel thread performance and optimization
-Date: Mon, 17 Dec 2012 14:18:06 -0800
-Message-ID: <50CF9A1E.5000902@am.sony.com>
-References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com> <50B933A5.3020400@am.sony.com> <d27143389b68c615c242b56c7cd4dd22@mail.gmail.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Bhavesh Davda <bhavesh@vmware.com>
+Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for
+ histogram overflow instance tracking
+Date: Mon, 17 Dec 2012 14:17:35 -0800 (PST)
+Message-ID: <817126228.24970734.1355782655348.JavaMail.root@vmware.com>
+References: <50CF8FDC.3090307@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	<jkacur@redhat.com>, <dvhart@infradead.org>
-To: Simon Falsig <simon@newtec.dk>
+Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
+To: frank rowand <frank.rowand@am.sony.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co9ehsobe004.messaging.microsoft.com ([207.46.163.27]:36398
-	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754773Ab2LQWSP (ORCPT
+Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:45396 "EHLO
+	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1754071Ab2LQW2D (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Dec 2012 17:18:15 -0500
-In-Reply-To: <d27143389b68c615c242b56c7cd4dd22@mail.gmail.com>
+	Mon, 17 Dec 2012 17:28:03 -0500
+In-Reply-To: <50CF8FDC.3090307@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/11/12 06:30, Simon Falsig wrote:
 
-< snip >
-
->>> Once I get this finished up, I'll be happy to do a complete write-up
->>> of the timer-thread code, if anyone is interested. I remember looking
->>> for something similar (but without success), when I wrote the code
->>> earlier this year.
->>
->> It would be very useful to add your results to the wiki.
->>
->> -Frank
+> It would be great if you could add my changes on top of your original
+> patch
+> since John hasn't committed your original patch yet.  That way
+> everything
+> will be coordinated from one person.  And yes, without the "#if 0's".
 > 
-> Cool - is there any particular place it should go? A how-to, FAQ entry,
-> etc? Just so I know how to do the write-up...
+> It would probably be good to submit it to John as a series of two
+> patches,
+> your original patch, followed by my additions.
+> 
+> For my patch, you can add: Signed-off-by: Frank Rowand
+> <frank.rowand@am.sony.com>
+> 
+> My patch did not address one other comment I made, which is:
+> 
+>   default of -g to zero means histogram overflows will be printed
+>   even
+>   if "-g" not specified (same as "-g 0").  The output of histogram
+>   overflows should only occur if of_max > 0.
 
-https://rt.wiki.kernel.org/index.php/Main_Page would be my default
-suggestion.  I'm not quite sure where on the wiki would be good
-though.  Maybe under "Tips and Techniques"?
 
-I added the rtwiki maintainers to the cc: list.
+I'll see if I can address that in a potentially 3rd part of a 3 patch series.
 
--Frank
+One thing I noticed when actually creating the 2nd patch, in your change:
 
+@@ -890,7 +904,7 @@ void *timerthread(void *param)
+                        if (diff >= histogram) {
+                                stat->hist_overflow++;
+                                if (stat->num_outliers < of_max)
+-                                       stat->outliers[stat->num_outliers++] = stat->cycles;
++                                       stat->outliers[stat->num_outliers++] = next;
+                        }
+                        else
+                                stat->hist_array[diff]++;
+
+Should that be:
++                                       stat->outliers[stat->num_outliers++] = now;
+
+instead?
+
+Also, not your fault, but I fixed another white space issue here:
+
+@@ -151,7 +153,7 @@ struct thread_stat {
+        double avg;
+        long *values;
+        long *hist_array;
+-        long *outliers;
++        struct timespec *outliers;
+        pthread_t thread;
+        int threadstarted;
+        int tid;
+
+And finally, as far as output format for the outliers is concerned, I'm slightly worried it takes too much screen real estate by printing one line per outlier per thread. But that's quite subjective and I wouldn't be opposed to living with it for a while and seeing if it starts to get annoying :)
+
+Thanks
+
+- Bhavesh
