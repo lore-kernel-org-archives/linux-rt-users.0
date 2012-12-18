@@ -1,107 +1,254 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH RT-TESTS] cyclictest: new command line switch for histogram
- overflow instance tracking
-Date: Mon, 17 Dec 2012 15:30:45 -0800
-Message-ID: <50CFAB25.90209@am.sony.com>
-References: <817126228.24970734.1355782655348.JavaMail.root@vmware.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Kirill Tkhai <tkhai@yandex.ru>
+Subject: [PATCH] sched/rt: Move cpu rq properties from "struct rt_rq" to "struct rq"
+Date: Tue, 18 Dec 2012 23:12:28 +0400
+Message-ID: <4807701355857948@web19f.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain
 Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Bhavesh Davda <bhavesh@vmware.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [216.32.180.185] ([216.32.180.185]:53713 "EHLO
-	co1outboundpool.messaging.microsoft.com" rhost-flags-FAIL-FAIL-OK-OK)
-	by vger.kernel.org with ESMTP id S1753209Ab2LQXc3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 17 Dec 2012 18:32:29 -0500
-In-Reply-To: <817126228.24970734.1355782655348.JavaMail.root@vmware.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Tkhai Kirill <tkhai@yandex.ru>
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 12/17/12 14:17, Bhavesh Davda wrote:
-> 
->> It would be great if you could add my changes on top of your original
->> patch
->> since John hasn't committed your original patch yet.  That way
->> everything
->> will be coordinated from one person.  And yes, without the "#if 0's".
->>
->> It would probably be good to submit it to John as a series of two
->> patches,
->> your original patch, followed by my additions.
->>
->> For my patch, you can add: Signed-off-by: Frank Rowand
->> <frank.rowand@am.sony.com>
->>
->> My patch did not address one other comment I made, which is:
->>
->>   default of -g to zero means histogram overflows will be printed
->>   even
->>   if "-g" not specified (same as "-g 0").  The output of histogram
->>   overflows should only occur if of_max > 0.
-> 
-> 
-> I'll see if I can address that in a potentially 3rd part of a 3 patch series.
-> 
-> One thing I noticed when actually creating the 2nd patch, in your change:
-> 
-> @@ -890,7 +904,7 @@ void *timerthread(void *param)
->                         if (diff >= histogram) {
->                                 stat->hist_overflow++;
->                                 if (stat->num_outliers < of_max)
-> -                                       stat->outliers[stat->num_outliers++] = stat->cycles;
-> +                                       stat->outliers[stat->num_outliers++] = next;
->                         }
->                         else
->                                 stat->hist_array[diff]++;
-> 
-> Should that be:
-> +                                       stat->outliers[stat->num_outliers++] = now;
-> 
-> instead?
+The members rt_nr_total, rt_nr_migratory, overloaded and pushable_tasks are
+properties of cpu runqueue, not group rt_rq.
 
-Both next and now are valid choices.  If one was to get totally carried away both
-values could be reported.  I don't think it is critical which one is used, as
-long as it is clearly documented.  For those reading along at home:
+Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ingo Molnar <mingo@kernel.org>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: linux-rt-users <linux-rt-users@vger.kernel.org>
 
-  next is the beginning time stamp of the delay (when execution should have occurred)
-
-  now is the ending time stamp of the delay (when execution did occur)
-
-Different causes of periodic latency causes might be more apparent with one time or
-the other.  I suspect that whichever one is used that I will on occasion modify
-cyclictest to report the other one.
-
-
-> Also, not your fault, but I fixed another white space issue here:
-> 
-> @@ -151,7 +153,7 @@ struct thread_stat {
->         double avg;
->         long *values;
->         long *hist_array;
-> -        long *outliers;
-> +        struct timespec *outliers;
->         pthread_t thread;
->         int threadstarted;
->         int tid;
-
-There are still a handful of white space issues if you want to kill
-them all with one patch (just look for a space in the first or last
-column).  I was just going to wait to everything else settled out to
-submit a patch for that.
-
-
-> And finally, as far as output format for the outliers is concerned, I'm slightly worried it takes too much screen real estate by printing one line per outlier per thread. But that's quite subjective and I wouldn't be opposed to living with it for a while and seeing if it starts to get annoying :)
-
-Agreed.  Two different use cases argue for different output format.  I'm used to
-processing large batches of data and frequently graph the data to make it more
-manageable.  But if you are looking at the raw data on a screen then many values
-per line is more effective use of real estate.  It isn't too hard to convert back
-and forth.  So given my use case, my one vote (for whatever that is worth) is for
-the screen real estate wasting format.
-
--Frank
-
+---
+ kernel/sched/core.c  |    5 ++++
+ kernel/sched/rt.c    |   67 +++++++++++++++++++++++++-------------------------
+ kernel/sched/sched.h |   11 ++++-----
+ 3 files changed, 44 insertions(+), 39 deletions(-)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index c1fb821..bf6eda6 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -6938,6 +6938,11 @@ void __init sched_init(void)
+ 
+ 		INIT_LIST_HEAD(&rq->cfs_tasks);
+ 
++		rq->rt_nr_total = 0;
++		rq->rt_nr_migratory = 0;
++		rq->rt_overloaded = 0;
++		plist_head_init(&rq->pushable_tasks);
++
+ 		rq_attach_root(rq, &def_root_domain);
+ #ifdef CONFIG_NO_HZ
+ 		rq->nohz_flags = 0;
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 418feb0..b102ab8 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -73,9 +73,6 @@ void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
+ #if defined CONFIG_SMP
+ 	rt_rq->highest_prio.curr = MAX_RT_PRIO;
+ 	rt_rq->highest_prio.next = MAX_RT_PRIO;
+-	rt_rq->rt_nr_migratory = 0;
+-	rt_rq->overloaded = 0;
+-	plist_head_init(&rt_rq->pushable_tasks);
+ #endif
+ 
+ 	rt_rq->rt_time = 0;
+@@ -259,63 +256,67 @@ static inline void rt_clear_overload(struct rq *rq)
+ 	cpumask_clear_cpu(rq->cpu, rq->rd->rto_mask);
+ }
+ 
+-static void update_rt_migration(struct rt_rq *rt_rq)
++static void update_rt_migration(struct rq *rq)
+ {
+-	if (rt_rq->rt_nr_migratory && rt_rq->rt_nr_total > 1) {
+-		if (!rt_rq->overloaded) {
+-			rt_set_overload(rq_of_rt_rq(rt_rq));
+-			rt_rq->overloaded = 1;
++	if (rq->rt_nr_migratory && rq->rt_nr_total > 1) {
++		if (!rq->rt_overloaded) {
++			rt_set_overload(rq);
++			rq->rt_overloaded = 1;
+ 		}
+-	} else if (rt_rq->overloaded) {
+-		rt_clear_overload(rq_of_rt_rq(rt_rq));
+-		rt_rq->overloaded = 0;
++	} else if (rq->rt_overloaded) {
++		rt_clear_overload(rq);
++		rq->rt_overloaded = 0;
+ 	}
+ }
+ 
+ static void inc_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+ {
+ 	struct task_struct *p;
++	struct rq *rq;
+ 
+ 	if (!rt_entity_is_task(rt_se))
+ 		return;
+ 
+ 	p = rt_task_of(rt_se);
+-	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
++	rq = rq_of_rt_rq(rt_rq);
++	rt_rq = &rq->rt;
+ 
+-	rt_rq->rt_nr_total++;
++	rq->rt_nr_total++;
+ 	if (p->nr_cpus_allowed > 1)
+-		rt_rq->rt_nr_migratory++;
++		rq->rt_nr_migratory++;
+ 
+-	update_rt_migration(rt_rq);
++	update_rt_migration(rq);
+ }
+ 
+ static void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
+ {
+ 	struct task_struct *p;
++	struct rq *rq;
+ 
+ 	if (!rt_entity_is_task(rt_se))
+ 		return;
+ 
+ 	p = rt_task_of(rt_se);
+-	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
++	rq = rq_of_rt_rq(rt_rq);
++	rt_rq = &rq->rt;
+ 
+-	rt_rq->rt_nr_total--;
++	rq->rt_nr_total--;
+ 	if (p->nr_cpus_allowed > 1)
+-		rt_rq->rt_nr_migratory--;
++		rq->rt_nr_migratory--;
+ 
+-	update_rt_migration(rt_rq);
++	update_rt_migration(rq);
+ }
+ 
+ static inline int has_pushable_tasks(struct rq *rq)
+ {
+-	return !plist_head_empty(&rq->rt.pushable_tasks);
++	return !plist_head_empty(&rq->pushable_tasks);
+ }
+ 
+ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+ {
+-	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
++	plist_del(&p->pushable_tasks, &rq->pushable_tasks);
+ 	plist_node_init(&p->pushable_tasks, p->prio);
+-	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
++	plist_add(&p->pushable_tasks, &rq->pushable_tasks);
+ 
+ 	/* Update the highest prio pushable task */
+ 	if (p->prio < rq->rt.highest_prio.next)
+@@ -324,11 +325,11 @@ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
+ 
+ static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
+ {
+-	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
++	plist_del(&p->pushable_tasks, &rq->pushable_tasks);
+ 
+ 	/* Update the new highest prio pushable task */
+ 	if (has_pushable_tasks(rq)) {
+-		p = plist_first_entry(&rq->rt.pushable_tasks,
++		p = plist_first_entry(&rq->pushable_tasks,
+ 				      struct task_struct, pushable_tasks);
+ 		rq->rt.highest_prio.next = p->prio;
+ 	} else
+@@ -1601,7 +1602,7 @@ static struct task_struct *pick_next_pushable_task(struct rq *rq)
+ 	if (!has_pushable_tasks(rq))
+ 		return NULL;
+ 
+-	p = plist_first_entry(&rq->rt.pushable_tasks,
++	p = plist_first_entry(&rq->pushable_tasks,
+ 			      struct task_struct, pushable_tasks);
+ 
+ 	BUG_ON(rq->cpu != task_cpu(p));
+@@ -1625,7 +1626,7 @@ static int push_rt_task(struct rq *rq)
+ 	struct rq *lowest_rq;
+ 	int ret = 0;
+ 
+-	if (!rq->rt.overloaded)
++	if (!rq->rt_overloaded)
+ 		return 0;
+ 
+ 	next_task = pick_next_pushable_task(rq);
+@@ -1843,21 +1844,21 @@ static void set_cpus_allowed_rt(struct task_struct *p,
+ 	if (weight <= 1) {
+ 		if (!task_current(rq, p))
+ 			dequeue_pushable_task(rq, p);
+-		BUG_ON(!rq->rt.rt_nr_migratory);
+-		rq->rt.rt_nr_migratory--;
++		BUG_ON(!rq->rt_nr_migratory);
++		rq->rt_nr_migratory--;
+ 	} else {
+ 		if (!task_current(rq, p))
+ 			enqueue_pushable_task(rq, p);
+-		rq->rt.rt_nr_migratory++;
++		rq->rt_nr_migratory++;
+ 	}
+ 
+-	update_rt_migration(&rq->rt);
++	update_rt_migration(rq);
+ }
+ 
+ /* Assumes rq->lock is held */
+ static void rq_online_rt(struct rq *rq)
+ {
+-	if (rq->rt.overloaded)
++	if (rq->rt_overloaded)
+ 		rt_set_overload(rq);
+ 
+ 	__enable_runtime(rq);
+@@ -1868,7 +1869,7 @@ static void rq_online_rt(struct rq *rq)
+ /* Assumes rq->lock is held */
+ static void rq_offline_rt(struct rq *rq)
+ {
+-	if (rq->rt.overloaded)
++	if (rq->rt_overloaded)
+ 		rt_clear_overload(rq);
+ 
+ 	__disable_runtime(rq);
+@@ -1922,7 +1923,7 @@ static void switched_to_rt(struct rq *rq, struct task_struct *p)
+ 	 */
+ 	if (p->on_rq && rq->curr != p) {
+ #ifdef CONFIG_SMP
+-		if (rq->rt.overloaded && push_rt_task(rq) &&
++		if (rq->rt_overloaded && push_rt_task(rq) &&
+ 		    /* Don't resched if we changed runqueues */
+ 		    rq != task_rq(p))
+ 			check_resched = 0;
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index fc88644..4faf9cd 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -301,12 +301,6 @@ struct rt_rq {
+ #endif
+ 	} highest_prio;
+ #endif
+-#ifdef CONFIG_SMP
+-	unsigned long rt_nr_migratory;
+-	unsigned long rt_nr_total;
+-	int overloaded;
+-	struct plist_head pushable_tasks;
+-#endif
+ 	int rt_throttled;
+ 	u64 rt_time;
+ 	u64 rt_runtime;
+@@ -431,6 +425,11 @@ struct rq {
+ 
+ 	struct list_head cfs_tasks;
+ 
++	unsigned long rt_nr_total;
++	unsigned long rt_nr_migratory;
++	int rt_overloaded;
++	struct plist_head pushable_tasks;
++
+ 	u64 rt_avg;
+ 	u64 age_stamp;
+ 	u64 idle_stamp;
