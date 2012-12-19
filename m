@@ -1,33 +1,58 @@
-From: John Stultz <john.stultz@linaro.org>
-Subject: Re: [PATCH] Round the calculated scale factor in set_cyc2ns_scale()
-Date: Wed, 19 Dec 2012 10:28:29 -0800
-Message-ID: <50D2074D.4000101@linaro.org>
-References: <1354717009-2687-1-git-send-email-berndfaust@gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Bernd Faust <berndfaust@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1354717009-2687-1-git-send-email-berndfaust@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Bhavesh Davda <bhavesh@vmware.com>
+Subject: [PATCH 3/3] cyclictest: Print histogram overflow instances only if asked for
+Date: Wed, 19 Dec 2012 12:00:33 -0800
+Message-ID: <1355947233-31451-4-git-send-email-bhavesh@vmware.com>
+References: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
+Cc: frank.rowand@am.sony.com, jkacur@redhat.com,
+	Bhavesh Davda <bhavesh@vmware.com>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:49508 "EHLO
+	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750922Ab2LSUA4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Dec 2012 15:00:56 -0500
+In-Reply-To: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/05/2012 06:16 AM, Bernd Faust wrote:
-> During some experiments with an external clock (in a FPGA), we saw that
-> the TSC clock drifted approx. 2.5ms per second.
->
-> This drift was caused by the current way of calculating the scale.
-> In our case cpu_khz had a value of 3292725. This resulted in a scale
-> value of 310. But when doing the calculation by hand it shows that the
-> actual value is 310.9886188491, so a value of 311 would be more precise.
->
-> With this change the value is rounded.
->
-> Signed-off-by: Bernd Faust <berndfaust@gmail.com>
+By default (if -g is not specified), of_max is zero. Don't print histogram
+overflow instances in that case.
 
-Thanks for sending this in! I've queued it, but because I was slow here, 
-it will have to wait for 3.9.
+Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
+---
+ src/cyclictest/cyclictest.c |   18 ++++++++++--------
+ 1 files changed, 10 insertions(+), 8 deletions(-)
 
-Sorry for the delay, and thanks again!
--john
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index b27f7dc..74c56a6 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1476,14 +1476,16 @@ static void print_hist(struct thread_param *par[], int nthreads)
+ 		printf(" %05lu", alloverflows);
+ 	printf("\n");
+ 
+-	printf("# Histogram Overflow: time (sec), thread\n");
+-	for (i = 0; i < nthreads; i++) {
+-		for (j = 0; j < par[i]->stats->num_outliers; j++) {
+-			struct timespec diff;
+-			diff.tv_sec  = par[i]->stats->outliers[j].tv_sec  - test_start.tv_sec;
+-			diff.tv_nsec = par[i]->stats->outliers[j].tv_nsec - test_start.tv_nsec;
+-			tsnorm2(&diff);
+-			printf("%ld.%09ld %d\n", diff.tv_sec, diff.tv_nsec, i);
++	if (of_max > 0) {
++		printf("# Histogram Overflow: time (sec), thread\n");
++		for (i = 0; i < nthreads; i++) {
++			for (j = 0; j < par[i]->stats->num_outliers; j++) {
++				struct timespec diff;
++				diff.tv_sec  = par[i]->stats->outliers[j].tv_sec  - test_start.tv_sec;
++				diff.tv_nsec = par[i]->stats->outliers[j].tv_nsec - test_start.tv_nsec;
++				tsnorm2(&diff);
++				printf("%ld.%09ld %d\n", diff.tv_sec, diff.tv_nsec, i);
++			}
+ 		}
+ 	}
+ }
+-- 
+1.7.4.1
+
