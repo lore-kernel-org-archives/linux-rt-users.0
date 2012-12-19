@@ -1,254 +1,94 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
-Subject: [PATCH] sched/rt: Move cpu rq properties from "struct rt_rq" to "struct rq"
-Date: Tue, 18 Dec 2012 23:12:28 +0400
-Message-ID: <4807701355857948@web19f.yandex.ru>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: Real-time kernel thread performance and optimization
+Date: Wed, 19 Dec 2012 09:10:35 +0100
+Message-ID: <50D1767B.6070400@osadl.org>
+References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com> <50B933A5.3020400@am.sony.com> <50BCB40E.9050304@osadl.org> <d63382c92165debf7dfcb7c5a6097ee6@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Tkhai Kirill <tkhai@yandex.ru>
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: frank.rowand@am.sony.com, linux-rt-users@vger.kernel.org
+To: Simon Falsig <simon@newtec.dk>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from toro.web-alm.net ([62.245.132.31]:44119 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751997Ab2LSIUN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Dec 2012 03:20:13 -0500
+In-Reply-To: <d63382c92165debf7dfcb7c5a6097ee6@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The members rt_nr_total, rt_nr_migratory, overloaded and pushable_tasks are
-properties of cpu runqueue, not group rt_rq.
+Simon,
 
-Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Ingo Molnar <mingo@kernel.org>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: linux-rt-users <linux-rt-users@vger.kernel.org>
+>>>> [..]
+>>>> Bonus-question:
+>>>>    - Additionally, I've tried running cyclictest alongside with all
+>>>> the above, and it actually performs rather well, without any
+>>>> substantial spikes. A strange thing is though, that the results are
+>>>> actually better with load than without? (running with -t1 -p 80 -n -i 10000 -l 10000)
+>>>>    - Loaded: Min: 16, Avg: 41, Max: 177
+>>>>    - No load: Min: 16, Avg: 97, Max: 263
+>>>
+>>> If the system is less loaded, then the idle thread might be able to
+>>> enter deeper levels of sleep.  Deeper levels of sleep have larger
+>>> latencies to exit.  You would have to look at your processor specific
+>>> values for exiting sleep states to see if this is sufficient to
+>>> explain the difference.
+>> If running a half-decent version of cyclictest, sleep states are generally
+>> disabled while cyclictest is running. Please watch the line
+>>     # /dev/cpu_dma_latency set to 0us
+>> which essentially documents this mechanism. Yes, the name of the variable
+>> "cpu_dma_latency" is not obvious and cyclictest could do a better job by
+>> writing
+>>     Wrote 0 to /dev/cpu_dma_latency and keeping the path open to prevent
+>>     all cores from entering any sleep state but this is another story.
+>>
+>> A patch that was merged to 3.7 allows to individually enable or disable sleep
+>> states of the ladder governor
+>> (http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=62d6ae880e3e76098d5e345decd2dce443975889).
+>> It smoothly applies to 3.6-RT as well. This allows to fine-tune the sleep states
+>> by state and core, while the /dev/cpu_dma_latency mechanism acts on all
+>> states and cores, e.g. to disable sleep state 2 and all deeper states of the
+>> ladder governor on core #0, use:
+>>     echo 1>/sys/devices/system/cpu/cpu0/cpuidle/state2/disable
+>>
+>> BTW: To analyze how much time a core spent in a specific sleep state, simply
+>> look repeatedly at the "time" variable of a core's sleep state, e.g. for core #0:
+>> # for i in /sys/devices/system/cpu/cpu0/cpuidle/state[0-4]
+>>   >  do
+>>   >  echo -e "`cat $i/name`:\t`cat $i/time`"
+>>   >  done
+>> POLL:	1342984105
+>> C1-IVB:	737109
+>> C3-IVB:	3852451
+>> C6-IVB:	1702683112
+>> C7-IVB:	4366946606
+>> While cyclictest is running with /dev/cpu_dma_latency set to 0, only the POLL
+>> state times are increasing.
+> Thanks for the reply! As I wrote in my reply to Frank, I'm not completely
+> sure if P states are correctly implemented in our system. We're using a
+> custom BIOS for our custom board, and while P states do show up and are
+> modifiable (I've currently installed the userspace-governor, and am
+> manually setting the clock-frequency to the lowest possible at startup),
+> our board guy is not sure that changing it actually has any effect on the
+> processor. Yay...:/
+Sorry, but this is a complete misunderstanding. C states and P states 
+are very different 
+(http://software.intel.com/en-us/blogs/2008/03/12/c-states-and-p-states-are-very-different). 
+The point made by Frank and my answer related to C states (aka sleep 
+states) a processor may enter when idle. The Linux C state interface is 
+called cpuidle. The P states you are referring to are related to the 
+processor's clock frequency that may be lowered at any time irrespective 
+of idle state. The Linux P state interface is called cpufreq. P states 
+generally affect the real-time capabilities in a linear and proportional 
+way, e.g. a CPU board with a worst-case latency of 100 microseconds at 1 
+GHz will have a latency of approximately 200 microseconds at 500 MHz. 
+When idle and in deep C state, however, the processor may take several 
+milliseconds to wake up and answer an asynchronous external event. This 
+is why deep C states should be disabled in a real-time system that may 
+become idle. And this is why I mentioned the new interface that allows 
+to individually disable a particular sleep state of a particular 
+processor core to ensure its deterministic behavior while the other 
+cores still may run in energy-saving mode.
 
----
- kernel/sched/core.c  |    5 ++++
- kernel/sched/rt.c    |   67 +++++++++++++++++++++++++-------------------------
- kernel/sched/sched.h |   11 ++++-----
- 3 files changed, 44 insertions(+), 39 deletions(-)
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index c1fb821..bf6eda6 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -6938,6 +6938,11 @@ void __init sched_init(void)
- 
- 		INIT_LIST_HEAD(&rq->cfs_tasks);
- 
-+		rq->rt_nr_total = 0;
-+		rq->rt_nr_migratory = 0;
-+		rq->rt_overloaded = 0;
-+		plist_head_init(&rq->pushable_tasks);
-+
- 		rq_attach_root(rq, &def_root_domain);
- #ifdef CONFIG_NO_HZ
- 		rq->nohz_flags = 0;
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index 418feb0..b102ab8 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -73,9 +73,6 @@ void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
- #if defined CONFIG_SMP
- 	rt_rq->highest_prio.curr = MAX_RT_PRIO;
- 	rt_rq->highest_prio.next = MAX_RT_PRIO;
--	rt_rq->rt_nr_migratory = 0;
--	rt_rq->overloaded = 0;
--	plist_head_init(&rt_rq->pushable_tasks);
- #endif
- 
- 	rt_rq->rt_time = 0;
-@@ -259,63 +256,67 @@ static inline void rt_clear_overload(struct rq *rq)
- 	cpumask_clear_cpu(rq->cpu, rq->rd->rto_mask);
- }
- 
--static void update_rt_migration(struct rt_rq *rt_rq)
-+static void update_rt_migration(struct rq *rq)
- {
--	if (rt_rq->rt_nr_migratory && rt_rq->rt_nr_total > 1) {
--		if (!rt_rq->overloaded) {
--			rt_set_overload(rq_of_rt_rq(rt_rq));
--			rt_rq->overloaded = 1;
-+	if (rq->rt_nr_migratory && rq->rt_nr_total > 1) {
-+		if (!rq->rt_overloaded) {
-+			rt_set_overload(rq);
-+			rq->rt_overloaded = 1;
- 		}
--	} else if (rt_rq->overloaded) {
--		rt_clear_overload(rq_of_rt_rq(rt_rq));
--		rt_rq->overloaded = 0;
-+	} else if (rq->rt_overloaded) {
-+		rt_clear_overload(rq);
-+		rq->rt_overloaded = 0;
- 	}
- }
- 
- static void inc_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
- {
- 	struct task_struct *p;
-+	struct rq *rq;
- 
- 	if (!rt_entity_is_task(rt_se))
- 		return;
- 
- 	p = rt_task_of(rt_se);
--	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
-+	rq = rq_of_rt_rq(rt_rq);
-+	rt_rq = &rq->rt;
- 
--	rt_rq->rt_nr_total++;
-+	rq->rt_nr_total++;
- 	if (p->nr_cpus_allowed > 1)
--		rt_rq->rt_nr_migratory++;
-+		rq->rt_nr_migratory++;
- 
--	update_rt_migration(rt_rq);
-+	update_rt_migration(rq);
- }
- 
- static void dec_rt_migration(struct sched_rt_entity *rt_se, struct rt_rq *rt_rq)
- {
- 	struct task_struct *p;
-+	struct rq *rq;
- 
- 	if (!rt_entity_is_task(rt_se))
- 		return;
- 
- 	p = rt_task_of(rt_se);
--	rt_rq = &rq_of_rt_rq(rt_rq)->rt;
-+	rq = rq_of_rt_rq(rt_rq);
-+	rt_rq = &rq->rt;
- 
--	rt_rq->rt_nr_total--;
-+	rq->rt_nr_total--;
- 	if (p->nr_cpus_allowed > 1)
--		rt_rq->rt_nr_migratory--;
-+		rq->rt_nr_migratory--;
- 
--	update_rt_migration(rt_rq);
-+	update_rt_migration(rq);
- }
- 
- static inline int has_pushable_tasks(struct rq *rq)
- {
--	return !plist_head_empty(&rq->rt.pushable_tasks);
-+	return !plist_head_empty(&rq->pushable_tasks);
- }
- 
- static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
- {
--	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+	plist_del(&p->pushable_tasks, &rq->pushable_tasks);
- 	plist_node_init(&p->pushable_tasks, p->prio);
--	plist_add(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+	plist_add(&p->pushable_tasks, &rq->pushable_tasks);
- 
- 	/* Update the highest prio pushable task */
- 	if (p->prio < rq->rt.highest_prio.next)
-@@ -324,11 +325,11 @@ static void enqueue_pushable_task(struct rq *rq, struct task_struct *p)
- 
- static void dequeue_pushable_task(struct rq *rq, struct task_struct *p)
- {
--	plist_del(&p->pushable_tasks, &rq->rt.pushable_tasks);
-+	plist_del(&p->pushable_tasks, &rq->pushable_tasks);
- 
- 	/* Update the new highest prio pushable task */
- 	if (has_pushable_tasks(rq)) {
--		p = plist_first_entry(&rq->rt.pushable_tasks,
-+		p = plist_first_entry(&rq->pushable_tasks,
- 				      struct task_struct, pushable_tasks);
- 		rq->rt.highest_prio.next = p->prio;
- 	} else
-@@ -1601,7 +1602,7 @@ static struct task_struct *pick_next_pushable_task(struct rq *rq)
- 	if (!has_pushable_tasks(rq))
- 		return NULL;
- 
--	p = plist_first_entry(&rq->rt.pushable_tasks,
-+	p = plist_first_entry(&rq->pushable_tasks,
- 			      struct task_struct, pushable_tasks);
- 
- 	BUG_ON(rq->cpu != task_cpu(p));
-@@ -1625,7 +1626,7 @@ static int push_rt_task(struct rq *rq)
- 	struct rq *lowest_rq;
- 	int ret = 0;
- 
--	if (!rq->rt.overloaded)
-+	if (!rq->rt_overloaded)
- 		return 0;
- 
- 	next_task = pick_next_pushable_task(rq);
-@@ -1843,21 +1844,21 @@ static void set_cpus_allowed_rt(struct task_struct *p,
- 	if (weight <= 1) {
- 		if (!task_current(rq, p))
- 			dequeue_pushable_task(rq, p);
--		BUG_ON(!rq->rt.rt_nr_migratory);
--		rq->rt.rt_nr_migratory--;
-+		BUG_ON(!rq->rt_nr_migratory);
-+		rq->rt_nr_migratory--;
- 	} else {
- 		if (!task_current(rq, p))
- 			enqueue_pushable_task(rq, p);
--		rq->rt.rt_nr_migratory++;
-+		rq->rt_nr_migratory++;
- 	}
- 
--	update_rt_migration(&rq->rt);
-+	update_rt_migration(rq);
- }
- 
- /* Assumes rq->lock is held */
- static void rq_online_rt(struct rq *rq)
- {
--	if (rq->rt.overloaded)
-+	if (rq->rt_overloaded)
- 		rt_set_overload(rq);
- 
- 	__enable_runtime(rq);
-@@ -1868,7 +1869,7 @@ static void rq_online_rt(struct rq *rq)
- /* Assumes rq->lock is held */
- static void rq_offline_rt(struct rq *rq)
- {
--	if (rq->rt.overloaded)
-+	if (rq->rt_overloaded)
- 		rt_clear_overload(rq);
- 
- 	__disable_runtime(rq);
-@@ -1922,7 +1923,7 @@ static void switched_to_rt(struct rq *rq, struct task_struct *p)
- 	 */
- 	if (p->on_rq && rq->curr != p) {
- #ifdef CONFIG_SMP
--		if (rq->rt.overloaded && push_rt_task(rq) &&
-+		if (rq->rt_overloaded && push_rt_task(rq) &&
- 		    /* Don't resched if we changed runqueues */
- 		    rq != task_rq(p))
- 			check_resched = 0;
-diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
-index fc88644..4faf9cd 100644
---- a/kernel/sched/sched.h
-+++ b/kernel/sched/sched.h
-@@ -301,12 +301,6 @@ struct rt_rq {
- #endif
- 	} highest_prio;
- #endif
--#ifdef CONFIG_SMP
--	unsigned long rt_nr_migratory;
--	unsigned long rt_nr_total;
--	int overloaded;
--	struct plist_head pushable_tasks;
--#endif
- 	int rt_throttled;
- 	u64 rt_time;
- 	u64 rt_runtime;
-@@ -431,6 +425,11 @@ struct rq {
- 
- 	struct list_head cfs_tasks;
- 
-+	unsigned long rt_nr_total;
-+	unsigned long rt_nr_migratory;
-+	int rt_overloaded;
-+	struct plist_head pushable_tasks;
-+
- 	u64 rt_avg;
- 	u64 age_stamp;
- 	u64 idle_stamp;
+Hope this helps,
+Carsten.
