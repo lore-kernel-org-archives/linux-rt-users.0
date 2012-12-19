@@ -1,58 +1,32 @@
 From: Bhavesh Davda <bhavesh@vmware.com>
-Subject: [PATCH 3/3] cyclictest: Print histogram overflow instances only if asked for
-Date: Wed, 19 Dec 2012 12:00:33 -0800
-Message-ID: <1355947233-31451-4-git-send-email-bhavesh@vmware.com>
-References: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
+Subject: [PATCH 0/3] cyclictest: improvements to histogram overflow instance mode
+Date: Wed, 19 Dec 2012 12:00:30 -0800
+Message-ID: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
 Cc: frank.rowand@am.sony.com, jkacur@redhat.com,
 	Bhavesh Davda <bhavesh@vmware.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-outbound-2.vmware.com ([208.91.2.13]:49508 "EHLO
-	smtp-outbound-2.vmware.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750922Ab2LSUA4 (ORCPT
+Received: from smtp-outbound-1.vmware.com ([208.91.2.12]:54306 "EHLO
+	smtp-outbound-1.vmware.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751214Ab2LSUA4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 19 Dec 2012 15:00:56 -0500
-In-Reply-To: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-By default (if -g is not specified), of_max is zero. Don't print histogram
-overflow instances in that case.
+This patch series makes usability improvements to the histogram overflow
+instance tracking mode, as suggested by Frank Rowland.
 
-Signed-off-by: Bhavesh Davda <bhavesh@vmware.com>
----
- src/cyclictest/cyclictest.c |   18 ++++++++++--------
- 1 files changed, 10 insertions(+), 8 deletions(-)
+Bhavesh Davda (3):
+  cyclictest: new command line switch for histogram overflow instance
+    tracking
+  cyclictest: Report histogram overflow instances in seconds since
+    start
+  cyclictest: Print histogram overflow instances only if asked for
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index b27f7dc..74c56a6 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -1476,14 +1476,16 @@ static void print_hist(struct thread_param *par[], int nthreads)
- 		printf(" %05lu", alloverflows);
- 	printf("\n");
- 
--	printf("# Histogram Overflow: time (sec), thread\n");
--	for (i = 0; i < nthreads; i++) {
--		for (j = 0; j < par[i]->stats->num_outliers; j++) {
--			struct timespec diff;
--			diff.tv_sec  = par[i]->stats->outliers[j].tv_sec  - test_start.tv_sec;
--			diff.tv_nsec = par[i]->stats->outliers[j].tv_nsec - test_start.tv_nsec;
--			tsnorm2(&diff);
--			printf("%ld.%09ld %d\n", diff.tv_sec, diff.tv_nsec, i);
-+	if (of_max > 0) {
-+		printf("# Histogram Overflow: time (sec), thread\n");
-+		for (i = 0; i < nthreads; i++) {
-+			for (j = 0; j < par[i]->stats->num_outliers; j++) {
-+				struct timespec diff;
-+				diff.tv_sec  = par[i]->stats->outliers[j].tv_sec  - test_start.tv_sec;
-+				diff.tv_nsec = par[i]->stats->outliers[j].tv_nsec - test_start.tv_nsec;
-+				tsnorm2(&diff);
-+				printf("%ld.%09ld %d\n", diff.tv_sec, diff.tv_nsec, i);
-+			}
- 		}
- 	}
- }
+ src/cyclictest/cyclictest.c |   72 +++++++++++++++++++++++++++++++++---------
+ 1 files changed, 56 insertions(+), 16 deletions(-)
+
 -- 
 1.7.4.1
 
