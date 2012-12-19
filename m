@@ -1,26 +1,33 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: [PATCH 0/1] Clarify the meaning of setting /dev/cpu_dma_latency to 0
-Date: Wed, 19 Dec 2012 16:35:24 +0100
-Message-ID: <20121219153524.843471516@osadl.org>
-Cc: John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>,
-	Carsten Emde <C.Emde@osadl.org>
-To: RT-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:45699 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752327Ab2LSPkS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2012 10:40:18 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: John Stultz <john.stultz@linaro.org>
+Subject: Re: [PATCH] Round the calculated scale factor in set_cyc2ns_scale()
+Date: Wed, 19 Dec 2012 10:28:29 -0800
+Message-ID: <50D2074D.4000101@linaro.org>
+References: <1354717009-2687-1-git-send-email-berndfaust@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Bernd Faust <berndfaust@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1354717009-2687-1-git-send-email-berndfaust@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi John,
-hi Clark,
+On 12/05/2012 06:16 AM, Bernd Faust wrote:
+> During some experiments with an external clock (in a FPGA), we saw that
+> the TSC clock drifted approx. 2.5ms per second.
+>
+> This drift was caused by the current way of calculating the scale.
+> In our case cpu_khz had a value of 3292725. This resulted in a scale
+> value of 310. But when doing the calculation by hand it shows that the
+> actual value is 310.9886188491, so a value of 311 would be more precise.
+>
+> With this change the value is rounded.
+>
+> Signed-off-by: Bernd Faust <berndfaust@gmail.com>
 
-this patch relates to the rt-users thread
-  http://permalink.gmane.org/gmane.linux.rt.user/9293. 
+Thanks for sending this in! I've queued it, but because I was slow here, 
+it will have to wait for 3.9.
 
-Thanks,
-	-Carsten.
- 
-
+Sorry for the delay, and thanks again!
+-john
