@@ -1,38 +1,57 @@
-From: Damien Moody <webmaster@gentoostudio.org>
-Subject: rt kernel, pro-audio use
-Date: Wed, 19 Dec 2012 21:30:29 +0000
-Message-ID: <50D231F5.4060604@gentoostudio.org>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH 0/3] cyclictest: improvements to histogram overflow instance
+ mode
+Date: Wed, 19 Dec 2012 15:17:47 -0800
+Message-ID: <50D24B1B.9020808@am.sony.com>
+References: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"Rowand, Frank" <Frank_Rowand@sonyusa.com>
+To: Bhavesh Davda <bhavesh@vmware.com>,
+	"jkacur@redhat.com" <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from serverdef.audiodef.com ([209.177.157.239]:35590 "EHLO
-	audiodef.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org with ESMTP
-	id S1751004Ab2LSVjk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2012 16:39:40 -0500
-Received: from audiodef.com (localhost [127.0.0.1])
-	by audiodef.com (Postfix) with ESMTP id 88BE03D0E1
-	for <linux-rt-users@vger.kernel.org>; Wed, 19 Dec 2012 21:02:14 +0000 (GMT)
-Received: from [192.168.1.5] (pool-108-48-23-204.washdc.fios.verizon.net [108.48.23.204])
-	(Authenticated sender: audiodef@audiodef.com)
-	by audiodef.com (Postfix) with ESMTPSA id 66BE83D0DB
-	for <linux-rt-users@vger.kernel.org>; Wed, 19 Dec 2012 21:02:14 +0000 (GMT)
+Received: from co1ehsobe001.messaging.microsoft.com ([216.32.180.184]:54788
+	"EHLO co1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752088Ab2LSXZ0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Dec 2012 18:25:26 -0500
+In-Reply-To: <1355947233-31451-1-git-send-email-bhavesh@vmware.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On 12/19/12 12:00, Bhavesh Davda wrote:
+> This patch series makes usability improvements to the histogram overflow
+> instance tracking mode, as suggested by Frank Rowland.
+                                                ^^^^^^^
+                                                Rowand
 
-I have a couple of questions.
+It happens all the time....
 
-1. I'd like to keep informed when the rt kernel gets updated, so I can 
-put up a new Gentoo ebuild on my site (gentoostudio.org). Is this the 
-list for that? If not, what is?
+> 
+> Bhavesh Davda (3):
+>   cyclictest: new command line switch for histogram overflow instance
+>     tracking
+>   cyclictest: Report histogram overflow instances in seconds since
+>     start
+>   cyclictest: Print histogram overflow instances only if asked for
+> 
+>  src/cyclictest/cyclictest.c |   72 +++++++++++++++++++++++++++++++++---------
+>  1 files changed, 56 insertions(+), 16 deletions(-)
+> 
 
-2. I use the rt patches a la rt-sources on Gentoo. I'm a musician and 
-audio engineer. What advantages does the rt patch set provide over other 
-patch sets like ck-sources and pf-sources, where latency can be 
-configured to be very low? I'd like to document this on my site.
+For patches 1 - 3:
 
-Thanks!
-Damien
+
+Reviewed-by: Frank Rowand <frank.rowand@am.sony.com>
+Tested-by: Frank Rowand <frank.rowand@am.sony.com>
+
+
+Thanks for improving cyclictest Bhavesh!
+
+John, all good for you to commit?
+
+-Frank
+
