@@ -1,130 +1,70 @@
 From: Simon Falsig <simon@newtec.dk>
 Subject: RE: Real-time kernel thread performance and optimization
-Date: Thu, 20 Dec 2012 09:09:53 +0100
-Message-ID: <478a74c3dfa2649fa76a6344b11292f2@mail.gmail.com>
+Date: Thu, 20 Dec 2012 09:21:54 +0100
+Message-ID: <32844ba58ef36b5032ce5aa08ca2a985@mail.gmail.com>
 References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com>
- <50B933A5.3020400@am.sony.com> <50BCB40E.9050304@osadl.org>
- <d63382c92165debf7dfcb7c5a6097ee6@mail.gmail.com> <50D1767B.6070400@osadl.org>
+ <50B933A5.3020400@am.sony.com> <d27143389b68c615c242b56c7cd4dd22@mail.gmail.com>
+ <50CF9A1E.5000902@am.sony.com> <50D257BF.2060803@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: frank.rowand@am.sony.com, linux-rt-users@vger.kernel.org
-To: Carsten Emde <C.Emde@osadl.org>
+Cc: linux-rt-users@vger.kernel.org, jkacur@redhat.com
+To: Darren Hart <dvhart@infradead.org>, frank.rowand@am.sony.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from eu1sys200aog115.obsmtp.com ([207.126.144.139]:47802 "HELO
-	eu1sys200aog115.obsmtp.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1751326Ab2LTIJ5 (ORCPT
+Received: from eu1sys200aog108.obsmtp.com ([207.126.144.125]:59139 "HELO
+	eu1sys200aog108.obsmtp.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1751155Ab2LTIV5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2012 03:09:57 -0500
-Received: by mail-wg0-f69.google.com with SMTP id es5so2264470wgb.4
-        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2012 00:09:54 -0800 (PST)
-In-Reply-To: <50D1767B.6070400@osadl.org>
+	Thu, 20 Dec 2012 03:21:57 -0500
+Received: by mail-ee0-f72.google.com with SMTP id c13so2447581eek.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2012 00:21:55 -0800 (PST)
+In-Reply-To: <50D257BF.2060803@infradead.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->
-> Simon,
->
-> >>>> [..]
-> >>>> Bonus-question:
-> >>>>    - Additionally, I've tried running cyclictest alongside with all
-> >>>> the above, and it actually performs rather well, without any
-> >>>> substantial spikes. A strange thing is though, that the results are
-> >>>> actually better with load than without? (running with -t1 -p 80 -n
--i
-> 10000 -l 10000)
-> >>>>    - Loaded: Min: 16, Avg: 41, Max: 177
-> >>>>    - No load: Min: 16, Avg: 97, Max: 263
+On 12/20/2012 01:12 AM, Darren Hart wrote:
+> On 12/17/2012 02:18 PM, Frank Rowand wrote:
+> > On 12/11/12 06:30, Simon Falsig wrote:
+> >
+> > < snip >
+> >
+> >>>> Once I get this finished up, I'll be happy to do a complete
+> >>>> write-up of the timer-thread code, if anyone is interested. I
+> >>>> remember looking for something similar (but without success), when
+> >>>> I wrote the code earlier this year.
 > >>>
-> >>> If the system is less loaded, then the idle thread might be able to
-> >>> enter deeper levels of sleep.  Deeper levels of sleep have larger
-> >>> latencies to exit.  You would have to look at your processor
-> >>> specific values for exiting sleep states to see if this is
-> >>> sufficient to explain the difference.
-> >> If running a half-decent version of cyclictest, sleep states are
-> >> generally disabled while cyclictest is running. Please watch the line
-> >>     # /dev/cpu_dma_latency set to 0us which essentially documents
-> >> this mechanism. Yes, the name of the variable "cpu_dma_latency" is
-> >> not obvious and cyclictest could do a better job by writing
-> >>     Wrote 0 to /dev/cpu_dma_latency and keeping the path open to
-> prevent
-> >>     all cores from entering any sleep state but this is another
-story.
+> >>> It would be very useful to add your results to the wiki.
+> >>>
+> >>> -Frank
 > >>
-> >> A patch that was merged to 3.7 allows to individually enable or
-> >> disable sleep states of the ladder governor
-> >>
+> >> Cool - is there any particular place it should go? A how-to, FAQ
+> >> entry, etc? Just so I know how to do the write-up...
+> >
+> > https://rt.wiki.kernel.org/index.php/Main_Page would be my default
+> > suggestion.  I'm not quite sure where on the wiki would be good
+> > though.  Maybe under "Tips and Techniques"?
+> >
+> > I added the rtwiki maintainers to the cc: list.
 >
-(http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=6
-2d
-> 6ae880e3e76098d5e345decd2dce443975889).
-> >> It smoothly applies to 3.6-RT as well. This allows to fine-tune the
-> >> sleep states by state and core, while the /dev/cpu_dma_latency
-> >> mechanism acts on all states and cores, e.g. to disable sleep state 2
-> >> and all deeper states of the ladder governor on core #0, use:
-> >>     echo 1>/sys/devices/system/cpu/cpu0/cpuidle/state2/disable
-> >>
-> >> BTW: To analyze how much time a core spent in a specific sleep state,
-> >> simply look repeatedly at the "time" variable of a core's sleep
-state, e.g.
-> for core #0:
-> >> # for i in /sys/devices/system/cpu/cpu0/cpuidle/state[0-4]
-> >>   >  do
-> >>   >  echo -e "`cat $i/name`:\t`cat $i/time`"
-> >>   >  done
-> >> POLL:	1342984105
-> >> C1-IVB:	737109
-> >> C3-IVB:	3852451
-> >> C6-IVB:	1702683112
-> >> C7-IVB:	4366946606
-> >> While cyclictest is running with /dev/cpu_dma_latency set to 0, only
-> >> the POLL state times are increasing.
-> > Thanks for the reply! As I wrote in my reply to Frank, I'm not
-> > completely sure if P states are correctly implemented in our system.
-> > We're using a custom BIOS for our custom board, and while P states do
-> > show up and are modifiable (I've currently installed the
-> > userspace-governor, and am manually setting the clock-frequency to the
-> > lowest possible at startup), our board guy is not sure that changing
-> > it actually has any effect on the processor. Yay...:/
-> Sorry, but this is a complete misunderstanding. C states and P states
-are very
-> different
-(http://software.intel.com/en-us/blogs/2008/03/12/c-states-and-
-> p-states-are-very-different).
-> The point made by Frank and my answer related to C states (aka sleep
-> states) a processor may enter when idle. The Linux C state interface is
-called
-> cpuidle. The P states you are referring to are related to the
-processor's clock
-> frequency that may be lowered at any time irrespective of idle state.
-The
-> Linux P state interface is called cpufreq. P states generally affect the
-real-
-> time capabilities in a linear and proportional way, e.g. a CPU board
-with a
-> worst-case latency of 100 microseconds at 1 GHz will have a latency of
-> approximately 200 microseconds at 500 MHz.
-> When idle and in deep C state, however, the processor may take several
-> milliseconds to wake up and answer an asynchronous external event. This
-is
-> why deep C states should be disabled in a real-time system that may
-become
-> idle. And this is why I mentioned the new interface that allows to
-individually
-> disable a particular sleep state of a particular processor core to
-ensure its
-> deterministic behavior while the other cores still may run in
-energy-saving
-> mode.
->
-> Hope this helps,
-> Carsten.
+> I don't have all the context, but this sounds a bit more like something
+for
+> linux/Documentation (possibly for the preempt-rt patch set). If not, the
+> Documentation section on the wiki is a possibility.
+> --
+> Darren Hart
+> Intel Open Source Technology Center
+> Yocto Project - Technical Lead - Linux Kernel
 
-Ah, I actually came to suspect as much after I posted the above. But I
-presume C-states also need to be supported in the BIOS? We have a new
-revision of our board (including an updated BIOS) coming along soon(ish),
-so I'll try having a further look at things once I get my hands on it.
+As I see it, the write-up could be done in two ways - 1) as a simple code
+example of a real-time loop in a kernel module, 2) as a blog-like post of
+the process I went through, investigating the performance, and optimizing
+my code.
 
-In any case, thank you for the nice explanation - much appreciated!
+In the case of 1), I guess it could be added to
+https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO, as a kernel version
+of the realtime example, or possibly to
+https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application under
+"Building Device Drivers"? In the case of 2) though, it could maybe be on
+its own page under "Tips and techniques"?
 
 Best regards,
 Simon Falsig
