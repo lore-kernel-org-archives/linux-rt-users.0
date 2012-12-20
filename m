@@ -1,172 +1,35 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT] rtmutex: Use raw_spin_trylock() in
+Subject: Re: [RFC][PATCH RT] rtmutex: Use raw_spin_trylock() in
  rt_mutex_slowlock() to ease possible live locks
-Date: Wed, 19 Dec 2012 20:31:58 -0500
-Message-ID: <1355967118.5896.52.camel@gandalf.local.home>
+Date: Wed, 19 Dec 2012 22:44:02 -0500
+Message-ID: <1355975042.5896.54.camel@gandalf.local.home>
+References: <1355967118.5896.52.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, Carsten Emde <cbe@osadl.org>,
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <cbe@osadl.org>,
 	Clark Williams <clark@redhat.com>,
 	John Kacur <jkacur@redhat.com>,
 	Mike Galbraith <bitbucket@online.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:22527 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8231 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751397Ab2LTBcB (ORCPT
+	with ESMTP id S1751397Ab2LTDoF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2012 20:32:01 -0500
+	Wed, 19 Dec 2012 22:44:05 -0500
+In-Reply-To: <1355967118.5896.52.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Running -rt on a 40 CPU core box, I would every so often hit a lockup in
-the file system. Any new access to the file system would also lock up. I
-finally triggered this again and did a sysrq-t and sysrq-w to
-investigate. What more, the NMI watchdog went off too, and this actually
-showed the real bug.
+On Wed, 2012-12-19 at 20:31 -0500, Steven Rostedt wrote:
 
-To explain this, lets look at some of the back traces:
+> 
+> This is just an RFC patch to start discussion, not for inclusion. I may
+> send another patch that implements #2 above.
 
-ksoftirqd/11    R  running task        0    80      2 0x00000000
-Call Trace:
- [<ffffffff8151e8d9>] schedule+0x29/0x70
- [<ffffffff8151f6cd>] rt_spin_lock_slowlock+0x10d/0x310
- [<ffffffff81156d86>] ? kmem_cache_free+0x116/0x2d0
- [<ffffffff8151fec6>] rt_spin_lock+0x26/0x30
- [<ffffffff81239052>] blk_run_queue+0x22/0x50
- [<ffffffff8135a4a3>] scsi_run_queue+0xd3/0x2c0
-
-ksoftirqd/11 is in the running state, and being woken up. It has just
-acquired the q->queue_lock in blk_run_queue(). But as it is only the
-pending owner, it hasn't had its pi_blocked_on cleared yet.
-
-NMI backtrace for cpu 11
-CPU 11 
-Pid: 2802, comm: irq/92-hpsa0 Not tainted 3.6.9-rt21+ #12 HP ProLiant DL580 G7
-RIP: 0010:[<ffffffff815202b5>]  [<ffffffff815202b5>] _raw_spin_lock_irqsave+0x25/0x40
-Process irq/92-hpsa0 (pid: 2802, threadinfo ffff880ffe078000, task ffff880ffe4ec580)
-Call Trace:
- [<ffffffff810a170c>] rt_mutex_adjust_prio_chain+0xfc/0x480
- [<ffffffff810a1f65>] task_blocks_on_rt_mutex+0x175/0x280
- [<ffffffff8151f699>] rt_spin_lock_slowlock+0xd9/0x310
- [<ffffffff8151fec6>] rt_spin_lock+0x26/0x30
- [<ffffffff8104e0a2>] do_current_softirqs+0x102/0x350
-
-The irq thread irq/92-hpsa0 running on CPU 11 is in the process of
-trying to boost the owner of the softirq, as it just raised the block
-softirq which ksoftirqd/11 is running. I let several NMI watchdogs
-trigger and this task is in a different location within the
-rt_mutex_adjust_prio_chain() code. But always within the retry loop of
-taking the task->pi_lock and the trylock of lock->wait_lock.
-
-Note that all tasks that are less than the priority of ksoftirqd/11 can
-not steal the q->queue_lock. As ksoftirqd/11 runs at priority 1, that
-includes all other ksoftirqds as well as my shell commands. Thus, the
-q->queue_lock isn't technically fully held by anyone yet.
-
-Then we have this lovely code:
-
-block/blk-ioc.c: put_io_context_active()
-
-retry:
-        spin_lock_irqsave_nested(&ioc->lock, flags, 1);
-        hlist_for_each_entry(icq, n, &ioc->icq_list, ioc_node) {
-                if (icq->flags & ICQ_EXITED)
-                        continue;
-                if (spin_trylock(icq->q->queue_lock)) {
-                        ioc_exit_icq(icq);
-                        spin_unlock(icq->q->queue_lock);
-                } else {
-                        spin_unlock_irqrestore(&ioc->lock, flags);
-                        cpu_relax();
-                        goto retry;
-                }
-        }
-
-Where it constantly tries to grab the icq->q->queue_lock, if it fails,
-it releases the lock, drops the other icq->lock, and tries again.
-There's lots of these in my dump:
-
-Call Trace:
- [<ffffffff810a1571>] rt_mutex_slowtrylock+0x11/0xb0
- [<ffffffff8151f2e8>] rt_mutex_trylock+0x28/0x30
- [<ffffffff8151fdde>] rt_spin_trylock+0xe/0x10
- [<ffffffff812408d1>] put_io_context_active+0x71/0x100
- [<ffffffff812409be>] exit_io_context+0x5e/0x70
- [<ffffffff8104b17d>] do_exit+0x5bd/0x9d0
- [<ffffffff8104b5e8>] do_group_exit+0x58/0xd0
-
-The one thing that caught my eye though, was that the majority of the
-time, that rt_mutex_slowtrylock() was here:
-
-rt_mutex_slowtrylock(struct rt_mutex *lock)
-{
-        int ret = 0;
-
-        raw_spin_lock(&lock->wait_lock);  <<--
-        init_lists(lock);
-
-
-And there were several of these:
-
-Call Trace:
- [<ffffffff8151e8d9>] schedule+0x29/0x70
- [<ffffffff8151f6cd>] rt_spin_lock_slowlock+0x10d/0x310
- [<ffffffff81156d86>] ? kmem_cache_free+0x116/0x2d0
- [<ffffffff8151fec6>] rt_spin_lock+0x26/0x30
- [<ffffffff81239052>] blk_run_queue+0x22/0x50
- [<ffffffff8135a4a3>] scsi_run_queue+0xd3/0x2c0
-
-At various calls that grab the q->queue_lock, not just at
-scsi_run_queue() or even blk_run_queue(). But all were blocked on the
-q->queue_lock.
-
-Where they were all ksoftirqd/X and stuck at:
-
-                if (top_waiter != &waiter || adaptive_wait(lock, lock_owner))
-                        schedule_rt_mutex(lock);
-
-                raw_spin_lock(&lock->wait_lock); <<--
-
-                pi_lock(&self->pi_lock);
-
-Not sure why there were more than one, as the condition above the
-schedule_rt_mutex() should only be false for one, if any.
-
-Thus, my theory of the lock up is that each of the raw_spin_lock()s are
-ticket locks, and the raw_spin_trylock() will fail if there's any
-contention. Which means because of the put_io_context_active() loop
-which does the rt_mutex_trylock() will always fail, but because it uses
-a normal raw_spin_lock(), it is guaranteed to take the lock->wait_lock
-because of the FIFO nature of the ticket spinlock. After it takes the
-lock, it will find out that the q->queue_lock is contented, and it can't
-steal it, and return. But the irq thread that's trying to boost, and
-will not exit till it gets the lock->wait_lock but will be starved by
-all the tasks doing the put_io_context_active() loop. The
-put_io_context_active() tasks will be constantly fighting over the lock
-and never let the irq thread get the lock to finish the boost.
-
-As the irq thread is starved, it wont let the ksoftirqd/11 task run,
-which is blocking all the rest. In essence, we have a live lock.
-
-Now, there's two solutions that I can think of:
-
-1) This patch. Which is to make the raw spin lock in the
-rt_mutex_trylock into a raw_spin_trylock(). This will make it a bit more
-fair among all the looping, but doesn't guarantee that we wont live lock
-either. It just doesn't force a live lock as the current code now
-stands.
-
-2) A bit more complex. When failing the trylock in the
-rt_mutex_adjust_prio_chain(), release the task->pi_lock, grab the
-lock->wait_lock directly, followed by the task->pi_lock. Do all the
-checks again (the ones between the retry and the trylock), if all is
-well, continue on, otherwise drop both locks and retry again.
-
-This is just an RFC patch to start discussion, not for inclusion. I may
-send another patch that implements #2 above.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
@@ -174,23 +37,101 @@ Index: linux-rt.git/kernel/rtmutex.c
 ===================================================================
 --- linux-rt.git.orig/kernel/rtmutex.c
 +++ linux-rt.git/kernel/rtmutex.c
-@@ -1044,7 +1044,16 @@ rt_mutex_slowtrylock(struct rt_mutex *lo
- {
- 	int ret = 0;
+@@ -167,6 +167,39 @@ static void rt_mutex_wake_waiter(struct 
+  */
+ int max_lock_depth = 1024;
  
--	raw_spin_lock(&lock->wait_lock);
++static bool test_lock_waiter(struct task_struct *task,
++			     struct rt_mutex_waiter *waiter,
++			     struct rt_mutex_waiter *top_waiter,
++			     struct rt_mutex *orig_lock,
++			     struct rt_mutex_waiter *orig_waiter,
++			     int detect_deadlock)
++{
 +	/*
-+	 * As raw_spin_lock() is FIFO, if the caller is looping
-+	 * with a trylock, then it could starve a task doing a priority
-+	 * boost, as rt_mutex_adjust_prio_chain() uses trylock
-+	 * which is not FIFO. Use a trylock here too. If we
-+	 * fail to get the wait_lock, then fail to get the rt_mutex.
++	 * Check the orig_waiter state. After we dropped the locks,
++	 * the previous owner of the lock might have released the lock.
 +	 */
-+	if (!raw_spin_trylock(&lock->wait_lock))
-+		return 0;
++	if (orig_waiter && !rt_mutex_owner(orig_lock))
++		return false;
 +
- 	init_lists(lock);
++	/*
++	 * Drop out, when the task has no waiters. Note,
++	 * top_waiter can be NULL, when we are in the deboosting
++	 * mode!
++	 */
++	if (top_waiter && (!task_has_pi_waiters(task) ||
++			   top_waiter != task_top_pi_waiter(task)))
++		return false;
++
++	/*
++	 * When deadlock detection is off then we check, if further
++	 * priority adjustment is necessary.
++	 */
++	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
++		return false;
++
++	return true;
++}
++
+ /*
+  * Adjust the priority chain. Also used for deadlock detection.
+  * Decreases task's usage by one - may thus free the task.
+@@ -225,34 +258,32 @@ static int rt_mutex_adjust_prio_chain(st
+ 	if (!rt_mutex_real_waiter(waiter))
+ 		goto out_unlock_pi;
  
- 	if (likely(rt_mutex_owner(lock) != current)) {
+-	/*
+-	 * Check the orig_waiter state. After we dropped the locks,
+-	 * the previous owner of the lock might have released the lock.
+-	 */
+-	if (orig_waiter && !rt_mutex_owner(orig_lock))
+-		goto out_unlock_pi;
+-
+-	/*
+-	 * Drop out, when the task has no waiters. Note,
+-	 * top_waiter can be NULL, when we are in the deboosting
+-	 * mode!
+-	 */
+-	if (top_waiter && (!task_has_pi_waiters(task) ||
+-			   top_waiter != task_top_pi_waiter(task)))
+-		goto out_unlock_pi;
+-
+-	/*
+-	 * When deadlock detection is off then we check, if further
+-	 * priority adjustment is necessary.
+-	 */
+-	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
++	if (!test_lock_waiter(task, waiter, top_waiter,
++			      orig_lock, orig_waiter, deadlock_detect))
+ 		goto out_unlock_pi;
+ 
+ 	lock = waiter->lock;
+ 	if (!raw_spin_trylock(&lock->wait_lock)) {
+ 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+-		cpu_relax();
+-		goto retry;
++		/*
++		 * As raw_spin_locks are FIFO, we need to avoid being
++		 * starved out by other tasks that may be grabbing
++		 * the wait_lock. Grab both locks in the proper
++		 * order and test if anything changed. If it did
++		 * we need to drop them and try again.
++		 */
++		raw_spin_lock(&lock->wait_lock);
++		raw_spin_lock_irqsave(&task->pi_lock, flags);
++		if (waiter != task->pi_blocked_on ||
++		    lock != waiter->lock ||
++		    !test_lock_waiter(task, waiter, top_waiter,
++				      orig_lock, orig_waiter,
++				      detect_deadlock)) {
++			raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++			raw_spin_unlock(&lock->wait_lock);
++			cpu_relax();
++			goto retry;
++		}
+ 	}
+ 
+ 	/* Deadlock detection */
 
 
