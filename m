@@ -1,35 +1,56 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] sched/rt: Move cpu rq properties from "struct rt_rq" to
- "struct rq"
-Date: Thu, 20 Dec 2012 18:53:43 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1212201852060.3148@ionos>
-References: <4807701355857948@web19f.yandex.ru>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC][PATCH RT] rtmutex: Use raw_spin_trylock() in
+ rt_mutex_slowlock() to ease possible live locks
+Date: Thu, 20 Dec 2012 13:02:01 -0500
+Message-ID: <1356026521.5896.55.camel@gandalf.local.home>
+References: <1355967118.5896.52.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Kirill Tkhai <tkhai@yandex.ru>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <cbe@osadl.org>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Mike Galbraith <bitbucket@online.de>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:50069 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750776Ab2LTRxt (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:24621 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751505Ab2LTSCF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Dec 2012 12:53:49 -0500
-In-Reply-To: <4807701355857948@web19f.yandex.ru>
+	Thu, 20 Dec 2012 13:02:05 -0500
+In-Reply-To: <1355967118.5896.52.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 18 Dec 2012, Kirill Tkhai wrote:
+On Wed, 2012-12-19 at 20:31 -0500, Steven Rostedt wrote:
 
-> The members rt_nr_total, rt_nr_migratory, overloaded and pushable_tasks are
-> properties of cpu runqueue, not group rt_rq.
+Talking with Thomas, the proper solution is:
 
-Why?
+> Then we have this lovely code:
+> 
+> block/blk-ioc.c: put_io_context_active()
+> 
+> retry:
+>         spin_lock_irqsave_nested(&ioc->lock, flags, 1);
+>         hlist_for_each_entry(icq, n, &ioc->icq_list, ioc_node) {
+>                 if (icq->flags & ICQ_EXITED)
+>                         continue;
+>                 if (spin_trylock(icq->q->queue_lock)) {
+>                         ioc_exit_icq(icq);
+>                         spin_unlock(icq->q->queue_lock);
+>                 } else {
+>                         spin_unlock_irqrestore(&ioc->lock, flags);
+>                         cpu_relax();
 
-Thanks,
+s/cpu_relax/cpu_chill/
 
-	tglx
+-- Steve
+
+>                         goto retry;
+>                 }
+>         }
+> 
+
 
