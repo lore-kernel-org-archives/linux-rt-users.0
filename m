@@ -1,137 +1,130 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH RT] rtmutex: Use raw_spin_trylock() in
- rt_mutex_slowlock() to ease possible live locks
-Date: Wed, 19 Dec 2012 22:44:02 -0500
-Message-ID: <1355975042.5896.54.camel@gandalf.local.home>
-References: <1355967118.5896.52.camel@gandalf.local.home>
+From: Simon Falsig <simon@newtec.dk>
+Subject: RE: Real-time kernel thread performance and optimization
+Date: Thu, 20 Dec 2012 09:09:53 +0100
+Message-ID: <478a74c3dfa2649fa76a6344b11292f2@mail.gmail.com>
+References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com>
+ <50B933A5.3020400@am.sony.com> <50BCB40E.9050304@osadl.org>
+ <d63382c92165debf7dfcb7c5a6097ee6@mail.gmail.com> <50D1767B.6070400@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <cbe@osadl.org>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
-To: LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: frank.rowand@am.sony.com, linux-rt-users@vger.kernel.org
+To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8231 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751397Ab2LTDoF (ORCPT
+Received: from eu1sys200aog115.obsmtp.com ([207.126.144.139]:47802 "HELO
+	eu1sys200aog115.obsmtp.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with SMTP id S1751326Ab2LTIJ5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Dec 2012 22:44:05 -0500
-In-Reply-To: <1355967118.5896.52.camel@gandalf.local.home>
+	Thu, 20 Dec 2012 03:09:57 -0500
+Received: by mail-wg0-f69.google.com with SMTP id es5so2264470wgb.4
+        for <linux-rt-users@vger.kernel.org>; Thu, 20 Dec 2012 00:09:54 -0800 (PST)
+In-Reply-To: <50D1767B.6070400@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2012-12-19 at 20:31 -0500, Steven Rostedt wrote:
+>
+> Simon,
+>
+> >>>> [..]
+> >>>> Bonus-question:
+> >>>>    - Additionally, I've tried running cyclictest alongside with all
+> >>>> the above, and it actually performs rather well, without any
+> >>>> substantial spikes. A strange thing is though, that the results are
+> >>>> actually better with load than without? (running with -t1 -p 80 -n
+-i
+> 10000 -l 10000)
+> >>>>    - Loaded: Min: 16, Avg: 41, Max: 177
+> >>>>    - No load: Min: 16, Avg: 97, Max: 263
+> >>>
+> >>> If the system is less loaded, then the idle thread might be able to
+> >>> enter deeper levels of sleep.  Deeper levels of sleep have larger
+> >>> latencies to exit.  You would have to look at your processor
+> >>> specific values for exiting sleep states to see if this is
+> >>> sufficient to explain the difference.
+> >> If running a half-decent version of cyclictest, sleep states are
+> >> generally disabled while cyclictest is running. Please watch the line
+> >>     # /dev/cpu_dma_latency set to 0us which essentially documents
+> >> this mechanism. Yes, the name of the variable "cpu_dma_latency" is
+> >> not obvious and cyclictest could do a better job by writing
+> >>     Wrote 0 to /dev/cpu_dma_latency and keeping the path open to
+> prevent
+> >>     all cores from entering any sleep state but this is another
+story.
+> >>
+> >> A patch that was merged to 3.7 allows to individually enable or
+> >> disable sleep states of the ladder governor
+> >>
+>
+(http://git.kernel.org/?p=linux/kernel/git/torvalds/linux.git;a=commit;h=6
+2d
+> 6ae880e3e76098d5e345decd2dce443975889).
+> >> It smoothly applies to 3.6-RT as well. This allows to fine-tune the
+> >> sleep states by state and core, while the /dev/cpu_dma_latency
+> >> mechanism acts on all states and cores, e.g. to disable sleep state 2
+> >> and all deeper states of the ladder governor on core #0, use:
+> >>     echo 1>/sys/devices/system/cpu/cpu0/cpuidle/state2/disable
+> >>
+> >> BTW: To analyze how much time a core spent in a specific sleep state,
+> >> simply look repeatedly at the "time" variable of a core's sleep
+state, e.g.
+> for core #0:
+> >> # for i in /sys/devices/system/cpu/cpu0/cpuidle/state[0-4]
+> >>   >  do
+> >>   >  echo -e "`cat $i/name`:\t`cat $i/time`"
+> >>   >  done
+> >> POLL:	1342984105
+> >> C1-IVB:	737109
+> >> C3-IVB:	3852451
+> >> C6-IVB:	1702683112
+> >> C7-IVB:	4366946606
+> >> While cyclictest is running with /dev/cpu_dma_latency set to 0, only
+> >> the POLL state times are increasing.
+> > Thanks for the reply! As I wrote in my reply to Frank, I'm not
+> > completely sure if P states are correctly implemented in our system.
+> > We're using a custom BIOS for our custom board, and while P states do
+> > show up and are modifiable (I've currently installed the
+> > userspace-governor, and am manually setting the clock-frequency to the
+> > lowest possible at startup), our board guy is not sure that changing
+> > it actually has any effect on the processor. Yay...:/
+> Sorry, but this is a complete misunderstanding. C states and P states
+are very
+> different
+(http://software.intel.com/en-us/blogs/2008/03/12/c-states-and-
+> p-states-are-very-different).
+> The point made by Frank and my answer related to C states (aka sleep
+> states) a processor may enter when idle. The Linux C state interface is
+called
+> cpuidle. The P states you are referring to are related to the
+processor's clock
+> frequency that may be lowered at any time irrespective of idle state.
+The
+> Linux P state interface is called cpufreq. P states generally affect the
+real-
+> time capabilities in a linear and proportional way, e.g. a CPU board
+with a
+> worst-case latency of 100 microseconds at 1 GHz will have a latency of
+> approximately 200 microseconds at 500 MHz.
+> When idle and in deep C state, however, the processor may take several
+> milliseconds to wake up and answer an asynchronous external event. This
+is
+> why deep C states should be disabled in a real-time system that may
+become
+> idle. And this is why I mentioned the new interface that allows to
+individually
+> disable a particular sleep state of a particular processor core to
+ensure its
+> deterministic behavior while the other cores still may run in
+energy-saving
+> mode.
+>
+> Hope this helps,
+> Carsten.
 
-> 
-> This is just an RFC patch to start discussion, not for inclusion. I may
-> send another patch that implements #2 above.
+Ah, I actually came to suspect as much after I posted the above. But I
+presume C-states also need to be supported in the BIOS? We have a new
+revision of our board (including an updated BIOS) coming along soon(ish),
+so I'll try having a further look at things once I get my hands on it.
 
+In any case, thank you for the nice explanation - much appreciated!
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Index: linux-rt.git/kernel/rtmutex.c
-===================================================================
---- linux-rt.git.orig/kernel/rtmutex.c
-+++ linux-rt.git/kernel/rtmutex.c
-@@ -167,6 +167,39 @@ static void rt_mutex_wake_waiter(struct 
-  */
- int max_lock_depth = 1024;
- 
-+static bool test_lock_waiter(struct task_struct *task,
-+			     struct rt_mutex_waiter *waiter,
-+			     struct rt_mutex_waiter *top_waiter,
-+			     struct rt_mutex *orig_lock,
-+			     struct rt_mutex_waiter *orig_waiter,
-+			     int detect_deadlock)
-+{
-+	/*
-+	 * Check the orig_waiter state. After we dropped the locks,
-+	 * the previous owner of the lock might have released the lock.
-+	 */
-+	if (orig_waiter && !rt_mutex_owner(orig_lock))
-+		return false;
-+
-+	/*
-+	 * Drop out, when the task has no waiters. Note,
-+	 * top_waiter can be NULL, when we are in the deboosting
-+	 * mode!
-+	 */
-+	if (top_waiter && (!task_has_pi_waiters(task) ||
-+			   top_waiter != task_top_pi_waiter(task)))
-+		return false;
-+
-+	/*
-+	 * When deadlock detection is off then we check, if further
-+	 * priority adjustment is necessary.
-+	 */
-+	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
-+		return false;
-+
-+	return true;
-+}
-+
- /*
-  * Adjust the priority chain. Also used for deadlock detection.
-  * Decreases task's usage by one - may thus free the task.
-@@ -225,34 +258,32 @@ static int rt_mutex_adjust_prio_chain(st
- 	if (!rt_mutex_real_waiter(waiter))
- 		goto out_unlock_pi;
- 
--	/*
--	 * Check the orig_waiter state. After we dropped the locks,
--	 * the previous owner of the lock might have released the lock.
--	 */
--	if (orig_waiter && !rt_mutex_owner(orig_lock))
--		goto out_unlock_pi;
--
--	/*
--	 * Drop out, when the task has no waiters. Note,
--	 * top_waiter can be NULL, when we are in the deboosting
--	 * mode!
--	 */
--	if (top_waiter && (!task_has_pi_waiters(task) ||
--			   top_waiter != task_top_pi_waiter(task)))
--		goto out_unlock_pi;
--
--	/*
--	 * When deadlock detection is off then we check, if further
--	 * priority adjustment is necessary.
--	 */
--	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
-+	if (!test_lock_waiter(task, waiter, top_waiter,
-+			      orig_lock, orig_waiter, deadlock_detect))
- 		goto out_unlock_pi;
- 
- 	lock = waiter->lock;
- 	if (!raw_spin_trylock(&lock->wait_lock)) {
- 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
--		cpu_relax();
--		goto retry;
-+		/*
-+		 * As raw_spin_locks are FIFO, we need to avoid being
-+		 * starved out by other tasks that may be grabbing
-+		 * the wait_lock. Grab both locks in the proper
-+		 * order and test if anything changed. If it did
-+		 * we need to drop them and try again.
-+		 */
-+		raw_spin_lock(&lock->wait_lock);
-+		raw_spin_lock_irqsave(&task->pi_lock, flags);
-+		if (waiter != task->pi_blocked_on ||
-+		    lock != waiter->lock ||
-+		    !test_lock_waiter(task, waiter, top_waiter,
-+				      orig_lock, orig_waiter,
-+				      detect_deadlock)) {
-+			raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-+			raw_spin_unlock(&lock->wait_lock);
-+			cpu_relax();
-+			goto retry;
-+		}
- 	}
- 
- 	/* Deadlock detection */
-
-
+Best regards,
+Simon Falsig
