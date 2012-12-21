@@ -1,342 +1,161 @@
 From: Mike Galbraith <bitbucket@online.de>
 Subject: Re: [ANNOUNCE] 3.6.11-rt24 (apocalypse release)c
-Date: Fri, 21 Dec 2012 17:06:10 +0100
-Message-ID: <1356105970.4547.55.camel@marge.simpson.net>
+Date: Fri, 21 Dec 2012 17:21:05 +0100
+Message-ID: <1356106865.4547.60.camel@marge.simpson.net>
 References: <alpine.LFD.2.02.1212211413200.3148@ionos>
-	 <20121221092651.55b44bfb@redhat.com>
-	 <alpine.LFD.2.02.1212211636460.3148@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.171]:59369 "EHLO
+Received: from moutng.kundenserver.de ([212.227.17.9]:56447 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751168Ab2LUQGU (ORCPT
+	with ESMTP id S1751260Ab2LUQVP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Dec 2012 11:06:20 -0500
-In-Reply-To: <alpine.LFD.2.02.1212211636460.3148@ionos>
+	Fri, 21 Dec 2012 11:21:15 -0500
+In-Reply-To: <alpine.LFD.2.02.1212211413200.3148@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2012-12-21 at 16:39 +0100, Thomas Gleixner wrote: 
-> On Fri, 21 Dec 2012, Clark Williams wrote:
-> > I had to add this to get -rt24 to compile:
-> > +#include <linux/delay.h>
+On Fri, 2012-12-21 at 14:50 +0100, Thomas Gleixner wrote: 
+> Dear RT Folks,
 > 
-> Carp. I should have run it through the full tests again after adding
-> that last minute fix yesterday night. But it was sooo obvious and of
-> course compiled with my config which magically pulls in that header.
+> I'm pleased to announce the 3.6.11-rt24 release. 3.6.9-rt21, 3.6.10-rt22
+> and 3.6.11-rt23 are not announced updates to the respective 3.6.y
+> stable releases without any RT changes
 > 
-> I silently uploaded -rt25
+> Changes since 3.6.11-rt23:
+> 
+>    * Fix the scheduler bug really. Thanks to Mike for noticing the
+>      issue. It turned out that there are a few more corner cases
+>      hidden in that code. See the 3 separate patches in the quilt
+>      queue for details.
+> 
+>    * Fix a livelock issue in the block layer. Thanks to Steve for
+>      debugging it.
+> 
+> Known issues:
+> 
+>    * There is still a possibility to get false positives from the NOHZ
+>      idle softirq pending detector. It's rather complex to fix and I
+>      have postponed it for a separate release. The warnings are
+>      harmless and can be ignored for now.
+> 
+> For those who are going to vanish today due to their firm believe in
+> the Mayan Apocalypse it's the last release ever and I can assure you
+> it's the best one as well. You just won't have enough time to verify
+> that.
+> 
+> For all others this is just the last release of 2012.
+> 
+> 
+> The delta patch against 3.6.11-rt23 is appended below and can be found
+> here:
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.11-rt23-rt24.patch.xz
+> 
+> The RT patch against 3.6.11 can be found here:
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11-rt24.patch.xz
+> 
+> The split quilt queue is available at:
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.11-rt24.tar.xz
+> 
+> 
+> Thanks to all of you who have contributed with patches, bugreports,
+> testing ...! Special thanks to Steven for running the stable series!
 
-I was just gonna report that, but needn't bother.  I was also gonna
-attach an xmas patchlet for those who need/want softirq threads.  I can
-still do that I suppose...
+Just got this apocalypse day hiccup.
 
-Your changes made this a lot less fugly.  The net threads are kinda out
-of work with the new scheme, but some folks may find it's still nice to
-be able to run some things SCHED_OTHER, or eq hrtimer at max.
 
-Ho Ho.. Hum, merry apocalypse.
+[ 4577.585902] BUG: soft lockup - CPU#34 stuck for 23s! [bash:7313]
+[ 4577.585924] Modules linked in: nfsv3 nfs_acl nfs fscache lockd sunrpc autofs4 ipmi_devintf ipmi_si ipmi_msghandler edd af_packet cpufreq_conservative cpufreq_userspace cpufreq_powersave pcc_cpufreq mperf fuse loop dm_mod sg ipv6 coretemp kvm_intel hpwdt iTCO_wdt iTCO_vendor_support sr_mod cdrom kvm netxen_nic shpchp container i7core_edac hpilo joydev hid_generic rtc_cmos lpc_ich bnx2 pci_hotplug crc32c_intel serio_raw edac_core microcode mfd_core pcspkr acpi_power_meter button ext3 jbd mbcache usbhid hid radeon ttm drm_kms_helper drm i2c_algo_bit i2c_core uhci_hcd ehci_hcd sd_mod crc_t10dif usbcore thermal usb_common processor thermal_sys hwmon scsi_dh_rdac scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh ata_generic ata_piix libata hpsa cciss scsi_mod
+[ 4577.585926] CPU 34 
+[ 4577.585926] Pid: 7313, comm: bash Not tainted 3.6.11-rt24-rt_trace #6 Hewlett-Packard ProLiant DL980 G7
+[ 4577.585930] RIP: 0010:[<ffffffff81481fa2>]  [<ffffffff81481fa2>] _raw_spin_lock+0x32/0x40
+[ 4577.585931] RSP: 0018:ffff88026ce819b8  EFLAGS: 00000a87
+[ 4577.585932] RAX: 000000000000c160 RBX: ffff88026ce81a38 RCX: ffff8802717ec140
+[ 4577.585933] RDX: 00000000000066ee RSI: ffff88026ce81fd8 RDI: ffff880200444f40
+[ 4577.585934] RBP: ffff88026ce819b8 R08: 0000000000000003 R09: 0000000000000007
+[ 4577.585935] R10: ffff88026bf58000 R11: 0000000000000000 R12: ffff88027702c0c0
+[ 4577.585936] R13: 0000000000000000 R14: ffffffff811a26ac R15: ffff88026ce81978
+[ 4577.585937] FS:  00007f00c58d1700(0000) GS:ffff88027ea40000(0000) knlGS:0000000000000000
+[ 4577.585938] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[ 4577.585939] CR2: 00000000006be8a0 CR3: 0000000262413000 CR4: 00000000000007e0
+[ 4577.585941] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 4577.585942] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 4577.585943] Process bash (pid: 7313, threadinfo ffff88026ce80000, task ffff8802717ec140)
+[ 4577.585944] Stack:
+[ 4577.585953]  ffff88026ce81a98 ffffffff81481366 0000000000001000 0000000000113800
+[ 4577.585957]  ffff88027702c0c0 ffff8802690cd520 ffff88026ce81a18 ffffffff811a3d06
+[ 4577.585961]  0000000000000000 0000000000000000 0000000000000000 0000000000000000
+[ 4577.585961] Call Trace:
+[ 4577.585964]  [<ffffffff81481366>] rt_spin_lock_slowlock+0x36/0x320
+[ 4577.585967]  [<ffffffff811a3d06>] ? __getblk+0x26/0x50
+[ 4577.585970]  [<ffffffff81481c97>] rt_spin_lock+0x27/0x30
+[ 4577.585973]  [<ffffffff8112583d>] activate_page+0x8d/0x130
+[ 4577.585976]  [<ffffffff8112592b>] mark_page_accessed+0x4b/0x60
+[ 4577.585978]  [<ffffffff811a2a88>] __find_get_block+0xc8/0x210
+[ 4577.585981]  [<ffffffff811a3d06>] __getblk+0x26/0x50
+[ 4577.585988]  [<ffffffffa034253c>] __ext3_get_inode_loc+0x10c/0x390 [ext3]
+[ 4577.585995]  [<ffffffffa0343610>] ext3_iget+0x90/0x4d0 [ext3]
+[ 4577.586002]  [<ffffffffa034b338>] ext3_lookup+0xa8/0x120 [ext3]
+[ 4577.586005]  [<ffffffff8117a365>] lookup_real+0x25/0x60
+[ 4577.586007]  [<ffffffff8117aa09>] __lookup_hash+0x39/0x50
+[ 4577.586010]  [<ffffffff8117ee85>] path_lookupat+0x7b5/0x870
+[ 4577.586013]  [<ffffffff8108057b>] ? migrate_enable+0xfb/0x230
+[ 4577.586016]  [<ffffffff8117ef75>] do_path_lookup+0x35/0xd0
+[ 4577.586018]  [<ffffffff8117fc13>] user_path_at_empty+0x83/0xb0
+[ 4577.586021]  [<ffffffff81077aaf>] ? lg_local_unlock+0x1f/0x30
+[ 4577.586024]  [<ffffffff8118f881>] ? mntput_no_expire+0x51/0x1a0
+[ 4577.586026]  [<ffffffff811742b5>] ? cp_new_stat+0x105/0x120
+[ 4577.586029]  [<ffffffff8117fc51>] user_path_at+0x11/0x20
+[ 4577.586031]  [<ffffffff8117452b>] vfs_fstatat+0x4b/0x90
+[ 4577.586034]  [<ffffffff8117469b>] vfs_stat+0x1b/0x20
+[ 4577.586036]  [<ffffffff811746c4>] sys_newstat+0x24/0x50
+[ 4577.586040]  [<ffffffff81489869>] system_call_fastpath+0x16/0x1b
+[ 4577.586053] Code: 66 90 65 48 8b 04 25 48 99 00 00 83 80 44 e0 ff ff 01 b8 00 00 01 00 f0 0f c1 07 89 c2 c1 ea 10 66 39 d0 74 0e 0f 1f 40 00 f3 90 <0f> b7 07 66 39 c2 75 f6 c9 c3 0f 1f 40 00 55 48 89 e5 66 66 66 
+[ 4578.002993] BUG: soft lockup - CPU#43 stuck for 22s! [syslog-ng:4245]
+[ 4578.003041] Modules linked in: nfsv3 nfs_acl nfs fscache lockd sunrpc autofs4 ipmi_devintf ipmi_si ipmi_msghandler edd af_packet cpufreq_conservative cpufreq_userspace cpufreq_powersave pcc_cpufreq mperf fuse loop dm_mod sg ipv6 coretemp kvm_intel hpwdt iTCO_wdt iTCO_vendor_support sr_mod cdrom kvm netxen_nic shpchp container i7core_edac hpilo joydev hid_generic rtc_cmos lpc_ich bnx2 pci_hotplug crc32c_intel serio_raw edac_core microcode mfd_core pcspkr acpi_power_meter button ext3 jbd mbcache usbhid hid radeon ttm drm_kms_helper drm i2c_algo_bit i2c_core uhci_hcd ehci_hcd sd_mod crc_t10dif usbcore thermal usb_common processor thermal_sys hwmon scsi_dh_rdac scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh ata_generic ata_piix libata hpsa cciss scsi_mod
+[ 4578.003045] CPU 43 
+[ 4578.003046] Pid: 4245, comm: syslog-ng Not tainted 3.6.11-rt24-rt_trace #6 Hewlett-Packard ProLiant DL980 G7
+[ 4578.003059] RIP: 0010:[<ffffffff81481fa2>]  [<ffffffff81481fa2>] _raw_spin_lock+0x32/0x40
+[ 4578.003060] RSP: 0018:ffff880273ac9ae8  EFLAGS: 00000297
+[ 4578.003061] RAX: 0000000000000001 RBX: ffff880273ac8000 RCX: ffff880271e66580
+[ 4578.003062] RDX: 0000000000000000 RSI: ffff880273ac9fd8 RDI: ffff880200564f40
+[ 4578.003063] RBP: ffff880273ac9ae8 R08: ffff880273ac9b58 R09: 0000000000001000
+[ 4578.003064] R10: 00000000fffff1d9 R11: 0000000000000080 R12: ffff880271e66580
+[ 4578.003065] R13: 0000000000000002 R14: ffffffff8106e347 R15: ffff880273ac9a58
+[ 4578.003067] FS:  00007f892a42c700(0000) GS:ffff88027eb60000(0000) knlGS:0000000000000000
+[ 4578.003068] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[ 4578.003069] CR2: ffffffffff600400 CR3: 00000002673f4000 CR4: 00000000000007e0
+[ 4578.003070] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+[ 4578.003071] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+[ 4578.003073] Process syslog-ng (pid: 4245, threadinfo ffff880273ac8000, task ffff880271e66580)
+[ 4578.003073] Stack:
+[ 4578.003078]  ffff880273ac9bc8 ffffffff81481366 ffff8802709f8c78 ffff8802709f8ed0
+[ 4578.003083]  fffffdc06b578800 0000000000001000 ffffffffa03446b0 ffffea000764af88
+[ 4578.003087]  00000240000001d9 ffff8802702c7520 ffff8802022c0c10 ffff88021cc47240
+[ 4578.003088] Call Trace:
+[ 4578.003094]  [<ffffffff81481366>] rt_spin_lock_slowlock+0x36/0x320
+[ 4578.003109]  [<ffffffffa03446b0>] ? ext3_get_blocks_handle+0x760/0x760 [ext3]
+[ 4578.003112]  [<ffffffff81481c97>] rt_spin_lock+0x27/0x30
+[ 4578.003119]  [<ffffffff8112583d>] activate_page+0x8d/0x130
+[ 4578.003122]  [<ffffffff8112592b>] mark_page_accessed+0x4b/0x60
+[ 4578.003132]  [<ffffffff81115756>] generic_perform_write+0xf6/0x1e0
+[ 4578.003138]  [<ffffffff81137acb>] ? bdi_wakeup_thread_delayed+0x3b/0x50
+[ 4578.003142]  [<ffffffff811158a5>] generic_file_buffered_write+0x65/0xa0
+[ 4578.003147]  [<ffffffff81118356>] __generic_file_aio_write+0x1b6/0x390
+[ 4578.003157]  [<ffffffff81165973>] ? kmem_cache_free+0x1b3/0x310
+[ 4578.003159]  [<ffffffff811185a7>] generic_file_aio_write+0x77/0xe0
+[ 4578.003165]  [<ffffffff8116edc9>] do_sync_write+0xa9/0xf0
+[ 4578.003168]  [<ffffffff8116f3cb>] vfs_write+0xcb/0x130
+[ 4578.003170]  [<ffffffff8116f525>] sys_write+0x55/0x90
+[ 4578.003175]  [<ffffffff81489869>] system_call_fastpath+0x16/0x1b
+[ 4578.003190] Code: 66 90 65 48 8b 04 25 48 99 00 00 83 80 44 e0 ff ff 01 b8 00 00 01 00 f0 0f c1 07 89 c2 c1 ea 10 66 39 d0 74 0e 0f 1f 40 00 f3 90 <0f> b7 07 66 39 c2 75 f6 c9 c3 0f 1f 40 00 55 48 89 e5 66 66 66 
 
--Mike
-
-sched,rt: resurrect softirq threads for RT_FULL
-
-Signed-off-by: Mike Galbraith <bitbucket@.online.de>
----
- include/linux/interrupt.h |    9 +--
- include/linux/sched.h     |    6 ++
- kernel/sched/core.c       |    4 -
- kernel/softirq.c          |  105 +++++++++++++++++++++++++++++++---------------
- 4 files changed, 84 insertions(+), 40 deletions(-)
-
-Index: linux-stable/include/linux/interrupt.h
-===================================================================
---- linux-stable.orig/include/linux/interrupt.h
-+++ linux-stable/include/linux/interrupt.h
-@@ -454,8 +454,10 @@ struct softirq_action
- asmlinkage void do_softirq(void);
- asmlinkage void __do_softirq(void);
- static inline void thread_do_softirq(void) { do_softirq(); }
-+#define NR_SOFTIRQ_THREADS 1
- #else
- extern void thread_do_softirq(void);
-+#define NR_SOFTIRQ_THREADS NR_SOFTIRQS
- #endif
- 
- extern void open_softirq(int nr, void (*action)(struct softirq_action *));
-@@ -476,12 +478,7 @@ extern void softirq_check_pending_idle(v
-  */
- DECLARE_PER_CPU(struct list_head [NR_SOFTIRQS], softirq_work_list);
- 
--DECLARE_PER_CPU(struct task_struct *, ksoftirqd);
--
--static inline struct task_struct *this_cpu_ksoftirqd(void)
--{
--	return this_cpu_read(ksoftirqd);
--}
-+DECLARE_PER_CPU(struct task_struct * [NR_SOFTIRQ_THREADS], ksoftirqd);
- 
- /* Try to send a softirq to a remote cpu.  If this cannot be done, the
-  * work will be queued to the local cpu.
-Index: linux-stable/include/linux/sched.h
-===================================================================
---- linux-stable.orig/include/linux/sched.h
-+++ linux-stable/include/linux/sched.h
-@@ -1331,6 +1331,7 @@ struct task_struct {
- 	/* Revert to default priority/policy when forking */
- 	unsigned sched_reset_on_fork:1;
- 	unsigned sched_contributes_to_load:1;
-+	unsigned sched_is_softirqd:1;
- 
- 	pid_t pid;
- 	pid_t tgid;
-@@ -1683,6 +1684,11 @@ static inline struct pid *task_tgid(stru
- 	return task->group_leader->pids[PIDTYPE_PID].pid;
- }
- 
-+static inline bool task_is_softirqd(struct task_struct *task)
-+{
-+	return task->sched_is_softirqd;
-+}
-+
- /*
-  * Without tasklist or rcu lock it is not safe to dereference
-  * the result of task_pgrp/task_session even if task == current,
-Index: linux-stable/kernel/sched/core.c
-===================================================================
---- linux-stable.orig/kernel/sched/core.c
-+++ linux-stable/kernel/sched/core.c
-@@ -887,7 +887,7 @@ void account_system_vtime(struct task_st
- 	 */
- 	if (hardirq_count())
- 		__this_cpu_add(cpu_hardirq_time, delta);
--	else if (in_serving_softirq() && curr != this_cpu_ksoftirqd())
-+	else if (in_serving_softirq() && !task_is_softirqd(curr))
- 		__this_cpu_add(cpu_softirq_time, delta);
- 
- 	irq_time_write_end();
-@@ -3122,7 +3122,7 @@ static void irqtime_account_process_tick
- 		cpustat[CPUTIME_IRQ] += (__force u64) cputime_one_jiffy;
- 	} else if (irqtime_account_si_update()) {
- 		cpustat[CPUTIME_SOFTIRQ] += (__force u64) cputime_one_jiffy;
--	} else if (this_cpu_ksoftirqd() == p) {
-+	} else if (task_is_softirqd(p)) {
- 		/*
- 		 * ksoftirqd time do not get accounted in cpu_softirq_time.
- 		 * So, we have to handle it separately here.
-Index: linux-stable/kernel/softirq.c
-===================================================================
---- linux-stable.orig/kernel/softirq.c
-+++ linux-stable/kernel/softirq.c
-@@ -56,13 +56,31 @@ EXPORT_SYMBOL(irq_stat);
- 
- static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
- 
--DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
-+DEFINE_PER_CPU(struct task_struct * [NR_SOFTIRQ_THREADS], ksoftirqd);
- 
- char *softirq_to_name[NR_SOFTIRQS] = {
- 	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
- 	"TASKLET", "SCHED", "HRTIMER", "RCU"
- };
- 
-+static const char *softirq_to_thread_name [] =
-+{
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	[HI_SOFTIRQ]		= "sirq-high",
-+	[TIMER_SOFTIRQ]		= "sirq-timer",
-+	[NET_TX_SOFTIRQ]	= "sirq-net-tx",
-+	[NET_RX_SOFTIRQ]	= "sirq-net-rx",
-+	[BLOCK_SOFTIRQ]		= "sirq-blk",
-+	[BLOCK_IOPOLL_SOFTIRQ]	= "sirq-blk-pol",
-+	[TASKLET_SOFTIRQ]	= "sirq-tasklet",
-+	[SCHED_SOFTIRQ]		= "sirq-sched",
-+	[HRTIMER_SOFTIRQ]	= "sirq-hrtimer",
-+	[RCU_SOFTIRQ]		= "sirq-rcu",
-+#else
-+	[HI_SOFTIRQ]		= "ksoftirqd",
-+#endif
-+};
-+
- #ifdef CONFIG_NO_HZ
- # ifdef CONFIG_PREEMPT_RT_FULL
- 
-@@ -159,10 +177,10 @@ static inline void softirq_clr_runner(un
-  * to the pending events, so lets the scheduler to balance
-  * the softirq load for us.
-  */
--static void wakeup_softirqd(void)
-+static void wakeup_softirqd(int nr)
- {
- 	/* Interrupts are disabled: no need to stop preemption */
--	struct task_struct *tsk = __this_cpu_read(ksoftirqd);
-+	struct task_struct *tsk =  __this_cpu_read(ksoftirqd[nr]);
- 
- 	if (tsk && tsk->state != TASK_RUNNING)
- 		wake_up_process(tsk);
-@@ -362,7 +380,7 @@ restart:
- 		goto restart;
- 
- 	if (pending)
--		wakeup_softirqd();
-+		wakeup_softirqd(0);
- 
- 	lockdep_softirq_exit();
- 
-@@ -430,7 +448,7 @@ void raise_softirq_irqoff(unsigned int n
- 	 * schedule the softirq soon.
- 	 */
- 	if (!in_interrupt())
--		wakeup_softirqd();
-+		wakeup_softirqd(0);
- }
- 
- void __raise_softirq_irqoff(unsigned int nr)
-@@ -626,15 +644,15 @@ static void do_raise_softirq_irqoff(unsi
- 	 */
- 	if (!in_irq() && current->softirq_nestcnt)
- 		current->softirqs_raised |= (1U << nr);
--	else if (__this_cpu_read(ksoftirqd))
--		__this_cpu_read(ksoftirqd)->softirqs_raised |= (1U << nr);
-+	else if (__this_cpu_read(ksoftirqd[nr]))
-+		__this_cpu_read(ksoftirqd[nr])->softirqs_raised |= (1U << nr);
- }
- 
- void __raise_softirq_irqoff(unsigned int nr)
- {
- 	do_raise_softirq_irqoff(nr);
- 	if (!in_irq() && !current->softirq_nestcnt)
--		wakeup_softirqd();
-+		wakeup_softirqd(nr);
- }
- 
- /*
-@@ -661,7 +679,7 @@ void raise_softirq_irqoff(unsigned int n
- 	 * raise a WARN() if the condition is met.
- 	 */
- 	if (!current->softirq_nestcnt)
--		wakeup_softirqd();
-+		wakeup_softirqd(nr);
- }
- 
- static inline int ksoftirqd_softirq_pending(void)
-@@ -724,16 +742,24 @@ static inline void invoke_softirq(void)
- 	} else {
- 		__local_bh_disable((unsigned long)__builtin_return_address(0),
- 				SOFTIRQ_OFFSET);
--		wakeup_softirqd();
-+		wakeup_softirqd(0);
- 		__local_bh_enable(SOFTIRQ_OFFSET);
- 	}
- #else /* PREEMPT_RT_FULL */
-+	struct task_struct *tsk;
- 	unsigned long flags;
-+	u32 pending, nr;
- 
- 	local_irq_save(flags);
--	if (__this_cpu_read(ksoftirqd) &&
--	    __this_cpu_read(ksoftirqd)->softirqs_raised)
--		wakeup_softirqd();
-+	pending = local_softirq_pending();
-+
-+	while (pending) {
-+		nr = __ffs(pending);
-+		tsk = __this_cpu_read(ksoftirqd[nr]);
-+		if (tsk && tsk->softirqs_raised)
-+			wakeup_softirqd(nr);
-+		pending &= ~(1U << nr);
-+	}
- 	local_irq_restore(flags);
- #endif
- }
-@@ -1213,6 +1239,7 @@ EXPORT_SYMBOL(tasklet_unlock_wait);
- static int run_ksoftirqd(void * __bind_cpu)
- {
- 	ksoftirqd_set_sched_params();
-+	current->sched_is_softirqd = 1;
- 
- 	set_current_state(TASK_INTERRUPTIBLE);
- 
-@@ -1313,41 +1340,55 @@ static int __cpuinit cpu_callback(struct
- 				  unsigned long action,
- 				  void *hcpu)
- {
--	int hotcpu = (unsigned long)hcpu;
-+	int hotcpu = (unsigned long)hcpu, i;
- 	struct task_struct *p;
- 
- 	switch (action & ~CPU_TASKS_FROZEN) {
- 	case CPU_UP_PREPARE:
--		p = kthread_create_on_node(run_ksoftirqd,
-+		for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
-+			per_cpu(ksoftirqd[i], hotcpu) = NULL;
-+		}
-+		for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
-+			p = kthread_create_on_node(run_ksoftirqd,
- 					   hcpu,
- 					   cpu_to_node(hotcpu),
--					   "ksoftirqd/%d", hotcpu);
--		if (IS_ERR(p)) {
--			printk("ksoftirqd for %i failed\n", hotcpu);
--			return notifier_from_errno(PTR_ERR(p));
-+					   "%s/%d", softirq_to_thread_name[i], hotcpu);
-+			if (IS_ERR(p)) {
-+				printk(KERN_ERR "%s/%d failed\n",
-+					   softirq_to_thread_name[i], hotcpu);
-+				return notifier_from_errno(PTR_ERR(p));
-+			}
-+			kthread_bind(p, hotcpu);
-+			per_cpu(ksoftirqd[i], hotcpu) = p;
- 		}
--		kthread_bind(p, hotcpu);
--  		per_cpu(ksoftirqd, hotcpu) = p;
-  		break;
- 	case CPU_ONLINE:
--		wake_up_process(per_cpu(ksoftirqd, hotcpu));
-+		for (i = 0; i < NR_SOFTIRQ_THREADS; i++)
-+			wake_up_process(per_cpu(ksoftirqd[i], hotcpu));
- 		break;
- #ifdef CONFIG_HOTPLUG_CPU
--	case CPU_UP_CANCELED:
--		if (!per_cpu(ksoftirqd, hotcpu))
--			break;
--		/* Unbind so it can run.  Fall thru. */
--		kthread_bind(per_cpu(ksoftirqd, hotcpu),
--			     cpumask_any(cpu_online_mask));
-+	case CPU_UP_CANCELED: {
-+		for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
-+			p = per_cpu(ksoftirqd[i], hotcpu);
-+			if (!p)
-+				continue;
-+			/* Unbind so it can run. */
-+			kthread_bind(p, cpumask_any(cpu_online_mask));
-+		}
-+	}
- 	case CPU_POST_DEAD: {
- 		static const struct sched_param param = {
- 			.sched_priority = MAX_RT_PRIO-1
- 		};
- 
--		p = per_cpu(ksoftirqd, hotcpu);
--		per_cpu(ksoftirqd, hotcpu) = NULL;
--		sched_setscheduler_nocheck(p, SCHED_FIFO, &param);
--		kthread_stop(p);
-+		for (i = 0; i < NR_SOFTIRQ_THREADS; i++) {
-+			p = per_cpu(ksoftirqd[i], hotcpu);
-+			per_cpu(ksoftirqd[i], hotcpu) = NULL;
-+			if (!p)
-+				continue;
-+			sched_setscheduler_nocheck(p, SCHED_FIFO, &param);
-+			kthread_stop(p);
-+		}
- 		takeover_tasklets(hotcpu);
- 		break;
- 	}
-
+repeat....
 
