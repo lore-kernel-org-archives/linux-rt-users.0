@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/5] sched: Queue RT tasks to head when prio drops
-Date: Fri, 21 Dec 2012 23:25:17 -0500
-Message-ID: <20121222042553.834155501@goodmis.org>
+Subject: [PATCH RT 1/5] sched: Adjust sched_reset_on_fork when nothing else changes
+Date: Fri, 21 Dec 2012 23:25:16 -0500
+Message-ID: <20121222042553.675639341@goodmis.org>
 References: <20121222042515.867823077@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -10,84 +10,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:22911 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:24417 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751447Ab2LVEZz (ORCPT
+	with ESMTP id S1751592Ab2LVEZz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 21 Dec 2012 23:25:55 -0500
-Content-Disposition: inline; filename=0002-sched-Queue-RT-tasks-to-head-when-prio-drops.patch
+Content-Disposition: inline; filename=0001-sched-Adjust-sched_reset_on_fork-when-nothing-else-c.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-The following scenario does not work correctly:
-
-Runqueue of CPUx contains two runnable and pinned tasks:
- T1: SCHED_FIFO, prio 80
- T2: SCHED_FIFO, prio 80
-
-T1 is on the cpu and executes the following syscalls (classic priority
-ceiling scenario):
-
- sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 90);
- ...
- sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 80);
- ...
-
-Now T1 gets preempted by T3 (SCHED_FIFO, prio 95). After T3 goes back
-to sleep the scheduler picks T2. Surprise!
-
-The same happens w/o actual preemption when T1 is forced into the
-scheduler due to a sporadic NEED_RESCHED event. The scheduler invokes
-pick_next_task() which returns T2. So T1 gets preempted and scheduled
-out.
-
-This happens because sched_setscheduler() dequeues T1 from the prio 90
-list and then enqueues it on the tail of the prio 80 list behind T2.
-This violates the POSIX spec and surprises user space which relies on
-the guarantee that SCHED_FIFO tasks are not scheduled out unless they
-give the CPU up voluntarily or are preempted by a higher priority
-task. In the latter case the preempted task must get back on the CPU
-after the preempting task schedules out again.
-
-We fixed a similar issue already in commit 60db48c (sched: Queue a
-deboosted task to the head of the RT prio queue). The same treatment
-is necessary for sched_setscheduler(). So enqueue to head of the prio
-bucket list if the priority of the task is lowered.
-
-It might be possible that existing user space relies on the current
-behaviour, but it can be considered highly unlikely due to the corner
-case nature of the application scenario.
+If the policy and priority remain unchanged a possible modification of
+sched_reset_on_fork gets lost in the early exit path.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable@vger.kernel.org
 Cc: stable-rt@vger.kernel.org
 ---
- kernel/sched/core.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ kernel/sched/core.c |    6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3753bda..b02f995 100644
+index 1f9d6f5..3753bda 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -4489,8 +4489,13 @@ recheck:
+@@ -4441,11 +4441,13 @@ recheck:
+ 	}
  
- 	if (running)
- 		p->sched_class->set_curr_task(rq);
--	if (on_rq)
--		enqueue_task(rq, p, 0);
-+	if (on_rq) {
-+		/*
-+		 * We enqueue to tail when the priority of a task is
-+		 * increased (user space view).
-+		 */
-+		enqueue_task(rq, p, oldprio <= p->prio ? ENQUEUE_HEAD : 0);
-+	}
- 
- 	check_class_changed(rq, p, prev_class, oldprio);
- 	task_rq_unlock(rq, p, &flags);
--- 
-1.7.10.4
-
-
+ 	/*
+-	 * If not changing anything there's no need to proceed further:
++	 * If not changing anything there's no need to proceed
++	 * further, but store a possible modification of
++	 * reset_on_fork.
+ 	 */
+ 	if (unlikely(policy == p->policy && (!rt_policy(policy) ||
+ 			param->sched_priority == p->rt_priority))) {
