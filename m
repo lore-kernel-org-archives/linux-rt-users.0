@@ -1,65 +1,86 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/4] [ANOUNCE] 3.2.35-rt53-rc1 stable review
-Date: Sat, 22 Dec 2012 10:49:22 -0500
-Message-ID: <20121222154922.724242376@goodmis.org>
+Subject: [PATCH RT 2/4] sched: Queue RT tasks to head when prio drops
+Date: Sat, 22 Dec 2012 12:12:03 -0500
+Message-ID: <20121222171217.290120752@goodmis.org>
+References: <20121222171201.588460638@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>, <stable@vger.kernel.org>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Return-path: <stable-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-sched-Queue-RT-tasks-to-head-when-prio-drops.patch
+Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Dear RT Folks,
+The following scenario does not work correctly:
 
-This is the RT stable review cycle of patch 3.2.35-rt53-rc1.
+Runqueue of CPUx contains two runnable and pinned tasks:
+ T1: SCHED_FIFO, prio 80
+ T2: SCHED_FIFO, prio 80
 
-Please scream at me if I messed something up. Please test the patches too.
+T1 is on the cpu and executes the following syscalls (classic priority
+ceiling scenario):
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+ sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 90);
+ ...
+ sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 80);
+ ...
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+Now T1 gets preempted by T3 (SCHED_FIFO, prio 95). After T3 goes back
+to sleep the scheduler picks T2. Surprise!
 
-If all goes well, this patch will be converted to the next main release
-on 12/27/2012.
+The same happens w/o actual preemption when T1 is forced into the
+scheduler due to a sporadic NEED_RESCHED event. The scheduler invokes
+pick_next_task() which returns T2. So T1 gets preempted and scheduled
+out.
 
-Enjoy,
+This happens because sched_setscheduler() dequeues T1 from the prio 90
+list and then enqueues it on the tail of the prio 80 list behind T2.
+This violates the POSIX spec and surprises user space which relies on
+the guarantee that SCHED_FIFO tasks are not scheduled out unless they
+give the CPU up voluntarily or are preempted by a higher priority
+task. In the latter case the preempted task must get back on the CPU
+after the preempting task schedules out again.
 
--- Steve
+We fixed a similar issue already in commit 60db48c (sched: Queue a
+deboosted task to the head of the RT prio queue). The same treatment
+is necessary for sched_setscheduler(). So enqueue to head of the prio
+bucket list if the priority of the task is lowered.
 
+It might be possible that existing user space relies on the current
+behaviour, but it can be considered highly unlikely due to the corner
+case nature of the application scenario.
 
-To build 3.2.35-rt53-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.35.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.35-rt53-rc1.patch.xz
-
-You can also build from 3.2.35-rt52 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.35-rt52-rt53-rc1.patch.xz
-
-
-Changes from 3.2.35-rt52:
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable@vger.kernel.org
+Cc: stable-rt@vger.kernel.org
 ---
+ kernel/sched.c |    9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-
-Steven Rostedt (1):
-      Linux 3.2.35-rt53-rc1
-
-Thomas Gleixner (3):
-      sched: Adjust sched_reset_on_fork when nothing else changes
-      sched: Queue RT tasks to head when prio drops
-      sched: Consider pi boosting in setscheduler
-
-----
- include/linux/sched.h |    5 +++++
- kernel/rtmutex.c      |   12 +++++++++++
- kernel/sched.c        |   54 ++++++++++++++++++++++++++++++++++++++-----------
- localversion-rt       |    2 +-
- 4 files changed, 60 insertions(+), 13 deletions(-)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 945009e..ad42cb2 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -5387,8 +5387,13 @@ recheck:
+ 
+ 	if (running)
+ 		p->sched_class->set_curr_task(rq);
+-	if (on_rq)
+-		activate_task(rq, p, 0);
++	if (on_rq) {
++		/*
++		 * We enqueue to tail when the priority of a task is
++		 * increased (user space view).
++		 */
++		activate_task(rq, p, oldprio <= p->prio ? ENQUEUE_HEAD : 0);
++	}
+ 
+ 	check_class_changed(rq, p, prev_class, oldprio);
+ 	task_rq_unlock(rq, p, &flags);
+-- 
+1.7.10.4
