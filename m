@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] sched: Queue RT tasks to head when prio drops
-Date: Sat, 22 Dec 2012 10:49:24 -0500
-Message-ID: <20121222154947.211931347@goodmis.org>
+Subject: [PATCH RT 3/4] sched: Consider pi boosting in setscheduler
+Date: Sat, 22 Dec 2012 10:49:25 -0500
+Message-ID: <20121222154947.351475552@goodmis.org>
 References: <20121222154922.724242376@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -10,77 +10,166 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <stable-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-sched-Queue-RT-tasks-to-head-when-prio-drops.patch
+Content-Disposition: inline; filename=0003-sched-Consider-pi-boosting-in-setscheduler.patch
 Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-The following scenario does not work correctly:
+If a PI boosted task policy/priority is modified by a setscheduler()
+call we unconditionally dequeue and requeue the task if it is on the
+runqueue even if the new priority is lower than the current effective
+boosted priority. This can result in undesired reordering of the
+priority bucket list.
 
-Runqueue of CPUx contains two runnable and pinned tasks:
- T1: SCHED_FIFO, prio 80
- T2: SCHED_FIFO, prio 80
-
-T1 is on the cpu and executes the following syscalls (classic priority
-ceiling scenario):
-
- sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 90);
- ...
- sys_sched_setscheduler(pid(T1), SCHED_FIFO, .prio = 80);
- ...
-
-Now T1 gets preempted by T3 (SCHED_FIFO, prio 95). After T3 goes back
-to sleep the scheduler picks T2. Surprise!
-
-The same happens w/o actual preemption when T1 is forced into the
-scheduler due to a sporadic NEED_RESCHED event. The scheduler invokes
-pick_next_task() which returns T2. So T1 gets preempted and scheduled
-out.
-
-This happens because sched_setscheduler() dequeues T1 from the prio 90
-list and then enqueues it on the tail of the prio 80 list behind T2.
-This violates the POSIX spec and surprises user space which relies on
-the guarantee that SCHED_FIFO tasks are not scheduled out unless they
-give the CPU up voluntarily or are preempted by a higher priority
-task. In the latter case the preempted task must get back on the CPU
-after the preempting task schedules out again.
-
-We fixed a similar issue already in commit 60db48c (sched: Queue a
-deboosted task to the head of the RT prio queue). The same treatment
-is necessary for sched_setscheduler(). So enqueue to head of the prio
-bucket list if the priority of the task is lowered.
-
-It might be possible that existing user space relies on the current
-behaviour, but it can be considered highly unlikely due to the corner
-case nature of the application scenario.
+If the new priority is less or equal than the current effective we
+just store the new parameters in the task struct and leave the
+scheduler class and the runqueue untouched. This is handled when the
+task deboosts itself. Only if the new priority is higher than the
+effective boosted priority we apply the change immediately.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable@vger.kernel.org
 Cc: stable-rt@vger.kernel.org
 ---
- kernel/sched.c |    9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ include/linux/sched.h |    5 +++++
+ kernel/rtmutex.c      |   12 ++++++++++++
+ kernel/sched.c        |   39 +++++++++++++++++++++++++++++++--------
+ 3 files changed, 48 insertions(+), 8 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 12317b6..e2f9e3b 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2127,6 +2127,7 @@ extern unsigned int sysctl_sched_cfs_bandwidth_slice;
+ #ifdef CONFIG_RT_MUTEXES
+ extern int rt_mutex_getprio(struct task_struct *p);
+ extern void rt_mutex_setprio(struct task_struct *p, int prio);
++extern int rt_mutex_check_prio(struct task_struct *task, int newprio);
+ extern void rt_mutex_adjust_pi(struct task_struct *p);
+ static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+ {
+@@ -2137,6 +2138,10 @@ static inline int rt_mutex_getprio(struct task_struct *p)
+ {
+ 	return p->normal_prio;
+ }
++static inline int rt_mutex_check_prio(struct task_struct *task, int newprio)
++{
++	return 0;
++}
+ # define rt_mutex_adjust_pi(p)		do { } while (0)
+ static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+ {
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 9c4f6e5..6075f17 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -124,6 +124,18 @@ int rt_mutex_getprio(struct task_struct *task)
+ }
+ 
+ /*
++ * Called by sched_setscheduler() to check whether the priority change
++ * is overruled by a possible priority boosting.
++ */
++int rt_mutex_check_prio(struct task_struct *task, int newprio)
++{
++	if (!task_has_pi_waiters(task))
++		return 0;
++
++	return task_top_pi_waiter(task)->pi_list_entry.prio <= newprio;
++}
++
++/*
+  * Adjust the priority of a task, after its pi_waiters got modified.
+  *
+  * This can be both boosting and unboosting. task->pi_lock must be held.
 diff --git a/kernel/sched.c b/kernel/sched.c
-index 9af4bbe..ed7f001 100644
+index ed7f001..b318b4a 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -5767,8 +5767,13 @@ recheck:
+@@ -5363,7 +5363,8 @@ EXPORT_SYMBOL(sleep_on_timeout);
+  * This function changes the 'effective' priority of a task. It does
+  * not touch ->normal_prio like __setscheduler().
+  *
+- * Used by the rt_mutex code to implement priority inheritance logic.
++ * Used by the rt_mutex code to implement priority inheritance
++ * logic. Call site only calls if the priority of the task changed.
+  */
+ void rt_mutex_setprio(struct task_struct *p, int prio)
+ {
+@@ -5586,20 +5587,25 @@ static struct task_struct *find_process_by_pid(pid_t pid)
+ 	return pid ? find_task_by_vpid(pid) : current;
+ }
  
- 	if (running)
- 		p->sched_class->set_curr_task(rq);
--	if (on_rq)
--		activate_task(rq, p, 0);
-+	if (on_rq) {
-+		/*
-+		 * We enqueue to tail when the priority of a task is
-+		 * increased (user space view).
-+		 */
-+		activate_task(rq, p, oldprio <= p->prio ? ENQUEUE_HEAD : 0);
+-/* Actually do priority change: must hold rq lock. */
+-static void
+-__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
++static void __setscheduler_params(struct task_struct *p, int policy, int prio)
+ {
+ 	p->policy = policy;
+ 	p->rt_priority = prio;
+ 	p->normal_prio = normal_prio(p);
++	set_load_weight(p);
++}
++
++/* Actually do priority change: must hold rq lock. */
++static void
++__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
++{
++	__setscheduler_params(p, policy, prio);
+ 	/* we are holding p->pi_lock already */
+ 	p->prio = rt_mutex_getprio(p);
+ 	if (rt_prio(p->prio))
+ 		p->sched_class = &rt_sched_class;
+ 	else
+ 		p->sched_class = &fair_sched_class;
+-	set_load_weight(p);
+ }
+ 
+ /*
+@@ -5624,6 +5630,7 @@ static bool check_same_owner(struct task_struct *p)
+ static int __sched_setscheduler(struct task_struct *p, int policy,
+ 				const struct sched_param *param, bool user)
+ {
++	int newprio = MAX_RT_PRIO - 1 - param->sched_priority;
+ 	int retval, oldprio, oldpolicy = -1, on_rq, running;
+ 	unsigned long flags;
+ 	const struct sched_class *prev_class;
+@@ -5752,6 +5759,25 @@ recheck:
+ 		task_rq_unlock(rq, p, &flags);
+ 		goto recheck;
+ 	}
++
++	p->sched_reset_on_fork = reset_on_fork;
++	oldprio = p->prio;
++
++	/*
++	 * Special case for priority boosted tasks.
++	 *
++	 * If the new priority is lower or equal (user space view)
++	 * than the current (boosted) priority, we just store the new
++	 * normal parameters and do not touch the scheduler class and
++	 * the runqueue. This will be done when the task deboost
++	 * itself.
++	 */
++	if (rt_mutex_check_prio(p, newprio)) {
++		__setscheduler_params(p, policy, param->sched_priority);
++		task_rq_unlock(rq, p, &flags);
++		return 0;
 +	}
++
+ 	on_rq = p->on_rq;
+ 	running = task_current(rq, p);
+ 	if (on_rq)
+@@ -5759,9 +5785,6 @@ recheck:
+ 	if (running)
+ 		p->sched_class->put_prev_task(rq, p);
  
- 	check_class_changed(rq, p, prev_class, oldprio);
- 	task_rq_unlock(rq, p, &flags);
+-	p->sched_reset_on_fork = reset_on_fork;
+-
+-	oldprio = p->prio;
+ 	prev_class = p->sched_class;
+ 	__setscheduler(rq, p, policy, param->sched_priority);
+ 
 -- 
 1.7.10.4
