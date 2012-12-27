@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.24-rt36
-Date: Thu, 27 Dec 2012 10:48:09 -0500
-Message-ID: <1356623289.10284.0.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.35-rt53
+Date: Thu, 27 Dec 2012 10:59:28 -0500
+Message-ID: <1356623968.10284.1.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -10,39 +10,39 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:22684 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:18861 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752946Ab2L0PsM (ORCPT
+	with ESMTP id S1752804Ab2L0P7a (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Dec 2012 10:48:12 -0500
+	Thu, 27 Dec 2012 10:59:30 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.24-rt36 stable release.
+I'm pleased to announce the 3.2.35-rt53 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: c094034cc852ce529317bddff5bda479aed11385
+  Head SHA1: a0023b3571d382691eaa75863a33dea512eac135
 
 
-Or to build 3.4.24-rt36 directly, the following patches should be applied:
+Or to build 3.2.35-rt53 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.24.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.35.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.24-rt36.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.35-rt53.patch.xz
 
 
-You can also build from 3.4.24-rt35 by applying the incremental patch:
+You can also build from 3.2.35-rt52 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.24-rt35-rt36.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.35-rt52-rt53.patch.xz
 
 
 
@@ -51,62 +51,30 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.4.24-rt35:
+Changes from 3.2.35-rt52:
 
 ---
 
 Steven Rostedt (1):
-      Linux 3.4.24-rt36
+      Linux 3.2.35-rt53
 
-Thomas Gleixner (4):
+Thomas Gleixner (3):
       sched: Adjust sched_reset_on_fork when nothing else changes
       sched: Queue RT tasks to head when prio drops
       sched: Consider pi boosting in setscheduler
-      block: Use cpu_chill() for retry loops
 
 ----
- block/blk-ioc.c       |    5 +++--
  include/linux/sched.h |    5 +++++
  kernel/rtmutex.c      |   12 +++++++++++
- kernel/sched/core.c   |   55 +++++++++++++++++++++++++++++++++++++------------
+ kernel/sched.c        |   54 ++++++++++++++++++++++++++++++++++++++-----------
  localversion-rt       |    2 +-
- 5 files changed, 63 insertions(+), 16 deletions(-)
+ 4 files changed, 60 insertions(+), 13 deletions(-)
 ---------------------------
-diff --git a/block/blk-ioc.c b/block/blk-ioc.c
-index fb95dd2..6b54201 100644
---- a/block/blk-ioc.c
-+++ b/block/blk-ioc.c
-@@ -8,6 +8,7 @@
- #include <linux/blkdev.h>
- #include <linux/bootmem.h>	/* for max_pfn/max_low_pfn */
- #include <linux/slab.h>
-+#include <linux/delay.h>
- 
- #include "blk.h"
- 
-@@ -110,7 +111,7 @@ static void ioc_release_fn(struct work_struct *work)
- 			spin_unlock(q->queue_lock);
- 		} else {
- 			spin_unlock_irqrestore(&ioc->lock, flags);
--			cpu_relax();
-+			cpu_chill();
- 			spin_lock_irqsave_nested(&ioc->lock, flags, 1);
- 		}
- 	}
-@@ -188,7 +189,7 @@ retry:
- 			spin_unlock(icq->q->queue_lock);
- 		} else {
- 			spin_unlock_irqrestore(&ioc->lock, flags);
--			cpu_relax();
-+			cpu_chill();
- 			goto retry;
- 		}
- 	}
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index f291347..b0448fa 100644
+index 12317b6..e2f9e3b 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -2166,6 +2166,7 @@ extern unsigned int sysctl_sched_cfs_bandwidth_slice;
+@@ -2127,6 +2127,7 @@ extern unsigned int sysctl_sched_cfs_bandwidth_slice;
  #ifdef CONFIG_RT_MUTEXES
  extern int rt_mutex_getprio(struct task_struct *p);
  extern void rt_mutex_setprio(struct task_struct *p, int prio);
@@ -114,7 +82,7 @@ index f291347..b0448fa 100644
  extern void rt_mutex_adjust_pi(struct task_struct *p);
  static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
  {
-@@ -2176,6 +2177,10 @@ static inline int rt_mutex_getprio(struct task_struct *p)
+@@ -2137,6 +2138,10 @@ static inline int rt_mutex_getprio(struct task_struct *p)
  {
  	return p->normal_prio;
  }
@@ -126,7 +94,7 @@ index f291347..b0448fa 100644
  static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
  {
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 3bff726..20742e7 100644
+index 9c4f6e5..6075f17 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
 @@ -124,6 +124,18 @@ int rt_mutex_getprio(struct task_struct *task)
@@ -148,11 +116,11 @@ index 3bff726..20742e7 100644
   * Adjust the priority of a task, after its pi_waiters got modified.
   *
   * This can be both boosting and unboosting. task->pi_lock must be held.
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 1f9d6f5..7b501a3 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -4085,7 +4085,8 @@ EXPORT_SYMBOL(sleep_on_timeout);
+diff --git a/kernel/sched.c b/kernel/sched.c
+index cdf9484..b318b4a 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -5363,7 +5363,8 @@ EXPORT_SYMBOL(sleep_on_timeout);
   * This function changes the 'effective' priority of a task. It does
   * not touch ->normal_prio like __setscheduler().
   *
@@ -162,7 +130,7 @@ index 1f9d6f5..7b501a3 100644
   */
  void rt_mutex_setprio(struct task_struct *p, int prio)
  {
-@@ -4308,20 +4309,25 @@ static struct task_struct *find_process_by_pid(pid_t pid)
+@@ -5586,20 +5587,25 @@ static struct task_struct *find_process_by_pid(pid_t pid)
  	return pid ? find_task_by_vpid(pid) : current;
  }
  
@@ -192,7 +160,7 @@ index 1f9d6f5..7b501a3 100644
  }
  
  /*
-@@ -4346,6 +4352,7 @@ static bool check_same_owner(struct task_struct *p)
+@@ -5624,6 +5630,7 @@ static bool check_same_owner(struct task_struct *p)
  static int __sched_setscheduler(struct task_struct *p, int policy,
  				const struct sched_param *param, bool user)
  {
@@ -200,7 +168,7 @@ index 1f9d6f5..7b501a3 100644
  	int retval, oldprio, oldpolicy = -1, on_rq, running;
  	unsigned long flags;
  	const struct sched_class *prev_class;
-@@ -4441,11 +4448,13 @@ recheck:
+@@ -5719,11 +5726,13 @@ recheck:
  	}
  
  	/*
@@ -216,7 +184,7 @@ index 1f9d6f5..7b501a3 100644
  		__task_rq_unlock(rq);
  		raw_spin_unlock_irqrestore(&p->pi_lock, flags);
  		return 0;
-@@ -4472,6 +4481,25 @@ recheck:
+@@ -5750,6 +5759,25 @@ recheck:
  		task_rq_unlock(rq, p, &flags);
  		goto recheck;
  	}
@@ -242,7 +210,7 @@ index 1f9d6f5..7b501a3 100644
  	on_rq = p->on_rq;
  	running = task_current(rq, p);
  	if (on_rq)
-@@ -4479,17 +4507,18 @@ recheck:
+@@ -5757,16 +5785,18 @@ recheck:
  	if (running)
  		p->sched_class->put_prev_task(rq, p);
  
@@ -255,4 +223,23 @@ index 1f9d6f5..7b501a3 100644
  	if (running)
  		p->sched_class->set_curr_task(rq);
 -	if (on_rq)
--		enqueue_task(rq, p, 0);
+-		activate_task(rq, p, 0);
++	if (on_rq) {
++		/*
++		 * We enqueue to tail when the priority of a task is
++		 * increased (user space view).
++		 */
++		activate_task(rq, p, oldprio <= p->prio ? ENQUEUE_HEAD : 0);
++	}
+ 
+ 	check_class_changed(rq, p, prev_class, oldprio);
+ 	task_rq_unlock(rq, p, &flags);
+diff --git a/localversion-rt b/localversion-rt
+index 66a5ed8..e6c0dc6 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt52
++-rt53
+
+
