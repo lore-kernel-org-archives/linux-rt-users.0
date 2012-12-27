@@ -1,107 +1,258 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
-Subject: [PATCH] sched/rt: Don't pull tasks of throttled rt_rq in pre_schedule_rt()
-Date: Tue, 25 Dec 2012 12:20:52 +0400
-Message-ID: <1286111356423652@web16f.yandex.ru>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.24-rt36
+Date: Thu, 27 Dec 2012 10:48:09 -0500
+Message-ID: <1356623289.10284.0.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:22684 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752946Ab2L0PsM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Dec 2012 10:48:12 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The patch aims not to pull tasks of throttled rt_rqs
-in pre_schedule_rt() because thay are not able to be
-picked in pick_next_task_rt().
 
-There are three places where pull_rt_task() is used:
+Dear RT Folks,
 
-1)pre_schedule_rt()
-If we pull a task of a throttled rt_rq it won't be picked
-by pick_next_task_rt(), because throttled tasks are dequeued
-by sched_rt_runtime_exceeded(). So this action is unnecessary.
+I'm pleased to announce the 3.4.24-rt36 stable release.
 
-2)prio_changed_rt()
-A pulled task of higher priority leads to reschedule of current
-rq's task. The schedule() will occur with the first hw interrupt
-so there is possibility the throttled rt_rq will unthrottle and
-it will be queued during this time.
-(In case of preemptable kernel schedule() occurs during
-preempt_enable() in call of __task_rq_unlock(). But its lock is
-unlocked so there is no guarantee the rt_rq won't be queued).
 
-3)switched_from_rt()
-The same as prio_changed_rt().
+You can get this release via the git tree at:
 
-Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
-CC: Steven Rostedt <rostedt@goodmis.org>
-CC: Ingo Molnar <mingo@kernel.org>
-CC: Peter Zijlstra <peterz@infradead.org>
-CC: linux-rt-users
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: c094034cc852ce529317bddff5bda479aed11385
+
+
+Or to build 3.4.24-rt36 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.24.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.24-rt36.patch.xz
+
+
+You can also build from 3.4.24-rt35 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.24-rt35-rt36.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from 3.4.24-rt35:
+
 ---
- kernel/sched/rt.c |   21 +++++++++++++++++----
- 1 file changed, 17 insertions(+), 4 deletions(-)
-diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-index 418feb0..567908a 100644
---- a/kernel/sched/rt.c
-+++ b/kernel/sched/rt.c
-@@ -1708,7 +1708,17 @@ static void push_rt_tasks(struct rq *rq)
- 		;
+
+Steven Rostedt (1):
+      Linux 3.4.24-rt36
+
+Thomas Gleixner (4):
+      sched: Adjust sched_reset_on_fork when nothing else changes
+      sched: Queue RT tasks to head when prio drops
+      sched: Consider pi boosting in setscheduler
+      block: Use cpu_chill() for retry loops
+
+----
+ block/blk-ioc.c       |    5 +++--
+ include/linux/sched.h |    5 +++++
+ kernel/rtmutex.c      |   12 +++++++++++
+ kernel/sched/core.c   |   55 +++++++++++++++++++++++++++++++++++++------------
+ localversion-rt       |    2 +-
+ 5 files changed, 63 insertions(+), 16 deletions(-)
+---------------------------
+diff --git a/block/blk-ioc.c b/block/blk-ioc.c
+index fb95dd2..6b54201 100644
+--- a/block/blk-ioc.c
++++ b/block/blk-ioc.c
+@@ -8,6 +8,7 @@
+ #include <linux/blkdev.h>
+ #include <linux/bootmem.h>	/* for max_pfn/max_low_pfn */
+ #include <linux/slab.h>
++#include <linux/delay.h>
+ 
+ #include "blk.h"
+ 
+@@ -110,7 +111,7 @@ static void ioc_release_fn(struct work_struct *work)
+ 			spin_unlock(q->queue_lock);
+ 		} else {
+ 			spin_unlock_irqrestore(&ioc->lock, flags);
+-			cpu_relax();
++			cpu_chill();
+ 			spin_lock_irqsave_nested(&ioc->lock, flags, 1);
+ 		}
+ 	}
+@@ -188,7 +189,7 @@ retry:
+ 			spin_unlock(icq->q->queue_lock);
+ 		} else {
+ 			spin_unlock_irqrestore(&ioc->lock, flags);
+-			cpu_relax();
++			cpu_chill();
+ 			goto retry;
+ 		}
+ 	}
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index f291347..b0448fa 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -2166,6 +2166,7 @@ extern unsigned int sysctl_sched_cfs_bandwidth_slice;
+ #ifdef CONFIG_RT_MUTEXES
+ extern int rt_mutex_getprio(struct task_struct *p);
+ extern void rt_mutex_setprio(struct task_struct *p, int prio);
++extern int rt_mutex_check_prio(struct task_struct *task, int newprio);
+ extern void rt_mutex_adjust_pi(struct task_struct *p);
+ static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+ {
+@@ -2176,6 +2177,10 @@ static inline int rt_mutex_getprio(struct task_struct *p)
+ {
+ 	return p->normal_prio;
+ }
++static inline int rt_mutex_check_prio(struct task_struct *task, int newprio)
++{
++	return 0;
++}
+ # define rt_mutex_adjust_pi(p)		do { } while (0)
+ static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
+ {
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 3bff726..20742e7 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -124,6 +124,18 @@ int rt_mutex_getprio(struct task_struct *task)
  }
  
--static int pull_rt_task(struct rq *this_rq)
-+static inline int remote_rt_rq_throttled(struct task_struct *p, int remote_cpu)
+ /*
++ * Called by sched_setscheduler() to check whether the priority change
++ * is overruled by a possible priority boosting.
++ */
++int rt_mutex_check_prio(struct task_struct *task, int newprio)
 +{
-+	struct rt_rq *rt_rq = rt_rq_of_se(&p->rt);
-+	struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
++	if (!task_has_pi_waiters(task))
++		return 0;
 +
-+	rt_rq = sched_rt_period_rt_rq(rt_b, remote_cpu);
-+
-+	return rt_rq_throttled(rt_rq);
++	return task_top_pi_waiter(task)->pi_list_entry.prio <= newprio;
 +}
 +
-+static int pull_rt_task(struct rq *this_rq, bool unthrottled)
++/*
+  * Adjust the priority of a task, after its pi_waiters got modified.
+  *
+  * This can be both boosting and unboosting. task->pi_lock must be held.
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 1f9d6f5..7b501a3 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -4085,7 +4085,8 @@ EXPORT_SYMBOL(sleep_on_timeout);
+  * This function changes the 'effective' priority of a task. It does
+  * not touch ->normal_prio like __setscheduler().
+  *
+- * Used by the rt_mutex code to implement priority inheritance logic.
++ * Used by the rt_mutex code to implement priority inheritance
++ * logic. Call site only calls if the priority of the task changed.
+  */
+ void rt_mutex_setprio(struct task_struct *p, int prio)
  {
- 	int this_cpu = this_rq->cpu, ret = 0, cpu;
- 	struct task_struct *p;
-@@ -1768,6 +1778,9 @@ static int pull_rt_task(struct rq *this_rq)
- 			if (p->prio < src_rq->curr->prio)
- 				goto skip;
+@@ -4308,20 +4309,25 @@ static struct task_struct *find_process_by_pid(pid_t pid)
+ 	return pid ? find_task_by_vpid(pid) : current;
+ }
  
-+			if (unthrottled && remote_rt_rq_throttled(p, this_cpu))
-+				goto skip;
+-/* Actually do priority change: must hold rq lock. */
+-static void
+-__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
++static void __setscheduler_params(struct task_struct *p, int policy, int prio)
+ {
+ 	p->policy = policy;
+ 	p->rt_priority = prio;
+ 	p->normal_prio = normal_prio(p);
++	set_load_weight(p);
++}
 +
- 			ret = 1;
++/* Actually do priority change: must hold rq lock. */
++static void
++__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
++{
++	__setscheduler_params(p, policy, prio);
+ 	/* we are holding p->pi_lock already */
+ 	p->prio = rt_mutex_getprio(p);
+ 	if (rt_prio(p->prio))
+ 		p->sched_class = &rt_sched_class;
+ 	else
+ 		p->sched_class = &fair_sched_class;
+-	set_load_weight(p);
+ }
  
- 			deactivate_task(src_rq, p, 0);
-@@ -1791,7 +1804,7 @@ static void pre_schedule_rt(struct rq *rq, struct task_struct *prev)
+ /*
+@@ -4346,6 +4352,7 @@ static bool check_same_owner(struct task_struct *p)
+ static int __sched_setscheduler(struct task_struct *p, int policy,
+ 				const struct sched_param *param, bool user)
  {
- 	/* Try to pull RT tasks here if we lower this rq's prio */
- 	if (rq->rt.highest_prio.curr > prev->prio)
--		pull_rt_task(rq);
-+		pull_rt_task(rq, true);
- }
++	int newprio = MAX_RT_PRIO - 1 - param->sched_priority;
+ 	int retval, oldprio, oldpolicy = -1, on_rq, running;
+ 	unsigned long flags;
+ 	const struct sched_class *prev_class;
+@@ -4441,11 +4448,13 @@ recheck:
+ 	}
  
- static void post_schedule_rt(struct rq *rq)
-@@ -1890,7 +1903,7 @@ static void switched_from_rt(struct rq *rq, struct task_struct *p)
- 	 * now.
+ 	/*
+-	 * If not changing anything there's no need to proceed further:
++	 * If not changing anything there's no need to proceed
++	 * further, but store a possible modification of
++	 * reset_on_fork.
  	 */
- 	if (p->on_rq && !rq->rt.rt_nr_running)
--		pull_rt_task(rq);
-+		pull_rt_task(rq, false);
- }
+ 	if (unlikely(policy == p->policy && (!rt_policy(policy) ||
+ 			param->sched_priority == p->rt_priority))) {
+-
++		p->sched_reset_on_fork = reset_on_fork;
+ 		__task_rq_unlock(rq);
+ 		raw_spin_unlock_irqrestore(&p->pi_lock, flags);
+ 		return 0;
+@@ -4472,6 +4481,25 @@ recheck:
+ 		task_rq_unlock(rq, p, &flags);
+ 		goto recheck;
+ 	}
++
++	p->sched_reset_on_fork = reset_on_fork;
++	oldprio = p->prio;
++
++	/*
++	 * Special case for priority boosted tasks.
++	 *
++	 * If the new priority is lower or equal (user space view)
++	 * than the current (boosted) priority, we just store the new
++	 * normal parameters and do not touch the scheduler class and
++	 * the runqueue. This will be done when the task deboost
++	 * itself.
++	 */
++	if (rt_mutex_check_prio(p, newprio)) {
++		__setscheduler_params(p, policy, param->sched_priority);
++		task_rq_unlock(rq, p, &flags);
++		return 0;
++	}
++
+ 	on_rq = p->on_rq;
+ 	running = task_current(rq, p);
+ 	if (on_rq)
+@@ -4479,17 +4507,18 @@ recheck:
+ 	if (running)
+ 		p->sched_class->put_prev_task(rq, p);
  
- void init_sched_rt_class(void)
-@@ -1949,7 +1962,7 @@ prio_changed_rt(struct rq *rq, struct task_struct *p, int oldprio)
- 		 * may need to pull tasks to this runqueue.
- 		 */
- 		if (oldprio < p->prio)
--			pull_rt_task(rq);
-+			pull_rt_task(rq, false);
- 		/*
- 		 * If there's a higher priority task waiting to run
- 		 * then reschedule. Note, the above pull_rt_task
+-	p->sched_reset_on_fork = reset_on_fork;
+-
+-	oldprio = p->prio;
+ 	prev_class = p->sched_class;
+ 	__setscheduler(rq, p, policy, param->sched_priority);
+ 
+ 	if (running)
+ 		p->sched_class->set_curr_task(rq);
+-	if (on_rq)
+-		enqueue_task(rq, p, 0);
