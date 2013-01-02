@@ -1,245 +1,76 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.57-rt82
-Date: Thu, 27 Dec 2012 11:05:06 -0500
-Message-ID: <1356624306.10284.2.camel@gandalf.local.home>
+From: Darren Hart <dvhart@infradead.org>
+Subject: Re: Real-time kernel thread performance and optimization
+Date: Wed, 02 Jan 2013 09:21:28 -0800
+Message-ID: <50E46C98.7090405@infradead.org>
+References: <6b5093025753dbc76e1d23af7c999826@mail.gmail.com> <50B933A5.3020400@am.sony.com> <d27143389b68c615c242b56c7cd4dd22@mail.gmail.com> <50CF9A1E.5000902@am.sony.com> <50D257BF.2060803@infradead.org> <32844ba58ef36b5032ce5aa08ca2a985@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Cc: frank.rowand@am.sony.com, linux-rt-users@vger.kernel.org,
+	jkacur@redhat.com
+To: Simon Falsig <simon@newtec.dk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:26469 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753019Ab2L0QFI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Dec 2012 11:05:08 -0500
+Received: from mga02.intel.com ([134.134.136.20]:19761 "EHLO mga02.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752132Ab3ABRVa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Jan 2013 12:21:30 -0500
+In-Reply-To: <32844ba58ef36b5032ce5aa08ca2a985@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-Dear RT Folks,
 
-I'm pleased to announce the 3.0.57-rt82 stable release.
+On 12/20/2012 12:21 AM, Simon Falsig wrote:
+> On 12/20/2012 01:12 AM, Darren Hart wrote:
+>> On 12/17/2012 02:18 PM, Frank Rowand wrote:
+>>> On 12/11/12 06:30, Simon Falsig wrote:
+>>>
+>>> < snip >
+>>>
+>>>>>> Once I get this finished up, I'll be happy to do a complete
+>>>>>> write-up of the timer-thread code, if anyone is interested. I
+>>>>>> remember looking for something similar (but without success), when
+>>>>>> I wrote the code earlier this year.
+>>>>>
+>>>>> It would be very useful to add your results to the wiki.
+>>>>>
+>>>>> -Frank
+>>>>
+>>>> Cool - is there any particular place it should go? A how-to, FAQ
+>>>> entry, etc? Just so I know how to do the write-up...
+>>>
+>>> https://rt.wiki.kernel.org/index.php/Main_Page would be my default
+>>> suggestion.  I'm not quite sure where on the wiki would be good
+>>> though.  Maybe under "Tips and Techniques"?
+>>>
+>>> I added the rtwiki maintainers to the cc: list.
+>>
+>> I don't have all the context, but this sounds a bit more like something
+> for
+>> linux/Documentation (possibly for the preempt-rt patch set). If not, the
+>> Documentation section on the wiki is a possibility.
+>> --
+>> Darren Hart
+>> Intel Open Source Technology Center
+>> Yocto Project - Technical Lead - Linux Kernel
+> 
+> As I see it, the write-up could be done in two ways - 1) as a simple code
+> example of a real-time loop in a kernel module, 2) as a blog-like post of
+> the process I went through, investigating the performance, and optimizing
+> my code.
+> 
+> In the case of 1), I guess it could be added to
+> https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO, as a kernel version
+> of the realtime example, or possibly to
+> https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application under
+> "Building Device Drivers"? In the case of 2) though, it could maybe be on
+> its own page under "Tips and techniques"?
 
+I'd leave the exploration type write-up to your blog and we can link to
+it. An explicit example in one of the locations above also sounds
+appropriate.
 
-You can get this release via the git tree at:
+Thanks,
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  Head SHA1: 5d64f2c93f9dfa509549d2103ff06d5d84731d2f
-
-
-Or to build 3.0.57-rt82 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.57.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.57-rt82.patch.xz
-
-
-You can also build from 3.0.57-rt81 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.57-rt81-rt82.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from 3.0.57-rt81:
-
----
-
-Steven Rostedt (1):
-      Linux 3.0.57-rt82
-
-Thomas Gleixner (3):
-      sched: Adjust sched_reset_on_fork when nothing else changes
-      sched: Queue RT tasks to head when prio drops
-      sched: Consider pi boosting in setscheduler
-
-----
- include/linux/sched.h |    5 +++++
- kernel/rtmutex.c      |   12 +++++++++++
- kernel/sched.c        |   54 ++++++++++++++++++++++++++++++++++++++-----------
- localversion-rt       |    2 +-
- 4 files changed, 60 insertions(+), 13 deletions(-)
----------------------------
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index a179dd0..8772834 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2089,6 +2089,7 @@ static inline void sched_autogroup_exit(struct signal_struct *sig) { }
- #ifdef CONFIG_RT_MUTEXES
- extern void task_setprio(struct task_struct *p, int prio);
- extern int rt_mutex_getprio(struct task_struct *p);
-+extern int rt_mutex_check_prio(struct task_struct *task, int newprio);
- static inline void rt_mutex_setprio(struct task_struct *p, int prio)
- {
- 	task_setprio(p, prio);
-@@ -2103,6 +2104,10 @@ static inline int rt_mutex_getprio(struct task_struct *p)
- {
- 	return p->normal_prio;
- }
-+static inline int rt_mutex_check_prio(struct task_struct *task, int newprio)
-+{
-+	return 0;
-+}
- # define rt_mutex_adjust_pi(p)		do { } while (0)
- static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
- {
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index d58db99..7667c5e 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -124,6 +124,18 @@ int rt_mutex_getprio(struct task_struct *task)
- }
- 
- /*
-+ * Called by sched_setscheduler() to check whether the priority change
-+ * is overruled by a possible priority boosting.
-+ */
-+int rt_mutex_check_prio(struct task_struct *task, int newprio)
-+{
-+	if (!task_has_pi_waiters(task))
-+		return 0;
-+
-+	return task_top_pi_waiter(task)->pi_list_entry.prio <= newprio;
-+}
-+
-+/*
-  * Adjust the priority of a task, after its pi_waiters got modified.
-  *
-  * This can be both boosting and unboosting. task->pi_lock must be held.
-diff --git a/kernel/sched.c b/kernel/sched.c
-index 2cf4c4b..858f5df 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -4989,7 +4989,8 @@ EXPORT_SYMBOL(sleep_on_timeout);
-  * This function changes the 'effective' priority of a task. It does
-  * not touch ->normal_prio like __setscheduler().
-  *
-- * Used by the rt_mutex code to implement priority inheritance logic.
-+ * Used by the rt_mutex code to implement priority inheritance
-+ * logic. Call site only calls if the priority of the task changed.
-  */
- void task_setprio(struct task_struct *p, int prio)
- {
-@@ -5206,20 +5207,25 @@ static struct task_struct *find_process_by_pid(pid_t pid)
- 	return pid ? find_task_by_vpid(pid) : current;
- }
- 
--/* Actually do priority change: must hold rq lock. */
--static void
--__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
-+static void __setscheduler_params(struct task_struct *p, int policy, int prio)
- {
- 	p->policy = policy;
- 	p->rt_priority = prio;
- 	p->normal_prio = normal_prio(p);
-+	set_load_weight(p);
-+}
-+
-+/* Actually do priority change: must hold rq lock. */
-+static void
-+__setscheduler(struct rq *rq, struct task_struct *p, int policy, int prio)
-+{
-+	__setscheduler_params(p, policy, prio);
- 	/* we are holding p->pi_lock already */
- 	p->prio = rt_mutex_getprio(p);
- 	if (rt_prio(p->prio))
- 		p->sched_class = &rt_sched_class;
- 	else
- 		p->sched_class = &fair_sched_class;
--	set_load_weight(p);
- }
- 
- /*
-@@ -5244,6 +5250,7 @@ static bool check_same_owner(struct task_struct *p)
- static int __sched_setscheduler(struct task_struct *p, int policy,
- 				const struct sched_param *param, bool user)
- {
-+	int newprio = MAX_RT_PRIO - 1 - param->sched_priority;
- 	int retval, oldprio, oldpolicy = -1, on_rq, running;
- 	unsigned long flags;
- 	const struct sched_class *prev_class;
-@@ -5339,11 +5346,13 @@ recheck:
- 	}
- 
- 	/*
--	 * If not changing anything there's no need to proceed further:
-+	 * If not changing anything there's no need to proceed
-+	 * further, but store a possible modification of
-+	 * reset_on_fork.
- 	 */
- 	if (unlikely(policy == p->policy && (!rt_policy(policy) ||
- 			param->sched_priority == p->rt_priority))) {
--
-+		p->sched_reset_on_fork = reset_on_fork;
- 		__task_rq_unlock(rq);
- 		raw_spin_unlock_irqrestore(&p->pi_lock, flags);
- 		return 0;
-@@ -5370,6 +5379,25 @@ recheck:
- 		task_rq_unlock(rq, p, &flags);
- 		goto recheck;
- 	}
-+
-+	p->sched_reset_on_fork = reset_on_fork;
-+	oldprio = p->prio;
-+
-+	/*
-+	 * Special case for priority boosted tasks.
-+	 *
-+	 * If the new priority is lower or equal (user space view)
-+	 * than the current (boosted) priority, we just store the new
-+	 * normal parameters and do not touch the scheduler class and
-+	 * the runqueue. This will be done when the task deboost
-+	 * itself.
-+	 */
-+	if (rt_mutex_check_prio(p, newprio)) {
-+		__setscheduler_params(p, policy, param->sched_priority);
-+		task_rq_unlock(rq, p, &flags);
-+		return 0;
-+	}
-+
- 	on_rq = p->on_rq;
- 	running = task_current(rq, p);
- 	if (on_rq)
-@@ -5377,16 +5405,18 @@ recheck:
- 	if (running)
- 		p->sched_class->put_prev_task(rq, p);
- 
--	p->sched_reset_on_fork = reset_on_fork;
--
--	oldprio = p->prio;
- 	prev_class = p->sched_class;
- 	__setscheduler(rq, p, policy, param->sched_priority);
- 
- 	if (running)
- 		p->sched_class->set_curr_task(rq);
--	if (on_rq)
--		activate_task(rq, p, 0);
-+	if (on_rq) {
-+		/*
-+		 * We enqueue to tail when the priority of a task is
-+		 * increased (user space view).
-+		 */
-+		activate_task(rq, p, oldprio <= p->prio ? ENQUEUE_HEAD : 0);
-+	}
- 
- 	check_class_changed(rq, p, prev_class, oldprio);
- 	task_rq_unlock(rq, p, &flags);
-diff --git a/localversion-rt b/localversion-rt
-index 8269ec1..5655698 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt81
-+-rt82
-
+Darren
 
