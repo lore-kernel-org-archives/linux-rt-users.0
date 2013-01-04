@@ -1,48 +1,104 @@
-From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
-Subject: RE: Observed deadlock in ext4 under 3.2.23-rt37 & 3.2.33-rt50
-Date: Thu, 3 Jan 2013 09:52:06 -0600
-Message-ID: <7A2FC0CD30EF4745AE15F485252D38AC2F45A70E82@clark>
-References: <7A2FC0CD30EF4745AE15F485252D38AC2F45A70C9A@clark>
- <1357182583.10284.16.camel@gandalf.local.home>
- <20130103042224.GB16895@thunk.org>
- <1357219291.10284.21.camel@gandalf.local.home>
- <20130103141837.GC16895@thunk.org>
- <7A2FC0CD30EF4745AE15F485252D38AC2F45A70E59@clark>
- <20130103153634.GD16895@thunk.org>
+From: Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
+	instead of current one
+Date: Fri, 4 Jan 2013 16:41:47 +0530
+Message-ID: <CAKohpokBMhto6xzp3MPGRJqstEkkC=kzgrKNhVXzi1Y8GejkXg@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
+	<20121126171539.GZ15971@htj.dyndns.org>
+	<CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"tglx@linutronix.de" <tglx@linutronix.de>,
-	"C.Emde@osadl.org" <C.Emde@osadl.org>,
-	"jkacur@redhat.com" <jkacur@redhat.com>
-To: Theodore Ts'o <tytso@mit.edu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.eagleseven.com ([38.98.183.218]:25292 "EHLO
-	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753310Ab3ACPwI convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Jan 2013 10:52:08 -0500
-In-Reply-To: <20130103153634.GD16895@thunk.org>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: venki-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org, linaro-dev-cunTk1MwBs8s++Sfvej+rw@public.gmane.org, suresh.b.siddha-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org,
+	patches-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org,
+	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, rostedt-nx8X9YLhiw1AfugRpC6u6w@public.gmane.org,
+	paul.mckenney-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, mingo-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org,
+	pdsw-power-team-5wv7dgnIgG8@public.gmane.org, tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, pjt-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org,
+	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>, Vincent Guittot <vincent.guittot-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
+Return-path: <linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
+In-Reply-To: <CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+List-Unsubscribe: <http://lists.linaro.org/mailman/options/linaro-dev>,
+	<mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=unsubscribe>
+List-Archive: <http://lists.linaro.org/pipermail/linaro-dev>
+List-Post: <mailto:linaro-dev-cunTk1MwBs8s++Sfvej+rw@public.gmane.org>
+List-Help: <mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=help>
+List-Subscribe: <http://lists.linaro.org/mailman/listinfo/linaro-dev>,
+	<mailto:linaro-dev-request-cunTk1MwBs8s++Sfvej+rw@public.gmane.org?subject=subscribe>
+Sender: linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
+Errors-To: linaro-dev-bounces-cunTk1MwBs8s++Sfvej+rw@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Theodore Ts'o [mailto:tytso@mit.edu] 
-Sent: Thursday, January 03, 2013 9:37 AM
-To: Staffan Tjernstrom
-Cc: Steven Rostedt; linux-rt-users@vger.kernel.org; tglx@linutronix.de; C.Emde@osadl.org; jkacur@redhat.com
-Subject: Re: Observed deadlock in ext4 under 3.2.23-rt37 & 3.2.33-rt50
+Hi Tejun,
 
->In fs/jbd2/transaction.c?  Can you give me the code snippit and/or function and line number that you're concerned about?
+On 27 November 2012 10:49, Viresh Kumar <viresh.kumar-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org> wrote:
+> On 26 November 2012 22:45, Tejun Heo <tj-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org> wrote:
+>> On Tue, Nov 06, 2012 at 04:08:45PM +0530, Viresh Kumar wrote:
+>
+>> I'm pretty skeptical about this.  queue_work() w/o explicit CPU
+>> assignment has always guaranteed that the work item will be executed
+>> on the same CPU.  I don't think there are too many users depending on
+>> that but am not sure at all that there are none.  I asked you last
+>> time that you would at the very least need to audit most users but it
+>> doesn't seem like there has been any effort there.
+>
+> My bad. I completely missed/forgot that comment from your earlier mails.
+> Will do it.
 
-Rather in fs/fs.h and fs/namei.c - I think that' where I ended up in my trace of a previous encounter with the issue (either via open() and/or truncate() calls from user land). Coming in from jbd2/transaction.c would make more sense than what I thought I manually traced out however.
+And this is the first thing i did this year :)
 
-See http://lxr.linux.no/#linux+v2.6.33.20/fs/namei.c#L325 vs http://lxr.linux.no/#linux+v3.2.33/include/linux/fs.h#L2286 for the change I got suspicious about.
+So there are almost 1200 files which are using: queue_work, queue_delayed_work,
+schedule_work, schedule_delayed_work or schedule_on_each_cpu
 
->Yeah, but do_get_write_access() blocks (usually waiting for the jbd2 kernel thread to complete, but possibly on a memory allocation); we don't return >EAGAIN or anything like that.  So I don't see how that would cause a wait loop.
+Obviously i can't try to understand all of them :) , and so i tried to
+search two
+strings in them: "cpu" or "processor_id". So, this would catch every
+file of these 1200
+odd files which use some variables/comment/code with cpu or smp_processor_id or
+raw_processor_id, etc..
 
->It's possible we could be returning -ENOMEM; are you looping for all write failures, or just for EAGAIN/EINTR and partial writes?
+I got around 650 files with these two searches.. Then i went into
+these files to see if
+there is anything noticeable, which may break due to this patch...
 
-Blocking would make more sense with what I was seeing - the loop around the write() failures deep inside libstdc++'s output stream code may just have been me not manging to navigate that library particularly well.
+I got a list of files where cpu/processor_id strings are found, which
+may break with
+this patch (still can't guarantee as i don't have knowledge of these drivers)...
+
+- arch/powerpc/mm/numa.c
+- arch/s390/appldata/appldata_base.c
+- arch/s390/kernel/time.c
+- arch/s390/kernel/topology.c
+- arch/s390/oprofile/hwsampler.c
+- arch/x86/kernel/cpu/mcheck/mce.c
+- arch/x86/kernel/tsc.c
+- arch/x86/kvm/x86.c
+- block/blk-core.c
+- block/blk-throttle.c
+- block/blk-genhd.c
+- crypto/cryptd.c
+- drivers/base/power/domain.c
+- drivers/cpufreq/cpufreq.c
+- drivers/hv/vmbus_drv.c
+- drivers/infiniband/hw/qib/qib_iba7322.c and
+drivers/infiniband/hw/qib/qib_init.c
+- drivers/md/dm-crypt.c
+- drivers/md/md.c
+- drivers/net/ethernet/sfc/efx.c
+- drivers/net/ethernet/tile/tilepro.c
+- drivers/net/team/team_mode_loadbalance.c
+- drivers/oprofile/cpu_buffer.c
+- drivers/s390/kvm/kvm_virtio.c
+- drivers/scsi/fcoe/fcoe.c
+- drivers/tty/sysrq.c
+- drivers/xen/pcpu.c
+- fs/file.c, file_table.c, fs/fscache/object.c
+- include/linux/stop_machine.h, kernel/stop_machine.c
+- mm/percpu.c
+- mm/slab.c
+- mm/vmstat.c
+- net/core/flow.c
+- net/iucv/iucv.c
+
+I am not sure what to do now :) , can you assist ?
