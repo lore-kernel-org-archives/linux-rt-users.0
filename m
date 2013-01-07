@@ -1,79 +1,67 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH V2 Resend 3/4] workqueue: Schedule work on non-idle cpu
  instead of current one
-Date: Mon, 7 Jan 2013 23:37:22 +0530
-Message-ID: <CAKohponQP7+fUJtTysDiaDNQA0fTCcErb97gpKCxXpshSOuYfg@mail.gmail.com>
+Date: Mon, 07 Jan 2013 17:29:55 -0500
+Message-ID: <1357597795.5190.10.camel@gandalf.local.home>
 References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
-	<20121126171539.GZ15971@htj.dyndns.org>
-	<CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g@mail.gmail.com>
-	<CAKohpokBMhto6xzp3MPGRJqstEkkC=kzgrKNhVXzi1Y8GejkXg@mail.gmail.com>
-	<20130104150928.GC15633@mtj.dyndns.org>
-	<CAKohpo=hhScCDUnDcqnZx4YzU_8nF1658jmSM_wzsOpSCxXwqA@mail.gmail.com>
-	<20130107150422.GB3926@htj.dyndns.org>
+	 <ad25c731a6ca1bd1269555245952f05c856a9759.1352196505.git.viresh.kumar@linaro.org>
+	 <20121126171539.GZ15971@htj.dyndns.org>
+	 <CAKohpom9=K976NmyFWtXx2UQyRcLAqsoGw-5AaqXRpSL6uxP_g@mail.gmail.com>
+	 <CAKohpokBMhto6xzp3MPGRJqstEkkC=kzgrKNhVXzi1Y8GejkXg@mail.gmail.com>
+	 <20130104150928.GC15633@mtj.dyndns.org>
+	 <CAKohpo=hhScCDUnDcqnZx4YzU_8nF1658jmSM_wzsOpSCxXwqA@mail.gmail.com>
+	 <1357565303.10284.73.camel@gandalf.local.home>
+	 <CAKohpom9DxoojtcpMfmyGeUcEw8=tsS4n+TFMRV3+9_UBaod7g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: rostedt@goodmis.org, Vincent Guittot <vincent.guittot@linaro.org>,
-	pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Tejun Heo <tj@kernel.org>,
+	Vincent Guittot <vincent.guittot@linaro.org>, pjt@google.com,
+	paul.mckenney@linaro.org, tglx@linutronix.de,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, Arvind.Chauhan@arm.com,
 	linaro-dev@lists.linaro.org, patches@linaro.org,
 	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f43.google.com ([209.85.219.43]:50121 "EHLO
-	mail-oa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754362Ab3AGSHX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Jan 2013 13:07:23 -0500
-Received: by mail-oa0-f43.google.com with SMTP id k1so18140388oag.2
-        for <linux-rt-users@vger.kernel.org>; Mon, 07 Jan 2013 10:07:23 -0800 (PST)
-In-Reply-To: <20130107150422.GB3926@htj.dyndns.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAKohpom9DxoojtcpMfmyGeUcEw8=tsS4n+TFMRV3+9_UBaod7g@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-[Removed Suresh and Venki from discussion, they switched their companies
-probably]
+On Mon, 2013-01-07 at 23:29 +0530, Viresh Kumar wrote:
 
-On 7 January 2013 20:34, Tejun Heo <tj@kernel.org> wrote:
-> The latter part "not using idle cpu just for processing work" does
-> apply to homogeneous systems too but as I wrote earlier work items
-> don't spontaneously happen on an idle core.  Something, including
-> timer, needs to kick it.  So, by definition, a CPU already isn't idle
-> when a work item starts execution on it.  What am I missing here?
+> > By default, I would suggest for cache locality,
+> > that we try to keep it on the same CPU. But if there's a better CPU to
+> > run on, it runs there.
+> 
+> That would break our intention behind this routine. We should run
+> it on a cpu which we think is the best one for it power/performance wise.
 
-We are talking about a core being idle from schedulers perspective :)
+If you are running on a big.Little box sure. But for normal (read x86 ;)
+systems, it should probably stay on the current CPU.
 
->> I have another idea that we can try:
->>
->> queue_work_on_any_cpu().
->>
->> With this we would not break any existing code and can try to migrate
->> old users to
->> this new infrastructure (atleast the ones which are rearming works from their
->> work_handlers). What do you say?
->
-> Yeah, this could be a better solution, I think.  Plus, it's not like
-> finding the optimal cpu is free.
+> 
+> So, i would like to call the sched_select_cpu() routine from this routine to
+> get the suggested cpu.
 
-Thanks for the first part (When i shared this idea with Vincent and Amit, i
-wasn't sure at all about the feedback i will get from you and others, but i
-am very happy now :) ).
+Does the caller need to know? Or if you have a big.LITTLE setup, it
+should just work automagically?
 
-I couldn't understand the second part. We still need to search for a free cpu
-for this new routine. And the implementation would almost be same as the
-implementation of queue_work() in my initial patch
+> 
+> This routine would however would see more changes later to optimize it
+> more.
+> 
+> > Also, we could still add a debug option that
+> > makes it always run on other CPUs to slap developers that don't read.
+> 
+> I don't think we need it :(
+> It would be a new API, with zero existing users. And so, whomsoever uses
+> it, should know what exactly he is doing :)
 
->> To take care of the cache locality issue, we can pass an argument to
->> this routine,
->> that can provide
->> - the mask of cpus to schedule this work on
->>   OR
->> - Sched Level (SD_LEVEL) of cpus to run it.
->
-> Let's start simple for now.  If we really need it, we can always add
-> more later.
+Heh, you don't know kernel developers well do you? ;-)
 
-:)
-Agreed. But i liked the idea from steven, we can have two routines:
-queue_work_on_any_cpu() and queue_work_on_cpus()
+Once a new API is added to the kernel tree, it quickly becomes
+(mis)used.
+
+-- Steve
