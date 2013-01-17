@@ -1,103 +1,93 @@
-From: Clark Williams <williams@redhat.com>
-Subject: [PREEMPT_RT] - kernel panic with 3.6.11-rt25
-Date: Wed, 16 Jan 2013 11:22:40 -0600
-Message-ID: <20130116112240.138270ca@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH] slub: Check for page NULL before doing the node_match
+ check
+Date: Thu, 17 Jan 2013 13:10:58 -0500
+Message-ID: <1358446258.23211.32.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/PlkI+4PIgL5yUgzl5Cc=e+7"; protocol="application/pgp-signature"
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:48397 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753308Ab3APRWw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Jan 2013 12:22:52 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Andrew Morton <akpm@linux-foundation.org>,
+	Christoph Lameter <cl@linux-foundation.org>,
+	Pekka Enberg <penberg@kernel.org>,
+	Matt Mackall <mpm@selenic.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@gmail.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/PlkI+4PIgL5yUgzl5Cc=e+7
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+In the -rt kernel (mrg), we hit the following dump:
 
-My laptop panic'ed this morning while I was doing my normal routine
-(nothing extraordinary running, just mail, IRC, web browsers,
-emacs, etc.). I've been running this kernel for quite a while now,
-pretty sure it's been running for days (suspend/resume).=20
+BUG: unable to handle kernel NULL pointer dereference at           (null) 
+IP: [<ffffffff811573f1>] kmem_cache_alloc_node+0x51/0x180 
+PGD a2d39067 PUD b1641067 PMD 0  
+Oops: 0000 [#1] PREEMPT SMP  
+Modules linked in: sunrpc cpufreq_ondemand ipv6 tg3 joydev sg serio_raw pcspkr k8temp amd64_edac_mod edac_core i2c_piix4 e100 mii shpchp ext4 mbcache jbd2 sd_mod crc_t10dif sr_mod cdrom sata_svw ata_generic pata_acpi pata_serverworks radeon ttm drm_kms_helper drm hwmon i2c_algo_bit i2c_core dm_mirror dm_region_hash dm_log dm_mod 
+CPU 3  
+Pid: 20878, comm: hackbench Not tainted 3.6.11-rt25.14.el6rt.x86_64 #1 empty empty/Tyan Transport GT24-B3992 
+RIP: 0010:[<ffffffff811573f1>]  [<ffffffff811573f1>] kmem_cache_alloc_node+0x51/0x180 
+RSP: 0018:ffff8800a9b17d70  EFLAGS: 00010213 
+RAX: 0000000000000000 RBX: 0000000001200011 RCX: ffff8800a06d8000 
+RDX: 0000000004d92a03 RSI: 00000000000000d0 RDI: ffff88013b805500 
+RBP: ffff8800a9b17dc0 R08: ffff88023fd14d10 R09: ffffffff81041cbd 
+R10: 00007f4e3f06e9d0 R11: 0000000000000246 R12: ffff88013b805500 
+R13: ffff8801ff46af40 R14: 0000000000000001 R15: 0000000000000000 
+FS:  00007f4e3f06e700(0000) GS:ffff88023fd00000(0000) knlGS:0000000000000000 
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b 
+CR2: 0000000000000000 CR3: 00000000a2d3a000 CR4: 00000000000007e0 
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000 
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400 
+Process hackbench (pid: 20878, threadinfo ffff8800a9b16000, task ffff8800a06d8000) 
+Stack: 
+ ffff8800a9b17da0 ffffffff81202e08 ffff8800a9b17de0 000000d001200011 
+ 0000000001200011 0000000001200011 0000000000000000 0000000000000000 
+ 00007f4e3f06e9d0 0000000000000000 ffff8800a9b17e60 ffffffff81041cbd 
+Call Trace: 
+ [<ffffffff81202e08>] ? current_has_perm+0x68/0x80 
+ [<ffffffff81041cbd>] copy_process+0xdd/0x15b0 
+ [<ffffffff810a2125>] ? rt_up_read+0x25/0x30 
+ [<ffffffff8104369a>] do_fork+0x5a/0x360 
+ [<ffffffff8107c66b>] ? migrate_enable+0xeb/0x220 
+ [<ffffffff8100b068>] sys_clone+0x28/0x30 
+ [<ffffffff81527423>] stub_clone+0x13/0x20 
+ [<ffffffff81527152>] ? system_call_fastpath+0x16/0x1b 
+Code: 89 fc 89 75 cc 41 89 d6 4d 8b 04 24 65 4c 03 04 25 48 ae 00 00 49 8b 50 08 4d 8b 28 49 8b 40 10 4d 85 ed 74 12 41 83 fe ff 74 27 <48> 8b 00 48 c1 e8 3a 41 39 c6 74 1b 8b 75 cc 4c 89 c9 44 89 f2  
+RIP  [<ffffffff811573f1>] kmem_cache_alloc_node+0x51/0x180 
+ RSP <ffff8800a9b17d70> 
+CR2: 0000000000000000 
+---[ end trace 0000000000000002 ]--- 
 
-I took a picture of the backtrace and did a rough hand transcribe of it
-here:
+Now, this uses SLUB pretty much unmodified, but as it is the -rt kernel
+with CONFIG_PREEMPT_RT set, spinlocks are mutexes, although they do
+disable migration. But the SLUB code is relatively lockless, and the
+spin_locks there are raw_spin_locks (not converted to mutexes), thus I
+believe this bug can happen in mainline without -rt features. The -rt
+patch is just good at triggering mainline bugs ;-)
 
-[204513.211279] kernel BUG at /home/williams/src/linux+rt/kernel/rt-linux.g=
-it/kernel/sched/core.c:1728
-[204513.211283] invalid opcode: 0000 [#1] PREEMPT SMP=20
-[204513.211327] Modules linked in:  <huge list mail if interested>
-[204513.211346] CPU 6=20
-[204513.211347] Pid: 23152, comm: kworker/6:1 Not tainted 3.6.11-rt25+ #47 =
-LENOVO 4391AH2/4391AH2 ...
-[204513.201307] Call Trace:
-[204513.211394]  [<ffffffff81634d90>] ? _raw_spin_unlock_irqrestore+0x20/0x=
-60=20
-[204513.211398]  [<ffffffff816332c9>] schedule+0x29/0x70=20
-[204513.211402]  [<ffffffff81634245>] rt_spin_lock_slowlock+0xe5/0x2c0
-[204513.211406]  [<ffffffff81634a36>] rt_spin_lock+0x26/0x30
-[204513.211412]  [<ffffffff8107fcb2>] process_one_work+0x172/0x510
-[204513.211418]  [<ffffffff812d6030>] ? disk_release+0xc0/0xc0
-[204513.211422]  [<ffffffff81080446>] worker_thread+0x166/0x250
-[204513.211426]  [<ffffffff810802e0>] ? rescuer_thread+0x250/0x250
-[204513.211430]  [<ffffffff81085113>] kthread+0x93/0xa0=20
-[204513.211435]  [<ffffffff81092339>] ? finish_task_switch+0x49/0xf0
-[204513.211439]  [<ffffffff8163d504>] kernel_thread_helper+0x4/0x10
-[204513.211443]  [<ffffffff81005080>] ? __init_kthread_worker+0x60/0x60
-[204513.211445]  [<ffffffff8163d588>] ? gs_change+0x13/0x13
-[204513.211470]  Code: ff 55 30 48 85 c0 74 e7 48 89 45 c0 e9 1c f9 ff
-ff 44 8b 9f a0 02 00 00 45 85 db 0f 85 1d f0 ff ff e8 fd 7b ff ff e9 13
-f8 ff ff <0f> 0b 0f 0b c9 9b 00 00 00 e9 cd fe ff ff a9 00 00 00 40 90
-0f=20
-[204513.211474] RIP [<ffffffff8163310c>] __schedule+0x07c/0x910=20
-[204513.211475] RSP <ffff880117b0dc30>
+Anyway, looking at where this crashed, it seems that the page variable
+can be NULL when passed to the node_match() function (which does not
+check if it is NULL). When this happens we get the above panic.
 
+As page is only used in slab_alloc() to check if the node matches, if
+it's NULL I'm assuming that we can say it doesn't and call the
+__slab_alloc() code. Is this a correct assumption?
 
-And here's the output of addr2line on the non-questionable addresses
-from the above backtrace:=20
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-
-$ addr2line -e rt-3.6/vmlinux ffffffff816332c9
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/sched/core.c:3698
-$ addr2line -e rt-3.6/vmlinux ffffffff81634245
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/rtmutex.c:768
-$ addr2line -e rt-3.6/vmlinux ffffffff81634a36
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/rtmutex.c:830
-$ addr2line -e rt-3.6/vmlinux ffffffff8107fcb2
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/workqueue.c:2111
-$ addr2line -e rt-3.6/vmlinux ffffffff81080446
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/workqueue.c:2211
-$ addr2line -e rt-3.6/vmlinux ffffffff81085113
-/home/williams/src/linux-rt/kernel/rt-linux.git/kernel/kthread.c:121
-$ addr2line -e rt-3.6/vmlinux ffffffff8163d504
-/home/williams/src/linux-rt/kernel/rt-linux.git/arch/x86/kernel/entry_64.S:=
-1224
-
-
-Unfortunately, the eights and zeros tend to bleed together in the
-picture I took (stupid cell phone camera) so I'm not completely
-positive about the traceback addresses like the workqueue.c:2211
-report. I am fairly confident of the addresses above that in the call
-trace stack. I'm not making a lot of sense out of this trace though.
-
-Next time I'll run downstairs and get the 8Mpixel camera.=20
-
-Clark
-
---Sig_/PlkI+4PIgL5yUgzl5Cc=e+7
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iEYEARECAAYFAlD24eAACgkQHyuj/+TTEp0VswCfUrlGugUr0f82P/uufY23usHz
-lSgAnR01p2rxdmVIOabJgaK3nviv/qD7
-=ODEW
------END PGP SIGNATURE-----
-
---Sig_/PlkI+4PIgL5yUgzl5Cc=e+7--
+diff --git a/mm/slub.c b/mm/slub.c
+index 2d9511a..85b95d5 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2399,7 +2399,7 @@ redo:
+ 
+ 	object = c->freelist;
+ 	page = c->page;
+-	if (unlikely(!object || !node_match(page, node)))
++	if (unlikely(!object || !page || !node_match(page, node)))
+ 		object = __slab_alloc(s, gfpflags, node, addr, c);
+ 
+ 	else {
