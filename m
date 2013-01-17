@@ -1,13 +1,14 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH] slub: Check for page NULL before doing the
  node_match check
-Date: Thu, 17 Jan 2013 17:46:03 -0500
-Message-ID: <1358462763.23211.57.camel@gandalf.local.home>
+Date: Thu, 17 Jan 2013 18:10:45 -0500
+Message-ID: <1358464245.23211.62.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
-	  <1358447864.23211.34.camel@gandalf.local.home>
-	  <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
+	 <1358447864.23211.34.camel@gandalf.local.home>
+	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
 	 <1358458996.23211.46.camel@gandalf.local.home>
 	 <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
+	 <1358462763.23211.57.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -19,48 +20,60 @@ Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
  Goncalves" <lgoncalv@redhat.com>
 To: Christoph Lameter <cl@linux.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
+In-Reply-To: <1358462763.23211.57.camel@gandalf.local.home>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2013-01-17 at 21:51 +0000, Christoph Lameter wrote:
+On Thu, 2013-01-17 at 17:46 -0500, Steven Rostedt wrote:
+> On Thu, 2013-01-17 at 21:51 +0000, Christoph Lameter wrote:
+> 
+> > This is dealing with the same cpu being interrupted. Some of these
+> > segments are in interrupt disable sections so they are not affected.
+> 
+> Except that we are not always on the same CPU. Now I'm looking at
+> mainline (non modified by -rt):
 
-> This is dealing with the same cpu being interrupted. Some of these
-> segments are in interrupt disable sections so they are not affected.
+Because there's also nothing to keep page related to object either, we
+may just need to do:
 
-Except that we are not always on the same CPU. Now I'm looking at
-mainline (non modified by -rt):
 
->From slab_alloc_node():
+> 
+> From slab_alloc_node():
+> 
+> 	/*
+> 	 * Must read kmem_cache cpu data via this cpu ptr. Preemption is
+> 	 * enabled. We may switch back and forth between cpus while
+> 	 * reading from one cpu area. That does not matter as long
+> 	 * as we end up on the original cpu again when doing the cmpxchg.
+> 	 */
 
-	/*
-	 * Must read kmem_cache cpu data via this cpu ptr. Preemption is
-	 * enabled. We may switch back and forth between cpus while
-	 * reading from one cpu area. That does not matter as long
-	 * as we end up on the original cpu again when doing the cmpxchg.
-	 */
-	c = __this_cpu_ptr(s->cpu_slab);
+	local_irq_save(flags);
 
-	/*
-	 * The transaction ids are globally unique per cpu and per operation on
-	 * a per cpu queue. Thus they can be guarantee that the cmpxchg_double
-	 * occurs on the right processor and that there was no operation on the
-	 * linked list in between.
-	 */
-	tid = c->tid;
-	barrier();
+> 	c = __this_cpu_ptr(s->cpu_slab);
+> 
+> 	/*
+> 	 * The transaction ids are globally unique per cpu and per operation on
+> 	 * a per cpu queue. Thus they can be guarantee that the cmpxchg_double
+> 	 * occurs on the right processor and that there was no operation on the
+> 	 * linked list in between.
+> 	 */
+> 	tid = c->tid;
+> 	barrier();
+> 
+> 	object = c->freelist;
+> 	page = c->page;
 
-	object = c->freelist;
-	page = c->page;
-	if (unlikely(!object || !node_match(page, node)))
-		object = __slab_alloc(s, gfpflags, node, addr, c);
+	r = !object || !node_match(page, node);
+	local_irq_restore(flags);
 
-Where we hit the bug on -rt, and can most certainly do it on mainline.
+	if (unlikely(r)) {
 
-This code does not disable preemption (the comment even states that). So
-if we switch CPUs after reading __this_cpu_ptr(), we are still accessing
-the 'c' pointer of the CPU we left. Hence, there's nothing protecting
-c->page being NULL when c->freelist is not NULL.
+> 		object = __slab_alloc(s, gfpflags, node, addr, c);
+> 
+
+I was thinking at first we could use preempt_disable(), but if an
+interrupt comes in after we set object = c->freelist, and changes
+c->page, then we disassociate the freelist and page again.
 
 -- Steve
 
