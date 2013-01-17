@@ -1,14 +1,13 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH] slub: Check for page NULL before doing the
  node_match check
-Date: Thu, 17 Jan 2013 17:10:47 -0500
-Message-ID: <1358460647.23211.52.camel@gandalf.local.home>
+Date: Thu, 17 Jan 2013 17:46:03 -0500
+Message-ID: <1358462763.23211.57.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
 	  <1358447864.23211.34.camel@gandalf.local.home>
 	  <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
 	 <1358458996.23211.46.camel@gandalf.local.home>
-	 <alpine.DEB.2.02.1301171547370.2774@gentwo.org>
-	 <0000013c4a8363ed-ba83975a-7b62-4a9e-981b-8b44d8030431-000000@email.amazonses.com>
+	 <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -20,37 +19,48 @@ Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
  Goncalves" <lgoncalv@redhat.com>
 To: Christoph Lameter <cl@linux.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <0000013c4a8363ed-ba83975a-7b62-4a9e-981b-8b44d8030431-000000@email.amazonses.com>
+In-Reply-To: <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2013-01-17 at 21:56 +0000, Christoph Lameter wrote:
-> on Thu, 17 Jan 2013, Christoph Lameter wrote:
-> 
-> > Ditto which leaves us with:
-> >
-> > Index: linux/mm/slub.c
-> > ===================================================================
-> > --- linux.orig/mm/slub.c	2013-01-17 15:49:57.417491975 -0600
-> > +++ linux/mm/slub.c	2013-01-17 15:50:49.010287150 -0600
-> > @@ -1993,8 +1993,9 @@ static inline void flush_slab(struct kme
-> >  	deactivate_slab(s, c->page, c->freelist);
-> >
-> >  	c->tid = next_tid(c->tid);
-> > -	c->page = NULL;
-> >  	c->freelist = NULL;
-> > +	barrier();
-> > +	c->page = NULL;
-> >  }
-> 
-> But the larger question is why is flush_slab() called with interrupts
-> enabled?
-> 
-> RT?
+On Thu, 2013-01-17 at 21:51 +0000, Christoph Lameter wrote:
 
-Could be, there's a few tweaks made in -rt. I'll put in a WARN_ON_ONCE()
-if flush_slab() is called with interrupts enabled just to see where it
-happens.
+> This is dealing with the same cpu being interrupted. Some of these
+> segments are in interrupt disable sections so they are not affected.
+
+Except that we are not always on the same CPU. Now I'm looking at
+mainline (non modified by -rt):
+
+>From slab_alloc_node():
+
+	/*
+	 * Must read kmem_cache cpu data via this cpu ptr. Preemption is
+	 * enabled. We may switch back and forth between cpus while
+	 * reading from one cpu area. That does not matter as long
+	 * as we end up on the original cpu again when doing the cmpxchg.
+	 */
+	c = __this_cpu_ptr(s->cpu_slab);
+
+	/*
+	 * The transaction ids are globally unique per cpu and per operation on
+	 * a per cpu queue. Thus they can be guarantee that the cmpxchg_double
+	 * occurs on the right processor and that there was no operation on the
+	 * linked list in between.
+	 */
+	tid = c->tid;
+	barrier();
+
+	object = c->freelist;
+	page = c->page;
+	if (unlikely(!object || !node_match(page, node)))
+		object = __slab_alloc(s, gfpflags, node, addr, c);
+
+Where we hit the bug on -rt, and can most certainly do it on mainline.
+
+This code does not disable preemption (the comment even states that). So
+if we switch CPUs after reading __this_cpu_ptr(), we are still accessing
+the 'c' pointer of the CPU we left. Hence, there's nothing protecting
+c->page being NULL when c->freelist is not NULL.
 
 -- Steve
 
