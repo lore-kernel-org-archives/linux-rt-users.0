@@ -1,29 +1,24 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH] slub: Check for page NULL before doing the
  node_match check
-Date: Thu, 17 Jan 2013 13:36:23 -0800
-Message-ID: <1358458583.11051.7.camel@edumazet-glaptop>
+Date: Thu, 17 Jan 2013 16:43:16 -0500
+Message-ID: <1358458996.23211.46.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358447864.23211.34.camel@gandalf.local.home>
 	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-mm <linux-mm@kvack.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Pekka Enberg <penberg@kernel.org>,
-	Matt Mackall <mpm@selenic.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@gmail.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
+ Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg
+ <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>,  Thomas Gleixner
+ <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark Williams
+ <clark@redhat.com>,  John Kacur <jkacur@gmail.com>, "Luis Claudio R.
+ Goncalves" <lgoncalv@redhat.com>
 To: Christoph Lameter <cl@linux.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <owner-linux-mm@kvack.org>
 In-Reply-To: <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Thu, 2013-01-17 at 21:28 +0000, Christoph Lameter wrote:
@@ -35,6 +30,13 @@ On Thu, 2013-01-17 at 21:28 +0000, Christoph Lameter wrote:
 > > >
 > > >  	object = c->freelist;
 > > >  	page = c->page;
+
+We should add a BUG_ON(!page) if it's a problem. I wasted a bit of time
+finding this bug just because it triggered in a static inline function,
+and I didn't have the vmlinuz file to play with. I had to ask someone
+else to do the work for me.
+
+
 > > > -	if (unlikely(!object || !node_match(page, node)))
 > > > +	if (unlikely(!object || !page || !node_match(page, node)))
 > >
@@ -59,6 +61,15 @@ On Thu, 2013-01-17 at 21:28 +0000, Christoph Lameter wrote:
 > -	c->page = NULL;
 >  	c->freelist = NULL;
 > +	c->page = NULL;
+
+I'm assuming that this is to deal with the same CPU being able to touch
+the code?
+
+If so, it requires "barrier()". If this can affect other CPUs, then we
+need a smp_wmb() here, and smp_rmb() where it matters.
+
+-- Steve
+
 >  }
 > 
 >  /*
@@ -83,4 +94,9 @@ On Thu, 2013-01-17 at 21:28 +0000, Christoph Lameter wrote:
 >  	}
 > 
 
-Without appropriate barriers, this change is a shoot in the dark.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
