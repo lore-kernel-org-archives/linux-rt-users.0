@@ -1,8 +1,8 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH v3] slub: Keep page and object in sync in
  slab_alloc_node()
-Date: Fri, 18 Jan 2013 11:09:50 -0800
-Message-ID: <1358536190.11051.573.camel@edumazet-glaptop>
+Date: Fri, 18 Jan 2013 14:20:35 -0500
+Message-ID: <1358536835.7383.31.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358447864.23211.34.camel@gandalf.local.home>
 	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
@@ -15,29 +15,51 @@ References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358468924.23211.69.camel@gandalf.local.home>
 	 <1358521791.7383.11.camel@gandalf.local.home>
 	 <0000013c4ef61783-2778b0f1-fdc1-421b-9d3e-ccd68d528115-000000@email.amazonses.com>
+	 <1358536190.11051.573.camel@edumazet-glaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, LKML <linux-kernel@vger.kernel.org>,  linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-To: Christoph Lameter <cl@linux.com>
+Cc: Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>,
+ linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
+ Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas
+ Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark
+ Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio
+ R. Goncalves" <lgoncalv@redhat.com>
+To: Eric Dumazet <eric.dumazet@gmail.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <0000013c4ef61783-2778b0f1-fdc1-421b-9d3e-ccd68d528115-000000@email.amazonses.com>
+In-Reply-To: <1358536190.11051.573.camel@edumazet-glaptop>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2013-01-18 at 18:40 +0000, Christoph Lameter wrote:
-
-> The fetching of the tid is the only critical thing here. If the tid is
-> retrieved from the right cpu then the cmpxchg will fail if any changes
-> occured to freelist or the page variable.
+On Fri, 2013-01-18 at 11:09 -0800, Eric Dumazet wrote:
+> On Fri, 2013-01-18 at 18:40 +0000, Christoph Lameter wrote:
 > 
-> The tid can be retrieved without disabling preemption through
-> this_cpu_read().
+> > The fetching of the tid is the only critical thing here. If the tid is
+> > retrieved from the right cpu then the cmpxchg will fail if any changes
+> > occured to freelist or the page variable.
+> > 
+> > The tid can be retrieved without disabling preemption through
+> > this_cpu_read().
+> 
+> Strictly speaking, this_cpu_read() _does_ disable preemption.
 
-Strictly speaking, this_cpu_read() _does_ disable preemption.
+I was thinking the same thing.
 
-Of course, on x86, this_cpu_read() uses __this_cpu_read()
+> 
+> Of course, on x86, this_cpu_read() uses __this_cpu_read()
 
+
+Looking at using this_cpu_read() on tid, I can't see what would break.
+We still need the check for page being NULL in node_match(). I'm still
+uneasy about it. Just because we can't see how it might break doesn't
+mean that it wont. As we have already found a bit of bugs in the current
+code. I'd feel more comfortable with the explicit preempt_disable(). And
+this is coming from an -rt guy that tries to avoid preempt_disable().
+But you're (Christoph) the maintainer.
+
+I guess if you use this_cpu_read() you don't need that barrier anymore.
+
+-- Steve
 
 
 --
