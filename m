@@ -1,74 +1,47 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v2] slub: Keep page and object in sync in
- slab_alloc_node()
-Date: Fri, 18 Jan 2013 10:55:01 -0500
-Message-ID: <1358524501.7383.17.camel@gandalf.local.home>
-References: <1358446258.23211.32.camel@gandalf.local.home>
-	 <1358447864.23211.34.camel@gandalf.local.home>
-	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
-	 <1358458996.23211.46.camel@gandalf.local.home>
-	 <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
-	 <1358462763.23211.57.camel@gandalf.local.home>
-	 <1358464245.23211.62.camel@gandalf.local.home>
-	 <1358464837.23211.66.camel@gandalf.local.home>
-	 <1358468598.23211.67.camel@gandalf.local.home>
-	 <1358468924.23211.69.camel@gandalf.local.home>
-	 <0000013c4e1ea131-b8ab56b9-bfca-44fe-b5da-f030551194c9-000000@email.amazonses.com>
-	 <1358521484.7383.8.camel@gandalf.local.home>
+Subject: Re: 3.2 kernel?
+Date: Fri, 18 Jan 2013 11:50:58 -0500
+Message-ID: <1358527858.7383.21.camel@gandalf.local.home>
+References: <CA+2XN5JRkNDi52k57fzXue1HjaqD5wJdZXLessMDz94mKfXc_A@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
- Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg
- <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>,  Thomas Gleixner
- <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark Williams
- <clark@redhat.com>,  John Kacur <jkacur@gmail.com>, "Luis Claudio R.
- Goncalves" <lgoncalv@redhat.com>
-To: Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1358521484.7383.8.camel@gandalf.local.home>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Ho Wan Chan <smartboyhw@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13473 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751654Ab3ARQvA (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Jan 2013 11:51:00 -0500
+In-Reply-To: <CA+2XN5JRkNDi52k57fzXue1HjaqD5wJdZXLessMDz94mKfXc_A@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-01-18 at 10:04 -0500, Steven Rostedt wrote:
-
-Just to be more complete:
-
-> 	CPU0			CPU1
-> 	----			----
-			c = __this_cpu_ptr(s->cpu_slab);
-			<migrates to CPU0>
-
-> <cpu fetches c->page>
-			<another task>
-
-> 			updates c->tid
-> 			updates c->page
-> 			updates c->freelist
-> <cpu fetches c->tid>
-> <cpu fetches c->freelist>
+On Mon, 2012-12-10 at 22:35 +0800, Ho Wan Chan wrote:
+> Hi guys.
 > 
->   node_match() succeeds even though
->     current c->page wont
+> Sorry if I have asked anything wrong, but now since the kernel is now
+> at 3.2.35 but then the -rt patch is still at 3.2.34, I wondered why
+> the .35 patch is still not yet released.
 > 
+> Anyway I tried applying the 3.2.34 patch onto 3.2.35 and it didn't
+> give out any errors.
 
- <migrates back to CPU 1>
+Wow, can we get more impatient. Yeah, I know this post is old but still.
 
->  this_cpu_cmpxchg_double() only tests
->    the object (freelist) and tid, both which
->    will match, but the page that was tested
->    isn't the right one.
-> 
+After a release comes out, I rebase the work on top of it and run
+several tests. Sometimes those tests fail, and I need to investigate.
+Usually they are minor issues, or something that should be ignored.
 
-Yes, it's very unlikely, but we are in the business of dealing with the
-very unlikely. That's because in our business, the very unlikely is very
-likely. Damn, I need to buy a lotto ticket!
+I try to make sure the -rt patch comes out within a week of the main
+release. But there's times that I may let it slide 2 weeks. After that,
+then sure, start complaining.
+
+BTW, just because we work on Real-Time software, doesn't mean that we
+are real-time in life. Actually, RT developers are usually the latest to
+get things done. Like me replying to this email now.
 
 -- Steve
 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
