@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH v3] slub: Keep page and object in sync in
+Subject: Re: [RFC][PATCH v2] slub: Keep page and object in sync in
  slab_alloc_node()
-Date: Fri, 18 Jan 2013 10:09:51 -0500
-Message-ID: <1358521791.7383.11.camel@gandalf.local.home>
+Date: Fri, 18 Jan 2013 10:29:52 -0500
+Message-ID: <1358522992.7383.13.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358447864.23211.34.camel@gandalf.local.home>
 	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
@@ -13,75 +13,63 @@ References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358464837.23211.66.camel@gandalf.local.home>
 	 <1358468598.23211.67.camel@gandalf.local.home>
 	 <1358468924.23211.69.camel@gandalf.local.home>
+	 <20130118044242.GA18665@lge.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
- Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg
- <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>,  Thomas Gleixner
- <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark Williams
- <clark@redhat.com>,  John Kacur <jkacur@gmail.com>, "Luis Claudio R.
- Goncalves" <lgoncalv@redhat.com>
-To: Christoph Lameter <cl@linux.com>
+Cc: Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>,
+ linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
+ Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas
+ Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark
+ Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio
+ R. Goncalves" <lgoncalv@redhat.com>
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1358468924.23211.69.camel@gandalf.local.home>
+In-Reply-To: <20130118044242.GA18665@lge.com>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-In slab_alloc_node(), after the cpu_slab is assigned, if the task is
-preempted and moves to another CPU, there's nothing keeping the page and
-object in sync. The -rt kernel crashed because page was NULL and object
-was not, and the node_match() dereferences page. Even though the crash
-happened on -rt, there's nothing that's keeping this from happening on
-mainline.
+On Fri, 2013-01-18 at 13:42 +0900, Joonsoo Kim wrote:
 
-The easiest fix is to disable preemption for the entire time from
-acquiring the current CPU cpu_slab and assigning the object and page.
-After that, it's fine to allow preemption.
+> diff --git a/include/linux/slub_def.h b/include/linux/slub_def.h
+> index 9db4825..b54dffa 100644
+> --- a/include/linux/slub_def.h
+> +++ b/include/linux/slub_def.h
+> @@ -46,6 +46,9 @@ enum stat_item {
+>  struct kmem_cache_cpu {
+>  	void **freelist;	/* Pointer to next available object */
+>  	unsigned long tid;	/* Globally unique transaction id */
+> +#ifdef CONFIG_NUMA
+> +	int node;
 
-Also add a check if page is NULL in node_match().
+Note, you put an int between a long and a pointer, which will waste 4
+bytes on 64bit machines.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> +#endif
+>  	struct page *page;	/* The slab from which we are allocating */
+>  	struct page *partial;	/* Partially allocated frozen slabs */
+>  #ifdef CONFIG_SLUB_STATS
 
-diff --git a/mm/slub.c b/mm/slub.c
-index ba2ca53..10714ee 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache *s)
- static inline int node_match(struct page *page, int node)
- {
- #ifdef CONFIG_NUMA
--	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
-+	if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
- 		return 0;
- #endif
- 	return 1;
-@@ -2337,7 +2337,10 @@ redo:
- 	 * enabled. We may switch back and forth between cpus while
- 	 * reading from one cpu area. That does not matter as long
- 	 * as we end up on the original cpu again when doing the cmpxchg.
-+	 *
-+	 * But we need to sync the setting of page and object.
- 	 */
-+	preempt_disable();
- 	c = __this_cpu_ptr(s->cpu_slab);
- 
- 	/*
-@@ -2347,10 +2350,14 @@ redo:
- 	 * linked list in between.
- 	 */
- 	tid = c->tid;
-+
-+	/* Must have tid first in case an interrupt comes in */
- 	barrier();
- 
- 	object = c->freelist;
- 	page = c->page;
-+	preempt_enable();
-+
- 	if (unlikely(!object || !node_match(page, node)))
- 		object = __slab_alloc(s, gfpflags, node, addr, c);
- 
+
+
+> @@ -2038,10 +2049,10 @@ static void flush_all(struct kmem_cache *s)
+>   * Check if the objects in a per cpu structure fit numa
+>   * locality expectations.
+>   */
+> -static inline int node_match(struct page *page, int node)
+> +static inline int node_match(struct kmem_cache_cpu *c, int node)
+>  {
+>  #ifdef CONFIG_NUMA
+> -	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
+> +	if (node != NUMA_NO_NODE && c->node != node)
+
+We still have the issue of cpu fetching c->node before c->tid and
+c->freelist.
+
+I still believe the only solution is to prevent the task from migrating
+via a preempt disable.
+
+-- Steve
 
 
 --
