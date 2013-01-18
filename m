@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH v2] slub: Keep page and object in sync in
  slab_alloc_node()
-Date: Fri, 18 Jan 2013 10:29:52 -0500
-Message-ID: <1358522992.7383.13.camel@gandalf.local.home>
+Date: Fri, 18 Jan 2013 10:55:01 -0500
+Message-ID: <1358524501.7383.17.camel@gandalf.local.home>
 References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358447864.23211.34.camel@gandalf.local.home>
 	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
@@ -13,61 +13,56 @@ References: <1358446258.23211.32.camel@gandalf.local.home>
 	 <1358464837.23211.66.camel@gandalf.local.home>
 	 <1358468598.23211.67.camel@gandalf.local.home>
 	 <1358468924.23211.69.camel@gandalf.local.home>
-	 <20130118044242.GA18665@lge.com>
+	 <0000013c4e1ea131-b8ab56b9-bfca-44fe-b5da-f030551194c9-000000@email.amazonses.com>
+	 <1358521484.7383.8.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>,
- linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
- Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas
- Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark
- Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio
- R. Goncalves" <lgoncalv@redhat.com>
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: LKML <linux-kernel@vger.kernel.org>, linux-mm <linux-mm@kvack.org>,
+ Andrew Morton <akpm@linux-foundation.org>, Pekka Enberg
+ <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>,  Thomas Gleixner
+ <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark Williams
+ <clark@redhat.com>,  John Kacur <jkacur@gmail.com>, "Luis Claudio R.
+ Goncalves" <lgoncalv@redhat.com>
+To: Christoph Lameter <cl@linux.com>
 Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20130118044242.GA18665@lge.com>
+In-Reply-To: <1358521484.7383.8.camel@gandalf.local.home>
 Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2013-01-18 at 13:42 +0900, Joonsoo Kim wrote:
+On Fri, 2013-01-18 at 10:04 -0500, Steven Rostedt wrote:
 
-> diff --git a/include/linux/slub_def.h b/include/linux/slub_def.h
-> index 9db4825..b54dffa 100644
-> --- a/include/linux/slub_def.h
-> +++ b/include/linux/slub_def.h
-> @@ -46,6 +46,9 @@ enum stat_item {
->  struct kmem_cache_cpu {
->  	void **freelist;	/* Pointer to next available object */
->  	unsigned long tid;	/* Globally unique transaction id */
-> +#ifdef CONFIG_NUMA
-> +	int node;
+Just to be more complete:
 
-Note, you put an int between a long and a pointer, which will waste 4
-bytes on 64bit machines.
+> 	CPU0			CPU1
+> 	----			----
+			c = __this_cpu_ptr(s->cpu_slab);
+			<migrates to CPU0>
 
-> +#endif
->  	struct page *page;	/* The slab from which we are allocating */
->  	struct page *partial;	/* Partially allocated frozen slabs */
->  #ifdef CONFIG_SLUB_STATS
+> <cpu fetches c->page>
+			<another task>
 
+> 			updates c->tid
+> 			updates c->page
+> 			updates c->freelist
+> <cpu fetches c->tid>
+> <cpu fetches c->freelist>
+> 
+>   node_match() succeeds even though
+>     current c->page wont
+> 
 
+ <migrates back to CPU 1>
 
-> @@ -2038,10 +2049,10 @@ static void flush_all(struct kmem_cache *s)
->   * Check if the objects in a per cpu structure fit numa
->   * locality expectations.
->   */
-> -static inline int node_match(struct page *page, int node)
-> +static inline int node_match(struct kmem_cache_cpu *c, int node)
->  {
->  #ifdef CONFIG_NUMA
-> -	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
-> +	if (node != NUMA_NO_NODE && c->node != node)
+>  this_cpu_cmpxchg_double() only tests
+>    the object (freelist) and tid, both which
+>    will match, but the page that was tested
+>    isn't the right one.
+> 
 
-We still have the issue of cpu fetching c->node before c->tid and
-c->freelist.
-
-I still believe the only solution is to prevent the task from migrating
-via a preempt disable.
+Yes, it's very unlikely, but we are in the business of dealing with the
+very unlikely. That's because in our business, the very unlikely is very
+likely. Damn, I need to buy a lotto ticket!
 
 -- Steve
 
