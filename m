@@ -1,69 +1,79 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v3] slub: Keep page and object in sync in
- slab_alloc_node()
-Date: Fri, 18 Jan 2013 14:20:35 -0500
-Message-ID: <1358536835.7383.31.camel@gandalf.local.home>
-References: <1358446258.23211.32.camel@gandalf.local.home>
-	 <1358447864.23211.34.camel@gandalf.local.home>
-	 <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com>
-	 <1358458996.23211.46.camel@gandalf.local.home>
-	 <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
-	 <1358462763.23211.57.camel@gandalf.local.home>
-	 <1358464245.23211.62.camel@gandalf.local.home>
-	 <1358464837.23211.66.camel@gandalf.local.home>
-	 <1358468598.23211.67.camel@gandalf.local.home>
-	 <1358468924.23211.69.camel@gandalf.local.home>
-	 <1358521791.7383.11.camel@gandalf.local.home>
-	 <0000013c4ef61783-2778b0f1-fdc1-421b-9d3e-ccd68d528115-000000@email.amazonses.com>
-	 <1358536190.11051.573.camel@edumazet-glaptop>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Plan to support RT on 3.8
+Date: Fri, 18 Jan 2013 23:55:17 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1301181904470.2935@ionos>
+References: <AC83832D6324604BB08FAE5A33553F190B24DB89@039-SN2MPN1-011.039d.mgd.msft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>,
- linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
- Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas
- Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark
- Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio
- R. Goncalves" <lgoncalv@redhat.com>
-To: Eric Dumazet <eric.dumazet@gmail.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1358536190.11051.573.camel@edumazet-glaptop>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Dev Manish-R65866 <R65866@freescale.com>
+To: Jain Priyanka-B32167 <B32167@freescale.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:53034 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751863Ab3ARWzX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Jan 2013 17:55:23 -0500
+In-Reply-To: <AC83832D6324604BB08FAE5A33553F190B24DB89@039-SN2MPN1-011.039d.mgd.msft.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-01-18 at 11:09 -0800, Eric Dumazet wrote:
-> On Fri, 2013-01-18 at 18:40 +0000, Christoph Lameter wrote:
+Jain,
+
+please do not take this reply as a personal affront!
+
+This is solely about the impertinence of your employer as I have
+already ignored _three_ private mails with the same topic originated
+from Freescale management folks.
+
+Though, I'm happy that you've been obviously forced by the same people
+which I ignored to send this mail. Otherwise I wouldn't have been able
+to give a public response.
+
+On Fri, 18 Jan 2013, Jain Priyanka-B32167 wrote:
+
+> We are planning for our next BSP. For that. We would like to use
+> Linux kernel 3.8.
 > 
-> > The fetching of the tid is the only critical thing here. If the tid is
-> > retrieved from the right cpu then the cmpxchg will fail if any changes
-> > occured to freelist or the page variable.
-> > 
-> > The tid can be retrieved without disabling preemption through
-> > this_cpu_read().
-> 
-> Strictly speaking, this_cpu_read() _does_ disable preemption.
+> It would be really helpful if you can please share the plan of RT
+> support on 3.8 kernel.
+>
+> When can the release be expected?
 
-I was thinking the same thing.
+I think I've made it entirely clear in the past, that these stupid
+roadmap and release plan questions are annoying as hell.
 
-> 
-> Of course, on x86, this_cpu_read() uses __this_cpu_read()
+	See: http://bit.ly/XJF0em
 
+I'm really amazed by the chuzpa of Freescale management folks to
+demand information from an Open Source project solely for the sake of
+Freescale business decisions.
 
-Looking at using this_cpu_read() on tid, I can't see what would break.
-We still need the check for page being NULL in node_match(). I'm still
-uneasy about it. Just because we can't see how it might break doesn't
-mean that it wont. As we have already found a bit of bugs in the current
-code. I'd feel more comfortable with the explicit preempt_disable(). And
-this is coming from an -rt guy that tries to avoid preempt_disable().
-But you're (Christoph) the maintainer.
+I would not mind such a demand from someone who actively fosters the
+development of this project (either by providing substantial man power
+or by sustainably funding it), but it seems that none of the managers
+at Freescale noticed my recent observations about participation on
+PREEMPT_RT.
 
-I guess if you use this_cpu_read() you don't need that barrier anymore.
-
--- Steve
+	See: https://lwn.net/Articles/524329/
+	and  https://lwn.net/Articles/232379/
 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Just to make it clear:
+
+ - Neither I nor anyone else in the PREEMPT_RT community has any
+   interest in Freescale business decisions.
+
+ - I personally detest the abuse of Freescale engineers who are
+   involved with this project to be forced to gain information which
+   their managers could not get.
+
+ - I call out Freescale management folks to explain why they think
+   that Open Source free-riding entitles them to demand anything from
+   the community.
+
+Thanks,
+
+	tglx
