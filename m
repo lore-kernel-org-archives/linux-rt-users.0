@@ -1,114 +1,60 @@
-From: "E-Blokos" <infos@e-blokos.com>
-Subject: Re: Plan to support RT on 3.8
-Date: Fri, 18 Jan 2013 19:04:25 -0500
-Message-ID: <66EBDBF9E9BE41EDB669191411467716@e1705>
-References: <AC83832D6324604BB08FAE5A33553F190B24DB89@039-SN2MPN1-011.039d.mgd.msft.net> <alpine.LFD.2.02.1301181904470.2935@ionos>
+From: John Morris <john@zultron.com>
+Subject: Detecting PREEMPT_RT
+Date: Sat, 19 Jan 2013 18:13:20 -0600
+Message-ID: <50FB36A0.7000702@zultron.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	format=flowed;
-	charset="iso-8859-1";
-	reply-type=original
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from node250.e-blokos.com ([67.205.80.138]:44176 "EHLO
-	node250.e-blokos.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751835Ab3ASAEh (ORCPT
+Received: from kayako.ext.zultron.com ([67.18.89.240]:37451 "EHLO
+	kayako.ext.zultron.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751389Ab3ATAni (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Jan 2013 19:04:37 -0500
-Received: from e1705 (localhost.localdomain [127.0.0.1])
-	by node250.e-blokos.com (8.14.3/8.14.3) with SMTP id r0J04U49009619
-	for <linux-rt-users@vger.kernel.org>; Fri, 18 Jan 2013 19:04:31 -0500
+	Sat, 19 Jan 2013 19:43:38 -0500
+Received: from norman.zultron.com (norman.zultron.com [192.168.7.8])
+	by kayako.ext.zultron.com (Postfix) with ESMTP id 0CEA837F32
+	for <linux-rt-users@vger.kernel.org>; Sat, 19 Jan 2013 18:13:23 -0600 (CST)
+Received: from caps.zultron.com (unknown [192.168.7.243])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by norman.zultron.com (Postfix) with ESMTP id 37F6D80243
+	for <linux-rt-users@vger.kernel.org>; Sat, 19 Jan 2013 18:13:58 -0600 (CST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi list,
 
------ Original Message ----- 
-From: "Thomas Gleixner" <tglx@linutronix.de>
-To: "Jain Priyanka-B32167" <B32167@freescale.com>
-Cc: "Carsten Emde" <C.Emde@osadl.org>; "Steven Rostedt" 
-<rostedt@goodmis.org>; <linux-rt-users@vger.kernel.org>; "Dev Manish-R65866" 
-<R65866@freescale.com>
-Sent: Friday, January 18, 2013 5:55 PM
-Subject: Re: Plan to support RT on 3.8
+I'm part of a project that recently added PREEMPT_RT support (as well as
+Xenomai) to LinuxCNC/EMC2.
 
+The next sub-project is a 'universal binary'.  The LCNC real-time module
+will run some checks to determine what RT systems, if any, are available
+on the running kernel, and then load the appropriate RT support module.
 
-> Jain,
->
-> please do not take this reply as a personal affront!
->
-> This is solely about the impertinence of your employer as I have
-> already ignored _three_ private mails with the same topic originated
-> from Freescale management folks.
->
-> Though, I'm happy that you've been obviously forced by the same people
-> which I ignored to send this mail. Otherwise I wouldn't have been able
-> to give a public response.
->
-> On Fri, 18 Jan 2013, Jain Priyanka-B32167 wrote:
->
->> We are planning for our next BSP. For that. We would like to use
->> Linux kernel 3.8.
->>
->> It would be really helpful if you can please share the plan of RT
->> support on 3.8 kernel.
->>
->> When can the release be expected?
->
-> I think I've made it entirely clear in the past, that these stupid
-> roadmap and release plan questions are annoying as hell.
->
-> See: http://bit.ly/XJF0em
->
-> I'm really amazed by the chuzpa of Freescale management folks to
-> demand information from an Open Source project solely for the sake of
-> Freescale business decisions.
->
-> I would not mind such a demand from someone who actively fosters the
-> development of this project (either by providing substantial man power
-> or by sustainably funding it), but it seems that none of the managers
-> at Freescale noticed my recent observations about participation on
-> PREEMPT_RT.
->
-> See: https://lwn.net/Articles/524329/
-> and  https://lwn.net/Articles/232379/
->
->
-> Just to make it clear:
->
-> - Neither I nor anyone else in the PREEMPT_RT community has any
->   interest in Freescale business decisions.
->
-> - I personally detest the abuse of Freescale engineers who are
->   involved with this project to be forced to gain information which
->   their managers could not get.
->
-> - I call out Freescale management folks to explain why they think
->   that Open Source free-riding entitles them to demand anything from
->   the community.
->
-> Thanks,
->
-> tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" 
-> in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> -- 
-> This message has been scanned for viruses and
-> dangerous content by MailScanner, and is
-> believed to be clean.
+We wish to distinguish between PREEMPT_RT and non-RT kernels because
+LCNC must confirm that the kernel really does have realtime
+capabilities, if that's what the user expects, and print big warning
+messages if not.  LCNC drives machines that weigh many tons and spins
+spindles at 24k RPM, so this is important!
 
-Why Freescale corporation didn'et make any donation to RT open source 
-project already
-if they need RT super developers ? :o)
-Seems that human nature wants always pervert freedom for their profits....
+The RT PREEMPT HOWTO discusses checking the kernel here:
 
+https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel
 
--- 
-This message has been scanned for viruses and
-dangerous content by MailScanner, and is
-believed to be clean.
+One method is to use string matching against the kernel version, which
+I'm a bit suspicious of.
 
+An improvement, figure 7 suggests using string matching against the
+process list in search of kernel thread names matching '[softirq-foo]'.
+
+Figure 8 show how to check /proc/interrupts on older kernels, but 9
+states this doesn't work for newer kernels, so this isn't an option.
+
+We haven't found /proc/config.gz in any vendor-provided PREEMPT_RT
+kernels, so that is not an option either.
+
+So, is string matching against the process list the best detection
+method, or is there something I've missed?
+
+	John
