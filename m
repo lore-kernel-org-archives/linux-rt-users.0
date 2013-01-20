@@ -1,113 +1,60 @@
-From: Jain Priyanka-B32167 <B32167@freescale.com>
-Subject: RE: Plan to support RT on 3.8
-Date: Sun, 20 Jan 2013 08:43:17 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F190B250BFE@039-SN2MPN1-013.039d.mgd.msft.net>
-References: <AC83832D6324604BB08FAE5A33553F190B24DB89@039-SN2MPN1-011.039d.mgd.msft.net>
- <alpine.LFD.2.02.1301181904470.2935@ionos>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: RT_PREEMPT autodetection from user program
+Date: Sun, 20 Jan 2013 10:49:28 +0100
+Message-ID: <50FBBDA8.5060605@meduna.org>
+References: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: Carsten Emde <C.Emde@osadl.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Dev Manish-R65866 <R65866@freescale.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from [213.199.154.206] ([213.199.154.206]:31646 "EHLO
-	am1outboundpool.messaging.microsoft.com" rhost-flags-FAIL-FAIL-OK-OK)
-	by vger.kernel.org with ESMTP id S1751057Ab3ATIom convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 Jan 2013 03:44:42 -0500
-In-Reply-To: <alpine.LFD.2.02.1301181904470.2935@ionos>
-Content-Language: en-US
+Received: from www.meduna.org ([92.240.244.38]:42341 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751140Ab3ATKDL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 20 Jan 2013 05:03:11 -0500
+Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
+	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
+	(Exim 4.72)
+	(envelope-from <stano@meduna.org>)
+	id 1TwrWu-0002uQ-Ko
+	for linux-rt-users@vger.kernel.org; Sun, 20 Jan 2013 10:49:34 +0100
+In-Reply-To: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear Thomas,
+On 20.01.2013 01:13, John Morris wrote:
 
-I really appreciate the efforts that open-source community puts up and know this work is not for any commercial gain
-I am really sorry if my query has annoyed you.
+> LCNC drives machines that weigh many tons and spins
+> spindles at 24k RPM, so this is important!
+...
+> We haven't found /proc/config.gz in any vendor-provided
+> PREEMPT_RT kernels, so that is not an option either.
 
+On 20.01.2013 01:49, Michael Haberler wrote:
 
-But regarding my company, I would say it is one of the best place to work at.
-Here we are given freedom to interact with open-source community and I was not forced by anyone to raise this query.
+> A false positive on a vanilla kernel could be a safety hazard.
 
-And it was just a query not a demand but I am again sorry for this.
+If we are speaking safety here I'd say that you have to support
+specific version of kernel on specific hardware that _you_ have
+quality assured. Anything else is a recipe for problems.
 
+I've seen OSADL Linux deadlock, RT PREEMPT leaking memory,
+RT PREEMPT on but without high-res timers, IDE driver
+monopolizing processor so that the RT throttler was activated,
+priority inversion issues between kernel and application
+threads, interrupt latencies due to interrupt routing
+on the specific hardware etc.
 
-Thanks
-Priyanka
+There is no way you can guarantee anything if you are using
+vendor-provided kernel on a hardware you have never seen.
+With your kernel, a list of supported hardware, with initscripts
+that are checking if the environment matches and with the help
+from this list (thank you guys, the level of support here
+is excellent!) you will sleep a lot better.
 
+Just my two cents
 
-> -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> owner@vger.kernel.org] On Behalf Of Thomas Gleixner
-> Sent: Saturday, January 19, 2013 4:25 AM
-> To: Jain Priyanka-B32167
-> Cc: Carsten Emde; Steven Rostedt; linux-rt-users@vger.kernel.org; Dev
-> Manish-R65866
-> Subject: Re: Plan to support RT on 3.8
-> 
-> Jain,
-> 
-> please do not take this reply as a personal affront!
-> 
-> This is solely about the impertinence of your employer as I have already
-> ignored _three_ private mails with the same topic originated from
-> Freescale management folks.
-> 
-> Though, I'm happy that you've been obviously forced by the same people
-> which I ignored to send this mail. Otherwise I wouldn't have been able to
-> give a public response.
-> 
-> On Fri, 18 Jan 2013, Jain Priyanka-B32167 wrote:
-> 
-> > We are planning for our next BSP. For that. We would like to use Linux
-> > kernel 3.8.
-> >
-> > It would be really helpful if you can please share the plan of RT
-> > support on 3.8 kernel.
-> >
-> > When can the release be expected?
-> 
-> I think I've made it entirely clear in the past, that these stupid
-> roadmap and release plan questions are annoying as hell.
-> 
-> 	See: http://bit.ly/XJF0em
-> 
-> I'm really amazed by the chuzpa of Freescale management folks to demand
-> information from an Open Source project solely for the sake of Freescale
-> business decisions.
-> 
-> I would not mind such a demand from someone who actively fosters the
-> development of this project (either by providing substantial man power or
-> by sustainably funding it), but it seems that none of the managers at
-> Freescale noticed my recent observations about participation on
-> PREEMPT_RT.
-> 
-> 	See: https://lwn.net/Articles/524329/
-> 	and  https://lwn.net/Articles/232379/
-> 
-> 
-> Just to make it clear:
-> 
->  - Neither I nor anyone else in the PREEMPT_RT community has any
->    interest in Freescale business decisions.
-> 
->  - I personally detest the abuse of Freescale engineers who are
->    involved with this project to be forced to gain information which
->    their managers could not get.
-> 
->  - I call out Freescale management folks to explain why they think
->    that Open Source free-riding entitles them to demand anything from
->    the community.
-> 
-> Thanks,
-> 
-> 	tglx
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
-> in the body of a message to majordomo@vger.kernel.org More majordomo info
-> at  http://vger.kernel.org/majordomo-info.html
-
+Regards
+-- 
+                                        Stano
 
