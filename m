@@ -1,63 +1,42 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: Detecting PREEMPT_RT
-Date: Sun, 20 Jan 2013 02:43:13 +0100
-Message-ID: <50FB4BB1.7070005@osadl.org>
-References: <50FB36A0.7000702@zultron.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: RT_PREEMPT autodetection from user program
+Date: Sat, 19 Jan 2013 17:56:07 -0800
+Message-ID: <8A87BD7C-0C1D-415D-8017-9B7739D4D088@thebigcorporation.com>
+References: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
+Mime-Version: 1.0 (Mac OS X Mail 6.2 \(1499\))
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
 Cc: linux-rt-users@vger.kernel.org
-To: John Morris <john@zultron.com>
+To: Michael Haberler <mail17@mah.priv.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:55400 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752292Ab3ATBpG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Jan 2013 20:45:06 -0500
-In-Reply-To: <50FB36A0.7000702@zultron.com>
+Received: from mail-pb0-f49.google.com ([209.85.160.49]:38373 "EHLO
+	mail-pb0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751938Ab3ATB4J convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 19 Jan 2013 20:56:09 -0500
+Received: by mail-pb0-f49.google.com with SMTP id un15so2706644pbc.36
+        for <linux-rt-users@vger.kernel.org>; Sat, 19 Jan 2013 17:56:08 -0800 (PST)
+In-Reply-To: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-John,
 
-> I'm part of a project that recently added PREEMPT_RT support (as well as
-> Xenomai) to LinuxCNC/EMC2.
->
-> The next sub-project is a 'universal binary'.  The LCNC real-time module
-> will run some checks to determine what RT systems, if any, are available
-> on the running kernel, and then load the appropriate RT support module.
->
-> We wish to distinguish between PREEMPT_RT and non-RT kernels because
-> LCNC must confirm that the kernel really does have realtime
-> capabilities, if that's what the user expects, and print big warning
-> messages if not.  LCNC drives machines that weigh many tons and spins
-> spindles at 24k RPM, so this is important!
->
-> The RT PREEMPT HOWTO discusses checking the kernel here:
->
-> https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel
->
-> One method is to use string matching against the kernel version, which
-> I'm a bit suspicious of.
-Unfortunately, this wiki article is old and unmaintained. You're 
-probably right to be a bit suspicious when checking for the "-rt" suffix 
-of the kernel release (uname -r). But looking for the occurrence of 
-"PREEMPT RT" in the kernel version (uname -v) should work. An 
-application may use the system call uname() and check the version 
-element of the utsname structure.
+On Jan 19, 2013, at 4:49 PM, Michael Haberler <mail17@mah.priv.at> wrote:
 
-In addition you may want to make sure the system has high-resolution 
-timers. If so, the timers in /proc/timer_list have ".resolution: 1 
-nsecs". An application may use the function check_timer() from 
-cyclictest for this purpose:
-static int check_timer(void)
-{
-   struct timespec ts;
+> Hi,
+> 
+> I need to autodetect the RT kernel for an application which runs under RTAI, Xenomai, RT_PREEMPT and vanilla kernels. 
+> 
+> To support a unified binary, I need to runtime detect the RT OS - what are my best options for RT_PREEMPT? from https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel I gather the single method:
+> 
+> parsing 'ps' output for IRQ handlers being kthreads, i.e. for '[IRQ' or '[irq'
+> 
+> any chance of doing better than that, or parsing of utsname.release for "-rt"?  A false positive on a vanilla kernel could be a safety hazard.
+> 
 
-   if (clock_getres(CLOCK_MONOTONIC, &ts))
-     return 1;
+Not sure what distro you are supporting and so on, but zcat /proc/config.gz | grep PREEMPT_RT might work.
 
-   return (ts.tv_sec != 0 || ts.tv_nsec != 1);
-}
 
-Hope this helps,
-	-Carsten.
+Sven
+
+
