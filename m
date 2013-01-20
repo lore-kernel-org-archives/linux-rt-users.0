@@ -1,42 +1,113 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: RT_PREEMPT autodetection from user program
-Date: Sat, 19 Jan 2013 17:56:07 -0800
-Message-ID: <8A87BD7C-0C1D-415D-8017-9B7739D4D088@thebigcorporation.com>
-References: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
-Mime-Version: 1.0 (Mac OS X Mail 6.2 \(1499\))
-Content-Type: text/plain; charset=us-ascii
+From: Jain Priyanka-B32167 <B32167@freescale.com>
+Subject: RE: Plan to support RT on 3.8
+Date: Sun, 20 Jan 2013 08:43:17 +0000
+Message-ID: <AC83832D6324604BB08FAE5A33553F190B250BFE@039-SN2MPN1-013.039d.mgd.msft.net>
+References: <AC83832D6324604BB08FAE5A33553F190B24DB89@039-SN2MPN1-011.039d.mgd.msft.net>
+ <alpine.LFD.2.02.1301181904470.2935@ionos>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Michael Haberler <mail17@mah.priv.at>
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Dev Manish-R65866 <R65866@freescale.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f49.google.com ([209.85.160.49]:38373 "EHLO
-	mail-pb0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751938Ab3ATB4J convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Jan 2013 20:56:09 -0500
-Received: by mail-pb0-f49.google.com with SMTP id un15so2706644pbc.36
-        for <linux-rt-users@vger.kernel.org>; Sat, 19 Jan 2013 17:56:08 -0800 (PST)
-In-Reply-To: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
+Received: from [213.199.154.206] ([213.199.154.206]:31646 "EHLO
+	am1outboundpool.messaging.microsoft.com" rhost-flags-FAIL-FAIL-OK-OK)
+	by vger.kernel.org with ESMTP id S1751057Ab3ATIom convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 20 Jan 2013 03:44:42 -0500
+In-Reply-To: <alpine.LFD.2.02.1301181904470.2935@ionos>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Dear Thomas,
 
-On Jan 19, 2013, at 4:49 PM, Michael Haberler <mail17@mah.priv.at> wrote:
-
-> Hi,
-> 
-> I need to autodetect the RT kernel for an application which runs under RTAI, Xenomai, RT_PREEMPT and vanilla kernels. 
-> 
-> To support a unified binary, I need to runtime detect the RT OS - what are my best options for RT_PREEMPT? from https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel I gather the single method:
-> 
-> parsing 'ps' output for IRQ handlers being kthreads, i.e. for '[IRQ' or '[irq'
-> 
-> any chance of doing better than that, or parsing of utsname.release for "-rt"?  A false positive on a vanilla kernel could be a safety hazard.
-> 
-
-Not sure what distro you are supporting and so on, but zcat /proc/config.gz | grep PREEMPT_RT might work.
+I really appreciate the efforts that open-source community puts up and know this work is not for any commercial gain
+I am really sorry if my query has annoyed you.
 
 
-Sven
+But regarding my company, I would say it is one of the best place to work at.
+Here we are given freedom to interact with open-source community and I was not forced by anyone to raise this query.
+
+And it was just a query not a demand but I am again sorry for this.
+
+
+Thanks
+Priyanka
+
+
+> -----Original Message-----
+> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
+> owner@vger.kernel.org] On Behalf Of Thomas Gleixner
+> Sent: Saturday, January 19, 2013 4:25 AM
+> To: Jain Priyanka-B32167
+> Cc: Carsten Emde; Steven Rostedt; linux-rt-users@vger.kernel.org; Dev
+> Manish-R65866
+> Subject: Re: Plan to support RT on 3.8
+> 
+> Jain,
+> 
+> please do not take this reply as a personal affront!
+> 
+> This is solely about the impertinence of your employer as I have already
+> ignored _three_ private mails with the same topic originated from
+> Freescale management folks.
+> 
+> Though, I'm happy that you've been obviously forced by the same people
+> which I ignored to send this mail. Otherwise I wouldn't have been able to
+> give a public response.
+> 
+> On Fri, 18 Jan 2013, Jain Priyanka-B32167 wrote:
+> 
+> > We are planning for our next BSP. For that. We would like to use Linux
+> > kernel 3.8.
+> >
+> > It would be really helpful if you can please share the plan of RT
+> > support on 3.8 kernel.
+> >
+> > When can the release be expected?
+> 
+> I think I've made it entirely clear in the past, that these stupid
+> roadmap and release plan questions are annoying as hell.
+> 
+> 	See: http://bit.ly/XJF0em
+> 
+> I'm really amazed by the chuzpa of Freescale management folks to demand
+> information from an Open Source project solely for the sake of Freescale
+> business decisions.
+> 
+> I would not mind such a demand from someone who actively fosters the
+> development of this project (either by providing substantial man power or
+> by sustainably funding it), but it seems that none of the managers at
+> Freescale noticed my recent observations about participation on
+> PREEMPT_RT.
+> 
+> 	See: https://lwn.net/Articles/524329/
+> 	and  https://lwn.net/Articles/232379/
+> 
+> 
+> Just to make it clear:
+> 
+>  - Neither I nor anyone else in the PREEMPT_RT community has any
+>    interest in Freescale business decisions.
+> 
+>  - I personally detest the abuse of Freescale engineers who are
+>    involved with this project to be forced to gain information which
+>    their managers could not get.
+> 
+>  - I call out Freescale management folks to explain why they think
+>    that Open Source free-riding entitles them to demand anything from
+>    the community.
+> 
+> Thanks,
+> 
+> 	tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"
+> in the body of a message to majordomo@vger.kernel.org More majordomo info
+> at  http://vger.kernel.org/majordomo-info.html
 
 
