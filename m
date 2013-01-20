@@ -1,38 +1,63 @@
-From: Michael Haberler <mail17@mah.priv.at>
-Subject: RT_PREEMPT autodetection from user program
-Date: Sun, 20 Jan 2013 01:49:59 +0100
-Message-ID: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
-Mime-Version: 1.0 (Apple Message framework v1283)
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: Detecting PREEMPT_RT
+Date: Sun, 20 Jan 2013 02:43:13 +0100
+Message-ID: <50FB4BB1.7070005@osadl.org>
+References: <50FB36A0.7000702@zultron.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: John Morris <john@zultron.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ns2.mah.priv.at ([86.59.12.250]:37930 "EHLO sil1.mah.priv.at"
+Received: from toro.web-alm.net ([62.245.132.31]:55400 "EHLO toro.web-alm.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752211Ab3ATB0p convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Jan 2013 20:26:45 -0500
-Received: from macbook.stiwoll.mah.priv.at ([193.228.47.195])
-	by sil1.mah.priv.at with esmtpsa (TLS1.0:RSA_AES_128_CBC_SHA1:128)
-	(Exim 4.80)
-	(envelope-from <mail17@mah.priv.at>)
-	id 1Twj6m-00014K-4b
-	for linux-rt-users@vger.kernel.org; Sun, 20 Jan 2013 00:50:00 +0000
+	id S1752292Ab3ATBpG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 19 Jan 2013 20:45:06 -0500
+In-Reply-To: <50FB36A0.7000702@zultron.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+John,
 
-I need to autodetect the RT kernel for an application which runs under RTAI, Xenomai, RT_PREEMPT and vanilla kernels. 
+> I'm part of a project that recently added PREEMPT_RT support (as well as
+> Xenomai) to LinuxCNC/EMC2.
+>
+> The next sub-project is a 'universal binary'.  The LCNC real-time module
+> will run some checks to determine what RT systems, if any, are available
+> on the running kernel, and then load the appropriate RT support module.
+>
+> We wish to distinguish between PREEMPT_RT and non-RT kernels because
+> LCNC must confirm that the kernel really does have realtime
+> capabilities, if that's what the user expects, and print big warning
+> messages if not.  LCNC drives machines that weigh many tons and spins
+> spindles at 24k RPM, so this is important!
+>
+> The RT PREEMPT HOWTO discusses checking the kernel here:
+>
+> https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel
+>
+> One method is to use string matching against the kernel version, which
+> I'm a bit suspicious of.
+Unfortunately, this wiki article is old and unmaintained. You're 
+probably right to be a bit suspicious when checking for the "-rt" suffix 
+of the kernel release (uname -r). But looking for the occurrence of 
+"PREEMPT RT" in the kernel version (uname -v) should work. An 
+application may use the system call uname() and check the version 
+element of the utsname structure.
 
-To support a unified binary, I need to runtime detect the RT OS - what are my best options for RT_PREEMPT? from https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Checking_the_Kernel I gather the single method:
+In addition you may want to make sure the system has high-resolution 
+timers. If so, the timers in /proc/timer_list have ".resolution: 1 
+nsecs". An application may use the function check_timer() from 
+cyclictest for this purpose:
+static int check_timer(void)
+{
+   struct timespec ts;
 
-parsing 'ps' output for IRQ handlers being kthreads, i.e. for '[IRQ' or '[irq'
+   if (clock_getres(CLOCK_MONOTONIC, &ts))
+     return 1;
 
-any chance of doing better than that, or parsing of utsname.release for "-rt"?  A false positive on a vanilla kernel could be a safety hazard.
+   return (ts.tv_sec != 0 || ts.tv_nsec != 1);
+}
 
-thanks in advance,
-
-Michael
-
-
+Hope this helps,
+	-Carsten.
