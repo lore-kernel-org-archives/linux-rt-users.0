@@ -1,49 +1,61 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v2] slub: Keep page and object in sync in
- slab_alloc_node()
-Date: Mon, 21 Jan 2013 07:19:42 -0500
-Message-ID: <1358770782.23981.8.camel@gandalf.local.home>
-References: <1358458996.23211.46.camel@gandalf.local.home>
-	 <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com>
-	 <1358462763.23211.57.camel@gandalf.local.home>
-	 <1358464245.23211.62.camel@gandalf.local.home>
-	 <1358464837.23211.66.camel@gandalf.local.home>
-	 <1358468598.23211.67.camel@gandalf.local.home>
-	 <1358468924.23211.69.camel@gandalf.local.home>
-	 <0000013c4e1ea131-b8ab56b9-bfca-44fe-b5da-f030551194c9-000000@email.amazonses.com>
-	 <1358521484.7383.8.camel@gandalf.local.home>
-	 <1358524501.7383.17.camel@gandalf.local.home>
-	 <20130121081121.GA3936@lge.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: RT_PREEMPT autodetection from user program
+Date: Mon, 21 Jan 2013 09:37:59 -0600
+Message-ID: <20130121093759.045119c8@redhat.com>
+References: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux.com>, LKML <linux-kernel@vger.kernel.org>,
- linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
- Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>, Thomas
- Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>, Clark
- Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>, "Luis Claudio
- R. Goncalves" <lgoncalv@redhat.com>
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <20130121081121.GA3936@lge.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/d/ToXcVzqKEsSsxxMoFTXT9"; protocol="application/pgp-signature"
+Cc: linux-rt-users@vger.kernel.org
+To: Michael Haberler <mail17@mah.priv.at>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:40186 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752134Ab3AUPiE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 Jan 2013 10:38:04 -0500
+In-Reply-To: <97041258-E312-4163-96B2-9077EED68E0B@mah.priv.at>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2013-01-21 at 17:11 +0900, Joonsoo Kim wrote:
+--Sig_/d/ToXcVzqKEsSsxxMoFTXT9
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> Hello.
-> I have one stupid question just for curiosity.
-> Does the processor re-order instructions which load data from same cacheline?
-> 
+On Sun, 20 Jan 2013 01:49:59 +0100
+Michael Haberler <mail17@mah.priv.at> wrote:
 
-Probably not, but I wouldn't have generic code assuming cacheline sizes.
+> Hi,
+>=20
+> I need to autodetect the RT kernel for an application which runs under RT=
+AI, Xenomai, RT_PREEMPT and vanilla kernels.=20
+>=20
+> To support a unified binary, I need to runtime detect the RT OS - what ar=
+e my best options for RT_PREEMPT? from https://rt.wiki.kernel.org/index.php=
+/RT_PREEMPT_HOWTO#Checking_the_Kernel I gather the single method:
+>=20
+> parsing 'ps' output for IRQ handlers being kthreads, i.e. for '[IRQ' or '=
+[irq'
+>=20
+> any chance of doing better than that, or parsing of utsname.release for "=
+-rt"?  A false positive on a vanilla kernel could be a safety hazard.
+>=20
+>
 
--- Steve
+A PREEMPT_RT kernel creates /sys/kernel/realtime when it boots. You
+can just check for the existence of that file.
 
+Clark
 
+--Sig_/d/ToXcVzqKEsSsxxMoFTXT9
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iEYEARECAAYFAlD9YNcACgkQHyuj/+TTEp0XDQCg1nKdGdVjnMOU10OOmKKxOtu2
+FRMAniT/A1jA1X65PwxSB6IpEkhsbq9i
+=6fsF
+-----END PGP SIGNATURE-----
+
+--Sig_/d/ToXcVzqKEsSsxxMoFTXT9--
