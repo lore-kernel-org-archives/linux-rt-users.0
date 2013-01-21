@@ -1,58 +1,43 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: Detecting PREEMPT_RT
-Date: Sun, 20 Jan 2013 21:18:50 +0100
-Message-ID: <50FC512A.5040909@osadl.org>
-References: <50FB36A0.7000702@zultron.com> <50FB4BB1.7070005@osadl.org> <1819DC75-5826-4882-A2B7-20953DE3392A@mah.priv.at> <50FC2A33.5010001@osadl.org> <50FC39E4.1090208@zultron.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RFC][PATCH v3] slub: Keep page and object in sync in
+ slab_alloc_node()
+Date: Mon, 21 Jan 2013 01:40:41 +0000
+Message-ID: <0000013c5ac3b6c6-3f8fa112-f11b-4b13-8394-7f688fd18191-000000@email.amazonses.com>
+References: <1358446258.23211.32.camel@gandalf.local.home> <1358447864.23211.34.camel@gandalf.local.home> <0000013c4a69a2cf-1a19a6f6-e6a3-4f06-99a4-10fdd4b9aca2-000000@email.amazonses.com> <1358458996.23211.46.camel@gandalf.local.home>
+ <0000013c4a7e7fbf-c51fd42a-2455-4fec-bb37-915035956f05-000000@email.amazonses.com> <1358462763.23211.57.camel@gandalf.local.home> <1358464245.23211.62.camel@gandalf.local.home> <1358464837.23211.66.camel@gandalf.local.home> <1358468598.23211.67.camel@gandalf.local.home>
+ <1358468924.23211.69.camel@gandalf.local.home> <1358521791.7383.11.camel@gandalf.local.home> <0000013c4ef61783-2778b0f1-fdc1-421b-9d3e-ccd68d528115-000000@email.amazonses.com> <1358536190.11051.573.camel@edumazet-glaptop>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Michael Haberler <mail17@mah.priv.at>,
-	linux-rt-users@vger.kernel.org
-To: John Morris <john@zultron.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:57469 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752416Ab3ATUWK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 Jan 2013 15:22:10 -0500
-In-Reply-To: <50FC39E4.1090208@zultron.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Steven Rostedt <rostedt@goodmis.org>, LKML <linux-kernel@vger.kernel.org>,
+    linux-mm <linux-mm@kvack.org>, Andrew Morton <akpm@linux-foundation.org>,
+    Pekka Enberg <penberg@kernel.org>, Matt Mackall <mpm@selenic.com>,
+    Thomas Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>,
+    Clark Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>,
+    "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1358536190.11051.573.camel@edumazet-glaptop>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-John,
+On Fri, 18 Jan 2013, Eric Dumazet wrote:
 
->>>> Unfortunately, this wiki article is old and unmaintained. You're
->>>> probably right to be a bit suspicious when checking for the "-rt" suffix
->>>> of the kernel release (uname -r). But looking for the occurrence of
->>>> "PREEMPT RT" in the kernel version (uname -v) should work. An
->>>> application may use the system call uname() and check the version
->>>> element of the utsname structure.
->>> the utsname.version string match is fine, however:
->>>> In addition you may want to make sure the system has
->>>> high-resolution
->>> timers. If so, the timers in /proc/timer_list have ".resolution: 1
->>> nsecs". An application may use the function check_timer() from
->>> cyclictest for this purpose:
->>>> static int check_timer(void)
->>>> {
->>>>    struct timespec ts;
->>>>
->>>>    if (clock_getres(CLOCK_MONOTONIC, &ts))
->>>>      return 1;
->>>>
->>>>    return (ts.tv_sec != 0 || ts.tv_nsec != 1);
->>>> }
->>>
->>> Just tried this on a generic kernel (2.6.32-45-generic #102-Ubuntu
->>> SMP Wed Jan 2 21:53:06 UTC 2013 i686 GNU/Linux) and I get ts.tv_sec == 0
->>> and ts.tv_nsec == 1, so it looks this cant be used to tell an RT_PREEMPT
->>> from a vanilla kernel
->> I meant boolean AND when I said "In addition".
-> Oh, I interpreted the timer check not as a PREEMPT_RT check, but a
-> separate check for timers, which we must confirm are available before
-> driving heavy machinery.
-> So, if utsname.version contains "PREEMPT RT", then load the preempt-rt
-> module.  Once the module is loaded, from an init() function, run sanity
-> checks, including the clock_getres check above.  Is that about right?
-Yes. Sounds good to me.
+> On Fri, 2013-01-18 at 18:40 +0000, Christoph Lameter wrote:
+>
+> > The fetching of the tid is the only critical thing here. If the tid is
+> > retrieved from the right cpu then the cmpxchg will fail if any changes
+> > occured to freelist or the page variable.
+> >
+> > The tid can be retrieved without disabling preemption through
+> > this_cpu_read().
+>
+> Strictly speaking, this_cpu_read() _does_ disable preemption.
 
-	-Carsten.
+Yes on x86 the relocation and the fetch is just a single instruction and
+therefore no preemption can occur.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
