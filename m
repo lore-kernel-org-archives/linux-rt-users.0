@@ -1,50 +1,128 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: Protection of critical section in PREEMPT_RT
-Date: Tue, 22 Jan 2013 11:24:47 +0100
-Message-ID: <50FE68EF.8060909@meduna.org>
-References: <CAHX1yNTSObcxNrvsBnPw8QzUWTb4zzs_faZZ1bbGU1L8xzgpsQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Jacky Lam <lamshuyin@gmail.com>
+From: Michael Haberler <mail17@mah.priv.at>
+Subject: Re: Detecting PREEMPT_RT
+Date: Tue, 22 Jan 2013 11:47:50 +0100
+Message-ID: <E6D3B85E-24D9-4C1E-9D47-3B2A591E2F70@mah.priv.at>
+References: <50FB36A0.7000702@zultron.com> <50FB4BB1.7070005@osadl.org> <1819DC75-5826-4882-A2B7-20953DE3392A@mah.priv.at> <50FC2A33.5010001@osadl.org> <50FC39E4.1090208@zultron.com> <50FC512A.5040909@osadl.org> <CAONaPpHFwj7zCPXb7tmZ6rODHrXXO==4HJe_zQxRGrS7dR2V_A@mail.gmail.com> <11A0CCD5-A89C-4173-8F94-EB06DFC765FE@mah.priv.at> <CAONaPpHxvc3_fsGE=r11D9ztyBmT2GfWazWP01yneyEFFCqc2g@mail.gmail.com>
+Mime-Version: 1.0 (Apple Message framework v1283)
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:33674 "EHLO meduna.org"
+Received: from ns2.mah.priv.at ([86.59.12.250]:58722 "EHLO sil1.mah.priv.at"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751090Ab3AVKY4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Jan 2013 05:24:56 -0500
-In-Reply-To: <CAHX1yNTSObcxNrvsBnPw8QzUWTb4zzs_faZZ1bbGU1L8xzgpsQ@mail.gmail.com>
+	id S1753056Ab3AVKry convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 Jan 2013 05:47:54 -0500
+Received: from macbook.stiwoll.mah.priv.at ([193.228.47.195])
+	by sil1.mah.priv.at with esmtpsa (TLS1.0:RSA_AES_128_CBC_SHA1:128)
+	(Exim 4.80)
+	(envelope-from <mail17@mah.priv.at>)
+	id 1TxbOR-0006Ig-S3
+	for linux-rt-users@vger.kernel.org; Tue, 22 Jan 2013 10:47:51 +0000
+In-Reply-To: <CAONaPpHxvc3_fsGE=r11D9ztyBmT2GfWazWP01yneyEFFCqc2g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 22.01.2013 04:29, Jacky Lam wrote:
 
-> I have a kernel driver needed to do a indirect register access
-> to a hardware interface. In past, I use spinlock to protect
-> those code. After turning on PREEMPT_RT, the driver doesn't
-> work anymore.
+Am 21.01.2013 um 13:17 schrieb John Kacur:
 
-I'm not an expert but AFAIK the spinlock still does the protection,
-it just can be preempted. If your driver does not work, there
-is either a timing issue as well (i.e. you have time constraints
-that are not met when the spinlock is preempted) or there is
-a bug that is triggered by the preemption (such as unprotected
-access in the code that preempts your spinlock).
+> On Mon, Jan 21, 2013 at 1:14 PM, Michael Haberler <mail17@mah.priv.at> wrote:
+>> John,
+>> 
+>> 
+>> Am 21.01.2013 um 12:36 schrieb John Kacur:
+>> 
+>>> On Sun, Jan 20, 2013 at 9:18 PM, Carsten Emde <C.Emde@osadl.org> wrote:
+>>>> John,
+>>>> 
+>>>> 
+>>>>>>>> Unfortunately, this wiki article is old and unmaintained. You're
+>>>>>>>> probably right to be a bit suspicious when checking for the "-rt"
+>>>>>>>> suffix
+>>>>>>>> of the kernel release (uname -r). But looking for the occurrence of
+>>>>>>>> "PREEMPT RT" in the kernel version (uname -v) should work. An
+>>>>>>>> application may use the system call uname() and check the version
+>>>>>>>> element of the utsname structure.
+>>>>>>> 
+>>>>>>> the utsname.version string match is fine, however:
+>>>>>>>> 
+>>>>>>>> In addition you may want to make sure the system has
+>>>>>>>> high-resolution
+>>>>>>> 
+>>>>>>> timers. If so, the timers in /proc/timer_list have ".resolution: 1
+>>>>>>> nsecs". An application may use the function check_timer() from
+>>>>>>> cyclictest for this purpose:
+>>>>>>>> 
+>>>>>>>> static int check_timer(void)
+>>>>>>>> {
+>>>>>>>>  struct timespec ts;
+>>>>>>>> 
+>>>>>>>>  if (clock_getres(CLOCK_MONOTONIC, &ts))
+>>>>>>>>    return 1;
+>>>>>>>> 
+>>>>>>>>  return (ts.tv_sec != 0 || ts.tv_nsec != 1);
+>>>>>>>> }
+>>>>>>> 
+>>>>>>> 
+>>>>>>> Just tried this on a generic kernel (2.6.32-45-generic #102-Ubuntu
+>>>>>>> SMP Wed Jan 2 21:53:06 UTC 2013 i686 GNU/Linux) and I get ts.tv_sec == 0
+>>>>>>> and ts.tv_nsec == 1, so it looks this cant be used to tell an RT_PREEMPT
+>>>>>>> from a vanilla kernel
+>>>>>> 
+>>>>>> I meant boolean AND when I said "In addition".
+>>>>> 
+>>>>> Oh, I interpreted the timer check not as a PREEMPT_RT check, but a
+>>>>> separate check for timers, which we must confirm are available before
+>>>>> driving heavy machinery.
+>>>>> So, if utsname.version contains "PREEMPT RT", then load the preempt-rt
+>>>>> module.  Once the module is loaded, from an init() function, run sanity
+>>>>> checks, including the clock_getres check above.  Is that about right?
+>>>> 
+>>>> Yes. Sounds good to me.
+>>>> 
+>>> Note we added a patch, called sysfs-realtime-entry.patch, but I'm not
+>>> sure how far back it goes, at least it's in 3.x-rt kernels.
+>>> 
+>>> This is the text from the patch
+>>> 
+>>> "Add a /sys/kernel entry to indicate that the kernel is a
+>>> realtime kernel.
+>> 
+>> found this: https://bugzilla.redhat.com/show_bug.cgi?id=728551 and this:
+>> https://github.com/clrkwllms/rt-linux/commit/274ca2cb72e013602cebb8dc142a7c69d42f92db
+>> 
+>> looks like it is being used elsewhere: http://softballinfo.net/ret/root/usr/lib/python2.6/site-packages/sos/plugins/kernel_realtime.py
+>> 
+>>> 
+>>> Clark says that he needs this for udev rules, udev needs to evaluate
+>>> if its a PREEMPT_RT kernel a few thousand times and parsing uname
+>>> output is too slow or so.
+>>> 
+>>> Are there better solutions? Should it exist and return 0 on !-rt?"
+>>> 
+>>> To use it, you do something like
+>>> test -e /sys/kernel/realtime
+>> 
+>> excellent - this works fine for me (I dont see us going back further than 3.4):
+>> 
+>> mah@atom:~$ uname -a
+>> Linux atom 3.4.13-rt-preempt-rt22+ #2 SMP PREEMPT RT Fri Oct 19 08:56:20 CEST 2012 i686 GNU/Linux
+>> 
+>> mah@atom:~$ ls -l /sys/kernel/realtime
+>> -r--r--r-- 1 root root 4096 2013-01-21 12:53 /sys/kernel/realtime
+>> 
+>> mah@atom:~$ cat /sys/kernel/realtime
+>> 1
+>> 
+>> The way I read it the fingerprint is - '/sys/kernel/realtime' exists and contents is '1'
+>> 
+>> thanks a lot!
+>> 
+> 
+> No problem, now if you want to give back, please feel free to update
+> the wiki as well!
 
-> I know spinlock is now preemptible, but how can I protect a "really"
-> critical section in PREEMPT_RT? If it is a bad design, could give me
-> some tutorial/readings on how to modify my driver?
 
-https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO
+https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO#Runtime_detection_of_an_RT-PREEMPT_Kernel
 
-says
-
-Critical sections protected by i.e. spinlock_t and rwlock_t are now
-preemptible. The creation of non-preemptible sections (in kernel) is
-still possible with raw_spinlock_t (same APIs like spinlock_t)
-
-However, try to identify the real culprit first.
-
---
-                                          Stano
-
+- Michael
