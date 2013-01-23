@@ -1,11 +1,15 @@
 From: Christoph Lameter <cl@linux.com>
-Subject: FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Subject: FIX [0/2] Slub hot path fixes
 Date: Wed, 23 Jan 2013 21:45:47 +0000
-Message-ID: <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
-References: <20130123214514.370647954@linux.com>
+Message-ID: <0000013c695fbbe8-6a7f750f-4647-40b8-9ab3-f4fa5af8c382-000000@email.amazonses.com>
 Cc: Steven Rostedt <rostedt@goodmis.org>
 To: Pekka Enberg <penberg@kernel.org>
-Return-path: <owner-linux-mm@kvack.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from a194-210.smtp-out.amazonses.com ([199.255.194.210]:6805 "EHLO
+	a194-210.smtp-out.amazonses.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751143Ab3AWVzf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Jan 2013 16:55:35 -0500
 Cc: Thomas Gleixner <tglx@linutronix.de>
 Cc: RT <linux-rt-users@vger.kernel.org>
 Cc: Clark Williams <clark@redhat.com>
@@ -16,37 +20,15 @@ Cc: Glauber Costa <glommer@parallels.com>
 Cc: linux-mm@kvack.org
 Cc: David Rientjes <rientjes@google.com>
 Cc: elezegarcia@gmail.com
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The variables accessed in slab_alloc are volatile and therefore
-the page pointer passed to node_match can be NULL. The processing
-of data in slab_alloc is tentative until either the cmpxhchg
-succeeds or the __slab_alloc slowpath is invoked. Both are
-able to perform the same allocation from the freelist.
+These are patches to fix up the issues brought up by Steven Rostedt.
 
-Check for the NULL pointer in node_match.
+I hoped to avoid the preempt disable for the tid retrieval but there is
+no per cpu atomic way to get a value from the per cpu area and also retrieve
+the pointer used in that operation. The pointer is necessary to fetch the
+related data from the per cpu structure. Without that we
+run into more issues with page pointer checks that can cause
+freelist corruption in slab_free().
 
-A false positive will lead to a retry of the loop in __slab_alloc.
-
-Signed-off-by: Christoph Lameter <cl@linux.com>
-
-Index: linux/mm/slub.c
-===================================================================
---- linux.orig/mm/slub.c	2013-01-18 08:47:29.198954250 -0600
-+++ linux/mm/slub.c	2013-01-18 08:47:40.579126371 -0600
-@@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache
- static inline int node_match(struct page *page, int node)
- {
- #ifdef CONFIG_NUMA
--	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
-+	if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
- 		return 0;
- #endif
- 	return 1;
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
