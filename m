@@ -1,56 +1,66 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
-Date: Thu, 24 Jan 2013 15:14:43 +0000
-Message-ID: <0000013c6d200e1d-03ae09c1-6fb8-42eb-ab6c-8fcae05fdb6e-000000@email.amazonses.com>
-References: <20130123214514.370647954@linux.com> <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com> <1358988824.3351.5.camel@kernel>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: [PATCH 0/3] cyclictest: improvements to histogram overflow instance
+ mode
+Date: Thu, 24 Jan 2013 14:17:25 -0800
+Message-ID: <5101B2F5.5090009@am.sony.com>
+References: <1355947233-31451-1-git-send-email-bhavesh@vmware.com> <50D24B1B.9020808@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Pekka Enberg <penberg@kernel.org>, Steven Rostedt <rostedt@goodmis.org>,
-    Thomas Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>,
-    Clark Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>,
-    "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-    Joonsoo Kim <js1304@gmail.com>, Glauber Costa <glommer@parallels.com>,
-    linux-mm@kvack.org, David Rientjes <rientjes@google.com>,
-    elezegarcia@gmail.com
-To: Simon Jeons <simon.jeons@gmail.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1358988824.3351.5.camel@kernel>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Bhavesh Davda <bhavesh@vmware.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "jkacur@redhat.com" <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from va3ehsobe001.messaging.microsoft.com ([216.32.180.11]:17084
+	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752278Ab3AXWRa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Jan 2013 17:17:30 -0500
+In-Reply-To: <50D24B1B.9020808@am.sony.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 23 Jan 2013, Simon Jeons wrote:
+John,
 
-> On Wed, 2013-01-23 at 21:45 +0000, Christoph Lameter wrote:
-> > The variables accessed in slab_alloc are volatile and therefore
-> > the page pointer passed to node_match can be NULL. The processing
-> > of data in slab_alloc is tentative until either the cmpxhchg
-> > succeeds or the __slab_alloc slowpath is invoked. Both are
-> > able to perform the same allocation from the freelist.
-> >
-> > Check for the NULL pointer in node_match.
-> >
-> > A false positive will lead to a retry of the loop in __slab_alloc.
->
-> Hi Christoph,
->
-> Since page_to_nid(NULL) will trigger bug, then how can run into
-> __slab_alloc?
+Ping... (did this go into the git repository?)
 
-page = NULL
+-Frank
 
-	 ->
+On 12/19/12 15:17, Frank Rowand wrote:
+> On 12/19/12 12:00, Bhavesh Davda wrote:
+>> This patch series makes usability improvements to the histogram overflow
+>> instance tracking mode, as suggested by Frank Rowland.
+>                                                 ^^^^^^^
+>                                                 Rowand
+> 
+> It happens all the time....
+> 
+>>
+>> Bhavesh Davda (3):
+>>   cyclictest: new command line switch for histogram overflow instance
+>>     tracking
+>>   cyclictest: Report histogram overflow instances in seconds since
+>>     start
+>>   cyclictest: Print histogram overflow instances only if asked for
+>>
+>>  src/cyclictest/cyclictest.c |   72 +++++++++++++++++++++++++++++++++---------
+>>  1 files changed, 56 insertions(+), 16 deletions(-)
+>>
+> 
+> For patches 1 - 3:
+> 
+> 
+> Reviewed-by: Frank Rowand <frank.rowand@am.sony.com>
+> Tested-by: Frank Rowand <frank.rowand@am.sony.com>
+> 
+> 
+> Thanks for improving cyclictest Bhavesh!
+> 
+> John, all good for you to commit?
+> 
+> -Frank
+> .
+> 
 
-node_match(NULL, xx) = 0
 
- 	->
-
-call into __slab_alloc.
-
-__slab_alloc() will check for !c->page which requires the assignment of a
-new per cpu slab page.
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
