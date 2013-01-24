@@ -1,72 +1,53 @@
-From: Simon Jeons <simon.jeons@gmail.com>
-Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
-Date: Wed, 23 Jan 2013 18:53:44 -0600
-Message-ID: <1358988824.3351.5.camel@kernel>
-References: <20130123214514.370647954@linux.com>
-	 <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.27-rt39
+Date: Wed, 23 Jan 2013 21:14:00 -0500
+Message-ID: <1358993640.21576.132.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Pekka Enberg <penberg@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@gmail.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Joonsoo Kim <js1304@gmail.com>,
-	Glauber Costa <glommer@parallels.com>, linux-mm@kvack.org,
-	David Rientjes <rientjes@google.com>, elezegarcia@gmail.com
-To: Christoph Lameter <cl@linux.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pa0-f42.google.com ([209.85.220.42]:33304 "EHLO
-	mail-pa0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752735Ab3AXAxv (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:22856 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752821Ab3AXCOE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Jan 2013 19:53:51 -0500
-Received: by mail-pa0-f42.google.com with SMTP id rl6so5159999pac.29
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Jan 2013 16:53:51 -0800 (PST)
-In-Reply-To: <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
+	Wed, 23 Jan 2013 21:14:04 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2013-01-23 at 21:45 +0000, Christoph Lameter wrote:
-> The variables accessed in slab_alloc are volatile and therefore
-> the page pointer passed to node_match can be NULL. The processing
-> of data in slab_alloc is tentative until either the cmpxhchg
-> succeeds or the __slab_alloc slowpath is invoked. Both are
-> able to perform the same allocation from the freelist.
-> 
-> Check for the NULL pointer in node_match.
-> 
-> A false positive will lead to a retry of the loop in __slab_alloc.
 
-Hi Christoph,
+Dear RT Folks,
 
-Since page_to_nid(NULL) will trigger bug, then how can run into
-__slab_alloc?
+I'm pleased to announce the 3.4.27-rt39 stable release.
 
-> 
-> Signed-off-by: Christoph Lameter <cl@linux.com>
-> 
-> Index: linux/mm/slub.c
-> ===================================================================
-> --- linux.orig/mm/slub.c	2013-01-18 08:47:29.198954250 -0600
-> +++ linux/mm/slub.c	2013-01-18 08:47:40.579126371 -0600
-> @@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache
->  static inline int node_match(struct page *page, int node)
->  {
->  #ifdef CONFIG_NUMA
-> -	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
-> +	if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
->  		return 0;
->  #endif
->  	return 1;
-> 
-> --
-> To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> the body to majordomo@kvack.org.  For more info on Linux MM,
-> see: http://www.linux-mm.org/ .
-> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+
+This release is just an update to the new stable 3.4.27 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 7b2d77dea363da22d2b57db9e23dac688bf4a7b6
+
+
+Or to build 3.4.27-rt39 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.27-rt39.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
 
 
