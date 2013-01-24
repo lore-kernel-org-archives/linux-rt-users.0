@@ -1,41 +1,72 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: FIX [0/2] Slub hot path fixes
-Date: Wed, 23 Jan 2013 16:55:56 -0500
-Message-ID: <1358978156.21576.129.camel@gandalf.local.home>
-References: <0000013c695fbbe8-6a7f750f-4647-40b8-9ab3-f4fa5af8c382-000000@email.amazonses.com>
+From: Simon Jeons <simon.jeons@gmail.com>
+Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Date: Wed, 23 Jan 2013 18:53:44 -0600
+Message-ID: <1358988824.3351.5.camel@kernel>
+References: <20130123214514.370647954@linux.com>
+	 <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Pekka Enberg <penberg@kernel.org>, Thomas Gleixner <tglx@linutronix.de>,
- RT <linux-rt-users@vger.kernel.org>, Clark Williams <clark@redhat.com>,
- John Kacur <jkacur@gmail.com>, "Luis Claudio R. Goncalves"
- <lgoncalv@redhat.com>,  Joonsoo Kim <js1304@gmail.com>, Glauber Costa
- <glommer@parallels.com>, linux-mm@kvack.org, David Rientjes
- <rientjes@google.com>, elezegarcia@gmail.com
+Cc: Pekka Enberg <penberg@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@gmail.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Joonsoo Kim <js1304@gmail.com>,
+	Glauber Costa <glommer@parallels.com>, linux-mm@kvack.org,
+	David Rientjes <rientjes@google.com>, elezegarcia@gmail.com
 To: Christoph Lameter <cl@linux.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <0000013c695fbbe8-6a7f750f-4647-40b8-9ab3-f4fa5af8c382-000000@email.amazonses.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pa0-f42.google.com ([209.85.220.42]:33304 "EHLO
+	mail-pa0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752735Ab3AXAxv (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Jan 2013 19:53:51 -0500
+Received: by mail-pa0-f42.google.com with SMTP id rl6so5159999pac.29
+        for <linux-rt-users@vger.kernel.org>; Wed, 23 Jan 2013 16:53:51 -0800 (PST)
+In-Reply-To: <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 On Wed, 2013-01-23 at 21:45 +0000, Christoph Lameter wrote:
-> These are patches to fix up the issues brought up by Steven Rostedt.
+> The variables accessed in slab_alloc are volatile and therefore
+> the page pointer passed to node_match can be NULL. The processing
+> of data in slab_alloc is tentative until either the cmpxhchg
+> succeeds or the __slab_alloc slowpath is invoked. Both are
+> able to perform the same allocation from the freelist.
 > 
-> I hoped to avoid the preempt disable for the tid retrieval but there is
-> no per cpu atomic way to get a value from the per cpu area and also retrieve
-> the pointer used in that operation. The pointer is necessary to fetch the
-> related data from the per cpu structure. Without that we
-> run into more issues with page pointer checks that can cause
-> freelist corruption in slab_free().
+> Check for the NULL pointer in node_match.
+> 
+> A false positive will lead to a retry of the loop in __slab_alloc.
 
-Thanks for looking into this. Your can add my "Reported-by" tags to the
-patches. Just because I like labels ;-)
+Hi Christoph,
 
--- Steve
+Since page_to_nid(NULL) will trigger bug, then how can run into
+__slab_alloc?
+
+> 
+> Signed-off-by: Christoph Lameter <cl@linux.com>
+> 
+> Index: linux/mm/slub.c
+> ===================================================================
+> --- linux.orig/mm/slub.c	2013-01-18 08:47:29.198954250 -0600
+> +++ linux/mm/slub.c	2013-01-18 08:47:40.579126371 -0600
+> @@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache
+>  static inline int node_match(struct page *page, int node)
+>  {
+>  #ifdef CONFIG_NUMA
+> -	if (node != NUMA_NO_NODE && page_to_nid(page) != node)
+> +	if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
+>  		return 0;
+>  #endif
+>  	return 1;
+> 
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
