@@ -1,56 +1,56 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [GIT PULL rcu/urgent] Fixes for RCU regressions in 3.8
-Date: Thu, 24 Jan 2013 13:28:49 +0100
-Message-ID: <20130124122849.GC3104@gmail.com>
-References: <20130111160813.GA14503@linux.vnet.ibm.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Date: Thu, 24 Jan 2013 15:14:43 +0000
+Message-ID: <0000013c6d200e1d-03ae09c1-6fb8-42eb-ab6c-8fcae05fdb6e-000000@email.amazonses.com>
+References: <20130123214514.370647954@linux.com> <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com> <1358988824.3351.5.camel@kernel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: mingo@elte.hu, paul.gortmaker@windriver.com, fweisbec@gmail.com,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ea0-f171.google.com ([209.85.215.171]:47793 "EHLO
-	mail-ea0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754377Ab3AXM2y (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jan 2013 07:28:54 -0500
-Content-Disposition: inline
-In-Reply-To: <20130111160813.GA14503@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Pekka Enberg <penberg@kernel.org>, Steven Rostedt <rostedt@goodmis.org>,
+    Thomas Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>,
+    Clark Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>,
+    "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+    Joonsoo Kim <js1304@gmail.com>, Glauber Costa <glommer@parallels.com>,
+    linux-mm@kvack.org, David Rientjes <rientjes@google.com>,
+    elezegarcia@gmail.com
+To: Simon Jeons <simon.jeons@gmail.com>
+Return-path: <owner-linux-mm@kvack.org>
+In-Reply-To: <1358988824.3351.5.camel@kernel>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Wed, 23 Jan 2013, Simon Jeons wrote:
 
-* Paul E. McKenney <paulmck@linux.vnet.ibm.com> wrote:
+> On Wed, 2013-01-23 at 21:45 +0000, Christoph Lameter wrote:
+> > The variables accessed in slab_alloc are volatile and therefore
+> > the page pointer passed to node_match can be NULL. The processing
+> > of data in slab_alloc is tentative until either the cmpxhchg
+> > succeeds or the __slab_alloc slowpath is invoked. Both are
+> > able to perform the same allocation from the freelist.
+> >
+> > Check for the NULL pointer in node_match.
+> >
+> > A false positive will lead to a retry of the loop in __slab_alloc.
+>
+> Hi Christoph,
+>
+> Since page_to_nid(NULL) will trigger bug, then how can run into
+> __slab_alloc?
 
-> Hello, Ingo,
-> 
-> Paul Gortmaker found some problems with no-CBs-CPU support in 3.8
-> mainline, and kindly supplied fixes.  The first problem is soft-lockup
-> complaints that can occur on systems running with no-CBs CPUs that have
-> long periods of time where RCU is completely idle, which can happen on
-> some embedded systems.  The second problem is a documentation error
-> for the "rcutree.rcu_nocb_poll" boot parameter.  In this case, Paul Gortmaker
-> (rightly) noted that the need for "rcutree." was inconsistent with the
-> "rcu_nocbs=<cpumap>" boot parameter.  The fix therefore to make the boot
-> parameter named "rcu_nocb_poll".
-> 
-> These problems only affect kernels built with the new CONFIG_RCU_NOCB_CPU
-> kernel parameter, but still should be fixed.
-> 
-> These fixes are available in the git repository at:
->   git://git.kernel.org/pub/scm/linux/kernel/git/paulmck/linux-rcu.git rcu/urgent
-> 
-> 							Thanx, Paul
-> 
-> ------------------>
-> Paul Gortmaker (2):
->       rcu: Prevent soft-lockup complaints about no-CBs CPUs
->       rcu: Make rcu_nocb_poll an early_param instead of module_param
-> 
->  Documentation/kernel-parameters.txt |    2 +-
->  kernel/rcutree_plugin.h             |   13 ++++++++++---
->  2 files changed, 11 insertions(+), 4 deletions(-)
+page = NULL
 
-Pulled, thanks a lot Paul!
+	 ->
 
-	Ingo
+node_match(NULL, xx) = 0
+
+ 	->
+
+call into __slab_alloc.
+
+__slab_alloc() will check for !c->page which requires the assignment of a
+new per cpu slab page.
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
