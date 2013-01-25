@@ -1,66 +1,68 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH 0/3] cyclictest: improvements to histogram overflow instance
- mode
-Date: Thu, 24 Jan 2013 14:17:25 -0800
-Message-ID: <5101B2F5.5090009@am.sony.com>
-References: <1355947233-31451-1-git-send-email-bhavesh@vmware.com> <50D24B1B.9020808@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] sched/rt: Don't pull tasks of throttled rt_rq in
+ pre_schedule_rt()
+Date: Thu, 24 Jan 2013 21:47:46 -0500
+Message-ID: <1359082066.21576.198.camel@gandalf.local.home>
+References: <1286111356423652@web16f.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Bhavesh Davda <bhavesh@vmware.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "jkacur@redhat.com" <jkacur@redhat.com>
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Kirill Tkhai <tkhai@yandex.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from va3ehsobe001.messaging.microsoft.com ([216.32.180.11]:17084
-	"EHLO va3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752278Ab3AXWRa (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:4990 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755269Ab3AYCrt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Jan 2013 17:17:30 -0500
-In-Reply-To: <50D24B1B.9020808@am.sony.com>
+	Thu, 24 Jan 2013 21:47:49 -0500
+In-Reply-To: <1286111356423652@web16f.yandex.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-John,
+Sorry for the late reply.
 
-Ping... (did this go into the git repository?)
+On Tue, 2012-12-25 at 12:20 +0400, Kirill Tkhai wrote:
+> The patch aims not to pull tasks of throttled rt_rqs
+> in pre_schedule_rt() because thay are not able to be
+> picked in pick_next_task_rt().
+> 
+> There are three places where pull_rt_task() is used:
+> 
+> 1)pre_schedule_rt()
+> If we pull a task of a throttled rt_rq it won't be picked
+> by pick_next_task_rt(), because throttled tasks are dequeued
+> by sched_rt_runtime_exceeded(). So this action is unnecessary.
+> 
+> 2)prio_changed_rt()
+> A pulled task of higher priority leads to reschedule of current
+> rq's task. The schedule() will occur with the first hw interrupt
+> so there is possibility the throttled rt_rq will unthrottle and
+> it will be queued during this time.
+> (In case of preemptable kernel schedule() occurs during
+> preempt_enable() in call of __task_rq_unlock(). But its lock is
+> unlocked so there is no guarantee the rt_rq won't be queued).
+> 
+> 3)switched_from_rt()
+> The same as prio_changed_rt().
 
--Frank
+These are pretty much hot paths. They are done rather commonly. My
+concern is that we are adding overhead here that can be done in a much
+less common path.
 
-On 12/19/12 15:17, Frank Rowand wrote:
-> On 12/19/12 12:00, Bhavesh Davda wrote:
->> This patch series makes usability improvements to the histogram overflow
->> instance tracking mode, as suggested by Frank Rowland.
->                                                 ^^^^^^^
->                                                 Rowand
-> 
-> It happens all the time....
-> 
->>
->> Bhavesh Davda (3):
->>   cyclictest: new command line switch for histogram overflow instance
->>     tracking
->>   cyclictest: Report histogram overflow instances in seconds since
->>     start
->>   cyclictest: Print histogram overflow instances only if asked for
->>
->>  src/cyclictest/cyclictest.c |   72 +++++++++++++++++++++++++++++++++---------
->>  1 files changed, 56 insertions(+), 16 deletions(-)
->>
-> 
-> For patches 1 - 3:
-> 
-> 
-> Reviewed-by: Frank Rowand <frank.rowand@am.sony.com>
-> Tested-by: Frank Rowand <frank.rowand@am.sony.com>
-> 
-> 
-> Thanks for improving cyclictest Bhavesh!
-> 
-> John, all good for you to commit?
-> 
-> -Frank
-> .
-> 
+I'm wondering if we couldn't use the pushable_task list for finding the
+next highest rt task. That may even speed up the fast path if we do so.
+
+Then, when an rq gets throttled, which shouldn't be often, we can remove
+all the tasks from the pushable_task list, and add them back when the rq
+is comes back up.
+
+Then, by just using the pushable_task list, we can achieve this goal.
+
+We have to look to see what prevents us from using that list.
+
+-- Steve
 
 
