@@ -1,45 +1,42 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
-Date: Fri, 25 Jan 2013 14:53:29 +0000
-Message-ID: <0000013c7232fa91-a8f59c62-a7c6-4937-89b9-8c53d86df7b1-000000@email.amazonses.com>
-References: <20130123214514.370647954@linux.com> <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com> <1358988824.3351.5.camel@kernel> <0000013c6d200e1d-03ae09c1-6fb8-42eb-ab6c-8fcae05fdb6e-000000@email.amazonses.com>
- <1359101516.16101.6.camel@kernel>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH-v2] tty: Use raw spin lock to protect the TTY read section
+Date: Fri, 25 Jan 2013 08:13:51 -0800
+Message-ID: <20130125161351.GA9929@kroah.com>
+References: <1348150166-4868-1-git-send-email-meltedpianoman@gmail.com>
+ <1359023699-27050-1-git-send-email-meltedpianoman@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Pekka Enberg <penberg@kernel.org>, Steven Rostedt <rostedt@goodmis.org>,
-    Thomas Gleixner <tglx@linutronix.de>, RT <linux-rt-users@vger.kernel.org>,
-    Clark Williams <clark@redhat.com>, John Kacur <jkacur@gmail.com>,
-    "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-    Joonsoo Kim <js1304@gmail.com>, Glauber Costa <glommer@parallels.com>,
-    linux-mm@kvack.org, David Rientjes <rientjes@google.com>,
-    elezegarcia@gmail.com
-To: Simon Jeons <simon.jeons@gmail.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1359101516.16101.6.camel@kernel>
-Sender: owner-linux-mm@kvack.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
+To: Ivo Sieben <meltedpianoman@gmail.com>
+Return-path: <linux-serial-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1359023699-27050-1-git-send-email-meltedpianoman@gmail.com>
+Sender: linux-serial-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 25 Jan 2013, Simon Jeons wrote:
+On Thu, Jan 24, 2013 at 11:34:59AM +0100, Ivo Sieben wrote:
+> The "normal" spin lock that guards the N_TTY line discipline read section
+> is replaced by a raw spin lock.
+> 
+> On a PREEMP_RT system this prevents unwanted scheduling overhead when data is
+> read at the same time as data is being received: while RX IRQ threaded handling
+> is busy a TTY read call is performed from a RT priority > threaded IRQ priority.
+> The read call tries to take the read section spin lock (held by the threaded
+> IRQ) which blocks and causes a context switch to/from the threaded IRQ handler
+> until the spin lock is unlocked.
+> 
+> On a 240 MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
+> overhead on the TTY read call.
 
-> >
-> > node_match(NULL, xx) = 0
-> >
-> >  	->
-> >
-> > call into __slab_alloc.
-> >
-> > __slab_alloc() will check for !c->page which requires the assignment of a
-> > new per cpu slab page.
-> >
->
-> But there are dereference in page_to_nid path, function page_to_section:
-> return (page->flags >> SECTIONS_PGSHIFT) & SECTIONS_MASK;
+Out of how many us total?
 
-node_match() checks for NULL and will not invoke page_to_nid for a NULL
-pointer.
+And this really makes a difference?  I'd like to hear the rt developers
+opinoin of this.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+> Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com
+
+Forgot the trailing '>' :)
+
+thanks,
+
+greg k-h
