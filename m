@@ -1,53 +1,263 @@
 From: Ivo Sieben <meltedpianoman@gmail.com>
-Subject: Re: [PATCH-v2] tty: Use raw spin lock to protect the TTY read section
-Date: Mon, 28 Jan 2013 13:15:26 +0100
-Message-ID: <CAMSQXEFFYqEZcJr5ig7fHgNd6Vfqh6GFZ_Md5OG=iRpDPWpTUw@mail.gmail.com>
-References: <1348150166-4868-1-git-send-email-meltedpianoman@gmail.com>
-	<1359023699-27050-1-git-send-email-meltedpianoman@gmail.com>
-	<20130125161351.GA9929@kroah.com>
+Subject: [PATCH-v3] tty: Use raw spin lock to protect the TTY read section
+Date: Mon, 28 Jan 2013 13:32:01 +0100
+Message-ID: <1359376321-27274-1-git-send-email-meltedpianoman@gmail.com>
+References: <CAMSQXEFFYqEZcJr5ig7fHgNd6Vfqh6GFZ_Md5OG=iRpDPWpTUw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>
-To: Greg KH <gregkh@linuxfoundation.org>
+Content-Type: text/plain
+Cc: Ivo Sieben <meltedpianoman@gmail.com>
+To: <linux-serial@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Greg KH <gregkh@linuxfoundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f178.google.com ([209.85.216.178]:61013 "EHLO
-	mail-qc0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756961Ab3A1MP1 (ORCPT
+Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:50906 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1757347Ab3A1McQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 28 Jan 2013 07:15:27 -0500
-In-Reply-To: <20130125161351.GA9929@kroah.com>
+	Mon, 28 Jan 2013 07:32:16 -0500
+In-Reply-To: <CAMSQXEFFYqEZcJr5ig7fHgNd6Vfqh6GFZ_Md5OG=iRpDPWpTUw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+The "normal" spin lock that guards the N_TTY line discipline read section
+is replaced by a raw spin lock.
 
-2013/1/25 Greg KH <gregkh@linuxfoundation.org>:
-> On Thu, Jan 24, 2013 at 11:34:59AM +0100, Ivo Sieben wrote:
->>
->> On a 240 MHz AT91SAM9261 processor setup this fixes about 100us of scheduling
->> overhead on the TTY read call.
->
-> Out of how many us total?
->
+On a PREEMP_RT system this prevents unwanted scheduling overhead when data is
+read at the same time as data is being received: while RX IRQ threaded handling
+is busy a TTY read call is performed from a RT priority > threaded IRQ priority.
+The read call tries to take the read section spin lock (held by the threaded
+IRQ) which blocks and causes a context switch to/from the threaded IRQ handler
+until the spin lock is unlocked.
 
-I tested with a TTY read call that before all optimizations had an
-average 76 us and a maximum of 305 us.
-After the optimizations the average dropped to 59 us and the maximum
-dropped to 135 us.
-Of course that gain of 170us is not completely due to this patch, also
-the other TTY patches that I've posted have contributed to this.
+Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+---
 
-I will remove this remark on the exact numbers from the commit
-message... it prevents unnecessary scheduling overhead, which is I
-think sufficient to describe what this patch does.
+v3:
+- Removed some detailed info from the commit message
 
-> And this really makes a difference?  I'd like to hear the rt developers
-> opinoin of this.
->
-> greg k-h
+@Thomas Gleixner & Steven Rostedt:
+Greg Kroah-Hartman responded to this patch: "And this really makes a
+difference? I'd like to hear the rt developers opinion of this."
+Would you care to take a look at it?
 
-I will repost this patch and ask Thomas Gleixner and Steven Rostedt to
-take a look at it.
+I tested this on a 3.0.43-rt65 kernel, with the following Kernel Hacking options
+enabled:
+ - CONFIG_DEBUG_RT_MUTEXES
+ - CONFIG_DEBUG_SPINLOCK
+ - CONFIG_DEBUG_MUTEXES
+ - CONFIG_DEBUG_LOCK_ALLOC
+ - CONFIG_PROVE_LOCKING
+ - CONFIG_DEBUG_SPINLOCK_SLEEP
 
-Regards,
-Ivo Sieben
+ drivers/tty/n_tty.c |   56 +++++++++++++++++++++++++--------------------------
+ 1 file changed, 28 insertions(+), 28 deletions(-)
+
+diff --git a/drivers/tty/n_tty.c b/drivers/tty/n_tty.c
+index 19083ef..0950728 100644
+--- a/drivers/tty/n_tty.c
++++ b/drivers/tty/n_tty.c
+@@ -100,7 +100,7 @@ struct n_tty_data {
+ 	struct mutex atomic_read_lock;
+ 	struct mutex output_lock;
+ 	struct mutex echo_lock;
+-	spinlock_t read_lock;
++	raw_spinlock_t read_lock;
+ };
+ 
+ static inline int tty_put_user(struct tty_struct *tty, unsigned char x,
+@@ -182,9 +182,9 @@ static void put_tty_queue(unsigned char c, struct n_tty_data *ldata)
+ 	 *	The problem of stomping on the buffers ends here.
+ 	 *	Why didn't anyone see this one coming? --AJK
+ 	*/
+-	spin_lock_irqsave(&ldata->read_lock, flags);
++	raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 	put_tty_queue_nolock(c, ldata);
+-	spin_unlock_irqrestore(&ldata->read_lock, flags);
++	raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ }
+ 
+ /**
+@@ -218,9 +218,9 @@ static void reset_buffer_flags(struct tty_struct *tty)
+ 	struct n_tty_data *ldata = tty->disc_data;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&ldata->read_lock, flags);
++	raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 	ldata->read_head = ldata->read_tail = ldata->read_cnt = 0;
+-	spin_unlock_irqrestore(&ldata->read_lock, flags);
++	raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 
+ 	mutex_lock(&ldata->echo_lock);
+ 	ldata->echo_pos = ldata->echo_cnt = ldata->echo_overrun = 0;
+@@ -276,7 +276,7 @@ static ssize_t n_tty_chars_in_buffer(struct tty_struct *tty)
+ 	unsigned long flags;
+ 	ssize_t n = 0;
+ 
+-	spin_lock_irqsave(&ldata->read_lock, flags);
++	raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 	if (!ldata->icanon) {
+ 		n = ldata->read_cnt;
+ 	} else if (ldata->canon_data) {
+@@ -284,7 +284,7 @@ static ssize_t n_tty_chars_in_buffer(struct tty_struct *tty)
+ 			ldata->canon_head - ldata->read_tail :
+ 			ldata->canon_head + (N_TTY_BUF_SIZE - ldata->read_tail);
+ 	}
+-	spin_unlock_irqrestore(&ldata->read_lock, flags);
++	raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 	return n;
+ }
+ 
+@@ -915,19 +915,19 @@ static void eraser(unsigned char c, struct tty_struct *tty)
+ 		kill_type = WERASE;
+ 	else {
+ 		if (!L_ECHO(tty)) {
+-			spin_lock_irqsave(&ldata->read_lock, flags);
++			raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 			ldata->read_cnt -= ((ldata->read_head - ldata->canon_head) &
+ 					  (N_TTY_BUF_SIZE - 1));
+ 			ldata->read_head = ldata->canon_head;
+-			spin_unlock_irqrestore(&ldata->read_lock, flags);
++			raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 			return;
+ 		}
+ 		if (!L_ECHOK(tty) || !L_ECHOKE(tty) || !L_ECHOE(tty)) {
+-			spin_lock_irqsave(&ldata->read_lock, flags);
++			raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 			ldata->read_cnt -= ((ldata->read_head - ldata->canon_head) &
+ 					  (N_TTY_BUF_SIZE - 1));
+ 			ldata->read_head = ldata->canon_head;
+-			spin_unlock_irqrestore(&ldata->read_lock, flags);
++			raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 			finish_erasing(ldata);
+ 			echo_char(KILL_CHAR(tty), tty);
+ 			/* Add a newline if ECHOK is on and ECHOKE is off. */
+@@ -961,10 +961,10 @@ static void eraser(unsigned char c, struct tty_struct *tty)
+ 				break;
+ 		}
+ 		cnt = (ldata->read_head - head) & (N_TTY_BUF_SIZE-1);
+-		spin_lock_irqsave(&ldata->read_lock, flags);
++		raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 		ldata->read_head = head;
+ 		ldata->read_cnt -= cnt;
+-		spin_unlock_irqrestore(&ldata->read_lock, flags);
++		raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 		if (L_ECHO(tty)) {
+ 			if (L_ECHOPRT(tty)) {
+ 				if (!ldata->erasing) {
+@@ -1344,12 +1344,12 @@ send_signal:
+ 				put_tty_queue(c, ldata);
+ 
+ handle_newline:
+-			spin_lock_irqsave(&ldata->read_lock, flags);
++			raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 			set_bit(ldata->read_head, ldata->read_flags);
+ 			put_tty_queue_nolock(c, ldata);
+ 			ldata->canon_head = ldata->read_head;
+ 			ldata->canon_data++;
+-			spin_unlock_irqrestore(&ldata->read_lock, flags);
++			raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 			kill_fasync(&tty->fasync, SIGIO, POLL_IN);
+ 			if (waitqueue_active(&tty->read_wait))
+ 				wake_up_interruptible(&tty->read_wait);
+@@ -1423,7 +1423,7 @@ static void n_tty_receive_buf(struct tty_struct *tty, const unsigned char *cp,
+ 	unsigned long cpuflags;
+ 
+ 	if (ldata->real_raw) {
+-		spin_lock_irqsave(&ldata->read_lock, cpuflags);
++		raw_spin_lock_irqsave(&ldata->read_lock, cpuflags);
+ 		i = min(N_TTY_BUF_SIZE - ldata->read_cnt,
+ 			N_TTY_BUF_SIZE - ldata->read_head);
+ 		i = min(count, i);
+@@ -1439,7 +1439,7 @@ static void n_tty_receive_buf(struct tty_struct *tty, const unsigned char *cp,
+ 		memcpy(ldata->read_buf + ldata->read_head, cp, i);
+ 		ldata->read_head = (ldata->read_head + i) & (N_TTY_BUF_SIZE-1);
+ 		ldata->read_cnt += i;
+-		spin_unlock_irqrestore(&ldata->read_lock, cpuflags);
++		raw_spin_unlock_irqrestore(&ldata->read_lock, cpuflags);
+ 	} else {
+ 		for (i = count, p = cp, f = fp; i; i--, p++) {
+ 			if (f)
+@@ -1635,7 +1635,7 @@ static int n_tty_open(struct tty_struct *tty)
+ 	mutex_init(&ldata->atomic_read_lock);
+ 	mutex_init(&ldata->output_lock);
+ 	mutex_init(&ldata->echo_lock);
+-	spin_lock_init(&ldata->read_lock);
++	raw_spin_lock_init(&ldata->read_lock);
+ 
+ 	/* These are ugly. Currently a malloc failure here can panic */
+ 	ldata->read_buf = kzalloc(N_TTY_BUF_SIZE, GFP_KERNEL);
+@@ -1703,10 +1703,10 @@ static int copy_from_read_buf(struct tty_struct *tty,
+ 	bool is_eof;
+ 
+ 	retval = 0;
+-	spin_lock_irqsave(&ldata->read_lock, flags);
++	raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 	n = min(ldata->read_cnt, N_TTY_BUF_SIZE - ldata->read_tail);
+ 	n = min(*nr, n);
+-	spin_unlock_irqrestore(&ldata->read_lock, flags);
++	raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 	if (n) {
+ 		retval = copy_to_user(*b, &ldata->read_buf[ldata->read_tail], n);
+ 		n -= retval;
+@@ -1714,13 +1714,13 @@ static int copy_from_read_buf(struct tty_struct *tty,
+ 			ldata->read_buf[ldata->read_tail] == EOF_CHAR(tty);
+ 		tty_audit_add_data(tty, &ldata->read_buf[ldata->read_tail], n,
+ 				ldata->icanon);
+-		spin_lock_irqsave(&ldata->read_lock, flags);
++		raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 		ldata->read_tail = (ldata->read_tail + n) & (N_TTY_BUF_SIZE-1);
+ 		ldata->read_cnt -= n;
+ 		/* Turn single EOF into zero-length read */
+ 		if (L_EXTPROC(tty) && ldata->icanon && is_eof && !ldata->read_cnt)
+ 			n = 0;
+-		spin_unlock_irqrestore(&ldata->read_lock, flags);
++		raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 		*b += n;
+ 		*nr -= n;
+ 	}
+@@ -1900,7 +1900,7 @@ do_it_again:
+ 
+ 		if (ldata->icanon && !L_EXTPROC(tty)) {
+ 			/* N.B. avoid overrun if nr == 0 */
+-			spin_lock_irqsave(&ldata->read_lock, flags);
++			raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 			while (nr && ldata->read_cnt) {
+ 				int eol;
+ 
+@@ -1918,25 +1918,25 @@ do_it_again:
+ 					if (--ldata->canon_data < 0)
+ 						ldata->canon_data = 0;
+ 				}
+-				spin_unlock_irqrestore(&ldata->read_lock, flags);
++				raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 
+ 				if (!eol || (c != __DISABLED_CHAR)) {
+ 					if (tty_put_user(tty, c, b++)) {
+ 						retval = -EFAULT;
+ 						b--;
+-						spin_lock_irqsave(&ldata->read_lock, flags);
++						raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 						break;
+ 					}
+ 					nr--;
+ 				}
+ 				if (eol) {
+ 					tty_audit_push(tty);
+-					spin_lock_irqsave(&ldata->read_lock, flags);
++					raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 					break;
+ 				}
+-				spin_lock_irqsave(&ldata->read_lock, flags);
++				raw_spin_lock_irqsave(&ldata->read_lock, flags);
+ 			}
+-			spin_unlock_irqrestore(&ldata->read_lock, flags);
++			raw_spin_unlock_irqrestore(&ldata->read_lock, flags);
+ 			if (retval)
+ 				break;
+ 		} else {
+-- 
+1.7.9.5
+
+
