@@ -1,50 +1,72 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: [PATCH] cyclictest: white space cleanup
-Date: Mon, 28 Jan 2013 18:13:18 -0800
-Message-ID: <5107303E.3010208@am.sony.com>
-References: <51072F6A.1050105@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Libo Chen <chenlibo.3@gmail.com>
+Subject: Re: [PATCH]sched/rt: Do not try to push tasks if pinned task switches
+ to RT
+Date: Tue, 29 Jan 2013 16:42:14 +0800
+Message-ID: <51078B66.9050805@gmail.com>
+References: <3019251359404630@web18f.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "jkacur@redhat.com" <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from db3ehsobe005.messaging.microsoft.com ([213.199.154.143]:52338
-	"EHLO db3outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751958Ab3A2CNY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 28 Jan 2013 21:13:24 -0500
-In-Reply-To: <51072F6A.1050105@am.sony.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	lizefan@huawei.com, jovi.zhangwei@huawei.com
+To: Kirill Tkhai <tkhai@yandex.ru>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3019251359404630@web18f.yandex.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 01/28/13 18:09, Frank Rowand wrote:
-> Clean up cyclictest formatting:
->   Change leading spaces to tabs.
->   Align function parameters.
->   Place type of function on same line as function name.
-> 
-> Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
+=46rom: Libo Chen <libo.chen@huawei.com>
+
+
+On 2013-1-29 4:23, Kirill Tkhai wrote:
+> Just switched pinned task is not able to be pushed. If the rq had had
+> several RT tasks before they have already been considered as candidat=
+es
+> to be pushed (or pulled).
+>
+> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+> CC: Steven Rostedt <rostedt@goodmis.org>
+> CC: Ingo Molnar <mingo@kernel.org>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: linux-rt-users <linux-rt-users@vger.kernel.org>
 > ---
->  src/cyclictest/cyclictest.c |   43 	21 +	22 -	0 !
->  1 file changed, 21 insertions(+), 22 deletions(-)
-> 
+>  kernel/sched/rt.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+> index 4e8f0f4..5f7d92b 100644
+> --- a/kernel/sched/rt.c
+> +++ b/kernel/sched/rt.c
+> @@ -1925,9 +1925,9 @@ static void switched_to_rt(struct rq *rq, struc=
+t task_struct *p)
+>  	 */
+>  	if (p->on_rq && rq->curr !=3D p) {
+>  #ifdef CONFIG_SMP
+> -		if (rq->rt.overloaded && push_rt_task(rq) &&
+> +		if (rq->rt.overloaded && p->nr_cpus_allowed > 1 &&
+>  		    /* Don't resched if we changed runqueues */
+> -		    rq !=3D task_rq(p))
+> +		    push_rt_task(rq) && rq !=3D task_rq(p))
 
-< snip >
+I think you worry about it was excess to call push_rt_task, since the t=
+ask of p->nr_cpus_allowed=3D1 can`t be pushed. is that right?
 
-The motivation of the white space clean up is so that future
-patches will not add white space damage.  Many editors will
-automatically copy the bad white space if a line immediately
-following is added.
+The task of p->nr_cpus_allowed =3D1 would`t be added to  pushable_tasks=
+ list =EF=BC=88see the enqueue_task_rt()=EF=BC=89and  this push_rt_task=
+() need to push other tasks when rt.overloaded.
 
-I tried to not get carried away with other formatting clean
-up.  The alignment of function parameters was only a few
-locations and seemed in the spirit of white space clean up.
-
-The "type of function name" fix was getting carried away, but
-there was only one instance so I don't feel too guilty.
-
--Frank
+So I don`t agree this patch. =20
 
 
+>  			check_resched =3D 0;
+>  #endif /* CONFIG_SMP */
+>  		if (check_resched && p->prio < rq->curr->prio)
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
