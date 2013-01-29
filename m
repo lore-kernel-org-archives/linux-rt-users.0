@@ -1,46 +1,62 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Re:[PATCH]sched/rt: Do not try to push tasks if pinned task
+Subject: Re: [PATCH]sched/rt: Do not try to push tasks if pinned task
  switches to RT
-Date: Tue, 29 Jan 2013 08:19:05 -0500
-Message-ID: <1359465545.17639.19.camel@gandalf.local.home>
-References: <446051359450817@web10d.yandex.ru>
+Date: Tue, 29 Jan 2013 08:26:00 -0500
+Message-ID: <1359465960.17639.25.camel@gandalf.local.home>
+References: <3019251359404630@web18f.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Libo Chen <chenlibo.3@gmail.com>, linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Ingo Molnar <mingo@kernel.org>,
 	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	lizefan@huawei.com, jovi.zhangwei@huawei.com
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Kirill Tkhai <tkhai@yandex.ru>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:9809 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751977Ab3A2NTH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Jan 2013 08:19:07 -0500
-In-Reply-To: <446051359450817@web10d.yandex.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3019251359404630@web18f.yandex.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2013-01-29 at 13:13 +0400, Kirill Tkhai wrote:
+On Tue, 2013-01-29 at 00:23 +0400, Kirill Tkhai wrote:
+> Just switched pinned task is not able to be pushed. If the rq had had
+> several RT tasks before they have already been considered as candidates
+> to be pushed (or pulled).
 
-> >=20
-> > The task of p->nr_cpus_allowed =3D1 would`t be added to pushable_ta=
-sks list =EF=BC=88see the enqueue_task_rt()=EF=BC=89and this push_rt_ta=
-sk() need to push other tasks when rt.overloaded.
->=20
-> If rq has already had 2 or more pushable tasks and we try to add a pi=
-nned task then call of push_rt_task will just waste a time.
->=20
+Thanks, but I have one minor nit.
 
-Correct, I just have some minor comments about the patch.
+> 
+> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+> CC: Steven Rostedt <rostedt@goodmis.org>
+> CC: Ingo Molnar <mingo@kernel.org>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: linux-rt-users <linux-rt-users@vger.kernel.org>
+> ---
+>  kernel/sched/rt.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+> index 4e8f0f4..5f7d92b 100644
+> --- a/kernel/sched/rt.c
+> +++ b/kernel/sched/rt.c
+> @@ -1925,9 +1925,9 @@ static void switched_to_rt(struct rq *rq, struct task_struct *p)
+>  	 */
+>  	if (p->on_rq && rq->curr != p) {
+>  #ifdef CONFIG_SMP
+> -		if (rq->rt.overloaded && push_rt_task(rq) &&
+> +		if (rq->rt.overloaded && p->nr_cpus_allowed > 1 &&
+
+I would swap the order here. That is, check p->nr_cpus_allowed before
+rq->rt.overloaded. The order doesn't really matter, and even though
+rq->rt.overloaded is probably more likely to be 0, it is used by other
+CPUs. And as a micro-optimization, I rather read something that is used
+by only one CPU than to read something that may be modified by many
+CPUs.
 
 -- Steve
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>  		    /* Don't resched if we changed runqueues */
+> -		    rq != task_rq(p))
+> +		    push_rt_task(rq) && rq != task_rq(p))
+>  			check_resched = 0;
+>  #endif /* CONFIG_SMP */
+>  		if (check_resched && p->prio < rq->curr->prio)
