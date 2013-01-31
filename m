@@ -1,9 +1,9 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] sched/rt: Decrease number of calls of push_rt_task() in
- push_rt_tasks()
-Date: Thu, 31 Jan 2013 11:08:10 -0500
-Message-ID: <1359648490.17639.107.camel@gandalf.local.home>
-References: <2016751359330408@web20f.yandex.ru>
+Subject: Re: [PATCH]sched/rt: Simplify pick_rt_task: remove next_prio()
+ inheritance
+Date: Thu, 31 Jan 2013 11:12:01 -0500
+Message-ID: <1359648721.17639.108.camel@gandalf.local.home>
+References: <70871359644177@web16d.yandex.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -13,46 +13,43 @@ Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Kirill Tkhai <tkhai@yandex.ru>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2016751359330408@web20f.yandex.ru>
+In-Reply-To: <70871359644177@web16d.yandex.ru>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2013-01-28 at 03:46 +0400, Kirill Tkhai wrote:
-> The patch aims to decrease the number of calls of push_rt_task()
-> in push_rt_tasks().
+On Thu, 2013-01-31 at 18:56 +0400, Kirill Tkhai wrote:
+> Function next_prio() has been removed and pull_rt_task() is the only
+> user of pick_next_highest_task_rt() at the moment.
 > 
-> It's not necessary to push more than 'num_online_cpus() - 1' tasks.
-> If just pushed task doesn't leave its new CPU during our local call
-> of push_rt_tasks() than we won't push another task to the CPU.
-> If it leave or change priority than it will pull new task by itself.
+> pull_rt_task is not interested in p->nr_cpus_allowed, its only interest
+> is the fact that cpu is allowed to execute p. If nr_cpus_allowed == 1,
+> cpu != task_cpu(p) and cpu is allowed then it means that task p is in
+> the middle of the migration techniques; the task waits until it is moved
+> by migration thread. So, lets pull it earlier.
+> 
+> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
 
-I'm curious. Have you hit situations where this was an issue? Or was
-this just discovered by code review?
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
 
 -- Steve
 
-> 
-> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
-> CC: Steven Rostedt <rostedt@goodmis.org>
 > CC: Ingo Molnar <mingo@kernel.org>
 > CC: Peter Zijlstra <peterz@infradead.org>
 > CC: linux-rt-users <linux-rt-users@vger.kernel.org>
 > ---
->  kernel/sched/rt.c |    4 +++-
->  1 file changed, 3 insertions(+), 1 deletion(-)
+>  kernel/sched/rt.c |    3 +--
+>  1 files changed, 1 insertions(+), 2 deletions(-)
 > diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> index 4e8f0f4..edf046d 100644
+> index 4e8f0f4..9aa2921 100644
 > --- a/kernel/sched/rt.c
 > +++ b/kernel/sched/rt.c
-> @@ -1703,8 +1703,10 @@ out:
->  
->  static void push_rt_tasks(struct rq *rq)
+> @@ -1427,8 +1427,7 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
+>  static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
 >  {
-> +	int num_cpus = num_online_cpus() - 1;
-> +
->  	/* push_rt_task will return true if it moved an RT */
-> -	while (push_rt_task(rq))
-> +	while (push_rt_task(rq) && --num_cpus > 0)
->  		;
+>  	if (!task_running(rq, p) &&
+> -	    (cpu < 0 || cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) &&
+> -	    (p->nr_cpus_allowed > 1))
+> +	    cpumask_test_cpu(cpu, tsk_cpus_allowed(p)))
+>  		return 1;
+>  	return 0;
 >  }
->  
