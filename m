@@ -1,82 +1,104 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
-Date: Fri, 01 Feb 2013 06:51:27 -0500
-Message-ID: <1359719487.5642.18.camel@gandalf.local.home>
-References: <20130123214514.370647954@linux.com>
-	 <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
-	 <CAOJsxLH6BO_m+6Ys0AG8gHQzmoDovdA8kaAecUhcP5foXoEXUA@mail.gmail.com>
+From: Ben Hutchings <ben@decadent.org.uk>
+Subject: Re: [PATCH] x86: Use enum instead of literals for trap values
+Date: Fri, 01 Feb 2013 18:18:36 +0100
+Message-ID: <1359739116.31386.64.camel@deadeye.wl.decadent.org.uk>
+References: <1358894672-10914-1-git-send-email-jkacur@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Christoph Lameter <cl@linux.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@gmail.com>,
-	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
-	Joonsoo Kim <js1304@gmail.com>,
-	Glauber Costa <glommer@parallels.com>, linux-mm@kvack.org,
-	David Rientjes <rientjes@google.com>, elezegarcia@gmail.com
-To: Pekka Enberg <penberg@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6277 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754848Ab3BALva (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Feb 2013 06:51:30 -0500
-In-Reply-To: <CAOJsxLH6BO_m+6Ys0AG8gHQzmoDovdA8kaAecUhcP5foXoEXUA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-On Fri, 2013-02-01 at 12:23 +0200, Pekka Enberg wrote:
-> On Wed, Jan 23, 2013 at 11:45 PM, Christoph Lameter <cl@linux.com> wrote:
-> > The variables accessed in slab_alloc are volatile and therefore
-> > the page pointer passed to node_match can be NULL. The processing
-> > of data in slab_alloc is tentative until either the cmpxhchg
-> > succeeds or the __slab_alloc slowpath is invoked. Both are
-> > able to perform the same allocation from the freelist.
-> >
-> > Check for the NULL pointer in node_match.
-> >
-> > A false positive will lead to a retry of the loop in __slab_alloc.
-> >
-> > Signed-off-by: Christoph Lameter <cl@linux.com>
-> 
-> Steven, how did you trigger the problem - i.e. is this -rt only
-> problem? Does the patch work for you?
-
-I haven't tested Christoph's version yet. I've only tested my own. But
-I'll take his and run them through tests as well. This bug is not easy
-to hit.
-
-It is not a -rt only bug, and yes it probably should go to stable. The
-race is extremely small, but -rt creates scenarios that may only be hit
-by 1000 CPU core machines. Because of the preemptive nature of -rt, -rt
-is much more susceptible to race conditions than mainline. But these are
-real bugs for mainline too. It may only trigger once a year, where in
--rt it will trigger once a week.
-
--- Steve
-
-> 
-> > Index: linux/mm/slub.c
-> > ===================================================================
-> > --- linux.orig/mm/slub.c        2013-01-18 08:47:29.198954250 -0600
-> > +++ linux/mm/slub.c     2013-01-18 08:47:40.579126371 -0600
-> > @@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache
-> >  static inline int node_match(struct page *page, int node)
-> >  {
-> >  #ifdef CONFIG_NUMA
-> > -       if (node != NUMA_NO_NODE && page_to_nid(page) != node)
-> > +       if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
-> >                 return 0;
-> >  #endif
-> >         return 1;
-> >
-> > --
-> > To unsubscribe, send a message with 'unsubscribe linux-mm' in
-> > the body to majordomo@kvack.org.  For more info on Linux MM,
-> > see: http://www.linux-mm.org/ .
-> > Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-nqCYNiv+MAaZYXjNYDk+"
+Cc: stable@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Kees Cook <keescook@chromium.org>,
+	"H. Peter Anvin" <hpa@zytor.com>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <1358894672-10914-1-git-send-email-jkacur@redhat.com>
+Sender: stable-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
+--=-nqCYNiv+MAaZYXjNYDk+
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, 2013-01-22 at 23:44 +0100, John Kacur wrote:
+> From: Kees Cook <keescook@chromium.org>
+>=20
+> commit c94082656dac74257f63e91f78d5d458ac781fa5 upstream
+>=20
+> The traps are referred to by their numbers and it can be difficult to
+> understand them while reading the code without context. This patch adds
+> enumeration of the trap numbers and replaces the numbers with the correct
+> enum for x86.
+>=20
+> Signed-off-by: Kees Cook <keescook@chromium.org>
+> Link: http://lkml.kernel.org/r/20120310000710.GA32667@www.outflux.net
+> Signed-off-by: H. Peter Anvin <hpa@zytor.com>
+> Cherry-picked-for: v2.3.37
+>=20
+> This fixes the following build error
+> make O=3D/bld/v3.2.37
+> make[2]: Nothing to be done for `relocs'.
+>   Using /home/jkacur/linux-rt as source for kernel
+>   GEN     /bld/v3.2.37/Makefile
+>   CHK     include/linux/version.h
+>   CHK     include/generated/utsrelease.h
+>   CALL    /home/jkacur/linux-rt/scripts/checksyscalls.sh
+>   CHK     include/generated/compile.h
+>   CHK     kernel/config_data.h
+>   CC [M]  drivers/misc/sgi-xp/xpc_main.o
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c: In function =E2=80=
+=98xpc_system_die=E2=80=99:
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: =E2=80=
+=98X86_TRAP_DF=E2=80=99 undeclared (first use in this function)
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: (Each u=
+ndeclared identifier is reported only once
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: for eac=
+h function it appears in.)
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1211: error: =E2=80=
+=98X86_TRAP_MF=E2=80=99 undeclared (first use in this function)
+> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1212: error: =E2=80=
+=98X86_TRAP_XF=E2=80=99 undeclared (first use in this function)
+> make[4]: *** [drivers/misc/sgi-xp/xpc_main.o] Error 1
+> make[3]: *** [drivers/misc/sgi-xp] Error 2
+> make[2]: *** [drivers/misc] Error 2
+> make[1]: *** [drivers] Error 2
+> make: *** [sub-make] Error 2
+[...]
+
+Queued up for 3.2, thanks.  I've also added X86_UV and SGI_XP to the
+x86 .config I build.
+
+Ben.
+
+--=20
+Ben Hutchings
+Everything should be made as simple as possible, but not simpler.
+                                                           - Albert Einstei=
+n
+
+--=-nqCYNiv+MAaZYXjNYDk+
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIVAwUAUQv47Oe/yOyVhhEJAQrTyg//dI36HnJLhvOfh/171dMGqgFkJ1P91SYW
+vzkgpV1yIrObTw9rBi4Yvo9Rglz80G8C4Mi+4ZdI60aKWcsggmnW/5luZ7zIjhRE
+AXMLBRYNfXvR/MMosdefPVln4uUkZ3hxInfS2zOqbbwYj8PQIlreeaGfpIbx2trJ
+DJA7jhMWlhsE6sULlttObXlPiKaguH/AupP4rC+nBL0pkLRUXNapbL4oIrk9KydP
+hBkHXVSyxHS6X3cGabLhPSF0AUoQTFq1OAo+vCJg1vcHPgHLJJxUvYSq5HhTKfTu
+v+T92JABaDbEWo8z1XmNY0koAyJhRUr2rEnG0UYSP3oyWJUrw4w9mn3OAiK14bZA
+RKy/sxH/k9LsDsdeksqqv5ddre2T8mTCpPKUCbHxOPjIbeIWbVD4MS7gSrS9KN7h
+Y1EbyCfnbmvSC9JM/BzBzKWcx/upKtKgPUDSFXjGya7SKOGVXK3izB4ofuDQsreL
+ZOAkVj/ukqUM1j41p4rjEuVEuRpHoO97OB1SRud0W2RUieJVG6zVcamp+Cb17feV
+6IIo5lpOX68wP8VRVYLHrrZ8pIg9BC5lxDtw1Lj2jWradM1hj2aF+PrZTXHMq7l5
+tcfAmStkxLQ/xWNgoFNSTaTWtIPv21m772UzkxJSeN5Jh077VEG5PCDTKbXi0lH4
+Rsp8/oNlfvc=
+=NaqN
+-----END PGP SIGNATURE-----
+
+--=-nqCYNiv+MAaZYXjNYDk+--
