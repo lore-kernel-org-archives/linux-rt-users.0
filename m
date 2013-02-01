@@ -1,104 +1,145 @@
-From: Ben Hutchings <ben@decadent.org.uk>
-Subject: Re: [PATCH] x86: Use enum instead of literals for trap values
-Date: Fri, 01 Feb 2013 18:18:36 +0100
-Message-ID: <1359739116.31386.64.camel@deadeye.wl.decadent.org.uk>
-References: <1358894672-10914-1-git-send-email-jkacur@redhat.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH] [PREEMPT_RT] make pagefault_{disable,enable}() back into
+ static inlines
+Date: Fri, 1 Feb 2013 17:06:56 -0600
+Message-ID: <20130201170656.75c0ce3c@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-nqCYNiv+MAaZYXjNYDk+"
-Cc: stable@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>,
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/GcB7YkkRro/k7IwNWseJEd9"; protocol="application/pgp-signature"
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Kees Cook <keescook@chromium.org>,
-	"H. Peter Anvin" <hpa@zytor.com>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <1358894672-10914-1-git-send-email-jkacur@redhat.com>
-Sender: stable-owner@vger.kernel.org
+	RT <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
---=-nqCYNiv+MAaZYXjNYDk+
-Content-Type: text/plain; charset="UTF-8"
+--Sig_/GcB7YkkRro/k7IwNWseJEd9
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, 2013-01-22 at 23:44 +0100, John Kacur wrote:
-> From: Kees Cook <keescook@chromium.org>
->=20
-> commit c94082656dac74257f63e91f78d5d458ac781fa5 upstream
->=20
-> The traps are referred to by their numbers and it can be difficult to
-> understand them while reading the code without context. This patch adds
-> enumeration of the trap numbers and replaces the numbers with the correct
-> enum for x86.
->=20
-> Signed-off-by: Kees Cook <keescook@chromium.org>
-> Link: http://lkml.kernel.org/r/20120310000710.GA32667@www.outflux.net
-> Signed-off-by: H. Peter Anvin <hpa@zytor.com>
-> Cherry-picked-for: v2.3.37
->=20
-> This fixes the following build error
-> make O=3D/bld/v3.2.37
-> make[2]: Nothing to be done for `relocs'.
->   Using /home/jkacur/linux-rt as source for kernel
->   GEN     /bld/v3.2.37/Makefile
->   CHK     include/linux/version.h
->   CHK     include/generated/utsrelease.h
->   CALL    /home/jkacur/linux-rt/scripts/checksyscalls.sh
->   CHK     include/generated/compile.h
->   CHK     kernel/config_data.h
->   CC [M]  drivers/misc/sgi-xp/xpc_main.o
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c: In function =E2=80=
-=98xpc_system_die=E2=80=99:
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: =E2=80=
-=98X86_TRAP_DF=E2=80=99 undeclared (first use in this function)
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: (Each u=
-ndeclared identifier is reported only once
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1208: error: for eac=
-h function it appears in.)
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1211: error: =E2=80=
-=98X86_TRAP_MF=E2=80=99 undeclared (first use in this function)
-> /home/jkacur/linux-rt/drivers/misc/sgi-xp/xpc_main.c:1212: error: =E2=80=
-=98X86_TRAP_XF=E2=80=99 undeclared (first use in this function)
-> make[4]: *** [drivers/misc/sgi-xp/xpc_main.o] Error 1
-> make[3]: *** [drivers/misc/sgi-xp] Error 2
-> make[2]: *** [drivers/misc] Error 2
-> make[1]: *** [drivers] Error 2
-> make: *** [sub-make] Error 2
-[...]
+Thomas,
 
-Queued up for 3.2, thanks.  I've also added X86_UV and SGI_XP to the
-x86 .config I build.
+The PREEMPT_RT behavior of moving pagefault_disable() and
+pagefault_enable() into mm/memory.c as EXPORT_SYMBOL_GPL symbols breaks
+compilation of a third-party driver that builds fine on a stock kernel.
+Yes, I know, I know, it's a binary driver, but my problem is that it
+already compiles and works on a stock kernel; the compile breaks only
+on a PREEMPT_RT kernel. The driver doesn't use the fault routines
+directly but the symbols get pulled in due to references in
+include/linux/io-memory.h.
 
-Ben.
+One way to "fix" it would be to change the definitions to EXPORT_SYMBOL,
+but what I wondered is if we should move them back into uaccess.h as
+static inlines (like the upstream versions). I've done that in the
+attached patch and it seems to work fine. What I'm not sure of are the
+performance implications of calling migrate_{disable,enable} from a
+static inline.=20
 
+Thoughts?
+
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ include/linux/uaccess.h | 25 +++++++++++++++++++++++--
+ mm/memory.c             | 26 --------------------------
+ 2 files changed, 23 insertions(+), 28 deletions(-)
+
+diff --git a/include/linux/uaccess.h b/include/linux/uaccess.h
+index 44b3751..f2f6c08 100644
+--- a/include/linux/uaccess.h
++++ b/include/linux/uaccess.h
+@@ -4,6 +4,8 @@
+ #include <linux/preempt.h>
+ #include <asm/uaccess.h>
+=20
++#include <linux/sched.h>
++
+ /*
+  * These routines enable/disable the pagefault handler in that
+  * it will not take any MM locks and go straight to the fixup table.
+@@ -33,8 +35,27 @@ static inline void pagefault_enable(void)
+ 	raw_pagefault_enable();
+ }
+ #else
+-extern void pagefault_disable(void);
+-extern void pagefault_enable(void);
++static inline void pagefault_disable(void)
++{
++	migrate_disable();
++	current->pagefault_disabled++;
++	/*
++	 * make sure to have issued the store before a pagefault
++	 * can hit.
++	 */
++	barrier();
++}
++
++static inline void pagefault_enable(void)
++{
++	/*
++	 * make sure to issue those last loads/stores before enabling
++	 * the pagefault handler again.
++	 */
++	barrier();
++	current->pagefault_disabled--;
++	migrate_enable();
++}
+ #endif
+=20
+ #ifndef ARCH_HAS_NOCACHE_UACCESS
+diff --git a/mm/memory.c b/mm/memory.c
+index 66f0ca8..6140eb8 100644
+--- a/mm/memory.c
++++ b/mm/memory.c
+@@ -3484,32 +3484,6 @@ unlock:
+ 	return 0;
+ }
+=20
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-void pagefault_disable(void)
+-{
+-	migrate_disable();
+-	current->pagefault_disabled++;
+-	/*
+-	 * make sure to have issued the store before a pagefault
+-	 * can hit.
+-	 */
+-	barrier();
+-}
+-EXPORT_SYMBOL_GPL(pagefault_disable);
+-
+-void pagefault_enable(void)
+-{
+-	/*
+-	 * make sure to issue those last loads/stores before enabling
+-	 * the pagefault handler again.
+-	 */
+-	barrier();
+-	current->pagefault_disabled--;
+-	migrate_enable();
+-}
+-EXPORT_SYMBOL_GPL(pagefault_enable);
+-#endif
+-
+ /*
+  * By the time we get here, we already hold the mm semaphore
+  */
 --=20
-Ben Hutchings
-Everything should be made as simple as possible, but not simpler.
-                                                           - Albert Einstei=
-n
+1.7.11.7
 
---=-nqCYNiv+MAaZYXjNYDk+
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
+
+--Sig_/GcB7YkkRro/k7IwNWseJEd9
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
+Version: GnuPG v2.0.19 (GNU/Linux)
 
-iQIVAwUAUQv47Oe/yOyVhhEJAQrTyg//dI36HnJLhvOfh/171dMGqgFkJ1P91SYW
-vzkgpV1yIrObTw9rBi4Yvo9Rglz80G8C4Mi+4ZdI60aKWcsggmnW/5luZ7zIjhRE
-AXMLBRYNfXvR/MMosdefPVln4uUkZ3hxInfS2zOqbbwYj8PQIlreeaGfpIbx2trJ
-DJA7jhMWlhsE6sULlttObXlPiKaguH/AupP4rC+nBL0pkLRUXNapbL4oIrk9KydP
-hBkHXVSyxHS6X3cGabLhPSF0AUoQTFq1OAo+vCJg1vcHPgHLJJxUvYSq5HhTKfTu
-v+T92JABaDbEWo8z1XmNY0koAyJhRUr2rEnG0UYSP3oyWJUrw4w9mn3OAiK14bZA
-RKy/sxH/k9LsDsdeksqqv5ddre2T8mTCpPKUCbHxOPjIbeIWbVD4MS7gSrS9KN7h
-Y1EbyCfnbmvSC9JM/BzBzKWcx/upKtKgPUDSFXjGya7SKOGVXK3izB4ofuDQsreL
-ZOAkVj/ukqUM1j41p4rjEuVEuRpHoO97OB1SRud0W2RUieJVG6zVcamp+Cb17feV
-6IIo5lpOX68wP8VRVYLHrrZ8pIg9BC5lxDtw1Lj2jWradM1hj2aF+PrZTXHMq7l5
-tcfAmStkxLQ/xWNgoFNSTaTWtIPv21m772UzkxJSeN5Jh077VEG5PCDTKbXi0lH4
-Rsp8/oNlfvc=
-=NaqN
+iEYEARECAAYFAlEMSpkACgkQHyuj/+TTEp20xgCgoCvUAbTqn+yC3njKxkTBpTBu
+3x4AnibtJAgso1lgxfHn3PwVnYz1xseZ
+=ATzR
 -----END PGP SIGNATURE-----
 
---=-nqCYNiv+MAaZYXjNYDk+--
+--Sig_/GcB7YkkRro/k7IwNWseJEd9--
