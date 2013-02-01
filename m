@@ -1,71 +1,65 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
-Subject: Re: [PATCH] sched/rt: Decrease number of calls of push_rt_task() in push_rt_tasks()
-Date: Fri, 01 Feb 2013 01:57:54 +0400
-Message-ID: <313901359669474@web15h.yandex.ru>
-References: <2016751359330408@web20f.yandex.ru> <1359648490.17639.107.camel@gandalf.local.home>
+From: Pekka Enberg <penberg@kernel.org>
+Subject: Re: FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Date: Fri, 1 Feb 2013 12:23:05 +0200
+Message-ID: <CAOJsxLH6BO_m+6Ys0AG8gHQzmoDovdA8kaAecUhcP5foXoEXUA@mail.gmail.com>
+References: <20130123214514.370647954@linux.com>
+	<0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1359648490.17639.107.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@gmail.com>,
+	"Luis Claudio R. Goncalves" <lgoncalv@redhat.com>,
+	Joonsoo Kim <js1304@gmail.com>,
+	Glauber Costa <glommer@parallels.com>, linux-mm@kvack.org,
+	David Rientjes <rientjes@google.com>, elezegarcia@gmail.com
+To: Christoph Lameter <cl@linux.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-we0-f180.google.com ([74.125.82.180]:37976 "EHLO
+	mail-we0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755681Ab3BAKXI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 1 Feb 2013 05:23:08 -0500
+Received: by mail-we0-f180.google.com with SMTP id k14so2745617wer.39
+        for <linux-rt-users@vger.kernel.org>; Fri, 01 Feb 2013 02:23:06 -0800 (PST)
+In-Reply-To: <0000013c695fbd30-9023bc55-f780-4d44-965f-ab4507e483d5-000000@email.amazonses.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-31.01.2013, 20:08, "Steven Rostedt" <rostedt@goodmis.org>:
-> On Mon, 2013-01-28 at 03:46 +0400, Kirill Tkhai wrote:
+On Wed, Jan 23, 2013 at 11:45 PM, Christoph Lameter <cl@linux.com> wrote:
+> The variables accessed in slab_alloc are volatile and therefore
+> the page pointer passed to node_match can be NULL. The processing
+> of data in slab_alloc is tentative until either the cmpxhchg
+> succeeds or the __slab_alloc slowpath is invoked. Both are
+> able to perform the same allocation from the freelist.
 >
->> =9AThe patch aims to decrease the number of calls of push_rt_task()
->> =9Ain push_rt_tasks().
->>
->> =9AIt's not necessary to push more than 'num_online_cpus() - 1' task=
-s.
->> =9AIf just pushed task doesn't leave its new CPU during our local ca=
-ll
->> =9Aof push_rt_tasks() than we won't push another task to the CPU.
->> =9AIf it leave or change priority than it will pull new task by itse=
-lf.
+> Check for the NULL pointer in node_match.
 >
-> I'm curious. Have you hit situations where this was an issue? Or was
-> this just discovered by code review?
-
-No, I did't hit this situation. It's impossible to hook every situation=
-=2E
-
-Thanks for your explanation.
-
-Kirill
-
+> A false positive will lead to a retry of the loop in __slab_alloc.
 >
-> -- Steve
+> Signed-off-by: Christoph Lameter <cl@linux.com>
+
+Steven, how did you trigger the problem - i.e. is this -rt only
+problem? Does the patch work for you?
+
+> Index: linux/mm/slub.c
+> ===================================================================
+> --- linux.orig/mm/slub.c        2013-01-18 08:47:29.198954250 -0600
+> +++ linux/mm/slub.c     2013-01-18 08:47:40.579126371 -0600
+> @@ -2041,7 +2041,7 @@ static void flush_all(struct kmem_cache
+>  static inline int node_match(struct page *page, int node)
+>  {
+>  #ifdef CONFIG_NUMA
+> -       if (node != NUMA_NO_NODE && page_to_nid(page) != node)
+> +       if (!page || (node != NUMA_NO_NODE && page_to_nid(page) != node))
+>                 return 0;
+>  #endif
+>         return 1;
 >
->> =9ASigned-off-by: Kirill V Tkhai <tkhai@yandex.ru>
->> =9ACC: Steven Rostedt <rostedt@goodmis.org>
->> =9ACC: Ingo Molnar <mingo@kernel.org>
->> =9ACC: Peter Zijlstra <peterz@infradead.org>
->> =9ACC: linux-rt-users <linux-rt-users@vger.kernel.org>
->> =9A---
->> =9A=9Akernel/sched/rt.c | =9A=9A=9A4 +++-
->> =9A=9A1 file changed, 3 insertions(+), 1 deletion(-)
->> =9Adiff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
->> =9Aindex 4e8f0f4..edf046d 100644
->> =9A--- a/kernel/sched/rt.c
->> =9A+++ b/kernel/sched/rt.c
->> =9A@@ -1703,8 +1703,10 @@ out:
->>
->> =9A=9Astatic void push_rt_tasks(struct rq *rq)
->> =9A=9A{
->> =9A+ int num_cpus =3D num_online_cpus() - 1;
->> =9A+
->> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A/* push_rt_task will return true if it=
- moved an RT */
->> =9A- while (push_rt_task(rq))
->> =9A+ while (push_rt_task(rq) && --num_cpus > 0)
->> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A;
->> =9A=9A}
+> --
+> To unsubscribe, send a message with 'unsubscribe linux-mm' in
+> the body to majordomo@kvack.org.  For more info on Linux MM,
+> see: http://www.linux-mm.org/ .
+> Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
