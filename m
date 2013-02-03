@@ -1,50 +1,69 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: rt patch for kernel v3.7.5
-Date: Sun, 3 Feb 2013 08:35:44 -0500
-Message-ID: <CAOcfFMz+vxm5EoKCGNiDZJuVmDEtkHQ4DX6TTM3ciDOjyPvi=w@mail.gmail.com>
-References: <1359861287.43330.YahooMailNeo@web190604.mail.sg3.yahoo.com>
+From: tip-bot for Kirill Tkhai <tkhai@yandex.ru>
+Subject: [tip:sched/core] sched/rt: Further simplify pick_rt_task()
+Date: Sun, 3 Feb 2013 11:30:47 -0800
+Message-ID: <tip-60334caf37dc7c59120b21faa625534a6fffead0@git.kernel.org>
+References: <70871359644177@web16d.yandex.ru>
+Reply-To: mingo@kernel.org, hpa@zytor.com, linux-kernel@vger.kernel.org,
+	  rostedt@goodmis.org, peterz@infradead.org, tkhai@yandex.ru,
+	  tglx@linutronix.de, linux-rt-users@vger.kernel.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Kks Kbase <kks.kbase@yahoo.in>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Cc: linux-kernel@vger.kernel.org, hpa@zytor.com, mingo@kernel.org,
+	peterz@infradead.org, linux-rt-users@vger.kernel.org,
+	rostedt@goodmis.org, tkhai@yandex.ru, tglx@linutronix.de
+To: linux-tip-commits@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f169.google.com ([209.85.214.169]:43921 "EHLO
-	mail-ob0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752258Ab3BCNfp (ORCPT
+Received: from terminus.zytor.com ([198.137.202.10]:50906 "EHLO
+	terminus.zytor.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753431Ab3BCTb0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 3 Feb 2013 08:35:45 -0500
-Received: by mail-ob0-f169.google.com with SMTP id ta14so5602811obb.14
-        for <linux-rt-users@vger.kernel.org>; Sun, 03 Feb 2013 05:35:45 -0800 (PST)
-In-Reply-To: <1359861287.43330.YahooMailNeo@web190604.mail.sg3.yahoo.com>
+	Sun, 3 Feb 2013 14:31:26 -0500
+In-Reply-To: <70871359644177@web16d.yandex.ru>
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> Hi,
+Commit-ID:  60334caf37dc7c59120b21faa625534a6fffead0
+Gitweb:     http://git.kernel.org/tip/60334caf37dc7c59120b21faa625534a6fffead0
+Author:     Kirill Tkhai <tkhai@yandex.ru>
+AuthorDate: Thu, 31 Jan 2013 18:56:17 +0400
+Committer:  Ingo Molnar <mingo@kernel.org>
+CommitDate: Sun, 3 Feb 2013 19:54:58 +0100
 
-Hi ;)
+sched/rt: Further simplify pick_rt_task()
 
-> I noticed there is stable version of latest kernel v3.7.5 and I need rt patch for this kernel version to build kernel.
->
-> But I couldn't find it on rt projects patch download page.
->
-> Can I have patch for it?
+Function next_prio() has been removed and pull_rt_task() is the
+only user of pick_next_highest_task_rt() at the moment.
 
-The reason you cannot find an -rt patch for 3.7.5 is because it does
-not exist. Linux-rt does not explicitly follow upstream releases of
-the linux kernel... Generally, it tends to 'jump' every couple of
-upstream releases . For example; we have 3.0-rt, 3.2-rt, 3.4-rt and
-3.6-rt... There is no -rt releases in between these.
+pull_rt_task is not interested in p->nr_cpus_allowed, its only
+interest is the fact that cpu is allowed to execute p. If
+nr_cpus_allowed == 1, cpu != task_cpu(p) and cpu is allowed then
+it means that task p is in the middle of the migration
+techniques; the task waits until it is moved by migration
+thread. So, lets pull it earlier.
 
-I'm not an rt-developer, so one of them can correct me if i am wrong,
-but i do not believe that there will be an 3.7-rt release...
+Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+CC: linux-rt-users <linux-rt-users@vger.kernel.org>
+Link: http://lkml.kernel.org/r/70871359644177@web16d.yandex.ru
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
+---
+ kernel/sched/rt.c | 3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-I can only assume 3.8-rt will be next. (although personally, i am
-waiting to see, and hope that it will be based on 3.9 since there is a
-feature in there, that i am looking forward to using with -rt patch).
-
-if there happens to be some feature that you need from 3.7.5 - you
-will likely need to wait until the next -rt series is released.
-
-cheerz
-
-Jordan
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 94abca4..c25de14 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1427,8 +1427,7 @@ static void put_prev_task_rt(struct rq *rq, struct task_struct *p)
+ static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
+ {
+ 	if (!task_running(rq, p) &&
+-	    (cpu < 0 || cpumask_test_cpu(cpu, tsk_cpus_allowed(p))) &&
+-	    (p->nr_cpus_allowed > 1))
++	    cpumask_test_cpu(cpu, tsk_cpus_allowed(p)))
+ 		return 1;
+ 	return 0;
+ }
