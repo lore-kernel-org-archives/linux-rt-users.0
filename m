@@ -1,40 +1,142 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH-v3] tty: Use raw spin lock to protect the TTY read
- section
-Date: Mon, 4 Feb 2013 16:33:33 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1302041616030.11905@ionos>
-References: <CAMSQXEFFYqEZcJr5ig7fHgNd6Vfqh6GFZ_Md5OG=iRpDPWpTUw@mail.gmail.com> <1359376321-27274-1-git-send-email-meltedpianoman@gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [ANNOUNCE] 3.6.11-rt26
+Date: Mon, 4 Feb 2013 09:54:38 -0600
+Message-ID: <20130204095438.41376edb@riff.lan>
+References: <alpine.LFD.2.02.1302041537230.11905@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-serial@vger.kernel.org, RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Greg KH <gregkh@linuxfoundation.org>
-To: Ivo Sieben <meltedpianoman@gmail.com>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/TlsHmUhMCMHG4=vpMA2pW4g"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44429 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752229Ab3BDPdg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Feb 2013 10:33:36 -0500
-In-Reply-To: <1359376321-27274-1-git-send-email-meltedpianoman@gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:57177 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754435Ab3BDPyt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 4 Feb 2013 10:54:49 -0500
+In-Reply-To: <alpine.LFD.2.02.1302041537230.11905@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 28 Jan 2013, Ivo Sieben wrote:
-> @Thomas Gleixner & Steven Rostedt:
-> Greg Kroah-Hartman responded to this patch: "And this really makes a
-> difference? I'd like to hear the rt developers opinion of this."
+--Sig_/TlsHmUhMCMHG4=vpMA2pW4g
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-In general the sleeping spinlocks overhead can be quite visible and
-AFAICT the ntty read_lock only protects very short code pathes which
-manipulate the read buffer and related data. So from an RT perspective
-this lock can be a real spinlock even on RT.
+On Mon, 4 Feb 2013 15:58:26 +0100 (CET)
+Thomas Gleixner <tglx@linutronix.de> wrote:
 
-Reviewed-by: Thomas Gleixner <tglx@linutronix.de>
+> Dear RT Folks,
+>=20
+> I'm pleased to announce the 3.6.11-rt26 release.
+>=20
+> Changes since 3.6.11-rt25:
+>=20
+>    1) Fix the RT highmem implementation on x86
+>=20
+>    2) Support highmem + RT on ARM
+>=20
+>    3) Fix an one off error in the generic highmem code (upstream fix
+>       did not make it into 3.6.stable)
+>=20
+>    4) Upstream SLUB fixes (Christoph Lameter)
+>=20
+>    5) Fix a few RT issues in mmc and amba drivers
+>=20
+>    6) Initialize local locks in mm/swap.c early
+>=20
+>    7) Use simple wait queues for completions. This is a performance
+>       improvement.
+>=20
+>       Completions do not have complex callbacks and the wakeup path is
+>       disabling interrupts anyway. So using simple wait locks with the
+>       raw spinlock is not a latency problem, but the "sleeping lock"
+>       in the normal waitqueue is a source for lock bouncing:
+>=20
+>       T1  	 	   T2
+>       lock(WQ)
+>       wakeup(T2)
+>       ---> preemption
+> 			   lock(WQ)
+> 			   pi_boost(T1)
+> 			   wait_for_lock(WQ)
+>       unlock(WQ)
+>       deboost(T1)
+>       ---> preemption
+> 			   ....
+>=20
+>       The simple waitqueue reduces this to:
+> 		  =20
+>       T1  	 	   T2
+>       raw_lock(WQ)
+>       wakeup(T2)
+>       raw_unlock(WQ)
+>       ---> preemption
+> 			   raw_lock(WQ)=09
+> 			   ....
+>=20
+> @Steven: Sorry, I forgot the stable tags on:
+> 	 drivers-tty-pl011-irq-disable-madness.patch
+> 	 mmci-remove-bogus-irq-save.patch
+> 	 idle-state.patch
+> 	 might-sleep-check-for-idle.patch
+> 	 mm-swap-fix-initialization.patch
+>=20
+> I'm still digging through my mail backlog, so I have not yet decided
+> whether this is the last RT release for 3.6.
+>=20
+>=20
+> The delta patch against 3.6.11-rt25 is appended below and can be found
+> here:
+>=20
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.1=
+1-rt25-rt26.patch.xz
+>=20
+> The RT patch against 3.6.11 can be found here:
+>=20
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11-rt2=
+6.patch.xz
+>=20
+> The split quilt queue is available at:
+>=20
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.11-r=
+t26.tar.xz
+>=20
+> Enjoy,
+>=20
+> 	tglx
+>=20
 
-Thanks,
 
-	tglx
+Thomas,
+
+I needed this change to build:
+
+diff --git a/include/linux/uprobes.h b/include/linux/uprobes.h
+index efe4b33..3d5231f 100644
+--- a/include/linux/uprobes.h
++++ b/include/linux/uprobes.h
+@@ -26,6 +26,7 @@
+=20
+ #include <linux/errno.h>
+ #include <linux/rbtree.h>
++#include <linux/wait.h>
+=20
+ struct vm_area_struct;
+ struct mm_struct;
 
 
+Clark
 
+--Sig_/TlsHmUhMCMHG4=vpMA2pW4g
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iEYEARECAAYFAlEP2b4ACgkQHyuj/+TTEp3f1ACfXFb5W0JcqOZSB8XPC9MGsX2h
+TGsAnRxAQQB6yrvNDcKA+RD3AJ7cEqGg
+=g+uT
+-----END PGP SIGNATURE-----
+
+--Sig_/TlsHmUhMCMHG4=vpMA2pW4g--
