@@ -1,26 +1,41 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.6.11-rt26
-Date: Mon, 4 Feb 2013 18:16:03 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1302041812460.11905@ionos>
-References: <alpine.LFD.2.02.1302041537230.11905@ionos> <20130204095438.41376edb@riff.lan> <20130204105900.63bd5fae@riff.lan>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH next] OF: convert devtree lock from rw_lock to raw
+ spinlock
+Date: Mon, 04 Feb 2013 12:54:50 -0500 (EST)
+Message-ID: <20130204.125450.2011131720910598109.davem@davemloft.net>
+References: <1359993921-18145-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: rob.herring@calxeda.com, grant.likely@secretlab.ca,
+	sam@ravnborg.org, devicetree-discuss@lists.ozlabs.org,
+	linux-kernel@vger.kernel.org, sparclinux@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, tglx@linutronix.de
+To: paul.gortmaker@windriver.com
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130204105900.63bd5fae@riff.lan>
+In-Reply-To: <1359993921-18145-1-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 4 Feb 2013, Clark Williams wrote:
-> More changes; I was running into a collision with the name kmap_prot.
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Date: Mon,  4 Feb 2013 11:05:21 -0500
 
-Bah. I knew that I should have decided that today is still part of the
-weekend.
+> From: Thomas Gleixner <tglx@linutronix.de>
+> 
+> With the locking cleanup in place (from "OF: Fixup resursive
+> locking code paths"), we can now do the conversion from the
+> rw_lock to a raw spinlock as required for preempt-rt.
+> 
+> The previous cleanup and the this conversion were originally
+> separate since they predated when mainline got raw spinlock (in
+> commit c2f21ce2e31286a "locking: Implement new raw_spinlock").
+> 
+> So, at that point in time, the cleanup was considered plausible
+> for mainline, but not this conversion.  In any case, we've kept
+> them separate as it makes for easier review and better bisection.
+> 
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> [PG: taken from preempt-rt, update subject & add a commit log]
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-Pushed out rt27 with the fixed merged back. Sorry for the noise.
-
-Thanks,
-
-	tglx
+Acked-by: David S. Miller <davem@davemloft.net>
