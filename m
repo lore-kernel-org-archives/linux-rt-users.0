@@ -1,81 +1,103 @@
-From: Jacky Lam <lamshuyin@gmail.com>
-Subject: Re: Protection of critical section in PREEMPT_RT
-Date: Tue, 5 Feb 2013 09:40:07 +0800
-Message-ID: <CAHX1yNTb92NMAi+9F0QCXqyvwEmerGOar5t4J1tLGznF2jD8Tg@mail.gmail.com>
-References: <CAHX1yNTSObcxNrvsBnPw8QzUWTb4zzs_faZZ1bbGU1L8xzgpsQ@mail.gmail.com>
-	<50FE68EF.8060909@meduna.org>
-	<CAHX1yNTKw8vr2v01Eft1tVV5YrP-7Zw=3fk9iF6YJYfbnBJ9LQ@mail.gmail.com>
-	<510ACB87.3080007@am.sony.com>
-	<CAHX1yNQgJXM292q1DWXLdQiR_BK5jZ-d+QHVoEEgksQm04YU6g@mail.gmail.com>
-	<alpine.LFD.2.02.1302041138400.11905@ionos>
+From: Austin Hendrix <ahendrix@willowgarage.com>
+Subject: Re: kfree causing high latency on 3.4.4-rt13
+Date: Mon, 4 Feb 2013 17:42:29 -0800
+Message-ID: <CAOY97Va2gie-jTfoP_3S9CS6ysR+a8rgC2Br1STiR251Y9F=gg@mail.gmail.com>
+References: <CAOY97VYWzxz-=HNYamCdqOzjXPsAyKjETZ3Hv7V3K4CZ6YB1kQ@mail.gmail.com>
+	<alpine.LFD.2.02.1302041245060.11905@ionos>
+	<CAOY97VZ-98xy-MaS5YuwUh9e00r8=eHQ1ZbG5yfp3xnHJjnSew@mail.gmail.com>
+	<1360021255.23825.0.camel@linux-mbp>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: frank.rowand@am.sony.com, Stanislav Meduna <stano@meduna.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ia0-f172.google.com ([209.85.210.172]:61045 "EHLO
-	mail-ia0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754410Ab3BEBkI (ORCPT
+Received: from mail-ob0-f173.google.com ([209.85.214.173]:61044 "EHLO
+	mail-ob0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754410Ab3BEBmb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Feb 2013 20:40:08 -0500
-Received: by mail-ia0-f172.google.com with SMTP id u8so8741700iag.17
-        for <linux-rt-users@vger.kernel.org>; Mon, 04 Feb 2013 17:40:07 -0800 (PST)
-In-Reply-To: <alpine.LFD.2.02.1302041138400.11905@ionos>
+	Mon, 4 Feb 2013 20:42:31 -0500
+Received: by mail-ob0-f173.google.com with SMTP id dn14so6931094obc.4
+        for <linux-rt-users@vger.kernel.org>; Mon, 04 Feb 2013 17:42:30 -0800 (PST)
+In-Reply-To: <1360021255.23825.0.camel@linux-mbp>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas,
+On Mon, Feb 4, 2013 at 3:40 PM, Sven-Thorsten Dietrich
+<sven@thebigcorporation.com> wrote:
+> On Mon, 2013-02-04 at 13:54 -0800, Austin Hendrix wrote:
+>> An example of what I'm seeing from latencytop is:
+>> [kfree]                                           7937.6 msec          6.4 %
+>
+> you are overwhelming folks with data now... but just a few more
+> questions:
+>
+> - e.g. what does the RT program you are running do?
+> - Code snippet that reproduces this issue?
+> - list of other processes on system.
+> - system specs; e.g. cpu speed, I am guessing around 8 - 12 Kilo Hz?
+>
+> Thanks
+>
+> Sven
+>
+>
+>>
+>> I poked around the kernel source a bit and was pretty stumped by this,
+>> so I'm glad it's not just me.
+>>
+>> Thanks,
+>> -Austin
+>>
+>> On Mon, Feb 4, 2013 at 3:49 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+>> > On Tue, 29 Jan 2013, Austin Hendrix wrote:
+>> >> I'm running 3.4.4-rt13 on my systems, and while the realtime
+>> >> performance is great, I occasionally see non-realtime processes block
+>> >> for several seconds. Running latencytop, it looks like the kfree
+>> >> kernel process is the worst offender. Does anyone have advice on how I
+>> >
+>> > There is no kfree process. kfree() is a function to release memory
+>> > allocated by kmalloc.
+>> >
+>> > Can you provide the latencytop output please ?
+>> >
+>> > Thanks,
+>> >
+>> >         tglx
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
+>
+>
 
-On Mon, Feb 4, 2013 at 6:40 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> Jacky,
->
-> On Mon, 4 Feb 2013, Jacky Lam wrote:
->
->> Thanks.
->
-> Please stop top posting!
->
+I wish I had more data too; that's one of the frustrating things about
+the troubleshooting process. Most of my attempts to capture more data
+or narrow the problem have instead caused the system to stop
+exhibiting problems.
 
-Thanks for reminding.
+The system in question is a dual Xeon L5520 (quad-core, 2.27GHz), with
+24GB of RAM. It's inside our robots:
+https://willowgarage.com/pages/pr2/overview
 
->> I finally find that if I disable interrupt during ata_qc_issue() in
->> libata-scsi.c, my sata driver works without any problem.
->
-> This is wrong. Which driver are you taling about ?
->
->> But I find USB EHCI driver is more complicated. Kernel crashes every
->> where when RT is turned on. It seems whenever the stack  spin_lock
->> ehci->lock and interrupt comes at that moment, kernel will be crashes.
->> The reason is EHCI interrupt handler will also take the same lock. If
->> my point of view, USB stack seems no PREEMPT_RT safe. Is it correct?
->> Am I miss anything?
->
-> Probably. First of all you don't tell us which driver you are
-> using. And w/o seing the code and the output of the kernel crash, we
-> can't help you at all.
->
+The system load is around 2-3 under normal use.
+My realtime process is an EtherCAT master, using about 30-40% of one
+core. We use it for 1kHz motor control, so the realtime deadline is
+pretty lax; in the 100's of us range.
+The rest of the system load comes from a number of non-realtime
+processes that are doing a significant amount of network I/O, along
+with an NFS server.
 
-I am sorry for that. But it is a driver for our in-house hardware. It
-seems meaningless even I post the source here. Please tell me if it
-did help. From your statement above, it seems PREEMPT_RT patch do not
-work with USB stack. Is it true? I am happy to post the fix here if I
-can fix that.
+Believe it or not, this system actually works quite well on the
+3.0.6-rt17 kernel. I'm upgrading it to a newer kernel since I'm also
+upgrading the base OS from Ubuntu Lucid to Precise.
 
-While I am porting my drivers to PREEMPT_RT patched kernel, I find a
-common problem. In stock kernel, whenever I need to touch some data
-structures in driver code and also in interrupt handler, we can
-protect them by spin_lock_irqsave(). But in PREEMT_RT kernel, while
-the driver code touching the data structures, interrupt can still come
-in. If I don't protect the data structure by spinlcok, the data
-structures will corrupt. If I put it, rt_spin_lock function will cause
-a kernel dump. Of course, I can use raw_spin_lock_irqsave() instead.
-But for the case like USB stack and SATA stack, if I disable the
-interrupt just like what I did for ata_qc_issue(). It seems not very
-good idea.
+I gave the 3.4.28-rt40 stable release a try today, and so far I
+haven't seen the problems that I was seeing with 3.4.4-rt13. I'd still
+like to know more about how the debug the problems I'm seeing on
+3.4.4-rt13 so that I can do a better job of debugging if problems like
+this come up in the future.
 
-Is there any rule to resolve such conflict?
-
-> Thanks,
->
->         tglx
+Thanks,
+-Austin
