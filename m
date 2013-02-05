@@ -1,119 +1,42 @@
-From: Qiang Huang <h.huangqiang@huawei.com>
-Subject: Re: [ANNOUNCE] 3.6.11-rt26
-Date: Tue, 5 Feb 2013 15:31:30 +0800
-Message-ID: <5110B552.9030903@huawei.com>
-References: <alpine.LFD.2.02.1302041537230.11905@ionos>
+From: Honghui Zhang <zhanghonghui@huawei.com>
+Subject: Re: [PATCH] sched/rt: Decrease number of calls of push_rt_task()
+ in push_rt_tasks()
+Date: Tue, 5 Feb 2013 16:25:11 +0800
+Message-ID: <5110C1E7.9020106@huawei.com>
+References: <500221360048944@web26g.yandex.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	<peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	<linux-kernel@vger.kernel.org>, Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Kirill Tkhai <tkhai@yandex.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from szxga01-in.huawei.com ([119.145.14.64]:33551 "EHLO
-	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751010Ab3BEHbl (ORCPT
+Received: from szxga02-in.huawei.com ([119.145.14.65]:52959 "EHLO
+	szxga02-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751426Ab3BEIZa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 5 Feb 2013 02:31:41 -0500
-In-Reply-To: <alpine.LFD.2.02.1302041537230.11905@ionos>
+	Tue, 5 Feb 2013 03:25:30 -0500
+In-Reply-To: <500221360048944@web26g.yandex.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2013/2/4 22:58, Thomas Gleixner wrote:
-> Dear RT Folks,
+On 2013/2/5 15:22, Kirill Tkhai wrote:
+>>
+>> Suppose we have a large number of cpus(say 4096), with the last one running
+>> a low-priority task on it. Is it possible with this patch we will never reach
+>> the last cpu in case that previous cpu has complete the pulled task?
 > 
-> I'm pleased to announce the 3.6.11-rt26 release.
+> Yes. But this patch is about several pushable tasks on the same cpu.
 > 
-> Changes since 3.6.11-rt25:
+> Kirill
 > 
->    1) Fix the RT highmem implementation on x86
 
-Hi Thomas,
+Maybe I haven't make myself understood, but in that case, there will be a higher-priority
+task in the runqueue of the pushing cpu, and a lower-priority task running in the last cpu
+which could not be preempt by push_rt_task(),  I don't think it's acceptable.
 
->From patches-3.6.11-rt28.patch.gz, your patch x86-highmem-make-it-work.patch
-did this work. And you said
-"It had been enabled quite some time, but never really worked."
-
-But I think there is a previous patch mm-rt-kmap-atomic-scheduling.patch did
-the job, so I think RT highmem on x86 should have worked.
-
-Now with your patch, if we use kmap instead of kmap_atomic on RT, do we need
-to revert Peter's patch as well?
-
-I haven't tested it, but if Peter's patch did solved the problem, is his way
-better than use kmap? Because we can use more highmem virtual address,
-although with some switch latency in some small probability scenarios.
-
-> 
->    2) Support highmem + RT on ARM
-> 
->    3) Fix an one off error in the generic highmem code (upstream fix
->       did not make it into 3.6.stable)
-> 
->    4) Upstream SLUB fixes (Christoph Lameter)
-> 
->    5) Fix a few RT issues in mmc and amba drivers
-> 
->    6) Initialize local locks in mm/swap.c early
-> 
->    7) Use simple wait queues for completions. This is a performance
->       improvement.
-> 
->       Completions do not have complex callbacks and the wakeup path is
->       disabling interrupts anyway. So using simple wait locks with the
->       raw spinlock is not a latency problem, but the "sleeping lock"
->       in the normal waitqueue is a source for lock bouncing:
-> 
->       T1  	 	   T2
->       lock(WQ)
->       wakeup(T2)
->       ---> preemption
-> 			   lock(WQ)
-> 			   pi_boost(T1)
-> 			   wait_for_lock(WQ)
->       unlock(WQ)
->       deboost(T1)
->       ---> preemption
-> 			   ....
-> 
->       The simple waitqueue reduces this to:
-> 		   
->       T1  	 	   T2
->       raw_lock(WQ)
->       wakeup(T2)
->       raw_unlock(WQ)
->       ---> preemption
-> 			   raw_lock(WQ)	
-> 			   ....
-> 
-> @Steven: Sorry, I forgot the stable tags on:
-> 	 drivers-tty-pl011-irq-disable-madness.patch
-> 	 mmci-remove-bogus-irq-save.patch
-> 	 idle-state.patch
-> 	 might-sleep-check-for-idle.patch
-> 	 mm-swap-fix-initialization.patch
-> 
-> I'm still digging through my mail backlog, so I have not yet decided
-> whether this is the last RT release for 3.6.
-> 
-> 
-> The delta patch against 3.6.11-rt25 is appended below and can be found
-> here:
-> 
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.11-rt25-rt26.patch.xz
-> 
-> The RT patch against 3.6.11 can be found here:
-> 
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11-rt26.patch.xz
-> 
-> The split quilt queue is available at:
-> 
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patches-3.6.11-rt26.tar.xz
-> 
-> Enjoy,
-> 
-> 	tglx
-> 
+Hans
 
 
