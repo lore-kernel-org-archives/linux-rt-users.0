@@ -1,63 +1,29 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/6] drivers-tty-pl011-irq-disable-madness.patch
-Date: Wed, 06 Feb 2013 16:58:19 -0500
-Message-ID: <20130206215915.058901172@goodmis.org>
+Subject: [PATCH RT 6/6] Linux 3.4.29-rt42-rc1
+Date: Wed, 06 Feb 2013 16:58:24 -0500
+Message-ID: <20130206215915.838017883@goodmis.org>
 References: <20130206215818.969089606@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-drivers-tty-pl011-irq-disable-madness.patch.patch
+Content-Disposition: inline; filename=0006-Linux-3.4.29-rt42-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <srostedt@redhat.com>
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
+ localversion-rt |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index b69356c..7b29c92 100644
---- a/drivers/tty/serial/amba-pl011.c
-+++ b/drivers/tty/serial/amba-pl011.c
-@@ -1788,13 +1788,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- 
- 	clk_enable(uap->clk);
- 
--	local_irq_save(flags);
-+	/*
-+	 * local_irq_save(flags);
-+	 *
-+	 * This local_irq_save() is nonsense. If we come in via sysrq
-+	 * handling then interrupts are already disabled. Aside of
-+	 * that the port.sysrq check is racy on SMP regardless.
-+	*/
- 	if (uap->port.sysrq)
- 		locked = 0;
- 	else if (oops_in_progress)
--		locked = spin_trylock(&uap->port.lock);
-+		locked = spin_trylock_irqsave(&uap->port.lock, flags);
- 	else
--		spin_lock(&uap->port.lock);
-+		spin_lock_irqsave(&uap->port.lock, flags);
- 
- 	/*
- 	 *	First save the CR then disable the interrupts
-@@ -1816,8 +1822,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- 	writew(old_cr, uap->port.membase + UART011_CR);
- 
- 	if (locked)
--		spin_unlock(&uap->port.lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&uap->port.lock, flags);
- 
- 	clk_disable(uap->clk);
- }
+diff --git a/localversion-rt b/localversion-rt
+index 629e0b4..31c892a 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt41
++-rt42-rc1
 -- 
 1.7.10.4
