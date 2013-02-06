@@ -1,49 +1,63 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/6] sched: Check for idle task in might_sleep()
-Date: Wed, 06 Feb 2013 16:58:22 -0500
-Message-ID: <20130206215915.514847412@goodmis.org>
+Subject: [PATCH RT 1/6] drivers-tty-pl011-irq-disable-madness.patch
+Date: Wed, 06 Feb 2013 16:58:19 -0500
+Message-ID: <20130206215915.058901172@goodmis.org>
 References: <20130206215818.969089606@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:4312 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758233Ab3BFV7S (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Feb 2013 16:59:18 -0500
-Content-Disposition: inline; filename=0004-sched-Check-for-idle-task-in-might_sleep.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-drivers-tty-pl011-irq-disable-madness.patch.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
-
-Idle is not allowed to call sleeping functions ever!
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched/core.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index e979551..751ec60 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -7536,7 +7536,8 @@ void __might_sleep(const char *file, int line, int preempt_offset)
- 	static unsigned long prev_jiffy;	/* ratelimiting */
+diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
+index b69356c..7b29c92 100644
+--- a/drivers/tty/serial/amba-pl011.c
++++ b/drivers/tty/serial/amba-pl011.c
+@@ -1788,13 +1788,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
  
- 	rcu_sleep_check(); /* WARN_ON_ONCE() by default, no rate limit reqd. */
--	if ((preempt_count_equals(preempt_offset) && !irqs_disabled()) ||
-+	if ((preempt_count_equals(preempt_offset) && !irqs_disabled() &&
-+	     !is_idle_task(current)) ||
- 	    system_state != SYSTEM_RUNNING || oops_in_progress)
- 		return;
- 	if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
+ 	clk_enable(uap->clk);
+ 
+-	local_irq_save(flags);
++	/*
++	 * local_irq_save(flags);
++	 *
++	 * This local_irq_save() is nonsense. If we come in via sysrq
++	 * handling then interrupts are already disabled. Aside of
++	 * that the port.sysrq check is racy on SMP regardless.
++	*/
+ 	if (uap->port.sysrq)
+ 		locked = 0;
+ 	else if (oops_in_progress)
+-		locked = spin_trylock(&uap->port.lock);
++		locked = spin_trylock_irqsave(&uap->port.lock, flags);
+ 	else
+-		spin_lock(&uap->port.lock);
++		spin_lock_irqsave(&uap->port.lock, flags);
+ 
+ 	/*
+ 	 *	First save the CR then disable the interrupts
+@@ -1816,8 +1822,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+ 	writew(old_cr, uap->port.membase + UART011_CR);
+ 
+ 	if (locked)
+-		spin_unlock(&uap->port.lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&uap->port.lock, flags);
+ 
+ 	clk_disable(uap->clk);
+ }
 -- 
 1.7.10.4
-
-
