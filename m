@@ -1,63 +1,68 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/6] drivers-tty-pl011-irq-disable-madness.patch
-Date: Wed, 06 Feb 2013 17:02:11 -0500
-Message-ID: <20130206220250.826323567@goodmis.org>
-References: <20130206220210.823160521@goodmis.org>
+Subject: [PATCH RT 0/6] [ANNOUNCE] 3.2.38-rt57-rc1 stable review
+Date: Wed, 06 Feb 2013 17:02:10 -0500
+Message-ID: <20130206220210.823160521@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-drivers-tty-pl011-irq-disable-madness.patch.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Dear RT Folks,
+
+This is the RT stable review cycle of patch 3.2.38-rt57-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 2/8/2013.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.38-rt57-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.38.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.38-rt57-rc1.patch.xz
+
+You can also build from 3.2.38-rt56 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.38-rt56-rt57-rc1.patch.xz
+
+
+Changes from 3.2.38-rt56:
+
 ---
- drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index fe9f111..1fbaf66 100644
---- a/drivers/tty/serial/amba-pl011.c
-+++ b/drivers/tty/serial/amba-pl011.c
-@@ -1761,13 +1761,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- 
- 	clk_enable(uap->clk);
- 
--	local_irq_save(flags);
-+	/*
-+	 * local_irq_save(flags);
-+	 *
-+	 * This local_irq_save() is nonsense. If we come in via sysrq
-+	 * handling then interrupts are already disabled. Aside of
-+	 * that the port.sysrq check is racy on SMP regardless.
-+	*/
- 	if (uap->port.sysrq)
- 		locked = 0;
- 	else if (oops_in_progress)
--		locked = spin_trylock(&uap->port.lock);
-+		locked = spin_trylock_irqsave(&uap->port.lock, flags);
- 	else
--		spin_lock(&uap->port.lock);
-+		spin_lock_irqsave(&uap->port.lock, flags);
- 
- 	/*
- 	 *	First save the CR then disable the interrupts
-@@ -1789,8 +1795,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
- 	writew(old_cr, uap->port.membase + UART011_CR);
- 
- 	if (locked)
--		spin_unlock(&uap->port.lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&uap->port.lock, flags);
- 
- 	clk_disable(uap->clk);
- }
--- 
-1.7.10.4
+
+Steven Rostedt (1):
+      Linux 3.2.38-rt57-rc1
+
+Thomas Gleixner (5):
+      drivers-tty-pl011-irq-disable-madness.patch
+      mmci: Remove bogus local_irq_save()
+      sched: Init idle->on_rq in init_idle()
+      sched: Check for idle task in might_sleep()
+      mm: swap: Initialize local locks early
+
+----
+ drivers/mmc/host/mmci.c         |    5 -----
+ drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
+ kernel/sched.c                  |    4 +++-
+ localversion-rt                 |    2 +-
+ mm/swap.c                       |   12 +++++++++---
+ 5 files changed, 23 insertions(+), 15 deletions(-)
