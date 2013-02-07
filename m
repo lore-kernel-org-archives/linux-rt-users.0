@@ -1,56 +1,34 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/5] mm: swap: Initialize local locks early
-Date: Wed, 06 Feb 2013 17:06:12 -0500
-Message-ID: <20130206220632.775810442@goodmis.org>
-References: <20130206220608.862416001@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-mm-swap-Initialize-local-locks-early.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Tim Sander <tim@krieglstein.org>
+Subject: Re: 3.4.28-rt40 arm freescale imx35 pcm43 - patch 86236252d2449313bdbac790023cbc957bf6e426 is cause
+Date: Thu, 07 Feb 2013 09:57:48 +0100
+Message-ID: <1525614.TvuV6qqnEF@dabox>
+References: <6003615.pRQnIgKCSn@dabox> <5977343.5KpmQXLB4x@dabox>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:38868
+	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752528Ab3BGI5w (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 7 Feb 2013 03:57:52 -0500
+Received: from dabox.localnet (unknown [213.157.30.20])
+	by lvps176-28-13-145.dedicated.hosteurope.de (Postfix) with ESMTPSA id CD0F4A8A407B
+	for <linux-rt-users@vger.kernel.org>; Thu,  7 Feb 2013 09:57:48 +0100 (CET)
+In-Reply-To: <5977343.5KpmQXLB4x@dabox>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Thomas Gleixner <tglx@linutronix.de>
+Hi
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- mm/swap.c |   12 +++++++++---
- 1 file changed, 9 insertions(+), 3 deletions(-)
+Just another update on this stuff. I noticed that there has been a patch added* 
+with spinlocks to the imx.c serial driver. I reverted this patch and now my 
+serialfuz programm "only" kills the serial port with a not so nice oom 
+condition. But at least it does not show the runaway interrupt problem.
 
-diff --git a/mm/swap.c b/mm/swap.c
-index 069390f..662972f 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -772,6 +772,15 @@ unsigned pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
- 
- EXPORT_SYMBOL(pagevec_lookup);
- 
-+/* Early setup for the local locks */
-+static int __init swap_init_locks(void)
-+{
-+	local_irq_lock_init(rotate_lock);
-+	local_irq_lock_init(swap_lock);
-+	return 1;
-+}
-+early_initcall(swap_init_locks);
-+
- unsigned pagevec_lookup_tag(struct pagevec *pvec, struct address_space *mapping,
- 		pgoff_t *index, int tag, unsigned nr_pages)
- {
-@@ -789,9 +798,6 @@ void __init swap_setup(void)
- {
- 	unsigned long megs = totalram_pages >> (20 - PAGE_SHIFT);
- 
--	local_irq_lock_init(rotate_lock);
--	local_irq_lock_init(swap_lock);
--
- #ifdef CONFIG_SWAP
- 	bdi_init(swapper_space.backing_dev_info);
- #endif
--- 
-1.7.10.4
+Best regards
+Tim
+
+* its 86236252d2449313bdbac790023cbc957bf6e426
+    commit 9ec1882df244c4ee1baa692676fef5e8b0f5487d upstream.
