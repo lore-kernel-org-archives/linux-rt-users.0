@@ -1,50 +1,42 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH RT-TESTS 3/3] Makefile: Add BUILDROOT and SPECS to the dirs to remove for distclean
-Date: Fri,  8 Feb 2013 15:47:35 +0100
-Message-ID: <1360334855-10176-4-git-send-email-jkacur@redhat.com>
-References: <1360334855-10176-1-git-send-email-jkacur@redhat.com>
-Cc: Frank Rowand <frank.rowand@am.sony.com>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Clark Williams <williams@redhat.com>
+From: Joakim Hernberg <jbh@alchemy.lu>
+Subject: 3.6.11-rt28 build failure on 32bit Intel
+Date: Fri, 8 Feb 2013 19:23:28 +0100
+Message-ID: <20130208192328.0fd0db59@tor.valhalla.alchemy.lu>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f54.google.com ([209.85.214.54]:61348 "EHLO
-	mail-bk0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759940Ab3BHOrr (ORCPT
+Received: from skinbark.wpsintrax.se ([83.145.49.220]:3078 "EHLO
+	skinbark.wpsintrax.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1946764Ab3BHSdX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Feb 2013 09:47:47 -0500
-Received: by mail-bk0-f54.google.com with SMTP id w5so1695040bku.41
-        for <linux-rt-users@vger.kernel.org>; Fri, 08 Feb 2013 06:47:46 -0800 (PST)
-In-Reply-To: <1360334855-10176-1-git-send-email-jkacur@redhat.com>
+	Fri, 8 Feb 2013 13:33:23 -0500
+Received: from localhost (localhost [127.0.0.1])
+	by skinbark.wpsintrax.se (Postfix) with ESMTP id B4B8977C05C
+	for <linux-rt-users@vger.kernel.org>; Fri,  8 Feb 2013 19:23:30 +0100 (CET)
+Received: from skinbark.wpsintrax.se ([127.0.0.1])
+	by localhost (skinbark.wpsintrax.se [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id I1i1ZaykhZyg for <linux-rt-users@vger.kernel.org>;
+	Fri,  8 Feb 2013 19:23:30 +0100 (CET)
+Received: from tor.valhalla.alchemy.lu (vodsl-4655.vo.lu [80.90.56.47])
+	by skinbark.wpsintrax.se (Postfix) with ESMTPA id 12D3877C00D
+	for <linux-rt-users@vger.kernel.org>; Fri,  8 Feb 2013 19:23:30 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: John Kacur <jkacur@redhat.com>
+Hi,
 
-make rpm creates the dirs BUILDROOT and SPECS that are missed by distclean.
-Gather all rpm related DIRS to the RPMDIRS and add that to distclean.
+I get the following when trying to build 3.6.11-rt28 build failure on
+32bit Intel:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- Makefile | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+CC arch/x86/mm/iomap_32.o 
+arch/x86/mm/iomap_32.c:57:7: error: expected identifier or '(' before
+'{' token
+make[2]: *** [arch/x86/mm/iomap_32.o] Error 1
+make[1]: *** [arch/x86/mm] Error 2
+make: *** [arch/x86] Error 2
 
-diff --git a/Makefile b/Makefile
-index ecc7386..25cfbfb 100644
---- a/Makefile
-+++ b/Makefile
-@@ -111,9 +111,10 @@ clean:
- 	rm -f hwlatdetect
- 	rm -f tags
- 
-+RPMDIRS = BUILD BUILDROOT RPMS SRPMS SPECS
- .PHONY: distclean
- distclean: clean
--	rm -rf BUILD RPMS SRPMS releases *.tar.gz rt-tests.spec tmp
-+	rm -rf $(RPMDIRS) releases *.tar.gz rt-tests.spec tmp
- 
- .PHONY: changelog
- changelog:
 -- 
-1.7.11.7
 
+   Joakim
