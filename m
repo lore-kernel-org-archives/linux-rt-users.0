@@ -1,42 +1,53 @@
-From: Joakim Hernberg <jbh@alchemy.lu>
-Subject: 3.6.11-rt28 build failure on 32bit Intel
-Date: Fri, 8 Feb 2013 19:23:28 +0100
-Message-ID: <20130208192328.0fd0db59@tor.valhalla.alchemy.lu>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: rt-tests: make rpm fails if numactl-devel is missing
+Date: Fri, 8 Feb 2013 15:03:50 -0800
+Message-ID: <51158456.8000009@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>, <jkacur@redhat.com>,
+	<linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skinbark.wpsintrax.se ([83.145.49.220]:3078 "EHLO
-	skinbark.wpsintrax.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1946764Ab3BHSdX (ORCPT
+Received: from co9ehsobe003.messaging.microsoft.com ([207.46.163.26]:31053
+	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1947094Ab3BHXDs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Feb 2013 13:33:23 -0500
-Received: from localhost (localhost [127.0.0.1])
-	by skinbark.wpsintrax.se (Postfix) with ESMTP id B4B8977C05C
-	for <linux-rt-users@vger.kernel.org>; Fri,  8 Feb 2013 19:23:30 +0100 (CET)
-Received: from skinbark.wpsintrax.se ([127.0.0.1])
-	by localhost (skinbark.wpsintrax.se [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id I1i1ZaykhZyg for <linux-rt-users@vger.kernel.org>;
-	Fri,  8 Feb 2013 19:23:30 +0100 (CET)
-Received: from tor.valhalla.alchemy.lu (vodsl-4655.vo.lu [80.90.56.47])
-	by skinbark.wpsintrax.se (Postfix) with ESMTPA id 12D3877C00D
-	for <linux-rt-users@vger.kernel.org>; Fri,  8 Feb 2013 19:23:30 +0100 (CET)
+	Fri, 8 Feb 2013 18:03:48 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi all,
 
-I get the following when trying to build 3.6.11-rt28 build failure on
-32bit Intel:
+I'm not sure what the best solution for this is.  Or if it is even
+worth fixing.  So just reporting for the archives...
 
-CC arch/x86/mm/iomap_32.o 
-arch/x86/mm/iomap_32.c:57:7: error: expected identifier or '(' before
-'{' token
-make[2]: *** [arch/x86/mm/iomap_32.o] Error 1
-make[1]: *** [arch/x86/mm] Error 2
-make: *** [arch/x86] Error 2
+rt-tests can be built without NUMA:
 
--- 
+   make NUMA=0
 
-   Joakim
+But "make rpm" does not have a way to be successful without NUMA:
+
+
+build_rt-tests_0.85> make rpm
+for F in cyclictest signaltest pi_stress rt-migrate-test ptsematest sigwaittest svsematest pmqtest sendme pip_stress hackbench *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a  ChangeLog; do find -type f -name $F | xargs rm -f; done
+rm -f hwlatdetect
+rm -f tags
+rm -rf BUILD BUILDROOT RPMS SRPMS SPECS releases *.tar.gz rt-tests.spec tmp
+git log >ChangeLog
+mkdir -p releases
+mkdir -p tmp/rt-tests
+cp -r Makefile COPYING ChangeLog src tmp/rt-tests
+tar -C tmp -czf rt-tests-0.85.tar.gz rt-tests
+rm -f ChangeLog
+cp rt-tests-0.85.tar.gz releases
+sed s/__VERSION__/0.85/ <rt-tests.spec-in >rt-tests.spec
+rpmbuild -ba --define "_topdir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85" --define "_sourcedir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/releases" --define "_builddir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/BUILD"  rt-tests.spec
+error: Failed build dependencies:
+	numactl-devel is needed by rt-tests-0.85-1.fc12.src
+make: *** [rpm] Error 1
+
+
+
+-Frank
+
