@@ -1,123 +1,80 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH v2] rt-tests: NUMA optional for make rpm
-Date: Mon, 11 Feb 2013 13:46:30 -0800
-Message-ID: <511966B6.8080008@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Grant Likely <grant.likely@secretlab.ca>
+Subject: Re: [PATCH next v2] OF: convert devtree lock from rw_lock to raw spinlock
+Date: Mon, 11 Feb 2013 22:18:32 +0000
+Message-ID: <CACxGe6umkZ0D2AGircEVtMfito-DWtgUBWnR15iPEDGrBGFZKA@mail.gmail.com>
+References: <1359993921-18145-1-git-send-email-paul.gortmaker@windriver.com>
+ <1360182656-15898-1-git-send-email-paul.gortmaker@windriver.com>
+ <511585A9.9090008@gmail.com> <51194685.5010904@wwwdotorg.org> <51194C75.5040302@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: <sven@thebigcorporation.com>, <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>, <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ch1ehsobe005.messaging.microsoft.com ([216.32.181.185]:20817
-	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S932219Ab3BKVqk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Feb 2013 16:46:40 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Stephen Warren <swarren@wwwdotorg.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	devicetree-discuss <devicetree-discuss@lists.ozlabs.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	sparclinux@vger.kernel.org, Sam Ravnborg <sam@ravnborg.org>,
+	"linux-next@vger.kernel.org" <linux-next@vger.kernel.org>
+To: Rob Herring <robherring2@gmail.com>
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <51194C75.5040302@gmail.com>
+Sender: sparclinux-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, Feb 11, 2013 at 7:54 PM, Rob Herring <robherring2@gmail.com> wrote:
+> On 02/11/2013 01:29 PM, Stephen Warren wrote:
+>> On 02/08/2013 04:09 PM, Rob Herring wrote:
+>>> On 02/06/2013 02:30 PM, Paul Gortmaker wrote:
+>>>> From: Thomas Gleixner <tglx@linutronix.de>
+>>>>
+>>>> With the locking cleanup in place (from "OF: Fixup resursive
+>>>> locking code paths"), we can now do the conversion from the
+>>>> rw_lock to a raw spinlock as required for preempt-rt.
+>>>>
+>>>> The previous cleanup and this conversion were originally
+>>>> separate since they predated when mainline got raw spinlock (in
+>>>> commit c2f21ce2e31286a "locking: Implement new raw_spinlock").
+>>>>
+>>>> So, at that point in time, the cleanup was considered plausible
+>>>> for mainline, but not this conversion.  In any case, we've kept
+>>>> them separate as it makes for easier review and better bisection.
+>>>>
+>>>> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+>>>> [PG: taken from preempt-rt, update subject & add a commit log]
+>>>> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+>>>> ---
+>>>>
+>>>> [v2: recent commit e81b329 ("powerpc+of: Add /proc device tree
+>>>>  updating to of node add/remove") added two more instances of
+>>>>  write_unlock that also needed converting to raw_spin_unlock.
+>>>>  Retested (boot) on sbc8548, defconfig builds on arm/sparc; no
+>>>>  new warnings observed.]
+>>>>
+>>>>  arch/sparc/kernel/prom_common.c |   4 +-
+>>>>  drivers/of/base.c               | 100 ++++++++++++++++++++++------------------
+>>>>  include/linux/of.h              |   2 +-
+>>>>  3 files changed, 59 insertions(+), 47 deletions(-)
+>>>
+>>> Applied.
+>>
+>> This commit is present in next-20130211, and causes a boot failure
+>> (hang) early while booting on Tegra. Reverting just this one commit
+>> solves the issue.
+>>
+>> I'll see if I can track down where the issue is. Given the commit
+>> description, I assume there's some new recursive lock issue that snuck
+>> in between the previous fix for them and this commit? Any hints welcome.
+>>
+>> One thing I wonder looking at the patch: Most paths use
+>> raw_spin_lock_irqsave() but a few use just raw_spin_lock(). I wonder how
+>> that decision was made?
+>
+> I found the problem. of_get_next_available_child ->
+> of_device_is_available -> of_get_property -> of_get_property. An
+> unlocked version of of_device_is_available is needed here.
 
-version 2:
-  - Add new placeholders in rt-tests.spec-in to make the replacements by
-    "make rpm" more visible to future maintainers of rt-tests.spec-in
-  - fix typo of my name in rt-tests.spec-in
+Oops, I had testbooted on a single core machine which would mask the
+issue. I've crafted a fix and am posting it for review before I apply
+it.
 
-rt-tests can be built without NUMA:
-
-   make NUMA=0
-
-But "make rpm" does not have a way to be successful without NUMA:
-
-   build_rt-tests_0.85> make rpm
-   for F in cyclictest signaltest pi_stress rt-migrate-test ptsematest sigwaittest svsematest pmqtest sendme pip_stress hackbench *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a  ChangeLog; do find -type f -name $F | xargs rm -f; done
-   rm -f hwlatdetect
-   rm -f tags
-   rm -rf BUILD BUILDROOT RPMS SRPMS SPECS releases *.tar.gz rt-tests.spec tmp
-   git log >ChangeLog
-   mkdir -p releases
-   mkdir -p tmp/rt-tests
-   cp -r Makefile COPYING ChangeLog src tmp/rt-tests
-   tar -C tmp -czf rt-tests-0.85.tar.gz rt-tests
-   rm -f ChangeLog
-   cp rt-tests-0.85.tar.gz releases
-   sed s/__VERSION__/0.85/ <rt-tests.spec-in >rt-tests.spec
-   rpmbuild -ba --define "_topdir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85" --define "_sourcedir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/releases" --define "_builddir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/BUILD"  rt-tests.spec
-   error: Failed build dependencies:
-           numactl-devel is needed by rt-tests-0.85-1.fc12.src
-   make: *** [rpm] Error 1
-
-
-The following patch allows the rpm to be built without NUMA, with the command:
-
-   make NUMA=0 rpm
-
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-
----
- Makefile         |    8 	8 +	0 -	0 !
- rt-tests.spec-in |    9 	6 +	3 -	0 !
- 2 files changed, 14 insertions(+), 3 deletions(-)
-
-Index: b/Makefile
-===================================================================
---- a/Makefile
-+++ b/Makefile
-@@ -161,6 +161,14 @@ pushtest: release
- 
- rt-tests.spec: Makefile rt-tests.spec-in
- 	sed s/__VERSION__/$(VERSION_STRING)/ <$@-in >$@
-+ifeq ($(NUMA),1)
-+	sed -i -e 's/__MAKE_NUMA__/NUMA=1/' $@
-+	sed -i -e 's/__BUILDREQUIRES_NUMA__/numactl-devel/' $@
-+else
-+	sed -i -e 's/__MAKE_NUMA__//' $@
-+	sed -i -e 's/__BUILDREQUIRES_NUMA__//' $@
-+endif
-+
- 
- HERE	:=	$(shell pwd)
- RPMARGS	:=	--define "_topdir $(HERE)" 	\
-Index: b/rt-tests.spec-in
-===================================================================
---- a/rt-tests.spec-in
-+++ b/rt-tests.spec-in
-@@ -2,6 +2,7 @@
- 
- Summary: Programs that test various rt-features
- Name: rt-tests
-+# __VERSION__ will be replaced by "make rpm"
- Version: __VERSION__
- Release: 1%{?dist}
- License: GPLv2
-@@ -10,7 +11,8 @@ URL: git://git.kernel.org/pub/scm/linux/
- Source0: %{name}-%{version}.tar.gz
- BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
- Obsoletes: cyclictest signaltest pi_tests
--BuildRequires: numactl-devel python
-+# __BUILDREQUIRES__ will be replaced by "make rpm"
-+BuildRequires: __BUILDREQUIRES_NUMA__ python
- 
- %description
- rt-tests is a set of programs that test and measure various components of
-@@ -21,7 +23,8 @@ latency. It also tests the functioning o
- %setup -qn rt-tests
- 
- %build
--make NUMA=1
-+# __MAKE_NUMA__ will be replaced by "make rpm"
-+make __MAKE_NUMA__
- 
- %install
- rm -rf $RPM_BUILD_ROOT
-@@ -64,7 +67,7 @@ rm -rf $RPM_BUILD_ROOT
- %changelog
- * Tue Nov 13 2012 Clark Williams <williams@redhat.com> - 0.85-1
- - [cyclictest] add tracemark function back to breaktrace logic
--- from Frank Rowland <frank.rowand@am.sony.com>:
-+- from Frank Rowand <frank.rowand@am.sony.com>:
-   - [cyclictest] report large measured clock latency
-   - [cyclictest] cleanup getopt_long() parameters
- - from John Kacur <jkacur@redhat.com>:
-
+g.
