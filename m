@@ -1,99 +1,46 @@
-From: Stephen Warren <swarren@wwwdotorg.org>
-Subject: [PATCH] of: fix recursive locking in of_get_next_available_child()
-Date: Mon, 11 Feb 2013 14:15:32 -0700
-Message-ID: <1360617332-2738-1-git-send-email-swarren@wwwdotorg.org>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	devicetree-discuss@lists.ozlabs.org, linux-kernel@vger.kernel.org,
-	sparclinux@vger.kernel.org, Sam Ravnborg <sam@ravnborg.org>,
-	linux-next@vger.kernel.org, Stephen Warren <swarren@nvidia.com>
-To: Rob Herring <rob.herring@calxeda.com>,
-	Grant Likely <grant.likely@secretlab.ca>
-Return-path: <linux-next-owner@vger.kernel.org>
-Sender: linux-next-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Kirill Tkhai <tkhai@yandex.ru>
+Subject: [PATCH]sched/stop_task: Do not account zero delta_exec in put_prev_task_stop
+Date: Tue, 12 Feb 2013 01:40:04 +0400
+Message-ID: <180751360618804@web6d.yandex.ru>
+Mime-Version: 1.0
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from forward3.mail.yandex.net ([77.88.46.8]:60652 "EHLO
+	forward3.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759394Ab3BKVkH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Feb 2013 16:40:07 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Stephen Warren <swarren@nvidia.com>
+Simple return
 
-of_get_next_available_child() acquires devtree_lock, then calls
-of_device_is_available() which calls of_get_property() which calls
-of_find_property() which tries to re-acquire devtree_lock, thus causing
-deadlock.
-
-To avoid this, create a new __of_device_is_available() which calls
-__of_get_property() instead, which calls __of_find_property(), which
-does not take the lock,. Update of_get_next_available_child() to call
-the new __of_device_is_available() since it already owns the lock.
-
-Signed-off-by: Stephen Warren <swarren@nvidia.com>
+Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ingo Molnar <mingo@kernel.org>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: linux-rt-users <linux-rt-users@vger.kernel.org>
 ---
- drivers/of/base.c |   30 +++++++++++++++++++++++++-----
- 1 file changed, 25 insertions(+), 5 deletions(-)
-
-diff --git a/drivers/of/base.c b/drivers/of/base.c
-index e8d65af..f7a87ce 100644
---- a/drivers/of/base.c
-+++ b/drivers/of/base.c
-@@ -290,19 +290,19 @@ int of_machine_is_compatible(const char *compat)
- EXPORT_SYMBOL(of_machine_is_compatible);
+ kernel/sched/stop_task.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
+index da5eb5b..78d0458 100644
+--- a/kernel/sched/stop_task.c
++++ b/kernel/sched/stop_task.c
+@@ -58,8 +58,8 @@ static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
+ 	u64 delta_exec;
  
- /**
-- *  of_device_is_available - check if a device is available for use
-+ *  __of_device_is_available - check if a device is available for use
-  *
-- *  @device: Node to check for availability
-+ *  @device: Node to check for availability, with locks already held
-  *
-  *  Returns 1 if the status property is absent or set to "okay" or "ok",
-  *  0 otherwise
-  */
--int of_device_is_available(const struct device_node *device)
-+static int __of_device_is_available(const struct device_node *device)
- {
- 	const char *status;
- 	int statlen;
+ 	delta_exec = rq->clock_task - curr->se.exec_start;
+-	if (unlikely((s64)delta_exec < 0))
+-		delta_exec = 0;
++	if (unlikely((s64)delta_exec <= 0))
++		return;
  
--	status = of_get_property(device, "status", &statlen);
-+	status = __of_get_property(device, "status", &statlen);
- 	if (status == NULL)
- 		return 1;
- 
-@@ -313,6 +313,26 @@ int of_device_is_available(const struct device_node *device)
- 
- 	return 0;
- }
-+
-+/**
-+ *  of_device_is_available - check if a device is available for use
-+ *
-+ *  @device: Node to check for availability
-+ *
-+ *  Returns 1 if the status property is absent or set to "okay" or "ok",
-+ *  0 otherwise
-+ */
-+int of_device_is_available(const struct device_node *device)
-+{
-+	unsigned long flags;
-+	int res;
-+
-+	raw_spin_lock_irqsave(&devtree_lock, flags);
-+	res = __of_device_is_available(device);
-+	raw_spin_unlock_irqrestore(&devtree_lock, flags);
-+	return res;
-+
-+}
- EXPORT_SYMBOL(of_device_is_available);
- 
- /**
-@@ -404,7 +424,7 @@ struct device_node *of_get_next_available_child(const struct device_node *node,
- 	raw_spin_lock(&devtree_lock);
- 	next = prev ? prev->sibling : node->child;
- 	for (; next; next = next->sibling) {
--		if (!of_device_is_available(next))
-+		if (!__of_device_is_available(next))
- 			continue;
- 		if (of_node_get(next))
- 			break;
--- 
-1.7.10.4
+ 	schedstat_set(curr->se.statistics.exec_max,
+ 			max(curr->se.statistics.exec_max, delta_exec));
