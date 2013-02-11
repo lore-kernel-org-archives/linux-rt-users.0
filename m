@@ -1,77 +1,80 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: [PATCH] rt-tests: NUMA optional for make rpm
-Date: Fri, 8 Feb 2013 18:28:50 -0800
-Message-ID: <5115B462.3050307@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
+Subject: How to decode output from sysrq - t
+Date: Mon, 11 Feb 2013 09:12:06 -0600
+Message-ID: <7A2FC0CD30EF4745AE15F485252D38AC2F45B93E9E@clark>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: <jkacur@redhat.com>, <sven@thebigcorporation.com>,
-	<linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from tx2ehsobe003.messaging.microsoft.com ([65.55.88.13]:44573 "EHLO
-	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753787Ab3BIC3G (ORCPT
+Received: from mail.eagleseven.com ([38.98.183.218]:23465 "EHLO
+	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757255Ab3BKPR1 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Feb 2013 21:29:06 -0500
+	Mon, 11 Feb 2013 10:17:27 -0500
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+I'm trying to plow through the output from sysrq - t on a system where =
+I think we may have a rouge high-priority call to the file system from =
+userspace causing a priority inversion issue.
 
-I'm not sure if this is worth fixing, but...
+=46or the particular instance I'm looking at, it would appear that the =
+"other" half of the hang is the auditd daemon.
 
-rt-tests can be built without NUMA:
+My question is this - is the format of the output between the task name=
+ and the call trace documented anywhere? Or where in the code should I =
+look for it?
 
-   make NUMA=0
+auditd          S ffff880418b967c0     0  2998      1 0x00000000       =
+                                   << This is what I'm wondering about
+ ffff880418479bf8 0000000000000086 00000000000000d0 ffff880418478000   =
+  << This is what I'm wondering about
+ ffff880418478010 ffff880418478010 ffff880418479fd8 ffff880418478000   =
+       << This is what I'm wondering about
+ ffff880418478000 ffff880418478000 ffff88041e3380c0 ffff880418b96400   =
+       << This is what I'm wondering about
+Call Trace:
+ [<ffffffff814e1aae>] schedule+0x2e/0xa0
+ [<ffffffff810898dc>] futex_wait_queue_me+0xcc/0x110
+ [<ffffffff81089ba5>] futex_wait+0x195/0x290
+ [<ffffffff8104b4fb>] ? migrate_enable+0xdb/0x1d0
+ [<ffffffff810892a6>] ? futex_wake+0x126/0x140
+ [<ffffffff8108ab34>] do_futex+0x124/0xaf0
+ [<ffffffff8104b4fb>] ? migrate_enable+0xdb/0x1d0
+ [<ffffffffa019463f>] ? ext2_statfs+0xef/0x180 [ext2]
+ [<ffffffff8117c388>] ? do_statfs_native+0x98/0xb0
+ [<ffffffff8108b57b>] sys_futex+0x7b/0x170
+ [<ffffffff814eab2b>] system_call_fastpath+0x16/0x1b
 
-But "make rpm" does not have a way to be successful without NUMA:
+Abby            S ffff8804181849c0     0 30761  30740 0x00000080
+ ffff880418ac9bf8 0000000000000086 ffff880400000000 ffff880418ac8000
+ ffff880418ac8010 ffff880418ac8010 ffff880418ac9fd8 ffff880418ac8000
+ ffff880418ac8000 ffff880418ac8000 ffffffff81a10020 ffff880418184600
+Call Trace:
+ [<ffffffff814e1aae>] schedule+0x2e/0xa0
+ [<ffffffff810898dc>] futex_wait_queue_me+0xcc/0x110
+ [<ffffffff81089ba5>] futex_wait+0x195/0x290
+ [<ffffffff81079410>] ? update_rmtp+0x80/0x80
+ [<ffffffff8108ab34>] do_futex+0x124/0xaf0
+ [<ffffffff8114b5ca>] ? do_sync_write+0xea/0x130
+ [<ffffffff8114cc57>] ? fget_light+0x97/0xf0
+ [<ffffffff8118a7ea>] ? fsnotify+0x1ea/0x320
+ [<ffffffff8108b57b>] sys_futex+0x7b/0x170
+ [<ffffffff814eab2b>] system_call_fastpath+0x16/0x1b
 
-   build_rt-tests_0.85> make rpm
-   for F in cyclictest signaltest pi_stress rt-migrate-test ptsematest sigwaittest svsematest pmqtest sendme pip_stress hackbench *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a  ChangeLog; do find -type f -name $F | xargs rm -f; done
-   rm -f hwlatdetect
-   rm -f tags
-   rm -rf BUILD BUILDROOT RPMS SRPMS SPECS releases *.tar.gz rt-tests.spec tmp
-   git log >ChangeLog
-   mkdir -p releases
-   mkdir -p tmp/rt-tests
-   cp -r Makefile COPYING ChangeLog src tmp/rt-tests
-   tar -C tmp -czf rt-tests-0.85.tar.gz rt-tests
-   rm -f ChangeLog
-   cp rt-tests-0.85.tar.gz releases
-   sed s/__VERSION__/0.85/ <rt-tests.spec-in >rt-tests.spec
-   rpmbuild -ba --define "_topdir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85" --define "_sourcedir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/releases" --define "_builddir /a/home/frowand/me/src/rt-tests/build_rt-tests_0.85/BUILD"  rt-tests.spec
-   error: Failed build dependencies:
-           numactl-devel is needed by rt-tests-0.85-1.fc12.src
-   make: *** [rpm] Error 1
+Kind Regards,
+Staffan Tjernstr=F6m
+Senior Software Engineer
+Eagle Seven, LLC
+141 West Jackson Boulevard #1575
+Chicago, IL 60604
+Tel: +1 312 385 2600 ext 2627
+Mobile: +1 515 770 5158
 
-
-The following patch allows the rpm to be built without NUMA, with the command:
-
-   make NUMA=0 rpm
-
-This is a somewhat ugly implementation, other suggestions are welcome.
-
-
-Signed-off-by: Frank Rowand <frank.rowand@am.sony.com>
-
----
- Makefile |    4 	4 +	0 -	0 !
- 1 file changed, 4 insertions(+)
-
-Index: b/Makefile
-===================================================================
---- a/Makefile
-+++ b/Makefile
-@@ -161,6 +161,10 @@ pushtest: release
- 
- rt-tests.spec: Makefile rt-tests.spec-in
- 	sed s/__VERSION__/$(VERSION_STRING)/ <$@-in >$@
-+ifneq ($(NUMA),1)
-+	sed -i -e 's/numactl-devel//' -e 's/make NUMA=1/make NUMA=0/' $@
-+endif
-+
- 
- HERE	:=	$(shell pwd)
- RPMARGS	:=	--define "_topdir $(HERE)" 	\
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
