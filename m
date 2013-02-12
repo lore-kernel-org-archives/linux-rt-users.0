@@ -1,38 +1,35 @@
-From: Grant Likely <grant.likely@secretlab.ca>
-Subject: Re: [PATCH] of: fix recursive locking in of_get_next_available_child()
-Date: Mon, 11 Feb 2013 22:39:07 +0000
-Message-ID: <20130211223907.271653E3530@localhost>
-References: <1360617332-2738-1-git-send-email-swarren@wwwdotorg.org>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	devicetree-discuss@lists.ozlabs.org, linux-kernel@vger.kernel.org,
-	sparclinux@vger.kernel.org, Sam Ravnborg <sam@ravnborg.org>,
-	linux-next@vger.kernel.org, Stephen Warren <swarren@nvidia.com>
-To: Stephen Warren <swarren@wwwdotorg.org>,
-	Rob Herring <rob.herring@calxeda.com>
-Return-path: <linux-next-owner@vger.kernel.org>
-In-Reply-To: <1360617332-2738-1-git-send-email-swarren@wwwdotorg.org>
-Sender: linux-next-owner@vger.kernel.org
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [PATCH] sched/rt: Unthrottle the highest RT task of the rq if
+ there are no another available tasks to be picked
+Date: Tue, 12 Feb 2013 08:06:49 +0100
+Message-ID: <1360652809.4657.87.camel@marge.simpson.net>
+References: <2260671360618316@web22h.yandex.ru>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Kirill Tkhai <tkhai@yandex.ru>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <2260671360618316@web22h.yandex.ru>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 11 Feb 2013 14:15:32 -0700, Stephen Warren <swarren@wwwdotorg.org> wrote:
-> From: Stephen Warren <swarren@nvidia.com>
-> 
-> of_get_next_available_child() acquires devtree_lock, then calls
-> of_device_is_available() which calls of_get_property() which calls
-> of_find_property() which tries to re-acquire devtree_lock, thus causing
-> deadlock.
-> 
-> To avoid this, create a new __of_device_is_available() which calls
-> __of_get_property() instead, which calls __of_find_property(), which
-> does not take the lock,. Update of_get_next_available_child() to call
-> the new __of_device_is_available() since it already owns the lock.
-> 
-> Signed-off-by: Stephen Warren <swarren@nvidia.com>
+On Tue, 2013-02-12 at 01:31 +0400, Kirill Tkhai wrote: 
+> It's possible a situation when rq->rt is throttled or
+> it has no child entities and there are RT tasks ready
+> for execution in the rq which are the only tasks
+> of TASK_RUNNING state. In this case pick_next_task
+> takes idle tasks and idle wastes cpu time.
 
-Thanks for looking at this Stephen. I ended up applying my version of
-this patch though just because it was more convenient to do so. It was
-pretty much identical anyway.
+That's not a waste of CPU time, that's utilization enforcement the thing
+it is designed to do.  I'd rather see borrowing go away, bodyguard being
+either a ruthless thug who may save your bacon, or unemployed.  AFAIKT,
+the throttle is useless in any other role, just having it standing
+around glaring across the room occasionally can turn sensitive realtime
+into a quaking heap of jello.
 
-g.
+-Mike
