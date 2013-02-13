@@ -1,40 +1,54 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
-Date: Wed, 13 Feb 2013 18:41:48 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1302131841340.22263@ionos>
-References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de> <1360776274.23152.7.camel@gandalf.local.home>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [RFC][PATCH RT] acpi/rt: Convert acpi lock back to a
+ raw_spinlock_t
+Date: Wed, 13 Feb 2013 18:46:50 +0100 (CET)
+Message-ID: <alpine.LFD.2.03.1302131844530.13701@tycho>
+References: <1360765565.23152.5.camel@gandalf.local.home> <alpine.LFD.2.03.1302131744590.13701@tycho> <alpine.LFD.2.02.1302131755230.11905@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Carsten Emde <C.Emde@osadl.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@gmail.com>,
+	Clark Williams <clark@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1360776274.23152.7.camel@gandalf.local.home>
+In-Reply-To: <alpine.LFD.2.02.1302131755230.11905@ionos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 13 Feb 2013, Steven Rostedt wrote:
 
-> On Wed, 2013-02-13 at 17:11 +0100, Sebastian Andrzej Siewior wrote:
-> > 3.2-rt is a long term supported kernel, which lacks two RT features
-> > from 3.6: SLUB support and the split softirq lock implementation.
-> > 
-> > SLUB has a way better performance than SLAB on RT and the split
-> > softirq lock implementation is necessary especially for realtime
-> > networking applications.
-> > 
-> > The following patch series backports these features to 3.2-rt.
-> > 
-> > Steven, could you please apply these patches to a separate
-> > 3.2-rt-features branch?
-> 
-> Is it possible to separate these two features into two different patch
-> sets. I would like to apply the softirq changes first, and then apply
-> the slub changes.
-> 
-> Although it looks as though the first half is softirq only 1-8, and the
-> second half is slub related 9-16. If that's the case, I'll just pull in
-> 1-8 first, play with them, and then do 9-16.
 
-That's correct.
+On Wed, 13 Feb 2013, Thomas Gleixner wrote:
+
+> On Wed, 13 Feb 2013, John Kacur wrote:
+> > 
+> > Thanks Steven. That looks way better than the previous revert.
+> 
+> I can't tell as I haven't seen the previous revert. And looks good is
+> not really a good review criteria.
+
+Absolutely true, and I wasn't claiming to have reviewed it, just wanted to 
+let everyone know that testing on it was to begin.
+> 
+> The patch is converting _all_ the spin_locks in acpi to raw spinlocks,
+> which will give you a nice bunch of "BUG: sleeping function called
+> from invalid context" splats depending on the ACPI functionality of
+> your machine.
+> 
+> The lock which is related to this splat is: acpi_gbl_hardware_lock and
+> that's the only lock which can be safely converted to a raw spinlock.
+> 
+> Untested patch below.
+> 
+> Thanks,
+> 
+> 	tglx
+
+
+Thank you Thomas, adding this version instead to our test queue.
+
+John
+
+-----------------SNIP
