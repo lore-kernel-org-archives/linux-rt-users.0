@@ -1,57 +1,57 @@
-From: Namhyung Kim <namhyung@kernel.org>
-Subject: Re: [PATCH]sched/stop_task: Do not account zero delta_exec in put_prev_task_stop
-Date: Wed, 13 Feb 2013 15:15:47 +0900
-Message-ID: <878v6spwmk.fsf@sejong.aot.lge.com>
-References: <180751360618804@web6d.yandex.ru>
-Mime-Version: 1.0
-Content-Type: text/plain
-Cc: "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Kirill Tkhai <tkhai@yandex.ru>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <180751360618804@web6d.yandex.ru> (Kirill Tkhai's message of
-	"Tue, 12 Feb 2013 01:40:04 +0400")
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: =?iso-8859-1?Q?Ralf_M=FCller?= <ralf@bj-ig.de>
+Subject: Re: Random 3 to 4.5 second blocks of RT thread
+Date: Wed, 13 Feb 2013 10:15:32 +0100
+Message-ID: <F6E121C4-2DD3-47AB-ABFE-301E5A636C69@bj-ig.de>
+References: <8426D3F6-9553-4B6A-B318-4983625ACC8E@bj-ig.de> <CADkTA4MNMCm-6T7rN+9-kujpO4hUmXJmR7hTOkVy2y4xGWX5BQ@mail.gmail.com> <7E3E5777-3AD4-4A87-B27D-6B3D152DE296@bj-ig.de> <CADkTA4ME9Ce1_vc8e60t_BmH5FZ55u5mYhRNCNuCRLMBOjU4Gw@mail.gmail.com>
+Mime-Version: 1.0 (Apple Message framework v1283)
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Realtime Mailinglist <linux-rt-users@vger.kernel.org>,
+	Thomas Weisser <thomas@bj-ig.de>
+To: Bruce Ashfield <bruce.ashfield@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtpgate.bj-ig.de ([194.127.182.6]:34127 "EHLO smtp.bj-ig.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751195Ab3BMJQC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 04:16:02 -0500
+In-Reply-To: <CADkTA4ME9Ce1_vc8e60t_BmH5FZ55u5mYhRNCNuCRLMBOjU4Gw@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Kirill,
 
-On Tue, 12 Feb 2013 01:40:04 +0400, Kirill Tkhai wrote:
-> Simple return
->
-> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
-> CC: Steven Rostedt <rostedt@goodmis.org>
-> CC: Ingo Molnar <mingo@kernel.org>
-> CC: Peter Zijlstra <peterz@infradead.org>
-> CC: linux-rt-users <linux-rt-users@vger.kernel.org>
-> ---
->  kernel/sched/stop_task.c |    4 ++--
->  1 file changed, 2 insertions(+), 2 deletions(-)
-> diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
-> index da5eb5b..78d0458 100644
-> --- a/kernel/sched/stop_task.c
-> +++ b/kernel/sched/stop_task.c
-> @@ -58,8 +58,8 @@ static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
->  	u64 delta_exec;
->  
->  	delta_exec = rq->clock_task - curr->se.exec_start;
-> -	if (unlikely((s64)delta_exec < 0))
-> -		delta_exec = 0;
-> +	if (unlikely((s64)delta_exec <= 0))
-> +		return;
+Am 12.02.2013 um 15:28 schrieb Bruce Ashfield:
+> 
+> I agree that such a long SMI isn't likely, but running the hwlat
+> detector is a fairly simple way to see if time is in fact being
+> stolen from your kernel, so it's something to look into.
 
-It seems it needs to update curr->se.exec_start then.
+hwlat - up to now - was unknown to me. I will give it a try. Thanks.
 
-Thanks,
-Namhyung
+>> BTW: Are there any links to SMI events in a multi second
+>> range? What in a system is done within such a long time span?
+> 
+> I've never seen it first hand, but I have heard of thermal SMIs that
+> can "borrow" quite a bit of time (depending on what your platform
+> is doing). Like anything, not all BIOS/SMIs are created equal :)
 
->  
->  	schedstat_set(curr->se.statistics.exec_max,
->  			max(curr->se.statistics.exec_max, delta_exec));
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+:)
+
+> Which of course can be more of a problem in your
+> case, since it sounds like you aren't on exactly
+> the same h/w as the problematic system.
+
+Thats the case - yes. But I can try here, build an installation
+packet for the customer system. Remote control the customer - so
+he can activate that packet and send me results.
+
+> Anyway, just a thought and something to rule out.
+
+> If the customer machines can have tracing enabled, you can always set
+> a latency threshold and stop tracing when it is crossed. That should
+> get you insight into what is happening in the long latency case.
+
+You are right - great idea.
+
+Thank you very much
+Ralf
+
