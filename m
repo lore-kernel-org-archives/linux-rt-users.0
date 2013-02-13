@@ -1,94 +1,91 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 01/12] softirq: Make serving softirqs a task flag
-Date: Wed, 13 Feb 2013 17:13:40 +0100
-Message-ID: <1360772031-27186-2-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH 09/12] FIX [2/2] slub: Tid must be retrieved from the percpu area of the current processor
+Date: Wed, 13 Feb 2013 17:13:48 +0100
+Message-ID: <1360772031-27186-10-git-send-email-bigeasy@linutronix.de>
 References: <1360772031-27186-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Carsten Emde <C.Emde@osadl.org>,
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:59797 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934467Ab3BMQOL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 11:14:11 -0500
 In-Reply-To: <1360772031-27186-1-git-send-email-bigeasy@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Christoph Lameter <cl@linux.com>
 
-Avoid the percpu softirq_runner pointer magic by using a task flag.
+As Steven Rostedt has pointer out: Rescheduling could occur on a differnet processor
+after the determination of the per cpu pointer and before the tid is retrieved.
+This could result in allocation from the wrong node in slab_alloc.
 
+The effect is much more severe in slab_free() where we could free to the freelist
+of the wrong page.
+
+The window for something like that occurring is pretty small but it is possible.
+
+Signed-off-by: Christoph Lameter <cl@linux.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Pekka Enberg <penberg@kernel.org>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/sched.h |    1 +
- kernel/softirq.c      |   20 +++-----------------
- 2 files changed, 4 insertions(+), 17 deletions(-)
+ mm/slub.c |   12 +++++++++---
+ 1 file changed, 9 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index b0448fa..8313893 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1876,6 +1876,7 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
- #define PF_MEMALLOC	0x00000800	/* Allocating memory */
- #define PF_NPROC_EXCEEDED 0x00001000	/* set_user noticed that RLIMIT_NPROC was exceeded */
- #define PF_USED_MATH	0x00002000	/* if unset the fpu must be initialized before use */
-+#define PF_IN_SOFTIRQ	0x00004000	/* Task is serving softirq */
- #define PF_NOFREEZE	0x00008000	/* this thread should not be frozen */
- #define PF_FROZEN	0x00010000	/* frozen for system suspend */
- #define PF_FSTRANS	0x00020000	/* inside a filesystem transaction */
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 34fe1db..2980048 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -383,7 +383,6 @@ static inline void ksoftirqd_clr_sched_params(void) { }
-  * On RT we serialize softirq execution with a cpu local lock
-  */
- static DEFINE_LOCAL_IRQ_LOCK(local_softirq_lock);
--static DEFINE_PER_CPU(struct task_struct *, local_softirq_runner);
+diff --git a/mm/slub.c b/mm/slub.c
+index fbf6810..634aabc 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2313,13 +2313,18 @@ static __always_inline void *slab_alloc(struct kmem_cache *s,
+ 		return NULL;
  
- static void __do_softirq_common(int need_rcu_bh_qs);
- 
-@@ -438,22 +437,9 @@ void _local_bh_enable(void)
- }
- EXPORT_SYMBOL(_local_bh_enable);
- 
--/* For tracing */
--int notrace __in_softirq(void)
--{
--	if (__get_cpu_var(local_softirq_lock).owner == current)
--		return __get_cpu_var(local_softirq_lock).nestcnt;
--	return 0;
--}
+ redo:
 -
- int in_serving_softirq(void)
- {
--	int res;
--
--	preempt_disable();
--	res = __get_cpu_var(local_softirq_runner) == current;
--	preempt_enable();
--	return res;
-+	return current->flags & PF_IN_SOFTIRQ;
- }
- EXPORT_SYMBOL(in_serving_softirq);
+ 	/*
+ 	 * Must read kmem_cache cpu data via this cpu ptr. Preemption is
+ 	 * enabled. We may switch back and forth between cpus while
+ 	 * reading from one cpu area. That does not matter as long
+ 	 * as we end up on the original cpu again when doing the cmpxchg.
++	 *
++	 * Preemption is disabled for the retrieval of the tid because that
++	 * must occur from the current processor. We cannot allow rescheduling
++	 * on a different processor between the determination of the pointer
++	 * and the retrieval of the tid.
+ 	 */
++	preempt_disable();
+ 	c = __this_cpu_ptr(s->cpu_slab);
  
-@@ -471,7 +457,7 @@ static void __do_softirq_common(int need_rcu_bh_qs)
- 	/* Reset the pending bitmask before enabling irqs */
- 	set_softirq_pending(0);
+ 	/*
+@@ -2329,7 +2334,7 @@ static __always_inline void *slab_alloc(struct kmem_cache *s,
+ 	 * linked list in between.
+ 	 */
+ 	tid = c->tid;
+-	barrier();
++	preempt_enable();
  
--	__get_cpu_var(local_softirq_runner) = current;
-+	current->flags |= PF_IN_SOFTIRQ;
+ 	object = c->freelist;
+ 	if (unlikely(!object || !node_match(c, node)))
+@@ -2575,10 +2580,11 @@ static __always_inline void slab_free(struct kmem_cache *s,
+ 	 * data is retrieved via this pointer. If we are on the same cpu
+ 	 * during the cmpxchg then the free will succedd.
+ 	 */
++	preempt_disable();
+ 	c = __this_cpu_ptr(s->cpu_slab);
  
- 	lockdep_softirq_enter();
+ 	tid = c->tid;
+-	barrier();
++	preempt_enable();
  
-@@ -482,7 +468,7 @@ static void __do_softirq_common(int need_rcu_bh_qs)
- 		wakeup_softirqd();
- 
- 	lockdep_softirq_exit();
--	__get_cpu_var(local_softirq_runner) = NULL;
-+	current->flags &= ~PF_IN_SOFTIRQ;
- 
- 	current->softirq_nestcnt--;
- }
+ 	if (likely(page == c->page)) {
+ 		set_freepointer(s, object, c->freelist);
 -- 
 1.7.10.4
+
