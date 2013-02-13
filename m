@@ -1,260 +1,96 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [RFC][PATCH RT 4/4 v2] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Wed, 13 Feb 2013 17:49:30 +0100 (CET)
-Message-ID: <alpine.LFD.2.03.1302131748480.13701@tycho>
-References: <20121212192733.221810086@goodmis.org> <20121212193920.803917953@goodmis.org> <1355428396.17101.382.camel@gandalf.local.home>
+From: Tim Sander <tim@krieglstein.org>
+Subject: Re: 3.4.28-rt40 arm freescale imx35 pcm43 - patch 86236252d2449313bdbac790023cbc957bf6e426 is cause
+Date: Wed, 13 Feb 2013 18:07:27 +0100
+Message-ID: <3970144.HqS49ZSYWh@dabox>
+References: <6003615.pRQnIgKCSn@dabox> <1525614.TvuV6qqnEF@dabox> <alpine.LFD.2.02.1302131301580.11905@ionos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Ingo Molnar <mingo@kernel.org>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Mike Galbraith <bitbucket@online.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1355428396.17101.382.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:56387
+	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1760039Ab3BMRHa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 12:07:30 -0500
+In-Reply-To: <alpine.LFD.2.02.1302131301580.11905@ionos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Thomas
+> > Just another update on this stuff. I noticed that there has been a patch
+> > added* with spinlocks to the imx.c serial driver. I reverted this patch
+> > and now my serialfuz programm "only" kills the serial port with a not so
+> > nice oom condition. But at least it does not show the runaway interrupt
+> > problem.
+> That does not make any sense, really. The runnaway interrupt issue is
+> completely unrelated to this commit.
+One thing that puzzles me is the fact that it does! So removing the mentioned 
+spinlock patch creates the same result as using your fixed patch.
 
+As the other problem with the driver i posted shows the same interrupt runaway 
+symptom as this i have a very bad gut feeling about this... 
+Or probably its not a runnaway interrupt problem but a double 
+spin_lock_irqsave.
 
-On Thu, 13 Dec 2012, Steven Rostedt wrote:
+Also the fact that my serialfuz program i posted is able to give the system an 
+Out Of Memory condition is strange. I mean throwing random chars at a getty 
+should'nt exhaust memory so fast.
 
-> I didn't get a chance to test the latest IPI patch series on the 40 core
-> box, and only had my 4 way box to test on. But I was able to test it
-> last night and found some issues.
+> Though the commit in question introduces a recursive locking problem
+> in imx_console_write().
 > 
-> The RT_PUSH_IPI doesn't get automatically set because just doing the
-> sched_feat_enable() wasn't enough. Below is the corrected patch.
+> imx_rxint()
+> {
+>   spin_lock_irqsave(&sport->port.lock,flags);
+>   ...
+>   uart_handle_sysrq_char();
+>     sysrq_function();
+>       printk();
+>         imx_console_write();
+> 	  spin_lock_irqsave(&sport->port.lock,flags); <--- BOOOM
 > 
-> Also, for some reason patch 3 caused the box to hang. Perhaps it
-> required the RT_PUSH_IPI set, because it worked with the original patch
-> series. But that series only did the push ipi. I removed it on the 40
-> core before noticing that the RT_PUSH_IPI wasn't being automatically
-> enabled.
+> Now the kernel cannot tell you, what happened because it's stuck dead.
 > 
-> Here's an update of patch 4:
-> 
-> sched/rt: Use IPI to trigger RT task push migration instead of pulling
-> 
-> When debugging the latencies on a 40 core box, where we hit 300 to
-> 500 microsecond latencies, I found there was a huge contention on the
-> runqueue locks.
-> 
-> Investigating it further, running ftrace, I found that it was due to
-> the pulling of RT tasks.
-> 
-> The test that was run was the following:
-> 
->  cyclictest --numa -p95 -m -d0 -i100
-> 
-> This created a thread on each CPU, that would set its wakeup in interations
-> of 100 microseconds. The -d0 means that all the threads had the same
-> interval (100us). Each thread sleeps for 100us and wakes up and measures
-> its latencies.
-> 
-> What happened was another RT task would be scheduled on one of the CPUs
-> that was running our test, when the other CPUS test went to sleep and
-> scheduled idle. This cause the "pull" operation to execute on all
-> these CPUs. Each one of these saw the RT task that was overloaded on
-> the CPU of the test that was still running, and each one tried
-> to grab that task in a thundering herd way.
-> 
-> To grab the task, each thread would do a double rq lock grab, grabbing
-> its own lock as well as the rq of the overloaded CPU. As the sched
-> domains on this box was rather flat for its size, I saw up to 12 CPUs
-> block on this lock at once. This caused a ripple affect with the
-> rq locks. As these locks were blocked, any wakeups or load balanceing
-> on these CPUs would also block on these locks, and the wait time escalated.
-> 
-> I've tried various methods to lesson the load, but things like an
-> atomic counter to only let one CPU grab the task wont work, because
-> the task may have a limited affinity, and we may pick the wrong
-> CPU to take that lock and do the pull, to only find out that the
-> CPU we picked isn't in the task's affinity.
-> 
-> Instead of doing the PULL, I now have the CPUs that want the pull to
-> send over an IPI to the overloaded CPU, and let that CPU pick what
-> CPU to push the task to. No more need to grab the rq lock, and the
-> push/pull algorithm still works fine.
-> 
-> With this patch, the latency dropped to just 150us over a 20 hour run.
-> Without the patch, the huge latencies would trigger in seconds.
-> 
-> Now, this issue only seems to apply to boxes with greater than 16 CPUs.
-> We noticed this on a 24 CPU box, and things got much worse on 40 (and
-> presumably more CPUs would get even worse yet). But running with 16
-> CPUs and below, the lock contention caused by the pulling of RT tasks
-> is not noticable.
-> 
-> I've created a new sched feature called RT_PUSH_IPI, which by default
-> on 16 and less core CPUs is disabled, and on 17 or more CPUs it is
-> enabled. That seems to be heuristic limit where the pulling logic
-> causes higher latencies than IPIs. Of course with all heuristics, things
-> could be different with different architectures.
-> 
-> When RT_PUSH_IPI is not enabled, the old method of grabbing the rq locks
-> and having the pulling CPU do the work is implemented. When RT_PUSH_IPI
-> is enabled, the IPI is sent to the overloaded CPU to do a push.
-> 
-> To enabled or disable this at run time:
-> 
->  # mount -t debugfs nodev /sys/kernel/debug
->  # echo RT_PUSH_IPI > /sys/kernel/debug/sched_features
-> or
->  # echo NO_RT_PUSH_IPI > /sys/kernel/debug/sched_features
-> 
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-> 
-> Index: rt-linux.git/kernel/sched/core.c
-> ===================================================================
-> --- rt-linux.git.orig/kernel/sched/core.c
-> +++ rt-linux.git/kernel/sched/core.c
-> @@ -1538,6 +1538,9 @@ static void sched_ttwu_pending(void)
->  
->  void scheduler_ipi(void)
->  {
-> +	if (sched_feat(RT_PUSH_IPI))
-> +		sched_rt_push_check();
-> +
->  	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
->  		return;
->  
-> @@ -7541,6 +7544,21 @@ void __init sched_init_smp(void)
->  	free_cpumask_var(non_isolated_cpus);
->  
->  	init_sched_rt_class();
-> +
-> +	/*
-> +	 * To avoid heavy contention on large CPU boxes,
-> +	 * when there is an RT overloaded CPU (two or more RT tasks
-> +	 * queued to run on a CPU and one of the waiting RT tasks
-> +	 * can migrate) and another CPU lowers its priority, instead
-> +	 * of grabbing both rq locks of the CPUS (as many CPUs lowering
-> +	 * their priority at the same time may create large latencies)
-> +	 * send an IPI to the CPU that is overloaded so that it can
-> +	 * do an efficent push.
-> +	 */
-> +	if (num_possible_cpus() > 16) {
-> +		sched_feat_enable(__SCHED_FEAT_RT_PUSH_IPI);
-> +		sysctl_sched_features |= (1UL << __SCHED_FEAT_RT_PUSH_IPI);
-> +	}
->  }
->  #else
->  void __init sched_init_smp(void)
-> Index: rt-linux.git/kernel/sched/rt.c
-> ===================================================================
-> --- rt-linux.git.orig/kernel/sched/rt.c
-> +++ rt-linux.git/kernel/sched/rt.c
-> @@ -1723,6 +1723,31 @@ static void push_rt_tasks(struct rq *rq)
->  		;
->  }
->  
-> +/**
-> + * sched_rt_push_check - check if we can push waiting RT tasks
-> + *
-> + * Called from sched IPI when sched feature RT_PUSH_IPI is enabled.
-> + *
-> + * Checks if there is an RT task that can migrate and there exists
-> + * a CPU in its affinity that only has tasks lower in priority than
-> + * the waiting RT task. If so, then it will push the task off to that
-> + * CPU.
-> + */
-> +void sched_rt_push_check(void)
-> +{
-> +	struct rq *rq = cpu_rq(smp_processor_id());
-> +
-> +	if (WARN_ON_ONCE(!irqs_disabled()))
-> +		return;
-> +
-> +	if (!has_pushable_tasks(rq))
-> +		return;
-> +
-> +	raw_spin_lock(&rq->lock);
-> +	push_rt_tasks(rq);
-> +	raw_spin_unlock(&rq->lock);
-> +}
-> +
->  static int pull_rt_task(struct rq *this_rq)
->  {
->  	int this_cpu = this_rq->cpu, ret = 0, cpu;
-> @@ -1750,6 +1775,18 @@ static int pull_rt_task(struct rq *this_
->  			continue;
->  
->  		/*
-> +		 * When the RT_PUSH_IPI sched feature is enabled, instead
-> +		 * of trying to grab the rq lock of the RT overloaded CPU
-> +		 * send an IPI to that CPU instead. This prevents heavy
-> +		 * contention from several CPUs lowering its priority
-> +		 * and all trying to grab the rq lock of that overloaded CPU.
-> +		 */
-> +		if (sched_feat(RT_PUSH_IPI)) {
-> +			smp_send_reschedule(cpu);
-> +			continue;
-> +		}
-> +
-> +		/*
->  		 * We can potentially drop this_rq's lock in
->  		 * double_lock_balance, and another CPU could
->  		 * alter this_rq
-> Index: rt-linux.git/kernel/sched/sched.h
-> ===================================================================
-> --- rt-linux.git.orig/kernel/sched/sched.h
-> +++ rt-linux.git/kernel/sched/sched.h
-> @@ -1111,6 +1111,8 @@ static inline void double_rq_unlock(stru
->  		__release(rq2->lock);
->  }
->  
-> +void sched_rt_push_check(void);
-> +
->  #else /* CONFIG_SMP */
->  
->  /*
-> @@ -1144,6 +1146,9 @@ static inline void double_rq_unlock(stru
->  	__release(rq2->lock);
->  }
->  
-> +void sched_rt_push_check(void)
-> +{
-> +}
->  #endif
->  
->  extern struct sched_entity *__pick_first_entity(struct cfs_rq *cfs_rq);
-> Index: rt-linux.git/kernel/sched/features.h
-> ===================================================================
-> --- rt-linux.git.orig/kernel/sched/features.h
-> +++ rt-linux.git/kernel/sched/features.h
-> @@ -73,6 +73,20 @@ SCHED_FEAT(PREEMPT_LAZY, true)
->  # endif
->  #endif
->  
-> +/*
-> + * In order to avoid a thundering herd attack of CPUS that are
-> + * lowering their priorities at the same time, and there being
-> + * a single CPU that has an RT task that can migrate and is waiting
-> + * to run, where the other CPUs will try to take that CPUs
-> + * rq lock and possibly create a large contention, sending an
-> + * IPI to that CPU and let that CPU push the RT task to where
-> + * it should go may be a better scenario.
-> + *
-> + * This is default off for machines with <= 16 CPUs, and will
-> + * be turned on at boot up for machines with > 16 CPUs.
-> + */
-> +SCHED_FEAT(RT_PUSH_IPI, false)
-> +
->  SCHED_FEAT(FORCE_SD_OVERLAP, false)
->  SCHED_FEAT(RT_RUNTIME_SHARE, true)
->  SCHED_FEAT(LB_MIN, false)
-> 
+> Find below a completely untested patch which should fix that issue.
+The patch didn't compile cleanly, so i removed the last or statment (albeit 
+without knowing if its important (but it's not defined so it can't be ;-).
 
-FWIW: Applying this to our latest test queue.
+Below is a patch that compiles and survives as the undone 
+86236252d2449313bdbac790023cbc957bf6e426 patch.
 
 Thanks
+Tim
 
-John
+diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
+index 0de7ed7..e1069b4 100644
+--- a/drivers/tty/serial/imx.c
++++ b/drivers/tty/serial/imx.c
+@@ -1225,8 +1225,12 @@ imx_console_write(struct console *co, const char *s, 
+unsigned int count)
+        struct imx_port_ucrs old_ucr;
+        unsigned int ucr1;
+        unsigned long flags;
++       int locked = 1;
+ 
+-       spin_lock_irqsave(&sport->port.lock, flags);
++       if (sport->port.sysrq || oops_in_progress )
++               locked = spin_trylock_irqsave(&sport->port.lock, flags);
++       else
++               spin_lock_irqsave(&sport->port.lock, flags);
+ 
+        /*
+         *      First, save UCR1/2/3 and then disable interrupts
+@@ -1253,7 +1257,8 @@ imx_console_write(struct console *co, const char *s, 
+unsigned int count)
+ 
+        imx_port_ucrs_restore(&sport->port, &old_ucr);
+ 
+-       spin_unlock_irqrestore(&sport->port.lock, flags);
++       if (locked)
++               spin_unlock_irqrestore(&sport->port.lock, flags);
+ }
+ 
+ /*
+
