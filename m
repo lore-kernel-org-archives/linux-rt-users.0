@@ -1,7 +1,7 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 06/12] softirq: Fix nohz pending issue for real
-Date: Wed, 13 Feb 2013 17:13:45 +0100
-Message-ID: <1360772031-27186-7-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH 05/12] softirq: Add more debugging
+Date: Wed, 13 Feb 2013 17:13:44 +0100
+Message-ID: <1360772031-27186-6-git-send-email-bigeasy@linutronix.de>
 References: <1360772031-27186-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -15,56 +15,62 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-We really need to iterate through all softirqs to find a potentially
-blocked runner.
-
-T1 runs softirq X (that cleared pending bit for X)
-
-Interrupt raises softirq Y
-
-T1 gets blocked on a lock and lock owner is not runnable
-
-T1 schedules out
-
-CPU goes idle and complains about pending softirq Y.
-
-Now iterating over all softirqs lets us find the runner for X and
-eliminate Y from the to warn about list as well.
+We really want to find code which calls __raise_softirq_irqsoff() and
+runs neither in hardirq context nor in a local_bh disabled
+region. This is even wrong on mainline as that code relies on random
+events to take care of it's newly raised softirq.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/softirq.c |   13 ++++---------
- 1 file changed, 4 insertions(+), 9 deletions(-)
+ kernel/softirq.c |   16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
 
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 499329d..3f67aff 100644
+index 72abc38..499329d 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
-@@ -100,20 +100,15 @@ void softirq_check_pending_idle(void)
+@@ -605,7 +605,7 @@ void thread_do_softirq(void)
+ 	}
+ }
+ 
+-void __raise_softirq_irqoff(unsigned int nr)
++static void do_raise_softirq_irqoff(unsigned int nr)
  {
- 	static int rate_limit;
- 	struct softirq_runner *sr = &__get_cpu_var(softirq_runners);
--	u32 warnpending, pending = local_softirq_pending();
-+	u32 warnpending = local_softirq_pending();
-+	int i;
+ 	trace_softirq_raise(nr);
+ 	or_softirq_pending(1UL << nr);
+@@ -622,12 +622,19 @@ void __raise_softirq_irqoff(unsigned int nr)
+ 		__this_cpu_read(ksoftirqd)->softirqs_raised |= (1U << nr);
+ }
  
- 	if (rate_limit >= 10)
- 		return;
++void __raise_softirq_irqoff(unsigned int nr)
++{
++	do_raise_softirq_irqoff(nr);
++	if (!in_irq() && !current->softirq_nestcnt)
++		wakeup_softirqd();
++}
++
+ /*
+  * This function must run with irqs disabled!
+  */
+ void raise_softirq_irqoff(unsigned int nr)
+ {
+-	__raise_softirq_irqoff(nr);
++	do_raise_softirq_irqoff(nr);
  
--	warnpending = pending;
+ 	/*
+ 	 * If we're in an hard interrupt we let irq return code deal
+@@ -649,11 +656,6 @@ void raise_softirq_irqoff(unsigned int nr)
+ 		wakeup_softirqd();
+ }
+ 
+-void do_raise_softirq_irqoff(unsigned int nr)
+-{
+-	raise_softirq_irqoff(nr);
+-}
 -
--	while (pending) {
--		struct task_struct *tsk;
--		int i = __ffs(pending);
--
--		pending &= ~(1 << i);
-+	for (i = 0; i < NR_SOFTIRQS; i++) {
-+		struct task_struct *tsk = sr->runner[i];
- 
--		tsk = sr->runner[i];
- 		/*
- 		 * The wakeup code in rtmutex.c wakes up the task
- 		 * _before_ it sets pi_blocked_on to NULL under
+ static inline int ksoftirqd_softirq_pending(void)
+ {
+ 	return current->softirqs_raised;
 -- 
 1.7.10.4
