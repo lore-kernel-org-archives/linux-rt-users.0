@@ -1,57 +1,60 @@
-From: =?iso-8859-1?Q?Ralf_M=FCller?= <ralf@bj-ig.de>
-Subject: Re: Random 3 to 4.5 second blocks of RT thread
-Date: Wed, 13 Feb 2013 10:15:32 +0100
-Message-ID: <F6E121C4-2DD3-47AB-ABFE-301E5A636C69@bj-ig.de>
-References: <8426D3F6-9553-4B6A-B318-4983625ACC8E@bj-ig.de> <CADkTA4MNMCm-6T7rN+9-kujpO4hUmXJmR7hTOkVy2y4xGWX5BQ@mail.gmail.com> <7E3E5777-3AD4-4A87-B27D-6B3D152DE296@bj-ig.de> <CADkTA4ME9Ce1_vc8e60t_BmH5FZ55u5mYhRNCNuCRLMBOjU4Gw@mail.gmail.com>
-Mime-Version: 1.0 (Apple Message framework v1283)
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Realtime Mailinglist <linux-rt-users@vger.kernel.org>,
-	Thomas Weisser <thomas@bj-ig.de>
-To: Bruce Ashfield <bruce.ashfield@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Protection of critical section in PREEMPT_RT
+Date: Wed, 13 Feb 2013 12:31:42 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1302131228320.11905@ionos>
+References: <CAHX1yNTSObcxNrvsBnPw8QzUWTb4zzs_faZZ1bbGU1L8xzgpsQ@mail.gmail.com> <50FE68EF.8060909@meduna.org> <CAHX1yNTKw8vr2v01Eft1tVV5YrP-7Zw=3fk9iF6YJYfbnBJ9LQ@mail.gmail.com> <510ACB87.3080007@am.sony.com> <CAHX1yNQgJXM292q1DWXLdQiR_BK5jZ-d+QHVoEEgksQm04YU6g@mail.gmail.com>
+ <alpine.LFD.2.02.1302041138400.11905@ionos> <CAHX1yNTb92NMAi+9F0QCXqyvwEmerGOar5t4J1tLGznF2jD8Tg@mail.gmail.com> <alpine.LFD.2.02.1302051048170.11905@ionos> <CAHX1yNSCba2wc7A2UOfdyzZ9z-YTYp+p16s8kHcA0e+r9sy+BQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: frank.rowand@am.sony.com, Stanislav Meduna <stano@meduna.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Jacky Lam <lamshuyin@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtpgate.bj-ig.de ([194.127.182.6]:34127 "EHLO smtp.bj-ig.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751195Ab3BMJQC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Feb 2013 04:16:02 -0500
-In-Reply-To: <CADkTA4ME9Ce1_vc8e60t_BmH5FZ55u5mYhRNCNuCRLMBOjU4Gw@mail.gmail.com>
+Received: from www.linutronix.de ([62.245.132.108]:58215 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933658Ab3BMLbs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 06:31:48 -0500
+In-Reply-To: <CAHX1yNSCba2wc7A2UOfdyzZ9z-YTYp+p16s8kHcA0e+r9sy+BQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Jacky,
 
-Am 12.02.2013 um 15:28 schrieb Bruce Ashfield:
+On Wed, 6 Feb 2013, Jacky Lam wrote:
+> On Tue, Feb 5, 2013 at 6:05 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> > If all issues are resolved, move over to RT and enable the same debug
+> > options. Run your code and if it still explodes, post code and kernel
+> > dump so we can have a look instead of having this completely pointless
+> > discussion over and over.
+> >
 > 
-> I agree that such a long SMI isn't likely, but running the hwlat
-> detector is a fairly simple way to see if time is in fact being
-> stolen from your kernel, so it's something to look into.
+> I try to make an example to show the problem. Our hardware  use
+> indirect method to access the SATA/USB controller internal registers,
+> i.e CPU has a SATA/USB IO Addr register and a DATA register. In order
+> to read from controller's internal register, I need to put the offset
+> into IO Addr register and then read from the IO Data register. As this
+> process cannot be interrupted, I need to put a spin_lock_irqsave to
+> protect the code.
 
-hwlat - up to now - was unknown to me. I will give it a try. Thanks.
+Right. That's the usual way to solve this.
+ 
+> When driver code is reading the controller's registers and interrupt
+> comes, interrupt handler (not the interrupt thread) need to clear the
+> interrupt source first and return IRQ_WAKE_THREAD to wait for
+> interrupt thread to actually handle the interrupt task. But in order
+> to clear the interrupt source, I need to access the controller's
+> internal registers. This is the problem I have now.
 
->> BTW: Are there any links to SMI events in a multi second
->> range? What in a system is done within such a long time span?
-> 
-> I've never seen it first hand, but I have heard of thermal SMIs that
-> can "borrow" quite a bit of time (depending on what your platform
-> is doing). Like anything, not all BIOS/SMIs are created equal :)
+Do I understand you correct, that you use a threaded interrupt handler
+already in the driver?
 
-:)
+If yes, then RT is of course not force threading your primary
+handler. In that case the protection of the indirect HW access must
+use a raw_spinlock not a spinlock.
 
-> Which of course can be more of a problem in your
-> case, since it sounds like you aren't on exactly
-> the same h/w as the problematic system.
+Thanks,
 
-Thats the case - yes. But I can try here, build an installation
-packet for the customer system. Remote control the customer - so
-he can activate that packet and send me results.
+	tglx
 
-> Anyway, just a thought and something to rule out.
-
-> If the customer machines can have tracing enabled, you can always set
-> a latency threshold and stop tracing when it is crossed. That should
-> get you insight into what is happening in the long latency case.
-
-You are right - great idea.
-
-Thank you very much
-Ralf
-
+ 
