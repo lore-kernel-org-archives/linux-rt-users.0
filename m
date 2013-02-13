@@ -1,24 +1,84 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
-Date: Wed, 13 Feb 2013 17:11:55 +0100
-Message-ID: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH 02/16] softirq: Split handling function
+Date: Wed, 13 Feb 2013 17:11:57 +0100
+Message-ID: <1360771932-27150-3-git-send-email-bigeasy@linutronix.de>
+References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Carsten Emde <C.Emde@osadl.org>
+	Carsten Emde <C.Emde@osadl.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2-rt is a long term supported kernel, which lacks two RT features
-from 3.6: SLUB support and the split softirq lock implementation.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-SLUB has a way better performance than SLAB on RT and the split
-softirq lock implementation is necessary especially for realtime
-networking applications.
+Split out the inner handling function, so RT can reuse it.
 
-The following patch series backports these features to 3.2-rt.
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/softirq.c |   43 +++++++++++++++++++++++--------------------
+ 1 file changed, 23 insertions(+), 20 deletions(-)
 
-Steven, could you please apply these patches to a separate
-3.2-rt-features branch?
-
-Sebastian
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index d4cace1..79ba7d3 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -139,31 +139,34 @@ static void wakeup_softirqd(void)
+ 		wake_up_process(tsk);
+ }
+ 
+-static void handle_pending_softirqs(u32 pending, int cpu, int need_rcu_bh_qs)
++static void handle_softirq(unsigned int vec_nr, int cpu, int need_rcu_bh_qs)
+ {
+-	struct softirq_action *h = softirq_vec;
++	struct softirq_action *h = softirq_vec + vec_nr;
+ 	unsigned int prev_count = preempt_count();
+ 
+-	local_irq_enable();
+-	for ( ; pending; h++, pending >>= 1) {
+-		unsigned int vec_nr = h - softirq_vec;
++	kstat_incr_softirqs_this_cpu(vec_nr);
++	trace_softirq_entry(vec_nr);
++	h->action(h);
++	trace_softirq_exit(vec_nr);
+ 
+-		if (!(pending & 1))
+-			continue;
++	if (unlikely(prev_count != preempt_count())) {
++		pr_err("softirq %u %s %p preempt count leak: %08x -> %08x\n",
++		       vec_nr, softirq_to_name[vec_nr], h->action,
++		       prev_count, (unsigned int) preempt_count());
++		preempt_count() = prev_count;
++	}
++	if (need_rcu_bh_qs)
++		rcu_bh_qs(cpu);
++}
+ 
+-		kstat_incr_softirqs_this_cpu(vec_nr);
+-		trace_softirq_entry(vec_nr);
+-		h->action(h);
+-		trace_softirq_exit(vec_nr);
+-		if (unlikely(prev_count != preempt_count())) {
+-			printk(KERN_ERR
+- "huh, entered softirq %u %s %p with preempt_count %08x exited with %08x?\n",
+-			       vec_nr, softirq_to_name[vec_nr], h->action,
+-			       prev_count, (unsigned int) preempt_count());
+-			preempt_count() = prev_count;
+-		}
+-		if (need_rcu_bh_qs)
+-			rcu_bh_qs(cpu);
++static void handle_pending_softirqs(u32 pending, int cpu, int need_rcu_bh_qs)
++{
++	unsigned int vec_nr;
++
++	local_irq_enable();
++	for (vec_nr = 0; pending; vec_nr++, pending >>= 1) {
++		if (pending & 1)
++			handle_softirq(vec_nr, cpu, need_rcu_bh_qs);
+ 	}
+ 	local_irq_disable();
+ }
+-- 
+1.7.10.4
