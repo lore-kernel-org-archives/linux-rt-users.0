@@ -1,49 +1,60 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 08/16] net: Use local_bh_disable in netif_rx_ni()
-Date: Wed, 13 Feb 2013 17:12:03 +0100
-Message-ID: <1360771932-27150-9-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH 09/16] FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Date: Wed, 13 Feb 2013 17:12:04 +0100
+Message-ID: <1360771932-27150-10-git-send-email-bigeasy@linutronix.de>
 References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Carsten Emde <C.Emde@osadl.org>,
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:59743 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934383Ab3BMQNU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 11:13:20 -0500
 In-Reply-To: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Christoph Lameter <cl@linux.com>
 
-This code triggers the new WARN in __raise_softirq_irqsoff() though it
-actually looks at the softirq pending bit and calls into the softirq
-code, but that fits not well with the context related softirq model of
-RT. It's correct on mainline though, but going through
-local_bh_disable/enable here is not going to hurt badly.
+The variables accessed in slab_alloc are volatile and therefore
+the page pointer passed to node_match can be NULL. The processing
+of data in slab_alloc is tentative until either the cmpxhchg
+succeeds or the __slab_alloc slowpath is invoked. Both are
+able to perform the same allocation from the freelist.
 
+Check for the NULL pointer in node_match.
+
+A false positive will lead to a retry of the loop in __slab_alloc.
+
+Signed-off-by: Christoph Lameter <cl@linux.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Pekka Enberg <penberg@kernel.org>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+[bigeasy@linutronix: replace page with c->page]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/core/dev.c |    6 ++----
- 1 file changed, 2 insertions(+), 4 deletions(-)
+ mm/slub.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 7e8f459..9a0ca4d 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -3033,11 +3033,9 @@ int netif_rx_ni(struct sk_buff *skb)
+diff --git a/mm/slub.c b/mm/slub.c
+index 5710788..08eb4c1 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -2038,7 +2038,7 @@ static void flush_all(struct kmem_cache *s)
+ static inline int node_match(struct kmem_cache_cpu *c, int node)
  {
- 	int err;
- 
--	migrate_disable();
-+	local_bh_disable();
- 	err = netif_rx(skb);
--	if (local_softirq_pending())
--		thread_do_softirq();
--	migrate_enable();
-+	local_bh_enable();
- 
- 	return err;
- }
+ #ifdef CONFIG_NUMA
+-	if (node != NUMA_NO_NODE && c->node != node)
++	if (!c->page || (node != NUMA_NO_NODE && c->node != node))
+ 		return 0;
+ #endif
+ 	return 1;
 -- 
 1.7.10.4
+
