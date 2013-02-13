@@ -1,40 +1,28 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
-Date: Wed, 13 Feb 2013 12:24:34 -0500
-Message-ID: <1360776274.23152.7.camel@gandalf.local.home>
-References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: 3.4.28-rt40 arm freescale imx35 pcm43 - patch
+ 86236252d2449313bdbac790023cbc957bf6e426 is cause
+Date: Wed, 13 Feb 2013 18:25:27 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1302131823420.22263@ionos>
+References: <6003615.pRQnIgKCSn@dabox> <1525614.TvuV6qqnEF@dabox> <alpine.LFD.2.02.1302131301580.11905@ionos> <3970144.HqS49ZSYWh@dabox>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Carsten Emde <C.Emde@osadl.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Tim Sander <tim@krieglstein.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:60358 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934457Ab3BMRZ3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 12:25:29 -0500
+In-Reply-To: <3970144.HqS49ZSYWh@dabox>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2013-02-13 at 17:11 +0100, Sebastian Andrzej Siewior wrote:
-> 3.2-rt is a long term supported kernel, which lacks two RT features
-> from 3.6: SLUB support and the split softirq lock implementation.
-> 
-> SLUB has a way better performance than SLAB on RT and the split
-> softirq lock implementation is necessary especially for realtime
-> networking applications.
-> 
-> The following patch series backports these features to 3.2-rt.
-> 
-> Steven, could you please apply these patches to a separate
-> 3.2-rt-features branch?
+On Wed, 13 Feb 2013, Tim Sander wrote:
+> > Find below a completely untested patch which should fix that issue.
+> The patch didn't compile cleanly, so i removed the last or statment (albeit 
+> without knowing if its important (but it's not defined so it can't be ;-).
 
-Is it possible to separate these two features into two different patch
-sets. I would like to apply the softirq changes first, and then apply
-the slub changes.
-
-Although it looks as though the first half is softirq only 1-8, and the
-second half is slub related 9-16. If that's the case, I'll just pull in
-1-8 first, play with them, and then do 9-16.
-
-Thanks,
-
--- Steve
+Well, at least in my kernel source it's defined in
+include/linux/kdb.h. So adding the header file to imx.c might cure
+that issue.
