@@ -1,48 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] sched/rt: Unthrottle the highest RT task of the rq if
- there are no another available tasks to be picked
-Date: Tue, 12 Feb 2013 09:46:18 -0500
-Message-ID: <1360680378.21867.8.camel@gandalf.local.home>
-References: <2260671360618316@web22h.yandex.ru>
-	 <1360652809.4657.87.camel@marge.simpson.net>
+From: Namhyung Kim <namhyung@kernel.org>
+Subject: Re: [PATCH]sched/stop_task: Do not account zero delta_exec in put_prev_task_stop
+Date: Wed, 13 Feb 2013 15:15:47 +0900
+Message-ID: <878v6spwmk.fsf@sejong.aot.lge.com>
+References: <180751360618804@web6d.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Kirill Tkhai <tkhai@yandex.ru>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain
+Cc: "linux-kernel\@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	Ingo Molnar <mingo@kernel.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <bitbucket@online.de>
+To: Kirill Tkhai <tkhai@yandex.ru>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1360652809.4657.87.camel@marge.simpson.net>
+In-Reply-To: <180751360618804@web6d.yandex.ru> (Kirill Tkhai's message of
+	"Tue, 12 Feb 2013 01:40:04 +0400")
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2013-02-12 at 08:06 +0100, Mike Galbraith wrote:
-> On Tue, 2013-02-12 at 01:31 +0400, Kirill Tkhai wrote: 
-> > It's possible a situation when rq->rt is throttled or
-> > it has no child entities and there are RT tasks ready
-> > for execution in the rq which are the only tasks
-> > of TASK_RUNNING state. In this case pick_next_task
-> > takes idle tasks and idle wastes cpu time.
-> 
-> That's not a waste of CPU time, that's utilization enforcement the thing
-> it is designed to do.  I'd rather see borrowing go away, bodyguard being
-> either a ruthless thug who may save your bacon, or unemployed.  AFAIKT,
-> the throttle is useless in any other role, just having it standing
-> around glaring across the room occasionally can turn sensitive realtime
-> into a quaking heap of jello.
+Hi Kirill,
 
-I guess what Mike is saying is, you can do a bunch of tests, and if it
-happens to throttle, you wont notice because the system happened to be
-idle.
+On Tue, 12 Feb 2013 01:40:04 +0400, Kirill Tkhai wrote:
+> Simple return
+>
+> Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+> CC: Steven Rostedt <rostedt@goodmis.org>
+> CC: Ingo Molnar <mingo@kernel.org>
+> CC: Peter Zijlstra <peterz@infradead.org>
+> CC: linux-rt-users <linux-rt-users@vger.kernel.org>
+> ---
+>  kernel/sched/stop_task.c |    4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
+> diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
+> index da5eb5b..78d0458 100644
+> --- a/kernel/sched/stop_task.c
+> +++ b/kernel/sched/stop_task.c
+> @@ -58,8 +58,8 @@ static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
+>  	u64 delta_exec;
+>  
+>  	delta_exec = rq->clock_task - curr->se.exec_start;
+> -	if (unlikely((s64)delta_exec < 0))
+> -		delta_exec = 0;
+> +	if (unlikely((s64)delta_exec <= 0))
+> +		return;
 
-Now if you are running in production, and hit the throttle, where
-there's tasks to run, you're production system just went *THUNK*.
+It seems it needs to update curr->se.exec_start then.
 
-Now in argument for the "borrowing" of idle, I do believe that the
-throttle does still occur, and you get a nasty output on the console.
-But not everyone reads those.
+Thanks,
+Namhyung
 
--- Steve
+>  
+>  	schedstat_set(curr->se.statistics.exec_max,
+>  			max(curr->se.statistics.exec_max, delta_exec));
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
