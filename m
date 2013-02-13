@@ -1,34 +1,77 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 3.6.11-rt28 build failure on 32bit Intel
-Date: Wed, 13 Feb 2013 13:14:21 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1302131314060.11905@ionos>
-References: <20130208192328.0fd0db59@tor.valhalla.alchemy.lu>
+Subject: Re: How to decode output from sysrq - t
+Date: Wed, 13 Feb 2013 14:34:26 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1302131429300.11905@ionos>
+References: <7A2FC0CD30EF4745AE15F485252D38AC2F45B93E9E@clark>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Joakim Hernberg <jbh@alchemy.lu>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Staffan Tjernstrom <stjernstrom@eagleseven.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:58441 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:58814 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754310Ab3BMMOX (ORCPT
+	with ESMTP id S1755626Ab3BMNe2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Feb 2013 07:14:23 -0500
-In-Reply-To: <20130208192328.0fd0db59@tor.valhalla.alchemy.lu>
+	Wed, 13 Feb 2013 08:34:28 -0500
+In-Reply-To: <7A2FC0CD30EF4745AE15F485252D38AC2F45B93E9E@clark>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 8 Feb 2013, Joakim Hernberg wrote:
+On Mon, 11 Feb 2013, Staffan Tjernstrom wrote:
 
-> Hi,
-> 
-> I get the following when trying to build 3.6.11-rt28 build failure on
-> 32bit Intel:
-> 
-> CC arch/x86/mm/iomap_32.o 
-> arch/x86/mm/iomap_32.c:57:7: error: expected identifier or '(' before
-> '{' token
-> make[2]: *** [arch/x86/mm/iomap_32.o] Error 1
-> make[1]: *** [arch/x86/mm] Error 2
-> make: *** [arch/x86] Error 2
+> I'm trying to plow through the output from sysrq - t on a system
+> where I think we may have a rouge high-priority call to the file
+> system from userspace causing a priority inversion issue.
 
-Yes, I know. Fixes are on the way.
+Abby hangs in a futex_wait() which has nothing to do with file
+systems.
+
+> For the particular instance I'm looking at, it would appear that the
+> "other" half of the hang is the auditd daemon.
+
+Well, there is no indication that auditd blocks on the same futex as
+Abby and I really would wonder if that's the case.
+
+> My question is this - is the format of the output between the task
+> name and the call trace documented anywhere? Or where in the code
+> should I look for it?
+
+> auditd          S ffff880418b967c0     0  2998      1 0x00000000
+
+sched_show_task()
+
+>  ffff880418479bf8 0000000000000086 00000000000000d0 ffff880418478000
+>  ffff880418478010 ffff880418478010 ffff880418479fd8 ffff880418478000
+>  ffff880418478000 ffff880418478000 ffff88041e3380c0 ffff880418b96400
+
+show_stack()
+
+> Call Trace:
+>  [<ffffffff814e1aae>] schedule+0x2e/0xa0
+>  [<ffffffff810898dc>] futex_wait_queue_me+0xcc/0x110
+>  [<ffffffff81089ba5>] futex_wait+0x195/0x290
+>  [<ffffffff8104b4fb>] ? migrate_enable+0xdb/0x1d0
+>  [<ffffffff810892a6>] ? futex_wake+0x126/0x140
+>  [<ffffffff8108ab34>] do_futex+0x124/0xaf0
+>  [<ffffffff8104b4fb>] ? migrate_enable+0xdb/0x1d0
+>  [<ffffffffa019463f>] ? ext2_statfs+0xef/0x180 [ext2]
+>  [<ffffffff8117c388>] ? do_statfs_native+0x98/0xb0
+>  [<ffffffff8108b57b>] sys_futex+0x7b/0x170
+>  [<ffffffff814eab2b>] system_call_fastpath+0x16/0x1b
+> 
+> Abby            S ffff8804181849c0     0 30761  30740 0x00000080
+>  ffff880418ac9bf8 0000000000000086 ffff880400000000 ffff880418ac8000
+>  ffff880418ac8010 ffff880418ac8010 ffff880418ac9fd8 ffff880418ac8000
+>  ffff880418ac8000 ffff880418ac8000 ffffffff81a10020 ffff880418184600
+> Call Trace:
+>  [<ffffffff814e1aae>] schedule+0x2e/0xa0
+>  [<ffffffff810898dc>] futex_wait_queue_me+0xcc/0x110
+>  [<ffffffff81089ba5>] futex_wait+0x195/0x290
+>  [<ffffffff81079410>] ? update_rmtp+0x80/0x80
+>  [<ffffffff8108ab34>] do_futex+0x124/0xaf0
+>  [<ffffffff8114b5ca>] ? do_sync_write+0xea/0x130
+>  [<ffffffff8114cc57>] ? fget_light+0x97/0xf0
+>  [<ffffffff8118a7ea>] ? fsnotify+0x1ea/0x320
+>  [<ffffffff8108b57b>] sys_futex+0x7b/0x170
+>  [<ffffffff814eab2b>] system_call_fastpath+0x16/0x1b
+
