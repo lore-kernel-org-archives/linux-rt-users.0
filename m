@@ -1,11 +1,12 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH 02/16] softirq: Split handling function
-Date: Wed, 13 Feb 2013 17:11:57 +0100
-Message-ID: <1360771932-27150-3-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH 01/16] softirq: Make serving softirqs a task flag
+Date: Wed, 13 Feb 2013 17:11:56 +0100
+Message-ID: <1360771932-27150-2-git-send-email-bigeasy@linutronix.de>
 References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Carsten Emde <C.Emde@osadl.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
@@ -14,71 +15,81 @@ List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Split out the inner handling function, so RT can reuse it.
+Avoid the percpu softirq_runner pointer magic by using a task flag.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+[bigeasy@linutronix: different PF_IN_SOFTIRQ bit]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/softirq.c |   43 +++++++++++++++++++++++--------------------
- 1 file changed, 23 insertions(+), 20 deletions(-)
+ include/linux/sched.h |    1 +
+ kernel/softirq.c      |   20 +++-----------------
+ 2 files changed, 4 insertions(+), 17 deletions(-)
 
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index e2f9e3b..751e65a 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1821,6 +1821,7 @@ extern void thread_group_times(struct task_struct *p, cputime_t *ut, cputime_t *
+ /*
+  * Per process flags
+  */
++#define PF_IN_SOFTIRQ	0x00000001	/* Task is serving softirq */
+ #define PF_STARTING	0x00000002	/* being created */
+ #define PF_EXITING	0x00000004	/* getting shut down */
+ #define PF_EXITPIDONE	0x00000008	/* pi exit done on shut down */
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index d4cace1..79ba7d3 100644
+index ca00a68..d4cace1 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
-@@ -139,31 +139,34 @@ static void wakeup_softirqd(void)
- 		wake_up_process(tsk);
+@@ -383,7 +383,6 @@ static inline void ksoftirqd_clr_sched_params(void) { }
+  * On RT we serialize softirq execution with a cpu local lock
+  */
+ static DEFINE_LOCAL_IRQ_LOCK(local_softirq_lock);
+-static DEFINE_PER_CPU(struct task_struct *, local_softirq_runner);
+ 
+ static void __do_softirq_common(int need_rcu_bh_qs);
+ 
+@@ -438,22 +437,9 @@ void _local_bh_enable(void)
  }
+ EXPORT_SYMBOL(_local_bh_enable);
  
--static void handle_pending_softirqs(u32 pending, int cpu, int need_rcu_bh_qs)
-+static void handle_softirq(unsigned int vec_nr, int cpu, int need_rcu_bh_qs)
+-/* For tracing */
+-int notrace __in_softirq(void)
+-{
+-	if (__get_cpu_var(local_softirq_lock).owner == current)
+-		return __get_cpu_var(local_softirq_lock).nestcnt;
+-	return 0;
+-}
+-
+ int in_serving_softirq(void)
  {
--	struct softirq_action *h = softirq_vec;
-+	struct softirq_action *h = softirq_vec + vec_nr;
- 	unsigned int prev_count = preempt_count();
+-	int res;
+-
+-	preempt_disable();
+-	res = __get_cpu_var(local_softirq_runner) == current;
+-	preempt_enable();
+-	return res;
++	return current->flags & PF_IN_SOFTIRQ;
+ }
+ EXPORT_SYMBOL(in_serving_softirq);
  
--	local_irq_enable();
--	for ( ; pending; h++, pending >>= 1) {
--		unsigned int vec_nr = h - softirq_vec;
-+	kstat_incr_softirqs_this_cpu(vec_nr);
-+	trace_softirq_entry(vec_nr);
-+	h->action(h);
-+	trace_softirq_exit(vec_nr);
+@@ -471,7 +457,7 @@ static void __do_softirq_common(int need_rcu_bh_qs)
+ 	/* Reset the pending bitmask before enabling irqs */
+ 	set_softirq_pending(0);
  
--		if (!(pending & 1))
--			continue;
-+	if (unlikely(prev_count != preempt_count())) {
-+		pr_err("softirq %u %s %p preempt count leak: %08x -> %08x\n",
-+		       vec_nr, softirq_to_name[vec_nr], h->action,
-+		       prev_count, (unsigned int) preempt_count());
-+		preempt_count() = prev_count;
-+	}
-+	if (need_rcu_bh_qs)
-+		rcu_bh_qs(cpu);
-+}
+-	__get_cpu_var(local_softirq_runner) = current;
++	current->flags |= PF_IN_SOFTIRQ;
  
--		kstat_incr_softirqs_this_cpu(vec_nr);
--		trace_softirq_entry(vec_nr);
--		h->action(h);
--		trace_softirq_exit(vec_nr);
--		if (unlikely(prev_count != preempt_count())) {
--			printk(KERN_ERR
-- "huh, entered softirq %u %s %p with preempt_count %08x exited with %08x?\n",
--			       vec_nr, softirq_to_name[vec_nr], h->action,
--			       prev_count, (unsigned int) preempt_count());
--			preempt_count() = prev_count;
--		}
--		if (need_rcu_bh_qs)
--			rcu_bh_qs(cpu);
-+static void handle_pending_softirqs(u32 pending, int cpu, int need_rcu_bh_qs)
-+{
-+	unsigned int vec_nr;
-+
-+	local_irq_enable();
-+	for (vec_nr = 0; pending; vec_nr++, pending >>= 1) {
-+		if (pending & 1)
-+			handle_softirq(vec_nr, cpu, need_rcu_bh_qs);
- 	}
- 	local_irq_disable();
+ 	lockdep_softirq_enter();
+ 
+@@ -482,7 +468,7 @@ static void __do_softirq_common(int need_rcu_bh_qs)
+ 		wakeup_softirqd();
+ 
+ 	lockdep_softirq_exit();
+-	__get_cpu_var(local_softirq_runner) = NULL;
++	current->flags &= ~PF_IN_SOFTIRQ;
+ 
+ 	current->softirq_nestcnt--;
  }
 -- 
 1.7.10.4
