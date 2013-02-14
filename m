@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.29-rt42
-Date: Wed, 13 Feb 2013 22:04:51 -0500
-Message-ID: <1360811091.23152.25.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.38-rt57
+Date: Wed, 13 Feb 2013 22:05:28 -0500
+Message-ID: <1360811128.23152.26.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -16,28 +16,28 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.29-rt42 stable release.
+I'm pleased to announce the 3.2.38-rt57 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: eab759b5f284bd3c29aaa12f41623ef2cb2ac60d
+  Head SHA1: 97eeac44604babd344fbcea25620de62ab520d88
 
 
-Or to build 3.4.29-rt42 directly, the following patches should be applied:
+Or to build 3.2.38-rt57 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.29.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.29-rt42.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.38-rt57.patch.xz
 
 
-You can also build from 3.4.29-rt41 by applying the incremental patch:
+You can also build from 3.2.38-rt56 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.29-rt41-rt42.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.38-rt56-rt57.patch.xz
 
 
 
@@ -46,12 +46,12 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.4.29-rt41:
+Changes from 3.2.38-rt56:
 
 ---
 
 Steven Rostedt (1):
-      Linux 3.4.29-rt42
+      Linux 3.2.38-rt57
 
 Thomas Gleixner (5):
       drivers-tty-pl011-irq-disable-madness.patch
@@ -63,16 +63,16 @@ Thomas Gleixner (5):
 ----
  drivers/mmc/host/mmci.c         |    5 -----
  drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
- kernel/sched/core.c             |    4 +++-
+ kernel/sched.c                  |    4 +++-
  localversion-rt                 |    2 +-
  mm/swap.c                       |   12 +++++++++---
  5 files changed, 23 insertions(+), 15 deletions(-)
 ---------------------------
 diff --git a/drivers/mmc/host/mmci.c b/drivers/mmc/host/mmci.c
-index 032b847..6f8a1a7 100644
+index 0726e59..5d7bf83 100644
 --- a/drivers/mmc/host/mmci.c
 +++ b/drivers/mmc/host/mmci.c
-@@ -910,15 +910,12 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
+@@ -859,15 +859,12 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
  	struct sg_mapping_iter *sg_miter = &host->sg_miter;
  	struct variant_data *variant = host->variant;
  	void __iomem *base = host->base;
@@ -88,7 +88,7 @@ index 032b847..6f8a1a7 100644
  	do {
  		unsigned int remain, len;
  		char *buffer;
-@@ -958,8 +955,6 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
+@@ -907,8 +904,6 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
  
  	sg_miter_stop(sg_miter);
  
@@ -98,10 +98,10 @@ index 032b847..6f8a1a7 100644
  	 * If we have less than the fifo 'half-full' threshold to transfer,
  	 * trigger a PIO interrupt as soon as any data is available.
 diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index b69356c..7b29c92 100644
+index fe9f111..1fbaf66 100644
 --- a/drivers/tty/serial/amba-pl011.c
 +++ b/drivers/tty/serial/amba-pl011.c
-@@ -1788,13 +1788,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+@@ -1761,13 +1761,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
  
  	clk_enable(uap->clk);
  
@@ -124,7 +124,7 @@ index b69356c..7b29c92 100644
  
  	/*
  	 *	First save the CR then disable the interrupts
-@@ -1816,8 +1822,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+@@ -1789,8 +1795,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
  	writew(old_cr, uap->port.membase + UART011_CR);
  
  	if (locked)
@@ -134,11 +134,11 @@ index b69356c..7b29c92 100644
  
  	clk_disable(uap->clk);
  }
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index fec5603..751ec60 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -5264,6 +5264,7 @@ void __cpuinit init_idle(struct task_struct *idle, int cpu)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index b318b4a..14219ed 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -6519,6 +6519,7 @@ void __cpuinit init_idle(struct task_struct *idle, int cpu)
  	rcu_read_unlock();
  
  	rq->curr = rq->idle = idle;
@@ -146,7 +146,7 @@ index fec5603..751ec60 100644
  #if defined(CONFIG_SMP)
  	idle->on_cpu = 1;
  #endif
-@@ -7535,7 +7536,8 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+@@ -8936,7 +8937,8 @@ void __might_sleep(const char *file, int line, int preempt_offset)
  	static unsigned long prev_jiffy;	/* ratelimiting */
  
  	rcu_sleep_check(); /* WARN_ON_ONCE() by default, no rate limit reqd. */
@@ -157,19 +157,19 @@ index fec5603..751ec60 100644
  		return;
  	if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
 diff --git a/localversion-rt b/localversion-rt
-index 629e0b4..8bdfb9a 100644
+index fdb0f88..c06cc435 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt41
-+-rt42
+--rt56
++-rt57
 diff --git a/mm/swap.c b/mm/swap.c
-index 2051da9..62dc70c 100644
+index e3f7d6f..c428897 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
-@@ -767,6 +767,15 @@ unsigned pagevec_lookup_tag(struct pagevec *pvec, struct address_space *mapping,
- }
- EXPORT_SYMBOL(pagevec_lookup_tag);
+@@ -772,6 +772,15 @@ unsigned pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
+ 
+ EXPORT_SYMBOL(pagevec_lookup);
  
 +/* Early setup for the local locks */
 +static int __init swap_init_locks(void)
@@ -180,10 +180,10 @@ index 2051da9..62dc70c 100644
 +}
 +early_initcall(swap_init_locks);
 +
- /*
-  * Perform any setup for the swap system
-  */
-@@ -774,9 +783,6 @@ void __init swap_setup(void)
+ unsigned pagevec_lookup_tag(struct pagevec *pvec, struct address_space *mapping,
+ 		pgoff_t *index, int tag, unsigned nr_pages)
+ {
+@@ -789,9 +798,6 @@ void __init swap_setup(void)
  {
  	unsigned long megs = totalram_pages >> (20 - PAGE_SHIFT);
  
