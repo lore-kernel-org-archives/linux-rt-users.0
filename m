@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.38-rt57
-Date: Wed, 13 Feb 2013 22:05:28 -0500
-Message-ID: <1360811128.23152.26.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.62-rt88
+Date: Wed, 13 Feb 2013 22:06:12 -0500
+Message-ID: <1360811172.23152.27.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -9,35 +9,40 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3079 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753170Ab3BNDGO (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Feb 2013 22:06:14 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.38-rt57 stable release.
+I'm pleased to announce the 3.0.62-rt88 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: 97eeac44604babd344fbcea25620de62ab520d88
+  Head SHA1: 3568cae0aa56660cadd607e19096ad853822b28c
 
 
-Or to build 3.2.38-rt57 directly, the following patches should be applied:
+Or to build 3.0.62-rt88 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.38.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.62.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.38-rt57.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.62-rt88.patch.xz
 
 
-You can also build from 3.2.38-rt56 by applying the incremental patch:
+You can also build from 3.0.62-rt87 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.38-rt56-rt57.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.62-rt87-rt88.patch.xz
 
 
 
@@ -46,33 +51,32 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.2.38-rt56:
+Changes from 3.0.62-rt87:
 
 ---
 
 Steven Rostedt (1):
-      Linux 3.2.38-rt57
+      Linux 3.0.62-rt88
 
-Thomas Gleixner (5):
+Thomas Gleixner (4):
       drivers-tty-pl011-irq-disable-madness.patch
       mmci: Remove bogus local_irq_save()
       sched: Init idle->on_rq in init_idle()
-      sched: Check for idle task in might_sleep()
       mm: swap: Initialize local locks early
 
 ----
  drivers/mmc/host/mmci.c         |    5 -----
  drivers/tty/serial/amba-pl011.c |   15 ++++++++++-----
- kernel/sched.c                  |    4 +++-
+ kernel/sched.c                  |    1 +
  localversion-rt                 |    2 +-
  mm/swap.c                       |   12 +++++++++---
- 5 files changed, 23 insertions(+), 15 deletions(-)
+ 5 files changed, 21 insertions(+), 14 deletions(-)
 ---------------------------
 diff --git a/drivers/mmc/host/mmci.c b/drivers/mmc/host/mmci.c
-index 0726e59..5d7bf83 100644
+index 9394d0b..8d0bf36 100644
 --- a/drivers/mmc/host/mmci.c
 +++ b/drivers/mmc/host/mmci.c
-@@ -859,15 +859,12 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
+@@ -741,15 +741,12 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
  	struct sg_mapping_iter *sg_miter = &host->sg_miter;
  	struct variant_data *variant = host->variant;
  	void __iomem *base = host->base;
@@ -88,7 +92,7 @@ index 0726e59..5d7bf83 100644
  	do {
  		unsigned int remain, len;
  		char *buffer;
-@@ -907,8 +904,6 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
+@@ -789,8 +786,6 @@ static irqreturn_t mmci_pio_irq(int irq, void *dev_id)
  
  	sg_miter_stop(sg_miter);
  
@@ -98,10 +102,10 @@ index 0726e59..5d7bf83 100644
  	 * If we have less than the fifo 'half-full' threshold to transfer,
  	 * trigger a PIO interrupt as soon as any data is available.
 diff --git a/drivers/tty/serial/amba-pl011.c b/drivers/tty/serial/amba-pl011.c
-index fe9f111..1fbaf66 100644
+index 7cbb367..40356ae 100644
 --- a/drivers/tty/serial/amba-pl011.c
 +++ b/drivers/tty/serial/amba-pl011.c
-@@ -1761,13 +1761,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+@@ -1754,13 +1754,19 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
  
  	clk_enable(uap->clk);
  
@@ -124,7 +128,7 @@ index fe9f111..1fbaf66 100644
  
  	/*
  	 *	First save the CR then disable the interrupts
-@@ -1789,8 +1795,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
+@@ -1782,8 +1788,7 @@ pl011_console_write(struct console *co, const char *s, unsigned int count)
  	writew(old_cr, uap->port.membase + UART011_CR);
  
  	if (locked)
@@ -135,10 +139,10 @@ index fe9f111..1fbaf66 100644
  	clk_disable(uap->clk);
  }
 diff --git a/kernel/sched.c b/kernel/sched.c
-index b318b4a..14219ed 100644
+index 858f5df..53b78f0 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -6519,6 +6519,7 @@ void __cpuinit init_idle(struct task_struct *idle, int cpu)
+@@ -6139,6 +6139,7 @@ void __cpuinit init_idle(struct task_struct *idle, int cpu)
  	rcu_read_unlock();
  
  	rq->curr = rq->idle = idle;
@@ -146,25 +150,15 @@ index b318b4a..14219ed 100644
  #if defined(CONFIG_SMP)
  	idle->on_cpu = 1;
  #endif
-@@ -8936,7 +8937,8 @@ void __might_sleep(const char *file, int line, int preempt_offset)
- 	static unsigned long prev_jiffy;	/* ratelimiting */
- 
- 	rcu_sleep_check(); /* WARN_ON_ONCE() by default, no rate limit reqd. */
--	if ((preempt_count_equals(preempt_offset) && !irqs_disabled()) ||
-+	if ((preempt_count_equals(preempt_offset) && !irqs_disabled() &&
-+	     !is_idle_task(current)) ||
- 	    system_state != SYSTEM_RUNNING || oops_in_progress)
- 		return;
- 	if (time_before(jiffies, prev_jiffy + HZ) && prev_jiffy)
 diff --git a/localversion-rt b/localversion-rt
-index fdb0f88..c06cc435 100644
+index bd5aee3..666227d 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt56
-+-rt57
+--rt87
++-rt88
 diff --git a/mm/swap.c b/mm/swap.c
-index e3f7d6f..c428897 100644
+index 069390f..662972f 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -772,6 +772,15 @@ unsigned pagevec_lookup(struct pagevec *pvec, struct address_space *mapping,
@@ -189,7 +183,3 @@ index e3f7d6f..c428897 100644
  
 -	local_irq_lock_init(rotate_lock);
 -	local_irq_lock_init(swap_lock);
--
- #ifdef CONFIG_SWAP
- 	bdi_init(swapper_space.backing_dev_info);
- #endif
