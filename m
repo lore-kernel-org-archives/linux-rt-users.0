@@ -1,53 +1,75 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH]sched/stop_task: Do not account zero delta_exec in
- put_prev_task_stop
-Date: Thu, 14 Feb 2013 14:25:32 -0500
-Message-ID: <1360869932.23152.51.camel@gandalf.local.home>
-References: <180751360618804@web6d.yandex.ru>
-	 <878v6spwmk.fsf@sejong.aot.lge.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH rt-tests] cyclictest: finish removal of 1 second first loops
+Date: Thu, 14 Feb 2013 17:23:14 -0500
+Message-ID: <1360880594-20779-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Kirill Tkhai <tkhai@yandex.ru>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Namhyung Kim <namhyung@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <878v6spwmk.fsf@sejong.aot.lge.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: Jim Somerville <Jim.Somerville@windriver.com>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.windriver.com ([147.11.1.11]:60779 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759164Ab3BNWW5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 Feb 2013 17:22:57 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2013-02-13 at 15:15 +0900, Namhyung Kim wrote:
-> ---
-> >  kernel/sched/stop_task.c |    4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> > diff --git a/kernel/sched/stop_task.c b/kernel/sched/stop_task.c
-> > index da5eb5b..78d0458 100644
-> > --- a/kernel/sched/stop_task.c
-> > +++ b/kernel/sched/stop_task.c
-> > @@ -58,8 +58,8 @@ static void put_prev_task_stop(struct rq *rq, struct task_struct *prev)
-> >  	u64 delta_exec;
-> >  
-> >  	delta_exec = rq->clock_task - curr->se.exec_start;
-> > -	if (unlikely((s64)delta_exec < 0))
-> > -		delta_exec = 0;
-> > +	if (unlikely((s64)delta_exec <= 0))
-> > +		return;
-> 
-> It seems it needs to update curr->se.exec_start then.
-> 
+From: Jim Somerville <Jim.Somerville@windriver.com>
 
-Ah, if it's less than zero, it does.
+Huge latencies are observed (close to 1 second) when certain
+options are used in cyclictest.
 
-A better patch would be:
+The problem was 1st introduced at commit da4956cbcaf7945554f
+("use interval on first loop instead of 1 second").  It removed
+the 1 second first timing loop out of the main path in cyclictest
+but left it in two other paths, namely the ones triggered by
+these two options:
 
-	if (unlikely((s64)delta_exec <= 0)) {
-		curr->se.exec_start = rq->clock_task;
-		return;
-	}
+    -r   --relative    use relative timer instead of absolute
+    -s   --system      use sys_nanosleep and sys_setitimer
 
-Thanks!
+which in turn causes the huge latencies of close to 1 second to
+be reported by cyclictest with certain uses of those two options.
 
--- Steve
+Here we extend the original commit to remove the 1 second
+hardcoded timer values from the RELTIME and ITIMER options, by
+simply using the actual interval provided instead.
+
+Signed-off-by: Jim Somerville <Jim.Somerville@windriver.com>
+Cc: Clark Williams <williams@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index abf3e8b..8c93ccb 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -775,17 +775,15 @@ void *timerthread(void *param)
+ 		if (par->timermode == TIMER_ABSTIME)
+ 			tspec.it_value = next;
+ 		else {
+-			tspec.it_value.tv_nsec = 0;
+-			tspec.it_value.tv_sec = 1;
++			tspec.it_value = interval;
+ 		}
+ 		timer_settime(timer, par->timermode, &tspec, NULL);
+ 	}
+ 
+ 	if (par->mode == MODE_SYS_ITIMER) {
+-		itimer.it_value.tv_sec = 1;
+-		itimer.it_value.tv_usec = 0;
+ 		itimer.it_interval.tv_sec = interval.tv_sec;
+ 		itimer.it_interval.tv_usec = interval.tv_nsec / 1000;
++		itimer.it_value = itimer.it_interval;
+ 		setitimer (ITIMER_REAL, &itimer, NULL);
+ 	}
+ 
+-- 
+1.8.1.2
+
