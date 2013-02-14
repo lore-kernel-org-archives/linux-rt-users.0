@@ -1,83 +1,127 @@
-From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
-Subject: RE: How to decode output from sysrq - t
-Date: Thu, 14 Feb 2013 07:02:44 -0600
-Message-ID: <7A2FC0CD30EF4745AE15F485252D38AC2F45B9410E@clark>
-References: <7A2FC0CD30EF4745AE15F485252D38AC2F45B93E9E@clark>
- <alpine.LFD.2.02.1302131429300.11905@ionos>
+From: Tim Sander <tim@krieglstein.org>
+Subject: [PATCH] 3.4.28-rt40 tglx fix imx.c spinlock
+Date: Thu, 14 Feb 2013 16:38:14 +0100
+Message-ID: <16398840.IK9i4U2q2d@dabox>
+References: <6003615.pRQnIgKCSn@dabox> <3970144.HqS49ZSYWh@dabox> <alpine.LFD.2.02.1302131828050.22263@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Transfer-Encoding: 7Bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	linux-kernel@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.eagleseven.com ([38.98.183.218]:47020 "EHLO
-	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758994Ab3BNNCq convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Feb 2013 08:02:46 -0500
-In-Reply-To: <alpine.LFD.2.02.1302131429300.11905@ionos>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.LFD.2.02.1302131828050.22263@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Thanks - the hints are much appreciated.
-
------Original Message-----
-From: Thomas Gleixner [mailto:tglx@linutronix.de] 
-Sent: Wednesday, February 13, 2013 7:34 AM
-To: Staffan Tjernstrom
-Cc: linux-rt-users@vger.kernel.org
-Subject: Re: How to decode output from sysrq - t
-
-On Mon, 11 Feb 2013, Staffan Tjernstrom wrote:
-
-> I'm trying to plow through the output from sysrq - t on a system where 
-> I think we may have a rouge high-priority call to the file system from 
-> userspace causing a priority inversion issue.
-
-Abby hangs in a futex_wait() which has nothing to do with file systems.
-
-> For the particular instance I'm looking at, it would appear that the 
-> "other" half of the hang is the auditd daemon.
-
-Well, there is no indication that auditd blocks on the same futex as Abby and I really would wonder if that's the case.
-
-> My question is this - is the format of the output between the task 
-> name and the call trace documented anywhere? Or where in the code 
-> should I look for it?
-
-> auditd          S ffff880418b967c0     0  2998      1 0x00000000
-
-sched_show_task()
-
->  ffff880418479bf8 0000000000000086 00000000000000d0 ffff880418478000
->  ffff880418478010 ffff880418478010 ffff880418479fd8 ffff880418478000
->  ffff880418478000 ffff880418478000 ffff88041e3380c0 ffff880418b96400
-
-show_stack()
-
-> Call Trace:
->  [<ffffffff814e1aae>] schedule+0x2e/0xa0  [<ffffffff810898dc>] 
-> futex_wait_queue_me+0xcc/0x110  [<ffffffff81089ba5>] 
-> futex_wait+0x195/0x290  [<ffffffff8104b4fb>] ? 
-> migrate_enable+0xdb/0x1d0  [<ffffffff810892a6>] ? 
-> futex_wake+0x126/0x140  [<ffffffff8108ab34>] do_futex+0x124/0xaf0  
-> [<ffffffff8104b4fb>] ? migrate_enable+0xdb/0x1d0  [<ffffffffa019463f>] 
-> ? ext2_statfs+0xef/0x180 [ext2]  [<ffffffff8117c388>] ? 
-> do_statfs_native+0x98/0xb0  [<ffffffff8108b57b>] sys_futex+0x7b/0x170  
-> [<ffffffff814eab2b>] system_call_fastpath+0x16/0x1b
+Hi Thomas
+> > > > Just another update on this stuff. I noticed that there has been a
+> > > > patch
+> > > > added* with spinlocks to the imx.c serial driver. I reverted this
+> > > > patch
+> > > > and now my serialfuz programm "only" kills the serial port with a not
+> > > > so
+> > > > nice oom condition. But at least it does not show the runaway
+> > > > interrupt
+> > > > problem.
+> > > 
+> > > That does not make any sense, really. The runnaway interrupt issue is
+> > > completely unrelated to this commit.
+> > 
+> > One thing that puzzles me is the fact that it does! So removing the
+> > mentioned spinlock patch creates the same result as using your fixed
+> > patch.
+> > 
+> > As the other problem with the driver i posted shows the same interrupt
+> > runaway symptom as this i have a very bad gut feeling about this...
+> > Or probably its not a runnaway interrupt problem but a double
+> > spin_lock_irqsave.
 > 
-> Abby            S ffff8804181849c0     0 30761  30740 0x00000080
->  ffff880418ac9bf8 0000000000000086 ffff880400000000 ffff880418ac8000
->  ffff880418ac8010 ffff880418ac8010 ffff880418ac9fd8 ffff880418ac8000
->  ffff880418ac8000 ffff880418ac8000 ffffffff81a10020 ffff880418184600 
-> Call Trace:
->  [<ffffffff814e1aae>] schedule+0x2e/0xa0  [<ffffffff810898dc>] 
-> futex_wait_queue_me+0xcc/0x110  [<ffffffff81089ba5>] 
-> futex_wait+0x195/0x290  [<ffffffff81079410>] ? update_rmtp+0x80/0x80  
-> [<ffffffff8108ab34>] do_futex+0x124/0xaf0  [<ffffffff8114b5ca>] ? 
-> do_sync_write+0xea/0x130  [<ffffffff8114cc57>] ? fget_light+0x97/0xf0  
-> [<ffffffff8118a7ea>] ? fsnotify+0x1ea/0x320  [<ffffffff8108b57b>] 
-> sys_futex+0x7b/0x170  [<ffffffff814eab2b>] 
-> system_call_fastpath+0x16/0x1b
+> Well, you claimed that it is a runnaway interrupt. So much for the
+> theory :)
+Well i sleept over that one. The symptoms in both cases seem to be identical:
+system locked up,interrupt pending, no output at all. 
 
+But there are some differences. Concerning the issue described in this mail:
+http://www.spinics.net/lists/linux-rt-users/msg09303.html
+After the complete lockup of the system i could get into a working system
+ by switching of the interrupt source of the respective interrupt. After that the
+interrupt readings in /proc/interrupts where insanely high. So definetly a runnaway
+ interrupt issue. But this issue seems to be not related to preempt rt. They where
+just so similar on the first glance that i thought they where related.
+
+I could not get the system back running in switching of the serial interrupt.
+Concerning the serial problem i consider the problem solved by the patch below. 
+Thanks!
+
+A patch for 3.6-rt will be sent in another reply. As it does not apply cleanly.
+
+> The issue with the recursive locking is not an RT issue. You can
+> observe the problem on mainline, when you enable PROVE_LOCKING and
+> issue a sysrq or oopsing in a section which holds the port.lock
+> already.
+> 
+> The reason why you can't observe it with PREEMPT_RT_FULL=n and
+> PROVE_LOCKING=n is, that the spinlocks on UP machines are compiled
+> away, so recursive locking does not lead to an observable dead lock.
+Ah, yes that perfectly explains why i have not seen this error in non preempt-rt
+mode.
+
+> > Also the fact that my serialfuz program i posted is able to give the
+> > system an Out Of Memory condition is strange. I mean throwing random
+> > chars at a getty should'nt exhaust memory so fast.
+> 
+> That's true, but w/o seing the OOM output I can't tell what's
+> exhausting the memory.
+When fuzzing the serial port one probably should switch of sysreq. It seems 
+as if there is a break send somehow and then it selects the OOM option.
+So when switching of MAGIC_SYSRQ the OOMs are gone. So its a non issue.
+
+Best regards
+Tim
+
+
+Signed-off-by: Tim Sander <tim@krieglstein.org>
+
+---
+ drivers/tty/serial/imx.c |   10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
+index 0de7ed7..f1f5c4e 100644
+--- a/drivers/tty/serial/imx.c
++++ b/drivers/tty/serial/imx.c
+@@ -47,6 +47,7 @@
+ #include <linux/slab.h>
+ #include <linux/of.h>
+ #include <linux/of_device.h>
++#include <linux/kdb.h>
+
+ #include <asm/io.h>
+ #include <asm/irq.h>
+@@ -1225,8 +1226,12 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+    struct imx_port_ucrs old_ucr;
+    unsigned int ucr1;
+    unsigned long flags;
++   int locked = 1;
+
+-   spin_lock_irqsave(&sport->port.lock, flags);
++   if (sport->port.sysrq || oops_in_progress || in_kdb_printk())
++       locked = spin_trylock_irqsave(&sport->port.lock, flags);
++   else
++       spin_lock_irqsave(&sport->port.lock, flags);
+
+    /*
+     *  First, save UCR1/2/3 and then disable interrupts
+@@ -1253,7 +1258,8 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+
+    imx_port_ucrs_restore(&sport->port, &old_ucr);
+
+-   spin_unlock_irqrestore(&sport->port.lock, flags);
++   if (locked)
++       spin_unlock_irqrestore(&sport->port.lock, flags);
+ }
+
+ /*
+-- 
+1.7.9.5
