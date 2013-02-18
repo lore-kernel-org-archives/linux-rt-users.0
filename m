@@ -1,50 +1,46 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 04/16] rcu: rcutiny: Prevent RCU stall
-Date: Mon, 18 Feb 2013 10:02:01 -0500
-Message-ID: <1361199721.23152.145.camel@gandalf.local.home>
-References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
-	 <1360771932-27150-5-git-send-email-bigeasy@linutronix.de>
-	 <20130216205909.GB3094@linux.vnet.ibm.com>
+Subject: Re: RCU?: Scheduling while atomic with 3.4.23-rt33
+Date: Mon, 18 Feb 2013 10:32:54 -0500
+Message-ID: <1361201574.23152.156.camel@gandalf.local.home>
+References: <4738617.pBMCEJ5E3K@dabox>
+	 <alpine.LFD.2.02.1302181214250.22263@ionos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Carsten Emde <C.Emde@osadl.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: paulmck@linux.vnet.ibm.com
+Cc: Tim Sander <tim.sander@hbm.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130216205909.GB3094@linux.vnet.ibm.com>
+In-Reply-To: <alpine.LFD.2.02.1302181214250.22263@ionos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2013-02-16 at 12:59 -0800, Paul E. McKenney wrote:
->  
-> > diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
-> > index 2b0484a..bac1906 100644
-> > --- a/kernel/rcutiny_plugin.h
-> > +++ b/kernel/rcutiny_plugin.h
-> > @@ -552,7 +552,7 @@ static void rcu_read_unlock_special(struct task_struct *t)
-> >  		rcu_preempt_cpu_qs();
-> > 
-> >  	/* Hardware IRQ handlers cannot block. */
-> > -	if (in_irq()) {
-> > +	if (preempt_count() & (HARDIRQ_MASK | SOFTIRQ_OFFSET)) {
+On Mon, 2013-02-18 at 12:16 +0100, Thomas Gleixner wrote:
+> On Mon, 18 Feb 2013, Tim Sander wrote:
+> > Here is a transtribed backtrace for easier reading:
+> > c0010fac t dump_backtrace
+> > c022c188 T dump_stack
+> > c022c71c t __schedule_bug
+> > c022fb28 t __schedule
+> > c0230644 t rt_spin_lock_slowlock
+> > c0230ba8 T rt_spin_lock
+> > c003a9b8 T __wake_up
+> > c0052a44 t invoke_rcu_callbacks
+> > c0053764 T rcu_check_callbacks
+> > c0026060 T update_process_times
 > 
-> For whatever it is worth, in mainline this is:
+> That's due to CONFIG_TINY_PREEMPT_RCU=y. That's a known issue, which
+> has been fixed in 3.6-rt.
 > 
-> 	if (in_irq() || in_serving_softirq()) {
-> 
-> The definition of in_serving_softirq() is a bit different:
-> 
-> #define in_serving_softirq()    (softirq_count() & SOFTIRQ_OFFSET)
-> 
-> This might be due to differences between mainline and -rt, but thought
-> it worth calling attention to.
+> Steven, could you backport that to 3.2/3.4 please ?
 > 
 
-Right, and we should avoid open coding HARDIRQ_MASK and SOFTIRQ_OFFSET. 
-And note, -rt is slowly creeping into mainline. It's better to have
-things like this nicely tidied up.
+I'm currently trying to get -rt up with the latest stable releases (Greg
+is too damn fast). I'll add this in an -rc later today if I get a
+chance. Otherwise it may have to wait till next week, or perhaps I can
+work on it while at ELC (I leave tomorrow). Keynotes are always a good
+time to get tedious tasks done online.
 
 -- Steve
