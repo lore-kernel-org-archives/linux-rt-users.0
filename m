@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.32-rt45
-Date: Mon, 18 Feb 2013 22:46:13 -0500
-Message-ID: <1361245573.23152.191.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.65-rt91
+Date: Mon, 18 Feb 2013 22:47:00 -0500
+Message-ID: <1361245620.23152.192.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
@@ -16,10 +16,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.32-rt45 stable release.
+I'm pleased to announce the 3.0.65-rt91 stable release.
 
 
-This release is just an update to the new stable 3.4.32 version
+This release is just an update to the new stable 3.0.65 version
 and no RT specific changes have been made.
 
 
@@ -27,16 +27,16 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: adcfec1ba3bff5031138c450298596f234c47fab
+  Head SHA1: e25a54ec098cc72eca675eddf9954cb38ca8ae24
 
 
-Or to build 3.4.32-rt45 directly, the following patches should be applied:
+Or to build 3.0.65-rt91 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.32.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.65.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.32-rt45.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.65-rt91.patch.xz
 
 
 
