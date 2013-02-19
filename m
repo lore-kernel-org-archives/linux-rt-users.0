@@ -1,60 +1,55 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/7] x86/32: Use kmap switch for non highmem as well
-Date: Mon, 18 Feb 2013 22:53:40 -0500
-Message-ID: <20130219035410.088126558@goodmis.org>
+Subject: [PATCH RT 3/7] printk: Fix rq->lock vs logbuf_lock unlock lock inversion
+Date: Mon, 18 Feb 2013 22:53:42 -0500
+Message-ID: <20130219035410.384095545@goodmis.org>
 References: <20130219035339.428477998@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, ybu <ybu@qti.qualcomm.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	<stable@vger.kernel.org>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-x86-32-Use-kmap-switch-for-non-highmem-as-well.patch
+Content-Disposition: inline; filename=0003-printk-Fix-rq-lock-vs-logbuf_lock-unlock-lock-invers.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Bu, Yitian" <ybu@qti.qualcomm.com>
 
-Even with CONFIG_HIGHMEM=n we need to take care of the "atomic"
-mappings which are installed via iomap_atomic.
+commit 07354eb1a74d1 ("locking printk: Annotate logbuf_lock as raw")
+reintroduced a lock inversion problem which was fixed in commit
+0b5e1c5255 ("printk: Release console_sem after logbuf_lock"). This
+happened probably when fixing up patch rejects.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Restore the ordering and unlock logbuf_lock before releasing
+console_sem.
+
+Signed-off-by: ybu <ybu@qti.qualcomm.com>
+Cc: Peter Zijlstra <a.p.zijlstra@chello.nl>
+Cc: stable@vger.kernel.org
 Cc: stable-rt@vger.kernel.org
+Link: http://lkml.kernel.org/r/E807E903FE6CBE4D95E420FBFCC273B827413C@nasanexd01h.na.qualcomm.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/process_32.c |    2 +-
- include/linux/sched.h        |    4 +++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ kernel/printk.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
-index 2b0882a..02ffbf5 100644
---- a/arch/x86/kernel/process_32.c
-+++ b/arch/x86/kernel/process_32.c
-@@ -286,7 +286,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
- 		     task_thread_info(next_p)->flags & _TIF_WORK_CTXSW_NEXT))
- 		__switch_to_xtra(prev_p, next_p, tss);
- 
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	/*
- 	 * Save @prev's kmap_atomic stack
- 	 */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index b0b2559..7a750f5 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1651,9 +1651,11 @@ struct task_struct {
- 	struct rcu_head put_rcu;
- 	int softirq_nestcnt;
- #endif
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+# if defined CONFIG_HIGHMEM || defined CONFIG_X86_32
- 	int kmap_idx;
- 	pte_t kmap_pte[KM_TYPE_NR];
-+# endif
- #endif
- 
- #ifdef CONFIG_DEBUG_PREEMPT
+diff --git a/kernel/printk.c b/kernel/printk.c
+index 7109711..56d7497 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -868,9 +868,9 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ 		}
+ 	}
+ 	printk_cpu = UINT_MAX;
++	raw_spin_unlock(&logbuf_lock);
+ 	if (wake)
+ 		up(&console_sem);
+-	raw_spin_unlock(&logbuf_lock);
+ 	return retval;
+ }
+ static const char recursion_bug_msg [] =
 -- 
 1.7.10.4
