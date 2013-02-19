@@ -1,19 +1,24 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/7] [ANNOUNCE] 3.4.32-rt46-rc1 stable review
-Date: Mon, 18 Feb 2013 22:53:39 -0500
-Message-ID: <20130219035339.428477998@goodmis.org>
+Subject: [PATCH RT 0/7] [ANNOUNCE] 3.2.38-rt58-rc1 stable review
+Date: Mon, 18 Feb 2013 22:56:23 -0500
+Message-ID: <20130219035623.277664914@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:2898 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932130Ab3BSD4q (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Feb 2013 22:56:46 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.4.32-rt46-rc1.
+This is the RT stable review cycle of patch 3.2.38-rt58-rc1.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -31,20 +36,20 @@ Enjoy,
 -- Steve
 
 
-To build 3.4.32-rt46-rc1 directly, the following patches should be applied:
+To build 3.2.38-rt58-rc1 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.32.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.32-rt46-rc1.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.38-rt58-rc1.patch.xz
 
-You can also build from 3.4.32-rt45 by applying the incremental patch:
+You can also build from 3.2.38-rt57 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.32-rt45-rt46-rc1.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.38-rt57-rt58-rc1.patch.xz
 
 
-Changes from 3.4.32-rt45:
+Changes from 3.2.38-rt57:
 
 ---
 
@@ -54,7 +59,7 @@ Bu, Yitian (1):
 
 Steven Rostedt (2):
       acpi/rt: Convert acpi_gbl_hardware lock back to a raw_spinlock_t
-      Linux 3.4.32-rt46-rc1
+      Linux 3.2.38-rt58-rc1
 
 Thomas Gleixner (4):
       x86/32: Use kmap switch for non highmem as well
