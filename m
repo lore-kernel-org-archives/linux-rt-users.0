@@ -1,70 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/4] [ANNOUNCE] 3.0.65-rt92-rc1
-Date: Tue, 19 Feb 2013 00:31:16 -0500
-Message-ID: <20130219053116.706325380@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
+Date: Tue, 19 Feb 2013 07:17:45 +0100
+Message-ID: <1361254665.5804.32.camel@marge.simpson.net>
+References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de>
+	 <1360776274.23152.7.camel@gandalf.local.home> <5122DB72.7030100@huawei.com>
+	 <5122DBC1.6010507@huawei.com>
+	 <1361246801.23152.195.camel@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Li Zefan <lizefan@huawei.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Carsten Emde <C.Emde@osadl.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1361246801.23152.195.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, 2013-02-18 at 23:06 -0500, Steven Rostedt wrote: 
+> On Tue, 2013-02-19 at 09:56 +0800, Li Zefan wrote:
+> 
+> > Oh ignore me. Just saw the patchset for 3.4-rt.
+> 
+> Note, I already have part of the 3.4-feature (softirq backport) tested
+> and ready. What I'm waiting on is trying to figure out the best way to
+> process it.
+> 
+> I already know I'll have a v3.4-features branch, but I'm thinking about
+> patches and tarballs, if it should be posted as well, or just be in git?
 
-Dear RT Folks,
+If I had a vote, it'd be for git only.
 
-This is the RT stable review cycle of patch 3.0.65-rt92-rc1.
+Extracting patches or using git directly is trivial.  The less time
+maintainers spend on trivial crud, the more time they have for hard
+stuff.  Git only is a win for maintainers _and_ us greedy users :)
 
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 2/22/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.0.65-rt92-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.65.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.65-rt92-rc1.patch.xz
-
-You can also build from 3.0.65-rt91 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.65-rt91-rt92-rc1.patch.xz
-
-
-Changes from 3.0.65-rt91:
-
----
-
-
-Steven Rostedt (2):
-      acpi/rt: Convert acpi_gbl_hardware lock back to a raw_spinlock_t
-      Linux 3.0.65-rt92-rc1
-
-Thomas Gleixner (2):
-      x86/32: Use kmap switch for non highmem as well
-      rcutiny: Use simple waitqueue
-
-----
- arch/x86/kernel/process_32.c    |    2 +-
- drivers/acpi/acpica/acglobal.h  |    2 +-
- drivers/acpi/acpica/hwregs.c    |    4 ++--
- drivers/acpi/acpica/hwxface.c   |    4 ++--
- drivers/acpi/acpica/utmutex.c   |    4 ++--
- include/acpi/platform/aclinux.h |   14 ++++++++++++++
- include/linux/sched.h           |    4 +++-
- kernel/rcutiny_plugin.h         |    9 +++++----
- localversion-rt                 |    2 +-
- 9 files changed, 31 insertions(+), 14 deletions(-)
+-Mike
