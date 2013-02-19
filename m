@@ -1,46 +1,45 @@
-From: Li Zefan <lizefan@huawei.com>
-Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
-Date: Tue, 19 Feb 2013 09:56:17 +0800
-Message-ID: <5122DBC1.6010507@huawei.com>
-References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de> <1360776274.23152.7.camel@gandalf.local.home> <5122DB72.7030100@huawei.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.32-rt45
+Date: Mon, 18 Feb 2013 22:46:13 -0500
+Message-ID: <1361245573.23152.191.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-15"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5122DB72.7030100@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2013/2/19 9:54, Li Zefan wrote:
-> On 2013/2/14 1:24, Steven Rostedt wrote:
->> On Wed, 2013-02-13 at 17:11 +0100, Sebastian Andrzej Siewior wrote:
->>> 3.2-rt is a long term supported kernel, which lacks two RT features
->>> from 3.6: SLUB support and the split softirq lock implementation.
->>>
->>> SLUB has a way better performance than SLAB on RT and the split
->>> softirq lock implementation is necessary especially for realtime
->>> networking applications.
->>>
->>> The following patch series backports these features to 3.2-rt.
->>>
->>> Steven, could you please apply these patches to a separate
->>> 3.2-rt-features branch?
->>
->> Is it possible to separate these two features into two different patch
->> sets. I would like to apply the softirq changes first, and then apply
->> the slub changes.
->>
->> Although it looks as though the first half is softirq only 1-8, and the
->> second half is slub related 9-16. If that's the case, I'll just pull in
->> 1-8 first, play with them, and then do 9-16.
->>
-> 
-> We've also ported these two features to 3.4-rt. Do you want us to post
-> them?
-> 
 
-Oh ignore me. Just saw the patchset for 3.4-rt.
+Dear RT Folks,
+
+I'm pleased to announce the 3.4.32-rt45 stable release.
+
+
+This release is just an update to the new stable 3.4.32 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: adcfec1ba3bff5031138c450298596f234c47fab
+
+
+Or to build 3.4.32-rt45 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.32.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.32-rt45.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
