@@ -1,60 +1,147 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/7] x86/32: Use kmap switch for non highmem as well
-Date: Mon, 18 Feb 2013 22:56:24 -0500
-Message-ID: <20130219035645.585688682@goodmis.org>
+Subject: [PATCH RT 4/7] serial: Imx: Fix recursive locking bug
+Date: Mon, 18 Feb 2013 22:56:27 -0500
+Message-ID: <20130219035646.071287104@goodmis.org>
 References: <20130219035623.277664914@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Jiri Slaby <jslaby@suse.cz>,
+	Xinyu Chen <xinyu.chen@freescale.com>,
+	Dirk Behme <dirk.behme@de.bosch.com>,
+	Shawn Guo <shawn.guo@linaro.org>,
+	Tim Sander <tim@krieglstein.org>,
+	Sascha Hauer <s.hauer@pengutronix.de>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-x86-32-Use-kmap-switch-for-non-highmem-as-well.patch
+Content-Disposition: inline; filename=0004-serial-Imx-Fix-recursive-locking-bug.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Even with CONFIG_HIGHMEM=n we need to take care of the "atomic"
-mappings which are installed via iomap_atomic.
+commit 9ec1882df2 (tty: serial: imx: console write routing is unsafe
+on SMP) introduced a recursive locking bug in imx_console_write().
 
+The callchain is:
+
+imx_rxint()
+  spin_lock_irqsave(&sport->port.lock,flags);
+  ...
+  uart_handle_sysrq_char();
+    sysrq_function();
+      printk();
+        imx_console_write();
+          spin_lock_irqsave(&sport->port.lock,flags); <--- DEAD
+
+The bad news is that the kernel debugging facilities can dectect the
+problem, but the printks never surface on the serial console for
+obvious reasons.
+
+There is a similar issue with oops_in_progress. If the kernel crashes
+we really don't want to be stuck on the lock and unable to tell what
+happened.
+
+In general most UP originated drivers miss these checks and nobody
+ever notices because CONFIG_PROVE_LOCKING seems to be still ignored by
+a large number of developers.
+
+The solution is to avoid locking in the sysrq case and trylock in the
+oops_in_progress case.
+
+This scheme is used in other drivers as well and it would be nice if
+we could move this to a common place, so the usual copy/paste/modify
+bugs can be avoided.
+
+Now there is another issue with this scheme:
+
+CPU0 	    	     	 CPU1
+printk()
+			 rxint()
+			   sysrq_detection() -> sets port->sysrq
+			 return from interrupt
+  console_write()
+     if (port->sysrq)
+     	avoid locking
+
+port->sysrq is reset with the next receive character. So as long as
+the port->sysrq is not reset and this can take an endless amount of
+time if after the break no futher receive character follows, all
+console writes happen unlocked.
+
+While the current writer is protected against other console writers by
+the console sem, it's unprotected against open/close or other
+operations which fiddle with the port. That's what the above mentioned
+commit tried to solve.
+
+That's an issue in all drivers which use that scheme and unfortunately
+there is no easy workaround. The only solution is to have a separate
+indicator port->sysrq_cpu. uart_handle_sysrq_char() then sets it to
+smp_processor_id() before calling into handle_sysrq() and resets it to
+-1 after that. Then change the locking check to:
+
+     if (port->sysrq_cpu == smp_processor_id())
+     	 locked = 0;
+     else if (oops_in_progress)
+         locked = spin_trylock_irqsave(port->lock, flags);
+     else
+  	 spin_lock_irqsave(port->lock, flags);
+
+That would force all other cpus into the spin_lock path. Problem
+solved, but that's way beyond the scope of this fix and really wants
+to be implemented in a common function which calls the uart specific
+write function to avoid another gazillion of hard to debug
+copy/paste/modify bugs.
+
+Reported-and-tested-by: Tim Sander <tim@krieglstein.org>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Cc: Jiri Slaby <jslaby@suse.cz>
+Cc: Xinyu Chen <xinyu.chen@freescale.com>
+Cc: Dirk Behme <dirk.behme@de.bosch.com>
+Cc: Shawn Guo <shawn.guo@linaro.org>
+Cc: Tim Sander <tim@krieglstein.org>
+Cc: Sascha Hauer <s.hauer@pengutronix.de>
 Cc: stable-rt@vger.kernel.org
+Link: http://lkml.kernel.org/r/alpine.LFD.2.02.1302142006050.22263@ionos
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/process_32.c |    2 +-
- include/linux/sched.h        |    4 +++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ drivers/tty/serial/imx.c |   11 +++++++++--
+ 1 file changed, 9 insertions(+), 2 deletions(-)
 
-diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
-index 20f1573..66ee590 100644
---- a/arch/x86/kernel/process_32.c
-+++ b/arch/x86/kernel/process_32.c
-@@ -340,7 +340,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
- 		     task_thread_info(next_p)->flags & _TIF_WORK_CTXSW_NEXT))
- 		__switch_to_xtra(prev_p, next_p, tss);
+diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
+index 8e68f79..5f5c214 100644
+--- a/drivers/tty/serial/imx.c
++++ b/drivers/tty/serial/imx.c
+@@ -1115,8 +1115,14 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 	struct imx_port *sport = imx_ports[co->index];
+ 	unsigned int old_ucr1, old_ucr2, ucr1;
+ 	unsigned long flags;
++	int locked = 1;
  
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#ifdef CONFIG_PREEMPT_RT_FULL
+-	spin_lock_irqsave(&sport->port.lock, flags);
++	if (sport->port.sysrq)
++		locked = 0;
++	else if (oops_in_progress)
++		locked = spin_trylock_irqsave(&sport->port.lock, flags);
++	else
++		spin_lock_irqsave(&sport->port.lock, flags);
+ 
  	/*
- 	 * Save @prev's kmap_atomic stack
- 	 */
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index e2f9e3b..a26bd7e 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1608,9 +1608,11 @@ struct task_struct {
- 	struct rcu_head put_rcu;
- 	int softirq_nestcnt;
- #endif
--#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+# if defined CONFIG_HIGHMEM || defined CONFIG_X86_32
- 	int kmap_idx;
- 	pte_t kmap_pte[KM_TYPE_NR];
-+# endif
- #endif
+ 	 *	First, save UCR1/2 and then disable interrupts
+@@ -1144,7 +1150,8 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 	writel(old_ucr1, sport->port.membase + UCR1);
+ 	writel(old_ucr2, sport->port.membase + UCR2);
  
- #ifdef CONFIG_DEBUG_PREEMPT
+-	spin_unlock_irqrestore(&sport->port.lock, flags);
++	if (locked)
++		spin_unlock_irqrestore(&sport->port.lock, flags);
+ }
+ 
+ /*
 -- 
 1.7.10.4
