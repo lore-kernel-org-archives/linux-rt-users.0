@@ -1,29 +1,103 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 7/7] Linux 3.4.32-rt46-rc1
-Date: Mon, 18 Feb 2013 22:53:46 -0500
-Message-ID: <20130219035411.049352671@goodmis.org>
+Subject: [PATCH RT 6/7] rcutiny: Use simple waitqueue
+Date: Mon, 18 Feb 2013 22:53:45 -0500
+Message-ID: <20130219035410.883303304@goodmis.org>
 References: <20130219035339.428477998@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-Linux-3.4.32-rt46-rc1.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3449 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932176Ab3BSDyN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Feb 2013 22:54:13 -0500
+Content-Disposition: inline; filename=0006-rcutiny-Use-simple-waitqueue.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Steven Rostedt <srostedt@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
+Simple waitqueues can be handled from interrupt disabled contexts.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/rcutiny_plugin.h |   17 +++++++++--------
+ 1 file changed, 9 insertions(+), 8 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 38c40b2..2a08cf6 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt45
-+-rt46-rc1
+diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
+index 97e359b..2824dbd 100644
+--- a/kernel/rcutiny_plugin.h
++++ b/kernel/rcutiny_plugin.h
+@@ -26,6 +26,7 @@
+ #include <linux/module.h>
+ #include <linux/debugfs.h>
+ #include <linux/seq_file.h>
++#include <linux/wait-simple.h>
+ 
+ /* Global control variables for rcupdate callback mechanism. */
+ struct rcu_ctrlblk {
+@@ -261,7 +262,7 @@ static void show_tiny_preempt_stats(struct seq_file *m)
+ 
+ /* Controls for rcu_kthread() kthread. */
+ static struct task_struct *rcu_kthread_task;
+-static DECLARE_WAIT_QUEUE_HEAD(rcu_kthread_wq);
++static DEFINE_SWAIT_HEAD(rcu_kthread_wq);
+ static unsigned long have_rcu_kthread_work;
+ 
+ /*
+@@ -754,7 +755,7 @@ void synchronize_rcu(void)
+ }
+ EXPORT_SYMBOL_GPL(synchronize_rcu);
+ 
+-static DECLARE_WAIT_QUEUE_HEAD(sync_rcu_preempt_exp_wq);
++static DEFINE_SWAIT_HEAD(sync_rcu_preempt_exp_wq);
+ static unsigned long sync_rcu_preempt_exp_count;
+ static DEFINE_MUTEX(sync_rcu_preempt_exp_mutex);
+ 
+@@ -776,7 +777,7 @@ static int rcu_preempted_readers_exp(void)
+  */
+ static void rcu_report_exp_done(void)
+ {
+-	wake_up(&sync_rcu_preempt_exp_wq);
++	swait_wake(&sync_rcu_preempt_exp_wq);
+ }
+ 
+ /*
+@@ -828,8 +829,8 @@ void synchronize_rcu_expedited(void)
+ 	else {
+ 		rcu_initiate_boost();
+ 		local_irq_restore(flags);
+-		wait_event(sync_rcu_preempt_exp_wq,
+-			   !rcu_preempted_readers_exp());
++		swait_event(sync_rcu_preempt_exp_wq,
++			    !rcu_preempted_readers_exp());
+ 	}
+ 
+ 	/* Clean up and exit. */
+@@ -917,7 +918,7 @@ static void invoke_rcu_callbacks(void)
+ {
+ 	have_rcu_kthread_work = 1;
+ 	if (rcu_kthread_task != NULL)
+-		wake_up(&rcu_kthread_wq);
++		swait_wake(&rcu_kthread_wq);
+ }
+ 
+ #ifdef CONFIG_RCU_TRACE
+@@ -947,8 +948,8 @@ static int rcu_kthread(void *arg)
+ 	unsigned long flags;
+ 
+ 	for (;;) {
+-		wait_event_interruptible(rcu_kthread_wq,
+-					 have_rcu_kthread_work != 0);
++		swait_event_interruptible(rcu_kthread_wq,
++					  have_rcu_kthread_work != 0);
+ 		morework = rcu_boost();
+ 		local_irq_save(flags);
+ 		work = have_rcu_kthread_work;
 -- 
 1.7.10.4
+
+
