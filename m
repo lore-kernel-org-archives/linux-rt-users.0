@@ -1,402 +1,660 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: rt: rtmutex experiment doubled tbench throughput
-Date: Fri, 22 Feb 2013 17:36:50 +0100
-Message-ID: <1361551010.32441.50.camel@marge.simpson.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.32-rt46
+Date: Fri, 22 Feb 2013 12:37:17 -0500
+Message-ID: <1361554637.9470.1.camel@pippen.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.186]:60516 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757195Ab3BVQhD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Feb 2013 11:37:03 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-Greetings,
-
-A user reported surprise at seeing a low priority rt task awakened in
-the same semop as a high priority task run before the high priority task
-could finish what it was supposed to do, and put itself to sleep.  The
-reason for that happening is that it, and a few of its brothers (highly
-synchronized task schedulers) enter semop to diddle the same array at
-the same time, meet at spinlock (rtmutex) and block.
-
-Now you could say "Waking task foo and depending on it's lower than task
-bar priority to keep it off the CPU is your bad if you do so without a
-no-block guarantee in hand for everything task bar does." which I did,
-that and "The semop syscall is not atomic per POSIX, it's the array
-operations that are atomic.  Blocking on a contended lock is fine".
-
-Anyway, I looked at rtmutex.c and started pondering, wondering if I
-could un-surprise the user without breaking the world, and maybe even
-make non-rt stuff perform a little better.
-
-Numerous deadlocks and cool explosions later...
-
-This seems to work, no harm to 60 core jitter testcase detected, and it
-doubled tbench throughput.  But be advised, your breakfast may emigrate,
-or a POSIX swat team may kick in your door if you even _look_ at this. 
-
-64 core DL980G2, 3.0.61-rt85
-
-vogelweide:/:[0]# tbench.sh 128 10
-waiting for connections
-dbench version 3.04 - Copyright Andrew Tridgell 1999-2004
-
-Running for 10 seconds with load '/usr/share/dbench/client.txt' and minimum warmup 2 secs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^128 clients started
- 128      5881  6239.48 MB/sec  warmup   1 sec   
- 128     17978  4169.33 MB/sec  execute   1 sec   
- 128     24051  4173.54 MB/sec  execute   2 sec   
- 128     30131  4185.35 MB/sec  execute   3 sec   
- 128     36145  4173.59 MB/sec  execute   4 sec   
- 128     42233  4182.69 MB/sec  execute   5 sec   
- 128     48293  4181.18 MB/sec  execute   6 sec   
- 128     54407  4185.10 MB/sec  execute   7 sec   
- 128     60445  4183.09 MB/sec  execute   8 sec   
- 128     66482  4179.41 MB/sec  execute   9 sec   
- 128     72543  4179.37 MB/sec  cleanup  10 sec   
- 128     72543  4174.07 MB/sec  cleanup  10 sec   
-
-Throughput 4179.49 MB/sec 128 procs
-924536 packets/sec
-/root/bin/tbench.sh: line 33: 11292 Killed                  tbench_srv
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-vogelweide:/:[0]# echo 1 >  /proc/sys/kernel/sched_rt_spin_yield
-vogelweide:/:[0]# tbench.sh 128 10
-waiting for connections
-dbench version 3.04 - Copyright Andrew Tridgell 1999-2004
+Dear RT Folks,
 
-Running for 10 seconds with load '/usr/share/dbench/client.txt' and minimum warmup 2 secs
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^128 clients started
- 128     14360  12090.05 MB/sec  warmup   1 sec   
- 128     42573  9740.67 MB/sec  execute   1 sec   
- 128     56661  9736.85 MB/sec  execute   2 sec   
- 128     70752  9723.79 MB/sec  execute   3 sec   
- 128     84850  9724.82 MB/sec  execute   4 sec   
- 128     98936  9720.49 MB/sec  execute   5 sec   
- 128    113021  9721.15 MB/sec  execute   6 sec   
- 128    127111  9723.26 MB/sec  execute   7 sec   
- 128    141203  9722.81 MB/sec  execute   8 sec   
- 128    155300  9722.90 MB/sec  execute   9 sec   
- 128    169392  9727.48 MB/sec  cleanup  10 sec   
- 128    169392  9712.52 MB/sec  cleanup  10 sec   
+I'm pleased to announce the 3.4.32-rt46 stable release.
 
-Throughput 9727.56 MB/sec 128 procs
-2150132 packets/sec
-/root/bin/tbench.sh: line 34: 11568 Killed                  tbench_srv
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: c0fbd612e9ebadfe34303759eb37b351c5f57de1
+
+
+Or to build 3.4.32-rt46 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.32.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.32-rt46.patch.xz
+
+
+You can also build from 3.4.32-rt45 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.32-rt45-rt46.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from 3.4.32-rt45:
 
 ---
- include/linux/sched.h   |    7 +++++--
- kernel/rtmutex.c        |   48 +++++++++++++++++++++++++++++++++++++++++-------
- kernel/rtmutex_common.h |   42 +++++++++++++++++++++++++++++++++++++++---
- kernel/sched.c          |   31 ++++++++++++++++++++++++++++---
- kernel/sched_fair.c     |    5 +++++
- kernel/sched_rt.c       |    3 +++
- kernel/sysctl.c         |   11 +++++++++++
- 7 files changed, 132 insertions(+), 15 deletions(-)
 
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2083,6 +2083,9 @@ extern unsigned int sysctl_sched_latency
- extern unsigned int sysctl_sched_min_granularity;
- extern unsigned int sysctl_sched_wakeup_granularity;
- extern unsigned int sysctl_sched_child_runs_first;
+Bu, Yitian (1):
+      printk: Fix rq->lock vs logbuf_lock unlock lock inversion
+
+Steven Rostedt (2):
+      acpi/rt: Convert acpi_gbl_hardware lock back to a raw_spinlock_t
+      Linux 3.4.32-rt46
+
+Thomas Gleixner (4):
+      x86/32: Use kmap switch for non highmem as well
+      serial: Imx: Fix recursive locking bug
+      wait-simple: Simple waitqueue implementation
+      rcutiny: Use simple waitqueue
+
+----
+ arch/x86/kernel/process_32.c    |    2 +-
+ drivers/acpi/acpica/acglobal.h  |    2 +-
+ drivers/acpi/acpica/hwregs.c    |    4 +-
+ drivers/acpi/acpica/hwxface.c   |    4 +-
+ drivers/acpi/acpica/utmutex.c   |    4 +-
+ drivers/tty/serial/imx.c        |   11 ++-
+ include/acpi/platform/aclinux.h |   14 ++++
+ include/linux/sched.h           |    4 +-
+ include/linux/wait-simple.h     |  172 +++++++++++++++++++++++++++++++++++++++
+ kernel/Makefile                 |    2 +-
+ kernel/printk.c                 |    2 +-
+ kernel/rcutiny_plugin.h         |   17 ++--
+ kernel/wait-simple.c            |  119 +++++++++++++++++++++++++++
+ localversion-rt                 |    2 +-
+ 14 files changed, 337 insertions(+), 22 deletions(-)
+---------------------------
+diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
+index 2b0882a..02ffbf5 100644
+--- a/arch/x86/kernel/process_32.c
++++ b/arch/x86/kernel/process_32.c
+@@ -286,7 +286,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
+ 		     task_thread_info(next_p)->flags & _TIF_WORK_CTXSW_NEXT))
+ 		__switch_to_xtra(prev_p, next_p, tss);
+ 
+-#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
 +#ifdef CONFIG_PREEMPT_RT_FULL
-+extern unsigned int sysctl_sched_rt_spin_yield;
-+#endif
- 
- enum sched_tunable_scaling {
- 	SCHED_TUNABLESCALING_NONE,
-@@ -2146,12 +2149,12 @@ extern unsigned int sysctl_sched_cfs_ban
- #endif
- 
- #ifdef CONFIG_RT_MUTEXES
--extern void task_setprio(struct task_struct *p, int prio);
-+extern void task_setprio(struct task_struct *p, int prio, int yield);
- extern int rt_mutex_getprio(struct task_struct *p);
- extern int rt_mutex_check_prio(struct task_struct *task, int newprio);
- static inline void rt_mutex_setprio(struct task_struct *p, int prio)
- {
--	task_setprio(p, prio);
-+	task_setprio(p, prio, 0);
- }
- extern void rt_mutex_adjust_pi(struct task_struct *p);
- static inline bool tsk_is_pi_blocked(struct task_struct *tsk)
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -689,7 +689,7 @@ static inline void rt_spin_lock_fastunlo
-  * on rcu_read_lock() and the check against the lock owner.
+ 	/*
+ 	 * Save @prev's kmap_atomic stack
+ 	 */
+diff --git a/drivers/acpi/acpica/acglobal.h b/drivers/acpi/acpica/acglobal.h
+index 4f7d3f5..16dddf2 100644
+--- a/drivers/acpi/acpica/acglobal.h
++++ b/drivers/acpi/acpica/acglobal.h
+@@ -251,7 +251,7 @@ ACPI_EXTERN u8 acpi_gbl_global_lock_pending;
+  * interrupt level
   */
- static int adaptive_wait(struct rt_mutex *lock,
--			 struct task_struct *owner)
-+			 struct task_struct *owner, int spin)
- {
- 	int res = 0;
+ ACPI_EXTERN acpi_spinlock acpi_gbl_gpe_lock;	/* For GPE data structs and registers */
+-ACPI_EXTERN acpi_spinlock acpi_gbl_hardware_lock;	/* For ACPI H/W except GPE registers */
++ACPI_EXTERN acpi_raw_spinlock acpi_gbl_hardware_lock;	/* For ACPI H/W except GPE registers */
  
-@@ -702,8 +702,8 @@ static int adaptive_wait(struct rt_mutex
- 		 * checking the above to be valid.
- 		 */
- 		barrier();
--		if (!owner->on_cpu) {
--			res = 1;
-+		if (!owner || !owner->on_cpu) {
-+			res = !spin;
- 			break;
- 		}
- 		cpu_relax();
-@@ -713,7 +713,7 @@ static int adaptive_wait(struct rt_mutex
- }
- #else
- static int adaptive_wait(struct rt_mutex *lock,
--			 struct task_struct *orig_owner)
-+			 struct task_struct *orig_owner, int spin)
- {
- 	return 1;
- }
-@@ -733,7 +733,7 @@ static void  noinline __sched rt_spin_lo
- {
- 	struct task_struct *lock_owner, *self = current;
- 	struct rt_mutex_waiter waiter, *top_waiter;
--	int ret;
-+	int ret, wait, rt_spin = 0, other_spin = 0, cpu;
+ /*****************************************************************************
+  *
+diff --git a/drivers/acpi/acpica/hwregs.c b/drivers/acpi/acpica/hwregs.c
+index 6b6c83b..fcc264f 100644
+--- a/drivers/acpi/acpica/hwregs.c
++++ b/drivers/acpi/acpica/hwregs.c
+@@ -271,14 +271,14 @@ acpi_status acpi_hw_clear_acpi_status(void)
+ 			  ACPI_BITMASK_ALL_FIXED_STATUS,
+ 			  ACPI_FORMAT_UINT64(acpi_gbl_xpm1a_status.address)));
  
- 	rt_mutex_init_waiter(&waiter, true);
+-	lock_flags = acpi_os_acquire_lock(acpi_gbl_hardware_lock);
++	raw_spin_lock_irqsave(acpi_gbl_hardware_lock, lock_flags);
  
-@@ -761,6 +761,17 @@ static void  noinline __sched rt_spin_lo
- 	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
- 	BUG_ON(ret);
+ 	/* Clear the fixed events in PM1 A/B */
  
-+	/* basic spin/yield sanity checks */
-+	if (rt_spin_yield_enabled()) {
-+		rt_spin = !self->saved_state;
-+		/* Here there be dragons */
-+		rt_spin &= !(self->flags & PF_EXITING);
-+		other_spin = rt_spin;
-+		rt_spin &= rt_task(self);
-+		other_spin &= !rt_spin;
-+	}
-+	cpu = raw_smp_processor_id();
-+
- 	for (;;) {
- 		/* Try to acquire the lock again. */
- 		if (__try_to_take_rt_mutex(lock, self, &waiter, STEAL_LATERAL))
-@@ -769,12 +780,25 @@ static void  noinline __sched rt_spin_lo
- 		top_waiter = rt_mutex_top_waiter(lock);
- 		lock_owner = rt_mutex_owner(lock);
+ 	status = acpi_hw_register_write(ACPI_REGISTER_PM1_STATUS,
+ 					ACPI_BITMASK_ALL_FIXED_STATUS);
  
-+		if (rt_spin)
-+			wait = 1;
-+		else
-+			wait = top_waiter != &waiter;
-+
-+		/* SCHED_OTHER can laterally steal, let them try */
-+		if (other_spin) {
-+			wait &= task_cpu(top_waiter->task) == cpu;
-+			wait |= top_waiter->task->prio < self->prio;
-+			wait |= lock_owner && !lock_owner->on_cpu;
-+			wait |= lock_owner && !lock_owner->prio < self->prio;
-+		}
-+
- 		raw_spin_unlock(&lock->wait_lock);
+-	acpi_os_release_lock(acpi_gbl_hardware_lock, lock_flags);
++	raw_spin_unlock_irqrestore(acpi_gbl_hardware_lock, lock_flags);
  
- 		debug_rt_mutex_print_deadlock(&waiter);
- 
--		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner))
--			schedule_rt_mutex(lock);
-+		if (wait || adaptive_wait(lock, lock_owner, rt_spin))
-+			schedule_rt_spinlock(lock, rt_spin);
- 
- 		raw_spin_lock(&lock->wait_lock);
- 
-@@ -826,6 +850,16 @@ static void  noinline __sched rt_spin_lo
- 		return;
+ 	if (ACPI_FAILURE(status))
+ 		goto exit;
+diff --git a/drivers/acpi/acpica/hwxface.c b/drivers/acpi/acpica/hwxface.c
+index a716fed..5c6494f 100644
+--- a/drivers/acpi/acpica/hwxface.c
++++ b/drivers/acpi/acpica/hwxface.c
+@@ -366,7 +366,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
+ 		return_ACPI_STATUS(AE_BAD_PARAMETER);
  	}
  
-+	if (rt_spin_yield_enabled() && rt_task(current)) {
-+		struct rt_mutex_waiter *top_waiter = rt_mutex_top_waiter(lock);
-+		struct task_struct *next = top_waiter->task;
-+
-+		/* Move next in line to head of its queue */
-+		pi_lock(&next->pi_lock);
-+		task_setprio(next, next->prio, 1);
-+		pi_unlock(&next->pi_lock);
-+	}
-+
- 	wakeup_next_waiter(lock);
+-	lock_flags = acpi_os_acquire_lock(acpi_gbl_hardware_lock);
++	raw_spin_lock_irqsave(acpi_gbl_hardware_lock, lock_flags);
  
- 	raw_spin_unlock(&lock->wait_lock);
---- a/kernel/rtmutex_common.h
-+++ b/kernel/rtmutex_common.h
-@@ -32,9 +32,45 @@ extern void schedule_rt_mutex_test(struc
- 		schedule_rt_mutex_test(_lock);			\
-   } while (0)
+ 	/*
+ 	 * At this point, we know that the parent register is one of the
+@@ -427,7 +427,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
  
--#else
--# define schedule_rt_mutex(_lock)			schedule()
--#endif
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+#define rt_spin_yield_enabled()					\
-+	(sysctl_sched_rt_spin_yield && system_state == SYSTEM_RUNNING)
-+
-+#define schedule_rt_spinlock(_lock, _spin)			\
-+  do {								\
-+	if (!(current->flags & PF_MUTEX_TESTER)) {		\
-+		if (!_spin)					\
-+			schedule();				\
-+		else						\
-+			yield();				\
-+	} else							\
-+		schedule_rt_mutex_test(_lock);			\
-+  } while (0)
-+#else /* !CONFIG_PREEMPT_RT_FULL */
-+#define rt_spin_yield_enabled()	(0)
-+#define schedule_rt_spinlock(_lock, _spin) schedule_rt_mutex(_lock)
-+#endif /* CONFIG_PREEMPT_RT_FULL */
-+
-+#else /* !CONFIG_RT_MUTEX_TESTER */
-+
-+#define schedule_rt_mutex(_lock)			schedule()
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+#define rt_spin_yield_enabled()					\
-+	(sysctl_sched_rt_spin_yield && system_state == SYSTEM_RUNNING)
-+
-+#define schedule_rt_spinlock(_lock, _spin)			\
-+  do {								\
-+	if (!_spin)						\
-+		schedule();					\
-+	else							\
-+		yield();					\
-+  } while (0)
-+#else /* !CONFIG_PREEMPT_RT_FULL */
-+#define rt_spin_yield_enabled()	(0)
-+#define schedule_rt_spinlock(_lock, _spin) schedule_rt_mutex(_lock)
-+#endif /* CONFIG_PREEMPT_RT_FULL */
-+#endif /* CONFIG_RT_MUTEX_TESTER */
+ unlock_and_exit:
+ 
+-	acpi_os_release_lock(acpi_gbl_hardware_lock, lock_flags);
++	raw_spin_unlock_irqrestore(acpi_gbl_hardware_lock, lock_flags);
+ 	return_ACPI_STATUS(status);
+ }
+ 
+diff --git a/drivers/acpi/acpica/utmutex.c b/drivers/acpi/acpica/utmutex.c
+index 43174df..5aab30a 100644
+--- a/drivers/acpi/acpica/utmutex.c
++++ b/drivers/acpi/acpica/utmutex.c
+@@ -88,7 +88,7 @@ acpi_status acpi_ut_mutex_initialize(void)
+ 		return_ACPI_STATUS (status);
+ 	}
+ 
+-	status = acpi_os_create_lock (&acpi_gbl_hardware_lock);
++	status = acpi_os_create_raw_lock (&acpi_gbl_hardware_lock);
+ 	if (ACPI_FAILURE (status)) {
+ 		return_ACPI_STATUS (status);
+ 	}
+@@ -135,7 +135,7 @@ void acpi_ut_mutex_terminate(void)
+ 	/* Delete the spinlocks */
+ 
+ 	acpi_os_delete_lock(acpi_gbl_gpe_lock);
+-	acpi_os_delete_lock(acpi_gbl_hardware_lock);
++	acpi_os_delete_raw_lock(acpi_gbl_hardware_lock);
+ 
+ 	/* Delete the reader/writer lock */
+ 
+diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
+index 0de7ed7..6604736 100644
+--- a/drivers/tty/serial/imx.c
++++ b/drivers/tty/serial/imx.c
+@@ -1225,8 +1225,14 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 	struct imx_port_ucrs old_ucr;
+ 	unsigned int ucr1;
+ 	unsigned long flags;
++	int locked = 1;
+ 
+-	spin_lock_irqsave(&sport->port.lock, flags);
++	if (sport->port.sysrq)
++		locked = 0;
++	else if (oops_in_progress)
++		locked = spin_trylock_irqsave(&sport->port.lock, flags);
++	else
++		spin_lock_irqsave(&sport->port.lock, flags);
+ 
+ 	/*
+ 	 *	First, save UCR1/2/3 and then disable interrupts
+@@ -1253,7 +1259,8 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 
+ 	imx_port_ucrs_restore(&sport->port, &old_ucr);
+ 
+-	spin_unlock_irqrestore(&sport->port.lock, flags);
++	if (locked)
++		spin_unlock_irqrestore(&sport->port.lock, flags);
+ }
  
  /*
-  * This is the control structure for tasks blocked on a rt_mutex,
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -943,6 +943,11 @@ late_initcall(sched_init_debug);
- const_debug unsigned int sysctl_sched_nr_migrate = 32;
- #else
- const_debug unsigned int sysctl_sched_nr_migrate = 8;
+diff --git a/include/acpi/platform/aclinux.h b/include/acpi/platform/aclinux.h
+index 6fbc4cab..6fee309 100644
+--- a/include/acpi/platform/aclinux.h
++++ b/include/acpi/platform/aclinux.h
+@@ -72,6 +72,7 @@
+ 
+ #define acpi_cache_t                        struct kmem_cache
+ #define acpi_spinlock                       spinlock_t *
++#define acpi_raw_spinlock                   raw_spinlock_t *
+ #define acpi_cpu_flags                      unsigned long
+ 
+ #else /* !__KERNEL__ */
+@@ -175,6 +176,19 @@ static inline void *acpi_os_acquire_object(acpi_cache_t * cache)
+ 	lock ? AE_OK : AE_NO_MEMORY;				\
+ })
+ 
++#define acpi_os_create_raw_lock(__handle)			\
++({								\
++	raw_spinlock_t *lock = ACPI_ALLOCATE(sizeof(*lock));	\
++								\
++	if (lock) {						\
++		*(__handle) = lock;				\
++		raw_spin_lock_init(*(__handle));		\
++	}							\
++	lock ? AE_OK : AE_NO_MEMORY;				\
++})
 +
-+/*
-+ * rt spinlock waiters spin and yield() if necessary vs blocking
-+ */
-+unsigned int sysctl_sched_rt_spin_yield __read_mostly;
++#define acpi_os_delete_raw_lock(__handle)	kfree(__handle)
++
+ #endif /* __KERNEL__ */
+ 
+ #endif /* __ACLINUX_H__ */
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index b0b2559..7a750f5 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1651,9 +1651,11 @@ struct task_struct {
+ 	struct rcu_head put_rcu;
+ 	int softirq_nestcnt;
+ #endif
+-#if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
++#ifdef CONFIG_PREEMPT_RT_FULL
++# if defined CONFIG_HIGHMEM || defined CONFIG_X86_32
+ 	int kmap_idx;
+ 	pte_t kmap_pte[KM_TYPE_NR];
++# endif
  #endif
  
- /*
-@@ -5292,6 +5297,7 @@ EXPORT_SYMBOL(sleep_on_timeout);
-  * task_setprio - set the current priority of a task
-  * @p: task
-  * @prio: prio value (kernel-internal form)
-+ * @requeue: requeue an rt_spin_lock_slowlock() top waiter and preempt
-  *
-  * This function changes the 'effective' priority of a task. It does
-  * not touch ->normal_prio like __setscheduler().
-@@ -5299,7 +5305,7 @@ EXPORT_SYMBOL(sleep_on_timeout);
-  * Used by the rt_mutex code to implement priority inheritance
-  * logic. Call site only calls if the priority of the task changed.
-  */
--void task_setprio(struct task_struct *p, int prio)
-+void task_setprio(struct task_struct *p, int prio, int requeue)
- {
- 	int oldprio, on_rq, running;
- 	struct rq *rq;
-@@ -5332,6 +5338,8 @@ void task_setprio(struct task_struct *p,
- 	prev_class = p->sched_class;
- 	on_rq = p->on_rq;
- 	running = task_current(rq, p);
-+	if (requeue && (running || !on_rq || !rt_prio(oldprio)))
-+		goto out_unlock;
- 	if (on_rq)
- 		dequeue_task(rq, p, 0);
- 	if (running)
-@@ -5346,8 +5354,25 @@ void task_setprio(struct task_struct *p,
+ #ifdef CONFIG_DEBUG_PREEMPT
+diff --git a/include/linux/wait-simple.h b/include/linux/wait-simple.h
+new file mode 100644
+index 0000000..44fee60
+--- /dev/null
++++ b/include/linux/wait-simple.h
+@@ -0,0 +1,172 @@
++#ifndef _LINUX_WAIT_SIMPLE_H
++#define _LINUX_WAIT_SIMPLE_H
++
++#include <linux/spinlock.h>
++#include <linux/list.h>
++
++#include <asm/current.h>
++
++struct swaiter {
++	struct task_struct	*task;
++	struct list_head	node;
++};
++
++#define DEFINE_SWAITER(name)					\
++	struct swaiter name = {					\
++		.task	= current,				\
++		.node	= LIST_HEAD_INIT((name).node),		\
++	}
++
++struct swait_head {
++	raw_spinlock_t		lock;
++	struct list_head	list;
++};
++
++#define SWAIT_HEAD_INITIALIZER(name) {				\
++		.lock	= __RAW_SPIN_LOCK_UNLOCKED(name.lock),	\
++		.list	= LIST_HEAD_INIT((name).list),		\
++	}
++
++#define DEFINE_SWAIT_HEAD(name)					\
++	struct swait_head name = SWAIT_HEAD_INITIALIZER(name)
++
++extern void __init_swait_head(struct swait_head *h, struct lock_class_key *key);
++
++#define init_swait_head(swh)					\
++	do {							\
++		static struct lock_class_key __key;		\
++								\
++		__init_swait_head((swh), &__key);		\
++	} while (0)
++
++/*
++ * Waiter functions
++ */
++extern void swait_prepare_locked(struct swait_head *head, struct swaiter *w);
++extern void swait_prepare(struct swait_head *head, struct swaiter *w, int state);
++extern void swait_finish_locked(struct swait_head *head, struct swaiter *w);
++extern void swait_finish(struct swait_head *head, struct swaiter *w);
++
++/*
++ * Wakeup functions
++ */
++extern unsigned int __swait_wake(struct swait_head *head, unsigned int state, unsigned int num);
++extern unsigned int __swait_wake_locked(struct swait_head *head, unsigned int state, unsigned int num);
++
++#define swait_wake(head)			__swait_wake(head, TASK_NORMAL, 1)
++#define swait_wake_interruptible(head)		__swait_wake(head, TASK_INTERRUPTIBLE, 1)
++#define swait_wake_all(head)			__swait_wake(head, TASK_NORMAL, 0)
++#define swait_wake_all_interruptible(head)	__swait_wake(head, TASK_INTERRUPTIBLE, 0)
++
++/*
++ * Event API
++ */
++#define __swait_event(wq, condition)					\
++do {									\
++	DEFINE_SWAITER(__wait);						\
++									\
++	for (;;) {							\
++		swait_prepare(&wq, &__wait, TASK_UNINTERRUPTIBLE);	\
++		if (condition)						\
++			break;						\
++		schedule();						\
++	}								\
++	swait_finish(&wq, &__wait);					\
++} while (0)
++
++/**
++ * swait_event - sleep until a condition gets true
++ * @wq: the waitqueue to wait on
++ * @condition: a C expression for the event to wait for
++ *
++ * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
++ * @condition evaluates to true. The @condition is checked each time
++ * the waitqueue @wq is woken up.
++ *
++ * wake_up() has to be called after changing any variable that could
++ * change the result of the wait condition.
++ */
++#define swait_event(wq, condition)					\
++do {									\
++	if (condition)							\
++		break;							\
++	__swait_event(wq, condition);					\
++} while (0)
++
++#define __swait_event_interruptible(wq, condition, ret)			\
++do {									\
++	DEFINE_SWAITER(__wait);						\
++									\
++	for (;;) {							\
++		swait_prepare(&wq, &__wait, TASK_INTERRUPTIBLE);	\
++		if (condition)						\
++			break;						\
++		if (signal_pending(current)) {				\
++			ret = -ERESTARTSYS;				\
++			break;						\
++		}							\
++		schedule();						\
++	}								\
++	swait_finish(&wq, &__wait);					\
++} while (0)
++
++/**
++ * swait_event_interruptible - sleep until a condition gets true
++ * @wq: the waitqueue to wait on
++ * @condition: a C expression for the event to wait for
++ *
++ * The process is put to sleep (TASK_INTERRUPTIBLE) until the
++ * @condition evaluates to true. The @condition is checked each time
++ * the waitqueue @wq is woken up.
++ *
++ * wake_up() has to be called after changing any variable that could
++ * change the result of the wait condition.
++ */
++#define swait_event_interruptible(wq, condition)			\
++({									\
++	int __ret = 0;							\
++	if (!(condition))						\
++		__swait_event_interruptible(wq, condition, __ret);	\
++	__ret;								\
++})
++
++#define __swait_event_timeout(wq, condition, ret)			\
++do {									\
++	DEFINE_SWAITER(__wait);						\
++									\
++	for (;;) {							\
++		swait_prepare(&wq, &__wait, TASK_UNINTERRUPTIBLE);	\
++		if (condition)						\
++			break;						\
++		ret = schedule_timeout(ret);				\
++		if (!ret)						\
++			break;						\
++	}								\
++	swait_finish(&wq, &__wait);					\
++} while (0)
++
++/**
++ * swait_event_timeout - sleep until a condition gets true or a timeout elapses
++ * @wq: the waitqueue to wait on
++ * @condition: a C expression for the event to wait for
++ * @timeout: timeout, in jiffies
++ *
++ * The process is put to sleep (TASK_UNINTERRUPTIBLE) until the
++ * @condition evaluates to true. The @condition is checked each time
++ * the waitqueue @wq is woken up.
++ *
++ * wake_up() has to be called after changing any variable that could
++ * change the result of the wait condition.
++ *
++ * The function returns 0 if the @timeout elapsed, and the remaining
++ * jiffies if the condition evaluated to true before the timeout elapsed.
++ */
++#define swait_event_timeout(wq, condition, timeout)			\
++({									\
++	long __ret = timeout;						\
++	if (!(condition))						\
++		__swait_event_timeout(wq, condition, __ret);		\
++	__ret;								\
++})
++
++#endif
+diff --git a/kernel/Makefile b/kernel/Makefile
+index f4bf68a..e7bbd15 100644
+--- a/kernel/Makefile
++++ b/kernel/Makefile
+@@ -10,7 +10,7 @@ obj-y     = fork.o exec_domain.o panic.o printk.o \
+ 	    kthread.o wait.o kfifo.o sys_ni.o posix-cpu-timers.o \
+ 	    hrtimer.o nsproxy.o srcu.o semaphore.o \
+ 	    notifier.o ksysfs.o cred.o \
+-	    async.o range.o groups.o
++	    async.o range.o groups.o wait-simple.o
  
- 	if (running)
- 		p->sched_class->set_curr_task(rq);
--	if (on_rq)
--		enqueue_task(rq, p, oldprio < prio ? ENQUEUE_HEAD : 0);
-+	if (on_rq) {
-+		if (!sysctl_sched_rt_spin_yield) {
-+			enqueue_task(rq, p, oldprio < prio ? ENQUEUE_HEAD : 0);
-+		} else {
-+			enqueue_task(rq, p, ENQUEUE_HEAD);
+ ifdef CONFIG_FUNCTION_TRACER
+ # Do not trace debug files and internal ftrace files
+diff --git a/kernel/printk.c b/kernel/printk.c
+index 7109711..56d7497 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -868,9 +868,9 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+ 		}
+ 	}
+ 	printk_cpu = UINT_MAX;
++	raw_spin_unlock(&logbuf_lock);
+ 	if (wake)
+ 		up(&console_sem);
+-	raw_spin_unlock(&logbuf_lock);
+ 	return retval;
+ }
+ static const char recursion_bug_msg [] =
+diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
+index 97e359b..2824dbd 100644
+--- a/kernel/rcutiny_plugin.h
++++ b/kernel/rcutiny_plugin.h
+@@ -26,6 +26,7 @@
+ #include <linux/module.h>
+ #include <linux/debugfs.h>
+ #include <linux/seq_file.h>
++#include <linux/wait-simple.h>
+ 
+ /* Global control variables for rcupdate callback mechanism. */
+ struct rcu_ctrlblk {
+@@ -261,7 +262,7 @@ static void show_tiny_preempt_stats(struct seq_file *m)
+ 
+ /* Controls for rcu_kthread() kthread. */
+ static struct task_struct *rcu_kthread_task;
+-static DECLARE_WAIT_QUEUE_HEAD(rcu_kthread_wq);
++static DEFINE_SWAIT_HEAD(rcu_kthread_wq);
+ static unsigned long have_rcu_kthread_work;
+ 
+ /*
+@@ -754,7 +755,7 @@ void synchronize_rcu(void)
+ }
+ EXPORT_SYMBOL_GPL(synchronize_rcu);
+ 
+-static DECLARE_WAIT_QUEUE_HEAD(sync_rcu_preempt_exp_wq);
++static DEFINE_SWAIT_HEAD(sync_rcu_preempt_exp_wq);
+ static unsigned long sync_rcu_preempt_exp_count;
+ static DEFINE_MUTEX(sync_rcu_preempt_exp_mutex);
+ 
+@@ -776,7 +777,7 @@ static int rcu_preempted_readers_exp(void)
+  */
+ static void rcu_report_exp_done(void)
+ {
+-	wake_up(&sync_rcu_preempt_exp_wq);
++	swait_wake(&sync_rcu_preempt_exp_wq);
+ }
+ 
+ /*
+@@ -828,8 +829,8 @@ void synchronize_rcu_expedited(void)
+ 	else {
+ 		rcu_initiate_boost();
+ 		local_irq_restore(flags);
+-		wait_event(sync_rcu_preempt_exp_wq,
+-			   !rcu_preempted_readers_exp());
++		swait_event(sync_rcu_preempt_exp_wq,
++			    !rcu_preempted_readers_exp());
+ 	}
+ 
+ 	/* Clean up and exit. */
+@@ -917,7 +918,7 @@ static void invoke_rcu_callbacks(void)
+ {
+ 	have_rcu_kthread_work = 1;
+ 	if (rcu_kthread_task != NULL)
+-		wake_up(&rcu_kthread_wq);
++		swait_wake(&rcu_kthread_wq);
+ }
+ 
+ #ifdef CONFIG_RCU_TRACE
+@@ -947,8 +948,8 @@ static int rcu_kthread(void *arg)
+ 	unsigned long flags;
+ 
+ 	for (;;) {
+-		wait_event_interruptible(rcu_kthread_wq,
+-					 have_rcu_kthread_work != 0);
++		swait_event_interruptible(rcu_kthread_wq,
++					  have_rcu_kthread_work != 0);
+ 		morework = rcu_boost();
+ 		local_irq_save(flags);
+ 		work = have_rcu_kthread_work;
+diff --git a/kernel/wait-simple.c b/kernel/wait-simple.c
+new file mode 100644
+index 0000000..c35ec78
+--- /dev/null
++++ b/kernel/wait-simple.c
+@@ -0,0 +1,119 @@
++/*
++ * Simple waitqueues without fancy flags and callbacks
++ *
++ * (C) 2011 Thomas Gleixner <tglx@linutronix.de>
++ *
++ * Based on kernel/wait.c
++ *
++ * For licencing details see kernel-base/COPYING
++ */
++#include <linux/init.h>
++#include <linux/export.h>
++#include <linux/sched.h>
++#include <linux/wait-simple.h>
 +
++/* Adds w to head->list. Must be called with head->lock locked. */
++static inline void __swait_enqueue(struct swait_head *head, struct swaiter *w)
++{
++	list_add(&w->node, &head->list);
++}
++
++/* Removes w from head->list. Must be called with head->lock locked. */
++static inline void __swait_dequeue(struct swaiter *w)
++{
++	list_del_init(&w->node);
++}
++
++/* Check whether a head has waiters enqueued */
++static inline bool swait_head_has_waiters(struct swait_head *h)
++{
++	return !list_empty(&h->list);
++}
++
++void __init_swait_head(struct swait_head *head, struct lock_class_key *key)
++{
++	raw_spin_lock_init(&head->lock);
++	lockdep_set_class(&head->lock, key);
++	INIT_LIST_HEAD(&head->list);
++}
++EXPORT_SYMBOL_GPL(__init_swait_head);
++
++void swait_prepare_locked(struct swait_head *head, struct swaiter *w)
++{
++	w->task = current;
++	if (list_empty(&w->node))
++		__swait_enqueue(head, w);
++}
++
++void swait_prepare(struct swait_head *head, struct swaiter *w, int state)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&head->lock, flags);
++	swait_prepare_locked(head, w);
++	__set_current_state(state);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
++}
++EXPORT_SYMBOL_GPL(swait_prepare);
++
++void swait_finish_locked(struct swait_head *head, struct swaiter *w)
++{
++	__set_current_state(TASK_RUNNING);
++	if (w->task)
++		__swait_dequeue(w);
++}
++
++void swait_finish(struct swait_head *head, struct swaiter *w)
++{
++	unsigned long flags;
++
++	__set_current_state(TASK_RUNNING);
++	if (w->task) {
++		raw_spin_lock_irqsave(&head->lock, flags);
++		__swait_dequeue(w);
++		raw_spin_unlock_irqrestore(&head->lock, flags);
++	}
++}
++EXPORT_SYMBOL_GPL(swait_finish);
++
++unsigned int
++__swait_wake_locked(struct swait_head *head, unsigned int state, unsigned int num)
++{
++	struct swaiter *curr, *next;
++	int woken = 0;
++
++	list_for_each_entry_safe(curr, next, &head->list, node) {
++		if (wake_up_state(curr->task, state)) {
++			__swait_dequeue(curr);
 +			/*
-+			 * If we're requeueing a spinlock waiter, preempt any
-+			 * peer in the way, waiter involuntarily blocked, so
-+			 * has the right to use this CPU before its peers.
++			 * The waiting task can free the waiter as
++			 * soon as curr->task = NULL is written,
++			 * without taking any locks. A memory barrier
++			 * is required here to prevent the following
++			 * store to curr->task from getting ahead of
++			 * the dequeue operation.
 +			 */
-+			requeue &= p->prio <= rq->curr->prio;
-+			requeue &= rq->curr->state == TASK_RUNNING;
-+			requeue &= rq->curr != current;
-+
-+			if (requeue)
-+				resched_task(rq->curr);
++			smp_wmb();
++			curr->task = NULL;
++			if (++woken == num)
++				break;
 +		}
 +	}
- 
- 	check_class_changed(rq, p, prev_class, oldprio);
- out_unlock:
---- a/kernel/sched_fair.c
-+++ b/kernel/sched_fair.c
-@@ -2510,6 +2510,11 @@ static void check_preempt_wakeup(struct
- 	if (unlikely(se == pse))
- 		return;
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	if (sysctl_sched_rt_spin_yield && curr->migrate_disable)
-+		return;
-+#endif
++	return woken;
++}
 +
- 	/*
- 	 * This is possible from callers such as pull_task(), in which we
- 	 * unconditionally check_prempt_curr() after an enqueue (which may have
---- a/kernel/sched_rt.c
-+++ b/kernel/sched_rt.c
-@@ -991,6 +991,9 @@ enqueue_task_rt(struct rq *rq, struct ta
- 	if (flags & ENQUEUE_WAKEUP)
- 		rt_se->timeout = 0;
- 
-+	if (sysctl_sched_rt_spin_yield && (flags & WF_LOCK_SLEEPER))
-+		flags |= ENQUEUE_HEAD;
++unsigned int
++__swait_wake(struct swait_head *head, unsigned int state, unsigned int num)
++{
++	unsigned long flags;
++	int woken;
 +
- 	enqueue_rt_entity(rt_se, flags & ENQUEUE_HEAD);
- 
- 	if (!task_current(rq, p) && p->rt.nr_cpus_allowed > 1)
---- a/kernel/sysctl.c
-+++ b/kernel/sysctl.c
-@@ -368,6 +368,17 @@ static struct ctl_table kern_table[] = {
- 		.mode		= 0644,
- 		.proc_handler	= sched_rt_handler,
- 	},
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	{
-+		.procname	= "sched_rt_spin_yield",
-+		.data		= &sysctl_sched_rt_spin_yield,
-+		.maxlen		= sizeof(unsigned int),
-+		.mode		= 0644,
-+		.proc_handler	= proc_dointvec_minmax,
-+		.extra1		= &zero,
-+		.extra2		= &one,
-+	},
-+#endif
- 	{
- 		.procname	= "sched_compat_yield",
- 		.data		= &sysctl_sched_compat_yield,
-
-
-
++	if (!swait_head_has_waiters(head))
++		return 0;
++
++	raw_spin_lock_irqsave(&head->lock, flags);
++	woken = __swait_wake_locked(head, state, num);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
++	return woken;
++}
++EXPORT_SYMBOL_GPL(__swait_wake);
+diff --git a/localversion-rt b/localversion-rt
+index 38c40b2..2721581 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt45
++-rt46
