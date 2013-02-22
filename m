@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.32-rt46
-Date: Fri, 22 Feb 2013 12:37:17 -0500
-Message-ID: <1361554637.9470.1.camel@pippen.local.home>
+Subject: [ANNOUNCE] 3.2.38-rt58
+Date: Fri, 22 Feb 2013 12:38:03 -0500
+Message-ID: <1361554683.9470.2.camel@pippen.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -9,35 +9,40 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11396 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758722Ab3BVRiN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Feb 2013 12:38:13 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.32-rt46 stable release.
+I'm pleased to announce the 3.2.38-rt58 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  Head SHA1: c0fbd612e9ebadfe34303759eb37b351c5f57de1
+  Head SHA1: d685c9f30b00bb734128c5b834417d961302f036
 
 
-Or to build 3.4.32-rt46 directly, the following patches should be applied:
+Or to build 3.2.38-rt58 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.32.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.32-rt46.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.38-rt58.patch.xz
 
 
-You can also build from 3.4.32-rt45 by applying the incremental patch:
+You can also build from 3.2.38-rt57 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.32-rt45-rt46.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.38-rt57-rt58.patch.xz
 
 
 
@@ -46,7 +51,7 @@ Enjoy,
 -- Steve
 
 
-Changes from 3.4.32-rt45:
+Changes from 3.2.38-rt57:
 
 ---
 
@@ -55,7 +60,7 @@ Bu, Yitian (1):
 
 Steven Rostedt (2):
       acpi/rt: Convert acpi_gbl_hardware lock back to a raw_spinlock_t
-      Linux 3.4.32-rt46
+      Linux 3.2.38-rt58
 
 Thomas Gleixner (4):
       x86/32: Use kmap switch for non highmem as well
@@ -81,10 +86,10 @@ Thomas Gleixner (4):
  14 files changed, 337 insertions(+), 22 deletions(-)
 ---------------------------
 diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
-index 2b0882a..02ffbf5 100644
+index 20f1573..66ee590 100644
 --- a/arch/x86/kernel/process_32.c
 +++ b/arch/x86/kernel/process_32.c
-@@ -286,7 +286,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
+@@ -340,7 +340,7 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
  		     task_thread_info(next_p)->flags & _TIF_WORK_CTXSW_NEXT))
  		__switch_to_xtra(prev_p, next_p, tss);
  
@@ -94,10 +99,10 @@ index 2b0882a..02ffbf5 100644
  	 * Save @prev's kmap_atomic stack
  	 */
 diff --git a/drivers/acpi/acpica/acglobal.h b/drivers/acpi/acpica/acglobal.h
-index 4f7d3f5..16dddf2 100644
+index 76dc02f1..ca6bbe7 100644
 --- a/drivers/acpi/acpica/acglobal.h
 +++ b/drivers/acpi/acpica/acglobal.h
-@@ -251,7 +251,7 @@ ACPI_EXTERN u8 acpi_gbl_global_lock_pending;
+@@ -236,7 +236,7 @@ ACPI_EXTERN u8 acpi_gbl_global_lock_pending;
   * interrupt level
   */
  ACPI_EXTERN acpi_spinlock acpi_gbl_gpe_lock;	/* For GPE data structs and registers */
@@ -107,10 +112,10 @@ index 4f7d3f5..16dddf2 100644
  /*****************************************************************************
   *
 diff --git a/drivers/acpi/acpica/hwregs.c b/drivers/acpi/acpica/hwregs.c
-index 6b6c83b..fcc264f 100644
+index cc70f3f..1df2ce6 100644
 --- a/drivers/acpi/acpica/hwregs.c
 +++ b/drivers/acpi/acpica/hwregs.c
-@@ -271,14 +271,14 @@ acpi_status acpi_hw_clear_acpi_status(void)
+@@ -263,14 +263,14 @@ acpi_status acpi_hw_clear_acpi_status(void)
  			  ACPI_BITMASK_ALL_FIXED_STATUS,
  			  ACPI_FORMAT_UINT64(acpi_gbl_xpm1a_status.address)));
  
@@ -128,10 +133,10 @@ index 6b6c83b..fcc264f 100644
  	if (ACPI_FAILURE(status))
  		goto exit;
 diff --git a/drivers/acpi/acpica/hwxface.c b/drivers/acpi/acpica/hwxface.c
-index a716fed..5c6494f 100644
+index c2793a8..5b28769 100644
 --- a/drivers/acpi/acpica/hwxface.c
 +++ b/drivers/acpi/acpica/hwxface.c
-@@ -366,7 +366,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
+@@ -387,7 +387,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
  		return_ACPI_STATUS(AE_BAD_PARAMETER);
  	}
  
@@ -140,7 +145,7 @@ index a716fed..5c6494f 100644
  
  	/*
  	 * At this point, we know that the parent register is one of the
-@@ -427,7 +427,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
+@@ -448,7 +448,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
  
  unlock_and_exit:
  
@@ -150,7 +155,7 @@ index a716fed..5c6494f 100644
  }
  
 diff --git a/drivers/acpi/acpica/utmutex.c b/drivers/acpi/acpica/utmutex.c
-index 43174df..5aab30a 100644
+index 7d797e2..b611bf3 100644
 --- a/drivers/acpi/acpica/utmutex.c
 +++ b/drivers/acpi/acpica/utmutex.c
 @@ -88,7 +88,7 @@ acpi_status acpi_ut_mutex_initialize(void)
@@ -172,12 +177,12 @@ index 43174df..5aab30a 100644
  	/* Delete the reader/writer lock */
  
 diff --git a/drivers/tty/serial/imx.c b/drivers/tty/serial/imx.c
-index 0de7ed7..6604736 100644
+index 8e68f79..5f5c214 100644
 --- a/drivers/tty/serial/imx.c
 +++ b/drivers/tty/serial/imx.c
-@@ -1225,8 +1225,14 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
- 	struct imx_port_ucrs old_ucr;
- 	unsigned int ucr1;
+@@ -1115,8 +1115,14 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 	struct imx_port *sport = imx_ports[co->index];
+ 	unsigned int old_ucr1, old_ucr2, ucr1;
  	unsigned long flags;
 +	int locked = 1;
  
@@ -190,10 +195,10 @@ index 0de7ed7..6604736 100644
 +		spin_lock_irqsave(&sport->port.lock, flags);
  
  	/*
- 	 *	First, save UCR1/2/3 and then disable interrupts
-@@ -1253,7 +1259,8 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
- 
- 	imx_port_ucrs_restore(&sport->port, &old_ucr);
+ 	 *	First, save UCR1/2 and then disable interrupts
+@@ -1144,7 +1150,8 @@ imx_console_write(struct console *co, const char *s, unsigned int count)
+ 	writel(old_ucr1, sport->port.membase + UCR1);
+ 	writel(old_ucr2, sport->port.membase + UCR2);
  
 -	spin_unlock_irqrestore(&sport->port.lock, flags);
 +	if (locked)
@@ -202,10 +207,10 @@ index 0de7ed7..6604736 100644
  
  /*
 diff --git a/include/acpi/platform/aclinux.h b/include/acpi/platform/aclinux.h
-index 6fbc4cab..6fee309 100644
+index f4b2eff..0e70789 100644
 --- a/include/acpi/platform/aclinux.h
 +++ b/include/acpi/platform/aclinux.h
-@@ -72,6 +72,7 @@
+@@ -73,6 +73,7 @@
  
  #define acpi_cache_t                        struct kmem_cache
  #define acpi_spinlock                       spinlock_t *
@@ -213,7 +218,7 @@ index 6fbc4cab..6fee309 100644
  #define acpi_cpu_flags                      unsigned long
  
  #else /* !__KERNEL__ */
-@@ -175,6 +176,19 @@ static inline void *acpi_os_acquire_object(acpi_cache_t * cache)
+@@ -176,6 +177,19 @@ static inline void *acpi_os_acquire_object(acpi_cache_t * cache)
  	lock ? AE_OK : AE_NO_MEMORY;				\
  })
  
@@ -234,10 +239,10 @@ index 6fbc4cab..6fee309 100644
  
  #endif /* __ACLINUX_H__ */
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index b0b2559..7a750f5 100644
+index e2f9e3b..a26bd7e 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -1651,9 +1651,11 @@ struct task_struct {
+@@ -1608,9 +1608,11 @@ struct task_struct {
  	struct rcu_head put_rcu;
  	int softirq_nestcnt;
  #endif
@@ -429,23 +434,23 @@ index 0000000..44fee60
 +
 +#endif
 diff --git a/kernel/Makefile b/kernel/Makefile
-index f4bf68a..e7bbd15 100644
+index c961d3a..0b0ed50 100644
 --- a/kernel/Makefile
 +++ b/kernel/Makefile
-@@ -10,7 +10,7 @@ obj-y     = fork.o exec_domain.o panic.o printk.o \
- 	    kthread.o wait.o kfifo.o sys_ni.o posix-cpu-timers.o \
+@@ -11,7 +11,7 @@ obj-y     = sched.o fork.o exec_domain.o panic.o printk.o \
  	    hrtimer.o nsproxy.o srcu.o semaphore.o \
- 	    notifier.o ksysfs.o cred.o \
--	    async.o range.o groups.o
-+	    async.o range.o groups.o wait-simple.o
+ 	    notifier.o ksysfs.o sched_clock.o cred.o \
+ 	    async.o range.o
+-obj-y += groups.o
++obj-y += groups.o wait-simple.o
  
  ifdef CONFIG_FUNCTION_TRACER
  # Do not trace debug files and internal ftrace files
 diff --git a/kernel/printk.c b/kernel/printk.c
-index 7109711..56d7497 100644
+index 972cc56..37b9b99 100644
 --- a/kernel/printk.c
 +++ b/kernel/printk.c
-@@ -868,9 +868,9 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
+@@ -867,9 +867,9 @@ static int console_trylock_for_printk(unsigned int cpu, unsigned long flags)
  		}
  	}
  	printk_cpu = UINT_MAX;
@@ -457,7 +462,7 @@ index 7109711..56d7497 100644
  }
  static const char recursion_bug_msg [] =
 diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
-index 97e359b..2824dbd 100644
+index 2b0484a..f0a6606 100644
 --- a/kernel/rcutiny_plugin.h
 +++ b/kernel/rcutiny_plugin.h
 @@ -26,6 +26,7 @@
@@ -468,7 +473,7 @@ index 97e359b..2824dbd 100644
  
  /* Global control variables for rcupdate callback mechanism. */
  struct rcu_ctrlblk {
-@@ -261,7 +262,7 @@ static void show_tiny_preempt_stats(struct seq_file *m)
+@@ -250,7 +251,7 @@ static void show_tiny_preempt_stats(struct seq_file *m)
  
  /* Controls for rcu_kthread() kthread. */
  static struct task_struct *rcu_kthread_task;
@@ -477,7 +482,7 @@ index 97e359b..2824dbd 100644
  static unsigned long have_rcu_kthread_work;
  
  /*
-@@ -754,7 +755,7 @@ void synchronize_rcu(void)
+@@ -720,7 +721,7 @@ void synchronize_rcu(void)
  }
  EXPORT_SYMBOL_GPL(synchronize_rcu);
  
@@ -486,7 +491,7 @@ index 97e359b..2824dbd 100644
  static unsigned long sync_rcu_preempt_exp_count;
  static DEFINE_MUTEX(sync_rcu_preempt_exp_mutex);
  
-@@ -776,7 +777,7 @@ static int rcu_preempted_readers_exp(void)
+@@ -742,7 +743,7 @@ static int rcu_preempted_readers_exp(void)
   */
  static void rcu_report_exp_done(void)
  {
@@ -495,7 +500,7 @@ index 97e359b..2824dbd 100644
  }
  
  /*
-@@ -828,8 +829,8 @@ void synchronize_rcu_expedited(void)
+@@ -794,8 +795,8 @@ void synchronize_rcu_expedited(void)
  	else {
  		rcu_initiate_boost();
  		local_irq_restore(flags);
@@ -506,16 +511,16 @@ index 97e359b..2824dbd 100644
  	}
  
  	/* Clean up and exit. */
-@@ -917,7 +918,7 @@ static void invoke_rcu_callbacks(void)
+@@ -882,7 +883,7 @@ static void rcu_preempt_process_callbacks(void)
+ static void invoke_rcu_callbacks(void)
  {
  	have_rcu_kthread_work = 1;
- 	if (rcu_kthread_task != NULL)
--		wake_up(&rcu_kthread_wq);
-+		swait_wake(&rcu_kthread_wq);
+-	wake_up(&rcu_kthread_wq);
++	swake_up(&rcu_kthread_wq);
  }
  
- #ifdef CONFIG_RCU_TRACE
-@@ -947,8 +948,8 @@ static int rcu_kthread(void *arg)
+ /*
+@@ -899,8 +900,8 @@ static int rcu_kthread(void *arg)
  	unsigned long flags;
  
  	for (;;) {
@@ -652,9 +657,11 @@ index 0000000..c35ec78
 +}
 +EXPORT_SYMBOL_GPL(__swait_wake);
 diff --git a/localversion-rt b/localversion-rt
-index 38c40b2..2721581 100644
+index c06cc435..f9df2cf 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt45
-+-rt46
+--rt57
++-rt58
+
+
