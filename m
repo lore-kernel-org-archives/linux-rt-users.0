@@ -1,87 +1,50 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: cyclictest: Unable to set scheduling policy / join real-time
- group or run as root
-Date: Wed, 27 Feb 2013 14:00:13 -0600
-Message-ID: <20130227140013.0f28c91b@riff.lan>
-References: <CA+69FtA6iP5Zer6ENWSgp8uyUc9OQv00JEV6ihz=SihRyEExJw@mail.gmail.com>
-	<20130225152122.49c408ec@riff.lan>
-	<CA+69FtDP0K5AqmL+Hi4vouuoOdHN2md4DrUkkZ1rtZFZAzfcJw@mail.gmail.com>
-	<20130227100957.22994960@riff.lan>
-	<CA+69FtB+_vt+L8VcsLs31DudkYE0iz7ckL=obQGkBP=f7smvSQ@mail.gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: rt-tester testcase t4-l2-pi-deboost.tst failed
+Date: Wed, 27 Feb 2013 23:16:59 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1302272315460.22263@ionos>
+References: <512E5D41.3000103@windriver.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/i2dd3AvQLikhpt8lo5ZUkHF"; protocol="application/pgp-signature"
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: linux-rt-users@vger.kernel.org
-To: Hartmut Behrens <hartmut.behrens@gmail.com>
+To: Yao Zhao <yao.zhao@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:40250 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751672Ab3B0UAl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Feb 2013 15:00:41 -0500
-In-Reply-To: <CA+69FtB+_vt+L8VcsLs31DudkYE0iz7ckL=obQGkBP=f7smvSQ@mail.gmail.com>
+Received: from www.linutronix.de ([62.245.132.108]:60235 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750699Ab3B0WRC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 27 Feb 2013 17:17:02 -0500
+In-Reply-To: <512E5D41.3000103@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/i2dd3AvQLikhpt8lo5ZUkHF
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Wed, 27 Feb 2013, Yao Zhao wrote:
 
-On Wed, 27 Feb 2013 18:22:20 +0200
-Hartmut Behrens <hartmut.behrens@gmail.com> wrote:
+> Hi,
+> 
+> I tested rt-tester with mainline 3.8.0 kernel and
+> the kernel scripts/rt-tester/t4-l2-pi-deboost.tst failed at
+> 
+> # Verify prio of T0 (still pending owner,
+> # but T2 is enqueued due to the previous boost by T3
+> T: prioeq:              0:      82
+> 
+> The current T0's prio is -21 so it failed.
+> 
+> Reading source code, it should be 82 as T2 is at prio 82 and
+> T0 owns the L1 and T2 is waiting for the L1.
+> 
+> Can I ask
+> 1.is the rt-tester test only for preempt-rt kernel?
 
-> On Wed, Feb 27, 2013 at 6:09 PM, Clark Williams <williams@redhat.com> wro=
-te:
-> > What happens if you compile and run this program on your kernel?
-> > #include <stdio.h>
-> > #include <stdlib.h>
-> > #include <sched.h>
-> > #include <errno.h>
-> > #include <memory.h>
-> >
-> > int main(int argc, char **argv)
-> > {
-> >         int ret;
-> >         struct sched_param s;
-> >
-> >         memset(&s, 0, sizeof(s));
-> >         s.sched_priority =3D 1;
-> >         if ((sched_setscheduler(0, SCHED_FIFO, &s))) {
-> >                 fprintf(stderr, "error changing policy: %s\n", strerror=
-(errno));
-> >                 exit(errno);
-> >         }
-> >         printf("successfully changed policy to SCHED_FIFO priority 1\n"=
-);
-> >         exit(0);
-> > }
->=20
-> When I run it as root I get "error changing policy: Operation not permitt=
-ed".
->=20
-> Does this mean that some hard limits are not correctly set for root?
+No
 
-Well this is a new one on me. Some questions:
+> 2.any idea why it failed?
 
-Do you have SELinux running?
+No
 
-Are there any files in /etc/security/limits.d other than the one you put
-there?
+It would be nice if you could figure out whether that's a failure of
+the test case or a failure in the kernel.
 
-Other than that I can't think of a reason why sched_setscheduler()
-would fail as root.=20
+Thanks
 
-Clark
-
---Sig_/i2dd3AvQLikhpt8lo5ZUkHF
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iEYEARECAAYFAlEuZc0ACgkQHyuj/+TTEp3w/gCgia3v98qKIIJBcFKrdum12nUR
-UCgAmwYxCX7PquL2PsJ50JhrJ+RLli1/
-=zqOQ
------END PGP SIGNATURE-----
-
---Sig_/i2dd3AvQLikhpt8lo5ZUkHF--
+	tglx
