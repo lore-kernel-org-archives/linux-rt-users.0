@@ -1,57 +1,58 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: rt: rtmutex experiment doubled tbench throughput
-Date: Wed, 27 Feb 2013 05:55:00 +0100
-Message-ID: <1361940900.4599.108.camel@marge.simpson.net>
-References: <1361551010.32441.50.camel@marge.simpson.net>
-	 <1361913901.11373.59.camel@gandalf.local.home>
-	 <CAP=VYLpWCDztU6-cMR1BVCUUeaa7eqKnXM88wzoqxDCR=SKdSw@mail.gmail.com>
-	 <1361932359.11373.62.camel@gandalf.local.home>
-	 <1361932513.11373.65.camel@gandalf.local.home>
+From: Hartmut Behrens <hartmut.behrens@gmail.com>
+Subject: Re: cyclictest: Unable to set scheduling policy / join real-time
+ group or run as root
+Date: Wed, 27 Feb 2013 08:26:45 +0200
+Message-ID: <CA+69FtDP0K5AqmL+Hi4vouuoOdHN2md4DrUkkZ1rtZFZAzfcJw@mail.gmail.com>
+References: <CA+69FtA6iP5Zer6ENWSgp8uyUc9OQv00JEV6ihz=SihRyEExJw@mail.gmail.com>
+	<20130225152122.49c408ec@riff.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.187]:49329 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758711Ab3B0EzF (ORCPT
+Received: from mail-vc0-f176.google.com ([209.85.220.176]:57003 "EHLO
+	mail-vc0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751003Ab3B0G0q (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Feb 2013 23:55:05 -0500
-In-Reply-To: <1361932513.11373.65.camel@gandalf.local.home>
+	Wed, 27 Feb 2013 01:26:46 -0500
+Received: by mail-vc0-f176.google.com with SMTP id fk10so145026vcb.7
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Feb 2013 22:26:45 -0800 (PST)
+In-Reply-To: <20130225152122.49c408ec@riff.lan>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2013-02-26 at 21:35 -0500, Steven Rostedt wrote: 
-> On Tue, 2013-02-26 at 21:32 -0500, Steven Rostedt wrote:
-> 
-> > Bah! As I looked in my history I see I did the following:
-> > 
-> >   git show v3.0:include/linux/sched.h
-> >   git show v3.2:include/linux/sched.h
-> >   git show v3.4:include/linux/sched.h
-> > 
-> > I forgot the '-rt" on each one of them :-p
-> 
-> That said...
-> 
-> Only v3.0-rt has it. I'm barely supporting that now, and I'm only doing
-> updates that might make sense. Greg should be dropping it soon, and so
-> will I. There's issues in v3.0-rt that are not in v3.2-rt or above, that
-> I'm not going to bother debugging.
+On Mon, Feb 25, 2013 at 11:21 PM, Clark Williams <williams@redhat.com> wrote:
+> Changing your scheduling policy requires extra privileges. You can
+> either run cyclictest as root, or if your distribution uses PAM, you
+> can set up a file in /etc/security/limits.d which enable group access to
+> changing scheduler policy. You can name the file whatever you want, I
+> usually call mine 99-realtime.conf:
+>
+> # cat <<EOF >/etc/security/limits.d/99-realtime.conf
+> @realtime       -       rtprio  99
+> @realtime       -       memlock unlimited
+> EOF
+>
+> Then create a group named realtime and add your username to the newly
+> created group:
+>
+> # groupadd realtime
+> # usermod -a -G realtime yourUserID
+>
+> Log out, then log back in and you should be able to verift that you're
+> in the realtime group using the 'groups' command. Once you're username
+> is a member of the realtime group, you should be able to run cyclictest
+> without being root.
 
-Yeah, I'm stuck with 3.0, so my 3.0 is not as virgin as I would like it
-to be.  It has threaded sirqs because I must have them, can turn cpupri
-and nohz on/off on the fly because I must have to have that too to make
-80 core boxen with tight jitter constraint be all they can be. 
+This problem persists even when I run cyclictest as root. I have also
+set up PAM as described above and added root to the realtime group
+without any success.
+I have also tried "sudo ./cyclictest" and " su -c './cyclictest'
 
-> I'll test a patch against the others but not one against v3.0-rt.
+Is this perhaps a more fundamental problem?
 
-64 core test box has microscopic root and newer kernel drivers break its
-userspace.  Putting a newer rt kernel on it to play is a pita, so I do
-big box tinkering in 3.0.  I can make a 3.6 hacklet during the weekend.
+Just to recap: I applied the patch-3.2-rt10 patch cleanly to a v3.2
+kernel customized for a TI OMAP (ARM) processor. CONFIG_PREEMPT_RT was
+enabled and CPU frequency scaling disabled.
 
--Mike
-
+HB
