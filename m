@@ -1,50 +1,56 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: rt-tester testcase t4-l2-pi-deboost.tst failed
-Date: Wed, 27 Feb 2013 23:16:59 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1302272315460.22263@ionos>
-References: <512E5D41.3000103@windriver.com>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: rt: rtmutex experiment doubled tbench throughput
+Date: Thu, 28 Feb 2013 06:59:33 +0100
+Message-ID: <1362031173.4460.87.camel@marge.simpson.net>
+References: <1361551010.32441.50.camel@marge.simpson.net>
+	 <1361907944.11373.57.camel@gandalf.local.home>
+	 <1361938754.4599.88.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Yao Zhao <yao.zhao@windriver.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60235 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750699Ab3B0WRC (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.10]:58791 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750723Ab3B1F7o (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Feb 2013 17:17:02 -0500
-In-Reply-To: <512E5D41.3000103@windriver.com>
+	Thu, 28 Feb 2013 00:59:44 -0500
+In-Reply-To: <1361938754.4599.88.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 27 Feb 2013, Yao Zhao wrote:
+On Wed, 2013-02-27 at 05:19 +0100, Mike Galbraith wrote: 
+> On Tue, 2013-02-26 at 14:45 -0500, Steven Rostedt wrote: 
 
-> Hi,
+> > I would be interested in seeing what happens if we just made rt_tasks
+> > spin instead of sleep (call yield). Actually, if we made real-time tasks
+> > always spin (never sleep), just yield, if this would give us much better
+> > performance.
 > 
-> I tested rt-tester with mainline 3.8.0 kernel and
-> the kernel scripts/rt-tester/t4-l2-pi-deboost.tst failed at
-> 
-> # Verify prio of T0 (still pending owner,
-> # but T2 is enqueued due to the previous boost by T3
-> T: prioeq:              0:      82
-> 
-> The current T0's prio is -21 so it failed.
-> 
-> Reading source code, it should be 82 as T2 is at prio 82 and
-> T0 owns the L1 and T2 is waiting for the L1.
-> 
-> Can I ask
-> 1.is the rt-tester test only for preempt-rt kernel?
+> Maybe you can get that working without the requeueing  Without it being
+> a global head -> tail -> head thing, my big box died and died and.. 
 
-No
+As noted, prior to global queue to head, I made dead box.. a lot.
 
-> 2.any idea why it failed?
+However, yesterday I had to hunt down a localhost throughput regression
+in 3.0.65 (794ed393) anyway, and I used the opportunity to do a little
+concurrent tinkering...
 
-No
+With SCHED_OTHER brain-o fixed up, as mentioned, -rt beat its NOPREEMPT
+parent tree at hefty tbench throughput.  This morning, I tried real rt
+spinning again, only yielding when mandatory.  With global queue to head
+in place, no silent box syndrome happened, worked fine.  That should
+mean that across the box contention induced jitter can shrink by sched
+cost * players, no?
 
-It would be nice if you could figure out whether that's a failure of
-the test case or a failure in the kernel.
+Maybe with some refinement, experiment will work out.
 
-Thanks
+Longish jitter test just finished, though worst case doesn't look any
+better (darn), it doesn't look any worse either, so I'll poke send.
 
-	tglx
+(hm, maybe if I avoid pounding raw lock through the floor...)
+
+-Mike
+
