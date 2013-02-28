@@ -1,60 +1,55 @@
-From: Yao Zhao <yao.zhao@windriver.com>
-Subject: Re: rt-tester testcase t4-l2-pi-deboost.tst failed
-Date: Thu, 28 Feb 2013 09:53:35 -0500
-Message-ID: <512F6F6F.5050700@windriver.com>
-References: <512E5D41.3000103@windriver.com> <alpine.LFD.2.02.1302272315460.22263@ionos>
+From: Hartmut Behrens <hartmut.behrens@gmail.com>
+Subject: Re: cyclictest: Unable to set scheduling policy / join real-time
+ group or run as root
+Date: Thu, 28 Feb 2013 17:07:06 +0200
+Message-ID: <CA+69FtBGT0NJ5Yh1Qqc9YWh+PuM_p=dng8=ApK1ie4ia0QvPiA@mail.gmail.com>
+References: <CA+69FtA6iP5Zer6ENWSgp8uyUc9OQv00JEV6ihz=SihRyEExJw@mail.gmail.com>
+	<20130225152122.49c408ec@riff.lan>
+	<CA+69FtDP0K5AqmL+Hi4vouuoOdHN2md4DrUkkZ1rtZFZAzfcJw@mail.gmail.com>
+	<20130227100957.22994960@riff.lan>
+	<CA+69FtB+_vt+L8VcsLs31DudkYE0iz7ckL=obQGkBP=f7smvSQ@mail.gmail.com>
+	<20130227140013.0f28c91b@riff.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:41416 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757251Ab3B1Oxv (ORCPT
+Received: from mail-ve0-f173.google.com ([209.85.128.173]:39030 "EHLO
+	mail-ve0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758849Ab3B1PHH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Feb 2013 09:53:51 -0500
-In-Reply-To: <alpine.LFD.2.02.1302272315460.22263@ionos>
+	Thu, 28 Feb 2013 10:07:07 -0500
+Received: by mail-ve0-f173.google.com with SMTP id oz10so1921178veb.32
+        for <linux-rt-users@vger.kernel.org>; Thu, 28 Feb 2013 07:07:06 -0800 (PST)
+In-Reply-To: <20130227140013.0f28c91b@riff.lan>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 13-02-27 05:16 PM, Thomas Gleixner wrote:
-> On Wed, 27 Feb 2013, Yao Zhao wrote:
+On Wed, Feb 27, 2013 at 10:00 PM, Clark Williams <williams@redhat.com> wrote:
+> Well this is a new one on me. Some questions:
 >
->> Hi,
->>
->> I tested rt-tester with mainline 3.8.0 kernel and
->> the kernel scripts/rt-tester/t4-l2-pi-deboost.tst failed at
->>
->> # Verify prio of T0 (still pending owner,
->> # but T2 is enqueued due to the previous boost by T3
->> T: prioeq:              0:      82
->>
->> The current T0's prio is -21 so it failed.
->>
->> Reading source code, it should be 82 as T2 is at prio 82 and
->> T0 owns the L1 and T2 is waiting for the L1.
->>
->> Can I ask
->> 1.is the rt-tester test only for preempt-rt kernel?
-> No
->
->> 2.any idea why it failed?
-> No
->
-> It would be nice if you could figure out whether that's a failure of
-> the test case or a failure in the kernel.
-For the whole check-all.sh t4-l2-pi-deboost.tst is the first test case
-which failed and in t4-l2-pi-deboost.tst: that line is the first "test"
-failed.
-I didn't see any failures in the kernel.
+> Do you have SELinux running?
 
-But I will spend some time to debug around and get familiar with
-the rt-mutex code.
+No SELinux is disabled
 
-thanks,
-yao
-> Thanks
 >
-> 	tglx
+> Are there any files in /etc/security/limits.d other than the one you put
+> there?
+>
+Yes there are:
 
+root@overo:/etc/security# ls -l
+total 40
+-rw-r--r-- 1 root root 4620 Feb 26  2013 access.conf
+-rw-r--r-- 1 root root 3635 Feb 26  2013 group.conf
+-rw-r--r-- 1 root root 1825 Feb 26  2013 limits.conf
+drwxr-xr-x 2 root root 4096 Feb 26  2013 limits.d
+-rw-r--r-- 1 root root 1442 Feb 26  2013 namespace.conf
+drwxr-xr-x 2 root root 4096 Feb 26  2013 namespace.d
+-rwxr-xr-x 1 root root 1020 Feb 26  2013 namespace.init
+-rw-r--r-- 1 root root 2980 Feb 26  2013 pam_env.conf
+-rw-r--r-- 1 root root 2180 Feb 26  2013 time.conf
+
+
+> Other than that I can't think of a reason why sched_setscheduler()
+> would fail as root.
