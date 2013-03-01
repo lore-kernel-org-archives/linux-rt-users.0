@@ -1,52 +1,143 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
-Subject: [V2 PATCH -rt] futex: fix unbalanced spin_lock/spin_unlock() in exit_pi_state_list()
-Date: Fri,  1 Mar 2013 14:00:03 +0800
-Message-ID: <1362117603-9480-1-git-send-email-yong.zhang0@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] futex: fix unbalanced spin_lock/spin_unlock() in
+ exit_pi_state_list()
+Date: Fri, 1 Mar 2013 11:17:42 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1303011047170.22263@ionos>
+References: <1362101815-19968-1-git-send-email-yong.zhang0@gmail.com>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Yong Zhang <yong.zhang0@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1362101815-19968-1-git-send-email-yong.zhang0@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Yong Zhang <yong.zhang@windriver.com>
+On Fri, 1 Mar 2013, Yong Zhang wrote:
 
-Otherwise, below warning is shown somtimes when running some test:
+> From: Yong Zhang <yong.zhang@windriver.com>
+> 
+> Otherwise, below warning is shown somtimes when running some test:
+> 
+> WARNING: at kernel/sched/core.c:3423 migrate_disable+0xbf/0xd0()
+> Hardware name: OptiPlex 755
+> Modules linked in: floppy parport parport_pc minix
+> Pid: 1800, comm: tst-robustpi8 Tainted: G        W    3.4.28-rt40 #1
+> Call Trace:
+>  [<ffffffff81031f3f>] warn_slowpath_common+0x7f/0xc0
+>  [<ffffffff81031f9a>] warn_slowpath_null+0x1a/0x20
+>  [<ffffffff81066eaf>] migrate_disable+0xbf/0xd0
+>  [<ffffffff81085d95>] exit_pi_state_list+0xa5/0x170
+>  [<ffffffff8102f71f>] mm_release+0x12f/0x170
+>  [<ffffffff81036906>] exit_mm+0x26/0x140
+>  [<ffffffff81090fc6>] ? acct_collect+0x186/0x1c0
+>  [<ffffffff81036b66>] do_exit+0x146/0x930
+>  [<ffffffff810658d1>] ? get_parent_ip+0x11/0x50
+>  [<ffffffff8103760d>] do_group_exit+0x4d/0xc0
+>  [<ffffffff8104828f>] get_signal_to_deliver+0x23f/0x6a0
+>  [<ffffffff810019e5>] do_signal+0x65/0x5e0
+>  [<ffffffff81047816>] ? group_send_sig_info+0x76/0x80
+>  [<ffffffff81002018>] do_notify_resume+0x98/0xd0
+>  [<ffffffff8165779b>] int_signal+0x12/0x17
+> ---[ end trace 0000000000000004 ]---
+> 
+> The reason is that spin_lock() is taken in atomic context, but
+> spin_unlock() is not.
 
-WARNING: at kernel/sched/core.c:3423 migrate_disable+0xbf/0xd0()
-Hardware name: OptiPlex 755
-Modules linked in: floppy parport parport_pc minix
-Pid: 1800, comm: tst-robustpi8 Tainted: G        W    3.4.28-rt40 #1
-Call Trace:
- [<ffffffff81031f3f>] warn_slowpath_common+0x7f/0xc0
- [<ffffffff81031f9a>] warn_slowpath_null+0x1a/0x20
- [<ffffffff81066eaf>] migrate_disable+0xbf/0xd0
- [<ffffffff81085d95>] exit_pi_state_list+0xa5/0x170
- [<ffffffff8102f71f>] mm_release+0x12f/0x170
- [<ffffffff81036906>] exit_mm+0x26/0x140
- [<ffffffff81090fc6>] ? acct_collect+0x186/0x1c0
- [<ffffffff81036b66>] do_exit+0x146/0x930
- [<ffffffff810658d1>] ? get_parent_ip+0x11/0x50
- [<ffffffff8103760d>] do_group_exit+0x4d/0xc0
- [<ffffffff8104828f>] get_signal_to_deliver+0x23f/0x6a0
- [<ffffffff810019e5>] do_signal+0x65/0x5e0
- [<ffffffff81047816>] ? group_send_sig_info+0x76/0x80
- [<ffffffff81002018>] do_notify_resume+0x98/0xd0
- [<ffffffff8165779b>] int_signal+0x12/0x17
----[ end trace 0000000000000004 ]---
+This doesn't make sense. The spin_lock() happens in non atomic
+context.
 
-The reason is that spin_lock() is taken in atomic context, but
-spin_unlock() is not.
+	spin_lock(&hb->lock);
+	raw_spin_lock_irq(&curr->pi_lock);
 
-Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
+The unlock is in atomic context and the unlock does not call
+migrate_disable().
+
+Though on RT this is caused by the in_atomic check of migrate_enable()
+and this results in asymetry. See below.
+
+> Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+> Cc: Thomas Gleixner <tglx@linutronix.de>
+> Cc: Steven Rostedt <rostedt@goodmis.org>
+> ---
+>  kernel/futex.c |    3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/kernel/futex.c b/kernel/futex.c
+> index 9e26e87..2b676a2 100644
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -562,16 +562,17 @@ void exit_pi_state_list(struct task_struct *curr)
+>  
+>  		spin_lock(&hb->lock);
+>  
+> -		raw_spin_lock_irq(&curr->pi_lock);
+>  		/*
+>  		 * We dropped the pi-lock, so re-check whether this
+>  		 * task still owns the PI-state:
+>  		 */
+
+Did you read and understand this comment ?
+
+The logic here is
+
+    raw_spin_lock_irq(&curr->pi_lock);
+    next = head->next;
+    raw_spin_unlock_irq(&curr->pi_lock);
+    spin_lock(&hb->lock);
+    raw_spin_lock_irq(&curr->pi_lock);
+    if (head->next != next)
+
+We must drop pi_lock before locking the hash bucket lock. That opens a
+window for another task to modify head list. So we must relock pi_lock
+and verify whether head->next is unmodified. If it changed, we need to
+reevaluate.
+
+>  		if (head->next != next) {
+>  			spin_unlock(&hb->lock);
+> +			raw_spin_lock_irq(&curr->pi_lock);
+>  			continue;
+>  		}
+>  
+> +		raw_spin_lock_irq(&curr->pi_lock);
+>  		WARN_ON(pi_state->owner != curr);
+>  		WARN_ON(list_empty(&pi_state->list));
+>  		list_del_init(&pi_state->list);
+
+So both your patch description and your patch are patently wrong.
+Correct solution below.
+
+Thanks,
+
+	tglx
 ---
- kernel/futex.c |    2 ++
- 1 file changed, 2 insertions(+)
+futex: Ensure lock/unlock symetry versus pi_lock and hash bucket lock
+
+In exit_pi_state_list() we have the following locking construct:
+
+   spin_lock(&hb->lock);
+   raw_spin_lock_irq(&curr->pi_lock);
+   
+   ...
+   spin_unlock(&hb->lock);
+
+In !RT this works, but on RT the migrate_enable() function which is
+called from spin_unlock() sees atomic context due to the held pi_lock
+and just decrements the migrate_disable_atomic counter of the
+task. Now the next call to migrate_disable() sees the counter being
+negative and issues a warning. That check should be in
+migrate_enable() already.
+
+Fix this by dropping pi_lock before unlocking hb->lock and reaquire
+pi_lock after that again. This is safe as the loop code reevaluates
+head again under the pi_lock.
+
+Reported-by: Yong Zhang <yong.zhang@windriver.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 
 diff --git a/kernel/futex.c b/kernel/futex.c
-index 9e26e87..daada3d 100644
+index f15f0e4..c795c9c 100644
 --- a/kernel/futex.c
 +++ b/kernel/futex.c
 @@ -568,7 +568,9 @@ void exit_pi_state_list(struct task_struct *curr)
@@ -59,5 +150,3 @@ index 9e26e87..daada3d 100644
  			continue;
  		}
  
--- 
-1.7.9.5
