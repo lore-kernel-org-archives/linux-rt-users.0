@@ -1,61 +1,172 @@
-From: Michal Sojka <sojkam1@fel.cvut.cz>
-Subject: Problems with 3.6.11-rt30
-Date: Sat, 02 Mar 2013 11:47:45 +0100
-Message-ID: <87k3pq6pta.fsf@steelpick.2x.cz>
+From: Yong Zhang <yong.zhang0@gmail.com>
+Subject: Re: [PATCH] futex: fix unbalanced spin_lock/spin_unlock() in
+ exit_pi_state_list()
+Date: Sun, 3 Mar 2013 16:38:29 +0800
+Message-ID: <20130303083829.GA18176@zhy>
+References: <1362101815-19968-1-git-send-email-yong.zhang0@gmail.com>
+ <alpine.LFD.2.02.1303011047170.22263@ionos>
+Reply-To: Yong Zhang <yong.zhang0@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-To: Linux RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from max.feld.cvut.cz ([147.32.192.36]:54704 "EHLO max.feld.cvut.cz"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751559Ab3CBKxx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 2 Mar 2013 05:53:53 -0500
-Received: from localhost (unknown [192.168.200.7])
-	by max.feld.cvut.cz (Postfix) with ESMTP id 1D3A83CFF2B
-	for <linux-rt-users@vger.kernel.org>; Sat,  2 Mar 2013 11:47:49 +0100 (CET)
-Received: from max.feld.cvut.cz ([192.168.200.1])
-	by localhost (styx.feld.cvut.cz [192.168.200.7]) (amavisd-new, port 10044)
-	with ESMTP id Q8-ddHFxRo1C for <linux-rt-users@vger.kernel.org>;
-	Sat,  2 Mar 2013 11:47:46 +0100 (CET)
-Received: from imap.feld.cvut.cz (imap.feld.cvut.cz [147.32.192.34])
-	by max.feld.cvut.cz (Postfix) with ESMTP id 4D3743CFE8F
-	for <linux-rt-users@vger.kernel.org>; Sat,  2 Mar 2013 11:47:45 +0100 (CET)
-Received: from wsh by steelpick.2x.cz with local (Exim 4.80)
-	(envelope-from <sojkam1@fel.cvut.cz>)
-	id 1UBjyj-0004nr-Is
-	for linux-rt-users@vger.kernel.org; Sat, 02 Mar 2013 11:47:45 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.02.1303011047170.22263@ionos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Fri, Mar 01, 2013 at 11:17:42AM +0100, Thomas Gleixner wrote:
+> On Fri, 1 Mar 2013, Yong Zhang wrote:
+> 
+> > From: Yong Zhang <yong.zhang@windriver.com>
+> > 
+> > Otherwise, below warning is shown somtimes when running some test:
+> > 
+> > WARNING: at kernel/sched/core.c:3423 migrate_disable+0xbf/0xd0()
+> > Hardware name: OptiPlex 755
+> > Modules linked in: floppy parport parport_pc minix
+> > Pid: 1800, comm: tst-robustpi8 Tainted: G        W    3.4.28-rt40 #1
+> > Call Trace:
+> >  [<ffffffff81031f3f>] warn_slowpath_common+0x7f/0xc0
+> >  [<ffffffff81031f9a>] warn_slowpath_null+0x1a/0x20
+> >  [<ffffffff81066eaf>] migrate_disable+0xbf/0xd0
+> >  [<ffffffff81085d95>] exit_pi_state_list+0xa5/0x170
+> >  [<ffffffff8102f71f>] mm_release+0x12f/0x170
+> >  [<ffffffff81036906>] exit_mm+0x26/0x140
+> >  [<ffffffff81090fc6>] ? acct_collect+0x186/0x1c0
+> >  [<ffffffff81036b66>] do_exit+0x146/0x930
+> >  [<ffffffff810658d1>] ? get_parent_ip+0x11/0x50
+> >  [<ffffffff8103760d>] do_group_exit+0x4d/0xc0
+> >  [<ffffffff8104828f>] get_signal_to_deliver+0x23f/0x6a0
+> >  [<ffffffff810019e5>] do_signal+0x65/0x5e0
+> >  [<ffffffff81047816>] ? group_send_sig_info+0x76/0x80
+> >  [<ffffffff81002018>] do_notify_resume+0x98/0xd0
+> >  [<ffffffff8165779b>] int_signal+0x12/0x17
+> > ---[ end trace 0000000000000004 ]---
+> > 
+> > The reason is that spin_lock() is taken in atomic context, but
+> > spin_unlock() is not.
+> 
+> This doesn't make sense. The spin_lock() happens in non atomic
+> context.
+> 
+> 	spin_lock(&hb->lock);
+> 	raw_spin_lock_irq(&curr->pi_lock);
+> 
+> The unlock is in atomic context and the unlock does not call
+> migrate_disable().
+> 
+> Though on RT this is caused by the in_atomic check of migrate_enable()
+> and this results in asymetry. See below.
 
-I've just tried to boot
-https://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11-rt30.patch.bz2
-on MPC5200 (PowerPC) and I experienced some problems.
+Yeah, this is what I want to say. s/atomic/no-atomic/ in my words :)
 
-1) With moderate network traffic, cyclictest reported latencies around
-   3000 us.
+> 
+> > Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
+> > Cc: Thomas Gleixner <tglx@linutronix.de>
+> > Cc: Steven Rostedt <rostedt@goodmis.org>
+> > ---
+> >  kernel/futex.c |    3 ++-
+> >  1 file changed, 2 insertions(+), 1 deletion(-)
+> > 
+> > diff --git a/kernel/futex.c b/kernel/futex.c
+> > index 9e26e87..2b676a2 100644
+> > --- a/kernel/futex.c
+> > +++ b/kernel/futex.c
+> > @@ -562,16 +562,17 @@ void exit_pi_state_list(struct task_struct *curr)
+> >  
+> >  		spin_lock(&hb->lock);
+> >  
+> > -		raw_spin_lock_irq(&curr->pi_lock);
+> >  		/*
+> >  		 * We dropped the pi-lock, so re-check whether this
+> >  		 * task still owns the PI-state:
+> >  		 */
+> 
+> Did you read and understand this comment ?
+> 
+> The logic here is
+> 
+>     raw_spin_lock_irq(&curr->pi_lock);
+>     next = head->next;
+>     raw_spin_unlock_irq(&curr->pi_lock);
+>     spin_lock(&hb->lock);
+>     raw_spin_lock_irq(&curr->pi_lock);
+>     if (head->next != next)
+> 
+> We must drop pi_lock before locking the hash bucket lock. That opens a
+> window for another task to modify head list. So we must relock pi_lock
+> and verify whether head->next is unmodified. If it changed, we need to
+> reevaluate.
+> 
+> >  		if (head->next != next) {
+> >  			spin_unlock(&hb->lock);
+> > +			raw_spin_lock_irq(&curr->pi_lock);
+> >  			continue;
+> >  		}
+> >  
+> > +		raw_spin_lock_irq(&curr->pi_lock);
+> >  		WARN_ON(pi_state->owner != curr);
+> >  		WARN_ON(list_empty(&pi_state->list));
+> >  		list_del_init(&pi_state->list);
+> 
+> So both your patch description and your patch are patently wrong.
+> Correct solution below.
 
-2) By loading the board with "ping -f -s 64000 mpc5200" after a while,
-   the board become unresponsible and console printed the following
-   messages.
+Recognized it after sending my V1 out. So V2 is sent out to close the
+race window and it happens to be the same patch with yours below.
+http://marc.info/?l=linux-rt-users&m=136211763323758&w=2
 
-   [217.957488] NOHZ: local_softirq_pending 02
-   [217.957555] NOHZ: local_softirq_pending 02
-   [217.968506] NOHZ: local_softirq_pending 02
-   [220.566778] net_ratelimit: 510909 callbacks suppressed
-   [220.566803] net eth0: transmit queue overrun
-   [...]
-   [220.667671] net eth0: transmit queue overrun
-   [225.626769] net_ratelimit: 433958 callbacks suppressed
-   [225.626793] net eth0: transmit queue overrun
-   [225.637967] net eth0: transmit queue overrun
-   [225.643195] net eth0: transmit queue overrun
-   [225.648491] net eth0: transmit queue overrun
-   [225.653484] net eth0: transmit queue overrun
+Thanks,
+Yong
 
-v3.4-rt branch runs perfecly on this board. Is the above expected
-behaviour for this version of -rt patch?
-
-Best regards,
--Michal Sojka
+> 
+> Thanks,
+> 
+> 	tglx
+> ---
+> futex: Ensure lock/unlock symetry versus pi_lock and hash bucket lock
+> 
+> In exit_pi_state_list() we have the following locking construct:
+> 
+>    spin_lock(&hb->lock);
+>    raw_spin_lock_irq(&curr->pi_lock);
+>    
+>    ...
+>    spin_unlock(&hb->lock);
+> 
+> In !RT this works, but on RT the migrate_enable() function which is
+> called from spin_unlock() sees atomic context due to the held pi_lock
+> and just decrements the migrate_disable_atomic counter of the
+> task. Now the next call to migrate_disable() sees the counter being
+> negative and issues a warning. That check should be in
+> migrate_enable() already.
+> 
+> Fix this by dropping pi_lock before unlocking hb->lock and reaquire
+> pi_lock after that again. This is safe as the loop code reevaluates
+> head again under the pi_lock.
+> 
+> Reported-by: Yong Zhang <yong.zhang@windriver.com>
+> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+> 
+> diff --git a/kernel/futex.c b/kernel/futex.c
+> index f15f0e4..c795c9c 100644
+> --- a/kernel/futex.c
+> +++ b/kernel/futex.c
+> @@ -568,7 +568,9 @@ void exit_pi_state_list(struct task_struct *curr)
+>  		 * task still owns the PI-state:
+>  		 */
+>  		if (head->next != next) {
+> +			raw_spin_unlock_irq(&curr->pi_lock);
+>  			spin_unlock(&hb->lock);
+> +			raw_spin_lock_irq(&curr->pi_lock);
+>  			continue;
+>  		}
+>  
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
