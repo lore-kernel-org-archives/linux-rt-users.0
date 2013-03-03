@@ -1,69 +1,28 @@
-From: Yong Zhang <yong.zhang0@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH] futex: fix unbalanced spin_lock/spin_unlock() in
  exit_pi_state_list()
-Date: Sun, 3 Mar 2013 16:38:29 +0800
-Message-ID: <20130303083829.GA18176@zhy>
+Date: Sun, 03 Mar 2013 16:50:50 -0500
+Message-ID: <1362347450.31874.16.camel@gandalf.local.home>
 References: <1362101815-19968-1-git-send-email-yong.zhang0@gmail.com>
- <alpine.LFD.2.02.1303011047170.22263@ionos>
-Reply-To: Yong Zhang <yong.zhang0@gmail.com>
+	 <alpine.LFD.2.02.1303011047170.22263@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: Yong Zhang <yong.zhang0@gmail.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31466 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754494Ab3CCVux (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 3 Mar 2013 16:50:53 -0500
 In-Reply-To: <alpine.LFD.2.02.1303011047170.22263@ionos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Mar 01, 2013 at 11:17:42AM +0100, Thomas Gleixner wrote:
-> On Fri, 1 Mar 2013, Yong Zhang wrote:
-> 
-> > From: Yong Zhang <yong.zhang@windriver.com>
-> > 
-> > Otherwise, below warning is shown somtimes when running some test:
-> > 
-> > WARNING: at kernel/sched/core.c:3423 migrate_disable+0xbf/0xd0()
-> > Hardware name: OptiPlex 755
-> > Modules linked in: floppy parport parport_pc minix
-> > Pid: 1800, comm: tst-robustpi8 Tainted: G        W    3.4.28-rt40 #1
-> > Call Trace:
-> >  [<ffffffff81031f3f>] warn_slowpath_common+0x7f/0xc0
-> >  [<ffffffff81031f9a>] warn_slowpath_null+0x1a/0x20
-> >  [<ffffffff81066eaf>] migrate_disable+0xbf/0xd0
-> >  [<ffffffff81085d95>] exit_pi_state_list+0xa5/0x170
-> >  [<ffffffff8102f71f>] mm_release+0x12f/0x170
-> >  [<ffffffff81036906>] exit_mm+0x26/0x140
-> >  [<ffffffff81090fc6>] ? acct_collect+0x186/0x1c0
-> >  [<ffffffff81036b66>] do_exit+0x146/0x930
-> >  [<ffffffff810658d1>] ? get_parent_ip+0x11/0x50
-> >  [<ffffffff8103760d>] do_group_exit+0x4d/0xc0
-> >  [<ffffffff8104828f>] get_signal_to_deliver+0x23f/0x6a0
-> >  [<ffffffff810019e5>] do_signal+0x65/0x5e0
-> >  [<ffffffff81047816>] ? group_send_sig_info+0x76/0x80
-> >  [<ffffffff81002018>] do_notify_resume+0x98/0xd0
-> >  [<ffffffff8165779b>] int_signal+0x12/0x17
-> > ---[ end trace 0000000000000004 ]---
-> > 
-> > The reason is that spin_lock() is taken in atomic context, but
-> > spin_unlock() is not.
-> 
-> This doesn't make sense. The spin_lock() happens in non atomic
-> context.
-> 
-> 	spin_lock(&hb->lock);
-> 	raw_spin_lock_irq(&curr->pi_lock);
-> 
-> The unlock is in atomic context and the unlock does not call
-> migrate_disable().
-> 
-> Though on RT this is caused by the in_atomic check of migrate_enable()
-> and this results in asymetry. See below.
+On Fri, 2013-03-01 at 11:17 +0100, Thomas Gleixner wrote:
 
-Yeah, this is what I want to say. s/atomic/no-atomic/ in my words :)
-
-> 
 > > Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
 > > Cc: Thomas Gleixner <tglx@linutronix.de>
 > > Cc: Steven Rostedt <rostedt@goodmis.org>
@@ -114,14 +73,6 @@ Yeah, this is what I want to say. s/atomic/no-atomic/ in my words :)
 > 
 > So both your patch description and your patch are patently wrong.
 > Correct solution below.
-
-Recognized it after sending my V1 out. So V2 is sent out to close the
-race window and it happens to be the same patch with yours below.
-http://marc.info/?l=linux-rt-users&m=136211763323758&w=2
-
-Thanks,
-Yong
-
 > 
 > Thanks,
 > 
@@ -159,14 +110,34 @@ Yong
 >  		 * task still owns the PI-state:
 >  		 */
 >  		if (head->next != next) {
+
+Can we add the following comment here:
+
+	/*
+	 * Normal spin_lock() and matching spin_unlock() must not be
+	 * inside a raw_spin_lock() or any raw preempt disabled
+	 * context.
+	 */
+
+Or something similar. Otherwise, people looking at this may think that
+the unlock and relock is unnecessary. Or they may just not understand it
+in general. Things like this deserve comments, or we ourselves may
+forget why we did it ;-)
+
+We probably should document somewhere (if we haven't already, I haven't
+looked), that if a spin_trylock() is inside a preempt disabled section,
+the entire context of that lock must stay inside a preempt disabled
+section (to the unlock). No normal spin_lock()s, and their matching
+unlocks, should be in any preempt disabled section, although a preempt
+disabled section may exist between the two.
+
+-- Steve
+
 > +			raw_spin_unlock_irq(&curr->pi_lock);
 >  			spin_unlock(&hb->lock);
 > +			raw_spin_lock_irq(&curr->pi_lock);
 >  			continue;
 >  		}
 >  
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+
+
