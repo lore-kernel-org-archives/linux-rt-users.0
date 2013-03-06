@@ -1,143 +1,174 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] futex: fix unbalanced spin_lock/spin_unlock() in
- exit_pi_state_list()
-Date: Sun, 03 Mar 2013 16:50:50 -0500
-Message-ID: <1362347450.31874.16.camel@gandalf.local.home>
-References: <1362101815-19968-1-git-send-email-yong.zhang0@gmail.com>
-	 <alpine.LFD.2.02.1303011047170.22263@ionos>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Threaded irqs + 100% CPU RT task = RCU stall
+Date: Wed, 6 Mar 2013 10:49:17 -0500
+Message-ID: <20130306154917.GA15249@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
-Cc: Yong Zhang <yong.zhang0@gmail.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31466 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754494Ab3CCVux (ORCPT
+Received: from mail1.windriver.com ([147.11.146.13]:56569 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751452Ab3CFPvd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 3 Mar 2013 16:50:53 -0500
-In-Reply-To: <alpine.LFD.2.02.1303011047170.22263@ionos>
+	Wed, 6 Mar 2013 10:51:33 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-03-01 at 11:17 +0100, Thomas Gleixner wrote:
+It turns out that if a person enables threaded irqs, takes a
+100% CPU using task, binds it to a core, and then chrt's it,
+they will get an RCU stall.
 
-> > Signed-off-by: Yong Zhang <yong.zhang0@gmail.com>
-> > Cc: Thomas Gleixner <tglx@linutronix.de>
-> > Cc: Steven Rostedt <rostedt@goodmis.org>
-> > ---
-> >  kernel/futex.c |    3 ++-
-> >  1 file changed, 2 insertions(+), 1 deletion(-)
-> > 
-> > diff --git a/kernel/futex.c b/kernel/futex.c
-> > index 9e26e87..2b676a2 100644
-> > --- a/kernel/futex.c
-> > +++ b/kernel/futex.c
-> > @@ -562,16 +562,17 @@ void exit_pi_state_list(struct task_struct *curr)
-> >  
-> >  		spin_lock(&hb->lock);
-> >  
-> > -		raw_spin_lock_irq(&curr->pi_lock);
-> >  		/*
-> >  		 * We dropped the pi-lock, so re-check whether this
-> >  		 * task still owns the PI-state:
-> >  		 */
-> 
-> Did you read and understand this comment ?
-> 
-> The logic here is
-> 
->     raw_spin_lock_irq(&curr->pi_lock);
->     next = head->next;
->     raw_spin_unlock_irq(&curr->pi_lock);
->     spin_lock(&hb->lock);
->     raw_spin_lock_irq(&curr->pi_lock);
->     if (head->next != next)
-> 
-> We must drop pi_lock before locking the hash bucket lock. That opens a
-> window for another task to modify head list. So we must relock pi_lock
-> and verify whether head->next is unmodified. If it changed, we need to
-> reevaluate.
-> 
-> >  		if (head->next != next) {
-> >  			spin_unlock(&hb->lock);
-> > +			raw_spin_lock_irq(&curr->pi_lock);
-> >  			continue;
-> >  		}
-> >  
-> > +		raw_spin_lock_irq(&curr->pi_lock);
-> >  		WARN_ON(pi_state->owner != curr);
-> >  		WARN_ON(list_empty(&pi_state->list));
-> >  		list_del_init(&pi_state->list);
-> 
-> So both your patch description and your patch are patently wrong.
-> Correct solution below.
-> 
-> Thanks,
-> 
-> 	tglx
-> ---
-> futex: Ensure lock/unlock symetry versus pi_lock and hash bucket lock
-> 
-> In exit_pi_state_list() we have the following locking construct:
-> 
->    spin_lock(&hb->lock);
->    raw_spin_lock_irq(&curr->pi_lock);
->    
->    ...
->    spin_unlock(&hb->lock);
-> 
-> In !RT this works, but on RT the migrate_enable() function which is
-> called from spin_unlock() sees atomic context due to the held pi_lock
-> and just decrements the migrate_disable_atomic counter of the
-> task. Now the next call to migrate_disable() sees the counter being
-> negative and issues a warning. That check should be in
-> migrate_enable() already.
-> 
-> Fix this by dropping pi_lock before unlocking hb->lock and reaquire
-> pi_lock after that again. This is safe as the loop code reevaluates
-> head again under the pi_lock.
-> 
-> Reported-by: Yong Zhang <yong.zhang@windriver.com>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> 
-> diff --git a/kernel/futex.c b/kernel/futex.c
-> index f15f0e4..c795c9c 100644
-> --- a/kernel/futex.c
-> +++ b/kernel/futex.c
-> @@ -568,7 +568,9 @@ void exit_pi_state_list(struct task_struct *curr)
->  		 * task still owns the PI-state:
->  		 */
->  		if (head->next != next) {
+This was seen on 3.6-RT (which implicitly forces "threadirqs=1") and
+then reproduced on vanilla 3.6.11, 3.8 and 3.9-rc1 when explicitly
+using threadirqs=1
 
-Can we add the following comment here:
+The problem (if you want to call it that, vs. an "educational issue")
+is that Joe Average will never correlate the mysterious RCU stall
+to the underlying root cause of that core's ksoftirqd never being run.
 
-	/*
-	 * Normal spin_lock() and matching spin_unlock() must not be
-	 * inside a raw_spin_lock() or any raw preempt disabled
-	 * context.
-	 */
+It wasn't immediately evident to me either, I had to "cheat" by
+doing a pseudo bisect on RT which got me looking at RT's patch
+called "genirq-force-threading.patch", and then things all started
+to make more sense.
 
-Or something similar. Otherwise, people looking at this may think that
-the unlock and relock is unnecessary. Or they may just not understand it
-in general. Things like this deserve comments, or we ourselves may
-forget why we did it ;-)
+To be more specific, say we have user "Joe" who has a busy polling
+loop in his RT task, and since Joe isn't that bright, he doesn't
+ever bother to briefly yield the core, or change other system thread
+priorities.
 
-We probably should document somewhere (if we haven't already, I haven't
-looked), that if a spin_trylock() is inside a preempt disabled section,
-the entire context of that lock must stay inside a preempt disabled
-section (to the unlock). No normal spin_lock()s, and their matching
-unlocks, should be in any preempt disabled section, although a preempt
-disabled section may exist between the two.
+We can simulate what Joe does by doing this:
 
--- Steve
+-boot 3.9-rc1 SMP box with threadirqs=1 on kernel command line and run:
 
-> +			raw_spin_unlock_irq(&curr->pi_lock);
->  			spin_unlock(&hb->lock);
-> +			raw_spin_lock_irq(&curr->pi_lock);
->  			continue;
->  		}
->  
+   echo "main() { for(;;);}" > eatme-simple.c
+   gcc eatme-simple.c -o eatme-simple
+   taskset -c 1 ./eatme-simple  &
+   chrt -p 80 `pgrep eatme`
+
+   <wait ~2m>
+
+   INFO: rcu_preempt self-detected stall on CPU
+   INFO: rcu_preempt detected stalls on CPUs/tasks: { 1} (detected by 4, t=60002 jiffies, g=314, c=313, q=2800)
+   Task dump for CPU 1:
+   eatme-simple    R  running task        0  1485   1428 0x00000000
+    ffff88042b7a7f70 ffffffff81316396 ffff88042a90ad30 ffff88042b7a7fd8
+    0000000000010b00 ffff88042b7a7fd8 ffff88042dac2050 ffff88042a90ad30
+    0000000000000000 0000000000000000 0000000000000000 ffff88043fc4ceb0
+   Call Trace:
+    [<ffffffff81316396>] ? __schedule+0x617/0x74b
+    [<ffffffff810a4dfc>] ? dput+0x20/0x15c
+    [<ffffffff8109577c>] ? __fput+0x1a1/0x1c8
+    [<ffffffff810aaf4b>] ? mntput_no_expire+0x13/0x11f
+    { 1}  (t=60010 jiffies g=314 c=313 q=2800)
+   Pid: 1485, comm: eatme-simple Not tainted 3.9.0-rc1 #15
+   Call Trace:
+    <IRQ>  [<ffffffff8105c2fc>] ? rcu_check_callbacks+0x1de/0x5ab
+    [<ffffffff8102ce08>] ? update_process_times+0x31/0x5c
+    [<ffffffff8104b947>] ? tick_handle_periodic+0x18/0x52
+    [<ffffffff8101616c>] ? smp_apic_timer_interrupt+0x7d/0x8f
+    [<ffffffff813189ca>] ? apic_timer_interrupt+0x6a/0x70
+
+What happens is that the threadirqs=1 option makes the difference in
+the invoke_softirq() function -- it will either call do_softirq()
+directly, or if threading is on, it will instead call the
+wakeup_softirqd() (i.e. defer it to the ksoftirqd.)  But the default
+prio for ksoftirqd on that core won't ever trump Joe's eatme task.
+So we never do any do_softirq work at all on that core.  Eventually
+the rcu stall detection sees it from sched tick:
+
+scheduling-clock interrupt
+  --> rcu_check_callbacks
+      --> if (rcu_pending)    <--- Stall message!
+          --> invoke_rcu_core
+              --> raise_softirq(RCU_SOFTIRQ)
+
+The stall comes rom rcu_pending as follows:
+
+rcu_pending
+  --> __rcu_pending
+      --> check_cpu_stall
+          --> print_cpu_stall
+              --> printk "self-detected stall.."
+
+Note that softirq isn't implicated at all in the above path, and hence
+even if Joe does a bit of digging, he probably still has no idea why
+things don't work.  He thinks this is just some as yet undiscovered
+kernel/RCU bug.
+
+To confirm that I was properly understanding what was really happening,
+I added a quick hack (below) that set a hard upper limit on the number
+of times we'd allow continuous defer to wakeup_softirqd() vs. running
+do_softirq() directly.  Choosing an arbitrary limit of ~8k showed that
+we'd hit it in roughly ~5s intervals with the busy loop program executing.
+And we'd avoid the stalls by forcing it when we hit that limit.
+
+So, I guess the question is, whether we want to try and make the system
+fail in a more meaningful way -- kind of like the rt throttling message
+does - as it lets users know they've hit the wall?  Something watching
+for kstat_incr_softirqs traffic perhaps?  Or other options?
+
+Paul.
+--
+
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index b4d252f..a1ded00 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -205,6 +205,8 @@ EXPORT_SYMBOL(local_bh_enable_ip);
+  */
+ #define MAX_SOFTIRQ_TIME  msecs_to_jiffies(2)
+ 
++DEFINE_PER_CPU(unsigned long, defer_count);
++
+ asmlinkage void __do_softirq(void)
+ {
+ 	struct softirq_action *h;
+@@ -271,6 +273,9 @@ restart:
+ 		wakeup_softirqd();
+ 	}
+ 
++	/* we've really run the queue, so reset counter */
++	this_cpu_write(defer_count, 0);
++
+ 	lockdep_softirq_exit();
+ 
+ 	account_irq_exit_time(current);
+@@ -321,19 +326,30 @@ void irq_enter(void)
+ 	__irq_enter();
+ }
+ 
++/*
++ * if we've gone too many iterations without having really run,
++ * then genuinely force it, otherwise we'll be setting ourselves
++ * up for a backlog, and get rcu stalls and so on.
++ */
++#define MAX_DEFER 8192
+ static inline void invoke_softirq(void)
+ {
+-	if (!force_irqthreads) {
++	bool overdue = (this_cpu_read(defer_count) > MAX_DEFER);
++
++	if (!force_irqthreads || overdue) {
+ #ifdef __ARCH_IRQ_EXIT_IRQS_DISABLED
+ 		__do_softirq();
+ #else
+ 		do_softirq();
+ #endif
++		if (overdue)
++			printk("defer limit reached: softirq execution was forced\n");
+ 	} else {
+ 		__local_bh_disable((unsigned long)__builtin_return_address(0),
+ 				SOFTIRQ_OFFSET);
+ 		wakeup_softirqd();
+ 		__local_bh_enable(SOFTIRQ_OFFSET);
++		this_cpu_inc(defer_count);
+ 	}
+ }
+ 
+-- 
+1.8.1.2
 
 
