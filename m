@@ -1,92 +1,118 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: linux-3.6.11-rt30 smoke test on ARM
-Date: Tue, 12 Mar 2013 17:44:03 -0700
-Message-ID: <513FCBD3.4@am.sony.com>
-References: <51396143.5060108@am.sony.com> <51396306.6090902@am.sony.com> <20130311173424.GB22286@linutronix.de>
-Reply-To: <frank.rowand@am.sony.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: Threaded irqs + 100% CPU RT task = RCU stall
+Date: Wed, 13 Mar 2013 17:03:07 -0400
+Message-ID: <20130313210307.GA22448@windriver.com>
+References: <20130306154917.GA15249@windriver.com>
+ <alpine.LFD.2.02.1303061651360.22263@ionos>
+ <20130306171648.GO3268@linux.vnet.ibm.com>
+ <alpine.LFD.2.02.1303062010060.22263@ionos>
+ <20130306214502.GC3268@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset="us-ascii"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co9ehsobe001.messaging.microsoft.com ([207.46.163.24]:3957 "EHLO
-	co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1755325Ab3CMAoJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Mar 2013 20:44:09 -0400
-In-Reply-To: <20130311173424.GB22286@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	<linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130306214502.GC3268@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 03/11/13 10:34, Sebastian Andrzej Siewior wrote:
-> * Frank Rowand | 2013-03-07 20:03:18 [-0800]:
+[Re: Threaded irqs + 100% CPU RT task = RCU stall] On 06/03/2013 (Wed 13:45) Paul E. McKenney wrote:
+
+[...]
+
 > 
->> panda boot often fails due to a usb timeout, while sending a command on
->> behalf of the smsc95xx ethernet driver.
->>
->> This patch is a temporary hack to force a retry when the timeout occurs.
+> Is this behavior OK?  If so, the following (untested) patch might do
+> what you want.  ;-)
 > 
-> It looks like you overrun the chip for some reason. Can you reproduce it
-> on mainline? They added a few delayes on register read() it might do the
-> trick.
+> 							Thanx, Paul
+> 
+> ------------------------------------------------------------------------
+> 
+> rcu: Add softirq-stall indications to stall-warning messages
 
-Yes, I can reproduce it on mainline.
+[...]
 
-Here is the current state of my debugging:
+> 
+> +The "softirq=" portion of the message tracks the number of RCU softirq
+> +handlers that the stalled CPU has executed.  The number before the "/"
+> +is the number that had executed since boot at the time that this CPU
+> +last noted the beginning of a grace period, which might be the current
+> +(stalled) grace period, or it might be some earlier grace period (for
+> +example, if the CPU might have been in dyntick-idle mode for an extended
+> +time period.  The number after the "/" is the number that have executed
+> +since boot until the current time.  If this latter number stays constant
+> +across repeated stall-warning messages, it is possible that RCU's softirq
+> +handlers are no longer able to execute on this CPU.  This can happen if
+> +the stalled CPU is spinning with interrupts are disabled, or, in -rt
+> +kernels, if a high-priority process is starving RCU's softirq handler.
 
-The problem usually occurs within three boot attempts.  But it has also
-taken eight boot attempts to see the problem.  I do not know what the
-maximum number of boots is required to see the problem, so I can not
-state with certainty that a given kernel version does not have the
-problem.  If the boot fails then I can state with certainty that the
-given kernel version has the problem.
+Here is the output of two consecutive stalls (triggered exactly as I'd
+described before) after applying the commit and enabling the new config
+option for RCU_CPU_STALL_INFO (btw, do we need this?  we already have
+the RCU_CPU_STALL_VERBOSE option, and the distinction isn't clear.)
 
-Given that level of uncertainty, I know:
+Looking at the output, it doesn't necessarily scream out "you are an
+idiot" in a way that Joe Average can immediately parse and understand,
+but I guess it does at least arm us with more information so that we
+can tell Joe Average that he is an idiot (assuming he posts more than
+just a single stall instance).
 
-  v3.5      does not appear to have the problem
-  v3.6-rc1  has the problem
-  v3.6      has the problem
-  v3.7      has the problem
-  v3.8      does not appear to have the problem
-  v3.9-rc1  fails to build
+Also note right after the <EOI> below, it looks like two stall
+messages got interleavedi, or a carriage return got dropped...
+(not suggesting that this patch caused that.).
 
-I thought I had bisected the problem to a specific commit, but wanting
-to be sure of it, I did extra boots of what should have been the last
-good commit.  On the 7th boot, that kernel version had the problem.
+Paul.
+--
 
-I'll probably redo the bisect, but have not had time to do so yet.
+INFO: rcu_preempt self-detected stall on CPU
+INFO: rcu_preempt detected stalls on CPUs/tasks:
+	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
+	(detected by 5, t=60002 jiffies, g=324, c=323, q=1368)
+Task dump for CPU 1:
+eatme-simple    R  running task        0  1487   1433 0x00000000
+ ffff88042ef47f60 ffffffff81316de1 ffff88042e5f5810 ffff88042ef47fd8
+ 0000000000010c00 ffff88042ef47fd8 ffff88042f994210 ffff88042e5f5810
+ 0000000000000000 ffff88043f4fe980 ffffffff810a56e4 0000000000000203
+Call Trace:
+ [<ffffffff81316de1>] ? __schedule+0x62a/0x75e
+ [<ffffffff810a56e4>] ? dput+0x20/0x15c
+ [<ffffffff81096070>] ? __fput+0x1a1/0x1c8
+ [<ffffffff810ab833>] ? mntput_no_expire+0x13/0x11f
+ [<ffffffff8101c55c>] ? do_page_fault+0x1f/0x3b
 
-The problem manifests as a timeout from at least two different locations
-in drivers/net/usb/smsc95xx.c:
+	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
+	 (t=60082 jiffies g=324 c=323 q=1368)
+Pid: 1487, comm: eatme-simple Not tainted 3.9.0-rc2+ #2
+Call Trace:
+ <IRQ>  [<ffffffff8105cac6>] ? rcu_check_callbacks+0x215/0x61a
+ [<ffffffff8102cffc>] ? update_process_times+0x31/0x5c
+ [<ffffffff8104bb5b>] ? tick_handle_periodic+0x18/0x52
+ [<ffffffff81016328>] ? smp_apic_timer_interrupt+0x7d/0x8f
+ [<ffffffff8131944a>] ? apic_timer_interrupt+0x6a/0x70
+ <EOI> 
+INFO: rcu_preempt self-detected stall on CPUINFO: rcu_preempt detected stalls on CPUs/tasks:
+	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
+	(detected by 5, t=240007 jiffies, g=324, c=323, q=9386)
+Task dump for CPU 1:
+eatme-simple    R  running task        0  1487   1433 0x00000000
+ ffff88042ef47f60 ffffffff81316dfd ffff88042e5f5810 ffff88042ef47fd8
+ 0000000000010c00 ffff88042ef47fd8 ffff88042e5f5810 ffff88042e5f5810
+ 0000000000000000 ffff88043f4fe980 ffffffff810a56e4 0000000000000203
+Call Trace:
+ [<ffffffff81316dfd>] ? __schedule+0x646/0x75e
+ [<ffffffff810a56e4>] ? dput+0x20/0x15c
+ [<ffffffff81096070>] ? __fput+0x1a1/0x1c8
+ [<ffffffff810ab833>] ? mntput_no_expire+0x13/0x11f
+ [<ffffffff8101c55c>] ? do_page_fault+0x1f/0x3b
 
-
- 656 static int smsc95xx_set_mac_address(struct usbnet *dev)
- 657 {
- ...
- 663         ret = smsc95xx_write_reg(dev, ADDRL, addr_lo);
- 664         if (ret < 0) {
- 665                 netdev_warn(dev->net, "Failed to write ADDRL: %d\n", ret);
- 666                 return ret;
- 667         }
-
-
-751 static int smsc95xx_reset(struct usbnet *dev)
- 752 {
- ...
- 783         write_buf = PM_CTL_PHY_RST_;
- 784         ret = smsc95xx_write_reg(dev, PM_CTRL, write_buf);
- 785         if (ret < 0) {
- 786                 netdev_warn(dev->net, "Failed to write PM_CTRL: %d\n", ret);
- 787                 return ret;
- 788         }
-
-
-Some of the other smsc95xx_write_reg() calls in smsc95xx_reset() are protected with
-checks for timeout, with up to 100 retries.  I do not know if this one should have
-the same protection.
-
--Frank
-
+	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
+	 (t=240087 jiffies g=324 c=323 q=9386)
+Pid: 1487, comm: eatme-simple Not tainted 3.9.0-rc2+ #2
+Call Trace:
+ <IRQ>  [<ffffffff8105cac6>] ? rcu_check_callbacks+0x215/0x61a
+ [<ffffffff8102cffc>] ? update_process_times+0x31/0x5c
+ [<ffffffff8104bb5b>] ? tick_handle_periodic+0x18/0x52
+ [<ffffffff81016328>] ? smp_apic_timer_interrupt+0x7d/0x8f
+ [<ffffffff8131944a>] ? apic_timer_interrupt+0x6a/0x70
