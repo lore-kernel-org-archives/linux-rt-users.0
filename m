@@ -1,149 +1,128 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: Threaded irqs + 100% CPU RT task = RCU stall
-Date: Wed, 13 Mar 2013 14:35:11 -0700
-Message-ID: <20130313213511.GA15969@linux.vnet.ibm.com>
-References: <20130306154917.GA15249@windriver.com>
- <alpine.LFD.2.02.1303061651360.22263@ionos>
- <20130306171648.GO3268@linux.vnet.ibm.com>
- <alpine.LFD.2.02.1303062010060.22263@ionos>
- <20130306214502.GC3268@linux.vnet.ibm.com>
- <20130313210307.GA22448@windriver.com>
- <20130313212802.GA3725@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Clark Williams <williams@redhat.com>
+Subject: RFC: cyclictest notrace option
+Date: Wed, 13 Mar 2013 19:46:50 -0500
+Message-ID: <20130313194650.45649c1f@riff.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130313212802.GA3725@linux.vnet.ibm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/m6UurMIN7U_ye9iTfiGZTT6"; protocol="application/pgp-signature"
+To: John Kacur <jkacur@redhat.com>, RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:23922 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755725Ab3CNAqx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Mar 2013 20:46:53 -0400
+Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+	by mx1.redhat.com (8.14.4/8.14.4) with ESMTP id r2E0krgT021178
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=OK)
+	for <linux-rt-users@vger.kernel.org>; Wed, 13 Mar 2013 20:46:53 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Mar 13, 2013 at 02:28:02PM -0700, Paul E. McKenney wrote:
-> On Wed, Mar 13, 2013 at 05:03:07PM -0400, Paul Gortmaker wrote:
-> > [Re: Threaded irqs + 100% CPU RT task = RCU stall] On 06/03/2013 (Wed 13:45) Paul E. McKenney wrote:
-> > 
-> > [...]
-> > 
-> > > 
-> > > Is this behavior OK?  If so, the following (untested) patch might do
-> > > what you want.  ;-)
-> > > 
-> > > 							Thanx, Paul
-> > > 
-> > > ------------------------------------------------------------------------
-> > > 
-> > > rcu: Add softirq-stall indications to stall-warning messages
-> > 
-> > [...]
-> > 
-> > > 
-> > > +The "softirq=" portion of the message tracks the number of RCU softirq
-> > > +handlers that the stalled CPU has executed.  The number before the "/"
-> > > +is the number that had executed since boot at the time that this CPU
-> > > +last noted the beginning of a grace period, which might be the current
-> > > +(stalled) grace period, or it might be some earlier grace period (for
-> > > +example, if the CPU might have been in dyntick-idle mode for an extended
-> > > +time period.  The number after the "/" is the number that have executed
-> > > +since boot until the current time.  If this latter number stays constant
-> > > +across repeated stall-warning messages, it is possible that RCU's softirq
-> > > +handlers are no longer able to execute on this CPU.  This can happen if
-> > > +the stalled CPU is spinning with interrupts are disabled, or, in -rt
-> > > +kernels, if a high-priority process is starving RCU's softirq handler.
-> > 
-> > Here is the output of two consecutive stalls (triggered exactly as I'd
-> > described before) after applying the commit and enabling the new config
-> > option for RCU_CPU_STALL_INFO (btw, do we need this?  we already have
-> > the RCU_CPU_STALL_VERBOSE option, and the distinction isn't clear.)
+--Sig_/m6UurMIN7U_ye9iTfiGZTT6
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-I won't argue that the choice of names is particularly inspired.
+This patch adds the --notrace/-A option to cyclictest. The intent is to
+allow use of the -b/--breaktrace option but to have cyclictest do no
+actual ftrace operations (i.e. stop when threshold is hit and do
+nothing wrt ftrace).  The idea is that you can do more sophisticated
+tracing with the trace-cmd script, so do that rather than trying to put
+all combinations of tracing into cyclictest.=20
 
-RCU_CPU_STALL_VERBOSE prints per-task information for any tasks stalling
-the current RCU grace period.
+I've push this and the previous patch up to my kernel.org repository in
+the work branch:
 
-RCU_CPU_STALL_INFO prints additional debug info for each CPU.
+git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
 
-Perhaps I should merge them or rename them.  I will give it some thought.
+commit 83adb67c7928a73f6434e98cba736717d656ceb4
+Author: Clark Williams <clark.williams@gmail.com>
+Date:   Wed Mar 13 19:36:29 2013 -0500
 
-							Thanx, Paul
+    cyclictest: allow break threshold without doing any tracing
+   =20
+    Add the --notrace/-A option, intended to be used in conjunction
+    with the -b option. This will cause cyclictest to exit when a
+    threshold is hit, but will not perform any tracing operations,
+    allowing more sophisticated tracing to be done externally.
+   =20
+    Signed-off-by: Clark Williams <clark.williams@gmail.com>
 
-> > Looking at the output, it doesn't necessarily scream out "you are an
-> > idiot" in a way that Joe Average can immediately parse and understand,
-> > but I guess it does at least arm us with more information so that we
-> > can tell Joe Average that he is an idiot (assuming he posts more than
-> > just a single stall instance).
-> 
-> OK, will queue this patch for 3.10, then, with your Tested-by.
-> 
-> > Also note right after the <EOI> below, it looks like two stall
-> > messages got interleavedi, or a carriage return got dropped...
-> > (not suggesting that this patch caused that.).
-> 
-> No idea...  Will recheck synchronization.  Oh, wait...  The stall warnings
-> for self-detected stalls are not synchronized.  This is a tradeoff.
-> If I synchronize them, and there are multiple CPUs stalling concurrently
-> and self-detecting those stalls, then I randomly lose stalls from some
-> of the CPUs.  I could let the winner complain on behalf of all currently
-> stalled CPUs, but remote stack tracing is inaccurate.
-> 
-> My thought is to leave it, unless someone has a cute idea for making it
-> all work nicely.
-> 
-> 							Thanx, Paul
-> 
-> > Paul.
-> > --
-> > 
-> > INFO: rcu_preempt self-detected stall on CPU
-> > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > 	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
-> > 	(detected by 5, t=60002 jiffies, g=324, c=323, q=1368)
-> > Task dump for CPU 1:
-> > eatme-simple    R  running task        0  1487   1433 0x00000000
-> >  ffff88042ef47f60 ffffffff81316de1 ffff88042e5f5810 ffff88042ef47fd8
-> >  0000000000010c00 ffff88042ef47fd8 ffff88042f994210 ffff88042e5f5810
-> >  0000000000000000 ffff88043f4fe980 ffffffff810a56e4 0000000000000203
-> > Call Trace:
-> >  [<ffffffff81316de1>] ? __schedule+0x62a/0x75e
-> >  [<ffffffff810a56e4>] ? dput+0x20/0x15c
-> >  [<ffffffff81096070>] ? __fput+0x1a1/0x1c8
-> >  [<ffffffff810ab833>] ? mntput_no_expire+0x13/0x11f
-> >  [<ffffffff8101c55c>] ? do_page_fault+0x1f/0x3b
-> > 
-> > 	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
-> > 	 (t=60082 jiffies g=324 c=323 q=1368)
-> > Pid: 1487, comm: eatme-simple Not tainted 3.9.0-rc2+ #2
-> > Call Trace:
-> >  <IRQ>  [<ffffffff8105cac6>] ? rcu_check_callbacks+0x215/0x61a
-> >  [<ffffffff8102cffc>] ? update_process_times+0x31/0x5c
-> >  [<ffffffff8104bb5b>] ? tick_handle_periodic+0x18/0x52
-> >  [<ffffffff81016328>] ? smp_apic_timer_interrupt+0x7d/0x8f
-> >  [<ffffffff8131944a>] ? apic_timer_interrupt+0x6a/0x70
-> >  <EOI> 
-> > INFO: rcu_preempt self-detected stall on CPUINFO: rcu_preempt detected stalls on CPUs/tasks:
-> > 	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
-> > 	(detected by 5, t=240007 jiffies, g=324, c=323, q=9386)
-> > Task dump for CPU 1:
-> > eatme-simple    R  running task        0  1487   1433 0x00000000
-> >  ffff88042ef47f60 ffffffff81316dfd ffff88042e5f5810 ffff88042ef47fd8
-> >  0000000000010c00 ffff88042ef47fd8 ffff88042e5f5810 ffff88042e5f5810
-> >  0000000000000000 ffff88043f4fe980 ffffffff810a56e4 0000000000000203
-> > Call Trace:
-> >  [<ffffffff81316dfd>] ? __schedule+0x646/0x75e
-> >  [<ffffffff810a56e4>] ? dput+0x20/0x15c
-> >  [<ffffffff81096070>] ? __fput+0x1a1/0x1c8
-> >  [<ffffffff810ab833>] ? mntput_no_expire+0x13/0x11f
-> >  [<ffffffff8101c55c>] ? do_page_fault+0x1f/0x3b
-> > 
-> > 	1: (1 GPs behind) idle=f4f/140000000000001/0 softirq=2256/2257 
-> > 	 (t=240087 jiffies g=324 c=323 q=9386)
-> > Pid: 1487, comm: eatme-simple Not tainted 3.9.0-rc2+ #2
-> > Call Trace:
-> >  <IRQ>  [<ffffffff8105cac6>] ? rcu_check_callbacks+0x215/0x61a
-> >  [<ffffffff8102cffc>] ? update_process_times+0x31/0x5c
-> >  [<ffffffff8104bb5b>] ? tick_handle_periodic+0x18/0x52
-> >  [<ffffffff81016328>] ? smp_apic_timer_interrupt+0x7d/0x8f
-> >  [<ffffffff8131944a>] ? apic_timer_interrupt+0x6a/0x70
-> > 
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index a8f9534..7eb4799 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -165,6 +165,7 @@ struct thread_stat {
+=20
+ static int shutdown;
+ static int tracelimit =3D 0;
++static int notrace =3D 0;
+ static int ftrace =3D 0;
+ static int kernelversion;
+ static int verbose =3D 0;
+@@ -446,7 +447,7 @@ static int settracer(char *tracer)
+=20
+ static void setup_tracer(void)
+ {
+-	if (!tracelimit)
++	if (!tracelimit || notrace)
+ 		return;
+=20
+ 	if (mount_debugfs(NULL))
+@@ -1101,6 +1102,7 @@ static void process_options (int argc, char
+*argv[]) */
+ 		static struct option long_options[] =3D {
+ 			{"affinity",         optional_argument, NULL,
+'a'},
++			{"notrace",          no_argument,       NULL,
+'A'}, {"breaktrace",       required_argument, NULL, 'b'},
+ 			{"preemptirqs",      no_argument,       NULL,
+'B'}, {"clock",            required_argument, NULL, 'c'},
+@@ -1161,6 +1163,7 @@ static void process_options (int argc, char
+*argv[]) setaffinity =3D AFFINITY_USEALL;
+ 			}
+ 			break;
++		case 'A': notrace =3D 1; break;
+ 		case 'b': tracelimit =3D atoi(optarg); break;
+ 		case 'B': tracetype =3D PREEMPTIRQSOFF; break;
+ 		case 'c': clocksel =3D atoi(optarg); break;
+@@ -1400,7 +1403,7 @@ static void sighand(int sig)
+ 	shutdown =3D 1;
+ 	if (refresh_on_max)
+ 		pthread_cond_signal(&refresh_on_max_cond);
+-	if (tracelimit)
++	if (tracelimit && !notrace)
+ 		tracing(0);
+ }
+=20
+@@ -1921,7 +1924,7 @@ int main(int argc, char **argv)
+ 	}
+  out:
+ 	/* ensure that the tracer is stopped */
+-	if (tracelimit)
++	if (tracelimit && !notrace)
+ 		tracing(0);
+=20
+=20
+@@ -1937,7 +1940,7 @@ int main(int argc, char **argv)
+=20
+ 	/* turn off the function tracer */
+ 	fileprefix =3D procfileprefix;
+-	if (tracetype)
++	if (tracetype && !notrace)
+ 		setkernvar("ftrace_enabled", "0");
+ 	fileprefix =3D get_debugfileprefix();
+=20
+
+--Sig_/m6UurMIN7U_ye9iTfiGZTT6
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iEYEARECAAYFAlFBHfoACgkQHyuj/+TTEp3EVQCgjrZ39sWN0Bp3KnpgB9XXiv5G
+tVcAn1juLEFOuwJGm7xHbVrDAwB+hn9W
+=KeNv
+-----END PGP SIGNATURE-----
+
+--Sig_/m6UurMIN7U_ye9iTfiGZTT6--
