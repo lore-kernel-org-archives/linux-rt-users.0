@@ -1,59 +1,45 @@
-From: notgeorge burns <not.george.burns@gmail.com>
-Subject: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
-Date: Fri, 15 Mar 2013 15:16:51 +0000
-Message-ID: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
+From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Subject: Re: RT Problem on Powermac G5 (more info)
+Date: Fri, 15 Mar 2013 13:54:55 -0700
+Message-ID: <CDAB4622-D08F-453E-A23F-1E2544BEDBF3@thebigcorporation.com>
+References: <DUB002-W1234C65DFF1F08EEE03C9BDE1ED0@phx.gbl>
+Mime-Version: 1.0 (Mac OS X Mail 6.3 \(1503\))
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: - - <man.johnson@outlook.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f195.google.com ([209.85.128.195]:33933 "EHLO
-	mail-ve0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754767Ab3COPdy (ORCPT
+Received: from mail-pb0-f44.google.com ([209.85.160.44]:44264 "EHLO
+	mail-pb0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932131Ab3COUy6 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Mar 2013 11:33:54 -0400
-Received: by mail-ve0-f195.google.com with SMTP id m1so581483ves.10
-        for <linux-rt-users@vger.kernel.org>; Fri, 15 Mar 2013 08:33:53 -0700 (PDT)
+	Fri, 15 Mar 2013 16:54:58 -0400
+Received: by mail-pb0-f44.google.com with SMTP id wz12so4313983pbc.17
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Mar 2013 13:54:58 -0700 (PDT)
+In-Reply-To: <DUB002-W1234C65DFF1F08EEE03C9BDE1ED0@phx.gbl>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
 
-In branch v3.2-rt, in entry_32.S, ret_from_intr, lines 347-351, it
-appears to be the case that a hard irq request can return to a
-userspace task without invoking the scheduler.
+Quick general advice, without looking at your specific links:
 
-What if the hardirq handler scheduled something higher priority than
-the userspace task that was interrupted?  For example, suppose you
-have the following scenario:
+Try some other configurations first, e.g. instead of configuring PREEMPT_FULL, 
+configure a more basic PREEMPT mode, and see if you can get something running.
 
-1) process A running at priority 60 in userspace.
+Then turn on features (e.g. IRQ threading, and so on, and see when it breaks)
 
-2) hard interrupt fires, resulting in entry_32.S common_interrupt processing.
+BTW what's up with the oddball - - in the SMTP header?
 
-3) hard interrupt handler schedules task B via irq_wake_thread() in
-kernel/irq/handle.c, i.e. wake_up_process().
+On Mar 15, 2013, at 4:39 AM, - - <man.johnson@outlook.com> wrote:
 
-4) Task B is of course the softirq for the interrupt.
+> Hello,
+> I have posted my config here: "http://pastebin.com/Fxw2Ergz",
+> I hope that with the photo of the error message which can be 
+> downloaded here: "http://views.airpost.net/?imagepage=oops.jpg"
+> in full format you will have enough to provide a first diagnosis.
+> I'd like to know also if someone has already an experience of 
+> rt-kernel on powerpc64. Thanks again 		 	   		  --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-5) The process/task B to be woken up has priority 70.
-
-6) Hard interrupt handler continues to ret_from_intr to prepare for
-whatever is next.
-
-7) What is the intended behavior at line 350 of entry_32.S on branch
-3.2-rt?  I.e. should we jump to work_pending, heading towards the
-scheduler, or instead pass through to restore_all and return back to
-process A?
-
-Does the hardirq handler need to do something to make the TI_flags
-work properly against _TIF_WORK_MASK ?   _TIF_WORK_MASK doesn't
-include TIF_NEED_RESCHED so it seems that this wouldn't be the right
-way to do it?
-
-Does the hardirq handler need to do something else to cause control to
-move to the higher priority softirq instead of returning to the lower
-priority process?
-
-
-Thank you for any clarification you can provide.
--burns
