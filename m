@@ -1,53 +1,47 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
-Date: Fri, 15 Mar 2013 22:36:02 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303152225250.22263@ionos>
-References: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
+Subject: Re: System freeze while sending data via tcp with 3.6.11-rt30
+ kernel
+Date: Fri, 15 Mar 2013 22:44:53 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1303152236550.22263@ionos>
+References: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1950233863-1363383772=:22263"
 Cc: linux-rt-users@vger.kernel.org
-To: notgeorge burns <not.george.burns@gmail.com>
+To: Heiko Schumann <heiko.sirona@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59884 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:59901 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753404Ab3COVgD (ORCPT
+	with ESMTP id S1754406Ab3COVoz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Mar 2013 17:36:03 -0400
-In-Reply-To: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
+	Fri, 15 Mar 2013 17:44:55 -0400
+In-Reply-To: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
+Content-ID: <alpine.LFD.2.02.1303152243320.22263@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 15 Mar 2013, notgeorge burns wrote:
-> Does the hardirq handler need to do something to make the TI_flags
-> work properly against _TIF_WORK_MASK ?   _TIF_WORK_MASK doesn't
-> include TIF_NEED_RESCHED so it seems that this wouldn't be the right
-> way to do it?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-To be honest I was puzzled for a second by that mysel after reading
-your mail, but you got tricked by really obfuscated macro magic:
+--8323328-1950233863-1363383772=:22263
+Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-1
+Content-Transfer-Encoding: 8BIT
+Content-ID: <alpine.LFD.2.02.1303152243321.22263@ionos>
 
-        andl $_TIF_WORK_MASK, %ecx      # is there any work to be done on
-                                        # int/exception return?
-        jne work_pending
+On Fri, 15 Mar 2013, Heiko Schumann wrote:
+> i´ve a 3.6.11-rt30 kernel on a QorIQ P2020 Processor.
+> Everything works fine, but when i start my application, which sends
+> data via tcp socket with a rate of ~840 Mbits to an another computer,
+> the QorIQ P2020 freezes within three minutes.
+> The application is started with SCHED_OTHER scheduling algorithm the
+> standard priority. The system freeze occurs until i start the
+> application with the SCHED_FIFO algorithm and a priority higher then
+> 50. With this option everything runs stable, but this option
+> isn´t suitable for the later system.
 
-So we jump to work_pending, if any bit of _TIF_WORK_MASK is set in ecx
-
-#define _TIF_WORK_MASK                                                  \
-        (0x0000FFFF &                                                   \
-         ~(_TIF_SYSCALL_TRACE|_TIF_SYSCALL_AUDIT|                       \
-           _TIF_SINGLESTEP|_TIF_SECCOMP|_TIF_SYSCALL_EMU))
-
-So we keep everything in 0xffff _except_ _TIF_SYSCALL_TRACE,
-_TIF_SYSCALL_AUDIT, _TIF_SINGLESTEP, _TIF_SECCOMP, _TIF_SYSCALL_EMU
-
-Note the "~" before (_TIF ...... EMU) !
-
-So _TIF_NEED_RESCHED is preserved and checked and handled in
-work_pending.
-
-You made me worried for a second, but that code has been that way for
-almost a decade, so RT would have stumbled over it at some point :)
+Is this a stock 3.6.11-rt30 or do you have any magic vendor patches
+applied?
 
 Thanks,
 
 	tglx
+--8323328-1950233863-1363383772=:22263--
