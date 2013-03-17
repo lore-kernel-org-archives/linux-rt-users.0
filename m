@@ -1,47 +1,44 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: System freeze while sending data via tcp with 3.6.11-rt30
- kernel
-Date: Fri, 15 Mar 2013 22:44:53 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303152236550.22263@ionos>
-References: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
+From: notgeorge burns <not.george.burns@gmail.com>
+Subject: Re: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
+Date: Sat, 16 Mar 2013 17:10:44 -0700
+Message-ID: <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
+References: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
+	<alpine.LFD.2.02.1303152225250.22263@ionos>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323328-1950233863-1363383772=:22263"
-Cc: linux-rt-users@vger.kernel.org
-To: Heiko Schumann <heiko.sirona@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+To: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59901 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754406Ab3COVoz (ORCPT
+Received: from mail-wg0-f49.google.com ([74.125.82.49]:43468 "EHLO
+	mail-wg0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751853Ab3CQAKq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Mar 2013 17:44:55 -0400
-In-Reply-To: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
-Content-ID: <alpine.LFD.2.02.1303152243320.22263@ionos>
+	Sat, 16 Mar 2013 20:10:46 -0400
+Received: by mail-wg0-f49.google.com with SMTP id ds1so3038190wgb.4
+        for <linux-rt-users@vger.kernel.org>; Sat, 16 Mar 2013 17:10:44 -0700 (PDT)
+In-Reply-To: <alpine.LFD.2.02.1303152225250.22263@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+>> Does the hardirq handler need to do something to make the TI_flags
+>> work properly against _TIF_WORK_MASK ?   _TIF_WORK_MASK doesn't
+>> include TIF_NEED_RESCHED so it seems that this wouldn't be the right
+>> way to do it?
+>
+> To be honest I was puzzled for a second by that mysel after reading
+> your mail, but you got tricked by really obfuscated macro magic:
+>
 
---8323328-1950233863-1363383772=:22263
-Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-1
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.LFD.2.02.1303152243321.22263@ionos>
+Ok that was a silly miss, sorry about the confusion.
 
-On Fri, 15 Mar 2013, Heiko Schumann wrote:
-> i´ve a 3.6.11-rt30 kernel on a QorIQ P2020 Processor.
-> Everything works fine, but when i start my application, which sends
-> data via tcp socket with a rate of ~840 Mbits to an another computer,
-> the QorIQ P2020 freezes within three minutes.
-> The application is started with SCHED_OTHER scheduling algorithm the
-> standard priority. The system freeze occurs until i start the
-> application with the SCHED_FIFO algorithm and a priority higher then
-> 50. With this option everything runs stable, but this option
-> isn´t suitable for the later system.
+Just curious, what is the rationale for irq_default_primary_handler()
+not to invoke set_need_resched()?  Drivers that set up with plain-old
+request_irq() will have a scheduled softirq handler, but the hardirq
+will return to wherever it was without the priority of the softirq
+task coming into play.  For my drivers I can work around it with
+request_threaded_irq() but is the potential inversion for
+request_irq()-installed handlers really the expected behavior?  Sorry
+if this question has been gone over before, I couldn't find anything
+with a quick search of the archives.
 
-Is this a stock 3.6.11-rt30 or do you have any magic vendor patches
-applied?
-
-Thanks,
-
-	tglx
---8323328-1950233863-1363383772=:22263--
+-burns
