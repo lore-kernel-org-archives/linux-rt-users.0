@@ -1,53 +1,47 @@
-From: Tejun Heo <tj@kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: workqueue code needing preemption disabled
-Date: Mon, 18 Mar 2013 11:21:30 -0700
-Message-ID: <20130318182130.GA3042@htj.dyndns.org>
+Date: Mon, 18 Mar 2013 14:35:44 -0400
+Message-ID: <1363631744.25967.199.camel@gandalf.local.home>
 References: <1363617383.25967.152.camel@gandalf.local.home>
- <20130318160652.GA20133@mtj.dyndns.org>
- <1363623799.25967.172.camel@gandalf.local.home>
- <1363624020.25967.175.camel@gandalf.local.home>
- <1363624243.25967.178.camel@gandalf.local.home>
- <20130318164351.GA21516@mtj.dyndns.org>
- <1363626487.25967.186.camel@gandalf.local.home>
+	 <20130318160652.GA20133@mtj.dyndns.org>
+	 <1363623799.25967.172.camel@gandalf.local.home>
+	 <1363624020.25967.175.camel@gandalf.local.home>
+	 <1363624243.25967.178.camel@gandalf.local.home>
+	 <20130318164351.GA21516@mtj.dyndns.org>
+	 <1363631036.25967.193.camel@gandalf.local.home>
+	 <20130318182631.GB3042@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Clark Williams <clark@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1363626487.25967.186.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8296 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754449Ab3CRSfq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Mar 2013 14:35:46 -0400
+In-Reply-To: <20130318182631.GB3042@htj.dyndns.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Mar 18, 2013 at 01:08:07PM -0400, Steven Rostedt wrote:
-> On Mon, 2013-03-18 at 09:43 -0700, Tejun Heo wrote:
+On Mon, 2013-03-18 at 11:26 -0700, Tejun Heo wrote:
+
+> > Hmm, the issue is that a "use to be" idle thread got migrated, and is
+> > now being woken up by another worker. What can cause an established
+> > worker to migrate without HOTPLUG being active?
 > 
-> > Making gcwq locks disable preemption would be much safer / easier, but
-> > if that's not desirable, anything touching gcwq->idle_list would be a
-> > good place to start - worker_enter_idle() and worker_leave_idle().
-> > Hmmm... ignoring CPU hotplug, I think those two might just do it.
-> > Give it a try?  How reproducible is the problem?
+> It doesn't.  I think it's trying to wakeup the idle_list head.
 > 
-> Not very :-( I triggered it twice on a 40 CPU box. It can go
-> approximately 1 month before it triggers. And the box we are testing on
-> is currently a loaner, and we have it on extension right now. Which
-> means we wont have it much longer.
-> 
-> But perhaps that's the place to fix things.
 
-I've been thinking about it and AFAICS the only way that BUG_ON()
-could trigger from preemption is if preemption happens while the
-idle_list head is becoming or stopping being empty.
-ie. pool->worklist is half updated so list_empty() isn't true but the
-first next entry is already pointing back to itself.  If there's a
-crashdump, it shouldn't be too difficult to verify and wrapping the
-above two functions should resolve it.
+That definitely makes sense. I'll go and write up a patch.
 
-Thanks.
+Thanks!!!
 
--- 
-tejun
+-- Steve
+
+
