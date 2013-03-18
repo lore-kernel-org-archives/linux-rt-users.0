@@ -1,14 +1,14 @@
 From: Tejun Heo <tj@kernel.org>
 Subject: Re: workqueue code needing preemption disabled
-Date: Mon, 18 Mar 2013 11:26:31 -0700
-Message-ID: <20130318182631.GB3042@htj.dyndns.org>
+Date: Mon, 18 Mar 2013 11:21:30 -0700
+Message-ID: <20130318182130.GA3042@htj.dyndns.org>
 References: <1363617383.25967.152.camel@gandalf.local.home>
  <20130318160652.GA20133@mtj.dyndns.org>
  <1363623799.25967.172.camel@gandalf.local.home>
  <1363624020.25967.175.camel@gandalf.local.home>
  <1363624243.25967.178.camel@gandalf.local.home>
  <20130318164351.GA21516@mtj.dyndns.org>
- <1363631036.25967.193.camel@gandalf.local.home>
+ <1363626487.25967.186.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: LKML <linux-kernel@vger.kernel.org>,
@@ -19,39 +19,35 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1363631036.25967.193.camel@gandalf.local.home>
+In-Reply-To: <1363626487.25967.186.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Mar 18, 2013 at 02:23:56PM -0400, Steven Rostedt wrote:
+On Mon, Mar 18, 2013 at 01:08:07PM -0400, Steven Rostedt wrote:
 > On Mon, 2013-03-18 at 09:43 -0700, Tejun Heo wrote:
-> > Hello, Steven.
-> > 
-> > On Mon, Mar 18, 2013 at 12:30:43PM -0400, Steven Rostedt wrote:
-> > > If you happen to know the critical areas that require preemption to be
-> > > disabled for real, we can encapsulate them with:
-> > > 
-> > > 	preempt_disable_rt();
-> > > 
-> > > 	preempt_enable_rt();
-> > > 
-> > > These are currently only in the -rt patch, but it annotates locations
-> > > that require preemption to be disabled even when -rt converts spin_locks
-> > > into mutexes. These obviously can not contain spin_locks() as
-> > > spin_locks() can block and schedule out.
-> > 
+> 
 > > Making gcwq locks disable preemption would be much safer / easier, but
 > > if that's not desirable, anything touching gcwq->idle_list would be a
 > > good place to start - worker_enter_idle() and worker_leave_idle().
 > > Hmmm... ignoring CPU hotplug, I think those two might just do it.
 > > Give it a try?  How reproducible is the problem?
-> > 
 > 
-> Hmm, the issue is that a "use to be" idle thread got migrated, and is
-> now being woken up by another worker. What can cause an established
-> worker to migrate without HOTPLUG being active?
+> Not very :-( I triggered it twice on a 40 CPU box. It can go
+> approximately 1 month before it triggers. And the box we are testing on
+> is currently a loaner, and we have it on extension right now. Which
+> means we wont have it much longer.
+> 
+> But perhaps that's the place to fix things.
 
-It doesn't.  I think it's trying to wakeup the idle_list head.
+I've been thinking about it and AFAICS the only way that BUG_ON()
+could trigger from preemption is if preemption happens while the
+idle_list head is becoming or stopping being empty.
+ie. pool->worklist is half updated so list_empty() isn't true but the
+first next entry is already pointing back to itself.  If there's a
+crashdump, it shouldn't be too difficult to verify and wrapping the
+above two functions should resolve it.
+
+Thanks.
 
 -- 
 tejun
