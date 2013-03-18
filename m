@@ -1,92 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: workqueue code needing preemption disabled
-Date: Mon, 18 Mar 2013 14:23:56 -0400
-Message-ID: <1363631036.25967.193.camel@gandalf.local.home>
+Date: Mon, 18 Mar 2013 11:26:31 -0700
+Message-ID: <20130318182631.GB3042@htj.dyndns.org>
 References: <1363617383.25967.152.camel@gandalf.local.home>
-	 <20130318160652.GA20133@mtj.dyndns.org>
-	 <1363623799.25967.172.camel@gandalf.local.home>
-	 <1363624020.25967.175.camel@gandalf.local.home>
-	 <1363624243.25967.178.camel@gandalf.local.home>
-	 <20130318164351.GA21516@mtj.dyndns.org>
+ <20130318160652.GA20133@mtj.dyndns.org>
+ <1363623799.25967.172.camel@gandalf.local.home>
+ <1363624020.25967.175.camel@gandalf.local.home>
+ <1363624243.25967.178.camel@gandalf.local.home>
+ <20130318164351.GA21516@mtj.dyndns.org>
+ <1363631036.25967.193.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Clark Williams <clark@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Tejun Heo <tj@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130318164351.GA21516@mtj.dyndns.org>
+Content-Disposition: inline
+In-Reply-To: <1363631036.25967.193.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2013-03-18 at 09:43 -0700, Tejun Heo wrote:
-> Hello, Steven.
-> 
-> On Mon, Mar 18, 2013 at 12:30:43PM -0400, Steven Rostedt wrote:
-> > If you happen to know the critical areas that require preemption to be
-> > disabled for real, we can encapsulate them with:
+On Mon, Mar 18, 2013 at 02:23:56PM -0400, Steven Rostedt wrote:
+> On Mon, 2013-03-18 at 09:43 -0700, Tejun Heo wrote:
+> > Hello, Steven.
 > > 
-> > 	preempt_disable_rt();
+> > On Mon, Mar 18, 2013 at 12:30:43PM -0400, Steven Rostedt wrote:
+> > > If you happen to know the critical areas that require preemption to be
+> > > disabled for real, we can encapsulate them with:
+> > > 
+> > > 	preempt_disable_rt();
+> > > 
+> > > 	preempt_enable_rt();
+> > > 
+> > > These are currently only in the -rt patch, but it annotates locations
+> > > that require preemption to be disabled even when -rt converts spin_locks
+> > > into mutexes. These obviously can not contain spin_locks() as
+> > > spin_locks() can block and schedule out.
 > > 
-> > 	preempt_enable_rt();
+> > Making gcwq locks disable preemption would be much safer / easier, but
+> > if that's not desirable, anything touching gcwq->idle_list would be a
+> > good place to start - worker_enter_idle() and worker_leave_idle().
+> > Hmmm... ignoring CPU hotplug, I think those two might just do it.
+> > Give it a try?  How reproducible is the problem?
 > > 
-> > These are currently only in the -rt patch, but it annotates locations
-> > that require preemption to be disabled even when -rt converts spin_locks
-> > into mutexes. These obviously can not contain spin_locks() as
-> > spin_locks() can block and schedule out.
 > 
-> Making gcwq locks disable preemption would be much safer / easier, but
-> if that's not desirable, anything touching gcwq->idle_list would be a
-> good place to start - worker_enter_idle() and worker_leave_idle().
-> Hmmm... ignoring CPU hotplug, I think those two might just do it.
-> Give it a try?  How reproducible is the problem?
-> 
+> Hmm, the issue is that a "use to be" idle thread got migrated, and is
+> now being woken up by another worker. What can cause an established
+> worker to migrate without HOTPLUG being active?
 
-Hmm, the issue is that a "use to be" idle thread got migrated, and is
-now being woken up by another worker. What can cause an established
-worker to migrate without HOTPLUG being active?
+It doesn't.  I think it's trying to wakeup the idle_list head.
 
-Thomas,
-
-I'm thinking that we should also modify the scheduler for -rt:
-
-        if (prev->state && !(preempt_count() & PREEMPT_ACTIVE)) {
-                if (unlikely(signal_pending_state(prev->state, prev))) {
-                        prev->state = TASK_RUNNING;
-                } else {
-                        deactivate_task(rq, prev, DEQUEUE_SLEEP);
-                        prev->on_rq = 0;
-
-                        /*
-                         * If a worker went to sleep, notify and ask workqueue
-                         * whether it wants to wake up a task to maintain
-                         * concurrency.
-                         */
-                        if (prev->flags & PF_WQ_WORKER) {
-                                struct task_struct *to_wakeup;
-
-                                to_wakeup = wq_worker_sleeping(prev, cpu);
-                                if (to_wakeup)
-                                        try_to_wake_up_local(to_wakeup);
-                        }
-                }
-                switch_count = &prev->nvcsw;
-        }
-
-
-The code calls another worker when the previous worker sleeps,
-presumably on IO or something. But in -rt, it could be sleeping on the
-gcwq->lock itself, and this could cause many more wakeups. Easily where
-the task being woken up will try to grab the same lock and sleep again.
-
-Perhaps we should check:
-
-	if (prev->flags & PF_WQ_WORKER && !prev->saved_state)
-
-To keep the worker thread from waking up other workers just because it
-blocked on a sleeping spin lock.
-
--- Steve
+-- 
+tejun
