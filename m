@@ -1,48 +1,109 @@
-From: Man Johnson <man.johnson@outlook.com>
-Subject: RE: RT Problem on Powermac G5 (more info)
-Date: Mon, 18 Mar 2013 11:41:04 +0100
-Message-ID: <DUB002-W1021CA504ED4C6331CE1438E1E80@phx.gbl>
-References: <DUB002-W1234C65DFF1F08EEE03C9BDE1ED0@phx.gbl>,<CDAB4622-D08F-453E-A23F-1E2544BEDBF3@thebigcorporation.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: workqueue code needing preemption disabled
+Date: Mon, 18 Mar 2013 10:36:23 -0400
+Message-ID: <1363617383.25967.152.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
+Content-Type: text/plain; charset="ISO-8859-15"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Clark Williams <clark@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Tejun Heo <tj@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from dub0-omc4-s2.dub0.hotmail.com ([157.55.2.77]:44963 "EHLO
-	dub0-omc4-s2.dub0.hotmail.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751813Ab3CRKrT convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Mar 2013 06:47:19 -0400
-In-Reply-To: <CDAB4622-D08F-453E-A23F-1E2544BEDBF3@thebigcorporation.com>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:23757 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751470Ab3CROg2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Mar 2013 10:36:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> Subject: Re: RT Problem on Powermac G5 (more info)
-> From: sven@thebigcorporation.com
-> Date: Fri, 15 Mar 2013 13:54:55 -0700
-> CC: linux-rt-users@vger.kernel.org
-> To: man.johnson@outlook.com
-> 
-> 
-> Quick general advice, without looking at your specific links:
-> 
-> Try some other configurations first, e.g. instead of configuring PREEMPT_FULL, 
-> configure a more basic PREEMPT mode, and see if you can get something running.
+Hi Tejun,
 
-Thank you -- I did that this week-end, trying to produce a minimal config. Now I have a PREEMT_DESKTOP with SOFT_IRQS which works well but as soon as I put PREEMT_HARDIRQS it fails at boot time with : "hda lost interrupt".
+I'm debugging a crash on -rt that has the following:
 
-I have put the working config here: http://pastebin.com/VJ4GDsHN
-and the failing one here: http://pastebin.com/jgZhkhVt
+kernel BUG at kernel/sched/core.c:1731!
+invalid opcode: 0000 [#1] PREEMPT SMP 
+CPU 5 
+Pid: 16637, comm: kworker/5:0 Not tainted 3.6.11-rt30.25.el6rt.x86_64 #1 HP ProLiant DL580 G7
+RIP: 0010:[<ffffffff8151ebea>]  [<ffffffff8151ebea>] __schedule+0x89a/0x8c0
+RSP: 0018:ffff880fec355c30  EFLAGS: 00010006
+RAX: ffff880fff951900 RBX: ffff880fff951900 RCX: ffffffffff48fb8a
+RDX: 0000000000000001 RSI: 0000000000000005 RDI: 0000000000000000
+RBP: ffff880fec355cc0 R08: 0000000000000001 R09: 0000000000000004
+R10: 0000000000000004 R11: 0000000000000002 R12: 0000000000000005
+R13: ffff880f61b417a0 R14: ffff883fff051900 R15: ffff880fec355d00
+FS:  0000000000000000(0000) GS:ffff880fff940000(0000) knlGS:0000000000000000
+CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+CR2: 0000003e0e98bd30 CR3: 0000000fe0348000 CR4: 00000000000007e0
+DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+Process kworker/5:0 (pid: 16637, threadinfo ffff880fec354000, task ffff880fe46d8000)
+Stack:
+ ffff880fea074d80 ffff880fec354010 ffff880fec354000 ffff880fec354010
+ ffff880fec354000 ffff880fec354010 ffff880fec354000 ffff880fec354010
+ ffff880fec354000 ffff880fec355fd8 0000000000000286 ffff880fe46d8000
+Call Trace:
+ [<ffffffff8151ed69>] schedule+0x29/0x70
+ [<ffffffff8151f8ed>] rt_spin_lock_slowlock+0x10d/0x310
+ [<ffffffff81240500>] ? ioc_destroy_icq+0xe0/0xe0
+ [<ffffffff81240500>] ? ioc_destroy_icq+0xe0/0xe0
+ [<ffffffff815200e6>] rt_spin_lock+0x26/0x30
+ [<ffffffff8106418b>] process_one_work+0x1ab/0x560
+ [<ffffffff81065f3b>] worker_thread+0x16b/0x510
+ [<ffffffff8151e76b>] ? __schedule+0x41b/0x8c0
+ [<ffffffff81065dd0>] ? manage_workers+0x340/0x340
+ [<ffffffff8106b246>] kthread+0x96/0xa0
+ [<ffffffff81528664>] kernel_thread_helper+0x4/0x10
+ [<ffffffff8106b1b0>] ? kthreadd+0x1e0/0x1e0
+ [<ffffffff81528660>] ? gs_change+0xb/0xb
+Code: c4 01 00 00 00 00 00 40 e9 86 f8 ff ff 83 be 90 02 00 00 00 0f 85
+20 f8 ff ff 48 89 f7 e8 df a0 b5 ff e9 13 f8 ff ff 0f 0b eb fe <0f> 0b
+0f 1f 40 00 eb fa e8 d9 00 00 00 e9 07 fe ff ff 0f 0b 66 
 
-They should only differ with respect to soft and hard irqs threading.
+The bug occurred on this line:
 
-The picture of the error message at boot time is at: http://views.airpost.net/#single:preempt_hardirqs.jpg
+static void try_to_wake_up_local(struct task_struct *p)
+{
+        struct rq *rq = task_rq(p);
 
-> Then turn on features (e.g. IRQ threading, and so on, and see when it breaks)
-> 
-> BTW what's up with the oddball - - in the SMTP header?
+        BUG_ON(rq != this_rq());  <---- bug here
+        BUG_ON(p == current);
+        lockdep_assert_held(&rq->lock);
 
-A mistake.
+        if (!raw_spin_trylock(&p->pi_lock)) {
+                raw_spin_unlock(&rq->lock);
+                raw_spin_lock(&p->pi_lock);
+                raw_spin_lock(&rq->lock);
+        }
 
-I'd be very glad if you can continue to help me find a way to boot in full realtime. 		 	   		  
+
+Now in your code you have the comment:
+
+ * X: During normal operation, modification requires gcwq->lock and
+ *    should be done only from local cpu.  Either disabling preemption
+ *    on local cpu or grabbing gcwq->lock is enough for read access.
+ *    If GCWQ_DISASSOCIATED is set, it's identical to L.
+
+struct worker has flags marked with X.
+struct worker_pool has flags and idle_list marked with X.
+
+spin_locks in -rt do not disable preemption, nor do they disable irqs,
+but they do disable migration. If there's code that depends on the
+spin_lock disabling preemption, we need to either change the code to not
+require that, or explicitly disable preemption in the critical paths.
+Note, if we explicitly disable preemption, we can not call spin_locks
+within those locations as in -rt a spin_lock can block and schedule.
+
+I've tried to figure out the code but I'm not familiar with it enough to
+know where the issues are as of yet. I was hoping that you could point
+me at the trouble areas that would cause us issues when spin_locks() do
+not disable preemption.
+
+Thanks!
+
+-- Steve
+
+
