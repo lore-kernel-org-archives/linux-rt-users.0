@@ -1,7 +1,7 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: [PATCH V3 1/7] sched: Create sched_select_cpu() to give preferred CPU for power saving
-Date: Mon, 18 Mar 2013 20:53:23 +0530
-Message-ID: <9f0fd16f792b9f9b399a4c91c98de37c56067d47.1363617402.git.viresh.kumar@linaro.org>
+Subject: [PATCH V3 2/7] timer: hrtimer: Don't check idle_cpu() before calling get_nohz_timer_target()
+Date: Mon, 18 Mar 2013 20:53:24 +0530
+Message-ID: <b5639020972e5321269d403c65e9b62ba8236bab.1363617402.git.viresh.kumar@linaro.org>
 References: <cover.1363617402.git.viresh.kumar@linaro.org>
 Cc: linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
 	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
@@ -11,167 +11,51 @@ Cc: linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
 To: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
 	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
 	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f44.google.com ([209.85.160.44]:54565 "EHLO
-	mail-pb0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752800Ab3CRPYJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Mar 2013 11:24:09 -0400
-Received: by mail-pb0-f44.google.com with SMTP id wz12so6522219pbc.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 18 Mar 2013 08:24:09 -0700 (PDT)
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <cover.1363617402.git.viresh.kumar@linaro.org>
 In-Reply-To: <cover.1363617402.git.viresh.kumar@linaro.org>
 References: <cover.1363617402.git.viresh.kumar@linaro.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-In order to save power, it would be useful to schedule light weight work on cpus
-that aren't IDLE instead of waking up an IDLE one.
+Check for current cpu's idleness is already done in implementation of
+sched_select_cpu() which is called by get_nohz_timer_target(). So, no need to
+call idle_cpu() twice, once from sched_select_cpu() and once from timer and
+hrtimer before calling get_nohz_timer_target().
 
-By idle cpu (from scheduler's perspective) we mean:
-- Current task is idle task
-- nr_running == 0
-- wake_list is empty
-
-This is already implemented for timers as get_nohz_timer_target(). We can figure
-out few more users of this feature, like workqueues.
-
-This patch converts get_nohz_timer_target() into a generic API
-sched_select_cpu() so that other frameworks (like workqueue) can also use it.
-
-This routine returns the cpu which is non-idle. It accepts a bitwise OR of SD_*
-flags present in linux/sched.h. If the local CPU isn't idle OR all cpus are
-idle, local cpu is returned back. If local cpu is idle, then we must look for
-another CPU which have all the flags passed as argument as set and isn't idle.
-
-This patch reuses the code from get_nohz_timer_target() routine, which had
-similar implementation.
+This patch removes calls to idle_cpu() from timer and hrtimer.
 
 Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
 ---
- include/linux/sched.h | 21 +++++++++++++++--
- kernel/sched/core.c   | 63 +++++++++++++++++++++++++++++----------------------
- 2 files changed, 55 insertions(+), 29 deletions(-)
+ kernel/hrtimer.c | 2 +-
+ kernel/timer.c   | 2 +-
+ 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index e20580d..216fa0d 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -230,14 +230,31 @@ extern void init_idle_bootup_task(struct task_struct *idle);
- 
- extern int runqueue_is_locked(int cpu);
- 
--#if defined(CONFIG_SMP) && defined(CONFIG_NO_HZ)
-+#ifdef CONFIG_SMP
-+extern int sched_select_cpu(unsigned int sd_flags);
-+
-+#ifdef CONFIG_NO_HZ
- extern void nohz_balance_enter_idle(int cpu);
- extern void set_cpu_sd_state_idle(void);
--extern int get_nohz_timer_target(void);
-+/*
-+ * In the semi idle case, use the nearest busy cpu for migrating timers
-+ * from an idle cpu.  This is good for power-savings.
-+ *
-+ * We don't do similar optimization for completely idle system, as
-+ * selecting an idle cpu will add more delays to the timers than intended
-+ * (as that cpu's timer base may not be uptodate wrt jiffies etc).
-+ */
-+#define get_nohz_timer_target() sched_select_cpu(0)
- #else
- static inline void nohz_balance_enter_idle(int cpu) { }
- static inline void set_cpu_sd_state_idle(void) { }
-+
-+static inline int sched_select_cpu(unsigned int sd_flags)
-+{
-+	return raw_smp_processor_id();
-+}
- #endif
-+#endif /* CONFIG_SMP */
- 
- /*
-  * Only dump TASK_* tasks. (0 for all tasks)
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index b36635e..ccd76d7 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -551,33 +551,6 @@ void resched_cpu(int cpu)
- 
- #ifdef CONFIG_NO_HZ
- /*
-- * In the semi idle case, use the nearest busy cpu for migrating timers
-- * from an idle cpu.  This is good for power-savings.
-- *
-- * We don't do similar optimization for completely idle system, as
-- * selecting an idle cpu will add more delays to the timers than intended
-- * (as that cpu's timer base may not be uptodate wrt jiffies etc).
-- */
--int get_nohz_timer_target(void)
--{
--	int cpu = smp_processor_id();
--	int i;
--	struct sched_domain *sd;
--
--	rcu_read_lock();
--	for_each_domain(cpu, sd) {
--		for_each_cpu(i, sched_domain_span(sd)) {
--			if (!idle_cpu(i)) {
--				cpu = i;
--				goto unlock;
--			}
--		}
--	}
--unlock:
--	rcu_read_unlock();
--	return cpu;
--}
--/*
-  * When add_timer_on() enqueues a timer into the timer wheel of an
-  * idle CPU then this timer might expire before the next timer event
-  * which is scheduled to wake up that CPU. In case of a completely
-@@ -648,6 +621,42 @@ void sched_avg_update(struct rq *rq)
- 	}
- }
- 
-+/*
-+ * This routine returns the nearest non-idle cpu. It accepts a bitwise OR of
-+ * SD_* flags present in linux/sched.h. If the local CPU isn't idle, it is
-+ * returned back. If it is idle, then we must look for another CPU which have
-+ * all the flags passed as argument as set.
-+ */
-+int sched_select_cpu(unsigned int sd_flags)
-+{
-+	struct sched_domain *sd;
-+	int cpu = smp_processor_id();
-+	int i;
-+
-+	/* If Current cpu isn't idle, don't migrate anything */
-+	if (!idle_cpu(cpu))
-+		return cpu;
-+
-+	rcu_read_lock();
-+	for_each_domain(cpu, sd) {
-+		 /* If sd doesnt' have sd_flags set skip sd. */
-+		if ((sd->flags & sd_flags) != sd_flags)
-+			continue;
-+
-+		for_each_cpu(i, sched_domain_span(sd)) {
-+			if (i == cpu)
-+				continue;
-+			if (!idle_cpu(i)) {
-+				cpu = i;
-+				goto unlock;
-+			}
-+		}
-+	}
-+unlock:
-+	rcu_read_unlock();
-+	return cpu;
-+}
-+
- #else /* !CONFIG_SMP */
- void resched_task(struct task_struct *p)
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index cc47812..c56668d 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -161,7 +161,7 @@ struct hrtimer_clock_base *lock_hrtimer_base(const struct hrtimer *timer,
+ static int hrtimer_get_target(int this_cpu, int pinned)
  {
+ #ifdef CONFIG_NO_HZ
+-	if (!pinned && get_sysctl_timer_migration() && idle_cpu(this_cpu))
++	if (!pinned && get_sysctl_timer_migration())
+ 		return get_nohz_timer_target();
+ #endif
+ 	return this_cpu;
+diff --git a/kernel/timer.c b/kernel/timer.c
+index dbf7a78..83a0d3c 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -739,7 +739,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
+ 	cpu = smp_processor_id();
+ 
+ #if defined(CONFIG_NO_HZ) && defined(CONFIG_SMP)
+-	if (!pinned && get_sysctl_timer_migration() && idle_cpu(cpu))
++	if (!pinned && get_sysctl_timer_migration())
+ 		cpu = get_nohz_timer_target();
+ #endif
+ 	new_base = per_cpu(tvec_bases, cpu);
 -- 
 1.7.12.rc2.18.g61b472e
-
