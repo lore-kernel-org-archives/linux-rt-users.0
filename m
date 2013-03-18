@@ -1,44 +1,91 @@
-From: notgeorge burns <not.george.burns@gmail.com>
-Subject: Re: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
-Date: Sat, 16 Mar 2013 17:10:44 -0700
-Message-ID: <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
-References: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
-	<alpine.LFD.2.02.1303152225250.22263@ionos>
+From: Jain Priyanka-B32167 <B32167@freescale.com>
+Subject: RE: System freeze while sending data via tcp with 3.6.11-rt30 kernel
+Date: Mon, 18 Mar 2013 07:15:17 +0000
+Message-ID: <AC83832D6324604BB08FAE5A33553F190B2F3D43@039-SN2MPN1-012.039d.mgd.msft.net>
+References: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: Heiko Schumann <heiko.sirona@gmail.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f49.google.com ([74.125.82.49]:43468 "EHLO
-	mail-wg0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751853Ab3CQAKq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 16 Mar 2013 20:10:46 -0400
-Received: by mail-wg0-f49.google.com with SMTP id ds1so3038190wgb.4
-        for <linux-rt-users@vger.kernel.org>; Sat, 16 Mar 2013 17:10:44 -0700 (PDT)
-In-Reply-To: <alpine.LFD.2.02.1303152225250.22263@ionos>
+Received: from mail-db8lp0189.outbound.messaging.microsoft.com ([213.199.154.189]:33619
+	"EHLO db8outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751255Ab3CRHa3 convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Mar 2013 03:30:29 -0400
+In-Reply-To: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->> Does the hardirq handler need to do something to make the TI_flags
->> work properly against _TIF_WORK_MASK ?   _TIF_WORK_MASK doesn't
->> include TIF_NEED_RESCHED so it seems that this wouldn't be the right
->> way to do it?
->
-> To be honest I was puzzled for a second by that mysel after reading
-> your mail, but you got tricked by really obfuscated macro magic:
->
+Hi,
 
-Ok that was a silly miss, sorry about the confusion.
 
-Just curious, what is the rationale for irq_default_primary_handler()
-not to invoke set_need_resched()?  Drivers that set up with plain-old
-request_irq() will have a scheduled softirq handler, but the hardirq
-will return to wherever it was without the priority of the softirq
-task coming into play.  For my drivers I can work around it with
-request_threaded_irq() but is the potential inversion for
-request_irq()-installed handlers really the expected behavior?  Sorry
-if this question has been gone over before, I couldn't find anything
-with a quick search of the archives.
+Linux network stack use softirqs for TX-RX actions. In PREEMPT_RT kerne=
+l, these softirqs run as RT threads at priority 50.
+Heavy traffic like ~840Mbps on 2-core machine like P2020 will throttle =
+the system.
+As scheduler picks the tasks as per priority, the application with SCHE=
+D_OTHER policy (non-RT task) will never get a chance to run except in "=
+rt_period - rt_runtime " zone specially reserved for non-rt tasks which=
+ is very small.
 
--burns
+One need to tune various scheduling parameters of various threads runni=
+ng on such a system.
+
+We have encountered a similar issue while working on one of networking =
+chip while running heavy traffic.  The below article will be useful for=
+ you for such kind of problems.
+http://www.techonline.com/electrical-engineers/education-training/tech-=
+papers/4402454/Challenges-in-Using-Linux-for-CPU-intensive-real-time-ne=
+tworking-products
+
+
+Regards
+Priyanka
+
+> -----Original Message-----
+> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
+> owner@vger.kernel.org] On Behalf Of Heiko Schumann
+> Sent: Friday, March 15, 2013 4:42 PM
+> To: linux-rt-users@vger.kernel.org
+> Subject: System freeze while sending data via tcp with 3.6.11-rt30 ke=
+rnel
+>=20
+> Hi,
+>=20
+> i=B4ve a 3.6.11-rt30 kernel on a QorIQ P2020 Processor.
+> Everything works fine, but when i start my application, which sends
+> data via tcp socket with a rate of ~840 Mbits to an another computer,
+> the QorIQ P2020 freezes within three minutes.
+> The application is started with SCHED_OTHER scheduling algorithm the
+> standard priority. The system freeze occurs until i start the
+> application with the SCHED_FIFO algorithm and a priority higher then
+> 50. With this option everything runs stable, but this option
+> isn=B4t suitable for the later system.
+>=20
+> I tried this with the 3.6.11-rt25 kernel too and it had the same prob=
+lem.
+> With a 3.6.11-rt25 kernel and the "Basic RT" as Preemption Model
+> instead of "RT" option in kernel options the freeze doesn=B4t occur,
+> while running the application with SCHED_OTHER and no priority.
+>=20
+> This are the settings of the 3.6.11-rt30 kernel. Maybe are there
+> errors i don=B4t see.
+>=20
+> Thanks for any help with this problem
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers"
+> in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
