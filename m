@@ -1,13 +1,14 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: [PATCH V3 2/7] timer: hrtimer: Don't check idle_cpu() before calling get_nohz_timer_target()
-Date: Mon, 18 Mar 2013 20:53:24 +0530
-Message-ID: <b5639020972e5321269d403c65e9b62ba8236bab.1363617402.git.viresh.kumar@linaro.org>
+Subject: [PATCH V3 5/7] mmc: queue work on any cpu
+Date: Mon, 18 Mar 2013 20:53:27 +0530
+Message-ID: <08070dbf56439c84b8c25837c2049ff8e8eafd6e.1363617402.git.viresh.kumar@linaro.org>
 References: <cover.1363617402.git.viresh.kumar@linaro.org>
 Cc: linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
 	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
 	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Viresh Kumar <viresh.kumar@linaro.org>
+	Viresh Kumar <viresh.kumar@linaro.org>,
+	Chris Ball <cjb@laptop.org>, linux-mmc@vger.kernel.org
 To: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
 	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
 	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org
@@ -18,44 +19,44 @@ References: <cover.1363617402.git.viresh.kumar@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Check for current cpu's idleness is already done in implementation of
-sched_select_cpu() which is called by get_nohz_timer_target(). So, no need to
-call idle_cpu() twice, once from sched_select_cpu() and once from timer and
-hrtimer before calling get_nohz_timer_target().
+mmc uses workqueues for running mmc_rescan(). There is no real dependency of
+scheduling these on the cpu which scheduled them.
 
-This patch removes calls to idle_cpu() from timer and hrtimer.
+On a idle system, it is observed that and idle cpu wakes up many times just to
+service this work. It would be better if we can schedule it on a cpu which isn't
+idle to save on power.
 
+By idle cpu (from scheduler's perspective) we mean:
+- Current task is idle task
+- nr_running == 0
+- wake_list is empty
+
+This patch replaces the queue_delayed_work() with
+queue_delayed_work_on_any_cpu() siblings.
+
+This routine would look for the closest (via scheduling domains) non-idle cpu
+(non-idle from schedulers perspective). If the current cpu is not idle or all
+cpus are idle, work will be scheduled on local cpu.
+
+Cc: Chris Ball <cjb@laptop.org>
+Cc: linux-mmc@vger.kernel.org
 Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
 ---
- kernel/hrtimer.c | 2 +-
- kernel/timer.c   | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
+ drivers/mmc/core/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index cc47812..c56668d 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -161,7 +161,7 @@ struct hrtimer_clock_base *lock_hrtimer_base(const struct hrtimer *timer,
- static int hrtimer_get_target(int this_cpu, int pinned)
+diff --git a/drivers/mmc/core/core.c b/drivers/mmc/core/core.c
+index 9290bb5..adf331a 100644
+--- a/drivers/mmc/core/core.c
++++ b/drivers/mmc/core/core.c
+@@ -85,7 +85,7 @@ MODULE_PARM_DESC(
+ static int mmc_schedule_delayed_work(struct delayed_work *work,
+ 				     unsigned long delay)
  {
- #ifdef CONFIG_NO_HZ
--	if (!pinned && get_sysctl_timer_migration() && idle_cpu(this_cpu))
-+	if (!pinned && get_sysctl_timer_migration())
- 		return get_nohz_timer_target();
- #endif
- 	return this_cpu;
-diff --git a/kernel/timer.c b/kernel/timer.c
-index dbf7a78..83a0d3c 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -739,7 +739,7 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
- 	cpu = smp_processor_id();
+-	return queue_delayed_work(workqueue, work, delay);
++	return queue_delayed_work_on_any_cpu(workqueue, work, delay);
+ }
  
- #if defined(CONFIG_NO_HZ) && defined(CONFIG_SMP)
--	if (!pinned && get_sysctl_timer_migration() && idle_cpu(cpu))
-+	if (!pinned && get_sysctl_timer_migration())
- 		cpu = get_nohz_timer_target();
- #endif
- 	new_base = per_cpu(tvec_bases, cpu);
+ /*
 -- 
 1.7.12.rc2.18.g61b472e
