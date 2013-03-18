@@ -1,91 +1,48 @@
-From: Jain Priyanka-B32167 <B32167@freescale.com>
-Subject: RE: System freeze while sending data via tcp with 3.6.11-rt30 kernel
-Date: Mon, 18 Mar 2013 07:15:17 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F190B2F3D43@039-SN2MPN1-012.039d.mgd.msft.net>
-References: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
+From: Man Johnson <man.johnson@outlook.com>
+Subject: RE: RT Problem on Powermac G5 (more info)
+Date: Mon, 18 Mar 2013 11:41:04 +0100
+Message-ID: <DUB002-W1021CA504ED4C6331CE1438E1E80@phx.gbl>
+References: <DUB002-W1234C65DFF1F08EEE03C9BDE1ED0@phx.gbl>,<CDAB4622-D08F-453E-A23F-1E2544BEDBF3@thebigcorporation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Heiko Schumann <heiko.sirona@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db8lp0189.outbound.messaging.microsoft.com ([213.199.154.189]:33619
-	"EHLO db8outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751255Ab3CRHa3 convert rfc822-to-8bit
+Received: from dub0-omc4-s2.dub0.hotmail.com ([157.55.2.77]:44963 "EHLO
+	dub0-omc4-s2.dub0.hotmail.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751813Ab3CRKrT convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Mar 2013 03:30:29 -0400
-In-Reply-To: <CAKQvxgXUDJ=o-dvoGg+cVJpNHw_yCBL+0BTv_QZqPv7QZ7WNUg@mail.gmail.com>
-Content-Language: en-US
+	Mon, 18 Mar 2013 06:47:19 -0400
+In-Reply-To: <CDAB4622-D08F-453E-A23F-1E2544BEDBF3@thebigcorporation.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+> Subject: Re: RT Problem on Powermac G5 (more info)
+> From: sven@thebigcorporation.com
+> Date: Fri, 15 Mar 2013 13:54:55 -0700
+> CC: linux-rt-users@vger.kernel.org
+> To: man.johnson@outlook.com
+> 
+> 
+> Quick general advice, without looking at your specific links:
+> 
+> Try some other configurations first, e.g. instead of configuring PREEMPT_FULL, 
+> configure a more basic PREEMPT mode, and see if you can get something running.
 
+Thank you -- I did that this week-end, trying to produce a minimal config. Now I have a PREEMT_DESKTOP with SOFT_IRQS which works well but as soon as I put PREEMT_HARDIRQS it fails at boot time with : "hda lost interrupt".
 
-Linux network stack use softirqs for TX-RX actions. In PREEMPT_RT kerne=
-l, these softirqs run as RT threads at priority 50.
-Heavy traffic like ~840Mbps on 2-core machine like P2020 will throttle =
-the system.
-As scheduler picks the tasks as per priority, the application with SCHE=
-D_OTHER policy (non-RT task) will never get a chance to run except in "=
-rt_period - rt_runtime " zone specially reserved for non-rt tasks which=
- is very small.
+I have put the working config here: http://pastebin.com/VJ4GDsHN
+and the failing one here: http://pastebin.com/jgZhkhVt
 
-One need to tune various scheduling parameters of various threads runni=
-ng on such a system.
+They should only differ with respect to soft and hard irqs threading.
 
-We have encountered a similar issue while working on one of networking =
-chip while running heavy traffic.  The below article will be useful for=
- you for such kind of problems.
-http://www.techonline.com/electrical-engineers/education-training/tech-=
-papers/4402454/Challenges-in-Using-Linux-for-CPU-intensive-real-time-ne=
-tworking-products
+The picture of the error message at boot time is at: http://views.airpost.net/#single:preempt_hardirqs.jpg
 
+> Then turn on features (e.g. IRQ threading, and so on, and see when it breaks)
+> 
+> BTW what's up with the oddball - - in the SMTP header?
 
-Regards
-Priyanka
+A mistake.
 
-> -----Original Message-----
-> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> owner@vger.kernel.org] On Behalf Of Heiko Schumann
-> Sent: Friday, March 15, 2013 4:42 PM
-> To: linux-rt-users@vger.kernel.org
-> Subject: System freeze while sending data via tcp with 3.6.11-rt30 ke=
-rnel
->=20
-> Hi,
->=20
-> i=B4ve a 3.6.11-rt30 kernel on a QorIQ P2020 Processor.
-> Everything works fine, but when i start my application, which sends
-> data via tcp socket with a rate of ~840 Mbits to an another computer,
-> the QorIQ P2020 freezes within three minutes.
-> The application is started with SCHED_OTHER scheduling algorithm the
-> standard priority. The system freeze occurs until i start the
-> application with the SCHED_FIFO algorithm and a priority higher then
-> 50. With this option everything runs stable, but this option
-> isn=B4t suitable for the later system.
->=20
-> I tried this with the 3.6.11-rt25 kernel too and it had the same prob=
-lem.
-> With a 3.6.11-rt25 kernel and the "Basic RT" as Preemption Model
-> instead of "RT" option in kernel options the freeze doesn=B4t occur,
-> while running the application with SCHED_OTHER and no priority.
->=20
-> This are the settings of the 3.6.11-rt30 kernel. Maybe are there
-> errors i don=B4t see.
->=20
-> Thanks for any help with this problem
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers"
-> in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I'd be very glad if you can continue to help me find a way to boot in full realtime. 		 	   		  
