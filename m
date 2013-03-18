@@ -1,49 +1,48 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Tejun Heo <tj@kernel.org>
 Subject: Re: workqueue code needing preemption disabled
-Date: Mon, 18 Mar 2013 12:41:23 -0400
-Message-ID: <1363624883.25967.184.camel@gandalf.local.home>
+Date: Mon, 18 Mar 2013 09:43:51 -0700
+Message-ID: <20130318164351.GA21516@mtj.dyndns.org>
 References: <1363617383.25967.152.camel@gandalf.local.home>
-	 <20130318160652.GA20133@mtj.dyndns.org>
-	 <1363623799.25967.172.camel@gandalf.local.home>
-	 <20130318162718.GB20133@mtj.dyndns.org>
+ <20130318160652.GA20133@mtj.dyndns.org>
+ <1363623799.25967.172.camel@gandalf.local.home>
+ <1363624020.25967.175.camel@gandalf.local.home>
+ <1363624243.25967.178.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-15"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Clark Williams <clark@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Tejun Heo <tj@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130318162718.GB20133@mtj.dyndns.org>
+Content-Disposition: inline
+In-Reply-To: <1363624243.25967.178.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2013-03-18 at 09:27 -0700, Tejun Heo wrote:
+Hello, Steven.
 
-> Does that mean that a task holding gcwq->lock may be preempted?  If
-> so, that sure could lead to weird problems.  Maybe gcwq->lock should
-> be marked non-preemptible somehow?
+On Mon, Mar 18, 2013 at 12:30:43PM -0400, Steven Rostedt wrote:
+> If you happen to know the critical areas that require preemption to be
+> disabled for real, we can encapsulate them with:
+> 
+> 	preempt_disable_rt();
+> 
+> 	preempt_enable_rt();
+> 
+> These are currently only in the -rt patch, but it annotates locations
+> that require preemption to be disabled even when -rt converts spin_locks
+> into mutexes. These obviously can not contain spin_locks() as
+> spin_locks() can block and schedule out.
 
-If the gcwq->lock is never held for a long time (really, more than a
-microsecond on today's processors is considered a long time), and it
-does not nest any other spin_locks (raw locks are OK, like the rq lock).
-Then we could mark the gcwq->lock as raw as well.
+Making gcwq locks disable preemption would be much safer / easier, but
+if that's not desirable, anything touching gcwq->idle_list would be a
+good place to start - worker_enter_idle() and worker_leave_idle().
+Hmmm... ignoring CPU hotplug, I think those two might just do it.
+Give it a try?  How reproducible is the problem?
 
-This would require the struct global_cwq lock to have:
+Thanks.
 
-	raw_spinlock_t		lock;
-
-and then you would need to do:
-
-s/spin_/raw_spin/ for all gcwq->lock usages.
-
-But, I'm worried about the loops that are done while holding this lock.
-Just looking at is_chained_work() that does for_each_busy_worker(), how
-big can that list be? If it's bound by # of CPUs then that may be fine,
-but if it can be as big as the # of workers assigned, with no real
-limit, then its not fine, because that creates an unbound (non
-deterministic) latency.
-
--- Steve
+-- 
+tejun
