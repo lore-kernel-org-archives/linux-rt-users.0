@@ -1,58 +1,203 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Tue, 19 Mar 2013 18:53:32 +0530
-Message-ID: <CAKohponERCYwBfqEZ8M5UMKCNHLPP1pXojcqq1v_0rVLKHVhmg@mail.gmail.com>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
-	<fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
-	<CAKohpo=BL_MOijb2k6cC44jv2R-7gv_BpnJ0N2mEkJ3rmAxzAQ@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Fixup for 3.4.34 merge conflict
+Date: Tue, 19 Mar 2013 12:50:34 -0400
+Message-ID: <1363711834.5938.39.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Viresh Kumar <viresh.kumar@linaro.org>
-To: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	tj@kernel.org, mingo@redhat.com, peterz@infradead.org,
-	rostedt@goodmis.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKohpo=BL_MOijb2k6cC44jv2R-7gv_BpnJ0N2mEkJ3rmAxzAQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 19 March 2013 10:45, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> On 18 March 2013 20:53, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> queue_work() queues work on current cpu. This may wake up an idle CPU, which is
->> actually not required.
->>
->> Some of these works can be processed by any CPU and so we must select a non-idle
->> CPU here. The initial idea was to modify implementation of queue_work(), but
->> that may end up breaking lots of kernel code that would be a nightmare to debug.
->>
->> So, we finalized to adding new workqueue interfaces, for works that don't depend
->> on a cpu to execute them.
+Thomas,
 
-Another fixup:
+Merging 3.4.34 into stable 3.4-rt I hit the following conflict:
 
-commit 8753c6d936faa6e3233cbf44a55913d05de05683
-Author: Viresh Kumar <viresh.kumar@linaro.org>
-Date:   Tue Mar 19 18:50:59 2013 +0530
+diff --cc kernel/hrtimer.c
+index 9114899,cdd5607..0000000
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@@ -643,30 -640,9 +643,33 @@@ static inline void hrtimer_init_hres(st
+   * and expiry check is done in the hrtimer_interrupt or in the softirq.
+   */
+  static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
+- 					    struct hrtimer_clock_base *base,
+- 					    int wakeup)
++ 					    struct hrtimer_clock_base *base)
+  {
+++<<<<<<< HEAD
+ +	if (base->cpu_base->hres_active && hrtimer_reprogram(timer, base)) {
+ +		if (!wakeup)
+ +			return -ETIME;
+ +
+ +#ifdef CONFIG_PREEMPT_RT_BASE
+ +		/*
+ +		 * Move softirq based timers away from the rbtree in
+ +		 * case it expired already. Otherwise we would have a
+ +		 * stale base->first entry until the softirq runs.
+ +		 */
+ +		if (!hrtimer_rt_defer(timer))
+ +			return -ETIME;
+ +#endif
+ +		raw_spin_unlock(&base->cpu_base->lock);
+ +		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+ +		raw_spin_lock(&base->cpu_base->lock);
+ +
+ +		return 0;
+ +	}
+ +
+ +	return 0;
+++=======
++ 	return base->cpu_base->hres_active && hrtimer_reprogram(timer, base);
+++>>>>>>> v3.4.34
+  }
+  
+  static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
+@@@ -1054,18 -982,19 +1056,34 @@@ int __hrtimer_start_range_ns(struct hrt
+  	 *
+  	 * XXX send_remote_softirq() ?
+  	 */
+++<<<<<<< HEAD
+ +	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)) {
+ +		ret = hrtimer_enqueue_reprogram(timer, new_base, wakeup);
+ +		if (ret) {
+ +			/*
+ +			 * In case we failed to reprogram the timer (mostly
+ +			 * because out current timer is already elapsed),
+ +			 * remove it again and report a failure. This avoids
+ +			 * stale base->first entries.
+ +			 */
+ +			debug_deactivate(timer);
+ +			__remove_hrtimer(timer, new_base,
+ +					timer->state & HRTIMER_STATE_CALLBACK, 0);
+++=======
++ 	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)
++ 		&& hrtimer_enqueue_reprogram(timer, new_base)) {
++ 		if (wakeup) {
++ 			/*
++ 			 * We need to drop cpu_base->lock to avoid a
++ 			 * lock ordering issue vs. rq->lock.
++ 			 */
++ 			raw_spin_unlock(&new_base->cpu_base->lock);
++ 			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++ 			local_irq_restore(flags);
++ 			return ret;
++ 		} else {
++ 			__raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+++>>>>>>> v3.4.34
+  		}
+  	}
+  
 
-    fixup! workqueue: Add helpers to schedule work on any cpu
----
- kernel/workqueue.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+As 3.4.34 stable included commit b22affe0a "hrtimer: Prevent
+hrtimer_enqueue_reprogram race" which conflicts with the current code in
+-rt as you can see above.
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 68daf50..4e023ab 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1242,7 +1242,7 @@ retry:
-        if (!(wq->flags & WQ_UNBOUND)) {
-                if (cpu == WORK_CPU_UNBOUND) {
-                        if (on_any_cpu)
--                               cpu = sched_select_non_idle_cpu(0);
-+                               cpu = sched_select_non_idle_cpu();
-                        else
-                                cpu = raw_smp_processor_id();
-                }
+Below is the final change I did to handle this code. I'm running tests
+on it now. I tried to keep the same basic logic that -rt has. Let me
+know if you have issues with this. I'll wait a few days before I push
+this to kernel.org.
+
+-- Steve
+
+
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 9114899..2328c04 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -643,30 +643,9 @@ static inline void hrtimer_init_hres(struct hrtimer_cpu_base *base)
+  * and expiry check is done in the hrtimer_interrupt or in the softirq.
+  */
+ static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
+-					    struct hrtimer_clock_base *base,
+-					    int wakeup)
++					    struct hrtimer_clock_base *base)
+ {
+-	if (base->cpu_base->hres_active && hrtimer_reprogram(timer, base)) {
+-		if (!wakeup)
+-			return -ETIME;
+-
+-#ifdef CONFIG_PREEMPT_RT_BASE
+-		/*
+-		 * Move softirq based timers away from the rbtree in
+-		 * case it expired already. Otherwise we would have a
+-		 * stale base->first entry until the softirq runs.
+-		 */
+-		if (!hrtimer_rt_defer(timer))
+-			return -ETIME;
+-#endif
+-		raw_spin_unlock(&base->cpu_base->lock);
+-		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+-		raw_spin_lock(&base->cpu_base->lock);
+-
+-		return 0;
+-	}
+-
+-	return 0;
++	return base->cpu_base->hres_active && hrtimer_reprogram(timer, base);
+ }
+ 
+ static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
+@@ -747,8 +726,7 @@ static inline int hrtimer_switch_to_hres(void) { return 0; }
+ static inline void
+ hrtimer_force_reprogram(struct hrtimer_cpu_base *base, int skip_equal) { }
+ static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
+-					    struct hrtimer_clock_base *base,
+-					    int wakeup)
++					    struct hrtimer_clock_base *base)
+ {
+ 	return 0;
+ }
+@@ -1054,19 +1032,39 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+ 	 *
+ 	 * XXX send_remote_softirq() ?
+ 	 */
+-	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)) {
+-		ret = hrtimer_enqueue_reprogram(timer, new_base, wakeup);
+-		if (ret) {
++	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)
++		&& hrtimer_enqueue_reprogram(timer, new_base)) {
++
++		if (wakeup
++#ifdef CONFIG_PREEMPT_RT_BASE
++		    /*
++		     * Move softirq based timers away from the rbtree in
++		     * case it expired already. Otherwise we would have a
++		     * stale base->first entry until the softirq runs.
++		     */
++		    && hrtimer_rt_defer(timer)
++#endif
++			) {
+ 			/*
+-			 * In case we failed to reprogram the timer (mostly
+-			 * because out current timer is already elapsed),
+-			 * remove it again and report a failure. This avoids
+-			 * stale base->first entries.
++			 * We need to drop cpu_base->lock to avoid a
++			 * lock ordering issue vs. rq->lock.
+ 			 */
+-			debug_deactivate(timer);
+-			__remove_hrtimer(timer, new_base,
+-					timer->state & HRTIMER_STATE_CALLBACK, 0);
++			raw_spin_unlock(&new_base->cpu_base->lock);
++			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
++			local_irq_restore(flags);
++			return ret;
+ 		}
++
++		/*
++		 * In case we failed to reprogram the timer (mostly
++		 * because out current timer is already elapsed),
++		 * remove it again and report a failure. This avoids
++		 * stale base->first entries.
++		 */
++		debug_deactivate(timer);
++		__remove_hrtimer(timer, new_base,
++				 timer->state & HRTIMER_STATE_CALLBACK, 0);
++		ret = -ETIME;
+ 	}
+ 
+ 	unlock_hrtimer_base(timer, &flags);
