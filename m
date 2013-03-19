@@ -1,203 +1,50 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Fixup for 3.4.34 merge conflict
-Date: Tue, 19 Mar 2013 12:50:34 -0400
-Message-ID: <1363711834.5938.39.camel@gandalf.local.home>
+Subject: Re: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
+Date: Tue, 19 Mar 2013 14:30:40 -0400
+Message-ID: <1363717840.5938.43.camel@gandalf.local.home>
+References: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
+	 <alpine.LFD.2.02.1303152225250.22263@ionos>
+	 <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: notgeorge burns <not.george.burns@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:33730 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754702Ab3CSSam (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Mar 2013 14:30:42 -0400
+In-Reply-To: <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Thomas,
+On Sat, 2013-03-16 at 17:10 -0700, notgeorge burns wrote:
+> Just curious, what is the rationale for irq_default_primary_handler()
+> not to invoke set_need_resched()?  Drivers that set up with plain-old
+> request_irq() will have a scheduled softirq handler, but the hardirq
+> will return to wherever it was without the priority of the softirq
+> task coming into play.  For my drivers I can work around it with
+> request_threaded_irq() but is the potential inversion for
+> request_irq()-installed handlers really the expected behavior?  Sorry
+> if this question has been gone over before, I couldn't find anything
+> with a quick search of the archives.
 
-Merging 3.4.34 into stable 3.4-rt I hit the following conflict:
+Why should it invoke set_need_resched(), I hope your driver isn't doing
+that, as it may not get scheduled, and you just added the extra overhead
+of a unnecessary schedule() call.
 
-diff --cc kernel/hrtimer.c
-index 9114899,cdd5607..0000000
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@@ -643,30 -640,9 +643,33 @@@ static inline void hrtimer_init_hres(st
-   * and expiry check is done in the hrtimer_interrupt or in the softirq.
-   */
-  static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
-- 					    struct hrtimer_clock_base *base,
-- 					    int wakeup)
-+ 					    struct hrtimer_clock_base *base)
-  {
-++<<<<<<< HEAD
- +	if (base->cpu_base->hres_active && hrtimer_reprogram(timer, base)) {
- +		if (!wakeup)
- +			return -ETIME;
- +
- +#ifdef CONFIG_PREEMPT_RT_BASE
- +		/*
- +		 * Move softirq based timers away from the rbtree in
- +		 * case it expired already. Otherwise we would have a
- +		 * stale base->first entry until the softirq runs.
- +		 */
- +		if (!hrtimer_rt_defer(timer))
- +			return -ETIME;
- +#endif
- +		raw_spin_unlock(&base->cpu_base->lock);
- +		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
- +		raw_spin_lock(&base->cpu_base->lock);
- +
- +		return 0;
- +	}
- +
- +	return 0;
-++=======
-+ 	return base->cpu_base->hres_active && hrtimer_reprogram(timer, base);
-++>>>>>>> v3.4.34
-  }
-  
-  static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
-@@@ -1054,18 -982,19 +1056,34 @@@ int __hrtimer_start_range_ns(struct hrt
-  	 *
-  	 * XXX send_remote_softirq() ?
-  	 */
-++<<<<<<< HEAD
- +	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)) {
- +		ret = hrtimer_enqueue_reprogram(timer, new_base, wakeup);
- +		if (ret) {
- +			/*
- +			 * In case we failed to reprogram the timer (mostly
- +			 * because out current timer is already elapsed),
- +			 * remove it again and report a failure. This avoids
- +			 * stale base->first entries.
- +			 */
- +			debug_deactivate(timer);
- +			__remove_hrtimer(timer, new_base,
- +					timer->state & HRTIMER_STATE_CALLBACK, 0);
-++=======
-+ 	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)
-+ 		&& hrtimer_enqueue_reprogram(timer, new_base)) {
-+ 		if (wakeup) {
-+ 			/*
-+ 			 * We need to drop cpu_base->lock to avoid a
-+ 			 * lock ordering issue vs. rq->lock.
-+ 			 */
-+ 			raw_spin_unlock(&new_base->cpu_base->lock);
-+ 			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+ 			local_irq_restore(flags);
-+ 			return ret;
-+ 		} else {
-+ 			__raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-++>>>>>>> v3.4.34
-  		}
-  	}
-  
+If a hardirq wakes up its thread, and that thread happens to be of a
+higher priority than the currently running task, the act of waking up
+will set need_resched for you. But it can certainly be possible for the
+current userspace thread to be running at a higher priority than the
+interrupt thread, and we don't want to call schedule in that case.
 
-As 3.4.34 stable included commit b22affe0a "hrtimer: Prevent
-hrtimer_enqueue_reprogram race" which conflicts with the current code in
--rt as you can see above.
-
-Below is the final change I did to handle this code. I'm running tests
-on it now. I tried to keep the same basic logic that -rt has. Let me
-know if you have issues with this. I'll wait a few days before I push
-this to kernel.org.
+This is the point of -rt in the first place. Its OK to have some
+userspace tasks higher priority than interrupts.
 
 -- Steve
 
 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 9114899..2328c04 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -643,30 +643,9 @@ static inline void hrtimer_init_hres(struct hrtimer_cpu_base *base)
-  * and expiry check is done in the hrtimer_interrupt or in the softirq.
-  */
- static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
--					    struct hrtimer_clock_base *base,
--					    int wakeup)
-+					    struct hrtimer_clock_base *base)
- {
--	if (base->cpu_base->hres_active && hrtimer_reprogram(timer, base)) {
--		if (!wakeup)
--			return -ETIME;
--
--#ifdef CONFIG_PREEMPT_RT_BASE
--		/*
--		 * Move softirq based timers away from the rbtree in
--		 * case it expired already. Otherwise we would have a
--		 * stale base->first entry until the softirq runs.
--		 */
--		if (!hrtimer_rt_defer(timer))
--			return -ETIME;
--#endif
--		raw_spin_unlock(&base->cpu_base->lock);
--		raise_softirq_irqoff(HRTIMER_SOFTIRQ);
--		raw_spin_lock(&base->cpu_base->lock);
--
--		return 0;
--	}
--
--	return 0;
-+	return base->cpu_base->hres_active && hrtimer_reprogram(timer, base);
- }
- 
- static inline ktime_t hrtimer_update_base(struct hrtimer_cpu_base *base)
-@@ -747,8 +726,7 @@ static inline int hrtimer_switch_to_hres(void) { return 0; }
- static inline void
- hrtimer_force_reprogram(struct hrtimer_cpu_base *base, int skip_equal) { }
- static inline int hrtimer_enqueue_reprogram(struct hrtimer *timer,
--					    struct hrtimer_clock_base *base,
--					    int wakeup)
-+					    struct hrtimer_clock_base *base)
- {
- 	return 0;
- }
-@@ -1054,19 +1032,39 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- 	 *
- 	 * XXX send_remote_softirq() ?
- 	 */
--	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)) {
--		ret = hrtimer_enqueue_reprogram(timer, new_base, wakeup);
--		if (ret) {
-+	if (leftmost && new_base->cpu_base == &__get_cpu_var(hrtimer_bases)
-+		&& hrtimer_enqueue_reprogram(timer, new_base)) {
-+
-+		if (wakeup
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+		    /*
-+		     * Move softirq based timers away from the rbtree in
-+		     * case it expired already. Otherwise we would have a
-+		     * stale base->first entry until the softirq runs.
-+		     */
-+		    && hrtimer_rt_defer(timer)
-+#endif
-+			) {
- 			/*
--			 * In case we failed to reprogram the timer (mostly
--			 * because out current timer is already elapsed),
--			 * remove it again and report a failure. This avoids
--			 * stale base->first entries.
-+			 * We need to drop cpu_base->lock to avoid a
-+			 * lock ordering issue vs. rq->lock.
- 			 */
--			debug_deactivate(timer);
--			__remove_hrtimer(timer, new_base,
--					timer->state & HRTIMER_STATE_CALLBACK, 0);
-+			raw_spin_unlock(&new_base->cpu_base->lock);
-+			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
-+			local_irq_restore(flags);
-+			return ret;
- 		}
-+
-+		/*
-+		 * In case we failed to reprogram the timer (mostly
-+		 * because out current timer is already elapsed),
-+		 * remove it again and report a failure. This avoids
-+		 * stale base->first entries.
-+		 */
-+		debug_deactivate(timer);
-+		__remove_hrtimer(timer, new_base,
-+				 timer->state & HRTIMER_STATE_CALLBACK, 0);
-+		ret = -ETIME;
- 	}
- 
- 	unlock_hrtimer_base(timer, &flags);
