@@ -1,50 +1,123 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: entry_32.S ret_from_intr and invocation of scheduler, v3.2-rt
-Date: Tue, 19 Mar 2013 14:30:40 -0400
-Message-ID: <1363717840.5938.43.camel@gandalf.local.home>
-References: <CAO2z5Zi52q94xfmqRDwq5XSgD-VaVitnJ_JNnEpGOr9Spi4cWA@mail.gmail.com>
-	 <alpine.LFD.2.02.1303152225250.22263@ionos>
-	 <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Wed, 20 Mar 2013 20:43:08 +0530
+Message-ID: <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
+	<1354024039.6276.72.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: notgeorge burns <not.george.burns@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:33730 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754702Ab3CSSam (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 Mar 2013 14:30:42 -0400
-In-Reply-To: <CAO2z5ZjDLdyrXJ-LsE_8VauwXuntTb4-51Gka3aLykYiBuNaVQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
+To: tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1354024039.6276.72.camel@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2013-03-16 at 17:10 -0700, notgeorge burns wrote:
-> Just curious, what is the rationale for irq_default_primary_handler()
-> not to invoke set_need_resched()?  Drivers that set up with plain-old
-> request_irq() will have a scheduled softirq handler, but the hardirq
-> will return to wherever it was without the priority of the softirq
-> task coming into play.  For my drivers I can work around it with
-> request_threaded_irq() but is the potential inversion for
-> request_irq()-installed handlers really the expected behavior?  Sorry
-> if this question has been gone over before, I couldn't find anything
-> with a quick search of the archives.
+On 27 November 2012 19:17, Steven Rostedt <rostedt@goodmis.org> wrote:
+> On Tue, 2012-11-06 at 16:08 +0530, Viresh Kumar wrote:
 
-Why should it invoke set_need_resched(), I hope your driver isn't doing
-that, as it may not get scheduled, and you just added the extra overhead
-of a unnecessary schedule() call.
+>> diff --git a/kernel/timer.c b/kernel/timer.c
+>> @@ -729,6 +730,12 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
+>>
+>>       base = lock_timer_base(timer, &flags);
+>>
+>> +     if (timer->sched_del) {
+>> +             /* Don't schedule it again, as it is getting deleted */
+>> +             ret = -EBUSY;
+>> +             goto out_unlock;
+>> +     }
+>> +
+>>       ret = detach_if_pending(timer, base, false);
+>>       if (!ret && pending_only)
+>>               goto out_unlock;
+>> @@ -746,21 +753,12 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
+>>       new_base = per_cpu(tvec_bases, cpu);
+>>
+>>       if (base != new_base) {
+>> -             /*
+>> -              * We are trying to schedule the timer on the local CPU.
+>> -              * However we can't change timer's base while it is running,
+>> -              * otherwise del_timer_sync() can't detect that the timer's
+>> -              * handler yet has not finished. This also guarantees that
+>> -              * the timer is serialized wrt itself.
+>> -              */
+>> -             if (likely(base->running_timer != timer)) {
+>> -                     /* See the comment in lock_timer_base() */
+>> -                     timer_set_base(timer, NULL);
+>> -                     spin_unlock(&base->lock);
+>> -                     base = new_base;
+>> -                     spin_lock(&base->lock);
+>> -                     timer_set_base(timer, base);
+>> -             }
+>> +             /* See the comment in lock_timer_base() */
+>> +             timer_set_base(timer, NULL);
+>> +             spin_unlock(&base->lock);
+>> +             base = new_base;
+>> +             spin_lock(&base->lock);
+>> +             timer_set_base(timer, base);
+>>       }
 
-If a hardirq wakes up its thread, and that thread happens to be of a
-higher priority than the currently running task, the act of waking up
-will set need_resched for you. But it can certainly be possible for the
-current userspace thread to be running at a higher priority than the
-interrupt thread, and we don't want to call schedule in that case.
+> I don't think this is good enough. For one thing, it doesn't handle
+> try_to_del_timer_sync() or even del_timer_sync() for that matter. As
+> that may return success when the timer happens to be running on another
+> CPU.
+>
+> We have this:
+>
+>         CPU0                    CPU1
+>         ----                    ----
+>    timerA (running)
+>    mod_timer(timerA)
+>    [ migrate to CPU2 ]
+>    release timer base lock
+>                            del_timer_sync(timerA)
+>                            timer->sched_del = true
+>                            try_to_del_timer_sync(timerA)
+>                                 base(CPU2)->timer != timerA
+>                                 [TRUE!]
+>   timerA (finishes)
+>
+> Fail!
 
-This is the point of -rt in the first place. Its OK to have some
-userspace tasks higher priority than interrupts.
+Hi Steven/Thomas,
 
--- Steve
+I came back to this patch after completing some other stuff and posting
+wq part of this patchset separately.
 
+I got your point and understand how this would fail.
 
+@Thomas: I need your opinion first. Do you like this concept of migrating
+running timer or not? Or you see some basic problem with this concept?
+
+If no (i.e. i can go ahead with another version), then i have some solution to
+fix earlier problems reported by Steven:
+
+The problem lies with del_timer_sync() which just checks
+base->running_timer != timer to check if timer is currently running or not.
+
+What if we add another variable in struct timer_list, that will store if we are
+running timer callback or not. And so, before we call callback in timer core,
+we will set this variable and will reset it after finishing callback.
+
+del_timer_sync() will have something like:
+
+if (base->running_timer != timer)
+    remove timer and return;
+else if (timer->running_callback)
+    go back to its loop...
+
+So, with my existing patch + this change, del_timer_sync() will not return
+back unless the callback is completed on CPU0.
+
+But what can happen now is base->running_timer == timer can be true
+for two cpus simultaneously cpu0 (running callback) and cpu2 (running hardware
+timer). Will that cause any issues?
+
+--
+viresh
