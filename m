@@ -1,123 +1,76 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Wed, 20 Mar 2013 20:43:08 +0530
-Message-ID: <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
-References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
-	<1354024039.6276.72.camel@gandalf.local.home>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
+Date: Wed, 20 Mar 2013 17:12:11 -0700
+Message-ID: <20130321001211.GC31256@htj.dyndns.org>
+References: <cover.1363617402.git.viresh.kumar@linaro.org>
+ <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
 	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
-	peterz@infradead.org, Arvind.Chauhan@arm.com,
-	linaro-dev@lists.linaro.org, patches@linaro.org,
-	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
-To: tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
+	peterz@infradead.org, rostedt@goodmis.org,
+	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1354024039.6276.72.camel@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 27 November 2012 19:17, Steven Rostedt <rostedt@goodmis.org> wrote:
-> On Tue, 2012-11-06 at 16:08 +0530, Viresh Kumar wrote:
+Hello, Viresh.
 
->> diff --git a/kernel/timer.c b/kernel/timer.c
->> @@ -729,6 +730,12 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
->>
->>       base = lock_timer_base(timer, &flags);
->>
->> +     if (timer->sched_del) {
->> +             /* Don't schedule it again, as it is getting deleted */
->> +             ret = -EBUSY;
->> +             goto out_unlock;
->> +     }
->> +
->>       ret = detach_if_pending(timer, base, false);
->>       if (!ret && pending_only)
->>               goto out_unlock;
->> @@ -746,21 +753,12 @@ __mod_timer(struct timer_list *timer, unsigned long expires,
->>       new_base = per_cpu(tvec_bases, cpu);
->>
->>       if (base != new_base) {
->> -             /*
->> -              * We are trying to schedule the timer on the local CPU.
->> -              * However we can't change timer's base while it is running,
->> -              * otherwise del_timer_sync() can't detect that the timer's
->> -              * handler yet has not finished. This also guarantees that
->> -              * the timer is serialized wrt itself.
->> -              */
->> -             if (likely(base->running_timer != timer)) {
->> -                     /* See the comment in lock_timer_base() */
->> -                     timer_set_base(timer, NULL);
->> -                     spin_unlock(&base->lock);
->> -                     base = new_base;
->> -                     spin_lock(&base->lock);
->> -                     timer_set_base(timer, base);
->> -             }
->> +             /* See the comment in lock_timer_base() */
->> +             timer_set_base(timer, NULL);
->> +             spin_unlock(&base->lock);
->> +             base = new_base;
->> +             spin_lock(&base->lock);
->> +             timer_set_base(timer, base);
->>       }
+On Mon, Mar 18, 2013 at 08:53:25PM +0530, Viresh Kumar wrote:
+> queue_work() queues work on current cpu. This may wake up an idle CPU, which is
+> actually not required.
+> 
+> Some of these works can be processed by any CPU and so we must select a non-idle
+> CPU here. The initial idea was to modify implementation of queue_work(), but
+> that may end up breaking lots of kernel code that would be a nightmare to debug.
+> 
+> So, we finalized to adding new workqueue interfaces, for works that don't depend
+> on a cpu to execute them.
+> 
+> This patch adds following new routines:
+> - queue_work_on_any_cpu
+> - queue_delayed_work_on_any_cpu
+> 
+> These routines would look for the closest (via scheduling domains) non-idle cpu
+> (non-idle from schedulers perspective). If the current cpu is not idle or all
+> cpus are idle, work will be scheduled on local cpu.
 
-> I don't think this is good enough. For one thing, it doesn't handle
-> try_to_del_timer_sync() or even del_timer_sync() for that matter. As
-> that may return success when the timer happens to be running on another
-> CPU.
->
-> We have this:
->
->         CPU0                    CPU1
->         ----                    ----
->    timerA (running)
->    mod_timer(timerA)
->    [ migrate to CPU2 ]
->    release timer base lock
->                            del_timer_sync(timerA)
->                            timer->sched_del = true
->                            try_to_del_timer_sync(timerA)
->                                 base(CPU2)->timer != timerA
->                                 [TRUE!]
->   timerA (finishes)
->
-> Fail!
+For some reason, I've been always unsure about this patchset.  I've
+been thinking about it past few days and I think I now know why.
 
-Hi Steven/Thomas,
+I can see that strategy like this being useful for timer, and
+impressive power saving numbers BTW - we definitely want that.  While
+workqueue shares a lot of attributes with timers, there's one
+important difference - scheduler is involved in work item executions.
 
-I came back to this patch after completing some other stuff and posting
-wq part of this patchset separately.
+Work item scheduling for per-cpu work items artificially removes the
+choice of CPU from the scheduler with the assumption that such
+restrictions would lead to lower overall overhead.  There is another
+variant of workqueue - WQ_UNBOUND - when such assumption wouldn't hold
+too well and it would be best to give the scheduler full latitude
+regarding scheduling work item execution including choice of CPU.
 
-I got your point and understand how this would fail.
+Now, this patchset, kinda sorta adds back CPU selection by scheduler
+in an ad-hoc way, right?  If we're gonna do that, why not just make it
+unbound workqueues?  Then, the scheduler would have full discretion
+over them and we don't need to implement this separate ad-hoc thing on
+the side.  It's the roundaboutness that bothers me.
 
-@Thomas: I need your opinion first. Do you like this concept of migrating
-running timer or not? Or you see some basic problem with this concept?
+I'm not sure about other workqueues but the block one can be very
+performance sensitive on machines with high IOPS and it would
+definitely be advisable to keep it CPU-affine unless power consumption
+is the overriding concern, so how about introducing another workqueue
+flag, say WQ_UNBOUND_FOR_POWER (it's terrible, please come up with
+something better), which is WQ_UNBOUND on configurations where this
+matters and becomes noop if not?
 
-If no (i.e. i can go ahead with another version), then i have some solution to
-fix earlier problems reported by Steven:
+Thanks.
 
-The problem lies with del_timer_sync() which just checks
-base->running_timer != timer to check if timer is currently running or not.
-
-What if we add another variable in struct timer_list, that will store if we are
-running timer callback or not. And so, before we call callback in timer core,
-we will set this variable and will reset it after finishing callback.
-
-del_timer_sync() will have something like:
-
-if (base->running_timer != timer)
-    remove timer and return;
-else if (timer->running_callback)
-    go back to its loop...
-
-So, with my existing patch + this change, del_timer_sync() will not return
-back unless the callback is completed on CPU0.
-
-But what can happen now is base->running_timer == timer can be true
-for two cpus simultaneously cpu0 (running callback) and cpu2 (running hardware
-timer). Will that cause any issues?
-
---
-viresh
+-- 
+tejun
