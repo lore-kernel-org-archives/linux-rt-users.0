@@ -1,118 +1,60 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Thu, 21 Mar 2013 16:27:23 +0530
-Message-ID: <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
-	<fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
-	<20130321001211.GC31256@htj.dyndns.org>
+From: Younes CHALABI <y.chalabi@sinters.fr>
+Subject: Informations about Real Time Linux
+Date: Thu, 21 Mar 2013 16:38:41 +0000
+Message-ID: <A46EF8CF1BBB8E4B8A27B73E177C4664EA5CFD@MAIL-SINTERS-01.sinters-int.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
-	peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130321001211.GC31256@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp-out-3.pacwan.net ([195.200.166.131]:60831 "EHLO
+	smtp-out-3.pacwan.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751236Ab3CUQsd convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Mar 2013 12:48:33 -0400
+Received: from mail.sinters.fr (201-171-dynamic.pacwan.net [195.200.171.201])
+	by smtp-out-3.pacwan.net (Postfix) with ESMTP id 326141C30F3
+	for <linux-rt-users@vger.kernel.org>; Thu, 21 Mar 2013 17:38:42 +0100 (CET)
+Content-Language: fr-FR
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 21 March 2013 05:42, Tejun Heo <tj@kernel.org> wrote:
-> On Mon, Mar 18, 2013 at 08:53:25PM +0530, Viresh Kumar wrote:
+Hello,
 
-> For some reason, I've been always unsure about this patchset.  I've
-> been thinking about it past few days and I think I now know why.
+Does Real Time Linux supports the i.MX27 and i.MX6 by Freescale.
 
-I knew this since the beginning and thought power numbers i showed might
-change your view. My hard luck :)
+I need this complementary informations :
 
-> I can see that strategy like this being useful for timer, and
-> impressive power saving numbers BTW - we definitely want that.  While
-> workqueue shares a lot of attributes with timers, there's one
-> important difference - scheduler is involved in work item executions.
+- What is the size of RT-Linux in RAM / ROM and footprint on the platforms i.MX27 and i.MX6 ?
 
-Yes, scheduler is involved for queuing works queued on a UNBOUND wq.
+- Which are the build systems to generate the kernel on the platforms ?
 
-> Work item scheduling for per-cpu work items artificially removes the
-> choice of CPU from the scheduler with the assumption that such
-> restrictions would lead to lower overall overhead.
+- What about the developement tools ?
 
-Yes.. We aren't touching them here and we can't :)
+- Concerning the development environment : Is it command line ? workbench? and the frameworks for creating applications?
 
-> There is another
-> variant of workqueue - WQ_UNBOUND - when such assumption wouldn't hold
-> too well and it would be best to give the scheduler full latitude
-> regarding scheduling work item execution including choice of CPU.
+- What are the programming langages ?
 
-I liked this point of yours and what you said is correct too. But there is a
-difference here with our approach.
+- Are these drivers supported ? 
+   - Screen
+   - Touchscreen
+   - WLAN
+   - USB 2.0 / 3.0 / OTG 
+   - SPI 
+   - I2C 
+   - Ethernet (gigabit)
+   - UART 
+   - PCI Express 
+   - CAN 
+   - I/O Micro
+   - Video : LVD / HDMI / DVI 
 
-I here see two parallel solutions:
+- Is it compatible with multi-core ?
 
-1. What we proposed:
-- Add another wq api and used sched_select_non_idle_cpu() to choose
-the right cpu
-- Fix user drivers we care about
+- Is it possible to interface Matlab Simulink models ?
 
-2. What you proposed:
-- Fix user drivers we care about by using UNBOUNDED workqueues rather than
-system_wq or other private wq's. And let the scheduler do everything. Right?
+- Is there tested packages for the i.MX27 and i.MX6 ?
 
+Cordially
 
-Now there are two things i am worried about.
-
-A.
-About the difference in behavior of scheduler and sched_select_non_idle_cpu().
-Scheduler will treat this work as any normal task and can schedule it anywhere
-based on what it feels is the right place and may still wake up an idle one for
-load balancing.
-
-In our approach, We aren't switching CPU for a work if that cpu (or system) is
-busy enough, like in case of high IOPS for block layer. We will find that cpu as
-busy, most of the time on such situations and so we will stay where we were.
-
-In case system is fairly idle, then also we stay on the same cpu.
-The only time we migrate is when current cpu is idle but the whole system
-isn't.
-
-B.
-It is sort of difficult to teach users about BOUND and UNBOUND workqueues
-and people have used them without thinking too much about them since some
-time. We need a straightforward API to make this more transparent. And
-queue_work_on_any_cpu() was a good candidate here. I am not talking about
-its implementation but about the interface.
-
-
-Though in both suggestions we need to fix user drivers one by one to use
-queue_work_on_any_cpu() or use WQ_UNBOUND..
-
-> Now, this patchset, kinda sorta adds back CPU selection by scheduler
-> in an ad-hoc way, right?
-
-Yes.
-
-> If we're gonna do that, why not just make it
-> unbound workqueues?  Then, the scheduler would have full discretion
-> over them and we don't need to implement this separate ad-hoc thing on
-> the side.  It's the roundaboutness that bothers me.
-
-I had my own reasons as explained earlier.
-
-> I'm not sure about other workqueues but the block one can be very
-> performance sensitive on machines with high IOPS and it would
-> definitely be advisable to keep it CPU-affine unless power consumption
-> is the overriding concern, so how about introducing another workqueue
-> flag, say WQ_UNBOUND_FOR_POWER (it's terrible, please come up with
-> something better), which is WQ_UNBOUND on configurations where this
-> matters and becomes noop if not?
-
-Maybe people wouldn't suffer much because of the reasons i told you earlier.
-On a busy system we will never switch cpus.
-
-This static configuration might not work well with multiplatform images.
-
---
-viresh
+Younes Chalabi
