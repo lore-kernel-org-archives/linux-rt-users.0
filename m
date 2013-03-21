@@ -1,103 +1,112 @@
-From: Frank Rowand <frank.rowand@am.sony.com>
-Subject: Re: linux-3.6.11-rt30 smoke test on ARM
-Date: Thu, 21 Mar 2013 13:26:31 -0700
-Message-ID: <514B6CF7.4030901@am.sony.com>
-References: <51396143.5060108@am.sony.com> <51396306.6090902@am.sony.com> <20130311173424.GB22286@linutronix.de> <513FCBD3.4@am.sony.com>
-Reply-To: <frank.rowand@am.sony.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Thu, 21 Mar 2013 18:55:45 -0400
+Message-ID: <1363906545.6345.81.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: unlisted-recipients:; (no To-header on input)
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-db8lp0187.outbound.messaging.microsoft.com ([213.199.154.187]:1876
-	"EHLO db8outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753007Ab3CUU0o (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Mar 2013 16:26:44 -0400
-In-Reply-To: <513FCBD3.4@am.sony.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Clark Williams <clark@redhat.com>
+To: Christoph Lameter <cl@linux.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 03/12/13 17:44, Frank Rowand wrote:
-> On 03/11/13 10:34, Sebastian Andrzej Siewior wrote:
->> * Frank Rowand | 2013-03-07 20:03:18 [-0800]:
->>
->>> panda boot often fails due to a usb timeout, while sending a command on
->>> behalf of the smsc95xx ethernet driver.
->>>
->>> This patch is a temporary hack to force a retry when the timeout occurs.
->>
->> It looks like you overrun the chip for some reason. Can you reproduce it
->> on mainline? They added a few delayes on register read() it might do the
->> trick.
-> 
-> Yes, I can reproduce it on mainline.
-> 
-> Here is the current state of my debugging:
-> 
-> The problem usually occurs within three boot attempts.  But it has also
-> taken eight boot attempts to see the problem.  I do not know what the
-> maximum number of boots is required to see the problem, so I can not
-> state with certainty that a given kernel version does not have the
-> problem.  If the boot fails then I can state with certainty that the
-> given kernel version has the problem.
-> 
-> Given that level of uncertainty, I know:
-> 
->   v3.5      does not appear to have the problem
->   v3.6-rc1  has the problem
->   v3.6      has the problem
->   v3.7      has the problem
->   v3.8      does not appear to have the problem
->   v3.9-rc1  fails to build
-> 
-> I thought I had bisected the problem to a specific commit, but wanting
-> to be sure of it, I did extra boots of what should have been the last
-> good commit.  On the 7th boot, that kernel version had the problem.
-> 
-> I'll probably redo the bisect, but have not had time to do so yet.
+Christoph,
 
-I did the bisect again, with more boot tests per bisect point, and found
-the commit to blame.  Hopefully the problem will be resolved in the
-thread where I report the bisect:
+I've been trying to hunt down a latency on a 40 core box, where funny,
+the more tracing we enabled the less likely it would hit. It would take
+up to 12 hours to hit the latency, and if we had too much tracing on, it
+never would hit :-p
 
-   https://lkml.org/lkml/2013/3/20/742
+Thus I would add little by little to find where things were going bad. I
+found the timer interrupt was triggering late. I then traced with:
+
+trace-cmd start -p function --func-stack -e irq -e raw_syscalls -e 'sched_wakeup*' \
+  -e sched_switch -e hrtimer_start -e hrtimer_expire_entry
+
+I kicked off the test again, when it detected a latency it would stop
+tracing, I extract the trace data from the buffers, send it to my
+workstation and analyze it.
+
+I found this:
 
 
-> 
-> The problem manifests as a timeout from at least two different locations
-> in drivers/net/usb/smsc95xx.c:
-> 
-> 
->  656 static int smsc95xx_set_mac_address(struct usbnet *dev)
->  657 {
->  ...
->  663         ret = smsc95xx_write_reg(dev, ADDRL, addr_lo);
->  664         if (ret < 0) {
->  665                 netdev_warn(dev->net, "Failed to write ADDRL: %d\n", ret);
->  666                 return ret;
->  667         }
-> 
-> 
-> 751 static int smsc95xx_reset(struct usbnet *dev)
->  752 {
->  ...
->  783         write_buf = PM_CTL_PHY_RST_;
->  784         ret = smsc95xx_write_reg(dev, PM_CTRL, write_buf);
->  785         if (ret < 0) {
->  786                 netdev_warn(dev->net, "Failed to write PM_CTRL: %d\n", ret);
->  787                 return ret;
->  788         }
-> 
-> 
-> Some of the other smsc95xx_write_reg() calls in smsc95xx_reset() are protected with
-> checks for timeout, with up to 100 retries.  I do not know if this one should have
-> the same protection.
-> 
-> -Frank
+hackbenc-61738  39d...0 238202.164474: function:             smp_apic_timer_interrupt
+hackbenc-61738  39d...0 238202.164484: kernel_stack:         <stack
+trace>
+=> apic_timer_interrupt (ffffffff81528077)
+=> retint_kernel (ffffffff81520967)
+=> __slab_free (ffffffff8115517a)
+=> kfree (ffffffff811554e1)
+=> skb_free_head (ffffffff8143b9ee)
+=> skb_release_data (ffffffff8143c830)
+=> __kfree_skb (ffffffff8143c8be)
+=> consume_skb (ffffffff8143c9c1)
+=> unix_stream_recvmsg (ffffffff814ecd88)
+=> sock_aio_read (ffffffff81431f6e)
+=> do_sync_read (ffffffff8115fdea)
+=> vfs_read (ffffffff811605c0)
+=> sys_read (ffffffff811606e1)
+=> tracesys (ffffffff8152778d)
+
+That __slab_free() happened here:
+
+   0xffffffff81155160 <+544>:	cmpb   $0x0,-0x55(%rbp)
+   0xffffffff81155164 <+548>:	jns    0xffffffff8115509e <__slab_free+350>
+   0xffffffff8115516a <+554>:	mov    $0x1,%edx
+   0xffffffff8115516f <+559>:	mov    %r13,%rsi
+   0xffffffff81155172 <+562>:	mov    %r15,%rdi
+   0xffffffff81155175 <+565>:	callq  0xffffffff81154d90 <put_cpu_partial>
+   0xffffffff8115517a <+570>:	jmpq   0xffffffff8115509e <__slab_free+350>
+   0xffffffff8115517f <+575>:	mov    %r8,-0xf8(%rbp)
 
 
+The ffffffff8115517a is just before put_cpu_partial() which calls
+unfreeze_partials() with irqs disabled. So I started tracing again, this
+time with:
+
+trace-cmd start -p function_graph -l smp_apic_timer_interrupt -l unfreeze_partials \
+  -e irq -e raw_syscalls -e 'sched_wakeup*' -e sched_switch -e hrtimer_start \
+  -e hrtimer_expire_entry
+
+The difference was instead of tracing the function
+smp_apic_timer_interrupt and its stack trace, I decided to trace the
+function graph of unfreeze_partials, and by only selecting that
+function, it gives me a good idea of how long that function runs. Here's
+the result:
+
+hackbenc-80563  14...10 262219.108980: sys_exit:             NR 0 = 100
+hackbenc-80563  14...10 262219.108981: sys_enter:            NR 0 (a, 7fff1b700d50, 64, 8, 7fff1b700c80, 138ef)
+hackbenc-80563  14d...0 262219.108982: funcgraph_entry:      ! 249.510 us |  unfreeze_partials();
+hackbenc-80563  14d...0 262219.109233: funcgraph_entry:                   |  smp_apic_timer_interrupt() {
+hackbenc-80563  14d.h10 262219.109234: hrtimer_expire_entry: hrtimer=0xffff881fcf731e88 now=262298497076329 function=hrtimer_wakeup/0x0
+hackbenc-80563  14d.h30 262219.109235: sched_wakeup:         cyclictest:33010 [4] success=1 CPU:014
+
+
+It ran for 249.51 microseconds!!! With interrupts disabled! This was
+what caused the interrupt to go off late. I have no idea why adding
+tracing makes this latency go away. Perhaps it changes the timings just
+enough to not let things line up?
+
+I did a report with '-R' and showing the raw events, which will show the
+exit part of the function graph we have:
+
+   <...>-80563  14d...0 262219.108982: funcgraph_entry:       func=0xffffffff81154954 depth=0
+   <...>-80563  14d...0 262219.109233: funcgraph_exit:        func=0xffffffff81154954 calltime=0xee7ca4d8200f rettime=0xee7ca4dbeeb5 overrun=0x0 depth=0
+   <...>-80563  14d...0 262219.109233: funcgraph_entry:       func=0xffffffff81528e47 depth=0
+
+The funcgraph_exit is within the same microsecond the
+smp_apic_timer_interrupt() went off, so yes this is what delayed it.
+
+Anyway, this is run on 3.6.11-rt30, but looking at the current code, it
+doesn't look like it changed in any meaningful way. The while ((page =
+c->partial)) makes me nervous. How big can this list be? Is there a way
+to limit the amount this can run?
+
+Thanks!
+
+-- Steve
