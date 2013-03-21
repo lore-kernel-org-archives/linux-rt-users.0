@@ -1,83 +1,105 @@
-From: Sven-Thorsten Dietrich <sven@thebigcorporation.com>
-Subject: Re: Informations about Real Time Linux
-Date: Thu, 21 Mar 2013 09:55:53 -0700
-Message-ID: <0104A8C1-8CCE-4A13-9AA4-8C73BC0D254A@thebigcorporation.com>
-References: <A46EF8CF1BBB8E4B8A27B73E177C4664EA5CFD@MAIL-SINTERS-01.sinters-int.fr>
-Mime-Version: 1.0 (Mac OS X Mail 6.3 \(1503\))
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
+Date: Thu, 21 Mar 2013 11:29:37 -0700
+Message-ID: <20130321182937.GB20500@htj.dyndns.org>
+References: <cover.1363617402.git.viresh.kumar@linaro.org>
+ <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
+ <20130321001211.GC31256@htj.dyndns.org>
+ <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
+Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Younes CHALABI <y.chalabi@sinters.fr>
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, rostedt@goodmis.org,
+	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f42.google.com ([209.85.160.42]:45028 "EHLO
-	mail-pb0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753982Ab3CUQzy convert rfc822-to-8bit (ORCPT
+Received: from mail-da0-f54.google.com ([209.85.210.54]:54763 "EHLO
+	mail-da0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751003Ab3CUS3n (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Mar 2013 12:55:54 -0400
-Received: by mail-pb0-f42.google.com with SMTP id xb4so2384076pbc.15
-        for <linux-rt-users@vger.kernel.org>; Thu, 21 Mar 2013 09:55:54 -0700 (PDT)
-In-Reply-To: <A46EF8CF1BBB8E4B8A27B73E177C4664EA5CFD@MAIL-SINTERS-01.sinters-int.fr>
+	Thu, 21 Mar 2013 14:29:43 -0400
+Content-Disposition: inline
+In-Reply-To: <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hey, Viresh.
 
-You'll find some answers here
+On Thu, Mar 21, 2013 at 04:27:23PM +0530, Viresh Kumar wrote:
+> > For some reason, I've been always unsure about this patchset.  I've
+> > been thinking about it past few days and I think I now know why.
+> 
+> I knew this since the beginning and thought power numbers i showed might
+> change your view. My hard luck :)
 
-https://rt.wiki.kernel.org/index.php/Main_Page
+Heh, sorry about the trouble but, yeah, your numbers are impressive
+and no matter how this discussion turns out, we're gonna have it in
+some form, so please don't think that your numbers didn't change
+anything.  Actually, to me, it seems that identifying which workqueues
+are good candidates for conversion and determining how much powersave
+can be gained are 90% of the work.
 
-For the other stuff you might want to hire an engineer with Linux Kernel skills, and he will be able to answer most questions you have.
+> Now there are two things i am worried about.
+> 
+> A.
+> About the difference in behavior of scheduler and sched_select_non_idle_cpu().
+> Scheduler will treat this work as any normal task and can schedule it anywhere
+> based on what it feels is the right place and may still wake up an idle one for
+> load balancing.
+> 
+> In our approach, We aren't switching CPU for a work if that cpu (or system) is
+> busy enough, like in case of high IOPS for block layer. We will find that cpu as
+> busy, most of the time on such situations and so we will stay where we were.
+>
+> In case system is fairly idle, then also we stay on the same cpu.
+> The only time we migrate is when current cpu is idle but the whole system
+> isn't.
 
-Many questions you pose are too specific for the amount of information you provide. 
-Aforementioned qualified engineer should also be able to explain / answer these provided additional information.
+Yes, I actually like that part a lot although I do wish the idle check
+was inlined.
 
-Tools are a matter of preference in Linux, as are programming languages. The Linux Kernel is written in C, some assembly, and some Perl!
+What I'm wondering is whether the kinda out-of-band decision via
+sched_select_cpu() is justified given that it can and is likely to go
+through full scheduling decision anyway.  For timer, we don't have
+that, so it makes sense.  For work items, it's a bit different.
 
-Regards
+To rephrase, *if* the scheduler can't already make proper decisions
+regarding power consumption on an idlish system, maybe it can be
+improved to do so?  It could as well be that this CPU selection is
+special enough that it's just better to keep it separate as this
+patchset proposes.  This is something up to the scheduler people.
+Peter, Ingo, what do you guys think?
 
-Sven
+> B.
+> It is sort of difficult to teach users about BOUND and UNBOUND workqueues
+> and people have used them without thinking too much about them since some
+> time. We need a straightforward API to make this more transparent. And
+> queue_work_on_any_cpu() was a good candidate here. I am not talking about
+> its implementation but about the interface.
+> 
+> Though in both suggestions we need to fix user drivers one by one to use
+> queue_work_on_any_cpu() or use WQ_UNBOUND..
 
-On Mar 21, 2013, at 9:38 AM, Younes CHALABI <y.chalabi@sinters.fr> wrote:
+I don't know.  Workqueues are attribute domains and I kinda dislike
+having a completely separate set of interface for this.  Regardless of
+how the backend gets implemented, I'd really much prefer it being
+implemented as a workqueue attribute rather than another set of
+queueing interface functions.
 
-> Hello,
+> Maybe people wouldn't suffer much because of the reasons i told you earlier.
+> On a busy system we will never switch cpus.
 > 
-> Does Real Time Linux supports the i.MX27 and i.MX6 by Freescale.
-> 
-> I need this complementary informations :
-> 
-> - What is the size of RT-Linux in RAM / ROM and footprint on the platforms i.MX27 and i.MX6 ?
-> 
-> - Which are the build systems to generate the kernel on the platforms ?
-> 
-> - What about the developement tools ?
-> 
-> - Concerning the development environment : Is it command line ? workbench? and the frameworks for creating applications?
-> 
-> - What are the programming langages ?
-> 
-> - Are these drivers supported ? 
->   - Screen
->   - Touchscreen
->   - WLAN
->   - USB 2.0 / 3.0 / OTG 
->   - SPI 
->   - I2C 
->   - Ethernet (gigabit)
->   - UART 
->   - PCI Express 
->   - CAN 
->   - I/O Micro
->   - Video : LVD / HDMI / DVI 
-> 
-> - Is it compatible with multi-core ?
-> 
-> - Is it possible to interface Matlab Simulink models ?
-> 
-> - Is there tested packages for the i.MX27 and i.MX6 ?
-> 
-> Cordially
-> 
-> Younes Chalabi--
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> This static configuration might not work well with multiplatform images.
 
+Well, it doesn't have to be a compile time thing.  It can be
+dynamically switched with, say, static_branch(), but I think that's a
+minor point at this point.
+
+Thanks.
+
+-- 
+tejun
