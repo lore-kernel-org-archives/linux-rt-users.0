@@ -1,105 +1,103 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Thu, 21 Mar 2013 11:29:37 -0700
-Message-ID: <20130321182937.GB20500@htj.dyndns.org>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
- <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
- <20130321001211.GC31256@htj.dyndns.org>
- <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
+From: Frank Rowand <frank.rowand@am.sony.com>
+Subject: Re: linux-3.6.11-rt30 smoke test on ARM
+Date: Thu, 21 Mar 2013 13:26:31 -0700
+Message-ID: <514B6CF7.4030901@am.sony.com>
+References: <51396143.5060108@am.sony.com> <51396306.6090902@am.sony.com> <20130311173424.GB22286@linutronix.de> <513FCBD3.4@am.sony.com>
+Reply-To: <frank.rowand@am.sony.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
-	peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-da0-f54.google.com ([209.85.210.54]:54763 "EHLO
-	mail-da0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751003Ab3CUS3n (ORCPT
+Received: from mail-db8lp0187.outbound.messaging.microsoft.com ([213.199.154.187]:1876
+	"EHLO db8outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753007Ab3CUU0o (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Mar 2013 14:29:43 -0400
-Content-Disposition: inline
-In-Reply-To: <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
+	Thu, 21 Mar 2013 16:26:44 -0400
+In-Reply-To: <513FCBD3.4@am.sony.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey, Viresh.
-
-On Thu, Mar 21, 2013 at 04:27:23PM +0530, Viresh Kumar wrote:
-> > For some reason, I've been always unsure about this patchset.  I've
-> > been thinking about it past few days and I think I now know why.
+On 03/12/13 17:44, Frank Rowand wrote:
+> On 03/11/13 10:34, Sebastian Andrzej Siewior wrote:
+>> * Frank Rowand | 2013-03-07 20:03:18 [-0800]:
+>>
+>>> panda boot often fails due to a usb timeout, while sending a command on
+>>> behalf of the smsc95xx ethernet driver.
+>>>
+>>> This patch is a temporary hack to force a retry when the timeout occurs.
+>>
+>> It looks like you overrun the chip for some reason. Can you reproduce it
+>> on mainline? They added a few delayes on register read() it might do the
+>> trick.
 > 
-> I knew this since the beginning and thought power numbers i showed might
-> change your view. My hard luck :)
-
-Heh, sorry about the trouble but, yeah, your numbers are impressive
-and no matter how this discussion turns out, we're gonna have it in
-some form, so please don't think that your numbers didn't change
-anything.  Actually, to me, it seems that identifying which workqueues
-are good candidates for conversion and determining how much powersave
-can be gained are 90% of the work.
-
-> Now there are two things i am worried about.
+> Yes, I can reproduce it on mainline.
 > 
-> A.
-> About the difference in behavior of scheduler and sched_select_non_idle_cpu().
-> Scheduler will treat this work as any normal task and can schedule it anywhere
-> based on what it feels is the right place and may still wake up an idle one for
-> load balancing.
+> Here is the current state of my debugging:
 > 
-> In our approach, We aren't switching CPU for a work if that cpu (or system) is
-> busy enough, like in case of high IOPS for block layer. We will find that cpu as
-> busy, most of the time on such situations and so we will stay where we were.
->
-> In case system is fairly idle, then also we stay on the same cpu.
-> The only time we migrate is when current cpu is idle but the whole system
-> isn't.
-
-Yes, I actually like that part a lot although I do wish the idle check
-was inlined.
-
-What I'm wondering is whether the kinda out-of-band decision via
-sched_select_cpu() is justified given that it can and is likely to go
-through full scheduling decision anyway.  For timer, we don't have
-that, so it makes sense.  For work items, it's a bit different.
-
-To rephrase, *if* the scheduler can't already make proper decisions
-regarding power consumption on an idlish system, maybe it can be
-improved to do so?  It could as well be that this CPU selection is
-special enough that it's just better to keep it separate as this
-patchset proposes.  This is something up to the scheduler people.
-Peter, Ingo, what do you guys think?
-
-> B.
-> It is sort of difficult to teach users about BOUND and UNBOUND workqueues
-> and people have used them without thinking too much about them since some
-> time. We need a straightforward API to make this more transparent. And
-> queue_work_on_any_cpu() was a good candidate here. I am not talking about
-> its implementation but about the interface.
+> The problem usually occurs within three boot attempts.  But it has also
+> taken eight boot attempts to see the problem.  I do not know what the
+> maximum number of boots is required to see the problem, so I can not
+> state with certainty that a given kernel version does not have the
+> problem.  If the boot fails then I can state with certainty that the
+> given kernel version has the problem.
 > 
-> Though in both suggestions we need to fix user drivers one by one to use
-> queue_work_on_any_cpu() or use WQ_UNBOUND..
-
-I don't know.  Workqueues are attribute domains and I kinda dislike
-having a completely separate set of interface for this.  Regardless of
-how the backend gets implemented, I'd really much prefer it being
-implemented as a workqueue attribute rather than another set of
-queueing interface functions.
-
-> Maybe people wouldn't suffer much because of the reasons i told you earlier.
-> On a busy system we will never switch cpus.
+> Given that level of uncertainty, I know:
 > 
-> This static configuration might not work well with multiplatform images.
+>   v3.5      does not appear to have the problem
+>   v3.6-rc1  has the problem
+>   v3.6      has the problem
+>   v3.7      has the problem
+>   v3.8      does not appear to have the problem
+>   v3.9-rc1  fails to build
+> 
+> I thought I had bisected the problem to a specific commit, but wanting
+> to be sure of it, I did extra boots of what should have been the last
+> good commit.  On the 7th boot, that kernel version had the problem.
+> 
+> I'll probably redo the bisect, but have not had time to do so yet.
 
-Well, it doesn't have to be a compile time thing.  It can be
-dynamically switched with, say, static_branch(), but I think that's a
-minor point at this point.
+I did the bisect again, with more boot tests per bisect point, and found
+the commit to blame.  Hopefully the problem will be resolved in the
+thread where I report the bisect:
 
-Thanks.
+   https://lkml.org/lkml/2013/3/20/742
 
--- 
-tejun
+
+> 
+> The problem manifests as a timeout from at least two different locations
+> in drivers/net/usb/smsc95xx.c:
+> 
+> 
+>  656 static int smsc95xx_set_mac_address(struct usbnet *dev)
+>  657 {
+>  ...
+>  663         ret = smsc95xx_write_reg(dev, ADDRL, addr_lo);
+>  664         if (ret < 0) {
+>  665                 netdev_warn(dev->net, "Failed to write ADDRL: %d\n", ret);
+>  666                 return ret;
+>  667         }
+> 
+> 
+> 751 static int smsc95xx_reset(struct usbnet *dev)
+>  752 {
+>  ...
+>  783         write_buf = PM_CTL_PHY_RST_;
+>  784         ret = smsc95xx_write_reg(dev, PM_CTRL, write_buf);
+>  785         if (ret < 0) {
+>  786                 netdev_warn(dev->net, "Failed to write PM_CTRL: %d\n", ret);
+>  787                 return ret;
+>  788         }
+> 
+> 
+> Some of the other smsc95xx_write_reg() calls in smsc95xx_reset() are protected with
+> checks for timeout, with up to 100 retries.  I do not know if this one should have
+> the same protection.
+> 
+> -Frank
+
+
