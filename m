@@ -1,55 +1,72 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
- unfreeze_partials() code.
-Date: Fri, 22 Mar 2013 15:41:58 +0000
-Message-ID: <0000013d92c37ff3-5fb85400-bec1-4eda-8ba1-332566884c59-000000@email.amazonses.com>
-References: <1363906545.6345.81.camel@gandalf.local.home>
+From: Chris Ball <cjb@laptop.org>
+Subject: Re: [PATCH V3 5/7] mmc: queue work on any cpu
+Date: Fri, 22 Mar 2013 13:09:13 -0400
+Message-ID: <87sj3nl5ty.fsf@octavius.laptop.org>
+References: <cover.1363617402.git.viresh.kumar@linaro.org>
+	<08070dbf56439c84b8c25837c2049ff8e8eafd6e.1363617402.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1363906545.6345.81.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
+	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
+	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org,
+	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-mmc@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-mmc-owner@vger.kernel.org>
+In-Reply-To: <08070dbf56439c84b8c25837c2049ff8e8eafd6e.1363617402.git.viresh.kumar@linaro.org>
+	(Viresh Kumar's message of "Mon, 18 Mar 2013 20:53:27 +0530")
+Sender: linux-mmc-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 21 Mar 2013, Steven Rostedt wrote:
+Hi,
 
-> The ffffffff8115517a is just before put_cpu_partial() which calls
-> unfreeze_partials() with irqs disabled. So I started tracing again, this
-> time with:
-
-Hmmm... That is strange. unfreeze_partials should be rather fast.
-
-> It ran for 249.51 microseconds!!! With interrupts disabled! This was
-> what caused the interrupt to go off late. I have no idea why adding
-> tracing makes this latency go away. Perhaps it changes the timings just
-> enough to not let things line up?
+On Mon, Mar 18 2013, Viresh Kumar wrote:
+> mmc uses workqueues for running mmc_rescan(). There is no real dependency of
+> scheduling these on the cpu which scheduled them.
 >
-> I did a report with '-R' and showing the raw events, which will show the
-> exit part of the function graph we have:
+> On a idle system, it is observed that and idle cpu wakes up many times just to
+> service this work. It would be better if we can schedule it on a cpu which isn't
+> idle to save on power.
 >
->    <...>-80563  14d...0 262219.108982: funcgraph_entry:       func=0xffffffff81154954 depth=0
->    <...>-80563  14d...0 262219.109233: funcgraph_exit:        func=0xffffffff81154954 calltime=0xee7ca4d8200f rettime=0xee7ca4dbeeb5 overrun=0x0 depth=0
->    <...>-80563  14d...0 262219.109233: funcgraph_entry:       func=0xffffffff81528e47 depth=0
+> By idle cpu (from scheduler's perspective) we mean:
+> - Current task is idle task
+> - nr_running == 0
+> - wake_list is empty
 >
-> The funcgraph_exit is within the same microsecond the
-> smp_apic_timer_interrupt() went off, so yes this is what delayed it.
+> This patch replaces the queue_delayed_work() with
+> queue_delayed_work_on_any_cpu() siblings.
 >
-> Anyway, this is run on 3.6.11-rt30, but looking at the current code, it
-> doesn't look like it changed in any meaningful way. The while ((page =
-> c->partial)) makes me nervous. How big can this list be? Is there a way
-> to limit the amount this can run?
+> This routine would look for the closest (via scheduling domains) non-idle cpu
+> (non-idle from schedulers perspective). If the current cpu is not idle or all
+> cpus are idle, work will be scheduled on local cpu.
+>
+> Cc: Chris Ball <cjb@laptop.org>
+> Cc: linux-mmc@vger.kernel.org
+> Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+> ---
+>  drivers/mmc/core/core.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/drivers/mmc/core/core.c b/drivers/mmc/core/core.c
+> index 9290bb5..adf331a 100644
+> --- a/drivers/mmc/core/core.c
+> +++ b/drivers/mmc/core/core.c
+> @@ -85,7 +85,7 @@ MODULE_PARM_DESC(
+>  static int mmc_schedule_delayed_work(struct delayed_work *work,
+>  				     unsigned long delay)
+>  {
+> -	return queue_delayed_work(workqueue, work, delay);
+> +	return queue_delayed_work_on_any_cpu(workqueue, work, delay);
+>  }
+>  
+>  /*
 
-The control is via the cpu_partial field in /sys/kernel/slab/<cache>/
+Thanks, pushed to mmc-next for 3.10.
 
-There is also slabs_cpu_partial which gives a view as to how many objects
-are cached in each per cpu structure. Do a cat
-
-/sys/kernel/*/slabs_cpu_partial to get a view of what the situation is.
-Any abnormally high numbers?
-
-The default for the number of per cpu partial objects should be 30 or so.
+- Chris.
+-- 
+Chris Ball   <cjb@laptop.org>   <http://printf.net/>
+One Laptop Per Child
