@@ -1,58 +1,76 @@
-From: Chris Ball <cjb@laptop.org>
-Subject: Re: [PATCH V3 5/7] mmc: queue work on any cpu
-Date: Fri, 22 Mar 2013 13:30:32 -0400
-Message-ID: <87r4j7jq9z.fsf@octavius.laptop.org>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
-	<08070dbf56439c84b8c25837c2049ff8e8eafd6e.1363617402.git.viresh.kumar@linaro.org>
-	<87vc8jjqhc.fsf@octavius.laptop.org>
-	<CAKohpomqkYeMgvTpjrUjGs3md=vzguW5Ae6Snf4hzsqtQxNDOw@mail.gmail.com>
+From: Oliver Nittka <oly@nittka.com>
+Subject: Beginner's questions on userspace latency
+Date: Fri, 22 Mar 2013 20:35:33 +0100
+Message-ID: <514CB285.4050100@nittka.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
-	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-mmc@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAKohpomqkYeMgvTpjrUjGs3md=vzguW5Ae6Snf4hzsqtQxNDOw@mail.gmail.com>
-	(Viresh Kumar's message of "Fri, 22 Mar 2013 22:57:49 +0530")
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mailout04.t-online.de ([194.25.134.18]:60558 "EHLO
+	mailout04.t-online.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754853Ab3CVTwL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Mar 2013 15:52:11 -0400
+Received: from [192.168.178.10] (angrenost.nittka.com [192.168.178.10])
+	by smtp.nittka.com (Postfix) with ESMTPA id 4DBB89C0045
+	for <linux-rt-users@vger.kernel.org>; Fri, 22 Mar 2013 20:35:32 +0100 (CET)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello,
 
-On Fri, Mar 22 2013, Viresh Kumar wrote:
-> On 22 March 2013 22:56, Chris Ball <cjb@laptop.org> wrote:
->> On Mon, Mar 18 2013, Viresh Kumar wrote:
->>
->> /home/cjb/git/mmc/drivers/mmc/core/core.c: In function
->> =E2=80=98mmc_schedule_delayed_work=E2=80=99:
->> /home/cjb/git/mmc/drivers/mmc/core/core.c:88:2: error: implicit
->> declaration of function =E2=80=98queue_delayed_work_on_any_cpu=E2=80=
-=99
->> [-Werror=3Dimplicit-function-declaration]
->>
->> I've dropped this patch for now.  This function doesn't seem to be
->> defined in linux-next either.
->
-> Hi chris,
->
-> This patch was part of a bigger patchset which also adds this API. I
-> don't want you to
-> apply this one but just Ack here. Probably Tejun or some scheduler
-> maintainer will
-> apply it later (if they like all patches).
+I need to get data from a data acquisition board into user space at
+least every 2 milliseconds.
 
-Thanks, makes sense.  For [5/7]:
+My setup: There's a kernel module that gets measurement data from a data
+acquisition board via USB. We're talking about 6 channels @ 100kHz each,
+so 512 bytes every 500us. Kernel timing is fine, I checked this using
+get_cycles() and computing the delta to the previous urb callback.
 
-Acked-by: Chris Ball <cjb@laptop.org>
+The kernel module puts the data into a ring buffer which the user space
+application accesses via mmap() (using remap_vmalloc_range()) which i
+suppose has better timing compared to copy_to_user()?
 
-- Chris.
---=20
-Chris Ball   <cjb@laptop.org>   <http://printf.net/>
-One Laptop Per Child
+Now the user space application needs to be notified at least every 2
+milliseconds (so it can evaluate the data and trigger an action in due
+time). Currently, I'm using an ioctl which calls
+wait_event_interruptible(), the module then wakes up the waitq in its
+urb_callback using wake_up_interruptible().
+
+To minimize latency in user space, the application does the following
+right at the beginning of its main():
+
+  mlockall(MCL_FUTURE);
+
+  schparm.sched_priority = 99;
+  sched_setscheduler(0, SCHED_FIFO, &schparm);
+
+  CPU_SET(1, &cpuset);
+  sched_setaffinity(0, sizeof(cpuset), &cpuset);
+
+I'm using a vanilla kernel 2.6.33.9 with patch-2.6.33.9-rt31.
+
+I've also tuned the scheduler using
+echo 500000 > /proc/sys/kernel/sched_latency_ns
+echo 200000 > /proc/sys/kernel/sched_wakeup_granularity_ns
+echo 100000 > /proc/sys/kernel/sched_min_granularity_ns
+
+The timing is fine most of the time, but putting the system under heavy
+CPU and USB load leads to occasional glitches where the time between two
+ioctl calls can be as high as 50ms.
+
+I'm an experienced developer on linux, but mostly on the application
+front. Writing the device driver was as close to the hardware as I ever
+got, yet ;-)
+
+I read through the RT wiki, but I'm still unsure on how to proceed from
+here. Is there any way to determine what's causing the glitches?
+Anything I could do to improve the realtime behavior of my application?
+
+Thank you all very much in advance!
+
+O. Nittka
+
+
+
