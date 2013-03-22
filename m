@@ -1,32 +1,37 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Tim Sander <tstone@krieglstein.org>
 Subject: Re: Beginner's questions on userspace latency
-Date: Fri, 22 Mar 2013 21:23:06 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303222121100.22263@ionos>
+Date: Fri, 22 Mar 2013 21:21:51 +0100
+Message-ID: <2181419.yCSEbLiqDZ@virgo>
 References: <514CB285.4050100@nittka.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Oliver Nittka <oly@nittka.com>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+To: Oliver Nittka <oly@nittka.com>, RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38624 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1422768Ab3CVUXJ (ORCPT
+Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:43724
+	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1422904Ab3CVUac (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Mar 2013 16:23:09 -0400
+	Fri, 22 Mar 2013 16:30:32 -0400
 In-Reply-To: <514CB285.4050100@nittka.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 22 Mar 2013, Oliver Nittka wrote:
-> The timing is fine most of the time, but putting the system under heavy
-> CPU and USB load leads to occasional glitches where the time between two
-> ioctl calls can be as high as 50ms.
+Hi Oliver
+> I read through the RT wiki, but I'm still unsure on how to proceed from
+> here. Is there any way to determine what's causing the glitches?
+> Anything I could do to improve the realtime behavior of my application?
+Realtime has a lot to do with your computing hardware + the drivers. The worst 
+driver determines your max latency. As you have not told on what hardware you 
+are running it is hard to give some hints... other than do latency tracing if 
+your hw is powerful enough. Also you might look at the nice latency charts 
+from osadl.org. Find a similar system to yours and look at the  worst 
+latencies recorded.
 
-The kernel tracer is your friend. Enable the kernel function tracer
-and add a check into your application which detects the issue and then
-stops the trace. See the cyclictest source code for an example how to
-do that.
+Also keep in mind that latency tracing needs some time. There are some 
+recordings of talks available for example of Frank Rowand about latency 
+tracing but they are probably a little bit dated as the don't acount to much 
+for the much improved latency tracing infrastructure within the kernel.
 
-Thanks,
-
-	tglx
+Good luck
+Tim
