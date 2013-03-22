@@ -1,37 +1,31 @@
-From: Tim Sander <tstone@krieglstein.org>
-Subject: Re: Beginner's questions on userspace latency
-Date: Fri, 22 Mar 2013 21:21:51 +0100
-Message-ID: <2181419.yCSEbLiqDZ@virgo>
-References: <514CB285.4050100@nittka.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Page faults with 3.6.11-rt30 but not with 3.6.11-rt25
+Date: Fri, 22 Mar 2013 21:48:49 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1303222148140.22263@ionos>
+References: <F9467A784CC48947B1D879F07370839E0EBD79BD@fe20099s.ecn.etasgroup.com> <1363963600.6345.102.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-To: Oliver Nittka <oly@nittka.com>, RT <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:43724
-	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1422904Ab3CVUac (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:38748 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1422911Ab3CVUsw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Mar 2013 16:30:32 -0400
-In-Reply-To: <514CB285.4050100@nittka.com>
+	Fri, 22 Mar 2013 16:48:52 -0400
+In-Reply-To: <1363963600.6345.102.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Oliver
-> I read through the RT wiki, but I'm still unsure on how to proceed from
-> here. Is there any way to determine what's causing the glitches?
-> Anything I could do to improve the realtime behavior of my application?
-Realtime has a lot to do with your computing hardware + the drivers. The worst 
-driver determines your max latency. As you have not told on what hardware you 
-are running it is hard to give some hints... other than do latency tracing if 
-your hw is powerful enough. Also you might look at the nice latency charts 
-from osadl.org. Find a similar system to yours and look at the  worst 
-latencies recorded.
+On Fri, 22 Mar 2013, Steven Rostedt wrote:
+> On Fri, 2013-03-22 at 09:46 +0000, Koehrer Mathias (ETAS/ESS2) wrote:
+> Doing a diff between the two kernels, it looks like there was a bit of
+> work on highmem (the stuff that lets you use more than 1 Gig of memory
+> on a 32 bit system). I haven't looked too deep at the bug, but if you
+> apply the following patch, do you get a stable system again?
+> 
+> (this is a revert of "highmem: Store ptes right away in the task
+> struct")
 
-Also keep in mind that latency tracing needs some time. There are some 
-recordings of talks available for example of Frank Rowand about latency 
-tracing but they are probably a little bit dated as the don't acount to much 
-for the much improved latency tracing infrastructure within the kernel.
-
-Good luck
-Tim
+I'm about to release an 3.6 update which fixes that.
