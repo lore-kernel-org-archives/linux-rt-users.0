@@ -1,56 +1,55 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V3 6/7] block: queue work on any cpu
-Date: Fri, 22 Mar 2013 09:05:19 -0600
-Message-ID: <20130322150519.GJ25978@kernel.dk>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
- <9aa157216e60de7d245128d42fb896918184ae8c.1363617402.git.viresh.kumar@linaro.org>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Fri, 22 Mar 2013 15:41:58 +0000
+Message-ID: <0000013d92c37ff3-5fb85400-bec1-4eda-8ba1-332566884c59-000000@email.amazonses.com>
+References: <1363906545.6345.81.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	tj@kernel.org, suresh.b.siddha@intel.com, venki@google.com,
-	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <9aa157216e60de7d245128d42fb896918184ae8c.1363617402.git.viresh.kumar@linaro.org>
+In-Reply-To: <1363906545.6345.81.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Mar 18 2013, Viresh Kumar wrote:
-> block layer uses workqueues for multiple purposes. There is no real dependency
-> of scheduling these on the cpu which scheduled them.
-> 
-> On a idle system, it is observed that and idle cpu wakes up many times just to
-> service this work. It would be better if we can schedule it on a cpu which isn't
-> idle to save on power.
-> 
-> By idle cpu (from scheduler's perspective) we mean:
-> - Current task is idle task
-> - nr_running == 0
-> - wake_list is empty
-> 
-> This patch replaces schedule_work() and queue_[delayed_]work() with
-> queue_[delayed_]work_on_any_cpu() siblings.
-> 
-> These routines would look for the closest (via scheduling domains) non-idle cpu
-> (non-idle from schedulers perspective). If the current cpu is not idle or all
-> cpus are idle, work will be scheduled on local cpu.
+On Thu, 21 Mar 2013, Steven Rostedt wrote:
 
-What are the performance implications of this? From that perspective,
-scheduling on a local core is the better choice. Hopefully it's already
-running on the local socket of the device, keeping it on that node would
-be preferable.
+> The ffffffff8115517a is just before put_cpu_partial() which calls
+> unfreeze_partials() with irqs disabled. So I started tracing again, this
+> time with:
 
-For the delayed functions, the timer is typically added on the current
-CPU. It's hard to know what the state of idleness of CPUs would be when
-the delay has expired. How are you handling this?
+Hmmm... That is strange. unfreeze_partials should be rather fast.
 
-I can see the win from a power consumption point of view, but it quickly
-gets a little more complicated than that.
+> It ran for 249.51 microseconds!!! With interrupts disabled! This was
+> what caused the interrupt to go off late. I have no idea why adding
+> tracing makes this latency go away. Perhaps it changes the timings just
+> enough to not let things line up?
+>
+> I did a report with '-R' and showing the raw events, which will show the
+> exit part of the function graph we have:
+>
+>    <...>-80563  14d...0 262219.108982: funcgraph_entry:       func=0xffffffff81154954 depth=0
+>    <...>-80563  14d...0 262219.109233: funcgraph_exit:        func=0xffffffff81154954 calltime=0xee7ca4d8200f rettime=0xee7ca4dbeeb5 overrun=0x0 depth=0
+>    <...>-80563  14d...0 262219.109233: funcgraph_entry:       func=0xffffffff81528e47 depth=0
+>
+> The funcgraph_exit is within the same microsecond the
+> smp_apic_timer_interrupt() went off, so yes this is what delayed it.
+>
+> Anyway, this is run on 3.6.11-rt30, but looking at the current code, it
+> doesn't look like it changed in any meaningful way. The while ((page =
+> c->partial)) makes me nervous. How big can this list be? Is there a way
+> to limit the amount this can run?
 
--- 
-Jens Axboe
+The control is via the cpu_partial field in /sys/kernel/slab/<cache>/
+
+There is also slabs_cpu_partial which gives a view as to how many objects
+are cached in each per cpu structure. Do a cat
+
+/sys/kernel/*/slabs_cpu_partial to get a view of what the situation is.
+Any abnormally high numbers?
+
+The default for the number of per cpu partial objects should be 30 or so.
