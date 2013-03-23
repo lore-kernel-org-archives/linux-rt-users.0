@@ -1,72 +1,88 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V3 6/7] block: queue work on any cpu
-Date: Sat, 23 Mar 2013 12:14:44 +0530
-Message-ID: <CAKohpon7SD666o=7sH9QpOt2dbiU2Jy1OE8E__y3+=Q-o33Xnw@mail.gmail.com>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
-	<9aa157216e60de7d245128d42fb896918184ae8c.1363617402.git.viresh.kumar@linaro.org>
-	<20130322150519.GJ25978@kernel.dk>
+From: Gregoire Gentil <gregoire@gentil.com>
+Subject: cpufreq + PREEMPT_RT_FULL give bad context sleeping BUG
+Date: Sat, 23 Mar 2013 10:17:51 -0700
+Message-ID: <514DE3BF.5010800@gentil.com>
+References: <alpine.LFD.2.02.1303222301010.22263@ionos> <20130323013003.GU11538@uudg.org>
+Reply-To: gregoire@gentil.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	tj@kernel.org, Ingo Molnar <mingo@redhat.com>,
-	peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Jens Axboe <axboe@kernel.dk>
+Content-Type: text/plain; charset=ISO-8859-1;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f46.google.com ([209.85.219.46]:51832 "EHLO
-	mail-oa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750755Ab3CWGop (ORCPT
+Received: from mx1.polytechnique.org ([129.104.30.34]:35592 "EHLO
+	mx1.polytechnique.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751655Ab3CWRYz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Mar 2013 02:44:45 -0400
-Received: by mail-oa0-f46.google.com with SMTP id k1so5047907oag.33
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 Mar 2013 23:44:45 -0700 (PDT)
-In-Reply-To: <20130322150519.GJ25978@kernel.dk>
+	Sat, 23 Mar 2013 13:24:55 -0400
+Received: from [192.168.10.2] (c-50-148-150-5.hsd1.ca.comcast.net [50.148.150.5])
+	(using TLSv1 with cipher DHE-RSA-AES256-SHA (256/256 bits))
+	(No client certificate requested)
+	by ssl.polytechnique.org (Postfix) with ESMTPSA id D6714140C56C0
+	for <linux-rt-users@vger.kernel.org>; Sat, 23 Mar 2013 18:17:53 +0100 (CET)
+In-Reply-To: <20130323013003.GU11538@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 22 March 2013 20:35, Jens Axboe <axboe@kernel.dk> wrote:
+Hello,
 
-Hi Jens,
+On OMAP + 3.4 + rt patches with CONFIG_PREEMPT_RT_FULL=20
+CONFIG_CPU_FREQ_GOV_ONDEMAND, I get a lot of those cpufreq-related bugs=
+:
 
-First of all, please have a look at:
+http://pastebin.com/csy9y3xk
 
-1. https://lkml.org/lkml/2013/3/18/364
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:=
+646
+in_atomic(): 1, irqs_disabled(): 128, pid: 1089, name: kworker/0:2
+INFO: lockdep is turned off.
+irq event stamp: 0
+hardirqs last enabled at (0): [< (null)>] (null)
+hardirqs last disabled at (0): [<c0043f3c>] copy_process+0x498/0x11c0
+softirqs last enabled at (0): [<c0043f3c>] copy_process+0x498/0x11c0
+softirqs last disabled at (0): [< (null)>] (null)
+(unwind_backtrace+0x0/0xf0) from (dump_stack+0x20/0x24)
+(dump_stack+0x20/0x24) from (__might_sleep+0x124/0x144)
+(__might_sleep+0x124/0x144) from (rt_spin_lock+0x30/0x64)
+(rt_spin_lock+0x30/0x64) from (clk_get_rate+0x30/0x54)
+(clk_get_rate+0x30/0x54) from (twd_update_frequency+0x20/0x58)
+(twd_update_frequency+0x20/0x58) from (smp_call_function_single+0xd0/0x=
+1c4)
+(smp_call_function_single+0xd0/0x1c4) from=20
+(twd_cpufreq_transition+0x34/0x40)
+(twd_cpufreq_transition+0x34/0x40) from (notifier_call_chain+0x48/0x78)
+(notifier_call_chain+0x48/0x78) from (__srcu_notifier_call_chain+0x80/0=
+xb8)
+(__srcu_notifier_call_chain+0x80/0xb8) from=20
+(srcu_notifier_call_chain+0x28/0x30)
+(srcu_notifier_call_chain+0x28/0x30) from=20
+(cpufreq_notify_transition+0x1c8/0x200)
+(cpufreq_notify_transition+0x1c8/0x200) from (omap_cpufreq_scale+0xec/0=
+x12c)
+(omap_cpufreq_scale+0xec/0x12c) from (omap_target+0x8c/0xb4)
+(omap_target+0x8c/0xb4) from (__cpufreq_driver_target+0x74/0x8c)
+(__cpufreq_driver_target+0x74/0x8c) from (do_dbs_timer+0x39c/0x454)
+(do_dbs_timer+0x39c/0x454) from (process_one_work+0x2ec/0x50c)
+(process_one_work+0x2ec/0x50c) from (worker_thread+0x1c4/0x2c8)
+(worker_thread+0x1c4/0x2c8) from (kthread+0x98/0xa4)
+(kthread+0x98/0xa4) from (kernel_thread_exit+0x0/0x8)
 
-This is cover-letter of my mail where i have shown power savings achieved
-with this patchset.
+Any idea what I should do to fix this problem?
 
-2. https://lkml.org/lkml/2013/3/21/172
+Gr=E9goire
 
-This is the link for discussion i had with Tejun which answers some of these
-questions.
+PS: Here is some related code:
 
-> What are the performance implications of this? From that perspective,
-> scheduling on a local core is the better choice. Hopefully it's already
-> running on the local socket of the device, keeping it on that node would
-> be preferable.
+http://dev.omapzoom.org/?p=3Dintegration/kernel-ubuntu.git;a=3Dblob;f=3D=
+arch/arm/mach-omap2/omap2plus-cpufreq.c;h=3Dc60eb61a60fb524ac9eb3a4bcbb=
+13bfa9d96e76f;hb=3D3e1c9f139425663ceee48f92e8d3f23158580334
 
-If the local cpu is busy or all cpus are idle then we don't migrate, and so
-for performance shouldn't be affected with it.
+http://dev.omapzoom.org/?p=3Dintegration/kernel-ubuntu.git;a=3Dblob;f=3D=
+arch/arm/plat-omap/clock.c;h=3D8c0e8fe2c5c51673e41e4304194d922dbfaedf38=
+;hb=3D3e1c9f139425663ceee48f92e8d3f23158580334
 
-> For the delayed functions, the timer is typically added on the current
-> CPU.
-
-This is the code that executes here:
-
-	if (unlikely(cpu != WORK_CPU_UNBOUND))
-		add_timer_on(timer, cpu);
-	else
-		add_timer(timer);
-
-Clearly for queue_delayed_work() call we don't use local cpu but we use
-the same sched_select_non_idle_cpu() routine to give us the right cpu.
-
-> It's hard to know what the state of idleness of CPUs would be when
-> the delay has expired. How are you handling this?
-
-Correct, and we are not deciding that right now, but when the timer expires.
-
-Thanks for your feedback.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
