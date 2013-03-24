@@ -1,107 +1,38 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: [ANNOUNCE] 3.8.4-rt1
-Date: Sat, 23 Mar 2013 22:15:53 -0300
-Message-ID: <20130324011553.GA3184@uudg.org>
-References: <alpine.LFD.2.02.1303222301010.22263@ionos>
- <20130323013003.GU11538@uudg.org>
- <20130323183827.GA31738@linutronix.de>
+From: Oliver Nittka <oly@nittka.com>
+Subject: Re: Beginner's questions on userspace latency
+Date: Sun, 24 Mar 2013 21:09:47 +0100
+Message-ID: <514F5D8B.7070706@nittka.com>
+References: <514CB285.4050100@nittka.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 7bit
+Cc: Staffan Tjernstrom <stjernstrom@eagleseven.com>,
+	tstone@krieglstein.org, tglx@linutronix.de
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-gg0-f171.google.com ([209.85.161.171]:52010 "EHLO
-	mail-gg0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752576Ab3CXBQA (ORCPT
+Received: from mailout10.t-online.de ([194.25.134.21]:41739 "EHLO
+	mailout10.t-online.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754709Ab3CXUKE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Mar 2013 21:16:00 -0400
-Received: by mail-gg0-f171.google.com with SMTP id j1so274087ggn.2
-        for <linux-rt-users@vger.kernel.org>; Sat, 23 Mar 2013 18:15:59 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20130323183827.GA31738@linutronix.de>
+	Sun, 24 Mar 2013 16:10:04 -0400
+In-Reply-To: <514CB285.4050100@nittka.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, Mar 23, 2013 at 07:38:27PM +0100, Sebastian Andrzej Siewior wro=
-te:
-| * Luis Claudio R. Goncalves | 2013-03-22 22:30:03 [-0300]:
-|=20
-| What about this:
-|=20
-| diff --git a/drivers/gpu/drm/i915/i915_gem.c b/drivers/gpu/drm/i915/i=
-915_gem.c
-| index de45b60..9b51712 100644
-| --- a/drivers/gpu/drm/i915/i915_gem.c
-| +++ b/drivers/gpu/drm/i915/i915_gem.c
-| @@ -91,7 +91,6 @@ i915_gem_wait_for_error(struct drm_device *dev)
-|  {
-|  	struct drm_i915_private *dev_priv =3D dev->dev_private;
-|  	struct completion *x =3D &dev_priv->error_completion;
-| -	unsigned long flags;
-|  	int ret;
-| =20
-|  	if (!atomic_read(&dev_priv->mm.wedged))
-| @@ -116,9 +115,7 @@ i915_gem_wait_for_error(struct drm_device *dev)
-|  		 * end up waiting upon a subsequent completion event that
-|  		 * will never happen.
-|  		 */
-| -		spin_lock_irqsave(&x->wait.lock, flags);
-| -		x->done++;
-| -		spin_unlock_irqrestore(&x->wait.lock, flags);
-| +		complete(x);
-|  	}
-|  	return 0;
-|  }
-| @@ -946,12 +943,9 @@ i915_gem_check_wedge(struct drm_i915_private *de=
-v_priv,
-|  	if (atomic_read(&dev_priv->mm.wedged)) {
-|  		struct completion *x =3D &dev_priv->error_completion;
-|  		bool recovery_complete;
-| -		unsigned long flags;
-| =20
-|  		/* Give the error handler a chance to run. */
-| -		spin_lock_irqsave(&x->wait.lock, flags);
-| -		recovery_complete =3D x->done > 0;
-| -		spin_unlock_irqrestore(&x->wait.lock, flags);
-| +		recovery_complete =3D completion_done(x);
-| =20
-|  		/* Non-interruptible callers can't handle -EAGAIN, hence return
-|  		 * -EIO unconditionally for these. */
+Thank you all very much for your insights!
 
-Good catch. The resulting code is cleaner. I took the simplest approach=
- while
-trying to fix the issue, but your solution is more elegant.
+I was experimenting some more on the weekend, and before I could
+investigate everything I learned from you, CPU isolation did the trick
+for me (using cset just like shown in the wiki).
 
-| @@ -4366,7 +4360,7 @@ static bool mutex_is_locked_by(struct mutex *mu=
-tex, struct task_struct *task)
-|  	if (!mutex_is_locked(mutex))
-|  		return false;
-| =20
-| -#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_MUTEXES)
-| +#if (defined(CONFIG_SMP) || defined(CONFIG_DEBUG_MUTEXES)) && !defin=
-ed(CONFIG_PREEMPT_RT_BASE)
-|  	return mutex->owner =3D=3D task;
-|  #else
-|  	/* Since UP may be pre-empted, we cannot assume that we own the loc=
-k */
+I originally thought sched_setaffinity() would suffice, but giving the
+application its own CPU helped a lot. Didn't get anything over 1.735 ms
+for two days now.
 
-I was trying to keep the behavior of CONFIG_DEBUG_MUTEXES, but we do ha=
-ve
-the RT counterpart, CONFIG_DEBUG_RT_MUTEXES. So, yours is probably the
-right one.
+FYI: this is running on a Kontron pITX-SP
+http://de.kontron.com/products/boards+and+mezzanines/embedded+sbc/pitx+25+sbc/pitxsp.html.
 
-| I'm not very happy with the complete() here, I am not sure what kind =
-of
-| problem they try to solve here=E2=80=A6
+Thanks again!
 
-I was looking at the code and IMHO it seems to fit there perfectly.
+  -- o
 
-Cheers,
-Luis
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
