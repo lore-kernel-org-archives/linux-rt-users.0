@@ -1,39 +1,144 @@
 From: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>
-Subject: Re: Page faults with 3.6.11-rt30 but not with 3.6.11-rt25
-Date: Mon, 25 Mar 2013 09:24:06 +0000
-Message-ID: <F9467A784CC48947B1D879F07370839E0EBE9940@fe20099s.ecn.etasgroup.com>
+Subject: Question on RCU_BOOST option
+Date: Mon, 25 Mar 2013 10:35:16 +0000
+Message-ID: <F9467A784CC48947B1D879F07370839E0EBE9986@fe20099s.ecn.etasgroup.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imta22.fe.bosch.de ([139.15.243.26]:62026 "EHLO
-	imta22.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755522Ab3CYJed convert rfc822-to-8bit (ORCPT
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:64037 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756169Ab3CYKfb convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Mar 2013 05:34:33 -0400
-Received: from smtp6-v.fe.bosch.de (imta24.fe.bosch.de [139.15.243.27])
-	by imta22.fe.bosch.de (Postfix) with ESMTP id 1AC928400E0
-	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2013 10:24:58 +0100 (CET)
+	Mon, 25 Mar 2013 06:35:31 -0400
+Received: from vsmta14.fe.internet.bosch.com (unknown [10.4.98.54])
+	by imta24.fe.bosch.de (Postfix) with ESMTP id 06069D80002
+	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2013 11:35:30 +0100 (CET)
+Received: from localhost (vsgw4.fe.internet.bosch.com [10.4.98.12])
+	by vsmta14.fe.internet.bosch.com (Postfix) with SMTP id E5EC0A40822
+	for <linux-rt-users@vger.kernel.org>; Mon, 25 Mar 2013 11:35:29 +0100 (CET)
 Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas, 
+Hi all,
 
-> > Doing a diff between the two kernels, it looks like there was a bit of
-> > work on highmem (the stuff that lets you use more than 1 Gig of memory
-> > on a 32 bit system). I haven't looked too deep at the bug, but if you
-> > apply the following patch, do you get a stable system again?
-> >
-> > (this is a revert of "highmem: Store ptes right away in the task
-> > struct")
-> 
-> I'm about to release an 3.6 update which fixes that.
-The patch 3.6.11-rt31 has fixed it. No issue anymore.
+my x86 PC (32bit, Intel core i7,  8 cores)  is started with "isolcpus=1-15".
+Kernel: 3.6.11-rt31
 
-Thanks a lot
+I have an  application having a real time thread bound to one CPU core (core 2).
+This threads runs in an endless loop with real time priority (prio 80).
+This leads to RCU stalls after a while. 
+I was now looking at the RCU_BOOST feature to see if this is a way to get rid of the RCU stalls.
+My understanding is now, if I enable RCU_BOOST, set the RCU_BOOST_PRIO to "97" this should avoid the issue with the RCU stalls.
+However, this works not as I expected.
+Please see the following test-application,
+--------- BEGIN CODE ---------
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <string.h>
+#include <pthread.h>
+#include <unistd.h>
+#include <math.h>
+#include <sys/time.h>
+
+volatile int end=0;
+
+int set_rt_prio_and_core(int prio, int core)
+{
+    {
+        int rc;
+        struct sched_param param;
+        memset(&param, 0, sizeof(param));
+        param.sched_priority = prio;
+        rc = sched_setscheduler(0, SCHED_FIFO, &param);
+        if (rc)
+        {
+            perror("sched_setscheduler");
+        }
+    }
+    {
+        int rc;
+        cpu_set_t mask;
+        CPU_ZERO(&mask);
+        CPU_SET(core, &mask);
+        rc = sched_setaffinity(0, sizeof(mask), &mask);
+        if (rc)
+        {
+            perror("sched_setaffinity");
+        }
+    }
+    return 0;
+}
+
+void *thread_func(void *arg)
+{
+    int i;
+    volatile double f = 0.0;
+    set_rt_prio_and_core(80,2);
+
+    for (i=0; !end; i++)
+    {
+        f = f + sin(2.3*i); // Some dummy load...
+    }
+    return NULL;
+}
+
+int main(void)
+{
+    pthread_t thr;
+
+    pthread_create(&thr, NULL, thread_func, NULL);
+    sleep(1000);
+    end = 1;
+    pthread_join(thr, NULL);
+    return 0;
+}
+--------- END CODE ---------
+
+When I start this application it runs as expected with roughly 100% CPU load on this thread.
+However after one minute, I got the following dmesg:
+
+-------- BEGIN DMESG ---------
+INFO: rcu_preempt self-detected stall on CPU { 2}  (t=6000 jiffies)
+Pid: 5312, comm: full-load Not tainted 3.6.11-rt31-1 #2
+Call Trace:
+ [<c106e298>] rcu_check_callbacks+0x150/0x4a5
+ [<c1032a1e>] update_process_times+0x37/0x43
+ [<c10585cb>] tick_sched_timer+0x19f/0x1d0
+ [<c104232e>] __run_hrtimer+0xf6/0x1e4
+ [<c105842c>] ? tick_init_highres+0x14/0x14
+ [<c1042f49>] hrtimer_interrupt+0x1c6/0x34f
+ [<c101a92a>] smp_apic_timer_interrupt+0x6c/0x7f
+ [<c13a651a>] apic_timer_interrupt+0x2a/0x30
+-------- END DMESG ---------
+
+What does this mean? 
+Is it just an informational message that the boost worked? If yes: How can I switch off this message.
+
+Looking at the RCU kernel threads I see the following:
+ps ax -o cmd,rtprio,lastcpu | grep rcu
+[rcuc/0]                         1   0
+[rcun/0]                        99   0
+[rcub/0]                        97   0
+[rcun/1]                        99   0
+[rcub/1]                        97   0
+[rcuc/1]                         1   1
+[rcuc/2]                         1   2
+[rcuc/3]                         1   3
+[rcuc/4]                         1   4
+[rcuc/5]                         1   5
+[rcuc/6]                         1   0
+[rcuc/7]                         1   7
+
+What is really unclear to me is the fact that there is a [rcun/0] and [rcun/1] but no /2 ,  /3, ... (the same with rcub).
+Also, the "lastcpu" of [rcun/1] and [rcub/1] is 0 which is fairly surprising to me (I expected the CPU 1 here).
+
+Any help or feedback on this is welcome.
+
+Best regards
 
 Mathias
+
+
