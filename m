@@ -1,48 +1,75 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: cpufreq + PREEMPT_RT_FULL give bad context sleeping BUG
-Date: Tue, 26 Mar 2013 22:44:53 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303262243540.22263@ionos>
-References: <alpine.LFD.2.02.1303222301010.22263@ionos> <20130323013003.GU11538@uudg.org> <514DE3BF.5010800@gentil.com> <20130326205107.GB14220@linutronix.de> <alpine.LFD.2.02.1303262203560.22263@ionos> <20130326213356.GC14220@linutronix.de>
- <alpine.LFD.2.02.1303262236300.22263@ionos>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Fixup for 3.4.34 merge conflict
+Date: Tue, 26 Mar 2013 22:49:32 +0100
+Message-ID: <20130326214932.GD14220@linutronix.de>
+References: <1363711834.5938.39.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Linus Walleij <linus.walleij@linaro.org>,
-	Santosh Shilimkar <santosh.shilimkar@ti.com>,
-	Rob Herring <rob.herring@calxeda.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Gregoire Gentil <gregoire@gentil.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59364 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:59397 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751940Ab3CZVo6 (ORCPT
+	with ESMTP id S1751595Ab3CZVtd convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Mar 2013 17:44:58 -0400
-In-Reply-To: <alpine.LFD.2.02.1303262236300.22263@ionos>
+	Tue, 26 Mar 2013 17:49:33 -0400
+Content-Disposition: inline
+In-Reply-To: <1363711834.5938.39.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 26 Mar 2013, Thomas Gleixner wrote:
+* Steven Rostedt | 2013-03-19 12:50:34 [-0400]:
 
-> On Tue, 26 Mar 2013, Sebastian Andrzej Siewior wrote:
-> 
-> > * Thomas Gleixner | 2013-03-26 22:07:45 [+0100]:
-> > 
-> > >> that means it should trigger on mainline as well.
-> > >
-> > >No. It won't. Mainline uses a spinlock which gets converted to a
-> > >sleeping spinlock on rt.
-> > >
-> > >  (rt_spin_lock+0x30/0x64) from (clk_get_rate+0x30/0x54)
-> > 
-> > This is true but this spinlock in only available in the OOT code
-> > Gregoire Gentil pointed out ([0]). In mainline we have a mutex in
-> > drivers/clk/clk.c and this is what my omap4 blaze is using.
-> > 
-> > [0] http://dev.omapzoom.org/?p=integration/kernel-ubuntu.git;a=blob;f=arch/arm/plat-omap/clock.c;h=8c0e8fe2c5c51673e41e4304194d922dbfaedf38;hb=3e1c9f139425663ceee48f92e8d3f23158580334
-> 
-> Yeah, it's that way in mainline as well.
+>@@ -1054,19 +1032,39 @@ int __hrtimer_start_range_ns(struct hrtimer *t=
+imer, ktime_t tim,
+> 	 *
+> 	 * XXX send_remote_softirq() ?
+> 	 */
+>-	if (leftmost && new_base->cpu_base =3D=3D &__get_cpu_var(hrtimer_bas=
+es)) {
+>-		ret =3D hrtimer_enqueue_reprogram(timer, new_base, wakeup);
+>-		if (ret) {
+>+	if (leftmost && new_base->cpu_base =3D=3D &__get_cpu_var(hrtimer_bas=
+es)
+>+		&& hrtimer_enqueue_reprogram(timer, new_base)) {
+>+
+>+		if (wakeup
+>+#ifdef CONFIG_PREEMPT_RT_BASE
+>+		    /*
+>+		     * Move softirq based timers away from the rbtree in
+>+		     * case it expired already. Otherwise we would have a
+>+		     * stale base->first entry until the softirq runs.
+>+		     */
+>+		    && hrtimer_rt_defer(timer)
+>+#endif
+>+			) {
+> 			/*
+>-			 * In case we failed to reprogram the timer (mostly
+>-			 * because out current timer is already elapsed),
+>-			 * remove it again and report a failure. This avoids
+>-			 * stale base->first entries.
+>+			 * We need to drop cpu_base->lock to avoid a
+>+			 * lock ordering issue vs. rq->lock.
+> 			 */
+>-			debug_deactivate(timer);
+>-			__remove_hrtimer(timer, new_base,
+>-					timer->state & HRTIMER_STATE_CALLBACK, 0);
+>+			raw_spin_unlock(&new_base->cpu_base->lock);
+>+			raise_softirq_irqoff(HRTIMER_SOFTIRQ);
+>+			local_irq_restore(flags);
+>+			return ret;
 
-I meant, that the mutex is taken. So yes, this will cause a warning in
-!RT too.
+Hmmm. Your ret here might be 0 or 1. RT did return here always zero
+unless it returned -ETIME. This is what I did for v3.8 but I don't clai=
+m
+to be correct here. Need to re-check this later=E2=80=A6
 
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
