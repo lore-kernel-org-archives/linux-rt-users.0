@@ -1,8 +1,9 @@
 From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: cpufreq + PREEMPT_RT_FULL give bad context sleeping BUG
-Date: Tue, 26 Mar 2013 22:38:02 +0100 (CET)
-Message-ID: <alpine.LFD.2.02.1303262236300.22263@ionos>
+Date: Tue, 26 Mar 2013 22:44:53 +0100 (CET)
+Message-ID: <alpine.LFD.2.02.1303262243540.22263@ionos>
 References: <alpine.LFD.2.02.1303222301010.22263@ionos> <20130323013003.GU11538@uudg.org> <514DE3BF.5010800@gentil.com> <20130326205107.GB14220@linutronix.de> <alpine.LFD.2.02.1303262203560.22263@ionos> <20130326213356.GC14220@linutronix.de>
+ <alpine.LFD.2.02.1303262236300.22263@ionos>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Linus Walleij <linus.walleij@linaro.org>,
@@ -12,39 +13,36 @@ Cc: Linus Walleij <linus.walleij@linaro.org>,
 	Gregoire Gentil <gregoire@gentil.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59328 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:59364 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751146Ab3CZViG (ORCPT
+	with ESMTP id S1751940Ab3CZVo6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Mar 2013 17:38:06 -0400
-In-Reply-To: <20130326213356.GC14220@linutronix.de>
+	Tue, 26 Mar 2013 17:44:58 -0400
+In-Reply-To: <alpine.LFD.2.02.1303262236300.22263@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 26 Mar 2013, Sebastian Andrzej Siewior wrote:
+On Tue, 26 Mar 2013, Thomas Gleixner wrote:
 
-> * Thomas Gleixner | 2013-03-26 22:07:45 [+0100]:
+> On Tue, 26 Mar 2013, Sebastian Andrzej Siewior wrote:
 > 
-> >> that means it should trigger on mainline as well.
-> >
-> >No. It won't. Mainline uses a spinlock which gets converted to a
-> >sleeping spinlock on rt.
-> >
-> >  (rt_spin_lock+0x30/0x64) from (clk_get_rate+0x30/0x54)
+> > * Thomas Gleixner | 2013-03-26 22:07:45 [+0100]:
+> > 
+> > >> that means it should trigger on mainline as well.
+> > >
+> > >No. It won't. Mainline uses a spinlock which gets converted to a
+> > >sleeping spinlock on rt.
+> > >
+> > >  (rt_spin_lock+0x30/0x64) from (clk_get_rate+0x30/0x54)
+> > 
+> > This is true but this spinlock in only available in the OOT code
+> > Gregoire Gentil pointed out ([0]). In mainline we have a mutex in
+> > drivers/clk/clk.c and this is what my omap4 blaze is using.
+> > 
+> > [0] http://dev.omapzoom.org/?p=integration/kernel-ubuntu.git;a=blob;f=arch/arm/plat-omap/clock.c;h=8c0e8fe2c5c51673e41e4304194d922dbfaedf38;hb=3e1c9f139425663ceee48f92e8d3f23158580334
 > 
-> This is true but this spinlock in only available in the OOT code
-> Gregoire Gentil pointed out ([0]). In mainline we have a mutex in
-> drivers/clk/clk.c and this is what my omap4 blaze is using.
-> 
-> [0] http://dev.omapzoom.org/?p=integration/kernel-ubuntu.git;a=blob;f=arch/arm/plat-omap/clock.c;h=8c0e8fe2c5c51673e41e4304194d922dbfaedf38;hb=3e1c9f139425663ceee48f92e8d3f23158580334
+> Yeah, it's that way in mainline as well.
 
-Yeah, it's that way in mainline as well. I did not look at the source,
-I just looked at the backtrace.
-
-So either way, this needs to be resolved :)
-
-Thanks,
-
-	tglx
-
+I meant, that the mutex is taken. So yes, this will cause a warning in
+!RT too.
 
