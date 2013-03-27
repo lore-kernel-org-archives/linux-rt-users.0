@@ -1,62 +1,39 @@
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
- unfreeze_partials() code.
-Date: Wed, 27 Mar 2013 15:13:51 +0900
-Message-ID: <20130327061351.GB17125@lge.com>
-References: <1364010673.6345.156.camel@gandalf.local.home>
- <0000013da1f93be3-c3d42ae8-ff34-4c63-8094-77a83291ea19-000000@email.amazonses.com>
- <1364227073.6345.182.camel@gandalf.local.home>
- <1364228039.6345.183.camel@gandalf.local.home>
- <0000013da2ace21a-9e87fe8a-75c2-4b7c-b5e1-37ad196ce012-000000@email.amazonses.com>
- <1364234613.6345.184.camel@gandalf.local.home>
- <0000013da2ce20f8-0e3a64ef-67ed-4ab4-9f20-b77980c876c3-000000@email.amazonses.com>
- <1364236355.6345.185.camel@gandalf.local.home>
- <20130327025957.GA17125@lge.com>
- <1364355032.6345.200.camel@gandalf.local.home>
+From: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>
+Subject: Re: Question on RCU_BOOST option
+Date: Wed, 27 Mar 2013 07:50:30 +0000
+Message-ID: <F9467A784CC48947B1D879F07370839E0EBE9EC3@fe20099s.ecn.etasgroup.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Lameter <cl@linux.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from LGEMRELSE6Q.lge.com ([156.147.1.121]:43387 "EHLO
-	LGEMRELSE6Q.lge.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751360Ab3C0GND (ORCPT
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:56150 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752854Ab3C0Hul convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Mar 2013 02:13:03 -0400
-Content-Disposition: inline
-In-Reply-To: <1364355032.6345.200.camel@gandalf.local.home>
+	Wed, 27 Mar 2013 03:50:41 -0400
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Mar 26, 2013 at 11:30:32PM -0400, Steven Rostedt wrote:
-> On Wed, 2013-03-27 at 11:59 +0900, Joonsoo Kim wrote:
-> 
-> > How about using spin_try_lock() in unfreeze_partials() and
-> > using spin_lock_contented() in get_partial_node() to reduce latency?
-> > IMHO, this doesn't make code more deterministic, but can maintain
-> > a benefit of cpu partial page with tolerable latency.
-> 
-> And what do you do when you fail the try lock? Try again, or just break
-> out?
-
-Just break out.
+Hi Paul,
 
 > 
-> We can run benchmarks, but I don't like playing games in -rt. It either
-> is deterministic, or it isn't.
+> Perhaps you might want to have a look at this thread, about RCU stalls
+> and a possible common root cause for some of them.
+> 
+> http://marc.info/?l=linux-rt-users&m=136258510132233&w=2
 
-Okay.
+Thanks for the information. However the application is intended to run with 100% CPU (real time) load on one core.
+That's why the CPU core is isolated for. They are reserved for this application.
+However to keep a system stable, the RCU must still run on this very core.
+The one option is to raise the prioriy of ksoftirq (which contains the RCU stuff (if I know right...)) or I was playing with the RCU_BOOST feature which I expected to have the same effect.
+However, the RCU_BOOST feature is not clear to me as I still saw the kernel messages about RCU stalls that I did not want to see anymore...
 
-> 
-> -- Steve
-> 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Regards
+
+Mathias
+
+
+
