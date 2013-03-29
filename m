@@ -1,62 +1,42 @@
-From: =?ISO-8859-1?Q?Jo=EBl_Kr=E4hemann?= <joel@weedlight.ch>
-Subject: Re: BUG - pthread conditional locks and barriers not reliable
-Date: Fri, 29 Mar 2013 02:49:38 +0100
-Message-ID: <1364521778.8491.4.camel@debian>
-References: <1364458931.4931.8.camel@debian>
-	 <1364520685.8268.2.camel@debian>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
+Date: Fri, 29 Mar 2013 08:09:49 +0530
+Message-ID: <CAKohpom1wbrfOgPr4n-HzQjdUS=BcHwbrd=gemVKr1QqEO0L9A@mail.gmail.com>
+References: <cover.1363617402.git.viresh.kumar@linaro.org>
+	<fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
+	<20130321001211.GC31256@htj.dyndns.org>
+	<CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
+	<20130321182937.GB20500@htj.dyndns.org>
+	<20130328181332.GD14088@htj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
+	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
+	peterz@infradead.org, rostedt@goodmis.org,
+	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from kraehem2.nine.ch ([178.209.44.180]:35769 "EHLO kraehem2"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1754417Ab3C2Btf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Mar 2013 21:49:35 -0400
-In-Reply-To: <1364520685.8268.2.camel@debian>
+Received: from mail-ob0-f170.google.com ([209.85.214.170]:52083 "EHLO
+	mail-ob0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753662Ab3C2Cju (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Mar 2013 22:39:50 -0400
+Received: by mail-ob0-f170.google.com with SMTP id wc20so131881obb.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 28 Mar 2013 19:39:50 -0700 (PDT)
+In-Reply-To: <20130328181332.GD14088@htj.dyndns.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi, finished with euphoria. It's an issue with pthread implementation
-may be you have to extend kernel API to fix this problem. You can't wra=
-p
-pthread_barrier_wait with pthread_mutex_lock and pthread_mutex_unlock
-because it has a race condition what ends probably in a deadlock.
+On 28 March 2013 23:43, Tejun Heo <tj@kernel.org> wrote:
+> Ping.  Peter, Ingo?
 
-cu
-Jo=C3=ABl
+Thanks for your ping, even i was thinking of it since sometime :)
 
-Am Freitag, den 29.03.2013, 02:31 +0100 schrieb Jo=C3=ABl Kr=C3=A4heman=
-n:
-> Hi, just ignore the spam it was just a programming mistake.
->=20
-> Am Donnerstag, den 28.03.2013, 09:22 +0100 schrieb Jo=C3=ABl Kr=C3=A4=
-hemann:
-> > Hi, I believe that pthread conditional locks and barriers aren't
-> > reliable. May be it's a problem with the kernel I just downloaded l=
-ibc6
-> > to get an entry point.
-> >=20
-> > The code is located at: sf.org/p/ags
-> > affected files: src/ags/audio/ags_devout.c
-> >=20
-> > I've attached the output of lspci and lscpu.
-> >=20
-> >=20
-> > cu
-> > Jo=C3=ABl
-> >=20
->=20
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Viresh, would it be difficult to make another measurement of the same
+> workload with the said workqueues converted to unbound?  I think that
+> would at least provide a nice reference point.
 
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I will try.
