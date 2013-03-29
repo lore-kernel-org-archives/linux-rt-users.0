@@ -1,79 +1,89 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Fri, 29 Mar 2013 12:57:23 +0530
-Message-ID: <CAKohpomkGxUy6-7tByBjQvAGSUn4EdVCpGo+94fn7vF8YgKRLQ@mail.gmail.com>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
-	<fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
-	<20130321001211.GC31256@htj.dyndns.org>
-	<CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
-	<20130321182937.GB20500@htj.dyndns.org>
-	<20130328181332.GD14088@htj.dyndns.org>
+From: "Mr. Paul Fletch." <omartinez@unefa.edu.ve>
+Subject: Lieber Freund
+Date: Fri, 29 Mar 2013 07:31:57 -0430 (VET)
+Message-ID: <9e74bf1b-bdd3-491c-b158-1c981b57b021@mail2.unefa.edu.ve>
+Reply-To: "Mr. Paul Fletch." <paulfletch_gtacctss@yahoo.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130328181332.GD14088@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+To: undisclosed-recipients:;
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from correo.unefa.edu.ve ([150.186.0.25]:45519 "EHLO
+	correo.unefa.edu.ve" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753040Ab3C2OkV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Mar 2013 10:40:21 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 28 March 2013 23:43, Tejun Heo <tj@kernel.org> wrote:
-> Viresh, would it be difficult to make another measurement of the same
-> workload with the said workqueues converted to unbound?  I think that
-> would at least provide a nice reference point.
+TGllYmVyIEZyZXVuZCwKCkluIGRlciBUYXQgaXN0IGVzIG1pciBlaW5lIEZyZXVkZSwgZGllc2Vu
+IEJyaWVmIHp1IHNjaHJlaWJlbiwgZGllIGljaCBnbGF1YmUsIHdpcmQgZWluZSDDnGJlcnJhc2No
+dW5nIGbDvHIgU2llLCB3aWUgd2lyIHZvcmhlciBuaWUgYmVnZWduZXQgc2VpbiwgdW5kIGljaCBi
+aW4genV0aWVmc3QgbGVpZCwgd2VubiBpY2ggaW4gaXJnZW5kZWluZXIgQXJ0IHVuZCBXZWlzZSBn
+ZXN0w7ZydCwgSWhyZSBQcml2YXRzcGjDpHJlIHp1IGhhYmVuLiBJY2ggYmluIE1yLiBQYXVsIERl
+IEhhcmxzZGVuIEZsZXRjaCwgTm9ydGggV2VzdCBMb25kb24sIEVuZ2xhbmQuIEljaCBhcmJlaXRl
+IG1pdCBTYW50YW5kZXIgQmFuayBwbGMgTG9uZG9uLiBCZWkgYWxsZW0gUmVzcGVrdCB1bmQgUsO8
+Y2tzaWNodCwgaWNoIHNjaHJlaWJlIElobmVuIGF1cyBtZWluZW0gQsO8cm8sIGRhc3MgZGVyIGlt
+bWVuc2UgVm9ydGVpbCBmw7xyIHVucyBiZWlkZSBzZWluIHdpcmQuIEluIG1laW5lciBBYnRlaWx1
+bmcsIHdvYmVpIGRpZSBwcml2YXRlbgpCYW5raW5nIE1hbmFnZXIgKEdyZWF0ZXIgTG9uZG9uIFJl
+Z2lvbmFsIE9mZmljZSkuIEljaCBiaW4gZGVyIHBlcnPDtm5saWNoZW4gQnVjaGhhbHRlciB6dSBz
+cMOkdCBCcmFtbGFnZSBNci5Sb24gZWluIEdlc2Now6RmdHNtYW5uLCBlaW4gYW1lcmlrYW5pc2No
+ZXIgU3RhYXRzYsO8cmdlciwgZGVyIGxlaWRlciBzZWluIExlYmVuIHZlcmxvcmVuLCBzZWluZSBG
+cmF1IHVuZCB2aWVyIEtpbmRlciB3dXJkZW4gZ2V0w7Z0ZXQsIGFscyBpaHIga2xlaW5lcyBGbHVn
+emV1ZyBzdMO8cnp0ZSBpbiBlaW5lbSBzdW1wZmlnZW4gR2ViaWV0IG9mIENlbnRyYWwgRmxvcmlk
+YSBhbSA3LiBKdW5pIDIwMTIuIE1yLiBSb24gQnJhbWxhZ2UsIGVpbiBwcm9taW5lbnRlciBHZXNj
+aMOkZnRzbWFubiwgUm9hZHNpZGUgVmVudHVyZXMgTExDIEJlc2l0eiB1bmQgYXVjaCBlaW4gSW1t
+b2JpbGllbm1ha2xlciwgd3VyZGUgaWNoIG1pdCBkZXIgUGxhbnVuZyB6dSBrb21tZW4sIHVtIGlu
+IEltbW9iaWxpZW4gdW5kIGFuZGVyZSBwcm9maXRhYmxlIFZlbnR1cmVzIGludmVzdGllcmVuIGhp
+ZXIgaW4gRW5nbGFuZCwgZGFzcyBlciBkaWUgU3VtbWUgdm9uIEdCUCBoaW50ZXJsZWd0IMKjIDEz
+LjcwMC4wMDAgKERyZWl6ZWhuIE1pbGxpb25lbiA3MDAgwqMgMTAwLjAwMCkgaW4gZWluZW0gS29u
+dG8gaGllciBpbiB1bnNlcmVyIEJhbmssIGRhc3MgaWNoIGdsYXViZSwgbmllbWFuZCB3ZWnDnyBl
+cy4KCkRpZSBXYWhsIGRlciBLb250YWt0YXVmbmFobWUgbWl0IElobmVuIGlzdCBhdXMgZGVyIGdl
+b2dyYXBoaXNjaGVuIE5hdHVyLCB3byBTaWUgbGViZW4sIHZvciBhbGxlbSBhdWZncnVuZCBkZXIg
+U2Vuc2liaWxpdMOkdCBkZXIgVHJhbnNha3Rpb24gdW5kIGRpZSBWZXJ0cmF1bGljaGtlaXQgaGll
+ciBnZXdlY2t0LiBKZXR6dCBpc3QgdW5zZXJlIEJhbmsgaGF0IGbDvHIga2VpbmUgZGVyIFZlcndh
+bmR0ZW4gb2RlciBQYXJ0bmVybiB6dSBrb21tZW4gZsO8ciBkZW4gQW5zcHJ1Y2ggZGFyYXVmIGdl
+d2FydGV0LCBhYmVyIG5pZW1hbmQgaGF0IGRhcyBnZXRhbi4gSWNoIHBlcnPDtm5saWNoIGhhYmUg
+c2Nob24gYmVpIGRlciBPcnR1bmcgZGVzIFZlcndhbmR0ZW4gb2RlciBQYXJ0bmVybiBlcmZvbGds
+b3MsIGljaCBzdWNoZSBJaHJlIFp1c3RpbW11bmcgYW4gU2llIGFscyBuw6RjaHN0ZW4gQW5nZWjD
+tnJpZ2VuIG9kZXIgUGFydG5lciB1bnNlcmVyIHNww6R0ZW4gQ2xpZW50IHZvcmhhbmRlbiwgc28g
+ZGFzcyBkaWUgRXJsw7ZzZSBhdXMgZGllc2VtIEtvbnRvIGJlaSDCoyAxMy43MDAuMDAwIGJlemlm
+ZmVydCAoMTMgTWlvIEdCUCDCoyA3MDAuMDAwKSBrYW5uIGFuIFNpZSBhdXNnZXphaGx0IHdlcmRl
+biwgdW5kIHNvIGJpbiBpY2ggSWhuZW4gdmVyc2ljaGVybiwgZGFzcyBkaWVzZXMgR2VzY2jDpGZ0
+IDEwMCUgUmlzaWtvIGZyZWkgaXN0LiBXZW5uIGRpZXNlciBWb3JzY2hsYWcgYWt6ZXB0YWJlbCwg
+bGFzcyBlcyBtaWNoIHZlcnN1Y2hlbiB6dSBiZWFudHdvcnRlbiBpbW1lZGlhdGVseS5PbiBkaWUg
+w5xiZXJ0cmFndW5nIHZvbiBkaWVzZW4gRm9uZHMgaW4gSWhyZW0gS29udG8gd2VyZGVuIDQwJSBJ
+aHJlciBBa3RpZW4gd2VyZGVuIGltIEhpbmJsaWNrIGF1ZiBkaWUgQmVyZWl0c3RlbGx1bmcgdm9u
+IElocmVtIEtvbnRvIHVuZCBVbnRlcnN0w7x0enVuZyB3w6RocmVuZCBkZXIgw5xiZXJ0cmFndW5n
+IGRlciBGb25kcyBpbiBJaHJlbSBCYW5ra29udG8sIHdlcmRlbiA1MCUgbWVpbmVyIEFrdGllbiBp
+c3QgZGVyIEtvb3JkaW5hdG9yIGRlciBUcmFuc2FrdGlvbiBzZWluLCB3w6RocmVuZCBkaWUgcmVz
+dGxpY2hlbiAxMCUgbWl0IHZlcnNjaGllZGVuZW4gQ2hhcml0eS1aZW50cmVuIGFuZ2VzZWhlbmVu
+IE9yZ2FuaXNhdGlvbiBpbiBJaHJlbSBMYW5kIGdldGVpbHQgd2VyZGVuLiBJY2ggbWFnIGRlbiBB
+cm1lbiB6dSBoZWxmZW4hCgpJY2ggaGFiZSBhbGxlIG5vdHdlbmRpZ2VuIHJlY2h0bGljaGVuIERv
+a3VtZW50ZSwgZGllIHZlcndlbmRldCB3ZXJkZW4sIHVtIGRpZXNlbiBBbnNwcnVjaCBzaW5kIHdp
+ciBkYWJlaSwgw7xiZXIgZGllc2VuIEZvbmRzIHp1IHR1biB1bnRlcnN0w7x0enQgd2VyZGVuIGvD
+tm5uZW4uIEFsbGVzIHdhcyBpY2ggYnJhdWNoZSBpc3QgZXMsIGluIGlocmVtIE5hbWVuIG9kZXIg
+SW5mb3JtYXRpb25lbiB6dSBkZW4gRG9rdW1lbnRlbiB6dSBmw7xsbGVuIHVuZCB6dSBsZWdhbGlz
+aWVyZW4gZXMgaW4gZGVyIGJyaXRpc2NoZW4gSGlnaCBDb3VydCBoaWVyIGluIExvbmRvbiwgdW0g
+U2llIGFscyBiZXJlY2h0aWd0ZW4gRW1wZsOkbmdlciBuYWNod2Vpc2VuLiBBbGxlcywgd2FzIGlj
+aCBqZXR6dCBicmF1Y2hlbiwgaXN0IElocmUgZWhybGljaGUgWnVzYW1tZW5hcmJlaXQsIFZlcnNj
+aHdpZWdlbmhlaXQgdW5kIGZlaWVybGljaGUgVmVydHJhdWVuLCBzbyBkYXNzIHdpciBkaWVzZSBU
+cmFuc2FrdGlvbiBkdXJjaCBzZWhlbiBrYW5uLiBJY2ggZ2FyYW50aWVyZSwgZGFzcyBkaWVzIHVu
+dGVyIGVpbmVyIGxlZ2l0aW1lbiBBbm9yZG51bmdlbiwgZGllIFNpZSB2b24gZWluZXIgVmVybGV0
+enVuZyBkZXMgR2VzZXR6ZXMgc2Now7x0enQgYXVzZ2Vmw7xocnQgd2lyZC4KCkJpdHRlIHNlbmRl
+biBTaWUgbWlyIGRpZSBmb2xnZW5kZW46IHdpZSB3aXIgaGFiZW4gZsO8bmYgVGFnZSwgdW0gZXMg
+ZHVyY2hsYXVmZW4uIERpZXMgaXN0IHNlaHIgVVJHRU5UIFBMRUFTRS4KCk9uZS4gVm9sbHN0w6Ru
+ZGlnZXIgTmFtZQoyLi4gSWhyZSBUZWxlZm9ubnVtbWVyCjMuLiBJaHJlIEtvbnRha3RhZHJlc3Nl
+LgoKTmFjaGRlbSBkdXJjaCBlaW5lIG1ldGhvZGlzY2hlIFN1Y2hlIGdlZ2FuZ2VuLCBlbnRzY2hp
+ZWQgaWNoIG1pY2gsIFNpZSB6dSBrb250YWt0aWVyZW4gaG9mZmVuLCBkYXNzIFNpZSBmaW5kZW4g
+ZGllc2VuIFZvcnNjaGxhZyBpbnRlcmVzc2FudC4gQml0dGUgYXVmIElocmVyIEJlc3TDpHRpZ3Vu
+ZyBkaWVzZXIgTmFjaHJpY2h0IHVuZCBnZWJlbiBTaWUgSWhyIEludGVyZXNzZSwgd2VyZGUgaWNo
+IElobmVuIHdlaXRlcmUgSW5mb3JtYXRpb25lbi4gQmVtw7xoZW4gU2llIHNpY2ggbGFzc2VuIFNp
+ZSBtaWNoIHdpc3NlbiwgSWhyZSBFbnRzY2hlaWR1bmcsIGFuc3RhdHQgbWljaCB3YXJ0ZW4uCk1p
+dCBmcmV1bmRsaWNoZW4gR3LDvMOfZW4sCk1yLiBQYXVsIEZsZXRjaC4KcGF1bGZsZXRjaF9ndGFj
+Y3RAeWFob28uY29tCioqKioqKioqQVZJU08gTEVHQUwqKioqKioqKioqCkVzdGUgbWVuc2FqZSBl
+cyBwcml2YWRvIHkgY29uZmlkZW5jaWFsLCAgZXN0w6EgZGlyaWdpZG8gZXhjbHVzaXZhbWVudGUg
+YWwgdXNvIGRlbCBjb3JyZW8gaW5zdGl0dWNpb25hbC4gU2kgdXN0ZWQgaGEgcmVjaWJpZG8gZXN0
+ZSBtZW5zYWplIHBvciBlcnJvciwgZGViZSBhYnN0ZW5lcnNlIGRlIGRpc3RyaWJ1aXJsbywgY29w
+aWFybG8gbyB1c2FybG8gZW4gY3VhbHF1aWVyIHNlbnRpZG8uIAo=
 
-My heart is shattered after getting the results :)
-
-
-Cluster A15 Energy      Cluster A7 Energy       Total
--------------------------      -----------------------       ------
-
-Without this patchset (Energy in Joules):
----------------------------------------------------
-
-0.151162                2.183545                2.334707
-0.223730                2.687067                2.910797
-0.289687                2.732702                3.022389
-0.454198                2.745908                3.200106
-0.495552                2.746465                3.242017
-
-Average:
-0.322866                2.619137                2.942003
-
-
-With this patchset (Energy in Joules):
------------------------------------------------
-
-0.133361                2.267822                2.401183
-0.260626                2.833389                3.094015
-0.142365                2.277929                2.420294
-0.246793                2.582550                2.829343
-0.130462                2.257033                2.387495
-
-Average:
-0.182721                2.443745                2.626466
-
-
-With WQ Unbound (Energy in Joules):
------------------------------------------------
-
-0.226421                2.283658                2.510079
-0.151361                2.236656                2.388017
-0.197726                2.249849                2.447575
-0.221915                2.229446                2.451361
-0.347098                2.257707                2.604805
-
-Average:
-0.2289042              2.2514632              2.4803674
-
-PS: I have to add another generic workqueue for these tests:
-system_unbound_freezable_wq as block layer was using
-system_freezable_wq.
-
---
-viresh
