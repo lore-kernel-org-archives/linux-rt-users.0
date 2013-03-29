@@ -1,51 +1,43 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Thu, 28 Mar 2013 11:13:32 -0700
-Message-ID: <20130328181332.GD14088@htj.dyndns.org>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
- <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
- <20130321001211.GC31256@htj.dyndns.org>
- <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
- <20130321182937.GB20500@htj.dyndns.org>
+From: =?ISO-8859-1?Q?Jo=EBl_Kr=E4hemann?= <joel@weedlight.ch>
+Subject: Re: BUG - pthread conditional locks and barriers not reliable
+Date: Fri, 29 Mar 2013 02:31:25 +0100
+Message-ID: <1364520685.8268.2.camel@debian>
+References: <1364458931.4931.8.camel@debian>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	suresh.b.siddha@intel.com, venki@google.com, mingo@redhat.com,
-	peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130321182937.GB20500@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from kraehem2.nine.ch ([178.209.44.180]:52702 "EHLO kraehem2"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1754277Ab3C2Bbo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Mar 2013 21:31:44 -0400
+In-Reply-To: <1364458931.4931.8.camel@debian>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Mar 21, 2013 at 11:29:37AM -0700, Tejun Heo wrote:
-> Yes, I actually like that part a lot although I do wish the idle check
-> was inlined.
-> 
-> What I'm wondering is whether the kinda out-of-band decision via
-> sched_select_cpu() is justified given that it can and is likely to go
-> through full scheduling decision anyway.  For timer, we don't have
-> that, so it makes sense.  For work items, it's a bit different.
-> 
-> To rephrase, *if* the scheduler can't already make proper decisions
-> regarding power consumption on an idlish system, maybe it can be
-> improved to do so?  It could as well be that this CPU selection is
-> special enough that it's just better to keep it separate as this
-> patchset proposes.  This is something up to the scheduler people.
-> Peter, Ingo, what do you guys think?
+Hi, just ignore the spam it was just a programming mistake.
 
-Ping.  Peter, Ingo?
+Am Donnerstag, den 28.03.2013, 09:22 +0100 schrieb Jo=C3=ABl Kr=C3=A4he=
+mann:
+> Hi, I believe that pthread conditional locks and barriers aren't
+> reliable. May be it's a problem with the kernel I just downloaded lib=
+c6
+> to get an entry point.
+>=20
+> The code is located at: sf.org/p/ags
+> affected files: src/ags/audio/ags_devout.c
+>=20
+> I've attached the output of lspci and lscpu.
+>=20
+>=20
+> cu
+> Jo=C3=ABl
+>=20
 
-Viresh, would it be difficult to make another measurement of the same
-workload with the said workqueues converted to unbound?  I think that
-would at least provide a nice reference point.
 
-Thanks.
-
--- 
-tejun
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
