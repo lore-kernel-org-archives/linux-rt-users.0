@@ -1,42 +1,45 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Fri, 29 Mar 2013 10:56:45 -0700
-Message-ID: <20130329175645.GB9862@htj.dyndns.org>
-References: <cover.1363617402.git.viresh.kumar@linaro.org>
- <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
- <20130321001211.GC31256@htj.dyndns.org>
- <CAKohponKUGbwEZ_edu353Y7YVZKgFOhZunTSUi04FGYWveftkw@mail.gmail.com>
- <20130321182937.GB20500@htj.dyndns.org>
- <20130328181332.GD14088@htj.dyndns.org>
- <CAKohpomkGxUy6-7tByBjQvAGSUn4EdVCpGo+94fn7vF8YgKRLQ@mail.gmail.com>
- <20130329174003.GA9862@htj.dyndns.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.0.71-rt98
+Date: Fri, 29 Mar 2013 15:06:57 -0400
+Message-ID: <1364584017.10629.37.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
-	mingo@redhat.com, peterz@infradead.org, rostedt@goodmis.org,
-	linaro-kernel@lists.linaro.org, robin.randhawa@arm.com,
-	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
-	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130329174003.GA9862@htj.dyndns.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Mar 29, 2013 at 10:40:03AM -0700, Tejun Heo wrote:
-> So the scheduler does know what it's doing after all, which is a nice
-> news.  Given the result, the best thing to do would be somehow marking
-> these workqueues as unbound for powersaving?
 
-BTW, recent changes to workqueue means that it shouldn't be too
-difficult to create a combined workqueue which distributes work items
-to both per-cpu and unbound worker pools depending on cpu_idle(), but,
-at least for now, I think we can make do with much coarser approach.
-We can refine it afterwards.
+Dear RT Folks,
 
-Thanks.
+I'm pleased to announce the 3.0.71-rt98 stable release.
 
--- 
-tejun
+
+This release is just an update to the new stable 3.0.71 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  Head SHA1: 07f234c5b81b341c983b0d61436d2f6eb6497aad
+
+
+Or to build 3.0.71-rt98 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.71.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.71-rt98.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
