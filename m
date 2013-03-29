@@ -1,7 +1,7 @@
 From: Tejun Heo <tj@kernel.org>
 Subject: Re: [PATCH V3 3/7] workqueue: Add helpers to schedule work on any cpu
-Date: Fri, 29 Mar 2013 10:40:03 -0700
-Message-ID: <20130329174003.GA9862@htj.dyndns.org>
+Date: Fri, 29 Mar 2013 10:56:45 -0700
+Message-ID: <20130329175645.GB9862@htj.dyndns.org>
 References: <cover.1363617402.git.viresh.kumar@linaro.org>
  <fb2e721fc43fbc3517a7ebb905aa573b12bb83a5.1363617402.git.viresh.kumar@linaro.org>
  <20130321001211.GC31256@htj.dyndns.org>
@@ -9,6 +9,7 @@ References: <cover.1363617402.git.viresh.kumar@linaro.org>
  <20130321182937.GB20500@htj.dyndns.org>
  <20130328181332.GD14088@htj.dyndns.org>
  <CAKohpomkGxUy6-7tByBjQvAGSUn4EdVCpGo+94fn7vF8YgKRLQ@mail.gmail.com>
+ <20130329174003.GA9862@htj.dyndns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
@@ -18,51 +19,24 @@ Cc: pjt@google.com, paul.mckenney@linaro.org, tglx@linutronix.de,
 	charles.garcia-tobin@arm.com, Arvind.Chauhan@arm.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f43.google.com ([209.85.216.43]:44572 "EHLO
-	mail-qa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756268Ab3C2RkJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Mar 2013 13:40:09 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKohpomkGxUy6-7tByBjQvAGSUn4EdVCpGo+94fn7vF8YgKRLQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20130329174003.GA9862@htj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello, Viresh.
+On Fri, Mar 29, 2013 at 10:40:03AM -0700, Tejun Heo wrote:
+> So the scheduler does know what it's doing after all, which is a nice
+> news.  Given the result, the best thing to do would be somehow marking
+> these workqueues as unbound for powersaving?
 
-On Fri, Mar 29, 2013 at 12:57:23PM +0530, Viresh Kumar wrote:
-> On 28 March 2013 23:43, Tejun Heo <tj@kernel.org> wrote:
-> > Viresh, would it be difficult to make another measurement of the same
-> > workload with the said workqueues converted to unbound?  I think that
-> > would at least provide a nice reference point.
-> 
-> My heart is shattered after getting the results :)
-> 
-> 
-> Cluster A15 Energy      Cluster A7 Energy       Total
-> -------------------------      -----------------------       ------
-> 
-> Without this patchset (Energy in Joules):
-> ---------------------------------------------------
-> 0.322866                2.619137                2.942003
-> 
-> 
-> With this patchset (Energy in Joules):
-> -----------------------------------------------
-> 0.182721                2.443745                2.626466
-> 
-> 
-> With WQ Unbound (Energy in Joules):
-> -----------------------------------------------
-> 0.2289042              2.2514632              2.4803674
+BTW, recent changes to workqueue means that it shouldn't be too
+difficult to create a combined workqueue which distributes work items
+to both per-cpu and unbound worker pools depending on cpu_idle(), but,
+at least for now, I think we can make do with much coarser approach.
+We can refine it afterwards.
 
-
-So the scheduler does know what it's doing after all, which is a nice
-news.  Given the result, the best thing to do would be somehow marking
-these workqueues as unbound for powersaving?
-
-Thanks!
+Thanks.
 
 -- 
 tejun
