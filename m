@@ -1,69 +1,59 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 3.4-rt] hrtimer: fix compile failure for when HRT are disabled
-Date: Thu, 28 Mar 2013 21:44:43 -0400
-Message-ID: <1364521483-22071-1-git-send-email-paul.gortmaker@windriver.com>
+From: =?ISO-8859-1?Q?Jo=EBl_Kr=E4hemann?= <joel@weedlight.ch>
+Subject: Re: BUG - pthread conditional locks and barriers not reliable
+Date: Fri, 29 Mar 2013 02:49:38 +0100
+Message-ID: <1364521778.8491.4.camel@debian>
+References: <1364458931.4931.8.camel@debian>
+	 <1364520685.8268.2.camel@debian>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: <linux-rt-users@vger.kernel.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:45307 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753693Ab3C2BpA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Mar 2013 21:45:00 -0400
+Received: from kraehem2.nine.ch ([178.209.44.180]:35769 "EHLO kraehem2"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1754417Ab3C2Btf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Mar 2013 21:49:35 -0400
+In-Reply-To: <1364520685.8268.2.camel@debian>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-With "# CONFIG_HIGH_RES_TIMERS is not set" in .config, one will see:
+Hi, finished with euphoria. It's an issue with pthread implementation
+may be you have to extend kernel API to fix this problem. You can't wra=
+p
+pthread_barrier_wait with pthread_mutex_lock and pthread_mutex_unlock
+because it has a race condition what ends probably in a deadlock.
 
-kernel/hrtimer.c: In function =E2=80=98__hrtimer_start_range_ns=E2=80=99=
-:
-kernel/hrtimer.c:1045:7: error: implicit declaration of function =E2=80=
-=98hrtimer_rt_defer=E2=80=99 [-Werror=3Dimplicit-function-declaration]
-kernel/hrtimer.c: At top level:
-kernel/hrtimer.c:1416:12: error: static declaration of =E2=80=98hrtimer=
-_rt_defer=E2=80=99 follows non-static declaration
-kernel/hrtimer.c:1045:10: note: previous implicit declaration of =E2=80=
-=98hrtimer_rt_defer=E2=80=99 was here
-cc1: some warnings being treated as errors
-make[2]: *** [kernel/hrtimer.o] Error 1
+cu
+Jo=C3=ABl
 
-Move the prototype outside of the block of code which is conditional
-on high res timers.
+Am Freitag, den 29.03.2013, 02:31 +0100 schrieb Jo=C3=ABl Kr=C3=A4heman=
+n:
+> Hi, just ignore the spam it was just a programming mistake.
+>=20
+> Am Donnerstag, den 28.03.2013, 09:22 +0100 schrieb Jo=C3=ABl Kr=C3=A4=
+hemann:
+> > Hi, I believe that pthread conditional locks and barriers aren't
+> > reliable. May be it's a problem with the kernel I just downloaded l=
+ibc6
+> > to get an entry point.
+> >=20
+> > The code is located at: sf.org/p/ags
+> > affected files: src/ags/audio/ags_devout.c
+> >=20
+> > I've attached the output of lspci and lscpu.
+> >=20
+> >=20
+> > cu
+> > Jo=C3=ABl
+> >=20
+>=20
+>=20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
-
-[Not needed for 3.6-rt; 3.0-rt and 3.2-rt were not tested for this issu=
-e.]
-
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 2328c04..1830c0f 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -625,7 +625,6 @@ static int hrtimer_reprogram(struct hrtimer *timer,
- }
-=20
- static void __run_hrtimer(struct hrtimer *timer, ktime_t *now);
--static int hrtimer_rt_defer(struct hrtimer *timer);
-=20
- /*
-  * Initialize the high resolution related parts of cpu_base
-@@ -740,6 +739,8 @@ static inline int hrtimer_reprogram(struct hrtimer =
-*timer,
-=20
- #endif /* CONFIG_HIGH_RES_TIMERS */
-=20
-+static int hrtimer_rt_defer(struct hrtimer *timer);
-+
- /*
-  * Clock realtime was set
-  *
---=20
-1.8.1.2
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
