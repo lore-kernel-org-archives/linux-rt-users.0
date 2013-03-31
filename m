@@ -1,53 +1,40 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: [PATCH V4 4/4] fbcon: queue work on unbound wq
-Date: Sun, 31 Mar 2013 20:01:47 +0530
-Message-ID: <2a30b6c081a7899fbce88bddf20b94c348eb4654.1364740180.git.viresh.kumar@linaro.org>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH V4 2/4] PHYLIB: queue work on unbound wq
+Date: Sun, 31 Mar 2013 12:45:22 -0400 (EDT)
+Message-ID: <20130331.124522.495583446567617837.davem@davemloft.net>
 References: <cover.1364740180.git.viresh.kumar@linaro.org>
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
+	<cover.1364740180.git.viresh.kumar@linaro.org>
+	<6be4e9ad2048a2a9d60143f58931c3fe94770175.1364740180.git.viresh.kumar@linaro.org>
+Mime-Version: 1.0
+Content-Type: Text/Plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+Cc: tj@kernel.org, linaro-kernel@lists.linaro.org, patches@linaro.org,
 	robin.randhawa@arm.com, Steve.Bannister@arm.com,
 	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
-	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
-	mingo@redhat.com, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Viresh Kumar <viresh.kumar@linaro.org>,
-	linux-fbdev@vger.kernel.org
-To: tj@kernel.org
+	arvind.chauhan@arm.com, airlied@redhat.com, axboe@kernel.dk,
+	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
+	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, netdev@vger.kernel.org
+To: viresh.kumar@linaro.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1364740180.git.viresh.kumar@linaro.org>
-In-Reply-To: <cover.1364740180.git.viresh.kumar@linaro.org>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
+In-Reply-To: <6be4e9ad2048a2a9d60143f58931c3fe94770175.1364740180.git.viresh.kumar@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-fbcon uses workqueues and it has no real dependency of scheduling these on the
-cpu which scheduled them.
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Date: Sun, 31 Mar 2013 20:01:45 +0530
 
-On a idle system, it is observed that and idle cpu wakes up many times just to
-service this work. It would be better if we can schedule it on a cpu which the
-scheduler believes to be the most appropriate one.
+> Phylib uses workqueues for multiple purposes. There is no real dependency of
+> scheduling these on the cpu which scheduled them.
+> 
+> On a idle system, it is observed that and idle cpu wakes up many times just to
+> service this work. It would be better if we can schedule it on a cpu which the
+> scheduler believes to be the most appropriate one.
+> 
+> This patch replaces system_wq with system_unbound_wq for PHYLIB.
+> 
+> Cc: David S. Miller <davem@davemloft.net>
+> Cc: netdev@vger.kernel.org
+> Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
 
-This patch replaces system_wq with system_unbound_wq.
-
-Cc: Dave Airlie <airlied@redhat.com>
-Cc: linux-fbdev@vger.kernel.org
-Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
----
- drivers/video/console/fbcon.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/drivers/video/console/fbcon.c b/drivers/video/console/fbcon.c
-index 3cd6759..6c1f7c3 100644
---- a/drivers/video/console/fbcon.c
-+++ b/drivers/video/console/fbcon.c
-@@ -404,7 +404,7 @@ static void cursor_timer_handler(unsigned long dev_addr)
- 	struct fb_info *info = (struct fb_info *) dev_addr;
- 	struct fbcon_ops *ops = info->fbcon_par;
- 
--	schedule_work(&info->queue);
-+	queue_work(system_unbound_wq, &info->queue);
- 	mod_timer(&ops->cursor_timer, jiffies + HZ/5);
- }
- 
--- 
-1.7.12.rc2.18.g61b472e
+Acked-by: David S. Miller <davem@davemloft.net>
