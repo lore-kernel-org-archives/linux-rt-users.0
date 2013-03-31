@@ -1,40 +1,59 @@
-From: David Miller <davem@davemloft.net>
-Subject: Re: [PATCH V4 2/4] PHYLIB: queue work on unbound wq
-Date: Sun, 31 Mar 2013 12:45:22 -0400 (EDT)
-Message-ID: <20130331.124522.495583446567617837.davem@davemloft.net>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
+Date: Sun, 31 Mar 2013 11:19:31 -0700
+Message-ID: <20130331181931.GA7533@htj.dyndns.org>
 References: <cover.1364740180.git.viresh.kumar@linaro.org>
-	<cover.1364740180.git.viresh.kumar@linaro.org>
-	<6be4e9ad2048a2a9d60143f58931c3fe94770175.1364740180.git.viresh.kumar@linaro.org>
+ <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-Cc: tj@kernel.org, linaro-kernel@lists.linaro.org, patches@linaro.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
 	robin.randhawa@arm.com, Steve.Bannister@arm.com,
 	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, airlied@redhat.com, axboe@kernel.dk,
-	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
-	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, netdev@vger.kernel.org
-To: viresh.kumar@linaro.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <6be4e9ad2048a2a9d60143f58931c3fe94770175.1364740180.git.viresh.kumar@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
+	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
+	mingo@redhat.com, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pa0-f52.google.com ([209.85.220.52]:49790 "EHLO
+	mail-pa0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752323Ab3CaSTi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 31 Mar 2013 14:19:38 -0400
+Content-Disposition: inline
+In-Reply-To: <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Date: Sun, 31 Mar 2013 20:01:45 +0530
+Hello, Viresh.
 
-> Phylib uses workqueues for multiple purposes. There is no real dependency of
-> scheduling these on the cpu which scheduled them.
+On Sun, Mar 31, 2013 at 08:01:46PM +0530, Viresh Kumar wrote:
+> Block layer uses workqueues for multiple purposes. There is no real dependency
+> of scheduling these on the cpu which scheduled them.
 > 
 > On a idle system, it is observed that and idle cpu wakes up many times just to
 > service this work. It would be better if we can schedule it on a cpu which the
 > scheduler believes to be the most appropriate one.
 > 
-> This patch replaces system_wq with system_unbound_wq for PHYLIB.
-> 
-> Cc: David S. Miller <davem@davemloft.net>
-> Cc: netdev@vger.kernel.org
-> Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+> This patch replaces normal workqueues with UNBOUND versions.
 
-Acked-by: David S. Miller <davem@davemloft.net>
+Hmm.... so, we really don't want to unconditionally convert workqueues
+to unbound.  Especially not kblockd.  On configurations with multiple
+high iops devices with IRQ routing, having request completion runinng
+on the same CPU has significant performance advantages.  We can't
+simply switch it to an unbound wokrqueue because it saves power on
+small arm configuration.
+
+Plus, I'd much prefer to be clearly marking the workqueues which would
+contribute to powersaving when converted to unbound at least until we
+can come up with a no-compromise solution which doesn't need to trade
+off between cache locality and powersaving.
+
+So, let's please introduce a new flag to mark these workqueues, say,
+WQ_UNBOUND_FOR_POWER_SAVE or whatever (please come up with a better
+name) and provide a compile time switch with boot time override.
+
+Thanks.
+
+-- 
+tejun
