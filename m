@@ -1,7 +1,7 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Sun, 31 Mar 2013 20:01:46 +0530
-Message-ID: <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
+Subject: [PATCH V4 1/4] workqueue: Add system wide system_freezable_unbound_wq
+Date: Sun, 31 Mar 2013 20:01:44 +0530
+Message-ID: <147bfb5aa81790f94df75858bf20570cbacc9dca.1364740180.git.viresh.kumar@linaro.org>
 References: <cover.1364740180.git.viresh.kumar@linaro.org>
 Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
 	robin.randhawa@arm.com, Steve.Bannister@arm.com,
@@ -19,85 +19,61 @@ References: <cover.1364740180.git.viresh.kumar@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Block layer uses workqueues for multiple purposes. There is no real dependency
-of scheduling these on the cpu which scheduled them.
+This patch adds system wide system_freezable_unbound_wq which will be used by
+code that currently uses system_freezable_wq and can be moved to unbound
+workqueues.
 
-On a idle system, it is observed that and idle cpu wakes up many times just to
-service this work. It would be better if we can schedule it on a cpu which the
-scheduler believes to be the most appropriate one.
-
-This patch replaces normal workqueues with UNBOUND versions.
-
-Cc: Jens Axboe <axboe@kernel.dk>
 Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
 ---
- block/blk-core.c |  3 ++-
- block/blk-ioc.c  |  2 +-
- block/genhd.c    | 10 ++++++----
- 3 files changed, 9 insertions(+), 6 deletions(-)
+ include/linux/workqueue.h | 4 ++++
+ kernel/workqueue.c        | 7 ++++++-
+ 2 files changed, 10 insertions(+), 1 deletion(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index 492242f..91cd486 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -3186,7 +3186,8 @@ int __init blk_dev_init(void)
+diff --git a/include/linux/workqueue.h b/include/linux/workqueue.h
+index 835d12b..ab7597b 100644
+--- a/include/linux/workqueue.h
++++ b/include/linux/workqueue.h
+@@ -325,11 +325,15 @@ enum {
+  *
+  * system_freezable_wq is equivalent to system_wq except that it's
+  * freezable.
++ *
++ * system_freezable_unbound_wq is equivalent to system_unbound_wq except that
++ * it's freezable.
+  */
+ extern struct workqueue_struct *system_wq;
+ extern struct workqueue_struct *system_long_wq;
+ extern struct workqueue_struct *system_unbound_wq;
+ extern struct workqueue_struct *system_freezable_wq;
++extern struct workqueue_struct *system_freezable_unbound_wq;
  
- 	/* used for unplugging and affects IO latency/throughput - HIGHPRI */
- 	kblockd_workqueue = alloc_workqueue("kblockd",
--					    WQ_MEM_RECLAIM | WQ_HIGHPRI, 0);
-+					    WQ_MEM_RECLAIM | WQ_HIGHPRI |
-+					    WQ_UNBOUND, 0);
- 	if (!kblockd_workqueue)
- 		panic("Failed to create kblockd\n");
+ static inline struct workqueue_struct * __deprecated __system_nrt_wq(void)
+ {
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index df2f6c4..771a5cc 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -281,6 +281,8 @@ struct workqueue_struct *system_unbound_wq __read_mostly;
+ EXPORT_SYMBOL_GPL(system_unbound_wq);
+ struct workqueue_struct *system_freezable_wq __read_mostly;
+ EXPORT_SYMBOL_GPL(system_freezable_wq);
++struct workqueue_struct *system_freezable_unbound_wq __read_mostly;
++EXPORT_SYMBOL_GPL(system_freezable_unbound_wq);
  
-diff --git a/block/blk-ioc.c b/block/blk-ioc.c
-index 9c4bb82..5dd576d 100644
---- a/block/blk-ioc.c
-+++ b/block/blk-ioc.c
-@@ -144,7 +144,7 @@ void put_io_context(struct io_context *ioc)
- 	if (atomic_long_dec_and_test(&ioc->refcount)) {
- 		spin_lock_irqsave(&ioc->lock, flags);
- 		if (!hlist_empty(&ioc->icq_list))
--			schedule_work(&ioc->release_work);
-+			queue_work(system_unbound_wq, &ioc->release_work);
- 		else
- 			free_ioc = true;
- 		spin_unlock_irqrestore(&ioc->lock, flags);
-diff --git a/block/genhd.c b/block/genhd.c
-index a1ed52a..0f4470a 100644
---- a/block/genhd.c
-+++ b/block/genhd.c
-@@ -1488,9 +1488,10 @@ static void __disk_unblock_events(struct gendisk *disk, bool check_now)
- 	intv = disk_events_poll_jiffies(disk);
- 	set_timer_slack(&ev->dwork.timer, intv / 4);
- 	if (check_now)
--		queue_delayed_work(system_freezable_wq, &ev->dwork, 0);
-+		queue_delayed_work(system_freezable_unbound_wq, &ev->dwork, 0);
- 	else if (intv)
--		queue_delayed_work(system_freezable_wq, &ev->dwork, intv);
-+		queue_delayed_work(system_freezable_unbound_wq, &ev->dwork,
-+				intv);
- out_unlock:
- 	spin_unlock_irqrestore(&ev->lock, flags);
+ static int worker_thread(void *__worker);
+ static void copy_workqueue_attrs(struct workqueue_attrs *to,
+@@ -4467,8 +4469,11 @@ static int __init init_workqueues(void)
+ 					    WQ_UNBOUND_MAX_ACTIVE);
+ 	system_freezable_wq = alloc_workqueue("events_freezable",
+ 					      WQ_FREEZABLE, 0);
++	system_freezable_unbound_wq = alloc_workqueue("events_unbound_freezable",
++					      WQ_FREEZABLE | WQ_UNBOUND, 0);
+ 	BUG_ON(!system_wq || !system_highpri_wq || !system_long_wq ||
+-	       !system_unbound_wq || !system_freezable_wq);
++	       !system_unbound_wq || !system_freezable_wq ||
++	       !system_freezable_unbound_wq);
+ 	return 0;
  }
-@@ -1533,7 +1534,7 @@ void disk_flush_events(struct gendisk *disk, unsigned int mask)
- 	spin_lock_irq(&ev->lock);
- 	ev->clearing |= mask;
- 	if (!ev->block)
--		mod_delayed_work(system_freezable_wq, &ev->dwork, 0);
-+		mod_delayed_work(system_freezable_unbound_wq, &ev->dwork, 0);
- 	spin_unlock_irq(&ev->lock);
- }
- 
-@@ -1626,7 +1627,8 @@ static void disk_check_events(struct disk_events *ev,
- 
- 	intv = disk_events_poll_jiffies(disk);
- 	if (!ev->block && intv)
--		queue_delayed_work(system_freezable_wq, &ev->dwork, intv);
-+		queue_delayed_work(system_freezable_unbound_wq, &ev->dwork,
-+				intv);
- 
- 	spin_unlock_irq(&ev->lock);
- 
+ early_initcall(init_workqueues);
 -- 
 1.7.12.rc2.18.g61b472e
