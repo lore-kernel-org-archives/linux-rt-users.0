@@ -1,44 +1,41 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V4 1/4] workqueue: Add system wide system_freezable_unbound_wq
-Date: Mon, 1 Apr 2013 10:55:37 +0530
-Message-ID: <CAKohponXTYSdmk71DNYsYtwU9GEYwnGcj-_wjLEZfxvEhzPWWQ@mail.gmail.com>
+Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
+Date: Mon, 1 Apr 2013 12:01:05 +0530
+Message-ID: <CAKohpo=nWsUh5y7y_tacGez7uN76QbRFRVPSQcKQMGM1nUBWtw@mail.gmail.com>
 References: <cover.1364740180.git.viresh.kumar@linaro.org>
-	<147bfb5aa81790f94df75858bf20570cbacc9dca.1364740180.git.viresh.kumar@linaro.org>
-	<CAP245DV-4d4hRGCnKUtyVV1ycHuYF4dKwh568kvHfKHdJR3xpw@mail.gmail.com>
+	<91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
+	<20130331181931.GA7533@htj.dyndns.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Tejun Heo <tj@kernel.org>, axboe@kernel.dk,
-	Robin Randhawa <robin.randhawa@arm.com>,
-	linux-rt-users@vger.kernel.org,
-	Patch Tracking <patches@linaro.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Liviu Dudau <Liviu.Dudau@arm.com>,
-	linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-	Lists linaro-kernel <linaro-kernel@lists.linaro.org>,
-	Steve Bannister <Steve.Bannister@arm.com>, airlied@redhat.com,
-	Arvind Chauhan <arvind.chauhan@arm.com>, mingo@redhat.com,
-	davem@davemloft.net,
-	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>
-To: Amit Kucheria <amit.kucheria@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f43.google.com ([209.85.219.43]:43622 "EHLO
-	mail-oa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751626Ab3DAFZi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Apr 2013 01:25:38 -0400
-Received: by mail-oa0-f43.google.com with SMTP id l10so1700828oag.16
-        for <linux-rt-users@vger.kernel.org>; Sun, 31 Mar 2013 22:25:37 -0700 (PDT)
-In-Reply-To: <CAP245DV-4d4hRGCnKUtyVV1ycHuYF4dKwh568kvHfKHdJR3xpw@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
+	robin.randhawa@arm.com, Steve.Bannister@arm.com,
+	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
+	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
+	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
+	mingo@redhat.com, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Tejun Heo <tj@kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130331181931.GA7533@htj.dyndns.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 1 April 2013 10:50, Amit Kucheria <amit.kucheria@linaro.org> wrote:
-> On Sun, Mar 31, 2013 at 8:01 PM, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> This patch adds system wide system_freezable_unbound_wq which will be used by
->> code that currently uses system_freezable_wq and can be moved to unbound
->> workqueues.
->
-> _Why_ do i need this change?
+Hi Tejun,
 
-Block layer uses system_freezable_wq for some work and to migrate them to a
-UNBOUND wq it was required. Sorry if it is yet not clear.
+On 31 March 2013 23:49, Tejun Heo <tj@kernel.org> wrote:
+> So, let's please introduce a new flag to mark these workqueues, say,
+> WQ_UNBOUND_FOR_POWER_SAVE or whatever (please come up with a better
+> name) and provide a compile time switch with boot time override.
+
+Just wanted to make this clear before writing it:
+
+You want me to do something like (With better names):
+
+int wq_unbound_for_power_save_enabled = 0;
+
+#ifdef CONFIG_WQ_UNBOUND_FOR_POWER_SAVE
+#define WQ_UNBOUND_FOR_POWER_SAVE   wq_unbound_for_power_save_enabled
+#else
+#define WQ_UNBOUND_FOR_POWER_SAVE 0
+
+And provide a call to enable/disable wq_unbound_for_power_save_enabled ??
