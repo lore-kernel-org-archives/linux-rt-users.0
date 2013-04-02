@@ -1,30 +1,32 @@
-From: Joris Slatman <jsn12015@student.mdh.se>
-Subject: run_list of rt_se
-Date: Tue, 2 Apr 2013 19:41:18 +0000
-Message-ID: <A15A7155564B5748AA7515A1F18C5ACB27D47FE5@AMSPRD0112MB545.eurprd01.prod.exchangelabs.com>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Tue, 2 Apr 2013 19:25:20 +0000
+Message-ID: <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com>
+References: <0000013da2ce20f8-0e3a64ef-67ed-4ab4-9f20-b77980c876c3-000000@email.amazonses.com> <1364236355.6345.185.camel@gandalf.local.home> <20130327025957.GA17125@lge.com> <1364355032.6345.200.camel@gandalf.local.home> <20130327061351.GB17125@lge.com>
+ <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com> <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com> <alpine.DEB.2.02.1304011025550.12690@gentwo.org>
+ <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com> <20130402004217.GA16699@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co1ehsobe005.messaging.microsoft.com ([216.32.180.188]:55309
-	"EHLO co1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752331Ab3DBTlh convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Apr 2013 15:41:37 -0400
-Received: from mail82-co1 (localhost [127.0.0.1])	by mail82-co1-R.bigfish.com
- (Postfix) with ESMTP id 8CA398A017C	for <linux-rt-users@vger.kernel.org>;
- Tue,  2 Apr 2013 19:41:34 +0000 (UTC)
-Received: from CO1EHSMHS025.bigfish.com (unknown [10.243.78.234])	by
- mail82-co1.bigfish.com (Postfix) with ESMTP id 10C5A7C006C	for
- <linux-rt-users@vger.kernel.org>; Tue,  2 Apr 2013 19:41:32 +0000 (UTC)
-Content-Language: nl-NL
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	Pekka Enberg <penberg@kernel.org>
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130402004217.GA16699@lge.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Tue, 2 Apr 2013, Joonsoo Kim wrote:
 
-Can anybody tell what is stored in the run_list of rt_se?
+> We need one more fix for correctness.
+> When available is assigned by put_cpu_partial, it doesn't count cpu slab's objects.
+> Please reference my old patch.
+>
+> https://lkml.org/lkml/2013/1/21/64
 
-Thanks
-
+Could you update your patch and submit it again?
