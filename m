@@ -1,35 +1,39 @@
-From: Stanislav Meduna <stano-eBkVDd3zSwodnm+yROfE0A@public.gmane.org>
-Subject: malloc/free and priority inheritance?
-Date: Wed, 03 Apr 2013 01:06:36 +0200
-Message-ID: <515B647C.3080505@meduna.org>
+From: Arpit Goel <arpitgoel@gmail.com>
+Subject: iMX6 compilation fails with RT patch
+Date: Wed, 3 Apr 2013 11:36:10 +0530
+Message-ID: <CANRA68LNCUUJGoYtntem-D8R3abcM-RmFRHjz+e002DtXVM4qA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org" <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-To: libc-help-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
-Return-path: <libc-help-return-2602-gclgu-libc-help=m.gmane.org-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
-List-Unsubscribe: <mailto:libc-help-unsubscribe-##L=##H@sourceware.org>
-List-Subscribe: <mailto:libc-help-subscribe-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
-List-Post: <mailto:libc-help-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>
-List-Help: <mailto:libc-help-help-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org>, <http://sourceware.org/lists.html#faqs>
-Sender: libc-help-owner-9JcytcrH/bA+uJoB2kUjGw@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-oa0-f41.google.com ([209.85.219.41]:44166 "EHLO
+	mail-oa0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751578Ab3DCGGL (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Apr 2013 02:06:11 -0400
+Received: by mail-oa0-f41.google.com with SMTP id f4so1163510oah.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 02 Apr 2013 23:06:10 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
 
-I am hunting a possible priority inversion case and I would like
-to ask whether the malloc/free from glibc (particularly 2.11.3
-used in Debian 6 or newer) uses priority inheritance mutexes
-when doing the necessary locking.
+I am using 3.8.4 kernel with RT patch(patch-3.8.4-rt2.patch).
+Patch was applied using "git apply" on kernel with Tag 3.8.4.
 
-There is http://sourceware.org/bugzilla/show_bug.cgi?id=12114
-which would suggest that it is not - is this (still) true?
-If yes, is there some patch or are there tried&tested alternative
-malloc libraries that do not have the problem (e.g. tcmalloc)?
-I am using it on a RT_PREEMPT_FULL linux-rt.
+Compilation for ARM architecture fails for iMX6 using
+imx_v6_v7_defconfig fails after following configuration flags are
+enabled.
 
-Please Cc me on answer, I am not subscribed to libc-help
+CONFIG_PREEMPT_RT_BASE
+CONFIG_PREEMPT_RT_FULL
 
-Thanks
--- 
-                                        Stano
+Compilation Error:
+
+arch/arm/mach-imx/clk.c:3:1: error: expected '=', ',', ';', 'asm' or
+'__attribute__' before '__cacheline_aligned_in_smp'
+
+Toolchain -> Linaro ARM FSL toolchain (arm-fsl-linux-gnueabi-)
+
+Regards
+Arpit Goel
