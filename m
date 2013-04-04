@@ -1,38 +1,36 @@
-From: Siddhesh Poyarekar <siddhesh.poyarekar@gmail.com>
-Subject: Re: malloc/free and priority inheritance?
-Date: Thu, 4 Apr 2013 19:07:01 +0530
-Message-ID: <CAAHN_R1zLdHqpC4JGxjJtADRWGA0hC=G2C3=0Z21KTKk5HJNtg@mail.gmail.com>
-References: <515B647C.3080505@meduna.org>
-	<515D7943.5000401@meduna.org>
-	<515D808C.8090808@meduna.org>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Thu, 4 Apr 2013 13:53:25 +0000
+Message-ID: <0000013dd552ca2b-986c7b7f-850e-4108-82e8-443695368b1d-000000@email.amazonses.com>
+References: <20130327025957.GA17125@lge.com> <1364355032.6345.200.camel@gandalf.local.home> <20130327061351.GB17125@lge.com> <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
+ <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com> <alpine.DEB.2.02.1304011025550.12690@gentwo.org> <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com> <20130402004217.GA16699@lge.com>
+ <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com> <20130404005850.GC10683@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: libc-help <libc-help@sourceware.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Stanislav Meduna <stano@meduna.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	Pekka Enberg <penberg@kernel.org>
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f169.google.com ([74.125.82.169]:61147 "EHLO
-	mail-we0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760776Ab3DDNhF (ORCPT
+Received: from a9-78.smtp-out.amazonses.com ([54.240.9.78]:45281 "EHLO
+	a9-78.smtp-out.amazonses.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1761305Ab3DDOLD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Apr 2013 09:37:05 -0400
-Received: by mail-we0-f169.google.com with SMTP id x43so2078824wey.14
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Apr 2013 06:37:01 -0700 (PDT)
-In-Reply-To: <515D808C.8090808@meduna.org>
+	Thu, 4 Apr 2013 10:11:03 -0400
+In-Reply-To: <20130404005850.GC10683@lge.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 4 April 2013 19:00, Stanislav Meduna <stano@meduna.org> wrote:
+On Thu, 4 Apr 2013, Joonsoo Kim wrote:
 
-> hm well.. the assembler version of e.g. __pthread_cond_broadcast
-> in 2.17 for x86 seems to be using the PI. No luck with ARM (2.16
-> in ports) though.
+> Pekka alreay applied it.
+> Do we need update?
 
-The generic C code was updated to use PI in current master (I don't
-remember if the arm support bits were added, but they must have been
-by now), so you could cherry-pick and backport those bits for your
-distro if you want.
+Well I thought the passing of the count via lru.next would be something
+worthwhile to pick up.
 
-Siddhesh
---
-http://siddhesh.in
