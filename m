@@ -1,55 +1,77 @@
-From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
- unfreeze_partials() code.
-Date: Thu, 4 Apr 2013 09:58:50 +0900
-Message-ID: <20130404005850.GC10683@lge.com>
-References: <20130327025957.GA17125@lge.com>
- <1364355032.6345.200.camel@gandalf.local.home>
- <20130327061351.GB17125@lge.com>
- <alpine.DEB.2.02.1303281227520.16200@gentwo.org>
- <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
- <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com>
- <alpine.DEB.2.02.1304011025550.12690@gentwo.org>
- <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com>
- <20130402004217.GA16699@lge.com>
- <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com>
+From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
+Subject: MAX_LOCKDEP_ENTRIES too low!
+Date: Thu, 04 Apr 2013 12:24:15 +0200
+Message-ID: <2490203.uLrt7BxRl5@bs8>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>,
-	Pekka Enberg <penberg@kernel.org>
-To: Christoph Lameter <cl@linux.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+To: rt <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from moutng.kundenserver.de ([212.227.17.10]:60878 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758165Ab3DDKYW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Apr 2013 06:24:22 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello, Christoph.
+Hi,
 
-On Tue, Apr 02, 2013 at 07:25:20PM +0000, Christoph Lameter wrote:
-> On Tue, 2 Apr 2013, Joonsoo Kim wrote:
-> 
-> > We need one more fix for correctness.
-> > When available is assigned by put_cpu_partial, it doesn't count cpu slab's objects.
-> > Please reference my old patch.
-> >
-> > https://lkml.org/lkml/2013/1/21/64
-> 
-> Could you update your patch and submit it again?
+booting a 3.8.5 patched with 3.8.4-rt2 I get something like this dmesg'ed: 
+...
+[  105.901078] BUG: MAX_LOCKDEP_ENTRIES too low!
+[  105.901079] turning off the locking correctness validator.
+[  105.901083] Pid: 3213, comm: mysqld Not tainted 3.8.5-rt2+ #3
+[  105.901084] Call Trace:
+[  105.901094]  [<ffffffff8107d1b6>] 
+add_lock_to_list.isra.22.constprop.37+0x45/0x9d
+[  105.901098]  [<ffffffff8107f1a3>] __lock_acquire+0xc55/0xde2
+[  105.901104]  [<ffffffff814c993f>] ? _raw_spin_unlock+0x61/0x6e
+[  105.901107]  [<ffffffff814c8ac1>] ? rt_spin_lock_slowlock+0x8a/0x27c
+[  105.901110]  [<ffffffff814c9911>] ? _raw_spin_unlock+0x33/0x6e
+[  105.901113]  [<ffffffff814c9911>] ? _raw_spin_unlock+0x33/0x6e
+[  105.901117]  [<ffffffff810dd01f>] ? __local_lock+0x28/0x77
+[  105.901121]  [<ffffffff8107f7a4>] lock_acquire+0xc4/0x112
+[  105.901124]  [<ffffffff810dd01f>] ? __local_lock+0x28/0x77
+[  105.901127]  [<ffffffff814c90fa>] rt_spin_lock+0x39/0x40
+[  105.901130]  [<ffffffff810dd01f>] ? __local_lock+0x28/0x77
+[  105.901135]  [<ffffffff81062741>] ? migrate_disable+0xeb/0xf9
+[  105.901138]  [<ffffffff810dd01f>] __local_lock+0x28/0x77
+[  105.901142]  [<ffffffff810de1e5>] lru_add_drain+0x2e/0x5a
+[  105.901145]  [<ffffffff810de224>] __pagevec_release+0x13/0x2e
+[  105.901149]  [<ffffffff810de2b0>] pagevec_release+0xe/0x10
+[  105.901153]  [<ffffffff810de7e5>] truncate_inode_pages_range+0x12a/0x347
+[  105.901156]  [<ffffffff814c9911>] ? _raw_spin_unlock+0x33/0x6e
+[  105.901158]  [<ffffffff814c8d60>] ? rt_spin_lock_slowunlock+0x47/0x66
+[  105.901163]  [<ffffffff810b7140>] ? trace_preempt_on+0x1e/0x3b
+[  105.901167]  [<ffffffff810625dc>] ? migrate_enable+0x156/0x1d0
+[  105.901170]  [<ffffffff810625dc>] ? migrate_enable+0x156/0x1d0
+[  105.901175]  [<ffffffff81169456>] ? __dquot_initialize+0x25/0x11d
+[  105.901179]  [<ffffffff810dea73>] truncate_inode_pages+0x12/0x14
+[  105.901182]  [<ffffffff811b0eda>] ext4_evict_inode+0xf3/0x333
+[  105.901186]  [<ffffffff811305b7>] evict+0xaa/0x16e
+[  105.901189]  [<ffffffff81130eb5>] iput+0x144/0x14d
+[  105.901192]  [<ffffffff81126316>] do_unlinkat+0x14a/0x1e4
+[  105.901197]  [<ffffffff8107fbfb>] ? trace_hardirqs_on_caller+0x12d/0x164
+[  105.901200]  [<ffffffff81263a3e>] ? trace_hardirqs_on_thunk+0x3a/0x3f
+[  105.901203]  [<ffffffff81127e27>] sys_unlink+0x16/0x18
+[  105.901207]  [<ffffffff814d0119>] system_call_fastpath+0x16/0x1b
+...
+It's repeatable in the sense of showing up at system start. It points mostly  
+at a different program for causing the problem. Common seems to be something 
+filesystem related as reported here:
+[  105.901182]  [<ffffffff811b0eda>] ext4_evict_inode+0xf3/0x333
 
-Pekka alreay applied it.
-Do we need update?
+Digging a little bit I found this thread as an example:
+http://www.kernelhub.org/?p=2&msg=147179
+showing that there may be real bugs hidden behind such messages.
 
-Thanks.
+My questions:
+1.) Does it make sense to dig a little big deeper?
+(I'am not a experienced kernelhacker, last -rt was a 3.6.5-rt11)
+2.) If 1.) : How to proceed?
 
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+Thanks in advance!
+
+Bernhard
+
