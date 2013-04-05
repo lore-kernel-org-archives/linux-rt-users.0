@@ -1,79 +1,43 @@
 From: Darren Hart <dvhart@linux.intel.com>
-Subject: Re: 3.8.4-rt2 panic in migrate_task_rq_fair
-Date: Fri, 05 Apr 2013 10:17:36 -0700
-Message-ID: <515F0730.9000006@linux.intel.com>
-References: <515F000D.9090500@linux.intel.com>
+Subject: Re: malloc/free and priority inheritance?
+Date: Fri, 05 Apr 2013 10:39:48 -0700
+Message-ID: <515F0C64.20609@linux.intel.com>
+References: <515B647C.3080505@meduna.org> <515D7943.5000401@meduna.org> <515D808C.8090808@meduna.org> <CAAHN_R1zLdHqpC4JGxjJtADRWGA0hC=G2C3=0Z21KTKk5HJNtg@mail.gmail.com> <515D97B8.5030101@meduna.org> <CAAHN_R0oHL+oWxs_0SBwi4dRWM9HDrFM0Y7ZDLZQGNHnnxYzHQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Stanislav Meduna <stano@meduna.org>,
+	libc-help <libc-help@sourceware.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Siddhesh Poyarekar <siddhesh.poyarekar@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga02.intel.com ([134.134.136.20]:33711 "EHLO mga02.intel.com"
+Received: from mga09.intel.com ([134.134.136.24]:7308 "EHLO mga09.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1162035Ab3DERRh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Apr 2013 13:17:37 -0400
-In-Reply-To: <515F000D.9090500@linux.intel.com>
+	id S1162184Ab3DERj7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Apr 2013 13:39:59 -0400
+In-Reply-To: <CAAHN_R0oHL+oWxs_0SBwi4dRWM9HDrFM0Y7ZDLZQGNHnnxYzHQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 
-On 04/05/2013 09:47 AM, Darren Hart wrote:
-> Running on a UEFI 32bit Atom E6xx system I see the following panic after
-> several minutes running the following cyclictest command.
+On 04/04/2013 08:39 AM, Siddhesh Poyarekar wrote:
+> On 4 April 2013 20:39, Stanislav Meduna <stano@meduna.org> wrote:
+>> The first thing e.g. the __pthread_cond_broadcast (and most of the
+>> other functions as well) does is to grab lll_lock. Is the following
+>> scenario possible?
 > 
-> root@sys940x:~# cyclictest -p 50 -d 10m -t -q
+> Yes this is possible.  I think there is a bug report that describes
+> this.  We need to convert the pthread_cond_t internal lock into a PI
+> one if the mutex guarding it is PI.  It's probably tricky to do
+> though; I haven't thought it through.
 
-Whoops, I should have used "-D 10m", but the following is of course
-still a problem.
+I have patches out on the glibc alpha list that do this. It is on my
+plate to dust these off, reapply and test them, and try to push them
+again, I just haven't been able to get to it.
 
---
-Darren
-
-> # /dev/cpu_dma_latency set to 0us
-> 
-> BUG: unable to handle kernel paging request at fffffff4
-> IP: [<c106a41c>] migrate_task_rq_fair+0x4c/0x100
-> *pde = 0198f067 *pte = 00000000
-> Oops: 0000 [#1] PREEMPT SMP
-> Modules linked in:
-> Pid: 649, comm: cyclictest Not tainted 3.8.4-rt2-yocto-preempt-rt #1
-> EIP: 0060:[<c106a41c>] EFLAGS: 00010046 CPU: 0
-> EIP is at migrate_task_rq_fair+0x4c/0x100
-> EAX: 00000000 EBX: deec43f0 ECX: 00000000 EDX: 00000000
-> ESI: dde8f948 EDI: c1983900 EBP: dee9fe58 ESP: dee9fe40
->  DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
-> CR0: 80050033 CR2: fffffff4 CR3: 1ef64000 CR4: 000007d0
-> DR0: 00000000 DR1: 00000000 DR2: 00000000 DR3: 00000000
-> DR6: ffff0ff0 DR7: 00000400
-> Process cyclictest (pid: 649, ti=dee9e000 task=def74170 task.ti=dee9e000)
-> Stack:
->  c197f060 00000000 00000000 00000000 deec43f0 00000001 dee9fec0 c1064ec5
->  c10380ce 00000010 dee9fe7c c1065894 de699ef0 619b7c30 00000000 dee9feac
->  00000010 00000000 dee9fea0 c1037f76 00000000 def74170 00000001 dee9ff28
-> Call Trace:
->  [<c1064ec5>] set_task_cpu+0x55/0x1b0
->  [<c10380ce>] ? unpin_current_cpu+0xe/0x70
->  [<c1065894>] ? migrate_enable+0xc4/0x1c0
->  [<c1037f76>] ? pin_current_cpu+0x76/0x1c0
->  [<c106713c>] try_to_wake_up+0x18c/0x300
->  [<c10672ef>] wake_up_process+0x1f/0x40
->  [<c10595ed>] hrtimer_wakeup+0x1d/0x30
->  [<c10599cb>] __run_hrtimer+0x9b/0x260
->  [<c10595d0>] ? update_rmtp+0x90/0x90
->  [<c105ad62>] hrtimer_interrupt+0x272/0x320
->  [<c1645ed5>] smp_apic_timer_interrupt+0x55/0x87
->  [<c163f75d>] apic_timer_interrupt+0x2d/0x34
->  [<c163f48c>] ? resume_kernel+0x44/0x44
-> Code: 83 74 01 00 00 74 48 8d 4e 58 e8 94 2e 2c 00 89 45 f0 89 55 f4 8b
-> 8b 78 01 00 00 8b 93 74 01 00 00 29 55 f0 19 4d f4 31 c0 31 d2 <8b> 49
-> f4 0b 4d f0 75 2c 89 83 74 01 00 00 89 93 78 01 00 00 8b
-> 
-> EIP: [<c106a41c>] migrate_task_rq_fair+0x4c/0x100 SS:ESP 0068:dee9fe40
-> CR2: 00000000fffffff4
-> ---[ end trace 0000000000000002 ]---
-> Kernel panic - not syncing: Fatal exception in interrupt
-> 
+Patches and test cases available here:
+http://sourceware.org/bugzilla/show_bug.cgi?id=11588
 
 -- 
 Darren Hart
