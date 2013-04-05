@@ -1,43 +1,86 @@
-From: "Carlos O'Donell" <carlos@redhat.com>
-Subject: Re: malloc/free and priority inheritance?
-Date: Sat, 06 Apr 2013 10:24:02 -0400
-Message-ID: <51603002.1020501@redhat.com>
-References: <515B647C.3080505@meduna.org> <515D7943.5000401@meduna.org> <515D808C.8090808@meduna.org> <CAAHN_R1zLdHqpC4JGxjJtADRWGA0hC=G2C3=0Z21KTKk5HJNtg@mail.gmail.com> <515D93F8.5050006@redhat.com> <CAAHN_R2zdvYwQL_Md8C=+O9w3tc2y+XR5tofv3FEe6CjcOubAQ@mail.gmail.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [ANNOUNCE] 3.8.4-rt2
+Date: Fri, 5 Apr 2013 19:35:51 -0400
+Message-ID: <CAP=VYLoXfECaSBuvYdZ3qbsnR9QMYpoRnKGZdY=P6zS_TYOcCA@mail.gmail.com>
+References: <20130326201722.GA14220@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Stanislav Meduna <stano@meduna.org>,
-	libc-help <libc-help@sourceware.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Siddhesh Poyarekar <siddhesh.poyarekar@gmail.com>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:46818 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1423006Ab3DFOZe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 6 Apr 2013 10:25:34 -0400
-In-Reply-To: <CAAHN_R2zdvYwQL_Md8C=+O9w3tc2y+XR5tofv3FEe6CjcOubAQ@mail.gmail.com>
+Received: from mail-we0-f177.google.com ([74.125.82.177]:51373 "EHLO
+	mail-we0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932282Ab3DEXgY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Apr 2013 19:36:24 -0400
+In-Reply-To: <20130326201722.GA14220@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/04/2013 11:32 AM, Siddhesh Poyarekar wrote:
-> On 4 April 2013 20:23, Carlos O'Donell <carlos@redhat.com> wrote:
->> ... and ARM uses the generic C code.
->>
->> My comments in BZ#12114 still remain. Why can't we make malloc/free
->> use PI locks? We need not convert lll_lock, but just make malloc-machine.h
->> use a PI-aware lock?
-> 
-> The trouble (as always) is to decide on when to use PI-aware locks.
-> Do we do that by default or do we have (*chuckle*) an environment
-> variable to override the default locks?  Maybe this discussion is more
-> suitable for libc-alpha though, since we can hopefully get all
-> maintainers to chime in there.
+On Tue, Mar 26, 2013 at 4:17 PM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+>
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.8.4-rt2 release.
+>
+> changes since v3.8.4-rt1:
+> - build fix for i915 (reported by "Luis Claudio R. Goncalves")
+> - build fix for fscache (reported by tglx)
+> - build fix for !RT (kernel/softirq.c did not compile)
+> - per-cpu rwsem fixed for RT (required only by uprobes so far)
+> - slub: delay the execution of the ->ctor() hook for newly created
+>   objects. This lowers the worst case latencies.
+>
+> Known issues:
+>
+>       - SLxB is broken on PowerPC.
+>
+> The delta patch against v3.8.4-rt1 is appended below and can be found
+> here:
+>
+>   https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.4-rt1-rt2.patch.xz
+>
+> The RT patch against 3.8.4 can be found here:
+>
+>   https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.4-rt2.patch.xz
+>
+> The split quilt queue is available at:
+>
+>   https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.8.4-rt2.tar.xz
 
-The number of tunables just keeps growing doesn't it?
+Thanks for the work in putting this together.  Just a heads up that the
+split queue fails on a patch with no author/date/subject as follows:
 
-Added this to my list of tunables in the WIP document I'm writing:
-sourceware.org/glibc/wiki/TuningLibraryRuntimeBehavior
+[...]
+(174/286) Applying: rt-add-rt-to-mutex-headers.patch
+(175/286) Applying: rwsem-add-rt-variant.patch
+(176/286) Applying: rt: Add the preempt-rt lock replacement APIs
+(177/286) Patch format detection failed.
+git am of percpu-rwsem-compilefix.patch failed.
 
-Cheers,
-Carlos.
+Looking at percpu-rwsem-compilefix.patch -- it starts with three dashes,
+so it looks like the shortlog and long-log got inadvertently thrown out,
+as well as any author or optional date information, etc.
 
+Fixing that one, I get further, until I get to:
+
+[...]
+(270/286) Applying: wait-simple: Simple waitqueue implementation
+(271/286) Applying: rcutiny: Use simple waitqueue
+(272/286) Patch format detection failed.
+git am of treercu-use-simple-waitqueue.patch failed.
+
+This "treercu-use-simple-waitqueue.patch" has the exact same problem.
+
+Note that I'm using git directly, and not quilt -- which is more
+strict in what it will accept, hence it catches these kinds of things.
+
+Thanks,
+Paul.
+--
+
+> Sebastian
+> ---
