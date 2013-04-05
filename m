@@ -1,39 +1,127 @@
-From: Siddhesh Poyarekar <siddhesh.poyarekar@gmail.com>
-Subject: Re: malloc/free and priority inheritance?
-Date: Thu, 4 Apr 2013 21:09:57 +0530
-Message-ID: <CAAHN_R0oHL+oWxs_0SBwi4dRWM9HDrFM0Y7ZDLZQGNHnnxYzHQ@mail.gmail.com>
-References: <515B647C.3080505@meduna.org>
-	<515D7943.5000401@meduna.org>
-	<515D808C.8090808@meduna.org>
-	<CAAHN_R1zLdHqpC4JGxjJtADRWGA0hC=G2C3=0Z21KTKk5HJNtg@mail.gmail.com>
-	<515D97B8.5030101@meduna.org>
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Fri, 5 Apr 2013 11:05:01 +0900
+Message-ID: <20130405020501.GB13624@lge.com>
+References: <20130327061351.GB17125@lge.com>
+ <alpine.DEB.2.02.1303281227520.16200@gentwo.org>
+ <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
+ <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com>
+ <alpine.DEB.2.02.1304011025550.12690@gentwo.org>
+ <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com>
+ <20130402004217.GA16699@lge.com>
+ <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com>
+ <20130404005850.GC10683@lge.com>
+ <0000013dd552ca2b-986c7b7f-850e-4108-82e8-443695368b1d-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: libc-help <libc-help@sourceware.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Stanislav Meduna <stano@meduna.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f43.google.com ([74.125.82.43]:53480 "EHLO
-	mail-wg0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1760168Ab3DDPj6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Apr 2013 11:39:58 -0400
-Received: by mail-wg0-f43.google.com with SMTP id f12so2781382wgh.34
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Apr 2013 08:39:57 -0700 (PDT)
-In-Reply-To: <515D97B8.5030101@meduna.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	Pekka Enberg <penberg@kernel.org>
+To: Christoph Lameter <cl@linux.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <0000013dd552ca2b-986c7b7f-850e-4108-82e8-443695368b1d-000000@email.amazonses.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 4 April 2013 20:39, Stanislav Meduna <stano@meduna.org> wrote:
-> The first thing e.g. the __pthread_cond_broadcast (and most of the
-> other functions as well) does is to grab lll_lock. Is the following
-> scenario possible?
+On Thu, Apr 04, 2013 at 01:53:25PM +0000, Christoph Lameter wrote:
+> On Thu, 4 Apr 2013, Joonsoo Kim wrote:
+> 
+> > Pekka alreay applied it.
+> > Do we need update?
+> 
+> Well I thought the passing of the count via lru.next would be something
+> worthwhile to pick up.
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-Yes this is possible.  I think there is a bug report that describes
-this.  We need to convert the pthread_cond_t internal lock into a PI
-one if the mutex guarding it is PI.  It's probably tricky to do
-though; I haven't thought it through.
+Hello, Pekka.
 
-Siddhesh
---
-http://siddhesh.in
+Here goes a patch implementing Christoph's idea.
+Instead of updating my previous patch, I re-write this patch on top of
+your slab/next tree.
+
+Thanks.
+
+------------------------8<-------------------------------
+>From e1c18793dd2a9d9cef87b07faf975364b71276d7 Mon Sep 17 00:00:00 2001
+From: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Date: Fri, 5 Apr 2013 10:49:36 +0900
+Subject: [PATCH] slub: use page->lru.next to calculate nr of acquired object
+
+We can pass inuse count via page->lru.next in order to calculate number
+of acquired objects and it is more beautiful way. This reduces one
+function argument and makes clean code.
+
+Cc: Christoph Lameter <cl@linux.com>
+Suggested-by: Christoph Lameter <cl@linux.com>
+Signed-off-by: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+
+diff --git a/mm/slub.c b/mm/slub.c
+index 21b3f00..8a35464 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1493,11 +1493,12 @@ static inline void remove_partial(struct kmem_cache_node *n,
+  */
+ static inline void *acquire_slab(struct kmem_cache *s,
+ 		struct kmem_cache_node *n, struct page *page,
+-		int mode, int *objects)
++		int mode)
+ {
+ 	void *freelist;
+ 	unsigned long counters;
+ 	struct page new;
++	unsigned long inuse;
+ 
+ 	/*
+ 	 * Zap the freelist and set the frozen bit.
+@@ -1507,7 +1508,7 @@ static inline void *acquire_slab(struct kmem_cache *s,
+ 	freelist = page->freelist;
+ 	counters = page->counters;
+ 	new.counters = counters;
+-	*objects = new.objects - new.inuse;
++	inuse = page->inuse;
+ 	if (mode) {
+ 		new.inuse = page->objects;
+ 		new.freelist = NULL;
+@@ -1525,6 +1526,7 @@ static inline void *acquire_slab(struct kmem_cache *s,
+ 		return NULL;
+ 
+ 	remove_partial(n, page);
++	page->lru.next = (void *)inuse;
+ 	WARN_ON(!freelist);
+ 	return freelist;
+ }
+@@ -1541,7 +1543,6 @@ static void *get_partial_node(struct kmem_cache *s, struct kmem_cache_node *n,
+ 	struct page *page, *page2;
+ 	void *object = NULL;
+ 	int available = 0;
+-	int objects;
+ 
+ 	/*
+ 	 * Racy check. If we mistakenly see no partial slabs then we
+@@ -1559,11 +1560,11 @@ static void *get_partial_node(struct kmem_cache *s, struct kmem_cache_node *n,
+ 		if (!pfmemalloc_match(page, flags))
+ 			continue;
+ 
+-		t = acquire_slab(s, n, page, object == NULL, &objects);
++		t = acquire_slab(s, n, page, object == NULL);
+ 		if (!t)
+ 			break;
+ 
+-		available += objects;
++		available += (page->objects - (unsigned long)page->lru.next);
+ 		if (!object) {
+ 			c->page = page;
+ 			stat(s, ALLOC_FROM_PARTIAL);
+-- 
+1.7.9.5
