@@ -1,37 +1,35 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Fri, 5 Apr 2013 15:17:17 +0530
-Message-ID: <CAKohpomTQj-S-32JdtY76_82NraB5uBqnKZXVxk28KxMZ-NSow@mail.gmail.com>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
-	<91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
-	<20130331181931.GA7533@htj.dyndns.org>
-	<CAKohpo=nWsUh5y7y_tacGez7uN76QbRFRVPSQcKQMGM1nUBWtw@mail.gmail.com>
-	<20130403215412.GG3411@htj.dyndns.org>
+From: Christoph Lameter <cl@linux.com>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Fri, 5 Apr 2013 14:35:33 +0000
+Message-ID: <0000013dda9fb9c0-4fbf0700-efb5-4935-b8d8-02d2f917a95b-000000@email.amazonses.com>
+References: <20130327061351.GB17125@lge.com> <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com> <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com>
+ <alpine.DEB.2.02.1304011025550.12690@gentwo.org> <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com> <20130402004217.GA16699@lge.com> <0000013dcc35f310-d338600d-8a5a-4c95-9770-af4b8d81e103-000000@email.amazonses.com>
+ <20130404005850.GC10683@lge.com> <0000013dd552ca2b-986c7b7f-850e-4108-82e8-443695368b1d-000000@email.amazonses.com> <20130405020501.GB13624@lge.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com,
-	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
-	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
-	mingo@redhat.com, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130403215412.GG3411@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	Pekka Enberg <penberg@kernel.org>
+To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from a194-210.smtp-out.amazonses.com ([199.255.194.210]:3010 "EHLO
+	a194-210.smtp-out.amazonses.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1161757Ab3DEOff (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 5 Apr 2013 10:35:35 -0400
+In-Reply-To: <20130405020501.GB13624@lge.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 4 April 2013 03:24, Tejun Heo <tj@kernel.org> wrote:
-> Not a call, probably a module_param() so that it can be switched
-> on/off during boot.  You can make the param writable so that it can be
-> flipped run-time but updating existing workqueues would be non-trivial
-> and I don't think it's gonna be worthwhile.
+On Fri, 5 Apr 2013, Joonsoo Kim wrote:
 
-module_param()?? We can't compile kernel/workqueue.c as a module and
-hence i went with #define + a variable with functions to set/reset it...
+> Here goes a patch implementing Christoph's idea.
+> Instead of updating my previous patch, I re-write this patch on top of
+> your slab/next tree.
 
-I am not looking to update all existing workqueues to use it but workqueues
-which are affecting power for us... And if there are some very very
-performance critical ones, then we must better use queue_work_on() for
-them to make it more clear.
+Acked-by: Christoph Lameter <cl@linux.com>
