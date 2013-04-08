@@ -1,60 +1,50 @@
-From: Jens Axboe <axboe@kernel.dk>
-Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Mon, 8 Apr 2013 13:13:28 +0200
-Message-ID: <20130408111328.GA12244@kernel.dk>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
- <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
- <20130331181931.GA7533@htj.dyndns.org>
+From: Qiang Huang <h.huangqiang@huawei.com>
+Subject: [PATCH] sched: fix the wrong macro name of CONFIG_DEBUG_PREEMPT
+Date: Mon, 8 Apr 2013 19:47:29 +0800
+Message-ID: <5162AE51.8030804@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Viresh Kumar <viresh.kumar@linaro.org>,
-	linaro-kernel@lists.linaro.org, patches@linaro.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com,
-	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
-	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
-	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130331181931.GA7533@htj.dyndns.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from szxga01-in.huawei.com ([119.145.14.64]:58190 "EHLO
+	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935215Ab3DHLwg (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Apr 2013 07:52:36 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Mar 31 2013, Tejun Heo wrote:
-> Hello, Viresh.
-> 
-> On Sun, Mar 31, 2013 at 08:01:46PM +0530, Viresh Kumar wrote:
-> > Block layer uses workqueues for multiple purposes. There is no real dependency
-> > of scheduling these on the cpu which scheduled them.
-> > 
-> > On a idle system, it is observed that and idle cpu wakes up many times just to
-> > service this work. It would be better if we can schedule it on a cpu which the
-> > scheduler believes to be the most appropriate one.
-> > 
-> > This patch replaces normal workqueues with UNBOUND versions.
-> 
-> Hmm.... so, we really don't want to unconditionally convert workqueues
-> to unbound.  Especially not kblockd.  On configurations with multiple
-> high iops devices with IRQ routing, having request completion runinng
-> on the same CPU has significant performance advantages.  We can't
-> simply switch it to an unbound wokrqueue because it saves power on
-> small arm configuration.
+Might be a typo, would cause some debug code never be run.
 
-I had the same complaint, when it was posted originally...
+Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
+---
+ kernel/sched/core.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
 
-> Plus, I'd much prefer to be clearly marking the workqueues which would
-> contribute to powersaving when converted to unbound at least until we
-> can come up with a no-compromise solution which doesn't need to trade
-> off between cache locality and powersaving.
-> 
-> So, let's please introduce a new flag to mark these workqueues, say,
-> WQ_UNBOUND_FOR_POWER_SAVE or whatever (please come up with a better
-> name) and provide a compile time switch with boot time override.
-
-And lets please have it off by default. The specialized configs / setups
-can turn it on, but we should default to better performance.
-
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 30126e2..7b50412 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3405,7 +3405,7 @@ static noinline void __schedule_bug(struct task_struct *prev)
+ 	print_modules();
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(prev);
+-#ifdef DEBUG_PREEMPT
++#ifdef CONFIG_DEBUG_PREEMPT
+ 	if (in_atomic_preempt_off()) {
+ 		pr_err("Preemption disabled at:");
+ 		print_ip_sym(current->preempt_disable_ip);
+@@ -7802,7 +7802,7 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+ 	debug_show_held_locks(current);
+ 	if (irqs_disabled())
+ 		print_irqtrace_events(current);
+-#ifdef DEBUG_PREEMPT
++#ifdef CONFIG_DEBUG_PREEMPT
+ 	if (!preempt_count_equals(preempt_offset)) {
+ 		pr_err("Preemption disabled at:");
+ 		print_ip_sym(current->preempt_disable_ip);
 -- 
-Jens Axboe
+1.7.1
+
