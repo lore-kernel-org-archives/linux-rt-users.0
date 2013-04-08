@@ -1,37 +1,69 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
+From: Amit Kucheria <amit.kucheria@linaro.org>
 Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Mon, 8 Apr 2013 15:54:51 +0530
-Message-ID: <CAKohpom5O+6iN-phuiFXRaBY8O8ZzUGyXKeiRnyj9Z8BR90SEg@mail.gmail.com>
+Date: Mon, 8 Apr 2013 16:07:05 +0530
+Message-ID: <CAP245DXTz-EhQqXycUkm5R3O=vpHQ5ZUrddJ40COpnO35oCqwg@mail.gmail.com>
 References: <cover.1364740180.git.viresh.kumar@linaro.org>
 	<91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
 	<20130331181931.GA7533@htj.dyndns.org>
 	<CAKohpo=nWsUh5y7y_tacGez7uN76QbRFRVPSQcKQMGM1nUBWtw@mail.gmail.com>
 	<20130403215412.GG3411@htj.dyndns.org>
-	<CAKohpomTQj-S-32JdtY76_82NraB5uBqnKZXVxk28KxMZ-NSow@mail.gmail.com>
-	<CAOS58YOvDGavhffFawMbk1Y4xihL3OwPSpOkEzXKSzORvjyq-Q@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com,
-	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, "David S. Miller" <davem@davemloft.net>,
-	airlied@redhat.com, Jens Axboe <axboe@kernel.dk>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Viresh Kumar <viresh.kumar@linaro.org>,
+	Jens Axboe <axboe@kernel.dk>,
+	Robin Randhawa <robin.randhawa@arm.com>,
+	linux-rt-users@vger.kernel.org,
+	Patch Tracking <patches@linaro.org>,
 	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org, lkml <linux-kernel@vger.kernel.org>
-To: Tejun Heo <tj@kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAOS58YOvDGavhffFawMbk1Y4xihL3OwPSpOkEzXKSzORvjyq-Q@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Liviu Dudau <Liviu.Dudau@arm.com>,
+	linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
+	Lists linaro-kernel <linaro-kernel@lists.linaro.org>,
+	airlied@redhat.com, mingo@redhat.com, davem@davemloft.net,
+	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>
+To: Tejun Heo <tj@kernel.org>, "Rafael J. Wysocki" <rjw@sisk.pl>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-vb0-f49.google.com ([209.85.212.49]:40471 "EHLO
+	mail-vb0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934661Ab3DHKhH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Apr 2013 06:37:07 -0400
+Received: by mail-vb0-f49.google.com with SMTP id 11so3666168vbf.36
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Apr 2013 03:37:05 -0700 (PDT)
+In-Reply-To: <20130403215412.GG3411@htj.dyndns.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 5 April 2013 17:52, Tejun Heo <tj@kernel.org> wrote:
-> On Fri, Apr 5, 2013 at 2:47 AM, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> module_param()?? We can't compile kernel/workqueue.c as a module and
->> hence i went with #define + a variable with functions to set/reset it...
+On Thu, Apr 4, 2013 at 3:24 AM, Tejun Heo <tj@kernel.org> wrote:
+> Hello, Viresh.
 >
-> module_param works fine for kernel proper.
+> Sorry about the delay.  Lost this one somehow.
+>
+> On Mon, Apr 01, 2013 at 12:01:05PM +0530, Viresh Kumar wrote:
+>> Just wanted to make this clear before writing it:
+>>
+>> You want me to do something like (With better names):
+>>
+>> int wq_unbound_for_power_save_enabled = 0;
+>>
+>> #ifdef CONFIG_WQ_UNBOUND_FOR_POWER_SAVE
+>> #define WQ_UNBOUND_FOR_POWER_SAVE   wq_unbound_for_power_save_enabled
+>> #else
+>> #define WQ_UNBOUND_FOR_POWER_SAVE 0
+>>
+>> And provide a call to enable/disable wq_unbound_for_power_save_enabled ??
+>
+> Not a call, probably a module_param() so that it can be switched
+> on/off during boot.  You can make the param writable so that it can be
+> flipped run-time but updating existing workqueues would be non-trivial
+> and I don't think it's gonna be worthwhile.
+>
+> Thanks!
 
-Got it!! Btw, to which Kconfig should i add WQ config option?
+Does it make sense to collect this sort of power optimisation under a
+CONFIG_PM sub-item, say, CONFIG_PM_OPTIMISATIONS?
+
+For people tuning for power, it could be single place to go enable
+stuff and for people looking for performance regressions it would be a
+single place to make sure nothing is enabled.
+
+/Amit
