@@ -1,90 +1,94 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.6.11.1-rt32
-Date: Tue, 09 Apr 2013 13:46:56 -0400
-Message-ID: <1365529616.25498.75.camel@gandalf.local.home>
-References: <1364527527.10629.10.camel@gandalf.local.home>
-	 <515A4CE4.9050607@osadl.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
+Date: Tue, 9 Apr 2013 11:30:20 -0700
+Message-ID: <20130409183020.GD6186@mtj.dyndns.org>
+References: <cover.1364740180.git.viresh.kumar@linaro.org>
+ <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
+ <20130331181931.GA7533@htj.dyndns.org>
+ <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <515A4CE4.9050607@osadl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
+	robin.randhawa@arm.com, Steve.Bannister@arm.com,
+	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
+	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
+	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
+	mingo@redhat.com, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qe0-f50.google.com ([209.85.128.50]:46416 "EHLO
+	mail-qe0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934557Ab3DISa2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Apr 2013 14:30:28 -0400
+Content-Disposition: inline
+In-Reply-To: <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2013-04-02 at 05:13 +0200, Carsten Emde wrote:
-> Steven,
+Yo!
 
-> > I'm pleased to announce the 3.6.11.1-rt32 stable release.
-> Unfortunately, there is another compile error:
-> drivers/gpu/drm/i915/i915_gem.c: In function =E2=80=98i915_gem_wait_f=
-or_error=E2=80=99:
-> drivers/gpu/drm/i915/i915_gem.c:118:3: warning: passing argument 1 of=
-=20
-> =E2=80=98rt_spin_lock=E2=80=99 from incompatible pointer type [enable=
-d by default]
-> In file included from include/linux/spinlock.h:273:0,
->                   from include/linux/wait.h:24,
->                   from include/linux/fs.h:396,
->                   from include/drm/drmP.h:47,
->                   from drivers/gpu/drm/i915/i915_gem.c:28:
-> include/linux/spinlock_rt.h:21:24: note: expected =E2=80=98struct spi=
-nlock_t *=E2=80=99=20
-> but argument is of type =E2=80=98struct raw_spinlock_t *=E2=80=99
-> drivers/gpu/drm/i915/i915_gem.c:120:3: warning: passing argument 1 of=
-=20
-> =E2=80=98rt_spin_unlock=E2=80=99 from incompatible pointer type [enab=
-led by default]
-> In file included from include/linux/spinlock.h:273:0,
->                   from include/linux/wait.h:24,
->                   from include/linux/fs.h:396,
->                   from include/drm/drmP.h:47,
->                   from drivers/gpu/drm/i915/i915_gem.c:28:
-> include/linux/spinlock_rt.h:24:24: note: expected =E2=80=98struct spi=
-nlock_t *=E2=80=99=20
-> but argument is of type =E2=80=98struct raw_spinlock_t *=E2=80=99
-> drivers/gpu/drm/i915/i915_gem.c: In function =E2=80=98i915_gem_check_=
-wedge=E2=80=99:
-> drivers/gpu/drm/i915/i915_gem.c:1890:3: warning: passing argument 1 o=
-f=20
-> =E2=80=98rt_spin_lock=E2=80=99 from incompatible pointer type [enable=
-d by default]
-> In file included from include/linux/spinlock.h:273:0,
->                   from include/linux/wait.h:24,
->                   from include/linux/fs.h:396,
->                   from include/drm/drmP.h:47,
->                   from drivers/gpu/drm/i915/i915_gem.c:28:
-> include/linux/spinlock_rt.h:21:24: note: expected =E2=80=98struct spi=
-nlock_t *=E2=80=99=20
-> but argument is of type =E2=80=98struct raw_spinlock_t *=E2=80=99
-> drivers/gpu/drm/i915/i915_gem.c:1892:3: warning: passing argument 1 o=
-f=20
-> =E2=80=98rt_spin_unlock=E2=80=99 from incompatible pointer type [enab=
-led by default]
-> In file included from include/linux/spinlock.h:273:0,
->                   from include/linux/wait.h:24,
->                   from include/linux/fs.h:396,
->                   from include/drm/drmP.h:47,
->                   from drivers/gpu/drm/i915/i915_gem.c:28:
-> include/linux/spinlock_rt.h:24:24: note: expected =E2=80=98struct spi=
-nlock_t *=E2=80=99=20
-> but argument is of type =E2=80=98struct raw_spinlock_t *=E2=80=99
->=20
-> I would propose to adopt the mechanism that Sebastian introduced in
-> 3.8.4-rt2 (https://lkml.org/lkml/2013/3/26/600). The kernel compiles
-> and runs without any problem with the below patch on a system that
-> requires the i915 driver module.
->=20
+On Tue, Apr 09, 2013 at 01:00:59PM +0530, Viresh Kumar wrote:
+> +	workqueue.power_efficient
+> +			Workqueues can be performance or power oriented. For
+> +			performance we may want to keep them running on a single
+> +			cpu, so that it remains cache hot. For power we can give
+> +			scheduler the liberty to choose target cpu for running
+> +			work handler.
+> +
+> +			Later one (Power oriented WQ) can be achieved if the
+> +			workqueue is allocated with WQ_UNBOUND flag. Enabling
+> +			power_efficient boot param will convert
+> +			WQ_POWER_EFFICIENT flag to WQ_UNBOUND on wq allocation.
+> +			This requires CONFIG_WQ_POWER_EFFICIENT to be enabled.
+> +			WQ_POWER_EFFICIENT is unused if power_efficient is not
+> +			set in boot params.
 
-Thanks Carsten, I'll be updating this later today. BTW, did you get any
-core dumps from the work queue race that we've been seeing?
+Looks mostly good to me but I think it'd be better if the parameter
+name is a bit more specific.
 
-Thanks,
+> @@ -299,6 +299,9 @@ enum {
+>  	WQ_HIGHPRI		= 1 << 4, /* high priority */
+>  	WQ_CPU_INTENSIVE	= 1 << 5, /* cpu instensive workqueue */
+>  	WQ_SYSFS		= 1 << 6, /* visible in sysfs, see wq_sysfs_register() */
+> +	WQ_POWER_EFFICIENT	= 1 << 7, /* WQ_UNBOUND, for power
+> +					   * saving, if wq_power_efficient is
+> +					   * enabled. Unused otherwise. */
 
--- Steve
+Ditto for the flag name.  It's not a requirement tho.  If you can
+think of something which is a bit more specific to what it does while
+not being unreasonably long, great.  If not, we'll live.
+
+> @@ -271,6 +271,11 @@ static cpumask_var_t *wq_numa_possible_cpumask;
+>  static bool wq_disable_numa;
+>  module_param_named(disable_numa, wq_disable_numa, bool, 0444);
+> 
+> +#ifdef CONFIG_WQ_POWER_EFFICIENT
+> +static bool wq_power_efficient = 0;
+> +module_param_named(power_efficient, wq_power_efficient, bool, 0444);
+> +#endif
+
+I don't think we need to make the whole thing configurable.  Turning
+it off isn't gonna save much - my gut tells me it's gonna be four
+instructions. :)
+
+What I meant was that the default value for the parameter would
+probably be need to be configurable so that mobile people don't have
+to include the kernel param all the time or patch the kernel
+themselves.
+
+> +	if (flags & WQ_POWER_EFFICIENT) {
+> +		flags &= ~WQ_POWER_EFFICIENT;
+
+No need to clear the flag.
+
+> +#ifdef CONFIG_WQ_POWER_EFFICIENT
+> +		if (wq_power_efficient)
+> +			flags |= WQ_UNBOUND;
+> +#endif
+
+Thanks!
+
+-- 
+tejun
