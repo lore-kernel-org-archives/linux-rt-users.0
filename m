@@ -1,46 +1,63 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Tue, 9 Apr 2013 15:41:37 +0530
-Message-ID: <CAKohpok6D7UfFTWkdeJWVE_SjG_TRwhGuVF8nq6Lr5XvomZ6Ew@mail.gmail.com>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
-	<91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
-	<20130331181931.GA7533@htj.dyndns.org>
-	<CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
-	<CAP245DUWtryaxn=u=VWiSp7b9RZYjsEozX9WEHCvzMWJR6B7TQ@mail.gmail.com>
-	<CAKohpomtRYfGcEq9b1NmZwha4XA2=HaKsOiyShWScJi0+szfiw@mail.gmail.com>
-	<CAP245DWzD7BqB6ZzQJp8iUTpucRUeFbq=xEh+5fr2TqXVuwgAw@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] sched: fix the wrong macro name of CONFIG_DEBUG_PREEMPT
+Date: Tue, 09 Apr 2013 10:37:25 -0400
+Message-ID: <1365518245.25498.57.camel@gandalf.local.home>
+References: <5162AE51.8030804@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>,
-	Robin Randhawa <robin.randhawa@arm.com>,
-	linux-rt-users@vger.kernel.org,
-	Patch Tracking <patches@linaro.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Liviu Dudau <Liviu.Dudau@arm.com>,
-	linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>,
-	Lists linaro-kernel <linaro-kernel@lists.linaro.org>,
-	Steve Bannister <Steve.Bannister@arm.com>, airlied@redhat.com,
-	Arvind Chauhan <arvind.chauhan@arm.com>, mingo@redhat.com,
-	davem@davemloft.net,
-	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>
-To: Amit Kucheria <amit.kucheria@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAP245DWzD7BqB6ZzQJp8iUTpucRUeFbq=xEh+5fr2TqXVuwgAw@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	stable-rt@vger.kernel.org
+To: Qiang Huang <h.huangqiang@huawei.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31408 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935016Ab3DIOh2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Apr 2013 10:37:28 -0400
+In-Reply-To: <5162AE51.8030804@huawei.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 9 April 2013 15:28, Amit Kucheria <amit.kucheria@linaro.org> wrote:
-> On Tue, Apr 9, 2013 at 3:25 PM, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> But how will we know if the user of wq wants to save power or not? He must
->> give some flag which is only used when power saving is enabled. We can't
->> set WQ_UNBOUND for all wqs.
->
-> You have the Kconfig option + the module param for that. You don't need a flag.
+Thomas, 
 
-I still don't agree.. Suppose there are three users A, B and C. A wants to use
-WQ_UNBOUND when POWER_EFFICIENT Kconfig option and module param is
-enabled. And B always want to enable WQ_UNBOUND and C doesn't want to
-set WQ_UNBOUND at all..
+Can you pick up this patch for 3.8-rt? I'll add it to stable after you
+have done so.
 
-Now, how will each of these behave differently based on module param settings.
-B and C are quite clear but A needs a flag for indicating its usage.
+Thanks,
+
+-- Steve
+
+On Mon, 2013-04-08 at 19:47 +0800, Qiang Huang wrote:
+> Might be a typo, would cause some debug code never be run.
+> 
+> Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
+> ---
+>  kernel/sched/core.c |    4 ++--
+>  1 files changed, 2 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 30126e2..7b50412 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -3405,7 +3405,7 @@ static noinline void __schedule_bug(struct task_struct *prev)
+>  	print_modules();
+>  	if (irqs_disabled())
+>  		print_irqtrace_events(prev);
+> -#ifdef DEBUG_PREEMPT
+> +#ifdef CONFIG_DEBUG_PREEMPT
+>  	if (in_atomic_preempt_off()) {
+>  		pr_err("Preemption disabled at:");
+>  		print_ip_sym(current->preempt_disable_ip);
+> @@ -7802,7 +7802,7 @@ void __might_sleep(const char *file, int line, int preempt_offset)
+>  	debug_show_held_locks(current);
+>  	if (irqs_disabled())
+>  		print_irqtrace_events(current);
+> -#ifdef DEBUG_PREEMPT
+> +#ifdef CONFIG_DEBUG_PREEMPT
+>  	if (!preempt_count_equals(preempt_offset)) {
+>  		pr_err("Preemption disabled at:");
+>  		print_ip_sym(current->preempt_disable_ip);
+
+
