@@ -1,94 +1,79 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Tue, 9 Apr 2013 11:30:20 -0700
-Message-ID: <20130409183020.GD6186@mtj.dyndns.org>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
- <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
- <20130331181931.GA7533@htj.dyndns.org>
- <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
+From: Pekka Enberg <penberg@kernel.org>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
+ unfreeze_partials() code.
+Date: Wed, 10 Apr 2013 09:31:10 +0300
+Message-ID: <CAOJsxLH2axjptbMj9caH0Wo_OqPZRVB20q7uT6f9dVtPZZxb_w@mail.gmail.com>
+References: <0000013da2ce20f8-0e3a64ef-67ed-4ab4-9f20-b77980c876c3-000000@email.amazonses.com>
+	<1364236355.6345.185.camel@gandalf.local.home>
+	<20130327025957.GA17125@lge.com>
+	<1364355032.6345.200.camel@gandalf.local.home>
+	<20130327061351.GB17125@lge.com>
+	<alpine.DEB.2.02.1303281227520.16200@gentwo.org>
+	<0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
+	<CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com>
+	<alpine.DEB.2.02.1304011025550.12690@gentwo.org>
+	<0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com>
+	<20130402004217.GA16699@lge.com>
+	<1365424372.25498.6.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com,
-	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
-	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
-	mingo@redhat.com, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qe0-f50.google.com ([209.85.128.50]:46416 "EHLO
-	mail-qe0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934557Ab3DISa2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Apr 2013 14:30:28 -0400
-Content-Disposition: inline
-In-Reply-To: <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Christoph Lameter <cl@linux.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1365424372.25498.6.camel@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Yo!
+On Mon, Apr 8, 2013 at 3:32 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+>> > Index: linux/mm/slub.c
+>> > ===================================================================
+>> > --- linux.orig/mm/slub.c    2013-03-28 12:14:26.958358688 -0500
+>> > +++ linux/mm/slub.c 2013-04-01 10:23:24.677584499 -0500
+>> > @@ -1498,6 +1498,7 @@ static inline void *acquire_slab(struct
+>> >     void *freelist;
+>> >     unsigned long counters;
+>> >     struct page new;
+>> > +   unsigned long objects;
+>> >
+>> >     /*
+>> >      * Zap the freelist and set the frozen bit.
+>> > @@ -1507,6 +1508,7 @@ static inline void *acquire_slab(struct
+>> >     freelist = page->freelist;
+>> >     counters = page->counters;
+>> >     new.counters = counters;
+>> > +   objects = page->inuse;
+>> >     if (mode) {
+>> >             new.inuse = page->objects;
+>> >             new.freelist = NULL;
+>> > @@ -1524,6 +1526,7 @@ static inline void *acquire_slab(struct
+>> >             return NULL;
+>> >
+>> >     remove_partial(n, page);
+>> > +   page->lru.next = (void *)objects;
+>> >     WARN_ON(!freelist);
+>> >     return freelist;
+>> >  }
+>>
+>> Good. I like your method which use lru.next in order to hand over
+>> number of objects.
+>
+> I hate it ;-)
+>
+> It just seems to be something that's not very robust and can cause hours
+> of debugging in the future. I mean, there's not even a comment
+> explaining what is happening. The lru is a union with other slub
+> partials structs that is not very obvious. If something is out of order,
+> it can easily break, and there's nothing here that points to why.
+>
+> Just pass the damn objects pointer by reference and use that. It's easy
+> to understand, read and is robust.
 
-On Tue, Apr 09, 2013 at 01:00:59PM +0530, Viresh Kumar wrote:
-> +	workqueue.power_efficient
-> +			Workqueues can be performance or power oriented. For
-> +			performance we may want to keep them running on a single
-> +			cpu, so that it remains cache hot. For power we can give
-> +			scheduler the liberty to choose target cpu for running
-> +			work handler.
-> +
-> +			Later one (Power oriented WQ) can be achieved if the
-> +			workqueue is allocated with WQ_UNBOUND flag. Enabling
-> +			power_efficient boot param will convert
-> +			WQ_POWER_EFFICIENT flag to WQ_UNBOUND on wq allocation.
-> +			This requires CONFIG_WQ_POWER_EFFICIENT to be enabled.
-> +			WQ_POWER_EFFICIENT is unused if power_efficient is not
-> +			set in boot params.
+Christoph, Joonsoo, comments?
 
-Looks mostly good to me but I think it'd be better if the parameter
-name is a bit more specific.
-
-> @@ -299,6 +299,9 @@ enum {
->  	WQ_HIGHPRI		= 1 << 4, /* high priority */
->  	WQ_CPU_INTENSIVE	= 1 << 5, /* cpu instensive workqueue */
->  	WQ_SYSFS		= 1 << 6, /* visible in sysfs, see wq_sysfs_register() */
-> +	WQ_POWER_EFFICIENT	= 1 << 7, /* WQ_UNBOUND, for power
-> +					   * saving, if wq_power_efficient is
-> +					   * enabled. Unused otherwise. */
-
-Ditto for the flag name.  It's not a requirement tho.  If you can
-think of something which is a bit more specific to what it does while
-not being unreasonably long, great.  If not, we'll live.
-
-> @@ -271,6 +271,11 @@ static cpumask_var_t *wq_numa_possible_cpumask;
->  static bool wq_disable_numa;
->  module_param_named(disable_numa, wq_disable_numa, bool, 0444);
-> 
-> +#ifdef CONFIG_WQ_POWER_EFFICIENT
-> +static bool wq_power_efficient = 0;
-> +module_param_named(power_efficient, wq_power_efficient, bool, 0444);
-> +#endif
-
-I don't think we need to make the whole thing configurable.  Turning
-it off isn't gonna save much - my gut tells me it's gonna be four
-instructions. :)
-
-What I meant was that the default value for the parameter would
-probably be need to be configurable so that mobile people don't have
-to include the kernel param all the time or patch the kernel
-themselves.
-
-> +	if (flags & WQ_POWER_EFFICIENT) {
-> +		flags &= ~WQ_POWER_EFFICIENT;
-
-No need to clear the flag.
-
-> +#ifdef CONFIG_WQ_POWER_EFFICIENT
-> +		if (wq_power_efficient)
-> +			flags |= WQ_UNBOUND;
-> +#endif
-
-Thanks!
-
--- 
-tejun
+                                Pekka
