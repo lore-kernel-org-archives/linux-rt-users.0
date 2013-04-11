@@ -1,12 +1,13 @@
-From: Dipankar Sarma <dipankar@in.ibm.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [PATCH documentation 1/2] nohz1: Add documentation.
-Date: Fri, 12 Apr 2013 00:13:13 +0530
-Message-ID: <20130411184313.GH22229@in.ibm.com>
+Date: Thu, 11 Apr 2013 12:14:42 -0700
+Message-ID: <20130411191442.GP29861@linux.vnet.ibm.com>
 References: <20130411160524.GA30384@linux.vnet.ibm.com>
  <1365696359-30958-1-git-send-email-paulmck@linux.vnet.ibm.com>
  <5166EF74.4030106@linux.intel.com>
  <20130411182727.GM29861@linux.vnet.ibm.com>
-Reply-To: dipankar@in.ibm.com
+ <20130411184313.GH22229@in.ibm.com>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Arjan van de Ven <arjan@linux.intel.com>,
@@ -19,41 +20,34 @@ Cc: Arjan van de Ven <arjan@linux.intel.com>,
 	Kevin Hilman <khilman@linaro.org>,
 	Christoph Lameter <cl@linux.com>, arnd@arndb.de,
 	Robin.Randhawa@arm.com, linux-rt-users@vger.kernel.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e9.ny.us.ibm.com ([32.97.182.139]:33834 "EHLO e9.ny.us.ibm.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1765265Ab3DKSoP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Apr 2013 14:44:15 -0400
-Received: from /spool/local
-	by e9.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <dipankar@in.ibm.com>;
-	Thu, 11 Apr 2013 14:44:13 -0400
+To: Dipankar Sarma <dipankar@in.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130411182727.GM29861@linux.vnet.ibm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20130411184313.GH22229@in.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Apr 11, 2013 at 11:27:27AM -0700, Paul E. McKenney wrote:
-> On Thu, Apr 11, 2013 at 10:14:28AM -0700, Arjan van de Ven wrote:
-> > >+2.	Many architectures will place dyntick-idle CPUs into deep sleep
-> > >+	states, which further degrades from-idle transition latencies.
-> > >+
-> > I think this part should just be deleted.
-> > On x86, the deeper idle states are even used with non-tickless system (the break even times are
-> > quite a bit less than even 1 msec).
-> > I can't imagine that ARM is worse on this, at which point the statement above is highly dubious
+On Fri, Apr 12, 2013 at 12:13:13AM +0530, Dipankar Sarma wrote:
+> On Thu, Apr 11, 2013 at 11:27:27AM -0700, Paul E. McKenney wrote:
+> > On Thu, Apr 11, 2013 at 10:14:28AM -0700, Arjan van de Ven wrote:
+> > > >+2.	Many architectures will place dyntick-idle CPUs into deep sleep
+> > > >+	states, which further degrades from-idle transition latencies.
+> > > >+
+> > > I think this part should just be deleted.
+> > > On x86, the deeper idle states are even used with non-tickless system (the break even times are
+> > > quite a bit less than even 1 msec).
+> > > I can't imagine that ARM is worse on this, at which point the statement above is highly dubious
+> > 
+> > Interesting point, and I freely admit that I don't have full knowledge
+> > of the energy-consumption characteristics of all the architectures that
+> > Linux supports.  Adding a few of the ARM guys on CC for their take,
+> > plus linux-rt-users.
+> > 
+> > If there are no objections, I will delete point 2 above as Arjan suggests.
 > 
-> Interesting point, and I freely admit that I don't have full knowledge
-> of the energy-consumption characteristics of all the architectures that
-> Linux supports.  Adding a few of the ARM guys on CC for their take,
-> plus linux-rt-users.
-> 
-> If there are no objections, I will delete point 2 above as Arjan suggests.
+> What Arjan said will also be true for Linux on Power systems. I am not
+> sure "many architectures" would be the right way to characterize it.
 
-What Arjan said will also be true for Linux on Power systems. I am not
-sure "many architectures" would be the right way to characterize it.
+Very well, I count one non-objection to Arjan's suggestion.  ;-)
 
-Thanks
-Dipankar
-
+							Thanx, Paul
