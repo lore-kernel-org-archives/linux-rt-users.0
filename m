@@ -1,94 +1,262 @@
-From: David Sommerseth <davids@redhat.com>
-Subject: Re: [PATCH] hackbench: init child's struct before using it
-Date: Thu, 11 Apr 2013 20:11:04 +0200
-Message-ID: <5166FCB8.2020402@redhat.com>
-References: <1365693605-22704-1-git-send-email-bigeasy@linutronix.de> <20130411120800.06d750b2@riff.lan>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] x86/mce: Defer mce wakeups to threads for PREEMPT_RT
+Date: Thu, 11 Apr 2013 14:23:46 -0400
+Message-ID: <1365704626.9609.55.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:18933 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S964882Ab3DKSLA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Apr 2013 14:11:00 -0400
-In-Reply-To: <20130411120800.06d750b2@riff.lan>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Tony Luck <tony.luck@intel.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Mauro Carvalho Chehab <mchehab@redhat.com>,
+	Ingo Molnar <mingo@kernel.org>,
+	"H. Peter Anvin" <hpa@linux.intel.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
------BEGIN PGP SIGNED MESSAGE-----
-Hash: SHA1
+We had a customer report a lockup on a 3.0-rt kernel that had the
+following backtrace:
 
-On 11/04/13 19:08, Clark Williams wrote:
-> Applied to my work branch for the next release. I've CC'd John
-> Kacur who has been doing the heavy lifting on rt-tests recently.
-
-Oh look at that ... I thought this patch looked familiar ... seems I
-fixed this in October 2010 but that patch probably fell through some
-cracks somewhere.  Well, Sebastian sure gets the glory on this one :)
-
-But full ACK on this patch from me as well.
-
-
-David S.
+[ffff88107fca3e80] rt_spin_lock_slowlock at ffffffff81499113
+[ffff88107fca3f40] rt_spin_lock at ffffffff81499a56
+[ffff88107fca3f50] __wake_up at ffffffff81043379
+[ffff88107fca3f80] mce_notify_irq at ffffffff81017328
+[ffff88107fca3f90] intel_threshold_interrupt at ffffffff81019508
+[ffff88107fca3fa0] smp_threshold_interrupt at ffffffff81019fc1
+[ffff88107fca3fb0] threshold_interrupt at ffffffff814a1853
 
 
+It actually bugged because the lock was taken by the same owner that
+already had that lock. What happened was the thread that was setting
+itself on a wait queue had the lock when an MCE triggered. The MCE
+interrupt does a wake up on its wait list and grabs the same lock.
 
-> On Thu, 11 Apr 2013 17:20:05 +0200 Sebastian Andrzej Siewior
-> <bigeasy@linutronix.de> wrote:
-> 
->> Commit ad27df7 ("Reimplement better child tracking and improve
->> error handling") changed the way of reporting pid/error after
->> creating a child. It will return an union which is a mix pid_t,
->> pthread_t and a signed long long for errors. Now on 32bit x86
->> both pid_t and pthread_t are four byte in size and are stored in
->> the first 4 bytes. Now if the most significant bit of the long 
->> long variable happens to be set by chance (because nobody really 
->> initializes the variable here) then error variable will be
->> negative. On little endian machines the assignment of pid or
->> threadid won't reset the sign bit and you see this:
->> 
->> | Running in process mode with 10 groups using 40 file
->> descriptors each (== 400 tasks) | Each sender will pass 100
->> messages of 100 bytes | 0 children started.  Expected 40 |
->> sending SIGTERM to all child processes | signaling 0 worker
->> threads to terminate | Creating workers (error: Success)
->> 
->> A machine with proper endian handlig (that is big endian) would
->> reset the sign bit during the assignment of pid and I would not
->> have to make this patch :)
->> 
->> While here, I make create_worker() since it is not used outside
->> of this file.
->> 
->> Cc: David Sommerseth <davids@redhat.com> Signed-off-by: Sebastian
->> Andrzej Siewior <bigeasy@linutronix.de> --- 
->> src/hackbench/hackbench.c |    3 ++- 1 file changed, 2
->> insertions(+), 1 deletion(-)
->> 
->> diff --git a/src/hackbench/hackbench.c
->> b/src/hackbench/hackbench.c index 8baeb23..c21b4db 100644 ---
->> a/src/hackbench/hackbench.c +++ b/src/hackbench/hackbench.c @@
->> -189,13 +189,14 @@ static void *receiver(struct receiver_context*
->> ctx) return NULL; }
->> 
->> -childinfo_t create_worker(void *ctx, void *(*func)(void *)) 
->> +static childinfo_t create_worker(void *ctx, void *(*func)(void
->> *)) { pthread_attr_t attr; int err; childinfo_t child; pid_t
->> childpid;
->> 
->> +	memset(&child, 0, sizeof(child)); switch (process_mode) { case
->> PROCESS_MODE: /* process mode */ /* Fork the sender/receiver
->> child. */ -- 1.7.10.4
->> 
+NOTE: THIS IS NOT A BUG ON MAINLINE
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.11 (GNU/Linux)
-Comment: Using GnuPG with Thunderbird - http://www.enigmail.net/
+Sorry for yelling, but as I Cc'd mainline maintainers I want them to
+know that this is an PREEMPT_RT bug only. I only Cc'd them for advice.
 
-iEYEARECAAYFAlFm/LMACgkQIIWEatLf4HcwMACeOJWBvqmCgqTIwGxpZNen73qP
-ttkAoLBlPfMsF9c37hQWZQluNBlfEDpr
-=9hkd
------END PGP SIGNATURE-----
+On PREEMPT_RT the wait queue locks are converted from normal
+"spin_locks" into an rt_mutex (see the rt_spin_lock_slowlock above).
+These are not to be taken by hard interrupt context. This usually isn't
+a problem as most all interrupts in PREEMPT_RT are converted into
+schedulable threads. Unfortunately that's not the case with the MCE irq.
+
+As wait queue locks are notorious for long hold times, we can not
+convert them to raw_spin_locks without causing issues with -rt. But
+Thomas has created a "simple-wait" structure that uses raw spin locks
+which may have been a good fit.
+
+Unfortunately, wait queues are not the only issue, as the mce_notify_irq
+also does a schedule_work(), which grabs the workqueue spin locks that
+have the exact same issue.
+
+Thus, this patch I'm proposing is to move the actual work of the MCE
+interrupt into a helper thread that gets woken up on the MCE interrupt
+and does the work in a schedulable context.
+
+NOTE: THIS PATCH ONLY CHANGES THE BEHAVIOR WHEN PREEMPT_RT IS SET
+
+Oops, sorry for yelling again, but I want to stress that I keep the same
+behavior of mainline when PREEMPT_RT is not set. Thus, this only changes
+the MCE behavior when PREEMPT_RT is configured.
+
+Comments?
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index e8d8ad0..060e473 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -18,6 +18,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/kobject.h>
+ #include <linux/uaccess.h>
++#include <linux/kthread.h>
+ #include <linux/kdebug.h>
+ #include <linux/kernel.h>
+ #include <linux/percpu.h>
+@@ -1308,6 +1309,61 @@ static void mce_do_trigger(struct work_struct *work)
+ 
+ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+ 
++static void __mce_notify_work(void)
++{
++	/* Not more than two messages every minute */
++	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
++
++	/* wake processes polling /dev/mcelog */
++	wake_up_interruptible(&mce_chrdev_wait);
++
++	/*
++	 * There is no risk of missing notifications because
++	 * work_pending is always cleared before the function is
++	 * executed.
++	 */
++	if (mce_helper[0] && !work_pending(&mce_trigger_work))
++		schedule_work(&mce_trigger_work);
++
++	if (__ratelimit(&ratelimit))
++		pr_info(HW_ERR "Machine check events logged\n");
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++struct task_struct *mce_notify_helper;
++
++static int mce_notify_helper_thread(void *unused)
++{
++	while (!kthread_should_stop()) {
++		__mce_notify_work();
++		set_current_state(TASK_INTERRUPTIBLE);
++		schedule();
++	}
++	return 0;
++}
++
++static int mce_notify_work_init(void)
++{
++	mce_notify_helper = kthread_create(mce_notify_helper_thread, NULL,
++					   "mce-notify");
++	if (!mce_notify_helper)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static void mce_notify_work()
++{
++	wake_up_process(mce_notify_helper);
++}
++#else
++static void mce_notify_work(void)
++{
++	__mce_notify_work();
++}
++static inline int mce_notify_work_init(void) { return 0; }
++#endif
++
+ /*
+  * Notify the user(s) about new machine check events.
+  * Can be called from interrupt context, but not from machine check/NMI
+@@ -1315,24 +1371,8 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+  */
+ int mce_notify_irq(void)
+ {
+-	/* Not more than two messages every minute */
+-	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+-
+ 	if (test_and_clear_bit(0, &mce_need_notify)) {
+-		/* wake processes polling /dev/mcelog */
+-		wake_up_interruptible(&mce_chrdev_wait);
+-
+-		/*
+-		 * There is no risk of missing notifications because
+-		 * work_pending is always cleared before the function is
+-		 * executed.
+-		 */
+-		if (mce_helper[0] && !work_pending(&mce_trigger_work))
+-			schedule_work(&mce_trigger_work);
+-
+-		if (__ratelimit(&ratelimit))
+-			pr_info(HW_ERR "Machine check events logged\n");
+-
++		mce_notify_work();
+ 		return 1;
+ 	}
+ 	return 0;
+@@ -2375,6 +2415,8 @@ static __init int mcheck_init_device(void)
+ 	/* register character device /dev/mcelog */
+ 	misc_register(&mce_chrdev_device);
+ 
++	err = mce_notify_work_init();
++
+ 	return err;
+ }
+ device_initcall_sync(mcheck_init_device);
+diff --git a/arch/x86/kernel/process_32.c b/arch/x86/kernel/process_32.c
+index 33e5d14..120c790 100644
+--- a/arch/x86/kernel/process_32.c
++++ b/arch/x86/kernel/process_32.c
+@@ -198,34 +198,6 @@ start_thread(struct pt_regs *regs, unsigned long new_ip, unsigned long new_sp)
+ }
+ EXPORT_SYMBOL_GPL(start_thread);
+ 
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-static void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
+-{
+-	int i;
+-
+-	/*
+-	 * Clear @prev's kmap_atomic mappings
+-	 */
+-	for (i = 0; i < prev_p->kmap_idx; i++) {
+-		int idx = i + KM_TYPE_NR * smp_processor_id();
+-		pte_t *ptep = kmap_pte - idx;
+-
+-		kpte_clear_flush(ptep, __fix_to_virt(FIX_KMAP_BEGIN + idx));
+-	}
+-	/*
+-	 * Restore @next_p's kmap_atomic mappings
+-	 */
+-	for (i = 0; i < next_p->kmap_idx; i++) {
+-		int idx = i + KM_TYPE_NR * smp_processor_id();
+-
+-		set_pte(kmap_pte - idx, next_p->kmap_pte[i]);
+-	}
+-}
+-#else
+-static inline void
+-switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p) { }
+-#endif
+-
+ 
+ /*
+  *	switch_to(x,y) should switch tasks from x to y.
+@@ -305,7 +277,40 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
+ 		     task_thread_info(next_p)->flags & _TIF_WORK_CTXSW_NEXT))
+ 		__switch_to_xtra(prev_p, next_p, tss);
+ 
+-	switch_kmaps(prev_p, next_p);
++#ifdef CONFIG_PREEMPT_RT_FULL
++	/*
++	 * Save @prev's kmap_atomic stack
++	 */
++	prev_p->kmap_idx = __this_cpu_read(__kmap_atomic_idx);
++	if (unlikely(prev_p->kmap_idx)) {
++		int i;
++
++		for (i = 0; i < prev_p->kmap_idx; i++) {
++			int idx = i + KM_TYPE_NR * smp_processor_id();
++
++			pte_t *ptep = kmap_pte - idx;
++			prev_p->kmap_pte[i] = *ptep;
++			kpte_clear_flush(ptep, __fix_to_virt(FIX_KMAP_BEGIN + idx));
++		}
++
++		__this_cpu_write(__kmap_atomic_idx, 0);
++	}
++
++	/*
++	 * Restore @next_p's kmap_atomic stack
++	 */
++	if (unlikely(next_p->kmap_idx)) {
++		int i;
++
++		__this_cpu_write(__kmap_atomic_idx, next_p->kmap_idx);
++
++		for (i = 0; i < next_p->kmap_idx; i++) {
++			int idx = i + KM_TYPE_NR * smp_processor_id();
++
++			set_pte(kmap_pte - idx, next_p->kmap_pte[i]);
++		}
++	}
++#endif
+ 
+ 	/*
+ 	 * Leave lazy mode, flushing any hypercalls made here.
