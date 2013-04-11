@@ -1,36 +1,71 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
- unfreeze_partials() code.
-Date: Wed, 10 Apr 2013 14:00:31 +0000
-Message-ID: <0000013df43f6fe0-8b71a9f4-bad1-417e-ab44-797c5ba2aecd-000000@email.amazonses.com>
-References: <1364355032.6345.200.camel@gandalf.local.home> <20130327061351.GB17125@lge.com> <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
- <CAP=VYLr4i=39ywFCrmG-XuvUFmmXpyj6dYgG44JJoUJhpN6uuQ@mail.gmail.com> <alpine.DEB.2.02.1304011025550.12690@gentwo.org> <0000013dc63b3a87-6ce88b75-d011-407e-8dde-da73c3a7f5fd-000000@email.amazonses.com> <20130402004217.GA16699@lge.com>
- <1365424372.25498.6.camel@gandalf.local.home> <CAOJsxLH2axjptbMj9caH0Wo_OqPZRVB20q7uT6f9dVtPZZxb_w@mail.gmail.com> <20130410073143.GF5872@lge.com>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Pekka Enberg <penberg@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>
-To: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130410073143.GF5872@lge.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] hackbench: init child's struct before using it
+Date: Thu, 11 Apr 2013 17:20:05 +0200
+Message-ID: <1365693605-22704-1-git-send-email-bigeasy@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	David Sommerseth <davids@redhat.com>
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:44665 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S936405Ab3DKPUK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Apr 2013 11:20:10 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 10 Apr 2013, Joonsoo Kim wrote:
+Commit ad27df7 ("Reimplement better child tracking and improve error
+handling") changed the way of reporting pid/error after creating a
+child. It will return an union which is a mix pid_t, pthread_t and a
+signed long long for errors.
+Now on 32bit x86 both pid_t and pthread_t are four byte in size and are
+stored in the first 4 bytes. Now if the most significant bit of the long
+long variable happens to be set by chance (because nobody really
+initializes the variable here) then error variable will be negative. On
+little endian machines the assignment of pid or threadid won't reset the
+sign bit and you see this:
 
-> > Christoph, Joonsoo, comments?
->
-> Steven's comment is reasonable to me.
->
-> If there is no objection from Christoph,
-> let's drop a patch in which I implement Christoph's idea.
+| Running in process mode with 10 groups using 40 file descriptors each (== 400 tasks)
+| Each sender will pass 100 messages of 100 bytes
+| 0 children started.  Expected 40
+| sending SIGTERM to all child processes
+| signaling 0 worker threads to terminate
+| Creating workers (error: Success)
 
-Fine with me.
+A machine with proper endian handlig (that is big endian) would reset
+the sign bit during the assignment of pid and I would not have to make
+this patch :)
 
-I do not like passing a reference just because we have to
-return an additional counter. Adds a lot of overhead.
+While here, I make create_worker() since it is not used outside of this
+file.
+
+Cc: David Sommerseth <davids@redhat.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ src/hackbench/hackbench.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
+index 8baeb23..c21b4db 100644
+--- a/src/hackbench/hackbench.c
++++ b/src/hackbench/hackbench.c
+@@ -189,13 +189,14 @@ static void *receiver(struct receiver_context* ctx)
+ 	return NULL;
+ }
+ 
+-childinfo_t create_worker(void *ctx, void *(*func)(void *))
++static childinfo_t create_worker(void *ctx, void *(*func)(void *))
+ {
+ 	pthread_attr_t attr;
+ 	int err;
+ 	childinfo_t child;
+ 	pid_t childpid;
+ 
++	memset(&child, 0, sizeof(child));
+ 	switch (process_mode) {
+ 	case PROCESS_MODE: /* process mode */
+ 		/* Fork the sender/receiver child. */
+-- 
+1.7.10.4
+
