@@ -1,183 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for PREEMPT_RT
-Date: Thu, 11 Apr 2013 14:33:34 -0400
-Message-ID: <1365705214.9609.58.camel@gandalf.local.home>
+From: Dipankar Sarma <dipankar@in.ibm.com>
+Subject: Re: [PATCH documentation 1/2] nohz1: Add documentation.
+Date: Fri, 12 Apr 2013 00:13:13 +0530
+Message-ID: <20130411184313.GH22229@in.ibm.com>
+References: <20130411160524.GA30384@linux.vnet.ibm.com>
+ <1365696359-30958-1-git-send-email-paulmck@linux.vnet.ibm.com>
+ <5166EF74.4030106@linux.intel.com>
+ <20130411182727.GM29861@linux.vnet.ibm.com>
+Reply-To: dipankar@in.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Tony Luck <tony.luck@intel.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Mauro Carvalho Chehab <mchehab@redhat.com>,
-	Ingo Molnar <mingo@kernel.org>,
-	"H. Peter Anvin" <hpa@linux.intel.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Arjan van de Ven <arjan@linux.intel.com>,
+	linux-kernel@vger.kernel.org, mingo@elte.hu, laijs@cn.fujitsu.com,
+	akpm@linux-foundation.org, mathieu.desnoyers@polymtl.ca,
+	josh@joshtriplett.org, niv@us.ibm.com, tglx@linutronix.de,
+	peterz@infradead.org, rostedt@goodmis.org, Valdis.Kletnieks@vt.edu,
+	dhowells@redhat.com, edumazet@google.com, darren@dvhart.com,
+	fweisbec@gmail.com, sbw@mit.edu, Borislav Petkov <bp@alien8.de>,
+	Kevin Hilman <khilman@linaro.org>,
+	Christoph Lameter <cl@linux.com>, arnd@arndb.de,
+	Robin.Randhawa@arm.com, linux-rt-users@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e9.ny.us.ibm.com ([32.97.182.139]:33834 "EHLO e9.ny.us.ibm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1765265Ab3DKSoP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 11 Apr 2013 14:44:15 -0400
+Received: from /spool/local
+	by e9.ny.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <dipankar@in.ibm.com>;
+	Thu, 11 Apr 2013 14:44:13 -0400
+Content-Disposition: inline
+In-Reply-To: <20130411182727.GM29861@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[ This time without the hitchhiking process_32.c cruff on the patch ]
+On Thu, Apr 11, 2013 at 11:27:27AM -0700, Paul E. McKenney wrote:
+> On Thu, Apr 11, 2013 at 10:14:28AM -0700, Arjan van de Ven wrote:
+> > >+2.	Many architectures will place dyntick-idle CPUs into deep sleep
+> > >+	states, which further degrades from-idle transition latencies.
+> > >+
+> > I think this part should just be deleted.
+> > On x86, the deeper idle states are even used with non-tickless system (the break even times are
+> > quite a bit less than even 1 msec).
+> > I can't imagine that ARM is worse on this, at which point the statement above is highly dubious
+> 
+> Interesting point, and I freely admit that I don't have full knowledge
+> of the energy-consumption characteristics of all the architectures that
+> Linux supports.  Adding a few of the ARM guys on CC for their take,
+> plus linux-rt-users.
+> 
+> If there are no objections, I will delete point 2 above as Arjan suggests.
 
-We had a customer report a lockup on a 3.0-rt kernel that had the
-following backtrace:
+What Arjan said will also be true for Linux on Power systems. I am not
+sure "many architectures" would be the right way to characterize it.
 
-[ffff88107fca3e80] rt_spin_lock_slowlock at ffffffff81499113
-[ffff88107fca3f40] rt_spin_lock at ffffffff81499a56
-[ffff88107fca3f50] __wake_up at ffffffff81043379
-[ffff88107fca3f80] mce_notify_irq at ffffffff81017328
-[ffff88107fca3f90] intel_threshold_interrupt at ffffffff81019508
-[ffff88107fca3fa0] smp_threshold_interrupt at ffffffff81019fc1
-[ffff88107fca3fb0] threshold_interrupt at ffffffff814a1853
+Thanks
+Dipankar
 
-
-It actually bugged because the lock was taken by the same owner that
-already had that lock. What happened was the thread that was setting
-itself on a wait queue had the lock when an MCE triggered. The MCE
-interrupt does a wake up on its wait list and grabs the same lock.
-
-NOTE: THIS IS NOT A BUG ON MAINLINE
-
-Sorry for yelling, but as I Cc'd mainline maintainers I want them to
-know that this is an PREEMPT_RT bug only. I only Cc'd them for advice.
-
-On PREEMPT_RT the wait queue locks are converted from normal
-"spin_locks" into an rt_mutex (see the rt_spin_lock_slowlock above).
-These are not to be taken by hard interrupt context. This usually isn't
-a problem as most all interrupts in PREEMPT_RT are converted into
-schedulable threads. Unfortunately that's not the case with the MCE irq.
-
-As wait queue locks are notorious for long hold times, we can not
-convert them to raw_spin_locks without causing issues with -rt. But
-Thomas has created a "simple-wait" structure that uses raw spin locks
-which may have been a good fit.
-
-Unfortunately, wait queues are not the only issue, as the mce_notify_irq
-also does a schedule_work(), which grabs the workqueue spin locks that
-have the exact same issue.
-
-Thus, this patch I'm proposing is to move the actual work of the MCE
-interrupt into a helper thread that gets woken up on the MCE interrupt
-and does the work in a schedulable context.
-
-NOTE: THIS PATCH ONLY CHANGES THE BEHAVIOR WHEN PREEMPT_RT IS SET
-
-Oops, sorry for yelling again, but I want to stress that I keep the same
-behavior of mainline when PREEMPT_RT is not set. Thus, this only changes
-the MCE behavior when PREEMPT_RT is configured.
-
-Comments?
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index e8d8ad0..060e473 100644
---- a/arch/x86/kernel/cpu/mcheck/mce.c
-+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -18,6 +18,7 @@
- #include <linux/rcupdate.h>
- #include <linux/kobject.h>
- #include <linux/uaccess.h>
-+#include <linux/kthread.h>
- #include <linux/kdebug.h>
- #include <linux/kernel.h>
- #include <linux/percpu.h>
-@@ -1308,6 +1309,61 @@ static void mce_do_trigger(struct work_struct *work)
- 
- static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
- 
-+static void __mce_notify_work(void)
-+{
-+	/* Not more than two messages every minute */
-+	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
-+
-+	/* wake processes polling /dev/mcelog */
-+	wake_up_interruptible(&mce_chrdev_wait);
-+
-+	/*
-+	 * There is no risk of missing notifications because
-+	 * work_pending is always cleared before the function is
-+	 * executed.
-+	 */
-+	if (mce_helper[0] && !work_pending(&mce_trigger_work))
-+		schedule_work(&mce_trigger_work);
-+
-+	if (__ratelimit(&ratelimit))
-+		pr_info(HW_ERR "Machine check events logged\n");
-+}
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+struct task_struct *mce_notify_helper;
-+
-+static int mce_notify_helper_thread(void *unused)
-+{
-+	while (!kthread_should_stop()) {
-+		__mce_notify_work();
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		schedule();
-+	}
-+	return 0;
-+}
-+
-+static int mce_notify_work_init(void)
-+{
-+	mce_notify_helper = kthread_create(mce_notify_helper_thread, NULL,
-+					   "mce-notify");
-+	if (!mce_notify_helper)
-+		return -ENOMEM;
-+
-+	return 0;
-+}
-+
-+static void mce_notify_work()
-+{
-+	wake_up_process(mce_notify_helper);
-+}
-+#else
-+static void mce_notify_work(void)
-+{
-+	__mce_notify_work();
-+}
-+static inline int mce_notify_work_init(void) { return 0; }
-+#endif
-+
- /*
-  * Notify the user(s) about new machine check events.
-  * Can be called from interrupt context, but not from machine check/NMI
-@@ -1315,24 +1371,8 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
-  */
- int mce_notify_irq(void)
- {
--	/* Not more than two messages every minute */
--	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
--
- 	if (test_and_clear_bit(0, &mce_need_notify)) {
--		/* wake processes polling /dev/mcelog */
--		wake_up_interruptible(&mce_chrdev_wait);
--
--		/*
--		 * There is no risk of missing notifications because
--		 * work_pending is always cleared before the function is
--		 * executed.
--		 */
--		if (mce_helper[0] && !work_pending(&mce_trigger_work))
--			schedule_work(&mce_trigger_work);
--
--		if (__ratelimit(&ratelimit))
--			pr_info(HW_ERR "Machine check events logged\n");
--
-+		mce_notify_work();
- 		return 1;
- 	}
- 	return 0;
-@@ -2375,6 +2415,8 @@ static __init int mcheck_init_device(void)
- 	/* register character device /dev/mcelog */
- 	misc_register(&mce_chrdev_device);
- 
-+	err = mce_notify_work_init();
-+
- 	return err;
- }
- device_initcall_sync(mcheck_init_device);
