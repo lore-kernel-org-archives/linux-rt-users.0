@@ -1,36 +1,42 @@
-From: Romain Geissler <romain.geissler@gmail.com>
-Subject: Multiple readers on multiple posix queues
-Date: Fri, 12 Apr 2013 10:53:13 +0200
-Message-ID: <CAF+LTeeELsNYj+wQZ_NC=5+2G2AqvLgpuwBxsOwM+S72WzckKw@mail.gmail.com>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
+ PREEMPT_RT
+Date: Fri, 12 Apr 2013 15:31:18 +0200
+Message-ID: <20130412133118.GC2368@pd.tnic>
+References: <1365705214.9609.58.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f49.google.com ([209.85.219.49]:59705 "EHLO
-	mail-oa0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753151Ab3DLIxO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 12 Apr 2013 04:53:14 -0400
-Received: by mail-oa0-f49.google.com with SMTP id j6so2282453oag.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 12 Apr 2013 01:53:13 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Tony Luck <tony.luck@intel.com>,
+	Mauro Carvalho Chehab <mchehab@redhat.com>,
+	Ingo Molnar <mingo@kernel.org>,
+	"H. Peter Anvin" <hpa@linux.intel.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1365705214.9609.58.camel@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+On Thu, Apr 11, 2013 at 02:33:34PM -0400, Steven Rostedt wrote:
+> Comments?
 
-We are currently facing an issue when reading in a set of several
-posix queues (let's say 2 different mqueues) from several processes.
-We are currently using epoll_wait to wait for an incoming message on
-either queue, then mq_timedreceive to retrieve it from the queue.
+I don't have a problem with it except with the yelling - I think I've
+gone deaf. And for Rostedt code it is pretty clean and even *I* can
+understand it :-).
 
-This is an issue when the number of reader process grows, as if we
-send only one message on a queue, all processes are awaken when
-epoll_wait returns, and all processes try to fetch the message. We
-would like to fix this and remove those useless kernel space/user
-space switchs.
+Tony?
 
-Is there any way to run a mq_receive/mq_timedreceive on several
-queues, that would awake only one process? Something more or less like
-epoll, but that also fetches a message from the readable queues.
+Steve, stupid question: since this is -rt only, why even push it
+upstream?
 
-Romain
+-- 
+Regards/Gruss,
+    Boris.
+
+Sent from a fat crate under my desk. Formatting is fine.
+--
