@@ -1,8 +1,8 @@
 From: Borislav Petkov <bp@alien8.de>
 Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
  PREEMPT_RT
-Date: Fri, 12 Apr 2013 15:31:18 +0200
-Message-ID: <20130412133118.GC2368@pd.tnic>
+Date: Fri, 12 Apr 2013 15:38:46 +0200
+Message-ID: <20130412133846.GD2368@pd.tnic>
 References: <1365705214.9609.58.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
@@ -23,16 +23,39 @@ Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Thu, Apr 11, 2013 at 02:33:34PM -0400, Steven Rostedt wrote:
-> Comments?
+> diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+> index e8d8ad0..060e473 100644
+> --- a/arch/x86/kernel/cpu/mcheck/mce.c
+> +++ b/arch/x86/kernel/cpu/mcheck/mce.c
+> @@ -18,6 +18,7 @@
+>  #include <linux/rcupdate.h>
+>  #include <linux/kobject.h>
+>  #include <linux/uaccess.h>
+> +#include <linux/kthread.h>
+>  #include <linux/kdebug.h>
+>  #include <linux/kernel.h>
+>  #include <linux/percpu.h>
+> @@ -1308,6 +1309,61 @@ static void mce_do_trigger(struct work_struct *work)
+>  
+>  static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+>  
+> +static void __mce_notify_work(void)
+> +{
+> +	/* Not more than two messages every minute */
+> +	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+> +
+> +	/* wake processes polling /dev/mcelog */
+> +	wake_up_interruptible(&mce_chrdev_wait);
+> +
+> +	/*
+> +	 * There is no risk of missing notifications because
+> +	 * work_pending is always cleared before the function is
+> +	 * executed.
+> +	 */
 
-I don't have a problem with it except with the yelling - I think I've
-gone deaf. And for Rostedt code it is pretty clean and even *I* can
-understand it :-).
-
-Tony?
-
-Steve, stupid question: since this is -rt only, why even push it
-upstream?
+You must be using some tree != mainline because this comment is gone
+upstream and that whole second hunk below which moves it here doesn't
+apply.
 
 -- 
 Regards/Gruss,
