@@ -1,53 +1,46 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH documentation 1/2] nohz1: Add documentation.
-Date: Thu, 11 Apr 2013 12:14:42 -0700
-Message-ID: <20130411191442.GP29861@linux.vnet.ibm.com>
-References: <20130411160524.GA30384@linux.vnet.ibm.com>
- <1365696359-30958-1-git-send-email-paulmck@linux.vnet.ibm.com>
- <5166EF74.4030106@linux.intel.com>
- <20130411182727.GM29861@linux.vnet.ibm.com>
- <20130411184313.GH22229@in.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Pekka Enberg <penberg@kernel.org>
+Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's unfreeze_partials()
+ code.
+Date: Fri, 12 Apr 2013 09:48:34 +0300
+Message-ID: <5167AE42.1040308@kernel.org>
+References: <1364010673.6345.156.camel@gandalf.local.home> <0000013da1f93be3-c3d42ae8-ff34-4c63-8094-77a83291ea19-000000@email.amazonses.com> <1364227073.6345.182.camel@gandalf.local.home> <1364228039.6345.183.camel@gandalf.local.home> <0000013da2ace21a-9e87fe8a-75c2-4b7c-b5e1-37ad196ce012-000000@email.amazonses.com> <1364234613.6345.184.camel@gandalf.local.home> <0000013da2ce20f8-0e3a64ef-67ed-4ab4-9f20-b77980c876c3-000000@email.amazonses.com> <1364236355.6345.185.camel@gandalf.local.home> <20130327025957.GA17125@lge.com> <1364355032.6345.200.camel@gandalf.local.home> <20130327061351.GB17125@lge.com> <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com> <1365696307.9609.36.camel@gandalf.local.home> <0000013df9f9
+ ca28-9863f810-f95f-4a21-83cd-a7a875af69c8-000000@email.amazonses.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Arjan van de Ven <arjan@linux.intel.com>,
-	linux-kernel@vger.kernel.org, mingo@elte.hu, laijs@cn.fujitsu.com,
-	akpm@linux-foundation.org, mathieu.desnoyers@polymtl.ca,
-	josh@joshtriplett.org, niv@us.ibm.com, tglx@linutronix.de,
-	peterz@infradead.org, rostedt@goodmis.org, Valdis.Kletnieks@vt.edu,
-	dhowells@redhat.com, edumazet@google.com, darren@dvhart.com,
-	fweisbec@gmail.com, sbw@mit.edu, Borislav Petkov <bp@alien8.de>,
-	Kevin Hilman <khilman@linaro.org>,
-	Christoph Lameter <cl@linux.com>, arnd@arndb.de,
-	Robin.Randhawa@arm.com, linux-rt-users@vger.kernel.org
-To: Dipankar Sarma <dipankar@in.ibm.com>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>
+To: Christoph Lameter <cl@linux.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130411184313.GH22229@in.ibm.com>
+In-Reply-To: <0000013df9f9ca28-9863f810-f95f-4a21-83cd-a7a875af69c8-000000@email.amazonses.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Apr 12, 2013 at 12:13:13AM +0530, Dipankar Sarma wrote:
-> On Thu, Apr 11, 2013 at 11:27:27AM -0700, Paul E. McKenney wrote:
-> > On Thu, Apr 11, 2013 at 10:14:28AM -0700, Arjan van de Ven wrote:
-> > > >+2.	Many architectures will place dyntick-idle CPUs into deep sleep
-> > > >+	states, which further degrades from-idle transition latencies.
-> > > >+
-> > > I think this part should just be deleted.
-> > > On x86, the deeper idle states are even used with non-tickless system (the break even times are
-> > > quite a bit less than even 1 msec).
-> > > I can't imagine that ARM is worse on this, at which point the statement above is highly dubious
-> > 
-> > Interesting point, and I freely admit that I don't have full knowledge
-> > of the energy-consumption characteristics of all the architectures that
-> > Linux supports.  Adding a few of the ARM guys on CC for their take,
-> > plus linux-rt-users.
-> > 
-> > If there are no objections, I will delete point 2 above as Arjan suggests.
-> 
-> What Arjan said will also be true for Linux on Power systems. I am not
-> sure "many architectures" would be the right way to characterize it.
+Hello,
 
-Very well, I count one non-objection to Arjan's suggestion.  ;-)
+On 04/11/2013 07:42 PM, Christoph Lameter wrote:
+> On Thu, 11 Apr 2013, Steven Rostedt wrote:
+>
+>> I was wondering if you made any more forward progress with with patch
+>> yet. When it goes into mainline, I'd like to backport it to the -rt
+>> stable trees, and will probably make it enabled by default when
+>> PREEMPT_RT is enabled.
+>
+> Sorry I did not get around to it yet. Also waiting for Joonsoo's patch to
+> be merged first. Which tree may I use Pekka?
 
-							Thanx, Paul
+https://github.com/penberg/linux/commits/slab/next
+
+and
+
+https://git.kernel.org/cgit/linux/kernel/git/penberg/linux.git/log/?h=slab/next
+
+are the same and include what I've queued for 3.10.
+
+I'm waiting for a new version of Joonsoon's patch to appear.
+
+			Pekka
