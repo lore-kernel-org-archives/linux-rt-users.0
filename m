@@ -1,58 +1,118 @@
 From: Stanislav Meduna <stano@meduna.org>
-Subject: hrtimer: interrupt took 6742 ns, then RT throttling and hung machine
- for nearly 2 seconds
-Date: Mon, 15 Apr 2013 13:02:42 +0200
-Message-ID: <516BDE52.90200@meduna.org>
+Subject: Re: hrtimer: interrupt took 6742 ns, then RT throttling and hung
+ machine for nearly 2 seconds
+Date: Mon, 15 Apr 2013 13:54:01 +0200
+Message-ID: <516BEA59.4050303@meduna.org>
+References: <516BDE52.90200@meduna.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:40155 "EHLO meduna.org"
+Received: from www.meduna.org ([92.240.244.38]:35728 "EHLO meduna.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933036Ab3DOLCw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Apr 2013 07:02:52 -0400
+	id S1752607Ab3DOLyK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Apr 2013 07:54:10 -0400
 Received: from dial-95-105-165-4-orange.orange.sk ([95.105.165.4] helo=[192.168.130.22])
 	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_256_CBC_SHA1:32)
 	(Exim 4.72)
 	(envelope-from <stano@meduna.org>)
-	id 1URhBO-0005EO-PE
-	for linux-rt-users@vger.kernel.org; Mon, 15 Apr 2013 13:02:48 +0200
+	id 1URhz3-0005G3-BM
+	for linux-rt-users@vger.kernel.org; Mon, 15 Apr 2013 13:54:07 +0200
+In-Reply-To: <516BDE52.90200@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On 15.04.2013 13:02, Stanislav Meduna wrote:
 
-Apr 15 10:14:57 lnx kernel: [56281.700293] hrtimer: interrupt took 6742 ns
-Apr 15 10:14:57 lnx kernel: [330740.000129] [sched_delayed] sched: RT
-throttling activated
+> Apr 15 10:14:57 lnx kernel: [56281.700293] hrtimer: interrupt took 6742 ns
 
+The /proc/timer_list follows. What worries me a bit are the retries -
+they are slowly rising (~1 / sec for nr_retries) even if the machine
+is basically idle. Is it normal?
 
->From our application logs the machine was basically hung for something
-between 1.71 - 1.73 seconds, then resumed normal operation. A 5ms
-timerfd_create timer returned 341 expirations, the 340 missed
-exactly correspond to the 1.7 seconds.
-
-None of the /sys/kernel/debug/tracing/latency_hist/* reports anything
-unusual, they are all in the tens of microsecond range, only wakeup
-shared prio is at 957 us between two same prio application threads,
-which is expected.
-
-It is not very probable that the reason for the throttling is our
-application. We have own monitoring of the runaway tasks and this
-did not kick in. Besides, the coincidence with the hrtimer
-message looks very suspicious.
+The rise only happens if our application is running, but it is
+basically the only thing in system that is actively using
+the hrtimers, so this does not really say much. Tweaking
+the priority of ksoftirqd has no effect.
 
 
-The kernel is 3.4.25-rt37 with full preempt on a 1 GHz Celeron M
-industrial PC, ICH4 (ata_piix) used for ATA, Intel 82801DB PRO/100 VE
-(e100) for ethernet.
+Timer List Version: v0.6
+HRTIMER_MAX_CLOCK_BASES: 3
+now at 342575389945882 nsecs
 
-Unfortunately it is not easily reproducible - it happens once
-per several days and there is no obvious trigger.
+cpu: 0
+ clock 0:
+  .base:       c04d7f68
+  .index:      0
+  .resolution: 1 nsecs
+  .get_time:   ktime_get
+  .offset:     0 nsecs
+active timers:
+ #0: tick_cpu_sched, tick_sched_timer, S:01
+ # expires at 342575390000000-342575390000000 nsecs [in 54118 to 54118
+nsecs]
+ #1: <cd9bb680>, timerfd_tmrproc, S:01
+ # expires at 342575390284003-342575390284003 nsecs [in 338121 to 338121
+nsecs]
+ #2: <cc6cff48>, hrtimer_wakeup, S:01
+ # expires at 342575390421978-342575390421978 nsecs [in 476096 to 476096
+nsecs]
+... 16 more hrtimer_wakeup follow ...
 
-Any hints?
+ clock 1:
+  .base:       c04d7fa0
+  .index:      1
+  .resolution: 1 nsecs
+  .get_time:   ktime_get_real
+  .offset:     1365682957275692841 nsecs
+active timers:
+ clock 2:
+  .base:       c04d7fd8
+  .index:      2
+  .resolution: 1 nsecs
+  .get_time:   ktime_get_boottime
+  .offset:     0 nsecs
+active timers:
+  .expires_next   : 342575390284003 nsecs
+  .hres_active    : 1
+  .nr_events      : 556415337
+  .nr_retries     : 1124752
+  .nr_hangs       : 1
+  .max_hang_time  : 6742 nsecs
+  .nohz_mode      : 2
+  .idle_tick      : 342575389000000 nsecs
+  .tick_stopped   : 0
+  .idle_jiffies   : 342275388
+  .idle_calls     : 514502119
+  .idle_sleeps    : 510841382
+  .idle_entrytime : 342575388177611 nsecs
+  .idle_waketime  : 342575388177611 nsecs
+  .idle_exittime  : 342575388184375 nsecs
+  .idle_sleeptime : 301580528758450 nsecs
+  .iowait_sleeptime: 21756268924 nsecs
+  .last_jiffies   : 342275388
+  .next_jiffies   : 342275421
+  .idle_expires   : 342575421000000 nsecs
+jiffies: 342275390
 
-Thanks
+
+Tick Device: mode:     1
+Per CPU device: 0
+Clock Event Device: hpet
+ max_delta_ns:   149983013276
+ min_delta_ns:   13409
+ mult:           61496111
+ shift:          32
+ mode:           3
+ next_event:     342575390284003 nsecs
+ set_next_event: hpet_legacy_next_event
+ set_mode:       hpet_legacy_set_mode
+ event_handler:  hrtimer_interrupt
+ retries:        9359
+
+
+Regards
 -- 
-                                             Stano
+                                      Stano
+
