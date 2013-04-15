@@ -1,57 +1,54 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: [ANNOUNCE] 3.6.11.1-rt32
-Date: Sun, 14 Apr 2013 23:13:29 +0200
-Message-ID: <516B1BF9.3000002@osadl.org>
-References: <1364527527.10629.10.camel@gandalf.local.home>  <515A4CE4.9050607@osadl.org> <1365529616.25498.75.camel@gandalf.local.home>
+From: Priyanka Jain <Priyanka.Jain@freescale.com>
+Subject: [PATCH] powerpc/64bit,PREEMPT_RT: Check preempt_count before preempting
+Date: Mon, 15 Apr 2013 11:17:11 +0530
+Message-ID: <1366004831-2931-1-git-send-email-Priyanka.Jain@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1365529616.25498.75.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: Priyanka Jain <Priyanka.Jain@freescale.com>
+To: <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from tx2ehsobe004.messaging.microsoft.com ([65.55.88.14]:32465 "EHLO
+	tx2outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752672Ab3DOFrb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 15 Apr 2013 01:47:31 -0400
+Received: from mail124-tx2 (localhost [127.0.0.1])	by
+ mail124-tx2-R.bigfish.com (Postfix) with ESMTP id 9F40B1200BD	for
+ <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2013 05:47:30 +0000 (UTC)
+Received: from TX2EHSMHS036.bigfish.com (unknown [10.9.14.240])	by
+ mail124-tx2.bigfish.com (Postfix) with ESMTP id 9587440004F	for
+ <linux-rt-users@vger.kernel.org>; Mon, 15 Apr 2013 05:47:28 +0000 (UTC)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steven,
+In ret_from_except_lite() with CONFIG_PREEMPT enabled,
+add the missing check to compare value of preempt_count
+with zero before continuing with preemption process of
+the current task.
+If preempt_count is non-zero, restore reg and return,
+else continue the preemption process.
 
->>> I'm pleased to announce the 3.6.11.1-rt32 stable release.
->> Unfortunately, there is another compile error:
->> drivers/gpu/drm/i915/i915_gem.c: In function =E2=80=98i915_gem_wait_=
-for_error=E2=80=99:
->> drivers/gpu/drm/i915/i915_gem.c:118:3: warning: passing argument 1 o=
-f
->> =E2=80=98rt_spin_lock=E2=80=99 from incompatible pointer type [enabl=
-ed by default]
->> In file included from include/linux/spinlock.h:273:0,
->>                    from include/linux/wait.h:24,
->>                    from include/linux/fs.h:396,
->>                    from include/drm/drmP.h:47,
->>                    from drivers/gpu/drm/i915/i915_gem.c:28:
->> [..]
->> I would propose to adopt the mechanism that Sebastian introduced in
->> 3.8.4-rt2 (https://lkml.org/lkml/2013/3/26/600). The kernel compiles
->> and runs without any problem with the below patch on a system that
->> requires the i915 driver module.
-> Thanks Carsten, I'll be updating this later today.
-Thank you.
+Signed-off-by: Priyanka Jain <Priyanka.Jain@freescale.com>
+Fixes CQ:ENGR257848
+	 CONFIG_PREEMPT_RT_FULL does not work on 64-bit
+---
+ arch/powerpc/kernel/entry_64.S |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
 
-> BTW, did you get any core dumps from the work queue race that we've
-> been seeing?
-No, not yet. Originally, the farm systems did not use crashkernels by
-default. I understood that it does no harm but could help in cases like
-this one. Therefore, I've started to reconfigure all farm system with
-crashkernels - starting with the two systems that had the work queue
-race crashes. The kernel messages here (one is a 12-core, the other one
-a 32-core box) look exactly like the one=20
-(https://lkml.org/lkml/2013/3/18/325)
-you saw in your 40-core machine (https://lkml.org/lkml/2013/3/18/430).
-We'll need to wait for the next crash that will give us a core dump we
-may then dissect.
+diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
+index 1b1c8ae..ec120e6 100644
+--- a/arch/powerpc/kernel/entry_64.S
++++ b/arch/powerpc/kernel/entry_64.S
+@@ -643,6 +643,8 @@ resume_kernel:
+ #ifdef CONFIG_PREEMPT
+ 	/* Check if we need to preempt */
+ 	lwz	r8,TI_PREEMPT(r9)
++	cmpwi	0,r8,0		/* if non-zero, just restore regs and return */
++	bne	restore
+ 	andi.	r0,r4,_TIF_NEED_RESCHED
+ 	bne+	check_count
+ 
+-- 
+1.7.4.1
 
-	-Carsten.
+
