@@ -1,8 +1,8 @@
 From: Mike Galbraith <bitbucket@online.de>
 Subject: Re: [rfc][patch] sched,rt: enqueue spinlock waiters to the head of
  their queue
-Date: Mon, 15 Apr 2013 15:01:44 +0200
-Message-ID: <1366030904.4962.36.camel@marge.simpson.net>
+Date: Tue, 16 Apr 2013 15:07:27 +0200
+Message-ID: <1366117647.4784.31.camel@marge.simpson.net>
 References: <1365946445.6105.3.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -11,41 +11,62 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.9]:49985 "EHLO
+Received: from moutng.kundenserver.de ([212.227.17.10]:52147 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751135Ab3DONB4 (ORCPT
+	with ESMTP id S932863Ab3DPNHj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Apr 2013 09:01:56 -0400
+	Tue, 16 Apr 2013 09:07:39 -0400
 In-Reply-To: <1365946445.6105.3.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
-
-BTW, if I were a reader, I'd be asking "where are the cold hard numbers
-showing that this is a good thing to do?"  They're missing because I
-don't have any.
-
-This is the fallout from turning spinlocks back into 100% spinning locks
-for rt explorations, which _can_ improve semop throughput up to 7 fold
-when combined with a "Ok boss, how long may I spin before I have to
-check for other runnable tasks at my prio" knob, but which also adds a
-little overhead to the general case for one (making it a FAIL), and will
-chew huge amounts of CPU in the heavily contended case just to close off
-most priority inversions should a high priority task block briefly while
-there's a low priority task runnable.  Preemptible spinning locks are
-pure evil.
-
-Doing this wake to head _should_ speed up lock turnaround, but I have
-zero hard evidence that it really makes any difference in practice, so
-yawn/NAK is perfectly understandable :)  These are only the leftover
-bits that I think might be worth a ponder or two after declaring
-preemptible spinning locks to be too evil to live.
 
 On Sun, 2013-04-14 at 15:34 +0200, Mike Galbraith wrote: 
 > If a task blocks on a spinlock, give the CPU back as soon as possible so
 > we can turn over the lock as quickly as possible.  The task was at HEAD
 > when it blocked, put it back, and tell everyone else to get the hell out
 > of the way.
-> 
+
+Hm, seems I may have munged it a little while separating 'good' from
+'evil'.
+
+With that patch.
+
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 15322680, ops/sec 510756
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 15448786, ops/sec 514959
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 15697128, ops/sec 523237
+
+Without the patch.
+
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 19056218, ops/sec 635207
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 18702572, ops/sec 623419
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 19164792, ops/sec 638826
+
+With spinning spinlocks locks parent patch.
+
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 37788816, ops/sec 1259627
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 37981322, ops/sec 1266044
+vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
+cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
+total operations: 37840314, ops/sec 1261343
+
+Crap.  Bloody mumble mutter rt....
+
 > Signed-off-by: Mike Galbraith <bitbucket@online.de>
 > ---
 >  include/linux/sched.h |    1 +
