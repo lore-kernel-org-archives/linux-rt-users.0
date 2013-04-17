@@ -1,70 +1,35 @@
-From: Zhao Hongjiang <zhaohongjiang@huawei.com>
-Subject: [PATCH] timers: prepare for full preemption improve
-Date: Wed, 17 Apr 2013 17:44:16 +0800
-Message-ID: <516E6EF0.3080309@huawei.com>
+From: ratheesh kannoth <ratheesh.ksz@gmail.com>
+Subject: scheduler context
+Date: Wed, 17 Apr 2013 15:35:15 +0530
+Message-ID: <CAGZFCEHb2Cb_LGXtcYmhDvd0d0zjdb3-5D7-6EBjXmHLJESYoA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: <tglx@linutronix.de>, <rostedt@goodmis.org>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from szxga01-in.huawei.com ([119.145.14.64]:7054 "EHLO
-	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965780Ab3DQJom (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Apr 2013 05:44:42 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-wake_up should do nothing on the nort, so we should use wakeup_timer_waiters,
-also fix a spell mistake.
+I would like to understand on linux scheduler context. I have read a
+lot in websites and i could find
+contradictory statement. There are so many mailing list also ,but with
+less info. I would really appreciate
+if anybody could spend some time answering my question.
 
-Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
----
- kernel/timer.c |    8 ++++++--
- 1 files changed, 6 insertions(+), 2 deletions(-)
+1. Which context scheduler run ? ( process context or interrupt context ).
+2. scheduler is the guy  who picks up the next candidate to run.  if
+it gets interrupted by hardirq, what will happen ?
+3. if scheduler run in process context , how bottom half are scheduled ?
+4. In smp, schedule() function may be called  simultaneously. How it
+is handled ?
+5. When a bottom half is interrupted  by hard irq, how softirq kernel
+thread saves the state and restart it later ? ...what i mean is , an
+   hardirq came and its isr executed. bottom half enabled and bottom
+half gets scheduled . Before bottom half is completed , next irq
+   came and it enables bottom half , and the new bottom half is
+scheduled ....So here , what will happen to old bottom half , will it
+again
+   run later ?
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 62fc642..211e836 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -76,7 +76,9 @@ struct tvec_root {
- struct tvec_base {
- 	spinlock_t lock;
- 	struct timer_list *running_timer;
-+#ifdef CONFIG_PREEMPT_RT_BASE
- 	wait_queue_head_t wait_for_running_timer;
-+#endif
- 	unsigned long timer_jiffies;
- 	unsigned long next_timer;
- 	struct tvec_root tv1;
-@@ -974,7 +976,7 @@ static void wait_for_running_timer(struct timer_list *timer)
- 			   base->running_timer != timer);
- }
- 
--# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_tunning_timer)
-+# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
- #else
- static inline void wait_for_running_timer(struct timer_list *timer)
- {
-@@ -1231,7 +1233,7 @@ static inline void __run_timers(struct tvec_base *base)
- 			spin_lock_irq(&base->lock);
- 		}
- 	}
--	wake_up(&base->wait_for_running_timer);
-+	wakeup_timer_waiters(base);
- 	spin_unlock_irq(&base->lock);
- }
- 
-@@ -1759,7 +1761,9 @@ static int __cpuinit init_timers_cpu(int cpu)
- 	}
- 
- 	spin_lock_init(&base->lock);
-+#ifdef CONFIG_PREEMPT_RT_BASE
- 	init_waitqueue_head(&base->wait_for_running_timer);
-+#endif
- 
- 	for (j = 0; j < TVN_SIZE; j++) {
- 		INIT_LIST_HEAD(base->tv5.vec + j);
--- 1.7.1
 
+Thanks,
+Ratheesh
