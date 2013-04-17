@@ -1,217 +1,70 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [rfc][patch] sched,rt: enqueue spinlock waiters to the head of
- their queue
-Date: Tue, 16 Apr 2013 15:07:27 +0200
-Message-ID: <1366117647.4784.31.camel@marge.simpson.net>
-References: <1365946445.6105.3.camel@marge.simpson.net>
+From: Zhao Hongjiang <zhaohongjiang@huawei.com>
+Subject: [PATCH] timers: prepare for full preemption improve
+Date: Wed, 17 Apr 2013 17:44:16 +0800
+Message-ID: <516E6EF0.3080309@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
+Cc: <tglx@linutronix.de>, <rostedt@goodmis.org>
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.10]:52147 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932863Ab3DPNHj (ORCPT
+Received: from szxga01-in.huawei.com ([119.145.14.64]:7054 "EHLO
+	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965780Ab3DQJom (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Apr 2013 09:07:39 -0400
-In-Reply-To: <1365946445.6105.3.camel@marge.simpson.net>
+	Wed, 17 Apr 2013 05:44:42 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 2013-04-14 at 15:34 +0200, Mike Galbraith wrote: 
-> If a task blocks on a spinlock, give the CPU back as soon as possible so
-> we can turn over the lock as quickly as possible.  The task was at HEAD
-> when it blocked, put it back, and tell everyone else to get the hell out
-> of the way.
+wake_up should do nothing on the nort, so we should use wakeup_timer_waiters,
+also fix a spell mistake.
 
-Hm, seems I may have munged it a little while separating 'good' from
-'evil'.
+Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
+---
+ kernel/timer.c |    8 ++++++--
+ 1 files changed, 6 insertions(+), 2 deletions(-)
 
-With that patch.
-
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 15322680, ops/sec 510756
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 15448786, ops/sec 514959
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 15697128, ops/sec 523237
-
-Without the patch.
-
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 19056218, ops/sec 635207
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 18702572, ops/sec 623419
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 19164792, ops/sec 638826
-
-With spinning spinlocks locks parent patch.
-
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 37788816, ops/sec 1259627
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 37981322, ops/sec 1266044
-vogelweide:/abuild/mike/:[0]# schedctl -F ./semop-multi 64 64
-cpus 64, threads: 64, semaphores: 64, test duration: 30 secs
-total operations: 37840314, ops/sec 1261343
-
-Crap.  Bloody mumble mutter rt....
-
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
-> ---
->  include/linux/sched.h |    1 +
->  kernel/rtmutex.c      |   13 +++++++++++--
->  kernel/sched/core.c   |    9 +++++++--
->  kernel/sched/fair.c   |    4 ++++
->  kernel/sched/rt.c     |   29 +++++++++++++++++++++++++++--
->  5 files changed, 50 insertions(+), 6 deletions(-)
-> 
-> --- a/include/linux/sched.h
-> +++ b/include/linux/sched.h
-> @@ -1064,6 +1064,7 @@ struct sched_domain;
->  #define WF_FORK		0x02		/* child wakeup after fork */
->  #define WF_MIGRATED	0x04		/* internal use, task got migrated */
->  #define WF_LOCK_SLEEPER	0x08		/* wakeup spinlock "sleeper" */
-> +#define WF_REQUEUE	0x10		/* requeue spinlock "sleeper" */
->  
->  #define ENQUEUE_WAKEUP		1
->  #define ENQUEUE_HEAD		2
-> --- a/kernel/rtmutex.c
-> +++ b/kernel/rtmutex.c
-> @@ -722,7 +722,7 @@ static void  noinline __sched rt_spin_lo
->  {
->  	struct task_struct *lock_owner, *self = current;
->  	struct rt_mutex_waiter waiter, *top_waiter;
-> -	int ret;
-> +	int ret, wait, cpu = raw_smp_processor_id();
->  
->  	rt_mutex_init_waiter(&waiter, true);
->  
-> @@ -757,12 +757,21 @@ static void  noinline __sched rt_spin_lo
->  
->  		top_waiter = rt_mutex_top_waiter(lock);
->  		lock_owner = rt_mutex_owner(lock);
-> +		wait = top_waiter != &waiter;
-> +
-> +		/*
-> +		 * If we preempt the lock owner, just preempt ourselves.
-> +		 * the now boosted lock owner is queued to queue head.
-> +		 * When we release the wait lock, lock owner runs.
-> +		 */
-> +		if (!wait && task_cpu(lock_owner) == cpu)
-> +			set_tsk_need_resched(self);
->  
->  		raw_spin_unlock(&lock->wait_lock);
->  
->  		debug_rt_mutex_print_deadlock(&waiter);
->  
-> -		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner))
-> +		if (wait || adaptive_wait(lock, lock_owner))
->  			schedule_rt_mutex(lock);
->  
->  		raw_spin_lock(&lock->wait_lock);
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -1611,7 +1611,12 @@ EXPORT_SYMBOL(wake_up_process);
->   */
->  int wake_up_lock_sleeper(struct task_struct *p)
->  {
-> -	return try_to_wake_up(p, TASK_ALL, WF_LOCK_SLEEPER);
-> +	int flags = WF_LOCK_SLEEPER;
-> +
-> +	if (rt_task(p))
-> +		flags |= WF_REQUEUE;
-> +
-> +	return try_to_wake_up(p, TASK_ALL, flags);
->  }
->  
->  int wake_up_state(struct task_struct *p, unsigned int state)
-> @@ -3815,7 +3820,7 @@ void rt_mutex_setprio(struct task_struct
->  	if (running)
->  		p->sched_class->set_curr_task(rq);
->  	if (on_rq)
-> -		enqueue_task(rq, p, oldprio < prio ? ENQUEUE_HEAD : 0);
-> +		enqueue_task(rq, p, ENQUEUE_HEAD);
->  
->  	check_class_changed(rq, p, prev_class, oldprio);
->  out_unlock:
-> --- a/kernel/sched/fair.c
-> +++ b/kernel/sched/fair.c
-> @@ -3522,6 +3522,10 @@ static void check_preempt_wakeup(struct
->  	if (unlikely(se == pse))
->  		return;
->  
-> +	/* Preempting SCHED_OTHER lock holders harms throughput for no good reason */
-> +	if (__migrate_disabled(curr))
-> +		return;
-> +
->  	/*
->  	 * This is possible from callers such as move_task(), in which we
->  	 * unconditionally check_prempt_curr() after an enqueue (which may have
-> --- a/kernel/sched/rt.c
-> +++ b/kernel/sched/rt.c
-> @@ -1180,6 +1180,10 @@ enqueue_task_rt(struct rq *rq, struct ta
->  	if (flags & ENQUEUE_WAKEUP)
->  		rt_se->timeout = 0;
->  
-> +	/* The wakee is a FIFO lock sleeper */
-> +	if (flags & WF_REQUEUE)
-> +		flags |= ENQUEUE_HEAD;
-> +
->  	enqueue_rt_entity(rt_se, flags & ENQUEUE_HEAD);
->  
->  	if (!task_current(rq, p) && p->nr_cpus_allowed > 1)
-> @@ -1295,8 +1299,29 @@ select_task_rq_rt(struct task_struct *p,
->  	return cpu;
->  }
->  
-> -static void check_preempt_equal_prio(struct rq *rq, struct task_struct *p)
-> +static void check_preempt_equal_prio(struct rq *rq, struct task_struct *p, int wake_flags)
->  {
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +	if (wake_flags & WF_REQUEUE) {
-> +		if (!p->on_cpu)
-> +			requeue_task_rt(rq, p, 1);
-> +
-> +		/*
-> +		 * The lock owner was here first, top waiter
-> +		 * must follow.  If the owner was PI boosted,
-> +		 * it's gone RSN.  All others need to get off
-> +		 * this CPU ASAP, this waiter had it first.
-> +		 */
-> +		if (rq == this_rq())
-> +			requeue_task_rt(rq, rq->curr, 1);
-> +		else if (__migrate_disabled(rq->curr))
-> +			set_tsk_need_resched(rq->curr);
-> +		else
-> +			resched_task(rq->curr);
-> +
-> +		return;
-> +	}
-> +#endif
->  	if (rq->curr->nr_cpus_allowed == 1)
->  		return;
->  
-> @@ -1342,7 +1367,7 @@ static void check_preempt_curr_rt(struct
->  	 * task.
->  	 */
->  	if (p->prio == rq->curr->prio && !test_tsk_need_resched(rq->curr))
-> -		check_preempt_equal_prio(rq, p);
-> +		check_preempt_equal_prio(rq, p, flags);
->  #endif
->  }
->  
-> 
-> 
-
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 62fc642..211e836 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -76,7 +76,9 @@ struct tvec_root {
+ struct tvec_base {
+ 	spinlock_t lock;
+ 	struct timer_list *running_timer;
++#ifdef CONFIG_PREEMPT_RT_BASE
+ 	wait_queue_head_t wait_for_running_timer;
++#endif
+ 	unsigned long timer_jiffies;
+ 	unsigned long next_timer;
+ 	struct tvec_root tv1;
+@@ -974,7 +976,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+ 			   base->running_timer != timer);
+ }
+ 
+-# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_tunning_timer)
++# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
+ #else
+ static inline void wait_for_running_timer(struct timer_list *timer)
+ {
+@@ -1231,7 +1233,7 @@ static inline void __run_timers(struct tvec_base *base)
+ 			spin_lock_irq(&base->lock);
+ 		}
+ 	}
+-	wake_up(&base->wait_for_running_timer);
++	wakeup_timer_waiters(base);
+ 	spin_unlock_irq(&base->lock);
+ }
+ 
+@@ -1759,7 +1761,9 @@ static int __cpuinit init_timers_cpu(int cpu)
+ 	}
+ 
+ 	spin_lock_init(&base->lock);
++#ifdef CONFIG_PREEMPT_RT_BASE
+ 	init_waitqueue_head(&base->wait_for_running_timer);
++#endif
+ 
+ 	for (j = 0; j < TVN_SIZE; j++) {
+ 		INIT_LIST_HEAD(base->tv5.vec + j);
+-- 1.7.1
 
