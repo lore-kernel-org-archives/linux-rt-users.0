@@ -1,47 +1,60 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [ANNOUNCE] 3.8.4-rt2
-Date: Wed, 17 Apr 2013 18:25:40 +0200
-Message-ID: <CAONaPpFSf+Eh3K3BHCsPTQdxmbghHhtH=wMooh+Ers2QiCdH=g@mail.gmail.com>
-References: <20130326201722.GA14220@linutronix.de>
-	<CAP=VYLoXfECaSBuvYdZ3qbsnR9QMYpoRnKGZdY=P6zS_TYOcCA@mail.gmail.com>
-	<20130408183012.GA5778@linutronix.de>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: timerfd read does not return [Was: Re: timerfd and softirqd]
+Date: Thu, 18 Apr 2013 11:11:21 +0200
+Message-ID: <516FB8B9.9090506@meduna.org>
+References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f48.google.com ([209.85.219.48]:44116 "EHLO
-	mail-oa0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754277Ab3DQQZm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Apr 2013 12:25:42 -0400
-In-Reply-To: <20130408183012.GA5778@linutronix.de>
+Received: from www.meduna.org ([92.240.244.38]:59671 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755965Ab3DRJLc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Apr 2013 05:11:32 -0400
+In-Reply-To: <516EC3F3.1080406@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Apr 8, 2013 at 8:30 PM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> * Paul Gortmaker | 2013-04-05 19:35:51 [-0400]:
->
->>Thanks for the work in putting this together.  Just a heads up that the
->>split queue fails on a patch with no author/date/subject as follows:
->>
->>[...]
->>git am of percpu-rwsem-compilefix.patch failed.
->>
->>This "treercu-use-simple-waitqueue.patch" has the exact same problem.
->>
->>Note that I'm using git directly, and not quilt -- which is more
->>strict in what it will accept, hence it catches these kinds of things.
->
-> I just fixed up those two. "git quiltimport" works now.
->
+Hi,
 
-Where did you fix these up? Can we have access?
+from a new log that includes syscall tracing it seems that a thread
+waiting in a timerfd is woken, but does not return from the read:
 
-Thanks
+     TimerT d....  3825.943136: sys_read -> 0x8
+...
+     TimerT d....  3825.943199: sys_read(fd: 6, buf: b7633158, count: 8)
+     TimerT d..3.  3825.943208: sched_switch: prev_comm=TimerT prev_prio=54 prev_state=S ==> next_comm=ksoftirqd/0 next_prio=62
+ksoftirqd/0 ...1.  3825.943213: softirq_exit: vec=8 [action=HRTIMER]
+...
+     OtherT d.h1.  3825.947983: irq_handler_entry: irq=0 name=timer
+     OtherT d.h3.  3825.947997: sched_wakeup: comm=SomeT1 prio=84 success=1
+     OtherT d.h3.  3825.948005: sched_wakeup: comm=SomeT2 prio=69 success=1
+     OtherT dNh1.  3825.948009: softirq_raise: vec=8 [action=HRTIMER]
+     OtherT dNh1.  3825.948011: softirq_raise: vec=1 [action=TIMER]
+     OtherT dNh1.  3825.948014: irq_handler_exit: irq=0 ret=handled
+...
+ksoftirqd/0 ...1.  3825.948034: softirq_entry: vec=1 [action=TIMER]
+ksoftirqd/0 ...1.  3825.948037: softirq_exit: vec=1 [action=TIMER]
+ksoftirqd/0 ...1.  3825.948039: softirq_entry: vec=8 [action=HRTIMER]
+ksoftirqd/0 d..3.  3825.948047: sched_wakeup: comm=TimerT prio=54 success=1
+ksoftirqd/0 d..3.  3825.948054: sched_switch: prev_comm=ksoftirqd/0 prev_prio=62 prev_state=R+ ==> next_comm=TimerT next_prio=54
+     TimerT d..4.  3825.948061: sched_pi_setprio: comm=ksoftirqd/0 oldprio=62 newprio=54
+     TimerT d..3.  3825.948072: sched_switch: prev_comm=TimerT prev_prio=54 prev_state=D ==> next_comm=ksoftirqd/0 next_prio=54
+ksoftirqd/0 d..4.  3825.948079: sched_wakeup: comm=TimerT prio=54 success=1
+ksoftirqd/0 d..3.  3825.948083: sched_pi_setprio: comm=ksoftirqd/0 oldprio=54 newprio=62
+ksoftirqd/0 d..3.  3825.948093: sched_switch: prev_comm=ksoftirqd/0 prev_prio=62 prev_state=R+ ==> next_comm=TimerT next_prio=54
+     TimerT d.h1.  3825.948980: irq_handler_entry: irq=0 name=timer
+     TimerT d.h1.  3825.948991: softirq_raise: vec=1 [action=TIMER]
+...
 
-John
+There is no return from the read until the RT throttler got activated.
+Kernel version 3.4.25-rt37 - I'll check whether anything relevant
+has changed since then.
+
+
+Regards
+-- 
+                                            Stano
+
