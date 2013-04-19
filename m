@@ -1,60 +1,196 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: timerfd read does not return [Was: Re: timerfd and softirqd]
-Date: Thu, 18 Apr 2013 11:11:21 +0200
-Message-ID: <516FB8B9.9090506@meduna.org>
-References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org>
+From: Qiang Huang <h.huangqiang@huawei.com>
+Subject: cgroup_fj tests will stick the nort kernel
+Date: Fri, 19 Apr 2013 15:30:23 +0800
+Message-ID: <5170F28F.3060002@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Cc: Li Zefan <lizefan@huawei.com>, zhangwei <jovi.zhangwei@huawei.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:59671 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755965Ab3DRJLc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Apr 2013 05:11:32 -0400
-In-Reply-To: <516EC3F3.1080406@meduna.org>
+Received: from szxga02-in.huawei.com ([119.145.14.65]:13359 "EHLO
+	szxga02-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755309Ab3DSHdI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 19 Apr 2013 03:33:08 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
 
-from a new log that includes syscall tracing it seems that a thread
-waiting in a timerfd is woken, but does not return from the read:
+I ran cgroup_fj tests on RT kernel with PREEMPT_RT_FULL disabled, it will
+stick the system when ran cpuset stress tests, it happens everytime.
 
-     TimerT d....  3825.943136: sys_read -> 0x8
-...
-     TimerT d....  3825.943199: sys_read(fd: 6, buf: b7633158, count: 8)
-     TimerT d..3.  3825.943208: sched_switch: prev_comm=TimerT prev_prio=54 prev_state=S ==> next_comm=ksoftirqd/0 next_prio=62
-ksoftirqd/0 ...1.  3825.943213: softirq_exit: vec=8 [action=HRTIMER]
-...
-     OtherT d.h1.  3825.947983: irq_handler_entry: irq=0 name=timer
-     OtherT d.h3.  3825.947997: sched_wakeup: comm=SomeT1 prio=84 success=1
-     OtherT d.h3.  3825.948005: sched_wakeup: comm=SomeT2 prio=69 success=1
-     OtherT dNh1.  3825.948009: softirq_raise: vec=8 [action=HRTIMER]
-     OtherT dNh1.  3825.948011: softirq_raise: vec=1 [action=TIMER]
-     OtherT dNh1.  3825.948014: irq_handler_exit: irq=0 ret=handled
-...
-ksoftirqd/0 ...1.  3825.948034: softirq_entry: vec=1 [action=TIMER]
-ksoftirqd/0 ...1.  3825.948037: softirq_exit: vec=1 [action=TIMER]
-ksoftirqd/0 ...1.  3825.948039: softirq_entry: vec=8 [action=HRTIMER]
-ksoftirqd/0 d..3.  3825.948047: sched_wakeup: comm=TimerT prio=54 success=1
-ksoftirqd/0 d..3.  3825.948054: sched_switch: prev_comm=ksoftirqd/0 prev_prio=62 prev_state=R+ ==> next_comm=TimerT next_prio=54
-     TimerT d..4.  3825.948061: sched_pi_setprio: comm=ksoftirqd/0 oldprio=62 newprio=54
-     TimerT d..3.  3825.948072: sched_switch: prev_comm=TimerT prev_prio=54 prev_state=D ==> next_comm=ksoftirqd/0 next_prio=54
-ksoftirqd/0 d..4.  3825.948079: sched_wakeup: comm=TimerT prio=54 success=1
-ksoftirqd/0 d..3.  3825.948083: sched_pi_setprio: comm=ksoftirqd/0 oldprio=54 newprio=62
-ksoftirqd/0 d..3.  3825.948093: sched_switch: prev_comm=ksoftirqd/0 prev_prio=62 prev_state=R+ ==> next_comm=TimerT next_prio=54
-     TimerT d.h1.  3825.948980: irq_handler_entry: irq=0 name=timer
-     TimerT d.h1.  3825.948991: softirq_raise: vec=1 [action=TIMER]
-...
+Here stick the system means there are almost no response from the system and
+we can hardly do anything on the terminal, but kernel isn't crash nor deadlocked
+(according to the lockdep message), and it may do some response sometimes.
 
-There is no return from the read until the RT throttler got activated.
-Kernel version 3.4.25-rt37 - I'll check whether anything relevant
-has changed since then.
+The problem exists on all RT versions from 3.4.18-rt29 to 3.4.37-rt51 AFAIK, but
+without RT patches or with PREEMPT_RT_FULL enabled, the problem isn't exists.
+
+When the system is stuck, we will get the following message:
+# dmesg
+...
+[96967.772181] NOHZ: local_softirq_pending 200
+[96967.776398] NOHZ: local_softirq_pending 200
+[96967.780212] NOHZ: local_softirq_pending 200
+[96967.781215] NOHZ: local_softirq_pending 200
+[96967.784152] NOHZ: local_softirq_pending 200
+[96967.784310] NOHZ: local_softirq_pending 200
+[96967.788239] NOHZ: local_softirq_pending 200
+[96967.796092] NOHZ: local_softirq_pending 200
+[96967.800089] NOHZ: local_softirq_pending 200
+[96967.800225] NOHZ: local_softirq_pending 200
+[97112.950055] ------------[ cut here ]------------
+[97112.950068] WARNING: at /usr/src/packages/BUILD/kernel-default-3.4.24.03/linux-3.4/kernel/workqueue.c:1208 worker_enter_idle+0x1d3/0x200()
+[97112.950073] Hardware name: Tecal RH2285
+[97112.950076] Modules linked in: reiserfs minix hfs vfat fat tun xt_limit xt_tcpudp nf_nat nf_conntrack_ipv4 nf_conntrack nf_defrag_ipv4 x_tables dummy edd cpufreq_conservative cpufreq_userspace
+cpufreq_powersave acpi_cpufreq mperf loop dm_mod coretemp crc32c_intel igb ghash_clmulni_intel aesni_intel cryptd aes_x86_64 aes_generic iTCO_wdt bnx2 iTCO_vendor_support i7core_edac pcspkr i2c_i801
+dca edac_core button rtc_cmos microcode serio_raw i2c_core ses enclosure sg mptctl ext3 jbd mbcache usbhid hid uhci_hcd ehci_hcd usbcore usb_common sd_mod crc_t10dif processor thermal_sys hwmon
+scsi_dh_alua scsi_dh_emc scsi_dh_hp_sw scsi_dh_rdac scsi_dh ata_generic ata_piix libata mptsas mptscsih mptbase scsi_transport_sas scsi_mod [last unloaded: ip_tables]
+[97112.950178] Pid: 5331, comm: kworker/0:2 Tainted: GF       WC   3.4.24.03-0.1.2-default #1
+[97112.950182] Call Trace:
+[97112.950191]  [<ffffffff8105e2d2>] warn_slowpath_common+0xb2/0x120
+[97112.950196]  [<ffffffff8105e365>] warn_slowpath_null+0x25/0x30
+[97112.950202]  [<ffffffff81085593>] worker_enter_idle+0x1d3/0x200
+[97112.950207]  [<ffffffff81084a95>] ? need_to_create_worker+0x15/0x50
+[97112.950213]  [<ffffffff8108a308>] worker_thread+0x2a8/0x4f0
+[97112.950218]  [<ffffffff8108a060>] ? rescuer_thread+0x320/0x320
+[97112.950226]  [<ffffffff81091d86>] kthread+0xc6/0xe0
+[97112.950233]  [<ffffffff81720454>] kernel_thread_helper+0x4/0x10
+[97112.950239]  [<ffffffff81091cc0>] ? __init_kthread_worker+0x50/0x50
+[97112.950244]  [<ffffffff81720450>] ? gs_change+0x13/0x13
+[97112.950248] ---[ end trace 61f48fadbd018007 ]---
 
 
-Regards
--- 
-                                            Stano
+
+Here is a sample version of cgroup_fj which can trigger this problem everytime:
+(make sure we have CONFIG_CGROUPS and CONFIG_CPUSET endabled :))
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# cat cgroup_fj.sh
+#! /bin/sh
+
+LOGFILE=./cgroup_fj-output.txt
+TMPFILE=/tmp/cgroup_fj_tempfile.txt
+
+subsystem=2
+subsystem_name="cpuset"
+
+subgroup_num=100
+
+cur_subgroup_path1=""
+
+get_subgroup_path1()
+{
+        cur_subgroup_path1=""
+        if [ "$#" -ne 1 ] || [ "$1" -lt 1 ] ; then
+                return;
+        fi
+
+        cur_subgroup_path1="/dev/cgroup/subgroup_$1/"
+}
+
+cleanup()
+{
+        mount_str="`mount -l | grep /dev/cgroup`"
+        if [ "$mount_str" != "" ]; then
+                umount /dev/cgroup
+        fi
+
+        if [ -e /dev/cgroup ]; then
+                rmdir /dev/cgroup
+        fi
+}
+
+setup()
+{
+        mkdir /dev/cgroup
+        mount -t cgroup -o $subsystem_name cgroup /dev/cgroup
+}
+
+reclaim_foundling()
+{
+        cat `find /dev/cgroup/subgroup_* -name "tasks"` > $TMPFILE
+        nlines=`cat "$TMPFILE" | wc -l`
+        for k in `seq 1 $nlines`
+        do
+                cur_pid=`sed -n "$k""p" $TMPFILE`
+                if [ -e /proc/$cur_pid/ ];then
+                        echo "pid $cur_pid reclaimed"
+                        echo "$cur_pid" > "/dev/cgroup/tasks"
+                fi
+        done
+}
+
+##########################  main   #######################
+echo "-------------------------------------------------------------------------" >> $LOGFILE
+
+cleanup;
+
+setup;
+
+if [ $subsystem -eq 2 ]; then
+        cpus=`cat /dev/cgroup/cpuset.cpus`
+        mems=`cat /dev/cgroup/cpuset.mems`
+fi
+
+count=0
+pathes[1]=""
+for i in `seq 1 $subgroup_num`
+do
+        get_subgroup_path1 $i
+        mkdir $cur_subgroup_path1
+
+        if [ $subsystem -eq 2 ]; then
+                echo "$cpus" > "$cur_subgroup_path1""cpuset.cpus"
+                echo "$mems" > "$cur_subgroup_path1""cpuset.mems"
+        fi
+
+        let "count = $count + 1"
+        pathes[$count]="$cur_subgroup_path1"
+done
+
+echo "...mkdired $count times" >> $LOGFILE
+
+sleep 1
+
+count2=$count
+let "count2 = $count2 + 1"
+pathes[0]="/dev/cgroup/"
+pathes[$count2]="/dev/cgroup/"
+for i in `seq 0 $count`
+do
+        j=$i
+        let "j = $j + 1"
+        cat "${pathes[$i]}tasks" > $TMPFILE
+        nlines=`cat "$TMPFILE" | wc -l`
+        for k in `seq 1 $nlines`
+        do
+                cur_pid=`sed -n "$k""p" $TMPFILE`
+                if [ -e /proc/$cur_pid/ ];then
+                        echo "$cur_pid" > "${pathes[$j]}tasks"
+                        echo "task: $cur_pid" >> $LOGFILE
+                        echo "target: ${pathes[$j]}tasks}" >> $LOGFILE
+                fi
+        done
+done
+
+reclaim_foundling;
+
+for i in `seq 1 $count`
+do
+        j=i
+        let "j = $count - $j + 1"
+        rmdir ${pathes[$j]}
+done
+
+sleep 1
+
+cleanup;
+
+exit 0;
+<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
 
