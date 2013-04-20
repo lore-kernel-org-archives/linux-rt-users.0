@@ -1,96 +1,51 @@
-From: "zhangwei(Jovi)" <jovi.zhangwei@huawei.com>
-Subject: [PATCH] relay: fix timer madness
-Date: Sat, 20 Apr 2013 15:37:08 +0800
-Message-ID: <517245A4.7050601@huawei.com>
+From: Dmitry Lysenko <dvl36.ripe.nick@gmail.com>
+Subject: Build failure. Typo in the 3.2.43-rt63 patch?
+Date: Sat, 20 Apr 2013 12:09:39 +0300
+Message-ID: <51725B53.2030204@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f173.google.com ([209.85.212.173]:64098 "EHLO
+	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754033Ab3DTJJo (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 20 Apr 2013 05:09:44 -0400
+Received: by mail-wi0-f173.google.com with SMTP id c10so1927519wiw.0
+        for <linux-rt-users@vger.kernel.org>; Sat, 20 Apr 2013 02:09:43 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
 
-Ingo, Steven, I get this patch from 3.4 preempt-rt patch set, It seems that this patch
-fix relayfs bug not only for rt kernel, but also for mainline.
+After applying rt63 patch to fresh 3.2.43 I got:
+....
+   CC      kernel/rcutiny.o
+In file included from kernel/rcutiny.c:54:0:
+kernel/rcutiny_plugin.h: In function 'invoke_rcu_callbacks':
+kernel/rcutiny_plugin.h:886:2: error: implicit declaration of function 
+'swake_up' [-Werror=implicit-function-declaration]
+cc1: some warnings being treated as errors
+make[2]: *** [kernel/rcutiny.o] Error 1
+make[1]: *** [kernel] Error 2
+make[1]: Leaving directory `/root/linux-3.2.43'
+make: *** [debian/stamp/build/kernel] Error 2
+--------
 
-When I'm using below ktap script to tracing all event tracepoints, without this patch,
-the system will hang in few seconds, the patch indeed fix the problem as the changelog pointed.
+Then I tried this:
 
-	function eventfun (e) {
-        	printf("%d %d\t%s\t%s", cpu(), pid(), execname(), e.annotate)
-	}
+-------
+root@debian:~/linux-3.2.43# grep -R swake_up
+kernel/rcutiny_plugin.h:    swake_up(&rcu_kthread_wq);
+patch-3.2.43-rt63.patch:+    swake_up(&rcu_kthread_wq);
+root@debian:~/linux-3.2.43#
+-------
 
-	kdebug.probe("tp:", eventfun)
+Finally I manualy changed swake_up to swait_wake in rcutiny_plugin.h 
+(line 886).
+(don't know is it right), but kernel is builded now.
 
-	kdebug.probe_end(function () {
-        	printf("probe end\n")
-	})
+Dmitry.
 
-
-This patch is old, I can found the original patch discussion in 2007.
-	http://marc.info/?l=linux-kernel&m=118544794717162&w=2
-(In that mail thread, the patch didn't fix that problem, but it fix the problem I encountered now)
-
-I hope you can remember this :)
-
-so why we didn't commit this patch into mainline? any concern?
-
-Thanks.
-
-------------------------------------->
-Subject: relay: fix timer madness
-From: Ingo Molnar <mingo@elte.hu>
-
-remove timer calls (!!!) from deep within the tracing infrastructure.
-This was totally bogus code that can cause lockups and worse.
-Poll the buffer every 2 jiffies for now.
-
-Signed-off-by: Ingo Molnar <mingo@elte.hu>
----
- kernel/relay.c |   14 +++++---------
- 1 file changed, 5 insertions(+), 9 deletions(-)
-
-Index: linux-rt-rebase.q/kernel/relay.c
-===================================================================
---- linux-rt-rebase.q.orig/kernel/relay.c
-+++ linux-rt-rebase.q/kernel/relay.c
-@@ -319,6 +319,10 @@ static void wakeup_readers(unsigned long
- {
- 	struct rchan_buf *buf = (struct rchan_buf *)data;
- 	wake_up_interruptible(&buf->read_wait);
-+	/*
-+	 * Stupid polling for now:
-+	 */
-+	mod_timer(&buf->timer, jiffies + 1);
- }
-
- /**
-@@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
- 		init_waitqueue_head(&buf->read_wait);
- 		kref_init(&buf->kref);
- 		setup_timer(&buf->timer, wakeup_readers, (unsigned long)buf);
-+		mod_timer(&buf->timer, jiffies + 1);
- 	} else
- 		del_timer_sync(&buf->timer);
-
-@@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
- 		buf->subbufs_produced++;
- 		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
- 			buf->padding[old_subbuf];
--		smp_mb();
--		if (waitqueue_active(&buf->read_wait))
--			/*
--			 * Calling wake_up_interruptible() from here
--			 * will deadlock if we happen to be logging
--			 * from the scheduler (trying to re-grab
--			 * rq->lock), so defer it.
--			 */
--			__mod_timer(&buf->timer, jiffies + 1);
- 	}
-
- 	old = buf->data;
+P.S. Marvell Kirkwood  native build.
