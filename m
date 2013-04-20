@@ -1,84 +1,96 @@
-From: Li Zefan <lizefan@huawei.com>
-Subject: Re: cgroup_fj tests will stick the nort kernel
-Date: Sat, 20 Apr 2013 15:21:41 +0800
-Message-ID: <51724205.3000008@huawei.com>
-References: <5170F28F.3060002@huawei.com> <5171F6B3.1020907@huawei.com>
+From: "zhangwei(Jovi)" <jovi.zhangwei@huawei.com>
+Subject: [PATCH] relay: fix timer madness
+Date: Sat, 20 Apr 2013 15:37:08 +0800
+Message-ID: <517245A4.7050601@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	zhangwei <jovi.zhangwei@huawei.com>
-To: Qiang Huang <h.huangqiang@huawei.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from szxga01-in.huawei.com ([119.145.14.64]:28855 "EHLO
-	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754222Ab3DTHVw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 20 Apr 2013 03:21:52 -0400
-In-Reply-To: <5171F6B3.1020907@huawei.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2013/4/20 10:00, Qiang Huang wrote:
-> On 2013/4/19 15:30, Qiang Huang wrote:
->> Hi,
->>
->> I ran cgroup_fj tests on RT kernel with PREEMPT_RT_FULL disabled, it will
->> stick the system when ran cpuset stress tests, it happens everytime.
-> 
-> Here let me explain something, cgroup_fj is a test suit in ltp, which will do
-> some functionality and pressure test on cgroup.
-> 
-> And the script I give below is a very simple version of cgroup_fj which only
-> do one type of pressure test on cpuset subsystem.
-> What he did is:
-> 1. Create /dev/cgroup and mount cpuset subsystem on it.
-> 2. Create 100 dir under /dev/cgroup named subgroup_1..subgroup_100.
-> 3. Attach all tasks in /dev/cgroup/tasks to /dev/cgroup/subgroup_1/tasks, then
-> from /dev/cgroup/subgroup_1/tasks to /dev/cgroup/subgroup_2/tasks and so on,
-> finally from /dev/cgroup/subgroup_100/tasks to /dev/cgroup/tasks, then end.
-> 
-> And the system will stuck in step 3.
-> 
+Hi,
 
-This is strange. When tasks are moved from one cpuset to another, their cpumask
-and nodemask will be updated and memory will be migrated, but only if the source
-cpuset and dest cpuset have different masks. In this test case, all cpusets have
-the same configs.
+Ingo, Steven, I get this patch from 3.4 preempt-rt patch set, It seems that this patch
+fix relayfs bug not only for rt kernel, but also for mainline.
 
-Try to comment out some lines in cpuset_attach(), and see if the problem still
-exists?
+When I'm using below ktap script to tracing all event tracepoints, without this patch,
+the system will hang in few seconds, the patch indeed fix the problem as the changelog pointed.
 
-diff --git a/kernel/cpuset.c b/kernel/cpuset.c
-index 5fc1570..ea430e7 100644
---- a/kernel/cpuset.c
-+++ b/kernel/cpuset.c
-@@ -1422,16 +1422,17 @@ static void cpuset_attach(struct cgroup *cgrp, struct cgroup_taskset *tset)
-                 * can_attach beforehand should guarantee that this doesn't
-                 * fail.  TODO: have a better way to handle failure here
-                 */
--               WARN_ON_ONCE(set_cpus_allowed_ptr(task, cpus_attach));
-+//             WARN_ON_ONCE(set_cpus_allowed_ptr(task, cpus_attach));
+	function eventfun (e) {
+        	printf("%d %d\t%s\t%s", cpu(), pid(), execname(), e.annotate)
+	}
 
--               cpuset_change_task_nodemask(task, &cpuset_attach_nodemask_to);
--               cpuset_update_task_spread_flag(cs, task);
-+//             cpuset_change_task_nodemask(task, &cpuset_attach_nodemask_to);
-+//             cpuset_update_task_spread_flag(cs, task);
-        }
+	kdebug.probe("tp:", eventfun)
 
-        /*
-         * Change mm, possibly for multiple threads in a threadgroup. This is
-         * expensive and may sleep.
-         */
-+       /*
-        cpuset_attach_nodemask_from = oldcs->mems_allowed;
-        cpuset_attach_nodemask_to = cs->mems_allowed;
-        mm = get_task_mm(leader);
-@@ -1442,6 +1443,7 @@ static void cpuset_attach(struct cgroup *cgrp, struct cgroup_taskset *tset)
-                                          &cpuset_attach_nodemask_to);
-                mmput(mm);
-        }
-+       */
+	kdebug.probe_end(function () {
+        	printf("probe end\n")
+	})
+
+
+This patch is old, I can found the original patch discussion in 2007.
+	http://marc.info/?l=linux-kernel&m=118544794717162&w=2
+(In that mail thread, the patch didn't fix that problem, but it fix the problem I encountered now)
+
+I hope you can remember this :)
+
+so why we didn't commit this patch into mainline? any concern?
+
+Thanks.
+
+------------------------------------->
+Subject: relay: fix timer madness
+From: Ingo Molnar <mingo@elte.hu>
+
+remove timer calls (!!!) from deep within the tracing infrastructure.
+This was totally bogus code that can cause lockups and worse.
+Poll the buffer every 2 jiffies for now.
+
+Signed-off-by: Ingo Molnar <mingo@elte.hu>
+---
+ kernel/relay.c |   14 +++++---------
+ 1 file changed, 5 insertions(+), 9 deletions(-)
+
+Index: linux-rt-rebase.q/kernel/relay.c
+===================================================================
+--- linux-rt-rebase.q.orig/kernel/relay.c
++++ linux-rt-rebase.q/kernel/relay.c
+@@ -319,6 +319,10 @@ static void wakeup_readers(unsigned long
+ {
+ 	struct rchan_buf *buf = (struct rchan_buf *)data;
+ 	wake_up_interruptible(&buf->read_wait);
++	/*
++	 * Stupid polling for now:
++	 */
++	mod_timer(&buf->timer, jiffies + 1);
  }
 
+ /**
+@@ -336,6 +340,7 @@ static void __relay_reset(struct rchan_b
+ 		init_waitqueue_head(&buf->read_wait);
+ 		kref_init(&buf->kref);
+ 		setup_timer(&buf->timer, wakeup_readers, (unsigned long)buf);
++		mod_timer(&buf->timer, jiffies + 1);
+ 	} else
+ 		del_timer_sync(&buf->timer);
 
+@@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
+ 		buf->subbufs_produced++;
+ 		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
+ 			buf->padding[old_subbuf];
+-		smp_mb();
+-		if (waitqueue_active(&buf->read_wait))
+-			/*
+-			 * Calling wake_up_interruptible() from here
+-			 * will deadlock if we happen to be logging
+-			 * from the scheduler (trying to re-grab
+-			 * rq->lock), so defer it.
+-			 */
+-			__mod_timer(&buf->timer, jiffies + 1);
+ 	}
+
+ 	old = buf->data;
