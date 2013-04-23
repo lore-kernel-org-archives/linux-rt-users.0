@@ -1,116 +1,70 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] swap: Use unique local lock name for swap_lock
-Date: Tue, 23 Apr 2013 16:10:00 -0400
-Message-ID: <1366747800.9609.170.camel@gandalf.local.home>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
+Date: Tue, 23 Apr 2013 13:24:29 -0700
+Message-ID: <20130423202429.GK12543@htj.dyndns.org>
+References: <cover.1364740180.git.viresh.kumar@linaro.org>
+ <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
+ <20130331181931.GA7533@htj.dyndns.org>
+ <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
+ <20130409183020.GD6186@mtj.dyndns.org>
+ <CAKohpok_pLyVruwq6JLO95cqobpyYgsQnii0sB0oSh5j=rj-=A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13550 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753145Ab3DWUKC (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Apr 2013 16:10:02 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
+	robin.randhawa@arm.com, Steve.Bannister@arm.com,
+	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
+	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
+	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
+	mingo@redhat.com, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <CAKohpok_pLyVruwq6JLO95cqobpyYgsQnii0sB0oSh5j=rj-=A@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
->From lib/Kconfig.debug on CONFIG_FORCE_WEAK_PER_CPU:
+Hello, Viresh.
 
----
-s390 and alpha require percpu variables in modules to be
-defined weak to work around addressing range issue which
-puts the following two restrictions on percpu variable
-definitions.
+On Mon, Apr 22, 2013 at 11:50:04AM +0530, Viresh Kumar wrote:
+> On 10 April 2013 00:00, Tejun Heo <tj@kernel.org> wrote:
+> > On Tue, Apr 09, 2013 at 01:00:59PM +0530, Viresh Kumar wrote:
+> 
+> >> +#ifdef CONFIG_WQ_POWER_EFFICIENT
+> >> +static bool wq_power_efficient = 0;
+> >> +module_param_named(power_efficient, wq_power_efficient, bool, 0444);
+> >> +#endif
+> >
+> > I don't think we need to make the whole thing configurable.  Turning
+> > it off isn't gonna save much - my gut tells me it's gonna be four
+> > instructions. :)
+> >
+> > What I meant was that the default value for the parameter would
+> > probably be need to be configurable so that mobile people don't have
+> > to include the kernel param all the time or patch the kernel
+> > themselves.
+> 
+> I didn't get it completely.. Are you asking to set the default value
+> to 1 instead
+> to keep it enabled by default if config option is selected?
 
-1. percpu symbols must be unique whether static or not
-2. percpu variables can't be defined inside a function
+Oh, sorry about that.  I meant something like this.
 
-To ensure that generic code follows the above rules, this
-option forces all percpu variables to be defined as weak.
----
+  #ifdef CONFIG_WQ_POWER_EFFICIENT_BY_DEFAULT // or something prettier
+  static bool wq_power_efficient = true;
+  #else
+  static bool wq_power_efficient = false;
+  #endif
 
-The addition of the local IRQ swap_lock in mm/swap.c broke this config
-as the name "swap_lock" is used through out the kernel. Just do a "git
-grep swap_lock" to see, and the new swap_lock is a local lock which
-defines the swap_lock for per_cpu.
+  module_param....
 
-The fix was to rename swap_lock to swapvec_lock which keeps it unique.
+And its Kconfig entry
 
-Reported-by: Mike Galbraith <bitbucket@online.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+  config WQ_POWER_EFFICIENT_BY_DEFAULT
+	bool "Blah Blah Viresh is awesome"
+	default n
 
-diff --git a/mm/swap.c b/mm/swap.c
-index 63f42b8..fab8f97 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -42,7 +42,7 @@ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
- static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
- 
- static DEFINE_LOCAL_IRQ_LOCK(rotate_lock);
--static DEFINE_LOCAL_IRQ_LOCK(swap_lock);
-+static DEFINE_LOCAL_IRQ_LOCK(swapvec_lock);
- 
- /*
-  * This path almost never happens for VM activity - pages are normally
-@@ -407,13 +407,13 @@ static void activate_page_drain(int cpu)
- void activate_page(struct page *page)
- {
- 	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) {
--		struct pagevec *pvec = &get_locked_var(swap_lock,
-+		struct pagevec *pvec = &get_locked_var(swapvec_lock,
- 						       activate_page_pvecs);
- 
- 		page_cache_get(page);
- 		if (!pagevec_add(pvec, page))
- 			pagevec_lru_move_fn(pvec, __activate_page, NULL);
--		put_locked_var(swap_lock, activate_page_pvecs);
-+		put_locked_var(swapvec_lock, activate_page_pvecs);
- 	}
- }
- 
-@@ -461,13 +461,13 @@ EXPORT_SYMBOL(mark_page_accessed);
-  */
- void __lru_cache_add(struct page *page, enum lru_list lru)
- {
--	struct pagevec *pvec = &get_locked_var(swap_lock, lru_add_pvecs)[lru];
-+	struct pagevec *pvec = &get_locked_var(swapvec_lock, lru_add_pvecs)[lru];
- 
- 	page_cache_get(page);
- 	if (!pagevec_space(pvec))
- 		__pagevec_lru_add(pvec, lru);
- 	pagevec_add(pvec, page);
--	put_locked_var(swap_lock, lru_add_pvecs);
-+	put_locked_var(swapvec_lock, lru_add_pvecs);
- }
- EXPORT_SYMBOL(__lru_cache_add);
- 
-@@ -632,19 +632,19 @@ void deactivate_page(struct page *page)
- 		return;
- 
- 	if (likely(get_page_unless_zero(page))) {
--		struct pagevec *pvec = &get_locked_var(swap_lock,
-+		struct pagevec *pvec = &get_locked_var(swapvec_lock,
- 						       lru_deactivate_pvecs);
- 
- 		if (!pagevec_add(pvec, page))
- 			pagevec_lru_move_fn(pvec, lru_deactivate_fn, NULL);
--		put_locked_var(swap_lock, lru_deactivate_pvecs);
-+		put_locked_var(swapvec_lock, lru_deactivate_pvecs);
- 	}
- }
- 
- void lru_add_drain(void)
- {
--	lru_add_drain_cpu(local_lock_cpu(swap_lock));
--	local_unlock_cpu(swap_lock);
-+	lru_add_drain_cpu(local_lock_cpu(swapvec_lock));
-+	local_unlock_cpu(swapvec_lock);
- }
- 
- static void lru_add_drain_per_cpu(struct work_struct *dummy)
+Thanks!
 
-
+-- 
+tejun
