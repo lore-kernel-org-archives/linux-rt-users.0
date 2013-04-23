@@ -1,70 +1,162 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V4 3/4] block: queue work on unbound wq
-Date: Tue, 23 Apr 2013 13:24:29 -0700
-Message-ID: <20130423202429.GK12543@htj.dyndns.org>
-References: <cover.1364740180.git.viresh.kumar@linaro.org>
- <91239cde99aaba2715f63db1f88241d9f4a36e13.1364740180.git.viresh.kumar@linaro.org>
- <20130331181931.GA7533@htj.dyndns.org>
- <CAKohpomGSkz6_YqDzaTYEsJfVmcg2=TvdgquWqTvd-nmtOmoaQ@mail.gmail.com>
- <20130409183020.GD6186@mtj.dyndns.org>
- <CAKohpok_pLyVruwq6JLO95cqobpyYgsQnii0sB0oSh5j=rj-=A@mail.gmail.com>
+From: Henrik Austad <henrik@austad.us>
+Subject: Re: scheduler context
+Date: Tue, 23 Apr 2013 22:42:38 +0200
+Message-ID: <20130423204238.GA14225@icarus.home.austad.us>
+References: <CAGZFCEHb2Cb_LGXtcYmhDvd0d0zjdb3-5D7-6EBjXmHLJESYoA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com,
-	Liviu.Dudau@arm.com, charles.garcia-tobin@arm.com,
-	arvind.chauhan@arm.com, davem@davemloft.net, airlied@redhat.com,
-	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
-	mingo@redhat.com, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="2fHTh5uZTiUOsy+g"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: ratheesh kannoth <ratheesh.ksz@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAKohpok_pLyVruwq6JLO95cqobpyYgsQnii0sB0oSh5j=rj-=A@mail.gmail.com>
+In-Reply-To: <CAGZFCEHb2Cb_LGXtcYmhDvd0d0zjdb3-5D7-6EBjXmHLJESYoA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello, Viresh.
 
-On Mon, Apr 22, 2013 at 11:50:04AM +0530, Viresh Kumar wrote:
-> On 10 April 2013 00:00, Tejun Heo <tj@kernel.org> wrote:
-> > On Tue, Apr 09, 2013 at 01:00:59PM +0530, Viresh Kumar wrote:
-> 
-> >> +#ifdef CONFIG_WQ_POWER_EFFICIENT
-> >> +static bool wq_power_efficient = 0;
-> >> +module_param_named(power_efficient, wq_power_efficient, bool, 0444);
-> >> +#endif
-> >
-> > I don't think we need to make the whole thing configurable.  Turning
-> > it off isn't gonna save much - my gut tells me it's gonna be four
-> > instructions. :)
-> >
-> > What I meant was that the default value for the parameter would
-> > probably be need to be configurable so that mobile people don't have
-> > to include the kernel param all the time or patch the kernel
-> > themselves.
-> 
-> I didn't get it completely.. Are you asking to set the default value
-> to 1 instead
-> to keep it enabled by default if config option is selected?
+--2fHTh5uZTiUOsy+g
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Oh, sorry about that.  I meant something like this.
+Hi Ratessh,
 
-  #ifdef CONFIG_WQ_POWER_EFFICIENT_BY_DEFAULT // or something prettier
-  static bool wq_power_efficient = true;
-  #else
-  static bool wq_power_efficient = false;
-  #endif
+Before digging into your questions;
+- LKML and linux-rt is probably not the best places to ask these kind of=20
+questions. kernelnewbies is an excellent place to go to for quidance, and=
+=20
+you may get faster response there as well.
 
-  module_param....
+Furthermore; I recommend you to pick up a book about kernel development=20
+(Linux Kernel Development by R. Love is a great place to start).
 
-And its Kconfig entry
+> I would like to understand on linux scheduler context. I have read a lot=
+=20
+> in websites and i could find contradictory statement. There are so many=
+=20
+> mailing list also ,but with less info. I would really appreciate if=20
+> anybody could spend some time answering my question.
+>=20
+> 1. Which context scheduler run ? ( process context or interrupt context ).
 
-  config WQ_POWER_EFFICIENT_BY_DEFAULT
-	bool "Blah Blah Viresh is awesome"
-	default n
+um.. it does not run in interrupt-context. It will be in kernel-context,=20
+either on return from interrupt or return to userspace from a syscall.
 
-Thanks!
+> 2. scheduler is the guy  who picks up the next candidate to run.  if
+> it gets interrupted by hardirq, what will happen ?
 
--- 
-tejun
+On return to userspace, the kernel will check if TIF_NEED_RESCHED is set,=
+=20
+if so, it will invoke do_schedule() which will then see if there's a better=
+=20
+candidate to run.
+
+> 3. if scheduler run in process context , how bottom half are scheduled ?
+
+Bottom half can be several things
+
+1) softirqs
+2) tasklets
+3) kernel threads
+4) timers
+
+Softirqs are run as soon as an interrupt handler has finished. These are=20
+defined in a set of softirqs when you compile the kernel and are used for=
+=20
+interrupt-handlers that require a very fast response (network being a=20
+candidate). Softirqs can run concurrently on any and all CPUs in the=20
+system.
+
+Tasklets are a simplification of softirqs, and it is pretty much (someone's=
+=20
+probably going to fry my nether regions for this simplification) a=20
+work-queue for interrupt handlers. You currently have 2 versions, one=20
+high-priorty queue and a normal one. They are handled by 2 corresponding=20
+softirqs. Tasklets of the _same_ type can only run on a single CPU at a=20
+time (but different tasklets can run concurrently).
+
+Kernel threads are 'normal' threads, normal in the sense that they are=20
+schedulable entities. Not normal in the sense that they do not have process=
+=20
+context (no *mm for instance).
+
+Timers is a way to not only delay execution of some code, but delay it to a=
+=20
+specific point in time, say in 2 seconds. Once 2 secs has elapsed, the=20
+timer will fire and the given function will be executed in the context of=
+=20
+the timer-softirq context.
+
+> 4. In smp, schedule() function may be called  simultaneously. How it
+> is handled ?
+
+You have one runqueue pr. cpu, each queue has a set of runnable tasks, it=
+=20
+will pick a task from that queue. One task cannot be placed in more than=20
+one rq at a time.
+
+> 5. When a bottom half is interrupted  by hard irq, how softirq kernel
+> thread saves the state and restart it later ?=20
+=2E..what i mean is , an
+>    hardirq came and its isr executed. bottom half enabled and bottom
+> half gets scheduled . Before bottom half is completed , next irq
+>    came and it enables bottom half , and the new bottom half is
+> scheduled ....So here , what will happen to old bottom half , will it
+> again
+>    run later ?
+
+So your question is "what happens to my system if a faulty piece of=20
+hardware generates a flood of interrupts?"?
+
+Meet: ksoftirqd
+
+let me try to explain:
+
+The moment you get a hard interrupt, the CPU will vector to the appropriate=
+=20
+handler, ack the interrupt and do whatever need doing right then. Once=20
+done, it will _raise_the_softirq_ and return. The kernel will then start=20
+processing the softirqs that need attention.
+
+What happens here is:
+- disable local interrupt
+- get a list of softirqs that needs to be processed
+- clear the list of pending softirqs
+- renable interrupts
+- process softirqs
+
+Once this is done, it will check to see if there's any _new_ softirqs that=
+=20
+needs to be handled. If so, it will jump to the start and go through the=20
+list one more time.
+
+It will continue to do this for a pre-defined number of times=20
+(MAX_SOFTIRQ_RESTART - which is 10) before prodding ksoftirqd to handle it.
+
+So, to connect this to your question - if you get an excessive amount of=20
+interrupts whilst in the middle of softirq processing, all you get is a set=
+=20
+of raised softirqs which will cause __do_softirq() to loop 10 times before=
+=20
+offloading the work to ksoftirqd.
+
+
+
+--=20
+Henrik Austad
+
+--2fHTh5uZTiUOsy+g
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+Content-Disposition: inline
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.10 (GNU/Linux)
+
+iEYEARECAAYFAlF28j4ACgkQ6k5VT6v45lllggCgxDbiFresG4gMiCqx4BHIURTT
+nkgAnAkYL10k3zyS9a4BYq/j9PaThYXW
+=G/L1
+-----END PGP SIGNATURE-----
+
+--2fHTh5uZTiUOsy+g--
