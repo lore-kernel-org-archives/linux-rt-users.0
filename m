@@ -1,162 +1,87 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: scheduler context
-Date: Tue, 23 Apr 2013 22:42:38 +0200
-Message-ID: <20130423204238.GA14225@icarus.home.austad.us>
-References: <CAGZFCEHb2Cb_LGXtcYmhDvd0d0zjdb3-5D7-6EBjXmHLJESYoA@mail.gmail.com>
+From: Andrew Morton <akpm@linux-foundation.org>
+Subject: Re: [PATCH] relay: fix timer madness
+Date: Tue, 23 Apr 2013 14:28:16 -0700
+Message-ID: <20130423142816.908a0a141bf41cc0dbf0cd01@linux-foundation.org>
+References: <517245A4.7050601@huawei.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="2fHTh5uZTiUOsy+g"
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: ratheesh kannoth <ratheesh.ksz@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAGZFCEHb2Cb_LGXtcYmhDvd0d0zjdb3-5D7-6EBjXmHLJESYoA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>
+To: "zhangwei(Jovi)" <jovi.zhangwei@huawei.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.linuxfoundation.org ([140.211.169.12]:33850 "EHLO
+	mail.linuxfoundation.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753246Ab3DWV2S (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Apr 2013 17:28:18 -0400
+In-Reply-To: <517245A4.7050601@huawei.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+On Sat, 20 Apr 2013 15:37:08 +0800 "zhangwei(Jovi)" <jovi.zhangwei@huawei.com> wrote:
+
+> Hi,
+> 
+> Ingo, Steven, I get this patch from 3.4 preempt-rt patch set, It seems that this patch
+> fix relayfs bug not only for rt kernel, but also for mainline.
+> 
+> When I'm using below ktap script to tracing all event tracepoints, without this patch,
+> the system will hang in few seconds, the patch indeed fix the problem as the changelog pointed.
+> 
+> 	function eventfun (e) {
+>         	printf("%d %d\t%s\t%s", cpu(), pid(), execname(), e.annotate)
+> 	}
+> 
+> 	kdebug.probe("tp:", eventfun)
+> 
+> 	kdebug.probe_end(function () {
+>         	printf("probe end\n")
+> 	})
+> 
+> 
+> This patch is old, I can found the original patch discussion in 2007.
+> 	http://marc.info/?l=linux-kernel&m=118544794717162&w=2
+> (In that mail thread, the patch didn't fix that problem, but it fix the problem I encountered now)
+> 
+> I hope you can remember this :)
+> 
+> so why we didn't commit this patch into mainline? any concern?
+> 
+> Thanks.
+> 
+> ------------------------------------->
+> Subject: relay: fix timer madness
+> From: Ingo Molnar <mingo@elte.hu>
+> 
+> remove timer calls (!!!) from deep within the tracing infrastructure.
+> This was totally bogus code that can cause lockups and worse.
+> Poll the buffer every 2 jiffies for now.
+> 
+> Signed-off-by: Ingo Molnar <mingo@elte.hu>
+
+(This version of the patch should have your signed-off-by)
+
+> @@ -604,15 +609,6 @@ size_t relay_switch_subbuf(struct rchan_
+>  		buf->subbufs_produced++;
+>  		buf->dentry->d_inode->i_size += buf->chan->subbuf_size -
+>  			buf->padding[old_subbuf];
+> -		smp_mb();
+> -		if (waitqueue_active(&buf->read_wait))
+> -			/*
+> -			 * Calling wake_up_interruptible() from here
+> -			 * will deadlock if we happen to be logging
+> -			 * from the scheduler (trying to re-grab
+> -			 * rq->lock), so defer it.
+> -			 */
+> -			__mod_timer(&buf->timer, jiffies + 1);
+>  	}
+
+We've "fixed" the printk-inside-runqueue-lock deadlocks via icky
+hackery in wake_up_klogd().  I guess we could do it the same way here. 
+But the two approaches are conceptually very similar and this version
+in relay.c is much simpler.
 
 
---2fHTh5uZTiUOsy+g
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hi Ratessh,
-
-Before digging into your questions;
-- LKML and linux-rt is probably not the best places to ask these kind of=20
-questions. kernelnewbies is an excellent place to go to for quidance, and=
-=20
-you may get faster response there as well.
-
-Furthermore; I recommend you to pick up a book about kernel development=20
-(Linux Kernel Development by R. Love is a great place to start).
-
-> I would like to understand on linux scheduler context. I have read a lot=
-=20
-> in websites and i could find contradictory statement. There are so many=
-=20
-> mailing list also ,but with less info. I would really appreciate if=20
-> anybody could spend some time answering my question.
->=20
-> 1. Which context scheduler run ? ( process context or interrupt context ).
-
-um.. it does not run in interrupt-context. It will be in kernel-context,=20
-either on return from interrupt or return to userspace from a syscall.
-
-> 2. scheduler is the guy  who picks up the next candidate to run.  if
-> it gets interrupted by hardirq, what will happen ?
-
-On return to userspace, the kernel will check if TIF_NEED_RESCHED is set,=
-=20
-if so, it will invoke do_schedule() which will then see if there's a better=
-=20
-candidate to run.
-
-> 3. if scheduler run in process context , how bottom half are scheduled ?
-
-Bottom half can be several things
-
-1) softirqs
-2) tasklets
-3) kernel threads
-4) timers
-
-Softirqs are run as soon as an interrupt handler has finished. These are=20
-defined in a set of softirqs when you compile the kernel and are used for=
-=20
-interrupt-handlers that require a very fast response (network being a=20
-candidate). Softirqs can run concurrently on any and all CPUs in the=20
-system.
-
-Tasklets are a simplification of softirqs, and it is pretty much (someone's=
-=20
-probably going to fry my nether regions for this simplification) a=20
-work-queue for interrupt handlers. You currently have 2 versions, one=20
-high-priorty queue and a normal one. They are handled by 2 corresponding=20
-softirqs. Tasklets of the _same_ type can only run on a single CPU at a=20
-time (but different tasklets can run concurrently).
-
-Kernel threads are 'normal' threads, normal in the sense that they are=20
-schedulable entities. Not normal in the sense that they do not have process=
-=20
-context (no *mm for instance).
-
-Timers is a way to not only delay execution of some code, but delay it to a=
-=20
-specific point in time, say in 2 seconds. Once 2 secs has elapsed, the=20
-timer will fire and the given function will be executed in the context of=
-=20
-the timer-softirq context.
-
-> 4. In smp, schedule() function may be called  simultaneously. How it
-> is handled ?
-
-You have one runqueue pr. cpu, each queue has a set of runnable tasks, it=
-=20
-will pick a task from that queue. One task cannot be placed in more than=20
-one rq at a time.
-
-> 5. When a bottom half is interrupted  by hard irq, how softirq kernel
-> thread saves the state and restart it later ?=20
-=2E..what i mean is , an
->    hardirq came and its isr executed. bottom half enabled and bottom
-> half gets scheduled . Before bottom half is completed , next irq
->    came and it enables bottom half , and the new bottom half is
-> scheduled ....So here , what will happen to old bottom half , will it
-> again
->    run later ?
-
-So your question is "what happens to my system if a faulty piece of=20
-hardware generates a flood of interrupts?"?
-
-Meet: ksoftirqd
-
-let me try to explain:
-
-The moment you get a hard interrupt, the CPU will vector to the appropriate=
-=20
-handler, ack the interrupt and do whatever need doing right then. Once=20
-done, it will _raise_the_softirq_ and return. The kernel will then start=20
-processing the softirqs that need attention.
-
-What happens here is:
-- disable local interrupt
-- get a list of softirqs that needs to be processed
-- clear the list of pending softirqs
-- renable interrupts
-- process softirqs
-
-Once this is done, it will check to see if there's any _new_ softirqs that=
-=20
-needs to be handled. If so, it will jump to the start and go through the=20
-list one more time.
-
-It will continue to do this for a pre-defined number of times=20
-(MAX_SOFTIRQ_RESTART - which is 10) before prodding ksoftirqd to handle it.
-
-So, to connect this to your question - if you get an excessive amount of=20
-interrupts whilst in the middle of softirq processing, all you get is a set=
-=20
-of raised softirqs which will cause __do_softirq() to loop 10 times before=
-=20
-offloading the work to ksoftirqd.
-
-
-
---=20
-Henrik Austad
-
---2fHTh5uZTiUOsy+g
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-Content-Disposition: inline
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.10 (GNU/Linux)
-
-iEYEARECAAYFAlF28j4ACgkQ6k5VT6v45lllggCgxDbiFresG4gMiCqx4BHIURTT
-nkgAnAkYL10k3zyS9a4BYq/j9PaThYXW
-=G/L1
------END PGP SIGNATURE-----
-
---2fHTh5uZTiUOsy+g--
