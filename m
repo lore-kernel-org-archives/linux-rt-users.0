@@ -1,75 +1,90 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
-Date: Wed, 24 Apr 2013 10:11:41 +0200
-Message-ID: <517793BD.30101@linutronix.de>
-References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de> <1366770979.2626.3.camel@gandalf.local.home>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Wed, 24 Apr 2013 16:52:56 +0530
+Message-ID: <CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
+	<1354024039.6276.72.camel@gandalf.local.home>
+	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Carsten Emde <C.Emde@osadl.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1366770979.2626.3.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
+	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
+To: tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-oa0-f50.google.com ([209.85.219.50]:46135 "EHLO
+	mail-oa0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757515Ab3DXLW5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Apr 2013 07:22:57 -0400
+Received: by mail-oa0-f50.google.com with SMTP id j6so1547546oag.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Apr 2013 04:22:56 -0700 (PDT)
+In-Reply-To: <CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/24/2013 04:36 AM, Steven Rostedt wrote:
-> Hi Sebastian,
+On 9 April 2013 20:22, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+> [Steven replied to a personal Ping!!, including everybody again]
+>
+> On 9 April 2013 19:25, Steven Rostedt <rostedt@goodmis.org> wrote:
+>> On Tue, 2013-04-09 at 14:05 +0530, Viresh Kumar wrote:
+>>> Ping!!
+>>>
+>>
+>> Remind me again. What problem are you trying to solve?
+>
+> I was trying to migrate a running timer which arms itself, so that we don't
+> keep a cpu busy just for servicing this timer.
+>
+>>> On 20 March 2013 20:43, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+>>> >
+>>> > Hi Steven/Thomas,
+>>> >
+>>> > I came back to this patch after completing some other stuff and posting
+>>> > wq part of this patchset separately.
+>>> >
+>>> > I got your point and understand how this would fail.
+>>> >
+>>> > @Thomas: I need your opinion first. Do you like this concept of migrating
+>>> > running timer or not? Or you see some basic problem with this concept?
+>>
+>> I'll let Thomas answer this, but to me, this sounds really racy.
+>
+> Sure.
+>
+>>> > If no (i.e. i can go ahead with another version), then i have some solution to
+>>> > fix earlier problems reported by Steven:
+>>> >
+>>> > The problem lies with del_timer_sync() which just checks
+>>> > base->running_timer != timer to check if timer is currently running or not.
+>>> >
+>>> > What if we add another variable in struct timer_list, that will store if we are
+>>> > running timer callback or not. And so, before we call callback in timer core,
+>>> > we will set this variable and will reset it after finishing callback.
+>>> >
+>>> > del_timer_sync() will have something like:
+>>> >
+>>> > if (base->running_timer != timer)
+>>> >     remove timer and return;
+>>
+>> For example, this didn't fix the issue. You removed the timer when it
+>> was still running, because base->running_timer did not equal timer.
+>
+> You are correct and i was stupid. I wanted to write this instead:
+>
+> del_timer_sync() will have something like:
+>
+> if (base->running_timer != timer)
+>     if (timer->running_callback)
+>         go back to its loop...
+>     else
+>         remove timer and return;
+>
+> i.e. if we aren't running on our base cpu, just check if our callback is
+> executing somewhere else due to migration.
 
-Hi Steven,
-
-> Which version of 3.2-rt was this applied to. It does not apply, where
-> patch 7/16 totally does not apply. I looked at the history of 3.2-rt and
-> I can't find where it would apply.
-
-I applied them on top of 2438ee33 ("Linux 3.2.37-rt55 REBASE"). I just
-grabbed the patches from the mailing list and re-applied them on top of
-this tree and is still works.
-
-After doing the same thing on v3.2.43-rt63-rebase I got:
-
-Applying: softirq: Make serving softirqs a task flag
-Applying: softirq: Split handling function
-Applying: softirq: Split softirq locks
-Using index info to reconstruct a base tree...
-Falling back to patching base and 3-way merge...
-Auto-merging include/linux/sched.h
-Applying: rcu: rcutiny: Prevent RCU stall
-Applying: softirq: Adapt NOHZ softirq pending check to new RT scheme
-Applying: softirq: Add more debugging
-Applying: softirq: Fix nohz pending issue for real
-Applying: net: Use local_bh_disable in netif_rx_ni()
-Applying: FIX [1/2] slub: Do not dereference NULL pointer in node_match
-Applying: FIX [2/2] slub: Tid must be retrieved from the percpu area of
-the current processor
-Applying: slub: Use correct cpu_slab on dead cpu
-Applying: smp: introduce a generic on_each_cpu_mask() function
-Applying: smp: add func to IPI cpus based on parameter func
-Applying: slub: only IPI CPUs that have per cpu obj to flush
-Applying: mm: Enable SLUB for RT
-Applying: slub: Enable irqs for __GFP_WAIT
-
-git did not complain about patch 7 ("softirq: Fix nohz pending issue for
-real") but about 3 ("softirq: Split softirq locks"). The diff between
-the two queues (except different sha1, index and so) is:
-
---- old/0003-softirq-Split-softirq-locks.patch
-+++ new/0003-softirq-Split-softirq-locks.patch
-@@ -60,8 +60,8 @@
-        int softirq_nestcnt;
- +      unsigned int softirqs_raised;
-  #endif
-- #if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
--       int kmap_idx;
-+ #ifdef CONFIG_PREEMPT_RT_FULL
-+ # if defined CONFIG_HIGHMEM || defined CONFIG_X86_32
-
-
-and this looks good.
-
-> Thanks,
-> 
-> -- Steve
-
-Sebastian
+Ping!!
