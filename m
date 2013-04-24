@@ -1,52 +1,75 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: [RFC PATCH] rt, lockdep: double
- MAX_LOCKDEP_ENTRIES/MAX_LOCKDEP_CHAINS_BITS
-Date: Wed, 24 Apr 2013 09:11:15 +0200
-Message-ID: <1366787475.5977.16.camel@marge.simpson.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PREEMPT RT] SLUB and split softirq lock for v3.2-rt
+Date: Wed, 24 Apr 2013 10:11:41 +0200
+Message-ID: <517793BD.30101@linutronix.de>
+References: <1360771932-27150-1-git-send-email-bigeasy@linutronix.de> <1366770979.2626.3.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.9]:52231 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753673Ab3DXHLa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Apr 2013 03:11:30 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Carsten Emde <C.Emde@osadl.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1366770979.2626.3.camel@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+On 04/24/2013 04:36 AM, Steven Rostedt wrote:
+> Hi Sebastian,
+
+Hi Steven,
+
+> Which version of 3.2-rt was this applied to. It does not apply, where
+> patch 7/16 totally does not apply. I looked at the history of 3.2-rt and
+> I can't find where it would apply.
+
+I applied them on top of 2438ee33 ("Linux 3.2.37-rt55 REBASE"). I just
+grabbed the patches from the mailing list and re-applied them on top of
+this tree and is still works.
+
+After doing the same thing on v3.2.43-rt63-rebase I got:
+
+Applying: softirq: Make serving softirqs a task flag
+Applying: softirq: Split handling function
+Applying: softirq: Split softirq locks
+Using index info to reconstruct a base tree...
+Falling back to patching base and 3-way merge...
+Auto-merging include/linux/sched.h
+Applying: rcu: rcutiny: Prevent RCU stall
+Applying: softirq: Adapt NOHZ softirq pending check to new RT scheme
+Applying: softirq: Add more debugging
+Applying: softirq: Fix nohz pending issue for real
+Applying: net: Use local_bh_disable in netif_rx_ni()
+Applying: FIX [1/2] slub: Do not dereference NULL pointer in node_match
+Applying: FIX [2/2] slub: Tid must be retrieved from the percpu area of
+the current processor
+Applying: slub: Use correct cpu_slab on dead cpu
+Applying: smp: introduce a generic on_each_cpu_mask() function
+Applying: smp: add func to IPI cpus based on parameter func
+Applying: slub: only IPI CPUs that have per cpu obj to flush
+Applying: mm: Enable SLUB for RT
+Applying: slub: Enable irqs for __GFP_WAIT
+
+git did not complain about patch 7 ("softirq: Fix nohz pending issue for
+real") but about 3 ("softirq: Split softirq locks"). The diff between
+the two queues (except different sha1, index and so) is:
+
+--- old/0003-softirq-Split-softirq-locks.patch
++++ new/0003-softirq-Split-softirq-locks.patch
+@@ -60,8 +60,8 @@
+        int softirq_nestcnt;
+ +      unsigned int softirqs_raised;
+  #endif
+- #if defined CONFIG_PREEMPT_RT_FULL && defined CONFIG_HIGHMEM
+-       int kmap_idx;
++ #ifdef CONFIG_PREEMPT_RT_FULL
++ # if defined CONFIG_HIGHMEM || defined CONFIG_X86_32
 
 
-Test driving v3.6-rt, lockdep shuts itself off soon after boot.
+and this looks good.
 
-[  117.940497] BUG: MAX_LOCKDEP_ENTRIES too low!
-[  117.940498] turning off the locking correctness validator.
-[  117.940502] Pid: 5242, comm: kio_trash Not tainted 3.6.11.1-rt32-smp #51
+> Thanks,
+> 
+> -- Steve
 
-Doubling MAX_LOCKDEP_ENTRIES/MAX_LOCKDEP_CHAINS_BITS appeased it.  Box
-has been up for an hour without lockdep taking it's toys and going home.
-
-Signed-off-by: Mike Galbraith <bitbucket@online.de>
-
----
- kernel/lockdep_internals.h |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
---- a/kernel/lockdep_internals.h
-+++ b/kernel/lockdep_internals.h
-@@ -54,9 +54,9 @@ enum {
-  * table (if it's not there yet), and we check it for lock order
-  * conflicts and deadlocks.
-  */
--#define MAX_LOCKDEP_ENTRIES	16384UL
-+#define MAX_LOCKDEP_ENTRIES	32768UL
- 
--#define MAX_LOCKDEP_CHAINS_BITS	15
-+#define MAX_LOCKDEP_CHAINS_BITS	16
- #define MAX_LOCKDEP_CHAINS	(1UL << MAX_LOCKDEP_CHAINS_BITS)
- 
- #define MAX_LOCKDEP_CHAIN_HLOCKS (MAX_LOCKDEP_CHAINS*5)
-
-
+Sebastian
