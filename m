@@ -1,90 +1,134 @@
 From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Wed, 24 Apr 2013 16:52:56 +0530
-Message-ID: <CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
-References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
-	<1354024039.6276.72.camel@gandalf.local.home>
-	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
-	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
-	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
-	linaro-dev@lists.linaro.org, patches@linaro.org,
-	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
-To: tglx@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f50.google.com ([209.85.219.50]:46135 "EHLO
-	mail-oa0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757515Ab3DXLW5 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Apr 2013 07:22:57 -0400
-Received: by mail-oa0-f50.google.com with SMTP id j6so1547546oag.9
-        for <linux-rt-users@vger.kernel.org>; Wed, 24 Apr 2013 04:22:56 -0700 (PDT)
-In-Reply-To: <CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Subject: [PATCH V5 0/5] Queue work on power efficient wq
+Date: Wed, 24 Apr 2013 17:12:52 +0530
+Message-ID: <cover.1366803121.git.viresh.kumar@linaro.org>
+Cc: davem@davemloft.net, airlied@redhat.com, axboe@kernel.dk,
+	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
+	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, arvind.chauhan@arm.com,
+	linaro-kernel@lists.linaro.org, patches@linaro.org,
+	Viresh Kumar <viresh.kumar@linaro.org>
+To: tj@kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 9 April 2013 20:22, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> [Steven replied to a personal Ping!!, including everybody again]
->
-> On 9 April 2013 19:25, Steven Rostedt <rostedt@goodmis.org> wrote:
->> On Tue, 2013-04-09 at 14:05 +0530, Viresh Kumar wrote:
->>> Ping!!
->>>
->>
->> Remind me again. What problem are you trying to solve?
->
-> I was trying to migrate a running timer which arms itself, so that we don't
-> keep a cpu busy just for servicing this timer.
->
->>> On 20 March 2013 20:43, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->>> >
->>> > Hi Steven/Thomas,
->>> >
->>> > I came back to this patch after completing some other stuff and posting
->>> > wq part of this patchset separately.
->>> >
->>> > I got your point and understand how this would fail.
->>> >
->>> > @Thomas: I need your opinion first. Do you like this concept of migrating
->>> > running timer or not? Or you see some basic problem with this concept?
->>
->> I'll let Thomas answer this, but to me, this sounds really racy.
->
-> Sure.
->
->>> > If no (i.e. i can go ahead with another version), then i have some solution to
->>> > fix earlier problems reported by Steven:
->>> >
->>> > The problem lies with del_timer_sync() which just checks
->>> > base->running_timer != timer to check if timer is currently running or not.
->>> >
->>> > What if we add another variable in struct timer_list, that will store if we are
->>> > running timer callback or not. And so, before we call callback in timer core,
->>> > we will set this variable and will reset it after finishing callback.
->>> >
->>> > del_timer_sync() will have something like:
->>> >
->>> > if (base->running_timer != timer)
->>> >     remove timer and return;
->>
->> For example, this didn't fix the issue. You removed the timer when it
->> was still running, because base->running_timer did not equal timer.
->
-> You are correct and i was stupid. I wanted to write this instead:
->
-> del_timer_sync() will have something like:
->
-> if (base->running_timer != timer)
->     if (timer->running_callback)
->         go back to its loop...
->     else
->         remove timer and return;
->
-> i.e. if we aren't running on our base cpu, just check if our callback is
-> executing somewhere else due to migration.
+This patchset was called: "Create sched_select_cpu() and use it for workqueues"
+for the first three versions.
 
-Ping!!
+Earlier discussions over v3, v2 and v1 can be found here:
+https://lkml.org/lkml/2013/3/18/364
+http://lists.linaro.org/pipermail/linaro-dev/2012-November/014344.html
+http://www.mail-archive.com/linaro-dev@lists.linaro.org/msg13342.html
+
+V4 is here:
+https://lkml.org/lkml/2013/3/31/55
+
+Workqueues can be performance or power oriented. For performance we may want to
+keep them running on a single cpu, so that it remains cache hot. For power we
+can give scheduler the liberty to choose target cpu for running work handler.
+
+Later one (Power oriented WQ) can be achieved if the workqueue is allocated with
+WQ_UNBOUND flag. Enabling CONFIG_WQ_POWER_EFFICIENT will set
+'wq_power_efficient' to 'true'. Setting 'power_efficient' boot param will
+override value of 'wq_power_efficient' variable. When 'wq_power_efficient' is
+set to 'true', we will convert WQ_POWER_EFFICIENT flag to WQ_UNBOUND on wq
+allocation. And so scheduler will have the liberty to choose where to run this
+work.
+
+Here we are migrating few users of workqueues to WQ_POWER_EFFICIENT. These
+drivers are found to be very much active on idle or lightly busy system and
+using WQ_POWER_EFFICIENT for these gave impressive results.
+
+These would be used in power saving mode only if relevant configs are enabled
+at compile time or in bootargs. Otherwise behavior is unchanged.
+
+Setup:
+-----
+- ARM Vexpress TC2 - big.LITTLE CPU
+- Core 0-1: A15, 2-4: A7
+- rootfs: linaro-ubuntu-devel
+
+This patchset has been tested on a big LITTLE system (heterogeneous) but is
+useful for all other homogeneous systems as well. During these tests audio was
+played in background using aplay.
+
+Results:
+-------
+
+Cluster A15 Energy      Cluster A7 Energy       Total
+-------------------------      -----------------------       ------
+
+Without this patchset (Energy in Joules):
+---------------------------------------------------
+
+0.151162                2.183545                2.334707
+0.223730                2.687067                2.910797
+0.289687                2.732702                3.022389
+0.454198                2.745908                3.200106
+0.495552                2.746465                3.242017
+
+Average:
+0.322866                2.619137                2.942003
+
+
+With this patchset (Energy in Joules):
+-----------------------------------------------
+
+0.226421                2.283658                2.510079
+0.151361                2.236656                2.388017
+0.197726                2.249849                2.447575
+0.221915                2.229446                2.451361
+0.347098                2.257707                2.604805
+
+Average:
+0.2289042              2.2514632              2.4803674
+
+Above tests are repeated multiple times and events are tracked using trace-cmd
+and analysed using kernelshark. And it was easily noticeable that idle time for
+many cpus has increased considerably, which eventually saved some power.
+
+V4->V5:
+-------
+- Created new wq flag: WQ_POWER_EFFICIENT, config option:
+  CONFIG_WQ_POWER_EFFICIENT and kernel param workqueue.power_efficient.
+- Created few system wide workqueues aligned towards power saving.
+
+V3->V4:
+-------
+- Dropped changes to kernel/sched directory and hence
+  sched_select_non_idle_cpu().
+- Dropped queue_work_on_any_cpu()
+- Created system_freezable_unbound_wq
+- Changed all patches accordingly.
+
+V2->V3:
+-------
+- Dropped changes into core queue_work() API, rather create *_on_any_cpu()
+  APIs
+- Dropped running timers migration patch as that was broken
+- Migrated few users of workqueues to use *_on_any_cpu() APIs.
+
+Viresh Kumar (5):
+  workqueues: Introduce new flag WQ_POWER_EFFICIENT for power oriented
+    workqueues
+  workqueue: Add system wide power_efficient workqueues
+  PHYLIB: queue work on system_power_efficient_wq
+  block: queue work on power efficient wq
+  fbcon: queue work on power efficient wq
+
+ Documentation/kernel-parameters.txt | 17 +++++++++++++++++
+ block/blk-core.c                    |  3 ++-
+ block/blk-ioc.c                     |  3 ++-
+ block/genhd.c                       | 12 ++++++++----
+ drivers/net/phy/phy.c               |  9 +++++----
+ drivers/video/console/fbcon.c       |  2 +-
+ include/linux/workqueue.h           | 10 ++++++++++
+ kernel/power/Kconfig                | 19 +++++++++++++++++++
+ kernel/workqueue.c                  | 24 +++++++++++++++++++++++-
+ 9 files changed, 87 insertions(+), 12 deletions(-)
+
+-- 
+1.7.12.rc2.18.g61b472e
