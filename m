@@ -1,106 +1,61 @@
 From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: 3.[68]-rt: CONFIG_PROVE_LOCKING +
- CONFIG_DEBUG_FORCE_WEAK_PER_CPU = boot time swap_lock deadlock
-Date: Wed, 24 Apr 2013 07:47:24 +0200
-Message-ID: <1366782444.5921.4.camel@marge.simpson.net>
-References: <1365937652.4717.25.camel@marge.simpson.net>
-	 <1366685096.9609.145.camel@gandalf.local.home>
-	 <1366685257.9609.147.camel@gandalf.local.home>
-	 <1366686791.4731.16.camel@marge.simpson.net>
-	 <1366732855.9609.158.camel@gandalf.local.home>
+Subject: 3.6-rt: inet_sk_rx_dst_set() network splat
+Date: Wed, 24 Apr 2013 08:50:04 +0200
+Message-ID: <1366786204.5977.10.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: netdev <netdev@vger.kernel.org>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.9]:61958 "EHLO
+Received: from moutng.kundenserver.de ([212.227.126.171]:52185 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752017Ab3DXFre (ORCPT
+	with ESMTP id S1754702Ab3DXGuH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Apr 2013 01:47:34 -0400
-In-Reply-To: <1366732855.9609.158.camel@gandalf.local.home>
+	Wed, 24 Apr 2013 02:50:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2013-04-23 at 12:00 -0400, Steven Rostedt wrote: 
-> On Tue, 2013-04-23 at 05:13 +0200, Mike Galbraith wrote:
-> > On Mon, 2013-04-22 at 22:47 -0400, Steven Rostedt wrote:
-> > 
-> > > Yeah, the bug is with the swap_lock not being unique (do a git grep
-> > > swap_lock), and it being weak made that per_cpu swap_lock the same lock
-> > > as the other locks.
-> > > 
-> > > Apply my patch and your bug should go away.
-> > 
-> > Aha, so the bug is certainly dead.  I'll test anyway, but you can take
-> > no news as confirmation that it's dead.
-> > 
-> 
-> Actually, I would feel more comfortable if I heard news that confirms
-> its dead ;-)
-> 
-> /me hopes to hear "It's dead Jim".
 
-It's-dead-Jim-by: Mike Galbraith <bitbucket@online.de>
+Giving 3.6-rt some routine usage runtime, while updating kernel git
+repositories, the below fell out, but didn't repeat while updating other
+repositories. 
 
-For 3.6-rt tested, I added the hunk below, which isn't in 3.8-rt..
+[  381.481464] ------------[ cut here ]------------
+[  381.486090] WARNING: at include/linux/skbuff.h:536 inet_sk_rx_dst_set+0x8c/0xe0()
+[  381.493566] Hardware name: MS-7502
+[  381.493612] Modules linked in: ip6table_filter ip6_tables iptable_filter ip_tables ebtable_nat ebtables x_tables nfsd snd_pcm_oss snd_mixer_oss snd_seq nfs_acl snd_seq_device auth_rpcgss edd nfs fscache lockd sunrpc bridge ipv6 stp cpufreq_conservative cpufreq_ondemand cpufreq_userspace cpufreq_powersave acpi_cpufreq mperf nls_iso8859_1 nls_cp437 vfat fat fuse ext3 jbd arc4 rt2800usb rt2800lib crc_ccitt rt2x00usb rt2x00lib mac80211 iTCO_wdt iTCO_vendor_support cfg80211 hid_generic rfkill usb_storage snd_hda_codec_realtek sr_mod cdrom sg snd_hda_intel snd_hda_codec snd_hwdep snd_pcm snd_timer e1000e snd firewire_ohci firewire_core coretemp microcode soundcore lpc_ich mfd_core crc_itu_t snd_page_alloc i2c_i801 button ext4 mbcache jbd2 crc16 usbhid hid sd_mod crc_t10dif uhci_hcd ehci_hcd r
+ tc_cmos ahci libahci libata thermal fan scsi_mod usbcore usb_common processor
+[  381.493620] Pid: 6170, comm: git Not tainted 3.6.11.1-rt32-smp #52
+[  381.493621] Call Trace:
+[  381.493626]  [<ffffffff8103cddf>] warn_slowpath_common+0x7f/0xc0
+[  381.493629]  [<ffffffff8103ce3a>] warn_slowpath_null+0x1a/0x20
+[  381.493631]  [<ffffffff813f6f0c>] inet_sk_rx_dst_set+0x8c/0xe0
+[  381.493633]  [<ffffffff813ece77>] tcp_rcv_established+0x797/0x7d0
+[  381.493636]  [<ffffffff813f82d4>] tcp_v4_do_rcv+0x134/0x220
+[  381.493638]  [<ffffffff813debc7>] tcp_prequeue_process+0x67/0xb0
+[  381.493641]  [<ffffffff813e373a>] tcp_recvmsg+0xaca/0xd70
+[  381.493645]  [<ffffffff810a627b>] ? __lock_release+0x6b/0xe0
+[  381.493648]  [<ffffffff8140f381>] inet_recvmsg+0x121/0x240
+[  381.493651]  [<ffffffff8140ead0>] ? inet_sock_destruct+0x230/0x230
+[  381.493655]  [<ffffffff8136fd49>] sock_aio_read.part.19+0xf9/0x120
+[  381.493657]  [<ffffffff8136fee0>] ? sock_aio_write+0x90/0xb0
+[  381.493660]  [<ffffffff8136fd96>] sock_aio_read+0x26/0x30
+[  381.493662]  [<ffffffff8116c503>] do_sync_read+0xa3/0xe0
+[  381.493665]  [<ffffffff8116ce9d>] vfs_read+0x14d/0x160
+[  381.493667]  [<ffffffff8116cefd>] sys_read+0x4d/0x90
+[  381.493670]  [<ffffffff81481812>] system_call_fastpath+0x16/0x1b
+[  381.493671] ---[ end trace 0000000000000002 ]---
 
-@@ -850,7 +850,7 @@ EXPORT_SYMBOL(pagevec_lookup_tag);
- static int __init swap_init_locks(void)
- {
- 	local_irq_lock_init(rotate_lock);
--	local_irq_lock_init(swap_lock);
-+	local_irq_lock_init(swapvec_lock);
- 	return 1;
- }
- early_initcall(swap_init_locks);
-
-..and build fix stolen from 3.8-rt.
-
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: gpu/i915: don't open code these things
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/gpu/drm/i915/i915_gem.c |   10 ++--------
- 1 file changed, 2 insertions(+), 8 deletions(-)
-
---- a/drivers/gpu/drm/i915/i915_gem.c
-+++ b/drivers/gpu/drm/i915/i915_gem.c
-@@ -90,7 +90,6 @@ i915_gem_wait_for_error(struct drm_devic
- {
- 	struct drm_i915_private *dev_priv = dev->dev_private;
- 	struct completion *x = &dev_priv->error_completion;
--	unsigned long flags;
- 	int ret;
- 
- 	if (!atomic_read(&dev_priv->mm.wedged))
-@@ -115,9 +114,7 @@ i915_gem_wait_for_error(struct drm_devic
- 		 * end up waiting upon a subsequent completion event that
- 		 * will never happen.
- 		 */
--		spin_lock_irqsave(&x->wait.lock, flags);
--		x->done++;
--		spin_unlock_irqrestore(&x->wait.lock, flags);
-+		complete(x);
- 	}
- 	return 0;
- }
-@@ -1884,12 +1881,9 @@ i915_gem_check_wedge(struct drm_i915_pri
- 	if (atomic_read(&dev_priv->mm.wedged)) {
- 		struct completion *x = &dev_priv->error_completion;
- 		bool recovery_complete;
--		unsigned long flags;
- 
- 		/* Give the error handler a chance to run. */
--		spin_lock_irqsave(&x->wait.lock, flags);
--		recovery_complete = x->done > 0;
--		spin_unlock_irqrestore(&x->wait.lock, flags);
-+		recovery_complete = completion_done(x);
- 
- 		/* Non-interruptible callers can't handle -EAGAIN, hence return
- 		 * -EIO unconditionally for these. */
+ 529 static inline struct dst_entry *skb_dst(const struct sk_buff *skb)
+ 530 {
+ 531         /* If refdst was not refcounted, check we still are in a
+ 532          * rcu_read_lock section
+ 533          */
+ 534         WARN_ON((skb->_skb_refdst & SKB_DST_NOREF) &&
+ 535                 !rcu_read_lock_held() &&
+ 536                 !rcu_read_lock_bh_held());
+ 537         return (struct dst_entry *)(skb->_skb_refdst & SKB_DST_PTRMASK);
+ 538 }
 
 
