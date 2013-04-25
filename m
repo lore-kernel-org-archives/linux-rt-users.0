@@ -1,38 +1,45 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: cgroup_fj tests will stick the nort kernel
-Date: Thu, 25 Apr 2013 08:53:57 -0400
-Message-ID: <1366894437.10248.8.camel@gandalf.local.home>
-References: <5170F28F.3060002@huawei.com> <51750563.8050301@huawei.com>
-	 <1366646447.9609.131.camel@gandalf.local.home>
-	 <5176217E.8030008@huawei.com> <5178C922.3060506@huawei.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
+Date: Thu, 25 Apr 2013 14:55:30 +0200
+Message-ID: <517927C2.40402@linutronix.de>
+References: <1366760662.9609.176.camel@gandalf.local.home>  <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de> <1366893374.6139.5.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: Li Zefan <lizefan@huawei.com>,
+Cc: Tim Sander <tim.sander@hbm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	zhangwei <jovi.zhangwei@huawei.com>
-To: Qiang Huang <h.huangqiang@huawei.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31906 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755203Ab3DYMx6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Apr 2013 08:53:58 -0400
-In-Reply-To: <5178C922.3060506@huawei.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1366893374.6139.5.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2013-04-25 at 14:11 +0800, Qiang Huang wrote:
+On 04/25/2013 02:36 PM, Mike Galbraith wrote:
+> hrtimer: fix hrtimer free zone build bug
+> 
+> Signed-off-by: Mike Galbraith <bitbucket@online.de>
+> 
+> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+> index 2328c04..31d57a2 100644
+> --- a/kernel/hrtimer.c
+> +++ b/kernel/hrtimer.c
+> @@ -1036,7 +1036,7 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+>  		&& hrtimer_enqueue_reprogram(timer, new_base)) {
+>  
+>  		if (wakeup
+> -#ifdef CONFIG_PREEMPT_RT_BASE
+> +#if defined(CONFIG_PREEMPT_RT_BASE) && defined(CONFIG_HIGH_RES_TIMERS)
+>  		    /*
+>  		     * Move softirq based timers away from the rbtree in
+>  		     * case it expired already. Otherwise we would have a
+> 
+> 
 
-> What's more, I don't see why we need to clear this flag any more,
-> because "cpu/rt: Rework cpu down for PREEMPT_RT" already remove the
-> optimization for PF_THREAD_BOUND on migrate_disable/enable.
+hrtimer_enqueue_reprogram() returns 0 in non-high res case so
+everything down there is never reached. The compiler should see this :)
 
-I'll have to think about this. That is, take a deeper look.
-
-Thanks,
-
--- Steve
-
-
+Sebastian
