@@ -1,37 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
-Date: Thu, 25 Apr 2013 10:36:08 -0400
-Message-ID: <1366900568.10248.16.camel@gandalf.local.home>
-References: <1366760662.9609.176.camel@gandalf.local.home>
-	 <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de>
-	 <3603730.i3rZKahVeu@dabox>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.8.4-rt2
+Date: Thu, 25 Apr 2013 17:09:12 +0200
+Message-ID: <51794718.5040703@linutronix.de>
+References: <20130326201722.GA14220@linutronix.de> <CAP=VYLoXfECaSBuvYdZ3qbsnR9QMYpoRnKGZdY=P6zS_TYOcCA@mail.gmail.com> <20130408183012.GA5778@linutronix.de> <20130408152558.627dc8b1@riff.lan>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Tim Sander <tim.sander@hbm.com>
+	Thomas Gleixner <tglx@linutronix.de>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11723 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932384Ab3DYOgK (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:44513 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757035Ab3DYPJS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Apr 2013 10:36:10 -0400
-In-Reply-To: <3603730.i3rZKahVeu@dabox>
+	Thu, 25 Apr 2013 11:09:18 -0400
+In-Reply-To: <20130408152558.627dc8b1@riff.lan>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2013-04-25 at 16:22 +0200, Tim Sander wrote:
+On 04/08/2013 10:25 PM, Clark Williams wrote:
+> BTW I imported -rt onto v3.8.6 with no hiccups from 'git
+> quiltimport' other than what you just fixed. Not much runtime on it
+> but it booted without complaint and ran just fine until I tried a
+> suspend/resume.
+> 
+> Resume seems to be borken on all the 3.8-rt kernels so far.
 
-> As we also have also PREEMPT_RT_FULL set the proposed solution to 
-> allow only PREEMPT_RT_FULL with PREEMPT_RT_FULL set is not an option for us.
+I just tested in qemu:
+- suspend to mem
+  the kvm support gives a few warn ons due to sleeping spinlocks in
+  apf_task_wake_all(). Without it, it works just fine.
 
-Then I think you have issues ;-)
+- suspend to disk
+  I see very often "NOHZ: local_softirq_pending" warnings. It looks
+  like the softirq thread is going down and the timer softirq isn't
+  handled for instance. Apart from this warning I see the going into
+  suspend and waking up.
 
--- Steve
+> 
+> Clark
 
-
-
+Sebastian
