@@ -1,86 +1,31 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: Suspend on 3.8.x-rtY (was: Re: [ANNOUNCE] 3.8.4-rt2)
-Date: Thu, 25 Apr 2013 14:35:53 -0500
-Message-ID: <20130425143553.1d11603b@riff.lan>
-References: <20130326201722.GA14220@linutronix.de>
-	<CAP=VYLoXfECaSBuvYdZ3qbsnR9QMYpoRnKGZdY=P6zS_TYOcCA@mail.gmail.com>
-	<20130408183012.GA5778@linutronix.de>
-	<20130408152558.627dc8b1@riff.lan>
-	<51794718.5040703@linutronix.de>
-	<20130425131459.59fc5249@riff.lan>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
+Date: Fri, 26 Apr 2013 00:20:02 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1304260018470.21884@ionos>
+References: <1366760662.9609.176.camel@gandalf.local.home> <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de> <3603730.i3rZKahVeu@dabox>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/unwhBzJLR9veVgy6V0pL+5F"; protocol="application/pgp-signature"
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130425131459.59fc5249@riff.lan>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	RT <linux-rt-users@vger.kernel.org>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Tim Sander <tim.sander@hbm.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:46348 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757814Ab3DYWUG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Apr 2013 18:20:06 -0400
+In-Reply-To: <3603730.i3rZKahVeu@dabox>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/unwhBzJLR9veVgy6V0pL+5F
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Tim,
 
-On Thu, 25 Apr 2013 13:14:59 -0500
-Clark Williams <williams@redhat.com> wrote:
-> I notice that nouveau is in there and yes, my laptop uses nouveau as
-> well. First thing I'll try is some of the pm-suspend quirks regarding gra=
-phics devices.
->=20
-> If that doesn't change anything I'll try swapping  out the graphics card =
-in that test box and see
-> if that makes a difference.=20
->=20
-> Clark
+On Thu, 25 Apr 2013, Tim Sander wrote:
+> handler. But normally the HR_TIMER is set. So we switched it off on this very 
+> purpose. As we also have also PREEMPT_RT_FULL set the proposed solution to 
+> allow only PREEMPT_RT_FULL with PREEMPT_RT_FULL set is not an option for us.
 
-As a reminder to anyone reading, this is RT specific. Suspend to Ram
-works fine on vanilla 3.8.x.
-
-I tried 'pm-suspend --quirk-save-pci' and that locked up on resume (13
-minutes and no activity). I then remembered something Thomas said (see
-Thomas, my head is not *completely* full of hot air) and ran this:
-
-[root@rhelrt-7 ~]# for i in core processors platform devices freezer
-> do
-> echo $i
-> echo $i > /sys/power/pm_test
-> pm-suspend
-> done
-core
-processors
-platform
-devices
-freezer
-[root@rhelrt-7 ~]#=20
-
-
-So all the pm_test modes passed.=20
-
-I replaced the nVidia adapter with an ATI Rage card I had laying around
-and that did not change the behaviour noted previously (i.e. pause of
-nearly 10 minutes on resume). So, something is wedged in the resume
-code and times out after nearly 10 minutes and lets the resume
-continue.  I think I'm going to have to take a long stroll through the
-resume path code and look for likely candidates.=20
-
-Debugging suggestions welcome.
-
-Clark
-
---Sig_/unwhBzJLR9veVgy6V0pL+5F
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iEYEARECAAYFAlF5hZ4ACgkQHyuj/+TTEp3oWwCdEkNjAb03+lJPb/yYFvgkbiUC
-ynAAoKHUUEMZ9ZRUdUVmSUy0xtdyq0C2
-=U1O5
------END PGP SIGNATURE-----
-
---Sig_/unwhBzJLR9veVgy6V0pL+5F--
+-ENOPARSE
