@@ -1,45 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
-Date: Thu, 25 Apr 2013 14:55:30 +0200
-Message-ID: <517927C2.40402@linutronix.de>
-References: <1366760662.9609.176.camel@gandalf.local.home>  <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de> <1366893374.6139.5.camel@marge.simpson.net>
+Date: Thu, 25 Apr 2013 15:09:00 +0200 (CEST)
+Message-ID: <alpine.LFD.2.02.1304251507370.21884@ionos>
+References: <1366760662.9609.176.camel@gandalf.local.home>   <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de>   <1366893374.6139.5.camel@marge.simpson.net>  <1366893787.10248.4.camel@gandalf.local.home>  <alpine.LFD.2.02.1304251445520.21884@ionos>
+ <1366894324.10248.6.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Tim Sander <tim.sander@hbm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Mike Galbraith <bitbucket@online.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Tim Sander <tim.sander@hbm.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <bitbucket@online.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1366893374.6139.5.camel@marge.simpson.net>
+In-Reply-To: <1366894324.10248.6.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 04/25/2013 02:36 PM, Mike Galbraith wrote:
-> hrtimer: fix hrtimer free zone build bug
-> 
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
-> 
-> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-> index 2328c04..31d57a2 100644
-> --- a/kernel/hrtimer.c
-> +++ b/kernel/hrtimer.c
-> @@ -1036,7 +1036,7 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
->  		&& hrtimer_enqueue_reprogram(timer, new_base)) {
->  
->  		if (wakeup
-> -#ifdef CONFIG_PREEMPT_RT_BASE
-> +#if defined(CONFIG_PREEMPT_RT_BASE) && defined(CONFIG_HIGH_RES_TIMERS)
->  		    /*
->  		     * Move softirq based timers away from the rbtree in
->  		     * case it expired already. Otherwise we would have a
-> 
-> 
+On Thu, 25 Apr 2013, Steven Rostedt wrote:
 
-hrtimer_enqueue_reprogram() returns 0 in non-high res case so
-everything down there is never reached. The compiler should see this :)
+> On Thu, 2013-04-25 at 14:46 +0200, Thomas Gleixner wrote:
+> > On Thu, 25 Apr 2013, Steven Rostedt wrote:
+> > > On Thu, 2013-04-25 at 14:36 +0200, Mike Galbraith wrote:
+> > > > hrtimer: fix hrtimer free zone build bug
+> > > 
+> > > Perhaps the better solution is to select HIGH_RES_TIMERS when
+> > > PREEMPT_RT_FULL is selected?
+> > 
+> > No, why ?
+> 
+> Why not? ;-)
+> 
+> Except for the lack of support, one would think that if you want real
+> time responses, you would also want a real time clock.
 
-Sebastian
+Well, if your application is driven by an external interrupt, then you
+do not need highres timers at all.
+
+Thanks,
+
+	tglx
