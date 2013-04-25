@@ -1,35 +1,38 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
-Date: Thu, 25 Apr 2013 08:52:32 -0400
-Message-ID: <1366894352.10248.7.camel@gandalf.local.home>
-References: <1366760662.9609.176.camel@gandalf.local.home>
-	 <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de>
-	 <1366893374.6139.5.camel@marge.simpson.net>
-	 <1366893787.10248.4.camel@gandalf.local.home>
-	 <1366894136.6139.9.camel@marge.simpson.net>
+Subject: Re: cgroup_fj tests will stick the nort kernel
+Date: Thu, 25 Apr 2013 08:53:57 -0400
+Message-ID: <1366894437.10248.8.camel@gandalf.local.home>
+References: <5170F28F.3060002@huawei.com> <51750563.8050301@huawei.com>
+	 <1366646447.9609.131.camel@gandalf.local.home>
+	 <5176217E.8030008@huawei.com> <5178C922.3060506@huawei.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Tim Sander <tim.sander@hbm.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
+Cc: Li Zefan <lizefan@huawei.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <bitbucket@online.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1366894136.6139.9.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	zhangwei <jovi.zhangwei@huawei.com>
+To: Qiang Huang <h.huangqiang@huawei.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31906 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755203Ab3DYMx6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Apr 2013 08:53:58 -0400
+In-Reply-To: <5178C922.3060506@huawei.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2013-04-25 at 14:48 +0200, Mike Galbraith wrote:
->  
-> > Perhaps the better solution is to select HIGH_RES_TIMERS when
-> > PREEMPT_RT_FULL is selected?
-> 
-> If they have support, most definitely.  I got the impression lots of ARM
-> boxen are impoverished.. why else would they not have it already set?
+On Thu, 2013-04-25 at 14:11 +0800, Qiang Huang wrote:
 
-Fair enough.
+> What's more, I don't see why we need to clear this flag any more,
+> because "cpu/rt: Rework cpu down for PREEMPT_RT" already remove the
+> optimization for PF_THREAD_BOUND on migrate_disable/enable.
+
+I'll have to think about this. That is, take a deeper look.
+
+Thanks,
 
 -- Steve
+
+
