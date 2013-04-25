@@ -1,63 +1,37 @@
-From: "Tim Sander" <tim.sander@hbm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
-Date: Thu, 25 Apr 2013 16:22:26 +0200
-Message-ID: <3603730.i3rZKahVeu@dabox>
-References: <1366760662.9609.176.camel@gandalf.local.home> <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de>
+Date: Thu, 25 Apr 2013 10:36:08 -0400
+Message-ID: <1366900568.10248.16.camel@gandalf.local.home>
+References: <1366760662.9609.176.camel@gandalf.local.home>
+	 <2156546.QlsX0XyPQz@dabox> <51792277.8000205@linutronix.de>
+	 <3603730.i3rZKahVeu@dabox>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "Steven Rostedt" <rostedt@goodmis.org>,
-	"LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Tim Sander <tim.sander@hbm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:23475 "HELO
-	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1757413Ab3DYOXb convert rfc822-to-8bit (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11723 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932384Ab3DYOgK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Apr 2013 10:23:31 -0400
-Content-Class: urn:content-classes:message
-In-Reply-To: <51792277.8000205@linutronix.de>
+	Thu, 25 Apr 2013 10:36:10 -0400
+In-Reply-To: <3603730.i3rZKahVeu@dabox>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Sebastian
-> > I just wanted to test this release but it fails to compile with the the
-> > following error:
-> > 
-> > kernel/hrtimer.c: In function '__hrtimer_start_range_ns':
-> > kernel/hrtimer.c:1045:7: error: implicit declaration of function
-> > 'hrtimer_rt_defer'
-> > kernel/hrtimer.c: At top level:
-> > kernel/hrtimer.c:1416:12: error: static declaration of 'hrtimer_rt_defer'
-> > follows non-static declaration
-> > kernel/hrtimer.c:1045:10: note: previous implicit declaration of
-> > 'hrtimer_rt_defer' was here
-> > 
-> > The kernelconfig is attached.
-> 
-> You do not have CONFIG_HIGH_RES_TIMERS defined. Is this on purpose?
-Yes, it's an tradeoff to get lower latencies for our VII (Very Important 
-Interrupt :-). The idea is from Thomas Gleixner: We have an regular interrupt 
-and define our own timer where which we call after we have finished our VII 
-handler. But normally the HR_TIMER is set. So we switched it off on this very 
-purpose. As we also have also PREEMPT_RT_FULL set the proposed solution to 
-allow only PREEMPT_RT_FULL with PREEMPT_RT_FULL set is not an option for us.
+On Thu, 2013-04-25 at 16:22 +0200, Tim Sander wrote:
 
-Best regards
-Tim
+> As we also have also PREEMPT_RT_FULL set the proposed solution to 
+> allow only PREEMPT_RT_FULL with PREEMPT_RT_FULL set is not an option for us.
 
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
+Then I think you have issues ;-)
 
-Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
+-- Steve
 
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
 
-The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
 
-Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
