@@ -1,36 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.[68]-rt: CONFIG_PROVE_LOCKING +
- CONFIG_DEBUG_FORCE_WEAK_PER_CPU = boot time swap_lock deadlock
-Date: Fri, 26 Apr 2013 11:16:56 +0200
-Message-ID: <20130426091656.GD20927@linutronix.de>
-References: <1365937652.4717.25.camel@marge.simpson.net>
- <1366685096.9609.145.camel@gandalf.local.home>
+Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
+Date: Fri, 26 Apr 2013 12:50:30 +0200
+Message-ID: <20130426105030.GE20927@linutronix.de>
+References: <1366786204.5977.10.camel@marge.simpson.net>
+ <1366853695.8964.120.camel@edumazet-glaptop>
+ <1366865490.4595.22.camel@marge.simpson.net>
+ <1366866233.8964.128.camel@edumazet-glaptop>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: Mike Galbraith <bitbucket@online.de>,
+	David Miller <davem@davemloft.net>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47827 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752938Ab3DZJQ6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Apr 2013 05:16:58 -0400
+	netdev <netdev@vger.kernel.org>
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Return-path: <netdev-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1366685096.9609.145.camel@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1366866233.8964.128.camel@edumazet-glaptop>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Steven Rostedt | 2013-04-22 22:44:56 [-0400]:
+* Eric Dumazet | 2013-04-24 22:03:53 [-0700]:
 
->When I built with CONFIG_DEBUG_FORCE_WEAK_PER_CPU it had issues with the
->swap lock. Can you try this patch? What you showed looks different, but
->did that happen with the updates you made?
+>On Thu, 2013-04-25 at 06:51 +0200, Mike Galbraith wrote:
+>
+>> Thanks for the fix.  I'll apply it and beat on the box some more (g.p.).
+>> Gripe only happened the one time during long workout day.
+>
+>To force it to happen, you need to invalidate the cached dst in socket.
+>
+>So presumably doing in the background some "ip ro ..." commands to
+>add/delete routes.
 
-Steven, could you please resend it with a sign-off-by and maybe a little
-description? It seems to fix the same problen in v3.8.
-
->-- Steve
+With this instructions I can crash in like 3-5 minutes, with your patch
+it runs now for 50minutes now. Thanks.
 
 Sebastian
