@@ -1,39 +1,46 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
-Date: Fri, 26 Apr 2013 07:14:26 -0700
-Message-ID: <1366985666.8964.186.camel@edumazet-glaptop>
-References: <1366786204.5977.10.camel@marge.simpson.net>
-	 <1366853695.8964.120.camel@edumazet-glaptop>
-	 <1366865490.4595.22.camel@marge.simpson.net>
-	 <1366866233.8964.128.camel@edumazet-glaptop>
-	 <20130426105030.GE20927@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 3.[68]-rt: CONFIG_PROVE_LOCKING +
+ CONFIG_DEBUG_FORCE_WEAK_PER_CPU = boot time swap_lock deadlock
+Date: Fri, 26 Apr 2013 10:15:48 -0400
+Message-ID: <1366985748.16752.16.camel@gandalf.local.home>
+References: <1365937652.4717.25.camel@marge.simpson.net>
+	  <1366685096.9609.145.camel@gandalf.local.home>
+	  <20130426091656.GD20927@linutronix.de>
+	  <1366978398.10248.21.camel@gandalf.local.home>
+	  <20130426133855.GG20927@linutronix.de>
+	 <1366984320.16752.7.camel@gandalf.local.home>
+	 <517A8957.1060908@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Mike Galbraith <bitbucket@online.de>,
-	David Miller <davem@davemloft.net>,
 	RT <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20130426105030.GE20927@linutronix.de>
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:10713 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752369Ab3DZOPt (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Apr 2013 10:15:49 -0400
+In-Reply-To: <517A8957.1060908@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-04-26 at 12:50 +0200, Sebastian Andrzej Siewior wrote:
-> * Eric Dumazet | 2013-04-24 22:03:53 [-0700]:
+On Fri, 2013-04-26 at 16:04 +0200, Sebastian Andrzej Siewior wrote:
+> On 04/26/2013 03:52 PM, Steven Rostedt wrote:
+> > Oops, and I was thinking this was about the mce patch. Hmm, I think I
+> > sent that out too. But I think it still needs to be cleaned up.
 > 
-> >On Thu, 2013-04-25 at 06:51 +0200, Mike Galbraith wrote:
-> >
-> >> Thanks for the fix.  I'll apply it and beat on the box some more (g.p.).
-> >> Gripe only happened the one time during long workout day.
-> >
-> >To force it to happen, you need to invalidate the cached dst in socket.
-> >
-> >So presumably doing in the background some "ip ro ..." commands to
-> >add/delete routes.
+> This is what I have so far:
 > 
-> With this instructions I can crash in like 3-5 minutes, with your patch
-> it runs now for 50minutes now. Thanks.
+> https://git.kernel.org/cgit/linux/kernel/git/bigeasy/rt-v3.8-devel.git/tree/x86-mce-Defer-mce-wakeups-to-threads-for-PREEMPT_RT.patch
+> 
 
-Thanks for testing !
+Ah, you did the clean up for me.
+
+Looks good.
+
+-- Steve
+
+
