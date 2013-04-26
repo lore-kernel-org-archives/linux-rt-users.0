@@ -1,76 +1,93 @@
-From: Tom Cook <tom.k.cook@gmail.com>
-Subject: Tracers+cyclictest causing kernel oops
-Date: Fri, 26 Apr 2013 09:04:48 +0100
-Message-ID: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
+ PREEMPT_RT
+Date: Fri, 26 Apr 2013 10:22:35 +0200
+Message-ID: <20130426082235.GA20927@linutronix.de>
+References: <1365705214.9609.58.camel@gandalf.local.home>
+ <20130425164441.GG5561@linutronix.de>
+ <1366909777.10248.17.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Tony Luck <tony.luck@intel.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Mauro Carvalho Chehab <mchehab@redhat.com>,
+	Ingo Molnar <mingo@kernel.org>,
+	"H. Peter Anvin" <hpa@linux.intel.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f177.google.com ([209.85.128.177]:46298 "EHLO
-	mail-ve0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753513Ab3DZIEv (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:47536 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752229Ab3DZIWi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Apr 2013 04:04:51 -0400
-Received: by mail-ve0-f177.google.com with SMTP id cy12so1683795veb.8
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Apr 2013 01:04:49 -0700 (PDT)
+	Fri, 26 Apr 2013 04:22:38 -0400
+Content-Disposition: inline
+In-Reply-To: <1366909777.10248.17.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm running 3.6.11-rt31 on a Raspberry Pi.  Running cyclictest like this:
+* Steven Rostedt | 2013-04-25 13:09:37 [-0400]:
 
-  sudo ./cyclictest -p95 -m -W -b 1000
-  # /dev/cpu_dma_latency set to 0us
-  policy: fifo: loadavg: 0.72 0.28 0.10 2/137 2054
+>Thanks, I didn't look hard at the warnings.
 
-causes this:
+Now that I booted the kernel I see this
 
-Entering kdb (current=0xca78e0a0, pid 2058) Oops: (null)
-due to oops @ 0xc009f654
+|INFO: task mce-notify:78 blocked for more than 120 seconds.
+|"echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+|mce-notify      D 00000086     0    78      2 0x00000000
+| f2e1bf2c 00000096 f2e1bebc 00000086 f2e1becc c1466606 f3440000 00000001
+| c1689000 c106dd0a f2cdddf0 f3471f50 00000000 c1690f00 00000007 00000006
+| c146662d f2cdddf0 00000282 00000001 f3449ef8 00000282 f2e1bf10 c106b67d
+|Call Trace:
+| [<c1466606>] ? _raw_spin_unlock_irqrestore+0x36/0x70
+| [<c106dd0a>] ? try_to_wake_up+0x5a/0x260
+| [<c146662d>] ? _raw_spin_unlock_irqrestore+0x5d/0x70
+| [<c106b67d>] ? sub_preempt_count+0x4d/0xb0
+| [<c1466606>] ? _raw_spin_unlock_irqrestore+0x36/0x70
+| [<c101b620>] ? set_bank+0x50/0x50
+| [<c1464d7e>] schedule+0x1e/0x50
+| [<c105bb07>] kthread+0x67/0x90
+| [<c1466662>] ? _raw_spin_unlock_irq+0x22/0x60
+| [<c14671b7>] ret_from_kernel_thread+0x1b/0x28
+| [<c105baa0>] ? __init_kthread_worker+0x80/0x80
+|no locks held by mce-notify/78.
 
-Pid: 2058, comm:           cyclictest
-CPU: 0    Not tainted  (3.6.11-rt31+ #10)
-PC is at ring_buffer_lock_reserve+0x7c/0x144
-LR is at ftrace_test_stop_func+0x28/0x34
-pc : [<c009f654>]    lr : [<c0097684>]    psr: 600001d1
-sp : ca7bfa78  ip : ca7bfaf0  fp : ca7bfaec
-r10: 00000000  r9 : c088ece0  r8 : ca7be000
-r7 : 200001d1  r6 : c030dd28  r5 : c00ab928  r4 : c0786000
-r3 : 200001d1  r2 : 00000018  r1 : 00000000  r0 : cb8013a0
-Flags: nZCv  IRQs off  FIQs off  Mode FIQ_32  ISA ARM  Segment user
-Control: 00c5387d  Table: 0a7b8008  DAC: 00000015
-[<c0015188>] (unwind_backtrace+0x0/0xfc) from [<c041953c>]
-(dump_stack+0x20/0x24)
-[<c041953c>] (dump_stack+0x20/0x24) from [<c000f720>] (show_regs+0x4c/0x58)
-[<c000f720>] (show_regs+0x4c/0x58) from [<c0086c48>] (kdb_dumpregs+0x38/0x60)
-[<c0086c48>] (kdb_dumpregs+0x38/0x60) from [<c00897d8>]
-(kdb_main_loop+0x348/0x77c)
-[<c00897d8>] (kdb_main_loop+0x348/0x77c) from [<c008c3d8>]
-(kdb_stub+0x2f0/0x3f8)
-[<c008c3d8>] (kdb_stub+0x2f0/0x3f8) from [<c0082b24>]
-(kgdb_handle_exception+0x164/0x6fc)
-[<c0082b24>] (kgdb_handle_exception+0x164/0x6fc) from [<c00147e0>]
-(kgdb_notify+0x3c/0x74)
-[<c00147e0>] (kgdb_notify+0x3c/0x74) from [<c0421e84>]
-(notifier_call_chain+0x54/0x94)
-[<c0421e84>] (notifier_call_chain+0x54/0x94) from [<c0421f0c>]
-(__atomic_notifier_call_chain+0x48/0x5c)
-[<c0421f0c>] (__atomic_notifier_call_chain+0x48/0x5c) from
-[<c0421f48>] (atomic_notifier_call_chain+0x28/0x30)
-[<c0421f48>] (atomic_notifier_call_chain+0x28/0x30) from [<c0421f90>]
-(notify_die+0x40/0x4c)
-[<c0421f90>] (notify_die+0x40/0x4c) from [<c0011de8>] (die+0xd8/0x3c0)
-[<c0011de8>] (die+0xd8/0x3c0) from [<c0012480>] (bad_mode+0x4c/0x70)
-[<c0012480>] (bad_mode+0x4c/0x70) from [<c0097684>]
-(ftrace_test_stop_func+0x28/0x34)
+because the new thread is still TASK_UNINTERRUPTIBLE and nobody wakes it
+up. So I did this:
 
-AFAICT, this is actually kgdb encountering a problem while trying to
-unwind the stack trace from the real problem - is that right?
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index c2d6dc7..332e133 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1371,17 +1371,19 @@ struct task_struct *mce_notify_helper;
+ 
+ static int mce_notify_helper_thread(void *unused)
+ {
+-	while (!kthread_should_stop()) {
+-		__mce_notify_work();
++	while (1) {
+ 		set_current_state(TASK_INTERRUPTIBLE);
+ 		schedule();
++		if (kthread_should_stop())
++			break;
++		__mce_notify_work();
+ 	}
+ 	return 0;
+ }
+ 
+ static int mce_notify_work_init(void)
+ {
+-	mce_notify_helper = kthread_create(mce_notify_helper_thread, NULL,
++	mce_notify_helper = kthread_run(mce_notify_helper_thread, NULL,
+ 					   "mce-notify");
+ 	if (!mce_notify_helper)
+ 		return -ENOMEM;
 
-The problem seems to be caused by cyclictest setting up the tracer,
-not triggering it - it doesn't matter what I set the latency threshold
-to, the same thing happens.
+>
+>-- Steve
 
-Is there a known cause for this?  Any tips on how to start debugging it?
-
-Thanks,
-Tom
+Sebastian
