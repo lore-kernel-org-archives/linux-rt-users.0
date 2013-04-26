@@ -1,67 +1,76 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat1
-Date: Fri, 26 Apr 2013 08:29:19 +0200
-Message-ID: <1583928.Wo0hVGhFvV@dabox>
-References: <1366760662.9609.176.camel@gandalf.local.home> <3603730.i3rZKahVeu@dabox> <alpine.LFD.2.02.1304260018470.21884@ionos>
+From: Tom Cook <tom.k.cook@gmail.com>
+Subject: Tracers+cyclictest causing kernel oops
+Date: Fri, 26 Apr 2013 09:04:48 +0100
+Message-ID: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
-	"Steven Rostedt" <rostedt@goodmis.org>,
-	"LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Thomas Gleixner" <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from relay.medianet-world.de ([213.157.0.172]:55880 "HELO
-	relay.medianet-world.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with SMTP id S1754071Ab3DZGag convert rfc822-to-8bit (ORCPT
+Received: from mail-ve0-f177.google.com ([209.85.128.177]:46298 "EHLO
+	mail-ve0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753513Ab3DZIEv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Apr 2013 02:30:36 -0400
-Content-Class: urn:content-classes:message
-In-Reply-To: <alpine.LFD.2.02.1304260018470.21884@ionos>
+	Fri, 26 Apr 2013 04:04:51 -0400
+Received: by mail-ve0-f177.google.com with SMTP id cy12so1683795veb.8
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Apr 2013 01:04:49 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Thomas
-> On Thu, 25 Apr 2013, Tim Sander wrote:
-> > handler. But normally the HR_TIMER is set. So we switched it off on this
-> > very purpose. As we also have also PREEMPT_RT_FULL set the proposed
-> > solution to allow only PREEMPT_RT_FULL with PREEMPT_RT_FULL set is not an
-> > option for us.
-Dammit, that happens when one gets interrupted. The thoughts got a little 
-scrambled on the way. Interestingly Steven understood my mental outflow (But he 
-also likes reading this stupid legalese on the end of the mail, so he is 
-probably not a reference ;-) )
+I'm running 3.6.11-rt31 on a Raspberry Pi.  Running cyclictest like this:
 
-What i meant to say is that PREEMPT_RT_FULL depending on HR_TIMERS is not an 
-option for us for the reasons you already stated in this thread.
+  sudo ./cyclictest -p95 -m -W -b 1000
+  # /dev/cpu_dma_latency set to 0us
+  policy: fifo: loadavg: 0.72 0.28 0.10 2/137 2054
 
-So while i can understand that you want to move forward, it would be nice if 
-at least the stable-rt 3.4 series would be keept seperate from this feature 
-patch in the future.
+causes this:
 
-Well i would also like to test this stuff on this non HR_TIMER config but mainly 
-to satify my own curiosity.
+Entering kdb (current=0xca78e0a0, pid 2058) Oops: (null)
+due to oops @ 0xc009f654
 
-Best regards
-Tim
+Pid: 2058, comm:           cyclictest
+CPU: 0    Not tainted  (3.6.11-rt31+ #10)
+PC is at ring_buffer_lock_reserve+0x7c/0x144
+LR is at ftrace_test_stop_func+0x28/0x34
+pc : [<c009f654>]    lr : [<c0097684>]    psr: 600001d1
+sp : ca7bfa78  ip : ca7bfaf0  fp : ca7bfaec
+r10: 00000000  r9 : c088ece0  r8 : ca7be000
+r7 : 200001d1  r6 : c030dd28  r5 : c00ab928  r4 : c0786000
+r3 : 200001d1  r2 : 00000018  r1 : 00000000  r0 : cb8013a0
+Flags: nZCv  IRQs off  FIQs off  Mode FIQ_32  ISA ARM  Segment user
+Control: 00c5387d  Table: 0a7b8008  DAC: 00000015
+[<c0015188>] (unwind_backtrace+0x0/0xfc) from [<c041953c>]
+(dump_stack+0x20/0x24)
+[<c041953c>] (dump_stack+0x20/0x24) from [<c000f720>] (show_regs+0x4c/0x58)
+[<c000f720>] (show_regs+0x4c/0x58) from [<c0086c48>] (kdb_dumpregs+0x38/0x60)
+[<c0086c48>] (kdb_dumpregs+0x38/0x60) from [<c00897d8>]
+(kdb_main_loop+0x348/0x77c)
+[<c00897d8>] (kdb_main_loop+0x348/0x77c) from [<c008c3d8>]
+(kdb_stub+0x2f0/0x3f8)
+[<c008c3d8>] (kdb_stub+0x2f0/0x3f8) from [<c0082b24>]
+(kgdb_handle_exception+0x164/0x6fc)
+[<c0082b24>] (kgdb_handle_exception+0x164/0x6fc) from [<c00147e0>]
+(kgdb_notify+0x3c/0x74)
+[<c00147e0>] (kgdb_notify+0x3c/0x74) from [<c0421e84>]
+(notifier_call_chain+0x54/0x94)
+[<c0421e84>] (notifier_call_chain+0x54/0x94) from [<c0421f0c>]
+(__atomic_notifier_call_chain+0x48/0x5c)
+[<c0421f0c>] (__atomic_notifier_call_chain+0x48/0x5c) from
+[<c0421f48>] (atomic_notifier_call_chain+0x28/0x30)
+[<c0421f48>] (atomic_notifier_call_chain+0x28/0x30) from [<c0421f90>]
+(notify_die+0x40/0x4c)
+[<c0421f90>] (notify_die+0x40/0x4c) from [<c0011de8>] (die+0xd8/0x3c0)
+[<c0011de8>] (die+0xd8/0x3c0) from [<c0012480>] (bad_mode+0x4c/0x70)
+[<c0012480>] (bad_mode+0x4c/0x70) from [<c0097684>]
+(ftrace_test_stop_func+0x28/0x34)
 
-Please ignore as alsway on public lists if you don't want to learn german 
-legalese:
+AFAICT, this is actually kgdb encountering a problem while trying to
+unwind the stack trace from the real problem - is that right?
 
+The problem seems to be caused by cyclictest setting up the tracer,
+not triggering it - it doesn't matter what I set the latency threshold
+to, the same thing happens.
 
+Is there a known cause for this?  Any tips on how to start debugging it?
 
-
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
-
-Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
+Thanks,
+Tom
