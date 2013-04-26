@@ -1,42 +1,36 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
- PREEMPT_RT
-Date: Fri, 26 Apr 2013 10:41:37 +0200
-Message-ID: <20130426084137.GC20927@linutronix.de>
-References: <1365705214.9609.58.camel@gandalf.local.home>
+Subject: Re: 3.[68]-rt: CONFIG_PROVE_LOCKING +
+ CONFIG_DEBUG_FORCE_WEAK_PER_CPU = boot time swap_lock deadlock
+Date: Fri, 26 Apr 2013 11:16:56 +0200
+Message-ID: <20130426091656.GD20927@linutronix.de>
+References: <1365937652.4717.25.camel@marge.simpson.net>
+ <1366685096.9609.145.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Cc: Mike Galbraith <bitbucket@online.de>,
 	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>,
-	John Kacur <jkacur@redhat.com>,
-	Tony Luck <tony.luck@intel.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Mauro Carvalho Chehab <mchehab@redhat.com>,
-	Ingo Molnar <mingo@kernel.org>,
-	"H. Peter Anvin" <hpa@linux.intel.com>
+	Thomas Gleixner <tglx@linutronix.de>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:47827 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752938Ab3DZJQ6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Apr 2013 05:16:58 -0400
 Content-Disposition: inline
-In-Reply-To: <1365705214.9609.58.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1366685096.9609.145.camel@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2013-04-11 14:33:34 [-0400]:
+* Steven Rostedt | 2013-04-22 22:44:56 [-0400]:
 
->As wait queue locks are notorious for long hold times, we can not
->convert them to raw_spin_locks without causing issues with -rt. But
->Thomas has created a "simple-wait" structure that uses raw spin locks
->which may have been a good fit.
->
->Unfortunately, wait queues are not the only issue, as the mce_notify_irq
->also does a schedule_work(), which grabs the workqueue spin locks that
->have the exact same issue.
+>When I built with CONFIG_DEBUG_FORCE_WEAK_PER_CPU it had issues with the
+>swap lock. Can you try this patch? What you showed looks different, but
+>did that happen with the updates you made?
 
-mce_notify_irq() can use simple_waitqueue, no?
-The other issue is that mce_report_event() is scheduling a per-cpu
-workqueue (mce_schedule_work) in case of a memory fault. This has the
-same issue.
+Steven, could you please resend it with a sign-off-by and maybe a little
+description? It seems to fix the same problen in v3.8.
+
+>-- Steve
 
 Sebastian
