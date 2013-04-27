@@ -1,52 +1,53 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: timerfd read does not return - was probably fixed in 3.4.38
-Date: Sat, 27 Apr 2013 10:34:25 +0200
-Message-ID: <517B8D91.4010700@meduna.org>
-References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: [ANNOUNCE] 3.8.9-rt4
+Date: Sat, 27 Apr 2013 23:44:54 +0200
+Message-ID: <517C46D6.7030601@osadl.org>
+References: <20130426222001.GH20927@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	rostedt@goodmis.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:60672 "EHLO meduna.org"
+Received: from toro.web-alm.net ([62.245.132.31]:50860 "EHLO toro.web-alm.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751175Ab3D0Ief (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Apr 2013 04:34:35 -0400
-In-Reply-To: <516FB8B9.9090506@meduna.org>
+	id S1753811Ab3D0VwN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Apr 2013 17:52:13 -0400
+In-Reply-To: <20130426222001.GH20927@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 18.04.2013 11:11, Stanislav Meduna wrote:
+Hi Sebastian,
 
-> from a new log that includes syscall tracing it seems that a thread
-> waiting in a timerfd is woken, but does not return from the read:
+> I'm pleased to announce the 3.8.9-rt4 release. [..]
+This patch is needed to prevent the compiler error
+drivers/gpu/drm/i915/i915_gem_execbuffer.c:1072:27:
+error: 'seqno' undeclared (first use in this function)
 
-For the record, the problem seems to be the issue that the
-http://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v3.4-rt&id=52cecaa
-fixed in v3.4.38-rt52 (tracing: Fix free of probe entry by calling
-call_rcu_sched()). A kernel with just this commit reverted stalled
-once per ~4 hours, with this one it did not stall in ~24h (I will
-surely try to run it longer).
+Signed-off-by: Carsten Emde <C.Emde@osadl.org>
 
-Why did is always manifest itself by hanging in return from timerfd
-read (and not e.g. when timer_create and friends were used) is beyond
-me, but there will be a reason.
+Index: linux-3.8.4-rt2/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+===================================================================
+--- linux-3.8.4-rt2.orig/drivers/gpu/drm/i915/i915_gem_execbuffer.c
++++ linux-3.8.4-rt2/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+@@ -814,6 +814,7 @@ i915_gem_do_execbuffer(struct drm_device
+  	struct intel_ring_buffer *ring;
+  	u32 ctx_id = i915_execbuffer2_get_context_id(*args);
+  	u32 exec_start, exec_len;
++	u32 seqno;
+  	u32 mask;
+  	u32 flags;
+  	int ret, mode, i;
+@@ -1068,7 +1069,8 @@ i915_gem_do_execbuffer(struct drm_device
+  			goto err;
+  	}
 
-Sorry for the false alarm, it was already fixed at the time I reported
-it - it is just that one wants to know the reason before updating
-to a brand new kernel with 750+ other changes.
+-	trace_i915_gem_ring_dispatch(ring, intel_ring_get_seqno(ring), flags);
++	seqno = intel_ring_get_seqno(ring);
++	trace_i915_gem_ring_dispatch(ring, seqno, flags);
+  	i915_trace_irq_get(ring, seqno);
 
-
-A general question: I am seeing a few recent changes in the tracing
-code. Is it generally safe to have at least latency histogram enabled
-in the production code, or is it advised not to compile these features
-in? I'd like to see the latencies the customer is getting in the real
-environment, but if the code is considered as work-in-progress,
-it is better to play it safe.
-
-Thanks
--- 
-                                           Stano
+  	i915_gem_execbuffer_move_to_active(&objects, ring);
 
