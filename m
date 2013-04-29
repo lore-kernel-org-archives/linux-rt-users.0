@@ -1,46 +1,97 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: timerfd read does not return - was probably fixed in 3.4.38
-Date: Mon, 29 Apr 2013 10:43:27 +0200
-Message-ID: <517E32AF.8080907@meduna.org>
-References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org> <517D0DD0.6040307@osadl.org>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V5 1/5] workqueues: Introduce new flag WQ_POWER_EFFICIENT
+ for power oriented workqueues
+Date: Mon, 29 Apr 2013 09:19:17 -0700
+Message-ID: <20130429161917.GB19814@mtj.dyndns.org>
+References: <cover.1366803121.git.viresh.kumar@linaro.org>
+ <480f5d6da920e2f2b868f311228c81635727799e.1366803121.git.viresh.kumar@linaro.org>
+ <CAP245DWtwguSp8ubid_KJnLSOqvCbmTXN+0Bg_MtDrUhBqve-Q@mail.gmail.com>
+ <CAKohpokN_o-RUX6MDwqqfzu4NKRysG-hSzmB=MHV7Y0aDbztuA@mail.gmail.com>
+ <20130424161208.GA16991@mtj.dyndns.org>
+ <CAP245DUGuaSQbP4026N8kgn6-NqXFJWR3zKoYud=HQ_b+v5+Xw@mail.gmail.com>
+ <CAKohpo=U5OqN7SM7XyOWv-WoUHOoJvGc6wcGH61+uikPK3novg@mail.gmail.com>
+ <20130426191118.GD1433@mtj.dyndns.org>
+ <CAKohpokJSwi24goSG=dTKkH0p+-YgsVURa_4giyU-u2TuK1bdA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Amit Kucheria <amit.kucheria@linaro.org>, davem@davemloft.net,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Robin Randhawa <robin.randhawa@arm.com>,
+	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>,
+	Steve Bannister <Steve.Bannister@arm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Arvind Chauhan <arvind.chauhan@arm.com>,
+	Patch Tracking <patches@linaro.org>, airlied@redhat.com,
+	mingo@redhat.com, Jens Axboe <axboe@kernel.dk>,
+	Liviu Dudau <Liviu.Dudau@arm.com>,
+	Lists linaro-kernel <linaro-kernel@lists.linaro.org>
+To: Viresh Kumar <viresh.kumar@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:35800 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751311Ab3D2Inh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Apr 2013 04:43:37 -0400
-In-Reply-To: <517D0DD0.6040307@osadl.org>
+Received: from mail-qe0-f50.google.com ([209.85.128.50]:54550 "EHLO
+	mail-qe0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757120Ab3D2QTX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Apr 2013 12:19:23 -0400
+Content-Disposition: inline
+In-Reply-To: <CAKohpokJSwi24goSG=dTKkH0p+-YgsVURa_4giyU-u2TuK1bdA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 28.04.2013 13:53, Carsten Emde wrote:
+Hello,
 
-Hi Carsten,
+On Mon, Apr 29, 2013 at 12:06:28PM +0530, Viresh Kumar wrote:
+> Whatever you wrote above confused me even more :)
 
-> We, therefore, configure and enable continuous latency
-> monitoring histograms (CONFIG_WAKEUP_LATENCY_HIST and
-> CONFIG_MISSED_TIMER_OFFSETS_HIST) by default in all our farm systems
-> since more than two years (https://www.osadl.org/?id=864), and we are
-> not aware of any problem that might be related to them.
+Heh heh, confumageddon!!!!
 
-The problem is our systems that started to exhibit this problem
-did have just these enabled :( Many more were compiled in.
+> This is what i had in my mind until now. Its not about per-cpu workqueue.
+> 
+> Lets take example of system_wq. It doesn't have WQ_UNBOUND flag set.
+> Now if we call queue_work_on() with cpu x and sytem_wq, then work
+> will execute on cpu x. If we call queue_work() then it will queue the work
+> on local cpu.
 
-Your continuous test farm is impressive! A suggestion: would it
-be possible to also add a dmesg and more of the /proc/timer_list
-output to the profile pages? This would make comparing with
-the own system even easier.
+Yeap, !WQ_UNBOUND workqueues == per-cpu workqueues.
 
-For example the Geode system at https://www.osadl.org/?id=948 :
-how did you convince it to use highres timers? In my environment
-the Geode LX / CS5536 needs tsc=reliable, but your kernel command
-line does not contain it.
+> At this time local cpu may be busy or idle (Atleast according to scheduler).
+> We don't want a idle cpu (From schedulers perspective) to be used for
+> running this work's handler due to two reasons.
+> - idle cpu may be in WFI or deeper idle states and so we can avoid waking
+>   it up.
 
-Thanks
+I have no idea what WFI is but the physical CPU is already awake at
+that time.  It can't be idle - it's running queue_work().  It could be
+running in lower freq tho, which each code piece doesn't really have
+much control over.
+
+> - We will make idle cpu look busy and so other kernel stuff may be scheduled
+>   on it now. But we could have kept it idle for a long time.
+
+Hmmm... yeah, about the same thing I wrote, it's not really about not
+waking up the CPU right now physically but avoiding forcing the
+scheduler scheduling a pinned task on an otherwise quiescent CPU.
+This effectively allows the scheduler to migrate such work items
+towards a CPU which the scheduler considers to be better (in power or
+whatever) leading to noticeable powersave.
+
+> And what timer are you talking about? I am not talking about deffered work only,
+> but normal work too.
+
+Deferred work item == timer + work item.
+
+> I might have wrongly phrased some part of my patch (maybe used workqueue
+> instead of work), will fix that up.
+
+I think it'd be necessary to distinguish the physical CPU being idle
+and the scheduler considers it to be idle (no task to schedule on it)
+and explain how increasing the latter can lead to powersave.  As it's
+currently written, it seemingly, to me anyway, suggests that the
+proposed change somehow avoids waking up actually idle CPU, which
+isn't the case as queue_work() *always* schedules on the local CPU.
+The local CPU can't be idle by definition.
+
+Thanks.
+
 -- 
-                                        Stano
-
+tejun
