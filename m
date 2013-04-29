@@ -1,58 +1,104 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: timerfd read does not return - was probably fixed in 3.4.38
-Date: Sun, 28 Apr 2013 13:53:52 +0200
-Message-ID: <517D0DD0.6040307@osadl.org>
-References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V5 1/5] workqueues: Introduce new flag WQ_POWER_EFFICIENT
+ for power oriented workqueues
+Date: Mon, 29 Apr 2013 12:06:28 +0530
+Message-ID: <CAKohpokJSwi24goSG=dTKkH0p+-YgsVURa_4giyU-u2TuK1bdA@mail.gmail.com>
+References: <cover.1366803121.git.viresh.kumar@linaro.org>
+	<480f5d6da920e2f2b868f311228c81635727799e.1366803121.git.viresh.kumar@linaro.org>
+	<CAP245DWtwguSp8ubid_KJnLSOqvCbmTXN+0Bg_MtDrUhBqve-Q@mail.gmail.com>
+	<CAKohpokN_o-RUX6MDwqqfzu4NKRysG-hSzmB=MHV7Y0aDbztuA@mail.gmail.com>
+	<20130424161208.GA16991@mtj.dyndns.org>
+	<CAP245DUGuaSQbP4026N8kgn6-NqXFJWR3zKoYud=HQ_b+v5+Xw@mail.gmail.com>
+	<CAKohpo=U5OqN7SM7XyOWv-WoUHOoJvGc6wcGH61+uikPK3novg@mail.gmail.com>
+	<20130426191118.GD1433@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>
-To: Stanislav Meduna <stano@meduna.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Amit Kucheria <amit.kucheria@linaro.org>, davem@davemloft.net,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Robin Randhawa <robin.randhawa@arm.com>,
+	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>,
+	Steve Bannister <Steve.Bannister@arm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Arvind Chauhan <arvind.chauhan@arm.com>,
+	Patch Tracking <patches@linaro.org>, airlied@redhat.com,
+	mingo@redhat.com, Jens Axboe <axboe@kernel.dk>,
+	Liviu Dudau <Liviu.Dudau@arm.com>,
+	Lists linaro-kernel <linaro-kernel@lists.linaro.org>
+To: Tejun Heo <tj@kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:52462 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755673Ab3D1MAU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 28 Apr 2013 08:00:20 -0400
-In-Reply-To: <517B8D91.4010700@meduna.org>
+Received: from mail-oa0-f43.google.com ([209.85.219.43]:39187 "EHLO
+	mail-oa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752044Ab3D2Gg3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Apr 2013 02:36:29 -0400
+Received: by mail-oa0-f43.google.com with SMTP id k7so5714907oag.30
+        for <linux-rt-users@vger.kernel.org>; Sun, 28 Apr 2013 23:36:28 -0700 (PDT)
+In-Reply-To: <20130426191118.GD1433@mtj.dyndns.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Stano,
+Hey Tejun,
 
-> [..]
-> A general question: I am seeing a few recent changes in the tracing
-> code. Is it generally safe to have at least latency histogram
-> enabled in the production code, or is it advised not to compile these
-> features in? I'd like to see the latencies the customer is getting in
-> the real environment, but if the code is considered as
-> work-in-progress, it is better to play it safe.
-There are a number of different built-in latency histograms in the
-kernel, some of them are best used to trace a known problem (e.g.
-INTERRUPT_OFF_HIST and PREEMPT_OFF_HIST) while others are intended for
-continuous latency monitoring (CONFIG_WAKEUP_LATENCY_HIST and
-CONFIG_MISSED_TIMER_OFFSETS_HIST). The latter are ideally suitable to
-document the real-time capabilities of a production system and to
-retrospectively analyze a failure that may be related to a prolonged
-latency. We, therefore, configure and enable continuous latency
-monitoring histograms (CONFIG_WAKEUP_LATENCY_HIST and
-CONFIG_MISSED_TIMER_OFFSETS_HIST) by default in all our farm systems
-since more than two years (https://www.osadl.org/?id=864), and we are
-not aware of any problem that might be related to them. I, thus, would
-like to say that they are save to be used in production systems. Since
-we do not have much long-term experience with the other histograms and
-they may introduce additional and longer latencies than the former, I
-would not recommend to enable them in production systems.
+On 27 April 2013 00:41, Tejun Heo <tj@kernel.org> wrote:
+> Hey, Viresh.
+>
+> It's already too late for the upcoming merge window, but things
+> generally look good to me and I'll apply the patchset once wq/for-3.11
+> opens.  One nitpick tho.
 
-BTW: Your question was whether it is "advised not to compile these
-features in". There certainly is very little penalty or risk to
-configure these features without enabling them. So I don't see any
-reason not to compile them in. Only when you enable them
-   cd /sys/kernel/debug/tracing/latency_hist/enable
-   for i in wakeup missed_timer_offsets timerandwakeup
-   do
-     echo 1 >$i
-   done
-a certain latency penalty and risk of malfunction may apply.
+Obviously. I understand this and agree with you on it. It should go in 3.11 now.
 
-	-Carsten.
+> On Thu, Apr 25, 2013 at 09:13:44AM +0530, Viresh Kumar wrote:
+>> +     workqueue.power_efficient
+>> +                     Workqueues can be performance or power-oriented.
+>> +                     Currently, most workqueues are bound to the CPU they
+>                                    ^^^^
+>                                    per-cpu would be better
+>
+>> +                     were created on. This gives good performance (due to
+>> +                     cache effects) at the cost of potentially waking up
+>> +                     otherwise idle cores just to process some work. To save
+>> +                     power, we can allow the work to be rescheduled on a core
+>> +                     that is already awake.
+>
+> The above description is confusing to me.  As have been discussed
+> multiple times before, per-cpu workqueue in itself doesn't wake up the
+> CPU physically.  The timer may but per-cpu workqueue doesn't.  It was
+> confusing when this patchset was first posted and the above phrasing
+> is still confusing.  What the patchset tries to do is preventing the
+> scheduler from perceiving the CPU as active due to the activated
+> worker thread pinned to that CPU, right?  The knob doesn't really do
+> anything about waking up the processor in itself.  It just avoids
+> feeding the scheduler with noisy activation events and allows it to
+> allocate work item execution according to the scheduler's view of CPU
+> active/idleness.  As the scheduler has longer / larger scope of
+> overall CPU activities and means to regulate them, this leads to more
+> power-efficient allocation of work item executions, right?  It'd be
+> really great if the descriptions and the comment above the flag makes
+> this abundantly clear because it's not something too apparent.
+
+Whatever you wrote above confused me even more :)
+This is what i had in my mind until now. Its not about per-cpu workqueue.
+
+Lets take example of system_wq. It doesn't have WQ_UNBOUND flag set.
+Now if we call queue_work_on() with cpu x and sytem_wq, then work
+will execute on cpu x. If we call queue_work() then it will queue the work
+on local cpu.
+
+At this time local cpu may be busy or idle (Atleast according to scheduler).
+We don't want a idle cpu (From schedulers perspective) to be used for
+running this work's handler due to two reasons.
+- idle cpu may be in WFI or deeper idle states and so we can avoid waking
+  it up.
+- We will make idle cpu look busy and so other kernel stuff may be scheduled
+  on it now. But we could have kept it idle for a long time.
+
+And what timer are you talking about? I am not talking about deffered work only,
+but normal work too.
+
+I might have wrongly phrased some part of my patch (maybe used workqueue
+instead of work), will fix that up.
+
+--
+viresh
