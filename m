@@ -1,104 +1,81 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V5 1/5] workqueues: Introduce new flag WQ_POWER_EFFICIENT
- for power oriented workqueues
-Date: Mon, 29 Apr 2013 12:06:28 +0530
-Message-ID: <CAKohpokJSwi24goSG=dTKkH0p+-YgsVURa_4giyU-u2TuK1bdA@mail.gmail.com>
-References: <cover.1366803121.git.viresh.kumar@linaro.org>
-	<480f5d6da920e2f2b868f311228c81635727799e.1366803121.git.viresh.kumar@linaro.org>
-	<CAP245DWtwguSp8ubid_KJnLSOqvCbmTXN+0Bg_MtDrUhBqve-Q@mail.gmail.com>
-	<CAKohpokN_o-RUX6MDwqqfzu4NKRysG-hSzmB=MHV7Y0aDbztuA@mail.gmail.com>
-	<20130424161208.GA16991@mtj.dyndns.org>
-	<CAP245DUGuaSQbP4026N8kgn6-NqXFJWR3zKoYud=HQ_b+v5+Xw@mail.gmail.com>
-	<CAKohpo=U5OqN7SM7XyOWv-WoUHOoJvGc6wcGH61+uikPK3novg@mail.gmail.com>
-	<20130426191118.GD1433@mtj.dyndns.org>
+From: Tom Cook <tom.k.cook@gmail.com>
+Subject: Re: Tracers+cyclictest causing kernel oops
+Date: Mon, 29 Apr 2013 08:16:35 +0100
+Message-ID: <CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
+References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Amit Kucheria <amit.kucheria@linaro.org>, davem@davemloft.net,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Robin Randhawa <robin.randhawa@arm.com>,
-	Charles Garcia-Tobin <charles.garcia-tobin@arm.com>,
-	Steve Bannister <Steve.Bannister@arm.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Arvind Chauhan <arvind.chauhan@arm.com>,
-	Patch Tracking <patches@linaro.org>, airlied@redhat.com,
-	mingo@redhat.com, Jens Axboe <axboe@kernel.dk>,
-	Liviu Dudau <Liviu.Dudau@arm.com>,
-	Lists linaro-kernel <linaro-kernel@lists.linaro.org>
-To: Tejun Heo <tj@kernel.org>
+Content-Type: text/plain; charset=UTF-8
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f43.google.com ([209.85.219.43]:39187 "EHLO
-	mail-oa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752044Ab3D2Gg3 (ORCPT
+Received: from mail-vc0-f179.google.com ([209.85.220.179]:52655 "EHLO
+	mail-vc0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751190Ab3D2HQg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Apr 2013 02:36:29 -0400
-Received: by mail-oa0-f43.google.com with SMTP id k7so5714907oag.30
-        for <linux-rt-users@vger.kernel.org>; Sun, 28 Apr 2013 23:36:28 -0700 (PDT)
-In-Reply-To: <20130426191118.GD1433@mtj.dyndns.org>
+	Mon, 29 Apr 2013 03:16:36 -0400
+Received: by mail-vc0-f179.google.com with SMTP id hz10so2699600vcb.10
+        for <linux-rt-users@vger.kernel.org>; Mon, 29 Apr 2013 00:16:35 -0700 (PDT)
+In-Reply-To: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey Tejun,
+No ideas?
 
-On 27 April 2013 00:41, Tejun Heo <tj@kernel.org> wrote:
-> Hey, Viresh.
+On Fri, Apr 26, 2013 at 9:04 AM, Tom Cook <tom.k.cook@gmail.com> wrote:
+> I'm running 3.6.11-rt31 on a Raspberry Pi.  Running cyclictest like this:
 >
-> It's already too late for the upcoming merge window, but things
-> generally look good to me and I'll apply the patchset once wq/for-3.11
-> opens.  One nitpick tho.
-
-Obviously. I understand this and agree with you on it. It should go in 3.11 now.
-
-> On Thu, Apr 25, 2013 at 09:13:44AM +0530, Viresh Kumar wrote:
->> +     workqueue.power_efficient
->> +                     Workqueues can be performance or power-oriented.
->> +                     Currently, most workqueues are bound to the CPU they
->                                    ^^^^
->                                    per-cpu would be better
+>   sudo ./cyclictest -p95 -m -W -b 1000
+>   # /dev/cpu_dma_latency set to 0us
+>   policy: fifo: loadavg: 0.72 0.28 0.10 2/137 2054
 >
->> +                     were created on. This gives good performance (due to
->> +                     cache effects) at the cost of potentially waking up
->> +                     otherwise idle cores just to process some work. To save
->> +                     power, we can allow the work to be rescheduled on a core
->> +                     that is already awake.
+> causes this:
 >
-> The above description is confusing to me.  As have been discussed
-> multiple times before, per-cpu workqueue in itself doesn't wake up the
-> CPU physically.  The timer may but per-cpu workqueue doesn't.  It was
-> confusing when this patchset was first posted and the above phrasing
-> is still confusing.  What the patchset tries to do is preventing the
-> scheduler from perceiving the CPU as active due to the activated
-> worker thread pinned to that CPU, right?  The knob doesn't really do
-> anything about waking up the processor in itself.  It just avoids
-> feeding the scheduler with noisy activation events and allows it to
-> allocate work item execution according to the scheduler's view of CPU
-> active/idleness.  As the scheduler has longer / larger scope of
-> overall CPU activities and means to regulate them, this leads to more
-> power-efficient allocation of work item executions, right?  It'd be
-> really great if the descriptions and the comment above the flag makes
-> this abundantly clear because it's not something too apparent.
-
-Whatever you wrote above confused me even more :)
-This is what i had in my mind until now. Its not about per-cpu workqueue.
-
-Lets take example of system_wq. It doesn't have WQ_UNBOUND flag set.
-Now if we call queue_work_on() with cpu x and sytem_wq, then work
-will execute on cpu x. If we call queue_work() then it will queue the work
-on local cpu.
-
-At this time local cpu may be busy or idle (Atleast according to scheduler).
-We don't want a idle cpu (From schedulers perspective) to be used for
-running this work's handler due to two reasons.
-- idle cpu may be in WFI or deeper idle states and so we can avoid waking
-  it up.
-- We will make idle cpu look busy and so other kernel stuff may be scheduled
-  on it now. But we could have kept it idle for a long time.
-
-And what timer are you talking about? I am not talking about deffered work only,
-but normal work too.
-
-I might have wrongly phrased some part of my patch (maybe used workqueue
-instead of work), will fix that up.
-
---
-viresh
+> Entering kdb (current=0xca78e0a0, pid 2058) Oops: (null)
+> due to oops @ 0xc009f654
+>
+> Pid: 2058, comm:           cyclictest
+> CPU: 0    Not tainted  (3.6.11-rt31+ #10)
+> PC is at ring_buffer_lock_reserve+0x7c/0x144
+> LR is at ftrace_test_stop_func+0x28/0x34
+> pc : [<c009f654>]    lr : [<c0097684>]    psr: 600001d1
+> sp : ca7bfa78  ip : ca7bfaf0  fp : ca7bfaec
+> r10: 00000000  r9 : c088ece0  r8 : ca7be000
+> r7 : 200001d1  r6 : c030dd28  r5 : c00ab928  r4 : c0786000
+> r3 : 200001d1  r2 : 00000018  r1 : 00000000  r0 : cb8013a0
+> Flags: nZCv  IRQs off  FIQs off  Mode FIQ_32  ISA ARM  Segment user
+> Control: 00c5387d  Table: 0a7b8008  DAC: 00000015
+> [<c0015188>] (unwind_backtrace+0x0/0xfc) from [<c041953c>]
+> (dump_stack+0x20/0x24)
+> [<c041953c>] (dump_stack+0x20/0x24) from [<c000f720>] (show_regs+0x4c/0x58)
+> [<c000f720>] (show_regs+0x4c/0x58) from [<c0086c48>] (kdb_dumpregs+0x38/0x60)
+> [<c0086c48>] (kdb_dumpregs+0x38/0x60) from [<c00897d8>]
+> (kdb_main_loop+0x348/0x77c)
+> [<c00897d8>] (kdb_main_loop+0x348/0x77c) from [<c008c3d8>]
+> (kdb_stub+0x2f0/0x3f8)
+> [<c008c3d8>] (kdb_stub+0x2f0/0x3f8) from [<c0082b24>]
+> (kgdb_handle_exception+0x164/0x6fc)
+> [<c0082b24>] (kgdb_handle_exception+0x164/0x6fc) from [<c00147e0>]
+> (kgdb_notify+0x3c/0x74)
+> [<c00147e0>] (kgdb_notify+0x3c/0x74) from [<c0421e84>]
+> (notifier_call_chain+0x54/0x94)
+> [<c0421e84>] (notifier_call_chain+0x54/0x94) from [<c0421f0c>]
+> (__atomic_notifier_call_chain+0x48/0x5c)
+> [<c0421f0c>] (__atomic_notifier_call_chain+0x48/0x5c) from
+> [<c0421f48>] (atomic_notifier_call_chain+0x28/0x30)
+> [<c0421f48>] (atomic_notifier_call_chain+0x28/0x30) from [<c0421f90>]
+> (notify_die+0x40/0x4c)
+> [<c0421f90>] (notify_die+0x40/0x4c) from [<c0011de8>] (die+0xd8/0x3c0)
+> [<c0011de8>] (die+0xd8/0x3c0) from [<c0012480>] (bad_mode+0x4c/0x70)
+> [<c0012480>] (bad_mode+0x4c/0x70) from [<c0097684>]
+> (ftrace_test_stop_func+0x28/0x34)
+>
+> AFAICT, this is actually kgdb encountering a problem while trying to
+> unwind the stack trace from the real problem - is that right?
+>
+> The problem seems to be caused by cyclictest setting up the tracer,
+> not triggering it - it doesn't matter what I set the latency threshold
+> to, the same thing happens.
+>
+> Is there a known cause for this?  Any tips on how to start debugging it?
+>
+> Thanks,
+> Tom
