@@ -1,30 +1,76 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.8.9-rt4
-Date: Mon, 29 Apr 2013 21:37:58 +0200
-Message-ID: <20130429193758.GA7979@linutronix.de>
-References: <20130426222001.GH20927@linutronix.de>
- <517C46D6.7030601@osadl.org>
+Subject: [ANNOUNCE] 3.8.10-rt6
+Date: Mon, 29 Apr 2013 22:12:02 +0200
+Message-ID: <20130429201202.GB7979@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
-To: Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:57862 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759634Ab3D2UMD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Apr 2013 16:12:03 -0400
 Content-Disposition: inline
-In-Reply-To: <517C46D6.7030601@osadl.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Carsten Emde | 2013-04-27 23:44:54 [+0200]:
+Dear RT Folks,
 
->Hi Sebastian,
-Hi Carsten,
+I'm pleased to announce the 3.8.10-rt6 release.
 
->This patch is needed to prevent the compiler error
->drivers/gpu/drm/i915/i915_gem_execbuffer.c:1072:27:
->error: 'seqno' undeclared (first use in this function)
+changes since v3.8.10-rt5:
+- the i915 compiles again after I broke it in the last release. A patch
+  was sent by Carsten Emde.
 
-thanks, I folded it into the patch that broke it.
+Known issues:
+
+    - SLxB is broken on PowerPC.
+    - suspend / resume seems to program program the timer wrong and wait
+      ages until it continues.
+
+The delta patch against v3.8.10-rt5 is appended below and can be found here:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.10-rt5-rt6.patch.xz
+
+The RT patch against 3.8.9 can be found here:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.10-rt6.patch.xz
+
+The split quilt queue is available at:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.8.10-rt6.tar.xz
 
 Sebastian
+
+diff --git a/drivers/gpu/drm/i915/i915_gem_execbuffer.c b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+index 81125de..eabd3dd 100644
+--- a/drivers/gpu/drm/i915/i915_gem_execbuffer.c
++++ b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+@@ -814,6 +814,7 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
+ 	struct intel_ring_buffer *ring;
+ 	u32 ctx_id = i915_execbuffer2_get_context_id(*args);
+ 	u32 exec_start, exec_len;
++	u32 seqno;
+ 	u32 mask;
+ 	u32 flags;
+ 	int ret, mode, i;
+@@ -1068,7 +1069,8 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
+ 			goto err;
+ 	}
+ 
+-	trace_i915_gem_ring_dispatch(ring, intel_ring_get_seqno(ring), flags);
++	seqno = intel_ring_get_seqno(ring);
++	trace_i915_gem_ring_dispatch(ring, seqno, flags);
+ 	i915_trace_irq_get(ring, seqno);
+ 
+ 	i915_gem_execbuffer_move_to_active(&objects, ring);
+diff --git a/localversion-rt b/localversion-rt
+index 0efe7ba..8fc605d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt5
++-rt6
