@@ -1,106 +1,112 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
-Date: Tue, 30 Apr 2013 19:09:48 +0200
-Message-ID: <20130430170948.GB4688@linutronix.de>
-References: <20130429201202.GB7979@linutronix.de>
- <20130429161925.2a6ea78a@riff.lan>
+From: =?UTF-8?B?TmVib2rFoWEgxIZvc2nEhw==?= <nebojsa@asnn.org>
+Subject: Re: UDP jitter
+Date: Tue, 30 Apr 2013 19:26:53 +0200
+Message-ID: <20130430192653.5c6c08b6@sanja.asnn.org>
+References: <20130429222238.2b440d8c@sanja.asnn.org>
+	<517FE1A5.1090702@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>, rostedt@goodmis.org
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20130429161925.2a6ea78a@riff.lan>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <C.Emde@osadl.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay-h31.telenor.se ([213.150.131.4]:39794 "EHLO
+	smtprelay-h31.telenor.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932267Ab3D3R7I convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Apr 2013 13:59:08 -0400
+Received: from ipb2.telenor.se (ipb2.telenor.se [195.54.127.165])
+	by smtprelay-h31.telenor.se (Postfix) with ESMTP id D39A0E9DF9
+	for <linux-rt-users@vger.kernel.org>; Tue, 30 Apr 2013 19:26:57 +0200 (CEST)
+In-Reply-To: <517FE1A5.1090702@osadl.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Clark Williams | 2013-04-29 16:19:25 [-0500]:
 
->On Mon, 29 Apr 2013 22:12:02 +0200
->Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
->>     - suspend / resume seems to program program the timer wrong and wait
->>       ages until it continues.
->
->It has to be something we're doing when we apply RT to v3.8.x, since
->v3.8.x suspends/resumes with no issues and I was able to suspend and
->resume fine with the 3.6-rt series. 
+> Hi Neboj=C5=A1a,
+Hi Carsten
+>=20
+> > I am doing some work on a product running kernel 2.6.33.7.2-rt30.
+> > Applications running on this kernel are a bit specific, meaning tha=
+t
+> > there are a number of threads running on a different priorities.
+> > For a several months I was haunted with spurious jitter, detected o=
+n
+> > UDP messages - multicast UDP messages where received on originating
+> > node without any delay, but on other nodes a delay in range of 10s =
+of
+> > milliseconds was detected. Simply, it looked like a message was stu=
+ck
+> > in kernel before finally getting transmitted.
+> > Finally, thanks to LTTng tool, I was able to locate the problem dow=
+n to
+> > this peace of code in net/sched/sch_generic.c:
+> >
+> > int sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
+> >                      struct net_device *dev, struct netdev_queue *t=
+xq,
+> >                      spinlock_t *root_lock)
+> > {
+> >          int ret =3D NETDEV_TX_BUSY;
+> >
+> >          /* And release qdisc */
+> >          spin_unlock(root_lock);
+> >
+> >          HARD_TX_LOCK(dev, txq);
+> >
+> >          if (!netif_tx_queue_stopped(txq) && !netif_tx_queue_frozen=
+(txq))
+> >                  ret =3D dev_hard_start_xmit(skb, dev, txq);
+> >
+> >
+> >          HARD_TX_UNLOCK(dev, txq);
+> >
+> >          spin_lock(root_lock);
+> > ...
+> >
+> > When transmit queue is empty, thread wanting to send a message come=
+s
+> > directly to sch_direct_xmit, without changing context. It then rele=
+ases
+> > spin lock, and than takes another. So far so good.
+> > If this starting thread is of lower priority, it can be preempted b=
+y
+> > another thread, while still being in dev_hard_start_xmit function
+> > This thread will check if HARD_TX_LOCK is taken, and if so, go on a=
+nd
+> > queue its own message.
+> > If there are enough higher priority tasks, tx can be stalled
+> > indefinitely. [..]
+> Did you increase the priority of the related sirq-net-tx and sirq-net=
+-rx=20
+> kernel threads appropriately? Some more details on enabling real-time=
+=20
+> Ethernet are given here -> https://www.osadl.org/?id=3D930.
+Thanks for the link, I was aware of it.
+I did try to increase sirq-net-tx and rx, even to get tx higher than rx
+(in case incoming traffic was creating problems), but it didn't make
+any difference.=20
+I was trying to isolate problem by running iperf, but it worked
+perfectly well when run on it's own. No wonder, because it generates
+traffic from the same priority, and to trigger this behaviour, one need
+traffic from at least two levels of priority, and a busy CPU (so that
+low priority thread can get blocked in driver for a noticeable period
+of time ).
+I suppose that running two iperf processes at different priorities can
+demonstrate the problem.
 
-I think I figured out what is going on or atleast I think I did.
+>=20
+> 	-Carsten.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-This log snippet is from the resume path (from suspend to mem):
-
-[   15.052115] Enabling non-boot CPUs ...
-[   15.052115] smpboot: Booting Node 0 Processor 1 APIC 0x1
-[   14.841378] Initializing CPU#1
-[   42.840017] [sched_delayed] sched: RT throttling activated
-[   42.842144] CPU1 is up
-[   42.842536] smpboot: Booting Node 0 Processor 2 APIC 0x2
-
-Two things happen here:
-- the time goes backwards from 15.X to 14.X. This is okay because the
-  14.X is the timestamp from the secondary CPU not - yet synchronized
-  with the bootcpu
-- the printk with "CPU1 is up" is comming from the boot CPU and
-  according to the timestamp about 28secs passed by. But this did not
-  really happen as the whole procedure took less time.
-
-The next thing that happens is that RCU assumes nobody is doing any
-progress (for almost 28secs) and triggers NMIs & printks to get some
-attention. I have a trace where
-- CPU0: arch_trigger_all_cpu_backtrace_handler() => printk()
-        has "lock" and is spinning for logbuf_lock
-
-- CPU1: print_cpu_stall() => printk() (spinning for the lock) => NMI =>
-  arch_trigger_all_cpu_backtrace_handler()
-        it may have logbuf_lock and is spinning for "lock"
-
-I can't tell if CPU1 got the logbuf_lock at this time but it seemed that
-it made no progress until I ended it.
-This NMI releated deadlock is a problem which should also trigger
-mainline, right?
-
-Now, the time jump on the other hand is the real issue here and is
-RT-only. It looks like we get a big number of timer updates via
-tick_do_update_jiffies64() because according to ktime_get() that much
-time really passed by.
-
-The sollution seems as simple as
-
->From c27eb2e0ab0b5acd96a4b62288976f1b72789b3e Mon Sep 17 00:00:00 2001
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date: Tue, 30 Apr 2013 18:53:55 +0200
-Subject: [PATCH] time/timekeeping: shadow tk->cycle_last together with
- clock->cycle_last
-
-Commit ("timekeeping: Store cycle_last value in timekeeper struct as
-well") introduced a tk-> based cycle_last values which needs to be reset
-on resume path as well or else ktime_get() will think that time
-increased a lot.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/time/timekeeping.c |    1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/kernel/time/timekeeping.c b/kernel/time/timekeeping.c
-index 99f943b..688817f 100644
---- a/kernel/time/timekeeping.c
-+++ b/kernel/time/timekeeping.c
-@@ -777,6 +777,7 @@ static void timekeeping_resume(void)
- 	}
- 	/* re-base the last cycle value */
- 	tk->clock->cycle_last = tk->clock->read(tk->clock);
-+	tk->cycle_last = tk->clock->cycle_last;
- 	tk->ntp_error = 0;
- 	timekeeping_suspended = 0;
- 	timekeeping_update(tk, false, true);
--- 
-1.7.10.4
-
-So Clark, does this patch fix your problem?
-
->Clark
-
-Sebastian
+--=20
+Neboj=C5=A1a
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
