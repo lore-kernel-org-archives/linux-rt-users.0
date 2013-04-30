@@ -1,50 +1,57 @@
-From: Borislav Petkov <bp@alien8.de>
-Subject: Re: EDAC messages about corrected errors affect realtime response
-Date: Tue, 30 Apr 2013 11:05:20 +0200
-Message-ID: <20130430090520.GA12095@pd.tnic>
-References: <20130430010733.GA1404@dvomlehn-z8.spacex.com>
+From: "Tim Sander" <tim.sander@hbm.com>
+Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat3
+Date: Tue, 30 Apr 2013 11:14:36 +0200
+Message-ID: <2805818.g7STVSuEne@dabox>
+References: <1367283987.30667.49.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-edac@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Robert Richter <rric@kernel.org>,
-	Tony Luck <tony.luck@intel.com>
-To: David VomLehn <David.VomLehn@spacex.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.skyhub.de ([78.46.96.112]:42307 "EHLO mail.skyhub.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750882Ab3D3JFd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Apr 2013 05:05:33 -0400
-Content-Disposition: inline
-In-Reply-To: <20130430010733.GA1404@dvomlehn-z8.spacex.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "LKML" <linux-kernel@vger.kernel.org>,
+	"RT" <linux-rt-users@vger.kernel.org>,
+	"Thomas Gleixner" <tglx@linutronix.de>,
+	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
+To: "Steven Rostedt" <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Class: urn:content-classes:message
+In-Reply-To: <1367283987.30667.49.camel@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Apr 29, 2013 at 06:07:58PM -0700, David VomLehn wrote:
-> Things I'd like feedback on:
-> 1.	Is sysfs even a reasonable place for this?
-> 2.	Is this a workable interface for this information? Note that, unlike
-> 	the console, this is a lossy reporting mechanism.
-> 3.	Other suggestions?
+Hi Steve and all RT Folks
 
-Actually, the rough idea is to go a couple steps further and carry
-RAS-related events using the perf infrastructure. A userspace daemon
-then uses perf tool code to open a tracepoint in userspace and do
-whatever it wants with that info. When this is done, you won't need
-printk and the sysfs part of edac anymore - edac will only do mainly
-DRAM ECC to DIMM decoding.
+> I'm pleased to announce the 3.4.41-rt55-feat3 feature release.
+> 
+> Note, I first uploaded -feat2 then realized I didn't add a compile fix by
+> Mike Galbraith, and then created the -feat3 with that fix.
+I just wanted to say thanks that this patch enables compilation again with the 
+preempt rt patchset with CONFIG_HIGH_RES_TIMERS disabled :-). 
+I think this patch* should be moved out of the feat patchset into the stable 
+rt backport branch as this also doesn't compile beginning with the 3.6.36-rt50 
+patch with CONFIG_HIGH_RES_TIMERS disabled .
 
-Robert and I are working on this currently and gladly welcome any help.
-Here are some more concrete examples of what we want to do/what we're
-working on:
+As i understand that SLUB should give better realtime latencies? At least i 
+configured the kernel that way an its currently running some tests. 
 
-http://lwn.net/Articles/425990/
-http://thread.gmane.org/gmane.linux.kernel/1457591
+Best regards
+Tim
 
-HTH.
 
--- 
-Regards/Gruss,
-    Boris.
+*That is the coresponding line:
+patch-3.4.41-rt55-feat3.patch:55:+#if defined(CONFIG_PREEMPT_RT_BASE) && 
+defined(CONFIG_HIGH_RES_TIMERS)
 
-Sent from a fat crate under my desk. Formatting is fine.
---
+Please ignore this legalese as always on public lists (its attached 
+automatically):
+
+Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
+
+Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
+Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
+
+Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
+Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
+
+The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
+
+Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
