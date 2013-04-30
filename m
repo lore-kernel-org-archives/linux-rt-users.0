@@ -1,57 +1,54 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat3
-Date: Tue, 30 Apr 2013 11:14:36 +0200
-Message-ID: <2805818.g7STVSuEne@dabox>
-References: <1367283987.30667.49.camel@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.8.10-rt6
+Date: Tue, 30 Apr 2013 12:35:00 +0200
+Message-ID: <20130430103500.GA4688@linutronix.de>
+References: <20130429201202.GB7979@linutronix.de>
+ <20130429161925.2a6ea78a@riff.lan>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Steven Rostedt" <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Class: urn:content-classes:message
-In-Reply-To: <1367283987.30667.49.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:60305 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759915Ab3D3KfD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Apr 2013 06:35:03 -0400
+Content-Disposition: inline
+In-Reply-To: <20130429161925.2a6ea78a@riff.lan>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steve and all RT Folks
+* Clark Williams | 2013-04-29 16:19:25 [-0500]:
 
-> I'm pleased to announce the 3.4.41-rt55-feat3 feature release.
-> 
-> Note, I first uploaded -feat2 then realized I didn't add a compile fix by
-> Mike Galbraith, and then created the -feat3 with that fix.
-I just wanted to say thanks that this patch enables compilation again with the 
-preempt rt patchset with CONFIG_HIGH_RES_TIMERS disabled :-). 
-I think this patch* should be moved out of the feat patchset into the stable 
-rt backport branch as this also doesn't compile beginning with the 3.6.36-rt50 
-patch with CONFIG_HIGH_RES_TIMERS disabled .
+>On Mon, 29 Apr 2013 22:12:02 +0200
+>Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+>>     - suspend / resume seems to program program the timer wrong and wait
+>>       ages until it continues.
+>> 
+>
+>It has to be something we're doing when we apply RT to v3.8.x, since
+>v3.8.x suspends/resumes with no issues and I was able to suspend and
+>resume fine with the 3.6-rt series. 
 
-As i understand that SLUB should give better realtime latencies? At least i 
-configured the kernel that way an its currently running some tests. 
+Are your problems gone with:
 
-Best regards
-Tim
+diff --git a/kernel/printk.c b/kernel/printk.c
+index 6d52c34..8783ea5 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -1583,6 +1583,8 @@ asmlinkage int vprintk_emit(int facility, int level,
+ 	 */
+ 	if (unlikely(forced_early_printk(fmt, args)))
+ 		return 1;
++	if (in_nmi())
++		return 1;
+ 
+ 	boot_delay_msec(level);
+ 	printk_delay();
 
+>Clark
 
-*That is the coresponding line:
-patch-3.4.41-rt55-feat3.patch:55:+#if defined(CONFIG_PREEMPT_RT_BASE) && 
-defined(CONFIG_HIGH_RES_TIMERS)
-
-Please ignore this legalese as always on public lists (its attached 
-automatically):
-
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
-
-Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
+Sebastian
