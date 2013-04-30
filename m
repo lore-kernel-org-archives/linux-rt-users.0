@@ -1,41 +1,77 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat3
-Date: Tue, 30 Apr 2013 10:59:17 -0400
-Message-ID: <1367333957.30667.61.camel@gandalf.local.home>
-References: <1367283987.30667.49.camel@gandalf.local.home>
-	 <2805818.g7STVSuEne@dabox>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: UDP jitter
+Date: Tue, 30 Apr 2013 17:22:13 +0200
+Message-ID: <517FE1A5.1090702@osadl.org>
+References: <20130429222238.2b440d8c@sanja.asnn.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: Tim Sander <tim.sander@hbm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <2805818.g7STVSuEne@dabox>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: =?UTF-8?B?TmVib2rFoWEgxIZvc2nEhw==?= <nebojsa@asnn.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from toro.web-alm.net ([62.245.132.31]:60199 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932930Ab3D3PdL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Apr 2013 11:33:11 -0400
+In-Reply-To: <20130429222238.2b440d8c@sanja.asnn.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2013-04-30 at 11:14 +0200, Tim Sander wrote:
-> Hi Steve and all RT Folks
-> 
-> > I'm pleased to announce the 3.4.41-rt55-feat3 feature release.
-> > 
-> > Note, I first uploaded -feat2 then realized I didn't add a compile fix by
-> > Mike Galbraith, and then created the -feat3 with that fix.
-> I just wanted to say thanks that this patch enables compilation again with the 
-> preempt rt patchset with CONFIG_HIGH_RES_TIMERS disabled :-). 
-> I think this patch* should be moved out of the feat patchset into the stable 
-> rt backport branch as this also doesn't compile beginning with the 3.6.36-rt50 
-> patch with CONFIG_HIGH_RES_TIMERS disabled .
+Hi Neboj=C5=A1a,
 
-As the discussion was originally in the -feat thread, I didn't realize
-it was required for vanilla. Hmm, as it had nothing to do with softirqs
-I should have realized that. Oh well.
+> I am doing some work on a product running kernel 2.6.33.7.2-rt30.
+> Applications running on this kernel are a bit specific, meaning that
+> there are a number of threads running on a different priorities.
+> For a several months I was haunted with spurious jitter, detected on
+> UDP messages - multicast UDP messages where received on originating
+> node without any delay, but on other nodes a delay in range of 10s of
+> milliseconds was detected. Simply, it looked like a message was stuck
+> in kernel before finally getting transmitted.
+> Finally, thanks to LTTng tool, I was able to locate the problem down =
+to
+> this peace of code in net/sched/sch_generic.c:
+>
+> int sch_direct_xmit(struct sk_buff *skb, struct Qdisc *q,
+>                      struct net_device *dev, struct netdev_queue *txq=
+,
+>                      spinlock_t *root_lock)
+> {
+>          int ret =3D NETDEV_TX_BUSY;
+>
+>          /* And release qdisc */
+>          spin_unlock(root_lock);
+>
+>          HARD_TX_LOCK(dev, txq);
+>
+>          if (!netif_tx_queue_stopped(txq) && !netif_tx_queue_frozen(t=
+xq))
+>                  ret =3D dev_hard_start_xmit(skb, dev, txq);
+>
+>
+>          HARD_TX_UNLOCK(dev, txq);
+>
+>          spin_lock(root_lock);
+> ...
+>
+> When transmit queue is empty, thread wanting to send a message comes
+> directly to sch_direct_xmit, without changing context. It then releas=
+es
+> spin lock, and than takes another. So far so good.
+> If this starting thread is of lower priority, it can be preempted by
+> another thread, while still being in dev_hard_start_xmit function
+> This thread will check if HARD_TX_LOCK is taken, and if so, go on and
+> queue its own message.
+> If there are enough higher priority tasks, tx can be stalled
+> indefinitely. [..]
+Did you increase the priority of the related sirq-net-tx and sirq-net-r=
+x=20
+kernel threads appropriately? Some more details on enabling real-time=20
+Ethernet are given here -> https://www.osadl.org/?id=3D930.
 
-Anyway, I'm working on getting the mainline stable releases merged into
-the current stable-rt releases, and then I'll be looking at backports
-from upstream -rt. I'll add it then.
-
--- Steve
+	-Carsten.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
