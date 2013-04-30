@@ -1,54 +1,69 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.8.10-rt6
-Date: Tue, 30 Apr 2013 12:35:00 +0200
-Message-ID: <20130430103500.GA4688@linutronix.de>
-References: <20130429201202.GB7979@linutronix.de>
- <20130429161925.2a6ea78a@riff.lan>
+From: Jason Cooper <jason@lakedaemon.net>
+Subject: Re: Need help to measure and tune the latency in Linux RT
+Date: Tue, 30 Apr 2013 07:10:21 -0400
+Message-ID: <20130430111021.GC31290@titan.lakedaemon.net>
+References: <CALJd4cbfqRFiGHshv8A+0A8kFo_qW=rvREsdgj3jQ=-0Rix0-g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60305 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759915Ab3D3KfD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Apr 2013 06:35:03 -0400
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-embedded@vger.kernel.org, linux-newbie@vger.kernel.org,
+	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
+	linux-rt-users@vger.kernel.org
+To: Ashoka K <ashok.vinu@gmail.com>
+Return-path: <linux-newbie-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20130429161925.2a6ea78a@riff.lan>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <CALJd4cbfqRFiGHshv8A+0A8kFo_qW=rvREsdgj3jQ=-0Rix0-g@mail.gmail.com>
+Sender: linux-newbie-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Clark Williams | 2013-04-29 16:19:25 [-0500]:
+Ashoka,
 
->On Mon, 29 Apr 2013 22:12:02 +0200
->Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
->>     - suspend / resume seems to program program the timer wrong and wait
->>       ages until it continues.
->> 
->
->It has to be something we're doing when we apply RT to v3.8.x, since
->v3.8.x suspends/resumes with no issues and I was able to suspend and
->resume fine with the 3.6-rt series. 
+linux-embedded is pretty quiet.  I'm not even sure why I'm still
+subscribed to it.  You'll have better luck with your question by asking
+on linux-arm-kernel (added to the cc).  I believe there is also a
+linux-rt-users mailinglist [1].  A few comments below:
 
-Are your problems gone with:
+On Tue, Apr 30, 2013 at 01:57:21PM +0530, Ashoka K wrote:
+> Hi,
+> 
+> I have an embedded system running 2.6.33 cross compiled for ARM OMAP
+> with 1 GHZ uni-processor system.
 
-diff --git a/kernel/printk.c b/kernel/printk.c
-index 6d52c34..8783ea5 100644
---- a/kernel/printk.c
-+++ b/kernel/printk.c
-@@ -1583,6 +1583,8 @@ asmlinkage int vprintk_emit(int facility, int level,
- 	 */
- 	if (unlikely(forced_early_printk(fmt, args)))
- 		return 1;
-+	if (in_nmi())
-+		return 1;
- 
- 	boot_delay_msec(level);
- 	printk_delay();
+Wow, this is ancient.  Is this a vanilla kernel?  If it's a vendor
+kernel, you'll need to ask the vendor.
 
->Clark
+> The application has many threads and processes (around 15 total). In
+> that 1 thread is time critical and must run every interval confiurable
+> as 2, 4 or 8 milli sec etc. There is another thread which transfers
+> Images to a FTP or to HMI etc, whoever requested the image.
+> With this image transfer enabled my critical process misses the
+> deadline and timesout. This critical thread is at RR priority 50. I
+> used a HR timer thread with RR pri 55 to wakeup the critical thread
+> every 1 milli sec to do the job.
+> If image transfer is enabled i see that real time thread misses deadlines.
+> 
+> All traffic is flowing on common ethernet connection. Does it affect
+> in any way ?
+> 
+> How to find out where the kernel is waiting or delaying to schedule
+> the critical thread even though it is at higher RR priority. How to
+> measure the latency ?
+> 
+> I am trying to use Oprofile tool, but got some error in cross
+> compiling. Doesn't these tools add their own latency to the original
+> problem ?
+> 
+> Any tools ? which one is better. Please provide your input on this.
 
-Sebastian
+I'm not the guy to answer this ;-)  I'll just forward to the appropriate
+lists.
+
+hth,
+
+Jason.
+
+[1] http://vger.kernel.org/vger-lists.html#linux-rt-users
+--
+To unsubscribe from this list: send the line "unsubscribe linux-newbie" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Please read the FAQ at http://www.linux-learn.org/faqs
