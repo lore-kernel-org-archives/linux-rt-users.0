@@ -1,46 +1,50 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [ANNOUNCE] 3.8.10-rt6
-Date: Tue, 30 Apr 2013 10:47:14 +0200 (CEST)
-Message-ID: <alpine.LFD.2.03.1304301045080.23877@tycho>
-References: <20130429201202.GB7979@linutronix.de> <20130429161925.2a6ea78a@riff.lan>
+From: Borislav Petkov <bp@alien8.de>
+Subject: Re: EDAC messages about corrected errors affect realtime response
+Date: Tue, 30 Apr 2013 11:05:20 +0200
+Message-ID: <20130430090520.GA12095@pd.tnic>
+References: <20130430010733.GA1404@dvomlehn-z8.spacex.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130429161925.2a6ea78a@riff.lan>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-edac@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Robert Richter <rric@kernel.org>,
+	Tony Luck <tony.luck@intel.com>
+To: David VomLehn <David.VomLehn@spacex.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.skyhub.de ([78.46.96.112]:42307 "EHLO mail.skyhub.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750882Ab3D3JFd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 30 Apr 2013 05:05:33 -0400
+Content-Disposition: inline
+In-Reply-To: <20130430010733.GA1404@dvomlehn-z8.spacex.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Mon, Apr 29, 2013 at 06:07:58PM -0700, David VomLehn wrote:
+> Things I'd like feedback on:
+> 1.	Is sysfs even a reasonable place for this?
+> 2.	Is this a workable interface for this information? Note that, unlike
+> 	the console, this is a lossy reporting mechanism.
+> 3.	Other suggestions?
 
+Actually, the rough idea is to go a couple steps further and carry
+RAS-related events using the perf infrastructure. A userspace daemon
+then uses perf tool code to open a tracepoint in userspace and do
+whatever it wants with that info. When this is done, you won't need
+printk and the sysfs part of edac anymore - edac will only do mainly
+DRAM ECC to DIMM decoding.
 
-On Mon, 29 Apr 2013, Clark Williams wrote:
+Robert and I are working on this currently and gladly welcome any help.
+Here are some more concrete examples of what we want to do/what we're
+working on:
 
-> On Mon, 29 Apr 2013 22:12:02 +0200
-> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-> >     - suspend / resume seems to program program the timer wrong and wait
-> >       ages until it continues.
-> > 
-> 
-> It has to be something we're doing when we apply RT to v3.8.x, since
-> v3.8.x suspends/resumes with no issues and I was able to suspend and
-> resume fine with the 3.6-rt series.
+http://lwn.net/Articles/425990/
+http://thread.gmane.org/gmane.linux.kernel/1457591
 
-Our v3.8x series is currently no different than "vanilla" rt.
-quilt-import on top of v3.8.10, with no RH patches. So, I know you said 
-that just as a polite way to say, "maybe we messed up, but...", however 
-I'm confident we didn't.
+HTH.
 
-Also, that must be a typo, you meant to say that v3.8.x does have issues 
-with suspend / resume right?
- 
-> 
-> I'm looking at a git diff between 3.6.11-rt30 and 3.8.9-rt4,
-> specifically in kernel/time* and arch/x86/kernel but so far I'm not
-> seeing much that's RT specific.
-> 
-> Clark
-> 
+-- 
+Regards/Gruss,
+    Boris.
+
+Sent from a fat crate under my desk. Formatting is fine.
+--
