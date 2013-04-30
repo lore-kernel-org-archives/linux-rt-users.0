@@ -1,35 +1,50 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: How to find long execution times in kernel threads?
-Date: Tue, 30 Apr 2013 20:02:23 +0200
-Message-ID: <5180072F.7010102@meduna.org>
-References: <517FCBA3.1000909@meduna.org> <517FF6B1.9050204@osadl.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
+Date: Tue, 30 Apr 2013 14:08:15 -0400
+Message-ID: <1367345295.30667.68.camel@gandalf.local.home>
+References: <20130429201202.GB7979@linutronix.de>
+	 <20130429161925.2a6ea78a@riff.lan> <20130430170948.GB4688@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:52937 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1760203Ab3D3SCd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 30 Apr 2013 14:02:33 -0400
-In-Reply-To: <517FF6B1.9050204@osadl.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Clark Williams <williams@redhat.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130430170948.GB4688@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 30.04.2013 18:52, Carsten Emde wrote:
+On Tue, 2013-04-30 at 19:09 +0200, Sebastian Andrzej Siewior wrote:
 
-> Sure, record everything (trace-cmd record -e all) and analyze the
-> traces.
+> The next thing that happens is that RCU assumes nobody is doing any
+> progress (for almost 28secs) and triggers NMIs & printks to get some
+> attention. I have a trace where
+> - CPU0: arch_trigger_all_cpu_backtrace_handler() => printk()
+>         has "lock" and is spinning for logbuf_lock
+> 
+> - CPU1: print_cpu_stall() => printk() (spinning for the lock) => NMI =>
+>   arch_trigger_all_cpu_backtrace_handler()
+>         it may have logbuf_lock and is spinning for "lock"
+> 
+> I can't tell if CPU1 got the logbuf_lock at this time but it seemed that
+> it made no progress until I ended it.
+> This NMI releated deadlock is a problem which should also trigger
+> mainline, right?
 
-Well, the problem is that with record -e all I get 20 ms instead
-of 1 ms, so I'd say Mr. Heisenberg laughs at me loudly here ;)
+Well, yeah, as sending out a NMI stack dump is sorta the last resort,
+and is dangerous to do printks from NMI context.
 
-Thanks for the pointer anyway, I'll try to thoroughly read
-the available documentation and come up with some sane set
-of filters to start with.
+> 
+> Now, the time jump on the other hand is the real issue here and is
+> RT-only. It looks like we get a big number of timer updates via
+> tick_do_update_jiffies64() because according to ktime_get() that much
+> time really passed by.
 
-Thanks
--- 
-                                      Stano
+As the NMI dump only happens because of the time jump, which as you
+said, is -rt only, I wouldn't say that the NMI deadlock is a mainline
+bug.
 
+-- Steve
