@@ -1,64 +1,112 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: How to find long execution times in kernel threads?
-Date: Wed, 01 May 2013 10:19:07 +0200
-Message-ID: <5180CFFB.5070401@meduna.org>
-References: <517FCBA3.1000909@meduna.org> <517FF6B1.9050204@osadl.org> <5180072F.7010102@meduna.org> <5180C62F.6030904@osadl.org>
+From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
+Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
+Date: Wed, 01 May 2013 10:30:48 +0200
+Message-ID: <47157022.drQAKXAcr6@bs8>
+References: <20130429201202.GB7979@linutronix.de> <20130429161925.2a6ea78a@riff.lan> <20130430170948.GB4688@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:50578 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753655Ab3EAITS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 May 2013 04:19:18 -0400
-In-Reply-To: <5180C62F.6030904@osadl.org>
+Received: from moutng.kundenserver.de ([212.227.126.187]:49737 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751219Ab3EAId0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 1 May 2013 04:33:26 -0400
+In-Reply-To: <20130430170948.GB4688@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01.05.2013 09:37, Carsten Emde wrote:
-
-> He who laughs last, laughs loudest. Since the entire system slows down,
-> you may only need to adapt cycles and thresholds accordingly.
-
-Yep, I will try it. However as this is connected to a real application
-running parallel and generating some load pattern this is not so easy -
-for example I'll need to go down with the HZ, otherwise the timer
-ticking once per ms can be already too much, which in turn will
-probably affect the RR threads etc. There are also constraints
-from the outside world that have to be met while running - these
-are still far, but with tracing enabled not anymore an order
-of magnitude far.
-
-That I am running this on a low-spec embedded systems that already
-struggles with saving the data does not make it easier either.
-
->From what I was already able to capture I did not see anything
-that seems plainly wrong, the ksoftirqd just had really a lot
-of work with hrtimers, RCU, network etc. But I am not sure whether
-I caught _the_ situation.
-
-> Tracing is a very useful tool to identify sources of latencies
-> and has helped a lot to make Linux RT as good as it is today.
-
-Yep, the infrastructure is fantastic.
-
->   cyclictest -m -M -Sp90 -i500 -d0 -fb1000
+Am Dienstag, 30. April 2013, 19:09:48 schrieb Sebastian Andrzej Siewior:
+> * Clark Williams | 2013-04-29 16:19:25 [-0500]:
+> >On Mon, 29 Apr 2013 22:12:02 +0200
+> >
+> >Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> >>     - suspend / resume seems to program program the timer wrong and wait
+> >>     
+> >>       ages until it continues.
+> >
+> >It has to be something we're doing when we apply RT to v3.8.x, since
+> >v3.8.x suspends/resumes with no issues and I was able to suspend and
+> >resume fine with the 3.6-rt series.
 > 
-> probably will break at the first occurrence of the latency in question
-> and let you diagnose its origin at the end of the trace output.
+> I think I figured out what is going on or atleast I think I did.
+> 
+> This log snippet is from the resume path (from suspend to mem):
+> 
+> [   15.052115] Enabling non-boot CPUs ...
+> [   15.052115] smpboot: Booting Node 0 Processor 1 APIC 0x1
+> [   14.841378] Initializing CPU#1
+> [   42.840017] [sched_delayed] sched: RT throttling activated
+> [   42.842144] CPU1 is up
+> [   42.842536] smpboot: Booting Node 0 Processor 2 APIC 0x2
+> 
+> Two things happen here:
+> - the time goes backwards from 15.X to 14.X. This is okay because the
+>   14.X is the timestamp from the secondary CPU not - yet synchronized
+>   with the bootcpu
+> - the printk with "CPU1 is up" is comming from the boot CPU and
+>   according to the timestamp about 28secs passed by. But this did not
+>   really happen as the whole procedure took less time.
+> 
+> The next thing that happens is that RCU assumes nobody is doing any
+> progress (for almost 28secs) and triggers NMIs & printks to get some
+> attention. I have a trace where
+> - CPU0: arch_trigger_all_cpu_backtrace_handler() => printk()
+>         has "lock" and is spinning for logbuf_lock
+> 
+> - CPU1: print_cpu_stall() => printk() (spinning for the lock) => NMI =>
+>   arch_trigger_all_cpu_backtrace_handler()
+>         it may have logbuf_lock and is spinning for "lock"
+> 
+> I can't tell if CPU1 got the logbuf_lock at this time but it seemed that
+> it made no progress until I ended it.
+> This NMI releated deadlock is a problem which should also trigger
+> mainline, right?
+> 
+> Now, the time jump on the other hand is the real issue here and is
+> RT-only. It looks like we get a big number of timer updates via
+> tick_do_update_jiffies64() because according to ktime_get() that much
+> time really passed by.
+> 
+> The sollution seems as simple as
+> 
+> From c27eb2e0ab0b5acd96a4b62288976f1b72789b3e Mon Sep 17 00:00:00 2001
+> From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> Date: Tue, 30 Apr 2013 18:53:55 +0200
+> Subject: [PATCH] time/timekeeping: shadow tk->cycle_last together with
+>  clock->cycle_last
+> 
+> Commit ("timekeeping: Store cycle_last value in timekeeper struct as
+> well") introduced a tk-> based cycle_last values which needs to be reset
+> on resume path as well or else ktime_get() will think that time
+> increased a lot.
+> 
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  kernel/time/timekeeping.c |    1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/kernel/time/timekeeping.c b/kernel/time/timekeeping.c
+> index 99f943b..688817f 100644
+> --- a/kernel/time/timekeeping.c
+> +++ b/kernel/time/timekeeping.c
+> @@ -777,6 +777,7 @@ static void timekeeping_resume(void)
+>  	}
+>  	/* re-base the last cycle value */
+>  	tk->clock->cycle_last = tk->clock->read(tk->clock);
+> +	tk->cycle_last = tk->clock->cycle_last;
+>  	tk->ntp_error = 0;
+>  	timekeeping_suspended = 0;
+>  	timekeeping_update(tk, false, true);
+> 
+> >Clark
+> 
+> Sebastian
+> --
+This patch together with the in_nmi() patch solves the resume problem for me.
+Architecture X64, patched against 3.8.10-rt6.
 
-I tried this but I was unable to load a trace.dat produced
-by breaking the tracing this way into kernelshark on at least
-two occasions. Only stopping the trace from trace-cmd itself
-worked. Are there some known issues?
+THANKS!
 
-I am using trace-cmd from git. The recording and examining
-system are not the same, but are reasonably similar library-wise
-(both are Debian squeeze-based).
-
-Thanks
--- 
-                                  Stano
-
+Bernhard
