@@ -1,18 +1,18 @@
 From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
 Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
-Date: Wed, 01 May 2013 10:30:48 +0200
-Message-ID: <47157022.drQAKXAcr6@bs8>
+Date: Wed, 01 May 2013 10:32:43 +0200
+Message-ID: <2408558.MfQ5MZYUhX@bs8>
 References: <20130429201202.GB7979@linutronix.de> <20130429161925.2a6ea78a@riff.lan> <20130430170948.GB4688@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7Bit
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.187]:49737 "EHLO
+Received: from moutng.kundenserver.de ([212.227.17.9]:62120 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751219Ab3EAId0 (ORCPT
+	with ESMTP id S1751219Ab3EAIdl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 May 2013 04:33:26 -0400
+	Wed, 1 May 2013 04:33:41 -0400
 In-Reply-To: <20130430170948.GB4688@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
