@@ -1,43 +1,49 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
-Date: Wed, 01 May 2013 20:49:39 -0400
-Message-ID: <1367455779.30667.113.camel@gandalf.local.home>
-References: <1366786204.5977.10.camel@marge.simpson.net>
-	 <1366853695.8964.120.camel@edumazet-glaptop>
-	 <1366865490.4595.22.camel@marge.simpson.net>
-	 <1366866233.8964.128.camel@edumazet-glaptop>
-	 <20130426105030.GE20927@linutronix.de>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: 3.8.10-rt6: suspend/resume irqs enabled splat
+Date: Thu, 02 May 2013 07:43:53 +0200
+Message-ID: <1367473433.5808.8.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Eric Dumazet <eric.dumazet@gmail.com>,
-	Mike Galbraith <bitbucket@online.de>,
-	David Miller <davem@davemloft.net>,
-	RT <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <20130426105030.GE20927@linutronix.de>
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from moutng.kundenserver.de ([212.227.126.171]:49650 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751237Ab3EBFoD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 2 May 2013 01:44:03 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-04-26 at 12:50 +0200, Sebastian Andrzej Siewior wrote:
-> * Eric Dumazet | 2013-04-24 22:03:53 [-0700]:
-> 
-> >On Thu, 2013-04-25 at 06:51 +0200, Mike Galbraith wrote:
-> >
-> >> Thanks for the fix.  I'll apply it and beat on the box some more (g.p.).
-> >> Gripe only happened the one time during long workout day.
-> >
-> >To force it to happen, you need to invalidate the cached dst in socket.
-> >
-> >So presumably doing in the background some "ip ro ..." commands to
-> >add/delete routes.
-> 
-> With this instructions I can crash in like 3-5 minutes, with your patch
-> it runs now for 50minutes now. Thanks.
+Suspend/resume works fine on laptop, but, suspend, let it sit there a
+bit, then resume produces the gripe below.  Seems to be -rt specific,
+3.8.10 with only voluntary preempt/autogroup config delta doesn't gripe.
 
-Is this something going into the stable tree, or does it not affect 3.0,
-3.2, 3.4 or 3.6?
+[  301.005804] ------------[ cut here ]------------
+[  301.005813] WARNING: at kernel/sched/clock.c:245 sched_clock_cpu+0x108/0x120()
+[  301.005815] Hardware name: SATELLITE T130
+[  301.005884] Modules linked in: fuse nfsd lockd rfcomm nfs_acl auth_rpcgss bnep sunrpc cpufreq_conservative cpufreq_ondemand cpufreq_userspace cpufreq_powersave arc4 rtl8192se rtlwifi mac80211 snd_hda_codec_hdmi snd_hda_codec_conexant btusb bluetooth snd_hda_intel snd_hda_codec snd_hwdep snd_pcm_oss cfg80211 snd_pcm snd_seq snd_timer snd_seq_device snd_mixer_oss snd soundcore iTCO_wdt acpi_cpufreq iTCO_vendor_support lpc_ich snd_page_alloc sg mperf toshiba_acpi sparse_keymap ehci_pci coretemp joydev serio_raw i2c_i801 atl1c mfd_core wmi toshiba_bluetooth battery ac rfkill edd microcode ipv6 autofs4 ext4 mbcache jbd2 crc16 hid_generic usbhid hid sd_mod crc_t10dif uhci_hcd ehci_hcd rtc_cmos i915 drm_kms_helper drm i2c_algo_bit usbcore button usb_common video ahci libahci libata scsi_mod fa
+ n processor thermal
+[  301.005889] Pid: 0, comm: swapper/0 Not tainted 3.8.10-rt6-smp #25
+[  301.005891] Call Trace:
+[  301.005899]  [<ffffffff8103dd2f>] warn_slowpath_common+0x7f/0xc0
+[  301.005905]  [<ffffffff8103dd8a>] warn_slowpath_null+0x1a/0x20
+[  301.005909]  [<ffffffff81079a48>] sched_clock_cpu+0x108/0x120
+[  301.005912]  [<ffffffff81079b31>] sched_clock_idle_sleep_event+0x11/0x20
+[  301.005922]  [<ffffffffa000d190>] acpi_idle_enter_simple+0x78/0xbe [processor]
+[  301.005931]  [<ffffffffa000d307>] acpi_idle_enter_bm+0xdf/0x21c [processor]
+[  301.005937]  [<ffffffff8134ce70>] ? cpufreq_frequency_table_cpuinfo+0x120/0x120
+[  301.005942]  [<ffffffff8134ce89>] cpuidle_enter+0x19/0x20
+[  301.005945]  [<ffffffff8134da71>] cpuidle_wrap_enter+0x41/0xa0
+[  301.005951]  [<ffffffff8134dae0>] cpuidle_enter_tk+0x10/0x20
+[  301.005954]  [<ffffffff8134d571>] cpuidle_idle_call+0xe1/0x410
+[  301.005959]  [<ffffffff8100bfea>] cpu_idle+0xca/0x130
+[  301.005963]  [<ffffffff8142027b>] ? rest_init+0x7b/0x90
+[  301.005965]  [<ffffffff81420280>] rest_init+0x80/0x90
+[  301.005970]  [<ffffffff818d4b91>] start_kernel+0x357/0x364
+[  301.005973]  [<ffffffff818d46cc>] ? repair_env_string+0x5a/0x5a
+[  301.005976]  [<ffffffff818d432d>] x86_64_start_reservations+0x131/0x135
+[  301.005979]  [<ffffffff818d4421>] x86_64_start_kernel+0xf0/0xf7
+[  301.005981] ---[ end trace 0000000000000002 ]---
 
--- Steve
+
