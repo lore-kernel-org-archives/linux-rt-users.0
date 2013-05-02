@@ -1,62 +1,78 @@
-From: "Tim Sander" <tim.sander@hbm.com>
-Subject: Re: [ANNOUNCE] 3.4.41-rt55-feat3
-Date: Thu, 02 May 2013 10:07:47 +0200
-Message-ID: <5389720.ZZ1mLuoD9D@dabox>
-References: <1367283987.30667.49.camel@gandalf.local.home> <2805818.g7STVSuEne@dabox> <1367333957.30667.61.camel@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
+ PREEMPT_RT
+Date: Thu, 02 May 2013 10:26:53 -0400
+Message-ID: <1367504813.30667.128.camel@gandalf.local.home>
+References: <1365705214.9609.58.camel@gandalf.local.home>
+	 <20130426082407.GB20927@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-Cc: "LKML" <linux-kernel@vger.kernel.org>,
-	"RT" <linux-rt-users@vger.kernel.org>,
-	"Thomas Gleixner" <tglx@linutronix.de>,
-	"Carsten Emde" <C.Emde@osadl.org>, "John Kacur" <jkacur@redhat.com>
-To: "Steven Rostedt" <rostedt@goodmis.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <clark@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Tony Luck <tony.luck@intel.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Mauro Carvalho Chehab <mchehab@redhat.com>,
+	Ingo Molnar <mingo@kernel.org>,
+	"H. Peter Anvin" <hpa@linux.intel.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Class: urn:content-classes:message
-In-Reply-To: <1367333957.30667.61.camel@gandalf.local.home>
+In-Reply-To: <20130426082407.GB20927@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi
-> > > I'm pleased to announce the 3.4.41-rt55-feat3 feature release.
-> > > 
-> > > Note, I first uploaded -feat2 then realized I didn't add a compile fix
-> > > by
-> > > Mike Galbraith, and then created the -feat3 with that fix.
-> > 
-> > I just wanted to say thanks that this patch enables compilation again with
-> > the preempt rt patchset with CONFIG_HIGH_RES_TIMERS disabled :-).
-> > I think this patch* should be moved out of the feat patchset into the
-> > stable rt backport branch as this also doesn't compile beginning with the
-> > 3.6.36-rt50 patch with CONFIG_HIGH_RES_TIMERS disabled .
+Grumble, somehow these emails got lost in the crowd.
+
+On Fri, 2013-04-26 at 10:24 +0200, Sebastian Andrzej Siewior wrote:
+> * Steven Rostedt | 2013-04-11 14:33:34 [-0400]:
 > 
-> As the discussion was originally in the -feat thread, I didn't realize
-> it was required for vanilla. Hmm, as it had nothing to do with softirqs
-> I should have realized that. Oh well.
-Yes, i only realized it later on, that the compile failure with 
-CONFIG_HIGH_RES_TIMERS was introduced in 3.6.36-rt50 when i tried the feature 
-patch. Then i prepared a patch only to see that a fix was already in the 
-feature branch. Alas.
+> >diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+> >index e8d8ad0..060e473 100644
+> >--- a/arch/x86/kernel/cpu/mcheck/mce.c
+> >+++ b/arch/x86/kernel/cpu/mcheck/mce.c
+> >@@ -1308,6 +1309,61 @@ static void mce_do_trigger(struct work_struct *work)
+> > 
+> > static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+> > 
+> >+static void __mce_notify_work(void)
+> >+{
+> >+	/* Not more than two messages every minute */
+> >+	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+> >+
+> >+	/* wake processes polling /dev/mcelog */
+> >+	wake_up_interruptible(&mce_chrdev_wait);
+> >+
+> >+	/*
+> >+	 * There is no risk of missing notifications because
+> >+	 * work_pending is always cleared before the function is
+> >+	 * executed.
+> >+	 */
+> >+	if (mce_helper[0] && !work_pending(&mce_trigger_work))
+> >+		schedule_work(&mce_trigger_work);
+> 
+> Why is here this work_pending() check? You can't enqueue a work item
+> twice.
 
-> Anyway, I'm working on getting the mainline stable releases merged into
-> the current stable-rt releases, and then I'll be looking at backports
-> from upstream -rt. I'll add it then.
-Sounds good.
+Yep, that doesn't look needed. Looking at the current code we have this
+commit:
 
-Tim
+commit 4d899be584d4b4c5d6b49d655176b25cebf6ff1a
+Author: Tejun Heo <tj@kernel.org>
+Date:   Fri Dec 21 17:57:05 2012 -0800
 
-Please ignore this legalese as always on public lists (its attached 
-automatically):
+    x86/mce: don't use [delayed_]work_pending()
+    
+    There's no need to test whether a (delayed) work item in pending
+    before queueing, flushing or cancelling it.  Most uses are unnecessary
+    and quite a few of them are buggy.
+    
+    Remove unnecessary pending tests from x86/mce.  Only compile tested.
+    
+    v2: Local var work removed from mce_schedule_work() as suggested by
+        Borislav.
 
-Hottinger Baldwin Messtechnik GmbH, Im Tiefen See 45, 64293 Darmstadt, Germany | www.hbm.com 
 
-Registered as GmbH (German limited liability corporation) in the commercial register at the local court of Darmstadt, HRB 1147  
-Company domiciled in Darmstadt | CEO: Andreas Huellhorst | Chairman of the board: James Charles Webster
-
-Als Gesellschaft mit beschraenkter Haftung eingetragen im Handelsregister des Amtsgerichts Darmstadt unter HRB 1147 
-Sitz der Gesellschaft: Darmstadt | Geschaeftsfuehrung: Andreas Huellhorst | Aufsichtsratsvorsitzender: James Charles Webster
-
-The information in this email is confidential. It is intended solely for the addressee. If you are not the intended recipient, please let me know and delete this email.
-
-Die in dieser E-Mail enthaltene Information ist vertraulich und lediglich fur den Empfaenger bestimmt. Sollten Sie nicht der eigentliche Empfaenger sein, informieren Sie mich bitte kurz und loeschen diese E-Mail.
+-- Steve
