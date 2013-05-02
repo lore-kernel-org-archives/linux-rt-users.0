@@ -1,10 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT v2] x86/mce: Defer mce wakeups to threads for
  PREEMPT_RT
-Date: Thu, 02 May 2013 10:26:53 -0400
-Message-ID: <1367504813.30667.128.camel@gandalf.local.home>
+Date: Thu, 02 May 2013 10:33:19 -0400
+Message-ID: <1367505199.30667.132.camel@gandalf.local.home>
 References: <1365705214.9609.58.camel@gandalf.local.home>
-	 <20130426082407.GB20927@linutronix.de>
+	 <20130426084137.GC20927@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -20,59 +20,35 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	"H. Peter Anvin" <hpa@linux.intel.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130426082407.GB20927@linutronix.de>
+In-Reply-To: <20130426084137.GC20927@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Grumble, somehow these emails got lost in the crowd.
-
-On Fri, 2013-04-26 at 10:24 +0200, Sebastian Andrzej Siewior wrote:
+On Fri, 2013-04-26 at 10:41 +0200, Sebastian Andrzej Siewior wrote:
 > * Steven Rostedt | 2013-04-11 14:33:34 [-0400]:
 > 
-> >diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-> >index e8d8ad0..060e473 100644
-> >--- a/arch/x86/kernel/cpu/mcheck/mce.c
-> >+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-> >@@ -1308,6 +1309,61 @@ static void mce_do_trigger(struct work_struct *work)
-> > 
-> > static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
-> > 
-> >+static void __mce_notify_work(void)
-> >+{
-> >+	/* Not more than two messages every minute */
-> >+	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
-> >+
-> >+	/* wake processes polling /dev/mcelog */
-> >+	wake_up_interruptible(&mce_chrdev_wait);
-> >+
-> >+	/*
-> >+	 * There is no risk of missing notifications because
-> >+	 * work_pending is always cleared before the function is
-> >+	 * executed.
-> >+	 */
-> >+	if (mce_helper[0] && !work_pending(&mce_trigger_work))
-> >+		schedule_work(&mce_trigger_work);
+> >As wait queue locks are notorious for long hold times, we can not
+> >convert them to raw_spin_locks without causing issues with -rt. But
+> >Thomas has created a "simple-wait" structure that uses raw spin locks
+> >which may have been a good fit.
+> >
+> >Unfortunately, wait queues are not the only issue, as the mce_notify_irq
+> >also does a schedule_work(), which grabs the workqueue spin locks that
+> >have the exact same issue.
 > 
-> Why is here this work_pending() check? You can't enqueue a work item
-> twice.
+> mce_notify_irq() can use simple_waitqueue, no?
 
-Yep, that doesn't look needed. Looking at the current code we have this
-commit:
+Yeah, and I went down that path.
 
-commit 4d899be584d4b4c5d6b49d655176b25cebf6ff1a
-Author: Tejun Heo <tj@kernel.org>
-Date:   Fri Dec 21 17:57:05 2012 -0800
+But it also schedules work, which has the issue.
 
-    x86/mce: don't use [delayed_]work_pending()
-    
-    There's no need to test whether a (delayed) work item in pending
-    before queueing, flushing or cancelling it.  Most uses are unnecessary
-    and quite a few of them are buggy.
-    
-    Remove unnecessary pending tests from x86/mce.  Only compile tested.
-    
-    v2: Local var work removed from mce_schedule_work() as suggested by
-        Borislav.
+> The other issue is that mce_report_event() is scheduling a per-cpu
+> workqueue (mce_schedule_work) in case of a memory fault. This has the
+> same issue.
 
+Yeah, that looks like it can be an issue too. I wonder if we can use the
+same thread and use flags check what to do. Atomically set the flag for
+the function to perform, and then have the thread clear it before doing
+the function and only go to sleep when all flags are cleared.
 
 -- Steve
