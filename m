@@ -1,46 +1,61 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] tcp: force a dst refcount when prequeue packet
-Date: Fri, 03 May 2013 17:37:04 -0400
-Message-ID: <20130503213817.778015700@goodmis.org>
-References: <20130503213703.521223574@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
+Date: Fri, 03 May 2013 17:56:23 -0400
+Message-ID: <1367618183.7373.22.camel@gandalf.local.home>
+References: <1366786204.5977.10.camel@marge.simpson.net>
+	 <1366853695.8964.120.camel@edumazet-glaptop>
+	 <1366865490.4595.22.camel@marge.simpson.net>
+	 <1366866233.8964.128.camel@edumazet-glaptop>
+	 <20130426105030.GE20927@linutronix.de>
+	 <1367455779.30667.113.camel@gandalf.local.home>
+	 <20130503082058.GA8230@linutronix.de>
+	 <1367589787.29805.23.camel@edumazet-glaptop>
+	 <1367594003.7373.13.camel@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Mike Galbraith <bitbucket@online.de>,
-	Eric Dumazet <edumazet@google.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-tcp-force-a-dst-refcount-when-prequeue-packet.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	David Miller <davem@davemloft.net>,
+	RT <linux-rt-users@vger.kernel.org>,
+	netdev <netdev@vger.kernel.org>
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:27110 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752034Ab3ECV4Z (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 May 2013 17:56:25 -0400
+In-Reply-To: <1367594003.7373.13.camel@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Eric Dumazet <edumazet@google.com>
+On Fri, 2013-05-03 at 11:13 -0400, Steven Rostedt wrote:
+> On Fri, 2013-05-03 at 07:03 -0700, Eric Dumazet wrote:
+> > On Fri, 2013-05-03 at 10:20 +0200, Sebastian Andrzej Siewior wrote:
+> > > * Steven Rostedt | 2013-05-01 20:49:39 [-0400]:
+> > > 
+> > > >Is this something going into the stable tree, or does it not affect 3.0,
+> > > >3.2, 3.4 or 3.6?
+> > > 
+> > > Mike Galbraith reported it against v3.6 so I would say that this is one
+> > > candidate. I just booted v3.4.41-rt55 and it runs for 20 minutes now
+> > > without any issues. Maybe it crashes after I sent the email but I hope
+> > > it does not :)
+> > 
+> > Thats because the particular way to trigger the bug was to use the IP
+> > early demux, and it was added in 3.5
+> 
+> Is it OK to keep it? I pulled the patch into 3.2-rt and 3.4-rt. I can
+> remove it if you think it's not necessary and will cause a slight
+> performance penalty.
 
-Before escaping RCU protected section and adding packet into
-prequeue, make sure the dst is refcounted.
+I took it out of 3.2-rt as I needed to add a patch and rerun my tests.
+But I'll leave it in 3.4-rt (unless you think I shoudn't) just so I
+don't need to rerun the tests. I'm only posting a pre-release anyway.
 
-Cc: stable-rt@vger.kernel.org
-Reported-by: Mike Galbraith <bitbucket@online.de>
-Signed-off-by: Eric Dumazet <edumazet@google.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- include/net/tcp.h |    1 +
- 1 file changed, 1 insertion(+)
+Thanks,
 
-diff --git a/include/net/tcp.h b/include/net/tcp.h
-index 1f000ff..9297897 100644
---- a/include/net/tcp.h
-+++ b/include/net/tcp.h
-@@ -1015,6 +1015,7 @@ static inline bool tcp_prequeue(struct sock *sk, struct sk_buff *skb)
- 	if (sysctl_tcp_low_latency || !tp->ucopy.task)
- 		return false;
- 
-+	skb_dst_force(skb);
- 	__skb_queue_tail(&tp->ucopy.prequeue, skb);
- 	tp->ucopy.memory += skb->truesize;
- 	if (tp->ucopy.memory > sk->sk_rcvbuf) {
--- 
-1.7.10.4
+-- Steve
+
+
