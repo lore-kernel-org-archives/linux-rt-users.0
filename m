@@ -1,114 +1,73 @@
-From: Josh Cartwright <josh.cartwright@ni.com>
-Subject: 3.2-rt build issue with CONFIG_DEBUG_ATOMIC_SLEEP
-Date: Thu, 2 May 2013 22:30:20 -0500
-Message-ID: <20130503033019.GB5011@beefymiracle.amer.corp.natinst.com>
+From: Jain Priyanka-B32167 <B32167@freescale.com>
+Subject: RE: [ANNOUNCE] 3.8.10-rt6
+Date: Fri, 3 May 2013 04:40:33 +0000
+Message-ID: <AC83832D6324604BB08FAE5A33553F190B360375@039-SN2MPN1-013.039d.mgd.msft.net>
+References: <20130429201202.GB7979@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="Pd0ReVV5GZGQvF3a"
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"rostedt@goodmis.org" <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailserver5.natinst.com ([130.164.80.5]:56435 "EHLO
-	spamkiller05.natinst.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750739Ab3ECECs (ORCPT
+Received: from co9ehsobe001.messaging.microsoft.com ([207.46.163.24]:44482
+	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751189Ab3ECEkh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 00:02:48 -0400
-Content-Disposition: inline
+	Fri, 3 May 2013 00:40:37 -0400
+In-Reply-To: <20130429201202.GB7979@linutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+SGVsbG8gU2ViYXN0aWFuLA0KDQpJdCBpcyBtZW50aW9uZWQgYmVsb3cgdGhhdCBTTHhCIGlzIGJy
+b2tlbi4NCkkgYXNzdW1lIGl0IG1lYW5zIGJpdCBTTFVCIGFuZCBTTEFCIGlzIGJyb2tlbj8NCkNh
+biB5b3UgcGxlYXNlIHNoYXJlIHRoZSBlcnJvci1kZXRhaWxzL2xvZ3Mvc2NlbmFyaW8vc3RlcHMt
+dG8tcmVwcm9kdWNlLg0KDQpSZWdhcmRzDQpQcml5YW5rYQ0KDQo+IC0tLS0tT3JpZ2luYWwgTWVz
+c2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyBb
+bWFpbHRvOmxpbnV4LXJ0LXVzZXJzLQ0KPiBvd25lckB2Z2VyLmtlcm5lbC5vcmddIE9uIEJlaGFs
+ZiBPZiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yDQo+IFNlbnQ6IFR1ZXNkYXksIEFwcmlsIDMw
+LCAyMDEzIDE6NDIgQU0NCj4gVG86IGxpbnV4LXJ0LXVzZXJzDQo+IENjOiBMS01MOyBUaG9tYXMg
+R2xlaXhuZXI7IHJvc3RlZHRAZ29vZG1pcy5vcmcNCj4gU3ViamVjdDogW0FOTk9VTkNFXSAzLjgu
+MTAtcnQ2DQo+IA0KPiBEZWFyIFJUIEZvbGtzLA0KPiANCj4gSSdtIHBsZWFzZWQgdG8gYW5ub3Vu
+Y2UgdGhlIDMuOC4xMC1ydDYgcmVsZWFzZS4NCj4gDQo+IGNoYW5nZXMgc2luY2UgdjMuOC4xMC1y
+dDU6DQo+IC0gdGhlIGk5MTUgY29tcGlsZXMgYWdhaW4gYWZ0ZXIgSSBicm9rZSBpdCBpbiB0aGUg
+bGFzdCByZWxlYXNlLiBBIHBhdGNoDQo+ICAgd2FzIHNlbnQgYnkgQ2Fyc3RlbiBFbWRlLg0KPiAN
+Cj4gS25vd24gaXNzdWVzOg0KPiANCj4gICAgIC0gU0x4QiBpcyBicm9rZW4gb24gUG93ZXJQQy4N
+Cj4gICAgIC0gc3VzcGVuZCAvIHJlc3VtZSBzZWVtcyB0byBwcm9ncmFtIHByb2dyYW0gdGhlIHRp
+bWVyIHdyb25nIGFuZCB3YWl0DQo+ICAgICAgIGFnZXMgdW50aWwgaXQgY29udGludWVzLg0KPiAN
+Cj4gVGhlIGRlbHRhIHBhdGNoIGFnYWluc3QgdjMuOC4xMC1ydDUgaXMgYXBwZW5kZWQgYmVsb3cg
+YW5kIGNhbiBiZSBmb3VuZA0KPiBoZXJlOg0KPiANCj4gICBodHRwczovL3d3dy5rZXJuZWwub3Jn
+L3B1Yi9saW51eC9rZXJuZWwvcHJvamVjdHMvcnQvMy44L2luY3IvcGF0Y2gtDQo+IDMuOC4xMC1y
+dDUtcnQ2LnBhdGNoLnh6DQo+IA0KPiBUaGUgUlQgcGF0Y2ggYWdhaW5zdCAzLjguOSBjYW4gYmUg
+Zm91bmQgaGVyZToNCj4gDQo+ICAgaHR0cHM6Ly93d3cua2VybmVsLm9yZy9wdWIvbGludXgva2Vy
+bmVsL3Byb2plY3RzL3J0LzMuOC9wYXRjaC0zLjguMTAtDQo+IHJ0Ni5wYXRjaC54eg0KPiANCj4g
+VGhlIHNwbGl0IHF1aWx0IHF1ZXVlIGlzIGF2YWlsYWJsZSBhdDoNCj4gDQo+ICAgaHR0cHM6Ly93
+d3cua2VybmVsLm9yZy9wdWIvbGludXgva2VybmVsL3Byb2plY3RzL3J0LzMuOC9wYXRjaGVzLTMu
+OC4xMC0NCj4gcnQ2LnRhci54eg0KPiANCj4gU2ViYXN0aWFuDQo+IA0KPiBkaWZmIC0tZ2l0IGEv
+ZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV9nZW1fZXhlY2J1ZmZlci5jDQo+IGIvZHJpdmVycy9n
+cHUvZHJtL2k5MTUvaTkxNV9nZW1fZXhlY2J1ZmZlci5jDQo+IGluZGV4IDgxMTI1ZGUuLmVhYmQz
+ZGQgMTAwNjQ0DQo+IC0tLSBhL2RyaXZlcnMvZ3B1L2RybS9pOTE1L2k5MTVfZ2VtX2V4ZWNidWZm
+ZXIuYw0KPiArKysgYi9kcml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X2dlbV9leGVjYnVmZmVyLmMN
+Cj4gQEAgLTgxNCw2ICs4MTQsNyBAQCBpOTE1X2dlbV9kb19leGVjYnVmZmVyKHN0cnVjdCBkcm1f
+ZGV2aWNlICpkZXYsIHZvaWQNCj4gKmRhdGEsDQo+ICAJc3RydWN0IGludGVsX3JpbmdfYnVmZmVy
+ICpyaW5nOw0KPiAgCXUzMiBjdHhfaWQgPSBpOTE1X2V4ZWNidWZmZXIyX2dldF9jb250ZXh0X2lk
+KCphcmdzKTsNCj4gIAl1MzIgZXhlY19zdGFydCwgZXhlY19sZW47DQo+ICsJdTMyIHNlcW5vOw0K
+PiAgCXUzMiBtYXNrOw0KPiAgCXUzMiBmbGFnczsNCj4gIAlpbnQgcmV0LCBtb2RlLCBpOw0KPiBA
+QCAtMTA2OCw3ICsxMDY5LDggQEAgaTkxNV9nZW1fZG9fZXhlY2J1ZmZlcihzdHJ1Y3QgZHJtX2Rl
+dmljZSAqZGV2LCB2b2lkDQo+ICpkYXRhLA0KPiAgCQkJZ290byBlcnI7DQo+ICAJfQ0KPiANCj4g
+LQl0cmFjZV9pOTE1X2dlbV9yaW5nX2Rpc3BhdGNoKHJpbmcsIGludGVsX3JpbmdfZ2V0X3NlcW5v
+KHJpbmcpLA0KPiBmbGFncyk7DQo+ICsJc2Vxbm8gPSBpbnRlbF9yaW5nX2dldF9zZXFubyhyaW5n
+KTsNCj4gKwl0cmFjZV9pOTE1X2dlbV9yaW5nX2Rpc3BhdGNoKHJpbmcsIHNlcW5vLCBmbGFncyk7
+DQo+ICAJaTkxNV90cmFjZV9pcnFfZ2V0KHJpbmcsIHNlcW5vKTsNCj4gDQo+ICAJaTkxNV9nZW1f
+ZXhlY2J1ZmZlcl9tb3ZlX3RvX2FjdGl2ZSgmb2JqZWN0cywgcmluZyk7IGRpZmYgLS1naXQNCj4g
+YS9sb2NhbHZlcnNpb24tcnQgYi9sb2NhbHZlcnNpb24tcnQgaW5kZXggMGVmZTdiYS4uOGZjNjA1
+ZCAxMDA2NDQNCj4gLS0tIGEvbG9jYWx2ZXJzaW9uLXJ0DQo+ICsrKyBiL2xvY2FsdmVyc2lvbi1y
+dA0KPiBAQCAtMSArMSBAQA0KPiAtLXJ0NQ0KPiArLXJ0Ng0KPiAtLQ0KPiBUbyB1bnN1YnNjcmli
+ZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtcnQtdXNl
+cnMiDQo+IGluIHRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwu
+b3JnIE1vcmUgbWFqb3Jkb21vIGluZm8NCj4gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFq
+b3Jkb21vLWluZm8uaHRtbA0KDQo=
 
---Pd0ReVV5GZGQvF3a
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hey Steven-
-
-It looks like commit 78563280521 ("sched: Check for idle task in
-might_sleep()") in the v3.2-rt stable branch has a dependency on
-is_idle_task() being defined, which doesn't exist in 3.2.
-
-This causes build breakages with CONFIG_DEBUG_ATOMIC_SLEEP:
-
-  kernel/sched.c: In function =E2=80=98__might_sleep=E2=80=99:
-  kernel/sched.c:8942:7: error: implicit declaration of function =E2=80=98i=
-s_idle_task=E2=80=99 [-Werror=3Dimplicit-function-declaration]
-
-Fortunately, upstream commit c4f30608435 (shown below) is nice and
-contained, and can be cherry-picked cleanly.
-
-Thanks,
-
-   Josh
-
---8<--
-=46rom: "Paul E. McKenney" <paul.mckenney@linaro.org>
-Subject: [PATCH] sched: Add is_idle_task() to handle invalidated uses of id=
-le_cpu()
-
-Commit 908a3283 (Fix idle_cpu()) invalidated some uses of idle_cpu(),
-which used to say whether or not the CPU was running the idle task,
-but now instead says whether or not the CPU is running the idle task
-in the absence of pending wakeups.  Although this new implementation
-gives a better answer to the question "is this CPU idle?", it also
-invalidates other uses that were made of idle_cpu().
-
-This commit therefore introduces a new is_idle_task() API member
-that determines whether or not the specified task is one of the
-idle tasks, allowing open-coded "->pid =3D=3D 0" sequences to be replaced
-by something more meaningful.
-
-Suggested-by: Josh Triplett <josh@joshtriplett.org>
-Suggested-by: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Paul E. McKenney <paul.mckenney@linaro.org>
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
----
- include/linux/sched.h | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 1c4f3e9..4a7e4d3 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2070,6 +2070,14 @@ extern int sched_setscheduler(struct task_struct *, =
-int,
- extern int sched_setscheduler_nocheck(struct task_struct *, int,
- 				      const struct sched_param *);
- extern struct task_struct *idle_task(int cpu);
-+/**
-+ * is_idle_task - is the specified task an idle task?
-+ * @tsk: the task in question.
-+ */
-+static inline bool is_idle_task(struct task_struct *p)
-+{
-+	return p->pid =3D=3D 0;
-+}
- extern struct task_struct *curr_task(int cpu);
- extern void set_curr_task(int cpu, struct task_struct *p);
-=20
---=20
-1.8.2.2
-
---Pd0ReVV5GZGQvF3a
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBAgAGBQJRgy9LAAoJEEef0niEbw+luNAP/1p4E4bTFH3lH2pXMyOnoBgT
-/dTtVs6M+3SqjFYJC2OJjaoohUbgr2DgggLROq6a/4jSg+kOWx4xWCHZUiL3h4k1
-wv7LDib1N+XuxrOrwXFZ7vI9xEtFo8THatZuxQrUCWywj35lOJXT0GZyJuTw5I7Q
-QfCA5C9cFXJklGRKVndU4lCGojGhoJ7YO2y2BUkbn8u9RWAARxRRiDvhNmDNfSGU
-gRoXbG3Lmp6+xng++w/w46870byL6Em7+x+i8DoH8RLZ8qOhEhO7Ll896/h9n/GZ
-eletRK5aVMmi4jLrsq2piRh1CAzYaPlT/t4mXAYPiuuvQ5yRAMx0LNsTXJFKhI+s
-/+XIEclejBi0YFomZDT65h4fKP38lfNx7iK21TA/0ji+LzStprz4rm6RjC1XvFWS
-j4llbqtnz6mNw90evecMl4uPk00SfXjkgj1kvyKv2+DGPkM8LvbzfNJEsWxcKko5
-6+L12boRD0oQgq3gmKpA+kbqNCJ5o/Py5Ju7jAvQuBIjmMH2QUCWHEFHq2MzZwpF
-U0Oufp+zbRFXsgHruXCAMJHQem6bJ54xCXfIABXka5bGTaadi5/x4P83NCRgLlyC
-5ZRgDDDsdKaG9OMUaYAz5QNT3CtArp6I4QR4/Bsbo88Sk2d9bilLntYY2SC1qR7G
-thpsOcPxC+S6wRK4kS50
-=6OYW
------END PGP SIGNATURE-----
-
---Pd0ReVV5GZGQvF3a--
