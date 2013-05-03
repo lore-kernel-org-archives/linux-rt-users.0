@@ -1,35 +1,38 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
-Date: Fri, 3 May 2013 12:27:03 +0200
-Message-ID: <20130503102703.GC8230@linutronix.de>
-References: <20130429201202.GB7979@linutronix.de>
- <20130429161925.2a6ea78a@riff.lan>
- <20130430170948.GB4688@linutronix.de>
- <2408558.MfQ5MZYUhX@bs8>
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
+Date: Fri, 03 May 2013 07:03:07 -0700
+Message-ID: <1367589787.29805.23.camel@edumazet-glaptop>
+References: <1366786204.5977.10.camel@marge.simpson.net>
+	 <1366853695.8964.120.camel@edumazet-glaptop>
+	 <1366865490.4595.22.camel@marge.simpson.net>
+	 <1366866233.8964.128.camel@edumazet-glaptop>
+	 <20130426105030.GE20927@linutronix.de>
+	 <1367455779.30667.113.camel@gandalf.local.home>
+	 <20130503082058.GA8230@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Bernhard Schiffner <bernhard@schiffner-limbach.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44403 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1761957Ab3ECK1E (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 06:27:04 -0400
-Content-Disposition: inline
-In-Reply-To: <2408558.MfQ5MZYUhX@bs8>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Mike Galbraith <bitbucket@online.de>,
+	David Miller <davem@davemloft.net>,
+	RT <linux-rt-users@vger.kernel.org>,
+	netdev <netdev@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20130503082058.GA8230@linutronix.de>
+Sender: netdev-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Bernhard Schiffner | 2013-05-01 10:32:43 [+0200]:
+On Fri, 2013-05-03 at 10:20 +0200, Sebastian Andrzej Siewior wrote:
+> * Steven Rostedt | 2013-05-01 20:49:39 [-0400]:
+> 
+> >Is this something going into the stable tree, or does it not affect 3.0,
+> >3.2, 3.4 or 3.6?
+> 
+> Mike Galbraith reported it against v3.6 so I would say that this is one
+> candidate. I just booted v3.4.41-rt55 and it runs for 20 minutes now
+> without any issues. Maybe it crashes after I sent the email but I hope
+> it does not :)
 
->This patch together with the in_nmi() patch solves the resume problem for me.
->Architecture X64, patched against 3.8.10-rt6.
-
-You should be able to drop the in_nmi() patch have it still working.
-
->THANKS!
->
->Bernhard
-
-Sebastian
+Thats because the particular way to trigger the bug was to use the IP
+early demux, and it was added in 3.5
