@@ -1,63 +1,49 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] sched: don't clear PF_THREAD_BOUND in
- select_fallback_rq
-Date: Fri, 3 May 2013 22:46:10 +0200
-Message-ID: <20130503204610.GG8230@linutronix.de>
-References: <5178F0DE.8030808@huawei.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: 3.2-rt build issue with CONFIG_DEBUG_ATOMIC_SLEEP
+Date: Fri, 03 May 2013 17:15:14 -0400
+Message-ID: <1367615714.7373.21.camel@gandalf.local.home>
+References: <20130503033019.GB5011@beefymiracle.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Li Zefan <lizefan@huawei.com>,
-	zhangwei <jovi.zhangwei@huawei.com>
-To: Qiang Huang <h.huangqiang@huawei.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Josh Cartwright <josh.cartwright@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46770 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1763522Ab3ECUqM (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3811 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1760851Ab3ECVPQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 16:46:12 -0400
-Content-Disposition: inline
-In-Reply-To: <5178F0DE.8030808@huawei.com>
+	Fri, 3 May 2013 17:15:16 -0400
+In-Reply-To: <20130503033019.GB5011@beefymiracle.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Qiang Huang | 2013-04-25 17:01:18 [+0800]:
+On Thu, 2013-05-02 at 22:30 -0500, Josh Cartwright wrote:
+> Hey Steven-
+>=20
+> It looks like commit 78563280521 ("sched: Check for idle task in
+> might_sleep()") in the v3.2-rt stable branch has a dependency on
+> is_idle_task() being defined, which doesn't exist in 3.2.
+>=20
+> This causes build breakages with CONFIG_DEBUG_ATOMIC_SLEEP:
+>=20
+>   kernel/sched.c: In function =C3=A2=C2=80=C2=98__might_sleep=C3=A2=C2=
+=80=C2=99:
+>   kernel/sched.c:8942:7: error: implicit declaration of function =C3=A2=
+=C2=80=C2=98is_idle_task=C3=A2=C2=80=C2=99 [-Werror=3Dimplicit-function=
+-declaration]
+>=20
+> Fortunately, upstream commit c4f30608435 (shown below) is nice and
+> contained, and can be cherry-picked cleanly.
+>=20
 
->This is revert of "sched-clear-pf-thread-bound-on-fallback-rq.patch"
->(commit 0d939066acdcb in v3.4-rt),.
->
->Select_fallback_rq() can be easilly called during system boot, because
->select_task_rq_fair() just return task_cpu(p) for bounded kernel threads,
->which is 0 during system boot and not in tsk_cpus_allowed, so
->select_fallback_rq() is called and PF_THREAD_BOUND is cleared. In my
->box, 1/3 bounded kernel threads will clear that flag after boot.
->
->And it will cause problems, for example:
-># for pid in `ps -e -o pid`; do taskset -p -c 0-15 $pid; done
->this command will cause system hung.
->
->What's more, I don't see why we need to clear this flag any more,
->because "cpu/rt: Rework cpu down for PREEMPT_RT" already remove the
->optimization for PF_THREAD_BOUND on migrate_disable/enable.
->
->Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
+Thanks, I'll apply it to my next release.
 
-I can execute the command you mendtion above on v3.4 and v3.8 with no
-hangs. Can you give me number of your cpus and maybe the config or
-another detail?
+-- Steve
 
-I played a little with it on v3.8. That code you asked to remove
-triggers only on cpu down for kernel threads which do not use the
-park/unpark infrastructure that is "posixcputmr" and "migration" which
-get removed later. The only reason why "migration" pops up is so it can
-leave.
-I managed to trigger it as well for worker threads. The threads which
-were bound the CPU, that went down, are marked DISASSOCIATED in
-gcwq_unbind_fn() and we lose that PF_THREAD_BOUND flag once that thread
-is used. After the CPU gets back, it is assigned to the "old" cpu via
-worker_maybe_bind_and_lock() and the PF_THREAD_BOUND flag is missing.
-So that is not looking that good. Will look at this later.
 
-Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
