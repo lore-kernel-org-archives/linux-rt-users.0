@@ -1,34 +1,63 @@
-From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
-Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
-Date: Fri, 03 May 2013 19:46:45 +0200
-Message-ID: <28497065.fpBpkFWOyd@bs8>
-References: <20130429201202.GB7979@linutronix.de> <2408558.MfQ5MZYUhX@bs8> <20130503102703.GC8230@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] sched: don't clear PF_THREAD_BOUND in
+ select_fallback_rq
+Date: Fri, 3 May 2013 22:46:10 +0200
+Message-ID: <20130503204610.GG8230@linutronix.de>
+References: <5178F0DE.8030808@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: 7Bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Li Zefan <lizefan@huawei.com>,
+	zhangwei <jovi.zhangwei@huawei.com>
+To: Qiang Huang <h.huangqiang@huawei.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.10]:57053 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933812Ab3ECRq5 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:46770 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1763522Ab3ECUqM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 13:46:57 -0400
-In-Reply-To: <20130503102703.GC8230@linutronix.de>
+	Fri, 3 May 2013 16:46:12 -0400
+Content-Disposition: inline
+In-Reply-To: <5178F0DE.8030808@huawei.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Freitag, 3. Mai 2013, 12:27:03 schrieb Sebastian Andrzej Siewior:
-> * Bernhard Schiffner | 2013-05-01 10:32:43 [+0200]:
-> >This patch together with the in_nmi() patch solves the resume problem for
-> >me. Architecture X64, patched against 3.8.10-rt6.
-> 
-> You should be able to drop the in_nmi() patch have it still working.
-Confirmed.
-(oops kernel is 3.8.11-rt6 now, but working)
-> 
-> >THANKS!
-> >
-> >Bernhard
-> 
-> Sebastian
+* Qiang Huang | 2013-04-25 17:01:18 [+0800]:
+
+>This is revert of "sched-clear-pf-thread-bound-on-fallback-rq.patch"
+>(commit 0d939066acdcb in v3.4-rt),.
+>
+>Select_fallback_rq() can be easilly called during system boot, because
+>select_task_rq_fair() just return task_cpu(p) for bounded kernel threads,
+>which is 0 during system boot and not in tsk_cpus_allowed, so
+>select_fallback_rq() is called and PF_THREAD_BOUND is cleared. In my
+>box, 1/3 bounded kernel threads will clear that flag after boot.
+>
+>And it will cause problems, for example:
+># for pid in `ps -e -o pid`; do taskset -p -c 0-15 $pid; done
+>this command will cause system hung.
+>
+>What's more, I don't see why we need to clear this flag any more,
+>because "cpu/rt: Rework cpu down for PREEMPT_RT" already remove the
+>optimization for PF_THREAD_BOUND on migrate_disable/enable.
+>
+>Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
+
+I can execute the command you mendtion above on v3.4 and v3.8 with no
+hangs. Can you give me number of your cpus and maybe the config or
+another detail?
+
+I played a little with it on v3.8. That code you asked to remove
+triggers only on cpu down for kernel threads which do not use the
+park/unpark infrastructure that is "posixcputmr" and "migration" which
+get removed later. The only reason why "migration" pops up is so it can
+leave.
+I managed to trigger it as well for worker threads. The threads which
+were bound the CPU, that went down, are marked DISASSOCIATED in
+gcwq_unbind_fn() and we lose that PF_THREAD_BOUND flag once that thread
+is used. After the CPU gets back, it is assigned to the "old" cpu via
+worker_maybe_bind_and_lock() and the PF_THREAD_BOUND flag is missing.
+So that is not looking that good. Will look at this later.
+
+Sebastian
