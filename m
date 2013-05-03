@@ -1,73 +1,42 @@
-From: Jain Priyanka-B32167 <B32167@freescale.com>
-Subject: RE: [ANNOUNCE] 3.8.10-rt6
-Date: Fri, 3 May 2013 04:40:33 +0000
-Message-ID: <AC83832D6324604BB08FAE5A33553F190B360375@039-SN2MPN1-013.039d.mgd.msft.net>
-References: <20130429201202.GB7979@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
+Date: Fri, 3 May 2013 10:20:58 +0200
+Message-ID: <20130503082058.GA8230@linutronix.de>
+References: <1366786204.5977.10.camel@marge.simpson.net>
+ <1366853695.8964.120.camel@edumazet-glaptop>
+ <1366865490.4595.22.camel@marge.simpson.net>
+ <1366866233.8964.128.camel@edumazet-glaptop>
+ <20130426105030.GE20927@linutronix.de>
+ <1367455779.30667.113.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: Eric Dumazet <eric.dumazet@gmail.com>,
+	Mike Galbraith <bitbucket@online.de>,
+	David Miller <davem@davemloft.net>,
+	RT <linux-rt-users@vger.kernel.org>,
+	netdev <netdev@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from co9ehsobe001.messaging.microsoft.com ([207.46.163.24]:44482
-	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751189Ab3ECEkh (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:43569 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1762192Ab3ECIVD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 00:40:37 -0400
-In-Reply-To: <20130429201202.GB7979@linutronix.de>
-Content-Language: en-US
+	Fri, 3 May 2013 04:21:03 -0400
+Content-Disposition: inline
+In-Reply-To: <1367455779.30667.113.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGVsbG8gU2ViYXN0aWFuLA0KDQpJdCBpcyBtZW50aW9uZWQgYmVsb3cgdGhhdCBTTHhCIGlzIGJy
-b2tlbi4NCkkgYXNzdW1lIGl0IG1lYW5zIGJpdCBTTFVCIGFuZCBTTEFCIGlzIGJyb2tlbj8NCkNh
-biB5b3UgcGxlYXNlIHNoYXJlIHRoZSBlcnJvci1kZXRhaWxzL2xvZ3Mvc2NlbmFyaW8vc3RlcHMt
-dG8tcmVwcm9kdWNlLg0KDQpSZWdhcmRzDQpQcml5YW5rYQ0KDQo+IC0tLS0tT3JpZ2luYWwgTWVz
-c2FnZS0tLS0tDQo+IEZyb206IGxpbnV4LXJ0LXVzZXJzLW93bmVyQHZnZXIua2VybmVsLm9yZyBb
-bWFpbHRvOmxpbnV4LXJ0LXVzZXJzLQ0KPiBvd25lckB2Z2VyLmtlcm5lbC5vcmddIE9uIEJlaGFs
-ZiBPZiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yDQo+IFNlbnQ6IFR1ZXNkYXksIEFwcmlsIDMw
-LCAyMDEzIDE6NDIgQU0NCj4gVG86IGxpbnV4LXJ0LXVzZXJzDQo+IENjOiBMS01MOyBUaG9tYXMg
-R2xlaXhuZXI7IHJvc3RlZHRAZ29vZG1pcy5vcmcNCj4gU3ViamVjdDogW0FOTk9VTkNFXSAzLjgu
-MTAtcnQ2DQo+IA0KPiBEZWFyIFJUIEZvbGtzLA0KPiANCj4gSSdtIHBsZWFzZWQgdG8gYW5ub3Vu
-Y2UgdGhlIDMuOC4xMC1ydDYgcmVsZWFzZS4NCj4gDQo+IGNoYW5nZXMgc2luY2UgdjMuOC4xMC1y
-dDU6DQo+IC0gdGhlIGk5MTUgY29tcGlsZXMgYWdhaW4gYWZ0ZXIgSSBicm9rZSBpdCBpbiB0aGUg
-bGFzdCByZWxlYXNlLiBBIHBhdGNoDQo+ICAgd2FzIHNlbnQgYnkgQ2Fyc3RlbiBFbWRlLg0KPiAN
-Cj4gS25vd24gaXNzdWVzOg0KPiANCj4gICAgIC0gU0x4QiBpcyBicm9rZW4gb24gUG93ZXJQQy4N
-Cj4gICAgIC0gc3VzcGVuZCAvIHJlc3VtZSBzZWVtcyB0byBwcm9ncmFtIHByb2dyYW0gdGhlIHRp
-bWVyIHdyb25nIGFuZCB3YWl0DQo+ICAgICAgIGFnZXMgdW50aWwgaXQgY29udGludWVzLg0KPiAN
-Cj4gVGhlIGRlbHRhIHBhdGNoIGFnYWluc3QgdjMuOC4xMC1ydDUgaXMgYXBwZW5kZWQgYmVsb3cg
-YW5kIGNhbiBiZSBmb3VuZA0KPiBoZXJlOg0KPiANCj4gICBodHRwczovL3d3dy5rZXJuZWwub3Jn
-L3B1Yi9saW51eC9rZXJuZWwvcHJvamVjdHMvcnQvMy44L2luY3IvcGF0Y2gtDQo+IDMuOC4xMC1y
-dDUtcnQ2LnBhdGNoLnh6DQo+IA0KPiBUaGUgUlQgcGF0Y2ggYWdhaW5zdCAzLjguOSBjYW4gYmUg
-Zm91bmQgaGVyZToNCj4gDQo+ICAgaHR0cHM6Ly93d3cua2VybmVsLm9yZy9wdWIvbGludXgva2Vy
-bmVsL3Byb2plY3RzL3J0LzMuOC9wYXRjaC0zLjguMTAtDQo+IHJ0Ni5wYXRjaC54eg0KPiANCj4g
-VGhlIHNwbGl0IHF1aWx0IHF1ZXVlIGlzIGF2YWlsYWJsZSBhdDoNCj4gDQo+ICAgaHR0cHM6Ly93
-d3cua2VybmVsLm9yZy9wdWIvbGludXgva2VybmVsL3Byb2plY3RzL3J0LzMuOC9wYXRjaGVzLTMu
-OC4xMC0NCj4gcnQ2LnRhci54eg0KPiANCj4gU2ViYXN0aWFuDQo+IA0KPiBkaWZmIC0tZ2l0IGEv
-ZHJpdmVycy9ncHUvZHJtL2k5MTUvaTkxNV9nZW1fZXhlY2J1ZmZlci5jDQo+IGIvZHJpdmVycy9n
-cHUvZHJtL2k5MTUvaTkxNV9nZW1fZXhlY2J1ZmZlci5jDQo+IGluZGV4IDgxMTI1ZGUuLmVhYmQz
-ZGQgMTAwNjQ0DQo+IC0tLSBhL2RyaXZlcnMvZ3B1L2RybS9pOTE1L2k5MTVfZ2VtX2V4ZWNidWZm
-ZXIuYw0KPiArKysgYi9kcml2ZXJzL2dwdS9kcm0vaTkxNS9pOTE1X2dlbV9leGVjYnVmZmVyLmMN
-Cj4gQEAgLTgxNCw2ICs4MTQsNyBAQCBpOTE1X2dlbV9kb19leGVjYnVmZmVyKHN0cnVjdCBkcm1f
-ZGV2aWNlICpkZXYsIHZvaWQNCj4gKmRhdGEsDQo+ICAJc3RydWN0IGludGVsX3JpbmdfYnVmZmVy
-ICpyaW5nOw0KPiAgCXUzMiBjdHhfaWQgPSBpOTE1X2V4ZWNidWZmZXIyX2dldF9jb250ZXh0X2lk
-KCphcmdzKTsNCj4gIAl1MzIgZXhlY19zdGFydCwgZXhlY19sZW47DQo+ICsJdTMyIHNlcW5vOw0K
-PiAgCXUzMiBtYXNrOw0KPiAgCXUzMiBmbGFnczsNCj4gIAlpbnQgcmV0LCBtb2RlLCBpOw0KPiBA
-QCAtMTA2OCw3ICsxMDY5LDggQEAgaTkxNV9nZW1fZG9fZXhlY2J1ZmZlcihzdHJ1Y3QgZHJtX2Rl
-dmljZSAqZGV2LCB2b2lkDQo+ICpkYXRhLA0KPiAgCQkJZ290byBlcnI7DQo+ICAJfQ0KPiANCj4g
-LQl0cmFjZV9pOTE1X2dlbV9yaW5nX2Rpc3BhdGNoKHJpbmcsIGludGVsX3JpbmdfZ2V0X3NlcW5v
-KHJpbmcpLA0KPiBmbGFncyk7DQo+ICsJc2Vxbm8gPSBpbnRlbF9yaW5nX2dldF9zZXFubyhyaW5n
-KTsNCj4gKwl0cmFjZV9pOTE1X2dlbV9yaW5nX2Rpc3BhdGNoKHJpbmcsIHNlcW5vLCBmbGFncyk7
-DQo+ICAJaTkxNV90cmFjZV9pcnFfZ2V0KHJpbmcsIHNlcW5vKTsNCj4gDQo+ICAJaTkxNV9nZW1f
-ZXhlY2J1ZmZlcl9tb3ZlX3RvX2FjdGl2ZSgmb2JqZWN0cywgcmluZyk7IGRpZmYgLS1naXQNCj4g
-YS9sb2NhbHZlcnNpb24tcnQgYi9sb2NhbHZlcnNpb24tcnQgaW5kZXggMGVmZTdiYS4uOGZjNjA1
-ZCAxMDA2NDQNCj4gLS0tIGEvbG9jYWx2ZXJzaW9uLXJ0DQo+ICsrKyBiL2xvY2FsdmVyc2lvbi1y
-dA0KPiBAQCAtMSArMSBAQA0KPiAtLXJ0NQ0KPiArLXJ0Ng0KPiAtLQ0KPiBUbyB1bnN1YnNjcmli
-ZSBmcm9tIHRoaXMgbGlzdDogc2VuZCB0aGUgbGluZSAidW5zdWJzY3JpYmUgbGludXgtcnQtdXNl
-cnMiDQo+IGluIHRoZSBib2R5IG9mIGEgbWVzc2FnZSB0byBtYWpvcmRvbW9Admdlci5rZXJuZWwu
-b3JnIE1vcmUgbWFqb3Jkb21vIGluZm8NCj4gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFq
-b3Jkb21vLWluZm8uaHRtbA0KDQo=
+* Steven Rostedt | 2013-05-01 20:49:39 [-0400]:
 
+>Is this something going into the stable tree, or does it not affect 3.0,
+>3.2, 3.4 or 3.6?
+
+Mike Galbraith reported it against v3.6 so I would say that this is one
+candidate. I just booted v3.4.41-rt55 and it runs for 20 minutes now
+without any issues. Maybe it crashes after I sent the email but I hope
+it does not :)
+
+>-- Steve
+
+Sebastian
