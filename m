@@ -1,46 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: Suspend resume problem (WAS Re: [ANNOUNCE] 3.8.10-rt6)
-Date: Fri, 03 May 2013 11:59:32 +0200
-Message-ID: <51838A84.90500@linutronix.de>
-References: <20130429201202.GB7979@linutronix.de>  <20130429161925.2a6ea78a@riff.lan> <20130430170948.GB4688@linutronix.de> <1367345295.30667.68.camel@gandalf.local.home>
+Date: Fri, 3 May 2013 12:27:03 +0200
+Message-ID: <20130503102703.GC8230@linutronix.de>
+References: <20130429201202.GB7979@linutronix.de>
+ <20130429161925.2a6ea78a@riff.lan>
+ <20130430170948.GB4688@linutronix.de>
+ <2408558.MfQ5MZYUhX@bs8>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1367345295.30667.68.camel@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Bernhard Schiffner <bernhard@schiffner-limbach.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:44403 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1761957Ab3ECK1E (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 3 May 2013 06:27:04 -0400
+Content-Disposition: inline
+In-Reply-To: <2408558.MfQ5MZYUhX@bs8>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/30/2013 08:08 PM, Steven Rostedt wrote:
->> This NMI releated deadlock is a problem which should also trigger
->> mainline, right?
-> 
-> Well, yeah, as sending out a NMI stack dump is sorta the last resort,
-> and is dangerous to do printks from NMI context.
+* Bernhard Schiffner | 2013-05-01 10:32:43 [+0200]:
 
-So we did bad and we upgrade to bad and dangerous.
+>This patch together with the in_nmi() patch solves the resume problem for me.
+>Architecture X64, patched against 3.8.10-rt6.
 
->>
->> Now, the time jump on the other hand is the real issue here and is
->> RT-only. It looks like we get a big number of timer updates via
->> tick_do_update_jiffies64() because according to ktime_get() that much
->> time really passed by.
-> 
-> As the NMI dump only happens because of the time jump, which as you
-> said, is -rt only, I wouldn't say that the NMI deadlock is a mainline
-> bug.
+You should be able to drop the in_nmi() patch have it still working.
 
-The reason for the NMI was a bug in the -RT tree but if something else
-triggers that NMI we have a good chance to deadlock.
-
-What about a try_lock() and leave after 50 usecs of trying and not
-getting it in the in_nmi() case?
-
-> -- Steve
+>THANKS!
+>
+>Bernhard
 
 Sebastian
