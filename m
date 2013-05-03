@@ -1,60 +1,186 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
-Subject: Re: 3.6-rt: inet_sk_rx_dst_set() network splat
-Date: Fri, 03 May 2013 14:58:57 -0700
-Message-ID: <1367618337.22983.0.camel@edumazet-glaptop>
-References: <1366786204.5977.10.camel@marge.simpson.net>
-	 <1366853695.8964.120.camel@edumazet-glaptop>
-	 <1366865490.4595.22.camel@marge.simpson.net>
-	 <1366866233.8964.128.camel@edumazet-glaptop>
-	 <20130426105030.GE20927@linutronix.de>
-	 <1367455779.30667.113.camel@gandalf.local.home>
-	 <20130503082058.GA8230@linutronix.de>
-	 <1367589787.29805.23.camel@edumazet-glaptop>
-	 <1367594003.7373.13.camel@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	David Miller <davem@davemloft.net>,
-	RT <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f175.google.com ([209.85.223.175]:39615 "EHLO
-	mail-ie0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S934311Ab3ECV7A (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 17:59:00 -0400
-In-Reply-To: <1367594003.7373.13.camel@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/4] x86/mce: Defer mce wakeups to threads for PREEMPT_RT
+Date: Fri, 03 May 2013 17:58:34 -0400
+Message-ID: <20130503215850.456807071@goodmis.org>
+References: <20130503215832.688847775@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-x86-mce-Defer-mce-wakeups-to-threads-for-PREEMPT_RT.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2013-05-03 at 11:13 -0400, Steven Rostedt wrote:
-> On Fri, 2013-05-03 at 07:03 -0700, Eric Dumazet wrote:
-> > On Fri, 2013-05-03 at 10:20 +0200, Sebastian Andrzej Siewior wrote:
-> > > * Steven Rostedt | 2013-05-01 20:49:39 [-0400]:
-> > > 
-> > > >Is this something going into the stable tree, or does it not affect 3.0,
-> > > >3.2, 3.4 or 3.6?
-> > > 
-> > > Mike Galbraith reported it against v3.6 so I would say that this is one
-> > > candidate. I just booted v3.4.41-rt55 and it runs for 20 minutes now
-> > > without any issues. Maybe it crashes after I sent the email but I hope
-> > > it does not :)
-> > 
-> > Thats because the particular way to trigger the bug was to use the IP
-> > early demux, and it was added in 3.5
-> 
-> Is it OK to keep it? I pulled the patch into 3.2-rt and 3.4-rt. I can
-> remove it if you think it's not necessary and will cause a slight
-> performance penalty.
+From: Steven Rostedt <rostedt@goodmis.org>
 
-You can keep it.
+We had a customer report a lockup on a 3.0-rt kernel that had the
+following backtrace:
 
-I was refereeing to the method used to trigger the bug.
+[ffff88107fca3e80] rt_spin_lock_slowlock at ffffffff81499113
+[ffff88107fca3f40] rt_spin_lock at ffffffff81499a56
+[ffff88107fca3f50] __wake_up at ffffffff81043379
+[ffff88107fca3f80] mce_notify_irq at ffffffff81017328
+[ffff88107fca3f90] intel_threshold_interrupt at ffffffff81019508
+[ffff88107fca3fa0] smp_threshold_interrupt at ffffffff81019fc1
+[ffff88107fca3fb0] threshold_interrupt at ffffffff814a1853
 
-But the bug is really old and could trigger with other workloads.
+It actually bugged because the lock was taken by the same owner that
+already had that lock. What happened was the thread that was setting
+itself on a wait queue had the lock when an MCE triggered. The MCE
+interrupt does a wake up on its wait list and grabs the same lock.
 
+NOTE: THIS IS NOT A BUG ON MAINLINE
 
+Sorry for yelling, but as I Cc'd mainline maintainers I want them to
+know that this is an PREEMPT_RT bug only. I only Cc'd them for advice.
 
+On PREEMPT_RT the wait queue locks are converted from normal
+"spin_locks" into an rt_mutex (see the rt_spin_lock_slowlock above).
+These are not to be taken by hard interrupt context. This usually isn't
+a problem as most all interrupts in PREEMPT_RT are converted into
+schedulable threads. Unfortunately that's not the case with the MCE irq.
+
+As wait queue locks are notorious for long hold times, we can not
+convert them to raw_spin_locks without causing issues with -rt. But
+Thomas has created a "simple-wait" structure that uses raw spin locks
+which may have been a good fit.
+
+Unfortunately, wait queues are not the only issue, as the mce_notify_irq
+also does a schedule_work(), which grabs the workqueue spin locks that
+have the exact same issue.
+
+Thus, this patch I'm proposing is to move the actual work of the MCE
+interrupt into a helper thread that gets woken up on the MCE interrupt
+and does the work in a schedulable context.
+
+NOTE: THIS PATCH ONLY CHANGES THE BEHAVIOR WHEN PREEMPT_RT IS SET
+
+Oops, sorry for yelling again, but I want to stress that I keep the same
+behavior of mainline when PREEMPT_RT is not set. Thus, this only changes
+the MCE behavior when PREEMPT_RT is configured.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy@linutronix: make mce_notify_work() a proper prototype, use
+		     kthread_run()]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/x86/kernel/cpu/mcheck/mce.c |   78 +++++++++++++++++++++++++++++---------
+ 1 file changed, 61 insertions(+), 17 deletions(-)
+
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index 91466f5..63c96f9 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -15,6 +15,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/kobject.h>
+ #include <linux/uaccess.h>
++#include <linux/kthread.h>
+ #include <linux/kdebug.h>
+ #include <linux/kernel.h>
+ #include <linux/percpu.h>
+@@ -1293,6 +1294,63 @@ static void mce_do_trigger(struct work_struct *work)
+ 
+ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+ 
++static void __mce_notify_work(void)
++{
++	/* Not more than two messages every minute */
++	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
++
++	/* wake processes polling /dev/mcelog */
++	wake_up_interruptible(&mce_chrdev_wait);
++
++	/*
++	 * There is no risk of missing notifications because
++	 * work_pending is always cleared before the function is
++	 * executed.
++	 */
++	if (mce_helper[0] && !work_pending(&mce_trigger_work))
++		schedule_work(&mce_trigger_work);
++
++	if (__ratelimit(&ratelimit))
++		pr_info(HW_ERR "Machine check events logged\n");
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++struct task_struct *mce_notify_helper;
++
++static int mce_notify_helper_thread(void *unused)
++{
++	while (1) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		schedule();
++		if (kthread_should_stop())
++			break;
++		__mce_notify_work();
++	}
++	return 0;
++}
++
++static int mce_notify_work_init(void)
++{
++	mce_notify_helper = kthread_run(mce_notify_helper_thread, NULL,
++					   "mce-notify");
++	if (!mce_notify_helper)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static void mce_notify_work(void)
++{
++	wake_up_process(mce_notify_helper);
++}
++#else
++static void mce_notify_work(void)
++{
++	__mce_notify_work();
++}
++static inline int mce_notify_work_init(void) { return 0; }
++#endif
++
+ /*
+  * Notify the user(s) about new machine check events.
+  * Can be called from interrupt context, but not from machine check/NMI
+@@ -1300,24 +1358,8 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+  */
+ int mce_notify_irq(void)
+ {
+-	/* Not more than two messages every minute */
+-	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+-
+ 	if (test_and_clear_bit(0, &mce_need_notify)) {
+-		/* wake processes polling /dev/mcelog */
+-		wake_up_interruptible(&mce_chrdev_wait);
+-
+-		/*
+-		 * There is no risk of missing notifications because
+-		 * work_pending is always cleared before the function is
+-		 * executed.
+-		 */
+-		if (mce_helper[0] && !work_pending(&mce_trigger_work))
+-			schedule_work(&mce_trigger_work);
+-
+-		if (__ratelimit(&ratelimit))
+-			pr_info(HW_ERR "Machine check events logged\n");
+-
++		mce_notify_work();
+ 		return 1;
+ 	}
+ 	return 0;
+@@ -2295,6 +2337,8 @@ static __init int mcheck_init_device(void)
+ 	/* register character device /dev/mcelog */
+ 	misc_register(&mce_chrdev_device);
+ 
++	err = mce_notify_work_init();
++
+ 	return err;
+ }
+ device_initcall(mcheck_init_device);
+-- 
+1.7.10.4
