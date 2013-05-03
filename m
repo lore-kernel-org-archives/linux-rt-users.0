@@ -1,43 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] sched/workqueue: Only wake up idle workers if not
- blocked on sleeping spin lock
-Date: Fri, 3 May 2013 17:53:40 +0200
-Message-ID: <20130503155340.GD8230@linutronix.de>
-References: <1363633969.28194.3.camel@gandalf.local.home>
+Subject: Re: [RFC PATCH] rt, lockdep: double
+ MAX_LOCKDEP_ENTRIES/MAX_LOCKDEP_CHAINS_BITS
+Date: Fri, 3 May 2013 18:03:12 +0200
+Message-ID: <20130503160312.GE8230@linutronix.de>
+References: <1366787475.5977.16.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>, Tejun Heo <tj@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45908 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:45947 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932459Ab3ECPxn (ORCPT
+	with ESMTP id S933207Ab3ECQDN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 11:53:43 -0400
+	Fri, 3 May 2013 12:03:13 -0400
 Content-Disposition: inline
-In-Reply-To: <1363633969.28194.3.camel@gandalf.local.home>
+In-Reply-To: <1366787475.5977.16.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2013-03-18 15:12:49 [-0400]:
+* Mike Galbraith | 2013-04-24 09:11:15 [+0200]:
 
->In -rt, most spin_locks() turn into mutexes. One of these spin_lock
->conversions is performed on the workqueue gcwq->lock. When the idle
->worker is worken, the first thing it will do is grab that same lock and
->it too will block, possibly jumping into the same code, but because
->nr_running would already be decremented it prevents an infinite loop.
+>Test driving v3.6-rt, lockdep shuts itself off soon after boot.
 >
->But this is still a waste of CPU cycles, and it doesn't follow the method
->of mainline, as new workers should only be woken when a worker thread is
->truly going to sleep, and not just blocked on a spin_lock().
+>[  117.940497] BUG: MAX_LOCKDEP_ENTRIES too low!
+>[  117.940498] turning off the locking correctness validator.
+>[  117.940502] Pid: 5242, comm: kio_trash Not tainted 3.6.11.1-rt32-smp #51
 >
->Check the saved_state too before waking up new workers.
->
->Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+>Doubling MAX_LOCKDEP_ENTRIES/MAX_LOCKDEP_CHAINS_BITS appeased it.  Box
+>has been up for an hour without lockdep taking it's toys and going home.
 
-Taking for v3.8-rt.
+Can you send me your .config offlist please? I haven't seen this yet.
 
 Sebastian
