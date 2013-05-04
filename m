@@ -1,27 +1,31 @@
-From: Damien Moody <mailinglists@audiodef.com>
-Subject: Unsubscribing
-Date: Sat, 04 May 2013 19:57:55 +0000
-Message-ID: <51856843.2070402@audiodef.com>
+From: Mark Knecht <markknecht@gmail.com>
+Subject: Re: Unsubscribing
+Date: Sat, 4 May 2013 13:35:14 -0700
+Message-ID: <CAK2H+ef6hmF8Dfesn1=D7FqxqKtKiC5DEw7aKMfzfUod5gmwGg@mail.gmail.com>
 References: <20130504010207.365885836@goodmis.org>
+	<51856843.2070402@audiodef.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Damien Moody <mailinglists@audiodef.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ks4003397.ip-142-4-210.net ([142.4.210.26]:48920 "EHLO
-	audiodef.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752377Ab3EDUDv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 4 May 2013 16:03:51 -0400
-Received: from audiodef.com (localhost [127.0.0.1])
-	by audiodef.com (Postfix) with ESMTP id A5C8DE029C6
-	for <linux-rt-users@vger.kernel.org>; Sat,  4 May 2013 13:37:54 +0000 (GMT)
-Received: from [192.168.1.45] (65-73-217-2.dsl1.chtw.wv.frontiernet.net [65.73.217.2])
-	(Authenticated sender: mailinglists@audiodef.com)
-	by audiodef.com (Postfix) with ESMTPSA id 5CB2DE0269F
-	for <linux-rt-users@vger.kernel.org>; Sat,  4 May 2013 13:37:54 +0000 (GMT)
-In-Reply-To: <20130504010207.365885836@goodmis.org>
+Received: from mail-bk0-f41.google.com ([209.85.214.41]:62025 "EHLO
+	mail-bk0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752536Ab3EDUfQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 4 May 2013 16:35:16 -0400
+Received: by mail-bk0-f41.google.com with SMTP id jc3so1139595bkc.0
+        for <linux-rt-users@vger.kernel.org>; Sat, 04 May 2013 13:35:14 -0700 (PDT)
+In-Reply-To: <51856843.2070402@audiodef.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm sorry to post this, but things have been a little crazy lately and I
-don't know where I kept the relevant info. How do I unsubscribe?
+On Sat, May 4, 2013 at 12:57 PM, Damien Moody <mailinglists@audiodef.com> wrote:
+> I'm sorry to post this, but things have been a little crazy lately and I
+> don't know where I kept the relevant info. How do I unsubscribe?
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+Possibly read the footer added to the email you sent? :-)
