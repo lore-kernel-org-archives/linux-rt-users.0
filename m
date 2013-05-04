@@ -1,82 +1,177 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: Re: [PATCH] sched: don't clear PF_THREAD_BOUND in select_fallback_rq
-Date: Fri, 3 May 2013 19:39:15 -0300
-Message-ID: <20130503223915.GE17599@uudg.org>
-References: <5178F0DE.8030808@huawei.com>
- <20130503204610.GG8230@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Qiang Huang <h.huangqiang@huawei.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Li Zefan <lizefan@huawei.com>,
-	zhangwei <jovi.zhangwei@huawei.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 3/6] x86/mce: Defer mce wakeups to threads for PREEMPT_RT
+Date: Fri, 03 May 2013 20:59:58 -0400
+Message-ID: <20130504010016.729310985@goodmis.org>
+References: <20130504005955.061874443@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yh0-f43.google.com ([209.85.213.43]:61933 "EHLO
-	mail-yh0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1762266Ab3ECWrM (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:15366 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1763809Ab3EDBAS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 May 2013 18:47:12 -0400
-Received: by mail-yh0-f43.google.com with SMTP id a41so389722yho.30
-        for <linux-rt-users@vger.kernel.org>; Fri, 03 May 2013 15:47:12 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20130503204610.GG8230@linutronix.de>
+	Fri, 3 May 2013 21:00:18 -0400
+Content-Disposition: inline; filename=0003-x86-mce-Defer-mce-wakeups-to-threads-for-PREEMPT_RT.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, May 03, 2013 at 10:46:10PM +0200, Sebastian Andrzej Siewior wrote:
-| * Qiang Huang | 2013-04-25 17:01:18 [+0800]:
-| 
-| >This is revert of "sched-clear-pf-thread-bound-on-fallback-rq.patch"
-| >(commit 0d939066acdcb in v3.4-rt),.
-| >
-| >Select_fallback_rq() can be easilly called during system boot, because
-| >select_task_rq_fair() just return task_cpu(p) for bounded kernel threads,
-| >which is 0 during system boot and not in tsk_cpus_allowed, so
-| >select_fallback_rq() is called and PF_THREAD_BOUND is cleared. In my
-| >box, 1/3 bounded kernel threads will clear that flag after boot.
-| >
-| >And it will cause problems, for example:
-| ># for pid in `ps -e -o pid`; do taskset -p -c 0-15 $pid; done
-| >this command will cause system hung.
-| >
-| >What's more, I don't see why we need to clear this flag any more,
-| >because "cpu/rt: Rework cpu down for PREEMPT_RT" already remove the
-| >optimization for PF_THREAD_BOUND on migrate_disable/enable.
-| >
-| >Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
-| 
-| I can execute the command you mendtion above on v3.4 and v3.8 with no
-| hangs. Can you give me number of your cpus and maybe the config or
-| another detail?
+From: Steven Rostedt <rostedt@goodmis.org>
 
-I was able to reproduce the original issue on 3.6-rt (PREEMPT_RT_FULL
-enabled) running the ltp-cgroups testcase. in fact, as originally reported,
-the issue appeared when running the cgroup_fj tests. It usually took from
-8~11min to trigger the issue.
+We had a customer report a lockup on a 3.0-rt kernel that had the
+following backtrace:
 
-After applying the patch I was no longer able to reproduce the issue, even
-on 16h-long test runs.
+[ffff88107fca3e80] rt_spin_lock_slowlock at ffffffff81499113
+[ffff88107fca3f40] rt_spin_lock at ffffffff81499a56
+[ffff88107fca3f50] __wake_up at ffffffff81043379
+[ffff88107fca3f80] mce_notify_irq at ffffffff81017328
+[ffff88107fca3f90] intel_threshold_interrupt at ffffffff81019508
+[ffff88107fca3fa0] smp_threshold_interrupt at ffffffff81019fc1
+[ffff88107fca3fb0] threshold_interrupt at ffffffff814a1853
 
-Luis
+It actually bugged because the lock was taken by the same owner that
+already had that lock. What happened was the thread that was setting
+itself on a wait queue had the lock when an MCE triggered. The MCE
+interrupt does a wake up on its wait list and grabs the same lock.
 
-| I played a little with it on v3.8. That code you asked to remove
-| triggers only on cpu down for kernel threads which do not use the
-| park/unpark infrastructure that is "posixcputmr" and "migration" which
-| get removed later. The only reason why "migration" pops up is so it can
-| leave.
-| I managed to trigger it as well for worker threads. The threads which
-| were bound the CPU, that went down, are marked DISASSOCIATED in
-| gcwq_unbind_fn() and we lose that PF_THREAD_BOUND flag once that thread
-| is used. After the CPU gets back, it is assigned to the "old" cpu via
-| worker_maybe_bind_and_lock() and the PF_THREAD_BOUND flag is missing.
-| So that is not looking that good. Will look at this later.
-| 
-| Sebastian
-| --
-| To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-| the body of a message to majordomo@vger.kernel.org
-| More majordomo info at  http://vger.kernel.org/majordomo-info.html
+NOTE: THIS IS NOT A BUG ON MAINLINE
 
+Sorry for yelling, but as I Cc'd mainline maintainers I want them to
+know that this is an PREEMPT_RT bug only. I only Cc'd them for advice.
+
+On PREEMPT_RT the wait queue locks are converted from normal
+"spin_locks" into an rt_mutex (see the rt_spin_lock_slowlock above).
+These are not to be taken by hard interrupt context. This usually isn't
+a problem as most all interrupts in PREEMPT_RT are converted into
+schedulable threads. Unfortunately that's not the case with the MCE irq.
+
+As wait queue locks are notorious for long hold times, we can not
+convert them to raw_spin_locks without causing issues with -rt. But
+Thomas has created a "simple-wait" structure that uses raw spin locks
+which may have been a good fit.
+
+Unfortunately, wait queues are not the only issue, as the mce_notify_irq
+also does a schedule_work(), which grabs the workqueue spin locks that
+have the exact same issue.
+
+Thus, this patch I'm proposing is to move the actual work of the MCE
+interrupt into a helper thread that gets woken up on the MCE interrupt
+and does the work in a schedulable context.
+
+NOTE: THIS PATCH ONLY CHANGES THE BEHAVIOR WHEN PREEMPT_RT IS SET
+
+Oops, sorry for yelling again, but I want to stress that I keep the same
+behavior of mainline when PREEMPT_RT is not set. Thus, this only changes
+the MCE behavior when PREEMPT_RT is configured.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy@linutronix: make mce_notify_work() a proper prototype, use
+		     kthread_run()]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/x86/kernel/cpu/mcheck/mce.c |   78 +++++++++++++++++++++++++++++---------
+ 1 file changed, 61 insertions(+), 17 deletions(-)
+
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index 7e4f230..8ceb100 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -15,6 +15,7 @@
+ #include <linux/rcupdate.h>
+ #include <linux/kobject.h>
+ #include <linux/uaccess.h>
++#include <linux/kthread.h>
+ #include <linux/kdebug.h>
+ #include <linux/kernel.h>
+ #include <linux/percpu.h>
+@@ -1158,6 +1159,63 @@ static void mce_do_trigger(struct work_struct *work)
+ 
+ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+ 
++static void __mce_notify_work(void)
++{
++	/* Not more than two messages every minute */
++	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
++
++	/* wake processes polling /dev/mcelog */
++	wake_up_interruptible(&mce_chrdev_wait);
++
++	/*
++	 * There is no risk of missing notifications because
++	 * work_pending is always cleared before the function is
++	 * executed.
++	 */
++	if (mce_helper[0] && !work_pending(&mce_trigger_work))
++		schedule_work(&mce_trigger_work);
++
++	if (__ratelimit(&ratelimit))
++		pr_info(HW_ERR "Machine check events logged\n");
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++struct task_struct *mce_notify_helper;
++
++static int mce_notify_helper_thread(void *unused)
++{
++	while (1) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		schedule();
++		if (kthread_should_stop())
++			break;
++		__mce_notify_work();
++	}
++	return 0;
++}
++
++static int mce_notify_work_init(void)
++{
++	mce_notify_helper = kthread_run(mce_notify_helper_thread, NULL,
++					   "mce-notify");
++	if (!mce_notify_helper)
++		return -ENOMEM;
++
++	return 0;
++}
++
++static void mce_notify_work(void)
++{
++	wake_up_process(mce_notify_helper);
++}
++#else
++static void mce_notify_work(void)
++{
++	__mce_notify_work();
++}
++static inline int mce_notify_work_init(void) { return 0; }
++#endif
++
+ /*
+  * Notify the user(s) about new machine check events.
+  * Can be called from interrupt context, but not from machine check/NMI
+@@ -1165,26 +1223,10 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+  */
+ int mce_notify_irq(void)
+ {
+-	/* Not more than two messages every minute */
+-	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
+-
+ 	clear_thread_flag(TIF_MCE_NOTIFY);
+ 
+ 	if (test_and_clear_bit(0, &mce_need_notify)) {
+-		/* wake processes polling /dev/mcelog */
+-		wake_up_interruptible(&mce_chrdev_wait);
+-
+-		/*
+-		 * There is no risk of missing notifications because
+-		 * work_pending is always cleared before the function is
+-		 * executed.
+-		 */
+-		if (mce_helper[0] && !work_pending(&mce_trigger_work))
+-			schedule_work(&mce_trigger_work);
+-
+-		if (__ratelimit(&ratelimit))
+-			pr_info(HW_ERR "Machine check events logged\n");
