@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.6.11.2-rt34
-Date: Tue, 07 May 2013 10:36:35 -0400
-Message-ID: <1367937395.7373.51.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.4.42-rt57
+Date: Tue, 07 May 2013 10:37:09 -0400
+Message-ID: <1367937429.7373.52.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,43 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11477 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:17767 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750831Ab3EGOgh (ORCPT
+	with ESMTP id S1752528Ab3EGOhM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 May 2013 10:36:37 -0400
+	Tue, 7 May 2013 10:37:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.6.11.2-rt34 stable release.
+I'm pleased to announce the 3.4.42-rt57 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.6-rt
-  Head SHA1: e49c8e8225d5135380b53e07d331441e55bdb0c4
+  branch: v3.4-rt
+  Head SHA1: 3586f2835e04bc4e07a7d521323854fad1778ec7
 
 
-Or to build 3.6.11.2-rt34 directly, the following patches should be applied:
+Or to build 3.4.42-rt57 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.6.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.6.11.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.42.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/stable/patch-3.6.11.2.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11.2-rt34.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.42-rt57.patch.xz
 
 
 
-You can also build from 3.6.11.2-rt33 by applying the incremental patch:
+You can also build from 3.4.42-rt56 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/incr/patch-3.6.11.2-rt33-rt34.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.42-rt56-rt57.patch.xz
 
 
 
@@ -57,49 +55,32 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.6.11.2-rt33:
+Changes from v3.4.42-rt56:
 
 ---
 
 Eric Dumazet (1):
       tcp: force a dst refcount when prequeue packet
 
-Priyanka Jain (1):
-      powerpc/64bit,PREEMPT_RT: Check preempt_count before preempting
-
 Steven Rostedt (2):
       x86/mce: Defer mce wakeups to threads for PREEMPT_RT
       swap: Use unique local lock name for swap_lock
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.6.11.2-rt34
+      Linux 3.4.42-rt57
 
 ----
- arch/powerpc/kernel/entry_64.S   |    2 +
  arch/x86/kernel/cpu/mcheck/mce.c |   78 +++++++++++++++++++++++++++++---------
  include/net/tcp.h                |    1 +
  localversion-rt                  |    2 +-
  mm/swap.c                        |   20 +++++-----
- 5 files changed, 75 insertions(+), 28 deletions(-)
+ 4 files changed, 73 insertions(+), 28 deletions(-)
 ---------------------------
-diff --git a/arch/powerpc/kernel/entry_64.S b/arch/powerpc/kernel/entry_64.S
-index a9b98cc..7af1ea7 100644
---- a/arch/powerpc/kernel/entry_64.S
-+++ b/arch/powerpc/kernel/entry_64.S
-@@ -596,6 +596,8 @@ resume_kernel:
- #ifdef CONFIG_PREEMPT
- 	/* Check if we need to preempt */
- 	lwz	r8,TI_PREEMPT(r9)
-+	cmpwi	0,r8,0		/* if non-zero, just restore regs and return */
-+	bne	restore
- 	andi.	r0,r4,_TIF_NEED_RESCHED
- 	bne+	1f
- 
 diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index e8d8ad0..e31ea90 100644
+index 91466f5..63c96f9 100644
 --- a/arch/x86/kernel/cpu/mcheck/mce.c
 +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -18,6 +18,7 @@
+@@ -15,6 +15,7 @@
  #include <linux/rcupdate.h>
  #include <linux/kobject.h>
  #include <linux/uaccess.h>
@@ -107,7 +88,7 @@ index e8d8ad0..e31ea90 100644
  #include <linux/kdebug.h>
  #include <linux/kernel.h>
  #include <linux/percpu.h>
-@@ -1308,6 +1309,63 @@ static void mce_do_trigger(struct work_struct *work)
+@@ -1293,6 +1294,63 @@ static void mce_do_trigger(struct work_struct *work)
  
  static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
  
@@ -171,7 +152,7 @@ index e8d8ad0..e31ea90 100644
  /*
   * Notify the user(s) about new machine check events.
   * Can be called from interrupt context, but not from machine check/NMI
-@@ -1315,24 +1373,8 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+@@ -1300,24 +1358,8 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
   */
  int mce_notify_irq(void)
  {
@@ -197,7 +178,7 @@ index e8d8ad0..e31ea90 100644
  		return 1;
  	}
  	return 0;
-@@ -2375,6 +2417,8 @@ static __init int mcheck_init_device(void)
+@@ -2295,6 +2337,8 @@ static __init int mcheck_init_device(void)
  	/* register character device /dev/mcelog */
  	misc_register(&mce_chrdev_device);
  
@@ -205,28 +186,28 @@ index e8d8ad0..e31ea90 100644
 +
  	return err;
  }
- device_initcall_sync(mcheck_init_device);
+ device_initcall(mcheck_init_device);
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index 1f000ff..9297897 100644
+index 2757a11..8376a6a 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -1015,6 +1015,7 @@ static inline bool tcp_prequeue(struct sock *sk, struct sk_buff *skb)
+@@ -948,6 +948,7 @@ static inline int tcp_prequeue(struct sock *sk, struct sk_buff *skb)
  	if (sysctl_tcp_low_latency || !tp->ucopy.task)
- 		return false;
+ 		return 0;
  
 +	skb_dst_force(skb);
  	__skb_queue_tail(&tp->ucopy.prequeue, skb);
  	tp->ucopy.memory += skb->truesize;
  	if (tp->ucopy.memory > sk->sk_rcvbuf) {
 diff --git a/localversion-rt b/localversion-rt
-index e1d8362..21988f9 100644
+index fdb0f88..c06cc435 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt33
-+-rt34
+--rt56
++-rt57
 diff --git a/mm/swap.c b/mm/swap.c
-index 8ef0e84..0f9ad9d 100644
+index 62dc70c..15c1c53 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -42,7 +42,7 @@ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
@@ -238,7 +219,7 @@ index 8ef0e84..0f9ad9d 100644
  
  /*
   * This path almost never happens for VM activity - pages are normally
-@@ -407,13 +407,13 @@ static void activate_page_drain(int cpu)
+@@ -332,13 +332,13 @@ static void activate_page_drain(int cpu)
  void activate_page(struct page *page)
  {
  	if (PageLRU(page) && !PageActive(page) && !PageUnevictable(page)) {
@@ -254,7 +235,7 @@ index 8ef0e84..0f9ad9d 100644
  	}
  }
  
-@@ -453,12 +453,12 @@ EXPORT_SYMBOL(mark_page_accessed);
+@@ -378,12 +378,12 @@ EXPORT_SYMBOL(mark_page_accessed);
  
  void __lru_cache_add(struct page *page, enum lru_list lru)
  {
@@ -269,7 +250,7 @@ index 8ef0e84..0f9ad9d 100644
  }
  EXPORT_SYMBOL(__lru_cache_add);
  
-@@ -623,19 +623,19 @@ void deactivate_page(struct page *page)
+@@ -548,19 +548,19 @@ void deactivate_page(struct page *page)
  		return;
  
  	if (likely(get_page_unless_zero(page))) {
@@ -293,7 +274,7 @@ index 8ef0e84..0f9ad9d 100644
  }
  
  static void lru_add_drain_per_cpu(struct work_struct *dummy)
-@@ -850,7 +850,7 @@ EXPORT_SYMBOL(pagevec_lookup_tag);
+@@ -771,7 +771,7 @@ EXPORT_SYMBOL(pagevec_lookup_tag);
  static int __init swap_init_locks(void)
  {
  	local_irq_lock_init(rotate_lock);
