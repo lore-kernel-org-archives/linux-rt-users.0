@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.44-rt65
-Date: Tue, 07 May 2013 10:37:41 -0400
-Message-ID: <1367937461.7373.53.camel@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.75-rt103
+Date: Tue, 07 May 2013 10:38:10 -0400
+Message-ID: <1367937490.7373.54.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31773 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13128 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751981Ab3EGOhn (ORCPT
+	with ESMTP id S1752233Ab3EGOiO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 7 May 2013 10:37:43 -0400
+	Tue, 7 May 2013 10:38:14 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.44-rt65 stable release.
+I'm pleased to announce the 3.0.75-rt103 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.2-rt
-  Head SHA1: d94dc2cc1e5b303d70ccb394234897c24a03e3b0
+  branch: v3.0-rt
+  Head SHA1: 359b8b074c355e73a1223e759445a5fe7a79dd97
 
 
-Or to build 3.2.44-rt65 directly, the following patches should be applied:
+Or to build 3.0.75-rt103 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.44.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.75.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.44-rt65.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.75-rt103.patch.xz
 
 
 
-You can also build from 3.2.44-rt64 by applying the incremental patch:
+You can also build from 3.0.75-rt102 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.44-rt64-rt65.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0.75-rt102-rt103.patch.xz
 
 
 
@@ -55,38 +55,32 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.2.44-rt64:
+Changes from v3.0.75-rt102:
 
 ---
 
 Eric Dumazet (1):
       tcp: force a dst refcount when prequeue packet
 
-Paul E. McKenney (1):
-      sched: Add is_idle_task() to handle invalidated uses of idle_cpu()
-
 Steven Rostedt (2):
       x86/mce: Defer mce wakeups to threads for PREEMPT_RT
       swap: Use unique local lock name for swap_lock
 
-Steven Rostedt (Red Hat) (2):
-      rcutiny: Fix typo of using swake_up() instead of swait_wake()
-      Linux 3.2.44-rt65
+Steven Rostedt (Red Hat) (1):
+      Linux 3.0.75-rt103
 
 ----
- arch/x86/kernel/cpu/mcheck/mce.c |   78 +++++++++++++++++++++++++++++---------
- include/linux/sched.h            |    8 ++++
+ arch/x86/kernel/cpu/mcheck/mce.c |   76 ++++++++++++++++++++++++++++++--------
  include/net/tcp.h                |    1 +
- kernel/rcutiny_plugin.h          |    2 +-
  localversion-rt                  |    2 +-
  mm/swap.c                        |   20 +++++-----
- 6 files changed, 82 insertions(+), 29 deletions(-)
+ 4 files changed, 72 insertions(+), 27 deletions(-)
 ---------------------------
 diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index 7e4f230..8ceb100 100644
+index 3d38e73..c859bb4 100644
 --- a/arch/x86/kernel/cpu/mcheck/mce.c
 +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -15,6 +15,7 @@
+@@ -16,6 +16,7 @@
  #include <linux/rcupdate.h>
  #include <linux/kobject.h>
  #include <linux/uaccess.h>
@@ -94,7 +88,7 @@ index 7e4f230..8ceb100 100644
  #include <linux/kdebug.h>
  #include <linux/kernel.h>
  #include <linux/percpu.h>
-@@ -1158,6 +1159,63 @@ static void mce_do_trigger(struct work_struct *work)
+@@ -1181,6 +1182,62 @@ static void mce_do_trigger(struct work_struct *work)
  
  static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
  
@@ -103,8 +97,7 @@ index 7e4f230..8ceb100 100644
 +	/* Not more than two messages every minute */
 +	static DEFINE_RATELIMIT_STATE(ratelimit, 60*HZ, 2);
 +
-+	/* wake processes polling /dev/mcelog */
-+	wake_up_interruptible(&mce_chrdev_wait);
++	wake_up_interruptible(&mce_wait);
 +
 +	/*
 +	 * There is no risk of missing notifications because
@@ -158,7 +151,7 @@ index 7e4f230..8ceb100 100644
  /*
   * Notify the user(s) about new machine check events.
   * Can be called from interrupt context, but not from machine check/NMI
-@@ -1165,26 +1223,10 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
+@@ -1188,25 +1245,10 @@ static DECLARE_WORK(mce_trigger_work, mce_do_trigger);
   */
  int mce_notify_irq(void)
  {
@@ -168,8 +161,7 @@ index 7e4f230..8ceb100 100644
  	clear_thread_flag(TIF_MCE_NOTIFY);
  
  	if (test_and_clear_bit(0, &mce_need_notify)) {
--		/* wake processes polling /dev/mcelog */
--		wake_up_interruptible(&mce_chrdev_wait);
+-		wake_up_interruptible(&mce_wait);
 -
 -		/*
 -		 * There is no risk of missing notifications because
@@ -186,39 +178,20 @@ index 7e4f230..8ceb100 100644
  		return 1;
  	}
  	return 0;
-@@ -2146,6 +2188,8 @@ static __init int mcheck_init_device(void)
- 	/* register character device /dev/mcelog */
- 	misc_register(&mce_chrdev_device);
+@@ -2136,6 +2178,8 @@ static __init int mcheck_init_device(void)
+ 	register_hotcpu_notifier(&mce_cpu_notifier);
+ 	misc_register(&mce_log_device);
  
 +	err = mce_notify_work_init();
 +
  	return err;
  }
- device_initcall(mcheck_init_device);
-diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 41c0979..dddabbb 100644
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -2163,6 +2163,14 @@ extern int sched_setscheduler(struct task_struct *, int,
- extern int sched_setscheduler_nocheck(struct task_struct *, int,
- 				      const struct sched_param *);
- extern struct task_struct *idle_task(int cpu);
-+/**
-+ * is_idle_task - is the specified task an idle task?
-+ * @tsk: the task in question.
-+ */
-+static inline bool is_idle_task(struct task_struct *p)
-+{
-+	return p->pid == 0;
-+}
- extern struct task_struct *curr_task(int cpu);
- extern void set_curr_task(int cpu, struct task_struct *p);
  
 diff --git a/include/net/tcp.h b/include/net/tcp.h
-index 0768715..fe46019 100644
+index b28a49f..4881cb6 100644
 --- a/include/net/tcp.h
 +++ b/include/net/tcp.h
-@@ -931,6 +931,7 @@ static inline int tcp_prequeue(struct sock *sk, struct sk_buff *skb)
+@@ -902,6 +902,7 @@ static inline int tcp_prequeue(struct sock *sk, struct sk_buff *skb)
  	if (sysctl_tcp_low_latency || !tp->ucopy.task)
  		return 0;
  
@@ -226,28 +199,15 @@ index 0768715..fe46019 100644
  	__skb_queue_tail(&tp->ucopy.prequeue, skb);
  	tp->ucopy.memory += skb->truesize;
  	if (tp->ucopy.memory > sk->sk_rcvbuf) {
-diff --git a/kernel/rcutiny_plugin.h b/kernel/rcutiny_plugin.h
-index f0a6606..6242ccd 100644
---- a/kernel/rcutiny_plugin.h
-+++ b/kernel/rcutiny_plugin.h
-@@ -883,7 +883,7 @@ static void rcu_preempt_process_callbacks(void)
- static void invoke_rcu_callbacks(void)
- {
- 	have_rcu_kthread_work = 1;
--	swake_up(&rcu_kthread_wq);
-+	swait_wake(&rcu_kthread_wq);
- }
- 
- /*
 diff --git a/localversion-rt b/localversion-rt
-index 1047404..e2eb197 100644
+index 33017cd..e0a0b11 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt64
-+-rt65
+--rt102
++-rt103
 diff --git a/mm/swap.c b/mm/swap.c
-index c428897..c77da7a 100644
+index 662972f..ccf04d2 100644
 --- a/mm/swap.c
 +++ b/mm/swap.c
 @@ -43,7 +43,7 @@ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
