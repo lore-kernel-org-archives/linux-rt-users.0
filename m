@@ -1,122 +1,60 @@
-From: Tom Cook <tom.k.cook@gmail.com>
-Subject: Re: Tracers+cyclictest causing kernel oops
-Date: Sun, 12 May 2013 06:14:29 +0100
-Message-ID: <CAFSh4Ux0Fywgi=RPE-kNmFyGmAd+d5V2m1uGO019NX80c-JH4w@mail.gmail.com>
-References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
-	<CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
-	<20130503160546.GF8230@linutronix.de>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: timerfd read does not return - some traces
+Date: Sun, 12 May 2013 19:31:12 +0200
+Message-ID: <518FD1E0.1070400@meduna.org>
+References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org> <518CEB45.9080705@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vb0-f45.google.com ([209.85.212.45]:42237 "EHLO
-	mail-vb0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750999Ab3ELFOa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 12 May 2013 01:14:30 -0400
-Received: by mail-vb0-f45.google.com with SMTP id 12so4429102vbf.4
-        for <linux-rt-users@vger.kernel.org>; Sat, 11 May 2013 22:14:30 -0700 (PDT)
-In-Reply-To: <20130503160546.GF8230@linutronix.de>
+Received: from www.meduna.org ([92.240.244.38]:52745 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754749Ab3ELRbW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 12 May 2013 13:31:22 -0400
+In-Reply-To: <518CEB45.9080705@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Okay, I've built the same kernel config but without kgdb enabled.
-Running cyclictest with a tracer enabled (-f in this case) causes the
-crash below.
+On 10.05.2013 14:42, Stanislav Meduna wrote:
 
-I'm not big on debugging these things yet.  Since cyclictest works
-without the tracers enabled and causes a crash with them enabled, the
-problem must be in the tracers themselves, right?  Actually, 'echo
-function > current_tracer' has the same effect.
+> I have uploaded the trace.dat captured by
+>   trace-cmd start -b 64000 -e irq -e sched -e syscalls -e timer
 
-Is that trace really saying that the processor is in mode 0?  AFAICT,
-ARM does not have a mode 0 unless you truncate the mode number to four
-bits - in which case mode '0' is user mode.  The process name seems to
-be a red herring - repeating this can turn up almost any process
-running on the system, from interrupt handler threads to bash.
+Actually the problem probably comes earlier. The thread with id 1276
+normally tries to call setsockopt and then right after it
+returns a select is called. See e.g. trace #914414 @ 49720.850080.
+There is no way in the code it can wait for more than tens of
+microseconds - no loop, no lock, just two function calls.
 
-Is this a known problem?  Any tips on figuring it out?
+With -p function -n '*preempt_count' (which unfortunately changes
+the timings so that the problem does not occur) there is nothing
+logged between the calls as well, except the syscall_trace_entry
+function.
 
-Sebastian, sorry for the repeat - hit the wrong reply button the first time.
+However, at #1800630 @ 49762.927207 the setsockopt returns,
+but the expected system call is not entered for 600 us
+and no irq, sched or timer event is logged in between.
 
-Thanks,
-Tom
+I also have another instance of the crash where the timing
+is different - the thread runs for 4 ms with soft and hard
+interrupts coming, so I am sure that this is not some SMI.
+It really looks that something is spinning here.
 
-pi@raspberrypi:~/rt-tests$ sudo ./cyclictest -p95 -m -f -b 2000
-# /dev/cpu_dma_latency set to 0us
-[  199.186167] Bad mode in data abort handler detected
-[  199.186194] Internal error: Oops - bad mode: 0 [#1] PREEMPT ARM
-[  199.186246] Modules linked in: snd_bcm2835 snd_pcm snd_seq
-snd_timer snd_seq_device snd snd_page_alloc
-[  199.186260] CPU: 0    Not tainted  (3.6.11-rt31+ #1)
-[  199.186297] PC is at ring_buffer_lock_reserve+0x7c/0x144
-[  199.186326] LR is at vfs_write+0x140/0x188
-[  199.186341] pc : [<c009486c>]    lr : [<c00efda4>]    psr: 600001d1
-[  199.186341] sp : da645ef8  ip : da645e28  fp : da645f6c
-[  199.186348] r10: 00000000  r9 : 00000000  r8 : 00000008
-[  199.186357] r7 : 200001d1  r6 : c030226c  r5 : c012cd64  r4 : c0732000
-[  199.186366] r3 : 200001d1  r2 : 00000018  r1 : 00000000  r0 : db801420
-[  199.186375] Flags: nZCv  IRQs off  FIQs off  Mode FIQ_32  ISA ARM
-Segment user
-[  199.186384] Control: 00c5387d  Table: 1a7f8008  DAC: 00000015
-[  199.186396] Process cyclictest (pid: 2035, stack limit = 0xda644268)
-[  199.186406] Stack: (0xda645ef8 to 0xda646000)
-[  199.186417] 5ee0:
-    db801420 00000000
-[  199.186434] 5f00: 00000018 200001d1 c0732000 c012cd64 c030226c
-200001d1 00000008 00000000
-[  199.186451] 5f20: 00000000 da645f6c da645e28 da645ef8 c00efda4
-c009486c 600001d1 ffffffff
-[  199.186467] 5f40: db408988 da6e52c8 da6e52c0 0000fc10 00000008
-00000004 00000000 00000000
-[  199.186483] 5f60: da645fa4 da645f70 c00f002c c00efc70 00000008
-00000000 00000001 00000000
-[  199.186499] 5f80: 00000004 00000004 00000001 0000001a c000e248
-da644000 00000000 da645fa8
-[  199.186515] 5fa0: c000dfc0 c00effec 00000004 00000001 00000004
-0000fc10 00000008 00000063
-[  199.186531] 5fc0: 00000004 00000001 0000001a 00000004 00019798
-0000fc10 00000008 00000001
-[  199.186547] 5fe0: 0000000e beca42c0 0000b7bc b6f7a6fc 60000010
-00000004 00000000 00000000
-[  199.186595] [<c009486c>] (ring_buffer_lock_reserve+0x7c/0x144) from
-[<c00f002c>] (sys_write+0x4c/0x78)
-[  199.186639] [<c00f002c>] (sys_write+0x4c/0x78) from [<c000dfc0>]
-(ret_fast_syscall+0x0/0x48)
-[  199.186659] Code: eb0df889 e3a00000 e89da830 e5941010 (e591cd4c)
-[  199.497152] ---[ end trace 0000000000000002 ]---
-[  199.497169] Kernel panic - not syncing: Fatal exception
-[  199.515555] Bad mode in prefetch abort handler detected
-[  199.515584] Internal error: Oops - bad mode: 0 [#2] PREEMPT ARM
-[  199.515632] Modules linked in: snd_bcm2835 snd_pcm snd_seq
-snd_timer snd_seq_device snd snd_page_alloc
-[  199.515644] CPU: 0    Tainted: G      D       (3.6.11-rt31+ #1)
-[  199.515660] PC is at 0xbe6f00b0
-[  199.515671] LR is at 0xb6ee67d4
-[  199.515684] pc : [<be6f00b0>]    lr : [<b6ee67d4>]    psr: 800001d1
-[  199.515684] sp : da46ffb0  ip : 00000000  fp : b5ca8fac
-[  199.515691] r10: b5ca96a4  r9 : b5ca8fb0  r8 : 00000000
-[  199.515700] r7 : 00000003  r6 : b5ca9684  r5 : b6cf62dc  r4 : b6cf42e4
-[  199.515708] r3 : 00000000  r2 : 00000fff  r1 : b6cf42e4  r0 : 000008fe
-[  199.515717] Flags: Nzcv  IRQs off  FIQs off  Mode FIQ_32  ISA ARM
-Segment user
-[  199.515725] Control: 00c5387d  Table: 1a434008  DAC: 00000015
-[  199.515735] Process rsyslogd (pid: 1700, stack limit = 0xda46e268)
-[  199.515744] Stack: (0xda46ffb0 to 0xda470000)
-[  199.515759] ffa0:                                     000008fe
-b6cf42e4 00000fff 00000000
-[  199.515776] ffc0: b6cf42e4 b6cf62dc b5ca9684 00000003 00000000
-b5ca8fb0 b5ca96a4 b5ca8fac
-[  199.515793] ffe0: 00000000 da46ffb0 b6ee67d4 be6f00b0 800001d1
-ffffffff 1bffe821 1bffec21
-[  199.515900] Code: 00000000 00000000 00000000 00000000 (00000000)
+At #1800649 the priority of the thread is boosted, i.e. there
+most probably _is_ a PI lock held. It even looks to be unlocked
+at #1800658 where the priority boost goes away.
 
-On Fri, May 3, 2013 at 5:05 PM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> * Tom Cook | 2013-04-29 08:16:35 [+0100]:
->
->>No ideas?
->
-> what about trying without kgdb?
->
-> Sebastian
+Which one? What locking happens between sys_exit_socketcall
+is logged and the time next syscall entry is logged?
+
+The problem akso happens with the whole CONFIG_FTRACE subtree
+disabled, so if there is some lock only present if the
+tracers are present, it is not the (only) culprit.
+
+Thanks
+-- 
+                                     Stano
+
