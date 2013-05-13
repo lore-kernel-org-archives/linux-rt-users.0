@@ -1,8 +1,8 @@
 From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: timerfd read does not return - hangs inside put_user
-Date: Mon, 13 May 2013 01:20:32 +0200
-Message-ID: <519023C0.2030603@meduna.org>
-References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org> <518CEB45.9080705@meduna.org>
+Subject: Re: timerfd read does not return - caused by MM fault
+Date: Mon, 13 May 2013 10:05:02 +0200
+Message-ID: <51909EAE.8070901@meduna.org>
+References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org> <518CEB45.9080705@meduna.org> <519023C0.2030603@meduna.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
@@ -10,75 +10,52 @@ Cc: rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:36053 "EHLO meduna.org"
+Received: from www.meduna.org ([92.240.244.38]:53115 "EHLO meduna.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751011Ab3ELXUm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 12 May 2013 19:20:42 -0400
-In-Reply-To: <518CEB45.9080705@meduna.org>
+	id S1751013Ab3EMIFO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 May 2013 04:05:14 -0400
+In-Reply-To: <519023C0.2030603@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10.05.2013 14:42, Stanislav Meduna wrote:
+On 13.05.2013 01:20, Stanislav Meduna wrote:
 
-> 49762.928029 the timerfd thread gets the CPU, does not giveit back,
-> but the end of the syscall is not reached in a sane time.
+> So it looks like the problem happens inside the put_user,
+> maybe a pagefault? The buf is an address on the stack:
 
-Hmm... I added some trace_printks into fs/timerfd.c:
+Yep, this is a page fault. I added tracing of the
+  mm_fault_error
+  handle_mm_fault
+  handle_pte_fault
+  do_page_fault
+functions
 
 
-static ssize_t timerfd_read(
-{
-...
-	trace_printk("timerfd_read before unlock, res=%d", res);
-	spin_unlock_irq(&ctx->wqh.lock);
-	trace_printk("timerfd_read after unlock, res=%d", res);
-	if (ticks)
-		res = put_user(ticks, (u64 __user *) buf) ? -EFAULT: sizeof(ticks);
-	trace_printk("timerfd_read return, res=%d, ticks=%llu, buf=%p", res, (unsigned long long) ticks, buf);
-	return res;
-}
+The result is
 
-The first two are printed. The last one is not.
+0....0 62811.755379: bprint:    timerfd_read: timerfd_read after unlock, res=0
+0d...0 62811.755382: function:  do_page_fault
+0....0 62811.755386: function:     handle_mm_fault
+0....0 62811.755389: function:        handle_pte_fault
+0d...0 62811.755394: function:  do_page_fault
+0....0 62811.755396: function:     handle_mm_fault
+0....0 62811.755398: function:        handle_pte_fault
+0d...0 62811.755402: function:  do_page_fault
+0....0 62811.755404: function:     handle_mm_fault
+0....0 62811.755406: function:        handle_pte_fault
 
-0....0 timerfd_read: timerfd_read before unlock, res=0
-0....0 timerfd_read: timerfd_read after unlock, res=0
 
-The usual
+> Viewing the ps -o min_flt,maj_flt for the task shows 969701
+> minor faults (that do not increment - I will check this when
+> the hang happens again) and 0 major ones.
 
-0....0 timerfd_read: timerfd_read return, res=8, ticks=1, buf=0xb7600158
+The number of minor faults of the thread jumped to 1433400 and
+the process recovered after 2.77 seconds.
 
-does _not_ happen here.
+The trace file is at
+  http://www.meduna.org/tmp/trace.mmfaulthang.dat.gz
 
-So it looks like the problem happens inside the put_user,
-maybe a pagefault? The buf is an address on the stack:
-
-while(alive) {
-	u64 exp;
-
-	if (read(tmrFd, &exp, sizeof(exp)) != sizeof(exp) || exp < 1)
-		continue;
-...
-
-and the process is running with mlockall(MCL_CURRENT | MCL_FUTURE),
-so the whole stack is forced into the RAM.
-
-Viewing the ps -o min_flt,maj_flt for the task shows 969701
-minor faults (that do not increment - I will check this when
-the hang happens again) and 0 major ones.
-
-This starts to look like some priority inversion where a realtime
-thread is busy-waiting for something a SCHED_OTHER thread holds.
-After the RT throttler kicks in, that other thread can proceed
-and the system eventually recovers - unfortunately after
-a 1+ second pause, which is what I am seeing.
-
-Is there something that could cause stalling the whole realtime
-thread for a significant time? Unfortunately I am not an expert
-on memory management, pagefaults etc - but I guess this should
-only produce a minor pagefault and that should never block?
-Or am I seeing it wrong?
-
-Regards
+Thanks
 -- 
-                                     Stano
+                                        Stano
 
