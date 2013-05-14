@@ -1,59 +1,33 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.6.11.3-rt35
-Date: Tue, 14 May 2013 11:22:13 -0400
-Message-ID: <1368544933.6828.41.camel@gandalf.local.home>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: [PATCH V5 0/5] Queue work on power efficient wq
+Date: Tue, 14 May 2013 10:54:40 -0700
+Message-ID: <20130514175440.GG6795@mtj.dyndns.org>
+References: <cover.1366803121.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:25840 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753517Ab3ENPWQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 May 2013 11:22:16 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: davem@davemloft.net, airlied@redhat.com, axboe@kernel.dk,
+	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
+	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, robin.randhawa@arm.com,
+	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
+	charles.garcia-tobin@arm.com, arvind.chauhan@arm.com,
+	linaro-kernel@lists.linaro.org, patches@linaro.org
+To: Viresh Kumar <viresh.kumar@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <cover.1366803121.git.viresh.kumar@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Wed, Apr 24, 2013 at 05:12:52PM +0530, Viresh Kumar wrote:
+> This patchset was called: "Create sched_select_cpu() and use it for workqueues"
+> for the first three versions.
 
-Dear RT Folks,
+Applied to wq/for-3.11 with some updates to comments and
+documentation.  Will post the applied versions.  If something is awry,
+please let me know.
 
-I'm pleased to announce the 3.6.11.3-rt35 stable release.
+Thanks.
 
-
-This release is just an update to the new stable 3.6.11.3 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.6-rt
-  Head SHA1: aa40d8a6b739c1356e2f1643dc01b9fad7d2def5
-
-
-Or to build 3.6.11.3-rt35 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.6.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.6.11.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/stable/patch-3.6.11.3.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11.3-rt35.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
-
-
-
+-- 
+tejun
