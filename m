@@ -1,75 +1,68 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Mon, 13 May 2013 12:35:30 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1305131223470.2863@ionos>
-References: <cover.1352196505.git.viresh.kumar@linaro.org> <d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org> <1354024039.6276.72.camel@gandalf.local.home> <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
- <CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com> <CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com> <CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Livelock in handle_pte_fault [Was: Re: timerfd read does not return]
+Date: Tue, 14 May 2013 10:31:09 +0200
+Message-ID: <5191F64D.2050509@meduna.org>
+References: <516BDE52.90200@meduna.org> <alpine.LFD.2.02.1304151416580.21884@ionos> <516BF8FD.2000700@meduna.org> <516EC3F3.1080406@meduna.org> <516FB8B9.9090506@meduna.org> <517B8D91.4010700@meduna.org> <518CEB45.9080705@meduna.org> <519023C0.2030603@meduna.org> <51909EAE.8070901@meduna.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Steven Rostedt <rostedt@goodmis.org>, pjt@google.com,
-	paul.mckenney@linaro.org, tj@kernel.org, mingo@redhat.com,
-	peterz@infradead.org, Arvind.Chauhan@arm.com,
-	linaro-dev@lists.linaro.org, patches@linaro.org,
-	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46976 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753327Ab3EMKgC (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 May 2013 06:36:02 -0400
-In-Reply-To: <CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+Received: from www.meduna.org ([92.240.244.38]:43977 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756600Ab3ENIbU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 14 May 2013 04:31:20 -0400
+In-Reply-To: <51909EAE.8070901@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 13 May 2013, Viresh Kumar wrote:
-> On 24 April 2013 16:52, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> > On 9 April 2013 20:22, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> >> [Steven replied to a personal Ping!!, including everybody again]
-> >>
-> >> On 9 April 2013 19:25, Steven Rostedt <rostedt@goodmis.org> wrote:
-> >>> On Tue, 2013-04-09 at 14:05 +0530, Viresh Kumar wrote:
-> >>>> Ping!!
-> >>>>
-> >>>
-> >>> Remind me again. What problem are you trying to solve?
-> >>
-> >> I was trying to migrate a running timer which arms itself, so that we don't
-> >> keep a cpu busy just for servicing this timer.
+On 13.05.2013 10:05, Stanislav Meduna wrote:
 
-Which mechanism is migrating the timer away?
+> 0d...0 62811.755394: function:  do_page_fault
+> 0....0 62811.755396: function:     handle_mm_fault
+> 0....0 62811.755398: function:        handle_pte_fault
+> 0d...0 62811.755402: function:  do_page_fault
+> 0....0 62811.755404: function:     handle_mm_fault
+> 0....0 62811.755406: function:        handle_pte_fault
 
-> >>>> On 20 March 2013 20:43, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> >>>> >
-> >>>> > Hi Steven/Thomas,
-> >>>> >
-> >>>> > I came back to this patch after completing some other stuff and posting
-> >>>> > wq part of this patchset separately.
-> >>>> >
-> >>>> > I got your point and understand how this would fail.
-> >>>> >
-> >>>> > @Thomas: I need your opinion first. Do you like this concept of migrating
-> >>>> > running timer or not? Or you see some basic problem with this concept?
+The flags in the pagefault handler are 0x28 - if I understand
+it correctly, FAULT_FLAG_KILLABLE | FAULT_FLAG_ALLOW_RETRY.
+The faulting address is indeed the one from stack that worked
+for hours before, is mlockall()-ed and I have (of course)
+no swap. I will add some code to print the content of
+the offending pte.
 
-I have no objections to the functionality per se, but the proposed
-solution is not going to fly.
+The code in handle_pte_fault proceeds through the
+  entry = pte_mkyoung(entry);
+line and the following
+  ptep_set_access_flags
+returns zero. This repeats ad nauseum without anything run
+in between. I will add some tracing prints to output
+the content of the pte.
 
-Aside of bloating the data structure you're changing the semantics of
-__mod_timer(). No __mod_timer() caller can deal with -EBUSY. So you'd
-break the world and some more.
+Adding flush_tlb_page(vma, address) at the beginning of
+handle_pte_fault does not change anything.
 
-Here is a list of questions:
+The length of the hang could correlate with the time until
+some SCHED_OTHER process is scheduled after the RT throttler
+activates. There is a process running each 2 seconds and the
+length of the hang is usually between 1 and 3 seconds. This
+is not (yet) verified.
 
-      - Which mechanism migrates timers?
+I am starting to think that the virtual memory mapping of the
+process got somehow corrupted and is fixed at the next regular
+context switch. There is no switch to other non-kernel process,
+only to ksoftirqd, irq threads or other thread of the
+same process afterwards. Shortly before there was some
+switching between modprobe and kworker and sched_process_free
+of kworker and modprobe in the RCU softirq.
 
-      - How is that mechanism triggered?
+The symptoms are similar to
+http://lkml.indiana.edu/hypermail/linux/kernel/1103.0/01364.html
 
-      - How does that deal with CPU bound timers?
-
-Thanks,
-
-	tglx
-
-
+Regards
+-- 
+                                            Stano
 
