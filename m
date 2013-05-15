@@ -1,44 +1,38 @@
-From: Tejun Heo <tj@kernel.org>
-Subject: Re: [PATCH V5 5/5] fbcon: queue work on power efficient wq
-Date: Tue, 14 May 2013 10:57:59 -0700
-Message-ID: <20130514175759.GK6795@mtj.dyndns.org>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V5 0/5] Queue work on power efficient wq
+Date: Wed, 15 May 2013 11:18:59 +0530
+Message-ID: <CAKohpo=oHXbHTWdj+J9OeV9ZHU3ii9u5UNcsrwOrJwkXbz_xkg@mail.gmail.com>
 References: <cover.1366803121.git.viresh.kumar@linaro.org>
- <89924f001e3ddd66ab41a16500569a976ea846fd.1366803121.git.viresh.kumar@linaro.org>
+	<20130514175440.GG6795@mtj.dyndns.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Cc: davem@davemloft.net, airlied@redhat.com, axboe@kernel.dk,
 	tglx@linutronix.de, peterz@infradead.org, mingo@redhat.com,
 	rostedt@goodmis.org, linux-rt-users@vger.kernel.org,
 	linux-kernel@vger.kernel.org, robin.randhawa@arm.com,
 	Steve.Bannister@arm.com, Liviu.Dudau@arm.com,
 	charles.garcia-tobin@arm.com, arvind.chauhan@arm.com,
-	linaro-kernel@lists.linaro.org, patches@linaro.org,
-	linux-fbdev@vger.kernel.org
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <89924f001e3ddd66ab41a16500569a976ea846fd.1366803121.git.viresh.kumar@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	linaro-kernel@lists.linaro.org, patches@linaro.org
+To: Tejun Heo <tj@kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-oa0-f48.google.com ([209.85.219.48]:64570 "EHLO
+	mail-oa0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751638Ab3EOFtA (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 15 May 2013 01:49:00 -0400
+Received: by mail-oa0-f48.google.com with SMTP id i4so1634822oah.7
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 May 2013 22:49:00 -0700 (PDT)
+In-Reply-To: <20130514175440.GG6795@mtj.dyndns.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Apr 24, 2013 at 05:12:57PM +0530, Viresh Kumar wrote:
-> fbcon uses workqueues and it has no real dependency of scheduling these on the
-> cpu which scheduled them.
-> 
-> On a idle system, it is observed that and idle cpu wakes up many times just to
-> service this work. It would be better if we can schedule it on a cpu which the
-> scheduler believes to be the most appropriate one.
-> 
-> This patch replaces system_wq with system_power_efficient_wq.
-> 
-> Cc: Dave Airlie <airlied@redhat.com>
-> Cc: linux-fbdev@vger.kernel.org
-> Signed-off-by: Viresh Kumar <viresh.kumar@linaro.org>
+On 14 May 2013 23:24, Tejun Heo <tj@kernel.org> wrote:
+> On Wed, Apr 24, 2013 at 05:12:52PM +0530, Viresh Kumar wrote:
+>> This patchset was called: "Create sched_select_cpu() and use it for workqueues"
+>> for the first three versions.
+>
+> Applied to wq/for-3.11 with some updates to comments and
+> documentation.  Will post the applied versions.  If something is awry,
+> please let me know.
 
-Dave, applied this to wq/for-3.11.  Please holler if you want this to
-be routed differently.
-
-Thanks!
-
--- 
-tejun
+Thanks. All looks good.
