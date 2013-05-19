@@ -1,151 +1,56 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: [PATCH - sort of] x86: Livelock in handle_pte_fault
-Date: Fri, 17 May 2013 10:42:51 +0200
-Message-ID: <5195ED8B.7060002@meduna.org>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: 3.8.13-201.rt8 also builds and runs very smoothly
+ on fc19 alpha
+Date: Sun, 19 May 2013 15:23:38 -0700
+Message-ID: <519950EA.20907@localhost>
+References: <CAAKCv600qmZf63n8-bm9LSX2qtJKmFiCFSN+hGDYJxiN9O0ggw@mail.gmail.com>	<5182A29C.3060501@localhost>	<CAAKCv63N9zE2icvXH9vLNBV+cfRBj9u_w4GXmEjda4XX85JcBA@mail.gmail.com>	<51968C58.1060207@localhost>	<CAAKCv62LumwYmqk-Jjn-qn+J_fPEW_kFZsF4D22R8Yi2=_DVbA@mail.gmail.com>
+	<51991BCF.90202@slnet-online.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:43434 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753671Ab3EQInT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 May 2013 04:43:19 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: planetccrma@ccrma.Stanford.EDU,
+        "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Simon Lewis <simon.lewis@slnet-online.de>
+Return-path: <planetccrma-bounces@ccrma.Stanford.EDU>
+In-Reply-To: <51991BCF.90202@slnet-online.de>
+List-Unsubscribe: <http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma>,
+	<mailto:planetccrma-request@ccrma.stanford.edu?subject=unsubscribe>
+List-Archive: <http://ccrma-mail.stanford.edu/pipermail/planetccrma>
+List-Post: <mailto:planetccrma@ccrma.stanford.edu>
+List-Help: <mailto:planetccrma-request@ccrma.stanford.edu?subject=help>
+List-Subscribe: <http://ccrma-mail.stanford.edu/mailman/listinfo/planetccrma>,
+	<mailto:planetccrma-request@ccrma.stanford.edu?subject=subscribe>
+Sender: planetccrma-bounces@ccrma.Stanford.EDU
+Errors-To: planetccrma-bounces@ccrma.Stanford.EDU
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+On 05/19/2013 11:37 AM, Simon Lewis wrote:
+> Nice work Fernando, I've never known the rt kernel to be so good...
 
-I don't know whether this is linux-rt specific or applies to
-the mainline too, so I'll repeat some things the linux-rt
-readers already know.
+Thanks, but all the credit goes to the rt kernel gurus that brings us 
+the rt patch (I'm cc'ing the rt list, kudos to all!). I have not seen a 
+better kernel for audio work in a long time. Good to know it builds and 
+runs on fc19 alpha...
 
-Environment:
+-- Fernando
 
-- Geode LX or Celeron M
-- _not_ CONFIG_SMP
-- linux 3.4 with realtime patches and full preempt configured
-- an application consisting of several mostly RR-class threads
-- the application runs with mlockall()
-- there is no swap
-
-Problem:
-
-- after several hours to 1-2 weeks some of the threads start to loop
-  in the following way
-
-  0d...0 62811.755382: function:  do_page_fault
-  0....0 62811.755386: function:     handle_mm_fault
-  0....0 62811.755389: function:        handle_pte_fault
-  0d...0 62811.755394: function:  do_page_fault
-  0....0 62811.755396: function:     handle_mm_fault
-  0....0 62811.755398: function:        handle_pte_fault
-  0d...0 62811.755402: function:  do_page_fault
-  0....0 62811.755404: function:     handle_mm_fault
-  0....0 62811.755406: function:        handle_pte_fault
-
-  and stay in the loop until the RT throttling gets activated.
-  One of the faulting addresses was in code (after returning
-  from a syscall), a second one in stack (inside put_user right
-  before a syscall ends), both were surely mapped.
-
-- After RT throttler activates it somehow magically fixes itself,
-  probably (not verified) because another _process_ gets scheduled.
-  When throttled the RR and FF threads are not allowed to run for
-  a while (20 ms in my configuration). The livelocks lasts around
-  1-3 seconds, and there is a SCHED_OTHER process that runs each
-  2 seconds.
-
-- Kernel threads with higher priority than the faulting one (linux-rt
-  irq threads) run normally. A higher priority user thread from the
-  same process gets scheduled and then enters the same faulting loop.
-
-- in ps -o min_flt,maj_flt the number of minor page faults
-  for the offending thread skyrockets to hundreds of thousands
-  (normally it stays zero as everything is already mapped
-  when it is started)
-
-- The code in handle_pte_fault proceeds through the
-    entry = pte_mkyoung(entry);
-  line and the following
-    ptep_set_access_flags
-  returns zero.
-
-- The livelock is extremely timing sensitive - different workloads
-  cause it not to happen at all or far later.
-
-- I was able to make this happen a bit faster (once per ~4 hours)
-  with the rt thread repeatly causing the kernel to try to
-  invoke modprobe to load a missing module - so there is a load
-  of kworker-s launching modprobes (in case anyone wonders how it
-  can happen: this was a bug in our application with invalid level
-  specified for setsockopt causing searching for TCP congestion
-  module instead of setting SO_LINGER)
-
-- the symptoms are similar to
-    http://lkml.indiana.edu/hypermail/linux/kernel/1103.0/01364.html
-  which got fixed by
-    https://lkml.org/lkml/2011/3/15/516
-  but this fix does not apply to the processors in question
-
-- the patch below _seems_ to fix it, or at least massively delay it -
-  the testcase now runs for 2.5 days instead of 4 hours. I doubt
-  it is the proper patch (it brutally reloads the CR3 every time
-  a thread with userspace mapping is switched to). I just got the
-  suspicion that there is some way the kernel forgets to update
-  the memory mapping when going from an userpace thread through
-  some kernel ones back to another userspace one and tried to make
-  sure the mapping is always reloaded.
-
-- the whole history starts at
-    http://www.spinics.net/lists/linux-rt-users/msg09758.html
-  I originally thought the problem is in timerfd and hunted it
-  in several places until I learned to use the tracing infrastructure
-  and started to pin it down with trace prints etc :)
-
-- A trace file of the hang is at
-  http://www.meduna.org/tmp/trace.mmfaulthang.dat.gz
-
-Does this ring a bell with someone?
-
-Thanks
-                                              Stano
-
-
-
-
-diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-index 6902152..3d54a15 100644
---- a/arch/x86/include/asm/mmu_context.h
-+++ b/arch/x86/include/asm/mmu_context.h
-@@ -54,21 +54,23 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
- 		if (unlikely(prev->context.ldt != next->context.ldt))
- 			load_LDT_nolock(&next->context);
- 	}
--#ifdef CONFIG_SMP
- 	else {
-+#ifdef CONFIG_SMP
- 		percpu_write(cpu_tlbstate.state, TLBSTATE_OK);
- 		BUG_ON(percpu_read(cpu_tlbstate.active_mm) != next);
-
- 		if (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next))) {
-+#endif
- 			/* We were in lazy tlb mode and leave_mm disabled
- 			 * tlb flush IPI delivery. We must reload CR3
- 			 * to make sure to use no freed page tables.
- 			 */
- 			load_cr3(next->pgd);
- 			load_LDT_nolock(&next->context);
-+#ifdef CONFIG_SMP
- 		}
--	}
- #endif
-+	}
- }
-
- #define activate_mm(prev, next)
-
+> Am 19.05.2013 17:37, schrieb Sean Beeson:
+>> 3.8.13-201.rt8.1.fc18.ccrma.i686.rtPAE
+>>
+>> On Sat, May 18, 2013 at 5:00 AM, Fernando Lopez-Lezcano
+>> <nando@ccrma.stanford.edu <mailto:nando@ccrma.stanford.edu>> wrote:
+>>
+>>     Anyway, I just released an rt kernel based on 3.8.13 and rt8. It
+>>     is available on planetcore for fc18 and planetcore-testing for fc17.
+>>
+>>     I tried suspend on my "test" laptop running fc18 and it did wake
+>>     up correctly (at least two times, don't know about more :-), so
+>>     maybe this version fixed that problem.
+>>
+>>     Enjoy!
+>>
+>> Thanks for dropping a note about it. My machine got updated with
+>> 3.8.13-201.rt8.1.fc18.ccrma.i686.rtPAE with a lot of other cool
+>> updates/features for other things too.
+>>
+>> The resume/suspend is working really well for me as well.
