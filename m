@@ -1,77 +1,134 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: [PATCH - sort of] x86: Livelock in handle_pte_fault
-Date: Wed, 22 May 2013 09:32:05 +0200
-Message-ID: <519C7475.5080400@meduna.org>
-References: <5195ED8B.7060002@meduna.org> <1369183168.6828.168.camel@gandalf.local.home>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Wed, 22 May 2013 14:04:16 +0530
+Message-ID: <CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
+	<1354024039.6276.72.camel@gandalf.local.home>
+	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
+	<CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
+	<CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+	<alpine.LFD.2.02.1305131223470.2863@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org,
-	riel <riel@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Steven Rostedt <rostedt@goodmis.org>, pjt@google.com,
+	paul.mckenney@linaro.org, tj@kernel.org, mingo@redhat.com,
+	peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1369183168.6828.168.camel@gandalf.local.home>
+In-Reply-To: <alpine.LFD.2.02.1305131223470.2863@ionos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 22.05.2013 02:39, Steven Rostedt wrote:
+Sorry for being late in replying to your queries.
 
-> The threads do a mlockall too right? I'm not sure mlock will lock memory
-> for a new thread's stack.
+On 13 May 2013 16:05, Thomas Gleixner <tglx@linutronix.de> wrote:
+> Which mechanism is migrating the timer away?
 
-They don't. However,
-https://rt.wiki.kernel.org/index.php/Threaded_RT-application_with_memory_locking_and_stack_handling_example
-claims
+It will be the same: get_nohz_timer_target() which will decide target
+cpu for migration.
 
-  "Threads started after a call to mlockall(MCL_CURRENT | MCL_FUTURE) will
-  generate page faults immediately since the new stack is immediately forced
-  to RAM (due to the MCL_FUTURE flag)."
+> I have no objections to the functionality per se, but the proposed
+> solution is not going to fly.
+>
+> Aside of bloating the data structure you're changing the semantics of
+> __mod_timer(). No __mod_timer() caller can deal with -EBUSY. So you'd
+> break the world and some more.
 
-and as the ps -o min_flt reports zero page faults for the threads
-so I think it is also the case.
+Ahh.. That idea was dropped already.
 
-Anyway, both particular addresses were surely mapped long before
-the fault.
+> Here is a list of questions:
+>
+>       - Which mechanism migrates timers?
+>
+>       - How is that mechanism triggered?
 
->> - the application runs with mlockall()
-> 
-> With both MCL_FUTURE and MCL_CURRENT set, right?
+The mechanism remains the same as is for non-rearmed timers.
+i.e. get_nohz_timer_target()..
 
-Yes.
+We are just trying to give a approach with which we can migrate
+running timers. i.e. those which re-arm themselves from their
+handlers.
 
->> - there is no swap
-> 
-> Hmm, doesn't mean that code can't be swapped out, as it is just mapped
-> from the file it came from. But you'd think mlockall would prevent that.
+>       - How does that deal with CPU bound timers?
 
-mlockall also forces the stack to be mapped immediately and not
-generating pagefaults when incrementally expanding.
+We will still check 'Pinned' for this timer as is done for any other
+normal timer. So, we don't migrate them.
 
-> Seems a bit extreme. Looks to me there's a missing flush TLB somewhere.
+So, this is the clean draft for the idea I had.. (Naming is poor for
+now):
 
-Probably.
+diff --git a/include/linux/timer.h b/include/linux/timer.h
+index 8c5a197..ad00ebe 100644
+--- a/include/linux/timer.h
++++ b/include/linux/timer.h
+@@ -20,6 +20,7 @@ struct timer_list {
 
-One interesting thing: the test for "need to reload something"
-looks a bit differently for the ARM architecture in
-arch/arm/include/asm/mmu_context.h:
+        void (*function)(unsigned long);
+        unsigned long data;
++       int wait_for_migration_to_complete;
 
-  if (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next)) || prev != next) {
+        int slack;
 
-and they do something also for the
-  !CONFIG_SMP && !cpumask_test_and_set_cpu(cpu, mm_cpumask(next)
-case. I don't know what exactly is semantics of mm_cpumask,
-but the difference is suspicious.
+diff --git a/kernel/timer.c b/kernel/timer.c
+index a860bba..7791f28 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -746,21 +746,15 @@ __mod_timer(struct timer_list *timer, unsigned
+long expires,
+        new_base = per_cpu(tvec_bases, cpu);
 
-> Do you have a reproducer you can share. That way, maybe we can all share
-> the joy.
+        if (base != new_base) {
+-               /*
+-                * We are trying to schedule the timer on the local CPU.
+-                * However we can't change timer's base while it is running,
+-                * otherwise del_timer_sync() can't detect that the timer's
+-                * handler yet has not finished. This also guarantees that
+-                * the timer is serialized wrt itself.
+-                */
+-               if (likely(base->running_timer != timer)) {
+-                       /* See the comment in lock_timer_base() */
+-                       timer_set_base(timer, NULL);
+-                       spin_unlock(&base->lock);
+-                       base = new_base;
+-                       spin_lock(&base->lock);
+-                       timer_set_base(timer, base);
+-               }
++               if (base->running_timer == timer)
++                       timer->wait_for_migration_to_complete = 1;
++
++               /* See the comment in lock_timer_base() */
++               timer_set_base(timer, NULL);
++               spin_unlock(&base->lock);
++               base = new_base;
++               spin_lock(&base->lock);
++               timer_set_base(timer, base);
+        }
 
-Unfortunately not and I have really tried :( If I get new ideas, I will
-try again.
+        timer->expires = expires;
+@@ -990,7 +984,8 @@ int try_to_del_timer_sync(struct timer_list *timer)
 
-Thanks
--- 
-                                                   Stano
+        base = lock_timer_base(timer, &flags);
+
+-       if (base->running_timer != timer) {
++       if ((base->running_timer != timer) &&
++                       !timer->wait_for_migration_to_complete) {
+                timer_stats_timer_clear_start_info(timer);
+                ret = detach_if_pending(timer, base, true);
+        }
+@@ -1183,6 +1178,8 @@ static inline void __run_timers(struct tvec_base *base)
+                                call_timer_fn(timer, fn, data);
+                                spin_lock_irq(&base->lock);
+                        }
++                       if (timer->wait_for_migration_to_complete)
++                               timer->wait_for_migration_to_complete = 0;
+                }
+        }
+        base->running_timer = NULL;
+
+
+Please see if it a junk idea or has some light of hope :)
