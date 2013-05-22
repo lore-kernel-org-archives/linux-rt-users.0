@@ -1,10 +1,10 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Stanislav Meduna <stano@meduna.org>
 Subject: Re: [PATCH - sort of] x86: Livelock in handle_pte_fault
-Date: Tue, 21 May 2013 20:39:28 -0400
-Message-ID: <1369183168.6828.168.camel@gandalf.local.home>
-References: <5195ED8B.7060002@meduna.org>
+Date: Wed, 22 May 2013 09:32:05 +0200
+Message-ID: <519C7475.5080400@meduna.org>
+References: <5195ED8B.7060002@meduna.org> <1369183168.6828.168.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
@@ -12,172 +12,66 @@ Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@redhat.com>,
 	"H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org,
 	riel <riel@redhat.com>
-To: Stanislav Meduna <stano@meduna.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5195ED8B.7060002@meduna.org>
+In-Reply-To: <1369183168.6828.168.camel@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2013-05-17 at 10:42 +0200, Stanislav Meduna wrote:
-> Hi all,
-> 
-> I don't know whether this is linux-rt specific or applies to
-> the mainline too, so I'll repeat some things the linux-rt
-> readers already know.
-> 
-> Environment:
-> 
-> - Geode LX or Celeron M
-> - _not_ CONFIG_SMP
-> - linux 3.4 with realtime patches and full preempt configured
-> - an application consisting of several mostly RR-class threads
+On 22.05.2013 02:39, Steven Rostedt wrote:
 
-The threads do a mlockall too right? I'm not sure mlock will lock memory
-for a new thread's stack.
+> The threads do a mlockall too right? I'm not sure mlock will lock memory
+> for a new thread's stack.
 
-> - the application runs with mlockall()
+They don't. However,
+https://rt.wiki.kernel.org/index.php/Threaded_RT-application_with_memory_locking_and_stack_handling_example
+claims
 
-With both MCL_FUTURE and MCL_CURRENT set, right?
+  "Threads started after a call to mlockall(MCL_CURRENT | MCL_FUTURE) will
+  generate page faults immediately since the new stack is immediately forced
+  to RAM (due to the MCL_FUTURE flag)."
 
-> - there is no swap
+and as the ps -o min_flt reports zero page faults for the threads
+so I think it is also the case.
 
-Hmm, doesn't mean that code can't be swapped out, as it is just mapped
-from the file it came from. But you'd think mlockall would prevent that.
+Anyway, both particular addresses were surely mapped long before
+the fault.
 
+>> - the application runs with mlockall()
 > 
-> Problem:
-> 
-> - after several hours to 1-2 weeks some of the threads start to loop
->   in the following way
-> 
->   0d...0 62811.755382: function:  do_page_fault
->   0....0 62811.755386: function:     handle_mm_fault
->   0....0 62811.755389: function:        handle_pte_fault
->   0d...0 62811.755394: function:  do_page_fault
->   0....0 62811.755396: function:     handle_mm_fault
->   0....0 62811.755398: function:        handle_pte_fault
->   0d...0 62811.755402: function:  do_page_fault
->   0....0 62811.755404: function:     handle_mm_fault
->   0....0 62811.755406: function:        handle_pte_fault
-> 
->   and stay in the loop until the RT throttling gets activated.
->   One of the faulting addresses was in code (after returning
->   from a syscall), a second one in stack (inside put_user right
->   before a syscall ends), both were surely mapped.
-> 
-> - After RT throttler activates it somehow magically fixes itself,
->   probably (not verified) because another _process_ gets scheduled.
->   When throttled the RR and FF threads are not allowed to run for
->   a while (20 ms in my configuration). The livelocks lasts around
->   1-3 seconds, and there is a SCHED_OTHER process that runs each
->   2 seconds.
+> With both MCL_FUTURE and MCL_CURRENT set, right?
 
-Hmm, if there was a missed TLB flush, and we are faulting due to a bad
-TLB table, and it goes into an infinite faulting loop, the only thing
-that will stop it is the RT throttle. Then a new task gets scheduled,
-and we flush the TLB and everything is fine again.
+Yes.
 
+>> - there is no swap
 > 
-> - Kernel threads with higher priority than the faulting one (linux-rt
->   irq threads) run normally. A higher priority user thread from the
->   same process gets scheduled and then enters the same faulting loop.
+> Hmm, doesn't mean that code can't be swapped out, as it is just mapped
+> from the file it came from. But you'd think mlockall would prevent that.
 
-Kernel threads share the mm, and wont cause a reload of the CR3.
+mlockall also forces the stack to be mapped immediately and not
+generating pagefaults when incrementally expanding.
 
-> 
-> - in ps -o min_flt,maj_flt the number of minor page faults
->   for the offending thread skyrockets to hundreds of thousands
->   (normally it stays zero as everything is already mapped
->   when it is started)
-> 
-> - The code in handle_pte_fault proceeds through the
->     entry = pte_mkyoung(entry);
->   line and the following
->     ptep_set_access_flags
->   returns zero.
-> 
-> - The livelock is extremely timing sensitive - different workloads
->   cause it not to happen at all or far later.
-> 
-> - I was able to make this happen a bit faster (once per ~4 hours)
->   with the rt thread repeatly causing the kernel to try to
->   invoke modprobe to load a missing module - so there is a load
->   of kworker-s launching modprobes (in case anyone wonders how it
->   can happen: this was a bug in our application with invalid level
->   specified for setsockopt causing searching for TCP congestion
->   module instead of setting SO_LINGER)
+> Seems a bit extreme. Looks to me there's a missing flush TLB somewhere.
 
-Note, that modules are in vmalloc space, and do fault in. But it also
-changes the PGD.
+Probably.
 
-> 
-> - the symptoms are similar to
->     http://lkml.indiana.edu/hypermail/linux/kernel/1103.0/01364.html
->   which got fixed by
->     https://lkml.org/lkml/2011/3/15/516
->   but this fix does not apply to the processors in question
-> 
-> - the patch below _seems_ to fix it, or at least massively delay it -
->   the testcase now runs for 2.5 days instead of 4 hours. I doubt
->   it is the proper patch (it brutally reloads the CR3 every time
->   a thread with userspace mapping is switched to). I just got the
->   suspicion that there is some way the kernel forgets to update
->   the memory mapping when going from an userpace thread through
->   some kernel ones back to another userspace one and tried to make
->   sure the mapping is always reloaded.
+One interesting thing: the test for "need to reload something"
+looks a bit differently for the ARM architecture in
+arch/arm/include/asm/mmu_context.h:
 
-Seems a bit extreme. Looks to me there's a missing flush TLB somewhere.
+  if (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next)) || prev != next) {
 
-Do you have a reproducer you can share. That way, maybe we can all share
-the joy.
+and they do something also for the
+  !CONFIG_SMP && !cpumask_test_and_set_cpu(cpu, mm_cpumask(next)
+case. I don't know what exactly is semantics of mm_cpumask,
+but the difference is suspicious.
 
--- Steve
+> Do you have a reproducer you can share. That way, maybe we can all share
+> the joy.
 
-> 
-> - the whole history starts at
->     http://www.spinics.net/lists/linux-rt-users/msg09758.html
->   I originally thought the problem is in timerfd and hunted it
->   in several places until I learned to use the tracing infrastructure
->   and started to pin it down with trace prints etc :)
-> 
-> - A trace file of the hang is at
->   http://www.meduna.org/tmp/trace.mmfaulthang.dat.gz
-> 
-> Does this ring a bell with someone?
-> 
-> Thanks
->                                               Stano
-> 
-> 
-> 
-> 
-> diff --git a/arch/x86/include/asm/mmu_context.h b/arch/x86/include/asm/mmu_context.h
-> index 6902152..3d54a15 100644
-> --- a/arch/x86/include/asm/mmu_context.h
-> +++ b/arch/x86/include/asm/mmu_context.h
-> @@ -54,21 +54,23 @@ static inline void switch_mm(struct mm_struct *prev, struct mm_struct *next,
->  		if (unlikely(prev->context.ldt != next->context.ldt))
->  			load_LDT_nolock(&next->context);
->  	}
-> -#ifdef CONFIG_SMP
->  	else {
-> +#ifdef CONFIG_SMP
->  		percpu_write(cpu_tlbstate.state, TLBSTATE_OK);
->  		BUG_ON(percpu_read(cpu_tlbstate.active_mm) != next);
-> 
->  		if (!cpumask_test_and_set_cpu(cpu, mm_cpumask(next))) {
-> +#endif
->  			/* We were in lazy tlb mode and leave_mm disabled
->  			 * tlb flush IPI delivery. We must reload CR3
->  			 * to make sure to use no freed page tables.
->  			 */
->  			load_cr3(next->pgd);
->  			load_LDT_nolock(&next->context);
-> +#ifdef CONFIG_SMP
->  		}
-> -	}
->  #endif
-> +	}
->  }
-> 
->  #define activate_mm(prev, next)
+Unfortunately not and I have really tried :( If I get new ideas, I will
+try again.
+
+Thanks
+-- 
+                                                   Stano
