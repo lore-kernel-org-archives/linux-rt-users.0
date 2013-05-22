@@ -1,141 +1,58 @@
-From: Rik van Riel <riel@redhat.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH - sort of] x86: Livelock in handle_pte_fault
-Date: Wed, 22 May 2013 08:33:52 -0400
-Message-ID: <519CBB30.3060200@redhat.com>
-References: <5195ED8B.7060002@meduna.org> <1369183168.6828.168.camel@gandalf.local.home>
+Date: Wed, 22 May 2013 08:01:43 -0700
+Message-ID: <CA+55aFxMqvDvcVtLW-yD2PuU_CcjPOC30Zk07Kuk6S25WCzbHQ@mail.gmail.com>
+References: <5195ED8B.7060002@meduna.org>
+	<1369183168.6828.168.camel@gandalf.local.home>
+	<519CBB30.3060200@redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------020901050200030000040607"
-Cc: Stanislav Meduna <stano@meduna.org>,
+Content-Type: text/plain; charset=UTF-8
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Stanislav Meduna <stano@meduna.org>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Ingo Molnar <mingo@redhat.com>,
-	"H. Peter Anvin" <hpa@zytor.com>, x86@kernel.org,
-	Linus Torvalds <torvalds@linux-foundation.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
+	"the arch/x86 maintainers" <x86@kernel.org>,
 	Hai Huang <hhuang@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Rik van Riel <riel@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1369183168.6828.168.camel@gandalf.local.home>
+In-Reply-To: <519CBB30.3060200@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is a multi-part message in MIME format.
---------------020901050200030000040607
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-
-On 05/21/2013 08:39 PM, Steven Rostedt wrote:
-> On Fri, 2013-05-17 at 10:42 +0200, Stanislav Meduna wrote:
->> Hi all,
->>
->> I don't know whether this is linux-rt specific or applies to
->> the mainline too, so I'll repeat some things the linux-rt
->> readers already know.
->>
->> Environment:
->>
->> - Geode LX or Celeron M
->> - _not_ CONFIG_SMP
->> - linux 3.4 with realtime patches and full preempt configured
->> - an application consisting of several mostly RR-class threads
+On Wed, May 22, 2013 at 5:33 AM, Rik van Riel <riel@redhat.com> wrote:
 >
-> The threads do a mlockall too right? I'm not sure mlock will lock memory
-> for a new thread's stack.
+> That sounds like maybe we DO want a TLB flush on spurious
+> page faults, so we get rid of this problem.
+
+Hmm. If it was just the Geode, I wouldn't be surprised. But with a Celeron too?
+
+Anyway, worth testing..
+
+> We can get flush_tlb_fix_spurious_fault to do a local TLB
+> invalidate of just the address in question by removing the
+> x86-specific dummy version, falling back to the asm-generic
+> version that does something.
 >
->> - the application runs with mlockall()
->
-> With both MCL_FUTURE and MCL_CURRENT set, right?
->
->> - there is no swap
->
-> Hmm, doesn't mean that code can't be swapped out, as it is just mapped
-> from the file it came from. But you'd think mlockall would prevent that.
->
->>
->> Problem:
->>
->> - after several hours to 1-2 weeks some of the threads start to loop
->>    in the following way
->>
->>    0d...0 62811.755382: function:  do_page_fault
->>    0....0 62811.755386: function:     handle_mm_fault
->>    0....0 62811.755389: function:        handle_pte_fault
->>    0d...0 62811.755394: function:  do_page_fault
->>    0....0 62811.755396: function:     handle_mm_fault
->>    0....0 62811.755398: function:        handle_pte_fault
->>    0d...0 62811.755402: function:  do_page_fault
->>    0....0 62811.755404: function:     handle_mm_fault
->>    0....0 62811.755406: function:        handle_pte_fault
->>
->>    and stay in the loop until the RT throttling gets activated.
->>    One of the faulting addresses was in code (after returning
->>    from a syscall), a second one in stack (inside put_user right
->>    before a syscall ends), both were surely mapped.
->>
->> - After RT throttler activates it somehow magically fixes itself,
->>    probably (not verified) because another _process_ gets scheduled.
->>    When throttled the RR and FF threads are not allowed to run for
->>    a while (20 ms in my configuration). The livelocks lasts around
->>    1-3 seconds, and there is a SCHED_OTHER process that runs each
->>    2 seconds.
->
-> Hmm, if there was a missed TLB flush, and we are faulting due to a bad
-> TLB table, and it goes into an infinite faulting loop, the only thing
-> that will stop it is the RT throttle. Then a new task gets scheduled,
-> and we flush the TLB and everything is fine again.
+> Can you test the attached patch?
 
-That sounds like maybe we DO want a TLB flush on spurious
-page faults, so we get rid of this problem.
+I think you should also remove the
 
-Last fall we thought this problem could not happen on x86,
-but your bug report suggests that it might.
+        if (flags & FAULT_FLAG_WRITE)
 
-We can get flush_tlb_fix_spurious_fault to do a local TLB
-invalidate of just the address in question by removing the
-x86-specific dummy version, falling back to the asm-generic
-version that does something.
+test in handle_pte_fault(). Because if it's spurious, it might happen
+on reads too, I think.
 
-Can you test the attached patch?
+RT people - does RT do anything special with the page tables?
 
--- 
-All rights reversed
+Stanislav, the patch you sent out may well work, but it's damned odd.
+On UP, we don't do the leave_mm() optimization that makes that code
+necessary. So I agree with Rik that it's more likely somewhere else
+(and infinite page faults do imply the TLB not getting flushed by the
+page fault exception), and your patch might just be working around it
+by simply flushing the TLB at least when switching between threads,
+which still happens.
 
---------------020901050200030000040607
-Content-Type: text/x-patch;
- name="flush-tlb-on-spurious-fault.patch"
-Content-Transfer-Encoding: 7bit
-Content-Disposition: attachment;
- filename="flush-tlb-on-spurious-fault.patch"
-
-Subject: x86,mm: flush TLB on spurious fault
-
-It appears that certain x86 CPUs do not automatically flush the
-TLB entry that caused a page fault, causing spurious faults to
-loop forever under certain circumstances.
-
-Remove the dummy flush_tlb_fix_spurious_fault define, so x86
-falls back to the asm-generic version, which does do a local
-TLB flush.
-
-Signed-off-by: Rik van Riel <riel@redhat.com>
-Reported-by: Stanislav Meduna <stano@meduna.org>
----
- arch/x86/include/asm/pgtable.h | 2 --
- 1 file changed, 2 deletions(-)
-
-diff --git a/arch/x86/include/asm/pgtable.h b/arch/x86/include/asm/pgtable.h
-index 1e67223..43e7966 100644
---- a/arch/x86/include/asm/pgtable.h
-+++ b/arch/x86/include/asm/pgtable.h
-@@ -729,8 +729,6 @@ static inline void ptep_set_wrprotect(struct mm_struct *mm,
- 	pte_update(mm, addr, ptep);
- }
- 
--#define flush_tlb_fix_spurious_fault(vma, address) do { } while (0)
--
- #define mk_pmd(page, pgprot)   pfn_pmd(page_to_pfn(page), (pgprot))
- 
- #define  __HAVE_ARCH_PMDP_SET_ACCESS_FLAGS
-
---------------020901050200030000040607--
+                   Linus
