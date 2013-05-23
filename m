@@ -1,13 +1,22 @@
-From: Rik van Riel <riel@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH] mm: fix up a spurious page fault whenever it happens
-Date: Thu, 23 May 2013 08:19:38 -0400
-Message-ID: <519E095A.4000105@redhat.com>
-References: <5195ED8B.7060002@meduna.org>  <1369183168.6828.168.camel@gandalf.local.home>  <519CBB30.3060200@redhat.com>  <CA+55aFxMqvDvcVtLW-yD2PuU_CcjPOC30Zk07Kuk6S25WCzbHQ@mail.gmail.com>  <20130522134111.33a695c5@cuia.bos.redhat.com> <519D08B0.8050707@meduna.org> <1369246316.6828.176.camel@gandalf.local.home> <519D0CAB.7020800@meduna.org> <519D0FF8.5080200@redhat.com> <519D118B.6010306@zytor.com> <519D11BF.5000604@redhat.com> <519DCE2A.4010801@meduna.org>
+Date: Thu, 23 May 2013 09:29:29 -0400
+Message-ID: <1369315769.6828.198.camel@gandalf.local.home>
+References: <5195ED8B.7060002@meduna.org>
+	  <1369183168.6828.168.camel@gandalf.local.home>
+	  <519CBB30.3060200@redhat.com>
+	  <CA+55aFxMqvDvcVtLW-yD2PuU_CcjPOC30Zk07Kuk6S25WCzbHQ@mail.gmail.com>
+	  <20130522134111.33a695c5@cuia.bos.redhat.com>
+	 <519D08B0.8050707@meduna.org>
+	 <1369246316.6828.176.camel@gandalf.local.home>
+	 <519D0CAB.7020800@meduna.org> <519D0FF8.5080200@redhat.com>
+	 <519D118B.6010306@zytor.com> <519D11BF.5000604@redhat.com>
+	 <519DCE2A.4010801@meduna.org> <519E095A.4000105@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: "H. Peter Anvin" <hpa@zytor.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Cc: Stanislav Meduna <stano@meduna.org>,
+	"H. Peter Anvin" <hpa@zytor.com>,
 	Linus Torvalds <torvalds@linux-foundation.org>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
@@ -15,58 +24,23 @@ Cc: "H. Peter Anvin" <hpa@zytor.com>,
 	Ingo Molnar <mingo@redhat.com>,
 	the arch/x86 maintainers <x86@kernel.org>,
 	Hai Huang <hhuang@redhat.com>
-To: Stanislav Meduna <stano@meduna.org>
+To: Rik van Riel <riel@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <519DCE2A.4010801@meduna.org>
+In-Reply-To: <519E095A.4000105@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 05/23/2013 04:07 AM, Stanislav Meduna wrote:
-> On 22.05.2013 20:43, Rik van Riel wrote:
->
->>> Some CPUs have had errata when it comes to flushing large pages that
->>> have been split into small pages by hardware, e.g. due to MTRR
->>> conflicts.  In that case, fragments of the large page may have been left
->>> in the TLB.
->
-> Can I somehow find if this is the case? The memory mapping
-> for the failing process has two regions slightly larger than
-> 4 MB - code and heap.
->
-> The process also does not access any funny memory regions
-> from userspace - it is basically networking (both TCP/IP
-> and raw sockets) and crunching of the data received.
-> No mmapped devices or something like that.
->
->> static inline void __native_flush_tlb_single(unsigned long addr)
->> {
->>          __flush_tlb();
->> }
->>
->> This on top of the other two patches.
->
-> It did not crash overnight, but it also does not show any
-> minor fault counted for the threads, so I'm afraid the situation
-> just did not happen - there should be at least one visible in
-> the ps -o min_flt output, right?
+On Thu, 2013-05-23 at 08:19 -0400, Rik van Riel wrote:
 
-If all the page faults are done by he main thread,
-and the TLB gets properly flushed now, the other
-threads might not see minor faults.
+> We can add a bit in the architecture bits that
+> we use to check against other CPU and system
+> errata, and conditionally flush the whole TLB
+> from __native_flush_tlb_single().
 
-> I will give it some more testing time.
+If we find that some CPUs have issues and others do not, and we can
+determine this by checking the CPU type at run time, I would strongly
+suggest using the jump_label infrastructure to do the branches. I know
+this is early to suggest something like this, but I just wanted to put
+it in your head ;-)
 
-That is a good idea.
-
-Now to figure out how we properly fix this
-issue in the kernel...
-
-We can add a bit in the architecture bits that
-we use to check against other CPU and system
-errata, and conditionally flush the whole TLB
-from __native_flush_tlb_single().
-
-The question is, how do we identify what CPUs
-need the extra flushing?
-
-And in what circumstances do they require it?
+-- Steve
