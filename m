@@ -1,7 +1,7 @@
 From: Linus Torvalds <torvalds@linux-foundation.org>
 Subject: Re: [PATCH] mm: fix up a spurious page fault whenever it happens
-Date: Thu, 23 May 2013 07:45:09 -0700
-Message-ID: <CA+55aFwzedGVew7CCSqZ-Z=2ELt+A4L--mEQGjtALbMSB3LFoQ@mail.gmail.com>
+Date: Thu, 23 May 2013 07:50:09 -0700
+Message-ID: <CA+55aFzZdgp0Z3J_6WBAKin-J5k1aLxjaGvLcXxQEuChpD=bXw@mail.gmail.com>
 References: <5195ED8B.7060002@meduna.org>
 	<1369183168.6828.168.camel@gandalf.local.home>
 	<519CBB30.3060200@redhat.com>
@@ -14,6 +14,7 @@ References: <5195ED8B.7060002@meduna.org>
 	<519D118B.6010306@zytor.com>
 	<519D11BF.5000604@redhat.com>
 	<519DCE2A.4010801@meduna.org>
+	<CA+55aFwzedGVew7CCSqZ-Z=2ELt+A4L--mEQGjtALbMSB3LFoQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Rik van Riel <riel@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>,
@@ -26,20 +27,22 @@ Cc: Rik van Riel <riel@redhat.com>, "H. Peter Anvin" <hpa@zytor.com>,
 	Hai Huang <hhuang@redhat.com>
 To: Stanislav Meduna <stano@meduna.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <519DCE2A.4010801@meduna.org>
+In-Reply-To: <CA+55aFwzedGVew7CCSqZ-Z=2ELt+A4L--mEQGjtALbMSB3LFoQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, May 23, 2013 at 1:07 AM, Stanislav Meduna <stano@meduna.org> wrote:
+On Thu, May 23, 2013 at 7:45 AM, Linus Torvalds
+<torvalds@linux-foundation.org> wrote:
 >
-> It did not crash overnight, but it also does not show any
-> minor fault counted for the threads
+> Page faults that don't cause us to map a page (ie a spurious one, or
+> one that just updates dirty/accessed bits) don't show up as even minor
+> faults. Thing of the major/minor as "mapping activity" not a page
+> fault count.
 
-Page faults that don't cause us to map a page (ie a spurious one, or
-one that just updates dirty/accessed bits) don't show up as even minor
-faults. Thing of the major/minor as "mapping activity" not a page
-fault count.
+Actually, I take that back. We always update eithe rmin_flt or maj_flt. My bad.
 
-So if this is due to some stuck TLB entry, that wouldn't show up anyway.
+Another question: I'm assuming this is all 32-bit, is it with PAE
+enabled? That changes some of the TLB flushing, and we had one bug
+related to that, maybe there are others..
 
-                    Linus
+            Linus
