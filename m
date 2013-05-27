@@ -1,113 +1,72 @@
-From: Gratian Crisan <gratian.crisan@ni.com>
-Subject: spike in latency when calling popen() in the same process that runs a high
- priority RT thread
-Date: Fri, 24 May 2013 11:14:49 -0500
-Message-ID: <OF23979777.B356D29C-ON86257B75.0059025F-86257B75.00593F88@ni.com>
+From: Christoph Mathys <eraserix@gmail.com>
+Subject: Re: [ANNOUNCE] 3.6.11.4-rt36
+Date: Mon, 27 May 2013 09:38:22 +0200
+Message-ID: <CALqGcGpX5FDi6yqDFC7zac2vKFzhNTozSbQxYn=YdLM=14DbFw@mail.gmail.com>
+References: <1369154725.6828.131.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
+Content-Type: text/plain; charset=UTF-8
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailserver5.natinst.com ([130.164.80.5]:57705 "EHLO
-	spamkiller05.natinst.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754791Ab3EXQOs (ORCPT
+Received: from mail-qc0-f181.google.com ([209.85.216.181]:57662 "EHLO
+	mail-qc0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756640Ab3E0HiW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 May 2013 12:14:48 -0400
-Received: from mailserv59-us.natinst.com (nb-chan1-1338.natinst.com [130.164.19.134])
-	by spamkiller05.natinst.com (8.14.5/8.14.5) with ESMTP id r4OGEmd4023186
-	for <linux-rt-users@vger.kernel.org>; Fri, 24 May 2013 11:14:48 -0500
+	Mon, 27 May 2013 03:38:22 -0400
+Received: by mail-qc0-f181.google.com with SMTP id u11so3340729qcx.40
+        for <linux-rt-users@vger.kernel.org>; Mon, 27 May 2013 00:38:22 -0700 (PDT)
+In-Reply-To: <1369154725.6828.131.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We are seeing a fairly big spike in latency for an RT thread when another 
-regular thread in the same process calls popen().
-I have modified cyclictest (see the patch below) to spawn another thread 
-that just does popen() in a loop and run cyclictest with the following 
-options:
+Just did a quick "smoketest" with cyclictest. This release spikes to
+over 600us when opening other gnome-terminals or switching to a VTY
+etc. I checked with 3.6.11.3-rt35, and the problem does not occur
+there.
 
-./cyclictest -m -S --policy=fifo -p 98
+Christoph
 
-Normally the max latency on our system is ~50uS. This is a dual core ARM 
-Cortex-A9 running a 3.2.35-rt52 kernel. With this change it spikes over 
-500uS.
-This doesn't happen if the popen() test is run in a separate process 
-
-We are looking for ideas on the root cause for this.
-
-Thanks,
-        Gratian
-
->From c673b5be21686c92a4c94a60f465fe889d0978e3 Mon Sep 17 00:00:00 2001
-From: Gratian Crisan <gratian.crisan@ni.com>
-Date: Thu, 23 May 2013 17:22:05 -0500
-Subject: [PATCH] Test for tracing popen() latency
-
-This test adds a regular priority thread to cyclic test in order
-to track down a latency exibited when using popen() in the same
-process that runs a high priority RT thread (cyclic test in this
-case)
-
-Signed-off-by: Gratian Crisan <gratian.crisan@ni.com>
----
- src/cyclictest/cyclictest.c |   29 +++++++++++++++++++++++++++++
- 1 file changed, 29 insertions(+)
-
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index abf3e8b..423b0d5 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -930,6 +930,25 @@ out:
-        return NULL;
- }
- 
-+void *popen_test(void *param)
-+{
-+       struct sched_param schedp;
-+       FILE *fp = NULL;
-+
-+       schedp.sched_priority = 0;
-+       sched_setscheduler(0, SCHED_OTHER, &schedp);
-+
-+       while (!shutdown) {
-+               fp = popen("echo hello > /tmp/test", "r");
-+               if (!fp) {
-+                       perror("popen failed");
-+                       break;
-+               }
-+               pclose(fp);
-+       }
-+       printf("# popen() test thread: %ld\n", gettid());
-+       return NULL;
-+}
- 
- /* Print usage information */
- static void display_help(int error)
-@@ -1511,6 +1530,8 @@ int main(int argc, char **argv)
-        int max_cpus = sysconf(_SC_NPROCESSORS_CONF);
-        int i, ret = -1;
-        int status;
-+       pthread_t popen_thread;
-+       pthread_attr_t popen_attr;
- 
-        process_options(argc, argv);
- 
-@@ -1759,6 +1780,14 @@ int main(int argc, char **argv)
- 
-        }
- 
-+       status = pthread_attr_init(&popen_attr);
-+       if (status != 0)
-+               fatal("error from pthread_attr_init for popen test thread 
-%s\n", strerror(status));
-+
-+       status = pthread_create(&popen_thread, &popen_attr, popen_test, 
-NULL);
-+       if (status)
-+               fatal("failed to create popen test thread %s\n", 
-strerror(status));
-+
-        while (!shutdown) {
-                char lavg[256];
-                int fd, len, allstopped = 0;
--- 
-1.7.10.4
-
+On Tue, May 21, 2013 at 6:45 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.6.11.4-rt36 stable release.
+>
+>
+> This release is just an update to the new stable 3.6.11.4 version
+> and no RT specific changes have been made.
+>
+>
+> You can get this release via the git tree at:
+>
+>   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+>
+>   branch: v3.6-rt
+>   Head SHA1: 605e3eba4fbf83ad32032cec4ca4c1d2fa665793
+>
+>
+> Or to build 3.6.11.4-rt36 directly, the following patches should be
+> applied:
+>
+>   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.6.tar.xz
+>
+>   http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.6.11.xz
+>
+>
+> http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/stable/patch-3.6.11.4.xz
+>
+>
+> http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11.4-rt36.patch.xz
+>
+>
+>
+>
+> Enjoy,
+>
+> -- Steve
+>
+>
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
