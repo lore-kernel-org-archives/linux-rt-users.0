@@ -1,61 +1,57 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: [patch] rt,mce: fix mce timer interval
-Date: Wed, 29 May 2013 13:52:13 +0200
-Message-ID: <1369828333.6089.133.camel@marge.simpson.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.47-rt62
+Date: Wed, 29 May 2013 23:40:17 -0400
+Message-ID: <1369885217.26799.0.camel@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.8]:57666 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965645Ab3E2LwX (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:6413 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759673Ab3E3DkU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 May 2013 07:52:23 -0400
+	Wed, 29 May 2013 23:40:20 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Seems mce timer fire at the wrong frequency in -rt kernels since roughly
-forever due to 32 bit overflow.  3.8-rt is also missing a multiplier.
 
-Add missing us -> ns conversion and 32 bit overflow prevention.
+Dear RT Folks,
 
-Signed-off-by: Mike Galbraith <bitbucket@online.de>
----
- arch/x86/kernel/cpu/mcheck/mce.c |    6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+I'm pleased to announce the 3.4.47-rt62 stable release.
 
---- a/arch/x86/kernel/cpu/mcheck/mce.c
-+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1295,7 +1295,7 @@ static enum hrtimer_restart mce_timer_fn
- 	__this_cpu_write(mce_next_interval, iv);
- 	/* Might have become 0 after CMCI storm subsided */
- 	if (iv) {
--		hrtimer_forward_now(timer, ns_to_ktime(jiffies_to_usecs(iv)));
-+		hrtimer_forward_now(timer, ns_to_ktime((u64)jiffies_to_usecs(iv) * 1000));
- 		return HRTIMER_RESTART;
- 	}
- 	return HRTIMER_NORESTART;
-@@ -1323,7 +1323,7 @@ void mce_timer_kick(unsigned long interv
- 		}
- 	} else {
- 		hrtimer_start_range_ns(t,
--				ns_to_ktime(jiffies_to_usecs(interval) * 1000),
-+				ns_to_ktime((u64)jiffies_to_usecs(interval) * 1000),
- 				0, HRTIMER_MODE_REL_PINNED);
- 	}
- 	if (interval < iv)
-@@ -1691,7 +1691,7 @@ static void mce_start_timer(unsigned int
- 	if (mca_cfg.ignore_ce || !iv)
- 		return;
- 
--	hrtimer_start_range_ns(t, ns_to_ktime(jiffies_to_usecs(iv) * 1000),
-+	hrtimer_start_range_ns(t, ns_to_ktime((u64)jiffies_to_usecs(iv) * 1000),
- 			0, HRTIMER_MODE_REL_PINNED);
- }
- 
+
+This release is just an update to the new stable 3.4.47 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.4-rt
+  Head SHA1: b7e90b9234c032ab0825f95a532b852a3cc1e05e
+
+
+Or to build 3.4.47-rt62 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.47.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.47-rt62.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
 
 
