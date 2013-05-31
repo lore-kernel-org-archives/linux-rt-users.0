@@ -1,49 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] RFC: Set irq thread to RT priority on creation
-Date: Thu, 30 May 2013 21:50:41 +0200 (CEST)
-Message-ID: <alpine.LFD.2.02.1305302147290.2905@ionos>
-References: <1369915975-28797-1-git-send-email-meltedpianoman@gmail.com>  <alpine.LFD.2.02.1305301602490.2905@ionos> <1369925681.26799.6.camel@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Tracers+cyclictest causing kernel oops
+Date: Fri, 31 May 2013 11:23:38 +0200
+Message-ID: <51A86C1A.2040100@linutronix.de>
+References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com> <CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com> <20130503160546.GF8230@linutronix.de> <CAFSh4UwD5yyJrtKwUaOX-uiUuzVf7YaDbM4vbZ1EFZBf6F1JHg@mail.gmail.com> <519B57A7.1010901@linutronix.de> <CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ivo Sieben <meltedpianoman@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Tom Cook <tom.k.cook@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35043 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:36802 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753849Ab3E3Tuo (ORCPT
+	with ESMTP id S1752925Ab3EaJXj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 May 2013 15:50:44 -0400
-In-Reply-To: <1369925681.26799.6.camel@gandalf.local.home>
+	Fri, 31 May 2013 05:23:39 -0400
+In-Reply-To: <CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 30 May 2013, Steven Rostedt wrote:
-
-> On Thu, 2013-05-30 at 16:07 +0200, Thomas Gleixner wrote:
+On 05/21/2013 05:20 PM, Tom Cook wrote:
+> No.  I've also tried compiling without kgdb and enabling tracers still
+> causes a crash (see below).
 > 
-> > > This patch solves an issue for me where a device driver is expected to handle an
-> > > interrupt immediatly after irq handlers are installed and interrupts enabled.
-> > 
-> > You miss to explain what kind of issue that is.
-> 
-> I could envision the case where the interrupt is initialized but doesn't
-> go off until much later. If it never ran, then it would still be in
-> SCHED_OTHER(), and that first interrupt could have a large delay.
+> Again, I'm far from expert here, but as near as I can tell, a fast
+> interrupt exception handler is causing a data abort exception.  Do the
+> tracers use fast interrupts to wake up?  Is there some tracer-related
+> memory that's getting swapped out?
 
-Nope. As Ivo explained it's about an interrupt coming in right away,
-i.e. before __setup_irq() reaches:
+I just tried the same thing on my AM33xx and nothing bad happned here.
+One thing still: you might want to use "-n" for nanosleep.
 
-        if (new->thread)
-	   wake_up_process(new->thread);
+Could you try [0] to check if you are not using more memory than
+available? If the OOM-killer kills the program, then it is okay, if the
+data-abort exception comes or the kernel crashes in a strange way then
+it is HW.
 
-The ones which come much later do not have that issue as the thread
-code already sits in the waiting loop and already adjusted the
-priority.
+The tracer do not use any special interrupts on purpose.
+Now that I saw rasperry-pi let me ask this: do you have any
+non-mainline patches on-top? And if it is the case, could you try to
+get rid of them?
+Also you can try the same test without the RT patches?
 
-Thanks,
+[0] http://download.breakpoint.cc/malloc.c
 
-	tglx
-
+Sebastian
