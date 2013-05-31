@@ -1,52 +1,145 @@
-From: Tom Cook <tom.k.cook@gmail.com>
-Subject: Re: Tracers+cyclictest causing kernel oops
-Date: Fri, 31 May 2013 10:31:01 +0100
-Message-ID: <CAFSh4Uw-tAC0QugLQzFow4uRyZKw=7Gu=XC37ZYrsAuPAOrjpw@mail.gmail.com>
-References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
-	<CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
-	<20130503160546.GF8230@linutronix.de>
-	<CAFSh4UwD5yyJrtKwUaOX-uiUuzVf7YaDbM4vbZ1EFZBf6F1JHg@mail.gmail.com>
-	<519B57A7.1010901@linutronix.de>
-	<CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
-	<51A86C1A.2040100@linutronix.de>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Fri, 31 May 2013 16:19:40 +0530
+Message-ID: <CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
+	<1354024039.6276.72.camel@gandalf.local.home>
+	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
+	<CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
+	<CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+	<alpine.LFD.2.02.1305131223470.2863@ionos>
+	<CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
+	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vc0-f176.google.com ([209.85.220.176]:52378 "EHLO
-	mail-vc0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753903Ab3EaJbD (ORCPT
+Received: from mail-ob0-f174.google.com ([209.85.214.174]:40284 "EHLO
+	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751814Ab3EaKtl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 May 2013 05:31:03 -0400
-Received: by mail-vc0-f176.google.com with SMTP id ha11so888798vcb.35
-        for <linux-rt-users@vger.kernel.org>; Fri, 31 May 2013 02:31:02 -0700 (PDT)
-In-Reply-To: <51A86C1A.2040100@linutronix.de>
+	Fri, 31 May 2013 06:49:41 -0400
+Received: by mail-ob0-f174.google.com with SMTP id wd20so2702759obb.19
+        for <linux-rt-users@vger.kernel.org>; Fri, 31 May 2013 03:49:40 -0700 (PDT)
+In-Reply-To: <CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, May 31, 2013 at 10:23 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-[snip]
-> I just tried the same thing on my AM33xx and nothing bad happned here.
-> One thing still: you might want to use "-n" for nanosleep.
+On 22 May 2013 14:04, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+> Sorry for being late in replying to your queries.
 >
-> Could you try [0] to check if you are not using more memory than
-> available? If the OOM-killer kills the program, then it is okay, if the
-> data-abort exception comes or the kernel crashes in a strange way then
-> it is HW.
+> On 13 May 2013 16:05, Thomas Gleixner <tglx@linutronix.de> wrote:
+>> Which mechanism is migrating the timer away?
 >
-> The tracer do not use any special interrupts on purpose.
-> Now that I saw rasperry-pi let me ask this: do you have any
-> non-mainline patches on-top? And if it is the case, could you try to
-> get rid of them?
+> It will be the same: get_nohz_timer_target() which will decide target
+> cpu for migration.
+>
+>> I have no objections to the functionality per se, but the proposed
+>> solution is not going to fly.
+>>
+>> Aside of bloating the data structure you're changing the semantics of
+>> __mod_timer(). No __mod_timer() caller can deal with -EBUSY. So you'd
+>> break the world and some more.
+>
+> Ahh.. That idea was dropped already.
+>
+>> Here is a list of questions:
+>>
+>>       - Which mechanism migrates timers?
+>>
+>>       - How is that mechanism triggered?
+>
+> The mechanism remains the same as is for non-rearmed timers.
+> i.e. get_nohz_timer_target()..
+>
+> We are just trying to give a approach with which we can migrate
+> running timers. i.e. those which re-arm themselves from their
+> handlers.
+>
+>>       - How does that deal with CPU bound timers?
+>
+> We will still check 'Pinned' for this timer as is done for any other
+> normal timer. So, we don't migrate them.
+>
+> So, this is the clean draft for the idea I had.. (Naming is poor for
+> now):
+>
+> diff --git a/include/linux/timer.h b/include/linux/timer.h
+> index 8c5a197..ad00ebe 100644
+> --- a/include/linux/timer.h
+> +++ b/include/linux/timer.h
+> @@ -20,6 +20,7 @@ struct timer_list {
+>
+>         void (*function)(unsigned long);
+>         unsigned long data;
+> +       int wait_for_migration_to_complete;
+>
+>         int slack;
+>
+> diff --git a/kernel/timer.c b/kernel/timer.c
+> index a860bba..7791f28 100644
+> --- a/kernel/timer.c
+> +++ b/kernel/timer.c
+> @@ -746,21 +746,15 @@ __mod_timer(struct timer_list *timer, unsigned
+> long expires,
+>         new_base = per_cpu(tvec_bases, cpu);
+>
+>         if (base != new_base) {
+> -               /*
+> -                * We are trying to schedule the timer on the local CPU.
+> -                * However we can't change timer's base while it is running,
+> -                * otherwise del_timer_sync() can't detect that the timer's
+> -                * handler yet has not finished. This also guarantees that
+> -                * the timer is serialized wrt itself.
+> -                */
+> -               if (likely(base->running_timer != timer)) {
+> -                       /* See the comment in lock_timer_base() */
+> -                       timer_set_base(timer, NULL);
+> -                       spin_unlock(&base->lock);
+> -                       base = new_base;
+> -                       spin_lock(&base->lock);
+> -                       timer_set_base(timer, base);
+> -               }
+> +               if (base->running_timer == timer)
+> +                       timer->wait_for_migration_to_complete = 1;
+> +
+> +               /* See the comment in lock_timer_base() */
+> +               timer_set_base(timer, NULL);
+> +               spin_unlock(&base->lock);
+> +               base = new_base;
+> +               spin_lock(&base->lock);
+> +               timer_set_base(timer, base);
+>         }
+>
+>         timer->expires = expires;
+> @@ -990,7 +984,8 @@ int try_to_del_timer_sync(struct timer_list *timer)
+>
+>         base = lock_timer_base(timer, &flags);
+>
+> -       if (base->running_timer != timer) {
+> +       if ((base->running_timer != timer) &&
+> +                       !timer->wait_for_migration_to_complete) {
+>                 timer_stats_timer_clear_start_info(timer);
+>                 ret = detach_if_pending(timer, base, true);
+>         }
+> @@ -1183,6 +1178,8 @@ static inline void __run_timers(struct tvec_base *base)
+>                                 call_timer_fn(timer, fn, data);
+>                                 spin_lock_irq(&base->lock);
+>                         }
+> +                       if (timer->wait_for_migration_to_complete)
+> +                               timer->wait_for_migration_to_complete = 0;
+>                 }
+>         }
+>         base->running_timer = NULL;
+>
+>
+> Please see if it a junk idea or has some light of hope :)
 
-It is the linux-3.6.y branch of raspberrypi/linux on github with RT
-patches added.  Nothing else custom.
-
-> Also you can try the same test without the RT patches?
-
-Okay.  Hopefully the flurry of spring weddings will break up enough to
-give me a chance to try this over the weekend.
-
-Tom
+Ping!!
