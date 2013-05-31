@@ -1,145 +1,30 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Fri, 31 May 2013 16:19:40 +0530
-Message-ID: <CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
-References: <cover.1352196505.git.viresh.kumar@linaro.org>
-	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
-	<1354024039.6276.72.camel@gandalf.local.home>
-	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
-	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
-	<CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
-	<CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
-	<alpine.LFD.2.02.1305131223470.2863@ionos>
-	<CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.8.10-rt6 : Observing high latency as preempt_schedule_irq:__schedule
+ is not getting called
+Date: Fri, 31 May 2013 13:11:37 +0200
+Message-ID: <51A88569.503@linutronix.de>
+References: <AC83832D6324604BB08FAE5A33553F190B386F60@039-SN2MPN1-013.039d.mgd.msft.net> <AC83832D6324604BB08FAE5A33553F190B388AD8@039-SN2MPN1-013.039d.mgd.msft.net> <AC83832D6324604BB08FAE5A33553F190B3B0367@039-SN2MPN1-012.039d.mgd.msft.net> <AC83832D6324604BB08FAE5A33553F190B3B04F2@039-SN2MPN1-012.039d.mgd.msft.net> <AC83832D6324604BB08FAE5A33553F190B3B849B@039-SN2MPN1-012.039d.mgd.msft.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
-	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
-	linaro-dev@lists.linaro.org, patches@linaro.org,
-	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org, john stultz <johnstul@us.ibm.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"tglx@linutronix.de" <tglx@linutronix.de>
+To: Jain Priyanka-B32167 <B32167@freescale.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f174.google.com ([209.85.214.174]:40284 "EHLO
-	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751814Ab3EaKtl (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:37312 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753642Ab3EaLLk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 May 2013 06:49:41 -0400
-Received: by mail-ob0-f174.google.com with SMTP id wd20so2702759obb.19
-        for <linux-rt-users@vger.kernel.org>; Fri, 31 May 2013 03:49:40 -0700 (PDT)
-In-Reply-To: <CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
+	Fri, 31 May 2013 07:11:40 -0400
+In-Reply-To: <AC83832D6324604BB08FAE5A33553F190B3B849B@039-SN2MPN1-012.039d.mgd.msft.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 22 May 2013 14:04, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> Sorry for being late in replying to your queries.
->
-> On 13 May 2013 16:05, Thomas Gleixner <tglx@linutronix.de> wrote:
->> Which mechanism is migrating the timer away?
->
-> It will be the same: get_nohz_timer_target() which will decide target
-> cpu for migration.
->
->> I have no objections to the functionality per se, but the proposed
->> solution is not going to fly.
->>
->> Aside of bloating the data structure you're changing the semantics of
->> __mod_timer(). No __mod_timer() caller can deal with -EBUSY. So you'd
->> break the world and some more.
->
-> Ahh.. That idea was dropped already.
->
->> Here is a list of questions:
->>
->>       - Which mechanism migrates timers?
->>
->>       - How is that mechanism triggered?
->
-> The mechanism remains the same as is for non-rearmed timers.
-> i.e. get_nohz_timer_target()..
->
-> We are just trying to give a approach with which we can migrate
-> running timers. i.e. those which re-arm themselves from their
-> handlers.
->
->>       - How does that deal with CPU bound timers?
->
-> We will still check 'Pinned' for this timer as is done for any other
-> normal timer. So, we don't migrate them.
->
-> So, this is the clean draft for the idea I had.. (Naming is poor for
-> now):
->
-> diff --git a/include/linux/timer.h b/include/linux/timer.h
-> index 8c5a197..ad00ebe 100644
-> --- a/include/linux/timer.h
-> +++ b/include/linux/timer.h
-> @@ -20,6 +20,7 @@ struct timer_list {
->
->         void (*function)(unsigned long);
->         unsigned long data;
-> +       int wait_for_migration_to_complete;
->
->         int slack;
->
-> diff --git a/kernel/timer.c b/kernel/timer.c
-> index a860bba..7791f28 100644
-> --- a/kernel/timer.c
-> +++ b/kernel/timer.c
-> @@ -746,21 +746,15 @@ __mod_timer(struct timer_list *timer, unsigned
-> long expires,
->         new_base = per_cpu(tvec_bases, cpu);
->
->         if (base != new_base) {
-> -               /*
-> -                * We are trying to schedule the timer on the local CPU.
-> -                * However we can't change timer's base while it is running,
-> -                * otherwise del_timer_sync() can't detect that the timer's
-> -                * handler yet has not finished. This also guarantees that
-> -                * the timer is serialized wrt itself.
-> -                */
-> -               if (likely(base->running_timer != timer)) {
-> -                       /* See the comment in lock_timer_base() */
-> -                       timer_set_base(timer, NULL);
-> -                       spin_unlock(&base->lock);
-> -                       base = new_base;
-> -                       spin_lock(&base->lock);
-> -                       timer_set_base(timer, base);
-> -               }
-> +               if (base->running_timer == timer)
-> +                       timer->wait_for_migration_to_complete = 1;
-> +
-> +               /* See the comment in lock_timer_base() */
-> +               timer_set_base(timer, NULL);
-> +               spin_unlock(&base->lock);
-> +               base = new_base;
-> +               spin_lock(&base->lock);
-> +               timer_set_base(timer, base);
->         }
->
->         timer->expires = expires;
-> @@ -990,7 +984,8 @@ int try_to_del_timer_sync(struct timer_list *timer)
->
->         base = lock_timer_base(timer, &flags);
->
-> -       if (base->running_timer != timer) {
-> +       if ((base->running_timer != timer) &&
-> +                       !timer->wait_for_migration_to_complete) {
->                 timer_stats_timer_clear_start_info(timer);
->                 ret = detach_if_pending(timer, base, true);
->         }
-> @@ -1183,6 +1178,8 @@ static inline void __run_timers(struct tvec_base *base)
->                                 call_timer_fn(timer, fn, data);
->                                 spin_lock_irq(&base->lock);
->                         }
-> +                       if (timer->wait_for_migration_to_complete)
-> +                               timer->wait_for_migration_to_complete = 0;
->                 }
->         }
->         base->running_timer = NULL;
->
->
-> Please see if it a junk idea or has some light of hope :)
+On 05/28/2013 06:01 AM, Jain Priyanka-B32167 wrote:
+> Submitted below patch to linuxppc-dev@lists.ozlabs.org to fix this issue
 
-Ping!!
+Thank you very much. The problem was introduced in v3.7-rc1 so it is a
+v3.8-rt problem only.
+
+Sebastian
