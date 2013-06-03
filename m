@@ -1,56 +1,101 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Highmem support on ppc32 plattform with PREEMPT_RT_FULL option
-Date: Fri, 31 May 2013 21:56:49 +0200
-Message-ID: <20130531195649.GB24632@linutronix.de>
-References: <CAKQvxgWOcnK79bn1f0LWqvagAEXVrS39eGv0ESUvp4LwdnGEFw@mail.gmail.com>
+From: Ivo Sieben <meltedpianoman@gmail.com>
+Subject: [PATCH-v2] Set irq thread to RT priority on creation
+Date: Mon, 3 Jun 2013 12:12:02 +0200
+Message-ID: <1370254322-17240-1-git-send-email-meltedpianoman@gmail.com>
+References: <alpine.LFD.2.02.1305302147290.2905@ionos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Heiko Schumann <heiko.sirona@gmail.com>
+Content-Type: text/plain
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Ivo Sieben <meltedpianoman@gmail.com>
+To: RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39926 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753886Ab3EaT4u convert rfc822-to-8bit (ORCPT
+Received: from ch1ehsobe001.messaging.microsoft.com ([216.32.181.181]:50313
+	"EHLO ch1outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751728Ab3FCKML (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 May 2013 15:56:50 -0400
-Content-Disposition: inline
-In-Reply-To: <CAKQvxgWOcnK79bn1f0LWqvagAEXVrS39eGv0ESUvp4LwdnGEFw@mail.gmail.com>
+	Mon, 3 Jun 2013 06:12:11 -0400
+In-Reply-To: <alpine.LFD.2.02.1305302147290.2905@ionos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Heiko Schumann | 2013-05-14 13:04:34 [+0200]:
+When a threaded irq handler is installed the irq thread is initially created
+on normal scheduling priority. Only after the the irq thread is woken up it
+immediately sets its priority to RT_FIFO MAX_USER_RT_PRIO/2.
 
->Hello,
-Hi,
+This means that interrupts that occur directly after the irq handler is
+installed will be handled on a normal scheduling priority instead of the
+realtime priority that you would expect. Fixed this by setting the RT
+priority on creation of the irq_thread.
 
->i=C2=B4ve a ppc32 processor with 2 GB Ram. I use a 3.8.4 Kernel with v=
-endor
->and 3.8.4rt2 patch. To support  2 GB of RAM i=C2=B4ve to set the kerne=
-l
->option HIGHMEM. But this option is not available when PREEMPT_RT_FULL
->is selected.
->Is there a workaround or additional patch to use more than 1GB RAM on
->a ppc32 with the option PREEMPT_RT_FULL?
+This solves the following issue with a UART device driver:
+On start of the application there is already data present in the uart RX
+fifo buffer. On opening the uart device the hard & threaded interrupt
+handlers are installed and the interrupts are enabled. Immediately a hard
+irq occurs because there is still data in the RX fifo. Because the threaded
+irq handler is still on normal scheduling, my application is not immediatly
+interrupted by the threaded handler and continues to run: it tries to flush
+the uart input buffer and writes data to the uart device. After this the
+threaded handler finally gets scheduled in and fills the buffer with the
+"old" received data. When my application reads data from the uart port it
+receives the "old" data and gives an error.
 
-No, we have only arm and x86 so far. Either try to do the same thing on
-Power that has been on ARM & x86.
-A workaround would be to adjust lowmem, virtual base and user stack.
-That means your userland wouldn't have 3GiB virtual address space but
-the kernel could access 2GiB.
-Something like=20
-  CONFIG_PAGE_OFFSET=3D0x40000000
-  CONFIG_KERNEL_START=3D0x40000000
-  CONFIG_TASK_SIZE=3D0x40000000
+Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+---
 
-should work.
+v2:
+ * Removed the sched_setscheduler() call in irq_thread() function
+ * Updated commit log why this solves an issue for me with a UART driver
 
->
->Thanks
+ kernel/irq/manage.c |   11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-Sebatian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index fa17855..e16caa8 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -840,9 +840,6 @@ static void irq_thread_dtor(struct callback_head *unused)
+ static int irq_thread(void *data)
+ {
+ 	struct callback_head on_exit_work;
+-	static const struct sched_param param = {
+-		.sched_priority = MAX_USER_RT_PRIO/2,
+-	};
+ 	struct irqaction *action = data;
+ 	struct irq_desc *desc = irq_to_desc(action->irq);
+ 	irqreturn_t (*handler_fn)(struct irq_desc *desc,
+@@ -854,8 +851,6 @@ static int irq_thread(void *data)
+ 	else
+ 		handler_fn = irq_thread_fn;
+ 
+-	sched_setscheduler(current, SCHED_FIFO, &param);
+-
+ 	init_task_work(&on_exit_work, irq_thread_dtor);
+ 	task_work_add(current, &on_exit_work, false);
+ 
+@@ -950,6 +945,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 	 */
+ 	if (new->thread_fn && !nested) {
+ 		struct task_struct *t;
++		static const struct sched_param param = {
++			.sched_priority = MAX_USER_RT_PRIO/2,
++		};
+ 
+ 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
+ 				   new->name);
+@@ -957,6 +955,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 			ret = PTR_ERR(t);
+ 			goto out_mput;
+ 		}
++
++		sched_setscheduler(t, SCHED_FIFO, &param);
++
+ 		/*
+ 		 * We keep the reference to the task struct even if
+ 		 * the thread dies to avoid that the interrupt code
+-- 
+1.7.9.5
+
+
