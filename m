@@ -1,44 +1,168 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [RT LATENCY] 249 microsecond latency caused by slub's
- unfreeze_partials() code.
-Date: Wed, 5 Jun 2013 14:09:21 +0000
-Message-ID: <0000013f14aba791-b53199dd-c805-4644-9777-3916950e83e4-000000@email.amazonses.com>
-References: <1364010673.6345.156.camel@gandalf.local.home> <0000013da2ace21a-9e87fe8a-75c2-4b7c-b5e1-37ad196ce012-000000@email.amazonses.com> <1364234613.6345.184.camel@gandalf.local.home> <0000013da2ce20f8-0e3a64ef-67ed-4ab4-9f20-b77980c876c3-000000@email.amazonses.com>
- <1364236355.6345.185.camel@gandalf.local.home> <20130327025957.GA17125@lge.com> <1364355032.6345.200.camel@gandalf.local.home> <20130327061351.GB17125@lge.com> <alpine.DEB.2.02.1303281227520.16200@gentwo.org> <0000013db20ca149-0064fbb8-2f81-4323-9095-a38f6abb79c5-000000@email.amazonses.com>
- <1369751967.15552.12.camel@gandalf.local.home> <alpine.DEB.2.02.1305281121420.1627@gentwo.org> <0000013eec62261a-77052f34-f1cb-41b2-ae90-7575a2d0472c-000000@email.amazonses.com> <CAAmzW4M8rX9WGo_FYeyBQ8=Ht-mRnQz1TGhLfbFuKhm3r8grGA@mail.gmail.com>
- <0000013f0b7b993c-35844ed2-81be-4146-ab3c-6c803006576b-000000@email.amazonses.com> <CAAmzW4MakOx_SA6eA=BYP4rq76np4yOS6RANpNObQP6dDDqYQg@mail.gmail.com>
+From: Kirill Tkhai <tkhai@yandex.ru>
+Subject: [PATCH]sched/rt: Simplify pull_rt_task() logic and remove .leaf_rt_rq_list
+Date: Fri, 07 Jun 2013 02:31:38 +0400
+Message-ID: <287571370557898@web7d.yandex.ru>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
 Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <clark@redhat.com>,
-	Pekka Enberg <penberg@kernel.org>
-To: JoonSoo Kim <js1304@gmail.com>
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from a193-30.smtp-out.amazonses.com ([199.255.193.30]:18468 "EHLO
-	a193-30.smtp-out.amazonses.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751476Ab3FEOJW (ORCPT
+Received: from forward3.mail.yandex.net ([77.88.46.8]:41835 "EHLO
+	forward3.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751848Ab3FFWhc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Jun 2013 10:09:22 -0400
-In-Reply-To: <CAAmzW4MakOx_SA6eA=BYP4rq76np4yOS6RANpNObQP6dDDqYQg@mail.gmail.com>
+	Thu, 6 Jun 2013 18:37:32 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 5 Jun 2013, JoonSoo Kim wrote:
+Based on the patch by Steven Rostedt from previous year:
 
-> @@ -2495,7 +2495,8 @@ static void __slab_free(struct kmem_cache *s,
-> struct page *page,
->                 new.inuse--;
->                 if ((!new.inuse || !prior) && !was_frozen) {
->
-> -                       if (!kmem_cache_debug(s) && !prior)
-> +                       if (!kmem_cache_debug(s) && !prior &&
-> +                               node_match(page,
-> cpu_to_node(smp_processor_id())))
->
+https://lkml.org/lkml/2012/4/18/517
 
-Would increase the overhead of the free path. cpu_to_node? Use
-numa_node_id().
+1)Simplify pull_rt_task() logic: search in pushable tasks of dest runqueue.
+The only pullable tasks are the tasks which are pushable in their local rq,
+and no others.
+
+2)Remove .leaf_rt_rq_list member of struct rt_rq and functions connected
+with it: nobody uses it since now.
+
+Signed-off-by: Kirill Tkhai <tkhai@yandex.ru>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ingo Molnar <mingo@redhat.com>
+CC: Peter Zijlstra <peterz@infradead.org>
+---
+ kernel/sched/rt.c    |   82 ++++++++++----------------------------------------
+ kernel/sched/sched.h |    1 -
+ 2 files changed, 16 insertions(+), 67 deletions(-)
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 127a2c4..75286d6 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -399,20 +399,6 @@ static inline struct task_group *next_task_group(struct task_group *tg)
+ 		(iter = next_task_group(iter)) &&			\
+ 		(rt_rq = iter->rt_rq[cpu_of(rq)]);)
+ 
+-static inline void list_add_leaf_rt_rq(struct rt_rq *rt_rq)
+-{
+-	list_add_rcu(&rt_rq->leaf_rt_rq_list,
+-			&rq_of_rt_rq(rt_rq)->leaf_rt_rq_list);
+-}
+-
+-static inline void list_del_leaf_rt_rq(struct rt_rq *rt_rq)
+-{
+-	list_del_rcu(&rt_rq->leaf_rt_rq_list);
+-}
+-
+-#define for_each_leaf_rt_rq(rt_rq, rq) \
+-	list_for_each_entry_rcu(rt_rq, &rq->leaf_rt_rq_list, leaf_rt_rq_list)
+-
+ #define for_each_sched_rt_entity(rt_se) \
+ 	for (; rt_se; rt_se = rt_se->parent)
+ 
+@@ -509,17 +495,6 @@ typedef struct rt_rq *rt_rq_iter_t;
+ #define for_each_rt_rq(rt_rq, iter, rq) \
+ 	for ((void) iter, rt_rq = &rq->rt; rt_rq; rt_rq = NULL)
+ 
+-static inline void list_add_leaf_rt_rq(struct rt_rq *rt_rq)
+-{
+-}
+-
+-static inline void list_del_leaf_rt_rq(struct rt_rq *rt_rq)
+-{
+-}
+-
+-#define for_each_leaf_rt_rq(rt_rq, rq) \
+-	for (rt_rq = &rq->rt; rt_rq; rt_rq = NULL)
+-
+ #define for_each_sched_rt_entity(rt_se) \
+ 	for (; rt_se; rt_se = NULL)
+ 
+@@ -1106,9 +1081,6 @@ static void __enqueue_rt_entity(struct sched_rt_entity *rt_se, bool head)
+ 	if (group_rq && (rt_rq_throttled(group_rq) || !group_rq->rt_nr_running))
+ 		return;
+ 
+-	if (!rt_rq->rt_nr_running)
+-		list_add_leaf_rt_rq(rt_rq);
+-
+ 	if (head)
+ 		list_add(&rt_se->run_list, queue);
+ 	else
+@@ -1128,8 +1100,6 @@ static void __dequeue_rt_entity(struct sched_rt_entity *rt_se)
+ 		__clear_bit(rt_se_prio(rt_se), array->bitmap);
+ 
+ 	dec_rt_tasks(rt_se, rt_rq);
+-	if (!rt_rq->rt_nr_running)
+-		list_del_leaf_rt_rq(rt_rq);
+ }
+ 
+ /*
+@@ -1434,42 +1404,24 @@ static int pick_rt_task(struct rq *rq, struct task_struct *p, int cpu)
+ 	return 0;
+ }
+ 
+-/* Return the second highest RT task, NULL otherwise */
+-static struct task_struct *pick_next_highest_task_rt(struct rq *rq, int cpu)
++/*
++ * Return the highest pushable rq's task, which is suitable to be executed
++ * on the cpu, NULL otherwise
++ */
++static struct task_struct *pick_highest_pushable_task(struct rq *rq, int cpu)
+ {
+-	struct task_struct *next = NULL;
+-	struct sched_rt_entity *rt_se;
+-	struct rt_prio_array *array;
+-	struct rt_rq *rt_rq;
+-	int idx;
+-
+-	for_each_leaf_rt_rq(rt_rq, rq) {
+-		array = &rt_rq->active;
+-		idx = sched_find_first_bit(array->bitmap);
+-next_idx:
+-		if (idx >= MAX_RT_PRIO)
+-			continue;
+-		if (next && next->prio <= idx)
+-			continue;
+-		list_for_each_entry(rt_se, array->queue + idx, run_list) {
+-			struct task_struct *p;
++	struct plist_head *head = &rq->rt.pushable_tasks;
++	struct task_struct *p;
+ 
+-			if (!rt_entity_is_task(rt_se))
+-				continue;
++	if (!has_pushable_tasks(rq))
++		return NULL;
+ 
+-			p = rt_task_of(rt_se);
+-			if (pick_rt_task(rq, p, cpu)) {
+-				next = p;
+-				break;
+-			}
+-		}
+-		if (!next) {
+-			idx = find_next_bit(array->bitmap, MAX_RT_PRIO, idx+1);
+-			goto next_idx;
+-		}
++	plist_for_each_entry(p, head, pushable_tasks) {
++		if (pick_rt_task(rq, p, cpu))
++			return p;
+ 	}
+ 
+-	return next;
++	return NULL;
+ }
+ 
+ static DEFINE_PER_CPU(cpumask_var_t, local_cpu_mask);
+@@ -1743,12 +1695,10 @@ static int pull_rt_task(struct rq *this_rq)
+ 		double_lock_balance(this_rq, src_rq);
+ 
+ 		/*
+-		 * Are there still pullable RT tasks?
++		 * We can pull only a task, which is pushable
++		 * on its rq, and no others.
+ 		 */
+-		if (src_rq->rt.rt_nr_running <= 1)
+-			goto skip;
