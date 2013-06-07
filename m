@@ -1,9 +1,10 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH] sched: don't clear PF_THREAD_BOUND in
  select_fallback_rq
-Date: Fri, 7 Jun 2013 22:50:48 +0200
-Message-ID: <20130607205048.GA22550@linutronix.de>
+Date: Fri, 7 Jun 2013 22:59:17 +0200
+Message-ID: <20130607205917.GA3395@linutronix.de>
 References: <5178F0DE.8030808@huawei.com>
+ <20130607205048.GA22550@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -14,94 +15,58 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	zhangwei <jovi.zhangwei@huawei.com>, bitbucket@online.de
 To: Qiang Huang <h.huangqiang@huawei.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:48566 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:48608 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757427Ab3FGUut convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752900Ab3FGU7S convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Jun 2013 16:50:49 -0400
+	Fri, 7 Jun 2013 16:59:18 -0400
 Content-Disposition: inline
-In-Reply-To: <5178F0DE.8030808@huawei.com>
+In-Reply-To: <20130607205048.GA22550@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Qiang Huang | 2013-04-25 17:01:18 [+0800]:
+* Sebastian Andrzej Siewior | 2013-06-07 22:50:48 [+0200]:
 
-So I looked again at this.
-
->This is revert of "sched-clear-pf-thread-bound-on-fallback-rq.patch"
->(commit 0d939066acdcb in v3.4-rt),.
+>* Qiang Huang | 2013-04-25 17:01:18 [+0800]:
 >
->Select_fallback_rq() can be easilly called during system boot, because
->select_task_rq_fair() just return task_cpu(p) for bounded kernel threa=
-ds,
->which is 0 during system boot and not in tsk_cpus_allowed, so
->select_fallback_rq() is called and PF_THREAD_BOUND is cleared. In my
->box, 1/3 bounded kernel threads will clear that flag after boot.
+>>select_fallback_rq() is called and PF_THREAD_BOUND is cleared. In my
+>>box, 1/3 bounded kernel threads will clear that flag after boot.
+>
+>Please tell me _which_ threads lose this flag. I don't see this=E2=80=A6
 
-Please tell me _which_ threads lose this flag. I don't see this=E2=80=A6
+The only way I lose this flag is by starting a workqueue on a CPU which
+if offline. Now that is wrong. I am not sure if the workqueue re-uses
+the "idle" workers later. In the up path it sets the CPU mask and
+PF_THREAD_BOUND is usually set (unless it was lost due to
+select_fallback_rq()). So we can set this back on:
 
->And it will cause problems, for example:
-># for pid in `ps -e -o pid`; do taskset -p -c 0-15 $pid; done
->this command will cause system hung.
-
-I tracked this down and I grabbed a brown paper bag=E2=80=A6
-So to trigger this, it seems enough to=20
-| taskset -p -c 5 2
-| echo 0 > /sys/devices/system/cpu/cpu5/online
-
-and the fix is:
-
-Subject: [PATCH] kernel/cpu: fix cpu down problems
-
-During forward porting I mixed up those two calls. The CPU up/down
-worked usually. However a migrate_disable() in one of the notifier coul=
-d
-freeze the system.
+Subject: [PATCH] kernel/workqueue: Add PF_THREAD_BOUND after set_cpu
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/cpu.c |   13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
+ kernel/workqueue.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index d44dea3..0784023 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -557,11 +557,6 @@ static int __ref _cpu_down(unsigned int cpu, int t=
-asks_frozen)
- 	}
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 11285e4..aff5841 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -1637,8 +1637,10 @@ __acquires(&gcwq->lock)
+ 		 * it races with cpu hotunplug operation.  Verify
+ 		 * against GCWQ_DISASSOCIATED.
+ 		 */
+-		if (!(gcwq->flags & GCWQ_DISASSOCIATED))
++		if (!(gcwq->flags & GCWQ_DISASSOCIATED)) {
+ 			set_cpus_allowed_ptr(task, get_cpu_mask(gcwq->cpu));
++			task->flags |=3D PF_THREAD_BOUND;
++		}
 =20
- 	cpu_hotplug_begin();
--	err =3D cpu_unplug_begin(cpu);
--	if (err) {
--		printk("cpu_unplug_begin(%d) failed\n", cpu);
--		goto out_cancel;
--	}
-=20
- 	err =3D __cpu_notify(CPU_DOWN_PREPARE | mod, hcpu, -1, &nr_calls);
- 	if (err) {
-@@ -569,8 +564,16 @@ static int __ref _cpu_down(unsigned int cpu, int t=
-asks_frozen)
- 		__cpu_notify(CPU_DOWN_FAILED | mod, hcpu, nr_calls, NULL);
- 		printk("%s: attempt to take down CPU %u failed\n",
- 				__func__, cpu);
-+		goto out_cancel;
-+	}
-+
-+	err =3D cpu_unplug_begin(cpu);
-+	if (err) {
-+		printk("cpu_unplug_begin(%d) failed\n", cpu);
-+		__cpu_notify(CPU_DOWN_FAILED | mod, hcpu, nr_calls, NULL);
- 		goto out_release;
- 	}
-+
- 	smpboot_park_threads(cpu);
-=20
- 	/* Notifiers are done. Don't let any more tasks pin this CPU. */
+ 		spin_lock_irq(&gcwq->lock);
+ 		if (gcwq->flags & GCWQ_DISASSOCIATED)
 --=20
 1.7.10.4
 
-Does this fix your problems.
+Do you see any other?
 
 Sebastian
 --
