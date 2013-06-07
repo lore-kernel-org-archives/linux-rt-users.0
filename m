@@ -1,36 +1,31 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH][RFC] kernel/cpu: do not change the cpus_allowed of the
- current task when unplugging cpus
-Date: Fri, 7 Jun 2013 11:05:43 +0200
-Message-ID: <20130607090543.GD10280@linutronix.de>
-References: <1368699439-13034-1-git-send-email-chenhui.zhao@freescale.com>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: 3.8.11-rt8 NFS triggered seizures
+Date: Fri, 07 Jun 2013 13:17:28 +0200
+Message-ID: <1370603848.5854.42.camel@marge.simpson.net>
+References: <1368437465.11686.60.camel@marge.simpson.net>
+	 <20130607090300.GC10280@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	tglx@linutronix.de, leoli@freescale.com, scottwood@freescale.com,
-	Priyanka.Jain@freescale.com
-To: Zhao Chenhui <chenhui.zhao@freescale.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45122 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751671Ab3FGJFo (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.8]:53191 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753255Ab3FGLRb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Jun 2013 05:05:44 -0400
-Content-Disposition: inline
-In-Reply-To: <1368699439-13034-1-git-send-email-chenhui.zhao@freescale.com>
+	Fri, 7 Jun 2013 07:17:31 -0400
+In-Reply-To: <20130607090300.GC10280@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Zhao Chenhui | 2013-05-16 18:17:19 [+0800]:
+On Fri, 2013-06-07 at 11:03 +0200, Sebastian Andrzej Siewior wrote:
 
->We found a problem. When a cpu is brought down using _cpu_down(),
->the corresponding cpu bit in the cpus_allowed of the current task is
->cleared. But this bit will not be set when the same cpu is online again.
->Then, the current task and its child processes will not be allowed to
->run on this cpu.
+> The "panic" says "Oops" so your karnel most likely hit a NULL pointer.
+> The completion you say is missing might run into the NULL pointer
+> problem. Any way to get the backtrace from the oops?
 
-Isn't this what should happen? This also happens on mainline if you
-leave the RT bits out, right? You should be able to put the task back on
-the CPU once the CPU is up again.
+The oops is just me poking sysrq-c to crash the box.
 
-Sebastian
+-Mike
+
