@@ -1,109 +1,223 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH 0/2] Avoid more bit_spin_lock usage on RT kernels
-Date: Mon, 10 Jun 2013 14:56:31 -0700
-Message-ID: <20130610215631.GU5146@linux.vnet.ibm.com>
-References: <1370900209-40769-1-git-send-email-paul.gortmaker@windriver.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH v2] drm/i915: Do not flush caches on RT, print a warning
+ instead
+Date: Mon, 10 Jun 2013 18:22:16 -0400
+Message-ID: <20130610222215.GA27391@windriver.com>
+References: <1369154725.6828.131.camel@gandalf.local.home>
+ <CALqGcGop=cpgSvcdmwE6QOSjo-JHBDGYpe2qyy3cxULfamgy+w@mail.gmail.com>
+ <1370637266.9844.95.camel@gandalf.local.home>
+ <51B35727.6040907@osadl.org>
+ <51B46AC0.7050502@osadl.org>
+ <CALqGcGoeGSN8tJ3AmRFeoysWEZdHA2c8X3Ebjn4GHOX=naK_Ww@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rostedt@goodmis.org, tglx@linutronix.de, bigeasy@linutronix.de,
-	linux-rt-users@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Chris Wilson <chris@chris-wilson.co.uk>,
+	Daniel Vetter <daniel@ffwll.ch>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Christoph Mathys <eraserix@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e36.co.us.ibm.com ([32.97.110.154]:51702 "EHLO
-	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752907Ab3FJV4f (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:34551 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754406Ab3FJWWM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Jun 2013 17:56:35 -0400
-Received: from /spool/local
-	by e36.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Mon, 10 Jun 2013 15:56:35 -0600
-Received: from d03relay03.boulder.ibm.com (d03relay03.boulder.ibm.com [9.17.195.228])
-	by d03dlp02.boulder.ibm.com (Postfix) with ESMTP id 093663E40042
-	for <linux-rt-users@vger.kernel.org>; Mon, 10 Jun 2013 15:56:15 -0600 (MDT)
-Received: from d03av06.boulder.ibm.com (d03av06.boulder.ibm.com [9.17.195.245])
-	by d03relay03.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id r5ALuXJq144990
-	for <linux-rt-users@vger.kernel.org>; Mon, 10 Jun 2013 15:56:33 -0600
-Received: from d03av06.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av06.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id r5ALws7f017919
-	for <linux-rt-users@vger.kernel.org>; Mon, 10 Jun 2013 15:58:55 -0600
+	Mon, 10 Jun 2013 18:22:12 -0400
 Content-Disposition: inline
-In-Reply-To: <1370900209-40769-1-git-send-email-paul.gortmaker@windriver.com>
+In-Reply-To: <CALqGcGoeGSN8tJ3AmRFeoysWEZdHA2c8X3Ebjn4GHOX=naK_Ww@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Jun 10, 2013 at 05:36:47PM -0400, Paul Gortmaker wrote:
-> The bit_spin_locks have been problematic on RT for a long time; dating
-> at least back to 2.6.11 and their use in the journalling code[1].  We
-> still have patches today that clobber them for cgroups and jbd/jbd2
-> code on RT[2].  But there have been some newer users added.
-> 
-> In commit 4e35e6070b1c [2.6.38] ("kernel: add bl_list") we got
-> the list heads with the zero'th bit reserved for locking.
-> 
-> It was shortly followed with ceb5bdc2d24 ("fs: dcache per-bucket
-> dcache hash locking") that made it clear the bit was now being used
-> in a bit_spin_lock context (e.g. in fs/dcache.c).
-> 
-> As of commit 1879fd6a265 [2.6.39] ("add hlist_bl_lock/unlock helpers")
-> we got helper functions that combined the open coded bit locks into
-> one place.  At the same time, it makes it more clear that bit_spin_lock
-> is being used, and where.
-> 
-> Assuming that we still can not use the bit_spin_lock safely on RT,
-> then users of these helpers will also result in unsafe usage.  Following
-> the style of "fix" used for jbd code[2], I've done a similar thing here
-> and introduce a stand-alone lock for the list head.  This may be less
-> than ideal from a performance standpoint -- currently unclear to me.
-> 
-> I can't pin an actual failing on not having these patches present; I
-> came by it simply by inspecting the jbd2 code while trying to diagnose
-> another problem (one which these patches unfortunately don't fix) and
-> ended up searching for users of bit_spin.
-> 
-> Noting the above, there is also another use case which may be
-> undesireable for RT -- for the RT trees which now support SLUB,
-> there is a bit_spin_lock used for slab_lock/slab_unlock....  I'll
-> only mention it here and leave it for a separate thread/discussion.
-> 
-> I'm calling these RFC patches, meant to just start discussion.  The
-> two patches could obviously be squashed into one, but I wanted the
-> 2nd (rawlock) to remain separate since it shows why it becomes raw,
-> and I'm not 100% convinced that my assumption that it is OK from a
-> latency perspective to be raw is actually a valid one yet.
-> 
-> In addition, we probably want to be looking at Eric/PaulM's patch
-> currently in net-next:  c87a124a5d ("net: force a reload of first
-> item in hlist_nulls_for_each_entry_rcu") [3] -- as a candidate for
-> cherry-pick onto RT, I think.  It will get there eventually via
-> DaveM --> GregKH --> Steve path (for the rt-stable branches).
-> 
-> Patches attached here were from a v3.6.11.5-rt37 based tree.
+[Re: [PATCH v2] drm/i915: Do not flush caches on RT, print a warning in=
+stead] On 10/06/2013 (Mon 08:30) Christoph Mathys wrote:
 
-They both look good to me:
+> On Sun, Jun 9, 2013 at 1:45 PM, Carsten Emde <C.Emde@osadl.org> wrote=
+:
+> > Invalidating and flushing all caches may introduce long latencies o=
+f up
+> > to several milliseconds. Do not execute it in PREEMPT_RT_FULL kerne=
+ls,
+> > warn once instead and propose to pin all GPU renderering tasks to a
+> > single CPU, if possible.
+> >
+> > Original commit:
+> > 25ff1195f8a0b3724541ae7bbe331b4296de9c06 upstream.
+> >
+> > Original log:
+> > In order to fully serialize access to the fenced region and the upd=
+ate
+> > to the fence register we need to take extreme measures on SNB+, and
+> > manually flush writes to memory prior to writing the fence register=
+ in
+> > conjunction with the memory barriers placed around the register wri=
+te.
+> >
+> > Cc: Chris Wilson <chris@chris-wilson.co.uk>
+> > Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+>=20
+> This fixes the problem for me on 3.6.11.5-rt37. Thanks, Carsten!
 
-Acked-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+This thread reminded me of the i915 compile warning I'd seen earlier
+today.  Fixing the warning does actually change the code produced.
 
-> Paul.
-> --
-> 
-> [1] http://linux.kernel.narkive.com/octAmqz8/patch-real-time-preemption-rt-2-6-11-rc3-v0-7-38-01.4
-> 
-> [2] http://git.kernel.org/cgit/linux/kernel/git/paulg/3.6-rt-patches.git/tree/mm-cgroup-page-bit-spinlock.patch
->     http://git.kernel.org/cgit/linux/kernel/git/paulg/3.6-rt-patches.git/tree/fs-jbd-replace-bh_state-lock.patch
-> 
-> [3] http://patchwork.ozlabs.org/patch/247360/
->     http://git.kernel.org/cgit/linux/kernel/git/davem/net-next.git/commit/?id=c87a124a5d5e8cf8e21c4363c3372bcaf53ea190
-> 
-> Paul Gortmaker (2):
->   list_bl.h: make list head locking RT safe
->   list_bl: make list head lock a raw lock
-> 
->  include/linux/list_bl.h | 24 +++++++++++++++++++++---
->  1 file changed, 21 insertions(+), 3 deletions(-)
-> 
-> -- 
-> 1.8.1.2
-> 
+I'll let you guys who have the actual hardware have the joy of reading
+the asm and deciding whether the change is significant or not...
 
+Paul.
+--
+
+=46rom 8343a1b04ce4a9462697f584d67e06cd5431fe9b Mon Sep 17 00:00:00 200=
+1
+=46rom: Paul Gortmaker <paul.gortmaker@windriver.com>
+Date: Mon, 10 Jun 2013 17:55:44 -0400
+Subject: [PATCH RT-3.6] i915_gem: properly annotate use of completion l=
+ocks as raw
+MIME-Version: 1.0
+Content-Type: text/plain; charset=3DUTF-8
+Content-Transfer-Encoding: 8bit
+
+Currently when compiling drivers/gpu/drm/i915/i915_gem.c we
+will get the following warnings:
+
+drivers/gpu/drm/i915/i915_gem.c:118:3: warning: passing argument 1 of =E2=
+=80=98rt_spin_lock=E2=80=99 from incompatible pointer type [enabled by =
+default]
+drivers/gpu/drm/i915/i915_gem.c:1890:3: warning: passing argument 1 of =
+=E2=80=98rt_spin_lock=E2=80=99 from incompatible pointer type [enabled =
+by default]
+ [...]
+include/linux/spinlock_rt.h:21:24: note: expected =E2=80=98struct spinl=
+ock_t *=E2=80=99 but argument is of type =E2=80=98struct raw_spinlock_t=
+ *=E2=80=99
+
+This happens because the i915 code is going after the lock contained
+within a completion -- and in RT, we have the commit "completion: Use
+simple wait queues", which contains:
+
+    struct completion {
+           unsigned int done;
+   -       wait_queue_head_t wait;
+   +       struct swait_head wait;
+
+and a swait_head is defined as:
+
+   struct swait_head {
+           raw_spinlock_t          lock;
+           struct list_head        list;
+   };
+
+Noting that the wait_queue_head_t's lock was not a raw lock, we
+have thus converted the i915 code to use a raw lock, hence the
+compile warnings.
+
+These appear to be more than just cosmetic warnings, as the
+assembly dump of before this commit and after show some level
+of change:
+
+   --- /tmp/before
+   +++ /tmp/after
+   @@ -551,27 +551,27 @@
+         82c:	e8 00 00 00 00       	callq  831 <i915_mutex_lock_interru=
+ptible+0x51>
+         831:	48 89 c2             	mov    %rax,%rdx
+         834:	83 fa 00             	cmp    $0x0,%edx
+   -     837:	74 36                	je     86f <i915_mutex_lock_interru=
+ptible+0x8f>
+   +     837:	74 2f                	je     868 <i915_mutex_lock_interru=
+ptible+0x88>
+         839:	7c d7                	jl     812 <i915_mutex_lock_interru=
+ptible+0x32>
+         83b:	8b 83 f0 2c 00 00    	mov    0x2cf0(%rbx),%eax
+         841:	85 c0                	test   %eax,%eax
+         843:	74 c3                	je     808 <i915_mutex_lock_interru=
+ptible+0x28>
+         845:	4c 8d ab 88 1d 00 00 	lea    0x1d88(%rbx),%r13
+   -     84c:	e8 00 00 00 00       	callq  851 <i915_mutex_lock_interru=
+ptible+0x71>
+   -     851:	4c 89 ef             	mov    %r13,%rdi
+   -     854:	e8 00 00 00 00       	callq  859 <i915_mutex_lock_interru=
+ptible+0x79>
+   -     859:	83 83 80 1d 00 00 01 	addl   $0x1,0x1d80(%rbx)
+   -     860:	4c 89 ef             	mov    %r13,%rdi
+   -     863:	e8 00 00 00 00       	callq  868 <i915_mutex_lock_interru=
+ptible+0x88>
+   -     868:	e8 00 00 00 00       	callq  86d <i915_mutex_lock_interru=
+ptible+0x8d>
+   -     86d:	eb 99                	jmp    808 <i915_mutex_lock_interru=
+ptible+0x28>
+   -     86f:	48 c7 c6 00 00 00 00 	mov    $0x0,%rsi
+   -     876:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+   -     87d:	31 c0                	xor    %eax,%eax
+   -     87f:	e8 00 00 00 00       	callq  884 <i915_mutex_lock_interru=
+ptible+0xa4>
+   -     884:	b8 fb ff ff ff       	mov    $0xfffffffb,%eax
+   -     889:	eb 87                	jmp    812 <i915_mutex_lock_interru=
+ptible+0x32>
+   -     88b:	0f 1f 44 00 00       	nopl   0x0(%rax,%rax,1)
+   +     84c:	4c 89 ef             	mov    %r13,%rdi
+   +     84f:	e8 00 00 00 00       	callq  854 <i915_mutex_lock_interru=
+ptible+0x74>
+   +     854:	83 83 80 1d 00 00 01 	addl   $0x1,0x1d80(%rbx)
+   +     85b:	48 89 c6             	mov    %rax,%rsi
+   +     85e:	4c 89 ef             	mov    %r13,%rdi
+   +     861:	e8 00 00 00 00       	callq  866 <i915_mutex_lock_interru=
+ptible+0x86>
+   +     866:	eb a0                	jmp    808 <i915_mutex_lock_interru=
+ptible+0x28>
+   +     868:	48 c7 c6 00 00 00 00 	mov    $0x0,%rsi
+   +     86f:	48 c7 c7 00 00 00 00 	mov    $0x0,%rdi
+   +     876:	31 c0                	xor    %eax,%eax
+   +     878:	e8 00 00 00 00       	callq  87d <i915_mutex_lock_interru=
+ptible+0x9d>
+   +     87d:	b8 fb ff ff ff       	mov    $0xfffffffb,%eax
+   +     882:	eb 8e                	jmp    812 <i915_mutex_lock_interru=
+ptible+0x32>
+   +     884:	66 66 66 2e 0f 1f 84 	data32 data32 nopw %cs:0x0(%rax,%ra=
+x,1)
+   +     88b:	00 00 00 00 00
+
+   [Similar instance of 2nd lock/unlock disassembly not shown]
+
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+
+diff --git a/drivers/gpu/drm/i915/i915_gem.c b/drivers/gpu/drm/i915/i91=
+5_gem.c
+index 18da42c..c6998c5 100644
+--- a/drivers/gpu/drm/i915/i915_gem.c
++++ b/drivers/gpu/drm/i915/i915_gem.c
+@@ -115,9 +115,9 @@ i915_gem_wait_for_error(struct drm_device *dev)
+ 		 * end up waiting upon a subsequent completion event that
+ 		 * will never happen.
+ 		 */
+-		spin_lock_irqsave(&x->wait.lock, flags);
++		raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 		x->done++;
+-		spin_unlock_irqrestore(&x->wait.lock, flags);
++		raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ 	}
+ 	return 0;
+ }
+@@ -1887,9 +1887,9 @@ i915_gem_check_wedge(struct drm_i915_private *dev=
+_priv,
+ 		unsigned long flags;
+=20
+ 		/* Give the error handler a chance to run. */
+-		spin_lock_irqsave(&x->wait.lock, flags);
++		raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 		recovery_complete =3D x->done > 0;
+-		spin_unlock_irqrestore(&x->wait.lock, flags);
++		raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+=20
+ 		/* Non-interruptible callers can't handle -EAGAIN, hence return
+ 		 * -EIO unconditionally for these. */
+--=20
+1.8.1.2
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
