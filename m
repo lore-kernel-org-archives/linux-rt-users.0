@@ -1,39 +1,44 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Theodore Ts'o <tytso@mit.edu>
 Subject: Re: [PATCH 6/6] jbd2: remove debug dependency on debug_fs; update
  help text
-Date: Thu, 13 Jun 2013 09:51:31 -0400
-Message-ID: <51B9CE63.9000509@windriver.com>
-References: <1370892723-30860-1-git-send-email-paul.gortmaker@windriver.com> <1370990670-49249-1-git-send-email-paul.gortmaker@windriver.com> <1370990670-49249-7-git-send-email-paul.gortmaker@windriver.com> <20130613030831.GG16959@thunk.org>
+Date: Thu, 13 Jun 2013 10:14:31 -0400
+Message-ID: <20130613141431.GE13429@thunk.org>
+References: <1370892723-30860-1-git-send-email-paul.gortmaker@windriver.com>
+ <1370990670-49249-1-git-send-email-paul.gortmaker@windriver.com>
+ <1370990670-49249-7-git-send-email-paul.gortmaker@windriver.com>
+ <20130613030831.GG16959@thunk.org>
+ <51B9CE63.9000509@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: <linux-ext4@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: "Theodore Ts'o" <tytso@mit.edu>
-Return-path: <linux-ext4-owner@vger.kernel.org>
-In-Reply-To: <20130613030831.GG16959@thunk.org>
-Sender: linux-ext4-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-ext4@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from li9-11.members.linode.com ([67.18.176.11]:57674 "EHLO
+	imap.thunk.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752678Ab3FMOOe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Jun 2013 10:14:34 -0400
+Content-Disposition: inline
+In-Reply-To: <51B9CE63.9000509@windriver.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 13-06-12 11:08 PM, Theodore Ts'o wrote:
-> On Tue, Jun 11, 2013 at 06:44:30PM -0400, Paul Gortmaker wrote:
->> commit b6e96d0067d8 ("jbd2: use module parameters instead of debugfs
->> for jbd_debug") removed any need for a dependency on DEBUG_FS.  It
->> also moved the /sys variables out from underneath the typical debugfs
->> mount point.  Delete the dependency and update the /sys path to where
->> the debug settings are currently.
->>
->> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+On Thu, Jun 13, 2013 at 09:51:31AM -0400, Paul Gortmaker wrote:
+> On 13-06-12 11:08 PM, Theodore Ts'o wrote:
+> > On Tue, Jun 11, 2013 at 06:44:30PM -0400, Paul Gortmaker wrote:
+> >> commit b6e96d0067d8 ("jbd2: use module parameters instead of debugfs
+> >> for jbd_debug") removed any need for a dependency on DEBUG_FS.  It
+> >> also moved the /sys variables out from underneath the typical debugfs
+> >> mount point.  Delete the dependency and update the /sys path to where
+> >> the debug settings are currently.
+> >>
+> >> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+> > 
+> > Applied, thanks.
 > 
-> Applied, thanks.
+> Just a heads up -- it seems some script threw away the 1st line of the
+> commit log here.
 
-Just a heads up -- it seems some script threw away the 1st line of the
-commit log here.
+Thanks for noticing this.  Guilt is apparently stripping lines that
+begin with "commit".  Using "Commit" avoids this.
 
-https://git.kernel.org/cgit/linux/kernel/git/tytso/ext4.git/commit/?h=dev&id=7c39c8340334b79019812d7366057b1d4376516e
-
-Paul.
---
-
-> 
-> 						- Ted
-> 
+      	   	      	    	     	    - Ted
