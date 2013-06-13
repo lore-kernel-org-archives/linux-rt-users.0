@@ -1,90 +1,33 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 2/6] jbd2/log_wait_for_space: drop checkpoint mutex when waiting
-Date: Tue, 11 Jun 2013 18:44:26 -0400
-Message-ID: <1370990670-49249-3-git-send-email-paul.gortmaker@windriver.com>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: [PATCH 1/6] jbd2/journal_commit_transaction: relocate assert
+ after state lock
+Date: Wed, 12 Jun 2013 22:42:52 -0400
+Message-ID: <20130613024252.GC16959@thunk.org>
 References: <1370892723-30860-1-git-send-email-paul.gortmaker@windriver.com>
  <1370990670-49249-1-git-send-email-paul.gortmaker@windriver.com>
+ <1370990670-49249-2-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-ext4@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: "Theodore Ts'o" <tytso@mit.edu>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-ext4@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:47995 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756366Ab3FKWpM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Jun 2013 18:45:12 -0400
-In-Reply-To: <1370990670-49249-1-git-send-email-paul.gortmaker@windriver.com>
+Received: from li9-11.members.linode.com ([67.18.176.11]:57465 "EHLO
+	imap.thunk.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756951Ab3FMCm4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 12 Jun 2013 22:42:56 -0400
+Content-Disposition: inline
+In-Reply-To: <1370990670-49249-2-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-While trying to debug an an issue under extreme I/O loading
-on preempt-rt kernels, the following backtrace was observed
-via SysRQ output:
+On Tue, Jun 11, 2013 at 06:44:25PM -0400, Paul Gortmaker wrote:
+> The state lock is taken after we are doing an assert on the state
+> value, not before.  So we might in fact be doing an assert on a
+> transient value.  Ensure the state check is within the scope of
+> the state lock being taken.
+> 
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-rm              D ffff8802203afbc0  4600  4878   4748 0x00000000
- ffff8802217bfb78 0000000000000082 ffff88021fc2bb80 ffff88021fc2bb80
- ffff88021fc2bb80 ffff8802217bffd8 ffff8802217bffd8 ffff8802217bffd8
- ffff88021f1d4c80 ffff88021fc2bb80 ffff8802217bfb88 ffff88022437b000
-Call Trace:
- [<ffffffff8172dc34>] schedule+0x24/0x70
- [<ffffffff81225b5d>] jbd2_log_wait_commit+0xbd/0x140
- [<ffffffff81060390>] ? __init_waitqueue_head+0x50/0x50
- [<ffffffff81223635>] jbd2_log_do_checkpoint+0xf5/0x520
- [<ffffffff81223b09>] __jbd2_log_wait_for_space+0xa9/0x1f0
- [<ffffffff8121dc40>] start_this_handle.isra.10+0x2e0/0x530
- [<ffffffff81060390>] ? __init_waitqueue_head+0x50/0x50
- [<ffffffff8121e0a3>] jbd2__journal_start+0xc3/0x110
- [<ffffffff811de7ce>] ? ext4_rmdir+0x6e/0x230
- [<ffffffff8121e0fe>] jbd2_journal_start+0xe/0x10
- [<ffffffff811f308b>] ext4_journal_start_sb+0x5b/0x160
- [<ffffffff811de7ce>] ext4_rmdir+0x6e/0x230
- [<ffffffff811435c5>] vfs_rmdir+0xd5/0x140
- [<ffffffff8114370f>] do_rmdir+0xdf/0x120
- [<ffffffff8105c6b4>] ? task_work_run+0x44/0x80
- [<ffffffff81002889>] ? do_notify_resume+0x89/0x100
- [<ffffffff817361ae>] ? int_signal+0x12/0x17
- [<ffffffff81145d85>] sys_unlinkat+0x25/0x40
- [<ffffffff81735f22>] system_call_fastpath+0x16/0x1b
+Thanks, applied.
 
-What is interesting here, is that we call log_wait_commit, from
-within wait_for_space, but we are still holding the checkpoint_mutex
-as it surrounds mostly the whole of wait_for_space.  And then, as we
-are waiting, journal_commit_transaction can run, and if the JBD2_FLUSHED
-bit is set, then we will also try to take the same checkpoint_mutex.
-
-It seems that we need to drop the checkpoint_mutex while sitting in
-jbd2_log_wait_commit, if we want to guarantee that progress can be made
-by jbd2_journal_commit_transaction().  There does not seem to be
-anything preempt-rt specific about this, other then perhaps increasing
-the odds of it happening.
-
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- fs/jbd2/checkpoint.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
-
-diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
-index c78841e..1d4f129 100644
---- a/fs/jbd2/checkpoint.c
-+++ b/fs/jbd2/checkpoint.c
-@@ -156,7 +156,15 @@ void __jbd2_log_wait_for_space(journal_t *journal)
- 				/* We were able to recover space; yay! */
- 				;
- 			} else if (tid) {
-+				/*
-+				 * jbd2_journal_commit_transaction() may want
-+				 * to take the checkpoint_mutex if JBD2_FLUSHED
-+				 * is set.  So we need to temporarily drop it.
-+				 */
-+				mutex_unlock(&journal->j_checkpoint_mutex);
- 				jbd2_log_wait_commit(journal, tid);
-+				write_lock(&journal->j_state_lock);
-+				continue;
- 			} else {
- 				printk(KERN_ERR "%s: needed %d blocks and "
- 				       "only had %d space available\n",
--- 
-1.8.1.2
-
+					- Ted
