@@ -1,220 +1,107 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/4] acpi/rt: Convert acpi_gbl_hardware lock back to
- a raw_spinlock_t
-Date: Fri, 14 Jun 2013 11:16:52 -0400
-Message-ID: <1371223012.9844.317.camel@gandalf.local.home>
-References: <20130219053116.706325380@goodmis.org>
-	 <20130219053159.965355809@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH][RFC] kernel/cpu: do not change the cpus_allowed of the
+ current task when unplugging cpus
+Date: Fri, 14 Jun 2013 17:29:17 +0200
+Message-ID: <20130614152917.GA8597@linutronix.de>
+References: <1368699439-13034-1-git-send-email-chenhui.zhao@freescale.com>
+ <20130607090543.GD10280@linutronix.de>
+ <20130609095942.GA8548@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Clark Williams <clark@redhat.com>, stable-rt@vger.kernel.org
-To: linux-kernel@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	tglx@linutronix.de, leoli@freescale.com, scottwood@freescale.com,
+	Priyanka.Jain@freescale.com
+To: Zhao Chenhui <chenhui.zhao@freescale.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:32944 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753081Ab3FNPQ4 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:54992 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752021Ab3FNP3S (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Jun 2013 11:16:56 -0400
-In-Reply-To: <20130219053159.965355809@goodmis.org>
+	Fri, 14 Jun 2013 11:29:18 -0400
+Content-Disposition: inline
+In-Reply-To: <20130609095942.GA8548@localhost.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Sebastian,
+* Zhao Chenhui | 2013-06-09 17:59:42 [+0800]:
 
-Any reason that this patch was dropped for 3.8? We hit this exact same
-bug recently with a 3.8-rt kernel.
+>No. _cpu_down() on mainline do not change the cpus_allowed.
+My bad.
 
--- Steve
+>The problem is that the task which turned off cpu2 (for instance)
+>can not run on cpu2 again after cpu2 is turned on, because cpu2 has been
+>removed from the cpus_allowed of the task.
+>
+>The task can put himself back on cpu2 throuhg the system call,
+>but I think applications should not do this work and do not care which cpu
+>it is running on in most time.
 
+The mask needs to be changed because you may not be on the CPU while it
+is going down. What do you think about:
 
-On Tue, 2013-02-19 at 00:31 -0500, Steven Rostedt wrote:
-> plain text document attachment
-> (0002-acpi-rt-Convert-acpi_gbl_hardware-lock-back-to-a-raw.patch)
-> From: Steven Rostedt <rostedt@goodmis.org>
-> 
-> We hit the following bug with 3.6-rt:
-> 
-> [    5.898990] BUG: scheduling while atomic: swapper/3/0/0x00000002
-> [    5.898991] no locks held by swapper/3/0.
-> [    5.898993] Modules linked in:
-> [    5.898996] Pid: 0, comm: swapper/3 Not tainted 3.6.11-rt28.19.el6rt.x86_64.debug #1
-> [    5.898997] Call Trace:
-> [    5.899011]  [<ffffffff810804e7>] __schedule_bug+0x67/0x90
-> [    5.899028]  [<ffffffff81577923>] __schedule+0x793/0x7a0
-> [    5.899032]  [<ffffffff810b4e40>] ? debug_rt_mutex_print_deadlock+0x50/0x200
-> [    5.899034]  [<ffffffff81577b89>] schedule+0x29/0x70
-> [    5.899036] BUG: scheduling while atomic: swapper/7/0/0x00000002
-> [    5.899037] no locks held by swapper/7/0.
-> [    5.899039]  [<ffffffff81578525>] rt_spin_lock_slowlock+0xe5/0x2f0
-> [    5.899040] Modules linked in:
-> [    5.899041]
-> [    5.899045]  [<ffffffff81579a58>] ? _raw_spin_unlock_irqrestore+0x38/0x90
-> [    5.899046] Pid: 0, comm: swapper/7 Not tainted 3.6.11-rt28.19.el6rt.x86_64.debug #1
-> [    5.899047] Call Trace:
-> [    5.899049]  [<ffffffff81578bc6>] rt_spin_lock+0x16/0x40
-> [    5.899052]  [<ffffffff810804e7>] __schedule_bug+0x67/0x90
-> [    5.899054]  [<ffffffff8157d3f0>] ? notifier_call_chain+0x80/0x80
-> [    5.899056]  [<ffffffff81577923>] __schedule+0x793/0x7a0
-> [    5.899059]  [<ffffffff812f2034>] acpi_os_acquire_lock+0x1f/0x23
-> [    5.899062]  [<ffffffff810b4e40>] ? debug_rt_mutex_print_deadlock+0x50/0x200
-> [    5.899068]  [<ffffffff8130be64>] acpi_write_bit_register+0x33/0xb0
-> [    5.899071]  [<ffffffff81577b89>] schedule+0x29/0x70
-> [    5.899072]  [<ffffffff8130be13>] ? acpi_read_bit_register+0x33/0x51
-> [    5.899074]  [<ffffffff81578525>] rt_spin_lock_slowlock+0xe5/0x2f0
-> [    5.899077]  [<ffffffff8131d1fc>] acpi_idle_enter_bm+0x8a/0x28e
-> [    5.899079]  [<ffffffff81579a58>] ? _raw_spin_unlock_irqrestore+0x38/0x90
-> [    5.899081]  [<ffffffff8107e5da>] ? this_cpu_load+0x1a/0x30
-> [    5.899083]  [<ffffffff81578bc6>] rt_spin_lock+0x16/0x40
-> [    5.899087]  [<ffffffff8144c759>] cpuidle_enter+0x19/0x20
-> [    5.899088]  [<ffffffff8157d3f0>] ? notifier_call_chain+0x80/0x80
-> [    5.899090]  [<ffffffff8144c777>] cpuidle_enter_state+0x17/0x50
-> [    5.899092]  [<ffffffff812f2034>] acpi_os_acquire_lock+0x1f/0x23
-> [    5.899094]  [<ffffffff8144d1a1>] cpuidle899101]  [<ffffffff8130be13>] ?
-> 
-> As the acpi code disables interrupts in acpi_idle_enter_bm, and calls
-> code that grabs the acpi lock, it causes issues as the lock is currently
-> in RT a sleeping lock.
-> 
-> The lock was converted from a raw to a sleeping lock due to some
-> previous issues, and tests that showed it didn't seem to matter.
-> Unfortunately, it did matter for one of our boxes.
-> 
-> This patch converts the lock back to a raw lock. I've run this code on a
-> few of my own machines, one being my laptop that uses the acpi quite
-> extensively. I've been able to suspend and resume without issues.
-> 
-> [ tglx: Made the change exclusive for acpi_gbl_hardware_lock ]
-> 
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-> Cc: John Kacur <jkacur@gmail.com>
-> Cc: Clark Williams <clark@redhat.com>
-> Link: http://lkml.kernel.org/r/1360765565.23152.5.camel@gandalf.local.home
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> ---
->  drivers/acpi/acpica/acglobal.h  |    2 +-
->  drivers/acpi/acpica/hwregs.c    |    4 ++--
->  drivers/acpi/acpica/hwxface.c   |    4 ++--
->  drivers/acpi/acpica/utmutex.c   |    4 ++--
->  include/acpi/platform/aclinux.h |   14 ++++++++++++++
->  5 files changed, 21 insertions(+), 7 deletions(-)
-> 
-> diff --git a/drivers/acpi/acpica/acglobal.h b/drivers/acpi/acpica/acglobal.h
-> index 73863d8..3d208c8 100644
-> --- a/drivers/acpi/acpica/acglobal.h
-> +++ b/drivers/acpi/acpica/acglobal.h
-> @@ -230,7 +230,7 @@ ACPI_EXTERN u8 acpi_gbl_global_lock_pending;
->   * interrupt level
->   */
->  ACPI_EXTERN acpi_spinlock acpi_gbl_gpe_lock;	/* For GPE data structs and registers */
-> -ACPI_EXTERN acpi_spinlock acpi_gbl_hardware_lock;	/* For ACPI H/W except GPE registers */
-> +ACPI_EXTERN acpi_raw_spinlock acpi_gbl_hardware_lock;	/* For ACPI H/W except GPE registers */
->  
->  /*****************************************************************************
->   *
-> diff --git a/drivers/acpi/acpica/hwregs.c b/drivers/acpi/acpica/hwregs.c
-> index 55accb7..1da9213 100644
-> --- a/drivers/acpi/acpica/hwregs.c
-> +++ b/drivers/acpi/acpica/hwregs.c
-> @@ -263,7 +263,7 @@ acpi_status acpi_hw_clear_acpi_status(void)
->  			  ACPI_BITMASK_ALL_FIXED_STATUS,
->  			  ACPI_FORMAT_UINT64(acpi_gbl_xpm1a_status.address)));
->  
-> -	lock_flags = acpi_os_acquire_lock(acpi_gbl_hardware_lock);
-> +	raw_spin_lock_irqsave(acpi_gbl_hardware_lock, lock_flags);
->  
->  	/* Clear the fixed events in PM1 A/B */
->  
-> @@ -278,7 +278,7 @@ acpi_status acpi_hw_clear_acpi_status(void)
->  	status = acpi_ev_walk_gpe_list(acpi_hw_clear_gpe_block, NULL);
->  
->        unlock_and_exit:
-> -	acpi_os_release_lock(acpi_gbl_hardware_lock, lock_flags);
-> +	raw_spin_unlock_irqrestore(acpi_gbl_hardware_lock, lock_flags);
->  	return_ACPI_STATUS(status);
->  }
->  
-> diff --git a/drivers/acpi/acpica/hwxface.c b/drivers/acpi/acpica/hwxface.c
-> index f75f81a..94a33ce 100644
-> --- a/drivers/acpi/acpica/hwxface.c
-> +++ b/drivers/acpi/acpica/hwxface.c
-> @@ -386,7 +386,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
->  		return_ACPI_STATUS(AE_BAD_PARAMETER);
->  	}
->  
-> -	lock_flags = acpi_os_acquire_lock(acpi_gbl_hardware_lock);
-> +	raw_spin_lock_irqsave(acpi_gbl_hardware_lock, lock_flags);
->  
->  	/*
->  	 * At this point, we know that the parent register is one of the
-> @@ -447,7 +447,7 @@ acpi_status acpi_write_bit_register(u32 register_id, u32 value)
->  
->  unlock_and_exit:
->  
-> -	acpi_os_release_lock(acpi_gbl_hardware_lock, lock_flags);
-> +	raw_spin_unlock_irqrestore(acpi_gbl_hardware_lock, lock_flags);
->  	return_ACPI_STATUS(status);
->  }
->  
-> diff --git a/drivers/acpi/acpica/utmutex.c b/drivers/acpi/acpica/utmutex.c
-> index 7d797e2..b611bf3 100644
-> --- a/drivers/acpi/acpica/utmutex.c
-> +++ b/drivers/acpi/acpica/utmutex.c
-> @@ -88,7 +88,7 @@ acpi_status acpi_ut_mutex_initialize(void)
->  		return_ACPI_STATUS (status);
->  	}
->  
-> -	status = acpi_os_create_lock (&acpi_gbl_hardware_lock);
-> +	status = acpi_os_create_raw_lock (&acpi_gbl_hardware_lock);
->  	if (ACPI_FAILURE (status)) {
->  		return_ACPI_STATUS (status);
->  	}
-> @@ -135,7 +135,7 @@ void acpi_ut_mutex_terminate(void)
->  	/* Delete the spinlocks */
->  
->  	acpi_os_delete_lock(acpi_gbl_gpe_lock);
-> -	acpi_os_delete_lock(acpi_gbl_hardware_lock);
-> +	acpi_os_delete_raw_lock(acpi_gbl_hardware_lock);
->  
->  	/* Delete the reader/writer lock */
->  
-> diff --git a/include/acpi/platform/aclinux.h b/include/acpi/platform/aclinux.h
-> index 2ce1be9..17d24de 100644
-> --- a/include/acpi/platform/aclinux.h
-> +++ b/include/acpi/platform/aclinux.h
-> @@ -74,6 +74,7 @@
->  
->  #define acpi_cache_t                        struct kmem_cache
->  #define acpi_spinlock                       spinlock_t *
-> +#define acpi_raw_spinlock                   raw_spinlock_t *
->  #define acpi_cpu_flags                      unsigned long
->  
->  #else /* !__KERNEL__ */
-> @@ -177,6 +178,19 @@ static inline void *acpi_os_acquire_object(acpi_cache_t * cache)
->  	lock ? AE_OK : AE_NO_MEMORY;				\
->  })
->  
-> +#define acpi_os_create_raw_lock(__handle)			\
-> +({								\
-> +	raw_spinlock_t *lock = ACPI_ALLOCATE(sizeof(*lock));	\
-> +								\
-> +	if (lock) {						\
-> +		*(__handle) = lock;				\
-> +		raw_spin_lock_init(*(__handle));		\
-> +	}							\
-> +	lock ? AE_OK : AE_NO_MEMORY;				\
-> +})
-> +
-> +#define acpi_os_delete_raw_lock(__handle)	kfree(__handle)
-> +
->  #endif /* __KERNEL__ */
->  
->  #endif /* __ACLINUX_H__ */
+Subject: [PATCH] kernel/hotplug: restore original cpu mask oncpu/down
+
+If a task which is allowed to run only on CPU X puts CPU Y down then it
+will be allowed on all CPUs but the on CPU Y after it comes back from
+kernel. This patch ensures that we don't lose the initial setting unless
+the CPU the task is running is going down.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/cpu.c |   13 ++++++++++++-
+ 1 file changed, 12 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 3acf17d..f5ad8e1 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -545,6 +545,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 		.hcpu = hcpu,
+ 	};
+ 	cpumask_var_t cpumask;
++	cpumask_var_t cpumask_org;
+ 
+ 	if (num_online_cpus() == 1)
+ 		return -EBUSY;
+@@ -555,6 +556,12 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 	/* Move the downtaker off the unplug cpu */
+ 	if (!alloc_cpumask_var(&cpumask, GFP_KERNEL))
+ 		return -ENOMEM;
++	if (!alloc_cpumask_var(&cpumask_org, GFP_KERNEL))  {
++		free_cpumask_var(cpumask);
++		return -ENOMEM;
++	}
++
++	cpumask_copy(cpumask_org, tsk_cpus_allowed(current));
+ 	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
+ 	set_cpus_allowed_ptr(current, cpumask);
+ 	free_cpumask_var(cpumask);
+@@ -563,7 +570,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 	if (mycpu == cpu) {
+ 		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
+ 		migrate_enable();
+-		return -EBUSY;
++		err = -EBUSY;
++		goto restore_cpus;
+ 	}
+ 
+ 	cpu_hotplug_begin();
+@@ -622,6 +630,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 	cpu_hotplug_done();
+ 	if (!err)
+ 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
++restore_cpus:
++	set_cpus_allowed_ptr(current, cpumask_org);
++	free_cpumask_var(cpumask_org);
+ 	return err;
+ }
+ 
+-- 
+1.7.10.4
 
 
+>
+>-Chenhui
+
+Sebastian
