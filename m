@@ -1,276 +1,78 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.8.13-rt11
-Date: Fri, 14 Jun 2013 21:30:37 +0200
-Message-ID: <20130614193037.GC8597@linutronix.de>
+From: Daniel Vetter <daniel@ffwll.ch>
+Subject: Re: [PATCH v2] drm/i915: Do not flush caches on RT, print a warning instead
+Date: Fri, 14 Jun 2013 22:32:13 +0200
+Message-ID: <CAKMK7uEjuMsU_jmbYKAK_dA7E+Rbro8dqUAN6T0tiM65J2hvAQ@mail.gmail.com>
+References: <1369154725.6828.131.camel@gandalf.local.home>
+	<CALqGcGop=cpgSvcdmwE6QOSjo-JHBDGYpe2qyy3cxULfamgy+w@mail.gmail.com>
+	<1370637266.9844.95.camel@gandalf.local.home>
+	<51B35727.6040907@osadl.org>
+	<51B46AC0.7050502@osadl.org>
+	<51BB3F18.6030709@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Chris Wilson <chris@chris-wilson.co.uk>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Christoph Mathys <eraserix@gmail.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55972 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753206Ab3FNTaj (ORCPT
+Received: from mail-ie0-f172.google.com ([209.85.223.172]:51917 "EHLO
+	mail-ie0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753647Ab3FNUcN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Jun 2013 15:30:39 -0400
-Content-Disposition: inline
+	Fri, 14 Jun 2013 16:32:13 -0400
+Received: by mail-ie0-f172.google.com with SMTP id 16so2422348iea.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 14 Jun 2013 13:32:13 -0700 (PDT)
+In-Reply-To: <51BB3F18.6030709@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT Folks,
+On Fri, Jun 14, 2013 at 6:04 PM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> On 06/09/2013 01:45 PM, Carsten Emde wrote:
+>> Invalidating and flushing all caches may introduce long latencies of up
+>> to several milliseconds. Do not execute it in PREEMPT_RT_FULL kernels,
+>> warn once instead and propose to pin all GPU renderering tasks to a
+>> single CPU, if possible.
+>>
+>> Original commit:
+>> 25ff1195f8a0b3724541ae7bbe331b4296de9c06 upstream.
+>>
+>> Original log:
+>> In order to fully serialize access to the fenced region and the update
+>> to the fence register we need to take extreme measures on SNB+, and
+>> manually flush writes to memory prior to writing the fence register in
+>> conjunction with the memory barriers placed around the register write.
+>>
+>> Cc: Chris Wilson <chris@chris-wilson.co.uk>
+>> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+>
+> Oh boy.
+>
+> Chris, I have a few questions:
+> - is the wbinvd() required even on the local CPU or just the remote?
+>   According to bugzilla non-smp works fine. If so, you open code
+>   wbinvd_on_all_cpus()
+> - is it possible to replace the wbinvd() with clflush() ?
 
-I'm pleased to announce the 3.8.13-rt11 release.
 
-changes since v3.8.13-rt10:
-- use wakeup_timer_waiters() in wake_up() so we do nothing on nort
-  kernel. Sent by Zhao Hongjiang
-- a fix for a cpu down problem. If kthread is pinned to the same CPU
-  which is going down we will spin for ever and wait until kthread
-  leaves the CPU. This does not trigger on v3.6-rt because the workqueue
-  code there does not create a new process in the notfier callback.
-  Reported by Qiang Huang.
-- a check if we lose PF_THREAD_BOUND in the workqueue code. Shouldn't
-  happen yet it seems it happens from time to time.
-- save the cpu mask of the application which disables a CPU. Prior this
-  change the application which put a CPU down was allowed to run on any
-  CPU if it was restricted to a specifc one. Reported by Zhao Chenhui.
+-next has an extended version of this w/a where we also bang a special
+register after the wbinvd - the current one isn't good enough on
+baytrail platforms. Thus far we haven't found anything less offensive
+that still works (hey, we've started with machine_stop!), but we're
+working together with hw engineers trying to figure out what's going
+on.
 
-- the SLxB PowerPC, e500 problem is removed from the list without a
-  change. The problem triggers even on a v3.6 non-RT kernel after 1-2
-  days of runtime on my MPC8572DS. I don't see any problem so far on
-  MPC8536 which is mostly the same HW except it is UP but MPC8572DS
-  crashes also in UP mode so I belive it is a HW problem.
+> - is the problem going away if every process doing graphics is pinned
+>   to single CPU and the wbindv() call is avoided?
 
-Known issues:
+Yep, the issue only happens when threads migrate while they're
+accessing tiled buffers thru the gtt.
 
-    - Steven reported a missing acpi from the v3.6 release.
-    - a "fix" for i915 leads to high latencies due to wbinvd(). Not sure
-      what is the best thing to do here.
-
-The delta patch against v3.8.13-rt10 is appended below and can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13-rt10-rt11.patch.xz
-
-The RT patch against 3.8.11 can be found here:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13-rt11.patch.xz
-
-The split quilt queue is available at:
-
-  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.8.13-rt11.tar.xz
-
-Sebastian
-
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index d44dea3..f5ad8e1 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -83,6 +83,7 @@ struct hotplug_pcp {
- 	int refcount;
- 	int grab_lock;
- 	struct completion synced;
-+	struct completion unplug_wait;
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	spinlock_t lock;
- #else
-@@ -180,6 +181,7 @@ static int sync_unplug_thread(void *data)
- {
- 	struct hotplug_pcp *hp = data;
- 
-+	wait_for_completion(&hp->unplug_wait);
- 	preempt_disable();
- 	hp->unplug = current;
- 	wait_for_pinned_cpus(hp);
-@@ -245,6 +247,14 @@ static void __cpu_unplug_sync(struct hotplug_pcp *hp)
- 	wait_for_completion(&hp->synced);
- }
- 
-+static void __cpu_unplug_wait(unsigned int cpu)
-+{
-+	struct hotplug_pcp *hp = &per_cpu(hotplug_pcp, cpu);
-+
-+	complete(&hp->unplug_wait);
-+	wait_for_completion(&hp->synced);
-+}
-+
- /*
-  * Start the sync_unplug_thread on the target cpu and wait for it to
-  * complete.
-@@ -268,6 +278,7 @@ static int cpu_unplug_begin(unsigned int cpu)
- 	tell_sched_cpu_down_begin(cpu);
- 
- 	init_completion(&hp->synced);
-+	init_completion(&hp->unplug_wait);
- 
- 	hp->sync_tsk = kthread_create(sync_unplug_thread, hp, "sync_unplug/%d", cpu);
- 	if (IS_ERR(hp->sync_tsk)) {
-@@ -283,8 +294,7 @@ static int cpu_unplug_begin(unsigned int cpu)
- 	 * wait for tasks that are going to enter these sections and
- 	 * we must not have them block.
- 	 */
--	__cpu_unplug_sync(hp);
--
-+	wake_up_process(hp->sync_tsk);
- 	return 0;
- }
- 
-@@ -535,6 +545,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		.hcpu = hcpu,
- 	};
- 	cpumask_var_t cpumask;
-+	cpumask_var_t cpumask_org;
- 
- 	if (num_online_cpus() == 1)
- 		return -EBUSY;
-@@ -545,6 +556,12 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 	/* Move the downtaker off the unplug cpu */
- 	if (!alloc_cpumask_var(&cpumask, GFP_KERNEL))
- 		return -ENOMEM;
-+	if (!alloc_cpumask_var(&cpumask_org, GFP_KERNEL))  {
-+		free_cpumask_var(cpumask);
-+		return -ENOMEM;
-+	}
-+
-+	cpumask_copy(cpumask_org, tsk_cpus_allowed(current));
- 	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
- 	set_cpus_allowed_ptr(current, cpumask);
- 	free_cpumask_var(cpumask);
-@@ -553,7 +570,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 	if (mycpu == cpu) {
- 		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
- 		migrate_enable();
--		return -EBUSY;
-+		err = -EBUSY;
-+		goto restore_cpus;
- 	}
- 
- 	cpu_hotplug_begin();
-@@ -571,6 +589,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 				__func__, cpu);
- 		goto out_release;
- 	}
-+
-+	__cpu_unplug_wait(cpu);
- 	smpboot_park_threads(cpu);
- 
- 	/* Notifiers are done. Don't let any more tasks pin this CPU. */
-@@ -610,6 +630,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 	cpu_hotplug_done();
- 	if (!err)
- 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
-+restore_cpus:
-+	set_cpus_allowed_ptr(current, cpumask_org);
-+	free_cpumask_var(cpumask_org);
- 	return err;
- }
- 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 1fba5cb..81a28dd 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -849,9 +849,6 @@ static void irq_thread_dtor(struct callback_head *unused)
- static int irq_thread(void *data)
- {
- 	struct callback_head on_exit_work;
--	static const struct sched_param param = {
--		.sched_priority = MAX_USER_RT_PRIO/2,
--	};
- 	struct irqaction *action = data;
- 	struct irq_desc *desc = irq_to_desc(action->irq);
- 	irqreturn_t (*handler_fn)(struct irq_desc *desc,
-@@ -863,8 +860,6 @@ static int irq_thread(void *data)
- 	else
- 		handler_fn = irq_thread_fn;
- 
--	sched_setscheduler(current, SCHED_FIFO, &param);
--
- 	init_task_work(&on_exit_work, irq_thread_dtor);
- 	task_work_add(current, &on_exit_work, false);
- 
-@@ -965,6 +960,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 	 */
- 	if (new->thread_fn && !nested) {
- 		struct task_struct *t;
-+		static const struct sched_param param = {
-+			.sched_priority = MAX_USER_RT_PRIO/2,
-+		};
- 
- 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
- 				   new->name);
-@@ -972,6 +970,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 			ret = PTR_ERR(t);
- 			goto out_mput;
- 		}
-+
-+		sched_setscheduler(t, SCHED_FIFO, &param);
-+
- 		/*
- 		 * We keep the reference to the task struct even if
- 		 * the thread dies to avoid that the interrupt code
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 374e7b1..2f1c8d3 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -76,7 +76,9 @@ struct tvec_root {
- struct tvec_base {
- 	spinlock_t lock;
- 	struct timer_list *running_timer;
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	wait_queue_head_t wait_for_running_timer;
-+#endif
- 	unsigned long timer_jiffies;
- 	unsigned long next_timer;
- 	unsigned long active_timers;
-@@ -982,7 +984,7 @@ static void wait_for_running_timer(struct timer_list *timer)
- 			   base->running_timer != timer);
- }
- 
--# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_tunning_timer)
-+# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
- #else
- static inline void wait_for_running_timer(struct timer_list *timer)
- {
-@@ -1236,7 +1238,7 @@ static inline void __run_timers(struct tvec_base *base)
- 			}
- 		}
- 	}
--	wake_up(&base->wait_for_running_timer);
-+	wakeup_timer_waiters(base);
- 	spin_unlock_irq(&base->lock);
- }
- 
-@@ -1755,7 +1757,9 @@ static int __cpuinit init_timers_cpu(int cpu)
- 	}
- 
- 	spin_lock_init(&base->lock);
-+#ifdef CONFIG_PREEMPT_RT_FULL
- 	init_waitqueue_head(&base->wait_for_running_timer);
-+#endif
- 
- 	for (j = 0; j < TVN_SIZE; j++) {
- 		INIT_LIST_HEAD(base->tv5.vec + j);
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 11285e4..0d49ddf 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1637,8 +1637,11 @@ __acquires(&gcwq->lock)
- 		 * it races with cpu hotunplug operation.  Verify
- 		 * against GCWQ_DISASSOCIATED.
- 		 */
--		if (!(gcwq->flags & GCWQ_DISASSOCIATED))
-+		if (!(gcwq->flags & GCWQ_DISASSOCIATED)) {
- 			set_cpus_allowed_ptr(task, get_cpu_mask(gcwq->cpu));
-+			if (WARN_ON(!(task->flags & PF_THREAD_BOUND)))
-+				task->flags |= PF_THREAD_BOUND;
-+		}
- 
- 		spin_lock_irq(&gcwq->lock);
- 		if (gcwq->flags & GCWQ_DISASSOCIATED)
-diff --git a/localversion-rt b/localversion-rt
-index d79dde6..05c35cb 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt10
-+-rt11
+-Daniel
+--
+Daniel Vetter
+Software Engineer, Intel Corporation
++41 (0) 79 365 57 48 - http://blog.ffwll.ch
