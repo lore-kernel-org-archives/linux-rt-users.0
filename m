@@ -1,78 +1,90 @@
-From: Daniel Vetter <daniel@ffwll.ch>
-Subject: Re: [PATCH v2] drm/i915: Do not flush caches on RT, print a warning instead
-Date: Fri, 14 Jun 2013 22:32:13 +0200
-Message-ID: <CAKMK7uEjuMsU_jmbYKAK_dA7E+Rbro8dqUAN6T0tiM65J2hvAQ@mail.gmail.com>
-References: <1369154725.6828.131.camel@gandalf.local.home>
-	<CALqGcGop=cpgSvcdmwE6QOSjo-JHBDGYpe2qyy3cxULfamgy+w@mail.gmail.com>
-	<1370637266.9844.95.camel@gandalf.local.home>
-	<51B35727.6040907@osadl.org>
-	<51B46AC0.7050502@osadl.org>
-	<51BB3F18.6030709@linutronix.de>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: [PATCH] mm: fix up a spurious page fault whenever it happens
+Date: Sun, 16 Jun 2013 23:34:20 +0200
+Message-ID: <51BE2F5C.8070408@meduna.org>
+References: <5195ED8B.7060002@meduna.org>  <1369183168.6828.168.camel@gandalf.local.home>  <519CBB30.3060200@redhat.com>  <CA+55aFxMqvDvcVtLW-yD2PuU_CcjPOC30Zk07Kuk6S25WCzbHQ@mail.gmail.com>  <20130522134111.33a695c5@cuia.bos.redhat.com> <519D08B0.8050707@meduna.org> <1369246316.6828.176.camel@gandalf.local.home> <519D0CAB.7020800@meduna.org> <519D0FF8.5080200@redhat.com> <519D118B.6010306@zytor.com> <519D11BF.5000604@redhat.com> <519DCE2A.4010801@meduna.org> <519E095A.4000105@redhat.com> <519F24DD.5060700@meduna.org> <519F65DB.2020305@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: Chris Wilson <chris@chris-wilson.co.uk>,
-	Carsten Emde <C.Emde@osadl.org>,
+Content-Transfer-Encoding: 7bit
+Cc: "H. Peter Anvin" <hpa@zytor.com>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Christoph Mathys <eraserix@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f172.google.com ([209.85.223.172]:51917 "EHLO
-	mail-ie0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753647Ab3FNUcN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Jun 2013 16:32:13 -0400
-Received: by mail-ie0-f172.google.com with SMTP id 16so2422348iea.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 14 Jun 2013 13:32:13 -0700 (PDT)
-In-Reply-To: <51BB3F18.6030709@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Ingo Molnar <mingo@redhat.com>,
+	the arch/x86 maintainers <x86@kernel.org>,
+	Hai Huang <hhuang@redhat.com>
+To: Rik van Riel <riel@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <519F65DB.2020305@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jun 14, 2013 at 6:04 PM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> On 06/09/2013 01:45 PM, Carsten Emde wrote:
->> Invalidating and flushing all caches may introduce long latencies of up
->> to several milliseconds. Do not execute it in PREEMPT_RT_FULL kernels,
->> warn once instead and propose to pin all GPU renderering tasks to a
->> single CPU, if possible.
->>
->> Original commit:
->> 25ff1195f8a0b3724541ae7bbe331b4296de9c06 upstream.
->>
->> Original log:
->> In order to fully serialize access to the fenced region and the update
->> to the fence register we need to take extreme measures on SNB+, and
->> manually flush writes to memory prior to writing the fence register in
->> conjunction with the memory barriers placed around the register write.
->>
->> Cc: Chris Wilson <chris@chris-wilson.co.uk>
->> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
->
-> Oh boy.
->
-> Chris, I have a few questions:
-> - is the wbinvd() required even on the local CPU or just the remote?
->   According to bugzilla non-smp works fine. If so, you open code
->   wbinvd_on_all_cpus()
-> - is it possible to replace the wbinvd() with clflush() ?
+Hi all,
 
+I was able to reproduce the page fault problem with
+a relatively simple application, for now on the
+Geode platform. It can be downloaded at
 
--next has an extended version of this w/a where we also bang a special
-register after the wbinvd - the current one isn't good enough on
-baytrail platforms. Thus far we haven't found anything less offensive
-that still works (hey, we've started with machine_stop!), but we're
-working together with hw engineers trying to figure out what's going
-on.
+  http://www.meduna.org/tmp/PageFault.tar.gz
 
-> - is the problem going away if every process doing graphics is pinned
->   to single CPU and the wbindv() call is avoided?
+Basically the test application does:
 
-Yep, the issue only happens when threads migrate while they're
-accessing tiled buffers thru the gtt.
+- 4 threads that do nothing but periodically sleep
+- 1 thread looping in a timerfd loop doing nothing
+- 4 threads doing nonblocking TCP connects to an address
+  in the local network that does not exist, i.e. all that
+  happens are ARP requests.
+- additionally a non-existing TCP congestion algorithm is
+  requested resulting in repeated futile requests to load
+  the module. This looks to be an important part in reproducing
+  it, but the problem also occasionally happened with kernels
+  that did not have modules enabled at all, so it is
+  probably just pushing some probabilities.
+- the application is statically linked - this might or might
+  not be relevant, I just wanted the text-segment to be bigger
 
--Daniel
---
-Daniel Vetter
-Software Engineer, Intel Corporation
-+41 (0) 79 365 57 48 - http://blog.ffwll.ch
+I know it is a weird mix, I was just trying to mimic what
+our application did in the form that was able to trigger
+the faults most often.
+
+In my few tests this repeatably triggered the problem in hours,
+max a day.
+
+My feeling is that the problem is triggered best if there
+is little network traffic and no other connections to the
+machine, but this is only a subjective feeling.
+
+The kernel configuration, cpuinfo, meminfo and lspci
+are included in the tarball. The kernel configuration is not
+very clean, it is a kernel intended to work on both Geode
+and Celeron and is also a snapshot of what reproduced the
+problem the best.
+
+The environment is a current 3.4-rt with following tweaks:
+
+ chrt -f -p 37 <pid of ksoftirqd/0>
+ chrt -o -p 0 <pid of irq/14-pata>  [because of a pata_cs5536 bug]
+ renice -15 <pid of irq/14-pata>
+ ulimit -s 512
+
+Before compiling change the CONNECT_ADDR define to an address
+that is in the local LAN but is not present.
+
+Other than this application a lightweight mix of usual Debian
+processes is running. There are no servers except openssh and ntp.
+A shell script that wakes each 2 seconds and does some
+housekeeping is running, that probably recovers the system
+when it enters the page-fault loop followed by the
+RT throttling.
+
+Right now a test with the same kernel with preempt none
+is running to see whether the problem also happens with this
+application there (due to the timing sensitivity only a positive
+result has a significance). I did not have a chance to test
+on an Intel processor yet.
+
+Thanks
+-- 
+                                       Stano
