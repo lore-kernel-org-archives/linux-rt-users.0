@@ -1,90 +1,113 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: [PATCH] mm: fix up a spurious page fault whenever it happens
-Date: Sun, 16 Jun 2013 23:34:20 +0200
-Message-ID: <51BE2F5C.8070408@meduna.org>
-References: <5195ED8B.7060002@meduna.org>  <1369183168.6828.168.camel@gandalf.local.home>  <519CBB30.3060200@redhat.com>  <CA+55aFxMqvDvcVtLW-yD2PuU_CcjPOC30Zk07Kuk6S25WCzbHQ@mail.gmail.com>  <20130522134111.33a695c5@cuia.bos.redhat.com> <519D08B0.8050707@meduna.org> <1369246316.6828.176.camel@gandalf.local.home> <519D0CAB.7020800@meduna.org> <519D0FF8.5080200@redhat.com> <519D118B.6010306@zytor.com> <519D11BF.5000604@redhat.com> <519DCE2A.4010801@meduna.org> <519E095A.4000105@redhat.com> <519F24DD.5060700@meduna.org> <519F65DB.2020305@redhat.com>
+From: Zhao Chenhui <chenhui.zhao@freescale.com>
+Subject: Re: [PATCH][RFC] kernel/cpu: do not change the cpus_allowed of the
+ current task when unplugging cpus
+Date: Mon, 17 Jun 2013 18:48:32 +0800
+Message-ID: <20130617104832.GA20410@localhost.localdomain>
+References: <1368699439-13034-1-git-send-email-chenhui.zhao@freescale.com>
+ <20130607090543.GD10280@linutronix.de>
+ <20130609095942.GA8548@localhost.localdomain>
+ <20130614152917.GA8597@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: "H. Peter Anvin" <hpa@zytor.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@redhat.com>,
-	the arch/x86 maintainers <x86@kernel.org>,
-	Hai Huang <hhuang@redhat.com>
-To: Rik van Riel <riel@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <519F65DB.2020305@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	<tglx@linutronix.de>, <leoli@freescale.com>,
+	<scottwood@freescale.com>, <Priyanka.Jain@freescale.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from co9ehsobe003.messaging.microsoft.com ([207.46.163.26]:27065
+	"EHLO co9outboundpool.messaging.microsoft.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S932264Ab3FQKsj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Jun 2013 06:48:39 -0400
+Content-Disposition: inline
+In-Reply-To: <20130614152917.GA8597@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+On Fri, Jun 14, 2013 at 05:29:17PM +0200, Sebastian Andrzej Siewior wrote:
+> * Zhao Chenhui | 2013-06-09 17:59:42 [+0800]:
+> 
+> >No. _cpu_down() on mainline do not change the cpus_allowed.
+> My bad.
+> 
+> >The problem is that the task which turned off cpu2 (for instance)
+> >can not run on cpu2 again after cpu2 is turned on, because cpu2 has been
+> >removed from the cpus_allowed of the task.
+> >
+> >The task can put himself back on cpu2 throuhg the system call,
+> >but I think applications should not do this work and do not care which cpu
+> >it is running on in most time.
+> 
+> The mask needs to be changed because you may not be on the CPU while it
+> is going down. What do you think about:
+> 
 
-I was able to reproduce the page fault problem with
-a relatively simple application, for now on the
-Geode platform. It can be downloaded at
+I don't think it is necessary to change the mask. migration_call() invoked by
+the cpu notify "CPU_DYING" will remove all running tasks from the dying cpu.
+Even if the current task is running on the dying cpu, it will be transfered
+to another online cpu. 
 
-  http://www.meduna.org/tmp/PageFault.tar.gz
+I guess that changing the mask benefits the latency of the system.
+Please correct me.
 
-Basically the test application does:
+-Chenhui
 
-- 4 threads that do nothing but periodically sleep
-- 1 thread looping in a timerfd loop doing nothing
-- 4 threads doing nonblocking TCP connects to an address
-  in the local network that does not exist, i.e. all that
-  happens are ARP requests.
-- additionally a non-existing TCP congestion algorithm is
-  requested resulting in repeated futile requests to load
-  the module. This looks to be an important part in reproducing
-  it, but the problem also occasionally happened with kernels
-  that did not have modules enabled at all, so it is
-  probably just pushing some probabilities.
-- the application is statically linked - this might or might
-  not be relevant, I just wanted the text-segment to be bigger
+> Subject: [PATCH] kernel/hotplug: restore original cpu mask oncpu/down
+> 
+> If a task which is allowed to run only on CPU X puts CPU Y down then it
+> will be allowed on all CPUs but the on CPU Y after it comes back from
+> kernel. This patch ensures that we don't lose the initial setting unless
+> the CPU the task is running is going down.
+> 
+> Cc: stable-rt@vger.kernel.org
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  kernel/cpu.c |   13 ++++++++++++-
+>  1 file changed, 12 insertions(+), 1 deletion(-)
+> 
+> diff --git a/kernel/cpu.c b/kernel/cpu.c
+> index 3acf17d..f5ad8e1 100644
+> --- a/kernel/cpu.c
+> +++ b/kernel/cpu.c
+> @@ -545,6 +545,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+>  		.hcpu = hcpu,
+>  	};
+>  	cpumask_var_t cpumask;
+> +	cpumask_var_t cpumask_org;
+>  
+>  	if (num_online_cpus() == 1)
+>  		return -EBUSY;
+> @@ -555,6 +556,12 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+>  	/* Move the downtaker off the unplug cpu */
+>  	if (!alloc_cpumask_var(&cpumask, GFP_KERNEL))
+>  		return -ENOMEM;
+> +	if (!alloc_cpumask_var(&cpumask_org, GFP_KERNEL))  {
+> +		free_cpumask_var(cpumask);
+> +		return -ENOMEM;
+> +	}
+> +
+> +	cpumask_copy(cpumask_org, tsk_cpus_allowed(current));
+>  	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
+>  	set_cpus_allowed_ptr(current, cpumask);
+>  	free_cpumask_var(cpumask);
+> @@ -563,7 +570,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+>  	if (mycpu == cpu) {
+>  		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
+>  		migrate_enable();
+> -		return -EBUSY;
+> +		err = -EBUSY;
+> +		goto restore_cpus;
+>  	}
+>  
+>  	cpu_hotplug_begin();
+> @@ -622,6 +630,9 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+>  	cpu_hotplug_done();
+>  	if (!err)
+>  		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
+> +restore_cpus:
+> +	set_cpus_allowed_ptr(current, cpumask_org);
+> +	free_cpumask_var(cpumask_org);
+>  	return err;
+>  }
+>  
 
-I know it is a weird mix, I was just trying to mimic what
-our application did in the form that was able to trigger
-the faults most often.
-
-In my few tests this repeatably triggered the problem in hours,
-max a day.
-
-My feeling is that the problem is triggered best if there
-is little network traffic and no other connections to the
-machine, but this is only a subjective feeling.
-
-The kernel configuration, cpuinfo, meminfo and lspci
-are included in the tarball. The kernel configuration is not
-very clean, it is a kernel intended to work on both Geode
-and Celeron and is also a snapshot of what reproduced the
-problem the best.
-
-The environment is a current 3.4-rt with following tweaks:
-
- chrt -f -p 37 <pid of ksoftirqd/0>
- chrt -o -p 0 <pid of irq/14-pata>  [because of a pata_cs5536 bug]
- renice -15 <pid of irq/14-pata>
- ulimit -s 512
-
-Before compiling change the CONNECT_ADDR define to an address
-that is in the local LAN but is not present.
-
-Other than this application a lightweight mix of usual Debian
-processes is running. There are no servers except openssh and ntp.
-A shell script that wakes each 2 seconds and does some
-housekeeping is running, that probably recovers the system
-when it enters the page-fault loop followed by the
-RT throttling.
-
-Right now a test with the same kernel with preempt none
-is running to see whether the problem also happens with this
-application there (due to the timing sensitivity only a positive
-result has a significance). I did not have a chance to test
-on an Intel processor yet.
-
-Thanks
--- 
-                                       Stano
