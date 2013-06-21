@@ -1,46 +1,38 @@
-From: Tom Cook <tom.k.cook@gmail.com>
-Subject: Re: Tracers+cyclictest causing kernel oops
-Date: Fri, 21 Jun 2013 15:17:54 +0100
-Message-ID: <CAFSh4Uzjvqsew9yAQafO=nYtV5rOuCSdt3aRXUxDvkUBMOCdXw@mail.gmail.com>
-References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
-	<CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
-	<20130503160546.GF8230@linutronix.de>
-	<CAFSh4UwD5yyJrtKwUaOX-uiUuzVf7YaDbM4vbZ1EFZBf6F1JHg@mail.gmail.com>
-	<519B57A7.1010901@linutronix.de>
-	<CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
-	<51A86C1A.2040100@linutronix.de>
-	<CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.8.10-rt6: suspend/resume irqs enabled splat
+Date: Fri, 21 Jun 2013 16:18:16 +0200
+Message-ID: <51C460A8.4010800@linutronix.de>
+References: <1367473433.5808.8.camel@marge.simpson.net>  <20130621104940.GB21228@linutronix.de> <1371819580.5992.2.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pa0-f41.google.com ([209.85.220.41]:35909 "EHLO
-	mail-pa0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1422708Ab3FUORz (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:39583 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1422708Ab3FUOSS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Jun 2013 10:17:55 -0400
-Received: by mail-pa0-f41.google.com with SMTP id bj3so7905894pad.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 21 Jun 2013 07:17:54 -0700 (PDT)
-In-Reply-To: <CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
+	Fri, 21 Jun 2013 10:18:18 -0400
+In-Reply-To: <1371819580.5992.2.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jun 21, 2013 at 12:21 PM, Tom Cook <tom.k.cook@gmail.com> wrote:
-[snip]
-> I think I'm nearly starting to get my head around what's going on
-> here.  The USB driver uses FIQs, which normally isn't a problem
-> because nothing would interrupt the FIQ handler (or if it did, it
-> wouldn't generate a page fault).  But cyclictest runs at a higher
-> priority than the USB handler and generates page faults (at least when
-> it is initialising).  Eventually it interrupts a USB FIQ handler and
-> the memory manager doesn't know what to do with a page fault in a FIQ
-> handler, so it oopses.  Does that sound about right?
+On 06/21/2013 02:59 PM, Mike Galbraith wrote:
+> On Fri, 2013-06-21 at 12:49 +0200, Sebastian Andrzej Siewior wrote: 
+>> * Mike Galbraith | 2013-05-02 07:43:53 [+0200]:
+>>
+>>> Suspend/resume works fine on laptop, but, suspend, let it sit there a
+>>> bit, then resume produces the gripe below.  Seems to be -rt specific,
+>>> 3.8.10 with only voluntary preempt/autogroup config delta doesn't gripe.
+>>
+>> Could you please check if you see those on latest RT?
+> 
+> Yup, during boot.
 
-Or, of course, perhaps the tracer is instrumenting the USB FIQ handler
-with a hardware watchpoint.  These turn up as data aborts, which are
-unhandled in FIQ mode.  Some evidence for this is that if I use
-set_ftrace_filter to restrict the tracing to only a few system
-functions then the crash doesn't happen.
+Argh. So I tried a few things and I still don't see it.
 
-Regards,
-Tom
+> -Mike
+> 
+
+Sebastian
