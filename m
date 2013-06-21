@@ -1,65 +1,86 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Tracers+cyclictest causing kernel oops
-Date: Fri, 21 Jun 2013 17:00:44 +0200
-Message-ID: <20130621150044.GE21228@linutronix.de>
-References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
- <CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
- <20130503160546.GF8230@linutronix.de>
- <CAFSh4UwD5yyJrtKwUaOX-uiUuzVf7YaDbM4vbZ1EFZBf6F1JHg@mail.gmail.com>
- <519B57A7.1010901@linutronix.de>
- <CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
- <51A86C1A.2040100@linutronix.de>
- <CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH 1/2] list_bl.h: make list head locking RT safe
+Date: Fri, 21 Jun 2013 11:25:28 -0400
+Message-ID: <20130621152528.GB19624@windriver.com>
+References: <1370900209-40769-1-git-send-email-paul.gortmaker@windriver.com>
+ <1370900209-40769-2-git-send-email-paul.gortmaker@windriver.com>
+ <20130621122305.GC21228@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Tom Cook <tom.k.cook@gmail.com>
+Content-Type: text/plain; charset="us-ascii"
+Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>,
+	<paulmck@linux.vnet.ibm.com>, <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39857 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161419Ab3FUPAp (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:45921 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1161519Ab3FUP0O (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Jun 2013 11:00:45 -0400
+	Fri, 21 Jun 2013 11:26:14 -0400
 Content-Disposition: inline
-In-Reply-To: <CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
+In-Reply-To: <20130621122305.GC21228@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Tom Cook | 2013-06-21 12:21:40 [+0100]:
+[Re: [PATCH 1/2] list_bl.h: make list head locking RT safe] On 21/06/2013 (Fri 14:23) Sebastian Andrzej Siewior wrote:
 
->> The tracer do not use any special interrupts on purpose.
->> Now that I saw rasperry-pi let me ask this: do you have any
->> non-mainline patches on-top? And if it is the case, could you try to
->> get rid of them?
->
->By 'non-mainline' do you mean in addition to the kernel.org source, or
->in addition to the raspberry pi git tree?  Yes, to the former, no to
->the latter.
+> * Paul Gortmaker | 2013-06-10 17:36:48 [-0400]:
+> 
+> >--- a/include/linux/list_bl.h
+> >+++ b/include/linux/list_bl.h
+> >@@ -17,7 +18,7 @@
+> >  * some fast and compact auxiliary data.
+> >  */
+> > 
+> >-#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+> >+#if (defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)) && !defined(CONFIG_PREEMPT_RT_BASE)
+> > #define LIST_BL_LOCKMASK	1UL
+> > #else
+> > #define LIST_BL_LOCKMASK	0UL
+> 
+> On RT we don't have the lock mask anymore and those LIST_BL_BUG_ON()
+> check don't do anything. It would be nice if you could check if the lock
+> in that given entry is taken or not.
+> 
+> All in all it looks good.
 
-You could boot into ramdisk with tiny busybox + cyclictest and disable
-the usb driver in question.
+I guess the easiest way to make use of the existing checks is to
+simply set/clear the bit inside the lock.  That will allow the
+existing code to check if the list got smashed by something.
 
->> Also you can try the same test without the RT patches?
->
->Quite right - the same oops happens with "Linux raspberrypi 3.6.11+ #4 PREEMPT".
->
->I think I'm nearly starting to get my head around what's going on
->here.  The USB driver uses FIQs, which normally isn't a problem
->because nothing would interrupt the FIQ handler (or if it did, it
->wouldn't generate a page fault).  But cyclictest runs at a higher
->priority than the USB handler and generates page faults (at least when
->it is initialising).  Eventually it interrupts a USB FIQ handler and
->the memory manager doesn't know what to do with a page fault in a FIQ
->handler, so it oopses.  Does that sound about right?
+If the incremental patch below is what you had in mind, then I'll
+resend a v2 with this change incorporated.
 
-You said that it oops also on non-RT kernel where cyclictest is not
-running ontop of the USB thread. In general, the irq core disables the
-interrupts and schedules the interrupt thread with threaded interrupt
-support enabled.
-But here it seems that FIQ interrupt is not implemented / suppoted
-fully.
-So either you have to fix this or replace the USB part :)
+Thanks,
+Paul.
+--
 
->Tom
 
-Sebastian
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index 64ba33b..a3ff8d7 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -18,7 +18,7 @@
+  * some fast and compact auxiliary data.
+  */
+ 
+-#if (defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)) && !defined(CONFIG_PREEMPT_RT_BASE)
++#if (defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK))
+ #define LIST_BL_LOCKMASK	1UL
+ #else
+ #define LIST_BL_LOCKMASK	0UL
+@@ -131,6 +131,7 @@ static inline void hlist_bl_lock(struct hlist_bl_head *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
+ #else
+ 	raw_spin_lock(&b->lock);
++	__set_bit(0, (unsigned long *)b);
+ #endif
+ }
+ 
+@@ -139,6 +140,7 @@ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++	__clear_bit(0, (unsigned long *)b);
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
