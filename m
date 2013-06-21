@@ -1,60 +1,46 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [rfc patch] x86,uv: -rt conversions
-Date: Fri, 21 Jun 2013 15:52:04 +0200
-Message-ID: <20130621135204.GD21228@linutronix.de>
-References: <1371651978.5845.75.camel@marge.simpson.net>
+From: Tom Cook <tom.k.cook@gmail.com>
+Subject: Re: Tracers+cyclictest causing kernel oops
+Date: Fri, 21 Jun 2013 15:17:54 +0100
+Message-ID: <CAFSh4Uzjvqsew9yAQafO=nYtV5rOuCSdt3aRXUxDvkUBMOCdXw@mail.gmail.com>
+References: <CAFSh4UwgZJD0YGi8GRtAW4APqWkyf2a+v31zgL2Bu3zfVZg6gw@mail.gmail.com>
+	<CAFSh4UzfxuTrsUCX9gsm10KRhJB9APLs8DJihxWai1ysdhMiXg@mail.gmail.com>
+	<20130503160546.GF8230@linutronix.de>
+	<CAFSh4UwD5yyJrtKwUaOX-uiUuzVf7YaDbM4vbZ1EFZBf6F1JHg@mail.gmail.com>
+	<519B57A7.1010901@linutronix.de>
+	<CAFSh4UzaOcbD456e408Qw4F=Ynt1WCXwrUx7ekC1GKLZRkFznw@mail.gmail.com>
+	<51A86C1A.2040100@linutronix.de>
+	<CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Dimitri Sivanich <sivanich@sgi.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Mike Galbraith <bitbucket@online.de>
+Content-Type: text/plain; charset=UTF-8
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39383 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161356Ab3FUNwH (ORCPT
+Received: from mail-pa0-f41.google.com ([209.85.220.41]:35909 "EHLO
+	mail-pa0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1422708Ab3FUORz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Jun 2013 09:52:07 -0400
-Content-Disposition: inline
-In-Reply-To: <1371651978.5845.75.camel@marge.simpson.net>
+	Fri, 21 Jun 2013 10:17:55 -0400
+Received: by mail-pa0-f41.google.com with SMTP id bj3so7905894pad.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 21 Jun 2013 07:17:54 -0700 (PDT)
+In-Reply-To: <CAFSh4UyVf18mx3Pf0HbOzLWTGEMNC0rv+7H8etcvsj+R0EgSNA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Mike Galbraith | 2013-06-19 16:26:18 [+0200]:
+On Fri, Jun 21, 2013 at 12:21 PM, Tom Cook <tom.k.cook@gmail.com> wrote:
+[snip]
+> I think I'm nearly starting to get my head around what's going on
+> here.  The USB driver uses FIQs, which normally isn't a problem
+> because nothing would interrupt the FIQ handler (or if it did, it
+> wouldn't generate a page fault).  But cyclictest runs at a higher
+> priority than the USB handler and generates page faults (at least when
+> it is initialising).  Eventually it interrupts a USB FIQ handler and
+> the memory manager doesn't know what to do with a page fault in a FIQ
+> handler, so it oopses.  Does that sound about right?
 
->
->The below is what I use to run -rt on UV boxen, diff generated against
->3.8-rt.  Should the lock conversions perhaps wander to mainline?
+Or, of course, perhaps the tracer is instrumenting the USB FIQ handler
+with a hardware watchpoint.  These turn up as data aborts, which are
+unhandled in FIQ mode.  Some evidence for this is that if I use
+set_ftrace_filter to restrict the tracing to only a few system
+functions then the crash doesn't happen.
 
-They seem to come from NMI or irq off region so if you can't change this
-why not.
-
->Signed-off-by: Mike Galbraith <bitbucket@online.de>
->
->Index: linux-2.6/arch/x86/platform/uv/uv_time.c
->===================================================================
->--- linux-2.6.orig/arch/x86/platform/uv/uv_time.c
->+++ linux-2.6/arch/x86/platform/uv/uv_time.c
->@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, i
-> static cycle_t uv_read_rtc(struct clocksource *cs)
-> {
-> 	unsigned long offset;
->+	cycle_t cycles;
-> 
->+	migrate_disable();
-> 	if (uv_get_min_hub_revision_id() == 1)
-> 		offset = 0;
-> 	else
-> 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
-> 
->-	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
->+	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
->+	migrate_enable();
->+
->+	return cycles;
-> }
-You try to ensure not to switch CPUs between uv_blade_processor_id() and
-uv_read_local_mmr()'s final HW access, right?
-
-Sebastian
+Regards,
+Tom
