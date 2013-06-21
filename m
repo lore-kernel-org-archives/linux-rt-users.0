@@ -1,31 +1,134 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.8.10-rt6: suspend/resume irqs enabled splat
-Date: Fri, 21 Jun 2013 19:16:17 +0200
-Message-ID: <51C48A61.5070801@linutronix.de>
-References: <1367473433.5808.8.camel@marge.simpson.net>  <20130621104940.GB21228@linutronix.de>  <1371819580.5992.2.camel@marge.simpson.net>  <51C460A8.4010800@linutronix.de> <1371834264.5953.39.camel@marge.simpson.net>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH v2] list_bl.h: make list head locking RT safe
+Date: Fri, 21 Jun 2013 15:07:25 -0400
+Message-ID: <1371841645-27604-1-git-send-email-paul.gortmaker@windriver.com>
+References: <51C472FF.1050409@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <bitbucket@online.de>
+Content-Type: text/plain
+Cc: <rostedt@goodmis.org>, <tglx@linutronix.de>,
+	<paulmck@linux.vnet.ibm.com>, <linux-rt-users@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40699 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1422925Ab3FURQT (ORCPT
+Received: from mail1.windriver.com ([147.11.146.13]:52998 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1423604Ab3FUTHu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Jun 2013 13:16:19 -0400
-In-Reply-To: <1371834264.5953.39.camel@marge.simpson.net>
+	Fri, 21 Jun 2013 15:07:50 -0400
+In-Reply-To: <51C472FF.1050409@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/21/2013 07:04 PM, Mike Galbraith wrote:
-> As I was examining the trace, your -rt12 announcement landed..
-> 
-> - added the missing "acpi/rt: Convert acpi_gbl_hardware lock back to a
->   raw_spinlock_t", reported by Steven.
-> 
-> Adding only that to -rt11 seems to have cured it.
+As per changes in include/linux/jbd_common.h for avoiding the
+bit_spin_locks on RT ("fs: jbd/jbd2: Make state lock and journal
+head lock rt safe") we do the same thing here.
 
-Excellent. Good news to start the weekend :)
+We use the non atomic __set_bit and __clear_bit inside the scope of
+the lock to preserve the ability of the existing LIST_DEBUG code to
+use the zero'th bit in the sanity checks.
 
-Sebastian
+As a bit spinlock, we had no lockdep visibility into the usage
+of the list head locking.  Now, if we were to implement it as a
+standard non-raw spinlock, we would see:
+
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:658
+in_atomic(): 1, irqs_disabled(): 0, pid: 122, name: udevd
+5 locks held by udevd/122:
+ #0:  (&sb->s_type->i_mutex_key#7/1){+.+.+.}, at: [<ffffffff811967e8>] lock_rename+0xe8/0xf0
+ #1:  (rename_lock){+.+...}, at: [<ffffffff811a277c>] d_move+0x2c/0x60
+ #2:  (&dentry->d_lock){+.+...}, at: [<ffffffff811a0763>] dentry_lock_for_move+0xf3/0x130
+ #3:  (&dentry->d_lock/2){+.+...}, at: [<ffffffff811a0734>] dentry_lock_for_move+0xc4/0x130
+ #4:  (&dentry->d_lock/3){+.+...}, at: [<ffffffff811a0747>] dentry_lock_for_move+0xd7/0x130
+Pid: 122, comm: udevd Not tainted 3.4.47-rt62 #7
+Call Trace:
+ [<ffffffff810b9624>] __might_sleep+0x134/0x1f0
+ [<ffffffff817a24d4>] rt_spin_lock+0x24/0x60
+ [<ffffffff811a0c4c>] __d_shrink+0x5c/0xa0
+ [<ffffffff811a1b2d>] __d_drop+0x1d/0x40
+ [<ffffffff811a24be>] __d_move+0x8e/0x320
+ [<ffffffff811a278e>] d_move+0x3e/0x60
+ [<ffffffff81199598>] vfs_rename+0x198/0x4c0
+ [<ffffffff8119b093>] sys_renameat+0x213/0x240
+ [<ffffffff817a2de5>] ? _raw_spin_unlock+0x35/0x60
+ [<ffffffff8107781c>] ? do_page_fault+0x1ec/0x4b0
+ [<ffffffff817a32ca>] ? retint_swapgs+0xe/0x13
+ [<ffffffff813eb0e6>] ? trace_hardirqs_on_thunk+0x3a/0x3f
+ [<ffffffff8119b0db>] sys_rename+0x1b/0x20
+ [<ffffffff817a3b96>] system_call_fastpath+0x1a/0x1f
+
+Since we are only taking the lock during short lived list operations,
+lets assume for now that it being raw won't be a significant latency
+concern.
+
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+---
+
+[v2: squash the previous two commits into one; add set_bit to
+ preserve the ability of LIST_DEBUG to do sanity checks.]
+
+ include/linux/list_bl.h | 24 ++++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
+
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index 31f9d75..ddfd46a 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -2,6 +2,7 @@
+ #define _LINUX_LIST_BL_H
+ 
+ #include <linux/list.h>
++#include <linux/spinlock.h>
+ #include <linux/bit_spinlock.h>
+ 
+ /*
+@@ -32,13 +33,22 @@
+ 
+ struct hlist_bl_head {
+ 	struct hlist_bl_node *first;
++#ifdef CONFIG_PREEMPT_RT_BASE
++	raw_spinlock_t lock;
++#endif
+ };
+ 
+ struct hlist_bl_node {
+ 	struct hlist_bl_node *next, **pprev;
+ };
+-#define INIT_HLIST_BL_HEAD(ptr) \
+-	((ptr)->first = NULL)
++
++static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
++{
++	h->first = NULL;
++#ifdef CONFIG_PREEMPT_RT_BASE
++	raw_spin_lock_init(&h->lock);
++#endif
++}
+ 
+ static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
+ {
+@@ -117,12 +127,22 @@ static inline void hlist_bl_del_init(struct hlist_bl_node *n)
+ 
+ static inline void hlist_bl_lock(struct hlist_bl_head *b)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	bit_spin_lock(0, (unsigned long *)b);
++#else
++	raw_spin_lock(&b->lock);
++	__set_bit(0, (unsigned long *)b);
++#endif
+ }
+ 
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
++#else
++	__clear_bit(0, (unsigned long *)b);
++	raw_spin_unlock(&b->lock);
++#endif
+ }
+ 
+ /**
+-- 
+1.8.1.2
+
