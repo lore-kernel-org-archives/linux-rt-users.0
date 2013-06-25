@@ -1,84 +1,109 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: ext4/jbd2 hangs in __jbd2_log_wait_for_space on 3.4-RT/3.6-RT
-Date: Tue, 25 Jun 2013 16:56:42 +0200
-Message-ID: <20130625145642.GA16841@quack.suse.cz>
-References: <20130531183411.GA30169@windriver.com>
- <20130625131808.GA14581@quack.suse.cz>
- <51C9A0A1.3030703@windriver.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH-next] kvm: don't try to take mmu_lock while holding the main raw kvm_lock
+Date: Tue, 25 Jun 2013 18:34:03 -0400
+Message-ID: <1372199643-3936-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Jan Kara <jack@suse.cz>, linux-rt-users@vger.kernel.org,
-	linux-ext4@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <kvm@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Gleb Natapov <gleb@redhat.com>, Paolo Bonzini <pbonzini@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:56632 "EHLO mx2.suse.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752484Ab3FYO4p (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Jun 2013 10:56:45 -0400
-Content-Disposition: inline
-In-Reply-To: <51C9A0A1.3030703@windriver.com>
+Received: from mail.windriver.com ([147.11.1.11]:36765 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751059Ab3FYWeM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 25 Jun 2013 18:34:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue 25-06-13 09:52:33, Paul Gortmaker wrote:
-> On 13-06-25 09:18 AM, Jan Kara wrote:
-> > On Fri 31-05-13 14:34:12, Paul Gortmaker wrote:
-> >> This problem is seen on vanilla 3.4-RT and 3.6-RT kernels. It is
-> >> not clear to me whether this is an RT issue, or whether (as usual)
-> >> RT has managed to shake out an issue in mainline code.  So I've
-> >> looped in the ext4 list as well as the RT list, since at the
-> >> moment it appears this can impact anyone using RT and ext4...
-> >>
-> >> What happens is that under reasonable load, the jbd2/sda1-8 thread
-> >> goes D state, and then lots of regular processes follow suit, after
-> >> calling __jbd2_log_wait_for_space.  As can be seen at the bottom
-> >> of the sysrq-t output, j_checkpoint_mutex is implicated.  All
-> >> future processes trying to do I/O to/from that filesystem go D.
-> >>
-> >> More testing details:
-> >> Even though debug_rt_mutex_print_deadlock shows up in each stalled
-> >> process backtrace, no output is seen from debug_rt_mutex_print_deadlock.
-> >> There are no messages in dmesg at all, until I trigger a SysRQ-t.
-> >>
-> >> I've reproduced this on v3.4.42-rt57, v3.4.47-rt62, and v3.6.11.3-rt35.
-> >>
-> >> The two separate versions of v3.4.x are because I noticed the 3.4.47
-> >> pulled in some jbd2 commits via stable, like 794446c6 "jbd2: fix race
-> >> between jbd2_journal_remove_checkpoint and ->j_commit_callback". It
-> >> looked promising, but having that present didn't change things.
-> >>
-> >> I'm using a yocto build, configured for six parallel package builds,
-> >> each pkg in turn with "make -j6" to create I/O.  I've found that also
-> >> running an "rm -rf" of an old build (several gigs of data) at the
-> >> same time increases the probability of it.  Typically it will fail
-> >> within about 15m or so.  The test box is a dell optiplex 990 with
-> >> a single disk as ext4.  The box stays alive for basic sysrq operations
-> >> and anything else that doesn't touch the locked filesystem.  The build
-> >> halts with a static load average equal to the number of blocked D procs.
-> >>
-> >> I've deleted the sysrq-t output from the irrelevant sleeping processes
-> >> in order to reduce the noise.  I'll keep looking at this but I'm hoping
-> >> more experienced eyes on the problem will help, since it seems common
-> >> to all RT users and hence of interest to everyone (I've not yet tried
-> >> 3.8.x-RT, mind you.)
-> >   Hum, this sounds familiar... I was already debugging this with RT kernel
-> > and I also remember it was RT specific issue. Let me try to remember the
-> > whole story... yes, while wandering over the traces I think I remember what
-> > was the problem: In standard kernel, whenever we scheduler process out from
-> > CPU, we unplug its IO queue in sched_submit_work(). However in RT kernel
-> > that was not the case. So it could happen that a process has IOs queued
-> > and was sent to sleep waiting for jbd2 thread to free some journal space
-> > and jbd2 thread was waiting for some IO to complete - however that never
-> > happened because the IO was sitting in the sleeping process' queue.
-> 
-> Do you have a link to that older discussion?  I did search around before
-> posting, but came up empty.  I'll try and fold your description into my
-> thoughts as I return to looking at it (got dragged into other things
-> as of late, and haven't been spending time on this as of late...)
-  So I did some more archeology and the discussion starts here:
-https://lkml.org/lkml/2012/7/11/255
+In commit e935b8372cf8 ("KVM: Convert kvm_lock to raw_spinlock"),
+the kvm_lock was made a raw lock.  However, the kvm mmu_shrink()
+function tries to grab the (non-raw) mmu_lock within the scope of
+the raw locked kvm_lock being held.  This leads to the following:
 
-								Honza
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+in_atomic(): 1, irqs_disabled(): 0, pid: 55, name: kswapd0
+Preemption disabled at:[<ffffffffa0376eac>] mmu_shrink+0x5c/0x1b0 [kvm]
+
+Pid: 55, comm: kswapd0 Not tainted 3.4.34_preempt-rt
+Call Trace:
+ [<ffffffff8106f2ad>] __might_sleep+0xfd/0x160
+ [<ffffffff817d8d64>] rt_spin_lock+0x24/0x50
+ [<ffffffffa0376f3c>] mmu_shrink+0xec/0x1b0 [kvm]
+ [<ffffffff8111455d>] shrink_slab+0x17d/0x3a0
+ [<ffffffff81151f00>] ? mem_cgroup_iter+0x130/0x260
+ [<ffffffff8111824a>] balance_pgdat+0x54a/0x730
+ [<ffffffff8111fe47>] ? set_pgdat_percpu_threshold+0xa7/0xd0
+ [<ffffffff811185bf>] kswapd+0x18f/0x490
+ [<ffffffff81070961>] ? get_parent_ip+0x11/0x50
+ [<ffffffff81061970>] ? __init_waitqueue_head+0x50/0x50
+ [<ffffffff81118430>] ? balance_pgdat+0x730/0x730
+ [<ffffffff81060d2b>] kthread+0xdb/0xe0
+ [<ffffffff8106e122>] ? finish_task_switch+0x52/0x100
+ [<ffffffff817e1e94>] kernel_thread_helper+0x4/0x10
+ [<ffffffff81060c50>] ? __init_kthread_worker+0x
+
+Since we only use the lock for protecting the vm_list, once we've
+found the instance we want, we can shuffle it to the end of the
+list and then drop the kvm_lock before taking the mmu_lock.  We
+can do this because after the mmu operations are completed, we
+break -- i.e. we don't continue list processing, so it doesn't
+matter if the list changed around us.
+
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+---
+
+[Note1: do double check that this solution makes sense for the
+ mainline kernel; consider this an RFC patch that does want a
+ review from people in the know.]
+
+[Note2: you'll need to be running a preempt-rt kernel to actually
+ see this.  Also note that the above patch is against linux-next.
+ Alternate solutions welcome ; this seemed to me the obvious fix.]
+
+ arch/x86/kvm/mmu.c | 12 ++++++++++--
+ 1 file changed, 10 insertions(+), 2 deletions(-)
+
+diff --git a/arch/x86/kvm/mmu.c b/arch/x86/kvm/mmu.c
+index 748e0d8..db93a70 100644
+--- a/arch/x86/kvm/mmu.c
++++ b/arch/x86/kvm/mmu.c
+@@ -4322,6 +4322,7 @@ mmu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+ {
+ 	struct kvm *kvm;
+ 	int nr_to_scan = sc->nr_to_scan;
++	int found = 0;
+ 	unsigned long freed = 0;
+ 
+ 	raw_spin_lock(&kvm_lock);
+@@ -4349,6 +4350,12 @@ mmu_shrink_scan(struct shrinker *shrink, struct shrink_control *sc)
+ 			continue;
+ 
+ 		idx = srcu_read_lock(&kvm->srcu);
++
++		list_move_tail(&kvm->vm_list, &vm_list);
++		found = 1;
++		/* We can't be holding a raw lock and take non-raw mmu_lock */
++		raw_spin_unlock(&kvm_lock);
++
+ 		spin_lock(&kvm->mmu_lock);
+ 
+ 		if (kvm_has_zapped_obsolete_pages(kvm)) {
+@@ -4370,11 +4377,12 @@ unlock:
+ 		 * per-vm shrinkers cry out
+ 		 * sadness comes quickly
+ 		 */
+-		list_move_tail(&kvm->vm_list, &vm_list);
+ 		break;
+ 	}
+ 
+-	raw_spin_unlock(&kvm_lock);
++	if (!found)
++		raw_spin_unlock(&kvm_lock);
++
+ 	return freed;
+ 
+ }
 -- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
+1.8.1.2
+
