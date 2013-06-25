@@ -1,86 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: question about disabling interrupts for workqueue pool?
-Date: Tue, 25 Jun 2013 18:52:34 -0400
-Message-ID: <1372200754.18733.236.camel@gandalf.local.home>
+From: Tejun Heo <tj@kernel.org>
+Subject: Re: question about disabling interrupts for workqueue pool?
+Date: Tue, 25 Jun 2013 16:01:29 -0700
+Message-ID: <20130625230129.GA30407@mtj.dyndns.org>
+References: <1372200754.18733.236.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <clark@redhat.com>,
 	"Paul E. McKenney" <paulmck@us.ibm.com>
-To: Tejun Heo <tj@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31789 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751505Ab3FYWwg (ORCPT
+Received: from mail-pb0-f45.google.com ([209.85.160.45]:48827 "EHLO
+	mail-pb0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751005Ab3FYXBd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 25 Jun 2013 18:52:36 -0400
+	Tue, 25 Jun 2013 19:01:33 -0400
+Content-Disposition: inline
+In-Reply-To: <1372200754.18733.236.camel@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tejun,
+Hello, Steven.
 
-We've been playing with porting -rt to 3.10, and one of the stumbling
-blocks we are dealing with happens to be with commit fa1b54e69bc
-"workqueue: update synchronization rules on worker_pool_idr".
+On Tue, Jun 25, 2013 at 06:52:34PM -0400, Steven Rostedt wrote:
+> Now my question is, are those local_irq_*() calls just for synchronizing
+> with sched RCU? If so, can you use rcu_read_lock_sched() instead?
 
-The issue is with the disabling of interrupts, and specifically this
-sequence of events from start_flush_work():
+Hmmm... using local_irq_disable/enable() is more consistent as
+irq-safe locks are used widely in workqueue.  Also, using
+rcu_read_lock_sched() would mean that we'll have
+spin_lock_irq_save/restore() nested inside preempt_disable/enable(),
+which is a bit silly in upstream kernel.
 
-        local_irq_disable();
-        pool = get_work_pool(work);
-        if (!pool) {
-                local_irq_enable();
-                return false;
-        }
+That said, both paths you pointed out are rather cold, so I don't
+think it'd matter.  Please feel free to send a patch with comment
+explaining why local irq flipping, which fits better there, isn't
+being used.
 
-        spin_lock(&pool->lock);
-        /* see the comment in try_to_grab_pending() with the same code */
-        pwq = get_work_pwq(work);
-        if (pwq) {
-                if (unlikely(pwq->pool != pool))
-                        goto already_gone;
-        } else {
-                worker = find_worker_executing_work(pool, work);
-                if (!worker)
-                        goto already_gone;
-                pwq = worker->current_pwq;
-        }
+Thanks.
 
-        insert_wq_barrier(pwq, barr, work, worker);
-        spin_unlock_irq(&pool->lock);
-
-
-As -rt does not have spin_lock_irq() disable interrupts, it means that
-spin_unlock_irq() will not enable them either. But that's not all:
-
-        local_irq_save(flags);
-        pool = get_work_pool(work);
-        if (pool) {
-                spin_lock(&pool->lock);
-                if (find_worker_executing_work(pool, work))
-                        ret |= WORK_BUSY_RUNNING;
-                spin_unlock(&pool->lock);
-        }
-        local_irq_restore(flags);
-
-Basically, anywhere you disable interrupts, as -rt converts spin_lock()
-into a mutex.
-
-Now my question is, are those local_irq_*() calls just for synchronizing
-with sched RCU? If so, can you use rcu_read_lock_sched() instead?
-
-This wont solve our problems, as we will need to deal with
-rcu_read_lock_sched() critical sections sleeping, but it will at least
-change the problem area away from workqueues, and will document the
-workqueue code better because stand alone "local_irq_disable()"s tend to
-bring up a lot of questions to "why do we need to disable interrupts
-here?".
-
--- Steve
-
-
-
+-- 
+tejun
