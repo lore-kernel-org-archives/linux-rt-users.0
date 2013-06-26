@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT 1/6] rt,rcu: Have rcu_read_lock_sched() use locks for PREEMPT_RT
-Date: Wed, 26 Jun 2013 15:28:07 -0400
-Message-ID: <20130626193049.724948276@goodmis.org>
+Subject: [RFC][PATCH RT 6/6] vtime: Convert vtime_seqlock into raw_spinlock_t and seqcount combo
+Date: Wed, 26 Jun 2013 15:28:12 -0400
+Message-ID: <20130626193050.529670718@goodmis.org>
 References: <20130626192806.107564905@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -11,145 +11,225 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13720 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:13333 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752307Ab3FZTav (ORCPT
+	with ESMTP id S1752605Ab3FZTaw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Jun 2013 15:30:51 -0400
-Content-Disposition: inline; filename=rcu-sched-preempt.patch
+	Wed, 26 Jun 2013 15:30:52 -0400
+Content-Disposition: inline; filename=vtime-lock.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-There are several critical sections that require synchronization with
-synchronize_sched(). Usually these are done by disabling preemption and
-the synchronize_sched() just waits for the kernel to schedule on each
-of the CPUs.
+The vtime seqlock needs to be taken in true interrupt context on -rt.
+The normal seqlocks are converted to mutexes when PREEMPT_RT_FULL is
+enabled, which will break the vtime code as the calls are done from
+interrupt context.
 
-The rcu_read_lock_sched() is the preferred API to use, but some areas
-still use preempt_disable() and local_irq_*() to prevent preemption
-from happening. But our main concern is with those users of
-rcu_read_lock_sched(), where they may also call spin_locks() that turn
-into a mutex for PREEMPT_RT. For these cases, we need to allow
-rcu_read_lock_sched() to schedule out.
-
-To allow rcu_read_lock_sched() sections to preempt when PREEMPT_RT is enabled,
-instead of disabling preemption, it will grab a local_lock(). Then the
-synchronize_sched() will grab all CPUs local_locks() and release them.
-After that, it still does the normal synchronize_sched() as there may be
-places that still disable preemption or irqs that it needs to
-synchronize with. By grabbing all the locks and releasing them, it will
-properly synchronize with those that use the locks instead of disabling
-preemption or interrupts.
-
-Note: The rcu_read_lock_sched_notrace() version still only disables
-preemption, because they are used for lockdep and tracing, which require
-real preemption disabling and not mutexes.
+Convert the vtime seqlock into the raw_spinlock_t and seqcount combo
+that can be done in interrupt context.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-rt.git/include/linux/rcupdate.h
+
+Index: linux-rt.git/include/linux/sched.h
 ===================================================================
---- linux-rt.git.orig/include/linux/rcupdate.h
-+++ linux-rt.git/include/linux/rcupdate.h
-@@ -36,6 +36,7 @@
- #include <linux/types.h>
- #include <linux/cache.h>
- #include <linux/spinlock.h>
-+#include <linux/locallock.h>
- #include <linux/threads.h>
- #include <linux/cpumask.h>
- #include <linux/seqlock.h>
-@@ -870,6 +871,28 @@ static inline void rcu_read_unlock_bh(vo
- 	local_bh_enable();
- }
- 
-+/* asm-offsets.c gets confused with local_lock here */
-+#if defined(CONFIG_PREEMPT_RT_FULL)
-+DECLARE_LOCAL_IRQ_LOCK(rcu_sched_lock);
-+static inline void rcu_read_lock_sched_disable(void)
-+{
-+	local_lock(rcu_sched_lock);
-+}
-+static inline void rcu_read_lock_sched_enable(void)
-+{
-+	local_unlock(rcu_sched_lock);
-+}
-+#else
-+static inline void rcu_read_lock_sched_disable(void)
-+{
-+	preempt_disable();
-+}
-+static inline void rcu_read_lock_sched_enable(void)
-+{
-+	preempt_enable();
-+}
-+#endif
-+
- /**
-  * rcu_read_lock_sched() - mark the beginning of a RCU-sched critical section
-  *
-@@ -885,7 +908,7 @@ static inline void rcu_read_unlock_bh(vo
-  */
- static inline void rcu_read_lock_sched(void)
- {
--	preempt_disable();
-+	rcu_read_lock_sched_disable();
- 	__acquire(RCU_SCHED);
- 	rcu_lock_acquire(&rcu_sched_lock_map);
- 	rcu_lockdep_assert(!rcu_is_cpu_idle(),
-@@ -910,7 +933,7 @@ static inline void rcu_read_unlock_sched
- 			   "rcu_read_unlock_sched() used illegally while idle");
- 	rcu_lock_release(&rcu_sched_lock_map);
- 	__release(RCU_SCHED);
--	preempt_enable();
-+	rcu_read_lock_sched_enable();
- }
- 
- /* Used by lockdep and tracing: cannot be traced, cannot call lockdep. */
-Index: linux-rt.git/kernel/rcutree.c
+--- linux-rt.git.orig/include/linux/sched.h
++++ linux-rt.git/include/linux/sched.h
+@@ -1176,7 +1176,8 @@ struct task_struct {
+ 	struct cputime prev_cputime;
+ #endif
+ #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+-	seqlock_t vtime_seqlock;
++	raw_spinlock_t vtime_lock;
++	seqcount_t vtime_seq;
+ 	unsigned long long vtime_snap;
+ 	enum {
+ 		VTIME_SLEEPING = 0,
+Index: linux-rt.git/kernel/sched/cputime.c
 ===================================================================
---- linux-rt.git.orig/kernel/rcutree.c
-+++ linux-rt.git/kernel/rcutree.c
-@@ -2491,6 +2491,31 @@ static inline int rcu_blocking_is_gp(voi
- 	return ret;
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+DEFINE_LOCAL_IRQ_LOCK(rcu_sched_lock);
-+/*
-+ * Real-time allows for synchronize sched to sleep but not migrate.
-+ * This is done via the local locks. When calling synchronize_sched(),
-+ * all the local locks need to be taken and released. This will ensure
-+ * that all users of rcu_read_lock_sched() will be out of their critical
-+ * sections at the completion of this function. synchronize_sched() will
-+ * still perform the normal RCU sched operations to synchronize with
-+ * locations that use disabling preemption or interrupts.
-+ */
-+static void rcu_synchronize_sched_rt(void)
-+{
-+	int cpu;
-+
-+	for_each_possible_cpu(cpu) {
-+		spin_lock(&per_cpu(rcu_sched_lock, cpu).lock);
-+		spin_unlock(&per_cpu(rcu_sched_lock, cpu).lock);
-+	}
-+}
-+#else
-+static inline void rcu_synchronize_sched_rt(void)
-+{
-+}
-+#endif
- /**
-  * synchronize_sched - wait until an rcu-sched grace period has elapsed.
-  *
-@@ -2538,6 +2563,9 @@ void synchronize_sched(void)
- 			   !lock_is_held(&rcu_lock_map) &&
- 			   !lock_is_held(&rcu_sched_lock_map),
- 			   "Illegal synchronize_sched() in RCU-sched read-side critical section");
-+
-+	rcu_synchronize_sched_rt();
-+
- 	if (rcu_blocking_is_gp())
+--- linux-rt.git.orig/kernel/sched/cputime.c
++++ linux-rt.git/kernel/sched/cputime.c
+@@ -668,9 +668,11 @@ void vtime_account_system(struct task_st
+ 	if (!vtime_accounting_enabled())
  		return;
- 	if (rcu_expedited)
+ 
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_account_irq_exit(struct task_struct *tsk)
+@@ -678,11 +680,13 @@ void vtime_account_irq_exit(struct task_
+ 	if (!vtime_accounting_enabled())
+ 		return;
+ 
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	if (context_tracking_in_user())
+ 		tsk->vtime_snap_whence = VTIME_USER;
+ 	__vtime_account_system(tsk);
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_account_user(struct task_struct *tsk)
+@@ -694,10 +698,12 @@ void vtime_account_user(struct task_stru
+ 
+ 	delta_cpu = get_vtime_delta(tsk);
+ 
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	tsk->vtime_snap_whence = VTIME_SYS;
+ 	account_user_time(tsk, delta_cpu, cputime_to_scaled(delta_cpu));
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_user_enter(struct task_struct *tsk)
+@@ -705,26 +711,32 @@ void vtime_user_enter(struct task_struct
+ 	if (!vtime_accounting_enabled())
+ 		return;
+ 
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	tsk->vtime_snap_whence = VTIME_USER;
+ 	__vtime_account_system(tsk);
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_guest_enter(struct task_struct *tsk)
+ {
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	current->flags |= PF_VCPU;
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_guest_exit(struct task_struct *tsk)
+ {
+-	write_seqlock(&tsk->vtime_seqlock);
++	raw_spin_lock(&tsk->vtime_lock);
++	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	current->flags &= ~PF_VCPU;
+-	write_sequnlock(&tsk->vtime_seqlock);
++	write_seqcount_end(&tsk->vtime_seq);
++	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ 
+ void vtime_account_idle(struct task_struct *tsk)
+@@ -741,24 +753,30 @@ bool vtime_accounting_enabled(void)
+ 
+ void arch_vtime_task_switch(struct task_struct *prev)
+ {
+-	write_seqlock(&prev->vtime_seqlock);
++	raw_spin_lock(&prev->vtime_lock);
++	write_seqcount_begin(&prev->vtime_seq);
+ 	prev->vtime_snap_whence = VTIME_SLEEPING;
+-	write_sequnlock(&prev->vtime_seqlock);
++	write_seqcount_end(&prev->vtime_seq);
++	raw_spin_unlock(&prev->vtime_lock);
+ 
+-	write_seqlock(&current->vtime_seqlock);
++	raw_spin_lock(&current->vtime_lock);
++	write_seqcount_begin(&current->vtime_seq);
+ 	current->vtime_snap_whence = VTIME_SYS;
+ 	current->vtime_snap = sched_clock_cpu(smp_processor_id());
+-	write_sequnlock(&current->vtime_seqlock);
++	write_seqcount_end(&current->vtime_seq);
++	raw_spin_unlock(&current->vtime_lock);
+ }
+ 
+ void vtime_init_idle(struct task_struct *t, int cpu)
+ {
+ 	unsigned long flags;
+ 
+-	write_seqlock_irqsave(&t->vtime_seqlock, flags);
++	raw_spin_lock_irqsave(&t->vtime_lock, flags);
++	write_seqcount_begin(&t->vtime_seq);
+ 	t->vtime_snap_whence = VTIME_SYS;
+ 	t->vtime_snap = sched_clock_cpu(cpu);
+-	write_sequnlock_irqrestore(&t->vtime_seqlock, flags);
++	write_seqcount_end(&t->vtime_seq);
++	raw_spin_unlock_irqrestore(&t->vtime_lock, flags);
+ }
+ 
+ cputime_t task_gtime(struct task_struct *t)
+@@ -767,13 +785,13 @@ cputime_t task_gtime(struct task_struct 
+ 	cputime_t gtime;
+ 
+ 	do {
+-		seq = read_seqbegin(&t->vtime_seqlock);
++		seq = read_seqcount_begin(&t->vtime_seq);
+ 
+ 		gtime = t->gtime;
+ 		if (t->flags & PF_VCPU)
+ 			gtime += vtime_delta(t);
+ 
+-	} while (read_seqretry(&t->vtime_seqlock, seq));
++	} while (read_seqcount_retry(&t->vtime_seq, seq));
+ 
+ 	return gtime;
+ }
+@@ -796,7 +814,7 @@ fetch_task_cputime(struct task_struct *t
+ 		*udelta = 0;
+ 		*sdelta = 0;
+ 
+-		seq = read_seqbegin(&t->vtime_seqlock);
++		seq = read_seqcount_begin(&t->vtime_seq);
+ 
+ 		if (u_dst)
+ 			*u_dst = *u_src;
+@@ -820,7 +838,7 @@ fetch_task_cputime(struct task_struct *t
+ 			if (t->vtime_snap_whence == VTIME_SYS)
+ 				*sdelta = delta;
+ 		}
+-	} while (read_seqretry(&t->vtime_seqlock, seq));
++	} while (read_seqcount_retry(&t->vtime_seq, seq));
+ }
+ 
+ 
+Index: linux-rt.git/include/linux/init_task.h
+===================================================================
+--- linux-rt.git.orig/include/linux/init_task.h
++++ linux-rt.git/include/linux/init_task.h
+@@ -151,7 +151,8 @@ extern struct task_group root_task_group
+ 
+ #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+ # define INIT_VTIME(tsk)						\
+-	.vtime_seqlock = __SEQLOCK_UNLOCKED(tsk.vtime_seqlock),	\
++	.vtime_lock = __RAW_SPIN_LOCK_UNLOCKED(tsk.vtime_lock),	\
++	.vtime_seq = SEQCNT_ZERO,			\
+ 	.vtime_snap = 0,				\
+ 	.vtime_snap_whence = VTIME_SYS,
+ #else
+Index: linux-rt.git/kernel/fork.c
+===================================================================
+--- linux-rt.git.orig/kernel/fork.c
++++ linux-rt.git/kernel/fork.c
+@@ -1268,7 +1268,8 @@ static struct task_struct *copy_process(
+ 	p->prev_cputime.utime = p->prev_cputime.stime = 0;
+ #endif
+ #ifdef CONFIG_VIRT_CPU_ACCOUNTING_GEN
+-	seqlock_init(&p->vtime_seqlock);
++	raw_spin_lock_init(&p->vtime_lock);
++	seqcount_init(&p->vtime_seq);
+ 	p->vtime_snap = 0;
+ 	p->vtime_snap_whence = VTIME_SLEEPING;
+ #endif
 
