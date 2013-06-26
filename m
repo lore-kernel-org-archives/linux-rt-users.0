@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT 3/6] idr: Use migrate_disable() to stay on the current CPU
-Date: Wed, 26 Jun 2013 15:28:09 -0400
-Message-ID: <20130626193050.056722116@goodmis.org>
+Subject: [RFC][PATCH RT 5/6] rt,ntp: Move call to schedule_delayed_work() to helper thread
+Date: Wed, 26 Jun 2013 15:28:11 -0400
+Message-ID: <20130626193050.368113600@goodmis.org>
 References: <20130626192806.107564905@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -11,53 +11,86 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=idr-migrate-disable.patch
+Content-Disposition: inline; filename=ntp-sched-delay-thread.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-idr_preload() and idr_preload_end() use preempt_disable() to keep the process
-from migrating. For mainline that's fine, but for -rt, that has issues as
-the spin_locks in between are changed to mutexes.
+The ntp code for notify_cmos_timer() is called from a hard interrupt
+context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
+that have been converted to mutexes, thus calling schedule_delayed_work()
+from interrupt is not safe.
 
-Use migrated_disable/enable() instead.
+Add a helper thread that does the call to schedule_delayed_work and wake
+up that thread instead of calling schedule_delayed_work() directly.
+This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
+schedule_delayed_work() directly in irq context.
+
+Note: There's a few places in the kernel that do this. Perhaps the RT
+code should have a dedicated thread that does the checks. Just register
+a notifier on boot up for your check and wake up the thread when
+needed. This will be a todo.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-Index: linux-rt.git/include/linux/idr.h
+Index: linux-rt.git/kernel/time/ntp.c
 ===================================================================
---- linux-rt.git.orig/include/linux/idr.h
-+++ linux-rt.git/include/linux/idr.h
-@@ -94,7 +94,7 @@ void idr_init(struct idr *idp);
-  */
- static inline void idr_preload_end(void)
- {
--	preempt_enable();
-+	migrate_enable();
+--- linux-rt.git.orig/kernel/time/ntp.c
++++ linux-rt.git/kernel/time/ntp.c
+@@ -10,6 +10,7 @@
+ #include <linux/workqueue.h>
+ #include <linux/hrtimer.h>
+ #include <linux/jiffies.h>
++#include <linux/kthread.h>
+ #include <linux/math64.h>
+ #include <linux/timex.h>
+ #include <linux/time.h>
+@@ -516,10 +517,49 @@ static void sync_cmos_clock(struct work_
+ 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
  }
  
- /**
-Index: linux-rt.git/lib/idr.c
-===================================================================
---- linux-rt.git.orig/lib/idr.c
-+++ linux-rt.git/lib/idr.c
-@@ -423,7 +423,7 @@ void idr_preload(gfp_t gfp_mask)
- 	WARN_ON_ONCE(in_interrupt());
- 	might_sleep_if(gfp_mask & __GFP_WAIT);
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * RT can not call schedule_delayed_work from real interrupt context.
++ * Need to make a thread to do the real work.
++ */
++static struct task_struct *cmos_delay_thread;
++static bool do_cmos_delay;
++
++static int run_cmos_delay(void *ignore)
++{
++	while (!kthread_should_stop()) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		if (do_cmos_delay) {
++			do_cmos_delay = false;
++			schedule_delayed_work(&sync_cmos_work, 0);
++		}
++		schedule();
++	}
++	__set_current_state(TASK_RUNNING);
++	return 0;
++}
++
++static void notify_cmos_timer(void)
++{
++	do_cmos_delay = true;
++	/* Make visible before waking up process */
++	smp_wmb();
++	wake_up_process(cmos_delay_thread);
++}
++
++static __init int create_cmos_delay_thread(void)
++{
++	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
++	BUG_ON(!cmos_delay_thread);
++	return 0;
++}
++early_initcall(create_cmos_delay_thread);
++#else
+ static void notify_cmos_timer(void)
+ {
+ 	schedule_delayed_work(&sync_cmos_work, 0);
+ }
++#endif /* CONFIG_PREEMPT_RT_FULL */
  
--	preempt_disable();
-+	migrate_disable();
- 
- 	/*
- 	 * idr_alloc() is likely to succeed w/o full idr_layer buffer and
-@@ -435,9 +435,9 @@ void idr_preload(gfp_t gfp_mask)
- 	while (__this_cpu_read(idr_preload_cnt) < MAX_IDR_FREE) {
- 		struct idr_layer *new;
- 
--		preempt_enable();
-+		migrate_enable();
- 		new = kmem_cache_zalloc(idr_layer_cache, gfp_mask);
--		preempt_disable();
-+		migrate_disable();
- 		if (!new)
- 			break;
- 
+ #else
+ static inline void notify_cmos_timer(void) { }
