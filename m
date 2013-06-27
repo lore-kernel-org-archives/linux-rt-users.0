@@ -1,63 +1,59 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH-next v2] kvm: don't try to take mmu_lock while holding
- the main raw kvm_lock
-Date: Wed, 26 Jun 2013 22:56:54 -0400
-Message-ID: <20130627025654.GB3297@windriver.com>
-References: <51CAA1DE.2020307@redhat.com>
- <1372270295-16496-1-git-send-email-paul.gortmaker@windriver.com>
- <51CB644C.1090305@redhat.com>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [RFC][PATCH RT 1/6] rt,rcu: Have rcu_read_lock_sched() use
+ locks for PREEMPT_RT
+Date: Thu, 27 Jun 2013 05:52:14 +0200
+Message-ID: <1372305134.5871.5.camel@marge.simpson.net>
+References: <20130626192806.107564905@goodmis.org>
+	 <20130626193049.724948276@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <kvm@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Gleb Natapov <gleb@redhat.com>
-To: Paolo Bonzini <pbonzini@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <clark.williams@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:59321 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751542Ab3F0C4O (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.10]:58575 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751458Ab3F0DxA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 26 Jun 2013 22:56:14 -0400
-Content-Disposition: inline
-In-Reply-To: <51CB644C.1090305@redhat.com>
+	Wed, 26 Jun 2013 23:53:00 -0400
+In-Reply-To: <20130626193049.724948276@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[Re: [PATCH-next v2] kvm: don't try to take mmu_lock while holding the main raw kvm_lock] On 26/06/2013 (Wed 23:59) Paolo Bonzini wrote:
+On Wed, 2013-06-26 at 15:28 -0400, Steven Rostedt wrote:
 
-> Il 26/06/2013 20:11, Paul Gortmaker ha scritto:
-> >  		spin_unlock(&kvm->mmu_lock);
-> > +		kvm_put_kvm(kvm);
-> >  		srcu_read_unlock(&kvm->srcu, idx);
-> >  
-> 
-> kvm_put_kvm needs to go last.  I can fix when applying, but I'll wait
-> for Gleb to take a look too.
+> @@ -2491,6 +2491,31 @@ static inline int rcu_blocking_is_gp(voi
+>  	return ret;
+>  }
+>  
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +DEFINE_LOCAL_IRQ_LOCK(rcu_sched_lock);
+> +/*
+> + * Real-time allows for synchronize sched to sleep but not migrate.
+> + * This is done via the local locks. When calling synchronize_sched(),
+> + * all the local locks need to be taken and released. This will ensure
+> + * that all users of rcu_read_lock_sched() will be out of their critical
+> + * sections at the completion of this function. synchronize_sched() will
+> + * still perform the normal RCU sched operations to synchronize with
+> + * locations that use disabling preemption or interrupts.
+> + */
+> +static void rcu_synchronize_sched_rt(void)
+> +{
+> +	int cpu;
+> +
+> +	for_each_possible_cpu(cpu) {
+> +		spin_lock(&per_cpu(rcu_sched_lock, cpu).lock);
+> +		spin_unlock(&per_cpu(rcu_sched_lock, cpu).lock);
+> +	}
+> +}
 
-I'm curious why you would say that -- since the way I sent it has the
-lock tear down be symmetrical and opposite to the build up - e.g.
+Does that have to be possible vs online?
 
- 		idx = srcu_read_lock(&kvm->srcu);
+-Mike
 
-[...]
-
-+		kvm_get_kvm(kvm);
-
-[...]
- 		spin_lock(&kvm->mmu_lock);
- 
-[...]
-
- unlock:
- 		spin_unlock(&kvm->mmu_lock);
-+		kvm_put_kvm(kvm);
- 		srcu_read_unlock(&kvm->srcu, idx);
- 
-You'd originally said to put the kvm_get_kvm where it currently is;
-perhaps instead we want the get/put to encompass the whole 
-srcu_read locked section?
-
-P.
---
-
-> 
-> Paolo
