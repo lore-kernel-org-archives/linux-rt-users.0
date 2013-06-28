@@ -1,117 +1,109 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] sched: don't clear PF_THREAD_BOUND in select_fallback_rq
-Date: Fri, 28 Jun 2013 13:57:18 +0200
-Message-ID: <51CD7A1E.2000308@linutronix.de>
-References: <5178F0DE.8030808@huawei.com> <20130607205048.GA22550@linutronix.de> <20130607205917.GA3395@linutronix.de> <51C519A6.4090902@huawei.com>
+Subject: [ANNOUNCE] 3.8.13-rt13
+Date: Fri, 28 Jun 2013 14:43:51 +0200
+Message-ID: <20130628124351.GA19732@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Li Zefan <lizefan@huawei.com>,
-	zhangwei <jovi.zhangwei@huawei.com>, bitbucket@online.de
-To: Qiang Huang <h.huangqiang@huawei.com>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45828 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:46047 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750813Ab3F1L5V (ORCPT
+	with ESMTP id S1751543Ab3F1Mnx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Jun 2013 07:57:21 -0400
-In-Reply-To: <51C519A6.4090902@huawei.com>
+	Fri, 28 Jun 2013 08:43:53 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/22/2013 05:27 AM, Qiang Huang wrote:
+Dear RT Folks,
 
->> The only way I lose this flag is by starting a workqueue on a CPU wh=
-ich
->> if offline. Now that is wrong. I am not sure if the workqueue re-use=
-s
->=20
-> How do you judge a thread lost PF_THREAD_BOUND flag or not?
+I'm pleased to announce the 3.8.13-rt13 release.
 
-I have a printk in the code path you want to kill.
->=20
-> My way is:
-> # for pid in `ps -e -o pid`; do taskset -p -c 0-15 $pid; done
-=E2=80=A6snip=E2=80=A6
+changes since v3.8.13-rt12:
+- added a patch from Paul Gortmaker to use raw_spin_lock instead of bit
+  spinlocks list_bl.h
 
-> As you can see, many kernel threads' affinity can be changed, which w=
-ere
-> supposed to be attached to only one cpu, most of them are kworkers, a=
-s
-> well as some other kernel threads.
+The delta patch against v3.8.13-rt12 is appended below and can be found here:
 
-Yes, I see your output but I can't reproduce it here.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13-rt12-rt13.patch.xz
 
-> After applying my patch, turns out:
-=E2=80=A6snip=E2=80=A6
+The RT patch against 3.8.13 can be found here:
 
-> These changing all failed. We can't change the cpu affinity of those
-> threads which are attached to only one cpu.
->=20
-> I don't kown if that's enought to say many threads' PF_THREAD_BOUND f=
-lag
-> is cleared which should not be. But your patches definitely not resol=
-ve
-> this problem, the taskset result is similar to my first one. I don't =
-know
-> if this is the direct reason for the hung problem, but this is truly =
-a
-> problem, right?
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13-rt13.patch.xz
 
-So it seems that you lose your flag but I don't know how. I only lose
-it for threads which are woken up shortly before exit.
+The split quilt queue is available at:
 
-> And my test shows the same thing, after applying your patches, my
-> cgroup_fj test will still cause system hung, after reboot, log messag=
-e
-> shows the same as I sent before:
-> ...
-=E2=80=A6snip=E2=80=A6
-
-> ...
->=20
-> So right now, my patch is still my only solution.
->=20
-> One thing need to be clear, my test is on 3.4.45-rt60, but I think al=
-l 3.4-rt
-> versions have this problem.
-
-Oh boy. We have too many RT trees. Can you retest you problem on latest
-v3.8 and see if it there a problem, too?
-I just booted
-"Linux sq 3.4.41-rt55 #5 SMP PREEMPT RT Fri Jun 28 13:44:38 CEST 2013
-x86_64 GNU/Linux"
-
-and I have a Script doing:
-
-|for pid in $(ps -e -o pid);
-|do
-|        taskset -p -c 6,7 $pid >/dev/null 2>&1
-|        if [ $? -eq 0 ]
-|        then
-|                C=3D"$(cat /proc/$pid/cmdline)"
-|                if [ -z "$C" ]
-|                then
-|                        echo "Okay: $(cat /proc/$pid/comm)"
-|                fi
-|        fi
-|done
-
-
-which is basically your test. It will print each kernel thread on which
-the affinity change went well. There are no kworker, no migration
-threads, no softirqs. Just kthreadd, irq/* and so on.
-So I still have no idea how and why you lose this flag and I still
-can't reproduce it.
-The interesting part is, why do your threads lose their flag and mine
-don't.
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.8.13-rt13.tar.xz
 
 Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index 31f9d75..ddfd46a 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -2,6 +2,7 @@
+ #define _LINUX_LIST_BL_H
+ 
+ #include <linux/list.h>
++#include <linux/spinlock.h>
+ #include <linux/bit_spinlock.h>
+ 
+ /*
+@@ -32,13 +33,22 @@
+ 
+ struct hlist_bl_head {
+ 	struct hlist_bl_node *first;
++#ifdef CONFIG_PREEMPT_RT_BASE
++	raw_spinlock_t lock;
++#endif
+ };
+ 
+ struct hlist_bl_node {
+ 	struct hlist_bl_node *next, **pprev;
+ };
+-#define INIT_HLIST_BL_HEAD(ptr) \
+-	((ptr)->first = NULL)
++
++static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
++{
++	h->first = NULL;
++#ifdef CONFIG_PREEMPT_RT_BASE
++	raw_spin_lock_init(&h->lock);
++#endif
++}
+ 
+ static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
+ {
+@@ -117,12 +127,22 @@ static inline void hlist_bl_del_init(struct hlist_bl_node *n)
+ 
+ static inline void hlist_bl_lock(struct hlist_bl_head *b)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	bit_spin_lock(0, (unsigned long *)b);
++#else
++	raw_spin_lock(&b->lock);
++	__set_bit(0, (unsigned long *)b);
++#endif
+ }
+ 
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+ {
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
++#else
++	__clear_bit(0, (unsigned long *)b);
++	raw_spin_unlock(&b->lock);
++#endif
+ }
+ 
+ /**
+diff --git a/localversion-rt b/localversion-rt
+index 6e44e54..9f7d0bd 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt12
++-rt13
