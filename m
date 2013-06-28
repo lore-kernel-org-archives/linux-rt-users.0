@@ -1,37 +1,57 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: paging in realtime context ...
-Date: Fri, 28 Jun 2013 17:37:13 +0200
-Message-ID: <51CDADA9.1030909@meduna.org>
-References: <CAF-VNaov5Y76uhm6W3zPD-oe8xik4ER69Pw8V+dPP8JdJ4gb-w@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.50-rt65
+Date: Fri, 28 Jun 2013 11:42:06 -0400
+Message-ID: <1372434126.18733.337.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-To: Lars Segerlund <lars.segerlund@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:47011 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753740Ab3F1Ph2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Jun 2013 11:37:28 -0400
-In-Reply-To: <CAF-VNaov5Y76uhm6W3zPD-oe8xik4ER69Pw8V+dPP8JdJ4gb-w@mail.gmail.com>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:16086 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750818Ab3F1PmI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Jun 2013 11:42:08 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 28.06.2013 16:14, Lars Segerlund wrote:
 
->  Quick question, if I mlock my app and prefault the stacks, what
-> happens if I haven't linked static and use a library ?
-> 
->  Surely a bunch of pagefaults ?
+Dear RT Folks,
 
-I am no kernel expert but as I understand it should not matter
-whether the application is linked statically or dynamically.
-What is mapped gets locked.
+I'm pleased to announce the 3.4.50-rt65 stable release.
 
-After mlockall returns you should only get pagefaults if the
-mapping changes (heap grows, you call mmap, dlopen()
-a library, start a new thread, ...).
 
--- 
-                                            Stano
+This release is just an update to the new stable 3.4.50 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.4-rt
+  Head SHA1: 9d92da2cc7c4e8a926f8e2cf28538d96b4f93b02
+
+
+Or to build 3.4.50-rt65 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.50.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.50-rt65.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
+
 
