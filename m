@@ -1,57 +1,52 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.83-rt111
-Date: Fri, 28 Jun 2013 11:43:07 -0400
-Message-ID: <1372434187.18733.339.camel@gandalf.local.home>
+From: "Matthias Klein" <matthias.klein@optimeas.de>
+Subject: Kernel modules: atomic GPIO access on PREEMPT_RT
+Date: Sat, 29 Jun 2013 07:11:03 +0000
+Message-ID: <emcf19860c-9857-436b-874a-5daee54f378f@nb-mak>
+Reply-To: "Matthias Klein" <matthias.klein@optimeas.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; format=flowed; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:3734 "EHLO
-	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751511Ab3F1PnJ (ORCPT
+Received: from optimeas.de ([78.46.18.2]:45406 "EHLO optimeas.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751950Ab3F2HLF convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Jun 2013 11:43:09 -0400
+	Sat, 29 Jun 2013 03:11:05 -0400
+Received: from [127.0.0.1] (p5DCF440C.dip0.t-ipconnect.de [93.207.68.12])
+	by optimeas.de (Postfix) with ESMTPSA id D626C4207A57
+	for <linux-rt-users@vger.kernel.org>; Sat, 29 Jun 2013 09:11:02 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello,
 
-Dear RT Folks,
+I am working on kernel modules on an i.MX537 ARM platform where we use 
+GPIO pins to control various
+external chips, LEDs etc.
 
-I'm pleased to announce the 3.0.83-rt111 stable release.
+For accessing these ports I use ioremap_nocache(). But I only want to 
+use single bits of these big 32 ports,
+and some other kernel modules should reuse the other free pins of that 
+port.
 
-
-This release is just an update to the new stable 3.0.83 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.0-rt
-  Head SHA1: 10bff64d16891c70050f715999f91b3eb69ba21f
-
-
-Or to build 3.0.83-rt111 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.83.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.83-rt111.patch.xz
+Therefore I am afraid about the shared simultaneously registers access 
+between:
+- 2 kernel modules (user contex)
+- interrupt context (IRQF_NODELAY) and simultaneously from the user 
+context (ioctl() etc.) in the kernel module
 
 
+What is the right way to access these registers for e.g setting a single 
+bit of such a register to avoid read/modify/write problems ?
+Do I have to use some locking / atomic operations ?
 
 
-Enjoy,
+Can someone recommend a kernel driver for studying where such shared 
+registers access is used / handled?
 
--- Steve
 
+Best regards,
 
+Matthias
 
