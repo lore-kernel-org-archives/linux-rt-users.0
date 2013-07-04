@@ -1,72 +1,109 @@
-From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
-Subject: Re: [ANNOUNCE] 3.6.11.4-rt36 - Kernel Bug
-Date: Thu, 4 Jul 2013 09:09:22 +0200
-Message-ID: <CEE27071B8F0914B91B3076CEB63C2B60F5C0444EF@de01ex08.GLOBAL.JHCN.NET>
-References: <1369154725.6828.131.camel@gandalf.local.home>
+From: Jeremy Jongepier <jeremy@autostatic.com>
+Subject: Re: Searching a Bug on Raspberry Pi
+Date: Thu, 04 Jul 2013 12:45:16 +0200
+Message-ID: <51D5523C.3060605@autostatic.com>
+References: <51CF4035.8090100@schorsch-tech.de> <CAFSh4Uz7B8L5Y0nsp1bW4pgPkyqHtXDSM0R-PiRLZQfd+URFYw@mail.gmail.com> <51CFB71F.5090401@schorsch-tech.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: multipart/mixed;
+ boundary="------------090301060108000700050805"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx02.jhcn.net ([194.25.102.130]:24276 "EHLO mx02.jhcn.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754997Ab3GDHVh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jul 2013 03:21:37 -0400
-In-Reply-To: <1369154725.6828.131.camel@gandalf.local.home>
-Content-Language: de-DE
+Received: from mail-bk0-f47.google.com ([209.85.214.47]:57865 "EHLO
+	mail-bk0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752610Ab3GDKpU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Jul 2013 06:45:20 -0400
+Received: by mail-bk0-f47.google.com with SMTP id jg1so557159bkc.34
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Jul 2013 03:45:19 -0700 (PDT)
+Received: from [192.168.1.98] (s5146f5f9.adsl.online.nl. [81.70.245.249])
+        by mx.google.com with ESMTPSA id px7sm667215bkb.9.2013.07.04.03.45.17
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1 cipher=ECDHE-RSA-RC4-SHA bits=128/128);
+        Thu, 04 Jul 2013 03:45:18 -0700 (PDT)
+In-Reply-To: <51CFB71F.5090401@schorsch-tech.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGVsbG8gU3RldmVuLA0KDQp3aXRoIDMuNi4xMS40LXJ0MzYgSSBnb3Qgb24gYSB4ODYgbWFjaGlu
-ZSB3aXRoIGEgbG9uZyB0aW1lIHRlc3QgdmVyeSBzcG9yYWRpY2FsIHRoZSBmb2xsb3dpbmcga2Vy
-bmVsIG9vcHMuIEkgY2Fubm90IHJlcHJvZHVjZSBpdCByZWxpYWJsZSwgYnV0IGl0IG9jY3VycyBh
-Ym91dCBvbmNlIGEgd2Vlay4gRG8geW91IGhhdmUgYW55IGlkZWFzPw0KDQpTdGFjazoNCiBjMDE0
-YzU2ZCAwMDAwMDAwMSBmM2RmNWMwNCBmM2RmNWMwOCBjMDE0YzU2ZCAwMDAwMDAwMSBmM2RmNWMx
-NCBjMDA0ZmM2ZQ0KIGY2ZmY3MDMwIGYzZGY1YzIwIDAwMjAwMDQ2IGY2ZmY3MDMwIGYzZGY1YzM0
-IGMwMTg4NDRhIGY2ZmY3MDMwIGYzZGY1YzM4DQogMDAwMDAwMDAgMDAwMDAwMDEgZjNkZjVjMDEg
-ZjZmZjg3YjQgZjYzYzI0OTAgZjNkZjA3ZmMgZjNkZjVjNTAgYzA0NGQxYzANCkNhbGwgVHJhY2U6
-DQogWzxjMDE0YzU2ZD5dID8gZ2V0X3BhcmVudF9pcCsweGIvMHgzMQ0KIFs8YzAxNGM1NmQ+XSA/
-IGdldF9wYXJlbnRfaXArMHhiLzB4MzENCiBbPGMwNDRmYzZlPl0gPyBhZGRfcHJlZW1wdF9jb3Vu
-dCsweDkwLzB4YTANCiBbPGMwMTg4NDRhPl0gPyBfX2NhbGxfcmN1X2NvcmUrMHg0NS8weGVkDQog
-WzxjMDQ0ZDFjMD5dIF9fcnRfc3Bpbl9sb2NrKzB4MWUvMHgyMA0KIFs8YzAxNDdlZjk+XSBsZ19s
-b2NhbF9sb2NrKzB4MjAvMHgyMw0KIFs8YzAxZWI1ZTg+XSBtbnRwdXRfbm9fZXhwaXJlKzB4MTUv
-MHhmYg0KIFs8YzAxZWI2ZWM+XSBtbnRwdXQrMHgxZS8weDIwDQogWzxjMDFkZDJlMD5dIHBhdGhf
-cHV0KzB4MTUvMHgxOA0KIFs8YzAxZjZmZGY+XSBmcmVlX2ZzX3N0cnVjdCsweGUvMHgyNQ0KIFs8
-YzAxZjcwNjI+XSBleGl0X2ZzKzB4NmMvMHg3Mg0KIFs8YzAxMmFhOWI+XSBkb19leGl0KzB4MjZk
-LzB4MzUyDQogWzxjMDQ0ZTEzZj5dIG9vcHNfZW5kKzB4OTQvMDljDQogWzxjMDQzZjkwOT5dIG5v
-X2NvbnRleHQrMHgxNWUvMHgxNjgNCiBbPGMwNDNmYTM0Pl0gX19iYWRfYXJlYV9ub3NlbWFwaG9y
-ZSsweDEyMS8weDEyYg0KIFs8YzA0NGY2ODk+XSA/IHNwdXJpb3VzX2ZhdWx0KzB4YTAvMHhhMA0K
-IFs8YzA0M2ZhODM+XSBiYWRfYXJlYSsweDM1LzB4M2INCiBbPGMwNDRmOTMzPl0gZG9fcGFnZV9m
-YXVsdCsweDJhYS8weDQyOQ0KIFs8YzA0NGQzOTU+XSA/IF9yYXdfc3Bpbl91bmxvY2tfaXJxKzB4
-MTIvMHgzMA0KIFs8YzAxNGFiMTI+XSA/IGZpbmlzaF90YXNrX3N3aXRjaDB4NDUvMHhiNA0KIFs8
-YzA0NGMzMzM+XSA/IF9fc2NoZWR1bGUrMHg2NDIvMHg2NzkNCiBbPGMwNDRmNjg5Pl0gPyBzcHVy
-aW91c19mYXVsdCsweGEwLzB4YTANCiBbPGMwNDRkYjRhPl0gZXJyb3JfY29kZSsweDVhLzB4NjAN
-CiBbPGMwNDRmNjg5Pl0gPyBzcHVyaW91c19mYXVsdCsweGEwLzB4YTANCiBbPGMwMmJhNWIyPl0g
-PyBzZWxpbnV4X2lub2RlX3Blcm1pc3Npb24rMHhiMS8weDEzMQ0KIFs8YzA0NGM3ZDM+XSA/IHBy
-ZWVtcHRfc2NoZWR1bGVfaXJxKzB4MzQvMHg0ZA0KIFs8YzA0NGQ2MDg+XSA/IHJlc3VtZV9rZXJu
-ZWwrMHgzOC8weDUwDQogWzxjMDJiNzA2OT5dIHNlY3VyaXR5X2lub2RlX3Blcm1pc3Npb24rMHgx
-Yi8weDFkDQogWzxjMDFkZTJlND5dIF9faW5vZGVfcGVybWlzc2lvbisweDkxLzB4OTYNCiBbPGMw
-MWRlMzI5Pl0gaW5vZGVfcGVybWlzc2lvbisweDQwLzB4NDINCiBbPGMwMWRlMzZlPl0gbGlua19w
-YXRoX3dhbGsrMHg0My8weDY3Zg0KIFs8YzAxZTBhMmI+XSBwYXRoX29wZW5hdCsweDc1LzB4MzRk
-DQogWzxjMDFlMGYwYT5dIGRvX2ZpbHBfb3BlbisweDIxLzB4NWQNCiBbPGMwMTRkNzdhPl0gPyBt
-aWdyYXRlX2VuYWJsZSsweDEzMy8weDE3NA0KIFs8YzAxNGQ3N2E+XSA/IG1pZ3JhdGVfZW5hYmxl
-KzB4MTMzLzB4MTc0DQogWzxjMDFlYTVkMj5dID8gYWxsb2NfZmQrMHhjMC8weGNiDQogWzxjMDFk
-NGM4MT5dIGRvX3N5c19vcGVuKzB4ZWQveDE2Yw0KIFs8YzAxZDRkMjE+XSBzeXNfb3BlbisweDIx
-LzB4MjkNCiBbPGMwNDUyMjEwPl0gc3lzZW50ZXJfZG9fY2FsbCsweDEyLzB4MjINCkNvZGU6IDc1
-IDA5IDhkIDQzIDA0IDg5IDQzIDA0IDg5IDQzMDggMzEgYzkgODkgZjIgNmEgMDEgODkgZDggZTgg
-OGYgNTggZDEgZmYgNWYgODUgYzAgMGYgODUgNzMgMDEgMDAgMDAgOGIgNDMgMGMgODMgZTAgZmUg
-MzkgYzYNCiA3NSAwMiA8MGY+IDBiIDhkIGJlIGE0IDA0IDAwIDAwIDg5IGY4IGU4IDZkIDA3IDAw
-IDAwIDhiIDA2IDg5IDQ2IDA0IDY0DQogRUlQOiBbPGMwNDRjY2M5Pl0gcnRfc3Bpbl9sb2NrX3Ns
-b3dsb2NrKzB4NTEvMHgxZWMgU1M6RVNQIDAwNjg6ZjNkZjViZjANCg0KTWF5YmUgdGhlcmUgYXJl
-IHR5cG9zIGluIHRoZSBjYWxsIHN0YWNrLCBiZWNhdXNlIEkgaGF2ZSBvbmx5IGEgInJlYWwiIHNj
-cmVlbnNob3QuDQoNCkFuZHJlYXMNCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLQpSZWdpc3RlcmdlcmljaHQ6IFRyYXVuc3RlaW4gLyBSZWdpc3RyeSBDb3VydDog
-SFJCIDI3NSAtIFNpdHogLyBIZWFkIE9mZmljZTogVHJhdW5yZXV0CkF1ZnNpY2h0c3JhdHN2b3Jz
-aXR6ZW5kZXIgLyBDaGFpcm1hbiBvZiBTdXBlcnZpc29yeSBCb2FyZDogUmFpbmVyIEJ1cmtoYXJk
-Ckdlc2Now6RmdHNmw7xocnVuZyAvIE1hbmFnZW1lbnQgQm9hcmQ6IFRob21hcyBTZXNzZWxtYW5u
-IChWb3JzaXR6ZW5kZXIgLyBDaGFpcm1hbiksCk1pY2hhZWwgR3JpbW0sIE1hdHRoaWFzIEZhdXNl
-ciwgU2ViYXN0aWFuIFRvbmRvcmYKCkUtTWFpbCBIYWZ0dW5nc2F1c3NjaGx1c3MgLyBFLU1haWwg
-RGlzY2xhaW1lcjogaHR0cDovL3d3dy5oZWlkZW5oYWluLmRlL2Rpc2NsYWltZXIK
+This is a multi-part message in MIME format.
+--------------090301060108000700050805
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
 
+On 06/30/2013 06:42 AM, Georg Gast wrote:
+> Hi Tom,
+> 
+> the problem occurs even if i set enable_llm=0. The while loop is now not
+> touched and the rpi deadlocks too.
+> 
+> As far as i understand it, the sdhci.c is the base for all sdhci card
+> readers and the sdhci-*.c implement the ops for the specific hardware.
+> 
+> My problem is, that i dont have an other sdhci card reader here. It wont
+> be possible to boot from, but i could try to read from it on a rt
+> kernel. If i compile the sdhci_bcm2708 as a module, i could not get a
+> device info from the rpi reader. Maybe an other reader works, then the
+> real problem sits in sdhci_bcm2708.c (or at bad luck, it shows an bigger
+> problem in sdhci.c).
+> 
+> Georg
+> 
+
+Here's a quick and dirty hack to get things going.
+
+Regards,
+
+Jeremy
+
+--------------090301060108000700050805
+Content-Type: text/x-patch;
+ name="sdhci.c.diff"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment;
+ filename="sdhci.c.diff"
+
+--- linux/drivers/mmc/host/sdhci.c	2013-07-03 11:54:06.306455988 +0200
++++ linux-rt/drivers/mmc/host/sdhci.c	2013-07-03 16:49:33.298601044 +0200
+@@ -162,9 +162,17 @@
+ 			preempt_schedule();
+ 		}
+ 		spin_lock_irqsave(&host->lock,*flags);
++#ifdef CONFIG_PREEMPT_RT_FULL
++		disable_irq_nosync(host->irq);
++#else
+ 		disable_irq(host->irq);
++#endif
+ 		if(host->second_irq)
++#ifdef CONFIG_PREEMPT_RT_FULL
++			disable_irq_nosync(host->second_irq);
++#else
+ 			disable_irq(host->second_irq);
++#endif
+ 		local_irq_enable();
+ 	}
+ 	else
+@@ -1834,7 +1842,11 @@
+ 	host = mmc_priv(mmc);
+ 
+ 	sdhci_runtime_pm_get(host);
++#ifdef CONFIG_PREEMPT_RT_FULL
++	disable_irq_nosync(host->irq);
++#else
+ 	disable_irq(host->irq);
++#endif
+ 	spin_lock(&host->lock);
+ 
+ 	ctrl = sdhci_readw(host, SDHCI_HOST_CONTROL2);
+@@ -1935,7 +1947,11 @@
+ 		wait_event_interruptible_timeout(host->buf_ready_int,
+ 					(host->tuning_done == 1),
+ 					msecs_to_jiffies(50));
++#ifdef CONFIG_PREEMPT_RT_FULL
++		disable_irq_nosync(host->irq);
++#else
+ 		disable_irq(host->irq);
++#endif
+ 		spin_lock(&host->lock);
+ 
+ 		if (!host->tuning_done) {
+
+--------------090301060108000700050805--
