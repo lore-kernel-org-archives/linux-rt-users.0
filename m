@@ -1,125 +1,72 @@
-From: Georg Gast <georg@schorsch-tech.de>
-Subject: Re: Searching a Bug on Raspberry Pi
-Date: Sun, 30 Jun 2013 06:42:07 +0200
-Message-ID: <51CFB71F.5090401@schorsch-tech.de>
-References: <51CF4035.8090100@schorsch-tech.de> <CAFSh4Uz7B8L5Y0nsp1bW4pgPkyqHtXDSM0R-PiRLZQfd+URFYw@mail.gmail.com>
+From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Subject: Re: [ANNOUNCE] 3.6.11.4-rt36 - Kernel Bug
+Date: Thu, 4 Jul 2013 09:09:22 +0200
+Message-ID: <CEE27071B8F0914B91B3076CEB63C2B60F5C0444EF@de01ex08.GLOBAL.JHCN.NET>
+References: <1369154725.6828.131.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Tom Cook <tom.k.cook@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+To: Steven Rostedt <rostedt@goodmis.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from schorsch-tech.de ([88.198.48.118]:34846 "EHLO schorsch-tech.de"
+Received: from mx02.jhcn.net ([194.25.102.130]:24276 "EHLO mx02.jhcn.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750737Ab3F3EoH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 30 Jun 2013 00:44:07 -0400
-In-Reply-To: <CAFSh4Uz7B8L5Y0nsp1bW4pgPkyqHtXDSM0R-PiRLZQfd+URFYw@mail.gmail.com>
+	id S1754997Ab3GDHVh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Jul 2013 03:21:37 -0400
+In-Reply-To: <1369154725.6828.131.camel@gandalf.local.home>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Tom,
-
-the problem occurs even if i set enable_llm=0. The while loop is now not 
-touched and the rpi deadlocks too.
-
-As far as i understand it, the sdhci.c is the base for all sdhci card 
-readers and the sdhci-*.c implement the ops for the specific hardware.
-
-My problem is, that i dont have an other sdhci card reader here. It wont 
-be possible to boot from, but i could try to read from it on a rt 
-kernel. If i compile the sdhci_bcm2708 as a module, i could not get a 
-device info from the rpi reader. Maybe an other reader works, then the 
-real problem sits in sdhci_bcm2708.c (or at bad luck, it shows an bigger 
-problem in sdhci.c).
-
-Georg
-
-
-Am 29.06.2013 23:36, schrieb Tom Cook:
-> This is as far as I've got too.  I think you need to make the while loop
-> conditional on CONFIG_PREEMPT_RT_FULL but I haven't had a chance to try it.
->
-> Tom
->
-> On 29 Jun 2013 21:16, "Georg Gast" <georg@schorsch-tech.de
-> <mailto:georg@schorsch-tech.de>> wrote:
->
->     Hi there!
->
->     Currently i try to locate a bug in drivers/mmc/host/sdhci.c on
->     RaspberryPi. I know it is not the mainline kernel...
->
->     Currently i use Kernel 3.8.13 and RT Patch 3.8.13-rt12 on the kernel
->     found at git://github.com/raspberrypi/__linux.git
->     <http://github.com/raspberrypi/linux.git> on branch rpi-3.8.y.
->
->     The bug shows up at booting and after 3 seconds of booting as it
->     wants to mount the rootfs in a deadlock. as i compiled sdhci_bcm2708
->     as a module i can boot the kernel and system as i pushed the system
->     to a usb stick. As far as good.
->
->     Now i try to find the bug, if the rootfs is on the sdcard. I narrowd
->     the deadlock down to the following lines:
->
->     void sdhci_spin_lock_irqsave(struct sdhci_host *host,unsigned long
->     *flags)
->     {
->          return;
->     #ifdef CONFIG_PREEMPT
->          if(enable_llm)
->          {
->              while(sdhci_locked)
->              {
->                  preempt_schedule();
->              }
->              spin_lock_irqsave(&host->lock,__*flags);
->              disable_irq(host->irq);
->              if(host->second_irq)
->                  disable_irq(host->second_irq);
->              local_irq_enable();
->          }
->          else
->     #endif
->              spin_lock_irqsave(&host->lock,__*flags);
->     }
->
->     void sdhci_spin_unlock_irqrestore(__struct sdhci_host *host,unsigned
->     long flags)
->     {
->          return;
->     #ifdef CONFIG_PREEMPT
->          if(enable_llm)
->          {
->              local_irq_disable();
->              if(host->second_irq)
->                  enable_irq(host->second_irq);
->              enable_irq(host->irq);
->          }
->     #endif
->          spin_unlock_irqrestore(&host->__lock,flags);
->     }
->
->     in drivers/mmc/host/sdhci.c . The both return statements are added
->     by me. Now i can boot the RT Preempt kernel but it is for sure not
->     the right fix.
->
->     My problem is, that i dont know how those both functions should work
->     with the rt preempt patch.
->
->     What can you suggest me to fix that deadlock? I already bought the
->     book "Linux Kernel Development" but i dont know how the kernel works
->     exaktly with the PREEMPT patch. Can you point me to a site which
->     shows how RTPREEMPT works in the irqsave/restore functions or can
->     you please describe it to me?
->
->     Thank you
->     Georg
->     --
->     To unsubscribe from this list: send the line "unsubscribe
->     linux-rt-users" in
->     the body of a message to majordomo@vger.kernel.org
->     <mailto:majordomo@vger.kernel.org>
->     More majordomo info at http://vger.kernel.org/__majordomo-info.html
->     <http://vger.kernel.org/majordomo-info.html>
->
+SGVsbG8gU3RldmVuLA0KDQp3aXRoIDMuNi4xMS40LXJ0MzYgSSBnb3Qgb24gYSB4ODYgbWFjaGlu
+ZSB3aXRoIGEgbG9uZyB0aW1lIHRlc3QgdmVyeSBzcG9yYWRpY2FsIHRoZSBmb2xsb3dpbmcga2Vy
+bmVsIG9vcHMuIEkgY2Fubm90IHJlcHJvZHVjZSBpdCByZWxpYWJsZSwgYnV0IGl0IG9jY3VycyBh
+Ym91dCBvbmNlIGEgd2Vlay4gRG8geW91IGhhdmUgYW55IGlkZWFzPw0KDQpTdGFjazoNCiBjMDE0
+YzU2ZCAwMDAwMDAwMSBmM2RmNWMwNCBmM2RmNWMwOCBjMDE0YzU2ZCAwMDAwMDAwMSBmM2RmNWMx
+NCBjMDA0ZmM2ZQ0KIGY2ZmY3MDMwIGYzZGY1YzIwIDAwMjAwMDQ2IGY2ZmY3MDMwIGYzZGY1YzM0
+IGMwMTg4NDRhIGY2ZmY3MDMwIGYzZGY1YzM4DQogMDAwMDAwMDAgMDAwMDAwMDEgZjNkZjVjMDEg
+ZjZmZjg3YjQgZjYzYzI0OTAgZjNkZjA3ZmMgZjNkZjVjNTAgYzA0NGQxYzANCkNhbGwgVHJhY2U6
+DQogWzxjMDE0YzU2ZD5dID8gZ2V0X3BhcmVudF9pcCsweGIvMHgzMQ0KIFs8YzAxNGM1NmQ+XSA/
+IGdldF9wYXJlbnRfaXArMHhiLzB4MzENCiBbPGMwNDRmYzZlPl0gPyBhZGRfcHJlZW1wdF9jb3Vu
+dCsweDkwLzB4YTANCiBbPGMwMTg4NDRhPl0gPyBfX2NhbGxfcmN1X2NvcmUrMHg0NS8weGVkDQog
+WzxjMDQ0ZDFjMD5dIF9fcnRfc3Bpbl9sb2NrKzB4MWUvMHgyMA0KIFs8YzAxNDdlZjk+XSBsZ19s
+b2NhbF9sb2NrKzB4MjAvMHgyMw0KIFs8YzAxZWI1ZTg+XSBtbnRwdXRfbm9fZXhwaXJlKzB4MTUv
+MHhmYg0KIFs8YzAxZWI2ZWM+XSBtbnRwdXQrMHgxZS8weDIwDQogWzxjMDFkZDJlMD5dIHBhdGhf
+cHV0KzB4MTUvMHgxOA0KIFs8YzAxZjZmZGY+XSBmcmVlX2ZzX3N0cnVjdCsweGUvMHgyNQ0KIFs8
+YzAxZjcwNjI+XSBleGl0X2ZzKzB4NmMvMHg3Mg0KIFs8YzAxMmFhOWI+XSBkb19leGl0KzB4MjZk
+LzB4MzUyDQogWzxjMDQ0ZTEzZj5dIG9vcHNfZW5kKzB4OTQvMDljDQogWzxjMDQzZjkwOT5dIG5v
+X2NvbnRleHQrMHgxNWUvMHgxNjgNCiBbPGMwNDNmYTM0Pl0gX19iYWRfYXJlYV9ub3NlbWFwaG9y
+ZSsweDEyMS8weDEyYg0KIFs8YzA0NGY2ODk+XSA/IHNwdXJpb3VzX2ZhdWx0KzB4YTAvMHhhMA0K
+IFs8YzA0M2ZhODM+XSBiYWRfYXJlYSsweDM1LzB4M2INCiBbPGMwNDRmOTMzPl0gZG9fcGFnZV9m
+YXVsdCsweDJhYS8weDQyOQ0KIFs8YzA0NGQzOTU+XSA/IF9yYXdfc3Bpbl91bmxvY2tfaXJxKzB4
+MTIvMHgzMA0KIFs8YzAxNGFiMTI+XSA/IGZpbmlzaF90YXNrX3N3aXRjaDB4NDUvMHhiNA0KIFs8
+YzA0NGMzMzM+XSA/IF9fc2NoZWR1bGUrMHg2NDIvMHg2NzkNCiBbPGMwNDRmNjg5Pl0gPyBzcHVy
+aW91c19mYXVsdCsweGEwLzB4YTANCiBbPGMwNDRkYjRhPl0gZXJyb3JfY29kZSsweDVhLzB4NjAN
+CiBbPGMwNDRmNjg5Pl0gPyBzcHVyaW91c19mYXVsdCsweGEwLzB4YTANCiBbPGMwMmJhNWIyPl0g
+PyBzZWxpbnV4X2lub2RlX3Blcm1pc3Npb24rMHhiMS8weDEzMQ0KIFs8YzA0NGM3ZDM+XSA/IHBy
+ZWVtcHRfc2NoZWR1bGVfaXJxKzB4MzQvMHg0ZA0KIFs8YzA0NGQ2MDg+XSA/IHJlc3VtZV9rZXJu
+ZWwrMHgzOC8weDUwDQogWzxjMDJiNzA2OT5dIHNlY3VyaXR5X2lub2RlX3Blcm1pc3Npb24rMHgx
+Yi8weDFkDQogWzxjMDFkZTJlND5dIF9faW5vZGVfcGVybWlzc2lvbisweDkxLzB4OTYNCiBbPGMw
+MWRlMzI5Pl0gaW5vZGVfcGVybWlzc2lvbisweDQwLzB4NDINCiBbPGMwMWRlMzZlPl0gbGlua19w
+YXRoX3dhbGsrMHg0My8weDY3Zg0KIFs8YzAxZTBhMmI+XSBwYXRoX29wZW5hdCsweDc1LzB4MzRk
+DQogWzxjMDFlMGYwYT5dIGRvX2ZpbHBfb3BlbisweDIxLzB4NWQNCiBbPGMwMTRkNzdhPl0gPyBt
+aWdyYXRlX2VuYWJsZSsweDEzMy8weDE3NA0KIFs8YzAxNGQ3N2E+XSA/IG1pZ3JhdGVfZW5hYmxl
+KzB4MTMzLzB4MTc0DQogWzxjMDFlYTVkMj5dID8gYWxsb2NfZmQrMHhjMC8weGNiDQogWzxjMDFk
+NGM4MT5dIGRvX3N5c19vcGVuKzB4ZWQveDE2Yw0KIFs8YzAxZDRkMjE+XSBzeXNfb3BlbisweDIx
+LzB4MjkNCiBbPGMwNDUyMjEwPl0gc3lzZW50ZXJfZG9fY2FsbCsweDEyLzB4MjINCkNvZGU6IDc1
+IDA5IDhkIDQzIDA0IDg5IDQzIDA0IDg5IDQzMDggMzEgYzkgODkgZjIgNmEgMDEgODkgZDggZTgg
+OGYgNTggZDEgZmYgNWYgODUgYzAgMGYgODUgNzMgMDEgMDAgMDAgOGIgNDMgMGMgODMgZTAgZmUg
+MzkgYzYNCiA3NSAwMiA8MGY+IDBiIDhkIGJlIGE0IDA0IDAwIDAwIDg5IGY4IGU4IDZkIDA3IDAw
+IDAwIDhiIDA2IDg5IDQ2IDA0IDY0DQogRUlQOiBbPGMwNDRjY2M5Pl0gcnRfc3Bpbl9sb2NrX3Ns
+b3dsb2NrKzB4NTEvMHgxZWMgU1M6RVNQIDAwNjg6ZjNkZjViZjANCg0KTWF5YmUgdGhlcmUgYXJl
+IHR5cG9zIGluIHRoZSBjYWxsIHN0YWNrLCBiZWNhdXNlIEkgaGF2ZSBvbmx5IGEgInJlYWwiIHNj
+cmVlbnNob3QuDQoNCkFuZHJlYXMNCi0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLQpSZWdpc3RlcmdlcmljaHQ6IFRyYXVuc3RlaW4gLyBSZWdpc3RyeSBDb3VydDog
+SFJCIDI3NSAtIFNpdHogLyBIZWFkIE9mZmljZTogVHJhdW5yZXV0CkF1ZnNpY2h0c3JhdHN2b3Jz
+aXR6ZW5kZXIgLyBDaGFpcm1hbiBvZiBTdXBlcnZpc29yeSBCb2FyZDogUmFpbmVyIEJ1cmtoYXJk
+Ckdlc2Now6RmdHNmw7xocnVuZyAvIE1hbmFnZW1lbnQgQm9hcmQ6IFRob21hcyBTZXNzZWxtYW5u
+IChWb3JzaXR6ZW5kZXIgLyBDaGFpcm1hbiksCk1pY2hhZWwgR3JpbW0sIE1hdHRoaWFzIEZhdXNl
+ciwgU2ViYXN0aWFuIFRvbmRvcmYKCkUtTWFpbCBIYWZ0dW5nc2F1c3NjaGx1c3MgLyBFLU1haWwg
+RGlzY2xhaW1lcjogaHR0cDovL3d3dy5oZWlkZW5oYWluLmRlL2Rpc2NsYWltZXIK
 
