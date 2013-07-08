@@ -1,107 +1,93 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
-Subject: Re: Searching a Bug on Raspberry Pi
-Date: Thu, 04 Jul 2013 16:14:07 +0400
-Message-ID: <393651372940047@web30e.yandex.ru>
-References: <51CF2756.5080509@schorsch-tech.de>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [PATCH V5 0/5] Queue work on power efficient wq
+Date: Mon, 8 Jul 2013 17:37:16 +0200
+Message-ID: <20130708153716.GF29556@pengutronix.de>
+References: <cover.1366803121.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Georg Gast <georg@schorsch-tech.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: tj@kernel.org, davem@davemloft.net, airlied@redhat.com,
+	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
+	mingo@redhat.com, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	robin.randhawa@arm.com, Steve.Bannister@arm.com, Livi@jasper.es
+To: Viresh Kumar <viresh.kumar@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from forward6.mail.yandex.net ([77.88.60.125]:39801 "EHLO
-	forward6.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753359Ab3GDMTi (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:57303 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751245Ab3GHPhl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Jul 2013 08:19:38 -0400
-In-Reply-To: <51CF2756.5080509@schorsch-tech.de>
+	Mon, 8 Jul 2013 11:37:41 -0400
+Content-Disposition: inline
+In-Reply-To: <cover.1366803121.git.viresh.kumar@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi, Georg!
+Hello,
 
-29.06.2013, 22:39, "Georg Gast" <georg@schorsch-tech.de>:
-> Hi there!
->
-> Currently i try to locate a bug in sdhci.c on RaspberryPi. I know it =
-is
-> not the mainline kernel...
->
-> Currently i use Kernel 3.8.13 and RT Patch 3.8.13-rt12 on the kernel
-> found at git://github.com/raspberrypi/linux.git on branch rpi-3.8.y.
->
-> The bug shows up as booting and after 3 seconds of booting as it want=
-s
-> to mount the rootfs in a deadlock. as i compiled sdhci_bcm2708 as a
-> module i can boot the kernel and system as i pushed the system to a u=
-sb
-> stick. As far as good.
->
-> Now i try to find the bug, if the rootfs is on the sdcard. I narrowd =
-the
-> deadlock down to the following lines:
->
-> void sdhci_spin_lock_irqsave(struct sdhci_host *host,unsigned long *f=
-lags)
-> {
-> =9A=9A=9A=9A=9Areturn;
-> #ifdef CONFIG_PREEMPT
-> =9A=9A=9A=9A=9Aif(enable_llm)
-> =9A=9A=9A=9A=9A{
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Awhile(sdhci_locked)
-> =9A=9A=9A=9A=9A=9A=9A=9A=9A{
-> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9Apreempt_schedule();
-> =9A=9A=9A=9A=9A=9A=9A=9A=9A}
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Aspin_lock_irqsave(&host->lock,*flags);
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Adisable_irq(host->irq);
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Aif(host->second_irq)
-> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9Adisable_irq(host->second_irq);
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Alocal_irq_enable();
-> =9A=9A=9A=9A=9A}
-> =9A=9A=9A=9A=9Aelse
-> #endif
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Aspin_lock_irqsave(&host->lock,*flags);
-> }
->
-> void sdhci_spin_unlock_irqrestore(struct sdhci_host *host,unsigned lo=
-ng
-> flags)
-> {
-> =9A=9A=9A=9A=9Areturn;
-> #ifdef CONFIG_PREEMPT
-> =9A=9A=9A=9A=9Aif(enable_llm)
-> =9A=9A=9A=9A=9A{
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Alocal_irq_disable();
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Aif(host->second_irq)
-> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9A=9Aenable_irq(host->second_irq);
-> =9A=9A=9A=9A=9A=9A=9A=9A=9Aenable_irq(host->irq);
-> =9A=9A=9A=9A=9A}
-> #endif
-> =9A=9A=9A=9A=9Aspin_unlock_irqrestore(&host->lock,flags);
-> }
->
-> in drivers/mmc/host/sdhci.c . The both return statements are added by
-> me. Now i can boot the RT Preempt kernel but it is for sure not the
-> right fix.
->
-> My problem is, that i dont know how those both functions should work
-> with the rt preempt patch.
+On Wed, Apr 24, 2013 at 05:12:52PM +0530, Viresh Kumar wrote:
+> This patchset was called: "Create sched_select_cpu() and use it for w=
+orkqueues"
+> for the first three versions.
+>=20
+> Earlier discussions over v3, v2 and v1 can be found here:
+> https://lkml.org/lkml/2013/3/18/364
+> http://lists.linaro.org/pipermail/linaro-dev/2012-November/014344.htm=
+l
+> http://www.mail-archive.com/linaro-dev@lists.linaro.org/msg13342.html
+>=20
+> V4 is here:
+> https://lkml.org/lkml/2013/3/31/55
+>=20
+> Workqueues can be performance or power oriented. For performance we m=
+ay want to
+> keep them running on a single cpu, so that it remains cache hot. For =
+power we
+> can give scheduler the liberty to choose target cpu for running work =
+handler.
+>=20
+> Later one (Power oriented WQ) can be achieved if the workqueue is all=
+ocated with
+> WQ_UNBOUND flag. Enabling CONFIG_WQ_POWER_EFFICIENT will set
+> 'wq_power_efficient' to 'true'. Setting 'power_efficient' boot param =
+will
+> override value of 'wq_power_efficient' variable. When 'wq_power_effic=
+ient' is
+> set to 'true', we will convert WQ_POWER_EFFICIENT flag to WQ_UNBOUND =
+on wq
+> allocation. And so scheduler will have the liberty to choose where to=
+ run this
+> work.
+>=20
+> Here we are migrating few users of workqueues to WQ_POWER_EFFICIENT. =
+These
+> drivers are found to be very much active on idle or lightly busy syst=
+em and
+> using WQ_POWER_EFFICIENT for these gave impressive results.
+>=20
+> These would be used in power saving mode only if relevant configs are=
+ enabled
+> at compile time or in bootargs. Otherwise behavior is unchanged.
+>=20
+> Setup:
+> -----
+> - ARM Vexpress TC2 - big.LITTLE CPU
+> - Core 0-1: A15, 2-4: A7
+> - rootfs: linaro-ubuntu-devel
+This patch set hit my tree now. I wonder if it makes sense to make
+WQ_POWER_EFFICIENT_DEFAULT depend on SMP. (Oh wait, big.LITTLE isn't
+SMP, so probably there is a better symbol to depend on?)
 
-Spinlocks transform to mutexes on RT kernel and really functions like
-spin_lock_irqsave() do not disable interrupts. Your problem can be conn=
-ected
-with that.
+Just my 2 cent
+Uwe
 
-If you code works on !RT kernel you should convert the type of host->lo=
-ck
-from spinlock_t to raw_spinlock_t and all of spin_lock_irqsave()
-to raw_spin_lock_irqsave() etc.
 
-I think this will help you. Sadly, I don't have enough time to look at =
-whole of your
-driver.
-
-Kirill
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
