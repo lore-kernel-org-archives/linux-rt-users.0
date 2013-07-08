@@ -1,105 +1,89 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: [RFC] igb: minimize busy loop on igb_get_hw_semaphore
-Date: Mon, 8 Jul 2013 18:17:05 -0300
-Message-ID: <20130708211705.GB9997@uudg.org>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH rt] fix "list_bl.h: make list head locking RT safe" for !SMP && !DEBUG_SPINLOCK
+Date: Tue,  9 Jul 2013 00:26:32 +0200
+Message-ID: <1373322392-27604-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmiss.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rostedt@goodmis.org, tglx@linutronix.de,
+	paulmck@linux.vnet.ibm.com, linux-rt-users@vger.kernel.org,
+	kernel@pengutronix.de
+To: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	bigeasy@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qe0-f54.google.com ([209.85.128.54]:38710 "EHLO
-	mail-qe0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751874Ab3GHVRT (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:44333 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751975Ab3GHW1f (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Jul 2013 17:17:19 -0400
-Received: by mail-qe0-f54.google.com with SMTP id ne12so2615819qeb.13
-        for <linux-rt-users@vger.kernel.org>; Mon, 08 Jul 2013 14:17:18 -0700 (PDT)
-Content-Disposition: inline
+	Mon, 8 Jul 2013 18:27:35 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+The patch "list_bl.h: make list head locking RT safe" introduced
+an unconditional
+
+	__set_bit(0, (unsigned long *)b);
+
+in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
+of b->first. When the value of b->first is retrieved using
+hlist_bl_first the clobbering is undone using
+
+	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+
+and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
+only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
+defined. Without these the value returned by hlist_bl_first has the
+zeroth bit set which likely results in a crash.
+
+So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
+An alternative would be to always define LIST_BL_LOCKMASK to one with
+CONFIG_PREEMPT_RT_BASE.
+
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
 Hello,
 
-This patch was written to 3.0-rt but the same code path triggering the
-issue exists up to 3.8.13-rt13. It was initially a test patch, to minimize
-a problem observed by a customer, but it may be the starting point of a
-needed solution.
+this applies on top of 3.8-rt13 and makes my ARM board boot again.
 
-Rostedt helped me to visualize this small patch on the early stages and
-Clark Williams has been bugging me to send it out to the list in order
-to gather ideas on how useful this small change really is.
+Best regards
+Uwe
 
-As it is noted on the description, though the same code is present
-upstream, it may be a problem only on RT.
+ include/linux/list_bl.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-----
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
+ #else
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
+ }
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
+--=20
+1.8.3.1
 
-igb: minimize busy loop on igb_get_hw_semaphore
-
-Bugzilla: 976912
-
-In drivers/net/igb/e1000_82575.c, funtion igb_release_swfw_sync_82575()
-there is this line:
-
-	while (igb_get_hw_semaphore(hw) != 0);
-
-That is basically a busy loop waiting on a HW semaphore.
-
-A customer has a setup where two igb NICs are part of a bonding interface.
-This customer also has a monitoring script that calls ifconfig often. It was
-observed that in this scenario there is a chance that this ifconfig, that
-happens to hold the bond->lock while collecting statistics, enters this busy
-loop waiting for another thread clear that HW semaphore.
-
-Meanwhile, the irq/xxx-ethY-Tx threads, running at FIFO:85, try to acquire
-the bond lock, held by ifconfig. As it happens on RT, a Priority Inheritance
-operation is started and ifconfig is boosted to FIFO:85 so that it may be able
-to finish its work sooner and release the bond->lock, desired by the
-aforementioned threads.
-
-As ifconfig is running on a busy loop, waiting for the HW semaphore, this
-thread now runs a busy loop at a very high priority, preventing other threads
-on that CPU from progressing.
-
-On that scenario, it seems that the thread holding the HW semaphore is also
-waiting for a lock held by other task. This whole scenario leads to RCU stall
-warnings, that have as side effects a crescent number of threads being stuck.
-As this progresses, the livelock reaches threads on other CPUs and the system
-becomes more and more unresponsive.
-
-This little patch aims to prevent the busy loop at a high priority (the code
-called by ifconfig in this example) to starve the threads on the same CPU. It
-may not solve the issue but will at least lead us closer to the real issue,
-masked by the RCU stalls created by the busy loop.
-
-This is mostly a debug patch for a testing kernel.
-
-Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
-
-diff --git a/drivers/net/igb/e1000_mac.c b/drivers/net/igb/e1000_mac.c
-index ce8255f..0ca912c 100644
---- a/drivers/net/igb/e1000_mac.c
-+++ b/drivers/net/igb/e1000_mac.c
-@@ -1037,7 +1037,7 @@ s32 igb_get_hw_semaphore(struct e1000_hw *hw)
- 		if (!(swsm & E1000_SWSM_SMBI))
- 			break;
- 
--		udelay(50);
-+		usleep_range(50,51);
- 		i++;
- 	}
- 
-@@ -1056,7 +1056,7 @@ s32 igb_get_hw_semaphore(struct e1000_hw *hw)
- 		if (rd32(E1000_SWSM) & E1000_SWSM_SWESMBI)
- 			break;
- 
--		udelay(50);
-+		usleep_range(50,51);
- 	}
- 
- 	if (i == timeout) {
-
--- 
-[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
-[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
-
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
