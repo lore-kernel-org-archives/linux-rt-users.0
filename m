@@ -1,90 +1,105 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH V5 0/5] Queue work on power efficient wq
-Date: Mon, 8 Jul 2013 20:55:09 +0200
-Message-ID: <20130708185509.GH29556@pengutronix.de>
-References: <cover.1366803121.git.viresh.kumar@linaro.org>
- <20130708153716.GF29556@pengutronix.de>
- <CAKohpon+dFBDUhfbJcBBWyg4mAfQ1nU_wSd6OMvdTH6SzkUjNg@mail.gmail.com>
- <20130708155747.GG29556@pengutronix.de>
- <CAKohpokT3M5TNhzGxCwHZoFU69VkFutQ-KBCf5Xh5Vfwb+trzg@mail.gmail.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: [RFC] igb: minimize busy loop on igb_get_hw_semaphore
+Date: Mon, 8 Jul 2013 18:17:05 -0300
+Message-ID: <20130708211705.GB9997@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: tj@kernel.org, davem@davemloft.net, airlied@redhat.com,
-	axboe@kernel.dk, tglx@linutronix.de, peterz@infradead.org,
-	mingo@redhat.com, rostedt@goodmis.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	robin.randhawa@arm.com, Steve.Bannister@arm.com, Livi@jasper.es
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmiss.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:59888 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751984Ab3GHSz2 (ORCPT
+Received: from mail-qe0-f54.google.com ([209.85.128.54]:38710 "EHLO
+	mail-qe0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751874Ab3GHVRT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Jul 2013 14:55:28 -0400
+	Mon, 8 Jul 2013 17:17:19 -0400
+Received: by mail-qe0-f54.google.com with SMTP id ne12so2615819qeb.13
+        for <linux-rt-users@vger.kernel.org>; Mon, 08 Jul 2013 14:17:18 -0700 (PDT)
 Content-Disposition: inline
-In-Reply-To: <CAKohpokT3M5TNhzGxCwHZoFU69VkFutQ-KBCf5Xh5Vfwb+trzg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hello,
 
-On Mon, Jul 08, 2013 at 10:18:08PM +0530, Viresh Kumar wrote:
-> On 8 July 2013 21:27, Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix=
-=2Ede> wrote:
-> > On Mon, Jul 08, 2013 at 09:17:01PM +0530, Viresh Kumar wrote:
->=20
-> >> Well, big LITTLE still runs an SMP kernel :) and so has this flag =
-set.
-> > The 'S' is justified because cpu0 and cpu1 are of the same type? Ar=
-e
-> > there b.L systems that have only one big and one LITTLE cpu? Do the=
-se
-> > use SMP, too?
->=20
-> Following definition of SMP says:
-> http://en.wikipedia.org/wiki/Symmetric_Multiprocessor
->=20
-> A system is SMP when:
-> - It has same type of cores
-> - controlled by a single instance of OS.
->=20
-> In big LITTLE first one is obviously not completely true as you point=
-ed out.
-> But second one is and so I would say its an SMP system :)
->=20
-> Don't know how it should be called though.
-MP maybe.
+This patch was written to 3.0-rt but the same code path triggering the
+issue exists up to 3.8.13-rt13. It was initially a test patch, to minimize
+a problem observed by a customer, but it may be the starting point of a
+needed solution.
 
-> >> You can make it dependent on that if required.
-> > Well, it's not required. It's just that the corresponding question =
-in
-> > make oldconfig isn't really an enrichment for a kernel targeting an
-> > Cortex M3 :-)
->=20
-> Just to make it clear enough, you are saying it doesn't make any
-> sense to enable it for M3? But because it is disabled by default,
-> the problem is not seen?
-No I'm saying that asking me is bad because on an UP machine it won't
-matter what I answer. So please don't ask me if SMP is off.
+Rostedt helped me to visualize this small patch on the early stages and
+Clark Williams has been bugging me to send it out to the list in order
+to gather ideas on how useful this small change really is.
 
-> Why? Can't we have two M3's on a SoC and run an SMP kernel over
-> it?
-Yeah, you can. Then you'd have SMP (or MP) enabled though and the choic=
-e
-for that workqueue thing makes a difference. In that case asking is OK.
+As it is noted on the description, though the same code is present
+upstream, it may be a problem only on RT.
 
-Best regards
-Uwe
+----
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+igb: minimize busy loop on igb_get_hw_semaphore
+
+Bugzilla: 976912
+
+In drivers/net/igb/e1000_82575.c, funtion igb_release_swfw_sync_82575()
+there is this line:
+
+	while (igb_get_hw_semaphore(hw) != 0);
+
+That is basically a busy loop waiting on a HW semaphore.
+
+A customer has a setup where two igb NICs are part of a bonding interface.
+This customer also has a monitoring script that calls ifconfig often. It was
+observed that in this scenario there is a chance that this ifconfig, that
+happens to hold the bond->lock while collecting statistics, enters this busy
+loop waiting for another thread clear that HW semaphore.
+
+Meanwhile, the irq/xxx-ethY-Tx threads, running at FIFO:85, try to acquire
+the bond lock, held by ifconfig. As it happens on RT, a Priority Inheritance
+operation is started and ifconfig is boosted to FIFO:85 so that it may be able
+to finish its work sooner and release the bond->lock, desired by the
+aforementioned threads.
+
+As ifconfig is running on a busy loop, waiting for the HW semaphore, this
+thread now runs a busy loop at a very high priority, preventing other threads
+on that CPU from progressing.
+
+On that scenario, it seems that the thread holding the HW semaphore is also
+waiting for a lock held by other task. This whole scenario leads to RCU stall
+warnings, that have as side effects a crescent number of threads being stuck.
+As this progresses, the livelock reaches threads on other CPUs and the system
+becomes more and more unresponsive.
+
+This little patch aims to prevent the busy loop at a high priority (the code
+called by ifconfig in this example) to starve the threads on the same CPU. It
+may not solve the issue but will at least lead us closer to the real issue,
+masked by the RCU stalls created by the busy loop.
+
+This is mostly a debug patch for a testing kernel.
+
+Signed-off-by: Luis Claudio R. Goncalves <lgoncalv@redhat.com>
+
+diff --git a/drivers/net/igb/e1000_mac.c b/drivers/net/igb/e1000_mac.c
+index ce8255f..0ca912c 100644
+--- a/drivers/net/igb/e1000_mac.c
++++ b/drivers/net/igb/e1000_mac.c
+@@ -1037,7 +1037,7 @@ s32 igb_get_hw_semaphore(struct e1000_hw *hw)
+ 		if (!(swsm & E1000_SWSM_SMBI))
+ 			break;
+ 
+-		udelay(50);
++		usleep_range(50,51);
+ 		i++;
+ 	}
+ 
+@@ -1056,7 +1056,7 @@ s32 igb_get_hw_semaphore(struct e1000_hw *hw)
+ 		if (rd32(E1000_SWSM) & E1000_SWSM_SWESMBI)
+ 			break;
+ 
+-		udelay(50);
++		usleep_range(50,51);
+ 	}
+ 
+ 	if (i == timeout) {
+
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+
