@@ -1,178 +1,59 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [RFC][PATCH RT 6/6] vtime: Convert vtime_seqlock into
- raw_spinlock_t and seqcount combo
-Date: Wed, 10 Jul 2013 13:12:13 -0400
-Message-ID: <20130710171212.GA13553@windriver.com>
-References: <20130626192806.107564905@goodmis.org>
- <20130626193050.529670718@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.6.11.6-rt38
+Date: Wed, 10 Jul 2013 16:04:25 -0400
+Message-ID: <1373486665.7458.65.camel@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <clark.williams@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:47490 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754402Ab3GJRMl (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:27273 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754681Ab3GJUE1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Jul 2013 13:12:41 -0400
-Content-Disposition: inline
-In-Reply-To: <20130626193050.529670718@goodmis.org>
+	Wed, 10 Jul 2013 16:04:27 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[[RFC][PATCH RT 6/6] vtime: Convert vtime_seqlock into raw_spinlock_t and seqcount combo] On 26/06/2013 (Wed 15:28) Steven Rostedt wrote:
 
-> The vtime seqlock needs to be taken in true interrupt context on -rt.
-> The normal seqlocks are converted to mutexes when PREEMPT_RT_FULL is
-> enabled, which will break the vtime code as the calls are done from
-> interrupt context.
-> 
-> Convert the vtime seqlock into the raw_spinlock_t and seqcount combo
-> that can be done in interrupt context.
+Dear RT Folks,
 
-Alternatively, we could revive the raw seqlock patch from Thomas?
+I'm pleased to announce the 3.6.11.6-rt38 stable release.
 
-https://lkml.org/lkml/2010/2/17/238
 
-Below is a version updating it to 3.8.x-RT.  One downside is that
-current mainline kernels have raw_seqcount_begin() function, which has
-nothing to do with preempt-rt, so the seqcount function namespace can
-get confusing unless we rename raw_seqcount_begin to something that
-doesn't sound RT-ish.
+This release is just an update to the new stable 3.6.11.6 version
+and no RT specific changes have been made.
 
-Paul.
---
 
-diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
-index 939ea1a..5a3f6fd 100644
---- a/include/linux/seqlock.h
-+++ b/include/linux/seqlock.h
-@@ -185,6 +185,11 @@ static inline void write_seqcount_barrier(seqcount_t *s)
- 
- typedef struct {
- 	struct seqcount seqcount;
-+	raw_spinlock_t lock;
-+} raw_seqlock_t;
-+
-+typedef struct {
-+	struct seqcount seqcount;
- 	spinlock_t lock;
- } seqlock_t;
- 
-@@ -192,6 +197,21 @@ typedef struct {
-  * These macros triggered gcc-3.x compile-time problems.  We think these are
-  * OK now.  Be cautious.
-  */
-+#define __RAW_SEQLOCK_UNLOCKED(lockname)			\
-+	{							\
-+		.seqcount = SEQCNT_ZERO,			\
-+		.lock =	__RAW_SPIN_LOCK_UNLOCKED(lockname)	\
-+	}
-+
-+#define raw_seqlock_init(x)					\
-+	do {							\
-+		seqcount_init(&(x)->seqcount);			\
-+		raw_spin_lock_init(&(x)->lock);			\
-+	} while (0)
-+
-+#define DEFINE_RAW_SEQLOCK(x) \
-+		raw_seqlock_t x = __RAW_SEQLOCK_UNLOCKED(x)
-+
- #define __SEQLOCK_UNLOCKED(lockname)			\
- 	{						\
- 		.seqcount = SEQCNT_ZERO,		\
-@@ -210,6 +230,11 @@ typedef struct {
- /*
-  * Read side functions for starting and finalizing a read side section.
-  */
-+static inline unsigned read_raw_seqbegin(const raw_seqlock_t *sl)
-+{
-+	return read_seqcount_begin(&sl->seqcount);
-+}
-+
- #ifndef CONFIG_PREEMPT_RT_FULL
- static inline unsigned read_seqbegin(const seqlock_t *sl)
- {
-@@ -238,6 +263,11 @@ repeat:
- }
- #endif
- 
-+static inline unsigned read_raw_seqretry(const raw_seqlock_t *sl, unsigned start)
-+{
-+	return read_seqcount_retry(&sl->seqcount, start);
-+}
-+
- static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
- {
- 	return read_seqcount_retry(&sl->seqcount, start);
-@@ -248,6 +278,64 @@ static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
-  * Acts like a normal spin_lock/unlock.
-  * Don't need preempt_disable() because that is in the spin_lock already.
-  */
-+static inline void write_raw_seqlock(raw_seqlock_t *sl)
-+{
-+	raw_spin_lock(&sl->lock);
-+	__write_seqcount_begin(&sl->seqcount);
-+}
-+
-+static inline void write_raw_sequnlock(raw_seqlock_t *sl)
-+{
-+	__write_seqcount_end(&sl->seqcount);
-+	raw_spin_unlock(&sl->lock);
-+}
-+
-+static inline void write_raw_seqlock_bh(raw_seqlock_t *sl)
-+{
-+	raw_spin_lock_bh(&sl->lock);
-+	__write_seqcount_begin(&sl->seqcount);
-+}
-+
-+static inline void write_raw_sequnlock_bh(raw_seqlock_t *sl)
-+{
-+	__write_seqcount_end(&sl->seqcount);
-+	raw_spin_unlock_bh(&sl->lock);
-+}
-+
-+static inline void write_raw_seqlock_irq(raw_seqlock_t *sl)
-+{
-+	raw_spin_lock_irq(&sl->lock);
-+	__write_seqcount_begin(&sl->seqcount);
-+}
-+
-+static inline void write_raw_sequnlock_irq(raw_seqlock_t *sl)
-+{
-+	__write_seqcount_end(&sl->seqcount);
-+	raw_spin_unlock_irq(&sl->lock);
-+}
-+
-+static inline unsigned long __write_raw_seqlock_irqsave(raw_seqlock_t *sl)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave(&sl->lock, flags);
-+	__write_seqcount_begin(&sl->seqcount);
-+	return flags;
-+}
-+
-+#define write_raw_seqlock_irqsave(lock, flags)				\
-+	do { flags = __write_raw_seqlock_irqsave(lock); } while (0)
-+
-+static inline void
-+write_raw_sequnlock_irqrestore(raw_seqlock_t *sl, unsigned long flags)
-+{
-+	__write_seqcount_end(&sl->seqcount);
-+	raw_spin_unlock_irqrestore(&sl->lock, flags);
-+}
-+
-+/*
-+ * non raw versions
-+ */
- static inline void write_seqlock(seqlock_t *sl)
- {
- 	spin_lock(&sl->lock);
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.6-rt
+  Head SHA1: 9291036c51de8c84d0796e3d61e648aa1319f95e
+
+
+Or to build 3.6.11.6-rt38 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.6.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.6.11.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/stable/patch-3.6.11.6.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11.6-rt38.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
+
+
