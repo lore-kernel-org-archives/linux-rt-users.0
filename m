@@ -1,51 +1,178 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH rt] fix "list_bl.h: make list head locking RT safe" for
- !SMP && !DEBUG_SPINLOCK
-Date: Tue, 09 Jul 2013 09:39:14 +0200
-Message-ID: <51DBBE22.8060403@linutronix.de>
-References: <1373322392-27604-1-git-send-email-u.kleine-koenig@pengutronix.de> <51DB40BA.60607@windriver.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [RFC][PATCH RT 6/6] vtime: Convert vtime_seqlock into
+ raw_spinlock_t and seqcount combo
+Date: Wed, 10 Jul 2013 13:12:13 -0400
+Message-ID: <20130710171212.GA13553@windriver.com>
+References: <20130626192806.107564905@goodmis.org>
+ <20130626193050.529670718@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: =?UTF-8?B?VXdlIEtsZWluZS1Lw7ZuaWc=?=
-	<u.kleine-koenig@pengutronix.de>, rostedt@goodmis.org,
-	tglx@linutronix.de, paulmck@linux.vnet.ibm.com,
-	linux-rt-users@vger.kernel.org, kernel@pengutronix.de
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <clark.williams@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:56046 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753062Ab3GIHjZ (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:47490 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754402Ab3GJRMl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Jul 2013 03:39:25 -0400
-In-Reply-To: <51DB40BA.60607@windriver.com>
+	Wed, 10 Jul 2013 13:12:41 -0400
+Content-Disposition: inline
+In-Reply-To: <20130626193050.529670718@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07/09/2013 12:44 AM, Paul Gortmaker wrote:
-> On 13-07-08 06:26 PM, Uwe Kleine-K=C3=B6nig wrote:
->> and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK=
- is
->> only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
->> defined. Without these the value returned by hlist_bl_first has the
->> zeroth bit set which likely results in a crash.
->=20
-> The incorrect assumption that I made was that the bit spin locks
-> still set/cleared the bit in the !SMP case.  So if we set the bit
-> and the mask is zero, we get the mismatch, giving something like:
->=20
-> Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-> Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+[[RFC][PATCH RT 6/6] vtime: Convert vtime_seqlock into raw_spinlock_t and seqcount combo] On 26/06/2013 (Wed 15:28) Steven Rostedt wrote:
 
-Thanks everyone.
+> The vtime seqlock needs to be taken in true interrupt context on -rt.
+> The normal seqlocks are converted to mutexes when PREEMPT_RT_FULL is
+> enabled, which will break the vtime code as the calls are done from
+> interrupt context.
+> 
+> Convert the vtime seqlock into the raw_spinlock_t and seqcount combo
+> that can be done in interrupt context.
 
->=20
-> Thanks,
-> Paul.
+Alternatively, we could revive the raw seqlock patch from Thomas?
 
-Sebastian
+https://lkml.org/lkml/2010/2/17/238
+
+Below is a version updating it to 3.8.x-RT.  One downside is that
+current mainline kernels have raw_seqcount_begin() function, which has
+nothing to do with preempt-rt, so the seqcount function namespace can
+get confusing unless we rename raw_seqcount_begin to something that
+doesn't sound RT-ish.
+
+Paul.
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
+index 939ea1a..5a3f6fd 100644
+--- a/include/linux/seqlock.h
++++ b/include/linux/seqlock.h
+@@ -185,6 +185,11 @@ static inline void write_seqcount_barrier(seqcount_t *s)
+ 
+ typedef struct {
+ 	struct seqcount seqcount;
++	raw_spinlock_t lock;
++} raw_seqlock_t;
++
++typedef struct {
++	struct seqcount seqcount;
+ 	spinlock_t lock;
+ } seqlock_t;
+ 
+@@ -192,6 +197,21 @@ typedef struct {
+  * These macros triggered gcc-3.x compile-time problems.  We think these are
+  * OK now.  Be cautious.
+  */
++#define __RAW_SEQLOCK_UNLOCKED(lockname)			\
++	{							\
++		.seqcount = SEQCNT_ZERO,			\
++		.lock =	__RAW_SPIN_LOCK_UNLOCKED(lockname)	\
++	}
++
++#define raw_seqlock_init(x)					\
++	do {							\
++		seqcount_init(&(x)->seqcount);			\
++		raw_spin_lock_init(&(x)->lock);			\
++	} while (0)
++
++#define DEFINE_RAW_SEQLOCK(x) \
++		raw_seqlock_t x = __RAW_SEQLOCK_UNLOCKED(x)
++
+ #define __SEQLOCK_UNLOCKED(lockname)			\
+ 	{						\
+ 		.seqcount = SEQCNT_ZERO,		\
+@@ -210,6 +230,11 @@ typedef struct {
+ /*
+  * Read side functions for starting and finalizing a read side section.
+  */
++static inline unsigned read_raw_seqbegin(const raw_seqlock_t *sl)
++{
++	return read_seqcount_begin(&sl->seqcount);
++}
++
+ #ifndef CONFIG_PREEMPT_RT_FULL
+ static inline unsigned read_seqbegin(const seqlock_t *sl)
+ {
+@@ -238,6 +263,11 @@ repeat:
+ }
+ #endif
+ 
++static inline unsigned read_raw_seqretry(const raw_seqlock_t *sl, unsigned start)
++{
++	return read_seqcount_retry(&sl->seqcount, start);
++}
++
+ static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
+ {
+ 	return read_seqcount_retry(&sl->seqcount, start);
+@@ -248,6 +278,64 @@ static inline unsigned read_seqretry(const seqlock_t *sl, unsigned start)
+  * Acts like a normal spin_lock/unlock.
+  * Don't need preempt_disable() because that is in the spin_lock already.
+  */
++static inline void write_raw_seqlock(raw_seqlock_t *sl)
++{
++	raw_spin_lock(&sl->lock);
++	__write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_raw_sequnlock(raw_seqlock_t *sl)
++{
++	__write_seqcount_end(&sl->seqcount);
++	raw_spin_unlock(&sl->lock);
++}
++
++static inline void write_raw_seqlock_bh(raw_seqlock_t *sl)
++{
++	raw_spin_lock_bh(&sl->lock);
++	__write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_raw_sequnlock_bh(raw_seqlock_t *sl)
++{
++	__write_seqcount_end(&sl->seqcount);
++	raw_spin_unlock_bh(&sl->lock);
++}
++
++static inline void write_raw_seqlock_irq(raw_seqlock_t *sl)
++{
++	raw_spin_lock_irq(&sl->lock);
++	__write_seqcount_begin(&sl->seqcount);
++}
++
++static inline void write_raw_sequnlock_irq(raw_seqlock_t *sl)
++{
++	__write_seqcount_end(&sl->seqcount);
++	raw_spin_unlock_irq(&sl->lock);
++}
++
++static inline unsigned long __write_raw_seqlock_irqsave(raw_seqlock_t *sl)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&sl->lock, flags);
++	__write_seqcount_begin(&sl->seqcount);
++	return flags;
++}
++
++#define write_raw_seqlock_irqsave(lock, flags)				\
++	do { flags = __write_raw_seqlock_irqsave(lock); } while (0)
++
++static inline void
++write_raw_sequnlock_irqrestore(raw_seqlock_t *sl, unsigned long flags)
++{
++	__write_seqcount_end(&sl->seqcount);
++	raw_spin_unlock_irqrestore(&sl->lock, flags);
++}
++
++/*
++ * non raw versions
++ */
+ static inline void write_seqlock(seqlock_t *sl)
+ {
+ 	spin_lock(&sl->lock);
