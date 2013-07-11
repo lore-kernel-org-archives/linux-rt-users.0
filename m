@@ -1,97 +1,111 @@
-From: Simon Falsig <simon@newtec.dk>
-Subject: Re: Real-time kernel thread performance and optimization
-Date: Thu, 11 Jul 2013 08:32:25 +0200
-Message-ID: <d65eee941637bbf73bb2f5e939230e04@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 3.8.13-rt14
+Date: Thu, 11 Jul 2013 09:38:58 +0200
+Message-ID: <20130711073858.GA3695@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: dvhart@infradead.org, frank.rowand@am.sony.com, jkacur@redhat.com
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from eu1sys200aog113.obsmtp.com ([207.126.144.135]:57740 "HELO
-	eu1sys200aog113.obsmtp.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with SMTP id S1755031Ab3GKGc0 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:36658 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755602Ab3GKHjA convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Jul 2013 02:32:26 -0400
-Received: by mail-lb0-f171.google.com with SMTP id 13so6322476lba.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 10 Jul 2013 23:32:24 -0700 (PDT)
+	Thu, 11 Jul 2013 03:39:00 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->On 12/20/2012 12:21 AM, Simon Falsig wrote:
->> On 12/20/2012 01:12 AM, Darren Hart wrote:
->>> On 12/17/2012 02:18 PM, Frank Rowand wrote:
->>>> On 12/11/12 06:30, Simon Falsig wrote:
->>>>
->>>> < snip >
->>>>
->>>>>>> Once I get this finished up, I'll be happy to do a complete
->>>>>>> write-up of the timer-thread code, if anyone is interested. I
->>>>>>> remember looking for something similar (but without success), when
->>>>>>> I wrote the code earlier this year.
->>>>>>
->>>>>> It would be very useful to add your results to the wiki.
->>>>>>
->>>>>> -Frank
->>>>>
->>>>> Cool - is there any particular place it should go? A how-to, FAQ
->>>>> entry, etc? Just so I know how to do the write-up...
->>>>
->>>> https://rt.wiki.kernel.org/index.php/Main_Page would be my default
->>>> suggestion.  I'm not quite sure where on the wiki would be good
->>>> though.  Maybe under "Tips and Techniques"?
->>>>
->>>> I added the rtwiki maintainers to the cc: list.
->>>
->>> I don't have all the context, but this sounds a bit more like
-something
->> for
->>> linux/Documentation (possibly for the preempt-rt patch set). If not,
-the
->>> Documentation section on the wiki is a possibility.
->>> --
->>> Darren Hart
->>> Intel Open Source Technology Center
->>> Yocto Project - Technical Lead - Linux Kernel
->>
->> As I see it, the write-up could be done in two ways - 1) as a simple
-code
->> example of a real-time loop in a kernel module, 2) as a blog-like post
-of
->> the process I went through, investigating the performance, and
-optimizing
->> my code.
->>
->> In the case of 1), I guess it could be added to
->> https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO, as a kernel
-version
->> of the realtime example, or possibly to
->> https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
-under
->> "Building Device Drivers"? In the case of 2) though, it could maybe be
-on
->> its own page under "Tips and techniques"?
->
-> I'd leave the exploration type write-up to your blog and we can link to
-> it. An explicit example in one of the locations above also sounds
-> appropriate.
->
-> Thanks,
->
-> Darren
+Dear RT Folks,
 
-So, it's been long overdue for some time now, but I finally got around to
-finishing the writeup on my own blog. If anyone is still interested, it
-can be found as a 3-part story here:
+I'm pleased to announce the 3.8.13-rt14 release.
 
-http://www.falsig.org/simon/blog/2013/03/30/real-time-linux-kernel-drivers
--part-1-the-setup/
-http://www.falsig.org/simon/blog/2013/07/10/real-time-linux-kernel-drivers
--part-2-testing-and-first-implementation/
-http://www.falsig.org/simon/blog/2013/07/10/real-time-linux-kernel-drivers
--part-3-the-better-implementation/
+changes since v3.8.13-rt13:
+- added a patch from Uwe Kleine-K=C3=B6nig to fix the UP breakage intro=
+duced by
+  the recent s/sbin spinlocks/raw_spin_lock/ change.
+- added a fix for a livelock of workqueue vs ata-piix. Found by Carsten
+  Emde, patch proposed by Thomas Gleixner.
 
-Any comments are more than welcome - and feel free to adapt any of the
-code examples and put them on the wiki, if that could be of any help.
+The delta patch against v3.8.13-rt13 is appended below and can be found=
+ here:
 
-Best regards,
-Simon
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.=
+8.13-rt13-rt14.patch.xz
+
+The RT patch against 3.8.13 can be found here:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13-=
+rt14.patch.xz
+
+The split quilt queue is available at:
+
+  https://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.8.1=
+3-rt14.tar.xz
+
+Sebastian
+
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
+ #else
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
+ }
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index 0d49ddf..99855b3 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -42,6 +42,7 @@
+ #include <linux/lockdep.h>
+ #include <linux/idr.h>
+ #include <linux/locallock.h>
++#include <linux/delay.h>
+=20
+ #include "workqueue_sched.h"
+=20
+@@ -1157,7 +1158,7 @@ static int try_to_grab_pending(struct work_struct=
+ *work, bool is_dwork,
+ 	local_unlock_irqrestore(pendingb_lock, *flags);
+ 	if (work_is_canceling(work))
+ 		return -ENOENT;
+-	cpu_relax();
++	cpu_chill();
+ 	return -EAGAIN;
+ }
+=20
+diff --git a/localversion-rt b/localversion-rt
+index 9f7d0bd..08b3e75 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt13
++-rt14
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
