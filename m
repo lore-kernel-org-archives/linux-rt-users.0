@@ -1,41 +1,106 @@
-From: Michael Haberler <mail17@mah.priv.at>
-Subject: RT thread status display?
-Date: Mon, 15 Jul 2013 15:58:48 +0200
-Message-ID: <3220ECFD-B7E4-4D2F-82F4-B4BE2C36EE4E@mah.priv.at>
-Mime-Version: 1.0 (Mac OS X Mail 6.5 \(1508\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH 3.4-rt] hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
+Date: Mon, 15 Jul 2013 11:32:44 -0400
+Message-ID: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Cc: <stable-rt@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	Zhao Hongjiang <zhaohongjiang@huawei.com>,
+	Weng Meiling <wengmeiling.weng@huawei.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mah2.mah.priv.at ([86.59.12.251]:33685 "EHLO mah.priv.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1756800Ab3GOOGp convert rfc822-to-8bit (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:45205 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932533Ab3GOPdC (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Jul 2013 10:06:45 -0400
-Received: from macbook.stiwoll.mah.priv.at (macbook.stiwoll.mah.priv.at [193.228.47.195])
-	by mah.priv.at (Postfix) with ESMTPSA id B17F52C00A4
-	for <linux-rt-users@vger.kernel.org>; Mon, 15 Jul 2013 15:58:48 +0200 (CEST)
+	Mon, 15 Jul 2013 11:33:02 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-we have an application with several RT threads within a single process - those show up nicely in say 'top -H'
+From: Zhao Hongjiang <zhaohongjiang@huawei.com>
 
-how can a correlate a Posix thread id to the PID column in top? If nothing else, we can do it via a log entry
+When we run the test "taskset -c 1 stress -m 1 --vm-bytes 50M" and
+"taskset -c 1 cyclictest -t 1 -p 80 -n -m -v" with rt closed 3.4.26-rt38 kernel,
+the cyclictest's result is anomalous as follow:
+       0:     278:       1
+       0:     279:       2
+       0:     280:      17
+       0:     281:    1657
+       0:     282:    1680
+       0:     283:    4678
+       0:     284:    7026
+       0:     285:    6678
+       0:     286:    9677
+       0:     287:   12678
+       0:     288:   13090
+       0:     289:   14678
+       0:     290:   17677
+       0:     291:   20155
+       0:     292:   19678
+       0:     293:   22679
+       0:     294:   25676
+       0:     295:   26218
+       0:     296:   27679
+       0:     297:   30677
+       0:     298:   33283
+       0:     299:   32677
+       0:     300:   35676
+and the result is increase continuously forever. We find that the patch
+("hrtimer: fixup hrtimer callback changes for preempt-rt") has missed
+hrtimer_peek_ahead_timers() in hrtimer_rt_run_pending() fuction in nort
+code. We fix this and the test result isn't increase continuously as same
+as the result with nort 3.4.26 kernel as follow:
+       0:     636:       8
+       0:     637:       7
+       0:     638:       8
+       0:     639:       9
+       0:     640:       7
+       0:     641:       9
+       0:     642:       8
+       0:     643:       8
+       0:     644:       8
+       0:     645:      32
+       0:     646:    8683
+       0:     647:    7760
+       0:     648:    6784
+       0:     649:    5797
+       0:     650:    4810
+       0:     651:    3823
+       0:     652:    2836
+       0:     653:    1849
+       0:     654:     862
+       0:     655:       7
+       0:     656:       7
+       0:     657:       7
+       0:     658:       6
+       0:     659:       8
+       0:     660:       7
 
-Is there a way to pass a string which reappears in top/ps output (like a modifed argv or the like)? (threads are named in our application)
+Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
+Signed-off-by: Weng Meiling <wengmeiling.weng@huawei.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[PG: direct cherry pick of b236e408 from v3.6-rt]
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-
-what I'm looking for is roughly the equivalent of this http://www.xenomai.org/index.php//proc/xenomai/stat for rt-preempt
-
-(in Xenomai the thread names are shown, so no need to correlate thread id's)
-
-any better suggestions than ps/top?
-
-
-thanks in advance
-
-- Michael
-
-
-
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index c5f8b11..9d96d7a 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1430,7 +1430,11 @@ static int hrtimer_rt_defer(struct hrtimer *timer)
+ 
+ #else
+ 
+-static inline void hrtimer_rt_run_pending(void) { }
++static inline void hrtimer_rt_run_pending(void)
++{
++	hrtimer_peek_ahead_timers();
++}
++
+ static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
+ 
+ #endif
+-- 
+1.8.1.2
 
