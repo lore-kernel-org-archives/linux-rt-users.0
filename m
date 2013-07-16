@@ -1,78 +1,85 @@
-From: "Jenisch Stefan" <Stefan.Jenisch@emco.at>
-Subject: AW: RT thread status display?
-Date: Tue, 16 Jul 2013 07:37:40 +0200
-Message-ID: <AAFC45227224154C86D130E6B3CB4F360422BC3A@athafpm01.emco.at>
-References: <3220ECFD-B7E4-4D2F-82F4-B4BE2C36EE4E@mah.priv.at>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?= <uwe@kleine-koenig.org>
+Subject: [PATCH rt-tests] Makefile: complement user-supplied CFLAGS with needed parameters
+Date: Tue, 16 Jul 2013 17:51:40 +0200
+Message-ID: <1373989900-25351-1-git-send-email-uwe@kleine-koenig.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: <linux-rt-users@vger.kernel.org>
+Cc: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+To: linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.emco.at ([194.107.90.51]:3268 "HELO mail.emco.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
-	id S1751341Ab3GPFxB convert rfc822-to-8bit (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:55138 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932590Ab3GPPvu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 16 Jul 2013 01:53:01 -0400
-Content-class: urn:content-classes:message
-In-Reply-To: <3220ECFD-B7E4-4D2F-82F4-B4BE2C36EE4E@mah.priv.at>
+	Tue, 16 Jul 2013 11:51:50 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi folks,
+=46rom: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 
-=46ound a solution to this problem using:
+=46or compilation to work
 
-#include <pthread.h>
-int pthread_setname_np(pthread_t thread, const char *name);
+	-D_GNU_SOURCE -Isrc/include
 
-Now I got custom thread names using top -H, htop (Using Option in "Setu=
-p -> Display options -> show custom thread names") and ps -e -T.
+is needed to be passed to the compiler. For Debian packaging several
+things are added to CFLAGS but not these two from above yielding compil=
+ation
+errors, similar to:
 
-Also see:
+	$ make CFLAGS=3D-Wall cyclictest
+	cc -D VERSION_STRING=3D0.84 -c src/cyclictest/cyclictest.c -Wall
+	In file included from src/cyclictest/cyclictest.c:37:0:
+	src/cyclictest/rt_numa.h:17:22: fatal error: rt-utils.h: No such file =
+or directory
+	compilation terminated.
+	make: *** [cyclictest.o] Error 1
 
-http://stackoverflow.com/questions/2369738/can-i-set-the-name-of-a-thre=
-ad-in-pthreads-linux
+So add the needed parameters unconditionally. There is no harm if they
+are included in the user supplied CFLAGS and so passed twice.
 
-Regards,
-Stefan J.
+Moreover be a bit more correct about CFLAGS/CPPFLAGS. Both should be
+passed to the compiler with CFLAGS taking options for the compiler and
+CPPFLAGS taking options for the preprocessor. This is also needed for
+Debian packaging where the helper scripts set CPPFLAGS.
 
------Urspr=FCngliche Nachricht-----
-Von: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@=
-vger.kernel.org] Im Auftrag von Michael Haberler
-Gesendet: Montag, 15. Juli 2013 15:59
-An: linux-rt-users@vger.kernel.org
-Betreff: RT thread status display?
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>=20
+---
+ Makefile |    7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
 
-we have an application with several RT threads within a single process =
-- those show up nicely in say 'top -H'
-
-how can a correlate a Posix thread id to the PID column in top? If noth=
-ing else, we can do it via a log entry
-
-Is there a way to pass a string which reappears in top/ps output (like =
-a modifed argv or the like)? (threads are named in our application)
-
-
-what I'm looking for is roughly the equivalent of this http://www.xenom=
-ai.org/index.php//proc/xenomai/stat for rt-preempt
-
-(in Xenomai the thread names are shown, so no need to correlate thread =
-id's)
-
-any better suggestions than ps/top?
-
-
-thanks in advance
-
-- Michael
-
-
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in the body of a message to majordomo@vger.kernel.org More majordomo=
- info at  http://vger.kernel.org/majordomo-info.html
+--- a/Makefile
++++ b/Makefile
+@@ -20,7 +20,8 @@ ifneq ($(filter x86_64 i386 ia64 mips po
+ NUMA 	:=3D 1
+ endif
+=20
+-CFLAGS ?=3D -D_GNU_SOURCE -Wall -Wno-nonnull -Isrc/include
++CFLAGS ?=3D -Wall -Wno-nonnull
++CPPFLAGS +=3D -D_GNU_SOURCE -Isrc/include
+ LDFLAGS ?=3D
+=20
+ ifndef DEBUG
+@@ -47,11 +48,11 @@ VPATH	+=3D src/lib
+ VPATH	+=3D src/hackbench
+=20
+ %.o: %.c
+-	$(CC) -D VERSION_STRING=3D$(VERSION_STRING) -c $< $(CFLAGS)
++	$(CC) -D VERSION_STRING=3D$(VERSION_STRING) -c $< $(CFLAGS) $(CPPFLAG=
+S)
+=20
+ # Pattern rule to generate dependency files from .c files
+ %.d: %.c
+-	@$(CC) -MM $(CFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@ ||=
+ rm -f $@
++	@$(CC) -MM $(CFLAGS) $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ :=
+ ,g' > $@ || rm -f $@
+=20
+ .PHONY: all
+ all: $(TARGETS) hwlatdetect
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
