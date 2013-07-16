@@ -1,106 +1,80 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 3.4-rt] hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
-Date: Mon, 15 Jul 2013 11:32:44 -0400
-Message-ID: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
+From: "Jenisch Stefan" <Stefan.Jenisch@emco.at>
+Subject: AW: RT thread status display?
+Date: Tue, 16 Jul 2013 07:37:40 +0200
+Message-ID: <AAFC45227224154C86D130E6B3CB4F360422BC3A@athafpm01.emco.at>
+References: <3220ECFD-B7E4-4D2F-82F4-B4BE2C36EE4E@mah.priv.at>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <stable-rt@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Zhao Hongjiang <zhaohongjiang@huawei.com>,
-	Weng Meiling <wengmeiling.weng@huawei.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:45205 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932533Ab3GOPdC (ORCPT
+Received: from mail.emco.at ([194.107.90.51]:3268 "HELO mail.emco.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with SMTP
+	id S1751341Ab3GPFxB convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Jul 2013 11:33:02 -0400
+	Tue, 16 Jul 2013 01:53:01 -0400
+Content-class: urn:content-classes:message
+In-Reply-To: <3220ECFD-B7E4-4D2F-82F4-B4BE2C36EE4E@mah.priv.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Zhao Hongjiang <zhaohongjiang@huawei.com>
+Hi folks,
 
-When we run the test "taskset -c 1 stress -m 1 --vm-bytes 50M" and
-"taskset -c 1 cyclictest -t 1 -p 80 -n -m -v" with rt closed 3.4.26-rt38 kernel,
-the cyclictest's result is anomalous as follow:
-       0:     278:       1
-       0:     279:       2
-       0:     280:      17
-       0:     281:    1657
-       0:     282:    1680
-       0:     283:    4678
-       0:     284:    7026
-       0:     285:    6678
-       0:     286:    9677
-       0:     287:   12678
-       0:     288:   13090
-       0:     289:   14678
-       0:     290:   17677
-       0:     291:   20155
-       0:     292:   19678
-       0:     293:   22679
-       0:     294:   25676
-       0:     295:   26218
-       0:     296:   27679
-       0:     297:   30677
-       0:     298:   33283
-       0:     299:   32677
-       0:     300:   35676
-and the result is increase continuously forever. We find that the patch
-("hrtimer: fixup hrtimer callback changes for preempt-rt") has missed
-hrtimer_peek_ahead_timers() in hrtimer_rt_run_pending() fuction in nort
-code. We fix this and the test result isn't increase continuously as same
-as the result with nort 3.4.26 kernel as follow:
-       0:     636:       8
-       0:     637:       7
-       0:     638:       8
-       0:     639:       9
-       0:     640:       7
-       0:     641:       9
-       0:     642:       8
-       0:     643:       8
-       0:     644:       8
-       0:     645:      32
-       0:     646:    8683
-       0:     647:    7760
-       0:     648:    6784
-       0:     649:    5797
-       0:     650:    4810
-       0:     651:    3823
-       0:     652:    2836
-       0:     653:    1849
-       0:     654:     862
-       0:     655:       7
-       0:     656:       7
-       0:     657:       7
-       0:     658:       6
-       0:     659:       8
-       0:     660:       7
+=46ound a solution to this problem using:
 
-Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
-Signed-off-by: Weng Meiling <wengmeiling.weng@huawei.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-[PG: direct cherry pick of b236e408 from v3.6-rt]
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+#include <pthread.h>
+int pthread_setname_np(pthread_t thread, const char *name);
 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index c5f8b11..9d96d7a 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1430,7 +1430,11 @@ static int hrtimer_rt_defer(struct hrtimer *timer)
- 
- #else
- 
--static inline void hrtimer_rt_run_pending(void) { }
-+static inline void hrtimer_rt_run_pending(void)
-+{
-+	hrtimer_peek_ahead_timers();
-+}
-+
- static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
- 
- #endif
--- 
-1.8.1.2
+Now I got custom thread names using top -H, htop (Using Option in "Setu=
+p -> Display options -> show custom thread names") and ps -e -T.
 
+Also see:
+
+http://stackoverflow.com/questions/2369738/can-i-set-the-name-of-a-thre=
+ad-in-pthreads-linux
+
+Regards,
+Stefan J.
+
+-----Urspr=FCngliche Nachricht-----
+Von: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-owner@=
+vger.kernel.org] Im Auftrag von Michael Haberler
+Gesendet: Montag, 15. Juli 2013 15:59
+An: linux-rt-users@vger.kernel.org
+Betreff: RT thread status display?
+
+we have an application with several RT threads within a single process =
+- those show up nicely in say 'top -H'
+
+how can a correlate a Posix thread id to the PID column in top? If noth=
+ing else, we can do it via a log entry
+
+Is there a way to pass a string which reappears in top/ps output (like =
+a modifed argv or the like)? (threads are named in our application)
+
+
+what I'm looking for is roughly the equivalent of this http://www.xenom=
+ai.org/index.php//proc/xenomai/stat for rt-preempt
+
+(in Xenomai the thread names are shown, so no need to correlate thread =
+id's)
+
+any better suggestions than ps/top?
+
+
+thanks in advance
+
+- Michael
+
+
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in the body of a message to majordomo@vger.kernel.org More majordomo=
+ info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
