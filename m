@@ -1,32 +1,47 @@
-From: "Stepina, Alina" <Alina.Stepina@emc.com>
-Subject: Cgroups: RT-Scheduler
-Date: Mon, 29 Jul 2013 02:33:32 -0400
-Message-ID: <9BD9A5CBDB7AA84C904151C4DB793B73FDD165B2@MX18A.corp.emc.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.10.4-rt1
+Date: Thu, 1 Aug 2013 13:24:10 +0200 (CEST)
+Message-ID: <alpine.DEB.2.02.1308011215160.4089@ionos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hop-nat-141.emc.com ([168.159.213.141]:33053 "EHLO
-	mexforward.lss.emc.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751440Ab3G2Gds convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Jul 2013 02:33:48 -0400
-Received: from hop04-l1d11-si02.isus.emc.com (HOP04-L1D11-SI02.isus.emc.com [10.254.111.55])
-	by mexforward.lss.emc.com (Switch-3.4.3/Switch-3.4.3) with ESMTP id r6T6Xkbb011248
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Mon, 29 Jul 2013 02:33:46 -0400
-Received: from mailhub.lss.emc.com (mailhubhoprd04.lss.emc.com [10.254.222.226]) by hop04-l1d11-si02.isus.emc.com (RSA Interceptor) for <linux-rt-users@vger.kernel.org>; Mon, 29 Jul 2013 02:33:34 -0400
-Received: from mxhub32.corp.emc.com (mxhub32.corp.emc.com [128.222.70.172])
-	by mailhub.lss.emc.com (Switch-3.4.3/Switch-3.4.3) with ESMTP id r6T6XY4f019081
-	for <linux-rt-users@vger.kernel.org>; Mon, 29 Jul 2013 02:33:34 -0400
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Sebastian Sewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi folks,
-I'm working with cgroup now, and I can't understand RT mechanism's destination. What is the real case for RT scheduler in cgroup? In what cases should I restrict RT-threads? As far as I understand, a RT-thread has highest priority in system, and what the reason to give ability to make TS-thread higher priority? If someone has such experience please share it.
+Dear RT folks!
 
+I'm pleased to announce the 3.10.4-rt1 patch set.
 
-Regards,
-Alina Stepina
+This is a mostly straight forward port of the 3.8 set. I had
+experimented with a new implementation detail, but I did not get it
+into a shape which would have made it applicable to RT.
+
+Known issues:
+
+      - SLAB support not working
+
+      - Untested on ARM and PPC (hapless victims^W^Wtesters are
+        welcome)
+
+I'm about to leave for my annual kids summer camp kitchen duty, so I
+let you fool around with the current pile.
+
+Sebastian will help out while I'm away, so please send tons of patches
+in the next couple of days and get this thing fixed before I
+return. All I'm going to look for in my mail backlog is a mail with
+the subject: 3.10.x-rty is perfect :)
+
+The RT patch against 3.10.4 can be found here:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.10.4-rt1.patch.xz
+
+The split quilt queue is available at:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.10.4-rt1.tar.xz
+
+Enjoy,
+
+        tglx
