@@ -1,97 +1,35 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
 Subject: Re: [ANNOUNCE] 3.10.4-rt1
-Date: Thu, 1 Aug 2013 20:03:01 -0400
-Message-ID: <CAP=VYLp1ERhS4cFtgXGHL2DfCGoJ9VbPvShH5ZOWCpPuSzQY6w@mail.gmail.com>
+Date: Fri, 02 Aug 2013 15:05:17 +1000
+Message-ID: <1375419917.3743.93.camel@pasglop>
 References: <alpine.DEB.2.02.1308011215160.4089@ionos.tec.linutronix.de>
+	 <CAP=VYLp1ERhS4cFtgXGHL2DfCGoJ9VbPvShH5ZOWCpPuSzQY6w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sebastian Sewior <bigeasy@linutronix.de>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Sebastian Sewior <bigeasy@linutronix.de>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f180.google.com ([209.85.212.180]:36778 "EHLO
-	mail-wi0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753779Ab3HBADd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 Aug 2013 20:03:33 -0400
-In-Reply-To: <alpine.DEB.2.02.1308011215160.4089@ionos.tec.linutronix.de>
+Received: from gate.crashing.org ([63.228.1.57]:52527 "EHLO gate.crashing.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754103Ab3HBFFd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Aug 2013 01:05:33 -0400
+In-Reply-To: <CAP=VYLp1ERhS4cFtgXGHL2DfCGoJ9VbPvShH5ZOWCpPuSzQY6w@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Aug 1, 2013 at 7:24 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the 3.10.4-rt1 patch set.
->
-> This is a mostly straight forward port of the 3.8 set. I had
-> experimented with a new implementation detail, but I did not get it
-> into a shape which would have made it applicable to RT.
->
-> Known issues:
->
->       - SLAB support not working
->
->       - Untested on ARM and PPC (hapless victims^W^Wtesters are
->         welcome)
+On Thu, 2013-08-01 at 20:03 -0400, Paul Gortmaker wrote:
+> I've added Ben to the CC in case he has a suggestion on
+> how best to fix this, even though it is not yet mainline.
 
-We break at compile on powerpc with the below.  It happens because
-in earlier RT,  we had TIF_NEED_RESCHED_LAZY as bit 14.  But
-now, in 3.10 it is 18, and in breaking the 16 barrier, we get this:
+Can you exchange with a TIF_ that isn't used in asm ? For example
+TIF_PERFMON_* ? Keep all the asm ones below 16 and move up the ones
+that are used in C only ?
 
-arch/powerpc/kernel/entry_32.S: Assembler messages:
-arch/powerpc/kernel/entry_32.S:367: Error: operand out of range
-(0x000000000004ff87 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:833: Error: operand out of range
-(0x0000000000046006 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:898: Error: operand out of range
-(0x0000000000040000 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:914: Error: operand out of range
-(0x0000000000040004 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:1236: Error: operand out of range
-(0x0000000000040004 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:1257: Error: operand out of range
-(0x0000000000040004 is not between 0x0000000000000000 and
-0x000000000000ffff)
-arch/powerpc/kernel/entry_32.S:1259: Error: operand out of range
-(0x0000000000046006 is not between 0x0000000000000000 and
-0x000000000000ffff)
-make[1]: *** [arch/powerpc/kernel/entry_32.o] Error 1
+Cheers,
+Ben.
 
-I've added Ben to the CC in case he has a suggestion on
-how best to fix this, even though it is not yet mainline.
 
-Paul.
---
-
->
-> I'm about to leave for my annual kids summer camp kitchen duty, so I
-> let you fool around with the current pile.
->
-> Sebastian will help out while I'm away, so please send tons of patches
-> in the next couple of days and get this thing fixed before I
-> return. All I'm going to look for in my mail backlog is a mail with
-> the subject: 3.10.x-rty is perfect :)
->
-> The RT patch against 3.10.4 can be found here:
->
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.10.4-rt1.patch.xz
->
-> The split quilt queue is available at:
->
->   http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patches-3.10.4-rt1.tar.xz
->
-> Enjoy,
->
->         tglx
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
