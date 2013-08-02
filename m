@@ -1,41 +1,57 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [ANNOUNCE] 3.10.4-rt1
-Date: Sat, 03 Aug 2013 07:20:57 +1000
-Message-ID: <1375478457.15999.25.camel@pasglop>
-References: <alpine.DEB.2.02.1308011215160.4089@ionos.tec.linutronix.de>
-	 <CAP=VYLp1ERhS4cFtgXGHL2DfCGoJ9VbPvShH5ZOWCpPuSzQY6w@mail.gmail.com>
-	 <1375419917.3743.93.camel@pasglop> <51FBA9CC.2090206@linutronix.de>
-	 <20130802141936.GA8267@windriver.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: minyard@acm.org
+Subject: [PATCH 3.10-rt1] rt: Fix NO_HZ config use
+Date: Fri, 02 Aug 2013 15:24:34 -0500
+Message-ID: <1375475074-30704-1-git-send-email-minyard@acm.org>
+Cc: linux-rt-users@vger.kernel.org, Corey Minyard <cminyard@mvista.com>
+To: Sebastian Sewior <bigeasy@linutronix.de>,
+	Thomas Gleixnet <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gate.crashing.org ([63.228.1.57]:51848 "EHLO gate.crashing.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751923Ab3HBVV1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Aug 2013 17:21:27 -0400
-In-Reply-To: <20130802141936.GA8267@windriver.com>
+Received: from vms173017pub.verizon.net ([206.46.173.17]:20486 "EHLO
+	vms173017pub.verizon.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753255Ab3HBVYr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Aug 2013 17:24:47 -0400
+Received: from wf-rch.minyard.home ([unknown] [173.74.121.95])
+ by vms173017.mailsrvcs.net
+ (Sun Java(tm) System Messaging Server 7u2-7.02 32bit (built Apr 16 2009))
+ with ESMTPA id <0MQX00BFB7D3AV90@vms173017.mailsrvcs.net> for
+ linux-rt-users@vger.kernel.org; Fri, 02 Aug 2013 15:24:44 -0500 (CDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-08-02 at 10:19 -0400, Paul Gortmaker wrote:
-> 
-> Yep, 3.8 shuffled TIF_MEMDIE to the end of the queue, but
-> in 3.10, mainline commit 22ecbe8dcef has already done that trick.
-> 
-> The list of donor victims that aren't used in asm is getting
-> smaller, but TIF_POLLING_NRFLAG seems OK and it puts RESCHED
-> and RESCHED_LAZY right beside each other.
+From: Corey Minyard <cminyard@mvista.com>
 
-Worst case we can turn it into a 32-bit and but I'd rather avoid it
-as long as we can :-)
+NO_HZ is old, it has become NO_HZ_COMMON. NO_HZ generally still works
+because a leftover NO_HZ in a config file will still work, but it needs
+to be fixed.
 
-Cheers,
-Ben.
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
+---
+ kernel/softirq.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index db2fe2b..d0f189d 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -64,7 +64,7 @@ char *softirq_to_name[NR_SOFTIRQS] = {
+ 	"TASKLET", "SCHED", "HRTIMER", "RCU"
+ };
+ 
+-#ifdef CONFIG_NO_HZ
++#ifdef CONFIG_NO_HZ_COMMON
+ # ifdef CONFIG_PREEMPT_RT_FULL
+ 
+ struct softirq_runner {
+@@ -151,7 +151,7 @@ void softirq_check_pending_idle(void)
+ }
+ # endif
+ 
+-#else /* !NO_HZ */
++#else /* !NO_HZ_COMMON */
+ static inline void softirq_set_runner(unsigned int sirq) { }
+ static inline void softirq_clr_runner(unsigned int sirq) { }
+ #endif
+-- 
+1.7.9.5
 
