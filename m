@@ -1,57 +1,46 @@
-From: minyard@acm.org
-Subject: [PATCH 3.10-rt1] rt: Fix NO_HZ config use
-Date: Fri, 02 Aug 2013 15:24:34 -0500
-Message-ID: <1375475074-30704-1-git-send-email-minyard@acm.org>
-Cc: linux-rt-users@vger.kernel.org, Corey Minyard <cminyard@mvista.com>
-To: Sebastian Sewior <bigeasy@linutronix.de>,
-	Thomas Gleixnet <tglx@linutronix.de>
+From: Viresh Kumar <viresh.kumar@linaro.org>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Wed, 7 Aug 2013 15:25:55 +0530
+Message-ID: <CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
+References: <cover.1352196505.git.viresh.kumar@linaro.org>
+	<d12b25130db5a8b645929eb93d1cf4ddc2d68826.1352196505.git.viresh.kumar@linaro.org>
+	<1354024039.6276.72.camel@gandalf.local.home>
+	<CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
+	<CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
+	<CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+	<alpine.LFD.2.02.1305131223470.2863@ionos>
+	<CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
+	<CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
+	<CAKohpon0dC6O_QBXnbyxUOO0DcrRxTzFkZSJNh6VrNL5kzT66Q@mail.gmail.com>
+	<CAKohpomGSoU5VOcrbonD1=NE-6xDVr+pveAmuXdrzjmLotmEug@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: pjt@google.com, paul.mckenney@linaro.org, tj@kernel.org,
+	mingo@redhat.com, peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	John Stultz <john.stultz@linaro.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from vms173017pub.verizon.net ([206.46.173.17]:20486 "EHLO
-	vms173017pub.verizon.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753255Ab3HBVYr (ORCPT
+Received: from mail-ob0-f181.google.com ([209.85.214.181]:38797 "EHLO
+	mail-ob0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757225Ab3HGJzz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Aug 2013 17:24:47 -0400
-Received: from wf-rch.minyard.home ([unknown] [173.74.121.95])
- by vms173017.mailsrvcs.net
- (Sun Java(tm) System Messaging Server 7u2-7.02 32bit (built Apr 16 2009))
- with ESMTPA id <0MQX00BFB7D3AV90@vms173017.mailsrvcs.net> for
- linux-rt-users@vger.kernel.org; Fri, 02 Aug 2013 15:24:44 -0500 (CDT)
+	Wed, 7 Aug 2013 05:55:55 -0400
+Received: by mail-ob0-f181.google.com with SMTP id dn14so3333939obc.12
+        for <linux-rt-users@vger.kernel.org>; Wed, 07 Aug 2013 02:55:55 -0700 (PDT)
+In-Reply-To: <CAKohpomGSoU5VOcrbonD1=NE-6xDVr+pveAmuXdrzjmLotmEug@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Corey Minyard <cminyard@mvista.com>
+On 24 July 2013 14:47, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+> On 18 June 2013 10:21, Viresh Kumar <viresh.kumar@linaro.org> wrote:
 
-NO_HZ is old, it has become NO_HZ_COMMON. NO_HZ generally still works
-because a leftover NO_HZ in a config file will still work, but it needs
-to be fixed.
+> Hi Thomas,
+>
+> Do you still see some light of hope in this patch :) ?
 
-Signed-off-by: Corey Minyard <cminyard@mvista.com>
----
- kernel/softirq.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index db2fe2b..d0f189d 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -64,7 +64,7 @@ char *softirq_to_name[NR_SOFTIRQS] = {
- 	"TASKLET", "SCHED", "HRTIMER", "RCU"
- };
- 
--#ifdef CONFIG_NO_HZ
-+#ifdef CONFIG_NO_HZ_COMMON
- # ifdef CONFIG_PREEMPT_RT_FULL
- 
- struct softirq_runner {
-@@ -151,7 +151,7 @@ void softirq_check_pending_idle(void)
- }
- # endif
- 
--#else /* !NO_HZ */
-+#else /* !NO_HZ_COMMON */
- static inline void softirq_set_runner(unsigned int sirq) { }
- static inline void softirq_clr_runner(unsigned int sirq) { }
- #endif
--- 
-1.7.9.5
-
+Ping!!
