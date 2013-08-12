@@ -1,58 +1,45 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.10.4-rt1 : too many arguments to function 'phy_connect'
-Date: Mon, 12 Aug 2013 13:12:36 +0200
-Message-ID: <20130812111236.GD23040@linutronix.de>
-References: <52088F6B.8080707@onera.fr>
+Subject: Re: 3.8.10-rt1 not compiling
+Date: Mon, 12 Aug 2013 13:44:47 +0200
+Message-ID: <20130812114447.GE23040@linutronix.de>
+References: <loom.20130809T204344-6@post.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org
-To: Paul Chavent <Paul.Chavent@onera.fr>
+To: matthew henschel <henschel@capaccess.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:43788 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:43896 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752604Ab3HLLNa (ORCPT
+	with ESMTP id S1755160Ab3HLLos (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 12 Aug 2013 07:13:30 -0400
+	Mon, 12 Aug 2013 07:44:48 -0400
 Content-Disposition: inline
-In-Reply-To: <52088F6B.8080707@onera.fr>
+In-Reply-To: <loom.20130809T204344-6@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Paul Chavent | 2013-08-12 09:31:55 [+0200]:
+* matthew henschel | 2013-08-09 18:46:15 [+0000]:
 
->Hi.
-Hi Paul,
+>probably a simple fix:
+>[output snipped]
+>  LD      vmlinux.o
+>  MODPOST vmlinux.o
+>  GEN     .version
+>  CHK     include/generated/compile.h
+>  UPD     include/generated/compile.h
+>  CC      init/version.o
+>  LD      init/built-in.o
+>kernel/built-in.o: In function `__tick_nohz_idle_enter':
+>tick-sched.c:(.text+0x40db8): undefined reference to
+>`softirq_check_pending_idle'
+>make: *** [vmlinux] Error 1
+>Exit 2
 
->When i compile this version (3.10.4-rt1) for typical da850 (arm omap)
->config i get this error :
->
->  CC      drivers/net/ethernet/ti/davinci_emac.o
->drivers/net/ethernet/ti/davinci_emac.c: In function 'emac_dev_open':
->drivers/net/ethernet/ti/davinci_emac.c:1604:9: error: too many
->arguments to function 'phy_connect'
->         PHY_INTERFACE_MODE_MII);
->         ^
->In file included from drivers/net/ethernet/ti/davinci_emac.c:56:0:
->include/linux/phy.h:522:21: note: declared here
-> struct phy_device * phy_connect(struct net_device *dev, const char
->*bus_id,
->                     ^
->
->There are some suspect lines in the patch that add an extra argument
->to the phy_connect function without modifying its signature.
->
->The compilation complete if i remove this extra arg (but the kernel
->don't start, i will check my config for this point).
-
-The series files has a bunch of cpsw patches. For the next -rt release
-I'm going to remove all of them as they were only required for the v3.8
-release were I backported the cpsw driver. If you drop them, cpsw will
-compile. After quick testing I've seen that the cpsw wasn't running nice
-but did not crash / hang the system. That is something that should be
-investigated.
-
->Regards.
->
->Paul.
+Can you clean your tree and recompile? There seems to be something out
+of sync. Both __tick_nohz_idle_enter() and softirq_check_pending_idle()
+are behind CONFIG_NO_HZ_COMMON so it is unlikely that in a normal
+build you have one symbol but not the other.
+I took your config file, removed radeon/R200_cp.bin from it and it built
+without a problem.
 
 Sebastian
