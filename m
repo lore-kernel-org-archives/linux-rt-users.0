@@ -1,49 +1,33 @@
-From: scameron@beardog.cce.hp.com
-Subject: Re: [PATCH] hpsa: fix warning with smp_processor_id() in preemptible
-Date: Mon, 12 Aug 2013 08:58:45 -0500
-Message-ID: <20130812135845.GA15147@beardog.cce.hp.com>
-References: <alpine.LFD.2.03.1307261640170.2642@tycho> <20130812131312.GF23040@linutronix.de> <1290115203.630841.1376314412366.JavaMail.root@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v3.8-rt] trivial: fix typo in description of PREEMPT_RTB
+Date: Mon, 12 Aug 2013 16:24:14 +0200
+Message-ID: <20130812142414.GH23040@linutronix.de>
+References: <1374680123-14367-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-scsi@vger.kernel.org,
-	James Bottomley <jbottomley@parallels.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	Clark Williams <williams@redhat.com>,
-	scameron@beardog.cce.hp.com
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-scsi-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:44546 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756048Ab3HLOYO convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 12 Aug 2013 10:24:14 -0400
 Content-Disposition: inline
-In-Reply-To: <1290115203.630841.1376314412366.JavaMail.root@redhat.com>
-Sender: linux-scsi-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1374680123-14367-1-git-send-email-u.kleine-koenig@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Aug 12, 2013 at 09:33:32AM -0400, John Kacur wrote:
-> 
-> 
-> ----- Original Message -----
-> > * John Kacur | 2013-07-26 16:42:30 [+0200]:
-> > 
-> > >Signed-off-by: John Kacur <jkacur@redhat.com>
-> > >Acked-by: Stephen <scameron@beardog.cce.hp.com>
-> > 
-> > ping.
-> > 
-> > I checked the branches for-next, scsi-fixes, fixes and misc at [0] and I
-> > didn't see it. I'm going to take this for 3.10-rt but please don't lose
-> > it on its way to Linus :)
-> > 
-> > [0] git://git.kernel.org/pub/scm/linux/kernel/git/jejb/scsi.git
-> 
-> 
-> I hope it was clear to everyone that this patch was intended for upstream.
-> It was discovered by running the real-time kernel, but it exposes a (minor) problem
-> that should be fixed in the mainline kernel. Please apply it there Stephen, and
-> push it upstream appropriately.
+* Uwe Kleine-K=C3=B6nig | 2013-07-24 17:35:23 [+0200]:
 
-I don't have such pushing abilities.  Acking it as I've done is
-all I can do.  Bug James. :)
+>Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 
--- steve
+Thanks, I folded this into the orignial patch.
 
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
