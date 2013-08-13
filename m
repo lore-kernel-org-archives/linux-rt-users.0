@@ -1,43 +1,48 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.10.6-rt3
-Date: Tue, 13 Aug 2013 12:54:26 +0200 (CEST)
-Message-ID: <alpine.DEB.2.02.1308131253040.4089@ionos.tec.linutronix.de>
-References: <20130812163413.GI23040@linutronix.de> <20130812154810.433858a5@gandalf.local.home> <CAP=VYLrd_ZU94Nf0X+FtT3M2Xx85t9FF13o-hV+_xHi7EjTf=w@mail.gmail.com> <5209880E.6080902@osadl.org>
+Date: Tue, 13 Aug 2013 08:08:06 -0400
+Message-ID: <20130813080806.4a16d8d1@gandalf.local.home>
+References: <20130812163413.GI23040@linutronix.de>
+	<20130812154810.433858a5@gandalf.local.home>
+	<CAP=VYLrd_ZU94Nf0X+FtT3M2Xx85t9FF13o-hV+_xHi7EjTf=w@mail.gmail.com>
+	<5209880E.6080902@osadl.org>
+	<alpine.DEB.2.02.1308131253040.4089@ionos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	John Kacur <jkacur@redhat.com>
-To: Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:48735 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756214Ab3HMKyd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 Aug 2013 06:54:33 -0400
-In-Reply-To: <5209880E.6080902@osadl.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.02.1308131253040.4089@ionos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 13 Aug 2013, Carsten Emde wrote:
-> On 08/13/2013 02:47 AM, Paul Gortmaker wrote:
-> > On Mon, Aug 12, 2013 at 3:48 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> > > I'm behind on 3.4-rt, 3.2-rt and of course 3.0-rt. Hopefully, I'll get
-> > > them all out this week.
+On Tue, 13 Aug 2013 12:54:26 +0200 (CEST)
+Thomas Gleixner <tglx@linutronix.de> wrote:
+
+> On Tue, 13 Aug 2013, Carsten Emde wrote:
+> > On 08/13/2013 02:47 AM, Paul Gortmaker wrote:
+> > > On Mon, Aug 12, 2013 at 3:48 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> > > > I'm behind on 3.4-rt, 3.2-rt and of course 3.0-rt. Hopefully, I'll get
+> > > > them all out this week.
+> > > 
+> > > I expect that the 3.10-rt kernel will replace the older RT kernels.
 > > 
-> > I expect that the 3.10-rt kernel will replace the older RT kernels.
+> > We should not forget 3.2 that will be maintained until March
+> > 2016. Thus, let's focus on 3.2 and 3.10 (maintained until August
+> > 2015) and abandon all other 3.x RT versions.
 > 
-> We should not forget 3.2 that will be maintained until March
-> 2016. Thus, let's focus on 3.2 and 3.10 (maintained until August
-> 2015) and abandon all other 3.x RT versions.
+> Yes, please. We need all man power on 3.10 and let's keep 3.2 as a
+> long term supported version along with the nice work from the debian
+> kernel team.
+> 
 
-Yes, please. We need all man power on 3.10 and let's keep 3.2 as a
-long term supported version along with the nice work from the debian
-kernel team.
+Unfortunately, the company that is paying me, is interested in some of
+the other versions.
 
-Thanks,
-
-	tglx
+-- Steve
