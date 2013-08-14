@@ -1,48 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.10.6-rt3
-Date: Tue, 13 Aug 2013 08:08:06 -0400
-Message-ID: <20130813080806.4a16d8d1@gandalf.local.home>
-References: <20130812163413.GI23040@linutronix.de>
-	<20130812154810.433858a5@gandalf.local.home>
-	<CAP=VYLrd_ZU94Nf0X+FtT3M2Xx85t9FF13o-hV+_xHi7EjTf=w@mail.gmail.com>
-	<5209880E.6080902@osadl.org>
-	<alpine.DEB.2.02.1308131253040.4089@ionos.tec.linutronix.de>
+Date: Wed, 14 Aug 2013 20:17:41 +0200
+Message-ID: <520BC9C5.7040706@linutronix.de>
+References: <20130812163413.GI23040@linutronix.de> <CAF+KLxsGtt_+0shjSGbjC4MG7i_yg1NL1zUXuVb-RiN=C44_nA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Carsten Emde <C.Emde@osadl.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.02.1308131253040.4089@ionos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Aaron Fabbri <ajfabbri@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:57799 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758561Ab3HNSRq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Aug 2013 14:17:46 -0400
+In-Reply-To: <CAF+KLxsGtt_+0shjSGbjC4MG7i_yg1NL1zUXuVb-RiN=C44_nA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 13 Aug 2013 12:54:26 +0200 (CEST)
-Thomas Gleixner <tglx@linutronix.de> wrote:
+On 08/14/2013 06:48 PM, Aaron Fabbri wrote:
+> Hi Sebastian,
 
-> On Tue, 13 Aug 2013, Carsten Emde wrote:
-> > On 08/13/2013 02:47 AM, Paul Gortmaker wrote:
-> > > On Mon, Aug 12, 2013 at 3:48 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> > > > I'm behind on 3.4-rt, 3.2-rt and of course 3.0-rt. Hopefully, I'll get
-> > > > them all out this week.
-> > > 
-> > > I expect that the 3.10-rt kernel will replace the older RT kernels.
-> > 
-> > We should not forget 3.2 that will be maintained until March
-> > 2016. Thus, let's focus on 3.2 and 3.10 (maintained until August
-> > 2015) and abandon all other 3.x RT versions.
-> 
-> Yes, please. We need all man power on 3.10 and let's keep 3.2 as a
-> long term supported version along with the nice work from the debian
-> kernel team.
-> 
+Hi Aaron,
 
-Unfortunately, the company that is paying me, is interested in some of
-the other versions.
+> Is there a git tree for this newer 3.10 stuff?  I didn't see a branch
+> here http://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git
 
--- Steve
+There is
+  https://git.kernel.org/cgit/linux/kernel/git/bigeasy/rt-v3.10-devel.git/
+
+which is the quilt queue. I don't have a git tree with the queue
+imported. Is this something a lot of people want to have?
+
+Sebastian
