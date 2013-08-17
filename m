@@ -1,63 +1,55 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.10.6-rt3
-Date: Fri, 16 Aug 2013 09:01:51 +0200
-Message-ID: <520DCE5F.1040402@linutronix.de>
-References: <20130812163413.GI23040@linutronix.de> <520D212F.7030400@localhost> <20130815152210.5ed93696@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.4.57-rt72
+Date: Fri, 16 Aug 2013 23:07:36 -0400
+Message-ID: <20130816230736.55fc9bde@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Kent Overstreet <kmo@daterainc.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37775 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751149Ab3HPHB5 (ORCPT
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:11513 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751634Ab3HQDHi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Aug 2013 03:01:57 -0400
-In-Reply-To: <20130815152210.5ed93696@gandalf.local.home>
+	Fri, 16 Aug 2013 23:07:38 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/15/2013 09:22 PM, Steven Rostedt wrote:
-> On Thu, 15 Aug 2013 11:42:55 -0700
-> Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
-> 
->> On 08/12/2013 09:34 AM, Sebastian Andrzej Siewior wrote:
->>> Dear RT folks!
->>>
->>> I'm pleased to announce the v3.10.6-rt3 patch set.
->>
->> I'm getting this when trying to build:
->>
->> drivers/md/bcache/request.c: In function 'cached_dev_write_complete':
->> drivers/md/bcache/request.c:1008:2: error: implicit declaration of 
->> function 'up_read_non_owner' [-Werror=implicit-function-declaration]
->>    up_read_non_owner(&dc->writeback_lock);
->>    ^
->> drivers/md/bcache/request.c: In function 'request_write':
->> drivers/md/bcache/request.c:1034:2: error: implicit declaration of 
->> function 'down_read_non_owner' [-Werror=implicit-function-declaration]
->>    down_read_non_owner(&dc->writeback_lock);
->>    ^
->> cc1: some warnings being treated as errors
->>
-> 
-> Can you send us your config.
 
-The problem is that bcache is using new semaphore functions which it
-just introduced which rt does not know about. The comment above their
-definition says that it is wrong to use them and completion is the
-right way to do it.
-So my question is, why don't we use completion but this nasty hack?
+Dear RT Folks,
 
-> 
-> Thanks,
-> 
-> -- Steve
+I'm pleased to announce the 3.4.57-rt72 stable release.
 
-Sebastian
+
+This release is just an update to the new stable 3.4.57 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.4-rt
+  Head SHA1: a7e9bc3835e61436f8fb845e8ac1c3a42aef78d1
+
+
+Or to build 3.4.57-rt72 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.57.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.57-rt72.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
