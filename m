@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/3] rcu/swait: Fix RCU conversion of wake_up_all() to swait_wake()
-Date: Mon, 19 Aug 2013 11:35:31 -0400
-Message-ID: <20130819153618.854174262@goodmis.org>
+Subject: [PATCH RT 3/3] swait: Add smp_mb() after setting h->list
+Date: Mon, 19 Aug 2013 11:35:33 -0400
+Message-ID: <20130819153619.148613482@goodmis.org>
 References: <20130819153530.409041534@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -12,40 +12,72 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-rcu-swait-Fix-RCU-conversion-of-wake_up_all-to-swait.patch
+Content-Disposition: inline; filename=0003-swait-Add-smp_mb-after-setting-h-list.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Steven Rostedt <rostedt@goodmis.org>
 
-Reverting the rcu swait patches fixed the boot problem. Then when I was
-looking at the revert itself, this stood out like a sore thumb.
+The raw_spin_unlock() is not a full memory barrier. It only keeps
+things from leaking past it, but does not prevent leaks from entering
+the critical section. That is:
 
- static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp) {
--       swait_wake(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
-+       wake_up_all(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
- }
+ 	p = 1;
 
-See the problem there?
+ 	raw_spin_lock();
+ 	[...]
+ 	raw_spin_unlock();
+
+ 	y = x
+
+ Can turn into:
+
+  	p = 1;
+
+ 	raw_spin_lock();
+
+ 	load x
+
+ 	store p = 1
+
+ 	raw_spin_unlock();
+
+ 	y = x
+
+This means that the condition check in __swait_event() (and friends)
+can be seen before the h->list is set.
+
+ 	raw_spin_lock();
+
+ 	load condition;
+
+ 	store h->list;
+
+ 	raw_spin_unlock();
+
+And the other CPU can see h->list as empty, and this CPU see condition
+as not set, and possibly miss the wake up.
+
+To prevent this from happening, add an mb() after setting the h->list.
 
 Reviewed-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rcutree_plugin.h |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/wait-simple.c |    2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
-index 684b762..dc0c4b2 100644
---- a/kernel/rcutree_plugin.h
-+++ b/kernel/rcutree_plugin.h
-@@ -2036,7 +2036,7 @@ static int rcu_nocb_needs_gp(struct rcu_state *rsp)
-  */
- static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
+diff --git a/kernel/wait-simple.c b/kernel/wait-simple.c
+index 9725a11..2c85626 100644
+--- a/kernel/wait-simple.c
++++ b/kernel/wait-simple.c
+@@ -16,6 +16,8 @@
+ static inline void __swait_enqueue(struct swait_head *head, struct swaiter *w)
  {
--	swait_wake(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
-+	swait_wake_all(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
+ 	list_add(&w->node, &head->list);
++	/* We can't let the condition leak before the setting of head */
++	smp_mb();
  }
  
- /*
+ /* Removes w from head->list. Must be called with head->lock locked. */
 -- 
 1.7.10.4
