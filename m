@@ -1,49 +1,36 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.0.89-rt117
-Date: Fri, 16 Aug 2013 23:09:31 -0400
-Message-ID: <20130816230931.5897275b@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH RT 0/3] rt/rcu/swait: Fix boot up when RCU NOCB_ALL is enabled
+Date: Mon, 19 Aug 2013 11:35:30 -0400
+Message-ID: <20130819153530.409041534@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:9345 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750775Ab3HSPgU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 19 Aug 2013 11:36:20 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-Dear RT Folks,
+Thomas and Sebastian,
 
-I'm pleased to announce the 3.0.89-rt117 stable release.
+These three patches fixes the boot problem that Carsten was having
+with 3.10-rt and RCU_NOCB_ALL
 
+Steven Rostedt (3):
+      rcu/swait: Fix RCU conversion of wake_up_all() to swait_wake()
+      swait: Add memory barrier before checking list empty
+      swait: Add smp_mb() after setting h->list
 
-This release is just an update to the new stable 3.0.89 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.0-rt
-  Head SHA1: 714ab80b94ce6bcd33d9c3320bec3556b54be361
-
-
-Or to build 3.0.89-rt117 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.89.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.89-rt117.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+----
+ kernel/rcutree_plugin.h |    2 +-
+ kernel/wait-simple.c    |    4 ++++
+ 2 files changed, 5 insertions(+), 1 deletion(-)
