@@ -1,81 +1,38 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.10.6-rt3
-Date: Tue, 20 Aug 2013 10:06:51 -0400
-Message-ID: <20130820100651.32e1b79c@gandalf.local.home>
-References: <20130812163413.GI23040@linutronix.de>
-	<520D212F.7030400@localhost>
-	<20130815152210.5ed93696@gandalf.local.home>
-	<520DCE5F.1040402@linutronix.de>
-	<521254A0.6050603@localhost>
-	<20130819202903.692097ea@gandalf.local.home>
-	<20130819210208.426e01b3@gandalf.local.home>
-	<52131747.4010105@linutronix.de>
+From: Joe Korty <joe.korty@ccur.com>
+Subject: network bug in 3.6.11.7
+Date: Tue, 20 Aug 2013 13:15:14 -0400
+Message-ID: <20130820171514.GA16405@tsunami.ccur.com>
+Reply-To: Joe Korty <joe.korty@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Kent Overstreet <kmo@daterainc.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <52131747.4010105@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from flusers.ccur.com ([173.221.59.2]:56914 "EHLO gamx.iccur.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751761Ab3HTRPV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 20 Aug 2013 13:15:21 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 20 Aug 2013 09:14:15 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+Hi Steve,
+I get the following warnings when compiling 3.6.11.7-rt39:
 
-> On 08/20/2013 03:02 AM, Steven Rostedt wrote:
-> > Looking at it more, I can now see why they did what they did.
-> 
-> He is the only user in the whole kernel. It is somehow hard to believe
-> that it can't be solved differently.
-> 
+  net/core/sock.c:212: warning: excess elements in array initializer
+  net/core/sock.c:212: warning: (near initialization for 'af_family_key_strings')
+  net/core/sock.c:228: warning: excess elements in array initializer
+  net/core/sock.c:228: warning: (near initialization for 'af_family_slock_key_strings')
+  net/core/sock.c:244: warning: excess elements in array initializer
+  net/core/sock.c:244: warning: (near initialization for 'af_family_clock_key_strings')
 
-Perhaps. But if I understand the code, this is what they have.
+I traced it down to the patch
+  "net/core/sock.c: add missing VSOCK string in af_family_*_key_strings"
 
-When a request is sent out, the writes must wait till it is complete
-before it can do anything, thus the writers wait. When the request
-finishes (by a different thread), it releases the reader, then the
-writers can continue.
+This is really a fixup to a much larger patch (6,000 lines) in mainline
+called "VSOCK: Introduce VM Sockets", which was not backport to 3.6.11.7.
 
-The problem is that the task that sends the request does not wait for
-it to finish. But until the request does finish, all writers must wait.
-To complicate the matter, it appears that more than one request can be
-in transition at a time. That is, its not just a single request the a
-writer must wait for, it could be many.
+It might be best for 3.6.11.7 to to drop the VSOCK fixup patch.
 
-The only way I can think of at the moment to fix this without
-non-owner, is to set up a wait queue, and a ref count. Basically have
-this:
-
-writer:
-
-  again:
-	down_write(lock);
-	if (refcount) {
-		up_write(lock);
-		wait_event(wq, !refcount);
-		goto again;
-	}
-
-reader:
-	down_read(lock);
-	refcount++;
-	request();
-	up_read(lock);
-
-completion:
-
-	down_read(lock);
-	refcount--;
-	up_read_(lock);
-
-The refcount would need to be an atomic, but I think this would work.
-
-Maybe I'll submit it to get rid of the one user of non_owner().
-
--- Steve
+Regards,
+Joe
