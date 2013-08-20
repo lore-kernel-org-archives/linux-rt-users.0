@@ -1,90 +1,41 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: [PATCH] fix might sleep oops in irq affinity callback hook
-Date: Tue, 20 Aug 2013 13:59:18 -0400
-Message-ID: <20130820175918.GA18125@tsunami.ccur.com>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 3.10.6-rt3
+Date: Tue, 20 Aug 2013 11:58:13 -0700
+Message-ID: <5213BC45.6020900@localhost>
+References: <20130812163413.GI23040@linutronix.de> <520D212F.7030400@localhost> <20130815152210.5ed93696@gandalf.local.home> <520DCE5F.1040402@linutronix.de> <521254A0.6050603@localhost> <20130819202903.692097ea@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Kent Overstreet <kmo@daterainc.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from flusers.ccur.com ([173.221.59.2]:60323 "EHLO gamx.iccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751442Ab3HTR7W (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 20 Aug 2013 13:59:22 -0400
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20130819202903.692097ea@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Fix might_sleep oops in the irq affinity notifier logic.
+On 08/19/2013 05:29 PM, Steven Rostedt wrote:
+> On Mon, 19 Aug 2013 10:23:44 -0700
+> Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
+>
+>>> The problem is that bcache is using new semaphore functions which it
+>>> just introduced which rt does not know about. The comment above their
+>>> definition says that it is wrong to use them and completion is the
+>>> right way to do it.
+>>> So my question is, why don't we use completion but this nasty hack?
+>
+> I think I'm going to send them an email about that.
+>
+>> In the meanwhile, any hope of a patch to be able to compile and test
+>> with my current configuration?
+>
+> Can you boot without enabling CONFIG_BCACHE?
 
-Bug was due to the generic support function
-irq_set_affinity() invoking schedule_work() underneath
-a raw spin lock.  Our workaround is to move the
-schedule_work() down a few lines to where the lock has
-just been dropped.  This may not be ideal, as the resultant
-code is a bit ugly.
-
-This bug was discovered when the sfc networking driver
-was loaded.  Perusal of the kernel source shows that the
-mellanox and infiniband drivers are also likely to suffer
-from this problem.
-
-(applies to 3.6.11.6-rt38, appears to be applicable to
-all later rt's and I expect it is valid for all earlier
-rt's as well).
-
-Signed-off-by: Joe Korty <joe.korty@ccur.com>
-
-Index: b/kernel/irq/manage.c
-===================================================================
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -163,7 +163,7 @@ int irq_do_set_affinity(struct irq_data 
- 	return ret;
- }
- 
--int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
-+static int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
- {
- 	struct irq_chip *chip = irq_data_get_irq_chip(data);
- 	struct irq_desc *desc = irq_data_to_desc(data);
-@@ -179,10 +179,6 @@ int __irq_set_affinity_locked(struct irq
- 		irq_copy_pending(desc, mask);
- 	}
- 
--	if (desc->affinity_notify) {
--		kref_get(&desc->affinity_notify->kref);
--		schedule_work(&desc->affinity_notify->work);
--	}
- 	irqd_set(data, IRQD_AFFINITY_SET);
- 
- 	return ret;
-@@ -205,7 +201,14 @@ int irq_set_affinity(unsigned int irq, c
- 
- 	raw_spin_lock_irqsave(&desc->lock, flags);
- 	ret =  __irq_set_affinity_locked(irq_desc_get_irq_data(desc), mask);
--	raw_spin_unlock_irqrestore(&desc->lock, flags);
-+
-+	if (!ret && desc->affinity_notify) {
-+		kref_get(&desc->affinity_notify->kref);
-+		raw_spin_unlock_irqrestore(&desc->lock, flags);
-+		schedule_work(&desc->affinity_notify->work);
-+	} else
-+		raw_spin_unlock_irqrestore(&desc->lock, flags);
-+
- 	return ret;
- }
- 
-Index: b/include/linux/irq.h
-===================================================================
---- a/include/linux/irq.h
-+++ b/include/linux/irq.h
-@@ -381,7 +381,6 @@ extern void remove_percpu_irq(unsigned i
- 
- extern void irq_cpu_online(void);
- extern void irq_cpu_offline(void);
--extern int __irq_set_affinity_locked(struct irq_data *data,  const struct cpumask *cpumask);
- 
- #ifdef CONFIG_GENERIC_HARDIRQS
- 
+Just to confirm that the kernel builds, installs and boots fine without 
+this option...
+-- Fernando
