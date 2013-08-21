@@ -1,41 +1,30 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.10.6-rt3
-Date: Tue, 20 Aug 2013 11:58:13 -0700
-Message-ID: <5213BC45.6020900@localhost>
-References: <20130812163413.GI23040@linutronix.de> <520D212F.7030400@localhost> <20130815152210.5ed93696@gandalf.local.home> <520DCE5F.1040402@linutronix.de> <521254A0.6050603@localhost> <20130819202903.692097ea@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 0/3] rt/rcu/swait: Fix boot up when RCU NOCB_ALL is
+ enabled
+Date: Wed, 21 Aug 2013 15:41:12 +0200
+Message-ID: <20130821134112.GA16913@linutronix.de>
+References: <20130819153530.409041534@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Kent Overstreet <kmo@daterainc.com>,
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Clark Williams <clark.williams@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130819202903.692097ea@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <20130819153530.409041534@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/19/2013 05:29 PM, Steven Rostedt wrote:
-> On Mon, 19 Aug 2013 10:23:44 -0700
-> Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU> wrote:
->
->>> The problem is that bcache is using new semaphore functions which it
->>> just introduced which rt does not know about. The comment above their
->>> definition says that it is wrong to use them and completion is the
->>> right way to do it.
->>> So my question is, why don't we use completion but this nasty hack?
->
-> I think I'm going to send them an email about that.
->
->> In the meanwhile, any hope of a patch to be able to compile and test
->> with my current configuration?
->
-> Can you boot without enabling CONFIG_BCACHE?
+* Steven Rostedt | 2013-08-19 11:35:30 [-0400]:
 
-Just to confirm that the kernel builds, installs and boots fine without 
-this option...
--- Fernando
+>Thomas and Sebastian,
+Hi Steven,
+
+thanks for the series.
+
+Sebastian
