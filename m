@@ -1,63 +1,36 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH rt] Fix races in ptrace
-Date: Wed, 21 Aug 2013 19:24:31 +0200
-Message-ID: <20130821172431.GD16913@linutronix.de>
-References: <102271374683007@web8f.yandex.ru>
- <20130812164145.GJ23040@linutronix.de>
- <393831376342036@web15d.yandex.ru>
+From: Joe Korty <joe.korty@ccur.com>
+Subject: Re: [PATCH] fix might sleep oops in irq affinity callback hook
+Date: Wed, 21 Aug 2013 17:09:28 -0400
+Message-ID: <20130821210928.GA14467@tsunami.ccur.com>
+References: <20130820175918.GA18125@tsunami.ccur.com>
+ <20130821155347.GB16913@linutronix.de>
+Reply-To: Joe Korty <joe.korty@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Alexander Fyodorov <halcy@yandex.ru>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37943 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751621Ab3HURYd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Aug 2013 13:24:33 -0400
+Received: from flusers.ccur.com ([173.221.59.2]:11620 "EHLO gamx.iccur.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752688Ab3HUVJl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Aug 2013 17:09:41 -0400
 Content-Disposition: inline
-In-Reply-To: <393831376342036@web15d.yandex.ru>
+In-Reply-To: <20130821155347.GB16913@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Alexander Fyodorov | 2013-08-13 01:13:56 [+0400]:
+On Wed, Aug 21, 2013 at 11:53:47AM -0400, Sebastian Andrzej Siewior wrote:
+> Joe could you please test this one? In 3.10 we have one user of
+> __irq_set_affinity_locked() and we might get more.
 
->Hi Sebastian,
-Hi Alexander,
+Hi Sebastian,
+I backported the patch to 3.6.11.6-rt38 and added a few printk's so that
+when daemon started I would see that and when each affinity hook was
+executed I would see that too.
 
->Is there a need to write a test?
+The system came up and the printk for daemon start showed up near where
+the sfc driver started, but no affinity action printk appeared.  Thus
+the patch as written does not seem to work.
 
-It is nice to have so it can be checked if this bug is fixed "some place
-else".
-
-Now that I looked at it for a while, would this fix your trouble?
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -724,6 +724,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	struct task_struct *lock_owner, *self = current;
- 	struct rt_mutex_waiter waiter, *top_waiter;
- 	int ret;
-+	int new_state;
- 
- 	rt_mutex_init_waiter(&waiter, true);
- 
-@@ -744,8 +745,11 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	 * try_to_wake_up().
- 	 */
- 	pi_lock(&self->pi_lock);
-+	new_state = TASK_UNINTERRUPTIBLE;
-+	if (task_is_traced(self))
-+		new_state |= __TASK_TRACED;
- 	self->saved_state = self->state;
--	__set_current_state(TASK_UNINTERRUPTIBLE);
-+	__set_current_state(new_state);
- 	pi_unlock(&self->pi_lock);
- 
- 	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
-
-This should avoid that the trace state is lost while waiting on that
-mutex and the checks for "is traced" may remain the same.
-
-Sebastian
+Joe
