@@ -1,37 +1,63 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 0/3] hwlat-detector: Have it actually find hardware
- latency
-Date: Wed, 21 Aug 2013 17:59:45 +0200
-Message-ID: <20130821155945.GC16913@linutronix.de>
-References: <20130819213324.405942342@goodmis.org>
+Subject: Re: [PATCH rt] Fix races in ptrace
+Date: Wed, 21 Aug 2013 19:24:31 +0200
+Message-ID: <20130821172431.GD16913@linutronix.de>
+References: <102271374683007@web8f.yandex.ru>
+ <20130812164145.GJ23040@linutronix.de>
+ <393831376342036@web15d.yandex.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Clark Williams <clark.williams@gmail.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Alexander Fyodorov <halcy@yandex.ru>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:37943 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751621Ab3HURYd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Aug 2013 13:24:33 -0400
 Content-Disposition: inline
-In-Reply-To: <20130819213324.405942342@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <393831376342036@web15d.yandex.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2013-08-19 17:33:24 [-0400]:
+* Alexander Fyodorov | 2013-08-13 01:13:56 [+0400]:
 
->Thi patch series fixes up hwlat-detector to check the entire path
->of time for a latency being hit, instead of the quick check between
->two time stamps.
->
->It also uses the trace_local_clock() if available, which is much lighter
->weight than ktime_get() which might produce false positives. As
->the trace clock is used to detect irq latencies, it's suitable for
->hardware latency.
->
->Finally, stop machine is removed and the test is run by a single thread.
+>Hi Sebastian,
+Hi Alexander,
 
-Applied, thanks.
+>Is there a need to write a test?
+
+It is nice to have so it can be checked if this bug is fixed "some place
+else".
+
+Now that I looked at it for a while, would this fix your trouble?
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -724,6 +724,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	struct task_struct *lock_owner, *self = current;
+ 	struct rt_mutex_waiter waiter, *top_waiter;
+ 	int ret;
++	int new_state;
+ 
+ 	rt_mutex_init_waiter(&waiter, true);
+ 
+@@ -744,8 +745,11 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	 * try_to_wake_up().
+ 	 */
+ 	pi_lock(&self->pi_lock);
++	new_state = TASK_UNINTERRUPTIBLE;
++	if (task_is_traced(self))
++		new_state |= __TASK_TRACED;
+ 	self->saved_state = self->state;
+-	__set_current_state(TASK_UNINTERRUPTIBLE);
++	__set_current_state(new_state);
+ 	pi_unlock(&self->pi_lock);
+ 
+ 	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
+
+This should avoid that the trace state is lost while waiting on that
+mutex and the checks for "is traced" may remain the same.
 
 Sebastian
