@@ -1,36 +1,81 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: Re: [PATCH] fix might sleep oops in irq affinity callback hook
-Date: Wed, 21 Aug 2013 17:09:28 -0400
-Message-ID: <20130821210928.GA14467@tsunami.ccur.com>
-References: <20130820175918.GA18125@tsunami.ccur.com>
- <20130821155347.GB16913@linutronix.de>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Alexander Fyodorov <halcy@yandex.ru>
+Subject: Re: [PATCH rt] Fix races in ptrace
+Date: Thu, 22 Aug 2013 18:23:18 +0400
+Message-ID: <96171377181398@web13h.yandex.ru>
+References: <102271374683007@web8f.yandex.ru>
+ <20130812164145.GJ23040@linutronix.de>
+ <393831376342036@web15d.yandex.ru> <20130821172431.GD16913@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from flusers.ccur.com ([173.221.59.2]:11620 "EHLO gamx.iccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752688Ab3HUVJl (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Aug 2013 17:09:41 -0400
-Content-Disposition: inline
-In-Reply-To: <20130821155347.GB16913@linutronix.de>
+Received: from forward3h.mail.yandex.net ([84.201.187.148]:43681 "EHLO
+	forward3h.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753284Ab3HVO3D (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 22 Aug 2013 10:29:03 -0400
+In-Reply-To: <20130821172431.GD16913@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Aug 21, 2013 at 11:53:47AM -0400, Sebastian Andrzej Siewior wrote:
-> Joe could you please test this one? In 3.10 we have one user of
-> __irq_set_affinity_locked() and we might get more.
+21.08.2013, 21:24, "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>:
+> Now that I looked at it for a while, would this fix your trouble?
+>
+> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+> --- a/kernel/rtmutex.c
+> +++ b/kernel/rtmutex.c
+> @@ -724,6 +724,7 @@ static void =9Anoinline __sched rt_spin_lock_slow=
+lock(struct rt_mutex *lock)
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Astruct task_struct *lock_owner, *self =3D =
+current;
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Astruct rt_mutex_waiter waiter, *top_waiter=
+;
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Aint ret;
+> + int new_state;
+>
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Art_mutex_init_waiter(&waiter, true);
+>
+> @@ -744,8 +745,11 @@ static void =9Anoinline __sched rt_spin_lock_slo=
+wlock(struct rt_mutex *lock)
+> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A* try_to_wake_up().
+> =9A=9A=9A=9A=9A=9A=9A=9A=9A=9A*/
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Api_lock(&self->pi_lock);
+> + new_state =3D TASK_UNINTERRUPTIBLE;
+> + if (task_is_traced(self))
+> + new_state |=3D __TASK_TRACED;
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Aself->saved_state =3D self->state;
+> - __set_current_state(TASK_UNINTERRUPTIBLE);
+> + __set_current_state(new_state);
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Api_unlock(&self->pi_lock);
+>
+> =9A=9A=9A=9A=9A=9A=9A=9A=9Aret =3D task_blocks_on_rt_mutex(lock, &wai=
+ter, self, 0);
+>
+> This should avoid that the trace state is lost while waiting on that
+> mutex and the checks for "is traced" may remain the same.
 
-Hi Sebastian,
-I backported the patch to 3.6.11.6-rt38 and added a few printk's so that
-when daemon started I would see that and when each affinity hook was
-executed I would see that too.
+This was the first thing I tried but it did not work. ptrace_check_atta=
+ch() passes TASK_TRACED to wait_task_inactive() which tests for equalit=
+y:
 
-The system came up and the printk for daemon start showed up near where
-the sfc driver started, but no affinity action printk appeared.  Thus
-the patch as written does not seem to work.
+unsigned long wait_task_inactive(struct task_struct *p, long match_stat=
+e)
+< ... >
+                        if (match_state && unlikely(p->state !=3D match=
+_state)
+                            && unlikely(p->saved_state !=3D match_state=
+)) {
 
-Joe
+But this test will fail because we've added TASK_UNINTERRUPTIBLE and po=
+ssibly removed some other bits from p->state. So I decided to add pi_lo=
+ck locking instead - it is slower but it works with 100% guarantee.
+
+Also adding __TASK_TRACED does not help with all the other places where=
+ saved_state is checked and more races might still be hidden.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
