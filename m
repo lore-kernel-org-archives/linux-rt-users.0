@@ -1,30 +1,39 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [ANNOUNCE] 3.10.9-rt5
-Date: Fri, 23 Aug 2013 09:06:08 +0200
-Message-ID: <521709E0.3060505@linutronix.de>
-References: <20130822182127.GA7606@linutronix.de> <20130822145314.32bdb0f9@gandalf.local.home>
+Date: Fri, 23 Aug 2013 09:08:31 +0200
+Message-ID: <52170A6F.6040009@linutronix.de>
+References: <20130822182127.GA7606@linutronix.de> <5216F81A.4050203@localhost>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
 	John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130822145314.32bdb0f9@gandalf.local.home>
+In-Reply-To: <5216F81A.4050203@localhost>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/22/2013 08:53 PM, Steven Rostedt wrote:
->>       - bcache does not compile.
+On 08/23/2013 07:50 AM, Fernando Lopez-Lezcano wrote:
+> On 08/22/2013 11:21 AM, Sebastian Andrzej Siewior wrote:
+>> - hwlat improvements by Steven
+>>
+>> Known issues:
+> ...
+> Trying to build I get (in make modules):
 > 
-> For now, it may be prudent to just make bcache depend on !PREEMPT_RT.
-> 
-> I can send a patch if you want.
+> ERROR: "__udivdi3" [drivers/misc/hwlat_detector.ko] undefined!
+> make[1]: *** [__modpost] Error 1
+> make: *** [modules] Error 2
 
-I was tempted to take one of your two patches. Haven't deiced yet.
+looks like someone forgot to do do_div() instead / which fails on 32bit
+if used on a 64bit dividend.
 
-> -- Steve
+Will fix later.
+
+> (find attached the final configuration used for building)
+> -- Fernando
 
 Sebastian
