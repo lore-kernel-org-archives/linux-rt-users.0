@@ -1,39 +1,41 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.10.9-rt5
-Date: Fri, 23 Aug 2013 09:08:31 +0200
-Message-ID: <52170A6F.6040009@linutronix.de>
-References: <20130822182127.GA7606@linutronix.de> <5216F81A.4050203@localhost>
+Subject: Re: [PATCH] fix might sleep oops in irq affinity callback hook
+Date: Fri, 23 Aug 2013 09:23:36 +0200
+Message-ID: <52170DF8.90703@linutronix.de>
+References: <20130820175918.GA18125@tsunami.ccur.com> <20130821155347.GB16913@linutronix.de> <20130821210928.GA14467@tsunami.ccur.com> <20130822190103.GA3198@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5216F81A.4050203@localhost>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Joe Korty <joe.korty@ccur.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:46365 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753350Ab3HWHXk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 23 Aug 2013 03:23:40 -0400
+In-Reply-To: <20130822190103.GA3198@tsunami.ccur.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/23/2013 07:50 AM, Fernando Lopez-Lezcano wrote:
-> On 08/22/2013 11:21 AM, Sebastian Andrzej Siewior wrote:
->> - hwlat improvements by Steven
->>
->> Known issues:
-> ...
-> Trying to build I get (in make modules):
+On 08/22/2013 09:01 PM, Joe Korty wrote:
+> Hi Sebastian,
+
+Hi Joe,
+
+> For the rt kernel, I get the message only for the first
+> time the affinity for some SFC IRQ is changed.  Subsequent
+> changes of the _same_ IRQ do not have the callback invoked.
+> If I go and change some other SFC IRQ that will also invoke
+> the callback the first time only.
+
+it seems the thread does not get woken up second invocation. I try to
+check this somehow here.
+
 > 
-> ERROR: "__udivdi3" [drivers/misc/hwlat_detector.ko] undefined!
-> make[1]: *** [__modpost] Error 1
-> make: *** [modules] Error 2
-
-looks like someone forgot to do do_div() instead / which fails on 32bit
-if used on a 64bit dividend.
-
-Will fix later.
-
-> (find attached the final configuration used for building)
-> -- Fernando
-
+> 
+> Regards,
+> Joe
+> 
 Sebastian
