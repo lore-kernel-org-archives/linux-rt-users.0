@@ -1,46 +1,44 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.10.9-rt5
-Date: Fri, 23 Aug 2013 13:21:17 -0700
-Message-ID: <5217C43D.6090909@localhost>
-References: <20130822182127.GA7606@linutronix.de> <5216F81A.4050203@localhost> <52170A6F.6040009@linutronix.de> <52179950.6010601@localhost> <20130823175628.GA9130@linutronix.de>
+From: Wolfgang Wallner <Wolfgang.Wallner@br-automation.com>
+Subject: Configuration of real-time tasks in PREEMPT_RT kernels > 2.6.33
+Date: Mon, 26 Aug 2013 14:28:35 +0200
+Message-ID: <OF6C5E1E92.67FE0167-ONC1257BD3.0043D8B2-C1257BD3.00448947@br-automation.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20130823175628.GA9130@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail2.br-automation.com ([213.33.116.61]:44753 "EHLO
+	mail2.br-automation.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752636Ab3HZMni convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 26 Aug 2013 08:43:38 -0400
+In-Reply-To: 
+References: 
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/23/2013 10:56 AM, Sebastian Andrzej Siewior wrote:
-> * Fernando Lopez-Lezcano | 2013-08-23 10:18:08 [-0700]:
->
->> Please post a patch when/if you have it so I can retry the build...
->> Thanks for taking a look at this!
->
-> Does this fix your trobule?
+Dear RT community,
 
-Yes, it does, thanks! Builds, installs and boots the x86_64 kernel (I 
-did not test the i686 build, I don't have a 32 machine to test).
+I have a question regarding the configuration of real-time tasks in PREEMPT
+_RT kernels > 2.6.33.
+Up to now, I only have experience with 2.6.33-rt.
 
--- Fernando
+I use the openPOWERLINK[1] real-time ethernet stack, and have it running on an x86-box with Ubuntu 13.04.
+I try to use it with two different kernel versions:
+* 2.6.33.7.2-rt30
+* 3.2.48-rt69
 
+When I use kernel version 2.6.33, I get very good results (jitter of ethernet frames on the network < +/-10us).
+But when I use kernel version 3.2, the results are much worse. The jitter on the network increases up to +/-50us.
 
-> diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-> index 0bfa40d..6f61d5f 100644
-> --- a/drivers/misc/hwlat_detector.c
-> +++ b/drivers/misc/hwlat_detector.c
-> @@ -220,7 +220,7 @@ static struct sample *buffer_get_sample(struct sample *sample)
->   #else
->   #define time_type	u64
->   #define time_get()	trace_clock_local()
-> -#define time_to_us(x)	((x) / 1000)
-> +#define time_to_us(x)	div_u64(x, 1000)
->   #define time_sub(a, b)	((a) - (b))
->   #define init_time(a, b)	a = b
->   #define time_u64(a)	a
+In my configuration, the openPOWERLINK stack consists of a kernel module (data link layer) and a user space application.
+
+I know that in 2.6.33 there were splitted softirqs, and that it was possible to configure each thread with its own priority.
+What are the steps that need to be done in 3.x to achieve similar results as in 2.6.33?
+
+kind regards,
+Wolfgang Wallner
+
+[1] http://sourceforge.net/projects/openpowerlink/
+
+PS: Running cyclictest (e.g. sudo cyclictest -p 99 -n -i 500) on both kernels shows very similar results (avg latency: 15us, max latency 35us). 
