@@ -1,31 +1,172 @@
-From: Wolfgang Wallner <Wolfgang.Wallner@br-automation.com>
-Subject: Re: Configuration of real-time tasks in PREEMPT_RT kernels > 2.6.33
-Date: Thu, 29 Aug 2013 09:57:56 +0200
-Message-ID: <OF4C15C8C3.0B582488-ONC1257BD6.002BC1C3-C1257BD6.002BC1C4@br-automation.com>
-References: <521D162D.3030301@osadl.org>,
-	<OF6C5E1E92.67FE0167-ONC1257BD3.0043D8B2-C1257BD3.00448947@br-automation.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] fix might sleep oops in irq affinity callback hook
+Date: Thu, 29 Aug 2013 13:22:57 +0200
+Message-ID: <20130829112257.GA15360@linutronix.de>
+References: <20130820175918.GA18125@tsunami.ccur.com>
+ <20130821155347.GB16913@linutronix.de>
+ <20130821210928.GA14467@tsunami.ccur.com>
+ <20130822190103.GA3198@tsunami.ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7BIT
-Cc: linux-rt-users@vger.kernel.org
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Joe Korty <joe.korty@ccur.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail2.br-automation.com ([213.33.116.61]:64960 "EHLO
-	mail2.br-automation.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753929Ab3H2H57 convert rfc822-to-8bit (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:49149 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752618Ab3H2LXD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Aug 2013 03:57:59 -0400
-In-Reply-To: <521D162D.3030301@osadl.org>
+	Thu, 29 Aug 2013 07:23:03 -0400
+Content-Disposition: inline
+In-Reply-To: <20130822190103.GA3198@tsunami.ccur.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Carsten,
+* Joe Korty | 2013-08-22 15:01:03 [-0400]:
 
->> I know that in 2.6.33 there were splitted softirqs, and that it was possible to configure each thread with its own priority.
->> What are the steps that need to be done in 3.x to achieve similar results as in 2.6.33?
->The full story is here -> https://www.osadl.org/?id=930.
+>Hi Sebastian,
+Hi Joe,
 
-Thanks for the info, I will have a look at the 3.2 feature branch.
+>For the rt kernel, I get the message only for the first
+>time the affinity for some SFC IRQ is changed.  Subsequent
+>changes of the _same_ IRQ do not have the callback invoked.
+>If I go and change some other SFC IRQ that will also invoke
+>the callback the first time only.
 
-kind regards,
-Wolfgang Wallner
+I forget to remove that item from the list so your observing was
+correct. Thanks for testing.
+I'm going to tae that one, as it seems to work:
+
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -261,6 +261,7 @@ struct irq_affinity_notify {
+ 	unsigned int irq;
+ 	struct kref kref;
+ 	struct work_struct work;
++	struct list_head list;
+ 	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
+ 	void (*release)(struct kref *ref);
+ };
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -164,6 +164,62 @@ int irq_do_set_affinity(struct irq_data
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void _irq_affinity_notify(struct irq_affinity_notify *notify);
++static struct task_struct *set_affinity_helper;
++static LIST_HEAD(affinity_list);
++static DEFINE_RAW_SPINLOCK(affinity_list_lock);
++
++static int set_affinity_thread(void *unused)
++{
++	while (1) {
++		struct irq_affinity_notify *notify;
++		int empty;
++
++		set_current_state(TASK_INTERRUPTIBLE);
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		empty = list_empty(&affinity_list);
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (empty)
++			schedule();
++		if (kthread_should_stop())
++			break;
++		set_current_state(TASK_RUNNING);
++try_next:
++		notify = NULL;
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		if (!list_empty(&affinity_list)) {
++			notify = list_first_entry(&affinity_list,
++					struct irq_affinity_notify, list);
++			list_del_init(&notify->list);
++		}
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (!notify)
++			continue;
++		_irq_affinity_notify(notify);
++		goto try_next;
++	}
++	return 0;
++}
++
++static void init_helper_thread(void)
++{
++	if (set_affinity_helper)
++		return;
++	set_affinity_helper = kthread_run(set_affinity_thread, NULL,
++			"affinity-cb");
++	WARN_ON(IS_ERR(set_affinity_helper));
++}
++#else
++
++static inline void init_helper_thread(void) { }
++
++#endif
++
+ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
+ {
+ 	struct irq_chip *chip = irq_data_get_irq_chip(data);
+@@ -182,7 +238,17 @@ int __irq_set_affinity_locked(struct irq
+ 
+ 	if (desc->affinity_notify) {
+ 		kref_get(&desc->affinity_notify->kref);
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++		raw_spin_lock(&affinity_list_lock);
++		if (list_empty(&desc->affinity_notify->list))
++			list_add_tail(&affinity_list,
++					&desc->affinity_notify->list);
++		raw_spin_unlock(&affinity_list_lock);
++		wake_up_process(set_affinity_helper);
++#else
+ 		schedule_work(&desc->affinity_notify->work);
++#endif
+ 	}
+ 	irqd_set(data, IRQD_AFFINITY_SET);
+ 
+@@ -223,10 +289,8 @@ int irq_set_affinity_hint(unsigned int i
+ }
+ EXPORT_SYMBOL_GPL(irq_set_affinity_hint);
+ 
+-static void irq_affinity_notify(struct work_struct *work)
++static void _irq_affinity_notify(struct irq_affinity_notify *notify)
+ {
+-	struct irq_affinity_notify *notify =
+-		container_of(work, struct irq_affinity_notify, work);
+ 	struct irq_desc *desc = irq_to_desc(notify->irq);
+ 	cpumask_var_t cpumask;
+ 	unsigned long flags;
+@@ -248,6 +312,13 @@ out:
+ 	kref_put(&notify->kref, notify->release);
+ }
+ 
++static void irq_affinity_notify(struct work_struct *work)
++{
++	struct irq_affinity_notify *notify =
++		container_of(work, struct irq_affinity_notify, work);
++	_irq_affinity_notify(notify);
++}
++
+ /**
+  *	irq_set_affinity_notifier - control notification of IRQ affinity changes
+  *	@irq:		Interrupt for which to enable/disable notification
+@@ -277,6 +348,8 @@ irq_set_affinity_notifier(unsigned int i
+ 		notify->irq = irq;
+ 		kref_init(&notify->kref);
+ 		INIT_WORK(&notify->work, irq_affinity_notify);
++		INIT_LIST_HEAD(&notify->list);
++		init_helper_thread();
+ 	}
+ 
+ 	raw_spin_lock_irqsave(&desc->lock, flags);
+
+>Regards,
+>Joe
+
+Sebastian
