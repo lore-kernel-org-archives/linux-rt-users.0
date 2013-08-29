@@ -1,264 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.10.10-rt7
-Date: Thu, 29 Aug 2013 20:42:28 +0200
-Message-ID: <20130829184228.GD15360@linutronix.de>
+From: Alexander Fyodorov <halcy@yandex.ru>
+Subject: Re: [PATCH rt] Fix races in ptrace
+Date: Thu, 29 Aug 2013 22:47:22 +0400
+Message-ID: <18551377802042@web15m.yandex.ru>
+References: <102271374683007@web8f.yandex.ru> <20130812164145.GJ23040@linutronix.de> <393831376342036@web15d.yandex.ru> <20130821172431.GD16913@linutronix.de> <96171377181398@web13h.yandex.ru> <20130829163300.GC15360@linutronix.de> <143271377797197@web5m.yandex.ru> <521F92D9.5090701@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from forward6.mail.yandex.net ([77.88.60.125]:50547 "EHLO
+	forward6.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756801Ab3H2Sr0 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Aug 2013 14:47:26 -0400
+In-Reply-To: <521F92D9.5090701@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+29.08.2013, 22:28, "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>:
+> On 08/29/2013 07:26 PM, Alexander Fyodorov wrote:
+>> =9AStill this is only half of the solution because the patch doesn't=
+ solve the race in wait_task_inactive() (and all other places which tes=
+t both state and saved_state without holding pi_lock).
+>
+> So you are concerned that missing pi_lock in wait_task_inactive(). Th=
+is
+> is a problem if the task wakes up from sleeping on the lock while its
+> state is beeing checked. Hmm it indeed looks legal.
+> I keep that patch in queue but disabled and take another look once I
+> get back.
+> Does this missing pi_lock() affects you or is just a precaution?
 
-I'm pleased to announce the v3.10.10-rt7 patch set.
-
-Changes since v3.10.10-rt6
-- hwlat compiles on 32bit (again). Reported by Fernando Lopez-Lezcano.
-- bcache is disabled due to usage of anon semaphores. Anyone interrested
-  in using it?
-- "genirq affinity callback" are fixed. Reported by Joe Korty. There are
-  two nics using this feature.
-- Paul Gortmaker's swait rename patch has been included.
-
-Known issues:
-
-      - SLAB support not working
-
-      - The cpsw network driver shows some issues.
-
-      - bcache is disabled.
-
-      - an ancient race (since we got sleeping spinlocks) where the
-        TASK_TRACED state is temporary replaced while waiting on a rw
-        lock and the task can't be traced.
-
-The delta patch against v3.10.10-rt6 is appended below and can be found
-here:
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.10-rt6-rt7.patch.xz
-
-The RT patch against 3.10.10 can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.10-rt7.patch.xz
-
-The split quilt queue is available at:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patches-3.10.10-rt7.tar.xz
-
-Sebastian
-
-diff --git a/drivers/md/bcache/Kconfig b/drivers/md/bcache/Kconfig
-index f950c9d..5eb76dd 100644
---- a/drivers/md/bcache/Kconfig
-+++ b/drivers/md/bcache/Kconfig
-@@ -1,6 +1,7 @@
- 
- config BCACHE
- 	tristate "Block device as cache"
-+	depends on !PREEMPT_RT_FULL
- 	---help---
- 	Allows a block device to be used as cache for other devices; uses
- 	a btree for indexing and the layout is optimized for SSDs.
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index 0bfa40d..6f61d5f 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -220,7 +220,7 @@ static struct sample *buffer_get_sample(struct sample *sample)
- #else
- #define time_type	u64
- #define time_get()	trace_clock_local()
--#define time_to_us(x)	((x) / 1000)
-+#define time_to_us(x)	div_u64(x, 1000)
- #define time_sub(a, b)	((a) - (b))
- #define init_time(a, b)	a = b
- #define time_u64(a)	a
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 11bdb1e..838d4bd 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -263,6 +263,7 @@ struct irq_affinity_notify {
- 	unsigned int irq;
- 	struct kref kref;
- 	struct work_struct work;
-+	struct list_head list;
- 	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
- 	void (*release)(struct kref *ref);
- };
-diff --git a/include/linux/wait-simple.h b/include/linux/wait-simple.h
-index 4efba4d..f86bca2 100644
---- a/include/linux/wait-simple.h
-+++ b/include/linux/wait-simple.h
-@@ -47,6 +47,14 @@ extern void swait_prepare(struct swait_head *head, struct swaiter *w, int state)
- extern void swait_finish_locked(struct swait_head *head, struct swaiter *w);
- extern void swait_finish(struct swait_head *head, struct swaiter *w);
- 
-+/* Check whether a head has waiters enqueued */
-+static inline bool swaitqueue_active(struct swait_head *h)
-+{
-+	/* Make sure the condition is visible before checking list_empty() */
-+	smp_mb();
-+	return !list_empty(&h->list);
-+}
-+
- /*
-  * Wakeup functions
-  */
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 0e34a98..c5c19ec 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -164,6 +164,62 @@ int irq_do_set_affinity(struct irq_data *data, const struct cpumask *mask,
- 	return ret;
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void _irq_affinity_notify(struct irq_affinity_notify *notify);
-+static struct task_struct *set_affinity_helper;
-+static LIST_HEAD(affinity_list);
-+static DEFINE_RAW_SPINLOCK(affinity_list_lock);
-+
-+static int set_affinity_thread(void *unused)
-+{
-+	while (1) {
-+		struct irq_affinity_notify *notify;
-+		int empty;
-+
-+		set_current_state(TASK_INTERRUPTIBLE);
-+
-+		raw_spin_lock_irq(&affinity_list_lock);
-+		empty = list_empty(&affinity_list);
-+		raw_spin_unlock_irq(&affinity_list_lock);
-+
-+		if (empty)
-+			schedule();
-+		if (kthread_should_stop())
-+			break;
-+		set_current_state(TASK_RUNNING);
-+try_next:
-+		notify = NULL;
-+
-+		raw_spin_lock_irq(&affinity_list_lock);
-+		if (!list_empty(&affinity_list)) {
-+			notify = list_first_entry(&affinity_list,
-+					struct irq_affinity_notify, list);
-+			list_del_init(&notify->list);
-+		}
-+		raw_spin_unlock_irq(&affinity_list_lock);
-+
-+		if (!notify)
-+			continue;
-+		_irq_affinity_notify(notify);
-+		goto try_next;
-+	}
-+	return 0;
-+}
-+
-+static void init_helper_thread(void)
-+{
-+	if (set_affinity_helper)
-+		return;
-+	set_affinity_helper = kthread_run(set_affinity_thread, NULL,
-+			"affinity-cb");
-+	WARN_ON(IS_ERR(set_affinity_helper));
-+}
-+#else
-+
-+static inline void init_helper_thread(void) { }
-+
-+#endif
-+
- int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
- {
- 	struct irq_chip *chip = irq_data_get_irq_chip(data);
-@@ -182,7 +238,17 @@ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
- 
- 	if (desc->affinity_notify) {
- 		kref_get(&desc->affinity_notify->kref);
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		raw_spin_lock(&affinity_list_lock);
-+		if (list_empty(&desc->affinity_notify->list))
-+			list_add_tail(&affinity_list,
-+					&desc->affinity_notify->list);
-+		raw_spin_unlock(&affinity_list_lock);
-+		wake_up_process(set_affinity_helper);
-+#else
- 		schedule_work(&desc->affinity_notify->work);
-+#endif
- 	}
- 	irqd_set(data, IRQD_AFFINITY_SET);
- 
-@@ -223,10 +289,8 @@ int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m)
- }
- EXPORT_SYMBOL_GPL(irq_set_affinity_hint);
- 
--static void irq_affinity_notify(struct work_struct *work)
-+static void _irq_affinity_notify(struct irq_affinity_notify *notify)
- {
--	struct irq_affinity_notify *notify =
--		container_of(work, struct irq_affinity_notify, work);
- 	struct irq_desc *desc = irq_to_desc(notify->irq);
- 	cpumask_var_t cpumask;
- 	unsigned long flags;
-@@ -248,6 +312,13 @@ static void irq_affinity_notify(struct work_struct *work)
- 	kref_put(&notify->kref, notify->release);
- }
- 
-+static void irq_affinity_notify(struct work_struct *work)
-+{
-+	struct irq_affinity_notify *notify =
-+		container_of(work, struct irq_affinity_notify, work);
-+	_irq_affinity_notify(notify);
-+}
-+
- /**
-  *	irq_set_affinity_notifier - control notification of IRQ affinity changes
-  *	@irq:		Interrupt for which to enable/disable notification
-@@ -277,6 +348,8 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
- 		notify->irq = irq;
- 		kref_init(&notify->kref);
- 		INIT_WORK(&notify->work, irq_affinity_notify);
-+		INIT_LIST_HEAD(&notify->list);
-+		init_helper_thread();
- 	}
- 
- 	raw_spin_lock_irqsave(&desc->lock, flags);
-diff --git a/kernel/wait-simple.c b/kernel/wait-simple.c
-index 2c85626..7dfa86d 100644
---- a/kernel/wait-simple.c
-+++ b/kernel/wait-simple.c
-@@ -26,14 +26,6 @@ static inline void __swait_dequeue(struct swaiter *w)
- 	list_del_init(&w->node);
- }
- 
--/* Check whether a head has waiters enqueued */
--static inline bool swait_head_has_waiters(struct swait_head *h)
--{
--	/* Make sure the condition is visible before checking list_empty() */
--	smp_mb();
--	return !list_empty(&h->list);
--}
--
- void __init_swait_head(struct swait_head *head, struct lock_class_key *key)
- {
- 	raw_spin_lock_init(&head->lock);
-@@ -112,7 +104,7 @@ __swait_wake(struct swait_head *head, unsigned int state, unsigned int num)
- 	unsigned long flags;
- 	int woken;
- 
--	if (!swait_head_has_waiters(head))
-+	if (!swaitqueue_active(head))
- 		return 0;
- 
- 	raw_spin_lock_irqsave(&head->lock, flags);
-diff --git a/localversion-rt b/localversion-rt
-index 8fc605d..0454789 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt6
-+-rt7
+Yes, my test application failed because of it, a detailed description i=
+s in the first message in the thread. I've also looked at other places =
+that test saved_state but I don't understand the code enough to decide =
+whether there are similar bugs there or not.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
