@@ -1,29 +1,41 @@
-From: Michael Langfinger <michael@langfinger.org>
-Subject: 213123
-Date: Sat, 31 Aug 2013 11:33:10 +0200
-Message-ID: <0dd0ffb898e6f1490718ad0c27c5891a-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlAWWl5oBlFLXFswQEYFWFNdQV1cWA==-webmailer2@server06.webmailer.hosteurope.de>
-Reply-To: michael@langfinger.org
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [ANNOUNCE] 3.10.9-rt5
+Date: Sat, 31 Aug 2013 14:00:27 -0700
+Message-ID: <20130831210027.GD3871@linux.vnet.ibm.com>
+References: <20130822182127.GA7606@linutronix.de>
+ <20130822182423.GA8685@linutronix.de>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain;
- charset=UTF-8;
- format=flowed
-Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from server01.mc0.hosteurope.de ([92.51.170.72]:35392 "EHLO
-	server01.mc0.hosteurope.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752358Ab3HaJkL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 31 Aug 2013 05:40:11 -0400
-Received: from server06.webmailer.hosteurope.de ([10.9.0.185]);
-	by mailout.hosteurope.de (server01.mc0.hosteurope.de) running EXperimental Internet Mailer with esmtps (TLSv1:AES256-SHA:256)
-	id 1VFhYM-0006Mg-QW
-	for linux-rt-users@vger.kernel.org; Sat, 31 Aug 2013 11:33:10 +0200
-Received: from nobody by server06.webmailer.hosteurope.de with local (Exim 4.72)
-	(envelope-from <michael@langfinger.org>)
-	id 1VFhYM-0000C6-Oz
-	for linux-rt-users@vger.kernel.org; Sat, 31 Aug 2013 11:33:10 +0200
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20130822182423.GA8685@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
- 23123
+On Thu, Aug 22, 2013 at 08:24:23PM +0200, Sebastian Andrzej Siewior wrote:
+> * Sebastian Andrzej Siewior | 2013-08-22 20:21:27 [+0200]:
+> 
+> >Changes since v3.10.9-rt4
+> >- swait fixes from Steven. It fixed the issues with CONFIG_RCU_NOCB_CPU
+> >  where the system suddenly froze and RCU wasn't doing its job 
+> 
+> Also a big thanks to Carsten Emde and Paul E. McKenney for finding and
+> debugging the problem.
+
+And Clark Williams as well!
+
+							Thanx, Paul
+
+> Sebastian
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
+> 
