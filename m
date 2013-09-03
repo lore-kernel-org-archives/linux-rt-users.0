@@ -1,30 +1,73 @@
-From: Michael Haberler <ml1234@mah.priv.at>
-Subject: synchronize RT thread to external IRQ - suggestions?
-Date: Sun, 1 Sep 2013 19:40:14 +0200
-Message-ID: <C5F241C8-47AB-4EA5-83D2-C067EA7F3E7B@mah.priv.at>
-Mime-Version: 1.0 (Mac OS X Mail 6.5 \(1508\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-Cc: Jon Elson <elson@pico-systems.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+From: =?utf-8?B?SMOkbmVsLUJhYXMsIEFsZXhhbmRlcg==?=
+	<alexander.haenel-baas@sieb-meyer.de>
+Subject: AW: AW: CONFIG_PREEMPT_RT_FULL an usb gadget
+Date: Tue, 3 Sep 2013 07:02:40 +0000
+Message-ID: <9BA84827B30CBE4996725F98F7DC91232F96EC0B@SMExchange01.siebmeyer.org>
+References: <9BA84827B30CBE4996725F98F7DC91232F954E81@SMExchange01.siebmeyer.org>
+ <20130829113521.GB15360@linutronix.de>
+ <9BA84827B30CBE4996725F98F7DC91232F955F47@SMExchange01.siebmeyer.org>
+ <521F99C6.1010200@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mah2.mah.priv.at ([86.59.12.251]:37193 "EHLO mah.priv.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755903Ab3IARrs convert rfc822-to-8bit (ORCPT
+Received: from smnotes1.sieb-meyer.de ([213.252.170.194]:28723 "EHLO
+	mail.sieb-meyer.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759580Ab3ICHCo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 1 Sep 2013 13:47:48 -0400
+	Tue, 3 Sep 2013 03:02:44 -0400
+In-Reply-To: <521F99C6.1010200@linutronix.de>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I've hardware at hand which would best be serviced by an RT-hardened thread after the hardware interrupts the host - in the simplest form it could be say a parport IRQ
-
-squeezing out latency as far as possible is a must
-
-I'm looking for suggestions how to best achieve that - just wait-for-irq in a normal device driver? any alternative schemes I should consider? (in the Xenomai setup an RTDM driver seems the way to go).
-
-thanks in advance
-
-Michael
-
-
-
+SGkgU2ViYXN0aWFuLA0KDQpub3cgaSBoYXZlIGEgd29ya2luZyBkZWJpYW4gaG9zdCA6KQ0KDQpZ
+b3UgcmVtZW1iZXI6IA0KKExpbnV4IHRhcmdldCBSVC5QUkVFTVBUKXVzYiAtLS0gUk5ESVMgLS0t
+IHVzYiA8LT4gKGxpbnV4Okhvc3QgZGViaWFuKQ0KDQpTbywgdGhlIG5leHQgcHJvYmxlbSBpczog
+dGhlIG1hY2hpbmUgY29ubmVjdCB3aXRoIENEQyBhbmQgbm90IHdpdGggcm5kaXMNCg0KVGhlIHRh
+cmdldCBzYXlzOg0KZ19ldGhlciBnYWRnZXQ6IGhpZ2gtc3BlZWQgY29uZmlnICMxOiBDREMgRXRo
+ZXJuZXQgKEVDTSkNCmdfZXRoZXIgZ2FkZ2V0OiBpbml0IGVjbQ0KZ19ldGhlciBnYWRnZXQ6IG5v
+dGlmeSBjb25uZWN0IHRydWUNCmdfZXRoZXIgZ2FkZ2V0OiBhY3RpdmF0ZSBlY20NCnVzYjA6IHFs
+ZW4gMTANCmdfZXRoZXIgZ2FkZ2V0OiBlY21fb3Blbg0KdXNiMDogZXRoX3N0YXJ0DQpnX2V0aGVy
+IGdhZGdldDogbm90aWZ5IGNvbm5lY3QgdHJ1ZQ0KZ19ldGhlciBnYWRnZXQ6IG5vdGlmeSBzcGVl
+ZCA0MjU5ODQwMDANCg0KQW5kIHRoZSBkZWJpYW4gaG9zdCBzYXlzOg0KdXNiY29yZTogcmVnaXN0
+ZXJlZCBuZXcgaW50ZXJmYWNlIGRyaXZlciBybmRpc19ob3N0DQp1c2IgMS0xOiBVU0IgZGlzY29u
+bmVjdCwgZGV2aWNlIG51bWJlciAyDQpjZGNfZXRoZXIgMS0xOjEuMDogZXRoMTogdW5yZWdpc3Rl
+ciAnY2RjX2V0aGVyJyB1c2ItMDAwMDowMjowMy4wLTEsIENEQyBFdGhlcm5ldCBEZXZpY2UNCnVz
+YiAxLTE6IG5ldyBoaWdoLXNwZWVkIFVTQiBkZXZpY2UgbnVtYmVyIDMgdXNpbmcgZWhjaV9oY2QN
+CnVzYiAxLTE6IE5ldyBVU0IgZGV2aWNlIGZvdW5kLCBpZFZlbmRvcj0xYzJiLCBpZFByb2R1Y3Q9
+MDAwYg0KdXNiIDEtMTogTmV3IFVTQiBkZXZpY2Ugc3RyaW5nczogTWZyPTEsIFByb2R1Y3Q9Miwg
+U2VyaWFsTnVtYmVyPTANCnVzYiAxLTE6IFByb2R1Y3Q6IFJORElTL0V0aGVybmV0IEdhZGdldA0K
+dXNiIDEtMTogTWFudWZhY3R1cmVyOiBMaW51eCAzLjEwLjQtcnQxLUtUVC1WMV9BSEIgd2l0aCBw
+Y2hfdWRjDQpjZGNfZXRoZXIgMS0xOjEuMDogZXRoMTogcmVnaXN0ZXIgJ2NkY19ldGhlcicgYXQg
+dXNiLTAwMDA6MDI6MDMuMC0xLCBDREMgRXRoZXJuZXQgRGV2aWNlLCAwMDowMTo4NDowMDowODox
+NQ0KDQpBbmQgSSBkb27igJl0IGtub3cgaG93IHRvIGNvbmZpZ3VyZSBpdC4gDQpEbyB5b3UgaGF2
+ZSBhbiBpZGVhIGZvciB0aGlzPw0KDQoNCkdyZWV0aW5ncw0KQWxleA0KDQotLS0tLVVyc3Byw7xu
+Z2xpY2hlIE5hY2hyaWNodC0tLS0tDQpWb246IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21h
+aWx0bzpiaWdlYXN5QGxpbnV0cm9uaXguZGVdIA0KR2VzZW5kZXQ6IERvbm5lcnN0YWcsIDI5LiBB
+dWd1c3QgMjAxMyAyMDo1OA0KQW46IEjDpG5lbC1CYWFzLCBBbGV4YW5kZXINCkNjOiBsaW51eC1y
+dC11c2Vycw0KQmV0cmVmZjogUmU6IEFXOiBDT05GSUdfUFJFRU1QVF9SVF9GVUxMIGFuIHVzYiBn
+YWRnZXQNCg0KDQpwbGVhc2Uga2VlcCB0aGUgbGlzdCBpbiBDYy4NCg0KT24gMDgvMjkvMjAxMyAw
+NDozNiBQTSwgSMOkbmVsLUJhYXMsIEFsZXhhbmRlciB3cm90ZToNCj4gSGkgU2ViYXN0aWFuLA0K
+DQpIaSBBbGV4YW5kZXIsDQoNCj4geWVzIGkgdXNlIGEgeDg2IG1hY2hpbmUgd2l0aCAzLjEwLjQt
+cnQxIHBhdGNoLg0KPiBObywgdGhlcmUgaXMgbm8gb3RoZXIgZ2FkZ2V0J3Mgb3IgdXNiIGRldmlj
+ZSBhY3RpdmUuDQoNCkkgbWVhbnQgdHJ5IGFub3RoZXIgZ2FkZ2V0IChsaWtlIHN0b3JhZ2UpIG9y
+IHJuZGlzIG9uIGEgbGludXggaG9zdCB3aGVyZSB5b3UgY2FuIGRlYnVnIHNpbmNlIFdpbmRvd3Mg
+aXNuJ3QgdGhhdCBjb29wZXJhdGl2ZS4NCg0KPiBOb3cgSSBoYXZlIGVuYWJsZWQgdGhlIGxvY2sg
+ZGVidWcgKEkgaG9wZSBzbyksIGJ1dCBJIGNhbid0IHNlZSBhIG1lc3NhZ2UgdGhhdCB0aGUga2Vy
+bmVsIGNvbXBsYWlucyBhYm91dCBzb21ldGhpbmcuDQo+IA0KPiBZZXMgdGhhdCB0aGUgcG9pbnQu
+IEluIHRoZSBkZWJ1Z2dpbmcgbXNnLiBpcyBubyBkaWZmZXJlbmNlIGJldHdlZW4gdGhlIHdvcmtp
+bmcgb3Igbm90IHdvcmtpbmcgc2l0dWF0aW9uLg0KPiANCj4gSSBhdHRhY2hlZCBteSBrZXJuZWwg
+Y29uZmlnJ3M6IA0KPiBDb25maWdfMy4xMC40X1BSRUVNUFRfRlVMTCAtPiBGdWxseSBwcmVlbXB0
+aWJsZQ0KPiBDb25maWdfMy4xMC40X1BSRUVNUFRfTEwJLT4gTG93LUxhdGVuY3kNCj4gDQo+IFRo
+ZSBvdGhlciBmaWxlcyBhcmUgdGhlIGNvcnJlc3BvbmRpbmcgIGRtZXNnLg0KPiBwcmVlbXB0X2Z1
+bGxfZG1lc2cudHh0DQo+IHByZWVtcHRfbGxfZG1lc2cudHh0DQoNClNvcnJ5LCBJIGhhdmUgY3Vy
+cmVudGx5IG5vIHRpbWUgbG9vayBhdCB0aG9zZSwgSSdtIG9uIHRoZSBydW7igKYNCg0KPiANCj4g
+T2ssIEkgbG9vayBmb3IgYW5vdGhlciBsaW51eCBtYWNoaW5lIHRvIGNvbm5lY3Q6ICAoVHJhZ2V0
+OiBsaW51eCkgPC0+IA0KPiB1c2IgLS0tIFJORElTIC0tLSB1c2IgPC0+IChsaW51eDpIb3N0KQ0K
+DQpHb29kLiBOb3RlIHRoYXQgdGhhdCBtb3N0IGdhZGdldHMgYXR0YWNoIFJETklTIGFzIGFuIGFk
+ZGl0aW9uYWwgZnVuY3Rpb24gdGhhdCBtZWFucyB1bmRlciBub3JtYWwgY2lyY3Vtc3RhbmNlcyBM
+aW51eCBpZ25vcmVzIFJORElTIGFuZCBnb2VzIGZvciBDREMuDQoNCj4gVGhhbmsgeW91IGZvciBo
+ZWxwLA0KPiANCj4gQWxleA0KDQpTZWJhc3RpYW4NCg==
