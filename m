@@ -1,38 +1,26 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH RT]  rt,ipc,sem: fix -rt livelock
-Date: Fri, 06 Sep 2013 09:08:58 +0200
-Message-ID: <1378451338.5434.91.camel@marge.simpson.net>
-References: <20130819213324.405942342@goodmis.org>
-	 <1377842245.5422.7.camel@marge.simpson.net>
-	 <1377873580.5422.25.camel@marge.simpson.net>
-	 <1377926850.6234.22.camel@marge.simpson.net>
+From: Venkat Subbiah <venkat.mlist@gmail.com>
+Subject: Enabling function trace on call during module init
+Date: Fri, 6 Sep 2013 20:55:54 -0700
+Message-ID: <CA+P49ArN2Nki5oy5MdwKGdcCUYv4i7oEJkypkKWB618T9nHvug@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.186]:51027 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750823Ab3IFHJH (ORCPT
+Received: from mail-vc0-f174.google.com ([209.85.220.174]:48178 "EHLO
+	mail-vc0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750980Ab3IGDzy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Sep 2013 03:09:07 -0400
-In-Reply-To: <1377926850.6234.22.camel@marge.simpson.net>
+	Fri, 6 Sep 2013 23:55:54 -0400
+Received: by mail-vc0-f174.google.com with SMTP id gd11so2705743vcb.33
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Sep 2013 20:55:54 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2013-08-31 at 07:27 +0200, Mike Galbraith wrote: 
-> The attached proggy (Manfred Spraul) is one reproducer. 
+Hello,
 
-Just in case it's not obvious, the cause is spin_unlock_wait() usage.  
+Would like to be able to trace function calls executed during the
+initialization of the kernel module. Is that possible?
 
-All it takes is one task to start the ball rolling while enough others
-exist to react by then taking the lock themselves, and you instantly get
-"Woohoo, let's all lock the lock we stare at to see if we need to lock
-the lock that we stare at.....".
 
-(loop doesn't look lovely for non-rt either, seems you could stimulate
-it if you tried it hard enough)
-
+Thanks,
+Venkat
