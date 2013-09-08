@@ -1,52 +1,33 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Enabling function trace on call during module init
-Date: Sat, 7 Sep 2013 20:48:11 -0400
-Message-ID: <20130907204811.5d52a6b1@gandalf.local.home>
-References: <CA+P49ArN2Nki5oy5MdwKGdcCUYv4i7oEJkypkKWB618T9nHvug@mail.gmail.com>
+Subject: Re: synchronize RT thread to external IRQ - suggestions?
+Date: Sat, 7 Sep 2013 20:53:49 -0400
+Message-ID: <20130907205349.2feeef7f@gandalf.local.home>
+References: <C5F241C8-47AB-4EA5-83D2-C067EA7F3E7B@mah.priv.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Venkat Subbiah <venkat.mlist@gmail.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Jon Elson <elson@pico-systems.com>
+To: Michael Haberler <ml1234@mah.priv.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:10644 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:2048 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750980Ab3IHAsN (ORCPT
+	with ESMTP id S1750980Ab3IHAxv (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 7 Sep 2013 20:48:13 -0400
-In-Reply-To: <CA+P49ArN2Nki5oy5MdwKGdcCUYv4i7oEJkypkKWB618T9nHvug@mail.gmail.com>
+	Sat, 7 Sep 2013 20:53:51 -0400
+In-Reply-To: <C5F241C8-47AB-4EA5-83D2-C067EA7F3E7B@mah.priv.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 6 Sep 2013 20:55:54 -0700
-Venkat Subbiah <venkat.mlist@gmail.com> wrote:
+On Sun, 1 Sep 2013 19:40:14 +0200
+Michael Haberler <ml1234@mah.priv.at> wrote:
 
-> Hello,
-> 
-> Would like to be able to trace function calls executed during the
-> initialization of the kernel module. Is that possible?
-> 
+> I've hardware at hand which would best be serviced by an RT-hardened thread after the hardware interrupts the host - in the simplest form it could be say a parport IRQ
 
-Well, yes and no, and it depends ;-)
+request_threaded_irq() in the driver.
 
+Then just set the priority of that thread to whatever you like it to be.
 
-You wont be able to trace any function that is annotated with "__init",
-or even "__exit". That's because the init section does not have a
-standard way of cleaning them up (for boot, modules are different, but
-are still affected by it).
-
-As ftrace modifies code, and it modifies locations of functions, it can
-not safely modify code that suddenly disappeared without it knowing it,
-otherwise you may end up with broken NIC cards.
-
-Note, I do plan on adding code that will fix this in the future, but
-today, unfortunately, we don't have it.
-
-For functions that are not marked by __init, they will be traced. If
-you trace all functions, they will be traced when the module is loaded.
-This may not help you either, because by tracing all functions, you
-will probably lose the data you want due to overflow of the buffers.
-
-This too may change in the future, but currently we don't have it :-/
+Or is this a user task thread?
 
 -- Steve
