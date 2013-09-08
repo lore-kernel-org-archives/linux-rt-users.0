@@ -1,51 +1,165 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.6.11.8-rt40
-Date: Sun, 8 Sep 2013 11:09:15 -0400
-Message-ID: <20130908110915.69f94951@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Subject: [PATCH RT 18/19] genirq: do not invoke the affinity callback via a workqueue
+Date: Sun, 08 Sep 2013 11:14:13 -0400
+Message-ID: <20130908151448.833507988@goodmis.org>
+References: <20130908151355.362583092@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0018-genirq-do-not-invoke-the-affinity-callback-via-a-wor.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Dear RT Folks,
+Joe Korty reported, that __irq_set_affinity_locked() schedules a
+workqueue while holding a rawlock which results in a might_sleep()
+warning.
+This patch moves the invokation into a process context so that we only
+wakeup() a process while holding the lock.
 
-I'm pleased to announce the 3.6.11.8-rt40 stable release.
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ include/linux/interrupt.h |    1 +
+ kernel/irq/manage.c       |   79 +++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 77 insertions(+), 3 deletions(-)
 
-
-This release is just an update to the new stable 3.6.11.8 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.6-rt
-  Head SHA1: 119ba33488d29385b941cdbadd720449f59f11b3
-
-
-Or to build 3.6.11.8-rt40 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.6.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.6.11.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/stable/patch-3.6.11.8.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.6/patch-3.6.11.8-rt40.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index fb81baa..16fbe2b 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -263,6 +263,7 @@ struct irq_affinity_notify {
+ 	unsigned int irq;
+ 	struct kref kref;
+ 	struct work_struct work;
++	struct list_head list;
+ 	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
+ 	void (*release)(struct kref *ref);
+ };
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 2ecc232..0fe99a4 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -163,6 +163,62 @@ int irq_do_set_affinity(struct irq_data *data, const struct cpumask *mask,
+ 	return ret;
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++static void _irq_affinity_notify(struct irq_affinity_notify *notify);
++static struct task_struct *set_affinity_helper;
++static LIST_HEAD(affinity_list);
++static DEFINE_RAW_SPINLOCK(affinity_list_lock);
++
++static int set_affinity_thread(void *unused)
++{
++	while (1) {
++		struct irq_affinity_notify *notify;
++		int empty;
++
++		set_current_state(TASK_INTERRUPTIBLE);
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		empty = list_empty(&affinity_list);
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (empty)
++			schedule();
++		if (kthread_should_stop())
++			break;
++		set_current_state(TASK_RUNNING);
++try_next:
++		notify = NULL;
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		if (!list_empty(&affinity_list)) {
++			notify = list_first_entry(&affinity_list,
++					struct irq_affinity_notify, list);
++			list_del_init(&notify->list);
++		}
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (!notify)
++			continue;
++		_irq_affinity_notify(notify);
++		goto try_next;
++	}
++	return 0;
++}
++
++static void init_helper_thread(void)
++{
++	if (set_affinity_helper)
++		return;
++	set_affinity_helper = kthread_run(set_affinity_thread, NULL,
++			"affinity-cb");
++	WARN_ON(IS_ERR(set_affinity_helper));
++}
++#else
++
++static inline void init_helper_thread(void) { }
++
++#endif
++
+ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
+ {
+ 	struct irq_chip *chip = irq_data_get_irq_chip(data);
+@@ -181,7 +237,17 @@ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
+ 
+ 	if (desc->affinity_notify) {
+ 		kref_get(&desc->affinity_notify->kref);
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++		raw_spin_lock(&affinity_list_lock);
++		if (list_empty(&desc->affinity_notify->list))
++			list_add_tail(&affinity_list,
++					&desc->affinity_notify->list);
++		raw_spin_unlock(&affinity_list_lock);
++		wake_up_process(set_affinity_helper);
++#else
+ 		schedule_work(&desc->affinity_notify->work);
++#endif
+ 	}
+ 	irqd_set(data, IRQD_AFFINITY_SET);
+ 
+@@ -222,10 +288,8 @@ int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m)
+ }
+ EXPORT_SYMBOL_GPL(irq_set_affinity_hint);
+ 
+-static void irq_affinity_notify(struct work_struct *work)
++static void _irq_affinity_notify(struct irq_affinity_notify *notify)
+ {
+-	struct irq_affinity_notify *notify =
+-		container_of(work, struct irq_affinity_notify, work);
+ 	struct irq_desc *desc = irq_to_desc(notify->irq);
+ 	cpumask_var_t cpumask;
+ 	unsigned long flags;
+@@ -247,6 +311,13 @@ out:
+ 	kref_put(&notify->kref, notify->release);
+ }
+ 
++static void irq_affinity_notify(struct work_struct *work)
++{
++	struct irq_affinity_notify *notify =
++		container_of(work, struct irq_affinity_notify, work);
++	_irq_affinity_notify(notify);
++}
++
+ /**
+  *	irq_set_affinity_notifier - control notification of IRQ affinity changes
+  *	@irq:		Interrupt for which to enable/disable notification
+@@ -276,6 +347,8 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
+ 		notify->irq = irq;
+ 		kref_init(&notify->kref);
+ 		INIT_WORK(&notify->work, irq_affinity_notify);
++		INIT_LIST_HEAD(&notify->list);
++		init_helper_thread();
+ 	}
+ 
+ 	raw_spin_lock_irqsave(&desc->lock, flags);
+-- 
+1.7.10.4
