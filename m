@@ -1,96 +1,145 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] hpsa: fix warning with smp_processor_id() in preemptible section
-Date: Sun, 08 Sep 2013 08:25:48 -0400
-Message-ID: <20130908122700.069493932@goodmis.org>
+Subject: [PATCH RT 05/10] hwlat-detector: Update hwlat_detector to add outer loop detection
+Date: Sun, 08 Sep 2013 08:25:50 -0400
+Message-ID: <20130908122700.384774713@goodmis.org>
 References: <20130908122545.421180629@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Stephen <scameron@beardog.cce.hp.com>
+	Steven Rostedt <srostedt@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-hpsa-fix-warning-with-smp_processor_id-in-preemptibl.patch
+Content-Disposition: inline; filename=0005-hwlat-detector-Update-hwlat_detector-to-add-outer-lo.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: John Kacur <jkacur@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-On a 3.6-rt (real-time patch) kernel we are seeing the following BUG
-However, it appears to be relevant for non-realtime (mainline) as well.
+The hwlat_detector reads two timestamps in a row, then reports any
+gap between those calls. The problem is, it misses everything between
+the second reading of the time stamp to the first reading of the time stamp
+in the next loop. That's were most of the time is spent, which means,
+chances are likely that it will miss all hardware latencies. This
+defeats the purpose.
 
-|hpsa 0000:03:00.0: hpsa0: <0x323a> at IRQ 67 using DAC
-|scsi0 : hpsa
-|BUG: using smp_processor_id() in preemptible [0000000000000000] code: kworker/u:0/6
-|caller is enqueue_cmd_and_start_io+0x5a/0x100 [hpsa]
-|Pid: 6, comm: kworker/u:0 Not tainted 3.6.11.5-rt37.52.el6rt.x86_64.debug #1
-|Call Trace:
-| [<ffffffff812abe83>] debug_smp_processor_id+0x123/0x150
-| [<ffffffffa009043a>] enqueue_cmd_and_start_io+0x5a/0x100 [hpsa]
-| [<ffffffffa00905cb>] hpsa_scsi_do_simple_cmd_core+0xeb/0x110 [hpsa]
-| [<ffffffff812b09c8>] ? swiotlb_dma_mapping_error+0x18/0x30
-| [<ffffffff812b09c8>] ? swiotlb_dma_mapping_error+0x18/0x30
-| [<ffffffffa0090701>] hpsa_scsi_do_simple_cmd_with_retry+0x91/0x280 [hpsa]
-| [<ffffffffa0093558>] hpsa_scsi_do_report_luns.clone.2+0xd8/0x130 [hpsa]
-| [<ffffffffa00935ea>] hpsa_gather_lun_info.clone.3+0x3a/0x1a0 [hpsa]
-| [<ffffffffa00963df>] hpsa_update_scsi_devices+0x11f/0x4f0 [hpsa]
-| [<ffffffff81592019>] ? sub_preempt_count+0xa9/0xe0
-| [<ffffffffa00968ad>] hpsa_scan_start+0xfd/0x150 [hpsa]
-| [<ffffffff8158cba8>] ? rt_spin_lock_slowunlock+0x78/0x90
-| [<ffffffff813b04d7>] do_scsi_scan_host+0x37/0xa0
-| [<ffffffff813b05da>] do_scan_async+0x1a/0x30
-| [<ffffffff8107c4ab>] async_run_entry_fn+0x9b/0x1d0
-| [<ffffffff8106ae92>] process_one_work+0x1f2/0x620
-| [<ffffffff8106ae20>] ? process_one_work+0x180/0x620
-| [<ffffffff8106d4fe>] ? worker_thread+0x5e/0x3a0
-| [<ffffffff8107c410>] ? async_schedule+0x20/0x20
-| [<ffffffff8106d5d3>] worker_thread+0x133/0x3a0
-| [<ffffffff8106d4a0>] ? manage_workers+0x190/0x190
-| [<ffffffff81073236>] kthread+0xa6/0xb0
-| [<ffffffff815970a4>] kernel_thread_helper+0x4/0x10
-| [<ffffffff81082a7c>] ? finish_task_switch+0x8c/0x110
-| [<ffffffff8158e44b>] ? _raw_spin_unlock_irq+0x3b/0x70
-| [<ffffffff8158e85d>] ? retint_restore_args+0xe/0xe
-| [<ffffffff81073190>] ? kthreadd+0x1e0/0x1e0
-| [<ffffffff815970a0>] ? gs_change+0xb/0xb
+By also testing the first time stamp from the previous loop second
+time stamp (the outer loop), we are more likely to find a latency.
 
--------------------
+Setting the threshold to 1, here's what the report now looks like:
 
-This is caused by
-enqueue_cmd_and_start_io()->
-        set_performant_mode()->
-                smp_processor_id()
-Which if you have debugging enabled calls debug_processor_id() and triggers the warning.
+1347415723.0232202770	0	2
+1347415725.0234202822	0	2
+1347415727.0236202875	0	2
+1347415729.0238202928	0	2
+1347415731.0240202980	0	2
+1347415734.0243203061	0	2
+1347415736.0245203113	0	2
+1347415738.0247203166	2	0
+1347415740.0249203219	0	3
+1347415742.0251203272	0	3
+1347415743.0252203299	0	3
+1347415745.0254203351	0	2
+1347415747.0256203404	0	2
+1347415749.0258203457	0	2
+1347415751.0260203510	0	2
+1347415754.0263203589	0	2
+1347415756.0265203642	0	2
+1347415758.0267203695	0	2
+1347415760.0269203748	0	2
+1347415762.0271203801	0	2
+1347415764.0273203853	2	0
 
-The code here is
- c->Header.ReplyQueue = smp_processor_id() % h->nreply_queues;
-
-Since it is not critical that the code complete on the same processor,
-but the cpu is a hint used in generating the ReplyQueue and will still work if
-the cpu migrates or is preempted, it is safe to use the raw_smp_processor_id()
-to surpress the false positve warning.
+There's some hardware latency that takes 2 microseconds to run.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: John Kacur <jkacur@redhat.com>
-Acked-by: Stephen <scameron@beardog.cce.hp.com>
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/scsi/hpsa.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/misc/hwlat_detector.c |   32 ++++++++++++++++++++++++++------
+ 1 file changed, 26 insertions(+), 6 deletions(-)
 
-diff --git a/drivers/scsi/hpsa.c b/drivers/scsi/hpsa.c
-index 4f33806..80a44b1 100644
---- a/drivers/scsi/hpsa.c
-+++ b/drivers/scsi/hpsa.c
-@@ -583,7 +583,7 @@ static void set_performant_mode(struct ctlr_info *h, struct CommandList *c)
- 		c->busaddr |= 1 | (h->blockFetchTable[c->Header.SGList] << 1);
- 		if (likely(h->msix_vector))
- 			c->Header.ReplyQueue =
--				smp_processor_id() % h->nreply_queues;
-+				raw_smp_processor_id() % h->nreply_queues;
- 	}
- }
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index b7b7c90..f93b8ef 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -143,6 +143,7 @@ static void detector_exit(void);
+ struct sample {
+ 	u64		seqnum;		/* unique sequence */
+ 	u64		duration;	/* ktime delta */
++	u64		outer_duration;	/* ktime delta (outer loop) */
+ 	struct timespec	timestamp;	/* wall time */
+ 	unsigned long   lost;
+ };
+@@ -219,11 +220,13 @@ static struct sample *buffer_get_sample(struct sample *sample)
+  */
+ static int get_sample(void *unused)
+ {
+-	ktime_t start, t1, t2;
++	ktime_t start, t1, t2, last_t2;
+ 	s64 diff, total = 0;
+ 	u64 sample = 0;
++	u64 outer_sample = 0;
+ 	int ret = 1;
  
++	last_t2.tv64 = 0;
+ 	start = ktime_get(); /* start timestamp */
+ 
+ 	do {
+@@ -231,7 +234,22 @@ static int get_sample(void *unused)
+ 		t1 = ktime_get();	/* we'll look for a discontinuity */
+ 		t2 = ktime_get();
+ 
++		if (last_t2.tv64) {
++			/* Check the delta from the outer loop (t2 to next t1) */
++			diff = ktime_to_us(ktime_sub(t1, last_t2));
++			/* This shouldn't happen */
++			if (diff < 0) {
++				printk(KERN_ERR BANNER "time running backwards\n");
++				goto out;
++			}
++			if (diff > outer_sample)
++				outer_sample = diff;
++		}
++		last_t2 = t2;
++
+ 		total = ktime_to_us(ktime_sub(t2, start)); /* sample width */
++
++		/* This checks the inner loop (t1 to t2) */
+ 		diff = ktime_to_us(ktime_sub(t2, t1));     /* current diff */
+ 
+ 		/* This shouldn't happen */
+@@ -246,12 +264,13 @@ static int get_sample(void *unused)
+ 	} while (total <= data.sample_width);
+ 
+ 	/* If we exceed the threshold value, we have found a hardware latency */
+-	if (sample > data.threshold) {
++	if (sample > data.threshold || outer_sample > data.threshold) {
+ 		struct sample s;
+ 
+ 		data.count++;
+ 		s.seqnum = data.count;
+ 		s.duration = sample;
++		s.outer_duration = outer_sample;
+ 		s.timestamp = CURRENT_TIME;
+ 		__buffer_add_sample(&s);
+ 
+@@ -738,10 +757,11 @@ static ssize_t debug_sample_fread(struct file *filp, char __user *ubuf,
+ 		}
+ 	}
+ 
+-	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\n",
+-		      sample->timestamp.tv_sec,
+-		      sample->timestamp.tv_nsec,
+-		      sample->duration);
++	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\t%llu\n",
++		       sample->timestamp.tv_sec,
++		       sample->timestamp.tv_nsec,
++		       sample->duration,
++		       sample->outer_duration);
+ 
+ 
+ 	/* handling partial reads is more trouble than it's worth */
 -- 
 1.7.10.4
