@@ -1,48 +1,83 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/19] x86/mce: fix mce timer interval
-Date: Sun, 08 Sep 2013 11:13:57 -0400
-Message-ID: <20130908151445.962814337@goodmis.org>
+Subject: [PATCH RT 05/19] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
+Date: Sun, 08 Sep 2013 11:14:00 -0400
+Message-ID: <20130908151446.449394004@goodmis.org>
 References: <20130908151355.362583092@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Mike Galbraith <bitbucket@online.de>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-x86-mce-fix-mce-timer-interval.patch
+Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Mike Galbraith <bitbucket@online.de>
+=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
+pengutronix.de>
 
-Seems mce timer fire at the wrong frequency in -rt kernels since roughly
-forever due to 32 bit overflow.  3.8-rt is also missing a multiplier.
+The patch "list_bl.h: make list head locking RT safe" introduced
+an unconditional
 
-Add missing us -> ns conversion and 32 bit overflow prevention.
+	__set_bit(0, (unsigned long *)b);
+
+in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
+of b->first. When the value of b->first is retrieved using
+hlist_bl_first the clobbering is undone using
+
+	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+
+and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
+only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
+defined. Without these the value returned by hlist_bl_first has the
+zeroth bit set which likely results in a crash.
+
+So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
+An alternative would be to always define LIST_BL_LOCKMASK to one with
+CONFIG_PREEMPT_RT_BASE.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <bitbucket@online.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-[bigeasy: use ULL instead of u64 cast]
+Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/x86/kernel/cpu/mcheck/mce.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/list_bl.h |    4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index e31ea90..339bb4d0 100644
---- a/arch/x86/kernel/cpu/mcheck/mce.c
-+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1649,7 +1649,7 @@ static void __mcheck_cpu_init_timer(void)
- 	__this_cpu_write(mce_next_interval, iv);
- 	if (!iv)
- 		return;
--	hrtimer_start_range_ns(t, ns_to_ktime(jiffies_to_usecs(iv) * 1000),
-+	hrtimer_start_range_ns(t, ns_to_ktime(jiffies_to_usecs(iv) * 1000ULL),
- 			       0, HRTIMER_MODE_REL_PINNED);
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
+ #else
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
  }
- 
--- 
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
+--=20
 1.7.10.4
