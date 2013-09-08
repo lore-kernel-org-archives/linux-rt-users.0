@@ -1,83 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/19] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
-Date: Sun, 08 Sep 2013 11:14:00 -0400
-Message-ID: <20130908151446.449394004@goodmis.org>
+Subject: [PATCH RT 06/19] timers: prepare for full preemption improve
+Date: Sun, 08 Sep 2013 11:14:01 -0400
+Message-ID: <20130908151446.754102670@goodmis.org>
 References: <20130908151355.362583092@goodmis.org>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
+	Zhao Hongjiang <zhaohongjiang@huawei.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
+Content-Disposition: inline; filename=0006-timers-prepare-for-full-preemption-improve.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
-pengutronix.de>
+From: Zhao Hongjiang <zhaohongjiang@huawei.com>
 
-The patch "list_bl.h: make list head locking RT safe" introduced
-an unconditional
-
-	__set_bit(0, (unsigned long *)b);
-
-in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
-of b->first. When the value of b->first is retrieved using
-hlist_bl_first the clobbering is undone using
-
-	(unsigned long)h->first & ~LIST_BL_LOCKMASK
-
-and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
-only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
-defined. Without these the value returned by hlist_bl_first has the
-zeroth bit set which likely results in a crash.
-
-So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
-An alternative would be to always define LIST_BL_LOCKMASK to one with
-CONFIG_PREEMPT_RT_BASE.
+wake_up should do nothing on the nort, so we should use wakeup_timer_waiters,
+also fix a spell mistake.
 
 Cc: stable-rt@vger.kernel.org
-Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
+[bigeasy: s/CONFIG_PREEMPT_RT_BASE/CONFIG_PREEMPT_RT_FULL/]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/list_bl.h |    4 ++++
- 1 file changed, 4 insertions(+)
+ kernel/timer.c |    8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index ddfd46a..becd7a6 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
-ead *b)
- 	bit_spin_lock(0, (unsigned long *)b);
- #else
- 	raw_spin_lock(&b->lock);
-+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
- 	__set_bit(0, (unsigned long *)b);
- #endif
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 027ce4e..61b57c1 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -76,7 +76,9 @@ struct tvec_root {
+ struct tvec_base {
+ 	spinlock_t lock;
+ 	struct timer_list *running_timer;
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 	wait_queue_head_t wait_for_running_timer;
 +#endif
+ 	unsigned long timer_jiffies;
+ 	unsigned long next_timer;
+ 	unsigned long active_timers;
+@@ -1006,7 +1008,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+ 			   base->running_timer != timer);
  }
-=20
- static inline void hlist_bl_unlock(struct hlist_bl_head *b)
-@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
-head *b)
- #ifndef CONFIG_PREEMPT_RT_BASE
- 	__bit_spin_unlock(0, (unsigned long *)b);
+ 
+-# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_tunning_timer)
++# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
  #else
-+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
- 	__clear_bit(0, (unsigned long *)b);
-+#endif
- 	raw_spin_unlock(&b->lock);
- #endif
+ static inline void wait_for_running_timer(struct timer_list *timer)
+ {
+@@ -1251,7 +1253,7 @@ static inline void __run_timers(struct tvec_base *base)
+ 			spin_lock_irq(&base->lock);
+ 		}
+ 	}
+-	wake_up(&base->wait_for_running_timer);
++	wakeup_timer_waiters(base);
+ 	spin_unlock_irq(&base->lock);
  }
---=20
+ 
+@@ -1765,7 +1767,9 @@ static int __cpuinit init_timers_cpu(int cpu)
+ 			base = &boot_tvec_bases;
+ 		}
+ 		spin_lock_init(&base->lock);
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 		init_waitqueue_head(&base->wait_for_running_timer);
++#endif
+ 		tvec_base_done[cpu] = 1;
+ 	} else {
+ 		base = per_cpu(tvec_bases, cpu);
+-- 
 1.7.10.4
