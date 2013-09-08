@@ -1,33 +1,110 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: synchronize RT thread to external IRQ - suggestions?
-Date: Sat, 7 Sep 2013 20:53:49 -0400
-Message-ID: <20130907205349.2feeef7f@gandalf.local.home>
-References: <C5F241C8-47AB-4EA5-83D2-C067EA7F3E7B@mah.priv.at>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Jon Elson <elson@pico-systems.com>
-To: Michael Haberler <ml1234@mah.priv.at>
+Subject: [PATCH RT 02/10] rt,ntp: Move call to schedule_delayed_work() to helper thread
+Date: Sun, 08 Sep 2013 08:25:47 -0400
+Message-ID: <20130908122659.911522142@goodmis.org>
+References: <20130908122545.421180629@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:2048 "EHLO
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:33539 "EHLO
 	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750980Ab3IHAxv (ORCPT
+	with ESMTP id S1751279Ab3IHM1C (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 7 Sep 2013 20:53:51 -0400
-In-Reply-To: <C5F241C8-47AB-4EA5-83D2-C067EA7F3E7B@mah.priv.at>
+	Sun, 8 Sep 2013 08:27:02 -0400
+Content-Disposition: inline; filename=0002-rt-ntp-Move-call-to-schedule_delayed_work-to-helper-.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 1 Sep 2013 19:40:14 +0200
-Michael Haberler <ml1234@mah.priv.at> wrote:
+From: Steven Rostedt <rostedt@goodmis.org>
 
-> I've hardware at hand which would best be serviced by an RT-hardened thread after the hardware interrupts the host - in the simplest form it could be say a parport IRQ
+The ntp code for notify_cmos_timer() is called from a hard interrupt
+context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
+that have been converted to mutexes, thus calling schedule_delayed_work()
+from interrupt is not safe.
 
-request_threaded_irq() in the driver.
+Add a helper thread that does the call to schedule_delayed_work and wake
+up that thread instead of calling schedule_delayed_work() directly.
+This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
+schedule_delayed_work() directly in irq context.
 
-Then just set the priority of that thread to whatever you like it to be.
+Note: There's a few places in the kernel that do this. Perhaps the RT
+code should have a dedicated thread that does the checks. Just register
+a notifier on boot up for your check and wake up the thread when
+needed. This will be a todo.
 
-Or is this a user task thread?
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ kernel/time/ntp.c |   40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
--- Steve
+diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
+index bb1edfa..3e93516 100644
+--- a/kernel/time/ntp.c
++++ b/kernel/time/ntp.c
+@@ -10,6 +10,7 @@
+ #include <linux/workqueue.h>
+ #include <linux/hrtimer.h>
+ #include <linux/jiffies.h>
++#include <linux/kthread.h>
+ #include <linux/math64.h>
+ #include <linux/timex.h>
+ #include <linux/time.h>
+@@ -529,10 +530,49 @@ static void sync_cmos_clock(struct work_struct *work)
+ 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * RT can not call schedule_delayed_work from real interrupt context.
++ * Need to make a thread to do the real work.
++ */
++static struct task_struct *cmos_delay_thread;
++static bool do_cmos_delay;
++
++static int run_cmos_delay(void *ignore)
++{
++	while (!kthread_should_stop()) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		if (do_cmos_delay) {
++			do_cmos_delay = false;
++			schedule_delayed_work(&sync_cmos_work, 0);
++		}
++		schedule();
++	}
++	__set_current_state(TASK_RUNNING);
++	return 0;
++}
++
++static void notify_cmos_timer(void)
++{
++	do_cmos_delay = true;
++	/* Make visible before waking up process */
++	smp_wmb();
++	wake_up_process(cmos_delay_thread);
++}
++
++static __init int create_cmos_delay_thread(void)
++{
++	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
++	BUG_ON(!cmos_delay_thread);
++	return 0;
++}
++early_initcall(create_cmos_delay_thread);
++#else
+ static void notify_cmos_timer(void)
+ {
+ 	schedule_delayed_work(&sync_cmos_work, 0);
+ }
++#endif /* CONFIG_PREEMPT_RT_FULL */
+ 
+ #else
+ static inline void notify_cmos_timer(void) { }
+-- 
+1.7.10.4
+
+
