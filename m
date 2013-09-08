@@ -1,63 +1,112 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/10] powerpc: 52xx: provide a default in mpc52xx_irqhost_map()
-Date: Sun, 08 Sep 2013 08:25:49 -0400
-Message-ID: <20130908122700.229691761@goodmis.org>
+Subject: [PATCH RT 07/10] hwlat-detector: Use trace_clock_local if available
+Date: Sun, 08 Sep 2013 08:25:52 -0400
+Message-ID: <20130908122700.702417664@goodmis.org>
 References: <20130908122545.421180629@goodmis.org>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Steven Rostedt <srostedt@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-powerpc-52xx-provide-a-default-in-mpc52xx_irqhost_ma.patch
+Content-Disposition: inline; filename=0007-hwlat-detector-Use-trace_clock_local-if-available.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-=46rom: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-My gcc-4.3.5 fails to compile due to:
+As ktime_get() calls into the timing code which does a read_seq(), it
+may be affected by other CPUS that touch that lock. To remove this
+dependency, use the trace_clock_local() which is already exported
+for module use. If CONFIG_TRACING is enabled, use that as the clock,
+otherwise use ktime_get().
 
-|cc1: warnings being treated as errors
-|arch/powerpc/platforms/52xx/mpc52xx_pic.c: In function =E2=80=98mpc52x=
-x_irqhost_map=E2=80=99:
-|arch/powerpc/platforms/52xx/mpc52xx_pic.c:343: error: =E2=80=98irqchip=
-=E2=80=99 may be used uninitialized in this function
-
-since commit e34298c ("powerpc: 52xx: nop out unsupported critical
-IRQs"). This warning is complete crap since only values 0=E2=80=A63 are=
- possible
-which are checked but gcc fails to understand that. I wouldn't care muc=
-h
-but since this is compiled with -Werror I made this patch.
-While add it, I replaced the warning from l2irq to l1irq since this is
-the number that is evaluated.
-
-Cc: stable-rt@vger.kernel.org # 3.8
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <srostedt@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/powerpc/platforms/52xx/mpc52xx_pic.c |    3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ drivers/misc/hwlat_detector.c |   34 +++++++++++++++++++++++++---------
+ 1 file changed, 25 insertions(+), 9 deletions(-)
 
-diff --git a/arch/powerpc/platforms/52xx/mpc52xx_pic.c b/arch/powerpc/p=
-latforms/52xx/mpc52xx_pic.c
-index b89ef65..b69221b 100644
---- a/arch/powerpc/platforms/52xx/mpc52xx_pic.c
-+++ b/arch/powerpc/platforms/52xx/mpc52xx_pic.c
-@@ -373,8 +373,9 @@ static int mpc52xx_irqhost_map(struct irq_domain *h=
-, unsigned int virq,
- 	case MPC52xx_IRQ_L1_PERP: irqchip =3D &mpc52xx_periph_irqchip; break;
- 	case MPC52xx_IRQ_L1_SDMA: irqchip =3D &mpc52xx_sdma_irqchip; break;
- 	case MPC52xx_IRQ_L1_CRIT:
-+	default:
- 		pr_warn("%s: Critical IRQ #%d is unsupported! Nopping it.\n",
--			__func__, l2irq);
-+			__func__, l1irq);
- 		irq_set_chip(virq, &no_irq_chip);
- 		return 0;
- 	}
---=20
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index f93b8ef..13443e9 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -51,6 +51,7 @@
+ #include <linux/version.h>
+ #include <linux/delay.h>
+ #include <linux/slab.h>
++#include <linux/trace_clock.h>
+ 
+ #define BUF_SIZE_DEFAULT	262144UL		/* 8K*(sizeof(entry)) */
+ #define BUF_FLAGS		(RB_FL_OVERWRITE)	/* no block on full */
+@@ -211,6 +212,21 @@ static struct sample *buffer_get_sample(struct sample *sample)
+ 	return sample;
+ }
+ 
++#ifndef CONFIG_TRACING
++#define time_type	ktime_t
++#define time_get()	ktime_get()
++#define time_to_us(x)	ktime_to_us(x)
++#define time_sub(a, b)	ktime_sub(a, b)
++#define init_time(a, b)	(a).tv64 = b
++#define time_u64(a)	(a).tv64
++#else
++#define time_type	u64
++#define time_get()	trace_clock_local()
++#define time_to_us(x)	div_u64(x, 1000)
++#define time_sub(a, b)	((a) - (b))
++#define init_time(a, b)	a = b
++#define time_u64(a)	a
++#endif
+ /**
+  * get_sample - sample the CPU TSC and look for likely hardware latencies
+  * @unused: This is not used but is a part of the stop_machine API
+@@ -220,23 +236,23 @@ static struct sample *buffer_get_sample(struct sample *sample)
+  */
+ static int get_sample(void *unused)
+ {
+-	ktime_t start, t1, t2, last_t2;
++	time_type start, t1, t2, last_t2;
+ 	s64 diff, total = 0;
+ 	u64 sample = 0;
+ 	u64 outer_sample = 0;
+ 	int ret = 1;
+ 
+-	last_t2.tv64 = 0;
+-	start = ktime_get(); /* start timestamp */
++	init_time(last_t2, 0);
++	start = time_get(); /* start timestamp */
+ 
+ 	do {
+ 
+-		t1 = ktime_get();	/* we'll look for a discontinuity */
+-		t2 = ktime_get();
++		t1 = time_get();	/* we'll look for a discontinuity */
++		t2 = time_get();
+ 
+-		if (last_t2.tv64) {
++		if (time_u64(last_t2)) {
+ 			/* Check the delta from the outer loop (t2 to next t1) */
+-			diff = ktime_to_us(ktime_sub(t1, last_t2));
++			diff = time_to_us(time_sub(t1, last_t2));
+ 			/* This shouldn't happen */
+ 			if (diff < 0) {
+ 				printk(KERN_ERR BANNER "time running backwards\n");
+@@ -247,10 +263,10 @@ static int get_sample(void *unused)
+ 		}
+ 		last_t2 = t2;
+ 
+-		total = ktime_to_us(ktime_sub(t2, start)); /* sample width */
++		total = time_to_us(time_sub(t2, start)); /* sample width */
+ 
+ 		/* This checks the inner loop (t1 to t2) */
+-		diff = ktime_to_us(ktime_sub(t2, t1));     /* current diff */
++		diff = time_to_us(time_sub(t2, t1));     /* current diff */
+ 
+ 		/* This shouldn't happen */
+ 		if (diff < 0) {
+-- 
 1.7.10.4
