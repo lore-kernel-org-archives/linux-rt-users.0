@@ -1,86 +1,63 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/10] 3.8.13-rt16-rc1 stable review
-Date: Sun, 08 Sep 2013 08:25:45 -0400
-Message-ID: <20130908122545.421180629@goodmis.org>
+Subject: [PATCH RT 04/10] powerpc: 52xx: provide a default in mpc52xx_irqhost_map()
+Date: Sun, 08 Sep 2013 08:25:49 -0400
+Message-ID: <20130908122700.229691761@goodmis.org>
+References: <20130908122545.421180629@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-powerpc-52xx-provide-a-default-in-mpc52xx_irqhost_ma.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+=46rom: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Dear RT Folks,
+My gcc-4.3.5 fails to compile due to:
 
-This is the RT stable review cycle of patch 3.8.13-rt16-rc1.
+|cc1: warnings being treated as errors
+|arch/powerpc/platforms/52xx/mpc52xx_pic.c: In function =E2=80=98mpc52x=
+x_irqhost_map=E2=80=99:
+|arch/powerpc/platforms/52xx/mpc52xx_pic.c:343: error: =E2=80=98irqchip=
+=E2=80=99 may be used uninitialized in this function
 
-Please scream at me if I messed something up. Please test the patches too.
+since commit e34298c ("powerpc: 52xx: nop out unsupported critical
+IRQs"). This warning is complete crap since only values 0=E2=80=A63 are=
+ possible
+which are checked but gcc fails to understand that. I wouldn't care muc=
+h
+but since this is compiled with -Werror I made this patch.
+While add it, I replaced the warning from l2irq to l1irq since this is
+the number that is evaluated.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 9/11/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.8.13-rt16-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13-rt16-rc1.patch.xz
-
-You can also build from 3.8.13-rt15 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13-rt15-rt16-rc1.patch.xz
-
-
-Changes from 3.8.13-rt15:
-
+Cc: stable-rt@vger.kernel.org # 3.8
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ arch/powerpc/platforms/52xx/mpc52xx_pic.c |    3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-
-John Kacur (1):
-      hpsa: fix warning with smp_processor_id() in preemptible section
-
-Sebastian Andrzej Siewior (2):
-      powerpc: 52xx: provide a default in mpc52xx_irqhost_map()
-      genirq: do not invoke the affinity callback via a workqueue
-
-Steven Rostedt (4):
-      rt,ntp: Move call to schedule_delayed_work() to helper thread
-      hwlat-detector: Update hwlat_detector to add outer loop detection
-      hwlat-detector: Use trace_clock_local if available
-      hwlat-detector: Use thread instead of stop machine
-
-Steven Rostedt (Red Hat) (2):
-      hwlat-detect/trace: Export trace_clock_local for hwlat-detector
-      Linux 3.8.13-rt16-rc1
-
-Thomas Gleixner (1):
-      sched: Distangle worker accounting from rqlock
-
-----
- arch/powerpc/platforms/52xx/mpc52xx_pic.c |    3 +-
- drivers/misc/hwlat_detector.c             |  117 ++++++++++++++++++-----------
- drivers/scsi/hpsa.c                       |    2 +-
- include/linux/interrupt.h                 |    1 +
- kernel/irq/manage.c                       |   79 ++++++++++++++++++-
- kernel/sched/core.c                       |   70 ++++-------------
- kernel/time/ntp.c                         |   40 ++++++++++
- kernel/trace/trace_clock.c                |    1 +
- kernel/workqueue.c                        |   63 +++++++---------
- kernel/workqueue_sched.h                  |    5 +-
- localversion-rt                           |    2 +-
- 11 files changed, 240 insertions(+), 143 deletions(-)
+diff --git a/arch/powerpc/platforms/52xx/mpc52xx_pic.c b/arch/powerpc/p=
+latforms/52xx/mpc52xx_pic.c
+index b89ef65..b69221b 100644
+--- a/arch/powerpc/platforms/52xx/mpc52xx_pic.c
++++ b/arch/powerpc/platforms/52xx/mpc52xx_pic.c
+@@ -373,8 +373,9 @@ static int mpc52xx_irqhost_map(struct irq_domain *h=
+, unsigned int virq,
+ 	case MPC52xx_IRQ_L1_PERP: irqchip =3D &mpc52xx_periph_irqchip; break;
+ 	case MPC52xx_IRQ_L1_SDMA: irqchip =3D &mpc52xx_sdma_irqchip; break;
+ 	case MPC52xx_IRQ_L1_CRIT:
++	default:
+ 		pr_warn("%s: Critical IRQ #%d is unsupported! Nopping it.\n",
+-			__func__, l2irq);
++			__func__, l1irq);
+ 		irq_set_chip(virq, &no_irq_chip);
+ 		return 0;
+ 	}
+--=20
+1.7.10.4
