@@ -1,31 +1,92 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 19/19] Linux 3.6.11.8-rt41-rc1
-Date: Sun, 08 Sep 2013 11:14:14 -0400
-Message-ID: <20130908151449.063742278@goodmis.org>
+Subject: [PATCH RT 03/19] genirq: Set irq thread to RT priority on creation
+Date: Sun, 08 Sep 2013 11:13:58 -0400
+Message-ID: <20130908151446.117567548@goodmis.org>
 References: <20130908151355.362583092@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Ivo Sieben <meltedpianoman@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0019-Linux-3.6.11.8-rt41-rc1.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:8228 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757206Ab3IHP4t (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 8 Sep 2013 11:56:49 -0400
+Content-Disposition: inline; filename=0003-genirq-Set-irq-thread-to-RT-priority-on-creation.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Ivo Sieben <meltedpianoman@gmail.com>
 
+When a threaded irq handler is installed the irq thread is initially
+created on normal scheduling priority. Only after the irq thread is
+woken up it sets its priority to RT_FIFO MAX_USER_RT_PRIO/2 itself.
+
+This means that interrupts that occur directly after the irq handler
+is installed will be handled on a normal scheduling priority instead
+of the realtime priority that one would expect.
+
+Fix this by setting the RT priority on creation of the irq_thread.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
+Cc: Sebastian Andrzej Siewior  <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Link: http://lkml.kernel.org/r/1370254322-17240-1-git-send-email-meltedpianoman@gmail.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- localversion-rt |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/irq/manage.c |   11 ++++++-----
+ 1 file changed, 6 insertions(+), 5 deletions(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 2af6c89..ad263ce 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt40
-+-rt41-rc1
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 478ade0..2ecc232 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -824,9 +824,6 @@ static void irq_thread_dtor(struct callback_head *unused)
+ static int irq_thread(void *data)
+ {
+ 	struct callback_head on_exit_work;
+-	static const struct sched_param param = {
+-		.sched_priority = MAX_USER_RT_PRIO/2,
+-	};
+ 	struct irqaction *action = data;
+ 	struct irq_desc *desc = irq_to_desc(action->irq);
+ 	irqreturn_t (*handler_fn)(struct irq_desc *desc,
+@@ -838,8 +835,6 @@ static int irq_thread(void *data)
+ 	else
+ 		handler_fn = irq_thread_fn;
+ 
+-	sched_setscheduler(current, SCHED_FIFO, &param);
+-
+ 	init_task_work(&on_exit_work, irq_thread_dtor);
+ 	task_work_add(current, &on_exit_work, false);
+ 
+@@ -938,6 +933,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 	 */
+ 	if (new->thread_fn && !nested) {
+ 		struct task_struct *t;
++		static const struct sched_param param = {
++			.sched_priority = MAX_USER_RT_PRIO/2,
++		};
+ 
+ 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
+ 				   new->name);
+@@ -945,6 +943,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 			ret = PTR_ERR(t);
+ 			goto out_mput;
+ 		}
++
++		sched_setscheduler(t, SCHED_FIFO, &param);
++
+ 		/*
+ 		 * We keep the reference to the task struct even if
+ 		 * the thread dies to avoid that the interrupt code
 -- 
 1.7.10.4
+
+
