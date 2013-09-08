@@ -1,77 +1,279 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/19] drm/i915: drop trace_i915_gem_ring_dispatch on rt
-Date: Sun, 08 Sep 2013 11:14:05 -0400
-Message-ID: <20130908151447.559319819@goodmis.org>
+Subject: [PATCH RT 11/19] sched: Distangle worker accounting from rqlock
+Date: Sun, 08 Sep 2013 11:14:06 -0400
+Message-ID: <20130908151447.716628304@goodmis.org>
 References: <20130908151355.362583092@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Joakim Hernberg <jbh@alchemy.lu>
+	John Kacur <jkacur@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Tejun Heo <tj@kernel.org>, Jens Axboe <axboe@kernel.dk>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-drm-i915-drop-trace_i915_gem_ring_dispatch-on-rt.patch
+Content-Disposition: inline; filename=0011-sched-Distangle-worker-accounting-from-rqlock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-This tracepoint is responsible for:
+The worker accounting for cpu bound workers is plugged into the core
+scheduler code and the wakeup code. This is not a hard requirement and
+can be avoided by keeping track of the state in the workqueue code
+itself.
 
-|[<814cc358>] __schedule_bug+0x4d/0x59
-|[<814d24cc>] __schedule+0x88c/0x930
-|[<814d3b90>] ? _raw_spin_unlock_irqrestore+0x40/0x50
-|[<814d3b95>] ? _raw_spin_unlock_irqrestore+0x45/0x50
-|[<810b57b5>] ? task_blocks_on_rt_mutex+0x1f5/0x250
-|[<814d27d9>] schedule+0x29/0x70
-|[<814d3423>] rt_spin_lock_slowlock+0x15b/0x278
-|[<814d3786>] rt_spin_lock+0x26/0x30
-|[<a00dced9>] gen6_gt_force_wake_get+0x29/0x60 [i915]
-|[<a00e183f>] gen6_ring_get_irq+0x5f/0x100 [i915]
-|[<a00b2a33>] ftrace_raw_event_i915_gem_ring_dispatch+0xe3/0x100 [i915]
-|[<a00ac1b3>] i915_gem_do_execbuffer.isra.13+0xbd3/0x1430 [i915]
-|[<810f8943>] ? trace_buffer_unlock_commit+0x43/0x60
-|[<8113e8d2>] ? ftrace_raw_event_kmem_alloc+0xd2/0x180
-|[<8101d063>] ? native_sched_clock+0x13/0x80
-|[<a00acf29>] i915_gem_execbuffer2+0x99/0x280 [i915]
-|[<a00114a3>] drm_ioctl+0x4c3/0x570 [drm]
-|[<8101d0d9>] ? sched_clock+0x9/0x10
-|[<a00ace90>] ? i915_gem_execbuffer+0x480/0x480 [i915]
-|[<810f1c18>] ? rb_commit+0x68/0xa0
-|[<810f1c6c>] ? ring_buffer_unlock_commit+0x1c/0xa0
-|[<81197467>] do_vfs_ioctl+0x97/0x540
-|[<81021318>] ? ftrace_raw_event_sys_enter+0xd8/0x130
-|[<811979a1>] sys_ioctl+0x91/0xb0
-|[<814db931>] tracesys+0xe1/0xe6
+Keep track of the sleeping state in the worker itself and call the
+notifier before entering the core scheduler. There might be false
+positives when the task is woken between that call and actually
+scheduling, but that's not really different from scheduling and being
+woken immediately after switching away. There is also no harm from
+updating nr_running when the task returns from scheduling instead of
+accounting it in the wakeup code.
 
-Chris Wilson does not like to move i915_trace_irq_get() out of the macro
-
-|No. This enables the IRQ, as well as making a number of
-|very expensively serialised read, unconditionally.
-
-so it is gone now on RT.
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Tejun Heo <tj@kernel.org>
+Cc: Jens Axboe <axboe@kernel.dk>
 Cc: stable-rt@vger.kernel.org
-Reported-by: Joakim Hernberg <jbh@alchemy.lu>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Link: http://lkml.kernel.org/r/20110622174919.135236139@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- drivers/gpu/drm/i915/i915_gem_execbuffer.c |    2 ++
- 1 file changed, 2 insertions(+)
+ kernel/sched/core.c      |   70 ++++++++++------------------------------------
+ kernel/workqueue.c       |   59 +++++++++++++++++++-------------------
+ kernel/workqueue_sched.h |    5 ++--
+ 3 files changed, 45 insertions(+), 89 deletions(-)
 
-diff --git a/drivers/gpu/drm/i915/i915_gem_execbuffer.c b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
-index c26a8f8a..14df3f6 100644
---- a/drivers/gpu/drm/i915/i915_gem_execbuffer.c
-+++ b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
-@@ -1259,7 +1259,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
- 			goto err;
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 781e6c4..1493f43 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1452,10 +1452,6 @@ static void ttwu_activate(struct rq *rq, struct task_struct *p, int en_flags)
+ {
+ 	activate_task(rq, p, en_flags);
+ 	p->on_rq = 1;
+-
+-	/* if a worker is waking up, notify workqueue */
+-	if (p->flags & PF_WQ_WORKER)
+-		wq_worker_waking_up(p, cpu_of(rq));
+ }
+ 
+ /*
+@@ -1714,42 +1710,6 @@ out:
+ }
+ 
+ /**
+- * try_to_wake_up_local - try to wake up a local task with rq lock held
+- * @p: the thread to be awakened
+- *
+- * Put @p on the run-queue if it's not already there. The caller must
+- * ensure that this_rq() is locked, @p is bound to this_rq() and not
+- * the current task.
+- */
+-static void try_to_wake_up_local(struct task_struct *p)
+-{
+-	struct rq *rq = task_rq(p);
+-
+-	if (WARN_ON_ONCE(rq != this_rq()) ||
+-	    WARN_ON_ONCE(p == current))
+-		return;
+-
+-	lockdep_assert_held(&rq->lock);
+-
+-	if (!raw_spin_trylock(&p->pi_lock)) {
+-		raw_spin_unlock(&rq->lock);
+-		raw_spin_lock(&p->pi_lock);
+-		raw_spin_lock(&rq->lock);
+-	}
+-
+-	if (!(p->state & TASK_NORMAL))
+-		goto out;
+-
+-	if (!p->on_rq)
+-		ttwu_activate(rq, p, ENQUEUE_WAKEUP);
+-
+-	ttwu_do_wakeup(rq, p, 0);
+-	ttwu_stat(p, smp_processor_id(), 0);
+-out:
+-	raw_spin_unlock(&p->pi_lock);
+-}
+-
+-/**
+  * wake_up_process - Wake up a specific process
+  * @p: The process to be woken up.
+  *
+@@ -3627,21 +3587,6 @@ need_resched:
+ 		} else {
+ 			deactivate_task(rq, prev, DEQUEUE_SLEEP);
+ 			prev->on_rq = 0;
+-
+-			/*
+-			 * If a worker went to sleep, notify and ask workqueue
+-			 * whether it wants to wake up a task to maintain
+-			 * concurrency.
+-			 * Only call wake up if prev isn't blocked on a sleeping
+-			 * spin lock.
+-			 */
+-			if (prev->flags & PF_WQ_WORKER && !prev->saved_state) {
+-				struct task_struct *to_wakeup;
+-
+-				to_wakeup = wq_worker_sleeping(prev, cpu);
+-				if (to_wakeup)
+-					try_to_wake_up_local(to_wakeup);
+-			}
+ 		}
+ 		switch_count = &prev->nvcsw;
  	}
+@@ -3685,6 +3630,14 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ {
+ 	if (!tsk->state || tsk_is_pi_blocked(tsk))
+ 		return;
++
++	/*
++	 * If a worker went to sleep, notify and ask workqueue whether
++	 * it wants to wake up a task to maintain concurrency.
++	 */
++	if (tsk->flags & PF_WQ_WORKER)
++		wq_worker_sleeping(tsk);
++
+ 	/*
+ 	 * If we are going to sleep and we have plugged IO queued,
+ 	 * make sure to submit it to avoid deadlocks.
+@@ -3693,12 +3646,19 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 		blk_schedule_flush_plug(tsk);
+ }
  
-+#ifndef CONFIG_PREEMPT_RT_BASE
- 	trace_i915_gem_ring_dispatch(ring, seqno);
-+#endif
++static inline void sched_update_worker(struct task_struct *tsk)
++{
++	if (tsk->flags & PF_WQ_WORKER)
++		wq_worker_running(tsk);
++}
++
+ asmlinkage void __sched schedule(void)
+ {
+ 	struct task_struct *tsk = current;
  
- 	exec_start = batch_obj->gtt_offset + args->batch_start_offset;
- 	exec_len = args->batch_len;
+ 	sched_submit_work(tsk);
+ 	__schedule();
++	sched_update_worker(tsk);
+ }
+ EXPORT_SYMBOL(schedule);
+ 
+diff --git a/kernel/workqueue.c b/kernel/workqueue.c
+index b973d66..6308d9b 100644
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -148,6 +148,7 @@ struct worker {
+ 	unsigned long		last_active;	/* L: last active timestamp */
+ 	unsigned int		flags;		/* X: flags */
+ 	int			id;		/* I: worker id */
++	int			sleeping;	/* None */
+ 
+ 	/* for rebinding worker to CPU */
+ 	struct idle_rebind	*idle_rebind;	/* L: for idle worker */
+@@ -691,52 +692,45 @@ static void wake_up_worker(struct worker_pool *pool)
+ }
+ 
+ /**
+- * wq_worker_waking_up - a worker is waking up
+- * @task: task waking up
+- * @cpu: CPU @task is waking up to
++ * wq_worker_running - a worker is running again
++ * @task: task returning from sleep
+  *
+- * This function is called during try_to_wake_up() when a worker is
+- * being awoken.
+- *
+- * CONTEXT:
+- * spin_lock_irq(rq->lock)
++ * This function is called when a worker returns from schedule()
+  */
+-void wq_worker_waking_up(struct task_struct *task, unsigned int cpu)
++void wq_worker_running(struct task_struct *task)
+ {
+ 	struct worker *worker = kthread_data(task);
+ 
++	if (!worker->sleeping)
++		return;
+ 	if (!(worker->flags & WORKER_NOT_RUNNING))
+ 		atomic_inc(get_pool_nr_running(worker->pool));
++	worker->sleeping = 0;
+ }
+ 
+ /**
+  * wq_worker_sleeping - a worker is going to sleep
+  * @task: task going to sleep
+- * @cpu: CPU in question, must be the current CPU number
+- *
+- * This function is called during schedule() when a busy worker is
+- * going to sleep.  Worker on the same cpu can be woken up by
+- * returning pointer to its task.
+- *
+- * CONTEXT:
+- * spin_lock_irq(rq->lock)
+- *
+- * RETURNS:
+- * Worker task on @cpu to wake up, %NULL if none.
++ * This function is called from schedule() when a busy worker is
++ * going to sleep.
+  */
+-struct task_struct *wq_worker_sleeping(struct task_struct *task,
+-				       unsigned int cpu)
++void wq_worker_sleeping(struct task_struct *task)
+ {
+-	struct worker *worker = kthread_data(task), *to_wakeup = NULL;
+-	struct worker_pool *pool = worker->pool;
+-	atomic_t *nr_running = get_pool_nr_running(pool);
++	struct worker *next, *worker = kthread_data(task);
++	struct worker_pool *pool;
++	atomic_t *nr_running;
+ 
+ 	if (worker->flags & WORKER_NOT_RUNNING)
+-		return NULL;
++		return;
++
++	if (WARN_ON_ONCE(worker->sleeping))
++		return;
+ 
+-	/* this can only happen on the local cpu */
+-	BUG_ON(cpu != raw_smp_processor_id());
++	pool = worker->pool;
++	nr_running = get_pool_nr_running(pool);
+ 
++	worker->sleeping = 1;
++	spin_lock_irq(&pool->gcwq->lock);
+ 	/*
+ 	 * The counterpart of the following dec_and_test, implied mb,
+ 	 * worklist not empty test sequence is in insert_work().
+@@ -748,9 +742,12 @@ struct task_struct *wq_worker_sleeping(struct task_struct *task,
+ 	 * manipulating idle_list, so dereferencing idle_list without gcwq
+ 	 * lock is safe.
+ 	 */
+-	if (atomic_dec_and_test(nr_running) && !list_empty(&pool->worklist))
+-		to_wakeup = first_worker(pool);
+-	return to_wakeup ? to_wakeup->task : NULL;
++	if (atomic_dec_and_test(nr_running) && !list_empty(&pool->worklist)) {
++		next = first_worker(pool);
++		if (next)
++			wake_up_process(next->task);
++	}
++	spin_unlock_irq(&pool->gcwq->lock);
+ }
+ 
+ /**
+diff --git a/kernel/workqueue_sched.h b/kernel/workqueue_sched.h
+index 2d10fc9..3bf73e2 100644
+--- a/kernel/workqueue_sched.h
++++ b/kernel/workqueue_sched.h
+@@ -4,6 +4,5 @@
+  * Scheduler hooks for concurrency managed workqueue.  Only to be
+  * included from sched.c and workqueue.c.
+  */
+-void wq_worker_waking_up(struct task_struct *task, unsigned int cpu);
+-struct task_struct *wq_worker_sleeping(struct task_struct *task,
+-				       unsigned int cpu);
++void wq_worker_running(struct task_struct *task);
++void wq_worker_sleeping(struct task_struct *task);
 -- 
 1.7.10.4
