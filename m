@@ -1,112 +1,162 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 16/19] hwlat-detector: Use trace_clock_local if available
-Date: Sun, 08 Sep 2013 11:14:11 -0400
-Message-ID: <20130908151448.514596511@goodmis.org>
-References: <20130908151355.362583092@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Steven Rostedt <srostedt@redhat.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0016-hwlat-detector-Use-trace_clock_local-if-available.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: [rt-tests][PATCH] align thread wakeup times
+Date: Mon, 9 Sep 2013 09:29:48 +0200
+Message-ID: <20130909072948.GA1967@opentech.at>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, C.Emde@osadl.org,
+	tglx@linutronix.de, andi@opentech.at
+To: williams@redhat.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:48711 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750820Ab3IIHlN (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Sep 2013 03:41:13 -0400
+Content-Disposition: inline
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Steven Rostedt <rostedt@goodmis.org>
 
-As ktime_get() calls into the timing code which does a read_seq(), it
-may be affected by other CPUS that touch that lock. To remove this
-dependency, use the trace_clock_local() which is already exported
-for module use. If CONFIG_TRACING is enabled, use that as the clock,
-otherwise use ktime_get().
+Hi !
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+  This patch provides and additional -A/--align flag to cyclictest to align
+ thread wakeup times of all threads as closly defined as possible.
+
+  When running multiple threads in cyclictest (-S or -t # option) the threads
+ are launched in an unsynchronized manner. Basically the creation order and
+ time for thread creation determines the start time. For provoking a maximum
+ congestion situation (e.g. cache evictions) and to improve reproducibility
+ or run conditions the start time should be defined distances appart. The 
+ well defined distance is implemented as a offset parameter to -A/--align
+ and will offset each threads start time by the parameter * the sequentially
+ assigned thread number (par->tnum), together with the -d0 (distance in the
+ intervals of the individual threads) this alignment option allows to get 
+ the thread wakeup times as closely synchronized as possible.
+
+  The method to sync is simply that the thread with par->tnum == 0 is chosen
+ to set a globally shared timestamp, and all other threads use this timestamp
+ as their starting time rather than each calling clock_gettime() at startup.
+ To ensure synchronization of the thread startup the setting of the global
+ time is guarded by pthread_barriers.
+
+
+
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+Reviewed-by: Andreas Platschek <andreas.platschek@opentech.at>
 ---
- drivers/misc/hwlat_detector.c |   34 +++++++++++++++++++++++++---------
- 1 file changed, 25 insertions(+), 9 deletions(-)
+ src/cyclictest/cyclictest.c |   36 ++++++++++++++++++++++++++++++++++--
+ 1 files changed, 34 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index f93b8ef..13443e9 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -51,6 +51,7 @@
- #include <linux/version.h>
- #include <linux/delay.h>
- #include <linux/slab.h>
-+#include <linux/trace_clock.h>
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index abf3e8b..96edda5 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -138,6 +138,7 @@ struct thread_param {
+ 	unsigned long interval;
+ 	int cpu;
+ 	int node;
++	int tnum;
+ };
  
- #define BUF_SIZE_DEFAULT	262144UL		/* 8K*(sizeof(entry)) */
- #define BUF_FLAGS		(RB_FL_OVERWRITE)	/* no block on full */
-@@ -211,6 +212,21 @@ static struct sample *buffer_get_sample(struct sample *sample)
- 	return sample;
+ /* Struct for statistics */
+@@ -178,6 +179,8 @@ static int force_sched_other;
+ static int priospread = 0;
+ static int check_clock_resolution;
+ static int ct_debug;
++static int aligned = 0;
++static int disaligned = 0;
+ 
+ static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
+ static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
+@@ -186,6 +189,10 @@ static pthread_mutex_t break_thread_id_lock = PTHREAD_MUTEX_INITIALIZER;
+ static pid_t break_thread_id = 0;
+ static uint64_t break_thread_value = 0;
+ 
++static pthread_barrier_t align_barr;
++static pthread_barrier_t globalt_barr;
++static struct timespec globalt;
++
+ /* Backup of kernel variables that we modify */
+ static struct kvars {
+ 	char name[KVARNAMELEN];
+@@ -758,7 +765,20 @@ void *timerthread(void *param)
+ 		fatal("timerthread%d: failed to set priority to %d\n", par->cpu, par->prio);
+ 
+ 	/* Get current time */
+-	clock_gettime(par->clock, &now);
++	if(aligned){
++		pthread_barrier_wait(&globalt_barr);
++		if(par->tnum==0){
++			clock_gettime(par->clock, &globalt);
++		}
++		pthread_barrier_wait(&align_barr); 
++		now = globalt;
++		if(disaligned){
++			now.tv_nsec += disaligned * par->tnum;
++			tsnorm(&now);
++		}
++	} else {
++		clock_gettime(par->clock, &now);
++	}
+ 
+ 	next = now;
+ 	next.tv_sec += interval.tv_sec;
+@@ -951,6 +971,7 @@ static void display_help(int error)
+ 	       "cyclictest <options>\n\n"
+ 	       "-a [NUM] --affinity        run thread #N on processor #N, if possible\n"
+ 	       "                           with NUM pin all threads to the processor NUM\n"
++	       "-A USEC  --aligned=USEC     allign threads wakeup to a specific offset"
+ 	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+ 	       "-B       --preemptirqs     both preempt and irqsoff tracing (used with -b)\n"
+ 	       "-c CLOCK --clock=CLOCK     select clock\n"
+@@ -1093,6 +1114,7 @@ static void process_options (int argc, char *argv[])
+ 		 */
+ 		static struct option long_options[] = {
+ 			{"affinity",         optional_argument, NULL, 'a'},
++			{"aligned",           optional_argument, NULL, 'A'},
+ 			{"breaktrace",       required_argument, NULL, 'b'},
+ 			{"preemptirqs",      no_argument,       NULL, 'B'},
+ 			{"clock",            required_argument, NULL, 'c'},
+@@ -1133,7 +1155,7 @@ static void process_options (int argc, char *argv[])
+ 			{"help",             no_argument,       NULL, '?'},
+ 			{NULL, 0, NULL, 0}
+ 		};
+-		int c = getopt_long(argc, argv, "a::b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrRsSt::uUvD:wWXT:y:",
++		int c = getopt_long(argc, argv, "a::A:b:Bc:Cd:D:e:Efh:H:i:Il:MnNo:O:p:PmqQrRsSt::uUvD:wWXT:y:",
+ 				    long_options, &option_index);
+ 		if (c == -1)
+ 			break;
+@@ -1152,6 +1174,10 @@ static void process_options (int argc, char *argv[])
+ 				setaffinity = AFFINITY_USEALL;
+ 			}
+ 			break;
++		case 'A': aligned=1; 
++			if (optarg != NULL)
++				disaligned = atoi(optarg);
++ 			break;
+ 		case 'b': tracelimit = atoi(optarg); break;
+ 		case 'B': tracetype = PREEMPTIRQSOFF; break;
+ 		case 'c': clocksel = atoi(optarg); break;
+@@ -1318,6 +1344,11 @@ static void process_options (int argc, char *argv[])
+ 	if (num_threads < 1)
+ 		error = 1;
+ 
++	if (aligned){
++		pthread_barrier_init (&globalt_barr, NULL, num_threads);
++		pthread_barrier_init (&align_barr, NULL, num_threads);
++	}
++
+ 	if (error)
+ 		display_help(1);
  }
- 
-+#ifndef CONFIG_TRACING
-+#define time_type	ktime_t
-+#define time_get()	ktime_get()
-+#define time_to_us(x)	ktime_to_us(x)
-+#define time_sub(a, b)	ktime_sub(a, b)
-+#define init_time(a, b)	(a).tv64 = b
-+#define time_u64(a)	(a).tv64
-+#else
-+#define time_type	u64
-+#define time_get()	trace_clock_local()
-+#define time_to_us(x)	div_u64(x, 1000)
-+#define time_sub(a, b)	((a) - (b))
-+#define init_time(a, b)	a = b
-+#define time_u64(a)	a
-+#endif
- /**
-  * get_sample - sample the CPU TSC and look for likely hardware latencies
-  * @unused: This is not used but is a part of the stop_machine API
-@@ -220,23 +236,23 @@ static struct sample *buffer_get_sample(struct sample *sample)
-  */
- static int get_sample(void *unused)
- {
--	ktime_t start, t1, t2, last_t2;
-+	time_type start, t1, t2, last_t2;
- 	s64 diff, total = 0;
- 	u64 sample = 0;
- 	u64 outer_sample = 0;
- 	int ret = 1;
- 
--	last_t2.tv64 = 0;
--	start = ktime_get(); /* start timestamp */
-+	init_time(last_t2, 0);
-+	start = time_get(); /* start timestamp */
- 
- 	do {
- 
--		t1 = ktime_get();	/* we'll look for a discontinuity */
--		t2 = ktime_get();
-+		t1 = time_get();	/* we'll look for a discontinuity */
-+		t2 = time_get();
- 
--		if (last_t2.tv64) {
-+		if (time_u64(last_t2)) {
- 			/* Check the delta from the outer loop (t2 to next t1) */
--			diff = ktime_to_us(ktime_sub(t1, last_t2));
-+			diff = time_to_us(time_sub(t1, last_t2));
- 			/* This shouldn't happen */
- 			if (diff < 0) {
- 				printk(KERN_ERR BANNER "time running backwards\n");
-@@ -247,10 +263,10 @@ static int get_sample(void *unused)
- 		}
- 		last_t2 = t2;
- 
--		total = ktime_to_us(ktime_sub(t2, start)); /* sample width */
-+		total = time_to_us(time_sub(t2, start)); /* sample width */
- 
- 		/* This checks the inner loop (t1 to t2) */
--		diff = ktime_to_us(ktime_sub(t2, t1));     /* current diff */
-+		diff = time_to_us(time_sub(t2, t1));     /* current diff */
- 
- 		/* This shouldn't happen */
- 		if (diff < 0) {
+@@ -1744,6 +1775,7 @@ int main(int argc, char **argv)
+ 		par->max_cycles = max_cycles;
+ 		par->stats = stat;
+ 		par->node = node;
++		par->tnum = i;
+ 		switch (setaffinity) {
+ 		case AFFINITY_UNSPECIFIED: par->cpu = -1; break;
+ 		case AFFINITY_SPECIFIED: par->cpu = affinity; break;
 -- 
-1.7.10.4
+1.7.2.5
+
