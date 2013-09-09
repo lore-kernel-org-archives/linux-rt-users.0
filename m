@@ -1,84 +1,103 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/16] genirq: Set irq thread to RT priority on creation
-Date: Mon, 09 Sep 2013 08:45:34 -0400
-Message-ID: <20130909124556.319103947@goodmis.org>
+Subject: [PATCH RT 10/16] rt,ntp: Move call to schedule_delayed_work() to helper thread
+Date: Mon, 09 Sep 2013 08:45:41 -0400
+Message-ID: <20130909124557.494305433@goodmis.org>
 References: <20130909124531.445392664@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Ivo Sieben <meltedpianoman@gmail.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-genirq-Set-irq-thread-to-RT-priority-on-creation.patch
+Content-Disposition: inline; filename=0010-rt-ntp-Move-call-to-schedule_delayed_work-to-helper-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Ivo Sieben <meltedpianoman@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-When a threaded irq handler is installed the irq thread is initially
-created on normal scheduling priority. Only after the irq thread is
-woken up it sets its priority to RT_FIFO MAX_USER_RT_PRIO/2 itself.
+The ntp code for notify_cmos_timer() is called from a hard interrupt
+context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
+that have been converted to mutexes, thus calling schedule_delayed_work()
+from interrupt is not safe.
 
-This means that interrupts that occur directly after the irq handler
-is installed will be handled on a normal scheduling priority instead
-of the realtime priority that one would expect.
+Add a helper thread that does the call to schedule_delayed_work and wake
+up that thread instead of calling schedule_delayed_work() directly.
+This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
+schedule_delayed_work() directly in irq context.
 
-Fix this by setting the RT priority on creation of the irq_thread.
+Note: There's a few places in the kernel that do this. Perhaps the RT
+code should have a dedicated thread that does the checks. Just register
+a notifier on boot up for your check and wake up the thread when
+needed. This will be a todo.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
-Cc: Sebastian Andrzej Siewior  <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/1370254322-17240-1-git-send-email-meltedpianoman@gmail.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/irq/manage.c |   10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ kernel/time/ntp.c |   40 ++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 40 insertions(+)
 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 22ca55a..ff54ceb 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -797,9 +797,6 @@ static void wake_threads_waitq(struct irq_desc *desc)
-  */
- static int irq_thread(void *data)
+diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
+index 96db12f..dfe74f1 100644
+--- a/kernel/time/ntp.c
++++ b/kernel/time/ntp.c
+@@ -10,6 +10,7 @@
+ #include <linux/workqueue.h>
+ #include <linux/hrtimer.h>
+ #include <linux/jiffies.h>
++#include <linux/kthread.h>
+ #include <linux/math64.h>
+ #include <linux/timex.h>
+ #include <linux/time.h>
+@@ -531,10 +532,49 @@ static void sync_cmos_clock(struct work_struct *work)
+ 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * RT can not call schedule_delayed_work from real interrupt context.
++ * Need to make a thread to do the real work.
++ */
++static struct task_struct *cmos_delay_thread;
++static bool do_cmos_delay;
++
++static int run_cmos_delay(void *ignore)
++{
++	while (!kthread_should_stop()) {
++		set_current_state(TASK_INTERRUPTIBLE);
++		if (do_cmos_delay) {
++			do_cmos_delay = false;
++			schedule_delayed_work(&sync_cmos_work, 0);
++		}
++		schedule();
++	}
++	__set_current_state(TASK_RUNNING);
++	return 0;
++}
++
++static void notify_cmos_timer(void)
++{
++	do_cmos_delay = true;
++	/* Make visible before waking up process */
++	smp_wmb();
++	wake_up_process(cmos_delay_thread);
++}
++
++static __init int create_cmos_delay_thread(void)
++{
++	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
++	BUG_ON(!cmos_delay_thread);
++	return 0;
++}
++early_initcall(create_cmos_delay_thread);
++#else
+ static void notify_cmos_timer(void)
  {
--	static const struct sched_param param = {
--		.sched_priority = MAX_USER_RT_PRIO/2,
--	};
- 	struct irqaction *action = data;
- 	struct irq_desc *desc = irq_to_desc(action->irq);
- 	irqreturn_t (*handler_fn)(struct irq_desc *desc,
-@@ -811,7 +808,6 @@ static int irq_thread(void *data)
- 	else
- 		handler_fn = irq_thread_fn;
+ 	schedule_delayed_work(&sync_cmos_work, 0);
+ }
++#endif /* CONFIG_PREEMPT_RT_FULL */
  
--	sched_setscheduler(current, SCHED_FIFO, &param);
- 	current->irq_thread = 1;
- 
- 	while (!irq_wait_for_interrupt(action)) {
-@@ -944,6 +940,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 	 */
- 	if (new->thread_fn && !nested) {
- 		struct task_struct *t;
-+		static const struct sched_param param = {
-+			.sched_priority = MAX_USER_RT_PRIO/2,
-+		};
- 
- 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
- 				   new->name);
-@@ -951,6 +950,9 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 			ret = PTR_ERR(t);
- 			goto out_mput;
- 		}
-+
-+		sched_setscheduler(t, SCHED_FIFO, &param);
-+
- 		/*
- 		 * We keep the reference to the task struct even if
- 		 * the thread dies to avoid that the interrupt code
+ #else
+ static inline void notify_cmos_timer(void) { }
 -- 
 1.7.10.4
