@@ -1,106 +1,83 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/16] rt,ntp: Move call to schedule_delayed_work() to helper thread
-Date: Mon, 09 Sep 2013 08:47:55 -0400
-Message-ID: <20130909124800.657268707@goodmis.org>
-References: <20130909124745.590777496@goodmis.org>
+Subject: [PATCH RT 05/16] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
+Date: Mon, 09 Sep 2013 08:45:36 -0400
+Message-ID: <20130909124556.627732109@goodmis.org>
+References: <20130909124531.445392664@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-rt-ntp-Move-call-to-schedule_delayed_work-to-helper-.patch
+Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
+pengutronix.de>
 
-The ntp code for notify_cmos_timer() is called from a hard interrupt
-context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
-that have been converted to mutexes, thus calling schedule_delayed_work()
-from interrupt is not safe.
+The patch "list_bl.h: make list head locking RT safe" introduced
+an unconditional
 
-Add a helper thread that does the call to schedule_delayed_work and wake
-up that thread instead of calling schedule_delayed_work() directly.
-This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
-schedule_delayed_work() directly in irq context.
+	__set_bit(0, (unsigned long *)b);
 
-Note: There's a few places in the kernel that do this. Perhaps the RT
-code should have a dedicated thread that does the checks. Just register
-a notifier on boot up for your check and wake up the thread when
-needed. This will be a todo.
+in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
+of b->first. When the value of b->first is retrieved using
+hlist_bl_first the clobbering is undone using
+
+	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+
+and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
+only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
+defined. Without these the value returned by hlist_bl_first has the
+zeroth bit set which likely results in a crash.
+
+So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
+An alternative would be to always define LIST_BL_LOCKMASK to one with
+CONFIG_PREEMPT_RT_BASE.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/ntp.c |   42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ include/linux/list_bl.h |    4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 4b63943..7d5241e 100644
---- a/kernel/time/ntp.c
-+++ b/kernel/time/ntp.c
-@@ -10,6 +10,7 @@
- #include <linux/workqueue.h>
- #include <linux/hrtimer.h>
- #include <linux/jiffies.h>
-+#include <linux/kthread.h>
- #include <linux/math64.h>
- #include <linux/timex.h>
- #include <linux/time.h>
-@@ -490,11 +491,52 @@ static void sync_cmos_clock(struct work_struct *work)
- 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * RT can not call schedule_delayed_work from real interrupt context.
-+ * Need to make a thread to do the real work.
-+ */
-+static struct task_struct *cmos_delay_thread;
-+static bool do_cmos_delay;
-+
-+static int run_cmos_delay(void *ignore)
-+{
-+	while (!kthread_should_stop()) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		if (do_cmos_delay) {
-+			do_cmos_delay = false;
-+			schedule_delayed_work(&sync_cmos_work, 0);
-+		}
-+		schedule();
-+	}
-+	__set_current_state(TASK_RUNNING);
-+	return 0;
-+}
-+
-+static void notify_cmos_timer(void)
-+{
-+	if (!no_sync_cmos_clock) {
-+		do_cmos_delay = true;
-+		/* Make visible before waking up process */
-+		smp_wmb();
-+		wake_up_process(cmos_delay_thread);
-+	}
-+}
-+
-+static __init int create_cmos_delay_thread(void)
-+{
-+	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
-+	BUG_ON(!cmos_delay_thread);
-+	return 0;
-+}
-+early_initcall(create_cmos_delay_thread);
-+#else
- static void notify_cmos_timer(void)
- {
- 	if (!no_sync_cmos_clock)
- 		schedule_delayed_work(&sync_cmos_work, 0);
- }
-+#endif /* CONFIG_PREEMPT_RT_FULL */
- 
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
  #else
- static inline void notify_cmos_timer(void) { }
--- 
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
+ }
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
+--=20
 1.7.10.4
