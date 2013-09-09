@@ -1,165 +1,110 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 15/16] genirq: do not invoke the affinity callback via a workqueue
-Date: Mon, 09 Sep 2013 08:45:46 -0400
-Message-ID: <20130909124558.450347261@goodmis.org>
-References: <20130909124531.445392664@goodmis.org>
+Subject: [PATCH RT 00/16] 3.2.50-rt71-rc1 stable review
+Date: Mon, 09 Sep 2013 08:47:45 -0400
+Message-ID: <20130909124745.590777496@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0015-genirq-do-not-invoke-the-affinity-callback-via-a-wor.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Joe Korty reported, that __irq_set_affinity_locked() schedules a
-workqueue while holding a rawlock which results in a might_sleep()
-warning.
-This patch moves the invokation into a process context so that we only
-wakeup() a process while holding the lock.
+Dear RT Folks,
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.2.50-rt71-rc1.
+
+Please scream at me if I messed something up. Please test the patches t=
+oo.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release can=
+didate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 9/12/2013.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.50-rt71-rc1 directly, the following patches should be appl=
+ied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.50.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.50-r=
+t71-rc1.patch.xz
+
+You can also build from 3.2.50-rt70 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.5=
+0-rt70-rt71-rc1.patch.xz
+
+
+Changes from 3.2.50-rt70:
+
 ---
- include/linux/interrupt.h |    1 +
- kernel/irq/manage.c       |   79 +++++++++++++++++++++++++++++++++++++++++++--
- 2 files changed, 77 insertions(+), 3 deletions(-)
 
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 773dbc9..fb05761 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -269,6 +269,7 @@ struct irq_affinity_notify {
- 	unsigned int irq;
- 	struct kref kref;
- 	struct work_struct work;
-+	struct list_head list;
- 	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
- 	void (*release)(struct kref *ref);
- };
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index ff54ceb..a6bea19 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -141,6 +141,62 @@ static inline void
- irq_get_pending(struct cpumask *mask, struct irq_desc *desc) { }
- #endif
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void _irq_affinity_notify(struct irq_affinity_notify *notify);
-+static struct task_struct *set_affinity_helper;
-+static LIST_HEAD(affinity_list);
-+static DEFINE_RAW_SPINLOCK(affinity_list_lock);
-+
-+static int set_affinity_thread(void *unused)
-+{
-+	while (1) {
-+		struct irq_affinity_notify *notify;
-+		int empty;
-+
-+		set_current_state(TASK_INTERRUPTIBLE);
-+
-+		raw_spin_lock_irq(&affinity_list_lock);
-+		empty = list_empty(&affinity_list);
-+		raw_spin_unlock_irq(&affinity_list_lock);
-+
-+		if (empty)
-+			schedule();
-+		if (kthread_should_stop())
-+			break;
-+		set_current_state(TASK_RUNNING);
-+try_next:
-+		notify = NULL;
-+
-+		raw_spin_lock_irq(&affinity_list_lock);
-+		if (!list_empty(&affinity_list)) {
-+			notify = list_first_entry(&affinity_list,
-+					struct irq_affinity_notify, list);
-+			list_del_init(&notify->list);
-+		}
-+		raw_spin_unlock_irq(&affinity_list_lock);
-+
-+		if (!notify)
-+			continue;
-+		_irq_affinity_notify(notify);
-+		goto try_next;
-+	}
-+	return 0;
-+}
-+
-+static void init_helper_thread(void)
-+{
-+	if (set_affinity_helper)
-+		return;
-+	set_affinity_helper = kthread_run(set_affinity_thread, NULL,
-+			"affinity-cb");
-+	WARN_ON(IS_ERR(set_affinity_helper));
-+}
-+#else
-+
-+static inline void init_helper_thread(void) { }
-+
-+#endif
-+
- int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
- {
- 	struct irq_chip *chip = irq_data_get_irq_chip(data);
-@@ -166,7 +222,17 @@ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
- 
- 	if (desc->affinity_notify) {
- 		kref_get(&desc->affinity_notify->kref);
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		raw_spin_lock(&affinity_list_lock);
-+		if (list_empty(&desc->affinity_notify->list))
-+			list_add_tail(&affinity_list,
-+					&desc->affinity_notify->list);
-+		raw_spin_unlock(&affinity_list_lock);
-+		wake_up_process(set_affinity_helper);
-+#else
- 		schedule_work(&desc->affinity_notify->work);
-+#endif
- 	}
- 	irqd_set(data, IRQD_AFFINITY_SET);
- 
-@@ -207,10 +273,8 @@ int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m)
- }
- EXPORT_SYMBOL_GPL(irq_set_affinity_hint);
- 
--static void irq_affinity_notify(struct work_struct *work)
-+static void _irq_affinity_notify(struct irq_affinity_notify *notify)
- {
--	struct irq_affinity_notify *notify =
--		container_of(work, struct irq_affinity_notify, work);
- 	struct irq_desc *desc = irq_to_desc(notify->irq);
- 	cpumask_var_t cpumask;
- 	unsigned long flags;
-@@ -232,6 +296,13 @@ out:
- 	kref_put(&notify->kref, notify->release);
- }
- 
-+static void irq_affinity_notify(struct work_struct *work)
-+{
-+	struct irq_affinity_notify *notify =
-+		container_of(work, struct irq_affinity_notify, work);
-+	_irq_affinity_notify(notify);
-+}
-+
- /**
-  *	irq_set_affinity_notifier - control notification of IRQ affinity changes
-  *	@irq:		Interrupt for which to enable/disable notification
-@@ -261,6 +332,8 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
- 		notify->irq = irq;
- 		kref_init(&notify->kref);
- 		INIT_WORK(&notify->work, irq_affinity_notify);
-+		INIT_LIST_HEAD(&notify->list);
-+		init_helper_thread();
- 	}
- 
- 	raw_spin_lock_irqsave(&desc->lock, flags);
--- 
-1.7.10.4
+
+Ivo Sieben (1):
+      genirq: Set irq thread to RT priority on creation
+
+Mike Galbraith (1):
+      x86/mce: fix mce timer interval
+
+Paul Gortmaker (1):
+      list_bl.h: make list head locking RT safe
+
+Sebastian Andrzej Siewior (4):
+      kernel/cpu: fix cpu down problem if kthread's cpu is going down
+      kernel/hotplug: restore original cpu mask oncpu/down
+      drm/i915: drop trace_i915_gem_ring_dispatch on rt
+      genirq: do not invoke the affinity callback via a workqueue
+
+Steven Rostedt (5):
+      sched/workqueue: Only wake up idle workers if not blocked on slee=
+ping spin lock
+      rt,ntp: Move call to schedule_delayed_work() to helper thread
+      hwlat-detector: Update hwlat_detector to add outer loop detection
+      hwlat-detector: Use trace_clock_local if available
+      hwlat-detector: Use thread instead of stop machine
+
+Steven Rostedt (Red Hat) (2):
+      hwlat-detect/trace: Export trace_clock_local for hwlat-detector
+      Linux 3.2.50-rt71-rc1
+
+Uwe Kleine-K=C3=B6nig (1):
+      list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
+
+Zhao Hongjiang (1):
+      timers: prepare for full preemption improve
+
+----
+ arch/x86/kernel/cpu/mcheck/mce.c           |    4 +-
+ drivers/gpu/drm/i915/i915_gem_execbuffer.c |    2 +
+ drivers/misc/hwlat_detector.c              |  117 +++++++++++++++++---=
+--------
+ include/linux/interrupt.h                  |    1 +
+ include/linux/list_bl.h                    |   28 ++++++-
+ kernel/cpu.c                               |   29 ++++++-
+ kernel/irq/manage.c                        |   89 +++++++++++++++++++-=
+-
+ kernel/sched.c                             |    4 +-
+ kernel/time/ntp.c                          |   42 ++++++++++
+ kernel/timer.c                             |    8 +-
+ kernel/trace/trace_clock.c                 |    1 +
+ localversion-rt                            |    2 +-
+ 12 files changed, 264 insertions(+), 63 deletions(-)
