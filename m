@@ -1,82 +1,105 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/16] genirq: Set irq thread to RT priority on creation
-Date: Mon, 09 Sep 2013 10:35:20 -0400
-Message-ID: <20130909143534.655639785@goodmis.org>
+Subject: [PATCH RT 07/16] kernel/cpu: fix cpu down problem if kthreads cpu is going down
+Date: Mon, 09 Sep 2013 10:35:24 -0400
+Message-ID: <20130909143535.275563613@goodmis.org>
 References: <20130909143517.641735717@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Ivo Sieben <meltedpianoman@gmail.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-genirq-Set-irq-thread-to-RT-priority-on-creation.patch
+Content-Disposition: inline; filename=0007-kernel-cpu-fix-cpu-down-problem-if-kthread-s-cpu-is-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Ivo Sieben <meltedpianoman@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-When a threaded irq handler is installed the irq thread is initially
-created on normal scheduling priority. Only after the irq thread is
-woken up it sets its priority to RT_FIFO MAX_USER_RT_PRIO/2 itself.
+If kthread is pinned to CPUx and CPUx is going down then we get into
+trouble:
+- first the unplug thread is created
+- it will set itself to hp->unplug. As a result, every task that is
+  going to take a lock, has to leave the CPU.
+- the CPU_DOWN_PREPARE notifier are started. The worker thread will
+  start a new process for the "high priority worker".
+  Now kthread would like to take a lock but since it can't leave the CPU
+  it will never complete its task.
 
-This means that interrupts that occur directly after the irq handler
-is installed will be handled on a normal scheduling priority instead
-of the realtime priority that one would expect.
+We could fire the unplug thread after the notifier but then the cpu is
+no longer marked "online" and the unplug thread will run on CPU0 which
+was fixed before :)
 
-Fix this by setting the RT priority on creation of the irq_thread.
+So instead the unplug thread is started and kept waiting until the
+notfier complete their work.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Ivo Sieben <meltedpianoman@gmail.com>
-Cc: Sebastian Andrzej Siewior  <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/1370254322-17240-1-git-send-email-meltedpianoman@gmail.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/irq/manage.c |   10 ++++++----
- 1 file changed, 6 insertions(+), 4 deletions(-)
+ kernel/cpu.c |   16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index d750268..9d702cf 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -780,9 +780,6 @@ static irqreturn_t irq_thread_fn(struct irq_desc *desc,
-  */
- static int irq_thread(void *data)
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 3bcbf99..25853dc 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -78,6 +78,7 @@ struct hotplug_pcp {
+ 	int refcount;
+ 	int grab_lock;
+ 	struct completion synced;
++	struct completion unplug_wait;
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	spinlock_t lock;
+ #else
+@@ -175,6 +176,7 @@ static int sync_unplug_thread(void *data)
  {
--	static const struct sched_param param = {
--		.sched_priority = MAX_USER_RT_PRIO/2,
--	};
- 	struct irqaction *action = data;
- 	struct irq_desc *desc = irq_to_desc(action->irq);
- 	irqreturn_t (*handler_fn)(struct irq_desc *desc,
-@@ -795,7 +792,6 @@ static int irq_thread(void *data)
- 	else
- 		handler_fn = irq_thread_fn;
+ 	struct hotplug_pcp *hp = data;
  
--	sched_setscheduler(current, SCHED_FIFO, &param);
- 	current->irqaction = action;
++	wait_for_completion(&hp->unplug_wait);
+ 	preempt_disable();
+ 	hp->unplug = current;
+ 	wait_for_pinned_cpus(hp);
+@@ -240,6 +242,14 @@ static void __cpu_unplug_sync(struct hotplug_pcp *hp)
+ 	wait_for_completion(&hp->synced);
+ }
  
- 	while (!irq_wait_for_interrupt(action)) {
-@@ -932,11 +928,17 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
++static void __cpu_unplug_wait(unsigned int cpu)
++{
++	struct hotplug_pcp *hp = &per_cpu(hotplug_pcp, cpu);
++
++	complete(&hp->unplug_wait);
++	wait_for_completion(&hp->synced);
++}
++
+ /*
+  * Start the sync_unplug_thread on the target cpu and wait for it to
+  * complete.
+@@ -263,6 +273,7 @@ static int cpu_unplug_begin(unsigned int cpu)
+ 	tell_sched_cpu_down_begin(cpu);
+ 
+ 	init_completion(&hp->synced);
++	init_completion(&hp->unplug_wait);
+ 
+ 	hp->sync_tsk = kthread_create(sync_unplug_thread, hp, "sync_unplug/%d", cpu);
+ 	if (IS_ERR(hp->sync_tsk)) {
+@@ -278,8 +289,7 @@ static int cpu_unplug_begin(unsigned int cpu)
+ 	 * wait for tasks that are going to enter these sections and
+ 	 * we must not have them block.
  	 */
- 	if (new->thread_fn && !nested) {
- 		struct task_struct *t;
-+		static const struct sched_param param = {
-+			.sched_priority = MAX_USER_RT_PRIO/2,
-+		};
+-	__cpu_unplug_sync(hp);
+-
++	wake_up_process(hp->sync_tsk);
+ 	return 0;
+ }
  
- 		t = kthread_create(irq_thread, new, "irq/%d-%s", irq,
- 				   new->name);
- 		if (IS_ERR(t))
- 			return PTR_ERR(t);
+@@ -524,6 +534,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 		goto out_release;
+ 	}
+ 
++	__cpu_unplug_wait(cpu);
 +
-+		sched_setscheduler(t, SCHED_FIFO, &param);
-+
- 		/*
- 		 * We keep the reference to the task struct even if
- 		 * the thread dies to avoid that the interrupt code
+ 	/* Notifiers are done. Don't let any more tasks pin this CPU. */
+ 	cpu_unplug_sync(cpu);
+ 
 -- 
 1.7.10.4
