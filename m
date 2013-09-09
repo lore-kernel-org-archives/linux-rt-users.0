@@ -1,105 +1,83 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/16] kernel/cpu: fix cpu down problem if kthreads cpu is going down
-Date: Mon, 09 Sep 2013 08:47:52 -0400
-Message-ID: <20130909124759.956936932@goodmis.org>
+Subject: [PATCH RT 05/16] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
+Date: Mon, 09 Sep 2013 08:47:50 -0400
+Message-ID: <20130909124759.575383146@goodmis.org>
 References: <20130909124745.590777496@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-kernel-cpu-fix-cpu-down-problem-if-kthread-s-cpu-is-.patch
+Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
+pengutronix.de>
 
-If kthread is pinned to CPUx and CPUx is going down then we get into
-trouble:
-- first the unplug thread is created
-- it will set itself to hp->unplug. As a result, every task that is
-  going to take a lock, has to leave the CPU.
-- the CPU_DOWN_PREPARE notifier are started. The worker thread will
-  start a new process for the "high priority worker".
-  Now kthread would like to take a lock but since it can't leave the CPU
-  it will never complete its task.
+The patch "list_bl.h: make list head locking RT safe" introduced
+an unconditional
 
-We could fire the unplug thread after the notifier but then the cpu is
-no longer marked "online" and the unplug thread will run on CPU0 which
-was fixed before :)
+	__set_bit(0, (unsigned long *)b);
 
-So instead the unplug thread is started and kept waiting until the
-notfier complete their work.
+in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
+of b->first. When the value of b->first is retrieved using
+hlist_bl_first the clobbering is undone using
+
+	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+
+and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
+only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
+defined. Without these the value returned by hlist_bl_first has the
+zeroth bit set which likely results in a crash.
+
+So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
+An alternative would be to always define LIST_BL_LOCKMASK to one with
+CONFIG_PREEMPT_RT_BASE.
 
 Cc: stable-rt@vger.kernel.org
+Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/cpu.c |   16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+ include/linux/list_bl.h |    4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 5ef0c31..f56a8ec 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -78,6 +78,7 @@ struct hotplug_pcp {
- 	int refcount;
- 	int grab_lock;
- 	struct completion synced;
-+	struct completion unplug_wait;
- #ifdef CONFIG_PREEMPT_RT_FULL
- 	spinlock_t lock;
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
  #else
-@@ -175,6 +176,7 @@ static int sync_unplug_thread(void *data)
- {
- 	struct hotplug_pcp *hp = data;
- 
-+	wait_for_completion(&hp->unplug_wait);
- 	preempt_disable();
- 	hp->unplug = current;
- 	wait_for_pinned_cpus(hp);
-@@ -240,6 +242,14 @@ static void __cpu_unplug_sync(struct hotplug_pcp *hp)
- 	wait_for_completion(&hp->synced);
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
  }
- 
-+static void __cpu_unplug_wait(unsigned int cpu)
-+{
-+	struct hotplug_pcp *hp = &per_cpu(hotplug_pcp, cpu);
-+
-+	complete(&hp->unplug_wait);
-+	wait_for_completion(&hp->synced);
-+}
-+
- /*
-  * Start the sync_unplug_thread on the target cpu and wait for it to
-  * complete.
-@@ -263,6 +273,7 @@ static int cpu_unplug_begin(unsigned int cpu)
- 	tell_sched_cpu_down_begin(cpu);
- 
- 	init_completion(&hp->synced);
-+	init_completion(&hp->unplug_wait);
- 
- 	hp->sync_tsk = kthread_create(sync_unplug_thread, hp, "sync_unplug/%d", cpu);
- 	if (IS_ERR(hp->sync_tsk)) {
-@@ -278,8 +289,7 @@ static int cpu_unplug_begin(unsigned int cpu)
- 	 * wait for tasks that are going to enter these sections and
- 	 * we must not have them block.
- 	 */
--	__cpu_unplug_sync(hp);
--
-+	wake_up_process(hp->sync_tsk);
- 	return 0;
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
  }
- 
-@@ -545,6 +555,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		goto out_release;
- 	}
- 
-+	__cpu_unplug_wait(cpu);
-+
- 	/* Notifiers are done. Don't let any more tasks pin this CPU. */
- 	cpu_unplug_sync(cpu);
- 
--- 
+--=20
 1.7.10.4
