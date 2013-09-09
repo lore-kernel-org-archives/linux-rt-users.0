@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/16] rt,ntp: Move call to schedule_delayed_work() to helper thread
-Date: Mon, 09 Sep 2013 08:45:41 -0400
-Message-ID: <20130909124557.494305433@goodmis.org>
+Subject: [PATCH RT 14/16] hwlat-detector: Use thread instead of stop machine
+Date: Mon, 09 Sep 2013 08:45:45 -0400
+Message-ID: <20130909124558.290354645@goodmis.org>
 References: <20130909124531.445392664@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -10,94 +10,192 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-rt-ntp-Move-call-to-schedule_delayed_work-to-helper-.patch
+Content-Disposition: inline; filename=0014-hwlat-detector-Use-thread-instead-of-stop-machine.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: Steven Rostedt <rostedt@goodmis.org>
 
-The ntp code for notify_cmos_timer() is called from a hard interrupt
-context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
-that have been converted to mutexes, thus calling schedule_delayed_work()
-from interrupt is not safe.
+There's no reason to use stop machine to search for hardware latency.
+Simply disabling interrupts while running the loop will do enough to
+check if something comes in that wasn't disabled by interrupts being
+off, which is exactly what stop machine does.
 
-Add a helper thread that does the call to schedule_delayed_work and wake
-up that thread instead of calling schedule_delayed_work() directly.
-This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
-schedule_delayed_work() directly in irq context.
-
-Note: There's a few places in the kernel that do this. Perhaps the RT
-code should have a dedicated thread that does the checks. Just register
-a notifier on boot up for your check and wake up the thread when
-needed. This will be a todo.
+Instead of using stop machine, just have the thread disable interrupts
+while it checks for hardware latency.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/ntp.c |   40 ++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 40 insertions(+)
+ drivers/misc/hwlat_detector.c |   59 +++++++++++++++++------------------------
+ 1 file changed, 25 insertions(+), 34 deletions(-)
 
-diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 96db12f..dfe74f1 100644
---- a/kernel/time/ntp.c
-+++ b/kernel/time/ntp.c
-@@ -10,6 +10,7 @@
- #include <linux/workqueue.h>
- #include <linux/hrtimer.h>
- #include <linux/jiffies.h>
-+#include <linux/kthread.h>
- #include <linux/math64.h>
- #include <linux/timex.h>
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index 13443e9..6f61d5f 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -41,7 +41,6 @@
+ #include <linux/module.h>
+ #include <linux/init.h>
+ #include <linux/ring_buffer.h>
+-#include <linux/stop_machine.h>
  #include <linux/time.h>
-@@ -531,10 +532,49 @@ static void sync_cmos_clock(struct work_struct *work)
- 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
- }
+ #include <linux/hrtimer.h>
+ #include <linux/kthread.h>
+@@ -107,7 +106,6 @@ struct data;					/* Global state */
+ /* Sampling functions */
+ static int __buffer_add_sample(struct sample *sample);
+ static struct sample *buffer_get_sample(struct sample *sample);
+-static int get_sample(void *unused);
  
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * RT can not call schedule_delayed_work from real interrupt context.
-+ * Need to make a thread to do the real work.
-+ */
-+static struct task_struct *cmos_delay_thread;
-+static bool do_cmos_delay;
-+
-+static int run_cmos_delay(void *ignore)
-+{
-+	while (!kthread_should_stop()) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		if (do_cmos_delay) {
-+			do_cmos_delay = false;
-+			schedule_delayed_work(&sync_cmos_work, 0);
-+		}
-+		schedule();
-+	}
-+	__set_current_state(TASK_RUNNING);
-+	return 0;
-+}
-+
-+static void notify_cmos_timer(void)
-+{
-+	do_cmos_delay = true;
-+	/* Make visible before waking up process */
-+	smp_wmb();
-+	wake_up_process(cmos_delay_thread);
-+}
-+
-+static __init int create_cmos_delay_thread(void)
-+{
-+	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
-+	BUG_ON(!cmos_delay_thread);
-+	return 0;
-+}
-+early_initcall(create_cmos_delay_thread);
-+#else
- static void notify_cmos_timer(void)
+ /* Threading and state */
+ static int kthread_fn(void *unused);
+@@ -149,7 +147,7 @@ struct sample {
+ 	unsigned long   lost;
+ };
+ 
+-/* keep the global state somewhere. Mostly used under stop_machine. */
++/* keep the global state somewhere. */
+ static struct data {
+ 
+ 	struct mutex lock;		/* protect changes */
+@@ -172,7 +170,7 @@ static struct data {
+  * @sample: The new latency sample value
+  *
+  * This receives a new latency sample and records it in a global ring buffer.
+- * No additional locking is used in this case - suited for stop_machine use.
++ * No additional locking is used in this case.
+  */
+ static int __buffer_add_sample(struct sample *sample)
  {
- 	schedule_delayed_work(&sync_cmos_work, 0);
- }
-+#endif /* CONFIG_PREEMPT_RT_FULL */
+@@ -229,18 +227,17 @@ static struct sample *buffer_get_sample(struct sample *sample)
+ #endif
+ /**
+  * get_sample - sample the CPU TSC and look for likely hardware latencies
+- * @unused: This is not used but is a part of the stop_machine API
+  *
+  * Used to repeatedly capture the CPU TSC (or similar), looking for potential
+- * hardware-induced latency. Called under stop_machine, with data.lock held.
++ * hardware-induced latency. Called with interrupts disabled and with data.lock held.
+  */
+-static int get_sample(void *unused)
++static int get_sample(void)
+ {
+ 	time_type start, t1, t2, last_t2;
+ 	s64 diff, total = 0;
+ 	u64 sample = 0;
+ 	u64 outer_sample = 0;
+-	int ret = 1;
++	int ret = -1;
  
- #else
- static inline void notify_cmos_timer(void) { }
+ 	init_time(last_t2, 0);
+ 	start = time_get(); /* start timestamp */
+@@ -279,10 +276,14 @@ static int get_sample(void *unused)
+ 
+ 	} while (total <= data.sample_width);
+ 
++	ret = 0;
++
+ 	/* If we exceed the threshold value, we have found a hardware latency */
+ 	if (sample > data.threshold || outer_sample > data.threshold) {
+ 		struct sample s;
+ 
++		ret = 1;
++
+ 		data.count++;
+ 		s.seqnum = data.count;
+ 		s.duration = sample;
+@@ -295,7 +296,6 @@ static int get_sample(void *unused)
+ 			data.max_sample = sample;
+ 	}
+ 
+-	ret = 0;
+ out:
+ 	return ret;
+ }
+@@ -305,32 +305,30 @@ out:
+  * @unused: A required part of the kthread API.
+  *
+  * Used to periodically sample the CPU TSC via a call to get_sample. We
+- * use stop_machine, whith does (intentionally) introduce latency since we
++ * disable interrupts, which does (intentionally) introduce latency since we
+  * need to ensure nothing else might be running (and thus pre-empting).
+  * Obviously this should never be used in production environments.
+  *
+- * stop_machine will schedule us typically only on CPU0 which is fine for
+- * almost every real-world hardware latency situation - but we might later
+- * generalize this if we find there are any actualy systems with alternate
+- * SMI delivery or other non CPU0 hardware latencies.
++ * Currently this runs on which ever CPU it was scheduled on, but most
++ * real-worald hardware latency situations occur across several CPUs,
++ * but we might later generalize this if we find there are any actualy
++ * systems with alternate SMI delivery or other hardware latencies.
+  */
+ static int kthread_fn(void *unused)
+ {
+-	int err = 0;
+-	u64 interval = 0;
++	int ret;
++	u64 interval;
+ 
+ 	while (!kthread_should_stop()) {
+ 
+ 		mutex_lock(&data.lock);
+ 
+-		err = stop_machine(get_sample, unused, 0);
+-		if (err) {
+-			/* Houston, we have a problem */
+-			mutex_unlock(&data.lock);
+-			goto err_out;
+-		}
++		local_irq_disable();
++		ret = get_sample();
++		local_irq_enable();
+ 
+-		wake_up(&data.wq); /* wake up reader(s) */
++		if (ret > 0)
++			wake_up(&data.wq); /* wake up reader(s) */
+ 
+ 		interval = data.sample_window - data.sample_width;
+ 		do_div(interval, USEC_PER_MSEC); /* modifies interval value */
+@@ -338,15 +336,10 @@ static int kthread_fn(void *unused)
+ 		mutex_unlock(&data.lock);
+ 
+ 		if (msleep_interruptible(interval))
+-			goto out;
++			break;
+ 	}
+-		goto out;
+-err_out:
+-	printk(KERN_ERR BANNER "could not call stop_machine, disabling\n");
+-	enabled = 0;
+-out:
+-	return err;
+ 
++	return 0;
+ }
+ 
+ /**
+@@ -442,8 +435,7 @@ out:
+  * This function provides a generic read implementation for the global state
+  * "data" structure debugfs filesystem entries. It would be nice to use
+  * simple_attr_read directly, but we need to make sure that the data.lock
+- * spinlock is held during the actual read (even though we likely won't ever
+- * actually race here as the updater runs under a stop_machine context).
++ * is held during the actual read.
+  */
+ static ssize_t simple_data_read(struct file *filp, char __user *ubuf,
+ 				size_t cnt, loff_t *ppos, const u64 *entry)
+@@ -478,8 +470,7 @@ static ssize_t simple_data_read(struct file *filp, char __user *ubuf,
+  * This function provides a generic write implementation for the global state
+  * "data" structure debugfs filesystem entries. It would be nice to use
+  * simple_attr_write directly, but we need to make sure that the data.lock
+- * spinlock is held during the actual write (even though we likely won't ever
+- * actually race here as the updater runs under a stop_machine context).
++ * is held during the actual write.
+  */
+ static ssize_t simple_data_write(struct file *filp, const char __user *ubuf,
+ 				 size_t cnt, loff_t *ppos, u64 *entry)
 -- 
 1.7.10.4
