@@ -1,83 +1,84 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/16] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
-Date: Mon, 09 Sep 2013 10:35:22 -0400
-Message-ID: <20130909143534.962146393@goodmis.org>
+Subject: [PATCH RT 09/16] drm/i915: drop trace_i915_gem_ring_dispatch on rt
+Date: Mon, 09 Sep 2013 10:35:26 -0400
+Message-ID: <20130909143535.590582560@goodmis.org>
 References: <20130909143517.641735717@goodmis.org>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
+	Joakim Hernberg <jbh@alchemy.lu>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:31424 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754282Ab3IIP0r (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Sep 2013 11:26:47 -0400
+Content-Disposition: inline; filename=0009-drm-i915-drop-trace_i915_gem_ring_dispatch-on-rt.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
-pengutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The patch "list_bl.h: make list head locking RT safe" introduced
-an unconditional
+This tracepoint is responsible for:
 
-	__set_bit(0, (unsigned long *)b);
+|[<814cc358>] __schedule_bug+0x4d/0x59
+|[<814d24cc>] __schedule+0x88c/0x930
+|[<814d3b90>] ? _raw_spin_unlock_irqrestore+0x40/0x50
+|[<814d3b95>] ? _raw_spin_unlock_irqrestore+0x45/0x50
+|[<810b57b5>] ? task_blocks_on_rt_mutex+0x1f5/0x250
+|[<814d27d9>] schedule+0x29/0x70
+|[<814d3423>] rt_spin_lock_slowlock+0x15b/0x278
+|[<814d3786>] rt_spin_lock+0x26/0x30
+|[<a00dced9>] gen6_gt_force_wake_get+0x29/0x60 [i915]
+|[<a00e183f>] gen6_ring_get_irq+0x5f/0x100 [i915]
+|[<a00b2a33>] ftrace_raw_event_i915_gem_ring_dispatch+0xe3/0x100 [i915]
+|[<a00ac1b3>] i915_gem_do_execbuffer.isra.13+0xbd3/0x1430 [i915]
+|[<810f8943>] ? trace_buffer_unlock_commit+0x43/0x60
+|[<8113e8d2>] ? ftrace_raw_event_kmem_alloc+0xd2/0x180
+|[<8101d063>] ? native_sched_clock+0x13/0x80
+|[<a00acf29>] i915_gem_execbuffer2+0x99/0x280 [i915]
+|[<a00114a3>] drm_ioctl+0x4c3/0x570 [drm]
+|[<8101d0d9>] ? sched_clock+0x9/0x10
+|[<a00ace90>] ? i915_gem_execbuffer+0x480/0x480 [i915]
+|[<810f1c18>] ? rb_commit+0x68/0xa0
+|[<810f1c6c>] ? ring_buffer_unlock_commit+0x1c/0xa0
+|[<81197467>] do_vfs_ioctl+0x97/0x540
+|[<81021318>] ? ftrace_raw_event_sys_enter+0xd8/0x130
+|[<811979a1>] sys_ioctl+0x91/0xb0
+|[<814db931>] tracesys+0xe1/0xe6
 
-in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
-of b->first. When the value of b->first is retrieved using
-hlist_bl_first the clobbering is undone using
+Chris Wilson does not like to move i915_trace_irq_get() out of the macro
 
-	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+|No. This enables the IRQ, as well as making a number of
+|very expensively serialised read, unconditionally.
 
-and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
-only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
-defined. Without these the value returned by hlist_bl_first has the
-zeroth bit set which likely results in a crash.
-
-So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
-An alternative would be to always define LIST_BL_LOCKMASK to one with
-CONFIG_PREEMPT_RT_BASE.
+so it is gone now on RT.
 
 Cc: stable-rt@vger.kernel.org
-Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Reported-by: Joakim Hernberg <jbh@alchemy.lu>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/list_bl.h |    4 ++++
- 1 file changed, 4 insertions(+)
+ drivers/gpu/drm/i915/i915_gem_execbuffer.c |    2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index ddfd46a..becd7a6 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
-ead *b)
- 	bit_spin_lock(0, (unsigned long *)b);
- #else
- 	raw_spin_lock(&b->lock);
-+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
- 	__set_bit(0, (unsigned long *)b);
- #endif
+diff --git a/drivers/gpu/drm/i915/i915_gem_execbuffer.c b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+index 1ca53ff..4d04a9f 100644
+--- a/drivers/gpu/drm/i915/i915_gem_execbuffer.c
++++ b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
+@@ -1189,7 +1189,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
+ 		}
+ 	}
+ 
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	trace_i915_gem_ring_dispatch(ring, seqno);
 +#endif
- }
-=20
- static inline void hlist_bl_unlock(struct hlist_bl_head *b)
-@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
-head *b)
- #ifndef CONFIG_PREEMPT_RT_BASE
- 	__bit_spin_unlock(0, (unsigned long *)b);
- #else
-+#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
- 	__clear_bit(0, (unsigned long *)b);
-+#endif
- 	raw_spin_unlock(&b->lock);
- #endif
- }
---=20
+ 
+ 	exec_start = batch_obj->gtt_offset + args->batch_start_offset;
+ 	exec_len = args->batch_len;
+-- 
 1.7.10.4
+
+
