@@ -1,145 +1,81 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/16] hwlat-detector: Update hwlat_detector to add outer loop detection
-Date: Mon, 09 Sep 2013 10:35:28 -0400
-Message-ID: <20130909143535.905788375@goodmis.org>
+Subject: [PATCH RT 06/16] timers: prepare for full preemption improve
+Date: Mon, 09 Sep 2013 10:35:23 -0400
+Message-ID: <20130909143535.120360363@goodmis.org>
 References: <20130909143517.641735717@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Steven Rostedt <srostedt@redhat.com>
+	Zhao Hongjiang <zhaohongjiang@huawei.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-hwlat-detector-Update-hwlat_detector-to-add-outer-lo.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:21912 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754331Ab3IIP0s (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Sep 2013 11:26:48 -0400
+Content-Disposition: inline; filename=0006-timers-prepare-for-full-preemption-improve.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Zhao Hongjiang <zhaohongjiang@huawei.com>
 
-The hwlat_detector reads two timestamps in a row, then reports any
-gap between those calls. The problem is, it misses everything between
-the second reading of the time stamp to the first reading of the time stamp
-in the next loop. That's were most of the time is spent, which means,
-chances are likely that it will miss all hardware latencies. This
-defeats the purpose.
-
-By also testing the first time stamp from the previous loop second
-time stamp (the outer loop), we are more likely to find a latency.
-
-Setting the threshold to 1, here's what the report now looks like:
-
-1347415723.0232202770	0	2
-1347415725.0234202822	0	2
-1347415727.0236202875	0	2
-1347415729.0238202928	0	2
-1347415731.0240202980	0	2
-1347415734.0243203061	0	2
-1347415736.0245203113	0	2
-1347415738.0247203166	2	0
-1347415740.0249203219	0	3
-1347415742.0251203272	0	3
-1347415743.0252203299	0	3
-1347415745.0254203351	0	2
-1347415747.0256203404	0	2
-1347415749.0258203457	0	2
-1347415751.0260203510	0	2
-1347415754.0263203589	0	2
-1347415756.0265203642	0	2
-1347415758.0267203695	0	2
-1347415760.0269203748	0	2
-1347415762.0271203801	0	2
-1347415764.0273203853	2	0
-
-There's some hardware latency that takes 2 microseconds to run.
+wake_up should do nothing on the nort, so we should use wakeup_timer_waiters,
+also fix a spell mistake.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <srostedt@redhat.com>
+Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
+[bigeasy: s/CONFIG_PREEMPT_RT_BASE/CONFIG_PREEMPT_RT_FULL/]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/misc/hwlat_detector.c |   32 ++++++++++++++++++++++++++------
- 1 file changed, 26 insertions(+), 6 deletions(-)
+ kernel/timer.c |    8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index b7b7c90..f93b8ef 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -143,6 +143,7 @@ static void detector_exit(void);
- struct sample {
- 	u64		seqnum;		/* unique sequence */
- 	u64		duration;	/* ktime delta */
-+	u64		outer_duration;	/* ktime delta (outer loop) */
- 	struct timespec	timestamp;	/* wall time */
- 	unsigned long   lost;
- };
-@@ -219,11 +220,13 @@ static struct sample *buffer_get_sample(struct sample *sample)
-  */
- static int get_sample(void *unused)
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 2e21a6c..07070cb 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -76,7 +76,9 @@ struct tvec_root {
+ struct tvec_base {
+ 	spinlock_t lock;
+ 	struct timer_list *running_timer;
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 	wait_queue_head_t wait_for_running_timer;
++#endif
+ 	unsigned long timer_jiffies;
+ 	unsigned long next_timer;
+ 	struct tvec_root tv1;
+@@ -930,7 +932,7 @@ static void wait_for_running_timer(struct timer_list *timer)
+ 			   base->running_timer != timer);
+ }
+ 
+-# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_tunning_timer)
++# define wakeup_timer_waiters(b)	wake_up(&(b)->wait_for_running_timer)
+ #else
+ static inline void wait_for_running_timer(struct timer_list *timer)
  {
--	ktime_t start, t1, t2;
-+	ktime_t start, t1, t2, last_t2;
- 	s64 diff, total = 0;
- 	u64 sample = 0;
-+	u64 outer_sample = 0;
- 	int ret = 1;
- 
-+	last_t2.tv64 = 0;
- 	start = ktime_get(); /* start timestamp */
- 
- 	do {
-@@ -231,7 +234,22 @@ static int get_sample(void *unused)
- 		t1 = ktime_get();	/* we'll look for a discontinuity */
- 		t2 = ktime_get();
- 
-+		if (last_t2.tv64) {
-+			/* Check the delta from the outer loop (t2 to next t1) */
-+			diff = ktime_to_us(ktime_sub(t1, last_t2));
-+			/* This shouldn't happen */
-+			if (diff < 0) {
-+				printk(KERN_ERR BANNER "time running backwards\n");
-+				goto out;
-+			}
-+			if (diff > outer_sample)
-+				outer_sample = diff;
-+		}
-+		last_t2 = t2;
-+
- 		total = ktime_to_us(ktime_sub(t2, start)); /* sample width */
-+
-+		/* This checks the inner loop (t1 to t2) */
- 		diff = ktime_to_us(ktime_sub(t2, t1));     /* current diff */
- 
- 		/* This shouldn't happen */
-@@ -246,12 +264,13 @@ static int get_sample(void *unused)
- 	} while (total <= data.sample_width);
- 
- 	/* If we exceed the threshold value, we have found a hardware latency */
--	if (sample > data.threshold) {
-+	if (sample > data.threshold || outer_sample > data.threshold) {
- 		struct sample s;
- 
- 		data.count++;
- 		s.seqnum = data.count;
- 		s.duration = sample;
-+		s.outer_duration = outer_sample;
- 		s.timestamp = CURRENT_TIME;
- 		__buffer_add_sample(&s);
- 
-@@ -738,10 +757,11 @@ static ssize_t debug_sample_fread(struct file *filp, char __user *ubuf,
+@@ -1183,7 +1185,7 @@ static inline void __run_timers(struct tvec_base *base)
+ 			spin_lock_irq(&base->lock);
  		}
  	}
+-	wake_up(&base->wait_for_running_timer);
++	wakeup_timer_waiters(base);
+ 	spin_unlock_irq(&base->lock);
+ }
  
--	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\n",
--		      sample->timestamp.tv_sec,
--		      sample->timestamp.tv_nsec,
--		      sample->duration);
-+	len = snprintf(buf, sizeof(buf), "%010lu.%010lu\t%llu\t%llu\n",
-+		       sample->timestamp.tv_sec,
-+		       sample->timestamp.tv_nsec,
-+		       sample->duration,
-+		       sample->outer_duration);
- 
- 
- 	/* handling partial reads is more trouble than it's worth */
+@@ -1706,7 +1708,9 @@ static int __cpuinit init_timers_cpu(int cpu)
+ 			base = &boot_tvec_bases;
+ 		}
+ 		spin_lock_init(&base->lock);
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 		init_waitqueue_head(&base->wait_for_running_timer);
++#endif
+ 		tvec_base_done[cpu] = 1;
+ 	} else {
+ 		base = per_cpu(tvec_bases, cpu);
 -- 
 1.7.10.4
+
+
