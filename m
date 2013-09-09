@@ -1,56 +1,57 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/16] sched/workqueue: Only wake up idle workers if not blocked on
- sleeping spin lock
-Date: Mon, 09 Sep 2013 08:47:46 -0400
-Message-ID: <20130909124758.600728378@goodmis.org>
+Subject: [PATCH RT 02/16] x86/mce: fix mce timer interval
+Date: Mon, 09 Sep 2013 08:47:47 -0400
+Message-ID: <20130909124758.826663268@goodmis.org>
 References: <20130909124745.590777496@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-sched-workqueue-Only-wake-up-idle-workers-if-not-blo.patch
+Content-Disposition: inline; filename=0002-x86-mce-fix-mce-timer-interval.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Mike Galbraith <bitbucket@online.de>
 
-In -rt, most spin_locks() turn into mutexes. One of these spin_lock
-conversions is performed on the workqueue gcwq->lock. When the idle
-worker is worken, the first thing it will do is grab that same lock and
-it too will block, possibly jumping into the same code, but because
-nr_running would already be decremented it prevents an infinite loop.
+Seems mce timer fire at the wrong frequency in -rt kernels since roughly
+forever due to 32 bit overflow.  3.8-rt is also missing a multiplier.
 
-But this is still a waste of CPU cycles, and it doesn't follow the method
-of mainline, as new workers should only be woken when a worker thread is
-truly going to sleep, and not just blocked on a spin_lock().
-
-Check the saved_state too before waking up new workers.
+Add missing us -> ns conversion and 32 bit overflow prevention.
 
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <bitbucket@online.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy: use ULL instead of u64 cast]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/sched.c |    4 +++-
- 1 file changed, 3 insertions(+), 1 deletion(-)
+ arch/x86/kernel/cpu/mcheck/mce.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched.c b/kernel/sched.c
-index dbd9a43..4c37a42 100644
---- a/kernel/sched.c
-+++ b/kernel/sched.c
-@@ -4803,8 +4803,10 @@ static inline void sched_submit_work(struct task_struct *tsk)
- 	/*
- 	 * If a worker went to sleep, notify and ask workqueue whether
- 	 * it wants to wake up a task to maintain concurrency.
-+	 * Only call wake up if prev isn't blocked on a sleeping
-+	 * spin lock.
- 	 */
--	if (tsk->flags & PF_WQ_WORKER)
-+	if (tsk->flags & PF_WQ_WORKER && !tsk->saved_state)
- 		wq_worker_sleeping(tsk);
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index 8ceb100..b08a373 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1139,7 +1139,7 @@ static enum hrtimer_restart mce_start_timer(struct hrtimer *timer)
+ 		*n = min(*n*2, round_jiffies_relative(check_interval*HZ));
  
- 	/*
+ 	hrtimer_forward(timer, timer->base->get_time(),
+-			ns_to_ktime(jiffies_to_usecs(*n) * 1000));
++			ns_to_ktime(jiffies_to_usecs(*n) * 1000ULL));
+ 	return HRTIMER_RESTART;
+ }
+ 
+@@ -1435,7 +1435,7 @@ static void __mcheck_cpu_init_timer(void)
+ 	if (!*n)
+ 		return;
+ 
+-	hrtimer_start_range_ns(t, ns_to_ktime(jiffies_to_usecs(*n) * 1000),
++	hrtimer_start_range_ns(t, ns_to_ktime(jiffies_to_usecs(*n) * 1000ULL),
+ 			       0 , HRTIMER_MODE_REL_PINNED);
+ }
+ 
 -- 
 1.7.10.4
