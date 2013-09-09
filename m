@@ -1,76 +1,83 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/16] kernel/hotplug: restore original cpu mask oncpu/down
-Date: Mon, 09 Sep 2013 10:35:25 -0400
-Message-ID: <20130909143535.432817617@goodmis.org>
+Subject: [PATCH RT 05/16] list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
+Date: Mon, 09 Sep 2013 10:35:22 -0400
+Message-ID: <20130909143534.962146393@goodmis.org>
 References: <20130909143517.641735717@goodmis.org>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=ISO-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	=?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-kernel-hotplug-restore-original-cpu-mask-oncpu-down.patch
+Content-Disposition: inline; filename=0005-list_bl.h-fix-it-for-for-SMP-DEBUG_SPINLOCK.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+=46rom: =3D?UTF-8?q?Uwe=3D20Kleine-K=3DC3=3DB6nig?=3D <u.kleine-koenig@=
+pengutronix.de>
 
-If a task which is allowed to run only on CPU X puts CPU Y down then it
-will be allowed on all CPUs but the on CPU Y after it comes back from
-kernel. This patch ensures that we don't lose the initial setting unless
-the CPU the task is running is going down.
+The patch "list_bl.h: make list head locking RT safe" introduced
+an unconditional
+
+	__set_bit(0, (unsigned long *)b);
+
+in void hlist_bl_lock(struct hlist_bl_head *b). This clobbers the value
+of b->first. When the value of b->first is retrieved using
+hlist_bl_first the clobbering is undone using
+
+	(unsigned long)h->first & ~LIST_BL_LOCKMASK
+
+and so depending on LIST_BL_LOCKMASK being one. But LIST_BL_LOCKMASK is
+only one if at least on of CONFIG_SMP and CONFIG_DEBUG_SPINLOCK are
+defined. Without these the value returned by hlist_bl_first has the
+zeroth bit set which likely results in a crash.
+
+So only do the clobbering in the cases where LIST_BL_LOCKMASK is one.
+An alternative would be to always define LIST_BL_LOCKMASK to one with
+CONFIG_PREEMPT_RT_BASE.
 
 Cc: stable-rt@vger.kernel.org
+Acked-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Tested-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/cpu.c |   13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ include/linux/list_bl.h |    4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 25853dc..4abfd5d 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -497,6 +497,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		.hcpu = hcpu,
- 	};
- 	cpumask_var_t cpumask;
-+	cpumask_var_t cpumask_org;
- 
- 	if (num_online_cpus() == 1)
- 		return -EBUSY;
-@@ -507,6 +508,12 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 	/* Move the downtaker off the unplug cpu */
- 	if (!alloc_cpumask_var(&cpumask, GFP_KERNEL))
- 		return -ENOMEM;
-+	if (!alloc_cpumask_var(&cpumask_org, GFP_KERNEL))  {
-+		free_cpumask_var(cpumask);
-+		return -ENOMEM;
-+	}
-+
-+	cpumask_copy(cpumask_org, tsk_cpus_allowed(current));
- 	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
- 	set_cpus_allowed_ptr(current, cpumask);
- 	free_cpumask_var(cpumask);
-@@ -515,7 +522,8 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 	if (mycpu == cpu) {
- 		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
- 		migrate_enable();
--		return -EBUSY;
-+		err = -EBUSY;
-+		goto restore_cpus;
- 	}
- 
- 	cpu_hotplug_begin();
-@@ -573,6 +581,9 @@ out_cancel:
- 	cpu_hotplug_done();
- 	if (!err)
- 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
-+restore_cpus:
-+	set_cpus_allowed_ptr(current, cpumask_org);
-+	free_cpumask_var(cpumask_org);
- 	return err;
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index ddfd46a..becd7a6 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -131,8 +131,10 @@ static inline void hlist_bl_lock(struct hlist_bl_h=
+ead *b)
+ 	bit_spin_lock(0, (unsigned long *)b);
+ #else
+ 	raw_spin_lock(&b->lock);
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__set_bit(0, (unsigned long *)b);
+ #endif
++#endif
  }
- 
--- 
+=20
+ static inline void hlist_bl_unlock(struct hlist_bl_head *b)
+@@ -140,7 +142,9 @@ static inline void hlist_bl_unlock(struct hlist_bl_=
+head *b)
+ #ifndef CONFIG_PREEMPT_RT_BASE
+ 	__bit_spin_unlock(0, (unsigned long *)b);
+ #else
++#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+ 	__clear_bit(0, (unsigned long *)b);
++#endif
+ 	raw_spin_unlock(&b->lock);
+ #endif
+ }
+--=20
 1.7.10.4
