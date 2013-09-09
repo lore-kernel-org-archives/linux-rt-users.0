@@ -1,110 +1,63 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/16] 3.4.57-rt73-rc1 stable review
-Date: Mon, 09 Sep 2013 08:45:31 -0400
-Message-ID: <20130909124531.445392664@goodmis.org>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Subject: [PATCH RT 01/16] sched/workqueue: Only wake up idle workers if not blocked on
+ sleeping spin lock
+Date: Mon, 09 Sep 2013 08:45:32 -0400
+Message-ID: <20130909124555.974389218@goodmis.org>
+References: <20130909124531.445392664@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:25990 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753593Ab3IIN0y (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Sep 2013 09:26:54 -0400
+Content-Disposition: inline; filename=0001-sched-workqueue-Only-wake-up-idle-workers-if-not-blo.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Dear RT Folks,
+In -rt, most spin_locks() turn into mutexes. One of these spin_lock
+conversions is performed on the workqueue gcwq->lock. When the idle
+worker is worken, the first thing it will do is grab that same lock and
+it too will block, possibly jumping into the same code, but because
+nr_running would already be decremented it prevents an infinite loop.
 
-This is the RT stable review cycle of patch 3.4.57-rt73-rc1.
+But this is still a waste of CPU cycles, and it doesn't follow the method
+of mainline, as new workers should only be woken when a worker thread is
+truly going to sleep, and not just blocked on a spin_lock().
 
-Please scream at me if I messed something up. Please test the patches t=
-oo.
+Check the saved_state too before waking up new workers.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release can=
-didate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 9/12/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.4.57-rt73-rc1 directly, the following patches should be appl=
-ied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.57.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.57-r=
-t73-rc1.patch.xz
-
-You can also build from 3.4.57-rt72 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.5=
-7-rt72-rt73-rc1.patch.xz
-
-
-Changes from 3.4.57-rt72:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ kernel/sched/core.c |    4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 751ec60..8674878 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3528,8 +3528,10 @@ static inline void sched_submit_work(struct task_struct *tsk)
+ 	/*
+ 	 * If a worker went to sleep, notify and ask workqueue whether
+ 	 * it wants to wake up a task to maintain concurrency.
++	 * Only call wake up if prev isn't blocked on a sleeping
++	 * spin lock.
+ 	 */
+-	if (tsk->flags & PF_WQ_WORKER)
++	if (tsk->flags & PF_WQ_WORKER && !tsk->saved_state)
+ 		wq_worker_sleeping(tsk);
+ 
+ 	/*
+-- 
+1.7.10.4
 
 
-Ivo Sieben (1):
-      genirq: Set irq thread to RT priority on creation
-
-Mike Galbraith (1):
-      x86/mce: fix mce timer interval
-
-Paul Gortmaker (1):
-      list_bl.h: make list head locking RT safe
-
-Sebastian Andrzej Siewior (4):
-      kernel/cpu: fix cpu down problem if kthread's cpu is going down
-      kernel/hotplug: restore original cpu mask oncpu/down
-      drm/i915: drop trace_i915_gem_ring_dispatch on rt
-      genirq: do not invoke the affinity callback via a workqueue
-
-Steven Rostedt (5):
-      sched/workqueue: Only wake up idle workers if not blocked on slee=
-ping spin lock
-      rt,ntp: Move call to schedule_delayed_work() to helper thread
-      hwlat-detector: Update hwlat_detector to add outer loop detection
-      hwlat-detector: Use trace_clock_local if available
-      hwlat-detector: Use thread instead of stop machine
-
-Steven Rostedt (Red Hat) (2):
-      hwlat-detect/trace: Export trace_clock_local for hwlat-detector
-      Linux 3.4.57-rt73-rc1
-
-Uwe Kleine-K=C3=B6nig (1):
-      list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
-
-Zhao Hongjiang (1):
-      timers: prepare for full preemption improve
-
-----
- arch/x86/kernel/cpu/mcheck/mce.c           |    4 +-
- drivers/gpu/drm/i915/i915_gem_execbuffer.c |    2 +
- drivers/misc/hwlat_detector.c              |  117 +++++++++++++++++---=
---------
- include/linux/interrupt.h                  |    1 +
- include/linux/list_bl.h                    |   28 ++++++-
- kernel/cpu.c                               |   29 ++++++-
- kernel/irq/manage.c                        |   89 +++++++++++++++++++-=
--
- kernel/sched/core.c                        |    4 +-
- kernel/time/ntp.c                          |   40 ++++++++++
- kernel/timer.c                             |    8 +-
- kernel/trace/trace_clock.c                 |    1 +
- localversion-rt                            |    2 +-
- 12 files changed, 262 insertions(+), 63 deletions(-)
