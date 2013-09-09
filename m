@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/16] rt,ntp: Move call to schedule_delayed_work() to helper thread
-Date: Mon, 09 Sep 2013 10:35:27 -0400
-Message-ID: <20130909143535.749287955@goodmis.org>
+Subject: [PATCH RT 15/16] genirq: do not invoke the affinity callback via a workqueue
+Date: Mon, 09 Sep 2013 10:35:32 -0400
+Message-ID: <20130909143536.674693016@goodmis.org>
 References: <20130909143517.641735717@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
@@ -10,97 +10,156 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-rt-ntp-Move-call-to-schedule_delayed_work-to-helper-.patch
+Content-Disposition: inline; filename=0015-genirq-do-not-invoke-the-affinity-callback-via-a-wor.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The ntp code for notify_cmos_timer() is called from a hard interrupt
-context. schedule_delayed_work() under PREEMPT_RT_FULL calls spinlocks
-that have been converted to mutexes, thus calling schedule_delayed_work()
-from interrupt is not safe.
-
-Add a helper thread that does the call to schedule_delayed_work and wake
-up that thread instead of calling schedule_delayed_work() directly.
-This is only for CONFIG_PREEMPT_RT_FULL, otherwise the code still calls
-schedule_delayed_work() directly in irq context.
-
-Note: There's a few places in the kernel that do this. Perhaps the RT
-code should have a dedicated thread that does the checks. Just register
-a notifier on boot up for your check and wake up the thread when
-needed. This will be a todo.
+Joe Korty reported, that __irq_set_affinity_locked() schedules a
+workqueue while holding a rawlock which results in a might_sleep()
+warning.
+This patch moves the invokation into a process context so that we only
+wakeup() a process while holding the lock.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/time/ntp.c |   42 ++++++++++++++++++++++++++++++++++++++++++
- 1 file changed, 42 insertions(+)
+ include/linux/interrupt.h |    1 +
+ kernel/irq/manage.c       |   79 +++++++++++++++++++++++++++++++++++++++++++--
+ 2 files changed, 77 insertions(+), 3 deletions(-)
 
-diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 8b3a185..fa0c206 100644
---- a/kernel/time/ntp.c
-+++ b/kernel/time/ntp.c
-@@ -10,6 +10,7 @@
- #include <linux/workqueue.h>
- #include <linux/hrtimer.h>
- #include <linux/jiffies.h>
-+#include <linux/kthread.h>
- #include <linux/math64.h>
- #include <linux/timex.h>
- #include <linux/time.h>
-@@ -494,11 +495,52 @@ static void sync_cmos_clock(struct work_struct *work)
- 	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
- }
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 71c2c0b..9f67f91 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -255,6 +255,7 @@ struct irq_affinity_notify {
+ 	unsigned int irq;
+ 	struct kref kref;
+ 	struct work_struct work;
++	struct list_head list;
+ 	void (*notify)(struct irq_affinity_notify *, const cpumask_t *mask);
+ 	void (*release)(struct kref *ref);
+ };
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 9d702cf..3d7d5f6 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -141,6 +141,62 @@ static inline void
+ irq_get_pending(struct cpumask *mask, struct irq_desc *desc) { }
+ #endif
  
 +#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * RT can not call schedule_delayed_work from real interrupt context.
-+ * Need to make a thread to do the real work.
-+ */
-+static struct task_struct *cmos_delay_thread;
-+static bool do_cmos_delay;
++static void _irq_affinity_notify(struct irq_affinity_notify *notify);
++static struct task_struct *set_affinity_helper;
++static LIST_HEAD(affinity_list);
++static DEFINE_RAW_SPINLOCK(affinity_list_lock);
 +
-+static int run_cmos_delay(void *ignore)
++static int set_affinity_thread(void *unused)
 +{
-+	while (!kthread_should_stop()) {
++	while (1) {
++		struct irq_affinity_notify *notify;
++		int empty;
++
 +		set_current_state(TASK_INTERRUPTIBLE);
-+		if (do_cmos_delay) {
-+			do_cmos_delay = false;
-+			schedule_delayed_work(&sync_cmos_work, 0);
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		empty = list_empty(&affinity_list);
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (empty)
++			schedule();
++		if (kthread_should_stop())
++			break;
++		set_current_state(TASK_RUNNING);
++try_next:
++		notify = NULL;
++
++		raw_spin_lock_irq(&affinity_list_lock);
++		if (!list_empty(&affinity_list)) {
++			notify = list_first_entry(&affinity_list,
++					struct irq_affinity_notify, list);
++			list_del_init(&notify->list);
 +		}
-+		schedule();
++		raw_spin_unlock_irq(&affinity_list_lock);
++
++		if (!notify)
++			continue;
++		_irq_affinity_notify(notify);
++		goto try_next;
 +	}
-+	__set_current_state(TASK_RUNNING);
 +	return 0;
 +}
 +
-+static void notify_cmos_timer(void)
++static void init_helper_thread(void)
 +{
-+	if (!no_sync_cmos_clock) {
-+		do_cmos_delay = true;
-+		/* Make visible before waking up process */
-+		smp_wmb();
-+		wake_up_process(cmos_delay_thread);
-+	}
++	if (set_affinity_helper)
++		return;
++	set_affinity_helper = kthread_run(set_affinity_thread, NULL,
++			"affinity-cb");
++	WARN_ON(IS_ERR(set_affinity_helper));
 +}
-+
-+static __init int create_cmos_delay_thread(void)
-+{
-+	cmos_delay_thread = kthread_run(run_cmos_delay, NULL, "kcmosdelayd");
-+	BUG_ON(!cmos_delay_thread);
-+	return 0;
-+}
-+early_initcall(create_cmos_delay_thread);
 +#else
- static void notify_cmos_timer(void)
++
++static inline void init_helper_thread(void) { }
++
++#endif
++
+ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
  {
- 	if (!no_sync_cmos_clock)
- 		schedule_delayed_work(&sync_cmos_work, 0);
- }
-+#endif /* CONFIG_PREEMPT_RT_FULL */
+ 	struct irq_chip *chip = irq_data_get_irq_chip(data);
+@@ -166,7 +222,17 @@ int __irq_set_affinity_locked(struct irq_data *data, const struct cpumask *mask)
  
- #else
- static inline void notify_cmos_timer(void) { }
+ 	if (desc->affinity_notify) {
+ 		kref_get(&desc->affinity_notify->kref);
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++		raw_spin_lock(&affinity_list_lock);
++		if (list_empty(&desc->affinity_notify->list))
++			list_add_tail(&affinity_list,
++					&desc->affinity_notify->list);
++		raw_spin_unlock(&affinity_list_lock);
++		wake_up_process(set_affinity_helper);
++#else
+ 		schedule_work(&desc->affinity_notify->work);
++#endif
+ 	}
+ 	irqd_set(data, IRQD_AFFINITY_SET);
+ 
+@@ -207,10 +273,8 @@ int irq_set_affinity_hint(unsigned int irq, const struct cpumask *m)
+ }
+ EXPORT_SYMBOL_GPL(irq_set_affinity_hint);
+ 
+-static void irq_affinity_notify(struct work_struct *work)
++static void _irq_affinity_notify(struct irq_affinity_notify *notify)
+ {
+-	struct irq_affinity_notify *notify =
+-		container_of(work, struct irq_affinity_notify, work);
+ 	struct irq_desc *desc = irq_to_desc(notify->irq);
+ 	cpumask_var_t cpumask;
+ 	unsigned long flags;
+@@ -232,6 +296,13 @@ out:
+ 	kref_put(&notify->kref, notify->release);
+ }
+ 
++static void irq_affinity_notify(struct work_struct *work)
++{
++	struct irq_affinity_notify *notify =
++		container_of(work, struct irq_affinity_notify, work);
++	_irq_affinity_notify(notify);
++}
++
+ /**
+  *	irq_set_affinity_notifier - control notification of IRQ affinity changes
+  *	@irq:		Interrupt for which to enable/disable notification
+@@ -261,6 +332,8 @@ irq_set_affinity_notifier(unsigned int irq, struct irq_affinity_notify *notify)
+ 		notify->irq = irq;
+ 		kref_init(&notify->kref);
+ 		INIT_WORK(&notify->work, irq_affinity_notify);
++		INIT_LIST_HEAD(&notify->list);
++		init_helper_thread();
+ 	}
+ 
+ 	raw_spin_lock_irqsave(&desc->lock, flags);
 -- 
 1.7.10.4
