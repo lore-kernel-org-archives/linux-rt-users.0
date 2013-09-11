@@ -1,416 +1,171 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH RT]  rt,ipc,sem: fix -rt livelock
-Date: Tue, 10 Sep 2013 08:30:14 +0200
-Message-ID: <1378794614.6046.37.camel@marge.simpson.net>
-References: <20130819213324.405942342@goodmis.org>
-	 <1377842245.5422.7.camel@marge.simpson.net>
-	 <1377873580.5422.25.camel@marge.simpson.net>
-	 <1377926850.6234.22.camel@marge.simpson.net>
-	 <1378451338.5434.91.camel@marge.simpson.net>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: BUG: sleeping function called from invalid context on 3.10.10-rt7
+Date: Wed, 11 Sep 2013 07:28:09 -0300
+Message-ID: <20130911102809.GA31663@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: Steven Rostedt <rostedt@goodmis.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>
+	Clark Williams <williams@redhat.com>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.186]:65024 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753353Ab3IJGaT (ORCPT
+Received: from mail-ye0-f176.google.com ([209.85.213.176]:42321 "EHLO
+	mail-ye0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753667Ab3IKK2O (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 10 Sep 2013 02:30:19 -0400
-In-Reply-To: <1378451338.5434.91.camel@marge.simpson.net>
+	Wed, 11 Sep 2013 06:28:14 -0400
+Received: by mail-ye0-f176.google.com with SMTP id m4so2976276yen.21
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Sep 2013 03:28:14 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2013-09-06 at 09:08 +0200, Mike Galbraith wrote:
-> On Sat, 2013-08-31 at 07:27 +0200, Mike Galbraith wrote: 
-> > The attached proggy (Manfred Spraul) is one reproducer. 
-> 
-> Just in case it's not obvious, the cause is spin_unlock_wait() usage.  
+Hello,
 
-(readers are encouraged to skip this bit, go straight to second diff)
+I saw two different occurrences of "BUG: sleeping function called from
+invalid context" happening on 3.10.10-rt7. The first one happened on
+drm_vblank_get() -> i915_get_vblank_timestamp() and was flooding dmesg
+after Xorg started. I silenced that with a hackish patch, just for fun, and
+found a second problem, this time on tty_ldisc_reinit().
 
-The below will prevent livelock without the unpleasant down-sides of /me
-trying to let PI see any thumb twiddling going on (also induces thumb
-twiddling, just not the endless variety), but surely won't fly, and...
+The logs:
 
----
- ipc/sem.c |    6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+[   23.973991] BUG: sleeping function called from invalid context at /home/lclaudio/SANDBOX/mrg-rt-v2-devel/kernel/rtmutex.c:659
+[   23.973992] in_atomic(): 1, irqs_disabled(): 0, pid: 517, name: Xorg
+[   23.973993] 2 locks held by Xorg/517:
+[   23.973993]  #0: 
+[   23.973994]  (
+[   23.973994] &dev->vbl_lock
+[   23.973995] ){......}
+[   23.973995] , at: 
+[   23.974007] [<ffffffffa0024c60>] drm_vblank_get+0x30/0x2b0 [drm]
+[   23.974008]  #1: 
+[   23.974008]  (
+[   23.974008] &dev->vblank_time_lock
+[   23.974008] ){......}
+[   23.974009] , at: 
+[   23.974013] [<ffffffffa0024ce1>] drm_vblank_get+0xb1/0x2b0 [drm]
+[   23.974013] Preemption disabled at:
+[   23.974021] [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
+[   23.974023] CPU: 3 PID: 517 Comm: Xorg Not tainted 3.10.10-rt7+ #5
+[   23.974024] Hardware name: Hewlett-Packard p7-1512/2ADA, BIOS 8.15 02/05/2013
+[   23.974024]  0000000000070008
+[   23.974025]  ffff88017a08bae0
+[   23.974025]  ffffffff8164b790
+[   23.974025]  ffff88017a08baf8
+[   23.974026]  ffffffff8107e62f
+[   23.974026]  ffff880179840040
+[   23.974026]  ffff88017a08bb18
+[   23.974027]  ffffffff81651ac4
+[   23.974027]  0000000000000002
+[   23.974027]  ffff880179840000
+[   23.974028]  ffff88017a08bb48
+[   23.974028]  ffffffffa0084e67
+[   23.974028] Call Trace:
+[   23.974033]  [<ffffffff8164b790>] dump_stack+0x19/0x1b
+[   23.974035]  [<ffffffff8107e62f>] __might_sleep+0xff/0x170
+[   23.974037]  [<ffffffff81651ac4>] rt_spin_lock+0x24/0x60
+[   23.974043]  [<ffffffffa0084e67>] i915_read32+0x27/0x170 [i915]
+[   23.974048]  [<ffffffffa008a591>] i915_pipe_enabled+0x31/0x40 [i915]
+[   23.974054]  [<ffffffffa008a6be>] i915_get_crtc_scanoutpos+0x3e/0x1b0 [i915]
+[   23.974056]  [<ffffffff81087025>] ? sched_clock_cpu+0xb5/0x100
+[   23.974062]  [<ffffffffa00245d4>] drm_calc_vbltimestamp_from_scanoutpos+0xf4/0x430 [drm]
+[   23.974068]  [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
+[   23.974073]  [<ffffffffa0024998>] drm_get_last_vbltimestamp+0x48/0x70 [drm]
+[   23.974078]  [<ffffffffa0024db5>] drm_vblank_get+0x185/0x2b0 [drm]
+[   23.974079]  [<ffffffff81087025>] ? sched_clock_cpu+0xb5/0x100
+[   23.974085]  [<ffffffffa0025d03>] drm_wait_vblank+0x83/0x5d0 [drm]
+[   23.974086]  [<ffffffff81087025>] ? sched_clock_cpu+0xb5/0x100
+[   23.974088]  [<ffffffff810af143>] ? __lock_acquire.isra.31+0x273/0xa70
+[   23.974093]  [<ffffffffa00212a2>] drm_ioctl+0x552/0x6a0 [drm]
+[   23.974096]  [<ffffffff8128d886>] ? avc_has_perm_flags+0x126/0x1c0
+[   23.974098]  [<ffffffff8128d788>] ? avc_has_perm_flags+0x28/0x1c0
+[   23.974099]  [<ffffffff810ad49e>] ? put_lock_stats.isra.23+0xe/0x40
+[   23.974101]  [<ffffffff811a0095>] do_vfs_ioctl+0x325/0x5b0
+[   23.974103]  [<ffffffff8128fc3e>] ? file_has_perm+0x8e/0xa0
+[   23.974105]  [<ffffffff811a03a1>] SyS_ioctl+0x81/0xa0
+[   23.974107]  [<ffffffff8165a342>] tracesys+0xdd/0xe2
 
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -232,7 +232,8 @@ static inline int sem_lock(struct sem_ar
+
+and
+
+
+[   25.423675] BUG: sleeping function called from invalid context at /home/lclaudio/SANDBOX/mrg-rt-v2-devel/kernel/rtmutex.c:659
+[   25.423676] in_atomic(): 1, irqs_disabled(): 1, pid: 188, name: plymouthd
+[   25.423676] 3 locks held by plymouthd/188:
+[   25.423682]  #0:  (&tty->legacy_mutex){......}, at: [<ffffffff816528d0>] tty_lock_nested+0x40/0x90
+[   25.423686]  #1:  (&tty->ldisc_mutex){......}, at: [<ffffffff8139b482>] tty_ldisc_hangup+0x152/0x300
+[   25.423688]  #2:  (tty_ldisc_lock){......}, at: [<ffffffff8139a9c2>] tty_ldisc_reinit+0x72/0x130
+[   25.423689] Preemption disabled at:[<ffffffff8139a9c2>] tty_ldisc_reinit+0x72/0x130
+[   25.423691] CPU: 2 PID: 188 Comm: plymouthd Not tainted 3.10.10-rt7+ #6
+[   25.423692] Hardware name: Hewlett-Packard p7-1512/2ADA, BIOS 8.15 02/05/2013
+[   25.423694]  005ff00000000000 ffff8801788ada68 ffffffff8164b790 ffff8801788ada80
+[   25.423695]  ffffffff8107e62f ffff8801991ce1a0 ffff8801788adaa0 ffffffff81651ac4
+[   25.423696]  0000000000000000 ffffea0005e26680 ffff8801788adaf8 ffffffff81130984
+[   25.423696] Call Trace:
+[   25.423700]  [<ffffffff8164b790>] dump_stack+0x19/0x1b
+[   25.423702]  [<ffffffff8107e62f>] __might_sleep+0xff/0x170
+[   25.423704]  [<ffffffff81651ac4>] rt_spin_lock+0x24/0x60
+[   25.423707]  [<ffffffff81130984>] free_hot_cold_page+0xb4/0x3c0
+[   25.423710]  [<ffffffff81178209>] ?unfreeze_partials.isra.42+0x229/0x2b0
+[   25.423711]  [<ffffffff81130dc7>] __free_pages+0x47/0x70
+[   25.423713]  [<ffffffff81130fb2>] __free_memcg_kmem_pages+0x22/0x50
+[   25.423714]  [<ffffffff81177528>] __free_slab+0xe8/0x1e0
+[   25.423716]  [<ffffffff81177654>] free_delayed+0x34/0x50
+[   25.423717]  [<ffffffff81649633>] __slab_free+0x273/0x36b
+[   25.423719]  [<ffffffff810acde9>] ? get_lock_stats+0x19/0x60
+[   25.423721]  [<ffffffff810ad49e>] ? put_lock_stats.isra.23+0xe/0x40
+[   25.423722]  [<ffffffff81178794>] kfree+0x1c4/0x210
+[   25.423724]  [<ffffffff8139a9f5>] ? tty_ldisc_reinit+0xa5/0x130
+[   25.423725]  [<ffffffff8139a9f5>] tty_ldisc_reinit+0xa5/0x130
+[   25.423726]  [<ffffffff8139b49f>] tty_ldisc_hangup+0x16f/0x300
+[   25.423728]  [<ffffffff81082e1d>] ? get_parent_ip+0xd/0x50
+[   25.423731]  [<ffffffff8104d736>] ? unpin_current_cpu+0x16/0x70
+[   25.423732]  [<ffffffff81392136>] __tty_hangup+0x346/0x460
+[   25.423733]  [<ffffffff81392260>] tty_vhangup+0x10/0x20
+[   25.423735]  [<ffffffff8139d6e1>] pty_close+0x131/0x180
+[   25.423736]  [<ffffffff813936ad>] tty_release+0x11d/0x5f0
+[   25.423737]  [<ffffffff810acde9>] ? get_lock_stats+0x19/0x60
+[   25.423747]  [<ffffffff81009d84>] ? native_sched_clock+0x24/0x80
+[   25.423749]  [<ffffffff81087025>] ? sched_clock_cpu+0xb5/0x100
+[   25.423750]  [<ffffffff810acde9>] ? get_lock_stats+0x19/0x60
+[   25.423752]  [<ffffffff8118eb45>] __fput+0xf5/0x250
+[   25.423762]  [<ffffffff8118ed6e>] ____fput+0xe/0x10
+[   25.423764]  [<ffffffff8106f1cc>] task_work_run+0xac/0xe0
+[   25.423765]  [<ffffffff81002a11>] do_notify_resume+0x91/0xf0
+[   25.423767]  [<ffffffff8165a41c>] int_signal+0x12/0x17
+
+
+About the hackish patch I used to silence the constant i915 complaints,
+even though the comments on drm_calc_vbltimestamp_from_scanoutpos() state
+the preempt_disable is there for a reason, I removed it for the RT case. I
+really wanted to confirm if there was anything else after that complaint.
+
+diff --git a/drivers/gpu/drm/drm_irq.c b/drivers/gpu/drm/drm_irq.c
+index f92da0a..bd2e8e2 100644
+--- a/drivers/gpu/drm/drm_irq.c
++++ b/drivers/gpu/drm/drm_irq.c
+@@ -631,7 +631,7 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
+ 		/* Disable preemption to make it very likely to
+ 		 * succeed in the first iteration even on PREEMPT_RT kernel.
  		 */
- 		if (unlikely(spin_is_locked(&sma->sem_perm.lock))) {
- 			spin_unlock(&sem->lock);
--			spin_unlock_wait(&sma->sem_perm.lock);
-+			while(spin_is_locked(&sma->sem_perm.lock))
-+				cpu_relax();
- 			goto again;
- 		}
- 
-@@ -249,7 +250,8 @@ static inline int sem_lock(struct sem_ar
- 		spin_lock(&sma->sem_perm.lock);
- 		for (i = 0; i < sma->sem_nsems; i++) {
- 			struct sem *sem = sma->sem_base + i;
--			spin_unlock_wait(&sem->lock);
-+			while(spin_is_locked(&sem->lock))
-+				cpu_relax();
- 		}
- 		locknum = -1;
- 	}
-
-
-You can kill this particular (osim induced) livelock by using Manfred's
-completion wakeup scheme.  It may not make it all better, but it does
-eliminate this trigger, despite that not being what the patch is about.
-
-Beware, contains 3.10.10-rt7 hammer marks made by /me to test.
-
->From 7fdbcc018b85d5804ea51323f3cefd5fe3032f82 Mon Sep 17 00:00:00 2001
-From: Manfred Spraul <manfred@colorfullife.com>
-Date: Sat, 28 Jan 2012 18:42:58 +0100
-Subject: [PATCH] ipc/sem.c: Add -RT compatible wakeup scheme.
-
-ipc/sem.c uses a custom wakeup scheme that relies on preempt_disable() to
-prevent livelocks.
-On -RT, this causes increased latencies and debug warnings.
-
-The patch:
-- separates the wakeup scheme into helper functions
-- adds a scheme built around a completion.
-
-The preferred solution (use a spinlock instead of the completion) does not
-work, because there is a limit of at most 256 concurrent spinlocks.
-
---
-        Manfred
-
-Signed-off-by: Manfred Spraul <manfred@colorfullife.com>
----
- ipc/sem.c |  210 +++++++++++++++++++++++++++++++++++++-------------------------
- 1 file changed, 127 insertions(+), 83 deletions(-)
-
---- a/ipc/sem.c
-+++ b/ipc/sem.c
-@@ -61,8 +61,8 @@
-  * - A woken up task may not even touch the semaphore array anymore, it may
-  *   have been destroyed already by a semctl(RMID).
-  * - The synchronizations between wake-ups due to a timeout/signal and a
-- *   wake-up due to a completed semaphore operation is achieved by using an
-- *   intermediate state (IN_WAKEUP).
-+ *   wake-up due to a completed semaphore operation is achieved by using a
-+ *   special wakeup scheme (queuewakeup_wait and support functions)
-  * - UNDO values are stored in an array (one per process and per
-  *   semaphore array, lazily allocated). For backwards compatibility, multiple
-  *   modes for the UNDO variables are supported (per process, per thread)
-@@ -90,6 +90,85 @@
- #include <asm/uaccess.h>
- #include "util.h"
- 
-+
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	#define SYSVSEM_COMPLETION 1
-+#else
-+	#define SYSVSEM_CUSTOM 1
-+#endif
-+
-+#ifdef SYSVSEM_COMPLETION
-+	/* Using a completion causes some overhead, but avoids a busy loop
-+	 * that increases the worst case latency.
-+	 */
-+	struct queue_done {
-+		struct completion done;
-+	};
-+
-+	static void queuewakeup_prepare(void)
-+	{
-+		/* no preparation necessary */
-+	}
-+
-+	static void queuewakeup_completed(void)
-+	{
-+		/* empty */
-+	}
-+
-+	static void queuewakeup_handsoff(struct queue_done *qd)
-+	{
-+		complete_all(&qd->done);
-+	}
-+
-+	static void queuewakeup_init(struct queue_done *qd)
-+	{
-+		init_completion(&qd->done);
-+	}
-+
-+	static void queuewakeup_wait(struct queue_done *qd)
-+	{
-+		wait_for_completion(&qd->done);
-+	}
-+
-+#elif defined(SYSVSEM_CUSTOM)
-+	struct queue_done {
-+		atomic_t done;
-+	};
-+
-+	static void queuewakeup_prepare(void)
-+	{
-+		preempt_disable();
-+	}
-+
-+	static void queuewakeup_completed(void)
-+	{
-+		preempt_enable();
-+	}
-+
-+	static void queuewakeup_handsoff(struct queue_done *qd)
-+	{
-+		BUG_ON(atomic_read(&qd->done) != 2);
-+		smp_mb();
-+		atomic_set(&qd->done, 1);
-+	}
-+
-+	static void queuewakeup_init(struct queue_done *qd)
-+	{
-+		atomic_set(&qd->done, 2);
-+	}
-+
-+	static void queuewakeup_wait(struct queue_done *qd)
-+	{
-+		while (atomic_read(&qd->done) != 1)
-+			cpu_relax();
-+
-+		smp_mb();
-+	}
-+#else
-+#error Unknown locking primitive
-+#endif
-+
-+
- /* One semaphore structure for each semaphore in the system. */
- struct sem {
- 	int	semval;		/* current value */
-@@ -108,6 +187,7 @@ struct sem_queue {
- 	struct sembuf		*sops;	 /* array of pending operations */
- 	int			nsops;	 /* number of operations */
- 	int			alter;	 /* does *sops alter the array? */
-+	struct queue_done	done;	 /* completion synchronization */
- };
- 
- /* Each task has a list of undo requests. They are executed automatically
-@@ -334,27 +414,34 @@ static inline void sem_rmid(struct ipc_n
- 
- /*
-  * Lockless wakeup algorithm:
-- * Without the check/retry algorithm a lockless wakeup is possible:
-+ * The whole task of choosing tasks to wake up is done by the thread that
-+ * does the wakeup. For the woken up thread, this makes the following
-+ * lockless wakeup possible:
-  * - queue.status is initialized to -EINTR before blocking.
-  * - wakeup is performed by
-- *	* unlinking the queue entry from sma->sem_pending
-- *	* setting queue.status to IN_WAKEUP
-- *	  This is the notification for the blocked thread that a
-- *	  result value is imminent.
-+ * 	* call queuewakeup_prepare() once. This is necessary to prevent
-+ *	  livelocks.
-+ *	* setting queue.status to the actual result code
-  *	* call wake_up_process
-- *	* set queue.status to the final value.
-+ *	* queuewakeup_handsoff(&q->done);
-+ *	* call queuewakeup_completed() once.
-  * - the previously blocked thread checks queue.status:
-- *   	* if it's IN_WAKEUP, then it must wait until the value changes
-- *   	* if it's not -EINTR, then the operation was completed by
-- *   	  update_queue. semtimedop can return queue.status without
-- *   	  performing any operation on the sem array.
-- *   	* otherwise it must acquire the spinlock and check what's up.
-+ *	* if it's not -EINTR, then someone completed the operation.
-+ *	  First, queuewakeup_wait() must be called. Afterwards,
-+ *	  semtimedop must return queue.status without performing any
-+ *	  operation on the sem array.
-+ *	* otherwise it must acquire the spinlock and repeat the test
-+ *	    (including: call queuewakeup_wait() if there is a return code)
-+ *	* If it is still -EINTR, then no update_queue() completed the
-+ *	    operation, thus semtimedop() can proceed normally.
-  *
-- * The two-stage algorithm is necessary to protect against the following
-+ * queuewakeup_wait() is necessary to protect against the following
-  * races:
-  * - if queue.status is set after wake_up_process, then the woken up idle
-  *   thread could race forward and try (and fail) to acquire sma->lock
-- *   before update_queue had a chance to set queue.status
-+ *   before update_queue had a chance to set queue.status.
-+ *   More importantly, it would mean that wake_up_process must be done
-+ *   while holding sma->lock, i.e. this would reduce the scalability.
-  * - if queue.status is written before wake_up_process and if the
-  *   blocked process is woken up by a signal between writing
-  *   queue.status and the wake_up_process, then the woken up
-@@ -364,7 +451,6 @@ static inline void sem_rmid(struct ipc_n
-  *   (yes, this happened on s390 with sysv msg).
-  *
-  */
--#define IN_WAKEUP	1
- 
- /**
-  * newary - Create a new semaphore set
-@@ -557,22 +643,17 @@ static int try_atomic_semop (struct sem_
- static void wake_up_sem_queue_prepare(struct list_head *pt,
- 				struct sem_queue *q, int error)
- {
--#ifdef CONFIG_PREEMPT_RT_BASE
-+#ifdef CONFIG_PREEMPT_RT_BASE_MIKE
- 	struct task_struct *p = q->sleeper;
- 	get_task_struct(p);
- 	q->status = error;
- 	wake_up_process(p);
- 	put_task_struct(p);
- #else
--	if (list_empty(pt)) {
--		/*
--		 * Hold preempt off so that we don't get preempted and have the
--		 * wakee busy-wait until we're scheduled back on.
--		 */
 -		preempt_disable();
--	}
--	q->status = IN_WAKEUP;
--	q->pid = error;
-+	if (list_empty(pt))
-+		queuewakeup_prepare();
-+
-+	q->status = error;
++		preempt_disable_nort();
  
- 	list_add_tail(&q->list, pt);
- #endif
-@@ -584,24 +665,23 @@ static void wake_up_sem_queue_prepare(st
-  *
-  * Do the actual wake-up.
-  * The function is called without any locks held, thus the semaphore array
-- * could be destroyed already and the tasks can disappear as soon as the
-- * status is set to the actual return code.
-+ * could be destroyed already and the tasks can disappear as soon as
-+ * queuewakeup_handsoff() is called.
-  */
- static void wake_up_sem_queue_do(struct list_head *pt)
- {
--#ifndef CONFIG_PREEMPT_RT_BASE
-+#ifndef CONFIG_PREEMPT_RT_BASE_MIKE
- 	struct sem_queue *q, *t;
- 	int did_something;
+ 		/* Get system timestamp before query. */
+ 		stime = ktime_get();
+@@ -644,7 +644,7 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
+ 		if (!drm_timestamp_monotonic)
+ 			mono_time_offset = ktime_get_monotonic_offset();
  
- 	did_something = !list_empty(pt);
- 	list_for_each_entry_safe(q, t, pt, list) {
- 		wake_up_process(q->sleeper);
--		/* q can disappear immediately after writing q->status. */
--		smp_wmb();
--		q->status = q->pid;
-+		/* q can disappear immediately after completing q->done */
-+		queuewakeup_handsoff(&q->done);
- 	}
- 	if (did_something)
 -		preempt_enable();
-+		queuewakeup_completed();
- #endif
- }
++		preempt_enable_nort();
  
-@@ -1517,33 +1597,6 @@ static struct sem_undo *find_alloc_undo(
- 	return un;
- }
- 
--
--/**
-- * get_queue_result - Retrieve the result code from sem_queue
-- * @q: Pointer to queue structure
-- *
-- * Retrieve the return code from the pending queue. If IN_WAKEUP is found in
-- * q->status, then we must loop until the value is replaced with the final
-- * value: This may happen if a task is woken up by an unrelated event (e.g.
-- * signal) and in parallel the task is woken up by another task because it got
-- * the requested semaphores.
-- *
-- * The function can be called with or without holding the semaphore spinlock.
-- */
--static int get_queue_result(struct sem_queue *q)
--{
--	int error;
--
--	error = q->status;
--	while (unlikely(error == IN_WAKEUP)) {
--		cpu_relax();
--		error = q->status;
--	}
--
--	return error;
--}
--
--
- SYSCALL_DEFINE4(semtimedop, int, semid, struct sembuf __user *, tsops,
- 		unsigned, nsops, const struct timespec __user *, timeout)
- {
-@@ -1677,6 +1730,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid,
- 
- 	queue.status = -EINTR;
- 	queue.sleeper = current;
-+	queuewakeup_init(&queue.done);
- 
- sleep_again:
- 	current->state = TASK_INTERRUPTIBLE;
-@@ -1688,17 +1742,14 @@ SYSCALL_DEFINE4(semtimedop, int, semid,
- 	else
- 		schedule();
- 
--	error = get_queue_result(&queue);
-+	error = queue.status;
- 
- 	if (error != -EINTR) {
- 		/* fast path: update_queue already obtained all requested
--		 * resources.
--		 * Perform a smp_mb(): User space could assume that semop()
--		 * is a memory barrier: Without the mb(), the cpu could
--		 * speculatively read in user space stale data that was
--		 * overwritten by the previous owner of the semaphore.
-+		 * resources. Just ensure that update_queue completed
-+		 * it's access to &queue.
- 		 */
--		smp_mb();
-+		queuewakeup_wait(&queue.done);
- 
- 		goto out_free;
- 	}
-@@ -1709,26 +1760,19 @@ SYSCALL_DEFINE4(semtimedop, int, semid,
- 	/*
- 	 * Wait until it's guaranteed that no wakeup_sem_queue_do() is ongoing.
- 	 */
--	error = get_queue_result(&queue);
--
--	/*
--	 * Array removed? If yes, leave without sem_unlock().
--	 */
--	if (IS_ERR(sma)) {
-+	error = queue.status;
-+	if (error != -EINTR) {
-+		/* If there is a return code, then we can leave immediately. */
-+		if (!IS_ERR(sma)) {
-+			/* sem_lock() succeeded - then unlock */
-+			sem_unlock(sma, locknum);
-+		}
- 		rcu_read_unlock();
-+		/* Except that we must wait for the hands-off */
-+		queuewakeup_wait(&queue.done);
- 		goto out_free;
- 	}
- 
--
--	/*
--	 * If queue.status != -EINTR we are woken up by another process.
--	 * Leave without unlink_queue(), but with sem_unlock().
--	 */
--
--	if (error != -EINTR) {
--		goto out_unlock_free;
--	}
+ 		/* Return as no-op if scanout query unsupported or failed. */
+ 		if (!(vbl_status & DRM_SCANOUTPOS_VALID)) {
+
+-- 
+[ Luis Claudio R. Goncalves                    Bass - Gospel - RT ]
+[ Fingerprint: 4FDD B8C4 3C59 34BD 8BE9  2696 7203 D980 A448 C8F8 ]
+
