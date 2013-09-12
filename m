@@ -1,58 +1,52 @@
-From: =?utf-8?B?SMOkbmVsLUJhYXMsIEFsZXhhbmRlcg==?=
-	<alexander.haenel-baas@sieb-meyer.de>
-Subject: AW: AW: CONFIG_PREEMPT_RT_FULL an usb gadget
-Date: Thu, 12 Sep 2013 11:41:56 +0000
-Message-ID: <9BA84827B30CBE4996725F98F7DC91232F9730FC@SMExchange01.siebmeyer.org>
-References: <9BA84827B30CBE4996725F98F7DC91232F954E81@SMExchange01.siebmeyer.org>
- <20130829113521.GB15360@linutronix.de>
- <9BA84827B30CBE4996725F98F7DC91232F955F47@SMExchange01.siebmeyer.org>
- <521F99C6.1010200@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT]  hwlat-detector: Don't ignore threshold module
+ parameter
+Date: Thu, 12 Sep 2013 14:23:04 -0400
+Message-ID: <20130912142304.48e3bcf0@gandalf.local.home>
+References: <20130819213324.405942342@goodmis.org>
+	<1377842245.5422.7.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smnotes1.sieb-meyer.de ([213.252.170.194]:6601 "EHLO
-	mail.sieb-meyer.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751390Ab3ILLmA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Sep 2013 07:42:00 -0400
-In-Reply-To: <521F99C6.1010200@linutronix.de>
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1377842245.5422.7.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGVsbG8gU2ViYXN0aW9uLA0KDQpzbyB0aGUgcm5kaXMgY29uZmlndXJhdGlvbiB3b3Jrcy4uLg0K
-DQpObyBJIHNlZSBvbiB0aGUgdGFyZ2V0IHdpdGggdGhlIHJ0LXByZWVtcHQgcGF0Y2ggdGhpcyBr
-ZXJuZWwgbWVzc2FnZToNCg0KWyAgIDk3LjIwNjg1M10gZ19ldGhlciBnYWRnZXQ6IGhpZ2gtc3Bl
-ZWQgY29uZmlnICMyOiBSTkRJUyAgPC0gdGhlIGRlYmlhbiBob3N0IGlzIGFscmVhZHkgY29ubmVj
-dGVkIGFuZCB3ZSBoYXZlIGEgcHV0dHkgY29ubmVjdGlvbiB0byB0aGUgdGFyZ2V0DQpbICAyNDcu
-MjE2MzY2XSBnX2V0aGVyIGdhZGdldDogcm5kaXMgcmVzcG9uc2Ugb24gZXJyIC0yMiAgICAgICAg
-PC0gdGhlIGRlYmlhbiBob3N0IHNheTogIGNvbW11bmljYXRpb24gZXJyb3INClsgIDI0OC45NzQw
-ODFdIE5PSFo6IGxvY2FsX3NvZnRpcnFfcGVuZGluZyAwMg0KWyAgMjQ4Ljk3NDEzNV0gTk9IWjog
-bG9jYWxfc29mdGlycV9wZW5kaW5nIDgwDQpbICAyNDguOTg0MjEzXSBOT0haOiBsb2NhbF9zb2Z0
-aXJxX3BlbmRpbmcgMTgyDQpbICAyNDkuMDEwMjc4XSBbc2NoZWRfZGVsYXllZF0gc2NoZWQ6IFJU
-IHRocm90dGxpbmcgYWN0aXZhdGVkDQpbICAyNDkuOTk2MTEzXSBOT0haOiBsb2NhbF9zb2Z0aXJx
-X3BlbmRpbmcgMDINClsgIDI0OS45OTY2NDddIE5PSFo6IGxvY2FsX3NvZnRpcnFfcGVuZGluZyA4
-Mg0KWyAgMjQ5Ljk5Njc5OF0gTk9IWjogbG9jYWxfc29mdGlycV9wZW5kaW5nIDEwMg0KWyAgMjUw
-Ljk4NjA3N10gTk9IWjogbG9jYWxfc29mdGlycV9wZW5kaW5nIDEwMA0KWyAgMjUwLjk4NzA3M10g
-Tk9IWjogbG9jYWxfc29mdGlycV9wZW5kaW5nIDEwMg0KWyAgMjUxLjk3NjE4OF0gTk9IWjogbG9j
-YWxfc29mdGlycV9wZW5kaW5nIDAyDQpbICAyNTMuMjg2NTY3XSBwY2hfdWRjIDAwMDA6MDU6MDIu
-NDogcGNoX3VkY19lcF9jbGVhcl9uYWs6IFJ4RklGTyBub3QgRW1wdHkNClsgIDI1NC45NzI4ODBd
-IE5PSFo6IGxvY2FsX3NvZnRpcnFfcGVuZGluZyAwMg0KDQoNCk9uIHRoaXMgc2l0dWF0aW9uIHRo
-ZSB0YXJnZXQgaXMgdmVyeSBzbG93LiANCnRvcCBzaG93czoNCg0KTWVtOiAyOTk3MksgdXNlZCwg
-NDY0MTYwSyBmcmVlLCAwSyBzaHJkLCAwSyBidWZmLCA4MDQwSyBjYWNoZWQNCkNQVTogIDAuMSUg
-dXNyIDcxLjglIHN5cyAgMC4wJSBuaWMgMTEuMCUgaWRsZSAgMC4wJSBpbyAgMC4wJSBpcnEgMTYu
-OSUgc2lycQ0KTG9hZCBhdmVyYWdlOiA0LjUyIDIuNDggMS4wNiAyLzg2IDIwMw0KICBQSUQgIFBQ
-SUQgVVNFUiAgICAgU1RBVCAgIFZTWiAlVlNaIENQVSAlQ1BVIENPTU1BTkQNCiAgIDYxICAgICAy
-IHJvb3QgICAgIFNXICAgICAgIDAgIDAuMCAgIDAgMjAuMSBbaXJxLzE4LXBjaC1kbWFdDQogICA3
-OCAgICAgMiByb290ICAgICBTVyAgICAgICAwICAwLjAgICAwIDE2LjYgW2lycS8xOC1laGNpX2hj
-ZF0NCiAgMTg4ICAgICAyIHJvb3QgICAgIFNXICAgICAgIDAgIDAuMCAgIDAgMTQuNSBbaXJxLzE4
-LXBjaF91ZGNdDQogICA4MiAgICAgMiByb290ICAgICBTVyAgICAgICAwICAwLjAgICAwICA5LjEg
-W2lycS8xOC1vaGNpX2hjZF0NCiAgIDgxICAgICAyIHJvb3QgICAgIFNXICAgICAgIDAgIDAuMCAg
-IDAgIDguMyBbaXJxLzE4LW9oY2lfaGNkXQ0KICAgODAgICAgIDIgcm9vdCAgICAgU1cgICAgICAg
-MCAgMC4wICAgMCAgNy44IFtpcnEvMTgtb2hjaV9oY2RdDQogICAgMyAgICAgMiByb290ICAgICBS
-VyAgICAgICAwICAwLjAgICAwICA2LjYgW2tzb2Z0aXJxZC8wXQ0KDQpJIGhvcGUgdGhhdCBpcyBy
-aWdodCBpbmZvcm1hdGlvbiB0byBmaW5kIHRoZSBwcm9ibGVtLg0KDQpHcmVldGluZ3MNCkFsZXhh
-bmRlcg0KDQoNCg==
+Don't be afraid to Cc LKML with rt kernel patches. linux-rt-users is
+for users not kernel developers. People like Peter Zijlstra will never
+see this patch.
+
+On Fri, 30 Aug 2013 07:57:25 +0200
+Mike Galbraith <bitbucket@online.de> wrote:
+
+> If the user specified a threshold at module load time, use it.
+
+This could use a little better change log.
+
+Other than that,
+
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+
+-- Steve
+
+> 
+> Signed-off-by: Mike Galbraith <bitbucket@online.de>
+> 
+> --- a/drivers/misc/hwlat_detector.c	2013-08-30 07:16:05.387959392 +0200
+> +++ b/drivers/misc/hwlat_detector.c	2013-08-30 07:10:52.958670183 +0200
+> @@ -413,7 +413,7 @@ static int init_stats(void)
+>  		goto out;
+>  
+>  	__reset_stats();
+> -	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
+> +	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
+>  	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
+>  	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
+>  
+> 
