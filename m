@@ -1,52 +1,50 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT]  hwlat-detector: Don't ignore threshold module
- parameter
-Date: Thu, 12 Sep 2013 14:23:04 -0400
-Message-ID: <20130912142304.48e3bcf0@gandalf.local.home>
+Subject: Re: [PATCH RT]  rt,ipc,sem: fix -rt livelock
+Date: Thu, 12 Sep 2013 15:15:47 -0400
+Message-ID: <20130912151547.389673d2@gandalf.local.home>
 References: <20130819213324.405942342@goodmis.org>
 	<1377842245.5422.7.camel@marge.simpson.net>
+	<1377873580.5422.25.camel@marge.simpson.net>
+	<1377926850.6234.22.camel@marge.simpson.net>
+	<1378451338.5434.91.camel@marge.simpson.net>
+	<1378794614.6046.37.camel@marge.simpson.net>
+	<52307814.4020104@colorfullife.com>
+	<1378971628.10696.88.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc: Manfred Spraul <manfred@colorfullife.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: Mike Galbraith <bitbucket@online.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1377842245.5422.7.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hrndva-omtalb.mail.rr.com ([71.74.56.122]:24251 "EHLO
+	hrndva-omtalb.mail.rr.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754624Ab3ILTPu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Sep 2013 15:15:50 -0400
+In-Reply-To: <1378971628.10696.88.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Don't be afraid to Cc LKML with rt kernel patches. linux-rt-users is
-for users not kernel developers. People like Peter Zijlstra will never
-see this patch.
-
-On Fri, 30 Aug 2013 07:57:25 +0200
+On Thu, 12 Sep 2013 09:40:28 +0200
 Mike Galbraith <bitbucket@online.de> wrote:
 
-> If the user specified a threshold at module load time, use it.
 
-This could use a little better change log.
+> If maintainers are interested, I can add that and clean up hammer marks
+> so it can be applied in lieu of the existing rt wakeup patch instead of
+> being crammed in on top of it, or they can trivially do that themselves,
+> both options presuming your (implied) approval.
+> 
 
-Other than that,
+Mike,
 
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
+What's the final patch for this?
+
+Could you post another one with what you believe is the correct fix.
+
+Thanks,
 
 -- Steve
-
-> 
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
-> 
-> --- a/drivers/misc/hwlat_detector.c	2013-08-30 07:16:05.387959392 +0200
-> +++ b/drivers/misc/hwlat_detector.c	2013-08-30 07:10:52.958670183 +0200
-> @@ -413,7 +413,7 @@ static int init_stats(void)
->  		goto out;
->  
->  	__reset_stats();
-> -	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
-> +	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
->  	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
->  	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
->  
-> 
