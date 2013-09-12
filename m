@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.50-rt71
-Date: Wed, 11 Sep 2013 21:08:50 -0400
-Message-ID: <20130911210850.702bdded@gandalf.local.home>
+Subject: [ANNOUNCE] 3.0.89-rt118
+Date: Wed, 11 Sep 2013 21:09:17 -0400
+Message-ID: <20130911210917.1efe6c2e@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -18,33 +18,33 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.2.50-rt71 stable release.
+I'm pleased to announce the 3.0.89-rt118 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.2-rt
-  Head SHA1: ce97f8430a19c032746d72f1addbc03c57acdce6
+  branch: v3.0-rt
+  Head SHA1: 5df5fdd22f799e1919b2def24b24b9f48abdba2f
 
 
-Or to build 3.2.50-rt71 directly, the following patches should be appli=
-ed:
+Or to build 3.0.89-rt118 directly, the following patches should be appl=
+ied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/linux-3.0.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.50.xz
+  http://www.kernel.org/pub/linux/kernel/v3.0/patch-3.0.89.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.50-r=
-t71.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/patch-3.0.89-r=
+t118.patch.xz
 
 
 
-You can also build from 3.2.50-rt70 by applying the incremental patch:
+You can also build from 3.0.89-rt117 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2=
-=2E50-rt70-rt71.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.0/incr/patch-3.0=
+=2E89-rt117-rt118.patch.xz
 
 
 
@@ -53,7 +53,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.2.50-rt70:
+Changes from v3.0.89-rt117:
 
 ---
 
@@ -82,7 +82,7 @@ ping spin lock
 
 Steven Rostedt (Red Hat) (2):
       hwlat-detect/trace: Export trace_clock_local for hwlat-detector
-      Linux 3.2.50-rt71
+      Linux 3.0.89-rt118
 
 Uwe Kleine-K=C3=B6nig (1):
       list_bl.h: fix it for for !SMP && !DEBUG_SPINLOCK
@@ -109,10 +109,10 @@ Zhao Hongjiang (1):
 ---------------------------
 diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mch=
 eck/mce.c
-index 8ceb100..b08a373 100644
+index c859bb4..e51191f 100644
 --- a/arch/x86/kernel/cpu/mcheck/mce.c
 +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1139,7 +1139,7 @@ static enum hrtimer_restart mce_start_timer(struc=
+@@ -1171,7 +1171,7 @@ static enum hrtimer_restart mce_start_timer(struc=
 t hrtimer *timer)
  		*n =3D min(*n*2, round_jiffies_relative(check_interval*HZ));
 =20
@@ -122,7 +122,7 @@ t hrtimer *timer)
  	return HRTIMER_RESTART;
  }
 =20
-@@ -1435,7 +1435,7 @@ static void __mcheck_cpu_init_timer(void)
+@@ -1452,7 +1452,7 @@ static void __mcheck_cpu_init_timer(void)
  	if (!*n)
  		return;
 =20
@@ -134,12 +134,12 @@ t hrtimer *timer)
 =20
 diff --git a/drivers/gpu/drm/i915/i915_gem_execbuffer.c b/drivers/gpu/d=
 rm/i915/i915_gem_execbuffer.c
-index b1bb734..8bef4a5 100644
+index 1ca53ff..4d04a9f 100644
 --- a/drivers/gpu/drm/i915/i915_gem_execbuffer.c
 +++ b/drivers/gpu/drm/i915/i915_gem_execbuffer.c
-@@ -1216,7 +1216,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, vo=
+@@ -1189,7 +1189,9 @@ i915_gem_do_execbuffer(struct drm_device *dev, vo=
 id *data,
- 		dev_priv->relative_constants_mode =3D mode;
+ 		}
  	}
 =20
 +#ifndef CONFIG_PREEMPT_RT_BASE
@@ -427,10 +427,10 @@ lp, char __user *ubuf,
 =20
  	/* handling partial reads is more trouble than it's worth */
 diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index f70a65b..42f79fb 100644
+index 71c2c0b..9f67f91 100644
 --- a/include/linux/interrupt.h
 +++ b/include/linux/interrupt.h
-@@ -271,6 +271,7 @@ struct irq_affinity_notify {
+@@ -255,6 +255,7 @@ struct irq_affinity_notify {
  	unsigned int irq;
  	struct kref kref;
  	struct work_struct work;
@@ -504,7 +504,7 @@ _bl_node *n)
 =20
  /**
 diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 5ef0c31..063c2bb 100644
+index 3bcbf99..4abfd5d 100644
 --- a/kernel/cpu.c
 +++ b/kernel/cpu.c
 @@ -78,6 +78,7 @@ struct hotplug_pcp {
@@ -558,7 +558,7 @@ hp)
  	return 0;
  }
 =20
-@@ -508,6 +518,7 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
+@@ -487,6 +497,7 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
 sks_frozen)
  		.hcpu =3D hcpu,
  	};
@@ -567,7 +567,7 @@ sks_frozen)
 =20
  	if (num_online_cpus() =3D=3D 1)
  		return -EBUSY;
-@@ -518,6 +529,12 @@ static int __ref _cpu_down(unsigned int cpu, int t=
+@@ -497,6 +508,12 @@ static int __ref _cpu_down(unsigned int cpu, int t=
 asks_frozen)
  	/* Move the downtaker off the unplug cpu */
  	if (!alloc_cpumask_var(&cpumask, GFP_KERNEL))
@@ -581,7 +581,7 @@ asks_frozen)
  	cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
  	set_cpus_allowed_ptr(current, cpumask);
  	free_cpumask_var(cpumask);
-@@ -526,7 +543,8 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
+@@ -505,7 +522,8 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
 sks_frozen)
  	if (mycpu =3D=3D cpu) {
  		printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
@@ -592,7 +592,7 @@ sks_frozen)
  	}
 =20
  	cpu_hotplug_begin();
-@@ -545,6 +563,8 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
+@@ -524,6 +542,8 @@ static int __ref _cpu_down(unsigned int cpu, int ta=
 sks_frozen)
  		goto out_release;
  	}
@@ -602,7 +602,7 @@ sks_frozen)
  	/* Notifiers are done. Don't let any more tasks pin this CPU. */
  	cpu_unplug_sync(cpu);
 =20
-@@ -582,6 +602,9 @@ out_cancel:
+@@ -561,6 +581,9 @@ out_cancel:
  	cpu_hotplug_done();
  	if (!err)
  		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
@@ -613,7 +613,7 @@ sks_frozen)
  }
 =20
 diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index b3c753e..88a4ff5 100644
+index d750268..3d7d5f6 100644
 --- a/kernel/irq/manage.c
 +++ b/kernel/irq/manage.c
 @@ -141,6 +141,62 @@ static inline void
@@ -737,7 +737,7 @@ irq_affinity_notify *notify)
  	}
 =20
  	raw_spin_lock_irqsave(&desc->lock, flags);
-@@ -783,9 +856,6 @@ static irqreturn_t irq_thread_fn(struct irq_desc *d=
+@@ -780,9 +853,6 @@ static irqreturn_t irq_thread_fn(struct irq_desc *d=
 esc,
   */
  static int irq_thread(void *data)
@@ -748,7 +748,7 @@ esc,
  	struct irqaction *action =3D data;
  	struct irq_desc *desc =3D irq_to_desc(action->irq);
  	irqreturn_t (*handler_fn)(struct irq_desc *desc,
-@@ -798,7 +868,6 @@ static int irq_thread(void *data)
+@@ -795,7 +865,6 @@ static int irq_thread(void *data)
  	else
  		handler_fn =3D irq_thread_fn;
 =20
@@ -756,8 +756,8 @@ esc,
  	current->irqaction =3D action;
 =20
  	while (!irq_wait_for_interrupt(action)) {
-@@ -961,6 +1030,9 @@ __setup_irq(unsigned int irq, struct irq_desc *des=
-c, struct irqaction *new)
+@@ -932,11 +1001,17 @@ __setup_irq(unsigned int irq, struct irq_desc *d=
+esc, struct irqaction *new)
  	 */
  	if (new->thread_fn && !nested) {
  		struct task_struct *t;
@@ -767,11 +767,8 @@ c, struct irqaction *new)
 =20
  		t =3D kthread_create(irq_thread, new, "irq/%d-%s", irq,
  				   new->name);
-@@ -968,6 +1040,9 @@ __setup_irq(unsigned int irq, struct irq_desc *des=
-c, struct irqaction *new)
- 			ret =3D PTR_ERR(t);
- 			goto out_mput;
- 		}
+ 		if (IS_ERR(t))
+ 			return PTR_ERR(t);
 +
 +		sched_setscheduler(t, SCHED_FIFO, &param);
 +
@@ -779,10 +776,10 @@ c, struct irqaction *new)
  		 * We keep the reference to the task struct even if
  		 * the thread dies to avoid that the interrupt code
 diff --git a/kernel/sched.c b/kernel/sched.c
-index dbd9a43..4c37a42 100644
+index 96dd9c2..59bb8bc 100644
 --- a/kernel/sched.c
 +++ b/kernel/sched.c
-@@ -4803,8 +4803,10 @@ static inline void sched_submit_work(struct task=
+@@ -4436,8 +4436,10 @@ static inline void sched_submit_work(struct task=
 _struct *tsk)
  	/*
  	 * If a worker went to sleep, notify and ask workqueue whether
@@ -796,7 +793,7 @@ _struct *tsk)
 =20
  	/*
 diff --git a/kernel/time/ntp.c b/kernel/time/ntp.c
-index 4b63943..7d5241e 100644
+index 8b3a185..fa0c206 100644
 --- a/kernel/time/ntp.c
 +++ b/kernel/time/ntp.c
 @@ -10,6 +10,7 @@
@@ -807,7 +804,7 @@ index 4b63943..7d5241e 100644
  #include <linux/math64.h>
  #include <linux/timex.h>
  #include <linux/time.h>
-@@ -490,11 +491,52 @@ static void sync_cmos_clock(struct work_struct *w=
+@@ -494,11 +495,52 @@ static void sync_cmos_clock(struct work_struct *w=
 ork)
  	schedule_delayed_work(&sync_cmos_work, timespec_to_jiffies(&next));
  }
@@ -863,7 +860,7 @@ ork)
  #else
  static inline void notify_cmos_timer(void) { }
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 2f114d1..7fa30e0 100644
+index 2e21a6c..07070cb 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -76,7 +76,9 @@ struct tvec_root {
@@ -907,7 +904,7 @@ t *timer)
  	} else {
  		base =3D per_cpu(tvec_bases, cpu);
 diff --git a/kernel/trace/trace_clock.c b/kernel/trace/trace_clock.c
-index 3947835..1bbb1b2 100644
+index 6302747..e5163ab 100644
 --- a/kernel/trace/trace_clock.c
 +++ b/kernel/trace/trace_clock.c
 @@ -44,6 +44,7 @@ u64 notrace trace_clock_local(void)
@@ -919,9 +916,9 @@ index 3947835..1bbb1b2 100644
  /*
   * trace_clock(): 'between' trace clock. Not completely serialized,
 diff --git a/localversion-rt b/localversion-rt
-index f36b5d4..f38a3cc 100644
+index 9788245..4e32122 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt70
-+-rt71
+--rt117
++-rt118
