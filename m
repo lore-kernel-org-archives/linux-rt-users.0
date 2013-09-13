@@ -1,7 +1,7 @@
 From: Mike Galbraith <bitbucket@online.de>
-Subject: [patch 1/3] ipc/sem: fix -rt livelock
-Date: Fri, 13 Sep 2013 08:12:40 +0200
-Message-ID: <1379052760.5455.127.camel@marge.simpson.net>
+Subject: [patch 2/3] ipc/sem: revert ipc/sem: Rework semaphore wakeups
+Date: Fri, 13 Sep 2013 08:12:50 +0200
+Message-ID: <1379052770.5455.128.camel@marge.simpson.net>
 References: <1379051751.5455.112.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -13,115 +13,128 @@ Cc: Manfred Spraul <manfred@colorfullife.com>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.10]:60430 "EHLO
+Received: from moutng.kundenserver.de ([212.227.126.186]:53312 "EHLO
 	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754552Ab3IMGMx (ORCPT
+	with ESMTP id S1754552Ab3IMGNB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Sep 2013 02:12:53 -0400
+	Fri, 13 Sep 2013 02:13:01 -0400
 In-Reply-To: <1379051751.5455.112.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-goto again loop can and does induce livelock in -rt.  Remove it.
+ipc/sem: revert ipc/sem: Rework semaphore wakeups
 
-spin_unlock_wait(lock) in -rt kernels takes/releases the lock in question, so
-all it takes to create a self perpetuating loop is for one task to start the
-ball rolling by taking the array lock, other tasks see this, and react by
-take/release/retry endlessly.
+Revert Peterz's -rt wakeup scheme to prepare for replacement with a new
+completion scheme by Manfred Spraul.
 
-Signed-off-by: Mike Galbraith <bitbucket@online.de>
+<original changelog>
+ipc/sem: Rework semaphore wakeups
+Current sysv sems have a weird ass wakeup scheme that involves keeping
+preemption disabled over a potential O(n^2) loop and busy waiting on
+that on other CPUs.
 
+Kill this and simply wake the task directly from under the sem_lock.
+
+This was discovered by a migrate_disable() debug feature that
+disallows:
+
+  spin_lock();
+  preempt_disable();
+  spin_unlock()
+  preempt_enable();
+</original changelog>
+
+Signed-off-by: 	Mike Galbraith <bitbucket@online.de>
 ---
- ipc/sem.c |   56 ++++++++++++++++++++++++++++++++++++++------------------
- 1 file changed, 38 insertions(+), 18 deletions(-)
+ ipc/sem.c |   24 +++++++-----------------
+ 1 file changed, 7 insertions(+), 17 deletions(-)
 
-Index: linux-2.6/ipc/sem.c
-===================================================================
---- linux-2.6.orig/ipc/sem.c
-+++ linux-2.6/ipc/sem.c
-@@ -208,22 +208,11 @@ void __init sem_init (void)
- static inline int sem_lock(struct sem_array *sma, struct sembuf *sops,
- 			      int nsops)
- {
-+	struct sem *sem;
- 	int locknum;
-- again:
--	if (nsops == 1 && !sma->complex_count) {
--		struct sem *sem = sma->sem_base + sops->sem_num;
+--- a/ipc/sem.c
++++ b/ipc/sem.c
+@@ -155,7 +155,7 @@ static int sysvipc_sem_proc_show(struct
+  *	sem_array.sem_pending{,last},
+  *	sem_array.sem_undo: sem_lock() for read/write
+  *	sem_undo.proc_next: only "current" is allowed to read/write that field.
+- *
++ *
+  */
+ 
+ #define sc_semmsl	sem_ctls[0]
+@@ -518,7 +518,7 @@ static int try_atomic_semop (struct sem_
+ 		curr = sma->sem_base + sop->sem_num;
+ 		sem_op = sop->sem_op;
+ 		result = curr->semval;
 -
--		/* Lock just the semaphore we are interested in. */
--		spin_lock(&sem->lock);
- 
--		/*
--		 * If sma->complex_count was set while we were spinning,
--		 * we may need to look at things we did not lock here.
--		 */
--		if (unlikely(sma->complex_count)) {
--			spin_unlock(&sem->lock);
--			goto lock_array;
--		}
-+	if (nsops == 1 && !sma->complex_count) {
-+		sem = sma->sem_base + sops->sem_num;
- 
- 		/*
- 		 * Another process is holding the global lock on the
-@@ -231,9 +220,29 @@ static inline int sem_lock(struct sem_ar
- 		 * but have to wait for the global lock to be released.
- 		 */
- 		if (unlikely(spin_is_locked(&sma->sem_perm.lock))) {
--			spin_unlock(&sem->lock);
--			spin_unlock_wait(&sma->sem_perm.lock);
--			goto again;
-+			spin_lock(&sma->sem_perm.lock);
-+			if (sma->complex_count)
-+				goto wait_array;
 +
-+			/*
-+			 * Acquiring our sem->lock under the global lock
-+			 * forces new complex operations to wait for us
-+			 * to exit our critical section.
-+			 */
-+			spin_lock(&sem->lock);
-+			spin_unlock(&sma->sem_perm.lock);
-+		} else {
-+			/* Lock just the semaphore we are interested in. */
-+			spin_lock(&sem->lock);
-+
-+			/*
-+			 * If sma->complex_count was set prior to acquisition,
-+			 * we must fall back to the global array lock.
-+			 */
-+			if (unlikely(sma->complex_count)) {
-+				spin_unlock(&sem->lock);
-+				goto lock_array;
-+			}
- 		}
+ 		if (!sem_op && result)
+ 			goto would_block;
  
- 		locknum = sops->sem_num;
-@@ -247,11 +256,22 @@ static inline int sem_lock(struct sem_ar
- 		 */
-  lock_array:
- 		spin_lock(&sma->sem_perm.lock);
-+ wait_array:
- 		for (i = 0; i < sma->sem_nsems; i++) {
--			struct sem *sem = sma->sem_base + i;
-+			sem = sma->sem_base + i;
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+			if (spin_is_locked(&sem->lock))
-+#endif
- 			spin_unlock_wait(&sem->lock);
- 		}
- 		locknum = -1;
-+
-+		if (nsops == 1 && !sma->complex_count) {
-+			sem = sma->sem_base + sops->sem_num;
-+			spin_lock(&sem->lock);
-+			spin_unlock(&sma->sem_perm.lock);
-+			locknum = sops->sem_num;
-+		}
+@@ -545,7 +545,7 @@ static int try_atomic_semop (struct sem_
+ 			un->semadj[sop->sem_num] -= sop->sem_op;
+ 		sop--;
  	}
- 	return locknum;
+-
++
+ 	return 0;
+ 
+ out_of_range:
+@@ -577,13 +577,6 @@ static int try_atomic_semop (struct sem_
+ static void wake_up_sem_queue_prepare(struct list_head *pt,
+ 				struct sem_queue *q, int error)
+ {
+-#ifdef CONFIG_PREEMPT_RT_BASE
+-	struct task_struct *p = q->sleeper;
+-	get_task_struct(p);
+-	q->status = error;
+-	wake_up_process(p);
+-	put_task_struct(p);
+-#else
+ 	if (list_empty(pt)) {
+ 		/*
+ 		 * Hold preempt off so that we don't get preempted and have the
+@@ -595,7 +588,6 @@ static void wake_up_sem_queue_prepare(st
+ 	q->pid = error;
+ 
+ 	list_add_tail(&q->list, pt);
+-#endif
  }
-
-
-
+ 
+ /**
+@@ -609,7 +601,6 @@ static void wake_up_sem_queue_prepare(st
+  */
+ static void wake_up_sem_queue_do(struct list_head *pt)
+ {
+-#ifndef CONFIG_PREEMPT_RT_BASE
+ 	struct sem_queue *q, *t;
+ 	int did_something;
+ 
+@@ -622,7 +613,6 @@ static void wake_up_sem_queue_do(struct
+ 	}
+ 	if (did_something)
+ 		preempt_enable();
+-#endif
+ }
+ 
+ static void unlink_queue(struct sem_array *sma, struct sem_queue *q)
+@@ -977,7 +967,7 @@ static int semctl_nolock(struct ipc_name
+ 		err = security_sem_semctl(NULL, cmd);
+ 		if (err)
+ 			return err;
+-
++
+ 		memset(&seminfo,0,sizeof(seminfo));
+ 		seminfo.semmni = ns->sc_semmni;
+ 		seminfo.semmns = ns->sc_semmns;
+@@ -997,7 +987,7 @@ static int semctl_nolock(struct ipc_name
+ 		}
+ 		max_id = ipc_get_maxid(&sem_ids(ns));
+ 		up_read(&sem_ids(ns).rw_mutex);
+-		if (copy_to_user(p, &seminfo, sizeof(struct seminfo)))
++		if (copy_to_user(p, &seminfo, sizeof(struct seminfo)))
+ 			return -EFAULT;
+ 		return (max_id < 0) ? 0: max_id;
+ 	}
+@@ -1672,7 +1662,7 @@ SYSCALL_DEFINE4(semtimedop, int, semid,
+ 	/* We need to sleep on this operation, so we put the current
+ 	 * task into the pending queue and go to sleep.
+ 	 */
