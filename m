@@ -1,7 +1,7 @@
 From: Manfred Spraul <manfred@colorfullife.com>
 Subject: Re: [patch 1/3] ipc/sem: fix -rt livelock
-Date: Sat, 14 Sep 2013 14:24:34 +0200
-Message-ID: <52345582.7020000@colorfullife.com>
+Date: Sat, 14 Sep 2013 23:46:53 +0200
+Message-ID: <5234D94D.8010608@colorfullife.com>
 References: <1379051751.5455.112.camel@marge.simpson.net> <1379052760.5455.127.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
@@ -13,13 +13,13 @@ Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f44.google.com ([209.85.214.44]:44903 "EHLO
-	mail-bk0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752771Ab3INMYj (ORCPT
+Received: from mail-bk0-f47.google.com ([209.85.214.47]:52115 "EHLO
+	mail-bk0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756789Ab3INVrD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 14 Sep 2013 08:24:39 -0400
-Received: by mail-bk0-f44.google.com with SMTP id mz10so857782bkb.31
-        for <linux-rt-users@vger.kernel.org>; Sat, 14 Sep 2013 05:24:38 -0700 (PDT)
+	Sat, 14 Sep 2013 17:47:03 -0400
+Received: by mail-bk0-f47.google.com with SMTP id mx12so956657bkb.34
+        for <linux-rt-users@vger.kernel.org>; Sat, 14 Sep 2013 14:47:01 -0700 (PDT)
 In-Reply-To: <1379052760.5455.127.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -33,40 +33,28 @@ On 09/13/2013 08:12 AM, Mike Galbraith wrote:
 > all it takes to create a self perpetuating loop is for one task to start the
 > ball rolling by taking the array lock, other tasks see this, and react by
 > take/release/retry endlessly.
->
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
->
-> ---
->   ipc/sem.c |   56 ++++++++++++++++++++++++++++++++++++++------------------
->   1 file changed, 38 insertions(+), 18 deletions(-)
->
-> Index: linux-2.6/ipc/sem.c
-> ===================================================================
-> --- linux-2.6.orig/ipc/sem.c
-> +++ linux-2.6/ipc/sem.c
-> @@ -247,11 +256,22 @@ static inline int sem_lock(struct sem_ar
->   		 */
->    lock_array:
->   		spin_lock(&sma->sem_perm.lock);
-> + wait_array:
->   		for (i = 0; i < sma->sem_nsems; i++) {
-> -			struct sem *sem = sma->sem_base + i;
-> +			sem = sma->sem_base + i;
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +			if (spin_is_locked(&sem->lock))
-> +#endif
->   			spin_unlock_wait(&sem->lock);
->   		}
->   
-I don't like this part of the change:
-It reads like a micro-optimization for spin_unlock_wait() within the 
-ipc/sem.c code.
+I think your code inherits the race I just sent to you:
+The test of complex_count must be after spin_is_locked().
 
-If spin_unlock_wait() for CONFIG_PREEMPT_RT_BASE is broken, then the 
-implementation of spin_unlock_wait() should be fixed.
+http://marc.info/?l=linux-kernel&m=137919453307294
 
-Something like
-#define spin_unlock_wait(x) if(spin_is_locked(x)) __spin_unlock_wait(x)
+Could you check that?
+Or alternatively: Is my proposed sem_lock() function -rt friendly?
+
+
+>   		locknum = -1;
+> +
+> +		if (nsops == 1 && !sma->complex_count) {
+> +			sem = sma->sem_base + sops->sem_num;
+> +			spin_lock(&sem->lock);
+> +			spin_unlock(&sma->sem_perm.lock);
+> +			locknum = sops->sem_num;
+> +		}
+A clever idea:
+If the decision that the slow path must be used proves to be a false 
+alarm, switch back to the fast path.
+You can even move that block further up and skip the loop over all 
+per-semaphore arrays.
 
 --
      Manfred
