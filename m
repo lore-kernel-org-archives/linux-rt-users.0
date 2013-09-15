@@ -1,60 +1,67 @@
-From: Manfred Spraul <manfred@colorfullife.com>
+From: Mike Galbraith <bitbucket@online.de>
 Subject: Re: [patch 1/3] ipc/sem: fix -rt livelock
-Date: Sat, 14 Sep 2013 23:46:53 +0200
-Message-ID: <5234D94D.8010608@colorfullife.com>
-References: <1379051751.5455.112.camel@marge.simpson.net> <1379052760.5455.127.camel@marge.simpson.net>
+Date: Sun, 15 Sep 2013 05:41:41 +0200
+Message-ID: <1379216501.5545.72.camel@marge.simpson.net>
+References: <1379051751.5455.112.camel@marge.simpson.net>
+	 <1379052760.5455.127.camel@marge.simpson.net>
+	 <52345582.7020000@colorfullife.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Mike Galbraith <bitbucket@online.de>
+To: Manfred Spraul <manfred@colorfullife.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-bk0-f47.google.com ([209.85.214.47]:52115 "EHLO
-	mail-bk0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756789Ab3INVrD (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.8]:54075 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756901Ab3IODlz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 14 Sep 2013 17:47:03 -0400
-Received: by mail-bk0-f47.google.com with SMTP id mx12so956657bkb.34
-        for <linux-rt-users@vger.kernel.org>; Sat, 14 Sep 2013 14:47:01 -0700 (PDT)
-In-Reply-To: <1379052760.5455.127.camel@marge.simpson.net>
+	Sat, 14 Sep 2013 23:41:55 -0400
+In-Reply-To: <52345582.7020000@colorfullife.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Mike,
+On Sat, 2013-09-14 at 14:24 +0200, Manfred Spraul wrote: 
+> Hi Mike,
 
-On 09/13/2013 08:12 AM, Mike Galbraith wrote:
-> goto again loop can and does induce livelock in -rt.  Remove it.
->
-> spin_unlock_wait(lock) in -rt kernels takes/releases the lock in question, so
-> all it takes to create a self perpetuating loop is for one task to start the
-> ball rolling by taking the array lock, other tasks see this, and react by
-> take/release/retry endlessly.
-I think your code inherits the race I just sent to you:
-The test of complex_count must be after spin_is_locked().
+Hi,
 
-http://marc.info/?l=linux-kernel&m=137919453307294
+> > Index: linux-2.6/ipc/sem.c
+> > ===================================================================
+> > --- linux-2.6.orig/ipc/sem.c
+> > +++ linux-2.6/ipc/sem.c
+> > @@ -247,11 +256,22 @@ static inline int sem_lock(struct sem_ar
+> >   		 */
+> >    lock_array:
+> >   		spin_lock(&sma->sem_perm.lock);
+> > + wait_array:
+> >   		for (i = 0; i < sma->sem_nsems; i++) {
+> > -			struct sem *sem = sma->sem_base + i;
+> > +			sem = sma->sem_base + i;
+> > +#ifdef CONFIG_PREEMPT_RT_BASE
+> > +			if (spin_is_locked(&sem->lock))
+> > +#endif
+> >   			spin_unlock_wait(&sem->lock);
+> >   		}
+> >   
+> I don't like this part of the change:
 
-Could you check that?
-Or alternatively: Is my proposed sem_lock() function -rt friendly?
+None of it is pretty, but the livelock is even less pretty ;-)
 
+> It reads like a micro-optimization for spin_unlock_wait() within the 
+> ipc/sem.c code.
 
->   		locknum = -1;
-> +
-> +		if (nsops == 1 && !sma->complex_count) {
-> +			sem = sma->sem_base + sops->sem_num;
-> +			spin_lock(&sem->lock);
-> +			spin_unlock(&sma->sem_perm.lock);
-> +			locknum = sops->sem_num;
-> +		}
-A clever idea:
-If the decision that the slow path must be used proves to be a false 
-alarm, switch back to the fast path.
-You can even move that block further up and skip the loop over all 
-per-semaphore arrays.
+It's exactly that, hope to hammer fewer locks.
 
---
-     Manfred
+> If spin_unlock_wait() for CONFIG_PREEMPT_RT_BASE is broken, then the 
+> implementation of spin_unlock_wait() should be fixed.
+
+But it's not broken, taking the lock lets PI see/fix inversion.
+
+Preemptible locks are (necessary) evil incarnate.
+
+-Mike
+
