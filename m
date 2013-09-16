@@ -1,139 +1,93 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [PATCH 2/2] rt: Move schedule_work call to helper thread
-Date: Mon, 16 Sep 2013 14:09:19 -0700
-Message-ID: <1379365759-5743-3-git-send-email-yang.shi@windriver.com>
-References: <1379365759-5743-1-git-send-email-yang.shi@windriver.com>
+From: Thomas Meyer <thomas@m3y3r.de>
+Subject: 3.10.10-rt7: inconsistent lock state (iwlwifi)
+Date: Mon, 16 Sep 2013 23:10:50 +0200
+Message-ID: <1379365850.3828.3.camel@localhost.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <paul.gortmaker@windriver.com>, <yang.shi@windriver.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:32874 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751002Ab3IPVOM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Sep 2013 17:14:12 -0400
-Received: from ALA-HCB.corp.ad.wrs.com (ala-hcb.corp.ad.wrs.com [147.11.189.41])
-	by mail.windriver.com (8.14.5/8.14.3) with ESMTP id r8GLEB06000388
-	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=FAIL)
-	for <linux-rt-users@vger.kernel.org>; Mon, 16 Sep 2013 14:14:11 -0700 (PDT)
-In-Reply-To: <1379365759-5743-1-git-send-email-yang.shi@windriver.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+To: Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	ilw <ilw@linux.intel.com>, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-When run ltp leapsec_timer test, the following call trace is caught:
+Hi,
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-in_atomic(): 1, irqs_disabled(): 1, pid: 0, name: swapper/1
-Preemption disabled at:[<ffffffff810857f3>] cpu_startup_entry+0x133/0x310
+lockdep complains about this:
 
-CPU: 1 PID: 0 Comm: swapper/1 Not tainted 3.10.10-rt3 #2
-Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
-ffffffff81c2f800 ffff880076843e40 ffffffff8169918d ffff880076843e58
-ffffffff8106db31 ffff88007684b4a0 ffff880076843e70 ffffffff8169d9c0
-ffff88007684b4a0 ffff880076843eb0 ffffffff81059da1 0000001876851200
-Call Trace:
-<IRQ>  [<ffffffff8169918d>] dump_stack+0x19/0x1b
-[<ffffffff8106db31>] __might_sleep+0xf1/0x170
-[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
-[<ffffffff81059da1>] queue_work_on+0x61/0x100
-[<ffffffff81065aa1>] clock_was_set_delayed+0x21/0x30
-[<ffffffff810883be>] do_timer+0x40e/0x660
-[<ffffffff8108f487>] tick_do_update_jiffies64+0xf7/0x140
-[<ffffffff8108fe42>] tick_check_idle+0x92/0xc0
-[<ffffffff81044327>] irq_enter+0x57/0x70
-[<ffffffff816a040e>] smp_apic_timer_interrupt+0x3e/0x9b
-[<ffffffff8169f80a>] apic_timer_interrupt+0x6a/0x70
-<EOI>  [<ffffffff8155ea1c>] ? cpuidle_enter_state+0x4c/0xc0
-[<ffffffff8155eb68>] cpuidle_idle_call+0xd8/0x2d0
-[<ffffffff8100b59e>] arch_cpu_idle+0xe/0x30
-[<ffffffff8108585e>] cpu_startup_entry+0x19e/0x310
-[<ffffffff8168efa2>] start_secondary+0x1ad/0x1b0
+[   92.041513] iwlwifi 0000:02:00.0: L1 Enabled; Disabling L0S
+[   92.090910] iwlwifi 0000:02:00.0: Radio type=0x1-0x2-0x0
 
-The clock_was_set_delayed is called in hard IRQ handler (timer interrupt), which
-calls schedule_work.
+[   92.094779] =================================
+[   92.094780] [ INFO: inconsistent lock state ]
+[   92.094782] 3.10.10-rt7 #5 Not tainted
+[   92.094783] ---------------------------------
+[   92.094784] inconsistent {HARDIRQ-ON-W} -> {IN-HARDIRQ-W} usage.
+[   92.094787] systemd-journal/1002 [HC1[1]:SC0[0]:HE0:SE1] takes:
+[   92.094801]  (&trans_pcie->irq_lock){?.+...}, at: [<ffffffffa015587c>] iwl_pcie_isr_ict+0x2c/0x2d0 [iwlwifi]
+[   92.094802] {HARDIRQ-ON-W} state was registered at:
+[   92.094808]   [<ffffffff8107ea04>] __lock_acquire+0x5b4/0x1a60
+[   92.094810]   [<ffffffff81080622>] lock_acquire+0x62/0x80
+[   92.094814]   [<ffffffff81529360>] rt_spin_lock+0x40/0x50
+[   92.094822]   [<ffffffffa015a49e>] iwl_trans_pcie_stop_hw+0x1e/0x150 [iwlwifi]
+[   92.094830]   [<ffffffffa0265e84>] iwl_op_mode_dvm_start+0x244/0xc10 [iwldvm]
+[   92.094836]   [<ffffffffa015062b>] iwl_opmode_register+0xcb/0xf0 [iwlwifi]
+[   92.094840]   [<ffffffffa0288037>] acpi_cpufreq_cpu_exit+0x17/0x50 [acpi_cpufreq]
+[   92.094843]   [<ffffffff810002a2>] do_one_initcall+0xf2/0x150
+[   92.094848]   [<ffffffff8108b0cf>] load_module+0x18cf/0x2150
+[   92.094851]   [<ffffffff8108ba96>] SyS_finit_module+0x76/0x80
+[   92.094854]   [<ffffffff8152fa50>] system_call_fastpath+0x16/0x1b
+[   92.094855] irq event stamp: 291624
+[   92.094859] hardirqs last  enabled at (291623): [<ffffffff8152cef9>] __do_page_fault+0x79/0x5a0
+[   92.094863] hardirqs last disabled at (291624): [<ffffffff8152a228>] common_interrupt+0x68/0x6d
+[   92.094866] softirqs last  enabled at (0): [<ffffffff81033229>] copy_process.part.31+0x619/0x14f0
+[   92.094868] softirqs last disabled at (0): [<          (null)>]           (null)
+[   92.094869] 
+other info that might help us debug this:
+[   92.094870]  Possible unsafe locking scenario:
 
-Under PREEMPT_RT_FULL, schedule_work calls spinlocks which could sleep, so it's
-not safe to call schedule_work in interrupt context.
+[   92.094870]        CPU0
+[   92.094871]        ----
+[   92.094872]   lock(&trans_pcie->irq_lock);
+[   92.094873]   <Interrupt>
+[   92.094875]     lock(&trans_pcie->irq_lock);
+[   92.094875] 
+ *** DEADLOCK ***
 
-Reference upstream commit b68d61c705ef02384c0538b8d9374545097899ca
-(rt,ntp: Move call to schedule_delayed_work() to helper thread)
-from git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git, which
-makes a similar change.
-
-add a helper thread which does the call to schedule_work and wake up that
-thread instead of calling schedule_work directly.
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
----
- kernel/hrtimer.c |   40 ++++++++++++++++++++++++++++++++++++++++
- 1 files changed, 40 insertions(+), 0 deletions(-)
-
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index bd61c40..a63cfaf 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -47,6 +47,7 @@
- #include <linux/sched/sysctl.h>
- #include <linux/sched/rt.h>
- #include <linux/timer.h>
-+#include <linux/kthread.h>
- 
- #include <asm/uaccess.h>
- 
-@@ -740,6 +741,44 @@ static void clock_was_set_work(struct work_struct *work)
- 
- static DECLARE_WORK(hrtimer_work, clock_was_set_work);
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * RT can not call schedule_work from real interrupt context.
-+ * Need to make a thread to do the real work.
-+ */
-+static struct task_struct *clock_set_delay_thread;
-+static bool do_clock_set_delay;
-+
-+static int run_clock_set_delay(void *ignore)
-+{
-+	while (!kthread_should_stop()) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		if (do_clock_set_delay) {
-+			do_clock_set_delay = false;
-+			schedule_work(&hrtimer_work);
-+		}
-+		schedule();
-+	}
-+	__set_current_state(TASK_RUNNING);
-+	return 0;
-+}
-+
-+void clock_was_set_delayed(void)
-+{
-+	do_clock_set_delay = true;
-+	/* Make visible before waking up process */
-+	smp_wmb();
-+	wake_up_process(clock_set_delay_thread);
-+}
-+
-+static __init int create_clock_set_delay_thread(void)
-+{
-+	clock_set_delay_thread = kthread_run(run_clock_set_delay, NULL, "kclksetdelayd");
-+	BUG_ON(!clock_set_delay_thread);
-+	return 0;
-+}
-+early_initcall(create_clock_set_delay_thread);
-+#else /* PREEMPT_RT_FULL */
- /*
-  * Called from timekeeping and resume code to reprogramm the hrtimer
-  * interrupt device on all cpus.
-@@ -748,6 +787,7 @@ void clock_was_set_delayed(void)
- {
- 	schedule_work(&hrtimer_work);
- }
-+#endif
- 
- #else
- 
--- 
-1.7.5.4
-
+[   92.094877] 1 lock held by systemd-journal/1002:
+[   92.094882]  #0:  (&mm->mmap_sem){+++++.}, at: [<ffffffff8152d04c>] __do_page_fault+0x1cc/0x5a0
+[   92.094883] 
+stack backtrace:
+[   92.094885] CPU: 0 PID: 1002 Comm: systemd-journal Not tainted 3.10.10-rt7 #5
+[   92.094887] Hardware name: Acer Aspire 1810T/JM11-MS, BIOS v1.3310 03/25/2010
+[   92.094890]  ffffffff81fd95f0 ffffffff81a21cf0 ffffffff81525783 ffffffff81a21d40
+[   92.094893]  ffffffff81522347 0000000000000000 ffff880100000000 ffffffff00000001
+[   92.094895]  0000000000000002 ffff88013734d050 ffffffff8107d420 0000000000000000
+[   92.094896] Call Trace:
+[   92.094902]  <IRQ>  [<ffffffff81525783>] dump_stack+0x19/0x1b
+[   92.094905]  [<ffffffff81522347>] print_usage_bug+0x1fb/0x20c
+[   92.094909]  [<ffffffff8107d420>] ? check_usage_backwards+0x140/0x140
+[   92.094912]  [<ffffffff8107de3a>] mark_lock+0x23a/0x2c0
+[   92.094914]  [<ffffffff8107ec4f>] __lock_acquire+0x7ff/0x1a60
+[   92.094918]  [<ffffffff8152d04c>] ? __do_page_fault+0x1cc/0x5a0
+[   92.094920]  [<ffffffff81080622>] lock_acquire+0x62/0x80
+[   92.094927]  [<ffffffffa015587c>] ? iwl_pcie_isr_ict+0x2c/0x2d0 [iwlwifi]
+[   92.094930]  [<ffffffff81529360>] rt_spin_lock+0x40/0x50
+[   92.094936]  [<ffffffffa015587c>] ? iwl_pcie_isr_ict+0x2c/0x2d0 [iwlwifi]
+[   92.094943]  [<ffffffffa015587c>] iwl_pcie_isr_ict+0x2c/0x2d0 [iwlwifi]
+[   92.094948]  [<ffffffff810a88d5>] handle_irq_event_percpu+0x55/0x180
+[   92.094951]  [<ffffffff810a8a38>] handle_irq_event+0x38/0x60
+[   92.094954]  [<ffffffff810aab7f>] handle_edge_irq+0x6f/0x140
+[   92.094956]  [<ffffffff81003ae9>] handle_irq+0x19/0x30
+[   92.094959]  [<ffffffff810039b5>] do_IRQ+0x45/0xb0
+[   92.094962]  [<ffffffff8152a22d>] common_interrupt+0x6d/0x6d
+[   92.094966]  <EOI>  [<ffffffff8152d04c>] ? __do_page_fault+0x1cc/0x5a0
+[   92.094969]  [<ffffffff810806e0>] ? lock_release_non_nested+0xa0/0x300
+[   92.094973]  [<ffffffff8106196d>] ? get_parent_ip+0xd/0x50
+[   92.094976]  [<ffffffff8152a2c9>] ? retint_swapgs+0xe/0x13
+[   92.094980]  [<ffffffff8123ed3d>] ? trace_hardirqs_off_thunk+0x3a/0x3c
+[   92.094983]  [<ffffffff8152d429>] do_page_fault+0x9/0x10
+[   92.094985]  [<ffffffff8152a502>] page_fault+0x22/0x30
+[   92.288725] iwlwifi 0000:02:00.0: L1 Enabled; Disabling L0S
+[   92.291849] iwlwifi 0000:02:00.0: Radio type=0x1-0x2-0x0
+[   92.422236] IPv6: ADDRCONF(NETDEV_UP): wlan0: link is not ready
