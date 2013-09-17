@@ -1,80 +1,121 @@
-From: "Grumbach, Emmanuel" <emmanuel.grumbach@intel.com>
-Subject: RE: [Ilw] 3.10.10-rt7: inconsistent lock state (iwlwifi)
-Date: Tue, 17 Sep 2013 06:00:54 +0000
-Message-ID: <0BA3FCBA62E2DC44AF3030971E174FB301DB078F@HASMSX103.ger.corp.intel.com>
-References: <1379365850.3828.3.camel@localhost.localdomain>
+From: Peter Hurley <peter@hurleysoftware.com>
+Subject: Re: BUG: sleeping function called from invalid context on 3.10.10-rt7
+Date: Tue, 17 Sep 2013 15:50:32 -0400
+Message-ID: <5238B288.3000704@hurleysoftware.com>
+References: <20130911102809.GA31663@uudg.org> <20130911092623.42efd930@gandalf.local.home> <5230895B.5070400@hurleysoftware.com> <20130911113845.6d56a556@gandalf.local.home> <5230C52E.3050801@hurleysoftware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: Thomas Meyer <thomas@m3y3r.de>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	ilw <ilw@linux.intel.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga14.intel.com ([143.182.124.37]:15783 "EHLO mga14.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751349Ab3IQGA7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Sep 2013 02:00:59 -0400
-In-Reply-To: <1379365850.3828.3.camel@localhost.localdomain>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Mario Kleiner <mario.kleiner@tuebingen.mpg.de>,
+	Dave Airlie <airlied@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	"dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>,
+	intel-gfx@lists.freedesktop.org
+To: Daniel Vetter <daniel.vetter@ffwll.ch>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5230C52E.3050801@hurleysoftware.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-PiANCj4gbG9ja2RlcCBjb21wbGFpbnMgYWJvdXQgdGhpczoNCiANCj4gDQo+IFsgICA5Mi4wOTQ4
-NzBdICAgICAgICBDUFUwDQo+IFsgICA5Mi4wOTQ4NzFdICAgICAgICAtLS0tDQo+IFsgICA5Mi4w
-OTQ4NzJdICAgbG9jaygmdHJhbnNfcGNpZS0+aXJxX2xvY2spOw0KPiBbICAgOTIuMDk0ODczXSAg
-IDxJbnRlcnJ1cHQ+DQo+IFsgICA5Mi4wOTQ4NzVdICAgICBsb2NrKCZ0cmFuc19wY2llLT5pcnFf
-bG9jayk7DQo+IFsgICA5Mi4wOTQ4NzVdDQo+ICAqKiogREVBRExPQ0sgKioqDQoNClNvcnJ5IGJ5
-IEkgYW0gbm90IGF3YXJlIG9mIGFsbCB0aGUgZGV0YWlscyBvZiBSVCBrZXJuZWxzLg0KV2hhdCBJ
-IHNlZSBoZXJlIGlzIHRoYXQgd2UgYWx3YXlzIGRpc2FibGUgaW50ZXJydXB0cyB3aGVuIHdlIHRh
-a2UgdHJhbnNfcGNpZS0+aXJxX2xvY2sgc28gSSBkb24ndCBzZWUgaG93IHRoaXMgZmxvdyBpcyBw
-b3NzaWJsZSAtIGF0IGxlYXN0IG5vdCBpbiB0aGUgd29ybGQgSSBrbm93LiBDYW4geW91IHBsZWFz
-ZSBlbGFib3JhdGUgb24gd2h5IHRoaXMgaXMgcG9zc2libGUgaW4gdGhlIFJUIHdvcmxkPw0KDQpU
-aGFua3MuDQoNCj4gDQo+IFsgICA5Mi4wOTQ4NzddIDEgbG9jayBoZWxkIGJ5IHN5c3RlbWQtam91
-cm5hbC8xMDAyOg0KPiBbICAgOTIuMDk0ODgyXSAgIzA6ICAoJm1tLT5tbWFwX3NlbSl7KysrKysu
-fSwgYXQ6IFs8ZmZmZmZmZmY4MTUyZDA0Yz5dDQo+IF9fZG9fcGFnZV9mYXVsdCsweDFjYy8weDVh
-MA0KPiBbICAgOTIuMDk0ODgzXQ0KPiBzdGFjayBiYWNrdHJhY2U6DQo+IFsgICA5Mi4wOTQ4ODVd
-IENQVTogMCBQSUQ6IDEwMDIgQ29tbTogc3lzdGVtZC1qb3VybmFsIE5vdCB0YWludGVkIDMuMTAu
-MTAtDQo+IHJ0NyAjNQ0KPiBbICAgOTIuMDk0ODg3XSBIYXJkd2FyZSBuYW1lOiBBY2VyIEFzcGly
-ZSAxODEwVC9KTTExLU1TLCBCSU9TIHYxLjMzMTANCj4gMDMvMjUvMjAxMA0KPiBbICAgOTIuMDk0
-ODkwXSAgZmZmZmZmZmY4MWZkOTVmMCBmZmZmZmZmZjgxYTIxY2YwIGZmZmZmZmZmODE1MjU3ODMN
-Cj4gZmZmZmZmZmY4MWEyMWQ0MA0KPiBbICAgOTIuMDk0ODkzXSAgZmZmZmZmZmY4MTUyMjM0NyAw
-MDAwMDAwMDAwMDAwMDAwIGZmZmY4ODAxMDAwMDAwMDANCj4gZmZmZmZmZmYwMDAwMDAwMQ0KPiBb
-ICAgOTIuMDk0ODk1XSAgMDAwMDAwMDAwMDAwMDAwMiBmZmZmODgwMTM3MzRkMDUwIGZmZmZmZmZm
-ODEwN2Q0MjANCj4gMDAwMDAwMDAwMDAwMDAwMA0KPiBbICAgOTIuMDk0ODk2XSBDYWxsIFRyYWNl
-Og0KPiBbICAgOTIuMDk0OTAyXSAgPElSUT4gIFs8ZmZmZmZmZmY4MTUyNTc4Mz5dIGR1bXBfc3Rh
-Y2srMHgxOS8weDFiDQo+IFsgICA5Mi4wOTQ5MDVdICBbPGZmZmZmZmZmODE1MjIzNDc+XSBwcmlu
-dF91c2FnZV9idWcrMHgxZmIvMHgyMGMNCj4gWyAgIDkyLjA5NDkwOV0gIFs8ZmZmZmZmZmY4MTA3
-ZDQyMD5dID8gY2hlY2tfdXNhZ2VfYmFja3dhcmRzKzB4MTQwLzB4MTQwDQo+IFsgICA5Mi4wOTQ5
-MTJdICBbPGZmZmZmZmZmODEwN2RlM2E+XSBtYXJrX2xvY2srMHgyM2EvMHgyYzANCj4gWyAgIDky
-LjA5NDkxNF0gIFs8ZmZmZmZmZmY4MTA3ZWM0Zj5dIF9fbG9ja19hY3F1aXJlKzB4N2ZmLzB4MWE2
-MA0KPiBbICAgOTIuMDk0OTE4XSAgWzxmZmZmZmZmZjgxNTJkMDRjPl0gPyBfX2RvX3BhZ2VfZmF1
-bHQrMHgxY2MvMHg1YTANCj4gWyAgIDkyLjA5NDkyMF0gIFs8ZmZmZmZmZmY4MTA4MDYyMj5dIGxv
-Y2tfYWNxdWlyZSsweDYyLzB4ODANCj4gWyAgIDkyLjA5NDkyN10gIFs8ZmZmZmZmZmZhMDE1NTg3
-Yz5dID8gaXdsX3BjaWVfaXNyX2ljdCsweDJjLzB4MmQwIFtpd2x3aWZpXQ0KPiBbICAgOTIuMDk0
-OTMwXSAgWzxmZmZmZmZmZjgxNTI5MzYwPl0gcnRfc3Bpbl9sb2NrKzB4NDAvMHg1MA0KPiBbICAg
-OTIuMDk0OTM2XSAgWzxmZmZmZmZmZmEwMTU1ODdjPl0gPyBpd2xfcGNpZV9pc3JfaWN0KzB4MmMv
-MHgyZDAgW2l3bHdpZmldDQo+IFsgICA5Mi4wOTQ5NDNdICBbPGZmZmZmZmZmYTAxNTU4N2M+XSBp
-d2xfcGNpZV9pc3JfaWN0KzB4MmMvMHgyZDAgW2l3bHdpZmldDQo+IFsgICA5Mi4wOTQ5NDhdICBb
-PGZmZmZmZmZmODEwYTg4ZDU+XSBoYW5kbGVfaXJxX2V2ZW50X3BlcmNwdSsweDU1LzB4MTgwDQo+
-IFsgICA5Mi4wOTQ5NTFdICBbPGZmZmZmZmZmODEwYThhMzg+XSBoYW5kbGVfaXJxX2V2ZW50KzB4
-MzgvMHg2MA0KPiBbICAgOTIuMDk0OTU0XSAgWzxmZmZmZmZmZjgxMGFhYjdmPl0gaGFuZGxlX2Vk
-Z2VfaXJxKzB4NmYvMHgxNDANCj4gWyAgIDkyLjA5NDk1Nl0gIFs8ZmZmZmZmZmY4MTAwM2FlOT5d
-IGhhbmRsZV9pcnErMHgxOS8weDMwDQo+IFsgICA5Mi4wOTQ5NTldICBbPGZmZmZmZmZmODEwMDM5
-YjU+XSBkb19JUlErMHg0NS8weGIwDQo+IFsgICA5Mi4wOTQ5NjJdICBbPGZmZmZmZmZmODE1MmEy
-MmQ+XSBjb21tb25faW50ZXJydXB0KzB4NmQvMHg2ZA0KPiBbICAgOTIuMDk0OTY2XSAgPEVPST4g
-IFs8ZmZmZmZmZmY4MTUyZDA0Yz5dID8gX19kb19wYWdlX2ZhdWx0KzB4MWNjLzB4NWEwDQo+IFsg
-ICA5Mi4wOTQ5NjldICBbPGZmZmZmZmZmODEwODA2ZTA+XSA/IGxvY2tfcmVsZWFzZV9ub25fbmVz
-dGVkKzB4YTAvMHgzMDANCj4gWyAgIDkyLjA5NDk3M10gIFs8ZmZmZmZmZmY4MTA2MTk2ZD5dID8g
-Z2V0X3BhcmVudF9pcCsweGQvMHg1MA0KPiBbICAgOTIuMDk0OTc2XSAgWzxmZmZmZmZmZjgxNTJh
-MmM5Pl0gPyByZXRpbnRfc3dhcGdzKzB4ZS8weDEzDQo+IFsgICA5Mi4wOTQ5ODBdICBbPGZmZmZm
-ZmZmODEyM2VkM2Q+XSA/IHRyYWNlX2hhcmRpcnFzX29mZl90aHVuaysweDNhLzB4M2MNCj4gWyAg
-IDkyLjA5NDk4M10gIFs8ZmZmZmZmZmY4MTUyZDQyOT5dIGRvX3BhZ2VfZmF1bHQrMHg5LzB4MTAN
-Cj4gWyAgIDkyLjA5NDk4NV0gIFs8ZmZmZmZmZmY4MTUyYTUwMj5dIHBhZ2VfZmF1bHQrMHgyMi8w
-eDMwDQo+IFsgICA5Mi4yODg3MjVdIGl3bHdpZmkgMDAwMDowMjowMC4wOiBMMSBFbmFibGVkOyBE
-aXNhYmxpbmcgTDBTDQo+IFsgICA5Mi4yOTE4NDldIGl3bHdpZmkgMDAwMDowMjowMC4wOiBSYWRp
-byB0eXBlPTB4MS0weDItMHgwDQo+IFsgICA5Mi40MjIyMzZdIElQdjY6IEFERFJDT05GKE5FVERF
-Vl9VUCk6IHdsYW4wOiBsaW5rIGlzIG5vdCByZWFkeQ0KPiANCj4gDQo+IF9fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fDQo+IGlsdyBtYWlsaW5nIGxpc3QNCj4g
-aWx3QGxpbnV4LmludGVsLmNvbQ0KPiBodHRwOi8vbGludXguaW50ZWwuY29tL21haWxtYW4vbGlz
-dGluZm8vaWx3DQo=
+On 09/11/2013 03:31 PM, Peter Hurley wrote:
+> [+cc dri-devel]
+>
+> On 09/11/2013 11:38 AM, Steven Rostedt wrote:
+>> On Wed, 11 Sep 2013 11:16:43 -0400
+>> Peter Hurley <peter@hurleysoftware.com> wrote:
+>>
+>>>> The funny part is, there's a comment there that shows that this was
+>>>> done even for "PREEMPT_RT". Unfortunately, the call to
+>>>> "get_scanout_position()" can call functions that use the rt-mutex
+>>>> "sleeping spin locks" and it breaks there.
+>>>>
+>>>> I guess we need to ask the authors of the mainline patch exactly why
+>>>> that preempt_disable() is needed?
+>>>
+>>> The drm core associates a timestamp with each vertical blank frame #.
+>>> Drm drivers can optionally support a 'high resolution' hw timestamp.
+>>> The vblank frame #/timestamp tuple is user-space visible.
+>>>
+>>> The i915 drm driver supports a hw timestamp via this drm helper function
+>>> which computes the timestamp from the crtc scan position (based on the
+>>> pixel clock).
+>>>
+>>> For mainline, the preempt_disable/_enable() isn't actually necessary
+>>> because every call tree that leads here already has preemption disabled.
+>>>
+>>> For -RT, the maybe i915 register spinlock (uncore.lock) should be raw?
+>>>
+>>
+>> No, it should not. Note, any other lock that can be held when it is
+>> held would also need to be raw.
+>
+> By that, you mean "any other lock" that might be claimed "would also need
+> to be raw"?  Hopefully not "any other lock" already held?
+>
+>> And by taking a quick audit of the code, I see this:
+>>
+>>     spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
+>>
+>>     /* Reset the chip */
+>>
+>>     /* GEN6_GDRST is not in the gt power well, no need to check
+>>      * for fifo space for the write or forcewake the chip for
+>>      * the read
+>>      */
+>>     __raw_i915_write32(dev_priv, GEN6_GDRST, GEN6_GRDOM_FULL);
+>>
+>>     /* Spin waiting for the device to ack the reset request */
+>>     ret = wait_for((__raw_i915_read32(dev_priv, GEN6_GDRST) & GEN6_GRDOM_FULL) == 0, 500);
+>>
+>> That spin is unacceptable in RT with preemption and interrupts disabled.
+>
+> Yep. That would be bad.
+>
+> AFAICT the registers read in i915_get_crtc_scanoutpos() aren't included
+> in the force-wake set, so raw reads of the registers would
+> probably be acceptable (thus obviating the need for claiming the uncore.lock).
+>
+> Except that _ALL_ register access is disabled with the uncore.lock
+> during a gpu reset. Not sure if that's meant to include crtc registers
+> or not, or what other synchronization/serialization issues are being
+> handled/hidden by forcing all register accesses to wait during a gpu reset.
+>
+> Hopefully an i915 expert can weigh in here?
+
+
+Daniel,
+
+Can you shed some light on whether the i915+ crtc registers (specifically
+those in i915_get_crtc_scanoutpos() and i915_/gm45_get_vblank_counter())
+read as part of the vblank counter/timestamp handling need to
+be prevented during gpu reset?
+
+The implied wait with preemption and interrupts disabled is causing grief
+in -RT, but also a 4ms wait inside an irq handler seems like a bad idea.
+
+Regards,
+Peter Hurley
+
+
+>> What's the real issue here?
+>
+> That the vblank timestamp needs to be an accurate measurement of a
+> realtime event. Sleeping/servicing interrupts while reading
+> the registers necessary to compute the timestamp would be bad too.
+>
+> (edit: which hopefully Mario Kleiner clarified in his reply)
+>
+> My point earlier was three-fold:
+> 1. Don't need the preempt_disable() for mainline: all callers are already
+>     holding interrupt-disabling spinlocks.
+> 2. -RT still needs to prevent scheduling there.
+> 3. the problem is i915-specific.
+>
+> [update: the radeon driver should also BUG like the i915 driver but probably
+> should have mmio_idx_lock spinlock as raw]
