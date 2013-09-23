@@ -1,212 +1,273 @@
-From: "Michael S. Tsirkin" <mst@redhat.com>
-Subject: Re: [PATCH 0/3] KVM: Make kvm_lock non-raw
-Date: Sat, 21 Sep 2013 23:26:47 +0300
-Message-ID: <20130921202647.GA21821@redhat.com>
-References: <1379340373-5135-1-git-send-email-pbonzini@redhat.com>
- <5237824E.5090802@windriver.com>
- <20130920175150.GA24770@windriver.com>
- <523C8E23.4080904@siemens.com>
+From: Ville =?iso-8859-1?Q?Syrj=E4l=E4?= <ville.syrjala@linux.intel.com>
+Subject: Re: [Intel-gfx] BUG: sleeping function called from invalid context
+ on 3.10.10-rt7
+Date: Mon, 23 Sep 2013 11:38:41 +0300
+Message-ID: <20130923083841.GT4531@intel.com>
+References: <20130911102809.GA31663@uudg.org>
+ <20130911092623.42efd930@gandalf.local.home>
+ <5230895B.5070400@hurleysoftware.com>
+ <20130911113845.6d56a556@gandalf.local.home>
+ <5230C52E.3050801@hurleysoftware.com>
+ <5238B288.3000704@hurleysoftware.com>
+ <CAKMK7uG9s8W6yebkmuJe0XHGsoru4_9FzGqfmKWtMFyCAfQZqA@mail.gmail.com>
+ <523CC728.4040302@tuebingen.mpg.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	linux-kernel@vger.kernel.org, kvm@vger.kernel.org, gleb@redhat.com,
-	linux-rt-users@vger.kernel.org,
-	Alex Williamson <alex.williamson@redhat.com>
-To: Jan Kiszka <jan.kiszka@siemens.com>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Daniel Vetter <daniel.vetter@ffwll.ch>,
+	Peter Hurley <peter@hurleysoftware.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>,
+	Dave Airlie <airlied@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	intel-gfx <intel-gfx@lists.freedesktop.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Mario Kleiner <mario.kleiner@tuebingen.mpg.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <523C8E23.4080904@siemens.com>
+In-Reply-To: <523CC728.4040302@tuebingen.mpg.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Sep 20, 2013 at 08:04:19PM +0200, Jan Kiszka wrote:
-> On 2013-09-20 19:51, Paul Gortmaker wrote:
-> > [Re: [PATCH 0/3] KVM: Make kvm_lock non-raw] On 16/09/2013 (Mon 18:12) Paul Gortmaker wrote:
-> > 
-> >> On 13-09-16 10:06 AM, Paolo Bonzini wrote:
-> >>> Paul Gortmaker reported a BUG on preempt-rt kernels, due to taking the
-> >>> mmu_lock within the raw kvm_lock in mmu_shrink_scan.  He provided a
-> >>> patch that shrunk the kvm_lock critical section so that the mmu_lock
-> >>> critical section does not nest with it, but in the end there is no reason
-> >>> for the vm_list to be protected by a raw spinlock.  Only manipulations
-> >>> of kvm_usage_count and the consequent hardware_enable/disable operations
-> >>> are not preemptable.
+On Sat, Sep 21, 2013 at 12:07:36AM +0200, Mario Kleiner wrote:
+> On 09/17/2013 10:55 PM, Daniel Vetter wrote:
+> > On Tue, Sep 17, 2013 at 9:50 PM, Peter Hurley <peter@hurleysoftware=
+=2Ecom> wrote:
+> >> On 09/11/2013 03:31 PM, Peter Hurley wrote:
 > >>>
-> >>> This small series thus splits the kvm_lock in the "raw" part and the
-> >>> "non-raw" part.
+> >>> [+cc dri-devel]
 > >>>
-> >>> Paul, could you please provide your Tested-by?
+> >>> On 09/11/2013 11:38 AM, Steven Rostedt wrote:
+> >>>>
+> >>>> On Wed, 11 Sep 2013 11:16:43 -0400
+> >>>> Peter Hurley <peter@hurleysoftware.com> wrote:
+> >>>>
+> >>>>>> The funny part is, there's a comment there that shows that thi=
+s was
+> >>>>>> done even for "PREEMPT_RT". Unfortunately, the call to
+> >>>>>> "get_scanout_position()" can call functions that use the rt-mu=
+tex
+> >>>>>> "sleeping spin locks" and it breaks there.
+> >>>>>>
+> >>>>>> I guess we need to ask the authors of the mainline patch exact=
+ly why
+> >>>>>> that preempt_disable() is needed?
+> >>>>>
+> >>>>>
+> >>>>> The drm core associates a timestamp with each vertical blank fr=
+ame #.
+> >>>>> Drm drivers can optionally support a 'high resolution' hw times=
+tamp.
+> >>>>> The vblank frame #/timestamp tuple is user-space visible.
+> >>>>>
+> >>>>> The i915 drm driver supports a hw timestamp via this drm helper=
+ function
+> >>>>> which computes the timestamp from the crtc scan position (based=
+ on the
+> >>>>> pixel clock).
+> >>>>>
+> >>>>> For mainline, the preempt_disable/_enable() isn't actually nece=
+ssary
+> >>>>> because every call tree that leads here already has preemption =
+disabled.
+> >>>>>
+> >>>>> For -RT, the maybe i915 register spinlock (uncore.lock) should =
+be raw?
+> >>>>>
+> >>>>
+> >>>> No, it should not. Note, any other lock that can be held when it=
+ is
+> >>>> held would also need to be raw.
+> >>>
+> >>>
+> >>> By that, you mean "any other lock" that might be claimed "would a=
+lso need
+> >>> to be raw"?  Hopefully not "any other lock" already held?
+> >>>
+> >>>> And by taking a quick audit of the code, I see this:
+> >>>>
+> >>>>      spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
+> >>>>
+> >>>>      /* Reset the chip */
+> >>>>
+> >>>>      /* GEN6_GDRST is not in the gt power well, no need to check
+> >>>>       * for fifo space for the write or forcewake the chip for
+> >>>>       * the read
+> >>>>       */
+> >>>>      __raw_i915_write32(dev_priv, GEN6_GDRST, GEN6_GRDOM_FULL);
+> >>>>
+> >>>>      /* Spin waiting for the device to ack the reset request */
+> >>>>      ret =3D wait_for((__raw_i915_read32(dev_priv, GEN6_GDRST) &
+> >>>> GEN6_GRDOM_FULL) =3D=3D 0, 500);
+> >>>>
+> >>>> That spin is unacceptable in RT with preemption and interrupts d=
+isabled.
+> >>>
+> >>>
+> >>> Yep. That would be bad.
+> >>>
+> >>> AFAICT the registers read in i915_get_crtc_scanoutpos() aren't in=
+cluded
+> >>> in the force-wake set, so raw reads of the registers would
+> >>> probably be acceptable (thus obviating the need for claiming the
+> >>> uncore.lock).
+> >>>
+> >>> Except that _ALL_ register access is disabled with the uncore.loc=
+k
+> >>> during a gpu reset. Not sure if that's meant to include crtc regi=
+sters
+> >>> or not, or what other synchronization/serialization issues are be=
+ing
+> >>> handled/hidden by forcing all register accesses to wait during a =
+gpu
+> >>> reset.
+> >>>
+> >>> Hopefully an i915 expert can weigh in here?
 > >>
-> >> Sure, I'll go back and see if I can find what triggered it in the
-> >> original report, and give the patches a spin on 3.4.x-rt (and probably
-> >> 3.10.x-rt, since that is where rt-current is presently).
-> > 
-> > Seems fine on 3.4-rt.  On 3.10.10-rt7 it looks like there are other
-> > issues, probably not explicitly related to this patchset (see below).
-> > 
-> > Paul.
-> > --
-> > 
-> > e1000e 0000:00:19.0 eth1: removed PHC
-> > assign device 0:0:19.0
-> > pci 0000:00:19.0: irq 43 for MSI/MSI-X
-> > pci 0000:00:19.0: irq 43 for MSI/MSI-X
-> > pci 0000:00:19.0: irq 43 for MSI/MSI-X
-> > pci 0000:00:19.0: irq 43 for MSI/MSI-X
-> > BUG: sleeping function called from invalid context at /home/paul/git/linux-rt/kernel/rtmutex.c:659
-> > in_atomic(): 1, irqs_disabled(): 1, pid: 0, name: swapper/0
-> > 2 locks held by swapper/0/0:
-> >  #0:  (rcu_read_lock){.+.+.+}, at: [<ffffffff8100998a>] kvm_set_irq_inatomic+0x2a/0x4a0
-> >  #1:  (rcu_read_lock){.+.+.+}, at: [<ffffffff81038800>] kvm_irq_delivery_to_apic_fast+0x60/0x3d0
-> > irq event stamp: 6121390
-> > hardirqs last  enabled at (6121389): [<ffffffff819f9ae0>] restore_args+0x0/0x30
-> > hardirqs last disabled at (6121390): [<ffffffff819f9a2a>] common_interrupt+0x6a/0x6f
-> > softirqs last  enabled at (0): [<          (null)>]           (null)
-> > softirqs last disabled at (0): [<          (null)>]           (null)
-> > Preemption disabled at:[<ffffffff810ebb9a>] cpu_startup_entry+0x1ba/0x430
-> > 
-> > CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.10.10-rt7 #2
-> > Hardware name: Dell Inc. OptiPlex 990/0VNP2H, BIOS A17 03/14/2013
-> >  ffffffff8201c440 ffff880223603cf0 ffffffff819f177d ffff880223603d18
-> >  ffffffff810c90d3 ffff880214a50110 0000000000000001 0000000000000001
-> >  ffff880223603d38 ffffffff819f89a4 ffff880214a50110 ffff880214a50110
-> > Call Trace:
-> >  <IRQ>  [<ffffffff819f177d>] dump_stack+0x19/0x1b
-> >  [<ffffffff810c90d3>] __might_sleep+0x153/0x250
-> >  [<ffffffff819f89a4>] rt_spin_lock+0x24/0x60
-> >  [<ffffffff810ccdd6>] __wake_up+0x36/0x70
-> >  [<ffffffff81003bbb>] kvm_vcpu_kick+0x3b/0xd0
-> 
-> -rt lacks an atomic waitqueue for triggering VCPU wakeups on MSIs from
-> assigned devices directly from the host IRQ handler. We need to disable
-> this fast-path in -rt or introduce such an abstraction (I did this once
-> over 2.6.33-rt).
-> 
-> IIRC, VFIO goes the slower patch via a kernel thread unconditionally,
-> thus cannot trigger this.
+> >>
+> >>
+> >> Daniel,
+> >>
+> >> Can you shed some light on whether the i915+ crtc registers (speci=
+fically
+> >> those in i915_get_crtc_scanoutpos() and i915_/gm45_get_vblank_coun=
+ter())
+> >> read as part of the vblank counter/timestamp handling need to
+> >> be prevented during gpu reset?
+> >
+> > The depency here in the locking is a recent addition:
+> >
+> > commit a7cd1b8fea2f341b626b255d9898a5ca5fabbf0a
+> > Author: Chris Wilson <chris@chris-wilson.co.uk>
+> > Date:   Fri Jul 19 20:36:51 2013 +0100
+> >
+> >      drm/i915: Serialize almost all register access
+> >
+> > It's a (slightly) oversized hammer to work around a hardware issue =
+-
+> > we could break it down to register blocks, which can be accessed
+> > concurrently, but that tends to be more fragile. But the chip reall=
+y
+> > dies if you access (even just reads) the same block concurrently :(
+> >
+> > We could try break the spinlock protected section a bit in the rese=
+t
+> > handler - register access on a hung gpu tends to be ill-defined
+> > anyway.
+> >
+> >> The implied wait with preemption and interrupts disabled is causin=
+g grief
+> >> in -RT, but also a 4ms wait inside an irq handler seems like a bad=
+ idea.
+> >
+> > Oops, the magic code in wait_for which is just there to make the im=
+o
+> > totally misguided kgdb support work papered over the aweful long wa=
+it
+> > in atomic context ever since we've added this in
+> >
+> > commit b6e45f866465f42b53d803b0c574da0fc508a0e9
+> > Author: Keith Packard <keithp@keithp.com>
+> > Date:   Fri Jan 6 11:34:04 2012 -0800
+> >
+> >      drm/i915: Move reset forcewake processing to gen6_do_reset
+> >
+> > Reverting this change should be enough (code moved obviously a bit)=
+=2E
+> >
+> > Cheers, Daniel
+> >
+> >>
+> >> Regards,
+> >> Peter Hurley
+> >>
+> >>
+> >>
+> >>>> What's the real issue here?
+> >>>
+> >>>
+> >>> That the vblank timestamp needs to be an accurate measurement of =
+a
+> >>> realtime event. Sleeping/servicing interrupts while reading
+> >>> the registers necessary to compute the timestamp would be bad too=
+=2E
+> >>>
+> >>> (edit: which hopefully Mario Kleiner clarified in his reply)
+> >>>
+> >>> My point earlier was three-fold:
+> >>> 1. Don't need the preempt_disable() for mainline: all callers are=
+ already
+> >>>      holding interrupt-disabling spinlocks.
+> >>> 2. -RT still needs to prevent scheduling there.
+> >>> 3. the problem is i915-specific.
+> >>>
+> >>> [update: the radeon driver should also BUG like the i915 driver b=
+ut
+> >>> probably
+> >>> should have mmio_idx_lock spinlock as raw]
+> >>
+>=20
+> Ok, so register access must be serialized, at least within a register=
+=20
+> block, no way around it. Thanks for explaining this. That makes me a =
+bit=20
+> depressed. Is this also true for older hw generations than gen6?
+>=20
+> Daniel, could we move access to the display register block to a separ=
+ate=20
+> lock, so the I915_READ to PIPEDSL in  i915_get_crtc_scanoutpos() can=20
+> avoid the uncore.lock? If the display registers don't need forcewake=20
+> then i assume we could have much shorter lock hold times by avoiding =
+the=20
+> large up to 4 msecs waits in forcewake handling. Probably also much l=
+ess=20
+> contention in normal operation when no modesetting happens? I think i=
+=20
+> can get rid of the other register reads in that function. Those setti=
+ngs=20
+> are already cached and accessible from the intel_crtc_config->adjuste=
+d_mode.
 
-AFAIK VFIO just uses eventfds and these can
-inject MSI interrupts directly from IRQ without going through a thread.
+I actually have a patch to kill most of the registers reads in
+get_scanout_position on i915 somewhere. Let me dig that out and send it
+to the list...
 
+<snip>
+> In any case, maybe the simple retry 3x loop in the DRM for measuring =
+the=20
+> timestamp is not good enough anymore to keep this reliable and accura=
+te.=20
+> Maybe we would need some loop that retries until an accurate measurem=
+ent=20
+> or a user configurable timeout is reached. Then users like  mine coul=
+d=20
+> set a very high timeout which rather totally degrades the system and=20
+> causes severe stuttering of graphics updates than silently failing wi=
+th=20
+> inaccurate timestamps. The default could be something safe for normal=
+=20
+> desktop use.
 
-> Only legacy device assignment is affected.
-> 
-> Jan
-> 
-> >  [<ffffffff810371a2>] __apic_accept_irq+0x2b2/0x3a0
-> >  [<ffffffff810385f7>] kvm_apic_set_irq+0x27/0x30
-> >  [<ffffffff8103894e>] kvm_irq_delivery_to_apic_fast+0x1ae/0x3d0
-> >  [<ffffffff81038800>] ? kvm_irq_delivery_to_apic_fast+0x60/0x3d0
-> >  [<ffffffff81009a8b>] kvm_set_irq_inatomic+0x12b/0x4a0
-> >  [<ffffffff8100998a>] ? kvm_set_irq_inatomic+0x2a/0x4a0
-> >  [<ffffffff8100c5b3>] kvm_assigned_dev_msi+0x23/0x40
-> >  [<ffffffff8113cb38>] handle_irq_event_percpu+0x88/0x3d0
-> >  [<ffffffff810ebb7c>] ? cpu_startup_entry+0x19c/0x430
-> >  [<ffffffff8113cec8>] handle_irq_event+0x48/0x70
-> >  [<ffffffff8113f9b7>] handle_edge_irq+0x77/0x120
-> >  [<ffffffff8104c6ae>] handle_irq+0x1e/0x30
-> >  [<ffffffff81a035ca>] do_IRQ+0x5a/0xd0
-> >  [<ffffffff819f9a2f>] common_interrupt+0x6f/0x6f
-> >  <EOI>  [<ffffffff819f9ae0>] ? retint_restore_args+0xe/0xe
-> >  [<ffffffff810ebb7c>] ? cpu_startup_entry+0x19c/0x430
-> >  [<ffffffff810ebb38>] ? cpu_startup_entry+0x158/0x430
-> >  [<ffffffff819db767>] rest_init+0x137/0x140
-> >  [<ffffffff819db635>] ? rest_init+0x5/0x140
-> >  [<ffffffff822fde18>] start_kernel+0x3af/0x3bc
-> >  [<ffffffff822fd870>] ? repair_env_string+0x5e/0x5e
-> >  [<ffffffff822fd5a5>] x86_64_start_reservations+0x2a/0x2c
-> >  [<ffffffff822fd673>] x86_64_start_kernel+0xcc/0xcf
-> > 
-> > =================================
-> > [ INFO: inconsistent lock state ]
-> > 3.10.10-rt7 #2 Not tainted
-> > ---------------------------------
-> > inconsistent {HARDIRQ-ON-W} -> {IN-HARDIRQ-W} usage.
-> > swapper/0/0 [HC1[1]:SC0[0]:HE0:SE1] takes:
-> >  (&(&(&q->lock)->lock)->wait_lock){?.+.-.}, at: [<ffffffff819f7e98>] rt_spin_lock_slowlock+0x48/0x370
-> > {HARDIRQ-ON-W} state was registered at:
-> >   [<ffffffff810fc94d>] __lock_acquire+0x69d/0x20e0
-> >   [<ffffffff810feaee>] lock_acquire+0x9e/0x1f0
-> >   [<ffffffff819f9090>] _raw_spin_lock+0x40/0x80
-> >   [<ffffffff819f7e98>] rt_spin_lock_slowlock+0x48/0x370
-> >   [<ffffffff819f89ac>] rt_spin_lock+0x2c/0x60
-> >   [<ffffffff810ccdd6>] __wake_up+0x36/0x70
-> >   [<ffffffff8109c5ce>] run_timer_softirq+0x1be/0x390
-> >   [<ffffffff81092a09>] do_current_softirqs+0x239/0x5b0
-> >   [<ffffffff81092db8>] run_ksoftirqd+0x38/0x60
-> >   [<ffffffff810c5d7c>] smpboot_thread_fn+0x22c/0x340
-> >   [<ffffffff810bbf4d>] kthread+0xcd/0xe0
-> >   [<ffffffff81a019dc>] ret_from_fork+0x7c/0xb0
-> > irq event stamp: 6121390
-> > hardirqs last  enabled at (6121389): [<ffffffff819f9ae0>] restore_args+0x0/0x30
-> > hardirqs last disabled at (6121390): [<ffffffff819f9a2a>] common_interrupt+0x6a/0x6f
-> > softirqs last  enabled at (0): [<          (null)>]           (null)
-> > softirqs last disabled at (0): [<          (null)>]           (null)
-> > 
-> > other info that might help us debug this:
-> >  Possible unsafe locking scenario:
-> > 
-> >        CPU0
-> >        ----
-> >   lock(&(&(&q->lock)->lock)->wait_lock);
-> >   <Interrupt>
-> >     lock(&(&(&q->lock)->lock)->wait_lock);
-> > 
-> >  *** DEADLOCK ***
-> > 
-> > 2 locks held by swapper/0/0:
-> >  #0:  (rcu_read_lock){.+.+.+}, at: [<ffffffff8100998a>] kvm_set_irq_inatomic+0x2a/0x4a0
-> >  #1:  (rcu_read_lock){.+.+.+}, at: [<ffffffff81038800>] kvm_irq_delivery_to_apic_fast+0x60/0x3d0
-> > 
-> > stack backtrace:
-> > CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.10.10-rt7 #2
-> > Hardware name: Dell Inc. OptiPlex 990/0VNP2H, BIOS A17 03/14/2013
-> >  ffffffff8262b550 ffff880223603a40 ffffffff819f177d ffff880223603a90
-> >  ffffffff819ec532 0000000000000000 ffffffff00000000 ffff880200000001
-> >  0000000000000002 ffffffff8201ccc0 ffffffff810f9040 0000000000000000
-> > Call Trace:
-> >  <IRQ>  [<ffffffff819f177d>] dump_stack+0x19/0x1b
-> >  [<ffffffff819ec532>] print_usage_bug.part.36+0x28b/0x29a
-> >  [<ffffffff810f9040>] ? check_usage_backwards+0x150/0x150
-> >  [<ffffffff810f9dab>] mark_lock+0x28b/0x6a0
-> >  [<ffffffff810fcbf9>] __lock_acquire+0x949/0x20e0
-> >  [<ffffffff811091f2>] ? __module_text_address+0x12/0x60
-> >  [<ffffffff8110ea8f>] ? is_module_text_address+0x2f/0x60
-> >  [<ffffffff810b8408>] ? __kernel_text_address+0x58/0x80
-> >  [<ffffffff8104dbb2>] ? print_context_stack+0x62/0xf0
-> >  [<ffffffff810feaee>] lock_acquire+0x9e/0x1f0
-> >  [<ffffffff819f7e98>] ? rt_spin_lock_slowlock+0x48/0x370
-> >  [<ffffffff819f9090>] _raw_spin_lock+0x40/0x80
-> >  [<ffffffff819f7e98>] ? rt_spin_lock_slowlock+0x48/0x370
-> >  [<ffffffff819f7e98>] rt_spin_lock_slowlock+0x48/0x370
-> >  [<ffffffff819f89ac>] rt_spin_lock+0x2c/0x60
-> >  [<ffffffff810ccdd6>] __wake_up+0x36/0x70
-> >  [<ffffffff81003bbb>] kvm_vcpu_kick+0x3b/0xd0
-> >  [<ffffffff810371a2>] __apic_accept_irq+0x2b2/0x3a0
-> >  [<ffffffff810385f7>] kvm_apic_set_irq+0x27/0x30
-> >  [<ffffffff8103894e>] kvm_irq_delivery_to_apic_fast+0x1ae/0x3d0
-> >  [<ffffffff81038800>] ? kvm_irq_delivery_to_apic_fast+0x60/0x3d0
-> >  [<ffffffff81009a8b>] kvm_set_irq_inatomic+0x12b/0x4a0
-> >  [<ffffffff8100998a>] ? kvm_set_irq_inatomic+0x2a/0x4a0
-> >  [<ffffffff8100c5b3>] kvm_assigned_dev_msi+0x23/0x40
-> >  [<ffffffff8113cb38>] handle_irq_event_percpu+0x88/0x3d0
-> >  [<ffffffff810ebb7c>] ? cpu_startup_entry+0x19c/0x430
-> >  [<ffffffff8113cec8>] handle_irq_event+0x48/0x70
-> >  [<ffffffff8113f9b7>] handle_edge_irq+0x77/0x120
-> >  [<ffffffff8104c6ae>] handle_irq+0x1e/0x30
-> >  [<ffffffff81a035ca>] do_IRQ+0x5a/0xd0
-> >  [<ffffffff819f9a2f>] common_interrupt+0x6f/0x6f
-> >  <EOI>  [<ffffffff819f9ae0>] ? retint_restore_args+0xe/0xe
-> >  [<ffffffff810ebb7c>] ? cpu_startup_entry+0x19c/0x430
-> >  [<ffffffff810ebb38>] ? cpu_startup_entry+0x158/0x430
-> >  [<ffffffff819db767>] rest_init+0x137/0x140
-> >  [<ffffffff819db635>] ? rest_init+0x5/0x140
-> >  [<ffffffff822fde18>] start_kernel+0x3af/0x3bc
-> >  [<ffffffff822fd870>] ? repair_env_string+0x5e/0x5e
-> >  [<ffffffff822fd5a5>] x86_64_start_reservations+0x2a/0x2c
-> >  [<ffffffff822fd673>] x86_64_start_kernel+0xcc/0xcf
-> 
-> -- 
-> Siemens AG, Corporate Technology, CT RTC ITP SES-DE
-> Corporate Competence Center Embedded Linux
+I never really understood the need for the preempt disabled retry loop =
+in
+drm core. What I would do is just something like this:
+
+get_scanoutpos_and_timestamp()
+{
+ local_irq_disable();
+ get_scanoutpos();
+ get_timestamp();
+ local_irq_enable();
+}
+
+If that has a lot of error, then it seems to me that the system is just
+crap and we shouldn't care. Or if you're really worried about SMIs and
+such then you could still do a retry loop.
+
+--=20
+Ville Syrj=E4l=E4
+Intel OTC
