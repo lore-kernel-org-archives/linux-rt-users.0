@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [Intel-gfx] BUG: sleeping function called from invalid context
  on 3.10.10-rt7
-Date: Wed, 25 Sep 2013 10:13:01 -0400
-Message-ID: <20130925101301.6cbe5d0f@gandalf.local.home>
+Date: Wed, 25 Sep 2013 10:18:03 -0400
+Message-ID: <20130925101803.2848fc3c@gandalf.local.home>
 References: <20130911102809.GA31663@uudg.org>
 	<20130911092623.42efd930@gandalf.local.home>
 	<5230895B.5070400@hurleysoftware.com>
@@ -13,10 +13,11 @@ References: <20130911102809.GA31663@uudg.org>
 	<523CC728.4040302@tuebingen.mpg.de>
 	<20130923083841.GT4531@intel.com>
 	<5242674A.8020100@tuebingen.mpg.de>
+	<20130925074936.GI4531@intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Ville =?UTF-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Mario Kleiner <mario.kleiner@tuebingen.mpg.de>,
 	Daniel Vetter <daniel.vetter@ffwll.ch>,
 	Peter Hurley <peter@hurleysoftware.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
@@ -28,53 +29,47 @@ Cc: Ville =?UTF-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	intel-gfx <intel-gfx@lists.freedesktop.org>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: Mario Kleiner <mario.kleiner@tuebingen.mpg.de>
+To: Ville =?UTF-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:27807 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:39501 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755432Ab3IYONE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Sep 2013 10:13:04 -0400
-In-Reply-To: <5242674A.8020100@tuebingen.mpg.de>
+	by vger.kernel.org with ESMTP id S1754886Ab3IYOSG convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Sep 2013 10:18:06 -0400
+In-Reply-To: <20130925074936.GI4531@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 25 Sep 2013 06:32:10 +0200
-Mario Kleiner <mario.kleiner@tuebingen.mpg.de> wrote:
+On Wed, 25 Sep 2013 10:49:36 +0300
+Ville Syrj=C3=A4l=C3=A4 <ville.syrjala@linux.intel.com> wrote:
 
- 
-> But given the new situation, your proposal is great! If we push the 
-> clock readouts into the get_scanoutpos routine, we can make this robust 
-> without causing grief for the rt people and without the need for a new 
-> separate lock for display regs in intel-kms.
-> 
-> E.g., for intel-kms:
-> 
-> i915_get_crtc_scanoutpos(..., ktime_t *stime, ktime_t *etime)
-> {
->    ...
->    spin_lock_irqsave(...uncore.lock);
->    preempt_disable();
->    *stime = ktime_get();
->    position = __raw_i915_read32(dev_priv, PIPEDSL(pipe));
->    *etime = ktime_get();
->    preempt_enable();
->    spin_unlock_irqrestore(...uncore.lock)
->    ...
-> }
-> 
-> With your patchset to reduce the amount of register reads needed in that 
-> function, and given that forcewake handling isn't needed for these 
-> registers, this should make it robust again and wouldn't need new locks.
-> 
-> Unless ktime_get is also a bad thing to do in a preempt disabled section?
+=20
+> The preempt_disable/enable is not needed. The spinlock serves the sam=
+e
+> purpose already.
 
-ktime_get() works fine in preempt_disable sections, although it may add
-some latencies, but you shouldn't need to worry about it.
+As stated, that was only for the -rt patch, as spin_lock_irqsave does
+not disable preemption nor does it even disable interrupts.
 
-I like this solution the best too, but if it does go in, I would ask to
-send us the patch for adding the preempt_disable() and we can add the
-preempt_disable_rt() to it. Why make mainline have a little more
-overhead?
+But I agree, the added preempt_disable() should be sent to us to keep
+in the -rt patch itself. We really appreciate that you are thinking
+about us :-)  But something like this will just confuse the mainline
+folks. Having a "preempt_disable_rt()" would make a lot more sense
+(which exists in the -rt patch).
+
+>=20
+> As far as ktime_get(), I've used it from spinlocked/irq disabled sect=
+ions
+> and so far haven't seen it do bad things. But would be nice to get so=
+me
+> official statement to that effect.
+
+It's just a read seqlock. It may do a few loops to get the correct
+time, but it's fine to have in a preempt/irq disabled section.
 
 -- Steve
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
