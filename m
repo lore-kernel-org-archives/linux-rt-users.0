@@ -1,366 +1,71 @@
-From: Ville =?iso-8859-1?Q?Syrj=E4l=E4?= <ville.syrjala@linux.intel.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [Intel-gfx] BUG: sleeping function called from invalid context
  on 3.10.10-rt7
-Date: Wed, 25 Sep 2013 10:49:36 +0300
-Message-ID: <20130925074936.GI4531@intel.com>
+Date: Wed, 25 Sep 2013 09:52:59 -0400
+Message-ID: <20130925095259.7138eb68@gandalf.local.home>
 References: <20130911102809.GA31663@uudg.org>
- <20130911092623.42efd930@gandalf.local.home>
- <5230895B.5070400@hurleysoftware.com>
- <20130911113845.6d56a556@gandalf.local.home>
- <5230C52E.3050801@hurleysoftware.com>
- <5238B288.3000704@hurleysoftware.com>
- <CAKMK7uG9s8W6yebkmuJe0XHGsoru4_9FzGqfmKWtMFyCAfQZqA@mail.gmail.com>
- <523CC728.4040302@tuebingen.mpg.de>
- <20130923083841.GT4531@intel.com>
- <5242674A.8020100@tuebingen.mpg.de>
+	<20130911092623.42efd930@gandalf.local.home>
+	<5230895B.5070400@hurleysoftware.com>
+	<20130911113845.6d56a556@gandalf.local.home>
+	<5230C52E.3050801@hurleysoftware.com>
+	<5238B288.3000704@hurleysoftware.com>
+	<CAKMK7uG9s8W6yebkmuJe0XHGsoru4_9FzGqfmKWtMFyCAfQZqA@mail.gmail.com>
+	<523CC728.4040302@tuebingen.mpg.de>
+	<20130923083841.GT4531@intel.com>
+	<5242674A.8020100@tuebingen.mpg.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Daniel Vetter <daniel.vetter@ffwll.ch>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Ville =?UTF-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>,
+	Daniel Vetter <daniel.vetter@ffwll.ch>,
 	Peter Hurley <peter@hurleysoftware.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Clark Williams <williams@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	"dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>,
 	Dave Airlie <airlied@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	intel-gfx <intel-gfx@lists.freedesktop.org>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 To: Mario Kleiner <mario.kleiner@tuebingen.mpg.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:24843 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755587Ab3IYOAH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Sep 2013 10:00:07 -0400
 In-Reply-To: <5242674A.8020100@tuebingen.mpg.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Sep 25, 2013 at 06:32:10AM +0200, Mario Kleiner wrote:
-> On 23.09.13 10:38, Ville Syrj=E4l=E4 wrote:
-> > On Sat, Sep 21, 2013 at 12:07:36AM +0200, Mario Kleiner wrote:
-> >> On 09/17/2013 10:55 PM, Daniel Vetter wrote:
-> >>> On Tue, Sep 17, 2013 at 9:50 PM, Peter Hurley <peter@hurleysoftwa=
-re.com> wrote:
-> >>>> On 09/11/2013 03:31 PM, Peter Hurley wrote:
-> >>>>>
-> >>>>> [+cc dri-devel]
-> >>>>>
-> >>>>> On 09/11/2013 11:38 AM, Steven Rostedt wrote:
-> >>>>>>
-> >>>>>> On Wed, 11 Sep 2013 11:16:43 -0400
-> >>>>>> Peter Hurley <peter@hurleysoftware.com> wrote:
-> >>>>>>
-> >>>>>>>> The funny part is, there's a comment there that shows that t=
-his was
-> >>>>>>>> done even for "PREEMPT_RT". Unfortunately, the call to
-> >>>>>>>> "get_scanout_position()" can call functions that use the rt-=
-mutex
-> >>>>>>>> "sleeping spin locks" and it breaks there.
-> >>>>>>>>
-> >>>>>>>> I guess we need to ask the authors of the mainline patch exa=
-ctly why
-> >>>>>>>> that preempt_disable() is needed?
-> >>>>>>>
-> >>>>>>>
-> >>>>>>> The drm core associates a timestamp with each vertical blank =
-frame #.
-> >>>>>>> Drm drivers can optionally support a 'high resolution' hw tim=
-estamp.
-> >>>>>>> The vblank frame #/timestamp tuple is user-space visible.
-> >>>>>>>
-> >>>>>>> The i915 drm driver supports a hw timestamp via this drm help=
-er function
-> >>>>>>> which computes the timestamp from the crtc scan position (bas=
-ed on the
-> >>>>>>> pixel clock).
-> >>>>>>>
-> >>>>>>> For mainline, the preempt_disable/_enable() isn't actually ne=
-cessary
-> >>>>>>> because every call tree that leads here already has preemptio=
-n disabled.
-> >>>>>>>
-> >>>>>>> For -RT, the maybe i915 register spinlock (uncore.lock) shoul=
-d be raw?
-> >>>>>>>
-> >>>>>>
-> >>>>>> No, it should not. Note, any other lock that can be held when =
-it is
-> >>>>>> held would also need to be raw.
-> >>>>>
-> >>>>>
-> >>>>> By that, you mean "any other lock" that might be claimed "would=
- also need
-> >>>>> to be raw"?  Hopefully not "any other lock" already held?
-> >>>>>
-> >>>>>> And by taking a quick audit of the code, I see this:
-> >>>>>>
-> >>>>>>       spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
-> >>>>>>
-> >>>>>>       /* Reset the chip */
-> >>>>>>
-> >>>>>>       /* GEN6_GDRST is not in the gt power well, no need to ch=
-eck
-> >>>>>>        * for fifo space for the write or forcewake the chip fo=
-r
-> >>>>>>        * the read
-> >>>>>>        */
-> >>>>>>       __raw_i915_write32(dev_priv, GEN6_GDRST, GEN6_GRDOM_FULL=
-);
-> >>>>>>
-> >>>>>>       /* Spin waiting for the device to ack the reset request =
-*/
-> >>>>>>       ret =3D wait_for((__raw_i915_read32(dev_priv, GEN6_GDRST=
-) &
-> >>>>>> GEN6_GRDOM_FULL) =3D=3D 0, 500);
-> >>>>>>
-> >>>>>> That spin is unacceptable in RT with preemption and interrupts=
- disabled.
-> >>>>>
-> >>>>>
-> >>>>> Yep. That would be bad.
-> >>>>>
-> >>>>> AFAICT the registers read in i915_get_crtc_scanoutpos() aren't =
-included
-> >>>>> in the force-wake set, so raw reads of the registers would
-> >>>>> probably be acceptable (thus obviating the need for claiming th=
-e
-> >>>>> uncore.lock).
-> >>>>>
-> >>>>> Except that _ALL_ register access is disabled with the uncore.l=
-ock
-> >>>>> during a gpu reset. Not sure if that's meant to include crtc re=
-gisters
-> >>>>> or not, or what other synchronization/serialization issues are =
-being
-> >>>>> handled/hidden by forcing all register accesses to wait during =
-a gpu
-> >>>>> reset.
-> >>>>>
-> >>>>> Hopefully an i915 expert can weigh in here?
-> >>>>
-> >>>>
-> >>>>
-> >>>> Daniel,
-> >>>>
-> >>>> Can you shed some light on whether the i915+ crtc registers (spe=
-cifically
-> >>>> those in i915_get_crtc_scanoutpos() and i915_/gm45_get_vblank_co=
-unter())
-> >>>> read as part of the vblank counter/timestamp handling need to
-> >>>> be prevented during gpu reset?
-> >>>
-> >>> The depency here in the locking is a recent addition:
-> >>>
-> >>> commit a7cd1b8fea2f341b626b255d9898a5ca5fabbf0a
-> >>> Author: Chris Wilson <chris@chris-wilson.co.uk>
-> >>> Date:   Fri Jul 19 20:36:51 2013 +0100
-> >>>
-> >>>       drm/i915: Serialize almost all register access
-> >>>
-> >>> It's a (slightly) oversized hammer to work around a hardware issu=
-e -
-> >>> we could break it down to register blocks, which can be accessed
-> >>> concurrently, but that tends to be more fragile. But the chip rea=
-lly
-> >>> dies if you access (even just reads) the same block concurrently =
-:(
-> >>>
-> >>> We could try break the spinlock protected section a bit in the re=
-set
-> >>> handler - register access on a hung gpu tends to be ill-defined
-> >>> anyway.
-> >>>
-> >>>> The implied wait with preemption and interrupts disabled is caus=
-ing grief
-> >>>> in -RT, but also a 4ms wait inside an irq handler seems like a b=
-ad idea.
-> >>>
-> >>> Oops, the magic code in wait_for which is just there to make the =
-imo
-> >>> totally misguided kgdb support work papered over the aweful long =
-wait
-> >>> in atomic context ever since we've added this in
-> >>>
-> >>> commit b6e45f866465f42b53d803b0c574da0fc508a0e9
-> >>> Author: Keith Packard <keithp@keithp.com>
-> >>> Date:   Fri Jan 6 11:34:04 2012 -0800
-> >>>
-> >>>       drm/i915: Move reset forcewake processing to gen6_do_reset
-> >>>
-> >>> Reverting this change should be enough (code moved obviously a bi=
-t).
-> >>>
-> >>> Cheers, Daniel
-> >>>
-> >>>>
-> >>>> Regards,
-> >>>> Peter Hurley
-> >>>>
-> >>>>
-> >>>>
-> >>>>>> What's the real issue here?
-> >>>>>
-> >>>>>
-> >>>>> That the vblank timestamp needs to be an accurate measurement o=
-f a
-> >>>>> realtime event. Sleeping/servicing interrupts while reading
-> >>>>> the registers necessary to compute the timestamp would be bad t=
-oo.
-> >>>>>
-> >>>>> (edit: which hopefully Mario Kleiner clarified in his reply)
-> >>>>>
-> >>>>> My point earlier was three-fold:
-> >>>>> 1. Don't need the preempt_disable() for mainline: all callers a=
-re already
-> >>>>>       holding interrupt-disabling spinlocks.
-> >>>>> 2. -RT still needs to prevent scheduling there.
-> >>>>> 3. the problem is i915-specific.
-> >>>>>
-> >>>>> [update: the radeon driver should also BUG like the i915 driver=
- but
-> >>>>> probably
-> >>>>> should have mmio_idx_lock spinlock as raw]
-> >>>>
-> >>
-> >> Ok, so register access must be serialized, at least within a regis=
-ter
-> >> block, no way around it. Thanks for explaining this. That makes me=
- a bit
-> >> depressed. Is this also true for older hw generations than gen6?
-> >>
-> >> Daniel, could we move access to the display register block to a se=
-parate
-> >> lock, so the I915_READ to PIPEDSL in  i915_get_crtc_scanoutpos() c=
-an
-> >> avoid the uncore.lock? If the display registers don't need forcewa=
-ke
-> >> then i assume we could have much shorter lock hold times by avoidi=
-ng the
-> >> large up to 4 msecs waits in forcewake handling. Probably also muc=
-h less
-> >> contention in normal operation when no modesetting happens? I thin=
-k i
-> >> can get rid of the other register reads in that function. Those se=
-ttings
-> >> are already cached and accessible from the intel_crtc_config->adju=
-sted_mode.
-> >
-> > I actually have a patch to kill most of the registers reads in
-> > get_scanout_position on i915 somewhere. Let me dig that out and sen=
-d it
-> > to the list...
-> >
-> > <snip>
-> >> In any case, maybe the simple retry 3x loop in the DRM for measuri=
-ng the
-> >> timestamp is not good enough anymore to keep this reliable and acc=
-urate.
-> >> Maybe we would need some loop that retries until an accurate measu=
-rement
-> >> or a user configurable timeout is reached. Then users like  mine c=
-ould
-> >> set a very high timeout which rather totally degrades the system a=
-nd
-> >> causes severe stuttering of graphics updates than silently failing=
- with
-> >> inaccurate timestamps. The default could be something safe for nor=
-mal
-> >> desktop use.
-> >
-> > I never really understood the need for the preempt disabled retry l=
-oop in
-> > drm core. What I would do is just something like this:
-> >
-> > get_scanoutpos_and_timestamp()
-> > {
-> >   local_irq_disable();
-> >   get_scanoutpos();
-> >   get_timestamp();
-> >   local_irq_enable();
-> > }
->=20
-> The preempt_disable serves the same purpose for PREEMPT_RT kernels as=
-=20
-> your local_irq_disable in your example - get rid of any preventable=20
-> interruption, so a retry is unlikely to be ever needed. At least that=
-=20
-> was the idea.
->=20
-> I assume if a spin_lock_irqsave doesn't really disable interrupts on =
-a=20
-> RT kernel with normal spinlocks then local_irq_disable won't really=20
+On Wed, 25 Sep 2013 06:32:10 +0200
+Mario Kleiner <mario.kleiner@tuebingen.mpg.de> wrote:
+
+
+> I assume if a spin_lock_irqsave doesn't really disable interrupts on a 
+> RT kernel with normal spinlocks then local_irq_disable won't really 
 > disable interrupts either?
->=20
-> >
-> > If that has a lot of error, then it seems to me that the system is =
-just
-> > crap and we shouldn't care. Or if you're really worried about SMIs =
-and
-> > such then you could still do a retry loop.
-> >
->=20
-> I didn't expect a lot of error with preemption and interrupts disable=
-d,=20
-> essentially only such infrequent things as smi's, that's why the retr=
-y=20
-> loop only tries 3x max, once for real, once in case the 1st one got=20
-> spoiled by a smi or such, and once because three times a charm ;-) - =
-In=20
-> practice i didn't ever observe more than 3-4 usecs of delay, well bel=
-ow=20
-> the 20 usecs retry threshold. But i didn't expect=20
-> i915_crtc_get_scanoutpos() to ever take any locks or other stuff that=
-=20
-> could induce long waits.
->=20
-> But given the new situation, your proposal is great! If we push the=20
-> clock readouts into the get_scanoutpos routine, we can make this robu=
-st=20
-> without causing grief for the rt people and without the need for a ne=
-w=20
-> separate lock for display regs in intel-kms.
->=20
-> E.g., for intel-kms:
->=20
-> i915_get_crtc_scanoutpos(..., ktime_t *stime, ktime_t *etime)
-> {
->    ...
->    spin_lock_irqsave(...uncore.lock);
->    preempt_disable();
->    *stime =3D ktime_get();
->    position =3D __raw_i915_read32(dev_priv, PIPEDSL(pipe));
->    *etime =3D ktime_get();
->    preempt_enable();
->    spin_unlock_irqrestore(...uncore.lock)
->    ...
-> }
->=20
-> With your patchset to reduce the amount of register reads needed in t=
-hat=20
-> function, and given that forcewake handling isn't needed for these=20
-> registers, this should make it robust again and wouldn't need new loc=
-ks.
->=20
-> Unless ktime_get is also a bad thing to do in a preempt disabled sect=
-ion?
+> 
 
-The preempt_disable/enable is not needed. The spinlock serves the same
-purpose already.
+That is incorrect. On PREEMPT_RT, you are right about
+spin_lock_irqsave() not disabling interrupts, but local_irq_disable()
+does indeed disable interrupts.
 
-As far as ktime_get(), I've used it from spinlocked/irq disabled sectio=
-ns
-and so far haven't seen it do bad things. But would be nice to get some
-official statement to that effect.
+Open coded local_irq_disable() usually ends up being a bug as it does
+nothing to synchronize interrupts from other CPUs. But most of those
+bugs have been removed, and there are some very legit reasons for using
+local_irq_disable(). PREEMPT_RT honors those.
 
-To minimize the chance of breakage, I guess we could add a new func
-->get_scanout_pos_and_time or something like that, fill it by default
-with the code from the current drm_calc_vbltimestamp_from_scanoutpos().
+The reason PREEMPT_RT does not disable interrupts for
+spin_lock_irqsave(), is because that's usually used for when a
+interrupt uses the same spinlock. You need the irqsave() part in order
+to prevent a deadlock, if the code that has the spinlock gets preempted
+by the interrupt and that interrupt tries to grab the same lock.
 
-Or we could just shovel the delta_ns handling from
-drm_calc_vbltimestamp_from_scanoutpos() into some small helper function
-that we could call from i915_get_vblank_timestamp(), and then we can
-call i915_get_crtc_scanoutpos() directly from there as well.
+Because PREEMPT_RT runs interrupts as threads, we don't have that issue,
+because if the interrupt preempts the holder of the lock and it tries
+to grab the same lock, it will just block like any other thread trying
+to grab that lock. That is, spinlocks turn into mutexes on PREEMPT_RT.
 
---=20
-Ville Syrj=E4l=E4
-Intel OTC
+-- Steve
