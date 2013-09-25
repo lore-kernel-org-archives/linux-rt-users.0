@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: BUG: sleeping function called from invalid context on
- 3.10.10-rt7
-Date: Wed, 25 Sep 2013 10:07:30 -0400
-Message-ID: <20130925100730.0b63628e@gandalf.local.home>
+Subject: Re: [Intel-gfx] BUG: sleeping function called from invalid context
+ on 3.10.10-rt7
+Date: Wed, 25 Sep 2013 10:13:01 -0400
+Message-ID: <20130925101301.6cbe5d0f@gandalf.local.home>
 References: <20130911102809.GA31663@uudg.org>
 	<20130911092623.42efd930@gandalf.local.home>
 	<5230895B.5070400@hurleysoftware.com>
@@ -11,52 +11,70 @@ References: <20130911102809.GA31663@uudg.org>
 	<5238B288.3000704@hurleysoftware.com>
 	<CAKMK7uG9s8W6yebkmuJe0XHGsoru4_9FzGqfmKWtMFyCAfQZqA@mail.gmail.com>
 	<523CC728.4040302@tuebingen.mpg.de>
+	<20130923083841.GT4531@intel.com>
+	<5242674A.8020100@tuebingen.mpg.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Daniel Vetter <daniel.vetter@ffwll.ch>,
+Cc: Ville =?UTF-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>,
+	Daniel Vetter <daniel.vetter@ffwll.ch>,
 	Peter Hurley <peter@hurleysoftware.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <williams@redhat.com>,
-	Dave Airlie <airlied@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	"dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>,
-	intel-gfx <intel-gfx@lists.freedesktop.org>
+	Dave Airlie <airlied@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	intel-gfx <intel-gfx@lists.freedesktop.org>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 To: Mario Kleiner <mario.kleiner@tuebingen.mpg.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:26284 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:27807 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754752Ab3IYOHc (ORCPT
+	by vger.kernel.org with ESMTP id S1755432Ab3IYONE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Sep 2013 10:07:32 -0400
-In-Reply-To: <523CC728.4040302@tuebingen.mpg.de>
+	Wed, 25 Sep 2013 10:13:04 -0400
+In-Reply-To: <5242674A.8020100@tuebingen.mpg.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-Sorry for the late reply, I was at Linux Plumbers, and had a bunch of
-stuff to catch up on when I returned.
-
-On Sat, 21 Sep 2013 00:07:36 +0200
+On Wed, 25 Sep 2013 06:32:10 +0200
 Mario Kleiner <mario.kleiner@tuebingen.mpg.de> wrote:
 
  
-> Steven, would it then be acceptable to convert that "faster" lock into a 
-> raw_spinlock_t or is this unacceptable? If so, the preempt_disable() 
-> could stay, right?
+> But given the new situation, your proposal is great! If we push the 
+> clock readouts into the get_scanoutpos routine, we can make this robust 
+> without causing grief for the rt people and without the need for a new 
+> separate lock for display regs in intel-kms.
+> 
+> E.g., for intel-kms:
+> 
+> i915_get_crtc_scanoutpos(..., ktime_t *stime, ktime_t *etime)
+> {
+>    ...
+>    spin_lock_irqsave(...uncore.lock);
+>    preempt_disable();
+>    *stime = ktime_get();
+>    position = __raw_i915_read32(dev_priv, PIPEDSL(pipe));
+>    *etime = ktime_get();
+>    preempt_enable();
+>    spin_unlock_irqrestore(...uncore.lock)
+>    ...
+> }
+> 
+> With your patchset to reduce the amount of register reads needed in that 
+> function, and given that forcewake handling isn't needed for these 
+> registers, this should make it robust again and wouldn't need new locks.
+> 
+> Unless ktime_get is also a bad thing to do in a preempt disabled section?
 
-If a spinlock is tight (not held for more than 2us on todays
-processors), and has little contention, than I would be fine with
-converting it to raw. And if that's the only lock held you could do the
-preempt_disable() call.
+ktime_get() works fine in preempt_disable sections, although it may add
+some latencies, but you shouldn't need to worry about it.
 
-In fact, if you want, you can leave the preempt_disable() out of
-mainline, and send a patch to us that uses "preempt_disable_rt()" and
-add a comment to it. In the -rt patch, preempt_disable_rt() is a nop
-when PREEMPT_RT is not set, and is preempt_disable() when it is.
-
+I like this solution the best too, but if it does go in, I would ask to
+send us the patch for adding the preempt_disable() and we can add the
+preempt_disable_rt() to it. Why make mainline have a little more
+overhead?
 
 -- Steve
