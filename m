@@ -1,46 +1,49 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Fri, 4 Oct 2013 14:39:28 +0200
-Message-ID: <20131004123928.GD19953@linutronix.de>
-References: <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
- <CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
- <CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
- <CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
- <alpine.LFD.2.02.1305131223470.2863@ionos>
- <CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
- <CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
- <CAKohpon0dC6O_QBXnbyxUOO0DcrRxTzFkZSJNh6VrNL5kzT66Q@mail.gmail.com>
- <CAKohpomGSoU5VOcrbonD1=NE-6xDVr+pveAmuXdrzjmLotmEug@mail.gmail.com>
- <CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
+Subject: Re: Oops with spin_lock() in an IRQF_NO_THREAD interrupt
+Date: Fri, 4 Oct 2013 14:42:58 +0200
+Message-ID: <20131004124258.GE19953@linutronix.de>
+References: <em8d903d65-1a3e-4973-9012-be50c5713bd5@nb-mak>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Viresh Kumar <viresh.kumar@linaro.org>,
-	paul.mckenney@linaro.org, tj@kernel.org, mingo@redhat.com,
-	peterz@infradead.org, Arvind.Chauhan@arm.com,
-	linaro-dev@lists.linaro.org, patches@linaro.org,
-	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	John Stultz <john.stultz@linaro.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Matthias Klein <matthias.klein@optimeas.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:53638 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752754Ab3JDMm7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Oct 2013 08:42:59 -0400
 Content-Disposition: inline
-In-Reply-To: <CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <em8d903d65-1a3e-4973-9012-be50c5713bd5@nb-mak>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Viresh Kumar | 2013-08-07 15:25:55 [+0530]:
+* Matthias Klein | 2013-10-02 14:54:00 [+0000]:
 
->On 24 July 2013 14:47, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> On 18 June 2013 10:21, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+>Hello,
+Hi,
+
+>i am writing a kernel module on a rt kernel where I have an
+>IRQF_NO_THREAD interrupt.
+I hope you know what you are doing with this.
+
+>For sharing a "write index" between that interrupt and the process
+>context (ioctl() etc.) I use a spin_lock for locking.
 >
->> Hi Thomas,
->>
->> Do you still see some light of hope in this patch :) ?
+>In the IRQ I use spin_lock() & spin_unlock(), and in the process
+>context I use spin_lock_irq() & spin_unlock_irq().
 >
->Ping!!
+>Basically the driver and the test application are working, but after
+>some time I get an oops message.
+>
+>Do I use the right functions for locking ? Do you have a tip why I
+>get that oops message ?
 
-tglx, could you please take a look at this patch / thread?
+You should use a the raw_spinlock here if you _really_ need
+IRQF_NO_THREAD.
+
+>Best regards,
+>
+>Matthias
 
 Sebastian
