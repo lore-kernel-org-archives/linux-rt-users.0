@@ -1,38 +1,46 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.10.10-rt7
-Date: Fri, 4 Oct 2013 14:27:03 +0200
-Message-ID: <20131004122703.GC19953@linutronix.de>
-References: <20130829184228.GD15360@linutronix.de>
- <537051377882968@web17h.yandex.ru>
+Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
+Date: Fri, 4 Oct 2013 14:39:28 +0200
+Message-ID: <20131004123928.GD19953@linutronix.de>
+References: <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
+ <CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
+ <CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
+ <CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
+ <alpine.LFD.2.02.1305131223470.2863@ionos>
+ <CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
+ <CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
+ <CAKohpon0dC6O_QBXnbyxUOO0DcrRxTzFkZSJNh6VrNL5kzT66Q@mail.gmail.com>
+ <CAKohpomGSoU5VOcrbonD1=NE-6xDVr+pveAmuXdrzjmLotmEug@mail.gmail.com>
+ <CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Kirill Tkhai <tkhai@yandex.ru>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:53548 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754063Ab3JDM1E (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 08:27:04 -0400
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Viresh Kumar <viresh.kumar@linaro.org>,
+	paul.mckenney@linaro.org, tj@kernel.org, mingo@redhat.com,
+	peterz@infradead.org, Arvind.Chauhan@arm.com,
+	linaro-dev@lists.linaro.org, patches@linaro.org,
+	pdsw-power-team@arm.com, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	John Stultz <john.stultz@linaro.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <537051377882968@web17h.yandex.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Kirill Tkhai | 2013-08-30 21:16:08 [+0400]:
+* Viresh Kumar | 2013-08-07 15:25:55 [+0530]:
 
->sparc does not have CONFIG_EARLY_PRINTK option.
+>On 24 July 2013 14:47, Viresh Kumar <viresh.kumar@linaro.org> wrote:
+>> On 18 June 2013 10:21, Viresh Kumar <viresh.kumar@linaro.org> wrote:
 >
->So early-printk-consolidate.patch breaks compilation:
+>> Hi Thomas,
+>>
+>> Do you still see some light of hope in this patch :) ?
 >
->arch/sparc/built-in.o: In function `setup_arch':
->(.init.text+0x15e4): undefined reference to `early_console'
->arch/sparc/built-in.o: In function `setup_arch':
->(.init.text+0x15ec): undefined reference to `early_console'
+>Ping!!
 
-that is true and I applied that patch, thanks.
-However with this alone you do not have a working RT on Sparc because
-you can't select "Fully Preemptible Kernel (RT)" only the "basic" system
-is available.
+tglx, could you please take a look at this patch / thread?
 
 Sebastian
