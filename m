@@ -1,33 +1,68 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: [PATCH] slab+rt: Don't free locks twice in cpuup_canceled
-Date: Fri, 04 Oct 2013 11:10:39 -0500
-Message-ID: <524EE87F.9020906@mvista.com>
-References: <1379700149-16400-1-git-send-email-minyard@acm.org> <52431132.9070209@caviumnetworks.com> <20131004144936.GI19953@linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [rt-tests][PATCH] align thread wakeup times
+Date: Fri, 4 Oct 2013 18:21:39 +0200
+Message-ID: <20131004162139.GD9752@opentech.at>
+References: <20130909072948.GA1967@opentech.at> <20131004132207.GF19953@linutronix.de> <20131004133325.GB26223@opentech.at> <524ED838.2060500@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Corey Minyard <cminyard@caviumnetworks.com>,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: williams@redhat.com, linux-rt-users@vger.kernel.org,
+	C.Emde@osadl.org, tglx@linutronix.de, andi@opentech.at
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f52.google.com ([209.85.219.52]:54562 "EHLO
-	mail-oa0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754909Ab3JDQKm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 12:10:42 -0400
-Received: by mail-oa0-f52.google.com with SMTP id n2so4227388oag.11
-        for <linux-rt-users@vger.kernel.org>; Fri, 04 Oct 2013 09:10:42 -0700 (PDT)
-In-Reply-To: <20131004144936.GI19953@linutronix.de>
+Received: from hofr.at ([212.69.189.236]:41138 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754636Ab3JDQVk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 4 Oct 2013 12:21:40 -0400
+Content-Disposition: inline
+In-Reply-To: <524ED838.2060500@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/04/2013 09:49 AM, Sebastian Andrzej Siewior wrote:
-> * Corey Minyard | 2013-09-25 11:37:06 [-0500]:
->
->> I forgot to mention that this was on 3.10.10-rt7.
-> This looks valid. But SLAB still isn't working on -RT, right?
->
-AFAIK SLAB is still not working on RT, but this breaks things if you
-have RT disabled.
+On Fri, 04 Oct 2013, Sebastian Andrzej Siewior wrote:
 
--corey
+> On 10/04/2013 03:33 PM, Nicholas Mc Guire wrote:
+> >> I would rather fix current behaviour instead introducing yet another
+> >> option. By using -d0 I assume that all threads wakeup at the same time.
+> > 
+> > Nop they do not -d0 just says that they all use
+> > the same period rather than some offset with multiple threads (e.g. -S)
+> > 
+> >> According to your patch this does not happen due to the thread creating
+> >> / starting overhead.
+> >> Is there is a reason to keep this "faulty" behavior? If not I would vote
+> >> to make this what you suggest the default.
+> >>
+> > 
+> > its not faulty behavior - its a different case
+> > in fact we need both.
+> > 
+> > same period + "random" start time
+> > same period + synced start time
+> > 
+> > it makes a difference on some boxes that is significant.
+> 
+> So you say with -d0, where d is documented as "distance of thread
+> intervals in us", I should not expect that all threads share the exact
+> same wakeup time (because their distance is 0)?
+>
+no why should you - you might want
+ 
+-i 100 -d 50 -A 20
+
+T1 0     100     200     300
+T2  20         170
+T3   40              240
+T4    60                   310
+
+Which is quite a lot different than just stating
+
+that i_1=100 i_2=150, etc... but initial distance "undefined" or random
+
+so in the sense of schedulability tests these are really two seperate
+parameters and thus should be configurable independently.
+
+That the current documentation might give the impression that they are
+in sync is a bug in the documentation not in the -d implementation.
+
+hofrat
+ 
