@@ -1,54 +1,54 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
-Subject: Re: [ANNOUNCE] 3.10.10-rt7
-Date: Fri, 04 Oct 2013 17:11:42 +0400
-Message-ID: <476411380892302@web20m.yandex.ru>
-References: <20130829184228.GD15360@linutronix.de> <537051377882968@web17h.yandex.ru> <20131004122703.GC19953@linutronix.de> <448111380891453@web20m.yandex.ru> <524EBD29.5010100@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [rt-tests][PATCH] align thread wakeup times
+Date: Fri, 4 Oct 2013 15:22:07 +0200
+Message-ID: <20131004132207.GF19953@linutronix.de>
+References: <20130909072948.GA1967@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: williams@redhat.com, linux-rt-users@vger.kernel.org,
+	C.Emde@osadl.org, tglx@linutronix.de, andi@opentech.at
+To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from forward8.mail.yandex.net ([77.88.61.38]:45670 "EHLO
-	forward8.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752754Ab3JDNTA (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:53835 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754540Ab3JDNWL (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 09:19:00 -0400
-In-Reply-To: <524EBD29.5010100@linutronix.de>
+	Fri, 4 Oct 2013 09:22:11 -0400
+Content-Disposition: inline
+In-Reply-To: <20130909072948.GA1967@opentech.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-04.10.2013, 17:05, "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>:
-> On 10/04/2013 02:57 PM, Kirill Tkhai wrote:
->
->> =9AYes, I now. I added IRQ_FORCED_THREADING to Kconfig. My hardware
->> =9Arequires additional changes at arch/sparc and it's in a process o=
-f porting
->> =9Aon 3.10 so I can't say if everything works on sparc or not yet.
->
-> So if you marked NMIs and so as non-threaded you can send this patch =
-to
-> Dave, too :)
+* Nicholas Mc Guire | 2013-09-09 09:29:48 [+0200]:
 
-It's not standard interrupt controller, so it's useless for mainline. I=
-t maybe,
-later we'll go to upstream, not ready for now.
+>Hi !
+Hi Nicholas,
 
->> =9AThe other required fix to make sparc64 compilable is deletion of =
-rwsem leftovers.
->> =9AI sent it to mainline sparc:
->>
->> =9Ahttps://git.kernel.org/cgit/linux/kernel/git/davem/sparc.git/comm=
-it/arch/sparc?id=3D61d9b9355b0d427bd1e732bd54628ff9103e496f
->>
->> =9AIt seems it's resonable to add it to the patch too.
+>  This patch provides and additional -A/--align flag to cyclictest to align
+> thread wakeup times of all threads as closly defined as possible.
 >
-> Since it is queued for mainline let me make your life easier and pick
-> it up for -RT, too.
+>  When running multiple threads in cyclictest (-S or -t # option) the threads
+> are launched in an unsynchronized manner. Basically the creation order and
+> time for thread creation determines the start time. For provoking a maximum
+> congestion situation (e.g. cache evictions) and to improve reproducibility
+> or run conditions the start time should be defined distances appart. The 
+> well defined distance is implemented as a offset parameter to -A/--align
+> and will offset each threads start time by the parameter * the sequentially
+> assigned thread number (par->tnum), together with the -d0 (distance in the
+> intervals of the individual threads) this alignment option allows to get 
+> the thread wakeup times as closely synchronized as possible.
+>
+>  The method to sync is simply that the thread with par->tnum == 0 is chosen
+> to set a globally shared timestamp, and all other threads use this timestamp
+> as their starting time rather than each calling clock_gettime() at startup.
+> To ensure synchronization of the thread startup the setting of the global
+> time is guarded by pthread_barriers.
 
-Ok, thanks :)
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+I would rather fix current behaviour instead introducing yet another
+option. By using -d0 I assume that all threads wakeup at the same time.
+According to your patch this does not happen due to the thread creating
+/ starting overhead.
+Is there is a reason to keep this "faulty" behavior? If not I would vote
+to make this what you suggest the default.
+
+Sebastian
