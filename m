@@ -1,38 +1,48 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 1/2] rt: Don't call schedule_work_on in preemption disabled
- context
-Date: Fri, 04 Oct 2013 19:56:35 +0200
-Message-ID: <524F0153.5040808@linutronix.de>
-References: <1379365759-5743-1-git-send-email-yang.shi@windriver.com> <1379365759-5743-2-git-send-email-yang.shi@windriver.com> <20131004154616.GJ19953@linutronix.de> <524EEE99.1060907@windriver.com> <20131004171010.GK19953@linutronix.de> <524EFF90.3090402@windriver.com>
+Subject: Re: [ANNOUNCE] 3.10.10-rt7
+Date: Fri, 4 Oct 2013 20:34:40 +0200
+Message-ID: <20131004183440.GM19953@linutronix.de>
+References: <20130829184228.GD15360@linutronix.de>
+ <5125727.2P4PZHk0nB@bs8>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, paul.gortmaker@windriver.com
-To: Yang Shi <yang.shi@windriver.com>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Bernhard Schiffner <bernhard@schiffner-limbach.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55512 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:55701 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751043Ab3JDR4i (ORCPT
+	with ESMTP id S1753953Ab3JDSel (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 13:56:38 -0400
-In-Reply-To: <524EFF90.3090402@windriver.com>
+	Fri, 4 Oct 2013 14:34:41 -0400
+Content-Disposition: inline
+In-Reply-To: <5125727.2P4PZHk0nB@bs8>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/04/2013 07:49 PM, Yang Shi wrote:
-> And, I checked the git commit history about the drain_local_stock call,
-> it sounds it is just an optimization for preventing from deferring local
-> stock drain to work queue.
-> 
-> So, It sounds safe to remove the get_cpu and the shortcut to make
-> schedule_work_on called safely as you suggested.
-> 
-> If this sounds fine to you, I'm going to come up with V2.
+* Bernhard Schiffner | 2013-08-30 12:32:48 [+0200]:
 
-This sounds fine to me, thanks.
+>Just for the records:
+>
+>older, but recent rt-kernels (3.10.*, rt [1,3]) stopped booting here 
+>indicating some problems with initialisation of the nouveau drm driver.
+>(might also be a PCI-E problem)
+>
+>This was not the case with 3.8.*-rt*.
+>The problem gone with 3.10.10-rt7 tested today.
 
-> 
-> Thanks,
-> Yang
+In that case it was probably fixed by the stable series.
+
+>A lot of thanks!
+>
+>
+>Bernhard 
+>
+>PS:
+>Would it be much work to activate netconsole with rt-kernels?
+>(I was ready to send some "real screenshots" of the probelm next days,  but 
+>the problem gone :-) )
+
+You could enable and check what explodes. I would assume the problem is
+somewhere around write_msg() :)
 
 Sebastian
