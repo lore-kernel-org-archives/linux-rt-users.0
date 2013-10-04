@@ -1,48 +1,67 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [rt-tests][PATCH] align thread wakeup times
-Date: Fri, 04 Oct 2013 18:35:29 +0200
-Message-ID: <524EEE51.7000107@linutronix.de>
-References: <20130909072948.GA1967@opentech.at> <20131004132207.GF19953@linutronix.de> <20131004133325.GB26223@opentech.at> <524ED838.2060500@linutronix.de> <20131004162139.GD9752@opentech.at>
+From: Yang Shi <yang.shi@windriver.com>
+Subject: Re: [PATCH 1/2] rt: Don't call schedule_work_on in preemption disabled
+ context
+Date: Fri, 4 Oct 2013 09:36:41 -0700
+Message-ID: <524EEE99.1060907@windriver.com>
+References: <1379365759-5743-1-git-send-email-yang.shi@windriver.com> <1379365759-5743-2-git-send-email-yang.shi@windriver.com> <20131004154616.GJ19953@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: williams@redhat.com, linux-rt-users@vger.kernel.org,
-	C.Emde@osadl.org, tglx@linutronix.de, andi@opentech.at
-To: Nicholas Mc Guire <der.herr@hofr.at>
+Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55062 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754882Ab3JDQff (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:50525 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754634Ab3JDQgx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 12:35:35 -0400
-In-Reply-To: <20131004162139.GD9752@opentech.at>
+	Fri, 4 Oct 2013 12:36:53 -0400
+In-Reply-To: <20131004154616.GJ19953@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/04/2013 06:21 PM, Nicholas Mc Guire wrote:
-> no why should you - you might want
->  
-> -i 100 -d 50 -A 20
-> 
-> T1 0     100     200     300
-> T2  20         170
-> T3   40              240
-> T4    60                   310
-> 
-> Which is quite a lot different than just stating
-> 
-> that i_1=100 i_2=150, etc... but initial distance "undefined" or random
-> 
-> so in the sense of schedulability tests these are really two seperate
-> parameters and thus should be configurable independently.
-> 
-> That the current documentation might give the impression that they are
-> in sync is a bug in the documentation not in the -d implementation.
+On 10/4/2013 8:46 AM, Sebastian Andrzej Siewior wrote:
+> * Yang Shi | 2013-09-16 14:09:18 [-0700]:
+>
+>> ---
+>> mm/memcontrol.c |    5 ++++-
+>> 1 files changed, 4 insertions(+), 1 deletions(-)
+>>
+>> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+>> index 82a187a..9f7cc0f 100644
+>> --- a/mm/memcontrol.c
+>> +++ b/mm/memcontrol.c
+>> @@ -2453,8 +2453,11 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+>> 		if (!test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) {
+>> 			if (cpu == curcpu)
+>> 				drain_local_stock(&stock->work);
+>> -			else
+>> +			else {
+>> +				preempt_enable();
+>> 				schedule_work_on(cpu, &stock->work);
+>> +				preempt_disable();
+>> +			}
+>> 		}
+> What ensures that you don't switch CPUs between preempt_enable() &
+> preempt_disable() and is curcpu != smp_processor_id() ?
 
-Now, I get it. Okay, so this makes sense.
+drain_all_stock is called by drain_all_stock_async or 
+drain_all_stock_sync, and the call in both is protected by mutex:
 
-> hofrat
->  
-> 
+if (!mutex_trylock(&percpu_charge_mutex))
+                 return;
+         drain_all_stock(root_memcg, false);
+         mutex_unlock(&percpu_charge_mutex);
 
-Sebastian
+
+So, I suppose this should be able to protect from migration?
+
+Thanks,
+Yang
+
+>
+> What about removing the get_cpu() & put_cpu() calls (and the shortcut)?
+>
+>> 	}
+>> 	put_cpu();
+> Sebastian
+
