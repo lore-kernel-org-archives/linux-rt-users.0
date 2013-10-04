@@ -1,37 +1,68 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 3.4.62-rt77] fix irq thread scheduling
-Date: Fri, 4 Oct 2013 16:05:49 +0200
-Message-ID: <20131004140549.GH19953@linutronix.de>
-References: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [patch 1/3] ipc/sem: fix -rt livelock
+Date: Fri, 04 Oct 2013 16:08:47 +0200
+Message-ID: <1380895727.5432.16.camel@marge.simpson.net>
+References: <1379051751.5455.112.camel@marge.simpson.net>
+	 <1379052760.5455.127.camel@marge.simpson.net>
+	 <5234D94D.8010608@colorfullife.com>
+	 <1379220340.5545.93.camel@marge.simpson.net>
+	 <20131004104450.GB19953@linutronix.de>
+	 <1380885410.5432.5.camel@marge.simpson.net>
+	 <524EA673.5050400@linutronix.de>
+	 <1380894919.5432.12.camel@marge.simpson.net>
+	 <524ECA5F.1090803@colorfullife.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: tglx@linutronix.de, linux-rt-users@vger.kernel.org,
-	rostedt@goodmis.org
-To: Thomas Pfaff <tpfaff@pcs.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Manfred Spraul <manfred@colorfullife.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54131 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753531Ab3JDOFv (ORCPT
+Received: from moutng.kundenserver.de ([212.227.17.9]:54811 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753755Ab3JDOI7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 10:05:51 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de>
+	Fri, 4 Oct 2013 10:08:59 -0400
+In-Reply-To: <524ECA5F.1090803@colorfullife.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Thomas Pfaff | 2013-09-19 11:02:57 [+0200]:
+On Fri, 2013-10-04 at 16:02 +0200, Manfred Spraul wrote: 
+> On 10/04/2013 03:55 PM, Mike Galbraith wrote:
+> > On Fri, 2013-10-04 at 13:28 +0200, Sebastian Andrzej Siewior wrote:
+> >> On 10/04/2013 01:16 PM, Mike Galbraith wrote:
+> >>> Manfred's race fix also kills loop, and thereby the -rt livelock, so the
+> >>> only question is does -rt want to use his completion wakeup scheme, and
+> >>> does it want to do something about spin_unlock_wait() unconditionally
+> >>> grabbing/releasing every lock in the array.
+> >> So his patches went into v3.11 or so right? So all -RT released post
+> >> this point will have it fixed right?
+> > Most fixes have gone into master.  There's still at least one in the
+> > pipe, ipc/sem.c: synchronize semop and semctl with IPC_RMID, and I
+> > _think_ there's still one open issue.
+> >
+> > <quoting Manfred>
+> > And now new:
+> > 1) ipc/namespace.c:
+> >       free_ipcs() still assumes the "old style" free calls:
+> >       rcu_lock and ipc_lock dropped within the callback.
+> >
+> >       freeary() was converted - but free_ipcs was not updated.
+> >
+> >       Thus:
+> >       Closing a namespace with sem arrays and threads that are waiting
+> > on
+> > the array with semtimedop() and bad timing can deadlock the semtimedop
+> > thread.
+> >       (i.e.: spin_lock() waiting forever).
+> > </quoting Manfred>
+> That one was a false alarm, i.e. everything is fixed in -mm.
 
->If an irq is requested during device open, for example by opening a serial 
->device, then request_irq is called in the context of the opening process.
->If the process lacks off CAP_SYS_NICE the irq thread is running with SCHED_OTHER 
->priority.
->
->The problem exists in other real time patches as well, 3.10 seems to be ok.
+Cool, that works out rather nicely.  I looked at fixing it, and couldn't
+figure out what the heck was wrong with it :)
 
-Hmmm. I see the same check in v3.10 compared to v3.6 which so I *think*
-v3.10 has the same problem.
-However this does not look to be -RT specific, you should see the same
-problem in mainline, too. Could you please verify whether this does
-affect v3.10? And if it does, we should try to fix up it upstream, too
+-Mike
 
-Sebastian
