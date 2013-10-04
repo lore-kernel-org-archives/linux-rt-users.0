@@ -1,49 +1,48 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Oops with spin_lock() in an IRQF_NO_THREAD interrupt
-Date: Fri, 4 Oct 2013 14:42:58 +0200
-Message-ID: <20131004124258.GE19953@linutronix.de>
-References: <em8d903d65-1a3e-4973-9012-be50c5713bd5@nb-mak>
+From: Kirill Tkhai <tkhai@yandex.ru>
+Subject: Re: [ANNOUNCE] 3.10.10-rt7
+Date: Fri, 04 Oct 2013 16:57:33 +0400
+Message-ID: <448111380891453@web20m.yandex.ru>
+References: <20130829184228.GD15360@linutronix.de>
+ <537051377882968@web17h.yandex.ru> <20131004122703.GC19953@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Matthias Klein <matthias.klein@optimeas.de>
+Content-Type: text/plain
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:53638 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752754Ab3JDMm7 (ORCPT
+Received: from forward9.mail.yandex.net ([77.88.61.48]:33808 "EHLO
+	forward9.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753581Ab3JDM5g (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 08:42:59 -0400
-Content-Disposition: inline
-In-Reply-To: <em8d903d65-1a3e-4973-9012-be50c5713bd5@nb-mak>
+	Fri, 4 Oct 2013 08:57:36 -0400
+In-Reply-To: <20131004122703.GC19953@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Matthias Klein | 2013-10-02 14:54:00 [+0000]:
-
->Hello,
-Hi,
-
->i am writing a kernel module on a rt kernel where I have an
->IRQF_NO_THREAD interrupt.
-I hope you know what you are doing with this.
-
->For sharing a "write index" between that interrupt and the process
->context (ioctl() etc.) I use a spin_lock for locking.
+04.10.2013, 16:27, "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>:
+> * Kirill Tkhai | 2013-08-30 21:16:08 [+0400]:
 >
->In the IRQ I use spin_lock() & spin_unlock(), and in the process
->context I use spin_lock_irq() & spin_unlock_irq().
+>> sparc does not have CONFIG_EARLY_PRINTK option.
+>>
+>> So early-printk-consolidate.patch breaks compilation:
+>>
+>> arch/sparc/built-in.o: In function `setup_arch':
+>> (.init.text+0x15e4): undefined reference to `early_console'
+>> arch/sparc/built-in.o: In function `setup_arch':
+>> (.init.text+0x15ec): undefined reference to `early_console'
 >
->Basically the driver and the test application are working, but after
->some time I get an oops message.
->
->Do I use the right functions for locking ? Do you have a tip why I
->get that oops message ?
+> that is true and I applied that patch, thanks.
+> However with this alone you do not have a working RT on Sparc because
+> you can't select "Fully Preemptible Kernel (RT)" only the "basic" system
+> is available.
 
-You should use a the raw_spinlock here if you _really_ need
-IRQF_NO_THREAD.
+Yes, I now. I added IRQ_FORCED_THREADING to Kconfig. My hardware
+requires additional changes at arch/sparc and it's in a process of porting
+on 3.10 so I can't say if everything works on sparc or not yet.
 
->Best regards,
->
->Matthias
+The other required fix to make sparc64 compilable is deletion of rwsem leftovers.
+I sent it to mainline sparc:
 
-Sebastian
+https://git.kernel.org/cgit/linux/kernel/git/davem/sparc.git/commit/arch/sparc?id=61d9b9355b0d427bd1e732bd54628ff9103e496f
+
+It seems it's resonable to add it to the patch too.
