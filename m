@@ -1,48 +1,96 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.10.10-rt7
-Date: Fri, 4 Oct 2013 20:34:40 +0200
-Message-ID: <20131004183440.GM19953@linutronix.de>
-References: <20130829184228.GD15360@linutronix.de>
- <5125727.2P4PZHk0nB@bs8>
+From: Yang Shi <yang.shi@windriver.com>
+Subject: [V2 PATCH] rt: Don't call schedule_work_on in preemption disabled context
+Date: Fri, 4 Oct 2013 14:58:57 -0700
+Message-ID: <1380923937-19506-1-git-send-email-yang.shi@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Bernhard Schiffner <bernhard@schiffner-limbach.de>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>,
+	<yang.shi@windriver.com>
+To: <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55701 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753953Ab3JDSel (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:38432 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751348Ab3JDWEM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 4 Oct 2013 14:34:41 -0400
-Content-Disposition: inline
-In-Reply-To: <5125727.2P4PZHk0nB@bs8>
+	Fri, 4 Oct 2013 18:04:12 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Bernhard Schiffner | 2013-08-30 12:32:48 [+0200]:
+The following trace is triggered when running ltp oom test cases:
 
->Just for the records:
->
->older, but recent rt-kernels (3.10.*, rt [1,3]) stopped booting here 
->indicating some problems with initialisation of the nouveau drm driver.
->(might also be a PCI-E problem)
->
->This was not the case with 3.8.*-rt*.
->The problem gone with 3.10.10-rt7 tested today.
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+in_atomic(): 1, irqs_disabled(): 0, pid: 17188, name: oom03
+Preemption disabled at:[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
 
-In that case it was probably fixed by the stable series.
+CPU: 2 PID: 17188 Comm: oom03 Not tainted 3.10.10-rt3 #2
+Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
+ffff88007684d730 ffff880070df9b58 ffffffff8169918d ffff880070df9b70
+ffffffff8106db31 ffff88007688b4a0 ffff880070df9b88 ffffffff8169d9c0
+ffff88007688b4a0 ffff880070df9bc8 ffffffff81059da1 0000000170df9bb0
+Call Trace:
+[<ffffffff8169918d>] dump_stack+0x19/0x1b
+[<ffffffff8106db31>] __might_sleep+0xf1/0x170
+[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
+[<ffffffff81059da1>] queue_work_on+0x61/0x100
+[<ffffffff8112b361>] drain_all_stock+0xe1/0x1c0
+[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
+[<ffffffff8112beda>] __mem_cgroup_try_charge+0x41a/0xc40
+[<ffffffff810f1c91>] ? release_pages+0x1b1/0x1f0
+[<ffffffff8106f200>] ? sched_exec+0x40/0xb0
+[<ffffffff8112cc87>] mem_cgroup_charge_common+0x37/0x70
+[<ffffffff8112e2c6>] mem_cgroup_newpage_charge+0x26/0x30
+[<ffffffff8110af68>] handle_pte_fault+0x618/0x840
+[<ffffffff8103ecf6>] ? unpin_current_cpu+0x16/0x70
+[<ffffffff81070f94>] ? migrate_enable+0xd4/0x200
+[<ffffffff8110cde5>] handle_mm_fault+0x145/0x1e0
+[<ffffffff810301e1>] __do_page_fault+0x1a1/0x4c0
+[<ffffffff8169c9eb>] ? preempt_schedule_irq+0x4b/0x70
+[<ffffffff8169e3b7>] ? retint_kernel+0x37/0x40
+[<ffffffff8103053e>] do_page_fault+0xe/0x10
+[<ffffffff8169e4c2>] page_fault+0x22/0x30
 
->A lot of thanks!
->
->
->Bernhard 
->
->PS:
->Would it be much work to activate netconsole with rt-kernels?
->(I was ready to send some "real screenshots" of the probelm next days,  but 
->the problem gone :-) )
+So, to prevent schedule_work_on from being called in preempt disabled context,
+remove the pair of get_cpu/put_cpu and drain_local_stock shortcut.
 
-You could enable and check what explodes. I would assume the problem is
-somewhere around write_msg() :)
+Signed-off-by: Yang Shi <yang.shi@windriver.com>
+---
+ mm/memcontrol.c |   12 +++---------
+ 1 files changed, 3 insertions(+), 9 deletions(-)
 
-Sebastian
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 82a187a..b025731 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2436,11 +2436,10 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+  */
+ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+ {
+-	int cpu, curcpu;
++	int cpu;
+ 
+ 	/* Notify other cpus that system-wide "drain" is running */
+ 	get_online_cpus();
+-	curcpu = get_cpu();
+ 	for_each_online_cpu(cpu) {
+ 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
+ 		struct mem_cgroup *memcg;
+@@ -2450,14 +2449,9 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+ 			continue;
+ 		if (!mem_cgroup_same_or_subtree(root_memcg, memcg))
+ 			continue;
+-		if (!test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) {
+-			if (cpu == curcpu)
+-				drain_local_stock(&stock->work);
+-			else
+-				schedule_work_on(cpu, &stock->work);
+-		}
++		if (!test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags))
++			schedule_work_on(cpu, &stock->work);
+ 	}
+-	put_cpu();
+ 
+ 	if (!sync)
+ 		goto out;
+-- 
+1.7.5.4
+
