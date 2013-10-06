@@ -1,256 +1,80 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.10.14-rt9
-Date: Sat, 5 Oct 2013 17:43:48 +0200
-Message-ID: <20131005154348.GA13400@linutronix.de>
+From: "Grumbach, Emmanuel" <emmanuel.grumbach@intel.com>
+Subject: RE: [Ilw] Re: Kernel panic in 3.10.10-rt7 (iwlwifi)
+Date: Sun, 6 Oct 2013 06:00:54 +0000
+Message-ID: <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
+References: <2CD18B42-2489-4DF7-98D6-4D002329DC63@m3y3r.de>
+ <20131004101216.GA17043@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"Berg, Johannes" <johannes.berg@intel.com>,
+	"linux-wireless@vger.kernel.org" <linux-wireless@vger.kernel.org>,
+	Intel Linux Wireless <ilw@linux.intel.com>,
+	"tglx@linutronix.de" <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Meyer <thomas@m3y3r.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga01.intel.com ([192.55.52.88]:10027 "EHLO mga01.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751343Ab3JFGA7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 6 Oct 2013 02:00:59 -0400
+In-Reply-To: <20131004101216.GA17043@linutronix.de>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
-
-I'm pleased to announce the v3.10.14-rt9 patch set.
-
-Changes since v3.10.14-rt8
-
-- the threshold module option of hwlat is no longer ignored. Path sent
-  by Mike Galbraith
-- two patches from Kirill Tkhai to get basic RT compiled on Sparc.
-- the ppc patch for the 5200 has been altered slightly. Patch sent by
-  Wolfram Sang
-- A patch for SLAB to get it working on !RT (Thanks Corey Minyard).
-- a fix for "sleeping from invalid context" in clock_was_set_delayed().
-  Patch by Yang Shi.
-- another fix for "sleeping from invalid context" in drain_all_stock.
-  Patch also by Yang Shi.
-
-Known issues:
-
-      - SLAB support not working
-
-      - The cpsw network driver shows some issues.
-
-      - bcache is disabled.
-
-      - an ancient race (since we got sleeping spinlocks) where the
-        TASK_TRACED state is temporary replaced while waiting on a rw
-        lock and the task can't be traced.
-
-The delta patch against v3.10.10-rt6 is appended below and can be found
-here:
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.14-rt8-rt9.patch.xz
-
-The RT patch against 3.10.14 can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.14-rt9.patch.xz
-
-The split quilt queue is available at:
-
-    https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patches-3.10.14-rt9.tar.xz
-
-Sebastian
-
-diff --git a/arch/powerpc/platforms/52xx/mpc52xx_pic.c b/arch/powerpc/platforms/52xx/mpc52xx_pic.c
-index b69221b..2898b73 100644
---- a/arch/powerpc/platforms/52xx/mpc52xx_pic.c
-+++ b/arch/powerpc/platforms/52xx/mpc52xx_pic.c
-@@ -340,7 +340,7 @@ static int mpc52xx_irqhost_map(struct irq_domain *h, unsigned int virq,
- {
- 	int l1irq;
- 	int l2irq;
--	struct irq_chip *irqchip;
-+	struct irq_chip *uninitialized_var(irqchip);
- 	void *hndlr;
- 	int type;
- 	u32 reg;
-@@ -373,9 +373,8 @@ static int mpc52xx_irqhost_map(struct irq_domain *h, unsigned int virq,
- 	case MPC52xx_IRQ_L1_PERP: irqchip = &mpc52xx_periph_irqchip; break;
- 	case MPC52xx_IRQ_L1_SDMA: irqchip = &mpc52xx_sdma_irqchip; break;
- 	case MPC52xx_IRQ_L1_CRIT:
--	default:
- 		pr_warn("%s: Critical IRQ #%d is unsupported! Nopping it.\n",
--			__func__, l1irq);
-+			__func__, l2irq);
- 		irq_set_chip(virq, &no_irq_chip);
- 		return 0;
- 	}
-diff --git a/arch/sparc/Kconfig b/arch/sparc/Kconfig
-index 9ac9f16..6787bd3 100644
---- a/arch/sparc/Kconfig
-+++ b/arch/sparc/Kconfig
-@@ -521,6 +521,10 @@ menu "Executable file formats"
- 
- source "fs/Kconfig.binfmt"
- 
-+config EARLY_PRINTK
-+	bool
-+	default y
-+
- config COMPAT
- 	bool
- 	depends on SPARC64
-diff --git a/arch/sparc/lib/ksyms.c b/arch/sparc/lib/ksyms.c
-index 0c4e35e..323335b 100644
---- a/arch/sparc/lib/ksyms.c
-+++ b/arch/sparc/lib/ksyms.c
-@@ -98,15 +98,6 @@ EXPORT_SYMBOL(___copy_from_user);
- EXPORT_SYMBOL(___copy_in_user);
- EXPORT_SYMBOL(__clear_user);
- 
--/* RW semaphores */
--EXPORT_SYMBOL(__down_read);
--EXPORT_SYMBOL(__down_read_trylock);
--EXPORT_SYMBOL(__down_write);
--EXPORT_SYMBOL(__down_write_trylock);
--EXPORT_SYMBOL(__up_read);
--EXPORT_SYMBOL(__up_write);
--EXPORT_SYMBOL(__downgrade_write);
--
- /* Atomic counter implementation. */
- EXPORT_SYMBOL(atomic_add);
- EXPORT_SYMBOL(atomic_add_ret);
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index 6f61d5f..d2676b8 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -413,7 +413,7 @@ static int init_stats(void)
- 		goto out;
- 
- 	__reset_stats();
--	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
-+	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
- 	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
- 	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
- 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index bd61c40..a63cfaf 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -47,6 +47,7 @@
- #include <linux/sched/sysctl.h>
- #include <linux/sched/rt.h>
- #include <linux/timer.h>
-+#include <linux/kthread.h>
- 
- #include <asm/uaccess.h>
- 
-@@ -740,6 +741,44 @@ static void clock_was_set_work(struct work_struct *work)
- 
- static DECLARE_WORK(hrtimer_work, clock_was_set_work);
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * RT can not call schedule_work from real interrupt context.
-+ * Need to make a thread to do the real work.
-+ */
-+static struct task_struct *clock_set_delay_thread;
-+static bool do_clock_set_delay;
-+
-+static int run_clock_set_delay(void *ignore)
-+{
-+	while (!kthread_should_stop()) {
-+		set_current_state(TASK_INTERRUPTIBLE);
-+		if (do_clock_set_delay) {
-+			do_clock_set_delay = false;
-+			schedule_work(&hrtimer_work);
-+		}
-+		schedule();
-+	}
-+	__set_current_state(TASK_RUNNING);
-+	return 0;
-+}
-+
-+void clock_was_set_delayed(void)
-+{
-+	do_clock_set_delay = true;
-+	/* Make visible before waking up process */
-+	smp_wmb();
-+	wake_up_process(clock_set_delay_thread);
-+}
-+
-+static __init int create_clock_set_delay_thread(void)
-+{
-+	clock_set_delay_thread = kthread_run(run_clock_set_delay, NULL, "kclksetdelayd");
-+	BUG_ON(!clock_set_delay_thread);
-+	return 0;
-+}
-+early_initcall(create_clock_set_delay_thread);
-+#else /* PREEMPT_RT_FULL */
- /*
-  * Called from timekeeping and resume code to reprogramm the hrtimer
-  * interrupt device on all cpus.
-@@ -748,6 +787,7 @@ void clock_was_set_delayed(void)
- {
- 	schedule_work(&hrtimer_work);
- }
-+#endif
- 
- #else
- 
-diff --git a/localversion-rt b/localversion-rt
-index 700c857..22746d6 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt8
-+-rt9
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 905ce72..f113cb7 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2436,11 +2436,10 @@ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
-  */
- static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- {
--	int cpu, curcpu;
-+	int cpu;
- 
- 	/* Notify other cpus that system-wide "drain" is running */
- 	get_online_cpus();
--	curcpu = get_cpu();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -2450,14 +2449,9 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 			continue;
- 		if (!mem_cgroup_same_or_subtree(root_memcg, memcg))
- 			continue;
--		if (!test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags)) {
--			if (cpu == curcpu)
--				drain_local_stock(&stock->work);
--			else
--				schedule_work_on(cpu, &stock->work);
--		}
-+		if (!test_and_set_bit(FLUSHING_CACHED_CHARGE, &stock->flags))
-+			schedule_work_on(cpu, &stock->work);
- 	}
--	put_cpu();
- 
- 	if (!sync)
- 		goto out;
-diff --git a/mm/slab.c b/mm/slab.c
-index 494274e..0a3d6d3 100644
---- a/mm/slab.c
-+++ b/mm/slab.c
-@@ -1270,7 +1270,6 @@ static void __cpuinit cpuup_canceled(long cpu)
- 			free_block(cachep, nc->entry, nc->avail, node);
- 
- 		if (!cpumask_empty(mask)) {
--			local_spin_unlock_irq(slab_lock, &n->list_lock);
- 			unlock_l3_and_free_delayed(&n->list_lock);
- 			goto free_array_cache;
- 		}
-@@ -1285,7 +1284,6 @@ static void __cpuinit cpuup_canceled(long cpu)
- 		alien = n->alien;
- 		n->alien = NULL;
- 
--		local_spin_unlock_irq(slab_lock, &n->list_lock);
- 		unlock_l3_and_free_delayed(&n->list_lock);
- 
- 		kfree(shared);
+PiA+TXkgc3lzdGVtIGRpZCBsb2NrdXAgYWZ0ZXIgc2hvcnQgdGltZSBvZiB1c2FnZS4gSSB3YXMg
+b25seSBhYmxlIHRvIGNhcHR1cmUNCj4gdGhpcyBzY3JlZW5zaG90Og0KPiA+DQo+ID5BbnkgaWRl
+YXM/DQo+IA0KPiB0aGUgcHJvYmxlbSBzZWVtcyB0byBiZSB0aGF0IHRoZXkgdXNlIHNsZWVwaW5n
+IGxvY2tzIGluIHRoZSBwcmltYXJ5IGlycQ0KPiBoYW5kbGVyLg0KPiANCj4gaXdsX3BjaWVfcnhf
+cmVwbGVuaXNoKCkgdGFrZXMgdGhlIHNhbWUgbG9jayAoLT5pcnFfbG9jaykgYW5kIGFkZGl0aW9u
+YWx5DQo+IC0+bG9jayBzbyBJIHRoaW5rIHR1bnJuaW5nIGV2ZXJ5dGhpbmcgaW50byByYXcgbG9j
+a3MgaXNuJ3QgdmVyeSB3aXNlIGZvcg0KPiB0aGUgbGF0ZW5jeS4NCj4gDQo+IFRoZSB0aHJlYWRl
+ZCBoYW5kbGVyIHRha2VzIGZvciBhIHZlcnkgc2hvcnQgdGltZSBpcnFfbG9jayBsb2NrLiBJdCBh
+bHNvIHRha2VzDQo+IHRoZSAtPmxvY2sgdmlhIChpd2xfcGNpZV9yeHFfaW5jX3dyX3B0cigpKSB3
+aXRoIGlycXMgb2ZmICh0aGF0IG9uZSBsb29rcyBzaG9ydCwNCj4gdG9vKSBhbmQgb3RoZXJzIGZv
+ciBpbnN0YW5jZSB2aWEgaXdsX3BjaWVfcnhfaGFuZGxlKCkuDQo+IElkZWFsbHkgdGhlIGRyaXZl
+ciBzaG91bGQgaG9sZCBvbmUgc3BpbmxvY2sgdG8gc3luY2hyb25pemUgdGhlIHByaW1hcnkgYW5k
+DQo+IHRocmVhZGVkIGlycSBoYW5kbGVyIHdoaWxlIGRpc2FibGluZyB0aGUgaW50ZXJydXB0IGlu
+IHRoZSBpd2wgaGFyZHdhcmUuDQo+IEV2ZXJ5dGhpbmcgZWxzZSB3b3VsZCB0aGVuIGhvbGQgb25l
+IG9yIHR3byBtdXRleChlcykgYW5kIGNvdWxkIGV2ZW4NCj4gYWxsb2NhdGUgbWVtb3J5IHdpdGgg
+R0ZQX0tFUk5FTC4NCg0KV2UgaGF2ZSBhIHBhdGNoIGludGVybmFsbHkgdGhhdCBnb2VzIGludG8g
+dGhhdCBkaXJlY3Rpb24sIGJ1dCBvbmUgdGhpbmcgdGhvdWdoLiBJZiB5b3Ugc3RpbGwgaGF2ZSBh
+IHNwaW5sb2NrIGluIHRoZSBwcmltYXJ5IGhhbmRsZXIsIHdvdWxkbid0IHRoYXQgc2xlZXAgaW4g
+YSBub24tc2xlZXBhYmxlIGNvbnRleHQ/IEZvcmdpdmUgbXkgLXJ0IGlnbm9yYW5jZSwgYnV0IEkg
+dW5kZXJzdG9vZCB0aGF0IGluIC1ydCwgYWxsIHRoZSBzcGlubG9jayBnbyB0byBzbGVlcCB3aGlj
+aCBiYXNpY2FsbHkgbWVhbiB0aGF0IHdlIGNhbid0IHRha2UgYW55IHNwaW5sb2NrIGluIHRoZSBw
+cmltYXJ5IGlycSBoYW5kbGVyIHNvIEkgYW0gYSBiaXQgY29uZnVzZWQgaGVyZS4NCg0KPiANCj4g
+Rm9yIG5vdyBJIHRoaW5rIHRoZSBzaW1wbHkgdGhpbmcgd291bGQgYmUganVzdCB0byBsZXQgYm90
+aCBoYW5kbGVycyBydW4gaW4gdGhlDQo+IHRocmVhZC4gRG9lcyB0aGlzIHBhdGNoIHNvbHZlIHlv
+dXIgcHJvYmxlbT8NCj4gDQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL25ldC93aXJlbGVzcy9pd2x3
+aWZpL3BjaWUvdHJhbnMuYw0KPiBiL2RyaXZlcnMvbmV0L3dpcmVsZXNzL2l3bHdpZmkvcGNpZS90
+cmFucy5jDQo+IGluZGV4IGFlYjcwZTEuLjQyNTY3ZmMgMTAwNjQ0DQo+IC0tLSBhL2RyaXZlcnMv
+bmV0L3dpcmVsZXNzL2l3bHdpZmkvcGNpZS90cmFucy5jDQo+ICsrKyBiL2RyaXZlcnMvbmV0L3dp
+cmVsZXNzL2l3bHdpZmkvcGNpZS90cmFucy5jDQo+IEBAIC0xNDU2LDYgKzE0NTYsMjAgQEAgc3Rh
+dGljIGNvbnN0IHN0cnVjdCBpd2xfdHJhbnNfb3BzIHRyYW5zX29wc19wY2llID0NCj4gew0KPiAg
+CS5zZXRfYml0c19tYXNrID0gaXdsX3RyYW5zX3BjaWVfc2V0X2JpdHNfbWFzaywgIH07DQo+IA0K
+PiArI2lmZGVmIENPTkZJR19QUkVFTVBUX1JUX0JBU0UNCj4gK3N0YXRpYyBpcnFyZXR1cm5fdCBp
+d2xfcnRfaXJxX2hhbmRsZXIoaW50IGlycSwgdm9pZCAqZGV2X2lkKSB7DQo+ICsJaXJxcmV0dXJu
+X3QgcmV0Ow0KPiArDQo+ICsJbG9jYWxfYmhfZGlzYWJsZSgpOw0KPiArCXJldCA9IGl3bF9wY2ll
+X2lzcl9pY3QoaXJxLCBkZXZfaWQpOw0KPiArCWxvY2FsX2JoX2VuYWJsZSgpOw0KPiArCWlmIChy
+ZXQgPT0gSVJRX1dBS0VfVEhSRUFEKQ0KPiArCQlyZXQgPSBpd2xfcGNpZV9pcnFfaGFuZGxlcihp
+cnEsIGRldl9pZCk7DQo+ICsJcmV0dXJuIHJldDsNCj4gK30NCj4gKyNlbmRpZg0KPiArDQo+ICBz
+dHJ1Y3QgaXdsX3RyYW5zICppd2xfdHJhbnNfcGNpZV9hbGxvYyhzdHJ1Y3QgcGNpX2RldiAqcGRl
+diwNCj4gIAkJCQkgICAgICAgY29uc3Qgc3RydWN0IHBjaV9kZXZpY2VfaWQgKmVudCwNCj4gIAkJ
+CQkgICAgICAgY29uc3Qgc3RydWN0IGl3bF9jZmcgKmNmZykNCj4gQEAgLTE1NjYsOSArMTU4MCwx
+NCBAQCBzdHJ1Y3QgaXdsX3RyYW5zICppd2xfdHJhbnNfcGNpZV9hbGxvYyhzdHJ1Y3QNCj4gcGNp
+X2RldiAqcGRldiwNCj4gIAlpZiAoaXdsX3BjaWVfYWxsb2NfaWN0KHRyYW5zKSkNCj4gIAkJZ290
+byBvdXRfZnJlZV9jbWRfcG9vbDsNCj4gDQo+ICsjaWZkZWYgQ09ORklHX1BSRUVNUFRfUlRfQkFT
+RQ0KPiArCWlmIChyZXF1ZXN0X3RocmVhZGVkX2lycShwZGV2LT5pcnEsIE5VTEwsIGl3bF9ydF9p
+cnFfaGFuZGxlciwNCj4gKwkJCQkgSVJRRl9TSEFSRUQgfCBJUlFGX09ORVNIT1QsDQo+IERSVl9O
+QU1FLCB0cmFucykpIHsgI2Vsc2UNCj4gIAlpZiAocmVxdWVzdF90aHJlYWRlZF9pcnEocGRldi0+
+aXJxLCBpd2xfcGNpZV9pc3JfaWN0LA0KPiAgCQkJCSBpd2xfcGNpZV9pcnFfaGFuZGxlciwNCj4g
+IAkJCQkgSVJRRl9TSEFSRUQsIERSVl9OQU1FLCB0cmFucykpIHsNCj4gKyNlbmRpZg0KPiAgCQlJ
+V0xfRVJSKHRyYW5zLCAiRXJyb3IgYWxsb2NhdGluZyBJUlEgJWRcbiIsIHBkZXYtPmlycSk7DQo+
+ICAJCWdvdG8gb3V0X2ZyZWVfaWN0Ow0KPiAgCX0NCj4gLS0NCj4gMS44LjQucmMzDQo+IA0KPiAN
+Cj4gPldpdGgga2luZCByZWdhcmRzDQo+ID5UaG9tYXMNCj4gDQo+IFNlYmFzdGlhbg0KPiANCj4g
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4gaWx3IG1h
+aWxpbmcgbGlzdA0KPiBpbHdAbGludXguaW50ZWwuY29tDQo+IGh0dHA6Ly9saW51eC5pbnRlbC5j
+b20vbWFpbG1hbi9saXN0aW5mby9pbHcNCg==
