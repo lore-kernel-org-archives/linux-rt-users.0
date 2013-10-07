@@ -1,80 +1,40 @@
-From: "Grumbach, Emmanuel" <emmanuel.grumbach@intel.com>
-Subject: RE: [Ilw] Re: Kernel panic in 3.10.10-rt7 (iwlwifi)
-Date: Sun, 6 Oct 2013 06:00:54 +0000
-Message-ID: <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
-References: <2CD18B42-2489-4DF7-98D6-4D002329DC63@m3y3r.de>
- <20131004101216.GA17043@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [Ilw] Re: Kernel panic in 3.10.10-rt7 (iwlwifi)
+Date: Mon, 07 Oct 2013 09:33:11 +0200
+Message-ID: <525263B7.5090609@linutronix.de>
+References: <2CD18B42-2489-4DF7-98D6-4D002329DC63@m3y3r.de> <20131004101216.GA17043@linutronix.de> <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Meyer <thomas@m3y3r.de>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"Berg, Johannes" <johannes.berg@intel.com>,
 	"linux-wireless@vger.kernel.org" <linux-wireless@vger.kernel.org>,
 	Intel Linux Wireless <ilw@linux.intel.com>,
 	"tglx@linutronix.de" <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Meyer <thomas@m3y3r.de>
+To: "Grumbach, Emmanuel" <emmanuel.grumbach@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga01.intel.com ([192.55.52.88]:10027 "EHLO mga01.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751343Ab3JFGA7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 6 Oct 2013 02:00:59 -0400
-In-Reply-To: <20131004101216.GA17043@linutronix.de>
-Content-Language: en-US
+Received: from www.linutronix.de ([62.245.132.108]:33397 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751413Ab3JGHdN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 Oct 2013 03:33:13 -0400
+In-Reply-To: <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-PiA+TXkgc3lzdGVtIGRpZCBsb2NrdXAgYWZ0ZXIgc2hvcnQgdGltZSBvZiB1c2FnZS4gSSB3YXMg
-b25seSBhYmxlIHRvIGNhcHR1cmUNCj4gdGhpcyBzY3JlZW5zaG90Og0KPiA+DQo+ID5BbnkgaWRl
-YXM/DQo+IA0KPiB0aGUgcHJvYmxlbSBzZWVtcyB0byBiZSB0aGF0IHRoZXkgdXNlIHNsZWVwaW5n
-IGxvY2tzIGluIHRoZSBwcmltYXJ5IGlycQ0KPiBoYW5kbGVyLg0KPiANCj4gaXdsX3BjaWVfcnhf
-cmVwbGVuaXNoKCkgdGFrZXMgdGhlIHNhbWUgbG9jayAoLT5pcnFfbG9jaykgYW5kIGFkZGl0aW9u
-YWx5DQo+IC0+bG9jayBzbyBJIHRoaW5rIHR1bnJuaW5nIGV2ZXJ5dGhpbmcgaW50byByYXcgbG9j
-a3MgaXNuJ3QgdmVyeSB3aXNlIGZvcg0KPiB0aGUgbGF0ZW5jeS4NCj4gDQo+IFRoZSB0aHJlYWRl
-ZCBoYW5kbGVyIHRha2VzIGZvciBhIHZlcnkgc2hvcnQgdGltZSBpcnFfbG9jayBsb2NrLiBJdCBh
-bHNvIHRha2VzDQo+IHRoZSAtPmxvY2sgdmlhIChpd2xfcGNpZV9yeHFfaW5jX3dyX3B0cigpKSB3
-aXRoIGlycXMgb2ZmICh0aGF0IG9uZSBsb29rcyBzaG9ydCwNCj4gdG9vKSBhbmQgb3RoZXJzIGZv
-ciBpbnN0YW5jZSB2aWEgaXdsX3BjaWVfcnhfaGFuZGxlKCkuDQo+IElkZWFsbHkgdGhlIGRyaXZl
-ciBzaG91bGQgaG9sZCBvbmUgc3BpbmxvY2sgdG8gc3luY2hyb25pemUgdGhlIHByaW1hcnkgYW5k
-DQo+IHRocmVhZGVkIGlycSBoYW5kbGVyIHdoaWxlIGRpc2FibGluZyB0aGUgaW50ZXJydXB0IGlu
-IHRoZSBpd2wgaGFyZHdhcmUuDQo+IEV2ZXJ5dGhpbmcgZWxzZSB3b3VsZCB0aGVuIGhvbGQgb25l
-IG9yIHR3byBtdXRleChlcykgYW5kIGNvdWxkIGV2ZW4NCj4gYWxsb2NhdGUgbWVtb3J5IHdpdGgg
-R0ZQX0tFUk5FTC4NCg0KV2UgaGF2ZSBhIHBhdGNoIGludGVybmFsbHkgdGhhdCBnb2VzIGludG8g
-dGhhdCBkaXJlY3Rpb24sIGJ1dCBvbmUgdGhpbmcgdGhvdWdoLiBJZiB5b3Ugc3RpbGwgaGF2ZSBh
-IHNwaW5sb2NrIGluIHRoZSBwcmltYXJ5IGhhbmRsZXIsIHdvdWxkbid0IHRoYXQgc2xlZXAgaW4g
-YSBub24tc2xlZXBhYmxlIGNvbnRleHQ/IEZvcmdpdmUgbXkgLXJ0IGlnbm9yYW5jZSwgYnV0IEkg
-dW5kZXJzdG9vZCB0aGF0IGluIC1ydCwgYWxsIHRoZSBzcGlubG9jayBnbyB0byBzbGVlcCB3aGlj
-aCBiYXNpY2FsbHkgbWVhbiB0aGF0IHdlIGNhbid0IHRha2UgYW55IHNwaW5sb2NrIGluIHRoZSBw
-cmltYXJ5IGlycSBoYW5kbGVyIHNvIEkgYW0gYSBiaXQgY29uZnVzZWQgaGVyZS4NCg0KPiANCj4g
-Rm9yIG5vdyBJIHRoaW5rIHRoZSBzaW1wbHkgdGhpbmcgd291bGQgYmUganVzdCB0byBsZXQgYm90
-aCBoYW5kbGVycyBydW4gaW4gdGhlDQo+IHRocmVhZC4gRG9lcyB0aGlzIHBhdGNoIHNvbHZlIHlv
-dXIgcHJvYmxlbT8NCj4gDQo+IGRpZmYgLS1naXQgYS9kcml2ZXJzL25ldC93aXJlbGVzcy9pd2x3
-aWZpL3BjaWUvdHJhbnMuYw0KPiBiL2RyaXZlcnMvbmV0L3dpcmVsZXNzL2l3bHdpZmkvcGNpZS90
-cmFucy5jDQo+IGluZGV4IGFlYjcwZTEuLjQyNTY3ZmMgMTAwNjQ0DQo+IC0tLSBhL2RyaXZlcnMv
-bmV0L3dpcmVsZXNzL2l3bHdpZmkvcGNpZS90cmFucy5jDQo+ICsrKyBiL2RyaXZlcnMvbmV0L3dp
-cmVsZXNzL2l3bHdpZmkvcGNpZS90cmFucy5jDQo+IEBAIC0xNDU2LDYgKzE0NTYsMjAgQEAgc3Rh
-dGljIGNvbnN0IHN0cnVjdCBpd2xfdHJhbnNfb3BzIHRyYW5zX29wc19wY2llID0NCj4gew0KPiAg
-CS5zZXRfYml0c19tYXNrID0gaXdsX3RyYW5zX3BjaWVfc2V0X2JpdHNfbWFzaywgIH07DQo+IA0K
-PiArI2lmZGVmIENPTkZJR19QUkVFTVBUX1JUX0JBU0UNCj4gK3N0YXRpYyBpcnFyZXR1cm5fdCBp
-d2xfcnRfaXJxX2hhbmRsZXIoaW50IGlycSwgdm9pZCAqZGV2X2lkKSB7DQo+ICsJaXJxcmV0dXJu
-X3QgcmV0Ow0KPiArDQo+ICsJbG9jYWxfYmhfZGlzYWJsZSgpOw0KPiArCXJldCA9IGl3bF9wY2ll
-X2lzcl9pY3QoaXJxLCBkZXZfaWQpOw0KPiArCWxvY2FsX2JoX2VuYWJsZSgpOw0KPiArCWlmIChy
-ZXQgPT0gSVJRX1dBS0VfVEhSRUFEKQ0KPiArCQlyZXQgPSBpd2xfcGNpZV9pcnFfaGFuZGxlcihp
-cnEsIGRldl9pZCk7DQo+ICsJcmV0dXJuIHJldDsNCj4gK30NCj4gKyNlbmRpZg0KPiArDQo+ICBz
-dHJ1Y3QgaXdsX3RyYW5zICppd2xfdHJhbnNfcGNpZV9hbGxvYyhzdHJ1Y3QgcGNpX2RldiAqcGRl
-diwNCj4gIAkJCQkgICAgICAgY29uc3Qgc3RydWN0IHBjaV9kZXZpY2VfaWQgKmVudCwNCj4gIAkJ
-CQkgICAgICAgY29uc3Qgc3RydWN0IGl3bF9jZmcgKmNmZykNCj4gQEAgLTE1NjYsOSArMTU4MCwx
-NCBAQCBzdHJ1Y3QgaXdsX3RyYW5zICppd2xfdHJhbnNfcGNpZV9hbGxvYyhzdHJ1Y3QNCj4gcGNp
-X2RldiAqcGRldiwNCj4gIAlpZiAoaXdsX3BjaWVfYWxsb2NfaWN0KHRyYW5zKSkNCj4gIAkJZ290
-byBvdXRfZnJlZV9jbWRfcG9vbDsNCj4gDQo+ICsjaWZkZWYgQ09ORklHX1BSRUVNUFRfUlRfQkFT
-RQ0KPiArCWlmIChyZXF1ZXN0X3RocmVhZGVkX2lycShwZGV2LT5pcnEsIE5VTEwsIGl3bF9ydF9p
-cnFfaGFuZGxlciwNCj4gKwkJCQkgSVJRRl9TSEFSRUQgfCBJUlFGX09ORVNIT1QsDQo+IERSVl9O
-QU1FLCB0cmFucykpIHsgI2Vsc2UNCj4gIAlpZiAocmVxdWVzdF90aHJlYWRlZF9pcnEocGRldi0+
-aXJxLCBpd2xfcGNpZV9pc3JfaWN0LA0KPiAgCQkJCSBpd2xfcGNpZV9pcnFfaGFuZGxlciwNCj4g
-IAkJCQkgSVJRRl9TSEFSRUQsIERSVl9OQU1FLCB0cmFucykpIHsNCj4gKyNlbmRpZg0KPiAgCQlJ
-V0xfRVJSKHRyYW5zLCAiRXJyb3IgYWxsb2NhdGluZyBJUlEgJWRcbiIsIHBkZXYtPmlycSk7DQo+
-ICAJCWdvdG8gb3V0X2ZyZWVfaWN0Ow0KPiAgCX0NCj4gLS0NCj4gMS44LjQucmMzDQo+IA0KPiAN
-Cj4gPldpdGgga2luZCByZWdhcmRzDQo+ID5UaG9tYXMNCj4gDQo+IFNlYmFzdGlhbg0KPiANCj4g
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18NCj4gaWx3IG1h
-aWxpbmcgbGlzdA0KPiBpbHdAbGludXguaW50ZWwuY29tDQo+IGh0dHA6Ly9saW51eC5pbnRlbC5j
-b20vbWFpbG1hbi9saXN0aW5mby9pbHcNCg==
+On 10/06/2013 08:00 AM, Grumbach, Emmanuel wrote:
+> 
+> We have a patch internally that goes into that direction, but one thing though.
+
+Sounds great.
+
+> If you still have a spinlock in the primary handler, wouldn't that sleep in a non-sleepable context? Forgive my -rt ignorance, but I understood that in -rt, all the spinlock go to sleep which basically mean that we can't take any spinlock in the primary irq handler so I am a bit confused here.
+
+After my change there is no primary handler anymore, just the threaded
+where you can take the (sleeping) spinlock.
+Everything what you wrote is correct:
+- you can't take a spinlock in the primary handler
+- all spinlocks may sleep
+
+Sebastian
