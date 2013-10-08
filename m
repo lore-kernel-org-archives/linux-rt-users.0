@@ -1,61 +1,56 @@
 From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH v3.10-rt] slab: nodelist is now just node
-Date: Tue, 8 Oct 2013 14:31:33 -0400
-Message-ID: <1381257093-6992-1-git-send-email-paul.gortmaker@windriver.com>
+Subject: [PATCH v3.10-rt] slab: make kmem_cache_node's list_lock conditionally raw
+Date: Tue, 8 Oct 2013 14:55:09 -0400
+Message-ID: <1381258509-7420-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: <linux-rt-users@vger.kernel.org>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:63830 "EHLO
+Received: from mail.windriver.com ([147.11.1.11]:39491 "EHLO
 	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751775Ab3JHSbo (ORCPT
+	with ESMTP id S1751732Ab3JHSzd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Oct 2013 14:31:44 -0400
+	Tue, 8 Oct 2013 14:55:33 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The rt patch "mm-slab-more-lock-breaks.patch" adds some operations
-looking for nodelist, but mainline commit 6a67368c36e2c0c2578ba62f
-("slab: Rename nodelists to node") means that the old naming is
-out of date and breaks compiles, even for !RT_FULL
+The RT patch "mm-disable-slab-on-rt.patch" unconditionally
+converts kmem_cache_node's list_lock into a raw lock.  As
+of mainline commit ca34956b804b7554fc4e88826773380d9d5122a8
+("slab: Common definition for kmem_cache_node") the definition
+is shared -- but slab.c still thinks the lock is non raw.
+
+At the moment SLAB depends on !RT_FULL, however with the lock
+being raw for !RT_FULL, we can't build the SLAB + !RT_FULL
+combination because of the above.  So only convert the lock if
+SLAB is not enabled.
 
 Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
 
-[Should be squished into mm-slab-wrap-functions.patch]
+[Should be squished into mm-disable-slab-on-rt.patch ]
 
- mm/slab.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
+ mm/slab.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/mm/slab.c b/mm/slab.c
-index b242b50..7349569 100644
---- a/mm/slab.c
-+++ b/mm/slab.c
-@@ -1239,11 +1239,11 @@ static int init_cache_node_node(int node)
- 			cachep->node[node] = n;
- 		}
+diff --git a/mm/slab.h b/mm/slab.h
+index 2e6c8b7..fc3c097 100644
+--- a/mm/slab.h
++++ b/mm/slab.h
+@@ -247,7 +247,11 @@ static inline struct kmem_cache *cache_from_obj(struct kmem_cache *s, void *x)
+  * The slab lists for all objects.
+  */
+ struct kmem_cache_node {
++#ifdef CONFIG_SLAB
++	spinlock_t list_lock;
++#else
+ 	raw_spinlock_t list_lock;
++#endif
  
--		local_spin_lock_irq(slab_lock, &cachep->nodelists[node]->list_lock);
-+		local_spin_lock_irq(slab_lock, &cachep->node[node]->list_lock);
- 		cachep->node[node]->free_limit =
- 			(1 + nr_cpus_node(node)) *
- 			cachep->batchcount + cachep->num;
--		local_spin_unlock_irq(slab_lock, &cachep->nodelists[node]->list_lock);
-+		local_spin_unlock_irq(slab_lock, &cachep->node[node]->list_lock);
- 	}
- 	return 0;
- }
-@@ -4064,7 +4064,7 @@ static int __do_tune_cpucache(struct kmem_cache *cachep, int limit,
- 				    &cachep->node[cpu_to_mem(i)]->list_lock);
- 		free_block(cachep, ccold->entry, ccold->avail, cpu_to_mem(i));
- 
--		unlock_l3_and_free_delayed(&cachep->nodelists[cpu_to_mem(i)]->list_lock);
-+		unlock_l3_and_free_delayed(&cachep->node[cpu_to_mem(i)]->list_lock);
- 		kfree(ccold);
- 	}
- 	kfree(new);
+ #ifdef CONFIG_SLAB
+ 	struct list_head slabs_partial;	/* partial list first, better asm code */
 -- 
 1.8.1.2
 
