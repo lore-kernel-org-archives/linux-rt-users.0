@@ -1,51 +1,48 @@
-From: Thomas Pfaff <tpfaff@pcs.com>
-Subject: Re: [PATCH 3.4.62-rt77] fix irq thread scheduling
-Date: Tue, 8 Oct 2013 16:12:30 +0200
-Message-ID: <alpine.LNX.2.00.1310081608280.16844@lxtpfaff.pcs.ditec.de>
-References: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de> <20131004140549.GH19953@linutronix.de> <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH v3.10-rt] ppc: use pagefault_disabled helper to fix compile fail for !RT_FULL
+Date: Tue, 8 Oct 2013 10:42:19 -0400
+Message-ID: <1381243339-31155-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="US-ASCII"
-Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.pcs.de ([145.253.69.50]:16175 "EHLO exchange5.pcs.ditec.de"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1754739Ab3JHOMv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Oct 2013 10:12:51 -0400
-In-Reply-To: <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
+Received: from mail.windriver.com ([147.11.1.11]:49344 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754509Ab3JHOmj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 8 Oct 2013 10:42:39 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+To fix:
 
+arch/powerpc/mm/fault.c: In function 'do_page_fault':
+arch/powerpc/mm/fault.c:267:42: error: 'struct task_struct' has no member named 'pagefault_disabled'
+make[2]: *** [arch/powerpc/mm/fault.o] Error 1
 
-On Tue, 8 Oct 2013, Pfaff Thomas wrote:
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+---
 
-> 
-> 
-> On Fri, 4 Oct 2013, Sebastian Andrzej Siewior wrote:
-> 
-> > * Thomas Pfaff | 2013-09-19 11:02:57 [+0200]:
-> > 
-> > >If an irq is requested during device open, for example by opening a serial 
-> > >device, then request_irq is called in the context of the opening process.
-> > >If the process lacks off CAP_SYS_NICE the irq thread is running with SCHED_OTHER 
-> > >priority.
-> > >
-> > >The problem exists in other real time patches as well, 3.10 seems to be ok.
-> > 
-> > Hmmm. I see the same check in v3.10 compared to v3.6 which so I *think*
-> > v3.10 has the same problem.
-> > However this does not look to be -RT specific, you should see the same
-> > problem in mainline, too. Could you please verify whether this does
-> > affect v3.10? And if it does, we should try to fix up it upstream, too
-> > 
-> 
-> I did a quick check with 3.10.14-rt9 and it is not affected, because 
-> sched_setscheduler is called in the context of the irq thread as the mainline 
-> kernel does, but the 3.6 rt patch moved this into __setup_irq.
+[Should be squished into peter_zijlstra-frob-pagefault_disable.patch]
 
-Sorry, should have been 3.4 rt patch.
+ arch/powerpc/mm/fault.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thomas
+diff --git a/arch/powerpc/mm/fault.c b/arch/powerpc/mm/fault.c
+index a47400d..87f730e 100644
+--- a/arch/powerpc/mm/fault.c
++++ b/arch/powerpc/mm/fault.c
+@@ -264,7 +264,7 @@ int __kprobes do_page_fault(struct pt_regs *regs, unsigned long address,
+ 	if (!arch_irq_disabled_regs(regs))
+ 		local_irq_enable();
+ 
+-	if (in_atomic() || mm == NULL || current->pagefault_disabled) {
++	if (in_atomic() || mm == NULL || pagefault_disabled()) {
+ 		if (!user_mode(regs)) {
+ 			rc = SIGSEGV;
+ 			goto bail;
+-- 
+1.8.1.2
+
