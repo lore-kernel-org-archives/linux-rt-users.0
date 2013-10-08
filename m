@@ -1,40 +1,45 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [Ilw] Re: Kernel panic in 3.10.10-rt7 (iwlwifi)
-Date: Mon, 07 Oct 2013 09:33:11 +0200
-Message-ID: <525263B7.5090609@linutronix.de>
-References: <2CD18B42-2489-4DF7-98D6-4D002329DC63@m3y3r.de> <20131004101216.GA17043@linutronix.de> <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
+From: Thomas Pfaff <tpfaff@pcs.com>
+Subject: Re: [PATCH 3.4.62-rt77] fix irq thread scheduling
+Date: Tue, 8 Oct 2013 15:58:50 +0200
+Message-ID: <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
+References: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de> <20131004140549.GH19953@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Meyer <thomas@m3y3r.de>,
+Content-Type: text/plain; charset="US-ASCII"
+Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"Berg, Johannes" <johannes.berg@intel.com>,
-	"linux-wireless@vger.kernel.org" <linux-wireless@vger.kernel.org>,
-	Intel Linux Wireless <ilw@linux.intel.com>,
-	"tglx@linutronix.de" <tglx@linutronix.de>
-To: "Grumbach, Emmanuel" <emmanuel.grumbach@intel.com>
+	"rostedt@goodmis.org" <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:33397 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751413Ab3JGHdN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Oct 2013 03:33:13 -0400
-In-Reply-To: <0BA3FCBA62E2DC44AF3030971E174FB301DBC098@HASMSX103.ger.corp.intel.com>
+Received: from mail.pcs.de ([145.253.69.50]:38220 "EHLO exchange5.pcs.ditec.de"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1754471Ab3JHN7c (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 8 Oct 2013 09:59:32 -0400
+In-Reply-To: <20131004140549.GH19953@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/06/2013 08:00 AM, Grumbach, Emmanuel wrote:
+
+
+On Fri, 4 Oct 2013, Sebastian Andrzej Siewior wrote:
+
+> * Thomas Pfaff | 2013-09-19 11:02:57 [+0200]:
 > 
-> We have a patch internally that goes into that direction, but one thing though.
+> >If an irq is requested during device open, for example by opening a serial 
+> >device, then request_irq is called in the context of the opening process.
+> >If the process lacks off CAP_SYS_NICE the irq thread is running with SCHED_OTHER 
+> >priority.
+> >
+> >The problem exists in other real time patches as well, 3.10 seems to be ok.
+> 
+> Hmmm. I see the same check in v3.10 compared to v3.6 which so I *think*
+> v3.10 has the same problem.
+> However this does not look to be -RT specific, you should see the same
+> problem in mainline, too. Could you please verify whether this does
+> affect v3.10? And if it does, we should try to fix up it upstream, too
+> 
 
-Sounds great.
+I did a quick check with 3.10.14-rt9 and it is not affected, because 
+sched_setscheduler is called in the context of the irq thread as the mainline 
+kernel does, but the 3.6 rt patch moved this into __setup_irq.
 
-> If you still have a spinlock in the primary handler, wouldn't that sleep in a non-sleepable context? Forgive my -rt ignorance, but I understood that in -rt, all the spinlock go to sleep which basically mean that we can't take any spinlock in the primary irq handler so I am a bit confused here.
-
-After my change there is no primary handler anymore, just the threaded
-where you can take the (sleeping) spinlock.
-Everything what you wrote is correct:
-- you can't take a spinlock in the primary handler
-- all spinlocks may sleep
-
-Sebastian
+Thomas
