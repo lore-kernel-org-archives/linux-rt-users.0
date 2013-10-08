@@ -1,48 +1,41 @@
 From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH v3.10-rt] ppc: use pagefault_disabled helper to fix compile fail for !RT_FULL
-Date: Tue, 8 Oct 2013 10:42:19 -0400
-Message-ID: <1381243339-31155-1-git-send-email-paul.gortmaker@windriver.com>
+Subject: [PATCH] rt-v3.10-devel: fix mangled mm/slab patch
+Date: Tue, 8 Oct 2013 13:35:47 -0400
+Message-ID: <1381253747-26753-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: <linux-rt-users@vger.kernel.org>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:49344 "EHLO
+Received: from mail.windriver.com ([147.11.1.11]:40105 "EHLO
 	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754509Ab3JHOmj (ORCPT
+	with ESMTP id S1755676Ab3JHRgK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Oct 2013 10:42:39 -0400
+	Tue, 8 Oct 2013 13:36:10 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-To fix:
-
-arch/powerpc/mm/fault.c: In function 'do_page_fault':
-arch/powerpc/mm/fault.c:267:42: error: 'struct task_struct' has no member named 'pagefault_disabled'
-make[2]: *** [arch/powerpc/mm/fault.o] Error 1
+Delete obviously duplicated content.
 
 Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
-
-[Should be squished into peter_zijlstra-frob-pagefault_disable.patch]
-
- arch/powerpc/mm/fault.c | 2 +-
+ mm-slab-wrap-functions.patch | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/powerpc/mm/fault.c b/arch/powerpc/mm/fault.c
-index a47400d..87f730e 100644
---- a/arch/powerpc/mm/fault.c
-+++ b/arch/powerpc/mm/fault.c
-@@ -264,7 +264,7 @@ int __kprobes do_page_fault(struct pt_regs *regs, unsigned long address,
- 	if (!arch_irq_disabled_regs(regs))
- 		local_irq_enable();
- 
--	if (in_atomic() || mm == NULL || current->pagefault_disabled) {
-+	if (in_atomic() || mm == NULL || pagefault_disabled()) {
- 		if (!user_mode(regs)) {
- 			rc = SIGSEGV;
- 			goto bail;
+diff --git a/mm-slab-wrap-functions.patch b/mm-slab-wrap-functions.patch
+index c8830f3..acb2397 100644
+--- a/mm-slab-wrap-functions.patch
++++ b/mm-slab-wrap-functions.patch
+@@ -162,7 +162,7 @@ Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+  			int force, int node);
+  
+ -static void do_drain(void *arg)
+-+static void __do_drain(void *arg, unsigned int cpu)+static void __do_drain(void *arg, unsigned int cpu)
+++static void __do_drain(void *arg, unsigned int cpu)
+  {
+  	struct kmem_cache *cachep = arg;
+  	struct array_cache *ac;
 -- 
 1.8.1.2
 
