@@ -1,36 +1,181 @@
-From: Anatolij Gustschin <agust@denx.de>
-Subject: Re: [PATCH] Kind of revert "powerpc: 52xx: provide a default in
- mpc52xx_irqhost_map()"
-Date: Tue, 8 Oct 2013 23:44:06 +0200
-Message-ID: <20131008234406.38cbebe2@crub>
-References: <1380901029-3548-1-git-send-email-wsa@the-dreams.de>
+From: "Braud Caroline" <Caroline.Braud@univ-lille1.fr>
+Subject: Re: RT + comedi (dual boot ubuntu 9.10/debian 7.0)
+Date: Wed, 09 Oct 2013 09:47:33 +0200
+Message-ID: <6271-52550a00-41-5b9ea080@247320133>
+References: <ce1-51cae800-39-67adc880@74461503>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linuxppc-dev@ozlabs.org, linux-rt-users@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Wolfram Sang <wsa@the-dreams.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: "Braud Caroline" <Caroline.Braud@univ-lille1.fr>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-out.m-online.net ([212.18.0.9]:51201 "EHLO
-	mail-out.m-online.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755498Ab3JHVoJ (ORCPT
+Received: from smtp01.univ-lille1.fr ([193.49.225.19]:46272 "EHLO
+	smtp01.univ-lille1.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751831Ab3JIIKt convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Oct 2013 17:44:09 -0400
-In-Reply-To: <1380901029-3548-1-git-send-email-wsa@the-dreams.de>
+	Wed, 9 Oct 2013 04:10:49 -0400
+in-reply-to: <ce1-51cae800-39-67adc880@74461503>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri,  4 Oct 2013 17:37:09 +0200
-Wolfram Sang <wsa@the-dreams.de> wrote:
+ Hello,
 
-> This more or less reverts commit 6391f697d4892a6f233501beea553e13f7745a23.
-> Instead of adding an unneeded 'default', mark the variable to prevent
-> the false positive 'uninitialized var'. The other change (fixing the
-> printout) needs revert, too. We want to know WHICH critical irq failed,
-> not which level it had.
-> 
-> Signed-off-by: Wolfram Sang <wsa@the-dreams.de>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Anatolij Gustschin <agust@denx.de>
+I'm back with my old distribution and I decided not to touch it anymore=
+ ...
+I will install RT with a more recent distrib in a separate computer.
 
-applied, thanks!
+Please can you advise me the most appropriate recent distribution to us=
+e the RT kernel and comedi drivers ?
+(if you have a step by step installation of the RT kernel, it would be =
+perfect !)
+
+Thanks,
+Karo
+=20
+ Le Mercredi 26 Juin 2013 15:08 CEST, "Braud Caroline" <Caroline.Braud@=
+univ-lille1.fr> a =C3=A9crit:=20
+=20
+> Hi evryone,
+>=20
+> I was using ubuntu 9.10 (ubuntustudio-9.10-alternate-amd64.iso) with =
+linux-rt package.
+> It was working well, I could run the Cyclictest with good RT jitters.
+> Also, I was using comedi and could manage a USBDUX board and a M&C bo=
+ard (PCI-DAS6036).
+>=20
+>  I needed to update my distrib for some reasons, so I did some search=
+ and found that Ubuntu does not support anymore the package linux-rt ..=
+=2E so I couldn't keep RT with an update version of ubuntu ...
+> I installed a debian distrib in dual boot using a liveCD (debian live=
+cd 7.0 AMD64, Gnome).
+> Everthing went well and I could drive my board (PCI-DAS6036) with com=
+edi without any problems.
+>=20
+> Here is the structure of my disk:
+> /dev/sda1 =3D /boot
+> /dev/sda2 =3D /  (Unbuntu 9.10)
+> /dev/sda6 =3D /  (debian 7.0)
+> /dev/sda7 =3D /home=20
+>=20
+> with a common swap, home and boot for both distributions
+>=20
+> $ sudo fdisk -l
+> Disque /dev/sda : 80.0 Go, 80026361856 octets
+> 255 t=C3=AAtes, 63 secteurs/piste, 9729 cylindres, total 156301488 se=
+cteurs
+> Unit=C3=A9s =3D secteurs de 1 * 512 =3D 512 octets
+> Taille de secteur (logique / physique) : 512 octets / 512 octets
+> taille d'E/S (minimale / optimale) : 512 octets / 512 octets
+> Identifiant de disque : 0x000aa812
+>=20
+> P=C3=A9riph=C3=A9rique Amorce  D=C3=A9but        Fin      Blocs     I=
+d  Syst=C3=A8me
+> /dev/sda1   *          63      208844      104391   83  Linux
+> /dev/sda2          208845    61641404    30716280   83  Linux
+> /dev/sda3        61641466   156296384    47327459+   5  =C3=89tendue=0D
+> /dev/sda5        61641468    70027334     4192933+  82  partition d'=C3=
+=A9change Linux / Solaris
+> /dev/sda6        70027398   131459894    30716248+  83  Linux
+> /dev/sda7       131459958   156296384    12418213+  83  Linux
+>=20
+>=20
+> I was quite happy with that and I decided to boot the rt of the debia=
+n distribution. It was not working (it was frozen at the login stage ..=
+=2E). So I installed the RT following this website: http://www.pengutro=
+nix.com/software/linux-rt/debian_en.html
+>=20
+> Since I installed it I have now 3 problems (that may be linked):
+> 1- Grub erased my previous grub so I cannot boot on Ubuntu anymore ..=
+=2E (not linked directly to rt-user problems, but comes from the instal=
+lation of rt distrib)
+> 2- Cyclictest tests do not work anymore
+> 3- My board is not reconnized automatically by comedi anymore
+>=20
+> 1- =20
+> On debian: EVERYTHING OK
+> $ ls -lah /
+> lrwxrwxrwx   1 root root   40 juin  25 17:13 initrd.img -> /boot/init=
+rd.img-2.6.33.7.2-rt30-1-amd64
+> lrwxrwxrwx   1 root root   30 juin  25 10:13 initrd.img.old -> /boot/=
+initrd.img-3.2.0-4-amd64
+> lrwxrwxrwx   1 root root   36 juin  25 17:13 vmlinuz -> boot/vmlinuz-=
+2.6.33.7.2-rt30-1-amd64
+> lrwxrwxrwx   1 root root   26 juin  25 10:18 vmlinuz.old -> boot/vmli=
+nuz-3.2.0-4-amd64
+>=20
+> On Ubuntu (from debian): PROBLEM WITH THE IMAGE LINK
+> $ sudo mkdir /mnt/Ubuntu
+> $ sudo mount /dev/sda2 /mnt/Ubuntu/
+> $ sudo mount /dev/sda1 /mnt/Ubuntu/boot
+> $ ls -lah /mnt/Ubuntu/
+> lrwxrwxrwx   1 root root   27 janv. 10  2012 initrd.img -> boot/initr=
+d.img-2.6.31-9-rt
+> lrwxrwxrwx   1 root root   24 janv. 10  2012 vmlinuz -> boot/vmlinuz-=
+2.6.31-9-rt
+>=20
+> I understand the problem ... but how to repair it ?
+>=20
+> 2-
+> It seems that I'm missing linux-headers from kernel 2.6 (see bellow):
+>=20
+> ~/rt-tests$ make all
+> cc -D VERSION_STRING=3D0.85 -c src/cyclictest/cyclictest.c -Wall -Wno=
+-nonnull -O2 -DNUMA -D_GNU_SOURCE -Isrc/include
+> In file included from src/cyclictest/cyclictest.c:37:0:
+> src/cyclictest/rt_numa.h:23:68: fatal error: /usr/src/linux-headers-2=
+=2E6.31-9-rt/include/config/numa.h: Aucun fichier ou dossier de ce type
+> compilation terminated.
+> make: *** [cyclictest.o] Erreur 1
+>=20
+> $ ls /usr/src/linux-headers-2.6.31-9-rt
+> ls: impossible d'acc=C3=A9der =C3=A0 /usr/src/linux-headers-2.6.31-9-=
+rt: Aucun fichier ou dossier de ce type
+>=20
+> $ sudo apt-get install  linux-headers-2.6.33.7.2-rt30-1-amd64
+> Les paquets suivants contiennent des d=C3=A9pendances non satisfaites=
+ :
+>  linux-headers-2.6.33.7.2-rt30-1-amd64 : D=C3=A9pend: gcc-4.3 mais il=
+ n'est pas installable
+> E: Impossible de corriger les probl=C3=A8mes, des paquets d=C3=A9fect=
+ueux sont en mode =C2=AB garder en l'=C3=A9tat =C2=BB.
+>=20
+> How can I solve this problem ? Can I install headers for kernel 2.6 t=
+ogether with linux-headers-3.2.0-4-amd64 from the standart debian ?
+>=20
+> 3-
+> /dev/comedi0: No such file or directory
+>=20
+> (http://www.comedi.org/doc/install.html)
+>=20
+> $ sudo modprobe options comedi comedi_num_legacy_minors=3D4
+> libkmod: ERROR ../libkmod/libkmod.c:505 kmod_lookup_alias_from_builti=
+n_file: could not open builtin file '/lib/modules/2.6.33.7.2-rt30-1-amd=
+64/modules.builtin.bin'
+> FATAL: Module options not found.
+>=20
+> $ ls /lib/modules/2.6.33.7.2-rt30-1-amd64/
+> kernel           modules.alias.bin    modules.dep      modules.devnam=
+e  modules.symbols
+> modules.alias  modules.builtin.bin  modules.dep.bin  modules.softdep =
+ modules.symbols.bin
+>=20
+> Please, can you tell me what went wrong with the installation of the =
+rt distrib ??
+> Thanks and sorry for this long message,
+>=20
+> Caro
+> PC: Intel/1xQuadCore @ 2.5 GHz, 4 GB RAM, 3 TB space
+> =20
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+=20
+=20
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
