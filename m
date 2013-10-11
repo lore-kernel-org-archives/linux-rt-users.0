@@ -1,37 +1,50 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 3.4.62-rt77] fix irq thread scheduling
-Date: Fri, 11 Oct 2013 12:58:12 +0200
-Message-ID: <20131011105812.GF6983@linutronix.de>
-References: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de>
- <20131004140549.GH19953@linutronix.de>
- <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>
-To: Thomas Pfaff <tpfaff@pcs.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60603 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758027Ab3JKK6N (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Oct 2013 06:58:13 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Subject: [PATCH] genirq: Set the irq thread policy without checking CAP_SYS_NICE
+Date: Fri, 11 Oct 2013 13:00:40 +0200
+Message-ID: <1381489240-29626-1-git-send-email-bigeasy@linutronix.de>
+Cc: Ivo Sieben <meltedpianoman@gmail.com>,
+	Thomas Pfaff <tpfaff@pcs.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Thomas Pfaff | 2013-10-08 15:58:50 [+0200]:
+From: Thomas Pfaff <tpfaff@pcs.com>
 
->I did a quick check with 3.10.14-rt9 and it is not affected, because 
->sched_setscheduler is called in the context of the irq thread as the mainline 
->kernel does, but the 3.6 rt patch moved this into __setup_irq.
+In commit ee23871389 ("genirq: Set irq thread to RT priority on
+creation") we moved the assigment of the thread's priority from the
+thread's function into __setup_irq(). That function may run in user
+context for instance if the user opens an UART node and then driver
+calls requests in the ->open() callback. That user may not have
+CAP_SYS_NICE and so the irq thread won't run with the SCHED_OTHER
+policy.
 
-Thanks for that report. It looks that this is broken upstream as well.
-I'm going to merge the patch that broke it, your fix and try to do the
-same for upstream.
+This patch uses sched_setscheduler_nocheck() so we omit the CAP_SYS_NICE
+check which is otherwise required for the SCHED_OTHER policy.
 
->Thomas
+Cc: Ivo Sieben <meltedpianoman@gmail.com>
+Cc: stable@vger.kernel.org
+Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
+[bigeasy: rewrite the changelog]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/irq/manage.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Sebastian
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 514bcfd..3e59f95 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -956,7 +956,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 			goto out_mput;
+ 		}
+ 
+-		sched_setscheduler(t, SCHED_FIFO, &param);
++		sched_setscheduler_nocheck(t, SCHED_FIFO, &param);
+ 
+ 		/*
+ 		 * We keep the reference to the task struct even if
+-- 
+1.8.4.rc3
