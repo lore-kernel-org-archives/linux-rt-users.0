@@ -1,42 +1,44 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: CONFIG_NO_HZ_FULL in x86 (32bit)?
-Date: Fri, 11 Oct 2013 14:32:49 +0200
-Message-ID: <20131011123249.GG6983@linutronix.de>
-References: <F9467A784CC48947B1D879F07370839E1E0364DC@fe20099s.ecn.etasgroup.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Enabling function trace on call during module init
+Date: Fri, 11 Oct 2013 08:35:53 -0400
+Message-ID: <20131011083553.3557f104@gandalf.local.home>
+References: <CA+P49ArN2Nki5oy5MdwKGdcCUYv4i7oEJkypkKWB618T9nHvug@mail.gmail.com>
+	<20130907204811.5d52a6b1@gandalf.local.home>
+	<20131011101531.GD6983@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Frederic Weisbecker <fweisbec@gmail.com>
-To: "Koehrer Mathias (ETAS/ESS2)" <mathias.koehrer@etas.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Venkat Subbiah <venkat.mlist@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:33046 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756197Ab3JKMcv (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:26559 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751968Ab3JKMfy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Oct 2013 08:32:51 -0400
-Content-Disposition: inline
-In-Reply-To: <F9467A784CC48947B1D879F07370839E1E0364DC@fe20099s.ecn.etasgroup.com>
+	Fri, 11 Oct 2013 08:35:54 -0400
+In-Reply-To: <20131011101531.GD6983@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Koehrer Mathias (ETAS/ESS2) | 2013-10-11 08:32:50 [+0000]:
+On Fri, 11 Oct 2013 12:15:31 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
->Hi all,
-Hi Mathias,
+> * Steven Rostedt | 2013-09-07 20:48:11 [-0400]:
+> 
+> >You wont be able to trace any function that is annotated with "__init",
+> >or even "__exit". That's because the init section does not have a
+> >standard way of cleaning them up (for boot, modules are different, but
+> >are still affected by it).
+> 
+> Is this even required / wanted? Usually the module just hooks itself
+> into subsystem like pci_register_driver() and is usually not
+> interresting. The interresting part starts from ->probe() (I think) and
+> this is captured, right?
 
->I found out that with the RT_PREEMPT patch for kernel 3.10 there is the cool feature rcu_nocbs (offload RCU callback processing) available which allows to free cores to run single real time user space applications on it.
->This feature depends on CONFIG_NO_HZ_FULL, however this is not available for x86 (32 bit).
->My question is now: Is there a way to get the rcu_nocbs running together with NO_HZ_FULL on a 32bit x86?
+Only if the ->probe() is not marked __init
 
-I *think* this is because VIRT_CPU_ACCOUNTING_GEN accounts everything in
-nsec instead of jiffies and this could be very expensive on 32bit archs
-doing 64bit math.
-Frederic, is this everything or is there more to it?
+There's a white list of sections that the function tracer traces. See
+is_mcounted_section_name() in scripts/recordmcount.c.
 
->Thanks for any feedback
->
->Best regards
->
->Mathias
-
-Sebastian
+-- Steve
