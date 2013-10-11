@@ -1,53 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [Intel-gfx] BUG: sleeping function called from invalid context
- on 3.10.10-rt7
-Date: Fri, 11 Oct 2013 12:18:00 +0200
-Message-ID: <20131011101800.GE6983@linutronix.de>
-References: <5230895B.5070400@hurleysoftware.com>
- <20130911113845.6d56a556@gandalf.local.home>
- <5230C52E.3050801@hurleysoftware.com>
- <5238B288.3000704@hurleysoftware.com>
- <CAKMK7uG9s8W6yebkmuJe0XHGsoru4_9FzGqfmKWtMFyCAfQZqA@mail.gmail.com>
- <523CC728.4040302@tuebingen.mpg.de>
- <20130923083841.GT4531@intel.com>
- <5242674A.8020100@tuebingen.mpg.de>
- <20130925101301.6cbe5d0f@gandalf.local.home>
- <52445DEF.1060007@gmail.com>
+Subject: Re: [PATCH 3.4.62-rt77] fix irq thread scheduling
+Date: Fri, 11 Oct 2013 12:58:12 +0200
+Message-ID: <20131011105812.GF6983@linutronix.de>
+References: <alpine.LNX.2.00.1309191038050.7134@lxtpfaff.pcs.ditec.de>
+ <20131004140549.GH19953@linutronix.de>
+ <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Mario Kleiner <mario.kleiner@tuebingen.mpg.de>,
-	Peter Hurley <peter@hurleysoftware.com>,
-	Clark Williams <williams@redhat.com>,
-	Daniel Vetter <daniel.vetter@ffwll.ch>,
-	LKML <linux-kernel@vger.kernel.org>,
-	"dri-devel@lists.freedesktop.org" <dri-devel@lists.freedesktop.org>,
-	Dave Airlie <airlied@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	intel-gfx <intel-gfx@lists.freedesktop.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Ville =?utf-8?B?U3lyasOkbMOk?= <ville.syrjala@linux.intel.com>
-To: Mario Kleiner <mario.kleiner.de@gmail.com>
+Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"rostedt@goodmis.org" <rostedt@goodmis.org>
+To: Thomas Pfaff <tpfaff@pcs.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60272 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:60603 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752616Ab3JKKSH (ORCPT
+	with ESMTP id S1758027Ab3JKK6N (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Oct 2013 06:18:07 -0400
+	Fri, 11 Oct 2013 06:58:13 -0400
 Content-Disposition: inline
-In-Reply-To: <52445DEF.1060007@gmail.com>
+In-Reply-To: <alpine.LNX.2.00.1310081550340.16551@lxtpfaff.pcs.ditec.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Mario Kleiner | 2013-09-26 18:16:47 [+0200]:
+* Thomas Pfaff | 2013-10-08 15:58:50 [+0200]:
 
->Good! I will do that. Thanks for clarifying the irq and constraints
->on raw locks in the other thread.
+>I did a quick check with 3.10.14-rt9 and it is not affected, because 
+>sched_setscheduler is called in the context of the irq thread as the mainline 
+>kernel does, but the 3.6 rt patch moved this into __setup_irq.
 
-Are there any suggestions for "now"?  preempt_disable_nort() like Luis
-suggesed?
+Thanks for that report. It looks that this is broken upstream as well.
+I'm going to merge the patch that broke it, your fix and try to do the
+same for upstream.
 
->-mario
+>Thomas
 
 Sebastian
