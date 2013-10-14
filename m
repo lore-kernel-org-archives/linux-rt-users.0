@@ -1,114 +1,80 @@
-From: =?iso-8859-1?Q?H=E4nel-Baas=2C_Alexander?=
-	<alexander.haenel-baas@sieb-meyer.de>
-Subject: Re: CONFIG_PREEMPT_RT_FULL an usb gadget
-Date: Mon, 14 Oct 2013 14:26:51 +0000
-Message-ID: <9BA84827B30CBE4996725F98F7DC91232F974979@SMExchange01.siebmeyer.org>
+From: =?ISO-8859-1?Q?Rapha=EBl_Beamonte?= <raphael.beamonte@gmail.com>
+Subject: Non-Preempt Test v1.01
+Date: Mon, 14 Oct 2013 15:05:14 -0400
+Message-ID: <525C406A.5050000@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Sebastian Andrzej Siewior (bigeasy@linutronix.de)"
-	<bigeasy@linutronix.de>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="lS6hG23oIGNS4FIqLSM83tHIUXlRTSpDg"
+Cc: lwn@lwn.net
+To: linux-rt-users@vger.kernel.org, lttng-dev@lists.lttng.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smnotes1.sieb-meyer.de ([213.252.170.194]:49156 "EHLO
-	mail.sieb-meyer.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750804Ab3JNO0x convert rfc822-to-8bit (ORCPT
+Received: from mail-qc0-f179.google.com ([209.85.216.179]:48614 "EHLO
+	mail-qc0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756607Ab3JNTFX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Oct 2013 10:26:53 -0400
-Content-Language: de-DE
+	Mon, 14 Oct 2013 15:05:23 -0400
+Received: by mail-qc0-f179.google.com with SMTP id l4so5289448qcv.10
+        for <linux-rt-users@vger.kernel.org>; Mon, 14 Oct 2013 12:05:23 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Sebastian,
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--lS6hG23oIGNS4FIqLSM83tHIUXlRTSpDg
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-nice to hear from you.
+Hi all !
 
-Yes I have disable ehci & ohci =A0with no changes.
+I just released the Non-Preempt Test (npt) version 1.01 which is
+available here: http://git.dorsal.polymtl.ca/?p=3Dnpt.git
 
-But=A0 the following dmesg shows the problem:
+The purpose of this tool is to simulate a small real-time system that
+runs with a high priority without being stopped or preempted. To do so,
+it first sets its environment (cpu affinity, RT scheduler, memory locked
+into RAM with mlockall) and can optionally disable the local IRQs if
+compiled with the right options (not defined by default).
 
-[=A0 335.682365] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER      =
--> normal read
-[=A0 335.693595] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.700148] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.713727] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.720236] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.733730] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.740482] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.746520] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER=A0 =A0=
-=A0-> normal read
-[=A0 335.757582] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.764220] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.777721] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.784467] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.797842] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 335.804473] g_ether gadget: rndis req21.00 v0000 i0000 l36
-[=A0 335.810456] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER=A0=A0=
-=A0 =A0-> normal read
-[=A0 335.821753] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
-[=A0 348.741461] g_ether gadget: rndis req21.00 v0000 i0000 l12
-[=A0 348.766563] pch_udc 0000:05:02.4: ES=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 -> !!! not normal what is ES=
-!!!
-[=A0 348.770744] rndis_msg_parser: unknown RNDIS message 0x80000004 len=
- 28
-[=A0 348.777492] rndis_msg_parser00000000: 04 00 00 80 1c 00 00 00 d2 3=
-3 00 00 00 00 00 00=A0 .........3......
-[=A0 348.787334] rndis_msg_parser00000010: 04 00 00 00 10 00 00 00 41 0=
-0 00 00=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ........A...
-[=A0 348.796795] RNDIS command error -524, 0/12=A0=A0=A0=A0 =A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0-> result of E=
-S is a read error !?
-[=A0 348.801379] g_ether gadget: reset config
-[=A0 348.805549] g_ether gadget: rndis deactivated
-[=A0 348.810159] usb0: gether_disconnect
-[=A0 348.822880] pch_udc 0000:05:02.4: USB_RESET
-[=A0 348.910541] pch_udc 0000:05:02.4: pch_udc_ep_clear_nak: RxFIFO not=
- Empty
-[=A0 348.917637] pch_udc 0000:05:02.4: USB_ENUM
-[=A0 354.814204] pch_udc 0000:05:02.4: ES=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0 =A0=A0=A0=A0=A0-> my new friend is here and he never leaves.
-[ =A0354.818381] g_ether gadget: setup complete --> -108, 0/18
-[=A0 354.824112] pch_udc 0000:05:02.4: USB_RESET
-[=A0 354.828589] pch_udc 0000:05:02.4: USB_ENUM
-[=A0 360.794105] pch_udc 0000:05:02.4: ES
-[=A0 360.798288] g_ether gadget: setup complete --> -108, 0/18
-[=A0 360.804088] pch_udc 0000:05:02.4: USB_RESET
-[=A0 360.808587] pch_udc 0000:05:02.4: USB_ENUM
-[=A0 366.813821] pch_udc 0000:05:02.4: ES
-[=A0 366.817946] g_ether gadget: setup complete --> -108, 0/18
-[=A0 366.823648] pch_udc 0000:05:02.4: USB_RESET
-[=A0 366.828116] pch_udc 0000:05:02.4: USB_ENUM
-[=A0 372.293541] pch_udc 0000:05:02.4: ES
-[=A0 372.297414] g_ether gadget: suspend
-[=A0 372.304110] pch_udc 0000:05:02.4: USB_SUSPEND
-[=A0 372.581917] g_ether gadget: setup complete --> -108, 0/18
+The core of the application is a loop that calculates the time gap
+between the start of two consecutive loops using the rdtsc asm
+instruction, thus a similarity with the hwlat_detector kernel module for
+kernel analysis. At the end of its execution, npt computes latencies
+statistics for each loop and generates a histogram showing the different
+latencies reached and the number of time it reached each one.
 
-Ok. The pch_udc.c code tells me:
+This tool can be used to analyse and identify overhead of different
+realtime applications as we can compare the latencies in each loops and
+thus identify the added latency from a "blank" run. It is released
+LTTng-ready and can thus be easily traced. Next versions could include
+other userspace tracers ability.
 
-/* ES interrupt, IDLE > 3ms on the USB */
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (dev_intr & UDC_DEVINT=
-_ES)
-=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
-=A0=A0=A0=A0=A0=A0 dev_dbg(&dev->pdev->dev, "ES\n");
+Feedback, collaborations and contributions are welcome!
 
-Sebastian, =A0can you tell my more about ES interrupt?
-
-When I change the rt-config to low-latency-desktop (not RT) my ES frien=
-d comes never up an the gadget works well.
+Regards,
+Rapha=EBl Beamonte
 
 
-Greetings
+--lS6hG23oIGNS4FIqLSM83tHIUXlRTSpDg
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-Alexander
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.14 (GNU/Linux)
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+iQIcBAEBAgAGBQJSXEBvAAoJECV+8Ygg/tEowx8QAJJrYrd6LmhH4OMKlGer9vp8
+M0Lj2tXDCuAS6fij8SdE3JAcv37zSP6+k12YHTZDjX3UjOIqPGMJSVgjw249zuYr
+WIcFAcaNpEpZF3r3gNzsGDD/EbvM+HM7Sw5psed7VXSgq2a7v4C63kCVVKEzWsvy
+jfmDLy2TeiD5WVKRjdEsFSQFASFflEV+NaewFEZNT5ApfJlcZfAOpY9tapU6r8z+
+qHuQAeZ2DAEBz9+BNMpTKSVt4ycEeCdcGK0f9pwgfvI2wp3+TYsw/y6U+Cz8UMdQ
+byRtCj7K2VDNqk8vXgBGAKV60NQSO6wu6VrRH1YA/50cjMxjaTPTjqlzur2hkGK8
+PX6qM8k/oCs2sU1aDapV3cdn6DjIHva+c/dOgKkuQ8fQAS4WX4uXCJFXPrg4sIJ6
+WiDoM4wIMNBScThn/ztHnZRlja0rSWM6a7v09QIOitY03QiYqDG+VSUYyKi3rcz0
+rOZQ57Z6+89XLJOwZxe+UWkAPkwLg5w6xW+eHCcPuIEhG9+VnoiyeB8+k8r3o3po
+7GZxzTyp8lGqtnwWkF0wE1MeVeLPr/3/OAVwai9J/3R+D9Rx0/f07r5Cfd16ma2+
+9nbyQCd+8UAwBQTFjilWqfWFi2WAvxaBpQb4Bf7lcbOM9bDG4+OjF05zk320xD7r
+rkmA4vPeNdf9T1R8xTW9
+=rjm/
+-----END PGP SIGNATURE-----
+
+--lS6hG23oIGNS4FIqLSM83tHIUXlRTSpDg--
