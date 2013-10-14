@@ -1,71 +1,66 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: All 3.10.x rt patched kernels are unusable on my machine
-Date: Mon, 14 Oct 2013 12:36:05 +0200
-Message-ID: <1381746965.3978.27.camel@archlinux>
+From: Ivo Sieben <meltedpianoman@gmail.com>
+Subject: Re: [PATCH] genirq: Set the irq thread policy without checking CAP_SYS_NICE
+Date: Mon, 14 Oct 2013 12:49:07 +0200
+Message-ID: <CAMSQXEFfOwsyGM=6STY6k0hCjiJHtz8i8SgBuyX476Ak8+e1Ow@mail.gmail.com>
+References: <1381489240-29626-1-git-send-email-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Thomas Pfaff <tpfaff@pcs.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail234c50.megamailservers.eu ([91.136.10.244]:53321 "EHLO
-	mail37c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756406Ab3JNKsS (ORCPT
+Received: from mail-qe0-f44.google.com ([209.85.128.44]:50304 "EHLO
+	mail-qe0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755857Ab3JNKtI (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Oct 2013 06:48:18 -0400
-Received: from [85.182.18.195] (e182018195.adsl.alicedsl.de [85.182.18.195])
-	(authenticated bits=0)
-	by mail37c50.megamailservers.eu (8.13.6/8.13.1) with ESMTP id r9EAa5HQ020763
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Mon, 14 Oct 2013 10:36:09 +0000
+	Mon, 14 Oct 2013 06:49:08 -0400
+In-Reply-To: <1381489240-29626-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-
-non of the 3.10.x rt patched kernels does work on my machine.
-
-$ ls /usr/src/pkg-linux-rt/linux-rt-3*
-/usr/src/pkg-linux-rt/linux-rt-3.10.10_rt7-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.10.14_rt9-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.10.15_rt11-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.10.6_rt3-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.10.9_rt5-01-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.11_rt8-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt10-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt11-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt12-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt13-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt14-1-x86_64.pkg.tar.xz
-/usr/src/pkg-linux-rt/linux-rt-3.8.13_rt9-1-x86_64.pkg.tar.xz
-
-It's not only on my main install, Arch Linux 64-bit architecture, I
-verified the issue by building a 3.10.x rt patched kernel for Ubuntu
-64-bit architecture too.
-
-$ ls /mnt/q/boot/vmlinuz*
-/mnt/q/boot/vmlinuz-3.10.9-rt5  /mnt/q/boot/vmlinuz-3.5.0-18-lowlatency  /mnt/q/boot/vmlinuz-3.6.5-rt14
-
-There were no issues without the rt patch for 3.10 kernels and no issues
-with kernel versions < 3.10.x with and without rt patch.
-
-Usually login doesn't work from lightdm, sometimes it does work, but
-after a short while terminals hang and the prompt gets lost, switching
-to tty by Ctrl + Alt + F-keys then doesn't work.
-
-Last time I could login, I got
-
-$ cat .xsession-errors.rt11
-find: `/home/rocketmouse/.Xauthority.??????': No such file or directory
-weather-Message: getting
-http://api.yr.no/weatherapi/locationforecastlts/1.1/?lat=51.466702;lon=6.850000;msl=38
-PolicyKit daemon disconnected from the bus.
-We are no longer a registered authentication agent.
-xfce4-appfinder: Fatal IO error 11 (Resource temporarily unavailable) on
-X server :0.0.
-
-Any info needed about my hardware, from journalctl the kernel's config
-or something else?
+Patch looks OK to me.. but I'm not an expert.
 
 Regards,
-Ralf
+Ivo Sieben
 
+2013/10/11 Sebastian Andrzej Siewior <bigeasy@linutronix.de>:
+> From: Thomas Pfaff <tpfaff@pcs.com>
+>
+> In commit ee23871389 ("genirq: Set irq thread to RT priority on
+> creation") we moved the assigment of the thread's priority from the
+> thread's function into __setup_irq(). That function may run in user
+> context for instance if the user opens an UART node and then driver
+> calls requests in the ->open() callback. That user may not have
+> CAP_SYS_NICE and so the irq thread won't run with the SCHED_OTHER
+> policy.
+>
+> This patch uses sched_setscheduler_nocheck() so we omit the CAP_SYS_NICE
+> check which is otherwise required for the SCHED_OTHER policy.
+>
+> Cc: Ivo Sieben <meltedpianoman@gmail.com>
+> Cc: stable@vger.kernel.org
+> Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
+> [bigeasy: rewrite the changelog]
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  kernel/irq/manage.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+>
+> diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+> index 514bcfd..3e59f95 100644
+> --- a/kernel/irq/manage.c
+> +++ b/kernel/irq/manage.c
+> @@ -956,7 +956,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+>                         goto out_mput;
+>                 }
+>
+> -               sched_setscheduler(t, SCHED_FIFO, &param);
+> +               sched_setscheduler_nocheck(t, SCHED_FIFO, &param);
+>
+>                 /*
+>                  * We keep the reference to the task struct even if
+> --
+> 1.8.4.rc3
+>
