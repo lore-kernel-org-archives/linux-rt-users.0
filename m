@@ -1,114 +1,111 @@
-From: "Braud Caroline" <Caroline.Braud@univ-lille1.fr>
-Subject: Re: RT + comedi (dual boot ubuntu 9.10/debian 7.0)
-Date: Mon, 14 Oct 2013 13:11:56 +0200
-Message-ID: <3c67-525bd180-8f-4d3d4300@252202304>
-References: <52554911.4020109@nnytech.net>
+From: =?iso-8859-1?Q?H=E4nel-Baas=2C_Alexander?=
+	<alexander.haenel-baas@sieb-meyer.de>
+Subject: Re: CONFIG_PREEMPT_RT_FULL an usb gadget
+Date: Mon, 14 Oct 2013 14:26:51 +0000
+Message-ID: <9BA84827B30CBE4996725F98F7DC91232F974979@SMExchange01.siebmeyer.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=iso-8859-1
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: "Martin K" <martin@nnytech.net>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Sebastian Andrzej Siewior (bigeasy@linutronix.de)"
+	<bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp02.univ-lille1.fr ([193.49.225.20]:52082 "EHLO
-	smtp02.univ-lille1.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754652Ab3JNLMC convert rfc822-to-8bit (ORCPT
+Received: from smnotes1.sieb-meyer.de ([213.252.170.194]:49156 "EHLO
+	mail.sieb-meyer.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750804Ab3JNO0x convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Oct 2013 07:12:02 -0400
-in-reply-to: <52554911.4020109@nnytech.net>
+	Mon, 14 Oct 2013 10:26:53 -0400
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
- Thanks Martin K, I'll try that.
+Hello Sebastian,
+
+nice to hear from you.
+
+Yes I have disable ehci & ohci =A0with no changes.
+
+But=A0 the following dmesg shows the problem:
+
+[=A0 335.682365] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER      =
+-> normal read
+[=A0 335.693595] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.700148] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.713727] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.720236] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.733730] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.740482] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.746520] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER=A0 =A0=
+=A0-> normal read
+[=A0 335.757582] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.764220] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.777721] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.784467] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.797842] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 335.804473] g_ether gadget: rndis req21.00 v0000 i0000 l36
+[=A0 335.810456] gen_ndis_query_resp: RNDIS_OID_GEN_RCV_NO_BUFFER=A0=A0=
+=A0 =A0-> normal read
+[=A0 335.821753] g_ether gadget: rndis reqa1.01 v0000 i0000 l4096
+[=A0 348.741461] g_ether gadget: rndis req21.00 v0000 i0000 l12
+[=A0 348.766563] pch_udc 0000:05:02.4: ES=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 -> !!! not normal what is ES=
+!!!
+[=A0 348.770744] rndis_msg_parser: unknown RNDIS message 0x80000004 len=
+ 28
+[=A0 348.777492] rndis_msg_parser00000000: 04 00 00 80 1c 00 00 00 d2 3=
+3 00 00 00 00 00 00=A0 .........3......
+[=A0 348.787334] rndis_msg_parser00000010: 04 00 00 00 10 00 00 00 41 0=
+0 00 00=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 ........A...
+[=A0 348.796795] RNDIS command error -524, 0/12=A0=A0=A0=A0 =A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0-> result of E=
+S is a read error !?
+[=A0 348.801379] g_ether gadget: reset config
+[=A0 348.805549] g_ether gadget: rndis deactivated
+[=A0 348.810159] usb0: gether_disconnect
+[=A0 348.822880] pch_udc 0000:05:02.4: USB_RESET
+[=A0 348.910541] pch_udc 0000:05:02.4: pch_udc_ep_clear_nak: RxFIFO not=
+ Empty
+[=A0 348.917637] pch_udc 0000:05:02.4: USB_ENUM
+[=A0 354.814204] pch_udc 0000:05:02.4: ES=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0 =A0=A0=A0=A0=A0-> my new friend is here and he never leaves.
+[ =A0354.818381] g_ether gadget: setup complete --> -108, 0/18
+[=A0 354.824112] pch_udc 0000:05:02.4: USB_RESET
+[=A0 354.828589] pch_udc 0000:05:02.4: USB_ENUM
+[=A0 360.794105] pch_udc 0000:05:02.4: ES
+[=A0 360.798288] g_ether gadget: setup complete --> -108, 0/18
+[=A0 360.804088] pch_udc 0000:05:02.4: USB_RESET
+[=A0 360.808587] pch_udc 0000:05:02.4: USB_ENUM
+[=A0 366.813821] pch_udc 0000:05:02.4: ES
+[=A0 366.817946] g_ether gadget: setup complete --> -108, 0/18
+[=A0 366.823648] pch_udc 0000:05:02.4: USB_RESET
+[=A0 366.828116] pch_udc 0000:05:02.4: USB_ENUM
+[=A0 372.293541] pch_udc 0000:05:02.4: ES
+[=A0 372.297414] g_ether gadget: suspend
+[=A0 372.304110] pch_udc 0000:05:02.4: USB_SUSPEND
+[=A0 372.581917] g_ether gadget: setup complete --> -108, 0/18
+
+Ok. The pch_udc.c code tells me:
+
+/* ES interrupt, IDLE > 3ms on the USB */
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0 if (dev_intr & UDC_DEVINT=
+_ES)
+=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=A0=
+=A0=A0=A0=A0=A0=A0 dev_dbg(&dev->pdev->dev, "ES\n");
+
+Sebastian, =A0can you tell my more about ES interrupt?
+
+When I change the rt-config to low-latency-desktop (not RT) my ES frien=
+d comes never up an the gadget works well.
 
 
- =20
-Le Mercredi 9 Octobre 2013 14:16 CEST, Martin K <martin@nnytech.net> a =
-=C3=A9crit:=20
-=20
-> On 10/9/2013 3:47 AM, Braud Caroline wrote:
-> >   Hello,
-> >
-> > I'm back with my old distribution and I decided not to touch it any=
-more ...
-> > I will install RT with a more recent distrib in a separate computer=
-=2E
-> >
-> > Please can you advise me the most appropriate recent distribution t=
-o use the RT kernel and comedi drivers ?
-> > (if you have a step by step installation of the RT kernel, it would=
- be perfect !)
-> >
-> > Thanks,
-> > Karo
-> >  =20
-> >
->=20
-> Karo,
-> Recently I started with a fresh installation of Kubuntu version 13.04
->=20
-> I installed the source and header packages for the kernel version tha=
-t=20
-> came with 13.04. Also several packages were needed for building the =0D
-> kernel on Ubuntu I did not rebuild this kernel or use this kernel=20
-> version (keep reading).
-> See:
-> http://www.howtoforge.com/kernel_compilation_ubuntu
->=20
-> 1. I then looked up the latest released RT patch set on kernel.org:
-> https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/
->=20
-> 2. I downloaded
-> https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patches-3.10=
-=2E14-rt9.tar.bz2
->=20
-> 3. And the corresponding linux version (3.10.14)
-> https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.14.tar.bz2
->=20
-> 4. I unzipped both, putting the patches directory into the linux sour=
-ce dir
->=20
-> 5. I installed quilt and applied the patch series (from the linux-x.x=
-=2Ex/=20
-> directory) using the command:
-> quilt push -a
->=20
-> 6. I copied the default kernel configuration from the stock linux=20
-> version to use as a template:
-> cp /boot/config-`uname -r` ./.config
->=20
-> 7. Configure the kernel (enable RT PREEMPT)
-> make menuconfig
->=20
-> 8. Build the kernel
-> make-kpkg clean
-> fakeroot make-kpkg --initrd --append-to-version=3D-karo kernel_image=20
-> kernel_headers
->=20
-> 9. Install
-> cd ../
-> [look for kernel*dpkg here]
-> dpkg -i ...
->=20
-> 10. reboot and check to see if it worked.
->=20
-> ---
-> I welcome critique on my method. I am not a kernel developer.
->=20
-> One question I have, and I'm sorry for being ignorant:
-> - If I had wanted to apply the RT patch for linux 3.8.13.7, how do I =
-get=20
-> kernel source version 3.8.13.7?
-> There is no release that I'm aware of for this version, and I was una=
-ble=20
-> to find this in the kernel git repository. Was I looking in the wrong=
- one?
->=20
-> -
-> Martin Klingensmith
->=20
->=20
-=20
-=20
+Greetings
+
+Alexander
 
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
