@@ -1,165 +1,106 @@
-From: Aaron Fabbri <ajfabbri@gmail.com>
-Subject: Re: Non-Preempt Test v1.01
-Date: Tue, 15 Oct 2013 17:10:02 -0700
-Message-ID: <CAF+KLxu9HHqKuODhkSDSMdsGfPYd4Z9arnXE2JvP1v=t5btZtA@mail.gmail.com>
-References: <525C406A.5050000@gmail.com>
-	<CAF+KLxtaqEg9Z+cEwcALEHQ-D6kkKXbj0E100pTz5PxQKwd+0g@mail.gmail.com>
-	<525D8D6F.5000207@gmail.com>
+From: Henrik Austad <henrik@austad.us>
+Subject: Re: error: implicit =?utf-8?Q?declaration_?=
+ =?utf-8?B?b2YgZnVuY3Rpb24g4oCYZG9fc29mdGlyceKAmQ==?=
+Date: Thu, 17 Oct 2013 14:07:17 +0200
+Message-ID: <20131017120717.GA22364@austad.us>
+References: <CAMj341OaVOXvcjvw75CoKSF1=YaBcVHa026LQ8VY2KXyUtOBaw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, lttng-dev@lists.lttng.org,
-	lwn@lwn.net
-To: =?ISO-8859-1?Q?Rapha=EBl_Beamonte?= <raphael.beamonte@gmail.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="45Z9DzgjV8m4Oswq"
+Cc: linux-rt-users@vger.kernel.org
+To: Matthias =?iso-8859-1?Q?D=FCbon?= <matthias.duebon@ing-duebon.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pb0-f51.google.com ([209.85.160.51]:57460 "EHLO
-	mail-pb0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1759923Ab3JPAKD convert rfc822-to-8bit (ORCPT
+Received: from mail-la0-f44.google.com ([209.85.215.44]:57739 "EHLO
+	mail-la0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753373Ab3JQMH0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Oct 2013 20:10:03 -0400
-Received: by mail-pb0-f51.google.com with SMTP id jt11so6822pbb.24
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Oct 2013 17:10:03 -0700 (PDT)
-In-Reply-To: <525D8D6F.5000207@gmail.com>
+	Thu, 17 Oct 2013 08:07:26 -0400
+Received: by mail-la0-f44.google.com with SMTP id ep20so1463568lab.31
+        for <linux-rt-users@vger.kernel.org>; Thu, 17 Oct 2013 05:07:25 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <CAMj341OaVOXvcjvw75CoKSF1=YaBcVHa026LQ8VY2KXyUtOBaw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Cool.  Just FYI, did a quick run on two machines and got sane results
-(maximums near what I'd expect).  First is generic kernel, second is
--RT w/ NO_HZ_FULL & CPU isolation.
 
-1. Desktop (Ivy Bridge , default 3.8.0-31-generic ubuntu 13 kernel)
-$ sudo ./npt -n 100 -l 5234567890 -p 80 -e
-# CPU affinity set on CPU 1
-# Application priority set to 80
-# CPU frequency (evaluation): 2594.10 MHz
-# Running for 5234567890 loops.. Please wait.
-5234567890 loops done.
-Loops duration:
-        min:            0.004626 us
-        max:            303.812622 us
-        mean:           0.031345 us
-        sum:            164075829.870756 us
-        variance:       0.00079042 us
-        std dev:        0.028114 us
---------------------------
-duration (us)   nb. loops
---------------------------
-0               5234494969
-1               3629
-2               8119
-3               15105
-4               4112
-5               5200
-6               1013
-7               2176
-8               29702
-9               1929
-10              910
-11              309
-12              241
-13              179
-14              47
-15              23
-16              26
-17              22
-18              13
-19              18
-20              31
-21              48
-22              20
-23              6
-24              3
-25              5
-26              3
-27              4
-28              2
-29              4
-30              2
-31              4
-32              2
-33              2
-34              5
-35              1
-36              1
-39              1
-41              1
-48              1
-56              1
-303             1
---------------------------
-Overruns (1000000+): 0
+--45Z9DzgjV8m4Oswq
+Content-Type: text/plain; charset=utf-8
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, Oct 15, 2013 at 06:14:01PM +0200, Matthias D=C3=BCbon wrote:
+> Hello everyone,
+
+Hi,
+
+> I am just experimenting with the RT preempt patch
+> patch-3.10.15-rt11.patch.bz2 and a 3.10.16 kernel for x86 architecture
+> with a "standard" .config file.
+
+Standard as in 'make defconfig' or standard as in 'what my distro uses'?
+
+> I configured CONFIG_PREEMPT_RT_FULL=3Dy
+>=20
+> when building the kernel I got the following error:
+>=20
+> "kernel/softirq.c: In function =E2=80=98invoke_softirq=E2=80=99:
+> kernel/softirq.c:710:3: error: implicit declaration of function
+> =E2=80=98do_softirq=E2=80=99 [-Werror=3Dimplicit-function-declaration]"
+>=20
+> Is this related to my kernel configuration?
+
+Not easy to say without the actual .config.
+
+However, I did note one thing. You are using the preempt-rt patch for=20
+3.10.15 and you apply it to 3.10.16 (or was that a typo?)
+
+When I try to do the same thing; lo and behold, I get a reject in=20
+kernel/softirq.c.
+
+$ cat kernel/softirq.c.rej=20
+--- kernel/softirq.c
++++ kernel/softirq.c
+@@ -698,10 +1066,20 @@
+=20
+ static inline void invoke_softirq(void)
+ {
++#ifndef CONFIG_PREEMPT_RT_FULL
+        if (!force_irqthreads)
+                __do_softirq();
+        else
+                wakeup_softirqd();
++#else /* PREEMPT_RT_FULL */
++       unsigned long flags;
++
++       local_irq_save(flags);
++       if (__this_cpu_read(ksoftirqd) &&
++           __this_cpu_read(ksoftirqd)->softirqs_raised)
++               wakeup_softirqd();
++       local_irq_restore(flags);
++#endif
+ }
+=20
+ static inline void tick_irq_exit(void)
 
 
-2. Server (3.10.10-rt7, isolcpus / NO_HZ_FULL / rcu thread offloading
-/ ftrace built, not enabled)
+Do you see anything suspicious here? :)
 
-$ sudo ./npt -n 100 -a 10 -l 5234567890 -p80
-# CPU affinity set on CPU 10
-# Application priority set to 80
-# CPU frequency (/proc/cpuinfo): 1995.18 MHz
-# Running for 5234567890 loops.. Please wait.
-5234567890 loops done.
-Loops duration:
-        min:            0.014034 us
-        max:            31.275311 us
-        mean:           0.024035 us
-        sum:            125811537.493472 us
-        variance:       0.000198279 us
-        std dev:        0.014081 us
---------------------------
-duration (us)   nb. loops
---------------------------
-0               5234536424
-1               9870
-2               7926
-3               2048
-4               200
-5               30
-6               22
-7               1491
-8               8666
-9               307
-10              330
-11              31
-12              1
-14              5
-15              19
-16              103
-17              308
-18              11
-22              7
-23              25
-24              63
-25              1
-31              2
---------------------------
-Overruns (1000000+): 0
+Try to use v3.10.15 and recompile. I think that'll work a bit better.
 
 
-To generate a little load I just did this during both tests:
-$ sudo find / -type f -exec md5sum "{}" \; > /dev/null 2>&1
+--=20
+Henrik Austad
 
-As well as
-$ sudo ping -i 0.001 localhost
+--45Z9DzgjV8m4Oswq
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
 
-On Tue, Oct 15, 2013 at 11:46 AM, Rapha=EBl Beamonte
-<raphael.beamonte@gmail.com> wrote:
-> On 2013-10-14 18:04, Aaron Fabbri wrote:
->> Thanks for sharing this, will check it out if I get a chance.  Do yo=
-u
->> have a http git url that I can clone?  I'm behind a firewall.
->
-> Hello Aaron,
->
-> Thanks for your interest!
-> It is now possible to clone the repository using http:
->         git clone http://git.dorsal.polymtl.ca/git/npt.git
->
-> Regards,
-> Rapha=EBl
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+iEYEARECAAYFAlJf0vUACgkQ6k5VT6v45lmTOQCeLrMuZ5Og3XpbFbz4u7aKvGbX
+DTAAn1JKRZfytBbKE9qAyp+k0qtMTUkb
+=j6gs
+-----END PGP SIGNATURE-----
+
+--45Z9DzgjV8m4Oswq--
