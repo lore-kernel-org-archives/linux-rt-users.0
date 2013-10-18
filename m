@@ -1,106 +1,72 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: error: implicit =?utf-8?Q?declaration_?=
- =?utf-8?B?b2YgZnVuY3Rpb24g4oCYZG9fc29mdGlyceKAmQ==?=
-Date: Thu, 17 Oct 2013 14:07:17 +0200
-Message-ID: <20131017120717.GA22364@austad.us>
-References: <CAMj341OaVOXvcjvw75CoKSF1=YaBcVHa026LQ8VY2KXyUtOBaw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.10.9-rt5 with Atmel AT91SAM9G25 SoC triggers "Trying to free
+ already-free IRQ 1"
+Date: Fri, 18 Oct 2013 16:03:47 +0200
+Message-ID: <20131018140346.GA14569@linutronix.de>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA67E950BA@edb1.wapice.localdomain>
+ <aa8bdc572d2b3fc1f5c1c92293990143-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1FTQ11bSSoDXF1RQFtXWAhY-webmailer2@server02.webmailer.hosteurope.de>
+ <20131011100951.GC6983@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="45Z9DzgjV8m4Oswq"
-Cc: linux-rt-users@vger.kernel.org
-To: Matthias =?iso-8859-1?Q?D=FCbon?= <matthias.duebon@ing-duebon.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sami =?utf-8?Q?Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f44.google.com ([209.85.215.44]:57739 "EHLO
-	mail-la0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753373Ab3JQMH0 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:40761 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755994Ab3JRODs convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Oct 2013 08:07:26 -0400
-Received: by mail-la0-f44.google.com with SMTP id ep20so1463568lab.31
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Oct 2013 05:07:25 -0700 (PDT)
+	Fri, 18 Oct 2013 10:03:48 -0400
 Content-Disposition: inline
-In-Reply-To: <CAMj341OaVOXvcjvw75CoKSF1=YaBcVHa026LQ8VY2KXyUtOBaw@mail.gmail.com>
+In-Reply-To: <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+* Sami Pietik=C3=A4inen | 2013-10-14 07:24:20 [+0000]:
 
---45Z9DzgjV8m4Oswq
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+>Hello Sebastian
+Hello Sami,
 
-On Tue, Oct 15, 2013 at 06:14:01PM +0200, Matthias D=C3=BCbon wrote:
-> Hello everyone,
+>>The problem does not look -RT specific.
+>
+>I would say that at least the "Trying to free already-free IRQ 1" warn=
+ing is somehow -RT specific. When I tested the 3.6.9 kernel without the=
+ RT patch there were no warnings (using SAMA5D35). The same warning Mic=
+hael is having appeared only after applying the patch. However, the oth=
+er problems Michael is having might also be something else.
+>
+>>I don't understand why uart tries over and over to request that inter=
+rupt but it simply doesn't work.
+>>I am a little confused why at91 is having everything (or more than on=
+e
+>>device) is on irq 16. It should have only one device on each interrup=
+t since they have usually dedicated irq lines.
+>
+>arm-at91-tclib-default-to-tclib-timer-for-rt.patch has the following c=
+omment:
+>"RT is not too happy about the shared timer interrupt in AT91
+>devices. Default to tclib timer for RT."
+>
+>Snippet from SAMA5D35 datasheet:
+>"Usually, the Debug Unit interrupt line connects to the interrupt sour=
+ce 1 of the AIC, which may be shared with the real-time clock, the syst=
+em timer interrupt lines and other system peripheral interrupts"
+>
+>The debug unit also has UART which is probably Michael's ttyS0.
 
-Hi,
+Argh. I missed that detail. So that explains why UART and the timer
+share the same interrupt number. Is that timer really disabled in your
+config?
 
-> I am just experimenting with the RT preempt patch
-> patch-3.10.15-rt11.patch.bz2 and a 3.10.16 kernel for x86 architecture
-> with a "standard" .config file.
+>
+>BR,
+>Sami
 
-Standard as in 'make defconfig' or standard as in 'what my distro uses'?
-
-> I configured CONFIG_PREEMPT_RT_FULL=3Dy
->=20
-> when building the kernel I got the following error:
->=20
-> "kernel/softirq.c: In function =E2=80=98invoke_softirq=E2=80=99:
-> kernel/softirq.c:710:3: error: implicit declaration of function
-> =E2=80=98do_softirq=E2=80=99 [-Werror=3Dimplicit-function-declaration]"
->=20
-> Is this related to my kernel configuration?
-
-Not easy to say without the actual .config.
-
-However, I did note one thing. You are using the preempt-rt patch for=20
-3.10.15 and you apply it to 3.10.16 (or was that a typo?)
-
-When I try to do the same thing; lo and behold, I get a reject in=20
-kernel/softirq.c.
-
-$ cat kernel/softirq.c.rej=20
---- kernel/softirq.c
-+++ kernel/softirq.c
-@@ -698,10 +1066,20 @@
-=20
- static inline void invoke_softirq(void)
- {
-+#ifndef CONFIG_PREEMPT_RT_FULL
-        if (!force_irqthreads)
-                __do_softirq();
-        else
-                wakeup_softirqd();
-+#else /* PREEMPT_RT_FULL */
-+       unsigned long flags;
-+
-+       local_irq_save(flags);
-+       if (__this_cpu_read(ksoftirqd) &&
-+           __this_cpu_read(ksoftirqd)->softirqs_raised)
-+               wakeup_softirqd();
-+       local_irq_restore(flags);
-+#endif
- }
-=20
- static inline void tick_irq_exit(void)
-
-
-Do you see anything suspicious here? :)
-
-Try to use v3.10.15 and recompile. I think that'll work a bit better.
-
-
---=20
-Henrik Austad
-
---45Z9DzgjV8m4Oswq
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iEYEARECAAYFAlJf0vUACgkQ6k5VT6v45lmTOQCeLrMuZ5Og3XpbFbz4u7aKvGbX
-DTAAn1JKRZfytBbKE9qAyp+k0qtMTUkb
-=j6gs
------END PGP SIGNATURE-----
-
---45Z9DzgjV8m4Oswq--
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
