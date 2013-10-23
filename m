@@ -1,40 +1,46 @@
-From: Viresh Kumar <viresh.kumar@linaro.org>
-Subject: Re: [PATCH V2 Resend 4/4] timer: Migrate running timer
-Date: Wed, 23 Oct 2013 11:25:49 +0530
-Message-ID: <CAKohpoksr+E6X1AWpROBxGvasXQ5zXHqKM7Xr7QFO=tzkEkoWQ@mail.gmail.com>
-References: <CAKohponv-AKZzM98Ujeek4oXQx+8ba+sMgMbM9eV8PgQR38kZw@mail.gmail.com>
-	<CAKohpo=St0z0L9ei248s3KL_DqZtewQ50o7d=BTdwLFcpM+x3w@mail.gmail.com>
-	<CAKohpo=0r=HY5w-XqnXv42eSJcH08C47J+TqWn7vY1aNBhGT_A@mail.gmail.com>
-	<CAKohpo=eAGVA540jN8+t0aaqCV9qJRkH0q9-q6QVUYusWQqSYw@mail.gmail.com>
-	<alpine.LFD.2.02.1305131223470.2863@ionos>
-	<CAKohpokfKPQ3EhMf3WB8koXuH2rF6QoejwNOTw08X+XfnVhpEg@mail.gmail.com>
-	<CAKohpomoSHS0wSCBrJApZuSTr9fbm2py6WdNg1MNzRWjb55Y_Q@mail.gmail.com>
-	<CAKohpon0dC6O_QBXnbyxUOO0DcrRxTzFkZSJNh6VrNL5kzT66Q@mail.gmail.com>
-	<CAKohpomGSoU5VOcrbonD1=NE-6xDVr+pveAmuXdrzjmLotmEug@mail.gmail.com>
-	<CAKohpokzTj-=2BgrAH4UabiCAe_sZXhdyKu1L-VDnYBJ97BAyA@mail.gmail.com>
-	<20131004123928.GD19953@linutronix.de>
+From: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>
+Subject: RE: 3.10.9-rt5 with Atmel AT91SAM9G25 SoC triggers "Trying to free
+ already-free IRQ 1"
+Date: Wed, 23 Oct 2013 12:19:01 +0000
+Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA67ECB109@edb1.wapice.localdomain>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA67E950BA@edb1.wapice.localdomain>
+ <aa8bdc572d2b3fc1f5c1c92293990143-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1FTQ11bSSoDXF1RQFtXWAhY-webmailer2@server02.webmailer.hosteurope.de>
+ <20131011100951.GC6983@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
+ <20131018140346.GA14569@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Paul McKenney <paul.mckenney@linaro.org>,
-	Tejun Heo <tj@kernel.org>, Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Arvind Chauhan <Arvind.Chauhan@arm.com>,
-	Lists linaro-dev <linaro-dev@lists.linaro.org>,
-	Patch Tracking <patches@linaro.org>,
-	PDSW-power-team <pdsw-power-team@arm.com>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org,
-	John Stultz <john.stultz@linaro.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131004123928.GD19953@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wapice.fi ([81.209.51.2]:38865 "EHLO brando.wapice.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752425Ab3JWMTI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Oct 2013 08:19:08 -0400
+In-Reply-To: <20131018140346.GA14569@linutronix.de>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 4 October 2013 18:09, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> tglx, could you please take a look at this patch / thread?
-
-Thomas, Ping!!
+DQo+QXJnaC4gSSBtaXNzZWQgdGhhdCBkZXRhaWwuIFNvIHRoYXQgZXhwbGFpbnMgd2h5IFVBUlQg
+YW5kIHRoZSB0aW1lciBzaGFyZSB0aGUgc2FtZSBpbnRlcnJ1cHQgbnVtYmVyLiBJcyB0aGF0IHRp
+bWVyIHJlYWxseSBkaXNhYmxlZCBpbiB5b3VyIGNvbmZpZz8NCj4NCj5TZWJhc3RpYW4NCg0KSGVy
+ZSBhcmUgY291cGxlIG9mIHNuaXBwZXRzIGZyb20gbXkgLmNvbmZpZyBmaWxlIHRoYXQgbWlnaHQg
+YmUgbWVhbmluZ2Z1bCBmb3IgdGhpcyBpc3N1ZToNCkNPTkZJR19USUNLX09ORVNIT1Q9eQ0KIyBD
+T05GSUdfTk9fSFogaXMgbm90IHNldA0KQ09ORklHX0hJR0hfUkVTX1RJTUVSUz15DQpDT05GSUdf
+R0VORVJJQ19DTE9DS0VWRU5UUz15DQpDT05GSUdfR0VORVJJQ19DTE9DS0VWRU5UU19CVUlMRD15
+DQpDT05GSUdfQVRNRUxfVENMSUI9eQ0KQ09ORklHX0FUTUVMX1RDQl9DTEtTUkM9eQ0KQ09ORklH
+X0FUTUVMX1RDQl9DTEtTUkNfQkxPQ0s9MQ0KIyBDT05GSUdfQVRNRUxfVENCX0NMS1NSQ19VU0Vf
+U0xPV19DTE9DSyBpcyBub3Qgc2V0DQpDT05GSUdfUlRDX0RSVl9BVDkxUk05MjAwPXkNCg0KVGhl
+IGtlcm5lbCBwcm9iYWJseSB1c2VzIHRoZSBwZXJpcGhlcmFsIGludGVycnVwdCB0aW1lciBkdXJp
+bmcgdGhlIGVhcmx5IGJvb3QgKGFuZCB0aGVyZWZvcmUgYWxzbyB0aGUgc2hhcmVkIGlycSk/IA0K
+QXQgbGVhc3QgdGhlcmUgaXMgICJbICAgIDAuMTgwMDAwXSBTd2l0Y2hpbmcgdG8gY2xvY2tzb3Vy
+Y2UgdGNiX2Nsa3NyYyIgcHJpbnQgbGF0ZXIgZHVyaW5nIHRoZSBib290Lg0KDQpJIGFjdHVhbGx5
+IGZvdW5kIGEgbmV3IGNsdWUgYWJvdXQgdGhpcyBpc3N1ZS4gDQoNCklmIEkgZG9uJ3QgcGF0Y2gg
+dGhlIGF0OTFzYW05MjZ4X3RpbWUuYyAoYXJtLWF0OTEtcGl0LXJlbW92ZS1pcnEtaGFuZGxlci13
+aGVuLWNsb2NrLWlzLXVudXNlZC5wYXRjaCksIA0KdGhlcmUgYXJlIG5vIGJvb3Qgd2FybmluZ3Mg
+d2l0aCB0aGUgMy42LjktcnQyMSBrZXJuZWwuIEkgc3RpbGwgbmVlZCB0byB0ZXN0IGlmIHRoaXMg
+YWxzbyBoZWxwcyB3aXRoIHRoZSBwcm9ibGVtcyANCndpdGggMy4xMC54IGtlcm5lbCAoc2FtZSB3
+YXJuaW5ncyArIGJvb3QgaGFuZ3MpLg0KDQpCUiwNClNhbWkgUGlldGlrw6RpbmVuDQo=
