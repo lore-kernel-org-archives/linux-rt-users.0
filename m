@@ -1,34 +1,52 @@
-From: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
-Subject: Why isn't there individual CONFIG in CONFIG_PREEMPT_RT_FULL?
-Date: Thu, 24 Oct 2013 21:43:14 +0900
-Message-ID: <526915E2.4040809@hitachi.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.8.13.9-rt20
+Date: Thu, 24 Oct 2013 11:53:51 -0400
+Message-ID: <1382630031.5283.26.camel@pippen.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-2022-JP
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: "Sampath, Pradyumna" <pradyumna@hitachi.co.in>
-To: linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
-	bigeasy@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from fallback.hitachi.co.jp ([133.145.228.50]:51615 "EHLO
-	mailxx.hitachi.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754995Ab3JXMp2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 24 Oct 2013 08:45:28 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
 
-I recently started to look at PREEMPT_RT patches(3.10.14-rt9) and I
-have a question.
+Dear RT Folks,
 
-CONFIG_PREEMPT_RT_FULL consists of many patches. I think it doesn't
-represent specific feature but is general term of various features.
-Why don't those features have each CONFIG_* ?
+I'm pleased to announce the 3.8.13.9-rt20 stable release.
 
-Best regards,
--- 
-Hiraku TOYOOKA
-Linux Technology Center
-Yokohama Research Laboratory
-Hitachi Ltd.
+
+This release is just an update to the new stable 3.8.13.9 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.8-rt
+  Head SHA1: 492b96082c7baa1f750239d431a2ca38a5c4d5e5
+492b96082c7baa1f750239d431a2ca38a5c4d5e5
+
+
+Or to build 3.8.13.9-rt20 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/stable/patch-3.8.13.9.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.9-rt20.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
