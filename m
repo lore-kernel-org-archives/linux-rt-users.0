@@ -1,46 +1,34 @@
-From: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>
-Subject: RE: 3.10.9-rt5 with Atmel AT91SAM9G25 SoC triggers "Trying to free
- already-free IRQ 1"
-Date: Wed, 23 Oct 2013 12:19:01 +0000
-Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA67ECB109@edb1.wapice.localdomain>
-References: <EBD2DE4ADA47B94E831AED12A4B0CADA67E950BA@edb1.wapice.localdomain>
- <aa8bdc572d2b3fc1f5c1c92293990143-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1FTQ11bSSoDXF1RQFtXWAhY-webmailer2@server02.webmailer.hosteurope.de>
- <20131011100951.GC6983@linutronix.de>
- <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
- <20131018140346.GA14569@linutronix.de>
+From: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
+Subject: Why isn't there individual CONFIG in CONFIG_PREEMPT_RT_FULL?
+Date: Thu, 24 Oct 2013 21:43:14 +0900
+Message-ID: <526915E2.4040809@hitachi.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=ISO-2022-JP
+Content-Transfer-Encoding: 7bit
+Cc: "Sampath, Pradyumna" <pradyumna@hitachi.co.in>
+To: linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
+	bigeasy@linutronix.de, Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wapice.fi ([81.209.51.2]:38865 "EHLO brando.wapice.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752425Ab3JWMTI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Oct 2013 08:19:08 -0400
-In-Reply-To: <20131018140346.GA14569@linutronix.de>
-Content-Language: en-US
+Received: from fallback.hitachi.co.jp ([133.145.228.50]:51615 "EHLO
+	mailxx.hitachi.co.jp" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754995Ab3JXMp2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Oct 2013 08:45:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-DQo+QXJnaC4gSSBtaXNzZWQgdGhhdCBkZXRhaWwuIFNvIHRoYXQgZXhwbGFpbnMgd2h5IFVBUlQg
-YW5kIHRoZSB0aW1lciBzaGFyZSB0aGUgc2FtZSBpbnRlcnJ1cHQgbnVtYmVyLiBJcyB0aGF0IHRp
-bWVyIHJlYWxseSBkaXNhYmxlZCBpbiB5b3VyIGNvbmZpZz8NCj4NCj5TZWJhc3RpYW4NCg0KSGVy
-ZSBhcmUgY291cGxlIG9mIHNuaXBwZXRzIGZyb20gbXkgLmNvbmZpZyBmaWxlIHRoYXQgbWlnaHQg
-YmUgbWVhbmluZ2Z1bCBmb3IgdGhpcyBpc3N1ZToNCkNPTkZJR19USUNLX09ORVNIT1Q9eQ0KIyBD
-T05GSUdfTk9fSFogaXMgbm90IHNldA0KQ09ORklHX0hJR0hfUkVTX1RJTUVSUz15DQpDT05GSUdf
-R0VORVJJQ19DTE9DS0VWRU5UUz15DQpDT05GSUdfR0VORVJJQ19DTE9DS0VWRU5UU19CVUlMRD15
-DQpDT05GSUdfQVRNRUxfVENMSUI9eQ0KQ09ORklHX0FUTUVMX1RDQl9DTEtTUkM9eQ0KQ09ORklH
-X0FUTUVMX1RDQl9DTEtTUkNfQkxPQ0s9MQ0KIyBDT05GSUdfQVRNRUxfVENCX0NMS1NSQ19VU0Vf
-U0xPV19DTE9DSyBpcyBub3Qgc2V0DQpDT05GSUdfUlRDX0RSVl9BVDkxUk05MjAwPXkNCg0KVGhl
-IGtlcm5lbCBwcm9iYWJseSB1c2VzIHRoZSBwZXJpcGhlcmFsIGludGVycnVwdCB0aW1lciBkdXJp
-bmcgdGhlIGVhcmx5IGJvb3QgKGFuZCB0aGVyZWZvcmUgYWxzbyB0aGUgc2hhcmVkIGlycSk/IA0K
-QXQgbGVhc3QgdGhlcmUgaXMgICJbICAgIDAuMTgwMDAwXSBTd2l0Y2hpbmcgdG8gY2xvY2tzb3Vy
-Y2UgdGNiX2Nsa3NyYyIgcHJpbnQgbGF0ZXIgZHVyaW5nIHRoZSBib290Lg0KDQpJIGFjdHVhbGx5
-IGZvdW5kIGEgbmV3IGNsdWUgYWJvdXQgdGhpcyBpc3N1ZS4gDQoNCklmIEkgZG9uJ3QgcGF0Y2gg
-dGhlIGF0OTFzYW05MjZ4X3RpbWUuYyAoYXJtLWF0OTEtcGl0LXJlbW92ZS1pcnEtaGFuZGxlci13
-aGVuLWNsb2NrLWlzLXVudXNlZC5wYXRjaCksIA0KdGhlcmUgYXJlIG5vIGJvb3Qgd2FybmluZ3Mg
-d2l0aCB0aGUgMy42LjktcnQyMSBrZXJuZWwuIEkgc3RpbGwgbmVlZCB0byB0ZXN0IGlmIHRoaXMg
-YWxzbyBoZWxwcyB3aXRoIHRoZSBwcm9ibGVtcyANCndpdGggMy4xMC54IGtlcm5lbCAoc2FtZSB3
-YXJuaW5ncyArIGJvb3QgaGFuZ3MpLg0KDQpCUiwNClNhbWkgUGlldGlrw6RpbmVuDQo=
+Hello,
+
+I recently started to look at PREEMPT_RT patches(3.10.14-rt9) and I
+have a question.
+
+CONFIG_PREEMPT_RT_FULL consists of many patches. I think it doesn't
+represent specific feature but is general term of various features.
+Why don't those features have each CONFIG_* ?
+
+Best regards,
+-- 
+Hiraku TOYOOKA
+Linux Technology Center
+Yokohama Research Laboratory
+Hitachi Ltd.
