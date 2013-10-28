@@ -1,29 +1,67 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: All 3.10.x rt patched kernels are unusable on my machine
-Date: Sun, 27 Oct 2013 22:57:15 +0100
-Message-ID: <1382911035.1058.5.camel@archlinux>
-References: <1381746965.3978.27.camel@archlinux>
-	 <20131025174537.GA21841@linutronix.de> <1382727082.656.24.camel@archlinux>
-	 <20131025201428.GC21841@linutronix.de> <1382732735.656.56.camel@archlinux>
-	 <526AF010.9080002@linutronix.de>
+From: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>
+Subject: RE: 3.10.9-rt5 with Atmel AT91SAM9G25 SoC triggers "Trying to free
+ already-free IRQ 1"
+Date: Mon, 28 Oct 2013 13:59:53 +0000
+Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA67ECF09C@edb1.wapice.localdomain>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA67E950BA@edb1.wapice.localdomain>
+ <aa8bdc572d2b3fc1f5c1c92293990143-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1FTQ11bSSoDXF1RQFtXWAhY-webmailer2@server02.webmailer.hosteurope.de>
+ <20131011100951.GC6983@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
+ <20131018140346.GA14569@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67ECB109@edb1.wapice.localdomain>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail229c50.megamailservers.eu ([91.136.10.239]:55215 "EHLO
-	mail36c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754507Ab3J0V52 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Oct 2013 17:57:28 -0400
-In-Reply-To: <526AF010.9080002@linutronix.de>
+Received: from wapice.fi ([81.209.51.2]:4817 "EHLO brando.wapice.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1756441Ab3J1N77 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 28 Oct 2013 09:59:59 -0400
+In-Reply-To: <EBD2DE4ADA47B94E831AED12A4B0CADA67ECB109@edb1.wapice.localdomain>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-JFTR after switching from the radeon to the vesa driver
-        - for X sessions nothing changed
-        - without starting X no prompt to log in appears
-Regards,
-Ralf
-
+SXQgc2VlbXMgdGhhdCB0aGVyZSBpcyBhbiBpcnEgbnVtYmVyIG1pc21hdGNoIGluIHRoZSAiYXJt
+LWF0OTEtcGl0LXJlbW92ZS1pcnEtaGFuZGxlci13aGVuLWNsb2NrLWlzLXVudXNlZC5wYXRjaCIu
+DQpUaGUgcGF0Y2ggYWRkcyBzZXR1cF9pcnEoKSBhbmQgcmVtb3ZlX2lycSgpIGNhbGxzIHdoaWNo
+IGhhdmUgZGlmZmVyZW50IGlycSBudW1iZXIgdGhhbiB0aGUgYmFzZSBkcml2ZXIuDQoNCklmIEkn
+bSBjb3JyZWN0LCB0aGUgaXJxIG51bWJlciBzaG91bGQgYmUgTlJfSVJRU19MRUdBQ1kgKyBBVDkx
+X0lEX1NZUyBpbnN0ZWFkIG9mIG9ubHkgQVQ5MV9JRF9TWVMuDQoNCkkgaGF2ZSBhdHRhY2hlZCBh
+IGZpeGVkIHBhdGNoIGZvciAzLjYuOS1ydDIxLiBJIHRlc3RlZCBpdCB3aXRoIFNBTUE1RDM1LCBh
+bmQgaXQgcmVtb3ZlZCB0aGUgDQoiVHJ5aW5nIHRvIGZyZWUgYWxyZWFkeS1mcmVlIElSUSAxIiBi
+b290IHdhcm5pbmdzLg0KDQpCUiwNClNhbWkgUGlldGlrw6RpbmVuDQoNCkluZGV4OiBsaW51eC1z
+dGFibGUvYXJjaC9hcm0vbWFjaC1hdDkxL2F0OTFybTkyMDBfdGltZS5jDQo9PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09DQot
+LS0gbGludXgtc3RhYmxlLm9yaWcvYXJjaC9hcm0vbWFjaC1hdDkxL2F0OTFybTkyMDBfdGltZS5j
+DQorKysgbGludXgtc3RhYmxlL2FyY2gvYXJtL21hY2gtYXQ5MS9hdDkxcm05MjAwX3RpbWUuYw0K
+QEAgLTEzMCw2ICsxMzAsNyBAQCBjbGtldnQzMmtfbW9kZShlbnVtIGNsb2NrX2V2ZW50X21vZGUg
+bW9kDQogCQlicmVhazsNCiAJY2FzZSBDTE9DS19FVlRfTU9ERV9TSFVURE9XTjoNCiAJY2FzZSBD
+TE9DS19FVlRfTU9ERV9VTlVTRUQ6DQorCQlyZW1vdmVfaXJxKE5SX0lSUVNfTEVHQUNZICsgQVQ5
+MV9JRF9TWVMsICZhdDkxcm05MjAwX3RpbWVyX2lycSk7DQogCWNhc2UgQ0xPQ0tfRVZUX01PREVf
+UkVTVU1FOg0KIAkJaXJxbWFzayA9IDA7DQogCQlicmVhazsNCkluZGV4OiBsaW51eC1zdGFibGUv
+YXJjaC9hcm0vbWFjaC1hdDkxL2F0OTFzYW05MjZ4X3RpbWUuYw0KPT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KLS0tIGxp
+bnV4LXN0YWJsZS5vcmlnL2FyY2gvYXJtL21hY2gtYXQ5MS9hdDkxc2FtOTI2eF90aW1lLmMNCisr
+KyBsaW51eC1zdGFibGUvYXJjaC9hcm0vbWFjaC1hdDkxL2F0OTFzYW05MjZ4X3RpbWUuYw0KQEAg
+LTY3LDcgKzY3LDcgQEAgc3RhdGljIHN0cnVjdCBjbG9ja3NvdXJjZSBwaXRfY2xrID0gew0KIAku
+ZmxhZ3MJCT0gQ0xPQ0tfU09VUkNFX0lTX0NPTlRJTlVPVVMsDQogfTsNCiANCi0NCitzdGF0aWMg
+c3RydWN0IGlycWFjdGlvbiBhdDkxc2FtOTI2eF9waXRfaXJxOw0KIC8qDQogICogQ2xvY2tldmVu
+dCBkZXZpY2U6ICBpbnRlcnJ1cHRzIGV2ZXJ5IDEvSFogKD09IHBpdF9jeWNsZXMgKiBNQ0svMTYp
+DQogICovDQpAQCAtNzYsNiArNzYsOCBAQCBwaXRfY2xrZXZ0X21vZGUoZW51bSBjbG9ja19ldmVu
+dF9tb2RlIG1vDQogew0KIAlzd2l0Y2ggKG1vZGUpIHsNCiAJY2FzZSBDTE9DS19FVlRfTU9ERV9Q
+RVJJT0RJQzoNCisJCS8qIFNldCB1cCBpcnEgaGFuZGxlciAqLw0KKwkJc2V0dXBfaXJxKGF0OTFz
+YW05MjZ4X3BpdF9pcnEuaXJxLCAmYXQ5MXNhbTkyNnhfcGl0X2lycSk7DQogCQkvKiB1cGRhdGUg
+Y2xvY2tzb3VyY2UgY291bnRlciAqLw0KIAkJcGl0X2NudCArPSBwaXRfY3ljbGUgKiBQSVRfUElD
+TlQocGl0X3JlYWQoQVQ5MV9QSVRfUElWUikpOw0KIAkJcGl0X3dyaXRlKEFUOTFfUElUX01SLCAo
+cGl0X2N5Y2xlIC0gMSkgfCBBVDkxX1BJVF9QSVRFTg0KQEAgLTg4LDYgKzkwLDcgQEAgcGl0X2Ns
+a2V2dF9tb2RlKGVudW0gY2xvY2tfZXZlbnRfbW9kZSBtbw0KIAljYXNlIENMT0NLX0VWVF9NT0RF
+X1VOVVNFRDoNCiAJCS8qIGRpc2FibGUgaXJxLCBsZWF2aW5nIHRoZSBjbG9ja3NvdXJjZSBhY3Rp
+dmUgKi8NCiAJCXBpdF93cml0ZShBVDkxX1BJVF9NUiwgKHBpdF9jeWNsZSAtIDEpIHwgQVQ5MV9Q
+SVRfUElURU4pOw0KKwkJcmVtb3ZlX2lycShhdDkxc2FtOTI2eF9waXRfaXJxLmlycSwgJmF0OTFz
+YW05MjZ4X3BpdF9pcnEpOw0KIAkJYnJlYWs7DQogCWNhc2UgQ0xPQ0tfRVZUX01PREVfUkVTVU1F
+Og0KIAkJYnJlYWs7DQoNCg0K
