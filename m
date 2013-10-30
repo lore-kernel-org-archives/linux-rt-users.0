@@ -1,42 +1,41 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.10.17-rt12
-Date: Mon, 28 Oct 2013 23:38:09 +0100
-Message-ID: <20131028223808.GA8631@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: workqueue realtime priority
+Date: Wed, 30 Oct 2013 10:08:46 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1310301002450.19212@ionos.tec.linutronix.de>
+References: <9B7F15AA4177464A8FAB5BE79B14288B889580FE@vistrex4.vi.vector.int>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Frederich, Jens" <Jens.Frederich@vector.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:59656 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750880Ab3J3JIu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 30 Oct 2013 05:08:50 -0400
+In-Reply-To: <9B7F15AA4177464A8FAB5BE79B14288B889580FE@vistrex4.vi.vector.int>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On Tue, 15 Oct 2013, Frederich, Jens wrote:
 
-I'm pleased to announce the v3.10.17-rt12 patch set.
+> Hi all,
+> 
+> is there any way to set the global workqueue priority to real
+> time or setup a workqueue with real time priority on Linux RT
 
-This is only a stable update (which fixed the livelock in sem_lock()).
+The global workqueue is used by the world and some more. So you better
+not try to fiddle with that.
 
-Known issues:
+> 3.x? I want to setup a kernel worker thread with real time
+> priority. What's the best way? Should I better use tasklets?
 
-      - SLAB support not working
+Tasklets are evil, hey should be renamed to craplets. You'll have the
+same problem as with the global workqueue, as tasklets run from
+softirq context.
 
-      - The cpsw network driver shows some issues.
+Could you describe what you are trying to do?
 
-      - bcache is disabled.
+Thanks,
 
-      - an ancient race (since we got sleeping spinlocks) where the
-        TASK_TRACED state is temporary replaced while waiting on a rw
-        lock and the task can't be traced.
-
-The RT patch against 3.10.17 can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.17-rt12.patch.xz
-
-The split quilt queue is available at:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patches-3.10.17-rt12.tar.xz
-
-Sebastian
+	tglx
