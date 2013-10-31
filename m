@@ -1,88 +1,76 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [V3 PATCH] mm/memcontrol: Don't call schedule_work_on in preemption disabled context
-Date: Wed, 30 Oct 2013 11:48:33 -0700
-Message-ID: <1383158913-16325-1-git-send-email-yang.shi@windriver.com>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Thu, 31 Oct 2013 15:07:07 +0100
+Message-ID: <1383228427.5272.36.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>,
-	<yang.shi@windriver.com>
-To: <tglx@linutronix.de>, <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:33636 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751646Ab3J3SyJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Oct 2013 14:54:09 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Frederic Weisbecker <fweisbec@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-The following trace is triggered when running ltp oom test cases:
+Hi Frederic,
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-in_atomic(): 1, irqs_disabled(): 0, pid: 17188, name: oom03
-Preemption disabled at:[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
+The tick wakes ksoftirqd, ensuring nr_running test ain't gonna happen
+when an otherwise lonely task takes the timer interrupt.  Deferring to
+softirq processing time..... works.
 
-CPU: 2 PID: 17188 Comm: oom03 Not tainted 3.10.10-rt3 #2
-Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
-ffff88007684d730 ffff880070df9b58 ffffffff8169918d ffff880070df9b70
-ffffffff8106db31 ffff88007688b4a0 ffff880070df9b88 ffffffff8169d9c0
-ffff88007688b4a0 ffff880070df9bc8 ffffffff81059da1 0000000170df9bb0
-Call Trace:
-[<ffffffff8169918d>] dump_stack+0x19/0x1b
-[<ffffffff8106db31>] __might_sleep+0xf1/0x170
-[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
-[<ffffffff81059da1>] queue_work_on+0x61/0x100
-[<ffffffff8112b361>] drain_all_stock+0xe1/0x1c0
-[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
-[<ffffffff8112beda>] __mem_cgroup_try_charge+0x41a/0xc40
-[<ffffffff810f1c91>] ? release_pages+0x1b1/0x1f0
-[<ffffffff8106f200>] ? sched_exec+0x40/0xb0
-[<ffffffff8112cc87>] mem_cgroup_charge_common+0x37/0x70
-[<ffffffff8112e2c6>] mem_cgroup_newpage_charge+0x26/0x30
-[<ffffffff8110af68>] handle_pte_fault+0x618/0x840
-[<ffffffff8103ecf6>] ? unpin_current_cpu+0x16/0x70
-[<ffffffff81070f94>] ? migrate_enable+0xd4/0x200
-[<ffffffff8110cde5>] handle_mm_fault+0x145/0x1e0
-[<ffffffff810301e1>] __do_page_fault+0x1a1/0x4c0
-[<ffffffff8169c9eb>] ? preempt_schedule_irq+0x4b/0x70
-[<ffffffff8169e3b7>] ? retint_kernel+0x37/0x40
-[<ffffffff8103053e>] do_page_fault+0xe/0x10
-[<ffffffff8169e4c2>] page_fault+0x22/0x30
-
-So, to prevent schedule_work_on from being called in preempt disabled context,
-replace the pair of get/put_cpu() to get/put_cpu_light().
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
 ---
-Adapt tglx's suggestion to rework this patch.
-The old mm-memcontrol-Don-t-call-schedule_work_on-in-preempt.patch can be
-replaced by this one.
+ kernel/sched/core.c      |    2 +-
+ kernel/softirq.c         |   10 ++++++++++
+ kernel/time/tick-sched.c |    2 ++
+ 3 files changed, 13 insertions(+), 1 deletion(-)
 
- mm/memcontrol.c |    4 ++--
- 1 files changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 82a187a..9944356 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2440,7 +2440,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -704,7 +704,7 @@ bool sched_can_stop_tick(void)
+        smp_rmb();
  
- 	/* Notify other cpus that system-wide "drain" is running */
- 	get_online_cpus();
--	curcpu = get_cpu();
-+	curcpu = get_cpu_light();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -2457,7 +2457,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 				schedule_work_on(cpu, &stock->work);
- 		}
+        /* More than one running task need preemption */
+-       if (rq->nr_running > 1)
++       if (rq->nr_running - (rq->curr == this_cpu_ksoftirqd()) > 1)
+                return false;
+ 
+        return true;
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -529,6 +529,11 @@ static void do_current_softirqs(int need
+ 		softirq_clr_runner(i);
+ 		unlock_softirq(i);
+ 		WARN_ON(current->softirq_nestcnt != 1);
++
++#ifdef CONFIG_NO_HZ_COMMON
++		if (i == TIMER_SOFTIRQ && tick_nohz_full_cpu(raw_smp_processor_id()))
++			 tick_nohz_irq_exit();
++#endif
  	}
--	put_cpu();
-+	put_cpu_light();
+ }
  
- 	if (!sync)
- 		goto out;
--- 
-1.7.5.4
-
+@@ -728,6 +733,11 @@ static inline void tick_irq_exit(void)
+ #ifdef CONFIG_NO_HZ_COMMON
+ 	int cpu = smp_processor_id();
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++	if (tick_nohz_full_cpu(cpu))
++		return;
++#endif
++
+ 	/* Make sure that timer wheel updates are propagated */
+ 	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu)) {
+ 		if (!in_interrupt())
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -157,7 +157,9 @@ bool have_nohz_full_mask;
+ 
+ static bool can_stop_full_tick(void)
+ {
++#ifndef CONFIG_PREEMPT_RT_FULL
+ 	WARN_ON_ONCE(!irqs_disabled());
++#endif
+ 
+ 	if (!sched_can_stop_tick()) {
+ 		trace_tick_stop(0, "more than 1 task in runqueue\n");
