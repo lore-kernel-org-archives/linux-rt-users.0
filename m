@@ -1,76 +1,43 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Thu, 31 Oct 2013 15:07:07 +0100
-Message-ID: <1383228427.5272.36.camel@marge.simpson.net>
+From: Aaron Fabbri <ajfabbri@gmail.com>
+Subject: [PATCH] trace-cmd: Make read nonblocking in find_time_stamp().
+Date: Mon, 4 Nov 2013 16:51:48 -0800
+Message-ID: <CAF+KLxuutGDHxzLLaWL-wXsDRyM=4syJcm7wDdEgNxNCpg2TWQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Frederic Weisbecker <fweisbec@gmail.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	yoshihiro.yunomae.ez@hitachi.com
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Frederic,
+This only affects the tsc -> time of day correlation when doing
+`trace-cmd record --date`.
 
-The tick wakes ksoftirqd, ensuring nr_running test ain't gonna happen
-when an otherwise lonely task takes the timer interrupt.  Deferring to
-softirq processing time..... works.
+get_date_to_ts() writes a dummy event to trace_marker and then reads it back.
+Reading it back is done by looping over all per-cpu raw trace pipes and trying
+to read.  This read should be non-blocking, because the dummy event can end up
+on any CPU.
 
+Signed-off-by: Aaron Fabbri <ajfabbri@gmail.com>
 ---
- kernel/sched/core.c      |    2 +-
- kernel/softirq.c         |   10 ++++++++++
- kernel/time/tick-sched.c |    2 ++
- 3 files changed, 13 insertions(+), 1 deletion(-)
+ trace-record.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -704,7 +704,7 @@ bool sched_can_stop_tick(void)
-        smp_rmb();
- 
-        /* More than one running task need preemption */
--       if (rq->nr_running > 1)
-+       if (rq->nr_running - (rq->curr == this_cpu_ksoftirqd()) > 1)
-                return false;
- 
-        return true;
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -529,6 +529,11 @@ static void do_current_softirqs(int need
- 		softirq_clr_runner(i);
- 		unlock_softirq(i);
- 		WARN_ON(current->softirq_nestcnt != 1);
-+
-+#ifdef CONFIG_NO_HZ_COMMON
-+		if (i == TIMER_SOFTIRQ && tick_nohz_full_cpu(raw_smp_processor_id()))
-+			 tick_nohz_irq_exit();
-+#endif
- 	}
- }
- 
-@@ -728,6 +733,11 @@ static inline void tick_irq_exit(void)
- #ifdef CONFIG_NO_HZ_COMMON
- 	int cpu = smp_processor_id();
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	if (tick_nohz_full_cpu(cpu))
-+		return;
-+#endif
-+
- 	/* Make sure that timer wheel updates are propagated */
- 	if ((idle_cpu(cpu) && !need_resched()) || tick_nohz_full_cpu(cpu)) {
- 		if (!in_interrupt())
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -157,7 +157,9 @@ bool have_nohz_full_mask;
- 
- static bool can_stop_full_tick(void)
- {
-+#ifndef CONFIG_PREEMPT_RT_FULL
- 	WARN_ON_ONCE(!irqs_disabled());
-+#endif
- 
- 	if (!sched_can_stop_tick()) {
- 		trace_tick_stop(0, "more than 1 task in runqueue\n");
+diff --git a/trace-record.c b/trace-record.c
+index 1b1d293..dca8a92 100644
+--- a/trace-record.c
++++ b/trace-record.c
+@@ -2092,7 +2092,7 @@ static unsigned long long find_time_stamp(struct
+pevent *pevent)
+                        continue;
+
+                sprintf(file, "%s/%s/trace_pipe_raw", path, name);
+-               fd = open(file, O_RDONLY);
++               fd = open(file, O_RDONLY | O_NONBLOCK);
+                if (fd < 0)
+                        continue;
+                do {
+-- 
+1.8.1.2
