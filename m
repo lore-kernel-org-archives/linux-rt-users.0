@@ -1,51 +1,39 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RT] rtmutex: fix deadlock in spin_trylock
-Date: Wed, 6 Nov 2013 18:39:37 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311061832020.23353@ionos.tec.linutronix.de>
-References: <641D1EBAB8EAD046954CD69996C8FE00164297@USCHMBX003.nsn-intra.net>
+Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Wed, 6 Nov 2013 18:49:41 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
+References: <1383228427.5272.36.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Cowell, Matt (NSN - US/Arlington Heights)" <matt.cowell@nsn.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46658 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754524Ab3KFRjk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Nov 2013 12:39:40 -0500
-In-Reply-To: <641D1EBAB8EAD046954CD69996C8FE00164297@USCHMBX003.nsn-intra.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1383228427.5272.36.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 30 Oct 2013, Cowell, Matt (NSN - US/Arlington Heights) wrote:
+On Thu, 31 Oct 2013, Mike Galbraith wrote:
 
-> Repost to linux-rt-users list, as there has been no response on the linux-kernel list and it missed several rt patch releases.  Originally seen on 3.10.10-rt7.
+> Hi Frederic,
 > 
-> 
-> There is a deadlock condition with RT spin_locks that may use trylock in
-> hardirq context.  The main user of this is get_next_timer_interrupt, which
-> will deadlock if an IRQ preempts a timer wheel modification.
+> The tick wakes ksoftirqd, ensuring nr_running test ain't gonna happen
+> when an otherwise lonely task takes the timer interrupt.  Deferring to
+> softirq processing time..... works.
 
-Errm. No. 
+-ENOPARSE
 
-> Detected by spinlock lockup debug:
->    BUG: spinlock lockup suspected on CPU#1, ncp_nca_0_grp_5/133
->     lock: 0xee02a000, .magic: dead4ead, .owner: <none>/-1, .owner_cpu: -1
->    CPU: 1 PID: 133 Comm: ncp_nca_0_grp_5 Tainted: G           O 3.10.10-rt7 #53
+What the heck is this patch doing aside of slapping #ifdeffery all
+over the place?
 
-The cpu is in thread context and therefor not idle. 
+I bet you are trying to work around some of the side effects of the
+occasional tick which is still necessary despite of full nohz, right?
 
-void tick_nohz_irq_exit(void)
-{
-        if (!ts->inidle)
-                return;
-	....
-}
-
-So you are papering over the real issue:
-
-   Why is ts->inidle true, if the CPU is not in idle?
-
+Bah, we want to solve the underlying problems and get rid of the tick
+completely instead of hiding the issues by magic hackery.
+ 
 Thanks,
 
 	tglx
