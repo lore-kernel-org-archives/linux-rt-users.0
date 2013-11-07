@@ -1,139 +1,160 @@
-From: =?UTF-8?B?TmVib2rFoWEgxIZvc2nEhw==?= <nebojsa@asnn.org>
-Subject: Re: UDP jitter
-Date: Thu, 7 Nov 2013 10:33:25 +0100
-Message-ID: <20131107103325.65938975@sanja.asnn.org>
-References: <20130429222238.2b440d8c@sanja.asnn.org>
-	<517FE1A5.1090702@osadl.org>
-	<20130430192653.5c6c08b6@sanja.asnn.org>
-	<12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at>
-	<20131106125709.2e091182@sth491dt.servo.net>
-	<alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de>
-	<12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Thu, 7 Nov 2013 12:21:11 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
+References: <1383228427.5272.36.camel@marge.simpson.net>  <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>  <1383794799.5441.16.camel@marge.simpson.net> <1383798668.5441.25.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: eg Engleder Gerhard <eg@keba.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay-h32.telenor.se ([213.150.131.5]:50278 "EHLO
-	smtprelay-h32.telenor.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752909Ab3KGJxg convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Nov 2013 04:53:36 -0500
-Received: from ipb4.telenor.se (ipb4.telenor.se [195.54.127.167])
-	by smtprelay-h32.telenor.se (Postfix) with ESMTP id C2709C56A
-	for <linux-rt-users@vger.kernel.org>; Thu,  7 Nov 2013 10:34:31 +0100 (CET)
-In-Reply-To: <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1383798668.5441.25.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+Mike,
 
-> > On Wed, 6 Nov 2013, Neboj=C5=A1a =C4=86osi=C4=87 wrote:
-> > > You can try with this patch. I am quite sure that same problem=20
-> > > persists on all newer kernels (I am using 2.6.33), but never had =
-a=20
-> > > time to create simple test to prove it.
-> >=20
-> > I'm looking forward to your detailed analysis ....
-> >=20
-> > > Index: net/sched/sch_generic.c
-> > > =3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D
-> > > --- net/sched/sch_generic.c	(revision 1709)
-> > > +++ net/sched/sch_generic.c	(revision 1710)
-> > > @@ -120,16 +120,18 @@
-> > >  	int ret =3D NETDEV_TX_BUSY;
-> > > =20
-> > >  	/* And release qdisc */
-> > > -	spin_unlock(root_lock);
-> > > +/*	spin_unlock(root_lock);
-> > > =20
-> > >  	HARD_TX_LOCK(dev, txq);
-> > > +*/
-> >=20
-> > Do you really think this locking scheme is just for fun?=20
-> > qdisk_lock, i.e. root_lock and the netif_tx_lock are mutually=20
-> > exclusive for a reason. Reading the documentation and=20
-> > comments of code is optional, right?
-> >=20
-> > > > > When transmit queue is empty, thread wanting to send a messag=
-e=20
-> > > > > comes directly to sch_direct_xmit, without changing context. =
-It=20
-> > > > > then releases spin lock, and than takes another. So far so go=
-od.
-> > > > > If this starting thread is of lower priority, it can be=20
-> > preempted=20
-> > > > > by another thread, while still being in dev_hard_start_xmit=20
-> > > > > function This thread will check if HARD_TX_LOCK is=20
-> > taken, and if=20
-> > > > > so, go on and queue its own message.  If there are=20
-> > enough higher=20
-> > > > > priority tasks, tx can be stalled indefinitely. [..]
-> >=20
-> > Utter nonsense.
->=20
-> In my situation if a first thread is preempted in dev_hard_start_xmit=
-, then a second
-> thread which transmits over the same interface sees a none empty queu=
-e and
-> just enqueue the skb in the queue. No transmit (HARD_TX_LOCK) is nece=
-ssary
-> because the first thread is already working on the queue. Please corr=
-ect me if I'm
-> not right.
-> For my case the first thread does normal SSH communication and the se=
-cond
-> thread does real-time UDP communication. This results in a priority i=
-nversion for
-> the transmission of skb's over the same network interface.
-> Is there any chance to get rid of this priority inversion? Maybe with=
- priority qdisc?
-And this is precisely what this hack is trying to work around. Original
-thread was a call for a discussion in order to find real solution to th=
-e
-problem.
-New messages arriving to the queue should somehow raise
-priority of thread sitting in dev_hard_start_xmit according to their
-own thread priority. Or can priority of a thread currently in
-dev_hard_start_xmit temporarily be raised to some configurable value.=20
-This hack is effectively shutting down queuing of skbs, and instead
-forces queuing of threads.
->=20
-> > The code (sch_direct_xmit) you are modifying is called from=20
-> > exactly two places:
-> >=20
-> > 1) __dev_xmit_skb
-> >=20
-> > 2) __qdisc_run()
-> >=20
-> >    Which in turn two call sites:
-> >=20
-> >    1) __dev_xmit_skb() either directly or via qdisc_run()
-> >=20
-> >    2) net_tx_action() which is the NET_TX softirq action
-> >=20
-> > None of those calls does a trylock on the xmit lock. So what=20
-> > the heck are you talking about?
-> >=20
-> > Thanks,
-> >=20
-> > 	tglx
->=20
-> regards, gerhard--
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On Thu, 7 Nov 2013, Mike Galbraith wrote:
 
+> On Thu, 2013-11-07 at 04:26 +0100, Mike Galbraith wrote: 
+> > On Wed, 2013-11-06 at 18:49 +0100, Thomas Gleixner wrote: 
+> 
+> > > I bet you are trying to work around some of the side effects of the
+> > > occasional tick which is still necessary despite of full nohz, right?
+> > 
+> > Nope, I wanted to check out cost of nohz_full for rt, and found that it
+> > doesn't work at all instead, looked, and found that the sole running
+> > task has just awakened ksoftirqd when it wants to shut the tick down, so
+> > that shutdown never happens. 
+> 
+> Like so in virgin 3.10-rt.  Box is x3550 M3 booted nowatchdog
+> rcu_nocbs=1-3 nohz_full=1-3, and CPUs1-3 are completely isolated via
+> cpusets as well.
 
---=20
-Pozdrav,
-Neboj=C5=A1a
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+well, that very same problem is in mainline if you add "threadirqs" to
+the command line. But we can be smart about this. The untested patch
+below should address that issue. If that works on mainline we can
+adapt it for RT (needs a trylock(&base->lock) there).
+
+Though it's not a full solution. It needs some thought versus the
+softirq code of timers. Assume we have only one timer queued 1000
+ticks into the future. So this change will cause the timer softirq not
+to be called until that timer expires and then the timer softirq is
+going to do 1000 loops until it catches up with jiffies. That's
+anything but pretty ...
+
+What worries me more is this one:
+
+  pert-5229  [003] d..h1..   684.482618: softirq_raise: vec=9 [action=RCU]
+
+The CPU has no callbacks as you shoved them over to cpu 0, so why is
+the RCU softirq raised?
+
+Thanks,
+
+	tglx
+------------------
+
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index d19a5c2..0816a50 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -445,9 +445,8 @@ extern int schedule_hrtimeout_range_clock(ktime_t *expires,
+ 		unsigned long delta, const enum hrtimer_mode mode, int clock);
+ extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mode mode);
+ 
+-/* Soft interrupt function to run the hrtimer queues: */
++/* Called from the periodic timer tick */
+ extern void hrtimer_run_queues(void);
+-extern void hrtimer_run_pending(void);
+ 
+ /* Bootup initialization: */
+ extern void __init hrtimers_init(void);
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 383319b..7359eaa 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1450,30 +1450,6 @@ static inline void __hrtimer_peek_ahead_timers(void) { }
+ #endif	/* !CONFIG_HIGH_RES_TIMERS */
+ 
+ /*
+- * Called from timer softirq every jiffy, expire hrtimers:
+- *
+- * For HRT its the fall back code to run the softirq in the timer
+- * softirq context in case the hrtimer initialization failed or has
+- * not been done yet.
+- */
+-void hrtimer_run_pending(void)
+-{
+-	if (hrtimer_hres_active())
+-		return;
+-
+-	/*
+-	 * This _is_ ugly: We have to check in the softirq context,
+-	 * whether we can switch to highres and / or nohz mode. The
+-	 * clocksource switch happens in the timer interrupt with
+-	 * xtime_lock held. Notification from there only sets the
+-	 * check bit in the tick_oneshot code, otherwise we might
+-	 * deadlock vs. xtime_lock.
+-	 */
+-	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
+-		hrtimer_switch_to_hres();
+-}
+-
+-/*
+  * Called from hardirq context every jiffy
+  */
+ void hrtimer_run_queues(void)
+@@ -1486,6 +1462,13 @@ void hrtimer_run_queues(void)
+ 	if (hrtimer_hres_active())
+ 		return;
+ 
++	/*
++	 * Check whether we can switch to highres mode.
++	 */
++	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled())
++	    && hrtimer_switch_to_hres())
++		return;
++
+ 	for (index = 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
+ 		base = &cpu_base->clock_base[index];
+ 		if (!timerqueue_getnext(&base->active))
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 4296d13..ba8ee94 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1370,8 +1370,6 @@ static void run_timer_softirq(struct softirq_action *h)
+ {
+ 	struct tvec_base *base = __this_cpu_read(tvec_bases);
+ 
+-	hrtimer_run_pending();
+-
+ 	if (time_after_eq(jiffies, base->timer_jiffies))
+ 		__run_timers(base);
+ }
+@@ -1381,8 +1379,20 @@ static void run_timer_softirq(struct softirq_action *h)
+  */
+ void run_local_timers(void)
+ {
++	struct tvec_base *base = __this_cpu_read(tvec_bases);
++
+ 	hrtimer_run_queues();
+-	raise_softirq(TIMER_SOFTIRQ);
++	/*
++	 * We can access this lockless as we are in the timer
++	 * interrupt. If there are no timers queued, nothing to do in
++	 * the timer softirq.
++	 */
++	if (!base->active_timers)
++		return;
++
++	/* Check whether the next pending timer has expired */
++	if (time_before_eq(base->next_timer, jiffies))
++		raise_softirq(TIMER_SOFTIRQ);
+ }
+ 
+ #ifdef __ARCH_WANT_SYS_ALARM
