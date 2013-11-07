@@ -1,46 +1,50 @@
-From: Tiejun Chen <tiejun.chen@windriver.com>
-Subject: [PATCH] pin_current_cpu: move preempt_enable() outside
-Date: Thu, 7 Nov 2013 11:07:30 +0800
-Message-ID: <1383793650-7839-1-git-send-email-tiejun.chen@windriver.com>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Thu, 07 Nov 2013 04:26:39 +0100
+Message-ID: <1383794799.5441.16.camel@marge.simpson.net>
+References: <1383228427.5272.36.camel@marge.simpson.net>
+	 <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <tglx@linutronix.de>, <stable-rt@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:40150 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752707Ab3KGDIi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 6 Nov 2013 22:08:38 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-It should make better sense than before.
+On Wed, 2013-11-06 at 18:49 +0100, Thomas Gleixner wrote: 
+> On Thu, 31 Oct 2013, Mike Galbraith wrote:
+> 
+> > Hi Frederic,
+> > 
+> > The tick wakes ksoftirqd, ensuring nr_running test ain't gonna happen
+> > when an otherwise lonely task takes the timer interrupt.  Deferring to
+> > softirq processing time..... works.
+> 
+> -ENOPARSE
+> 
+> What the heck is this patch doing aside of slapping #ifdeffery all
+> over the place?
 
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
----
- kernel/cpu.c |    3 +--
- 1 file changed, 1 insertion(+), 2 deletions(-)
+It ain't a patch, it's a diagnostic.
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index da6e128..7b1853f 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -124,12 +124,11 @@ retry:
- 		return;
- 	}
- 
-+	preempt_enable();
- 	if (hp->grab_lock) {
--		preempt_enable();
- 		hotplug_lock(hp);
- 		hotplug_unlock(hp);
- 	} else {
--		preempt_enable();
- 		/*
- 		 * Try to push this task off of this CPU.
- 		 */
--- 
-1.7.9.5
+> I bet you are trying to work around some of the side effects of the
+> occasional tick which is still necessary despite of full nohz, right?
 
+Nope, I wanted to check out cost of nohz_full for rt, and found that it
+doesn't work at all instead, looked, and found that the sole running
+task has just awakened ksoftirqd when it wants to shut the tick down, so
+that shutdown never happens. 
+
+> Bah, we want to solve the underlying problems and get rid of the tick
+> completely instead of hiding the issues by magic hackery.
+
+That's why I mentioned it.  That ".... works" has a whooooole different
+meaning than "this is the fix" :)
+
+-Mike
