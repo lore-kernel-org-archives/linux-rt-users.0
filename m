@@ -1,57 +1,153 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Thu, 7 Nov 2013 14:13:02 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de>
-References: <1383228427.5272.36.camel@marge.simpson.net> <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de> <1383794799.5441.16.camel@marge.simpson.net> <1383798668.5441.25.camel@marge.simpson.net> <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
- <20131107125923.GB24644@localhost.localdomain>
+Subject: Re: UDP jitter
+Date: Fri, 8 Nov 2013 03:07:53 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de>
+References: <20130429222238.2b440d8c@sanja.asnn.org> <517FE1A5.1090702@osadl.org> <20130430192653.5c6c08b6@sanja.asnn.org> <12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at> <20131106125709.2e091182@sth491dt.servo.net>
+ <alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de> <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at> <20131107103325.65938975@sanja.asnn.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Mike Galbraith <bitbucket@online.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Frederic Weisbecker <fweisbec@gmail.com>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-450531392-1383874710=:23353"
+Cc: eg Engleder Gerhard <eg@keba.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: =?ISO-8859-2?Q?Neboj=B9a_=C6osi=E6?= <nebojsa@asnn.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:51415 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:55108 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750867Ab3KGNNL (ORCPT
+	with ESMTP id S1753320Ab3KHCH6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 Nov 2013 08:13:11 -0500
-In-Reply-To: <20131107125923.GB24644@localhost.localdomain>
+	Thu, 7 Nov 2013 21:07:58 -0500
+In-Reply-To: <20131107103325.65938975@sanja.asnn.org>
+Content-ID: <alpine.DEB.2.02.1311080240040.23353@ionos.tec.linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 7 Nov 2013, Frederic Weisbecker wrote:
-> On Thu, Nov 07, 2013 at 12:21:11PM +0100, Thomas Gleixner wrote:
-> > Though it's not a full solution. It needs some thought versus the
-> > softirq code of timers. Assume we have only one timer queued 1000
-> > ticks into the future. So this change will cause the timer softirq not
-> > to be called until that timer expires and then the timer softirq is
-> > going to do 1000 loops until it catches up with jiffies. That's
-> > anything but pretty ...
-> 
-> I see, so the problem is that we raise the timer softirq unconditionally
-> from the tick?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Right.
+--8323329-450531392-1383874710=:23353
+Content-Type: TEXT/PLAIN; CHARSET=ISO-8859-2
+Content-Transfer-Encoding: 8BIT
+Content-ID: <alpine.DEB.2.02.1311080240041.23353@ionos.tec.linutronix.de>
+
+On Thu, 7 Nov 2013, Neboj¹a Æosiæ wrote:
+> On Thu, 7 Nov 2013 eg Engleder Gerhard wrote:
+> > On Wed, 6 Nov 2013, Thomas Gleixner wrote:
+> > > Utter nonsense.
+> > 
+> > In my situation if a first thread is preempted in dev_hard_start_xmit, then a second
+> > thread which transmits over the same interface sees a none empty queue and
+> > just enqueue the skb in the queue. No transmit (HARD_TX_LOCK) is necessary
+> > because the first thread is already working on the queue. Please correct me if I'm
+> > not right.
+
+You are right. When the queue is active, there is no contention or
+trylock on the xmit lock. And the resulting queuing operation is
+documented behaviour.
+
+> > For my case the first thread does normal SSH communication and the second
+> > thread does real-time UDP communication. This results in a priority inversion for
+> > the transmission of skb's over the same network interface.
+
+That's the nature of a single queue which has very primitive fifo
+odering constraints. There is no priority inversion. It's documented
+behaviour. Just because you set the prio of your task to uberimportant
+does not magically change the behaviour of everything to your favour.
+
+> > Is there any chance to get rid of this priority inversion? Maybe
+> > with priority qdisc?
+
+See below.
+
+> And this is precisely what this hack is trying to work around. Original
+> thread was a call for a discussion in order to find real solution to the
+> problem.
+
+By providing a problem description which is completely useless? And
+"solving" the issue by violating the locking rules of the networking
+code?
+
+> New messages arriving to the queue should somehow raise
+> priority of thread sitting in dev_hard_start_xmit according to their
+> own thread priority. Or can priority of a thread currently in
+> dev_hard_start_xmit temporarily be raised to some configurable value. 
+> This hack is effectively shutting down queuing of skbs, and instead
+> forces queuing of threads.
+
+Are you really believing that a generic fifo based queueing mechanism
+just needs a random locking/priority tweak to become deterministic?
+
+There is a damned good reason why the networking folks have spent a
+lot of time to implement queueing, filtering and traffic shaping
+mechanisms which allow you to influence the order and bandwidth
+consumed by outgoing packets.
+
+But understanding this seems to be way harder than wasting precious
+time to debug the "shortcomings" of RT and babbling about priorities
+and priority inversions.
+
+Just a simple example why your reasoning is completely bogus:
+
+ Assume a network device which has a tx ring size of 256, which is
+ quite common.
+
+ Now assume the following event flow:
+
+ highprio_app() -> send package()
+
+ 	Queues ONE package which is enqueued into the TX ring right away
+
+ lowprio_app() -> sendfile()
  
-> Ok we definetly don't want to keep that behaviour, even if softirqs are not
-> threaded, that's an overhead. So I'm looking at that loop in __run_timers()
-> and I guess you mean the "base->timer_jiffies" incrementation?
->
-> That's indeed not pretty. How do we handle exit from long dynticks
-> idle periods? Are we doing that loop until we catch up with the new
-> jiffies?
+	The file length results in 255 packages. These are enqueued
+	into the TX_RING right away WITHOUT congesting qdisc
 
-Right. I realized that right after I hit send :)
- 
-> Then it relies on the timer cascade stuff which is very obscure code to me...
+ highprio_app() -> send package()
 
-It's not that bad, really. I have an idea how to fix that. Needs some
-rewriting though.
+ 	Queues ONE package which is enqueued into the TX ring right away
+
+
+ NOTE: Neither operations are running into your observed scenario!
+
+ Now the package of the high prio app is at the end of the TX ring and
+ it has to wait for all other packages queued by the low prio app to
+ be sent out over the wire.
+
+ Let's do some rough math:
+
+ 100MB: Package size 1542 Bytes
+
+ 	time per package = ~15us
+
+	time for 255 packages = ~3ms
+
+ So now, assume that the low prio task is taking less than 1 msec to
+ queue 255 packages and your high prio task is required to send every
+ 1ms with a maximum latency of 0.5 ms.
+
+ How is your bogus hack going to solve that problem?
+
+Not at all. Period. 
+
+And none of your ideas to prevent that alleged priority inversion is
+going to solve that.
+
+WHY?
+
+Simply because it has nothing to do with priority inversion. It's just
+the nature of a single unmanaged queue. The behaviour is completely
+correct.
+
+Just for the record. I'm really frightened by the phrase "UDP
+realtime" which was mentioned in this thread more than once. Looking
+at the desperation level of these posts I fear, that there are going
+to be real world products out already or available in the near future
+which are based on the profound lack of understanding of the
+technology they are based on.
+
+This just confirms my theory, that most parts of this industry just
+work by chance.
 
 Thanks,
 
 	tglx
 
+--8323329-450531392-1383874710=:23353--
