@@ -1,54 +1,47 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: AW: UDP jitter
-Date: Fri, 8 Nov 2013 14:35:44 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311081432300.23353@ionos.tec.linutronix.de>
-References: <20130429222238.2b440d8c@sanja.asnn.org> <517FE1A5.1090702@osadl.org> <20130430192653.5c6c08b6@sanja.asnn.org> <12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at> <20131106125709.2e091182@sth491dt.servo.net>
- <alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de> <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at> <20131107103325.65938975@sanja.asnn.org> <alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de> <527CB16D.3040909@meduna.org>
- <alpine.DEB.2.02.1311081121190.23353@ionos.tec.linutronix.de> <12C1B74BDFD05D40B2356A9B12DFA33967BEB687E6@KEBMXSPMB01.keba.co.at>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Fri, 8 Nov 2013 06:03:31 -0800
+Message-ID: <20131108140331.GD18245@linux.vnet.ibm.com>
+References: <1383228427.5272.36.camel@marge.simpson.net>
+ <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
+ <1383794799.5441.16.camel@marge.simpson.net>
+ <1383798668.5441.25.camel@marge.simpson.net>
+ <20131108032343.GA18245@linux.vnet.ibm.com>
+ <1383895880.4964.91.camel@marge.simpson.net>
+ <20131108123713.GC18245@linux.vnet.ibm.com>
+ <1383917188.4964.94.camel@marge.simpson.net>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1004509738-1383917744=:23353"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: eg Engleder Gerhard <eg@keba.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:58430 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753533Ab3KHNfr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Nov 2013 08:35:47 -0500
-In-Reply-To: <12C1B74BDFD05D40B2356A9B12DFA33967BEB687E6@KEBMXSPMB01.keba.co.at>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1383917188.4964.94.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
---8323329-1004509738-1383917744=:23353
-Content-Type: TEXT/PLAIN; charset=iso-8859-2
-Content-Transfer-Encoding: 8BIT
-
-On Fri, 8 Nov 2013, eg Engleder Gerhard wrote:
->  > -----Ursprüngliche Nachricht-----
-> > Von: Thomas Gleixner [mailto:tglx@linutronix.de] 
-> > Gesendet: Freitag, 08. November 2013 12:31
-> > An: Stanislav Meduna
-> > Cc: Neboj¹a Æosiæ; eg Engleder Gerhard; linux-rt-users
-> > Betreff: Re: UDP jitter
+On Fri, Nov 08, 2013 at 02:26:28PM +0100, Mike Galbraith wrote:
+> On Fri, 2013-11-08 at 04:37 -0800, Paul E. McKenney wrote: 
+> > On Fri, Nov 08, 2013 at 08:31:20AM +0100, Mike Galbraith wrote:
+> > > On Thu, 2013-11-07 at 19:23 -0800, Paul E. McKenney wrote:
+> > > 
+> > > > An untested patch that gets rid of the RCU_SOFTIRQs in this case is below.
+> > > 
+> > > Yup, toasted.
 > > 
-> > There are other ways to solve this without touching a single 
-> > line of kernel code. The technology is all there, you just 
-> > have to use it. Of course that requires to understand it in 
-> > the first place, though this seems to be way harder than 
-> > spending a lot of time tracing the problem and then yelling 
-> > "priority inversion" and hope that the RT folks are going to "fix" it.
+> > You lost me on this one.  If my patch broke your system, any chance of
+> > any diagnostic information?
 > 
-> Can you give us a hint which technology to use? Currently I am
-> trying to use QoS Multi Band Priority Queueing.
+> No no, the RCU_SOFTIRQs are toast, history, gone.
 
-Well, it really depends on your requirements. Assuming you have a
-simple binary decision (Bulk and VIP traffic) a simple 2 band priority
-queue should work.
+Ah, I do like that outcome much better!  ;-)  The scheduling-clock
+interrupts are gone (or at least reduced) as well?
 
-Thanks,
+And does this mean that I can have your Tested-by?
 
-	tglx
---8323329-1004509738-1383917744=:23353--
+							Thanx, Paul
