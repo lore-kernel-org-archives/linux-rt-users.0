@@ -1,7 +1,7 @@
 From: Frederic Weisbecker <fweisbec@gmail.com>
 Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Fri, 8 Nov 2013 17:03:24 +0100
-Message-ID: <20131108160322.GB11112@localhost.localdomain>
+Date: Fri, 8 Nov 2013 17:04:30 +0100
+Message-ID: <20131108160428.GC11112@localhost.localdomain>
 References: <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
  <1383794799.5441.16.camel@marge.simpson.net>
  <1383798668.5441.25.camel@marge.simpson.net>
@@ -11,23 +11,23 @@ References: <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
  <1383917188.4964.94.camel@marge.simpson.net>
  <20131108140331.GD18245@linux.vnet.ibm.com>
  <20131108142934.GA11112@localhost.localdomain>
- <20131108144534.GE18245@linux.vnet.ibm.com>
+ <1383922427.4964.123.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Mike Galbraith <bitbucket@online.de>,
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <peterz@infradead.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	RT <linux-rt-users@vger.kernel.org>
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20131108144534.GE18245@linux.vnet.ibm.com>
+In-Reply-To: <1383922427.4964.123.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Nov 08, 2013 at 06:45:34AM -0800, Paul E. McKenney wrote:
-> On Fri, Nov 08, 2013 at 03:29:38PM +0100, Frederic Weisbecker wrote:
+On Fri, Nov 08, 2013 at 03:53:47PM +0100, Mike Galbraith wrote:
+> On Fri, 2013-11-08 at 15:29 +0100, Frederic Weisbecker wrote: 
 > > On Fri, Nov 08, 2013 at 06:03:31AM -0800, Paul E. McKenney wrote:
 > > > On Fri, Nov 08, 2013 at 02:26:28PM +0100, Mike Galbraith wrote:
 > > > > On Fri, 2013-11-08 at 04:37 -0800, Paul E. McKenney wrote: 
@@ -50,6 +50,6 @@ On Fri, Nov 08, 2013 at 06:45:34AM -0800, Paul E. McKenney wrote:
 > > 
 > > What's wrong with Toasted-by: ?  ;)
 > 
-> Does this mean that I can have your Toasted by?  ;-)
+> It sprang to mind, but I resisted :)
 
-Sure that was assumed ;)
+Yeah I'm too weak with these things :)
