@@ -1,63 +1,59 @@
-From: Tom Cook <tom.k.cook@gmail.com>
-Subject: Re: UDP jitter
-Date: Fri, 8 Nov 2013 10:50:54 +0000
-Message-ID: <CAFSh4UxAwF6fnxR82BcjxeMuxp-qgNJCpfW86YhcaYYyPoF4+Q@mail.gmail.com>
+From: eg Engleder Gerhard <eg@keba.com>
+Subject: AW: UDP jitter
+Date: Fri, 8 Nov 2013 11:51:42 +0100
+Message-ID: <12C1B74BDFD05D40B2356A9B12DFA33967BEB68783@KEBMXSPMB01.keba.co.at>
 References: <20130429222238.2b440d8c@sanja.asnn.org>
-	<517FE1A5.1090702@osadl.org>
-	<20130430192653.5c6c08b6@sanja.asnn.org>
-	<12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at>
-	<20131106125709.2e091182@sth491dt.servo.net>
-	<alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de>
-	<12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at>
-	<20131107103325.65938975@sanja.asnn.org>
-	<alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de>
-	<527CB16D.3040909@meduna.org>
+ <517FE1A5.1090702@osadl.org> <20130430192653.5c6c08b6@sanja.asnn.org>
+ <12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at>
+ <20131106125709.2e091182@sth491dt.servo.net>
+ <alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de>
+ <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at>
+ <20131107103325.65938975@sanja.asnn.org>
+ <alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de>
+ <527CB16D.3040909@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-2
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Stanislav Meduna <stano@meduna.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pd0-f177.google.com ([209.85.192.177]:55790 "EHLO
-	mail-pd0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757436Ab3KHKuz (ORCPT
+Received: from xlspam03.mdcs.at ([217.13.183.27]:20985 "EHLO xlspam03.mdcs.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757227Ab3KHKvn convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 8 Nov 2013 05:50:55 -0500
-Received: by mail-pd0-f177.google.com with SMTP id p10so1976446pdj.36
-        for <linux-rt-users@vger.kernel.org>; Fri, 08 Nov 2013 02:50:54 -0800 (PST)
+	Fri, 8 Nov 2013 05:51:43 -0500
 In-Reply-To: <527CB16D.3040909@meduna.org>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 8, 2013 at 9:39 AM, Stanislav Meduna <stano@meduna.org> wrote:
+> -----Urspr=FCngliche Nachricht-----
+> Von: Stanislav Meduna [mailto:stano@meduna.org]=20
+> Gesendet: Freitag, 08. November 2013 10:40
+> An: Thomas Gleixner; Neboj=B9a =C6osi=E6
+> Cc: eg Engleder Gerhard; linux-rt-users
+> Betreff: Re: UDP jitter
 >
-> On 08.11.2013 03:07, Thomas Gleixner wrote:
-> > Just for the record. I'm really frightened by the phrase "UDP
-> > realtime" which was mentioned in this thread more than once. Looking
-> > at the desperation level of these posts I fear, that there are going
-> > to be real world products out already or available in the near future
-> > which are based on the profound lack of understanding of the
-> > technology they are based on.
->
-> Yes there are real-world product using real-time ethernet - not
-> necessarily UDP but for example anything EtherCAT based absolutely
-> needs to be able to send certain packets cyclically no more than
-> 100 ms (or 10 ms or 2 ms) apart otherwise all hell breaks loose
-> with real-world connected hardware. The room for jitter is the
-> limit minus cycle the packets are being sent, which can be pretty
-> tight.
+> I cannot comment on the code as I did not analyze it myself=20
+> (at least yet), but I think Nebojsa is worried by the=20
+> situation where the high-prio thread is not able to _queue_=20
+> its packets because of the low-prio thread is sitting in some=20
+> lock being preempted by something unrelated.
 
-EtherCAT is a rather different case - you're never going to get mixed
-RT and non-RT traffic on an EtherCAT link (though you can carry
-Ethernet traffic over EtherCAT, but that's different).  An Ethernet
-port that's being used for EtherCAT is simply not able to also carry
-IP traffic.  Even given those restrictions, there is, IIRC, only one
-Ethernet chipset that can be used for deterministic IO interfacing.
+The high-prio thread is able to queue the packet. Thus for the
+thread itself everthing is fine, no priority inversion for the thread.
+At least in my case. In my situation the transmission of the
+packet from the high-prio thread is delayed until the low-prio
+thread is scheduled again.
 
-ProfiNet is a slightly more on-topic example, though that is only RT
-given special hardware and drivers that are able to prioritise the
-ProfiNet traffic over non-RT traffic.
+Is there any possibility to transmit high-prio traffic and low-prio
+traffic over the same network interface, with limited delay for
+the high-prio traffic? The delay of a full ring buffer of the network
+device is at least limited with e.g. 10ms, this is acceptable
+in my application.
 
-UDP realtime is indeed rather a pipe dream unless the whole system is
-very carefully controlled - which at minimum means not mixing RT and
-non-RT traffic.
-
-T
+regards, gerhard--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
