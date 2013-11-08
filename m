@@ -1,55 +1,26 @@
-From: Frederic Weisbecker <fweisbec@gmail.com>
-Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Fri, 8 Nov 2013 17:04:30 +0100
-Message-ID: <20131108160428.GC11112@localhost.localdomain>
-References: <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
- <1383794799.5441.16.camel@marge.simpson.net>
- <1383798668.5441.25.camel@marge.simpson.net>
- <20131108032343.GA18245@linux.vnet.ibm.com>
- <1383895880.4964.91.camel@marge.simpson.net>
- <20131108123713.GC18245@linux.vnet.ibm.com>
- <1383917188.4964.94.camel@marge.simpson.net>
- <20131108140331.GD18245@linux.vnet.ibm.com>
- <20131108142934.GA11112@localhost.localdomain>
- <1383922427.4964.123.camel@marge.simpson.net>
+From: "E-Blokos" <infos@e-blokos.com>
+Subject: Re: UDP jitter
+Date: Fri, 8 Nov 2013 10:57:56 -0800
+Message-ID: <E2F7E219C6544665BD7A66D88DD07062@e1705>
+References: <20130429222238.2b440d8c@sanja.asnn.org> <517FE1A5.1090702@osadl.org> <20130430192653.5c6c08b6@sanja.asnn.org> <12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at> <20131106125709.2e091182@sth491dt.servo.net> <alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de> <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at> <20131107103325.65938975@sanja.asnn.org> <alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de> <527CB16D.3040909@meduna.org> <20131108113250.2abdb8b7@sth491dt.servo.net> <alpine.DEB.2.02.1311081230580.23353@ionos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <bitbucket@online.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1383922427.4964.123.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain;
+	format=flowed;
+	charset="UTF-8";
+	reply-type=original
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from node250.e-blokos.com ([67.205.80.138]:53438 "EHLO
+	node250.e-blokos.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758009Ab3KHTFp (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 8 Nov 2013 14:05:45 -0500
+Received: from e1705 (localhost.localdomain [127.0.0.1])
+	by node250.e-blokos.com (8.14.7/8.14.6) with SMTP id rA8IwEQd001558
+	for <linux-rt-users@vger.kernel.org>; Fri, 8 Nov 2013 13:58:15 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 08, 2013 at 03:53:47PM +0100, Mike Galbraith wrote:
-> On Fri, 2013-11-08 at 15:29 +0100, Frederic Weisbecker wrote: 
-> > On Fri, Nov 08, 2013 at 06:03:31AM -0800, Paul E. McKenney wrote:
-> > > On Fri, Nov 08, 2013 at 02:26:28PM +0100, Mike Galbraith wrote:
-> > > > On Fri, 2013-11-08 at 04:37 -0800, Paul E. McKenney wrote: 
-> > > > > On Fri, Nov 08, 2013 at 08:31:20AM +0100, Mike Galbraith wrote:
-> > > > > > On Thu, 2013-11-07 at 19:23 -0800, Paul E. McKenney wrote:
-> > > > > > 
-> > > > > > > An untested patch that gets rid of the RCU_SOFTIRQs in this case is below.
-> > > > > > 
-> > > > > > Yup, toasted.
-> > > > > 
-> > > > > You lost me on this one.  If my patch broke your system, any chance of
-> > > > > any diagnostic information?
-> > > > 
-> > > > No no, the RCU_SOFTIRQs are toast, history, gone.
-> > > 
-> > > Ah, I do like that outcome much better!  ;-)  The scheduling-clock
-> > > interrupts are gone (or at least reduced) as well?
-> > > 
-> > > And does this mean that I can have your Tested-by?
-> > 
-> > What's wrong with Toasted-by: ?  ;)
-> 
-> It sprang to mind, but I resisted :)
-
-Yeah I'm too weak with these things :)
+> Again, there is no technical solution to cure ignorance.
+yes there is, it's called learning....
