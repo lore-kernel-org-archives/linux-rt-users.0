@@ -1,56 +1,79 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: Re: UDP jitter
-Date: Sat, 9 Nov 2013 11:33:20 -0500
-Message-ID: <20131109163319.GA31884@tsunami.ccur.com>
-References: <20130430192653.5c6c08b6@sanja.asnn.org>
- <12C1B74BDFD05D40B2356A9B12DFA33967BEB68107@KEBMXSPMB01.keba.co.at>
- <20131106125709.2e091182@sth491dt.servo.net>
- <alpine.DEB.2.02.1311061910240.23353@ionos.tec.linutronix.de>
- <12C1B74BDFD05D40B2356A9B12DFA33967BEB683CF@KEBMXSPMB01.keba.co.at>
- <20131107103325.65938975@sanja.asnn.org>
- <alpine.DEB.2.02.1311080134050.23353@ionos.tec.linutronix.de>
- <527CB16D.3040909@meduna.org>
- <alpine.DEB.2.02.1311081121190.23353@ionos.tec.linutronix.de>
- <12C1B74BDFD05D40B2356A9B12DFA33967BEB687E6@KEBMXSPMB01.keba.co.at>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Michael Langfinger <linux-rt-users@langfinger.org>
+Subject: Re: 3.10.9-rt5 with Atmel AT91SAM9G25 SoC triggers "Trying to free  already-free IRQ 1"
+Date: Sat, 09 Nov 2013 21:37:50 +0100
+Message-ID: <4532aa9843b9bc12ba1f645b257bcc0b-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1RcQ11dRSoDXFJdQFpcXA9f-webmailer2@server01.webmailer.hosteurope.de>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA67E950BA@edb1.wapice.localdomain>
+ <aa8bdc572d2b3fc1f5c1c92293990143-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1FTQ11bSSoDXF1RQFtXWAhY-webmailer2@server02.webmailer.hosteurope.de>
+ <20131011100951.GC6983@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67EBD1B2@edb0.wapice.localdomain>
+ <20131018140346.GA14569@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67ECB109@edb1.wapice.localdomain>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67ECF09C@edb1.wapice.localdomain>
+ <20131108221721.GB13367@linutronix.de>
+Reply-To: linux-rt-users@langfinger.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: eg Engleder Gerhard <eg@keba.com>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: =?UTF-8?Q?Sami_Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>,
+	<linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from flusers.ccur.com ([173.221.59.2]:54644 "EHLO gamx.iccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753700Ab3KIRRt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 9 Nov 2013 12:17:49 -0500
-Content-Disposition: inline
-In-Reply-To: <12C1B74BDFD05D40B2356A9B12DFA33967BEB687E6@KEBMXSPMB01.keba.co.at>
+Received: from mailout02.webmailer.hosteurope.de ([80.237.138.58]:38714 "EHLO
+	mailout02.webmailer.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1757261Ab3KIUq6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 9 Nov 2013 15:46:58 -0500
+In-Reply-To: <20131108221721.GB13367@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 08, 2013 at 07:07:41AM -0500, eg Engleder Gerhard wrote:
->  > -----Urspr?ngliche Nachricht-----
-> > Von: Thomas Gleixner [mailto:tglx@linutronix.de] 
-> > Gesendet: Freitag, 08. November 2013 12:31
-> > An: Stanislav Meduna
-> > Cc: Neboj?a ?osi?; eg Engleder Gerhard; linux-rt-users
-> > Betreff: Re: UDP jitter
-> > 
-> > There are other ways to solve this without touching a single 
-> > line of kernel code. The technology is all there, you just 
-> > have to use it. Of course that requires to understand it in 
-> > the first place, though this seems to be way harder than 
-> > spending a lot of time tracing the problem and then yelling 
-> > "priority inversion" and hope that the RT folks are going to "fix" it.
-> 
-> Can you give us a hint which technology to use? Currently I am
-> trying to use QoS Multi Band Priority Queueing.
+ Hello Sebastian,
 
+ sorry, I had so many other things on my mind in the last few weeks tha=
+t=20
+ I totally forgot to keep you updated about the matter.
 
-Look into OpenOnload.  The software is GPLed, tho it
-requires a custom Ethernet card that is perhaps 50% more
-expensive than other 10GigE cards.
+ Yes, the patch from Sami solves my problem, I tested the patch with=20
+ kernel 3.10.17-rt12. The system boots just fine, no more warnings and=20
+ the serial console is back, too. Thanks a lot, Sami! The only remainin=
+g=20
+ problem for now seems to be that the system does not boot if I enable=20
+ the high resolution timer support (CONFIG_HIGH_RES_TIMERS - the same=20
+ problem that Sami described a while ago).
 
-Regards
-Joe
+ Kind regards,
+ Michael Langfinger
 
+> * Sami Pietik=C3=A4inen | 2013-10-28 13:59:53 [+0000]:
+>
+>>It seems that there is an irq number mismatch in the=20
+>> "arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch".
+>>The patch adds setup_irq() and remove_irq() calls which have=20
+>> different irq number than the base driver.
+>>
+>>If I'm correct, the irq number should be NR_IRQS_LEGACY + AT91_ID_SYS=
+=20
+>> instead of only AT91_ID_SYS.
+>>
+>>I have attached a fixed patch for 3.6.9-rt21. I tested it with=20
+>> SAMA5D35, and it removed the
+>>"Trying to free already-free IRQ 1" boot warnings.
+>
+> Michael, any feedback? Does this solve your problem, too?
+>
+>>BR,
+>>Sami Pietik=C3=A4inen
+>
+> Sebastian
+> --
+> To unsubscribe from this list: send the line "unsubscribe=20
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
