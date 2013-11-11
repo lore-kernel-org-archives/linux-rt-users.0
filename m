@@ -1,54 +1,41 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.12.0-rt1
-Date: Sun, 10 Nov 2013 20:30:59 +0100
-Message-ID: <20131110193059.GA7537@linutronix.de>
+From: Tim Sander <tim@krieglstein.org>
+Subject: Re: [ANNOUNCE] 3.12.0-rt1
+Date: Mon, 11 Nov 2013 10:10:16 +0100
+Message-ID: <4531942.TIokzIBNEm@dabox>
+References: <20131110193059.GA7537@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
 	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38307 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751644Ab3KJTbC (ORCPT
+Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:50484
+	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750919Ab3KKJUW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 10 Nov 2013 14:31:02 -0500
-Content-Disposition: inline
+	Mon, 11 Nov 2013 04:20:22 -0500
+In-Reply-To: <20131110193059.GA7537@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+Hi Sebastian
+> I'm pleased to announce the v3.12.0-rt1 patch set.
+> 
+> Changes since v3.10.18-rt14
+> - updated to v3.12
+> - dropped SLAB support. It was broken in v3.10 and therefore not available
+>   for RT. Nobody complained except that it did not compile on !RT. Since
+>   SLUB performs a little better compared to SLAB and is the default
+>   allocator I think it is okay to drop SLAB support.
+> - the PREEMPT_RT Kconfig patches are now very early in the queue.
+> 
+> This is the first release of the v3.12 kernel. It run a couple of days on
+> powerpc and x86 without an accident :)
+Thanks for that release! Is ARM omitted because you didn't test it or because 
+of issues of some kind?
 
-I'm pleased to announce the v3.12.0-rt1 patch set.
-
-Changes since v3.10.18-rt14
-- updated to v3.12
-- dropped SLAB support. It was broken in v3.10 and therefore not available
-  for RT. Nobody complained except that it did not compile on !RT. Since
-  SLUB performs a little better compared to SLAB and is the default
-  allocator I think it is okay to drop SLAB support.
-- the PREEMPT_RT Kconfig patches are now very early in the queue.
-
-This is the first release of the v3.12 kernel. It run a couple of days on
-powerpc and x86 without an accident :)
-
-Known issues:
-
-      - bcache is disabled.
-
-      - an ancient race (since we got sleeping spinlocks) where the
-        TASK_TRACED state is temporary replaced while waiting on a rw
-        lock and the task can't be traced.
-
-The RT patch against 3.12 can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/3.12/patch-3.12.0-rt1.patch.xz
-
-The split quilt queue is available at:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.10/3.12/patches-3.12.0-rt1.tar.xz
-
-and it will be moved to the usual location once I able to do so.
-
-Sebastian
+Thanks
+Tim
