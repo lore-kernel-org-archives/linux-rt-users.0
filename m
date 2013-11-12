@@ -1,68 +1,54 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Tue, 12 Nov 2013 10:28:38 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de>
-References: <1383228427.5272.36.camel@marge.simpson.net>  <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>  <1383794799.5441.16.camel@marge.simpson.net>  <1383798668.5441.25.camel@marge.simpson.net>  <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
-  <20131107125923.GB24644@localhost.localdomain>  <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de> <1384243595.15180.63.camel@marge.simpson.net>
+From: Drew Richardson <Drew.Richardson@arm.com>
+Subject: mod_timer in interrupt context
+Date: Tue, 12 Nov 2013 08:39:31 -0800
+Message-ID: <42FC60A7A1C0DD469DA8DF3D4125035F012614404F67@SPOCK.usa.Arm.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Sebastian Sewior <bigeasy@linutronix.de>
-To: Mike Galbraith <bitbucket@online.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1384243595.15180.63.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=WINDOWS-1252
+Content-Transfer-Encoding: 8BIT
+Cc: Pawel Moll <Pawel.Moll@arm.com>, Wade Cherry <Wade.Cherry@arm.com>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from service87.mimecast.com ([91.220.42.44]:45401 "EHLO
+	service87.mimecast.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752641Ab3KLQoT convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Nov 2013 11:44:19 -0500
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 12 Nov 2013, Mike Galbraith wrote:
-> FYI, shiny new (and virgin) 3.12.0-rt1 nohz_full config is deadlock
-> prone.  I was measuring fastpath cost yesterday with pinned pipe-test.. 
-> 
-> x3550 M3 E5620 (bloatware config)
-> CONFIG_NO_HZ_IDLE - CPU3
-> 2.957012 usecs/loop -- avg 2.957012 676.4 KHz     1.000
-> 
-> CONFIG_NO_HZ_FULL - CPU1 != nohz_full
-> 3.735279 usecs/loop -- avg 3.735279 535.4 KHz      .791
-> 
-> CONFIG_NO_HZ_FULL - CPU3 == nohz_full
-> 5.922986 usecs/loop -- avg 5.922986 337.7 KHz      .499
-> 
-> (ow)
-> 
-> ..and noticed box eventually deadlocks, if it boots, which the instance
-> below didn't.
- 
-> --- <RT exception stack> ---
-> #11 [ffff88017b243e90] _raw_spin_lock at ffffffff815d2596
-> #12 [ffff88017b243e90] rt_mutex_trylock at ffffffff815d15be
-> #13 [ffff88017b243eb0] get_next_timer_interrupt at ffffffff81063b42
-> #14 [ffff88017b243f00] tick_nohz_stop_sched_tick at ffffffff810bd1fd
-> #15 [ffff88017b243f70] tick_nohz_irq_exit at ffffffff810bd7d2
-> #16 [ffff88017b243f90] irq_exit at ffffffff8105b02d
-> #17 [ffff88017b243fb0] reschedule_interrupt at ffffffff815db3dd
-> --- <IRQ stack> ---
-> #18 [ffff88017a2a9bc8] reschedule_interrupt at ffffffff815db3dd
->     [exception RIP: task_blocks_on_rt_mutex+51]
->     RIP: ffffffff810c1ed3  RSP: ffff88017a2a9c78  RFLAGS: 00000296
->     RAX: 0000000000080000  RBX: 0000000000000001  RCX: 0000000000000000
->     RDX: ffff88017a27d5a0  RSI: ffff88017a2a9d00  RDI: ffff880179ef8000
->     RBP: ffff880179ef8000   R8: ffff880179cfef50   R9: ffff880179ef8018
->     R10: ffff880179cfef51  R11: 0000000000000002  R12: 0000000000000001
->     R13: 0000000000000001  R14: 0000000100000000  R15: 0000000100000000
->     ORIG_RAX: ffffffffffffff02  CS: 0010  SS: 0018
-> #19 [ffff88017a2a9ce0] rt_spin_lock_slowlock at ffffffff815d183c
+I am using a 16 core ARM Cortex-A15 dev board with a PREEMPT_RT patched kernel. When I call mod_timer in the sched_switch tracepoint from a kernel module the board locks up. Here's the stack trace I get
 
-Grr....
- 
-     raw_spin_lock(&lock->wait_lock);
+BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+in_atomic(): 1, irqs_disabled(): 128, pid: 0, name: swapper/7
+INFO: lockdep is turned off.
+irq event stamp: 0
+hardirqs last  enabled at (0): [<  (null)>]   (null)
+hardirqs last disabled at (0): [<c0432358>] copy_process.part.49+0x414/0x11bc
+softirqs last  enabled at (0): [<c0432358>] copy_process.part.49+0x414/0x11bc
+softirqs last disabled at (0): [<  (null)>]   (null)
+Preemption disabled at:[<  (null)>]   (null)
 
-Ditto in rt_mutex_slowtrylock()
+CPU: 7 PID: 0 Comm: swapper/7 Tainted: G        W  O 3.10.14-rt9 #3
+[<c0424f38>] (unwind_backtrace+0x0/0xf4) from [<c0421750>] (show_stack+0x10/0x14)
+[<c0421750>] (show_stack+0x10/0x14) from [<c08f2cac>] (rt_spin_lock+0x24/0x58)
+[<c08f2cac>] (rt_spin_lock+0x24/0x58) from [<c0443f48>] (lock_timer_base.isra.38+0x2c/0x50)
+[<c0443f48>] (lock_timer_base.isra.38+0x2c/0x50) from [<c04441a8>] (mod_timer+0x60/0x240)
+[<c04441a8>] (mod_timer+0x60/0x240) from [<bf000038>] (probe_sched_switch+0x2c/0x3c [gator])
+[<bf000038>] (probe_sched_switch+0x2c/0x3c [gator]) from [<c08f1a08>] (__schedule+0x618/0x678)
+[<c08f1a08>] (__schedule+0x618/0x678) from [<c08f1a9c>] (schedule+0x34/0xa4)
+[<c08f1a9c>] (schedule+0x34/0xa4) from [<c08f2040>] (schedule_preempt_disabled+0x14/0x20)
+[<c08f2040>] (schedule_preempt_disabled+0x14/0x20) from [<c0473560>] (cpu_startup_entry+0x114/0x2b4)
+[<c0473560>] (cpu_startup_entry+0x114/0x2b4) from [<00af9aa4>] (0xaf9aa4)
+
+The mod_timer function calls lock_timer_base which calls spin_lock. This is fine in non-RT kernels, but in RT_FULL it's a mutex which could block. Is it illegal to call mod_timer in this context?
 
 Thanks,
 
-	tglx
+Drew
+
+-- IMPORTANT NOTICE: The contents of this email and any attachments are confidential and may also be privileged. If you are not the intended recipient, please notify the sender immediately and do not disclose the contents to any other person, use it for any purpose, or store or copy the information in any medium.  Thank you.
+
+ARM Limited, Registered office 110 Fulbourn Road, Cambridge CB1 9NJ, Registered in England & Wales, Company No:  2557590
+ARM Holdings plc, Registered office 110 Fulbourn Road, Cambridge CB1 9NJ, Registered in England & Wales, Company No:  2548782
+
