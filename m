@@ -1,54 +1,94 @@
-From: Drew Richardson <Drew.Richardson@arm.com>
-Subject: mod_timer in interrupt context
-Date: Tue, 12 Nov 2013 08:39:31 -0800
-Message-ID: <42FC60A7A1C0DD469DA8DF3D4125035F012614404F67@SPOCK.usa.Arm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH] 3.12.0-rt1: net: iwlwifi request only a threaded handler
+ for interrupts
+Date: Tue, 12 Nov 2013 13:16:59 -0600
+Message-ID: <20131112131659.578eb7c1@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: 8BIT
-Cc: Pawel Moll <Pawel.Moll@arm.com>, Wade Cherry <Wade.Cherry@arm.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from service87.mimecast.com ([91.220.42.44]:45401 "EHLO
-	service87.mimecast.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752641Ab3KLQoT convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Nov 2013 11:44:19 -0500
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/jaMgZAUhrMjDh81HYHp5fDW"; protocol="application/pgp-signature"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-I am using a 16 core ARM Cortex-A15 dev board with a PREEMPT_RT patched kernel. When I call mod_timer in the sched_switch tracepoint from a kernel module the board locks up. Here's the stack trace I get
+--Sig_/jaMgZAUhrMjDh81HYHp5fDW
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-in_atomic(): 1, irqs_disabled(): 128, pid: 0, name: swapper/7
-INFO: lockdep is turned off.
-irq event stamp: 0
-hardirqs last  enabled at (0): [<  (null)>]   (null)
-hardirqs last disabled at (0): [<c0432358>] copy_process.part.49+0x414/0x11bc
-softirqs last  enabled at (0): [<c0432358>] copy_process.part.49+0x414/0x11bc
-softirqs last disabled at (0): [<  (null)>]   (null)
-Preemption disabled at:[<  (null)>]   (null)
+Sebastian,
 
-CPU: 7 PID: 0 Comm: swapper/7 Tainted: G        W  O 3.10.14-rt9 #3
-[<c0424f38>] (unwind_backtrace+0x0/0xf4) from [<c0421750>] (show_stack+0x10/0x14)
-[<c0421750>] (show_stack+0x10/0x14) from [<c08f2cac>] (rt_spin_lock+0x24/0x58)
-[<c08f2cac>] (rt_spin_lock+0x24/0x58) from [<c0443f48>] (lock_timer_base.isra.38+0x2c/0x50)
-[<c0443f48>] (lock_timer_base.isra.38+0x2c/0x50) from [<c04441a8>] (mod_timer+0x60/0x240)
-[<c04441a8>] (mod_timer+0x60/0x240) from [<bf000038>] (probe_sched_switch+0x2c/0x3c [gator])
-[<bf000038>] (probe_sched_switch+0x2c/0x3c [gator]) from [<c08f1a08>] (__schedule+0x618/0x678)
-[<c08f1a08>] (__schedule+0x618/0x678) from [<c08f1a9c>] (schedule+0x34/0xa4)
-[<c08f1a9c>] (schedule+0x34/0xa4) from [<c08f2040>] (schedule_preempt_disabled+0x14/0x20)
-[<c08f2040>] (schedule_preempt_disabled+0x14/0x20) from [<c0473560>] (cpu_startup_entry+0x114/0x2b4)
-[<c0473560>] (cpu_startup_entry+0x114/0x2b4) from [<00af9aa4>] (0xaf9aa4)
+I needed this for my laptop on 3.12, so tweaked it to apply properly.=20
 
-The mod_timer function calls lock_timer_base which calls spin_lock. This is fine in non-RT kernels, but in RT_FULL it's a mutex which could block. Is it illegal to call mod_timer in this context?
+Clark
 
-Thanks,
+commit 7b1573eaa0f176731bc231b249598b6e4850babf
+Author: Clark Williams <clark.williams@gmail.com>
+Date:   Tue Nov 12 12:17:07 2013 -0600
 
-Drew
+    net: iwlwifi: request only a threaded handler for interrupts
+   =20
+    On RT the trans_pcie->irq_lock lock is converted into a sleeping
+    lock and can't be used in primary irq handler. The lock is used in
+    mutliple places which means turning it into a raw lock could
+    increase the latency of the system.
+    For now both handlers are moved into the thread.
+   =20
+    Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+    Signed-off-by: Clark Williams <clark.williams@gmail.com>
 
--- IMPORTANT NOTICE: The contents of this email and any attachments are confidential and may also be privileged. If you are not the intended recipient, please notify the sender immediately and do not disclose the contents to any other person, use it for any purpose, or store or copy the information in any medium.  Thank you.
+diff --git a/drivers/net/wireless/iwlwifi/pcie/trans.c
+b/drivers/net/wireless/iwlwifi/pcie/trans.c index c3f904d..2f2345c
+100644 --- a/drivers/net/wireless/iwlwifi/pcie/trans.c
++++ b/drivers/net/wireless/iwlwifi/pcie/trans.c
+@@ -1375,6 +1375,20 @@ static const struct iwl_trans_ops trans_ops_pcie
+=3D { .set_bits_mask =3D iwl_trans_pcie_set_bits_mask,
+ };
+=20
++#ifdef CONFIG_PREEMPT_RT_BASE
++static irqreturn_t iwl_rt_irq_handler(int irq, void *dev_id)
++{
++       irqreturn_t ret;
++
++       local_bh_disable();
++       ret =3D iwl_pcie_isr_ict(irq, dev_id);
++       local_bh_enable();
++       if (ret =3D=3D IRQ_WAKE_THREAD)
++               ret =3D iwl_pcie_irq_handler(irq, dev_id);
++       return ret;
++}
++#endif
++
+ struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
+                                       const struct pci_device_id *ent,
+                                       const struct iwl_cfg *cfg)
+@@ -1493,9 +1507,14 @@ struct iwl_trans *iwl_trans_pcie_alloc(struct
+pci_dev *pdev, if (iwl_pcie_alloc_ict(trans))
+                goto out_free_cmd_pool;
+=20
++#ifdef CONFIG_PREEMPT_RT_BASE
++       err =3D request_threaded_irq(pdev->irq, NULL, iwl_rt_irq_handler,
++                                IRQF_SHARED | IRQF_ONESHOT, DRV_NAME,
+trans)) +#else
+        err =3D request_threaded_irq(pdev->irq, iwl_pcie_isr_ict,
+                                   iwl_pcie_irq_handler,
+                                   IRQF_SHARED, DRV_NAME, trans);
++#endif
+        if (err) {
+                IWL_ERR(trans, "Error allocating IRQ %d\n", pdev->irq);
+                goto out_free_ict;
 
-ARM Limited, Registered office 110 Fulbourn Road, Cambridge CB1 9NJ, Registered in England & Wales, Company No:  2557590
-ARM Holdings plc, Registered office 110 Fulbourn Road, Cambridge CB1 9NJ, Registered in England & Wales, Company No:  2548782
+--Sig_/jaMgZAUhrMjDh81HYHp5fDW
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iEYEARECAAYFAlKCfqsACgkQHyuj/+TTEp3DrwCg5ozgU2mp/weF1TOEtY99S0N4
+qRAAnilbSg8mxF1MYb8Gv6184BJ40ZFv
+=S8s4
+-----END PGP SIGNATURE-----
+
+--Sig_/jaMgZAUhrMjDh81HYHp5fDW--
