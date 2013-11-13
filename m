@@ -1,41 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: mod_timer in interrupt context
-Date: Wed, 13 Nov 2013 22:53:04 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311132246030.30673@ionos.tec.linutronix.de>
-References: <42FC60A7A1C0DD469DA8DF3D4125035F012614404F67@SPOCK.usa.Arm.com>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [ANNOUNCE] 3.12.0-rt1
+Date: Thu, 14 Nov 2013 02:20:39 +0400
+Message-ID: <5283FB37.4060501@pavlinux.ru>
+References: <5282A99F.6020205@pavlinux.ru>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Pawel Moll <Pawel.Moll@arm.com>,
-	Wade Cherry <Wade.Cherry@arm.com>
-To: Drew Richardson <Drew.Richardson@arm.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-rt-users@vger.kernel.org>
+To: pavel@pavlinux.ru
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:56103 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751878Ab3KMVxI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Nov 2013 16:53:08 -0500
-In-Reply-To: <42FC60A7A1C0DD469DA8DF3D4125035F012614404F67@SPOCK.usa.Arm.com>
+Received: from imp02.mtu.ru ([62.5.255.19]:44850 "EHLO imp02.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751032Ab3KMWUq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Nov 2013 17:20:46 -0500
+In-Reply-To: <5282A99F.6020205@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 12 Nov 2013, Drew Richardson wrote:
-> I am using a 16 core ARM Cortex-A15 dev board with a PREEMPT_RT
-> patched kernel. When I call mod_timer in the sched_switch tracepoint
-> from a kernel module the board locks up.
+13.11.2013 02:20, Pavel Vasilyev =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> I =D1=81an't mount XFS partitions;
+>=20
+> Motherboard: Thunder K8WE (S2895), .config - http://pastebin.com/4JGw=
+eDgV
+>=20
 
-This sounds ass backwards to begin with. Why on earth are you calling
-mod_timer from a tracepoint in the guts of the scheduler core?
+nv_sata module
 
-> The mod_timer function calls lock_timer_base which calls
-> spin_lock. This is fine in non-RT kernels, but in RT_FULL it's a
-> mutex which could block. Is it illegal to call mod_timer in this
-> context?
+http://i58.fastpic.ru/big/2013/1114/14/978f3b5282cd65a2f1c8f2bd86d74914=
+=2Ejpg
 
-It's not illegal in any jurisdiction AFAICT, but it's a nono on
-RT. And no, we are not going to change this.
+--=20
 
-Thanks,
-
-	tglx
-
+                                                         Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
