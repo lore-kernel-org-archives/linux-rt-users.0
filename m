@@ -1,46 +1,35 @@
-From: David Miller <davem@davemloft.net>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH net] ip6tnl: fix use after free of fb_tnl_dev
-Date: Thu, 14 Nov 2013 17:05:29 -0500 (EST)
-Message-ID: <20131114.170529.1627250972818871118.davem@davemloft.net>
+Date: Thu, 14 Nov 2013 17:18:21 -0500
+Message-ID: <20131114171821.6500541d@gandalf.local.home>
 References: <20131113211430.1ad3bb7d@gandalf.local.home>
 	<1384440423-4275-1-git-send-email-nicolas.dichtel@6wind.com>
+	<20131114.170529.1627250972818871118.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+Cc: nicolas.dichtel@6wind.com, linux-kernel@vger.kernel.org,
 	stable@vger.kernel.org, gregkh@linuxfoundation.org,
 	williams@redhat.com, linux-rt-users@vger.kernel.org,
 	lclaudio@uudg.org, netdev@vger.kernel.org, willemb@google.com
-To: nicolas.dichtel@6wind.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from shards.monkeyblade.net ([149.20.54.216]:53343 "EHLO
-	shards.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757796Ab3KNWFc (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Nov 2013 17:05:32 -0500
-In-Reply-To: <1384440423-4275-1-git-send-email-nicolas.dichtel@6wind.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: David Miller <davem@davemloft.net>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <20131114.170529.1627250972818871118.davem@davemloft.net>
+Sender: stable-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
-Date: Thu, 14 Nov 2013 15:47:03 +0100
+On Thu, 14 Nov 2013 17:05:29 -0500 (EST)
+David Miller <davem@davemloft.net> wrote:
 
-> Bug has been introduced by commit bb8140947a24 ("ip6tnl: allow to use rtnl ops
-> on fb tunnel").
-> 
-> When ip6_tunnel.ko is unloaded, FB device is delete by rtnl_link_unregister()
-> and then we try to use the pointer in ip6_tnl_destroy_tunnels().
-> 
-> Let's add an handler for dellink, which will never remove the FB tunnel. With
-> this patch it will no more be possible to remove it via 'ip link del ip6tnl0',
-> but it's safer.
-> 
-> The same fix was already proposed by Willem de Bruijn <willemb@google.com> for
-> sit interfaces.
-> 
-> CC: Willem de Bruijn <willemb@google.com>
-> Reported-by: Steven Rostedt <rostedt@goodmis.org>
-> Signed-off-by: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+ 
+> Applied and queued up for -stable, thanks for being so proactive about this
+> Nicolas.
 
-Applied and queued up for -stable, thanks for being so proactive about this
-Nicolas.
+I should also note that I added this back to 3.10.18 and the bug goes
+away.
+
+If it's not too late:
+
+Tested-by: Steven Rostedt <rostedt@goodmis.org>
+
+-- Steve
