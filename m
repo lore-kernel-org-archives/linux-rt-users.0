@@ -1,85 +1,53 @@
-From: Clark Williams <williams@redhat.com>
-Subject: rt-tests v0.86 available from git.kernel.org
-Date: Fri, 15 Nov 2013 15:00:06 -0600
-Message-ID: <20131115150006.004c01a3@sluggy>
+From: Donna Timoth <abgr2010@gmail.com>
+Subject: Attn Your Payment Fund,
+Date: Sat, 16 Nov 2013 10:25:08 +0100
+Message-ID: <CADGta9nACPScu3LupUCk4C8XoVwnPgkLKMR9MpLpXsNa9Nw69Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=PGP-SHA1;
- boundary="Sig_/e9KmgWLvnJdRGykGS+fPV.h"; protocol="application/pgp-signature"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	John Kacur <jkacur@redhat.com>,
-	Nicholas Mc Guire <der.herr@hofr.at>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Frank Rowand <frank.rowand@am.sony.com>,
-	Jim Somerville <Jim.Somerville@windriver.com>
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: undisclosed-recipients:;
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:2451 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751385Ab3KOVAe (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Nov 2013 16:00:34 -0500
+Received: from mail-ie0-f193.google.com ([209.85.223.193]:51805 "EHLO
+	mail-ie0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751445Ab3KPJZI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 16 Nov 2013 04:25:08 -0500
+Received: by mail-ie0-f193.google.com with SMTP id aq17so1014310iec.0
+        for <linux-rt-users@vger.kernel.org>; Sat, 16 Nov 2013 01:25:08 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/e9KmgWLvnJdRGykGS+fPV.h
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Attn: Dearest One,
 
-The latest version of rt-tests (cyclictest, hwladetect, et al) may be
-pulled from:
+Re:Irrevocable Release of your payment fund,
 
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+We are authorized by the governor boards to immediate Release of your
+Re-Compensation Price
+funds value of us$850,000.00 Recommend and approve your claims for
+payment is certified as
+genuine.
 
-Use the master branch or the tag v0.86.
+Your total fund CASHIER'S CHECK worth of us$850,000.00 has been
+credited in your favour
+through the issuing bank into payment ATM Master Card fund which you
+can withdraw in any
+ATM Cash Point Machine Worldwide
 
-As soon as kup and I come to an understanding, I'll make tarballs
-available from my directory:
+You are therefore advised to contact WILLY JAMES (MR) the Director of
+the Administrative
+Audit unit ATM Payment Center with the bellowing information.
 
-https://www.kernel.org/pub/linux/kernel/people/clrkwllms/
+WILLY JAMES (MR)
+TELEPHONE: +226 7493 0179
+E-mail: ( Wjames@mail2james.com )
 
-This release is mainly bugfixes, but two new things were added.=20
+Note: You should furnished WILLY JAMES (MR) with your correct contact
+information.
+1. Full Name:
+2. Country:
+3. Delivery Address:
+4. Phone & Occupation:
+5. A copy of your international passport or national ID:
 
-Nicolas McGuire added the -A/--aligned option to cyclictest which starts
-threads aligned to a specified time boundary.
-
-I added the -F/--fifo option to cyclictest which causes a named fifo to
-be created so that an external program can read run statistics while
-the run is in process. This one is early days yet so any suggestions,
-corrections, flames, etc that can improve this are welcome.=20
-
-Here's the changelog:
-
-* Fri Nov 15 2013 Clark Williams <williams@redhat.com> - 0.86-1
-- cyclictest: allow break threshold without doing any tracing
-- cyclictest: add named fifo for statistics
-- from  John Kacur <jkacur@redhat.com>:
-  - cyclictest: Align option fixes
-  - Makefile: Don't tag files in dir BUILD from rpm builds
-  - Makefile: Add BUILDROOT and SPECS to the dirs to remove for distclean
-  - Makefile: Add tmp dir to distclean and "make release" call distclean
-  - Makefile: Don't tag tmp files created when making a release
-- from Nicholas Mc Guire <der.herr@hofr.at>:
-  - cyclictest: add align thread wakeup times option
-- cyclictest: modify option handling to use enumerated types
-- from Sebastian Andrzej Siewior <bigeasy@linutronix.de>:
-  - hackbench: init child's struct before using it
-- from Jim Somerville <Jim.Somerville@windriver.com>:
-  - cyclictest: finish removal of 1 second first loops
-- from Frank Rowand <frank.rowand@am.sony.com>:
-  - rt-tests: NUMA optional for make rpm
-  - cyclictest: white space cleanup
-
-Clark
-
---Sig_/e9KmgWLvnJdRGykGS+fPV.h
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iEYEARECAAYFAlKGi1YACgkQHyuj/+TTEp2ATwCfc8V3m+i/JAuu0p2YX4C6wxjo
-ufkAoKKP2Hb1rbOxnf5UOPcxXxzeRI4a
-=zGmj
------END PGP SIGNATURE-----
-
---Sig_/e9KmgWLvnJdRGykGS+fPV.h--
+Yours
+Best Regard.
+Dr. Donna Timoth
