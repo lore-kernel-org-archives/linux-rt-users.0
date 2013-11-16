@@ -1,53 +1,52 @@
-From: Donna Timoth <abgr2010@gmail.com>
-Subject: Attn Your Payment Fund,
-Date: Sat, 16 Nov 2013 10:25:08 +0100
-Message-ID: <CADGta9nACPScu3LupUCk4C8XoVwnPgkLKMR9MpLpXsNa9Nw69Q@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [v1][PATCH] cpu_down: move migrate_enable() back
+Date: Sat, 16 Nov 2013 14:05:00 +0100
+Message-ID: <20131116130500.GB11518@linutronix.de>
+References: <1383789967-5885-1-git-send-email-tiejun.chen@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: undisclosed-recipients:;
+Content-Type: text/plain; charset=utf-8
+Cc: tglx@linutronix.de, stable-rt@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Tiejun Chen <tiejun.chen@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f193.google.com ([209.85.223.193]:51805 "EHLO
-	mail-ie0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751445Ab3KPJZI (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:44048 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751040Ab3KPNFD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 16 Nov 2013 04:25:08 -0500
-Received: by mail-ie0-f193.google.com with SMTP id aq17so1014310iec.0
-        for <linux-rt-users@vger.kernel.org>; Sat, 16 Nov 2013 01:25:08 -0800 (PST)
+	Sat, 16 Nov 2013 08:05:03 -0500
+Content-Disposition: inline
+In-Reply-To: <1383789967-5885-1-git-send-email-tiejun.chen@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Attn: Dearest One,
+* Tiejun Chen | 2013-11-07 10:06:07 [+0800]:
 
-Re:Irrevocable Release of your payment fund,
+>Commit 08c1ab68, "hotplug-use-migrate-disable.patch", intends to
+>use migrate_enable()/migrate_disable() to replace that combination
+>of preempt_enable() and preempt_disable(), but actually in
+>!CONFIG_PREEMPT_RT_FULL case, migrate_enable()/migrate_disable()
+>are still equal to preempt_enable()/preempt_disable(). So that
+>followed cpu_hotplug_begin()/cpu_unplug_begin(cpu) would go schedule()
+>to trigger schedule_debug() like this:
+>
+>_cpu_down()
+>	|
+>	+ migrate_disable() = preempt_disable()
+>	|
+>	+ cpu_hotplug_begin() or cpu_unplug_begin()
+>		|
+>		+ schedule()
+>			|
+>			+ __schedule()
+>				|
+>				+ preempt_disable();
+>				|
+>				+ __schedule_bug() is true!
+>
+>So we should move migrate_enable() as the original scheme.
+>
+>Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
 
-We are authorized by the governor boards to immediate Release of your
-Re-Compensation Price
-funds value of us$850,000.00 Recommend and approve your claims for
-payment is certified as
-genuine.
+applied.
 
-Your total fund CASHIER'S CHECK worth of us$850,000.00 has been
-credited in your favour
-through the issuing bank into payment ATM Master Card fund which you
-can withdraw in any
-ATM Cash Point Machine Worldwide
-
-You are therefore advised to contact WILLY JAMES (MR) the Director of
-the Administrative
-Audit unit ATM Payment Center with the bellowing information.
-
-WILLY JAMES (MR)
-TELEPHONE: +226 7493 0179
-E-mail: ( Wjames@mail2james.com )
-
-Note: You should furnished WILLY JAMES (MR) with your correct contact
-information.
-1. Full Name:
-2. Country:
-3. Delivery Address:
-4. Phone & Occupation:
-5. A copy of your international passport or national ID:
-
-Yours
-Best Regard.
-Dr. Donna Timoth
+Sebastian
