@@ -1,73 +1,51 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [Kernel Panic] 3.10.10-rt7
-Date: Wed, 20 Nov 2013 10:46:05 -0500
-Message-ID: <528CD93D.4060609@windriver.com>
-References: <9B7F15AA4177464A8FAB5BE79B14288B88967CEF@vistrex3.vi.vector.int> <528CAC42.1060706@siemens.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.8.13.13-rt24
+Date: Wed, 20 Nov 2013 14:45:27 -0500
+Message-ID: <20131120144527.6de2f2dd@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
-To: Jan Kiszka <jan.kiszka@siemens.com>,
-	"Frederich, Jens" <Jens.Frederich@vector.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <528CAC42.1060706@siemens.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 13-11-20 07:34 AM, Jan Kiszka wrote:
-> On 2013-11-20 13:26, Frederich, Jens wrote:
->> Hello,
->>
->> I got a Kernel panic by some long time stress tests. Look here: http://dy.cx/pqP7M.
-> 
-> Ah, that should be http://thread.gmane.org/gmane.linux.kernel/1564783
-> 
-> Paul, was there any follow-up patch on this topic?
 
-Yeah, from the rt-summit [ http://lwn.net/Articles/572740/ ] it is on me
-to get those simple wait queue patches mainlined (and then the local_bh
-stuff).  Once I've got that done, I'll look at spending some time on 3.12-rt
-kvm patches -- in the meantime, you are right, the screenshot shows that his
-3.10-rt needs the straightforward conversion of vpcu->wq to simple wait.
+Dear RT Folks,
 
-Paul.
---
+I'm pleased to announce the 3.8.13.13-rt24 stable release.
 
-> 
-> Jan
-> 
->>
->> Furthermore I got sporadic some BUG messages:
->>
->> [ 1128.358971] BUG: scheduling while atomic: swapper/0/0/0x00010002
->> [ 1128.358982] Preemption disabled at:[<ffffffff810dfb8a>] cpu_startup_entry+0x17a/0x300
->>
->> Hardware
->> --------
->>
->> My system is a i7 with 4 GB RAM congatec evalboard.
->>
->> Setup
->> -----
->>
->> On the system runs Linux RT (text mode) 3.10.10-rt7 with 1 GB RAM and a
->> Windows 7 KVM/QEMU (Qemu 1.6.1) guest with 3 GB RAM. Each system has it own
->> ethernet card. The Win 7 guest uses it per pci pass-through. The Win 7 is
->> pinned to core 2,3.
->>
->> Scenario
->> --------
->>
->> We sending UDP packages every 1 msec on the Linux side. The UDP sender process
->> has real time prio 80 and the ethernet driver 90. At the same time we are
->> stressing Win 7. Memory stress - allocate as much as possible and do memset(),
->> then CPU stress - high CPU load, then Kernel DPC stress - high load thread at
->> DPC level and ethernet stress - send UDP packages every milliseconds. I got the
->> panic after 45 minutes. It seems that is correlates with the ethernet stress.
->>
->> Can anybody help me?
->>
->> thanks
->> Jens
-> 
+
+This release is just an update to the new stable 3.8.13.13 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.8-rt
+  Head SHA1: 52ab3966a3010a6c08c2f0298b1e7c0eca06a671
+
+
+Or to build 3.8.13.13-rt24 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/stable/patch-3.8.13.13.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.13-rt24.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
