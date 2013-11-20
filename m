@@ -1,61 +1,61 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: [PATCH 2/2] remove recursive call to migrate_disable in
-	write_lock_bh
-Date: Wed, 20 Nov 2013 11:27:34 +0100
-Message-ID: <20131120102734.GA3793@opentech.at>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RFC] Timer: Migrate running timers
+Date: Wed, 20 Nov 2013 12:42:47 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1311201148272.30673@ionos.tec.linutronix.de>
+References: <3a0ef8e5a838fcf1a3cdaecc029cc97dea5edf65.1384940804.git.viresh.kumar@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: linux-rt-users@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
+	bigeasy@linutronix.de, rostedt@goodmis.org, tj@kernel.org,
+	mingo@redhat.com, peterz@infradead.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	john.stultz@linaro.org, paulmck@linux.vnet.ibm.com
+To: Viresh Kumar <viresh.kumar@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:45320 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750860Ab3KTK1f (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Nov 2013 05:27:35 -0500
-Content-Disposition: inline
+Received: from www.linutronix.de ([62.245.132.108]:60986 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751312Ab3KTLnD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Nov 2013 06:43:03 -0500
+In-Reply-To: <3a0ef8e5a838fcf1a3cdaecc029cc97dea5edf65.1384940804.git.viresh.kumar@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->From 19176ba9a8a83e4acf34d9739fa06d6c18fa957f Mon Sep 17 00:00:00 2001
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Date: Tue, 19 Nov 2013 23:33:10 -0500
-Subject: [PATCH 2/2] remove recursive call to migrate_disable in write_lock_bh
+Viresh,
 
- write_lock_bh/write_unlock_bh calls local_bh_disable/enable which 
- already does a migrate_disable/enable no need for this recursive call.
+On Wed, 20 Nov 2013, Viresh Kumar wrote:
 
- patch is on top of 3.12-rt2
+> Migration of timers from idle cores to non-idle ones for power saving is very
+> well working and really saves a lot of power for us. What's currently not
+> working is the migration of running timers Or timers which re-arms themselves.
+>
+> There are complications with migrating timers which schedules themselves again
+> from their handler. del_timer_sync() can't detect that the timer's handler
+> yet has not finished.
 
- No change of functionality
+Because you try to violate the semantics of the existing code. There
+is a reason why we enforce that running timers must be requeued on the
+base they are running on.
+
+Now you try to duct tape it into submission. That's not going to fly.
+
+The timer wheel code is not designed to allow that and it has lots of
+other short comings and historic burdens. I'm not going to accept more
+duct tape and fragile hackery into that code.
+
+I'm already working on a complete replacement infrastructure, which
+avoids all the short comings of the current timer implementation
+including this one. 
+
+It's going to be a massive effort to convert everything over to the
+new infrastructure so we can kill the timer wheel, but that's less
+scary and less risky than trying to add more fragility to the existing
+code.
+
+Thanks,
+
+	tglx
 
 
-Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
----
- include/linux/rwlock_rt.h |    2 --
- 1 files changed, 0 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
-index 87f5a1d..9a5fe26 100644
---- a/include/linux/rwlock_rt.h
-+++ b/include/linux/rwlock_rt.h
-@@ -67,7 +67,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- #define write_lock_bh(lock)				\
- 	do {						\
- 		local_bh_disable();			\
--		migrate_disable();			\
- 		rt_write_lock(lock);			\
- 	} while (0)
- 
-@@ -96,7 +95,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- #define write_unlock_bh(lock)				\
- 	do {						\
- 		rt_write_unlock(lock);			\
--		migrate_enable();			\
- 		local_bh_enable();			\
- 	} while (0)
- 
--- 
-1.7.2.5
-
+	    
