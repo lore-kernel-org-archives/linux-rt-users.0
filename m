@@ -1,61 +1,50 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC] Timer: Migrate running timers
-Date: Wed, 20 Nov 2013 12:42:47 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1311201148272.30673@ionos.tec.linutronix.de>
-References: <3a0ef8e5a838fcf1a3cdaecc029cc97dea5edf65.1384940804.git.viresh.kumar@linaro.org>
+From: "Frederich, Jens" <Jens.Frederich@vector.com>
+Subject: [Kernel Panic] 3.10.10-rt7
+Date: Wed, 20 Nov 2013 12:26:22 +0000
+Message-ID: <9B7F15AA4177464A8FAB5BE79B14288B88967CEF@vistrex3.vi.vector.int>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linaro-kernel@lists.linaro.org, patches@linaro.org,
-	bigeasy@linutronix.de, rostedt@goodmis.org, tj@kernel.org,
-	mingo@redhat.com, peterz@infradead.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	john.stultz@linaro.org, paulmck@linux.vnet.ibm.com
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60986 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751312Ab3KTLnD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 Nov 2013 06:43:03 -0500
-In-Reply-To: <3a0ef8e5a838fcf1a3cdaecc029cc97dea5edf65.1384940804.git.viresh.kumar@linaro.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Language: de-DE
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Viresh,
+Hello,
 
-On Wed, 20 Nov 2013, Viresh Kumar wrote:
+I got a Kernel panic by some long time stress tests. Look here: http://dy.cx/pqP7M.
 
-> Migration of timers from idle cores to non-idle ones for power saving is very
-> well working and really saves a lot of power for us. What's currently not
-> working is the migration of running timers Or timers which re-arms themselves.
->
-> There are complications with migrating timers which schedules themselves again
-> from their handler. del_timer_sync() can't detect that the timer's handler
-> yet has not finished.
+Furthermore I got sporadic some BUG messages:
 
-Because you try to violate the semantics of the existing code. There
-is a reason why we enforce that running timers must be requeued on the
-base they are running on.
+[ 1128.358971] BUG: scheduling while atomic: swapper/0/0/0x00010002
+[ 1128.358982] Preemption disabled at:[<ffffffff810dfb8a>] cpu_startup_entry+0x17a/0x300
 
-Now you try to duct tape it into submission. That's not going to fly.
+Hardware
+--------
 
-The timer wheel code is not designed to allow that and it has lots of
-other short comings and historic burdens. I'm not going to accept more
-duct tape and fragile hackery into that code.
+My system is a i7 with 4 GB RAM congatec evalboard.
 
-I'm already working on a complete replacement infrastructure, which
-avoids all the short comings of the current timer implementation
-including this one. 
+Setup
+-----
 
-It's going to be a massive effort to convert everything over to the
-new infrastructure so we can kill the timer wheel, but that's less
-scary and less risky than trying to add more fragility to the existing
-code.
+On the system runs Linux RT (text mode) 3.10.10-rt7 with 1 GB RAM and a
+Windows 7 KVM/QEMU (Qemu 1.6.1) guest with 3 GB RAM. Each system has it own
+ethernet card. The Win 7 guest uses it per pci pass-through. The Win 7 is
+pinned to core 2,3.
 
-Thanks,
+Scenario
+--------
 
-	tglx
+We sending UDP packages every 1 msec on the Linux side. The UDP sender process
+has real time prio 80 and the ethernet driver 90. At the same time we are
+stressing Win 7. Memory stress - allocate as much as possible and do memset(),
+then CPU stress - high CPU load, then Kernel DPC stress - high load thread at
+DPC level and ethernet stress - send UDP packages every milliseconds. I got the
+panic after 45 minutes. It seems that is correlates with the ethernet stress.
 
+Can anybody help me?
 
-
-	    
+thanks
+Jens
