@@ -1,50 +1,43 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/5] hwlat-detector: Dont ignore threshold module parameter
-Date: Thu, 21 Nov 2013 13:42:01 -0500
-Message-ID: <20131121184218.185614956@goodmis.org>
+Subject: [PATCH RT 5/5] Linux 3.4.69-rt86-rc1
+Date: Thu, 21 Nov 2013 13:42:04 -0500
+Message-ID: <20131121184218.677962353@goodmis.org>
 References: <20131121184159.676777537@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-hwlat-detector-Don-t-ignore-threshold-module-paramet.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:65433 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754614Ab3KUSmW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Nov 2013 13:42:22 -0500
+Content-Disposition: inline; filename=0005-Linux-3.4.69-rt86-rc1.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.4.69-rt86-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <bitbucket@online.de>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-If the user specified a threshold at module load time, use it.
-
-Cc: stable-rt@vger.kernel.org
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
-Signed-off-by: Mike Galbraith <bitbucket@online.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/misc/hwlat_detector.c | 2 +-
+ localversion-rt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index 6f61d5f..d2676b8 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -413,7 +413,7 @@ static int init_stats(void)
- 		goto out;
- 
- 	__reset_stats();
--	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
-+	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
- 	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
- 	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
- 
+diff --git a/localversion-rt b/localversion-rt
+index 168858f..29dd2e2 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt85
++-rt86-rc1
 -- 
 1.8.4.rc3
+
+
