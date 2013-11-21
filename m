@@ -1,55 +1,81 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.20-rt17
-Date: Thu, 21 Nov 2013 10:45:54 -0500
-Message-ID: <20131121104554.7f41bcb8@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Subject: [PATCH RT 0/7] Linux 3.8.13.13-rt25-rc1
+Date: Thu, 21 Nov 2013 11:59:48 -0500
+Message-ID: <20131121165948.354971355@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:16943 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754486Ab3KUPp5 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Nov 2013 10:45:57 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.20-rt17 stable release.
+This is the RT stable review cycle of patch 3.8.13.13-rt25-rc1.
 
+Please scream at me if I messed something up. Please test the patches too.
 
-This release is just an update to the new stable 3.10.20 version
-and no RT specific changes have been made.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.10-rt
-  Head SHA1: 8b0a38c2139faea3cba3ad9c48232dea445da440
-
-
-Or to build 3.10.20-rt17 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.20.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.20-rt17.patch.xz
-
-
-
+If all goes well, this patch will be converted to the next main release
+on 11/25/2013.
 
 Enjoy,
 
 -- Steve
 
+
+To build 3.8.13.13-rt25-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.13.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.13-rt25-rc1.patch.xz
+
+You can also build from 3.8.13.13-rt24 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13.13-rt24-rt25-rc1.patch.xz
+
+
+Changes from 3.8.13.13-rt24:
+
+---
+
+
+Mike Galbraith (1):
+      hwlat-detector: Don't ignore threshold module parameter
+
+Sebastian Andrzej Siewior (2):
+      mm/slub: do not rely on slab_cached passed to free_delayed()
+      drm: remove preempt_disable() from drm_calc_vbltimestamp_from_scanoutpos()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.8.13.13-rt25-rc1
+
+Thomas Pfaff (1):
+      genirq: Set the irq thread policy without checking CAP_SYS_NICE
+
+Wolfram Sang (1):
+      Kind of revert "powerpc: 52xx: provide a default in mpc52xx_irqhost_map()"
+
+Yang Shi (1):
+      mm/memcontrol: Don't call schedule_work_on in preemption disabled context
+
+----
+ arch/powerpc/platforms/52xx/mpc52xx_pic.c |  5 ++---
+ drivers/gpu/drm/drm_irq.c                 |  7 -------
+ drivers/misc/hwlat_detector.c             |  2 +-
+ kernel/irq/manage.c                       |  2 +-
+ localversion-rt                           |  2 +-
+ mm/memcontrol.c                           |  4 ++--
+ mm/slub.c                                 | 10 +++++-----
+ 7 files changed, 12 insertions(+), 20 deletions(-)
