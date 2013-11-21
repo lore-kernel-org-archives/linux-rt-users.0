@@ -1,96 +1,122 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [ANNOUNCE] 3.2.52-rt73
-Date: Fri, 22 Nov 2013 00:44:37 +0400
-Message-ID: <528E70B5.5010603@pavlinux.ru>
-References: <20131116194633.GD11518@linutronix.de>
-Reply-To: pavel@pavlinux.ru
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [PATCH 1/2] remove recursive call to migrate_disable in
+	read_lock_bh
+Date: Fri, 22 Nov 2013 00:58:46 +0100
+Message-ID: <20131121235846.GB11774@opentech.at>
+References: <20131120102107.GA12022@opentech.at> <20131121102213.GA10022@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: unlisted-recipients:; (no To-header on input)
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131116194633.GD11518@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:57775 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753279Ab3KUX6w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Nov 2013 18:58:52 -0500
+Content-Disposition: inline
+In-Reply-To: <20131121102213.GA10022@twins.programming.kicks-ass.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Thu, 21 Nov 2013, Peter Zijlstra wrote:
+
+> On Wed, Nov 20, 2013 at 11:21:07AM +0100, Nicholas Mc Guire wrote:
+> > From 46393dc3185026c8500c2b734747d7c8785f3dc9 Mon Sep 17 00:00:00 2001
+> > From: Nicholas Mc Guire <der.herr@hofr.at>
+> > Date: Tue, 19 Nov 2013 23:31:05 -0500
+> > Subject: [PATCH 1/2] remove recursive call to migrate_disable in read_lock_bh
+> > 
+> >  read_lock_bh/read_unlock_bh unconditionally calls local_bh_disable/enable 
+> >  which already does a migrate_disable/enable - no need for this recursive call.
+> > 
+> >  patch is on top of 3.12-rt2
+> > 
+> >  No change of functionality
+> > 
+> > Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+> > ---
+> >  include/linux/rwlock_rt.h |    2 --
+> >  1 files changed, 0 insertions(+), 2 deletions(-)
+> > 
+> > diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
+> > index 853ee36..87f5a1d 100644
+> > --- a/include/linux/rwlock_rt.h
+> > +++ b/include/linux/rwlock_rt.h
+> > @@ -53,7 +53,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+> >  #define read_lock_bh(lock)				\
+> >  	do {						\
+> >  		local_bh_disable();			\
+> > -		migrate_disable();			\
+> >  		rt_read_lock(lock);			\
+> >  	} while (0)
+> >  
+> > @@ -83,7 +82,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+> >  #define read_unlock_bh(lock)				\
+> >  	do {						\
+> >  		rt_read_unlock(lock);			\
+> > -		migrate_enable();			\
+> >  		local_bh_enable();			\
+> >  	} while (0)
+> 
+> So the problem with this patch and the next is that:
+> 
+> 	read_lock_bh();
+> 
+> 	read_unlock();
+> 	local_bh_enable();
+> 
+> Is a valid pattern; and you'll notice that the release part has 2
+> migrate put refs. So if you can make a patch similar to:
+> 
+> lkml.kernel.org/r/20131120162736.624493595@infradead.org
+> 
+> That allows read_lock_bh() to obtain 2 migrate disable refs in one go,
+> then it would all work out just fine.
+
+yup thats what was causing the oops - fixed by the patch below
+with this my two boxes here survived cyclictest over night
+showing the same results as without the recursive calls to
+migrate_disable/enable removed.
 
 
-Fine, killed 3.12 now decided to finish 3.2.x. Good job guys!
+>From 2c8e669b691b825c0ed2a02bd7a698d8ed5c6d29 Mon Sep 17 00:00:00 2001
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Date: Thu, 21 Nov 2013 18:22:55 -0500
+Subject: [PATCH] rebalance locks by converting write_lock_bh to write_lock+local_bh_disable
+ 
+ This patch just rebalances the lock api
 
-Not configuration, not hardware, not software has not been updated or cha=
-nged.
+ in __neigh_event_send write_lock_bh(&neigh->lock) is implicitly balanced by
+ write_unlock(&neigh->lock)+local_bh_disable() - while this is equivalent with
+ respect to the effective low level locking primitives it breaks balancing
+ in the locking api. This makes automatic lock-checking trigger false 
+ positives, creates an implicit dependency between *_lock_bh and *_lock 
+ functions as well as making the extremly simply locking of net core even
+ easier to understand.
 
-BUG: scheduling while atomic: irq/74-sata_nv/57/0x00000002
-Modules linked in: cls_u32 sch_sfq sch_htb
-Pid: 57, comm: irq/74-sata_nv Tainted: G           O 3.2.52-rt73 #10
-Call Trace:
- [<ffffffff814bdef4>] ? __schedule+0x314/0x344
- [<ffffffff81081b77>] ? task_blocks_on_rt_mutex+0x1e7/0x280
- [<ffffffff814be741>] ? schedule+0x21/0xa0
- [<ffffffff814c0d88>] ? rt_spin_lock_slowlock+0x128/0x280
- [<ffffffff81204d01>] ? blk_update_request+0x11/0x450
- [<ffffffff812a6976>] ? add_timer_randomness+0x86/0x1e0
- [<ffffffff81206eac>] ? blk_end_request+0x9c/0xc0
- [<ffffffff812c629a>] ? scsi_io_completion+0x9a/0x770
- [<ffffffff8120d4ab>] ? blk_done_softirq+0x6b/0x80
- [<ffffffff8104a805>] ? __do_softirq_common+0xa5/0x1d0
- [<ffffffff81094ec0>] ? irq_thread_fn+0x50/0x50
- [<ffffffff8104ad77>] ? local_bh_enable+0x127/0x150
- [<ffffffff81094f08>] ? irq_forced_thread_fn+0x48/0x70
- [<ffffffff81094d80>] ? irq_thread+0x150/0x240
- [<ffffffff81094c30>] ? disable_irq_nosync+0x60/0x60
- [<ffffffff81067150>] ? kthread+0x80/0x90
- [<ffffffff814c3174>] ? kernel_thread_helper+0x4/0x10
- [<ffffffff810670d0>] ? kthread_bind+0x80/0x80
- [<ffffffff814c3170>] ? gs_change+0xb/0xb
+ No change of functionality
 
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+---
+ net/core/neighbour.c |    3 ++-
+ 1 files changed, 2 insertions(+), 1 deletions(-)
 
-BUG: scheduling while atomic: ksoftirqd/3/27/0x00000002
-Pid: 3, comm: ksoftirqd/0 Tainted: G           O 3.2.52-rt73 #10
-=2E..
-BUG: scheduling while atomic: ksoftirqd/0/3/0x00000002
-Pid: 27, comm: ksoftirqd/3 Tainted: G           O 3.2.52-rt73 #10
-=2E...
-BUG: scheduling while atomic: ksoftirqd/0/3/0x00000002
-Pid: 27, comm: ksoftirqd/3 Tainted: G           O 3.2.52-rt73 #10
+diff --git a/net/core/neighbour.c b/net/core/neighbour.c
+index ca15f32..d681c75 100644
+--- a/net/core/neighbour.c
++++ b/net/core/neighbour.c
+@@ -966,7 +966,8 @@ int __neigh_event_send(struct neighbour *neigh, struct sk_buff *skb)
+ 	int rc;
+ 	bool immediate_probe = false;
+ 
+-	write_lock_bh(&neigh->lock);
++	local_bh_disable();
++	write_lock(&neigh->lock);
+ 
+ 	rc = 0;
+ 	if (neigh->nud_state & (NUD_CONNECTED | NUD_DELAY | NUD_PROBE))
+-- 
+1.7.2.5
 
-
-
---=20
-
-                                                         Pavel.
-
-
-
-
---GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCgAGBQJSjnC2AAoJEPtok08Dny2hUmMP/jn+54ifyiHlijInPspgF/75
-eAd8IHi33BF5RwhHagUR2bUSZ7O5cI9Z350mVetbijbuoFtXsMlZpayvIY/PIy9V
-x0GYlmvwbL1Sh+9Jo0Rgij6ePDQDwptXFfz/re+oE2qFddcnUQURfiEEEHO6JP1B
-VV52xA8wXVnhg01QKB1m8GXiCgJfzvdhVxL4G47ezwu8R80Vr1A950F/5pPbFoHt
-TnBCUKdV3qImHyc0EzMUAWz4UAjS4pd42XYVV2Qjyp9Ja4Rkcq5LZi5DAouGFRxz
-qBR0J85jhRdWP9LV2Of7/qUoLPGHHs0LWWrboNUXvfcneN3I1Q4u0nSa1rrNhrJV
-Qm/94NllM2asA9eGMGMa6Lk3kMkah1fXFbtEdYQshVE7Oc1zZ2XMcqKgX9U/tS6L
-k51pn5uQz0EGA2I7G/4VS7EAXyhsezKYLuj3q29mA5/rY6uJGjUB038j9NmM0hoK
-OuMrG6iuV1h0n3Ik0RT+aaKm9zex70UyFDtf64uG8ts+2dUa0G47m8NVIAmbDmxA
-aENUgZ0kBFGzqYE37YsV21Z7BlJ5mqcCSaSr4vqCjoWLJoBf2rMEeNiHaVxkAEPZ
-9Hn9BYixctug+n9cXsfnhfgrbYedWPXH7Q+V7fFdolVvoigBTWHFAIOzM6YlnUJF
-Z/zu9vLOELuhWK6Mz3m1
-=9eAD
------END PGP SIGNATURE-----
-
---GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r--
