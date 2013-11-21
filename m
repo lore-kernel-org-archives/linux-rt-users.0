@@ -1,75 +1,50 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/5] [ANNOUNCE] 3.2.52-rt74-rc1
-Date: Thu, 21 Nov 2013 13:43:57 -0500
-Message-ID: <20131121184357.391591135@goodmis.org>
+Subject: [PATCH RT 2/5] hwlat-detector: Dont ignore threshold module parameter
+Date: Thu, 21 Nov 2013 13:43:59 -0500
+Message-ID: <20131121184629.647339591@goodmis.org>
+References: <20131121184357.391591135@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>,
+	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-hwlat-detector-Don-t-ignore-threshold-module-paramet.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.2.52-rt74-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.52-rt74-rc1.
+From: Mike Galbraith <bitbucket@online.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+If the user specified a threshold at module load time, use it.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 11/25/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.52-rt74-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.52.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.52-rt74-rc1.patch.xz
-
-You can also build from 3.2.52-rt73 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.52-rt73-rt74-rc1.patch.xz
-
-
-Changes from 3.2.52-rt73:
-
+Cc: stable-rt@vger.kernel.org
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Mike Galbraith <bitbucket@online.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Mike Galbraith (1):
-      hwlat-detector: Don't ignore threshold module parameter
-
-Sebastian Andrzej Siewior (1):
-      drm: remove preempt_disable() from drm_calc_vbltimestamp_from_scanoutpos()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.52-rt74-rc1
-
-Thomas Pfaff (1):
-      genirq: Set the irq thread policy without checking CAP_SYS_NICE
-
-Yang Shi (1):
-      mm/memcontrol: Don't call schedule_work_on in preemption disabled context
-
-----
- drivers/gpu/drm/drm_irq.c     | 7 -------
  drivers/misc/hwlat_detector.c | 2 +-
- kernel/irq/manage.c           | 2 +-
- localversion-rt               | 2 +-
- mm/memcontrol.c               | 4 ++--
- 5 files changed, 5 insertions(+), 12 deletions(-)
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index 6f61d5f..d2676b8 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -413,7 +413,7 @@ static int init_stats(void)
+ 		goto out;
+ 
+ 	__reset_stats();
+-	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
++	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
+ 	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
+ 	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
+ 
+-- 
+1.8.4.rc3
