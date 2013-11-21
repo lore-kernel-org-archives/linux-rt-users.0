@@ -1,18 +1,18 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/5] drm: remove preempt_disable() from
- drm_calc_vbltimestamp_from_scanoutpos()
-Date: Thu, 21 Nov 2013 13:44:01 -0500
-Message-ID: <20131121184629.986503514@goodmis.org>
+Subject: [PATCH RT 1/5] genirq: Set the irq thread policy without checking CAP_SYS_NICE
+Date: Thu, 21 Nov 2013 13:43:58 -0500
+Message-ID: <20131121184629.497182845@goodmis.org>
 References: <20131121184357.391591135@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+	Ivo Sieben <meltedpianoman@gmail.com>,
+	Thomas Pfaff <tpfaff@pcs.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-drm-remove-preempt_disable-from-drm_calc_vbltimestam.patch
+Content-Disposition: inline; filename=0001-genirq-Set-the-irq-thread-policy-without-checking-CA.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -21,81 +21,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Pfaff <tpfaff@pcs.com>
 
-Luis captured the following:
+In commit ee23871389 ("genirq: Set irq thread to RT priority on
+creation") we moved the assigment of the thread's priority from the
+thread's function into __setup_irq(). That function may run in user
+context for instance if the user opens an UART node and then driver
+calls requests in the ->open() callback. That user may not have
+CAP_SYS_NICE and so the irq thread won't run with the SCHED_OTHER
+policy.
 
-| BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-| in_atomic(): 1, irqs_disabled(): 0, pid: 517, name: Xorg
-| 2 locks held by Xorg/517:
-|  #0:
-|  (
-| &dev->vbl_lock
-| ){......}
-| , at:
-| [<ffffffffa0024c60>] drm_vblank_get+0x30/0x2b0 [drm]
-|  #1:
-|  (
-| &dev->vblank_time_lock
-| ){......}
-| , at:
-| [<ffffffffa0024ce1>] drm_vblank_get+0xb1/0x2b0 [drm]
-| Preemption disabled at:
-| [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
-| CPU: 3 PID: 517 Comm: Xorg Not tainted 3.10.10-rt7+ #5
-| Call Trace:
-|  [<ffffffff8164b790>] dump_stack+0x19/0x1b
-|  [<ffffffff8107e62f>] __might_sleep+0xff/0x170
-|  [<ffffffff81651ac4>] rt_spin_lock+0x24/0x60
-|  [<ffffffffa0084e67>] i915_read32+0x27/0x170 [i915]
-|  [<ffffffffa008a591>] i915_pipe_enabled+0x31/0x40 [i915]
-|  [<ffffffffa008a6be>] i915_get_crtc_scanoutpos+0x3e/0x1b0 [i915]
-|  [<ffffffffa00245d4>] drm_calc_vbltimestamp_from_scanoutpos+0xf4/0x430 [drm]
-|  [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
-|  [<ffffffffa0024998>] drm_get_last_vbltimestamp+0x48/0x70 [drm]
-|  [<ffffffffa0024db5>] drm_vblank_get+0x185/0x2b0 [drm]
-|  [<ffffffffa0025d03>] drm_wait_vblank+0x83/0x5d0 [drm]
-|  [<ffffffffa00212a2>] drm_ioctl+0x552/0x6a0 [drm]
-|  [<ffffffff811a0095>] do_vfs_ioctl+0x325/0x5b0
-|  [<ffffffff811a03a1>] SyS_ioctl+0x81/0xa0
-|  [<ffffffff8165a342>] tracesys+0xdd/0xe2
+This patch uses sched_setscheduler_nocheck() so we omit the CAP_SYS_NICE
+check which is otherwise required for the SCHED_OTHER policy.
 
-After a longer thread it was decided to drop the preempt_disable()/
-enable() invocations which were meant for -RT and Mario Kleiner looks
-for a replacement.
-
+Cc: Ivo Sieben <meltedpianoman@gmail.com>
+Cc: stable@vger.kernel.org
 Cc: stable-rt@vger.kernel.org
-Reported-By: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Pfaff <tpfaff@pcs.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy: rewrite the changelog]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- drivers/gpu/drm/drm_irq.c | 7 -------
- 1 file changed, 7 deletions(-)
+ kernel/irq/manage.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/drivers/gpu/drm/drm_irq.c b/drivers/gpu/drm/drm_irq.c
-index 73af885..2b13224 100644
---- a/drivers/gpu/drm/drm_irq.c
-+++ b/drivers/gpu/drm/drm_irq.c
-@@ -619,11 +619,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 	 * code gets preempted or delayed for some reason.
- 	 */
- 	for (i = 0; i < DRM_TIMESTAMP_MAXRETRIES; i++) {
--		/* Disable preemption to make it very likely to
--		 * succeed in the first iteration even on PREEMPT_RT kernel.
--		 */
--		preempt_disable();
--
- 		/* Get system timestamp before query. */
- 		do_gettimeofday(&stime);
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index 88a4ff5..5b51ba7 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -1041,7 +1041,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 			goto out_mput;
+ 		}
  
-@@ -633,8 +628,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 		/* Get system timestamp after query. */
- 		do_gettimeofday(&raw_time);
+-		sched_setscheduler(t, SCHED_FIFO, &param);
++		sched_setscheduler_nocheck(t, SCHED_FIFO, &param);
  
--		preempt_enable();
--
- 		/* Return as no-op if scanout query unsupported or failed. */
- 		if (!(vbl_status & DRM_SCANOUTPOS_VALID)) {
- 			DRM_DEBUG("crtc %d : scanoutpos query failed [%d].\n",
+ 		/*
+ 		 * We keep the reference to the task struct even if
 -- 
 1.8.4.rc3
