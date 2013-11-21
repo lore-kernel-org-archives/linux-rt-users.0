@@ -1,93 +1,96 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/5] mm/memcontrol: Dont call schedule_work_on in preemption disabled
- context
-Date: Thu, 21 Nov 2013 13:44:00 -0500
-Message-ID: <20131121184629.813804598@goodmis.org>
-References: <20131121184357.391591135@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Yang Shi <yang.shi@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [ANNOUNCE] 3.2.52-rt73
+Date: Fri, 22 Nov 2013 00:44:37 +0400
+Message-ID: <528E70B5.5010603@pavlinux.ru>
+References: <20131116194633.GD11518@linutronix.de>
+Reply-To: pavel@pavlinux.ru
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r"
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: unlisted-recipients:; (no To-header on input)
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-mm-memcontrol-Don-t-call-schedule_work_on-in-preempt.patch
+In-Reply-To: <20131116194633.GD11518@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.52-rt74-rc1 stable review patch.
-If anyone has any objections, please let me know.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-------------------
 
-From: Yang Shi <yang.shi@windriver.com>
+Fine, killed 3.12 now decided to finish 3.2.x. Good job guys!
 
-The following trace is triggered when running ltp oom test cases:
+Not configuration, not hardware, not software has not been updated or cha=
+nged.
 
-BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-in_atomic(): 1, irqs_disabled(): 0, pid: 17188, name: oom03
-Preemption disabled at:[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
-
-CPU: 2 PID: 17188 Comm: oom03 Not tainted 3.10.10-rt3 #2
-Hardware name: Intel Corporation Calpella platform/MATXM-CORE-411-B, BIOS 4.6.3 08/18/2010
-ffff88007684d730 ffff880070df9b58 ffffffff8169918d ffff880070df9b70
-ffffffff8106db31 ffff88007688b4a0 ffff880070df9b88 ffffffff8169d9c0
-ffff88007688b4a0 ffff880070df9bc8 ffffffff81059da1 0000000170df9bb0
+BUG: scheduling while atomic: irq/74-sata_nv/57/0x00000002
+Modules linked in: cls_u32 sch_sfq sch_htb
+Pid: 57, comm: irq/74-sata_nv Tainted: G           O 3.2.52-rt73 #10
 Call Trace:
-[<ffffffff8169918d>] dump_stack+0x19/0x1b
-[<ffffffff8106db31>] __might_sleep+0xf1/0x170
-[<ffffffff8169d9c0>] rt_spin_lock+0x20/0x50
-[<ffffffff81059da1>] queue_work_on+0x61/0x100
-[<ffffffff8112b361>] drain_all_stock+0xe1/0x1c0
-[<ffffffff8112ba70>] mem_cgroup_reclaim+0x90/0xe0
-[<ffffffff8112beda>] __mem_cgroup_try_charge+0x41a/0xc40
-[<ffffffff810f1c91>] ? release_pages+0x1b1/0x1f0
-[<ffffffff8106f200>] ? sched_exec+0x40/0xb0
-[<ffffffff8112cc87>] mem_cgroup_charge_common+0x37/0x70
-[<ffffffff8112e2c6>] mem_cgroup_newpage_charge+0x26/0x30
-[<ffffffff8110af68>] handle_pte_fault+0x618/0x840
-[<ffffffff8103ecf6>] ? unpin_current_cpu+0x16/0x70
-[<ffffffff81070f94>] ? migrate_enable+0xd4/0x200
-[<ffffffff8110cde5>] handle_mm_fault+0x145/0x1e0
-[<ffffffff810301e1>] __do_page_fault+0x1a1/0x4c0
-[<ffffffff8169c9eb>] ? preempt_schedule_irq+0x4b/0x70
-[<ffffffff8169e3b7>] ? retint_kernel+0x37/0x40
-[<ffffffff8103053e>] do_page_fault+0xe/0x10
-[<ffffffff8169e4c2>] page_fault+0x22/0x30
+ [<ffffffff814bdef4>] ? __schedule+0x314/0x344
+ [<ffffffff81081b77>] ? task_blocks_on_rt_mutex+0x1e7/0x280
+ [<ffffffff814be741>] ? schedule+0x21/0xa0
+ [<ffffffff814c0d88>] ? rt_spin_lock_slowlock+0x128/0x280
+ [<ffffffff81204d01>] ? blk_update_request+0x11/0x450
+ [<ffffffff812a6976>] ? add_timer_randomness+0x86/0x1e0
+ [<ffffffff81206eac>] ? blk_end_request+0x9c/0xc0
+ [<ffffffff812c629a>] ? scsi_io_completion+0x9a/0x770
+ [<ffffffff8120d4ab>] ? blk_done_softirq+0x6b/0x80
+ [<ffffffff8104a805>] ? __do_softirq_common+0xa5/0x1d0
+ [<ffffffff81094ec0>] ? irq_thread_fn+0x50/0x50
+ [<ffffffff8104ad77>] ? local_bh_enable+0x127/0x150
+ [<ffffffff81094f08>] ? irq_forced_thread_fn+0x48/0x70
+ [<ffffffff81094d80>] ? irq_thread+0x150/0x240
+ [<ffffffff81094c30>] ? disable_irq_nosync+0x60/0x60
+ [<ffffffff81067150>] ? kthread+0x80/0x90
+ [<ffffffff814c3174>] ? kernel_thread_helper+0x4/0x10
+ [<ffffffff810670d0>] ? kthread_bind+0x80/0x80
+ [<ffffffff814c3170>] ? gs_change+0xb/0xb
 
-So, to prevent schedule_work_on from being called in preempt disabled context,
-replace the pair of get/put_cpu() to get/put_cpu_light().
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- mm/memcontrol.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+BUG: scheduling while atomic: ksoftirqd/3/27/0x00000002
+Pid: 3, comm: ksoftirqd/0 Tainted: G           O 3.2.52-rt73 #10
+=2E..
+BUG: scheduling while atomic: ksoftirqd/0/3/0x00000002
+Pid: 27, comm: ksoftirqd/3 Tainted: G           O 3.2.52-rt73 #10
+=2E...
+BUG: scheduling while atomic: ksoftirqd/0/3/0x00000002
+Pid: 27, comm: ksoftirqd/3 Tainted: G           O 3.2.52-rt73 #10
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index f8bdd8d..df84f45 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2077,7 +2077,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 
- 	/* Notify other cpus that system-wide "drain" is running */
- 	get_online_cpus();
--	curcpu = get_cpu();
-+	curcpu = get_cpu_light();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -2094,7 +2094,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 				schedule_work_on(cpu, &stock->work);
- 		}
- 	}
--	put_cpu();
-+	put_cpu_light();
- 
- 	if (!sync)
- 		goto out;
--- 
-1.8.4.rc3
+
+
+--=20
+
+                                                         Pavel.
+
+
+
+
+--GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQIcBAEBCgAGBQJSjnC2AAoJEPtok08Dny2hUmMP/jn+54ifyiHlijInPspgF/75
+eAd8IHi33BF5RwhHagUR2bUSZ7O5cI9Z350mVetbijbuoFtXsMlZpayvIY/PIy9V
+x0GYlmvwbL1Sh+9Jo0Rgij6ePDQDwptXFfz/re+oE2qFddcnUQURfiEEEHO6JP1B
+VV52xA8wXVnhg01QKB1m8GXiCgJfzvdhVxL4G47ezwu8R80Vr1A950F/5pPbFoHt
+TnBCUKdV3qImHyc0EzMUAWz4UAjS4pd42XYVV2Qjyp9Ja4Rkcq5LZi5DAouGFRxz
+qBR0J85jhRdWP9LV2Of7/qUoLPGHHs0LWWrboNUXvfcneN3I1Q4u0nSa1rrNhrJV
+Qm/94NllM2asA9eGMGMa6Lk3kMkah1fXFbtEdYQshVE7Oc1zZ2XMcqKgX9U/tS6L
+k51pn5uQz0EGA2I7G/4VS7EAXyhsezKYLuj3q29mA5/rY6uJGjUB038j9NmM0hoK
+OuMrG6iuV1h0n3Ik0RT+aaKm9zex70UyFDtf64uG8ts+2dUa0G47m8NVIAmbDmxA
+aENUgZ0kBFGzqYE37YsV21Z7BlJ5mqcCSaSr4vqCjoWLJoBf2rMEeNiHaVxkAEPZ
+9Hn9BYixctug+n9cXsfnhfgrbYedWPXH7Q+V7fFdolVvoigBTWHFAIOzM6YlnUJF
+Z/zu9vLOELuhWK6Mz3m1
+=9eAD
+-----END PGP SIGNATURE-----
+
+--GaQnvvUubM9dwd0RACl7iJW3wDmPm7U4r--
