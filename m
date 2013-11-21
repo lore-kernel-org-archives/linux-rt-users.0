@@ -1,101 +1,75 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/5] drm: remove preempt_disable() from
- drm_calc_vbltimestamp_from_scanoutpos()
-Date: Thu, 21 Nov 2013 13:42:03 -0500
-Message-ID: <20131121184218.502653733@goodmis.org>
-References: <20131121184159.676777537@goodmis.org>
+Subject: [PATCH RT 0/5] [ANNOUNCE] 3.2.52-rt74-rc1
+Date: Thu, 21 Nov 2013 13:43:57 -0500
+Message-ID: <20131121184357.391591135@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+	John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-drm-remove-preempt_disable-from-drm_calc_vbltimestam.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.4.69-rt86-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.2.52-rt74-rc1.
 
-Luis captured the following:
+Please scream at me if I messed something up. Please test the patches too.
 
-| BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-| in_atomic(): 1, irqs_disabled(): 0, pid: 517, name: Xorg
-| 2 locks held by Xorg/517:
-|  #0:
-|  (
-| &dev->vbl_lock
-| ){......}
-| , at:
-| [<ffffffffa0024c60>] drm_vblank_get+0x30/0x2b0 [drm]
-|  #1:
-|  (
-| &dev->vblank_time_lock
-| ){......}
-| , at:
-| [<ffffffffa0024ce1>] drm_vblank_get+0xb1/0x2b0 [drm]
-| Preemption disabled at:
-| [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
-| CPU: 3 PID: 517 Comm: Xorg Not tainted 3.10.10-rt7+ #5
-| Call Trace:
-|  [<ffffffff8164b790>] dump_stack+0x19/0x1b
-|  [<ffffffff8107e62f>] __might_sleep+0xff/0x170
-|  [<ffffffff81651ac4>] rt_spin_lock+0x24/0x60
-|  [<ffffffffa0084e67>] i915_read32+0x27/0x170 [i915]
-|  [<ffffffffa008a591>] i915_pipe_enabled+0x31/0x40 [i915]
-|  [<ffffffffa008a6be>] i915_get_crtc_scanoutpos+0x3e/0x1b0 [i915]
-|  [<ffffffffa00245d4>] drm_calc_vbltimestamp_from_scanoutpos+0xf4/0x430 [drm]
-|  [<ffffffffa008bc95>] i915_get_vblank_timestamp+0x45/0xa0 [i915]
-|  [<ffffffffa0024998>] drm_get_last_vbltimestamp+0x48/0x70 [drm]
-|  [<ffffffffa0024db5>] drm_vblank_get+0x185/0x2b0 [drm]
-|  [<ffffffffa0025d03>] drm_wait_vblank+0x83/0x5d0 [drm]
-|  [<ffffffffa00212a2>] drm_ioctl+0x552/0x6a0 [drm]
-|  [<ffffffff811a0095>] do_vfs_ioctl+0x325/0x5b0
-|  [<ffffffff811a03a1>] SyS_ioctl+0x81/0xa0
-|  [<ffffffff8165a342>] tracesys+0xdd/0xe2
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-After a longer thread it was decided to drop the preempt_disable()/
-enable() invocations which were meant for -RT and Mario Kleiner looks
-for a replacement.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Cc: stable-rt@vger.kernel.org
-Reported-By: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+If all goes well, this patch will be converted to the next main release
+on 11/25/2013.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.52-rt74-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.52.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.52-rt74-rc1.patch.xz
+
+You can also build from 3.2.52-rt73 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.52-rt73-rt74-rc1.patch.xz
+
+
+Changes from 3.2.52-rt73:
+
 ---
- drivers/gpu/drm/drm_irq.c | 7 -------
- 1 file changed, 7 deletions(-)
 
-diff --git a/drivers/gpu/drm/drm_irq.c b/drivers/gpu/drm/drm_irq.c
-index dc33ba5..07dfb99 100644
---- a/drivers/gpu/drm/drm_irq.c
-+++ b/drivers/gpu/drm/drm_irq.c
-@@ -619,11 +619,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 	 * code gets preempted or delayed for some reason.
- 	 */
- 	for (i = 0; i < DRM_TIMESTAMP_MAXRETRIES; i++) {
--		/* Disable preemption to make it very likely to
--		 * succeed in the first iteration even on PREEMPT_RT kernel.
--		 */
--		preempt_disable();
--
- 		/* Get system timestamp before query. */
- 		do_gettimeofday(&stime);
- 
-@@ -633,8 +628,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 		/* Get system timestamp after query. */
- 		do_gettimeofday(&raw_time);
- 
--		preempt_enable();
--
- 		/* Return as no-op if scanout query unsupported or failed. */
- 		if (!(vbl_status & DRM_SCANOUTPOS_VALID)) {
- 			DRM_DEBUG("crtc %d : scanoutpos query failed [%d].\n",
--- 
-1.8.4.rc3
+
+Mike Galbraith (1):
+      hwlat-detector: Don't ignore threshold module parameter
+
+Sebastian Andrzej Siewior (1):
+      drm: remove preempt_disable() from drm_calc_vbltimestamp_from_scanoutpos()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.2.52-rt74-rc1
+
+Thomas Pfaff (1):
+      genirq: Set the irq thread policy without checking CAP_SYS_NICE
+
+Yang Shi (1):
+      mm/memcontrol: Don't call schedule_work_on in preemption disabled context
+
+----
+ drivers/gpu/drm/drm_irq.c     | 7 -------
+ drivers/misc/hwlat_detector.c | 2 +-
+ kernel/irq/manage.c           | 2 +-
+ localversion-rt               | 2 +-
+ mm/memcontrol.c               | 4 ++--
+ 5 files changed, 5 insertions(+), 12 deletions(-)
