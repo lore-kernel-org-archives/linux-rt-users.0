@@ -1,79 +1,151 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: [PATCH] drop recursive migrate_disable in rt_write_trylock_irqsave
-	- the right one this time...
-Date: Fri, 22 Nov 2013 06:09:34 +0100
-Message-ID: <20131122050934.GA11938@opentech.at>
-References: <20131120102107.GA12022@opentech.at>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
+Date: Fri, 22 Nov 2013 14:59:31 +0100
+Message-ID: <20131122135931.GA8698@linutronix.de>
+References: <1383794799.5441.16.camel@marge.simpson.net>
+ <1383798668.5441.25.camel@marge.simpson.net>
+ <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
+ <20131107125923.GB24644@localhost.localdomain>
+ <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de>
+ <1384243595.15180.63.camel@marge.simpson.net>
+ <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de>
+ <20131115163008.GB12164@linutronix.de>
+ <20131115201436.GC12164@linutronix.de>
+ <20131118141021.GA10022@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:33578 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750705Ab3KVFJg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Nov 2013 00:09:36 -0500
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Mike Galbraith <bitbucket@online.de>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20131120102107.GA12022@opentech.at>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20131118141021.GA10022@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+* Peter Zijlstra | 2013-11-18 15:10:21 [+0100]:
 
-sorry - sent out the wrong file before
+>Its get_next_timer_interrupt() that does a trylock() and only for
+>PREEMPT_RT_FULL.
+>
+>Also; on IRC you said:
+>
+>  "<bigeasy> I'm currently not sure if we should do
+>the _irq() lock or a trylock for the wait_lock in
+>rt_mutex_slowtrylock()"
+>
+>Which I misread and dismissed -- but yes that might actually work too
+>and would be a much smaller patch. You'd only need trylock and unlock.
 
-thx!
-hofrat
+Yes and the patch is at the end of the mail. I also added your "lockdep=
+:
+Correctly annotate hardirq context in irq_exit()" to the -RT queue and
+saw the splat. After the trylock replacement I needed something similar
+for the unlock path _or_ lockdep would complain. So unless there is a
+better way=E2=80=A6
 
->From f7702e3f2077b29b51172662fb988ce7fec9a985 Mon Sep 17 00:00:00 2001
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Date: Fri, 22 Nov 2013 00:04:51 -0500
-Subject: [PATCH] drop recursive migrate_disable in rt_write_trylock_irqsave
+>That said, allowing such usage from actual IRQ context is iffy; suppos=
+e
+>the trylock succeeds, who then is the lock owner?
+>
+>I suppose it would be whatever task we interrupted and boosting will
+>'work' because we're non-preemptable, but still *YUCK*.
 
- rt_write_trylock_irqsave unconditionally calls rt_write_trylock which will     
- disable migration if the lock was sucessfully acquired.                        
- This patch drops the recursive migrate_disable/enable in                       
- rt_write_trylock_irqsave and rt_write_unlock_irq respecttively                 
+You are right, this ain't pretty. I hope this timer mess can be replace=
+d
+with something else so the whole trylock thingy can be removed.
 
- patch is on top of 3.12-rt2
-                                                                                
- No change of functionality
+Sebastian
 
-Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
----
- include/linux/rwlock_rt.h |    1 -
- kernel/rt.c               |    4 +---
- 2 files changed, 1 insertions(+), 4 deletions(-)
-
-diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
-index 9a5fe26..2dbabe2 100644
---- a/include/linux/rwlock_rt.h
-+++ b/include/linux/rwlock_rt.h
-@@ -113,7 +113,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- 		typecheck(unsigned long, flags);	\
- 		(void) flags;				\
- 		rt_write_unlock(lock);			\
--		migrate_enable();			\
- 	} while (0)
- 
- #endif
-diff --git a/kernel/rt.c b/kernel/rt.c
-index 4b2c4a9..71d26a4 100644
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -196,10 +196,8 @@ int __lockfunc rt_write_trylock_irqsave(rwlock_t *rwlock, unsigned long *flags)
- 	int ret;
- 
- 	*flags = 0;
--	migrate_disable();
- 	ret = rt_write_trylock(rwlock);
--	if (!ret)
--		migrate_enable();
-+
- 	return ret;
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -22,6 +22,7 @@ extern void __lockfunc rt_spin_lock(spin
+ extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *l=
+ock);
+ extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subcl=
+ass);
+ extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
++extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
+ extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
+ extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsign=
+ed long *flags);
+ extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -816,10 +816,8 @@ static void  noinline __sched rt_spin_lo
+ /*
+  * Slow path to release a rt_mutex spin_lock style
+  */
+-static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex =
+*lock)
++static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ {
+-	raw_spin_lock(&lock->wait_lock);
+-
+ 	debug_rt_mutex_unlock(lock);
+=20
+ 	rt_mutex_deadlock_account_unlock(current);
+@@ -838,6 +836,21 @@ static void  noinline __sched rt_spin_lo
+ 	rt_mutex_adjust_prio(current);
  }
- EXPORT_SYMBOL(rt_write_trylock_irqsave);
--- 
-1.7.2.5
-
+=20
++static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex =
+*lock)
++{
++	raw_spin_lock(&lock->wait_lock);
++	__rt_spin_lock_slowunlock(lock);
++}
++
++static void  noinline __sched rt_spin_lock_try_slowunlock(struct rt_mu=
+tex *lock)
++{
++	int ret;
++
++	ret =3D raw_spin_trylock(&lock->wait_lock);
++	BUG_ON(!ret);
++	__rt_spin_lock_slowunlock(lock);
++}
++
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+@@ -868,6 +881,13 @@ void __lockfunc rt_spin_unlock(spinlock_
+ }
+ EXPORT_SYMBOL(rt_spin_unlock);
+=20
++void __lockfunc rt_spin_try_unlock(spinlock_t *lock)
++{
++	/* NOTE: we always pass in '1' for nested, for simplicity */
++	spin_release(&lock->dep_map, 1, _RET_IP_);
++	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_try_slowunlock);
++}
++
+ void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
+ {
+ 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
+@@ -1191,7 +1211,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lo
+ {
+ 	int ret =3D 0;
+=20
+-	raw_spin_lock(&lock->wait_lock);
++	if (!raw_spin_trylock(&lock->wait_lock))
++		return ret;
+ 	init_lists(lock);
+=20
+ 	if (likely(rt_mutex_owner(lock) !=3D current)) {
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1400,7 +1400,7 @@ unsigned long get_next_timer_interrupt(u
+ 		expires =3D base->next_timer;
+ 	}
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-	rt_spin_unlock(&base->lock);
++	rt_spin_try_unlock(&base->lock);
+ #else
+ 	spin_unlock(&base->lock);
+ #endif
