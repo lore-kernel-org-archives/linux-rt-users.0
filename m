@@ -1,37 +1,45 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
-Date: Fri, 22 Nov 2013 17:08:41 +0100
-Message-ID: <20131122160841.GS3866@twins.programming.kicks-ass.net>
-References: <1383798668.5441.25.camel@marge.simpson.net>
- <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
- <20131107125923.GB24644@localhost.localdomain>
- <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de>
- <1384243595.15180.63.camel@marge.simpson.net>
- <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de>
- <20131115163008.GB12164@linutronix.de>
- <20131115201436.GC12164@linutronix.de>
- <20131118141021.GA10022@twins.programming.kicks-ass.net>
- <20131122135931.GA8698@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/2] remove recursive call to migrate_disable in
+ read_lock_bh
+Date: Fri, 22 Nov 2013 17:12:34 +0100
+Message-ID: <20131122161234.GG8698@linutronix.de>
+References: <20131120102107.GA12022@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: Nicholas Mc Guire <der.herr@hofr.at>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:45750 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753041Ab3KVQMf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Nov 2013 11:12:35 -0500
 Content-Disposition: inline
-In-Reply-To: <20131122135931.GA8698@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20131120102107.GA12022@opentech.at>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Nov 22, 2013 at 02:59:31PM +0100, Sebastian Andrzej Siewior wrote:
-> +extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
+* Nicholas Mc Guire | 2013-11-20 11:21:07 [+0100]:
 
-I know what you mean, but.. try_unlock() just sounds wrong, how can we
-attempt but fail to unlock a lock we hold ;-)
+>diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
+>index 853ee36..87f5a1d 100644
+>--- a/include/linux/rwlock_rt.h
+>+++ b/include/linux/rwlock_rt.h
+>@@ -53,7 +53,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+> #define read_lock_bh(lock)				\
+> 	do {						\
+> 		local_bh_disable();			\
+>-		migrate_disable();			\
+> 		rt_read_lock(lock);			\
+> 	} while (0)
+> 
 
+local_bh_disable() does only.
+| add_preempt_count()
 
-/me crawls back under his rock ;-)
+Where is that second migrate_disable() comming from?
+
+Sebastian
