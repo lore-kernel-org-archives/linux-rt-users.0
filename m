@@ -1,151 +1,40 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
-Date: Fri, 22 Nov 2013 14:59:31 +0100
-Message-ID: <20131122135931.GA8698@linutronix.de>
-References: <1383794799.5441.16.camel@marge.simpson.net>
- <1383798668.5441.25.camel@marge.simpson.net>
- <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
- <20131107125923.GB24644@localhost.localdomain>
- <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de>
- <1384243595.15180.63.camel@marge.simpson.net>
- <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de>
- <20131115163008.GB12164@linutronix.de>
- <20131115201436.GC12164@linutronix.de>
- <20131118141021.GA10022@twins.programming.kicks-ass.net>
+Subject: Re: Why isn't there individual CONFIG in CONFIG_PREEMPT_RT_FULL?
+Date: Fri, 22 Nov 2013 15:21:00 +0100
+Message-ID: <20131122142100.GB8698@linutronix.de>
+References: <526915E2.4040809@hitachi.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de, mingo@elte.hu,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"Sampath, Pradyumna" <pradyumna@hitachi.co.in>
+To: Hiraku Toyooka <hiraku.toyooka.gu@hitachi.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:44856 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755321Ab3KVOVD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Nov 2013 09:21:03 -0500
 Content-Disposition: inline
-In-Reply-To: <20131118141021.GA10022@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <526915E2.4040809@hitachi.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Peter Zijlstra | 2013-11-18 15:10:21 [+0100]:
+* Hiraku Toyooka | 2013-10-24 21:43:14 [+0900]:
 
->Its get_next_timer_interrupt() that does a trylock() and only for
->PREEMPT_RT_FULL.
->
->Also; on IRC you said:
->
->  "<bigeasy> I'm currently not sure if we should do
->the _irq() lock or a trylock for the wait_lock in
->rt_mutex_slowtrylock()"
->
->Which I misread and dismissed -- but yes that might actually work too
->and would be a much smaller patch. You'd only need trylock and unlock.
+>Hello,
+Hello
 
-Yes and the patch is at the end of the mail. I also added your "lockdep=
-:
-Correctly annotate hardirq context in irq_exit()" to the -RT queue and
-saw the splat. After the trylock replacement I needed something similar
-for the unlock path _or_ lockdep would complain. So unless there is a
-better way=E2=80=A6
+>CONFIG_PREEMPT_RT_FULL consists of many patches. I think it doesn't
+>represent specific feature but is general term of various features.
+>Why don't those features have each CONFIG_* ?
 
->That said, allowing such usage from actual IRQ context is iffy; suppos=
-e
->the trylock succeeds, who then is the lock owner?
->
->I suppose it would be whatever task we interrupted and boosting will
->'work' because we're non-preemptable, but still *YUCK*.
+Do you have something in particular in mind?
+As long as it makes sense, there are CONFIG_* introduced. If a patch
+breaks locks for instance then we don't a special CONFIG item because
+this what we need and we don't keep both versions around (and the non-RT
+variant can work both ways).
 
-You are right, this ain't pretty. I hope this timer mess can be replace=
-d
-with something else so the whole trylock thingy can be removed.
+>Best regards,
 
 Sebastian
-
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -22,6 +22,7 @@ extern void __lockfunc rt_spin_lock(spin
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *l=
-ock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subcl=
-ass);
- extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
-+extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
- extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
- extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsign=
-ed long *flags);
- extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -816,10 +816,8 @@ static void  noinline __sched rt_spin_lo
- /*
-  * Slow path to release a rt_mutex spin_lock style
-  */
--static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex =
-*lock)
-+static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
- {
--	raw_spin_lock(&lock->wait_lock);
--
- 	debug_rt_mutex_unlock(lock);
-=20
- 	rt_mutex_deadlock_account_unlock(current);
-@@ -838,6 +836,21 @@ static void  noinline __sched rt_spin_lo
- 	rt_mutex_adjust_prio(current);
- }
-=20
-+static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex =
-*lock)
-+{
-+	raw_spin_lock(&lock->wait_lock);
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
-+static void  noinline __sched rt_spin_lock_try_slowunlock(struct rt_mu=
-tex *lock)
-+{
-+	int ret;
-+
-+	ret =3D raw_spin_trylock(&lock->wait_lock);
-+	BUG_ON(!ret);
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -868,6 +881,13 @@ void __lockfunc rt_spin_unlock(spinlock_
- }
- EXPORT_SYMBOL(rt_spin_unlock);
-=20
-+void __lockfunc rt_spin_try_unlock(spinlock_t *lock)
-+{
-+	/* NOTE: we always pass in '1' for nested, for simplicity */
-+	spin_release(&lock->dep_map, 1, _RET_IP_);
-+	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_try_slowunlock);
-+}
-+
- void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
- {
- 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-@@ -1191,7 +1211,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lo
- {
- 	int ret =3D 0;
-=20
--	raw_spin_lock(&lock->wait_lock);
-+	if (!raw_spin_trylock(&lock->wait_lock))
-+		return ret;
- 	init_lists(lock);
-=20
- 	if (likely(rt_mutex_owner(lock) !=3D current)) {
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1400,7 +1400,7 @@ unsigned long get_next_timer_interrupt(u
- 		expires =3D base->next_timer;
- 	}
- #ifdef CONFIG_PREEMPT_RT_FULL
--	rt_spin_unlock(&base->lock);
-+	rt_spin_try_unlock(&base->lock);
- #else
- 	spin_unlock(&base->lock);
- #endif
