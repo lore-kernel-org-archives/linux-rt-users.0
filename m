@@ -1,44 +1,101 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
-Date: Fri, 22 Nov 2013 17:21:02 +0100
-Message-ID: <528F846E.4000703@linutronix.de>
-References: <1383798668.5441.25.camel@marge.simpson.net> <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de> <20131107125923.GB24644@localhost.localdomain> <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de> <1384243595.15180.63.camel@marge.simpson.net> <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de> <20131115163008.GB12164@linutronix.de> <20131115201436.GC12164@linutronix.de> <20131118141021.GA10022@twins.programming.kicks-ass.net> <20131122135931.GA8698@linutronix.de> <20131122160841.GS3866@twins.programming.kicks-ass.net>
+Subject: Re: [PATCH] drop recursive migrate_disable in
+ rt_write_trylock_irqsave
+Date: Fri, 22 Nov 2013 18:15:55 +0100
+Message-ID: <20131122171555.GH8698@linutronix.de>
+References: <20131120102107.GA12022@opentech.at>
+ <20131122044439.GC31849@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45863 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:46308 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755688Ab3KVQVI (ORCPT
+	with ESMTP id S1753113Ab3KVRP6 convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Nov 2013 11:21:08 -0500
-In-Reply-To: <20131122160841.GS3866@twins.programming.kicks-ass.net>
+	Fri, 22 Nov 2013 12:15:58 -0500
+Content-Disposition: inline
+In-Reply-To: <20131122044439.GC31849@opentech.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/22/2013 05:08 PM, Peter Zijlstra wrote:
-> On Fri, Nov 22, 2013 at 02:59:31PM +0100, Sebastian Andrzej Siewior wrote:
->> +extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
-> 
-> I know what you mean, but.. try_unlock() just sounds wrong, how can we
-> attempt but fail to unlock a lock we hold ;-)
+* Nicholas Mc Guire | 2013-11-22 05:44:39 [+0100]:
 
-what about
-- rt_spin_unlock_try_or_fail();
-- __rt_spin_unlock_dont_use_me()
+> rt_write_trylock_irqsave unconditionally calls rt_write_trylock which=
+ will
+> disable migration if the lock was sucessfully acquired.
+> This patch drops the recursive migrate_disable/enable in
+> rt_write_trylock_irqsave and rt_write_unlock_irq respecttively
+>
+> No change of functionality
 
-Couldn't we tell lockdep to bend the rules in this case?
+I think you change functionality because you remove code. If you would
+cut a big function into two small functions then I would agree that the
+functionality has not been changed. But=E2=80=A6
 
-> 
-> 
-> /me crawls back under his rock ;-)
-:)
+>index 9a5fe26..f6c7612 100644
+>--- a/include/linux/rwlock_rt.h
+>+++ b/include/linux/rwlock_rt.h
+>@@ -105,7 +105,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, cha=
+r *name, struct lock_class_key
+> 		typecheck(unsigned long, flags);	\
+> 		(void) flags;				\
+> 		rt_read_unlock(lock);			\
+>-		migrate_enable();			\
+> 	} while (0)
+
+You are removing that from read_unlock_irqrestore() instead of
+write_unlock_irqrestore() which comes next:
+
+>=20
+> #define write_unlock_irqrestore(lock, flags) \
+>diff --git a/kernel/rt.c b/kernel/rt.c
+>index 4b2c4a9..71d26a4 100644
+>--- a/kernel/rt.c
+>+++ b/kernel/rt.c
+>@@ -196,10 +196,8 @@ int __lockfunc rt_write_trylock_irqsave(rwlock_t =
+*rwlock, unsigned long *flags)
+> 	int ret;
+>=20
+> 	*flags =3D 0;
+>-	migrate_disable();
+> 	ret =3D rt_write_trylock(rwlock);
+>-	if (!ret)
+>-		migrate_enable();
+>+
+
+The amount of users of rt_write_trylock_irqsave() is so small that
+nobody noticed this bug:
+
+ write_trylock_irqsave()
+  ->rt_write_trylock_irqsave()
+  -> m_d()
+    -> rt_write_trylock()
+    -> m_d()
+
+That means we called migrate_disable() twice. Now comes the unlock path=
+:
+ write_unlock_irqrestore()
+  -> rt_write_unlock()
+  -> m_e()
+
+That means migrations still needs to be enabled.
+
+I would however prefer your optimisation where you remove the pointless
+m_e() in rt_write_trylock_irqsave();
+
+> 	return ret;
+> }
+> EXPORT_SYMBOL(rt_write_trylock_irqsave);
 
 Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
