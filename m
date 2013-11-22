@@ -1,64 +1,66 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.12.0-rt2
-Date: Fri, 22 Nov 2013 15:23:45 +0100
-Message-ID: <20131122142345.GC8698@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.2.52-rt73
+Date: Fri, 22 Nov 2013 15:56:34 +0100
+Message-ID: <20131122145634.GD8698@linutronix.de>
 References: <20131116194633.GD11518@linutronix.de>
- <EBD2DE4ADA47B94E831AED12A4B0CADA67EE68DA@edb0.wapice.localdomain>
+ <528E70B5.5010603@pavlinux.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sami =?utf-8?Q?Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44873 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755601Ab3KVOXq convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 Nov 2013 09:23:46 -0500
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Pavel Vasilyev <pavel@pavlinux.ru>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <EBD2DE4ADA47B94E831AED12A4B0CADA67EE68DA@edb0.wapice.localdomain>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <528E70B5.5010603@pavlinux.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Sami Pietik=C3=A4inen | 2013-11-19 07:38:27 [+0000]:
+* Pavel Vasilyev | 2013-11-22 00:44:37 [+0400]:
 
->> - tried to fix AT91's "already-free IRQ" and highres problem. Michae=
-l
->>   Langfinge reported it initially and Sami Pietik=C3=A4inen sent a p=
-atch for
->>   the "already-free IRQ" problem. Based on another patch I looked at=
- the
->>   highres patch and tried to fix it. As I don't have the hardware, s=
-ome
->>   feedback would be nice.
 >
->I did a quick test run with the 3.12.0-rt2 kernel. There are no "Tryin=
-g to free already free IRQ 1" warnings anymore so that issue seems to b=
-e fixed. However, the system still hangs.
+>Fine, killed 3.12 now decided to finish 3.2.x. Good job guys!
 >
->CONFIG_HIGH_RES_TIMERS=3Dy
->CONFIG_ATMEL_TCB_CLKSRC=3Dy
->Hangs (or resets if the WD is enabled)
->
->CONFIG_HIGH_RES_TIMERS=3Dy
->CONFIG_ATMEL_TCB_CLKSRC=3Dn
->Boots ok.
->
->Now the kernel boots with the CONFIG_HIGH_RES_TIMERS enabled, but hang=
-s when I enable the TCB clock source.
->Michael, if you have spare time, maybe you could also test these confi=
-gs to see if you have similar behavior.
-Okay. So in the working variant with TCB=3Dn, do you have high res time=
-rs
-available?
+>Not configuration, not hardware, not software has not been updated or changed.
 
->BR,
->Sami Pietik=C3=A4inen
+No I am a bit confused. On 16th you write:
+|3.2.52-rt72 - work
+
+and now you say that we killed v3.2. There was no v3.2.52-rt72 but
+v3.2.51-rt72. So did -rt72 work and -rt73 does no more?
+
+I saw your earlier screenshots and there is nothing I can say. I can't
+tell based on the screenshot what is wrong. Sorry.
+
+This time you managed to include a backtrace. Better! However would you
+mind to enable frame pointers? The backtrace 
+
+>BUG: scheduling while atomic: irq/74-sata_nv/57/0x00000002
+>Modules linked in: cls_u32 sch_sfq sch_htb
+>Pid: 57, comm: irq/74-sata_nv Tainted: G           O 3.2.52-rt73 #10
+>Call Trace:
+> [<ffffffff814bdef4>] ? __schedule+0x314/0x344
+> [<ffffffff81081b77>] ? task_blocks_on_rt_mutex+0x1e7/0x280
+> [<ffffffff814be741>] ? schedule+0x21/0xa0
+> [<ffffffff814c0d88>] ? rt_spin_lock_slowlock+0x128/0x280
+> [<ffffffff81204d01>] ? blk_update_request+0x11/0x450
+> [<ffffffff812a6976>] ? add_timer_randomness+0x86/0x1e0
+> [<ffffffff81206eac>] ? blk_end_request+0x9c/0xc0
+> [<ffffffff812c629a>] ? scsi_io_completion+0x9a/0x770
+> [<ffffffff8120d4ab>] ? blk_done_softirq+0x6b/0x80
+> [<ffffffff8104a805>] ? __do_softirq_common+0xa5/0x1d0
+> [<ffffffff81094ec0>] ? irq_thread_fn+0x50/0x50
+> [<ffffffff8104ad77>] ? local_bh_enable+0x127/0x150
+> [<ffffffff81094f08>] ? irq_forced_thread_fn+0x48/0x70
+> [<ffffffff81094d80>] ? irq_thread+0x150/0x240
+> [<ffffffff81094c30>] ? disable_irq_nosync+0x60/0x60
+> [<ffffffff81067150>] ? kthread+0x80/0x90
+> [<ffffffff814c3174>] ? kernel_thread_helper+0x4/0x10
+> [<ffffffff810670d0>] ? kthread_bind+0x80/0x80
+> [<ffffffff814c3170>] ? gs_change+0xb/0xb
+
+shows now random functions which were on stack before the accident. What
+happens is that something on the system tries to take a sleeping long
+while beeing most likely in a preempt disable region. With lockdep on it
+might even throw some additional information here.
 
 Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
