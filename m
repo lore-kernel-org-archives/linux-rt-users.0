@@ -1,66 +1,51 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.2.52-rt73
-Date: Fri, 22 Nov 2013 15:56:34 +0100
-Message-ID: <20131122145634.GD8698@linutronix.de>
-References: <20131116194633.GD11518@linutronix.de>
- <528E70B5.5010603@pavlinux.ru>
+Subject: Re: RT-3.10.6_p3 fails to boot: home.mount mounting timed out
+Date: Fri, 22 Nov 2013 16:13:44 +0100
+Message-ID: <20131122151343.GE8698@linutronix.de>
+References: <526B46AA.1090407@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Pavel Vasilyev <pavel@pavlinux.ru>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Light <sgsdxzy@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:45243 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753034Ab3KVPNo (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Nov 2013 10:13:44 -0500
 Content-Disposition: inline
-In-Reply-To: <528E70B5.5010603@pavlinux.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <526B46AA.1090407@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Pavel Vasilyev | 2013-11-22 00:44:37 [+0400]:
+* Light | 2013-10-26 12:35:54 [+0800]:
 
+> I am trying to build a RT kernel, however it cannot boot because it
+>cannot mount /home, which is a subvolume of btrfs.  This is the entry
+>of it in /etc/fstab:
 >
->Fine, killed 3.12 now decided to finish 3.2.x. Good job guys!
->
->Not configuration, not hardware, not software has not been updated or changed.
+>/dev/sda3    /home    btrfs
+>subvol=gentoohome,defaults,compress=lzo,autodefrag 0 2
 
-No I am a bit confused. On 16th you write:
-|3.2.52-rt72 - work
+And this is okay it seems :)
 
-and now you say that we killed v3.2. There was no v3.2.52-rt72 but
-v3.2.51-rt72. So did -rt72 work and -rt73 does no more?
+>I copyed my .config from a working mainline 3.10 kernel(which is able
+>to boot) and used "make oldconfig". The resulting config file is
+>almost the same with mainline one: I only changed IO scheduler from
+>BFQ(from gentoo patchset) to deadline, without even enabling
+>CONFIG_PREEMPT_RT. However the RT kernel just cannot boot.
 
-I saw your earlier screenshots and there is nothing I can say. I can't
-tell based on the screenshot what is wrong. Sorry.
+That is interresting. Does vanila v3.10.4 / v3.10.6 work? In your
+bootlog I see
+| Oct 26 11:33:19 Light kernel: 1;39mKernel command line: root=/dev/sda3 rootflags=subvol=gentoo init=/usr/lib/systemd/systemd ro
+| Oct 26 11:33:19 Light kernel:  sda: sda1 sda2 sda3 sda4
+| Oct 26 11:33:19 Light kernel: VFS: Mounted root (btrfs filesystem) readonly on device 0:12.
 
-This time you managed to include a backtrace. Better! However would you
-mind to enable frame pointers? The backtrace 
-
->BUG: scheduling while atomic: irq/74-sata_nv/57/0x00000002
->Modules linked in: cls_u32 sch_sfq sch_htb
->Pid: 57, comm: irq/74-sata_nv Tainted: G           O 3.2.52-rt73 #10
->Call Trace:
-> [<ffffffff814bdef4>] ? __schedule+0x314/0x344
-> [<ffffffff81081b77>] ? task_blocks_on_rt_mutex+0x1e7/0x280
-> [<ffffffff814be741>] ? schedule+0x21/0xa0
-> [<ffffffff814c0d88>] ? rt_spin_lock_slowlock+0x128/0x280
-> [<ffffffff81204d01>] ? blk_update_request+0x11/0x450
-> [<ffffffff812a6976>] ? add_timer_randomness+0x86/0x1e0
-> [<ffffffff81206eac>] ? blk_end_request+0x9c/0xc0
-> [<ffffffff812c629a>] ? scsi_io_completion+0x9a/0x770
-> [<ffffffff8120d4ab>] ? blk_done_softirq+0x6b/0x80
-> [<ffffffff8104a805>] ? __do_softirq_common+0xa5/0x1d0
-> [<ffffffff81094ec0>] ? irq_thread_fn+0x50/0x50
-> [<ffffffff8104ad77>] ? local_bh_enable+0x127/0x150
-> [<ffffffff81094f08>] ? irq_forced_thread_fn+0x48/0x70
-> [<ffffffff81094d80>] ? irq_thread+0x150/0x240
-> [<ffffffff81094c30>] ? disable_irq_nosync+0x60/0x60
-> [<ffffffff81067150>] ? kthread+0x80/0x90
-> [<ffffffff814c3174>] ? kernel_thread_helper+0x4/0x10
-> [<ffffffff810670d0>] ? kthread_bind+0x80/0x80
-> [<ffffffff814c3170>] ? gs_change+0xb/0xb
-
-shows now random functions which were on stack before the accident. What
-happens is that something on the system tries to take a sleeping long
-while beeing most likely in a preempt disable region. With lockdep on it
-might even throw some additional information here.
+which means the disk there and btrfs was able to mount the root
+subvolume. However your home subvolume timed out. If there is nothing
+different with the way you create the kernel (initramfs and such) then I
+have no clue. 
+Maybe you could remove /home from fstab and mount it from commandline
+because this might show you the error here.
 
 Sebastian
