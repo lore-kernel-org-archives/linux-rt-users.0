@@ -1,85 +1,91 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: Re: [PATCH] allow preemption in recursive migrate_disable call
-Date: Sat, 23 Nov 2013 06:19:25 +0100
-Message-ID: <20131123051925.GA9730@opentech.at>
-References: <20131120003333.GA13545@opentech.at> <20131121101913.GZ10022@twins.programming.kicks-ass.net>
+From: Michael Langfinger <linux-rt-users@langfinger.org>
+Subject: Re: [ANNOUNCE] 3.12.0-rt2
+Date: Sun, 24 Nov 2013 11:15:59 +0100
+Message-ID: <3e7db7696ffd6cc78182421c0c436a20-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1ZVQ15fQioDXFJcQlBdWQ1W-webmailer2@server02.webmailer.hosteurope.de>
+References: <20131116194633.GD11518@linutronix.de>
+ <EBD2DE4ADA47B94E831AED12A4B0CADA67EE68DA@edb0.wapice.localdomain>
+ <20131122142345.GC8698@linutronix.de>
+Reply-To: linux-rt-users@langfinger.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: =?UTF-8?Q?Sami_Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:56604 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750744Ab3KWFT1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 23 Nov 2013 00:19:27 -0500
-Content-Disposition: inline
-In-Reply-To: <20131121101913.GZ10022@twins.programming.kicks-ass.net>
+Received: from mailout02.webmailer.hosteurope.de ([80.237.138.58]:45033 "EHLO
+	mailout02.webmailer.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751120Ab3KXKQB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 24 Nov 2013 05:16:01 -0500
+In-Reply-To: <20131122142345.GC8698@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 21 Nov 2013, Peter Zijlstra wrote:
+ Hello Sami, hello Sebastian,
 
-> On Wed, Nov 20, 2013 at 01:33:33AM +0100, Nicholas Mc Guire wrote:
-> > From a7259c360b6c8b873f5fcf6d5eed0ae78534a6c5 Mon Sep 17 00:00:00 2001
-> > From: Nicholas Mc Guire <der.herr@hofr.at>
-> > Date: Wed, 20 Nov 2013 07:22:09 +0800
-> > Subject: [PATCH] allow preemption in recursive migrate_disable call
-> > 
-> >  Minor cleanup in migrate_disable/migrate_enable. The recursive case
-> >  does not need to disable preemption as it is "pinned" to the current
-> >  cpu any way so it is safe to preempt it.
-> > 
-> >  No functional change to migrate_disable/enable
-> > 
-> > Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
-> > ---
-> >  kernel/sched/core.c |    6 ++----
-> >  1 files changed, 2 insertions(+), 4 deletions(-)
-> > 
-> > diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-> > index a7fafc28..22fa2e2 100644
-> > --- a/kernel/sched/core.c
-> > +++ b/kernel/sched/core.c
-> > @@ -2418,13 +2418,12 @@ void migrate_disable(void)
-> >  	}
-> >  #endif
-> >  
-> > -	preempt_disable();
-> >  	if (p->migrate_disable) {
-> >  		p->migrate_disable++;
-> > -		preempt_enable();
-> >  		return;
-> >  	}
-> >  
-> > +	preempt_disable();
-> >  	preempt_lazy_disable();
-> >  	pin_current_cpu();
-> >  	p->migrate_disable = 1;
-> > @@ -2454,13 +2453,12 @@ void migrate_enable(void)
-> >  #endif
-> >  	WARN_ON_ONCE(p->migrate_disable <= 0);
-> >  
-> > -	preempt_disable();
-> >  	if (migrate_disable_count(p) > 1) {
-> >  		p->migrate_disable--;
-> > -		preempt_enable();
-> >  		return;
-> >  	}
-> >  
-> > +	preempt_disable();
-> >  	if (unlikely(migrate_disabled_updated(p))) {
-> >  		/*
-> >  		 * Undo whatever update_migrate_disable() did, also see there
-> 
-> Is there a reason one uses p->migrate_disable and the other uses
-> migrate_disable_count(p) ? 
+ unfortunately I don't have access to the AT91 at the moment, so I can'=
+t=20
+ test the config myself. But I built the kernel 3.12.0-rt2 and gave my=20
+ former colleague with whom I worked on the AT91 a copy of it. I also=20
+ updated the build scripts that we used for our specific setup with the=
+=20
+ AT91, so he will be able to build the kernel himself and test the two=20
+ config options Sami posted. I will tell you about his results as soon =
+as=20
+ I hear from him!
+
+ Kind regards,
+ Michael Langfinger
+
+ On Fri, 22 Nov 2013 15:23:45 +0100, Sebastian Andrzej Siewior=20
+ <bigeasy@linutronix.de> wrote:
+> * Sami Pietik=C3=A4inen | 2013-11-19 07:38:27 [+0000]:
 >
-in the update case incrementting is fine with or without 
-MIGRATE_DISABLE_SET_AFFIN set, in the migrate_enable case though
-if the nesting level were actuall 1 and MIGRATE_DISABLE_SET_AFFIN were set
-we would end up in the wrong branch (1<<30)+1 > 1.
+>>> - tried to fix AT91's "already-free IRQ" and highres problem.=20
+>>> Michael
+>>>   Langfinge reported it initially and Sami Pietik=C3=A4inen sent a =
+patch=20
+>>> for
+>>>   the "already-free IRQ" problem. Based on another patch I looked=20
+>>> at the
+>>>   highres patch and tried to fix it. As I don't have the hardware,=20
+>>> some
+>>>   feedback would be nice.
+>>
+>>I did a quick test run with the 3.12.0-rt2 kernel. There are no=20
+>> "Trying to free already free IRQ 1" warnings anymore so that issue=20
+>> seems to be fixed. However, the system still hangs.
+>>
+>>CONFIG_HIGH_RES_TIMERS=3Dy
+>>CONFIG_ATMEL_TCB_CLKSRC=3Dy
+>>Hangs (or resets if the WD is enabled)
+>>
+>>CONFIG_HIGH_RES_TIMERS=3Dy
+>>CONFIG_ATMEL_TCB_CLKSRC=3Dn
+>>Boots ok.
+>>
+>>Now the kernel boots with the CONFIG_HIGH_RES_TIMERS enabled, but=20
+>> hangs when I enable the TCB clock source.
+>>Michael, if you have spare time, maybe you could also test these=20
+>> configs to see if you have similar behavior.
+> Okay. So in the working variant with TCB=3Dn, do you have high res=20
+> timers
+> available?
+>
+>>BR,
+>>Sami Pietik=C3=A4inen
+>
+> Sebastian
+> --
+> To unsubscribe from this list: send the line "unsubscribe=20
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-thx!
-hofrat
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
