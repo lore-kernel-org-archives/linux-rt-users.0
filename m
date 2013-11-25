@@ -1,45 +1,37 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Realtime Workshop Slides?
-Date: Mon, 25 Nov 2013 12:08:39 -0500
-Message-ID: <20131125120839.6cc3e823@gandalf.local.home>
-References: <5293140D.8040003@monom.org>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
+Date: Mon, 25 Nov 2013 13:33:46 -0500
+Message-ID: <5293980A.4030804@windriver.com>
+References: <1383798668.5441.25.camel@marge.simpson.net> <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de> <20131107125923.GB24644@localhost.localdomain> <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de> <1384243595.15180.63.camel@marge.simpson.net> <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de> <20131115163008.GB12164@linutronix.de> <20131115201436.GC12164@linutronix.de> <20131118141021.GA10022@twins.programming.kicks-ass.net> <20131122135931.GA8698@linutronix.de> <20131122160841.GS3866@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Daniel Wagner <wagi@monom.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:24001 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754636Ab3KYRIo (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Nov 2013 12:08:44 -0500
-In-Reply-To: <5293140D.8040003@monom.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Mike Galbraith <bitbucket@online.de>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Peter Zijlstra <peterz@infradead.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131122160841.GS3866@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 25 Nov 2013 10:10:37 +0100
-Daniel Wagner <wagi@monom.org> wrote:
-
-> Hi Steven,
+On 13-11-22 11:08 AM, Peter Zijlstra wrote:
+> On Fri, Nov 22, 2013 at 02:59:31PM +0100, Sebastian Andrzej Siewior wrote:
+>> +extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
 > 
-> I'd like to write up a summary how to write a RT application. Instead
-> of writing yet another document, I really like to extend (if needed)
-> this here
-> 
-> https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
-> 
-> My memory is quite bad so I am not sure if there is anything missing
-> on this page, compared with your presentation durin the RTWS.
-> If you don't mind sharing the slide, I could try to add missing stuff :)
+> I know what you mean, but.. try_unlock() just sounds wrong, how can we
+> attempt but fail to unlock a lock we hold ;-)
 
-My slides are already public. Add what you want.
-
--- Steve
+rt-v3.10-devel$git grep -l tryunlock
+tasklet-rt-prevent-tasklets-from-going-into-infinite-spin-in-rt.patch
+rt-v3.10-devel$
 
 > 
-> (Obviously, it will be in Engrish :P)
 > 
-> cheers,
-> daniel
+> /me crawls back under his rock ;-)
 
+Can you take tasklets with you?   ;-)
