@@ -1,91 +1,70 @@
-From: Michael Langfinger <linux-rt-users@langfinger.org>
-Subject: Re: [ANNOUNCE] 3.12.0-rt2
-Date: Sun, 24 Nov 2013 11:15:59 +0100
-Message-ID: <3e7db7696ffd6cc78182421c0c436a20-EhVcX1hHQARfWkQdAQYAWQoDGQlVS19cWF9EAVxEXEI3UlEWXV5/H1ZVQ15fQioDXFJcQlBdWQ1W-webmailer2@server02.webmailer.hosteurope.de>
+From: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>
+Subject: RE: [ANNOUNCE] 3.12.0-rt2
+Date: Mon, 25 Nov 2013 08:23:35 +0000
+Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA67EF1CFE@edb1.wapice.localdomain>
 References: <20131116194633.GD11518@linutronix.de>
  <EBD2DE4ADA47B94E831AED12A4B0CADA67EE68DA@edb0.wapice.localdomain>
  <20131122142345.GC8698@linutronix.de>
-Reply-To: linux-rt-users@langfinger.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: =?UTF-8?Q?Sami_Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>,
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout02.webmailer.hosteurope.de ([80.237.138.58]:45033 "EHLO
-	mailout02.webmailer.hosteurope.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751120Ab3KXKQB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 24 Nov 2013 05:16:01 -0500
+Received: from wapice.fi ([81.209.51.2]:40657 "EHLO brando.wapice.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751778Ab3KYIXm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Nov 2013 03:23:42 -0500
 In-Reply-To: <20131122142345.GC8698@linutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
- Hello Sami, hello Sebastian,
-
- unfortunately I don't have access to the AT91 at the moment, so I can'=
-t=20
- test the config myself. But I built the kernel 3.12.0-rt2 and gave my=20
- former colleague with whom I worked on the AT91 a copy of it. I also=20
- updated the build scripts that we used for our specific setup with the=
-=20
- AT91, so he will be able to build the kernel himself and test the two=20
- config options Sami posted. I will tell you about his results as soon =
-as=20
- I hear from him!
-
- Kind regards,
- Michael Langfinger
-
- On Fri, 22 Nov 2013 15:23:45 +0100, Sebastian Andrzej Siewior=20
- <bigeasy@linutronix.de> wrote:
-> * Sami Pietik=C3=A4inen | 2013-11-19 07:38:27 [+0000]:
->
->>> - tried to fix AT91's "already-free IRQ" and highres problem.=20
->>> Michael
->>>   Langfinge reported it initially and Sami Pietik=C3=A4inen sent a =
-patch=20
->>> for
->>>   the "already-free IRQ" problem. Based on another patch I looked=20
->>> at the
->>>   highres patch and tried to fix it. As I don't have the hardware,=20
->>> some
->>>   feedback would be nice.
->>
->>I did a quick test run with the 3.12.0-rt2 kernel. There are no=20
->> "Trying to free already free IRQ 1" warnings anymore so that issue=20
->> seems to be fixed. However, the system still hangs.
->>
->>CONFIG_HIGH_RES_TIMERS=3Dy
->>CONFIG_ATMEL_TCB_CLKSRC=3Dy
->>Hangs (or resets if the WD is enabled)
->>
->>CONFIG_HIGH_RES_TIMERS=3Dy
->>CONFIG_ATMEL_TCB_CLKSRC=3Dn
->>Boots ok.
->>
->>Now the kernel boots with the CONFIG_HIGH_RES_TIMERS enabled, but=20
->> hangs when I enable the TCB clock source.
->>Michael, if you have spare time, maybe you could also test these=20
->> configs to see if you have similar behavior.
-> Okay. So in the working variant with TCB=3Dn, do you have high res=20
-> timers
-> available?
->
->>BR,
->>Sami Pietik=C3=A4inen
->
-> Sebastian
-> --
-> To unsubscribe from this list: send the line "unsubscribe=20
-> linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Pj5DT05GSUdfSElHSF9SRVNfVElNRVJTPXkNCj4+Q09ORklHX0FUTUVMX1RDQl9DTEtTUkM9eQ0K
+Pj5IYW5ncyAob3IgcmVzZXRzIGlmIHRoZSBXRCBpcyBlbmFibGVkKQ0KPj4NCj4+Q09ORklHX0hJ
+R0hfUkVTX1RJTUVSUz15DQo+PkNPTkZJR19BVE1FTF9UQ0JfQ0xLU1JDPW4NCj4+Qm9vdHMgb2su
+DQo+Pg0KPj5Ob3cgdGhlIGtlcm5lbCBib290cyB3aXRoIHRoZSBDT05GSUdfSElHSF9SRVNfVElN
+RVJTIGVuYWJsZWQsIGJ1dCBoYW5ncyB3aGVuIEkgZW5hYmxlIHRoZSBUQ0IgY2xvY2sgc291cmNl
+Lg0KPj5NaWNoYWVsLCBpZiB5b3UgaGF2ZSBzcGFyZSB0aW1lLCBtYXliZSB5b3UgY291bGQgYWxz
+byB0ZXN0IHRoZXNlIGNvbmZpZ3MgdG8gc2VlIGlmIHlvdSBoYXZlIHNpbWlsYXIgYmVoYXZpb3Iu
+DQo+T2theS4gU28gaW4gdGhlIHdvcmtpbmcgdmFyaWFudCB3aXRoIFRDQj1uLCBkbyB5b3UgaGF2
+ZSBoaWdoIHJlcyB0aW1lcnMgYXZhaWxhYmxlPw0KDQo+U2ViYXN0aWFuDQoNCldoZW4gdGhlIFRD
+Ql9DTEtTUkM9biwgdGhlIHN5c3RlbSB1c2VzIHBlcmlvZGljIGludGVydmFsIHRpbWVyIChwaXQp
+LCBhbmQgaXQgc2VlbXMgdGhhdCB0aGUNCmhpZ2ggcmVzIHRpbWVycyBhcmUgbm90IGF2YWlsYWJs
+ZSBldmVuIHRob3VnaCBDT05GSUdfSElHSF9SRVNfVElNRVJTPXkuDQoNCi9wcm9jL3RpbWVyX2xp
+c3QgZm9yIHRoZSB3b3JraW5nIHZhcmlhbnQgYmVsb3cuDQoNCkJSLA0KU2FtaSBQaWV0aWvDpGlu
+ZW4NCg0KVGltZXIgTGlzdCBWZXJzaW9uOiB2MC43DQpIUlRJTUVSX01BWF9DTE9DS19CQVNFUzog
+NA0Kbm93IGF0IDE5NTE3NDc2NzExMSBuc2Vjcw0KDQpjcHU6IDANCiBjbG9jayAwOg0KICAuYmFz
+ZTogICAgICAgYzAzMDE5OTANCiAgLmluZGV4OiAgICAgIDANCiAgLnJlc29sdXRpb246IDEwMDAw
+MDAwIG5zZWNzDQogIC5nZXRfdGltZTogICBrdGltZV9nZXQNCiAgLm9mZnNldDogICAgIDAgbnNl
+Y3MNCmFjdGl2ZSB0aW1lcnM6DQogIzA6IDxjMDMxZTE0OD4sIHNjaGVkX3J0X3BlcmlvZF90aW1l
+ciwgUzowMQ0KICMgZXhwaXJlcyBhdCAxOTYwMDAwMDAwMDAtMTk2MDAwMDAwMDAwIG5zZWNzIFtp
+biA4MjUyMzI4ODkgdG8gODI1MjMyODg5IG5zZWNzXQ0KICMxOiA8ZGY4NjlhYTg+LCBocnRpbWVy
+X3dha2V1cCwgUzowMQ0KICMgZXhwaXJlcyBhdCAxOTk1NDMzNjU2NTctMTk5NTQ4MzY1NjUwIG5z
+ZWNzIFtpbiA0MzY4NTk4NTQ2IHRvIDQzNzM1OTg1MzkgbnNlY3NdDQogY2xvY2sgMToNCiAgLmJh
+c2U6ICAgICAgIGMwMzAxOWQwDQogIC5pbmRleDogICAgICAxDQogIC5yZXNvbHV0aW9uOiAxMDAw
+MDAwMCBuc2Vjcw0KICAuZ2V0X3RpbWU6ICAga3RpbWVfZ2V0X3JlYWwNCiAgLm9mZnNldDogICAg
+IDAgbnNlY3MNCmFjdGl2ZSB0aW1lcnM6DQogY2xvY2sgMjoNCiAgLmJhc2U6ICAgICAgIGMwMzAx
+YTEwDQogIC5pbmRleDogICAgICAyDQogIC5yZXNvbHV0aW9uOiAxMDAwMDAwMCBuc2Vjcw0KICAu
+Z2V0X3RpbWU6ICAga3RpbWVfZ2V0X2Jvb3R0aW1lDQogIC5vZmZzZXQ6ICAgICAwIG5zZWNzDQph
+Y3RpdmUgdGltZXJzOg0KIGNsb2NrIDM6DQogIC5iYXNlOiAgICAgICBjMDMwMWE1MA0KICAuaW5k
+ZXg6ICAgICAgMw0KICAucmVzb2x1dGlvbjogMTAwMDAwMDAgbnNlY3MNCiAgLmdldF90aW1lOiAg
+IGt0aW1lX2dldF9jbG9ja3RhaQ0KICAub2Zmc2V0OiAgICAgMCBuc2Vjcw0KYWN0aXZlIHRpbWVy
+czoNCiAgLmV4cGlyZXNfbmV4dCAgIDogOTIyMzM3MjAzNjg1NDc3NTgwNyBuc2Vjcw0KICAuaHJl
+c19hY3RpdmUgICAgOiAwDQogIC5ucl9ldmVudHMgICAgICA6IDANCiAgLm5yX3JldHJpZXMgICAg
+IDogMA0KICAubnJfaGFuZ3MgICAgICAgOiAwDQogIC5tYXhfaGFuZ190aW1lICA6IDAgbnNlY3MN
+CiAgLm5vaHpfbW9kZSAgICAgIDogMA0KICAubGFzdF90aWNrICAgICAgOiAwIG5zZWNzDQogIC50
+aWNrX3N0b3BwZWQgICA6IDANCiAgLmlkbGVfamlmZmllcyAgIDogMA0KICAuaWRsZV9jYWxscyAg
+ICAgOiAwDQogIC5pZGxlX3NsZWVwcyAgICA6IDANCiAgLmlkbGVfZW50cnl0aW1lIDogMTk1MTcw
+NjYxMDUxIG5zZWNzDQogIC5pZGxlX3dha2V0aW1lICA6IDAgbnNlY3MNCiAgLmlkbGVfZXhpdHRp
+bWUgIDogMCBuc2Vjcw0KICAuaWRsZV9zbGVlcHRpbWUgOiAxODg5MzM2MDYzOTcgbnNlY3MNCiAg
+Lmlvd2FpdF9zbGVlcHRpbWU6IDAgbnNlY3MNCiAgLmxhc3RfamlmZmllcyAgIDogMA0KICAubmV4
+dF9qaWZmaWVzICAgOiAwDQogIC5pZGxlX2V4cGlyZXMgICA6IDAgbnNlY3MNCmppZmZpZXM6IDQy
+OTQ5NTY4MTQNCg0KVGljayBEZXZpY2U6IG1vZGU6ICAgICAwDQpQZXIgQ1BVIGRldmljZTogMA0K
+Q2xvY2sgRXZlbnQgRGV2aWNlOiBwaXQNCiBtYXhfZGVsdGFfbnM6ICAgMA0KIG1pbl9kZWx0YV9u
+czogICAwDQogbXVsdDogICAgICAgICAgIDM1NDMzNDgwDQogc2hpZnQ6ICAgICAgICAgIDMyDQog
+bW9kZTogICAgICAgICAgIDINCiBuZXh0X2V2ZW50OiAgICAgOTIyMzM3MjAzNjg1NDc3NTgwNyBu
+c2Vjcw0KIHNldF9uZXh0X2V2ZW50OiA8MDAwMDAwMDA+DQogc2V0X21vZGU6ICAgICAgIHBpdF9j
+bGtldnRfbW9kZQ0KIGV2ZW50X2hhbmRsZXI6ICB0aWNrX2hhbmRsZV9wZXJpb2RpYw0KIHJldHJp
+ZXM6ICAgICAgICAwDQoNCg==
