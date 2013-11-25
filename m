@@ -1,70 +1,34 @@
-From: =?utf-8?B?U2FtaSBQaWV0aWvDpGluZW4=?= <Sami.Pietikainen@wapice.com>
-Subject: RE: [ANNOUNCE] 3.12.0-rt2
-Date: Mon, 25 Nov 2013 08:23:35 +0000
-Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA67EF1CFE@edb1.wapice.localdomain>
-References: <20131116194633.GD11518@linutronix.de>
- <EBD2DE4ADA47B94E831AED12A4B0CADA67EE68DA@edb0.wapice.localdomain>
- <20131122142345.GC8698@linutronix.de>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Realtime Workshop Slides?
+Date: Mon, 25 Nov 2013 10:10:37 +0100
+Message-ID: <5293140D.8040003@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: Michael Langfinger <linux-rt-users@langfinger.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from wapice.fi ([81.209.51.2]:40657 "EHLO brando.wapice.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751778Ab3KYIXm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Nov 2013 03:23:42 -0500
-In-Reply-To: <20131122142345.GC8698@linutronix.de>
-Content-Language: en-US
+Received: from hotel311.server4you.de ([85.25.146.15]:48800 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750729Ab3KYJSQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Nov 2013 04:18:16 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Pj5DT05GSUdfSElHSF9SRVNfVElNRVJTPXkNCj4+Q09ORklHX0FUTUVMX1RDQl9DTEtTUkM9eQ0K
-Pj5IYW5ncyAob3IgcmVzZXRzIGlmIHRoZSBXRCBpcyBlbmFibGVkKQ0KPj4NCj4+Q09ORklHX0hJ
-R0hfUkVTX1RJTUVSUz15DQo+PkNPTkZJR19BVE1FTF9UQ0JfQ0xLU1JDPW4NCj4+Qm9vdHMgb2su
-DQo+Pg0KPj5Ob3cgdGhlIGtlcm5lbCBib290cyB3aXRoIHRoZSBDT05GSUdfSElHSF9SRVNfVElN
-RVJTIGVuYWJsZWQsIGJ1dCBoYW5ncyB3aGVuIEkgZW5hYmxlIHRoZSBUQ0IgY2xvY2sgc291cmNl
-Lg0KPj5NaWNoYWVsLCBpZiB5b3UgaGF2ZSBzcGFyZSB0aW1lLCBtYXliZSB5b3UgY291bGQgYWxz
-byB0ZXN0IHRoZXNlIGNvbmZpZ3MgdG8gc2VlIGlmIHlvdSBoYXZlIHNpbWlsYXIgYmVoYXZpb3Iu
-DQo+T2theS4gU28gaW4gdGhlIHdvcmtpbmcgdmFyaWFudCB3aXRoIFRDQj1uLCBkbyB5b3UgaGF2
-ZSBoaWdoIHJlcyB0aW1lcnMgYXZhaWxhYmxlPw0KDQo+U2ViYXN0aWFuDQoNCldoZW4gdGhlIFRD
-Ql9DTEtTUkM9biwgdGhlIHN5c3RlbSB1c2VzIHBlcmlvZGljIGludGVydmFsIHRpbWVyIChwaXQp
-LCBhbmQgaXQgc2VlbXMgdGhhdCB0aGUNCmhpZ2ggcmVzIHRpbWVycyBhcmUgbm90IGF2YWlsYWJs
-ZSBldmVuIHRob3VnaCBDT05GSUdfSElHSF9SRVNfVElNRVJTPXkuDQoNCi9wcm9jL3RpbWVyX2xp
-c3QgZm9yIHRoZSB3b3JraW5nIHZhcmlhbnQgYmVsb3cuDQoNCkJSLA0KU2FtaSBQaWV0aWvDpGlu
-ZW4NCg0KVGltZXIgTGlzdCBWZXJzaW9uOiB2MC43DQpIUlRJTUVSX01BWF9DTE9DS19CQVNFUzog
-NA0Kbm93IGF0IDE5NTE3NDc2NzExMSBuc2Vjcw0KDQpjcHU6IDANCiBjbG9jayAwOg0KICAuYmFz
-ZTogICAgICAgYzAzMDE5OTANCiAgLmluZGV4OiAgICAgIDANCiAgLnJlc29sdXRpb246IDEwMDAw
-MDAwIG5zZWNzDQogIC5nZXRfdGltZTogICBrdGltZV9nZXQNCiAgLm9mZnNldDogICAgIDAgbnNl
-Y3MNCmFjdGl2ZSB0aW1lcnM6DQogIzA6IDxjMDMxZTE0OD4sIHNjaGVkX3J0X3BlcmlvZF90aW1l
-ciwgUzowMQ0KICMgZXhwaXJlcyBhdCAxOTYwMDAwMDAwMDAtMTk2MDAwMDAwMDAwIG5zZWNzIFtp
-biA4MjUyMzI4ODkgdG8gODI1MjMyODg5IG5zZWNzXQ0KICMxOiA8ZGY4NjlhYTg+LCBocnRpbWVy
-X3dha2V1cCwgUzowMQ0KICMgZXhwaXJlcyBhdCAxOTk1NDMzNjU2NTctMTk5NTQ4MzY1NjUwIG5z
-ZWNzIFtpbiA0MzY4NTk4NTQ2IHRvIDQzNzM1OTg1MzkgbnNlY3NdDQogY2xvY2sgMToNCiAgLmJh
-c2U6ICAgICAgIGMwMzAxOWQwDQogIC5pbmRleDogICAgICAxDQogIC5yZXNvbHV0aW9uOiAxMDAw
-MDAwMCBuc2Vjcw0KICAuZ2V0X3RpbWU6ICAga3RpbWVfZ2V0X3JlYWwNCiAgLm9mZnNldDogICAg
-IDAgbnNlY3MNCmFjdGl2ZSB0aW1lcnM6DQogY2xvY2sgMjoNCiAgLmJhc2U6ICAgICAgIGMwMzAx
-YTEwDQogIC5pbmRleDogICAgICAyDQogIC5yZXNvbHV0aW9uOiAxMDAwMDAwMCBuc2Vjcw0KICAu
-Z2V0X3RpbWU6ICAga3RpbWVfZ2V0X2Jvb3R0aW1lDQogIC5vZmZzZXQ6ICAgICAwIG5zZWNzDQph
-Y3RpdmUgdGltZXJzOg0KIGNsb2NrIDM6DQogIC5iYXNlOiAgICAgICBjMDMwMWE1MA0KICAuaW5k
-ZXg6ICAgICAgMw0KICAucmVzb2x1dGlvbjogMTAwMDAwMDAgbnNlY3MNCiAgLmdldF90aW1lOiAg
-IGt0aW1lX2dldF9jbG9ja3RhaQ0KICAub2Zmc2V0OiAgICAgMCBuc2Vjcw0KYWN0aXZlIHRpbWVy
-czoNCiAgLmV4cGlyZXNfbmV4dCAgIDogOTIyMzM3MjAzNjg1NDc3NTgwNyBuc2Vjcw0KICAuaHJl
-c19hY3RpdmUgICAgOiAwDQogIC5ucl9ldmVudHMgICAgICA6IDANCiAgLm5yX3JldHJpZXMgICAg
-IDogMA0KICAubnJfaGFuZ3MgICAgICAgOiAwDQogIC5tYXhfaGFuZ190aW1lICA6IDAgbnNlY3MN
-CiAgLm5vaHpfbW9kZSAgICAgIDogMA0KICAubGFzdF90aWNrICAgICAgOiAwIG5zZWNzDQogIC50
-aWNrX3N0b3BwZWQgICA6IDANCiAgLmlkbGVfamlmZmllcyAgIDogMA0KICAuaWRsZV9jYWxscyAg
-ICAgOiAwDQogIC5pZGxlX3NsZWVwcyAgICA6IDANCiAgLmlkbGVfZW50cnl0aW1lIDogMTk1MTcw
-NjYxMDUxIG5zZWNzDQogIC5pZGxlX3dha2V0aW1lICA6IDAgbnNlY3MNCiAgLmlkbGVfZXhpdHRp
-bWUgIDogMCBuc2Vjcw0KICAuaWRsZV9zbGVlcHRpbWUgOiAxODg5MzM2MDYzOTcgbnNlY3MNCiAg
-Lmlvd2FpdF9zbGVlcHRpbWU6IDAgbnNlY3MNCiAgLmxhc3RfamlmZmllcyAgIDogMA0KICAubmV4
-dF9qaWZmaWVzICAgOiAwDQogIC5pZGxlX2V4cGlyZXMgICA6IDAgbnNlY3MNCmppZmZpZXM6IDQy
-OTQ5NTY4MTQNCg0KVGljayBEZXZpY2U6IG1vZGU6ICAgICAwDQpQZXIgQ1BVIGRldmljZTogMA0K
-Q2xvY2sgRXZlbnQgRGV2aWNlOiBwaXQNCiBtYXhfZGVsdGFfbnM6ICAgMA0KIG1pbl9kZWx0YV9u
-czogICAwDQogbXVsdDogICAgICAgICAgIDM1NDMzNDgwDQogc2hpZnQ6ICAgICAgICAgIDMyDQog
-bW9kZTogICAgICAgICAgIDINCiBuZXh0X2V2ZW50OiAgICAgOTIyMzM3MjAzNjg1NDc3NTgwNyBu
-c2Vjcw0KIHNldF9uZXh0X2V2ZW50OiA8MDAwMDAwMDA+DQogc2V0X21vZGU6ICAgICAgIHBpdF9j
-bGtldnRfbW9kZQ0KIGV2ZW50X2hhbmRsZXI6ICB0aWNrX2hhbmRsZV9wZXJpb2RpYw0KIHJldHJp
-ZXM6ICAgICAgICAwDQoNCg==
+Hi Steven,
+
+I'd like to write up a summary how to write a RT application. Instead
+of writing yet another document, I really like to extend (if needed)
+this here
+
+https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
+
+My memory is quite bad so I am not sure if there is anything missing
+on this page, compared with your presentation durin the RTWS.
+If you don't mind sharing the slide, I could try to add missing stuff :)
+
+(Obviously, it will be in Engrish :P)
+
+cheers,
+daniel
