@@ -1,82 +1,87 @@
-From: Vijay Katoch <katoch.vijay@gmail.com>
-Subject: Linux timer hangs sometime and stops at 1ns
-Date: Tue, 26 Nov 2013 05:25:20 +0000 (UTC)
-Message-ID: <loom.20131126T062159-823@post.gmane.org>
+From: Stefan Roese <stefan.roese@gmail.com>
+Subject: cyclictest better values with system load than without (OMAP3530
+ target)
+Date: Tue, 26 Nov 2013 10:21:34 +0100
+Message-ID: <5294681E.10406@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:56785 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751140Ab3KZFZp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Nov 2013 00:25:45 -0500
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1VlB9c-0004iE-G1
-	for linux-rt-users@vger.kernel.org; Tue, 26 Nov 2013 06:25:44 +0100
-Received: from 202.27.9.30 ([202.27.9.30])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 26 Nov 2013 06:25:44 +0100
-Received: from katoch.vijay by 202.27.9.30 with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 26 Nov 2013 06:25:44 +0100
+Received: from mo-p05-ob.rzone.de ([81.169.146.180]:55718 "EHLO
+	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754772Ab3KZJVi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Nov 2013 04:21:38 -0500
+Received: from [10.0.0.152] (pD9FF8EF0.dip0.t-ipconnect.de [217.255.142.240])
+	by smtp.strato.de (RZmta 32.16 DYNA|AUTH)
+	with ESMTPA id J059depAQ9LZq3m for <linux-rt-users@vger.kernel.org>;
+	Tue, 26 Nov 2013 10:21:35 +0100 (CET)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I have an embedded board with PowerPC 5200 running Realtime Linux with=20
-version 2.6.33.7.2-rt30 (OSADL 2.6.33).
-My application is using one high resolution timer in Linux for alarms. =
-This=20
-timer sometimes didn=E2=80=99t expire. The problem happens very rarely,=
- it may go=20
-many months between each time it happens on a systems.
-The timer is set by function timer_settime with absolute time.
+Hi!
 
-I have done some interesting observations when the timer didn=E2=80=99t=
- expire:=20
-- Function timer_gettime returns remaining time 1ns.
-- Active timers are checked by displaying file /proc/timer_list and the=
-=20
-timer_list didn=E2=80=99t show this timer in the active timer list.=20
-I have looked into the Linux source and found a possible scenario:
+I'm running cylictest on a OMAP3530 target board and am a bit
+astonished about the results. Especially that the latency values
+are better on a system with system load (hackbench) than on one
+without system load. Here the values I get:
 
-The function timer_gettime ends up in function common_timer_get (posix-
-timers.c).  Function common_timer_get returns it_value.tv_nsec =3D 1 if=
- timer=20
-is active and remaining time is <=3D 0. This means that the timer has c=
-ounted=20
-down and the timer state must be 'enqueued' or 'callback'.
+With system load (hackbench):
+-----------------------------
+# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
+# /dev/cpu_dma_latency set to 0us
+T: 0 ( 1853) P:80 I:1000 C:  10000 Min:     36 Act:  156 Avg:  154 Max:
+    244
 
-I suppose that it is in state 'callback', that means it is running in=20
-function __run_hrtimer (hrtimer.c). Function __run_hrtimer is calling=20
-function__remove_hrtimer that remove the timer from timer active list b=
-efore=20
-it changes timer state from 'enqueued' to 'callback'.
-
-Several functions are called in function __run_hrtimer between changing=
-=20
-timer state to 'callback' and the end of the function where the state=20
-'callback' is cleared.  If it is hanging here, the function timer_getti=
-me=20
-may return 1ns while the timer is not in the active list. Here it is ca=
-lling=20
-several functions in Linux kernel and the callback function in the=20
-application.=20
-
-I have checked the callback function in my application. It is signaling=
- a=20
-semaphore and setting the timer again on the same thread. I can't see w=
-hy=20
-that should not work.=20
-
-Is there someone that has seen a similar case?
-Is there someone that has an idea of what are going wrong here?
+Idle system:
+------------
+# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
+# /dev/cpu_dma_latency set to 0us
+T: 0 ( 2332) P:80 I:1000 C:  10000 Min:     81 Act:  530 Avg:  484 Max:
+    602
 
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Some details to my test/system setup:
+- Linux v3.8.13
+- preempt-rt patch 3.8.13-rt14
+- HW: TI OMAP3530 CM_T35 board
+- Latest cyclictest from rt-tests git repository
+
+
+I might have misconfigured the system. So here some extracts from
+my .config:
+
+...
+CONFIG_TICK_ONESHOT=y
+CONFIG_NO_HZ=y
+CONFIG_HIGH_RES_TIMERS=y
+...
+# CONFIG_CPU_FREQ is not set
+# CONFIG_CPU_IDLE is not set
+# CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED is not set
+...
+CONFIG_PREEMPT_RT_FULL=y
+...
+
+With CONFIG_NO_HZ disabled I get slightly better results:
+
+With system load (hackbench):
+-----------------------------
+# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
+# /dev/cpu_dma_latency set to 0us
+T: 0 ( 1840) P:80 I:1000 C:  10000 Min:     30 Act:  153 Avg:  154 Max:
+    238
+
+Idle system:
+-------------
+# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
+# /dev/cpu_dma_latency set to 0us
+T: 0 ( 1371) P:80 I:1000 C:  10000 Min:     40 Act:  465 Avg:  435 Max:
+    502
+
+
+Any ideas/explanations are really appreciated.
+
+Thanks,
+Stefan
