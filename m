@@ -1,87 +1,71 @@
-From: Stefan Roese <stefan.roese@gmail.com>
-Subject: cyclictest better values with system load than without (OMAP3530
- target)
-Date: Tue, 26 Nov 2013 10:21:34 +0100
-Message-ID: <5294681E.10406@gmail.com>
+From: "Matthias Klein" <matthias.klein@optimeas.de>
+Subject: Re[2]: Realtime Workshop Slides?
+Date: Tue, 26 Nov 2013 10:07:11 +0000
+Message-ID: <emcd229eaf-52d7-4d34-8f89-9be12ea4480a@nb-mak>
+References: <20131125120839.6cc3e823@gandalf.local.home>
+Reply-To: "Matthias Klein" <matthias.klein@optimeas.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; format=flowed; charset=utf-8
+Content-Transfer-Encoding: 8BIT
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo-p05-ob.rzone.de ([81.169.146.180]:55718 "EHLO
-	mo-p05-ob.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754772Ab3KZJVi (ORCPT
+Received: from optimeas.de ([78.46.18.2]:54482 "EHLO optimeas.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755761Ab3KZKRb convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Nov 2013 04:21:38 -0500
-Received: from [10.0.0.152] (pD9FF8EF0.dip0.t-ipconnect.de [217.255.142.240])
-	by smtp.strato.de (RZmta 32.16 DYNA|AUTH)
-	with ESMTPA id J059depAQ9LZq3m for <linux-rt-users@vger.kernel.org>;
-	Tue, 26 Nov 2013 10:21:35 +0100 (CET)
+	Tue, 26 Nov 2013 05:17:31 -0500
+Received: from [127.0.0.1] (ip-37-24-34-31.unitymediagroup.de [37.24.34.31])
+	by optimeas.de (Postfix) with ESMTPSA id BB3C44207A56
+	for <linux-rt-users@vger.kernel.org>; Tue, 26 Nov 2013 11:07:12 +0100 (CET)
+In-Reply-To: <20131125120839.6cc3e823@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi!
+Hi Steve,
 
-I'm running cylictest on a OMAP3530 target board and am a bit
-astonished about the results. Especially that the latency values
-are better on a system with system load (hackbench) than on one
-without system load. Here the values I get:
-
-With system load (hackbench):
------------------------------
-# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
-# /dev/cpu_dma_latency set to 0us
-T: 0 ( 1853) P:80 I:1000 C:  10000 Min:     36 Act:  156 Avg:  154 Max:
-    244
-
-Idle system:
-------------
-# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
-# /dev/cpu_dma_latency set to 0us
-T: 0 ( 2332) P:80 I:1000 C:  10000 Min:     81 Act:  530 Avg:  484 Max:
-    602
+I am also interested in the slides. Where can I find them ?
 
 
-Some details to my test/system setup:
-- Linux v3.8.13
-- preempt-rt patch 3.8.13-rt14
-- HW: TI OMAP3530 CM_T35 board
-- Latest cyclictest from rt-tests git repository
+Best regards,
 
+Matthias
 
-I might have misconfigured the system. So here some extracts from
-my .config:
+------ Originalnachricht ------
+Von: "Steven Rostedt" <rostedt@goodmis.org>
+An: "Daniel Wagner" <wagi@monom.org>
+Cc: linux-rt-users@vger.kernel.org
+Gesendet: 25.11.2013 18:08:39
+Betreff: Re: Realtime Workshop Slides?
+>On Mon, 25 Nov 2013 10:10:37 +0100
+>Daniel Wagner <wagi@monom.org> wrote:
+>
+>>  Hi Steven,
+>>
+>>  I'd like to write up a summary how to write a RT application. Instead
+>>  of writing yet another document, I really like to extend (if needed)
+>>  this here
+>>
+>>  https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
+>>
+>>  My memory is quite bad so I am not sure if there is anything missing
+>>  on this page, compared with your presentation durin the RTWS.
+>>  If you don't mind sharing the slide, I could try to add missing stuff 
+>>:)
+>
+>My slides are already public. Add what you want.
+>
+>-- Steve
+>
+>>
+>>  (Obviously, it will be in Engrish :P)
+>>
+>>  cheers,
+>>  daniel
+>
+>--
+>To unsubscribe from this list: send the line "unsubscribe 
+>linux-rt-users" in
+>the body of a message to majordomo@vger.kernel.org
+>More majordomo info at http://vger.kernel.org/majordomo-info.html
+>
 
-...
-CONFIG_TICK_ONESHOT=y
-CONFIG_NO_HZ=y
-CONFIG_HIGH_RES_TIMERS=y
-...
-# CONFIG_CPU_FREQ is not set
-# CONFIG_CPU_IDLE is not set
-# CONFIG_ARCH_NEEDS_CPU_IDLE_COUPLED is not set
-...
-CONFIG_PREEMPT_RT_FULL=y
-...
-
-With CONFIG_NO_HZ disabled I get slightly better results:
-
-With system load (hackbench):
------------------------------
-# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
-# /dev/cpu_dma_latency set to 0us
-T: 0 ( 1840) P:80 I:1000 C:  10000 Min:     30 Act:  153 Avg:  154 Max:
-    238
-
-Idle system:
--------------
-# ./cyclictest -l 10000 -i 1000 -n -p 80 -q
-# /dev/cpu_dma_latency set to 0us
-T: 0 ( 1371) P:80 I:1000 C:  10000 Min:     40 Act:  465 Avg:  435 Max:
-    502
-
-
-Any ideas/explanations are really appreciated.
-
-Thanks,
-Stefan
