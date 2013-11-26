@@ -1,37 +1,82 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH v2] rtmutex: take the waiter lock with irqs off
-Date: Mon, 25 Nov 2013 13:33:46 -0500
-Message-ID: <5293980A.4030804@windriver.com>
-References: <1383798668.5441.25.camel@marge.simpson.net> <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de> <20131107125923.GB24644@localhost.localdomain> <alpine.DEB.2.02.1311071402380.23353@ionos.tec.linutronix.de> <1384243595.15180.63.camel@marge.simpson.net> <alpine.DEB.2.02.1311121024590.30673@ionos.tec.linutronix.de> <20131115163008.GB12164@linutronix.de> <20131115201436.GC12164@linutronix.de> <20131118141021.GA10022@twins.programming.kicks-ass.net> <20131122135931.GA8698@linutronix.de> <20131122160841.GS3866@twins.programming.kicks-ass.net>
+From: Vijay Katoch <katoch.vijay@gmail.com>
+Subject: Linux timer hangs sometime and stops at 1ns
+Date: Tue, 26 Nov 2013 05:25:20 +0000 (UTC)
+Message-ID: <loom.20131126T062159-823@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131122160841.GS3866@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from plane.gmane.org ([80.91.229.3]:56785 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751140Ab3KZFZp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 Nov 2013 00:25:45 -0500
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1VlB9c-0004iE-G1
+	for linux-rt-users@vger.kernel.org; Tue, 26 Nov 2013 06:25:44 +0100
+Received: from 202.27.9.30 ([202.27.9.30])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Nov 2013 06:25:44 +0100
+Received: from katoch.vijay by 202.27.9.30 with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 26 Nov 2013 06:25:44 +0100
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 13-11-22 11:08 AM, Peter Zijlstra wrote:
-> On Fri, Nov 22, 2013 at 02:59:31PM +0100, Sebastian Andrzej Siewior wrote:
->> +extern void __lockfunc rt_spin_try_unlock(spinlock_t *lock);
-> 
-> I know what you mean, but.. try_unlock() just sounds wrong, how can we
-> attempt but fail to unlock a lock we hold ;-)
+I have an embedded board with PowerPC 5200 running Realtime Linux with=20
+version 2.6.33.7.2-rt30 (OSADL 2.6.33).
+My application is using one high resolution timer in Linux for alarms. =
+This=20
+timer sometimes didn=E2=80=99t expire. The problem happens very rarely,=
+ it may go=20
+many months between each time it happens on a systems.
+The timer is set by function timer_settime with absolute time.
 
-rt-v3.10-devel$git grep -l tryunlock
-tasklet-rt-prevent-tasklets-from-going-into-infinite-spin-in-rt.patch
-rt-v3.10-devel$
+I have done some interesting observations when the timer didn=E2=80=99t=
+ expire:=20
+- Function timer_gettime returns remaining time 1ns.
+- Active timers are checked by displaying file /proc/timer_list and the=
+=20
+timer_list didn=E2=80=99t show this timer in the active timer list.=20
+I have looked into the Linux source and found a possible scenario:
 
-> 
-> 
-> /me crawls back under his rock ;-)
+The function timer_gettime ends up in function common_timer_get (posix-
+timers.c).  Function common_timer_get returns it_value.tv_nsec =3D 1 if=
+ timer=20
+is active and remaining time is <=3D 0. This means that the timer has c=
+ounted=20
+down and the timer state must be 'enqueued' or 'callback'.
 
-Can you take tasklets with you?   ;-)
+I suppose that it is in state 'callback', that means it is running in=20
+function __run_hrtimer (hrtimer.c). Function __run_hrtimer is calling=20
+function__remove_hrtimer that remove the timer from timer active list b=
+efore=20
+it changes timer state from 'enqueued' to 'callback'.
+
+Several functions are called in function __run_hrtimer between changing=
+=20
+timer state to 'callback' and the end of the function where the state=20
+'callback' is cleared.  If it is hanging here, the function timer_getti=
+me=20
+may return 1ns while the timer is not in the active list. Here it is ca=
+lling=20
+several functions in Linux kernel and the callback function in the=20
+application.=20
+
+I have checked the callback function in my application. It is signaling=
+ a=20
+semaphore and setting the timer again on the same thread. I can't see w=
+hy=20
+that should not work.=20
+
+Is there someone that has seen a similar case?
+Is there someone that has an idea of what are going wrong here?
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
