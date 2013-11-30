@@ -1,223 +1,216 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: 3.10.20-rt17, BUG and Oops
-Date: Sat, 30 Nov 2013 17:40:49 +0100
-Message-ID: <529A1511.5050801@osadl.org>
-References: <52999A44.7060103@localhost>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH v2] ptrace: fix ptrace vs tasklist_lock race
+Date: Sat, 30 Nov 2013 21:07:15 +0100
+Message-ID: <20131130200715.GA24080@linutronix.de>
+References: <102271374683007@web8f.yandex.ru>
+ <20130812164145.GJ23040@linutronix.de>
+ <393831376342036@web15d.yandex.ru>
+ <20130821172431.GD16913@linutronix.de>
+ <96171377181398@web13h.yandex.ru>
+ <20130829163300.GC15360@linutronix.de>
+ <143271377797197@web5m.yandex.ru>
+ <521F92D9.5090701@linutronix.de>
+ <18551377802042@web15m.yandex.ru>
+ <521F97AC.8080505@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Alexander Fyodorov <halcy@yandex.ru>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:37182 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751752Ab3K3QxV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 Nov 2013 11:53:21 -0500
-In-Reply-To: <52999A44.7060103@localhost>
+Received: from www.linutronix.de ([62.245.132.108]:37913 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751411Ab3K3UHS convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 Nov 2013 15:07:18 -0500
+Content-Disposition: inline
+In-Reply-To: <521F97AC.8080505@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/30/2013 08:56 AM, Fernando Lopez-Lezcano wrote:
-> Just got this on 3.10.20-rt17, ThinkPad T510 running Fedora 19 (I think
-> it has happened a few times before). The machine is not completely dead,
-> the mouse pointer moves around but otherwise display updates and
-> keyboard response are nil.
-Same behavior and same manufacturer here, but newer kernel (3.12.0-rt2). 
-This is the second crash of its kind. About four days after this fault, 
-the system stopped working and needed a reboot - as predicted. This 
-crash already made it into the OSADL Hall of Shame 
-(https://www.osadl.org/?id=1817&system=r1s6) where more details are 
-available.
+As explained by Alexander Fyodorov <halcy@yandex.ru>:
 
-While I can't remember crashes at advance_transaction(), function calls 
-such as acpi_ev_gpe_detect() and friends already occurred a couple of 
-times in crash dumps. It probably is important to note that the problem 
-is ACPI related and occurred in two different systems of the same board 
-manufacturer (and probably the same BIOS/ACPI supplier).
+|read_lock(&tasklist_lock) in ptrace_stop() is converted to mutex on RT=
+ kernel,
+|and it can remove __TASK_TRACED from task->state (by moving  it to
+|task->saved_state). If parent does wait() on child followed by a sys_p=
+trace
+|call, the following race can happen:
+|
+|- child sets __TASK_TRACED in ptrace_stop()
+|- parent does wait() which eventually calls wait_task_stopped() and re=
+turns
+|  child's pid
+|- child blocks on read_lock(&tasklist_lock) in ptrace_stop() and moves
+|  __TASK_TRACED flag to saved_state
+|- parent calls sys_ptrace, which calls ptrace_check_attach() and wait_=
+task_inactive()
 
-	-Carsten.
+The patch is based on his initial patch where an additional check is
+added in case the __TASK_TRACED moved to ->saved_state. The pi_lock is
+taken in case the caller is interrupted between looking into ->state an=
+d
+->saved_state.
 
+Additionally I also extended the check in task_is_stopped_or_traced()
+and consider the two possible states in ptrace_freeze_traced().
+In wait_task_inactive() the state is now checked under the pi_lock as
+well. I merged Steven's patch in this one
+(rfc-sched-rt-fix-wait_task_interactive-to-test-rt_spin_lock-state.patc=
+h)
+which already checked both places but without the lock.
+This seems to pass my tiny testcase=E2=80=A6
 
-----------
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ include/linux/sched.h |   48 +++++++++++++++++++++++++++++++++++++++++=
+++++---
+ kernel/ptrace.c       |    7 ++++++-
+ kernel/sched/core.c   |   24 +++++++++++++++++++++---
+ 3 files changed, 72 insertions(+), 7 deletions(-)
 
-# addr2line -e vmlinux 0xffffffff81298301
-/usr/src/kernels/linux-3.12.0-rt2/drivers/acpi/ec.c:186
-
-         if (t->wlen > t->wi) {
-                 if ((status & ACPI_EC_FLAG_IBF) == 0)
-                         acpi_ec_write_data(ec,
----->                           t->wdata[t->wi++]);
-                 else
-                         goto err;
-
-
-----------
-
-[805457.455978] BUG: unable to handle kernel paging request at 
-000000000000809b
-[805457.455989] IP: [<ffffffff81298301>] advance_transaction+0x5b/0x12e
-[805457.455994] PGD 72551067 PUD 79d02067 PMD 0
-[805457.455998] Oops: 0000 [#1] PREEMPT SMP
-[805457.456049] Modules linked in: nfsv4 nfs fscache lockd cpufreq_stats 
-eeprom rpcsec_gss_krb5 auth_rpcgss bnep oid_registry bluetooth sunrpc 
-ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 ip6table_filter ip6_tables 
-coretemp snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_intel 
-snd_hda_codec arc4 snd_hwdep rtl8192ce snd_seq rtl8192c_common 
-snd_seq_device rtl_pci rtlwifi mac80211 snd_pcm iTCO_wdt 
-iTCO_vendor_support cfg80211 snd_timer snd lpc_ich microcode soundcore 
-mfd_core pcspkr i2c_i801 r8169 serio_raw mii rfkill snd_page_alloc ipv6 
-autofs4 radeon ttm drm_kms_helper drm i2c_algo_bit [last unloaded: 
-speedstep_lib]
-[805457.456055] CPU: 1 PID: 45 Comm: irq/9-acpi Not tainted 3.12.0-rt2 #9
-[805457.456057] Hardware name: LENOVO 10087&3110/Tiger Hill, BIOS 
-E6KT11AUS 11/17/2011
-[805457.456060] task: ffff88007cb59800 ti: ffff88007c41c000 task.ti: 
-ffff88007c41c000
-[805457.456067] RIP: 0010:[<ffffffff81298301>]  [<ffffffff81298301>] 
-advance_transaction+0x5b/0x12e
-[805457.456069] RSP: 0018:ffff88007c41dce8  EFLAGS: 00010202
-[805457.456071] RAX: 000000000000007c RBX: ffff88007bc27d98 RCX: 
-0000000000008020
-[805457.456074] RDX: 000000000000007b RSI: 0000000000000009 RDI: 
-ffff88007cb7a0b0
-[805457.456076] RBP: ffff88007c41dd18 R08: 00000000000004d0 R09: 
-000000000000042e
-[805457.456078] R10: ffff88007c41c000 R11: ffff88007c41c000 R12: 
-ffff88007cb7a000
-[805457.456081] R13: 0000000000000011 R14: 0000000000000009 R15: 
-ffff88007cb7a0b0
-[805457.456084] FS:  0000000000000000(0000) GS:ffff88007f680000(0000) 
-knlGS:0000000000000000
-[805457.456086] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-[805457.456088] CR2: 000000000000809b CR3: 000000007985a000 CR4: 
-00000000000007e0
-[805457.456090] Stack:
-[805457.456097]  ffff88007ca8c909 ffff88007cb7a000 ffff88007ca8c909 
-0000000000000011
-[805457.456102]  0000000000000002 0000000000000000 ffff88007c41dd38 
-ffffffff81298ed8
-[805457.456108]  0000000000000001 ffff88007ca8c998 ffff88007c41dd68 
-ffffffff812a1e11
-[805457.456109] Call Trace:
-[805457.456116]  [<ffffffff81298ed8>] acpi_ec_gpe_handler+0x47/0xc6
-[805457.456122]  [<ffffffff812a1e11>] acpi_ev_gpe_dispatch+0xc5/0x13e
-[805457.456127]  [<ffffffff812a1f3f>] acpi_ev_gpe_detect+0xb5/0x10a
-[805457.456135]  [<ffffffff81077e15>] ? irq_thread_fn+0x41/0x41
-[805457.456140]  [<ffffffff812a3e46>] acpi_ev_sci_xrupt_handler+0x22/0x2b
-[805457.456146]  [<ffffffff81290f92>] acpi_irq+0x16/0x31
-[805457.456152]  [<ffffffff81077e39>] irq_forced_thread_fn+0x24/0x5a
-[805457.456159]  [<ffffffff81077ba7>] irq_thread+0x8c/0x174
-[805457.456166]  [<ffffffff81077d2e>] ? 
-irq_finalize_oneshot.part.5+0x9f/0x9f
-[805457.456173]  [<ffffffff81077b1b>] ? wake_threads_waitq+0x44/0x44
-[805457.456179]  [<ffffffff81077b1b>] ? wake_threads_waitq+0x44/0x44
-[805457.456186]  [<ffffffff81051c71>] kthread+0x8d/0x95
-[805457.456192]  [<ffffffff81051be4>] ? 
-rcu_read_unlock_sched_notrace+0x44/0x44
-[805457.456199]  [<ffffffff814d327c>] ret_from_fork+0x7c/0xb0
-[805457.456205]  [<ffffffff81051be4>] ? 
-rcu_read_unlock_sched_notrace+0x44/0x44
-[805457.456264] Code: ff e8 36 59 23 00 48 85 db 0f 84 d6 00 00 00 8a 53 
-15 8a 43 13 38 c2 76 49 41 f6 c6 02 0f 85 a1 00 00 00 48 8b 0b 0f b6 d0 
-ff c0 <44> 8a 2c 11 88 43 13 f6 05 bb 5b 80 00 04 74 19 41 0f b6 d5 48
-[805457.456269] RIP  [<ffffffff81298301>] advance_transaction+0x5b/0x12e
-[805457.456270]  RSP <ffff88007c41dce8>
-[805457.456272] CR2: 000000000000809b
-[805458.068444] ---[ end trace 0000000000000002 ]---
-[805458.068475] BUG: unable to handle kernel paging request at 
-ffffffffffffffd8
-[805458.068484] IP: [<ffffffff81051f6e>] kthread_data+0x10/0x16
-[805458.068488] PGD 1a0f067 PUD 1a11067 PMD 0
-[805458.068491] Oops: 0000 [#2] PREEMPT SMP
-[805458.068542] Modules linked in: nfsv4 nfs fscache lockd cpufreq_stats 
-eeprom rpcsec_gss_krb5 auth_rpcgss bnep oid_registry bluetooth sunrpc 
-ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 ip6table_filter ip6_tables 
-coretemp snd_hda_codec_hdmi snd_hda_codec_realtek snd_hda_intel 
-snd_hda_codec arc4 snd_hwdep rtl8192ce snd_seq rtl8192c_common 
-snd_seq_device rtl_pci rtlwifi mac80211 snd_pcm iTCO_wdt 
-iTCO_vendor_support cfg80211 snd_timer snd lpc_ich microcode soundcore 
-mfd_core pcspkr i2c_i801 r8169 serio_raw mii rfkill snd_page_alloc ipv6 
-autofs4 radeon ttm drm_kms_helper drm i2c_algo_bit [last unloaded: 
-speedstep_lib]
-[805458.068546] CPU: 1 PID: 45 Comm: irq/9-acpi Tainted: G      D 
-3.12.0-rt2 #9
-[805458.068548] Hardware name: LENOVO 10087&3110/Tiger Hill, BIOS 
-E6KT11AUS 11/17/2011
-[805458.068550] task: ffff88007cb59800 ti: ffff88007c41c000 task.ti: 
-ffff88007c41c000
-[805458.068556] RIP: 0010:[<ffffffff81051f6e>]  [<ffffffff81051f6e>] 
-kthread_data+0x10/0x16
-[805458.068558] RSP: 0018:ffff88007c41d928  EFLAGS: 00010202
-[805458.068560] RAX: 0000000000000000 RBX: ffff88007cb59800 RCX: 
-0000000000000000
-[805458.068561] RDX: ffff88007c41de70 RSI: 0000000000000000 RDI: 
-ffff88007cb59800
-[805458.068563] RBP: ffff88007c41d928 R08: 0000000000000000 R09: 
-0000000000000001
-[805458.068565] R10: 0000000000000001 R11: ffff88007cb59800 R12: 
-ffff88007cb59800
-[805458.068566] R13: ffffffff81c51f20 R14: 0000000000000246 R15: 
-0000000000000001
-[805458.068569] FS:  0000000000000000(0000) GS:ffff88007f680000(0000) 
-knlGS:0000000000000000
-[805458.068571] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-[805458.068572] CR2: ffffffffffffffd8 CR3: 000000007985a000 CR4: 
-00000000000007e0
-[805458.068574] Stack:
-[805458.068579]  ffff88007c41d948 ffffffff81077d76 ffff88007cb59800 
-0000000000000000
-[805458.068583]  ffff88007c41d978 ffffffff8104efe9 ffff88007cb59800 
-ffff88007cb59800
-[805458.068587]  0000000000000000 ffff88007c41dc38 ffff88007c41d9f8 
-ffffffff81036fa0
-[805458.068588] Call Trace:
-[805458.068594]  [<ffffffff81077d76>] irq_thread_dtor+0x48/0xa6
-[805458.068599]  [<ffffffff8104efe9>] task_work_run+0x83/0x9a
-[805458.068604]  [<ffffffff81036fa0>] do_exit+0x3f0/0x969
-[805458.068609]  [<ffffffff81076127>] ? kmsg_dump+0xac/0xb3
-[805458.068613]  [<ffffffff814cf03c>] oops_end+0xba/0xc2
-[805458.068619]  [<ffffffff814c5ae1>] no_context+0x1f9/0x208
-[805458.068624]  [<ffffffff81008d40>] ? __cycles_2_ns+0xe/0x4c
-[805458.068629]  [<ffffffff814c5cc5>] __bad_area_nosemaphore+0x1d5/0x1f6
-[805458.068634]  [<ffffffff8105d4c4>] ? get_parent_ip+0xe/0x3e
-[805458.068638]  [<ffffffff814ce4d9>] ? restore_args+0x30/0x30
-[805458.068643]  [<ffffffff814c5cf9>] bad_area_nosemaphore+0x13/0x15
-[805458.068647]  [<ffffffff814d110d>] __do_page_fault+0x370/0x3b0
-[805458.068651]  [<ffffffff810b8fb4>] ? buffer_ftrace_now+0x39/0x45
-[805458.068656]  [<ffffffff810016ee>] ? __switch_to+0x1f9/0x409
-[805458.068660]  [<ffffffff814cdeb7>] ? _raw_spin_unlock_irq+0x47/0x54
-[805458.068665]  [<ffffffff8105c1d2>] ? finish_task_switch+0x8c/0xdb
-[805458.068669]  [<ffffffff8105c585>] ? need_resched+0x38/0x44
-[805458.068673]  [<ffffffff814cca3f>] ? __schedule+0x614/0x62b
-[805458.068677]  [<ffffffff8105d4c4>] ? get_parent_ip+0xe/0x3e
-[805458.068681]  [<ffffffff814d115b>] do_page_fault+0xe/0x10
-[805458.068685]  [<ffffffff814ce6c2>] page_fault+0x22/0x30
-[805458.068691]  [<ffffffff81298301>] ? advance_transaction+0x5b/0x12e
-[805458.068696]  [<ffffffff812982dc>] ? advance_transaction+0x36/0x12e
-[805458.068703]  [<ffffffff81298ed8>] acpi_ec_gpe_handler+0x47/0xc6
-[805458.068710]  [<ffffffff812a1e11>] acpi_ev_gpe_dispatch+0xc5/0x13e
-[805458.068716]  [<ffffffff812a1f3f>] acpi_ev_gpe_detect+0xb5/0x10a
-[805458.068724]  [<ffffffff81077e15>] ? irq_thread_fn+0x41/0x41
-[805458.068728]  [<ffffffff812a3e46>] acpi_ev_sci_xrupt_handler+0x22/0x2b
-[805458.068732]  [<ffffffff81290f92>] acpi_irq+0x16/0x31
-[805458.068737]  [<ffffffff81077e39>] irq_forced_thread_fn+0x24/0x5a
-[805458.068741]  [<ffffffff81077ba7>] irq_thread+0x8c/0x174
-[805458.068746]  [<ffffffff81077d2e>] ? 
-irq_finalize_oneshot.part.5+0x9f/0x9f
-[805458.068750]  [<ffffffff81077b1b>] ? wake_threads_waitq+0x44/0x44
-[805458.068754]  [<ffffffff81077b1b>] ? wake_threads_waitq+0x44/0x44
-[805458.068758]  [<ffffffff81051c71>] kthread+0x8d/0x95
-[805458.068764]  [<ffffffff81051be4>] ? 
-rcu_read_unlock_sched_notrace+0x44/0x44
-[805458.068768]  [<ffffffff814d327c>] ret_from_fork+0x7c/0xb0
-[805458.068773]  [<ffffffff81051be4>] ? 
-rcu_read_unlock_sched_notrace+0x44/0x44
-[805458.068820] Code: 40 98 00 00 48 8b 80 c8 03 00 00 48 89 e5 5d 48 8b 
-40 c8 48 c1 e8 02 83 e0 01 c3 0f 1f 44 00 00 48 8b 87 c8 03 00 00 55 48 
-89 e5 <48> 8b 40 d8 5d c3 0f 1f 44 00 00 55 ba 08 00 00 00 48 89 e5 48
-[805458.068824] RIP  [<ffffffff81051f6e>] kthread_data+0x10/0x16
-[805458.068825]  RSP <ffff88007c41d928>
-[805458.068826] CR2: ffffffffffffffd8
-[805458.912113] ---[ end trace 0000000000000003 ]---
-[805458.912115] Fixing recursive fault but reboot is needed!
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -165,11 +165,8 @@ extern char ___assert_task_state[1 - 2*!
+ 				 TASK_UNINTERRUPTIBLE | __TASK_STOPPED | \
+ 				 __TASK_TRACED)
+=20
+-#define task_is_traced(task)	((task->state & __TASK_TRACED) !=3D 0)
+ #define task_is_stopped(task)	((task->state & __TASK_STOPPED) !=3D 0)
+ #define task_is_dead(task)	((task)->exit_state !=3D 0)
+-#define task_is_stopped_or_traced(task)	\
+-			((task->state & (__TASK_STOPPED | __TASK_TRACED)) !=3D 0)
+ #define task_contributes_to_load(task)	\
+ 				((task->state & TASK_UNINTERRUPTIBLE) !=3D 0 && \
+ 				 (task->flags & PF_FROZEN) =3D=3D 0)
+@@ -2410,6 +2407,51 @@ static inline int need_resched(void)
+ 	return unlikely(test_thread_flag(TIF_NEED_RESCHED));
+ }
+=20
++static inline bool __task_is_stopped_or_traced(struct task_struct *tas=
+k)
++{
++	if (task->state & (__TASK_STOPPED | __TASK_TRACED))
++		return true;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	if (task->saved_state & (__TASK_STOPPED | __TASK_TRACED))
++		return true;
++#endif
++	return false;
++}
++
++static inline bool task_is_stopped_or_traced(struct task_struct *task)
++{
++	bool traced_stopped;
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&task->pi_lock, flags);
++	traced_stopped =3D __task_is_stopped_or_traced(task);
++	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++#else
++	traced_stopped =3D __task_is_stopped_or_traced(task);
++#endif
++	return traced_stopped;
++}
++
++static inline bool task_is_traced(struct task_struct *task)
++{
++	bool traced =3D false;
++
++	if (task->state & __TASK_TRACED)
++		return true;
++#ifdef CONFIG_PREEMPT_RT_FULL
++	/* in case the task is sleeping on tasklist_lock */
++	raw_spin_lock_irq(&task->pi_lock);
++	if (task->state & __TASK_TRACED)
++		traced =3D true;
++	else if (task->saved_state & __TASK_TRACED)
++		traced =3D true;
++	raw_spin_unlock_irq(&task->pi_lock);
++#endif
++	return traced;
++}
++
+ /*
+  * cond_resched() and cond_resched_lock(): latency reduction via
+  * explicit rescheduling in places that are safe. The return
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -135,7 +135,12 @@ static bool ptrace_freeze_traced(struct
+=20
+ 	spin_lock_irq(&task->sighand->siglock);
+ 	if (task_is_traced(task) && !__fatal_signal_pending(task)) {
+-		task->state =3D __TASK_TRACED;
++		raw_spin_lock_irq(&task->pi_lock);
++		if (task->state & __TASK_TRACED)
++			task->state =3D __TASK_TRACED;
++		else
++			task->saved_state =3D __TASK_TRACED;
++		raw_spin_unlock_irq(&task->pi_lock);
+ 		ret =3D true;
+ 	}
+ 	spin_unlock_irq(&task->sighand->siglock);
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1024,6 +1024,20 @@ struct migration_arg {
+=20
+ static int migration_cpu_stop(void *data);
+=20
++static bool check_task_state(struct task_struct *p, long match_state)
++{
++	bool match =3D false;
++
++	raw_spin_lock_irq(&p->pi_lock);
++	if (p->state =3D=3D match_state)
++		match =3D true;
++	else if (p->saved_state =3D=3D match_state)
++		match =3D true;
++	raw_spin_unlock_irq(&p->pi_lock);
++
++	return match;
++}
++
+ /*
+  * wait_task_inactive - wait for a thread to unschedule.
+  *
+@@ -1068,8 +1082,11 @@ unsigned long wait_task_inactive(struct
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
+-			if (match_state && unlikely(p->state !=3D match_state))
++			if (match_state) {
++				if (!unlikely(check_task_state(p, match_state)))
++					return 0;
+ 				return 0;
++			}
+ 			cpu_relax();
+ 		}
+=20
+@@ -1083,7 +1100,8 @@ unsigned long wait_task_inactive(struct
+ 		running =3D task_running(rq, p);
+ 		on_rq =3D p->on_rq;
+ 		ncsw =3D 0;
+-		if (!match_state || p->state =3D=3D match_state)
++		if (!match_state || p->state =3D=3D match_state
++		    || p->saved_state =3D=3D match_state)
+ 			ncsw =3D p->nvcsw | LONG_MIN; /* sets MSB */
+ 		task_rq_unlock(rq, p, &flags);
+=20
+@@ -1579,7 +1597,7 @@ static void try_to_wake_up_local(struct
+  */
+ int wake_up_process(struct task_struct *p)
+ {
+-	WARN_ON(task_is_stopped_or_traced(p));
++	WARN_ON(__task_is_stopped_or_traced(p));
+ 	return try_to_wake_up(p, TASK_NORMAL, 0);
+ }
+ EXPORT_SYMBOL(wake_up_process);
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
