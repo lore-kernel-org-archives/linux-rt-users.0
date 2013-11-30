@@ -1,66 +1,85 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [3.4-rt] backport of completion-use-simple-wait-queues.patch
-Date: Fri, 29 Nov 2013 18:29:47 -0500
-Message-ID: <20131129232946.GA31239@windriver.com>
-References: <20131128201029.GA28966@windriver.com>
- <20131129124931.GA31099@linutronix.de>
- <5298AE91.6010309@windriver.com>
- <20131129172155.64ac1eef@gandalf.local.home>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [PATCH 1/2] remove recursive call to migrate_disable in
+	read_lock_bh
+Date: Sat, 30 Nov 2013 02:58:55 +0100
+Message-ID: <20131130015855.GA8114@opentech.at>
+References: <20131120102107.GA12022@opentech.at> <20131122161234.GG8698@linutronix.de> <20131122233925.GA25921@opentech.at> <20131129145443.GC31099@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	<linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:45125 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751655Ab3K2X3o (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Nov 2013 18:29:44 -0500
+Received: from hofr.at ([212.69.189.236]:53443 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751302Ab3K3B64 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 29 Nov 2013 20:58:56 -0500
 Content-Disposition: inline
-In-Reply-To: <20131129172155.64ac1eef@gandalf.local.home>
+In-Reply-To: <20131129145443.GC31099@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[Re: [3.4-rt] backport of completion-use-simple-wait-queues.patch] On 29/11/2013 (Fri 17:21) Steven Rostedt wrote:
+On Fri, 29 Nov 2013, Sebastian Andrzej Siewior wrote:
 
-> Burp!  /me is still recovering from Turkey day.
-
-I'm jealous.  :)   [and now craving turkey...]
-
+> * Nicholas Mc Guire | 2013-11-23 00:39:25 [+0100]:
 > 
-> On Fri, 29 Nov 2013 10:11:13 -0500
-> Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
-> 
-> > 
-> > Thanks for spotting that.  I guess the completion patch wouldn't hurt
-> > to be in 3.4-rt anyway, but it is more a feature than a fix, it now seems.
-> > [Not sure if Steve is still adding to the v3.4-rt-features branch...]
-> 
-> If people actually showed real interest for that branch, I would. But I
-> haven't heard anything about anyone using it, so I haven't wasted my
-> time on it.
+> >hmmm. am I looking at the wrong code path ?
+> No, it was me, sorry for the confusion.
+> So this patch should work. What I am concerned is what Peter mentioned.
+> It seems that we have no user of this "alternative" unlock path right
+> now but it could become a ticking time bomb.
+>
+yes that is a concern. I scaned the kernel source tree with some cocci scripts 
+to find these problems. And actually I only found 3 (1 with write_lock_bh, 2 
+with spin_lock_bh ), all 3 in net/core/*, but the maintainer does not seem 
+willing to include these cleanups so those cleanups do not seem doable.
 
-So while we've not used it directly, we have definitely used the content
-on that branch (i.e. rebasing to latest stable and logistical details
-like that that would preclude direct use).  And while having it on
-3.4-rt-features wasn't critically important, in that the content was
-obviously present on newer releases, it did add a certain value in the
-fact that folks in the know were indicating that the backports made
-sense, and it wasn't just me alone wondering if the backport was valid.
+the found locations are:
+file:linux-stable-rt4/net/core/sock.c lock split at lines 2382 2392 2397
+file:linux-stable-rt4/net/ipv4/inet_hashtables.c lock split at lines 571 577 581
+file:linux-stable-rt4/net/core/neighbour.c lock split at lines 969 1024 1025
 
-With all the RT releases, and doing some stable baseline releases to
-support them that you do, I'd not want to say that 3.4-rt-features
-should get any special attention.  But at the same time, I'd not want
-you to think it was a complete waste of time either.  I expect it is the
-same for others, but in the typical haste of getting things done, and
-the general level of "silent" users that was discussed at RTLWS, I do
-suspect that once again, unfortunately nobody has bothered to
-actually explicitly say "hey, thanks - we are glad this exists".
+The basic model of the scanner is like below, might be useful for other 
+problems as well. you need a whole set of the possible variations and 
+then simply brute force iterate over the kernel with 
+ find . -name "*.c" -exec spatch -sp_file read_lock.cocci {} \; 
 
-So, I'll start  -- thanks Steve. :)
+@r1@
+identifier f;
+expression E;
+position p1,p2,p3;
+@@
+f(...) {
+<...
+(
+read_lock_bh(E)@p1;
+...
+read_unlock(E)@p2;
+...
+local_bh_enable()@p3;
+|
+local_bh_disable()@p1;
+...
+read_lock(E)@p2;
+...
+read_unlock_bh(E)@p3;
+)
+...>
+}
 
-Too little, too late?  Perhaps.  But better late than never, I hope.
-`
-Paul.
+@script:python@
+p1 << r1.p1;
+p2 << r1.p2;
+p3 << r1.p3;
+@@
+print "file:%s lock split at lines %s %s %s" % (p1[0].file,p1[0].line, p2[0].line, p3[0].line)
+
+so there are ways to defuse these timebombs 
+the problem is more the reluctance of net/core to accept such patches
+as David Miller considers the lock splitting to be a valid locking idiom
+so its probably not woth pushing this further.
+
+thx!
+hofrat
