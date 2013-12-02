@@ -1,37 +1,48 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.12.1-rt4
-Date: Mon, 02 Dec 2013 09:43:57 +0100
-Message-ID: <529C484D.3080905@linutronix.de>
-References: <20131116194633.GD11518@linutronix.de> <20131122211119.GL8698@linutronix.de> <529BB74C.4000702@pavlinux.ru>
+From: Tim Sander <tim@krieglstein.org>
+Subject: Re: [PATCH RT 0/5] Linux 3.4.69-rt86-rc1
+Date: Mon, 02 Dec 2013 14:32:13 +0100
+Message-ID: <1720233.5xc8N19PWk@dabox>
+References: <20131121184159.676777537@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
-To: pavel@pavlinux.ru
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <529BB74C.4000702@pavlinux.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lvps176-28-13-145.dedicated.hosteurope.de ([176.28.13.145]:44958
+	"EHLO lvps176-28-13-145.dedicated.hosteurope.de" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751515Ab3LBNcR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Dec 2013 08:32:17 -0500
+In-Reply-To: <20131121184159.676777537@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/01/2013 11:25 PM, Pavel Vasilyev wrote:
-> ------------[ cut here ]------------
-> WARNING: CPU: 1 PID: 10 at kernel/time/tick-sched.c:191 0xffffffff8107bac6()
-> NO_HZ FULL will not work with unstable sched clock
-> Call Trace:
->  <IRQ>  [<ffffffff81501a58>] 0xffffffff81501a58
->  [<ffffffff8102f992>] 0xffffffff8102f992
+Hi Steven
+> This is the RT stable review cycle of patch 3.4.69-rt86-rc1.
+Thanks for this release, unfortunatly i am only able to test this stuff in
+indeterministic time slices... I am currently testing this stuff.
+No news is good news.
+> Please scream at me if I messed something up. Please test the patches too.
+> 
+> The -rc release will be uploaded to kernel.org and will be deleted when
+> the final release is out. This is just a review release (or release
+> candidate).
+> 
+> The pre-releases will not be pushed to the git repository, only the
+> final release is.
+> 
+> If all goes well, this patch will be converted to the next main release
+> on 11/25/2013.
+I don't want to nag you but as this date is in the past i just wanted to know 
+if anything has not gone well besides that the non-rc version is not 
+available? Which would be just a "cosmetic" issue.
 
-Okay. Now we have a backstrace. Better. Now there is an option named
-CONFIG_DEBUG_INFO which resolves a number like 0xffffffff81501a58 to
-the function name. Without it enabled, the backtrace is of no use to me.
+Best regards
+Tim 
 
-However, in this case you triggered the warning in tick-sched.c. The
-good news is that FULL-NO-HZ mode is not available because your TSC is
-unstable and this is all the backtrace is about so it is harmless. You
-should see it even without -RT enabled. The bad news is that I don't
-think that this has anything to do with your SATA problem.
-
-Sebastian
