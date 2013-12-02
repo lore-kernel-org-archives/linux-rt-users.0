@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.69-rt86
-Date: Mon, 2 Dec 2013 11:37:35 -0500
-Message-ID: <20131202113735.041dacb6@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.52-rt74
+Date: Mon, 2 Dec 2013 11:38:25 -0500
+Message-ID: <20131202113825.773fe9dd@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,42 +11,37 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:23876 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752668Ab3LBQhh (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Dec 2013 11:37:37 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.69-rt86 stable release.
+I'm pleased to announce the 3.2.52-rt74 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 09408b6936f6c62a98e06fa46c737a42725b9c9f
+  branch: v3.2-rt
+  Head SHA1: 0d68db4a4e26e478739458720e4970b9824f47a2
 
 
-Or to build 3.4.69-rt86 directly, the following patches should be applied:
+Or to build 3.2.52-rt74 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.69.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.52.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.69-rt86.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.52-rt74.patch.xz
 
 
 
-You can also build from 3.4.69-rt85 by applying the incremental patch:
+You can also build from 3.2.52-rt73 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.69-rt85-rt86.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.52-rt73-rt74.patch.xz
 
 
 
@@ -55,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.69-rt85:
+Changes from v3.2.52-rt73:
 
 ---
 
@@ -66,7 +61,7 @@ Sebastian Andrzej Siewior (1):
       drm: remove preempt_disable() from drm_calc_vbltimestamp_from_scanoutpos()
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.69-rt86
+      Linux 3.2.52-rt74
 
 Thomas Pfaff (1):
       genirq: Set the irq thread policy without checking CAP_SYS_NICE
@@ -83,7 +78,7 @@ Yang Shi (1):
  5 files changed, 5 insertions(+), 12 deletions(-)
 ---------------------------
 diff --git a/drivers/gpu/drm/drm_irq.c b/drivers/gpu/drm/drm_irq.c
-index dc33ba5..07dfb99 100644
+index 73af885..2b13224 100644
 --- a/drivers/gpu/drm/drm_irq.c
 +++ b/drivers/gpu/drm/drm_irq.c
 @@ -619,11 +619,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
@@ -121,10 +116,10 @@ index 6f61d5f..d2676b8 100644
  	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
  
 diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index a6bea19..30211a7 100644
+index 88a4ff5..5b51ba7 100644
 --- a/kernel/irq/manage.c
 +++ b/kernel/irq/manage.c
-@@ -1024,7 +1024,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+@@ -1041,7 +1041,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
  			goto out_mput;
  		}
  
@@ -134,17 +129,17 @@ index a6bea19..30211a7 100644
  		/*
  		 * We keep the reference to the task struct even if
 diff --git a/localversion-rt b/localversion-rt
-index 168858f..0e811ca 100644
+index e8ada8c..7d028f4 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt85
-+-rt86
+--rt73
++-rt74
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 9c36442..107c0ba 100644
+index f8bdd8d..df84f45 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -2082,7 +2082,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+@@ -2077,7 +2077,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
  
  	/* Notify other cpus that system-wide "drain" is running */
  	get_online_cpus();
@@ -153,7 +148,7 @@ index 9c36442..107c0ba 100644
  	for_each_online_cpu(cpu) {
  		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
  		struct mem_cgroup *memcg;
-@@ -2099,7 +2099,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
+@@ -2094,7 +2094,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
  				schedule_work_on(cpu, &stock->work);
  		}
  	}
