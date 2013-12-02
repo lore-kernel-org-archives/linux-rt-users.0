@@ -1,62 +1,53 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: [PATCH] consolidate spin_lock/unlock waiting with spin_unlock_wait
-Date: Mon, 2 Dec 2013 05:41:26 +0100
-Message-ID: <20131202044126.GA18399@opentech.at>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.10.20-rt17, BUG and Oops
+Date: Mon, 02 Dec 2013 09:27:41 +0100
+Message-ID: <529C447D.6010306@linutronix.de>
+References: <52999A44.7060103@localhost> <529A1511.5050801@osadl.org> <20131130203920.GB24080@linutronix.de> <529A6AFD.9020308@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:55343 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751817Ab3LBEl2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 1 Dec 2013 23:41:28 -0500
-Content-Disposition: inline
+Received: from www.linutronix.de ([62.245.132.108]:40962 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751284Ab3LBI1t (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 2 Dec 2013 03:27:49 -0500
+In-Reply-To: <529A6AFD.9020308@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->From 19ac7e10b38947dbd8d731a13243fb28490f5ab4 Mon Sep 17 00:00:00 2001
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Date: Sun, 1 Dec 2013 23:03:52 -0500
-Subject: [PATCH] consolidate spin_lock/unlock waiting with spin_unlock_wait
+On 11/30/2013 11:47 PM, Carsten Emde wrote:
+> Sebastian,
 
- since:
- commit c2f21ce2e31286a0a32f8da0a7856e9ca1122ef3
- Author: Thomas Gleixner <tglx@linutronix.de>
- Date:   Wed Dec 2 20:02:59 2009 +0100
+Hi Carsten,
 
- include/linux/spinlock.h includes spin_unlock_wait() to wait for a concurrent
- holder of a lock. this patch just moves over to that API. spin_unlock_wait
- covers both raw_spinlock_t and spinlock_t so it should be safe here as well.
- the added rt-variant of read_seqbegin in include/linux/seqlock.h that is being
- modified, was introduced by patch:
-   seqlock-prevent-rt-starvation.patch
+>> index a06d983..d3add07 100644
+>> --- a/drivers/acpi/ec.c
+>> +++ b/drivers/acpi/ec.c
+>> @@ -175,16 +175,19 @@ static void start_transaction(struct acpi_ec *ec)
+>>   static void advance_transaction(struct acpi_ec *ec, u8 status)
+>>   {
+>>       unsigned long flags;
+> 
+>> -    struct transaction *t = ec->curr;
+>> +    struct transaction *t;
+>>
+>>       spin_lock_irqsave(&ec->lock, flags);
+>> +    t = ec->curr;
+> Looks like a race - did you find a place where ec->curr->wdata could be
+> overwritten? The small size of the potential race window may explain why
+> it took a couple of days to trigger it.
 
- patch is on top of 3.12.1-rt4
+The pointer is assigned under a lock but here it is dereferenced before
+taking the lock. It looks racy this might be the bug.
 
- behavior should be unchanged.
+> Will apply the fix and the warning - let's see.
+> 
+> Thanks.
+>     -Carsten.
 
-
-Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
----
- include/linux/seqlock.h |    3 +--
- 1 files changed, 1 insertions(+), 2 deletions(-)
-
-diff --git a/include/linux/seqlock.h b/include/linux/seqlock.h
-index 142c0f7..019a936 100644
---- a/include/linux/seqlock.h
-+++ b/include/linux/seqlock.h
-@@ -236,8 +236,7 @@ repeat:
- 		 * Take the lock and let the writer proceed (i.e. evtl
- 		 * boost it), otherwise we could loop here forever.
- 		 */
--		spin_lock(&sl->lock);
--		spin_unlock(&sl->lock);
-+		spin_unlock_wait(&sl->lock);
- 		goto repeat;
- 	}
- 	return ret;
--- 
-1.7.2.5
-
+Sebastian
