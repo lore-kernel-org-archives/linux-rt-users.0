@@ -1,159 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.52-rt74
-Date: Mon, 2 Dec 2013 11:38:25 -0500
-Message-ID: <20131202113825.773fe9dd@gandalf.local.home>
+From: Daniel Wagner <wagi@monom.org>
+Subject: HOWTO: Build an RT-application
+Date: Tue, 03 Dec 2013 13:58:17 +0100
+Message-ID: <529DD569.2080700@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: =?ISO-8859-1?Q?Remy_B=F6hmer?= <linux@bohmer.net>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hotel311.server4you.de ([85.25.146.15]:51955 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753448Ab3LCM6T (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Dec 2013 07:58:19 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Remy,
 
-Dear RT Folks,
+I'd like to update "HOWTO: Build an RT-application" page on
+the rt wiki[1]. Since your are listed as maintainer, I better
+ask if my ideas are okay before editing.
 
-I'm pleased to announce the 3.2.52-rt74 stable release.
+1) I would like to get rid of quite outdated information (maybe
+    move it to archive section?) on 'The impact of the Big Kernel Lock'
+2) Add 'Don't use priority 99'
+3) Don't implement spin locks (use priority inheritance futexes)
+4) Avoid slow I/O
+5) mmap passing data
+6) Be aware of power management: cpufreq, nohz
 
+2) - 5) are stolen from Steven's presentation
 
-You can get this release via the git tree at:
+cheers,
+daniel
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 0d68db4a4e26e478739458720e4970b9824f47a2
-
-
-Or to build 3.2.52-rt74 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.52.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.52-rt74.patch.xz
-
-
-
-You can also build from 3.2.52-rt73 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.52-rt73-rt74.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.2.52-rt73:
-
----
-
-Mike Galbraith (1):
-      hwlat-detector: Don't ignore threshold module parameter
-
-Sebastian Andrzej Siewior (1):
-      drm: remove preempt_disable() from drm_calc_vbltimestamp_from_scanoutpos()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.52-rt74
-
-Thomas Pfaff (1):
-      genirq: Set the irq thread policy without checking CAP_SYS_NICE
-
-Yang Shi (1):
-      mm/memcontrol: Don't call schedule_work_on in preemption disabled context
-
-----
- drivers/gpu/drm/drm_irq.c     | 7 -------
- drivers/misc/hwlat_detector.c | 2 +-
- kernel/irq/manage.c           | 2 +-
- localversion-rt               | 2 +-
- mm/memcontrol.c               | 4 ++--
- 5 files changed, 5 insertions(+), 12 deletions(-)
----------------------------
-diff --git a/drivers/gpu/drm/drm_irq.c b/drivers/gpu/drm/drm_irq.c
-index 73af885..2b13224 100644
---- a/drivers/gpu/drm/drm_irq.c
-+++ b/drivers/gpu/drm/drm_irq.c
-@@ -619,11 +619,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 	 * code gets preempted or delayed for some reason.
- 	 */
- 	for (i = 0; i < DRM_TIMESTAMP_MAXRETRIES; i++) {
--		/* Disable preemption to make it very likely to
--		 * succeed in the first iteration even on PREEMPT_RT kernel.
--		 */
--		preempt_disable();
--
- 		/* Get system timestamp before query. */
- 		do_gettimeofday(&stime);
- 
-@@ -633,8 +628,6 @@ int drm_calc_vbltimestamp_from_scanoutpos(struct drm_device *dev, int crtc,
- 		/* Get system timestamp after query. */
- 		do_gettimeofday(&raw_time);
- 
--		preempt_enable();
--
- 		/* Return as no-op if scanout query unsupported or failed. */
- 		if (!(vbl_status & DRM_SCANOUTPOS_VALID)) {
- 			DRM_DEBUG("crtc %d : scanoutpos query failed [%d].\n",
-diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
-index 6f61d5f..d2676b8 100644
---- a/drivers/misc/hwlat_detector.c
-+++ b/drivers/misc/hwlat_detector.c
-@@ -413,7 +413,7 @@ static int init_stats(void)
- 		goto out;
- 
- 	__reset_stats();
--	data.threshold = DEFAULT_LAT_THRESHOLD;	    /* threshold us */
-+	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD;	    /* threshold us */
- 	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
- 	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
- 
-diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
-index 88a4ff5..5b51ba7 100644
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -1041,7 +1041,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
- 			goto out_mput;
- 		}
- 
--		sched_setscheduler(t, SCHED_FIFO, &param);
-+		sched_setscheduler_nocheck(t, SCHED_FIFO, &param);
- 
- 		/*
- 		 * We keep the reference to the task struct even if
-diff --git a/localversion-rt b/localversion-rt
-index e8ada8c..7d028f4 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt73
-+-rt74
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index f8bdd8d..df84f45 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2077,7 +2077,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 
- 	/* Notify other cpus that system-wide "drain" is running */
- 	get_online_cpus();
--	curcpu = get_cpu();
-+	curcpu = get_cpu_light();
- 	for_each_online_cpu(cpu) {
- 		struct memcg_stock_pcp *stock = &per_cpu(memcg_stock, cpu);
- 		struct mem_cgroup *memcg;
-@@ -2094,7 +2094,7 @@ static void drain_all_stock(struct mem_cgroup *root_memcg, bool sync)
- 				schedule_work_on(cpu, &stock->work);
- 		}
- 	}
--	put_cpu();
-+	put_cpu_light();
- 
- 	if (!sync)
- 		goto out;
+[1] https://rt.wiki.kernel.org/index.php/HOWTO:_Build_an_RT-application
+[2] http://elinux.org/images/b/ba/Elc2013_Rostedt.pdf
