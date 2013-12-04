@@ -1,39 +1,49 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: HOWTO: Build an RT-application
-Date: Tue, 03 Dec 2013 15:03:34 +0100
-Message-ID: <529DE4B6.9050003@monom.org>
-References: <529DD569.2080700@monom.org> <529DD696.7010403@nnytech.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.10.21-rt18
+Date: Tue, 3 Dec 2013 21:40:09 -0500
+Message-ID: <20131203214009.3c424e7e@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Martin K <martin@nnytech.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hotel311.server4you.de ([85.25.146.15]:52360 "EHLO
-	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753736Ab3LCODf (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Dec 2013 09:03:35 -0500
-In-Reply-To: <529DD696.7010403@nnytech.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Martin,
 
-On 12/03/2013 02:03 PM, Martin K wrote:
-> I'm someone who would have found it very very useful to have an updated HOWTO about a year ago.
+Dear RT Folks,
 
-If you see missing items in my TODO list please let me know. I am far away to be
-an expert, but I think I give it a shot and see what the expert think.
+I'm pleased to announce the 3.10.21-rt18 stable release.
 
-> The documentation is out of date or nonexistent for anyone new to linux-RT.
 
-Yes, that is the nature of wikis :)
+This release is just an update to the new stable 3.10.21 version
+and no RT specific changes have been made.
 
-> Thanks a lot for doing this.
 
-No problem. I need something like this internally anyway, so why not use a
-public source :)
+You can get this release via the git tree at:
 
-cheers,
-daniel
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.10-rt
+  Head SHA1: 79f848ea36f33a20a2e2dcfe314689d012450c3c
+
+
+Or to build 3.10.21-rt18 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.21.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.21-rt18.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
