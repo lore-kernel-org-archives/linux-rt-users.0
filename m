@@ -1,44 +1,70 @@
-From: Tiejun Chen <tiejun.chen@windriver.com>
-Subject: [PATCH 1/1] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-Date: Thu, 5 Dec 2013 17:52:42 +0800
-Message-ID: <1386237162-10141-1-git-send-email-tiejun.chen@windriver.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT] cpu hotplug: Document why PREEMPT_RT uses a spinlock
+Date: Thu, 5 Dec 2013 09:16:52 -0500
+Message-ID: <20131205091652.0523f2c3@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>
-To: <bigeasy@linutronix.de>, <tglx@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Nicholas Mc Guire <der.herr@hofr.at>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:52960 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755270Ab3LEJwf (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:44335 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756805Ab3LEOQz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Dec 2013 04:52:35 -0500
+	Thu, 5 Dec 2013 09:16:55 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Any callers should make sure irq is disabled before calling rcu_preempt_qs().
+The patch:
 
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
----
- kernel/rcutree.c |    5 +++++
- 1 file changed, 5 insertions(+)
+    cpu: Make hotplug.lock a "sleeping" spinlock on RT
+    
+    Tasks can block on hotplug.lock in pin_current_cpu(), but their
+    state might be != RUNNING. So the mutex wakeup will set the state
+    unconditionally to RUNNING. That might cause spurious unexpected
+    wakeups. We could provide a state preserving mutex_lock() function,
+    but this is semantically backwards. So instead we convert the
+    hotplug.lock() to a spinlock for RT, which has the state preserving
+    semantics already.
 
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 7ec834d..6f6d133 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
- 
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
- }
+Fixed a bug where the hotplug lock on PREEMPT_RT can be called after a
+task set its state to TASK_UNINTERRUPTIBLE and before it called
+schedule. If the hotplug_lock used a mutex, and there was contention,
+the current task's state would be turned to TASK_RUNNABLE and the
+schedule call will not sleep. This caused unexpected results.
+
+Although the patch had a description of the change, the code had no
+comments about it. This causes confusion to those that review the code,
+and as PREEMPT_RT is held in a quilt queue and not git, it's not as easy
+to see why a change was made. Even if it was in git, the code should
+still have a comment for something as subtle as this.
+
+Document the rational for using a spinlock on PREEMPT_RT in the hotplug
+lock code.
+
+Reported-by: Nicholas Mc Guire <der.herr@hofr.at>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 063c2bb..c3014f1 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -80,6 +80,14 @@ struct hotplug_pcp {
+ 	struct completion synced;
+ 	struct completion unplug_wait;
+ #ifdef CONFIG_PREEMPT_RT_FULL
++	/*
++	 * Note, on PREEMPT_RT, the hotplug lock must save the state of
++	 * the task, otherwise the mutex will cause the task to fail
++	 * to sleep when required. (Because it's called from migrate_disable())
++	 *
++	 * The spinlock_t on PREEMPT_RT is a mutex that saves the task's
++	 * state.
++	 */
+ 	spinlock_t lock;
  #else
- void rcu_bh_qs(int cpu)
--- 
-1.7.9.5
-
+ 	struct mutex mutex;
