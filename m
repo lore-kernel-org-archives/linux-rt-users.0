@@ -1,55 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.53-rt75
-Date: Tue, 3 Dec 2013 21:41:46 -0500
-Message-ID: <20131203214146.046ccfdf@gandalf.local.home>
+From: Tiejun Chen <tiejun.chen@windriver.com>
+Subject: [PATCH 1/1] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+Date: Thu, 5 Dec 2013 17:52:42 +0800
+Message-ID: <1386237162-10141-1-git-send-email-tiejun.chen@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>
+To: <bigeasy@linutronix.de>, <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:30663 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755340Ab3LDCls (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:52960 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755270Ab3LEJwf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Dec 2013 21:41:48 -0500
+	Thu, 5 Dec 2013 04:52:35 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Any callers should make sure irq is disabled before calling rcu_preempt_qs().
 
-Dear RT Folks,
+Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+---
+ kernel/rcutree.c |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-I'm pleased to announce the 3.2.53-rt75 stable release.
-
-
-This release is just an update to the new stable 3.2.53 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 31851e0bb2263c249a09a95e10eca720b5cdc4dd
-
-
-Or to build 3.2.53-rt75 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.53.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.53-rt75.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 7ec834d..6f6d133 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
+ 
+ void rcu_bh_qs(int cpu)
+ {
++	unsigned long flags;
++
++	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
++	local_irq_save(flags);
+ 	rcu_preempt_qs(cpu);
++	local_irq_restore(flags);
+ }
+ #else
+ void rcu_bh_qs(int cpu)
+-- 
+1.7.9.5
 
