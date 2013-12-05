@@ -1,70 +1,65 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] cpu hotplug: Document why PREEMPT_RT uses a spinlock
-Date: Thu, 5 Dec 2013 09:16:52 -0500
-Message-ID: <20131205091652.0523f2c3@gandalf.local.home>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH 1/1] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+Date: Thu, 5 Dec 2013 10:26:08 -0500
+Message-ID: <52A09B10.1010004@windriver.com>
+References: <1386237162-10141-1-git-send-email-tiejun.chen@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Nicholas Mc Guire <der.herr@hofr.at>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Tiejun Chen <tiejun.chen@windriver.com>, <bigeasy@linutronix.de>,
+	<tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:44335 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756805Ab3LEOQz (ORCPT
+Received: from mail1.windriver.com ([147.11.146.13]:61687 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932455Ab3LEPZ4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Dec 2013 09:16:55 -0500
+	Thu, 5 Dec 2013 10:25:56 -0500
+In-Reply-To: <1386237162-10141-1-git-send-email-tiejun.chen@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The patch:
+On 13-12-05 04:52 AM, Tiejun Chen wrote:
+> Any callers should make sure irq is disabled before calling rcu_preempt_qs().
 
-    cpu: Make hotplug.lock a "sleeping" spinlock on RT
-    
-    Tasks can block on hotplug.lock in pin_current_cpu(), but their
-    state might be != RUNNING. So the mutex wakeup will set the state
-    unconditionally to RUNNING. That might cause spurious unexpected
-    wakeups. We could provide a state preserving mutex_lock() function,
-    but this is semantically backwards. So instead we convert the
-    hotplug.lock() to a spinlock for RT, which has the state preserving
-    semantics already.
+Can we stick to the standard rule of three here for commit logs please?
 
-Fixed a bug where the hotplug lock on PREEMPT_RT can be called after a
-task set its state to TASK_UNINTERRUPTIBLE and before it called
-schedule. If the hotplug_lock used a mutex, and there was contention,
-the current task's state would be turned to TASK_RUNNABLE and the
-schedule call will not sleep. This caused unexpected results.
+1) Describe what the end user symptoms look like (crash, bug, splat)
 
-Although the patch had a description of the change, the code had no
-comments about it. This causes confusion to those that review the code,
-and as PREEMPT_RT is held in a quilt queue and not git, it's not as easy
-to see why a change was made. Even if it was in git, the code should
-still have a comment for something as subtle as this.
+2) Describe the underlying problem, i.e. why it happens.
 
-Document the rational for using a spinlock on PREEMPT_RT in the hotplug
-lock code.
+3) Describe why the fix proposed is the _right_ fix, in cases
+where it isn't obvious what the impact of the change will be etc.
 
-Reported-by: Nicholas Mc Guire <der.herr@hofr.at>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Maybe it seems obvious to you what the 1,2,3 are -- but it won't
+be obvious to everyone, and I hate having to guess.
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 063c2bb..c3014f1 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -80,6 +80,14 @@ struct hotplug_pcp {
- 	struct completion synced;
- 	struct completion unplug_wait;
- #ifdef CONFIG_PREEMPT_RT_FULL
-+	/*
-+	 * Note, on PREEMPT_RT, the hotplug lock must save the state of
-+	 * the task, otherwise the mutex will cause the task to fail
-+	 * to sleep when required. (Because it's called from migrate_disable())
-+	 *
-+	 * The spinlock_t on PREEMPT_RT is a mutex that saves the task's
-+	 * state.
-+	 */
- 	spinlock_t lock;
- #else
- 	struct mutex mutex;
+Thanks,
+Paul.
+--
+
+> 
+> Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+> ---
+>  kernel/rcutree.c |    5 +++++
+>  1 file changed, 5 insertions(+)
+> 
+> diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+> index 7ec834d..6f6d133 100644
+> --- a/kernel/rcutree.c
+> +++ b/kernel/rcutree.c
+> @@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
+>  
+>  void rcu_bh_qs(int cpu)
+>  {
+> +	unsigned long flags;
+> +
+> +	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
+> +	local_irq_save(flags);
+>  	rcu_preempt_qs(cpu);
+> +	local_irq_restore(flags);
+>  }
+>  #else
+>  void rcu_bh_qs(int cpu)
+> 
