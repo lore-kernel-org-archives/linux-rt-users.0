@@ -1,70 +1,190 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: Solving Nvidia (blob) latency spikes + convert (nvidia's)
- semaphores into mutexes patches for 331.20 [patches and links provided]
-Date: Thu, 5 Dec 2013 18:43:54 -0500
-Message-ID: <CAOcfFMwQ1-QOOFeLqWD8zNuCfQ9gELsqK8Zq69Zb=+EMzVKd4A@mail.gmail.com>
-References: <CAOcfFMzTXoSBJm8Rss6XKugc5knfDfdNaYT34bV=N2qcqeKkeg@mail.gmail.com>
-	<52A1067D.8070009@pavlinux.ru>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: [PATCH 2/3] read_lock migrate_disable pushdown to rt_read_lock
+Date: Fri, 6 Dec 2013 00:44:49 +0100
+Message-ID: <20131205234449.GF15603@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: pavel@pavlinux.ru
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>,
+	Peter Zijlstra <peterz@infradead.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f178.google.com ([209.85.128.178]:49186 "EHLO
-	mail-ve0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756030Ab3LEXnz (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Dec 2013 18:43:55 -0500
-Received: by mail-ve0-f178.google.com with SMTP id c14so14640655vea.37
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Dec 2013 15:43:54 -0800 (PST)
-In-Reply-To: <52A1067D.8070009@pavlinux.ru>
+Received: from hofr.at ([212.69.189.236]:58612 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752107Ab3LEXou (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 5 Dec 2013 18:44:50 -0500
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> 1. Blob after 325.xx.xx does not compile and does not work with our RT patches!
 
-Sure it does.
 
-make IGNORE_PREEMPT_RT_PRESENCE=1
-SYSSRC=/usr/lib/modules/"${_kernver}/build" module
+ pushdown of migrate_disable/enable from read_*lock* to the rt_read_*lock*
+ api level
 
-I've used every nvidia stable (or beta) driver post-325xx just fine on
--rt. The last remaning issues (for me) is getting nvidia to
-remove/replace wbinvd(); and fix up scheduling bugs (with
-semaphores)... or I will use mutexes, instead, i guess.
+general mapping to mutexes:
 
-> 2. Nvidia developers specifically inserted function WBINVD to slowly work? :)
+read_*lock* 
+  `-> rt_read_*lock* 
+          `-> __spin_lock (the sleeping spin locks)
+                 `-> rt_mutex 
 
-well, to find out this answer, i started a thread at nvidia's
-developer forums and inquired about this. But i can tell you that the
-Intel OSS driver was using wbinvdt() at some point in 3.10 cycle and
-it was problematic there too, from what I understand.
+The real read_lock* mapping:
 
-> 3. SFENCE need on SMP systems. Although, delay in 1000 nanoseconds - it's awful
+          read_lock_irqsave -.
+read_lock_irq                `-> rt_read_lock_irqsave()  
+       `->read_lock ---------.       \
+          read_lock_bh ------+        \ 
+                             `--> rt_read_lock() 
+                                   if (rt_mutex_owner(lock) != current){
+                                           `-> __rt_spin_lock()
+                                                rt_spin_lock_fastlock()
+                                                       `->rt_mutex_cmpxchg()
+                                    migrate_disable()
+                                   }
+                                   rwlock->read_depth++;
+read_trylock mapping:
 
-Would you care to goto into more detail on this?  - I have seen no
-negative impacts on my systems (I've been watching all system
-resources and H/w related info, etc), but am curious about this, as
-like i said, it is the source of problems in the nvidia blob and if
-the Intel OSS driver was able to work around it, i don't see why
-Nvidia couldn't do the same.
+read_trylock 
+          `-> rt_read_trylock 
+               if (rt_mutex_owner(lock) != current){
+                                              `-> rt_mutex_trylock()
+                                                   rt_mutex_fasttrylock()
+                                                    rt_mutex_cmpxchg()
+                migrate_disable()
+               }
+               rwlock->read_depth++;
 
-> 4. Do you really think, that mutex_lock/unlock more realtime than up/down?
+read_unlock* mapping:
 
-Did i say that, Pavel ...What i can tell you is;
+read_unlock_bh --------+
+read_unlock_irq -------+
+read_unlock_irqrestore +
+read_unlock -----------+
+                       `-> rt_read_unlock() 
+                            if(--rwlock->read_depth==0){
+                                      `-> __rt_spin_unlock()
+                                           rt_spin_lock_fastunlock()
+                                                        `-> rt_mutex_cmpxchg()
+                             migrate_disable()
+                            }
 
-1. nvidia's driver on -rt when using semaphores, causing scheduling
-bugs (ie: "scheduling while atomic"... that kind of thing),
-periodically. It's non-fatal but happens 5-6 times a day on my
-machines.  I've yet to see even one scheduling while atomic bug, when
-using  mutexes. - so whether or not semaphores are more realtime, is
-sort of a moot point for me - i use linux-rt for Proaudio - ie: GFX is
-NOT as important, but what is important is that the (nvidia) driver
-works properly (safely).
+ So calls to migrate_disable/enable() are better placed at the rt_read_*
+ level of lock/trylock/unlock as all of the read_*lock* API has this as a
+ common path. In the rt_read* API of lock/trylock/unlock the nesting level
+ is already being recorded in rwlock->read_depth, so we can push down the
+ migrate disable/enable to that level and condition it on the read_depth 
+ going from 0 to 1 -> migrate_disable and 1 to 0 -> migrate_enable. This 
+ eliminates the recursive calls that were needed when migrate_disable/enable
+ was done at the read_*lock* level.
 
-2. With Semaphores i seem to get more variance/jitter in my cyclictest
-results or slightly higher latency spikes, then when i am using
-mutexes. (and i feel a little safer without seeing a bunch of
-scheduling while atomic bugs).
+ The approach to read_*_bh also eliminates the concerns raised with the 
+ regards to api inbalances (read_lock_bh -> read_unlock+local_bh_enable) 
 
-Jordan
+ this is on top of 3.12.1-rt4 with the first batch of migration_cleanup 
+ patches applied.
+
+ No change of functional behavior 
+
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+---
+ include/linux/rwlock_rt.h |    6 ------
+ kernel/rt.c               |    9 +++++----
+ 2 files changed, 5 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
+index 853ee36..6d86c33 100644
+--- a/include/linux/rwlock_rt.h
++++ b/include/linux/rwlock_rt.h
+@@ -33,7 +33,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ #define read_lock_irqsave(lock, flags)			\
+ 	do {						\
+ 		typecheck(unsigned long, flags);	\
+-		migrate_disable();			\
+ 		flags = rt_read_lock_irqsave(lock);	\
+ 	} while (0)
+ 
+@@ -46,14 +45,12 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 
+ #define read_lock(lock)					\
+ 	do {						\
+-		migrate_disable();			\
+ 		rt_read_lock(lock);			\
+ 	} while (0)
+ 
+ #define read_lock_bh(lock)				\
+ 	do {						\
+ 		local_bh_disable();			\
+-		migrate_disable();			\
+ 		rt_read_lock(lock);			\
+ 	} while (0)
+ 
+@@ -77,13 +74,11 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ #define read_unlock(lock)				\
+ 	do {						\
+ 		rt_read_unlock(lock);			\
+-		migrate_enable();			\
+ 	} while (0)
+ 
+ #define read_unlock_bh(lock)				\
+ 	do {						\
+ 		rt_read_unlock(lock);			\
+-		migrate_enable();			\
+ 		local_bh_enable();			\
+ 	} while (0)
+ 
+@@ -109,7 +104,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 		typecheck(unsigned long, flags);	\
+ 		(void) flags;				\
+ 		rt_read_unlock(lock);			\
+-		migrate_enable();			\
+ 	} while (0)
+ 
+ #define write_unlock_irqrestore(lock, flags) \
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 29771e2..3403000 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -213,19 +213,18 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	 * but not when read_depth == 0 which means that the lock is
+ 	 * write locked.
+ 	 */
+-	migrate_disable();
+ 	if (rt_mutex_owner(lock) != current) {
+ 		ret = rt_mutex_trylock(lock);
+-		if (ret)
++		if (ret) {
++			migrate_disable();
+ 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
++		}
+ 	} else if (!rwlock->read_depth) {
+ 		ret = 0;
+ 	}
+ 
+ 	if (ret)
+ 		rwlock->read_depth++;
+-	else
+-		migrate_enable();
+ 
+ 	return ret;
+ }
+@@ -248,6 +247,7 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 	if (rt_mutex_owner(lock) != current) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 		__rt_spin_lock(lock);
++		migrate_disable();
+ 	}
+ 	rwlock->read_depth++;
+ }
+@@ -268,6 +268,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
+ 	if (--rwlock->read_depth == 0) {
+ 		rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
+ 		__rt_spin_unlock(&rwlock->lock);
++		migrate_enable();
+ 	}
+ }
+ EXPORT_SYMBOL(rt_read_unlock);
+-- 
+1.7.2.5
+
