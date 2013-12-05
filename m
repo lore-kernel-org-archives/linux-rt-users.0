@@ -1,82 +1,94 @@
-From: "Hong H. Pham" <hong.pham@windriver.com>
-Subject: [PATCH] powerpc: Fix PTE page address mismatch in pgtable ctor/dtor
-Date: Thu, 5 Dec 2013 10:54:54 -0500
-Message-ID: <1386258894-21851-1-git-send-email-hong.pham@windriver.com>
+From: jordan <triplesquarednine@gmail.com>
+Subject: Solving Nvidia (blob) latency spikes + convert (nvidia's) semaphores
+ into mutexes patches for 331.20 [patches and links provided]
+Date: Thu, 5 Dec 2013 16:20:37 -0500
+Message-ID: <CAOcfFMzTXoSBJm8Rss6XKugc5knfDfdNaYT34bV=N2qcqeKkeg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: "Hong H. Pham" <hong.pham@windriver.com>,
-	Paul Mackerras <paulus@samba.org>,
-	"Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linux-stable <stable@vger.kernel.org>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Content-Type: text/plain; charset=ISO-8859-1
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:63417 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751545Ab3LEPzr (ORCPT
+Received: from mail-vc0-f169.google.com ([209.85.220.169]:62213 "EHLO
+	mail-vc0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752331Ab3LEVUi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Dec 2013 10:55:47 -0500
+	Thu, 5 Dec 2013 16:20:38 -0500
+Received: by mail-vc0-f169.google.com with SMTP id hu19so13965177vcb.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 05 Dec 2013 13:20:37 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In pte_alloc_one(), pgtable_page_ctor() is passed an address that has
-not been converted by page_address() to the newly allocated PTE page.
+Hey list,
 
-When the PTE is freed, __pte_free_tlb() calls pgtable_page_dtor()
-with an address to the PTE page that has been converted by page_address().
-The mismatch in the PTE's page address causes pgtable_page_dtor() to access
-invalid memory, so resources for that PTE (such as the page lock) is not
-properly cleaned up.
+I have been experimenting with the nvidia blob, monitoring behavior /
+latencies, etc. Through some experimentation, googling/research and
+looking over previous nvidia-rt/compat patches from all over the
+interwebs; I've put together a few patches for the latest
+nvidia-331.20 driver. (probably portable to older 3xx.xx series too).
+You can obtain the patches from my Archlinux package (Arch User Repo)
+- download the package and extract the patches from the tarball.
 
-This bug was introduced by commit d614bb041209fd7cb5e4b35e11a7b2f6ee8f62b8
-"powerpc: Move the pte free routines from common header".
+https://aur.archlinux.org/packages/nvidia-l-pa/
 
-On a preempt-rt kernel, a spinlock is dynamically allocated for each
-PTE in pgtable_page_ctor().  When the PTE is freed, calling
-pgtable_page_dtor() with a mismatched page address causes a memory leak,
-as the pointer to the PTE's spinlock is bogus.
-
-On mainline, there isn't any immediately obvious symptoms, but the
-problem still exists here.
-
-Fixes: d614bb041209fd7c "powerpc: Move the pte free routes from common header"
-Cc: Paul Mackerras <paulus@samba.org>
-Cc: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Cc: linux-stable <stable@vger.kernel.org> # v3.10+
-Signed-off-by: Hong H. Pham <hong.pham@windriver.com>
+the PKGBUILD file, (which is a build script (for Arch/ABS pakcages)
+much like bsd/ports, gentoo /portage for those unfamiliar) shows how I
+patch/install the driver For Archlinux - although, obviously different
+distros do this different - so; DISCLAIMER: I'm not the person to ask
+for help :)
 ---
- arch/powerpc/include/asm/pgalloc-32.h | 2 +-
- arch/powerpc/include/asm/pgalloc-64.h | 2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/powerpc/include/asm/pgalloc-32.h b/arch/powerpc/include/asm/pgalloc-32.h
-index 27b2386..7ff24f0 100644
---- a/arch/powerpc/include/asm/pgalloc-32.h
-+++ b/arch/powerpc/include/asm/pgalloc-32.h
-@@ -87,7 +87,7 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
- 	struct page *page = page_address(table);
- 
- 	tlb_flush_pgtable(tlb, address);
--	pgtable_page_dtor(page);
-+	pgtable_page_dtor(table);
- 	pgtable_free_tlb(tlb, page, 0);
- }
- #endif /* _ASM_POWERPC_PGALLOC_32_H */
-diff --git a/arch/powerpc/include/asm/pgalloc-64.h b/arch/powerpc/include/asm/pgalloc-64.h
-index f65e27b..b187dc5 100644
---- a/arch/powerpc/include/asm/pgalloc-64.h
-+++ b/arch/powerpc/include/asm/pgalloc-64.h
-@@ -147,7 +147,7 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
- 	struct page *page = page_address(table);
- 
- 	tlb_flush_pgtable(tlb, address);
--	pgtable_page_dtor(page);
-+	pgtable_page_dtor(table);
- 	pgtable_free_tlb(tlb, page, 0);
- }
- 
--- 
-1.8.3.2
+1. nvidia-rt_no_wbinvd.patch - It turns out that nvidia uses wbinvdt()
+<An intel instruction> that through it's operations, in a nutshell,
+ends up halting all cpus - which is the source of nearly all pain when
+using nvidia-rt. :\  ...
 
+WBINVD: http://www.jaist.ac.jp/iscenter-new/mpc/altix/altixdata/opt/intel/vtune/doc/users_guide/mergedProjects/analyzer_ec/mergedProjects/reference_olh/mergedProjects/instructions/instruct32_hh/vc323.htm
+
+nvidia-rt_no_wbinvd.patch disables that behavior. The patch is used
+along with (2.) nvidia-rt_explicit.patch <failing to do so will result
+in X not starting>, but the kernel module will still load.
+
+* expect an nvidia-rt/linux-rt system to report VERY impressive
+results in Cyclictest. (any places you used to see latency spikes
+should be reduced to almost (or) nothing. (ie: competative with OSS
+drivers).
+----
+
+2. nvidia-rt_explicit.patch - i wrote this patch for nvidia-325.xx
+because skipping the PREEMPT_RT_FULL check, while resulting in a
+driver that could compile/install - it still deadlocked. So this patch
+just explicitly sets CONFIG_PREEMPT_RT_FULL (1). (which also allows
+the 1st patch to work).
+
+Lastly (but not needed to test the latency spikes, just use the above two);
+----
+
+3. nvidia-rt_mutexes.patch - Lastly, as the name of the patch implies;
+this patch converts all of the semaphores in the nvidia driver into
+(regular) mutexes. Nvidia had moved some around some of the semaphore
+code in the 3xx.xx series, but i found them all.   1st off - * this
+patch will likely kill any scheduling type-bugs encountered when using
+the semaphore version. (i have yet to see any 'complaints' in the last
+few days of uptime).
+
+* (especially) this last patch I would (Please!) like someone with
+more experience to look at for me, if at all possible? It would be
+greatly appreciated -> I hack a bit, but am not an accomplished
+programmer, so making a rookie mistake is not out of the question. ~
+That is why i do not have the feature enabled for users, as it is
+commented out.). That being said; I have tortured/tested the hell out
+of my system using the nvidia-rt_mutexes (all patches combined) and
+nvidia. (very deterministic,  great cyclictest results, just
+fantastic).
+
+Anyway, I thought i should share, as i know there are some nvidia-rt
+users subbed to the list and my hope is someone can also review these
+patches, help fix them up, etc... as like i said - not much of a
+programmer, so expertise would be helpful ;)
+
+cheerz
+
+Jordan
+
+PS: I've also taken the time to 'rattle nvidia's cage' on this issue,
+feel free to pipe in on my thread, if you like;
+https://devtalk.nvidia.com/default/topic/654639/linux/nvidia-using-wbinvdt-lt-an-intel-instruction-gt-causes-huge-latency-spikes-/
