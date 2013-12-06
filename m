@@ -1,100 +1,73 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 1/3] make migrate disable/enable conditioned on
- softirq_nestcnt transition
-Date: Thu, 5 Dec 2013 19:45:30 -0500
-Message-ID: <20131205194530.1c086844@gandalf.local.home>
-References: <20131205234222.GE15603@opentech.at>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: Solving Nvidia (blob) latency spikes + convert (nvidia's) semaphores
+ into mutexes patches for 331.20 [patches and links provided]
+Date: Fri, 06 Dec 2013 05:01:44 +0400
+Message-ID: <52A121F8.7010607@pavlinux.ru>
+References: <CAOcfFMzTXoSBJm8Rss6XKugc5knfDfdNaYT34bV=N2qcqeKkeg@mail.gmail.com> <52A1067D.8070009@pavlinux.ru> <CAOcfFMwQ1-QOOFeLqWD8zNuCfQ9gELsqK8Zq69Zb=+EMzVKd4A@mail.gmail.com>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Nicholas Mc Guire <der.herr@hofr.at>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131205234222.GE15603@opentech.at>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="JxaTpDeEkqeXXk7CmsLXaRtiP7McXwNTV"
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: jordan <triplesquarednine@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from imp02.mtu.ru ([62.5.255.19]:56696 "EHLO imp02.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751150Ab3LFBB5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 5 Dec 2013 20:01:57 -0500
+In-Reply-To: <CAOcfFMwQ1-QOOFeLqWD8zNuCfQ9gELsqK8Zq69Zb=+EMzVKd4A@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-BTW, Please Cc LKML when sending patches. It is the kernel you are
-modifying, not userspace.
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--JxaTpDeEkqeXXk7CmsLXaRtiP7McXwNTV
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
-On Fri, 6 Dec 2013 00:42:22 +0100
-Nicholas Mc Guire <der.herr@hofr.at> wrote:
+06.12.2013 03:43, jordan =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>> 1. Blob after 325.xx.xx does not compile and does not work with our RT=
+ patches!
+>=20
+> Sure it does.
+>=20
+> make IGNORE_PREEMPT_RT_PRESENCE=3D1
 
-> 
->  This patch removes the recursive calls to migrate_disable/enable in 
->  local_bh_disable/enable
-> 
->  the softirq-local-lock.patch introduces local_bh_disable/enable wich 
->  decrements/increments the current->softirq_nestcnt and disable/enables
->  migration as well. as softirq_nestcnt (include/linux/sched.h conditioned
->  on CONFIG_PREEMPT_RT_BASE) already is tracking the nesting level of the
->  recursive calls to local_bh_disable/enable (all in kernel/softirq.c) - no 
->  need to do it twice.
-> 
->  migrate_disable/enable thus can be conditionsed on softirq_nestcnt making
->  a transition from 0-1 to disable migration and 1-0 to re-enable it.
-> 
->  patch on top of 3.12.1-rt4
-> 
->  No change of functional behavior, this does noticably reduce the observed 
->  nesting level of migrate_disable/enable 
-> 
-> Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
-> ---
->  kernel/softirq.c |   14 ++++++++------
->  1 files changed, 8 insertions(+), 6 deletions(-)
-> 
-> diff --git a/kernel/softirq.c b/kernel/softirq.c
-> index 9a7268f..16ebbd9 100644
-> --- a/kernel/softirq.c
-> +++ b/kernel/softirq.c
-> @@ -569,8 +569,8 @@ static void do_current_softirqs(int need_rcu_bh_qs)
->  
->  void local_bh_disable(void)
->  {
-> -	migrate_disable();
-> -	current->softirq_nestcnt++;
-> +	if (++current->softirq_nestcnt == 1)
-> +		migrate_disable();
->  }
->  EXPORT_SYMBOL(local_bh_disable);
->  
-> @@ -584,8 +584,8 @@ void local_bh_enable(void)
->  		do_current_softirqs(1);
->  	local_irq_enable();
->  
-> -	current->softirq_nestcnt--;
-> -	migrate_enable();
-> +	if (--current->softirq_nestcnt == 0)
-> +		migrate_enable();
+Wow, I did not know, thanks. I until on 319.xx
 
-I wonder if we should add a:
+>=20
+>> 3. SFENCE need on SMP systems. Although, delay in 1000 nanoseconds - i=
+t's awful
+> Would you care to goto into more detail on this?=20
 
-	BUG_ON(current->softirq_nestcnt < 0);
+https://www.kernel.org/doc/Documentation/memory-barriers.txt
 
-As for the patch, I haven't found anything wrong with it.
+--=20
 
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+                                                         Pavel.
 
--- Steve
 
->  }
->  EXPORT_SYMBOL(local_bh_enable);
->  
-> @@ -597,8 +597,10 @@ EXPORT_SYMBOL(local_bh_enable_ip);
->  
->  void _local_bh_enable(void)
->  {
-> -	current->softirq_nestcnt--;
-> -	migrate_enable();
-> +	if (WARN_ON(current->softirq_nestcnt == 0))
-> +		return;
-> +	if (--current->softirq_nestcnt == 0)
-> +		migrate_enable();
->  }
->  EXPORT_SYMBOL(_local_bh_enable);
->  
+--JxaTpDeEkqeXXk7CmsLXaRtiP7McXwNTV
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQIcBAEBCgAGBQJSoSH4AAoJEPtok08Dny2hvIAP/RKNFASbKsndLqMyznOUL+dV
+t10awYmJRLVcH0flJe/hQlWxS8JVdUF45mIKrOp2RlY8Y2IfxcLmoriMVFLNt1uo
+ZdAFYE+N7kIjPmSH/O7Y5WFft52BRWO4Mc7gtWsacqUCuSXaZn5WYYo+AcE7uds9
+VbbAI3g3X5nhrcpCtBKR//s51C2f29A98wX1o6nV1gRSOaxfjJQa/cqnK/TIM+cp
+SuOwmZo444kjLJv2TEayTiFQ1Uzge/hPqTjLQvDu3DEewTGTuo5OEMPsTYc769RB
+OEVJ+/24PjGhTbuQ+ZKnDrJRwx5C77mSORzrtw9UBueVj5gqcVRnJwiqr8RDGPq4
+IieQVgaCXWEt6Ql7qswa0QpYBrunSdP4YvioxsGEe0oNUc+RNIN1KzrZSCi68gsR
+SfXUTgXHoMcJ4xzbHrudI+yF3vxD67EjghvtTgAoeuVT/OgwoWlWpERdCJZhNSt8
+jnTTvJNbyLB/lOxSWZ5/o/zvFP6eUJzhocv4rjGPy+530YmaWMqTXKMtDCWIob4G
+N2ktgb2fVI/c5IKMXXdDu4J71OrxGMxWT9JHDZt9asPx/8vh+xzuOfqWEYswEoJf
+8MyEQutqnfNGLlSknVMtD+Pri0H38gC2/8Y75SRdI4cUmGailLqUcOujR2eI8qtL
+rosMRPPwBJiFlYMORQZB
+=Dpuo
+-----END PGP SIGNATURE-----
+
+--JxaTpDeEkqeXXk7CmsLXaRtiP7McXwNTV--
