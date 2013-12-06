@@ -1,201 +1,105 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: Re: [PATCH 2/3] read_lock migrate_disable pushdown to rt_read_lock
-Date: Fri, 6 Dec 2013 03:33:34 +0100
-Message-ID: <20131206023334.GA26623@opentech.at>
-References: <20131205234449.GF15603@opentech.at> <20131205211951.5c2eaa0f@gandalf.local.home>
+From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
+Subject: Re: [PATCH] powerpc: Fix PTE page address mismatch in pgtable ctor/dtor
+Date: Fri, 06 Dec 2013 16:08:19 +0530
+Message-ID: <874n6muuw4.fsf@linux.vnet.ibm.com>
+References: <1386258894-21851-1-git-send-email-hong.pham@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:60625 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751500Ab3LFCdf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Dec 2013 21:33:35 -0500
-Content-Disposition: inline
-In-Reply-To: <20131205211951.5c2eaa0f@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain
+Cc: "Hong H. Pham" <hong.pham@windriver.com>,
+	Paul Mackerras <paulus@samba.org>,
+	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
+	linux-stable <stable@vger.kernel.org>
+To: "Hong H. Pham" <hong.pham@windriver.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
+Return-path: <stable-owner@vger.kernel.org>
+In-Reply-To: <1386258894-21851-1-git-send-email-hong.pham@windriver.com>
+Sender: stable-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 05 Dec 2013, Steven Rostedt wrote:
+"Hong H. Pham" <hong.pham@windriver.com> writes:
 
-> On Fri, 6 Dec 2013 00:44:49 +0100
-> Nicholas Mc Guire <der.herr@hofr.at> wrote:
-> 
-> > 
-> > 
-> >  pushdown of migrate_disable/enable from read_*lock* to the rt_read_*lock*
-> >  api level
-> > 
-> > general mapping to mutexes:
-> > 
-> > read_*lock* 
-> >   `-> rt_read_*lock* 
-> >           `-> __spin_lock (the sleeping spin locks)
-> >                  `-> rt_mutex 
-> > 
-> > The real read_lock* mapping:
-> > 
-> >           read_lock_irqsave -.
-> > read_lock_irq                `-> rt_read_lock_irqsave()  
-> >        `->read_lock ---------.       \
-> >           read_lock_bh ------+        \ 
-> >                              `--> rt_read_lock() 
-> >                                    if (rt_mutex_owner(lock) != current){
-> >                                            `-> __rt_spin_lock()
-> >                                                 rt_spin_lock_fastlock()
-> >                                                        `->rt_mutex_cmpxchg()
-> >                                     migrate_disable()
-> >                                    }
-> >                                    rwlock->read_depth++;
-> > read_trylock mapping:
-> > 
-> > read_trylock 
-> >           `-> rt_read_trylock 
-> >                if (rt_mutex_owner(lock) != current){
-> >                                               `-> rt_mutex_trylock()
-> >                                                    rt_mutex_fasttrylock()
-> >                                                     rt_mutex_cmpxchg()
-> >                 migrate_disable()
-> >                }
-> >                rwlock->read_depth++;
-> > 
-> > read_unlock* mapping:
-> > 
-> > read_unlock_bh --------+
-> > read_unlock_irq -------+
-> > read_unlock_irqrestore +
-> > read_unlock -----------+
-> >                        `-> rt_read_unlock() 
-> >                             if(--rwlock->read_depth==0){
-> >                                       `-> __rt_spin_unlock()
-> >                                            rt_spin_lock_fastunlock()
-> >                                                         `-> rt_mutex_cmpxchg()
-> >                              migrate_disable()
-> >                             }
-> > 
-> >  So calls to migrate_disable/enable() are better placed at the rt_read_*
-> >  level of lock/trylock/unlock as all of the read_*lock* API has this as a
-> >  common path. In the rt_read* API of lock/trylock/unlock the nesting level
-> >  is already being recorded in rwlock->read_depth, so we can push down the
-> >  migrate disable/enable to that level and condition it on the read_depth 
-> >  going from 0 to 1 -> migrate_disable and 1 to 0 -> migrate_enable. This 
-> >  eliminates the recursive calls that were needed when migrate_disable/enable
-> >  was done at the read_*lock* level.
-> > 
-> >  The approach to read_*_bh also eliminates the concerns raised with the 
-> >  regards to api inbalances (read_lock_bh -> read_unlock+local_bh_enable) 
-> > 
-> >  this is on top of 3.12.1-rt4 with the first batch of migration_cleanup 
-> >  patches applied.
-> > 
-> >  No change of functional behavior 
-> > 
-> > Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
-> > ---
-> >  include/linux/rwlock_rt.h |    6 ------
-> >  kernel/rt.c               |    9 +++++----
-> >  2 files changed, 5 insertions(+), 10 deletions(-)
-> > 
-> > diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
-> > index 853ee36..6d86c33 100644
-> > --- a/include/linux/rwlock_rt.h
-> > +++ b/include/linux/rwlock_rt.h
-> > @@ -33,7 +33,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
-> >  #define read_lock_irqsave(lock, flags)			\
-> >  	do {						\
-> >  		typecheck(unsigned long, flags);	\
-> > -		migrate_disable();			\
-> >  		flags = rt_read_lock_irqsave(lock);	\
-> >  	} while (0)
-> >  
-> > @@ -46,14 +45,12 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
-> >  
-> >  #define read_lock(lock)					\
-> >  	do {						\
-> > -		migrate_disable();			\
-> >  		rt_read_lock(lock);			\
-> >  	} while (0)
-> >  
-> >  #define read_lock_bh(lock)				\
-> >  	do {						\
-> >  		local_bh_disable();			\
-> > -		migrate_disable();			\
-> >  		rt_read_lock(lock);			\
-> >  	} while (0)
-> >  
-> > @@ -77,13 +74,11 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
-> >  #define read_unlock(lock)				\
-> >  	do {						\
-> >  		rt_read_unlock(lock);			\
-> > -		migrate_enable();			\
-> >  	} while (0)
-> >  
-> >  #define read_unlock_bh(lock)				\
-> >  	do {						\
-> >  		rt_read_unlock(lock);			\
-> > -		migrate_enable();			\
-> >  		local_bh_enable();			\
-> >  	} while (0)
-> >  
-> > @@ -109,7 +104,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
-> >  		typecheck(unsigned long, flags);	\
-> >  		(void) flags;				\
-> >  		rt_read_unlock(lock);			\
-> > -		migrate_enable();			\
-> >  	} while (0)
-> >  
-> >  #define write_unlock_irqrestore(lock, flags) \
-> > diff --git a/kernel/rt.c b/kernel/rt.c
-> > index 29771e2..3403000 100644
-> > --- a/kernel/rt.c
-> > +++ b/kernel/rt.c
-> > @@ -213,19 +213,18 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
-> >  	 * but not when read_depth == 0 which means that the lock is
-> >  	 * write locked.
-> >  	 */
-> > -	migrate_disable();
-> >  	if (rt_mutex_owner(lock) != current) {
-> >  		ret = rt_mutex_trylock(lock);
-> > -		if (ret)
-> > +		if (ret) {
-> > +			migrate_disable();
-> >  			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-> > +		}
-> 
-> I like this patch in general, but I'm nervous about this part.
-> 
-> What was the original reason to disable migration before checking the
-> mutex owner? Seems like we should have only disabled it on success. I'm
-> assuming there was some subtle reason not to.
+> In pte_alloc_one(), pgtable_page_ctor() is passed an address that has
+> not been converted by page_address() to the newly allocated PTE page.
+>
+> When the PTE is freed, __pte_free_tlb() calls pgtable_page_dtor()
+> with an address to the PTE page that has been converted by page_address().
+> The mismatch in the PTE's page address causes pgtable_page_dtor() to access
+> invalid memory, so resources for that PTE (such as the page lock) is not
+> properly cleaned up.
+>
+> This bug was introduced by commit d614bb041209fd7cb5e4b35e11a7b2f6ee8f62b8
+> "powerpc: Move the pte free routines from common header".
+>
+> On a preempt-rt kernel, a spinlock is dynamically allocated for each
+> PTE in pgtable_page_ctor().  When the PTE is freed, calling
+> pgtable_page_dtor() with a mismatched page address causes a memory leak,
+> as the pointer to the PTE's spinlock is bogus.
+>
+> On mainline, there isn't any immediately obvious symptoms, but the
+> problem still exists here.
+
+
+can you also specifiy the config details here. ie, 4K page size functions
+are broken ?
+
+>
+> Fixes: d614bb041209fd7c "powerpc: Move the pte free routes from common header"
+> Cc: Paul Mackerras <paulus@samba.org>
+> Cc: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
+> Cc: linux-stable <stable@vger.kernel.org> # v3.10+
+> Signed-off-by: Hong H. Pham <hong.pham@windriver.com>
+> ---
+>  arch/powerpc/include/asm/pgalloc-32.h | 2 +-
+>  arch/powerpc/include/asm/pgalloc-64.h | 2 +-
+>  2 files changed, 2 insertions(+), 2 deletions(-)
+>
+> diff --git a/arch/powerpc/include/asm/pgalloc-32.h b/arch/powerpc/include/asm/pgalloc-32.h
+> index 27b2386..7ff24f0 100644
+> --- a/arch/powerpc/include/asm/pgalloc-32.h
+> +++ b/arch/powerpc/include/asm/pgalloc-32.h
+> @@ -87,7 +87,7 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
+>  	struct page *page = page_address(table);
+>
+>  	tlb_flush_pgtable(tlb, address);
+> -	pgtable_page_dtor(page);
+> +	pgtable_page_dtor(table);
+>  	pgtable_free_tlb(tlb, page, 0);
+>  }
+>  #endif /* _ASM_POWERPC_PGALLOC_32_H */
+> diff --git a/arch/powerpc/include/asm/pgalloc-64.h b/arch/powerpc/include/asm/pgalloc-64.h
+> index f65e27b..b187dc5 100644
+> --- a/arch/powerpc/include/asm/pgalloc-64.h
+> +++ b/arch/powerpc/include/asm/pgalloc-64.h
+> @@ -147,7 +147,7 @@ static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
+>  	struct page *page = page_address(table);
+
+
+That one is also wrong right ? why not 
+
+>
+>  	tlb_flush_pgtable(tlb, address);
+> -	pgtable_page_dtor(page);
+> +	pgtable_page_dtor(table);
+>  	pgtable_free_tlb(tlb, page, 0);
+>  }
 >
 
-I think that it was simply being treated semantically as a lock - but it
-is actually not.
-                       hold a
- migrate_disable/lock  per_cpu  unlock/migrate_enable
- lock/migrate_disable  per_cpu  migrate_enable/unlcok
- lock/migrate_disable  per_cpu  unlock/migrate_enable
- migrate_disable/lock  per_cpu  migrate_enable/unlcok
-                       reference
+make it closer to what it was before,
 
-are all equivalent - the only thing you need to ensure that the per cpu 
-object will not be accessed before both lock and migration_disable have
-been sucessful. So from my understanding this is safe.
+pgtable_page_dtor(table);
+pgtable_free_tlb(tlb, page_address(table), 0);
 
-if we get migrated after a succesful trylock what would go wrong ?
-the protected object will not be accessed until after the spin_trylock
-returned so migration is disabled
+This is what we had before
 
-> If there was some strange reason, I'm not convinced that your change
-> makes that reason go away.
->
-IF there is a reason then this patch is broken - my conclusion up to now
-is that there is no such reason.
+-static inline void __pte_free_tlb(struct mmu_gather *tlb, struct page *ptepage,
+-                                 unsigned long address)
+-{
+-       tlb_flush_pgtable(tlb, address);
+-       pgtable_page_dtor(ptepage);
+-       pgtable_free_tlb(tlb, page_address(ptepage), 0);
+-}
 
-thx!
-hofrat 
+
+-aneesh
