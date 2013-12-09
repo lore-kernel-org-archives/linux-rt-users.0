@@ -1,82 +1,147 @@
-From: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-Subject: Re: [PATCH v3] powerpc: Fix PTE page address mismatch in pgtable
- ctor/dtor
-Date: Sun, 08 Dec 2013 07:32:25 +1100
-Message-ID: <1386448345.21910.106.camel@pasglop>
-References: <874n6muuw4.fsf@linux.vnet.ibm.com>
-	 <1386425193-24015-1-git-send-email-hong.pham@windriver.com>
-	 <1386448079.21910.105.camel@pasglop>
+From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Subject: Re: [BUG] stable v3.10.16+ introduced by "ip6tnl: allow to use rtnl
+ ops on fb tunnel"
+Date: Sun, 8 Dec 2013 16:25:31 -0800
+Message-ID: <20131209002531.GB14382@kroah.com>
+References: <20131113211430.1ad3bb7d@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Paul Mackerras <paulus@samba.org>,
-	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	stable <stable@vger.kernel.org>,
+	David Miller <davem@davemloft.net>,
+	Nicolas Dichtel <nicolas.dichtel@6wind.com>,
+	Clark Williams <williams@redhat.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linux-stable <stable@vger.kernel.org>,
-	"Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
-To: "Hong H. Pham" <hong.pham@windriver.com>
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <1386448079.21910.105.camel@pasglop>
+Content-Disposition: inline
+In-Reply-To: <20131113211430.1ad3bb7d@gandalf.local.home>
 Sender: stable-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, 2013-12-08 at 07:27 +1100, Benjamin Herrenschmidt wrote:
-> On Sat, 2013-12-07 at 09:06 -0500, Hong H. Pham wrote:
+On Wed, Nov 13, 2013 at 09:14:30PM -0500, Steven Rostedt wrote:
+> In our test labs we discovered a bug with the latest 3.10-rt kernel.
+> When investigating, I found that it was actually a bug in the 3.10.18
+> kernel that we based on. With that, I bisected it down to this commit:
 > 
-> > diff --git a/arch/powerpc/include/asm/pgalloc-32.h b/arch/powerpc/include/asm/pgalloc-32.h
-> > index 27b2386..842846c 100644
-> > --- a/arch/powerpc/include/asm/pgalloc-32.h
-> > +++ b/arch/powerpc/include/asm/pgalloc-32.h
-> > @@ -84,10 +84,8 @@ static inline void pgtable_free_tlb(struct mmu_gather *tlb,
-> >  static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
-> >  				  unsigned long address)
-> >  {
-> > -	struct page *page = page_address(table);
-> > -
-> >  	tlb_flush_pgtable(tlb, address);
-> > -	pgtable_page_dtor(page);
-> > -	pgtable_free_tlb(tlb, page, 0);
-> > +	pgtable_page_dtor(table);
-> > +	pgtable_free_tlb(tlb, page_address(table), 0);
-> >  }
+> commit 506cdb8909a1a739c7585c680c6bd4b3d1247564
+> Author: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+> Date:   Tue Oct 1 18:05:00 2013 +0200
 > 
-> Ok so your description of the problem confused me a bit, but I see that
-> in the !64K page, pgtable_t is already a struct page so yes, the
-> page_address() call here is bogus.
+>     ip6tnl: allow to use rtnl ops on fb tunnel
+>     
+>     [ Upstream commit bb8140947a247b9aa15652cc24dc555ebb0b64b0 ]
+>     
+>     rtnl ops where introduced by c075b13098b3 ("ip6tnl: advertise tunnel param
+>     rtnl"), but I forget to assign rtnl ops to fb tunnels.
+>     
+>     Now that it is done, we must remove the explicit call to
+>     unregister_netdevice_queue(), because  the fallback tunnel is added to the
+>     in ip6_tnl_destroy_tunnels() when checking rtnl_link_ops of all netdevices
+>     is valid since commit 0bd8762824e7 ("ip6tnl: add x-netns support")).
 > 
-> However, I also noticed that in the 64k page case, we don't call the dto
-> at all. Is that a problem ?
+> 
+> The bug we see is caused by simply loading and unloading the ip6_tunnel
+> module.
+> 
+> 	modprobe ip6_tunnel; rmmod ip6_tunnel
+> 
+> Which causes the following oops:
+> 
+> [   43.423028] BUG: unable to handle kernel NULL pointer dereference at 0000000000000008
+> [   43.424010] IP: [<ffffffffa0534f51>] ip6_tnl_exit_net+0x71/0x93 [ip6_tunnel]
+> [   43.424010] PGD 776f4067 PUD 7810a067 PMD 0 
+> [   43.424010] Oops: 0000 [#1] PREEMPT SMP 
+> [   43.424010] Modules linked in: ip6_tunnel(-) tunnel6 ipt_MASQUERADE sunrpc ip6t_REJECT nf_conntrack_ipv6 nf_defrag_ipv6 ip6table_filter ip6_tables uinput snd_hda_codec_idt kvm_i
+> ntel snd_hda_intel snd_hda_codec kvm snd_hwdep snd_seq snd_seq_device snd_pcm snd_page_alloc snd_timer snd shpchp i2c_i801 soundcore microcode pata_acpi firewire_ohci firewire_core
+>  crc_itu_t ata_generic i915 drm_kms_helper drm i2c_algo_bit i2c_core video
+> [   43.424010] CPU: 1 PID: 2731 Comm: rmmod Not tainted 3.10.15-test+ #105
+> [   43.424010] Hardware name: To Be Filled By O.E.M. To Be Filled By O.E.M./To be filled by O.E.M., BIOS SDBLI944.86P 05/08/2007
+> [   43.424010] task: ffff880078b01460 ti: ffff880077bf4000 task.ti: ffff880077bf4000
+> [   43.424010] RIP: 0010:[<ffffffffa0534f51>]  [<ffffffffa0534f51>] ip6_tnl_exit_net+0x71/0x93 [ip6_tunnel]
+> [   43.424010] RSP: 0018:ffff880077bf5e08  EFLAGS: 00010246
+> [   43.424010] RAX: 0000000000000000 RBX: 0000000000000100 RCX: 0000000000000003
+> [   43.424010] RDX: ffff88007d480000 RSI: ffff880077bf5e08 RDI: ffff880077bf4000
+> [   43.424010] RBP: ffff880077bf5e38 R08: ffff880077bf5d68 R09: ffffffff81aa20d0
+> [   43.424010] R10: ffffffff81aa20d0 R11: ffffffff81aa20d0 R12: 0000000000000000
+> [   43.424010] R13: ffff88007794b400 R14: ffff880077bf5e08 R15: 0000000000000001
+> [   43.424010] FS:  00007fbc2ee27700(0000) GS:ffff88007d480000(0000) knlGS:0000000000000000
+> [   43.424010] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+> [   43.424010] CR2: 0000000000000008 CR3: 0000000077bd0000 CR4: 00000000000007e0
+> [   43.424010] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
+> [   43.424010] DR3: 0000000000000000 DR6: 00000000ffff0ff0 DR7: 0000000000000400
+> [   43.424010] Stack:
+> [   43.424010]  ffff880077bf5e08 ffff880077bf5e08 ffffffffa0536f50 ffffffff81aa0900
+> [   43.424010]  ffff880077bf5e78 0000000000000000 ffff880077bf5e68 ffffffff81408df4
+> [   43.424010]  0000000000000000 ffffffffa0536f50 ffffffff81aa1820 ffff880077bf5e78
+> [   43.424010] Call Trace:
+> [   43.424010]  [<ffffffff81408df4>] ops_exit_list+0x27/0x50
+> [   43.424010]  [<ffffffff814090ba>] unregister_pernet_operations+0x61/0x93
+> [   43.424010]  [<ffffffff81409122>] unregister_pernet_device+0x36/0x47
+> [   43.424010]  [<ffffffffa05367d4>] ip6_tunnel_cleanup+0x70/0x72 [ip6_tunnel]
+> [   43.424010]  [<ffffffff81083ef5>] SyS_delete_module+0x20b/0x27d
+> [   43.424010]  [<ffffffff81244cae>] ? trace_hardirqs_on_thunk+0x3a/0x3c
+> [   43.424010]  [<ffffffff81503902>] system_call_fastpath+0x16/0x1b
+> [   43.424010] Code: 24 08 4c 89 f6 e8 8c 88 ed e0 4d 8b 24 24 4d 85 e4 75 ea 48 83 c3 08 48 81 fb 00 01 00 00 75 d6 49 8b 85 08 01 00 00 48 8d 75 d0 <48> 8b 78 08 e8 62 88 ed e0 48 8d 7d d0 e8 84 77 ed e0 e8 90 62 
+> [   43.424010] RIP  [<ffffffffa0534f51>] ip6_tnl_exit_net+0x71/0x93 [ip6_tunnel]
+> [   43.424010]  RSP <ffff880077bf5e08>
+> [   43.424010] CR2: 0000000000000008
+> [   43.708059] ---[ end trace ea2c125633de7c64 ]---
+> 
+> 
+> (gdb) li *ip6_tnl_exit_net+0x71
+> 0xf51 is in ip6_tnl_exit_net (/home/rostedt/work/git/linux-trace.git/net/ipv6/ip6_tunnel.c:1715).
+> 1710                            t = rtnl_dereference(t->next);
+> 1711                    }
+> 1712            }
+> 1713
+> 1714            t = rtnl_dereference(ip6n->tnls_wc[0]);
+> 1715            unregister_netdevice_queue(t->dev, &list);
+> 1716            unregister_netdevice_many(&list);
+> 1717    }
+> 1718
+> 1719    static int __net_init ip6_tnl_init_net(struct net *net)
+> 
+> Thus, this got called with ip6n->tnsl_wc[0] as NULL.
+> 
+> I ran the following trace command on this:
+> 
+> # modprobe ip6_tunnel
+> # trace-cmd start -p function_graph -g SyS_delete_module
+> # rmmod ip6_tunnel
+> 
+> and traced the flow of functions that lead up to the crash: Full dump
+> can be found here: http://rostedt.homelinux.com/private/ip6_tunnel.trace
+> 
+> 
+> ip6_tnl_dev_uninit() which is called by rollback_registered_many() sets
+> tnls_wc[0] to NULL. Later unregistered_pernet_device() gets called,
+> which eventually calls ip6_tnl_exit_net() which references the
+> tnls_wc[0] unconditionally. This looks to be where the bug happens.
+> 
+> Finally, after digging through all this, I looked at the original
+> commit that was backported to 3.10 and noticed that the backport
+> doesn't include the entire change. It also has:
+> 
+> +++ b/net/ipv6/ip6_tunnel.c
+> @@ -1731,8 +1731,6 @@ static void __net_exit ip6_tnl_destroy_tunnels(struct ip
+>                 }
+>         }
+>  
+> -       t = rtnl_dereference(ip6n->tnls_wc[0]);
+> -       unregister_netdevice_queue(t->dev, &list);
+>         unregister_netdevice_many(&list);
+>  }
+>  
+> 
+> Which, when applied to 3.10.18, fixes the bug. Was there a reason that
+> this part of the commit wasn't backported? or was this just an oversight?
 
-Actually we do, just elsewhere... ignore the above.
+It looks like it was left out to me as well.
 
-> Also, Aneesh, shouldn't we just fix the disconnect here and have
-> pgtable_t always be the same type ? The way this is now is confusing
-> and error prone...
-> 
-> >  #endif /* _ASM_POWERPC_PGALLOC_32_H */
-> > diff --git a/arch/powerpc/include/asm/pgalloc-64.h b/arch/powerpc/include/asm/pgalloc-64.h
-> > index f65e27b..256d6f8 100644
-> > --- a/arch/powerpc/include/asm/pgalloc-64.h
-> > +++ b/arch/powerpc/include/asm/pgalloc-64.h
-> > @@ -144,11 +144,9 @@ static inline void pgtable_free_tlb(struct mmu_gather *tlb,
-> >  static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
-> >  				  unsigned long address)
-> >  {
-> > -	struct page *page = page_address(table);
-> > -
-> >  	tlb_flush_pgtable(tlb, address);
-> > -	pgtable_page_dtor(page);
-> > -	pgtable_free_tlb(tlb, page, 0);
-> > +	pgtable_page_dtor(table);
-> > +	pgtable_free_tlb(tlb, page_address(table), 0);
-> >  }
-> >  
-> >  #else /* if CONFIG_PPC_64K_PAGES */
-> 
-> Ben.
-> 
-> 
-> _______________________________________________
-> Linuxppc-dev mailing list
-> Linuxppc-dev@lists.ozlabs.org
-> https://lists.ozlabs.org/listinfo/linuxppc-dev
+David, any objection to me making this fixup in the 3.10-stable tree?
+
+thanks,
+
+greg k-h
