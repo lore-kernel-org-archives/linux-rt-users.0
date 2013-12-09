@@ -1,100 +1,120 @@
-From: "Aneesh Kumar K.V" <aneesh.kumar@linux.vnet.ibm.com>
-Subject: Re: [PATCH v3] powerpc: Fix PTE page address mismatch in pgtable ctor/dtor
-Date: Mon, 09 Dec 2013 14:12:26 +0530
-Message-ID: <87siu2bekt.fsf@linux.vnet.ibm.com>
-References: <874n6muuw4.fsf@linux.vnet.ibm.com> <1386425193-24015-1-git-send-email-hong.pham@windriver.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [BUG] stable v3.10.16+ introduced by "ip6tnl: allow to use rtnl
+ ops on fb tunnel"
+Date: Mon, 9 Dec 2013 09:48:50 -0500
+Message-ID: <20131209094850.4e97e370@gandalf.local.home>
+References: <20131113211430.1ad3bb7d@gandalf.local.home>
+	<20131209002531.GB14382@kroah.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: "Hong H. Pham" <hong.pham@windriver.com>,
-	Paul Mackerras <paulus@samba.org>,
-	Benjamin Herrenschmidt <benh@kernel.crashing.org>,
-	linux-stable <stable@vger.kernel.org>
-To: "Hong H. Pham" <hong.pham@windriver.com>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	stable <stable@vger.kernel.org>,
+	David Miller <davem@davemloft.net>,
+	Nicolas Dichtel <nicolas.dichtel@6wind.com>,
+	Clark Williams <williams@redhat.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	linuxppc-dev <linuxppc-dev@lists.ozlabs.org>
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <1386425193-24015-1-git-send-email-hong.pham@windriver.com>
-Sender: stable-owner@vger.kernel.org
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131209002531.GB14382@kroah.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-"Hong H. Pham" <hong.pham@windriver.com> writes:
-
-> From: "Hong H. Pham" <hong.pham@windriver.com>
->
-> In pte_alloc_one(), pgtable_page_ctor() is passed an address that has
-> not been converted by page_address() to the newly allocated PTE page.
->
-> When the PTE is freed, __pte_free_tlb() calls pgtable_page_dtor()
-> with an address to the PTE page that has been converted by page_address().
-> The mismatch in the PTE's page address causes pgtable_page_dtor() to access
-> invalid memory, so resources for that PTE (such as the page lock) is not
-> properly cleaned up.
->
-> On PPC32, only SMP kernels are affected.
->
-> On PPC64, only SMP kernels with 4K page size are affected.
->
-> This bug was introduced by commit d614bb041209fd7cb5e4b35e11a7b2f6ee8f62b8
-> "powerpc: Move the pte free routines from common header".
->
-> On a preempt-rt kernel, a spinlock is dynamically allocated for each
-> PTE in pgtable_page_ctor().  When the PTE is freed, calling
-> pgtable_page_dtor() with a mismatched page address causes a memory leak,
-> as the pointer to the PTE's spinlock is bogus.
->
-> On mainline, there isn't any immediately obvious symptoms, but the
-> problem still exists here.
->
-> Fixes: d614bb041209fd7c "powerpc: Move the pte free routes from common header"
-> Cc: Paul Mackerras <paulus@samba.org>
-> Cc: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
-> Cc: Benjamin Herrenschmidt <benh@kernel.crashing.org>
-> Cc: linux-stable <stable@vger.kernel.org> # v3.10+
-> Signed-off-by: Hong H. Pham <hong.pham@windriver.com>
+On Sun, 8 Dec 2013 16:25:31 -0800
+Greg Kroah-Hartman <gregkh@linuxfoundation.org> wrote:
 
 
-Reviewed-by: Aneesh Kumar K.V <aneesh.kumar@linux.vnet.ibm.com>
+> > Which, when applied to 3.10.18, fixes the bug. Was there a reason that
+> > this part of the commit wasn't backported? or was this just an oversight?
+> 
+> It looks like it was left out to me as well.
+> 
+> David, any objection to me making this fixup in the 3.10-stable tree?
 
+I'm not sure my fix up was the right thing to do. I believe upstream
+commit 1e9f3d6f1c403 "ip6tnl: fix use after free of fb_tnl_dev" which
+was ported back to 3.12 stable, is the correct fix.
 
-> ---
->  arch/powerpc/include/asm/pgalloc-32.h | 6 ++----
->  arch/powerpc/include/asm/pgalloc-64.h | 6 ++----
->  2 files changed, 4 insertions(+), 8 deletions(-)
->
-> diff --git a/arch/powerpc/include/asm/pgalloc-32.h b/arch/powerpc/include/asm/pgalloc-32.h
-> index 27b2386..842846c 100644
-> --- a/arch/powerpc/include/asm/pgalloc-32.h
-> +++ b/arch/powerpc/include/asm/pgalloc-32.h
-> @@ -84,10 +84,8 @@ static inline void pgtable_free_tlb(struct mmu_gather *tlb,
->  static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
->  				  unsigned long address)
->  {
-> -	struct page *page = page_address(table);
-> -
->  	tlb_flush_pgtable(tlb, address);
-> -	pgtable_page_dtor(page);
-> -	pgtable_free_tlb(tlb, page, 0);
-> +	pgtable_page_dtor(table);
-> +	pgtable_free_tlb(tlb, page_address(table), 0);
->  }
->  #endif /* _ASM_POWERPC_PGALLOC_32_H */
-> diff --git a/arch/powerpc/include/asm/pgalloc-64.h b/arch/powerpc/include/asm/pgalloc-64.h
-> index f65e27b..256d6f8 100644
-> --- a/arch/powerpc/include/asm/pgalloc-64.h
-> +++ b/arch/powerpc/include/asm/pgalloc-64.h
-> @@ -144,11 +144,9 @@ static inline void pgtable_free_tlb(struct mmu_gather *tlb,
->  static inline void __pte_free_tlb(struct mmu_gather *tlb, pgtable_t table,
->  				  unsigned long address)
->  {
-> -	struct page *page = page_address(table);
-> -
->  	tlb_flush_pgtable(tlb, address);
-> -	pgtable_page_dtor(page);
-> -	pgtable_free_tlb(tlb, page, 0);
-> +	pgtable_page_dtor(table);
-> +	pgtable_free_tlb(tlb, page_address(table), 0);
->  }
->
->  #else /* if CONFIG_PPC_64K_PAGES */
-> -- 
-> 1.8.3.2
+I even backported that commit to 3.10 and tested it, and the bug did
+indeed go away.
+
+-- Steve
+
+ip6tnl: fix use after free of fb_tnl_dev
+
+commit 1e9f3d6f1c403dd2b6270f654b4747147aa2306f upstream.
+
+Bug has been introduced by commit bb8140947a24 ("ip6tnl: allow to use rtnl ops
+on fb tunnel").
+
+When ip6_tunnel.ko is unloaded, FB device is delete by rtnl_link_unregister()
+and then we try to use the pointer in ip6_tnl_destroy_tunnels().
+
+Let's add an handler for dellink, which will never remove the FB tunnel. With
+this patch it will no more be possible to remove it via 'ip link del ip6tnl0',
+but it's safer.
+
+The same fix was already proposed by Willem de Bruijn <willemb@google.com> for
+sit interfaces.
+
+CC: Willem de Bruijn <willemb@google.com>
+Reported-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+---
+ net/ipv6/ip6_tunnel.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+Index: linux-trace.git/net/ipv6/ip6_tunnel.c
+===================================================================
+--- linux-trace.git.orig/net/ipv6/ip6_tunnel.c
++++ linux-trace.git/net/ipv6/ip6_tunnel.c
+@@ -1617,6 +1617,15 @@ static int ip6_tnl_changelink(struct net
+ 	return ip6_tnl_update(t, &p);
+ }
+ 
++static void ip6_tnl_dellink(struct net_device *dev, struct list_head *head)
++{
++	struct net *net = dev_net(dev);
++	struct ip6_tnl_net *ip6n = net_generic(net, ip6_tnl_net_id);
++
++	if (dev != ip6n->fb_tnl_dev)
++		unregister_netdevice_queue(dev, head);
++}
++
+ static size_t ip6_tnl_get_size(const struct net_device *dev)
+ {
+ 	return
+@@ -1681,6 +1690,7 @@ static struct rtnl_link_ops ip6_link_ops
+ 	.validate	= ip6_tnl_validate,
+ 	.newlink	= ip6_tnl_newlink,
+ 	.changelink	= ip6_tnl_changelink,
++	.dellink	= ip6_tnl_dellink,
+ 	.get_size	= ip6_tnl_get_size,
+ 	.fill_info	= ip6_tnl_fill_info,
+ };
+@@ -1697,10 +1707,11 @@ static struct xfrm6_tunnel ip6ip6_handle
+ 	.priority	=	1,
+ };
+ 
+-static void __net_exit ip6_tnl_destroy_tunnels(struct ip6_tnl_net *ip6n)
++static void __net_exit ip6_tnl_destroy_tunnels(struct net *net)
+ {
+ 	int h;
+ 	struct ip6_tnl *t;
++	struct ip6_tnl_net *ip6n = net_generic(net, ip6_tnl_net_id);
+ 	LIST_HEAD(list);
+ 
+ 	for (h = 0; h < HASH_SIZE; h++) {
+@@ -1755,10 +1766,8 @@ err_alloc_dev:
+ 
+ static void __net_exit ip6_tnl_exit_net(struct net *net)
+ {
+-	struct ip6_tnl_net *ip6n = net_generic(net, ip6_tnl_net_id);
+-
+ 	rtnl_lock();
+-	ip6_tnl_destroy_tunnels(ip6n);
++	ip6_tnl_destroy_tunnels(net);
+ 	rtnl_unlock();
+ }
+ 
