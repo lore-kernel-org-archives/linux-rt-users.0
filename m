@@ -1,95 +1,95 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/5] a few open coded completions
-Date: Wed, 11 Dec 2013 14:57:51 -0500
-Message-ID: <20131211145751.386fbff2@gandalf.local.home>
-References: <20131211005046.115564491@goodmis.org>
-	<20131211005058.415159126@goodmis.org>
+From: Clark Williams <clark.williams@gmail.com>
+Subject: Re: [patch] cyclictest: CPU affinity now takes arbitrary set of
+ cpus.
+Date: Wed, 11 Dec 2013 15:35:06 -0600
+Message-ID: <20131211153506.1e51328c@sluggy>
+References: <CAF+KLxtyOC7jWcnr1XoF6Su3LeywYpVq5Sac258mUJ9hGrEtKA@mail.gmail.com>
 Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/JCJcK=cS+tPbyBWYaxmDcSM"; protocol="application/pgp-signature"
+Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
+To: Aaron Fabbri <ajfabbri@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qa0-f43.google.com ([209.85.216.43]:44379 "EHLO
+	mail-qa0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751086Ab3LKVfM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Dec 2013 16:35:12 -0500
+Received: by mail-qa0-f43.google.com with SMTP id ii20so5257294qab.9
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2013 13:35:11 -0800 (PST)
+In-Reply-To: <CAF+KLxtyOC7jWcnr1XoF6Su3LeywYpVq5Sac258mUJ9hGrEtKA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+--Sig_/JCJcK=cS+tPbyBWYaxmDcSM
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Corey Minyard <cminyard@mvista.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131211005058.415159126@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
 
-Here's the new patch for 3.4-rt.
+On Thu, 5 Dec 2013 16:29:37 -0800
+Aaron Fabbri <ajfabbri@gmail.com> wrote:
 
--- Steve
+> [This patch is rebased on latest rt-tests.git, and is available in the
+> "delivery" branch at https://github.com/ajfabbri/af-rt-tests.git]
+>=20
+> Change -a (affinity) option to take a set of CPUs, instead of just one.
+>=20
+> e.g.
+>   cyclictest -a4,6-8 -t5
+>=20
+> will use 5 threads, assigned round-robin to the set of CPUs {4,6,7,8}.
+> CPU 4 will get threads 1 and 5, CPU 6 gets thread 2, CPU 7 gets thread 3,=
+ and
+> CPU 8 gets thread 4.
+>=20
+> Although this builds without libnuma,  libnuma >=3D v2 is required for th=
+ese
+> arbitrary CPU sets.  With libnuma v1, the -a option behaves as before.  As
+> before, compiling without libnuma is supported. The command usage help is=
+ fixed
+> up at compile time to always show the correct usage of the -a option.
+>=20
+> Also note that, since numa_parse_cpustring_all() wasn't available in early
+> libnuma v2 versions, we use numa_parse_cpustring().  This means you'll ha=
+ve to
+> use taskset in some cases (isolcpus kernel parameter) to add the desired =
+CPUs to
+> the set of allowed cores, e.g.:
+>=20
+>   taskset -c4-6 cyclictest -a4-6
+>=20
+> Tested without libnuma (numactl), and with versions 1.0.2 and 2.0.9-rc3.
+>=20
+> Signed-off-by: Aaron Fabbri <ajfabbri@gmail.com>
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date: Mon, 28 Oct 2013 11:50:06 +0100
-Subject: [PATCH] swait: Add a few more users
+Thanks, I cherry-picked the commit from your git tree (the included
+patch was too badly line-wrapped for me to use it). The only issue I've
+seen so far was that in display_help() your #endif picked up the -A
+option which is not dependent on libnuma behavior, so I fixed that up.=20
 
-The wait-simple queue is lighter weight and more efficient than the full
-wait queue, and may be used in atomic context on PREEMPT_RT.
+I'll do some testing and push a new rt-tests out soon.
 
-Fix up some places that needed to call the swait_*() functions instead
-of the wait_*() functions.
+Clark
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
- drivers/usb/gadget/f_fs.c                  | 2 +-
- drivers/usb/gadget/inode.c                 | 4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
+--Sig_/JCJcK=cS+tPbyBWYaxmDcSM
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index f634d45..8152c94 100644
---- a/drivers/net/wireless/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/orinoco/orinoco_usb.c
-@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
- 			while (!ctx->done.done && msecs--)
- 				udelay(1000);
- 		} else {
--			wait_event_interruptible(ctx->done.wait,
-+			swait_event_interruptible(ctx->done.wait,
- 						 ctx->done.done);
- 		}
- 		break;
-diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index f52cb1a..54ea4e9 100644
---- a/drivers/usb/gadget/f_fs.c
-+++ b/drivers/usb/gadget/f_fs.c
-@@ -1255,7 +1255,7 @@ static void ffs_data_put(struct ffs_data *ffs)
- 		pr_info("%s(): freeing\n", __func__);
- 		ffs_data_clear(ffs);
- 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
--		       waitqueue_active(&ffs->ep0req_completion.wait));
-+		       swaitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs);
- 	}
- }
-diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index e58b164..2dfd196 100644
---- a/drivers/usb/gadget/inode.c
-+++ b/drivers/usb/gadget/inode.c
-@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 	spin_unlock_irq (&epdata->dev->lock);
- 
- 	if (likely (value == 0)) {
--		value = wait_event_interruptible (done.wait, done.done);
-+		value = swait_event_interruptible (done.wait, done.done);
- 		if (value != 0) {
- 			spin_lock_irq (&epdata->dev->lock);
- 			if (likely (epdata->ep != NULL)) {
-@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 				usb_ep_dequeue (epdata->ep, epdata->req);
- 				spin_unlock_irq (&epdata->dev->lock);
- 
--				wait_event (done.wait, done.done);
-+				swait_event (done.wait, done.done);
- 				if (epdata->status == -ECONNRESET)
- 					epdata->status = -EINTR;
- 			} else {
--- 
-1.8.4.3
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iQIcBAEBAgAGBQJSqNqKAAoJEEersVlSw9NzYBgP/ix4dcXxzMGoDJYO7mC/+6H4
+wa/0EvR793M7bQDyW/gNP6IiGA8u7paY6t+IoV3OQwrCLS1E2ro91YIOBf9bInke
+PwJA8+Lz93nnGe+5O6P/NmAMAaC4N0LOWetU8QOSDd1cdmdvUmVkCCTWW6EEqrGR
+OXsub4DNQu5uQ/9/yCBUlR17xTuQZyPl1lZb+0gplYuLFpzm5Rzdtx6VTysjx/Px
+bEY3tLYidQ8c6lHW2tK/IAJvMrnEPNPtxoDktBxVRD+3nHSujFQidP1A0ahQCk2H
+SMIbxODmF0Bvug743N4hm4DWkoCouAnXe9w7QljFDncR6gSk5TVqbSdaPwxvPI8q
+NRqG8Uxfa4uJgrFZ+OE5DrRUunoIep5giQsDD2fdPb02heaPAL0EaDuN4AAW24Oi
+1Sr/IfT7Gwhn5NOSk8a/zE9smXMVoHpyKxgtKoQ/wzB6EqqhO/+1x1LfHID5WYjM
+Gf6ZCYMth013oZYezbXguO4+TdvqWKtb2yEVvo2q1xKinwwdGiU4V1wDEG/XXBWU
+NXJnSdNDjnR+lBVBxnjgQlUm2ozzq2zGJ03zNB5Mv+QUpzDN28XWsBatkxTVHk2d
+XU5NZq0BKtsV3gCJF4JZDkUl09FFemOGlluiAfhdMVq0EVfgciUPwf30nvMoHPK9
+VhBW8tXhdEBl6/qw6SOL
+=f3CF
+-----END PGP SIGNATURE-----
+
+--Sig_/JCJcK=cS+tPbyBWYaxmDcSM--
