@@ -1,78 +1,77 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/5] Linux 3.10.22-rt20-rc1
-Date: Tue, 10 Dec 2013 19:37:32 -0500
-Message-ID: <20131211003732.351606520@goodmis.org>
+Subject: [PATCH RT 1/5] cpu_down: move migrate_enable() back
+Date: Tue, 10 Dec 2013 19:37:33 -0500
+Message-ID: <20131211003801.695104401@goodmis.org>
+References: <20131211003732.351606520@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>,
+	Tiejun Chen <tiejun.chen@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-cpu_down-move-migrate_enable-back.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.22-rt20-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.22-rt20-rc1.
+From: Tiejun Chen <tiejun.chen@windriver.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+Commit 08c1ab68, "hotplug-use-migrate-disable.patch", intends to
+use migrate_enable()/migrate_disable() to replace that combination
+of preempt_enable() and preempt_disable(), but actually in
+!CONFIG_PREEMPT_RT_FULL case, migrate_enable()/migrate_disable()
+are still equal to preempt_enable()/preempt_disable(). So that
+followed cpu_hotplug_begin()/cpu_unplug_begin(cpu) would go schedule()
+to trigger schedule_debug() like this:
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+_cpu_down()
+	|
+	+ migrate_disable() = preempt_disable()
+	|
+	+ cpu_hotplug_begin() or cpu_unplug_begin()
+		|
+		+ schedule()
+			|
+			+ __schedule()
+				|
+				+ preempt_disable();
+				|
+				+ __schedule_bug() is true!
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+So we should move migrate_enable() as the original scheme.
 
-If all goes well, this patch will be converted to the next main release
-on 12/13/2013.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.10.22-rt20-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.22.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.22-rt20-rc1.patch.xz
-
-You can also build from 3.10.22-rt19 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.22-rt19-rt20-rc1.patch.xz
-
-
-Changes from 3.10.22-rt19:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/cpu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Peter Zijlstra (1):
-      lockdep: Correctly annotate hardirq context in irq_exit()
-
-Sebastian Andrzej Siewior (2):
-      a few open coded completions
-      rtmutex: use a trylock for waiter lock in trylock
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.22-rt20-rc1
-
-Tiejun Chen (1):
-      cpu_down: move migrate_enable() back
-
-----
- drivers/net/wireless/orinoco/orinoco_usb.c |  2 +-
- drivers/usb/gadget/f_fs.c                  |  2 +-
- drivers/usb/gadget/inode.c                 |  4 +--
- include/linux/netdevice.h                  |  2 +-
- include/linux/spinlock_rt.h                |  1 +
- kernel/cpu.c                               |  2 +-
- kernel/rtmutex.c                           | 31 +++++++++++++++++---
- kernel/softirq.c                           | 46 +++++++++++++++++++++++++++---
- kernel/timer.c                             |  2 +-
- localversion-rt                            |  2 +-
- 10 files changed, 78 insertions(+), 16 deletions(-)
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 716c98b..c62ae01 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -596,6 +596,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ 		err = -EBUSY;
+ 		goto restore_cpus;
+ 	}
++	migrate_enable();
+ 
+ 	cpu_hotplug_begin();
+ 	err = cpu_unplug_begin(cpu);
+@@ -649,7 +650,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+ out_release:
+ 	cpu_unplug_done(cpu);
+ out_cancel:
+-	migrate_enable();
+ 	cpu_hotplug_done();
+ 	if (!err)
+ 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
+-- 
+1.8.4.3
