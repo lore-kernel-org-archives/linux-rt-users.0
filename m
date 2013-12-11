@@ -1,56 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/5] a few open coded completions
-Date: Wed, 11 Dec 2013 10:34:20 -0500
-Message-ID: <20131211103420.291aa61c@gandalf.local.home>
-References: <20131211003732.351606520@goodmis.org>
-	<20131211003801.836995968@goodmis.org>
-	<52A875D9.6090609@mvista.com>
+From: Donna Timoth <donnatimoth252@gmail.com>
+Subject: Attn Your Payment Fund,
+Date: Wed, 11 Dec 2013 18:43:04 +0100
+Message-ID: <CAN3Bv9+Fe7Kfpv2LYrWyu62OxEzGxEhCGmej3BjX_gDb=Ms2uQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Corey Minyard <cminyard@mvista.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <52A875D9.6090609@mvista.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+To: undisclosed-recipients:;
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ve0-f195.google.com ([209.85.128.195]:54392 "EHLO
+	mail-ve0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750971Ab3LKRnG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Dec 2013 12:43:06 -0500
+Received: by mail-ve0-f195.google.com with SMTP id c14so1171506vea.2
+        for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2013 09:43:05 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 11 Dec 2013 08:25:29 -0600
-Corey Minyard <cminyard@mvista.com> wrote:
+Attn: Dearest One,
 
-> This chunk doesn't seem to belong in this patch...
+Re: Irrevocable Release of your payment fund,
 
-You're right!
+I am very happy to inform you that your Irrevocable Re-Compensation
+Price funds value of
+us$1,850.000.00 Recommend and approve your claims for payment is
+certified as genuine has
+been instructed to Release.
 
-I noticed this after I sent these out.
+Your total fund CASHIER'S CHECK worth of us$1,850.000.00 has been
+credited in your favour
+through the issuing bank into payment ATM Master Card fund which you
+can withdraw in any
+ATM Cash Point Machine Worldwide
 
-This even caused a conflict, where I fixed it up.
+You are therefore advised to contact WILLY JAMES (MR) the Director of
+the Administrative
+Audit unit ATM Payment Center with the bellowing information.
 
-As this chunck doesn't need to be in the stable branch, I'm just going
-to nuke it.
+WILLY JAMES (MR)
+TELEPHONE: +226 7493 0179
+E-mail: ( w_james@mail2james.com )
 
-I'll even fix up the change log too.
+Note: You should furnished WILLY JAMES (MR) with your correct contact
+information.
+1. Full Name:
+2. Country:
+3. Delivery Address:
+4. Phone & Occupation:
+5. A copy of your international passport or national ID:
 
-Thanks,
-
--- Steve
-
-> 
-> diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-> index 819923f..ba78526 100644
-> --- a/include/linux/netdevice.h
-> +++ b/include/linux/netdevice.h
-> @@ -1139,7 +1139,7 @@ struct net_device {
->  	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
->  	unsigned char		addr_assign_type; /* hw address assignment type */
->  	unsigned char		addr_len;	/* hardware address length	*/
-> -	unsigned char		neigh_priv_len;
-> +	unsigned short		neigh_priv_len;
->  	unsigned short          dev_id;		/* for shared network cards */
->  
->  	spinlock_t		addr_list_lock;
+Yours
+Best Regard.
+Dr. Donna Timoth
