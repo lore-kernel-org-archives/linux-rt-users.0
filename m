@@ -1,53 +1,94 @@
-From: Donna Timoth <donnatimoth252@gmail.com>
-Subject: Attn Your Payment Fund,
-Date: Wed, 11 Dec 2013 18:43:04 +0100
-Message-ID: <CAN3Bv9+Fe7Kfpv2LYrWyu62OxEzGxEhCGmej3BjX_gDb=Ms2uQ@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 2/5] a few open coded completions
+Date: Wed, 11 Dec 2013 14:49:46 -0500
+Message-ID: <20131211144946.27d82a78@gandalf.local.home>
+References: <20131211003732.351606520@goodmis.org>
+	<20131211003801.836995968@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: undisclosed-recipients:;
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f195.google.com ([209.85.128.195]:54392 "EHLO
-	mail-ve0-f195.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750971Ab3LKRnG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Dec 2013 12:43:06 -0500
-Received: by mail-ve0-f195.google.com with SMTP id c14so1171506vea.2
-        for <linux-rt-users@vger.kernel.org>; Wed, 11 Dec 2013 09:43:05 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Corey Minyard <cminyard@mvista.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131211003801.836995968@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Attn: Dearest One,
+Here's the new patch:
 
-Re: Irrevocable Release of your payment fund,
 
-I am very happy to inform you that your Irrevocable Re-Compensation
-Price funds value of
-us$1,850.000.00 Recommend and approve your claims for payment is
-certified as genuine has
-been instructed to Release.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date: Mon, 28 Oct 2013 11:50:06 +0100
+Subject: [PATCH] swait: Add a few more users
 
-Your total fund CASHIER'S CHECK worth of us$1,850.000.00 has been
-credited in your favour
-through the issuing bank into payment ATM Master Card fund which you
-can withdraw in any
-ATM Cash Point Machine Worldwide
+The wait-simple queue is lighter weight and more efficient than the full
+wait queue, and may be used in atomic context on PREEMPT_RT.
 
-You are therefore advised to contact WILLY JAMES (MR) the Director of
-the Administrative
-Audit unit ATM Payment Center with the bellowing information.
+Fix up some places that needed to call the swait_*() functions instead
+of the wait_*() functions.
 
-WILLY JAMES (MR)
-TELEPHONE: +226 7493 0179
-E-mail: ( w_james@mail2james.com )
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
+ drivers/usb/gadget/f_fs.c                  | 2 +-
+ drivers/usb/gadget/inode.c                 | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
 
-Note: You should furnished WILLY JAMES (MR) with your correct contact
-information.
-1. Full Name:
-2. Country:
-3. Delivery Address:
-4. Phone & Occupation:
-5. A copy of your international passport or national ID:
-
-Yours
-Best Regard.
-Dr. Donna Timoth
+diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
+index 1f9cb55..a28f298 100644
+--- a/drivers/net/wireless/orinoco/orinoco_usb.c
++++ b/drivers/net/wireless/orinoco/orinoco_usb.c
+@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
+ 			while (!ctx->done.done && msecs--)
+ 				udelay(1000);
+ 		} else {
+-			wait_event_interruptible(ctx->done.wait,
++			swait_event_interruptible(ctx->done.wait,
+ 						 ctx->done.done);
+ 		}
+ 		break;
+diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
+index b6e9d91..35d9c53 100644
+--- a/drivers/usb/gadget/f_fs.c
++++ b/drivers/usb/gadget/f_fs.c
+@@ -1282,7 +1282,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+ 		pr_info("%s(): freeing\n", __func__);
+ 		ffs_data_clear(ffs);
+ 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
+-		       waitqueue_active(&ffs->ep0req_completion.wait));
++		       swaitqueue_active(&ffs->ep0req_completion.wait));
+ 		kfree(ffs->dev_name);
+ 		kfree(ffs);
+ 	}
+diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
+index 570c005..c60233d 100644
+--- a/drivers/usb/gadget/inode.c
++++ b/drivers/usb/gadget/inode.c
+@@ -340,7 +340,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 	spin_unlock_irq (&epdata->dev->lock);
+ 
+ 	if (likely (value == 0)) {
+-		value = wait_event_interruptible (done.wait, done.done);
++		value = swait_event_interruptible (done.wait, done.done);
+ 		if (value != 0) {
+ 			spin_lock_irq (&epdata->dev->lock);
+ 			if (likely (epdata->ep != NULL)) {
+@@ -349,7 +349,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 				usb_ep_dequeue (epdata->ep, epdata->req);
+ 				spin_unlock_irq (&epdata->dev->lock);
+ 
+-				wait_event (done.wait, done.done);
++				swait_event (done.wait, done.done);
+ 				if (epdata->status == -ECONNRESET)
+ 					epdata->status = -EINTR;
+ 			} else {
+-- 
+1.8.4.3
