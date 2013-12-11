@@ -1,9 +1,9 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 2/5] a few open coded completions
-Date: Wed, 11 Dec 2013 14:54:00 -0500
-Message-ID: <20131211145400.1b355ce4@gandalf.local.home>
-References: <20131211004631.950208564@goodmis.org>
-	<20131211004643.325379918@goodmis.org>
+Date: Wed, 11 Dec 2013 14:57:51 -0500
+Message-ID: <20131211145751.386fbff2@gandalf.local.home>
+References: <20131211005046.115564491@goodmis.org>
+	<20131211005058.415159126@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -16,11 +16,11 @@ Cc: linux-kernel@vger.kernel.org,
 	Corey Minyard <cminyard@mvista.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131211004643.325379918@goodmis.org>
+In-Reply-To: <20131211005058.415159126@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Here's the new patch for 3.8-rt.
+Here's the new patch for 3.4-rt.
 
 -- Steve
 
@@ -44,7 +44,7 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  3 files changed, 4 insertions(+), 4 deletions(-)
 
 diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index 01624dc..b0f9d2c 100644
+index f634d45..8152c94 100644
 --- a/drivers/net/wireless/orinoco/orinoco_usb.c
 +++ b/drivers/net/wireless/orinoco/orinoco_usb.c
 @@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
@@ -57,23 +57,23 @@ index 01624dc..b0f9d2c 100644
  		}
  		break;
 diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index de3e266..5b2a068 100644
+index f52cb1a..54ea4e9 100644
 --- a/drivers/usb/gadget/f_fs.c
 +++ b/drivers/usb/gadget/f_fs.c
-@@ -1284,7 +1284,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+@@ -1255,7 +1255,7 @@ static void ffs_data_put(struct ffs_data *ffs)
  		pr_info("%s(): freeing\n", __func__);
  		ffs_data_clear(ffs);
  		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
 -		       waitqueue_active(&ffs->ep0req_completion.wait));
 +		       swaitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs->dev_name);
  		kfree(ffs);
  	}
+ }
 diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index 8ac840f..fe85df7 100644
+index e58b164..2dfd196 100644
 --- a/drivers/usb/gadget/inode.c
 +++ b/drivers/usb/gadget/inode.c
-@@ -338,7 +338,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
  	spin_unlock_irq (&epdata->dev->lock);
  
  	if (likely (value == 0)) {
@@ -82,7 +82,7 @@ index 8ac840f..fe85df7 100644
  		if (value != 0) {
  			spin_lock_irq (&epdata->dev->lock);
  			if (likely (epdata->ep != NULL)) {
-@@ -347,7 +347,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
  				usb_ep_dequeue (epdata->ep, epdata->req);
  				spin_unlock_irq (&epdata->dev->lock);
  
