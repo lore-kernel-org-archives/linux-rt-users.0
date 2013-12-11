@@ -1,47 +1,96 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [BUG] stable v3.10.16+ introduced by "ip6tnl: allow to use rtnl
- ops on fb tunnel"
-Date: Mon, 9 Dec 2013 09:54:04 -0500
-Message-ID: <20131209095404.11b6d38f@gandalf.local.home>
-References: <20131113211430.1ad3bb7d@gandalf.local.home>
-	<20131209002531.GB14382@kroah.com>
-	<20131209094850.4e97e370@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	stable <stable@vger.kernel.org>,
-	David Miller <davem@davemloft.net>,
-	Nicolas Dichtel <nicolas.dichtel@6wind.com>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <stable-owner@vger.kernel.org>
-In-Reply-To: <20131209094850.4e97e370@gandalf.local.home>
-Sender: stable-owner@vger.kernel.org
+Subject: [PATCH RT 2/5] a few open coded completions
+Date: Tue, 10 Dec 2013 19:37:34 -0500
+Message-ID: <20131211003801.836995968@goodmis.org>
+References: <20131211003732.351606520@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-a-few-open-coded-completions.patch
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 9 Dec 2013 09:48:50 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
-sit interfaces.
-> 
-> CC: Willem de Bruijn <willemb@google.com>
-> Reported-by: Steven Rostedt <rostedt@goodmis.org>
-> Signed-off-by: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+3.10.22-rt20-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Note, this is missing:
+------------------
 
-    Acked-by: Willem de Bruijn <willemb@google.com>
-    Signed-off-by: David S. Miller <davem@davemloft.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-from the real commit. That's because I backported the original email,
-not the commit that was added to git.
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
+ drivers/usb/gadget/f_fs.c                  | 2 +-
+ drivers/usb/gadget/inode.c                 | 4 ++--
+ include/linux/netdevice.h                  | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
--- Steve
-
-> ---
->  net/ipv6/ip6_tunnel.c | 18 +++++++++++++-----
->  1 file changed, 13 insertions(+), 5 deletions(-)
-> 
+diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
+index 1f9cb55..a28f298 100644
+--- a/drivers/net/wireless/orinoco/orinoco_usb.c
++++ b/drivers/net/wireless/orinoco/orinoco_usb.c
+@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
+ 			while (!ctx->done.done && msecs--)
+ 				udelay(1000);
+ 		} else {
+-			wait_event_interruptible(ctx->done.wait,
++			swait_event_interruptible(ctx->done.wait,
+ 						 ctx->done.done);
+ 		}
+ 		break;
+diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
+index b6e9d91..35d9c53 100644
+--- a/drivers/usb/gadget/f_fs.c
++++ b/drivers/usb/gadget/f_fs.c
+@@ -1282,7 +1282,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+ 		pr_info("%s(): freeing\n", __func__);
+ 		ffs_data_clear(ffs);
+ 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
+-		       waitqueue_active(&ffs->ep0req_completion.wait));
++		       swaitqueue_active(&ffs->ep0req_completion.wait));
+ 		kfree(ffs->dev_name);
+ 		kfree(ffs);
+ 	}
+diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
+index 570c005..c60233d 100644
+--- a/drivers/usb/gadget/inode.c
++++ b/drivers/usb/gadget/inode.c
+@@ -340,7 +340,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 	spin_unlock_irq (&epdata->dev->lock);
+ 
+ 	if (likely (value == 0)) {
+-		value = wait_event_interruptible (done.wait, done.done);
++		value = swait_event_interruptible (done.wait, done.done);
+ 		if (value != 0) {
+ 			spin_lock_irq (&epdata->dev->lock);
+ 			if (likely (epdata->ep != NULL)) {
+@@ -349,7 +349,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 				usb_ep_dequeue (epdata->ep, epdata->req);
+ 				spin_unlock_irq (&epdata->dev->lock);
+ 
+-				wait_event (done.wait, done.done);
++				swait_event (done.wait, done.done);
+ 				if (epdata->status == -ECONNRESET)
+ 					epdata->status = -EINTR;
+ 			} else {
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 819923f..ba78526 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -1139,7 +1139,7 @@ struct net_device {
+ 	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
+ 	unsigned char		addr_assign_type; /* hw address assignment type */
+ 	unsigned char		addr_len;	/* hardware address length	*/
+-	unsigned char		neigh_priv_len;
++	unsigned short		neigh_priv_len;
+ 	unsigned short          dev_id;		/* for shared network cards */
+ 
+ 	spinlock_t		addr_list_lock;
+-- 
+1.8.4.3
