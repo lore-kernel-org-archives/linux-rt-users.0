@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: [PATCH RT 4/5] rtmutex: use a trylock for waiter lock in trylock
-Date: Tue, 10 Dec 2013 19:46:35 -0500
-Message-ID: <20131211004643.613346307@goodmis.org>
-References: <20131211004631.950208564@goodmis.org>
+Date: Tue, 10 Dec 2013 19:50:50 -0500
+Message-ID: <20131211005058.712156556@goodmis.org>
+References: <20131211005046.115564491@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,17 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:22002 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751406Ab3LKAqp (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 10 Dec 2013 19:46:45 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline; filename=0004-rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.8.13.13-rt26-rc1 stable review patch.
+3.4.72-rt90-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -140,19 +135,17 @@ index 20742e7..3825e1c 100644
  
  	if (likely(rt_mutex_owner(lock) != current)) {
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 3bb957e..330221b 100644
+index 78f07e5..fb1c00d 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -1398,7 +1398,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
+@@ -1386,7 +1386,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
+ 		if (time_before_eq(base->next_timer, base->timer_jiffies))
+ 			base->next_timer = __next_timer_interrupt(base);
  		expires = base->next_timer;
+-		rt_spin_unlock(&base->lock);
++		rt_spin_unlock_after_trylock_in_irq(&base->lock);
+ 	} else {
+ 		expires = now + 1;
  	}
- #ifdef CONFIG_PREEMPT_RT_FULL
--	rt_spin_unlock(&base->lock);
-+	rt_spin_unlock_after_trylock_in_irq(&base->lock);
- #else
- 	spin_unlock(&base->lock);
- #endif
 -- 
 1.8.4.3
-
-
