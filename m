@@ -1,157 +1,160 @@
 From: Emmanuel Grumbach <emmanuel.grumbach@intel.com>
-Subject: [RFC 09/10] iwlwifi: pcie: move interrupt prints to the common handler
-Date: Wed, 11 Dec 2013 10:33:45 +0200
-Message-ID: <1386750826-25219-11-git-send-email-emmanuel.grumbach@intel.com>
+Subject: [RFC 03/10] iwlwifi: pcie: re-organize the PCIe ISR code
+Date: Wed, 11 Dec 2013 10:33:38 +0200
+Message-ID: <1386750826-25219-4-git-send-email-emmanuel.grumbach@intel.com>
 References: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
 Cc: linux-wireless@vger.kernel.org,
 	Emmanuel Grumbach <emmanuel.grumbach@intel.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga09.intel.com ([134.134.136.24]:20040 "EHLO mga09.intel.com"
+Received: from mga09.intel.com ([134.134.136.24]:23250 "EHLO mga09.intel.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751453Ab3LKIfK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Dec 2013 03:35:10 -0500
+	id S1751321Ab3LKIe6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Dec 2013 03:34:58 -0500
 In-Reply-To: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Handling interrupt with no cause and printing logs doesn't
-need to be ICT / non-ICT specific move this to the common
-code.
+Separate the code that simply disables interrupt in the
+hardware and the code that checks what interrupt fired.
+This will be useful to move the second part in the threaded
+handler which will be done in a future patch.
 
-Change-Id: I741894a8079faf0bf192a63ea5f40de5d08c433c
+Change-Id: Iec42aa577c9de5c5a13a6030a1d8a69b4da37f43
 Signed-off-by: Emmanuel Grumbach <emmanuel.grumbach@intel.com>
 ---
- drivers/net/wireless/iwlwifi/pcie/rx.c | 90 ++++++++++++----------------------
- 1 file changed, 30 insertions(+), 60 deletions(-)
+ drivers/net/wireless/iwlwifi/pcie/internal.h |  2 +-
+ drivers/net/wireless/iwlwifi/pcie/rx.c       | 49 +++++++++++++---------------
+ drivers/net/wireless/iwlwifi/pcie/trans.c    |  4 +--
+ 3 files changed, 26 insertions(+), 29 deletions(-)
 
+diff --git a/drivers/net/wireless/iwlwifi/pcie/internal.h b/drivers/net/wireless/iwlwifi/pcie/internal.h
+index c9821ca..c790df6 100644
+--- a/drivers/net/wireless/iwlwifi/pcie/internal.h
++++ b/drivers/net/wireless/iwlwifi/pcie/internal.h
+@@ -346,7 +346,7 @@ void iwl_pcie_rx_free(struct iwl_trans *trans);
+ /*****************************************************
+ * ICT - interrupt handling
+ ******************************************************/
+-irqreturn_t iwl_pcie_isr_ict(int irq, void *data);
++irqreturn_t iwl_pcie_isr(int irq, void *data);
+ int iwl_pcie_alloc_ict(struct iwl_trans *trans);
+ void iwl_pcie_free_ict(struct iwl_trans *trans);
+ void iwl_pcie_reset_ict(struct iwl_trans *trans);
 diff --git a/drivers/net/wireless/iwlwifi/pcie/rx.c b/drivers/net/wireless/iwlwifi/pcie/rx.c
-index 3f247da..f25e6bb 100644
+index 7e4836f..54a2f4a 100644
 --- a/drivers/net/wireless/iwlwifi/pcie/rx.c
 +++ b/drivers/net/wireless/iwlwifi/pcie/rx.c
-@@ -819,43 +819,6 @@ static u32 iwl_pcie_int_cause_non_ict(struct iwl_trans *trans)
+@@ -1111,9 +1111,8 @@ void iwl_pcie_disable_ict(struct iwl_trans *trans)
+ }
+ 
+ /* legacy (non-ICT) ISR. Assumes that trans_pcie->irq_lock is held */
+-static irqreturn_t iwl_pcie_isr(int irq, void *data)
++static irqreturn_t iwl_pcie_isr_non_ict(struct iwl_trans *trans)
+ {
+-	struct iwl_trans *trans = data;
+ 	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
+ 	u32 inta;
+ 
+@@ -1121,12 +1120,6 @@ static irqreturn_t iwl_pcie_isr(int irq, void *data)
+ 
+ 	trace_iwlwifi_dev_irq(trans->dev);
+ 
+-	/* Disable (but don't clear!) interrupts here to avoid
+-	 *    back-to-back ISRs and sporadic interrupts from our NIC.
+-	 * If we have something to service, the irq thread will re-enable ints.
+-	 * If we *don't* have something, we'll re-enable before leaving here. */
+-	iwl_write32(trans, CSR_INT_MASK, 0x00000000);
+-
  	/* Discover which interrupts are active/pending */
  	inta = iwl_read32(trans, CSR_INT);
  
--	if (inta & (~trans_pcie->inta_mask)) {
--		IWL_DEBUG_ISR(trans,
--			      "We got a masked interrupt (0x%08x)...Ack and ignore\n",
--			      inta & (~trans_pcie->inta_mask));
--		iwl_write32(trans, CSR_INT, inta & (~trans_pcie->inta_mask));
--		inta &= trans_pcie->inta_mask;
--	}
+@@ -1181,20 +1174,14 @@ static irqreturn_t iwl_pcie_isr(int irq, void *data)
+  * the interrupt we need to service, driver will set the entries back to 0 and
+  * set index.
+  */
+-irqreturn_t iwl_pcie_isr_ict(int irq, void *data)
++static irqreturn_t iwl_pcie_isr_ict(struct iwl_trans *trans)
+ {
+-	struct iwl_trans *trans = data;
+-	struct iwl_trans_pcie *trans_pcie;
++	struct iwl_trans_pcie *trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
++	unsigned long flags;
++	irqreturn_t ret;
+ 	u32 inta;
+ 	u32 val = 0;
+ 	u32 read;
+-	unsigned long flags;
+-	irqreturn_t ret = IRQ_NONE;
 -
--	/* Ignore interrupt if there's nothing in NIC to service.
--	 * This may be due to IRQ shared with another device,
--	 * or due to sporadic interrupts thrown from our NIC. */
--	if (!inta) {
--		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
--		/*
--		 * Re-enable interrupts here since we don't have anything to
--		 * service, but only in case the handler won't run. Note that
--		 * the handler can be scheduled because of a previous
--		 * interrupt.
--		 */
--		if (test_bit(STATUS_INT_ENABLED, &trans->status) && !inta)
--			iwl_enable_interrupts(trans);
--		return inta;
--	}
+-	if (!trans)
+-		return IRQ_NONE;
 -
--	if ((inta == 0xFFFFFFFF) || ((inta & 0xFFFFFFF0) == 0xa5a5a5a0)) {
--		/* Hardware disappeared. It might have already raised
--		 * an interrupt */
--		IWL_WARN(trans, "HARDWARE GONE?? INTA == 0x%08x\n", inta);
--		return inta;
--	}
--
--	if (iwl_have_debug_level(IWL_DL_ISR))
--		IWL_DEBUG_ISR(trans,
--			      "ISR inta 0x%08x, enabled 0x%08x, fh 0x%08x\n",
--			      inta, trans_pcie->inta_mask,
--			      iwl_read32(trans, CSR_FH_INT_STATUS));
--
- 	/* the thread will service interrupts and re-enable them */
- 	return inta;
- }
-@@ -887,10 +850,8 @@ static u32 iwl_pcie_int_cause_ict(struct iwl_trans *trans)
- 	 * or due to sporadic interrupts thrown from our NIC. */
- 	read = le32_to_cpu(trans_pcie->ict_tbl[trans_pcie->ict_index]);
- 	trace_iwlwifi_dev_ict_read(trans->dev, trans_pcie->ict_index, read);
--	if (!read) {
--		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
--		goto none;
--	}
-+	if (!read)
-+		return 0;
+-	trans_pcie = IWL_TRANS_GET_PCIE_TRANS(trans);
  
- 	/*
- 	 * Collect all entries up to the first 0, starting from ict_index;
-@@ -924,25 +885,6 @@ static u32 iwl_pcie_int_cause_ict(struct iwl_trans *trans)
- 		val |= 0x8000;
+ 	spin_lock_irqsave(&trans_pcie->irq_lock, flags);
  
- 	inta = (0xff & val) | ((0xff00 & val) << 16);
--	IWL_DEBUG_ISR(trans, "ISR inta 0x%08x, enabled(sw) 0x%08x ict 0x%08x\n",
--		      inta, trans_pcie->inta_mask, val);
--	if (iwl_have_debug_level(IWL_DL_ISR))
--		IWL_DEBUG_ISR(trans, "enabled(hw) 0x%08x\n",
--			      iwl_read32(trans, CSR_INT_MASK));
--
--	inta &= trans_pcie->inta_mask;
--
--	/* iwl_pcie_tasklet() will service interrupts and re-enable them */
--	if (likely(inta))
--		return inta;
--
-- none:
--	/* re-enable interrupts here since we don't have anything to service.
--	 * only Re-enable if disabled by irq.
--	 */
--	if (test_bit(STATUS_INT_ENABLED, &trans->status) && !inta)
--		iwl_enable_interrupts(trans);
--
- 	return inta;
- }
- 
-@@ -968,11 +910,39 @@ irqreturn_t iwl_pcie_irq_handler(int irq, void *dev_id)
- 	else
- 		inta = iwl_pcie_int_cause_non_ict(trans);
- 
-+	if (iwl_have_debug_level(IWL_DL_ISR)) {
-+		IWL_DEBUG_ISR(trans,
-+			      "ISR inta 0x%08x, enabled 0x%08x(sw), enabled(hw) 0x%08x, fh 0x%08x\n",
-+			      inta, trans_pcie->inta_mask,
-+			      iwl_read32(trans, CSR_INT_MASK),
-+			      iwl_read32(trans, CSR_FH_INT_STATUS));
-+		if (inta & (~trans_pcie->inta_mask))
-+			IWL_DEBUG_ISR(trans,
-+				      "We got a masked interrupt (0x%08x)\n",
-+				      inta & (~trans_pcie->inta_mask));
-+	}
-+
-+	inta &= trans_pcie->inta_mask;
-+
-+	/*
-+	 * Ignore interrupt if there's nothing in NIC to service.
-+	 * This may be due to IRQ shared with another device,
-+	 * or due to sporadic interrupts thrown from our NIC.\
-+	 */
- 	if (!inta) {
-+		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
-+		/* Re-enable interrupts here since we don't have anything to service */
-+		if (test_bit(STATUS_INT_ENABLED, &trans->status))
-+			iwl_enable_interrupts(trans);
+@@ -1202,20 +1189,13 @@ irqreturn_t iwl_pcie_isr_ict(int irq, void *data)
+ 	 * use legacy interrupt.
+ 	 */
+ 	if (unlikely(!trans_pcie->use_ict)) {
+-		ret = iwl_pcie_isr(irq, data);
++		ret = iwl_pcie_isr_non_ict(trans);
  		spin_unlock_irqrestore(&trans_pcie->irq_lock, flags);
- 		return IRQ_NONE;
+ 		return ret;
  	}
  
-+	if ((inta == 0xFFFFFFFF) || ((inta & 0xFFFFFFF0) == 0xa5a5a5a0)) {
-+		/* Hardware disappeared. It might have already raised an interrupt */
-+		IWL_WARN(trans, "HARDWARE GONE?? INTA == 0x%08x\n", inta);
-+	}
+ 	trace_iwlwifi_dev_irq(trans->dev);
+ 
+-	/* Disable (but don't clear!) interrupts here to avoid
+-	 * back-to-back ISRs and sporadic interrupts from our NIC.
+-	 * If we have something to service, the tasklet will re-enable ints.
+-	 * If we *don't* have something, we'll re-enable before leaving here.
+-	 */
+-	iwl_write32(trans, CSR_INT_MASK, 0x00000000);
+-
+ 	/* Ignore interrupt if there's nothing in NIC to service.
+ 	 * This may be due to IRQ shared with another device,
+ 	 * or due to sporadic interrupts thrown from our NIC. */
+@@ -1286,3 +1266,20 @@ irqreturn_t iwl_pcie_isr_ict(int irq, void *data)
+ 	spin_unlock_irqrestore(&trans_pcie->irq_lock, flags);
+ 	return ret;
+ }
 +
- 	/* Ack/clear/reset pending uCode interrupts.
- 	 * Note:  Some bits in CSR_INT are "OR" of bits in CSR_FH_INT_STATUS,
- 	 */
++irqreturn_t iwl_pcie_isr(int irq, void *data)
++{
++	struct iwl_trans *trans = data;
++
++	if (!trans)
++		return IRQ_NONE;
++
++	/* Disable (but don't clear!) interrupts here to avoid
++	 * back-to-back ISRs and sporadic interrupts from our NIC.
++	 * If we have something to service, the tasklet will re-enable ints.
++	 * If we *don't* have something, we'll re-enable before leaving here.
++	 */
++	iwl_write32(trans, CSR_INT_MASK, 0x00000000);
++
++	return iwl_pcie_isr_ict(trans);
++}
+diff --git a/drivers/net/wireless/iwlwifi/pcie/trans.c b/drivers/net/wireless/iwlwifi/pcie/trans.c
+index d8ae0ad..af3ec74 100644
+--- a/drivers/net/wireless/iwlwifi/pcie/trans.c
++++ b/drivers/net/wireless/iwlwifi/pcie/trans.c
+@@ -1608,11 +1608,11 @@ struct iwl_trans *iwl_trans_pcie_alloc(struct pci_dev *pdev,
+ 
+ #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,31)
+ 	err = compat_request_threaded_irq(&trans_pcie->irq_compat,
+-					  pdev->irq, iwl_pcie_isr_ict,
++					  pdev->irq, iwl_pcie_isr,
+ 					  iwl_pcie_irq_handler,
+ 					  IRQF_SHARED, DRV_NAME, trans);
+ #else
+-	err = request_threaded_irq(pdev->irq, iwl_pcie_isr_ict,
++	err = request_threaded_irq(pdev->irq, iwl_pcie_isr,
+ 				   iwl_pcie_irq_handler,
+ 				   IRQF_SHARED, DRV_NAME, trans);
+ #endif
 -- 
 1.8.3.2
 
