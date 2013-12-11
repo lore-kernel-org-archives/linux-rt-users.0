@@ -1,17 +1,16 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/5] rtmutex: use a trylock for waiter lock in trylock
-Date: Tue, 10 Dec 2013 19:50:50 -0500
-Message-ID: <20131211005058.712156556@goodmis.org>
+Subject: [PATCH RT 2/5] a few open coded completions
+Date: Tue, 10 Dec 2013 19:50:48 -0500
+Message-ID: <20131211005058.415159126@goodmis.org>
 References: <20131211005046.115564491@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch
+Content-Disposition: inline; filename=0002-a-few-open-coded-completions.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,130 +21,76 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Mike Galbraith captered the following:
-| >#11 [ffff88017b243e90] _raw_spin_lock at ffffffff815d2596
-| >#12 [ffff88017b243e90] rt_mutex_trylock at ffffffff815d15be
-| >#13 [ffff88017b243eb0] get_next_timer_interrupt at ffffffff81063b42
-| >#14 [ffff88017b243f00] tick_nohz_stop_sched_tick at ffffffff810bd1fd
-| >#15 [ffff88017b243f70] tick_nohz_irq_exit at ffffffff810bd7d2
-| >#16 [ffff88017b243f90] irq_exit at ffffffff8105b02d
-| >#17 [ffff88017b243fb0] reschedule_interrupt at ffffffff815db3dd
-| >--- <IRQ stack> ---
-| >#18 [ffff88017a2a9bc8] reschedule_interrupt at ffffffff815db3dd
-| >    [exception RIP: task_blocks_on_rt_mutex+51]
-| >#19 [ffff88017a2a9ce0] rt_spin_lock_slowlock at ffffffff815d183c
-| >#20 [ffff88017a2a9da0] lock_timer_base.isra.35 at ffffffff81061cbf
-| >#21 [ffff88017a2a9dd0] schedule_timeout at ffffffff815cf1ce
-| >#22 [ffff88017a2a9e50] rcu_gp_kthread at ffffffff810f9bbb
-| >#23 [ffff88017a2a9ed0] kthread at ffffffff810796d5
-| >#24 [ffff88017a2a9f50] ret_from_fork at ffffffff815da04c
-
-lock_timer_base() does a try_lock() which deadlocks on the waiter lock
-not the lock itself.
-This patch takes the waiter_lock with trylock so it should work from interrupt
-context as well. If the fastpath doesn't work and the waiter_lock itself is
-taken then it seems that the lock itself taken.
-This patch also adds a "rt_spin_try_unlock" to keep lockdep happy. If we
-managed to take the wait_lock in the first place we should also be able
-to take it in the unlock path.
-
 Cc: stable-rt@vger.kernel.org
-Reported-by: Mike Galbraith <bitbucket@online.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/spinlock_rt.h |  1 +
- kernel/rtmutex.c            | 31 +++++++++++++++++++++++++++----
- kernel/timer.c              |  2 +-
- 3 files changed, 29 insertions(+), 5 deletions(-)
+ drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
+ drivers/usb/gadget/f_fs.c                  | 2 +-
+ drivers/usb/gadget/inode.c                 | 4 ++--
+ include/linux/netdevice.h                  | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
-diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-index 0618387..b3c504b 100644
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -22,6 +22,7 @@ extern void __lockfunc rt_spin_lock(spinlock_t *lock);
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
- extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
-+extern void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock);
- extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
- extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
- extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 20742e7..3825e1c 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -801,10 +801,8 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
- /*
-  * Slow path to release a rt_mutex spin_lock style
-  */
--static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
- {
--	raw_spin_lock(&lock->wait_lock);
--
- 	debug_rt_mutex_unlock(lock);
- 
- 	rt_mutex_deadlock_account_unlock(current);
-@@ -823,6 +821,23 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 	rt_mutex_adjust_prio(current);
- }
- 
-+static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+{
-+	raw_spin_lock(&lock->wait_lock);
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
-+static void  noinline __sched rt_spin_lock_slowunlock_hirq(struct rt_mutex *lock)
-+{
-+	int ret;
-+
-+	do {
-+		ret = raw_spin_trylock(&lock->wait_lock);
-+	} while (!ret);
-+
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -853,6 +868,13 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- }
- EXPORT_SYMBOL(rt_spin_unlock);
- 
-+void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock)
-+{
-+	/* NOTE: we always pass in '1' for nested, for simplicity */
-+	spin_release(&lock->dep_map, 1, _RET_IP_);
-+	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_hirq);
-+}
-+
- void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
- {
- 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-@@ -1056,7 +1078,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
- {
- 	int ret = 0;
- 
--	raw_spin_lock(&lock->wait_lock);
-+	if (!raw_spin_trylock(&lock->wait_lock))
-+		return ret;
- 	init_lists(lock);
- 
- 	if (likely(rt_mutex_owner(lock) != current)) {
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 78f07e5..fb1c00d 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1386,7 +1386,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
- 		if (time_before_eq(base->next_timer, base->timer_jiffies))
- 			base->next_timer = __next_timer_interrupt(base);
- 		expires = base->next_timer;
--		rt_spin_unlock(&base->lock);
-+		rt_spin_unlock_after_trylock_in_irq(&base->lock);
- 	} else {
- 		expires = now + 1;
+diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
+index f634d45..8152c94 100644
+--- a/drivers/net/wireless/orinoco/orinoco_usb.c
++++ b/drivers/net/wireless/orinoco/orinoco_usb.c
+@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
+ 			while (!ctx->done.done && msecs--)
+ 				udelay(1000);
+ 		} else {
+-			wait_event_interruptible(ctx->done.wait,
++			swait_event_interruptible(ctx->done.wait,
+ 						 ctx->done.done);
+ 		}
+ 		break;
+diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
+index f52cb1a..54ea4e9 100644
+--- a/drivers/usb/gadget/f_fs.c
++++ b/drivers/usb/gadget/f_fs.c
+@@ -1255,7 +1255,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+ 		pr_info("%s(): freeing\n", __func__);
+ 		ffs_data_clear(ffs);
+ 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
+-		       waitqueue_active(&ffs->ep0req_completion.wait));
++		       swaitqueue_active(&ffs->ep0req_completion.wait));
+ 		kfree(ffs);
  	}
+ }
+diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
+index e58b164..2dfd196 100644
+--- a/drivers/usb/gadget/inode.c
++++ b/drivers/usb/gadget/inode.c
+@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 	spin_unlock_irq (&epdata->dev->lock);
+ 
+ 	if (likely (value == 0)) {
+-		value = wait_event_interruptible (done.wait, done.done);
++		value = swait_event_interruptible (done.wait, done.done);
+ 		if (value != 0) {
+ 			spin_lock_irq (&epdata->dev->lock);
+ 			if (likely (epdata->ep != NULL)) {
+@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 				usb_ep_dequeue (epdata->ep, epdata->req);
+ 				spin_unlock_irq (&epdata->dev->lock);
+ 
+-				wait_event (done.wait, done.done);
++				swait_event (done.wait, done.done);
+ 				if (epdata->status == -ECONNRESET)
+ 					epdata->status = -EINTR;
+ 			} else {
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 40940f5..65d8385 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -1109,7 +1109,7 @@ struct net_device {
+ 	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
+ 	unsigned char		addr_assign_type; /* hw address assignment type */
+ 	unsigned char		addr_len;	/* hardware address length	*/
+-	unsigned char		neigh_priv_len;
++	unsigned short		neigh_priv_len;
+ 	unsigned short          dev_id;		/* for shared network cards */
+ 
+ 	spinlock_t		addr_list_lock;
 -- 
 1.8.4.3
