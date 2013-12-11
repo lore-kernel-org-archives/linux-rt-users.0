@@ -1,76 +1,34 @@
-From: Emmanuel Grumbach <egrumbach@gmail.com>
-Subject: Re: [RFC 00/10] make iwlwifi RT friendly
-Date: Wed, 11 Dec 2013 13:17:04 +0200
-Message-ID: <CANUX_P3g_WFvpiUZi9h1MKbHRcDtTdrLjem6n0mSf9wwv_+UwA@mail.gmail.com>
-References: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Re: [PATCH RT 2/5] a few open coded completions
+Date: Wed, 11 Dec 2013 08:25:29 -0600
+Message-ID: <52A875D9.6090609@mvista.com>
+References: <20131211003732.351606520@goodmis.org> <20131211003801.836995968@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Cc: linux-rt-users@vger.kernel.org,
-	linux-wireless <linux-wireless@vger.kernel.org>
-To: Emmanuel Grumbach <emmanuel.grumbach@intel.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f42.google.com ([209.85.215.42]:59584 "EHLO
-	mail-la0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752477Ab3LKLRG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 11 Dec 2013 06:17:06 -0500
-In-Reply-To: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131211003801.836995968@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Dec 11, 2013 at 10:33 AM, Emmanuel Grumbach
-<emmanuel.grumbach@intel.com> wrote:
-> RT folks have raised issues with iwlwifi wrt. RT kernel some time
-> ago. Johannes had a few patches to address this, but I had a few
-> concerns with them. This series tries to address the RT concerns:
-> * we don't do anything in hard-irq context besides stopping the
->   interrupts in the device.
-> * the interrupt cause is read from the irq handler and is handled
->   there.
->
+This chunk doesn't seem to belong in this patch...
 
-Well - this was a bit unfair :)
-The code I get is probably very similar (and inspired) from Johannes's
-work. But I guess I was missing:
-iwlwifi: pcie: track interrupt mask in SW.
-
-
-> This allows us to avoid the usage of _irqsave all over the driver
-> and also avoids any kind of locks in the hard-irq context.
-> We still have some work to do with the locks in the handler.
-> I believe the locking model can be improved there.
->
-> This patch series is split is very small patches. While this can
-> annoy the reader - it helped me much to make sure I don't do anything
-> wrong (well - I am still not sure) - and IMHO, it makes the review easier.
-> For example, in patch
->     iwlwifi: pcie: move the ICT / non-ICT handling functions
-> I just copy code from place to place without changing a bit. This makes
-> the significant diff smaller.
->
-> Emmanuel Grumbach (10):
->   iwlwifi: pcie: clean up ICT allocation code
->   iwlwifi: pcie: track interrupt mask in SW
->   iwlwifi: pcie: re-organize the PCIe ISR code
->   iwlwifi: pcie: move the ICT / non-ICT handling functions
->   iwlwifi: pcie: read the interrupt cause from the handler
->   iwlwifi: pcie: determine the interrupt type in the handler
->   iwlwifi: pcie: return inta from iwl_pcie_int_cause_{non_}ict
->   iwlwifi: pcie: no need to save inta in trans_pcie
->   iwlwifi: pcie: move interrupt prints to the common handler
->   iwlwifi: pcie: stop using _irqsave
->
->  drivers/net/wireless/iwlwifi/iwl-csr.h       |   3 +-
->  drivers/net/wireless/iwlwifi/pcie/internal.h |   9 +-
->  drivers/net/wireless/iwlwifi/pcie/rx.c       | 389 +++++++++++----------------
->  drivers/net/wireless/iwlwifi/pcie/trans.c    |  27 +-
->  drivers/net/wireless/iwlwifi/pcie/tx.c       |  10 +-
->  5 files changed, 185 insertions(+), 253 deletions(-)
->
-> --
-> 1.8.3.2
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-wireless" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 819923f..ba78526 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -1139,7 +1139,7 @@ struct net_device {
+ 	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
+ 	unsigned char		addr_assign_type; /* hw address assignment type */
+ 	unsigned char		addr_len;	/* hardware address length	*/
+-	unsigned char		neigh_priv_len;
++	unsigned short		neigh_priv_len;
+ 	unsigned short          dev_id;		/* for shared network cards */
+ 
+ 	spinlock_t		addr_list_lock;
