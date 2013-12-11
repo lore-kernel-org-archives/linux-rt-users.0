@@ -1,17 +1,16 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] cpu_down: move migrate_enable() back
-Date: Tue, 10 Dec 2013 19:46:32 -0500
-Message-ID: <20131211004643.182742571@goodmis.org>
+Subject: [PATCH RT 5/5] Linux 3.8.13.13-rt26-rc1
+Date: Tue, 10 Dec 2013 19:46:36 -0500
+Message-ID: <20131211004643.759855021@goodmis.org>
 References: <20131211004631.950208564@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Tiejun Chen <tiejun.chen@windriver.com>
+	John Kacur <jkacur@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-cpu_down-move-migrate_enable-back.patch
+Content-Disposition: inline; filename=0005-Linux-3.8.13.13-rt26-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -20,58 +19,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Tiejun Chen <tiejun.chen@windriver.com>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Commit 08c1ab68, "hotplug-use-migrate-disable.patch", intends to
-use migrate_enable()/migrate_disable() to replace that combination
-of preempt_enable() and preempt_disable(), but actually in
-!CONFIG_PREEMPT_RT_FULL case, migrate_enable()/migrate_disable()
-are still equal to preempt_enable()/preempt_disable(). So that
-followed cpu_hotplug_begin()/cpu_unplug_begin(cpu) would go schedule()
-to trigger schedule_debug() like this:
-
-_cpu_down()
-	|
-	+ migrate_disable() = preempt_disable()
-	|
-	+ cpu_hotplug_begin() or cpu_unplug_begin()
-		|
-		+ schedule()
-			|
-			+ __schedule()
-				|
-				+ preempt_disable();
-				|
-				+ __schedule_bug() is true!
-
-So we should move migrate_enable() as the original scheme.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/cpu.c | 2 +-
+ localversion-rt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 98f2ea3..da6e128 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -594,6 +594,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		err = -EBUSY;
- 		goto restore_cpus;
- 	}
-+	migrate_enable();
- 
- 	cpu_hotplug_begin();
- 	err = cpu_unplug_begin(cpu);
-@@ -647,7 +648,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- out_release:
- 	cpu_unplug_done(cpu);
- out_cancel:
--	migrate_enable();
- 	cpu_hotplug_done();
- 	if (!err)
- 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
+diff --git a/localversion-rt b/localversion-rt
+index c5b71f9..02556f4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt25
++-rt26-rc1
 -- 
 1.8.4.3
