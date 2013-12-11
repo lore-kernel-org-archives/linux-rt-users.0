@@ -1,77 +1,58 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] cpu_down: move migrate_enable() back
-Date: Tue, 10 Dec 2013 19:50:47 -0500
-Message-ID: <20131211005058.276003329@goodmis.org>
-References: <20131211005046.115564491@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Tiejun Chen <tiejun.chen@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-cpu_down-move-migrate_enable-back.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Emmanuel Grumbach <emmanuel.grumbach@intel.com>
+Subject: [RFC 00/10] make iwlwifi RT friendly
+Date: Wed, 11 Dec 2013 10:33:35 +0200
+Message-ID: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
+Cc: linux-wireless@vger.kernel.org,
+	Emmanuel Grumbach <emmanuel.grumbach@intel.com>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga09.intel.com ([134.134.136.24]:23250 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750894Ab3LKIey (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 11 Dec 2013 03:34:54 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.4.72-rt90-rc1 stable review patch.
-If anyone has any objections, please let me know.
+RT folks have raised issues with iwlwifi wrt. RT kernel some time
+ago. Johannes had a few patches to address this, but I had a few
+concerns with them. This series tries to address the RT concerns:
+* we don't do anything in hard-irq context besides stopping the
+  interrupts in the device.
+* the interrupt cause is read from the irq handler and is handled
+  there.
 
-------------------
+This allows us to avoid the usage of _irqsave all over the driver
+and also avoids any kind of locks in the hard-irq context.
+We still have some work to do with the locks in the handler.
+I believe the locking model can be improved there.
 
-From: Tiejun Chen <tiejun.chen@windriver.com>
+This patch series is split is very small patches. While this can
+annoy the reader - it helped me much to make sure I don't do anything
+wrong (well - I am still not sure) - and IMHO, it makes the review easier.
+For example, in patch 
+    iwlwifi: pcie: move the ICT / non-ICT handling functions
+I just copy code from place to place without changing a bit. This makes
+the significant diff smaller.
 
-Commit 08c1ab68, "hotplug-use-migrate-disable.patch", intends to
-use migrate_enable()/migrate_disable() to replace that combination
-of preempt_enable() and preempt_disable(), but actually in
-!CONFIG_PREEMPT_RT_FULL case, migrate_enable()/migrate_disable()
-are still equal to preempt_enable()/preempt_disable(). So that
-followed cpu_hotplug_begin()/cpu_unplug_begin(cpu) would go schedule()
-to trigger schedule_debug() like this:
+Emmanuel Grumbach (10):
+  iwlwifi: pcie: clean up ICT allocation code
+  iwlwifi: pcie: track interrupt mask in SW
+  iwlwifi: pcie: re-organize the PCIe ISR code
+  iwlwifi: pcie: move the ICT / non-ICT handling functions
+  iwlwifi: pcie: read the interrupt cause from the handler
+  iwlwifi: pcie: determine the interrupt type in the handler
+  iwlwifi: pcie: return inta from iwl_pcie_int_cause_{non_}ict
+  iwlwifi: pcie: no need to save inta in trans_pcie
+  iwlwifi: pcie: move interrupt prints to the common handler
+  iwlwifi: pcie: stop using _irqsave
 
-_cpu_down()
-	|
-	+ migrate_disable() = preempt_disable()
-	|
-	+ cpu_hotplug_begin() or cpu_unplug_begin()
-		|
-		+ schedule()
-			|
-			+ __schedule()
-				|
-				+ preempt_disable();
-				|
-				+ __schedule_bug() is true!
+ drivers/net/wireless/iwlwifi/iwl-csr.h       |   3 +-
+ drivers/net/wireless/iwlwifi/pcie/internal.h |   9 +-
+ drivers/net/wireless/iwlwifi/pcie/rx.c       | 389 +++++++++++----------------
+ drivers/net/wireless/iwlwifi/pcie/trans.c    |  27 +-
+ drivers/net/wireless/iwlwifi/pcie/tx.c       |  10 +-
+ 5 files changed, 185 insertions(+), 253 deletions(-)
 
-So we should move migrate_enable() as the original scheme.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/cpu.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index c18c25e..4e3b7c5 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -545,6 +545,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		err = -EBUSY;
- 		goto restore_cpus;
- 	}
-+	migrate_enable();
- 
- 	cpu_hotplug_begin();
- 	err = cpu_unplug_begin(cpu);
-@@ -597,7 +598,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- out_release:
- 	cpu_unplug_done(cpu);
- out_cancel:
--	migrate_enable();
- 	cpu_hotplug_done();
- 	if (!err)
- 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
 -- 
-1.8.4.3
+1.8.3.2
+
