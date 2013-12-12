@@ -1,70 +1,68 @@
-From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
-Subject: Re: [BUG] stable v3.10.16+ introduced by "ip6tnl: allow to use rtnl
- ops on fb tunnel"
-Date: Thu, 12 Dec 2013 10:53:49 +0100
-Message-ID: <52A987AD.4030204@6wind.com>
-References: <20131113211430.1ad3bb7d@gandalf.local.home>	<20131209002531.GB14382@kroah.com> <20131211.165331.495095016561766264.davem@davemloft.net>
-Reply-To: nicolas.dichtel@6wind.com
+From: Ciprian Barbu <ciprian.barbu@linaro.org>
+Subject: [PATCH] rt-tests: hackbench: fix for uninitialized start time
+Date: Thu, 12 Dec 2013 16:47:19 +0200
+Message-ID: <52A9CC77.20904@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: rostedt@goodmis.org, linux-kernel@vger.kernel.org,
-	stable@vger.kernel.org, williams@redhat.com,
-	linux-rt-users@vger.kernel.org, lclaudio@uudg.org
-To: David Miller <davem@davemloft.net>, gregkh@linuxfoundation.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Linaro Networking <linaro-networking@linaro.org>
+To: Clark Williams <williams@redhat.com>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131211.165331.495095016561766264.davem@davemloft.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Le 11/12/2013 22:53, David Miller a =E9crit :
-> From: Greg Kroah-Hartman <gregkh@linuxfoundation.org>
-> Date: Sun, 8 Dec 2013 16:25:31 -0800
->
->> On Wed, Nov 13, 2013 at 09:14:30PM -0500, Steven Rostedt wrote:
->>> +++ b/net/ipv6/ip6_tunnel.c
->>> @@ -1731,8 +1731,6 @@ static void __net_exit ip6_tnl_destroy_tunnel=
-s(struct ip
->>>                  }
->>>          }
->>>
->>> -       t =3D rtnl_dereference(ip6n->tnls_wc[0]);
->>> -       unregister_netdevice_queue(t->dev, &list);
->>>          unregister_netdevice_many(&list);
->>>   }
->>>
->>>
->>> Which, when applied to 3.10.18, fixes the bug. Was there a reason t=
-hat
->>> this part of the commit wasn't backported? or was this just an over=
-sight?
->>
->> It looks like it was left out to me as well.
->>
->> David, any objection to me making this fixup in the 3.10-stable tree=
-?
->
-> The original patch submitted told me to leave this part of the patch
-> out of the backport, explaining that it wasn't necessary in older
-> kernels.
-Yes, and this was right (in upstream commit, I remove this part because
-the fb device is deleted by the loop which check dev->rtnl_ops) , but .=
-=2E.
+Hello,
 
->
-> Can someone please sort this out?
->
-> Nicolas please provide some guidance here, thanks.
-The original patch left a bug, which was fixed upstream with this commi=
-t:
-1e9f3d6f1c40 ip6tnl: fix use after free of fb_tnl_dev
+While playing around with hackbench I discovered that I would sometimes 
+get an enormous time reported, even if the run time would be less than a 
+second or so. The problem was that the struct timeval start was not 
+initialized until after all children have been created. But if the 
+program receives a signal before this is done, the start time is left 
+uninitialized.
 
-The problem is a bit different in 3.10.y, because there is no x-vrf sup=
-port.
-When ip6_tunnel.ko is unloaded, FB device is deleted by rtnl_link_unreg=
-ister()
-and then we try to delete it again in ip6_tnl_destroy_tunnels().
-Thus the fix is different and in fact, the above patch is good.
+I propose that in such situations an error message be displayed, like 
+the following patch does.
 
-Steven, will you submit this patch properly or should I do this?
+Please let me know if this is acceptable.
+
+Regards,
+/Ciprian
+
+---
+diff -rupN rt-tests/src/hackbench/hackbench.c 
+rt-tests2/src/hackbench/hackbench.c
+--- rt-tests/src/hackbench/hackbench.c  2013-12-12 16:27:06.273731063 +0200
++++ rt-tests2/src/hackbench/hackbench.c 2013-12-12 16:24:01.945738814 +0200
+@@ -442,6 +442,7 @@ int main(int argc, char *argv[])
+     struct timeval start, stop, diff;
+     int readyfds[2], wakefds[2];
+     char dummy;
++   int timer_started = 0;
+     struct sched_param sp;
+
+     process_options (argc, argv);
+@@ -490,6 +491,7 @@ int main(int argc, char *argv[])
+             }
+
+         gettimeofday(&start, NULL);
++       timer_started = 1;
+
+         /* Kick them off */
+         if (write(wakefds[1], &dummy, 1) != 1) {
+@@ -509,8 +511,12 @@ int main(int argc, char *argv[])
+     gettimeofday(&stop, NULL);
+
+     /* Print time... */
+-   timersub(&stop, &start, &diff);
+-   printf("Time: %lu.%03lu\n", diff.tv_sec, diff.tv_usec/1000);
++   if (timer_started) {
++       timersub(&stop, &start, &diff);
++       printf("Time: %lu.%03lu\n", diff.tv_sec, diff.tv_usec/1000);
++   } else {
++       fprintf(stderr, "No measurements available\n");
++   }
+     free(child_tab);
+     exit(0);
+  }
