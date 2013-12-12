@@ -1,68 +1,59 @@
-From: Ciprian Barbu <ciprian.barbu@linaro.org>
-Subject: [PATCH] rt-tests: hackbench: fix for uninitialized start time
-Date: Thu, 12 Dec 2013 16:47:19 +0200
-Message-ID: <52A9CC77.20904@linaro.org>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH] rt-tests: hackbench: fix for uninitialized start time
+Date: Thu, 12 Dec 2013 09:14:22 -0600
+Message-ID: <20131212091422.3b909d99@sluggy>
+References: <52A9CC77.20904@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: multipart/signed; micalg=PGP-SHA1;
+ boundary="Sig_/gkPuJVomdyUk_aqQsKsKgqF"; protocol="application/pgp-signature"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
 	Linaro Networking <linaro-networking@linaro.org>
-To: Clark Williams <williams@redhat.com>,
-	RT <linux-rt-users@vger.kernel.org>
+To: Ciprian Barbu <ciprian.barbu@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <52A9CC77.20904@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+--Sig_/gkPuJVomdyUk_aqQsKsKgqF
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-While playing around with hackbench I discovered that I would sometimes 
-get an enormous time reported, even if the run time would be less than a 
-second or so. The problem was that the struct timeval start was not 
-initialized until after all children have been created. But if the 
-program receives a signal before this is done, the start time is left 
-uninitialized.
+On Thu, 12 Dec 2013 16:47:19 +0200
+Ciprian Barbu <ciprian.barbu@linaro.org> wrote:
 
-I propose that in such situations an error message be displayed, like 
-the following patch does.
+> Hello,
+>=20
+> While playing around with hackbench I discovered that I would sometimes=20
+> get an enormous time reported, even if the run time would be less than a=
+=20
+> second or so. The problem was that the struct timeval start was not=20
+> initialized until after all children have been created. But if the=20
+> program receives a signal before this is done, the start time is left=20
+> uninitialized.
+>=20
+> I propose that in such situations an error message be displayed, like=20
+> the following patch does.
+>=20
+> Please let me know if this is acceptable.
+>=20
+> Regards,
+> /Ciprian
 
-Please let me know if this is acceptable.
+Looks good to me. I've pulled it in for the next release.
 
-Regards,
-/Ciprian
+Clark
 
----
-diff -rupN rt-tests/src/hackbench/hackbench.c 
-rt-tests2/src/hackbench/hackbench.c
---- rt-tests/src/hackbench/hackbench.c  2013-12-12 16:27:06.273731063 +0200
-+++ rt-tests2/src/hackbench/hackbench.c 2013-12-12 16:24:01.945738814 +0200
-@@ -442,6 +442,7 @@ int main(int argc, char *argv[])
-     struct timeval start, stop, diff;
-     int readyfds[2], wakefds[2];
-     char dummy;
-+   int timer_started = 0;
-     struct sched_param sp;
+--Sig_/gkPuJVomdyUk_aqQsKsKgqF
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-     process_options (argc, argv);
-@@ -490,6 +491,7 @@ int main(int argc, char *argv[])
-             }
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
 
-         gettimeofday(&start, NULL);
-+       timer_started = 1;
+iEYEARECAAYFAlKp0s4ACgkQHyuj/+TTEp1YWwCgx4Mc0kMgY4KfKEPsAQhcGT8+
+zJAAoMGiTCqYLYWm8cV+qg/D3aEaVONx
+=ED79
+-----END PGP SIGNATURE-----
 
-         /* Kick them off */
-         if (write(wakefds[1], &dummy, 1) != 1) {
-@@ -509,8 +511,12 @@ int main(int argc, char *argv[])
-     gettimeofday(&stop, NULL);
-
-     /* Print time... */
--   timersub(&stop, &start, &diff);
--   printf("Time: %lu.%03lu\n", diff.tv_sec, diff.tv_usec/1000);
-+   if (timer_started) {
-+       timersub(&stop, &start, &diff);
-+       printf("Time: %lu.%03lu\n", diff.tv_sec, diff.tv_usec/1000);
-+   } else {
-+       fprintf(stderr, "No measurements available\n");
-+   }
-     free(child_tab);
-     exit(0);
-  }
+--Sig_/gkPuJVomdyUk_aqQsKsKgqF--
