@@ -1,51 +1,55 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] consolidate spin_lock/unlock waiting with
- spin_unlock_wait
-Date: Sun, 15 Dec 2013 14:44:22 +0100
-Message-ID: <20131215134422.GD31090@linutronix.de>
-References: <20131202044126.GA18399@opentech.at>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [PATCH] migrate_disable pushd down in rt_read_trylock
+Date: Sun, 15 Dec 2013 15:15:23 +0100
+Message-ID: <20131215141522.GA15532@opentech.at>
+References: <20131123005158.GA16338@opentech.at> <20131129151401.GD31099@linutronix.de> <20131129154425.GE31099@linutronix.de> <20131130023026.GB8114@opentech.at> <20131130064755.GA12036@opentech.at> <20131215131643.GC31090@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55577 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754085Ab3LONoX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Dec 2013 08:44:23 -0500
+Received: from hofr.at ([212.69.189.236]:53976 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754494Ab3LOOPY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 15 Dec 2013 09:15:24 -0500
 Content-Disposition: inline
-In-Reply-To: <20131202044126.GA18399@opentech.at>
+In-Reply-To: <20131215131643.GC31090@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Nicholas Mc Guire | 2013-12-02 05:41:26 [+0100]:
+On Sun, 15 Dec 2013, Sebastian Andrzej Siewior wrote:
 
->>From 19ac7e10b38947dbd8d731a13243fb28490f5ab4 Mon Sep 17 00:00:00 2001
->From: Nicholas Mc Guire <der.herr@hofr.at>
->Date: Sun, 1 Dec 2013 23:03:52 -0500
->Subject: [PATCH] consolidate spin_lock/unlock waiting with spin_unlock_wait
->
-> since:
-> commit c2f21ce2e31286a0a32f8da0a7856e9ca1122ef3
-> Author: Thomas Gleixner <tglx@linutronix.de>
-> Date:   Wed Dec 2 20:02:59 2009 +0100
->
-> include/linux/spinlock.h includes spin_unlock_wait() to wait for a concurrent
-> holder of a lock. this patch just moves over to that API. spin_unlock_wait
-> covers both raw_spinlock_t and spinlock_t so it should be safe here as well.
-> the added rt-variant of read_seqbegin in include/linux/seqlock.h that is being
-> modified, was introduced by patch:
->   seqlock-prevent-rt-starvation.patch
->
-> patch is on top of 3.12.1-rt4
->
-> behavior should be unchanged.
+> * Nicholas Mc Guire | 2013-11-30 07:47:55 [+0100]:
+> 
+> >given that the broken patch was disabling once and enabling potentially a
+> >number of times it should have triggert the
+> >WARN_ON_ONCE(p->migrate_disable <= 0); in migrate_enable() if the recursive
+> >case would have ever bin hit... so much to testing and locking...
+> 
+> And is why I removed the line
+> > No change of functionality
+> 
+> from the change log because it was not obvious to me that is a
+> zero-change patch :)
 
-Applied. One note: you indented the comment by one space. It looked to
-me like cited to complete commit. Please do commit-id ("one line
-description) and avoid the one line space at the begin of everyline if
-possible.
+well that was the intent and obviously
+it was not the case - so it served its purpose
+to document the intent.
 
-Sebastian
+> 
+> Are you going to redo this one?
+>
+no - as David Miller stated clearly that he sees these
+split-api locks as a valid idiom and there were clear
+worries that this would break in the future I see no point
+in pushing this. The alternative of removing the recursive
+migrate_disable/enable in local_bh_* directly is good
+enough I guess - see: 
+0001-make-migrate-disable-enable-conditioned-on-softirq_n.patch
+
+thx!
+hofrat
+
