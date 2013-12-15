@@ -1,39 +1,38 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 2/3] read_lock migrate_disable pushdown to rt_read_lock
-Date: Sun, 15 Dec 2013 16:15:11 +0100
-Message-ID: <20131215151511.GI31090@linutronix.de>
-References: <20131205234449.GF15603@opentech.at>
- <20131205211951.5c2eaa0f@gandalf.local.home>
- <20131206023334.GA26623@opentech.at>
- <20131206102532.712d4ae4@gandalf.local.home>
+Subject: Re: [PATCH RT 2/5] a few open coded completions
+Date: Sun, 15 Dec 2013 16:28:39 +0100
+Message-ID: <20131215152839.GJ31090@linutronix.de>
+References: <20131211003732.351606520@goodmis.org>
+ <20131211003801.836995968@goodmis.org>
+ <52A875D9.6090609@mvista.com>
+ <20131211103420.291aa61c@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
-	linux-rt-users@vger.kernel.org,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>
+Cc: Corey Minyard <cminyard@mvista.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55756 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751612Ab3LOPPM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Dec 2013 10:15:12 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20131206102532.712d4ae4@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20131211103420.291aa61c@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Steven Rostedt | 2013-12-06 10:25:32 [-0500]:
+* Steven Rostedt | 2013-12-11 10:34:20 [-0500]:
+
+>As this chunck doesn't need to be in the stable branch, I'm just going
+>to nuke it.
+>
+>I'll even fix up the change log too.
+
+Thank you for the fixups. I just did the same thing in the v3.12 tree.
+The chunk you nuked is now in Dave's net tree as a0a9663dd214 ("net: make
+neigh_priv_len in struct net_device 16bit instead of 8bit"). As it
+describes it is buggy on -RT but not mainline therefore it has no stable
+tag for mainline and I would add one for RT.
 
 >
->Let me analyze the original code first. I'll poke peterz and tglx too
->to make sure this modification is OK.
-
-I took 1/3. I postpone the remaining two until I hear something from
-you.
-
 >Thanks,
 >
 >-- Steve
