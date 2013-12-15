@@ -1,55 +1,34 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: Re: [PATCH] migrate_disable pushd down in rt_read_trylock
-Date: Sun, 15 Dec 2013 15:15:23 +0100
-Message-ID: <20131215141522.GA15532@opentech.at>
-References: <20131123005158.GA16338@opentech.at> <20131129151401.GD31099@linutronix.de> <20131129154425.GE31099@linutronix.de> <20131130023026.GB8114@opentech.at> <20131130064755.GA12036@opentech.at> <20131215131643.GC31090@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/4] migrate_disable pushd down in spin_trylock
+Date: Sun, 15 Dec 2013 15:29:00 +0100
+Message-ID: <20131215142900.GE31090@linutronix.de>
+References: <20131130030628.GB8101@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:53976 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754494Ab3LOOPY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Dec 2013 09:15:24 -0500
+Received: from www.linutronix.de ([62.245.132.108]:55666 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750867Ab3LOO3B (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 15 Dec 2013 09:29:01 -0500
 Content-Disposition: inline
-In-Reply-To: <20131215131643.GC31090@linutronix.de>
+In-Reply-To: <20131130030628.GB8101@opentech.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 15 Dec 2013, Sebastian Andrzej Siewior wrote:
+* Nicholas Mc Guire | 2013-11-30 04:06:28 [+0100]:
 
-> * Nicholas Mc Guire | 2013-11-30 07:47:55 [+0100]:
-> 
-> >given that the broken patch was disabling once and enabling potentially a
-> >number of times it should have triggert the
-> >WARN_ON_ONCE(p->migrate_disable <= 0); in migrate_enable() if the recursive
-> >case would have ever bin hit... so much to testing and locking...
-> 
-> And is why I removed the line
-> > No change of functionality
-> 
-> from the change log because it was not obvious to me that is a
-> zero-change patch :)
-
-well that was the intent and obviously
-it was not the case - so it served its purpose
-to document the intent.
-
-> 
-> Are you going to redo this one?
+>>From 7b60d163555d701b88f463d12ba62c6ceb61fb66 Mon Sep 17 00:00:00 2001
+>From: Nicholas Mc Guire <der.herr@hofr.at>
+>Date: Fri, 29 Nov 2013 00:21:59 -0500
+>Subject: [PATCH 4/4] migrate_disable pushd down in rt_write_trylock_irqsave
 >
-no - as David Miller stated clearly that he sees these
-split-api locks as a valid idiom and there were clear
-worries that this would break in the future I see no point
-in pushing this. The alternative of removing the recursive
-migrate_disable/enable in local_bh_* directly is good
-enough I guess - see: 
-0001-make-migrate-disable-enable-conditioned-on-softirq_n.patch
+>+++ b/kernel/rt.c
+>@@ -196,10 +196,9 @@ int __lockfunc rt_write_trylock_irqsave(rwlock_t *rwlock, unsigned long *flags)
 
-thx!
-hofrat
+It looks like you loaded the wrong file here. Email's subject line does
+not match patch's and it seems be to be really the same one as in 4/4.
 
+Sebastian
