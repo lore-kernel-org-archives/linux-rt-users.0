@@ -1,36 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 0/3]  PREEMPT_RT support for Sparc64
-Date: Sun, 15 Dec 2013 16:34:19 +0100
-Message-ID: <20131215153419.GK31090@linutronix.de>
-References: <1386908084-32064-1-git-send-email-allen.pais@oracle.com>
+Subject: Re: [RFC 00/10] make iwlwifi RT friendly
+Date: Sun, 15 Dec 2013 16:48:43 +0100
+Message-ID: <20131215154843.GL31090@linutronix.de>
+References: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: Allen Pais <allen.pais@oracle.com>
+Cc: linux-rt-users@vger.kernel.org, linux-wireless@vger.kernel.org
+To: Emmanuel Grumbach <emmanuel.grumbach@intel.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55832 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:55982 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751388Ab3LOPeV (ORCPT
+	with ESMTP id S1751153Ab3LOPsq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Dec 2013 10:34:21 -0500
+	Sun, 15 Dec 2013 10:48:46 -0500
 Content-Disposition: inline
-In-Reply-To: <1386908084-32064-1-git-send-email-allen.pais@oracle.com>
+In-Reply-To: <1386750826-25219-1-git-send-email-emmanuel.grumbach@intel.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Allen Pais | 2013-12-13 09:44:40 [+0530]:
+* Emmanuel Grumbach | 2013-12-11 10:33:35 [+0200]:
 
->PREEMPT_RT support for Sparc64. 
->I have tested it UltraSparc T4 (Niagara4).
-Nice.
+>RT folks have raised issues with iwlwifi wrt. RT kernel some time
+>ago. Johannes had a few patches to address this, but I had a few
+>concerns with them. This series tries to address the RT concerns:
+>* we don't do anything in hard-irq context besides stopping the
+>  interrupts in the device.
+>* the interrupt cause is read from the irq handler and is handled
+>  there.
 
->
->Allen Pais (3):
->  sparc64: use generic rwsem spinlocks rt
-I can pick this one up.
-
-Could you please forward this two upstream unless you have done so?
->  sparc64: convert spinlock_t to raw_spinlock_t in mmu_context_t
->  sparc64: convert ctx_alloc_lock raw_spinlock_t
+Thanks for the patches. I haven't yet looked at them I doubt I manage it
+anytime soon. Could you please answer one question: Do you grab any
+locks in the primary interrupt handler?
 
 Sebastian
