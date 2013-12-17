@@ -1,36 +1,44 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.10.20-rt17, BUG and Oops
-Date: Tue, 17 Dec 2013 20:42:57 +0100
-Message-ID: <52B0A941.9070702@linutronix.de>
-References: <52999A44.7060103@localhost> <529A1511.5050801@osadl.org> <20131130203920.GB24080@linutronix.de> <529A6AFD.9020308@osadl.org> <20131215145325.GH31090@linutronix.de> <52B0A891.8030905@localhost>
+From: Greg KH <gregkh@linuxfoundation.org>
+Subject: Re: [PATCH linux-3.10.y] ip6tnl: fix use after free of fb_tnl_dev
+Date: Tue, 17 Dec 2013 11:54:53 -0800
+Message-ID: <20131217195453.GB28274@kroah.com>
+References: <20131212.153545.1184197791301496227.davem@davemloft.net>
+ <1386925595-4995-1-git-send-email-nicolas.dichtel@6wind.com>
+ <20131217.144002.1716319550180883592.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: Carsten Emde <C.Emde@osadl.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40416 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753361Ab3LQTnF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Dec 2013 14:43:05 -0500
-In-Reply-To: <52B0A891.8030905@localhost>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: nicolas.dichtel@6wind.com, netdev@vger.kernel.org,
+	rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+	stable@vger.kernel.org, williams@redhat.com,
+	linux-rt-users@vger.kernel.org, lclaudio@uudg.org
+To: David Miller <davem@davemloft.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20131217.144002.1716319550180883592.davem@davemloft.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 12/17/2013 08:40 PM, Fernando Lopez-Lezcano wrote:
->> Fernando, any updates from you?
+On Tue, Dec 17, 2013 at 02:40:02PM -0500, David Miller wrote:
+> From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+> Date: Fri, 13 Dec 2013 10:06:35 +0100
 > 
-> Hi, I have not seen this problem again, but I have not had a chance to
-> stress the system. Usually this would pop up when running jackd + audio
-> applications for some time. But so far so good...
-
-Okay, but you are using the patch I posted correct? And without the
-patch you were able to reproduce it more than once?
-
+> > The upstream commit bb8140947a24 ("ip6tnl: allow to use rtnl ops on fb tunnel")
+> > (backported into linux-3.10.y) left a bug which was fixed upstream by commit
+> > 1e9f3d6f1c40 ("ip6tnl: fix use after free of fb_tnl_dev").
+> > 
+> > The problem is a bit different in linux-3.10.y, because there is no x-netns
+> > support (upstream commit 0bd8762824e7 ("ip6tnl: add x-netns support")).
+> > When ip6_tunnel.ko is unloaded, FB device is deleted by rtnl_link_unregister()
+> > and then we try to delete it again in ip6_tnl_destroy_tunnels().
+> > 
+> > This patch removes the second deletion.
+> > 
+> > Reported-by: Steven Rostedt <rostedt@goodmis.org>
+> > Suggested-by: Steven Rostedt <rostedt@goodmis.org>
+> > Signed-off-by: Nicolas Dichtel <nicolas.dichtel@6wind.com>
 > 
-> -- Fernando
+> Greg please queue this up for 3.10 -stable if you haven't already.
 
-Sebastian
+Thanks, will do.
+
+greg k-h
