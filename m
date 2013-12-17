@@ -1,123 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Mike Galbraith <bitbucket@online.de>
 Subject: Re: [ANNOUNCE] 3.12.5-rt6
-Date: Tue, 17 Dec 2013 09:16:24 -0500
-Message-ID: <20131217091624.65be757c@gandalf.local.home>
+Date: Tue, 17 Dec 2013 15:26:16 +0100
+Message-ID: <1387290376.2399.11.camel@marge.simpson.net>
 References: <20131216091431.GA13796@linutronix.de>
-	<1387264591.5340.23.camel@marge.simpson.net>
-	<20131217063156.6ac3bfed@gandalf.local.home>
-	<20131217124248.GA21694@linutronix.de>
+	 <1387264591.5340.23.camel@marge.simpson.net>
+	 <20131217063156.6ac3bfed@gandalf.local.home>
+	 <20131217124248.GA21694@linutronix.de>
+	 <20131217091624.65be757c@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Mike Galbraith <bitbucket@online.de>,
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:37452 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753980Ab3LQOQ0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Dec 2013 09:16:26 -0500
-In-Reply-To: <20131217124248.GA21694@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131217091624.65be757c@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 17 Dec 2013 13:42:48 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
- 
-> >> @@ -1068,8 +1082,10 @@ unsigned long wait_task_inactive(struct
-> >>  		 * is actually now running somewhere else!
-> >>  		 */
-> >>  		while (task_running(rq, p)) {
-> >> -			if (match_state && unlikely(p->state != match_state))
-> >> +			if (match_state && unlikely(p->state != match_state)
-> >> +			    && unlikely(p->saved_state != match_state))
-> >>  				return 0;
-> >> +			}
-> >
-> >Yeah, it should just be:
-> >
-> >		if (match_state && check_task_state(p, match_state))
-> >			return 0;
+On Tue, 2013-12-17 at 09:16 -0500, Steven Rostedt wrote: 
 > 
-> Are you sure?
-
-No :-)
-
-> If the state matches we should continue as long as it runs
-> therefore I would go for !check_task_state(). The problem here was that
-
-Yeah yeah, hey, I typed it by hand, no cut and paste there. Thus, I
-dropped the '!' by accident ;-)
-
-Hey! Here's a case where cut and paste would have prevented the bug!
-
-
-> I return 0 in both cases.
+> > @@ -1129,11 +1127,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+> >  		 * is actually now running somewhere else!
+> >  		 */
+> >  		while (task_running(rq, p)) {
+> > -			if (match_state) {
+> > -				if (!unlikely(check_task_state(p, match_state)))
+> > -					return 0;
+> > +			if (match_state && !check_task_state(p, match_state))
 > 
-> >Also, looking at check_task_state():
-> >
-> >+static bool check_task_state(struct task_struct *p, long match_state)
-> >+{
-> >+       bool match = false;
-> >+
-> >+       raw_spin_lock_irq(&p->pi_lock);
-> >+       if (p->state == match_state)
-> >+               match = true;
-> >+       else if (p->saved_state == match_state)
-> >+               match = true;
-> >
-> >Why the if () else if()? and not just:
-> >
-> >	if (p->state == match_state || p->save_state == match_state)
-> >		match = true;
-> >?
-> >
-> >The else if makes me think there's something missing.
-> 
-> Okay I can do this. But regarding the check_task_state part, I think I
-> should go with:
-> 
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -1076,9 +1076,7 @@ static bool check_task_state(struct task_struct *p, long match_state)
->  	bool match = false;
->  
->  	raw_spin_lock_irq(&p->pi_lock);
-> -	if (p->state == match_state)
-> -		match = true;
-> -	else if (p->saved_state == match_state)
-> +	if (p->state == match_state || p->saved_state == match_state)
->  		match = true;
->  	raw_spin_unlock_irq(&p->pi_lock);
->  
-> @@ -1129,11 +1127,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
->  		 * is actually now running somewhere else!
->  		 */
->  		while (task_running(rq, p)) {
-> -			if (match_state) {
-> -				if (!unlikely(check_task_state(p, match_state)))
-> -					return 0;
-> +			if (match_state && !check_task_state(p, match_state))
+> Ah, it was that "!unlikely(" that caused me to miss the '!'. That
+> should have been: likely(!check_task_state()). But anyway, I rather
+> just keep what you wrote and drop the unlikely altogether.
 
-Ah, it was that "!unlikely(" that caused me to miss the '!'. That
-should have been: likely(!check_task_state()). But anyway, I rather
-just keep what you wrote and drop the unlikely altogether.
+Maybe better would be to put the thing back inline, with a brief
+reference to the race.
 
-
->  				return 0;
-> -			}
->  			cpu_relax();
->  		}
->  
-> 
->  Any objections?
-> 
-
-Acked-by: Steven Rostedt <rostedt@goodmis.org>
-
--- Steve
+-Mike
