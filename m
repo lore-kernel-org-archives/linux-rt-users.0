@@ -1,48 +1,69 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.12.5-rt6
-Date: Tue, 17 Dec 2013 15:35:45 +0100
-Message-ID: <52B06141.5020803@linutronix.de>
-References: <20131216091431.GA13796@linutronix.de>  <1387264591.5340.23.camel@marge.simpson.net>  <20131217063156.6ac3bfed@gandalf.local.home>  <20131217124248.GA21694@linutronix.de>  <20131217091624.65be757c@gandalf.local.home> <1387290376.2399.11.camel@marge.simpson.net>
+From: Glenn Elliott <gelliott@cs.unc.edu>
+Subject: Re: Solving Nvidia (blob) latency spikes + convert (nvidia's) semaphores into mutexes patches for 331.20 [patches and links provided]
+Date: Tue, 17 Dec 2013 18:10:46 +0000 (UTC)
+Message-ID: <loom.20131217T190223-662@post.gmane.org>
+References: <CAOcfFMzTXoSBJm8Rss6XKugc5knfDfdNaYT34bV=N2qcqeKkeg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <bitbucket@online.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1387290376.2399.11.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from plane.gmane.org ([80.91.229.3]:56613 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755254Ab3LQSLJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Dec 2013 13:11:09 -0500
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1Vsz6q-0008SX-GN
+	for linux-rt-users@vger.kernel.org; Tue, 17 Dec 2013 19:11:08 +0100
+Received: from gelliott-lt.cs.unc.edu ([152.2.142.59])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2013 19:11:08 +0100
+Received: from gelliott by gelliott-lt.cs.unc.edu with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2013 19:11:08 +0100
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/17/2013 03:26 PM, Mike Galbraith wrote:
-> On Tue, 2013-12-17 at 09:16 -0500, Steven Rostedt wrote: 
->>
->>> @@ -1129,11 +1127,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
->>>  		 * is actually now running somewhere else!
->>>  		 */
->>>  		while (task_running(rq, p)) {
->>> -			if (match_state) {
->>> -				if (!unlikely(check_task_state(p, match_state)))
->>> -					return 0;
->>> +			if (match_state && !check_task_state(p, match_state))
->>
->> Ah, it was that "!unlikely(" that caused me to miss the '!'. That
->> should have been: likely(!check_task_state()). But anyway, I rather
->> just keep what you wrote and drop the unlikely altogether.
+jordan <triplesquarednine <at> gmail.com> writes:
+
 > 
-> Maybe better would be to put the thing back inline, with a brief
-> reference to the race.
+> Hey list,
+> 
+> I have been experimenting with the nvidia blob, monitoring behavior /
+> latencies, etc. Through some experimentation, googling/research and
+> looking over previous nvidia-rt/compat patches from all over the
+> interwebs; I've put together a few patches for the latest
+> nvidia-331.20 driver. (probably portable to older 3xx.xx series too).
+> You can obtain the patches from my Archlinux package (Arch User Repo)
+> - download the package and extract the patches from the tarball.
+> 
+> https://aur.archlinux.org/packages/nvidia-l-pa/
+> 
+> the PKGBUILD file, (which is a build script (for Arch/ABS pakcages)
+> much like bsd/ports, gentoo /portage for those unfamiliar) shows how I
+> patch/install the driver For Archlinux - although, obviously different
+> distros do this different - so; DISCLAIMER: I'm not the person to ask
+> for help :)
+> 
+> cheerz
+> 
+> Jordan
+> 
 
-There is similar code in
-- task_is_stopped_or_traced()
-- task_is_traced()
+Have you taken at the SteamOS beta release?  Apparently it's built on
+top of PREEMPT_RT.
 
-and I didn't get around to have one function for this stupid check
-since the check is always a little different.
+Link: http://www.phoronix.com/scan.php?page=news_item&px=MTU0MzY.
 
-> -Mike
+I believe NVIDIA has been involved in its development.  Hopefully this will
+mean NVIDIA will actively develop/test their driver on PREEMPT_RT.
 
-Sebastian
+Anyway, I was wondering if you had taken a peak at any NVIDIA GPL'ed code
+in SteamOS to see if they include  similar changes.  (The official driver version
+number is 331.20.
+
+Link: http://www.phoronix.com/scan.php? 
+page=article&item=steamos_linux_benchmarks&num=1
+
