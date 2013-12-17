@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.22-rt20
-Date: Mon, 16 Dec 2013 21:09:57 -0500
-Message-ID: <20131216210957.20241549@gandalf.local.home>
+Subject: [ANNOUNCE] 3.8.13.13-rt26
+Date: Mon, 16 Dec 2013 21:10:49 -0500
+Message-ID: <20131216211049.31d6ca0f@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,32 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.22-rt20 stable release.
+I'm pleased to announce the 3.8.13.13-rt26 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: 67a8032136484766fb109303006b4a2a20ce8abf
+  branch: v3.8-rt
+  Head SHA1: 97e7e161945d7fa1c3641d6c2f7ec1e7ef7d2eb8
 
 
-Or to build 3.10.22-rt20 directly, the following patches should be applied:
+Or to build 3.8.13.13-rt26 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.22.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.22-rt20.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/stable/patch-3.8.13.13.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.13-rt26.patch.xz
 
 
 
-You can also build from 3.10.22-rt19 by applying the incremental patch:
+You can also build from 3.8.13.13-rt25 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.22-rt19-rt20.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13.13-rt25-rt26.patch.xz
 
 
 
@@ -50,7 +52,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.10.22-rt19:
+Changes from v3.8.13.13-rt25:
 
 ---
 
@@ -65,7 +67,7 @@ Sebastian Siewior (1):
       net: make neigh_priv_len in struct net_device 16bit instead of 8bit
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.10.22-rt20
+      Linux 3.8.13.13-rt26
 
 Tiejun Chen (1):
       cpu_down: move migrate_enable() back
@@ -78,13 +80,13 @@ Tiejun Chen (1):
  include/linux/spinlock_rt.h                |  1 +
  kernel/cpu.c                               |  2 +-
  kernel/rtmutex.c                           | 31 +++++++++++++++++---
- kernel/softirq.c                           | 46 +++++++++++++++++++++++++++---
+ kernel/softirq.c                           | 45 ++++++++++++++++++++++++++++--
  kernel/timer.c                             |  2 +-
  localversion-rt                            |  2 +-
- 10 files changed, 78 insertions(+), 16 deletions(-)
+ 10 files changed, 78 insertions(+), 15 deletions(-)
 ---------------------------
 diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index 1f9cb55..a28f298 100644
+index 01624dc..b0f9d2c 100644
 --- a/drivers/net/wireless/orinoco/orinoco_usb.c
 +++ b/drivers/net/wireless/orinoco/orinoco_usb.c
 @@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
@@ -97,10 +99,10 @@ index 1f9cb55..a28f298 100644
  		}
  		break;
 diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index b6e9d91..35d9c53 100644
+index de3e266..5b2a068 100644
 --- a/drivers/usb/gadget/f_fs.c
 +++ b/drivers/usb/gadget/f_fs.c
-@@ -1282,7 +1282,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+@@ -1284,7 +1284,7 @@ static void ffs_data_put(struct ffs_data *ffs)
  		pr_info("%s(): freeing\n", __func__);
  		ffs_data_clear(ffs);
  		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
@@ -110,10 +112,10 @@ index b6e9d91..35d9c53 100644
  		kfree(ffs);
  	}
 diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index 570c005..c60233d 100644
+index 8ac840f..fe85df7 100644
 --- a/drivers/usb/gadget/inode.c
 +++ b/drivers/usb/gadget/inode.c
-@@ -340,7 +340,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+@@ -338,7 +338,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
  	spin_unlock_irq (&epdata->dev->lock);
  
  	if (likely (value == 0)) {
@@ -122,7 +124,7 @@ index 570c005..c60233d 100644
  		if (value != 0) {
  			spin_lock_irq (&epdata->dev->lock);
  			if (likely (epdata->ep != NULL)) {
-@@ -349,7 +349,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+@@ -347,7 +347,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
  				usb_ep_dequeue (epdata->ep, epdata->req);
  				spin_unlock_irq (&epdata->dev->lock);
  
@@ -132,10 +134,10 @@ index 570c005..c60233d 100644
  					epdata->status = -EINTR;
  			} else {
 diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 819923f..ba78526 100644
+index 0b58fd6..bc45789 100644
 --- a/include/linux/netdevice.h
 +++ b/include/linux/netdevice.h
-@@ -1139,7 +1139,7 @@ struct net_device {
+@@ -1123,7 +1123,7 @@ struct net_device {
  	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
  	unsigned char		addr_assign_type; /* hw address assignment type */
  	unsigned char		addr_len;	/* hardware address length	*/
@@ -157,10 +159,10 @@ index 0618387..b3c504b 100644
  extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
  extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
 diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 716c98b..c62ae01 100644
+index 98f2ea3..da6e128 100644
 --- a/kernel/cpu.c
 +++ b/kernel/cpu.c
-@@ -596,6 +596,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+@@ -594,6 +594,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
  		err = -EBUSY;
  		goto restore_cpus;
  	}
@@ -168,7 +170,7 @@ index 716c98b..c62ae01 100644
  
  	cpu_hotplug_begin();
  	err = cpu_unplug_begin(cpu);
-@@ -649,7 +650,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
+@@ -647,7 +648,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
  out_release:
  	cpu_unplug_done(cpu);
  out_cancel:
@@ -177,10 +179,10 @@ index 716c98b..c62ae01 100644
  	if (!err)
  		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 5d76634..0a64a90 100644
+index 20742e7..3825e1c 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -802,10 +802,8 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+@@ -801,10 +801,8 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
  /*
   * Slow path to release a rt_mutex spin_lock style
   */
@@ -192,7 +194,7 @@ index 5d76634..0a64a90 100644
  	debug_rt_mutex_unlock(lock);
  
  	rt_mutex_deadlock_account_unlock(current);
-@@ -824,6 +822,23 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+@@ -823,6 +821,23 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
  	rt_mutex_adjust_prio(current);
  }
  
@@ -216,7 +218,7 @@ index 5d76634..0a64a90 100644
  void __lockfunc rt_spin_lock(spinlock_t *lock)
  {
  	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -854,6 +869,13 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
+@@ -853,6 +868,13 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
  }
  EXPORT_SYMBOL(rt_spin_unlock);
  
@@ -230,7 +232,7 @@ index 5d76634..0a64a90 100644
  void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
  {
  	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-@@ -1057,7 +1079,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
+@@ -1056,7 +1078,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
  {
  	int ret = 0;
  
@@ -241,11 +243,11 @@ index 5d76634..0a64a90 100644
  
  	if (likely(rt_mutex_owner(lock) != current)) {
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 4cacbcd..541adf3 100644
+index 8447c8d..42b121f 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
-@@ -355,6 +355,44 @@ EXPORT_SYMBOL(local_bh_enable_ip);
- #define MAX_SOFTIRQ_TIME  msecs_to_jiffies(2)
+@@ -350,6 +350,44 @@ EXPORT_SYMBOL(local_bh_enable_ip);
+  */
  #define MAX_SOFTIRQ_RESTART 10
  
 +#ifdef CONFIG_TRACE_IRQFLAGS
@@ -289,7 +291,7 @@ index 4cacbcd..541adf3 100644
  asmlinkage void __do_softirq(void)
  {
  	__u32 pending;
-@@ -375,7 +413,7 @@ asmlinkage void __do_softirq(void)
+@@ -369,7 +407,7 @@ asmlinkage void __do_softirq(void)
  
  	__local_bh_disable((unsigned long)__builtin_return_address(0),
  			   SOFTIRQ_OFFSET);
@@ -298,44 +300,44 @@ index 4cacbcd..541adf3 100644
  
  	cpu = smp_processor_id();
  restart:
-@@ -393,8 +431,7 @@ restart:
+@@ -385,7 +423,7 @@ restart:
+ 	if (pending)
  		wakeup_softirqd();
- 	}
  
 -	lockdep_softirq_exit();
--
 +	lockdep_softirq_end();
- 	account_irq_exit_time(current);
+ 
+ 	vtime_account_irq_exit(current);
  	__local_bh_enable(SOFTIRQ_OFFSET);
- 	tsk_restore_flags(current, old_flags, PF_MEMALLOC);
-@@ -700,6 +737,7 @@ static inline void invoke_softirq(void)
+@@ -692,6 +730,7 @@ static inline void invoke_softirq(void)
  {
  #ifndef CONFIG_PREEMPT_RT_FULL
  	if (!force_irqthreads) {
 +		lockdep_softirq_from_hardirq();
- 		/*
- 		 * We can safely execute softirq on the current stack if
- 		 * it is the irq stack, because it should be near empty
-@@ -749,13 +787,13 @@ void irq_exit(void)
- #endif
- 
- 	account_irq_exit_time(current);
+ #ifdef __ARCH_IRQ_EXIT_IRQS_DISABLED
+ 		__do_softirq();
+ #else
+@@ -720,7 +759,6 @@ static inline void invoke_softirq(void)
+ void irq_exit(void)
+ {
+ 	vtime_account_irq_exit(current);
 -	trace_hardirq_exit();
- 	sub_preempt_count(HARDIRQ_OFFSET);
+ 	sub_preempt_count(IRQ_EXIT_OFFSET);
  	if (!in_interrupt() && local_softirq_pending())
  		invoke_softirq();
- 
- 	tick_irq_exit();
+@@ -731,6 +769,7 @@ void irq_exit(void)
+ 		tick_nohz_irq_exit();
+ #endif
  	rcu_irq_exit();
 +	trace_hardirq_exit(); /* must be last! */
+ 	sched_preempt_enable_no_resched();
  }
  
- void raise_softirq(unsigned int nr)
 diff --git a/kernel/timer.c b/kernel/timer.c
-index f53f592..48652cc 100644
+index 3bb957e..330221b 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -1400,7 +1400,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
+@@ -1398,7 +1398,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
  		expires = base->next_timer;
  	}
  #ifdef CONFIG_PREEMPT_RT_FULL
@@ -345,9 +347,9 @@ index f53f592..48652cc 100644
  	spin_unlock(&base->lock);
  #endif
 diff --git a/localversion-rt b/localversion-rt
-index 483ad77..e095ab8 100644
+index c5b71f9..2e9afd4 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt19
-+-rt20
+--rt25
++-rt26
