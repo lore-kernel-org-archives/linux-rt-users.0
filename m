@@ -1,353 +1,79 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.72-rt90
-Date: Mon, 16 Dec 2013 21:11:21 -0500
-Message-ID: <20131216211121.50ccbce7@gandalf.local.home>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [ANNOUNCE] 3.12.5-rt6
+Date: Tue, 17 Dec 2013 08:16:31 +0100
+Message-ID: <1387264591.5340.23.camel@marge.simpson.net>
+References: <20131216091431.GA13796@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20131216091431.GA13796@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Hi Sebastian,
 
-Dear RT Folks,
+Looks like there's a booboo here:
 
-I'm pleased to announce the 3.4.72-rt90 stable release.
+On Mon, 2013-12-16 at 10:14 +0100, Sebastian Andrzej Siewior wrote:
 
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index 22fa2e2..9c87a17 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -1115,9 +1129,11 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+>  		 * is actually now running somewhere else!
+>  		 */
+>  		while (task_running(rq, p)) {
+> -			if (match_state && unlikely(p->state != match_state)
+> -			    && unlikely(p->saved_state != match_state))
+> +			if (match_state) {
+> +				if (!unlikely(check_task_state(p, match_state)))
+> +					return 0;
+>  				return 0;
+> +			}
+>  			cpu_relax();
+>  		}
+>  
 
-You can get this release via the git tree at:
+"ptrace: fix ptrace vs tasklist_lock race" added.. 
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.4-rt
-  Head SHA1: 691eae354832e65db69742765fc5c20e9ffbb5ee
-
-
-Or to build 3.4.72-rt90 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.72.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.72-rt90.patch.xz
-
-
-
-You can also build from 3.4.72-rt89 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.72-rt89-rt90.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.4.72-rt89:
-
----
-
-Peter Zijlstra (1):
-      lockdep: Correctly annotate hardirq context in irq_exit()
-
-Sebastian Andrzej Siewior (2):
-      swait: Add a few more users
-      rtmutex: use a trylock for waiter lock in trylock
-
-Sebastian Siewior (1):
-      net: make neigh_priv_len in struct net_device 16bit instead of 8bit
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.4.72-rt90
-
-Tiejun Chen (1):
-      cpu_down: move migrate_enable() back
-
-----
- drivers/net/wireless/orinoco/orinoco_usb.c |  2 +-
- drivers/usb/gadget/f_fs.c                  |  2 +-
- drivers/usb/gadget/inode.c                 |  4 +--
- include/linux/netdevice.h                  |  2 +-
- include/linux/spinlock_rt.h                |  1 +
- kernel/cpu.c                               |  2 +-
- kernel/rtmutex.c                           | 31 +++++++++++++++++---
- kernel/softirq.c                           | 45 ++++++++++++++++++++++++++++--
- kernel/timer.c                             |  2 +-
- localversion-rt                            |  2 +-
- 10 files changed, 78 insertions(+), 15 deletions(-)
----------------------------
-diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index f634d45..8152c94 100644
---- a/drivers/net/wireless/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/orinoco/orinoco_usb.c
-@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
- 			while (!ctx->done.done && msecs--)
- 				udelay(1000);
- 		} else {
--			wait_event_interruptible(ctx->done.wait,
-+			swait_event_interruptible(ctx->done.wait,
- 						 ctx->done.done);
+@@ -1068,8 +1082,11 @@ unsigned long wait_task_inactive(struct
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
+-			if (match_state && unlikely(p->state != match_state))
++			if (match_state) {
++				if (!unlikely(check_task_state(p, match_state)))
++					return 0;
+ 				return 0;
++			}
+ 			cpu_relax();
  		}
- 		break;
-diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index f52cb1a..54ea4e9 100644
---- a/drivers/usb/gadget/f_fs.c
-+++ b/drivers/usb/gadget/f_fs.c
-@@ -1255,7 +1255,7 @@ static void ffs_data_put(struct ffs_data *ffs)
- 		pr_info("%s(): freeing\n", __func__);
- 		ffs_data_clear(ffs);
- 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
--		       waitqueue_active(&ffs->ep0req_completion.wait));
-+		       swaitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs);
- 	}
- }
-diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index e58b164..2dfd196 100644
---- a/drivers/usb/gadget/inode.c
-+++ b/drivers/usb/gadget/inode.c
-@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 	spin_unlock_irq (&epdata->dev->lock);
  
- 	if (likely (value == 0)) {
--		value = wait_event_interruptible (done.wait, done.done);
-+		value = swait_event_interruptible (done.wait, done.done);
- 		if (value != 0) {
- 			spin_lock_irq (&epdata->dev->lock);
- 			if (likely (epdata->ep != NULL)) {
-@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 				usb_ep_dequeue (epdata->ep, epdata->req);
- 				spin_unlock_irq (&epdata->dev->lock);
+..which is how it stays with the whole series applied.
+
+The patch contains hunk 2 from
+
+   "sched/rt: Fix wait_task_interactive() to test rt_spin_lock state",
+
+which went away in -rt6, so it seems the busted hunk should be as below
+if the two are to be merged.
+
+@@ -1068,8 +1082,10 @@ unsigned long wait_task_inactive(struct
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
+-			if (match_state && unlikely(p->state != match_state))
++			if (match_state && unlikely(p->state != match_state)
++			    && unlikely(p->saved_state != match_state))
+ 				return 0;
++			}
+ 			cpu_relax();
+ 		}
  
--				wait_event (done.wait, done.done);
-+				swait_event (done.wait, done.done);
- 				if (epdata->status == -ECONNRESET)
- 					epdata->status = -EINTR;
- 			} else {
-diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
-index 40940f5..65d8385 100644
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -1109,7 +1109,7 @@ struct net_device {
- 	unsigned char		perm_addr[MAX_ADDR_LEN]; /* permanent hw address */
- 	unsigned char		addr_assign_type; /* hw address assignment type */
- 	unsigned char		addr_len;	/* hardware address length	*/
--	unsigned char		neigh_priv_len;
-+	unsigned short		neigh_priv_len;
- 	unsigned short          dev_id;		/* for shared network cards */
- 
- 	spinlock_t		addr_list_lock;
-diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-index 0618387..b3c504b 100644
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -22,6 +22,7 @@ extern void __lockfunc rt_spin_lock(spinlock_t *lock);
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
- extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
-+extern void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock);
- extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
- extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
- extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index c18c25e..4e3b7c5 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -545,6 +545,7 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- 		err = -EBUSY;
- 		goto restore_cpus;
- 	}
-+	migrate_enable();
- 
- 	cpu_hotplug_begin();
- 	err = cpu_unplug_begin(cpu);
-@@ -597,7 +598,6 @@ static int __ref _cpu_down(unsigned int cpu, int tasks_frozen)
- out_release:
- 	cpu_unplug_done(cpu);
- out_cancel:
--	migrate_enable();
- 	cpu_hotplug_done();
- 	if (!err)
- 		cpu_notify_nofail(CPU_POST_DEAD | mod, hcpu);
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 20742e7..3825e1c 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -801,10 +801,8 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
- /*
-  * Slow path to release a rt_mutex spin_lock style
-  */
--static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
- {
--	raw_spin_lock(&lock->wait_lock);
--
- 	debug_rt_mutex_unlock(lock);
- 
- 	rt_mutex_deadlock_account_unlock(current);
-@@ -823,6 +821,23 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 	rt_mutex_adjust_prio(current);
- }
- 
-+static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+{
-+	raw_spin_lock(&lock->wait_lock);
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
-+static void  noinline __sched rt_spin_lock_slowunlock_hirq(struct rt_mutex *lock)
-+{
-+	int ret;
-+
-+	do {
-+		ret = raw_spin_trylock(&lock->wait_lock);
-+	} while (!ret);
-+
-+	__rt_spin_lock_slowunlock(lock);
-+}
-+
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-@@ -853,6 +868,13 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
- }
- EXPORT_SYMBOL(rt_spin_unlock);
- 
-+void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock)
-+{
-+	/* NOTE: we always pass in '1' for nested, for simplicity */
-+	spin_release(&lock->dep_map, 1, _RET_IP_);
-+	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_hirq);
-+}
-+
- void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
- {
- 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-@@ -1056,7 +1078,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
- {
- 	int ret = 0;
- 
--	raw_spin_lock(&lock->wait_lock);
-+	if (!raw_spin_trylock(&lock->wait_lock))
-+		return ret;
- 	init_lists(lock);
- 
- 	if (likely(rt_mutex_owner(lock) != current)) {
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 34fe1db..c2c6bc8 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -297,6 +297,44 @@ EXPORT_SYMBOL(local_bh_enable_ip);
-  */
- #define MAX_SOFTIRQ_RESTART 10
- 
-+#ifdef CONFIG_TRACE_IRQFLAGS
-+/*
-+ * Convoluted means of passing __do_softirq() a message through the various
-+ * architecture execute_on_stack() bits.
-+ *
-+ * When we run softirqs from irq_exit() and thus on the hardirq stack we need
-+ * to keep the lockdep irq context tracking as tight as possible in order to
-+ * not miss-qualify lock contexts and miss possible deadlocks.
-+ */
-+static DEFINE_PER_CPU(int, softirq_from_hardirq);
-+
-+static inline void lockdep_softirq_from_hardirq(void)
-+{
-+	this_cpu_write(softirq_from_hardirq, 1);
-+}
-+
-+static inline void lockdep_softirq_start(void)
-+{
-+	if (this_cpu_read(softirq_from_hardirq))
-+		trace_hardirq_exit();
-+	lockdep_softirq_enter();
-+}
-+
-+static inline void lockdep_softirq_end(void)
-+{
-+	lockdep_softirq_exit();
-+	if (this_cpu_read(softirq_from_hardirq)) {
-+		this_cpu_write(softirq_from_hardirq, 0);
-+		trace_hardirq_enter();
-+	}
-+}
-+
-+#else
-+static inline void lockdep_softirq_from_hardirq(void) { }
-+static inline void lockdep_softirq_start(void) { }
-+static inline void lockdep_softirq_end(void) { }
-+#endif
-+
- asmlinkage void __do_softirq(void)
- {
- 	__u32 pending;
-@@ -308,7 +346,7 @@ asmlinkage void __do_softirq(void)
- 
- 	__local_bh_disable((unsigned long)__builtin_return_address(0),
- 			   SOFTIRQ_OFFSET);
--	lockdep_softirq_enter();
-+	lockdep_softirq_start();
- 
- 	cpu = smp_processor_id();
- restart:
-@@ -324,7 +362,7 @@ restart:
- 	if (pending)
- 		wakeup_softirqd();
- 
--	lockdep_softirq_exit();
-+	lockdep_softirq_end();
- 
- 	account_system_vtime(current);
- 	__local_bh_enable(SOFTIRQ_OFFSET);
-@@ -582,6 +620,7 @@ static inline void invoke_softirq(void)
- {
- #ifndef CONFIG_PREEMPT_RT_FULL
- 	if (!force_irqthreads) {
-+		lockdep_softirq_from_hardirq();
- #ifdef __ARCH_IRQ_EXIT_IRQS_DISABLED
- 		__do_softirq();
- #else
-@@ -604,7 +643,6 @@ static inline void invoke_softirq(void)
- void irq_exit(void)
- {
- 	account_system_vtime(current);
--	trace_hardirq_exit();
- 	sub_preempt_count(IRQ_EXIT_OFFSET);
- 	if (!in_interrupt() && local_softirq_pending())
- 		invoke_softirq();
-@@ -615,6 +653,7 @@ void irq_exit(void)
- 		tick_nohz_irq_exit();
- #endif
- 	rcu_irq_exit();
-+	trace_hardirq_exit(); /* must be last! */
- 	sched_preempt_enable_no_resched();
- }
- 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 78f07e5..fb1c00d 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1386,7 +1386,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
- 		if (time_before_eq(base->next_timer, base->timer_jiffies))
- 			base->next_timer = __next_timer_interrupt(base);
- 		expires = base->next_timer;
--		rt_spin_unlock(&base->lock);
-+		rt_spin_unlock_after_trylock_in_irq(&base->lock);
- 	} else {
- 		expires = now + 1;
- 	}
-diff --git a/localversion-rt b/localversion-rt
-index d2a4022..cda29c6 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt89
-+-rt90
