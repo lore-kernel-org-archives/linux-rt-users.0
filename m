@@ -1,69 +1,83 @@
-From: Glenn Elliott <gelliott@cs.unc.edu>
-Subject: Re: Solving Nvidia (blob) latency spikes + convert (nvidia's) semaphores into mutexes patches for 331.20 [patches and links provided]
-Date: Tue, 17 Dec 2013 18:10:46 +0000 (UTC)
-Message-ID: <loom.20131217T190223-662@post.gmane.org>
-References: <CAOcfFMzTXoSBJm8Rss6XKugc5knfDfdNaYT34bV=N2qcqeKkeg@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 3.12.5-rt7
+Date: Tue, 17 Dec 2013 20:26:46 +0100
+Message-ID: <20131217192646.GA1710@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:56613 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755254Ab3LQSLJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Dec 2013 13:11:09 -0500
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1Vsz6q-0008SX-GN
-	for linux-rt-users@vger.kernel.org; Tue, 17 Dec 2013 19:11:08 +0100
-Received: from gelliott-lt.cs.unc.edu ([152.2.142.59])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2013 19:11:08 +0100
-Received: from gelliott by gelliott-lt.cs.unc.edu with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Dec 2013 19:11:08 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-jordan <triplesquarednine <at> gmail.com> writes:
+Dear RT folks!
 
-> 
-> Hey list,
-> 
-> I have been experimenting with the nvidia blob, monitoring behavior /
-> latencies, etc. Through some experimentation, googling/research and
-> looking over previous nvidia-rt/compat patches from all over the
-> interwebs; I've put together a few patches for the latest
-> nvidia-331.20 driver. (probably portable to older 3xx.xx series too).
-> You can obtain the patches from my Archlinux package (Arch User Repo)
-> - download the package and extract the patches from the tarball.
-> 
-> https://aur.archlinux.org/packages/nvidia-l-pa/
-> 
-> the PKGBUILD file, (which is a build script (for Arch/ABS pakcages)
-> much like bsd/ports, gentoo /portage for those unfamiliar) shows how I
-> patch/install the driver For Archlinux - although, obviously different
-> distros do this different - so; DISCLAIMER: I'm not the person to ask
-> for help :)
-> 
-> cheerz
-> 
-> Jordan
-> 
+I'm pleased to announce the v3.12.5-rt7 patch set.
 
-Have you taken at the SteamOS beta release?  Apparently it's built on
-top of PREEMPT_RT.
+Changes since v3.12.5-rt6
+- the ptrace fix got a little wrong in check_task_state() and we had two
+  return 0 which ensured that ptrace did not work. Noticed by Mike
+  Galbraith.
 
-Link: http://www.phoronix.com/scan.php?page=news_item&px=MTU0MzY.
+Known issues:
 
-I believe NVIDIA has been involved in its development.  Hopefully this will
-mean NVIDIA will actively develop/test their driver on PREEMPT_RT.
+      - bcache is disabled.
 
-Anyway, I was wondering if you had taken a peak at any NVIDIA GPL'ed code
-in SteamOS to see if they include  similar changes.  (The official driver version
-number is 331.20.
+      - Brian Silverman reported a BUG (via Debian BTS) where gdb's
+        record command does something nasty and causes a double fault on
+        x86-64 kernel with 32bit userland (the debugged application).
+        32bit and 64bit setup are not kernels are not affected. As far
+        as I understand the problem so far, it is limited to x86.
 
-Link: http://www.phoronix.com/scan.php? 
-page=article&item=steamos_linux_benchmarks&num=1
+The delta patch against v3.12.5-rt6 is appended below and can be found
+here:
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.5-rt6-rt7.patch.xz
 
+The RT patch against 3.12.5 can be found here:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.5-rt7.patch.xz
+
+The split quilt queue is available at:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patches-3.12.5-rt7.tar.xz
+
+Sebastian
+
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 9c87a17..b69f280 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1076,9 +1076,7 @@ static bool check_task_state(struct task_struct *p, long match_state)
+ 	bool match = false;
+ 
+ 	raw_spin_lock_irq(&p->pi_lock);
+-	if (p->state == match_state)
+-		match = true;
+-	else if (p->saved_state == match_state)
++	if (p->state == match_state || p->saved_state == match_state)
+ 		match = true;
+ 	raw_spin_unlock_irq(&p->pi_lock);
+ 
+@@ -1129,11 +1127,8 @@ unsigned long wait_task_inactive(struct task_struct *p, long match_state)
+ 		 * is actually now running somewhere else!
+ 		 */
+ 		while (task_running(rq, p)) {
+-			if (match_state) {
+-				if (!unlikely(check_task_state(p, match_state)))
+-					return 0;
++			if (match_state && !check_task_state(p, match_state))
+ 				return 0;
+-			}
+ 			cpu_relax();
+ 		}
+ 
+diff --git a/localversion-rt b/localversion-rt
+index 8fc605d..0454789 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt6
++-rt7
