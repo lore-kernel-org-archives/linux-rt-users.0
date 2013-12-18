@@ -1,64 +1,38 @@
-From: Tiejun Chen <tiejun.chen@windriver.com>
-Subject: [v2 PATCH] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-Date: Wed, 18 Dec 2013 17:51:49 +0800
-Message-ID: <1387360309-12801-1-git-send-email-tiejun.chen@windriver.com>
-Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>
-To: <bigeasy@linutronix.de>, <tglx@linutronix.de>
+From: Allen Pais <allen.pais@oracle.com>
+Subject: [PATCH 0/4] PREEMPT_RT support for sparc64
+Date: Wed, 18 Dec 2013 15:59:40 +0530
+Message-ID: <1387362584-29249-1-git-send-email-allen.pais@oracle.com>
+Cc: bigeasy@linutronix.de, Allen Pais <allen.pais@oracle.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:49968 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752301Ab3LRJwH (ORCPT
+Received: from aserp1040.oracle.com ([141.146.126.69]:43626 "EHLO
+	aserp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751320Ab3LRKaH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Dec 2013 04:52:07 -0500
+	Wed, 18 Dec 2013 05:30:07 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Any callers to the function rcu_preempt_qs() must disable irqs in
-order to protect the assignment to ->rcu_read_unlock_special. In
-RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
-in some scenarios where irq is enabled, like this path,
+PREEMPT_RT support for sparc64
+All the patches are based on v3.10.24-rt22
+commit e88b1c51941d964e77ef7e9099075ae2e8dafd75
 
-do_single_softirq()
-    |
-    + local_irq_enable();
-    + handle_softirq()
-    |    |
-    |    + rcu_bh_qs()
-    |        |
-    |        + rcu_preempt_qs()
-    |
-    + local_irq_disable()
+Have tested it on UltraSparc T4 (Niagara4). 
 
-So here we'd better disable irq directly inside of rcu_bh_qs() to
-fix this, otherwise the kernel may be freezable sometimes as
-observed. And especially this way is also kind and safe for the
-potential rcu_bh_qs() usage elsewhere in the future.
+Allen Pais (4):
+  [V1] sparc64: use generic rwsem spinlocks rt
+  [V1] sparc64: support forced irq threading
+  [V1] sparc64: convert spinloc_t to raw_spinlock_t in mmu_context_t
+  [V1] sparc64: convert ctx_alloc_lock raw_spinlock_t
 
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
----
- kernel/rcutree.c |    5 +++++
- 1 file changed, 5 insertions(+)
+ arch/sparc/Kconfig                      |    7 +++----
+ arch/sparc/include/asm/mmu_64.h         |    2 +-
+ arch/sparc/include/asm/mmu_context_64.h |   10 +++++-----
+ arch/sparc/kernel/smp_64.c              |    4 ++--
+ arch/sparc/mm/init_64.c                 |   14 +++++++-------
+ arch/sparc/mm/tsb.c                     |   20 ++++++++++----------
+ 6 files changed, 28 insertions(+), 29 deletions(-)
 
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 7ec834d..6f6d133 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
- 
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
- }
- #else
- void rcu_bh_qs(int cpu)
 -- 
-1.7.9.5
+1.7.10.4
 
