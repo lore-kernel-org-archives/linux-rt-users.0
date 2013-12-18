@@ -1,49 +1,64 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.74-rt92
-Date: Tue, 17 Dec 2013 22:54:06 -0500
-Message-ID: <20131217225406.3fd62e60@gandalf.local.home>
+From: Tiejun Chen <tiejun.chen@windriver.com>
+Subject: [v2 PATCH] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+Date: Wed, 18 Dec 2013 17:51:49 +0800
+Message-ID: <1387360309-12801-1-git-send-email-tiejun.chen@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>
+To: <bigeasy@linutronix.de>, <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail1.windriver.com ([147.11.146.13]:49968 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752301Ab3LRJwH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 18 Dec 2013 04:52:07 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Any callers to the function rcu_preempt_qs() must disable irqs in
+order to protect the assignment to ->rcu_read_unlock_special. In
+RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
+in some scenarios where irq is enabled, like this path,
 
-Dear RT Folks,
+do_single_softirq()
+    |
+    + local_irq_enable();
+    + handle_softirq()
+    |    |
+    |    + rcu_bh_qs()
+    |        |
+    |        + rcu_preempt_qs()
+    |
+    + local_irq_disable()
 
-I'm pleased to announce the 3.4.74-rt92 stable release.
+So here we'd better disable irq directly inside of rcu_bh_qs() to
+fix this, otherwise the kernel may be freezable sometimes as
+observed. And especially this way is also kind and safe for the
+potential rcu_bh_qs() usage elsewhere in the future.
 
+Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
+---
+ kernel/rcutree.c |    5 +++++
+ 1 file changed, 5 insertions(+)
 
-This release is just an update to the new stable 3.4.74 version
-and no RT specific changes have been made.
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 7ec834d..6f6d133 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
+ 
+ void rcu_bh_qs(int cpu)
+ {
++	unsigned long flags;
++
++	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
++	local_irq_save(flags);
+ 	rcu_preempt_qs(cpu);
++	local_irq_restore(flags);
+ }
+ #else
+ void rcu_bh_qs(int cpu)
+-- 
+1.7.9.5
 
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.4-rt
-  Head SHA1: cfc23e00c070e50b700233591d8e81c46c18885a
-
-
-Or to build 3.4.74-rt92 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.74.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.74-rt92.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
