@@ -1,158 +1,70 @@
 From: Henrik Austad <henrik-RT+80VE2nyv1P9xLtpHBDw@public.gmane.org>
-Subject: [PATCH 09/10] iwlwifi: pcie: move interrupt prints to the common handler
-Date: Thu, 19 Dec 2013 00:26:04 +0100
-Message-ID: <1387409165-28319-10-git-send-email-henrik@austad.us>
-References: <1387409165-28319-1-git-send-email-henrik@austad.us>
-Cc: linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+Subject: [PATCH 00/10] update of make iwlwifi RT friendly
+Date: Thu, 19 Dec 2013 00:25:55 +0100
+Message-ID: <1387409165-28319-1-git-send-email-henrik@austad.us>
+Cc: linux-wireless-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, Henrik Austad <henrik-RT+80VE2nyv1P9xLtpHBDw@public.gmane.org>
 To: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 Return-path: <linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1387409165-28319-1-git-send-email-henrik-RT+80VE2nyv1P9xLtpHBDw@public.gmane.org>
 Sender: linux-wireless-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
+This is a move of the series posted by Emmanuel a few days ago to the
+tip of Linus' master. It also applies pretty easily to 3.12.5-rt5
 
-Handling interrupt with no cause and printing logs doesn't
-need to be ICT / non-ICT specific move this to the common
-code.
+0010: iwlwifi: pcie: stop using _irqsave
+  * There's no function iwl_trans_pcie_op_mode_leave(), instead
+    iwl_trans_pcie_stop_hw() was updated
 
-Change-Id: I741894a8079faf0bf192a63ea5f40de5d08c433c
-Signed-off-by: Emmanuel Grumbach <emmanuel.grumbach-ral2JQCrhuEAvxtiuMwx3w@public.gmane.org>
----
- drivers/net/wireless/iwlwifi/pcie/rx.c |   93 +++++++++++---------------------
- 1 file changed, 31 insertions(+), 62 deletions(-)
+A part from that, the port was relatively straight forward, but someone
+should probably have a look to make sure I didn't miss anything
 
-diff --git a/drivers/net/wireless/iwlwifi/pcie/rx.c b/drivers/net/wireless/iwlwifi/pcie/rx.c
-index 4678957..0977ed5 100644
---- a/drivers/net/wireless/iwlwifi/pcie/rx.c
-+++ b/drivers/net/wireless/iwlwifi/pcie/rx.c
-@@ -822,45 +822,6 @@ static u32 iwl_pcie_int_cause_non_ict(struct iwl_trans *trans)
- 	/* Discover which interrupts are active/pending */
- 	inta = iwl_read32(trans, CSR_INT);
- 
--	if (inta & (~trans_pcie->inta_mask)) {
--		IWL_DEBUG_ISR(trans,
--			      "We got a masked interrupt (0x%08x)...Ack and ignore\n",
--			      inta & (~trans_pcie->inta_mask));
--		iwl_write32(trans, CSR_INT, inta & (~trans_pcie->inta_mask));
--		inta &= trans_pcie->inta_mask;
--	}
--
--	/* Ignore interrupt if there's nothing in NIC to service.
--	 * This may be due to IRQ shared with another device,
--	 * or due to sporadic interrupts thrown from our NIC. */
--	if (!inta) {
--		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
--		goto none;
--	}
--
--	if ((inta == 0xFFFFFFFF) || ((inta & 0xFFFFFFF0) == 0xa5a5a5a0)) {
--		/* Hardware disappeared. It might have already raised
--		 * an interrupt */
--		IWL_WARN(trans, "HARDWARE GONE?? INTA == 0x%08x\n", inta);
--		return inta;
--	}
--
--	if (iwl_have_debug_level(IWL_DL_ISR))
--		IWL_DEBUG_ISR(trans,
--			      "ISR inta 0x%08x, enabled 0x%08x, fh 0x%08x\n",
--			      inta, trans_pcie->inta_mask,
--			      iwl_read32(trans, CSR_FH_INT_STATUS));
--
--	/* the thread will service interrupts and re-enable them */
--	if (likely(inta))
--		return inta;
--
--none:
--	/* re-enable interrupts here since we don't have anything to service. */
--	/* only Re-enable if disabled by irq  and no schedules tasklet. */
--	if (test_bit(STATUS_INT_ENABLED, &trans_pcie->status) && !inta)
--		iwl_enable_interrupts(trans);
--
- 	return inta;
- }
- 
-@@ -891,10 +852,8 @@ static u32 iwl_pcie_int_cause_ict(struct iwl_trans *trans)
- 	 * or due to sporadic interrupts thrown from our NIC. */
- 	read = le32_to_cpu(trans_pcie->ict_tbl[trans_pcie->ict_index]);
- 	trace_iwlwifi_dev_ict_read(trans->dev, trans_pcie->ict_index, read);
--	if (!read) {
--		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
--		goto none;
--	}
-+	if (!read)
-+		return 0;
- 
- 	/*
- 	 * Collect all entries up to the first 0, starting from ict_index;
-@@ -928,25 +887,6 @@ static u32 iwl_pcie_int_cause_ict(struct iwl_trans *trans)
- 		val |= 0x8000;
- 
- 	inta = (0xff & val) | ((0xff00 & val) << 16);
--	IWL_DEBUG_ISR(trans, "ISR inta 0x%08x, enabled(sw) 0x%08x ict 0x%08x\n",
--		      inta, trans_pcie->inta_mask, val);
--	if (iwl_have_debug_level(IWL_DL_ISR))
--		IWL_DEBUG_ISR(trans, "enabled(hw) 0x%08x\n",
--			      iwl_read32(trans, CSR_INT_MASK));
--
--	inta &= trans_pcie->inta_mask;
--
--	/* iwl_pcie_tasklet() will service interrupts and re-enable them */
--	if (likely(inta))
--		return inta;
--
-- none:
--	/* re-enable interrupts here since we don't have anything to service.
--	 * only Re-enable if disabled by irq.
--	 */
--	if (test_bit(STATUS_INT_ENABLED, &trans_pcie->status) && !inta)
--		iwl_enable_interrupts(trans);
--
- 	return inta;
- }
- 
-@@ -972,11 +912,40 @@ irqreturn_t iwl_pcie_irq_handler(int irq, void *dev_id)
- 	else
- 		inta = iwl_pcie_int_cause_non_ict(trans);
- 
-+	if (iwl_have_debug_level(IWL_DL_ISR)) {
-+		IWL_DEBUG_ISR(trans,
-+					  "ISR inta 0x%08x, enabled 0x%08x(sw), enabled(hw) 0x%08x, fh 0x%08x\n",
-+					  inta, trans_pcie->inta_mask,
-+					  iwl_read32(trans, CSR_INT_MASK),
-+					  iwl_read32(trans, CSR_FH_INT_STATUS));
-+		if (inta & (~trans_pcie->inta_mask))
-+			IWL_DEBUG_ISR(trans,
-+				      "We got a masked interrupt (0x%08x)\n",
-+				      inta & (~trans_pcie->inta_mask));
-+	}
-+
-+	inta &= trans_pcie->inta_mask;
-+
-+	/*
-+	 * Ignore interrupt if there's nothing in NIC to service.
-+	 * This may be due to IRQ shared with another device,
-+	 * or due to sporadic interrupts thrown from our NIC.\
-+	 */
- 	if (!inta) {
-+		IWL_DEBUG_ISR(trans, "Ignore interrupt, inta == 0\n");
-+		/* Re-enable interrupts here since we don't have anything to service */
-+		if (test_bit(STATUS_INT_ENABLED, &trans_pcie->status))
-+			iwl_enable_interrupts(trans);
- 		spin_unlock_irqrestore(&trans_pcie->irq_lock, flags);
- 		return IRQ_NONE;
- 	}
- 
-+	if ((inta == 0xFFFFFFFF) || ((inta & 0xFFFFFFF0) == 0xa5a5a5a0)) {
-+		/* Hardware disappeared. It might have already raised an interrupt */
-+		IWL_WARN(trans, "HARDWARE GONE?? INTA == 0x%08x\n", inta);
-+	}
-+
-+
- 	/* Ack/clear/reset pending uCode interrupts.
- 	 * Note:  Some bits in CSR_INT are "OR" of bits in CSR_FH_INT_STATUS,
- 	 */
+So, some tests on my laptop (Lenovo X220, i5-2520M)
+
+3.12.1-rt4 (which has Sebastians iwlwifi workaround):
+
+cyclictest -p80 -i 1000 -l500000 -a -n -m -t2
+# /dev/cpu_dma_latency set to 0us
+policy: fifo: loadavg: 0.40 2.19 1.69 2/513 4682
+
+T: 0 ( 4118) P:80 I:1000 C: 500000 Min:      2 Act:   12 Avg:    8 Max:      47
+T: 1 ( 4119) P:80 I:1500 C: 333338 Min:      2 Act:   20 Avg:   11 Max:      49
+
+Over time (~6hr run), Max grew to about 300us
+
+3.12.5-rt6 (with the iwlwifi patches):
+cyclictest -p80 -i 1000 -a -n -m -t2
+# /dev/cpu_dma_latency set to 0us
+policy: fifo: loadavg: 0.35 0.44 0.40 2/518 4244
+
+T: 0 ( 3132) P:80 I:1000 C:1492239 Min:      2 Act:    3 Avg:    2 Max:    3089
+T: 1 ( 3133) P:80 I:1500 C: 994824 Min:      2 Act:    3 Avg:    4 Max:    2206
+
+Granted, this was a longer run, but a 3ms spike is pretty awful. Still
+trying to recreate that with traces running, but no luck so
+far. Removing the iwlwifi module gives low values for cyclictest,
+consistent with 3.12.1-rt4 (with iwlwifi disabled).
+
+
+
+Emmanuel Grumbach (10):
+  iwlwifi: pcie: clean up ICT allocation code
+  iwlwifi: pcie: track interrupt mask in SW
+  iwlwifi: pcie: re-organize the PCIe ISR code
+  iwlwifi: pcie: move the ICT / non-ICT handling functions
+  iwlwifi: pcie: read the interrupt cause from the handler
+  iwlwifi: pcie: determine the interrupt type in the handler
+  iwlwifi: pcie: return inta from iwl_pcie_int_cause_{non_}ict
+  iwlwifi: pcie: no need to save inta in trans_pcie
+  iwlwifi: pcie: move interrupt prints to the common handler
+  iwlwifi: pcie: stop using _irqsave
+
+ drivers/net/wireless/iwlwifi/iwl-csr.h       |    3 +-
+ drivers/net/wireless/iwlwifi/pcie/internal.h |    9 +-
+ drivers/net/wireless/iwlwifi/pcie/rx.c       |  393 +++++++++++---------------
+ drivers/net/wireless/iwlwifi/pcie/trans.c    |   25 +-
+ drivers/net/wireless/iwlwifi/pcie/tx.c       |   10 +-
+ 5 files changed, 184 insertions(+), 256 deletions(-)
+
 -- 
 1.7.10.4
 
