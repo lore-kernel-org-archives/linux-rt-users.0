@@ -1,100 +1,56 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: Applying rt-patches
-Date: Thu, 19 Dec 2013 10:05:38 +0100
-Message-ID: <20131219090538.GA7167@austad.us>
-References: <15AE5A936F5E3A42A9144E66875A0A8938ADEC@server1-derijp.CLB-Benelux.lokaal>
+From: Luis Henriques <luis.henriques@canonical.com>
+Subject: Re: [PATCH linux-3.10.y] ip6tnl: fix use after free of fb_tnl_dev
+Date: Thu, 19 Dec 2013 10:07:52 +0000
+Message-ID: <20131219100752.GA3866@hercules>
+References: <20131212.153545.1184197791301496227.davem@davemloft.net>
+ <1386925595-4995-1-git-send-email-nicolas.dichtel@6wind.com>
+ <20131217.144002.1716319550180883592.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="sdtB3X0nJg68CQEu"
-Cc: linux-rt-users@vger.kernel.org
-To: Ruud Commandeur <RCommandeur@clb.nl>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f46.google.com ([74.125.83.46]:34554 "EHLO
-	mail-ee0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750807Ab3LSJGs (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Dec 2013 04:06:48 -0500
-Received: by mail-ee0-f46.google.com with SMTP id d49so315460eek.33
-        for <linux-rt-users@vger.kernel.org>; Thu, 19 Dec 2013 01:06:47 -0800 (PST)
+Content-Type: text/plain; charset=us-ascii
+Cc: nicolas.dichtel@6wind.com, netdev@vger.kernel.org,
+	gregkh@linuxfoundation.org, rostedt@goodmis.org,
+	linux-kernel@vger.kernel.org, stable@vger.kernel.org,
+	williams@redhat.com, linux-rt-users@vger.kernel.org,
+	lclaudio@uudg.org
+To: David Miller <davem@davemloft.net>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <15AE5A936F5E3A42A9144E66875A0A8938ADEC@server1-derijp.CLB-Benelux.lokaal>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20131217.144002.1716319550180883592.davem@davemloft.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+On Tue, Dec 17, 2013 at 02:40:02PM -0500, David Miller wrote:
+> From: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+> Date: Fri, 13 Dec 2013 10:06:35 +0100
+> 
+> > The upstream commit bb8140947a24 ("ip6tnl: allow to use rtnl ops on fb tunnel")
+> > (backported into linux-3.10.y) left a bug which was fixed upstream by commit
+> > 1e9f3d6f1c40 ("ip6tnl: fix use after free of fb_tnl_dev").
+> > 
+> > The problem is a bit different in linux-3.10.y, because there is no x-netns
+> > support (upstream commit 0bd8762824e7 ("ip6tnl: add x-netns support")).
+> > When ip6_tunnel.ko is unloaded, FB device is deleted by rtnl_link_unregister()
+> > and then we try to delete it again in ip6_tnl_destroy_tunnels().
+> > 
+> > This patch removes the second deletion.
+> > 
+> > Reported-by: Steven Rostedt <rostedt@goodmis.org>
+> > Suggested-by: Steven Rostedt <rostedt@goodmis.org>
+> > Signed-off-by: Nicolas Dichtel <nicolas.dichtel@6wind.com>
+> 
+> Greg please queue this up for 3.10 -stable if you haven't already.
+
+As I'm picking the networking patches into the 3.11 kernel as well, I
+believe this fix is also applicable.  I'm queuing it for the 3.11 kernel.
+
+Cheers,
+--
+Luis
 
 
---sdtB3X0nJg68CQEu
-Content-Type: text/plain; charset=utf-8
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-On Thu, Dec 19, 2013 at 09:35:33AM +0100, Ruud Commandeur wrote:
-> Hi Everyone,
-
-Hi Ruud,
-
-> I'm using the Linux 3.10.x kernel for a while in an ARM9 embedded
-> system. I keep this kernel up-to-date by using incremental patches, with
-> 3.10.24 being the last version. I'm thinking of switching to the
-> RT-kernel for better real-time behavior, but I have a few questions how
-> to do that:
-> =20
-> On a clean 3.10.24 kernel, I assume I should use the
-> "patch-3.10.24-rt22.patch" archive (or the "patches-3.10.24-rt22" for a
-> collection of single patch files).
-
-Yes, that is correct.
-
-> But what if a 3.10.25 kernel is released? Should I first apply the
-> incremental patch for the kernel and then the incremental patch for the
-> rt-part? Or should the 3.10.24-rt patch be reverted before applying the
-> kernel patch to prevent conflicts?
-
-Hmm, _personally_ I just use git and check out a new stable-branch and then=
-=20
-apply the corresponding -rtX patch on top of that. It=CD=84's a pretty big=
-=20
-hammer, but it removes a lot of potentional snags (me being butterfingered=
-=20
-an' all :)
-
-If you have a set of local commits you want to carry with you, using the=20
-broken out rt-patches and 'git quiltimport' lets you quickly get everything=
-=20
-into a branch.  Then you can cherry-pick the changes you want to add on top=
-=20
-of that.
-
-At least, this is -my- approach to the matter.
-
-I also know that ro(a)sted keeps a git-repo which he moves forward, so you=
-=20
-could add your own, local changes to it and just track using 'git pull=20
---rebase' or some variant thereof. YMMW and all.
-=20
-> Sorry if the answer to my questions would be somewhere in the Wiki, I
-> was not able to find it myself up till now.
-
-I think this is pretty much down to what works best for you, applying the=
-=20
-incremental patches should probably work too, but I've never tried that=20
-approach myself. I just use the increments to track changes from one -rtX=
-=20
-to the next.
-
-
---=20
-Henrik Austad
-
---sdtB3X0nJg68CQEu
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iEYEARECAAYFAlKytuIACgkQ6k5VT6v45lm/UACfdb0eaRw1sNoST78UkA3bb7fN
-ujEAoOUITcS/0sRmD92/vuczGuQswQ10
-=SFNT
------END PGP SIGNATURE-----
-
---sdtB3X0nJg68CQEu--
+> 
+> Thanks a lot.
+> --
+> To unsubscribe from this list: send the line "unsubscribe stable" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
