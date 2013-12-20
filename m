@@ -1,30 +1,29 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.12.5 CRASH/FREEZE
-Date: Fri, 20 Dec 2013 16:05:59 +0100
-Message-ID: <52B45CD7.5030404@linutronix.de>
-References: <52A9CC77.20904@linaro.org> <52AA1CC0.30307@pavlinux.ru> <20131220141008.GE10249@linutronix.de> <52B45AEB.2060508@pavlinux.ru>
+From: Allen Pais <allen.pais@oracle.com>
+Subject: Re: [PATCH 2/4] [V1] sparc64: support forced irq threading
+Date: Fri, 20 Dec 2013 20:48:50 +0530
+Message-ID: <52B45FDA.1060204@oracle.com>
+References: <1387362584-29249-1-git-send-email-allen.pais@oracle.com> <1387362584-29249-3-git-send-email-allen.pais@oracle.com> <20131220134120.GD10249@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: pavel@pavlinux.ru
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <52B45AEB.2060508@pavlinux.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from userp1040.oracle.com ([156.151.31.81]:23446 "EHLO
+	userp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753271Ab3LTPTG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 20 Dec 2013 10:19:06 -0500
+In-Reply-To: <20131220134120.GD10249@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/20/2013 03:57 PM, Pavel Vasilyev wrote:
 > 
-> Same bug if attach to ehci hub.
+> Please add here some description and forward this upstream. Did this
+> series changed since I applied it?
 > 
-> ksoftird/0 process of loading the CPU upto 100% Sometimes process
-> irq17/0 - ehci_hcd  or xhci_hcd. After taking the camera out of the
-> socket, the load does not fall, keyboard and console blocked
+I will add the description and send it upstream.
+No, nothings changed, only that I re-based the
+code to v3.10.24-rt22.
 
-Okay, but this problem is unique to your webcam. Keyboard & mice to
-work as usual?
-Could please provide me the addr2line either for the ehci or xhci? I've
-been browsing to the code and I didn't see anything obvious.
-
-Sebastian
+- Allen
