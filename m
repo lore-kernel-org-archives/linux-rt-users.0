@@ -1,64 +1,430 @@
-From: Muli Baron <muli.baron@gmail.com>
-Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
-Date: Sat, 21 Dec 2013 19:21:13 +0200
-Message-ID: <52B5CE09.5030908@gmail.com>
-References: <1383228427.5272.36.camel@marge.simpson.net>	 <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>	 <1383794799.5441.16.camel@marge.simpson.net>	 <1383798668.5441.25.camel@marge.simpson.net>	 <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>	 <20131220154146.GA18672@breakpoint.cc> <1387617104.30230.7.camel@marge.simpson.net>
-Reply-To: muli.baron@gmail.com
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] rcu: Eliminate softirq processing from rcutree
+Date: Sat, 21 Dec 2013 20:39:00 +0100
+Message-ID: <20131221193900.GA8427@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1387617104.30230.7.camel@marge.simpson.net>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 21/12/2013 11:11, Mike Galbraith wrote:
->
-> Works, modulo noisy workqueues.
->
-> rtbox:~ # sleep 35 && killall pert& cgexec -g cpuset:rtcpus taskset -c 3 pert 5
-> [1] 5660
-> 2400.05 MHZ CPU
-> perturbation threshold 0.018 usecs.
-> pert/s:       33 >15.75us:        2 min:  0.04 max: 24.14 avg:  2.51 sum/s:    84us overhead: 0.01%
-> pert/s:       35 >15.54us:        3 min:  0.04 max: 24.89 avg:  2.39 sum/s:    84us overhead: 0.01%
-> pert/s:       30 >15.27us:        2 min:  0.04 max: 23.03 avg:  2.64 sum/s:    80us overhead: 0.01%
-> pert/s:       34 >15.12us:        3 min:  0.04 max: 25.03 avg:  2.51 sum/s:    86us overhead: 0.01%
-> pert/s:       31 >14.93us:        2 min:  0.04 max: 23.86 avg:  2.60 sum/s:    83us overhead: 0.01%
-> Terminated
->
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 
-I can confirm this works for me as well, but I have noticed some strange behavior under certain 
-conditions.
+Running RCU out of softirq is a problem for some workloads that would
+like to manage RCU core processing independently of other softirq work,
+for example, setting kthread priority.  This commit therefore moves the
+RCU core work from softirq to a per-CPU/per-flavor SCHED_OTHER kthread
+named rcuc.  The SCHED_OTHER approach avoids the scalability problems
+that appeared with the earlier attempt to move RCU core processing to
+from softirq to kthreads.  That said, kernels built with RCU_BOOST=y
+will run the rcuc kthreads at the RCU-boosting priority.
 
-If I run a process with SCHED_OTHER priority and pin it to a specific CPU like Mike did then all is 
-well and everything functions as expected. If however I mask the execution of ksoftirqd by running 
-that process as SCHED_FIFO for too long (say a few seconds) and later I free the CPU, then what I'm 
-seeing is that the tick is never turned off again even though the CPU is completely idle, and 
-running that same SCHED_OTHER process from before now gets 1K timer interrupts/s. I suspect this has 
-something to do with the timer softirq never running on that CPU again as a result of this patch.
+Reported-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+---
 
-Following is trace output during this condition for two consecutive ticks, when the CPU is 
-completely idle (shielded by isolcpus, HZ=1000):
+I intend to apply this for the next -RT relase. My powerpc test box runs
+with this for more than 24h without anything bad happending.
 
-<idle>-0     [003] d..h3..   355.620760: hrtimer_cancel: hrtimer=ffff88011fd8b720
-<idle>-0     [003] d..h2..   355.620760: hrtimer_expire_entry: hrtimer=ffff88011fd8b720 
-function=tick_sched_timer now=355487000349
-<idle>-0     [003] d..h2..   355.620761: hrtimer_expire_exit: hrtimer=ffff88011fd8b720
-<idle>-0     [003] d..h3..   355.620761: hrtimer_start: hrtimer=ffff88011fd8b720 
-function=tick_sched_timer expires=355488000000 softexpires=355488000000
-<idle>-0     [003] ....2..   355.620762: cpu_idle: state=4294967295 cpu_id=3
-<idle>-0     [003] d...2..   355.620762: cpu_idle: state=1 cpu_id=3
+ kernel/rcutree.c        | 113 +++++++++++++++++++++++++++++++++++-----
+ kernel/rcutree.h        |   3 +-
+ kernel/rcutree_plugin.h | 134 +++++-------------------------------------------
+ 3 files changed, 113 insertions(+), 137 deletions(-)
 
-<idle>-0     [003] d..h3..   355.621760: hrtimer_cancel: hrtimer=ffff88011fd8b720
-<idle>-0     [003] d..h2..   355.621761: hrtimer_expire_entry: hrtimer=ffff88011fd8b720 
-function=tick_sched_timer now=355488000330
-<idle>-0     [003] d..h2..   355.621761: hrtimer_expire_exit: hrtimer=ffff88011fd8b720
-<idle>-0     [003] d..h3..   355.621761: hrtimer_start: hrtimer=ffff88011fd8b720 
-function=tick_sched_timer expires=355489000000 softexpires=355489000000
-<idle>-0     [003] ....2..   355.621762: cpu_idle: state=4294967295 cpu_id=3
-<idle>-0     [003] d...2..   355.621762: cpu_idle: state=1 cpu_id=3
-
---Muli
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index f4f61bb..507fab1 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -55,6 +55,11 @@
+ #include <linux/random.h>
+ #include <linux/ftrace_event.h>
+ #include <linux/suspend.h>
++#include <linux/delay.h>
++#include <linux/gfp.h>
++#include <linux/oom.h>
++#include <linux/smpboot.h>
++#include "time/tick-internal.h"
+ 
+ #include "rcutree.h"
+ #include <trace/events/rcu.h>
+@@ -145,8 +150,6 @@ EXPORT_SYMBOL_GPL(rcu_scheduler_active);
+  */
+ static int rcu_scheduler_fully_active __read_mostly;
+ 
+-#ifdef CONFIG_RCU_BOOST
+-
+ /*
+  * Control variables for per-CPU and per-rcu_node kthreads.  These
+  * handle all flavors of RCU.
+@@ -156,8 +159,6 @@ DEFINE_PER_CPU(unsigned int, rcu_cpu_kthread_status);
+ DEFINE_PER_CPU(unsigned int, rcu_cpu_kthread_loops);
+ DEFINE_PER_CPU(char, rcu_cpu_has_work);
+ 
+-#endif /* #ifdef CONFIG_RCU_BOOST */
+-
+ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu);
+ static void invoke_rcu_core(void);
+ static void invoke_rcu_callbacks(struct rcu_state *rsp, struct rcu_data *rdp);
+@@ -2226,16 +2227,14 @@ __rcu_process_callbacks(struct rcu_state *rsp)
+ /*
+  * Do RCU core processing for the current CPU.
+  */
+-static void rcu_process_callbacks(struct softirq_action *unused)
++static void rcu_process_callbacks(void)
+ {
+ 	struct rcu_state *rsp;
+ 
+ 	if (cpu_is_offline(smp_processor_id()))
+ 		return;
+-	trace_rcu_utilization(TPS("Start RCU core"));
+ 	for_each_rcu_flavor(rsp)
+ 		__rcu_process_callbacks(rsp);
+-	trace_rcu_utilization(TPS("End RCU core"));
+ }
+ 
+ /*
+@@ -2249,18 +2248,105 @@ static void invoke_rcu_callbacks(struct rcu_state *rsp, struct rcu_data *rdp)
+ {
+ 	if (unlikely(!ACCESS_ONCE(rcu_scheduler_fully_active)))
+ 		return;
+-	if (likely(!rsp->boost)) {
+-		rcu_do_batch(rsp, rdp);
++	rcu_do_batch(rsp, rdp);
++}
++
++static void rcu_wake_cond(struct task_struct *t, int status)
++{
++	/*
++	 * If the thread is yielding, only wake it when this
++	 * is invoked from idle
++	 */
++	if (t && (status != RCU_KTHREAD_YIELDING || is_idle_task(current)))
++		wake_up_process(t);
++}
++
++/*
++ * Wake up this CPU's rcuc kthread to do RCU core processing.
++ */
++static void invoke_rcu_core(void)
++{
++	unsigned long flags;
++	struct task_struct *t;
++
++	if (!cpu_online(smp_processor_id()))
+ 		return;
++	local_irq_save(flags);
++	__this_cpu_write(rcu_cpu_has_work, 1);
++	t = __this_cpu_read(rcu_cpu_kthread_task);
++	if (t != NULL && current != t)
++		rcu_wake_cond(t, __this_cpu_read(rcu_cpu_kthread_status));
++	local_irq_restore(flags);
++}
++
++static void rcu_cpu_kthread_park(unsigned int cpu)
++{
++	per_cpu(rcu_cpu_kthread_status, cpu) = RCU_KTHREAD_OFFCPU;
++}
++
++static int rcu_cpu_kthread_should_run(unsigned int cpu)
++{
++	return __this_cpu_read(rcu_cpu_has_work);
++}
++
++/*
++ * Per-CPU kernel thread that invokes RCU callbacks.  This replaces the
++ * RCU softirq used in flavors and configurations of RCU that do not
++ * support RCU priority boosting.
++ */
++static void rcu_cpu_kthread(unsigned int cpu)
++{
++	unsigned int *statusp = &__get_cpu_var(rcu_cpu_kthread_status);
++	char work, *workp = &__get_cpu_var(rcu_cpu_has_work);
++	int spincnt;
++
++	for (spincnt = 0; spincnt < 10; spincnt++) {
++		trace_rcu_utilization(TPS("Start CPU kthread@rcu_wait"));
++		local_bh_disable();
++		*statusp = RCU_KTHREAD_RUNNING;
++		this_cpu_inc(rcu_cpu_kthread_loops);
++		local_irq_disable();
++		work = *workp;
++		*workp = 0;
++		local_irq_enable();
++		if (work)
++			rcu_process_callbacks();
++		local_bh_enable();
++		if (*workp == 0) {
++			trace_rcu_utilization(TPS("End CPU kthread@rcu_wait"));
++			*statusp = RCU_KTHREAD_WAITING;
++			return;
++		}
+ 	}
+-	invoke_rcu_callbacks_kthread();
++	*statusp = RCU_KTHREAD_YIELDING;
++	trace_rcu_utilization(TPS("Start CPU kthread@rcu_yield"));
++	schedule_timeout_interruptible(2);
++	trace_rcu_utilization(TPS("End CPU kthread@rcu_yield"));
++	*statusp = RCU_KTHREAD_WAITING;
+ }
+ 
+-static void invoke_rcu_core(void)
++static struct smp_hotplug_thread rcu_cpu_thread_spec = {
++	.store			= &rcu_cpu_kthread_task,
++	.thread_should_run	= rcu_cpu_kthread_should_run,
++	.thread_fn		= rcu_cpu_kthread,
++	.thread_comm		= "rcuc/%u",
++	.setup			= rcu_cpu_kthread_setup,
++	.park			= rcu_cpu_kthread_park,
++};
++
++/*
++ * Spawn per-CPU RCU core processing kthreads.
++ */
++static int __init rcu_spawn_core_kthreads(void)
+ {
+-	if (cpu_online(smp_processor_id()))
+-		raise_softirq(RCU_SOFTIRQ);
++	int cpu;
++
++	for_each_possible_cpu(cpu)
++		per_cpu(rcu_cpu_has_work, cpu) = 0;
++	BUG_ON(smpboot_register_percpu_thread(&rcu_cpu_thread_spec));
++	return 0;
+ }
++early_initcall(rcu_spawn_core_kthreads);
+ 
+ /*
+  * Handle any core-RCU processing required by a call_rcu() invocation.
+@@ -3325,7 +3411,6 @@ void __init rcu_init(void)
+ 	rcu_init_one(&rcu_sched_state, &rcu_sched_data);
+ 	rcu_init_one(&rcu_bh_state, &rcu_bh_data);
+ 	__rcu_init_preempt();
+-	open_softirq(RCU_SOFTIRQ, rcu_process_callbacks);
+ 
+ 	/*
+ 	 * We don't need protection against CPU-hotplug here because
+diff --git a/kernel/rcutree.h b/kernel/rcutree.h
+index eb4fe67..da1439d 100644
+--- a/kernel/rcutree.h
++++ b/kernel/rcutree.h
+@@ -526,10 +526,9 @@ static void rcu_report_exp_rnp(struct rcu_state *rsp, struct rcu_node *rnp,
+ static void __init __rcu_init_preempt(void);
+ static void rcu_initiate_boost(struct rcu_node *rnp, unsigned long flags);
+ static void rcu_preempt_boost_start_gp(struct rcu_node *rnp);
+-static void invoke_rcu_callbacks_kthread(void);
+ static bool rcu_is_callbacks_kthread(void);
++static void rcu_cpu_kthread_setup(unsigned int cpu);
+ #ifdef CONFIG_RCU_BOOST
+-static void rcu_preempt_do_callbacks(void);
+ static int rcu_spawn_one_boost_kthread(struct rcu_state *rsp,
+ 						 struct rcu_node *rnp);
+ #endif /* #ifdef CONFIG_RCU_BOOST */
+diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
+index c1735a1..34d2a06 100644
+--- a/kernel/rcutree_plugin.h
++++ b/kernel/rcutree_plugin.h
+@@ -24,12 +24,6 @@
+  *	   Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+  */
+ 
+-#include <linux/delay.h>
+-#include <linux/gfp.h>
+-#include <linux/oom.h>
+-#include <linux/smpboot.h>
+-#include "time/tick-internal.h"
+-
+ #define RCU_KTHREAD_PRIO 1
+ 
+ #ifdef CONFIG_RCU_BOOST
+@@ -656,15 +650,6 @@ static void rcu_preempt_check_callbacks(int cpu)
+ 		t->rcu_read_unlock_special |= RCU_READ_UNLOCK_NEED_QS;
+ }
+ 
+-#ifdef CONFIG_RCU_BOOST
+-
+-static void rcu_preempt_do_callbacks(void)
+-{
+-	rcu_do_batch(&rcu_preempt_state, &__get_cpu_var(rcu_preempt_data));
+-}
+-
+-#endif /* #ifdef CONFIG_RCU_BOOST */
+-
+ /*
+  * Queue a preemptible-RCU callback for invocation after a grace period.
+  */
+@@ -1126,6 +1111,19 @@ void exit_rcu(void)
+ 
+ #endif /* #else #ifdef CONFIG_TREE_PREEMPT_RCU */
+ 
++/*
++ * If boosting, set rcuc kthreads to realtime priority.
++ */
++static void rcu_cpu_kthread_setup(unsigned int cpu)
++{
++#ifdef CONFIG_RCU_BOOST
++	struct sched_param sp;
++
++	sp.sched_priority = RCU_KTHREAD_PRIO;
++	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
++#endif /* #ifdef CONFIG_RCU_BOOST */
++}
++
+ #ifdef CONFIG_RCU_BOOST
+ 
+ #include "rtmutex_common.h"
+@@ -1157,16 +1155,6 @@ static void rcu_initiate_boost_trace(struct rcu_node *rnp)
+ 
+ #endif /* #else #ifdef CONFIG_RCU_TRACE */
+ 
+-static void rcu_wake_cond(struct task_struct *t, int status)
+-{
+-	/*
+-	 * If the thread is yielding, only wake it when this
+-	 * is invoked from idle
+-	 */
+-	if (status != RCU_KTHREAD_YIELDING || is_idle_task(current))
+-		wake_up_process(t);
+-}
+-
+ /*
+  * Carry out RCU priority boosting on the task indicated by ->exp_tasks
+  * or ->boost_tasks, advancing the pointer to the next task in the
+@@ -1310,23 +1298,6 @@ static void rcu_initiate_boost(struct rcu_node *rnp, unsigned long flags)
+ }
+ 
+ /*
+- * Wake up the per-CPU kthread to invoke RCU callbacks.
+- */
+-static void invoke_rcu_callbacks_kthread(void)
+-{
+-	unsigned long flags;
+-
+-	local_irq_save(flags);
+-	__this_cpu_write(rcu_cpu_has_work, 1);
+-	if (__this_cpu_read(rcu_cpu_kthread_task) != NULL &&
+-	    current != __this_cpu_read(rcu_cpu_kthread_task)) {
+-		rcu_wake_cond(__this_cpu_read(rcu_cpu_kthread_task),
+-			      __this_cpu_read(rcu_cpu_kthread_status));
+-	}
+-	local_irq_restore(flags);
+-}
+-
+-/*
+  * Is the current CPU running the RCU-callbacks kthread?
+  * Caller must have preemption disabled.
+  */
+@@ -1380,67 +1351,6 @@ static int rcu_spawn_one_boost_kthread(struct rcu_state *rsp,
+ 	return 0;
+ }
+ 
+-static void rcu_kthread_do_work(void)
+-{
+-	rcu_do_batch(&rcu_sched_state, &__get_cpu_var(rcu_sched_data));
+-	rcu_do_batch(&rcu_bh_state, &__get_cpu_var(rcu_bh_data));
+-	rcu_preempt_do_callbacks();
+-}
+-
+-static void rcu_cpu_kthread_setup(unsigned int cpu)
+-{
+-	struct sched_param sp;
+-
+-	sp.sched_priority = RCU_KTHREAD_PRIO;
+-	sched_setscheduler_nocheck(current, SCHED_FIFO, &sp);
+-}
+-
+-static void rcu_cpu_kthread_park(unsigned int cpu)
+-{
+-	per_cpu(rcu_cpu_kthread_status, cpu) = RCU_KTHREAD_OFFCPU;
+-}
+-
+-static int rcu_cpu_kthread_should_run(unsigned int cpu)
+-{
+-	return __get_cpu_var(rcu_cpu_has_work);
+-}
+-
+-/*
+- * Per-CPU kernel thread that invokes RCU callbacks.  This replaces the
+- * RCU softirq used in flavors and configurations of RCU that do not
+- * support RCU priority boosting.
+- */
+-static void rcu_cpu_kthread(unsigned int cpu)
+-{
+-	unsigned int *statusp = &__get_cpu_var(rcu_cpu_kthread_status);
+-	char work, *workp = &__get_cpu_var(rcu_cpu_has_work);
+-	int spincnt;
+-
+-	for (spincnt = 0; spincnt < 10; spincnt++) {
+-		trace_rcu_utilization(TPS("Start CPU kthread@rcu_wait"));
+-		local_bh_disable();
+-		*statusp = RCU_KTHREAD_RUNNING;
+-		this_cpu_inc(rcu_cpu_kthread_loops);
+-		local_irq_disable();
+-		work = *workp;
+-		*workp = 0;
+-		local_irq_enable();
+-		if (work)
+-			rcu_kthread_do_work();
+-		local_bh_enable();
+-		if (*workp == 0) {
+-			trace_rcu_utilization(TPS("End CPU kthread@rcu_wait"));
+-			*statusp = RCU_KTHREAD_WAITING;
+-			return;
+-		}
+-	}
+-	*statusp = RCU_KTHREAD_YIELDING;
+-	trace_rcu_utilization(TPS("Start CPU kthread@rcu_yield"));
+-	schedule_timeout_interruptible(2);
+-	trace_rcu_utilization(TPS("End CPU kthread@rcu_yield"));
+-	*statusp = RCU_KTHREAD_WAITING;
+-}
+-
+ /*
+  * Set the per-rcu_node kthread's affinity to cover all CPUs that are
+  * served by the rcu_node in question.  The CPU hotplug lock is still
+@@ -1474,27 +1384,14 @@ static void rcu_boost_kthread_setaffinity(struct rcu_node *rnp, int outgoingcpu)
+ 	free_cpumask_var(cm);
+ }
+ 
+-static struct smp_hotplug_thread rcu_cpu_thread_spec = {
+-	.store			= &rcu_cpu_kthread_task,
+-	.thread_should_run	= rcu_cpu_kthread_should_run,
+-	.thread_fn		= rcu_cpu_kthread,
+-	.thread_comm		= "rcuc/%u",
+-	.setup			= rcu_cpu_kthread_setup,
+-	.park			= rcu_cpu_kthread_park,
+-};
+-
+ /*
+  * Spawn all kthreads -- called as soon as the scheduler is running.
+  */
+ static int __init rcu_spawn_kthreads(void)
+ {
+ 	struct rcu_node *rnp;
+-	int cpu;
+ 
+ 	rcu_scheduler_fully_active = 1;
+-	for_each_possible_cpu(cpu)
+-		per_cpu(rcu_cpu_has_work, cpu) = 0;
+-	BUG_ON(smpboot_register_percpu_thread(&rcu_cpu_thread_spec));
+ 	rnp = rcu_get_root(rcu_state);
+ 	(void)rcu_spawn_one_boost_kthread(rcu_state, rnp);
+ 	if (NUM_RCU_NODES > 1) {
+@@ -1522,11 +1419,6 @@ static void rcu_initiate_boost(struct rcu_node *rnp, unsigned long flags)
+ 	raw_spin_unlock_irqrestore(&rnp->lock, flags);
+ }
+ 
+-static void invoke_rcu_callbacks_kthread(void)
+-{
+-	WARN_ON_ONCE(1);
+-}
+-
+ static bool rcu_is_callbacks_kthread(void)
+ {
+ 	return false;
+-- 
+1.8.5.1
