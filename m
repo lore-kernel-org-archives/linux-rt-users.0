@@ -1,44 +1,50 @@
 From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Sun, 22 Dec 2013 04:07:27 +0100
-Message-ID: <1387681647.5412.25.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
+Subject: Re: CONFIG_NO_HZ_FULL + CONFIG_PREEMPT_RT_FULL = nogo
+Date: Sun, 22 Dec 2013 05:17:10 +0100
+Message-ID: <1387685830.5412.37.camel@marge.simpson.net>
+References: <1383228427.5272.36.camel@marge.simpson.net>
+	 <alpine.DEB.2.02.1311061842160.23353@ionos.tec.linutronix.de>
+	 <1383794799.5441.16.camel@marge.simpson.net>
+	 <1383798668.5441.25.camel@marge.simpson.net>
+	 <alpine.DEB.2.02.1311071158350.23353@ionos.tec.linutronix.de>
+	 <20131220154146.GA18672@breakpoint.cc>
+	 <1387617104.30230.7.camel@marge.simpson.net> <52B5CE09.5030908@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131221193900.GA8427@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: muli.baron@gmail.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from moutng.kundenserver.de ([212.227.126.187]:61711 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751035Ab3LVERO (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 21 Dec 2013 23:17:14 -0500
+In-Reply-To: <52B5CE09.5030908@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2013-12-21 at 20:39 +0100, Sebastian Andrzej Siewior wrote: 
-> From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+On Sat, 2013-12-21 at 19:21 +0200, Muli Baron wrote: 
+> On 21/12/2013 11:11, Mike Galbraith wrote:
+> >
+> > Works, modulo noisy workqueues.
+> >
+> > rtbox:~ # sleep 35 && killall pert& cgexec -g cpuset:rtcpus taskset -c 3 pert 5
+> > [1] 5660
+> > 2400.05 MHZ CPU
+> > perturbation threshold 0.018 usecs.
+> > pert/s:       33 >15.75us:        2 min:  0.04 max: 24.14 avg:  2.51 sum/s:    84us overhead: 0.01%
+> > pert/s:       35 >15.54us:        3 min:  0.04 max: 24.89 avg:  2.39 sum/s:    84us overhead: 0.01%
+> > pert/s:       30 >15.27us:        2 min:  0.04 max: 23.03 avg:  2.64 sum/s:    80us overhead: 0.01%
+> > pert/s:       34 >15.12us:        3 min:  0.04 max: 25.03 avg:  2.51 sum/s:    86us overhead: 0.01%
+> > pert/s:       31 >14.93us:        2 min:  0.04 max: 23.86 avg:  2.60 sum/s:    83us overhead: 0.01%
+> > Terminated
+> >
 > 
-> Running RCU out of softirq is a problem for some workloads that would
-> like to manage RCU core processing independently of other softirq work,
-> for example, setting kthread priority.  This commit therefore moves the
-> RCU core work from softirq to a per-CPU/per-flavor SCHED_OTHER kthread
-> named rcuc.  The SCHED_OTHER approach avoids the scalability problems
-> that appeared with the earlier attempt to move RCU core processing to
-> from softirq to kthreads.  That said, kernels built with RCU_BOOST=y
-> will run the rcuc kthreads at the RCU-boosting priority.
+> I can confirm this works for me as well, but I have noticed some strange behavior under certain 
+> conditions.
 
-I'll take this for a spin on my 64 core test box.
-
-I'm pretty sure I'll still end up having to split softirq threads again
-though, as big box has been unable to meet jitter requirements without,
-and last upstream rt kernel tested still couldn't.
+Hm, so can I.  Same everything, different day, nohz_full is NOT working.
 
 -Mike
 
-Hm.  Another thing I'll have to check again is btrfs locking fix, and
-generic IO deadlocks if you don't pull your plug upon first rtmutex
-block.  In 3.0, both were required for box to survive heavy fs pounding.
-Oh yeah, and the pain of rt tasks playing idle balance for SCHED_OTHER
-tasks, and nohz balancing crud, and cpupri cost when cores are isolated
-and and.. sigh, big boxen _suck_ ;-)
