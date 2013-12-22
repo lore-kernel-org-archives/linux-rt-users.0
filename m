@@ -1,70 +1,71 @@
 From: Pavel Vasilyev <pavel@pavlinux.ru>
 Subject: Re: 3.12.5 CRASH/FREEZE
-Date: Mon, 23 Dec 2013 02:19:14 +0400
-Message-ID: <52B76562.7040608@pavlinux.ru>
+Date: Mon, 23 Dec 2013 02:33:36 +0400
+Message-ID: <52B768C0.8080808@pavlinux.ru>
 References: <52A9CC77.20904@linaro.org> <52AA1CC0.30307@pavlinux.ru> <20131220141008.GE10249@linutronix.de> <52B45AEB.2060508@pavlinux.ru> <52B45CD7.5030404@linutronix.de>
 Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="9PB6EHkX3iVgFriAHUOEj9qvk5vQE8XRq"
 Cc: RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp02.mtu.ru ([62.5.255.19]:56654 "EHLO imp02.mtu.ru"
+Received: from imp01.mtu.ru ([62.5.255.10]:46804 "EHLO imp01.mtu.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754668Ab3LVWTf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 22 Dec 2013 17:19:35 -0500
+	id S1755464Ab3LVWdx (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 22 Dec 2013 17:33:53 -0500
 In-Reply-To: <52B45CD7.5030404@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-20.12.2013 19:05, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
-=82:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--9PB6EHkX3iVgFriAHUOEj9qvk5vQE8XRq
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+20.12.2013 19:05, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=82=
+:
 > On 12/20/2013 03:57 PM, Pavel Vasilyev wrote:
->>
->> Same bug if attach to ehci hub.
->>
->> ksoftird/0 process of loading the CPU upto 100% Sometimes process
->> irq17/0 - ehci_hcd  or xhci_hcd. After taking the camera out of the
->> socket, the load does not fall, keyboard and console blocked
->=20
-> Okay, but this problem is unique to your webcam. Keyboard & mice to
-> work as usual?
-> Could please provide me the addr2line either for the ehci or xhci? I'=
-ve
-> been browsing to the code and I didn't see anything obvious.
->=20
 
-Too many bugs, too many computers ...
-
-3.12.5-rt7 work ONLY in UP-mode!!! cmdline: nosmp maxcpus=3D1
-
-In SMP mode, problems arise in different places on different computers.
-On Intel Atom - USB, webcam and console. On the Opteron 285 system
-does not boot, can't mount devtmpfs, XFS partitions ...
-
-I can not get to catch the error and find a place neither in debug mode=
- or in
-normal. Because everything is frozen completely, and get to the console=
- or logs
-is not possible.
-I described one situation where had run top and see that the process
-ksoftirqd/0 use CPU upto 100%
-
-P.S.
-    3.12.5-rt7 still work Basic-RT mode.
-
-
-
+=2E.. The last two years I have worked with 3.2 kernel and patches for it=
+=2E
+Recently, we have a new equipment that partially works with version 3.2.5=
+3.
+Therefore it was decided to move to version 3.12. What was my surprise th=
+at none
+of the 15 (or old models, or new )computers does not start with the same
+=2Econfigs on a new version of the kernel and rt-patches. :)
 
 
 
 --=20
 
                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+
+--9PB6EHkX3iVgFriAHUOEj9qvk5vQE8XRq
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
+
+iQIcBAEBCgAGBQJSt2jAAAoJEPtok08Dny2h59EP/0cT0B8IPOuKJDWM7wkZUS23
+IUidoLK9ZH5zglXwVkTmBY8gqCD/5wfpfSd1GcWWdgOod7M+F5wKNRVTARHdLg2e
+vNMSCcJsjDvPe1X8PKDn5ROg5xffD9IrF6XKl1QgpNvM0zbp19rToUOn6wPeG3yf
+BfqTTDjC1BUNlj0TuG2MvmQHAlJaXXhFYg2F5MKF7EUGU2QJiu1gIlJGJqhK5EfO
+K6sBNPS2GUti5QbYeL5tRl3DILdwVf5AA9cjhCscQL3x4GB+CI2zVjRM9XPRsIr3
+Ye8y8moFpwotadjxAhDEyb7L5DluUBtGzj/nkBzwLSZanfOrXTKKcP7fTVbGwQfI
+fPmktHVAsd0ToUTXCYdRRxPWqkgUGFSWA4hXhoIQqjBgAZekmo706v7p62iWfos7
+E0psweVnBmtO7KhUpcOpQBLvDbfnjJeJa01oWXjcutTvInY0S8befLKw1/s8sd4Q
+hX6jbilyawXyK3nEr8l3GHrMJWQNqY5OSvQPx0O1I+vYl1hlA7iJD/IHINdD1aR7
+Ydju36/cvFoSfeQwtvj6vnffsM2CRQ5zFYDvweg35/vj7n7RlKKqousyBaaHUg3+
+SP1yEc49grTU1xoced1llZjJWybluBKSpiI2gm5MRBjEuc9lkKfI/ghnU/AzwX3t
+4xOG5u+HD+uJvAxs/igS
+=LnVP
+-----END PGP SIGNATURE-----
+
+--9PB6EHkX3iVgFriAHUOEj9qvk5vQE8XRq--
