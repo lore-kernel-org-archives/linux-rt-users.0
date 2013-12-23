@@ -1,60 +1,303 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Mon, 23 Dec 2013 06:12:39 +0100
-Message-ID: <1387775559.5369.20.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
-	 <1387681647.5412.25.camel@marge.simpson.net>
-	 <1387702631.5412.101.camel@marge.simpson.net>
-	 <1387773533.5369.16.camel@marge.simpson.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 3.12.6-rt9
+Date: Mon, 23 Dec 2013 23:50:17 +0100
+Message-ID: <20131223225017.GA8623@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1387773533.5369.16.camel@marge.simpson.net>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 2013-12-23 at 05:38 +0100, Mike Galbraith wrote: 
-> On Sun, 2013-12-22 at 09:57 +0100, Mike Galbraith wrote: 
-> > I'll let the box give
-> > RCU something to do for a couple days.  No news is good news.
-> 
-> Ho ho hum, merry christmas, gift attached.
-> 
-> I'll beat on virgin -rt7, see if it survives, then re-apply RCU patch
-> and retest.  This kernel had nohz_full enabled, along with Sebastian's
-> pending -rt fix for same, so RCU patch was not only not running solo,
-> box was running a known somewhat buggy config as well.  Box was doing
-> endless tbench 64 when it started stalling fwiw.
-> 
-> -Mike
+Dear RT folks!
 
-P.S.
+I'm pleased to announce the v3.12.6-rt9 patch set.
 
-virgin -rt7 doing tbench 64 + make -j64
+Changes since v3.12.6-rt8
+- ARM's mach-sti is now using rawlock as boot_lock (like the other
+  mach-*)
+- There was a callpath to rcu_preempt_qs() with interrupts enabled. Tie=
+jun
+  Chen posted a patch to call it with interrupt disabled like we always
+  do.
+- A patch from Paul E. McKenney to not activate RCU core on NO_HZ_FULL
+  CPUs
+- A patch from Thomas Gleixner not to raise the timer softirq
+  unconditionally (only if a timer is pending)
 
-[   97.907960] perf samples too long (3138 > 2500), lowering kernel.perf_event_max_sample_rate to 50000
-[  103.047921] perf samples too long (5544 > 5000), lowering kernel.perf_event_max_sample_rate to 25000
-[  181.561271] perf samples too long (10318 > 10000), lowering kernel.perf_event_max_sample_rate to 13000
-[  184.243750] INFO: NMI handler (perf_event_nmi_handler) took too long to run: 1.084 msecs
-[  248.914422] perf samples too long (19719 > 19230), lowering kernel.perf_event_max_sample_rate to 7000
-[  382.116674] NOHZ: local_softirq_pending 10
-[  405.201593] perf samples too long (36824 > 35714), lowering kernel.perf_event_max_sample_rate to 4000
-[  444.704185] NOHZ: local_softirq_pending 08
-[  444.704208] NOHZ: local_softirq_pending 08
-[  444.704579] NOHZ: local_softirq_pending 08
-[  444.704678] NOHZ: local_softirq_pending 08
-[  444.705100] NOHZ: local_softirq_pending 08
-[  444.705980] NOHZ: local_softirq_pending 08
-[  444.705994] NOHZ: local_softirq_pending 08
-[  444.708315] NOHZ: local_softirq_pending 08
-[  444.710348] NOHZ: local_softirq_pending 08
-[  474.435582] INFO: NMI handler (perf_event_nmi_handler) took too long to run: 1.096 msecs
-[  475.994055] perf samples too long (63124 > 62500), lowering kernel.perf_event_max_sample_rate to 2000
 
-Those annoying perf gripes are generic, not -rt.
+There is also a patch in the queue from Paul E. McKenney to move RCU
+processing from softirq into its own thread. After Mike Galbraith
+reported a few RCU stalls I decided to keep it disabled for now until I
+have some time to look at it.
+
+Known issues:
+
+      - bcache is disabled.
+
+      - Brian Silverman reported a BUG (via Debian BTS) where gdb's
+        record command does something nasty and causes a double fault o=
+n
+        x86-64 kernel with 32bit userland (the debugged application).
+        32bit and 64bit setup are not kernels are not affected. The
+        problem is limited is limited to x86.
+
+      - Sami Pietik=C3=A4inen reported a crash in __ip_make_skb(). Nich=
+olas
+        Mc Guire is preparing a patch for it.
+
+The delta patch against v3.12.6-rt8 is appended below and can be found
+here:
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-=
+3.12.6-rt8-rt9.patch.xz
+
+The RT patch against 3.12.6 can be found here:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.=
+6-rt9.patch.xz
+
+The split quilt queue is available at:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patches-3.1=
+2.6-rt9.tar.xz
+
+Sebastian
+
+diff --git a/arch/arm/mach-sti/platsmp.c b/arch/arm/mach-sti/platsmp.c
+index dce50d9..c05b764 100644
+--- a/arch/arm/mach-sti/platsmp.c
++++ b/arch/arm/mach-sti/platsmp.c
+@@ -35,7 +35,7 @@ static void write_pen_release(int val)
+ 	outer_clean_range(__pa(&pen_release), __pa(&pen_release + 1));
+ }
+=20
+-static DEFINE_SPINLOCK(boot_lock);
++static DEFINE_RAW_SPINLOCK(boot_lock);
+=20
+ void sti_secondary_init(unsigned int cpu)
+ {
+@@ -50,8 +50,8 @@ void sti_secondary_init(unsigned int cpu)
+ 	/*
+ 	 * Synchronise with the boot thread.
+ 	 */
+-	spin_lock(&boot_lock);
+-	spin_unlock(&boot_lock);
++	raw_spin_lock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+ }
+=20
+ int sti_boot_secondary(unsigned int cpu, struct task_struct *idle)
+@@ -62,7 +62,7 @@ int sti_boot_secondary(unsigned int cpu, struct task_=
+struct *idle)
+ 	 * set synchronisation state between this boot processor
+ 	 * and the secondary one
+ 	 */
+-	spin_lock(&boot_lock);
++	raw_spin_lock(&boot_lock);
+=20
+ 	/*
+ 	 * The secondary processor is waiting to be released from
+@@ -93,7 +93,7 @@ int sti_boot_secondary(unsigned int cpu, struct task_=
+struct *idle)
+ 	 * now the secondary core is starting up let it run its
+ 	 * calibrations, then wait for it to finish
+ 	 */
+-	spin_unlock(&boot_lock);
++	raw_spin_unlock(&boot_lock);
+=20
+ 	return pen_release !=3D -1 ? -ENOSYS : 0;
+ }
+diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
+index 79a7a35..bdbf77db 100644
+--- a/include/linux/hrtimer.h
++++ b/include/linux/hrtimer.h
+@@ -461,9 +461,8 @@ extern int schedule_hrtimeout_range_clock(ktime_t *=
+expires,
+ 		unsigned long delta, const enum hrtimer_mode mode, int clock);
+ extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mod=
+e mode);
+=20
+-/* Soft interrupt function to run the hrtimer queues: */
++/* Called from the periodic timer tick */
+ extern void hrtimer_run_queues(void);
+-extern void hrtimer_run_pending(void);
+=20
+ /* Bootup initialization: */
+ extern void __init hrtimers_init(void);
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index c383841..7aa442e 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1694,30 +1694,6 @@ static void run_hrtimer_softirq(struct softirq_a=
+ction *h)
+ }
+=20
+ /*
+- * Called from timer softirq every jiffy, expire hrtimers:
+- *
+- * For HRT its the fall back code to run the softirq in the timer
+- * softirq context in case the hrtimer initialization failed or has
+- * not been done yet.
+- */
+-void hrtimer_run_pending(void)
+-{
+-	if (hrtimer_hres_active())
+-		return;
+-
+-	/*
+-	 * This _is_ ugly: We have to check in the softirq context,
+-	 * whether we can switch to highres and / or nohz mode. The
+-	 * clocksource switch happens in the timer interrupt with
+-	 * xtime_lock held. Notification from there only sets the
+-	 * check bit in the tick_oneshot code, otherwise we might
+-	 * deadlock vs. xtime_lock.
+-	 */
+-	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
+-		hrtimer_switch_to_hres();
+-}
+-
+-/*
+  * Called from hardirq context every jiffy
+  */
+ void hrtimer_run_queues(void)
+@@ -1730,6 +1706,13 @@ void hrtimer_run_queues(void)
+ 	if (hrtimer_hres_active())
+ 		return;
+=20
++	/*
++	 * Check whether we can switch to highres mode.
++	 */
++	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled())
++	    && hrtimer_switch_to_hres())
++		return;
++
+ 	for (index =3D 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
+ 		base =3D &cpu_base->clock_base[index];
+ 		if (!timerqueue_getnext(&base->active))
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 10365be..f4f61bb 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -204,7 +204,12 @@ static void rcu_preempt_qs(int cpu);
+=20
+ void rcu_bh_qs(int cpu)
+ {
++	unsigned long flags;
++
++	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
++	local_irq_save(flags);
+ 	rcu_preempt_qs(cpu);
++	local_irq_restore(flags);
+ }
+ #else
+ void rcu_bh_qs(int cpu)
+@@ -2674,6 +2679,10 @@ static int __rcu_pending(struct rcu_state *rsp, =
+struct rcu_data *rdp)
+ 	/* Check for CPU stalls, if enabled. */
+ 	check_cpu_stall(rsp, rdp);
+=20
++	/* Is this CPU a NO_HZ_FULL CPU that should ignore RCU? */
++	if (rcu_nohz_full_cpu(rsp))
++		return 0;
++
+ 	/* Is the RCU core waiting for a quiescent state from this CPU? */
+ 	if (rcu_scheduler_fully_active &&
+ 	    rdp->qs_pending && !rdp->passed_quiesce) {
+diff --git a/kernel/rcutree.h b/kernel/rcutree.h
+index c36d59a..eb4fe67 100644
+--- a/kernel/rcutree.h
++++ b/kernel/rcutree.h
+@@ -563,6 +563,7 @@ static void rcu_sysidle_report_gp(struct rcu_state =
+*rsp, int isidle,
+ 				  unsigned long maxj);
+ static void rcu_bind_gp_kthread(void);
+ static void rcu_sysidle_init_percpu_data(struct rcu_dynticks *rdtp);
++static bool rcu_nohz_full_cpu(struct rcu_state *rsp);
+=20
+ #endif /* #ifndef RCU_TREE_NONCORE */
+=20
+diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
+index 05bcc6f..c1735a1 100644
+--- a/kernel/rcutree_plugin.h
++++ b/kernel/rcutree_plugin.h
+@@ -2801,3 +2801,23 @@ static void rcu_sysidle_init_percpu_data(struct =
+rcu_dynticks *rdtp)
+ }
+=20
+ #endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
++
++/*
++ * Is this CPU a NO_HZ_FULL CPU that should ignore RCU so that the
++ * grace-period kthread will do force_quiescent_state() processing?
++ * The idea is to avoid waking up RCU core processing on such a
++ * CPU unless the grace period has extended for too long.
++ *
++ * This code relies on the fact that all NO_HZ_FULL CPUs are also
++ * CONFIG_RCU_NOCB_CPUs.
++ */
++static bool rcu_nohz_full_cpu(struct rcu_state *rsp)
++{
++#ifdef CONFIG_NO_HZ_FULL
++	if (tick_nohz_full_cpu(smp_processor_id()) &&
++	    (!rcu_gp_in_progress(rsp) ||
++	     ULONG_CMP_LT(jiffies, ACCESS_ONCE(rsp->gp_start) + HZ)))
++		return 1;
++#endif /* #ifdef CONFIG_NO_HZ_FULL */
++	return 0;
++}
+diff --git a/kernel/timer.c b/kernel/timer.c
+index b06c647..46467be 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1443,8 +1443,6 @@ static void run_timer_softirq(struct softirq_acti=
+on *h)
+ 	irq_work_run();
+ #endif
+=20
+-	hrtimer_run_pending();
+-
+ 	if (time_after_eq(jiffies, base->timer_jiffies))
+ 		__run_timers(base);
+ }
+@@ -1454,8 +1452,27 @@ static void run_timer_softirq(struct softirq_act=
+ion *h)
+  */
+ void run_local_timers(void)
+ {
++	struct tvec_base *base =3D __this_cpu_read(tvec_bases);
++
+ 	hrtimer_run_queues();
+-	raise_softirq(TIMER_SOFTIRQ);
++	/*
++	 * We can access this lockless as we are in the timer
++	 * interrupt. If there are no timers queued, nothing to do in
++	 * the timer softirq.
++	 */
++	if (!spin_do_trylock(&base->lock)) {
++		raise_softirq(TIMER_SOFTIRQ);
++		return;
++	}
++	if (!base->active_timers)
++		goto out;
++
++	/* Check whether the next pending timer has expired */
++	if (time_before_eq(base->next_timer, jiffies))
++		raise_softirq(TIMER_SOFTIRQ);
++out:
++	rt_spin_unlock_after_trylock_in_irq(&base->lock);
++
+ }
+=20
+ #ifdef __ARCH_WANT_SYS_ALARM
+diff --git a/localversion-rt b/localversion-rt
+index 700c857..22746d6 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt8
++-rt9
