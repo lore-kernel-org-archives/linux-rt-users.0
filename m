@@ -1,303 +1,77 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 3.12.6-rt9
-Date: Mon, 23 Dec 2013 23:50:17 +0100
-Message-ID: <20131223225017.GA8623@linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: 3.12.6-rt9 build failure
+Date: Tue, 24 Dec 2013 16:15:26 +0100
+Message-ID: <20131224151526.GA19732@opentech.at>
+References: <20131223225017.GA8623@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
 	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:51369 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752174Ab3LXPPa (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Dec 2013 10:15:30 -0500
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20131223225017.GA8623@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+Hi !
 
-I'm pleased to announce the v3.12.6-rt9 patch set.
+in 3.12.6-rt9:
+ patch timers-do-not-raise-softirq-unconditionally.patch
+ fails compile test for: 
+  CONFIG_PREEMPT_RT_BASE=y
+  # CONFIG_PREEMPT_RT_FULL is not set
+ full config with seed 0xE3A03BD0.
 
-Changes since v3.12.6-rt8
-- ARM's mach-sti is now using rawlock as boot_lock (like the other
-  mach-*)
-- There was a callpath to rcu_preempt_qs() with interrupts enabled. Tie=
-jun
-  Chen posted a patch to call it with interrupt disabled like we always
-  do.
-- A patch from Paul E. McKenney to not activate RCU core on NO_HZ_FULL
-  CPUs
-- A patch from Thomas Gleixner not to raise the timer softirq
-  unconditionally (only if a timer is pending)
+<snip>
+  CC      kernel/timer.o
+kernel/timer.c: In function 'run_local_timers':
+kernel/timer.c:1463: error: implicit declaration of function 'spin_do_trylock'
+kernel/timer.c:1474: error: implicit declaration of function 'rt_spin_unlock_after_trylock_in_irq'
+make[1]: *** [kernel/timer.o] Error 1
+make: *** [kernel] Error 2
 
+ ... RT specific API not ifdef'ed, a brute force ifdefification "fix" below
 
-There is also a patch in the queue from Paul E. McKenney to move RCU
-processing from softirq into its own thread. After Mike Galbraith
-reported a few RCU stalls I decided to keep it disabled for now until I
-have some time to look at it.
+ But what this might actually point to is that testing of patches with RT off 
+ (and other configs ?) is being neglected a bit. rt6 also had a problem (seed
+ was 0xBE96A834 file:kernel/rtmutex.c:__mutex_lock_check_stamp:1007)
 
-Known issues:
+ maybe a set of minimum test-configs should be defined to atleast catch 
+ build-failurs. 
 
-      - bcache is disabled.
+thx!
+hofrat
 
-      - Brian Silverman reported a BUG (via Debian BTS) where gdb's
-        record command does something nasty and causes a double fault o=
-n
-        x86-64 kernel with 32bit userland (the debugged application).
-        32bit and 64bit setup are not kernels are not affected. The
-        problem is limited is limited to x86.
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+---
+ kernel/timer.c |    8 +++++++-
+ 1 files changed, 7 insertions(+), 1 deletions(-)
 
-      - Sami Pietik=C3=A4inen reported a crash in __ip_make_skb(). Nich=
-olas
-        Mc Guire is preparing a patch for it.
-
-The delta patch against v3.12.6-rt8 is appended below and can be found
-here:
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-=
-3.12.6-rt8-rt9.patch.xz
-
-The RT patch against 3.12.6 can be found here:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.=
-6-rt9.patch.xz
-
-The split quilt queue is available at:
-
-   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patches-3.1=
-2.6-rt9.tar.xz
-
-Sebastian
-
-diff --git a/arch/arm/mach-sti/platsmp.c b/arch/arm/mach-sti/platsmp.c
-index dce50d9..c05b764 100644
---- a/arch/arm/mach-sti/platsmp.c
-+++ b/arch/arm/mach-sti/platsmp.c
-@@ -35,7 +35,7 @@ static void write_pen_release(int val)
- 	outer_clean_range(__pa(&pen_release), __pa(&pen_release + 1));
- }
-=20
--static DEFINE_SPINLOCK(boot_lock);
-+static DEFINE_RAW_SPINLOCK(boot_lock);
-=20
- void sti_secondary_init(unsigned int cpu)
- {
-@@ -50,8 +50,8 @@ void sti_secondary_init(unsigned int cpu)
- 	/*
- 	 * Synchronise with the boot thread.
- 	 */
--	spin_lock(&boot_lock);
--	spin_unlock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
- }
-=20
- int sti_boot_secondary(unsigned int cpu, struct task_struct *idle)
-@@ -62,7 +62,7 @@ int sti_boot_secondary(unsigned int cpu, struct task_=
-struct *idle)
- 	 * set synchronisation state between this boot processor
- 	 * and the secondary one
- 	 */
--	spin_lock(&boot_lock);
-+	raw_spin_lock(&boot_lock);
-=20
- 	/*
- 	 * The secondary processor is waiting to be released from
-@@ -93,7 +93,7 @@ int sti_boot_secondary(unsigned int cpu, struct task_=
-struct *idle)
- 	 * now the secondary core is starting up let it run its
- 	 * calibrations, then wait for it to finish
- 	 */
--	spin_unlock(&boot_lock);
-+	raw_spin_unlock(&boot_lock);
-=20
- 	return pen_release !=3D -1 ? -ENOSYS : 0;
- }
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index 79a7a35..bdbf77db 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -461,9 +461,8 @@ extern int schedule_hrtimeout_range_clock(ktime_t *=
-expires,
- 		unsigned long delta, const enum hrtimer_mode mode, int clock);
- extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mod=
-e mode);
-=20
--/* Soft interrupt function to run the hrtimer queues: */
-+/* Called from the periodic timer tick */
- extern void hrtimer_run_queues(void);
--extern void hrtimer_run_pending(void);
-=20
- /* Bootup initialization: */
- extern void __init hrtimers_init(void);
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index c383841..7aa442e 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1694,30 +1694,6 @@ static void run_hrtimer_softirq(struct softirq_a=
-ction *h)
- }
-=20
- /*
-- * Called from timer softirq every jiffy, expire hrtimers:
-- *
-- * For HRT its the fall back code to run the softirq in the timer
-- * softirq context in case the hrtimer initialization failed or has
-- * not been done yet.
-- */
--void hrtimer_run_pending(void)
--{
--	if (hrtimer_hres_active())
--		return;
--
--	/*
--	 * This _is_ ugly: We have to check in the softirq context,
--	 * whether we can switch to highres and / or nohz mode. The
--	 * clocksource switch happens in the timer interrupt with
--	 * xtime_lock held. Notification from there only sets the
--	 * check bit in the tick_oneshot code, otherwise we might
--	 * deadlock vs. xtime_lock.
--	 */
--	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
--		hrtimer_switch_to_hres();
--}
--
--/*
-  * Called from hardirq context every jiffy
-  */
- void hrtimer_run_queues(void)
-@@ -1730,6 +1706,13 @@ void hrtimer_run_queues(void)
- 	if (hrtimer_hres_active())
- 		return;
-=20
-+	/*
-+	 * Check whether we can switch to highres mode.
-+	 */
-+	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled())
-+	    && hrtimer_switch_to_hres())
-+		return;
-+
- 	for (index =3D 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
- 		base =3D &cpu_base->clock_base[index];
- 		if (!timerqueue_getnext(&base->active))
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 10365be..f4f61bb 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -204,7 +204,12 @@ static void rcu_preempt_qs(int cpu);
-=20
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
- }
- #else
- void rcu_bh_qs(int cpu)
-@@ -2674,6 +2679,10 @@ static int __rcu_pending(struct rcu_state *rsp, =
-struct rcu_data *rdp)
- 	/* Check for CPU stalls, if enabled. */
- 	check_cpu_stall(rsp, rdp);
-=20
-+	/* Is this CPU a NO_HZ_FULL CPU that should ignore RCU? */
-+	if (rcu_nohz_full_cpu(rsp))
-+		return 0;
-+
- 	/* Is the RCU core waiting for a quiescent state from this CPU? */
- 	if (rcu_scheduler_fully_active &&
- 	    rdp->qs_pending && !rdp->passed_quiesce) {
-diff --git a/kernel/rcutree.h b/kernel/rcutree.h
-index c36d59a..eb4fe67 100644
---- a/kernel/rcutree.h
-+++ b/kernel/rcutree.h
-@@ -563,6 +563,7 @@ static void rcu_sysidle_report_gp(struct rcu_state =
-*rsp, int isidle,
- 				  unsigned long maxj);
- static void rcu_bind_gp_kthread(void);
- static void rcu_sysidle_init_percpu_data(struct rcu_dynticks *rdtp);
-+static bool rcu_nohz_full_cpu(struct rcu_state *rsp);
-=20
- #endif /* #ifndef RCU_TREE_NONCORE */
-=20
-diff --git a/kernel/rcutree_plugin.h b/kernel/rcutree_plugin.h
-index 05bcc6f..c1735a1 100644
---- a/kernel/rcutree_plugin.h
-+++ b/kernel/rcutree_plugin.h
-@@ -2801,3 +2801,23 @@ static void rcu_sysidle_init_percpu_data(struct =
-rcu_dynticks *rdtp)
- }
-=20
- #endif /* #else #ifdef CONFIG_NO_HZ_FULL_SYSIDLE */
-+
-+/*
-+ * Is this CPU a NO_HZ_FULL CPU that should ignore RCU so that the
-+ * grace-period kthread will do force_quiescent_state() processing?
-+ * The idea is to avoid waking up RCU core processing on such a
-+ * CPU unless the grace period has extended for too long.
-+ *
-+ * This code relies on the fact that all NO_HZ_FULL CPUs are also
-+ * CONFIG_RCU_NOCB_CPUs.
-+ */
-+static bool rcu_nohz_full_cpu(struct rcu_state *rsp)
-+{
-+#ifdef CONFIG_NO_HZ_FULL
-+	if (tick_nohz_full_cpu(smp_processor_id()) &&
-+	    (!rcu_gp_in_progress(rsp) ||
-+	     ULONG_CMP_LT(jiffies, ACCESS_ONCE(rsp->gp_start) + HZ)))
-+		return 1;
-+#endif /* #ifdef CONFIG_NO_HZ_FULL */
-+	return 0;
-+}
 diff --git a/kernel/timer.c b/kernel/timer.c
-index b06c647..46467be 100644
+index 46467be..88951cb 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -1443,8 +1443,6 @@ static void run_timer_softirq(struct softirq_acti=
-on *h)
- 	irq_work_run();
- #endif
-=20
--	hrtimer_run_pending();
--
- 	if (time_after_eq(jiffies, base->timer_jiffies))
- 		__run_timers(base);
- }
-@@ -1454,8 +1452,27 @@ static void run_timer_softirq(struct softirq_act=
-ion *h)
+@@ -1452,9 +1452,13 @@ static void run_timer_softirq(struct softirq_action *h)
   */
  void run_local_timers(void)
  {
-+	struct tvec_base *base =3D __this_cpu_read(tvec_bases);
-+
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 	struct tvec_base *base = __this_cpu_read(tvec_bases);
++#endif
+ 
  	hrtimer_run_queues();
--	raise_softirq(TIMER_SOFTIRQ);
-+	/*
-+	 * We can access this lockless as we are in the timer
-+	 * interrupt. If there are no timers queued, nothing to do in
-+	 * the timer softirq.
-+	 */
-+	if (!spin_do_trylock(&base->lock)) {
-+		raise_softirq(TIMER_SOFTIRQ);
-+		return;
-+	}
-+	if (!base->active_timers)
-+		goto out;
 +
-+	/* Check whether the next pending timer has expired */
-+	if (time_before_eq(base->next_timer, jiffies))
-+		raise_softirq(TIMER_SOFTIRQ);
-+out:
-+	rt_spin_unlock_after_trylock_in_irq(&base->lock);
-+
- }
-=20
- #ifdef __ARCH_WANT_SYS_ALARM
-diff --git a/localversion-rt b/localversion-rt
-index 700c857..22746d6 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt8
-+-rt9
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 	/*
+ 	 * We can access this lockless as we are in the timer
+ 	 * interrupt. If there are no timers queued, nothing to do in
+@@ -1472,7 +1476,9 @@ void run_local_timers(void)
+ 		raise_softirq(TIMER_SOFTIRQ);
+ out:
+ 	rt_spin_unlock_after_trylock_in_irq(&base->lock);
