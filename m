@@ -1,115 +1,115 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [ANNOUNCE] 3.12.6-rt9
-Date: Wed, 25 Dec 2013 04:24:37 +0100
-Message-ID: <1387941877.5373.10.camel@marge.simpson.net>
-References: <20131223225017.GA8623@linutronix.de>
-	 <1387900067.5490.33.camel@marge.simpson.net> <52B9B8C9.3090406@pavlinux.ru>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
+Date: Tue, 24 Dec 2013 23:55:44 -0800
+Message-ID: <20131225075544.GE19211@linux.vnet.ibm.com>
+References: <20131221193900.GA8427@linutronix.de>
+ <1387681647.5412.25.camel@marge.simpson.net>
+ <1387702631.5412.101.camel@marge.simpson.net>
+ <1387773533.5369.16.camel@marge.simpson.net>
+ <20131224193636.GD19211@linux.vnet.ibm.com>
+ <1387940854.5373.8.camel@marge.simpson.net>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=us-ascii
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: pavel@pavlinux.ru
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.9]:52067 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751305Ab3LYDYq convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Dec 2013 22:24:46 -0500
-In-Reply-To: <52B9B8C9.3090406@pavlinux.ru>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1387940854.5373.8.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2013-12-24 at 20:39 +0400, Pavel Vasilyev wrote:=20
-> 24.12.2013 19:47, Mike Galbraith =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> > On Mon, 2013-12-23 at 23:50 +0100, Sebastian Andrzej Siewior wrote:=
-=20
->=20
-> > crash> bt
-> > PID: 508    TASK: ffff8802739ba340  CPU: 16  COMMAND: "ksoftirqd/16=
-"
->=20
-> YES!!! And ARM code broke :)
+On Wed, Dec 25, 2013 at 04:07:34AM +0100, Mike Galbraith wrote:
+> On Tue, 2013-12-24 at 11:36 -0800, Paul E. McKenney wrote: 
+> > On Mon, Dec 23, 2013 at 05:38:53AM +0100, Mike Galbraith wrote:
+> > > On Sun, 2013-12-22 at 09:57 +0100, Mike Galbraith wrote: 
+> > > > I'll let the box give
+> > > > RCU something to do for a couple days.  No news is good news.
+> > > 
+> > > Ho ho hum, merry christmas, gift attached.
+> > 
+> > Hmmm...  I guess I should take a moment to work out who has been
+> > naughty and nice...
+> > 
+> > > I'll beat on virgin -rt7, see if it survives, then re-apply RCU patch
+> > > and retest.  This kernel had nohz_full enabled, along with Sebastian's
+> > > pending -rt fix for same, so RCU patch was not only not running solo,
+> > > box was running a known somewhat buggy config as well.  Box was doing
+> > > endless tbench 64 when it started stalling fwiw.
+> > 
+> > [72788.040872] NMI backtrace for cpu 31
+> > [72788.040874] CPU: 31 PID: 13975 Comm: tbench Tainted: G        W    3.12.6-rt7-nohz #192
+> > [72788.040874] Hardware name: Hewlett-Packard ProLiant DL980 G7, BIOS P66 07/07/2010
+> > [72788.040875] task: ffff8802728e3db0 ti: ffff88026deb2000 task.ti: ffff88026deb2000
+> > [72788.040877] RIP: 0010:[<ffffffff815e34e4>]  [<ffffffff815e34e4>] _raw_spin_trylock+0x14/0x80
+> > [72788.040878] RSP: 0018:ffff8802769e3e58  EFLAGS: 00000002
+> > [72788.040879] RAX: ffff88026deb3fd8 RBX: ffff880273544000 RCX: 000000007bc87bc6
+> > [72788.040879] RDX: 0000000000000000 RSI: ffff8802728e3db0 RDI: ffff880273544000
+> > [72788.040880] RBP: ffff88026deb39f8 R08: 0000063c14effd0f R09: 0000000000000119
+> > [72788.040881] R10: 0000000000000005 R11: ffff8802769f2260 R12: ffff8802728e3db0
+> > [72788.040881] R13: 000000000000001f R14: ffff8802769ebcc0 R15: ffffffff810c4730
+> > [72788.040883] FS:  00007f7cd380a700(0000) GS:ffff8802769e0000(0000) knlGS:0000000000000000
+> > [72788.040883] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+> > [72788.040884] CR2: 000000000068a0e8 CR3: 0000000267ba4000 CR4: 00000000000007e0
+> > [72788.040885] Stack:
+> > [72788.040886]  ffff88026deb39f8 ffffffff815e2aa0 0000000000000000 ffffffff8106711a
+> > [72788.040887]  ffff8802769ec4e0 ffff8802769ec4e0 ffff8802769e3f58 ffffffff810c44bd
+> > [72788.040888]  ffff88026deb39f8 ffff88026deb39f8 000015ed4f5ff89b ffffffff810c476e
+> > [72788.040889] Call Trace:
+> > [72788.040889]  <IRQ> 
+> > [72788.040891]  [<ffffffff815e2aa0>] ? rt_spin_lock_slowunlock_hirq+0x10/0x20
+> > [72788.040893]  [<ffffffff8106711a>] ? update_process_times+0x3a/0x60
+> > [72788.040895]  [<ffffffff810c44bd>] ? tick_sched_handle+0x2d/0x70
+> > [72788.040896]  [<ffffffff810c476e>] ? tick_sched_timer+0x3e/0x70
+> > [72788.040898]  [<ffffffff810839dd>] ? __run_hrtimer+0x13d/0x260
+> > [72788.040900]  [<ffffffff81083c2c>] ? hrtimer_interrupt+0x12c/0x310
+> > [72788.040901]  [<ffffffff8109593e>] ? vtime_account_system+0x4e/0xf0
+> > [72788.040903]  [<ffffffff81035656>] ? smp_apic_timer_interrupt+0x36/0x50
+> > [72788.040904]  [<ffffffff815ebc9d>] ? apic_timer_interrupt+0x6d/0x80
+> > [72788.040905]  <EOI> 
+> > [72788.040906]  [<ffffffff815e338a>] ? _raw_spin_lock+0x2a/0x40
+> > [72788.040908]  [<ffffffff815e23b3>] ? rt_spin_lock_slowlock+0x33/0x2d0
+> > [72788.040910]  [<ffffffff8108ee44>] ? migrate_enable+0xc4/0x220
+> > [72788.040911]  [<ffffffff8152f888>] ? ip_finish_output+0x258/0x450
+> > [72788.040913]  [<ffffffff81067011>] ? lock_timer_base+0x41/0x80
+> > [72788.040914]  [<ffffffff81068db6>] ? mod_timer+0x66/0x290
+> > [72788.040916]  [<ffffffff814df02f>] ? sk_reset_timer+0xf/0x20
+> > [72788.040917]  [<ffffffff81547d7f>] ? tcp_write_xmit+0x1cf/0x5d0
+> > [72788.040919]  [<ffffffff815481e5>] ? __tcp_push_pending_frames+0x25/0x60
+> > [72788.040921]  [<ffffffff81539e34>] ? tcp_sendmsg+0x114/0xbb0
+> > [72788.040923]  [<ffffffff814dbc1f>] ? sock_sendmsg+0xaf/0xf0
+> > [72788.040925]  [<ffffffff811bf5e5>] ? touch_atime+0x65/0x150
+> > [72788.040927]  [<ffffffff814dbd78>] ? SyS_sendto+0x118/0x190
+> > [72788.040929]  [<ffffffff81095b66>] ? vtime_account_user+0x66/0x100
+> > [72788.040930]  [<ffffffff8100f36a>] ? syscall_trace_enter+0x2a/0x260
+> > [72788.040932]  [<ffffffff815eb249>] ? tracesys+0xdd/0xe2
+> > 
+> > The most likely suspect is the rt_spin_lock_slowlock() that is apparently
+> > being acquired by migrate_enable().  This could be due to:
+> > 
+> > 1.	Massive contention on that lock.
+> > 
+> > 2.	Someone else holding that lock for excessive time periods.
+> > 	Evidence in favor: CPU 0 appears to be running within
+> > 	migrate_enable().  But isn't migrate_enable() really quite
+> > 	lightweight?
+> > 
+> > 3.	Possible looping in the networking stack -- but this seems
+> > 	unlikely given that we appear to have caught a lock acquisition
+> > 	in the act.  (Not impossible, however, if there are lots of
+> > 	migrate_enable() calls in the networking stack, which there
+> > 	are due to all the per-CPU work.)
+> > 
+> > So which code do you think deserves the big lump of coal?  ;-)
+> 
+> Sebastian's NO_HZ_FULL locking fixes.  Locking is hard, and rt sure
+> doesn't make it any easier, so lets give him a cookie or three to nibble
+> on while he ponders that trylock stuff again instead :)
 
-And NO_HZ_TICK config survived for only 4.5 hours.
+Fair enough.  Does Sebastian prefer milk and cookies or the other
+tradition of beer and a cigar?  ;-)
 
-PID: 6948   TASK: ffff880272d1f1c0  CPU: 29  COMMAND: "tbench"
- #0 [ffff8802769a6a40] machine_kexec at ffffffff8103bc07
- #1 [ffff8802769a6aa0] crash_kexec at ffffffff810d3e93
- #2 [ffff8802769a6b70] panic at ffffffff815bce70
- #3 [ffff8802769a6bf0] watchdog_overflow_callback at ffffffff810fd51d
- #4 [ffff8802769a6c10] __perf_event_overflow at ffffffff8112f1f8
- #5 [ffff8802769a6ca0] perf_event_overflow at ffffffff8112fb14
- #6 [ffff8802769a6cb0] intel_pmu_handle_irq at ffffffff8102078f
- #7 [ffff8802769a6de0] perf_event_nmi_handler at ffffffff815c2de5
- #8 [ffff8802769a6e10] nmi_handle at ffffffff815c2493
- #9 [ffff8802769a6ea0] default_do_nmi at ffffffff815c2623
-#10 [ffff8802769a6ed0] do_nmi at ffffffff815c2948
-#11 [ffff8802769a6ef0] end_repeat_nmi at ffffffff815c1931
-    [exception RIP: preempt_schedule+36]
-    RIP: ffffffff815be944  RSP: ffff8802769a3d98  RFLAGS: 00000002
-    RAX: 0000000000000010  RBX: 0000000000000010  RCX: 0000000000000002
-    RDX: ffff8802769a3d98  RSI: 0000000000000018  RDI: 0000000000000001
-    RBP: ffffffff815be944   R8: ffffffff815be944   R9: 0000000000000018
-    R10: ffff8802769a3d98  R11: 0000000000000002  R12: ffffffffffffffff
-    R13: ffff880273f74000  R14: ffff880272d1f1c0  R15: ffff880269cedfd8
-    ORIG_RAX: ffff880269cedfd8  CS: 0010  SS: 0018
---- <RT exception stack> ---
-#12 [ffff8802769a3d98] preempt_schedule at ffffffff815be944
-#13 [ffff8802769a3db0] _raw_spin_trylock at ffffffff815c0d6e
-#14 [ffff8802769a3dc0] rt_spin_lock_slowunlock_hirq at ffffffff815c0288
-#15 [ffff8802769a3de0] rt_spin_unlock_after_trylock_in_irq at ffffffff8=
-15c09e5
-#16 [ffff8802769a3df0] run_local_timers at ffffffff81068025
-#17 [ffff8802769a3e10] update_process_times at ffffffff810680ac
-#18 [ffff8802769a3e40] tick_sched_handle at ffffffff810c3a92
-#19 [ffff8802769a3e60] tick_sched_timer at ffffffff810c3d2f
-#20 [ffff8802769a3e90] __run_hrtimer at ffffffff8108471d
-#21 [ffff8802769a3ed0] hrtimer_interrupt at ffffffff8108497a
-#22 [ffff8802769a3f70] local_apic_timer_interrupt at ffffffff810349e6
-#23 [ffff8802769a3f90] smp_apic_timer_interrupt at ffffffff810358ee
-#24 [ffff8802769a3fb0] apic_timer_interrupt at ffffffff815c955d
---- <IRQ stack> ---
-#25 [ffff880269ced848] apic_timer_interrupt at ffffffff815c955d
-    [exception RIP: _raw_spin_lock+53]
-    RIP: ffffffff815c0c05  RSP: ffff880269ced8f8  RFLAGS: 00000202
-    RAX: 0000000000000b7b  RBX: 0000000000000282  RCX: ffff880272d1f1c0
-    RDX: 0000000000000b7d  RSI: ffff880269ceda38  RDI: ffff880273f74000
-    RBP: ffff880269ced8f8   R8: 0000000000000001   R9: 00000000b54d13a4
-    R10: 0000000000000001  R11: 0000000000000001  R12: ffff880269ced910
-    R13: ffff880276d32170  R14: ffffffff810c9030  R15: ffff880269ced8b8
-    ORIG_RAX: ffffffffffffff10  CS: 0010  SS: 0018
-#26 [ffff880269ced900] rt_spin_lock_slowlock at ffffffff815bfb51
-#27 [ffff880269ced9e0] rt_spin_lock at ffffffff815c0922
-#28 [ffff880269ced9f0] lock_timer_base at ffffffff81067f92
-#29 [ffff880269ceda20] mod_timer at ffffffff81069bcb
-#30 [ffff880269ceda70] sk_reset_timer at ffffffff814d1e57
-#31 [ffff880269ceda90] inet_csk_reset_xmit_timer at ffffffff8152d4a8
-#32 [ffff880269cedac0] tcp_rearm_rto at ffffffff8152d583
-#33 [ffff880269cedae0] tcp_ack at ffffffff81534085
-#34 [ffff880269cedb60] tcp_rcv_established at ffffffff8153443d
-#35 [ffff880269cedbb0] tcp_v4_do_rcv at ffffffff8153f56a
-#36 [ffff880269cedbe0] __release_sock at ffffffff814d3891
-#37 [ffff880269cedc10] release_sock at ffffffff814d3942
-#38 [ffff880269cedc30] tcp_sendmsg at ffffffff8152b955
-#39 [ffff880269cedd00] inet_sendmsg at ffffffff8155350e
-#40 [ffff880269cedd30] sock_sendmsg at ffffffff814cea87
-#41 [ffff880269cede40] sys_sendto at ffffffff814cebdf
-#42 [ffff880269cedf80] tracesys at ffffffff815c8b09 (via system_call)
-    RIP: 00007f0441a1fc35  RSP: 00007fffdea86130  RFLAGS: 00000246
-    RAX: ffffffffffffffda  RBX: ffffffff815c8b09  RCX: ffffffffffffffff
-    RDX: 000000000000248d  RSI: 0000000000607260  RDI: 0000000000000004
-    RBP: 000000000000248d   R8: 0000000000000000   R9: 0000000000000000
-    R10: 0000000000000000  R11: 0000000000000246  R12: 00007fffdea86a10
-    R13: 00007fffdea86414  R14: 0000000000000004  R15: 0000000000607260
-    ORIG_RAX: 000000000000002c  CS: 0033  SS: 002b
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+							Thanx, Paul
