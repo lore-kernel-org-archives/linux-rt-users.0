@@ -1,78 +1,65 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Thu, 26 Dec 2013 11:03:32 +0100
-Message-ID: <1388052212.5420.4.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
-	 <1387681647.5412.25.camel@marge.simpson.net>
-	 <1387702631.5412.101.camel@marge.simpson.net>
-	 <1387773533.5369.16.camel@marge.simpson.net>
-	 <20131224193636.GD19211@linux.vnet.ibm.com>
-	 <1387940854.5373.8.camel@marge.simpson.net>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [ANNOUNCE] 3.12.6-rt9
+Date: Fri, 27 Dec 2013 21:00:24 +0100
+Message-ID: <20131227200024.GA19505@opentech.at>
+References: <20131223225017.GA8623@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
-To: paulmck@linux.vnet.ibm.com
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1387940854.5373.8.camel@marge.simpson.net>
+Content-Disposition: inline
+In-Reply-To: <20131223225017.GA8623@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2013-12-25 at 04:07 +0100, Mike Galbraith wrote:
-> On Tue, 2013-12-24 at 11:36 -0800, Paul E. McKenney wrote: 
+On Mon, 23 Dec 2013, Sebastian Andrzej Siewior wrote:
 
-> > So which code do you think deserves the big lump of coal?  ;-)
+> Dear RT folks!
 > 
-> Sebastian's NO_HZ_FULL locking fixes.
+> I'm pleased to announce the v3.12.6-rt9 patch set.
+> 
+> Changes since v3.12.6-rt8
+<snip>
+> - A patch from Thomas Gleixner not to raise the timer softirq
+>   unconditionally (only if a timer is pending)
+> 
 
-Whack-a-mole hasn't yet dug up any new moles.
+This one seems to deadlock early in the boot sequence on x86
+(i3/i7/Phenom-4x here and Carsten Emde also had boot failures)
 
----
- kernel/timer.c |    4 ++++
- 1 file changed, 4 insertions(+)
+after droping this patch with:
+patch -p1 -R < ../paches/timers-do-not-raise-softirq-unconditionally.patch
+3.12.6-rt9 boots up fine. cyclictest seems to be back to what it was before
+(only ran for a few minutes idle and 1h with load on an i3).
 
-Index: linux-2.6/kernel/timer.c
-===================================================================
---- linux-2.6.orig/kernel/timer.c
-+++ linux-2.6/kernel/timer.c
-@@ -764,7 +764,9 @@ __mod_timer(struct timer_list *timer, un
- 	timer_stats_timer_set_start_info(timer);
- 	BUG_ON(!timer->function);
- 
-+	local_irq_disable_rt();
- 	base = lock_timer_base(timer, &flags);
-+	local_irq_enable_rt();
- 
- 	ret = detach_if_pending(timer, base, false);
- 	if (!ret && pending_only)
-@@ -1198,7 +1200,9 @@ static inline void __run_timers(struct t
- {
- 	struct timer_list *timer;
- 
-+	local_irq_disable_rt();
- 	spin_lock_irq(&base->lock);
-+	local_irq_enable_rt();
- 	while (time_after_eq(jiffies, base->timer_jiffies)) {
- 		struct list_head work_list;
- 		struct list_head *head = &work_list;
----
- kernel/time/tick-sched.c |    2 ++
- 1 file changed, 2 insertions(+)
+The main problem with this patch though are proceduaral isues 
+the commit note - which is a mail exchange - actually does not explain what 
+the rational for the changes is (...well I don't understand the logic of
+run_local_timers - if someone can explain - pleas do) and notably:
 
-Index: linux-2.6/kernel/time/tick-sched.c
-===================================================================
---- linux-2.6.orig/kernel/time/tick-sched.c
-+++ linux-2.6/kernel/time/tick-sched.c
-@@ -216,7 +216,9 @@ void __tick_nohz_full_check(void)
- 
- static void nohz_full_kick_work_func(struct irq_work *work)
- {
-+	local_irq_disable_rt();
- 	__tick_nohz_full_check();
-+	local_irq_enable_rt();
- }
- 
- static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) = {
+from timers-do-not-raise-softirq-unconditionally.patch
+<snip>
+well, that very same problem is in mainline if you add "threadirqs" to
+the command line. But we can be smart about this. The untested patch
+                                                    ^^^^^^^^^^^^^^^^^^
+below should address that issue. If that works on mainline we can
+adapt it for RT (needs a trylock(&base->lock) there).
+<snip>
+
+ does make me wonder why this went into -rt9 ?
+ It also build fails with CONFIG_PREEMPT_RT_FULL not set.
+
+ as with this patch, systems that booted just fine with 3.12.5-rt7 don't
+ even boot (atleast my 3 x86 test boxes here did not) this raises some
+ questions regarding the process of getting patches into -rtX - are
+ we going to fast here ?
+
+ I would prefere if such patches would go out with a request for testing
+ or atleast a "might blow up your system" note in them...
+
+thx!
+hofrat
