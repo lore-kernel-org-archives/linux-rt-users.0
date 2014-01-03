@@ -1,188 +1,141 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: [PATCH RT 2/2] read_lock migrate_disable pushdown to rt_read_lock
-Date: Thu, 2 Jan 2014 10:19:15 +0100
-Message-ID: <20140102091915.GC1757@opentech.at>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] Revert "x86: Disable IST stacks for debug/int 3/stack
+ fault for PREEMPT_RT"
+Date: Fri, 3 Jan 2014 14:55:48 +0100
+Message-ID: <20140103135548.GA6327@linutronix.de>
+References: <20130917061329.4872.51468.reportbug@dell-inspiron-linux.dlinkrouter>
+ <1379427451.23881.48.camel@deadeye.wl.decadent.org.uk>
+ <CAP01z6LVxoA6kDJeL8NuO2aA22BjMvXSk9ZY7z9cOK1=k56vpg@mail.gmail.com>
+ <1379905562.3913.8.camel@deadeye.wl.decadent.org.uk>
+ <CAP01z6+j6moUio9pc3G3iz+ebJCdKEvngddxnxazRP+NXwLkyg@mail.gmail.com>
+ <1380115449.4430.21.camel@deadeye.wl.decadent.org.uk>
+ <52AE0419.3050103@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	Steven Rostedt <rostedt@rostedt.homelinux.com>,
+	723180@bugs.debian.org, Brian Silverman <bsilver16384@gmail.com>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: linux-rt-users@vger.kernel.org
+	linux-rt-users@vger.kernel.org, Andi Kleen <andi@firstfloor.org>
+To: Ben Hutchings <ben@decadent.org.uk>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <52AE0419.3050103@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+where do I start. Let me explain what is going on here. The code
+sequence
+| pushf
+| pop    %edx
+| or     $0x1,%dh
+| push   %edx
+| mov    $0xe0,%eax
+| popf
+| sysenter
 
+triggers the bug. On 64bit kernel we see the double fault (with 32bit and
+64bit userland) and on 32bit kernel there is no problem. The reporter said
+that double fault does not happen on 64bit kernel with 64bit userland and
+this is because in that case the VDSO uses the "syscall" interface instead
+of "sysenter".
 
-pushdown of migrate_disable/enable from read_*lock* to the rt_read_*lock*
-api level
+The bug. "popf" loads the flags with the TF bit set which enables
+"single stepping" and this leads to a debug exception. Usually on 64bit
+we have a special IST stack for the debug exception. Due to patch [0] we
+do not use the IST stack but the kernel stack instead. On 64bit the
+sysenter instruction starts in kernel with the stack address NULL. The
+code sequence above enters the debug exception (TF flag) after the
+sysenter instruction was executed which sets the stack pointer to NULL
+and we have a fault (it seems that the debug exception saves some bytes
+on the stack).
+To fix the double fault I'm going to drop patch [0]. It is completely
+pointless. In do_debug() and do_stack_segment() we disable preemption
+which means the task can't leave the CPU. So it does not matter if we run
+on IST or on kernel stack.
+There is a patch [1] which drops preempt_disable() call for a 32bit
+kernel but not for 64bit so there should be no regression.
+And [1] seems valid even for this code sequence. We enter the debug
+exception with a 256bytes long per cpu stack and migrate to the kernel
+stack before calling do_debug().
 
-general mapping to mutexes:
+[0] x86-disable-debug-stack.patch
+[1] fix-rt-int3-x86_32-3.2-rt.patch
 
-read_*lock* 
-  `-> rt_read_*lock* 
-          `-> __spin_lock (the sleeping spin locks)
-                 `-> rt_mutex 
-
-The real read_lock* mapping:
-
-          read_lock_irqsave -.
-read_lock_irq                `-> rt_read_lock_irqsave()  
-       `->read_lock ---------.       \
-          read_lock_bh ------+        \ 
-                             `--> rt_read_lock() 
-                                   if (rt_mutex_owner(lock) != current){
-                                           `-> __rt_spin_lock()
-                                                rt_spin_lock_fastlock()
-                                                       `->rt_mutex_cmpxchg()
-                                    migrate_disable()
-                                   }
-                                   rwlock->read_depth++;
-read_trylock mapping:
-
-read_trylock 
-          `-> rt_read_trylock 
-               if (rt_mutex_owner(lock) != current){
-                                              `-> rt_mutex_trylock()
-                                                   rt_mutex_fasttrylock()
-                                                    rt_mutex_cmpxchg()
-                migrate_disable()
-               }
-               rwlock->read_depth++;
-
-read_unlock* mapping:
-
-read_unlock_bh --------+
-read_unlock_irq -------+
-read_unlock_irqrestore +
-read_unlock -----------+
-                       `-> rt_read_unlock() 
-                            if(--rwlock->read_depth==0){
-                                      `-> __rt_spin_unlock()
-                                           rt_spin_lock_fastunlock()
-                                                        `-> rt_mutex_cmpxchg()
-                             migrate_disable()
-                            }
-
-So calls to migrate_disable/enable() are better placed at the rt_read_*
-level of lock/trylock/unlock as all of the read_*lock* API has this as a
-common path. In the rt_read* API of lock/trylock/unlock the nesting level
-is already being recorded in rwlock->read_depth, so we can push down the
-migrate disable/enable to that level and condition it on the read_depth 
-going from 0 to 1 -> migrate_disable and 1 to 0 -> migrate_enable. This 
-eliminates the recursive calls that were needed when migrate_disable/enable
-was done at the read_*lock* level.
-
-The approach to read_*_bh also eliminates the concerns raised with the 
-regards to api inbalances (read_lock_bh -> read_unlock+local_bh_enable) 
-
-this is on top of 3.12.6-rt9 with 
-timers-do-not-raise-softirq-unconditionally.patch removed
-
-No change of functional behavior 
-
-Tested-by: Carsten Emde <C.Emde@osadl.org>
-Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+Reported-by: Brian Silverman <bsilver16384@gmail.com>
+Cc: Andi Kleen <andi@firstfloor.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/rwlock_rt.h |    6 ------
- kernel/rt.c               |    9 +++++----
- 2 files changed, 5 insertions(+), 10 deletions(-)
+ arch/x86/include/asm/page_64_types.h | 21 ++++++---------------
+ arch/x86/kernel/cpu/common.c         |  2 --
+ arch/x86/kernel/dumpstack_64.c       |  4 ----
+ 3 files changed, 6 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
-index a276fae..e85a5df 100644
---- a/include/linux/rwlock_rt.h
-+++ b/include/linux/rwlock_rt.h
-@@ -33,7 +33,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- #define read_lock_irqsave(lock, flags)			\
- 	do {						\
- 		typecheck(unsigned long, flags);	\
--		migrate_disable();			\
- 		flags = rt_read_lock_irqsave(lock);	\
- 	} while (0)
+diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
+index 695e04d..43dcd80 100644
+--- a/arch/x86/include/asm/page_64_types.h
++++ b/arch/x86/include/asm/page_64_types.h
+@@ -14,21 +14,12 @@
+ #define IRQ_STACK_ORDER 2
+ #define IRQ_STACK_SIZE (PAGE_SIZE << IRQ_STACK_ORDER)
  
-@@ -45,14 +44,12 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-# define STACKFAULT_STACK 0
+-# define DOUBLEFAULT_STACK 1
+-# define NMI_STACK 2
+-# define DEBUG_STACK 0
+-# define MCE_STACK 3
+-# define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
+-#else
+-# define STACKFAULT_STACK 1
+-# define DOUBLEFAULT_STACK 2
+-# define NMI_STACK 3
+-# define DEBUG_STACK 4
+-# define MCE_STACK 5
+-# define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
+-#endif
++#define STACKFAULT_STACK 1
++#define DOUBLEFAULT_STACK 2
++#define NMI_STACK 3
++#define DEBUG_STACK 4
++#define MCE_STACK 5
++#define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
  
- #define read_lock(lock)					\
- 	do {						\
--		migrate_disable();			\
- 		rt_read_lock(lock);			\
- 	} while (0)
+ #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
+ #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index c0dcf06..2793d1f 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -1105,9 +1105,7 @@ DEFINE_PER_CPU(struct task_struct *, fpu_owner_task);
+  */
+ static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
+ 	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
+-#if DEBUG_STACK > 0
+ 	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
+-#endif
+ };
  
- #define read_lock_bh(lock)				\
- 	do {						\
- 		local_bh_disable();			\
--		migrate_disable();			\
- 		rt_read_lock(lock);			\
- 	} while (0)
+ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index 52b4bcd..addb207 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -21,14 +21,10 @@
+ 		(N_EXCEPTION_STACKS + DEBUG_STKSZ/EXCEPTION_STKSZ - 2)
  
-@@ -74,13 +71,11 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- #define read_unlock(lock)				\
- 	do {						\
- 		rt_read_unlock(lock);			\
--		migrate_enable();			\
- 	} while (0)
- 
- #define read_unlock_bh(lock)				\
- 	do {						\
- 		rt_read_unlock(lock);			\
--		migrate_enable();			\
- 		local_bh_enable();			\
- 	} while (0)
- 
-@@ -104,7 +99,6 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
- 		typecheck(unsigned long, flags);	\
- 		(void) flags;				\
- 		rt_read_unlock(lock);			\
--		migrate_enable();			\
- 	} while (0)
- 
- #define write_unlock_irqrestore(lock, flags) \
-diff --git a/kernel/rt.c b/kernel/rt.c
-index c43c923..5d17727 100644
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -211,19 +211,18 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	 * but not when read_depth == 0 which means that the lock is
- 	 * write locked.
- 	 */
--	migrate_disable();
- 	if (rt_mutex_owner(lock) != current) {
- 		ret = rt_mutex_trylock(lock);
--		if (ret)
-+		if (ret) {
- 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
-+			migrate_disable();
-+		}
- 	} else if (!rwlock->read_depth) {
- 		ret = 0;
- 	}
- 
- 	if (ret)
- 		rwlock->read_depth++;
--	else
--		migrate_enable();
- 
- 	return ret;
- }
-@@ -247,6 +246,7 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
- 	if (rt_mutex_owner(lock) != current) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 		__rt_spin_lock(lock);
-+		migrate_disable();
- 	}
- 	rwlock->read_depth++;
- }
-@@ -268,6 +268,7 @@ void __lockfunc rt_read_unlock(rwlock_t *rwlock)
- 	if (--rwlock->read_depth == 0) {
- 		rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 		__rt_spin_unlock(&rwlock->lock);
-+		migrate_enable();
- 	}
- }
- EXPORT_SYMBOL(rt_read_unlock);
+ static char x86_stack_ids[][8] = {
+-#if DEBUG_STACK > 0
+ 		[ DEBUG_STACK-1			]	= "#DB",
+-#endif
+ 		[ NMI_STACK-1			]	= "NMI",
+ 		[ DOUBLEFAULT_STACK-1		]	= "#DF",
+-#if STACKFAULT_STACK > 0
+ 		[ STACKFAULT_STACK-1		]	= "#SS",
+-#endif
+ 		[ MCE_STACK-1			]	= "#MC",
+ #if DEBUG_STKSZ > EXCEPTION_STKSZ
+ 		[ N_EXCEPTION_STACKS ...
 -- 
-1.7.2.5
+1.8.5.2
