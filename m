@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.25-rt23
-Date: Fri, 3 Jan 2014 21:32:35 -0500
-Message-ID: <20140103213235.0dace762@gandalf.local.home>
+Subject: [ANNOUNCE] 3.4.75-rt93
+Date: Fri, 3 Jan 2014 21:33:08 -0500
+Message-ID: <20140103213308.10eda039@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.25-rt23 stable release.
+I'm pleased to announce the 3.4.75-rt93 stable release.
 
 
-This release is just an update to the new stable 3.10.25 version
+This release is just an update to the new stable 3.4.75 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: ee85b05eecc9f13a1d8e104e1cdbadef1bfea75e
+  branch: v3.4-rt
+  Head SHA1: 9d111c9c3814158097723d27029a9d214a8cd20e
 
 
-Or to build 3.10.25-rt23 directly, the following patches should be applied:
+Or to build 3.4.75-rt93 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.25.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.75.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.25-rt23.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.75-rt93.patch.xz
 
 
 
