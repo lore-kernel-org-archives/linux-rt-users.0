@@ -1,53 +1,50 @@
-From: Matthias Fuchs <mfuchs@ma-fu.de>
-Subject: Re: 3.12.6-rt9 on AM335x (armv7)
-Date: Wed, 08 Jan 2014 09:08:52 +0100
-Message-ID: <52CD0794.8030009@ma-fu.de>
-References: <52C44448.3030405@ma-fu.de> <15611103.51LOkxSQt9@dabox> <52CC6F94.6070906@ma-fu.de> <10785809.PZUZGWPMgY@hydra> <52CC91E9.7070808@pavlinux.ru>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: HOWTO: Build an RT-application
+Date: Wed, 8 Jan 2014 23:59:06 +0100
+Message-ID: <CAONaPpEnhQcxU5Vc6ctXBno8OQbOwpX2mqjXJ_otSEXdfxVumQ@mail.gmail.com>
+References: <529DD569.2080700@monom.org>
+	<CANqCtQK-Q3+ozURx7VBr_xSdjhHNkOm4sYj8KDLRvq=aRBr-kw@mail.gmail.com>
+	<52AF0107.9080809@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: pavel@pavlinux.ru, Tim Sander <tim@krieglstein.org>
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: RT <linux-rt-users@vger.kernel.org>, Remy Bohmer <linux@bohmer.net>
+To: Daniel Wagner <wagi@monom.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mo4-p00-ob.smtp.rzone.de ([81.169.146.216]:52785 "EHLO
-	mo4-p00-ob.smtp.rzone.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753919AbaAHIIs (ORCPT
+Received: from mail-wg0-f51.google.com ([74.125.82.51]:52709 "EHLO
+	mail-wg0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752325AbaAHW7I (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 8 Jan 2014 03:08:48 -0500
-In-Reply-To: <52CC91E9.7070808@pavlinux.ru>
+	Wed, 8 Jan 2014 17:59:08 -0500
+Received: by mail-wg0-f51.google.com with SMTP id z12so1914074wgg.30
+        for <linux-rt-users@vger.kernel.org>; Wed, 08 Jan 2014 14:59:07 -0800 (PST)
+In-Reply-To: <52AF0107.9080809@monom.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hmm, on Intel it might be an SMI-Issue.
-
-Matthias
-
-On 08.01.2014 00:46, Pavel Vasilyev wrote:
-> 08.01.2014 02:58, Tim Sander =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->=20
->> Yeah 118 =C2=B5s should be the right ballpark, while still a little =
-high for my=20
->> taste. All cortex a8 seem to have rather high latency. The A9's seem=
- much=20
->> better in this respect.
->=20
-> On my Intel Atom D425, latency around 25-30 =C2=B5s (but peaks upto 5=
-000 =C2=B5s :/ )
->=20
+On Mon, Dec 16, 2013 at 2:32 PM, Daniel Wagner <wagi@monom.org> wrote:
+> On 12/06/2013 08:07 PM, Remy Bohmer wrote:
+>> Hi,
 >>
->> Have you seen the following:
->> https://www.osadl.org/Realtime-Preempt-Kernel.kernel-rt.0.html#laten=
-cyfighting
+>> Op 3 dec. 2013 14:08 schreef "Daniel Wagner" <wagi@monom.org
+>> <mailto:wagi@monom.org>>:
+>>>
+>>> Hi Remy,
+>>>
+>>> I'd like to update "HOWTO: Build an RT-application" page on
+>>> the rt wiki[1]. Since your are listed as maintainer, I better
+>>> ask if my ideas are okay before editing.
 >>
->> Cyclictest has tracing support which might help finding the cause of=
- the long=20
->> latency.=20
->>
->=20
->=20
+>> It has been a very very long time ago when I wrote that page. (years?)
+>> Please take over this page and improve it :-)
+>
+> I 'improved' it now: Flames and improvements are welcome. In case
+> someone doesn't have an wiki account to fix it up, just post it here and
+> I add it to the wiki.
+>
+> cheers,
+> daniel
+>
+> --
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Should be easy to get an account on the wiki, no need to post here.
+Improvements / updates and so on, are very much welcome, so thanks!
