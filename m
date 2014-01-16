@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/8] swait: Add a few more users
-Date: Wed, 15 Jan 2014 20:58:26 -0500
-Message-ID: <20140116020324.061849515@goodmis.org>
-References: <20140116015824.201732155@goodmis.org>
+Subject: [PATCH RT 0/8] Linux 3.2.53-rt76-rc1
+Date: Wed, 15 Jan 2014 20:58:24 -0500
+Message-ID: <20140116015824.201732155@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,79 +9,92 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-swait-Add-a-few-more-users.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.53-rt76-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.2.53-rt76-rc1.
 
-The wait-simple queue is lighter weight and more efficient than the full
-wait queue, and may be used in atomic context on PREEMPT_RT.
+Note, the reason I did not release this earlier, was that I found
+that the v3.2-rt series was locking up with my cpu hotplug stress test.
+I finally got some time to debug this, and found that the problem was
+in the invalidate_bh_lrs() where it was stuck in the on_each_cpu() call
+where it was waiting for an offline CPU. Looking at what 3.4-rt does,
+which does not have this problem, there were three patches in mainline
+from Gilad Ben-Yossef that appears to fix the issue. At least it
+makes the symptom go away. I may look into this deeper to make sure
+that we did not just make a race window much harder to hit, and really
+did fix the problem. But as 3.2-rt is now as stable as 3.4-rt and later
+I can finally release this candidate.
 
-Fix up some places that needed to call the swait_*() functions instead
-of the wait_*() functions.
+Please scream at me if I messed something up. Please test the patches too.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 1/17/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.53-rt76-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.53.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.53-rt76-rc1.patch.xz
+
+You can also build from 3.2.53-rt75 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.53-rt75-rt76-rc1.patch.xz
+
+
+Changes from 3.2.53-rt75:
+
 ---
- drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
- drivers/usb/gadget/f_fs.c                  | 2 +-
- drivers/usb/gadget/inode.c                 | 4 ++--
- 3 files changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index 0793e42..d45833f 100644
---- a/drivers/net/wireless/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/orinoco/orinoco_usb.c
-@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
- 			while (!ctx->done.done && msecs--)
- 				udelay(1000);
- 		} else {
--			wait_event_interruptible(ctx->done.wait,
-+			swait_event_interruptible(ctx->done.wait,
- 						 ctx->done.done);
- 		}
- 		break;
-diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index 0e641a1..c6154ca 100644
---- a/drivers/usb/gadget/f_fs.c
-+++ b/drivers/usb/gadget/f_fs.c
-@@ -1270,7 +1270,7 @@ static void ffs_data_put(struct ffs_data *ffs)
- 		BUG_ON(mutex_is_locked(&ffs->mutex) ||
- 		       spin_is_locked(&ffs->ev.waitq.lock) ||
- 		       waitqueue_active(&ffs->ev.waitq) ||
--		       waitqueue_active(&ffs->ep0req_completion.wait));
-+		       swaitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs);
- 	}
- }
-diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index 7138540..616d19e 100644
---- a/drivers/usb/gadget/inode.c
-+++ b/drivers/usb/gadget/inode.c
-@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 	spin_unlock_irq (&epdata->dev->lock);
- 
- 	if (likely (value == 0)) {
--		value = wait_event_interruptible (done.wait, done.done);
-+		value = swait_event_interruptible (done.wait, done.done);
- 		if (value != 0) {
- 			spin_lock_irq (&epdata->dev->lock);
- 			if (likely (epdata->ep != NULL)) {
-@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 				usb_ep_dequeue (epdata->ep, epdata->req);
- 				spin_unlock_irq (&epdata->dev->lock);
- 
--				wait_event (done.wait, done.done);
-+				swait_event (done.wait, done.done);
- 				if (epdata->status == -ECONNRESET)
- 					epdata->status = -EINTR;
- 			} else {
--- 
-1.8.4.3
+
+Gilad Ben-Yossef (3):
+      smp: introduce a generic on_each_cpu_mask() function
+      smp: add func to IPI cpus based on parameter func
+      fs: only send IPI to invalidate LRU BH when needed
+
+Peter Zijlstra (1):
+      lockdep: Correctly annotate hardirq context in irq_exit()
+
+Sebastian Andrzej Siewior (2):
+      swait: Add a few more users
+      rtmutex: use a trylock for waiter lock in trylock
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.2.53-rt76-rc1
+
+Tiejun Chen (1):
+      cpu_down: move migrate_enable() back
+
+----
+ arch/arm/kernel/smp_tlb.c                  | 20 ++-----
+ arch/tile/include/asm/smp.h                |  7 ---
+ arch/tile/kernel/smp.c                     | 19 -------
+ drivers/net/wireless/orinoco/orinoco_usb.c |  2 +-
+ drivers/usb/gadget/f_fs.c                  |  2 +-
+ drivers/usb/gadget/inode.c                 |  4 +-
+ fs/buffer.c                                | 15 ++++-
+ include/linux/smp.h                        | 46 +++++++++++++++
+ include/linux/spinlock_rt.h                |  1 +
+ kernel/cpu.c                               |  2 +-
+ kernel/rtmutex.c                           | 31 ++++++++--
+ kernel/smp.c                               | 90 ++++++++++++++++++++++++++++++
+ kernel/softirq.c                           | 45 ++++++++++++++-
+ kernel/timer.c                             |  2 +-
+ localversion-rt                            |  2 +-
+ 15 files changed, 232 insertions(+), 56 deletions(-)
