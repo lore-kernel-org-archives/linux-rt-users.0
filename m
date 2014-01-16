@@ -1,160 +1,62 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH RT 4/8] rtmutex: use a trylock for waiter lock in trylock
-Date: Thu, 16 Jan 2014 04:08:57 +0100
-Message-ID: <1389841737.5418.14.camel@marge.simpson.net>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [PATCH RT 0/8] Linux 3.2.53-rt76-rc1
+Date: Thu, 16 Jan 2014 13:41:16 +0400
+Message-ID: <52D7A93C.9090801@pavlinux.ru>
 References: <20140116015824.201732155@goodmis.org>
-	 <20140116020324.637491369@goodmis.org>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ protocol="application/pgp-signature";
+ boundary="96BsrqKFHA1CCTKRNGFbXsPlLJrHLpXMK"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140116020324.637491369@goodmis.org>
+In-Reply-To: <20140116015824.201732155@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2014-01-15 at 20:58 -0500, Steven Rostedt wrote:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--96BsrqKFHA1CCTKRNGFbXsPlLJrHLpXMK
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
+
+16.01.2014 05:58, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> Dear RT Folks,
+>=20
+> This is the RT stable review cycle of patch 3.2.53-rt76-rc1.
+
+Yap..., mainline is 3.2.54 !
+
+--=20
+
+                                                         Pavel.
 
 
-> 3.2.53-rt76-rc1 stable review patch.
-> If anyone has any objections, please let me know.
+--96BsrqKFHA1CCTKRNGFbXsPlLJrHLpXMK
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
-Not sure this is needed without the tglx don't unconditionally raise
-timer softirq patch, and with that patch applied in the form it exists
-in 3.12-rt9, as well as this one, you'll still eventually deadlock.
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.19 (GNU/Linux)
 
-> ------------------
-> 
-> From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> 
-> Mike Galbraith captered the following:
-> | >#11 [ffff88017b243e90] _raw_spin_lock at ffffffff815d2596
-> | >#12 [ffff88017b243e90] rt_mutex_trylock at ffffffff815d15be
-> | >#13 [ffff88017b243eb0] get_next_timer_interrupt at ffffffff81063b42
-> | >#14 [ffff88017b243f00] tick_nohz_stop_sched_tick at ffffffff810bd1fd
-> | >#15 [ffff88017b243f70] tick_nohz_irq_exit at ffffffff810bd7d2
-> | >#16 [ffff88017b243f90] irq_exit at ffffffff8105b02d
-> | >#17 [ffff88017b243fb0] reschedule_interrupt at ffffffff815db3dd
-> | >--- <IRQ stack> ---
-> | >#18 [ffff88017a2a9bc8] reschedule_interrupt at ffffffff815db3dd
-> | >    [exception RIP: task_blocks_on_rt_mutex+51]
-> | >#19 [ffff88017a2a9ce0] rt_spin_lock_slowlock at ffffffff815d183c
-> | >#20 [ffff88017a2a9da0] lock_timer_base.isra.35 at ffffffff81061cbf
-> | >#21 [ffff88017a2a9dd0] schedule_timeout at ffffffff815cf1ce
-> | >#22 [ffff88017a2a9e50] rcu_gp_kthread at ffffffff810f9bbb
-> | >#23 [ffff88017a2a9ed0] kthread at ffffffff810796d5
-> | >#24 [ffff88017a2a9f50] ret_from_fork at ffffffff815da04c
-> 
-> lock_timer_base() does a try_lock() which deadlocks on the waiter lock
-> not the lock itself.
-> This patch takes the waiter_lock with trylock so it should work from interrupt
-> context as well. If the fastpath doesn't work and the waiter_lock itself is
-> taken then it seems that the lock itself taken.
-> This patch also adds a "rt_spin_try_unlock" to keep lockdep happy. If we
-> managed to take the wait_lock in the first place we should also be able
-> to take it in the unlock path.
-> 
-> Cc: stable-rt@vger.kernel.org
-> Reported-by: Mike Galbraith <bitbucket@online.de>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  include/linux/spinlock_rt.h |  1 +
->  kernel/rtmutex.c            | 31 +++++++++++++++++++++++++++----
->  kernel/timer.c              |  2 +-
->  3 files changed, 29 insertions(+), 5 deletions(-)
-> 
-> diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-> index 3b555b4..28edba7 100644
-> --- a/include/linux/spinlock_rt.h
-> +++ b/include/linux/spinlock_rt.h
-> @@ -20,6 +20,7 @@ extern void __lockfunc rt_spin_lock(spinlock_t *lock);
->  extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
->  extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
->  extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
-> +extern void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock);
->  extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
->  extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
->  extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
-> diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-> index 6075f17..d759326 100644
-> --- a/kernel/rtmutex.c
-> +++ b/kernel/rtmutex.c
-> @@ -801,10 +801,8 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
->  /*
->   * Slow path to release a rt_mutex spin_lock style
->   */
-> -static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-> +static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
->  {
-> -	raw_spin_lock(&lock->wait_lock);
-> -
->  	debug_rt_mutex_unlock(lock);
->  
->  	rt_mutex_deadlock_account_unlock(current);
-> @@ -823,6 +821,23 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
->  	rt_mutex_adjust_prio(current);
->  }
->  
-> +static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
-> +{
-> +	raw_spin_lock(&lock->wait_lock);
-> +	__rt_spin_lock_slowunlock(lock);
-> +}
-> +
-> +static void  noinline __sched rt_spin_lock_slowunlock_hirq(struct rt_mutex *lock)
-> +{
-> +	int ret;
-> +
-> +	do {
-> +		ret = raw_spin_trylock(&lock->wait_lock);
-> +	} while (!ret);
-> +
-> +	__rt_spin_lock_slowunlock(lock);
-> +}
-> +
->  void __lockfunc rt_spin_lock(spinlock_t *lock)
->  {
->  	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-> @@ -853,6 +868,13 @@ void __lockfunc rt_spin_unlock(spinlock_t *lock)
->  }
->  EXPORT_SYMBOL(rt_spin_unlock);
->  
-> +void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock)
-> +{
-> +	/* NOTE: we always pass in '1' for nested, for simplicity */
-> +	spin_release(&lock->dep_map, 1, _RET_IP_);
-> +	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_hirq);
-> +}
-> +
->  void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
->  {
->  	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-> @@ -1064,7 +1086,8 @@ rt_mutex_slowtrylock(struct rt_mutex *lock)
->  {
->  	int ret = 0;
->  
-> -	raw_spin_lock(&lock->wait_lock);
-> +	if (!raw_spin_trylock(&lock->wait_lock))
-> +		return ret;
->  	init_lists(lock);
->  
->  	if (likely(rt_mutex_owner(lock) != current)) {
-> diff --git a/kernel/timer.c b/kernel/timer.c
-> index 7fa30e0..b7ef082 100644
-> --- a/kernel/timer.c
-> +++ b/kernel/timer.c
-> @@ -1336,7 +1336,7 @@ unsigned long get_next_timer_interrupt(unsigned long now)
->  		if (time_before_eq(base->next_timer, base->timer_jiffies))
->  			base->next_timer = __next_timer_interrupt(base);
->  		expires = base->next_timer;
-> -		rt_spin_unlock(&base->lock);
-> +		rt_spin_unlock_after_trylock_in_irq(&base->lock);
->  	} else {
->  		expires = now + 1;
->  	}
+iQIcBAEBCgAGBQJS16k8AAoJEPtok08Dny2hajgP/iC8c+mWcxuAKuNjrO8REpai
+HwzEyaeCJVxKlajG3K4LhhxrzwkV6wDQg7kQ1ofj3frdThC0MYmDLMwZVCp3+8gx
+Oxg0+Scmfhqc8dmJ0mEHztA61cCfkS5Ta2NGu3q3kPZvYSb8xwBbswIrgy3P0CGs
+j543a9PfvFBkPMuDHqj3Rx9l7RlrJBOK+uD2G3+fFlrro2d/gUTmvnLZZVbm862q
+G+CAM73cx8FpsD3I99qzjxu0Q9kURQ2j4A0+GK0W8AnUbNHwirI0c/of3pguvS4f
+DqMljYVlU6DvNzG98T/6QdxhfQUUOKCqFdj5JWRVTRhcxDggxEIgtMZZ6u2e/wZE
+yD5hJpsuFE22Q4ma8irpGqBHhNN/sAaHLRXI2wouPwlfRWY1ibYgSA/woLQEJWej
+ccmma0LA6eB/O61dT9z4DhD0mEWlnF5758S7KmU3icSnDlcYCoL02XUP/28DG1tf
+cKd62Bni+vUP3Yl8DVWWynxXDyCTEvtZ5ckP4dfkZ+C9mRn1Cm4KataJL+qgDVwn
+rT/YeyUmW3McDzqivLWyNTJF8oWq4VntWc3QXhebPR34zZXEPdbipBjOvVr109U4
+b23NH2oOfkMQV4u1Cb2G2PNR4n8hxQWMcPAGUUSMFmN4vaXJR5MPpOYaFWVh/N0t
+ljo1pZEmpLaMRsluk+Zb
+=5tNM
+-----END PGP SIGNATURE-----
+
+--96BsrqKFHA1CCTKRNGFbXsPlLJrHLpXMK--
