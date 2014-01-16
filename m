@@ -1,45 +1,42 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC][PATCH 0/2] preempt: Track unmatched preempt_enable() to
  preempt_disable()
-Date: Thu, 16 Jan 2014 12:42:07 -0500
-Message-ID: <20140116124207.2065b153@gandalf.local.home>
+Date: Thu, 16 Jan 2014 18:45:36 +0100
+Message-ID: <20140116174536.GB9655@laptop.programming.kicks-ass.net>
 References: <20140116171824.748919700@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Clark Williams <williams@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from merlin.infradead.org ([205.233.59.134]:43565 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750749AbaAPRpq (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jan 2014 12:45:46 -0500
+Content-Disposition: inline
 In-Reply-To: <20140116171824.748919700@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 16 Jan 2014 12:18:24 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Thu, Jan 16, 2014 at 12:18:24PM -0500, Steven Rostedt wrote:
 
-> 
-> Back in the original real-time patch there was a nice debug feature
-> that tracked where preemption was disabled and not matched by a preempt
-> enable. This information made debugging scheduling while atomic much
-> easier, especially when a function was buried in a function chain
-> that happened just before the schedule. For example:
-> 
+Didn't see anything horrible in there, so fine with me.
 
-> Although this bug does not happen often, this feature is extremely helpful
-> when it does. I decided to take Ingo's code, which was just written for
-> debugging the -rt patch, and clean it up for something that is suitable
-> for mainline.
-> 
+Another thing I recently ran into was:
 
-Hmm, I rewrote this prologue a few times, and even though patch 2 states
-this, I want to make it clear that the original feature, that this is
-based on, was written by Ingo Molnar. I had it clear in my original
-version of the prologue, but somehow it was deleted.
+  local_irq_disable();
+  preempt_disable();
+  local_irq_enable();
 
--- Steve
+  local_irq_disable();
+  preempt_enable();
+  local_irq_enable();
+
+I'm not sure any of our debugging catches that, I meant to extend
+lockdep, but maybe it could also be hooked into something else.
