@@ -1,46 +1,88 @@
-From: Joakim Hernberg <jbh@alchemy.lu>
-Subject: Re: [ANNOUNCE] 3.12.6-rt9
-Date: Sat, 11 Jan 2014 21:25:50 +0100
-Message-ID: <20140111212550.2dca4829@tor.valhalla.alchemy.lu>
-References: <20131223225017.GA8623@linutronix.de>
-	<20131227200024.GA19505@opentech.at>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/8] swait: Add a few more users
+Date: Wed, 15 Jan 2014 20:58:26 -0500
+Message-ID: <20140116020324.061849515@goodmis.org>
+References: <20140116015824.201732155@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20131227200024.GA19505@opentech.at>
+Content-Disposition: inline; filename=0002-swait-Add-a-few-more-users.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 27 Dec 2013 21:00:24 +0100
-Nicholas Mc Guire <der.herr@hofr.at> wrote:
+3.2.53-rt76-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> On Mon, 23 Dec 2013, Sebastian Andrzej Siewior wrote:
-> 
-> > Dear RT folks!
-> > 
-> > I'm pleased to announce the v3.12.6-rt9 patch set.
-> > 
-> > Changes since v3.12.6-rt8
-> <snip>
-> > - A patch from Thomas Gleixner not to raise the timer softirq
-> >   unconditionally (only if a timer is pending)
-> > 
-> 
-> This one seems to deadlock early in the boot sequence on x86
-> (i3/i7/Phenom-4x here and Carsten Emde also had boot failures)
+------------------
 
-This patch seems to frequently make the kernel hang hard early in the
-boot process on my i7-2600k too. Reverting
-timers-do-not-raise-softirq-unconditionally.patch appears to fix the
-problem.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+The wait-simple queue is lighter weight and more efficient than the full
+wait queue, and may be used in atomic context on PREEMPT_RT.
+
+Fix up some places that needed to call the swait_*() functions instead
+of the wait_*() functions.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
+ drivers/usb/gadget/f_fs.c                  | 2 +-
+ drivers/usb/gadget/inode.c                 | 4 ++--
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
+index 0793e42..d45833f 100644
+--- a/drivers/net/wireless/orinoco/orinoco_usb.c
++++ b/drivers/net/wireless/orinoco/orinoco_usb.c
+@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
+ 			while (!ctx->done.done && msecs--)
+ 				udelay(1000);
+ 		} else {
+-			wait_event_interruptible(ctx->done.wait,
++			swait_event_interruptible(ctx->done.wait,
+ 						 ctx->done.done);
+ 		}
+ 		break;
+diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
+index 0e641a1..c6154ca 100644
+--- a/drivers/usb/gadget/f_fs.c
++++ b/drivers/usb/gadget/f_fs.c
+@@ -1270,7 +1270,7 @@ static void ffs_data_put(struct ffs_data *ffs)
+ 		BUG_ON(mutex_is_locked(&ffs->mutex) ||
+ 		       spin_is_locked(&ffs->ev.waitq.lock) ||
+ 		       waitqueue_active(&ffs->ev.waitq) ||
+-		       waitqueue_active(&ffs->ep0req_completion.wait));
++		       swaitqueue_active(&ffs->ep0req_completion.wait));
+ 		kfree(ffs);
+ 	}
+ }
+diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
+index 7138540..616d19e 100644
+--- a/drivers/usb/gadget/inode.c
++++ b/drivers/usb/gadget/inode.c
+@@ -339,7 +339,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 	spin_unlock_irq (&epdata->dev->lock);
+ 
+ 	if (likely (value == 0)) {
+-		value = wait_event_interruptible (done.wait, done.done);
++		value = swait_event_interruptible (done.wait, done.done);
+ 		if (value != 0) {
+ 			spin_lock_irq (&epdata->dev->lock);
+ 			if (likely (epdata->ep != NULL)) {
+@@ -348,7 +348,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
+ 				usb_ep_dequeue (epdata->ep, epdata->req);
+ 				spin_unlock_irq (&epdata->dev->lock);
+ 
+-				wait_event (done.wait, done.done);
++				swait_event (done.wait, done.done);
+ 				if (epdata->status == -ECONNRESET)
+ 					epdata->status = -EINTR;
+ 			} else {
 -- 
-
-   Joakim
+1.8.4.3
