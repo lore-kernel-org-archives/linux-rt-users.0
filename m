@@ -1,72 +1,110 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [PATCH RT 0/8] Linux 3.2.53-rt76-rc1
-Date: Thu, 16 Jan 2014 21:19:36 +0400
-Message-ID: <52D814A8.8070105@pavlinux.ru>
-References: <20140116015824.201732155@goodmis.org>	<52D7A93C.9090801@pavlinux.ru>	<20140116091847.0786c8af@gandalf.local.home>	<52D7EE70.8000509@pavlinux.ru> <20140116110823.26aad085@gandalf.local.home>
-Reply-To: pavel@pavlinux.ru
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="kR98lETc5JKhb8074nesNbbrfFKhP9gJe"
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH 0/2] preempt: Track unmatched preempt_enable() to preempt_disable()
+Date: Thu, 16 Jan 2014 12:18:24 -0500
+Message-ID: <20140116171824.748919700@goodmis.org>
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:44979 "EHLO imp01.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752865AbaAPRTs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jan 2014 12:19:48 -0500
-In-Reply-To: <20140116110823.26aad085@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---kR98lETc5JKhb8074nesNbbrfFKhP9gJe
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
-
-16.01.2014 20:08, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Thu, 16 Jan 2014 18:36:32 +0400
-> Pavel Vasilyev <pavel@pavlinux.ru> wrote:
->=20
->>
->> $ xz -cd /tmp/patch-3.2.53-rt75-rt76-rc1.patch.xz | patch -p1 --dry-ru=
-n
-
-> Did you start with v3.2.53-rt75?
-
-No, 3.2.54, already corrected.
-
---=20
-
-                                                         Pavel.
+	Peter Zijlstra <peterz@infradead.org>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Clark Williams <williams@redhat.com>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
---kR98lETc5JKhb8074nesNbbrfFKhP9gJe
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
+Back in the original real-time patch there was a nice debug feature
+that tracked where preemption was disabled and not matched by a preempt
+enable. This information made debugging scheduling while atomic much
+easier, especially when a function was buried in a function chain
+that happened just before the schedule. For example:
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
+bar() {
+  preempt_disable();
+  [...]
+  if (ret < 0)
+     return;
+  [...]
+}
 
-iQIcBAEBCgAGBQJS2BSpAAoJEPtok08Dny2hJyAP/34ac2/LyA2bc9i57FGQnkzT
-BUXzZ9V8GLvMpD881whDvvNyLA+bNghjJogR56e8MZ6rB7h3WZfHKPPSxA/PhFhz
-bgYMc5P64xvkkZMbCNDJ0Hc99oZ0Qw1uBNGxUjHs3+0T7BLi3ctYcbKi7RFf/PAp
-Xi4nNDW40NyJ3l7TIDkyD6/hlAwule/wyIqW1bbh0F4qrfgQbP2CH1a8lDlLsj1p
-R6zC/45+C+E5IN7sOg9MX06MBhA0yGCae9Brc81PXfuLLrV3566c2Bw81vwnf+4u
-powHDrUmvrkclFw0fVPYE9HZy1N2QhbvRWLsDjVQmHrD7X/T0QjI+PLwSQrprYNL
-fFJmvA1c1kyAbLnMA4l65pLLTaIOgNi7M+ZICxxWQqH35VCLCT+BSw2jZ12lOHj1
-Zn5+yWhXt6xFNlYq1jGzFnAeysZ43N150O+Ew4Fwx87YUSQ0oCpnvMwwh1P+XeHE
-NHIIQEzS4o0qtTTuP935S4fOs9GrPUxeJf1rDYK9rKbTU+mplen5WQJLY4Vf/ucw
-DZ4zGlZ2Wd0HMs+eOi3r2mLbT9QgoDCIIPcZZA4ebfIID4KAjP4QLYAdedwAE0xc
-XEnn3dUVXZT4glOSo3Zrp9Vtr15FentfSY6YDTy2HDSI9vWlnrjyYRXKS+aR6KpQ
-sWqZSJK5ybvOg5IugD0g
-=13Qu
------END PGP SIGNATURE-----
+foo() {
+  [...]
+  bar();
+  [...]
+}
 
---kR98lETc5JKhb8074nesNbbrfFKhP9gJe--
+foo();
+schedule();
+
+Getting the "scheduling while atomic" warning detects the bug, but it
+does not let you know where the bug happened. It may take several trials
+to figure out where the missing preempt_enable() was. Some times those
+functions are very deep and that makes it even more difficult to find.
+
+Although this bug does not happen often, this feature is extremely helpful
+when it does. I decided to take Ingo's code, which was just written for
+debugging the -rt patch, and clean it up for something that is suitable
+for mainline.
+
+I started with his code and modified it to be a bit simpler, as he never
+meant that code to be mainline. First, as preempt disabling is really more
+of a CPU state and not a process state, I made the stacks just per cpu
+arrays. This eliminates any changes needed by sched.h or the task_struct.
+
+The only times the preempt trace is needed is when scheduling while atomic
+or might sleep bugs are found. This information is only printed in those
+cases (not on all bug reports).
+
+I renamed the config option from PREEMPT_TRACE to PREEMPT_STACK to prevent
+confusion from the tracing facility PREEMPT_TRACER that traces the length
+that preemption is disabled.
+
+Using a struct to save the ip and parent ip together also keeps the code
+a bit cleaner than using two different arrays.
+
+Using a module that creates a kernel thread that calls a function
+bad_preempt_disable() that just calls preempt_disable() with no matching
+preempt_enable(), and then calls schedule, the output can be seen as the
+following:
+
+BUG: scheduling while atomic: task1/3889/0x00000002
+Modules linked in: sched_bug(O) [..]
+CPU: 7 PID: 3889 Comm: task1 Tainted: G           O 3.13.0-rc8-test+ #28
+Hardware name: Hewlett-Packard HP Compaq Pro 6300 SFF/339A, BIOS K01 v02.05 05/07/2012
+ 0000000000000007 ffff8800c87a1dd8 ffffffff81627676 ffff88011ebcf5d0
+ ffff8800ca0eaf00 ffff8800c87a1df8 ffffffff81623825 0000000000000002
+ ffff88011ebd3600 ffff8800c87a1e78 ffffffff8162b0f5 ffff8800c87a1e28
+Call Trace:
+ [<ffffffff81627676>] dump_stack+0x4f/0x7c
+ [<ffffffff81623825>] __schedule_bug+0x59/0x6e
+ [<ffffffff8162b0f5>] __schedule+0x6b5/0x7e0
+ [<ffffffff816329f1>] ? preempt_count_sub+0xb1/0x100
+ [<ffffffffa06d9020>] ? bad_preempt_disable+0x20/0x20 [sched_bug]
+ [<ffffffff8162b339>] schedule+0x29/0x70
+ [<ffffffffa06d9038>] dead_thread+0x18/0x78 [sched_bug]
+ [<ffffffff81073559>] kthread+0xc9/0xe0
+ [<ffffffff81620000>] ? pci_add_new_bus+0x150/0x3b0
+ [<ffffffff81073490>] ? flush_kthread_worker+0xb0/0xb0
+ [<ffffffff8163676c>] ret_from_fork+0x7c/0xb0
+ [<ffffffff81073490>] ? flush_kthread_worker+0xb0/0xb0
+---------------------------
+| preempt count: 00000002 ]
+| 2-level deep critical section nesting:
+----------------------------------------
+.. [<ffffffffa06d9013>] .... bad_preempt_disable+0x13/0x20 [sched_bug]
+.....[<ffffffffa06d9033>] ..   ( <= dead_thread+0x13/0x78 [sched_bug])
+.. [<ffffffff8162aa89>] .... __schedule+0x49/0x7e0
+.....[<ffffffff8162b339>] ..   ( <= schedule+0x29/0x70)
+
+
+Steven Rostedt (Red Hat) (2):
+      preempt: Add CONFIG_DEBUG_PREEMPT_COUNT to consolidate ifdef logic
+      preempt: Show preempt disable stack on schedule bugs
+
+----
+ include/linux/preempt.h |  2 +-
+ kernel/sched/core.c     | 63 ++++++++++++++++++++++++++++++++++++++++++++++---
+ kernel/trace/Kconfig    |  1 +
+ lib/Kconfig.debug       | 20 ++++++++++++++++
+ 4 files changed, 82 insertions(+), 4 deletions(-)
