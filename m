@@ -1,60 +1,125 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH 0/2] preempt: Track unmatched preempt_enable() to
- preempt_disable()
-Date: Thu, 16 Jan 2014 19:42:51 +0100
-Message-ID: <20140116184251.GA11314@laptop.programming.kicks-ass.net>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [RFC][PATCH 0/2] preempt: Track unmatched preempt_enable() to preempt_disable()
+Date: Thu, 16 Jan 2014 19:53:59 +0100
+Message-ID: <CAONaPpHVapqE0hJ9JpZHJivjf344Y-7Mj5V9j96Vq0p=94264Q@mail.gmail.com>
 References: <20140116171824.748919700@goodmis.org>
- <20140116174536.GB9655@laptop.programming.kicks-ass.net>
- <20140116133906.50bcbc93@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
 	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Clark Williams <williams@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:44936 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751246AbaAPSm5 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Jan 2014 13:42:57 -0500
-Content-Disposition: inline
-In-Reply-To: <20140116133906.50bcbc93@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140116171824.748919700@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jan 16, 2014 at 01:39:06PM -0500, Steven Rostedt wrote:
-> On Thu, 16 Jan 2014 18:45:36 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > On Thu, Jan 16, 2014 at 12:18:24PM -0500, Steven Rostedt wrote:
-> > 
-> > Didn't see anything horrible in there, so fine with me.
-> > 
-> > Another thing I recently ran into was:
-> > 
-> >   local_irq_disable();
-> >   preempt_disable();
-> >   local_irq_enable();
-> > 
-> >   local_irq_disable();
-> >   preempt_enable();
-> >   local_irq_enable();
-> > 
-> > I'm not sure any of our debugging catches that, I meant to extend
-> > lockdep, but maybe it could also be hooked into something else.
-> 
-> Hmm, what's wrong with the above?
+On Thu, Jan 16, 2014 at 6:18 PM, Steven Rostedt <rostedt@goodmis.org> wrote:
+>
+> Back in the original real-time patch there was a nice debug feature
+> that tracked where preemption was disabled and not matched by a preempt
+> enable. This information made debugging scheduling while atomic much
+> easier, especially when a function was buried in a function chain
+> that happened just before the schedule. For example:
+>
+> bar() {
+>   preempt_disable();
+>   [...]
+>   if (ret < 0)
+>      return;
+>   [...]
+> }
+>
+> foo() {
+>   [...]
+>   bar();
+>   [...]
+> }
+>
+> foo();
+> schedule();
+>
+> Getting the "scheduling while atomic" warning detects the bug, but it
+> does not let you know where the bug happened. It may take several trials
+> to figure out where the missing preempt_enable() was. Some times those
+> functions are very deep and that makes it even more difficult to find.
+>
+> Although this bug does not happen often, this feature is extremely helpful
+> when it does. I decided to take Ingo's code, which was just written for
+> debugging the -rt patch, and clean it up for something that is suitable
+> for mainline.
+>
+> I started with his code and modified it to be a bit simpler, as he never
+> meant that code to be mainline. First, as preempt disabling is really more
+> of a CPU state and not a process state, I made the stacks just per cpu
+> arrays. This eliminates any changes needed by sched.h or the task_struct.
+>
+> The only times the preempt trace is needed is when scheduling while atomic
+> or might sleep bugs are found. This information is only printed in those
+> cases (not on all bug reports).
+>
+> I renamed the config option from PREEMPT_TRACE to PREEMPT_STACK to prevent
+> confusion from the tracing facility PREEMPT_TRACER that traces the length
+> that preemption is disabled.
+>
+> Using a struct to save the ip and parent ip together also keeps the code
+> a bit cleaner than using two different arrays.
+>
+> Using a module that creates a kernel thread that calls a function
+> bad_preempt_disable() that just calls preempt_disable() with no matching
+> preempt_enable(), and then calls schedule, the output can be seen as the
+> following:
+>
+> BUG: scheduling while atomic: task1/3889/0x00000002
+> Modules linked in: sched_bug(O) [..]
+> CPU: 7 PID: 3889 Comm: task1 Tainted: G           O 3.13.0-rc8-test+ #28
+> Hardware name: Hewlett-Packard HP Compaq Pro 6300 SFF/339A, BIOS K01 v02.05 05/07/2012
+>  0000000000000007 ffff8800c87a1dd8 ffffffff81627676 ffff88011ebcf5d0
+>  ffff8800ca0eaf00 ffff8800c87a1df8 ffffffff81623825 0000000000000002
+>  ffff88011ebd3600 ffff8800c87a1e78 ffffffff8162b0f5 ffff8800c87a1e28
+> Call Trace:
+>  [<ffffffff81627676>] dump_stack+0x4f/0x7c
+>  [<ffffffff81623825>] __schedule_bug+0x59/0x6e
+>  [<ffffffff8162b0f5>] __schedule+0x6b5/0x7e0
+>  [<ffffffff816329f1>] ? preempt_count_sub+0xb1/0x100
+>  [<ffffffffa06d9020>] ? bad_preempt_disable+0x20/0x20 [sched_bug]
+>  [<ffffffff8162b339>] schedule+0x29/0x70
+>  [<ffffffffa06d9038>] dead_thread+0x18/0x78 [sched_bug]
+>  [<ffffffff81073559>] kthread+0xc9/0xe0
+>  [<ffffffff81620000>] ? pci_add_new_bus+0x150/0x3b0
+>  [<ffffffff81073490>] ? flush_kthread_worker+0xb0/0xb0
+>  [<ffffffff8163676c>] ret_from_fork+0x7c/0xb0
+>  [<ffffffff81073490>] ? flush_kthread_worker+0xb0/0xb0
+> ---------------------------
+> | preempt count: 00000002 ]
+> | 2-level deep critical section nesting:
+> ----------------------------------------
+> .. [<ffffffffa06d9013>] .... bad_preempt_disable+0x13/0x20 [sched_bug]
+> .....[<ffffffffa06d9033>] ..   ( <= dead_thread+0x13/0x78 [sched_bug])
+> .. [<ffffffff8162aa89>] .... __schedule+0x49/0x7e0
+> .....[<ffffffff8162b339>] ..   ( <= schedule+0x29/0x70)
+>
+>
+> Steven Rostedt (Red Hat) (2):
+>       preempt: Add CONFIG_DEBUG_PREEMPT_COUNT to consolidate ifdef logic
+>       preempt: Show preempt disable stack on schedule bugs
+>
+> ----
+>  include/linux/preempt.h |  2 +-
+>  kernel/sched/core.c     | 63 ++++++++++++++++++++++++++++++++++++++++++++++---
+>  kernel/trace/Kconfig    |  1 +
+>  lib/Kconfig.debug       | 20 ++++++++++++++++
+>  4 files changed, 82 insertions(+), 4 deletions(-)
+> --
 
-Suppose a reschedule interrupt happens in the middle; we set
-NEED_RESCHED but won't act because preempt is disabled.
+fwiw - I have found this feature useful in the past, and would love to
+see it mainstream.
 
-When we hit preempt_enable() we'll call into preempt_schedule() but fail
-because preemptible() finds irqs_disabled().
+Thanks
 
-And in the end we do not schedule, but have NEED_RESCHED set.
-
-FAIL.
+John Kacur
