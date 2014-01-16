@@ -1,50 +1,60 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC][PATCH 0/2] preempt: Track unmatched preempt_enable() to
  preempt_disable()
-Date: Thu, 16 Jan 2014 13:39:06 -0500
-Message-ID: <20140116133906.50bcbc93@gandalf.local.home>
+Date: Thu, 16 Jan 2014 19:42:51 +0100
+Message-ID: <20140116184251.GA11314@laptop.programming.kicks-ass.net>
 References: <20140116171824.748919700@goodmis.org>
-	<20140116174536.GB9655@laptop.programming.kicks-ass.net>
+ <20140116174536.GB9655@laptop.programming.kicks-ass.net>
+ <20140116133906.50bcbc93@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@kernel.org>,
 	Andrew Morton <akpm@linux-foundation.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Clark Williams <williams@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140116174536.GB9655@laptop.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from merlin.infradead.org ([205.233.59.134]:44936 "EHLO
+	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751246AbaAPSm5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 16 Jan 2014 13:42:57 -0500
+Content-Disposition: inline
+In-Reply-To: <20140116133906.50bcbc93@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 16 Jan 2014 18:45:36 +0100
-Peter Zijlstra <peterz@infradead.org> wrote:
+On Thu, Jan 16, 2014 at 01:39:06PM -0500, Steven Rostedt wrote:
+> On Thu, 16 Jan 2014 18:45:36 +0100
+> Peter Zijlstra <peterz@infradead.org> wrote:
+> 
+> > On Thu, Jan 16, 2014 at 12:18:24PM -0500, Steven Rostedt wrote:
+> > 
+> > Didn't see anything horrible in there, so fine with me.
+> > 
+> > Another thing I recently ran into was:
+> > 
+> >   local_irq_disable();
+> >   preempt_disable();
+> >   local_irq_enable();
+> > 
+> >   local_irq_disable();
+> >   preempt_enable();
+> >   local_irq_enable();
+> > 
+> > I'm not sure any of our debugging catches that, I meant to extend
+> > lockdep, but maybe it could also be hooked into something else.
+> 
+> Hmm, what's wrong with the above?
 
-> On Thu, Jan 16, 2014 at 12:18:24PM -0500, Steven Rostedt wrote:
-> 
-> Didn't see anything horrible in there, so fine with me.
-> 
-> Another thing I recently ran into was:
-> 
->   local_irq_disable();
->   preempt_disable();
->   local_irq_enable();
-> 
->   local_irq_disable();
->   preempt_enable();
->   local_irq_enable();
-> 
-> I'm not sure any of our debugging catches that, I meant to extend
-> lockdep, but maybe it could also be hooked into something else.
+Suppose a reschedule interrupt happens in the middle; we set
+NEED_RESCHED but won't act because preempt is disabled.
 
-Hmm, what's wrong with the above?
+When we hit preempt_enable() we'll call into preempt_schedule() but fail
+because preemptible() finds irqs_disabled().
 
-Note, the preemptirqsoff tracer will trace that as not being
-preemptible between that first local_irq_disable() to the
-local_irq_enable(). In fact, that's basically what the preemptirqsoff
-tracer was made for ;-)
+And in the end we do not schedule, but have NEED_RESCHED set.
 
--- Steve
+FAIL.
