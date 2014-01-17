@@ -1,52 +1,72 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 0/8] Linux 3.2.53-rt76-rc1
-Date: Fri, 17 Jan 2014 10:40:20 -0500
-Message-ID: <20140117104020.33c2f9ea@gandalf.local.home>
-References: <20140116015824.201732155@goodmis.org>
-	<52D92990.1020904@imms.de>
-	<20140117082111.294930fe@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.12.6-rt9
+Date: Fri, 17 Jan 2014 17:10:16 +0100
+Message-ID: <20140117161016.GE5785@linutronix.de>
+References: <20131223225017.GA8623@linutronix.de>
+ <20131227200024.GA19505@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Rolf Peukert <rolf.peukert@imms.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:50689 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752032AbaAQPkW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Jan 2014 10:40:22 -0500
-In-Reply-To: <20140117082111.294930fe@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Nicholas Mc Guire <der.herr@hofr.at>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20131227200024.GA19505@opentech.at>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 17 Jan 2014 08:21:11 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+* Nicholas Mc Guire | 2013-12-27 21:00:24 [+0100]:
 
+>> - A patch from Thomas Gleixner not to raise the timer softirq
+>>   unconditionally (only if a timer is pending)
+>> 
+>
+>This one seems to deadlock early in the boot sequence on x86
+>(i3/i7/Phenom-4x here and Carsten Emde also had boot failures)
+>
+>after droping this patch with:
+>patch -p1 -R < ../paches/timers-do-not-raise-softirq-unconditionally.patch
+>3.12.6-rt9 boots up fine. cyclictest seems to be back to what it was before
+>(only ran for a few minutes idle and 1h with load on an i3).
+>
+>The main problem with this patch though are proceduaral isues 
+>the commit note - which is a mail exchange - actually does not explain what 
+>the rational for the changes is (...well I don't understand the logic of
+>run_local_timers - if someone can explain - pleas do) and notably:
+>
+>from timers-do-not-raise-softirq-unconditionally.patch
+><snip>
+>well, that very same problem is in mainline if you add "threadirqs" to
+>the command line. But we can be smart about this. The untested patch
+>                                                    ^^^^^^^^^^^^^^^^^^
+>below should address that issue. If that works on mainline we can
+>adapt it for RT (needs a trylock(&base->lock) there).
+><snip>
+>
+> does make me wonder why this went into -rt9 ?
 
-> > The source code before that line currently looks like this
-> > 
-> > #ifndef CONFIG_PREEMPT_RT_FULL
-> > 	if (!force_irqthreads)
-> > 		lockdep_softirq_from_hardirq();
-> > 		__do_softirq();
-> > 	else {
-> > 
-> > Is one of the lines in the wrong place or is it just missing brackets?
-> 
-> Looks to be missing brackets. Thanks for reporting this. This was
-> probably a bad merge.
-> 
-> I'll fix this up and do an official release of 3.2.53-rt76.
-> 
-> I guess I should test that config too. :-/
+It was on the mailing list for a few weeks. My understanding was that
+Mike Galbraith tested it on mainline and then I added the RT specific
+pieces and added it it to the tree.
 
-Ah, the bug was in the #ifdef __ARCH_IRQ_EXIT_IRQS_DISABLED section.
-Which is not compiled with x86.
+> It also build fails with CONFIG_PREEMPT_RT_FULL not set.
 
-OK, I need to start testing against PPC and ARM. I'll add that to my
-todo list.
+I will add a non-RT based config to my compile tests.
 
--- Steve
+> as with this patch, systems that booted just fine with 3.12.5-rt7 don't
+> even boot (atleast my 3 x86 test boxes here did not) this raises some
+> questions regarding the process of getting patches into -rtX - are
+> we going to fast here ?
+>
+> I would prefere if such patches would go out with a request for testing
+> or atleast a "might blow up your system" note in them...
 
+I didn't expect that much trouble. In general I try to avoid adding
+explosives unless marked as such.
+
+>thx!
+>hofrat
+
+Sebastian
