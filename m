@@ -1,37 +1,55 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Sat, 18 Jan 2014 04:30:44 +0100
-Message-ID: <1390015844.5444.50.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
-	 <1387681647.5412.25.camel@marge.simpson.net>
-	 <1387702631.5412.101.camel@marge.simpson.net>
-	 <1387773533.5369.16.camel@marge.simpson.net>
-	 <20131224193636.GD19211@linux.vnet.ibm.com>
-	 <1387940854.5373.8.camel@marge.simpson.net>
-	 <1388052212.5420.4.camel@marge.simpson.net>
-	 <20140117172319.GH5785@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.10.27-rt25
+Date: Sat, 18 Jan 2014 17:17:34 -0500
+Message-ID: <20140118171734.5af029b8@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: paulmck@linux.vnet.ibm.com, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.186]:58473 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752026AbaARDaw (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:64938 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751494AbaARWRh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 17 Jan 2014 22:30:52 -0500
-In-Reply-To: <20140117172319.GH5785@linutronix.de>
+	Sat, 18 Jan 2014 17:17:37 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2014-01-17 at 18:23 +0100, Sebastian Andrzej Siewior wrote:
 
-> So I had rtmutex-take-the-waiter-lock-with-irqs-off.patch in my queue
-> which took the waiter lock with irqs off. This should be the same thing
-> you try do here.
+Dear RT Folks,
 
-(yeah, these are just whacked mole body bags;)
+I'm pleased to announce the 3.10.27-rt25 stable release.
+
+
+This release is just an update to the new stable 3.10.27 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.10-rt
+  Head SHA1: 57d2f2e8024d2a07272a24dcc4f8e3230f08e73b
+
+
+Or to build 3.10.27-rt25 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.27-rt25.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
 
