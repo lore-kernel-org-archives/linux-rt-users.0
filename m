@@ -1,95 +1,250 @@
-From: Stephen Rothwell <sfr@canb.auug.org.au>
-Subject: Re: [RFC][PATCH] preempt: Debug for possible missed preemption
- checks
-Date: Wed, 22 Jan 2014 10:50:40 +1100
-Message-ID: <20140122105040.f5e19a91b4a7277d2495547e@canb.auug.org.au>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [RFC][PATCH] preempt: Debug for possible missed preemption checks
+Date: Wed, 22 Jan 2014 14:47:42 -0500
+Message-ID: <52E0205E.3090600@windriver.com>
 References: <20140116235751.084728c8@gandalf.local.home>
-	<20140116211214.581197e5.akpm@linux-foundation.org>
-	<20140118184401.48b32cb3@gandalf.local.home>
-	<20140119115253.d6974d9c188c6d9e88d04b80@canb.auug.org.au>
-	<20140118200822.5d41ffce@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pgp-signature";
- micalg="PGP-SHA256";
- boundary="Signature=_Wed__22_Jan_2014_10_50_40_+1100_H5vaabw4oRzS+tPa"
-Cc: Andrew Morton <akpm@linux-foundation.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
+	Andrew Morton <akpm@linux-foundation.org>,
 	Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140118200822.5d41ffce@gandalf.local.home>
+In-Reply-To: <20140116235751.084728c8@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---Signature=_Wed__22_Jan_2014_10_50_40_+1100_H5vaabw4oRzS+tPa
-Content-Type: text/plain; charset=US-ASCII
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+On 14-01-16 11:57 PM, Steven Rostedt wrote:
+> Peter Zijlstra mentioned that he wanted to catch the following problem:
+> 
+>  local_irq_disable();
+>  preempt_disable();
+>  local_irq_enable();
+> 
+>  local_irq_disable();
+>  preempt_enable();
+>  local_irq_enable();
+> 
 
-Hi Steve,
+[...]
 
-On Sat, 18 Jan 2014 20:08:22 -0500 Steven Rostedt <rostedt@goodmis.org> wro=
-te:
->
-> On Sun, 19 Jan 2014 11:52:53 +1100
-> Stephen Rothwell <sfr@canb.auug.org.au> wrote:
->=20
-> > Given that the merge window will probably open today or tomorrow, I wou=
-ld
-> > prefer any new code not intended for 3.14 not be added to linux-next
-> > until after v3.14-rc1 to avoid unneeded conflicts.  If, however, Andrew
-> > thinks it is still worth the (maybe minimal) pain, then fine.
->=20
-> I'm not sure this is even intended for 3.15 either ;-)
->=20
-> I'm fine with waiting, to keep from adding any extra pain just before a
-> merge window. I guess the question is, is it OK to keep it in
-> linux-next for 3.15 even though it may not even go into 3.15?  Depends
-> on how useful it proves to be. Perhaps it may require staying in
-> linux-next till 3.16.
+> +
+> +static void update_pied_state(enum pied_stat_type type, bool enable,
+> +			      unsigned long ip)
+> +{
+> +	struct stack_trace *trace;
+> +	int state, new_state;
+> +	unsigned long flags;
+> +
+> +	if (pied_failed)
+> +		return;
+> +
+> +	if (this_cpu_read(pied_recursive))
+> +		return;
 
-If it is smallish and doesn't interact with much other stuff, then that
-is fine, I guess (I haven't looked at what you are discussing).
+Maybe I'm just missing something obvious, but it wasn't clear to me
+how or what the recursive check above would reliably protect against,
+when the increment is ~20 lines below and not a cmpxchg here.
 
-It just becomes a pain if it causes non trivial conflicts with real
-development (or worse runtime problems for testers).
+Thanks,
+Paul.
+--
 
-> Perhaps in order to keep merge windows from being an issue, I can add it
-> at each -rc1, and remove it at -rc6, if it didn't catch any bugs. But as
-> soon as it does catch a bug, we can say it's worth going into mainline.
-
-As long as its interactions with other code are minor, it is better for
-it to stay in once added.  Mainly because part of Andrew's patch queue
-sits on top of linux-next, so removing something from linux-next may
-cause interesting conflicts in that part.
-
---=20
-Cheers,
-Stephen Rothwell                    sfr@canb.auug.org.au
-
---Signature=_Wed__22_Jan_2014_10_50_40_+1100_H5vaabw4oRzS+tPa
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIcBAEBCAAGBQJS3wfWAAoJEMDTa8Ir7ZwVnnoP/2l7CP2SCutfmTC1h/7pDxlV
-MdviCYNBr00IVr0aa93sGXP8qJn5GcuXFTsxjYObjE63QwroBWSslWnZ3vY6Yizk
-LuK1qsiaFQuu8Ad8+lsL66T59MPTXKzjVa1J5wlmOKcL6kfsScIIY+N55FuQXc3e
-0zkqzGdGpwGT7lvohZcXW8ETXXRyK05fyzOIKt6MHFjr2MZNaHDvMB2qils9Y5mt
-EjEt5qwCqFXuFd9d7fIW0gdNE+cEn2/UI8KLZESV4foxBuO4Qv4qUCcasefir6F4
-GoECF7DOmt4OtTdXTs5cg+XNoA+au+rCKdKqB9Jv5W3KVIFFwyf43Vod0poKv6Vo
-Mu4uyhID1XWenbxO9VDdHx+zWkfIdmtdczDYEdGQrZmgcC1hi8C5tbd+Z8hxxq2W
-1l8QUk8bKfI3galu5I1Ca24BSMTtD35lCLImFbcwtgn9xANhWDyC/h2cBrAZ00gi
-AMHj8BeG8Ox4mNXPF++KIBVuzGJGpBBwjMdgaCOm1lK9tvlL7eD8jyiCYXqcd6EO
-U3Mv0WzoUBSE2Jc4rECCeb5/PfLF6jHHFBuNPn4kDt9QPt0w9UqItQ3aHj8bZQVg
-IP6UaDkcA+5GtvVK3+G8uWZ65u4I9TZ3Mn6I+EUGs1mL0JheLTCDk77dQwrEnQZo
-t92bjfIdlpMir7xWOetz
-=p6UY
------END PGP SIGNATURE-----
-
---Signature=_Wed__22_Jan_2014_10_50_40_+1100_H5vaabw4oRzS+tPa--
+> +
+> +	/*
+> +	 * Boot up may start with interrupts and/or preemption
+> +	 * disabled. We can't start the state updates till
+> +	 * we have synced with the initial state.
+> +	 */
+> +	if (!this_cpu_read(pied_initialized)) {
+> +		/*
+> +		 * The first time we enable preemption with interrupts
+> +		 * enabled on a CPU, start the state transactions.
+> +		 */
+> +		if (!in_interrupt() && type == PIED_STATE_PREEMPT &&
+> +		    enable && !irqs_disabled())
+> +			this_cpu_write(pied_initialized, 1);
+> +		return;
+> +	}
+> +
+> +	if (type == PIED_STATE_INTERRUPT) {
+> +		if (enable == false) {
+> +			/* Ignore nested disabling of interrupts */
+> +			if (this_cpu_read(pied_irqsoff))
+> +				return;
+> +			this_cpu_write(pied_irqsoff, 1);
+> +		} else
+> +			this_cpu_write(pied_irqsoff, 0);
+> +	}
+> +
+> +	this_cpu_inc(pied_recursive);
+> +	raw_local_irq_save(flags);
+> +
+> +	state = this_cpu_read(current_pied_state);
+> +
+> +	switch (type) {
+> +	case PIED_STATE_PREEMPT:
+> +		new_state = pied_state_trans[state].preempt_change;
+> +		switch (new_state) {
+> +		case 0: case 1: case 6: case 7:
+> +			if (!enable)
+> +				pied_state_bug(type, enable, state, new_state);
+> +			break;
+> +		default:
+> +			if (enable)
+> +				pied_state_bug(type, enable, state, new_state);
+> +			break;
+> +		}
+> +		break;
+> +	case PIED_STATE_INTERRUPT:
+> +		new_state = pied_state_trans[state].interrupt_change;
+> +		switch (new_state) {
+> +		case 0: case 2: case 3: case 7:
+> +			if (!enable)
+> +				pied_state_bug(type, enable, state, new_state);
+> +			break;
+> +		default:
+> +			if (enable)
+> +				pied_state_bug(type, enable, state, new_state);
+> +			break;
+> +		}
+> +		break;
+> +	}
+> +
+> +	switch (new_state) {
+> +	case PIED_DANGEROUS_STATE:
+> +		/*
+> +		 * If we are in an interrupt, then we need to switch
+> +		 * to state 3 to prevent from going into state 5, 6 and 7.
+> +		 *
+> +		 * PDIEX ==> PDIE
+> +		 */
+> +		if (in_interrupt()) {
+> +			new_state = 3;
+> +			break;
+> +		}
+> +		trace = this_cpu_ptr(&pied_stack_trace);
+> +		trace->nr_entries = 0;
+> +		trace->max_entries = PIED_STACK_MAX;
+> +		trace->entries = this_cpu_ptr(pied_stack);
+> +
+> +		trace->skip = 3;
+> +
+> +		save_stack_trace(trace);
+> +
+> +		break;
+> +	case PIED_BAD_STATE:
+> +
+> +		/*
+> +		 * Interrupts themselves do not cause problems as they
+> +		 * always check NEED_RESCHED when going back to normal context.
+> +		 *
+> +		 * PEIEX ==> PEIE
+> +		 */
+> +		if (in_interrupt()) {
+> +			new_state = 0;
+> +			break;
+> +		}
+> +
+> +		lockdep_off();
+> +		pied_failed = true;
+> +		printk("\n");
+> +		printk("===============================\n");
+> +		printk("[INFO: preempt check hit problem state]\n");
+> +		print_irqtrace_events(current);
+> +		printk("Entered dangerous state at: \n");
+> +		print_stack_trace(this_cpu_ptr(&pied_stack_trace), 2); 
+> +		printk("\nstack backtrace:\n");
+> +		dump_stack();
+> +		print_pied_trail();
+> +		lockdep_on();
+> +		break;
+> +	}
+> +	this_cpu_write(current_pied_state, new_state);
+> +	update_pied_trail(new_state, ip, irqs_disabled_flags(flags));
+> +	raw_local_irq_restore(flags);
+> +	this_cpu_dec(pied_recursive);
+> +}
+> +
+> +void trace_preempt_on(unsigned long a0, unsigned long a1)
+> +{
+> +	time_preempt_on(a0, a1);
+> +	update_pied_state(PIED_STATE_PREEMPT, true, a0);
+> +}
+> +
+> +void trace_preempt_off(unsigned long a0, unsigned long a1)
+> +{
+> +	time_preempt_off(a0, a1);
+> +	update_pied_state(PIED_STATE_PREEMPT, false, a0);
+> +}
+> +#endif /* CONFIG_PREEMPT */
+> Index: linux-trace.git/kernel/sched/core.c
+> ===================================================================
+> --- linux-trace.git.orig/kernel/sched/core.c
+> +++ linux-trace.git/kernel/sched/core.c
+> @@ -2414,7 +2414,8 @@ void __kprobes preempt_count_add(int val
+>  	DEBUG_LOCKS_WARN_ON((preempt_count() & PREEMPT_MASK) >=
+>  				PREEMPT_MASK - 10);
+>  #endif
+> -	if (preempt_count() == val)
+> +	/* PREEMPT_ACTIVE gets set directly, it must be ignored */
+> +	if ((preempt_count() & ~PREEMPT_ACTIVE) == val)
+>  		trace_preempt_off(ip, parent_ip);
+>  }
+>  EXPORT_SYMBOL(preempt_count_add);
+> @@ -2435,7 +2436,8 @@ void __kprobes preempt_count_sub(int val
+>  		return;
+>  #endif
+>  
+> -	if (preempt_count() == val)
+> +	/* PREEMPT_ACTIVE gets set directly, it must be ignored */
+> +	if ((preempt_count() & ~PREEMPT_ACTIVE) == val)
+>  		trace_preempt_on(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
+>  	__preempt_count_sub(val);
+>  }
+> Index: linux-trace.git/kernel/softirq.c
+> ===================================================================
+> --- linux-trace.git.orig/kernel/softirq.c
+> +++ linux-trace.git/kernel/softirq.c
+> @@ -111,7 +111,8 @@ static void __local_bh_disable(unsigned
+>  		trace_softirqs_off(ip);
+>  	raw_local_irq_restore(flags);
+>  
+> -	if (preempt_count() == cnt)
+> +	/* PREEMPT_ACTIVE gets set directly, it must be ignored */
+> +	if ((preempt_count() & ~PREEMPT_ACTIVE) == cnt)
+>  		trace_preempt_off(CALLER_ADDR0, get_parent_ip(CALLER_ADDR1));
+>  }
+>  #else /* !CONFIG_TRACE_IRQFLAGS */
+> Index: linux-trace.git/kernel/trace/trace_irqsoff.c
+> ===================================================================
+> --- linux-trace.git.orig/kernel/trace/trace_irqsoff.c
+> +++ linux-trace.git/kernel/trace/trace_irqsoff.c
+> @@ -516,13 +516,13 @@ EXPORT_SYMBOL(trace_hardirqs_off_caller)
+>  #endif /*  CONFIG_IRQSOFF_TRACER */
+>  
+>  #ifdef CONFIG_PREEMPT_TRACER
+> -void trace_preempt_on(unsigned long a0, unsigned long a1)
+> +void time_preempt_on(unsigned long a0, unsigned long a1)
+>  {
+>  	if (preempt_trace() && !irq_trace())
+>  		stop_critical_timing(a0, a1);
+>  }
+>  
+> -void trace_preempt_off(unsigned long a0, unsigned long a1)
+> +void time_preempt_off(unsigned long a0, unsigned long a1)
+>  {
+>  	if (preempt_trace() && !irq_trace())
+>  		start_critical_timing(a0, a1);
+> 
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
+> 
