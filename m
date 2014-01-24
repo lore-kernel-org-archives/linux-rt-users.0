@@ -1,82 +1,49 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] arm/unwind: fail on unwind in irq disabled regions
-Date: Fri, 24 Jan 2014 17:24:23 +0100
-Message-ID: <1390580663-28869-1-git-send-email-bigeasy@linutronix.de>
+Subject: Re: RT-3.10.6_p3 fails to boot: home.mount mounting timed out
+Date: Fri, 24 Jan 2014 20:14:17 +0100
+Message-ID: <20140124191417.GA29618@linutronix.de>
+References: <526B46AA.1090407@gmail.com>
+ <20131122151343.GE8698@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Light <sgsdxzy@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:59009 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751844AbaAXTOU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Jan 2014 14:14:20 -0500
+Content-Disposition: inline
+In-Reply-To: <20131122151343.GE8698@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Mostly unwind is done with irqs enabled however SLUB may call it with
-irqs disabled while creating a new SLUB cache.
+* Sebastian Andrzej Siewior | 2013-11-22 16:13:44 [+0100]:
 
-I had system freeze while loading a module which called
-kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
-interrupts and then
+>* Light | 2013-10-26 12:35:54 [+0800]:
+>
+>> I am trying to build a RT kernel, however it cannot boot because it
+>>cannot mount /home, which is a subvolume of btrfs.  This is the entry
+>>of it in /etc/fstab:
+>>
+>>/dev/sda3    /home    btrfs
+>>subvol=gentoohome,defaults,compress=lzo,autodefrag 0 2
 
-->new_slab_objects()
- ->new_slab()
-  ->setup_object()
-   ->setup_object_debug()
-    ->init_tracking()
-     ->set_track()
-      ->save_stack_trace()
-       ->save_stack_trace_tsk()
-        ->walk_stackframe()
-         ->unwind_frame()
-          ->unwind_find_idx()
-           =3D>spin_lock_irqsave(&unwind_lock);
+So I tried this myself. I've setup a FC19 box with btrfs with a root
+subvolume and a home subvolume. The etc/fstab
+|[root@fc19-64 ~]# grep btrfs /etc/fstab 
+|UUID=b5045733-8f7d-48e4-a4ad-a58bf44cb49f /      btrfs subvol=root     1 1
+|UUID=b5045733-8f7d-48e4-a4ad-a58bf44cb49f /home  btrfs subvol=home     1 1
 
-I would prefer not to turn this into a raw lock so for now it will just
-fail if it is called with irqs disabled which might return a few "empty=
-"
-traces=E2=80=A6
+and it booted:
+|[root@fc19-64 ~]# uname -a
+|Linux fc19-64.testing 3.12.8-rt10 #250 SMP PREEMPT RT Fri Jan 24 19:18:38 CET 2014 x86_64 x86_64 x86_64 GNU/Linux
+|[root@fc19-64 ~]# mount | grep btrfs
+|/dev/vda2 on / type btrfs (rw,relatime,seclabel,space_cache)
+|/dev/vda2 on /home type btrfs (rw,relatime,seclabel,space_cache)
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/arm/kernel/unwind.c | 8 ++++++++
- 1 file changed, 8 insertions(+)
+except for the different mount opts (compress=lzo,autodefrag) I don't
+see what is different here.
 
-diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
-index 00df012..2af232d 100644
---- a/arch/arm/kernel/unwind.c
-+++ b/arch/arm/kernel/unwind.c
-@@ -195,6 +195,11 @@ static const struct unwind_idx *unwind_find_idx(un=
-signed long addr)
- 		/* module unwind tables */
- 		struct unwind_table *table;
-=20
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+		if (irqs_disabled())
-+			goto out;
-+#endif
-+
- 		spin_lock_irqsave(&unwind_lock, flags);
- 		list_for_each_entry(table, &unwind_tables, list) {
- 			if (addr >=3D table->begin_addr &&
-@@ -211,6 +216,7 @@ static const struct unwind_idx *unwind_find_idx(uns=
-igned long addr)
- 	}
-=20
- 	pr_debug("%s: idx =3D %p\n", __func__, idx);
-+out:
- 	return idx;
- }
-=20
-@@ -345,7 +351,9 @@ int unwind_frame(struct stackframe *frame)
-=20
- 	idx =3D unwind_find_idx(frame->pc);
- 	if (!idx) {
-+#ifndef CONFIG_PREEMPT_RT_FULL
- 		pr_warning("unwind: Index not found %08lx\n", frame->pc);
-+#endif
- 		return -URC_FAILURE;
- 	}
-=20
---=20
-1.8.5.3
+Sebastian
