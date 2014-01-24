@@ -1,112 +1,82 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Strange results from Locking API testsuite on ARM
-Date: Fri, 24 Jan 2014 14:39:13 +0100
-Message-ID: <20140124133913.GD10264@linutronix.de>
-References: <52E161B7.6000002@imms.de>
+Subject: [PATCH RT] arm/unwind: fail on unwind in irq disabled regions
+Date: Fri, 24 Jan 2014 17:24:23 +0100
+Message-ID: <1390580663-28869-1-git-send-email-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Rolf Peukert <rolf.peukert@imms.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54896 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752441AbaAXNjP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jan 2014 08:39:15 -0500
-Content-Disposition: inline
-In-Reply-To: <52E161B7.6000002@imms.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Rolf Peukert | 2014-01-23 19:38:47 [+0100]:
+Mostly unwind is done with irqs enabled however SLUB may call it with
+irqs disabled while creating a new SLUB cache.
 
->Hello,
-Hi Rolf,
+I had system freeze while loading a module which called
+kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
+interrupts and then
 
->
->If I configure the kernel for "Basic RT" or less, all 218 testcases
->pass. If I configure "Full RT", but don't select "prove locking
+->new_slab_objects()
+ ->new_slab()
+  ->setup_object()
+   ->setup_object_debug()
+    ->init_tracking()
+     ->set_track()
+      ->save_stack_trace()
+       ->save_stack_trace_tsk()
+        ->walk_stackframe()
+         ->unwind_frame()
+          ->unwind_find_idx()
+           =3D>spin_lock_irqsave(&unwind_lock);
 
-Yes. I think in basic mode we use the "vanila" locking.
+I would prefer not to turn this into a raw lock so for now it will just
+fail if it is called with irqs disabled which might return a few "empty=
+"
+traces=E2=80=A6
 
->correctness", the result is the usual "135 out of 218 testcases failed,
->as expected."
->
->This phenomenon happens with the previous kernel too (at least, haven't
->checked older versions yet).
->
->I'm not sure, is the testsuite meant to work in full RT at all?
->Did I miss some important kernel config options?
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/arm/kernel/unwind.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-No you are fine. From a quick look on the v3.12 x86 output we disabled
-the failed tests from your second part of the output.
-The first few with the rlock fail because it works a little different on
--RT and thus leading to the errors. So the testsuite was never updated
-to match the behavior on -RT in v3.2 and it still does not match 100% on
-current v3.12.
-
-My current output is:
-| ------------------------
-| | Locking API testsuite:
-| ----------------------------------------------------------------------------
-|                                  | spin |wlock |rlock |mutex | wsem | rsem |
-|   --------------------------------------------------------------------------
-|                      A-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|                  A-B-B-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|              A-B-B-C-C-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|              A-B-C-A-B-C deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|          A-B-B-C-C-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|          A-B-C-D-B-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|          A-B-C-D-B-C-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-|                     double unlock:  ok  |  ok  |FAILED|  ok  |  ok  |FAILED|
-|                   initialize held:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
-|                  bad unlock order:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
-|   --------------------------------------------------------------------------
-|               recursive read-lock:             |  ok  |             |FAILED|
-|            recursive read-lock #2:             |FAILED|             |  ok  |
-|             mixed read-write-lock:             |  ok  |             |  ok  |
-|             mixed write-read-lock:             |  ok  |             |  ok  |
-|   --------------------------------------------------------------------------
-|      hard-irqs-on + irq-safe-A/12:  ok  |
-|      hard-irqs-on + irq-safe-A/21:  ok  |
-|          hard-safe-A + irqs-on/12:  ok  |
-|          hard-safe-A + irqs-on/21:  ok  |
-|     hard-safe-A + unsafe-B #1/123:  ok  |
-|     hard-safe-A + unsafe-B #1/132:  ok  |
-|     hard-safe-A + unsafe-B #1/213:  ok  |
-|     hard-safe-A + unsafe-B #1/231:  ok  |
-|     hard-safe-A + unsafe-B #1/312:  ok  |
-|     hard-safe-A + unsafe-B #1/321:  ok  |
-|     hard-safe-A + unsafe-B #2/123:  ok  |
-|     hard-safe-A + unsafe-B #2/132:  ok  |
-|     hard-safe-A + unsafe-B #2/213:  ok  |
-|     hard-safe-A + unsafe-B #2/231:  ok  |
-|     hard-safe-A + unsafe-B #2/312:  ok  |
-|     hard-safe-A + unsafe-B #2/321:  ok  |
-|   --------------------------------------------------------------------------
-|   | Wound/wait tests |
-|   ---------------------
-|                   ww api failures:  ok  |  ok  |  ok  |
-|                ww contexts mixing:  ok  |  ok  |
-|              finishing ww context:  ok  |  ok  |  ok  |  ok  |
-|                locking mismatches:  ok  |  ok  |  ok  |
-|                  EDEADLK handling:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
-|            spinlock nest unlocked:  ok  |
-|   -----------------------------------------------------
-|                                  |block | try  |context|
-|   -----------------------------------------------------
-|                           context:  ok  |  ok  |  ok  |
-|                               try:  ok  |  ok  |  ok  |
-|                             block:  ok  |  ok  |  ok  |
-|                          spinlock:  ok  |  ok  |  ok  |
-| -----------------------------------------------------------------
-| BUG:  11 unexpected failures (out of 119) - debugging disabled! |
-| -----------------------------------------------------------------
-
-and all fails here are due to -RT specific changes (which I verified
-while I added the Wound/wait part).
-
->Thanks,
->Rolf
-
-Sebastian
+diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
+index 00df012..2af232d 100644
+--- a/arch/arm/kernel/unwind.c
++++ b/arch/arm/kernel/unwind.c
+@@ -195,6 +195,11 @@ static const struct unwind_idx *unwind_find_idx(un=
+signed long addr)
+ 		/* module unwind tables */
+ 		struct unwind_table *table;
+=20
++#ifdef CONFIG_PREEMPT_RT_FULL
++		if (irqs_disabled())
++			goto out;
++#endif
++
+ 		spin_lock_irqsave(&unwind_lock, flags);
+ 		list_for_each_entry(table, &unwind_tables, list) {
+ 			if (addr >=3D table->begin_addr &&
+@@ -211,6 +216,7 @@ static const struct unwind_idx *unwind_find_idx(uns=
+igned long addr)
+ 	}
+=20
+ 	pr_debug("%s: idx =3D %p\n", __func__, idx);
++out:
+ 	return idx;
+ }
+=20
+@@ -345,7 +351,9 @@ int unwind_frame(struct stackframe *frame)
+=20
+ 	idx =3D unwind_find_idx(frame->pc);
+ 	if (!idx) {
++#ifndef CONFIG_PREEMPT_RT_FULL
+ 		pr_warning("unwind: Index not found %08lx\n", frame->pc);
++#endif
+ 		return -URC_FAILURE;
+ 	}
+=20
+--=20
+1.8.5.3
