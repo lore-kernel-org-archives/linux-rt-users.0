@@ -1,72 +1,112 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Crash in TCP/IP stack
-Date: Fri, 24 Jan 2014 13:56:39 +0100
-Message-ID: <20140124125639.GC10264@linutronix.de>
-References: <EBD2DE4ADA47B94E831AED12A4B0CADA76D06990@edb1.wapice.localdomain>
+Subject: Re: Strange results from Locking API testsuite on ARM
+Date: Fri, 24 Jan 2014 14:39:13 +0100
+Message-ID: <20140124133913.GD10264@linutronix.de>
+References: <52E161B7.6000002@imms.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Jouko Haapaluoma <jouko.haapaluoma@wapice.com>
-To: Sami =?utf-8?Q?Pietik=C3=A4inen?= <Sami.Pietikainen@wapice.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Rolf Peukert <rolf.peukert@imms.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54396 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:54896 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752112AbaAXM4k convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752441AbaAXNjP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jan 2014 07:56:40 -0500
+	Fri, 24 Jan 2014 08:39:15 -0500
 Content-Disposition: inline
-In-Reply-To: <EBD2DE4ADA47B94E831AED12A4B0CADA76D06990@edb1.wapice.localdomain>
+In-Reply-To: <52E161B7.6000002@imms.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Sami Pietik=C3=A4inen | 2013-12-17 10:21:33 [+0000]:
+* Rolf Peukert | 2014-01-23 19:38:47 [+0100]:
 
 >Hello,
-Hi Sami,
+Hi Rolf,
 
->We have run into a crash in the TCP/IP stack when doing torture tests =
-on our devices.=20
->We have been able to reproduce this issue with Atmel SAMA5D35-EK using=
- 3.6.9-rt21,=20
->3.10.20-rt17 and 3.12.5-rt6 kernels and using Xilinx Zynq Zedboard wit=
-h 3.8.13-rt15 kernel.=20
->Unable to handle kernel NULL pointer dereference at virtual address 00=
-000010
->CPU: 0 PID: 7292 Comm: wget Not tainted 3.12.5-rt6-custom #1
->[<c01989fc>] (__ip_make_skb+0x200/0x280) from [<c0198acf>] (ip_push_pe=
-nding_frames+0xf/0x24)
->[<c0198acf>] (ip_push_pending_frames+0xf/0x24) from [<c0198cf5>] (ip_s=
-end_unicast_reply+0x179/0x198)
->[<c0198cf5>] (ip_send_unicast_reply+0x179/0x198) from [<c01a992d>] (tc=
-p_v4_send_reset+0x10d/0x138)
->[<c01a992d>] (tcp_v4_send_reset+0x10d/0x138) from [<c01aa491>] (tcp_v4=
-_do_rcv+0x6d/0x168)
->[<c01aa491>] (tcp_v4_do_rcv+0x6d/0x168) from [<c0175683>] (release_soc=
-k+0x63/0xe0)
->[<c0175683>] (release_sock+0x63/0xe0) from [<c019f81b>] (tcp_close+0x1=
-2b/0x33c)
->[<c019f81b>] (tcp_close+0x12b/0x33c) from [<c01b6b61>] (inet_release+0=
-x25/0x44)
->[<c01b6b61>] (inet_release+0x25/0x44) from [<c01731db>] (sock_release+=
-0xf/0x5c)
->[<c01731db>] (sock_release+0xf/0x5c) from [<c01733ed>] (sock_close+0x9=
-/0xc)
->[<c01733ed>] (sock_close+0x9/0xc) from [<c0065259>] (__fput+0x5d/0x17c=
-)
->[<c0065259>] (__fput+0x5d/0x17c) from [<c002469b>] (task_work_run+0x53=
-/0x78)
->[<c002469b>] (task_work_run+0x53/0x78) from [<c000e3ab>] (do_work_pend=
-ing+0x5f/0x74)
->[<c000e3ab>] (do_work_pending+0x5f/0x74) from [<c000cb53>] (work_pendi=
-ng+0x9/0x1a)
+>
+>If I configure the kernel for "Basic RT" or less, all 218 testcases
+>pass. If I configure "Full RT", but don't select "prove locking
 
-Just that I have it tagged here properly. This bug seems to exist
-since v3.6-rt and Nicholas Mc Guire posted a fix for it.
+Yes. I think in basic mode we use the "vanila" locking.
+
+>correctness", the result is the usual "135 out of 218 testcases failed,
+>as expected."
+>
+>This phenomenon happens with the previous kernel too (at least, haven't
+>checked older versions yet).
+>
+>I'm not sure, is the testsuite meant to work in full RT at all?
+>Did I miss some important kernel config options?
+
+No you are fine. From a quick look on the v3.12 x86 output we disabled
+the failed tests from your second part of the output.
+The first few with the rlock fail because it works a little different on
+-RT and thus leading to the errors. So the testsuite was never updated
+to match the behavior on -RT in v3.2 and it still does not match 100% on
+current v3.12.
+
+My current output is:
+| ------------------------
+| | Locking API testsuite:
+| ----------------------------------------------------------------------------
+|                                  | spin |wlock |rlock |mutex | wsem | rsem |
+|   --------------------------------------------------------------------------
+|                      A-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|                  A-B-B-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|              A-B-B-C-C-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|              A-B-C-A-B-C deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|          A-B-B-C-C-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|          A-B-C-D-B-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|          A-B-C-D-B-C-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
+|                     double unlock:  ok  |  ok  |FAILED|  ok  |  ok  |FAILED|
+|                   initialize held:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+|                  bad unlock order:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+|   --------------------------------------------------------------------------
+|               recursive read-lock:             |  ok  |             |FAILED|
+|            recursive read-lock #2:             |FAILED|             |  ok  |
+|             mixed read-write-lock:             |  ok  |             |  ok  |
+|             mixed write-read-lock:             |  ok  |             |  ok  |
+|   --------------------------------------------------------------------------
+|      hard-irqs-on + irq-safe-A/12:  ok  |
+|      hard-irqs-on + irq-safe-A/21:  ok  |
+|          hard-safe-A + irqs-on/12:  ok  |
+|          hard-safe-A + irqs-on/21:  ok  |
+|     hard-safe-A + unsafe-B #1/123:  ok  |
+|     hard-safe-A + unsafe-B #1/132:  ok  |
+|     hard-safe-A + unsafe-B #1/213:  ok  |
+|     hard-safe-A + unsafe-B #1/231:  ok  |
+|     hard-safe-A + unsafe-B #1/312:  ok  |
+|     hard-safe-A + unsafe-B #1/321:  ok  |
+|     hard-safe-A + unsafe-B #2/123:  ok  |
+|     hard-safe-A + unsafe-B #2/132:  ok  |
+|     hard-safe-A + unsafe-B #2/213:  ok  |
+|     hard-safe-A + unsafe-B #2/231:  ok  |
+|     hard-safe-A + unsafe-B #2/312:  ok  |
+|     hard-safe-A + unsafe-B #2/321:  ok  |
+|   --------------------------------------------------------------------------
+|   | Wound/wait tests |
+|   ---------------------
+|                   ww api failures:  ok  |  ok  |  ok  |
+|                ww contexts mixing:  ok  |  ok  |
+|              finishing ww context:  ok  |  ok  |  ok  |  ok  |
+|                locking mismatches:  ok  |  ok  |  ok  |
+|                  EDEADLK handling:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+|            spinlock nest unlocked:  ok  |
+|   -----------------------------------------------------
+|                                  |block | try  |context|
+|   -----------------------------------------------------
+|                           context:  ok  |  ok  |  ok  |
+|                               try:  ok  |  ok  |  ok  |
+|                             block:  ok  |  ok  |  ok  |
+|                          spinlock:  ok  |  ok  |  ok  |
+| -----------------------------------------------------------------
+| BUG:  11 unexpected failures (out of 119) - debugging disabled! |
+| -----------------------------------------------------------------
+
+and all fails here are due to -RT specific changes (which I verified
+while I added the Wound/wait part).
+
+>Thanks,
+>Rolf
 
 Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
