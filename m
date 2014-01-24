@@ -1,11 +1,14 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] timer: Run irq_work() even if there are no active timers
-Date: Fri, 24 Jan 2014 14:51:57 -0500
-Message-ID: <20140124145157.1f30d447@gandalf.local.home>
+Subject: [PATCH RT v2] timer: Raise softirq if there's irq_work
+Date: Fri, 24 Jan 2014 15:09:33 -0500
+Message-ID: <20140124150933.22d8c20a@gandalf.local.home>
+References: <20140124145157.1f30d447@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <williams@redhat.com>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
@@ -14,11 +17,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Joakim Hernberg <jbh@alchemy.lu>,
 	Joe Korty <joe.korty@ccur.com>,
 	Muli Baron <muli.baron@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140124145157.1f30d447@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
+
+[ Talking with Sebastian on IRC, it seems that doing the irq_work_run()
+  from the interrupt in -rt is a bad thing. Here we simply raise the
+  softirq if there's irq work to do. This too boots on my i7 ]
 
 After trying hard to figure out why my i7 box was locking up with the
 new active_timers code, that does not run the timer softirq if there
@@ -29,22 +36,27 @@ This was the bug that was locking up the system. It wasn't missing a
 timer, it was missing irq work. By always doing the irq work callbacks,
 the system boots fine.
 
+No need to check for defined(CONFIG_IRQ_WORK). When that's not set the
+"irq_work_needs_cpu()" is a static inline that returns false.
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 46467be..7c5026e 100644
+index 46467be..c01a0d2 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -1464,8 +1464,12 @@ void run_local_timers(void)
+@@ -1464,8 +1464,13 @@ void run_local_timers(void)
  		raise_softirq(TIMER_SOFTIRQ);
  		return;
  	}
 -	if (!base->active_timers)
+-		goto out;
 +	if (!base->active_timers) {
-+#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
-+		irq_work_run();
++#ifdef CONFIG_PREEMPT_RT_FULL
++		/* On RT, irq work runs from softirq */
++		if (!irq_work_needs_cpu())
 +#endif
- 		goto out;
++			goto out;
 +	}
  
  	/* Check whether the next pending timer has expired */
