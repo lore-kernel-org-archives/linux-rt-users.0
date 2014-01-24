@@ -1,49 +1,51 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT-3.10.6_p3 fails to boot: home.mount mounting timed out
-Date: Fri, 24 Jan 2014 20:14:17 +0100
-Message-ID: <20140124191417.GA29618@linutronix.de>
-References: <526B46AA.1090407@gmail.com>
- <20131122151343.GE8698@linutronix.de>
+Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
+Date: Fri, 24 Jan 2014 20:46:42 +0100
+Message-ID: <20140124194642.GA29981@linutronix.de>
+References: <20131221193900.GA8427@linutronix.de>
+ <1387681647.5412.25.camel@marge.simpson.net>
+ <1387702631.5412.101.camel@marge.simpson.net>
+ <1387773533.5369.16.camel@marge.simpson.net>
+ <1387775559.5369.20.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Light <sgsdxzy@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59009 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751844AbaAXTOU (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jan 2014 14:14:20 -0500
+Cc: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20131122151343.GE8698@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1387775559.5369.20.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Sebastian Andrzej Siewior | 2013-11-22 16:13:44 [+0100]:
+* Mike Galbraith | 2013-12-23 06:12:39 [+0100]:
 
->* Light | 2013-10-26 12:35:54 [+0800]:
+>P.S.
 >
->> I am trying to build a RT kernel, however it cannot boot because it
->>cannot mount /home, which is a subvolume of btrfs.  This is the entry
->>of it in /etc/fstab:
->>
->>/dev/sda3    /home    btrfs
->>subvol=gentoohome,defaults,compress=lzo,autodefrag 0 2
+>virgin -rt7 doing tbench 64 + make -j64
+>
+>[   97.907960] perf samples too long (3138 > 2500), lowering kernel.perf_event_max_sample_rate to 50000
+>[  103.047921] perf samples too long (5544 > 5000), lowering kernel.perf_event_max_sample_rate to 25000
+>[  181.561271] perf samples too long (10318 > 10000), lowering kernel.perf_event_max_sample_rate to 13000
+>[  184.243750] INFO: NMI handler (perf_event_nmi_handler) took too long to run: 1.084 msecs
+>[  248.914422] perf samples too long (19719 > 19230), lowering kernel.perf_event_max_sample_rate to 7000
+>[  382.116674] NOHZ: local_softirq_pending 10
+This is block
 
-So I tried this myself. I've setup a FC19 box with btrfs with a root
-subvolume and a home subvolume. The etc/fstab
-|[root@fc19-64 ~]# grep btrfs /etc/fstab 
-|UUID=b5045733-8f7d-48e4-a4ad-a58bf44cb49f /      btrfs subvol=root     1 1
-|UUID=b5045733-8f7d-48e4-a4ad-a58bf44cb49f /home  btrfs subvol=home     1 1
+>[  405.201593] perf samples too long (36824 > 35714), lowering kernel.perf_event_max_sample_rate to 4000
+>[  444.704185] NOHZ: local_softirq_pending 08
+>[  444.704208] NOHZ: local_softirq_pending 08
+>[  444.704579] NOHZ: local_softirq_pending 08
+>[  444.704678] NOHZ: local_softirq_pending 08
+>[  444.705100] NOHZ: local_softirq_pending 08
+>[  444.705980] NOHZ: local_softirq_pending 08
+>[  444.705994] NOHZ: local_softirq_pending 08
+>[  444.708315] NOHZ: local_softirq_pending 08
+>[  444.710348] NOHZ: local_softirq_pending 08
 
-and it booted:
-|[root@fc19-64 ~]# uname -a
-|Linux fc19-64.testing 3.12.8-rt10 #250 SMP PREEMPT RT Fri Jan 24 19:18:38 CET 2014 x86_64 x86_64 x86_64 GNU/Linux
-|[root@fc19-64 ~]# mount | grep btrfs
-|/dev/vda2 on / type btrfs (rw,relatime,seclabel,space_cache)
-|/dev/vda2 on /home type btrfs (rw,relatime,seclabel,space_cache)
-
-except for the different mount opts (compress=lzo,autodefrag) I don't
-see what is different here.
+and this is RX. Is your testcase heavy disk-io or heavy disk-io +
+network?
 
 Sebastian
