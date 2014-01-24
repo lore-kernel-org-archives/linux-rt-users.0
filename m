@@ -1,128 +1,52 @@
-From: Rolf Peukert <rolf.peukert@imms.de>
-Subject: Strange results from Locking API testsuite on ARM
-Date: Thu, 23 Jan 2014 19:38:47 +0100
-Message-ID: <52E161B7.6000002@imms.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.12.6-rt9
+Date: Fri, 24 Jan 2014 12:19:52 +0100
+Message-ID: <52E24C58.2000205@linutronix.de>
+References: <20131223225017.GA8623@linutronix.de> <1387900067.5490.33.camel@marge.simpson.net> <20140117170052.GF5785@linutronix.de> <1390014929.5444.38.camel@marge.simpson.net> <20140120211736.0c97418a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from infosrv.imms.de ([194.95.250.51]:43469 "EHLO infosrv.imms.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751184AbaAWSiy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Jan 2014 13:38:54 -0500
-Received: from infosrv.imms.de (infosrv.imms.de [127.0.0.1])
-	by IMSVA (Postfix) with ESMTP id 71D849004D
-	for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2014 19:38:52 +0100 (CET)
-Received: from iimail.ii.imms.de (iimail.imms.de [194.95.133.35])
-	by infosrv.imms.de (Postfix) with ESMTP id 2CF929004C
-	for <linux-rt-users@vger.kernel.org>; Thu, 23 Jan 2014 19:38:52 +0100 (CET)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Mike Galbraith <bitbucket@online.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140120211736.0c97418a@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On 01/21/2014 03:17 AM, Steven Rostedt wrote:
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> 
+> diff --git a/kernel/timer.c b/kernel/timer.c
+> index 46467be..8212c10 100644
+> --- a/kernel/timer.c
+> +++ b/kernel/timer.c
+> @@ -1464,13 +1464,11 @@ void run_local_timers(void)
+>  		raise_softirq(TIMER_SOFTIRQ);
+>  		return;
+>  	}
+> -	if (!base->active_timers)
+> -		goto out;
+>  
+>  	/* Check whether the next pending timer has expired */
+>  	if (time_before_eq(base->next_timer, jiffies))
+>  		raise_softirq(TIMER_SOFTIRQ);
 
-on our ARM-Cortex-A8-based board (using a TI AM3505 Sitara CPU) running
-3.2.54-rt77, the Locking API testsuite displays 87 unexpected failures.
+Hmmm. If active_timers is 0 and "time_before_eq(base->next_timer,
+jiffies))" is true than that timer should have been initialized with
+init_timer_deferrable() or we have a serious bug here where
+active_timers isn't properly synchronized anymore.
 
-The pattern in the output looks interesting, but I'm not sure what it means:
+Now. If there is really just a deferrable timer that expired and nothing
+else then this would explain it.
 
-> [    0.000000] | Locking API testsuite:
-> [    0.000000] ----------------------------------------------------------------------------
-> [    0.000000]                                  | spin |wlock |rlock |mutex | wsem | rsem |
-> [    0.000000]   --------------------------------------------------------------------------
-> [    0.000000]                      A-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]                  A-B-B-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]              A-B-B-C-C-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]              A-B-C-A-B-C deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]          A-B-B-C-C-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]          A-B-C-D-B-D-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]          A-B-C-D-B-C-D-A deadlock:  ok  |  ok  |FAILED|  ok  |  ok  |  ok  |
-> [    0.000000]                     double unlock:  ok  |  ok  |FAILED|  ok  |  ok  |FAILED|
-> [    0.000000]                   initialize held:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
-> [    0.000000]                  bad unlock order:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
-> [    0.000000]   --------------------------------------------------------------------------
-> [    0.000000]               recursive read-lock:             |  ok  |             |FAILED|
-> [    0.000000]            recursive read-lock #2:             |FAILED|             |  ok  |
-> [    0.000000]             mixed read-write-lock:             |  ok  |             |  ok  |
-> [    0.000000]             mixed write-read-lock:             |  ok  |             |  ok  |
-> [    0.000000]   --------------------------------------------------------------------------
-> [    0.000000]      hard-irqs-on + irq-safe-A/12:  ok  |  ok  |FAILED|
-> [    0.000000]      soft-irqs-on + irq-safe-A/12:FAILED|FAILED|  ok  |
-> [    0.000000]      hard-irqs-on + irq-safe-A/21:  ok  |  ok  |FAILED|
-> [    0.000000]      soft-irqs-on + irq-safe-A/21:FAILED|FAILED|  ok  |
-> [    0.000000]        sirq-safe-A => hirqs-on/12:FAILED|FAILED|  ok  |
-> [    0.000000]        sirq-safe-A => hirqs-on/21:FAILED|FAILED|  ok  |
-> [    0.000000]          hard-safe-A + irqs-on/12:  ok  |  ok  |FAILED|
-> [    0.000000]          soft-safe-A + irqs-on/12:FAILED|FAILED|  ok  |
-> [    0.000000]          hard-safe-A + irqs-on/21:  ok  |  ok  |FAILED|
-> [    0.000000]          soft-safe-A + irqs-on/21:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/123:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/123:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/132:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/132:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/213:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/213:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/231:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/231:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/312:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/312:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #1/321:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #1/321:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/123:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/123:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/132:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/132:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/213:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/213:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/231:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/231:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/312:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/312:FAILED|FAILED|  ok  |
-> [    0.000000]     hard-safe-A + unsafe-B #2/321:  ok  |  ok  |FAILED|
-> [    0.000000]     soft-safe-A + unsafe-B #2/321:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/123:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/123:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/132:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/132:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/213:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/213:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/231:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/231:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/312:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/312:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq lock-inversion/321:  ok  |  ok  |FAILED|
-> [    0.000000]       soft-irq lock-inversion/321:FAILED|FAILED|  ok  |
-> [    0.000000]       hard-irq read-recursion/123:FAILED|
-> [    0.000000]       soft-irq read-recursion/123:  ok  |
-> [    0.000000]       hard-irq read-recursion/132:FAILED|
-> [    0.000000]       soft-irq read-recursion/132:  ok  |
-> [    0.000000]       hard-irq read-recursion/213:FAILED|
-> [    0.000000]       soft-irq read-recursion/213:  ok  |
-> [    0.000000]       hard-irq read-recursion/231:FAILED|
-> [    0.000000]       soft-irq read-recursion/231:  ok  |
-> [    0.000000]       hard-irq read-recursion/312:FAILED|
-> [    0.000000]       soft-irq read-recursion/312:  ok  |
-> [    0.000000]       hard-irq read-recursion/321:FAILED|
-> [    0.000000]       soft-irq read-recursion/321:  ok  |
-> [    0.000000] -----------------------------------------------------------------
-> [    0.000000] BUG:  87 unexpected failures (out of 218) - debugging disabled! |
+> -out:
+> +
+>  	rt_spin_unlock_after_trylock_in_irq(&base->lock);
+>  
+>  }
 
-Apparently the RT capabilites are not affected.
-
-Here is a link to the full startup log, http://pastebin.com/bBmLwebD
-and the kernel configuration used, http://pastebin.com/nYHyBjqT
-
-If I configure the kernel for "Basic RT" or less, all 218 testcases
-pass. If I configure "Full RT", but don't select "prove locking
-correctness", the result is the usual "135 out of 218 testcases failed,
-as expected."
-
-This phenomenon happens with the previous kernel too (at least, haven't
-checked older versions yet).
-
-I'm not sure, is the testsuite meant to work in full RT at all?
-Did I miss some important kernel config options?
-
-Thanks,
-Rolf
+Sebastian
