@@ -1,61 +1,67 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Sat, 25 Jan 2014 06:20:26 +0100
-Message-ID: <1390627226.3625.18.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
-	 <1387681647.5412.25.camel@marge.simpson.net>
-	 <1387702631.5412.101.camel@marge.simpson.net>
-	 <1387773533.5369.16.camel@marge.simpson.net>
-	 <1387775559.5369.20.camel@marge.simpson.net>
-	 <20140124194642.GA29981@linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [PATCH 2/3] read_lock migrate_disable pushdown to rt_read_lock
+Date: Sat, 25 Jan 2014 09:29:21 +0100
+Message-ID: <20140125082921.GA3831@opentech.at>
+References: <20131205234449.GF15603@opentech.at> <20131205211951.5c2eaa0f@gandalf.local.home> <20131206023334.GA26623@opentech.at> <20131206102532.712d4ae4@gandalf.local.home> <20131215151511.GI31090@linutronix.de> <20140124124216.GB10264@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users@vger.kernel.org,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Carsten Emde <carsten.emde@osadl.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.17.8]:58312 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750889AbaAYFUi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 25 Jan 2014 00:20:38 -0500
-In-Reply-To: <20140124194642.GA29981@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140124124216.GB10264@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2014-01-24 at 20:46 +0100, Sebastian Andrzej Siewior wrote: 
-> * Mike Galbraith | 2013-12-23 06:12:39 [+0100]:
+On Fri, 24 Jan 2014, Sebastian Andrzej Siewior wrote:
+
+> * Sebastian Andrzej Siewior | 2013-12-15 16:15:11 [+0100]:
 > 
-> >P.S.
+> >* Steven Rostedt | 2013-12-06 10:25:32 [-0500]:
 > >
-> >virgin -rt7 doing tbench 64 + make -j64
+> >>
+> >>Let me analyze the original code first. I'll poke peterz and tglx too
+> >>to make sure this modification is OK.
 > >
-> >[   97.907960] perf samples too long (3138 > 2500), lowering kernel.perf_event_max_sample_rate to 50000
-> >[  103.047921] perf samples too long (5544 > 5000), lowering kernel.perf_event_max_sample_rate to 25000
-> >[  181.561271] perf samples too long (10318 > 10000), lowering kernel.perf_event_max_sample_rate to 13000
-> >[  184.243750] INFO: NMI handler (perf_event_nmi_handler) took too long to run: 1.084 msecs
-> >[  248.914422] perf samples too long (19719 > 19230), lowering kernel.perf_event_max_sample_rate to 7000
-> >[  382.116674] NOHZ: local_softirq_pending 10
-> This is block
+> >I took 1/3. I postpone the remaining two until I hear something from
+> >you.
 > 
-> >[  405.201593] perf samples too long (36824 > 35714), lowering kernel.perf_event_max_sample_rate to 4000
-> >[  444.704185] NOHZ: local_softirq_pending 08
-> >[  444.704208] NOHZ: local_softirq_pending 08
-> >[  444.704579] NOHZ: local_softirq_pending 08
-> >[  444.704678] NOHZ: local_softirq_pending 08
-> >[  444.705100] NOHZ: local_softirq_pending 08
-> >[  444.705980] NOHZ: local_softirq_pending 08
-> >[  444.705994] NOHZ: local_softirq_pending 08
-> >[  444.708315] NOHZ: local_softirq_pending 08
-> >[  444.710348] NOHZ: local_softirq_pending 08
-> 
-> and this is RX. Is your testcase heavy disk-io or heavy disk-io +
-> network?
+> Any news?
+>
+Carsten Emde added the two patches
 
-Yeah.
+   0001-write_lock-migrate_disable-pushdown-to-rt_write_lock.patch
+   0002-read_lock-migrate_disable-pushdown-to-rt_read_lock.patch
 
--Mike
+to the -rt9 test on one of his ARM boards (i.MX6 Sabre automation board)
+in the OSADL QA-Farm (rack #9/slot #8)
 
+<snip Carsten Emde>
+No complaints so far after adding your patches.
+
+If you would like to follow up:
+- Profile: https://www.osadl.org/?id=1822
+- Patches: https://www.osadl.org/?id=1822#patches
+- Latency plot: https://www.osadl.org/?id=1823
+- Munin:
+https://www.osadl.org/munin/osadl.org/rack9slot8.osadl.org/index.html
+<snip>
+ 
+so it atleast seems to be passing basic testing.
+
+I have an AMD Phenom X4 and Intel i3 running -rt9 with those two patches
+applied running stable now for 2 days under alternating load/idle conditions
+as well. Unfortunately no further feedback up to now.
+
+Given that its a low-level locking issue I guess that more testing is of little
+help and code-reviews would be essential. Notably if any cases could exist
+where the order of preempt_disable/lock critical-section unlock/preempt_enable
+actually does natter.
+
+thx!
+hofrat
