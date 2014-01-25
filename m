@@ -1,67 +1,58 @@
 From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: Re: [PATCH 2/3] read_lock migrate_disable pushdown to rt_read_lock
-Date: Sat, 25 Jan 2014 09:29:21 +0100
-Message-ID: <20140125082921.GA3831@opentech.at>
-References: <20131205234449.GF15603@opentech.at> <20131205211951.5c2eaa0f@gandalf.local.home> <20131206023334.GA26623@opentech.at> <20131206102532.712d4ae4@gandalf.local.home> <20131215151511.GI31090@linutronix.de> <20140124124216.GB10264@linutronix.de>
+Subject: Re: Crash in TCP/IP stack
+Date: Sat, 25 Jan 2014 12:44:55 +0100
+Message-ID: <20140125114455.GA16350@opentech.at>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA76D06990@edb1.wapice.localdomain> <20140124125639.GC10264@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org,
-	Andreas Platschek <platschek@ict.tuwien.ac.at>,
-	Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Carsten Emde <carsten.emde@osadl.org>
+Cc: Sami Pietik??inen <Sami.Pietikainen@wapice.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Jouko Haapaluoma <jouko.haapaluoma@wapice.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:52195 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751031AbaAYLo5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 25 Jan 2014 06:44:57 -0500
 Content-Disposition: inline
-In-Reply-To: <20140124124216.GB10264@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20140124125639.GC10264@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 On Fri, 24 Jan 2014, Sebastian Andrzej Siewior wrote:
 
-> * Sebastian Andrzej Siewior | 2013-12-15 16:15:11 [+0100]:
+> * Sami Pietik??inen | 2013-12-17 10:21:33 [+0000]:
 > 
-> >* Steven Rostedt | 2013-12-06 10:25:32 [-0500]:
-> >
-> >>
-> >>Let me analyze the original code first. I'll poke peterz and tglx too
-> >>to make sure this modification is OK.
-> >
-> >I took 1/3. I postpone the remaining two until I hear something from
-> >you.
+> >Hello,
+> Hi Sami,
 > 
-> Any news?
+> >We have run into a crash in the TCP/IP stack when doing torture tests on our devices. 
+> >We have been able to reproduce this issue with Atmel SAMA5D35-EK using 3.6.9-rt21, 
+> >3.10.20-rt17 and 3.12.5-rt6 kernels and using Xilinx Zynq Zedboard with 3.8.13-rt15 kernel. 
+> >Unable to handle kernel NULL pointer dereference at virtual address 00000010
+> >CPU: 0 PID: 7292 Comm: wget Not tainted 3.12.5-rt6-custom #1
+> >[<c01989fc>] (__ip_make_skb+0x200/0x280) from [<c0198acf>] (ip_push_pending_frames+0xf/0x24)
+> >[<c0198acf>] (ip_push_pending_frames+0xf/0x24) from [<c0198cf5>] (ip_send_unicast_reply+0x179/0x198)
+> >[<c0198cf5>] (ip_send_unicast_reply+0x179/0x198) from [<c01a992d>] (tcp_v4_send_reset+0x10d/0x138)
+> >[<c01a992d>] (tcp_v4_send_reset+0x10d/0x138) from [<c01aa491>] (tcp_v4_do_rcv+0x6d/0x168)
+> >[<c01aa491>] (tcp_v4_do_rcv+0x6d/0x168) from [<c0175683>] (release_sock+0x63/0xe0)
+> >[<c0175683>] (release_sock+0x63/0xe0) from [<c019f81b>] (tcp_close+0x12b/0x33c)
+> >[<c019f81b>] (tcp_close+0x12b/0x33c) from [<c01b6b61>] (inet_release+0x25/0x44)
+> >[<c01b6b61>] (inet_release+0x25/0x44) from [<c01731db>] (sock_release+0xf/0x5c)
+> >[<c01731db>] (sock_release+0xf/0x5c) from [<c01733ed>] (sock_close+0x9/0xc)
+> >[<c01733ed>] (sock_close+0x9/0xc) from [<c0065259>] (__fput+0x5d/0x17c)
+> >[<c0065259>] (__fput+0x5d/0x17c) from [<c002469b>] (task_work_run+0x53/0x78)
+> >[<c002469b>] (task_work_run+0x53/0x78) from [<c000e3ab>] (do_work_pending+0x5f/0x74)
+> >[<c000e3ab>] (do_work_pending+0x5f/0x74) from [<c000cb53>] (work_pending+0x9/0x1a)
+> 
+> Just that I have it tagged here properly. This bug seems to exist
+> since v3.6-rt and Nicholas Mc Guire posted a fix for it.
 >
-Carsten Emde added the two patches
+yup - and the fix was confirmed to work atleast in the original setup
+ref: http://www.spinics.net/lists/linux-rt-users/msg11081.html
+ref: http://www.spinics.net/lists/linux-rt-users/msg11101.html
 
-   0001-write_lock-migrate_disable-pushdown-to-rt_write_lock.patch
-   0002-read_lock-migrate_disable-pushdown-to-rt_read_lock.patch
-
-to the -rt9 test on one of his ARM boards (i.MX6 Sabre automation board)
-in the OSADL QA-Farm (rack #9/slot #8)
-
-<snip Carsten Emde>
-No complaints so far after adding your patches.
-
-If you would like to follow up:
-- Profile: https://www.osadl.org/?id=1822
-- Patches: https://www.osadl.org/?id=1822#patches
-- Latency plot: https://www.osadl.org/?id=1823
-- Munin:
-https://www.osadl.org/munin/osadl.org/rack9slot8.osadl.org/index.html
-<snip>
- 
-so it atleast seems to be passing basic testing.
-
-I have an AMD Phenom X4 and Intel i3 running -rt9 with those two patches
-applied running stable now for 2 days under alternating load/idle conditions
-as well. Unfortunately no further feedback up to now.
-
-Given that its a low-level locking issue I guess that more testing is of little
-help and code-reviews would be essential. Notably if any cases could exist
-where the order of preempt_disable/lock critical-section unlock/preempt_enable
-actually does natter.
+No test/confirmation for v3.6 though - if needed I can give it a spin
 
 thx!
 hofrat
