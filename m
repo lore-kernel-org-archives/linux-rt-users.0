@@ -1,61 +1,42 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Mon, 27 Jan 2014 06:10:44 +0100
-Message-ID: <1390799444.5425.61.camel@marge.simpson.net>
-References: <20131221193900.GA8427@linutronix.de>
-	 <1387681647.5412.25.camel@marge.simpson.net>
-	 <1387702631.5412.101.camel@marge.simpson.net>
-	 <1387773533.5369.16.camel@marge.simpson.net>
-	 <20131224193636.GD19211@linux.vnet.ibm.com>
-	 <1387940854.5373.8.camel@marge.simpson.net>
-	 <20131225075544.GE19211@linux.vnet.ibm.com>
-	 <1387993057.5346.17.camel@marge.simpson.net>
-	 <20140117171441.GG5785@linutronix.de>
-	 <1390015514.5444.46.camel@marge.simpson.net>
-	 <20140124195014.GB29981@linutronix.de>
-	 <1390626760.3625.17.camel@marge.simpson.net>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: [ANNOUNCE] 3.12.8-rt11
+Date: Mon, 27 Jan 2014 05:54:31 +0100
+Message-ID: <52E5E687.1090808@osadl.org>
+References: <20140125134519.GA9845@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: paulmck@linux.vnet.ibm.com, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1390626760.3625.17.camel@marge.simpson.net>
+In-Reply-To: <20140125134519.GA9845@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2014-01-25 at 06:12 +0100, Mike Galbraith wrote: 
-> On Fri, 2014-01-24 at 20:50 +0100, Sebastian Andrzej Siewior wrote: 
-> > * Mike Galbraith | 2014-01-18 04:25:14 [+0100]:
-> > 
-> > >> ># timers-do-not-raise-softirq-unconditionally.patch
-> > >> ># rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch
-> > >> >
-> > >> >..those two out does seem to have stabilized the thing.
-> > >> 
-> > >> timers-do-not-raise-softirq-unconditionally.patch is on its way out.
-> > >> 
-> > >> rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch confues me.
-> > >> Didn't you report once that your box deadlocks without this patch? Now
-> > >> your 64way box on the other hand does not work with it?
-> > >
-> > >If 'do not raise' is applied, 'use a trylock' won't save you.  If 'do
-> > is this just an observation or you do know why it won't save me?
-> 
-> It's an observation from beyond the grave from the 64 core box that it
-> repeatedly did NOT save :)  Autopsy photos below.
-> 
-> I've built 3.12.8-rt9 with Stevens v2 "timer: Raise softirq if there's
-> irq_work" to see if it'll survive.
+On 01/25/2014 02:45 PM, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+>
+> I'm pleased to announce the v3.12.8-rt11 patch set.
+> [..]
+Thanks a lot, Sebastian, excellent work!
 
-And it did, configured both as nohz_tick, and nohz_full_all.  The irqs
-are enabled warning in can_stop_full_tick() fired for nohz_full_all, but
-that's it.
+I have upgraded about 40 different QA Farm systems (x86: 32-bit, 64-bit, 
+single-core, multi-core 2 to 32, single-socket, dual-socket; ARM: 
+single-core, multi-core), and they all boot and run without any problem. 
+I didn't see any crash of unknown origin so far. Most systems use the 
+original kernel besides some unimportant farm patches. Several systems 
+have a worst-case latency below 20 microseconds (e.g. 
+https://www.osadl.org/?id=1420 and https://www.osadl.org/?id=1805). Even 
+Raspberry Pi and BeagleBone-Black work like a charm and have reasonably 
+low real-time latency (https://www.osadl.org/?id=1663 and 
+https://www.osadl.org/?id=1601), although they still are not 100% 
+mainline. It is well conceivable that this or one of the next 3.12.X-rtY 
+versions will remind us of the legendary 2.6.33 RT kernel.
 
-For grins, I also applied Paul's v3 timer latency series while testing
-nohz_full_all config.   The box was heavily loaded the vast majority of
-the time, but it didn't explode or do anything obviously evil.
+Seems that an important milestone is being reached.
 
--Mike
+Thanks,
+	-Carsten.
