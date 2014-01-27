@@ -1,42 +1,42 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: [ANNOUNCE] 3.12.8-rt11
-Date: Mon, 27 Jan 2014 05:54:31 +0100
-Message-ID: <52E5E687.1090808@osadl.org>
-References: <20140125134519.GA9845@linutronix.de>
+From: =?iso-8859-1?Q?Sami_Pietik=E4inen?= <Sami.Pietikainen@wapice.com>
+Subject: RE: Crash in TCP/IP stack
+Date: Mon, 27 Jan 2014 07:20:27 +0000
+Message-ID: <EBD2DE4ADA47B94E831AED12A4B0CADA844C338D@edb1.wapice.localdomain>
+References: <EBD2DE4ADA47B94E831AED12A4B0CADA76D06990@edb1.wapice.localdomain>
+ <20140124125639.GC10264@linutronix.de> <20140125114455.GA16350@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140125134519.GA9845@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"Jouko Haapaluoma" <jouko.haapaluoma@wapice.com>
+To: Nicholas Mc Guire <der.herr@hofr.at>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from wapice.fi ([81.209.51.2]:46801 "EHLO brando.wapice.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1750895AbaA0HUc convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Jan 2014 02:20:32 -0500
+In-Reply-To: <20140125114455.GA16350@opentech.at>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/25/2014 02:45 PM, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v3.12.8-rt11 patch set.
-> [..]
-Thanks a lot, Sebastian, excellent work!
+>No test/confirmation for v3.6 though - if needed I can give it a spin
 
-I have upgraded about 40 different QA Farm systems (x86: 32-bit, 64-bit, 
-single-core, multi-core 2 to 32, single-socket, dual-socket; ARM: 
-single-core, multi-core), and they all boot and run without any problem. 
-I didn't see any crash of unknown origin so far. Most systems use the 
-original kernel besides some unimportant farm patches. Several systems 
-have a worst-case latency below 20 microseconds (e.g. 
-https://www.osadl.org/?id=1420 and https://www.osadl.org/?id=1805). Even 
-Raspberry Pi and BeagleBone-Black work like a charm and have reasonably 
-low real-time latency (https://www.osadl.org/?id=1663 and 
-https://www.osadl.org/?id=1601), although they still are not 100% 
-mainline. It is well conceivable that this or one of the next 3.12.X-rtY 
-versions will remind us of the legendary 2.6.33 RT kernel.
+>thx!
+>hofrat
 
-Seems that an important milestone is being reached.
+I have been using the fix with 3.6.9-rt21 kernel (Atmel SAMA5D35) for a=
+ couple of weeks now, and have not encountered the issue. This kernel I=
+ am using is, however, from Atmel linux4sam github repository so it is =
+not 100% mainline.
 
-Thanks,
-	-Carsten.
+BR,
+Sami Pietik=E4inen
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
