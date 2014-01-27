@@ -1,71 +1,61 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [ANNOUNCE] 3.12.8-rt11
-Date: Mon, 27 Jan 2014 01:25:22 +0400
-Message-ID: <52E57D42.60206@pavlinux.ru>
-References: <20140125134519.GA9845@linutronix.de>
-Reply-To: pavel@pavlinux.ru
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
+Date: Mon, 27 Jan 2014 06:10:44 +0100
+Message-ID: <1390799444.5425.61.camel@marge.simpson.net>
+References: <20131221193900.GA8427@linutronix.de>
+	 <1387681647.5412.25.camel@marge.simpson.net>
+	 <1387702631.5412.101.camel@marge.simpson.net>
+	 <1387773533.5369.16.camel@marge.simpson.net>
+	 <20131224193636.GD19211@linux.vnet.ibm.com>
+	 <1387940854.5373.8.camel@marge.simpson.net>
+	 <20131225075544.GE19211@linux.vnet.ibm.com>
+	 <1387993057.5346.17.camel@marge.simpson.net>
+	 <20140117171441.GG5785@linutronix.de>
+	 <1390015514.5444.46.camel@marge.simpson.net>
+	 <20140124195014.GB29981@linutronix.de>
+	 <1390626760.3625.17.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="jfKKxsauufOwfRcLkA7E0QNtlnat6EhHh"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:40802 "EHLO imp01.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752461AbaAZV0H (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 26 Jan 2014 16:26:07 -0500
-In-Reply-To: <20140125134519.GA9845@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: paulmck@linux.vnet.ibm.com, linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1390626760.3625.17.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---jfKKxsauufOwfRcLkA7E0QNtlnat6EhHh
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Sat, 2014-01-25 at 06:12 +0100, Mike Galbraith wrote: 
+> On Fri, 2014-01-24 at 20:50 +0100, Sebastian Andrzej Siewior wrote: 
+> > * Mike Galbraith | 2014-01-18 04:25:14 [+0100]:
+> > 
+> > >> ># timers-do-not-raise-softirq-unconditionally.patch
+> > >> ># rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch
+> > >> >
+> > >> >..those two out does seem to have stabilized the thing.
+> > >> 
+> > >> timers-do-not-raise-softirq-unconditionally.patch is on its way out.
+> > >> 
+> > >> rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch confues me.
+> > >> Didn't you report once that your box deadlocks without this patch? Now
+> > >> your 64way box on the other hand does not work with it?
+> > >
+> > >If 'do not raise' is applied, 'use a trylock' won't save you.  If 'do
+> > is this just an observation or you do know why it won't save me?
+> 
+> It's an observation from beyond the grave from the 64 core box that it
+> repeatedly did NOT save :)  Autopsy photos below.
+> 
+> I've built 3.12.8-rt9 with Stevens v2 "timer: Raise softirq if there's
+> irq_work" to see if it'll survive.
 
-25.01.2014 17:45, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=82=
-:
-> Dear RT folks!
+And it did, configured both as nohz_tick, and nohz_full_all.  The irqs
+are enabled warning in can_stop_full_tick() fired for nohz_full_all, but
+that's it.
 
+For grins, I also applied Paul's v3 timer latency series while testing
+nohz_full_all config.   The box was heavily loaded the vast majority of
+the time, but it didn't explode or do anything obviously evil.
 
-Gentlemen, let's have a month of stress testing!
-Divide tasks testing subsystem: USB, NET, MM, ACPI, AUDIO, VIDEO
-By CPUs: ARM/PPC/X86/X86_64...
-
-Purely on observations noted that in September 2013, the quality and stab=
-ility
-of the code has deteriorated dramatically.
-
---=20
-
-                                                         Pavel.
-
-
---jfKKxsauufOwfRcLkA7E0QNtlnat6EhHh
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCgAGBQJS5X1DAAoJEPtok08Dny2hsjIP/2DqresRa9Ymrn1CisClRotJ
-1mUeRnaSmX0jV0M+qvGze3XJWpmEZBqnvcH2YsVRCVtjdn3Al8qkXpukWqepA5+R
-YjW7jX0SG6nXrEnEqRSLOtZTr+d8+U4YJ7jCWvx9609ItOwriGVXsI4xEzTAYoxa
-R581LYYJMj1CnTl06hsGPSn9etDfrQxHwrjpQkYssq9vZQIp6qdrklCQ8uqIReYp
-7nFnLR5kK3JSxiWglH3ZixV71+UsaYM1kFyOKGh50Bv/HOEYV7mrtaXDRN3trIwO
-adVoFKTh95DpxJru9tDyvOv/2opPnwlPBrsQEWKDDEqG/NpfgTLjmx91UKOmkLgk
-QDUGryUQlie8EzcasL23jjnJq7qD8wySOQfAZ9hF9zwv74+RpFfIEaElQGPOtTbx
-1JJco0fPoVJWRpRFKYkA98xcCNMQayJ70HrFWeenMYSaB9ucnHlic4Kn5GyGdWBH
-rUEdS1Pq1fD46FFOeDAAvEXOFh/Br0yRrIpLkJrqICjTGfA24YlCGKsIU9/84nfG
-zHRuYmUGFtUrJOmLNqAi0y+UOJT0OJKBE9tcKSsAVJMrj7qkfxeRdnMnpkfl3zq1
-+MEFLMuEVdAW31xheXa0UkX+okQXPsvQohMgnd1EIEUGNS1I+aSmiyy6NLPUQwMI
-mCdGX6F8+rOZ/lpQEsZX
-=WOMI
------END PGP SIGNATURE-----
-
---jfKKxsauufOwfRcLkA7E0QNtlnat6EhHh--
+-Mike
