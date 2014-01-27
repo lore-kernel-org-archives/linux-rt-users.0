@@ -1,73 +1,115 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH] rcu: Eliminate softirq processing from rcutree
-Date: Mon, 27 Jan 2014 18:03:48 +0100
-Message-ID: <1390842228.5425.175.camel@marge.simpson.net>
-References: <1387773533.5369.16.camel@marge.simpson.net>
-	 <20131224193636.GD19211@linux.vnet.ibm.com>
-	 <1387940854.5373.8.camel@marge.simpson.net>
-	 <20131225075544.GE19211@linux.vnet.ibm.com>
-	 <1387993057.5346.17.camel@marge.simpson.net>
-	 <20140117171441.GG5785@linutronix.de>
-	 <1390015514.5444.46.camel@marge.simpson.net>
-	 <20140124195014.GB29981@linutronix.de>
-	 <1390626760.3625.17.camel@marge.simpson.net>
-	 <1390799444.5425.61.camel@marge.simpson.net>
-	 <20140127165405.GK9012@linux.vnet.ibm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.12.8-rt11
+Date: Mon, 27 Jan 2014 13:24:11 -0500
+Message-ID: <20140127132411.6f420c8f@gandalf.local.home>
+References: <20140125134519.GA9845@linutronix.de>
+	<52E57D42.60206@pavlinux.ru>
+	<52E61C52.6070104@linutronix.de>
+	<52E62A05.7080802@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-kernel@vger.kernel.org, Thomas Gleixner <tglx@linutronix.de>
-To: paulmck@linux.vnet.ibm.com
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: pavel@pavlinux.ru
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from moutng.kundenserver.de ([212.227.126.171]:56810 "EHLO
-	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753477AbaA0RDx (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 27 Jan 2014 12:03:53 -0500
-In-Reply-To: <20140127165405.GK9012@linux.vnet.ibm.com>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:53148 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1753639AbaA0SYN convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Jan 2014 13:24:13 -0500
+In-Reply-To: <52E62A05.7080802@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2014-01-27 at 08:54 -0800, Paul E. McKenney wrote: 
-> On Mon, Jan 27, 2014 at 06:10:44AM +0100, Mike Galbraith wrote:
-> > On Sat, 2014-01-25 at 06:12 +0100, Mike Galbraith wrote: 
-> > > On Fri, 2014-01-24 at 20:50 +0100, Sebastian Andrzej Siewior wrote: 
-> > > > * Mike Galbraith | 2014-01-18 04:25:14 [+0100]:
-> > > > 
-> > > > >> ># timers-do-not-raise-softirq-unconditionally.patch
-> > > > >> ># rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch
-> > > > >> >
-> > > > >> >..those two out does seem to have stabilized the thing.
-> > > > >> 
-> > > > >> timers-do-not-raise-softirq-unconditionally.patch is on its way out.
-> > > > >> 
-> > > > >> rtmutex-use-a-trylock-for-waiter-lock-in-trylock.patch confues me.
-> > > > >> Didn't you report once that your box deadlocks without this patch? Now
-> > > > >> your 64way box on the other hand does not work with it?
-> > > > >
-> > > > >If 'do not raise' is applied, 'use a trylock' won't save you.  If 'do
-> > > > is this just an observation or you do know why it won't save me?
-> > > 
-> > > It's an observation from beyond the grave from the 64 core box that it
-> > > repeatedly did NOT save :)  Autopsy photos below.
-> > > 
-> > > I've built 3.12.8-rt9 with Stevens v2 "timer: Raise softirq if there's
-> > > irq_work" to see if it'll survive.
-> > 
-> > And it did, configured both as nohz_tick, and nohz_full_all.  The irqs
-> > are enabled warning in can_stop_full_tick() fired for nohz_full_all, but
-> > that's it.
-> > 
-> > For grins, I also applied Paul's v3 timer latency series while testing
-> > nohz_full_all config.   The box was heavily loaded the vast majority of
-> > the time, but it didn't explode or do anything obviously evil.
-> 
-> Cool!  May I add your Tested-by?
+On Mon, 27 Jan 2014 13:42:29 +0400
+Pavel Vasilyev <pavel@pavlinux.ru> wrote:
 
-Certainly.
+> 27.01.2014 12:44, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
+=82:
+> > On 01/26/2014 10:25 PM, Pavel Vasilyev wrote:
+> >> 25.01.2014 17:45, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=
+=D1=82:
+> >>> Dear RT folks!
+> >>
+> >>
+> >> Gentlemen, let's have a month of stress testing! Divide tasks
+> >> testing subsystem: USB, NET, MM, ACPI, AUDIO, VIDEO By CPUs:
+> >> ARM/PPC/X86/X86_64...
+> >>
+> >> Purely on observations noted that in September 2013, the quality
+> >> and stability of the code has deteriorated dramatically.
+> >=20
+> > By September 2k13, do you mean a specific v3.10-RT release?
+> >=20
+>=20
+> Any after 3.2.x-rt
+>=20
+> Maybe I'm doing something wrong, but:
+>=20
+> 1) All kernels (3.2, 3.8, 3.12, 3.13,...) are working normally withou=
+t patches;
+>=20
+> 2) 3.2 works fine in CONFIG_PREEMPT_RT_BASE or CONFIG_PREEMPT_RT_FULL=
+ modes;
+>=20
+> 3) 3.10 not works at all, even without -RT patches;
 
--Mike
+Please report the problems here to LKML (linux-kernel@vger.kernel.org)
+to the appropriate maintainers. As well as the stable@vger.kernel.org
+mailing list.
 
+>=20
+> 4) 3.12 work only as CONFIG_PREEMPT_RT_BASE or CONFIG_PREEMPT_RT_FULL=
+ in
+> uniprocessor mode (maxcpus=3D0, nosmp).  Newer patches (Oct.-Dec.) di=
+d not work,
+> even in RT_BASE mode.
+
+Does 3.12 work without the -rt patches?
+
+>=20
+> Varia hardware: One Opteron 285, 2-cpus (4 cores). Six Intel Atoms de=
+vices
+> kernels compiled as x86_32.
+
+I have an intel atom dev board hanging around somewhere. I'll see if I
+can test this. Can you send me your config privately.
+
+Thanks,
+
+-- Steve
+
+>=20
+> I have my patches, but I tested both with them and without them.
+> ---
+>=20
+> Behold! 3.12.8-rt11, RT_FULL mode, kernel cmdline: init=3D/bin/bash
+>=20
+> 1.
+> bash: cannot set terminal process group (-1): Inappropriate ioctl for=
+ device
+> bash: no job control in this shell
+>=20
+> 2.
+> in single mode: After 2 minutes timeout: see screenshot
+> http://i59.fastpic.ru/big/2014/0127/bc/0f9e04536181286f820ecaae5a8481=
+bc.jpg
+>=20
+> 3.
+> command killall -15 freezed system!
+>=20
+>=20
+> Kernel compiled with debug information starts to work normally, but o=
+f course
+> slower. :D
+>=20
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
