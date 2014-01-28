@@ -1,83 +1,94 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: [ANNOUNCE] 3.12.8-rt11
-Date: Mon, 27 Jan 2014 23:01:47 +0100
-Message-ID: <52E6D74B.80401@osadl.org>
-References: <20140125134519.GA9845@linutronix.de>	<52E57D42.60206@pavlinux.ru>	<52E61C52.6070104@linutronix.de>	<52E62A05.7080802@pavlinux.ru> <20140127132411.6f420c8f@gandalf.local.home>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH rt-tests] Fix tracemark output when the latency threshold is hit on ARM
+Date: Tue, 28 Jan 2014 22:49:53 +0100
+Message-ID: <1390945793-28357-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: pavel@pavlinux.ru
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140127132411.6f420c8f@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:34632 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932174AbaA1VuB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 28 Jan 2014 16:50:01 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/27/2014 07:24 PM, Steven Rostedt wrote:
-> On Mon, 27 Jan 2014 13:42:29 +0400
-> Pavel Vasilyev <pavel@pavlinux.ru> wrote:
->
->> 27.01.2014 12:44, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=
-=D1=82:
->>> On 01/26/2014 10:25 PM, Pavel Vasilyev wrote:
->>>> 25.01.2014 17:45, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=
-=D1=82:
->>>>> Dear RT folks!
->>>>
->>>>
->>>> Gentlemen, let's have a month of stress testing! Divide tasks
->>>> testing subsystem: USB, NET, MM, ACPI, AUDIO, VIDEO By CPUs:
->>>> ARM/PPC/X86/X86_64...
->>>>
->>>> Purely on observations noted that in September 2013, the quality
->>>> and stability of the code has deteriorated dramatically.
->>>
->>> By September 2k13, do you mean a specific v3.10-RT release?
->>>
->>
->> Any after 3.2.x-rt
->>
->> Maybe I'm doing something wrong, but:
->>
->> 1) All kernels (3.2, 3.8, 3.12, 3.13,...) are working normally witho=
-ut patches;
->>
->> 2) 3.2 works fine in CONFIG_PREEMPT_RT_BASE or CONFIG_PREEMPT_RT_FUL=
-L modes;
->>
->> 3) 3.10 not works at all, even without -RT patches;
->
-> Please report the problems here to LKML (linux-kernel@vger.kernel.org=
-)
-> to the appropriate maintainers. As well as the stable@vger.kernel.org
-> mailing list.
->
->>
->> 4) 3.12 work only as CONFIG_PREEMPT_RT_BASE or CONFIG_PREEMPT_RT_FUL=
-L in
->> uniprocessor mode (maxcpus=3D0, nosmp).  Newer patches (Oct.-Dec.) d=
-id not work,
->> even in RT_BASE mode.
->
-> Does 3.12 work without the -rt patches?
->
->>
->> Varia hardware: One Opteron 285, 2-cpus (4 cores). Six Intel Atoms d=
-evices
->> kernels compiled as x86_32.
->
-> I have an intel atom dev board hanging around somewhere. I'll see if =
-I
-> can test this. Can you send me your config privately.
-I can offer help as well. And I am most curious to learn what prevents=20
-your systems from booting. Please send me your config as well - I'll ru=
-n=20
-(or at least try to run) it on a couple of spare farm systems.
+On ARM I'm seeing output like:
 
-	-Carsten.
+	cyclicte-623     0....... 19619418us+: tracing_mark_write: hit latency=
+ threshold (2000 > 2097)
+
+That's because of a format mismatch in
+
+	tracemark("hit latency threshold (%d > %d)", diff, tracelimit);
+
+diff is a u64 and tracelimit an int. So on ARM the string is passed in =
+r0,
+tracelimit in r1 and diff in r2+r3. The vsnprintf used in tracemark onl=
+y
+expects to ints passed and so only uses r1 and r2 yielding the permutat=
+ion
+in the output.
+
+With a printf attribute annotation for tracemark added this patch fixes=
+ a
+compiler warning:
+
+	src/cyclictest/cyclictest.c: In function =E2=80=98timerthread=E2=80=99=
+:
+	src/cyclictest/cyclictest.c:899:4: warning: format =E2=80=98%d=E2=80=99=
+ expects argument of type =E2=80=98int=E2=80=99, but argument 2 has typ=
+e =E2=80=98uint64_t=E2=80=99 [-Wformat]
+
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+=46ixes: 7667ff694693 ("add setup and call of tracemark function for br=
+eaktrace")
+---
+Hello,
+
+I'm not sure you like that c99 stuff. Tell me if you prefer a cast
+to unsigned long long + %llu.
+
+Also, what do you think about adding the printf annotation? Do we care =
+about
+non-gcc compilers?
+
+Best regards
+Uwe
+
+ src/cyclictest/cyclictest.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 686a6356659f..d1e70901e39f 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -15,6 +15,7 @@
+ #include <stdio.h>
+ #include <stdlib.h>
+ #include <stdint.h>
++#include <inttypes.h>
+ #include <stdarg.h>
+ #include <unistd.h>
+ #include <fcntl.h>
+@@ -895,7 +896,7 @@ void *timerthread(void *param)
+=20
+ 		if (!stopped && tracelimit && (diff > tracelimit)) {
+ 			stopped++;
+-			tracemark("hit latency threshold (%d > %d)", diff, tracelimit);
++			tracemark("hit latency threshold (%" PRIu64 " > %d)", diff, traceli=
+mit);
+ 			tracing(0);
+ 			shutdown++;
+ 			pthread_mutex_lock(&break_thread_id_lock);
+--=20
+1.8.5.2
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
