@@ -1,58 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH 2/2] timer: really raise softirq if there is irq_work to
  do
-Date: Fri, 31 Jan 2014 14:56:25 -0500
-Message-ID: <20140131145625.51128a8b@gandalf.local.home>
+Date: Fri, 31 Jan 2014 21:05:35 +0100
+Message-ID: <20140131200535.GR5002@laptop.programming.kicks-ass.net>
 References: <1391178845-15837-1-git-send-email-bigeasy@linutronix.de>
-	<1391178845-15837-2-git-send-email-bigeasy@linutronix.de>
-	<20140131120757.594e24d6@gandalf.local.home>
-	<20140131174227.GN9012@linux.vnet.ibm.com>
-	<20140131125719.73340f6e@gandalf.local.home>
-	<52EBF8FE.3080608@linutronix.de>
-	<20140131143441.478f79ee@gandalf.local.home>
-	<52EBFE1D.4020201@linutronix.de>
+ <1391178845-15837-2-git-send-email-bigeasy@linutronix.de>
+ <20140131120757.594e24d6@gandalf.local.home>
+ <20140131174227.GN9012@linux.vnet.ibm.com>
+ <20140131125719.73340f6e@gandalf.local.home>
+ <52EBF8FE.3080608@linutronix.de>
+ <20140131143441.478f79ee@gandalf.local.home>
+ <52EBFE1D.4020201@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: peterz@infradead.org, paulmck@linux.vnet.ibm.com,
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>, paulmck@linux.vnet.ibm.com,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	tglx@linutronix.de, Clark Williams <williams@redhat.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:32561 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752785AbaAaT41 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Jan 2014 14:56:27 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <52EBFE1D.4020201@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 31 Jan 2014 20:48:45 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> > As I have worked on code that uses irq_work() I can say that we want
-> > the arch specific interrupts. For those architectures that don't have
-> > it will experience larger latencies for the work required. It's
-> > basically, a "too bad" for them.
+On Fri, Jan 31, 2014 at 08:48:45PM +0100, Sebastian Andrzej Siewior wrote:
 > 
 > How "bad" is it? Is this something generic or just not getting
 > perf events fast enough out? Most users don't seem to require small
 > latencies.
 
-I use it for waking up trace-cmd, and if it is too long, then it we can
-miss lots of events. Same goes for perf.
+I have vague memories of there being an actual perf problem if there's a
+hole between the NMI/IRQ triggering the irq_work and the interrupt
+running the work.
 
-Remember, irq_work can be triggered from NMI context. That means, if
-the CPU is idle, it may be several seconds before that work happens.
-That is WAY too long to wait.
+I should have some notes on it somewhere and an todo entry to plug the
+hole.
 
-Anyway, your suggestion to get rid of the arch code doesn't help. We
-call the irq_work_run() from interrupt context whether there is work or
-not, with or without removing the arch code. The only thing your
-suggestion will do is to push the work from happening immediately to
-happening on the timer tick (which may be several seconds later). I
-don't see the savings.
-
--- Steve
-
+But note that the MCE code also uses irq_work, they really _need_ to be
+fast because the system might be crumbling under their feet.
