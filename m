@@ -1,33 +1,76 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Subject: Re: [PATCH 2/2] timer: really raise softirq if there is irq_work to
  do
-Date: Fri, 31 Jan 2014 12:11:04 -0500
-Message-ID: <20140131121104.382942cc@gandalf.local.home>
+Date: Fri, 31 Jan 2014 09:42:27 -0800
+Message-ID: <20140131174227.GN9012@linux.vnet.ibm.com>
 References: <1391178845-15837-1-git-send-email-bigeasy@linutronix.de>
-	<1391178845-15837-2-git-send-email-bigeasy@linutronix.de>
-	<20140131120757.594e24d6@gandalf.local.home>
+ <1391178845-15837-2-git-send-email-bigeasy@linutronix.de>
+ <20140131120757.594e24d6@gandalf.local.home>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	tglx@linutronix.de,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Clark Williams <williams@redhat.com>
+	tglx@linutronix.de, Clark Williams <williams@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:35957 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932457AbaAaRLF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Jan 2014 12:11:05 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20140131120757.594e24d6@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 31 Jan 2014 12:07:57 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
- 
+On Fri, Jan 31, 2014 at 12:07:57PM -0500, Steven Rostedt wrote:
+> On Fri, 31 Jan 2014 15:34:05 +0100
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> 
+> > from looking at the code, it seems that the softirq is only raised (in
+> > the !base->active_timers case) if we have also an expired timer
+> > (time_before_eq() is true). This patch ensures that the timer softirq is
+> > also raised in the !base->active_timers && no timer expired.
+> 
+> A couple of things. If there is no active timers, we do not need to
+> check the expired timers. That may contain a deferred timer that does
+> not need to be raised if the system is idle. This will just
+> re-introduce the problems that other people have been seeing.
+> 
+> The bug that I found is that if there *are* active timers, but they
+> have not expired yet. Why is this a problem? Because in that case we do
+> not check if there is irq_work to be done. That means the irq_work will
+> have to wait till the timer expires, and since RCU depends on this,
+> that can take a while. I've had a synchronize_sched() take up to 5
+> seconds to complete due to this!
+> 
+> 
+> The real fix is the following:
+> 
+> timer/rt: Always raise the softirq if there's irq_work to be done
+> 
+> It was previously discovered that some systems would hang on boot up
+> with a previous version of 3.12-rt. This was due to RCU using irq_work,
+> and RT defers the irq_work to a softirq. But if there's no active
+> timers, the softirq will not be raised, and RCU work will not get done,
+> causing the system to hang.  The fix was to check that if there was no
+> active timers but irq_work to be done, then we should raise the softirq.
+> 
+> But this fix was not 100% correct. It left out the case that there were
+> active timers that were not expired yet. This would have the softirq
+> not get raised even if there was irq work to be done.
+> 
+> If there is irq_work to be done, then we must raise the timer softirq
+> regardless of if there is active timers or whether they are expired or
+> not. The softirq can handle those cases. But we can never ignore
+> irq_work.
+> 
+> As it is only PREEMPT_RT_FULL that requires irq_work to be done in the
+> softirq, we can pull out the check in the active_timers condition, and
+> make the code a bit cleaner by having the irq_work check separate, and
+> put the code in with the other #ifdef PREEMPT_RT. If there is irq_work
+> to be done, there's no need to check the active timers or if they are
+> expired. Just raise the time softirq and be done with it. Otherwise, we
+> can do the timer checks just like we do with non -rt.
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> 
 > diff --git a/kernel/timer.c b/kernel/timer.c
 > index 106968f..426d114 100644
 > --- a/kernel/timer.c
@@ -39,6 +82,12 @@ Steven Rostedt <rostedt@goodmis.org> wrote:
 > +	/* On RT, irq work runs from softirq */
 > +	if (irq_work_needs_cpu()) {
 > +		raise_softirq(TIMER_SOFTIRQ);
+
+OK, I'll bite...  What if the IRQ work that needs doing is something
+other than TIMER_SOFTIRQ?
+
+							Thanx, Paul
+
 > +		return;
 > +	}
 > +
@@ -47,18 +96,17 @@ Steven Rostedt <rostedt@goodmis.org> wrote:
 >  		return;
 >  	}
 >  #endif
-
-Note, I debated about doing:
-
-	if (irq_work_needs_cpu() ||
-	    !spin_do_trylock(&base->lock)) {
-		raise_softirq(TIMER_SOFTIRQ);
-		return;
-	}
-
-instead, which is pretty much the same code. But I find it rather ugly,
-and does not read as well. I haven't looked at the disassembly, but I
-would hope that gcc would make my original version have the same result
-as this one.
-
--- Steve
+> -	if (!base->active_timers) {
+> -#ifdef CONFIG_PREEMPT_RT_FULL
+> -		/* On RT, irq work runs from softirq */
+> -		if (!irq_work_needs_cpu())
+> -#endif
+> -			goto out;
+> -	}
+> +
+> +	if (!base->active_timers)
+> +		goto out;
+> 
+>  	/* Check whether the next pending timer has expired */
+>  	if (time_before_eq(base->next_timer, jiffies))
+> 
