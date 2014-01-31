@@ -1,57 +1,53 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 2/2] timer: really raise softirq if there is irq_work to
- do
-Date: Fri, 31 Jan 2014 21:29:33 +0100
-Message-ID: <20140131202933.GE2936@laptop.programming.kicks-ass.net>
-References: <1391178845-15837-1-git-send-email-bigeasy@linutronix.de>
- <1391178845-15837-2-git-send-email-bigeasy@linutronix.de>
- <20140131120757.594e24d6@gandalf.local.home>
- <20140131174227.GN9012@linux.vnet.ibm.com>
- <20140131125719.73340f6e@gandalf.local.home>
- <52EBF8FE.3080608@linutronix.de>
- <20140131143441.478f79ee@gandalf.local.home>
- <52EBFE1D.4020201@linutronix.de>
- <20140131200535.GR5002@laptop.programming.kicks-ass.net>
- <52EC0658.3010205@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 4/8] rtmutex: use a trylock for waiter lock in trylock
+Date: Fri, 31 Jan 2014 23:07:37 +0100
+Message-ID: <20140131220737.GF21238@linutronix.de>
+References: <20140116015824.201732155@goodmis.org>
+ <20140116020324.637491369@goodmis.org>
+ <1389841737.5418.14.camel@marge.simpson.net>
+ <20140116232228.0f3cfb89@gandalf.local.home>
+ <1389935832.5449.23.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>, paulmck@linux.vnet.ibm.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	tglx@linutronix.de, Clark Williams <williams@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from merlin.infradead.org ([205.233.59.134]:55492 "EHLO
-	merlin.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932460AbaAaU3k (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 31 Jan 2014 15:29:40 -0500
+Content-Type: text/plain; charset=utf-8
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <bitbucket@online.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <52EC0658.3010205@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1389935832.5449.23.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Jan 31, 2014 at 09:23:52PM +0100, Sebastian Andrzej Siewior wrote:
-> Okay, this makes sense. What looked odd was the powerpc implementation
-> where they let the timer interrupt expire and call the irq_work from
-> the timer interrupt just before the clockevents callback is executed
-> (which would invoke the irq_work callback as well).
+* Mike Galbraith | 2014-01-17 06:17:12 [+0100]:
 
-Ah, so what I remember Paul Mackerras saying was that that was the
-easiest way to trigger an interrupt on the local CPU.
+>On Thu, 2014-01-16 at 23:22 -0500, Steven Rostedt wrote: 
+>> On Thu, 16 Jan 2014 04:08:57 +0100
+>> Mike Galbraith <bitbucket@online.de> wrote:
+>> 
+>> > On Wed, 2014-01-15 at 20:58 -0500, Steven Rostedt wrote:
+>> > 
+>> > 
+>> > > 3.2.53-rt76-rc1 stable review patch.
+>> > > If anyone has any objections, please let me know.
+>> > 
+>> > Not sure this is needed without the tglx don't unconditionally raise
+>> > timer softirq patch, and with that patch applied in the form it exists
+>> > in 3.12-rt9, as well as this one, you'll still eventually deadlock.
+>> 
+>> Hmm, I'll have to take a look. This sounds to be missing from all the
+>> stable -rt kernels. I'll be pulling in the latest updates from 3.12-rt
+>> soon.
+>
+>Below are the two deadlocks I encountered with 3.12-rt9, which has both
+>$subject and timers-do-not-raise-softirq-unconditionally.patch applied.
 
-ARM runs the things from every IRQ tail IIRC (or maybe only the PMI, I
-forget).
+This patch was introduced because we had a deadlock in
+run_local_timers() which took a sleeping lock in hardirq context. This
+seem not to be the case in v3.2 therefore I would suggest not to take
+this patch here because it does not fix anything.
 
-> Would it be a win if we would remove the arch specific code and instead
-> raise the timer interrupt asap? It sure won't be a win or change for
-> -RT but it would allow all architectures to get irq_work done as soon
-> as possible in IRQ context (and out of NMI context if I understand
-> correct) without an arch specific implementation.
+Mike, do you see these deadlocks with 3.12.*-rt11 as well?
 
-No, because poking at timer hardware on x86 is stupid expensive, whereas
-sending a self-IPI through the APIC is tons cheaper.
-
-Also, I don't really want to poke at the fragile x86 timer hardware from
-NMI context while we might already be poking at it from another context.
-
-
+Sebastian
