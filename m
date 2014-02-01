@@ -1,31 +1,66 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.12.8-rt11
-Date: Fri, 31 Jan 2014 23:22:07 +0100
-Message-ID: <20140131222207.GH21238@linutronix.de>
-References: <20140125134519.GA9845@linutronix.de>
- <52E57D42.60206@pavlinux.ru>
- <52E61C52.6070104@linutronix.de>
- <52E62A05.7080802@pavlinux.ru>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [PATCH RT 4/8] rtmutex: use a trylock for waiter lock in trylock
+Date: Sat, 01 Feb 2014 05:21:35 +0100
+Message-ID: <1391228495.5348.82.camel@marge.simpson.net>
+References: <20140116015824.201732155@goodmis.org>
+	 <20140116020324.637491369@goodmis.org>
+	 <1389841737.5418.14.camel@marge.simpson.net>
+	 <20140116232228.0f3cfb89@gandalf.local.home>
+	 <1389935832.5449.23.camel@marge.simpson.net>
+	 <20140131220737.GF21238@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Pavel Vasilyev <pavel@pavlinux.ru>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <52E62A05.7080802@pavlinux.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from moutng.kundenserver.de ([212.227.126.171]:56323 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932368AbaBAEVz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 31 Jan 2014 23:21:55 -0500
+In-Reply-To: <20140131220737.GF21238@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Pavel Vasilyev | 2014-01-27 13:42:29 [+0400]:
+On Fri, 2014-01-31 at 23:07 +0100, Sebastian Andrzej Siewior wrote: 
+> * Mike Galbraith | 2014-01-17 06:17:12 [+0100]:
+> 
+> >On Thu, 2014-01-16 at 23:22 -0500, Steven Rostedt wrote: 
+> >> On Thu, 16 Jan 2014 04:08:57 +0100
+> >> Mike Galbraith <bitbucket@online.de> wrote:
+> >> 
+> >> > On Wed, 2014-01-15 at 20:58 -0500, Steven Rostedt wrote:
+> >> > 
+> >> > 
+> >> > > 3.2.53-rt76-rc1 stable review patch.
+> >> > > If anyone has any objections, please let me know.
+> >> > 
+> >> > Not sure this is needed without the tglx don't unconditionally raise
+> >> > timer softirq patch, and with that patch applied in the form it exists
+> >> > in 3.12-rt9, as well as this one, you'll still eventually deadlock.
+> >> 
+> >> Hmm, I'll have to take a look. This sounds to be missing from all the
+> >> stable -rt kernels. I'll be pulling in the latest updates from 3.12-rt
+> >> soon.
+> >
+> >Below are the two deadlocks I encountered with 3.12-rt9, which has both
+> >$subject and timers-do-not-raise-softirq-unconditionally.patch applied.
+> 
+> This patch was introduced because we had a deadlock in
+> run_local_timers() which took a sleeping lock in hardirq context. This
+> seem not to be the case in v3.2 therefore I would suggest not to take
+> this patch here because it does not fix anything.
+> 
+> Mike, do you see these deadlocks with 3.12.*-rt11 as well?
 
->3) 3.10 not works at all, even without -RT patches;
+No.  I beat 64 core box hard configured both nohz_idle and nohz_full,
+the only thing that fell out was the nohz_full irqs enabled warning.
 
-I bootet 3.10.20-rt17 some time ago on an Intel Atom with EG20T chipset
-(with those pch driver like pch_udc for usb gadget, pch_uart for serial
-and so on). That on _was_ working. I can share the config with you from
-back then if you wish.
+If Stevens patch didn't fix them, it did make them hide very well.
 
-Sebastian
+-Mike
+
