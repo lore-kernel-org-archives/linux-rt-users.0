@@ -1,55 +1,34 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Next longterm
-Date: Tue, 04 Feb 2014 12:45:27 +0400
-Message-ID: <52F0A8A7.2050707@pavlinux.ru>
-Reply-To: pavel@pavlinux.ru
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [ANNOUNCE] 3.12.9-rt13
+Date: Tue, 04 Feb 2014 16:03:38 +0100
+Message-ID: <1391526218.5532.33.camel@marge.simpson.net>
+References: <20140203194841.GA17108@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="siTLh43NppUTMOGeT3WpWMOwt8TPBBsdA"
-To: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp02.mtu.ru ([62.5.255.19]:51025 "EHLO imp02.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752269AbaBDIpg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Feb 2014 03:45:36 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140203194841.GA17108@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---siTLh43NppUTMOGeT3WpWMOwt8TPBBsdA
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On Mon, 2014-02-03 at 20:48 +0100, Sebastian Andrzej Siewior wrote:
 
-Does anyone know what the next version of the kernel will be longterm?
+> Known issues:
 
---=20
+> Mike said that it caused two of his 64 CPUs to spin for five minutes
+>         doing nothing. Therefore it is disabled in the queue. Everyone
+>         who wants test it may do so :)
 
-                                                         Pavel.
+I put rt13 on an 8 socket Opetron (48 core) box, with patch enabled.  It
+box did NOT reproduce the hangs the 8 socket (1 node, bleh) DL980 did.
 
+Nor did it explode running hotplug stress, but then it deadlocks before
+BOOM would have happened on the DL980.  kdump isn't working properly on
+this box (not an rt issue, userspace), so..
 
---siTLh43NppUTMOGeT3WpWMOwt8TPBBsdA
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCgAGBQJS8KioAAoJEPtok08Dny2hZwIQALJ23Ke0i1+7H+ef8bKSASqf
-jQSI3WkIxKhzdytZK52qzEr2KIzorpQrVrDHUUT4piI94h86fGLMY5KGlhpqSpzJ
-uHMwh/BoG7ZQQZ76az6/5jxVHiT5PDcD2qXhZ6F962gcUhwcHlkrNh+Nj5zrF1OW
-2XRWAS5L28hIPl6EQ5Iamt6FNn2gjVuKSI5HvM9tnhMBBqarFxaFQVWjB6a1xiYS
-LFPIjprYpCQpEMuqFpCIPvb82Z+6GAoWFgPysM1iwzO+d+H/d2EXfHAsvC295VjO
-Bj3N+hzwfwA99Kzx5wQcYLrpHaGxdVcyzxOi15s02x40jYhSovWmJFJWzVKZzcJZ
-alw+sksvb7iyoVwpkvpsdmAMiWzz82lyv3Mhy6B3ClCds1u7rmuQ0+JapEd+lnt2
-U6IfXM084XxpWgMixap30YuHG1F+2HDd2o/7yfIwxAS0AuPwukBb3oJ3ttD0bGe5
-E3j9BACCIAffoQClo8xHwTED/NZGhBq5RXXJOyLDhUafYRwFZpe/omnFi2VwwkS0
-JKvVLR0g5T5JoJjnSWxIjj7NiXltApYSnvz2aDbmZrQcE9wCMdCjmoJzFQ6CHPU3
-AialnHG3fZhZ2VpL1wTL/ctYSGazgpdO8Ok031F5o4i9tu5o9alKuY17V4LGG1hJ
-A/pY1GACZSuG0Am+/eVV
-=EU1W
------END PGP SIGNATURE-----
-
---siTLh43NppUTMOGeT3WpWMOwt8TPBBsdA--
+-Mike
