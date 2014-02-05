@@ -1,86 +1,54 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] rt: Make cpu_chill() use hrtimer instead of msleep()
-Date: Wed, 5 Feb 2014 11:51:25 -0500
-Message-ID: <20140205115125.3cc950ce@gandalf.local.home>
+Subject: Re: [PATCH RT] rt: Make cpu_chill() use hrtimer instead of msleep()
+Date: Wed, 5 Feb 2014 11:57:00 -0500
+Message-ID: <20140205115700.3107d0e2@gandalf.local.home>
+References: <20140205115125.3cc950ce@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <williams@redhat.com>,
 	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	John Kacur <jkacur@redhat.com>,
-	Ulrich Obergfell <uobergfe@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:60394 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753100AbaBEQv3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Feb 2014 11:51:29 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Ulrich Obergfell <uobergfe@redhat.com>,
+	stable-rt@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140205115125.3cc950ce@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On Wed, 5 Feb 2014 11:51:25 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
-up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
-called from softirq context, it may block the ksoftirqd() from running, in
-which case, it may never wake up the msleep() causing the deadlock.
+> 
+> Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
+> up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
+> called from softirq context, it may block the ksoftirqd() from running, in
+> which case, it may never wake up the msleep() causing the deadlock.
+> 
+> I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
+> running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
+> runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
+> ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
+> blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
+> 
+> The solution is not to convert the cpu_chill() back to a cpu_relax() as that
+> will re-create a possible live lock that the cpu_chill() fixed earlier, and may
+> also leave this bug open on other softirqs. The fix is to remove the
+> dependency on ksoftirqd from cpu_chill(). That is, instead of calling
+> msleep() that requires ksoftirqd to wake it up, use the
+> hrtimer_nanosleep() code that does the wakeup from hard irq context.
+> 
+> Found-by: Ulrich Obergfell <uobergfe@redhat.com>
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> 
 
-I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
-running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
-runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
-ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
-blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
+I should have added:
 
-The solution is not to convert the cpu_chill() back to a cpu_relax() as that
-will re-create a possible live lock that the cpu_chill() fixed earlier, and may
-also leave this bug open on other softirqs. The fix is to remove the
-dependency on ksoftirqd from cpu_chill(). That is, instead of calling
-msleep() that requires ksoftirqd to wake it up, use the
-hrtimer_nanosleep() code that does the wakeup from hard irq context.
+Cc: stable-rt@vger.kernel.org
 
-Found-by: Ulrich Obergfell <uobergfe@redhat.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-
-diff --git a/include/linux/delay.h b/include/linux/delay.h
-index e23a7c0..37caab3 100644
---- a/include/linux/delay.h
-+++ b/include/linux/delay.h
-@@ -53,7 +53,7 @@ static inline void ssleep(unsigned int seconds)
- }
- 
- #ifdef CONFIG_PREEMPT_RT_FULL
--# define cpu_chill()	msleep(1)
-+extern void cpu_chill(void);
- #else
- # define cpu_chill()	cpu_relax()
- #endif
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index aa5eb4f..2f023aa 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1852,6 +1852,21 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * Sleep for 1 ms in hope whoever holds what we want will let it go.
-+ */
-+void cpu_chill(void)
-+{
-+	struct timespec tu = {
-+		.tv_nsec = NSEC_PER_MSEC,
-+	};
-+
-+	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+}
-+EXPORT_SYMBOL(cpu_chill);
-+#endif
-+
- /*
-  * Functions related to boot-time initialization:
-  */
+-- Steve
