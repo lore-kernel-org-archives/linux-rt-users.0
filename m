@@ -1,54 +1,57 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Allen Pais <allen.pais@oracle.com>
 Subject: Re: [PATCH 0/4] PREEMPT_RT support for sparc64
-Date: Wed, 05 Feb 2014 11:43:43 +0100
-Message-ID: <52F215DF.7090101@linutronix.de>
-References: <1388980510-10190-1-git-send-email-allen.pais@oracle.com> <52F1B087.5090203@oracle.com> <52F1F644.5040001@linutronix.de> <52F214A4.8080704@oracle.com>
+Date: Wed, 05 Feb 2014 16:21:04 +0530
+Message-ID: <52F21798.6090304@oracle.com>
+References: <1388980510-10190-1-git-send-email-allen.pais@oracle.com> <52F1B087.5090203@oracle.com> <52F1F644.5040001@linutronix.de> <52F214A4.8080704@oracle.com> <52F215DF.7090101@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Allen Pais <allen.pais@oracle.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52910 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750980AbaBEKnp (ORCPT
+Received: from aserp1040.oracle.com ([141.146.126.69]:20656 "EHLO
+	aserp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751701AbaBEKvR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Feb 2014 05:43:45 -0500
-In-Reply-To: <52F214A4.8080704@oracle.com>
+	Wed, 5 Feb 2014 05:51:17 -0500
+In-Reply-To: <52F215DF.7090101@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 02/05/2014 11:38 AM, Allen Pais wrote:
+On Wednesday 05 February 2014 04:13 PM, Sebastian Andrzej Siewior wrote:
+> On 02/05/2014 11:38 AM, Allen Pais wrote:
+>>>>>
+>>>>> Allen Pais (4):
+>>>>>   sparc64: use generic rwsem spinlocks rt
+>>>>>   sparc64: allow forced irq threading
+>>>>>   sparc64: convert spinlock_t to raw_spinlock_t in mmu_context_t
+>>>>>   sparc64: convert ctx_alloc_lock raw_spinlock_t
+>>>>>
+>>>>>  arch/sparc/Kconfig                      |    7 +++----
+>>>>>  arch/sparc/include/asm/mmu_64.h         |    2 +-
+>>>>>  arch/sparc/include/asm/mmu_context_64.h |   10 +++++-----
+>>>>>  arch/sparc/kernel/smp_64.c              |    4 ++--
+>>>>>  arch/sparc/mm/init_64.c                 |   14 +++++++-------
+>>>>>  arch/sparc/mm/tsb.c                     |   20 ++++++++++----------
+>>>>>  6 files changed, 28 insertions(+), 29 deletions(-)
+>>>>>
 >>>>
->>>> Allen Pais (4):
->>>>   sparc64: use generic rwsem spinlocks rt
->>>>   sparc64: allow forced irq threading
->>>>   sparc64: convert spinlock_t to raw_spinlock_t in mmu_context_t
->>>>   sparc64: convert ctx_alloc_lock raw_spinlock_t
->>>>
->>>>  arch/sparc/Kconfig                      |    7 +++----
->>>>  arch/sparc/include/asm/mmu_64.h         |    2 +-
->>>>  arch/sparc/include/asm/mmu_context_64.h |   10 +++++-----
->>>>  arch/sparc/kernel/smp_64.c              |    4 ++--
->>>>  arch/sparc/mm/init_64.c                 |   14 +++++++-------
->>>>  arch/sparc/mm/tsb.c                     |   20 ++++++++++----------
->>>>  6 files changed, 28 insertions(+), 29 deletions(-)
->>>>
+>>>> Sebastian, Any idea on the status of these patches?
 >>>
->>> Sebastian, Any idea on the status of these patches?
+>>> I took that all in one I think so they are part of -RT. These individual
+>>> should go upstream via DaveM / the sparc tree.
+>>>
 >>
->> I took that all in one I think so they are part of -RT. These individual
->> should go upstream via DaveM / the sparc tree.
->>
+>>  I think DaveM has to pick irq threading patch. The rest are -RT. Will ping the sparc
+>> list and check.
 > 
->  I think DaveM has to pick irq threading patch. The rest are -RT. Will ping the sparc
-> list and check.
+> The rwsem thingy is the only -RT specific and it depends on -RT only
+> Kconfig symbols. The spin_lock_t to raw_spinlock_t conversations can
+> also go upstream.
 
-The rwsem thingy is the only -RT specific and it depends on -RT only
-Kconfig symbols. The spin_lock_t to raw_spinlock_t conversations can
-also go upstream.
+They've all been sent upstream. Will check with DaveM on the status.
 
-> Thanks,
-> Allen
-> 
-Sebastian
+Thanks again.
+
+Allen
+
