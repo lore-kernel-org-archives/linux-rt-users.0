@@ -1,42 +1,54 @@
-From: Allen Pais <allen.pais@oracle.com>
-Subject: Re: Cyclictest results on Sparc64 with PREEMPT_RT
-Date: Fri, 07 Feb 2014 19:00:55 +0530
-Message-ID: <52F4E00F.9010009@oracle.com>
-References: <52E616DB.2040202@oracle.com> <20140207123529.GA2382@linutronix.de> <52F4D474.6080107@oracle.com> <52F4DED2.3010800@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT] rt: Make cpu_chill() use hrtimer instead of msleep()
+Date: Fri, 7 Feb 2014 09:08:34 -0500
+Message-ID: <20140207090834.72774272@gandalf.local.home>
+References: <20140205115125.3cc950ce@gandalf.local.home>
+	<20140207113006.GD23668@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, davem@davemloft.net
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	John Kacur <jkacur@redhat.com>,
+	Ulrich Obergfell <uobergfe@redhat.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from aserp1040.oracle.com ([141.146.126.69]:50939 "EHLO
-	aserp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752906AbaBGNbU (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Feb 2014 08:31:20 -0500
-In-Reply-To: <52F4DED2.3010800@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140207113006.GD23668@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Sebastian,
-> 
-> This is a dead lock. Whatever lock you go after, you are already
-> holding it in this context / hackbench. I don't know how you got from
-> perfctr_irq() to do_exit() but you shouldn't do this in hardirq
-> context.
-> 
-> But calling do_exit() is probably error recovery since it would kill
-> hackbench and I assume it wasn't done yet.
-> I see also tl0_irq15() in your stack trace. This is that evil NMI that
-> checks if the system is stalling. I think that you stuck in
-> flush_tsb_user() on that raw_lock and somebody is not letting it go and
-> so you spin for ever. Maybe full lockdep shows you some informations
-> about wrong context locking etc.
-> 
-Yes, there's someone's holding the lock and not releasing it in
-flush_tsb_user(). I'll check with lockdep.
+On Fri, 7 Feb 2014 12:30:06 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-Thanks,
-Allen
+> * Steven Rostedt | 2014-02-05 11:51:25 [-0500]:
+> 
+> >Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
+> >up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
+> >called from softirq context, it may block the ksoftirqd() from running, in
+> >which case, it may never wake up the msleep() causing the deadlock.
+> >
+> >I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
+> >running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
+> >runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
+> >ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
+> >blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
+> 
+> could you please tell me which two locks are invovled here?
+> 
 
+Looks to be the lock of the block softirq. I don't have the core dump
+anymore, but from what I could tell the ksoftirqd was blocked on the
+block softirq lock, where the block softirq handler did a msleep
+(called by the qla2xxx interrupt handler).
+
+Looking at trigger_softirq() in block/blk-softirq.c, it can do a
+smp_callfunction() to another cpu to run the block softirq. If that
+happens to be the cpu where the qla2xx irq handler is doing the block
+softirq and is in a middle of a msleep(), I believe the ksoftirqd will
+try to run the softirq. If it does that, then BOOM, it's deadlocked
+because the ksoftirqd will never run the timer softirq either.
+
+-- Steve
