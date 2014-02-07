@@ -1,45 +1,48 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] rt: Make cpu_chill() use hrtimer instead of msleep()
-Date: Fri, 07 Feb 2014 15:21:46 +0100
-Message-ID: <52F4EBFA.3040401@linutronix.de>
-References: <20140205115125.3cc950ce@gandalf.local.home>	<20140207113006.GD23668@linutronix.de>	<20140207090834.72774272@gandalf.local.home> <20140207091313.097f9059@gandalf.local.home>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [ANNOUNCE] 3.12.9-rt13
+Date: Fri, 07 Feb 2014 15:46:26 +0100
+Message-ID: <1391784386.5475.103.camel@marge.simpson.net>
+References: <20140203194841.GA17108@linutronix.de>
+	 <1391526218.5532.33.camel@marge.simpson.net>
+	 <20140207085701.GB23668@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	John Kacur <jkacur@redhat.com>,
-	Ulrich Obergfell <uobergfe@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140207091313.097f9059@gandalf.local.home>
+In-Reply-To: <20140207085701.GB23668@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 02/07/2014 03:13 PM, Steven Rostedt wrote:
-> On Fri, 7 Feb 2014 09:08:34 -0500
-> Steven Rostedt <rostedt@goodmis.org> wrote:
+On Fri, 2014-02-07 at 09:57 +0100, Sebastian Andrzej Siewior wrote: 
+> * Mike Galbraith | 2014-02-04 16:03:38 [+0100]:
 > 
+> >On Mon, 2014-02-03 at 20:48 +0100, Sebastian Andrzej Siewior wrote:
+> >
+> >> Known issues:
+> >
+> >> Mike said that it caused two of his 64 CPUs to spin for five minutes
+> >>         doing nothing. Therefore it is disabled in the queue. Everyone
+> >>         who wants test it may do so :)
+> >
+> >I put rt13 on an 8 socket Opetron (48 core) box, with patch enabled.  It
+> >box did NOT reproduce the hangs the 8 socket (1 node, bleh) DL980 did.
+> >
+> >Nor did it explode running hotplug stress, but then it deadlocks before
+> >BOOM would have happened on the DL980.  kdump isn't working properly on
+> >this box (not an rt issue, userspace), so..
 > 
->>> could you please tell me which two locks are invovled here?
-> 
-> I should have also stated that it was only one lock that was involved.
-> But the lock owner was doing a msleep() that requires a wakeup by
-> ksoftirqd to continue. If ksoftirqd happens to be blocked on a lock
-> held by the msleep() caller, then you have your deadlock.
+> Okay, so this is at some point good news. Thank you.
 
-That makes sense.
+I've been letting other big boxen play around the clock distro build
+slave and whatnot, with no sign of trouble.
 
-> It's best not to have any softirqs going to sleep requiring another
-> softirq to wake it up. Note, if we ever require a timer softirq to do a
-> cpu_chill() it will most definitely hit this deadlock.
+I'm raising an eyebrow in the general direction of DL980 test box.  Its
+microscopic, and more importantly, unsupported, memory configuration
+might be more than a mere performance hindrance.
 
-Yes. And that sleep in softirq is also not really nice but this isn't
-new. Thanks for the patch & explanation.
-> 
-> -- Steve
-
-Sebastian
+-Mike
