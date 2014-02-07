@@ -1,45 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.12.9-rt13
-Date: Fri, 7 Feb 2014 11:41:07 +0100
-Message-ID: <20140207104107.GC23668@linutronix.de>
-References: <20140203194841.GA17108@linutronix.de>
- <20140205092657.GA21590@opentech.at>
+Subject: Re: [PATCH RT] rt: Make cpu_chill() use hrtimer instead of msleep()
+Date: Fri, 7 Feb 2014 12:30:06 +0100
+Message-ID: <20140207113006.GD23668@linutronix.de>
+References: <20140205115125.3cc950ce@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	John Kacur <jkacur@redhat.com>,
+	Ulrich Obergfell <uobergfe@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140205092657.GA21590@opentech.at>
+In-Reply-To: <20140205115125.3cc950ce@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Nicholas Mc Guire | 2014-02-05 10:26:57 [+0100]:
+* Steven Rostedt | 2014-02-05 11:51:25 [-0500]:
 
->Sorry - this one causes a build failure with PREEMPT_RT_BASE=y and 
->PREEMPT_RT_FULL not set.
-
-At some point we are going to drop PREEMPT_RT_BASE because it was only
-meant for debugging in the beginning. However I don't know when this
-will be.
-
->The patch below fixes this build failure for 3.12.9-rt13.
+>Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
+>up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
+>called from softirq context, it may block the ksoftirqd() from running, in
+>which case, it may never wake up the msleep() causing the deadlock.
 >
->Not sure what the clean way of resolving this is - this patch proposes to
->move the spin_*_local into linux/locallock.h and map to spin_*lock for
->the "CONFIG_PREEMPT_RT_FULL not set" case.
->
->This was build tested with Preempt none,voluntary,low-lat,base,full and 
->otherweise got only limited testing.
->
->I'm also not sure if putting the rt specific locks into locallock.h in 
->this way is the proper way to deal with this #include dependency.
+>I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
+>running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
+>runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
+>ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
+>blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
 
-I think I keep it that way. However I split into two patches and add the
-spin_lock_local => rt_spin_lock mapping in the rt-add-rt-locks.patch
-where the locks are introduced.
+could you please tell me which two locks are invovled here?
 
 Sebastian
