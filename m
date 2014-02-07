@@ -1,250 +1,68 @@
-From: Allen Pais <allen.pais@oracle.com>
-Subject: Re: Cyclictest results on Sparc64 with PREEMPT_RT
-Date: Fri, 07 Feb 2014 18:11:24 +0530
-Message-ID: <52F4D474.6080107@oracle.com>
-References: <52E616DB.2040202@oracle.com> <20140207123529.GA2382@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.12.9-rt13
+Date: Fri, 7 Feb 2014 13:54:07 +0100
+Message-ID: <20140207125407.GB2382@linutronix.de>
+References: <em0e637974-2d88-4d01-b4ea-9a77d457577a@nb-mak>
+ <52F0A503.5050100@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------040501030300060904080306"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, davem@davemloft.net,
-	SebastianAndrzejSiewiorbigeasy@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Matthias Klein <matthias.klein@optimeas.de>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Pavel Vasilyev <pavel@pavlinux.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from aserp1040.oracle.com ([141.146.126.69]:30149 "EHLO
-	aserp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751768AbaBGMlx (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:45002 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753965AbaBGMyT convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Feb 2014 07:41:53 -0500
-In-Reply-To: <20140207123529.GA2382@linutronix.de>
+	Fri, 7 Feb 2014 07:54:19 -0500
+Content-Disposition: inline
+In-Reply-To: <52F0A503.5050100@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a multi-part message in MIME format.
---------------040501030300060904080306
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
+* Pavel Vasilyev | 2014-02-04 12:29:55 [+0400]:
 
-Sebastian,
-> 
-> This is the stack where the NMI got injected. Not sure why this is more
-> than once here but then this the sparc64 trace I see :)
-> 
->> [ 1150.135604]  [00000000004acc00] in_lock_functions+0x0/0x40
->> [ 1150.135608]  [000000000080a038] add_preempt_count+0xd8/0x140
->> [ 1150.135610]  [000000000080617c] __schedule+0x1c/0x500
->> [ 1150.135613]  [0000000000806b7c] schedule+0x1c/0xc0
->> [ 1150.135615]  [0000000000806f8c] schedule_preempt_disabled+0xc/0x40
->> [ 1150.135617]  [000000000049dd10] cpu_startup_entry+0x150/0x300
-> 
-> And this where the CPU was before the NMI. Doesn't look blocking.
-> in_lock_functions() compares a few values no locking involved so the CPU
-> probably was here while the NMI hit and an usec later it might be an
-> instruction later. What I thnig is odd, is that it is exactly at the
-> begin of the function, not an instruction later.
-> 
+>04.02.2014 11:26, Matthias Klein =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>> what is the reason that the file "patch-3.12.9-rt11-rt12.patch.xz" i=
+s missing in
+>> https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/ ?
 
-I haven't made much progress yet. These appear when the machine is under
-stress(hackbench/dd). There's also another issue that popped up while
-I ran hack bench, here's the brief trace
+There was v3.12.8-rt11 and 3.12.9-rt12. The difference between those tw=
+o
+is that I moved from stable .8 to stable .9. I increment in such
+releases the -RT version but there are usually no changes to the RT
+patch set. Usually means there are changes unless the newer stable vers=
+ion
+clashes with the -RT patch set. In that case the only change is the
+conflict fixup.
+Since there are _no_ -RT specific changes, these releaes are not
+announced here.
 
-[ 6694.884398] kernel BUG at kernel/rtmutex.c:738!
-[ 6694.884402]               \|/ ____ \|/
-[ 6694.884402]               "@'/ .. \`@"
-[ 6694.884402]               /_| \__/ |_\
-[ 6694.884402]                  \__U_/
-[ 6694.884403] hackbench(18821): Kernel bad sw trap 5 [#2]
-[ 6694.884408] CPU: 8 PID: 18821 Comm: hackbench Tainted: G      D W    3.10.24-rt22+ #11
-[ 6694.884410] task: fffff80f8f4a2580 ti: fffff80f8ebd4000 task.ti: fffff80f8ebd4000
-[ 6694.884413] TSTATE: 0000004411001603 TPC: 0000000000878ec4 TNPC: 0000000000878ec8 Y: 00000000    Tainted: G      D W   
-[ 6694.884425] TPC: <rt_spin_lock_slowlock+0x304/0x340>
-[ 6694.884427] g0: 0000000000000000 g1: 0000000000000000 g2: 0000000000000000 g3: 0000000000de5800
-[ 6694.884429] g4: fffff80f8f4a2580 g5: fffff80fd089c000 g6: fffff80f8ebd4000 g7: 726e656c2f72746d
-[ 6694.884430] o0: 00000000009bfaf0 o1: 00000000000002e2 o2: 0000000000000000 o3: 0000000000000001
-[ 6694.884432] o4: 0000000000000002 o5: 0000000000000000 sp: fffff80fff9b70d1 ret_pc: 0000000000878ebc
-[ 6694.884434] RPC: <rt_spin_lock_slowlock+0x2fc/0x340>
-[ 6694.884437] l0: fffff80fff9b7990 l1: fffff80f8f4a2580 l2: fffff80f8f4a2bd0 l3: 000001001fb75040
-[ 6694.884438] l4: 0000000000000000 l5: 0000000000e25c00 l6: 0000000000000008 l7: 0000000000000008
-[ 6694.884440] i0: fffff80f97836070 i1: 0000000000512400 i2: 0000000000000001 i3: 0000000000000000
-[ 6694.884441] i4: 0000000000000002 i5: 0000000000000000 i6: fffff80fff9b7211 i7: 00000000008790ac
-[ 6694.884444] I7: <rt_spin_lock+0xc/0x40>
-[ 6694.884445] Call Trace:
-[ 6694.884448]  [00000000008790ac] rt_spin_lock+0xc/0x40
-[ 6694.884454]  [000000000052e30c] unmap_single_vma+0x1ec/0x6c0
-[ 6694.884456]  [000000000052e808] unmap_vmas+0x28/0x60
-[ 6694.884459]  [0000000000530cc8] exit_mmap+0x88/0x160
-[ 6694.884465]  [000000000045e0d4] mmput+0x34/0xe0
-[ 6694.884469]  [00000000004669fc] do_exit+0x1fc/0xa40
-[ 6694.884473]  [000000000087a650] perfctr_irq+0x3d0/0x420
-[ 6694.884477]  [00000000004209f4] tl0_irq15+0x14/0x20
-[ 6694.884482]  [0000000000671e4c] do_raw_spin_lock+0xac/0x120
-[ 6694.884485]  [0000000000879cc8] _raw_spin_lock_irqsave+0x68/0xa0
-[ 6694.884488]  [0000000000452074] flush_tsb_user+0x14/0x120
-[ 6694.884490]  [00000000004515a8] flush_tlb_pending+0x68/0xe0
-[ 6694.884492]  [0000000000451800] tlb_batch_add+0x1e0/0x200
-[ 6694.884496]  [000000000053bef8] ptep_clear_flush+0x38/0x60
-[ 6694.884498]  [000000000052a9fc] do_wp_page+0x1dc/0x860
-[ 6694.884500]  [000000000052b3f8] handle_pte_fault+0x378/0x7c0
+>> Which (incremental) patches are needed to move from 3.12.8-rt11 to 3=
+=2E12.9-rt13=20
+>> (besides the mainline patch) ?
 
-These are the two issues I have ran into with stress. Otherwise the machine is quite stable
-with light load(compress/decompress and building the kernel).
+=46or the incremental update you need the stable diff [0] followed by t=
+he
+-RT diff [1] and you should get the same tree as if you would download
+v3.12.9 and the -RT13 release. Well, after you apply [0] you need to
+increment the -RT version from 11 to 12 and then you can apply [1] whic=
+h
+will increment it from 12 to 13. But this is it.
 
-Attached are the graphs of the system on light load.
+>And  -rt7 to -rt8, and -rt9 to -rt10,...
 
-Thanks,
+and those are also missing for the very same reason. Greg usually does
+one release a week and so do I.
 
-Allen
+[0] https://www.kernel.org/pub/linux/kernel/v3.x/incr/patch-3.12.8-9.xz
+[1] https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch=
+-3.12.9-rt12-rt13.patch.xz
 
-
---------------040501030300060904080306
-Content-Type: image/png;
- name="plot_OL.png"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="plot_OL.png"
-
-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
-RRAkgN/0sqAAAAAASUVORK5CYII=
---------------040501030300060904080306
-Content-Type: image/png;
- name="plot_RT.png"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="plot_RT.png"
-
-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
---------------040501030300060904080306--
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
