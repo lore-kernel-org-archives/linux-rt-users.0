@@ -1,48 +1,89 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: priority inheritance on kernel semaphore?
-Date: Fri, 7 Feb 2014 18:03:22 +0100
-Message-ID: <20140207170322.GE2382@linutronix.de>
-References: <20140129070736.78924D6CCE2A@bmail06.one.com>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: [PATCH RT] Cleanup of unnecessary do while 0 in api mappings
+Date: Sat, 8 Feb 2014 12:39:20 +0100
+Message-ID: <20140208113920.GA3861@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, John Kacur <jkacur@redhat.com>
-To: "Kim H. Madsen" <kim@undo.dk>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org, rostedt@goodmis.org,
+	tglx@linutronix.de,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Andreas Platschek <platschek@ict.tuwien.ac.at>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47289 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751065AbaBGRDZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Feb 2014 12:03:25 -0500
+Received: from hofr.at ([212.69.189.236]:60547 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751140AbaBHLjY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 8 Feb 2014 06:39:24 -0500
 Content-Disposition: inline
-In-Reply-To: <20140129070736.78924D6CCE2A@bmail06.one.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Kim H. Madsen | 2014-01-29 08:07:36 [+0100]:
 
->According to <https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO> the
->preempt-rt patch is "Implementing priority inheritance for in-kernel
->spinlocks and semaphores.".
->
->Testing this on 2.6.33.7-rt29 and 3.4.37-rt51 using up()/down() seems to
->give another result? PI works fine when using rt_mutex instead in the test. Have I
->failed in the testing/configuration or is the documentation out of date?
+Cleanup of unnecessary do while 0 in api mappings
 
-The documentation is partly out of date. In the "early" days we had
-boosting for semaphores. Later (once the semaphore users were not that
-important / critical) the whole owner tracking part got removed and so
-we do not have priority boosting for semaphores anymore.
+With the migration pushdonw a few of the do{ }while(0)
+loops became obsolete but got left over - this patch 
+only removes this fallout.
 
-There are also reader/write semaphores (rw_semaphore) and this is
-almost mapped to a mutexe (there is a difference a small difference).
-Here we have owner tracking and PI on -RT. The price for this is that
-you can't have >1 simultaneous readers on a rw_semaphore on -RT.
+Patch applies on top of 3.12.9-rt13
 
-So spin_lock, mutex and rw_semaphore should give you PI, plain
-semaphores don't.
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+---
+ include/linux/rwlock_rt.h |   20 ++++----------------
+ 1 files changed, 4 insertions(+), 16 deletions(-)
 
-John, could you please update the wiki?
+diff --git a/include/linux/rwlock_rt.h b/include/linux/rwlock_rt.h
+index e85a5df..4c729ce 100644
+--- a/include/linux/rwlock_rt.h
++++ b/include/linux/rwlock_rt.h
+@@ -42,10 +42,7 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 		flags = rt_write_lock_irqsave(lock);	\
+ 	} while (0)
+ 
+-#define read_lock(lock)					\
+-	do {						\
+-		rt_read_lock(lock);			\
+-	} while (0)
++#define read_lock(lock)		rt_read_lock(lock)
+ 
+ #define read_lock_bh(lock)				\
+ 	do {						\
+@@ -55,10 +52,7 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 
+ #define read_lock_irq(lock)	read_lock(lock)
+ 
+-#define write_lock(lock)				\
+-	do {						\
+-		rt_write_lock(lock);			\
+-	} while (0)
++#define write_lock(lock)	rt_write_lock(lock)
+ 
+ #define write_lock_bh(lock)				\
+ 	do {						\
+@@ -68,10 +62,7 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 
+ #define write_lock_irq(lock)	write_lock(lock)
+ 
+-#define read_unlock(lock)				\
+-	do {						\
+-		rt_read_unlock(lock);			\
+-	} while (0)
++#define read_unlock(lock)	rt_read_unlock(lock)
+ 
+ #define read_unlock_bh(lock)				\
+ 	do {						\
+@@ -81,10 +72,7 @@ extern void __rt_rwlock_init(rwlock_t *rwlock, char *name, struct lock_class_key
+ 
+ #define read_unlock_irq(lock)	read_unlock(lock)
+ 
+-#define write_unlock(lock)				\
+-	do {						\
+-		rt_write_unlock(lock);			\
+-	} while (0)
++#define write_unlock(lock)	rt_write_unlock(lock)
+ 
+ #define write_unlock_bh(lock)				\
+ 	do {						\
+-- 
+1.7.2.5
 
->- Kim--
-
-Sebastian
