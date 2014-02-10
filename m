@@ -1,12 +1,8 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Nicholas Mc Guire <der.herr@hofr.at>
 Subject: Re: allow preemption in check_task_state
-Date: Mon, 10 Feb 2014 19:16:08 +0100
-Message-ID: <20140210181608.GE27965@twins.programming.kicks-ass.net>
-References: <20140210153856.GD20017@opentech.at>
- <20140210111106.67438d1e@gandalf.local.home>
- <20140210171712.GA17517@opentech.at>
- <20140210173833.GQ9987@twins.programming.kicks-ass.net>
- <20140210181203.GA17914@opentech.at>
+Date: Mon, 10 Feb 2014 19:45:14 +0100
+Message-ID: <20140210184514.GA13362@opentech.at>
+References: <20140210153856.GD20017@opentech.at> <20140210111106.67438d1e@gandalf.local.home> <20140210171712.GA17517@opentech.at> <20140210173833.GQ9987@twins.programming.kicks-ass.net> <20140210181203.GA17914@opentech.at> <20140210181608.GE27965@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Steven Rostedt <rostedt@goodmis.org>,
@@ -16,34 +12,48 @@ Cc: Steven Rostedt <rostedt@goodmis.org>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: Nicholas Mc Guire <der.herr@hofr.at>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:46225 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752295AbaBJSpP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Feb 2014 13:45:15 -0500
 Content-Disposition: inline
-In-Reply-To: <20140210181203.GA17914@opentech.at>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20140210181608.GE27965@twins.programming.kicks-ass.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Feb 10, 2014 at 07:12:03PM +0100, Nicholas Mc Guire wrote:
-> On Mon, 10 Feb 2014, Peter Zijlstra wrote:
-> 
-> > On Mon, Feb 10, 2014 at 06:17:12PM +0100, Nicholas Mc Guire wrote:
-> > > maybe I'm missing/missunderstanding something here but
-> > > pi_unlock -> arch_spin_unlock is a full mb() 
-> > 
-> > Nope, arch_spin_unlock() on x86 is a single add[wb] without LOCK prefix.
-> > 
-> > The lock and unlock primitives are in general specified to have ACQUIRE
-> > resp. RELEASE semantics.
-> > 
-> > See Documentation/memory-barriers.txt for far too much head-hurting
-> > details.
-> 
-> I did check that - but from the code check it seems to me to be using a
-> lock prefix in the fast __add() path and an explicit smp_add() in the slow
-> path (arch/x86/include/asm/spinlock.h:arch_spin_unlock) the __add from 
-> arch/x86/include/asm/cmpxchg.h does lock or am I missinterpreting this ?
-> the other archs I believe were all doing explicit mb()/smp_mb() in the 
-> arch_spin_unlock - will go check this again.
+On Mon, 10 Feb 2014, Peter Zijlstra wrote:
 
-It uses UNLOCK_LOCK_PREFIX, which if you look carefully, is normally
-always "". Only some 'broken' i386 chips require a LOCK there.
+> On Mon, Feb 10, 2014 at 07:12:03PM +0100, Nicholas Mc Guire wrote:
+> > On Mon, 10 Feb 2014, Peter Zijlstra wrote:
+> > 
+> > > On Mon, Feb 10, 2014 at 06:17:12PM +0100, Nicholas Mc Guire wrote:
+> > > > maybe I'm missing/missunderstanding something here but
+> > > > pi_unlock -> arch_spin_unlock is a full mb() 
+> > > 
+> > > Nope, arch_spin_unlock() on x86 is a single add[wb] without LOCK prefix.
+> > > 
+> > > The lock and unlock primitives are in general specified to have ACQUIRE
+> > > resp. RELEASE semantics.
+> > > 
+> > > See Documentation/memory-barriers.txt for far too much head-hurting
+> > > details.
+> > 
+> > I did check that - but from the code check it seems to me to be using a
+> > lock prefix in the fast __add() path and an explicit smp_add() in the slow
+> > path (arch/x86/include/asm/spinlock.h:arch_spin_unlock) the __add from 
+> > arch/x86/include/asm/cmpxchg.h does lock or am I missinterpreting this ?
+> > the other archs I believe were all doing explicit mb()/smp_mb() in the 
+> > arch_spin_unlock - will go check this again.
+> 
+> It uses UNLOCK_LOCK_PREFIX, which if you look carefully, is normally
+> always "". Only some 'broken' i386 chips require a LOCK there.
+
+thanks for the details - will go dig through this again - still 
+missing seme bits.
+
+the first patch proposal is taken care of I guess :)
+
+thx!
+hofrat
