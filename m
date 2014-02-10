@@ -1,113 +1,107 @@
-From: Nicholas Mc Guire <der.herr@hofr.at>
-Subject: [PATCH RT 5/5] allow preemption in slab_alloc_node and slab_free
-Date: Mon, 10 Feb 2014 16:40:16 +0100
-Message-ID: <20140210154016.GF20017@opentech.at>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: allow preemption in check_task_state
+Date: Mon, 10 Feb 2014 11:11:06 -0500
+Message-ID: <20140210111106.67438d1e@gandalf.local.home>
+References: <20140210153856.GD20017@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org,
+	LKML <linux-kernel@vger.kernel.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Andreas Platschek <platschek@ict.tuwien.ac.at>
-To: linux-rt-users@vger.kernel.org
+To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hofr.at ([212.69.189.236]:43884 "EHLO mail.hofr.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751889AbaBJPkR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Feb 2014 10:40:17 -0500
-Content-Disposition: inline
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:21151 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751770AbaBJQLN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Feb 2014 11:11:13 -0500
+In-Reply-To: <20140210153856.GD20017@opentech.at>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Subject is missing patch number.
 
-drop preempt_disable/enable in slab_alloc_node and slab_free
 
-__slab_alloc is only called from slub.c:slab_alloc_node
-it runs with local irqs disabled so it can't be pushed off this CPU
-asynchronously, the preempt_disable/enable is thus not needed.
-Aside from that the later this_cpu_cmpxchg_double would catch such a 
-migration event anyay.
+On Mon, 10 Feb 2014 16:38:56 +0100
+Nicholas Mc Guire <der.herr@hofr.at> wrote:
 
-slab_free:
- slowpath: (if the allocation was on a different CPU) detected by 
-  (page == c->page) c pointing to the per cpu slab, this does not need a 
-  consistent ref to tid so the slow path is safe without the 
-  preempt_disable/enable
- fastpath: if allocation was on the same cpu but we got migrated between
-  fetching the cpu_slab and the actual push onto the free list then
-  this_cpu_cmpxchg_double would catch this case and loop in redo. So the
-  fast path is also safe without the preempt_disable/enable
+> 
+> A lockfree approach to check_task_state
+> 
+> This treates the state as an indicator variable and use it to probe 
+> saved_state lock free. There is actually no consistency demand on 
+> state/saved_state but rather a consistency demand on the transitions 
+> of the two variables but those transition, based on path inspection,
+> are not independent.
+> 
+> Its probably not faster than the lock/unlock case if uncontended - atleast
+> it does not show up in benchmark results, but it would never be hit by a 
+> full pi-boost cycle as there is no contention.
+> 
+> This also was tested against the test-case from Sebastian as well as 
+> rnning a few scripted gdb breakpoint debugging/single-stepping loops
+> to trigger this.
 
-Testing:
- while : ; do ./hackbench 120 thread 10000 ; done 
-Time: 296.631
-Time: 298.723
-Time: 301.468
-Time: 303.880
-Time: 301.988
-Time: 300.038
-Time: 299.634
-Time: 301.488
- which seems to be a good way to stress-test slub
+To trigger what?
 
-Impact on performance:
- The change could negatively impact performance if the removal of the 
- preempt_disable/enable would result in a significant increase of the 
- slow path being taken or looping via goto redo - this was checked by:
- static instrumentation:
-  an instrumentation was added to check how often the redo loop is taken
-  the results showed that the redo loop is very rarely taken (< 1 in 10000)
-  and is below the value with the preempt_disable/enable present. Further
-  the slowpath to fastpath ration improves slightly (not sure if this is 
-  statistically significant though)
- running slab_test.c:
-  the slub-benchmark from Christoph Lameter and Mathieu Desnoyers was used
-  the only change being that asm/system.h was droped from the list of
-  includes. The results indicate that the removal of preempt_disable/enable
-  reduces the cycles needed slightly (though quite a few testsystems would
-  need to be checked before this can be confirmed).
+> 
+> Tested-by: Andreas Platschek <platschek@ict.tuwien.ac.at>
+> Tested-by: Carsten Emde <C.Emde@osadl.org>
+> Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+> ---
+>  kernel/sched/core.c |   10 ++++++++--
+>  1 files changed, 8 insertions(+), 2 deletions(-)
+> 
+> diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+> index bf93f63..5690ba3 100644
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -1074,11 +1074,17 @@ static int migration_cpu_stop(void *data);
+>  static bool check_task_state(struct task_struct *p, long match_state)
+>  {
+>  	bool match = false;
+> +	long state, saved_state;
+> +
+> +	/* catch restored state */
+> +	do {
+> +		state = p->state;
+> +		saved_state = p->saved_state;
+> +		rmb();  /* make sure we actually catch updates */
 
-Tested-by: Andreas Platschek <platschek@ict.tuwien.ac.at>
-Tested-by: Carsten Emde <C.Emde@osadl.org>
-Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
----
- mm/slub.c |    4 ----
- 1 files changed, 0 insertions(+), 4 deletions(-)
+The problem I have with this is that there's no matching wmb(). Also,
+shouldn't that be a smp_rmb(), I don't think we can race with devices
+here.
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 546bd9a..c422988 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -2424,7 +2424,6 @@ redo:
- 	 * on a different processor between the determination of the pointer
- 	 * and the retrieval of the tid.
- 	 */
--	preempt_disable();
- 	c = __this_cpu_ptr(s->cpu_slab);
- 
- 	/*
-@@ -2434,7 +2433,6 @@ redo:
- 	 * linked list in between.
- 	 */
- 	tid = c->tid;
--	preempt_enable();
- 
- 	object = c->freelist;
- 	page = c->page;
-@@ -2683,11 +2681,9 @@ redo:
- 	 * data is retrieved via this pointer. If we are on the same cpu
- 	 * during the cmpxchg then the free will succedd.
- 	 */
--	preempt_disable();
- 	c = __this_cpu_ptr(s->cpu_slab);
- 
- 	tid = c->tid;
--	preempt_enable();
- 
- 	if (likely(page == c->page)) {
- 		set_freepointer(s, object, c->freelist);
--- 
-1.7.2.5
+> +	} while (state != p->state);
+>  
+> -	raw_spin_lock_irq(&p->pi_lock);
+>  	if (p->state == match_state || p->saved_state == match_state)
+>  		match = true;
+> -	raw_spin_unlock_irq(&p->pi_lock);
+>  
+>  	return match;
+>  }
+
+
+In rtmutex.c we have:
+
+	pi_lock(&self->pi_lock);
+	__set_current_state(self->saved_state);
+	self->saved_state = TASK_RUNNING;
+	pi_unlock(&self->pi_lock);
+
+As there is no wmb() here, it can be very possible that another CPU
+will see saved_state as TASK_RUNNING, and current state as
+TASK_RUNNING, and miss the update completely.
+
+I would not want to add a wmb() unless there is a real bug with the
+check state, as the above is in a very fast path and the check state is
+in a slower path.
+
+-- Steve
 
