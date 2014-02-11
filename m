@@ -1,52 +1,54 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Linux-rt fails to boot [any release past 3.12.5-rt7] on all of
- my machines
-Date: Tue, 11 Feb 2014 16:37:44 +0100
-Message-ID: <52FA43C8.5000102@linutronix.de>
-References: <CAOcfFMw2P9QwQrzUYL4rpvrJ2_d7L8Q3fi3-U=dgB=krjd2QoQ@mail.gmail.com>	<20140207152250.GC2382@linutronix.de> <CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com>
+From: jordan <triplesquarednine@gmail.com>
+Subject: Re: Linux-rt fails to boot [any release past 3.12.5-rt7] on all of my machines
+Date: Tue, 11 Feb 2014 10:49:43 -0500
+Message-ID: <CAOcfFMxCEQSR-sBGA98ac66sUM4peZfGP8vHrqgrM4FUTKHcBQ@mail.gmail.com>
+References: <CAOcfFMw2P9QwQrzUYL4rpvrJ2_d7L8Q3fi3-U=dgB=krjd2QoQ@mail.gmail.com>
+	<20140207152250.GC2382@linutronix.de>
+	<CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com>
+	<52FA43C8.5000102@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: jordan <triplesquarednine@gmail.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:42739 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751415AbaBKPhq (ORCPT
+Received: from mail-ve0-f177.google.com ([209.85.128.177]:42645 "EHLO
+	mail-ve0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751014AbaBKPtn (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Feb 2014 10:37:46 -0500
-In-Reply-To: <CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com>
+	Tue, 11 Feb 2014 10:49:43 -0500
+Received: by mail-ve0-f177.google.com with SMTP id jz11so6171720veb.36
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Feb 2014 07:49:43 -0800 (PST)
+In-Reply-To: <52FA43C8.5000102@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 02/11/2014 04:16 PM, jordan wrote:
-> Hi,
+On Tue, Feb 11, 2014 at 10:37 AM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> On 02/11/2014 04:16 PM, jordan wrote:
+>> Hi,
+>
+> Hi Jordan,
 
-Hi Jordan,
+Hey Sebastian
 
-> you would be looking at differences between -rt7 and now, as -rt8
-> fails to boot. [-rt7 is stable, -rt8+ doesn't boot].
-> 
-> When i get home tonight, i will revert those three patches and see if
-> i get a working kernel, but again - because i package my kernel [for
-> other users], this is problematic. [ie: i can't update packages until
-> i am sure that linux-rt patchset will boot for everyone okay - right
-> now, i know it won't boot for some and if i revert those 3 patches,
-> while it may boot for me/possibly those who it doesn't boot for - it's
-> likely going to cause issues for other users... it's a bit of a
-> pickle! ;) ].
-> 
-> anyway, let me know if there is anything i can do - as is - i will
-> report back if reverting those three patches allows my machine to at
-> least boot.
+> Okay. v3.12.5-rt7 is something I released with -RT changes. v3.12.6-rt8
+> has zero -RT changes, only stable increment. That means, the -RT patch
+> should be exactly the same (except for localversion).
+> So whatever breaks booting v3.12.6-rt8 is something that came via
+> stable queue.
 
-Okay. v3.12.5-rt7 is something I released with -RT changes. v3.12.6-rt8
-has zero -RT changes, only stable increment. That means, the -RT patch
-should be exactly the same (except for localversion).
-So whatever breaks booting v3.12.6-rt8 is something that came via
-stable queue.
+Okay, so now I have a place to start looking. :) So, while
+mainline/vanilla 3.12.6+ (including 3.12.10) boots just fine - there
+appears to be some change on mainline post 3.12.6 that is causing a
+boot failure [but only triggered] on -rt. [?]
 
-> 
-> Jordan
-> 
-Sebastian
+I'll have a look and see if any obvious commits stands out, but i
+guess i will likely have to do git-bisect to find the bad commit... I
+don't know if i will have time tonight, but i should be able to find
+some time over the next few days.
+
+thanks
+
+> Sebastian
+
+Jordan
