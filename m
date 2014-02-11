@@ -1,54 +1,73 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: Linux-rt fails to boot [any release past 3.12.5-rt7] on all of my machines
-Date: Tue, 11 Feb 2014 10:49:43 -0500
-Message-ID: <CAOcfFMxCEQSR-sBGA98ac66sUM4peZfGP8vHrqgrM4FUTKHcBQ@mail.gmail.com>
-References: <CAOcfFMw2P9QwQrzUYL4rpvrJ2_d7L8Q3fi3-U=dgB=krjd2QoQ@mail.gmail.com>
-	<20140207152250.GC2382@linutronix.de>
-	<CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com>
-	<52FA43C8.5000102@linutronix.de>
+From: Kirill Tkhai <tkhai@yandex.ru>
+Subject: Re: Cyclictest results on Sparc64 with PREEMPT_RT
+Date: Wed, 12 Feb 2014 01:44:31 +0400
+Message-ID: <193151392155071@web21h.yandex.ru>
+References: <52E616DB.2040202@oracle.com> <20140207123529.GA2382@linutronix.de> <52F4D474.6080107@oracle.com> <52F4DED2.3010800@linutronix.de> <52F4E00F.9010009@oracle.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=koi8-r
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"davem@davemloft.net" <davem@davemloft.net>
+To: Allen Pais <allen.pais@oracle.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f177.google.com ([209.85.128.177]:42645 "EHLO
-	mail-ve0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751014AbaBKPtn (ORCPT
+Received: from forward3h.mail.yandex.net ([84.201.187.148]:39784 "EHLO
+	forward3h.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752529AbaBKVwE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Feb 2014 10:49:43 -0500
-Received: by mail-ve0-f177.google.com with SMTP id jz11so6171720veb.36
-        for <linux-rt-users@vger.kernel.org>; Tue, 11 Feb 2014 07:49:43 -0800 (PST)
-In-Reply-To: <52FA43C8.5000102@linutronix.de>
+	Tue, 11 Feb 2014 16:52:04 -0500
+In-Reply-To: <52F4E00F.9010009@oracle.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Feb 11, 2014 at 10:37 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> On 02/11/2014 04:16 PM, jordan wrote:
->> Hi,
+
+
+07.02.2014, 17:31, "Allen Pais" <allen.pais@oracle.com>:
+> Sebastian,
 >
-> Hi Jordan,
+>> =9AThis is a dead lock. Whatever lock you go after, you are already
+>> =9Aholding it in this context / hackbench. I don't know how you got =
+from
+>> =9Aperfctr_irq() to do_exit() but you shouldn't do this in hardirq
+>> =9Acontext.
+>>
+>> =9ABut calling do_exit() is probably error recovery since it would k=
+ill
+>> =9Ahackbench and I assume it wasn't done yet.
+>> =9AI see also tl0_irq15() in your stack trace. This is that evil NMI=
+ that
+>> =9Achecks if the system is stalling. I think that you stuck in
+>> =9Aflush_tsb_user() on that raw_lock and somebody is not letting it =
+go and
+>> =9Aso you spin for ever. Maybe full lockdep shows you some informati=
+ons
+>> =9Aabout wrong context locking etc.
+>
+> Yes, there's someone's holding the lock and not releasing it in
+> flush_tsb_user(). I'll check with lockdep.
 
-Hey Sebastian
+I'm looking at arch_enter_lazy_mmu_mode()/arch_leave_lazy_mmu_mode().
+It looks like it's assumed they are called with preemption disabled.
+In !RT case they are called after spin_lock() which gives preemption
+disabled. In RT the spinlocks are mutexes and there is preemption.
+I think we need something like migrate_disable() here.
 
-> Okay. v3.12.5-rt7 is something I released with -RT changes. v3.12.6-rt8
-> has zero -RT changes, only stable increment. That means, the -RT patch
-> should be exactly the same (except for localversion).
-> So whatever breaks booting v3.12.6-rt8 is something that came via
-> stable queue.
+I have no sparc right now and did not check this carefully. Check if
+you are interested :)
 
-Okay, so now I have a place to start looking. :) So, while
-mainline/vanilla 3.12.6+ (including 3.12.10) boots just fine - there
-appears to be some change on mainline post 3.12.6 that is causing a
-boot failure [but only triggered] on -rt. [?]
+Kirill
 
-I'll have a look and see if any obvious commits stands out, but i
-guess i will likely have to do git-bisect to find the bad commit... I
-don't know if i will have time tonight, but i should be able to find
-some time over the next few days.
-
-thanks
-
-> Sebastian
-
-Jordan
+> Thanks,
+> Allen
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at =9Ahttp://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
