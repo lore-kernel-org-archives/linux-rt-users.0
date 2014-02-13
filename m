@@ -1,45 +1,58 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: 3.12.9-rt13: BUG: soft lockup
-Date: Thu, 13 Feb 2014 14:56:09 -0800
-Message-ID: <52FD4D89.2000207@localhost>
-References: <52FBF2F1.8040504@localhost> <alpine.DEB.2.02.1402132324230.21991@ionos.tec.linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH RT] arm/unwind: fail on unwind in irq disabled regions
+Date: Thu, 13 Feb 2014 23:57:45 +0100 (CET)
+Message-ID: <alpine.DEB.2.02.1402132355360.21991@ionos.tec.linutronix.de>
+References: <1390580663-28869-1-git-send-email-bigeasy@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-282708098-1392332266=:21991"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.02.1402132324230.21991@ionos.tec.linutronix.de>
+In-Reply-To: <1390580663-28869-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 02/13/2014 02:25 PM, Thomas Gleixner wrote:
-> On Wed, 12 Feb 2014, Fernando Lopez-Lezcano wrote:
->> [771508.546449] RIP: 0010:[<ffffffff810dc60a>]  [<ffffffff810dc60a>]
->> smp_call_function_many+0x2ca/0x330
->
-> Can you decode the exact location inside of smp_call_function_many via
-> addr2line please ?
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Hope this is useful (adding 0x2ce/0x330 as offsets does not make any 
-difference, don't know if it should)...
+--8323329-282708098-1392332266=:21991
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-# grep smp_call_function /var/log/messages|tail -1
-Feb 12 14:18:21 cmn27 kernel: [771840.224419] RIP: 
-0010:[<ffffffff810dc60e>]  [<ffffffff810dc60e>] 
-smp_call_function_many+0x2ce/0x330
-# addr2line -e 
-/usr/lib/debug/lib/modules/3.12.10-300.rt15.1.fc20.ccrma.x86_64+rt/vmlinux 
-  ffffffff810dc60e
-/usr/src/debug/kernel-3.12.fc20.ccrma/linux-3.12.10-300.rt15.1.fc20.ccrma.x86_64/kernel/rtmutex.c:1295
 
-This is the only time I was able to catch some logs of the problem (if 
-it is the same). I had to revert to 3.10.27-rt25 for the time being and 
-that seems to be holding up well so far.
 
--- Fernando
+On Fri, 24 Jan 2014, Sebastian Andrzej Siewior wrote:
+
+> Mostly unwind is done with irqs enabled however SLUB may call it with
+> irqs disabled while creating a new SLUB cache.
+> 
+> I had system freeze while loading a module which called
+> kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
+> interrupts and then
+> 
+> ->new_slab_objects()
+>  ->new_slab()
+>   ->setup_object()
+>    ->setup_object_debug()
+>     ->init_tracking()
+>      ->set_track()
+>       ->save_stack_trace()
+>        ->save_stack_trace_tsk()
+>         ->walk_stackframe()
+>          ->unwind_frame()
+>           ->unwind_find_idx()
+>            =>spin_lock_irqsave(&unwind_lock);
+> 
+> I would prefer not to turn this into a raw lock so for now it will just
+> fail if it is called with irqs disabled which might return a few "empty"
+> traces…
+
+If we really end up with unwinding then the few cycles to follow the
+stack are not that important anymore. We really want that output.
+
+Thanks,
+
+	tglx
+
+
+--8323329-282708098-1392332266=:21991--
