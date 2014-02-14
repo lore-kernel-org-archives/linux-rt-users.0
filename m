@@ -1,8 +1,9 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 2/5] allow preemption in alloc and free _buffer_head
-Date: Fri, 14 Feb 2014 13:53:25 +0100
-Message-ID: <20140214125325.GD28438@linutronix.de>
-References: <20140210153759.GC20017@opentech.at>
+Subject: Re: [PATCH RT 4/5] allow preemption in
+ mem_cgroup_move_account_page_stat
+Date: Fri, 14 Feb 2014 14:09:10 +0100
+Message-ID: <20140214130910.GE28438@linutronix.de>
+References: <20140210153933.GE20017@opentech.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org,
@@ -13,44 +14,27 @@ Cc: linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Andreas Platschek <platschek@ict.tuwien.ac.at>
 To: Nicholas Mc Guire <der.herr@hofr.at>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:41536 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751753AbaBNMx1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Feb 2014 07:53:27 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140210153759.GC20017@opentech.at>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20140210153933.GE20017@opentech.at>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Nicholas Mc Guire | 2014-02-10 16:37:59 [+0100]:
+* Nicholas Mc Guire | 2014-02-10 16:39:33 [+0100]:
 
->2a) premption induced race in __this_cpu_dec
->  T1 dec:start
->               T2 dec
->  T1 dec:end
 >
->__this_cpu_dec 
->  -> __this_cpu_sub 
->    -> __this_cpu_add
->      -> __this_cpu_add_#
->        -> __this_cpu_generic_to_op
->         -> __this_cpu_ptr += val
+>allow preemption in mem_cgroup_move_account_page_stat
 >
+>as the call sites of mem_cgroup_move_account_page_stat are under 
+>move_lock_mem_cgroup move_unlock_mem_cgroup (spin_lock_irqsave/
+>spin_unlock_irqrestore respectively) the move operations 
+>preempt_disable/enable seem to be purely for migration protection so 
+>a migrate_disable/enable should be fine here.
 >
->so we end up with the possibilities of
->  T1 load
->          T2 load
->          T2 store
->  T1 store
->and the increment provided by T2 would be lost. The result of which
->is that reaching the buffer_heads_over_limit threshold in recalc_bh_state 
+>patch on top of 3.12.10-rt15
+>
+>Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
 
-I don't like this very much. __this_cpu_inc() is not atomic as you say
-and without the locking that is provided by preempt_disable() it might
-lose one store in inc or dec direction. This error will never be
-corrected again. That code path looks very short unless you have 4096
-CPUs.
+Applied.
 
 Sebastian
