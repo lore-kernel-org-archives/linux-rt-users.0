@@ -1,11 +1,12 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH RT 4/5] allow preemption in
  mem_cgroup_move_account_page_stat
-Date: Fri, 14 Feb 2014 14:09:10 +0100
-Message-ID: <20140214130910.GE28438@linutronix.de>
+Date: Fri, 14 Feb 2014 14:17:05 +0100
+Message-ID: <20140214131705.GF28438@linutronix.de>
 References: <20140210153933.GE20017@opentech.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org,
 	LKML <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
@@ -22,19 +23,27 @@ List-Id: linux-rt-users.vger.kernel.org
 
 * Nicholas Mc Guire | 2014-02-10 16:39:33 [+0100]:
 
->
->allow preemption in mem_cgroup_move_account_page_stat
->
->as the call sites of mem_cgroup_move_account_page_stat are under 
->move_lock_mem_cgroup move_unlock_mem_cgroup (spin_lock_irqsave/
->spin_unlock_irqrestore respectively) the move operations 
->preempt_disable/enable seem to be purely for migration protection so 
->a migrate_disable/enable should be fine here.
->
->patch on top of 3.12.10-rt15
->
->Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
+>index a67e630f..e7cc35a 100644
+>--- a/mm/memcontrol.c
+>+++ b/mm/memcontrol.c
+>@@ -3784,10 +3784,10 @@ void mem_cgroup_move_account_page_stat(struct =
+mem_cgroup *from,
+> 					enum mem_cgroup_stat_index idx)
+> {
+> 	/* Update stat data for mem_cgroup */
+>-	preempt_disable();
+>+	migrate_disable();
+> 	__this_cpu_sub(from->stat->count[idx], nr_pages);
+> 	__this_cpu_add(to->stat->count[idx], nr_pages);
+>-	preempt_enable();
+>+	migrate_enable();
+> }
 
-Applied.
+Now, that I look at it again. Isn't it more efficient to keep preemptio=
+n
+disabled for this very short time instead instead of invoking
+migrate_disable() which includes preempt_disable()/enable() and a few
+more opcodes=E2=80=A6
+Therefore, I drop it again.
 
 Sebastian
