@@ -1,8 +1,8 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 0/1] Re: [PATCH RT] latency-hist: mostly checkpatch cleanup
-Date: Fri, 14 Feb 2014 20:46:23 +0100
-Message-ID: <52FE728F.3060908@linutronix.de>
-References: <20140214171641.048899133@osadl.org>
+Subject: Re: [PATCH 1/1] tracing/latency_hist Fix memory leak
+Date: Fri, 14 Feb 2014 20:59:37 +0100
+Message-ID: <52FE75A9.6050305@linutronix.de>
+References: <20140214172617.382025623@osadl.org> <20140214172751.776971499@osadl.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
@@ -11,44 +11,40 @@ Cc: Nicholas Mc Guire <der.herr@hofr.at>,
 	RT-users <linux-rt-users@vger.kernel.org>
 To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44228 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:44291 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751460AbaBNTq2 (ORCPT
+	with ESMTP id S1751948AbaBNT7n (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Feb 2014 14:46:28 -0500
-In-Reply-To: <20140214171641.048899133@osadl.org>
+	Fri, 14 Feb 2014 14:59:43 -0500
+In-Reply-To: <20140214172751.776971499@osadl.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 02/14/2014 06:16 PM, Carsten Emde wrote:
-> Hi Sebastian,
-
-Hi Carsten,
-
-> you submitted a patch of a patch - it's not funny and very difficult to read.
-> I allowed myself to transform it to a normal separate patch on top of the one
-> that you patched. It can be merged lateron.
+On 02/14/2014 06:26 PM, Carsten Emde wrote:
+> The index_ptr memory that is allocated when printout is started
+> currently is only returned when the printout is stopped
+> prematurely. It is not returned when the printout regularly
+> finishes. Fix this memory leak.
 > 
-> Isn't this better? (We always did it this way.)
+> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+> 
+> Index: linux-3.12.10-rt15-somedebug/kernel/trace/latency_hist.c
+> ===================================================================
+> --- linux-3.12.10-rt15-somedebug.orig/kernel/trace/latency_hist.c
+> +++ linux-3.12.10-rt15-somedebug/kernel/trace/latency_hist.c
+> @@ -313,6 +313,7 @@ static void *l_next(struct seq_file *m, 
+>  
+>  	if (++*pos >= MAX_ENTRY_NUM) {
+>  		atomic_inc(&my_hist->hist_mode);
+> +		kfree(p);
+>  		return NULL;
+>  	}
+>  	*index_ptr = *pos;
 
-Yes, we always did that way. This time it is different.
-I received 20 patches from Nicholas dealing with checkpatch issues. It
-contained code changes like fixes of white space and other changes that
-fall into the category cosmetic - code change at all. Others change the
-body of the patch because checkpatch did not like a twice the same
-person in a signed-of-by line or Toasted-by was not a valid tag and so
-on.
-I did not want any of this patches to extend unnecessary the -RT queue
-so I want them merged right in the first patch where the problem occurs.
-I also did not want to deal with fallout when I merge the
-patches back into the original and a following patch does no longer
-apply. So I asked Nicholas do it this way.
-This patch did a little more because it replaced NR_CPUS with something
-else and therefore I considered it important enough to send it to the
-mailing list. The other will be mentioned in the announcement email
-will be part of the incremental patch.
+Sure on that? If I look at seq_read() I see that there is that ->stop()
+is always called after ->start() / ->next() before returning to caller.
+Based on this I would say that this patach will introduce a double free
+of p.
 
 > 
-> 	-Carsten.
-
 Sebastian
