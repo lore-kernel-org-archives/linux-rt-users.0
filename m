@@ -1,13 +1,10 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 4/5] allow preemption in
- mem_cgroup_move_account_page_stat
-Date: Fri, 14 Feb 2014 14:19:59 +0100
-Message-ID: <20140214131959.GG28438@linutronix.de>
-References: <20140210153933.GE20017@opentech.at>
- <20140214131705.GF28438@linutronix.de>
+Subject: Re: [PATCH RT 3/5] allow preemption in check_task_state
+Date: Fri, 14 Feb 2014 14:22:40 +0100
+Message-ID: <20140214132240.GH28438@linutronix.de>
+References: <20140210162816.GA24267@opentech.at>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org,
 	LKML <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
@@ -18,21 +15,19 @@ Cc: linux-rt-users@vger.kernel.org,
 To: Nicholas Mc Guire <der.herr@hofr.at>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140214131705.GF28438@linutronix.de>
+In-Reply-To: <20140210162816.GA24267@opentech.at>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Sebastian Andrzej Siewior | 2014-02-14 14:17:05 [+0100]:
+* Nicholas Mc Guire | 2014-02-10 17:28:16 [+0100]:
 
->Now, that I look at it again. Isn't it more efficient to keep preempti=
-on
->disabled for this very short time instead instead of invoking
->migrate_disable() which includes preempt_disable()/enable() and a few
->more opcodes=E2=80=A6
->Therefore, I drop it again.
+>A lockfree approach to check_task_state
 
-I think doing the same for the 1/5 of this series since it also disable=
-s
-migration for a handfull of asm opcodes.
+I ignore this due to was has been written in the thread "allow
+preemption in check_task_state" for now.
+
+Also I just want to state that this function is hardly used on regular
+basis except for ptrace attach case which ends up beeing a power user in
+the test case mentioned.
 
 Sebastian
