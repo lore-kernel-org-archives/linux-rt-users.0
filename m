@@ -1,105 +1,63 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] arm/unwind: fail on unwind in irq disabled regions
-Date: Fri, 14 Feb 2014 21:24:26 +0100
-Message-ID: <20140214202426.GA14019@linutronix.de>
-References: <1390580663-28869-1-git-send-email-bigeasy@linutronix.de>
- <alpine.DEB.2.02.1402132355360.21991@ionos.tec.linutronix.de>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: [PATCH 1/1] tracing/latency_hist Fix memory leak
+Date: Fri, 14 Feb 2014 21:28:39 +0100
+Message-ID: <52FE7C77.7020408@osadl.org>
+References: <20140214172617.382025623@osadl.org> <20140214172751.776971499@osadl.org> <52FE75A9.6050305@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.02.1402132355360.21991@ionos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	RT-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from toro.web-alm.net ([62.245.132.31]:51460 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753216AbaBNU3G (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 14 Feb 2014 15:29:06 -0500
+In-Reply-To: <52FE75A9.6050305@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Thomas Gleixner | 2014-02-13 23:57:45 [+0100]:
-
->If we really end up with unwinding then the few cycles to follow the
->stack are not that important anymore. We really want that output.
-
-Here you go.
-
-diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
-index 2af232d..bbafc67 100644
---- a/arch/arm/kernel/unwind.c
-+++ b/arch/arm/kernel/unwind.c
-@@ -87,7 +87,7 @@ extern const struct unwind_idx __start_unwind_idx[];
- static const struct unwind_idx *__origin_unwind_idx;
- extern const struct unwind_idx __stop_unwind_idx[];
- 
--static DEFINE_SPINLOCK(unwind_lock);
-+static DEFINE_RAW_SPINLOCK(unwind_lock);
- static LIST_HEAD(unwind_tables);
- 
- /* Convert a prel31 symbol to an absolute address */
-@@ -195,12 +195,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 		/* module unwind tables */
- 		struct unwind_table *table;
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--		if (irqs_disabled())
--			goto out;
--#endif
--
--		spin_lock_irqsave(&unwind_lock, flags);
-+		raw_spin_lock_irqsave(&unwind_lock, flags);
- 		list_for_each_entry(table, &unwind_tables, list) {
- 			if (addr >= table->begin_addr &&
- 			    addr < table->end_addr) {
-@@ -212,11 +207,10 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 				break;
- 			}
- 		}
--		spin_unlock_irqrestore(&unwind_lock, flags);
-+		raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 	}
- 
- 	pr_debug("%s: idx = %p\n", __func__, idx);
--out:
- 	return idx;
- }
- 
-@@ -351,9 +345,7 @@ int unwind_frame(struct stackframe *frame)
- 
- 	idx = unwind_find_idx(frame->pc);
- 	if (!idx) {
--#ifndef CONFIG_PREEMPT_RT_FULL
- 		pr_warning("unwind: Index not found %08lx\n", frame->pc);
--#endif
- 		return -URC_FAILURE;
- 	}
- 
-@@ -477,9 +469,9 @@ struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
- 	tab->begin_addr = text_addr;
- 	tab->end_addr = text_addr + text_size;
- 
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_add_tail(&tab->list, &unwind_tables);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	return tab;
- }
-@@ -491,9 +483,9 @@ void unwind_table_del(struct unwind_table *tab)
- 	if (!tab)
- 		return;
- 
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_del(&tab->list);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	kfree(tab);
- }
--- 
-1.9.0.rc3
-
->Thanks,
+On 02/14/2014 08:59 PM, Sebastian Andrzej Siewior wrote:
+> On 02/14/2014 06:26 PM, Carsten Emde wrote:
+>> The index_ptr memory that is allocated when printout is started
+>> currently is only returned when the printout is stopped
+>> prematurely. It is not returned when the printout regularly
+>> finishes. Fix this memory leak.
+>>
+>> Signed-off-by: Carsten Emde <C.Emde@osadl.org>
+>>
+>> Index: linux-3.12.10-rt15-somedebug/kernel/trace/latency_hist.c
+>> ===================================================================
+>> --- linux-3.12.10-rt15-somedebug.orig/kernel/trace/latency_hist.c
+>> +++ linux-3.12.10-rt15-somedebug/kernel/trace/latency_hist.c
+>> @@ -313,6 +313,7 @@ static void *l_next(struct seq_file *m,
+>>
+>>   	if (++*pos >= MAX_ENTRY_NUM) {
+>>   		atomic_inc(&my_hist->hist_mode);
+>> +		kfree(p);
+>>   		return NULL;
+>>   	}
+>>   	*index_ptr = *pos;
 >
->	tglx
+> Sure on that? If I look at seq_read() I see that there is that ->stop()
+> is always called after ->start() / ->next() before returning to caller.
+> Based on this I would say that this patach will introduce a double free
+> of p.
+Some of the farm systems enable different levels of run time debug 
+features including kmemleak in two of them. These two machines regularly 
+crashed with kmemleak alloc overflow, because the system detected so 
+many memleaks that there was no more memory available to store all of 
+them. Since the objects were so small, the leak was not measurable in 
+terms of memory exhaustion. I then investigated the kmemleak objects, 
+and they clearly pointed to the index_ptr memory. This was the only 
+place I found, and kmemleak no longer complaint or crashed after 
+inserting this kfree(). I then patched the other farm systems some time 
+ago where it never never did any harm. I needed to find a solution to 
+the kmemleak machines, since otherwise I wouldn't have a usable tool to 
+search for other memleaks. But I know that I should have done better. So 
+please drop this patch and wait, until I find some time to more 
+carefully analyze the entire situation.
 
-Sebastian
+	-Carsten.
