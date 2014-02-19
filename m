@@ -1,36 +1,90 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] kernel/hrtimer: be non-freezeable in cpu_chill()
-Date: Wed, 19 Feb 2014 16:42:13 +0100
-Message-ID: <5304D0D5.3030802@linutronix.de>
-References: <20140205115125.3cc950ce@gandalf.local.home>	<20140207113006.GD23668@linutronix.de>	<20140207090834.72774272@gandalf.local.home>	<20140207091313.097f9059@gandalf.local.home>	<20140219115353.GA28909@linutronix.de> <20140219102700.04de1195@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	John Kacur <jkacur@redhat.com>,
-	Ulrich Obergfell <uobergfe@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52307 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751758AbaBSPmQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Feb 2014 10:42:16 -0500
-In-Reply-To: <20140219102700.04de1195@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Grant Edwards <grant.b.edwards@gmail.com>
+Subject: Re: locking changes in tty broke low latency feature
+Date: Wed, 19 Feb 2014 16:55:41 +0000 (UTC)
+Message-ID: <le2nmd$p1$1@ger.gmane.org>
+References: <20140218093829.GC1741@redhat.com>
+ <5303DABD.9000302@hurleysoftware.com> <20140219130308.GC1851@redhat.com>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: linux-serial@vger.kernel.org
+Return-path: <linux-serial-owner@vger.kernel.org>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 02/19/2014 04:27 PM, Steven Rostedt wrote:
+On 2014-02-19, Stanislaw Gruszka <sgruszka@redhat.com> wrote:
+> Hello,
+>
+> On Tue, Feb 18, 2014 at 05:12:13PM -0500, Peter Hurley wrote:
+>> On 02/18/2014 04:38 AM, Stanislaw Gruszka wrote:
+>>
+>> >setserial has low_latency option which should minimize receive latency
+>> >(scheduler delay). AFAICT it is used if someone talk to external device
+>> >via RS-485/RS-232 and need to have quick requests and responses.
 
-> Hmm, I wonder if this is because msleep() sets the tasks state to
-> TASK_UNINTERRUPTIBLE, and hrtimer_nanosleep sets it to
-> TASK_INTERRUPTIBLE.
+Exactly.
 
-No, it is because freezable_schedule() is called via do_nanosleep() in
-hrtimer call path and msleep() calls schedule() without it.
+>>>
+>>>But after 3.12 tty locking changes, calling flush_to_ldisc() from
+>>>interrupt context is a bug (we got scheduling while atomic bug report
+>>>here: https://bugzilla.redhat.com/show_bug.cgi?id=1065087 )
+>>
+>> Can you give me an idea of your device's average and minimum required
+>> latency (please be specific)?
 
-Sebastian
+If by "device" you mean the UART being supported by the the driver in
+question, then there is no answer.
+
+Latency issues and requirements are a user-space application level
+requirement that depend on the specific application's requirements and
+those of the widget on the other end of the serial cable.
+
+>> Also, how painful would it be if unsupported termios changes were rejected
+>> if the port was in low_latency mode and/or if low_latency setting was
+>> disallowed because of termios state?
+>> 
+>> It would be pointless to throttle low_latency, yes?
+
+By "throttle" I assume you're talking about flow control?
+
+_Usually_ applications that require low latency are exchanging short
+messages (up to a few hundred bytes, but usually more like a few
+dozen).  In those cases flow control is not generally needed.
+
+Does it matter?
+
+>> What would be an acceptable outcome of being unable to accept input?
+>> Corrupted overrun? Dropped i/o? Queued for later? Please explain with
+>> comparison to the outcome of missed minimum latency.
+>
+> I'm sorry, I can not answer your questions.
+>
+> For what I googled it looks like users wanted to get rid of 10ms jitter
+> caused by scheduler.
+
+Yes.  That was the use for the low_latency option. Historically, all
+of my drivers had supported the low_latency options for customers that
+found scheduling delays to be a problem.
+
+However, low_latency has been broken in certain contexts for a long
+time. As a result, drivers have to avoid using it either completely or
+sometimes only where rx data is handled in certain contexts.
+
+For some drivers the end result of that is that you can choose either
+a low-latency I/O mechanism or low-latency TTY layer rx handling, but
+you can't use both at the same time because the low-latency I/O
+mechanism handles rx data in a context where low-latency TTY layer
+stuff can't be used.
+
+Now that HZ is often 1000 and tickless is commonly used, I don't think
+the scheduling delay is nearly as much an issue as it used to be.  I
+haven't gotten any complaints since it was largely rendered useless
+several years ago.
+
+Now all my drivers will silently override users if they set the
+low_latency flag on a port in situations where it can't be used.
+
+-- 
+Grant Edwards               grant.b.edwards        Yow! OVER the underpass!
+                                  at               UNDER the overpass!
+                              gmail.com            Around the FUTURE and
+                                                   BEYOND REPAIR!!
+
