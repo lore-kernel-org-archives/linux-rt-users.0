@@ -1,28 +1,80 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: 3.12.9-rt13: BUG: soft lockup
-Date: Wed, 19 Feb 2014 10:50:29 +0100 (CET)
-Message-ID: <alpine.DEB.2.02.1402191049260.4468@ionos.tec.linutronix.de>
-References: <52FBF2F1.8040504@localhost> <alpine.DEB.2.02.1402132324230.21991@ionos.tec.linutronix.de> <52FD4D89.2000207@localhost> <alpine.DEB.2.02.1402140053000.21991@ionos.tec.linutronix.de> <52FDB71F.2020000@ccrma.stanford.edu>
- <alpine.DEB.2.02.1402141040460.21991@ionos.tec.linutronix.de> <52FE6681.8090807@ccrma.stanford.edu>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] kernel/hrtimer: be non-freezeable in cpu_chill()
+Date: Wed, 19 Feb 2014 12:53:53 +0100
+Message-ID: <20140219115353.GA28909@linutronix.de>
+References: <20140205115125.3cc950ce@gandalf.local.home>
+ <20140207113006.GD23668@linutronix.de>
+ <20140207090834.72774272@gandalf.local.home>
+ <20140207091313.097f9059@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
 	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+	Ulrich Obergfell <uobergfe@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <52FE6681.8090807@ccrma.stanford.edu>
+Content-Disposition: inline
+In-Reply-To: <20140207091313.097f9059@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 14 Feb 2014, Fernando Lopez-Lezcano wrote:
-> I could try to boot one of the machines into 3.12.xrtyy, replicate the
-> conditions and wait. What should I look for if I can catch this in the act?
+Since we replaced msleep() by hrtimer I see now and then (rarely) this:
 
-dmesg and sysrq-t output would be a good start I guess.
+| [....] Waiting for /dev to be fully populated...
+| =====================================
+| [ BUG: udevd/229 still has locks held! ]
+| 3.12.11-rt17 #23 Not tainted
+| -------------------------------------
+| 1 lock held by udevd/229:
+|  #0:  (&type->i_mutex_dir_key#2){+.+.+.}, at: lookup_slow+0x28/0x98
+|
+| stack backtrace:
+| CPU: 0 PID: 229 Comm: udevd Not tainted 3.12.11-rt17 #23
+| (unwind_backtrace+0x0/0xf8) from (show_stack+0x10/0x14)
+| (show_stack+0x10/0x14) from (dump_stack+0x74/0xbc)
+| (dump_stack+0x74/0xbc) from (do_nanosleep+0x120/0x160)
+| (do_nanosleep+0x120/0x160) from (hrtimer_nanosleep+0x90/0x110)
+| (hrtimer_nanosleep+0x90/0x110) from (cpu_chill+0x30/0x38)
+| (cpu_chill+0x30/0x38) from (dentry_kill+0x158/0x1ec)
+| (dentry_kill+0x158/0x1ec) from (dput+0x74/0x15c)
+| (dput+0x74/0x15c) from (lookup_real+0x4c/0x50)
+| (lookup_real+0x4c/0x50) from (__lookup_hash+0x34/0x44)
+| (__lookup_hash+0x34/0x44) from (lookup_slow+0x38/0x98)
+| (lookup_slow+0x38/0x98) from (path_lookupat+0x208/0x7fc)
+| (path_lookupat+0x208/0x7fc) from (filename_lookup+0x20/0x60)
+| (filename_lookup+0x20/0x60) from (user_path_at_empty+0x50/0x7c)
+| (user_path_at_empty+0x50/0x7c) from (user_path_at+0x14/0x1c)
+| (user_path_at+0x14/0x1c) from (vfs_fstatat+0x48/0x94)
+| (vfs_fstatat+0x48/0x94) from (SyS_stat64+0x14/0x30)
+| (SyS_stat64+0x14/0x30) from (ret_fast_syscall+0x0/0x48)
 
-Thanks,
+For now I see no better way but to disable the freezer for the sleep period.
 
-	tglx
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/hrtimer.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 5c26d2c..083815d 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1899,8 +1899,12 @@ void cpu_chill(void)
+ 	struct timespec tu = {
+ 		.tv_nsec = NSEC_PER_MSEC,
+ 	};
++	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
+ 
++	current->flags |= PF_NOFREEZE;
+ 	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	if (!freeze_flag)
++		current->flags &= ~PF_NOFREEZE;
+ }
+ EXPORT_SYMBOL(cpu_chill);
+ #endif
+-- 
+1.9.0.rc3
