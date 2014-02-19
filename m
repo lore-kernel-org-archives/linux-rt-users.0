@@ -1,106 +1,99 @@
-From: Stanislaw Gruszka <sgruszka@redhat.com>
-Subject: Re: locking changes in tty broke low latency feature
-Date: Wed, 19 Feb 2014 14:03:09 +0100
-Message-ID: <20140219130308.GC1851@redhat.com>
-References: <20140218093829.GC1741@redhat.com>
- <5303DABD.9000302@hurleysoftware.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT] kernel/hrtimer: be non-freezeable in cpu_chill()
+Date: Wed, 19 Feb 2014 10:27:00 -0500
+Message-ID: <20140219102700.04de1195@gandalf.local.home>
+References: <20140205115125.3cc950ce@gandalf.local.home>
+	<20140207113006.GD23668@linutronix.de>
+	<20140207090834.72774272@gandalf.local.home>
+	<20140207091313.097f9059@gandalf.local.home>
+	<20140219115353.GA28909@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>,
-	Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net>
-To: Peter Hurley <peter@hurleysoftware.com>
-Return-path: <linux-serial-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5303DABD.9000302@hurleysoftware.com>
-Sender: linux-serial-owner@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	John Kacur <jkacur@redhat.com>,
+	Ulrich Obergfell <uobergfe@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140219115353.GA28909@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On Wed, 19 Feb 2014 12:53:53 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-On Tue, Feb 18, 2014 at 05:12:13PM -0500, Peter Hurley wrote:
-> On 02/18/2014 04:38 AM, Stanislaw Gruszka wrote:
-> >Hi,
-> >
-> >setserial has low_latency option which should minimize receive latency
-> >(scheduler delay). AFAICT it is used if someone talk to external device
-> >via RS-485/RS-232 and need to have quick requests and responses . On
-> >kernel this feature was implemented by direct tty processing from
-> >interrupt context:
-> >
-> >void tty_flip_buffer_push(struct tty_port *port)
-> >{
-> >         struct tty_bufhead *buf = &port->buf;
-> >
-> >         buf->tail->commit = buf->tail->used;
-> >
-> >         if (port->low_latency)
-> >                 flush_to_ldisc(&buf->work);
-> >         else
-> >                 schedule_work(&buf->work);
-> >}
-> >
-> >But after 3.12 tty locking changes, calling flush_to_ldisc() from
-> >interrupt context is a bug (we got scheduling while atomic bug report
-> >here: https://bugzilla.redhat.com/show_bug.cgi?id=1065087 )
-> >
-> >I'm not sure how this should be solved. After Peter get rid all of those
-> >race condition in tty layer, we probably don't want go back to use
-> >spin_lock's there. Maybe we can create WQ_HIGHPRI workqueue and schedule
-> >flush_to_ldisc() work there. Or perhaps users that need to low latency,
-> >should switch to thread irq and prioritize serial irq to meat
-> >retirements. Anyway setserial low_latency is now broken and all who use
-> >this feature in the past can not do this any longer on 3.12+ kernels.
-> >
-> >Thoughts ?
+> Since we replaced msleep() by hrtimer I see now and then (rarely) this:
 > 
-> Can you give me an idea of your device's average and minimum required
-> latency (please be specific)?  Is your target arch x86 [so I can evaluate the
-> the impact of bus-locked instructions relative to your expected]?
+> | [....] Waiting for /dev to be fully populated...
+> | =====================================
+> | [ BUG: udevd/229 still has locks held! ]
+> | 3.12.11-rt17 #23 Not tainted
+> | -------------------------------------
+> | 1 lock held by udevd/229:
+> |  #0:  (&type->i_mutex_dir_key#2){+.+.+.}, at: lookup_slow+0x28/0x98
+> |
+> | stack backtrace:
+> | CPU: 0 PID: 229 Comm: udevd Not tainted 3.12.11-rt17 #23
+> | (unwind_backtrace+0x0/0xf8) from (show_stack+0x10/0x14)
+> | (show_stack+0x10/0x14) from (dump_stack+0x74/0xbc)
+> | (dump_stack+0x74/0xbc) from (do_nanosleep+0x120/0x160)
+> | (do_nanosleep+0x120/0x160) from (hrtimer_nanosleep+0x90/0x110)
+> | (hrtimer_nanosleep+0x90/0x110) from (cpu_chill+0x30/0x38)
+> | (cpu_chill+0x30/0x38) from (dentry_kill+0x158/0x1ec)
+> | (dentry_kill+0x158/0x1ec) from (dput+0x74/0x15c)
+> | (dput+0x74/0x15c) from (lookup_real+0x4c/0x50)
+> | (lookup_real+0x4c/0x50) from (__lookup_hash+0x34/0x44)
+> | (__lookup_hash+0x34/0x44) from (lookup_slow+0x38/0x98)
+> | (lookup_slow+0x38/0x98) from (path_lookupat+0x208/0x7fc)
+> | (path_lookupat+0x208/0x7fc) from (filename_lookup+0x20/0x60)
+> | (filename_lookup+0x20/0x60) from (user_path_at_empty+0x50/0x7c)
+> | (user_path_at_empty+0x50/0x7c) from (user_path_at+0x14/0x1c)
+> | (user_path_at+0x14/0x1c) from (vfs_fstatat+0x48/0x94)
+> | (vfs_fstatat+0x48/0x94) from (SyS_stat64+0x14/0x30)
+> | (SyS_stat64+0x14/0x30) from (ret_fast_syscall+0x0/0x48)
 > 
-> Also, how painful would it be if unsupported termios changes were rejected
-> if the port was in low_latency mode and/or if low_latency setting was
-> disallowed because of termios state?
+> For now I see no better way but to disable the freezer for the sleep period.
+
+Hmm, I wonder if this is because msleep() sets the tasks state to
+TASK_UNINTERRUPTIBLE, and hrtimer_nanosleep sets it to
+TASK_INTERRUPTIBLE.
+
 > 
-> It would be pointless to throttle low_latency, yes?
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  kernel/hrtimer.c | 4 ++++
+>  1 file changed, 4 insertions(+)
 > 
-> What would be an acceptable outcome of being unable to accept input?
-> Corrupted overrun? Dropped i/o? Queued for later? Please explain with
-> comparison to the outcome of missed minimum latency.
+> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+> index 5c26d2c..083815d 100644
+> --- a/kernel/hrtimer.c
+> +++ b/kernel/hrtimer.c
+> @@ -1899,8 +1899,12 @@ void cpu_chill(void)
+>  	struct timespec tu = {
+>  		.tv_nsec = NSEC_PER_MSEC,
+>  	};
+> +	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
+>  
+> +	current->flags |= PF_NOFREEZE;
+>  	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+> +	if (!freeze_flag)
+> +		current->flags &= ~PF_NOFREEZE;
 
-I'm sorry, I can not answer your questions.
+We could remove the branch with:
 
-For what I googled it looks like users wanted to get rid of 10ms jitter
-caused by scheduler. Unfortunately that is all I know. I'm not user of
-this feature and I don't know what are exact expectations. I'm adding Hal,
-who reported bug to RH bugzilla, perhaps he can tell more about what
-expectations are.
+	current->flags &= ~PF_NOFREEZE | freeze_flag;
 
-For now, since issue is not easy fixable, perhaps we should just fix
-scheduling while atomic bug and add warning like on below patch ?
+But as we just slept for a millisecond, that optimization may not be
+worth anything ;-)
 
-Thanks
-Stanislaw
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
 
-diff --git a/drivers/tty/tty_buffer.c b/drivers/tty/tty_buffer.c
-index 765125d..0fe6d65 100644
---- a/drivers/tty/tty_buffer.c
-+++ b/drivers/tty/tty_buffer.c
-@@ -504,9 +504,13 @@ void tty_flip_buffer_push(struct tty_port *port)
- 
- 	buf->tail->commit = buf->tail->used;
- 
--	if (port->low_latency)
--		flush_to_ldisc(&buf->work);
--	else
-+	if (port->low_latency) {
-+		if (WARN_ONCE(in_irq() || irqs_disabled(),
-+			      "serial low_latency feature can not be used in interrupt context"))
-+			schedule_work(&buf->work);
-+		else
-+			flush_to_ldisc(&buf->work);
-+	} else
- 		schedule_work(&buf->work);
- }
- EXPORT_SYMBOL(tty_flip_buffer_push);
+-- Steve
+
+>  }
+>  EXPORT_SYMBOL(cpu_chill);
+>  #endif
