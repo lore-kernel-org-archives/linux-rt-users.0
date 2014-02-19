@@ -1,80 +1,77 @@
-From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+From: Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net>
 Subject: Re: locking changes in tty broke low latency feature
-Date: Wed, 19 Feb 2014 21:42:42 +0000
-Message-ID: <20140219214242.406e705b@alan.etchedpixels.co.uk>
-References: <20140218093829.GC1741@redhat.com>
-	<5303DABD.9000302@hurleysoftware.com>
-	<20140219130308.GC1851@redhat.com>
-	<le2nmd$p1$1@ger.gmane.org>
-	<5304EC33.5040502@hurleysoftware.com>
-	<20140219191717.486ac4d0@alan.etchedpixels.co.uk>
-	<53051276.2070601@hurleysoftware.com>
+Date: Wed, 19 Feb 2014 15:06:23 -0800
+Message-ID: <20140219230623.736E8406062@ip-64-139-1-69.sjc.megapath.net>
+References: <sgruszka@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Grant Edwards <grant.b.edwards@gmail.com>,
-	linux-serial@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Stanislaw Gruszka <sgruszka@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>,
+	Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net>
 To: Peter Hurley <peter@hurleysoftware.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <53051276.2070601@hurleysoftware.com>
+In-Reply-To: Message from Stanislaw Gruszka <sgruszka@redhat.com>
+   of "Wed, 19 Feb 2014 14:03:09 +0100." <20140219130308.GC1851@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-> > Because low latency is about *turn around* time. There are plenty of
-> > protocols that can flow control, do flow control and want low latency
-> > because they are not windowed. It's not mutually exclusive by any means.
-> 
-> But if it's all about turn around time, how can the situation devolve to
-> needing throttling in the first place?  For N_TTY, throttling only happens
-> when the read queue is close to overflow (only 128 bytes left in 4k buffer).
+> Can you give me an idea of your device's average and minimum required
+> latency (please be specific)?  Is your target arch x86 [so I can evaluate the
+> the impact of bus-locked instructions relative to your expected]?
 
-Because if we are on the uplink end of a dumb protocol then our flow ends
-up as
+The code I'm familiar with is ntpd and gpsd.  They run on almost any hardware 
+or OS and talk to a wide collection of devices.
 
-< 4K in
-		read
-rest of block
-		read
-		block complete
-		write Y
+There is no hard requirement for latency.  They just work better with lower 
+latency.  The lower the better.
 
-until at some point sods law decrees that we do a big load of disk
-writes, an SMM event steals the processor, firefox garbage collects or
-somesuch and we go
+People gripe about the latency due to USB polling which is about a ms.
 
-4K in
-		throttle
-		flow control
+I can easily notice a few 10s of microseconds.  I probably wouldn't notice a 
+few microseconds, but there are people who would.  The latency isn't 
+critical, it's the jitter.  (ntpd has fudge factors to correct for a fixed 
+offset.)  Yes, down at the microsecond level luck-of-the-cache is important.
 
 
-It only has to happen *once*, not every time to screw stuff up.
+> Also, how painful would it be if unsupported termios changes were rejected
+> if the port was in low_latency mode and/or if low_latency setting was
+> disallowed because of termios state?
 
-> If the reader isn't pulling _all_ the data out the instant it's woken,
-> trying to trim off one worker wakeup (by processing input at interrupt time)
-> is pointless.
+What does "unsupported termios changes" mean?
 
-No - because of the statistical corner cases. The standard Linux is not
-remotely hard real time, and even if it were most of the tools involved
-are not.
+ntpd has only a few places where it opens a serial port.  I'll collect a list 
+of the options that are used if that will help.  The common cases are either 
+raw binary, or lines of text.  It doesn't need any fancy editing.
 
-> > Low latency goes back to the days of flip buffers, bottom halves an a
-> > 100Hz clock. There are certainly better ways to do it now if its needed.
-> 
-> Still, as you've pointed out a couple of times, maybe there's a limited
-> fastpath that's easy and simple. That's why I was asking about throttling
-> because it's evaluated even for raw mode.
 
-Even if there isn't the goal of low latency was always 'get stuff to
-happen soon' not 'get stuff to happen in the IRQ handler' If you have the
-tty processing happening immediately after the IRQ returns when
-low_latency is set I'm sure the numbers will be just fine and as good as
-historically.
+> It would be pointless to throttle low_latency, yes?
 
-Whether you can always do that I guess depends what happens on really
-slow boxes if you don't do any deferral - eg on Geert's Amiga.
+What does "throttle" mean?  If you mean what I call flow-control, then no, 
+it's not interesting.
 
-Flow control even in raw mode is expected Unix behaviour. However do we
-ever need to evaluate it if the tty termios has IXON and CRTSCTS clear ?
+There shouldn't be any problem with ntpd or gpsd grabbing all the data 
+promptly.
 
-Alan
+
+> What would be an acceptable outcome of being unable to accept input?
+> Corrupted overrun? Dropped i/o? Queued for later? Please explain with
+> comparison to the outcome of missed minimum latency.
+
+Corruption would be evil.  Longer latency would be OK, especially if it 
+didn't happen often.  (ntpd has code to discard outliers.)  3% of the time 
+would probably not be a problem.  25% might cause problems.
+
+We can allocate a bigger buffer if that helps.
+
+--------
+
+gpsd uses TIOCMIWAIT to get a wakeup from a PPS signal connected to a modem 
+control line.  That path might have the same problem and/or some ideas on how 
+to handle the data case.
+
+
+
+-- 
+These are my opinions.  I hate spam.
