@@ -1,108 +1,100 @@
 From: Peter Hurley <peter@hurleysoftware.com>
 Subject: Re: locking changes in tty broke low latency feature
-Date: Wed, 19 Feb 2014 21:19:56 -0500
-Message-ID: <5305664C.7080701@hurleysoftware.com>
-References: <20140218093829.GC1741@redhat.com>	<5303DABD.9000302@hurleysoftware.com>	<20140219130308.GC1851@redhat.com>	<le2nmd$p1$1@ger.gmane.org>	<5304EC33.5040502@hurleysoftware.com>	<20140219191717.486ac4d0@alan.etchedpixels.co.uk>	<53051276.2070601@hurleysoftware.com> <20140219214242.406e705b@alan.etchedpixels.co.uk>
+Date: Wed, 19 Feb 2014 21:55:21 -0500
+Message-ID: <53056E99.9070900@hurleysoftware.com>
+References: <20140219230623.736E8406062@ip-64-139-1-69.sjc.megapath.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Grant Edwards <grant.b.edwards@gmail.com>,
-	linux-serial@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Cc: Stanislaw Gruszka <sgruszka@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+To: Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net>
 Return-path: <linux-serial-owner@vger.kernel.org>
-In-Reply-To: <20140219214242.406e705b@alan.etchedpixels.co.uk>
+In-Reply-To: <20140219230623.736E8406062@ip-64-139-1-69.sjc.megapath.net>
 Sender: linux-serial-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 02/19/2014 04:42 PM, One Thousand Gnomes wrote:
-> It only has to happen *once*, not every time to screw stuff up.
+On 02/19/2014 06:06 PM, Hal Murray wrote:
+>> Can you give me an idea of your device's average and minimum required
+>> latency (please be specific)?  Is your target arch x86 [so I can evaluate the
+>> the impact of bus-locked instructions relative to your expected]?
 >
->> If the reader isn't pulling _all_ the data out the instant it's woken,
->> trying to trim off one worker wakeup (by processing input at interrupt time)
->> is pointless.
+> The code I'm familiar with is ntpd and gpsd.  They run on almost any hardware
+> or OS and talk to a wide collection of devices.
 >
-> No - because of the statistical corner cases. The standard Linux is not
-> remotely hard real time, and even if it were most of the tools involved
-> are not.
-
-Ok, so this is still only about "best effort", and really bad
-worst case behavior (that the tty core has no control over) is ok.
-
-Going to great lengths to trim one wakeup when nouveau disables interrupts
-for 2ms seemed like a waste of time.
-
->>> Low latency goes back to the days of flip buffers, bottom halves an a
->>> 100Hz clock. There are certainly better ways to do it now if its needed.
->>
->> Still, as you've pointed out a couple of times, maybe there's a limited
->> fastpath that's easy and simple. That's why I was asking about throttling
->> because it's evaluated even for raw mode.
+> There is no hard requirement for latency.  They just work better with lower
+> latency.  The lower the better.
 >
-> Even if there isn't the goal of low latency was always 'get stuff to
-> happen soon' not 'get stuff to happen in the IRQ handler' If you have the
-> tty processing happening immediately after the IRQ returns when
-> low_latency is set I'm sure the numbers will be just fine and as good as
-> historically.
+> People gripe about the latency due to USB polling which is about a ms.
+
+Have you tried 3.12+ without low_latency? I ripped out a lot of locks
+from 3.12+ so it's possible it already meets your requirements.
+
+> I can easily notice a few 10s of microseconds.  I probably wouldn't notice a
+> few microseconds, but there are people who would.  The latency isn't
+> critical, it's the jitter.  (ntpd has fudge factors to correct for a fixed
+> offset.)  Yes, down at the microsecond level luck-of-the-cache is important.
+
+Hopefully you meant "milliseconds" here; single-digit microsecond latency on
+any kind of stable duty cycle is linux-rt territory, and simply not a reasonable
+goal for mainline.
+
+The jitter is all scheduler and since the user-space app is sleeping waiting
+for input, there's nothing the tty core can do about that. Removing one
+mandatory scheduling wakeup _may_ help latency, but will probably not make
+much difference regarding jitter.
+
+>> Also, how painful would it be if unsupported termios changes were rejected
+>> if the port was in low_latency mode and/or if low_latency setting was
+>> disallowed because of termios state?
 >
-> Whether you can always do that I guess depends what happens on really
-> slow boxes if you don't do any deferral - eg on Geert's Amiga.
+> What does "unsupported termios changes" mean?
 
-Sure.
+For example, once the port is in low_latency mode, setting L_ECHO (and its ilk)
+would be rejected. And vice versa, if the L_ECHO is set in termios, low_latency
+would be rejected.
 
-I think _some_ effort will yield positive results. For example,
-in flush_to_ldisc():
+So running a vt console is low_latency mode is not going to work.
 
-  	if (disc == NULL)
-  		return;
+> ntpd has only a few places where it opens a serial port.  I'll collect a list
+> of the options that are used if that will help.  The common cases are either
+> raw binary, or lines of text.  It doesn't need any fancy editing.
+>
+>
+>> It would be pointless to throttle low_latency, yes?
+>
+> What does "throttle" mean?  If you mean what I call flow-control, then no,
+> it's not interesting.
 
--	mutex_lock(&buf->lock);
-+	if (!mutex_trylock(&buf->lock))
-+		goto deref;
+Yes, whatever the driver currently considers flow-control. The core is
+agnostic about the mechanism; throttling is the generic requirement.
 
-  	while (1) {
-  		struct tty_buffer *head = buf->head;
+> There shouldn't be any problem with ntpd or gpsd grabbing all the data
+> promptly.
 
-	.....
+Ok.
 
-  	mutex_unlock(&buf->lock);
--
-+ deref:
-  	tty_ldisc_deref(disc);
-  }
+>> What would be an acceptable outcome of being unable to accept input?
+>> Corrupted overrun? Dropped i/o? Queued for later? Please explain with
+>> comparison to the outcome of missed minimum latency.
+>
+> Corruption would be evil.  Longer latency would be OK, especially if it
+> didn't happen often.  (ntpd has code to discard outliers.)  3% of the time
+> would probably not be a problem.  25% might cause problems.
+>
+> We can allocate a bigger buffer if that helps.
 
-This change makes flush_to_ldisc() itself safely callable from
-interrupt context, and:
-1. doesn't lose data (ie., buffers if the ldisc is filling up)
-2. automatically picks the optimum handling whether the input worker
-    is running or not
-3. doesn't require more locks to exclude flushing or the input worker
+No need, I already solved this step.
 
-This still leaves fixing termios lock, properly handling throttling
-and the exclusion logic for incompatible termios options and low_latency.
+> gpsd uses TIOCMIWAIT to get a wakeup from a PPS signal connected to a modem
+> control line.  That path might have the same problem and/or some ideas on how
+> to handle the data case.
 
-[For this change to work properly, I still need to solve a race where
-the driver has just updated the commit marker but can't grab the buf
-lock because tty_buffer_flush() still has the lock but has already
-performed the flush -- in this case, the work needs to be restarted
-or something because there's still data in the buffer that needs
-processing. There's plenty of possible solutions to this; I'm thinking on
-which is the right one].
-
-> Flow control even in raw mode is expected Unix behaviour. However do we
-> ever need to evaluate it if the tty termios has IXON and CRTSCTS clear ?
-
-It doesn't right now because the assumption is that drivers can
-have a whole host of reasons why they want to throttle (the pty driver
-leaves it on permanently; the vt driver needs unthrottle to support
-paste that no one uses even though I fixed it).
-
-Putting aside for a moment the issue of termios safety inside
-the throttle and unthrottle driver methods, the exclusion locks here could
-be spinlocks if the drivers can be audited/fixed to not sleep here.
-
-Then that just leaves the termios lock, which is a non-trivial problem, and
-I'm not convinced RCU will magically fix it.
+What Alan said. low_latency has no impact on the handling of the PPS signal
+through DCD.
 
 Regards,
 Peter Hurley
+
