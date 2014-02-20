@@ -1,54 +1,73 @@
-From: Peter Hurley <peter@hurleysoftware.com>
+From: Grant Edwards <grant.b.edwards@gmail.com>
 Subject: Re: locking changes in tty broke low latency feature
-Date: Thu, 20 Feb 2014 17:06:08 -0500
-Message-ID: <53067C50.9010708@hurleysoftware.com>
-References: <20140219230623.736E8406062@ip-64-139-1-69.sjc.megapath.net> <53056E99.9070900@hurleysoftware.com> <53064672.3000807@hurleysoftware.com> <le5laq$40s$1@ger.gmane.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net>,
-	One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>,
-	Stanislaw Gruszka <sgruszka@redhat.com>
-To: Grant Edwards <grant.b.edwards@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailout32.mail01.mtsvc.net ([216.70.64.70]:57725 "EHLO
-	n23.mail01.mtsvc.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751350AbaBTWGN (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Feb 2014 17:06:13 -0500
-In-Reply-To: <le5laq$40s$1@ger.gmane.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Date: Thu, 20 Feb 2014 22:14:53 +0000 (UTC)
+Message-ID: <le5uot$si0$1@ger.gmane.org>
+References: <peter@hurleysoftware.com>
+ <20140220215541.7D694406062@ip-64-139-1-69.sjc.megapath.net>
+Cc: linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 02/20/2014 02:33 PM, Grant Edwards wrote:
-> On 2014-02-20, Peter Hurley <peter@hurleysoftware.com> wrote:
->> Sender completes 2000 loops in 160ms total run time;
->> that's 80us average per complete round-trip.
+On 2014-02-20, Hal Murray <murray+fedora@ip-64-139-1-69.sjc.megapath.net> wrote:
+
+> Let's go back to the big picture.  In the old old days, time sharing
+> systems had lots of serial ports.  It was common for the hardware to
+> buffer up several characters before requesting an interrupt in order
+> to reduce the CPU load.
+
+There were even serial boards that had a cooked "line mode" which
+buffered up a whole line of input: they handled limited line-editing
+and didn't interrupt the CPU until they saw 'enter' or 'ctrl-C'.
+
+> There was usually a bit in the hardware to bypass this if you thought
+> that response time was more important than CPU load.  I was expecting
+> low_latency to set that bit.
+
+It might.  That depends on whether the driver paid any attention to
+the low_latency flag.  IIRC, some did, some didn't.
+
+> Is that option even present in modern serial chips?
+
+Sure.  In pretty much all of the UARTs I know of, you can configure
+the rx FIFO threshold or disable the rx FIFO altogether [though
+setting the threshold to 1 is usually a better idea than disabling the
+rx FIFO].  At least one of my serial_core drivers looks at the
+low_latency flag and configure a lower rx FIFO threshold if it's set.
+
+> Do the various chips claiming to be 8250/16550 and friends correctly
+> implement all the details of the specs?
+
+What specs?
+
+> Many gigabit ethernet controllers have the same issue.  It's often
+> called interrupt coalescing.
 >
-> If I understand correctly, that 80us _includes_ the actual time for
-> the bits on the wire (which means the actual "baud rate" involved is
-> high enough that it's negligible).
+> What/why is the serial/scheduler doing differently in the low_latency
+> case?  What case does that help?
 
-Yes, 80us includes the transmit time.
+Back in the old days, when a serial driver pushed characters up to the
+tty layer it didn't immediately wake up a process that was blocking on
+a read().  AFAICT, that didn't happen until the next system tick. I'm
+not sure if that was just because the scheduler wasn't called until a
+tick happened, or if there was some intermediate tty-layer
+worker-thread that had to run.
 
->> I think this shows that low_latency is unnecessary and should
->> just be removed/ignored by the tty core.
->
-> If that's the sort of latency that you get for typical kernel
-> configurations for typical distros, then I agree that the low_latency
-> flag is not needed by the tty later.
+Setting the low_latency flag avoided that.
 
-Stock ubuntu kernel config but preempt and 250hz (and debugging stuff).
+When the driver pushed characters to the tty layer with the
+low_latency flag set, the user-space process that was blocking on
+read() would wake up "immediately". This potentially used up a lot
+more CPU time, since a user process that is reading a large block of
+data _might_ be woken up and then block again for every rx byte --
+assuming no rx FIFO.  Without the low_latency flag, the user process
+would wake up every 10ms and be handed 10ms worth of data.  (Back then
+HZ was always 100.)
 
-> However, it might still be useful for the lower-level tty or
-> serial-core driver to control CPU usage vs. latency trade-offs (for
-> exaple, one of my drivers uses it to decide where to set the rx FIFO
-> threshold).
+At least that's how I remember it...
 
-Sure, it could be left for driver consumption.
-
-Regards,
-Peter Hurley
-
+-- 
+Grant Edwards               grant.b.edwards        Yow! My EARS are GONE!!
+                                  at               
+                              gmail.com            
