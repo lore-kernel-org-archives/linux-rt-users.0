@@ -1,164 +1,71 @@
-From: Mike Galbraith <bitbucket@online.de>
-Subject: Re: [PATCH RT] fs: jbd2: pull your plug when waiting for space
-Date: Fri, 21 Feb 2014 14:54:12 +0100
-Message-ID: <1392990852.5451.178.camel@marge.simpson.net>
-References: <20140221123253.GA12822@linutronix.de>
+From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
+Subject: Re: locking changes in tty broke low latency feature
+Date: Fri, 21 Feb 2014 15:39:46 +0000
+Message-ID: <20140221153946.2bda2ef0@alan.etchedpixels.co.uk>
+References: <20140218093829.GC1741@redhat.com>
+	<5303DABD.9000302@hurleysoftware.com>
+	<20140219130308.GC1851@redhat.com>
+	<le2nmd$p1$1@ger.gmane.org>
+	<5304EC33.5040502@hurleysoftware.com>
+	<20140219191717.486ac4d0@alan.etchedpixels.co.uk>
+	<53051276.2070601@hurleysoftware.com>
+	<20140219214242.406e705b@alan.etchedpixels.co.uk>
+	<5305664C.7080701@hurleysoftware.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	tglx@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140221123253.GA12822@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Grant Edwards <grant.b.edwards@gmail.com>,
+	linux-serial@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Peter Hurley <peter@hurleysoftware.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from lxorguk.ukuu.org.uk ([81.2.110.251]:36387 "EHLO
+	lxorguk.ukuu.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932131AbaBUPkD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 21 Feb 2014 10:40:03 -0500
+In-Reply-To: <5305664C.7080701@hurleysoftware.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2014-02-21 at 13:32 +0100, Sebastian Andrzej Siewior wrote: 
-> Two cps in parallel managed to stall the the ext4 fs. It seems that
-> journal code is either waiting for locks or sleeping waiting for
-> something to happen. This seems similar to what Mike observed on ext3,
-> here is his description:
+> Ok, so this is still only about "best effort", and really bad
+> worst case behavior (that the tty core has no control over) is ok.
 > 
-> |With an -rt kernel, and a heavy sync IO load, tasks can jam
-> |up on journal locks without unplugging, which can lead to
-> |terminal IO starvation.  Unplug and schedule when waiting
-> |for space.
-> 
-> This is on v3.2-RT. This cp testcase triggers about once in four runs.
-> It did not trigger once in 20 runs on v3.12-RT.
+> Going to great lengths to trim one wakeup when nouveau disables interrupts
+> for 2ms seemed like a waste of time.
 
-In 3.0-rt, it could take ages to hit an IO deadlock.
-> This brings me to the question: could it been fixed in the meantime and
-> we not need the jbd patches in latest -RT is there a better testcase?
+If it used to work and it doesn't now it's a regression. It's also a
+nasty one if you've removed the facility for it.
 
-Dunno, suse QA does a simple but heavy dbench async then sync stress
-test, which would eventually lead to IO deadlock in 3.0-rt.  I dumped
-the pull your plug for jbd only patch in favor of the (stunningly
-beautiful) patch below, because XFS and others eventually deadlocked
-with crossed IO [ABBAXYZ] dependencies as well.
+> This change makes flush_to_ldisc() itself safely callable from
+> interrupt context, and:
+> 1. doesn't lose data (ie., buffers if the ldisc is filling up)
+> 2. automatically picks the optimum handling whether the input worker
+>     is running or not
+> 3. doesn't require more locks to exclude flushing or the input worker
 
-I haven't had time to do massive IO pounding in 3.12-rt yet, but the
-below got 3.0-rt over the IO hurdle, along with the one below that for
-btrfs, which lasted for about, oh, 2us without it.
+Yep
 
-Subject: rt: pull your plug before blocking
+> Putting aside for a moment the issue of termios safety inside
+> the throttle and unthrottle driver methods, the exclusion locks here could
+> be spinlocks if the drivers can be audited/fixed to not sleep here.
 
-Queued IO can lead to IO deadlock should a task require wakeup from as task
-which is blocked on that queued IO.
+That was basically insoluble when the lock first went in. We tried with a
+spinlock but a lot of USB widgets need to go and chatter with the device
+when you do flow control. Flow control is fundamentally ordered but
+asynchronous however so if the right fix was to make the USB dongles
+queue the work then no harm is done (and the queued flow control
+assertion would worst case be no different to a non queued one from a
+queued flush_to_ldisc)
 
-ext3: dbench1 queues a buffer, blocks on journal mutex, it's plug is not
-pulled.  dbench2 mutex owner is waiting for kjournald, who is waiting for
-the buffer queued by dbench1.  Game over.
+> Then that just leaves the termios lock, which is a non-trivial problem, and
+> I'm not convinced RCU will magically fix it.
 
-Signed-off-by: Mike Galbraith <efault@gmx.de>
----
- kernel/rtmutex.c |   18 ++++++++++++++++--
- 1 file changed, 16 insertions(+), 2 deletions(-)
+If you pass a snapshot of the termios state down then I think it does,
+but it's still not remotely trivial.
 
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -22,6 +22,7 @@
- #include <linux/sched/rt.h>
- #include <linux/timer.h>
- #include <linux/ww_mutex.h>
-+#include <linux/blkdev.h>
- 
- #include "rtmutex_common.h"
- 
-@@ -674,8 +675,18 @@ static inline void rt_spin_lock_fastlock
- 
- 	if (likely(rt_mutex_cmpxchg(lock, NULL, current)))
- 		rt_mutex_deadlock_account_lock(lock, current);
--	else
-+	else {
-+		/*
-+		 * We can't pull the plug if we're already holding a lock
-+		 * else we can deadlock.  eg, if we're holding slab_lock,
-+		 * ksoftirqd can block while processing BLOCK_SOFTIRQ after
-+		 * having acquired q->queue_lock.  If _we_ then block on
-+		 * that q->queue_lock while flushing our plug, deadlock.
-+		 */
-+		if (__migrate_disabled(current) < 2 && blk_needs_flush_plug(current))
-+			blk_schedule_flush_plug(current);
- 		slowfn(lock);
-+	}
- }
- 
- static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
-@@ -1275,8 +1286,11 @@ rt_mutex_fastlock(struct rt_mutex *lock,
- 	if (!detect_deadlock && likely(rt_mutex_cmpxchg(lock, NULL, current))) {
- 		rt_mutex_deadlock_account_lock(lock, current);
- 		return 0;
--	} else
-+	} else {
-+		if (blk_needs_flush_plug(current))
-+			blk_schedule_flush_plug(current);
- 		return slowfn(lock, state, NULL, detect_deadlock, ww_ctx);
-+	}
- }
- 
- static inline int
+First question though comes before all of this - and that is do we need
+low_latency at all any more or is the current scheduling logic now good
+enough to do the job anyway.
 
-
-
-Subject: rt,fs,btrfs: fix rt deadlock on extent_buffer->lock
-
-Trivially repeatable deadlock is cured by enabling lockdep code in
-btrfs_clear_path_blocking() as suggested by Chris Mason.  He also
-suggested restricting blocking reader count to one, and not allowing
-a spinning reader while blocking reader exists.  This has proven to
-be unnecessary, the strict lock order enforcement is enough.. or
-rather that's my box's opinion after long hours of hard pounding.
-
-Note: extent-tree.c bit is additional recommendation from Chris
-      Mason, split into a separate patch after discussion.
-
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Cc: Chris Mason <chris.mason@fusionio.com>
----
-fs/btrfs/ctree.c       |    4 ++--
-fs/btrfs/extent-tree.c |    8 --------
-2 files changed, 2 insertions(+), 10 deletions(-)
-
---- a/fs/btrfs/ctree.c
-+++ b/fs/btrfs/ctree.c
-@@ -81,7 +81,7 @@ noinline void btrfs_clear_path_blocking(
-{
-int i;
-
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) ||
-defined(CONFIG_PREEMPT_RT_BASE))
-/* lockdep really cares that we take all of these spinlocks
-* in the right order.  If any of the locks in the path are not
-* currently blocking, it is going to complain.  So, make really
-@@ -108,7 +108,7 @@ noinline void btrfs_clear_path_blocking(
-}
-}
-
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) ||
-defined(CONFIG_PREEMPT_RT_BASE))
-if (held)
-btrfs_clear_lock_blocking_rw(held, held_rw);
-#endif
---- a/fs/btrfs/extent-tree.c
-+++ b/fs/btrfs/extent-tree.c
-@@ -6899,14 +6899,6 @@ use_block_rsv(struct btrfs_trans_handle
-goto again;
-}
-
-- if (btrfs_test_opt(root, ENOSPC_DEBUG)) {
-- static DEFINE_RATELIMIT_STATE(_rs,
-- DEFAULT_RATELIMIT_INTERVAL * 10,
-- /*DEFAULT_RATELIMIT_BURST*/ 1);
-- if (__ratelimit(&_rs))
-- WARN(1, KERN_DEBUG
-- "btrfs: block rsv returned %d\n", ret);
-- }
-try_reserve:
-ret = reserve_metadata_bytes(root, block_rsv, blocksize,
-     BTRFS_RESERVE_NO_FLUSH);
+Alan
