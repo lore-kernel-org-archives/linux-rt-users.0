@@ -1,71 +1,38 @@
 From: One Thousand Gnomes <gnomes@lxorguk.ukuu.org.uk>
 Subject: Re: locking changes in tty broke low latency feature
-Date: Fri, 21 Feb 2014 15:39:46 +0000
-Message-ID: <20140221153946.2bda2ef0@alan.etchedpixels.co.uk>
-References: <20140218093829.GC1741@redhat.com>
-	<5303DABD.9000302@hurleysoftware.com>
-	<20140219130308.GC1851@redhat.com>
-	<le2nmd$p1$1@ger.gmane.org>
-	<5304EC33.5040502@hurleysoftware.com>
-	<20140219191717.486ac4d0@alan.etchedpixels.co.uk>
-	<53051276.2070601@hurleysoftware.com>
-	<20140219214242.406e705b@alan.etchedpixels.co.uk>
-	<5305664C.7080701@hurleysoftware.com>
+Date: Fri, 21 Feb 2014 15:43:54 +0000
+Message-ID: <20140221154354.5b1d8969@alan.etchedpixels.co.uk>
+References: <peter@hurleysoftware.com>
+	<20140220215541.7D694406062@ip-64-139-1-69.sjc.megapath.net>
+	<le5uot$si0$1@ger.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Grant Edwards <grant.b.edwards@gmail.com>,
-	linux-serial@vger.kernel.org, linux-kernel@vger.kernel.org,
+Cc: linux-kernel@vger.kernel.org, linux-serial@vger.kernel.org,
 	linux-rt-users@vger.kernel.org
-To: Peter Hurley <peter@hurleysoftware.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from lxorguk.ukuu.org.uk ([81.2.110.251]:36387 "EHLO
-	lxorguk.ukuu.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932131AbaBUPkD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 21 Feb 2014 10:40:03 -0500
-In-Reply-To: <5305664C.7080701@hurleysoftware.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Grant Edwards <grant.b.edwards@gmail.com>
+Return-path: <linux-serial-owner@vger.kernel.org>
+In-Reply-To: <le5uot$si0$1@ger.gmane.org>
+Sender: linux-serial-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> Ok, so this is still only about "best effort", and really bad
-> worst case behavior (that the tty core has no control over) is ok.
-> 
-> Going to great lengths to trim one wakeup when nouveau disables interrupts
-> for 2ms seemed like a waste of time.
+> Back in the old days, when a serial driver pushed characters up to the
+> tty layer it didn't immediately wake up a process that was blocking on
+> a read().  AFAICT, that didn't happen until the next system tick. I'm
+> not sure if that was just because the scheduler wasn't called until a
+> tick happened, or if there was some intermediate tty-layer
+> worker-thread that had to run.
 
-If it used to work and it doesn't now it's a regression. It's also a
-nasty one if you've removed the facility for it.
+Historically the interrupt handler tried to get out of the interrupt as
+fast as possible and to do the minimum instruction count, because a 56K
+modem on a 486 with a typical 16450A UART was *tight* and also a use case
+everyone cared about.
 
-> This change makes flush_to_ldisc() itself safely callable from
-> interrupt context, and:
-> 1. doesn't lose data (ie., buffers if the ldisc is filling up)
-> 2. automatically picks the optimum handling whether the input worker
->     is running or not
-> 3. doesn't require more locks to exclude flushing or the input worker
+So historically the code worked on the basis that there were two buffers
+per tty. Each timer tick the kernel flipped the buffers over (hence the
+legancy flip naming here and thre), and processed the data.
 
-Yep
-
-> Putting aside for a moment the issue of termios safety inside
-> the throttle and unthrottle driver methods, the exclusion locks here could
-> be spinlocks if the drivers can be audited/fixed to not sleep here.
-
-That was basically insoluble when the lock first went in. We tried with a
-spinlock but a lot of USB widgets need to go and chatter with the device
-when you do flow control. Flow control is fundamentally ordered but
-asynchronous however so if the right fix was to make the USB dongles
-queue the work then no harm is done (and the queued flow control
-assertion would worst case be no different to a non queued one from a
-queued flush_to_ldisc)
-
-> Then that just leaves the termios lock, which is a non-trivial problem, and
-> I'm not convinced RCU will magically fix it.
-
-If you pass a snapshot of the termios state down then I think it does,
-but it's still not remotely trivial.
-
-First question though comes before all of this - and that is do we need
-low_latency at all any more or is the current scheduling logic now good
-enough to do the job anyway.
+We do need low latency to the drivers, for FIFO setting, DMA watermarks
+and for some USB dongles for configuring the packetising
 
 Alan
