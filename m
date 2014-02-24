@@ -1,44 +1,45 @@
-From: Grant Edwards <grant.b.edwards@gmail.com>
-Subject: Re: locking changes in tty broke low latency feature
-Date: Mon, 24 Feb 2014 15:44:59 +0000 (UTC)
-Message-ID: <lefpdr$br$1@ger.gmane.org>
-References: <20140219230623.736E8406062@ip-64-139-1-69.sjc.megapath.net>
- <53056E99.9070900@hurleysoftware.com> <53064672.3000807@hurleysoftware.com>
- <alpine.DEB.2.02.1402232330190.21251@ionos.tec.linutronix.de>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: linux-serial@vger.kernel.org
-Return-path: <linux-serial-owner@vger.kernel.org>
-Sender: linux-serial-owner@vger.kernel.org
+From: Joel Fernandes <joelf@ti.com>
+Subject: Ideas/suggestions to avoid repeated locking and reducing too many
+ lists with dmaengine?
+Date: Mon, 24 Feb 2014 13:03:32 -0600
+Message-ID: <530B9784.5060904@ti.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: Russell King - ARM Linux <linux@arm.linux.org.uk>,
+	Vinod Koul <vinod.koul@intel.com>,
+	Lars-Peter Clausen <lars@metafoo.de>
+To: "linux-arm-kernel@lists.infradead.org"
+	<linux-arm-kernel@lists.infradead.org>,
+	"linux-omap@vger.kernel.org" <linux-omap@vger.kernel.org>,
+	<linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2014-02-23, Thomas Gleixner <tglx@linutronix.de> wrote:
-> On Thu, 20 Feb 2014, Peter Hurley wrote:
+Hi folks,
 
->> Using Alan's idea to mock up a latency test, I threw together a test
->> jig using two computers running 3.14-rc1 and my fwserial driver
->> (modified to not aggregrate writes) in raw mode where the target does
->> this:
->
-> This is a complete pointless test.
+Just wanted your thoughts/suggestions on how we can avoid overhead in the EDMA
+dmaengine driver. I am seeing a lots of performance drop specially for small
+transfers with EDMA versus before raw EDMA was moved to DMAEngine framework
+(atleast 25%).
 
-No, it isn't.  It tested exactly what it was supposed to test: latency
-between the driver pushing bytes to the line discipline and user-space
-read waking up.
+One of the things I am thinking about is the repeated (spin) locking/unlocking
+of the virt_dma_chan->lock or vc->lock. In many cases, there's only 1 user or
+thread requiring to do a DMA, so I feel the locking is unnecessary and potential
+overhead. If there's a sane way to detect this an avoid locking altogether, that
+would be great.
 
-> Use a bog standard 8250 UART on the PC and connect a microcontroller
-> on the other end which serves you an continous stream of data at
-> 115200 Baud.
->
-> There is no way you can keep up with that without the low latency
-> option neither on old and nor on new machines if you have enough
-> other stuff going on in the system.
+ Also with respect to virt_dma (which is used by edma to manage all the
+descriptors and lists) there are too many lists: submitted, issued, completed
+etc and the descriptor moves from one to the other. I am thinking if there is a
+way we can avoid using so many lists and just have 2 lists and move the desc
+from one list to the other, That could avoid using the intermediate list
+altogether and classify dma requests as "done" or "not done".
 
-That makes no sense.  Enabling the low-latency option historically
-made it _harder_ to keep up since it caused more overhead in the form
-buffer processing and context switches.
+Since this involves discussing concurrency primitives, copying linux-rt-users as
+well.
 
--- 
-Grant Edwards               grant.b.edwards        Yow! Look into my eyes and
-                                  at               try to forget that you have
-                              gmail.com            a Macy's charge card!
-
+Thanks,
+-Joel
