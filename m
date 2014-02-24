@@ -1,8 +1,8 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
+From: Andy Gross <agross@codeaurora.org>
 Subject: Re: Ideas/suggestions to avoid repeated locking and reducing too
-	many lists with dmaengine?
-Date: Mon, 24 Feb 2014 19:21:52 +0000
-Message-ID: <20140224192152.GV27282@n2100.arm.linux.org.uk>
+ many lists with dmaengine?
+Date: Mon, 24 Feb 2014 14:50:28 -0600
+Message-ID: <20140224205028.GA24339@qualcomm.com>
 References: <530B9784.5060904@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
@@ -12,57 +12,42 @@ Cc: "linux-arm-kernel@lists.infradead.org"
 	linux-rt-users@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
 	Vinod Koul <vinod.koul@intel.com>,
-	Lars-Peter Clausen <lars@metafoo.de>
+	Lars-Peter Clausen <lars@metafoo.de>,
+	Russell King - ARM Linux <linux@arm.linux.org.uk>
 To: Joel Fernandes <joelf@ti.com>
-Return-path: <linux-omap-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
 In-Reply-To: <530B9784.5060904@ti.com>
-Sender: linux-omap-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Wrapping... (I've had to manually edit this.)
-
 On Mon, Feb 24, 2014 at 01:03:32PM -0600, Joel Fernandes wrote:
-> Just wanted your thoughts/suggestions on how we can avoid overhead in
-> the EDMA dmaengine driver. I am seeing a lots of performance drop
-> specially for small transfers with EDMA versus before raw EDMA was
-> moved to DMAEngine framework (atleast 25%).
+> Hi folks,
 > 
-> One of the things I am thinking about is the repeated (spin)
-> locking/unlocking of the virt_dma_chan->lock or vc->lock. In many
-> cases, there's only 1 user or thread requiring to do a DMA, so I
-> feel the locking is unnecessary and potential overhead. If there's
-> a sane way to detect this an avoid locking altogether, that
+> Just wanted your thoughts/suggestions on how we can avoid overhead in the EDMA
+> dmaengine driver. I am seeing a lots of performance drop specially for small
+> transfers with EDMA versus before raw EDMA was moved to DMAEngine framework
+> (atleast 25%).
+
+I've seen roughly the same drop in my testing.  In my case it had to do with the
+nature of how work is done using virt-dma.  The virt-dma is predicated on only
+letting one transaction be active at a time and it increases the latency for
+getting the next transaction off.  For large transactions, it's negligible.  But
+for small transactions, it is pretty evident.
+
+
+> One of the things I am thinking about is the repeated (spin) locking/unlocking
+> of the virt_dma_chan->lock or vc->lock. In many cases, there's only 1 user or
+> thread requiring to do a DMA, so I feel the locking is unnecessary and potential
+> overhead. If there's a sane way to detect this an avoid locking altogether, that
 > would be great.
 
-For the case where there's no contention, spinlocks /should/ be light.
-What will make them more expensive is if you have things like lockdep
-enabled, which adds much more code into those paths to do state tracking.
-It's a known side effect of using that debug.
+I'd expect the locking to not be the source of the problem, especially with
+your use case.
 
-So, if you're developing, then you should always have turned lockdep on.
-If you're testing for performance, you should have lockdep and spinlock
-debugging turned off.
-
->  Also with respect to virt_dma (which is used by edma to manage all the
-> descriptors and lists) there are too many lists: submitted, issued,
-> completed etc and the descriptor moves from one to the other. I am
-> thinking if there is a way we can avoid using so many lists and just
-> have 2 lists and move the desc from one list to the other, That could
-> avoid using the intermediate list altogether and classify dma requests
-> as "done" or "not done".
-
-The reason I created separate submitted and issued lists is that it's
-much easier to manage than having everything on a single list.
-
-We could deal with the submitted vs issued list, and that's to have the
-channel store the cookie for the last issued descriptor - but I wonder
-if it's worth the effort.
-
-What I'd suggest is to try some profiling, and post some profiling
-results which show where the problems are, rather than pointing at
-bits of code you might not particularly like.
+[snip]
 
 -- 
-FTTC broadband for 0.8mile line: now at 9.7Mbps down 460kbps up... slowly
-improving, and getting towards what was expected from it.
+sent by an employee of the Qualcomm Innovation Center, Inc.
+The Qualcomm Innovation Center, Inc. is a member of the Code Aurora Forum,
+hosted by The Linux Foundation
