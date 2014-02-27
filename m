@@ -1,49 +1,60 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.55-rt78
-Date: Wed, 26 Feb 2014 21:48:15 -0500
-Message-ID: <20140226214815.0d03efda@gandalf.local.home>
+Subject: Re: Query about might_sleep()
+Date: Wed, 26 Feb 2014 21:55:06 -0500
+Message-ID: <20140226215506.246b9124@gandalf.local.home>
+References: <CALY8T6p-=jxix2Hr+HTHitcutzn33ETV2zFtStPkWttca5o9dA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: doug lkml <doug.lkml@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:63012 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754482AbaB0CzI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 26 Feb 2014 21:55:08 -0500
+In-Reply-To: <CALY8T6p-=jxix2Hr+HTHitcutzn33ETV2zFtStPkWttca5o9dA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Wed, 26 Feb 2014 12:25:53 +0530
+doug lkml <doug.lkml@gmail.com> wrote:
 
-Dear RT Folks,
+> for example
+> 
+>  __might_sleep
+>  rt_spin_lock
+> some_fucnction() --> which has a
+> local_irq_save(flags)/local_irq_irqrestore(flags).
+> 
+> This could be a potential bug right?
 
-I'm pleased to announce the 3.2.55-rt78 stable release.
+Not that I see.
 
+In -rt, we convert all spin_locks() into rt_mutex() which means they
+might sleep on contention. We do not convert raw_spin_locks(), they
+stay the same both in mainline and -rt.
 
-This release is just an update to the new stable 3.2.55 version
-and no RT specific changes have been made.
+The following is OK:
 
+  rt_mutex()
+    __might_sleep()
+    some_function()
+      local_irq_save()
+      local_irq_restore()
 
-You can get this release via the git tree at:
+Indention show what calls what.
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+But if you have:
 
-  branch: v3.2-rt
-  Head SHA1: bb9d84236c5dd8755164743d91722b54d8f0f77e
+  local_irq_save()
+  some_function();
+    rt_mutex();
+  local_irq_restore();
 
+Now the above *is* a bug.
 
-Or to build 3.2.55-rt78 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.55.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.55-rt78.patch.xz
-
-
-
-
-Enjoy,
+Is that what you are asking?
 
 -- Steve
