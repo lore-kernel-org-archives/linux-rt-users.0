@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/11] arm/unwind: use a raw_spin_lock
-Date: Fri, 28 Feb 2014 08:35:02 -0500
-Message-ID: <20140228133536.322928721@goodmis.org>
+Subject: [PATCH RT 02/11] timer: Raise softirq if theres irq_work
+Date: Fri, 28 Feb 2014 08:34:56 -0500
+Message-ID: <20140228133535.517092525@goodmis.org>
 References: <20140228133454.373761937@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -12,7 +12,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-arm-unwind-use-a-raw_spin_lock.patch
+Content-Disposition: inline; filename=0002-timer-Raise-softirq-if-there-s-irq_work.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -21,88 +21,51 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Mostly unwind is done with irqs enabled however SLUB may call it with
-irqs disabled while creating a new SLUB cache.
+[ Talking with Sebastian on IRC, it seems that doing the irq_work_run()
+  from the interrupt in -rt is a bad thing. Here we simply raise the
+  softirq if there's irq work to do. This too boots on my i7 ]
 
-I had system freeze while loading a module which called
-kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
-interrupts and then
+After trying hard to figure out why my i7 box was locking up with the
+new active_timers code, that does not run the timer softirq if there
+are no active timers, I took an extra look at the softirq handler and
+noticed that it doesn't just run timer softirqs, it also runs irq work.
 
-->new_slab_objects()
- ->new_slab()
-  ->setup_object()
-   ->setup_object_debug()
-    ->init_tracking()
-     ->set_track()
-      ->save_stack_trace()
-       ->save_stack_trace_tsk()
-        ->walk_stackframe()
-         ->unwind_frame()
-          ->unwind_find_idx()
-           =>spin_lock_irqsave(&unwind_lock);
+This was the bug that was locking up the system. It wasn't missing a
+timer, it was missing irq work. By always doing the irq work callbacks,
+the system boots fine. The missing irq work callback was the RCU's
+sp_wakeup() function.
+
+No need to check for defined(CONFIG_IRQ_WORK). When that's not set the
+"irq_work_needs_cpu()" is a static inline that returns false.
 
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/arm/kernel/unwind.c | 14 +++++++-------
- 1 file changed, 7 insertions(+), 7 deletions(-)
+ kernel/timer.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
-index 00df012..bbafc67 100644
---- a/arch/arm/kernel/unwind.c
-+++ b/arch/arm/kernel/unwind.c
-@@ -87,7 +87,7 @@ extern const struct unwind_idx __start_unwind_idx[];
- static const struct unwind_idx *__origin_unwind_idx;
- extern const struct unwind_idx __stop_unwind_idx[];
- 
--static DEFINE_SPINLOCK(unwind_lock);
-+static DEFINE_RAW_SPINLOCK(unwind_lock);
- static LIST_HEAD(unwind_tables);
- 
- /* Convert a prel31 symbol to an absolute address */
-@@ -195,7 +195,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 		/* module unwind tables */
- 		struct unwind_table *table;
- 
--		spin_lock_irqsave(&unwind_lock, flags);
-+		raw_spin_lock_irqsave(&unwind_lock, flags);
- 		list_for_each_entry(table, &unwind_tables, list) {
- 			if (addr >= table->begin_addr &&
- 			    addr < table->end_addr) {
-@@ -207,7 +207,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 				break;
- 			}
- 		}
--		spin_unlock_irqrestore(&unwind_lock, flags);
-+		raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 	}
- 
- 	pr_debug("%s: idx = %p\n", __func__, idx);
-@@ -469,9 +469,9 @@ struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
- 	tab->begin_addr = text_addr;
- 	tab->end_addr = text_addr + text_size;
- 
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_add_tail(&tab->list, &unwind_tables);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	return tab;
- }
-@@ -483,9 +483,9 @@ void unwind_table_del(struct unwind_table *tab)
- 	if (!tab)
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 3d7313c..25a38c4 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1466,8 +1466,13 @@ void run_local_timers(void)
  		return;
+ 	}
+ #endif
+-	if (!base->active_timers)
+-		goto out;
++	if (!base->active_timers) {
++#ifdef CONFIG_PREEMPT_RT_FULL
++		/* On RT, irq work runs from softirq */
++		if (!irq_work_needs_cpu())
++#endif
++			goto out;
++	}
  
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_del(&tab->list);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	kfree(tab);
- }
+ 	/* Check whether the next pending timer has expired */
+ 	if (time_before_eq(base->next_timer, jiffies))
 -- 
 1.8.5.3
