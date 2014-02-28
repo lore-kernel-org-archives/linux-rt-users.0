@@ -1,20 +1,18 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/11] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-Date: Fri, 28 Feb 2014 08:34:58 -0500
-Message-ID: <20140228133535.785759588@goodmis.org>
+Subject: [PATCH RT 03/11] timer/rt: Always raise the softirq if theres irq_work to be done
+Date: Fri, 28 Feb 2014 08:34:57 -0500
+Message-ID: <20140228133535.654535597@goodmis.org>
 References: <20140228133454.373761937@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Tiejun Chen <tiejun.chen@windriver.com>,
-	Bin Jiang <bin.jiang@windriver.com>
+	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-rcutree-rcu_bh_qs-disable-irq-while-calling-rcu_pree.patch
+Content-Disposition: inline; filename=0003-timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,53 +21,70 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Tiejun Chen <tiejun.chen@windriver.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Any callers to the function rcu_preempt_qs() must disable irqs in
-order to protect the assignment to ->rcu_read_unlock_special. In
-RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
-in some scenarios where irq is enabled, like this path,
+It was previously discovered that some systems would hang on boot up
+with a previous version of 3.12-rt. This was due to RCU using irq_work,
+and RT defers the irq_work to a softirq. But if there's no active
+timers, the softirq will not be raised, and RCU work will not get done,
+causing the system to hang.  The fix was to check that if there was no
+active timers but irq_work to be done, then we should raise the softirq.
 
-do_single_softirq()
-    |
-    + local_irq_enable();
-    + handle_softirq()
-    |    |
-    |    + rcu_bh_qs()
-    |        |
-    |        + rcu_preempt_qs()
-    |
-    + local_irq_disable()
+But this fix was not 100% correct. It left out the case that there were
+active timers that were not expired yet. This would have the softirq
+not get raised even if there was irq work to be done.
 
-So here we'd better disable irq directly inside of rcu_bh_qs() to
-fix this, otherwise the kernel may be freezable sometimes as
-observed. And especially this way is also kind and safe for the
-potential rcu_bh_qs() usage elsewhere in the future.
+If there is irq_work to be done, then we must raise the timer softirq
+regardless of if there is active timers or whether they are expired or
+not. The softirq can handle those cases. But we can never ignore
+irq_work.
+
+As it is only PREEMPT_RT_FULL that requires irq_work to be done in the
+softirq, we can pull out the check in the active_timers condition, and
+make the code a bit cleaner by having the irq_work check separate, and
+put the code in with the other #ifdef PREEMPT_RT. If there is irq_work
+to be done, there's no need to check the active timers or if they are
+expired. Just raise the time softirq and be done with it. Otherwise, we
+can do the timer checks just like we do with non -rt.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/rcutree.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ kernel/timer.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
 
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 55915b1..dcb79e9 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -187,7 +187,12 @@ static void rcu_preempt_qs(int cpu);
- 
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 25a38c4..f63a793 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1461,18 +1461,20 @@ void run_local_timers(void)
+ 	 * the timer softirq.
+ 	 */
+ #ifdef CONFIG_PREEMPT_RT_FULL
++	/* On RT, irq work runs from softirq */
++	if (irq_work_needs_cpu()) {
++		raise_softirq(TIMER_SOFTIRQ);
++		return;
++	}
 +
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
- }
- #else
- void rcu_bh_qs(int cpu)
+ 	if (!spin_do_trylock(&base->lock)) {
+ 		raise_softirq(TIMER_SOFTIRQ);
+ 		return;
+ 	}
+ #endif
+-	if (!base->active_timers) {
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-		/* On RT, irq work runs from softirq */
+-		if (!irq_work_needs_cpu())
+-#endif
+-			goto out;
+-	}
++
++	if (!base->active_timers)
++		goto out;
+ 
+ 	/* Check whether the next pending timer has expired */
+ 	if (time_before_eq(base->next_timer, jiffies))
 -- 
 1.8.5.3
