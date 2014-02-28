@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/11] timer/rt: Always raise the softirq if theres irq_work to be done
-Date: Fri, 28 Feb 2014 08:34:57 -0500
-Message-ID: <20140228133535.654535597@goodmis.org>
+Subject: [PATCH RT 07/11] kernel/hrtimer: be non-freezeable in cpu_chill()
+Date: Fri, 28 Feb 2014 08:35:01 -0500
+Message-ID: <20140228133536.188431841@goodmis.org>
 References: <20140228133454.373761937@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -11,80 +11,79 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:13676 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751993AbaB1Nfi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Feb 2014 08:35:38 -0500
+Content-Disposition: inline; filename=0007-kernel-hrtimer-be-non-freezeable-in-cpu_chill.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.10.32-rt31-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-It was previously discovered that some systems would hang on boot up
-with a previous version of 3.12-rt. This was due to RCU using irq_work,
-and RT defers the irq_work to a softirq. But if there's no active
-timers, the softirq will not be raised, and RCU work will not get done,
-causing the system to hang.  The fix was to check that if there was no
-active timers but irq_work to be done, then we should raise the softirq.
+Since we replaced msleep() by hrtimer I see now and then (rarely) this:
 
-But this fix was not 100% correct. It left out the case that there were
-active timers that were not expired yet. This would have the softirq
-not get raised even if there was irq work to be done.
+| [....] Waiting for /dev to be fully populated...
+| =====================================
+| [ BUG: udevd/229 still has locks held! ]
+| 3.12.11-rt17 #23 Not tainted
+| -------------------------------------
+| 1 lock held by udevd/229:
+|  #0:  (&type->i_mutex_dir_key#2){+.+.+.}, at: lookup_slow+0x28/0x98
+|
+| stack backtrace:
+| CPU: 0 PID: 229 Comm: udevd Not tainted 3.12.11-rt17 #23
+| (unwind_backtrace+0x0/0xf8) from (show_stack+0x10/0x14)
+| (show_stack+0x10/0x14) from (dump_stack+0x74/0xbc)
+| (dump_stack+0x74/0xbc) from (do_nanosleep+0x120/0x160)
+| (do_nanosleep+0x120/0x160) from (hrtimer_nanosleep+0x90/0x110)
+| (hrtimer_nanosleep+0x90/0x110) from (cpu_chill+0x30/0x38)
+| (cpu_chill+0x30/0x38) from (dentry_kill+0x158/0x1ec)
+| (dentry_kill+0x158/0x1ec) from (dput+0x74/0x15c)
+| (dput+0x74/0x15c) from (lookup_real+0x4c/0x50)
+| (lookup_real+0x4c/0x50) from (__lookup_hash+0x34/0x44)
+| (__lookup_hash+0x34/0x44) from (lookup_slow+0x38/0x98)
+| (lookup_slow+0x38/0x98) from (path_lookupat+0x208/0x7fc)
+| (path_lookupat+0x208/0x7fc) from (filename_lookup+0x20/0x60)
+| (filename_lookup+0x20/0x60) from (user_path_at_empty+0x50/0x7c)
+| (user_path_at_empty+0x50/0x7c) from (user_path_at+0x14/0x1c)
+| (user_path_at+0x14/0x1c) from (vfs_fstatat+0x48/0x94)
+| (vfs_fstatat+0x48/0x94) from (SyS_stat64+0x14/0x30)
+| (SyS_stat64+0x14/0x30) from (ret_fast_syscall+0x0/0x48)
 
-If there is irq_work to be done, then we must raise the timer softirq
-regardless of if there is active timers or whether they are expired or
-not. The softirq can handle those cases. But we can never ignore
-irq_work.
-
-As it is only PREEMPT_RT_FULL that requires irq_work to be done in the
-softirq, we can pull out the check in the active_timers condition, and
-make the code a bit cleaner by having the irq_work check separate, and
-put the code in with the other #ifdef PREEMPT_RT. If there is irq_work
-to be done, there's no need to check the active timers or if they are
-expired. Just raise the time softirq and be done with it. Otherwise, we
-can do the timer checks just like we do with non -rt.
+For now I see no better way but to disable the freezer the sleep the period.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/timer.c | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+ kernel/hrtimer.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 25a38c4..f63a793 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1461,18 +1461,20 @@ void run_local_timers(void)
- 	 * the timer softirq.
- 	 */
- #ifdef CONFIG_PREEMPT_RT_FULL
-+	/* On RT, irq work runs from softirq */
-+	if (irq_work_needs_cpu()) {
-+		raise_softirq(TIMER_SOFTIRQ);
-+		return;
-+	}
-+
- 	if (!spin_do_trylock(&base->lock)) {
- 		raise_softirq(TIMER_SOFTIRQ);
- 		return;
- 	}
- #endif
--	if (!base->active_timers) {
--#ifdef CONFIG_PREEMPT_RT_FULL
--		/* On RT, irq work runs from softirq */
--		if (!irq_work_needs_cpu())
--#endif
--			goto out;
--	}
-+
-+	if (!base->active_timers)
-+		goto out;
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index b569c6d..eb4c8831c 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1896,8 +1896,12 @@ void cpu_chill(void)
+ 	struct timespec tu = {
+ 		.tv_nsec = NSEC_PER_MSEC,
+ 	};
++	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
  
- 	/* Check whether the next pending timer has expired */
- 	if (time_before_eq(base->next_timer, jiffies))
++	current->flags |= PF_NOFREEZE;
+ 	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	if (!freeze_flag)
++		current->flags &= ~PF_NOFREEZE;
+ }
+ EXPORT_SYMBOL(cpu_chill);
+ #endif
 -- 
 1.8.5.3
+
+
