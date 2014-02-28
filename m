@@ -1,35 +1,90 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch] rt,sched,numa: Move task_numa_free() to
- __put_task_struct(), which -rt offloads
-Date: Fri, 28 Feb 2014 12:32:09 +0100
-Message-ID: <20140228113209.GK27965@twins.programming.kicks-ass.net>
-References: <1393568591.6018.27.camel@marge.simpson.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Mel Gorman <mgorman@suse.com>, LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <bitbucket@online.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 00/11] Linux 3.10.32-rt31-rc1
+Date: Fri, 28 Feb 2014 08:34:54 -0500
+Message-ID: <20140228133454.373761937@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1393568591.6018.27.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Feb 28, 2014 at 07:23:11AM +0100, Mike Galbraith wrote:
-> 
-> Bad idea:
-> [  908.026136]  [<ffffffff8150ad6a>] rt_spin_lock_slowlock+0xaa/0x2c0
-> [  908.026145]  [<ffffffff8108f701>] task_numa_free+0x31/0x130
-> [  908.026151]  [<ffffffff8108121e>] finish_task_switch+0xce/0x100
-> [  908.026156]  [<ffffffff81509c0a>] thread_return+0x48/0x4ae
-> [  908.026160]  [<ffffffff8150a095>] schedule+0x25/0xa0
-> [  908.026163]  [<ffffffff8150ad95>] rt_spin_lock_slowlock+0xd5/0x2c0
-> [  908.026170]  [<ffffffff810658cf>] get_signal_to_deliver+0xaf/0x680
-> [  908.026175]  [<ffffffff8100242d>] do_signal+0x3d/0x5b0
-> [  908.026179]  [<ffffffff81002a30>] do_notify_resume+0x90/0xe0
-> [  908.026186]  [<ffffffff81513176>] int_signal+0x12/0x17
-> [  908.026193]  [<00007ff2a388b1d0>] 0x7ff2a388b1cf
-> 
-> Signed-off-by: Mike Galbraith <bitbucket@online.de>
 
-Fair enough; thanks!
+Dear RT Folks,
+
+This is the RT stable review cycle of patch 3.10.32-rt31-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 3/3/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.32-rt31-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.32.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.32-rt31-rc1.patch.xz
+
+You can also build from 3.10.32-rt30 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.32-rt30-rt31-rc1.patch.xz
+
+
+Changes from 3.10.32-rt30:
+
+---
+
+
+Nicholas Mc Guire (1):
+      net: ip_send_unicast_reply: add missing local serialization
+
+Sebastian Andrzej Siewior (4):
+      Revert "x86: Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT"
+      kernel/hrtimer: be non-freezeable in cpu_chill()
+      arm/unwind: use a raw_spin_lock
+      leds: trigger: disable CPU trigger on -RT
+
+Steven Rostedt (3):
+      timer: Raise softirq if there's irq_work
+      timer/rt: Always raise the softirq if there's irq_work to be done
+      rt: Make cpu_chill() use hrtimer instead of msleep()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.32-rt31-rc1
+
+Thomas Gleixner (1):
+      timers: do not raise softirq unconditionally
+
+Tiejun Chen (1):
+      rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+
+----
+ arch/arm/kernel/unwind.c             | 14 +++++-----
+ arch/x86/include/asm/page_64_types.h | 21 +++++----------
+ arch/x86/kernel/cpu/common.c         |  2 --
+ arch/x86/kernel/dumpstack_64.c       |  4 ---
+ drivers/leds/trigger/Kconfig         |  2 +-
+ include/linux/delay.h                |  2 +-
+ include/linux/hrtimer.h              |  3 +--
+ kernel/hrtimer.c                     | 50 +++++++++++++++++++-----------------
+ kernel/rcutree.c                     |  5 ++++
+ kernel/timer.c                       | 35 ++++++++++++++++++++++---
+ localversion-rt                      |  2 +-
+ net/ipv4/ip_output.c                 |  9 ++++---
+ 12 files changed, 86 insertions(+), 63 deletions(-)
