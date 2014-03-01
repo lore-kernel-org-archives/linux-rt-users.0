@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/14] Revert "x86: Disable IST stacks for debug/int 3/stack fault for
- PREEMPT_RT"
-Date: Fri, 28 Feb 2014 22:52:15 -0500
-Message-ID: <20140301035236.659269979@goodmis.org>
+Subject: [PATCH RT 04/14] timer/rt: Always raise the softirq if theres irq_work to be done
+Date: Fri, 28 Feb 2014 22:52:13 -0500
+Message-ID: <20140301035236.370896936@goodmis.org>
 References: <20140301035209.031474616@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -11,143 +10,83 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Brian Silverman <bsilver16384@gmail.com>,
-	Andi Kleen <andi@firstfloor.org>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:11451 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752928AbaCADwk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Feb 2014 22:52:40 -0500
-Content-Disposition: inline; filename=0006-Revert-x86-Disable-IST-stacks-for-debug-int-3-stack-.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.10.32-rt31-rc2 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-where do I start. Let me explain what is going on here. The code
-sequence
-| pushf
-| pop    %edx
-| or     $0x1,%dh
-| push   %edx
-| mov    $0xe0,%eax
-| popf
-| sysenter
+It was previously discovered that some systems would hang on boot up
+with a previous version of 3.12-rt. This was due to RCU using irq_work,
+and RT defers the irq_work to a softirq. But if there's no active
+timers, the softirq will not be raised, and RCU work will not get done,
+causing the system to hang.  The fix was to check that if there was no
+active timers but irq_work to be done, then we should raise the softirq.
 
-triggers the bug. On 64bit kernel we see the double fault (with 32bit and
-64bit userland) and on 32bit kernel there is no problem. The reporter said
-that double fault does not happen on 64bit kernel with 64bit userland and
-this is because in that case the VDSO uses the "syscall" interface instead
-of "sysenter".
+But this fix was not 100% correct. It left out the case that there were
+active timers that were not expired yet. This would have the softirq
+not get raised even if there was irq work to be done.
 
-The bug. "popf" loads the flags with the TF bit set which enables
-"single stepping" and this leads to a debug exception. Usually on 64bit
-we have a special IST stack for the debug exception. Due to patch [0] we
-do not use the IST stack but the kernel stack instead. On 64bit the
-sysenter instruction starts in kernel with the stack address NULL. The
-code sequence above enters the debug exception (TF flag) after the
-sysenter instruction was executed which sets the stack pointer to NULL
-and we have a fault (it seems that the debug exception saves some bytes
-on the stack).
-To fix the double fault I'm going to drop patch [0]. It is completely
-pointless. In do_debug() and do_stack_segment() we disable preemption
-which means the task can't leave the CPU. So it does not matter if we run
-on IST or on kernel stack.
-There is a patch [1] which drops preempt_disable() call for a 32bit
-kernel but not for 64bit so there should be no regression.
-And [1] seems valid even for this code sequence. We enter the debug
-exception with a 256bytes long per cpu stack and migrate to the kernel
-stack before calling do_debug().
+If there is irq_work to be done, then we must raise the timer softirq
+regardless of if there is active timers or whether they are expired or
+not. The softirq can handle those cases. But we can never ignore
+irq_work.
 
-[0] x86-disable-debug-stack.patch
-[1] fix-rt-int3-x86_32-3.2-rt.patch
+As it is only PREEMPT_RT_FULL that requires irq_work to be done in the
+softirq, we can pull out the check in the active_timers condition, and
+make the code a bit cleaner by having the irq_work check separate, and
+put the code in with the other #ifdef PREEMPT_RT. If there is irq_work
+to be done, there's no need to check the active timers or if they are
+expired. Just raise the time softirq and be done with it. Otherwise, we
+can do the timer checks just like we do with non -rt.
 
 Cc: stable-rt@vger.kernel.org
-Reported-by: Brian Silverman <bsilver16384@gmail.com>
-Cc: Andi Kleen <andi@firstfloor.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/x86/include/asm/page_64_types.h | 21 ++++++---------------
- arch/x86/kernel/cpu/common.c         |  2 --
- arch/x86/kernel/dumpstack_64.c       |  4 ----
- 3 files changed, 6 insertions(+), 21 deletions(-)
+ kernel/timer.c | 16 +++++++++-------
+ 1 file changed, 9 insertions(+), 7 deletions(-)
 
-diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
-index 3cedb22..6c896fb 100644
---- a/arch/x86/include/asm/page_64_types.h
-+++ b/arch/x86/include/asm/page_64_types.h
-@@ -14,21 +14,12 @@
- #define IRQ_STACK_ORDER 2
- #define IRQ_STACK_SIZE (PAGE_SIZE << IRQ_STACK_ORDER)
- 
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 25a38c4..f63a793 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1461,18 +1461,20 @@ void run_local_timers(void)
+ 	 * the timer softirq.
+ 	 */
+ #ifdef CONFIG_PREEMPT_RT_FULL
++	/* On RT, irq work runs from softirq */
++	if (irq_work_needs_cpu()) {
++		raise_softirq(TIMER_SOFTIRQ);
++		return;
++	}
++
+ 	if (!spin_do_trylock(&base->lock)) {
+ 		raise_softirq(TIMER_SOFTIRQ);
+ 		return;
+ 	}
+ #endif
+-	if (!base->active_timers) {
 -#ifdef CONFIG_PREEMPT_RT_FULL
--# define STACKFAULT_STACK 0
--# define DOUBLEFAULT_STACK 1
--# define NMI_STACK 2
--# define DEBUG_STACK 0
--# define MCE_STACK 3
--# define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
--#else
--# define STACKFAULT_STACK 1
--# define DOUBLEFAULT_STACK 2
--# define NMI_STACK 3
--# define DEBUG_STACK 4
--# define MCE_STACK 5
--# define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
+-		/* On RT, irq work runs from softirq */
+-		if (!irq_work_needs_cpu())
 -#endif
-+#define STACKFAULT_STACK 1
-+#define DOUBLEFAULT_STACK 2
-+#define NMI_STACK 3
-+#define DEBUG_STACK 4
-+#define MCE_STACK 5
-+#define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
+-			goto out;
+-	}
++
++	if (!base->active_timers)
++		goto out;
  
- #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
- #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index d39993b..deeb48d 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -1109,9 +1109,7 @@ DEFINE_PER_CPU(struct task_struct *, fpu_owner_task);
-  */
- static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
- 	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
--#if DEBUG_STACK > 0
- 	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
--#endif
- };
- 
- static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
-diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 52b4bcd..addb207 100644
---- a/arch/x86/kernel/dumpstack_64.c
-+++ b/arch/x86/kernel/dumpstack_64.c
-@@ -21,14 +21,10 @@
- 		(N_EXCEPTION_STACKS + DEBUG_STKSZ/EXCEPTION_STKSZ - 2)
- 
- static char x86_stack_ids[][8] = {
--#if DEBUG_STACK > 0
- 		[ DEBUG_STACK-1			]	= "#DB",
--#endif
- 		[ NMI_STACK-1			]	= "NMI",
- 		[ DOUBLEFAULT_STACK-1		]	= "#DF",
--#if STACKFAULT_STACK > 0
- 		[ STACKFAULT_STACK-1		]	= "#SS",
--#endif
- 		[ MCE_STACK-1			]	= "#MC",
- #if DEBUG_STKSZ > EXCEPTION_STKSZ
- 		[ N_EXCEPTION_STACKS ...
+ 	/* Check whether the next pending timer has expired */
+ 	if (time_before_eq(base->next_timer, jiffies))
 -- 
 1.8.5.3
-
-
