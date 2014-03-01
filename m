@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 12/14] leds: trigger: disable CPU trigger on -RT
-Date: Fri, 28 Feb 2014 22:52:21 -0500
-Message-ID: <20140301035237.569667287@goodmis.org>
+Subject: [PATCH RT 10/14] arm/unwind: use a raw_spin_lock
+Date: Fri, 28 Feb 2014 22:52:19 -0500
+Message-ID: <20140301035237.280537618@goodmis.org>
 References: <20140301035209.031474616@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -13,15 +13,10 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:12241 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753081AbaCADwt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Feb 2014 22:52:49 -0500
-Content-Disposition: inline; filename=0012-leds-trigger-disable-CPU-trigger-on-RT.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0010-arm-unwind-use-a-raw_spin_lock.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.10.32-rt31-rc2 stable review patch.
 If anyone has any objections, please let me know.
@@ -30,41 +25,87 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-as it triggers:
-|CPU: 0 PID: 0 Comm: swapper Not tainted 3.12.8-rt10 #141
-|[<c0014aa4>] (unwind_backtrace+0x0/0xf8) from [<c0012788>] (show_stack+0x1c/0x20)
-|[<c0012788>] (show_stack+0x1c/0x20) from [<c043c8dc>] (dump_stack+0x20/0x2c)
-|[<c043c8dc>] (dump_stack+0x20/0x2c) from [<c004c5e8>] (__might_sleep+0x13c/0x170)
-|[<c004c5e8>] (__might_sleep+0x13c/0x170) from [<c043f270>] (__rt_spin_lock+0x28/0x38)
-|[<c043f270>] (__rt_spin_lock+0x28/0x38) from [<c043fa00>] (rt_read_lock+0x68/0x7c)
-|[<c043fa00>] (rt_read_lock+0x68/0x7c) from [<c036cf74>] (led_trigger_event+0x2c/0x5c)
-|[<c036cf74>] (led_trigger_event+0x2c/0x5c) from [<c036e0bc>] (ledtrig_cpu+0x54/0x5c)
-|[<c036e0bc>] (ledtrig_cpu+0x54/0x5c) from [<c000ffd8>] (arch_cpu_idle_exit+0x18/0x1c)
-|[<c000ffd8>] (arch_cpu_idle_exit+0x18/0x1c) from [<c00590b8>] (cpu_startup_entry+0xa8/0x234)
-|[<c00590b8>] (cpu_startup_entry+0xa8/0x234) from [<c043b2cc>] (rest_init+0xb8/0xe0)
-|[<c043b2cc>] (rest_init+0xb8/0xe0) from [<c061ebe0>] (start_kernel+0x2c4/0x380)
+Mostly unwind is done with irqs enabled however SLUB may call it with
+irqs disabled while creating a new SLUB cache.
+
+I had system freeze while loading a module which called
+kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
+interrupts and then
+
+->new_slab_objects()
+ ->new_slab()
+  ->setup_object()
+   ->setup_object_debug()
+    ->init_tracking()
+     ->set_track()
+      ->save_stack_trace()
+       ->save_stack_trace_tsk()
+        ->walk_stackframe()
+         ->unwind_frame()
+          ->unwind_find_idx()
+           =>spin_lock_irqsave(&unwind_lock);
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/leds/trigger/Kconfig | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/arm/kernel/unwind.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-diff --git a/drivers/leds/trigger/Kconfig b/drivers/leds/trigger/Kconfig
-index 49794b4..3d7245d 100644
---- a/drivers/leds/trigger/Kconfig
-+++ b/drivers/leds/trigger/Kconfig
-@@ -61,7 +61,7 @@ config LEDS_TRIGGER_BACKLIGHT
+diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
+index 00df012..bbafc67 100644
+--- a/arch/arm/kernel/unwind.c
++++ b/arch/arm/kernel/unwind.c
+@@ -87,7 +87,7 @@ extern const struct unwind_idx __start_unwind_idx[];
+ static const struct unwind_idx *__origin_unwind_idx;
+ extern const struct unwind_idx __stop_unwind_idx[];
  
- config LEDS_TRIGGER_CPU
- 	bool "LED CPU Trigger"
--	depends on LEDS_TRIGGERS
-+	depends on LEDS_TRIGGERS && !PREEMPT_RT_BASE
- 	help
- 	  This allows LEDs to be controlled by active CPUs. This shows
- 	  the active CPUs across an array of LEDs so you can see which
+-static DEFINE_SPINLOCK(unwind_lock);
++static DEFINE_RAW_SPINLOCK(unwind_lock);
+ static LIST_HEAD(unwind_tables);
+ 
+ /* Convert a prel31 symbol to an absolute address */
+@@ -195,7 +195,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
+ 		/* module unwind tables */
+ 		struct unwind_table *table;
+ 
+-		spin_lock_irqsave(&unwind_lock, flags);
++		raw_spin_lock_irqsave(&unwind_lock, flags);
+ 		list_for_each_entry(table, &unwind_tables, list) {
+ 			if (addr >= table->begin_addr &&
+ 			    addr < table->end_addr) {
+@@ -207,7 +207,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
+ 				break;
+ 			}
+ 		}
+-		spin_unlock_irqrestore(&unwind_lock, flags);
++		raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 	}
+ 
+ 	pr_debug("%s: idx = %p\n", __func__, idx);
+@@ -469,9 +469,9 @@ struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
+ 	tab->begin_addr = text_addr;
+ 	tab->end_addr = text_addr + text_size;
+ 
+-	spin_lock_irqsave(&unwind_lock, flags);
++	raw_spin_lock_irqsave(&unwind_lock, flags);
+ 	list_add_tail(&tab->list, &unwind_tables);
+-	spin_unlock_irqrestore(&unwind_lock, flags);
++	raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 
+ 	return tab;
+ }
+@@ -483,9 +483,9 @@ void unwind_table_del(struct unwind_table *tab)
+ 	if (!tab)
+ 		return;
+ 
+-	spin_lock_irqsave(&unwind_lock, flags);
++	raw_spin_lock_irqsave(&unwind_lock, flags);
+ 	list_del(&tab->list);
+-	spin_unlock_irqrestore(&unwind_lock, flags);
++	raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 
+ 	kfree(tab);
+ }
 -- 
 1.8.5.3
-
-
