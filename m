@@ -1,103 +1,73 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/14] Linux 3.10.32-rt31-rc2
-Date: Fri, 28 Feb 2014 22:52:09 -0500
-Message-ID: <20140301035209.031474616@goodmis.org>
+Subject: [PATCH RT 03/14] timer: Raise softirq if theres irq_work
+Date: Fri, 28 Feb 2014 22:52:12 -0500
+Message-ID: <20140301035236.228845249@goodmis.org>
+References: <20140301035209.031474616@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-timer-Raise-softirq-if-there-s-irq_work.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.32-rt31-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.32-rt31-rc2.
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Please scream at me if I messed something up. Please test the patches too.
+[ Talking with Sebastian on IRC, it seems that doing the irq_work_run()
+  from the interrupt in -rt is a bad thing. Here we simply raise the
+  softirq if there's irq work to do. This too boots on my i7 ]
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+After trying hard to figure out why my i7 box was locking up with the
+new active_timers code, that does not run the timer softirq if there
+are no active timers, I took an extra look at the softirq handler and
+noticed that it doesn't just run timer softirqs, it also runs irq work.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+This was the bug that was locking up the system. It wasn't missing a
+timer, it was missing irq work. By always doing the irq work callbacks,
+the system boots fine. The missing irq work callback was the RCU's
+sp_wakeup() function.
 
-If all goes well, this patch will be converted to the next main release
-on 3/3/2014.
+No need to check for defined(CONFIG_IRQ_WORK). When that's not set the
+"irq_work_needs_cpu()" is a static inline that returns false.
 
-Enjoy,
-
--- Steve
-
-
-To build 3.10.32-rt31-rc2 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.32.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.32-rt31-rc2.patch.xz
-
-You can also build from 3.10.32-rt30 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.32-rt30-rt31-rc2.patch.xz
-
-
-Changes from 3.10.32-rt30:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
+ kernel/timer.c | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
 
-
-Nicholas Mc Guire (1):
-      net: ip_send_unicast_reply: add missing local serialization
-
-Paul E. McKenney (2):
-      rcu: Don't activate RCU core on NO_HZ_FULL CPUs
-      rcu: Eliminate softirq processing from rcutree
-
-Sebastian Andrzej Siewior (5):
-      Revert "x86: Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT"
-      kernel/hrtimer: be non-freezeable in cpu_chill()
-      irq_work: allow certain work in hard irq context
-      arm/unwind: use a raw_spin_lock
-      leds: trigger: disable CPU trigger on -RT
-
-Steven Rostedt (3):
-      timer: Raise softirq if there's irq_work
-      timer/rt: Always raise the softirq if there's irq_work to be done
-      rt: Make cpu_chill() use hrtimer instead of msleep()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.32-rt31-rc2
-
-Thomas Gleixner (1):
-      timers: do not raise softirq unconditionally
-
-Tiejun Chen (1):
-      rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-
-----
- arch/arm/kernel/unwind.c             |  14 ++--
- arch/powerpc/kernel/time.c           |   2 +-
- arch/sparc/kernel/pcr.c              |   2 +
- arch/x86/include/asm/page_64_types.h |  21 ++---
- arch/x86/kernel/cpu/common.c         |   2 -
- arch/x86/kernel/dumpstack_64.c       |   4 -
- drivers/leds/trigger/Kconfig         |   2 +-
- include/linux/delay.h                |   2 +-
- include/linux/hrtimer.h              |   3 +-
- include/linux/irq_work.h             |   1 +
- kernel/hrtimer.c                     |  50 ++++++------
- kernel/irq_work.c                    |  22 ++++-
- kernel/rcutree.c                     | 122 +++++++++++++++++++++++----
- kernel/rcutree.h                     |   4 +-
- kernel/rcutree_plugin.h              | 154 ++++++++---------------------------
- kernel/time/tick-sched.c             |   1 +
- kernel/timer.c                       |  37 ++++++++-
- localversion-rt                      |   2 +-
- net/ipv4/ip_output.c                 |   9 +-
- 19 files changed, 249 insertions(+), 205 deletions(-)
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 3d7313c..25a38c4 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1466,8 +1466,13 @@ void run_local_timers(void)
+ 		return;
+ 	}
+ #endif
+-	if (!base->active_timers)
+-		goto out;
++	if (!base->active_timers) {
++#ifdef CONFIG_PREEMPT_RT_FULL
++		/* On RT, irq work runs from softirq */
++		if (!irq_work_needs_cpu())
++#endif
++			goto out;
++	}
+ 
+ 	/* Check whether the next pending timer has expired */
+ 	if (time_before_eq(base->next_timer, jiffies))
+-- 
+1.8.5.3
