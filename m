@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/14] irq_work: allow certain work in hard irq context
-Date: Fri, 28 Feb 2014 22:52:18 -0500
-Message-ID: <20140301035237.129565140@goodmis.org>
+Subject: [PATCH RT 11/14] net: ip_send_unicast_reply: add missing local serialization
+Date: Fri, 28 Feb 2014 22:52:20 -0500
+Message-ID: <20140301035237.424335985@goodmis.org>
 References: <20140301035209.031474616@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,16 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>, Nicholas Mc Guire <der.herr@hofr.at>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:11444 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:12248 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752986AbaCADwm (ORCPT
+	by vger.kernel.org with ESMTP id S1753042AbaCADwo (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Feb 2014 22:52:42 -0500
-Content-Disposition: inline; filename=0009-irq_work-allow-certain-work-in-hard-irq-context.patch
+	Fri, 28 Feb 2014 22:52:44 -0500
+Content-Disposition: inline; filename=0011-net-ip_send_unicast_reply-add-missing-local-serializ.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,157 +28,107 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
 
-irq_work is processed in softirq context on -RT because we want to avoid
-long latencies which might arise from processing lots of perf events.
-The noHZ-full mode requires its callback to be called from real hardirq
-context (commit 76c24fb ("nohz: New APIs to re-evaluate the tick on full
-dynticks CPUs")). If it is called from a thread context we might get
-wrong results for checks like "is_idle_task(current)".
-This patch introduces a second list (hirq_work_list) which will be used
-if irq_work_run() has been invoked from hardirq context and process only
-work items marked with IRQ_WORK_HARD_IRQ.
+in response to the oops in ip_output.c:ip_send_unicast_reply under high
+network load with CONFIG_PREEMPT_RT_FULL=y, reported by Sami Pietikainen
+<Sami.Pietikainen@wapice.com>, this patch adds local serialization in
+ip_send_unicast_reply.
 
-This patch also removes arch_irq_work_raise() from sparc & powerpc like
-it is already done for x86. Atleast for powerpc it is somehow
-superfluous because it is called from the timer interrupt which should
-invoke update_process_times().
+from ip_output.c:
+/*
+ *      Generic function to send a packet as reply to another packet.
+ *      Used to send some TCP resets/acks so far.
+ *
+ *      Use a fake percpu inet socket to avoid false sharing and contention.
+ */
+static DEFINE_PER_CPU(struct inet_sock, unicast_sock) = {
+...
 
+which was added in commit be9f4a44 in linux-stable. The git log, wich
+introduced the PER_CPU unicast_sock, states:
+<snip>
+commit be9f4a44e7d41cee50ddb5f038fc2391cbbb4046
+Author: Eric Dumazet <edumazet@google.com>
+Date:   Thu Jul 19 07:34:03 2012 +0000
+
+    ipv4: tcp: remove per net tcp_sock
+
+    tcp_v4_send_reset() and tcp_v4_send_ack() use a single socket
+    per network namespace.
+
+    This leads to bad behavior on multiqueue NICS, because many cpus
+    contend for the socket lock and once socket lock is acquired, extra
+    false sharing on various socket fields slow down the operations.
+
+    To better resist to attacks, we use a percpu socket. Each cpu can
+    run without contention, using appropriate memory (local node)
+<snip>
+
+The per-cpu here thus is assuming exclusivity serializing per cpu - so
+the use of get_cpu_ligh introduced in
+net-use-cpu-light-in-ip-send-unicast-reply.patch, which droped the
+preempt_disable in favor of a migrate_disable is probably wrong as this
+only handles the referencial consistency but not the serialization. To
+evade a preempt_disable here a local lock would be needed.
+
+Therapie:
+ * add local lock:
+ * and re-introduce local serialization:
+
+Tested on x86 with high network load using the testcase from Sami Pietikainen
+  while : ; do wget -O - ftp://LOCAL_SERVER/empty_file > /dev/null 2>&1; done
+
+Link: http://www.spinics.net/lists/linux-rt-users/msg11007.html
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/powerpc/kernel/time.c |  2 +-
- arch/sparc/kernel/pcr.c    |  2 ++
- include/linux/irq_work.h   |  1 +
- kernel/irq_work.c          | 22 +++++++++++++++++++---
- kernel/time/tick-sched.c   |  1 +
- kernel/timer.c             |  2 +-
- 6 files changed, 25 insertions(+), 5 deletions(-)
+ net/ipv4/ip_output.c | 9 ++++++---
+ 1 file changed, 6 insertions(+), 3 deletions(-)
 
-diff --git a/arch/powerpc/kernel/time.c b/arch/powerpc/kernel/time.c
-index 5fc29ad..7cc55b2 100644
---- a/arch/powerpc/kernel/time.c
-+++ b/arch/powerpc/kernel/time.c
-@@ -423,7 +423,7 @@ unsigned long profile_pc(struct pt_regs *regs)
- EXPORT_SYMBOL(profile_pc);
- #endif
+diff --git a/net/ipv4/ip_output.c b/net/ipv4/ip_output.c
+index 2d69b1b..ab674e8 100644
+--- a/net/ipv4/ip_output.c
++++ b/net/ipv4/ip_output.c
+@@ -79,6 +79,7 @@
+ #include <linux/mroute.h>
+ #include <linux/netlink.h>
+ #include <linux/tcp.h>
++#include <linux/locallock.h>
  
--#ifdef CONFIG_IRQ_WORK
-+#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
- 
- /*
-  * 64-bit uses a byte in the PACA, 32-bit uses a per-cpu variable...
-diff --git a/arch/sparc/kernel/pcr.c b/arch/sparc/kernel/pcr.c
-index 269af58..dbb51a6 100644
---- a/arch/sparc/kernel/pcr.c
-+++ b/arch/sparc/kernel/pcr.c
-@@ -43,10 +43,12 @@ void __irq_entry deferred_pcr_work_irq(int irq, struct pt_regs *regs)
- 	set_irq_regs(old_regs);
- }
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- void arch_irq_work_raise(void)
- {
- 	set_softint(1 << PIL_DEFERRED_PCR_WORK);
- }
-+#endif
- 
- const struct pcr_ops *pcr_ops;
- EXPORT_SYMBOL_GPL(pcr_ops);
-diff --git a/include/linux/irq_work.h b/include/linux/irq_work.h
-index 6601702..60c19ee 100644
---- a/include/linux/irq_work.h
-+++ b/include/linux/irq_work.h
-@@ -16,6 +16,7 @@
- #define IRQ_WORK_BUSY		2UL
- #define IRQ_WORK_FLAGS		3UL
- #define IRQ_WORK_LAZY		4UL /* Doesn't want IPI, wait for tick */
-+#define IRQ_WORK_HARD_IRQ	8UL /* Run hard IRQ context, even on RT */
- 
- struct irq_work {
- 	unsigned long flags;
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index f6e4377..35d21f9 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -20,6 +20,9 @@
- 
- 
- static DEFINE_PER_CPU(struct llist_head, irq_work_list);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static DEFINE_PER_CPU(struct llist_head, hirq_work_list);
-+#endif
- static DEFINE_PER_CPU(int, irq_work_raised);
- 
- /*
-@@ -48,7 +51,11 @@ static bool irq_work_claim(struct irq_work *work)
- 	return true;
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+void arch_irq_work_raise(void)
-+#else
- void __weak arch_irq_work_raise(void)
-+#endif
- {
- 	/*
- 	 * Lame architectures will get the timer tick callback
-@@ -70,8 +77,12 @@ void irq_work_queue(struct irq_work *work)
- 	/* Queue the entry and raise the IPI if needed. */
- 	preempt_disable();
- 
--	llist_add(&work->llnode, &__get_cpu_var(irq_work_list));
--
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	if (work->flags & IRQ_WORK_HARD_IRQ)
-+		llist_add(&work->llnode, &__get_cpu_var(hirq_work_list));
-+	else
-+#endif
-+		llist_add(&work->llnode, &__get_cpu_var(irq_work_list));
- 	/*
- 	 * If the work is not "lazy" or the tick is stopped, raise the irq
- 	 * work interrupt (if supported by the arch), otherwise, just wait
-@@ -115,7 +126,12 @@ static void __irq_work_run(void)
- 	__this_cpu_write(irq_work_raised, 0);
- 	barrier();
- 
--	this_list = &__get_cpu_var(irq_work_list);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	if (in_irq())
-+		this_list = &__get_cpu_var(hirq_work_list);
-+	else
-+#endif
-+		this_list = &__get_cpu_var(irq_work_list);
- 	if (llist_empty(this_list))
- 		return;
- 
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index 4e657e5..aa1e4b2 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -214,6 +214,7 @@ static void nohz_full_kick_work_func(struct irq_work *work)
- 
- static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) = {
- 	.func = nohz_full_kick_work_func,
-+	.flags = IRQ_WORK_HARD_IRQ,
+ int sysctl_ip_default_ttl __read_mostly = IPDEFTTL;
+ EXPORT_SYMBOL(sysctl_ip_default_ttl);
+@@ -1471,6 +1472,9 @@ static DEFINE_PER_CPU(struct inet_sock, unicast_sock) = {
+ 	.uc_ttl		= -1,
  };
  
- /*
-diff --git a/kernel/timer.c b/kernel/timer.c
-index f63a793..76846a1 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1425,7 +1425,7 @@ void update_process_times(int user_tick)
- 	scheduler_tick();
- 	run_local_timers();
- 	rcu_check_callbacks(cpu, user_tick);
--#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
-+#if defined(CONFIG_IRQ_WORK)
- 	if (in_irq())
- 		irq_work_run();
- #endif
++/* serialize concurrent calls on the same CPU to ip_send_unicast_reply */
++static DEFINE_LOCAL_IRQ_LOCK(unicast_lock);
++
+ void ip_send_unicast_reply(struct net *net, struct sk_buff *skb, __be32 daddr,
+ 			   __be32 saddr, const struct ip_reply_arg *arg,
+ 			   unsigned int len)
+@@ -1508,8 +1512,7 @@ void ip_send_unicast_reply(struct net *net, struct sk_buff *skb, __be32 daddr,
+ 	if (IS_ERR(rt))
+ 		return;
+ 
+-	get_cpu_light();
+-	inet = &__get_cpu_var(unicast_sock);
++	inet = &get_locked_var(unicast_lock, unicast_sock);
+ 
+ 	inet->tos = arg->tos;
+ 	sk = &inet->sk;
+@@ -1533,7 +1536,7 @@ void ip_send_unicast_reply(struct net *net, struct sk_buff *skb, __be32 daddr,
+ 		ip_push_pending_frames(sk, &fl4);
+ 	}
+ 
+-	put_cpu_light();
++	put_locked_var(unicast_lock, unicast_sock);
+ 
+ 	ip_rt_put(rt);
+ }
 -- 
 1.8.5.3
 
