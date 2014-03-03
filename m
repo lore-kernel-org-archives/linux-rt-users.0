@@ -1,310 +1,58 @@
-From: Yijing Wang <wangyijing@huawei.com>
-Subject: [BUGREPORT] Tasklet scheduled issue in Linux 3.4.x-rt
-Date: Mon, 3 Mar 2014 17:24:39 +0800
-Message-ID: <53144A57.4040204@huawei.com>
+From: Jens Axboe <axboe@kernel.dk>
+Subject: Re: [patch] rt,blk,mq: Make blk_mq_cpu_notify_lock a raw spinlock
+Date: Mon, 03 Mar 2014 09:34:22 -0700
+Message-ID: <5314AF0E.3040703@kernel.dk>
+References: <1393822646.5816.4.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Li Zefan <lizefan@huawei.com>, Zhangwei <jovi.zhangwei@huawei.com>,
-	Yijing Wang <wangyijing@huawei.com>
-To: Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1393822646.5816.4.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi list,
-   I found a tasklet related issue in linux-stable-rt 3.4.
+On 03/02/2014 09:57 PM, Mike Galbraith wrote:
+>
+> [  365.164040] BUG: sleeping function called from invalid context at kernel/rtmutex.c:674
+> [  365.164041] in_atomic(): 1, irqs_disabled(): 1, pid: 26, name: migration/1
+> [  365.164043] no locks held by migration/1/26.
+> [  365.164044] irq event stamp: 6648
+> [  365.164056] hardirqs last  enabled at (6647): [<ffffffff8153d377>] restore_args+0x0/0x30
+> [  365.164062] hardirqs last disabled at (6648): [<ffffffff810ed98d>] multi_cpu_stop+0x9d/0x120
+> [  365.164070] softirqs last  enabled at (0): [<ffffffff810543bc>] copy_process.part.28+0x6fc/0x1920
+> [  365.164072] softirqs last disabled at (0): [<          (null)>]           (null)
+> [  365.164076] CPU: 1 PID: 26 Comm: migration/1 Tainted: GF           N  3.12.12-rt19-0.gcb6c4a2-rt #3
+> [  365.164078] Hardware name: QCI QSSC-S4R/QSSC-S4R, BIOS QSSC-S4R.QCI.01.00.S013.032920111005 03/29/2011
+> [  365.164091]  0000000000000001 ffff880a42ea7c30 ffffffff815367e6 ffffffff81a086c0
+> [  365.164099]  ffff880a42ea7c40 ffffffff8108919c ffff880a42ea7c60 ffffffff8153c24f
+> [  365.164107]  ffff880a42ea91f0 00000000ffffffe1 ffff880a42ea7c88 ffffffff81297ec0
+> [  365.164108] Call Trace:
+> [  365.164119]  [<ffffffff810060b1>] try_stack_unwind+0x191/0x1a0
+> [  365.164127]  [<ffffffff81004872>] dump_trace+0x92/0x360
+> [  365.164133]  [<ffffffff81006108>] show_trace_log_lvl+0x48/0x60
+> [  365.164138]  [<ffffffff81004c18>] show_stack_log_lvl+0xd8/0x1d0
+> [  365.164143]  [<ffffffff81006160>] show_stack+0x20/0x50
+> [  365.164153]  [<ffffffff815367e6>] dump_stack+0x54/0x9a
+> [  365.164163]  [<ffffffff8108919c>] __might_sleep+0xfc/0x140
+> [  365.164173]  [<ffffffff8153c24f>] rt_spin_lock+0x1f/0x70
+> [  365.164182]  [<ffffffff81297ec0>] blk_mq_main_cpu_notify+0x20/0x70
+> [  365.164191]  [<ffffffff81540a1c>] notifier_call_chain+0x4c/0x70
+> [  365.164201]  [<ffffffff81083499>] __raw_notifier_call_chain+0x9/0x10
+> [  365.164207]  [<ffffffff810567be>] cpu_notify+0x1e/0x40
+> [  365.164217]  [<ffffffff81525da2>] take_cpu_down+0x22/0x40
+> [  365.164223]  [<ffffffff810ed9c6>] multi_cpu_stop+0xd6/0x120
+> [  365.164229]  [<ffffffff810edd97>] cpu_stopper_thread+0xd7/0x1e0
+> [  365.164235]  [<ffffffff810863a3>] smpboot_thread_fn+0x203/0x380
+> [  365.164241]  [<ffffffff8107cbf8>] kthread+0xc8/0xd0
+> [  365.164250]  [<ffffffff8154440c>] ret_from_fork+0x7c/0xb0
+> [  365.164429] smpboot: CPU 1 is now offline
+>
+> Signed-off-by: Mike Galbraith <bitbucket@online.de>
 
-And after I revert following commit, the test result seems ok(test last=
-ed 40hours).
+Dirty! Applied, thanks :)
 
-commit 0d9f73fc1e7270a3f8709c59c913408153d9d9f8
-Author: Ingo Molnar <mingo@elte.hu>
-Date:   Tue Nov 29 20:18:22 2011 -0500
-
-    tasklet: Prevent tasklets from going into infinite spin in RT
-
-
-I test FC driver IO in this kernel, and after a few hours test, FC IO w=
-ill abort, I found a lot of tasklet WARNING Call Trace in kernel messag=
-e,like:
-
-[2012-03-26 18:55:43][  929.252289] ------------[ cut here ]-----------=
--
-[2012-03-26 18:55:43][  929.252312] WARNING: at kernel/softirq.c:773 __=
-tasklet_action+0x51/0x1a0()
-[2012-03-26 18:55:43][  929.252314] Hardware name: Romley
-[2012-03-26 18:55:43][  929.252316] Modules linked in: isd_fid(O) ivs_e=
-dft(O) ivs_emp(O) ivs_xnet(O) isd_rds(O) isd_idm(O) isd_dft(O) isd_base=
-(O) sdm(O) isd_cmm(O) isd_ibc(O) isd_lib(O) xve_hab(PO) xve_net(PO) xve=
-_cls_msg_filter(PO) xve_dscp(PO) pagepool(PO) iod(O) cmm(PO) util(PO) i=
-ntel_t10(PO) itest_nid(PO) dmi(PO) bsp_adapter(PO) mpa(O) ipmi_si ipmi_=
-devintf ipmi_msghandler iscsi_sw(PO) iscsi_prot(O) iscsi_seg(PO) iscsi_=
-comm(PO) iscsi_initiator(PO) 8192cu(O) pciehp(PO) pcieaer(PO) pciecore(=
-PO) drvinstallthird(PO) quark(O) sal(O) pmsas(O) foe(O) lfcoe(O) libfc(=
-O) ib_uverbs(O) ibtgt(O) ib_srpt(O) ib_cm(O) ib_sa(O) mlx4_ib(O) ib_uma=
-d(O) ib_mad(O) mlx4_core(O) ib_core(O) drvtom(O) cxgb4(O) drvtoecore(O)=
- fcdrv(PO) unflowlevel(PO) unfcommon(O) drvmml(PO) scsi_transport_fc sc=
-si_tgt memtest(PO) drv_iosubsys_ini(O) iocount(O) bsp_mml(PO) agetty_qu=
-ery(PO) cpufreq_powersave af_packet nf_conntrack_ipv6 nf_defrag_ipv6 ip=
-6table_filter ip6_tables xt_limit xt_tcpudp xt_multiport nf_conntr!
-ack_ipv4
- nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf p=
-rocessor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O=
-) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_sto=
-rage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) lib=
-ata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interfa=
-ce(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp=
-_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_hand=
-ler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
-[2012-03-26 18:55:43][  929.252460] Pid: 17495, comm: 3th SioT Tainted:=
- P           O 3.4.24.15-0.11-default #1
-[2012-03-26 18:55:43][  929.252463] Call Trace:
-[2012-03-26 18:55:43][  929.252465]  <IRQ>  [<ffffffff810413d1>] ? __ta=
-sklet_action+0x51/0x1a0
-[2012-03-26 18:55:43][  929.252481]  [<ffffffff81039e4a>] warn_slowpath=
-_common+0x7a/0xb0
-[2012-03-26 18:55:43][  929.252486]  [<ffffffff81039e95>] warn_slowpath=
-_null+0x15/0x20
-[2012-03-26 18:55:43][  929.252490]  [<ffffffff810413d1>] __tasklet_act=
-ion+0x51/0x1a0
-[2012-03-26 18:55:43][  929.252494]  [<ffffffff810415c9>] tasklet_actio=
-n+0x59/0x60
-[2012-03-26 18:55:43][  929.252498]  [<ffffffff81041a90>] handle_pendin=
-g_softirqs+0xb0/0x170
-[2012-03-26 18:55:43][  929.252502]  [<ffffffff81041b99>] __do_softirq+=
-0x49/0xa0
-[2012-03-26 18:55:43][  929.252513]  [<ffffffff8144e7dc>] call_softirq+=
-0x1c/0x30
-[2012-03-26 18:55:43][  929.252519]  [<ffffffff81004415>] do_softirq+0x=
-65/0xa0
-[2012-03-26 18:55:43][  929.252523]  [<ffffffff810418a5>] irq_exit+0xc5=
-/0xe0
-[2012-03-26 18:55:43][  929.252526]  [<ffffffff81003b74>] do_IRQ+0x64/0=
-xe0
-[2012-03-26 18:55:43][  929.252534]  [<ffffffff8144576a>] common_interr=
-upt+0x6a/0x6a
-[2012-03-26 18:55:43][  929.252536]  <EOI>  [<ffffffff81445506>] ? _raw=
-_spin_unlock_irqrestore+0x16/0x30
-[2012-03-26 18:55:43][  929.252565]  [<ffffffffa334ea84>] SDM_SDGetDisk=
-+0x64/0x100 [sdm]
-[2012-03-26 18:55:43][  929.252575]  [<ffffffffa334af47>] SDM_FRAMESdGe=
-tDisk+0x17/0x80 [sdm]
-[2012-03-26 18:55:43][  929.252585]  [<ffffffffa33687e3>] SDM_ERRAddTim=
-er+0x33/0x370 [sdm]
-[2012-03-26 18:55:43][  929.252594]  [<ffffffffa334a747>] SDM_FRAMEErrA=
-ddTimer+0x17/0x80 [sdm]
-[2012-03-26 18:55:43][  929.252604]  [<ffffffffa335b697>] SDM_SIOQueueR=
-eqProcess+0x67/0x7d0 [sdm]
-[2012-03-26 18:55:43][  929.252612]  [<ffffffffa335bf42>] SDM_SIOQueueT=
-hread+0x142/0x310 [sdm]
-[2012-03-26 18:55:43][  929.252618]  [<ffffffff8144e6e4>] kernel_thread=
-_helper+0x4/0x10
-[2012-03-26 18:55:43][  929.252627]  [<ffffffffa335be00>] ? SDM_SIOQueu=
-eReqProcess+0x7d0/0x7d0 [sdm]
-[2012-03-26 18:55:43][  929.252632]  [<ffffffff8144e6e0>] ? gs_change+0=
-x13/0x13
-[2012-03-26 18:55:43][  929.252635] ---[ end trace a82addcbe6cbf131 ]--=
--
-=2E......[snip].........
-[2012-03-27 03:41:06][ 3647.885973] ------------[ cut here ]-----------=
--
-[2012-03-27 03:41:06][ 3647.886005] WARNING: at kernel/softirq.c:773 __=
-tasklet_action+0x51/0x1a0()
-[2012-03-27 03:41:06][ 3647.886010] Hardware name: Romley
-[2012-03-27 03:41:06][ 3647.886012] Modules linked in: isd_fid(O) ivs_e=
-dft(O) ivs_emp(O) ivs_xnet(O) isd_rds(O) isd_idm(O) isd_dft(O) isd_base=
-(O) sdm(O) isd_cmm(O) isd_ibc(O) isd_lib(O) xve_hab(PO) xve_net(PO) xve=
-_cls_msg_filter(PO) xve_dscp(PO) pagepool(PO) iod(O) cmm(PO) util(PO) i=
-ntel_t10(PO) itest_nid(PO) dmi(PO) bsp_adapter(PO) mpa(O) ipmi_si ipmi_=
-devintf ipmi_msghandler iscsi_sw(PO) iscsi_prot(O) iscsi_seg(PO) iscsi_=
-comm(PO) iscsi_initiator(PO) 8192cu(O) pciehp(PO) pcieaer(PO) pciecore(=
-PO) drvinstallthird(PO) quark(O) sal(O) pmsas(O) foe(O) lfcoe(O) libfc(=
-O) ib_uverbs(O) ibtgt(O) ib_srpt(O) ib_cm(O) ib_sa(O) mlx4_ib(O) ib_uma=
-d(O) ib_mad(O) mlx4_core(O) ib_core(O) drvtom(O) cxgb4(O) drvtoecore(O)=
- fcdrv(PO) unflowlevel(PO) unfcommon(O) drvmml(PO) scsi_transport_fc sc=
-si_tgt memtest(PO) drv_iosubsys_ini(O) iocount(O) bsp_mml(PO) agetty_qu=
-ery(PO) cpufreq_powersave af_packet nf_conntrack_ipv6 nf_defrag_ipv6 ip=
-6table_filter ip6_tables xt_limit xt_tcpudp xt_multiport nf_conntr!
-ack_ipv4
- nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf p=
-rocessor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O=
-) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_sto=
-rage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) lib=
-ata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interfa=
-ce(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp=
-_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_hand=
-ler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
-[2012-03-27 03:41:06][ 3647.886175] Pid: 21635, comm: sdtester Tainted:=
- P        W  O 3.4.24.15-0.11-default #1
-[2012-03-27 03:41:06][ 3647.886179] Call Trace:
-[2012-03-27 03:41:06][ 3647.886182]  <IRQ>  [<ffffffff810413d1>] ? __ta=
-sklet_action+0x51/0x1a0
-[2012-03-27 03:41:06][ 3647.886197]  [<ffffffff81039e4a>] warn_slowpath=
-_common+0x7a/0xb0
-[2012-03-27 03:41:06][ 3647.886201]  [<ffffffff81039e95>] warn_slowpath=
-_null+0x15/0x20
-[2012-03-27 03:41:06][ 3647.886205]  [<ffffffff810413d1>] __tasklet_act=
-ion+0x51/0x1a0
-[2012-03-27 03:41:06][ 3647.886209]  [<ffffffff810415c9>] tasklet_actio=
-n+0x59/0x60
-[2012-03-27 03:41:06][ 3647.886213]  [<ffffffff81041a90>] handle_pendin=
-g_softirqs+0xb0/0x170
-[2012-03-27 03:41:06][ 3647.886217]  [<ffffffff81041b99>] __do_softirq+=
-0x49/0xa0
-[2012-03-27 03:41:06][ 3647.886228]  [<ffffffff8144e7dc>] call_softirq+=
-0x1c/0x30
-[2012-03-27 03:41:06][ 3647.886234]  [<ffffffff81004415>] do_softirq+0x=
-65/0xa0
-[2012-03-27 03:41:06][ 3647.886238]  [<ffffffff810418a5>] irq_exit+0xc5=
-/0xe0
-[2012-03-27 03:41:06][ 3647.886243]  [<ffffffff81003b74>] do_IRQ+0x64/0=
-xe0
-[2012-03-27 03:41:06][ 3647.886252]  [<ffffffff8144576a>] common_interr=
-upt+0x6a/0x6a
-[2012-03-27 03:41:06][ 3647.886254]  <EOI>  [<ffffffff814454e0>] ? _raw=
-_spin_unlock_irq+0x10/0x20
-[2012-03-27 03:41:06][ 3647.886264]  [<ffffffff814454d9>] ? _raw_spin_u=
-nlock_irq+0x9/0x20
-[2012-03-27 03:41:06][ 3647.886275]  [<ffffffff8118e8d2>] kiocb_batch_r=
-efill+0x2c2/0x2e0
-[2012-03-27 03:41:06][ 3647.886279]  [<ffffffff8118eb0c>] io_submit_one=
-+0x21c/0x2b0
-[2012-03-27 03:41:06][ 3647.886284]  [<ffffffff8118ed0a>] do_io_submit+=
-0x16a/0x360
-[2012-03-27 03:41:06][ 3647.886288]  [<ffffffff8118ef0b>] sys_io_submit=
-+0xb/0x10
-[2012-03-27 03:41:06][ 3647.886293]  [<ffffffff8144d3f9>] system_call_f=
-astpath+0x16/0x1b
-[2012-03-27 03:41:06][ 3647.886297] ---[ end trace a82addcbe6cbf137 ]--=
--
-[2012-03-27 03:42:04][ 3705.434405] ------------[ cut here ]-----------=
--
-[2012-03-27 03:42:04][ 3705.434418] WARNING: at kernel/softirq.c:799 __=
-tasklet_action+0xae/0x1a0()
-[2012-03-27 03:42:04][ 3705.434421] Hardware name: Romley
-[2012-03-27 03:42:04][ 3705.434423] Modules linked in: isd_fid(O) ivs_e=
-dft(O) ivs_emp(O) ivs_xnet(O) isd_rds(O) isd_idm(O) isd_dft(O) isd_base=
-(O) sdm(O) isd_cmm(O) isd_ibc(O) isd_lib(O) xve_hab(PO) xve_net(PO) xve=
-_cls_msg_filter(PO) xve_dscp(PO) pagepool(PO) iod(O) cmm(PO) util(PO) i=
-ntel_t10(PO) itest_nid(PO) dmi(PO) bsp_adapter(PO) mpa(O) ipmi_si ipmi_=
-devintf ipmi_msghandler iscsi_sw(PO) iscsi_prot(O) iscsi_seg(PO) iscsi_=
-comm(PO) iscsi_initiator(PO) 8192cu(O) pciehp(PO) pcieaer(PO) pciecore(=
-PO) drvinstallthird(PO) quark(O) sal(O) pmsas(O) foe(O) lfcoe(O) libfc(=
-O) ib_uverbs(O) ibtgt(O) ib_srpt(O) ib_cm(O) ib_sa(O) mlx4_ib(O) ib_uma=
-d(O) ib_mad(O) mlx4_core(O) ib_core(O) drvtom(O) cxgb4(O) drvtoecore(O)=
- fcdrv(PO) unflowlevel(PO) unfcommon(O) drvmml(PO) scsi_transport_fc sc=
-si_tgt memtest(PO) drv_iosubsys_ini(O) iocount(O) bsp_mml(PO) agetty_qu=
-ery(PO) cpufreq_powersave af_packet nf_conntrack_ipv6 nf_defrag_ipv6 ip=
-6table_filter ip6_tables xt_limit xt_tcpudp xt_multiport nf_conntr!
-ack_ipv4
- nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf p=
-rocessor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O=
-) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_sto=
-rage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) lib=
-ata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interfa=
-ce(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp=
-_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_hand=
-ler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
-[2012-03-27 03:42:04][ 3705.434574] Pid: 11, comm: ksoftirqd/1 Tainted:=
- P        W  O 3.4.24.15-0.11-default #1
-[2012-03-27 03:42:04][ 3705.434577] Call Trace:
-[2012-03-27 03:42:04][ 3705.434586]  [<ffffffff8104142e>] ? __tasklet_a=
-ction+0xae/0x1a0
-[2012-03-27 03:42:04][ 3705.434592]  [<ffffffff81039e4a>] warn_slowpath=
-_common+0x7a/0xb0
-[2012-03-27 03:42:04][ 3705.434596]  [<ffffffff81039e95>] warn_slowpath=
-_null+0x15/0x20
-[2012-03-27 03:42:04][ 3705.434600]  [<ffffffff8104142e>] __tasklet_act=
-ion+0xae/0x1a0
-[2012-03-27 03:42:04][ 3705.434604]  [<ffffffff810415c9>] tasklet_actio=
-n+0x59/0x60
-[2012-03-27 03:42:04][ 3705.434608]  [<ffffffff81041a90>] handle_pendin=
-g_softirqs+0xb0/0x170
-[2012-03-27 03:42:04][ 3705.434613]  [<ffffffff81041b99>] __do_softirq+=
-0x49/0xa0
-[2012-03-27 03:42:04][ 3705.434616]  [<ffffffff81041d35>] run_ksoftirqd=
-+0x145/0x160
-[2012-03-27 03:42:04][ 3705.434620]  [<ffffffff81041bf0>] ? __do_softir=
-q+0xa0/0xa0
-[2012-03-27 03:42:04][ 3705.434623]  [<ffffffff81041bf0>] ? __do_softir=
-q+0xa0/0xa0
-[2012-03-27 03:42:04][ 3705.434629]  [<ffffffff8105c3ee>] kthread+0x9e/=
-0xb0
-[2012-03-27 03:42:04][ 3705.434637]  [<ffffffff8144e6e4>] kernel_thread=
-_helper+0x4/0x10
-[2012-03-27 03:42:04][ 3705.434641]  [<ffffffff8105c350>] ? __init_kthr=
-ead_worker+0x40/0x40
-[2012-03-27 03:42:04][ 3705.434646]  [<ffffffff8144e6e0>] ? gs_change+0=
-x13/0x13
-[2012-03-27 03:42:04][ 3705.434648] ---[ end trace a82addcbe6cbf138 ]--=
--
-
-
-I tested my FC IO in my platform(x86 smp machine, which have 8 cpus), a=
-fter FC IO
-running a few hours(sometimes 1-2h), I found FC IO abort. We found FC d=
-river tasklet
-can not run in current CPU(which received interrupts).
-
-In our FC driver, the process flow:
-
-=46C card hardware  -------> FC driver interrupt handler  --------->tas=
-klet_schedule(fc driver tasklet) ------->tasklet running, call function=
- process FC IO data.
-                        here will disable FC card interrupt            =
-                                         here will enable FC card inter=
-rupt again
-
-After the issue occur, OS can not receive the interrupt again(we check =
-the FC hardware and the interrupt is disabled).
-At this time, for debug, we force FC hardware reset to send a interrupt=
- to OS,
-and we track this interrupt in FC driver interrupt handler.
-We found the tasklet state is 0x1(mean state is TASKLET_STATE_SCHED),co=
-unt is 0, before we call tasklet_schedule().
-So the new tasklet can not add to CPU list.
-
-=2E...........
-    if (TRUE =3D=3D fcinterrupthandler(&(pstHba->hpRoot)))    ---------=
----> disable FC card interrupt here.
-    {
-        set_bit(TADRV_DPC_INT, (void *)&(pstHba->ulDelayProcessFlag));
-        /* use schedule_task because some of the OS callback events
-        * allocate memory which we can not do in the immediate queue.
-        */
-        tasklet_schedule(&pstHba->stDelayProcessTasklet);
-        spin_unlock(pstHba->pstPortLock);//=C3=88=C2=A5=C2=B5=C3=B4irq =
-save
-        return IRQ_HANDLED;
-    }
-=2E...........
-
-And I also add some dynamic debug in __tasklet_action(); after the issu=
-e occur, I open the dynamic debug.
-After we force the hardware reset to interrupt OS, we never found the F=
-C driver tasklet running in dmesg(I identify the tasklet by its data).
-I guess the FC tasklet is not in CPU global tasklet list.
-
-So I suspect the FC driver tasklet maybe lost with the patch 0d9f73fc1e=
-=2E
-=46urther more, I tested the kernel without this patch(0d9f73fc1e), I t=
-ested the FC IO exceed 40 hours, and the result is ok.
-
-I hope somebody can help to look at it. If I missing something, let me =
-know.
-
-
-
-Thanks!
-Yijing.
-
-
-
---=20
-Thanks!
-Yijing
+-- 
+Jens Axboe
