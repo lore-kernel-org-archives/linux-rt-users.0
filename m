@@ -1,76 +1,108 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: Linux-rt fails to boot [any release past 3.12.5-rt7] on all of
- my machines
-Date: Sun, 02 Mar 2014 18:18:58 +0400
-Message-ID: <53133DD2.40107@pavlinux.ru>
-References: <CAOcfFMw2P9QwQrzUYL4rpvrJ2_d7L8Q3fi3-U=dgB=krjd2QoQ@mail.gmail.com> <20140207152250.GC2382@linutronix.de> <CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com> <53131268.4070806@me.com>
-Reply-To: pavel@pavlinux.ru
+From: Mike Galbraith <bitbucket@online.de>
+Subject: [patch] rt,blk,mq: Make blk_mq_cpu_notify_lock a raw spinlock
+Date: Mon, 03 Mar 2014 05:57:26 +0100
+Message-ID: <1393822646.5816.4.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- protocol="application/pgp-signature";
- boundary="diWMRBw2TUG2swV7nT4SHRXWhqPhsfP8h"
-To: Kimmo Taskinen <kimmo.taskinen@me.com>,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Jens Axboe <axboe@kernel.dk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp02.mtu.ru ([62.5.255.19]:46460 "EHLO imp02.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752309AbaCBOTH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 2 Mar 2014 09:19:07 -0500
-In-Reply-To: <53131268.4070806@me.com>
+Received: from moutng.kundenserver.de ([212.227.17.13]:50640 "EHLO
+	moutng.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752469AbaCCE52 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 2 Mar 2014 23:57:28 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---diWMRBw2TUG2swV7nT4SHRXWhqPhsfP8h
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
 
-02.03.2014 15:13, Kimmo Taskinen =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> Hi,
->=20
-> Phenom has had boot problems with all patches after 3.12.5-rt7.
->=20
-> Today I noticed that an old Turion64 laptop didn't boot even with 3.12.=
-5-rt7. I
-> tried 3.10.32-rt30 and that worked fine.
+[  365.164040] BUG: sleeping function called from invalid context at kernel/rtmutex.c:674
+[  365.164041] in_atomic(): 1, irqs_disabled(): 1, pid: 26, name: migration/1
+[  365.164043] no locks held by migration/1/26.
+[  365.164044] irq event stamp: 6648
+[  365.164056] hardirqs last  enabled at (6647): [<ffffffff8153d377>] restore_args+0x0/0x30
+[  365.164062] hardirqs last disabled at (6648): [<ffffffff810ed98d>] multi_cpu_stop+0x9d/0x120
+[  365.164070] softirqs last  enabled at (0): [<ffffffff810543bc>] copy_process.part.28+0x6fc/0x1920
+[  365.164072] softirqs last disabled at (0): [<          (null)>]           (null)
+[  365.164076] CPU: 1 PID: 26 Comm: migration/1 Tainted: GF           N  3.12.12-rt19-0.gcb6c4a2-rt #3
+[  365.164078] Hardware name: QCI QSSC-S4R/QSSC-S4R, BIOS QSSC-S4R.QCI.01.00.S013.032920111005 03/29/2011
+[  365.164091]  0000000000000001 ffff880a42ea7c30 ffffffff815367e6 ffffffff81a086c0
+[  365.164099]  ffff880a42ea7c40 ffffffff8108919c ffff880a42ea7c60 ffffffff8153c24f
+[  365.164107]  ffff880a42ea91f0 00000000ffffffe1 ffff880a42ea7c88 ffffffff81297ec0
+[  365.164108] Call Trace:
+[  365.164119]  [<ffffffff810060b1>] try_stack_unwind+0x191/0x1a0
+[  365.164127]  [<ffffffff81004872>] dump_trace+0x92/0x360
+[  365.164133]  [<ffffffff81006108>] show_trace_log_lvl+0x48/0x60
+[  365.164138]  [<ffffffff81004c18>] show_stack_log_lvl+0xd8/0x1d0
+[  365.164143]  [<ffffffff81006160>] show_stack+0x20/0x50
+[  365.164153]  [<ffffffff815367e6>] dump_stack+0x54/0x9a
+[  365.164163]  [<ffffffff8108919c>] __might_sleep+0xfc/0x140
+[  365.164173]  [<ffffffff8153c24f>] rt_spin_lock+0x1f/0x70
+[  365.164182]  [<ffffffff81297ec0>] blk_mq_main_cpu_notify+0x20/0x70
+[  365.164191]  [<ffffffff81540a1c>] notifier_call_chain+0x4c/0x70
+[  365.164201]  [<ffffffff81083499>] __raw_notifier_call_chain+0x9/0x10
+[  365.164207]  [<ffffffff810567be>] cpu_notify+0x1e/0x40
+[  365.164217]  [<ffffffff81525da2>] take_cpu_down+0x22/0x40
+[  365.164223]  [<ffffffff810ed9c6>] multi_cpu_stop+0xd6/0x120
+[  365.164229]  [<ffffffff810edd97>] cpu_stopper_thread+0xd7/0x1e0
+[  365.164235]  [<ffffffff810863a3>] smpboot_thread_fn+0x203/0x380
+[  365.164241]  [<ffffffff8107cbf8>] kthread+0xc8/0xd0
+[  365.164250]  [<ffffffff8154440c>] ret_from_fork+0x7c/0xb0
+[  365.164429] smpboot: CPU 1 is now offline
+
+Signed-off-by: Mike Galbraith <bitbucket@online.de>
+---
+ block/blk-mq-cpu.c |   14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+--- a/block/blk-mq-cpu.c
++++ b/block/blk-mq-cpu.c
+@@ -11,7 +11,7 @@
+ #include "blk-mq.h"
+ 
+ static LIST_HEAD(blk_mq_cpu_notify_list);
+-static DEFINE_SPINLOCK(blk_mq_cpu_notify_lock);
++static DEFINE_RAW_SPINLOCK(blk_mq_cpu_notify_lock);
+ 
+ static int blk_mq_main_cpu_notify(struct notifier_block *self,
+ 				  unsigned long action, void *hcpu)
+@@ -19,12 +19,12 @@ static int blk_mq_main_cpu_notify(struct
+ 	unsigned int cpu = (unsigned long) hcpu;
+ 	struct blk_mq_cpu_notifier *notify;
+ 
+-	spin_lock(&blk_mq_cpu_notify_lock);
++	raw_spin_lock(&blk_mq_cpu_notify_lock);
+ 
+ 	list_for_each_entry(notify, &blk_mq_cpu_notify_list, list)
+ 		notify->notify(notify->data, action, cpu);
+ 
+-	spin_unlock(&blk_mq_cpu_notify_lock);
++	raw_spin_unlock(&blk_mq_cpu_notify_lock);
+ 	return NOTIFY_OK;
+ }
+ 
+@@ -32,16 +32,16 @@ void blk_mq_register_cpu_notifier(struct
+ {
+ 	BUG_ON(!notifier->notify);
+ 
+-	spin_lock(&blk_mq_cpu_notify_lock);
++	raw_spin_lock(&blk_mq_cpu_notify_lock);
+ 	list_add_tail(&notifier->list, &blk_mq_cpu_notify_list);
+-	spin_unlock(&blk_mq_cpu_notify_lock);
++	raw_spin_unlock(&blk_mq_cpu_notify_lock);
+ }
+ 
+ void blk_mq_unregister_cpu_notifier(struct blk_mq_cpu_notifier *notifier)
+ {
+-	spin_lock(&blk_mq_cpu_notify_lock);
++	raw_spin_lock(&blk_mq_cpu_notify_lock);
+ 	list_del(&notifier->list);
+-	spin_unlock(&blk_mq_cpu_notify_lock);
++	raw_spin_unlock(&blk_mq_cpu_notify_lock);
+ }
+ 
+ void blk_mq_init_cpu_notifier(struct blk_mq_cpu_notifier *notifier,
 
 
-I have yet three or four months ago that most x86 systems, almost all of =
-the
-patches to the kernel 3.12 do not work.
-
-Partially or accidentally only work with debug information: if enable
-CONFIG_DEBUG_KERNEL and DEBUG_LATENCYTOP,.... and other.
-
-
-See mailing list history.
-
---=20
-
-                                                         Pavel.
-
-
---diWMRBw2TUG2swV7nT4SHRXWhqPhsfP8h
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.19 (GNU/Linux)
-
-iQIcBAEBCgAGBQJTEz3SAAoJEPtok08Dny2hiPMQAMnGv3qGHABX96B9Boz3Mdd5
-ccHWKWgfOBL6J6jBBdoGJIs4iqww2rHea594nKHC5bMphvUleNe/qJR+Kcazrt9i
-xbZMcjt+uYHCOKSR3Ozh3BZJr55UAe9JRhu/DZzPHD1Xb29H0z+kF/xcKyZ106Wy
-nCRw9DZcwymOH0A9aIvGwYik0ENUEGYUK/Uyzmi2FE+bDke5yuMPsbYrfIhMdTp1
-StgoFUJu+M5CuxpQe90ZTkpx0SGEhfzWGt6qrB+WcWfDZLXoNZTs6tAfu2vj9m2t
-VL1kQMKfkDdUHsjiHfEF6acjOAPgVhljsBQx9CWevBUYPePkXKKjRwAuta7WC71j
-B1dZznaQSZ3zHJ82jnMUrr2qveS+yvglPni8e2uZ92mjbdeVxbEX8SOUpRYDre3v
-uHf83INDNxPtgDrb1WZgKoBfsSo18STacNPSP+0/4yc4ECAWupVlxzUjnwz0o9xs
-RuZcEU3wuRtn2YSslmu/MlAKrL/kpG9eV0uAiD9PDI23lofnk1O6lG7zHNFyO9j2
-BG9zchtHggNIq8jmtrQAeohV6yi7fdwvb8xKa/Q39EKoV0RWxKjf9+oz9HbeJEXp
-YT/NnRvr5P2xFgFFA2OS97nc9j7CzWZI1agKcIz1FOe1gC+lpgVekqCOGZQxXRxj
-E2braMVEEe9tOIOuGIz8
-=2Xrx
------END PGP SIGNATURE-----
-
---diWMRBw2TUG2swV7nT4SHRXWhqPhsfP8h--
