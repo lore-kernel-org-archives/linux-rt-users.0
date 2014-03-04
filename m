@@ -1,116 +1,92 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] cpu_chill: Add a UNINTERRUPTIBLE hrtimer_nanosleep
-Date: Tue, 4 Mar 2014 12:28:32 -0500
-Message-ID: <20140304122832.0979c5dc@gandalf.local.home>
+From: David Miller <davem@davemloft.net>
+Subject: Re: [PATCH 3/4] sparc64: convert spinlock_t to raw_spinlock_t in
+ mmu_context_t
+Date: Tue, 04 Mar 2014 14:10:03 -0500 (EST)
+Message-ID: <20140304.141003.1969905483115684548.davem@davemloft.net>
+References: <359241392801938@web24j.yandex.ru>
+	<530D9D1C.1060905@oracle.com>
+	<39171393599083@web13h.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>, uobergfe@redhat.com
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: allen.pais@oracle.com, linux-rt-users@vger.kernel.org,
+	sparclinux@vger.kernel.org, bigeasy@linutronix.de
+To: tkhai@yandex.ru
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from shards.monkeyblade.net ([149.20.54.216]:35930 "EHLO
+	shards.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753420AbaCDTKG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Mar 2014 14:10:06 -0500
+In-Reply-To: <39171393599083@web13h.yandex.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-We hit another bug that was caused by switching cpu_chill() from
-msleep() to hrtimer_nanosleep().
+From: Kirill Tkhai <tkhai@yandex.ru>
+Date: Fri, 28 Feb 2014 18:51:23 +0400
 
-This time it is a livelock. The problem is that hrtimer_nanosleep()
-calls schedule with the state == TASK_INTERRUPTIBLE. But these means
-that if a signal is pending, the scheduler wont schedule, and will
-simply change the current task state back to TASK_RUNNING. This
-nullifies the whole point of cpu_chill() in the first place. That is,
-if a task is spinning on a try_lock() and it preempted the owner of the
-lock, if it has a signal pending, it will never give up the CPU to let
-the owner of the lock run.
+> This should be fixed like that's done for 8250
+> [patch drivers-serial-cleanup-locking-for-rt.patch]
 
-I made a static function __hrtimer_nanosleep() that takes a fifth
-parameter "state", which determines the task state of that the
-nanosleep() will be in. The normal hrtimer_nanosleep() will act the
-same, but cpu_chill() will call the __hrtimer_nanosleep() directly with
-the TASK_UNINTERRUPTIBLE state.
+Like the patch below?
 
-cpu_chill() only cares that the first sleep happens, and does not care
-about the state of the restart schedule (in hrtimer_nanosleep_restart).
+Is this transformation legitimate outside of the -rt tree?  I wish the commit
+messages for the 8250 change was more verbose, explaining exactly why this
+is needed.
 
-Reported-by: Ulrich Obergfell <uobergfe@redhat.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 083815d..c19183d 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1769,12 +1769,13 @@ void hrtimer_init_sleeper(struct hrtimer_sleeper *sl, struct task_struct *task)
- }
- EXPORT_SYMBOL_GPL(hrtimer_init_sleeper);
+And if it's needed, all the sparc serial/console drivers need this too.
+
+diff --git a/drivers/tty/serial/sunhv.c b/drivers/tty/serial/sunhv.c
+index cf86e72..dc697ce 100644
+--- a/drivers/tty/serial/sunhv.c
++++ b/drivers/tty/serial/sunhv.c
+@@ -433,13 +433,10 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
+ 	unsigned long flags;
+ 	int locked = 1;
  
--static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode)
-+static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode,
-+				unsigned long state)
- {
- 	hrtimer_init_sleeper(t, current);
+-	local_irq_save(flags);
+-	if (port->sysrq) {
+-		locked = 0;
+-	} else if (oops_in_progress) {
+-		locked = spin_trylock(&port->lock);
+-	} else
+-		spin_lock(&port->lock);
++	if (port->sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&port->lock, flags);
++	else
++		spin_lock_irqsave(&port->lock, flags);
  
- 	do {
--		set_current_state(TASK_INTERRUPTIBLE);
-+		set_current_state(state);
- 		hrtimer_start_expires(&t->timer, mode);
- 		if (!hrtimer_active(&t->timer))
- 			t->task = NULL;
-@@ -1818,7 +1819,8 @@ long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
- 				HRTIMER_MODE_ABS);
- 	hrtimer_set_expires_tv64(&t.timer, restart->nanosleep.expires);
+ 	while (n > 0) {
+ 		unsigned long ra = __pa(con_write_page);
+@@ -470,8 +467,7 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
+ 	}
  
--	if (do_nanosleep(&t, HRTIMER_MODE_ABS))
-+	/* cpu_chill() does not care about restart state. */
-+	if (do_nanosleep(&t, HRTIMER_MODE_ABS, TASK_INTERRUPTIBLE))
- 		goto out;
- 
- 	rmtp = restart->nanosleep.rmtp;
-@@ -1835,8 +1837,10 @@ out:
- 	return ret;
+ 	if (locked)
+-		spin_unlock(&port->lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&port->lock, flags);
  }
  
--long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
--		       const enum hrtimer_mode mode, const clockid_t clockid)
-+static long
-+__hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
-+		    const enum hrtimer_mode mode, const clockid_t clockid,
-+		    unsigned long state)
- {
- 	struct restart_block *restart;
- 	struct hrtimer_sleeper t;
-@@ -1849,7 +1853,7 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
+ static inline void sunhv_console_putchar(struct uart_port *port, char c)
+@@ -492,7 +488,10 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
+ 	unsigned long flags;
+ 	int i, locked = 1;
  
- 	hrtimer_init_on_stack(&t.timer, clockid, mode);
- 	hrtimer_set_expires_range_ns(&t.timer, timespec_to_ktime(*rqtp), slack);
--	if (do_nanosleep(&t, mode))
-+	if (do_nanosleep(&t, mode, state))
- 		goto out;
+-	local_irq_save(flags);
++	if (port->sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&port->lock, flags);
++	else
++		spin_lock_irqsave(&port->lock, flags);
+ 	if (port->sysrq) {
+ 		locked = 0;
+ 	} else if (oops_in_progress) {
+@@ -507,8 +506,7 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
+ 	}
  
- 	/* Absolute timers do not update the rmtp value and restart: */
-@@ -1876,6 +1880,12 @@ out:
- 	return ret;
+ 	if (locked)
+-		spin_unlock(&port->lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&port->lock, flags);
  }
  
-+long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
-+		       const enum hrtimer_mode mode, const clockid_t clockid)
-+{
-+	return __hrtimer_nanosleep(rqtp, rmtp, mode, clockid, TASK_INTERRUPTIBLE);
-+}
-+
- SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 		struct timespec __user *, rmtp)
- {
-@@ -1902,7 +1912,8 @@ void cpu_chill(void)
- 	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
- 
- 	current->flags |= PF_NOFREEZE;
--	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	__hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC,
-+			    TASK_UNINTERRUPTIBLE);
- 	if (!freeze_flag)
- 		current->flags &= ~PF_NOFREEZE;
- }
+ static struct console sunhv_console = {
