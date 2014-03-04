@@ -1,103 +1,37 @@
-From: Kirill Tkhai <tkhai@yandex.ru>
+From: David Miller <davem@davemloft.net>
 Subject: Re: [PATCH 3/4] sparc64: convert spinlock_t to raw_spinlock_t in
  mmu_context_t
-Date: Wed, 05 Mar 2014 00:39:38 +0400
-Message-ID: <53163A0A.5040806@yandex.ru>
-References: <359241392801938@web24j.yandex.ru>	<530D9D1C.1060905@oracle.com>	<39171393599083@web13h.yandex.ru> <20140304.141003.1969905483115684548.davem@davemloft.net>
-Reply-To: tkhai@yandex.ru
+Date: Tue, 04 Mar 2014 15:03:38 -0500 (EST)
+Message-ID: <20140304.150338.542737888922892447.davem@davemloft.net>
+References: <259041392800232@web13m.yandex.ru>
+	<530475A8.3060602@oracle.com>
+	<359241392801938@web24j.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: Text/Plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
 Cc: allen.pais@oracle.com, linux-rt-users@vger.kernel.org,
 	sparclinux@vger.kernel.org, bigeasy@linutronix.de
-To: David Miller <davem@davemloft.net>
-Return-path: <sparclinux-owner@vger.kernel.org>
-In-Reply-To: <20140304.141003.1969905483115684548.davem@davemloft.net>
-Sender: sparclinux-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: tkhai@yandex.ru
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from shards.monkeyblade.net ([149.20.54.216]:36443 "EHLO
+	shards.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756383AbaCDUDl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Mar 2014 15:03:41 -0500
+In-Reply-To: <359241392801938@web24j.yandex.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi, David!
+From: Kirill Tkhai <tkhai@yandex.ru>
+Date: Wed, 19 Feb 2014 13:25:38 +0400
 
-On 04.03.2014 23:10, David Miller wrote:
-> From: Kirill Tkhai <tkhai@yandex.ru>
-> Date: Fri, 28 Feb 2014 18:51:23 +0400
-> 
->> This should be fixed like that's done for 8250
->> [patch drivers-serial-cleanup-locking-for-rt.patch]
-> 
-> Like the patch below?
+> It seems for me it's better to decide the problem not changing protector of tsb like in patch above.
+> You may get good stack without sun4v_data_access_exception error, which was in the first or second
+> message.
 
-Exactly this.
+My suspicion is that what happens when we get the data access error is
+that we sample the tlb batch count as non-zero, preempt, then come
+back from preemption seeing the tlb batch in a completely different state.
 
-> Is this transformation legitimate outside of the -rt tree?  I wish the commit
-> messages for the 8250 change was more verbose, explaining exactly why this
-> is needed.
-> 
-> And if it's needed, all the sparc serial/console drivers need this too.
-
-port->lock is mutex, so we should not disable interrupts before we are
-doing spin_lock(). In RT spin_trylock_irqsave() does not disable irqs.
-
-The patch is made to be good for both RT and !RT cases, so everything
-is ok!
-
-Really I don't know, why the original patch is not in upstream
-***shrugging***. It's from 2009, everything is possible.
-
-
-> diff --git a/drivers/tty/serial/sunhv.c b/drivers/tty/serial/sunhv.c
-> index cf86e72..dc697ce 100644
-> --- a/drivers/tty/serial/sunhv.c
-> +++ b/drivers/tty/serial/sunhv.c
-> @@ -433,13 +433,10 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
->  	unsigned long flags;
->  	int locked = 1;
->  
-> -	local_irq_save(flags);
-> -	if (port->sysrq) {
-> -		locked = 0;
-> -	} else if (oops_in_progress) {
-> -		locked = spin_trylock(&port->lock);
-> -	} else
-> -		spin_lock(&port->lock);
-> +	if (port->sysrq || oops_in_progress)
-> +		locked = spin_trylock_irqsave(&port->lock, flags);
-> +	else
-> +		spin_lock_irqsave(&port->lock, flags);
->  
->  	while (n > 0) {
->  		unsigned long ra = __pa(con_write_page);
-> @@ -470,8 +467,7 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
->  	}
->  
->  	if (locked)
-> -		spin_unlock(&port->lock);
-> -	local_irq_restore(flags);
-> +		spin_unlock_irqrestore(&port->lock, flags);
->  }
->  
->  static inline void sunhv_console_putchar(struct uart_port *port, char c)
-> @@ -492,7 +488,10 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
->  	unsigned long flags;
->  	int i, locked = 1;
->  
-> -	local_irq_save(flags);
-> +	if (port->sysrq || oops_in_progress)
-> +		locked = spin_trylock_irqsave(&port->lock, flags);
-> +	else
-> +		spin_lock_irqsave(&port->lock, flags);
->  	if (port->sysrq) {
->  		locked = 0;
->  	} else if (oops_in_progress) {
-> @@ -507,8 +506,7 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
->  	}
->  
->  	if (locked)
-> -		spin_unlock(&port->lock);
-> -	local_irq_restore(flags);
-> +		spin_unlock_irqrestore(&port->lock, flags);
->  }
->  
->  static struct console sunhv_console = {
-> 
-
+And that's what leads to the crash, in the one trace I saw the TSB address
+passed to tsb_flush() (register %o0) was some garbage like 0x103.
