@@ -1,189 +1,67 @@
-From: David Miller <davem@davemloft.net>
+From: Kirill Tkhai <tkhai@yandex.ru>
 Subject: Re: [PATCH 3/4] sparc64: convert spinlock_t to raw_spinlock_t in
  mmu_context_t
-Date: Tue, 04 Mar 2014 15:28:35 -0500 (EST)
-Message-ID: <20140304.152835.432307123220321373.davem@davemloft.net>
-References: <530D9D1C.1060905@oracle.com>
-	<39171393599083@web13h.yandex.ru>
-	<20140304.141003.1969905483115684548.davem@davemloft.net>
+Date: Wed, 05 Mar 2014 00:44:05 +0400
+Message-ID: <53163B15.7060905@yandex.ru>
+References: <341392153219@web17g.yandex.ru>	<52FB2751.2070101@oracle.com>	<173231392194038@web29j.yandex.ru> <20140304.145523.176895354551282596.davem@davemloft.net>
+Reply-To: tkhai@yandex.ru
 Mime-Version: 1.0
-Content-Type: Text/Plain; charset=us-ascii
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
 Cc: allen.pais@oracle.com, linux-rt-users@vger.kernel.org,
 	sparclinux@vger.kernel.org, bigeasy@linutronix.de
-To: tkhai@yandex.ru
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from shards.monkeyblade.net ([149.20.54.216]:36657 "EHLO
-	shards.monkeyblade.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932271AbaCDU2j (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Mar 2014 15:28:39 -0500
-In-Reply-To: <20140304.141003.1969905483115684548.davem@davemloft.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: David Miller <davem@davemloft.net>
+Return-path: <sparclinux-owner@vger.kernel.org>
+In-Reply-To: <20140304.145523.176895354551282596.davem@davemloft.net>
+Sender: sparclinux-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: David Miller <davem@davemloft.net>
-Date: Tue, 04 Mar 2014 14:10:03 -0500 (EST)
-
+On 04.03.2014 23:55, David Miller wrote:
 > From: Kirill Tkhai <tkhai@yandex.ru>
-> Date: Fri, 28 Feb 2014 18:51:23 +0400
+> Date: Wed, 12 Feb 2014 12:33:58 +0400
 > 
->> This should be fixed like that's done for 8250
->> [patch drivers-serial-cleanup-locking-for-rt.patch]
+>> 12.02.2014, 11:48, "Allen Pais" <allen.pais@oracle.com>:
+>>
+>>>  On Wednesday 12 February 2014 02:43 AM, Kirill Tkhai wrote:
+>>>>   06.01.2014, 07:56, "Allen Pais" <allen.pais@oracle.com>:
+>>>>>   In the attempt of get PREEMPT_RT working on sparc64 using
+>>>>>   linux-stable-rt version 3.10.22-rt19+, the kernel crash
+>>>>>   with the following trace:
+>>>>>
+>>>>>   [ 1487.027884] I7: <rt_mutex_setprio+0x3c/0x2c0>
+>>>>>   [ 1487.027885] Call Trace:
+>>>>>   [ 1487.027887]  [00000000004967dc] rt_mutex_setprio+0x3c/0x2c0
+>>>>>   [ 1487.027892]  [00000000004afe20] task_blocks_on_rt_mutex+0x180/0x200
+>>>>>   [ 1487.027895]  [0000000000819114] rt_spin_lock_slowlock+0x94/0x300
+>>>>>   [ 1487.027897]  [0000000000817ebc] __schedule+0x39c/0x53c
+>>>>>   [ 1487.027899]  [00000000008185fc] schedule+0x1c/0xc0
+>>>>>   [ 1487.027908]  [000000000048fff4] smpboot_thread_fn+0x154/0x2e0
+>>>>>   [ 1487.027913]  [000000000048753c] kthread+0x7c/0xa0
+>>>>>   [ 1487.027920]  [00000000004060c4] ret_from_syscall+0x1c/0x2c
+>>>>>   [ 1487.027922]  [0000000000000000]           (null)
+>>>  Now, consistently I've been getting sun4v_data_access_exception.
+>>>  Here's the trace:
+>>>  [ 4673.360121] sun4v_data_access_exception: ADDR[0000080000000000] CTX[0000] TYPE[0004], going.
+>>
+>> I've never dived at sparc's tlb before, but it seems now I'm understanding.
+>>
+>> arch_enter_lazy_mmu_mode() makes possible delayed tlb flushing. In !RT kernel
+>> you collect flush requests before you really flush all of them.
+>>
+>> In RT you collect them too, but you are able to be preempted in any moment.
+>> So, you may switch to other process with unflushed tlb, which is very bad.
+>>
+>> Try to not to set tb->active = 1; in arch_enter_lazy_mmu_mode(). Set it to zero.
+>> We will look if this robust fix helps.
 > 
-> Like the patch below?
+> Sorry for coming into this discussion so late.
+> 
+> Indeed, the pending flushes are per-cpu and we must flush them out in the
+> event of a preemption.
+> 
+> PowerPC does the same exact thing with arch_enter_lazy_mmu_mode(), in
+> fact that's where I copied the logic from.  Does PowerPC not work with
+> -rt? :-)
+> 
 
-Here's an updated patch that takes care of all of the Sun serial
-drivers, and is compile tested:
-
---------------------
-sparc: serial: Clean up the locking for -rt
-
-Signed-off-by: David S. Miller <davem@davemloft.net>
-
-diff --git a/drivers/tty/serial/sunhv.c b/drivers/tty/serial/sunhv.c
-index cf86e72..dc697ce 100644
---- a/drivers/tty/serial/sunhv.c
-+++ b/drivers/tty/serial/sunhv.c
-@@ -433,13 +433,10 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
- 	unsigned long flags;
- 	int locked = 1;
- 
--	local_irq_save(flags);
--	if (port->sysrq) {
--		locked = 0;
--	} else if (oops_in_progress) {
--		locked = spin_trylock(&port->lock);
--	} else
--		spin_lock(&port->lock);
-+	if (port->sysrq || oops_in_progress)
-+		locked = spin_trylock_irqsave(&port->lock, flags);
-+	else
-+		spin_lock_irqsave(&port->lock, flags);
- 
- 	while (n > 0) {
- 		unsigned long ra = __pa(con_write_page);
-@@ -470,8 +467,7 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
- 	}
- 
- 	if (locked)
--		spin_unlock(&port->lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&port->lock, flags);
- }
- 
- static inline void sunhv_console_putchar(struct uart_port *port, char c)
-@@ -492,7 +488,10 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
- 	unsigned long flags;
- 	int i, locked = 1;
- 
--	local_irq_save(flags);
-+	if (port->sysrq || oops_in_progress)
-+		locked = spin_trylock_irqsave(&port->lock, flags);
-+	else
-+		spin_lock_irqsave(&port->lock, flags);
- 	if (port->sysrq) {
- 		locked = 0;
- 	} else if (oops_in_progress) {
-@@ -507,8 +506,7 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
- 	}
- 
- 	if (locked)
--		spin_unlock(&port->lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&port->lock, flags);
- }
- 
- static struct console sunhv_console = {
-diff --git a/drivers/tty/serial/sunsab.c b/drivers/tty/serial/sunsab.c
-index 380fb53..5faa8e9 100644
---- a/drivers/tty/serial/sunsab.c
-+++ b/drivers/tty/serial/sunsab.c
-@@ -844,20 +844,16 @@ static void sunsab_console_write(struct console *con, const char *s, unsigned n)
- 	unsigned long flags;
- 	int locked = 1;
- 
--	local_irq_save(flags);
--	if (up->port.sysrq) {
--		locked = 0;
--	} else if (oops_in_progress) {
--		locked = spin_trylock(&up->port.lock);
--	} else
--		spin_lock(&up->port.lock);
-+	if (up->port.sysrq || oops_in_progress)
-+		locked = spin_trylock_irqsave(&up->port.lock, flags);
-+	else
-+		spin_lock_irqsave(&up->port.lock, flags);
- 
- 	uart_console_write(&up->port, s, n, sunsab_console_putchar);
- 	sunsab_tec_wait(up);
- 
- 	if (locked)
--		spin_unlock(&up->port.lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&up->port.lock, flags);
- }
- 
- static int sunsab_console_setup(struct console *con, char *options)
-diff --git a/drivers/tty/serial/sunsu.c b/drivers/tty/serial/sunsu.c
-index db79b76..9a0f24f 100644
---- a/drivers/tty/serial/sunsu.c
-+++ b/drivers/tty/serial/sunsu.c
-@@ -1295,13 +1295,10 @@ static void sunsu_console_write(struct console *co, const char *s,
- 	unsigned int ier;
- 	int locked = 1;
- 
--	local_irq_save(flags);
--	if (up->port.sysrq) {
--		locked = 0;
--	} else if (oops_in_progress) {
--		locked = spin_trylock(&up->port.lock);
--	} else
--		spin_lock(&up->port.lock);
-+	if (up->port.sysrq || oops_in_progress)
-+		locked = spin_trylock_irqsave(&up->port.lock, flags);
-+	else
-+		spin_lock_irqsave(&up->port.lock, flags);
- 
- 	/*
- 	 *	First save the UER then disable the interrupts
-@@ -1319,8 +1316,7 @@ static void sunsu_console_write(struct console *co, const char *s,
- 	serial_out(up, UART_IER, ier);
- 
- 	if (locked)
--		spin_unlock(&up->port.lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&up->port.lock, flags);
- }
- 
- /*
-diff --git a/drivers/tty/serial/sunzilog.c b/drivers/tty/serial/sunzilog.c
-index 45a8c6a..a2c40ed 100644
---- a/drivers/tty/serial/sunzilog.c
-+++ b/drivers/tty/serial/sunzilog.c
-@@ -1195,20 +1195,16 @@ sunzilog_console_write(struct console *con, const char *s, unsigned int count)
- 	unsigned long flags;
- 	int locked = 1;
- 
--	local_irq_save(flags);
--	if (up->port.sysrq) {
--		locked = 0;
--	} else if (oops_in_progress) {
--		locked = spin_trylock(&up->port.lock);
--	} else
--		spin_lock(&up->port.lock);
-+	if (up->port.sysrq || oops_in_progress)
-+		locked = spin_trylock_irqsave(&up->port.lock, flags);
-+	else
-+		spin_lock_irqsave(&up->port.lock, flags);
- 
- 	uart_console_write(&up->port, s, count, sunzilog_putchar);
- 	udelay(2);
- 
- 	if (locked)
--		spin_unlock(&up->port.lock);
--	local_irq_restore(flags);
-+		spin_unlock_irqrestore(&up->port.lock, flags);
- }
- 
- static int __init sunzilog_console_setup(struct console *con, char *options)
+It does not work, but we will :)
