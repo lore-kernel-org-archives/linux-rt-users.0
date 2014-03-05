@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/6] rt: Make cpu_chill() use hrtimer instead of msleep()
-Date: Tue, 04 Mar 2014 19:33:36 -0500
-Message-ID: <20140305003346.602499217@goodmis.org>
+Subject: [PATCH RT 2/6] Revert "x86: Disable IST stacks for debug/int 3/stack fault for
+ PREEMPT_RT"
+Date: Tue, 04 Mar 2014 19:33:35 -0500
+Message-ID: <20140305003346.447190358@goodmis.org>
 References: <20140305003333.402759240@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,11 +11,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>,
+	Brian Silverman <bsilver16384@gmail.com>,
+	Andi Kleen <andi@firstfloor.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rt-Make-cpu_chill-use-hrtimer-instead-of-msleep.patch
+Content-Disposition: inline; filename=0002-Revert-x86-Disable-IST-stacks-for-debug-int-3-stack-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,95 +26,121 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
-up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
-called from softirq context, it may block the ksoftirqd() from running, in
-which case, it may never wake up the msleep() causing the deadlock.
+where do I start. Let me explain what is going on here. The code
+sequence
+| pushf
+| pop    %edx
+| or     $0x1,%dh
+| push   %edx
+| mov    $0xe0,%eax
+| popf
+| sysenter
 
-I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
-running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
-runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
-ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
-blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
+triggers the bug. On 64bit kernel we see the double fault (with 32bit and
+64bit userland) and on 32bit kernel there is no problem. The reporter said
+that double fault does not happen on 64bit kernel with 64bit userland and
+this is because in that case the VDSO uses the "syscall" interface instead
+of "sysenter".
 
-The solution is not to convert the cpu_chill() back to a cpu_relax() as that
-will re-create a possible live lock that the cpu_chill() fixed earlier, and may
-also leave this bug open on other softirqs. The fix is to remove the
-dependency on ksoftirqd from cpu_chill(). That is, instead of calling
-msleep() that requires ksoftirqd to wake it up, use the
-hrtimer_nanosleep() code that does the wakeup from hard irq context.
+The bug. "popf" loads the flags with the TF bit set which enables
+"single stepping" and this leads to a debug exception. Usually on 64bit
+we have a special IST stack for the debug exception. Due to patch [0] we
+do not use the IST stack but the kernel stack instead. On 64bit the
+sysenter instruction starts in kernel with the stack address NULL. The
+code sequence above enters the debug exception (TF flag) after the
+sysenter instruction was executed which sets the stack pointer to NULL
+and we have a fault (it seems that the debug exception saves some bytes
+on the stack).
+To fix the double fault I'm going to drop patch [0]. It is completely
+pointless. In do_debug() and do_stack_segment() we disable preemption
+which means the task can't leave the CPU. So it does not matter if we run
+on IST or on kernel stack.
+There is a patch [1] which drops preempt_disable() call for a 32bit
+kernel but not for 64bit so there should be no regression.
+And [1] seems valid even for this code sequence. We enter the debug
+exception with a 256bytes long per cpu stack and migrate to the kernel
+stack before calling do_debug().
 
-|Looks to be the lock of the block softirq. I don't have the core dump
-|anymore, but from what I could tell the ksoftirqd was blocked on the
-|block softirq lock, where the block softirq handler did a msleep
-|(called by the qla2xxx interrupt handler).
-|
-|Looking at trigger_softirq() in block/blk-softirq.c, it can do a
-|smp_callfunction() to another cpu to run the block softirq. If that
-|happens to be the cpu where the qla2xx irq handler is doing the block
-|softirq and is in a middle of a msleep(), I believe the ksoftirqd will
-|try to run the softirq. If it does that, then BOOM, it's deadlocked
-|because the ksoftirqd will never run the timer softirq either.
-
-|I should have also stated that it was only one lock that was involved.
-|But the lock owner was doing a msleep() that requires a wakeup by
-|ksoftirqd to continue. If ksoftirqd happens to be blocked on a lock
-|held by the msleep() caller, then you have your deadlock.
-|
-|It's best not to have any softirqs going to sleep requiring another
-|softirq to wake it up. Note, if we ever require a timer softirq to do a
-|cpu_chill() it will most definitely hit this deadlock.
+[0] x86-disable-debug-stack.patch
+[1] fix-rt-int3-x86_32-3.2-rt.patch
 
 Cc: stable-rt@vger.kernel.org
-Found-by: Ulrich Obergfell <uobergfe@redhat.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-[bigeasy: add the 4 | chapters from email]
+Reported-by: Brian Silverman <bsilver16384@gmail.com>
+Cc: Andi Kleen <andi@firstfloor.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/delay.h |  2 +-
- kernel/hrtimer.c      | 15 +++++++++++++++
- 2 files changed, 16 insertions(+), 1 deletion(-)
+ arch/x86/include/asm/page_64_types.h | 21 ++++++---------------
+ arch/x86/kernel/cpu/common.c         |  2 --
+ arch/x86/kernel/dumpstack_64.c       |  4 ----
+ 3 files changed, 6 insertions(+), 21 deletions(-)
 
-diff --git a/include/linux/delay.h b/include/linux/delay.h
-index e23a7c0..37caab3 100644
---- a/include/linux/delay.h
-+++ b/include/linux/delay.h
-@@ -53,7 +53,7 @@ static inline void ssleep(unsigned int seconds)
- }
+diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
+index 0883ecd..7639dbf 100644
+--- a/arch/x86/include/asm/page_64_types.h
++++ b/arch/x86/include/asm/page_64_types.h
+@@ -14,21 +14,12 @@
+ #define IRQ_STACK_ORDER 2
+ #define IRQ_STACK_SIZE (PAGE_SIZE << IRQ_STACK_ORDER)
  
- #ifdef CONFIG_PREEMPT_RT_FULL
--# define cpu_chill()	msleep(1)
-+extern void cpu_chill(void);
- #else
- # define cpu_chill()	cpu_relax()
- #endif
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index ed0f3a1..a9f8842 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1847,6 +1847,21 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-# define STACKFAULT_STACK 0
+-# define DOUBLEFAULT_STACK 1
+-# define NMI_STACK 2
+-# define DEBUG_STACK 0
+-# define MCE_STACK 3
+-# define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
+-#else
+-# define STACKFAULT_STACK 1
+-# define DOUBLEFAULT_STACK 2
+-# define NMI_STACK 3
+-# define DEBUG_STACK 4
+-# define MCE_STACK 5
+-# define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
+-#endif
++#define STACKFAULT_STACK 1
++#define DOUBLEFAULT_STACK 2
++#define NMI_STACK 3
++#define DEBUG_STACK 4
++#define MCE_STACK 5
++#define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
  
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * Sleep for 1 ms in hope whoever holds what we want will let it go.
-+ */
-+void cpu_chill(void)
-+{
-+	struct timespec tu = {
-+		.tv_nsec = NSEC_PER_MSEC,
-+	};
-+
-+	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+}
-+EXPORT_SYMBOL(cpu_chill);
-+#endif
-+
- /*
-  * Functions related to boot-time initialization:
+ #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
+ #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
+diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
+index edc013e..ca93cc7 100644
+--- a/arch/x86/kernel/cpu/common.c
++++ b/arch/x86/kernel/cpu/common.c
+@@ -1050,9 +1050,7 @@ DEFINE_PER_CPU(unsigned int, irq_count) = -1;
   */
+ static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
+ 	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
+-#if DEBUG_STACK > 0
+ 	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
+-#endif
+ };
+ 
+ static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index 352beb7..6d728d9 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -21,14 +21,10 @@
+ 		(N_EXCEPTION_STACKS + DEBUG_STKSZ/EXCEPTION_STKSZ - 2)
+ 
+ static char x86_stack_ids[][8] = {
+-#if DEBUG_STACK > 0
+ 		[ DEBUG_STACK-1			]	= "#DB",
+-#endif
+ 		[ NMI_STACK-1			]	= "NMI",
+ 		[ DOUBLEFAULT_STACK-1		]	= "#DF",
+-#if STACKFAULT_STACK > 0
+ 		[ STACKFAULT_STACK-1		]	= "#SS",
+-#endif
+ 		[ MCE_STACK-1			]	= "#MC",
+ #if DEBUG_STKSZ > EXCEPTION_STKSZ
+ 		[ N_EXCEPTION_STACKS ...
 -- 
 1.8.5.3
