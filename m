@@ -1,75 +1,85 @@
-From: Marc Kleine-Budde <mkl@pengutronix.de>
-Subject: [PATCH] net: sched: dev_deactivate_many(): use msleep(1) instead of yield() to wait for outstanding qdisc_run calls
-Date: Wed,  5 Mar 2014 00:49:47 +0100
-Message-ID: <1393976987-23555-1-git-send-email-mkl@pengutronix.de>
-Cc: linux-kernel@vger.kernel.org, netdev@vger.kernel.org,
-	kernel@pengutronix.de, Marc Kleine-Budde <mkl@pengutronix.de>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 1/8] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+Date: Tue, 04 Mar 2014 19:24:47 -0500
+Message-ID: <20140305002507.205435052@goodmis.org>
+References: <20140305002446.173840270@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>,
+	Tiejun Chen <tiejun.chen@windriver.com>,
+	Bin Jiang <bin.jiang@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:43093 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755733AbaCEAZJ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Mar 2014 19:25:09 -0500
+Content-Disposition: inline; filename=0001-rcutree-rcu_bh_qs-disable-irq-while-calling-rcu_pree.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On PREEMPT_RT enabled systems the interrupt handler run as threads at prio 50
-(by default). If a high priority userspace process tries to shut down a busy
-network interface it might spin in a yield loop waiting for the device to
-become idle. With the interrupt thread having a lower priority than the
-looping process it might never be scheduled and so result in a deadlock on UP
-systems.
+3.8.13.14-rt28-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-With Magic SysRq the following backtrace can be produced:
+------------------
 
-> test_app R running      0   174    168 0x00000000
-> [<c02c7070>] (__schedule+0x220/0x3fc) from [<c02c7870>] (preempt_schedule_irq+0x48/0x80)
-> [<c02c7870>] (preempt_schedule_irq+0x48/0x80) from [<c0008fa8>] (svc_preempt+0x8/0x20)
-> [<c0008fa8>] (svc_preempt+0x8/0x20) from [<c001a984>] (local_bh_enable+0x18/0x88)
-> [<c001a984>] (local_bh_enable+0x18/0x88) from [<c025316c>] (dev_deactivate_many+0x220/0x264)
-> [<c025316c>] (dev_deactivate_many+0x220/0x264) from [<c023be04>] (__dev_close_many+0x64/0xd4)
-> [<c023be04>] (__dev_close_many+0x64/0xd4) from [<c023be9c>] (__dev_close+0x28/0x3c)
-> [<c023be9c>] (__dev_close+0x28/0x3c) from [<c023f7f0>] (__dev_change_flags+0x88/0x130)
-> [<c023f7f0>] (__dev_change_flags+0x88/0x130) from [<c023f904>] (dev_change_flags+0x10/0x48)
-> [<c023f904>] (dev_change_flags+0x10/0x48) from [<c024c140>] (do_setlink+0x370/0x7ec)
-> [<c024c140>] (do_setlink+0x370/0x7ec) from [<c024d2f0>] (rtnl_newlink+0x2b4/0x450)
-> [<c024d2f0>] (rtnl_newlink+0x2b4/0x450) from [<c024cfa0>] (rtnetlink_rcv_msg+0x158/0x1f4)
-> [<c024cfa0>] (rtnetlink_rcv_msg+0x158/0x1f4) from [<c0256740>] (netlink_rcv_skb+0xac/0xc0)
-> [<c0256740>] (netlink_rcv_skb+0xac/0xc0) from [<c024bbd8>] (rtnetlink_rcv+0x18/0x24)
-> [<c024bbd8>] (rtnetlink_rcv+0x18/0x24) from [<c02561b8>] (netlink_unicast+0x13c/0x198)
-> [<c02561b8>] (netlink_unicast+0x13c/0x198) from [<c025651c>] (netlink_sendmsg+0x264/0x2e0)
-> [<c025651c>] (netlink_sendmsg+0x264/0x2e0) from [<c022af98>] (sock_sendmsg+0x78/0x98)
-> [<c022af98>] (sock_sendmsg+0x78/0x98) from [<c022bb50>] (___sys_sendmsg.part.25+0x268/0x278)
-> [<c022bb50>] (___sys_sendmsg.part.25+0x268/0x278) from [<c022cf08>] (__sys_sendmsg+0x48/0x78)
-> [<c022cf08>] (__sys_sendmsg+0x48/0x78) from [<c0009320>] (ret_fast_syscall+0x0/0x2c)
+From: Tiejun Chen <tiejun.chen@windriver.com>
 
-This patch works around the problem by replacing yield() by msleep(1), giving
-the interrupt thread time to finish, similar to other changes contained in the
-rt patch set. Using wait_for_completion() instead would probably be a better
-solution.
+Any callers to the function rcu_preempt_qs() must disable irqs in
+order to protect the assignment to ->rcu_read_unlock_special. In
+RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
+in some scenarios where irq is enabled, like this path,
 
-Signed-off-by: Marc Kleine-Budde <mkl@pengutronix.de>
+do_single_softirq()
+    |
+    + local_irq_enable();
+    + handle_softirq()
+    |    |
+    |    + rcu_bh_qs()
+    |        |
+    |        + rcu_preempt_qs()
+    |
+    + local_irq_disable()
+
+So here we'd better disable irq directly inside of rcu_bh_qs() to
+fix this, otherwise the kernel may be freezable sometimes as
+observed. And especially this way is also kind and safe for the
+potential rcu_bh_qs() usage elsewhere in the future.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-Hello,
+ kernel/rcutree.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-this patch is intended for -rt, as the problem probably doesn't occur on non rt
-systems. However, I put netdev on Cc, as they probably can come up with a
-proper solution.
-
-regards,
-Marc
-
- net/sched/sch_generic.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/net/sched/sch_generic.c b/net/sched/sch_generic.c
-index a7f838b..d5b00ad 100644
---- a/net/sched/sch_generic.c
-+++ b/net/sched/sch_generic.c
-@@ -839,7 +839,7 @@ void dev_deactivate_many(struct list_head *head)
- 	/* Wait for outstanding qdisc_run calls. */
- 	list_for_each_entry(dev, head, unreg_list)
- 		while (some_qdisc_is_busy(dev))
--			yield();
-+			msleep(1)
- }
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 7ec834d..6f6d133 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -186,7 +186,12 @@ static void rcu_preempt_qs(int cpu);
  
- void dev_deactivate(struct net_device *dev)
+ void rcu_bh_qs(int cpu)
+ {
++	unsigned long flags;
++
++	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
++	local_irq_save(flags);
+ 	rcu_preempt_qs(cpu);
++	local_irq_restore(flags);
+ }
+ #else
+ void rcu_bh_qs(int cpu)
 -- 
-1.9.0
+1.8.5.3
+
+
