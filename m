@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/6] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-Date: Tue, 04 Mar 2014 19:33:34 -0500
-Message-ID: <20140305003346.299958746@goodmis.org>
+Subject: [PATCH RT 3/6] rt: Make cpu_chill() use hrtimer instead of msleep()
+Date: Tue, 04 Mar 2014 19:33:36 -0500
+Message-ID: <20140305003346.602499217@goodmis.org>
 References: <20140305003333.402759240@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,13 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Tiejun Chen <tiejun.chen@windriver.com>,
-	Bin Jiang <bin.jiang@windriver.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-rcutree-rcu_bh_qs-disable-irq-while-calling-rcu_pree.patch
+Content-Disposition: inline; filename=0003-rt-Make-cpu_chill-use-hrtimer-instead-of-msleep.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,54 +23,95 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Tiejun Chen <tiejun.chen@windriver.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Any callers to the function rcu_preempt_qs() must disable irqs in
-order to protect the assignment to ->rcu_read_unlock_special. In
-RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
-in some scenarios where irq is enabled, like this path,
+Ulrich Obergfell pointed out that cpu_chill() calls msleep() which is woken
+up by the ksoftirqd running the TIMER softirq. But as the cpu_chill() is
+called from softirq context, it may block the ksoftirqd() from running, in
+which case, it may never wake up the msleep() causing the deadlock.
 
-do_single_softirq()
-    |
-    + local_irq_enable();
-    + handle_softirq()
-    |    |
-    |    + rcu_bh_qs()
-    |        |
-    |        + rcu_preempt_qs()
-    |
-    + local_irq_disable()
+I checked the vmcore, and irq/74-qla2xxx is stuck in the msleep() call,
+running on CPU 8. The one ksoftirqd that is stuck, happens to be the one that
+runs on CPU 8, and it is blocked on a lock held by irq/74-qla2xxx. As that
+ksoftirqd is the one that will wake up irq/74-qla2xxx, and it happens to be
+blocked on a lock that irq/74-qla2xxx holds, we have our deadlock.
 
-So here we'd better disable irq directly inside of rcu_bh_qs() to
-fix this, otherwise the kernel may be freezable sometimes as
-observed. And especially this way is also kind and safe for the
-potential rcu_bh_qs() usage elsewhere in the future.
+The solution is not to convert the cpu_chill() back to a cpu_relax() as that
+will re-create a possible live lock that the cpu_chill() fixed earlier, and may
+also leave this bug open on other softirqs. The fix is to remove the
+dependency on ksoftirqd from cpu_chill(). That is, instead of calling
+msleep() that requires ksoftirqd to wake it up, use the
+hrtimer_nanosleep() code that does the wakeup from hard irq context.
+
+|Looks to be the lock of the block softirq. I don't have the core dump
+|anymore, but from what I could tell the ksoftirqd was blocked on the
+|block softirq lock, where the block softirq handler did a msleep
+|(called by the qla2xxx interrupt handler).
+|
+|Looking at trigger_softirq() in block/blk-softirq.c, it can do a
+|smp_callfunction() to another cpu to run the block softirq. If that
+|happens to be the cpu where the qla2xx irq handler is doing the block
+|softirq and is in a middle of a msleep(), I believe the ksoftirqd will
+|try to run the softirq. If it does that, then BOOM, it's deadlocked
+|because the ksoftirqd will never run the timer softirq either.
+
+|I should have also stated that it was only one lock that was involved.
+|But the lock owner was doing a msleep() that requires a wakeup by
+|ksoftirqd to continue. If ksoftirqd happens to be blocked on a lock
+|held by the msleep() caller, then you have your deadlock.
+|
+|It's best not to have any softirqs going to sleep requiring another
+|softirq to wake it up. Note, if we ever require a timer softirq to do a
+|cpu_chill() it will most definitely hit this deadlock.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Found-by: Ulrich Obergfell <uobergfe@redhat.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy: add the 4 | chapters from email]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/rcutree.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ include/linux/delay.h |  2 +-
+ kernel/hrtimer.c      | 15 +++++++++++++++
+ 2 files changed, 16 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 82c2224..6c2ec2d 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -175,7 +175,12 @@ static void rcu_preempt_qs(int cpu);
- 
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
+diff --git a/include/linux/delay.h b/include/linux/delay.h
+index e23a7c0..37caab3 100644
+--- a/include/linux/delay.h
++++ b/include/linux/delay.h
+@@ -53,7 +53,7 @@ static inline void ssleep(unsigned int seconds)
  }
+ 
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-# define cpu_chill()	msleep(1)
++extern void cpu_chill(void);
  #else
- void rcu_bh_qs(int cpu)
+ # define cpu_chill()	cpu_relax()
+ #endif
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index ed0f3a1..a9f8842 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1847,6 +1847,21 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+ 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
+ }
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * Sleep for 1 ms in hope whoever holds what we want will let it go.
++ */
++void cpu_chill(void)
++{
++	struct timespec tu = {
++		.tv_nsec = NSEC_PER_MSEC,
++	};
++
++	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++}
++EXPORT_SYMBOL(cpu_chill);
++#endif
++
+ /*
+  * Functions related to boot-time initialization:
+  */
 -- 
 1.8.5.3
