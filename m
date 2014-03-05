@@ -1,78 +1,78 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/6] Linux 3.4.82-rt101-rc1
-Date: Tue, 04 Mar 2014 19:29:33 -0500
-Message-ID: <20140305002933.559081123@goodmis.org>
+Subject: [PATCH RT 1/6] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
+Date: Tue, 04 Mar 2014 19:33:34 -0500
+Message-ID: <20140305003346.299958746@goodmis.org>
+References: <20140305003333.402759240@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>,
+	Tiejun Chen <tiejun.chen@windriver.com>,
+	Bin Jiang <bin.jiang@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-rcutree-rcu_bh_qs-disable-irq-while-calling-rcu_pree.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.2.55-rt79-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.4.82-rt101-rc1.
+From: Tiejun Chen <tiejun.chen@windriver.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+Any callers to the function rcu_preempt_qs() must disable irqs in
+order to protect the assignment to ->rcu_read_unlock_special. In
+RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
+in some scenarios where irq is enabled, like this path,
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+do_single_softirq()
+    |
+    + local_irq_enable();
+    + handle_softirq()
+    |    |
+    |    + rcu_bh_qs()
+    |        |
+    |        + rcu_preempt_qs()
+    |
+    + local_irq_disable()
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+So here we'd better disable irq directly inside of rcu_bh_qs() to
+fix this, otherwise the kernel may be freezable sometimes as
+observed. And especially this way is also kind and safe for the
+potential rcu_bh_qs() usage elsewhere in the future.
 
-If all goes well, this patch will be converted to the next main release
-on 3/7/2014.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.4.82-rt101-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.82.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.82-rt101-rc1.patch.xz
-
-You can also build from 3.4.82-rt100 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.82-rt100-rt101-rc1.patch.xz
-
-
-Changes from 3.4.82-rt100:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
+Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/rcutree.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-
-Sebastian Andrzej Siewior (3):
-      Revert "x86: Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT"
-      kernel/hrtimer: be non-freezeable in cpu_chill()
-      arm/unwind: use a raw_spin_lock
-
-Steven Rostedt (1):
-      rt: Make cpu_chill() use hrtimer instead of msleep()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.4.82-rt101-rc1
-
-Tiejun Chen (1):
-      rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-
-----
- arch/arm/kernel/unwind.c             | 14 +++++++-------
- arch/x86/include/asm/page_64_types.h | 21 ++++++---------------
- arch/x86/kernel/cpu/common.c         |  2 --
- arch/x86/kernel/dumpstack_64.c       |  4 ----
- include/linux/delay.h                |  2 +-
- kernel/hrtimer.c                     | 19 +++++++++++++++++++
- kernel/rcutree.c                     |  5 +++++
- localversion-rt                      |  2 +-
- 8 files changed, 39 insertions(+), 30 deletions(-)
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index 82c2224..6c2ec2d 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -175,7 +175,12 @@ static void rcu_preempt_qs(int cpu);
+ 
+ void rcu_bh_qs(int cpu)
+ {
++	unsigned long flags;
++
++	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
++	local_irq_save(flags);
+ 	rcu_preempt_qs(cpu);
++	local_irq_restore(flags);
+ }
+ #else
+ void rcu_bh_qs(int cpu)
+-- 
+1.8.5.3
