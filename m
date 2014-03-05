@@ -1,9 +1,9 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/8] Revert "x86: Disable IST stacks for debug/int 3/stack fault for
+Subject: [PATCH RT 2/6] Revert "x86: Disable IST stacks for debug/int 3/stack fault for
  PREEMPT_RT"
-Date: Tue, 04 Mar 2014 19:24:48 -0500
-Message-ID: <20140305002507.352731397@goodmis.org>
-References: <20140305002446.173840270@goodmis.org>
+Date: Tue, 04 Mar 2014 19:29:35 -0500
+Message-ID: <20140305002943.983290223@goodmis.org>
+References: <20140305002933.559081123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -21,7 +21,7 @@ Content-Disposition: inline; filename=0002-Revert-x86-Disable-IST-stacks-for-deb
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.8.13.14-rt28-rc1 stable review patch.
+3.4.82-rt101-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -78,7 +78,7 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  3 files changed, 6 insertions(+), 21 deletions(-)
 
 diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
-index 65b85f4..320f7bb 100644
+index 0883ecd..7639dbf 100644
 --- a/arch/x86/include/asm/page_64_types.h
 +++ b/arch/x86/include/asm/page_64_types.h
 @@ -14,21 +14,12 @@
@@ -110,10 +110,10 @@ index 65b85f4..320f7bb 100644
  #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
  #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index 2636e0f..9c3ab43 100644
+index f743261..cf79302 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
-@@ -1103,9 +1103,7 @@ DEFINE_PER_CPU(struct task_struct *, fpu_owner_task);
+@@ -1056,9 +1056,7 @@ DEFINE_PER_CPU(struct task_struct *, fpu_owner_task);
   */
  static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
  	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
@@ -124,7 +124,7 @@ index 2636e0f..9c3ab43 100644
  
  static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
 diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index f16c07b..b653675 100644
+index 9d50b30..17107bd 100644
 --- a/arch/x86/kernel/dumpstack_64.c
 +++ b/arch/x86/kernel/dumpstack_64.c
 @@ -21,14 +21,10 @@
