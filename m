@@ -1,87 +1,111 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/8] Linux 3.8.13.14-rt28-rc1
-Date: Tue, 04 Mar 2014 19:24:46 -0500
-Message-ID: <20140305002446.173840270@goodmis.org>
+Subject: [PATCH RT 5/8] arm/unwind: use a raw_spin_lock
+Date: Tue, 04 Mar 2014 19:24:51 -0500
+Message-ID: <20140305002507.809011804@goodmis.org>
+References: <20140305002446.173840270@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0005-arm-unwind-use-a-raw_spin_lock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.8.13.14-rt28-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.8.13.14-rt28-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+Mostly unwind is done with irqs enabled however SLUB may call it with
+irqs disabled while creating a new SLUB cache.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+I had system freeze while loading a module which called
+kmem_cache_create() on init. That means SLUB's __slab_alloc() disabled
+interrupts and then
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+->new_slab_objects()
+ ->new_slab()
+  ->setup_object()
+   ->setup_object_debug()
+    ->init_tracking()
+     ->set_track()
+      ->save_stack_trace()
+       ->save_stack_trace_tsk()
+        ->walk_stackframe()
+         ->unwind_frame()
+          ->unwind_find_idx()
+           =>spin_lock_irqsave(&unwind_lock);
 
-If all goes well, this patch will be converted to the next main release
-on 3/7/2014.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.8.13.14-rt28-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.14.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.14-rt28-rc1.patch.xz
-
-You can also build from 3.8.13.14-rt27 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13.14-rt27-rt28-rc1.patch.xz
-
-
-Changes from 3.8.13.14-rt27:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ arch/arm/kernel/unwind.c | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
 
-
-Nicholas Mc Guire (1):
-      net: ip_send_unicast_reply: add missing local serialization
-
-Paul E. McKenney (1):
-      rcu: Eliminate softirq processing from rcutree
-
-Sebastian Andrzej Siewior (3):
-      Revert "x86: Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT"
-      kernel/hrtimer: be non-freezeable in cpu_chill()
-      arm/unwind: use a raw_spin_lock
-
-Steven Rostedt (1):
-      rt: Make cpu_chill() use hrtimer instead of msleep()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.8.13.14-rt28-rc1
-
-Tiejun Chen (1):
-      rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-
-----
- arch/arm/kernel/unwind.c             |  14 ++--
- arch/x86/include/asm/page_64_types.h |  21 ++----
- arch/x86/kernel/cpu/common.c         |   2 -
- arch/x86/kernel/dumpstack_64.c       |   4 --
- include/linux/delay.h                |   2 +-
- kernel/hrtimer.c                     |  19 +++++
- kernel/rcutree.c                     | 119 +++++++++++++++++++++++++++----
- kernel/rcutree.h                     |   3 +-
- kernel/rcutree_plugin.h              | 133 ++++-------------------------------
- localversion-rt                      |   2 +-
- net/ipv4/ip_output.c                 |   9 ++-
- 11 files changed, 159 insertions(+), 169 deletions(-)
+diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
+index 00df012..bbafc67 100644
+--- a/arch/arm/kernel/unwind.c
++++ b/arch/arm/kernel/unwind.c
+@@ -87,7 +87,7 @@ extern const struct unwind_idx __start_unwind_idx[];
+ static const struct unwind_idx *__origin_unwind_idx;
+ extern const struct unwind_idx __stop_unwind_idx[];
+ 
+-static DEFINE_SPINLOCK(unwind_lock);
++static DEFINE_RAW_SPINLOCK(unwind_lock);
+ static LIST_HEAD(unwind_tables);
+ 
+ /* Convert a prel31 symbol to an absolute address */
+@@ -195,7 +195,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
+ 		/* module unwind tables */
+ 		struct unwind_table *table;
+ 
+-		spin_lock_irqsave(&unwind_lock, flags);
++		raw_spin_lock_irqsave(&unwind_lock, flags);
+ 		list_for_each_entry(table, &unwind_tables, list) {
+ 			if (addr >= table->begin_addr &&
+ 			    addr < table->end_addr) {
+@@ -207,7 +207,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
+ 				break;
+ 			}
+ 		}
+-		spin_unlock_irqrestore(&unwind_lock, flags);
++		raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 	}
+ 
+ 	pr_debug("%s: idx = %p\n", __func__, idx);
+@@ -469,9 +469,9 @@ struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
+ 	tab->begin_addr = text_addr;
+ 	tab->end_addr = text_addr + text_size;
+ 
+-	spin_lock_irqsave(&unwind_lock, flags);
++	raw_spin_lock_irqsave(&unwind_lock, flags);
+ 	list_add_tail(&tab->list, &unwind_tables);
+-	spin_unlock_irqrestore(&unwind_lock, flags);
++	raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 
+ 	return tab;
+ }
+@@ -483,9 +483,9 @@ void unwind_table_del(struct unwind_table *tab)
+ 	if (!tab)
+ 		return;
+ 
+-	spin_lock_irqsave(&unwind_lock, flags);
++	raw_spin_lock_irqsave(&unwind_lock, flags);
+ 	list_del(&tab->list);
+-	spin_unlock_irqrestore(&unwind_lock, flags);
++	raw_spin_unlock_irqrestore(&unwind_lock, flags);
+ 
+ 	kfree(tab);
+ }
+-- 
+1.8.5.3
