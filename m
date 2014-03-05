@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/6] rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-Date: Tue, 04 Mar 2014 19:29:34 -0500
-Message-ID: <20140305002943.837880844@goodmis.org>
+Subject: [PATCH RT 4/6] kernel/hrtimer: be non-freezeable in cpu_chill()
+Date: Tue, 04 Mar 2014 19:29:37 -0500
+Message-ID: <20140305002944.285907729@goodmis.org>
 References: <20140305002933.559081123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,69 +10,83 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Tiejun Chen <tiejun.chen@windriver.com>,
-	Bin Jiang <bin.jiang@windriver.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-rcutree-rcu_bh_qs-disable-irq-while-calling-rcu_pree.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:42090 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756967AbaCEA3r (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 4 Mar 2014 19:29:47 -0500
+Content-Disposition: inline; filename=0004-kernel-hrtimer-be-non-freezeable-in-cpu_chill.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.4.82-rt101-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Tiejun Chen <tiejun.chen@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Any callers to the function rcu_preempt_qs() must disable irqs in
-order to protect the assignment to ->rcu_read_unlock_special. In
-RT case, rcu_bh_qs() as the wrapper of rcu_preempt_qs() is called
-in some scenarios where irq is enabled, like this path,
+Since we replaced msleep() by hrtimer I see now and then (rarely) this:
 
-do_single_softirq()
-    |
-    + local_irq_enable();
-    + handle_softirq()
-    |    |
-    |    + rcu_bh_qs()
-    |        |
-    |        + rcu_preempt_qs()
-    |
-    + local_irq_disable()
+| [....] Waiting for /dev to be fully populated...
+| =====================================
+| [ BUG: udevd/229 still has locks held! ]
+| 3.12.11-rt17 #23 Not tainted
+| -------------------------------------
+| 1 lock held by udevd/229:
+|  #0:  (&type->i_mutex_dir_key#2){+.+.+.}, at: lookup_slow+0x28/0x98
+|
+| stack backtrace:
+| CPU: 0 PID: 229 Comm: udevd Not tainted 3.12.11-rt17 #23
+| (unwind_backtrace+0x0/0xf8) from (show_stack+0x10/0x14)
+| (show_stack+0x10/0x14) from (dump_stack+0x74/0xbc)
+| (dump_stack+0x74/0xbc) from (do_nanosleep+0x120/0x160)
+| (do_nanosleep+0x120/0x160) from (hrtimer_nanosleep+0x90/0x110)
+| (hrtimer_nanosleep+0x90/0x110) from (cpu_chill+0x30/0x38)
+| (cpu_chill+0x30/0x38) from (dentry_kill+0x158/0x1ec)
+| (dentry_kill+0x158/0x1ec) from (dput+0x74/0x15c)
+| (dput+0x74/0x15c) from (lookup_real+0x4c/0x50)
+| (lookup_real+0x4c/0x50) from (__lookup_hash+0x34/0x44)
+| (__lookup_hash+0x34/0x44) from (lookup_slow+0x38/0x98)
+| (lookup_slow+0x38/0x98) from (path_lookupat+0x208/0x7fc)
+| (path_lookupat+0x208/0x7fc) from (filename_lookup+0x20/0x60)
+| (filename_lookup+0x20/0x60) from (user_path_at_empty+0x50/0x7c)
+| (user_path_at_empty+0x50/0x7c) from (user_path_at+0x14/0x1c)
+| (user_path_at+0x14/0x1c) from (vfs_fstatat+0x48/0x94)
+| (vfs_fstatat+0x48/0x94) from (SyS_stat64+0x14/0x30)
+| (SyS_stat64+0x14/0x30) from (ret_fast_syscall+0x0/0x48)
 
-So here we'd better disable irq directly inside of rcu_bh_qs() to
-fix this, otherwise the kernel may be freezable sometimes as
-observed. And especially this way is also kind and safe for the
-potential rcu_bh_qs() usage elsewhere in the future.
+For now I see no better way but to disable the freezer the sleep the period.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Tiejun Chen <tiejun.chen@windriver.com>
-Signed-off-by: Bin Jiang <bin.jiang@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rcutree.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ kernel/hrtimer.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 12ae410..055268b 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -177,7 +177,12 @@ static void rcu_preempt_qs(int cpu);
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 0b1d411..a87d70d 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1854,8 +1854,12 @@ void cpu_chill(void)
+ 	struct timespec tu = {
+ 		.tv_nsec = NSEC_PER_MSEC,
+ 	};
++	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
  
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
++	current->flags |= PF_NOFREEZE;
+ 	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	if (!freeze_flag)
++		current->flags &= ~PF_NOFREEZE;
  }
- #else
- void rcu_bh_qs(int cpu)
+ EXPORT_SYMBOL(cpu_chill);
+ #endif
 -- 
 1.8.5.3
+
+
