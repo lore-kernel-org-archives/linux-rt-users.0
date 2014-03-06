@@ -1,27 +1,27 @@
 From: Helmut Buchsbaum <helmut.buchsbaum@gmail.com>
-Subject: 3.10.32-rt31: problem with "rcu: Eliminate softirq processing from rcutree"
-Date: Wed, 5 Mar 2014 18:32:09 +0100
-Message-ID: <CAJAcJWKVMxGKpD+YCvt0-ytsLZZHYXNU1wPUg8UTwM1B+X-2nQ@mail.gmail.com>
+Subject: Resend: 3.10.32-rt31: problem with "rcu: Eliminate softirq processing
+ from rcutree"
+Date: Thu, 6 Mar 2014 20:05:13 +0100
+Message-ID: <CAJAcJWKq1VsSVGWGtbx=-e-kW5kP5sQ9y4mvRbnM==U9BC2NpQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-1
 To: linux-rt-users@vger.kernel.org, rostedt@goodmis.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f44.google.com ([209.85.215.44]:46697 "EHLO
-	mail-la0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756049AbaCERcK (ORCPT
+Received: from mail-la0-f42.google.com ([209.85.215.42]:63948 "EHLO
+	mail-la0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751969AbaCFTFP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 5 Mar 2014 12:32:10 -0500
-Received: by mail-la0-f44.google.com with SMTP id hr13so946839lab.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 05 Mar 2014 09:32:09 -0800 (PST)
+	Thu, 6 Mar 2014 14:05:15 -0500
+Received: by mail-la0-f42.google.com with SMTP id ec20so2112349lab.29
+        for <linux-rt-users@vger.kernel.org>; Thu, 06 Mar 2014 11:05:13 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 I am working with a 3.10-rt based kernel on a custom device based on
 Xilinx Zynq Z-7010 (dual Cortex-A9) with 64MB DDR2 RAM.
-
 Today I rebased my work (3.10-rt mainly enhanced by Xilinx drivers,
-but otherwise unchanged) from 3.10.32-rt30 to 3.10.32-rt31.
-There I ran a dohell derivate (from
+but otherwise unchanged) from 3.10.32-rt30 to 3.10.32-rt31. There I
+ran a dohell derivate (from
 http://git.xenomai.org/xenomai-2.6.git/plain/src/testsuite/xeno-test/dohell?id=v2.6.3,
 just using customized hackbench call and cyclictest as the only test)
 when the OOM killer struck, which definitely did not happen with
@@ -222,7 +222,7 @@ or sacrifice child
 anon-rss:8544kB, file-rss:1432kB
 
 Unfortunately I'm rather busy at the moment, so I couldn't investigate
-this issue at all, sorry about that.
+this issue at all, I'm sorry.
 Steven, probably this issue also concerns 3.8.13.14-rt28-rc1 (I just
 discovered your post on the list).
 
@@ -231,3 +231,5 @@ Helmut
 
 PS: running this test with hackbench alone (no dohell), I get nearly
 the same result with kmem_cache_alloc() failing.
+PPS: I had to resend this post since I didn't get through to the list.
+Sorry about any noise!
