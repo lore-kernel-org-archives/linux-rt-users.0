@@ -1,40 +1,91 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH] net: sched: dev_deactivate_many(): use msleep(1)
- instead of yield() to wait for outstanding qdisc_run calls
-Date: Fri, 07 Mar 2014 05:26:37 +0100
-Message-ID: <1394166397.5056.40.camel@marge.simpson.net>
-References: <1393976987-23555-1-git-send-email-mkl@pengutronix.de>
-	 <20140306.160622.59358366688518505.davem@davemloft.net>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: FlexCAN on i.MX28 interrupt flooding retrying send
+Date: Fri, 07 Mar 2014 09:08:42 +0100
+Message-ID: <53197E8A.5050409@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: mkl@pengutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, netdev@vger.kernel.org,
-	kernel@pengutronix.de
-To: David Miller <davem@davemloft.net>
+To: wg@grandegger.com, mkl@pengutronix.de, linux-can@vger.kernel.org,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140306.160622.59358366688518505.davem@davemloft.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2014-03-06 at 16:06 -0500, David Miller wrote: 
-> From: Marc Kleine-Budde <mkl@pengutronix.de>
-> Date: Wed,  5 Mar 2014 00:49:47 +0100
-> 
-> > @@ -839,7 +839,7 @@ void dev_deactivate_many(struct list_head *head)
-> >  	/* Wait for outstanding qdisc_run calls. */
-> >  	list_for_each_entry(dev, head, unreg_list)
-> >  		while (some_qdisc_is_busy(dev))
-> > -			yield();
-> > +			msleep(1)
-> >  }
-> 
-> I don't understand this.
-> 
-> yield() should really _mean_ yield.
+Hi,
 
-It does, but yield() semantics make it useless for what you want to do..
-and pretty much undefined for anything other than SCHED_FIFO.  If you
-really want to give up the CPU to any old body, you have to sleep.
+I am using a FlexCAN CAN controller on a Freescale i.MX28 platform [1].
+If a packet is being sent when the bus is disconnected, I am getting
+an interrupt flooed that basically kills the machine.
 
--Mike
+This is _not_ the same problem as [2] - my kernel already has
+the fix.
+
+The first interrupt comes with ESR 0x00028652, i.e.
+
+TXWRN_INT
+BIT1_ERR
+STF_ERR
+TX_WRN
+TXRX
+FLT_CONF error passive
+ERR_INT
+
+The next ones come the same without the acked TXWRN_INT.
+Reading the ESR again immediately after acking gives
+0x00000250, i.e.
+
+TX_WRN
+TXRX
+FLT_CONF error passive
+
+so everything ackable has actually been acked.
+
+I think that the problem is that the FlexCAN tries to retransmit
+the frame indefinitely. Each retry senses the bus in the invalid
+state (BIT1_ERR) and immediately fires a new ERR_INT. To verify
+this I aborted the transmitted frame in the error state in the
+interrupt handler
+
+#define FLEXCAN_ESR_ERR_TRANSMIT \
+	(FLEXCAN_ESR_BIT1_ERR | FLEXCAN_ESR_BIT0_ERR | FLEXCAN_ESR_ACK_ERR)
+
+if (reg_esr & FLEXCAN_ESR_ERR_TRANSMIT) {
+
+	/* In case of a transmission error the packet is retried and
+	 * if the error persists, we will get another interrupt right
+	 * away. Abort the transmission - a lost packet is better than
+	 * an irq storm.
+	 */
+	if(printk_ratelimit())
+		netdev_err(dev, "Aborted transmission, ESR %08x\n", reg_esr);
+
+	can_get_echo_skb(dev, 0);
+	flexcan_write(FLEXCAN_MB_CNT_CODE(0x4),
+		&regs->cantxfg[FLEXCAN_TX_BUF_ID].can_ctrl);
+	netif_wake_queue(dev);
+}
+
+and the problem disappeared as expected. However, the correct
+way is probably to retry during some reasonable (configurable?)
+time interval.
+
+What puzzles me is that I did not found any other instance
+of this problem in the relevant mailing lists, only the original [2].
+
+I am using the 3.4.77 kernel with the realtime patches, but the
+code in the latest mainline looks the same in this respect.
+Maybe the realtime patches change some bevaviour, but I don't
+think they affect the core problem. I am not really an expert
+in the network devices, NAPI etc - maybe in that case the error
+interrupt should be disabled and re-enabled only if the
+error condition goes away? - I don't know...
+
+Please Cc: me when answering to the list.
+
+[1] http://www.tq-group.com/en/products/product-details/prod/embedded-modul-tqma28/extb/Main/productdetail/
+[2] https://gitorious.org/linux-can/wg-linux-can-next/commit/8ad94fa
+
+Thanks
+-- 
+                                           Stano
