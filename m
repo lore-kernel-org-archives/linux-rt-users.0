@@ -1,46 +1,39 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: nouveau crash due to missing channel (WAS: Re: [ANNOUNCE]
- 3.12.12-rt19)
-Date: Fri, 7 Mar 2014 12:53:57 +0100
-Message-ID: <20140307115357.GB8637@linutronix.de>
-References: <20140223184727.GA12442@linutronix.de>
- <53128DED.1000402@localhost>
- <20140307111848.GA8637@linutronix.de>
- <5319AF2D.2060004@canonical.com>
+Subject: Re: Linux-rt fails to boot [any release past 3.12.5-rt7] on all of
+ my machines
+Date: Fri, 07 Mar 2014 12:54:42 +0100
+Message-ID: <5319B382.1050208@linutronix.de>
+References: <CAOcfFMw2P9QwQrzUYL4rpvrJ2_d7L8Q3fi3-U=dgB=krjd2QoQ@mail.gmail.com> <20140207152250.GC2382@linutronix.de> <CAOcfFMzcymuyoi+Ox6pQ=U7KBbmbwFOYwHZHKBQPQpmjBLkQJQ@mail.gmail.com> <52FA43C8.5000102@linutronix.de> <5313185A.3040301@me.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Ben Skeggs <bskeggs@redhat.com>,
-	Peter Hurley <peter@hurleysoftware.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	dri-devel@lists.freedesktop.org,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Maarten Lankhorst <maarten.lankhorst@canonical.com>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Kimmo Taskinen <kimmo.taskinen@me.com>,
+	jordan <triplesquarednine@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:36877 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:36889 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751490AbaCGLyE (ORCPT
+	with ESMTP id S1752019AbaCGLyp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Mar 2014 06:54:04 -0500
-Content-Disposition: inline
-In-Reply-To: <5319AF2D.2060004@canonical.com>
+	Fri, 7 Mar 2014 06:54:45 -0500
+In-Reply-To: <5313185A.3040301@me.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Maarten Lankhorst | 2014-03-07 12:36:13 [+0100]:
+On 03/02/2014 12:39 PM, Kimmo Taskinen wrote:
+> Hi,
 
->>I can't find any kind of locking so my question is what ensures that chan is
->>not set to NULL between nouveau_fence_done() and
->>nouveau_fence_wait_uevent()? There are just a few opcodes in between but
->>nothing that pauses nouveau_fence_signal().
->Absolutely nothing. :-) Worse still, there's no guarantee that channel isn't freed, but hopefully that is less likely to be an issue.
+Hi,
 
-Okay, so I hit the correct spot. What do we do here? Do you want the
-patch I posted without the WARN_ON() or do you prefer to fix this in an
-other way?
+> Phenom has had boot problems with all patches after 3.12.5-rt7.
 
->~Maarten
+The difference between 3.12.5-rt7 and v3.12.6-rt8 is just the stable
+.6. I don't have anything close to the hardware to look at this myself.
+
+> Today I noticed that an old Turion64 laptop didn't boot even with
+> 3.12.5-rt7. I tried 3.10.32-rt30 and that worked fine.
+> 
+> Cheers
+> Kimmo
 
 Sebastian
