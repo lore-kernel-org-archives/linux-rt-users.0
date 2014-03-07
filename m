@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.82-rt101
-Date: Fri, 7 Mar 2014 12:58:21 -0500
-Message-ID: <20140307125821.1b269ca5@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.55-rt79
+Date: Fri, 7 Mar 2014 12:58:49 -0500
+Message-ID: <20140307125849.3b66fea5@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.82-rt101 stable release.
+I'm pleased to announce the 3.2.55-rt79 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 01a1d70707d15d64c4f013d78b520642e0c6d6bb
+  branch: v3.2-rt
+  Head SHA1: 1db3983893d2a70342a3af66a2ea1608dc068dfa
 
 
-Or to build 3.4.82-rt101 directly, the following patches should be applied:
+Or to build 3.2.55-rt79 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.82.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.55.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.82-rt101.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.55-rt79.patch.xz
 
 
 
-You can also build from 3.4.82-rt100 by applying the incremental patch:
+You can also build from 3.2.55-rt78 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.82-rt100-rt101.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.55-rt78-rt79.patch.xz
 
 
 
@@ -50,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.82-rt100:
+Changes from v3.2.55-rt78:
 
 ---
 
@@ -63,7 +63,7 @@ Steven Rostedt (1):
       rt: Make cpu_chill() use hrtimer instead of msleep()
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.82-rt101
+      Linux 3.2.55-rt79
 
 Tiejun Chen (1):
       rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
@@ -167,10 +167,10 @@ index 0883ecd..7639dbf 100644
  #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
  #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
 diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index f743261..cf79302 100644
+index edc013e..ca93cc7 100644
 --- a/arch/x86/kernel/cpu/common.c
 +++ b/arch/x86/kernel/cpu/common.c
-@@ -1056,9 +1056,7 @@ DEFINE_PER_CPU(struct task_struct *, fpu_owner_task);
+@@ -1050,9 +1050,7 @@ DEFINE_PER_CPU(unsigned int, irq_count) = -1;
   */
  static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
  	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
@@ -181,7 +181,7 @@ index f743261..cf79302 100644
  
  static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
 diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 9d50b30..17107bd 100644
+index 352beb7..6d728d9 100644
 --- a/arch/x86/kernel/dumpstack_64.c
 +++ b/arch/x86/kernel/dumpstack_64.c
 @@ -21,14 +21,10 @@
@@ -213,10 +213,10 @@ index e23a7c0..37caab3 100644
  # define cpu_chill()	cpu_relax()
  #endif
 diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 1314c00..a87d70d 100644
+index ed0f3a1..71acc21 100644
 --- a/kernel/hrtimer.c
 +++ b/kernel/hrtimer.c
-@@ -1845,6 +1845,25 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+@@ -1847,6 +1847,25 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
  	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
  }
  
@@ -243,10 +243,10 @@ index 1314c00..a87d70d 100644
   * Functions related to boot-time initialization:
   */
 diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 12ae410..055268b 100644
+index 82c2224..6c2ec2d 100644
 --- a/kernel/rcutree.c
 +++ b/kernel/rcutree.c
-@@ -177,7 +177,12 @@ static void rcu_preempt_qs(int cpu);
+@@ -175,7 +175,12 @@ static void rcu_preempt_qs(int cpu);
  
  void rcu_bh_qs(int cpu)
  {
@@ -260,9 +260,9 @@ index 12ae410..055268b 100644
  #else
  void rcu_bh_qs(int cpu)
 diff --git a/localversion-rt b/localversion-rt
-index 79d3e2b..9ea5981f 100644
+index 30758e0..cf94a55 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt100
-+-rt101
+--rt78
++-rt79
