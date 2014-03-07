@@ -1,68 +1,68 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: FlexCAN on i.MX28 interrupt flooding retrying send
-Date: Fri, 07 Mar 2014 14:36:24 +0100
-Message-ID: <5319CB58.4070708@meduna.org>
-References: <53197E8A.5050409@meduna.org> <53198753.8000900@pengutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 3/4] sparc64: convert spinlock_t to raw_spinlock_t in
+ mmu_context_t
+Date: Fri, 7 Mar 2014 14:41:33 +0100
+Message-ID: <20140307134133.GE8637@linutronix.de>
+References: <359241392801938@web24j.yandex.ru>
+ <530D9D1C.1060905@oracle.com>
+ <39171393599083@web13h.yandex.ru>
+ <20140304.141003.1969905483115684548.davem@davemloft.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-To: Marc Kleine-Budde <mkl@pengutronix.de>, wg@grandegger.com,
-	linux-can@vger.kernel.org,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-can-owner@vger.kernel.org>
-In-Reply-To: <53198753.8000900@pengutronix.de>
-Sender: linux-can-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: tkhai@yandex.ru, allen.pais@oracle.com,
+	linux-rt-users@vger.kernel.org, sparclinux@vger.kernel.org
+To: David Miller <davem@davemloft.net>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:37601 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753315AbaCGNll convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Mar 2014 08:41:41 -0500
+Content-Disposition: inline
+In-Reply-To: <20140304.141003.1969905483115684548.davem@davemloft.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 07.03.2014 09:46, Marc Kleine-Budde wrote:
+* David Miller | 2014-03-04 14:10:03 [-0500]:
 
-> Adding the linux-can mailinglist to Cc.
-
-I am not subscribed so maybe that's why the original mail
-did not get through - I did Cc: linux-can@vger.kernel.org
-
-> Your kernel is missing the patch:
-> 
-> e358784 can: flexcan: fix mx28 detection by rearanging OF match table
-> 
-> With this patch the CAN core properly detected as an mx28, so that bus
-> errors stay disabled (unless you enable them). If you need bus errors to
-> detect not connected CAN busses, you need another patchset berr_limit,
-> which is not yet mainline. I can repost it here, if you need it.
-
-Ah ok.
-
-Thank you, this probably points me to the right direction - I'll try
-to implement this behaviour in my kernel (unfortunately
-I cannot move to more recent one at the moment).
-
-On 07.03.2014 09:40, Wolfgang Grandegger wrote:
-
-> Maybe there is something wrong with you platform code or DTS file. What
-> kernel are you using and how is the DTS can node defined in your DTS file?
-
-This is a the 3.4.77 kernel with the realtime patches and without
-the device tree, so these settings are missing and the patch does
-not apply.
-
-On 07.03.2014 09:32, Matthias Klein wrote:
-
-> I made a similar observation on an i.MX537 with the 3.12.12-rt19
-> kernel: I see the same interrupt flooed when the bus is
-> disconnected.
+>> This should be fixed like that's done for 8250
+>> [patch drivers-serial-cleanup-locking-for-rt.patch]
 >
-> What do you mean with "kills the machine"? I have a high interrupt
-> load, but the machine is still responsive.
+>Like the patch below?
 
-In my case the ssh connection became hung or updated once per several
-seconds etc. In one case it was even necessary to ifconfig down/up
-the ethernet interface (NAPI overload? - no idea). The exact behaviour
-might be related to the realtime patches - we need guaranteed response
-times and runaway interrupt processing hogging the CPU at the realtime
-priority is a problem.
+The patch looks good.
 
-Many thanks
--- 
-                                      Stano
+>Is this transformation legitimate outside of the -rt tree?  I wish the=
+ commit
+>messages for the 8250 change was more verbose, explaining exactly why =
+this
+>is needed.
 
+Looking at it, it looks like the transformation is legitimate in
+vanila, too.
+
+In -RT the spin_lock_irqsave() does not spin but sleep if the lock is
+taken. Before that, local_irq_save() is invoked which disables
+interrupts even on -RT. That is why you might_sleep() triggers a warnin=
+g
+here.
+In the ->sysrq and oops_in_progress case it is save to trylock the lock
+i.e. this is what we do now anyway except for ->sysrq where we assume
+that the lock is already taken.
+
+The spin_lock_irqsave() grabs the lock and disables the interrupts on
+vanila (the same behavior) and on -RT it won't disable interrupts.
+
+>And if it's needed, all the sparc serial/console drivers need this too=
+=2E
+
+Let me forward the 8250 to GregKH and see how he reacts. Would be nice
+if it is another patch that gets removed from that queue=E2=80=A6
+
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
