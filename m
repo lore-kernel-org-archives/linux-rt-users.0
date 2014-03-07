@@ -1,68 +1,77 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 3/4] sparc64: convert spinlock_t to raw_spinlock_t in
- mmu_context_t
-Date: Fri, 7 Mar 2014 14:41:33 +0100
-Message-ID: <20140307134133.GE8637@linutronix.de>
-References: <359241392801938@web24j.yandex.ru>
- <530D9D1C.1060905@oracle.com>
- <39171393599083@web13h.yandex.ru>
- <20140304.141003.1969905483115684548.davem@davemloft.net>
+From: Marc Kleine-Budde <mkl@pengutronix.de>
+Subject: Re: FlexCAN on i.MX28 interrupt flooding retrying send
+Date: Fri, 07 Mar 2014 14:54:47 +0100
+Message-ID: <5319CFA7.7040402@pengutronix.de>
+References: <53197E8A.5050409@meduna.org> <53198753.8000900@pengutronix.de> <5319CB58.4070708@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: tkhai@yandex.ru, allen.pais@oracle.com,
-	linux-rt-users@vger.kernel.org, sparclinux@vger.kernel.org
-To: David Miller <davem@davemloft.net>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37601 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753315AbaCGNll convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Mar 2014 08:41:41 -0500
-Content-Disposition: inline
-In-Reply-To: <20140304.141003.1969905483115684548.davem@davemloft.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="IHBpVPKpNi4vbRlWxnkJmRuUiCtuWTdqI"
+To: Stanislav Meduna <stano@meduna.org>, wg@grandegger.com,
+	linux-can@vger.kernel.org,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-can-owner@vger.kernel.org>
+In-Reply-To: <5319CB58.4070708@meduna.org>
+Sender: linux-can-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* David Miller | 2014-03-04 14:10:03 [-0500]:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--IHBpVPKpNi4vbRlWxnkJmRuUiCtuWTdqI
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: quoted-printable
 
->> This should be fixed like that's done for 8250
->> [patch drivers-serial-cleanup-locking-for-rt.patch]
->
->Like the patch below?
+On 03/07/2014 02:36 PM, Stanislav Meduna wrote:
+>> Adding the linux-can mailinglist to Cc.
+>=20
+> I am not subscribed so maybe that's why the original mail
+> did not get through - I did Cc: linux-can@vger.kernel.org
 
-The patch looks good.
+My bad, linux-can was on Cc, but it arrived on linux-can late.
 
->Is this transformation legitimate outside of the -rt tree?  I wish the=
- commit
->messages for the 8250 change was more verbose, explaining exactly why =
-this
->is needed.
+>> Your kernel is missing the patch:
+>>
+>> e358784 can: flexcan: fix mx28 detection by rearanging OF match table
+>>
+>> With this patch the CAN core properly detected as an mx28, so that bus=
 
-Looking at it, it looks like the transformation is legitimate in
-vanila, too.
+>> errors stay disabled (unless you enable them). If you need bus errors =
+to
+>> detect not connected CAN busses, you need another patchset berr_limit,=
 
-In -RT the spin_lock_irqsave() does not spin but sleep if the lock is
-taken. Before that, local_irq_save() is invoked which disables
-interrupts even on -RT. That is why you might_sleep() triggers a warnin=
-g
-here.
-In the ->sysrq and oops_in_progress case it is save to trylock the lock
-i.e. this is what we do now anyway except for ->sysrq where we assume
-that the lock is already taken.
+>> which is not yet mainline. I can repost it here, if you need it.
+>=20
+> Ah ok.
+>=20
+> Thank you, this probably points me to the right direction - I'll try
+> to implement this behaviour in my kernel (unfortunately
+> I cannot move to more recent one at the moment).
 
-The spin_lock_irqsave() grabs the lock and disables the interrupts on
-vanila (the same behavior) and on -RT it won't disable interrupts.
+The flexcan driver in you kernel doesn't have the improvements for mx28,
+i.e. that the bus error is not needed on that CAN core. I think for non
+DT we never added that support.
 
->And if it's needed, all the sparc serial/console drivers need this too=
-=2E
+Marc
 
-Let me forward the 8250 to GregKH and see how he reacts. Would be nice
-if it is another patch that gets removed from that queue=E2=80=A6
+--=20
+Pengutronix e.K.                  | Marc Kleine-Budde           |
+Industrial Linux Solutions        | Phone: +49-231-2826-924     |
+Vertretung West/Dortmund          | Fax:   +49-5121-206917-5555 |
+Amtsgericht Hildesheim, HRA 2686  | http://www.pengutronix.de   |
 
-Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+--IHBpVPKpNi4vbRlWxnkJmRuUiCtuWTdqI
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+Comment: Using GnuPG with Icedove - http://www.enigmail.net/
+
+iEYEARECAAYFAlMZz6cACgkQjTAFq1RaXHMYjgCdGlf3gH577VT96aw0cPFBefd8
+65sAmwZ6AdIK9bhiIVb4UEnuCnD9WAXK
+=Kgy0
+-----END PGP SIGNATURE-----
+
+--IHBpVPKpNi4vbRlWxnkJmRuUiCtuWTdqI--
