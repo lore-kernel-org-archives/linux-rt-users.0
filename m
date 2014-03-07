@@ -1,43 +1,68 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.12.9-rt13: BUG: soft lockup
-Date: Fri, 7 Mar 2014 14:15:55 +0100
-Message-ID: <20140307131555.GD8637@linutronix.de>
-References: <52FBF2F1.8040504@localhost>
- <alpine.DEB.2.02.1402132324230.21991@ionos.tec.linutronix.de>
- <52FD4D89.2000207@localhost>
- <alpine.DEB.2.02.1402140053000.21991@ionos.tec.linutronix.de>
- <52FDB71F.2020000@ccrma.stanford.edu>
- <alpine.DEB.2.02.1402141040460.21991@ionos.tec.linutronix.de>
- <52FE6681.8090807@ccrma.stanford.edu>
- <alpine.DEB.2.02.1402191049260.4468@ionos.tec.linutronix.de>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: FlexCAN on i.MX28 interrupt flooding retrying send
+Date: Fri, 07 Mar 2014 14:36:24 +0100
+Message-ID: <5319CB58.4070708@meduna.org>
+References: <53197E8A.5050409@meduna.org> <53198753.8000900@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.02.1402191049260.4468@ionos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+To: Marc Kleine-Budde <mkl@pengutronix.de>, wg@grandegger.com,
+	linux-can@vger.kernel.org,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-can-owner@vger.kernel.org>
+In-Reply-To: <53198753.8000900@pengutronix.de>
+Sender: linux-can-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Thomas Gleixner | 2014-02-19 10:50:29 [+0100]:
+On 07.03.2014 09:46, Marc Kleine-Budde wrote:
 
->On Fri, 14 Feb 2014, Fernando Lopez-Lezcano wrote:
->> I could try to boot one of the machines into 3.12.xrtyy, replicate the
->> conditions and wait. What should I look for if I can catch this in the act?
+> Adding the linux-can mailinglist to Cc.
+
+I am not subscribed so maybe that's why the original mail
+did not get through - I did Cc: linux-can@vger.kernel.org
+
+> Your kernel is missing the patch:
+> 
+> e358784 can: flexcan: fix mx28 detection by rearanging OF match table
+> 
+> With this patch the CAN core properly detected as an mx28, so that bus
+> errors stay disabled (unless you enable them). If you need bus errors to
+> detect not connected CAN busses, you need another patchset berr_limit,
+> which is not yet mainline. I can repost it here, if you need it.
+
+Ah ok.
+
+Thank you, this probably points me to the right direction - I'll try
+to implement this behaviour in my kernel (unfortunately
+I cannot move to more recent one at the moment).
+
+On 07.03.2014 09:40, Wolfgang Grandegger wrote:
+
+> Maybe there is something wrong with you platform code or DTS file. What
+> kernel are you using and how is the DTS can node defined in your DTS file?
+
+This is a the 3.4.77 kernel with the realtime patches and without
+the device tree, so these settings are missing and the patch does
+not apply.
+
+On 07.03.2014 09:32, Matthias Klein wrote:
+
+> I made a similar observation on an i.MX537 with the 3.12.12-rt19
+> kernel: I see the same interrupt flooed when the bus is
+> disconnected.
 >
->dmesg and sysrq-t output would be a good start I guess.
+> What do you mean with "kills the machine"? I have a high interrupt
+> load, but the machine is still responsive.
 
-Yeah. Is it possible to use a serial console? It might happen that the
-kernel throws something out before it dies but it does not manage to
-write it to disk anymore.
+In my case the ssh connection became hung or updated once per several
+seconds etc. In one case it was even necessary to ifconfig down/up
+the ethernet interface (NAPI overload? - no idea). The exact behaviour
+might be related to the realtime patches - we need guaranteed response
+times and runaway interrupt processing hogging the CPU at the realtime
+priority is a problem.
 
->Thanks,
->
->	tglx
+Many thanks
+-- 
+                                      Stano
 
-Sebastian
