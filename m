@@ -1,268 +1,188 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.55-rt79
-Date: Fri, 7 Mar 2014 12:58:49 -0500
-Message-ID: <20140307125849.3b66fea5@gandalf.local.home>
+From: Helmut Buchsbaum <helmut.buchsbaum@gmail.com>
+Subject: Re: Resend: 3.10.32-rt31: problem with "rcu: Eliminate softirq
+ processing from rcutree"
+Date: Sat, 8 Mar 2014 20:08:35 +0100
+Message-ID: <CAJAcJWJ=TB=6orb3BQMQ7BbFBjP7k7Vn52KrKJGdmJeTZ91A3g@mail.gmail.com>
+References: <CAJAcJWKq1VsSVGWGtbx=-e-kW5kP5sQ9y4mvRbnM==U9BC2NpQ@mail.gmail.com>
+	<20140307162145.GC18441@linutronix.de>
+	<20140307170419.GI3334@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users@vger.kernel.org, rostedt@goodmis.org
+To: paulmck@linux.vnet.ibm.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lb0-f180.google.com ([209.85.217.180]:52212 "EHLO
+	mail-lb0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751149AbaCHTIh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 8 Mar 2014 14:08:37 -0500
+Received: by mail-lb0-f180.google.com with SMTP id 10so3627456lbg.39
+        for <linux-rt-users@vger.kernel.org>; Sat, 08 Mar 2014 11:08:35 -0800 (PST)
+In-Reply-To: <20140307170419.GI3334@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+This is the correct point to tweak the system, I was not yet aware of!
+Thanks a lot for the hint. I just enabled RCU_BOOST with its default
+settings and the system runs smooth and stable again even in heavy
+load situations. Maybe the default for RCU_BOOST should be set to Y on
+systems using PREEMPT_RT_FULL ?
 
-Dear RT Folks,
+Again, many thanx,
+Helmut
 
-I'm pleased to announce the 3.2.55-rt79 stable release.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 1db3983893d2a70342a3af66a2ea1608dc068dfa
-
-
-Or to build 3.2.55-rt79 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.55.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.55-rt79.patch.xz
-
-
-
-You can also build from 3.2.55-rt78 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.55-rt78-rt79.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.2.55-rt78:
-
----
-
-Sebastian Andrzej Siewior (3):
-      Revert "x86: Disable IST stacks for debug/int 3/stack fault for PREEMPT_RT"
-      kernel/hrtimer: be non-freezeable in cpu_chill()
-      arm/unwind: use a raw_spin_lock
-
-Steven Rostedt (1):
-      rt: Make cpu_chill() use hrtimer instead of msleep()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.55-rt79
-
-Tiejun Chen (1):
-      rcutree/rcu_bh_qs: disable irq while calling rcu_preempt_qs()
-
-----
- arch/arm/kernel/unwind.c             | 14 +++++++-------
- arch/x86/include/asm/page_64_types.h | 21 ++++++---------------
- arch/x86/kernel/cpu/common.c         |  2 --
- arch/x86/kernel/dumpstack_64.c       |  4 ----
- include/linux/delay.h                |  2 +-
- kernel/hrtimer.c                     | 19 +++++++++++++++++++
- kernel/rcutree.c                     |  5 +++++
- localversion-rt                      |  2 +-
- 8 files changed, 39 insertions(+), 30 deletions(-)
----------------------------
-diff --git a/arch/arm/kernel/unwind.c b/arch/arm/kernel/unwind.c
-index 00df012..bbafc67 100644
---- a/arch/arm/kernel/unwind.c
-+++ b/arch/arm/kernel/unwind.c
-@@ -87,7 +87,7 @@ extern const struct unwind_idx __start_unwind_idx[];
- static const struct unwind_idx *__origin_unwind_idx;
- extern const struct unwind_idx __stop_unwind_idx[];
- 
--static DEFINE_SPINLOCK(unwind_lock);
-+static DEFINE_RAW_SPINLOCK(unwind_lock);
- static LIST_HEAD(unwind_tables);
- 
- /* Convert a prel31 symbol to an absolute address */
-@@ -195,7 +195,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 		/* module unwind tables */
- 		struct unwind_table *table;
- 
--		spin_lock_irqsave(&unwind_lock, flags);
-+		raw_spin_lock_irqsave(&unwind_lock, flags);
- 		list_for_each_entry(table, &unwind_tables, list) {
- 			if (addr >= table->begin_addr &&
- 			    addr < table->end_addr) {
-@@ -207,7 +207,7 @@ static const struct unwind_idx *unwind_find_idx(unsigned long addr)
- 				break;
- 			}
- 		}
--		spin_unlock_irqrestore(&unwind_lock, flags);
-+		raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 	}
- 
- 	pr_debug("%s: idx = %p\n", __func__, idx);
-@@ -469,9 +469,9 @@ struct unwind_table *unwind_table_add(unsigned long start, unsigned long size,
- 	tab->begin_addr = text_addr;
- 	tab->end_addr = text_addr + text_size;
- 
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_add_tail(&tab->list, &unwind_tables);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	return tab;
- }
-@@ -483,9 +483,9 @@ void unwind_table_del(struct unwind_table *tab)
- 	if (!tab)
- 		return;
- 
--	spin_lock_irqsave(&unwind_lock, flags);
-+	raw_spin_lock_irqsave(&unwind_lock, flags);
- 	list_del(&tab->list);
--	spin_unlock_irqrestore(&unwind_lock, flags);
-+	raw_spin_unlock_irqrestore(&unwind_lock, flags);
- 
- 	kfree(tab);
- }
-diff --git a/arch/x86/include/asm/page_64_types.h b/arch/x86/include/asm/page_64_types.h
-index 0883ecd..7639dbf 100644
---- a/arch/x86/include/asm/page_64_types.h
-+++ b/arch/x86/include/asm/page_64_types.h
-@@ -14,21 +14,12 @@
- #define IRQ_STACK_ORDER 2
- #define IRQ_STACK_SIZE (PAGE_SIZE << IRQ_STACK_ORDER)
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--# define STACKFAULT_STACK 0
--# define DOUBLEFAULT_STACK 1
--# define NMI_STACK 2
--# define DEBUG_STACK 0
--# define MCE_STACK 3
--# define N_EXCEPTION_STACKS 3  /* hw limit: 7 */
--#else
--# define STACKFAULT_STACK 1
--# define DOUBLEFAULT_STACK 2
--# define NMI_STACK 3
--# define DEBUG_STACK 4
--# define MCE_STACK 5
--# define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
--#endif
-+#define STACKFAULT_STACK 1
-+#define DOUBLEFAULT_STACK 2
-+#define NMI_STACK 3
-+#define DEBUG_STACK 4
-+#define MCE_STACK 5
-+#define N_EXCEPTION_STACKS 5  /* hw limit: 7 */
- 
- #define PUD_PAGE_SIZE		(_AC(1, UL) << PUD_SHIFT)
- #define PUD_PAGE_MASK		(~(PUD_PAGE_SIZE-1))
-diff --git a/arch/x86/kernel/cpu/common.c b/arch/x86/kernel/cpu/common.c
-index edc013e..ca93cc7 100644
---- a/arch/x86/kernel/cpu/common.c
-+++ b/arch/x86/kernel/cpu/common.c
-@@ -1050,9 +1050,7 @@ DEFINE_PER_CPU(unsigned int, irq_count) = -1;
-  */
- static const unsigned int exception_stack_sizes[N_EXCEPTION_STACKS] = {
- 	  [0 ... N_EXCEPTION_STACKS - 1]	= EXCEPTION_STKSZ,
--#if DEBUG_STACK > 0
- 	  [DEBUG_STACK - 1]			= DEBUG_STKSZ
--#endif
- };
- 
- static DEFINE_PER_CPU_PAGE_ALIGNED(char, exception_stacks
-diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 352beb7..6d728d9 100644
---- a/arch/x86/kernel/dumpstack_64.c
-+++ b/arch/x86/kernel/dumpstack_64.c
-@@ -21,14 +21,10 @@
- 		(N_EXCEPTION_STACKS + DEBUG_STKSZ/EXCEPTION_STKSZ - 2)
- 
- static char x86_stack_ids[][8] = {
--#if DEBUG_STACK > 0
- 		[ DEBUG_STACK-1			]	= "#DB",
--#endif
- 		[ NMI_STACK-1			]	= "NMI",
- 		[ DOUBLEFAULT_STACK-1		]	= "#DF",
--#if STACKFAULT_STACK > 0
- 		[ STACKFAULT_STACK-1		]	= "#SS",
--#endif
- 		[ MCE_STACK-1			]	= "#MC",
- #if DEBUG_STKSZ > EXCEPTION_STKSZ
- 		[ N_EXCEPTION_STACKS ...
-diff --git a/include/linux/delay.h b/include/linux/delay.h
-index e23a7c0..37caab3 100644
---- a/include/linux/delay.h
-+++ b/include/linux/delay.h
-@@ -53,7 +53,7 @@ static inline void ssleep(unsigned int seconds)
- }
- 
- #ifdef CONFIG_PREEMPT_RT_FULL
--# define cpu_chill()	msleep(1)
-+extern void cpu_chill(void);
- #else
- # define cpu_chill()	cpu_relax()
- #endif
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index ed0f3a1..71acc21 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1847,6 +1847,25 @@ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
- 	return hrtimer_nanosleep(&tu, rmtp, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * Sleep for 1 ms in hope whoever holds what we want will let it go.
-+ */
-+void cpu_chill(void)
-+{
-+	struct timespec tu = {
-+		.tv_nsec = NSEC_PER_MSEC,
-+	};
-+	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
-+
-+	current->flags |= PF_NOFREEZE;
-+	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
-+	if (!freeze_flag)
-+		current->flags &= ~PF_NOFREEZE;
-+}
-+EXPORT_SYMBOL(cpu_chill);
-+#endif
-+
- /*
-  * Functions related to boot-time initialization:
-  */
-diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-index 82c2224..6c2ec2d 100644
---- a/kernel/rcutree.c
-+++ b/kernel/rcutree.c
-@@ -175,7 +175,12 @@ static void rcu_preempt_qs(int cpu);
- 
- void rcu_bh_qs(int cpu)
- {
-+	unsigned long flags;
-+
-+	/* Callers to this function, rcu_preempt_qs(), must disable irqs. */
-+	local_irq_save(flags);
- 	rcu_preempt_qs(cpu);
-+	local_irq_restore(flags);
- }
- #else
- void rcu_bh_qs(int cpu)
-diff --git a/localversion-rt b/localversion-rt
-index 30758e0..cf94a55 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt78
-+-rt79
+2014-03-07 18:04 GMT+01:00 Paul E. McKenney <paulmck@linux.vnet.ibm.com>:
+> On Fri, Mar 07, 2014 at 05:21:45PM +0100, Sebastian Andrzej Siewior wrote:
+>> + paulmck
+>>
+>> * Helmut Buchsbaum | 2014-03-06 20:05:13 [+0100]:
+>>
+>> >I am working with a 3.10-rt based kernel on a custom device based on
+>> >Xilinx Zynq Z-7010 (dual Cortex-A9) with 64MB DDR2 RAM.
+>> >Today I rebased my work (3.10-rt mainly enhanced by Xilinx drivers,
+>> >but otherwise unchanged) from 3.10.32-rt30 to 3.10.32-rt31. There I
+>> >ran a dohell derivate (from
+>> >http://git.xenomai.org/xenomai-2.6.git/plain/src/testsuite/xeno-test/dohell?id=v2.6.3,
+>> >just using customized hackbench call and cyclictest as the only test)
+>> >when the OOM killer struck, which definitely did not happen with
+>> >3.10.32-rt30. Bisecting I detected
+>> >8cf5b0e982cba4fd0e469989a420a15c8a378fa2 "rcu: Eliminate softirq
+>> >processing from rcutree" as the change which introduced the unwanted
+>> >behavior:
+>> >
+>> >[   73.865213] ls invoked oom-killer: gfp_mask=0x2000d0, order=0, oom_score_adj=0
+>> >[   73.877229] CPU: 1 PID: 623 Comm: ls Not tainted 3.10.32-rt30+ #1
+>> >[   73.877280] [<c0013c80>] (unwind_backtrace+0x0/0x138) from [<c0011d14>] (show_stack+0x10/0x14)
+>> >[   73.877310] [<c0011d14>] (show_stack+0x10/0x14) from [<c0394d88>] (dump_header.isra.12+0x6c/0xa8)
+>> >[   73.877334] [<c0394d88>] (dump_header.isra.12+0x6c/0xa8) from [<c0394e10>] (oom_kill_process.part.14+0x4c/0x384)
+>> >[   73.877357] [<c0394e10>] (oom_kill_process.part.14+0x4c/0x384) from [<c007301c>] (out_of_memory+0x128/0x1c8)
+>> >[   73.877380] [<c007301c>] (out_of_memory+0x128/0x1c8) from >[<c0076f10>] (__alloc_pages_nodemask+0x6f4/0x71c)
+>> >[   73.877406] [<c0076f10>] (__alloc_pages_nodemask+0x6f4/0x71c) from [<c009fe9c>] (allocate_slab+0xe4/0xfc)
+>> >[   73.877426] [<c009fe9c>] (allocate_slab+0xe4/0xfc) from [<c009fee4>] (new_slab+0x30/0x154)
+>> >[   73.877447] [<c009fee4>] (new_slab+0x30/0x154) from [<c0396608>] (__slab_alloc.isra.52.constprop.54+0x2f0/0x3c4)
+>> >[   73.877467] [<c0396608>] (__slab_alloc.isra.52.constprop.54+0x2f0/0x3c4) from [<c00a0614>] (kmem_cache_alloc+0x130/0x138)
+>> >[   73.877489] [<c00a0614>] (kmem_cache_alloc+0x130/0x138) from [<c00a5d84>] (get_empty_filp+0x6c/0x1f4)
+>> >[   73.877509] [<c00a5d84>] (get_empty_filp+0x6c/0x1f4) from [<c00b18b8>] (path_openat+0x2c/0x43c)
+>> >[   73.877527] [<c00b18b8>] (path_openat+0x2c/0x43c) from [<c00b1f80>] (do_filp_open+0x2c/0x80)
+>> >[   73.877544] [<c00b1f80>] (do_filp_open+0x2c/0x80) from [<c00a40a4>] (do_sys_open+0xe8/0x174)
+>> >[   73.877564] [<c00a40a4>] (do_sys_open+0xe8/0x174) from [<c000e9c0>] (ret_fast_syscall+0x0/0x30)
+>> >[   73.877574] Mem-info:
+>> >[   73.877582] Normal per-cpu:
+>> >[   73.877593] CPU    0: hi:    6, btch:   1 usd:   0
+>> >[   73.877603] CPU    1: hi:    6, btch:   1 usd:   0
+>> >[   73.877625] active_anon:1827 inactive_anon:5 isolated_anon:0
+>> >[   73.877625]  active_file:174 inactive_file:1158 isolated_file:0
+>> >[   73.877625]  unevictable:2493 dirty:1 writeback:1160 unstable:0
+>> >[   73.877625]  free:3978 slab_reclaimable:1161 slab_unreclaimable:1345
+>> >[   73.877625]  mapped:440 shmem:512 pagetables:526 bounce:0
+>> >[   73.877625]  free_cma:3833
+>> >[   73.877669] Normal free:15912kB min:824kB low:1028kB high:1236kB active_anon:7308kB inactive_anon:20kB active_file:696kB inacs
+>> >[   73.877679] lowmem_reserve[]: 0 0
+>> >[   73.877695] Normal: 234*4kB (ERC) 208*8kB (URC) 200*16kB (C) 189*32kB (RC) 61*64kB (RC) 1*128kB (R) 0*256kB 0*512kB 0*1024kB B
+>> >[   73.877769] 2196 total pagecache pages
+>> >[   73.877780] 0 pages in swap cache
+>> >[   73.877789] Swap cache stats: add 0, delete 0, find 0/0
+>> >[   73.877796] Free swap  = 0kB
+>> >[   73.877804] Total swap = 0kB
+>> >[   73.884950] 16384 pages of RAM
+>> >[   73.884966] 5008 free pages
+>> >[   73.884975] 1558 reserved pages
+>> >[   73.884983] 1674 slab pages
+>> >[   73.884990] 532633 pages shared
+>> >[   73.884998] 0 pages swap cached
+>> >[   73.885007] [ pid ]   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name
+>> >[   73.908257] [  502]     0   502      723      119       5        0           0 klogd
+>> >[   73.936201] [  504]     0   504      723      112       5        0           0 syslogd
+>> >[   73.980352] [  506]     0   506      723       76       5        0           0 telnetd
+>> >[   74.028534] [  566]     0   566      724      166       5        0           0 ash
+>> >[   74.053796] [  606]     0   606      723       57       4        0           0 udhcpc
+>> >[   74.081419] [  607]     0   607      724      161       5        0           0 dohell
+>> >[   74.090873] [  609]     0   609      724       68       5        0           0 dohell
+>> >[   74.106407] [  610]     0   610      724       61       5        0           0 dohell
+>> >[   74.118017] [  611]     0   611      724       58       5        0           0 dohell
+>> >[   74.128390] [  612]     0   612      723      110       5        0           0 nc
+>> >[   74.198260] [  613]     0   613      724       61       5        0           0 dohell
+>> >[   74.214133] [  614]     0   614      724       60       5        0           0 dohell
+>> >[   74.227782] [  615]     0   615      724       60       5        0           0 dohell
+>> >[   74.240921] [  616]     0   616      723      104       4        0           0 dd
+>> >[   74.264528] [  617]     0   617      941      360       4        0           0 dd
+>> >[   74.284988] [  618]     0   618      724       60       5        0           0 dohell
+>> >[   74.312808] [  620]     0   620     2523     2494       9        0           0 cyclictest
+>> >[   74.333122] [  623]     0   623      724      174       5        0           0 ls
+>> >[   74.361071] [ 1623]     0  1623      690       95       4        0           0 sleep
+>> >[   74.382116] [ 2008]     0  2008      448      133       5        0           0 hackbench
+>> >[   74.402224] [ 2011]     0  2011      448       54       5        0           0 hackbench
+>> >[   74.426216] [ 2012]     0  2012      448       54       5        0           0 hackbench
+>> >[   74.452513] [ 2013]     0  2013      448       54       5        0           0 hackbench
+>> >[   74.468437] [ 2014]     0  2014      448       54       5        0           0 hackbench
+>> >[   74.481603] [ 2015]     0  2015      448       54       5        0           0 hackbench
+>> >[   74.495083] [ 2016]     0  2016      448       54       5        0           0 hackbench
+>> >[   74.528757] [ 2017]     0  2017      448       54       5        0           0 hackbench
+>> >[   74.542685] [ 2019]     0  2019      448       54       5        0           0 hackbench
+>> >[   74.561320] [ 2020]     0  2020      448       54       5        0           0 hackbench
+>> >[   74.576906] [ 2021]     0  2021      448       54       5        0           0 hackbench
+>> >[   74.586537] [ 2022]     0  2022      448       54       5        0           0 hackbench
+>> >[   74.610881] [ 2023]     0  2023      448       54       5        0           0 hackbench
+>> >[   74.696010] [ 2026]     0  2026      448       59       5        0           0 hackbench
+>> >[   74.746412] [ 2032]     0  2032      448       64       5        0           0 hackbench
+>> >[   74.781200] [ 2095]     0  2095      689       36       3        0           0 cat
+>> >[   74.795979] [ 2098]     0  2098      246        1       2        0           0 ps
+>> >[   74.815133] [ 2099]     0  2099      448      133       4        0           0 hackbench
+>> >[   74.829415] [ 2100]     0  2100      690       98       4        0           0 cat
+>> >[   74.844691] [ 2101]     0  2101      448       54       4        0           0 hackbench
+>> >[   74.855449] [ 2102]     0  2102      448       54       4        0           0 hackbench
+>> >[   74.876889] [ 2103]     0  2103      448       54       4        0           0 hackbench
+>> >[   74.893808] [ 2104]     0  2104      448       54       4        0           0 hackbench
+>> >[   74.915100] [ 2105]     0  2105      448       54       4        0           0 hackbench
+>> >[   74.932730] [ 2106]     0  2106      448       54       4        0           0 hackbench
+>> >[   74.965216] [ 2107]     0  2107      448       54       4        0           0 hackbench
+>> >[   75.027941] [ 2108]     0  2108      448       54       4        0           0 hackbench
+>> >[   75.046197] [ 2109]     0  2109      448       54       4        0           0 hackbench
+>> >[   75.063038] [ 2110]     0  2110      448       54       4        0           0 hackbench
+>> >[   75.079646] [ 2111]     0  2111      448       55       4        0           0 hackbench
+>> >[   75.115715] [ 2112]     0  2112      448       55       4        0           0 hackbench
+>> >[   75.125629] [ 2113]     0  2113      448       55       4        0           0 hackbench
+>> >[   75.136509] [ 2114]     0  2114      448       55       4        0           0 hackbench
+>> >[   75.146358] [ 2115]     0  2115      448       55       4        0           0 hackbench
+>> >[   75.157808] [ 2116]     0  2116      448       55       4        0           0 hackbench
+>> >[   75.167646] [ 2117]     0  2117      448       55       4        0           0 hackbench
+>> >[   75.177705] [ 2118]     0  2118      448       55       4        0           0 hackbench
+>> >[   75.187688] [ 2119]     0  2119      448       55       4        0           0 hackbench
+>> >[   75.202440] [ 2120]     0  2120      448       55       4        0           0 hackbench
+>> >[   75.226442] [ 2121]     0  2121      448       54       4        0           0 hackbench
+>> >[   75.299323] [ 2190]     0  2190      724      152       5        0           0 ps
+>> >[   75.309857] [ 2191]     0  2191      392       31       3        0           0 cat
+>> >[   75.320704] [ 2192]     0  2192      116       33       3        0           0 hackbench
+>> >[   75.331584] [ 2193]     0  2193      246        1       2        0           0 ps
+>> >[   75.341056] Out of memory: Kill process 620 (cyclictest) score 163 or sacrifice child
+>> >[   75.350899] Killed process 620 (cyclictest) total-vm:10092kB, anon-rss:8544kB, file-rss:1432kB
+>> >
+>> >Unfortunately I'm rather busy at the moment, so I couldn't investigate
+>> >this issue at all, I'm sorry.
+>> >Steven, probably this issue also concerns 3.8.13.14-rt28-rc1 (I just
+>> >discovered your post on the list).
+>> >
+>> >Regards,
+>> >Helmut
+>> >
+>> >PS: running this test with hackbench alone (no dohell), I get nearly
+>> >the same result with kmem_cache_alloc() failing.
+>> >PPS: I had to resend this post since I didn't get through to the list.
+>> >Sorry about any noise!
+>>
+>> Do you have RCU_BOOST enabled? My guess here is that you *something* is
+>> running at a higher priority not allowing rcuc/ to run and do its job.
+>
+> The major effect of that commit is to move processing from softirq to
+> kthread.  If your workload has quite a few interrupts, it is possible
+> that the softirq version would -usually- make progress, but the kthread
+> version not.  (You could still get this to happen with softirq should
+> ksoftirqd kick in.)
+>
+> Sebastian's suggestion of RCU_BOOST makes sense, and you will also need to
+> set CONFIG_RCU_BOOST_PRIO to be higher priority than your highest-priority
+> CPU-bound thread.
+>
+>                                                         Thanx, Paul
+>
