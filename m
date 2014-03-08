@@ -1,209 +1,309 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: Resend: 3.10.32-rt31: problem with "rcu: Eliminate softirq
- processing from rcutree"
-Date: Sat, 8 Mar 2014 12:04:00 -0800
-Message-ID: <20140308200400.GA3334@linux.vnet.ibm.com>
-References: <CAJAcJWKq1VsSVGWGtbx=-e-kW5kP5sQ9y4mvRbnM==U9BC2NpQ@mail.gmail.com>
- <20140307162145.GC18441@linutronix.de>
- <20140307170419.GI3334@linux.vnet.ibm.com>
- <CAJAcJWJ=TB=6orb3BQMQ7BbFBjP7k7Vn52KrKJGdmJeTZ91A3g@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 3.12.13-rt21
+Date: Sat, 8 Mar 2014 22:39:23 +0100
+Message-ID: <20140308213923.GA14337@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org, rostedt@goodmis.org
-To: Helmut Buchsbaum <helmut.buchsbaum@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e32.co.us.ibm.com ([32.97.110.150]:59495 "EHLO
-	e32.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751900AbaCHUEG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 8 Mar 2014 15:04:06 -0500
-Received: from /spool/local
-	by e32.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Sat, 8 Mar 2014 13:04:05 -0700
-Received: from b03cxnp08028.gho.boulder.ibm.com (b03cxnp08028.gho.boulder.ibm.com [9.17.130.20])
-	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id 75C011FF003E
-	for <linux-rt-users@vger.kernel.org>; Sat,  8 Mar 2014 13:04:03 -0700 (MST)
-Received: from d03av06.boulder.ibm.com (d03av06.boulder.ibm.com [9.17.195.245])
-	by b03cxnp08028.gho.boulder.ibm.com (8.13.8/8.13.8/NCO v10.0) with ESMTP id s28K435E11272490
-	for <linux-rt-users@vger.kernel.org>; Sat, 8 Mar 2014 21:04:03 +0100
-Received: from d03av06.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av06.boulder.ibm.com (8.14.4/8.13.1/NCO v10.0 AVout) with ESMTP id s28K7YiA026156
-	for <linux-rt-users@vger.kernel.org>; Sat, 8 Mar 2014 13:07:34 -0700
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <CAJAcJWJ=TB=6orb3BQMQ7BbFBjP7k7Vn52KrKJGdmJeTZ91A3g@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, Mar 08, 2014 at 08:08:35PM +0100, Helmut Buchsbaum wrote:
-> This is the correct point to tweak the system, I was not yet aware of!
-> Thanks a lot for the hint. I just enabled RCU_BOOST with its default
-> settings and the system runs smooth and stable again even in heavy
-> load situations. Maybe the default for RCU_BOOST should be set to Y on
-> systems using PREEMPT_RT_FULL ?
+Dear RT folks!
 
-I must defer to Sebastian on this, but seems like a good approach.
+I'm pleased to announce the v3.12.13-rt21 patch set.
 
-							Thanx, Paul
+Changes since v3.12.13-rt20
+- the recent change to cpu_chill() could defeat its purpose if the task
+  invoking cpu_chill() had a signal pending. Noticed by Ulrich Obergfell
+  and fixed by Steven Rostedt.
 
-> Again, many thanx,
-> Helmut
-> 
-> 2014-03-07 18:04 GMT+01:00 Paul E. McKenney <paulmck@linux.vnet.ibm.com>:
-> > On Fri, Mar 07, 2014 at 05:21:45PM +0100, Sebastian Andrzej Siewior wrote:
-> >> + paulmck
-> >>
-> >> * Helmut Buchsbaum | 2014-03-06 20:05:13 [+0100]:
-> >>
-> >> >I am working with a 3.10-rt based kernel on a custom device based on
-> >> >Xilinx Zynq Z-7010 (dual Cortex-A9) with 64MB DDR2 RAM.
-> >> >Today I rebased my work (3.10-rt mainly enhanced by Xilinx drivers,
-> >> >but otherwise unchanged) from 3.10.32-rt30 to 3.10.32-rt31. There I
-> >> >ran a dohell derivate (from
-> >> >http://git.xenomai.org/xenomai-2.6.git/plain/src/testsuite/xeno-test/dohell?id=v2.6.3,
-> >> >just using customized hackbench call and cyclictest as the only test)
-> >> >when the OOM killer struck, which definitely did not happen with
-> >> >3.10.32-rt30. Bisecting I detected
-> >> >8cf5b0e982cba4fd0e469989a420a15c8a378fa2 "rcu: Eliminate softirq
-> >> >processing from rcutree" as the change which introduced the unwanted
-> >> >behavior:
-> >> >
-> >> >[   73.865213] ls invoked oom-killer: gfp_mask=0x2000d0, order=0, oom_score_adj=0
-> >> >[   73.877229] CPU: 1 PID: 623 Comm: ls Not tainted 3.10.32-rt30+ #1
-> >> >[   73.877280] [<c0013c80>] (unwind_backtrace+0x0/0x138) from [<c0011d14>] (show_stack+0x10/0x14)
-> >> >[   73.877310] [<c0011d14>] (show_stack+0x10/0x14) from [<c0394d88>] (dump_header.isra.12+0x6c/0xa8)
-> >> >[   73.877334] [<c0394d88>] (dump_header.isra.12+0x6c/0xa8) from [<c0394e10>] (oom_kill_process.part.14+0x4c/0x384)
-> >> >[   73.877357] [<c0394e10>] (oom_kill_process.part.14+0x4c/0x384) from [<c007301c>] (out_of_memory+0x128/0x1c8)
-> >> >[   73.877380] [<c007301c>] (out_of_memory+0x128/0x1c8) from >[<c0076f10>] (__alloc_pages_nodemask+0x6f4/0x71c)
-> >> >[   73.877406] [<c0076f10>] (__alloc_pages_nodemask+0x6f4/0x71c) from [<c009fe9c>] (allocate_slab+0xe4/0xfc)
-> >> >[   73.877426] [<c009fe9c>] (allocate_slab+0xe4/0xfc) from [<c009fee4>] (new_slab+0x30/0x154)
-> >> >[   73.877447] [<c009fee4>] (new_slab+0x30/0x154) from [<c0396608>] (__slab_alloc.isra.52.constprop.54+0x2f0/0x3c4)
-> >> >[   73.877467] [<c0396608>] (__slab_alloc.isra.52.constprop.54+0x2f0/0x3c4) from [<c00a0614>] (kmem_cache_alloc+0x130/0x138)
-> >> >[   73.877489] [<c00a0614>] (kmem_cache_alloc+0x130/0x138) from [<c00a5d84>] (get_empty_filp+0x6c/0x1f4)
-> >> >[   73.877509] [<c00a5d84>] (get_empty_filp+0x6c/0x1f4) from [<c00b18b8>] (path_openat+0x2c/0x43c)
-> >> >[   73.877527] [<c00b18b8>] (path_openat+0x2c/0x43c) from [<c00b1f80>] (do_filp_open+0x2c/0x80)
-> >> >[   73.877544] [<c00b1f80>] (do_filp_open+0x2c/0x80) from [<c00a40a4>] (do_sys_open+0xe8/0x174)
-> >> >[   73.877564] [<c00a40a4>] (do_sys_open+0xe8/0x174) from [<c000e9c0>] (ret_fast_syscall+0x0/0x30)
-> >> >[   73.877574] Mem-info:
-> >> >[   73.877582] Normal per-cpu:
-> >> >[   73.877593] CPU    0: hi:    6, btch:   1 usd:   0
-> >> >[   73.877603] CPU    1: hi:    6, btch:   1 usd:   0
-> >> >[   73.877625] active_anon:1827 inactive_anon:5 isolated_anon:0
-> >> >[   73.877625]  active_file:174 inactive_file:1158 isolated_file:0
-> >> >[   73.877625]  unevictable:2493 dirty:1 writeback:1160 unstable:0
-> >> >[   73.877625]  free:3978 slab_reclaimable:1161 slab_unreclaimable:1345
-> >> >[   73.877625]  mapped:440 shmem:512 pagetables:526 bounce:0
-> >> >[   73.877625]  free_cma:3833
-> >> >[   73.877669] Normal free:15912kB min:824kB low:1028kB high:1236kB active_anon:7308kB inactive_anon:20kB active_file:696kB inacs
-> >> >[   73.877679] lowmem_reserve[]: 0 0
-> >> >[   73.877695] Normal: 234*4kB (ERC) 208*8kB (URC) 200*16kB (C) 189*32kB (RC) 61*64kB (RC) 1*128kB (R) 0*256kB 0*512kB 0*1024kB B
-> >> >[   73.877769] 2196 total pagecache pages
-> >> >[   73.877780] 0 pages in swap cache
-> >> >[   73.877789] Swap cache stats: add 0, delete 0, find 0/0
-> >> >[   73.877796] Free swap  = 0kB
-> >> >[   73.877804] Total swap = 0kB
-> >> >[   73.884950] 16384 pages of RAM
-> >> >[   73.884966] 5008 free pages
-> >> >[   73.884975] 1558 reserved pages
-> >> >[   73.884983] 1674 slab pages
-> >> >[   73.884990] 532633 pages shared
-> >> >[   73.884998] 0 pages swap cached
-> >> >[   73.885007] [ pid ]   uid  tgid total_vm      rss nr_ptes swapents oom_score_adj name
-> >> >[   73.908257] [  502]     0   502      723      119       5        0           0 klogd
-> >> >[   73.936201] [  504]     0   504      723      112       5        0           0 syslogd
-> >> >[   73.980352] [  506]     0   506      723       76       5        0           0 telnetd
-> >> >[   74.028534] [  566]     0   566      724      166       5        0           0 ash
-> >> >[   74.053796] [  606]     0   606      723       57       4        0           0 udhcpc
-> >> >[   74.081419] [  607]     0   607      724      161       5        0           0 dohell
-> >> >[   74.090873] [  609]     0   609      724       68       5        0           0 dohell
-> >> >[   74.106407] [  610]     0   610      724       61       5        0           0 dohell
-> >> >[   74.118017] [  611]     0   611      724       58       5        0           0 dohell
-> >> >[   74.128390] [  612]     0   612      723      110       5        0           0 nc
-> >> >[   74.198260] [  613]     0   613      724       61       5        0           0 dohell
-> >> >[   74.214133] [  614]     0   614      724       60       5        0           0 dohell
-> >> >[   74.227782] [  615]     0   615      724       60       5        0           0 dohell
-> >> >[   74.240921] [  616]     0   616      723      104       4        0           0 dd
-> >> >[   74.264528] [  617]     0   617      941      360       4        0           0 dd
-> >> >[   74.284988] [  618]     0   618      724       60       5        0           0 dohell
-> >> >[   74.312808] [  620]     0   620     2523     2494       9        0           0 cyclictest
-> >> >[   74.333122] [  623]     0   623      724      174       5        0           0 ls
-> >> >[   74.361071] [ 1623]     0  1623      690       95       4        0           0 sleep
-> >> >[   74.382116] [ 2008]     0  2008      448      133       5        0           0 hackbench
-> >> >[   74.402224] [ 2011]     0  2011      448       54       5        0           0 hackbench
-> >> >[   74.426216] [ 2012]     0  2012      448       54       5        0           0 hackbench
-> >> >[   74.452513] [ 2013]     0  2013      448       54       5        0           0 hackbench
-> >> >[   74.468437] [ 2014]     0  2014      448       54       5        0           0 hackbench
-> >> >[   74.481603] [ 2015]     0  2015      448       54       5        0           0 hackbench
-> >> >[   74.495083] [ 2016]     0  2016      448       54       5        0           0 hackbench
-> >> >[   74.528757] [ 2017]     0  2017      448       54       5        0           0 hackbench
-> >> >[   74.542685] [ 2019]     0  2019      448       54       5        0           0 hackbench
-> >> >[   74.561320] [ 2020]     0  2020      448       54       5        0           0 hackbench
-> >> >[   74.576906] [ 2021]     0  2021      448       54       5        0           0 hackbench
-> >> >[   74.586537] [ 2022]     0  2022      448       54       5        0           0 hackbench
-> >> >[   74.610881] [ 2023]     0  2023      448       54       5        0           0 hackbench
-> >> >[   74.696010] [ 2026]     0  2026      448       59       5        0           0 hackbench
-> >> >[   74.746412] [ 2032]     0  2032      448       64       5        0           0 hackbench
-> >> >[   74.781200] [ 2095]     0  2095      689       36       3        0           0 cat
-> >> >[   74.795979] [ 2098]     0  2098      246        1       2        0           0 ps
-> >> >[   74.815133] [ 2099]     0  2099      448      133       4        0           0 hackbench
-> >> >[   74.829415] [ 2100]     0  2100      690       98       4        0           0 cat
-> >> >[   74.844691] [ 2101]     0  2101      448       54       4        0           0 hackbench
-> >> >[   74.855449] [ 2102]     0  2102      448       54       4        0           0 hackbench
-> >> >[   74.876889] [ 2103]     0  2103      448       54       4        0           0 hackbench
-> >> >[   74.893808] [ 2104]     0  2104      448       54       4        0           0 hackbench
-> >> >[   74.915100] [ 2105]     0  2105      448       54       4        0           0 hackbench
-> >> >[   74.932730] [ 2106]     0  2106      448       54       4        0           0 hackbench
-> >> >[   74.965216] [ 2107]     0  2107      448       54       4        0           0 hackbench
-> >> >[   75.027941] [ 2108]     0  2108      448       54       4        0           0 hackbench
-> >> >[   75.046197] [ 2109]     0  2109      448       54       4        0           0 hackbench
-> >> >[   75.063038] [ 2110]     0  2110      448       54       4        0           0 hackbench
-> >> >[   75.079646] [ 2111]     0  2111      448       55       4        0           0 hackbench
-> >> >[   75.115715] [ 2112]     0  2112      448       55       4        0           0 hackbench
-> >> >[   75.125629] [ 2113]     0  2113      448       55       4        0           0 hackbench
-> >> >[   75.136509] [ 2114]     0  2114      448       55       4        0           0 hackbench
-> >> >[   75.146358] [ 2115]     0  2115      448       55       4        0           0 hackbench
-> >> >[   75.157808] [ 2116]     0  2116      448       55       4        0           0 hackbench
-> >> >[   75.167646] [ 2117]     0  2117      448       55       4        0           0 hackbench
-> >> >[   75.177705] [ 2118]     0  2118      448       55       4        0           0 hackbench
-> >> >[   75.187688] [ 2119]     0  2119      448       55       4        0           0 hackbench
-> >> >[   75.202440] [ 2120]     0  2120      448       55       4        0           0 hackbench
-> >> >[   75.226442] [ 2121]     0  2121      448       54       4        0           0 hackbench
-> >> >[   75.299323] [ 2190]     0  2190      724      152       5        0           0 ps
-> >> >[   75.309857] [ 2191]     0  2191      392       31       3        0           0 cat
-> >> >[   75.320704] [ 2192]     0  2192      116       33       3        0           0 hackbench
-> >> >[   75.331584] [ 2193]     0  2193      246        1       2        0           0 ps
-> >> >[   75.341056] Out of memory: Kill process 620 (cyclictest) score 163 or sacrifice child
-> >> >[   75.350899] Killed process 620 (cyclictest) total-vm:10092kB, anon-rss:8544kB, file-rss:1432kB
-> >> >
-> >> >Unfortunately I'm rather busy at the moment, so I couldn't investigate
-> >> >this issue at all, I'm sorry.
-> >> >Steven, probably this issue also concerns 3.8.13.14-rt28-rc1 (I just
-> >> >discovered your post on the list).
-> >> >
-> >> >Regards,
-> >> >Helmut
-> >> >
-> >> >PS: running this test with hackbench alone (no dohell), I get nearly
-> >> >the same result with kmem_cache_alloc() failing.
-> >> >PPS: I had to resend this post since I didn't get through to the list.
-> >> >Sorry about any noise!
-> >>
-> >> Do you have RCU_BOOST enabled? My guess here is that you *something* is
-> >> running at a higher priority not allowing rcuc/ to run and do its job.
-> >
-> > The major effect of that commit is to move processing from softirq to
-> > kthread.  If your workload has quite a few interrupts, it is possible
-> > that the softirq version would -usually- make progress, but the kthread
-> > version not.  (You could still get this to happen with softirq should
-> > ksoftirqd kick in.)
-> >
-> > Sebastian's suggestion of RCU_BOOST makes sense, and you will also need to
-> > set CONFIG_RCU_BOOST_PRIO to be higher priority than your highest-priority
-> > CPU-bound thread.
-> >
-> >                                                         Thanx, Paul
-> >
-> 
+- David Miller coverted a few sparc serial drivers.
 
+- the system may deadlock if a high prio process tries to shutdown a
+  network device. This results in a busy loop until the interrupt
+  thread has completed its work which will never happen if its priority
+  is lower compared to the task that requested the shutdown. Reported
+  and fixed by Marc Kleine-Budde.
+
+- I run into a dead lock situtation in ext4 on v3.2. I couldn't
+  reproduce the same lockup on v3.12 but since we keep a similar patch
+  fot ext3 I decided to add one for ext4 just in case the problem is
+  harder to trigger now.
+
+Known issues:
+
+      - bcache is disabled.
+
+The delta patch against v3.12.13-rt20 is appended below and can be found
+here:
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.13-rt20-rt21.patch.xz
+
+The RT patch against 3.12.13 can be found here:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.13-rt21.patch.xz
+
+The split quilt queue is available at:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patches-3.12.13-rt21.tar.xz
+
+Sebastian
+
+diff --git a/drivers/tty/serial/sunhv.c b/drivers/tty/serial/sunhv.c
+index cf86e72..dc697ce 100644
+--- a/drivers/tty/serial/sunhv.c
++++ b/drivers/tty/serial/sunhv.c
+@@ -433,13 +433,10 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
+ 	unsigned long flags;
+ 	int locked = 1;
+ 
+-	local_irq_save(flags);
+-	if (port->sysrq) {
+-		locked = 0;
+-	} else if (oops_in_progress) {
+-		locked = spin_trylock(&port->lock);
+-	} else
+-		spin_lock(&port->lock);
++	if (port->sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&port->lock, flags);
++	else
++		spin_lock_irqsave(&port->lock, flags);
+ 
+ 	while (n > 0) {
+ 		unsigned long ra = __pa(con_write_page);
+@@ -470,8 +467,7 @@ static void sunhv_console_write_paged(struct console *con, const char *s, unsign
+ 	}
+ 
+ 	if (locked)
+-		spin_unlock(&port->lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&port->lock, flags);
+ }
+ 
+ static inline void sunhv_console_putchar(struct uart_port *port, char c)
+@@ -492,7 +488,10 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
+ 	unsigned long flags;
+ 	int i, locked = 1;
+ 
+-	local_irq_save(flags);
++	if (port->sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&port->lock, flags);
++	else
++		spin_lock_irqsave(&port->lock, flags);
+ 	if (port->sysrq) {
+ 		locked = 0;
+ 	} else if (oops_in_progress) {
+@@ -507,8 +506,7 @@ static void sunhv_console_write_bychar(struct console *con, const char *s, unsig
+ 	}
+ 
+ 	if (locked)
+-		spin_unlock(&port->lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&port->lock, flags);
+ }
+ 
+ static struct console sunhv_console = {
+diff --git a/drivers/tty/serial/sunsab.c b/drivers/tty/serial/sunsab.c
+index 5d6136b..1bf2774 100644
+--- a/drivers/tty/serial/sunsab.c
++++ b/drivers/tty/serial/sunsab.c
+@@ -844,20 +844,16 @@ static void sunsab_console_write(struct console *con, const char *s, unsigned n)
+ 	unsigned long flags;
+ 	int locked = 1;
+ 
+-	local_irq_save(flags);
+-	if (up->port.sysrq) {
+-		locked = 0;
+-	} else if (oops_in_progress) {
+-		locked = spin_trylock(&up->port.lock);
+-	} else
+-		spin_lock(&up->port.lock);
++	if (up->port.sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&up->port.lock, flags);
++	else
++		spin_lock_irqsave(&up->port.lock, flags);
+ 
+ 	uart_console_write(&up->port, s, n, sunsab_console_putchar);
+ 	sunsab_tec_wait(up);
+ 
+ 	if (locked)
+-		spin_unlock(&up->port.lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&up->port.lock, flags);
+ }
+ 
+ static int sunsab_console_setup(struct console *con, char *options)
+diff --git a/drivers/tty/serial/sunsu.c b/drivers/tty/serial/sunsu.c
+index 699cc1b..d88fb63 100644
+--- a/drivers/tty/serial/sunsu.c
++++ b/drivers/tty/serial/sunsu.c
+@@ -1295,13 +1295,10 @@ static void sunsu_console_write(struct console *co, const char *s,
+ 	unsigned int ier;
+ 	int locked = 1;
+ 
+-	local_irq_save(flags);
+-	if (up->port.sysrq) {
+-		locked = 0;
+-	} else if (oops_in_progress) {
+-		locked = spin_trylock(&up->port.lock);
+-	} else
+-		spin_lock(&up->port.lock);
++	if (up->port.sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&up->port.lock, flags);
++	else
++		spin_lock_irqsave(&up->port.lock, flags);
+ 
+ 	/*
+ 	 *	First save the UER then disable the interrupts
+@@ -1319,8 +1316,7 @@ static void sunsu_console_write(struct console *co, const char *s,
+ 	serial_out(up, UART_IER, ier);
+ 
+ 	if (locked)
+-		spin_unlock(&up->port.lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&up->port.lock, flags);
+ }
+ 
+ /*
+diff --git a/drivers/tty/serial/sunzilog.c b/drivers/tty/serial/sunzilog.c
+index 135a152..3103c3b 100644
+--- a/drivers/tty/serial/sunzilog.c
++++ b/drivers/tty/serial/sunzilog.c
+@@ -1195,20 +1195,16 @@ sunzilog_console_write(struct console *con, const char *s, unsigned int count)
+ 	unsigned long flags;
+ 	int locked = 1;
+ 
+-	local_irq_save(flags);
+-	if (up->port.sysrq) {
+-		locked = 0;
+-	} else if (oops_in_progress) {
+-		locked = spin_trylock(&up->port.lock);
+-	} else
+-		spin_lock(&up->port.lock);
++	if (up->port.sysrq || oops_in_progress)
++		locked = spin_trylock_irqsave(&up->port.lock, flags);
++	else
++		spin_lock_irqsave(&up->port.lock, flags);
+ 
+ 	uart_console_write(&up->port, s, count, sunzilog_putchar);
+ 	udelay(2);
+ 
+ 	if (locked)
+-		spin_unlock(&up->port.lock);
+-	local_irq_restore(flags);
++		spin_unlock_irqrestore(&up->port.lock, flags);
+ }
+ 
+ static int __init sunzilog_console_setup(struct console *con, char *options)
+diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
+index 7f34f47..8c40400 100644
+--- a/fs/jbd2/checkpoint.c
++++ b/fs/jbd2/checkpoint.c
+@@ -125,6 +125,8 @@ void __jbd2_log_wait_for_space(journal_t *journal)
+ 		if (journal->j_flags & JBD2_ABORT)
+ 			return;
+ 		write_unlock(&journal->j_state_lock);
++		if (current->plug)
++			io_schedule();
+ 		mutex_lock(&journal->j_checkpoint_mutex);
+ 
+ 		/*
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index 083815d..c19183d 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1769,12 +1769,13 @@ void hrtimer_init_sleeper(struct hrtimer_sleeper *sl, struct task_struct *task)
+ }
+ EXPORT_SYMBOL_GPL(hrtimer_init_sleeper);
+ 
+-static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode)
++static int __sched do_nanosleep(struct hrtimer_sleeper *t, enum hrtimer_mode mode,
++				unsigned long state)
+ {
+ 	hrtimer_init_sleeper(t, current);
+ 
+ 	do {
+-		set_current_state(TASK_INTERRUPTIBLE);
++		set_current_state(state);
+ 		hrtimer_start_expires(&t->timer, mode);
+ 		if (!hrtimer_active(&t->timer))
+ 			t->task = NULL;
+@@ -1818,7 +1819,8 @@ long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
+ 				HRTIMER_MODE_ABS);
+ 	hrtimer_set_expires_tv64(&t.timer, restart->nanosleep.expires);
+ 
+-	if (do_nanosleep(&t, HRTIMER_MODE_ABS))
++	/* cpu_chill() does not care about restart state. */
++	if (do_nanosleep(&t, HRTIMER_MODE_ABS, TASK_INTERRUPTIBLE))
+ 		goto out;
+ 
+ 	rmtp = restart->nanosleep.rmtp;
+@@ -1835,8 +1837,10 @@ long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
+ 	return ret;
+ }
+ 
+-long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
+-		       const enum hrtimer_mode mode, const clockid_t clockid)
++static long
++__hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
++		    const enum hrtimer_mode mode, const clockid_t clockid,
++		    unsigned long state)
+ {
+ 	struct restart_block *restart;
+ 	struct hrtimer_sleeper t;
+@@ -1849,7 +1853,7 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
+ 
+ 	hrtimer_init_on_stack(&t.timer, clockid, mode);
+ 	hrtimer_set_expires_range_ns(&t.timer, timespec_to_ktime(*rqtp), slack);
+-	if (do_nanosleep(&t, mode))
++	if (do_nanosleep(&t, mode, state))
+ 		goto out;
+ 
+ 	/* Absolute timers do not update the rmtp value and restart: */
+@@ -1876,6 +1880,12 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
+ 	return ret;
+ }
+ 
++long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
++		       const enum hrtimer_mode mode, const clockid_t clockid)
++{
++	return __hrtimer_nanosleep(rqtp, rmtp, mode, clockid, TASK_INTERRUPTIBLE);
++}
++
+ SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
+ 		struct timespec __user *, rmtp)
+ {
+@@ -1902,7 +1912,8 @@ void cpu_chill(void)
+ 	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
+ 
+ 	current->flags |= PF_NOFREEZE;
+-	hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC);
++	__hrtimer_nanosleep(&tu, NULL, HRTIMER_MODE_REL, CLOCK_MONOTONIC,
++			    TASK_UNINTERRUPTIBLE);
+ 	if (!freeze_flag)
+ 		current->flags &= ~PF_NOFREEZE;
+ }
+diff --git a/localversion-rt b/localversion-rt
+index e095ab8..6c6cde1 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt20
++-rt21
+diff --git a/net/sched/sch_generic.c b/net/sched/sch_generic.c
+index a74e278..1dcebc9 100644
+--- a/net/sched/sch_generic.c
++++ b/net/sched/sch_generic.c
+@@ -850,7 +850,7 @@ void dev_deactivate_many(struct list_head *head)
+ 	/* Wait for outstanding qdisc_run calls. */
+ 	list_for_each_entry(dev, head, unreg_list)
+ 		while (some_qdisc_is_busy(dev))
+-			yield();
++			msleep(1);
+ }
+ 
+ void dev_deactivate(struct net_device *dev)
