@@ -1,27 +1,31 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Theodore Ts'o <tytso@mit.edu>
 Subject: Re: [PATCH RT] fs: jbd2: pull your plug when waiting for space
-Date: Mon, 10 Mar 2014 18:41:39 +0100
-Message-ID: <531DF953.7050005@linutronix.de>
-References: <20140221123253.GA12822@linutronix.de> <20140310132602.6d4b0e53@gandalf.local.home>
+Date: Mon, 10 Mar 2014 13:47:18 -0400
+Message-ID: <20140310174718.GB6763@thunk.org>
+References: <20140221123253.GA12822@linutronix.de>
+ <1392990852.5451.178.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-Cc: Mike Galbraith <bitbucket@online.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	tglx@linutronix.de
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <bitbucket@online.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140310132602.6d4b0e53@gandalf.local.home>
+Content-Disposition: inline
+In-Reply-To: <1392990852.5451.178.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 03/10/2014 06:26 PM, Steven Rostedt wrote:
-> I'm a little confused. Is this only needed for 3.12-rt? I see that you
-> did not mark it for stable.
+On Fri, Feb 21, 2014 at 02:54:12PM +0100, Mike Galbraith wrote:
+> 
+> ext3: dbench1 queues a buffer, blocks on journal mutex, it's plug is not
+> pulled.  dbench2 mutex owner is waiting for kjournald, who is waiting for
+> the buffer queued by dbench1.  Game over.
 
-it supposed to go stable. Sorry about the missing tag.
+Where is in ext3/4 are we calling some function which could end up
+blocking on kjournald while we have the I/O queue plugged?  That
+sounds suspicious and potentially wrong.
 
-> -- Steve
-
-Sebastian
+							- Ted
