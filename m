@@ -1,63 +1,53 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/5] a few open coded completions
-Date: Mon, 10 Mar 2014 22:56:23 -0400
-Message-ID: <20140310225623.0cad071a@gandalf.local.home>
-References: <20131211003732.351606520@goodmis.org>
-	<20131211003801.836995968@goodmis.org>
-	<20131211144946.27d82a78@gandalf.local.home>
-	<1394324841.2861.56.camel@deadeye.wl.decadent.org.uk>
-	<20140310102928.7b2a2cfa@gandalf.local.home>
-	<1394473962.23624.3.camel@deadeye.wl.decadent.org.uk>
-	<20140310141449.6b99c7eb@gandalf.local.home>
-	<1394503606.23624.27.camel@deadeye.wl.decadent.org.uk>
+From: Mike Galbraith <bitbucket@online.de>
+Subject: Re: [PATCH RT] fs: jbd2: pull your plug when waiting for space
+Date: Tue, 11 Mar 2014 05:13:16 +0100
+Message-ID: <1394511196.4896.29.camel@marge.simpson.net>
+References: <20140221123253.GA12822@linutronix.de>
+	 <1392990852.5451.178.camel@marge.simpson.net>
+	 <20140310174718.GB6763@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Corey Minyard <cminyard@mvista.com>
-To: Ben Hutchings <ben@decadent.org.uk>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:19694 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753242AbaCKC40 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Mar 2014 22:56:26 -0400
-In-Reply-To: <1394503606.23624.27.camel@deadeye.wl.decadent.org.uk>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	tglx@linutronix.de
+To: Theodore Ts'o <tytso@mit.edu>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140310174718.GB6763@thunk.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 11 Mar 2014 02:06:46 +0000
-Ben Hutchings <ben@decadent.org.uk> wrote:
-
-
-> > I don't run a make allmodconfig as I do on my upstream work. Maybe I'll
-> > have to add that to the mix.
+On Mon, 2014-03-10 at 13:47 -0400, Theodore Ts'o wrote: 
+> On Fri, Feb 21, 2014 at 02:54:12PM +0100, Mike Galbraith wrote:
+> > 
+> > ext3: dbench1 queues a buffer, blocks on journal mutex, it's plug is not
+> > pulled.  dbench2 mutex owner is waiting for kjournald, who is waiting for
+> > the buffer queued by dbench1.  Game over.
 > 
-> You can enable all the affected code with:
-> 
-> CONFIG_HERMES=m
-> CONFIG_ORINOCO_USB=m
-> CONFIG_USB_GADGET=m
-> CONFIG_USB_FUNCTIONFS=m
-> CONFIG_USB_GADGETFS=m
+> Where is in ext3/4 are we calling some function which could end up
+> blocking on kjournald while we have the I/O queue plugged?  That
+> sounds suspicious and potentially wrong.
 
-Thanks, I ran an allmodconfig, and you're right, the orinoco driver
-failed to compile on v3.2-rt. I ran allmodconfig on 3.10-rt and it
-passed fine. Seems that one of the headers there pulls in swait.
+I don't have the crash dumps and analysis handy, this was quite some
+time ago.  Problem is that..
 
-Looking deeper, 3.10-rt has completion as a simple-wait, and
-completion.h pulls in wait-simple.h, which is why it works there. 3.2
-does not have completions there. I wonder if I should pull in the patch
-that converts completions into swaits, and that may fix other locations
-as well.
+static inline void sched_submit_work(struct task_struct *tsk)
+{
+        if (!tsk->state || tsk_is_pi_blocked(tsk))
+                return;
+        /*
+         * If we are going to sleep and we have plugged IO queued,
+         * make sure to submit it to avoid deadlocks.
+         */
+        if (blk_needs_flush_plug(tsk))
+                blk_schedule_flush_plug(tsk);
+}
 
-I'll give it a try.
+..tsk_is_pi_blocked(tsk) leaves us with IO queued, dependency on which
+can (_did_ for ext[34] and xfs that I recall) end up with our waker
+waiting on our IO.  There were other deadlock scenarios, not only the
+one in the quoted text.
 
-Thanks,
-
--- Steve
+-Mike
