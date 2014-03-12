@@ -1,126 +1,57 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.8.13.14-rt29
-Date: Wed, 12 Mar 2014 05:42:10 -0400
-Message-ID: <20140312054210.7403a665@gandalf.local.home>
+Subject: Re: [PATCH]sched/rt: Do not try to push tasks if pinned task
+ switches to RT
+Date: Wed, 12 Mar 2014 06:18:33 -0400
+Message-ID: <20140312061833.3a43aa64@gandalf.local.home>
+References: <4451359470707@web16g.yandex.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
+Cc: Kirill Tkhai <tkhai@yandex.ru>, linux-kernel@vger.kernel.org,
+	Ingo Molnar <mingo@kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4451359470707@web16g.yandex.ru>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+Peter,
 
-Dear RT Folks,
+I'm going through my inbox (over a year old), and found this patch from
+Kirill. It looks fine to me. You can apply it with my
 
-I'm pleased to announce the 3.8.13.14-rt29 stable release.
-
-I'm posting this without an -rc release because it only contains a
-revert of a patch that caused the kernel to fail to compile.
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.8-rt
-  Head SHA1: 5c1d604be1956db39d5be31dd73dc61b4a99cc1c
-
-
-Or to build 3.8.13.14-rt29 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.8.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.8.13.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/stable/patch-3.8.13.14.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/patch-3.8.13.14-rt29.patch.xz
-
-
-
-You can also build from 3.8.13.14-rt28 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.8/incr/patch-3.8.13.14-rt28-rt29.patch.xz
-
-
-
-Enjoy,
+  Acked-by: Steven Rostedt <rostedt@goodmis.org>
 
 -- Steve
 
+[PATCH]sched/rt: Do not try to push tasks if pinned task switches to RT
 
-Changes from v3.8.13.14-rt28:
+Just switched pinned task is not able to be pushed. If the rq had had
+several RT tasks before they have already been considered as candidates
+to be pushed (or pulled).
 
+Signed-off-by: Kirill V Tkhai <tkhai@yandex.ru>
+CC: Steven Rostedt <rostedt@goodmis.org>
+CC: Ingo Molnar <mingo@kernel.org>
+CC: Peter Zijlstra <peterz@infradead.org>
+CC: linux-rt-users <linux-rt-users@vger.kernel.org>
 ---
-
-Steven Rostedt (Red Hat) (2):
-      Revert "swait: Add a few more users"
-      Linux 3.8.13.14-rt29
-
-----
- drivers/net/wireless/orinoco/orinoco_usb.c | 2 +-
- drivers/usb/gadget/f_fs.c                  | 2 +-
- drivers/usb/gadget/inode.c                 | 4 ++--
- localversion-rt                            | 2 +-
- 4 files changed, 5 insertions(+), 5 deletions(-)
----------------------------
-diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index b0f9d2c..01624dc 100644
---- a/drivers/net/wireless/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/orinoco/orinoco_usb.c
-@@ -714,7 +714,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
- 			while (!ctx->done.done && msecs--)
- 				udelay(1000);
- 		} else {
--			swait_event_interruptible(ctx->done.wait,
-+			wait_event_interruptible(ctx->done.wait,
- 						 ctx->done.done);
- 		}
- 		break;
-diff --git a/drivers/usb/gadget/f_fs.c b/drivers/usb/gadget/f_fs.c
-index 5b2a068..de3e266 100644
---- a/drivers/usb/gadget/f_fs.c
-+++ b/drivers/usb/gadget/f_fs.c
-@@ -1284,7 +1284,7 @@ static void ffs_data_put(struct ffs_data *ffs)
- 		pr_info("%s(): freeing\n", __func__);
- 		ffs_data_clear(ffs);
- 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
--		       swaitqueue_active(&ffs->ep0req_completion.wait));
-+		       waitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs->dev_name);
- 		kfree(ffs);
- 	}
-diff --git a/drivers/usb/gadget/inode.c b/drivers/usb/gadget/inode.c
-index fe85df7..8ac840f 100644
---- a/drivers/usb/gadget/inode.c
-+++ b/drivers/usb/gadget/inode.c
-@@ -338,7 +338,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 	spin_unlock_irq (&epdata->dev->lock);
- 
- 	if (likely (value == 0)) {
--		value = swait_event_interruptible (done.wait, done.done);
-+		value = wait_event_interruptible (done.wait, done.done);
- 		if (value != 0) {
- 			spin_lock_irq (&epdata->dev->lock);
- 			if (likely (epdata->ep != NULL)) {
-@@ -347,7 +347,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 				usb_ep_dequeue (epdata->ep, epdata->req);
- 				spin_unlock_irq (&epdata->dev->lock);
- 
--				swait_event (done.wait, done.done);
-+				wait_event (done.wait, done.done);
- 				if (epdata->status == -ECONNRESET)
- 					epdata->status = -EINTR;
- 			} else {
-diff --git a/localversion-rt b/localversion-rt
-index 5a64c9c..90290c6 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt28
-+-rt29
+ kernel/sched/rt.c |    4 ++--
+ 1 files changed, 2 insertions(+), 2 deletions(-)
+diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
+index 4e8f0f4..5aab032 100644
+--- a/kernel/sched/rt.c
++++ b/kernel/sched/rt.c
+@@ -1925,9 +1925,9 @@ static void switched_to_rt(struct rq *rq, struct task_struct *p)
+ 	 */
+ 	if (p->on_rq && rq->curr != p) {
+ #ifdef CONFIG_SMP
+-		if (rq->rt.overloaded && push_rt_task(rq) &&
++		if (p->nr_cpus_allowed > 1 && rq->rt.overloaded &&
+ 		    /* Don't resched if we changed runqueues */
+-		    rq != task_rq(p))
++		    push_rt_task(rq) && rq != task_rq(p))
+ 			check_resched = 0;
+ #endif /* CONFIG_SMP */
+ 		if (check_resched && p->prio < rq->curr->prio)
