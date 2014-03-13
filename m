@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 5/5] Linux 3.10.33-rt33-rc1
-Date: Thu, 13 Mar 2014 06:40:58 -0400
-Message-ID: <20140313104120.788398330@goodmis.org>
-References: <20140313104053.933715112@goodmis.org>
+Subject: [PATCH RT 5/5] Linux 3.8.13.14-rt30-rc1
+Date: Thu, 13 Mar 2014 06:42:57 -0400
+Message-ID: <20140313104304.484291146@goodmis.org>
+References: <20140313104252.175070082@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -12,12 +12,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-Linux-3.10.33-rt33-rc1.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:60527 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754188AbaCMKnG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 13 Mar 2014 06:43:06 -0400
+Content-Disposition: inline; filename=0005-Linux-3.8.13.14-rt30-rc1.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.33-rt33-rc1 stable review patch.
+3.8.13.14-rt30-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -29,11 +34,13 @@ From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/localversion-rt b/localversion-rt
-index ce6a482..c8c4d21 100644
+index 90290c6..96edf41 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt32
-+-rt33-rc1
+--rt29
++-rt30-rc1
 -- 
 1.8.5.3
+
+
