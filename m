@@ -1,58 +1,36 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/5] fs: jbd2: pull your plug when waiting for space
-Date: Thu, 13 Mar 2014 06:40:55 -0400
-Message-ID: <20140313104120.340271117@goodmis.org>
-References: <20140313104053.933715112@goodmis.org>
+Subject: Re: [PATCH RT 4/4] Linux 3.2.55-rt81-rc
+Date: Thu, 13 Mar 2014 06:57:58 -0400
+Message-ID: <20140313065758.3efee75c@gandalf.local.home>
+References: <20140313104626.944700242@goodmis.org>
+	<20140313104654.270838109@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-fs-jbd2-pull-your-plug-when-waiting-for-space.patch
+In-Reply-To: <20140313104654.270838109@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.33-rt33-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On Thu, 13 Mar 2014 06:46:30 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-------------------
+> index 5ba2c20..f9e9cc7 100644
+> --- a/localversion-rt
+> +++ b/localversion-rt
+> @@ -1 +1 @@
+> --rt80
+> +-rt81-rc
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Bah, that should have been -rt81-rc1. But it is rather pointless to
+make an -rc2 to update the rc number.
 
-Two cps in parallel managed to stall the the ext4 fs. It seems that
-journal code is either waiting for locks or sleeping waiting for
-something to happen. This seems similar to what Mike observed on ext3,
-here is his description:
-
-|With an -rt kernel, and a heavy sync IO load, tasks can jam
-|up on journal locks without unplugging, which can lead to
-|terminal IO starvation.  Unplug and schedule when waiting
-|for space.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- fs/jbd2/checkpoint.c | 2 ++
- 1 file changed, 2 insertions(+)
-
-diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
-index c78841e..a4d273b 100644
---- a/fs/jbd2/checkpoint.c
-+++ b/fs/jbd2/checkpoint.c
-@@ -125,6 +125,8 @@ void __jbd2_log_wait_for_space(journal_t *journal)
- 		if (journal->j_flags & JBD2_ABORT)
- 			return;
- 		write_unlock(&journal->j_state_lock);
-+		if (current->plug)
-+			io_schedule();
- 		mutex_lock(&journal->j_checkpoint_mutex);
- 
- 		/*
--- 
-1.8.5.3
+-- Steve
