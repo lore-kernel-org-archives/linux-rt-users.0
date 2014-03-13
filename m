@@ -1,9 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] net: sched: dev_deactivate_many(): use msleep(1) instead of yield()
- to wait for outstanding qdisc_run calls
-Date: Thu, 13 Mar 2014 06:42:53 -0400
-Message-ID: <20140313104303.913794230@goodmis.org>
-References: <20140313104252.175070082@goodmis.org>
+Subject: [PATCH RT 2/5] fs: jbd2: pull your plug when waiting for space
+Date: Thu, 13 Mar 2014 06:40:55 -0400
+Message-ID: <20140313104120.340271117@goodmis.org>
+References: <20140313104053.933715112@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -11,75 +10,49 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Marc Kleine-Budde <mkl@pengutronix.de>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-net-sched-dev_deactivate_many-use-msleep-1-instead-o.patch
+Content-Disposition: inline; filename=0002-fs-jbd2-pull-your-plug-when-waiting-for-space.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.8.13.14-rt30-rc1 stable review patch.
+3.10.33-rt33-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Marc Kleine-Budde <mkl@pengutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-On PREEMPT_RT enabled systems the interrupt handler run as threads at prio 50
-(by default). If a high priority userspace process tries to shut down a busy
-network interface it might spin in a yield loop waiting for the device to
-become idle. With the interrupt thread having a lower priority than the
-looping process it might never be scheduled and so result in a deadlock on UP
-systems.
+Two cps in parallel managed to stall the the ext4 fs. It seems that
+journal code is either waiting for locks or sleeping waiting for
+something to happen. This seems similar to what Mike observed on ext3,
+here is his description:
 
-With Magic SysRq the following backtrace can be produced:
-
-> test_app R running      0   174    168 0x00000000
-> [<c02c7070>] (__schedule+0x220/0x3fc) from [<c02c7870>] (preempt_schedule_irq+0x48/0x80)
-> [<c02c7870>] (preempt_schedule_irq+0x48/0x80) from [<c0008fa8>] (svc_preempt+0x8/0x20)
-> [<c0008fa8>] (svc_preempt+0x8/0x20) from [<c001a984>] (local_bh_enable+0x18/0x88)
-> [<c001a984>] (local_bh_enable+0x18/0x88) from [<c025316c>] (dev_deactivate_many+0x220/0x264)
-> [<c025316c>] (dev_deactivate_many+0x220/0x264) from [<c023be04>] (__dev_close_many+0x64/0xd4)
-> [<c023be04>] (__dev_close_many+0x64/0xd4) from [<c023be9c>] (__dev_close+0x28/0x3c)
-> [<c023be9c>] (__dev_close+0x28/0x3c) from [<c023f7f0>] (__dev_change_flags+0x88/0x130)
-> [<c023f7f0>] (__dev_change_flags+0x88/0x130) from [<c023f904>] (dev_change_flags+0x10/0x48)
-> [<c023f904>] (dev_change_flags+0x10/0x48) from [<c024c140>] (do_setlink+0x370/0x7ec)
-> [<c024c140>] (do_setlink+0x370/0x7ec) from [<c024d2f0>] (rtnl_newlink+0x2b4/0x450)
-> [<c024d2f0>] (rtnl_newlink+0x2b4/0x450) from [<c024cfa0>] (rtnetlink_rcv_msg+0x158/0x1f4)
-> [<c024cfa0>] (rtnetlink_rcv_msg+0x158/0x1f4) from [<c0256740>] (netlink_rcv_skb+0xac/0xc0)
-> [<c0256740>] (netlink_rcv_skb+0xac/0xc0) from [<c024bbd8>] (rtnetlink_rcv+0x18/0x24)
-> [<c024bbd8>] (rtnetlink_rcv+0x18/0x24) from [<c02561b8>] (netlink_unicast+0x13c/0x198)
-> [<c02561b8>] (netlink_unicast+0x13c/0x198) from [<c025651c>] (netlink_sendmsg+0x264/0x2e0)
-> [<c025651c>] (netlink_sendmsg+0x264/0x2e0) from [<c022af98>] (sock_sendmsg+0x78/0x98)
-> [<c022af98>] (sock_sendmsg+0x78/0x98) from [<c022bb50>] (___sys_sendmsg.part.25+0x268/0x278)
-> [<c022bb50>] (___sys_sendmsg.part.25+0x268/0x278) from [<c022cf08>] (__sys_sendmsg+0x48/0x78)
-> [<c022cf08>] (__sys_sendmsg+0x48/0x78) from [<c0009320>] (ret_fast_syscall+0x0/0x2c)
-
-This patch works around the problem by replacing yield() by msleep(1), giving
-the interrupt thread time to finish, similar to other changes contained in the
-rt patch set. Using wait_for_completion() instead would probably be a better
-solution.
+|With an -rt kernel, and a heavy sync IO load, tasks can jam
+|up on journal locks without unplugging, which can lead to
+|terminal IO starvation.  Unplug and schedule when waiting
+|for space.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Marc Kleine-Budde <mkl@pengutronix.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/sched/sch_generic.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ fs/jbd2/checkpoint.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/net/sched/sch_generic.c b/net/sched/sch_generic.c
-index 5d81a44..e402538 100644
---- a/net/sched/sch_generic.c
-+++ b/net/sched/sch_generic.c
-@@ -838,7 +838,7 @@ void dev_deactivate_many(struct list_head *head)
- 	/* Wait for outstanding qdisc_run calls. */
- 	list_for_each_entry(dev, head, unreg_list)
- 		while (some_qdisc_is_busy(dev))
--			yield();
-+			msleep(1);
- }
+diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
+index c78841e..a4d273b 100644
+--- a/fs/jbd2/checkpoint.c
++++ b/fs/jbd2/checkpoint.c
+@@ -125,6 +125,8 @@ void __jbd2_log_wait_for_space(journal_t *journal)
+ 		if (journal->j_flags & JBD2_ABORT)
+ 			return;
+ 		write_unlock(&journal->j_state_lock);
++		if (current->plug)
++			io_schedule();
+ 		mutex_lock(&journal->j_checkpoint_mutex);
  
- void dev_deactivate(struct net_device *dev)
+ 		/*
 -- 
 1.8.5.3
