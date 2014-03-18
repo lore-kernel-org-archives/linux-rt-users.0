@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.82-rt103
-Date: Tue, 18 Mar 2014 17:39:27 -0400
-Message-ID: <20140318173927.202d75cf@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.55-rt81
+Date: Tue, 18 Mar 2014 17:39:57 -0400
+Message-ID: <20140318173957.2a174fa6@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.82-rt103 stable release.
+I'm pleased to announce the 3.2.55-rt81 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: b837f3a52f4aa74f8af135b5a5fbb7dd20fa1181
+  branch: v3.2-rt
+  Head SHA1: 3c8ce5f0a334826f3341a8233503d4748df11a3b
 
 
-Or to build 3.4.82-rt103 directly, the following patches should be applied:
+Or to build 3.2.55-rt81 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.82.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.55.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.82-rt103.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.55-rt81.patch.xz
 
 
 
-You can also build from 3.4.82-rt102 by applying the incremental patch:
+You can also build from 3.2.55-rt80 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.82-rt102-rt103.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.55-rt80-rt81.patch.xz
 
 
 
@@ -50,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.82-rt102:
+Changes from v3.2.55-rt80:
 
 ---
 
@@ -64,7 +64,7 @@ Steven Rostedt (1):
       cpu_chill: Add a UNINTERRUPTIBLE hrtimer_nanosleep
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.82-rt103
+      Linux 3.2.55-rt81
 
 ----
  fs/jbd2/checkpoint.c    |  2 ++
@@ -74,10 +74,10 @@ Steven Rostedt (Red Hat) (1):
  4 files changed, 22 insertions(+), 9 deletions(-)
 ---------------------------
 diff --git a/fs/jbd2/checkpoint.c b/fs/jbd2/checkpoint.c
-index c78841e..a4d273b 100644
+index 16a698b..c6443c3 100644
 --- a/fs/jbd2/checkpoint.c
 +++ b/fs/jbd2/checkpoint.c
-@@ -125,6 +125,8 @@ void __jbd2_log_wait_for_space(journal_t *journal)
+@@ -129,6 +129,8 @@ void __jbd2_log_wait_for_space(journal_t *journal)
  		if (journal->j_flags & JBD2_ABORT)
  			return;
  		write_unlock(&journal->j_state_lock);
@@ -87,10 +87,10 @@ index c78841e..a4d273b 100644
  
  		/*
 diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index a87d70d..5342f82 100644
+index 71acc21..0316f75 100644
 --- a/kernel/hrtimer.c
 +++ b/kernel/hrtimer.c
-@@ -1724,12 +1724,13 @@ void hrtimer_init_sleeper(struct hrtimer_sleeper *sl, struct task_struct *task)
+@@ -1726,12 +1726,13 @@ void hrtimer_init_sleeper(struct hrtimer_sleeper *sl, struct task_struct *task)
  }
  EXPORT_SYMBOL_GPL(hrtimer_init_sleeper);
  
@@ -106,7 +106,7 @@ index a87d70d..5342f82 100644
  		hrtimer_start_expires(&t->timer, mode);
  		if (!hrtimer_active(&t->timer))
  			t->task = NULL;
-@@ -1773,7 +1774,8 @@ long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
+@@ -1775,7 +1776,8 @@ long __sched hrtimer_nanosleep_restart(struct restart_block *restart)
  				HRTIMER_MODE_ABS);
  	hrtimer_set_expires_tv64(&t.timer, restart->nanosleep.expires);
  
@@ -116,7 +116,7 @@ index a87d70d..5342f82 100644
  		goto out;
  
  	rmtp = restart->nanosleep.rmtp;
-@@ -1790,8 +1792,10 @@ out:
+@@ -1792,8 +1794,10 @@ out:
  	return ret;
  }
  
@@ -129,7 +129,7 @@ index a87d70d..5342f82 100644
  {
  	struct restart_block *restart;
  	struct hrtimer_sleeper t;
-@@ -1804,7 +1808,7 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
+@@ -1806,7 +1810,7 @@ long hrtimer_nanosleep(struct timespec *rqtp, struct timespec __user *rmtp,
  
  	hrtimer_init_on_stack(&t.timer, clockid, mode);
  	hrtimer_set_expires_range_ns(&t.timer, timespec_to_ktime(*rqtp), slack);
@@ -138,7 +138,7 @@ index a87d70d..5342f82 100644
  		goto out;
  
  	/* Absolute timers do not update the rmtp value and restart: */
-@@ -1831,6 +1835,12 @@ out:
+@@ -1833,6 +1837,12 @@ out:
  	return ret;
  }
  
@@ -151,7 +151,7 @@ index a87d70d..5342f82 100644
  SYSCALL_DEFINE2(nanosleep, struct timespec __user *, rqtp,
  		struct timespec __user *, rmtp)
  {
-@@ -1857,7 +1867,8 @@ void cpu_chill(void)
+@@ -1859,7 +1869,8 @@ void cpu_chill(void)
  	unsigned int freeze_flag = current->flags & PF_NOFREEZE;
  
  	current->flags |= PF_NOFREEZE;
@@ -162,17 +162,17 @@ index a87d70d..5342f82 100644
  		current->flags &= ~PF_NOFREEZE;
  }
 diff --git a/localversion-rt b/localversion-rt
-index 33017cd..e0a0b11 100644
+index 5ba2c20..8269ec1 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt102
-+-rt103
+--rt80
++-rt81
 diff --git a/net/sched/sch_generic.c b/net/sched/sch_generic.c
-index 67fc573..455d21a 100644
+index 69fca27..9ede52e 100644
 --- a/net/sched/sch_generic.c
 +++ b/net/sched/sch_generic.c
-@@ -848,7 +848,7 @@ void dev_deactivate_many(struct list_head *head)
+@@ -847,7 +847,7 @@ void dev_deactivate_many(struct list_head *head)
  	/* Wait for outstanding qdisc_run calls. */
  	list_for_each_entry(dev, head, unreg_list)
  		while (some_qdisc_is_busy(dev))
