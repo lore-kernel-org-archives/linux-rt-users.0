@@ -1,59 +1,46 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: Resend: 3.10.32-rt31: problem with "rcu: Eliminate softirq
- processing from rcutree"
-Date: Thu, 20 Mar 2014 10:50:26 -0400
-Message-ID: <20140320105026.290bd87b@gandalf.local.home>
-References: <CAJAcJWKq1VsSVGWGtbx=-e-kW5kP5sQ9y4mvRbnM==U9BC2NpQ@mail.gmail.com>
-	<20140307162145.GC18441@linutronix.de>
-	<20140307170419.GI3334@linux.vnet.ibm.com>
-	<CAJAcJWJ=TB=6orb3BQMQ7BbFBjP7k7Vn52KrKJGdmJeTZ91A3g@mail.gmail.com>
-	<20140308200400.GA3334@linux.vnet.ibm.com>
-	<20140318110531.GC10448@linutronix.de>
+Subject: Re: [PATCH]sched/rt: Do not try to push tasks if pinned task
+ switches to RT
+Date: Thu, 20 Mar 2014 14:21:39 -0400
+Message-ID: <20140320142139.04a40e66@gandalf.local.home>
+References: <4451359470707@web16g.yandex.ru>
+	<20140312061833.3a43aa64@gandalf.local.home>
+	<20140312103942.GB5321@opentech.at>
+	<3618231394627028@web10g.yandex.ru>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Helmut Buchsbaum <helmut.buchsbaum@gmail.com>,
-	linux-rt-users@vger.kernel.org, tglx@linutronix.de
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:24884 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932685AbaCTOu3 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 20 Mar 2014 10:50:29 -0400
-In-Reply-To: <20140318110531.GC10448@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Kirill Tkhai <tkhai@yandex.ru>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <3618231394627028@web10g.yandex.ru>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 18 Mar 2014 12:05:31 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Wed, 12 Mar 2014 16:23:48 +0400
+Kirill Tkhai <tkhai@yandex.ru> wrote:
 
-> * Paul E. McKenney | 2014-03-08 12:04:00 [-0800]:
+> > would there not need to be a check for p->migrate_disable ?
+> > push_rt_task() is not checking and so a high prio RT task
+> > preemting a low prio RT task in a migrate_disable() section
+> > would actually push it off this cpu ? atleast I did not
+> > find why that would not happen.
 > 
-> >On Sat, Mar 08, 2014 at 08:08:35PM +0100, Helmut Buchsbaum wrote:
-> >> This is the correct point to tweak the system, I was not yet aware of!
-> >> Thanks a lot for the hint. I just enabled RCU_BOOST with its default
-> >> settings and the system runs smooth and stable again even in heavy
-> >> load situations. Maybe the default for RCU_BOOST should be set to Y on
-> >> systems using PREEMPT_RT_FULL ?
-> >
-> >I must defer to Sebastian on this, but seems like a good approach.
+> Hi, Nicholas!
 > 
-> Hmm. There are a few ways to break an RT system. Afaik RCU_BOOST was
-> recommended even before this change. 
+> p is not rq->curr, so its p->migrate_disable state is already updated and
+> it can't be pushed (nr_cpus_allowed == 1 and it's not pushable).
 > 
-> Steven, tglx any opinion on that?
+> (If I understand right, that you worry about this).
 > 
-> Another thing we could do is to register_shrinker() which is called
-> before OOM. But then boosting is simple enough.
 
-I thought RCU_BOOST was already set for default y when PREEMPT_RT is
-set. If not, then please add it. Note, the default should be set, but
-not selected. Still let the user disable it.
-
- default y if PREEMPT_RT_FULL
-
-Thanks,
+Correct. If p has migrate_disabled set and scheduled out, then when it
+gets scheduled out, its cpu affinity gets set to only the current cpu
+and nr_cpu_allowed to 1. No need to check here if p->migrate_disabled is
+set.
 
 -- Steve
