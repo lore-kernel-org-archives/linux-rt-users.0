@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.34-rt34
-Date: Mon, 24 Mar 2014 18:32:52 -0400
-Message-ID: <20140324183252.2c8ac6fb@gandalf.local.home>
+Subject: [ANNOUNCE] 3.4.84-rt105
+Date: Mon, 24 Mar 2014 18:57:08 -0400
+Message-ID: <20140324185708.0577599c@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.34-rt34 stable release.
+I'm pleased to announce the 3.4.84-rt105 stable release.
 
 
-This release is just an update to the new stable 3.10.34 version
+This release is just an update to the new stable 3.4.84 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: ff2826200b84358b9a9f1184710eb020088e8354
+  branch: v3.4-rt
+  Head SHA1: ebbe3adc6986d0908248e6c45a7b186a4f7f8d92
 
 
-Or to build 3.10.34-rt34 directly, the following patches should be applied:
+Or to build 3.4.84-rt105 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.34.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.84.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.34-rt34.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.84-rt105.patch.xz
 
 
 
