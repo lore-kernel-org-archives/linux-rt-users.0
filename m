@@ -1,74 +1,49 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT] drop migrate_disabled section in _cpu_down
-Date: Mon, 24 Mar 2014 10:20:29 -0400
-Message-ID: <20140324102029.48350386@gandalf.local.home>
-References: <20140324122025.GB18300@opentech.at>
+Subject: [ANNOUNCE] 3.10.34-rt34
+Date: Mon, 24 Mar 2014 18:32:52 -0400
+Message-ID: <20140324183252.2c8ac6fb@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	tglx@linutronix.de,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Nicholas Mc Guire <der.herr@hofr.at>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:34147 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752322AbaCXOUb (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 24 Mar 2014 10:20:31 -0400
-In-Reply-To: <20140324122025.GB18300@opentech.at>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 24 Mar 2014 13:20:25 +0100
-Nicholas Mc Guire <der.herr@hofr.at> wrote:
 
-> HI !
-> 
-> 
-> Minor cleanup: drop unnecessary migrate_disable in _cpu_down
-> 
-> in kernel/cpu.c:_cpu_down
->     ...
->     cpumask_andnot(cpumask, cpu_online_mask, cpumask_of(cpu));
->     set_cpus_allowed_ptr(current, cpumask);
->     ...
->     migrate_disable();
->     mycpu = smp_processor_id();
->     if (mycpu == cpu) {
->             printk(KERN_ERR "Yuck! Still on unplug CPU\n!");
->             migrate_enable();
->             err = -EBUSY;
->             goto restore_cpus;
->     }
->     migrate_enable();
-> 
-> If we got migrated off "cpu" then we can not get migrate
-> back as the cpus_allowed was updated. so if smp_processor_id(); returns
-> anything != cpu we are fine even if migrated off to a third cpu between
-> the mycpu = smp_processor_id() and the if (mycpu == cpu). No need for
-> migration protection here.
-> 
-> Further the migrate disable is effectively only needed for the condition
-> check in the if statement - so I think it could be replaced by:
-> 
->     if (cpu==smp_processor_id()) {
->             pr_err("Yuck! Still on unplug CPU\n!");
->             err = -EBUSY;
->             goto restore_cpus;
->     }
-> 
-> even in the case that the cpus_allowed had not been updated.
-> 
-> Patch is against 3.12.13-rt21
+Dear RT Folks,
 
-This is checking for an anomaly, and it's in a very slow path. I feel
-more comfortable with keeping the code as is, than to change it for a
-micro optimization.
+I'm pleased to announce the 3.10.34-rt34 stable release.
+
+
+This release is just an update to the new stable 3.10.34 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.10-rt
+  Head SHA1: ff2826200b84358b9a9f1184710eb020088e8354
+
+
+Or to build 3.10.34-rt34 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.34.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.34-rt34.patch.xz
+
+
+
+
+Enjoy,
 
 -- Steve
-
-
-> 
-> Signed-off-by: Nicholas Mc Guire <der.herr@hofr.at>
