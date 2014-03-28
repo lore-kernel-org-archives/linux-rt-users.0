@@ -1,69 +1,72 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 2/2] net: gianfar: do not try to cleanup TX packets if they are not done
-Date: Fri, 28 Mar 2014 11:57:00 +0100
-Message-ID: <1396004220-5711-2-git-send-email-bigeasy@linutronix.de>
-References: <1396004220-5711-1-git-send-email-bigeasy@linutronix.de>
-Cc: linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+From: Clark Williams <clark.williams@gmail.com>
+Subject: rt-tests 0.88 released
+Date: Fri, 28 Mar 2014 09:45:23 -0500
+Message-ID: <20140328094523.7c9e040c@sluggy>
+Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/6K+QPWev35RVU+iXeTw4yNC"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Uwe =?ISO-8859-1?B?S2xlaW5lLUv2?= =?ISO-8859-1?B?bmln?=
+	<u.kleine-koenig@pengutronix.de>,
+	Gary Robertson <gary.robertson@linaro.org>,
+	Mike Holmes <mike.holmes@linaro.org>,
+	Anders Roxell <anders.roxell@linaro.org>,
+	John Kacur <jkacur@gmail.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1396004220-5711-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-What I observe is that the TX queue is not empty and does not make any
-progress. gfar_clean_tx_ring() does not clean up the packet because it
-is not completed yet.
-The root cause is that the DMA engine did not start yet (it was
-preempted before doing so) and that dumb loop, loops until that packet
-is gone.
-This is broken since c233cf4 ("gianfar: Fix tx napi polling").
+--Sig_/6K+QPWev35RVU+iXeTw4yNC
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: quoted-printable
 
-What remains are spurious interrupts if CPU0 cleans up TX packages and
-CPU1 returns with IRQ_NONE.
+I just pushed v0.88 of rt-tests up to kernel.org. This release has a
+set of fixes for ARM systems from:
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/net/ethernet/freescale/gianfar.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>:
+  - cyclictest: Fix tracemark output when the latency threshold is hit
+    on ARM
 
-diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-index 8f1afda..091945c 100644
---- a/drivers/net/ethernet/freescale/gianfar.c
-+++ b/drivers/net/ethernet/freescale/gianfar.c
-@@ -134,7 +134,6 @@ static int gfar_poll_sq(struct napi_struct *napi, int budget);
- static void gfar_netpoll(struct net_device *dev);
- #endif
- int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit);
--static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue);
- static void gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
- 			       int amount_pull, struct napi_struct *napi);
- void gfar_halt(struct net_device *dev);
-@@ -2516,7 +2515,7 @@ static void gfar_align_skb(struct sk_buff *skb)
- }
- 
- /* Interrupt Handler for Transmit complete */
--static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
-+static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
- {
- 	struct net_device *dev = tx_queue->dev;
- 	struct netdev_queue *txq;
-@@ -2939,10 +2938,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
- 			tx_queue = priv->tx_queue[i];
- 			/* run Tx cleanup to completion */
- 			if (tx_queue->tx_skbuff[tx_queue->skb_dirtytx]) {
--				gfar_clean_tx_ring(tx_queue);
--				has_tx_work = 1;
-+				int ret;
-+
-+				ret = gfar_clean_tx_ring(tx_queue);
-+				if (ret)
-+					has_tx_work++;
- 			}
- 		}
-+		work_done += has_tx_work;
- 
- 		for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
- 			/* skip queue if not active */
--- 
-1.9.1
+Gary S. Robertson <gary.robertson@linaro.org>:
+  - cyclictest: Restore CPU affinity function for non-NUMA builds
+  - cyclictest: Don't offer --numa option when unavailable
+
+You can pull it with git from here:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+
+branch master or tag v0.88
+
+Tarballs available at:
+
+https://www.kernel.org/pub/linux/kernel/people/clrkwllms/
+
+Questions, comments, snide remarks all welcome (well, some more than
+others).=20
+
+Clark
+
+--Sig_/6K+QPWev35RVU+iXeTw4yNC
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iQIcBAEBAgAGBQJTNYsDAAoJEEersVlSw9Nz+gEQAJxpRiR8xsqaiTYvgu4mC9g7
+fW7d3ZtERkvdVqPt9YRh3x6CdmQs5QGRoYcJOpknioohWr1WBUKqOmRD8D62IfDP
+nzqEpfOMIuChyUdr5h0I/g+5L7//WjC1LS05hUyOWXl0l1LTGv1AOqtoEIe2u7FD
+SMlvK00Y65V7VIrHXRy3B089dKWF3bDi0GRLX4Qwv9zYKj+QbrZbgRhRGyboEJgT
+7okn7Ym0/VxHp4q3r4bxobWQ0nK+taoB1fJEHznBTxB/O/M3ceHpM0OzLLwhiv8W
+6E90yG69olJZUofg0med5qpzDvbVHwXdiOzCcOpvC+Atcki2d+pybBbKLOBjWAWZ
+hLhcnWa1FPFwEHDIK+3yy9PqCT3TPIjoeadYsqavHbQyMmyUGAkIehgv4l2B+Uwd
+yrdrT1vyfGtNwJISsLLPDHPVsfNz5PJgX6jfzNQM/JNOtocairZ6At/z6lRHPtem
+ry3t1oZMQx1ojURsGdX1qnuexp6CRHaWJR7nYADz4MImwxuQ1ydKI5Bm/TDI+tnD
+iY+vMGJAWhl9eSgdgye7vScBYaqBkPJABofW6rFkqOo+v2XGX70lMxQB1Kwycg6A
+LVbm68TKIElk4ZtY5ToDeT689FLxO/LUgciUD0fj3TYhe++jfWXDYRFdvBekTgdW
+XwpGJf66dJqidYuGiqGq
+=9zbX
+-----END PGP SIGNATURE-----
+
+--Sig_/6K+QPWev35RVU+iXeTw4yNC--
