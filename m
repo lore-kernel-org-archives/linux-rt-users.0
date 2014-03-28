@@ -1,72 +1,74 @@
-From: Clark Williams <clark.williams@gmail.com>
-Subject: rt-tests 0.88 released
-Date: Fri, 28 Mar 2014 09:45:23 -0500
-Message-ID: <20140328094523.7c9e040c@sluggy>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [BUGREPORT] Tasklet scheduled issue in Linux 3.4.x-rt
+Date: Fri, 28 Mar 2014 17:37:53 +0100
+Message-ID: <20140328163753.GB14842@linutronix.de>
+References: <53144A57.4040204@huawei.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/6K+QPWev35RVU+iXeTw4yNC"; protocol="application/pgp-signature"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Uwe =?ISO-8859-1?B?S2xlaW5lLUv2?= =?ISO-8859-1?B?bmln?=
-	<u.kleine-koenig@pengutronix.de>,
-	Gary Robertson <gary.robertson@linaro.org>,
-	Mike Holmes <mike.holmes@linaro.org>,
-	Anders Roxell <anders.roxell@linaro.org>,
-	John Kacur <jkacur@gmail.com>
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org, Li Zefan <lizefan@huawei.com>,
+	Zhangwei <jovi.zhangwei@huawei.com>
+To: Yijing Wang <wangyijing@huawei.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <53144A57.4040204@huawei.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/6K+QPWev35RVU+iXeTw4yNC
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: quoted-printable
+* Yijing Wang | 2014-03-03 17:24:39 [+0800]:
 
-I just pushed v0.88 of rt-tests up to kernel.org. This release has a
-set of fixes for ARM systems from:
+>[2012-03-26 18:55:43][  929.252312] WARNING: at kernel/softirq.c:773 _=
+_tasklet_action+0x51/0x1a0()
+>[2012-03-27 03:41:06][ 3647.886005] WARNING: at kernel/softirq.c:773 _=
+_tasklet_action+0x51/0x1a0()
+>[2012-03-27 03:42:04][ 3705.434418] WARNING: at kernel/softirq.c:799 _=
+_tasklet_action+0xae/0x1a0()
 
-Uwe Kleine-K=F6nig <u.kleine-koenig@pengutronix.de>:
-  - cyclictest: Fix tracemark output when the latency threshold is hit
-    on ARM
+>FC card hardware  -------> FC driver interrupt handler  --------->task=
+let_schedule(fc driver tasklet) ------->tasklet running, call function =
+process FC IO data.
+>                        here will disable FC card interrupt           =
+                                          here will enable FC card inte=
+rrupt again
 
-Gary S. Robertson <gary.robertson@linaro.org>:
-  - cyclictest: Restore CPU affinity function for non-NUMA builds
-  - cyclictest: Don't offer --numa option when unavailable
+This looks okay.
 
-You can pull it with git from here:
+>We found the tasklet state is 0x1(mean state is TASKLET_STATE_SCHED),c=
+ount is 0, before we call tasklet_schedule().
+>So the new tasklet can not add to CPU list.
+>
+>And I also add some dynamic debug in __tasklet_action(); after the iss=
+ue occur, I open the dynamic debug.
+>After we force the hardware reset to interrupt OS, we never found the =
+=46C driver tasklet running in dmesg(I identify the tasklet by its data=
+).
+>I guess the FC tasklet is not in CPU global tasklet list.
+You guess correct.
 
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+>I hope somebody can help to look at it. If I missing something, let me=
+ know.
 
-branch master or tag v0.88
+The tasklet is always added to the local cpu, never cross. That list is
+always accessed with interrupts off.
+With TASKLET_STATE_SCHED set, the next step is to add the task let to
+the CPU's tasklet list. This isn't done if TASKLET_STATE_RUN is already
+set which means __tasklet_action() is already busy serving the tasklet.
+In that case it clears TASKLET_STATE_SCHED and invokes the tasklet
+again.
+After looking at it for a while I must say I have no idea how you
+managed to keep TASKLET_STATE_SCHED set. Further, each time
+TASKLET_STATE_RUN is cleared it is always with a cmpxchg() down to zero
+which means TASKLET_STATE_SCHED is removed earlier.
+That said, triggerring the warning at 773 is the first thing that went
+wrong. After it has been added to the list, the TASKLET_STATE_RUN is
+cleared again. I have no idea how it managed to remain still on except
+that __tasklet_common_schedule() is invoked which is protected by the
+SCHED bit=E2=80=A6
 
-Tarballs available at:
+>Thanks!
+>Yijing.
 
-https://www.kernel.org/pub/linux/kernel/people/clrkwllms/
-
-Questions, comments, snide remarks all welcome (well, some more than
-others).=20
-
-Clark
-
---Sig_/6K+QPWev35RVU+iXeTw4yNC
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIcBAEBAgAGBQJTNYsDAAoJEEersVlSw9Nz+gEQAJxpRiR8xsqaiTYvgu4mC9g7
-fW7d3ZtERkvdVqPt9YRh3x6CdmQs5QGRoYcJOpknioohWr1WBUKqOmRD8D62IfDP
-nzqEpfOMIuChyUdr5h0I/g+5L7//WjC1LS05hUyOWXl0l1LTGv1AOqtoEIe2u7FD
-SMlvK00Y65V7VIrHXRy3B089dKWF3bDi0GRLX4Qwv9zYKj+QbrZbgRhRGyboEJgT
-7okn7Ym0/VxHp4q3r4bxobWQ0nK+taoB1fJEHznBTxB/O/M3ceHpM0OzLLwhiv8W
-6E90yG69olJZUofg0med5qpzDvbVHwXdiOzCcOpvC+Atcki2d+pybBbKLOBjWAWZ
-hLhcnWa1FPFwEHDIK+3yy9PqCT3TPIjoeadYsqavHbQyMmyUGAkIehgv4l2B+Uwd
-yrdrT1vyfGtNwJISsLLPDHPVsfNz5PJgX6jfzNQM/JNOtocairZ6At/z6lRHPtem
-ry3t1oZMQx1ojURsGdX1qnuexp6CRHaWJR7nYADz4MImwxuQ1ydKI5Bm/TDI+tnD
-iY+vMGJAWhl9eSgdgye7vScBYaqBkPJABofW6rFkqOo+v2XGX70lMxQB1Kwycg6A
-LVbm68TKIElk4ZtY5ToDeT689FLxO/LUgciUD0fj3TYhe++jfWXDYRFdvBekTgdW
-XwpGJf66dJqidYuGiqGq
-=9zbX
------END PGP SIGNATURE-----
-
---Sig_/6K+QPWev35RVU+iXeTw4yNC--
+Sebastian
