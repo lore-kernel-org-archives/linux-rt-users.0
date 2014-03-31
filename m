@@ -1,70 +1,83 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [BUGREPORT] Tasklet scheduled issue in Linux 3.4.x-rt
-Date: Mon, 31 Mar 2014 22:50:17 +0200 (CEST)
-Message-ID: <alpine.DEB.2.02.1403312230340.14882@ionos.tec.linutronix.de>
-References: <53144A57.4040204@huawei.com>
+Subject: Re: [PATCH] net: sched: dev_deactivate_many(): use msleep(1) instead
+ of yield() to wait for outstanding qdisc_run callsb
+Date: Mon, 31 Mar 2014 23:49:16 +0200 (CEST)
+Message-ID: <alpine.DEB.2.02.1403312333100.14882@ionos.tec.linutronix.de>
+References: <1393976987-23555-1-git-send-email-mkl@pengutronix.de> <20140306.160622.59358366688518505.davem@davemloft.net> <1394392160.15968.13.camel@deadeye.wl.decadent.org.uk> <20140309.185338.2057082497431220324.davem@davemloft.net>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users@vger.kernel.org, Li Zefan <lizefan@huawei.com>,
-	Zhangwei <jovi.zhangwei@huawei.com>
-To: Yijing Wang <wangyijing@huawei.com>
+Cc: ben@decadent.org.uk, mkl@pengutronix.de,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org,
+	kernel@pengutronix.de, Peter Zijlstra <peterz@infradead.org>
+To: David Miller <davem@davemloft.net>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <53144A57.4040204@huawei.com>
+In-Reply-To: <20140309.185338.2057082497431220324.davem@davemloft.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 3 Mar 2014, Yijing Wang wrote:
-
-> Hi list,
->    I found a tasklet related issue in linux-stable-rt 3.4.
+On Sun, 9 Mar 2014, David Miller wrote:
+> From: Ben Hutchings <ben@decadent.org.uk>
+> Date: Sun, 09 Mar 2014 19:09:20 +0000
 > 
-> And after I revert following commit, the test result seems ok(test lasted 40hours).
+> > On Thu, 2014-03-06 at 16:06 -0500, David Miller wrote:
+> >> From: Marc Kleine-Budde <mkl@pengutronix.de>
+> >> Date: Wed,  5 Mar 2014 00:49:47 +0100
+> >> 
+> >> > @@ -839,7 +839,7 @@ void dev_deactivate_many(struct list_head *head)
+> >> >       /* Wait for outstanding qdisc_run calls. */
+> >> >       list_for_each_entry(dev, head, unreg_list)
+> >> >               while (some_qdisc_is_busy(dev))
+> >> > -                     yield();
+> >> > +                     msleep(1)
+> >> >  }
+> >> 
+> >> I don't understand this.
+> >> 
+> >> yield() should really _mean_ yield.
+> >> 
+> >> The intent of a yield() call, like this one here, is unambiguously
+> >> that the current thread cannot do anything until some other thread
+> >> gets onto the cpu and makes forward progress.
+> >>
+> >> Therefore it should allow lower priority threads to run, not just
+> >> equal or higher priority ones.
+> > 
+> > Until when?
+> > 
+> > yield() is not a sensible operation in a preemptive multitasking system,
+> > regardless of RT.
 > 
-> commit 0d9f73fc1e7270a3f8709c59c913408153d9d9f8
-
-This commit id does not exist in the official stable rt tree.
-
-> Author: Ingo Molnar <mingo@elte.hu>
-> Date:   Tue Nov 29 20:18:22 2011 -0500
+> To me it means "I've got nothing to do if other tasks want to run right
+> now"  Yes, I even see it having this meaning when an RT task executes
+> it.
 > 
->     tasklet: Prevent tasklets from going into infinite spin in RT
- 
-> 
-> I test FC driver IO in this kernel, and after a few hours test, FC IO will abort, I found a lot of tasklet WARNING Call Trace in kernel message,like:
-> 
-> [2012-03-26 18:55:43][  929.252289] ------------[ cut here ]------------
-> [2012-03-26 18:55:43][  929.252312] WARNING: at kernel/softirq.c:773 __tasklet_action+0x51/0x1a0()
+> How else can you interpret the intent above?
 
-There is no warning at line 773 in any official linux-stable-rt 3.4.
+The problem is that the semantics of yield() are a complete disaster.
 
-> [2012-03-26 18:55:43][  929.252314] Hardware name: Romley
-> [2012-03-26 18:55:43][  929.252316] Modules linked in: isd_fid(O) ivs_edft(O) ivs_emp(O) ivs_xnet(O) isd_rds(O) isd_idm(O) isd_dft(O) isd_base(O) sdm(O) isd_cmm(O) isd_ibc(O) isd_lib(O) xve_hab(PO) xve_net(PO) xve_cls_msg_filter(PO) xve_dscp(PO) pagepool(PO) iod(O) cmm(PO) util(PO) intel_t10(PO) itest_nid(PO) dmi(PO) bsp_adapter(PO) mpa(O) ipmi_si ipmi_devintf ipmi_msghandler iscsi_sw(PO) iscsi_prot(O) iscsi_seg(PO) iscsi_comm(PO) iscsi_initiator(PO) 8192cu(O) pciehp(PO) pcieaer(PO) pciecore(PO) drvinstallthird(PO) quark(O) sal(O) pmsas(O) foe(O) lfcoe(O) libfc(O) ib_uverbs(O) ibtgt(O) ib_srpt(O) ib_cm(O) ib_sa(O) mlx4_ib(O) ib_umad(O) ib_mad(O) mlx4_core(O) ib_core(O) drvtom(O) cxgb4(O) drvtoecore(O) fcdrv(PO) unflowlevel(PO) unfcommon(O) drvmml(PO) scsi_transport_fc scsi_tgt memtest(PO
- ) drv_iosubsys_ini(O) iocount(O) bsp_mml(PO) agetty_query(PO) cpufreq_powersave af_packet nf_conntrack_ipv6 nf_defrag_ipv6 ip6table_filter ip6_tables xt_limit xt_tcpudp xt_multiport nf_conntr!
-> ack_ipv4
->  nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf processor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_storage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) libata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interface(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_handler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
-> [2012-03-26 18:55:43][  929.252460] Pid: 17495, comm: 3th SioT Tainted: P           O 3.4.24.15-0.11-default #1
+yield() only works by some definiton of "works" when the involved
+parties are in the same scheduling class.
 
-You have loaded a gazillion of proprietary and out of tree modules and
-your kernel is tainted 'P'.
+You can yield from one SCHED_OTHER task to another SCHED_OTHER task,
+but yield() does not guarantee any progress. It might work for some
+scenarios of yield from one SCHED_FIFO task to another SCHED_FIFO task
+even better than in the SCHED_OTHER case, but there is no guarantee
+that it works at all.
 
-None of our problems. See:
+But yielding across scheduling classes cannot work ever. Not even in
+mainline.
 
- http://lwn.net/1999/0211/a/lt-binary.html
+That's not a RT sepcific issue, it's just one of these problems which
+are unearthed by RT because it does not follow the bog standard
+scheduling class and priority assignements of your favourite distro
+setup.
 
- https://lwn.net/Articles/287056/
+Once you tune a few knobs on a mainline kernel, you can provoke the
+same issue. It's that simple.
 
-I'm in a good mood today and give you some hints:
+yield() should die both in kernel and user space.
 
-- Ingos patch is correct and always has been for RT.
+Thanks,
 
-- We had not a single bug report against this in almost 10 years.
-
-- File your bugs to those who abuse our work and violate our license.
-
-Case closed.
-
-     tglx
+	tglx
