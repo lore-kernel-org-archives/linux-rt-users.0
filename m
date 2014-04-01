@@ -1,46 +1,70 @@
 From: Yijing Wang <wangyijing@huawei.com>
 Subject: Re: [BUGREPORT] Tasklet scheduled issue in Linux 3.4.x-rt
-Date: Tue, 1 Apr 2014 10:24:18 +0800
-Message-ID: <533A2352.7000306@huawei.com>
-References: <53144A57.4040204@huawei.com> <20140328163753.GB14842@linutronix.de> <533669C7.0@huawei.com> <53394296.5030906@linutronix.de>
+Date: Tue, 1 Apr 2014 11:15:09 +0800
+Message-ID: <533A2F3D.7070502@huawei.com>
+References: <53144A57.4040204@huawei.com> <alpine.DEB.2.02.1403312230340.14882@ionos.tec.linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
 Cc: Ingo Molnar <mingo@kernel.org>,
 	Peter Zijlstra <peterz@infradead.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>, "Li Zefan" <lizefan@huawei.com>,
+	<linux-rt-users@vger.kernel.org>, Li Zefan <lizefan@huawei.com>,
 	Zhangwei <jovi.zhangwei@huawei.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <53394296.5030906@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from szxga02-in.huawei.com ([119.145.14.65]:42401 "EHLO
+	szxga02-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751032AbaDADQa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 31 Mar 2014 23:16:30 -0400
+In-Reply-To: <alpine.DEB.2.02.1403312230340.14882@ionos.tec.linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
->> Because this patch does not exist in the latest Linus kernel, so I
->> have not reported this issue to kernel bugzilla.
-> 
-> This patch exists in all -RT releases up to 3.12. If there is an issue
-> with it, it should be solved.
-> 
-> If the sched bit set is and you can't get lock later then the tasklet
-> has be to active. Finally, not getting the lock in the tasklet code
-> itself means it is still occupied by the "add-to-the-list" part which
-> actually can't happen according to the code.
-> You said, that you have an eight-way. Is this also NUMA? If so, does
-> this problem happen if you disable NUMA (i.e. run only one NUMA node
-> and use only the memory that is directly attached to the node).
+Hi Thomas,
+   Thanks for your reply!
 
-Hi Sebastian,
-   The target platform is not NUMA, there is only one node.
+
+>>  nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf processor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_storage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) libata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interface(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_handler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
+>> [2012-03-26 18:55:43][  929.252460] Pid: 17495, comm: 3th SioT Tainted: P           O 3.4.24.15-0.11-default #1
+> 
+> You have loaded a gazillion of proprietary and out of tree modules and
+> your kernel is tainted 'P'.
+> 
+> None of our problems. See:
+> 
+>  http://lwn.net/1999/0211/a/lt-binary.html
+> 
+>  https://lwn.net/Articles/287056/
+> 
+> I'm in a good mood today and give you some hints:
+> 
+> - Ingos patch is correct and always has been for RT.
+> 
+> - We had not a single bug report against this in almost 10 years.
+> 
+> - File your bugs to those who abuse our work and violate our license.
+
+Actually, we applied the RT stable patch above the Greg 3.4 stable tree.
+No other changes in schedule filed.
+
+I will try to find out what codes cause this issue.
 
 Thanks!
 Yijing.
 
 > 
+> Case closed.
+> 
+>      tglx
+> 
+> .
 > 
 
 
 -- 
 Thanks!
 Yijing
+
