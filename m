@@ -1,70 +1,54 @@
-From: Yijing Wang <wangyijing@huawei.com>
-Subject: Re: [BUGREPORT] Tasklet scheduled issue in Linux 3.4.x-rt
-Date: Tue, 1 Apr 2014 11:15:09 +0800
-Message-ID: <533A2F3D.7070502@huawei.com>
-References: <53144A57.4040204@huawei.com> <alpine.DEB.2.02.1403312230340.14882@ionos.tec.linutronix.de>
+From: Clark Williams <clark.williams@gmail.com>
+Subject: rt-tests 0.89 released
+Date: Tue, 1 Apr 2014 08:15:45 -0500
+Message-ID: <20140401081545.2d33d2ed@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>, Li Zefan <lizefan@huawei.com>,
-	Zhangwei <jovi.zhangwei@huawei.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from szxga02-in.huawei.com ([119.145.14.65]:42401 "EHLO
-	szxga02-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751032AbaDADQa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Mar 2014 23:16:30 -0400
-In-Reply-To: <alpine.DEB.2.02.1403312230340.14882@ionos.tec.linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/PtX_F.BIBD.CxsGslZQ7LBH"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>, John Kacur <jkacur@gmail.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Thomas,
-   Thanks for your reply!
+--Sig_/PtX_F.BIBD.CxsGslZQ7LBH
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
+Verion 0.89 of rt-tests has been pushed to the git repository on
+kernel.org:
 
->>  nf_defrag_ipv4 xt_state nf_conntrack usr_cache(O) acpi_cpufreq mperf processor thermal_sys sg hwmon iptable_filter ip_tables x_tables ixgbe(O) igb(O) bonding(O) tg(O) netmgmt(O) drvinstall(PO) dal(PO) dca usb_storage(O) uhci_hcd ehci_hcd usbcore(O) usb_common sata_mml(O) ahci(O) libata(O) satahp(O) drvframe(PO) sd_mod crc_t10dif scsi_mod agetty_interface(PO) ext3 jbd mbcache nvram_printk(PO) os_feeddog(PO) os_debug(O) osp_proc(PO) os_rnvramdev(PO) vos(O) bsp(PO) os_die_handler(O) os_oom_handler(O) os_panic_handler(O) biosnvramdriver(O) kbox(O)
->> [2012-03-26 18:55:43][  929.252460] Pid: 17495, comm: 3th SioT Tainted: P           O 3.4.24.15-0.11-default #1
-> 
-> You have loaded a gazillion of proprietary and out of tree modules and
-> your kernel is tainted 'P'.
-> 
-> None of our problems. See:
-> 
->  http://lwn.net/1999/0211/a/lt-binary.html
-> 
->  https://lwn.net/Articles/287056/
-> 
-> I'm in a good mood today and give you some hints:
-> 
-> - Ingos patch is correct and always has been for RT.
-> 
-> - We had not a single bug report against this in almost 10 years.
-> 
-> - File your bugs to those who abuse our work and violate our license.
+git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
 
-Actually, we applied the RT stable patch above the Greg 3.4 stable tree.
-No other changes in schedule filed.
+tag: v0.89
 
-I will try to find out what codes cause this issue.
+This version fixes a problem with hwlatdetect on distros
+where /usr/bin/python is linked to python3.=20
 
-Thanks!
-Yijing.
+In addition it cleans up a leftover debugging comment from 0.88.=20
 
-> 
-> Case closed.
-> 
->      tglx
-> 
-> .
-> 
+Clark
 
+--Sig_/PtX_F.BIBD.CxsGslZQ7LBH
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
--- 
-Thanks!
-Yijing
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
 
+iQIcBAEBAgAGBQJTOrwBAAoJEEersVlSw9NzyFoP/0DmFOqLVn8cZTZXgNvRIrjt
+Uy9i/y95t1ByEUv9chXRJJqGbfbc2rflOgzMhFqFNKLHji0wmuoF203M/xNlxIhf
+GQw1YI/P2SoMFYArszmWNn0fiRR0qImq67RS4MhcZBjqKnqw9bWD75Adf/h08yLO
+/JxQHiE/gwoj6NzB7XnhMFoh8PWUtd6uNM7xkPoM0xNrz2yoAhkSpVDuAGJoihGj
+OTQziIx2wWPzK1BgvxgnxA/6ThaH9YNlYNlTpezhwoiZUl8y4jc2KCjNDrmFYr1K
+0+JsQCgHrwgpbZ9G8W416nxwXxAm9PCc83fgzZOefofR3v7HrUEK8tHFJcetbv+M
+ln42axgdphU2s7fMIa6NY7Wten2djUBYdRphn7DVb2WHcOcBwtqX785tt66KtP4Z
+N4HCSSlAuk7woyEhc2NNYXhidzyz6ktrJPsq5zBtVM52r+FNvGUSawLHGm7vPlTB
+aXe8nfM9boQKWY0PIdc7I98bwqkzYmoY4fXWhqGjMMES+qe19ywU/oaRk+i+6vqU
+8uVBGMweGpOTM2MTDePxQdsZz2q28IDvKCvibmZlxAiOpvOOBXn7v59F4Oa5NJ59
+lFkyWPA6XyaY8gB5mLonwiA1AIcicaCunYSufar4jafqZwehOYVmDDyrmYzMYfaB
+30BWPPXxqP35PFWAUuHZ
+=UZo/
+-----END PGP SIGNATURE-----
+
+--Sig_/PtX_F.BIBD.CxsGslZQ7LBH--
