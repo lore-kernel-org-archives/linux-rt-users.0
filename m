@@ -1,54 +1,62 @@
-From: Clark Williams <clark.williams@gmail.com>
-Subject: rt-tests 0.89 released
-Date: Tue, 1 Apr 2014 08:15:45 -0500
-Message-ID: <20140401081545.2d33d2ed@sluggy>
+From: Eric Dumazet <eric.dumazet@gmail.com>
+Subject: Re: [PATCH] net: sched: dev_deactivate_many(): use msleep(1)
+ instead of yield() to wait for outstanding qdisc_run callsb
+Date: Wed, 02 Apr 2014 04:17:39 -0700
+Message-ID: <1396437459.3989.39.camel@edumazet-glaptop2.roam.corp.google.com>
+References: <1393976987-23555-1-git-send-email-mkl@pengutronix.de>
+	 <20140306.160622.59358366688518505.davem@davemloft.net>
+	 <1394392160.15968.13.camel@deadeye.wl.decadent.org.uk>
+	 <20140309.185338.2057082497431220324.davem@davemloft.net>
+	 <alpine.DEB.2.02.1403312333100.14882@ionos.tec.linutronix.de>
+	 <20140402110743.GG27965@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/PtX_F.BIBD.CxsGslZQ7LBH"; protocol="application/pgp-signature"
-Cc: LKML <linux-kernel@vger.kernel.org>, John Kacur <jkacur@gmail.com>
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	David Miller <davem@davemloft.net>, ben@decadent.org.uk,
+	mkl@pengutronix.de,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>, netdev@vger.kernel.org,
+	kernel@pengutronix.de
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <netdev-owner@vger.kernel.org>
+In-Reply-To: <20140402110743.GG27965@twins.programming.kicks-ass.net>
+Sender: netdev-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/PtX_F.BIBD.CxsGslZQ7LBH
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On Wed, 2014-04-02 at 13:07 +0200, Peter Zijlstra wrote:
+> On Mon, Mar 31, 2014 at 11:49:16PM +0200, Thomas Gleixner wrote:
+> > > >> The intent of a yield() call, like this one here, is unambiguously
+> > > >> that the current thread cannot do anything until some other thread
+> > > >> gets onto the cpu and makes forward progress.
+> 
+> Yeah; like Thomas said; that's not what yield() does -- or can do.
+> 
+> yield() only says 'I don't know what to do, you figure it out', but then
+> fails to provide enough information to actually do something sensible.
+> 
+> It cannot put the task to sleep; because it doesn't pair with a wakeup;
+> and therefore the task stays an eligible/runnable task from a scheduler
+> pov.
+> 
+> The scheduler is therefore entirely in its right to pick this task
+> again; and pretty much has to under many circumstances.
+> 
+> yield() does not, and can not, guarantee forward progress - ever.
+> 
+> Use wait_event() and assorted bits to wait for an actual event. That is
+> a sleep paired with a wakeup and thus has progress guarantees.
 
-Verion 0.89 of rt-tests has been pushed to the git repository on
-kernel.org:
+Why wouldn't it be safe to redefine yield as msleep(1) ?
 
-git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+net/ipv4/tcp_output.c seems to also use yield().
 
-tag: v0.89
 
-This version fixes a problem with hwlatdetect on distros
-where /usr/bin/python is linked to python3.=20
-
-In addition it cleans up a leftover debugging comment from 0.88.=20
-
-Clark
-
---Sig_/PtX_F.BIBD.CxsGslZQ7LBH
-Content-Type: application/pgp-signature; name=signature.asc
-Content-Disposition: attachment; filename=signature.asc
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2.0.22 (GNU/Linux)
-
-iQIcBAEBAgAGBQJTOrwBAAoJEEersVlSw9NzyFoP/0DmFOqLVn8cZTZXgNvRIrjt
-Uy9i/y95t1ByEUv9chXRJJqGbfbc2rflOgzMhFqFNKLHji0wmuoF203M/xNlxIhf
-GQw1YI/P2SoMFYArszmWNn0fiRR0qImq67RS4MhcZBjqKnqw9bWD75Adf/h08yLO
-/JxQHiE/gwoj6NzB7XnhMFoh8PWUtd6uNM7xkPoM0xNrz2yoAhkSpVDuAGJoihGj
-OTQziIx2wWPzK1BgvxgnxA/6ThaH9YNlYNlTpezhwoiZUl8y4jc2KCjNDrmFYr1K
-0+JsQCgHrwgpbZ9G8W416nxwXxAm9PCc83fgzZOefofR3v7HrUEK8tHFJcetbv+M
-ln42axgdphU2s7fMIa6NY7Wten2djUBYdRphn7DVb2WHcOcBwtqX785tt66KtP4Z
-N4HCSSlAuk7woyEhc2NNYXhidzyz6ktrJPsq5zBtVM52r+FNvGUSawLHGm7vPlTB
-aXe8nfM9boQKWY0PIdc7I98bwqkzYmoY4fXWhqGjMMES+qe19ywU/oaRk+i+6vqU
-8uVBGMweGpOTM2MTDePxQdsZz2q28IDvKCvibmZlxAiOpvOOBXn7v59F4Oa5NJ59
-lFkyWPA6XyaY8gB5mLonwiA1AIcicaCunYSufar4jafqZwehOYVmDDyrmYzMYfaB
-30BWPPXxqP35PFWAUuHZ
-=UZo/
------END PGP SIGNATURE-----
-
---Sig_/PtX_F.BIBD.CxsGslZQ7LBH--
+                /* Socket is locked, keep trying until memory is available. */
+                for (;;) {
+                        skb = alloc_skb_fclone(MAX_TCP_HEADER,
+                                               sk->sk_allocation);
+                        if (skb)
+                                break;
+                        yield();
+                }
