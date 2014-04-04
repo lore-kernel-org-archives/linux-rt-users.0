@@ -1,8 +1,8 @@
 From: David Miller <davem@davemloft.net>
 Subject: Re: [PATCH] net: sched: dev_deactivate_many(): use msleep(1)
  instead of yield() to wait for outstanding qdisc_run callsb
-Date: Fri, 04 Apr 2014 11:26:28 -0400 (EDT)
-Message-ID: <20140404.112628.1273328398538574058.davem@davemloft.net>
+Date: Fri, 04 Apr 2014 11:28:50 -0400 (EDT)
+Message-ID: <20140404.112850.1541183418380443600.davem@davemloft.net>
 References: <20140402110743.GG27965@twins.programming.kicks-ass.net>
 	<1396437459.3989.39.camel@edumazet-glaptop2.roam.corp.google.com>
 	<20140404151942.GI10526@twins.programming.kicks-ass.net>
@@ -22,11 +22,10 @@ List-Id: linux-rt-users.vger.kernel.org
 From: Peter Zijlstra <peterz@infradead.org>
 Date: Fri, 4 Apr 2014 17:19:42 +0200
 
-> The proper way to fix the dev_deactivate_many() is to use wait_event(),
-> polling for that state is just daft. Afaict there is no reason the qdisc
-> code could not do a wakeup whenever that condition changes.
+> And the above loop in tcp_output() is a plain memory deadlock, you
+> should not loop on allocations like that. If the allocation fails;
+> propagate the error.
 
-I actually looked into this, and it's going to add expensive checks
-to the fast paths of packet processing.
-
-If it was so easy we'd be doing it that way already.
+There is nothing to "propagate" it to.  We have no "event" that will
+trigger so that we have a second chance to send the FIN out, it really
+must go out before we progress any further at this stage.
