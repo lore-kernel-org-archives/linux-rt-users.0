@@ -1,49 +1,37 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH] net: sched: dev_deactivate_many(): use msleep(1) instead
- of yield() to wait for outstanding qdisc_run callsb
-Date: Mon, 7 Apr 2014 13:24:13 +0200
-Message-ID: <20140407112413.GI11096@twins.programming.kicks-ass.net>
-References: <20140402110743.GG27965@twins.programming.kicks-ass.net>
- <1396437459.3989.39.camel@edumazet-glaptop2.roam.corp.google.com>
- <20140404151942.GI10526@twins.programming.kicks-ass.net>
- <20140404.112850.1541183418380443600.davem@davemloft.net>
+From: David Lopo <lopo.david@gmail.com>
+Subject: Re: =?utf-8?b?Q09ORklHX1BSRUVNUFRfUlRfRlVMTA==?= an usb gadget
+Date: Mon, 7 Apr 2014 19:30:46 +0000 (UTC)
+Message-ID: <loom.20140407T212745-609@post.gmane.org>
+References: <9BA84827B30CBE4996725F98F7DC91232F974979@SMExchange01.siebmeyer.org> <20131018143559.GB14569@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: eric.dumazet@gmail.com, tglx@linutronix.de, ben@decadent.org.uk,
-	mkl@pengutronix.de, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, netdev@vger.kernel.org,
-	kernel@pengutronix.de
-To: David Miller <davem@davemloft.net>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140404.112850.1541183418380443600.davem@davemloft.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from plane.gmane.org ([80.91.229.3]:50907 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755855AbaDGTfH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 7 Apr 2014 15:35:07 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1WXFJw-0006Wv-Ic
+	for linux-rt-users@vger.kernel.org; Mon, 07 Apr 2014 21:35:04 +0200
+Received: from 134.191.220.73 ([134.191.220.73])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Apr 2014 21:35:04 +0200
+Received: from lopo.david by 134.191.220.73 with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Apr 2014 21:35:04 +0200
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Apr 04, 2014 at 11:28:50AM -0400, David Miller wrote:
-> From: Peter Zijlstra <peterz@infradead.org>
-> Date: Fri, 4 Apr 2014 17:19:42 +0200
-> 
-> > And the above loop in tcp_output() is a plain memory deadlock, you
-> > should not loop on allocations like that. If the allocation fails;
-> > propagate the error.
-> 
-> There is nothing to "propagate" it to.  We have no "event" that will
-> trigger so that we have a second chance to send the FIN out, it really
-> must go out before we progress any further at this stage.
+Hi Alexander
 
->From what I remember of TCP/IP the FIN packet is used once per
-connection; to terminate said connection. So if we pre-allocate one per
-connection, at establishment time (where we can still easily fail) we
-should be good and safe.
+Did you find the problem?
+I have a similar issue...
 
-Now, I suppose there's valid arguments against this -- wasted memory
-being one I suspect.
+Thanks & Regards
+David
 
-Also, seeing how this code has basically been this way forever and has
-not caused (afaik) any actual memory deadlocks (they're hard anyway). We
-might just get away with not touching it.
 
-That said, at the very least we want a comment here stating that this is
-a potential memory deadlock and why the alternatives aren't any good, so
-that future readers (possibly us again) know this has been considered.
