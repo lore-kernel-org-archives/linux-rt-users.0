@@ -1,37 +1,65 @@
-From: David Lopo <lopo.david@gmail.com>
-Subject: Re: =?utf-8?b?Q09ORklHX1BSRUVNUFRfUlRfRlVMTA==?= an usb gadget
-Date: Mon, 7 Apr 2014 19:30:46 +0000 (UTC)
-Message-ID: <loom.20140407T212745-609@post.gmane.org>
-References: <9BA84827B30CBE4996725F98F7DC91232F974979@SMExchange01.siebmeyer.org> <20131018143559.GB14569@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/2] rtmutex: Remove duplicate rt_mutex_init()
+Date: Tue, 08 Apr 2014 22:47:02 -0400
+Message-ID: <20140409025232.161960044@goodmis.org>
+References: <20140409024700.702797305@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>,
+	"H. Peter Anvin" <hpa@zytor.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:50907 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755855AbaDGTfH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Apr 2014 15:35:07 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1WXFJw-0006Wv-Ic
-	for linux-rt-users@vger.kernel.org; Mon, 07 Apr 2014 21:35:04 +0200
-Received: from 134.191.220.73 ([134.191.220.73])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 07 Apr 2014 21:35:04 +0200
-Received: from lopo.david by 134.191.220.73 with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 07 Apr 2014 21:35:04 +0200
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:20426 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756868AbaDICwg (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 8 Apr 2014 22:52:36 -0400
+Content-Disposition: inline; filename=0002-rtmutex-Remove-duplicate-rt_mutex_init.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Alexander
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Did you find the problem?
-I have a similar issue...
+The rt_mutex_init() macro is the same whether or not
+CONFIG_DEBUG_RT_MUTEX is set. Remove the duplicate.
 
-Thanks & Regards
-David
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ include/linux/rtmutex.h | 12 +++---------
+ 1 file changed, 3 insertions(+), 9 deletions(-)
 
-
+diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
+index fa18682..f7e79e8 100644
+--- a/include/linux/rtmutex.h
++++ b/include/linux/rtmutex.h
+@@ -62,25 +62,19 @@ struct hrtimer_sleeper;
+ # define __DEBUG_RT_MUTEX_INITIALIZER(mutexname) \
+ 	, .name = #mutexname, .file = __FILE__, .line = __LINE__
+ 
+-# define rt_mutex_init(mutex)					\
+-	do {							\
+-		raw_spin_lock_init(&(mutex)->wait_lock);	\
+-		__rt_mutex_init(mutex, #mutex);			\
+-	} while (0)
+-
+  extern void rt_mutex_debug_task_free(struct task_struct *tsk);
+ #else
+ # define __DEBUG_RT_MUTEX_INITIALIZER(mutexname)
+ 
++# define rt_mutex_debug_task_free(t)			do { } while (0)
++#endif
++
+ # define rt_mutex_init(mutex)					\
+ 	do {							\
+ 		raw_spin_lock_init(&(mutex)->wait_lock);	\
+ 		__rt_mutex_init(mutex, #mutex);			\
+ 	} while (0)
+ 
+-# define rt_mutex_debug_task_free(t)			do { } while (0)
+-#endif
