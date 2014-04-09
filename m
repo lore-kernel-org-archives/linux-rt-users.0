@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2] rtmutex: Remove duplicate rt_mutex_init()
-Date: Tue, 08 Apr 2014 22:47:02 -0400
-Message-ID: <20140409025232.161960044@goodmis.org>
+Subject: [PATCH RT 1/2] rwsem-rt: Do not allow readers to nest
+Date: Tue, 08 Apr 2014 22:47:01 -0400
+Message-ID: <20140409025231.998774075@goodmis.org>
 References: <20140409024700.702797305@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -15,51 +15,93 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:20426 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:23775 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756868AbaDICwg (ORCPT
+	by vger.kernel.org with ESMTP id S1757406AbaDICwg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Tue, 8 Apr 2014 22:52:36 -0400
-Content-Disposition: inline; filename=0002-rtmutex-Remove-duplicate-rt_mutex_init.patch
+Content-Disposition: inline; filename=0001-rwsem-rt-Do-not-allow-readers-to-nest.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-The rt_mutex_init() macro is the same whether or not
-CONFIG_DEBUG_RT_MUTEX is set. Remove the duplicate.
+The readers of mainline rwsems are not allowed to nest, the rwsems in the
+PREEMPT_RT kernel should not nest either.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/rtmutex.h | 12 +++---------
- 1 file changed, 3 insertions(+), 9 deletions(-)
+ include/linux/rwsem_rt.h |  1 -
+ kernel/rt.c              | 37 ++++++++-----------------------------
+ 2 files changed, 8 insertions(+), 30 deletions(-)
 
-diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
-index fa18682..f7e79e8 100644
---- a/include/linux/rtmutex.h
-+++ b/include/linux/rtmutex.h
-@@ -62,25 +62,19 @@ struct hrtimer_sleeper;
- # define __DEBUG_RT_MUTEX_INITIALIZER(mutexname) \
- 	, .name = #mutexname, .file = __FILE__, .line = __LINE__
+diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
+index e94d945..a81151c 100644
+--- a/include/linux/rwsem_rt.h
++++ b/include/linux/rwsem_rt.h
+@@ -20,7 +20,6 @@
  
--# define rt_mutex_init(mutex)					\
--	do {							\
--		raw_spin_lock_init(&(mutex)->wait_lock);	\
--		__rt_mutex_init(mutex, #mutex);			\
--	} while (0)
+ struct rw_semaphore {
+ 	struct rt_mutex		lock;
+-	int			read_depth;
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ 	struct lockdep_map	dep_map;
+ #endif
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 5d17727..bb72347 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -316,10 +316,8 @@ EXPORT_SYMBOL(rt_up_write);
+ 
+ void  rt_up_read(struct rw_semaphore *rwsem)
+ {
+-	if (--rwsem->read_depth == 0) {
+-		rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-		rt_mutex_unlock(&rwsem->lock);
+-	}
++	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
++	rt_mutex_unlock(&rwsem->lock);
+ }
+ EXPORT_SYMBOL(rt_up_read);
+ 
+@@ -330,7 +328,6 @@ EXPORT_SYMBOL(rt_up_read);
+ void  rt_downgrade_write(struct rw_semaphore *rwsem)
+ {
+ 	BUG_ON(rt_mutex_owner(&rwsem->lock) != current);
+-	rwsem->read_depth = 1;
+ }
+ EXPORT_SYMBOL(rt_downgrade_write);
+ 
+@@ -367,37 +364,20 @@ void rt_down_write_nested_lock(struct rw_semaphore *rwsem,
+ 
+ int  rt_down_read_trylock(struct rw_semaphore *rwsem)
+ {
+-	struct rt_mutex *lock = &rwsem->lock;
+-	int ret = 1;
 -
-  extern void rt_mutex_debug_task_free(struct task_struct *tsk);
- #else
- # define __DEBUG_RT_MUTEX_INITIALIZER(mutexname)
+-	/*
+-	 * recursive read locks succeed when current owns the rwsem,
+-	 * but not when read_depth == 0 which means that the rwsem is
+-	 * write locked.
+-	 */
+-	if (rt_mutex_owner(lock) != current) {
+-		ret = rt_mutex_trylock(&rwsem->lock);
+-		if (ret)
+-			rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
+-	} else if (!rwsem->read_depth) {
+-		ret = 0;
+-	}
++	int ret;
  
-+# define rt_mutex_debug_task_free(t)			do { } while (0)
-+#endif
++	ret = rt_mutex_trylock(&rwsem->lock);
+ 	if (ret)
+-		rwsem->read_depth++;
++		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
 +
- # define rt_mutex_init(mutex)					\
- 	do {							\
- 		raw_spin_lock_init(&(mutex)->wait_lock);	\
- 		__rt_mutex_init(mutex, #mutex);			\
- 	} while (0)
+ 	return ret;
+ }
+ EXPORT_SYMBOL(rt_down_read_trylock);
  
--# define rt_mutex_debug_task_free(t)			do { } while (0)
--#endif
+ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
+ {
+-	struct rt_mutex *lock = &rwsem->lock;
