@@ -1,49 +1,101 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
-Date: Thu, 10 Apr 2014 10:32:55 -0400
-Message-ID: <20140410103255.2eba08c6@gandalf.local.home>
+Date: Thu, 10 Apr 2014 09:44:30 -0500
+Message-ID: <20140410094430.56ca9ee1@sluggy.gateway.2wire.net>
 References: <20140409151922.5fa5d999@gandalf.local.home>
-	<1397139510.5137.92.camel@marge.simpson.net>
-	<1397140123.5137.99.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/0Kr_8p_vZhU0dhpEjRL+Wr8"; protocol="application/pgp-signature"
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@kernel.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1397140123.5137.99.camel@marge.simpson.net>
+In-Reply-To: <20140409151922.5fa5d999@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 10 Apr 2014 16:28:43 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+--Sig_/0Kr_8p_vZhU0dhpEjRL+Wr8
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> On Thu, 2014-04-10 at 16:18 +0200, Mike Galbraith wrote: 
-> > On Wed, 2014-04-09 at 15:19 -0400, Steven Rostedt wrote:
-> > 
-> > > If you have any benchmark on large machines I would be very happy if
-> > > you could test this patch against the unpatched version of -rt.
-> > 
-> > Too bad I don't have (and know how to use) specjbb.
-> > 
-> > I dug up old vmark, thinking I'd be able to get some halfway useful
-> > relative numbers from it, but that was a waste of a day.  The thing
-> > performs so badly on 40 core box that rt _beats_ nopreempt, and after 2
-> > nodes, you're going backward.  40 Westmere EX cores does a whopping ~2.5
-> > * dinky old Q6600 box throughput.
-> 
-> P.S.  What I didn't see was any sign of a delta patched/unpatched..
-> which may mean nothing at all :-/
+On Wed, 9 Apr 2014 15:19:22 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-Actually that at least means it didn't cause any regressions for you.
+=20
+> This patch is built on top of the two other patches that I posted
+> earlier, which should not be as controversial.
+>=20
+> If you have any benchmark on large machines I would be very happy if
+> you could test this patch against the unpatched version of -rt.
+>=20
+> Cheers,
+>=20
+> -- Steve
+>
 
--- Steve
+Steven
+
+I wrote a program named whack_mmap_sem which creates a large (4GB)
+buffer, then creates 2 x ncpus threads that are affined across all the
+available cpus. These threads then randomly write into the buffer,
+which should cause page faults galore.
+
+I then built the following kernel configs:
+
+  vanilla-3.13.15  - no RT patches applied
+  rt-3.12.15       - PREEMPT_RT patchset
+  rt-3.12.15-fixes - PREEMPT_RT + rwsem fixes
+  rt-3.12.15-multi - PREEMPT_RT + rwsem fixes + rwsem-multi patch
+
+My test h/w was a Dell R520 with a 6-core Intel(R) Xeon(R) CPU E5-2430
+0 @ 2.20GHz (hyperthreaded). So whack_mmap_sem created 24 threads
+which all partied in the 4GB address range.
+
+I ran whack_mmap_sem with the argument -w 100000 which means each
+thread does 100k writes to random locations inside the buffer and then
+did five runs per each kernel. At the end of the run whack_mmap_sem
+prints out the time of the run in microseconds.
+
+The means of each group of five test runs are:
+
+  vanilla.log:  1210117
+       rt.log:  17210953 (14.2 x slower than vanilla)
+ rt-fixes.log:  10062027 (8.3 x slower than vanilla)
+ rt-multi.log:  3179582  (2.x x slower than vanilla)
+
+
+As expected, vanilla kicked RT's butt when hammering on the
+mmap_sem. But somewhat unexpectedly, your fixups helped quite a bit
+and the multi+fixups got RT back into being almost respectable.
+
+Obviously these are just preliminary results on one piece of h/w but
+it looks promising.
+
+Clark
+
+P.S. If you want the source to whack_mmap_sem you can grab it from=20
+http://people.redhat.com/williams/whack_mmap_sem. If it looks like its
+worth keeping around I can add it to rt-tests.=20
+
+
+--Sig_/0Kr_8p_vZhU0dhpEjRL+Wr8
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iEYEARECAAYFAlNGrk4ACgkQHyuj/+TTEp07fQCfd0+7wizfvUJJJ+jZTDUyFZhh
+7+wAn2ZsxeZD4QWxZRHogj1o+AHTOYZh
+=bERs
+-----END PGP SIGNATURE-----
+
+--Sig_/0Kr_8p_vZhU0dhpEjRL+Wr8--
