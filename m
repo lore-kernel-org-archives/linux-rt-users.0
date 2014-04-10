@@ -1,66 +1,57 @@
-From: Scott Wood <scottwood@freescale.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH RT 2/2] net: gianfar: do not try to cleanup TX packets
  if they are not done
-Date: Wed, 9 Apr 2014 19:48:36 -0500
-Message-ID: <1397090916.20280.36.camel@snotra.buserror.net>
-References: <1396004220-5711-1-git-send-email-bigeasy@linutronix.de>
-	 <1396004220-5711-2-git-send-email-bigeasy@linutronix.de>
+Date: Thu, 10 Apr 2014 09:20:25 +0200
+Message-ID: <53464639.2040208@linutronix.de>
+References: <1396004220-5711-1-git-send-email-bigeasy@linutronix.de>	 <1396004220-5711-2-git-send-email-bigeasy@linutronix.de> <1397090916.20280.36.camel@snotra.buserror.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
-	"Claudiu Manoil" <claudiu.manoil@freescale.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Claudiu Manoil <claudiu.manoil@freescale.com>
+To: Scott Wood <scottwood@freescale.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1396004220-5711-2-git-send-email-bigeasy@linutronix.de>
+In-Reply-To: <1397090916.20280.36.camel@snotra.buserror.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2014-03-28 at 11:57 +0100, Sebastian Andrzej Siewior wrote:
-> What I observe is that the TX queue is not empty and does not make any
-> progress. gfar_clean_tx_ring() does not clean up the packet because it
-> is not completed yet.
-> The root cause is that the DMA engine did not start yet (it was
-> preempted before doing so) and that dumb loop, loops until that packet
-> is gone.
-> This is broken since c233cf4 ("gianfar: Fix tx napi polling").
+On 04/10/2014 02:48 AM, Scott Wood wrote:
+> Why is this only being sent to RT and not to netdev for mainline?
+
+I tried. And complained about how that problem was fixed by a duct tape
+solution (by dropping the outer loop) instead of understanding the
+problem and fixing it properly. Even Eric tied to point out that there
+might be something else going on. Look at netdev for "gianfar: Simplify
+MQ polling to avoid soft lockup".
+The threaded ended ended up with the fact that I took this for -RT only
+because netdev had already code for v3.15 and Claudiu managed to
+rewrite that part (again) and added napi for TX. So that Patch as-is
+does not apply anymore.
+With NAPI for TX I had may no longer persists so I will probably drop
+this patch in -RT >= 3.15
+
+>> --- a/drivers/net/ethernet/freescale/gianfar.c
+>> +++ b/drivers/net/ethernet/freescale/gianfar.c
+>> @@ -2516,7 +2515,7 @@ static void gfar_align_skb(struct sk_buff *skb)
+>>  }
+>>  
+>>  /* Interrupt Handler for Transmit complete */
+>> -static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+>> +static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+>>  {
+>>  	struct net_device *dev = tx_queue->dev;
+>>  	struct netdev_queue *txq;
+>> @@ -2939,10 +2938,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
 > 
-> What remains are spurious interrupts if CPU0 cleans up TX packages and
-> CPU1 returns with IRQ_NONE.
+> You changed the return from void to int, but you never added any return
+> statement.  GCC should have warned you about this...
+
+Interesting. I remember that I added "howmany" as return value. I
+remember testing it. And yet there is evidence that I did not such a
+thing. I will add it. Thanks for pointing out.
+
 > 
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-
-Why is this only being sent to RT and not to netdev for mainline?
-
-> ---
->  drivers/net/ethernet/freescale/gianfar.c | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
+> -Scott
 > 
-> diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-> index 8f1afda..091945c 100644
-> --- a/drivers/net/ethernet/freescale/gianfar.c
-> +++ b/drivers/net/ethernet/freescale/gianfar.c
-> @@ -134,7 +134,6 @@ static int gfar_poll_sq(struct napi_struct *napi, int budget);
->  static void gfar_netpoll(struct net_device *dev);
->  #endif
->  int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit);
-> -static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue);
->  static void gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
->  			       int amount_pull, struct napi_struct *napi);
->  void gfar_halt(struct net_device *dev);
-> @@ -2516,7 +2515,7 @@ static void gfar_align_skb(struct sk_buff *skb)
->  }
->  
->  /* Interrupt Handler for Transmit complete */
-> -static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
-> +static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
->  {
->  	struct net_device *dev = tx_queue->dev;
->  	struct netdev_queue *txq;
-> @@ -2939,10 +2938,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
 
-You changed the return from void to int, but you never added any return
-statement.  GCC should have warned you about this...
-
--Scott
+Sebastian
