@@ -1,57 +1,38 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 2/2] net: gianfar: do not try to cleanup TX packets
- if they are not done
-Date: Thu, 10 Apr 2014 09:20:25 +0200
-Message-ID: <53464639.2040208@linutronix.de>
-References: <1396004220-5711-1-git-send-email-bigeasy@linutronix.de>	 <1396004220-5711-2-git-send-email-bigeasy@linutronix.de> <1397090916.20280.36.camel@snotra.buserror.net>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
+Date: Thu, 10 Apr 2014 16:18:30 +0200
+Message-ID: <1397139510.5137.92.camel@marge.simpson.net>
+References: <20140409151922.5fa5d999@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Claudiu Manoil <claudiu.manoil@freescale.com>
-To: Scott Wood <scottwood@freescale.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1397090916.20280.36.camel@snotra.buserror.net>
+In-Reply-To: <20140409151922.5fa5d999@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 04/10/2014 02:48 AM, Scott Wood wrote:
-> Why is this only being sent to RT and not to netdev for mainline?
+On Wed, 2014-04-09 at 15:19 -0400, Steven Rostedt wrote:
 
-I tried. And complained about how that problem was fixed by a duct tape
-solution (by dropping the outer loop) instead of understanding the
-problem and fixing it properly. Even Eric tied to point out that there
-might be something else going on. Look at netdev for "gianfar: Simplify
-MQ polling to avoid soft lockup".
-The threaded ended ended up with the fact that I took this for -RT only
-because netdev had already code for v3.15 and Claudiu managed to
-rewrite that part (again) and added napi for TX. So that Patch as-is
-does not apply anymore.
-With NAPI for TX I had may no longer persists so I will probably drop
-this patch in -RT >= 3.15
+> If you have any benchmark on large machines I would be very happy if
+> you could test this patch against the unpatched version of -rt.
 
->> --- a/drivers/net/ethernet/freescale/gianfar.c
->> +++ b/drivers/net/ethernet/freescale/gianfar.c
->> @@ -2516,7 +2515,7 @@ static void gfar_align_skb(struct sk_buff *skb)
->>  }
->>  
->>  /* Interrupt Handler for Transmit complete */
->> -static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
->> +static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
->>  {
->>  	struct net_device *dev = tx_queue->dev;
->>  	struct netdev_queue *txq;
->> @@ -2939,10 +2938,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
-> 
-> You changed the return from void to int, but you never added any return
-> statement.  GCC should have warned you about this...
+Too bad I don't have (and know how to use) specjbb.
 
-Interesting. I remember that I added "howmany" as return value. I
-remember testing it. And yet there is evidence that I did not such a
-thing. I will add it. Thanks for pointing out.
+I dug up old vmark, thinking I'd be able to get some halfway useful
+relative numbers from it, but that was a waste of a day.  The thing
+performs so badly on 40 core box that rt _beats_ nopreempt, and after 2
+nodes, you're going backward.  40 Westmere EX cores does a whopping ~2.5
+* dinky old Q6600 box throughput.
 
-> 
-> -Scott
-> 
-
-Sebastian
+-Mike
