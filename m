@@ -1,14 +1,16 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
-Date: Thu, 10 Apr 2014 17:36:17 +0200
-Message-ID: <20140410153617.GN10526@twins.programming.kicks-ass.net>
+Date: Thu, 10 Apr 2014 15:17:41 -0400
+Message-ID: <20140410151741.617f86d9@gandalf.local.home>
 References: <20140409151922.5fa5d999@gandalf.local.home>
- <20140410094430.56ca9ee1@sluggy.gateway.2wire.net>
- <5346B2C8.6000207@linutronix.de>
+	<20140410094430.56ca9ee1@sluggy.gateway.2wire.net>
+	<5346B2C8.6000207@linutronix.de>
+	<20140410153617.GN10526@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Clark Williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Mike Galbraith <umgwanakikbuti@gmail.com>,
@@ -17,53 +19,27 @@ Cc: Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Ingo Molnar <mingo@kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <5346B2C8.6000207@linutronix.de>
+In-Reply-To: <20140410153617.GN10526@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Apr 10, 2014 at 05:03:36PM +0200, Sebastian Andrzej Siewior wrote:
-> On 04/10/2014 04:44 PM, Clark Williams wrote:
-> > The means of each group of five test runs are:
-> > 
-> > vanilla.log:  1210117 rt.log:  17210953 (14.2 x slower than
-> > vanilla) rt-fixes.log:  10062027 (8.3 x slower than vanilla) 
-> > rt-multi.log:  3179582  (2.x x slower than vanilla)
-> > 
-> > 
-> > As expected, vanilla kicked RT's butt when hammering on the 
-> > mmap_sem. But somewhat unexpectedly, your fixups helped quite a
-> > bit and the multi+fixups got RT back into being almost
-> > respectable.
-> > 
-> > Obviously these are just preliminary results on one piece of h/w
-> > but it looks promising.
-> 
-> Is it easy to look at the latency when you have multiple readers and
-> and a high prio writer which has to boost all those readers away
-> instead just one?
-> Or is this something that should not happen for a high prio RT task
-> because it has all memory already allocated?
+On Thu, 10 Apr 2014 17:36:17 +0200
+Peter Zijlstra <peterz@infradead.org> wrote:
 
-With care it should not happen; it should be relatively straight forward
-to avoid all system calls that take mmap_sem for writing.
 
-But yes, the total latency is a concern, that said, that is the very
-reason there is a hard limit to the reader concurrency and why this
-limit is a tunable.
+> It defaults to the total number of CPUs in the system, given the default
+> setup (all CPUs in a single balance domain), this should result in all
+> CPUs working concurrently on the boosted read sides.
 
-It defaults to the total number of CPUs in the system, given the default
-setup (all CPUs in a single balance domain), this should result in all
-CPUs working concurrently on the boosted read sides.
+Unfortunately, it currently defaults to the number of possible CPUs in
+the system. I should probably move the default assignment to after SMP
+is setup. Currently it happens in early boot before all the CPUs are
+running. On boot up, the limit is set to NR_CPUS which should be much
+higher than what the system has, but shouldn't matter during boot. But
+after all the CPUs are up and running, it can lower it to online CPUs.
 
-So while there is always some overhead, the worst case should not be
-nr_readers * read-hold-time.
+I think I'll go and make v3 of this patch.
 
-Although, with more (unrelated) higher prio threads you can indeed wreck
-this. Similarly by partitioning the system and not adjusting the max
-reader you also get into trouble.
-
-But then, the above nr_readers * read-hold-time is still an upper bound,
-and the entire thing does stay deterministic.
+-- Steve
