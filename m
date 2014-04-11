@@ -1,50 +1,51 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: [RFC PATCH RT V3] rwsem: The return of multi-reader PI rwsems
-Date: Fri, 11 Apr 2014 14:47:49 +0200
-Message-ID: <5347E475.4020009@osadl.org>
-References: <20140409151922.5fa5d999@gandalf.local.home>	<20140410134217.38cd6db7@gandalf.local.home> <20140410223508.6d0fc135@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 3.14-rt1
+Date: Fri, 11 Apr 2014 20:57:40 +0200
+Message-ID: <20140411185739.GA6644@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140410223508.6d0fc135@gandalf.local.home>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven,
+Dear RT folks!
 
-> [..] I added Carsten to the Cc, so I'll post the entire change log
-> of v1 here again.
-I've been listening and testing boxes all the time ...
+I'm pleased to announce the v3.14-rt1 patch set.
 
-> [..] If you have any benchmark on large machines I would be very
-> happy if you could test this patch against the unpatched version of
-> -rt.
-Three machines
-- an X32 x86_64 (AMD Opteron 6272 @2100 MHz) at rack #1/slot #1,
-- an X4x2 x86_64 (Intel i7-2600K @3400 MHz) at rack #4/slot #6, and
-- an X4 ARM (i.MX6 Quad @996 MHz) at rack #8/slot #7
-are running a v3-patched 3.12.15-rt25 kernel now. I'll equip more
-machines later.
+Changes since v3.12.15-rt25
+- I dropped the sparc64 patches I had in the queue. They did not apply
+  cleanly, the code in v3.14 changed in the MMU area. Here is where I
+  remembered that it was not working perfectly either.
 
-What I can say so far is:
-- No evidence for any regression, no crashes
-- Performance certainly at least as good as unpatched, probably better
+- Scott Wood pointed out that I forgot a return value in the latest
+  gianfar fixup for RT. Return value added, thanks Scott.
 
-I'll do more tests and come back with more precise performance
-comparison data.
+This -RT series didn't crashed within ~4h testing on my ARM and
+x86-32.
+x86-64 crashed after I started hackbench. I figured out that the crash
+does not happen with lazy-preempt disabled. Therefore the last but one
+patch in the queue disables lazy preempt on x86-64. With this change the
+test box survived ~2h without a crash. I look at this later but it looks
+good now.
 
-Thanks,
-	-Carsten.
+I decided to release it now because otherwise it would be lying around
+probably the next two weeks or so. So here it is, enjoy.
+
+Known issues:
+
+      - bcache is disabled.
+
+The RT patch against 3.14 can be found here:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.0-rt1.patch.xz
+
+The split quilt queue is available at:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patches-3.14.0-rt1.tar.xz
+
+Sebastian
