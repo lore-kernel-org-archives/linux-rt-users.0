@@ -1,18 +1,17 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
-Date: Fri, 11 Apr 2014 06:25:27 +0200
-Message-ID: <1397190327.5139.36.camel@marge.simpson.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC PATCH RT V3] rwsem: The return of multi-reader PI rwsems
+Date: Fri, 11 Apr 2014 09:25:24 -0400
+Message-ID: <20140411092524.1f242e25@gandalf.local.home>
 References: <20140409151922.5fa5d999@gandalf.local.home>
-	 <1397139510.5137.92.camel@marge.simpson.net>
-	 <1397140123.5137.99.camel@marge.simpson.net>
-	 <1397184626.5139.24.camel@marge.simpson.net>
-	 <20140410232542.23ee9920@gandalf.local.home>
-	 <1397188356.5139.33.camel@marge.simpson.net>
+	<20140410134217.38cd6db7@gandalf.local.home>
+	<20140410223508.6d0fc135@gandalf.local.home>
+	<5347E475.4020009@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -21,82 +20,54 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Frederic Weisbecker <fweisbec@gmail.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+To: Carsten Emde <C.Emde@osadl.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1397188356.5139.33.camel@marge.simpson.net>
+In-Reply-To: <5347E475.4020009@osadl.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2014-04-11 at 05:52 +0200, Mike Galbraith wrote: 
-> On Thu, 2014-04-10 at 23:25 -0400, Steven Rostedt wrote: 
-> > On Fri, 11 Apr 2014 04:50:26 +0200
-> > Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> > 
-> > > Oh, there was another useful bit. 
-> > > 
-> > > 3.12.17-rt25       403991     384216     377786
-> > >                    405466     394011     392850
-> > > 
-> > > 3.12.17-nopreempt  109049     186133     118766  !?!.. ew, TTWU_QUEUE
-> > >                    350385     318786     367336  !TTWU_QUEUE
-> > >                    326009     356939     378215  !TTWU_QUEUE
-> > > 
-> > > IPI == low-pass filter.
-> > 
-> > I'm sorry, but I don't have the foggiest clue to what the above means.
-> 
-> It means..
-> 
-> # Overhead                                                                                                                                                                                   Symbol
-> # ........  .......................................................................................................................................................................................
-> #
->     17.33%  [k] native_write_msr_safe
->             |
->             |--88.45%-- __x2apic_send_IPI_mask
->             |          |
->             |          |--97.89%-- try_to_wake_up
->             |          |          |
->             |          |          |--99.91%-- wake_futex
->             |          |          |          |
->             |          |          |          |--99.77%-- futex_wake_op
->             |          |          |          |          do_futex
->             |          |          |          |          sys_futex
->             |          |          |          |          system_call_fastpath
-> 
-> ..wakeup frequency is restricted by the IPI.
+On Fri, 11 Apr 2014 14:47:49 +0200
+Carsten Emde <C.Emde@osadl.org> wrote:
 
-Turn TTWU_QUEUE off, bottleneck goes away.
+> Hi Steven,
+> 
+> > [..] I added Carsten to the Cc, so I'll post the entire change log
+> > of v1 here again.
+> I've been listening and testing boxes all the time ...
+> 
 
-# Overhead                                                                                                                                                                                   Symbol
-# ........  .......................................................................................................................................................................................
-#
-     6.12%  [.] _ZN13ObjectMonitor20TrySpin_VaryDurationEP6Thread
-            |
-            |--61.27%-- _ZN13ObjectMonitor5enterEP6Thread
-            |          |
-            |          |--99.96%-- _ZN13SharedRuntime26complete_monitor_locking_CEP7oopDescP9BasicLockP10JavaThread
-            |          |          0x7f93149b2748
-            |          |          |
-            |          |          |--99.76%-- 0xf1a02b30
-            |          |          |          0xbaba00000000fc24
-            |          |           --0.24%-- [...]
-            |           --0.04%-- [...]
-            |
-            |--38.40%-- _ZN13ObjectMonitor6EnterIEP6Thread
-            |          _ZN13ObjectMonitor5enterEP6Thread
-            |          |
-            |          |--99.98%-- _ZN13SharedRuntime26complete_monitor_locking_CEP7oopDescP9BasicLockP10JavaThread
-            |          |          0x7f93149b2748
-            |          |          |
-            |          |          |--99.89%-- 0xf1a02b30
-            |          |          |          0xbaba00000000fc24
-            |          |           --0.11%-- [...]
-            |           --0.02%-- [...]
-             --0.32%-- [...]
+I figured but still wanted to add you to the Cc.
 
-     3.59%  [k] intel_idle
-            |
-            --- cpuidle_enter_state
-                cpuidle_idle_call
-                arch_cpu_idle
-                cpu_startup_entry
+> > [..] If you have any benchmark on large machines I would be very
+> > happy if you could test this patch against the unpatched version of
+> > -rt.
+> Three machines
+> - an X32 x86_64 (AMD Opteron 6272 @2100 MHz) at rack #1/slot #1,
+> - an X4x2 x86_64 (Intel i7-2600K @3400 MHz) at rack #4/slot #6, and
+> - an X4 ARM (i.MX6 Quad @996 MHz) at rack #8/slot #7
+> are running a v3-patched 3.12.15-rt25 kernel now. I'll equip more
+> machines later.
+> 
+> What I can say so far is:
+> - No evidence for any regression, no crashes
+
+That's good to hear.
+
+> - Performance certainly at least as good as unpatched, probably better
+
+That's even better.
+
+> 
+> I'll do more tests and come back with more precise performance
+> comparison data.
+
+Do you also have any threaded tests? That is, something like a java
+benchmark that kicks off lots of threads. That's where the performance
+should show up the most. Clark's whack_mmap_sem test is specific to
+this, and has shown an 10x increase in performance with my patch. But
+that's a micro benchmark. A better test would be a real java
+application.
+
+Thanks,
+
+-- Steve
