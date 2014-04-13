@@ -1,117 +1,79 @@
-From: Daniel Bristot de Oliveira <danielbristot@gmail.com>
-Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
-Date: Fri, 11 Apr 2014 18:39:09 -0300
-Message-ID: <534860FD.3030702@gmail.com>
-References: <20140409151922.5fa5d999@gandalf.local.home> <20140410094430.56ca9ee1@sluggy.gateway.2wire.net>
+From: jordan <triplesquarednine@gmail.com>
+Subject: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
+ linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init [which
+ in 3.14 has been changed to EXPORT_SYMBOL_GPL]
+Date: Sun, 13 Apr 2014 11:50:49 -0400
+Message-ID: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@kernel.org>
-To: Clark Williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140410094430.56ca9ee1@sluggy.gateway.2wire.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ve0-f171.google.com ([209.85.128.171]:47673 "EHLO
+	mail-ve0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751413AbaDMPuu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 13 Apr 2014 11:50:50 -0400
+Received: by mail-ve0-f171.google.com with SMTP id jy13so6519239veb.16
+        for <linux-rt-users@vger.kernel.org>; Sun, 13 Apr 2014 08:50:50 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hey list.
 
+1. So after finally having some time off of work [after a busy couple
+of months] i have come back to trying to sort out linux-rt on my AMD
+PHenom II 965 system - which had failed to boot post 3.12.5-rt7
 
-On 04/10/2014 11:44 AM, Clark Williams wrote:
-> On Wed, 9 Apr 2014 15:19:22 -0400
-> Steven Rostedt <rostedt@goodmis.org> wrote:
->
->
->> This patch is built on top of the two other patches that I posted
->> earlier, which should not be as controversial.
->>
->> If you have any benchmark on large machines I would be very happy if
->> you could test this patch against the unpatched version of -rt.
->>
->> Cheers,
->>
->> -- Steve
->>
->
-> Steven
->
-> I wrote a program named whack_mmap_sem which creates a large (4GB)
-> buffer, then creates 2 x ncpus threads that are affined across all the
-> available cpus. These threads then randomly write into the buffer,
-> which should cause page faults galore.
->
-> I then built the following kernel configs:
->
->    vanilla-3.13.15  - no RT patches applied
->    rt-3.12.15       - PREEMPT_RT patchset
->    rt-3.12.15-fixes - PREEMPT_RT + rwsem fixes
->    rt-3.12.15-multi - PREEMPT_RT + rwsem fixes + rwsem-multi patch
->
-> My test h/w was a Dell R520 with a 6-core Intel(R) Xeon(R) CPU E5-2430
-> 0 @ 2.20GHz (hyperthreaded). So whack_mmap_sem created 24 threads
-> which all partied in the 4GB address range.
->
-> I ran whack_mmap_sem with the argument -w 100000 which means each
-> thread does 100k writes to random locations inside the buffer and then
-> did five runs per each kernel. At the end of the run whack_mmap_sem
-> prints out the time of the run in microseconds.
->
-> The means of each group of five test runs are:
->
->    vanilla.log:  1210117
->         rt.log:  17210953 (14.2 x slower than vanilla)
->   rt-fixes.log:  10062027 (8.3 x slower than vanilla)
->   rt-multi.log:  3179582  (2.x x slower than vanilla)
->
+first, i need to make a correction -rt8 DID boot fine and was stable
+[after one/initial lockup, it never locked again, and obviously booted
+fine.]. but i figured this out, only after doing a git-bisect on -rt7
+to -rt8 ... and never got around to testing -rt8 to -rt9... However, I
+decided to give 3.14-rt a run - and again - ended up with the machine
+failing to boot... Next, i decided to revert all three of the patches
+that you pointed out Sebastion;
 
-Hi
+| timers-do-not-raise-softirq-unconditionally.patch
+| timer-Raise-softirq-if-there-s-irq_work.patch
+| timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
 
-I ran Clark's test on a machine with 32 CPUs: 2 Sockets, 8 core/socket + HT
+well, what i actually ended up doing was reverting the first and
+modifying the 1st patch to revert the other two patches (by changing
+../kernel/timer.c section of the original patch). [ i reverted after
+applying the linux-rt patch, not split queue];
+http://pastebin.com/zwsZg9ZM
 
-On this machine I ran 5 different kernels:
+[ninez@localhost ~]$ uname -a
+Linux localhost 3.14.0-rt1-1-l-pa #1 SMP PREEMPT RT Sun Apr 13
+10:44:19 EDT 2014 x86_64 GNU/Linux
 
-Vanilla:     3.12.15 - Vanilla
-RT:          3.12.15 + Preempt-RT 3.12.15-rt25
-FIX:         RT + rwsem fixes from rostedt
-Multi:       FIX + Multi-reader PI
-Multi -FULL: Multi + CONFIG_PREEMPT=y
+I've been running 3.14-rt for a couple of hours now and it appears to
+be stable, thus far - without those patches/fixes applied [and
+obviously doesn't boot at all with them applied...and as you know - i
+am not the only AMD user affected by the boot failures...so i am
+thinking those patches really need to be looked at again, as they
+cause serious regressions for some of us :\
 
-I ran the test with the same parameters that Clark used, 100 iterations 
-for each kernel. For each kernel I measure the min and max execution 
-time, along with the avg execution time and the standard deviation.
+It also presents a problem because i package linux-rt and how i am
+supposed to update it, when if i revert these patches, afaict - other
+H/W may not boot. [wasn't it some i7 machines that failed or
+something?]... So i am not sure what to do [aside from not updating my
+packages until the problem is resolved upstream].
 
-The result was:
+2. Nvidia [and possibly/most likely other out-of-tree drivers] make
+use or __rt_mutex_init - which apparently has been changed from
+EXPORT_SYMBOL to EXPORT_SYMBOL_GPL in 3.14 [or 3.13?] (and obviously
+in 3.12 it was EXPORT_SYMBOL). I had to end up switching nvidia's
+license to GPL in order to be able to use the driver/modules. I'm not
+sure what is supposed to happen here, but nvidia should be usable
+without having to change it's license [since i never had to before,
+aside from similar situations where symbols where changed to gpl, only
+to be reverted back, as has happened before].
 
-+-------+---------+----------+----------+-----------+-------------+
-|       | Vanilla |    RT    |    FIX   |   Multi   | Multi -FULL |
---------+---------+----------+----------+-----------+-------------+
-|MIN:   | 3806754 |  6092939 |  6324665 |   2633614 |     3867240 |
-|AVG:   | 3875201 |  8162832 |  8007934 |   2736253 |     3961607 |
-|MAX:   | 4062205 | 10951416 | 10574212 |   2972458 |     4139297 |
-|STDEV: |   47645 |   927839 |   943482 |     52579 |      943482 |
-+-------+---------+----------+----------+-----------+-------------+
+anyway, I am less concerned about the nvidia issue [im just pointing
+it out] and am obviously more concerned about being able to sort out
+the boot failure issues, as afaict - they are caused by changes in
+-rt9, not upstream.
 
-A comparative of avg case to vanilla:
+cheerz
 
-RT                    - 2.10x (slower)
-FIX                   - 2.06x (slower)
-Multi                 - 0.70x (faster?)
-Multi no PREEMPT_FULL - 1.02x (equals?)
-
-As we can see, the patch gave good results on Preempt-RT, but my results 
-was a little bit weird, because the PREEMPT-RT + Multi patch became 
-faster than vanilla.
-
-In the standard deviation, the patch showed a good result as well, with 
-the patch the std dev became ~17x smaller than on RT kernel without the 
-patch, which means less jitter.
-
--- Daniel
+Jordan
