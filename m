@@ -1,79 +1,81 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
- linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init [which
- in 3.14 has been changed to EXPORT_SYMBOL_GPL]
-Date: Sun, 13 Apr 2014 11:50:49 -0400
-Message-ID: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Mon, 14 Apr 2014 00:04:29 +0400
+Message-ID: <534AEDCD.20208@pavlinux.ru>
+References: <20140411185739.GA6644@linutronix.de>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ve0-f171.google.com ([209.85.128.171]:47673 "EHLO
-	mail-ve0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751413AbaDMPuu (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Apr 2014 11:50:50 -0400
-Received: by mail-ve0-f171.google.com with SMTP id jy13so6519239veb.16
-        for <linux-rt-users@vger.kernel.org>; Sun, 13 Apr 2014 08:50:50 -0700 (PDT)
+Received: from imp01.mtu.ru ([62.5.255.10]:41779 "EHLO imp01.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755130AbaDMUEc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 13 Apr 2014 16:04:32 -0400
+In-Reply-To: <20140411185739.GA6644@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey list.
+11.04.2014 22:57, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
+=82:
 
-1. So after finally having some time off of work [after a busy couple
-of months] i have come back to trying to sort out linux-rt on my AMD
-PHenom II 965 system - which had failed to boot post 3.12.5-rt7
+> x86-64 crashed after I started hackbench. I figured out that the cras=
+h
+> does not happen with lazy-preempt disabled. Therefore the last but on=
+e
+> patch in the queue disables lazy preempt on x86-64. With this change =
+the
+> test box survived ~2h without a crash. I look at this later but it lo=
+oks
+> good now.
 
-first, i need to make a correction -rt8 DID boot fine and was stable
-[after one/initial lockup, it never locked again, and obviously booted
-fine.]. but i figured this out, only after doing a git-bisect on -rt7
-to -rt8 ... and never got around to testing -rt8 to -rt9... However, I
-decided to give 3.14-rt a run - and again - ended up with the machine
-failing to boot... Next, i decided to revert all three of the patches
-that you pointed out Sebastion;
 
-| timers-do-not-raise-softirq-unconditionally.patch
-| timer-Raise-softirq-if-there-s-irq_work.patch
-| timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
+AMD64 (Dual AMD Opteron 285), 8Gb RAM, MB: TYAN Thunder KW8E 2895
 
-well, what i actually ended up doing was reverting the first and
-modifying the 1st patch to revert the other two patches (by changing
-../kernel/timer.c section of the original patch). [ i reverted after
-applying the linux-rt patch, not split queue];
-http://pastebin.com/zwsZg9ZM
+WORK ONLY IN UniProcessor mode (maxcpus=3D0)
 
-[ninez@localhost ~]$ uname -a
-Linux localhost 3.14.0-rt1-1-l-pa #1 SMP PREEMPT RT Sun Apr 13
-10:44:19 EDT 2014 x86_64 GNU/Linux
+Normal boot: Debian 7 x64, Xorg, Google Chrome, Firefox/Thunderbird,
+Unigine Heaven Benchmark: 39 FPS, Nvidia driver 334.21, watch youtube.
 
-I've been running 3.14-rt for a couple of hours now and it appears to
-be stable, thus far - without those patches/fixes applied [and
-obviously doesn't boot at all with them applied...and as you know - i
-am not the only AMD user affected by the boot failures...so i am
-thinking those patches really need to be looked at again, as they
-cause serious regressions for some of us :\
+  ./hackbench -T 4 -l 10000
+Time: 162.643
 
-It also presents a problem because i package linux-rt and how i am
-supposed to update it, when if i revert these patches, afaict - other
-H/W may not boot. [wasn't it some i7 machines that failed or
-something?]... So i am not sure what to do [aside from not updating my
-packages until the problem is resolved upstream].
+=2E/cyclictest -p 99 -D 60
+policy: fifo: loadavg: 0.27 19.88 19.17 1/311 4481
+T: 0 ( 4336) P:99 I:1000 C:  59995 Min: 19 Act: 23 Avg: 24 Max: 61
 
-2. Nvidia [and possibly/most likely other out-of-tree drivers] make
-use or __rt_mutex_init - which apparently has been changed from
-EXPORT_SYMBOL to EXPORT_SYMBOL_GPL in 3.14 [or 3.13?] (and obviously
-in 3.12 it was EXPORT_SYMBOL). I had to end up switching nvidia's
-license to GPL in order to be able to use the driver/modules. I'm not
-sure what is supposed to happen here, but nvidia should be usable
-without having to change it's license [since i never had to before,
-aside from similar situations where symbols where changed to gpl, only
-to be reverted back, as has happened before].
+  ./signaltest -p99 -m -l 10000
+0.25 13.60 16.96 3/312 4831
 
-anyway, I am less concerned about the nvidia issue [im just pointing
-it out] and am obviously more concerned about being able to sort out
-the boot failure issues, as afaict - they are caused by changes in
--rt9, not upstream.
+T: 0 ( 4812) P:99 C:  10000 Min: 9 Act: 9 Avg:10 Max: 35
 
-cheerz
+---
 
-Jordan
+In SMP mode boot only with kernel option init=3D/bin/bash
+After remount /dev/sda2 to RW mode, and run mc (midnight commander)
+system freezeeeee! But SysRQ key works!
+
+
+/proc/cmdline:
+root=3D/dev/sda2 quiet vga=3D0 pci=3Drouteirq nmi_watchdog=3D0 iommu=3D=
+noagp
+mce=3Ddont_log_ce tsc=3Dreliable clocksource=3Dhpet workqueue.power_eff=
+icient=3D0
+agp=3Doff reset_devices iommu=3Dmemaper=3D4 amd_iommu=3Dfullflush pci=3D=
+skip_isa_align
+sata_nv.adma=3D1 hpet=3Dforce zswap.enabled=3D1 maxcpus=3D0
+
+=2Econfig:  http://pastebin.com/2GmGc3Ra
+dmesg:  http://pastebin.com/gxZXHK2x
+
+
+--=20
+
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
