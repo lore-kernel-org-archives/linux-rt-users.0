@@ -1,81 +1,110 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Mon, 14 Apr 2014 00:04:29 +0400
-Message-ID: <534AEDCD.20208@pavlinux.ru>
-References: <20140411185739.GA6644@linutronix.de>
-Reply-To: pavel@pavlinux.ru
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
+Date: Mon, 14 Apr 2014 11:55:54 +0200
+Message-ID: <20140414095554.GB731@gmail.com>
+References: <20140409151922.5fa5d999@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:41779 "EHLO imp01.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755130AbaDMUEc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Apr 2014 16:04:32 -0400
-In-Reply-To: <20140411185739.GA6644@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-11.04.2014 22:57, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
-=82:
-
-> x86-64 crashed after I started hackbench. I figured out that the cras=
-h
-> does not happen with lazy-preempt disabled. Therefore the last but on=
-e
-> patch in the queue disables lazy preempt on x86-64. With this change =
-the
-> test box survived ~2h without a crash. I look at this later but it lo=
-oks
-> good now.
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140409151922.5fa5d999@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-AMD64 (Dual AMD Opteron 285), 8Gb RAM, MB: TYAN Thunder KW8E 2895
+* Steven Rostedt <rostedt@goodmis.org> wrote:
 
-WORK ONLY IN UniProcessor mode (maxcpus=3D0)
+> A while back ago I wrote a patch that would allow for reader/writer
+> locks like rwlock and rwsems to have multiple readers in PREEMPT_RT. It
+> was slick and fast but unfortunately it was way too complex and ridden
+> with nasty little critters which earned me my large collection of
+> frozen sharks in the fridge (which are quite tasty).
+> 
+> The main problem with my previous solution was that I tried to be too
+> clever. I worked hard on making the rw mutex still have the "fast
+> path". That is, the cmpxchg that could allow a non contended grabbing
+> of the lock be one instruction and be off with it. But to get that
+> working required lots of tricks and black magic that was certainly
+> going to fail. Thus, with the raining of sharks on my parade, the
+> priority inheritance mutex with multiple owners died a slow painful
+> death.
+> 
+> So we thought.
+> 
+> But over the years, a new darkness was on the horizon. Complaints about
+> running highly threaded processes (did I hear Java?) were suffering
+> huge performance hits on the PREEMPT_RT kernel. Whether or not the
+> processes were real-time tasks, they still were horrible compared to
+> running the same tasks on the mainline kernel. Note, this was being
+> done on machines with many CPUs.
+> 
+> The culprit mostly was a single rwsem, the notorious mmap_sem that
+> can be taking several times for read, and as on RT, this is just a
+> single mutex, and it would serialize these accesses that would not
+> happen on mainline.
+> 
+> I looked back at my poor dead rw multi pi reader patch and thought to
+> myself. "How complex would this be if I removed the 'fast path' from
+> the code". I decided to build a new tower in Mordor.
+> 
+> I feel that I am correct. By removing the fast path and requiring all
+> accesses to the rwsem to go through the slow path (must take the
+> wait_lock to do anything). The code really wasn't that bad. I also only
+> focused on the rwsem and did not worry about the rwlocks as that hasn't
+> been pointed out as a bottle neck yet. If it does happen to be, this
+> code could easily work on rwlocks too.
+> 
+> I'm much more confident in this code than I was with my previous
+> version of the rwlock multi-reader patch. I added a bunch of comments
+> to this code to explain how things interact. The writer unlock was
+> still able to use the fast path as the writers are pretty much like a
+> normal mutex. Too bad that the writer unlock is not a high point of
+> contention.
+> 
+> This patch is built on top of the two other patches that I posted
+> earlier, which should not be as controversial.
+> 
+> If you have any benchmark on large machines I would be very happy if
+> you could test this patch against the unpatched version of -rt.
+> 
+> Cheers,
+> 
+> -- Steve
+> 
+> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+> ---
+> Index: linux-rt.git/kernel/rtmutex.c
 
-Normal boot: Debian 7 x64, Xorg, Google Chrome, Firefox/Thunderbird,
-Unigine Heaven Benchmark: 39 FPS, Nvidia driver 334.21, watch youtube.
+Side note: could you please in general include diffstats with such 
+patches, especially since you seem to be exporting it from a Git repo?
 
-  ./hackbench -T 4 -l 10000
-Time: 162.643
+Newfangled patch summaries like:
 
-=2E/cyclictest -p 99 -D 60
-policy: fifo: loadavg: 0.27 19.88 19.17 1/311 4481
-T: 0 ( 4336) P:99 I:1000 C:  59995 Min: 19 Act: 23 Avg: 24 Max: 61
+ include/linux/rtmutex.h  |   29 ++
+ include/linux/rwsem_rt.h |    8 
+ include/linux/sched.h    |   20 +
+ kernel/fork.c            |   20 +
+ kernel/futex.c           |    2 
+ kernel/rt.c              |   27 +
+ kernel/rtmutex.c         |  645 +++++++++++++++++++++++++++++++++++++++++++++--
+ kernel/rtmutex_common.h  |   19 +
+ kernel/sysctl.c          |   13 
+ 9 files changed, 753 insertions(+), 30 deletions(-)
 
-  ./signaltest -p99 -m -l 10000
-0.25 13.60 16.96 3/312 4831
+Really give a useful bird's eye view of forest Fangorn, before 
+straying into it!
 
-T: 0 ( 4812) P:99 C:  10000 Min: 9 Act: 9 Avg:10 Max: 35
+Thanks,
 
----
-
-In SMP mode boot only with kernel option init=3D/bin/bash
-After remount /dev/sda2 to RW mode, and run mc (midnight commander)
-system freezeeeee! But SysRQ key works!
-
-
-/proc/cmdline:
-root=3D/dev/sda2 quiet vga=3D0 pci=3Drouteirq nmi_watchdog=3D0 iommu=3D=
-noagp
-mce=3Ddont_log_ce tsc=3Dreliable clocksource=3Dhpet workqueue.power_eff=
-icient=3D0
-agp=3Doff reset_devices iommu=3Dmemaper=3D4 amd_iommu=3Dfullflush pci=3D=
-skip_isa_align
-sata_nv.adma=3D1 hpet=3Dforce zswap.enabled=3D1 maxcpus=3D0
-
-=2Econfig:  http://pastebin.com/2GmGc3Ra
-dmesg:  http://pastebin.com/gxZXHK2x
-
-
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+	Ingo
