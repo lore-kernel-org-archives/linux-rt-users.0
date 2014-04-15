@@ -1,80 +1,80 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
- linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init [which
- in 3.14 has been changed to EXPORT_SYMBOL_GPL]
-Date: Tue, 15 Apr 2014 12:15:49 -0400
-Message-ID: <CAOcfFMynnyHL_G6Gez_AZYFky=hLYeoyY8WVHF572RZq1g_aBw@mail.gmail.com>
-References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
+Date: Wed, 16 Apr 2014 00:08:49 +0200
+Message-ID: <534DADF1.6060608@meduna.org>
+References: <534C3606.7010206@meduna.org> <534C731F.1050406@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	bigeasy@linutronix.de, Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vc0-f179.google.com ([209.85.220.179]:48939 "EHLO
-	mail-vc0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750917AbaDOQPu (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Apr 2014 12:15:50 -0400
-Received: by mail-vc0-f179.google.com with SMTP id ij19so9177613vcb.24
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Apr 2014 09:15:49 -0700 (PDT)
-In-Reply-To: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
+Received: from www.meduna.org ([92.240.244.38]:47261 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750790AbaDOWJB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Apr 2014 18:09:01 -0400
+In-Reply-To: <534C731F.1050406@meduna.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Just an update on this;
+On 15.04.2014 01:45, Stanislav Meduna wrote:
 
-> [ninez@localhost ~]$ uname -a
-> Linux localhost 3.14.0-rt1-1-l-pa #1 SMP PREEMPT RT Sun Apr 13
-> 10:44:19 EDT 2014 x86_64 GNU/Linux
->
-> I've been running 3.14-rt for a couple of hours now and it appears to
-> be stable, thus far - without those patches/fixes applied [and
-> obviously doesn't boot at all with them applied...and as you know - i
-> am not the only AMD user affected by the boot failures...so i am
-> thinking those patches really need to be looked at again, as they
-> cause serious regressions for some of us :\
+>> BUG: spinlock trylock failure on UP on CPU#0, ksoftirqd/0/3
 
-My Phenom II 965 has uptime of two days, after being stress tested and
-is running great [hackbench, cyclictest+100% load, etc] :)
+I am now getting this quite reproducibly a few seconds into
+the boot and the path is always similar. Depending on what modules
+I am loading the source changes, but it is nearly always
+a schedule_timeout with a following timer interrupt.
 
-All of my other machines [both Intel and AMD] also are running well,
-without those three patches applied;
+Disabling highres timers just changes the bug path but it happens
+also in that case. I am using CONFIG_HZ_PERIODIC. I tried to disable
+the serial console and several drivers to rule out some interference
+but it did not change anything.
 
-| timers-do-not-raise-softirq-unconditionally.patch
-| timer-Raise-softirq-if-there-s-irq_work.patch
-| timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
+Freescale i.MX28, 3.12.15-rt25 + patches enabling the platform,
+none of them touches anything in kernel/* or the MXS timer.
+Up to now no freeze or other BUGs, it was always only this one.
 
-I did see a couple of "non-fatal" "NOHZ: local_softirq_pending 40"
-messages [as expected, since i reverted those patches] but these are
-harmless, when compared to my machines not being bootable with those
-applied... I don't have the expertise to fix those patches to boot on
-my AMD hardware, but i am hoping that someone who does; can take a
-look at those patches again - and i am more than willing to test
-subsequent revisions to see if we can get these troublesome AMD
-machines to boot with them applied..
+I see that the relevant code was touched a few times in the last
+few months, maybe there is still something lurking.
 
-...regarding nvidia on PREEMPT_RT_FULL / EXPORT_SYMBOL_GPL for
-__rt_mutex_init - i notified nvidia of the problem [although, it is an
-upstream linux problem]. Interestingly, this problem has already
-cropped up during 3.0 development cycle on PREEMPT_RT_FULL - where the
-__rt_mutex_init was changed to gpl-only symbol - only to be changed
-back to SYMBOL_EXPORT shortly thereafter.... and yes, i realize
-'everybody hates nvidia' - but i have to imagine there might be an MIT
-licensed out-of-tree module or two [or other gpl-compatible license]
-that might rely on being able to use __rt_mutex_init and now can't...
-meaning i doubt this is _just_ an nvidia problem :\
+Hmm... how is it in the rt-case guaranteed that the timer interrupt
+does not preempt someone trying to modify the timer? The run_local_timers
+looks to have arrived via hardirq context. The spinlock in the tvec_base
+is a normal one and spin_lock_irqsave does not disable interrupts
+on rt, right?
 
-as it stands, one must either change nvidia's licenses to GPL [makeing
-nvidia non-distibutable]...
+[   11.797460] BUG: spinlock trylock failure on UP on CPU#0, rcu_preempt/11
+[   11.797522]  lock: boot_tvec_bases+0x0/0x10c0, .magic: dead4ead, .owner: rcu_preempt/11, .owner_cpu: 0
+[   11.797550] CPU: 0 PID: 11 Comm: rcu_preempt Not tainted 3.12.15-rt25+ #52
+[   11.797630] [<c00151bc>] (unwind_backtrace+0x0/0xf4) from [<c0012c00>] (show_stack+0x10/0x14)
+[   11.797691] [<c0012c00>] (show_stack+0x10/0x14) from [<c01b2758>] (do_raw_spin_trylock+0x4c/0x58)
+[   11.797748] [<c01b2758>] (do_raw_spin_trylock+0x4c/0x58) from [<c02e0194>] (_raw_spin_trylock+0x20/0x98)
+[   11.797792] [<c02e0194>] (_raw_spin_trylock+0x20/0x98) from [<c02df734>] (rt_spin_trylock+0x14/0xd0)
+[   11.797851] [<c02df734>] (rt_spin_trylock+0x14/0xd0) from [<c0028e7c>] (run_local_timers+0x24/0x78)
+[   11.797892] [<c0028e7c>] (run_local_timers+0x24/0x78) from [<c0028f04>] (update_process_times+0x34/0x68)
+[   11.797940] [<c0028f04>] (update_process_times+0x34/0x68) from [<c0060920>] (tick_sched_timer+0x58/0x22c)
+[   11.797990] [<c0060920>] (tick_sched_timer+0x58/0x22c) from [<c0040820>] (__run_hrtimer+0x88/0x2b8)
+[   11.798029] [<c0040820>] (__run_hrtimer+0x88/0x2b8) from [<c0040bb0>] (hrtimer_interrupt+0x104/0x30c)
+[   11.798076] [<c0040bb0>] (hrtimer_interrupt+0x104/0x30c) from [<c0246c50>] (mxs_timer_interrupt+0x20/0x2c)
+[   11.798123] [<c0246c50>] (mxs_timer_interrupt+0x20/0x2c) from [<c00534d8>] (handle_irq_event_percpu+0x80/0x2f8)
+[   11.798161] [<c00534d8>] (handle_irq_event_percpu+0x80/0x2f8) from [<c005378c>] (handle_irq_event+0x3c/0x5c)
+[   11.798201] [<c005378c>] (handle_irq_event+0x3c/0x5c) from [<c0055f68>] (handle_level_irq+0x8c/0x118)
+[   11.798239] [<c0055f68>] (handle_level_irq+0x8c/0x118) from [<c0053448>] (generic_handle_irq+0x28/0x30)
+[   11.798281] [<c0053448>] (generic_handle_irq+0x28/0x30) from [<c00101dc>] (handle_IRQ+0x30/0x84)
+[   11.798322] [<c00101dc>] (handle_IRQ+0x30/0x84) from [<c0013484>] (__irq_svc+0x44/0x88)
+[   11.798364] [<c0013484>] (__irq_svc+0x44/0x88) from [<c02deb18>] (rt_spin_lock_slowlock+0x60/0x204)
+[   11.798402] [<c02deb18>] (rt_spin_lock_slowlock+0x60/0x204) from [<c02df4d0>] (rt_spin_lock+0x28/0x60)
+[   11.798451] [<c02df4d0>] (rt_spin_lock+0x28/0x60) from [<c0028874>] (lock_timer_base+0x28/0x48)
+[   11.798494] [<c0028874>] (lock_timer_base+0x28/0x48) from [<c02dcb28>] (schedule_timeout+0x78/0x254)
+[   11.798531] [<c02dcb28>] (schedule_timeout+0x78/0x254) from [<c00763a4>] (rcu_gp_kthread+0x2d4/0x5f0)
+[   11.798578] [<c00763a4>] (rcu_gp_kthread+0x2d4/0x5f0) from [<c003cf24>] (kthread+0xa0/0xa8)
+[   11.798621] [<c003cf24>] (kthread+0xa0/0xa8) from [<c000f3e0>] (ret_from_fork+0x14/0x34)
 
-or change 'kernel/locking/rtmutex.c' ~
-EXPORT_SYMBOL_GPL(__rt_mutex_init) to EXPORT_SYMBOL(__rt_mutex_init)
+Thanks
+-- 
+                                            Stano
 
-...which obviously makes the kernel GPL-incompatible / non-distributable.
-
-I may hit LKML on this issue too, as something needs to happen here -
-but i thought i would wait and see if i got a response from someone
-here, first. [being as rt-devs have a little more direct contact with
-Ingo / subsystem maintainers than i do [ and i am not even subbed to
-that list].
-
-Jordan
