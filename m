@@ -1,63 +1,37 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
-Date: Tue, 15 Apr 2014 01:45:35 +0200
-Message-ID: <534C731F.1050406@meduna.org>
-References: <534C3606.7010206@meduna.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: RFC: SIGUSR1 to stderr
+Date: Tue, 15 Apr 2014 16:28:11 +0200
+Message-ID: <CAONaPpEyH5r6iYRBS69T6A+Zm5rmpx=2-_CSAw9JXbQDFFoAHA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:41363 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750950AbaDNXpo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Apr 2014 19:45:44 -0400
-In-Reply-To: <534C3606.7010206@meduna.org>
+Received: from mail-we0-f182.google.com ([74.125.82.182]:39581 "EHLO
+	mail-we0-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751185AbaDOO2M (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 15 Apr 2014 10:28:12 -0400
+Received: by mail-we0-f182.google.com with SMTP id p61so9445113wes.41
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Apr 2014 07:28:11 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 14.04.2014 21:24, Stanislav Meduna wrote:
+We usually do testing by running cyclictest laucned via rteval. It
+would be nice to get status updates from cyclictest in the middle of
+long runs (sometimes days long). cyclictest already has the capability
+to do this via SIGUSR1.
 
-> hunting another problem with AUART acting weirdly I got
+It would be useful for rteval parsing of SIGUSR1 output if this were
+directed to stderr. I could make this the default, but don't want to
+do this if it would interfere with the way anyone else is doing
+testing. If this would cause a problem for you, I'll just make it an
+option.
 
-okay, the AUART thing was some device tree snafu, but I have seen
-the BUG a few times (but not readily reproducible). This thread
-looks remotely similar https://lkml.org/lkml/2013/9/27/534 - looks
-like the real bug happened somewhere else :( Any hints on how to
-get more info?
+So, please let me know if this change would cause problems for you.
 
-Adding Cc: to linux-arm and linux-kernel
+Thanks
 
-> BUG: spinlock trylock failure on UP on CPU#0, ksoftirqd/0/3
->  lock: boot_tvec_bases+0x0/0x10a0, .magic: dead4ead, .owner: ksoftirqd/0/3, .owner_cpu: 0
-> CPU: 0 PID: 3 Comm: ksoftirqd/0 Not tainted 3.12.15-rt25-00371-gfec62f5-dirty #26
-> [<c00149ec>] (unwind_backtrace+0x0/0xf4) from [<c0012ab0>] (show_stack+0x10/0x14)
-> [<c0012ab0>] (show_stack+0x10/0x14) from [<c01a4b80>] (do_raw_spin_trylock+0x4c/0x58)
-> [<c01a4b80>] (do_raw_spin_trylock+0x4c/0x58) from [<c02ca0b4>] (_raw_spin_trylock+0x20/0x98)
-> [<c02ca0b4>] (_raw_spin_trylock+0x20/0x98) from [<c02c9654>] (rt_spin_trylock+0x14/0xd0)
-> [<c02c9654>] (rt_spin_trylock+0x14/0xd0) from [<c00285cc>] (run_local_timers+0x24/0x78)
-> [<c00285cc>] (run_local_timers+0x24/0x78) from [<c0028654>] (update_process_times+0x34/0x68)
-> [<c0028654>] (update_process_times+0x34/0x68) from [<c005f0ac>] (tick_sched_timer+0x58/0x22c)
-> [<c005f0ac>] (tick_sched_timer+0x58/0x22c) from [<c003f2f8>] (__run_hrtimer+0x7c/0x2a8)
-> [<c003f2f8>] (__run_hrtimer+0x7c/0x2a8) from [<c003f684>] (hrtimer_interrupt+0x104/0x30c)
-> [<c003f684>] (hrtimer_interrupt+0x104/0x30c) from [<c0230a84>] (mxs_timer_interrupt+0x20/0x2c)
-> [<c0230a84>] (mxs_timer_interrupt+0x20/0x2c) from [<c0051d1c>] (handle_irq_event_percpu+0x80/0x2f8)
-> [<c0051d1c>] (handle_irq_event_percpu+0x80/0x2f8) from [<c0051fd0>] (handle_irq_event+0x3c/0x5c)
-> [<c0051fd0>] (handle_irq_event+0x3c/0x5c) from [<c0054778>] (handle_level_irq+0x8c/0x118)
-> [<c0054778>] (handle_level_irq+0x8c/0x118) from [<c0051c8c>] (generic_handle_irq+0x28/0x30)
-> [<c0051c8c>] (generic_handle_irq+0x28/0x30) from [<c001009c>] (handle_IRQ+0x30/0x84)
-> [<c001009c>] (handle_IRQ+0x30/0x84) from [<c0013324>] (__irq_svc+0x44/0x88)
-> [<c0013324>] (__irq_svc+0x44/0x88) from [<c006a664>] (__try_to_take_rt_mutex+0x4/0x144)
-> [<c006a664>] (__try_to_take_rt_mutex+0x4/0x144) from [<00000000>] (  (null))
-> 
-> 
-> Linux nxt 3.12.15-rt25-00371-gfec62f5-dirty #26 PREEMPT RT Mon Apr 14 20:40:56 CEST 2014 armv5tejl GNU/Linux
-> 
-> This is on a Freescale i.MX28, 3.12.15-rt25 with patches that do not touch
-> anything related.
-
--- 
-                                                 Stano
-
+John
