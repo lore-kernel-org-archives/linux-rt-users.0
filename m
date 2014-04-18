@@ -1,51 +1,74 @@
-From: jordan <triplesquarednine@gmail.com>
-Subject: Re: BUG: spinlock trylock failure on UP - reverting timer patches
- helps
-Date: Thu, 17 Apr 2014 21:15:50 -0400
-Message-ID: <CAOcfFMz6U+w_h+0GoAB4OMbEGsDo_h=vCobvgxuBtLTijW3VmQ@mail.gmail.com>
-References: <534C3606.7010206@meduna.org> <534C731F.1050406@meduna.org>
- <534DADF1.6060608@meduna.org> <53500184.4050309@meduna.org>
- <53505BD7.9050004@meduna.org>
- <CAOcfFMyTmQH-FwGE2YWoA76ypzBtWPYVTyi+4QpEMnrRtw8QVg@mail.gmail.com>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC PATCH RT V4] rwsem: The return of multi-reader PI rwsems
+Date: Fri, 18 Apr 2014 10:19:26 +0200
+Message-ID: <20140418081926.GC14560@gmail.com>
+References: <20140409151922.5fa5d999@gandalf.local.home>
+ <20140410134217.38cd6db7@gandalf.local.home>
+ <20140410223508.6d0fc135@gandalf.local.home>
+ <5347E475.4020009@osadl.org>
+ <20140411092524.1f242e25@gandalf.local.home>
+ <20140417192603.6e379157@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- "linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
- Steven Rostedt <rostedt@goodmis.org>, Thomas Gleixner <tglx@linutronix.de>,
- Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>
-To: Stanislav Meduna <stano@meduna.org>
-Return-path: <linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org>
-In-Reply-To: <CAOcfFMyTmQH-FwGE2YWoA76ypzBtWPYVTyi+4QpEMnrRtw8QVg@mail.gmail.com>
-List-Unsubscribe: <http://lists.infradead.org/mailman/options/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=unsubscribe>
-List-Archive: <http://lists.infradead.org/pipermail/linux-arm-kernel/>
-List-Post: <mailto:linux-arm-kernel@lists.infradead.org>
-List-Help: <mailto:linux-arm-kernel-request@lists.infradead.org?subject=help>
-List-Subscribe: <http://lists.infradead.org/mailman/listinfo/linux-arm-kernel>,
- <mailto:linux-arm-kernel-request@lists.infradead.org?subject=subscribe>
-Sender: "linux-arm-kernel" <linux-arm-kernel-bounces@lists.infradead.org>
-Errors-To: linux-arm-kernel-bounces+linux-arm-kernel=m.gmane.org@lists.infradead.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ee0-f54.google.com ([74.125.83.54]:55303 "EHLO
+	mail-ee0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752610AbaDRITd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Apr 2014 04:19:33 -0400
+Content-Disposition: inline
+In-Reply-To: <20140417192603.6e379157@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey again,
 
-> [ninez@localhost ~]$  (cat /proc/meminfo ; cat /proc/meminfo) |  grep
-> KernelStack
-> KernelStack:        3728 kB
-> KernelStack:        3728 kB
-> [ninez@localhost ~]$  (cat /proc/meminfo ; cat /proc/meminfo) |  grep
-> KernelStack
-> KernelStack:        3696 kB
-> KernelStack:        3696 kB
->
-> I'll post from my old kernel in a bit.
+* Steven Rostedt <rostedt@goodmis.org> wrote:
 
-my other machines all report kstack as being stable/consistent - I
-also had an Archlinux user of my kernel check his box - his was
-consistent too. [all of those boxes reverted those timer patches].
+> Changes since v3:
+> 
+> Clark reported that he was seeing a large latency when he added this
+> patch. I tested it out on a 8 logical CPU box, and sure enough I was
+> seeing it too. After spending the day debugging why, I found that I had
+> a bug in rt_mutex_getprio(), where I could do:
+> 
+>   min(task_top_pi_waiter(task)->pi_list_entry.prio, prio)
+> 
+> when there was no "top_pi_waiter", which would give garbage as a
+> result. This would let some tasks have higher priority than they
+> should, and cause other tasks that should have high priority not run.
 
-cheerz
+Would a sanity check like the one below have helped? (untested and 
+such)
 
-Jordan
+Thanks,
+
+	Ingo
+
+==========>
+ kernel/locking/rtmutex_common.h | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/kernel/locking/rtmutex_common.h b/kernel/locking/rtmutex_common.h
+index 7431a9c..36b1ce8 100644
+--- a/kernel/locking/rtmutex_common.h
++++ b/kernel/locking/rtmutex_common.h
+@@ -85,6 +85,7 @@ static inline int task_has_pi_waiters(struct task_struct *p)
+ static inline struct rt_mutex_waiter *
+ task_top_pi_waiter(struct task_struct *p)
+ {
++	WARN_ON_ONCE(!p->pi_waiters_leftmost);
+ 	return rb_entry(p->pi_waiters_leftmost, struct rt_mutex_waiter,
+ 			pi_tree_entry);
+ }
