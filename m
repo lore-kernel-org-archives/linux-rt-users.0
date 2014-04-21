@@ -1,58 +1,40 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Mon, 21 Apr 2014 05:31:18 +0200
-Message-ID: <1398051078.4437.6.camel@marge.simpson.net>
-References: <20140411185739.GA6644@linutronix.de>
-	 <1397918766.5436.16.camel@marge.simpson.net>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS: linux-rt-3.14
+ boots by reverting patches
+Date: Mon, 21 Apr 2014 10:48:34 +0200
+Message-ID: <5354DB62.7010503@meduna.org>
+References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com> <CAOcfFMynnyHL_G6Gez_AZYFky=hLYeoyY8WVHF572RZq1g_aBw@mail.gmail.com> <CAP=VYLrHC3TPAixV8m0u9g8ooyiE0jvS=7bFLHDdCwt3wsA1iA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	jordan <triplesquarednine@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f49.google.com ([74.125.83.49]:60595 "EHLO
-	mail-ee0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751305AbaDUDbV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 20 Apr 2014 23:31:21 -0400
-In-Reply-To: <1397918766.5436.16.camel@marge.simpson.net>
+Received: from www.meduna.org ([92.240.244.38]:38426 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750824AbaDUIsp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 Apr 2014 04:48:45 -0400
+In-Reply-To: <CAP=VYLrHC3TPAixV8m0u9g8ooyiE0jvS=7bFLHDdCwt3wsA1iA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2014-04-19 at 16:46 +0200, Mike Galbraith wrote: 
-> Hi Sebastian,
-> 
-> On Fri, 2014-04-11 at 20:57 +0200, Sebastian Andrzej Siewior wrote: 
-> > Dear RT folks!
-> > 
-> > I'm pleased to announce the v3.14-rt1 patch set.
-> 
-> This hunk in hotplug-light-get-online-cpus.patch looks like a bug.
-> 
-> @@ -333,7 +449,7 @@ static int __ref _cpu_down(unsigned int
->                 /* CPU didn't die: tell everyone.  Can't complain. */
->                 smpboot_unpark_threads(cpu);
->                 cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
-> -               goto out_release;
-> +               goto out_cancel;
->         }
->         BUG_ON(cpu_online(cpu));
-> 
+On 19.04.2014 15:48, Paul Gortmaker wrote:
 
-Another little bug.  This hunk of patches/stomp-machine-raw-lock.patch
-should be while (atomic_read(&done.nr_todo)) 
+> I've got some AMD kit that has just been freed up from winter
+> heating duty - sometime later this week I should be able to try to
+> reproduce what you have seen, and knowing it works w/o the above
+> softirq patch monkeying around should be a good lead on this.
 
-@@ -647,7 +671,7 @@ int stop_machine_from_inactive_cpu(int (
-        ret = multi_cpu_stop(&msdata);
+After reverting the patches my box experiencing
+  http://www.spinics.net/lists/linux-rt-users/msg11655.html
+was stable with no more BUGs running for some 2,5 days with
+our application plus a cyclictest.
 
-        /* Busy wait for completion. */
--       while (!completion_done(&done.completion))
-+       while (!atomic_read(&done.nr_todo))
-                cpu_relax();
+Note: my configuration is an embedded ARM (i.MX28) using periodic
+ticks, so this is probably neither nohz nor AMD stuff only.
 
-        mutex_unlock(&stop_cpus_mutex);
-                                        
+Thanks
+-- 
+                                                 Stano
 
