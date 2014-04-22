@@ -1,11 +1,8 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
-Date: Tue, 22 Apr 2014 09:46:57 -0400
-Message-ID: <20140422094657.5b6ca1e2@gandalf.local.home>
-References: <534C3606.7010206@meduna.org>
-	<534C731F.1050406@meduna.org>
-	<534DADF1.6060608@meduna.org>
-	<20140422115439.GA20669@linutronix.de>
+Date: Tue, 22 Apr 2014 18:51:17 +0200
+Message-ID: <53569E05.8010600@linutronix.de>
+References: <534C3606.7010206@meduna.org>	<534C731F.1050406@meduna.org>	<534DADF1.6060608@meduna.org>	<20140422115439.GA20669@linutronix.de> <20140422094657.5b6ca1e2@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
@@ -15,29 +12,48 @@ Cc: Stanislav Meduna <stano@meduna.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140422115439.GA20669@linutronix.de>
+In-Reply-To: <20140422094657.5b6ca1e2@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-[ added Peter ]
+On 04/22/2014 03:46 PM, Steven Rostedt wrote:
+> [ added Peter ]
+>=20
+> On Tue, 22 Apr 2014 13:54:39 +0200
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> =20
+>> this is, erm, harmless. We grab the timer lock via trylock in hardir=
+q
+>> context. If the lock is already taken then we fail to get it we go f=
+or
+>> plan B. According to lockdep a trylock should not fail on UP. This i=
+s
+>> true in general except for this timer case. I was thinking abour
+>> disabling this lockdep check=E2=80=A6
+>=20
+> trylock not failing on UP, can that be an issue? I mean, if a hardirq
+> does a trylock to see if it can grab a lock that is not protected by
+> disabling irqs, and will go to plan B if it fails, on UP, it will
+> always get it.  But the issue is still there. That would mean that a
+> hardirq could have preempted a critical section and doing a trylock
+> here would succeed when it really should have failed.
 
-On Tue, 22 Apr 2014 13:54:39 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-=20
-> this is, erm, harmless. We grab the timer lock via trylock in hardirq
-> context. If the lock is already taken then we fail to get it we go fo=
-r
-> plan B. According to lockdep a trylock should not fail on UP. This is
-> true in general except for this timer case. I was thinking abour
-> disabling this lockdep check=E2=80=A6
+If you take a lock with irqs enabled and disabled then lockdep should
+complain about it.
 
-trylock not failing on UP, can that be an issue? I mean, if a hardirq
-does a trylock to see if it can grab a lock that is not protected by
-disabling irqs, and will go to plan B if it fails, on UP, it will
-always get it.  But the issue is still there. That would mean that a
-hardirq could have preempted a critical section and doing a trylock
-here would succeed when it really should have failed.
+This is the ->wait_lock of the timer base lock. This (sleeping) lock is
+usually taken with interrupts enabled. Except here, in the timer
+callback, we check if the lock is available or not. And this lock may
+be a) taken (and the ->wait_lock unlocked) or b) in process to be taken
+but the caller only succeeded to acquire the ->wait_lock before the
+interrupt occurred. This is the case here and we can't acquire the
+->wait_lock a second time the check if the lock is really taken. But
+since the wait_lock is occupied it is likely that the lock itself is
+occupied as well.
 
--- Steve
+>=20
+> -- Steve
+
+Sebastian
