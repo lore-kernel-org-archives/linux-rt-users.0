@@ -1,66 +1,51 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
-Date: Wed, 23 Apr 2014 08:15:25 -0400
-Message-ID: <20140423081525.0e9b863f@gandalf.local.home>
-References: <534C3606.7010206@meduna.org>
-	<534C731F.1050406@meduna.org>
-	<534DADF1.6060608@meduna.org>
-	<20140422115439.GA20669@linutronix.de>
-	<20140422094657.5b6ca1e2@gandalf.local.home>
-	<53569E05.8010600@linutronix.de>
-	<20140422134802.73fc1fa4@gandalf.local.home>
-	<20140422141650.7f43d5ba@gandalf.local.home>
-	<53576859.8060706@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Wed, 23 Apr 2014 08:19:50 -0400
+Message-ID: <20140423081950.778e1a3a@gandalf.local.home>
+References: <20140411185739.GA6644@linutronix.de>
+	<1398249425.5910.14.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Stanislav Meduna <stano@meduna.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:34711 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:33669 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752284AbaDWMPb (ORCPT
+	by vger.kernel.org with ESMTP id S1751363AbaDWMTw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Apr 2014 08:15:31 -0400
-In-Reply-To: <53576859.8060706@linutronix.de>
+	Wed, 23 Apr 2014 08:19:52 -0400
+In-Reply-To: <1398249425.5910.14.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 23 Apr 2014 09:14:33 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Wed, 23 Apr 2014 12:37:05 +0200
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-> On 04/22/2014 08:16 PM, Steven Rostedt wrote:
-> > --- a/kernel/timer.c
-> > +++ b/kernel/timer.c
-> > @@ -1447,6 +1447,12 @@ static void run_timer_softirq(struct softirq_action *h)
-> >  		__run_timers(base);
-> >  }
-> >  
-> > +#ifdef CONFIG_SMP
-> > +#define timer_should_raise_softirq(lock)	!spin_do_trylock(lock)
-> > +#else
-> > +#define timer_should_raise_softirq(lock)	1
-> > +#endif
-> > +
+> On Fri, 2014-04-11 at 20:57 +0200, Sebastian Andrzej Siewior wrote:
 > 
-> No. The lock may be taken but it also may be available no matter if UP
-> or not. With this patch applied the lockdep splat will go away but the
-> FULL_NO_HZ people will come back because the timer softirq is scheduled
-> even if no timer has expired.
+> > This -RT series didn't crashed within ~4h testing on my ARM and
+> > x86-32.
+> > x86-64 crashed after I started hackbench. I figured out that the crash
+> > does not happen with lazy-preempt disabled. Therefore the last but one
+> > patch in the queue disables lazy preempt on x86-64. With this change the
+> > test box survived ~2h without a crash. I look at this later but it looks
+> > good now.
+> 
+> I think the below fixes it (in a more or less minimalist way), but it's
+> not very pretty.  Methinks it would be prettier to either clone the x86
+> percpu + fold logic, or neutralize that optimization completely when
+> PREEMPT_LAZY is enabled.
+> 
+> x86_32 bit is completely untested, x86_64 hasn't exploded.. yet :) 
+> 
 
-Although, as Peter said FULL_NO_HZ is pretty pointless on UP, but I've
-been thinking this from a non PREEMPT_RT viewpoint. In non PREEMPT_RT,
-spin_locks() are nops, where this is an issue, but in PREEMPT_RT, they
-are mutexes, BUT!
+This patch makes sense to me.
 
-The rt_mutex use wait_lock to protect its internal state, which is a raw
-spinlock, and in UP it's a nop. That means there's nothing preventing
-an interrupt here from corrupting the rtmutex's internal state. I see
-this is still an issue, and the warning is still valid.
+Acked-by: Steven Rostedt <rostedt@goodmis.org>
 
 -- Steve
