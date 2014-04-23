@@ -1,144 +1,66 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Wed, 23 Apr 2014 12:37:05 +0200
-Message-ID: <1398249425.5910.14.camel@marge.simpson.net>
-References: <20140411185739.GA6644@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
+Date: Wed, 23 Apr 2014 08:15:25 -0400
+Message-ID: <20140423081525.0e9b863f@gandalf.local.home>
+References: <534C3606.7010206@meduna.org>
+	<534C731F.1050406@meduna.org>
+	<534DADF1.6060608@meduna.org>
+	<20140422115439.GA20669@linutronix.de>
+	<20140422094657.5b6ca1e2@gandalf.local.home>
+	<53569E05.8010600@linutronix.de>
+	<20140422134802.73fc1fa4@gandalf.local.home>
+	<20140422141650.7f43d5ba@gandalf.local.home>
+	<53576859.8060706@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
+Cc: Stanislav Meduna <stano@meduna.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f51.google.com ([74.125.83.51]:52391 "EHLO
-	mail-ee0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752024AbaDWKhJ (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:34711 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752284AbaDWMPb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Apr 2014 06:37:09 -0400
-In-Reply-To: <20140411185739.GA6644@linutronix.de>
+	Wed, 23 Apr 2014 08:15:31 -0400
+In-Reply-To: <53576859.8060706@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2014-04-11 at 20:57 +0200, Sebastian Andrzej Siewior wrote:
+On Wed, 23 Apr 2014 09:14:33 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-> This -RT series didn't crashed within ~4h testing on my ARM and
-> x86-32.
-> x86-64 crashed after I started hackbench. I figured out that the crash
-> does not happen with lazy-preempt disabled. Therefore the last but one
-> patch in the queue disables lazy preempt on x86-64. With this change the
-> test box survived ~2h without a crash. I look at this later but it looks
-> good now.
+> On 04/22/2014 08:16 PM, Steven Rostedt wrote:
+> > --- a/kernel/timer.c
+> > +++ b/kernel/timer.c
+> > @@ -1447,6 +1447,12 @@ static void run_timer_softirq(struct softirq_action *h)
+> >  		__run_timers(base);
+> >  }
+> >  
+> > +#ifdef CONFIG_SMP
+> > +#define timer_should_raise_softirq(lock)	!spin_do_trylock(lock)
+> > +#else
+> > +#define timer_should_raise_softirq(lock)	1
+> > +#endif
+> > +
+> 
+> No. The lock may be taken but it also may be available no matter if UP
+> or not. With this patch applied the lockdep splat will go away but the
+> FULL_NO_HZ people will come back because the timer softirq is scheduled
+> even if no timer has expired.
 
-I think the below fixes it (in a more or less minimalist way), but it's
-not very pretty.  Methinks it would be prettier to either clone the x86
-percpu + fold logic, or neutralize that optimization completely when
-PREEMPT_LAZY is enabled.
+Although, as Peter said FULL_NO_HZ is pretty pointless on UP, but I've
+been thinking this from a non PREEMPT_RT viewpoint. In non PREEMPT_RT,
+spin_locks() are nops, where this is an issue, but in PREEMPT_RT, they
+are mutexes, BUT!
 
-x86_32 bit is completely untested, x86_64 hasn't exploded.. yet :) 
+The rt_mutex use wait_lock to protect its internal state, which is a raw
+spinlock, and in UP it's a nop. That means there's nothing preventing
+an interrupt here from corrupting the rtmutex's internal state. I see
+this is still an issue, and the warning is still valid.
 
----
- include/linux/preempt.h        |    3 +--
- arch/x86/include/asm/preempt.h |    8 ++++++++
- arch/x86/kernel/asm-offsets.c  |    1 +
- arch/x86/kernel/entry_32.S     |    9 ++++++---
- arch/x86/kernel/entry_64.S     |    7 +++++--
- 5 files changed, 21 insertions(+), 7 deletions(-)
-
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -126,8 +126,7 @@ do { \
- #define preempt_enable_notrace() \
- do { \
- 	barrier(); \
--	if (unlikely(__preempt_count_dec_and_test() || \
--				test_thread_flag(TIF_NEED_RESCHED_LAZY))) \
-+	if (unlikely(__preempt_count_dec_and_test())) \
- 		__preempt_schedule_context(); \
- } while (0)
- #else
---- a/arch/x86/include/asm/preempt.h
-+++ b/arch/x86/include/asm/preempt.h
-@@ -94,7 +94,11 @@ static __always_inline bool __preempt_co
- {
- 	if (____preempt_count_dec_and_test())
- 		return true;
-+#ifdef CONFIG_PREEMPT_LAZY
- 	return test_thread_flag(TIF_NEED_RESCHED_LAZY);
-+#else
-+	return false;
-+#endif
- }
- 
- /*
-@@ -102,8 +106,12 @@ static __always_inline bool __preempt_co
-  */
- static __always_inline bool should_resched(void)
- {
-+#ifdef CONFIG_PREEMPT_LAZY
- 	return unlikely(!__this_cpu_read_4(__preempt_count) || \
- 			test_thread_flag(TIF_NEED_RESCHED_LAZY));
-+#else
-+	return unlikely(!__this_cpu_read_4(__preempt_count));
-+#endif
- }
- 
- #ifdef CONFIG_PREEMPT
---- a/arch/x86/kernel/asm-offsets.c
-+++ b/arch/x86/kernel/asm-offsets.c
-@@ -72,4 +72,5 @@ void common(void) {
- 
- 	BLANK();
- 	DEFINE(PTREGS_SIZE, sizeof(struct pt_regs));
-+	DEFINE(_PREEMPT_ENABLED, PREEMPT_ENABLED);
- }
---- a/arch/x86/kernel/entry_32.S
-+++ b/arch/x86/kernel/entry_32.S
-@@ -365,19 +365,22 @@ ENTRY(resume_kernel)
- need_resched:
- 	# preempt count == 0 + NEED_RS set?
- 	cmpl $0,PER_CPU_VAR(__preempt_count)
-+#ifndef CONFIG_PREEMPT_LAZY
-+	jnz restore_all
-+#else
- 	jz test_int_off
- 
- 	# atleast preempt count == 0 ?
--	cmpl $_TIF_NEED_RESCHED,PER_CPU_VAR(__preempt_count)
-+	cmpl $_PREEMPT_ENABLED,PER_CPU_VAR(__preempt_count)
- 	jne restore_all
- 
- 	cmpl $0,TI_preempt_lazy_count(%ebp)	# non-zero preempt_lazy_count ?
- 	jnz restore_all
- 
--	testl $_TIF_NEED_RESCHED_LAZY, %ecx
-+	testl $_TIF_NEED_RESCHED_LAZY, TI_flags(%ebp)
- 	jz restore_all
--
- test_int_off:
-+#endif
- 	testl $X86_EFLAGS_IF,PT_EFLAGS(%esp)	# interrupts off (exception path) ?
- 	jz restore_all
- 	call preempt_schedule_irq
---- a/arch/x86/kernel/entry_64.S
-+++ b/arch/x86/kernel/entry_64.S
-@@ -1104,10 +1104,13 @@ ENTRY(native_iret)
- 	/* rcx:	 threadinfo. interrupts off. */
- ENTRY(retint_kernel)
- 	cmpl $0,PER_CPU_VAR(__preempt_count)
-+#ifndef CONFIG_PREEMPT_LAZY
-+	jnz  retint_restore_args
-+#else
- 	jz  check_int_off
- 
- 	# atleast preempt count == 0 ?
--	cmpl $_TIF_NEED_RESCHED,PER_CPU_VAR(__preempt_count)
-+	cmpl $_PREEMPT_ENABLED,PER_CPU_VAR(__preempt_count)
- 	jnz retint_restore_args
- 
- 	cmpl $0, TI_preempt_lazy_count(%rcx)
-@@ -1115,8 +1118,8 @@ ENTRY(retint_kernel)
- 
- 	bt $TIF_NEED_RESCHED_LAZY,TI_flags(%rcx)
- 	jnc  retint_restore_args
+-- Steve
