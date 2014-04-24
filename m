@@ -1,73 +1,334 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS: linux-rt-3.14
- boots by reverting patches + nvidia uses __rt_mutex_init [which in 3.14 has
- been changed to EXPORT_SYMBOL_GPL]
-Date: Thu, 24 Apr 2014 01:39:40 +0400
-Message-ID: <5358331C.4030406@pavlinux.ru>
-References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com> <53582C0F.8040901@pavlinux.ru>
-Reply-To: pavel@pavlinux.ru
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Thu, 24 Apr 2014 06:06:31 +0200
+Message-ID: <1398312391.5415.16.camel@marge.simpson.net>
+References: <20140411185739.GA6644@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: jordan <triplesquarednine@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:59444 "EHLO imp01.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751017AbaDWVjn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Apr 2014 17:39:43 -0400
-In-Reply-To: <53582C0F.8040901@pavlinux.ru>
+Received: from mail-ee0-f43.google.com ([74.125.83.43]:33511 "EHLO
+	mail-ee0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750935AbaDXEGf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 24 Apr 2014 00:06:35 -0400
+In-Reply-To: <20140411185739.GA6644@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-24.04.2014 01:09, Pavel Vasilyev =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> 13.04.2014 19:50, jordan =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->> Hey list.
->>
->> 1. So after finally having some time off of work [after a busy coupl=
-e
->> of months] i have come back to trying to sort out linux-rt on my AMD
->> PHenom II 965 system - which had failed to boot post 3.12.5-rt7
->>
->> first, i need to make a correction -rt8 DID boot fine and was stable
->> [after one/initial lockup, it never locked again, and obviously boot=
-ed
->> fine.]. but i figured this out, only after doing a git-bisect on -rt=
-7
->> to -rt8 ... and never got around to testing -rt8 to -rt9... However,=
- I
->> decided to give 3.14-rt a run - and again - ended up with the machin=
-e
->> failing to boot... Next, i decided to revert all three of the patche=
-s
->> that you pointed out Sebastion;
->>
->> | timers-do-not-raise-softirq-unconditionally.patch
->> | timer-Raise-softirq-if-there-s-irq_work.patch
->> | timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
->>
->> well, what i actually ended up doing was reverting the first and
->> modifying the 1st patch to revert the other two patches (by changing
->> ../kernel/timer.c section of the original patch). [ i reverted after
->> applying the linux-rt patch, not split queue];
->> http://pastebin.com/zwsZg9ZM
->
-> Please show patch between 3.14-rt1 and 3.14-rt1-you-version
->
->
+Turning lockdep on, it says it's busted.
 
-Well, no matter. I revert these three patches, and did not help.
-Since September 2013 and until now, my system no longer operates in RT_=
-=46ULL and=20
-SMP mode. Only SOFT_RT or maxcpus=3D0.
+(I'll go stare at it, maybe the beast will blink first for a change)
+
+[    0.000000] Lock dependency validator: Copyright (c) 2006 Red Hat, Inc., Ingo Molnar
+[    0.000000] ... MAX_LOCKDEP_SUBCLASSES:  8
+[    0.000000] ... MAX_LOCK_DEPTH:          48
+[    0.000000] ... MAX_LOCKDEP_KEYS:        8191
+[    0.000000] ... CLASSHASH_SIZE:          4096
+[    0.000000] ... MAX_LOCKDEP_ENTRIES:     16384
+[    0.000000] ... MAX_LOCKDEP_CHAINS:      32768
+[    0.000000] ... CHAINHASH_SIZE:          16384
+[    0.000000]  memory used by lock dependency info: 6367 kB
+[    0.000000]  per task-struct memory footprint: 2688 bytes
+[    0.000000] ------------------------
+[    0.000000] | Locking API testsuite:
+[    0.000000] ----------------------------------------------------------------------------
+[    0.000000]                                  | spin |wlock |rlock |mutex | wsem | rsem |
+[    0.000000]   --------------------------------------------------------------------------
+[    0.000000]                      A-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e710f>] locking_selftest+0xdf/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]                  A-B-B-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e719e>] locking_selftest+0x16e/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]              A-B-B-C-C-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e722d>] locking_selftest+0x1fd/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]              A-B-C-A-B-C deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e72bc>] locking_selftest+0x28c/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]          A-B-B-C-C-D-D-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e734b>] locking_selftest+0x31b/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]          A-B-C-D-B-D-D-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e73da>] locking_selftest+0x3aa/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]          A-B-C-D-B-C-D-A deadlock:  ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e7469>] locking_selftest+0x439/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |  ok  |
+[    0.000000]                     double unlock:  ok  |
+[    0.000000] ------------[ cut here ]------------
+[    0.000000] WARNING: CPU: 0 PID: 0 at kernel/sched/core.c:2660 migrate_disable+0xbd/0xd0()
+[    0.000000] Modules linked in:
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000a64 ffffffff81a01d38 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000000 ffffffff81a01d78 ffffffff8104f0cc ffffffff81a01d78
+[    0.000000]  ffffffff81a194c0 0000000000000027 0000000000000006 0000000000000001
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff8104f0cc>] warn_slowpath_common+0x8c/0xc0
+[    0.000000]  [<ffffffff8104f11a>] warn_slowpath_null+0x1a/0x20
+[    0.000000]  [<ffffffff8108795d>] migrate_disable+0xbd/0xd0
+[    0.000000]  [<ffffffff810b7a7f>] call_console_drivers.constprop.20+0x4f/0x140
+[    0.000000]  [<ffffffff810b823f>] console_unlock.part.15+0x1df/0x2e0
+[    0.000000]  [<ffffffff815ec835>] ? _raw_spin_unlock+0x35/0x60
+[    0.000000]  [<ffffffff810b8358>] console_unlock+0x18/0x30
+[    0.000000]  [<ffffffff810b8771>] vprintk_emit+0x231/0x400
+[    0.000000]  [<ffffffff815e9aca>] ? preempt_schedule+0x4a/0x70
+[    0.000000]  [<ffffffff812e1320>] ? bad_unlock_order_spin+0x40/0x40
+[    0.000000]  [<ffffffff815d8519>] printk+0x4d/0x4f
+[    0.000000]  [<ffffffff815f11d9>] ? preempt_count_sub+0x29/0x70
+[    0.000000]  [<ffffffff812e1348>] ? double_unlock_spin+0x28/0x30
+[    0.000000]  [<ffffffff815e1dc8>] dotest+0x75/0xc7
+[    0.000000]  [<ffffffff812e74cf>] locking_selftest+0x49f/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000] ---[ end trace 0000000000000001 ]---
+[    0.000000] ------------[ cut here ]------------
+[    0.000000] WARNING: CPU: 0 PID: 0 at kernel/sched/core.c:2693 migrate_enable+0xf6/0x1a0()
+[    0.000000] Modules linked in:
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G        W    3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000a85 ffffffff81a01cb8 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000000 ffffffff81a01cf8 ffffffff8104f0cc ffffffff81a01d18
+[    0.000000]  ffffffff81a194c0 0000000000000000 000000000000000a ffffffff8275f367
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff8104f0cc>] warn_slowpath_common+0x8c/0xc0
+[    0.000000]  [<ffffffff8104f11a>] warn_slowpath_null+0x1a/0x20
+[    0.000000]  [<ffffffff810877f6>] migrate_enable+0xf6/0x1a0
+[    0.000000]  [<ffffffff813aab31>] vt_console_print+0x2f1/0x3d0
+[    0.000000]  [<ffffffff810b7ae7>] call_console_drivers.constprop.20+0xb7/0x140
+[    0.000000]  [<ffffffff810b823f>] console_unlock.part.15+0x1df/0x2e0
+[    0.000000]  [<ffffffff815ec835>] ? _raw_spin_unlock+0x35/0x60
+[    0.000000]  [<ffffffff810b8358>] console_unlock+0x18/0x30
+[    0.000000]  [<ffffffff810b8771>] vprintk_emit+0x231/0x400
+[    0.000000]  [<ffffffff815e9aca>] ? preempt_schedule+0x4a/0x70
+[    0.000000]  [<ffffffff812e1320>] ? bad_unlock_order_spin+0x40/0x40
+[    0.000000]  [<ffffffff815d8519>] printk+0x4d/0x4f
+[    0.000000]  [<ffffffff815f11d9>] ? preempt_count_sub+0x29/0x70
+[    0.000000]  [<ffffffff812e1348>] ? double_unlock_spin+0x28/0x30
+[    0.000000]  [<ffffffff815e1dc8>] dotest+0x75/0xc7
+[    0.000000]  [<ffffffff812e74cf>] locking_selftest+0x49f/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000] ---[ end trace 0000000000000002 ]---
+[    0.000000]   ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G        W    3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 0000000000000046
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e74f5>] locking_selftest+0x4c5/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]   ok  |  ok  |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G        W    3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000008 ffffffff81a01f28 ffffffff815e12a5 0000000000000046
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e752e>] locking_selftest+0x4fe/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000] 
+[    0.000000]                   initialize held:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+[    0.000000]                  bad unlock order:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+[    0.000000]   --------------------------------------------------------------------------
+[    0.000000]               recursive read-lock:             |  ok  |             |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G        W    3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000008 ffffffff81a01f28 ffffffff815e12a5 0000000000000006
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e76c5>] locking_selftest+0x695/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000] 
+[    0.000000]            recursive read-lock #2:             |FAILED|
+[    0.000000] CPU: 0 PID: 0 Comm: swapper/0 Tainted: G        W    3.14.1-rt1 #16
+[    0.000000] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
+[    0.000000]  0000000000000002 ffffffff81a01f28 ffffffff815e12a5 ffffffff810b7727
+[    0.000000]  0000000000000001 ffffffff81a01f58 ffffffff815e1db2 0000000000000000
+[    0.000000]  0000000000000000 0000000000000000 0000000000000000 ffffffff81a01f68
+[    0.000000] Call Trace:
+[    0.000000]  [<ffffffff815e12a5>] dump_stack+0x4f/0x7c
+[    0.000000]  [<ffffffff810b7727>] ? console_trylock_for_printk+0x37/0xf0
+[    0.000000]  [<ffffffff815e1db2>] dotest+0x5f/0xc7
+[    0.000000]  [<ffffffff812e7703>] locking_selftest+0x6d3/0xb30
+[    0.000000]  [<ffffffff81d51d8f>] start_kernel+0x215/0x327
+[    0.000000]  [<ffffffff81d51a0c>] ? repair_env_string+0x5a/0x5a
+[    0.000000]  [<ffffffff81d9f4c1>] ? memblock_reserve+0x49/0x4e
+[    0.000000]  [<ffffffff81d515b2>] x86_64_start_reservations+0x2a/0x2c
+[    0.000000]  [<ffffffff81d516a4>] x86_64_start_kernel+0xf0/0xf7
+[    0.000000]              |  ok  |
+[    0.000000]             mixed read-write-lock:             |  ok  |             |  ok  |
+[    0.000000]             mixed write-read-lock:             |  ok  |             |  ok  |
+[    0.000000]   --------------------------------------------------------------------------
+[    0.000000]      hard-irqs-on + irq-safe-A/12:  ok  |
+[    0.000000]      hard-irqs-on + irq-safe-A/21:  ok  |
+[    0.000000]          hard-safe-A + irqs-on/12:  ok  |
+[    0.000000]          hard-safe-A + irqs-on/21:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/123:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/132:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/213:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/231:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/312:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #1/321:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/123:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/132:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/213:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/231:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/312:  ok  |
+[    0.000000]     hard-safe-A + unsafe-B #2/321:  ok  |
+[    0.000000]   --------------------------------------------------------------------------
+[    0.000000]   | Wound/wait tests |
+[    0.000000]   ---------------------
+[    0.000000]                   ww api failures:  ok  |  ok  |  ok  |
+[    0.000000]                ww contexts mixing:  ok  |  ok  |
+[    0.000000]              finishing ww context:  ok  |  ok  |  ok  |  ok  |
+[    0.000000]                locking mismatches:  ok  |  ok  |  ok  |
+[    0.000000]                  EDEADLK handling:  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |  ok  |
+[    0.000000]            spinlock nest unlocked:  ok  |
+[    0.000000]   -----------------------------------------------------
+[    0.000000]                                  |block | try  |context|
+[    0.000000]   -----------------------------------------------------
+[    0.000000]                           context:  ok  |  ok  |  ok  |
+[    0.000000]                               try:  ok  |  ok  |  ok  |
+[    0.000000]                             block:  ok  |  ok  |  ok  |
+[    0.000000]                          spinlock:  ok  |  ok  |  ok  |
+[    0.000000] -----------------------------------------------------------------
+[    0.000000] BUG:  11 unexpected failures (out of 119) - debugging disabled! |
+[    0.000000] -----------------------------------------------------------------
 
 
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
