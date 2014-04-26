@@ -1,123 +1,85 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC PATCH] rtmutex: Do not prio boost when timeout is used
-Date: Fri, 25 Apr 2014 16:28:48 -0400
-Message-ID: <20140425162848.0e1deed8@gandalf.local.home>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Sat, 26 Apr 2014 10:38:11 +0200
+Message-ID: <1398501491.12941.5.camel@marge.simpson.net>
+References: <20140411185739.GA6644@linutronix.de>
+	 <1397918766.5436.16.camel@marge.simpson.net>
+	 <1398411635.11930.45.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ee0-f43.google.com ([74.125.83.43]:41417 "EHLO
+	mail-ee0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751522AbaDZIiP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 26 Apr 2014 04:38:15 -0400
+In-Reply-To: <1398411635.11930.45.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-I've been discussing an issue on IRC with deadlock checking and found
-something wrong with it. Mainly, if any of the locks have a timeout,
-then even if the chain loops, there is no real deadlock. If one of the
-locks in the chain times out, then things will move forward again.
+On Fri, 2014-04-25 at 09:40 +0200, Mike Galbraith wrote:
 
-Now it may not be nice to have locks that do this, but we can break
-applications that use futex priority boosting and may use timeouts to
-break deadlocks.
+> Hotplug can still deadlock in rt trees too, and will if you beat it
+> hard.
 
-Here's the scenario:
+Box actually deadlocks like so.
 
-Locks:  L1, L2, L3
-Tasks:  A, B, C
+                                                CPU3 boot.kdump
+                                                sys_wait4
+                                                do_wait
+                                                   read_lock(&tasklist_lock)
+                                                      rt_read_lock
+                                                         __rt_spin_lock(lock)
+                                                            migrate_disable()
+                                                               pin_current_cpu()
+                                                                  if (hp->grab_lock) {
+                                                                     preempt_enable(); <== hmm
+                                                                     hotplug_lock(hp); 
+                                                                       hp = &__get_cpu_var(hotplug_pcp);  <== hmm
+                                                                       struct hotplug_pcp {
+                                                                          unplug = 0xffff8800b7d0e540,
+                                                                          sync_tsk = 0x0,
+                                                                          refcount = 0, <== hmm
+                                                                          grab_lock = 1,
+                                                                          ...
+                                                                          lock = {
+                                                                             ...
+                                                                             owner = 0xffff8802039f0001,
+                                                                             stress-cpu-hotplug_stress.sh?!?
+                                                                             <=== he's way over yonder.
+                                                                             Yo, dude, would you please NOT
+                                                                             take percpu locks with you?
 
-C grabs L2
+CPU0 stress-cpu-hotplug_stress.sh
+sysfs_write_file
+dev_attr_store
+online_store
+device_offline
+cpu_subsys_offline
+cpu_down
+_cpu_down
+   cpu_hotplug_begin
+       mutex_lock(&cpu_hotplug.lock);
+       ...
+      check_for_tasks
+         write_lock_irq(&tasklist_lock);
+         held by CPU3 boot.kdump over there ===>
 
-A grabs L1
-A tries to grab L2 - blocks
+CPU0 kworker/0:0
+cpuset_hotplug_workfn+0x23e/0x380
+rebuild_sched_domains+0x15/0x30
+rebuild_sched_domains_locked+0x17/0x80
+get_online_cpus+0x35/0x50
+   mutex_lock(&cpu_hotplug.lock);
+   held by stress-cpu-hotplug_stress.sh
 
-B grabs L3
-B grabs L1 with a timeout
+twiddle twiddle twiddle...
+INFO: task kworker/0:0:4 blocked for more than 120 seconds.
 
-C grabs L3 and blocks
 
-deadlock detect kicks in and runs up the chain.
-
-L3 is held by B
-B is blocked on L1
-L1 is owned by A
-
-(in the mean time B times out and release L3)
-
-A is blocked on L2
-L2 is owned by C
-
- if (lock == orig_lock || rt_mutex_owner(lock) == top_task)
-
-Where top_task is C, this is true. The deadlock is reported back up to
-userspace and C exits, killing all other threads and the app dies.
-
-The problem here is that there was no deadlock. If we just ignored
-this, as B had timed out and released L3, C could have gotten L3 and
-continued normally.
-
-As priority boosting is made to prevent unbounded latencies, and a
-timeout grabbing of a lock is a bounded latency, I'm suggesting that we
-do not bother boosting the owner or even treating the task as being
-blocked.
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index aa4dff0..c8f2681 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -520,6 +520,7 @@ static int try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
- static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 				   struct rt_mutex_waiter *waiter,
- 				   struct task_struct *task,
-+				   void *timeout,
- 				   int detect_deadlock)
- {
- 	struct task_struct *owner = rt_mutex_owner(lock);
-@@ -538,7 +539,9 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 		top_waiter = rt_mutex_top_waiter(lock);
- 	rt_mutex_enqueue(lock, waiter);
- 
--	task->pi_blocked_on = waiter;
-+	/* Treat locks with timeouts as not being blocked */
-+	if (likely(!timeout))
-+		task->pi_blocked_on = waiter;
- 
- 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 
-@@ -558,6 +561,13 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 	else if (debug_rt_mutex_detect_deadlock(waiter, detect_deadlock))
- 		chain_walk = 1;
- 
-+	/*
-+	 * If blocking with a timeout, then it's already bounded.
-+	 * No priority boosting necessary.
-+	 */
-+	if (unlikely(timeout))
-+		return 0;
-+
- 	if (!chain_walk)
- 		return 0;
- 
-@@ -771,7 +781,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 			timeout->task = NULL;
- 	}
- 
--	ret = task_blocks_on_rt_mutex(lock, &waiter, current, detect_deadlock);
-+	ret = task_blocks_on_rt_mutex(lock, &waiter, current, timeout,
-+				      detect_deadlock);
- 
- 	if (likely(!ret))
- 		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter);
-@@ -1088,7 +1099,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 		return 1;
- 	}
- 
--	ret = task_blocks_on_rt_mutex(lock, waiter, task, detect_deadlock);
-+	ret = task_blocks_on_rt_mutex(lock, waiter, task, NULL, detect_deadlock);
- 
- 	if (ret && !rt_mutex_owner(lock)) {
- 		/*
