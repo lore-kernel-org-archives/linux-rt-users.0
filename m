@@ -1,233 +1,104 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Sat, 26 Apr 2014 15:58:19 +0200
-Message-ID: <1398520699.28726.22.camel@marge.simpson.net>
+Date: Sat, 26 Apr 2014 11:29:04 -0700
+Message-ID: <535BFAF0.5090306@localhost>
 References: <20140411185739.GA6644@linutronix.de>
-	 <1397918766.5436.16.camel@marge.simpson.net>
-	 <1398411635.11930.45.camel@marge.simpson.net>
-	 <1398501491.12941.5.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
 	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f42.google.com ([74.125.83.42]:32867 "EHLO
-	mail-ee0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751180AbaDZN6W (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 26 Apr 2014 09:58:22 -0400
-In-Reply-To: <1398501491.12941.5.camel@marge.simpson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140411185739.GA6644@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2014-04-26 at 10:38 +0200, Mike Galbraith wrote: 
-> On Fri, 2014-04-25 at 09:40 +0200, Mike Galbraith wrote:
-> 
-> > Hotplug can still deadlock in rt trees too, and will if you beat it
-> > hard.
-> 
-> Box actually deadlocks like so.
+On 04/11/2014 11:57 AM, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+>
+> I'm pleased to announce the v3.14-rt1 patch setty).
+>
+> Changes since v3.12.15-rt25
+> - I dropped the sparc64 patches I had in the queue. They did not apply
+>    cleanly, the code in v3.14 changed in the MMU area. Here is where I
+>    remembered that it was not working perfectly either.
 
-...
+Saw this a moment ago (3.14.1 + rt1, Fedora 19 laptop - I think I have 
+seen something similar in 3.12.x-r):
 
-3.12-rt looks a bit busted migrate_disable/enable() wise.
+Apr 26 11:16:11 localhost kernel: [   96.323248] ------------[ cut here 
+]------------
+Apr 26 11:16:11 localhost kernel: [   96.323262] WARNING: CPU: 0 PID: 
+2051 at lib/list_debug.c:59 __list_del_entry+0xa1/0xd0()
+Apr 26 11:16:11 localhost kernel: [   96.323264] list_del corruption. 
+prev->next should be ffff8802101196a0, but was 0000000000000001
+Apr 26 11:16:11 localhost kernel: [   96.323266] Modules linked in: fuse 
+ipt_MASQUERADE xt_CHECKSUM tun ip6t_rpfilter ip6t_REJECT xt_conntrack 
+ebtable_nat ebtable_broute bridge stp llc ebtable_filter ebtables 
+ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 
+ip6table_mangle ip6table_security ip6table_raw rfcomm ip6table_filter 
+bnep ip6_tables iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 
+nf_nat nf_conntrack iptable_mangle iptable_security iptable_raw iTCO_wdt 
+iTCO_vendor_support coretemp kvm_intel kvm crct10dif_pclmul crc32_pclmul 
+crc32c_intel ghash_clmulni_intel uvcvideo videobuf2_vmalloc microcode 
+videobuf2_memops snd_hda_codec_hdmi videobuf2_core videodev media 
+serio_raw btusb bluetooth intel_ips i2c_i801 6lowpan_iphc 
+snd_hda_codec_conexant snd_hda_codec_generic arc4 iwldvm mac80211 
+iwlwifi lpc_ich sdhci_pci mfd_core sdhci cfg80211 mmc_core snd_hda_intel 
+snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm e1000e snd_timer 
+ptp mei_me pps_core mei shpchp thinkpad_acpi snd ppdev soundcore rfkill 
+parport_pc parport acpi_cpufreq uinput firewire_ohci nouveau 
+firewire_core crc_itu_t i2c_algo_bit drm_kms_helper ttm drm mxm_wmi 
+i2c_core wmi video
+Apr 26 11:16:11 localhost kernel: [   96.323331] CPU: 0 PID: 2051 Comm: 
+cinnamon Not tainted 3.14.1-200.rt1.1.fc19.ccrma.x86_64+rt #1
+Apr 26 11:16:11 localhost kernel: [   96.323332] Hardware name: LENOVO 
+4313CTO/4313CTO, BIOS 6MET64WW (1.27 ) 07/15/2010
+Apr 26 11:16:11 localhost kernel: [   96.323334]  0000000000000000 
+000000008a5c11dc ffff8800ae715a88 ffffffff81707fca
+Apr 26 11:16:11 localhost kernel: [   96.323336]  ffff8800ae715ad0 
+ffff8800ae715ac0 ffffffff8108d03d ffff8802101196a0
+Apr 26 11:16:11 localhost kernel: [   96.323337]  ffff880210119b50 
+ffff880210119b50 ffff880210119b40 ffff88021a615648
+Apr 26 11:16:11 localhost kernel: [   96.323338] Call Trace:
+Apr 26 11:16:11 localhost kernel: [   96.323345]  [<ffffffff81707fca>] 
+dump_stack+0x4d/0x82
+Apr 26 11:16:11 localhost kernel: [   96.323351]  [<ffffffff8108d03d>] 
+warn_slowpath_common+0x7d/0xc0
+Apr 26 11:16:11 localhost kernel: [   96.323352]  [<ffffffff8108d0dc>] 
+warn_slowpath_fmt+0x5c/0x80
+Apr 26 11:16:11 localhost kernel: [   96.323354]  [<ffffffff8137c551>] 
+__list_del_entry+0xa1/0xd0
+Apr 26 11:16:11 localhost kernel: [   96.323355]  [<ffffffff8137c58d>] 
+list_del+0xd/0x30
+Apr 26 11:16:11 localhost kernel: [   96.323393]  [<ffffffffa0135593>] 
+nouveau_fence_signal+0x53/0x80 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323414]  [<ffffffffa0135678>] 
+nouveau_fence_update+0x48/0xa0 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323435]  [<ffffffffa0135f85>] 
+nouveau_fence_sync+0x45/0x80 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323456]  [<ffffffffa013aea8>] 
+validate_list+0xd8/0x2e0 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323478]  [<ffffffffa013c3d3>] 
+nouveau_gem_ioctl_pushbuf+0xaa3/0x13e0 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323500]  [<ffffffffa002ad02>] 
+drm_ioctl+0x4f2/0x620 [drm]
+Apr 26 11:16:11 localhost kernel: [   96.323506]  [<ffffffff810c1af4>] ? 
+migrate_enable+0x94/0x1c0
+Apr 26 11:16:11 localhost kernel: [   96.323527]  [<ffffffffa0132cfe>] 
+nouveau_drm_ioctl+0x4e/0x90 [nouveau]
+Apr 26 11:16:11 localhost kernel: [   96.323530]  [<ffffffff81203480>] 
+do_vfs_ioctl+0x2e0/0x4c0
+Apr 26 11:16:11 localhost kernel: [   96.323533]  [<ffffffff812fd8d6>] ? 
+file_has_perm+0xa6/0xb0
+Apr 26 11:16:11 localhost kernel: [   96.323535]  [<ffffffff812036e1>] 
+SyS_ioctl+0x81/0xa0
+Apr 26 11:16:11 localhost kernel: [   96.323538]  [<ffffffff81716769>] 
+system_call_fastpath+0x16/0x1b
+Apr 26 11:16:11 localhost kernel: [   96.323569] ---[ end trace 
+0000000000000002 ]---
 
-/me eyeballs 3.10-rt (looks better), confirms 3.10-rt hotplug works,
-swipes working code, confirms 3.12-rt now works.  Yup, that was it.
-
-When I fix lg_global_lock() (I think it and Medusa are both busted) I
-bet a nickle 3.14-rt will work.
-
-Hm, actually, rt_write_trylock() in swiped 3.10-rt code below (and some
-others) look busted to me.  migrate_disable() _after_ grabbing a lock is
-too late, no?
-
----
- include/linux/rwlock_rt.h |   32 ++++++++++++++++++++++++++++----
- kernel/rt.c               |   21 +++++++++++----------
- 2 files changed, 39 insertions(+), 14 deletions(-)
-
---- a/include/linux/rwlock_rt.h
-+++ b/include/linux/rwlock_rt.h
-@@ -33,50 +33,72 @@ extern void __rt_rwlock_init(rwlock_t *r
- #define read_lock_irqsave(lock, flags)			\
- 	do {						\
- 		typecheck(unsigned long, flags);	\
-+		migrate_disable();			\
- 		flags = rt_read_lock_irqsave(lock);	\
- 	} while (0)
- 
- #define write_lock_irqsave(lock, flags)			\
- 	do {						\
- 		typecheck(unsigned long, flags);	\
-+		migrate_disable();			\
- 		flags = rt_write_lock_irqsave(lock);	\
- 	} while (0)
- 
--#define read_lock(lock)		rt_read_lock(lock)
-+#define read_lock(lock)					\
-+	do {						\
-+		migrate_disable();			\
-+		rt_read_lock(lock);			\
-+	} while (0)
- 
- #define read_lock_bh(lock)				\
- 	do {						\
- 		local_bh_disable();			\
-+		migrate_disable();			\
- 		rt_read_lock(lock);			\
- 	} while (0)
- 
- #define read_lock_irq(lock)	read_lock(lock)
- 
--#define write_lock(lock)	rt_write_lock(lock)
-+#define write_lock(lock)				\
-+	do {						\
-+		migrate_disable();			\
-+		rt_write_lock(lock);			\
-+	} while (0)
- 
- #define write_lock_bh(lock)				\
- 	do {						\
- 		local_bh_disable();			\
-+		migrate_disable();			\
- 		rt_write_lock(lock);			\
- 	} while (0)
- 
- #define write_lock_irq(lock)	write_lock(lock)
- 
--#define read_unlock(lock)	rt_read_unlock(lock)
-+#define read_unlock(lock)				\
-+	do {						\
-+		rt_read_unlock(lock);			\
-+		migrate_enable();			\
-+	} while (0)
- 
- #define read_unlock_bh(lock)				\
- 	do {						\
- 		rt_read_unlock(lock);			\
-+		migrate_enable();			\
- 		local_bh_enable();			\
- 	} while (0)
- 
- #define read_unlock_irq(lock)	read_unlock(lock)
- 
--#define write_unlock(lock)	rt_write_unlock(lock)
-+#define write_unlock(lock)				\
-+	do {						\
-+		rt_write_unlock(lock);			\
-+		migrate_enable();			\
-+	} while (0)
- 
- #define write_unlock_bh(lock)				\
- 	do {						\
- 		rt_write_unlock(lock);			\
-+		migrate_enable();			\
- 		local_bh_enable();			\
- 	} while (0)
- 
-@@ -87,6 +109,7 @@ extern void __rt_rwlock_init(rwlock_t *r
- 		typecheck(unsigned long, flags);	\
- 		(void) flags;				\
- 		rt_read_unlock(lock);			\
-+		migrate_enable();			\
- 	} while (0)
- 
- #define write_unlock_irqrestore(lock, flags) \
-@@ -94,6 +117,7 @@ extern void __rt_rwlock_init(rwlock_t *r
- 		typecheck(unsigned long, flags);	\
- 		(void) flags;				\
- 		rt_write_unlock(lock);			\
-+		migrate_enable();			\
- 	} while (0)
- 
- #endif
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -182,10 +182,11 @@ int __lockfunc rt_write_trylock(rwlock_t
- {
- 	int ret = rt_mutex_trylock(&rwlock->lock);
- 
--	if (ret) {
-+	migrate_disable();
-+	if (ret)
- 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
--		migrate_disable();
--	}
-+	else
-+		migrate_enable();
- 
- 	return ret;
- }
-@@ -196,7 +197,10 @@ int __lockfunc rt_write_trylock_irqsave(
- 	int ret;
- 
- 	*flags = 0;
-+	migrate_disable();
- 	ret = rt_write_trylock(rwlock);
-+	if (!ret)
-+		migrate_enable();
- 	return ret;
- }
- EXPORT_SYMBOL(rt_write_trylock_irqsave);
-@@ -211,18 +215,19 @@ int __lockfunc rt_read_trylock(rwlock_t
- 	 * but not when read_depth == 0 which means that the lock is
- 	 * write locked.
- 	 */
-+	migrate_disable();
- 	if (rt_mutex_owner(lock) != current) {
- 		ret = rt_mutex_trylock(lock);
--		if (ret) {
-+		if (ret)
- 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
--			migrate_disable();
--		}
- 	} else if (!rwlock->read_depth) {
- 		ret = 0;
- 	}
- 
- 	if (ret)
- 		rwlock->read_depth++;
-+	else
-+		migrate_enable();
- 
- 	return ret;
- }
-@@ -231,7 +236,6 @@ EXPORT_SYMBOL(rt_read_trylock);
- void __lockfunc rt_write_lock(rwlock_t *rwlock)
- {
- 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
--	migrate_disable();
- 	__rt_spin_lock(&rwlock->lock);
- }
- EXPORT_SYMBOL(rt_write_lock);
-@@ -246,7 +250,6 @@ void __lockfunc rt_read_lock(rwlock_t *r
- 	if (rt_mutex_owner(lock) != current) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 		__rt_spin_lock(lock);
--		migrate_disable();
- 	}
- 	rwlock->read_depth++;
- }
-@@ -258,7 +261,6 @@ void __lockfunc rt_write_unlock(rwlock_t
- 	/* NOTE: we always pass in '1' for nested, for simplicity */
- 	rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 	__rt_spin_unlock(&rwlock->lock);
--	migrate_enable();
- }
- EXPORT_SYMBOL(rt_write_unlock);
- 
-@@ -268,7 +270,6 @@ void __lockfunc rt_read_unlock(rwlock_t
- 	if (--rwlock->read_depth == 0) {
- 		rwlock_release(&rwlock->dep_map, 1, _RET_IP_);
- 		__rt_spin_unlock(&rwlock->lock);
--		migrate_enable();
- 	}
- }
- EXPORT_SYMBOL(rt_read_unlock);
-
-
+-- Fernando
