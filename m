@@ -1,85 +1,35 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Sat, 26 Apr 2014 10:38:11 +0200
-Message-ID: <1398501491.12941.5.camel@marge.simpson.net>
-References: <20140411185739.GA6644@linutronix.de>
-	 <1397918766.5436.16.camel@marge.simpson.net>
-	 <1398411635.11930.45.camel@marge.simpson.net>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC PATCH] rtmutex: Do not prio boost when timeout is used
+Date: Sat, 26 Apr 2014 13:04:37 +0200
+Message-ID: <20140426110437.GK26782@laptop.programming.kicks-ass.net>
+References: <20140425162848.0e1deed8@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f43.google.com ([74.125.83.43]:41417 "EHLO
-	mail-ee0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751522AbaDZIiP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 26 Apr 2014 04:38:15 -0400
-In-Reply-To: <1398411635.11930.45.camel@marge.simpson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140425162848.0e1deed8@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2014-04-25 at 09:40 +0200, Mike Galbraith wrote:
-
-> Hotplug can still deadlock in rt trees too, and will if you beat it
-> hard.
-
-Box actually deadlocks like so.
-
-                                                CPU3 boot.kdump
-                                                sys_wait4
-                                                do_wait
-                                                   read_lock(&tasklist_lock)
-                                                      rt_read_lock
-                                                         __rt_spin_lock(lock)
-                                                            migrate_disable()
-                                                               pin_current_cpu()
-                                                                  if (hp->grab_lock) {
-                                                                     preempt_enable(); <== hmm
-                                                                     hotplug_lock(hp); 
-                                                                       hp = &__get_cpu_var(hotplug_pcp);  <== hmm
-                                                                       struct hotplug_pcp {
-                                                                          unplug = 0xffff8800b7d0e540,
-                                                                          sync_tsk = 0x0,
-                                                                          refcount = 0, <== hmm
-                                                                          grab_lock = 1,
-                                                                          ...
-                                                                          lock = {
-                                                                             ...
-                                                                             owner = 0xffff8802039f0001,
-                                                                             stress-cpu-hotplug_stress.sh?!?
-                                                                             <=== he's way over yonder.
-                                                                             Yo, dude, would you please NOT
-                                                                             take percpu locks with you?
-
-CPU0 stress-cpu-hotplug_stress.sh
-sysfs_write_file
-dev_attr_store
-online_store
-device_offline
-cpu_subsys_offline
-cpu_down
-_cpu_down
-   cpu_hotplug_begin
-       mutex_lock(&cpu_hotplug.lock);
-       ...
-      check_for_tasks
-         write_lock_irq(&tasklist_lock);
-         held by CPU3 boot.kdump over there ===>
-
-CPU0 kworker/0:0
-cpuset_hotplug_workfn+0x23e/0x380
-rebuild_sched_domains+0x15/0x30
-rebuild_sched_domains_locked+0x17/0x80
-get_online_cpus+0x35/0x50
-   mutex_lock(&cpu_hotplug.lock);
-   held by stress-cpu-hotplug_stress.sh
-
-twiddle twiddle twiddle...
-INFO: task kworker/0:0:4 blocked for more than 120 seconds.
+On Fri, Apr 25, 2014 at 04:28:48PM -0400, Steven Rostedt wrote:
+> I've been discussing an issue on IRC with deadlock checking and found
+> something wrong with it. Mainly, if any of the locks have a timeout,
+> then even if the chain loops, there is no real deadlock. If one of the
+> locks in the chain times out, then things will move forward again.
 
 
+POSIX (opengroup):
+
+ http://pubs.opengroup.org/onlinepubs/009695399/functions/pthread_mutex_timedlock.html
+
+Explicitly states that pthread_mutex_timedlock() should participate in
+the PI chain, it also states that its perfectly valid for this function
+to return -EDEADLK.
+
+Therefore, there's nothing wrong. If this behaviour breaks userspace,
+its already broken for not actually expecting the right thing.
