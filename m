@@ -1,54 +1,74 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/4] rcu: make RCU_BOOST default on RT
-Date: Sun, 27 Apr 2014 10:31:22 -0400
-Message-ID: <20140427143140.536967084@goodmis.org>
-References: <20140427143119.898655303@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH RT 0/4] Linux 3.10.37-rt38-rc1
+Date: Sun, 27 Apr 2014 10:31:19 -0400
+Message-ID: <20140427143119.898655303@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rcu-make-RCU_BOOST-default-on-RT.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:59142 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752496AbaD0Obn (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Apr 2014 10:31:43 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.37-rt38-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.10.37-rt38-rc1.
 
-Since it is no longer invoked from the softirq people run into OOM more
-often if the priority of the RCU thread is too low. Making boosting
-default on RT should help in those case and it can be switched off if
-someone knows better.
+Please scream at me if I messed something up. Please test the patches too.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 4/30/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.37-rt38-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.37.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.37-rt38-rc1.patch.xz
+
+You can also build from 3.10.37-rt37 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.37-rt37-rt38-rc1.patch.xz
+
+
+Changes from 3.10.37-rt37:
+
 ---
- init/Kconfig | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/init/Kconfig b/init/Kconfig
-index 6c3a4fd..bd3612d 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -604,7 +604,7 @@ config TREE_RCU_TRACE
- config RCU_BOOST
- 	bool "Enable RCU priority boosting"
- 	depends on RT_MUTEXES && PREEMPT_RCU
--	default n
-+	default y if PREEMPT_RT_FULL
- 	help
- 	  This option boosts the priority of preempted RCU readers that
- 	  block the current preemptible RCU grace period for too long.
--- 
-1.8.5.3
+
+Sebastian Andrzej Siewior (3):
+      net: gianfar: do not disable interrupts
+      net: gianfar: do not try to cleanup TX packets if they are not done
+      rcu: make RCU_BOOST default on RT
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.37-rt38-rc1
+
+----
+ drivers/net/ethernet/freescale/gianfar.c         | 27 +++++++++++++-----------
+ drivers/net/ethernet/freescale/gianfar_ethtool.c |  8 +++----
+ drivers/net/ethernet/freescale/gianfar_sysfs.c   | 24 ++++++++++-----------
+ init/Kconfig                                     |  2 +-
+ localversion-rt                                  |  2 +-
+ 5 files changed, 33 insertions(+), 30 deletions(-)
