@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: [PATCH RT 2/3] rcu: make RCU_BOOST default on RT
-Date: Sun, 27 Apr 2014 10:34:32 -0400
-Message-ID: <20140427143451.555035836@goodmis.org>
-References: <20140427143430.589333461@goodmis.org>
+Date: Sun, 27 Apr 2014 10:39:27 -0400
+Message-ID: <20140427143941.009834783@goodmis.org>
+References: <20140427143925.177486597@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -18,7 +18,7 @@ Content-Disposition: inline; filename=0002-rcu-make-RCU_BOOST-default-on-RT.patc
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.8.13.14-rt31-rc1 stable review patch.
+3.2.57-rt84-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -38,10 +38,10 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  1 file changed, 1 insertion(+), 1 deletion(-)
 
 diff --git a/init/Kconfig b/init/Kconfig
-index d0590c7..34050fe 100644
+index aa6545f..c16e1f3 100644
 --- a/init/Kconfig
 +++ b/init/Kconfig
-@@ -603,7 +603,7 @@ config TREE_RCU_TRACE
+@@ -494,7 +494,7 @@ config TREE_RCU_TRACE
  config RCU_BOOST
  	bool "Enable RCU priority boosting"
  	depends on RT_MUTEXES && PREEMPT_RCU
