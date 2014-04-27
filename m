@@ -1,104 +1,139 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Sat, 26 Apr 2014 11:29:04 -0700
-Message-ID: <535BFAF0.5090306@localhost>
-References: <20140411185739.GA6644@linutronix.de>
+From: Stefan Jenisch <stefan.jenisch@gmail.com>
+Subject: Difficulties with cyclictest on AMD CPU
+Date: Sun, 27 Apr 2014 13:01:08 +0200
+Message-ID: <535CE374.7050907@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140411185739.GA6644@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ee0-f53.google.com ([74.125.83.53]:45592 "EHLO
+	mail-ee0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752514AbaD0LBN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Apr 2014 07:01:13 -0400
+Received: by mail-ee0-f53.google.com with SMTP id b57so3957899eek.40
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Apr 2014 04:01:11 -0700 (PDT)
+Received: from [192.168.0.10] (82-194-155-17.dyn.salzburg-online.at. [82.194.155.17])
+        by mx.google.com with ESMTPSA id o5sm40818968eeg.8.2014.04.27.04.01.09
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1 cipher=ECDHE-RSA-RC4-SHA bits=128/128);
+        Sun, 27 Apr 2014 04:01:09 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 04/11/2014 11:57 AM, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v3.14-rt1 patch setty).
->
-> Changes since v3.12.15-rt25
-> - I dropped the sparc64 patches I had in the queue. They did not apply
->    cleanly, the code in v3.14 changed in the MMU area. Here is where I
->    remembered that it was not working perfectly either.
+Hello folks!
 
-Saw this a moment ago (3.14.1 + rt1, Fedora 19 laptop - I think I have 
-seen something similar in 3.12.x-r):
+I am having some difficulties with cyclictest on an =93AMD GX-210HA SOC=
+=20
+with Radeon(tm) HD Graphics=94 CPU. Latency values are better with some=
+=20
+CPU load (execution of an endless loop) than without.
 
-Apr 26 11:16:11 localhost kernel: [   96.323248] ------------[ cut here 
-]------------
-Apr 26 11:16:11 localhost kernel: [   96.323262] WARNING: CPU: 0 PID: 
-2051 at lib/list_debug.c:59 __list_del_entry+0xa1/0xd0()
-Apr 26 11:16:11 localhost kernel: [   96.323264] list_del corruption. 
-prev->next should be ffff8802101196a0, but was 0000000000000001
-Apr 26 11:16:11 localhost kernel: [   96.323266] Modules linked in: fuse 
-ipt_MASQUERADE xt_CHECKSUM tun ip6t_rpfilter ip6t_REJECT xt_conntrack 
-ebtable_nat ebtable_broute bridge stp llc ebtable_filter ebtables 
-ip6table_nat nf_conntrack_ipv6 nf_defrag_ipv6 nf_nat_ipv6 
-ip6table_mangle ip6table_security ip6table_raw rfcomm ip6table_filter 
-bnep ip6_tables iptable_nat nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 
-nf_nat nf_conntrack iptable_mangle iptable_security iptable_raw iTCO_wdt 
-iTCO_vendor_support coretemp kvm_intel kvm crct10dif_pclmul crc32_pclmul 
-crc32c_intel ghash_clmulni_intel uvcvideo videobuf2_vmalloc microcode 
-videobuf2_memops snd_hda_codec_hdmi videobuf2_core videodev media 
-serio_raw btusb bluetooth intel_ips i2c_i801 6lowpan_iphc 
-snd_hda_codec_conexant snd_hda_codec_generic arc4 iwldvm mac80211 
-iwlwifi lpc_ich sdhci_pci mfd_core sdhci cfg80211 mmc_core snd_hda_intel 
-snd_hda_codec snd_hwdep snd_seq snd_seq_device snd_pcm e1000e snd_timer 
-ptp mei_me pps_core mei shpchp thinkpad_acpi snd ppdev soundcore rfkill 
-parport_pc parport acpi_cpufreq uinput firewire_ohci nouveau 
-firewire_core crc_itu_t i2c_algo_bit drm_kms_helper ttm drm mxm_wmi 
-i2c_core wmi video
-Apr 26 11:16:11 localhost kernel: [   96.323331] CPU: 0 PID: 2051 Comm: 
-cinnamon Not tainted 3.14.1-200.rt1.1.fc19.ccrma.x86_64+rt #1
-Apr 26 11:16:11 localhost kernel: [   96.323332] Hardware name: LENOVO 
-4313CTO/4313CTO, BIOS 6MET64WW (1.27 ) 07/15/2010
-Apr 26 11:16:11 localhost kernel: [   96.323334]  0000000000000000 
-000000008a5c11dc ffff8800ae715a88 ffffffff81707fca
-Apr 26 11:16:11 localhost kernel: [   96.323336]  ffff8800ae715ad0 
-ffff8800ae715ac0 ffffffff8108d03d ffff8802101196a0
-Apr 26 11:16:11 localhost kernel: [   96.323337]  ffff880210119b50 
-ffff880210119b50 ffff880210119b40 ffff88021a615648
-Apr 26 11:16:11 localhost kernel: [   96.323338] Call Trace:
-Apr 26 11:16:11 localhost kernel: [   96.323345]  [<ffffffff81707fca>] 
-dump_stack+0x4d/0x82
-Apr 26 11:16:11 localhost kernel: [   96.323351]  [<ffffffff8108d03d>] 
-warn_slowpath_common+0x7d/0xc0
-Apr 26 11:16:11 localhost kernel: [   96.323352]  [<ffffffff8108d0dc>] 
-warn_slowpath_fmt+0x5c/0x80
-Apr 26 11:16:11 localhost kernel: [   96.323354]  [<ffffffff8137c551>] 
-__list_del_entry+0xa1/0xd0
-Apr 26 11:16:11 localhost kernel: [   96.323355]  [<ffffffff8137c58d>] 
-list_del+0xd/0x30
-Apr 26 11:16:11 localhost kernel: [   96.323393]  [<ffffffffa0135593>] 
-nouveau_fence_signal+0x53/0x80 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323414]  [<ffffffffa0135678>] 
-nouveau_fence_update+0x48/0xa0 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323435]  [<ffffffffa0135f85>] 
-nouveau_fence_sync+0x45/0x80 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323456]  [<ffffffffa013aea8>] 
-validate_list+0xd8/0x2e0 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323478]  [<ffffffffa013c3d3>] 
-nouveau_gem_ioctl_pushbuf+0xaa3/0x13e0 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323500]  [<ffffffffa002ad02>] 
-drm_ioctl+0x4f2/0x620 [drm]
-Apr 26 11:16:11 localhost kernel: [   96.323506]  [<ffffffff810c1af4>] ? 
-migrate_enable+0x94/0x1c0
-Apr 26 11:16:11 localhost kernel: [   96.323527]  [<ffffffffa0132cfe>] 
-nouveau_drm_ioctl+0x4e/0x90 [nouveau]
-Apr 26 11:16:11 localhost kernel: [   96.323530]  [<ffffffff81203480>] 
-do_vfs_ioctl+0x2e0/0x4c0
-Apr 26 11:16:11 localhost kernel: [   96.323533]  [<ffffffff812fd8d6>] ? 
-file_has_perm+0xa6/0xb0
-Apr 26 11:16:11 localhost kernel: [   96.323535]  [<ffffffff812036e1>] 
-SyS_ioctl+0x81/0xa0
-Apr 26 11:16:11 localhost kernel: [   96.323538]  [<ffffffff81716769>] 
-system_call_fastpath+0x16/0x1b
-Apr 26 11:16:11 localhost kernel: [   96.323569] ---[ end trace 
-0000000000000002 ]---
+When running the command =93cyclictest -c 0 -t15 -p 95 -i 500 -n -l=20
+100000=94 I get the output:
 
--- Fernando
+policy: fifo: loadavg: 0.25 0.09 0.06 1/201 2349
+
+T: 0 ( 2335) P:95 I:500 C: 100000 Min: 11 Act: 19 Avg: 21 Max: 231
+
+T: 1 ( 2336) P:95 I:1000 C: 50000 Min: 10 Act: 13 Avg: 23 Max: 222
+
+T: 2 ( 2337) P:95 I:1500 C: 33333 Min: 11 Act: 19 Avg: 24 Max: 198
+
+T: 3 ( 2338) P:95 I:2000 C: 25000 Min: 10 Act: 16 Avg: 25 Max: 185
+
+T: 4 ( 2339) P:95 I:2500 C: 20000 Min: 12 Act: 22 Avg: 25 Max: 196
+
+T: 5 ( 2340) P:95 I:3000 C: 16666 Min: 11 Act: 20 Avg: 23 Max: 233
+
+T: 6 ( 2341) P:95 I:3500 C: 14285 Min: 12 Act: 19 Avg: 25 Max: 209
+
+T: 7 ( 2342) P:95 I:4000 C: 12500 Min: 10 Act: 13 Avg: 25 Max: 123
+
+T: 8 ( 2343) P:95 I:4500 C: 11111 Min: 11 Act: 65 Avg: 29 Max: 203
+
+T: 9 ( 2344) P:95 I:5000 C: 10000 Min: 11 Act: 26 Avg: 22 Max: 175
+
+T:10 ( 2345) P:95 I:5500 C: 9091 Min: 13 Act: 30 Avg: 31 Max: 165
+
+T:11 ( 2346) P:95 I:6000 C: 8333 Min: 12 Act: 19 Avg: 23 Max: 161
+
+T:12 ( 2347) P:95 I:6500 C: 7692 Min: 12 Act: 19 Avg: 24 Max: 194
+
+T:13 ( 2348) P:95 I:7000 C: 7142 Min: 12 Act: 64 Avg: 23 Max: 185
+
+T:14 ( 2349) P:95 I:7500 C: 6666 Min: 12 Act: 20 Avg: 23 Max: 192
+
+Now the thing is when getting the CPUs a little bit busy with something=
+=20
+else(e.g. simultaneous running =93while true; do echo loop; done=94 on =
+in=20
+another shell) the same cyclictest results in:
+
+root@host:[~]# cyclictest -c 0 -t15 -p 95 -i 500 -n -l 100000
+
+policy: fifo: loadavg: 1.78 0.54 0.22 3/203 2431
+
+T: 0 ( 2417) P:95 I:500 C: 100000 Min: 10 Act: 19 Avg: 16 Max: 44
+
+T: 1 ( 2418) P:95 I:1000 C: 49998 Min: 10 Act: 16 Avg: 15 Max: 45
+
+T: 2 ( 2419) P:95 I:1500 C: 33335 Min: 9 Act: 16 Avg: 15 Max: 33
+
+T: 3 ( 2420) P:95 I:2000 C: 25000 Min: 10 Act: 14 Avg: 16 Max: 40
+
+T: 4 ( 2421) P:95 I:2500 C: 20000 Min: 10 Act: 15 Avg: 16 Max: 33
+
+T: 5 ( 2422) P:95 I:3000 C: 16667 Min: 10 Act: 15 Avg: 16 Max: 60
+
+T: 6 ( 2423) P:95 I:3500 C: 14286 Min: 10 Act: 14 Avg: 16 Max: 35
+
+T: 7 ( 2424) P:95 I:4000 C: 12500 Min: 12 Act: 24 Avg: 16 Max: 33
+
+T: 8 ( 2425) P:95 I:4500 C: 11111 Min: 11 Act: 15 Avg: 16 Max: 34
+
+T: 9 ( 2426) P:95 I:5000 C: 10000 Min: 10 Act: 15 Avg: 17 Max: 46
+
+T:10 ( 2427) P:95 I:5500 C: 9091 Min: 10 Act: 15 Avg: 15 Max: 38
+
+T:11 ( 2428) P:95 I:6000 C: 8333 Min: 10 Act: 13 Avg: 15 Max: 35
+
+T:12 ( 2429) P:95 I:6500 C: 7692 Min: 11 Act: 13 Avg: 16 Max: 42
+
+T:13 ( 2430) P:95 I:7000 C: 7143 Min: 11 Act: 12 Avg: 16 Max: 32
+
+T:14 ( 2431) P:95 I:7500 C: 6666 Min: 11 Act: 15 Avg: 17 Max: 37
+
+As can be seen the max-latency improved!
+
+It=92s like ordering in an empty restaurant. Takes hours to get the din=
+ner=20
+if you are the only customer. As soon as some more people are around=20
+everything is getting faster...
+
+So my guess is that the cpu goes into some sort of powersave mode from=20
+time to time. The wakeup from these powersave state results in=20
+latencies. Currently I am looking for a proper solution to this problem=
+=20
+and what I have tried so far:
+
+- BIOS upgrade
+- Upgraded to linux-3.10.12-rt25
+- Disabling all sort of powersave modes in the kernel config
+- Activated cpufreq-performance (which seems to be ignored anyway)
+- Searched the BIOS for any powersave modes to deactivate (none found)
+
+I got rather clueless on what else to try! Does anyone has a helping=20
+hint on how to solve this one???
+
+With many thanks in advance,
+
+Stefan J.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
