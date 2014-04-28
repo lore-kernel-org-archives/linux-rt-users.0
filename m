@@ -1,80 +1,70 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Mon, 28 Apr 2014 10:18:05 -0400
-Message-ID: <20140428101805.75032f45@gandalf.local.home>
-References: <20140411185739.GA6644@linutronix.de>
-	<1397918766.5436.16.camel@marge.simpson.net>
-	<1398411635.11930.45.camel@marge.simpson.net>
-	<1398501491.12941.5.camel@marge.simpson.net>
-	<1398520699.28726.22.camel@marge.simpson.net>
-	<1398661784.30930.33.camel@marge.simpson.net>
-	<1398676186.30930.49.camel@marge.simpson.net>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: Difficulties with cyclictest on AMD CPU
+Date: Mon, 28 Apr 2014 09:24:24 -0500
+Message-ID: <20140428092424.71629805@sluggy>
+References: <535CE374.7050907@gmail.com>
 Mime-Version: 1.0
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/mlOfOkOjM2ErZez9VkSA4Sb"; protocol="application/pgp-signature"
+Cc: linux-rt-users@vger.kernel.org
+To: Stefan Jenisch <stefan.jenisch@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:37976 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751635AbaD1OY1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 28 Apr 2014 10:24:27 -0400
+In-Reply-To: <535CE374.7050907@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+--Sig_/mlOfOkOjM2ErZez9VkSA4Sb
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1398676186.30930.49.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: quoted-printable
 
-On Mon, 28 Apr 2014 11:09:46 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
- 
-> migrate_disable-pushd-down-in-atomic_dec_and_spin_lo.patch
-> 
-> bug: migrate_disable() after blocking is too late.
-> 
-> @@ -1028,12 +1028,12 @@ int atomic_dec_and_spin_lock(atomic_t *a
->         /* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
->         if (atomic_add_unless(atomic, -1, 1))
->                 return 0;
-> -       migrate_disable();
->         rt_spin_lock(lock);
-> -       if (atomic_dec_and_test(atomic))
-> +       if (atomic_dec_and_test(atomic)){
-> +               migrate_disable();
+On Sun, 27 Apr 2014 13:01:08 +0200
+Stefan Jenisch <stefan.jenisch@gmail.com> wrote:
+>=20
+> So my guess is that the cpu goes into some sort of powersave mode from=20
+> time to time. The wakeup from these powersave state results in=20
+> latencies. Currently I am looking for a proper solution to this problem=20
+> and what I have tried so far:
+>=20
+> - BIOS upgrade
+> - Upgraded to linux-3.10.12-rt25
+> - Disabling all sort of powersave modes in the kernel config
+> - Activated cpufreq-performance (which seems to be ignored anyway)
+> - Searched the BIOS for any powersave modes to deactivate (none found)
+>=20
+> I got rather clueless on what else to try! Does anyone has a helping=20
+> hint on how to solve this one???
+>=20
+> With many thanks in advance,
+>=20
+> Stefan J.
+>=20
 
-Makes sense, as the CPU can go offline right after the lock is grabbed
-and before the migrate_disable() is called.
+Did you get this message when starting cyclictest?
 
-Seems that migrate_disable() must be called before taking the lock as
-it is done in every other location.
-
--- Steve
+# /dev/cpu_dma_latency set to 0us
 
 
->                 return 1;
-> +       }
->         rt_spin_unlock(lock);
-> -       migrate_enable();
->         return 0;
->  }
->  EXPORT_SYMBOL(atomic_dec_and_spin_lock);
-> 
-> read_lock-migrate_disable-pushdown-to-rt_read_lock.patch
-> 
-> bug: ditto.
-> 
-> @@ -244,8 +246,10 @@ void __lockfunc rt_read_lock(rwlock_t *r
->         /*
->          * recursive read locks succeed when current owns the lock
->          */
-> -       if (rt_mutex_owner(lock) != current)
-> +       if (rt_mutex_owner(lock) != current) {
->                 __rt_spin_lock(lock);
-> +               migrate_disable();
-> +       }
->         rwlock->read_depth++;
->  }
-> 
-> Moving that migrate_disable() up will likely fix my hotplug troubles.
-> I'll find out when I get back from physical torture (therapy) session.
-> 
-> -Mike
+That's a hack that is supposed to prevent the system from entering
+deeper C-states than C-state 0.=20
+
+What version of rt-tests are you running?
+
+Clark
+
+--Sig_/mlOfOkOjM2ErZez9VkSA4Sb
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iEYEARECAAYFAlNeZJgACgkQHyuj/+TTEp0BQACgtUzRLz3kkmhrzJqKhnnIGOcu
+epwAoI7wrOHBdcpT27Hr/iOv0O1NrWfe
+=MzL2
+-----END PGP SIGNATURE-----
+
+--Sig_/mlOfOkOjM2ErZez9VkSA4Sb--
