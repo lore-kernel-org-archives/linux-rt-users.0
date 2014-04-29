@@ -1,46 +1,55 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/4] Linux 3.10.37-rt38-rc2
-Date: Tue, 29 Apr 2014 10:31:02 -0400
-Message-ID: <20140429143112.642149005@goodmis.org>
-References: <20140429143058.198462905@goodmis.org>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [PATCH RT 0/3] Linux 3.2.57-rt84-rc1
+Date: Tue, 29 Apr 2014 19:48:37 +0400
+Message-ID: <535FC9D5.4040107@pavlinux.ru>
+References: <20140427143925.177486597@goodmis.org>	<535D8180.1020607@pavlinux.ru> <20140428093956.78d0f3ea@gandalf.local.home>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:59262 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757815AbaD2ObP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Apr 2014 10:31:15 -0400
-Content-Disposition: inline; filename=0004-Linux-3.10.37-rt38-rc2.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140428093956.78d0f3ea@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.10.37-rt38-rc2 stable review patch.
-If anyone has any objections, please let me know.
-
-------------------
-
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
-
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/localversion-rt b/localversion-rt
-index a3b2408..43245dc 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt37
-+-rt38-rc2
--- 
-1.8.5.3
+28.04.2014 17:39, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> On Mon, 28 Apr 2014 02:15:28 +0400
+> Pavel Vasilyev <pavel@pavlinux.ru> wrote:
+>
+>> 27.04.2014 18:39, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>>> Dear RT Folks,
+>>>
+>>> This is the RT stable review cycle of patch 3.2.57-rt84-rc1.
+>>>
+>>> Please scream at me if I messed something up. Please test the patch=
+es too.
+>>
+>>
+>> More than two years our thin clients (about 5000 machines, Intel Ato=
+m, x86_32)
+>> work with RCU_BOOST.
+>>
+>> CONFIG_RCU_BOOST=3Dy
+>> CONFIG_RCU_BOOST_PRIO=3D80
+>> CONFIG_RCU_BOOST_DELAY=3D400
+>>
+>
+> Is this just a confirmation of having RCU_BOOST default y for
+> PREEMPT_RT is a good thing?
 
 
+Only 3.2-rt
+
+
+--=20
+
+                                                          Pavel.
