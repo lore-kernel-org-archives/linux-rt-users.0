@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/4] rcu: make RCU_BOOST default on RT
-Date: Tue, 29 Apr 2014 10:31:01 -0400
-Message-ID: <20140429143112.488914460@goodmis.org>
+Subject: [PATCH RT 4/4] Linux 3.10.37-rt38-rc2
+Date: Tue, 29 Apr 2014 10:31:02 -0400
+Message-ID: <20140429143112.642149005@goodmis.org>
 References: <20140429143058.198462905@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -9,17 +9,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:60932 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:59262 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757792AbaD2ObP (ORCPT
+	by vger.kernel.org with ESMTP id S1757815AbaD2ObP (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Tue, 29 Apr 2014 10:31:15 -0400
-Content-Disposition: inline; filename=0003-rcu-make-RCU_BOOST-default-on-RT.patch
+Content-Disposition: inline; filename=0004-Linux-3.10.37-rt38-rc2.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,33 +27,19 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Since it is no longer invoked from the softirq people run into OOM more
-often if the priority of the RCU thread is too low. Making boosting
-default on RT should help in those case and it can be switched off if
-someone knows better.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- init/Kconfig | 2 +-
+ localversion-rt | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/init/Kconfig b/init/Kconfig
-index 6c3a4fd..bd3612d 100644
---- a/init/Kconfig
-+++ b/init/Kconfig
-@@ -604,7 +604,7 @@ config TREE_RCU_TRACE
- config RCU_BOOST
- 	bool "Enable RCU priority boosting"
- 	depends on RT_MUTEXES && PREEMPT_RCU
--	default n
-+	default y if PREEMPT_RT_FULL
- 	help
- 	  This option boosts the priority of preempted RCU readers that
- 	  block the current preemptible RCU grace period for too long.
+diff --git a/localversion-rt b/localversion-rt
+index a3b2408..43245dc 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt37
++-rt38-rc2
 -- 
 1.8.5.3
 
