@@ -1,49 +1,101 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/4] net: gianfar: do not try to cleanup TX packets
- if they are not done
-Date: Tue, 29 Apr 2014 10:25:05 -0400
-Message-ID: <20140429102505.1d52f93c@gandalf.local.home>
-References: <20140427143119.898655303@goodmis.org>
-	<20140427143140.384915886@goodmis.org>
-	<535DF744.60606@linutronix.de>
-	<535FB453.2060100@windriver.com>
+Subject: [PATCH RT 2/4] net: gianfar: do not try to cleanup TX packets if they are not done
+Date: Tue, 29 Apr 2014 10:31:00 -0400
+Message-ID: <20140429143112.349213407@goodmis.org>
+References: <20140429143058.198462905@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	<linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=UTF-8
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <535FB453.2060100@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:15907 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1757792AbaD2ObN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Apr 2014 10:31:13 -0400
+Content-Disposition: inline; filename=0002-net-gianfar-do-not-try-to-cleanup-TX-packets-if-they.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 29 Apr 2014 10:16:51 -0400
-Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
+3.10.37-rt38-rc2 stable review patch.
+If anyone has any objections, please let me know.
 
+------------------
+
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+
+What I observe is that the TX queue is not empty and does not make any
+progress. gfar_clean_tx_ring() does not clean up the packet because it
+is not completed yet.
+The root cause is that the DMA engine did not start yet (it was
+preempted before doing so) and that dumb loop, loops until that packet
+is gone.
+This is broken since c233cf4 ("gianfar: Fix tx napi polling").
+
+What remains are spurious interrupts if CPU0 cleans up TX packages and
+CPU1 returns with IRQ_NONE.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[ added return howmany; ]
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ drivers/net/ethernet/freescale/gianfar.c | 12 ++++++++----
+ 1 file changed, 8 insertions(+), 4 deletions(-)
+
+diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
+index 5c0efcc..b87a8c9 100644
+--- a/drivers/net/ethernet/freescale/gianfar.c
++++ b/drivers/net/ethernet/freescale/gianfar.c
+@@ -132,7 +132,6 @@ static int gfar_poll(struct napi_struct *napi, int budget);
+ static void gfar_netpoll(struct net_device *dev);
+ #endif
+ int gfar_clean_rx_ring(struct gfar_priv_rx_q *rx_queue, int rx_work_limit);
+-static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue);
+ static void gfar_process_frame(struct net_device *dev, struct sk_buff *skb,
+ 			       int amount_pull, struct napi_struct *napi);
+ void gfar_halt(struct net_device *dev);
+@@ -2475,7 +2474,7 @@ static void gfar_align_skb(struct sk_buff *skb)
+ }
  
-> Sanity boot tested the 3.10 rc1 on a sbc8548 (UP PPC with gianfar), with
-> the one-liner added as follows:
-> 
-> diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-> index 8aecc1d81395..b87a8c919c3e 100644
-> --- a/drivers/net/ethernet/freescale/gianfar.c
-> +++ b/drivers/net/ethernet/freescale/gianfar.c
-> @@ -2574,6 +2574,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
->         tx_queue->dirty_tx = bdp;
->  
->         netdev_tx_completed_queue(txq, howmany, bytes_sent);
-> +       return howmany;
+ /* Interrupt Handler for Transmit complete */
+-static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
++static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+ {
+ 	struct net_device *dev = tx_queue->dev;
+ 	struct netdev_queue *txq;
+@@ -2575,6 +2574,7 @@ static void gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+ 	tx_queue->dirty_tx = bdp;
+ 
+ 	netdev_tx_completed_queue(txq, howmany, bytes_sent);
++	return howmany;
+ }
+ 
+ static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
+@@ -2856,10 +2856,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
+ 			tx_queue = priv->tx_queue[i];
+ 			/* run Tx cleanup to completion */
+ 			if (tx_queue->tx_skbuff[tx_queue->skb_dirtytx]) {
+-				gfar_clean_tx_ring(tx_queue);
+-				has_tx_work = 1;
++				int ret;
++
++				ret = gfar_clean_tx_ring(tx_queue);
++				if (ret)
++					has_tx_work++;
+ 			}
+ 		}
++		work_done += has_tx_work;
+ 
+ 		for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
+ 			/* skip queue if not active */
+-- 
+1.8.5.3
 
-That's the change I added to 3.10-rc2. I'll post it soon if you want to
-test it.
 
--- Steve
-
->  }
->  
->  static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
