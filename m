@@ -1,76 +1,49 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 2/4] net: gianfar: do not try to cleanup TX packets
  if they are not done
-Date: Tue, 29 Apr 2014 10:16:51 -0400
-Message-ID: <535FB453.2060100@windriver.com>
-References: <20140427143119.898655303@goodmis.org> <20140427143140.384915886@goodmis.org> <535DF744.60606@linutronix.de>
+Date: Tue, 29 Apr 2014 10:25:05 -0400
+Message-ID: <20140429102505.1d52f93c@gandalf.local.home>
+References: <20140427143119.898655303@goodmis.org>
+	<20140427143140.384915886@goodmis.org>
+	<535DF744.60606@linutronix.de>
+	<535FB453.2060100@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	<linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	<linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:50066 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933360AbaD2OQ4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Apr 2014 10:16:56 -0400
-In-Reply-To: <535DF744.60606@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <535FB453.2060100@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 14-04-28 02:37 AM, Sebastian Andrzej Siewior wrote:
-> On 04/27/2014 04:31 PM, Steven Rostedt wrote:
->> diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
->> index 5c0efcc..8aecc1d 100644
->> --- a/drivers/net/ethernet/freescale/gianfar.c
->> +++ b/drivers/net/ethernet/freescale/gianfar.c
->> @@ -2856,10 +2855,14 @@ static int gfar_poll(struct napi_struct *napi, int budget)
->>  			tx_queue = priv->tx_queue[i];
->>  			/* run Tx cleanup to completion */
->>  			if (tx_queue->tx_skbuff[tx_queue->skb_dirtytx]) {
->> -				gfar_clean_tx_ring(tx_queue);
->> -				has_tx_work = 1;
->> +				int ret;
->> +
->> +				ret = gfar_clean_tx_ring(tx_queue);
->> +				if (ret)
->> +					has_tx_work++;
->>  			}
->>  		}
->> +		work_done += has_tx_work;
->>  
->>  		for_each_set_bit(i, &gfargrp->rx_bit_map, priv->num_rx_queues) {
->>  			/* skip queue if not active */
-> 
-> The 3.14-RT version of the patch should have an additional return
-> statement here which I forgot initially.
+On Tue, 29 Apr 2014 10:16:51 -0400
+Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
 
-Sanity boot tested the 3.10 rc1 on a sbc8548 (UP PPC with gianfar), with
-the one-liner added as follows:
-
-diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-index 8aecc1d81395..b87a8c919c3e 100644
---- a/drivers/net/ethernet/freescale/gianfar.c
-+++ b/drivers/net/ethernet/freescale/gianfar.c
-@@ -2574,6 +2574,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
-        tx_queue->dirty_tx = bdp;
  
-        netdev_tx_completed_queue(txq, howmany, bytes_sent);
-+       return howmany;
- }
- 
- static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
-
-Paul.
---
-
-
+> Sanity boot tested the 3.10 rc1 on a sbc8548 (UP PPC with gianfar), with
+> the one-liner added as follows:
 > 
-> Sebastian
-> 
+> diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
+> index 8aecc1d81395..b87a8c919c3e 100644
+> --- a/drivers/net/ethernet/freescale/gianfar.c
+> +++ b/drivers/net/ethernet/freescale/gianfar.c
+> @@ -2574,6 +2574,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+>         tx_queue->dirty_tx = bdp;
+>  
+>         netdev_tx_completed_queue(txq, howmany, bytes_sent);
+> +       return howmany;
+
+That's the change I added to 3.10-rc2. I'll post it soon if you want to
+test it.
+
+-- Steve
+
+>  }
+>  
+>  static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
