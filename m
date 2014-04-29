@@ -1,55 +1,60 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [PATCH RT 0/3] Linux 3.2.57-rt84-rc1
-Date: Tue, 29 Apr 2014 19:48:37 +0400
-Message-ID: <535FC9D5.4040107@pavlinux.ru>
-References: <20140427143925.177486597@goodmis.org>	<535D8180.1020607@pavlinux.ru> <20140428093956.78d0f3ea@gandalf.local.home>
-Reply-To: pavel@pavlinux.ru
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [RFC PATCH RT] netconsole: enable netconsole on PREEMPT_RT
+Date: Tue, 29 Apr 2014 14:55:04 -0300
+Message-ID: <31fa5b74f8e6267f9b7f906c791d1ddf7d550771.1398788759.git.bristot@redhat.com>
+Cc: linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140428093956.78d0f3ea@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-28.04.2014 17:39, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Mon, 28 Apr 2014 02:15:28 +0400
-> Pavel Vasilyev <pavel@pavlinux.ru> wrote:
->
->> 27.04.2014 18:39, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->>> Dear RT Folks,
->>>
->>> This is the RT stable review cycle of patch 3.2.57-rt84-rc1.
->>>
->>> Please scream at me if I messed something up. Please test the patch=
-es too.
->>
->>
->> More than two years our thin clients (about 5000 machines, Intel Ato=
-m, x86_32)
->> work with RCU_BOOST.
->>
->> CONFIG_RCU_BOOST=3Dy
->> CONFIG_RCU_BOOST_PRIO=3D80
->> CONFIG_RCU_BOOST_DELAY=3D400
->>
->
-> Is this just a confirmation of having RCU_BOOST default y for
-> PREEMPT_RT is a good thing?
+Dear RT Folks,
 
+This patch enables the netconsole on PREEMPT_RT_FULL, netconsole
+was disabled on commit:
+cb7cb77 kconfig-disable-a-few-options-rt.patch
 
-Only 3.2-rt
+I tested the netconsole on three machines:
 
+- Intel Core i5 (4 cpus) - Local network
+- Intel Xeon (32 cpus)   - Remote network
+- KVM VM (on a Core i7)  - Virtual network
 
---=20
+On these machines I build the kernel 3.10.34-rt34 + netconsole
+built as module. In order to execute some printks, I run a small
+benchmark that runs as a module. To analyse the output I captured
+the netconsole messages using Wireshark.
 
-                                                          Pavel.
+On all cases, the tests passed without any error:
+
+- No error messages from the kernel
+- No missed messages
+- No out of order messages
+
+I ran +1 hour tests on each machine. The test using the Xeon machine
+ran by around 10 hours. On this test I received 317149 netconsole's
+messages.
+
+I also read the code and ran some traces (using the ftrace's
+function_graph). In the traces that I read, the netconsole code never
+broke the rt lock assumptions.
+
+Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+---
+ drivers/net/Kconfig | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
+index 096de88..3835321 100644
+--- a/drivers/net/Kconfig
++++ b/drivers/net/Kconfig
+@@ -164,7 +164,6 @@ config VXLAN
+ 
+ config NETCONSOLE
+ 	tristate "Network console logging support"
+-	depends on !PREEMPT_RT_FULL
+ 	---help---
+ 	If you want to log kernel messages over the network, enable this.
+ 	See <file:Documentation/networking/netconsole.txt> for details.
+-- 
+1.9.0
