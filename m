@@ -1,60 +1,108 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [RFC PATCH RT] netconsole: enable netconsole on PREEMPT_RT
-Date: Tue, 29 Apr 2014 14:55:04 -0300
-Message-ID: <31fa5b74f8e6267f9b7f906c791d1ddf7d550771.1398788759.git.bristot@redhat.com>
-Cc: linux-kernel@vger.kernel.org
-To: linux-rt-users@vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Tue, 29 Apr 2014 20:13:08 -0400
+Message-ID: <20140429201308.63292691@gandalf.local.home>
+References: <20140411185739.GA6644@linutronix.de>
+	<1397918766.5436.16.camel@marge.simpson.net>
+	<1398411635.11930.45.camel@marge.simpson.net>
+	<1398501491.12941.5.camel@marge.simpson.net>
+	<1398520699.28726.22.camel@marge.simpson.net>
+	<1398661784.30930.33.camel@marge.simpson.net>
+	<1398676186.30930.49.camel@marge.simpson.net>
+	<20140428101805.75032f45@gandalf.local.home>
+	<1398695832.14475.10.camel@marge.simpson.net>
+	<1398748869.5514.81.camel@marge.simpson.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1398748869.5514.81.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT Folks,
+On Tue, 29 Apr 2014 07:21:09 +0200
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-This patch enables the netconsole on PREEMPT_RT_FULL, netconsole
-was disabled on commit:
-cb7cb77 kconfig-disable-a-few-options-rt.patch
+> On Mon, 2014-04-28 at 16:37 +0200, Mike Galbraith wrote: 
+> 
+> > > Seems that migrate_disable() must be called before taking the lock as
+> > > it is done in every other location.
+> > 
+> > And for tasklist_lock, seems you also MUST do that prior to trylock as
+> > well, else you'll run afoul of the hotplug beast.
+> 
+> Bah.  Futzing with dmesg while stress script is running is either a very
+> bad idea, or a very good test.  Both virgin 3.10-rt and 3.12-rt with new
+> bugs squashed will deadlock.
+> 
+> Too bad I kept on testing, I liked the notion that hotplug was solid ;-)
 
-I tested the netconsole on three machines:
+I was able to stress cpu hotplug on 3.12-rt after applying the
+following patch.
 
-- Intel Core i5 (4 cpus) - Local network
-- Intel Xeon (32 cpus)   - Remote network
-- KVM VM (on a Core i7)  - Virtual network
+If there's no complaints about it. I'm going to add this to the 3.12-rt
+stable tree. As without it, it fails horribly with the cpu hotplug
+stress test, and I wont release a stable kernel that does that.
 
-On these machines I build the kernel 3.10.34-rt34 + netconsole
-built as module. In order to execute some printks, I run a small
-benchmark that runs as a module. To analyse the output I captured
-the netconsole messages using Wireshark.
+-- Steve
 
-On all cases, the tests passed without any error:
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-- No error messages from the kernel
-- No missed messages
-- No out of order messages
-
-I ran +1 hour tests on each machine. The test using the Xeon machine
-ran by around 10 hours. On this test I received 317149 netconsole's
-messages.
-
-I also read the code and ran some traces (using the ftrace's
-function_graph). In the traces that I read, the netconsole code never
-broke the rt lock assumptions.
-
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
----
- drivers/net/Kconfig | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
-index 096de88..3835321 100644
---- a/drivers/net/Kconfig
-+++ b/drivers/net/Kconfig
-@@ -164,7 +164,6 @@ config VXLAN
+diff --git a/kernel/rt.c b/kernel/rt.c
+index bb72347..4f2a613 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -180,12 +180,15 @@ EXPORT_SYMBOL(_mutex_unlock);
+  */
+ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ {
+-	int ret = rt_mutex_trylock(&rwlock->lock);
++	int ret;
++
++	migrate_disable();
++	ret = rt_mutex_trylock(&rwlock->lock);
  
- config NETCONSOLE
- 	tristate "Network console logging support"
--	depends on !PREEMPT_RT_FULL
- 	---help---
- 	If you want to log kernel messages over the network, enable this.
- 	See <file:Documentation/networking/netconsole.txt> for details.
--- 
-1.9.0
+-	if (ret) {
++	if (ret)
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-		migrate_disable();
+-	}
++	else
++		migrate_enable();
+ 
+ 	return ret;
+ }
+@@ -212,11 +215,12 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	 * write locked.
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
++		migrate_disable();
+ 		ret = rt_mutex_trylock(lock);
+-		if (ret) {
++		if (ret)
+ 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-			migrate_disable();
+-		}
++		else
++			migrate_enable();
+ 	} else if (!rwlock->read_depth) {
+ 		ret = 0;
+ 	}
+@@ -245,8 +249,8 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+-		__rt_spin_lock(lock);
+ 		migrate_disable();
++		__rt_spin_lock(lock);
+ 	}
+ 	rwlock->read_depth++;
+ }
