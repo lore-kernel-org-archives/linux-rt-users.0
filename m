@@ -1,7 +1,7 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Wed, 30 Apr 2014 16:45:45 +0200
-Message-ID: <1398869145.26071.148.camel@marge.simpson.net>
+Date: Wed, 30 Apr 2014 16:54:46 +0200
+Message-ID: <1398869686.26071.151.camel@marge.simpson.net>
 References: <20140411185739.GA6644@linutronix.de>
 	 <1397918766.5436.16.camel@marge.simpson.net>
 	 <1398411635.11930.45.camel@marge.simpson.net>
@@ -18,6 +18,7 @@ References: <20140411185739.GA6644@linutronix.de>
 	 <20140430091550.1177bc90@gandalf.local.home>
 	 <1398866403.26071.125.camel@marge.simpson.net>
 	 <20140430101919.70b2f622@gandalf.local.home>
+	 <20140430103308.1e46dd18@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -30,39 +31,44 @@ Cc: Nicholas Mc Guire <der.herr@hofr.at>,
 	Clark Williams <williams@redhat.com>
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140430101919.70b2f622@gandalf.local.home>
+In-Reply-To: <20140430103308.1e46dd18@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2014-04-30 at 10:19 -0400, Steven Rostedt wrote: 
-> On Wed, 30 Apr 2014 16:00:03 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+On Wed, 2014-04-30 at 10:33 -0400, Steven Rostedt wrote: 
+> On Wed, 30 Apr 2014 10:19:19 -0400
+> Steven Rostedt <rostedt@goodmis.org> wrote:
 > 
-> > On Wed, 2014-04-30 at 09:15 -0400, Steven Rostedt wrote: 
-> > > On Wed, 30 Apr 2014 15:06:29 +0200
-> > > Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> > > 
-> > > 
-> > > > The End.. I hope.  I've had enough hotplug entertainment for a while.
-> > > 
-> > > Not for me. 3.14-rt stress-cpu-hotplug crashes quickly. But it's a
-> > > different issues than what my patch addressed. I'm still debugging it.
-> > 
-> > If you didn't fix the two bugs I showed, and (wisely) didn't look at the
-> > beautiful lglock patches I posted (no frozen shark, I'm disappointed;),
-> > your patch won't help.
+> > I'm testing it now. But could you please post them as regular patches.
+> > They were attachments to this thread, and were not something that stood
+> > out.
 > 
-> Mike,
-> 
-> I'm testing it now. But could you please post them as regular patches.
-> They were attachments to this thread, and were not something that stood
-> out.
+> With your two patches, it still crashes exactly the same way. I
+> probably should remove my debug just in case, but I think this box has
+> another problem with it.
 
-They were meant to not stick out :)  I showed what I did to deal with
-that damn lglock, but showing them at all felt more akin to chumming the
-waters for frozen sharks than posting patches.
+You killed this hunk of hotplug-light-get-online-cpus.patch
 
-'spose I could try to muster up some courage, showing them put a pretty
-big dent in my supply.
+@@ -333,7 +449,7 @@ static int __ref _cpu_down(unsigned int
+                /* CPU didn't die: tell everyone.  Can't complain. */
+                smpboot_unpark_threads(cpu);
+                cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
+-               goto out_release;
++               goto out_cancel;
+        }
+        BUG_ON(cpu_online(cpu));
 
--Mike
+..and fixed this too?
+
+Another little bug.  This hunk of patches/stomp-machine-raw-lock.patch
+should be while (atomic_read(&done.nr_todo)) 
+
+@@ -647,7 +671,7 @@ int stop_machine_from_inactive_cpu(int (
+        ret = multi_cpu_stop(&msdata);
+
+        /* Busy wait for completion. */
+-       while (!completion_done(&done.completion))
++       while (!atomic_read(&done.nr_todo))
+                cpu_relax();
+
+        mutex_unlock(&stop_cpus_mutex);
