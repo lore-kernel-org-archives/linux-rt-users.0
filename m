@@ -1,73 +1,64 @@
-From: Qiang Huang <h.huangqiang@huawei.com>
-Subject: [RFC PATCH] tasklet: correct the comments about tasklet schedule
-Date: Wed, 30 Apr 2014 12:02:09 +0800
-Message-ID: <536075C1.2080704@huawei.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Wed, 30 Apr 2014 09:43:13 +0200
+Message-ID: <1398843793.26071.52.camel@marge.simpson.net>
+References: <20140411185739.GA6644@linutronix.de>
+	 <1397918766.5436.16.camel@marge.simpson.net>
+	 <1398411635.11930.45.camel@marge.simpson.net>
+	 <1398501491.12941.5.camel@marge.simpson.net>
+	 <1398520699.28726.22.camel@marge.simpson.net>
+	 <1398661784.30930.33.camel@marge.simpson.net>
+	 <1398676186.30930.49.camel@marge.simpson.net>
+	 <20140428101805.75032f45@gandalf.local.home>
+	 <1398695832.14475.10.camel@marge.simpson.net>
+	 <1398748869.5514.81.camel@marge.simpson.net>
+	 <20140429201308.63292691@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	zhangwei <jovi.zhangwei@huawei.com>,
-	"Li Zefan" <lizefan@huawei.com>, <peterz@infradead.org>
-To: Steven Rostedt <rostedt@goodmis.org>, <mingo@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from szxga01-in.huawei.com ([119.145.14.64]:40259 "EHLO
-	szxga01-in.huawei.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750799AbaD3EDr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Apr 2014 00:03:47 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140429201308.63292691@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+On Tue, 2014-04-29 at 20:13 -0400, Steven Rostedt wrote: 
+> On Tue, 29 Apr 2014 07:21:09 +0200
+> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+> 
+> > On Mon, 2014-04-28 at 16:37 +0200, Mike Galbraith wrote: 
+> > 
+> > > > Seems that migrate_disable() must be called before taking the lock as
+> > > > it is done in every other location.
+> > > 
+> > > And for tasklist_lock, seems you also MUST do that prior to trylock as
+> > > well, else you'll run afoul of the hotplug beast.
+> > 
+> > Bah.  Futzing with dmesg while stress script is running is either a very
+> > bad idea, or a very good test.  Both virgin 3.10-rt and 3.12-rt with new
+> > bugs squashed will deadlock.
+> > 
+> > Too bad I kept on testing, I liked the notion that hotplug was solid ;-)
+> 
+> I was able to stress cpu hotplug on 3.12-rt after applying the
+> following patch.
+> 
+> If there's no complaints about it. I'm going to add this to the 3.12-rt
+> stable tree. As without it, it fails horribly with the cpu hotplug
+> stress test, and I wont release a stable kernel that does that.
 
-Ingo's patch:
-00853150572df2	tasklet: Prevent tasklets from going into infinite spin in RT
-changed behavior about tasklet in NO-RT scenario, but I found some suspicious
-from code and comments.
+My local boxen are happy, 64 core box with 14-rt seems happy as well,
+though I couldn't let it burn for long.
 
-Like the below patch says, if a tasklet is already running on another CPU,
-then it would have RUN flag and have no SCHED flag, so when we call
-tasklet_schedule, then in __tasklet_common_schedule(), tasklet_trylock()
-will return false, and the tasklet won't be added to tasklet_vec list,
-so there is no reschedule, right?
+BTW, that dmesg business went into hiding.  I didn't have time to put
+virgin 10-rt back on and play around poking both kernels this that and
+the other way again, but seems there's some phase-of-moon factor there.
 
-Another, the comments said schedule called from tasklet itself would cause
-lockup, like it mentioned above, in tasklet function, the tasklet has RUN
-flag, and have no SCHED flag, so when it call tasklet_schedule, it will
-only meet tasklet_trylock return false, then nothing happened. I think this
-should not be any lockup.
-
-After all, if my understanding is correct, it changed the behavior when
-tasklet scheduled itself, this would affect some kernel modules using
-tasklet, is this what we want in RT? If so, should we use RT_FULL config
-to isolate this affect?
-
---------------------
-
-Correct the comments as the code really do.
-
-Signed-off-by: Qiang Huang <h.huangqiang@huawei.com>
----
- include/linux/interrupt.h | 5 ++---
- 1 file changed, 2 insertions(+), 3 deletions(-)
-
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index fb05761..e9d73e6 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -514,9 +514,8 @@ extern void __send_remote_softirq(struct call_single_data *cp, int cpu,
-      to be executed on some cpu at least once after this.
-    * If the tasklet is already scheduled, but its execution is still not
-      started, it will be executed only once.
--   * If this tasklet is already running on another CPU, it is rescheduled
--     for later.
--   * Schedule must not be called from the tasklet itself (a lockup occurs)
-+   * If this tasklet is already running on another CPU (or schedule is called
-+     from tasklet itself), it wound not be rescheduled.
-    * Tasklet is strictly serialized wrt itself, but not
-      wrt another tasklets. If client needs some intertask synchronization,
-      he makes it with spinlocks.
---
-1.8.3
-
+-Mike
