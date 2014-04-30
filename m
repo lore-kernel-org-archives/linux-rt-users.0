@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Wed, 30 Apr 2014 10:19:19 -0400
-Message-ID: <20140430101919.70b2f622@gandalf.local.home>
+Date: Wed, 30 Apr 2014 10:33:08 -0400
+Message-ID: <20140430103308.1e46dd18@gandalf.local.home>
 References: <20140411185739.GA6644@linutronix.de>
 	<1397918766.5436.16.camel@marge.simpson.net>
 	<1398411635.11930.45.camel@marge.simpson.net>
@@ -17,45 +17,33 @@ References: <20140411185739.GA6644@linutronix.de>
 	<1398863189.26071.97.camel@marge.simpson.net>
 	<20140430091550.1177bc90@gandalf.local.home>
 	<1398866403.26071.125.camel@marge.simpson.net>
+	<20140430101919.70b2f622@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Clark Williams <williams@redhat.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1398866403.26071.125.camel@marge.simpson.net>
+In-Reply-To: <20140430101919.70b2f622@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 30 Apr 2014 16:00:03 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+On Wed, 30 Apr 2014 10:19:19 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On Wed, 2014-04-30 at 09:15 -0400, Steven Rostedt wrote: 
-> > On Wed, 30 Apr 2014 15:06:29 +0200
-> > Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> > 
-> > 
-> > > The End.. I hope.  I've had enough hotplug entertainment for a while.
-> > 
-> > Not for me. 3.14-rt stress-cpu-hotplug crashes quickly. But it's a
-> > different issues than what my patch addressed. I'm still debugging it.
-> 
-> If you didn't fix the two bugs I showed, and (wisely) didn't look at the
-> beautiful lglock patches I posted (no frozen shark, I'm disappointed;),
-> your patch won't help.
+> I'm testing it now. But could you please post them as regular patches.
+> They were attachments to this thread, and were not something that stood
+> out.
 
-Mike,
-
-I'm testing it now. But could you please post them as regular patches.
-They were attachments to this thread, and were not something that stood
-out.
-
-Thanks,
+With your two patches, it still crashes exactly the same way. I
+probably should remove my debug just in case, but I think this box has
+another problem with it.
 
 -- Steve
