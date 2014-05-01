@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3] net: gianfar: Fix missing return of gfar_clean_tx_ring()
-Date: Wed, 30 Apr 2014 20:47:59 -0400
-Message-ID: <20140501005004.406079574@goodmis.org>
+Subject: [PATCH RT 1/3] rt: Move migrate_disable up in trylocks
+Date: Wed, 30 Apr 2014 20:47:58 -0400
+Message-ID: <20140501005004.241785945@goodmis.org>
 References: <20140501004757.583708392@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -9,11 +9,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
+	Clark Williams <williams@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-net-gianfar-Fix-missing-return-of-gfar_clean_tx_ring.patch
+Content-Disposition: inline; filename=0001-rt-Move-migrate_disable-up-in-trylocks.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,30 +25,77 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-The patch "net: gianfar: do not try to cleanup TX packets if they are
-not done" for 3.12-rt left out the return value for gfar_clean_tx_ring().
-This would cause an error when building this module. Note, this module
-does not build on x86 and was not tested because of that.
+The changes to move the migrate_disable() down in the trylocks()
+caused race conditions to appear in the cpu hotplug code. The
+migrate disables must be done before any of the rtmutexes are
+taken, otherwise a lock may be held that prevents hotplug from
+moving forward.
 
-Reported-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Link: http://lkml.kernel.org/r/20140429201308.63292691@gandalf.local.home
+
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>
+Cc: Nicholas Mc Guire <der.herr@hofr.at>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>
 ---
- drivers/net/ethernet/freescale/gianfar.c | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/rt.c | 20 ++++++++++++--------
+ 1 file changed, 12 insertions(+), 8 deletions(-)
 
-diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-index 091945c..df27493 100644
---- a/drivers/net/ethernet/freescale/gianfar.c
-+++ b/drivers/net/ethernet/freescale/gianfar.c
-@@ -2615,6 +2615,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
- 	tx_queue->dirty_tx = bdp;
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 5d17727..5f44def 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -180,12 +180,15 @@ EXPORT_SYMBOL(_mutex_unlock);
+  */
+ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ {
+-	int ret = rt_mutex_trylock(&rwlock->lock);
++	int ret;
++
++	migrate_disable();
++	ret = rt_mutex_trylock(&rwlock->lock);
  
- 	netdev_tx_completed_queue(txq, howmany, bytes_sent);
-+	return howmany;
+-	if (ret) {
++	if (ret)
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-		migrate_disable();
+-	}
++	else
++		migrate_enable();
+ 
+ 	return ret;
  }
- 
- static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
+@@ -212,11 +215,12 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	 * write locked.
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
++		migrate_disable();
+ 		ret = rt_mutex_trylock(lock);
+-		if (ret) {
++		if (ret)
+ 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-			migrate_disable();
+-		}
++		else
++			migrate_enable();
+ 	} else if (!rwlock->read_depth) {
+ 		ret = 0;
+ 	}
+@@ -245,8 +249,8 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+-		__rt_spin_lock(lock);
+ 		migrate_disable();
++		__rt_spin_lock(lock);
+ 	}
+ 	rwlock->read_depth++;
+ }
 -- 
 1.8.5.3
