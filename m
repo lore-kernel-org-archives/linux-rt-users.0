@@ -1,52 +1,72 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Can PAX and Rt-patch co-exist ?
-Date: Wed, 30 Apr 2014 18:53:46 -0500
-Message-ID: <53618D0A.2050609@mvista.com>
-References: <CAPFcPTL10dY0NjYUrQ-q_W81RRFReiA0jTeseC8tC8_FZViWkQ@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-To: Mau Z <zmau1962@gmail.com>, linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f46.google.com ([209.85.219.46]:64432 "EHLO
-	mail-oa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754724AbaD3Xxt (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Apr 2014 19:53:49 -0400
-Received: by mail-oa0-f46.google.com with SMTP id i4so2133519oah.5
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Apr 2014 16:53:49 -0700 (PDT)
-In-Reply-To: <CAPFcPTL10dY0NjYUrQ-q_W81RRFReiA0jTeseC8tC8_FZViWkQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 0/3] Linux 3.12.15-rt26-rc1
+Date: Wed, 30 Apr 2014 20:47:57 -0400
+Message-ID: <20140501004757.583708392@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 04/30/2014 05:47 PM, Mau Z wrote:
-> I have some more questions concerning the relation between PAX and the
-> RT-Patch :
-> A) Can they work together ?
 
-It can be made to work.  We have it working together in our distribution.
+Dear RT Folks,
 
-> B) Do you know if it matters which patch is applied first ?
+The 3.12-rt kernel is entering the stable phase. But instead of
+just pulling the last development version into stable, there
+were a few bugs that needed to be fixed first. The 3.12.15-rt26
+will go through an rc phase before it is officially released as
+stable.
 
-Not really.
+This is the RT stable review cycle of patch 3.12.15-rt26-rc1.
 
-> C) Is there any documentation about this subject ?
+Please scream at me if I messed something up. Please test the patches too.
 
-None that I know of.  I imagine that I'm the only person who has ever
-done this.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-There are some conflicts (a few are non-trivial, but not excessively
-complicated, IIRC).  But it's not something insurmountable.  You do have
-to have a fairly good understanding of kernel code.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
--corey
+If all goes well, this patch will be converted to the next main release
+on 5/2/2014.
 
->
->
-> Thanks
-> zmau
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Enjoy,
 
+-- Steve
+
+
+To build 3.12.15-rt26-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.15.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.15-rt26-rc1.patch.xz
+
+You can also build from 3.12.15-rt25 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.15-rt25-rt26-rc1.patch.xz
+
+
+Changes from 3.12.15-rt25:
+
+---
+
+
+Steven Rostedt (1):
+      rt: Move migrate_disable up in trylocks
+
+Steven Rostedt (Red Hat) (2):
+      net: gianfar: Fix missing return of gfar_clean_tx_ring()
+      Linux 3.12.15-rt26-rc1
+
+----
+ drivers/net/ethernet/freescale/gianfar.c |  1 +
+ kernel/rt.c                              | 20 ++++++++++++--------
+ localversion-rt                          |  2 +-
+ 3 files changed, 14 insertions(+), 9 deletions(-)
