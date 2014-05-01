@@ -1,76 +1,82 @@
-From: "eagle.rtlinux" <eagle.rtlinux@gmail.com>
-Subject: [PATCH]Fix the Compiling failed problem with the default arch/x86/configs/x86_64_defconfig(3.14-rt1)
-Date: Fri, 02 May 2014 04:32:37 +0800
-Message-ID: <5362AF65.50202@gmail.com>
-References: <20140411185739.GA6644@linutronix.de>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [RFC PATCH RT] netconsole: enable netconsole on PREEMPT_RT
+Date: Thu, 1 May 2014 10:15:08 -0400
+Message-ID: <536256EC.1060909@windriver.com>
+References: <31fa5b74f8e6267f9b7f906c791d1ddf7d550771.1398788759.git.bristot@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Nicholas Mc Guire <der.herr@hofr.at>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yk0-f178.google.com ([209.85.160.178]:47211 "EHLO
-	mail-yk0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750845AbaEAMjJ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 1 May 2014 08:39:09 -0400
-Received: by mail-yk0-f178.google.com with SMTP id 200so2615831ykr.23
-        for <linux-rt-users@vger.kernel.org>; Thu, 01 May 2014 05:39:08 -0700 (PDT)
-In-Reply-To: <20140411185739.GA6644@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-kernel@vger.kernel.org>
+To: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	<linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <31fa5b74f8e6267f9b7f906c791d1ddf7d550771.1398788759.git.bristot@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+On 14-04-29 01:55 PM, Daniel Bristot de Oliveira wrote:
+> Dear RT Folks,
+> 
+> This patch enables the netconsole on PREEMPT_RT_FULL, netconsole
+> was disabled on commit:
+> cb7cb77 kconfig-disable-a-few-options-rt.patch
+> 
+> I tested the netconsole on three machines:
+> 
+> - Intel Core i5 (4 cpus) - Local network
+> - Intel Xeon (32 cpus)   - Remote network
+> - KVM VM (on a Core i7)  - Virtual network
 
-Hello,
+Chances are the two real targets above were using the
+same igb network driver.  I wonder if it matters what
+underlying nic is used for netconsole?
 
-After applied the 3.14-rt1 patch set, one compiling error occurred.
+It is probably worthwhile to do some data mining into why
+it was disabled in the 1st place.  I can't say I recall, and
+it is possible that the reason has long since become irrelevant,
+even though the patch has been carried forward over time.
 
-Compile failed with the default arch/x86/configs/x86_64_defconfig on my=
-=20
-laptop(Intel(R) Core(TM) i5-3230M CPU).
-The configure command is 'make defconfig'.
-Error messages:
-linux-3.14/kernel/softirq.c: In function =E2=80=98__local_bh_enable_ip=E2=
-=80=99:
-linux-3.14/kernel/softirq.c:328:2: error: implicit declaration of fu   =
-=20
-nction =E2=80=98preempt_check_resched=E2=80=99 [-Werror=3Dimplicit-func=
-tion-declaration]
-cc1: some warnings being treated as errors
+Or it may be that your testing simply doesn't cover the use
+case where netconsole will spew sleeping while atomic...
 
-The reason is when configured with 'CONFIG_PREEMPT_VOLUNTARY', the=20
-compiler can not find the definiation of function preempt_check_resched=
-=2E
-This  patch is supplied to fix this problem.
-
-Signed-off-by: Yang Honggang <eagle.rtlinux@gmail.com>
----
-  include/linux/preempt.h |    1 +
-  1 file changed, 1 insertion(+)
-
-diff --git a/include/linux/preempt.h b/include/linux/preempt.h
-index 116af6a..7d4f557 100644
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -155,6 +155,7 @@ do { \
-  #define preempt_enable_no_resched_notrace()    barrier()
-  #define preempt_enable_notrace()        barrier()
-  #define preempt_check_resched_rt()        barrier()
-+#define preempt_check_resched()  barrier()
-
-  #endif /* CONFIG_PREEMPT_COUNT */
-
---=20
-1.7.10.4
-
-
-Best regards,
-
-Yang Honggang
+P.
 --
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+> 
+> On these machines I build the kernel 3.10.34-rt34 + netconsole
+> built as module. In order to execute some printks, I run a small
+> benchmark that runs as a module. To analyse the output I captured
+> the netconsole messages using Wireshark.
+> 
+> On all cases, the tests passed without any error:
+> 
+> - No error messages from the kernel
+> - No missed messages
+> - No out of order messages
+> 
+> I ran +1 hour tests on each machine. The test using the Xeon machine
+> ran by around 10 hours. On this test I received 317149 netconsole's
+> messages.
+> 
+> I also read the code and ran some traces (using the ftrace's
+> function_graph). In the traces that I read, the netconsole code never
+> broke the rt lock assumptions.
+> 
+> Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+> ---
+>  drivers/net/Kconfig | 1 -
+>  1 file changed, 1 deletion(-)
+> 
+> diff --git a/drivers/net/Kconfig b/drivers/net/Kconfig
+> index 096de88..3835321 100644
+> --- a/drivers/net/Kconfig
+> +++ b/drivers/net/Kconfig
+> @@ -164,7 +164,6 @@ config VXLAN
+>  
+>  config NETCONSOLE
+>  	tristate "Network console logging support"
+> -	depends on !PREEMPT_RT_FULL
+>  	---help---
+>  	If you want to log kernel messages over the network, enable this.
+>  	See <file:Documentation/networking/netconsole.txt> for details.
+> 
