@@ -1,42 +1,44 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch 0/6] 3.14-rt1 fixes
-Date: Fri, 02 May 2014 15:49:36 +0200
-Message-ID: <5363A270.5060109@linutronix.de>
-References: <1399029159.5233.124.camel@marge.simpson.net>	 <20140502134408.GF9178@linutronix.de> <1399038349.5233.169.camel@marge.simpson.net>
+Subject: Re: [PATCH RT 1/3] rt: Move migrate_disable up in trylocks
+Date: Fri, 2 May 2014 17:31:53 +0200
+Message-ID: <20140502153153.GG9178@linutronix.de>
+References: <20140501004757.583708392@goodmis.org>
+ <20140501005004.241785945@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:41224 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751505AbaEBNti (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 09:49:38 -0400
-In-Reply-To: <1399038349.5233.169.camel@marge.simpson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
+	Clark Williams <williams@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140501005004.241785945@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 05/02/2014 03:45 PM, Mike Galbraith wrote:
-> On Fri, 2014-05-02 at 15:44 +0200, Sebastian Andrzej Siewior wrote: 
->> * Mike Galbraith | 2014-05-02 13:12:39 [+0200]:
->>
->>> drop: (buggy - calls migrate_disable() _after_ maybe blocking)
->>> migrate_disable-pushd-down-in-atomic_dec_and_spin_lo.patch
->>
->> In the thread you quoted also the delayed migrated_disable in
->> rt_read_lock(). Is this one no longer required?
-> 
-> Steven submitted a patch for that.
+* Steven Rostedt | 2014-04-30 20:47:58 [-0400]:
 
-Ah I see. Let me look at this. What it looks is that we revert the 3
-three push down patches since they break hotplug. Thanks.
+>From: Steven Rostedt <rostedt@goodmis.org>
+>
+>The changes to move the migrate_disable() down in the trylocks()
+>caused race conditions to appear in the cpu hotplug code. The
+>migrate disables must be done before any of the rtmutexes are
+>taken, otherwise a lock may be held that prevents hotplug from
+>moving forward.
+>
+>Link: http://lkml.kernel.org/r/20140429201308.63292691@gandalf.local.home
 
-> 
-> -Mike
-> 
+Okay. I am taking a modified version (so it applies) of this into v3.14
+tree. Mike also suggested to drop
+migrate_disable-pushd-down-in-atomic_dec_and_spin_lo.patch because we
+which is basicaly the some thing. And then we have
+migrate_disable-pushd-down-in-rt_spin_trylock_irqsav.patch which we
+could drop as well for the same reason.
 
 Sebastian
