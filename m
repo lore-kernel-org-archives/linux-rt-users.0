@@ -1,101 +1,82 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: Can PAX and Rt-patch co-exist ?
-Date: Fri, 02 May 2014 12:28:42 -0500
-Message-ID: <5363D5CA.2020102@mvista.com>
-References: <CAPFcPTL10dY0NjYUrQ-q_W81RRFReiA0jTeseC8tC8_FZViWkQ@mail.gmail.com>	<53618D0A.2050609@mvista.com> <CAPFcPTJLcZ3RJ0VsUvEJbtx1tj4_y6P31YhRiTW+OnsfUHT_9Q@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
+Date: Fri, 2 May 2014 20:38:24 +0200
+Message-ID: <20140502183824.GH9178@linutronix.de>
+References: <534C3606.7010206@meduna.org>
+ <534C731F.1050406@meduna.org>
+ <534DADF1.6060608@meduna.org>
+ <20140422115439.GA20669@linutronix.de>
+ <20140422094657.5b6ca1e2@gandalf.local.home>
+ <53569E05.8010600@linutronix.de>
+ <20140422134802.73fc1fa4@gandalf.local.home>
+ <20140422141650.7f43d5ba@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Mau Z <zmau1962@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Cc: Stanislav Meduna <stano@meduna.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pa0-f50.google.com ([209.85.220.50]:50165 "EHLO
-	mail-pa0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752721AbaEBR2q (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:43693 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751824AbaEBSif (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 13:28:46 -0400
-Received: by mail-pa0-f50.google.com with SMTP id rd3so5725441pab.37
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 10:28:45 -0700 (PDT)
-In-Reply-To: <CAPFcPTJLcZ3RJ0VsUvEJbtx1tj4_y6P31YhRiTW+OnsfUHT_9Q@mail.gmail.com>
+	Fri, 2 May 2014 14:38:35 -0400
+Content-Disposition: inline
+In-Reply-To: <20140422141650.7f43d5ba@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/02/2014 02:40 AM, Mau Z wrote:
-> Thanks
+* Steven Rostedt | 2014-04-22 14:16:50 [-0400]:
+
+>On Tue, 22 Apr 2014 13:48:02 -0400
+>Steven Rostedt <rostedt@goodmis.org> wrote:
 >
-> The answer is very surprising.
-> I would assume that more than one person would have such an experience.
-
-Well, the LTSI organization may have done it.  That's all I can think
-of, though.
-
+>> I need to take a deeper look into the actual code. But as trylocks on
+>> UP are nops (always succeed), and if it expects to be able to do
+>> something in a critical section that is protected by spinlocks (again
+>> nops on UP), this would be broken for UP.
 >
+>Reading the code, I see it's broken. We should add something like this:
 >
-> I am curious regarding the magnitude of work to be done. I am
-> especially intersted what happens when you have to handle another
-> Linux version for your distribution.
->
-> Is this job done just once (for one specific Linux version) ?
+>Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+>---
+>diff --git a/kernel/timer.c b/kernel/timer.c
+>index cc34e42..a03164a 100644
+>--- a/kernel/timer.c
+>+++ b/kernel/timer.c
+>@@ -1447,6 +1447,12 @@ static void run_timer_softirq(struct softirq_action *h)
+> 		__run_timers(base);
+> }
+> 
+>+#ifdef CONFIG_SMP
+>+#define timer_should_raise_softirq(lock)	!spin_do_trylock(lock)
+>+#else
+>+#define timer_should_raise_softirq(lock)	1
+>+#endif
+>+
+> /*
+>  * Called by the local, per-CPU timer interrupt on SMP.
+>  */
+>@@ -1467,7 +1473,7 @@ void run_local_timers(void)
+> 		return;
+> 	}
+> 
+>-	if (!spin_do_trylock(&base->lock)) {
+>+	if (timer_should_raise_softirq(&base->lock)) {
+> 		raise_softirq(TIMER_SOFTIRQ);
+> 		return;
+> 	}
 
-Once for a specific Linux version, 3.10.
+Okay. So Peter said that it is okay to apply this since FULL_NO_HZ users
+wouldn't complain on UP. I still wouldn't say it is broken but that is a
+different story.
+We have two users of this trylock. run_local_timers() which pops up
+quite often (and you patched here) and the other is
+get_next_timer_interrupt(). What do you suggest we do here? It is
+basically the same thing.
 
->  or
-> You do the job once, and then do the same fixes on the other Linux
-> version (more or less) ?
->  or
-> You have to do the same job all over again in every linux version ?
-
-We will on the next version we release, yes.
-
->
->
-> Is the following discription correct ?
-> Basically the job is
-> 1) Download kernel
-> 2) apply RT-patch
-> 3) apply PAX patch
-> 4) compile and fix warnings and errors
-
-Well, there's testing :).  But basically yes.  Resolving the conflicts
-is the biggest deal, really, in the above process.  And testing is a lot
-bigger than that :).
-
-We integrate a lot of other things, so it's hard to remember the
-specific RT/PaX issues.
-
--corey
-
->
-> Thanks
-> again
-> zmau
->
->
-> On Thu, May 1, 2014 at 2:53 AM, Corey Minyard <cminyard@mvista.com> wrote:
->> On 04/30/2014 05:47 PM, Mau Z wrote:
->>> I have some more questions concerning the relation between PAX and the
->>> RT-Patch :
->>> A) Can they work together ?
->> It can be made to work.  We have it working together in our distribution.
->>
->>> B) Do you know if it matters which patch is applied first ?
->> Not really.
->>
->>> C) Is there any documentation about this subject ?
->> None that I know of.  I imagine that I'm the only person who has ever
->> done this.
->>
->> There are some conflicts (a few are non-trivial, but not excessively
->> complicated, IIRC).  But it's not something insurmountable.  You do have
->> to have a fairly good understanding of kernel code.
->>
->> -corey
->>
->>>
->>> Thanks
->>> zmau
->>> --
->>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->>> the body of a message to majordomo@vger.kernel.org
->>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
+Sebastian
