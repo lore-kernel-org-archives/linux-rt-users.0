@@ -1,7 +1,8 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch 4/6] stomp-machine: fix typo in kernel/stop_machine.c
-Date: Fri, 02 May 2014 13:13:14 +0200
-Message-ID: <1399029194.5233.128.camel@marge.simpson.net>
+Subject: [patch 5/6] stomp-machine: create lg_global_trylock_relax()
+ primitive
+Date: Fri, 02 May 2014 13:13:22 +0200
+Message-ID: <1399029202.5233.129.camel@marge.simpson.net>
 References: <1399020080.5233.96.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -11,33 +12,96 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f45.google.com ([74.125.83.45]:54631 "EHLO
-	mail-ee0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751721AbaEBLNQ (ORCPT
+Received: from mail-ee0-f51.google.com ([74.125.83.51]:43361 "EHLO
+	mail-ee0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751721AbaEBLNZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 07:13:16 -0400
-Received: by mail-ee0-f45.google.com with SMTP id d17so3069982eek.4
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 04:13:15 -0700 (PDT)
+	Fri, 2 May 2014 07:13:25 -0400
+Received: by mail-ee0-f51.google.com with SMTP id c13so3039870eek.24
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 04:13:24 -0700 (PDT)
 In-Reply-To: <1399020080.5233.96.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Create lg_global_trylock_relax() for use by stopper thread when it cannot
+schedule, to deal with stop_cpus_lock, which is now an lglock.
+
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- kernel/stop_machine.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/lglock.h      |    6 ++++++
+ include/linux/spinlock_rt.h |    1 +
+ kernel/locking/lglock.c     |   25 +++++++++++++++++++++++++
+ kernel/locking/rtmutex.c    |    5 +++++
+ 4 files changed, 37 insertions(+)
 
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -671,7 +671,7 @@ int stop_machine_from_inactive_cpu(int (
- 	ret = multi_cpu_stop(&msdata);
+--- a/include/linux/lglock.h
++++ b/include/linux/lglock.h
+@@ -74,4 +74,10 @@ void lg_local_unlock_cpu(struct lglock *
+ void lg_global_lock(struct lglock *lg);
+ void lg_global_unlock(struct lglock *lg);
  
- 	/* Busy wait for completion. */
--	while (!atomic_read(&done.nr_todo))
-+	while (atomic_read(&done.nr_todo))
- 		cpu_relax();
++#ifndef CONFIG_PREEMPT_RT_FULL
++#define lg_global_trylock_relax(name)	lg_global_lock(name)
++#else
++void lg_global_trylock_relax(struct lglock *lg);
++#endif
++
+ #endif
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -35,6 +35,7 @@ extern int atomic_dec_and_spin_lock(atom
+  */
+ extern void __lockfunc __rt_spin_lock(struct rt_mutex *lock);
+ extern void __lockfunc __rt_spin_unlock(struct rt_mutex *lock);
++extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
  
- 	mutex_unlock(&stop_cpus_mutex);
+ #define spin_lock(lock)				\
+ 	do {					\
+--- a/kernel/locking/lglock.c
++++ b/kernel/locking/lglock.c
+@@ -105,3 +105,28 @@ void lg_global_unlock(struct lglock *lg)
+ 	preempt_enable_nort();
+ }
+ EXPORT_SYMBOL(lg_global_unlock);
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++/*
++ * HACK: If you use this, you get to keep the pieces.
++ * Used in queue_stop_cpus_work() when stop machinery
++ * is called from inactive CPU, so we can't schedule.
++ */
++# define lg_do_trylock_relax(l)			\
++	do {					\
++		while (!__rt_spin_trylock(l))	\
++			cpu_relax();		\
++	} while (0)
++
++void lg_global_trylock_relax(struct lglock *lg)
++{
++	int i;
++
++	lock_acquire_exclusive(&lg->lock_dep_map, 0, 0, NULL, _RET_IP_);
++	for_each_possible_cpu(i) {
++		lg_lock_ptr *lock;
++		lock = per_cpu_ptr(lg->lock, i);
++		lg_do_trylock_relax(lock);
++	}
++}
++#endif
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1001,6 +1001,11 @@ void __lockfunc rt_spin_unlock_wait(spin
+ }
+ EXPORT_SYMBOL(rt_spin_unlock_wait);
+ 
++int __lockfunc __rt_spin_trylock(struct rt_mutex *lock)
++{
++	return rt_mutex_trylock(lock);
++}
++
+ int __lockfunc rt_spin_trylock(spinlock_t *lock)
+ {
+ 	int ret = rt_mutex_trylock(&lock->lock);
 
 
 
