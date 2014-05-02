@@ -1,123 +1,44 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch 6/6] stomp-machine: use lg_global_trylock_relax() to dead
- with stop_cpus_lock lglock
-Date: Fri, 02 May 2014 13:13:34 +0200
-Message-ID: <1399029214.5233.130.camel@marge.simpson.net>
-References: <1399020080.5233.96.camel@marge.simpson.net>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Fri, 02 May 2014 13:16:51 +0200
+Message-ID: <1399029411.5233.133.camel@marge.simpson.net>
+References: <20140411185739.GA6644@linutronix.de>
+	 <1397918766.5436.16.camel@marge.simpson.net>
+	 <20140502100951.GC9178@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f44.google.com ([74.125.83.44]:46565 "EHLO
-	mail-ee0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751721AbaEBLNh (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 07:13:37 -0400
-Received: by mail-ee0-f44.google.com with SMTP id c41so2998378eek.17
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 04:13:36 -0700 (PDT)
-In-Reply-To: <1399020080.5233.96.camel@marge.simpson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140502100951.GC9178@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-If the stop machinery is called from inactive CPU we cannot use
-lg_global_lock(), because some other stomp machine invocation might be
-in progress and the lock can be contended.  We cannot schedule from this
-context, so use the lovely new lg_global_trylock_relax() primitive to
-do what we used to do via one mutex_trylock()/cpu_relax() loop.  We
-now do that trylock()/relax() across an entire herd of locks. Joy.
+On Fri, 2014-05-02 at 12:09 +0200, Sebastian Andrzej Siewior wrote:=20
+> * Mike Galbraith | 2014-04-19 16:46:06 [+0200]:
+>=20
+> >Hi Sebastian,
+> Hi Mike,
+>=20
+> >This hunk in hotplug-light-get-online-cpus.patch looks like a bug.
+> >
+> >@@ -333,7 +449,7 @@ static int __ref _cpu_down(unsigned int
+> >                /* CPU didn't die: tell everyone.  Can't complain. *=
+/
+> >                smpboot_unpark_threads(cpu);
+> >                cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
+> >-               goto out_release;
+> >+               goto out_cancel;
+> >        }
+> >        BUG_ON(cpu_online(cpu));
+>=20
+> Yes, it looks like it. v3.12-rt did not have this=E2=80=A6
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- kernel/stop_machine.c |   24 ++++++++++++++----------
- 1 file changed, 14 insertions(+), 10 deletions(-)
+I just sent a set of dinky patches with which patch to fold them into,
+along with my way of dealing with the new stopper_lock.
 
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -266,7 +266,7 @@ int stop_two_cpus(unsigned int cpu1, uns
- 	struct irq_cpu_stop_queue_work_info call_args;
- 	struct multi_stop_data msdata;
- 
--	preempt_disable();
-+	preempt_disable_nort();
- 	msdata = (struct multi_stop_data){
- 		.fn = fn,
- 		.data = arg,
-@@ -299,7 +299,7 @@ int stop_two_cpus(unsigned int cpu1, uns
- 	 * This relies on the stopper workqueues to be FIFO.
- 	 */
- 	if (!cpu_active(cpu1) || !cpu_active(cpu2)) {
--		preempt_enable();
-+		preempt_enable_nort();
- 		return -ENOENT;
- 	}
- 
-@@ -313,7 +313,7 @@ int stop_two_cpus(unsigned int cpu1, uns
- 				 &irq_cpu_stop_queue_work,
- 				 &call_args, 1);
- 	lg_local_unlock(&stop_cpus_lock);
--	preempt_enable();
-+	preempt_enable_nort();
- 
- 	wait_for_stop_done(&done);
- 
-@@ -346,7 +346,7 @@ static DEFINE_PER_CPU(struct cpu_stop_wo
- 
- static void queue_stop_cpus_work(const struct cpumask *cpumask,
- 				 cpu_stop_fn_t fn, void *arg,
--				 struct cpu_stop_done *done)
-+				 struct cpu_stop_done *done, bool inactive)
- {
- 	struct cpu_stop_work *work;
- 	unsigned int cpu;
-@@ -360,11 +360,13 @@ static void queue_stop_cpus_work(const s
- 	}
- 
- 	/*
--	 * Disable preemption while queueing to avoid getting
--	 * preempted by a stopper which might wait for other stoppers
--	 * to enter @fn which can lead to deadlock.
-+	 * Make sure that all work is queued on all cpus before
-+	 * any of the cpus can execute it.
- 	 */
--	lg_global_lock(&stop_cpus_lock);
-+	if (!inactive)
-+		lg_global_lock(&stop_cpus_lock);
-+	else
-+		lg_global_trylock_relax(&stop_cpus_lock);
- 	for_each_cpu(cpu, cpumask)
- 		cpu_stop_queue_work(cpu, &per_cpu(stop_cpus_work, cpu));
- 	lg_global_unlock(&stop_cpus_lock);
-@@ -376,7 +378,7 @@ static int __stop_cpus(const struct cpum
- 	struct cpu_stop_done done;
- 
- 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
--	queue_stop_cpus_work(cpumask, fn, arg, &done);
-+	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
- 	wait_for_stop_done(&done);
- 	return done.executed ? done.ret : -ENOENT;
- }
-@@ -572,6 +574,8 @@ static int __init cpu_stop_init(void)
- 		INIT_LIST_HEAD(&stopper->works);
- 	}
- 
-+	lg_lock_init(&stop_cpus_lock, "stop_cpus_lock");
-+
- 	BUG_ON(smpboot_register_percpu_thread(&cpu_stop_threads));
- 	stop_machine_initialized = true;
- 	return 0;
-@@ -667,7 +671,7 @@ int stop_machine_from_inactive_cpu(int (
- 	set_state(&msdata, MULTI_STOP_PREPARE);
- 	cpu_stop_init_done(&done, num_active_cpus());
- 	queue_stop_cpus_work(cpu_active_mask, multi_cpu_stop, &msdata,
--			     &done);
-+			     &done, true);
- 	ret = multi_cpu_stop(&msdata);
- 
- 	/* Busy wait for completion. */
-
-
-
+-Mike
