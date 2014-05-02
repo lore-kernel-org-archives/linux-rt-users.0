@@ -1,8 +1,8 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch 5/6] stomp-machine: create lg_global_trylock_relax()
- primitive
-Date: Fri, 02 May 2014 13:13:22 +0200
-Message-ID: <1399029202.5233.129.camel@marge.simpson.net>
+Subject: [patch 6/6] stomp-machine: use lg_global_trylock_relax() to dead
+ with stop_cpus_lock lglock
+Date: Fri, 02 May 2014 13:13:34 +0200
+Message-ID: <1399029214.5233.130.camel@marge.simpson.net>
 References: <1399020080.5233.96.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -12,96 +12,112 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Thomas Gleixner <tglx@linutronix.de>
 To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f51.google.com ([74.125.83.51]:43361 "EHLO
-	mail-ee0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751721AbaEBLNZ (ORCPT
+Received: from mail-ee0-f44.google.com ([74.125.83.44]:46565 "EHLO
+	mail-ee0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751721AbaEBLNh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 07:13:25 -0400
-Received: by mail-ee0-f51.google.com with SMTP id c13so3039870eek.24
-        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 04:13:24 -0700 (PDT)
+	Fri, 2 May 2014 07:13:37 -0400
+Received: by mail-ee0-f44.google.com with SMTP id c41so2998378eek.17
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 May 2014 04:13:36 -0700 (PDT)
 In-Reply-To: <1399020080.5233.96.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Create lg_global_trylock_relax() for use by stopper thread when it cannot
-schedule, to deal with stop_cpus_lock, which is now an lglock.
+If the stop machinery is called from inactive CPU we cannot use
+lg_global_lock(), because some other stomp machine invocation might be
+in progress and the lock can be contended.  We cannot schedule from this
+context, so use the lovely new lg_global_trylock_relax() primitive to
+do what we used to do via one mutex_trylock()/cpu_relax() loop.  We
+now do that trylock()/relax() across an entire herd of locks. Joy.
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- include/linux/lglock.h      |    6 ++++++
- include/linux/spinlock_rt.h |    1 +
- kernel/locking/lglock.c     |   25 +++++++++++++++++++++++++
- kernel/locking/rtmutex.c    |    5 +++++
- 4 files changed, 37 insertions(+)
+ kernel/stop_machine.c |   24 ++++++++++++++----------
+ 1 file changed, 14 insertions(+), 10 deletions(-)
 
---- a/include/linux/lglock.h
-+++ b/include/linux/lglock.h
-@@ -74,4 +74,10 @@ void lg_local_unlock_cpu(struct lglock *
- void lg_global_lock(struct lglock *lg);
- void lg_global_unlock(struct lglock *lg);
+--- a/kernel/stop_machine.c
++++ b/kernel/stop_machine.c
+@@ -266,7 +266,7 @@ int stop_two_cpus(unsigned int cpu1, uns
+ 	struct irq_cpu_stop_queue_work_info call_args;
+ 	struct multi_stop_data msdata;
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+#define lg_global_trylock_relax(name)	lg_global_lock(name)
-+#else
-+void lg_global_trylock_relax(struct lglock *lg);
-+#endif
-+
- #endif
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -35,6 +35,7 @@ extern int atomic_dec_and_spin_lock(atom
-  */
- extern void __lockfunc __rt_spin_lock(struct rt_mutex *lock);
- extern void __lockfunc __rt_spin_unlock(struct rt_mutex *lock);
-+extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
+-	preempt_disable();
++	preempt_disable_nort();
+ 	msdata = (struct multi_stop_data){
+ 		.fn = fn,
+ 		.data = arg,
+@@ -299,7 +299,7 @@ int stop_two_cpus(unsigned int cpu1, uns
+ 	 * This relies on the stopper workqueues to be FIFO.
+ 	 */
+ 	if (!cpu_active(cpu1) || !cpu_active(cpu2)) {
+-		preempt_enable();
++		preempt_enable_nort();
+ 		return -ENOENT;
+ 	}
  
- #define spin_lock(lock)				\
- 	do {					\
---- a/kernel/locking/lglock.c
-+++ b/kernel/locking/lglock.c
-@@ -105,3 +105,28 @@ void lg_global_unlock(struct lglock *lg)
- 	preempt_enable_nort();
- }
- EXPORT_SYMBOL(lg_global_unlock);
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+/*
-+ * HACK: If you use this, you get to keep the pieces.
-+ * Used in queue_stop_cpus_work() when stop machinery
-+ * is called from inactive CPU, so we can't schedule.
-+ */
-+# define lg_do_trylock_relax(l)			\
-+	do {					\
-+		while (!__rt_spin_trylock(l))	\
-+			cpu_relax();		\
-+	} while (0)
-+
-+void lg_global_trylock_relax(struct lglock *lg)
-+{
-+	int i;
-+
-+	lock_acquire_exclusive(&lg->lock_dep_map, 0, 0, NULL, _RET_IP_);
-+	for_each_possible_cpu(i) {
-+		lg_lock_ptr *lock;
-+		lock = per_cpu_ptr(lg->lock, i);
-+		lg_do_trylock_relax(lock);
-+	}
-+}
-+#endif
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1001,6 +1001,11 @@ void __lockfunc rt_spin_unlock_wait(spin
- }
- EXPORT_SYMBOL(rt_spin_unlock_wait);
+@@ -313,7 +313,7 @@ int stop_two_cpus(unsigned int cpu1, uns
+ 				 &irq_cpu_stop_queue_work,
+ 				 &call_args, 1);
+ 	lg_local_unlock(&stop_cpus_lock);
+-	preempt_enable();
++	preempt_enable_nort();
  
-+int __lockfunc __rt_spin_trylock(struct rt_mutex *lock)
-+{
-+	return rt_mutex_trylock(lock);
-+}
-+
- int __lockfunc rt_spin_trylock(spinlock_t *lock)
+ 	wait_for_stop_done(&done);
+ 
+@@ -346,7 +346,7 @@ static DEFINE_PER_CPU(struct cpu_stop_wo
+ 
+ static void queue_stop_cpus_work(const struct cpumask *cpumask,
+ 				 cpu_stop_fn_t fn, void *arg,
+-				 struct cpu_stop_done *done)
++				 struct cpu_stop_done *done, bool inactive)
  {
- 	int ret = rt_mutex_trylock(&lock->lock);
+ 	struct cpu_stop_work *work;
+ 	unsigned int cpu;
+@@ -360,11 +360,13 @@ static void queue_stop_cpus_work(const s
+ 	}
+ 
+ 	/*
+-	 * Disable preemption while queueing to avoid getting
+-	 * preempted by a stopper which might wait for other stoppers
+-	 * to enter @fn which can lead to deadlock.
++	 * Make sure that all work is queued on all cpus before
++	 * any of the cpus can execute it.
+ 	 */
+-	lg_global_lock(&stop_cpus_lock);
++	if (!inactive)
++		lg_global_lock(&stop_cpus_lock);
++	else
++		lg_global_trylock_relax(&stop_cpus_lock);
+ 	for_each_cpu(cpu, cpumask)
+ 		cpu_stop_queue_work(cpu, &per_cpu(stop_cpus_work, cpu));
+ 	lg_global_unlock(&stop_cpus_lock);
+@@ -376,7 +378,7 @@ static int __stop_cpus(const struct cpum
+ 	struct cpu_stop_done done;
+ 
+ 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
+-	queue_stop_cpus_work(cpumask, fn, arg, &done);
++	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
+ 	wait_for_stop_done(&done);
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+@@ -572,6 +574,8 @@ static int __init cpu_stop_init(void)
+ 		INIT_LIST_HEAD(&stopper->works);
+ 	}
+ 
++	lg_lock_init(&stop_cpus_lock, "stop_cpus_lock");
++
+ 	BUG_ON(smpboot_register_percpu_thread(&cpu_stop_threads));
+ 	stop_machine_initialized = true;
+ 	return 0;
+@@ -667,7 +671,7 @@ int stop_machine_from_inactive_cpu(int (
+ 	set_state(&msdata, MULTI_STOP_PREPARE);
+ 	cpu_stop_init_done(&done, num_active_cpus());
+ 	queue_stop_cpus_work(cpu_active_mask, multi_cpu_stop, &msdata,
+-			     &done);
++			     &done, true);
+ 	ret = multi_cpu_stop(&msdata);
+ 
+ 	/* Busy wait for completion. */
 
 
 
