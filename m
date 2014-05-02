@@ -1,57 +1,32 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Fri, 02 May 2014 03:45:34 +0200
-Message-ID: <1398995134.5233.12.camel@marge.simpson.net>
-References: <20140411185739.GA6644@linutronix.de>
-	 <1398411635.11930.45.camel@marge.simpson.net>
-	 <1398501491.12941.5.camel@marge.simpson.net>
-	 <1398520699.28726.22.camel@marge.simpson.net>
-	 <1398661784.30930.33.camel@marge.simpson.net>
-	 <1398676186.30930.49.camel@marge.simpson.net>
-	 <20140428101805.75032f45@gandalf.local.home>
-	 <1398695832.14475.10.camel@marge.simpson.net>
-	 <1398748869.5514.81.camel@marge.simpson.net>
-	 <20140429201308.63292691@gandalf.local.home>
-	 <1398843793.26071.52.camel@marge.simpson.net>
-	 <1398863189.26071.97.camel@marge.simpson.net>
-	 <20140430091550.1177bc90@gandalf.local.home>
-	 <1398866403.26071.125.camel@marge.simpson.net>
-	 <20140430101919.70b2f622@gandalf.local.home>
-	 <20140430103308.1e46dd18@gandalf.local.home>
-	 <1398869686.26071.151.camel@marge.simpson.net>
-	 <20140430111100.72a7a71b@gandalf.local.home>
-	 <1398870957.5220.2.camel@marge.simpson.net>
-	 <20140430114819.03e8c6ce@gandalf.local.home>
-	 <1398965778.5439.7.camel@marge.simpson.net>
-	 <20140501144231.1c1af0ce@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 1/3] rt: Move migrate_disable up in trylocks
+Date: Fri, 02 May 2014 09:11:23 +0200
+Message-ID: <5363451B.8080300@linutronix.de>
+References: <20140501004757.583708392@goodmis.org> <20140501005004.241785945@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 7bit
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
 	Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140501144231.1c1af0ce@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:37279 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751763AbaEBHL1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 May 2014 03:11:27 -0400
+In-Reply-To: <20140501005004.241785945@goodmis.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2014-05-01 at 14:42 -0400, Steven Rostedt wrote: 
-> On Thu, 01 May 2014 19:36:18 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> 
+On 05/01/2014 02:47 AM, Steven Rostedt wrote:
 
-> > Hah!  I knew you were just hiding, you sneaky little SOB ;-)
-> 
-> What's this from? A new bug that had all the patches applied? Or was
-> this without one of the patches?
+Could this wait until it appears in the development release?
 
-It's with all patches applied.  It's not new, it has muddied the water
-during other hunting expeditions.  You may never see it in a box with a
-sane topology, that box is kinda special.
-
--Mike
+Sebastian
