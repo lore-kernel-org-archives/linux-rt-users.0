@@ -1,44 +1,55 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.14-rt1
-Date: Fri, 2 May 2014 13:37:03 +0200
-Message-ID: <20140502113703.GE9178@linutronix.de>
-References: <20140411185739.GA6644@linutronix.de>
- <535BFAF0.5090306@localhost>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [patch 0/6] 3.14-rt1 fixes
+Date: Fri, 02 May 2014 15:39:55 +0400
+Message-ID: <5363840B.6020402@pavlinux.ru>
+References: <1399029159.5233.124.camel@marge.simpson.net>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40146 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751353AbaEBLhG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 May 2014 07:37:06 -0400
-Content-Disposition: inline
-In-Reply-To: <535BFAF0.5090306@localhost>
+Received: from imp01.mtu.ru ([62.5.255.10]:44455 "EHLO imp01.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751823AbaEBLj6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 May 2014 07:39:58 -0400
+In-Reply-To: <1399029159.5233.124.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Fernando Lopez-Lezcano | 2014-04-26 11:29:04 [-0700]:
+02.05.2014 15:12, Mike Galbraith =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> The following patches are fixes that fell out of testing rt1.  Patche=
+s
+> 1-4 are intended to be folded into existing patches, 5-6 are
+> replacements.
+>
+> fold:
+> 1/6 - preempt-lazy-support.patch
+> 2/6 - x86-preempt-lazy.patch
+> 3/6 - hotplug-light-get-online-cpus.patch
+> 4/6 - stomp-machine-raw-lock.patch
+>
+> replace:
+> 5/6 - (prep)
+> 6/6 - stomp-machine-deal-clever-with-stopper-lock.patch
+>
+> drop: (buggy - calls migrate_disable() _after_ maybe blocking)
+> migrate_disable-pushd-down-in-atomic_dec_and_spin_lo.patch
 
->Saw this a moment ago (3.14.1 + rt1, Fedora 19 laptop - I think I
->have seen something similar in 3.12.x-r):
 
-Yes, you did: https://lkml.org/lkml/2014/3/7/163
-You did not test I've sent. Care to do so?
+Cool, but you can the same, but for 3.14.2 ?
 
->Apr 26 11:16:11 localhost kernel: [   96.323248] ------------[ cut
->here ]------------
->Apr 26 11:16:11 localhost kernel: [   96.323262] WARNING: CPU: 0 PID:
->2051 at lib/list_debug.c:59 __list_del_entry+0xa1/0xd0()
->Apr 26 11:16:11 localhost kernel: [   96.323264] list_del corruption.
->prev->next should be ffff8802101196a0, but was 0000000000000001
->Apr 26 11:16:11 localhost kernel: [   96.323266] Modules linked in:
 
-and please send backtrace information properly formatted. This is
-terrible hard to read.
+--=20
 
-Sebastian
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
