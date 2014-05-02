@@ -1,54 +1,39 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 2/2] rtmutex: Remove duplicate rt_mutex_init()
-Date: Fri, 2 May 2014 11:08:31 +0200
-Message-ID: <20140502090831.GB9178@linutronix.de>
-References: <20140409024700.702797305@goodmis.org>
- <20140409025232.161960044@goodmis.org>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Fri, 2 May 2014 12:09:51 +0200
+Message-ID: <20140502100951.GC9178@linutronix.de>
+References: <20140411185739.GA6644@linutronix.de>
+ <1397918766.5436.16.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <a.p.zijlstra@chello.nl>,
-	"H. Peter Anvin" <hpa@zytor.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140409025232.161960044@goodmis.org>
+In-Reply-To: <1397918766.5436.16.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Steven Rostedt | 2014-04-08 22:47:02 [-0400]:
+* Mike Galbraith | 2014-04-19 16:46:06 [+0200]:
 
->From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+>Hi Sebastian,
+Hi Mike,
+
+>This hunk in hotplug-light-get-online-cpus.patch looks like a bug.
 >
->The rt_mutex_init() macro is the same whether or not
->CONFIG_DEBUG_RT_MUTEX is set. Remove the duplicate.
->
->Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+>@@ -333,7 +449,7 @@ static int __ref _cpu_down(unsigned int
+>                /* CPU didn't die: tell everyone.  Can't complain. */
+>                smpboot_unpark_threads(cpu);
+>                cpu_notify_nofail(CPU_DOWN_FAILED | mod, hcpu);
+>-               goto out_release;
+>+               goto out_cancel;
+>        }
+>        BUG_ON(cpu_online(cpu));
 
-This does not apply cleanly on v3.14-rt
-
->--- a/include/linux/rtmutex.h
->+++ b/include/linux/rtmutex.h
->@@ -62,25 +62,19 @@ struct hrtimer_sleeper;
-> # define __DEBUG_RT_MUTEX_INITIALIZER(mutexname) \
-> 	, .name = #mutexname, .file = __FILE__, .line = __LINE__
-> 
->-# define rt_mutex_init(mutex)					\
->-	do {							\
->-		raw_spin_lock_init(&(mutex)->wait_lock);	\
->-		__rt_mutex_init(mutex, #mutex);			\
->-	} while (0)
->-
-
-The macro is the same in CONFIG_DEBUG_RT_MUTEXES and the else path.
-Shouldn't you remove both and define it before the ifdef? There are some
-users of this:
-|drivers/i2c/i2c-core.c: rt_mutex_init(&adap->bus_lock);
-|drivers/media/usb/em28xx/em28xx-cards.c: rt_mutex_init(&dev->i2c_bus_lock);
+Yes, it looks like it. v3.12-rt did not have this=E2=80=A6
 
 Sebastian
