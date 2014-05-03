@@ -1,95 +1,61 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: BUG: spinlock trylock failure on UP, i.MX28 3.12.15-rt25
-Date: Fri, 2 May 2014 21:37:05 +0200
-Message-ID: <20140502193705.GI9178@linutronix.de>
-References: <534C3606.7010206@meduna.org>
- <534C731F.1050406@meduna.org>
- <534DADF1.6060608@meduna.org>
- <20140422115439.GA20669@linutronix.de>
- <20140422094657.5b6ca1e2@gandalf.local.home>
- <53569E05.8010600@linutronix.de>
- <20140422134802.73fc1fa4@gandalf.local.home>
- <20140422141650.7f43d5ba@gandalf.local.home>
- <20140502183824.GH9178@linutronix.de>
- <alpine.DEB.2.02.1405022100351.6261@ionos.tec.linutronix.de>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [patch 0/6] 3.14-rt1 fixes
+Date: Sat, 3 May 2014 10:32:57 +0200
+Message-ID: <20140503083257.GA16242@opentech.at>
+References: <1399029159.5233.124.camel@marge.simpson.net> <5363840B.6020402@pavlinux.ru> <1399031023.5233.145.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Stanislav Meduna <stano@meduna.org>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: pavel@pavlinux.ru, RT <linux-rt-users@vger.kernel.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hofr.at ([212.69.189.236]:35380 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750920AbaECIll (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 3 May 2014 04:41:41 -0400
 Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.02.1405022100351.6261@ionos.tec.linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1399031023.5233.145.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Thomas Gleixner | 2014-05-02 21:01:50 [+0200]:
+On Fri, 02 May 2014, Mike Galbraith wrote:
 
->It's different as it CANNOT fail on UP. That's called from the idle
->code and there is no way that anything holds that lock on UP when idle
->runs.
+> On Fri, 2014-05-02 at 15:39 +0400, Pavel Vasilyev wrote: 
+> > 02.05.2014 15:12, Mike Galbraith ??????????:
+> > > The following patches are fixes that fell out of testing rt1.  Patches
+> > > 1-4 are intended to be folded into existing patches, 5-6 are
+> > > replacements.
+> > >
+> > > fold:
+> > > 1/6 - preempt-lazy-support.patch
+> > > 2/6 - x86-preempt-lazy.patch
+> > > 3/6 - hotplug-light-get-online-cpus.patch
+> > > 4/6 - stomp-machine-raw-lock.patch
+> > >
+> > > replace:
+> > > 5/6 - (prep)
+> > > 6/6 - stomp-machine-deal-clever-with-stopper-lock.patch
+> > >
+> > > drop: (buggy - calls migrate_disable() _after_ maybe blocking)
+> > > migrate_disable-pushd-down-in-atomic_dec_and_spin_lo.patch
+> > 
+> > 
+Why would calling migrate_disable be buggy after blocking ?
+at that point any per cpu data is not yet being accessed so its perfectly fine
+to
 
-Okay, so I will add the patch here. The same thing (mostly) but it will
-also skip the irq_work_needs_cpu() check since we will run the timer
-softirq anyway.
+  lock->block
+   -> migrate 
+    -> unblock->lock 
+     -> migrate_disable on a new CPU
+      -> access per_cpu object
+     -> migrate_enable
+  -> unlock
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Date: Fri, 2 May 2014 21:31:50 +0200
-Subject: [PATCH] timer: do not spin_trylock() on UP
+what problems would there be ?
 
-This will void a warning comming from the spin-lock debugging code. The
-lock avoiding idea is from Steven Rostedt.
+thx!
+hofrat
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- kernel/timer.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
-
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 54596b5..8750875 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1455,18 +1455,31 @@ void run_local_timers(void)
- 	struct tvec_base *base = __this_cpu_read(tvec_bases);
- 
- 	hrtimer_run_queues();
- 	/*
- 	 * We can access this lockless as we are in the timer
- 	 * interrupt. If there are no timers queued, nothing to do in
- 	 * the timer softirq.
- 	 */
- #ifdef CONFIG_PREEMPT_RT_FULL
-+
-+#ifndef CONFIG_SMP
-+	/*
-+	 * The spin_do_trylock() later may fail as the lock may be hold before
-+	 * the interrupt arrived. The spin-lock debugging code will raise a
-+	 * warning if the try_lock fails on UP. Since this is only an
-+	 * optimization for the FULL_NO_HZ case (not to run the timer softirq on
-+	 * an nohz_full CPU) we don't really care and shedule the softirq.
-+	 */
-+	raise_softirq(TIMER_SOFTIRQ);
-+	return;
-+#endif
-+
- 	/* On RT, irq work runs from softirq */
- 	if (irq_work_needs_cpu()) {
- 		raise_softirq(TIMER_SOFTIRQ);
- 		return;
- 	}
- 
- 	if (!spin_do_trylock(&base->lock)) {
- 		raise_softirq(TIMER_SOFTIRQ);
- 		return;
--- 
-2.0.0.rc0
-
->Thanks,
->
->	tglx
-
-Sebastian
