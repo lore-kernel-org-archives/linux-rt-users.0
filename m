@@ -1,78 +1,102 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [patch 0/6] 3.14-rt1 fixes
-Date: Sat, 03 May 2014 17:24:15 +0200
-Message-ID: <1399130655.5326.174.camel@marge.simpson.net>
-References: <1399029159.5233.124.camel@marge.simpson.net>
-	 <5363840B.6020402@pavlinux.ru>
-	 <1399031023.5233.145.camel@marge.simpson.net>
-	 <20140503083257.GA16242@opentech.at>
-	 <1399113657.5326.58.camel@marge.simpson.net>
-	 <20140503123146.GB15945@opentech.at>
-	 <1399125807.5326.128.camel@marge.simpson.net>
-	 <20140503141901.GA20210@opentech.at>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: pavel@pavlinux.ru, RT <linux-rt-users@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] blk-mq: revert raw locks, post pone notifier to POST_DEAD
+Date: Sat,  3 May 2014 18:42:24 +0200
+Message-ID: <1399135344-5349-1-git-send-email-bigeasy@linutronix.de>
+Cc: <linux-rt-users@vger.kernel.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f43.google.com ([74.125.83.43]:50176 "EHLO
-	mail-ee0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751648AbaECPYT (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:46059 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751066AbaECQm2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 May 2014 11:24:19 -0400
-Received: by mail-ee0-f43.google.com with SMTP id e51so4006786eek.30
-        for <linux-rt-users@vger.kernel.org>; Sat, 03 May 2014 08:24:18 -0700 (PDT)
-In-Reply-To: <20140503141901.GA20210@opentech.at>
+	Sat, 3 May 2014 12:42:28 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2014-05-03 at 16:19 +0200, Nicholas Mc Guire wrote: 
-> On Sat, 03 May 2014, Mike Galbraith wrote:
-> 
-> > On Sat, 2014-05-03 at 14:31 +0200, Nicholas Mc Guire wrote: 
-> > > On Sat, 03 May 2014, Mike Galbraith wrote:
-> > 
-> > > > If this is in fact safe, you should be able to move each and every
-> > > > migrate_disable() to post acquisition.
-> > > 
-> > > yup
-> > 
-> > Having just seen working -> brick transition, color me skeptical.
-> > 
-> > > > I have a virtual nickle that
-> > > > says your box will have a severe allergic reaction to such a patch.
-> > > >
-> > > Actually that is what the pushdowns in the read_lock/write_lock api did and
-> > > I did not notice any of the systems having problems with that.
-> > 
-> > If you had tested hotplug, you would have met the deadlock, and would
-> > have verified that the change to read_lock() was the culprit instead of
-> > me doing that.  Steven also verified that.  You too can flip back and
-> > forth, drive boxen into the wall as many times as it take to convince
-> > yourself that that change really really did induce the breakage.
-> >
-> 
-> I did not test hotplug - I did try and understand the code to
+The blk_mq_cpu_notify_lock should be raw because some CPU down levels
+are called with interrupts off. The notifier itself calls currently one
+function that is blk_mq_hctx_notify().
+That function acquires the ctx->lock lock which is sleeping and I would
+prefer to keep it that way. That function only moves IO-requests from
+the CPU that is going offline to another CPU and it is currently the
+only one. Therefore I revert the list lock back to sleeping spinlocks
+and let the notifier run at POST_DEAD time.
 
-Not testing hotplug was obviously a mistake given what you were
-changing.  Nor is that a tiny change, it's a glaringly huge order
-change... for read_lock(), with no order change to write_lock().
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+Mike, I see that lockdep splat (sleeping while atomic) during cpu-hotplug.
+Don't you see this, too?
 
-Things that make ya go hmmm.
+ block/blk-mq-cpu.c | 17 ++++++++++-------
+ block/blk-mq.c     |  2 +-
+ 2 files changed, 11 insertions(+), 8 deletions(-)
 
-> verify the assumptions - but before looking at details of some code
-> path (which in my opinion has a few problems of its own) I think it
-> would be best to clarify first if the assumptions made for the
-> migrate pushdown patches is right or not - if it is not there is no point
-> in discussing individual code paths but then that patch set simply needs to 
-> go out, if the assumptions are right then we can discuss where the fix is 
-> needed.
-
-If your assumptions were correct, there would have been no breakage.
-
--Mike
+diff --git a/block/blk-mq-cpu.c b/block/blk-mq-cpu.c
+index 136ef86..37acc3a 100644
+--- a/block/blk-mq-cpu.c
++++ b/block/blk-mq-cpu.c
+@@ -11,7 +11,7 @@
+ #include "blk-mq.h"
+ 
+ static LIST_HEAD(blk_mq_cpu_notify_list);
+-static DEFINE_RAW_SPINLOCK(blk_mq_cpu_notify_lock);
++static DEFINE_SPINLOCK(blk_mq_cpu_notify_lock);
+ 
+ static int blk_mq_main_cpu_notify(struct notifier_block *self,
+ 				  unsigned long action, void *hcpu)
+@@ -19,12 +19,15 @@ static int blk_mq_main_cpu_notify(struct notifier_block *self,
+ 	unsigned int cpu = (unsigned long) hcpu;
+ 	struct blk_mq_cpu_notifier *notify;
+ 
+-	raw_spin_lock(&blk_mq_cpu_notify_lock);
++	if (action != CPU_POST_DEAD && action != CPU_POST_DEAD)
++		return NOTIFY_OK;
++
++	spin_lock(&blk_mq_cpu_notify_lock);
+ 
+ 	list_for_each_entry(notify, &blk_mq_cpu_notify_list, list)
+ 		notify->notify(notify->data, action, cpu);
+ 
+-	raw_spin_unlock(&blk_mq_cpu_notify_lock);
++	spin_unlock(&blk_mq_cpu_notify_lock);
+ 	return NOTIFY_OK;
+ }
+ 
+@@ -32,16 +35,16 @@ void blk_mq_register_cpu_notifier(struct blk_mq_cpu_notifier *notifier)
+ {
+ 	BUG_ON(!notifier->notify);
+ 
+-	raw_spin_lock(&blk_mq_cpu_notify_lock);
++	spin_lock(&blk_mq_cpu_notify_lock);
+ 	list_add_tail(&notifier->list, &blk_mq_cpu_notify_list);
+-	raw_spin_unlock(&blk_mq_cpu_notify_lock);
++	spin_unlock(&blk_mq_cpu_notify_lock);
+ }
+ 
+ void blk_mq_unregister_cpu_notifier(struct blk_mq_cpu_notifier *notifier)
+ {
+-	raw_spin_lock(&blk_mq_cpu_notify_lock);
++	spin_lock(&blk_mq_cpu_notify_lock);
+ 	list_del(&notifier->list);
+-	raw_spin_unlock(&blk_mq_cpu_notify_lock);
++	spin_unlock(&blk_mq_cpu_notify_lock);
+ }
+ 
+ void blk_mq_init_cpu_notifier(struct blk_mq_cpu_notifier *notifier,
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index da3af9f..d5e73d8 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -971,7 +971,7 @@ static void blk_mq_hctx_notify(void *data, unsigned long action,
+ 	struct blk_mq_ctx *ctx;
+ 	LIST_HEAD(tmp);
+ 
+-	if (action != CPU_DEAD && action != CPU_DEAD_FROZEN)
++	if (action != CPU_POST_DEAD && action != CPU_POST_DEAD)
+ 		return;
+ 
+ 	/*
+-- 
+2.0.0.rc0
 
