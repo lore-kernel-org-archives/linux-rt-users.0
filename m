@@ -1,56 +1,58 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Nicholas Mc Guire <der.herr@hofr.at>
 Subject: Re: [patch 0/6] 3.14-rt1 fixes
-Date: Sat, 03 May 2014 16:03:27 +0200
-Message-ID: <1399125807.5326.128.camel@marge.simpson.net>
-References: <1399029159.5233.124.camel@marge.simpson.net>
-	 <5363840B.6020402@pavlinux.ru>
-	 <1399031023.5233.145.camel@marge.simpson.net>
-	 <20140503083257.GA16242@opentech.at>
-	 <1399113657.5326.58.camel@marge.simpson.net>
-	 <20140503123146.GB15945@opentech.at>
+Date: Sat, 3 May 2014 16:19:01 +0200
+Message-ID: <20140503141901.GA20210@opentech.at>
+References: <1399029159.5233.124.camel@marge.simpson.net> <5363840B.6020402@pavlinux.ru> <1399031023.5233.145.camel@marge.simpson.net> <20140503083257.GA16242@opentech.at> <1399113657.5326.58.camel@marge.simpson.net> <20140503123146.GB15945@opentech.at> <1399125807.5326.128.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: pavel@pavlinux.ru, RT <linux-rt-users@vger.kernel.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f49.google.com ([74.125.83.49]:43568 "EHLO
-	mail-ee0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751038AbaECODa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 3 May 2014 10:03:30 -0400
-Received: by mail-ee0-f49.google.com with SMTP id e53so3920246eek.36
-        for <linux-rt-users@vger.kernel.org>; Sat, 03 May 2014 07:03:29 -0700 (PDT)
-In-Reply-To: <20140503123146.GB15945@opentech.at>
+Received: from hofr.at ([212.69.189.236]:39884 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751805AbaECOTG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 3 May 2014 10:19:06 -0400
+Content-Disposition: inline
+In-Reply-To: <1399125807.5326.128.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2014-05-03 at 14:31 +0200, Nicholas Mc Guire wrote: 
-> On Sat, 03 May 2014, Mike Galbraith wrote:
+On Sat, 03 May 2014, Mike Galbraith wrote:
 
-> > If this is in fact safe, you should be able to move each and every
-> > migrate_disable() to post acquisition.
+> On Sat, 2014-05-03 at 14:31 +0200, Nicholas Mc Guire wrote: 
+> > On Sat, 03 May 2014, Mike Galbraith wrote:
 > 
-> yup
+> > > If this is in fact safe, you should be able to move each and every
+> > > migrate_disable() to post acquisition.
+> > 
+> > yup
+> 
+> Having just seen working -> brick transition, color me skeptical.
+> 
+> > > I have a virtual nickle that
+> > > says your box will have a severe allergic reaction to such a patch.
+> > >
+> > Actually that is what the pushdowns in the read_lock/write_lock api did and
+> > I did not notice any of the systems having problems with that.
+> 
+> If you had tested hotplug, you would have met the deadlock, and would
+> have verified that the change to read_lock() was the culprit instead of
+> me doing that.  Steven also verified that.  You too can flip back and
+> forth, drive boxen into the wall as many times as it take to convince
+> yourself that that change really really did induce the breakage.
+>
 
-Having just seen working -> brick transition, color me skeptical.
+I did not test hotplug - I did try and understand the code to
+verify the assumptions - but before looking at details of some code
+path (which in my opinion has a few problems of its own) I think it
+would be best to clarify first if the assumptions made for the
+migrate pushdown patches is right or not - if it is not there is no point
+in discussing individual code paths but then that patch set simply needs to 
+go out, if the assumptions are right then we can discuss where the fix is 
+needed.
 
-> > I have a virtual nickle that
-> > says your box will have a severe allergic reaction to such a patch.
-> >
-> Actually that is what the pushdowns in the read_lock/write_lock api did and
-> I did not notice any of the systems having problems with that.
-
-If you had tested hotplug, you would have met the deadlock, and would
-have verified that the change to read_lock() was the culprit instead of
-me doing that.  Steven also verified that.  You too can flip back and
-forth, drive boxen into the wall as many times as it take to convince
-yourself that that change really really did induce the breakage.
-
-I'll read the rest later, I'm getting all grumpy.
-
--Mike
-
+thx!
+hofrat
