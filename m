@@ -1,45 +1,40 @@
-From: Joakim Hernberg <jbh@alchemy.lu>
-Subject: kernel/locking/rt.c: add missing EXPORT_SYMBOL for
- rt_down_write_nested_lock() needed by f2fs
-Date: Sun, 4 May 2014 19:14:42 +0200
-Message-ID: <20140504191442.370fcf4c@tor.valhalla.alchemy.lu>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.14.2-rt3
+Date: Mon, 05 May 2014 05:26:47 +0200
+Message-ID: <1399260407.5172.41.camel@marge.simpson.net>
+References: <20140503170110.GA10652@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailsafe.webbplatsen.se ([94.247.172.109]:28781 "EHLO
-	mailsafe.webbplatsen.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752631AbaEDRb5 (ORCPT
+Received: from mail-ee0-f45.google.com ([74.125.83.45]:42818 "EHLO
+	mail-ee0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752122AbaEED0u (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 4 May 2014 13:31:57 -0400
+	Sun, 4 May 2014 23:26:50 -0400
+In-Reply-To: <20140503170110.GA10652@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I found this trying to build 3.14.2-rt3.
+On Sat, 2014-05-03 at 19:01 +0200, Sebastian Andrzej Siewior wrote:
 
-Signed-off-by: Joakim Hernberg <jhernberg@alchemy.lu>
----
- kernel/locking/rt.c | 1 +
- 1 file changed, 1 insertion(+)
+> - Mike Galbraith sent a patch which might fix lazy preempt on x86_64.
+>   Patch applied and my machine still explodes therefore lazy preempt
+>   remains off on x86_64.
 
-diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
-index 055a3df..3a57b3a 100644
---- a/kernel/locking/rt.c
-+++ b/kernel/locking/rt.c
-@@ -366,6 +366,7 @@ void rt_down_write_nested_lock(struct rw_semaphore *rwsem,
-        rwsem_acquire_nest(&rwsem->dep_map, 0, 0, nest, _RET_IP_);
-        rt_mutex_lock(&rwsem->lock);
- }
-+EXPORT_SYMBOL(rt_down_write_nested_lock);
- 
- int  rt_down_read_trylock(struct rw_semaphore *rwsem)
- {
+Can you send me your config offline?  I'll try to scrape up some cycles
+to take another peek.  It seems to work fine on my boxen, so there must
+be a config dependent bug somewhere.
 
+> - Mike Galbraith sent a few patches to get cpu hoplug to work. This
+>   includes lg_global_trylock_relax().
 
--- 
+(applies frozen shark repellent.. liberally)
 
-   Joakim
+-Mike
+
