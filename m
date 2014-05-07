@@ -1,67 +1,59 @@
-From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-Subject: Re: [PATCH 1/2] memcg: fold mem_cgroup_stolen
-Date: Wed, 7 May 2014 11:17:55 +0200
-Message-ID: <20140507091755.GA9489@dhcp22.suse.cz>
-References: <5369EE5E.50202@huawei.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [patchlet] locking/rt: fix rt_read_lock() lockdep annotation.
+Date: Wed, 7 May 2014 09:48:07 -0400
+Message-ID: <20140507094807.229d88d8@gandalf.local.home>
+References: <20140503170110.GA10652@linutronix.de>
+	<1399449247.5142.14.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org,
-	kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org, Cgroups <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>,
-	Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
-To: Qiang Huang <h.huangqiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Content-Disposition: inline
-In-Reply-To: <5369EE5E.50202-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:37669 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755915AbaEGNsR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 May 2014 09:48:17 -0400
+In-Reply-To: <1399449247.5142.14.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed 07-05-14 16:27:10, Qiang Huang wrote:
-> It is only used in __mem_cgroup_begin_update_page_stat(), the
-> name is confusing and 2 routines for one thing also confuse people,
-> so fold this function seems more clear.
+On Wed, 07 May 2014 09:54:07 +0200
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-Yes, the name was everything but self-explanatory.
- 
-The patch looks good to me. One nit below.
-
-> Signed-off-by: Qiang Huang <h.huangqiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
-
-Acked-by: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
-
+> 
+> rt-rw-lockdep-annotations.patch missed an rwlock_acquire_read()
+> 
+> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 > ---
->  mm/memcontrol.c | 25 +++++++------------------
->  1 file changed, 7 insertions(+), 18 deletions(-)
+>  kernel/locking/rt.c |    3 +--
+>  1 file changed, 1 insertion(+), 2 deletions(-)
 > 
-> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-> index 4f97662..5804d71 100644
-> --- a/mm/memcontrol.c
-> +++ b/mm/memcontrol.c
-> @@ -1568,23 +1568,12 @@ static void mem_cgroup_end_move(struct mem_cgroup *memcg)
->  }
+> --- a/kernel/locking/rt.c
+> +++ b/kernel/locking/rt.c
+> @@ -244,13 +244,12 @@ void __lockfunc rt_read_lock(rwlock_t *r
+>  {
+>  	struct rt_mutex *lock = &rwlock->lock;
+>  
+> -
+>  	/*
+>  	 * recursive read locks succeed when current owns the lock
+>  	 */
+>  	if (rt_mutex_owner(lock) != current) {
+>  		migrate_disable();
+> -		rwlock_acquire_read(&rwlock->dep_map, 0, 0, _RET_IP_);
+> +		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+>  		__rt_spin_lock(lock);
+
+This looks like it reverse applies?
+
+-- Steve
+
+>  	}
+>  	rwlock->read_depth++;
 > 
->  /*
-> - * 2 routines for checking "mem" is under move_account() or not.
-> + * A routine for checking "mem" is under move_account() or not.
->   *
-> - * mem_cgroup_stolen() -  checking whether a cgroup is mc.from or not. This
-> - *			  is used for avoiding races in accounting.  If true,
-> - *			  pc->mem_cgroup may be overwritten.
-> - *
-> - * mem_cgroup_under_move() - checking a cgroup is mc.from or mc.to or
-> - *			  under hierarchy of moving cgroups. This is for
-> - *			  waiting at hith-memory prressure caused by "move".
-> + * Checking a cgroup is mc.from or mc.to or under hierarchy of
-> + * moving cgroups.
 
-> This is for waiting at hith-memory pressure
-
-s/hith/high/
-
-but I guess that part can go away
-
-[...]
--- 
-Michal Hocko
-SUSE Labs
