@@ -1,67 +1,67 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT] blk-mq: revert raw locks, post pone notifier to
- POST_DEAD
-Date: Wed, 07 May 2014 11:07:17 +0200
-Message-ID: <1399453637.5142.40.camel@marge.simpson.net>
-References: <1399135344-5349-1-git-send-email-bigeasy@linutronix.de>
-	 <1399136587.5158.29.camel@marge.simpson.net>
-	 <5369EC9E.1010904@linutronix.de>
+From: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+Subject: Re: [PATCH 1/2] memcg: fold mem_cgroup_stolen
+Date: Wed, 7 May 2014 11:17:55 +0200
+Message-ID: <20140507091755.GA9489@dhcp22.suse.cz>
+References: <5369EE5E.50202@huawei.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f53.google.com ([74.125.83.53]:33669 "EHLO
-	mail-ee0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755441AbaEGJHU (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 May 2014 05:07:20 -0400
-Received: by mail-ee0-f53.google.com with SMTP id c13so483472eek.40
-        for <linux-rt-users@vger.kernel.org>; Wed, 07 May 2014 02:07:19 -0700 (PDT)
-In-Reply-To: <5369EC9E.1010904@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Johannes Weiner <hannes-druUgvl0LCNAfugRpC6u6w@public.gmane.org>, bsingharora-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org,
+	kamezawa.hiroyu-+CUm20s59erQFUHtdCDX3A@public.gmane.org, Cgroups <cgroups-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	linux-rt-users <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	Li Zefan <lizefan-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>,
+	Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>
+To: Qiang Huang <h.huangqiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Return-path: <cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Content-Disposition: inline
+In-Reply-To: <5369EE5E.50202-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+Sender: cgroups-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2014-05-07 at 10:19 +0200, Sebastian Andrzej Siewior wrote: 
-> On 05/03/2014 07:03 PM, Mike Galbraith wrote:
-> >> Mike, I see that lockdep splat (sleeping while atomic) during cpu-hotplug.
-> >> Don't you see this, too?
-> > 
-> > Nope, didn't.
+On Wed 07-05-14 16:27:10, Qiang Huang wrote:
+> It is only used in __mem_cgroup_begin_update_page_stat(), the
+> name is confusing and 2 routines for one thing also confuse people,
+> so fold this function seems more clear.
+
+Yes, the name was everything but self-explanatory.
+ 
+The patch looks good to me. One nit below.
+
+> Signed-off-by: Qiang Huang <h.huangqiang-hv44wF8Li93QT0dZR+AlfA@public.gmane.org>
+
+Acked-by: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+
+> ---
+>  mm/memcontrol.c | 25 +++++++------------------
+>  1 file changed, 7 insertions(+), 18 deletions(-)
 > 
-> Hmm. blk_mq_hctx_notify(). It does
-> 	spin_lock(&ctx->lock);
+> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+> index 4f97662..5804d71 100644
+> --- a/mm/memcontrol.c
+> +++ b/mm/memcontrol.c
+> @@ -1568,23 +1568,12 @@ static void mem_cgroup_end_move(struct mem_cgroup *memcg)
+>  }
 > 
-> Isn't this a sleeping spinlock for you or don't get here at all?
+>  /*
+> - * 2 routines for checking "mem" is under move_account() or not.
+> + * A routine for checking "mem" is under move_account() or not.
+>   *
+> - * mem_cgroup_stolen() -  checking whether a cgroup is mc.from or not. This
+> - *			  is used for avoiding races in accounting.  If true,
+> - *			  pc->mem_cgroup may be overwritten.
+> - *
+> - * mem_cgroup_under_move() - checking a cgroup is mc.from or mc.to or
+> - *			  under hierarchy of moving cgroups. This is for
+> - *			  waiting at hith-memory prressure caused by "move".
+> + * Checking a cgroup is mc.from or mc.to or under hierarchy of
+> + * moving cgroups.
 
-Hm, cts->lock...
+> This is for waiting at hith-memory pressure
 
-git@marge:~/suse/scratch_area/linux-3.12-SLE12-RT> grep -IR cpu_lock block
-git@marge:~/suse/scratch_area/linux-3.12-SLE12-RT>
+s/hith/high/
 
-(here lock lock lock, here boy)
+but I guess that part can go away
 
-marge:/usr/local/src/kernel/linux-3.x.git # grep -IR cpu_lock block
-marge:/usr/local/src/kernel/linux-3.x.git # 
-
-marge:/usr/local/src/kernel/linux-3.14 # grep -IR cpu_lock block
-marge:/usr/local/src/kernel/linux-3.14 #
-
-(what the..)
-
-marge:/usr/local/src/kernel/linux-3.14-rt # grep -IR cpu_lock block
-block/blk-mq.c: spin_lock(&ctx->cpu_lock);
-block/blk-mq.c: spin_unlock(&ctx->cpu_lock);
-block/blk-mq.c:                         spin_unlock(&ctx->cpu_lock);
-block/blk-mq.c:                         spin_lock(&ctx->cpu_lock);
-block/blk-mq.c:         spin_lock_init(&__ctx->cpu_lock);
-block/blk-mq.h: spinlock_t              cpu_lock;
-marge:/usr/local/src/kernel/linux-3.14-rt #
-
-(aha!)
-
-Nope, I definitely don't get there.
-
-	-Mike
-
+[...]
+-- 
+Michal Hocko
+SUSE Labs
