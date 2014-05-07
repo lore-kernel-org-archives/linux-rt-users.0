@@ -1,46 +1,38 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [patch 1/6] preempt_lazy: remove redundant test_thread_flag()
- call
-Date: Tue, 06 May 2014 07:33:51 +0200
-Message-ID: <1399354431.5192.67.camel@marge.simpson.net>
-References: <1399020080.5233.96.camel@marge.simpson.net>
-	 <1399029166.5233.125.camel@marge.simpson.net>
-	 <20140505223728.5a07e6e1@gandalf.local.home>
+Subject: [patchlet] locking/rt: fix rt_read_lock() lockdep annotation.
+Date: Wed, 07 May 2014 09:54:07 +0200
+Message-ID: <1399449247.5142.14.camel@marge.simpson.net>
+References: <20140503170110.GA10652@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ee0-f44.google.com ([74.125.83.44]:33055 "EHLO
-	mail-ee0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751224AbaEFFeF (ORCPT
+Received: from mail-ee0-f51.google.com ([74.125.83.51]:35393 "EHLO
+	mail-ee0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750905AbaEGHyK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 May 2014 01:34:05 -0400
-Received: by mail-ee0-f44.google.com with SMTP id c41so5912974eek.17
-        for <linux-rt-users@vger.kernel.org>; Mon, 05 May 2014 22:34:03 -0700 (PDT)
-In-Reply-To: <20140505223728.5a07e6e1@gandalf.local.home>
+	Wed, 7 May 2014 03:54:10 -0400
+Received: by mail-ee0-f51.google.com with SMTP id e51so405220eek.38
+        for <linux-rt-users@vger.kernel.org>; Wed, 07 May 2014 00:54:09 -0700 (PDT)
+In-Reply-To: <20140503170110.GA10652@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2014-05-05 at 22:37 -0400, Steven Rostedt wrote: 
-> On Fri, 02 May 2014 13:12:46 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> 
-> > __preempt_count_dec_and_test() already does it.
-> 
-> Already does what? :-)
 
-Poo.. yeah that.
+rt-rw-lockdep-annotations.patch missed an rwlock_acquire_read()
 
-> Hmm, do all archs check? Perhaps we need to also update
-> include/asm-generic/preempt.h?
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ kernel/locking/rt.c |    3 +--
+ 1 file changed, 1 insertion(+), 2 deletions(-)
 
-Per cpu preempt_count is x86, and tif_need_resched() handles laziness,
-so all should be well.  Did I just manage to overlook the obvious for
-the second time?
-
--Mike
-
+--- a/kernel/locking/rt.c
++++ b/kernel/locking/rt.c
+@@ -244,13 +244,12 @@ void __lockfunc rt_read_lock(rwlock_t *r
+ {
+ 	struct rt_mutex *lock = &rwlock->lock;
+ 
