@@ -1,67 +1,140 @@
-From: minyard@acm.org
-Subject: [PATCH] ftrace: Simplify ring buffer resizing, make work with RT
-Date: Thu,  8 May 2014 15:03:22 -0500
-Message-ID: <1399579402-27034-1-git-send-email-minyard@acm.org>
-Cc: Corey Minyard <cminyard@mvista.com>
-To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oa0-f49.google.com ([209.85.219.49]:59514 "EHLO
-	mail-oa0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755192AbaEHUDa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 May 2014 16:03:30 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.12.15-rt26
+Date: Thu, 8 May 2014 20:16:43 -0400
+Message-ID: <20140508201643.359d0768@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: Corey Minyard <cminyard@mvista.com>
 
-ring_buffer_resize() would call rb_update_pages() with preempt
-disabled.  It did this with preempt disabled, bu rb_update_pages
-would eventually claim the zone semaphore, which is a mutex in PREEMPT_RT,
-thus resulting in a "scheduling while atomic" BUG.
+Dear RT Folks,
 
-When doing this, all other CPUs except the running one did the operation
-in a work queue.  So just do the current CPU operation in a work queue,
-too.  This simplifies the code, gets rid of the need for preempt_disable(),
-and solves the RT issue.
+I'm pleased to announce the 3.12.15-rt26 stable release.
 
-Signed-off-by: Corey Minyard <cminyard@mvista.com>
+The 3.12-rt series is now under the stable releases. This came out
+later than scheduled due to making sure one of the updates was correct.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.12-rt
+  Head SHA1: d0785b146144c18f524d17908d880c553865e417
+
+
+Or to build 3.12.15-rt26 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.15.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.15-rt26.patch.xz
+
+
+
+You can also build from 3.12.15-rt25 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.15-rt25-rt26.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v3.12.15-rt25:
+
 ---
- kernel/trace/ring_buffer.c | 10 +---------
- 1 file changed, 1 insertion(+), 9 deletions(-)
 
-This isn't well tested, but fixes an obvious PREEMPT_RT problem and seems
-like a good simplification.  You can see the PREEMPT_RT bug if you enable
-ftrace and all the self tests; it will fail running selftests when it tries
-to resize the buffers.
+Steven Rostedt (1):
+      rt: Move migrate_disable up in trylocks
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index fc4da2d..972125e 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -1688,21 +1688,13 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
- 				continue;
+Steven Rostedt (Red Hat) (2):
+      net: gianfar: Fix missing return of gfar_clean_tx_ring()
+      Linux 3.12.15-rt26
+
+----
+ drivers/net/ethernet/freescale/gianfar.c |  1 +
+ kernel/rt.c                              | 20 ++++++++++++--------
+ localversion-rt                          |  2 +-
+ 3 files changed, 14 insertions(+), 9 deletions(-)
+---------------------------
+diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
+index 091945c..df27493 100644
+--- a/drivers/net/ethernet/freescale/gianfar.c
++++ b/drivers/net/ethernet/freescale/gianfar.c
+@@ -2615,6 +2615,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
+ 	tx_queue->dirty_tx = bdp;
  
- 			/* The update must run on the CPU that is being updated. */
--			preempt_disable();
--			if (cpu == smp_processor_id() || !cpu_online(cpu)) {
-+			if (!cpu_online(cpu)) {
- 				rb_update_pages(cpu_buffer);
- 				cpu_buffer->nr_pages_to_update = 0;
- 			} else {
--				/*
--				 * Can not disable preemption for schedule_work_on()
--				 * on PREEMPT_RT.
--				 */
--				preempt_enable();
- 				schedule_work_on(cpu,
- 						&cpu_buffer->update_pages_work);
--				preempt_disable();
- 			}
--			preempt_enable();
- 		}
+ 	netdev_tx_completed_queue(txq, howmany, bytes_sent);
++	return howmany;
+ }
  
- 		/* wait for all the updates to complete */
--- 
-1.8.3.1
-
+ static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 5d17727..5f44def 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -180,12 +180,15 @@ EXPORT_SYMBOL(_mutex_unlock);
+  */
+ int __lockfunc rt_write_trylock(rwlock_t *rwlock)
+ {
+-	int ret = rt_mutex_trylock(&rwlock->lock);
++	int ret;
++
++	migrate_disable();
++	ret = rt_mutex_trylock(&rwlock->lock);
+ 
+-	if (ret) {
++	if (ret)
+ 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-		migrate_disable();
+-	}
++	else
++		migrate_enable();
+ 
+ 	return ret;
+ }
+@@ -212,11 +215,12 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
+ 	 * write locked.
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
++		migrate_disable();
+ 		ret = rt_mutex_trylock(lock);
+-		if (ret) {
++		if (ret)
+ 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
+-			migrate_disable();
+-		}
++		else
++			migrate_enable();
+ 	} else if (!rwlock->read_depth) {
+ 		ret = 0;
+ 	}
+@@ -245,8 +249,8 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
+ 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+-		__rt_spin_lock(lock);
+ 		migrate_disable();
++		__rt_spin_lock(lock);
+ 	}
+ 	rwlock->read_depth++;
+ }
+diff --git a/localversion-rt b/localversion-rt
+index c5b71f9..2e9afd4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt25
++-rt26
