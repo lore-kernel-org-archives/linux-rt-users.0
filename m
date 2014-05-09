@@ -1,117 +1,105 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: tracing: BUG: sleeping function called from invalid context
-Date: Fri, 9 May 2014 11:37:00 +0200
-Message-ID: <20140509093700.GA29014@linutronix.de>
-References: <53518CD8.4020706@meduna.org>
+Subject: Re: [RFC v0] thermal: Protect schedule flag by raw spin
+Date: Fri, 9 May 2014 14:09:02 +0200
+Message-ID: <20140509120902.GB29014@linutronix.de>
+References: <1397485347-2235-1-git-send-email-daniel.wagner@oss.bmw-carit.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Stanislav Meduna <stano@meduna.org>, rostedt@goodmis.org
+Cc: linux-rt-users@vger.kernel.org,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
+To: Daniel Wagner <daniel.wagner@oss.bmw-carit.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:33617 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:35106 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752652AbaEIJhF (ORCPT
+	with ESMTP id S1751899AbaEIMJH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 May 2014 05:37:05 -0400
+	Fri, 9 May 2014 08:09:07 -0400
 Content-Disposition: inline
-In-Reply-To: <53518CD8.4020706@meduna.org>
+In-Reply-To: <1397485347-2235-1-git-send-email-daniel.wagner@oss.bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Stanislav Meduna | 2014-04-18 22:36:40 [+0200]:
+* Daniel Wagner | 2014-04-14 16:22:27 [+0200]:
 
->Hi,
-Hi,
+>diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+>index 7257366..7d0b0ac 100644
+>--- a/drivers/thermal/x86_pkg_temp_thermal.c
+>+++ b/drivers/thermal/x86_pkg_temp_thermal.c
+>@@ -363,16 +363,16 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+>   * are in the same interrupt state. So scheduling on any one CPU in
+>   * the package is enough and simply return for others.
+>   */
+>-  spin_lock_irqsave(&pkg_work_lock, flags);
+>+  raw_spin_lock_irqsave(&pkg_work_lock, flags);
+>   ++pkg_interrupt_cnt;
+>   if (unlikely(phy_id > max_phy_id) || unlikely(!pkg_work_scheduled) ||
+>           pkg_work_scheduled[phy_id]) {
+>       disable_pkg_thres_interrupt();
+>-      spin_unlock_irqrestore(&pkg_work_lock, flags);
+>+      raw_spin_unlock_irqrestore(&pkg_work_lock, flags);
+>       return -EINVAL;
+>   }
+>   pkg_work_scheduled[phy_id] = 1;
+>-  spin_unlock_irqrestore(&pkg_work_lock, flags);
+>+  raw_spin_unlock_irqrestore(&pkg_work_lock, flags);
+> 
+>   disable_pkg_thres_interrupt();
+>   schedule_delayed_work_on(cpu,
 
->BUG: sleeping function called from invalid context at /home/stano/Kernels/linux-3.12-rt/kernel/rtmutex.c:673
->in_atomic(): 1, irqs_disabled(): 0, pid: 607, name: bash
->3 locks held by bash/607:
-> #0:  (sb_writers#8){......}, at: [<c00de6f4>] vfs_write+0x1cc/0x1d0
-> #1:  (trace_types_lock){......}, at: [<c0087764>] tracing_set_tracer+0x1c/0x2ac
-> #2:  (&buffer->mutex#2){......}, at: [<c0080220>] ring_buffer_resize+0xac/0x3dc
->Preemption disabled at:[<  (null)>]   (null)
->
->CPU: 0 PID: 607 Comm: bash Not tainted 3.12.15-rt25+ #124
->[<c02f7010>] (rt_spin_lock+0x28/0x68) from [<c00aa468>] (free_hot_cold_page+0x84/0x3b8)
->[<c00aa468>] (free_hot_cold_page+0x84/0x3b8) from [<c007cb2c>] (free_buffer_page+0x14/0x20)
->[<c007cb2c>] (free_buffer_page+0x14/0x20) from [<c00800bc>] (rb_update_pages+0x280/0x338)
->[<c00800bc>] (rb_update_pages+0x280/0x338) from [<c00804a0>] (ring_buffer_resize+0x32c/0x3dc)
->[<c00804a0>] (ring_buffer_resize+0x32c/0x3dc) from [<c0087530>] (free_snapshot+0x18/0x38)
->[<c0087530>] (free_snapshot+0x18/0x38) from [<c00879c4>] (tracing_set_tracer+0x27c/0x2ac)
->[<c00879c4>] (tracing_set_tracer+0x27c/0x2ac) from [<c0087a4c>] (tracing_set_trace_write+0x58/0x114)
+This doens't work. Since you come out of the hard-irq context you can
+not call schedule_work() here. Currently I don't have any better idea
+than to do something like in "x86/mce: Defer mce wakeups to threads for
+PREEMPT_RT"
 
-Can be triggered by:
-| cd /sys/kernel/debug/tracing/
-| echo 1 > events/enable
-| sleep 2 # fill the buffer
-| echo 1024 > buffer_size_kb # shrink the buffer
+>@@ -426,19 +426,28 @@ static int pkg_temp_thermal_device_add(unsigned int cpu)
+> 		goto err_ret_unlock;
+> 	}
+> 
+>-	spin_lock_irqsave(&pkg_work_lock, flags);
+>-	if (topology_physical_package_id(cpu) > max_phy_id)
+>+	if (topology_physical_package_id(cpu) > max_phy_id) {
+> 		max_phy_id = topology_physical_package_id(cpu);
 
-the shrinking of the buffer does this.
-Steven, are you comfortable with this change:
+I like this. You shouldn't however modify max_phy_id outside of the
+lock. Besides that it looks good.
 
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index fc4da2d..112d4a5 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -1682,28 +1682,22 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
- 		 * We can't schedule on offline CPUs, but it's not necessary
- 		 * since we can change their buffer sizes without any race.
- 		 */
-+		migrate_disable();
- 		for_each_buffer_cpu(buffer, cpu) {
- 			cpu_buffer = buffer->buffers[cpu];
- 			if (!cpu_buffer->nr_pages_to_update)
- 				continue;
- 
- 			/* The update must run on the CPU that is being updated. */
--			preempt_disable();
- 			if (cpu == smp_processor_id() || !cpu_online(cpu)) {
- 				rb_update_pages(cpu_buffer);
- 				cpu_buffer->nr_pages_to_update = 0;
- 			} else {
--				/*
--				 * Can not disable preemption for schedule_work_on()
--				 * on PREEMPT_RT.
--				 */
--				preempt_enable();
- 				schedule_work_on(cpu,
- 						&cpu_buffer->update_pages_work);
--				preempt_disable();
- 			}
--			preempt_enable();
- 		}
-+		migrate_enable();
- 
- 		/* wait for all the updates to complete */
- 		for_each_buffer_cpu(buffer, cpu) {
-@@ -1740,22 +1734,16 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
- 
- 		get_online_cpus();
- 
--		preempt_disable();
-+		migrate_disable();
- 		/* The update must run on the CPU that is being updated. */
- 		if (cpu_id == smp_processor_id() || !cpu_online(cpu_id))
- 			rb_update_pages(cpu_buffer);
- 		else {
--			/*
--			 * Can not disable preemption for schedule_work_on()
--			 * on PREEMPT_RT.
--			 */
--			preempt_enable();
- 			schedule_work_on(cpu_id,
- 					 &cpu_buffer->update_pages_work);
- 			wait_for_completion(&cpu_buffer->update_done);
--			preempt_disable();
- 		}
--		preempt_enable();
-+		migrate_enable();
- 
- 		cpu_buffer->nr_pages_to_update = 0;
- 		put_online_cpus();
--- 
-2.0.0.rc0
+>-	temp = krealloc(pkg_work_scheduled,
+>-			(max_phy_id+1) * sizeof(u8), GFP_ATOMIC);
+>-	if (!temp) {
+>-		spin_unlock_irqrestore(&pkg_work_lock, flags);
+>-		err = -ENOMEM;
+>-		goto err_ret_free;
+>+
+>+		temp = kmalloc((max_phy_id+1) * sizeof(u8), GFP_KERNEL);
+>+		if (!temp) {
+>+			err = -ENOMEM;
+>+			goto err_ret_free;
+>+		}
+>+
+>+		raw_spin_lock_irqsave(&pkg_work_lock, flags);
+>+
+>+		p = pkg_work_scheduled;
+>+
+>+		memcpy(temp, pkg_work_scheduled, ksize(pkg_work_scheduled));
+>+		pkg_work_scheduled = temp;
+>+
+>+		pkg_work_scheduled[topology_physical_package_id(cpu)] = 0;
 
->Thanks
+This seems to be the "init" which needs to be done. Now you skip it if
+you are first called with 4 and later with 3,2,1,0 for instance. Using
+kzalloc() instead of kmalloc() should make it right and avoid the need
+of = 0 here.
+
+>+
+>+		raw_spin_unlock_irqrestore(&pkg_work_lock, flags);
+>+
+>+		kfree(p);
+> 	}
+>-	pkg_work_scheduled = temp;
+>-	pkg_work_scheduled[topology_physical_package_id(cpu)] = 0;
+>-	spin_unlock_irqrestore(&pkg_work_lock, flags);
+> 
+> 	phy_dev_entry->phys_proc_id = topology_physical_package_id(cpu);
+> 	phy_dev_entry->first_cpu = cpu;
 
 Sebastian
