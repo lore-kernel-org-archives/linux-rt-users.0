@@ -1,140 +1,117 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.15-rt26
-Date: Thu, 8 May 2014 20:16:43 -0400
-Message-ID: <20140508201643.359d0768@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: tracing: BUG: sleeping function called from invalid context
+Date: Fri, 9 May 2014 11:37:00 +0200
+Message-ID: <20140509093700.GA29014@linutronix.de>
+References: <53518CD8.4020706@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Stanislav Meduna <stano@meduna.org>, rostedt@goodmis.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:33617 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752652AbaEIJhF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 May 2014 05:37:05 -0400
+Content-Disposition: inline
+In-Reply-To: <53518CD8.4020706@meduna.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+* Stanislav Meduna | 2014-04-18 22:36:40 [+0200]:
 
-Dear RT Folks,
+>Hi,
+Hi,
 
-I'm pleased to announce the 3.12.15-rt26 stable release.
+>BUG: sleeping function called from invalid context at /home/stano/Kernels/linux-3.12-rt/kernel/rtmutex.c:673
+>in_atomic(): 1, irqs_disabled(): 0, pid: 607, name: bash
+>3 locks held by bash/607:
+> #0:  (sb_writers#8){......}, at: [<c00de6f4>] vfs_write+0x1cc/0x1d0
+> #1:  (trace_types_lock){......}, at: [<c0087764>] tracing_set_tracer+0x1c/0x2ac
+> #2:  (&buffer->mutex#2){......}, at: [<c0080220>] ring_buffer_resize+0xac/0x3dc
+>Preemption disabled at:[<  (null)>]   (null)
+>
+>CPU: 0 PID: 607 Comm: bash Not tainted 3.12.15-rt25+ #124
+>[<c02f7010>] (rt_spin_lock+0x28/0x68) from [<c00aa468>] (free_hot_cold_page+0x84/0x3b8)
+>[<c00aa468>] (free_hot_cold_page+0x84/0x3b8) from [<c007cb2c>] (free_buffer_page+0x14/0x20)
+>[<c007cb2c>] (free_buffer_page+0x14/0x20) from [<c00800bc>] (rb_update_pages+0x280/0x338)
+>[<c00800bc>] (rb_update_pages+0x280/0x338) from [<c00804a0>] (ring_buffer_resize+0x32c/0x3dc)
+>[<c00804a0>] (ring_buffer_resize+0x32c/0x3dc) from [<c0087530>] (free_snapshot+0x18/0x38)
+>[<c0087530>] (free_snapshot+0x18/0x38) from [<c00879c4>] (tracing_set_tracer+0x27c/0x2ac)
+>[<c00879c4>] (tracing_set_tracer+0x27c/0x2ac) from [<c0087a4c>] (tracing_set_trace_write+0x58/0x114)
 
-The 3.12-rt series is now under the stable releases. This came out
-later than scheduled due to making sure one of the updates was correct.
+Can be triggered by:
+| cd /sys/kernel/debug/tracing/
+| echo 1 > events/enable
+| sleep 2 # fill the buffer
+| echo 1024 > buffer_size_kb # shrink the buffer
 
-You can get this release via the git tree at:
+the shrinking of the buffer does this.
+Steven, are you comfortable with this change:
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.12-rt
-  Head SHA1: d0785b146144c18f524d17908d880c553865e417
-
-
-Or to build 3.12.15-rt26 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.15.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.15-rt26.patch.xz
-
-
-
-You can also build from 3.12.15-rt25 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.15-rt25-rt26.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.12.15-rt25:
-
----
-
-Steven Rostedt (1):
-      rt: Move migrate_disable up in trylocks
-
-Steven Rostedt (Red Hat) (2):
-      net: gianfar: Fix missing return of gfar_clean_tx_ring()
-      Linux 3.12.15-rt26
-
-----
- drivers/net/ethernet/freescale/gianfar.c |  1 +
- kernel/rt.c                              | 20 ++++++++++++--------
- localversion-rt                          |  2 +-
- 3 files changed, 14 insertions(+), 9 deletions(-)
----------------------------
-diff --git a/drivers/net/ethernet/freescale/gianfar.c b/drivers/net/ethernet/freescale/gianfar.c
-index 091945c..df27493 100644
---- a/drivers/net/ethernet/freescale/gianfar.c
-+++ b/drivers/net/ethernet/freescale/gianfar.c
-@@ -2615,6 +2615,7 @@ static int gfar_clean_tx_ring(struct gfar_priv_tx_q *tx_queue)
- 	tx_queue->dirty_tx = bdp;
+diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+index fc4da2d..112d4a5 100644
+--- a/kernel/trace/ring_buffer.c
++++ b/kernel/trace/ring_buffer.c
+@@ -1682,28 +1682,22 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
+ 		 * We can't schedule on offline CPUs, but it's not necessary
+ 		 * since we can change their buffer sizes without any race.
+ 		 */
++		migrate_disable();
+ 		for_each_buffer_cpu(buffer, cpu) {
+ 			cpu_buffer = buffer->buffers[cpu];
+ 			if (!cpu_buffer->nr_pages_to_update)
+ 				continue;
  
- 	netdev_tx_completed_queue(txq, howmany, bytes_sent);
-+	return howmany;
- }
- 
- static void gfar_schedule_cleanup(struct gfar_priv_grp *gfargrp)
-diff --git a/kernel/rt.c b/kernel/rt.c
-index 5d17727..5f44def 100644
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -180,12 +180,15 @@ EXPORT_SYMBOL(_mutex_unlock);
-  */
- int __lockfunc rt_write_trylock(rwlock_t *rwlock)
- {
--	int ret = rt_mutex_trylock(&rwlock->lock);
-+	int ret;
-+
-+	migrate_disable();
-+	ret = rt_mutex_trylock(&rwlock->lock);
- 
--	if (ret) {
-+	if (ret)
- 		rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
--		migrate_disable();
--	}
-+	else
+ 			/* The update must run on the CPU that is being updated. */
+-			preempt_disable();
+ 			if (cpu == smp_processor_id() || !cpu_online(cpu)) {
+ 				rb_update_pages(cpu_buffer);
+ 				cpu_buffer->nr_pages_to_update = 0;
+ 			} else {
+-				/*
+-				 * Can not disable preemption for schedule_work_on()
+-				 * on PREEMPT_RT.
+-				 */
+-				preempt_enable();
+ 				schedule_work_on(cpu,
+ 						&cpu_buffer->update_pages_work);
+-				preempt_disable();
+ 			}
+-			preempt_enable();
+ 		}
 +		migrate_enable();
  
- 	return ret;
- }
-@@ -212,11 +215,12 @@ int __lockfunc rt_read_trylock(rwlock_t *rwlock)
- 	 * write locked.
- 	 */
- 	if (rt_mutex_owner(lock) != current) {
+ 		/* wait for all the updates to complete */
+ 		for_each_buffer_cpu(buffer, cpu) {
+@@ -1740,22 +1734,16 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
+ 
+ 		get_online_cpus();
+ 
+-		preempt_disable();
 +		migrate_disable();
- 		ret = rt_mutex_trylock(lock);
--		if (ret) {
-+		if (ret)
- 			rwlock_acquire(&rwlock->dep_map, 0, 1, _RET_IP_);
--			migrate_disable();
--		}
-+		else
-+			migrate_enable();
- 	} else if (!rwlock->read_depth) {
- 		ret = 0;
- 	}
-@@ -245,8 +249,8 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
- 	 */
- 	if (rt_mutex_owner(lock) != current) {
- 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
--		__rt_spin_lock(lock);
- 		migrate_disable();
-+		__rt_spin_lock(lock);
- 	}
- 	rwlock->read_depth++;
- }
-diff --git a/localversion-rt b/localversion-rt
-index c5b71f9..2e9afd4 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt25
-+-rt26
+ 		/* The update must run on the CPU that is being updated. */
+ 		if (cpu_id == smp_processor_id() || !cpu_online(cpu_id))
+ 			rb_update_pages(cpu_buffer);
+ 		else {
+-			/*
+-			 * Can not disable preemption for schedule_work_on()
+-			 * on PREEMPT_RT.
+-			 */
+-			preempt_enable();
+ 			schedule_work_on(cpu_id,
+ 					 &cpu_buffer->update_pages_work);
+ 			wait_for_completion(&cpu_buffer->update_done);
+-			preempt_disable();
+ 		}
+-		preempt_enable();
++		migrate_enable();
+ 
+ 		cpu_buffer->nr_pages_to_update = 0;
+ 		put_online_cpus();
+-- 
+2.0.0.rc0
+
+>Thanks
+
+Sebastian
