@@ -1,39 +1,32 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RFC PATCH RT] netconsole: enable netconsole on PREEMPT_RT
-Date: Fri, 9 May 2014 17:55:15 +0200
-Message-ID: <20140509155515.GJ29014@linutronix.de>
-References: <31fa5b74f8e6267f9b7f906c791d1ddf7d550771.1398788759.git.bristot@redhat.com>
- <536256EC.1060909@windriver.com>
- <5367E23B.7060908@redhat.com>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Re: [PATCH] ftrace: Simplify ring buffer resizing, make work with
+ RT
+Date: Fri, 09 May 2014 12:08:43 -0500
+Message-ID: <536D0B9B.8070906@mvista.com>
+References: <1399579402-27034-1-git-send-email-minyard@acm.org> <20140509131244.GF29014@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	rostedt@goodmis.org
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37330 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754499AbaEIPzV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 May 2014 11:55:21 -0400
-Content-Disposition: inline
-In-Reply-To: <5367E23B.7060908@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>, minyard@acm.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140509131244.GF29014@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Daniel Bristot de Oliveira | 2014-05-05 16:10:51 [-0300]:
+On 05/09/2014 08:12 AM, Sebastian Andrzej Siewior wrote:
+> * minyard@acm.org | 2014-05-08 15:03:22 [-0500]:
+>
+>> This isn't well tested, but fixes an obvious PREEMPT_RT problem and seems
+>> like a good simplification.  You can see the PREEMPT_RT bug if you enable
+>> ftrace and all the self tests; it will fail running selftests when it tries
+>> to resize the buffers.
+> I posted http://marc.info/?l=linux-rt-users&m=139962823022896&w=2 before
+> I noticed this one. You seem not to touch the second hunk.
+>
+> Sebastian
+That's a good solution, too.  I didn't notice the second hunk in my testing.
 
->Figure out why it was disabled is one objective of this RFC :-).
+Thanks,
 
-The patch first appeared in patch-3.2-rt10.patch. Haven't seen it in
-v3.0-rt1 nor in in the first v3.2-rcX-rt1. I would assume that it was
-something locking specific.
-I haven't seen any lockdep splat in current v3.14-RT. Therefore I'm
-going to drop that hunk from the patch so it can be enabled again.
-
-Since I don't really know why it was disabled in v3.2 I think it is
-best not to backport this change unless someone figures out the real
-reason and provides proof that it works in the older kernel as well.
-
-Sebastian
+-corey
