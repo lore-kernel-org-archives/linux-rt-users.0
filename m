@@ -1,40 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patchlet] locking/rt: fix rt_read_lock() lockdep annotation.
-Date: Fri, 9 May 2014 10:39:10 -0400
-Message-ID: <20140509103910.64544b48@gandalf.local.home>
-References: <20140503170110.GA10652@linutronix.de>
-	<1399449247.5142.14.camel@marge.simpson.net>
-	<20140507094807.229d88d8@gandalf.local.home>
-	<1399471264.5248.5.camel@marge.simpson.net>
-	<1399472415.5248.15.camel@marge.simpson.net>
-	<20140509132713.GH29014@linutronix.de>
-	<1399645080.31219.14.camel@marge.simpson.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH]Fix the Compiling failed problem with the default
+ arch/x86/configs/x86_64_defconfig(3.14-rt1)
+Date: Fri, 9 May 2014 16:57:45 +0200
+Message-ID: <20140509145745.GI29014@linutronix.de>
+References: <20140411185739.GA6644@linutronix.de>
+ <5362AF65.50202@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Nicholas Mc Guire <der.herr@hofr.at>
+To: "eagle.rtlinux" <eagle.rtlinux@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:13760 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753459AbaEIOjM (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:36851 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755156AbaEIO5r convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 May 2014 10:39:12 -0400
-In-Reply-To: <1399645080.31219.14.camel@marge.simpson.net>
+	Fri, 9 May 2014 10:57:47 -0400
+Content-Disposition: inline
+In-Reply-To: <5362AF65.50202@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 09 May 2014 16:18:00 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+* eagle.rtlinux | 2014-05-02 04:32:37 [+0800]:
 
+>Hello,
+Hi,
 
-> No, I had done the right thing in the first patch, as confirmed by what
-> landed in 12-rt.  The lock ain't "shared" is why I whacked it.  You saw
-> what happened to my confidence in that logic when Steven spoke.  Eek :)
+>linux-3.14/kernel/softirq.c: In function =E2=80=98__local_bh_enable_ip=
+=E2=80=99:
+>linux-3.14/kernel/softirq.c:328:2: error: implicit declaration of fu
+>nction =E2=80=98preempt_check_resched=E2=80=99
+>[-Werror=3Dimplicit-function-declaration]
+=E2=80=A6
+>diff --git a/include/linux/preempt.h b/include/linux/preempt.h
+>index 116af6a..7d4f557 100644
+>--- a/include/linux/preempt.h
+>+++ b/include/linux/preempt.h
+>@@ -155,6 +155,7 @@ do { \
+> #define preempt_enable_no_resched_notrace()    barrier()
+> #define preempt_enable_notrace()        barrier()
+> #define preempt_check_resched_rt()        barrier()
+>+#define preempt_check_resched()  barrier()
+>
 
-I was confused because the patch didn't apply to my tree :-)
+I fixed it differently. Somehow I removed preempt_check_resched() in th=
+e
+preempt-lazy-support.patch for no obvious reason. Upstream has this
+defined as "do while { }" and now I keep this as is instead of removing
+this define.
+Thanks for reporting.
 
--- Steve
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
