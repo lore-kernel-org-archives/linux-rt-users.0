@@ -1,27 +1,54 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] ftrace: Simplify ring buffer resizing, make work with RT
-Date: Fri, 9 May 2014 15:12:44 +0200
-Message-ID: <20140509131244.GF29014@linutronix.de>
-References: <1399579402-27034-1-git-send-email-minyard@acm.org>
+Subject: Re: [patch 1/6] preempt_lazy: remove redundant test_thread_flag()
+ call
+Date: Fri, 9 May 2014 15:17:47 +0200
+Message-ID: <20140509131747.GG29014@linutronix.de>
+References: <1399020080.5233.96.camel@marge.simpson.net>
+ <1399029166.5233.125.camel@marge.simpson.net>
+ <20140505223728.5a07e6e1@gandalf.local.home>
+ <1399354431.5192.67.camel@marge.simpson.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Corey Minyard <cminyard@mvista.com>
-To: minyard@acm.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:35838 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751067AbaEINRt (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 9 May 2014 09:17:49 -0400
 Content-Disposition: inline
-In-Reply-To: <1399579402-27034-1-git-send-email-minyard@acm.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <1399354431.5192.67.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* minyard@acm.org | 2014-05-08 15:03:22 [-0500]:
+* Mike Galbraith | 2014-05-06 07:33:51 [+0200]:
 
->This isn't well tested, but fixes an obvious PREEMPT_RT problem and seems
->like a good simplification.  You can see the PREEMPT_RT bug if you enable
->ftrace and all the self tests; it will fail running selftests when it tries
->to resize the buffers.
+>> Hmm, do all archs check? Perhaps we need to also update
+>> include/asm-generic/preempt.h?
+>
+>Per cpu preempt_count is x86, and tif_need_resched() handles laziness,
+>so all should be well.  Did I just manage to overlook the obvious for
+>the second time?
 
-I posted http://marc.info/?l=linux-rt-users&m=139962823022896&w=2 before
-I noticed this one. You seem not to touch the second hunk.
+In include/asm-generic/preempt.h we have
+| static __always_inline bool __preempt_count_dec_and_test(void)
+| {
+|         return !--*preempt_count_ptr() && tif_need_resched();
+| }
+
+and tif_need_resched() is in include/linux/thread_info.h
+| #ifdef CONFIG_PREEMPT_LAZY
+| #define tif_need_resched() (test_thread_flag(TIF_NEED_RESCHED) || \
+|                 test_thread_flag(TIF_NEED_RESCHED_LAZY))
+| #else
+| #define tif_need_resched() (test_thread_flag(TIF_NEED_RESCHED))
+| #endif  
+
+So I guess we are fine.
+
+>-Mike
 
 Sebastian
