@@ -1,30 +1,27 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: kernel/locking/rt.c: add missing EXPORT_SYMBOL for
- rt_down_write_nested_lock() needed by f2fs
-Date: Fri, 9 May 2014 15:07:02 +0200
-Message-ID: <20140509130702.GE29014@linutronix.de>
-References: <20140504191442.370fcf4c@tor.valhalla.alchemy.lu>
+Subject: Re: [PATCH] ftrace: Simplify ring buffer resizing, make work with RT
+Date: Fri, 9 May 2014 15:12:44 +0200
+Message-ID: <20140509131244.GF29014@linutronix.de>
+References: <1399579402-27034-1-git-send-email-minyard@acm.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Joakim Hernberg <jbh@alchemy.lu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35732 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750744AbaEINHE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 May 2014 09:07:04 -0400
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Corey Minyard <cminyard@mvista.com>
+To: minyard@acm.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140504191442.370fcf4c@tor.valhalla.alchemy.lu>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1399579402-27034-1-git-send-email-minyard@acm.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Joakim Hernberg | 2014-05-04 19:14:42 [+0200]:
+* minyard@acm.org | 2014-05-08 15:03:22 [-0500]:
 
->I found this trying to build 3.14.2-rt3.
+>This isn't well tested, but fixes an obvious PREEMPT_RT problem and seems
+>like a good simplification.  You can see the PREEMPT_RT bug if you enable
+>ftrace and all the self tests; it will fail running selftests when it tries
+>to resize the buffers.
 
-Applied.
+I posted http://marc.info/?l=linux-rt-users&m=139962823022896&w=2 before
+I noticed this one. You seem not to touch the second hunk.
 
 Sebastian
