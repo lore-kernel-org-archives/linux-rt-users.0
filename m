@@ -1,143 +1,92 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
- futile
-Date: Wed, 14 May 2014 08:44:59 -0700
-Message-ID: <20140514154459.GE4570@linux.vnet.ibm.com>
-References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: 3.2.57-rt: rcu_preempt detected stalls at boot
+Date: Wed, 14 May 2014 12:21:56 -0400
+Message-ID: <53739824.2080007@windriver.com>
+References: <20140513074539.GJ12328@oktetlabs.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"
+Content-Transfer-Encoding: 7bit
+Cc: <746232@bugs.debian.org>
+To: "Alexandra N. Kossovsky" <Alexandra.Kossovsky@oktetlabs.ru>,
+	<linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.windriver.com ([147.11.1.11]:36293 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751447AbaENQVd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 May 2014 12:21:33 -0400
+In-Reply-To: <20140513074539.GJ12328@oktetlabs.ru>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, May 14, 2014 at 11:08:35AM -0400, Paul Gortmaker wrote:
-> As of the old commit ac086bc22997a2be24fc40fc8d46522fe7e03d11
-> ("sched: rt-group: smp balancing") the concept of borrowing per
-> cpu rt_runtime from one core to another was introduced.
+On 14-05-13 03:45 AM, Alexandra N. Kossovsky wrote:
+> Hello.
 > 
-> However, this prevents the RT throttling message from ever being
-> emitted when someone does a common (but mistaken) attempt at
-> using too much CPU in RT context.  Consider the following test:
-> 
->   echo "main() {for(;;);}" > full_load.c
->   gcc full_load.c -o full_load
->   taskset -c 1 ./full_load &
->   chrt -r -p 80 `pidof full_load`
-> 
-> When run on x86_64 defconfig, what happens is as follows:
-> 
-> -task runs on core1 for 95% of an rt_period as documented in
->  the file Documentation/scheduler/sched-rt-group.txt
-> 
-> -at 95%, the code in balance_runtime sees this threshold and
->  calls do_balance_runtime()
-> 
-> -do_balance_runtime sees that core 1 is in need, and does this:
-> 	---------------
->         if (rt_rq->rt_runtime + diff > rt_period)
->                 diff = rt_period - rt_rq->rt_runtime;
->         iter->rt_runtime -= diff;
->         rt_rq->rt_runtime += diff;
-> 	---------------
->  which extends core1's rt_runtime by 5%, making it 100% of rt_period
->  by stealing 5% from core0 (or possibly some other core).
-> 
-> However, the next time core1's rt_rq enters sched_rt_runtime_exceeded(),
-> we hit this near the top of that function:
-> 	---------------
->         if (runtime >= sched_rt_period(rt_rq))
->                 return 0;
-> 	---------------
-> and hence we'll _never_ look at/set any of the throttling checks and
-> messages in sched_rt_runtime_exceeded().  Instead, we will happily
-> plod along for CONFIG_RCU_CPU_STALL_TIMEOUT seconds, at which point
-> the RCU subsystem will get angry and trigger an NMI in response to
-> what it rightly sees as a WTF situation.
+> One of my computers fails to boot with 3.2.57-rt kernel, i686.
+> The kernel is the Debian one: linux-image-3.2.0-4-rt-686-pae, version
+> 3.2.57-3.  Same non-rt kernel boots fine.  All newer -rt kernels (I've
+> tried kernels starting from 3.6) boot fine.
+> You can find some details of the hardware in
+> https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=746232,
+> including lspci output and full kernel output.
 
-In theory, one way of making RCU OK with an RT usermode CPU hog is to
-build with Frederic's CONFIG_NO_HZ_FULL=y.  This will cause RCU to see
-CPUs having a single runnable usermode task as idle, preventing the RCU
-CPU stall warning.  This does work well for mainline kernel in the lab.
+One of the more recent additions was to ensure RCU_BOOST was
+auto selected via Kconfig dependencies.  It might not have
+been present in 3.2.57-rt; not sure w/o checking what debian
+has in there.  But you might want to check the .config you
+have to see whether it is on or off, and try enabling it.
 
-In practice, not sure how much testing CONFIG_NO_HZ_FULL=y has received
-for -rt kernels in production environments.
+Paul.
+--
 
-But leaving practice aside for the moment...
-
-> Granted, there are lots of ways you can do bad things to yourself with
-> RT, but in the current zeitgeist of multicore systems with people
-> dedicating individual cores to individual tasks, I'd say the above is
-> common enough that we should react to it sensibly, and an RCU stall
-> really doesn't translate well to an end user vs a simple message that
-> says "throttling activated".
 > 
-> One way to get the throttle message instead of the ambiguous and lengthy
-> NMI triggered all core backtrace of the RCU stall is to change the
-> SCHED_FEAT(RT_RUNTIME_SHARE, true) to false.  One could make a good
-> case for this being the default for the out-of-tree preempt-rt series,
-> since folks using that are more apt to be manually tuning the system
-> and won't want an invisible hand coming in and making changes.
+> Here is the end of the serial log from the failed boot:
+> [    2.868692] ERST: Failed to get Error Log Address Range.
+> [    3.705427] Refined TSC clocksource calibration: 3599.999 MHz.
+> [    3.711340] Switching to clocksource tsc
+> [   62.804918] INFO: rcu_preempt detected stalls on CPUs/tasks: {} (detected by 3, t=15002 jiffies)
+> [   62.804923] INFO: Stall ended before state dump start
+> [  242.351898] INFO: task swapper/0:1 blocked for more than 120 seconds.
+> [  242.372354] "echo 0 > /proc/sys/kernel/hung_task_timeout_secs" disables this message.
+> [  242.380260] swapper/0       D 00000001     0     1      0 0x00000000
+> [  242.386812]  e8cd56f0 00000046 c12c30e0 00000001 e8cd6000 00000000 2c2abdd0 c14cb680
+> [  242.400292]  e8cd58c0 c14cb680 00000001 c12c5c47 c154bfdc c12c2f02 00003520 c10283fb
+> [  242.408607]  00000001 c12c5bb3 e8c18800 c12c3002 c118f8e7 c140007c c140007c e8c18800
+> [  242.416931] Call Trace:
+> [  242.419453]  [<c12c30e0>] ? need_resched+0x17/0x1b
+> [  242.424296]  [<c12c5c47>] ? add_preempt_count+0x88/0x97
+> [  242.429577]  [<c12c2f02>] ? _raw_spin_lock_irqsave+0x1b/0x37
+> [  242.435308]  [<c10283fb>] ? get_parent_ip+0x8/0x19
+> [  242.440158]  [<c12c5bb3>] ? sub_preempt_count+0x74/0x80
+> [  242.445439]  [<c12c3002>] ? _raw_spin_unlock_irqrestore+0x21/0x2b
+> [  242.451602]  [<c118f8e7>] ? vgacon_scroll+0x175/0x18f
+> [  242.456703]  [<c12c5ccd>] ? __atomic_notifier_call_chain+0x33/0x3c
+> [  242.462942]  [<c12c20ac>] ? schedule+0x64/0x7d
+> [  242.467441]  [<c12c22d5>] ? schedule_timeout+0x1f/0xac
+> [  242.472641]  [<c11d530a>] ? notify_update+0x1f/0x23
+> [  242.477574]  [<c10283fb>] ? get_parent_ip+0x8/0x19
+> [  242.482421]  [<c12c5bb3>] ? sub_preempt_count+0x74/0x80
+> [  242.487700]  [<c10283fb>] ? get_parent_ip+0x8/0x19
+> [  242.492543]  [<c12c5bb3>] ? sub_preempt_count+0x74/0x80
+> [  242.497831]  [<c102b2de>] ? migrate_enable+0x120/0x132
+> [  242.503024]  [<c12c1f7f>] ? wait_for_common+0x7f/0xe1
+> [  242.508130]  [<c102b0d6>] ? try_to_wake_up+0x189/0x189
+> [  242.513336]  [<c1077820>] ? __call_rcu+0xe6/0xe6
+> [  242.518025]  [<c1044fcc>] ? wait_rcu_gp+0x2e/0x33
+> [  242.522787]  [<c1044fd1>] ? wait_rcu_gp+0x33/0x33
+> [  242.527553]  [<c1020000>] ? huge_pte_alloc+0x1cc/0x216
+> [  242.532750]  [<c102b2de>] ? migrate_enable+0x120/0x132
+> [  242.537953]  [<c119bbcb>] ? acpi_post_unmap_gar+0x78/0x91
+> [  242.543424]  [<c11ba24a>] ? post_unmap_gar_callback+0x15/0x18
+> [  242.549224]  [<c11b9c97>] ? apei_exec_for_each_entry+0x64/0x78
+> [  242.555110]  [<c11ba235>] ? apei_resources_request+0x17f/0x17f
+> [  242.561008]  [<c143aa36>] ? setup_erst_disable+0xd/0xd
+> [  242.566203]  [<c11b9cc9>] ? apei_exec_post_unmap_gars+0xe/0x10
+> [  242.572088]  [<c143ac67>] ? erst_init+0x231/0x288
+> [  242.576851]  [<c11ef04a>] ? bus_add_driver+0x180/0x1b2
+> [  242.582054]  [<c100115c>] ? do_one_initcall+0x66/0x10e
+> [  242.587246]  [<c14177d8>] ? kernel_init+0xfc/0x173
+> [  242.592093]  [<c14176dc>] ? start_kernel+0x31a/0x31a
+> [  242.597110]  [<c12c76fe>] ? kernel_thread_helper+0x6/0xd
 > 
-> However, in mainline, where it is more likely that there will be
-> n+x (x>0) RT tasks on an n core system, we can leave the sharing on,
-> and still avoid the RCU stalls by noting that there is no point in
-> trying to balance when there are no tasks to migrate, or only a
-> single RT task is present.  Inflating the rt_runtime does nothing
-> in this case other than defeat sched_rt_runtime_exceeded().
-> 
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Steven Rostedt <rostedt@goodmis.org>
-> Cc: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-> ---
-> 
-> [I'd mentioned a similar use case here: https://lkml.org/lkml/2013/3/6/338
->  and tglx asked why they wouldn't see the throttle message; it is only
->  now that I had a chance to dig in and figure out why.  Oh, and the patch
->  is against linux-next, in case that matters...]
-> 
->  kernel/sched/rt.c | 9 +++++++++
->  1 file changed, 9 insertions(+)
-> 
-> diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> index ea4d500..698aac9 100644
-> --- a/kernel/sched/rt.c
-> +++ b/kernel/sched/rt.c
-> @@ -774,6 +774,15 @@ static int balance_runtime(struct rt_rq *rt_rq)
->  	if (!sched_feat(RT_RUNTIME_SHARE))
->  		return more;
-> 
-> +	/*
-> +	 * Stealing from another core won't help us at all if
-> +	 * we have nothing to migrate over there, or only one
-> +	 * task that is running up all the rt_time.  In fact it
-> +	 * will just inhibit the throttling message in that case.
-> +	 */
-> +	if (!rt_rq->rt_nr_migratory || rt_rq->rt_nr_total == 1)
-
-How about something like the following to take NO_HZ_FULL into account?
-
-+	if ((!rt_rq->rt_nr_migratory || rt_rq->rt_nr_total == 1) &&
-+	    !tick_nohz_full_cpu(cpu))
-
-							Thanx, Paul
-
-> +		return more;
-> +
->  	if (rt_rq->rt_time > rt_rq->rt_runtime) {
->  		raw_spin_unlock(&rt_rq->rt_runtime_lock);
->  		more = do_balance_runtime(rt_rq);
-> -- 
-> 1.8.2.3
 > 
