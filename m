@@ -1,154 +1,86 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
- futile
-Date: Wed, 14 May 2014 12:27:35 -0700
-Message-ID: <20140514192735.GP4570@linux.vnet.ibm.com>
-References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
- <20140514154459.GE4570@linux.vnet.ibm.com>
- <20140514191100.GA24155@windriver.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Ben Hutchings <ben@decadent.org.uk>
+Subject: Re: Bug#746232: 3.2.57-rt: rcu_preempt detected stalls at boot
+Date: Wed, 14 May 2014 21:15:53 +0100
+Message-ID: <1400098553.2647.26.camel@deadeye.wl.decadent.org.uk>
+References: <20140513074539.GJ12328@oktetlabs.ru>
+	 <53739824.2080007@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@redhat.com>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140514191100.GA24155@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: multipart/signed; micalg="pgp-sha512";
+	protocol="application/pgp-signature"; boundary="=-RY2ph8EyIdR0A6KCqEAK"
+Cc: linux-rt-users@vger.kernel.org, 746232@bugs.debian.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	"Alexandra N. Kossovsky" <Alexandra.Kossovsky@oktetlabs.ru>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from shadbolt.e.decadent.org.uk ([88.96.1.126]:44471 "EHLO
+	shadbolt.e.decadent.org.uk" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751156AbaENUQR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 May 2014 16:16:17 -0400
+In-Reply-To: <53739824.2080007@windriver.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, May 14, 2014 at 03:11:00PM -0400, Paul Gortmaker wrote:
-> [Added Frederic to Cc: since we are now talking nohz stuff]
-> 
-> [Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is futile] On 14/05/2014 (Wed 08:44) Paul E. McKenney wrote:
-> 
-> > On Wed, May 14, 2014 at 11:08:35AM -0400, Paul Gortmaker wrote:
-> > > As of the old commit ac086bc22997a2be24fc40fc8d46522fe7e03d11
-> > > ("sched: rt-group: smp balancing") the concept of borrowing per
-> > > cpu rt_runtime from one core to another was introduced.
-> > > 
-> > > However, this prevents the RT throttling message from ever being
-> > > emitted when someone does a common (but mistaken) attempt at
-> > > using too much CPU in RT context.  Consider the following test:
-> > > 
-> > >   echo "main() {for(;;);}" > full_load.c
-> > >   gcc full_load.c -o full_load
-> > >   taskset -c 1 ./full_load &
-> > >   chrt -r -p 80 `pidof full_load`
-> > > 
-> > > When run on x86_64 defconfig, what happens is as follows:
-> > > 
-> > > -task runs on core1 for 95% of an rt_period as documented in
-> > >  the file Documentation/scheduler/sched-rt-group.txt
-> > > 
-> > > -at 95%, the code in balance_runtime sees this threshold and
-> > >  calls do_balance_runtime()
-> > > 
-> > > -do_balance_runtime sees that core 1 is in need, and does this:
-> > > 	---------------
-> > >         if (rt_rq->rt_runtime + diff > rt_period)
-> > >                 diff = rt_period - rt_rq->rt_runtime;
-> > >         iter->rt_runtime -= diff;
-> > >         rt_rq->rt_runtime += diff;
-> > > 	---------------
-> > >  which extends core1's rt_runtime by 5%, making it 100% of rt_period
-> > >  by stealing 5% from core0 (or possibly some other core).
-> > > 
-> > > However, the next time core1's rt_rq enters sched_rt_runtime_exceeded(),
-> > > we hit this near the top of that function:
-> > > 	---------------
-> > >         if (runtime >= sched_rt_period(rt_rq))
-> > >                 return 0;
-> > > 	---------------
-> > > and hence we'll _never_ look at/set any of the throttling checks and
-> > > messages in sched_rt_runtime_exceeded().  Instead, we will happily
-> > > plod along for CONFIG_RCU_CPU_STALL_TIMEOUT seconds, at which point
-> > > the RCU subsystem will get angry and trigger an NMI in response to
-> > > what it rightly sees as a WTF situation.
-> > 
-> > In theory, one way of making RCU OK with an RT usermode CPU hog is to
-> > build with Frederic's CONFIG_NO_HZ_FULL=y.  This will cause RCU to see
-> > CPUs having a single runnable usermode task as idle, preventing the RCU
-> > CPU stall warning.  This does work well for mainline kernel in the lab.
-> 
-> Agreed; wanting to test that locally for myself meant moving to a more
-> modern machine, as the older PentiumD doesn't support NO_HZ_FULL.  But
-> on the newer box (dual socket six cores in each) I found the stall
-> harder to trigger w/o going back to using the threadirqs boot arg as
-> used in the earlier lkml post referenced below. (Why?  Not sure...)
-> 
-> Once I did that though (boot vanilla linux-next with threadirqs) I
-> confirmed what you said; i.e. that we would reliably get a stall with
-> the defconfig of NOHZ_IDLE=y but not with NOHZ_FULL=y (and hence also
-> RCU_USER_QS=y).
 
-Nice!!!  Thank you for checking this out!
+--=-RY2ph8EyIdR0A6KCqEAK
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: quoted-printable
 
-> > In practice, not sure how much testing CONFIG_NO_HZ_FULL=y has received
-> > for -rt kernels in production environments.
-> > 
-> > But leaving practice aside for the moment...
-> > 
-> 
-> [...]
-> 
-> > > diff --git a/kernel/sched/rt.c b/kernel/sched/rt.c
-> > > index ea4d500..698aac9 100644
-> > > --- a/kernel/sched/rt.c
-> > > +++ b/kernel/sched/rt.c
-> > > @@ -774,6 +774,15 @@ static int balance_runtime(struct rt_rq *rt_rq)
-> > >  	if (!sched_feat(RT_RUNTIME_SHARE))
-> > >  		return more;
-> > > 
-> > > +	/*
-> > > +	 * Stealing from another core won't help us at all if
-> > > +	 * we have nothing to migrate over there, or only one
-> > > +	 * task that is running up all the rt_time.  In fact it
-> > > +	 * will just inhibit the throttling message in that case.
-> > > +	 */
-> > > +	if (!rt_rq->rt_nr_migratory || rt_rq->rt_nr_total == 1)
-> > 
-> > How about something like the following to take NO_HZ_FULL into account?
-> > 
-> > +	if ((!rt_rq->rt_nr_migratory || rt_rq->rt_nr_total == 1) &&
-> > +	    !tick_nohz_full_cpu(cpu))
-> 
-> Yes, I think special casing nohz_full can make sense, but maybe not
-> exactly here in balance_runtime?  Since the underlying reasoning doesn't
-> change on nohz_full ; if only one task is present, or nothing can
-> migrate, then the call to do_balance_runtime is largely useless - we'll
-> walk possibly all cpus in search of an rt_rq to steal from, and what we
-> steal, we can't use - so we've artificially crippled the other rt_rq for
-> nothing other than to artifically inflate our rt_runtime and thus allow
-> 100% usage.
-> 
-> Given that, perhaps a separate change to sched_rt_runtime_exceeded()
-> that works out the CPU from the rt_rq, and returns zero if it is a
-> nohz_full cpu?  Does that make sense?  Then the nohz_full people won't
-> get the throttling message even if they go 100%.
+On Wed, 2014-05-14 at 12:21 -0400, Paul Gortmaker wrote:
+> On 14-05-13 03:45 AM, Alexandra N. Kossovsky wrote:
+> > Hello.
+> >=20
+> > One of my computers fails to boot with 3.2.57-rt kernel, i686.
+> > The kernel is the Debian one: linux-image-3.2.0-4-rt-686-pae, version
+> > 3.2.57-3.  Same non-rt kernel boots fine.  All newer -rt kernels (I've
+> > tried kernels starting from 3.6) boot fine.
+> > You can find some details of the hardware in
+> > https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=3D746232,
+> > including lspci output and full kernel output.
+>=20
+> One of the more recent additions was to ensure RCU_BOOST was
+> auto selected via Kconfig dependencies.  It might not have
+> been present in 3.2.57-rt; not sure w/o checking what debian
+> has in there.  But you might want to check the .config you
+> have to see whether it is on or off, and try enabling it.
+[...]
 
-Makes sense to me!  Then again, I am no scheduler expert.
+$ grep RCU_BOOST /usr/src/linux-headers-3.2.0-4-rt-686-pae/.config
+# CONFIG_RCU_BOOST is not set
 
-							Thanx, Paul
+Sasha, could you try enabling this?  (Instructions for rebuilding the
+package are at
+<http://kernel-handbook.alioth.debian.org/ch-common-tasks.html#s-common-off=
+icial>, or you could take the source and rt patch from linux-source-3.2 and=
+ then use 'make deb-pkg'.)
 
-> Paul.
-> --
-> 
-> > 
-> > 							Thanx, Paul
-> > 
-> > > +		return more;
-> > > +
-> > >  	if (rt_rq->rt_time > rt_rq->rt_runtime) {
-> > >  		raw_spin_unlock(&rt_rq->rt_runtime_lock);
-> > >  		more = do_balance_runtime(rt_rq);
-> > > -- 
-> > > 1.8.2.3
-> > > 
-> > 
-> 
+Ben.
+
+--=20
+Ben Hutchings
+We get into the habit of living before acquiring the habit of thinking.
+                                                              - Albert Camu=
+s
+
+--=-RY2ph8EyIdR0A6KCqEAK
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: This is a digitally signed message part
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2.0.22 (GNU/Linux)
+
+iQIVAwUAU3PPBOe/yOyVhhEJAQrAFQ//XEhEGl12ABjh1asXfgg34iagbe5dOtOQ
+q1WLDowIe32J8mpklhAVxEAKQwdrrf67xaKG9viiIjo8Py60hmY2wVSmq+COAXmk
+CICYyzhHMEy4dCtKtwH5dHrhw6RI82tP+O5A4PXforpfNQNl1PMdHXNxBKDh+mfd
+cZGXP3buAOg4T5xM6FphB/dhS5Mh6b77foo/oPYX4+sQj4SJuumFvZ+S3FbzPTd4
+R4kKT6muHf34htqZwTuNR4nFtKoAzhZckcGwD4wogQCR1WkuTBet01d2Ktvy1NHB
+9bPHRlpOxOVpsG7iZ5o8luj+ViCMcho6eFuv2ds0f5UAYXv0u3mxwv0kNiLdgBod
+2qex4X7vDbiy/YLAxxGI/jI/+pm0NZtVl2LEJyG/0I5/+BdrJRSamacyDCMbSKaf
+B/WT2/LBUh4TF2TbT1a+83Af2rufNZA1fMvo+Qp+txDXEKDN/Q/Kwfo7BiiBavWo
+9OUuBdXypggoQdbqgLSy2whPkN2D1/4PelqLyXD0pg3kbUQDwlGtG586eTCPwWJ1
+rCCrD0CG5ywsKodrAxv6j/8uKmz2QdeCzoxnMxnYX5i6wPvmFLKF/wOheJYZFOcu
+eJab9lC85qDbmLZ4nc/w9B7tqdjbXP/Ef7Ubj6Zrs+PWu9za6bIRfFvTy4k2XHRN
+dnf34Pd0s1g=
+=eXhl
+-----END PGP SIGNATURE-----
+
+--=-RY2ph8EyIdR0A6KCqEAK--
