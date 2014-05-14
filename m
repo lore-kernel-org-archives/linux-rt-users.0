@@ -1,134 +1,86 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.14.3-rt5
-Date: Wed, 14 May 2014 05:10:57 +0200
-Message-ID: <1400037057.5157.16.camel@marge.simpson.net>
-References: <20140509181214.GK29014@linutronix.de>
-	 <1399695303.5146.21.camel@marge.simpson.net>
-	 <20140513154002.GD15049@linutronix.de>
+From: Kimmo Taskinen <kimmo.taskinen@me.com>
+Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
+ linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init [which
+ in 3.14 has been changed to EXPORT_SYMBOL_GPL]
+Date: Wed, 14 May 2014 12:03:49 +0300
+Message-ID: <53733175.9020300@me.com>
+References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
+ <CAOcfFMynnyHL_G6Gez_AZYFky=hLYeoyY8WVHF572RZq1g_aBw@mail.gmail.com>
+ <CAP=VYLrHC3TPAixV8m0u9g8ooyiE0jvS=7bFLHDdCwt3wsA1iA@mail.gmail.com>
+ <CAOcfFMy_Ui94baWzuAMKOnUpcjYpnNsubdDCNTZx52XokVyN6g@mail.gmail.com>
+ <535A7474.2090701@windriver.com>
+ <CAOcfFMyjup8OAkxHj-hbb5rMzrPjNPpw_9Jdx-iXPi09ce-Zuw@mail.gmail.com>
+ <535A9DDC.4070801@windriver.com> <5372BB0C.8030303@me.com>
+ <20140514021740.GE22474@windriver.com>
+ <CAOcfFMxipjwdNPOHhxgaMU_MvSKYe5bfexhn71xvx026431YDA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140513154002.GD15049@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; CHARSET=US-ASCII; format=flowed
+Content-Transfer-Encoding: 7BIT
+To: jordan <triplesquarednine@gmail.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from st11p00mm-asmtpout003.mac.com ([17.172.81.2]:41960 "EHLO
+	st11p00mm-asmtp003.mac.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751308AbaENJDx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 May 2014 05:03:53 -0400
+Received: from [10.0.1.102] (cs181219184.pp.htv.fi [82.181.219.184])
+ by st11p00mm-asmtp003.mac.com
+ (Oracle Communications Messaging Server 7u4-27.08(7.0.4.27.7) 64bit (built Aug
+ 22 2013)) with ESMTPSA id <0N5K00M7Y3UD2880@st11p00mm-asmtp003.mac.com> for
+ linux-rt-users@vger.kernel.org; Wed, 14 May 2014 09:03:52 +0000 (GMT)
+In-reply-to: <CAOcfFMxipjwdNPOHhxgaMU_MvSKYe5bfexhn71xvx026431YDA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2014-05-13 at 17:40 +0200, Sebastian Andrzej Siewior wrote: 
-> * Mike Galbraith | 2014-05-10 06:15:03 [+0200]:
-> 
-> >On Fri, 2014-05-09 at 20:12 +0200, Sebastian Andrzej Siewior wrote:
-> >
-> >> Known issues:
-> >> 
-> >>       - bcache is disabled.
-> >> 
-> >>       - lazy preempt on x86_64 leads to a crash with some load.
-> >
-> >That is only with NO_HZ_FUL enabled here.  Box blows the stack during
-> >task exit, eyeballing hasn't spotted the why.
-> 
-> Even if I disable NO_HZ_FULL it explodes as soon as hackbench starts.
+On 14.05.2014 05:47, jordan wrote:
+>>> I had not been able to boot my Phenom II X4 910e PC with any of the
+>>> latest RT kernels (3.12 after 3.12.5-rt7 or 3.14 or not even the
+>>> latest 3.10 versions) until I today disabled AMD C1E from BIOS. An
+>>> other way to get it to boot was "acpi=off" as a parameter to kernel
+>>> but I need "button". I tried many others "processor.max_cstate=0",
+>>> "processor.nocst", etc...
+>>>
+>>> Without RT patch the "AMD C1E" is not a problem.
+> Kimmo, have you tried reverting the 3 patches that some of us have had
+> success in using to get a booting system?
+>
+> you can get the patch here; http://pastebin.com/VG7X5WjK ... it
+> applies over 3.14.3-rt5 [after you've already applied the -rt patch,
+> you apply it]. It's yielded working AMD Phenom systems for me
+> [although, i don't have the exact same H/W as you]. it might be worth
+> a try, just to see if it works.
+I can confirm that applying the patch in http://pastebin.com/VG7X5WjK to 
+3.14.3-rt5 makes my system bootable even with AMD C1E enabled.
+To clarify my previous email, those other tricks 
+"processor.max_cstate=0", "processor.nocst", etc... did not help.
 
-Well good, that makes a hell of a lot more sense.  The below is with
-NO_HZ_FULL enabled, and hackbench exploding on exit.  Every kaboom I've
-see has been a dead task exploding on scrambled thread_info.
+Kimmo
+>
+>> OK, so I never got back to finding a system that could reproduce this,
+>> but it sounds like it is still worthwhile; thanks for the reminder and
+>> I'll go see if I can reproduce this on a quad since the six core was OK.
+> Hey Paul, I also forgot to get back to you ;) ... I had been carrying
+> over my .config - so i tried using defconfig too [just to see] and it
+> was no different. I was astonished that yours booted up just fine,
+> because i know of other AMD users [aside from Kimmo] who can't boot on
+> vainlla-rt... Again, 3.14.x-rtX boot and work just fine for me, by
+> reverting those patches. I had thought maybe -rt5 would boot [it
+> looked to have some substantial changes], but alas -rt5 also required
+> the patch for a working system.
+>
+> Jordan
+>
+>> P.
+>> --
+>>
+>>> Cheers
+>>> Kimmo
+>>>
+>>>> --
+>>>> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+>>>> the body of a message to majordomo@vger.kernel.org
+>>>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>>>>
 
-Accessing per-anti-cpu data doesn't work well from our universe ;-)
-
-crash> bt  6657
-PID: 6657   TASK: ffff8801f947ac00  CPU: 1   COMMAND: "hackbench"
- #0 [ffff88022fc86e00] crash_nmi_callback at ffffffff8102b8f4
- #1 [ffff88022fc86e10] nmi_handle at ffffffff8164865a
- #2 [ffff88022fc86ea0] default_do_nmi at ffffffff81648883
- #3 [ffff88022fc86ed0] do_nmi at ffffffff81648b50
- #4 [ffff88022fc86ef0] end_repeat_nmi at ffffffff81647b71
-    [exception RIP: oops_begin+162]
-    RIP: ffffffff816483e2  RSP: ffff8800b220d9d8  RFLAGS: 00000097
-    RAX: 0000000000000010  RBX: 0000000000000010  RCX: 0000000000000097
-    RDX: ffff8800b220d9d8  RSI: 0000000000000018  RDI: 0000000000000001
-    RBP: ffffffff816483e2   R8: ffffffff816483e2   R9: 0000000000000018
-    R10: ffff8800b220d9d8  R11: 0000000000000097  R12: ffffffffffffffff
-    R13: ffff88022700bf00  R14: 0000000000000100  R15: 0000000000000001
-    ORIG_RAX: 0000000000000001  CS: 0010  SS: 0018
---- <NMI exception stack> ---
- #5 [ffff8800b220d9d8] oops_begin at ffffffff816483e2
- #6 [ffff8800b220d9f0] no_context at ffffffff8162ef25
- #7 [ffff8800b220da40] __bad_area_nosemaphore at ffffffff8162f19d
- #8 [ffff8800b220daa0] bad_area_nosemaphore at ffffffff8162f1ca
- #9 [ffff8800b220dab0] __do_page_fault at ffffffff8164a68e
-#10 [ffff8800b220dbd0] do_page_fault at ffffffff8164ab9e
-#11 [ffff8800b220dc00] page_fault at ffffffff81647808
-    [exception RIP: cpuacct_charge+148]
-    RIP: ffffffff810a1874  RSP: ffff8800b220dcb8  RFLAGS: 00010046
-    RAX: 0000000000000040  RBX: 000000000000dd08  RCX: 0000000000000003
-    RDX: 0000000000000006  RSI: 0000000000000006  RDI: ffff88022700bf00
-    RBP: ffff8800b220dcf8   R8: 00000000000006c0   R9: 000000000000000b
-    R10: 0000000000000000  R11: 0000000000013f40  R12: ffffffff81c3b180
-    R13: ffff8801f947ac00  R14: ffffffffb220ddd8  R15: 0000000000001d64
-    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
-#12 [ffff8800b220dd00] update_curr at ffffffff81092451
-#13 [ffff8800b220dd60] dequeue_entity at ffffffff810928f3
-#14 [ffff8800b220ddc0] dequeue_task_fair at ffffffff81092d4d
-#15 [ffff8800b220de10] dequeue_task at ffffffff8108442e
-#16 [ffff8800b220de40] deactivate_task at ffffffff81084f9e
-#17 [ffff8800b220de50] __schedule at ffffffff816440d4
-#18 [ffff8800b220ded0] schedule at ffffffff81644899
-#19 [ffff8800b220def0] do_exit at ffffffff810530d0
-#20 [ffff8800b220df40] do_group_exit at ffffffff8105334c
-#21 [ffff8800b220df70] sys_exit_group at ffffffff810533e2
-#22 [ffff8800b220df80] tracesys at ffffffff8164f109 (via system_call)
-    RIP: 00007fcc1a078ca8  RSP: 00007fff62546c48  RFLAGS: 00000246
-    RAX: ffffffffffffffda  RBX: ffffffff8164f109  RCX: ffffffffffffffff
-    RDX: 0000000000000000  RSI: 000000000000003c  RDI: 0000000000000000
-    RBP: 00007fcc1a355840   R8: 00000000000000e7   R9: ffffffffffffffa8
-    R10: 00007fcc1a969700  R11: 0000000000000246  R12: ffffffff810533e2
-    R13: ffff8800b220df78  R14: 0000000001ad9c88  R15: 0000000000000001
-    ORIG_RAX: 00000000000000e7  CS: 0033  SS: 002b
-
-crash> struct thread_info 0xffff8800b220c000
-struct thread_info {
-  task = 0xffffffff, 
-  exec_domain = 0xffffffff811bae66 <__d_free+70>, 
-  flags = 2, 
-  status = 0, 
-  cpu = 2988498392, 
-  saved_preempt_count = -30720, 
-  preempt_lazy_count = -112742225, 
-  addr_limit = {
-    seg = 524802
-  }, 
-  restart_block = {
-    fn = 0xffff88022fc91358, 
-    {
-      futex = {
-        uaddr = 0x80202, 
-        val = 3, 
-        flags = 0, 
-        bitset = 2988490752, 
-        time = 18446744071585425101, 
-        uaddr2 = 0xffff88022fc91358
-      }, 
-      nanosleep = {
-        clockid = 524802, 
-        rmtp = 0x3, 
-        compat_rmtp = 0xffff8800b220c000, 
-        expires = 18446744071585425101
-      }, 
-      poll = {
-        ufds = 0x80202, 
-        nfds = 3, 
-        has_timeout = 0, 
-        tv_sec = 18446612135302709248, 
-        tv_nsec = 18446744071585425101
-      }
-    }
-  }, 
-  sysenter_return = 0xffffffff, 
-  sig_on_uaccess_error = 0, 
-  uaccess_err = 0
-}
