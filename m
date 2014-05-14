@@ -2,32 +2,33 @@ From: Kimmo Taskinen <kimmo.taskinen@me.com>
 Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
  linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init [which
  in 3.14 has been changed to EXPORT_SYMBOL_GPL]
-Date: Wed, 14 May 2014 03:51:34 +0300
-Message-ID: <5372BE16.7090004@me.com>
+Date: Wed, 14 May 2014 03:38:36 +0300
+Message-ID: <5372BB0C.8030303@me.com>
 References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
  <CAOcfFMynnyHL_G6Gez_AZYFky=hLYeoyY8WVHF572RZq1g_aBw@mail.gmail.com>
  <CAP=VYLrHC3TPAixV8m0u9g8ooyiE0jvS=7bFLHDdCwt3wsA1iA@mail.gmail.com>
  <CAOcfFMy_Ui94baWzuAMKOnUpcjYpnNsubdDCNTZx52XokVyN6g@mail.gmail.com>
  <535A7474.2090701@windriver.com>
  <CAOcfFMyjup8OAkxHj-hbb5rMzrPjNPpw_9Jdx-iXPi09ce-Zuw@mail.gmail.com>
- <535A9DDC.4070801@windriver.com> <5372BB0C.8030303@me.com>
- <5372BDC5.3070309@me.com>
+ <535A9DDC.4070801@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain; CHARSET=US-ASCII; format=flowed
 Content-Transfer-Encoding: 7BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	jordan <triplesquarednine@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from st11p00mm-asmtp002.mac.com ([17.172.81.1]:50567 "EHLO
-	st11p00mm-asmtp002.mac.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751798AbaENAvi (ORCPT
+Received: from st11p00mm-asmtp001.mac.com ([17.172.81.0]:46961 "EHLO
+	st11p00mm-asmtp001.mac.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751319AbaENBik (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 13 May 2014 20:51:38 -0400
+	Tue, 13 May 2014 21:38:40 -0400
 Received: from [10.0.1.102] (cs181219184.pp.htv.fi [82.181.219.184])
- by st11p00mm-asmtp002.mac.com
+ by st11p00mm-asmtp001.mac.com
  (Oracle Communications Messaging Server 7u4-27.08(7.0.4.27.7) 64bit (built Aug
- 22 2013)) with ESMTPSA id <0N5J00B0YH1YNS40@st11p00mm-asmtp002.mac.com> for
- linux-rt-users@vger.kernel.org; Wed, 14 May 2014 00:51:37 +0000 (GMT)
-In-reply-to: <5372BDC5.3070309@me.com>
+ 22 2013)) with ESMTPSA id <0N5J00H7WGGCRQ10@st11p00mm-asmtp001.mac.com> for
+ linux-rt-users@vger.kernel.org; Wed, 14 May 2014 00:38:39 +0000 (GMT)
+In-reply-to: <535A9DDC.4070801@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -55,7 +56,7 @@ On 25.04.2014 20:39, Paul Gortmaker wrote:
 > it was straight forward to make a 3.14.1-rt
 >
 > P.
-> -- 
+> --
 >
 >>> I should be able to dig up an athlon quad and see what it does...
 >> worth a look, i suppose.
@@ -75,10 +76,9 @@ Without RT patch the "AMD C1E" is not a problem.
 Cheers
 Kimmo
 
-> -- 
-> To unsubscribe from this list: send the line "unsubscribe 
-> linux-rt-users" in
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at http://vger.kernel.org/majordomo-info.html
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 >
 
