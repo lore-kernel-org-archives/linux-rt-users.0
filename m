@@ -1,47 +1,48 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
- futile
-Date: Thu, 15 May 2014 19:27:21 +0200
-Message-ID: <1400174841.18229.6.camel@marge.simpson.net>
-References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
-	 <20140514154459.GE4570@linux.vnet.ibm.com>
-	 <1400123931.5175.38.camel@marge.simpson.net>
-	 <20140515144553.GZ4570@linux.vnet.ibm.com>
+From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
+Subject: Re: [ANNOUNCE] 3.14-rt1
+Date: Thu, 15 May 2014 10:51:25 -0700
+Message-ID: <5374FE9D.9020900@localhost>
+References: <20140411185739.GA6644@linutronix.de> <535BFAF0.5090306@localhost> <20140502113703.GE9178@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: paulmck@linux.vnet.ibm.com
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140515144553.GZ4570@linux.vnet.ibm.com>
+In-Reply-To: <20140502113703.GE9178@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2014-05-15 at 07:45 -0700, Paul E. McKenney wrote: 
-> On Thu, May 15, 2014 at 05:18:51AM +0200, Mike Galbraith wrote:
-> > On Wed, 2014-05-14 at 08:44 -0700, Paul E. McKenney wrote:
-> > 
-> > > In practice, not sure how much testing CONFIG_NO_HZ_FULL=y has received
-> > > for -rt kernels in production environments.
-> > 
-> > I took 3.14-rt out for a quick spin on my 64 core box, it didn't work at
-> > all with 60 cores isolated.  I didn't have time to rummage, but it looks
-> > like there are still bugs to squash. 
-> > 
-> > Biggest problem with CONFIG_NO_HZ_FULL is the price tag.  It just raped
-> > fast mover performance last time I measured.
-> 
-> I do have a report of the RCU grace-period kthreads (rcu_preempt,
-> rcu_sched, and rcu_bh) consuming excessive CPU time on large boxes,
-> but this is for workloads with lots of threads and context switches.
-> 
-> Whether relevant or not to your situation, working on it...
+On 05/02/2014 04:37 AM, Sebastian Andrzej Siewior wrote:
+> * Fernando Lopez-Lezcano | 2014-04-26 11:29:04 [-0700]:
+>
+>> Saw this a moment ago (3.14.1 + rt1, Fedora 19 laptop - I think I
+>> have seen something similar in 3.12.x-r):
+>
+> Yes, you did: https://lkml.org/lkml/2014/3/7/163
+> You did not test I've sent. Care to do so?
 
-RCU signal was swamped by accounting.
+I did patch my kernel and (I think) I did not see the problem again. I 
+did get some very occassional hangs that seemed to be video related but 
+I think I could not see what had caused them.
 
--Mike
+>> Apr 26 11:16:11 localhost kernel: [   96.323248] ------------[ cut
+>> here ]------------
+>> Apr 26 11:16:11 localhost kernel: [   96.323262] WARNING: CPU: 0 PID:
+>> 2051 at lib/list_debug.c:59 __list_del_entry+0xa1/0xd0()
+>> Apr 26 11:16:11 localhost kernel: [   96.323264] list_del corruption.
+>> prev->next should be ffff8802101196a0, but was 0000000000000001
+>> Apr 26 11:16:11 localhost kernel: [   96.323266] Modules linked in:
+>
+> and please send backtrace information properly formatted. This is
+> terrible hard to read.
+
+Sorry about that, I will attach files in the future.
+
+I re-patched 3.14.3-rt5 with a slightly tweaked version of you patch. 
+Will see what happens and report back.
+-- Fernando
