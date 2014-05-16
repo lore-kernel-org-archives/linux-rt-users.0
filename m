@@ -1,166 +1,150 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch] rt/sched: fix resursion when CONTEXT_TRACKING and
- PREEMPT_LAZY are enabled
-Date: Fri, 16 May 2014 15:53:31 +0200
-Message-ID: <1400248411.5877.10.camel@marge.simpson.net>
-References: <20140509181214.GK29014@linutronix.de>
-	 <1399695303.5146.21.camel@marge.simpson.net>
-	 <20140513154002.GD15049@linutronix.de>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: [PATCH 3.10-rt] tick-sched: fix inadvertent enabling of interrupts
+Date: Fri, 16 May 2014 14:10:23 -0400
+Message-ID: <1400263823-59227-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140513154002.GD15049@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail1.windriver.com ([147.11.146.13]:62111 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755964AbaEPSKc (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 May 2014 14:10:32 -0400
+Received: from ALA-HCA.corp.ad.wrs.com (ala-hca.corp.ad.wrs.com [147.11.189.40])
+	by mail1.windriver.com (8.14.5/8.14.5) with ESMTP id s4GIAVHd018768
+	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=FAIL)
+	for <linux-rt-users@vger.kernel.org>; Fri, 16 May 2014 11:10:31 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2014-05-13 at 17:40 +0200, Sebastian Andrzej Siewior wrote: 
-> * Mike Galbraith | 2014-05-10 06:15:03 [+0200]:
-> 
-> >On Fri, 2014-05-09 at 20:12 +0200, Sebastian Andrzej Siewior wrote:
-> >
-> >> Known issues:
-> >> 
-> >>       - bcache is disabled.
-> >> 
-> >>       - lazy preempt on x86_64 leads to a crash with some load.
-> >
-> >That is only with NO_HZ_FUL enabled here.  Box blows the stack during
-> >task exit, eyeballing hasn't spotted the why.
-> 
-> Even if I disable NO_HZ_FULL it explodes as soon as hackbench starts.
+Booting an RT kernel as kvm guest with "highres=off" results in this:
 
-Ah, you didn't turn CONTEXT_TRACKING off too.  The below made the dirty
-little SOB die here.
+Switching to clocksource kvm-clock
+ ------------[ cut here ]------------
+WARNING: at kernel/lockdep.c:2593 trace_hardirqs_on_caller+0x1dc/0x210()
+DEBUG_LOCKS_WARN_ON(current->hardirq_context)
+Modules linked in:
+CPU: 0 PID: 1 Comm: swapper/0 Not tainted 3.10.40-rt40_preempt-rt #1
+Hardware name: Bochs Bochs, BIOS Bochs 01/01/2011
+ 0000000000000009 ffff88007fc03db8 ffffffff8171fb1c ffff88007fc03df0
+ ffffffff8103fb31 0000000000000000 ffffffff8109c3b4 ffff88007fc0e6c0
+ ffff88007647b900 ffff88007647b900 ffff88007fc03e50 ffffffff8103fbbc
+Call Trace:
+ <IRQ>  [<ffffffff8171fb1c>] dump_stack+0x19/0x1b
+ [<ffffffff8103fb31>] warn_slowpath_common+0x61/0xa0
+ [<ffffffff8109c3b4>] ? tick_check_oneshot_change+0xf4/0x120
+ [<ffffffff8103fbbc>] warn_slowpath_fmt+0x4c/0x50
+ [<ffffffff81092b43>] ? ktime_get+0x43/0xc0
+ [<ffffffff8109f8cc>] trace_hardirqs_on_caller+0x1dc/0x210
+ [<ffffffff8109f90d>] trace_hardirqs_on+0xd/0x10
+ [<ffffffff8109c3b4>] tick_check_oneshot_change+0xf4/0x120  <---
+ [<ffffffff8106d383>] hrtimer_run_queues+0x63/0x300
+ [<ffffffff81052128>] run_local_timers+0x18/0x70
+ [<ffffffff810521b7>] update_process_times+0x37/0x70
+ [<ffffffff81099c1c>] tick_periodic+0x2c/0xd0
+ [<ffffffff81099d50>] tick_handle_periodic+0x20/0x70
+ [<ffffffff81727a26>] smp_apic_timer_interrupt+0x66/0x9b
+ [<ffffffff81726c32>] apic_timer_interrupt+0x72/0x80
+ <EOI>  [<ffffffff81381169>] ? memset+0x9/0xb0
+ [<ffffffff81164acb>] ? address_space_init_once+0x1b/0x120
+ [<ffffffff81164c34>] inode_init_once+0x64/0x80
+ <...snip...>
+ ------------[ cut here ]------------
 
-If context tracking is enabled, we can recurse, and explode violently.
-Add missing checks to preempt_schedule_context().
+If you don't have lock debugging on, you'll instead get this:
 
-Fix other inconsistencies spotted while searching.
+   kernel BUG at kernel/posix-cpu-timers.c:1469!
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+which is just a sanity check to ensure irqs are disabled in
+run_posix_cpu_timers().  The debug lock splat is more informative
+since it points right at tick_check_oneshot_change as the culprit
+who re-enabled interrupts [which in turn has called the
+tick_nohz_switch_to_nohz before returning].
+
+This isn't a problem on mainline, since there, the call path is
+clearly limited to softirq context as follows:
+
+    run_timer_softirq
+     --> hrtimer_run_pending
+          --> tick_check_oneshot_change
+               --> tick_nohz_switch_to_nohz
+
+On rt, there is also only one call path, and since we know irqs
+are off for it, we can delete the local_irq ops vs making them
+the save/restore variants.  Insert a BUG_ON, since as above
+we'll bug anyway later on if we screw this up.  And fix up
+the comments to match the way -rt does things.
+
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
- arch/x86/include/asm/thread_info.h |    1 +
- include/linux/preempt.h            |    2 +-
- include/linux/preempt_mask.h       |   10 ++++++++--
- kernel/context_tracking.c          |    2 +-
- kernel/fork.c                      |    1 +
- kernel/sched/core.c                |   16 +++++-----------
- kernel/sched/fair.c                |    2 +-
- 7 files changed, 18 insertions(+), 16 deletions(-)
 
---- a/arch/x86/include/asm/thread_info.h
-+++ b/arch/x86/include/asm/thread_info.h
-@@ -51,6 +51,7 @@ struct thread_info {
- 	.flags		= 0,			\
- 	.cpu		= 0,			\
- 	.saved_preempt_count = INIT_PREEMPT_COUNT,	\
-+	.preempt_lazy_count = 0,		\
- 	.addr_limit	= KERNEL_DS,		\
- 	.restart_block = {			\
- 		.fn = do_no_restart_syscall,	\
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -91,8 +91,8 @@ do { \
+[found on 3.10-rt -- have not checked others yet, but I bet they
+ have the same thing, since who disables highres normally anyway?]
+
+ kernel/time/tick-sched.c | 18 ++++++++++--------
+ 1 file changed, 10 insertions(+), 8 deletions(-)
+
+diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+index aa1e4b2411d5..836cf05831db 100644
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -974,20 +974,21 @@ static void tick_nohz_handler(struct clock_event_device *dev)
  
- #define preempt_lazy_enable() \
- do { \
--	dec_preempt_lazy_count(); \
- 	barrier(); \
-+	dec_preempt_lazy_count(); \
- 	preempt_check_resched(); \
- } while (0)
- 
---- a/include/linux/preempt_mask.h
-+++ b/include/linux/preempt_mask.h
-@@ -118,9 +118,15 @@ extern int in_serving_softirq(void);
- 		((preempt_count() & ~PREEMPT_ACTIVE) != PREEMPT_CHECK_OFFSET)
- 
- #ifdef CONFIG_PREEMPT_COUNT
--# define preemptible()	(preempt_count() == 0 && !irqs_disabled())
-+# define preemptible()		(preempt_count() == 0 && !irqs_disabled())
-+#ifdef CONFIG_PREEMPT_LAZY
-+# define preemptible_lazy()	(preempt_lazy_count() !=0 && !need_resched_now())
- #else
--# define preemptible()	0
-+# define preemptible_lazy()	1
-+#endif
-+#else
-+# define preemptible()		0
-+# define preemptible_lazy()	0
- #endif
- 
- #endif /* LINUX_PREEMPT_MASK_H */
---- a/kernel/context_tracking.c
-+++ b/kernel/context_tracking.c
-@@ -124,7 +124,7 @@ asmlinkage void __sched notrace preempt_
+ /**
+  * tick_nohz_switch_to_nohz - switch to nohz mode
++ * Called with interrupts disabled.
+  */
+ static void tick_nohz_switch_to_nohz(void)
  {
- 	enum ctx_state prev_ctx;
+ 	struct tick_sched *ts = &__get_cpu_var(tick_cpu_sched);
+ 	ktime_t next;
  
--	if (likely(!preemptible()))
-+	if (likely(!preemptible() || !preemptible_lazy()))
++	BUG_ON(!irqs_disabled());
++
+ 	if (!tick_nohz_enabled)
  		return;
  
- 	/*
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -329,6 +329,7 @@ static struct task_struct *dup_task_stru
- 	setup_thread_stack(tsk, orig);
- 	clear_user_return_notifier(tsk);
- 	clear_tsk_need_resched(tsk);
-+	clear_tsk_need_resched_lazy(tsk);
- 	stackend = end_of_stack(tsk);
- 	*stackend = STACK_END_MAGIC;	/* for overflow detection */
+-	local_irq_disable();
+-	if (tick_switch_to_oneshot(tick_nohz_handler)) {
+-		local_irq_enable();
++	if (tick_switch_to_oneshot(tick_nohz_handler))
+ 		return;
+-	}
++
  
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2861,8 +2861,8 @@ void migrate_enable(void)
- 		p->migrate_disable = 0;
+ 	ts->nohz_mode = NOHZ_MODE_LOWRES;
  
- 	unpin_current_cpu();
--	preempt_enable();
- 	preempt_lazy_enable();
-+	preempt_enable();
+@@ -1005,7 +1006,6 @@ static void tick_nohz_switch_to_nohz(void)
+ 			break;
+ 		next = ktime_add(next, tick_period);
+ 	}
+-	local_irq_enable();
  }
- EXPORT_SYMBOL(migrate_enable);
- #else
-@@ -3096,19 +3096,13 @@ asmlinkage void __sched notrace preempt_
+ 
+ /*
+@@ -1191,15 +1191,17 @@ void tick_oneshot_notify(void)
+ /**
+  * Check, if a change happened, which makes oneshot possible.
+  *
+- * Called cyclic from the hrtimer softirq (driven by the timer
+- * softirq) allow_nohz signals, that we can switch into low-res nohz
+- * mode, because high resolution timers are disabled (either compile
++ * Called cyclic from the hardirq (each jiffie from hrtimer_run_queues)
++ * allow_nohz signals, that we can switch into low-res nohz mode,
++ * because high resolution timers are disabled (either compile
+  * or runtime).
+  */
+ int tick_check_oneshot_change(int allow_nohz)
  {
- 	/*
- 	 * If there is a non-zero preempt_count or interrupts are disabled,
--	 * we do not want to preempt the current task. Just return..
-+	 * we do not want to preempt the current task. Just return.  For
-+	 * lazy preemption we also check for non-zero preempt_count_lazy,
-+	 * and bail if no immediate preemption is required.
- 	 */
--	if (likely(!preemptible()))
-+	if (likely(!preemptible() || !preemptible_lazy()))
- 		return;
+ 	struct tick_sched *ts = &__get_cpu_var(tick_cpu_sched);
  
--#ifdef CONFIG_PREEMPT_LAZY
--	/*
--	 * Check for lazy preemption
--	 */
--	if (current_thread_info()->preempt_lazy_count &&
--			!test_thread_flag(TIF_NEED_RESCHED))
--		return;
--#endif
- 	do {
- 		__preempt_count_add(PREEMPT_ACTIVE);
- 		/*
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -4446,7 +4446,7 @@ static void check_preempt_wakeup(struct
- 	 * prevents us from potentially nominating it as a false LAST_BUDDY
- 	 * below.
- 	 */
--	if (test_tsk_need_resched(curr))
-+	if (test_tsk_need_resched(curr) || test_tsk_need_resched_lazy(curr))
- 		return;
++	BUG_ON(!irqs_disabled());
++
+ 	if (!test_and_clear_bit(0, &ts->check_clocks))
+ 		return 0;
  
- 	/* Idle tasks are by definition preempted by non-idle tasks. */
+-- 
+1.9.0
+
