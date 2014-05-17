@@ -1,150 +1,132 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 3.10-rt] tick-sched: fix inadvertent enabling of interrupts
-Date: Fri, 16 May 2014 14:10:23 -0400
-Message-ID: <1400263823-59227-1-git-send-email-paul.gortmaker@windriver.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [PATCH 3.14-rt] sched/numa: Fix task_numa_free() lockdep splat
+Date: Sat, 17 May 2014 05:36:59 +0200
+Message-ID: <1400297819.9493.11.camel@marge.simpson.net>
+References: <20140509181214.GK29014@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:62111 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755964AbaEPSKc (ORCPT
+Received: from mail-ee0-f41.google.com ([74.125.83.41]:57047 "EHLO
+	mail-ee0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754817AbaEQDhE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 May 2014 14:10:32 -0400
-Received: from ALA-HCA.corp.ad.wrs.com (ala-hca.corp.ad.wrs.com [147.11.189.40])
-	by mail1.windriver.com (8.14.5/8.14.5) with ESMTP id s4GIAVHd018768
-	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=FAIL)
-	for <linux-rt-users@vger.kernel.org>; Fri, 16 May 2014 11:10:31 -0700 (PDT)
+	Fri, 16 May 2014 23:37:04 -0400
+Received: by mail-ee0-f41.google.com with SMTP id t10so1992765eei.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 16 May 2014 20:37:02 -0700 (PDT)
+In-Reply-To: <20140509181214.GK29014@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Booting an RT kernel as kvm guest with "highres=off" results in this:
+3.14-rt being build with a non-rt config is unlikely, but..
 
-Switching to clocksource kvm-clock
- ------------[ cut here ]------------
-WARNING: at kernel/lockdep.c:2593 trace_hardirqs_on_caller+0x1dc/0x210()
-DEBUG_LOCKS_WARN_ON(current->hardirq_context)
-Modules linked in:
-CPU: 0 PID: 1 Comm: swapper/0 Not tainted 3.10.40-rt40_preempt-rt #1
-Hardware name: Bochs Bochs, BIOS Bochs 01/01/2011
- 0000000000000009 ffff88007fc03db8 ffffffff8171fb1c ffff88007fc03df0
- ffffffff8103fb31 0000000000000000 ffffffff8109c3b4 ffff88007fc0e6c0
- ffff88007647b900 ffff88007647b900 ffff88007fc03e50 ffffffff8103fbbc
-Call Trace:
- <IRQ>  [<ffffffff8171fb1c>] dump_stack+0x19/0x1b
- [<ffffffff8103fb31>] warn_slowpath_common+0x61/0xa0
- [<ffffffff8109c3b4>] ? tick_check_oneshot_change+0xf4/0x120
- [<ffffffff8103fbbc>] warn_slowpath_fmt+0x4c/0x50
- [<ffffffff81092b43>] ? ktime_get+0x43/0xc0
- [<ffffffff8109f8cc>] trace_hardirqs_on_caller+0x1dc/0x210
- [<ffffffff8109f90d>] trace_hardirqs_on+0xd/0x10
- [<ffffffff8109c3b4>] tick_check_oneshot_change+0xf4/0x120  <---
- [<ffffffff8106d383>] hrtimer_run_queues+0x63/0x300
- [<ffffffff81052128>] run_local_timers+0x18/0x70
- [<ffffffff810521b7>] update_process_times+0x37/0x70
- [<ffffffff81099c1c>] tick_periodic+0x2c/0xd0
- [<ffffffff81099d50>] tick_handle_periodic+0x20/0x70
- [<ffffffff81727a26>] smp_apic_timer_interrupt+0x66/0x9b
- [<ffffffff81726c32>] apic_timer_interrupt+0x72/0x80
- <EOI>  [<ffffffff81381169>] ? memset+0x9/0xb0
- [<ffffffff81164acb>] ? address_space_init_once+0x1b/0x120
- [<ffffffff81164c34>] inode_init_once+0x64/0x80
- <...snip...>
- ------------[ cut here ]------------
+>From 60e69eed85bb7b5198ef70643b5895c26ad76ef7 Mon Sep 17 00:00:00 2001
+From: Mike Galbraith <bitbucket@online.de>
+Date: Mon, 7 Apr 2014 10:55:15 +0200
+Subject: [PATCH] sched/numa: Fix task_numa_free() lockdep splat
 
-If you don't have lock debugging on, you'll instead get this:
+Sasha reported that lockdep claims that the following commit:
+made numa_group.lock interrupt unsafe:
 
-   kernel BUG at kernel/posix-cpu-timers.c:1469!
+  156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct()")
 
-which is just a sanity check to ensure irqs are disabled in
-run_posix_cpu_timers().  The debug lock splat is more informative
-since it points right at tick_check_oneshot_change as the culprit
-who re-enabled interrupts [which in turn has called the
-tick_nohz_switch_to_nohz before returning].
+While I don't see how that could be, given the commit in question moved
+task_numa_free() from one irq enabled region to another, the below does
+make both gripes and lockups upon gripe with numa=fake=4 go away.
 
-This isn't a problem on mainline, since there, the call path is
-clearly limited to softirq context as follows:
+Reported-by: Sasha Levin <sasha.levin@oracle.com>
+Fixes: 156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct()")
+Signed-off-by: Mike Galbraith <bitbucket@online.de>
+Signed-off-by: Peter Zijlstra <peterz@infradead.org>
+Cc: torvalds@linux-foundation.org
+Cc: mgorman@suse.com
+Cc: akpm@linux-foundation.org
+Cc: Dave Jones <davej@redhat.com>
+Link: http://lkml.kernel.org/r/1396860915.5170.5.camel@marge.simpson.net
+Signed-off-by: Ingo Molnar <mingo@kernel.org>
 
-    run_timer_softirq
-     --> hrtimer_run_pending
-          --> tick_check_oneshot_change
-               --> tick_nohz_switch_to_nohz
-
-On rt, there is also only one call path, and since we know irqs
-are off for it, we can delete the local_irq ops vs making them
-the save/restore variants.  Insert a BUG_ON, since as above
-we'll bug anyway later on if we screw this up.  And fix up
-the comments to match the way -rt does things.
-
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
+ kernel/sched/fair.c  |   13 +++++++------
+ kernel/sched/sched.h |    9 +++++++++
+ 2 files changed, 16 insertions(+), 6 deletions(-)
 
-[found on 3.10-rt -- have not checked others yet, but I bet they
- have the same thing, since who disables highres normally anyway?]
-
- kernel/time/tick-sched.c | 18 ++++++++++--------
- 1 file changed, 10 insertions(+), 8 deletions(-)
-
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index aa1e4b2411d5..836cf05831db 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -974,20 +974,21 @@ static void tick_nohz_handler(struct clock_event_device *dev)
- 
- /**
-  * tick_nohz_switch_to_nohz - switch to nohz mode
-+ * Called with interrupts disabled.
-  */
- static void tick_nohz_switch_to_nohz(void)
- {
- 	struct tick_sched *ts = &__get_cpu_var(tick_cpu_sched);
- 	ktime_t next;
- 
-+	BUG_ON(!irqs_disabled());
-+
- 	if (!tick_nohz_enabled)
- 		return;
- 
--	local_irq_disable();
--	if (tick_switch_to_oneshot(tick_nohz_handler)) {
--		local_irq_enable();
-+	if (tick_switch_to_oneshot(tick_nohz_handler))
- 		return;
--	}
-+
- 
- 	ts->nohz_mode = NOHZ_MODE_LOWRES;
- 
-@@ -1005,7 +1006,6 @@ static void tick_nohz_switch_to_nohz(void)
- 			break;
- 		next = ktime_add(next, tick_period);
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -1371,7 +1371,7 @@ static void task_numa_placement(struct t
+ 	/* If the task is part of a group prevent parallel updates to group stats */
+ 	if (p->numa_group) {
+ 		group_lock = &p->numa_group->lock;
+-		spin_lock(group_lock);
++		spin_lock_irq(group_lock);
  	}
--	local_irq_enable();
+ 
+ 	/* Find the node with the highest number of faults */
+@@ -1432,7 +1432,7 @@ static void task_numa_placement(struct t
+ 			}
+ 		}
+ 
+-		spin_unlock(group_lock);
++		spin_unlock_irq(group_lock);
+ 	}
+ 
+ 	/* Preferred node as the node with the most faults */
+@@ -1532,7 +1532,8 @@ static void task_numa_group(struct task_
+ 	if (!join)
+ 		return;
+ 
+-	double_lock(&my_grp->lock, &grp->lock);
++	BUG_ON(irqs_disabled());
++	double_lock_irq(&my_grp->lock, &grp->lock);
+ 
+ 	for (i = 0; i < 2*nr_node_ids; i++) {
+ 		my_grp->faults[i] -= p->numa_faults[i];
+@@ -1546,7 +1547,7 @@ static void task_numa_group(struct task_
+ 	grp->nr_tasks++;
+ 
+ 	spin_unlock(&my_grp->lock);
+-	spin_unlock(&grp->lock);
++	spin_unlock_irq(&grp->lock);
+ 
+ 	rcu_assign_pointer(p->numa_group, grp);
+ 
+@@ -1565,14 +1566,14 @@ void task_numa_free(struct task_struct *
+ 	void *numa_faults = p->numa_faults;
+ 
+ 	if (grp) {
+-		spin_lock(&grp->lock);
++		spin_lock_irq(&grp->lock);
+ 		for (i = 0; i < 2*nr_node_ids; i++)
+ 			grp->faults[i] -= p->numa_faults[i];
+ 		grp->total_faults -= p->total_numa_faults;
+ 
+ 		list_del(&p->numa_entry);
+ 		grp->nr_tasks--;
+-		spin_unlock(&grp->lock);
++		spin_unlock_irq(&grp->lock);
+ 		rcu_assign_pointer(p->numa_group, NULL);
+ 		put_numa_group(grp);
+ 	}
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -1392,6 +1392,15 @@ static inline void double_lock(spinlock_
+ 	spin_lock_nested(l2, SINGLE_DEPTH_NESTING);
  }
  
- /*
-@@ -1191,15 +1191,17 @@ void tick_oneshot_notify(void)
- /**
-  * Check, if a change happened, which makes oneshot possible.
-  *
-- * Called cyclic from the hrtimer softirq (driven by the timer
-- * softirq) allow_nohz signals, that we can switch into low-res nohz
-- * mode, because high resolution timers are disabled (either compile
-+ * Called cyclic from the hardirq (each jiffie from hrtimer_run_queues)
-+ * allow_nohz signals, that we can switch into low-res nohz mode,
-+ * because high resolution timers are disabled (either compile
-  * or runtime).
-  */
- int tick_check_oneshot_change(int allow_nohz)
- {
- 	struct tick_sched *ts = &__get_cpu_var(tick_cpu_sched);
- 
-+	BUG_ON(!irqs_disabled());
++static inline void double_lock_irq(spinlock_t *l1, spinlock_t *l2)
++{
++	if (l1 > l2)
++		swap(l1, l2);
 +
- 	if (!test_and_clear_bit(0, &ts->check_clocks))
- 		return 0;
- 
--- 
-1.9.0
++	spin_lock_irq(l1);
++	spin_lock_nested(l2, SINGLE_DEPTH_NESTING);
++}
++
+ static inline void double_raw_lock(raw_spinlock_t *l1, raw_spinlock_t *l2)
+ {
+ 	if (l1 > l2)
+
 
