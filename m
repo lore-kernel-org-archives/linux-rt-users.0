@@ -1,69 +1,69 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
  futile
-Date: Sun, 18 May 2014 22:34:01 -0700
-Message-ID: <20140519053401.GP4570@linux.vnet.ibm.com>
+Date: Mon, 19 May 2014 12:54:04 +0200
+Message-ID: <20140519105404.GZ30445@twins.programming.kicks-ass.net>
 References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
  <20140514154459.GE4570@linux.vnet.ibm.com>
  <1400123931.5175.38.camel@marge.simpson.net>
- <1400386954.5140.36.camel@marge.simpson.net>
- <20140518052039.GF4570@linux.vnet.ibm.com>
- <1400402201.5166.13.camel@marge.simpson.net>
- <20140518155815.GK4570@linux.vnet.ibm.com>
- <1400467481.5211.48.camel@marge.simpson.net>
-Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="HditFSw+SJxJh6AP"
+Cc: paulmck@linux.vnet.ibm.com,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>, fweisbec@gmail.com
+	Thomas Gleixner <tglx@linutronix.de>
 To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1400467481.5211.48.camel@marge.simpson.net>
+In-Reply-To: <1400123931.5175.38.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, May 19, 2014 at 04:44:41AM +0200, Mike Galbraith wrote:
-> On Sun, 2014-05-18 at 08:58 -0700, Paul E. McKenney wrote: 
-> > On Sun, May 18, 2014 at 10:36:41AM +0200, Mike Galbraith wrote:
-> > > On Sat, 2014-05-17 at 22:20 -0700, Paul E. McKenney wrote:
-> > > 
-> > > > If you are saying that turning on nohz_full doesn't help unless you
-> > > > also ensure that there is only one runnable task per CPU, I completely
-> > > > agree.  If you are saying something else, you lost me.  ;-)
-> > > 
-> > > Yup, that's it more or less.  It's not only single task loads that could
-> > > benefit from better isolation, but if isolation improving measures are
-> > > tied to nohz_full, other sensitive loads will suffer if they try to use
-> > > isolation improvements.
-> > 
-> > So you are arguing for a separate Kconfig variable that does the isolation?
-> > So that NO_HZ_FULL selects this new variable, and (for example) RCU
-> > uses this new variable to decide when to pin the grace-period kthreads
-> > onto the housekeeping CPU?
-> 
-> I'm thinking more about runtime, but yes.
-> 
-> The tick mode really wants to be selectable per set (in my boxen you can
-> switch between nohz off/idle, but not yet nohz_full, that might get real
-> interesting).  You saw in my numbers that ticked is far better for the
-> threaded rt load, but what if the total load has both sensitive rt and
-> compute components to worry about?  The rt component wants relief from
-> the jitter that flipping the tick inflicts, but also wants as little
-> disturbance as possible, so RCU offload and whatever other measures that
-> are or become available are perhaps interesting to it as well.  The
-> numbers showed that here and now the two modes can work together in the
-> same box, I can have my rt set ticking away, and other cores doing
-> tickless compute, but enabling that via common config (distros don't
-> want to ship many kernel flavors) has a cost to rt performance.
-> 
-> Ideally, bean counting would be switchable too, giving all components
-> the environment they like best.
 
-Sounds like a question for Frederic (now CCed).  ;-)
+--HditFSw+SJxJh6AP
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-							Thanx, Paul
+On Thu, May 15, 2014 at 05:18:51AM +0200, Mike Galbraith wrote:
+> On Wed, 2014-05-14 at 08:44 -0700, Paul E. McKenney wrote:
+>=20
+> > In practice, not sure how much testing CONFIG_NO_HZ_FULL=3Dy has receiv=
+ed
+> > for -rt kernels in production environments.
+>=20
+> I took 3.14-rt out for a quick spin on my 64 core box, it didn't work at
+> all with 60 cores isolated.  I didn't have time to rummage, but it looks
+> like there are still bugs to squash.=20
+>=20
+> Biggest problem with CONFIG_NO_HZ_FULL is the price tag.  It just raped
+> fast mover performance last time I measured.
+
+Syscall entry and exit times are through the roof with it. So anything
+doing loads of syscalls will suffer badly.
+
+--HditFSw+SJxJh6AP
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAEBAgAGBQJTeeLMAAoJEHZH4aRLwOS6KCAP/ilJRsxFkR9rQNK6LanTx6S3
+RbvdAmgdvRTvELyJTT2QzGyBo/GNz/f4LbXnLd37iGQwBEUY8eLEpLuUVKPXPAkk
+VuEDsQy/Y8K2GOlJ4E0D8ZHa0/VFpcWvJrFE6fhbHioq2E0EOU/AiliKU74u+y2j
+XufiDl4xo8cH36tO2pM5VNEvM0p/0KxwELJNB5RUpdhxS/H8o2QoEfwlMY45WTzW
+Uss/jxt/FfB9xXLBozaQUkSr5fC+ZpyXrGkT7EIasCgp6GfH55iz6JvSq1fn/Qtb
+xAMsxrAMHkr3CMejUQaoJ9A8S6IrBcS7Cn8nkFWwdun98EHXJnh9Cx9G2uKzeTDu
+2+Nf/mZqDspncKSt+TmhOB2e7Xs8SXOfpErtFPdLyQeubH1QgyY7jSvYryGCNuP9
+b94II8bPIfp2OpAThpDhzVqNhw3oSGPiiZom8CZMKSs0uSq38Oqqn7iaOLueSaeC
+Yth3U4+bmNQk858W18whwZP6ShGXLrGcuIVSTXd/zLI1GB+iCtxYlJ2j/oPmFgfg
+TAsX8MXY5FVVN9ffoIQLMfHScMVt4rOdvxNGFF3kmP+RgS0+UoORieKk2gEb05BR
+gr+N81Q2qAYBFoBb/8t7zJAMPlWgAVCQU7xLJwqG7888tt/oPphrGBwmWRO5GvMr
+/OTXqYgc7d3jUQ2LqD6H
+=xbBp
+-----END PGP SIGNATURE-----
+
+--HditFSw+SJxJh6AP--
