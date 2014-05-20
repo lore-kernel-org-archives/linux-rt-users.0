@@ -1,53 +1,92 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: WAS: linux-rt fails to boot on > 3.12.5.-rt7 ... NOW IS:
- linux-rt-3.14 boots by reverting patches + nvidia uses __rt_mutex_init
- [which in 3.14 has been changed to EXPORT_SYMBOL_GPL]
-Date: Mon, 19 May 2014 21:02:09 +0200
-Message-ID: <1400526129.839.10.camel@archlinux>
-References: <CAOcfFMxc=Ldp_bvvz228_8C9SxqbCbfgzaAjBrf4n2oigG7_wg@mail.gmail.com>
-	 <CAOcfFMynnyHL_G6Gez_AZYFky=hLYeoyY8WVHF572RZq1g_aBw@mail.gmail.com>
-	 <CAP=VYLrHC3TPAixV8m0u9g8ooyiE0jvS=7bFLHDdCwt3wsA1iA@mail.gmail.com>
-	 <CAOcfFMy_Ui94baWzuAMKOnUpcjYpnNsubdDCNTZx52XokVyN6g@mail.gmail.com>
-	 <535A7474.2090701@windriver.com>
-	 <CAOcfFMyjup8OAkxHj-hbb5rMzrPjNPpw_9Jdx-iXPi09ce-Zuw@mail.gmail.com>
-	 <535A9DDC.4070801@windriver.com> <5372BB0C.8030303@me.com>
-	 <1400505275.3482.5.camel@archlinux> <1400505358.3482.6.camel@archlinux>
-	 <20140519171603.6c0c2ec2@tor.valhalla.alchemy.lu>
+From: Frederic Weisbecker <fweisbec@gmail.com>
+Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
+ futile
+Date: Tue, 20 May 2014 16:53:52 +0200
+Message-ID: <20140520145350.GC17741@localhost.localdomain>
+References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>
+ <20140514154459.GE4570@linux.vnet.ibm.com>
+ <1400123931.5175.38.camel@marge.simpson.net>
+ <1400386954.5140.36.camel@marge.simpson.net>
+ <20140518052039.GF4570@linux.vnet.ibm.com>
+ <1400402201.5166.13.camel@marge.simpson.net>
+ <20140518155815.GK4570@linux.vnet.ibm.com>
+ <1400467481.5211.48.camel@marge.simpson.net>
+ <20140519053401.GP4570@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Joakim Hernberg <jbh@alchemy.lu>
+Content-Type: text/plain; charset=us-ascii
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail153c50.megamailservers.eu ([91.136.10.163]:41032 "EHLO
-	mail50c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751254AbaESTCV (ORCPT
+Received: from mail-wi0-f175.google.com ([209.85.212.175]:50204 "EHLO
+	mail-wi0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752851AbaETOx4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 19 May 2014 15:02:21 -0400
-In-Reply-To: <20140519171603.6c0c2ec2@tor.valhalla.alchemy.lu>
+	Tue, 20 May 2014 10:53:56 -0400
+Content-Disposition: inline
+In-Reply-To: <20140519053401.GP4570@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2014-05-19 at 17:16 +0200, Joakim Hernberg wrote:
-> If you are still on archlinux, try the new 3.14.3-rt5 kernel that I've
-> uploaded to the AUR and to the binary archaudio-production repo.  This
-> one has 3 patches reverted, and all of NO_HZ disabled. Apparently this
-> makes it work on some AMD cpus that have had problem booting recent -rt
-> kernels.
+On Sun, May 18, 2014 at 10:34:01PM -0700, Paul E. McKenney wrote:
+> On Mon, May 19, 2014 at 04:44:41AM +0200, Mike Galbraith wrote:
+> > On Sun, 2014-05-18 at 08:58 -0700, Paul E. McKenney wrote: 
+> > > On Sun, May 18, 2014 at 10:36:41AM +0200, Mike Galbraith wrote:
+> > > > On Sat, 2014-05-17 at 22:20 -0700, Paul E. McKenney wrote:
+> > > > 
+> > > > > If you are saying that turning on nohz_full doesn't help unless you
+> > > > > also ensure that there is only one runnable task per CPU, I completely
+> > > > > agree.  If you are saying something else, you lost me.  ;-)
+> > > > 
+> > > > Yup, that's it more or less.  It's not only single task loads that could
+> > > > benefit from better isolation, but if isolation improving measures are
+> > > > tied to nohz_full, other sensitive loads will suffer if they try to use
+> > > > isolation improvements.
+> > > 
+> > > So you are arguing for a separate Kconfig variable that does the isolation?
+> > > So that NO_HZ_FULL selects this new variable, and (for example) RCU
+> > > uses this new variable to decide when to pin the grace-period kthreads
+> > > onto the housekeeping CPU?
+> > 
+> > I'm thinking more about runtime, but yes.
+> > 
+> > The tick mode really wants to be selectable per set (in my boxen you can
+> > switch between nohz off/idle, but not yet nohz_full, that might get real
+> > interesting).  You saw in my numbers that ticked is far better for the
+> > threaded rt load, but what if the total load has both sensitive rt and
+> > compute components to worry about?  The rt component wants relief from
+> > the jitter that flipping the tick inflicts, but also wants as little
+> > disturbance as possible, so RCU offload and whatever other measures that
+> > are or become available are perhaps interesting to it as well.  The
+> > numbers showed that here and now the two modes can work together in the
+> > same box, I can have my rt set ticking away, and other cores doing
+> > tickless compute, but enabling that via common config (distros don't
+> > want to ship many kernel flavors) has a cost to rt performance.
+> > 
+> > Ideally, bean counting would be switchable too, giving all components
+> > the environment they like best.
+> 
+> Sounds like a question for Frederic (now CCed).  ;-)
 
-I tried both rt-lts and rt from the repo, not from AUR, for a x86_64
-install.
+I'm not sure that I really understand what you want here.
 
-$ pacman -Q linux-rt-lts
-linux-rt-lts 3.10.39_rt40-1
+The current state of the art is that when you enable CONFIG_NO_HZ_FULL=y, full dynticks
+is actually off by default. This is only overriden by "nohz_full=" boot parameter.
 
-I only tried to boot it one time.
-Startup finished with a black screen, the display manager wasn't
-visible.
+Now if what you need is to enable or disable it at runtime instead of boottime,
+I must warn you that this is going to complicate the nohz code a lot (and also perhaps sched
+and RCU).
 
-$ pacman -Q linux-rt
-linux-rt 3.14.3_rt5-1
+I've already been eyed by vulturous frozen sharks flying in circles above me lately
+after a few overengineering visions.
 
-The first time I booted it, a restart happened during startup.
-The second time I booted it, startup hung.
+And given that the full nohz code is still in a baby shape, it's probably not the right
+time to expand it that way. I haven't even yet heard about users who crossed the testing
+stage of full nohz.
 
+We'll probably extend it that way in the future. But likely not in a near future.
