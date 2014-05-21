@@ -1,137 +1,126 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
- futile
-Date: Wed, 21 May 2014 05:03:11 -0700
-Message-ID: <20140521120311.GK4570@linux.vnet.ibm.com>
-References: <1400123931.5175.38.camel@marge.simpson.net>
- <1400386954.5140.36.camel@marge.simpson.net>
- <20140518052039.GF4570@linux.vnet.ibm.com>
- <1400402201.5166.13.camel@marge.simpson.net>
- <20140518155815.GK4570@linux.vnet.ibm.com>
- <1400467481.5211.48.camel@marge.simpson.net>
- <20140519053401.GP4570@linux.vnet.ibm.com>
- <20140520145350.GC17741@localhost.localdomain>
- <20140520155324.GD4570@linux.vnet.ibm.com>
- <1400645881.5158.35.camel@marge.simpson.net>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: John Blackwood <john.blackwood@ccur.com>
+Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
+Date: Wed, 21 May 2014 14:30:23 -0500
+Message-ID: <537CFECF.9070701@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Frederic Weisbecker <fweisbec@gmail.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1400645881.5158.35.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"; Format="flowed"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	xfs@oss.sgi.com
+To: Richard Weinberger <richard.weinberger@gmail.com>, Austin Schuh
+	<austin@peloton-tech.com>
+Return-path: <xfs-bounces@oss.sgi.com>
+List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
+List-Archive: <http://oss.sgi.com/pipermail/xfs>
+List-Post: <mailto:xfs@oss.sgi.com>
+List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
+List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
+	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
+Errors-To: xfs-bounces@oss.sgi.com
+Sender: xfs-bounces@oss.sgi.com
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, May 21, 2014 at 06:18:01AM +0200, Mike Galbraith wrote:
-> On Tue, 2014-05-20 at 08:53 -0700, Paul E. McKenney wrote: 
-> > On Tue, May 20, 2014 at 04:53:52PM +0200, Frederic Weisbecker wrote:
-> > > On Sun, May 18, 2014 at 10:34:01PM -0700, Paul E. McKenney wrote:
-> > > > On Mon, May 19, 2014 at 04:44:41AM +0200, Mike Galbraith wrote:
-> > > > > On Sun, 2014-05-18 at 08:58 -0700, Paul E. McKenney wrote: 
-> > > > > > On Sun, May 18, 2014 at 10:36:41AM +0200, Mike Galbraith wrote:
-> > > > > > > On Sat, 2014-05-17 at 22:20 -0700, Paul E. McKenney wrote:
-> > > > > > > 
-> > > > > > > > If you are saying that turning on nohz_full doesn't help unless you
-> > > > > > > > also ensure that there is only one runnable task per CPU, I completely
-> > > > > > > > agree.  If you are saying something else, you lost me.  ;-)
-> > > > > > > 
-> > > > > > > Yup, that's it more or less.  It's not only single task loads that could
-> > > > > > > benefit from better isolation, but if isolation improving measures are
-> > > > > > > tied to nohz_full, other sensitive loads will suffer if they try to use
-> > > > > > > isolation improvements.
-> > > > > > 
-> > > > > > So you are arguing for a separate Kconfig variable that does the isolation?
-> > > > > > So that NO_HZ_FULL selects this new variable, and (for example) RCU
-> > > > > > uses this new variable to decide when to pin the grace-period kthreads
-> > > > > > onto the housekeeping CPU?
-> > > > > 
-> > > > > I'm thinking more about runtime, but yes.
-> > > > > 
-> > > > > The tick mode really wants to be selectable per set (in my boxen you can
-> > > > > switch between nohz off/idle, but not yet nohz_full, that might get real
-> > > > > interesting).  You saw in my numbers that ticked is far better for the
-> > > > > threaded rt load, but what if the total load has both sensitive rt and
-> > > > > compute components to worry about?  The rt component wants relief from
-> > > > > the jitter that flipping the tick inflicts, but also wants as little
-> > > > > disturbance as possible, so RCU offload and whatever other measures that
-> > > > > are or become available are perhaps interesting to it as well.  The
-> > > > > numbers showed that here and now the two modes can work together in the
-> > > > > same box, I can have my rt set ticking away, and other cores doing
-> > > > > tickless compute, but enabling that via common config (distros don't
-> > > > > want to ship many kernel flavors) has a cost to rt performance.
-> > > > > 
-> > > > > Ideally, bean counting would be switchable too, giving all components
-> > > > > the environment they like best.
-> > > > 
-> > > > Sounds like a question for Frederic (now CCed).  ;-)
-> > > 
-> > > I'm not sure that I really understand what you want here.
-> > > 
-> > > The current state of the art is that when you enable CONFIG_NO_HZ_FULL=y, full dynticks
-> > > is actually off by default. This is only overriden by "nohz_full=" boot parameter.
-> > 
-> > If I understand correctly, if there is no nohz_full= boot parameter,
-> > then the context-tracking code takes the early exit via the
-> > context_tracking_is_enabled() check in context_tracking_user_enter().
-> > I would not expect this to cause much in the way of syscall performance
-> > degradation.  However, it looks like having even one CPU in nohz_full
-> > mode causes all CPUs to enable context tracking.
-> > 
-> > My guess is that Mike wants to have (say) half of his CPUs running
-> > nohz_full, and the other half having fast system calls.  So my guess
-> > also is that he would like some way of having the non-nohz_full CPUs
-> > to opt out of the context-tracking overhead, including the memory
-> > barriers and atomic ops in rcu_user_enter() and rcu_user_exit().  ;-)
-> 
-> Bingo.
-> 
-> > > Now if what you need is to enable or disable it at runtime instead of boottime,
-> > > I must warn you that this is going to complicate the nohz code a lot (and also perhaps sched
-> > > and RCU).
-> > 
-> > What Frederic said!  Making RCU deal with this is possible, but a bit on
-> > the complicated side.  Given that I haven't heard too many people complaining
-> > that RCU is too simple, I would like to opt out of runtime changes to the
-> > nohz_full mask.
-> > 
-> > > I've already been eyed by vulturous frozen sharks flying in circles above me lately
-> > > after a few overengineering visions.
-> > 
-> > Nothing like the icy glare of a frozen shark, is there?  ;-)
-> > 
-> > > And given that the full nohz code is still in a baby shape, it's probably not the right
-> > > time to expand it that way. I haven't even yet heard about users who crossed the testing
-> > > stage of full nohz.
-> > > 
-> > > We'll probably extend it that way in the future. But likely not in a near future.
-> > 
-> > My guess is that Mike would be OK with making nohz_full choice of CPUs
-> > still at boot time, but that he would like the CPUs that are not to be
-> > in nohz_full state be able to opt out of the context-tracking overhead.
-> > 
-> > Mike, please let us all know if I am misunderstanding what you are
-> > looking for.
-> 
-> Yup, exactly.  As it sits, you couldn't possible ship nohz_full out to
-> the real world in any other form than a specialty kernel.  There's no
-> doubt in my mind that there are users out there who would love to have
-> high performance rt and compute in the same box though.  I can imagine
-> them lurking here and slobbering profusely ;-)
+ > Date: Wed, 21 May 2014 03:33:49 -0400
+ > From: Richard Weinberger <richard.weinberger@gmail.com>
+ > To: Austin Schuh <austin@peloton-tech.com>
+ > CC: LKML <linux-kernel@vger.kernel.org>, xfs <xfs@oss.sgi.com>, rt-users
+ > 	<linux-rt-users@vger.kernel.org>
+ > Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
+ >
+ > CC'ing RT folks
+ >
+ > On Wed, May 21, 2014 at 8:23 AM, Austin Schuh <austin@peloton-tech.com> wrote:
+ > > > On Tue, May 13, 2014 at 7:29 PM, Austin Schuh <austin@peloton-tech.com> wrote:
+ > >> >> Hi,
+ > >> >>
+ > >> >> I am observing a filesystem lockup with XFS on a CONFIG_PREEMPT_RT
+ > >> >> patched kernel.  I have currently only triggered it using dpkg.  Dave
+ > >> >> Chinner on the XFS mailing list suggested that it was a rt-kernel
+ > >> >> workqueue issue as opposed to a XFS problem after looking at the
+ > >> >> kernel messages.
+ > >> >>
+ > >> >> The only modification to the kernel besides the RT patch is that I
+ > >> >> have applied tglx's "genirq: Sanitize spurious interrupt detection of
+ > >> >> threaded irqs" patch.
+ > > >
+ > > > I upgraded to 3.14.3-rt4, and the problem still persists.
+ > > >
+ > > > I turned on event tracing and tracked it down further.  I'm able to
+ > > > lock it up by scping a new kernel debian package to /tmp/ on the
+ > > > machine.  scp is locking the inode, and then scheduling
+ > > > xfs_bmapi_allocate_worker in the work queue.  The work then never gets
+ > > > run.  The kworkers then lock up waiting for the inode lock.
+ > > >
+ > > > Here are the relevant events from the trace.  ffff8803e9f10288
+ > > > (blk_delay_work) gets run later on in the trace, but ffff8803b4c158d0
+ > > > (xfs_bmapi_allocate_worker) never does.  The kernel then warns about
+ > > > blocked tasks 120 seconds later.
 
-I think that shipping nohz_full out to the real world is already
-happening, but that turning on nohz_full at boot time is expected to
-clobber syscall performance globally.
+Austin and Richard,
 
-Still, I can see the attraction of avoiding clobbering the syscall
-performance on the non-nohz_ful CPUs when nohz_full is enabled on
-only some of the CPUs.
+I'm not 100% sure that the patch below will fix your problem, but we
+saw something that sounds pretty familiar to your issue involving the
+nvidia driver and the preempt-rt patch.  The nvidia driver uses the
+completion support to create their own driver's notion of an internally
+used semaphore.
 
-							Thanx, Paul
+Some tasks were failing to ever wakeup from wait_for_completion() calls
+due to a race in the underlying do_wait_for_common() routine.
+
+This is the patch that we used to fix this issue:
+
+------------------- -------------------
+
+Fix a race in the PRT wait for completion simple wait code.
+
+A wait_for_completion() waiter task can be awoken by a task calling
+complete(), but fail to consume the 'done' completion resource if it
+looses a race with another task calling wait_for_completion() just as
+it is waking up.
+
+In this case, the awoken task will call schedule_timeout() again
+without being in the simple wait queue.
+
+So if the awoken task is unable to claim the 'done' completion resource,
+check to see if it needs to be re-inserted into the wait list before
+waiting again in schedule_timeout().
+
+Fix-by: John Blackwood <john.blackwood@ccur.com>
+Index: b/kernel/sched/core.c
+===================================================================
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3529,11 +3529,19 @@ static inline long __sched
+  do_wait_for_common(struct completion *x,
+  		   long (*action)(long), long timeout, int state)
+  {
++	int again = 0;
++
+  	if (!x->done) {
+  		DEFINE_SWAITER(wait);
+
+  		swait_prepare_locked(&x->wait, &wait);
+  		do {
++			/* Check to see if we lost race for 'done' and are
++			 * no longer in the wait list.
++			 */
++			if (unlikely(again) && list_empty(&wait.node))
++				swait_prepare_locked(&x->wait, &wait);
++
+  			if (signal_pending_state(state, current)) {
+  				timeout = -ERESTARTSYS;
+  				break;
+@@ -3542,6 +3550,7 @@ do_wait_for_common(struct completion *x,
+  			raw_spin_unlock_irq(&x->wait.lock);
+  			timeout = action(timeout);
+  			raw_spin_lock_irq(&x->wait.lock);
++			again = 1;
+  		} while (!x->done && timeout);
+  		swait_finish_locked(&x->wait, &wait);
+  		if (!x->done)
+
+_______________________________________________
+xfs mailing list
+xfs@oss.sgi.com
+http://oss.sgi.com/mailman/listinfo/xfs
