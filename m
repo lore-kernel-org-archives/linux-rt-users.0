@@ -1,162 +1,137 @@
-From: Richard Weinberger <richard.weinberger@gmail.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Wed, 21 May 2014 09:33:49 +0200
-Message-ID: <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
-References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
-	<CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
+ futile
+Date: Wed, 21 May 2014 05:03:11 -0700
+Message-ID: <20140521120311.GK4570@linux.vnet.ibm.com>
+References: <1400123931.5175.38.camel@marge.simpson.net>
+ <1400386954.5140.36.camel@marge.simpson.net>
+ <20140518052039.GF4570@linux.vnet.ibm.com>
+ <1400402201.5166.13.camel@marge.simpson.net>
+ <20140518155815.GK4570@linux.vnet.ibm.com>
+ <1400467481.5211.48.camel@marge.simpson.net>
+ <20140519053401.GP4570@linux.vnet.ibm.com>
+ <20140520145350.GC17741@localhost.localdomain>
+ <20140520155324.GD4570@linux.vnet.ibm.com>
+ <1400645881.5158.35.camel@marge.simpson.net>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>, xfs <xfs@oss.sgi.com>
-To: Austin Schuh <austin@peloton-tech.com>
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Content-Type: text/plain; charset=us-ascii
+Cc: Frederic Weisbecker <fweisbec@gmail.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1400645881.5158.35.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-CC'ing RT folks
+On Wed, May 21, 2014 at 06:18:01AM +0200, Mike Galbraith wrote:
+> On Tue, 2014-05-20 at 08:53 -0700, Paul E. McKenney wrote: 
+> > On Tue, May 20, 2014 at 04:53:52PM +0200, Frederic Weisbecker wrote:
+> > > On Sun, May 18, 2014 at 10:34:01PM -0700, Paul E. McKenney wrote:
+> > > > On Mon, May 19, 2014 at 04:44:41AM +0200, Mike Galbraith wrote:
+> > > > > On Sun, 2014-05-18 at 08:58 -0700, Paul E. McKenney wrote: 
+> > > > > > On Sun, May 18, 2014 at 10:36:41AM +0200, Mike Galbraith wrote:
+> > > > > > > On Sat, 2014-05-17 at 22:20 -0700, Paul E. McKenney wrote:
+> > > > > > > 
+> > > > > > > > If you are saying that turning on nohz_full doesn't help unless you
+> > > > > > > > also ensure that there is only one runnable task per CPU, I completely
+> > > > > > > > agree.  If you are saying something else, you lost me.  ;-)
+> > > > > > > 
+> > > > > > > Yup, that's it more or less.  It's not only single task loads that could
+> > > > > > > benefit from better isolation, but if isolation improving measures are
+> > > > > > > tied to nohz_full, other sensitive loads will suffer if they try to use
+> > > > > > > isolation improvements.
+> > > > > > 
+> > > > > > So you are arguing for a separate Kconfig variable that does the isolation?
+> > > > > > So that NO_HZ_FULL selects this new variable, and (for example) RCU
+> > > > > > uses this new variable to decide when to pin the grace-period kthreads
+> > > > > > onto the housekeeping CPU?
+> > > > > 
+> > > > > I'm thinking more about runtime, but yes.
+> > > > > 
+> > > > > The tick mode really wants to be selectable per set (in my boxen you can
+> > > > > switch between nohz off/idle, but not yet nohz_full, that might get real
+> > > > > interesting).  You saw in my numbers that ticked is far better for the
+> > > > > threaded rt load, but what if the total load has both sensitive rt and
+> > > > > compute components to worry about?  The rt component wants relief from
+> > > > > the jitter that flipping the tick inflicts, but also wants as little
+> > > > > disturbance as possible, so RCU offload and whatever other measures that
+> > > > > are or become available are perhaps interesting to it as well.  The
+> > > > > numbers showed that here and now the two modes can work together in the
+> > > > > same box, I can have my rt set ticking away, and other cores doing
+> > > > > tickless compute, but enabling that via common config (distros don't
+> > > > > want to ship many kernel flavors) has a cost to rt performance.
+> > > > > 
+> > > > > Ideally, bean counting would be switchable too, giving all components
+> > > > > the environment they like best.
+> > > > 
+> > > > Sounds like a question for Frederic (now CCed).  ;-)
+> > > 
+> > > I'm not sure that I really understand what you want here.
+> > > 
+> > > The current state of the art is that when you enable CONFIG_NO_HZ_FULL=y, full dynticks
+> > > is actually off by default. This is only overriden by "nohz_full=" boot parameter.
+> > 
+> > If I understand correctly, if there is no nohz_full= boot parameter,
+> > then the context-tracking code takes the early exit via the
+> > context_tracking_is_enabled() check in context_tracking_user_enter().
+> > I would not expect this to cause much in the way of syscall performance
+> > degradation.  However, it looks like having even one CPU in nohz_full
+> > mode causes all CPUs to enable context tracking.
+> > 
+> > My guess is that Mike wants to have (say) half of his CPUs running
+> > nohz_full, and the other half having fast system calls.  So my guess
+> > also is that he would like some way of having the non-nohz_full CPUs
+> > to opt out of the context-tracking overhead, including the memory
+> > barriers and atomic ops in rcu_user_enter() and rcu_user_exit().  ;-)
+> 
+> Bingo.
+> 
+> > > Now if what you need is to enable or disable it at runtime instead of boottime,
+> > > I must warn you that this is going to complicate the nohz code a lot (and also perhaps sched
+> > > and RCU).
+> > 
+> > What Frederic said!  Making RCU deal with this is possible, but a bit on
+> > the complicated side.  Given that I haven't heard too many people complaining
+> > that RCU is too simple, I would like to opt out of runtime changes to the
+> > nohz_full mask.
+> > 
+> > > I've already been eyed by vulturous frozen sharks flying in circles above me lately
+> > > after a few overengineering visions.
+> > 
+> > Nothing like the icy glare of a frozen shark, is there?  ;-)
+> > 
+> > > And given that the full nohz code is still in a baby shape, it's probably not the right
+> > > time to expand it that way. I haven't even yet heard about users who crossed the testing
+> > > stage of full nohz.
+> > > 
+> > > We'll probably extend it that way in the future. But likely not in a near future.
+> > 
+> > My guess is that Mike would be OK with making nohz_full choice of CPUs
+> > still at boot time, but that he would like the CPUs that are not to be
+> > in nohz_full state be able to opt out of the context-tracking overhead.
+> > 
+> > Mike, please let us all know if I am misunderstanding what you are
+> > looking for.
+> 
+> Yup, exactly.  As it sits, you couldn't possible ship nohz_full out to
+> the real world in any other form than a specialty kernel.  There's no
+> doubt in my mind that there are users out there who would love to have
+> high performance rt and compute in the same box though.  I can imagine
+> them lurking here and slobbering profusely ;-)
 
-On Wed, May 21, 2014 at 8:23 AM, Austin Schuh <austin@peloton-tech.com> wrote:
-> On Tue, May 13, 2014 at 7:29 PM, Austin Schuh <austin@peloton-tech.com> wrote:
->> Hi,
->>
->> I am observing a filesystem lockup with XFS on a CONFIG_PREEMPT_RT
->> patched kernel.  I have currently only triggered it using dpkg.  Dave
->> Chinner on the XFS mailing list suggested that it was a rt-kernel
->> workqueue issue as opposed to a XFS problem after looking at the
->> kernel messages.
->>
->> The only modification to the kernel besides the RT patch is that I
->> have applied tglx's "genirq: Sanitize spurious interrupt detection of
->> threaded irqs" patch.
->
-> I upgraded to 3.14.3-rt4, and the problem still persists.
->
-> I turned on event tracing and tracked it down further.  I'm able to
-> lock it up by scping a new kernel debian package to /tmp/ on the
-> machine.  scp is locking the inode, and then scheduling
-> xfs_bmapi_allocate_worker in the work queue.  The work then never gets
-> run.  The kworkers then lock up waiting for the inode lock.
->
-> Here are the relevant events from the trace.  ffff8803e9f10288
-> (blk_delay_work) gets run later on in the trace, but ffff8803b4c158d0
-> (xfs_bmapi_allocate_worker) never does.  The kernel then warns about
-> blocked tasks 120 seconds later.
->
->
->              scp-5393  [001] ....1..   148.883383: xfs_writepage: dev
-> 8:5 ino 0xd8e pgoff 0x4a3e000 size 0x16af02b0 offset 0 length 0
-> delalloc 1 unwritten 0
->              scp-5393  [001] ....1..   148.883383: xfs_ilock_nowait:
-> dev 8:5 ino 0xd8e flags ILOCK_SHARED caller xfs_map_blocks
->              scp-5393  [001] ....1..   148.883384: xfs_iunlock: dev
-> 8:5 ino 0xd8e flags ILOCK_SHARED caller xfs_map_blocks
->              scp-5393  [001] ....1..   148.883386: xfs_log_reserve:
-> dev 8:5 type STRAT_WRITE t_ocnt 2 t_cnt 2 t_curr_res 112332 t_unit_res
-> 112332 t_flags XLOG_TIC_INITED|XLOG_TIC_PERM_RESERV reserveq empty
-> writeq empty grant_reserve_cycle 57 grant_reserve_bytes 9250852
-> grant_write_cycle 57 grant_write_bytes 9250852 curr_cycle 57
-> curr_block 18031 tail_cycle 57 tail_block 17993
->              scp-5393  [001] ....1..   148.883386:
-> xfs_log_reserve_exit: dev 8:5 type STRAT_WRITE t_ocnt 2 t_cnt 2
-> t_curr_res 112332 t_unit_res 112332 t_flags
-> XLOG_TIC_INITED|XLOG_TIC_PERM_RESERV reserveq empty writeq empty
-> grant_reserve_cycle 57 grant_reserve_bytes 9475516 grant_write_cycle
-> 57 grant_write_bytes 9475516 curr_cycle 57 curr_block 18031 tail_cycle
-> 57 tail_block 17993
->              scp-5393  [001] ....1..   148.883386: xfs_ilock: dev 8:5
-> ino 0xd8e flags ILOCK_EXCL caller xfs_iomap_write_allocate
->              scp-5393  [001] ....1.3   148.883390:
-> workqueue_queue_work: work struct=ffff8803b4c158d0
-> function=xfs_bmapi_allocate_worker workqueue=ffff8803ea85dc00
-> req_cpu=512 cpu=1
->              scp-5393  [001] ....1.3   148.883390:
-> workqueue_activate_work: work struct ffff8803b4c158d0
->              scp-5393  [001] ....1.4   148.883396:
-> workqueue_queue_work: work struct=ffff8803e9f10288
-> function=blk_delay_work workqueue=ffff8803ecf96200 req_cpu=512 cpu=1
->              scp-5393  [001] ....1.4   148.883396:
-> workqueue_activate_work: work struct ffff8803e9f10288
->              scp-5393  [001] dN..3.4   148.883399: sched_wakeup:
-> comm=kworker/1:1H pid=573 prio=100 success=1 target_cpu=001
->              scp-5393  [001] dN..3.4   148.883400: sched_stat_runtime:
-> comm=scp pid=5393 runtime=32683 [ns] vruntime=658862317 [ns]
->              scp-5393  [001] d...3.4   148.883400: sched_switch:
-> prev_comm=scp prev_pid=5393 prev_prio=120 prev_state=R+ ==>
-> next_comm=kworker/1:1H next_pid=573 next_prio=100
->
->     irq/44-ahci-273   [000] d...3.5   148.883647: sched_wakeup:
-> comm=kworker/0:2 pid=732 prio=120 success=1 target_cpu=000
->     irq/44-ahci-273   [000] d...3..   148.883667: sched_switch:
-> prev_comm=irq/44-ahci prev_pid=273 prev_prio=49 prev_state=S ==>
-> next_comm=kworker/0:2 next_pid=732 next_prio=120
->     kworker/0:2-732   [000] ....1..   148.883674:
-> workqueue_execute_start: work struct ffff8800aea30cb8: function
-> xfs_end_io
->     kworker/0:2-732   [000] ....1..   148.883674: xfs_ilock: dev 8:5
-> ino 0xd8e flags ILOCK_EXCL caller xfs_setfilesize
->     kworker/0:2-732   [000] d...3..   148.883677: sched_stat_runtime:
-> comm=kworker/0:2 pid=732 runtime=11392 [ns] vruntime=46907654869 [ns]
->     kworker/0:2-732   [000] d...3..   148.883679: sched_switch:
-> prev_comm=kworker/0:2 prev_pid=732 prev_prio=120 prev_state=D ==>
-> next_comm=swapper/0 next_pid=0 next_prio=120
->
->    kworker/1:1-99    [001] ....1..   148.884208:
-> workqueue_execute_start: work struct ffff8800aea30c20: function
-> xfs_end_io
->     kworker/1:1-99    [001] ....1..   148.884208: xfs_ilock: dev 8:5
-> ino 0xd8e flags ILOCK_EXCL caller xfs_setfilesize
->     kworker/1:1-99    [001] d...3..   148.884210: sched_stat_runtime:
-> comm=kworker/1:1 pid=99 runtime=36705 [ns] vruntime=48354424724 [ns]
->     kworker/1:1-99    [001] d...3..   148.884211: sched_switch:
-> prev_comm=kworker/1:1 prev_pid=99 prev_prio=120 prev_state=R+ ==>
-> next_comm=swapper/1 next_pid=0 next_prio=120
->
->   kworker/u16:4-296   [001] ....1..   151.560358:
-> workqueue_execute_start: work struct ffff8803e9f10660: function
-> bdi_writeback_workfn
->   kworker/u16:4-296   [001] ....1..   151.560389:
-> workqueue_execute_end: work struct ffff8803e9f10660
->   kworker/u16:4-296   [001] d...3..   151.560398: sched_stat_runtime:
-> comm=kworker/u16:4 pid=296 runtime=51174 [ns] vruntime=48345513312
-> [ns]
->   kworker/u16:4-296   [001] d...3..   151.560403: sched_switch:
-> prev_comm=kworker/u16:4 prev_pid=296 prev_prio=120 prev_state=R+ ==>
-> next_comm=swapper/1 next_pid=0 next_prio=120
->
->
-> I have a peak_pci can card in the machine that is consuming about 1.5
-> CPU cores because it is not connected to a CAN bus and gets error
-> interrupts every time it tries to send and resend.  If I disable the
-> card (ifconfig can0 down; ifconfig can1 down), I have a lot more
-> trouble reproducing the lockup.
->
-> Any ideas why the scheduled work is never getting run?
->
-> Thanks,
-> Austin
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+I think that shipping nohz_full out to the real world is already
+happening, but that turning on nohz_full at boot time is expected to
+clobber syscall performance globally.
 
+Still, I can see the attraction of avoiding clobbering the syscall
+performance on the non-nohz_ful CPUs when nohz_full is enabled on
+only some of the CPUs.
 
-
--- 
-Thanks,
-//richard
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+							Thanx, Paul
