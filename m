@@ -1,190 +1,46 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it
- is futile
-Date: Thu, 22 May 2014 15:40:15 -0400
-Message-ID: <537E529F.6070409@windriver.com>
-References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com> <20140519124052.GA30445@twins.programming.kicks-ass.net>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: BUG: sleeping function called from invalid context (do_force_sig_info)
+Date: Fri, 23 May 2014 01:09:52 +0200
+Message-ID: <537E83C0.9040406@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	Linux ARM Kernel <linux-arm-kernel@lists.infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140519124052.GA30445@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 14-05-19 08:40 AM, Peter Zijlstra wrote:
-> On Wed, May 14, 2014 at 11:08:35AM -0400, Paul Gortmaker wrote:
->> As of the old commit ac086bc22997a2be24fc40fc8d46522fe7e03d11
->> ("sched: rt-group: smp balancing") the concept of borrowing per
->> cpu rt_runtime from one core to another was introduced.
->>
->> However, this prevents the RT throttling message from ever being
->> emitted when someone does a common (but mistaken) attempt at
->> using too much CPU in RT context.  Consider the following test:
-> 
-> 
-> So the alternative approach is something like the below, where we will
-> not let it borrow more than the global bandwidth per cpu.
-> 
-> This whole sharing thing is completely fail anyway, but I really
-> wouldn't know what else to do and keep allowing RT tasks to set random
-> cpu affinities.
+Hi,
 
-So, for the record, this does seem to work, in the sense that the
-original test of:
+this is on a i.MX28 running a 3.12.19-rt30
 
-  echo "main() {for(;;);}" > full_load.c
-  gcc full_load.c -o full_load
-  taskset -c 1 ./full_load &
-  chrt -r -p 80 `pidof full_load`
+[27284.008123] BUG: sleeping function called from invalid context at /home/nxtdev/Kernels/linux-stable-rt/kernel/rtmutex.c:673
+[27284.008143] in_atomic(): 0, irqs_disabled(): 128, pid: 1335, name: nxt
+[27284.008170] CPU: 0 PID: 1335 Comm: nxt Not tainted 3.12.19-rt30+ #178
+[27284.008255] [<c0014440>] (unwind_backtrace+0x0/0xf4) from [<c00124cc>] (show_stack+0x10/0x14)
+[27284.008306] [<c00124cc>] (show_stack+0x10/0x14) from [<c028b6a8>] (rt_spin_lock+0x18/0x2c)
+[27284.008348] [<c028b6a8>] (rt_spin_lock+0x18/0x2c) from [<c002a7ec>] (do_force_sig_info+0x20/0xd8)
+[27284.008387] [<c002a7ec>] (do_force_sig_info+0x20/0xd8) from [<c0016720>] (__do_user_fault+0x88/0xc8)
+[27284.008419] [<c0016720>] (__do_user_fault+0x88/0xc8) from [<c0016c2c>] (do_bad_area+0x64/0x70)
+[27284.008452] [<c0016c2c>] (do_bad_area+0x64/0x70) from [<c0016ca4>] (do_translation_fault+0x6c/0xa8)
+[27284.008483] [<c0016ca4>] (do_translation_fault+0x6c/0xa8) from [<c000867c>] (do_DataAbort+0x34/0x98)
+[27284.008520] [<c000867c>] (do_DataAbort+0x34/0x98) from [<c0012ebc>] (__dabt_usr+0x3c/0x40)
+[27284.008531] Exception stack(0xc1173fb0 to 0xc1173ff8)
+[27284.008554] 3fa0:                                     b6634b48 d6634b44 d6634a94 07ffffff
+[27284.008583] 3fc0: b6634c1c b6ef1160 b6ef1000 00000152 b6635460 b6ee6b34 00000000 b6634b4c
+[27284.008605] 3fe0: 00000152 b6634a80 001f813c 00203888 60000010 ffffffff
 
-will emit the sched delayed throttling message instead of the less
-informative (and 20s delayed) RCU stall.  Which IMHO is a win in
-terms of being more friendly to the less informed users out there.
+There are some changes to the stock 3.12.19-rt30 (added drivers) where
+I can not exclude that there is some bug lurking, and a bug in userspace
+is even more probable; I am just forwarding it because of the sleeping
+from invalid context thing.
 
-I'd re-tested it on today's linux-next tree, with RT_GROUP_SCHED off.
+After a reboot I am unfortunately not able to easily reproduce it. There
+was no core dump (they are enabled) and the application did not exit
+(there is no SEGV handler).
 
-The downside is that we get another tuning knob that will inevitably
-end up in /proc/sys/kernel/ and we'll need to explain somewhere how
-the new max_runtime relates to the existing rt_runtime and rt_period.
-
-I'm still unsure what the best solution for mainline is.  Clearly
-just defaulting the sched feat to false is the simplest, and given
-your description of it as "fail" perhaps that does makes sense.  :)
-
-Paul.
---
-
-> 
-> 
-> ---
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -7386,10 +7386,59 @@ static int __rt_schedulable(struct task_
->  	return ret;
->  }
->  
-> +/*
-> + * ret := (a * b) / d
-> + */
-> +static u64 mul_u64_u64_div_u64(u64 a, u64 b, u64 d)
-> +{
-> +	/*
-> +	 * Compute the 128bit product:
-> +	 *   a * b ->
-> +	 *     [ a = (ah * 2^32 + al),  b = (bh * 2^32 + bl) ]
-> +	 *   -> (ah * bh) * 2^64 + (ah * bl + al * bh) * 2^32 + al * bl
-> +	 */
-> +	u32 ah = (a >> 32);
-> +	u32 bh = (b >> 32);
-> +	u32 al = a;
-> +	u32 bl = b;
-> +
-> +	u64 mh, mm, ml;
-> +
-> +	mh = (u64)ah * bh;
-> +	mm = (u64)ah * bl + (u64)al * bh;
-> +	ml = (u64)al * bl;
-> +
-> +	mh += mm >> 32;
-> +	mm <<= 32;
-> +
-> +	ml += mm;
-> +	if (ml < mm) /* overflow */
-> +		mh++;
-> +
-> +	/*
-> +	 * Reduce the 128bit result to fit in a 64bit dividend:
-> +	 *   m / d -> (m / 2^n) / (d / 2^n)
-> +	 */
-> +	while (mh) {
-> +		ml >>= 1;
-> +		if (mh & 1)
-> +			ml |= 1ULL << 63;
-> +		mh >>= 1;
-> +		d >>= 1;
-> +	}
-> +
-> +	if (unlikely(!d))
-> +		return ml;
-> +
-> +	return div64_u64(ml, d);
-> +}
-> +
->  static int tg_set_rt_bandwidth(struct task_group *tg,
->  		u64 rt_period, u64 rt_runtime)
->  {
->  	int i, err = 0;
-> +	u64 g_period = global_rt_period();
-> +	u64 g_runtime = global_rt_runtime();
->  
->  	mutex_lock(&rt_constraints_mutex);
->  	read_lock(&tasklist_lock);
-> @@ -7400,6 +7449,9 @@ static int tg_set_rt_bandwidth(struct ta
->  	raw_spin_lock_irq(&tg->rt_bandwidth.rt_runtime_lock);
->  	tg->rt_bandwidth.rt_period = ns_to_ktime(rt_period);
->  	tg->rt_bandwidth.rt_runtime = rt_runtime;
-> +	tg->rt_bandwidth.rt_max_runtime = (g_runtime == RUNTIME_INF) ?
-> +		rt_period :
-> +		mul_u64_u64_div_u64(rt_period, g_runtime, g_period);
->  
->  	for_each_possible_cpu(i) {
->  		struct rt_rq *rt_rq = tg->rt_rq[i];
-> @@ -7577,6 +7629,7 @@ static int sched_rt_global_validate(void
->  static void sched_rt_do_global(void)
->  {
->  	def_rt_bandwidth.rt_runtime = global_rt_runtime();
-> +	def_rt_bandwidth.rt_max_runtime = global_rt_runtime();
->  	def_rt_bandwidth.rt_period = ns_to_ktime(global_rt_period());
->  }
->  
-> --- a/kernel/sched/rt.c
-> +++ b/kernel/sched/rt.c
-> @@ -614,12 +614,12 @@ static int do_balance_runtime(struct rt_
->  	struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
->  	struct root_domain *rd = rq_of_rt_rq(rt_rq)->rd;
->  	int i, weight, more = 0;
-> -	u64 rt_period;
-> +	u64 rt_max_runtime;
->  
->  	weight = cpumask_weight(rd->span);
->  
->  	raw_spin_lock(&rt_b->rt_runtime_lock);
-> -	rt_period = ktime_to_ns(rt_b->rt_period);
-> +	rt_max_runtime = rt_b->rt_max_runtime;
->  	for_each_cpu(i, rd->span) {
->  		struct rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
->  		s64 diff;
-> @@ -643,12 +643,12 @@ static int do_balance_runtime(struct rt_
->  		diff = iter->rt_runtime - iter->rt_time;
->  		if (diff > 0) {
->  			diff = div_u64((u64)diff, weight);
-> -			if (rt_rq->rt_runtime + diff > rt_period)
-> -				diff = rt_period - rt_rq->rt_runtime;
-> +			if (rt_rq->rt_runtime + diff > rt_max_runtime)
-> +				diff = rt_max_runtime - rt_rq->rt_runtime;
->  			iter->rt_runtime -= diff;
->  			rt_rq->rt_runtime += diff;
->  			more = 1;
-> -			if (rt_rq->rt_runtime == rt_period) {
-> +			if (rt_rq->rt_runtime == rt_max_runtime) {
->  				raw_spin_unlock(&iter->rt_runtime_lock);
->  				break;
->  			}
-> --- a/kernel/sched/sched.h
-> +++ b/kernel/sched/sched.h
-> @@ -124,6 +124,7 @@ struct rt_bandwidth {
->  	raw_spinlock_t		rt_runtime_lock;
->  	ktime_t			rt_period;
->  	u64			rt_runtime;
-> +	u64			rt_max_runtime;
->  	struct hrtimer		rt_period_timer;
->  };
->  /*
-> 
+Thanks
+-- 
+                                       Stano
