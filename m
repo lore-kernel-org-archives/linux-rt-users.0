@@ -1,92 +1,190 @@
-From: Austin Schuh <austin@peloton-tech.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Wed, 21 May 2014 14:59:30 -0700
-Message-ID: <CANGgnMYCFVQ7aR2Qjo+c5B=Jyi3QfyhAHd6y3imSN_7a3Y4Ekg@mail.gmail.com>
-References: <537CFECF.9070701@ccur.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it
+ is futile
+Date: Thu, 22 May 2014 15:40:15 -0400
+Message-ID: <537E529F.6070409@windriver.com>
+References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com> <20140519124052.GA30445@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Richard Weinberger <richard.weinberger@gmail.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	xfs <xfs@oss.sgi.com>
-To: John Blackwood <john.blackwood@ccur.com>
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <537CFECF.9070701@ccur.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140519124052.GA30445@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, May 21, 2014 at 12:30 PM, John Blackwood
-<john.blackwood@ccur.com> wrote:
->> Date: Wed, 21 May 2014 03:33:49 -0400
->> From: Richard Weinberger <richard.weinberger@gmail.com>
->> To: Austin Schuh <austin@peloton-tech.com>
->> CC: LKML <linux-kernel@vger.kernel.org>, xfs <xfs@oss.sgi.com>, rt-users
->>       <linux-rt-users@vger.kernel.org>
->> Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
->
+On 14-05-19 08:40 AM, Peter Zijlstra wrote:
+> On Wed, May 14, 2014 at 11:08:35AM -0400, Paul Gortmaker wrote:
+>> As of the old commit ac086bc22997a2be24fc40fc8d46522fe7e03d11
+>> ("sched: rt-group: smp balancing") the concept of borrowing per
+>> cpu rt_runtime from one core to another was introduced.
 >>
->> CC'ing RT folks
->>
->> On Wed, May 21, 2014 at 8:23 AM, Austin Schuh <austin@peloton-tech.com>
->> wrote:
->> > > On Tue, May 13, 2014 at 7:29 PM, Austin Schuh
->> > > <austin@peloton-tech.com> wrote:
->> >> >> Hi,
->> >> >>
->> >> >> I am observing a filesystem lockup with XFS on a CONFIG_PREEMPT_RT
->> >> >> patched kernel.  I have currently only triggered it using dpkg.
->> >> >> Dave
->> >> >> Chinner on the XFS mailing list suggested that it was a rt-kernel
->> >> >> workqueue issue as opposed to a XFS problem after looking at the
->> >> >> kernel messages.
->> >> >>
->> >> >> The only modification to the kernel besides the RT patch is that I
->> >> >> have applied tglx's "genirq: Sanitize spurious interrupt detection
->> >> >> of
->> >> >> threaded irqs" patch.
->> > >
->> > > I upgraded to 3.14.3-rt4, and the problem still persists.
->> > >
->> > > I turned on event tracing and tracked it down further.  I'm able to
->> > > lock it up by scping a new kernel debian package to /tmp/ on the
->> > > machine.  scp is locking the inode, and then scheduling
->> > > xfs_bmapi_allocate_worker in the work queue.  The work then never gets
->> > > run.  The kworkers then lock up waiting for the inode lock.
->> > >
->> > > Here are the relevant events from the trace.  ffff8803e9f10288
->> > > (blk_delay_work) gets run later on in the trace, but ffff8803b4c158d0
->> > > (xfs_bmapi_allocate_worker) never does.  The kernel then warns about
->> > > blocked tasks 120 seconds later.
->
-> Austin and Richard,
->
-> I'm not 100% sure that the patch below will fix your problem, but we
-> saw something that sounds pretty familiar to your issue involving the
-> nvidia driver and the preempt-rt patch.  The nvidia driver uses the
-> completion support to create their own driver's notion of an internally
-> used semaphore.
->
-> Some tasks were failing to ever wakeup from wait_for_completion() calls
-> due to a race in the underlying do_wait_for_common() routine.
+>> However, this prevents the RT throttling message from ever being
+>> emitted when someone does a common (but mistaken) attempt at
+>> using too much CPU in RT context.  Consider the following test:
+> 
+> 
+> So the alternative approach is something like the below, where we will
+> not let it borrow more than the global bandwidth per cpu.
+> 
+> This whole sharing thing is completely fail anyway, but I really
+> wouldn't know what else to do and keep allowing RT tasks to set random
+> cpu affinities.
 
-Hi John,
+So, for the record, this does seem to work, in the sense that the
+original test of:
 
-Thanks for the suggestion and patch.  The issue is that the work never
-gets run, not that the work finishes but the waiter never gets woken.
-I applied it anyways to see if it helps, but I still get the lockup.
+  echo "main() {for(;;);}" > full_load.c
+  gcc full_load.c -o full_load
+  taskset -c 1 ./full_load &
+  chrt -r -p 80 `pidof full_load`
 
-Thanks,
-    Austin
+will emit the sched delayed throttling message instead of the less
+informative (and 20s delayed) RCU stall.  Which IMHO is a win in
+terms of being more friendly to the less informed users out there.
 
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+I'd re-tested it on today's linux-next tree, with RT_GROUP_SCHED off.
+
+The downside is that we get another tuning knob that will inevitably
+end up in /proc/sys/kernel/ and we'll need to explain somewhere how
+the new max_runtime relates to the existing rt_runtime and rt_period.
+
+I'm still unsure what the best solution for mainline is.  Clearly
+just defaulting the sched feat to false is the simplest, and given
+your description of it as "fail" perhaps that does makes sense.  :)
+
+Paul.
+--
+
+> 
+> 
+> ---
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -7386,10 +7386,59 @@ static int __rt_schedulable(struct task_
+>  	return ret;
+>  }
+>  
+> +/*
+> + * ret := (a * b) / d
+> + */
+> +static u64 mul_u64_u64_div_u64(u64 a, u64 b, u64 d)
+> +{
+> +	/*
+> +	 * Compute the 128bit product:
+> +	 *   a * b ->
+> +	 *     [ a = (ah * 2^32 + al),  b = (bh * 2^32 + bl) ]
+> +	 *   -> (ah * bh) * 2^64 + (ah * bl + al * bh) * 2^32 + al * bl
+> +	 */
+> +	u32 ah = (a >> 32);
+> +	u32 bh = (b >> 32);
+> +	u32 al = a;
+> +	u32 bl = b;
+> +
+> +	u64 mh, mm, ml;
+> +
+> +	mh = (u64)ah * bh;
+> +	mm = (u64)ah * bl + (u64)al * bh;
+> +	ml = (u64)al * bl;
+> +
+> +	mh += mm >> 32;
+> +	mm <<= 32;
+> +
+> +	ml += mm;
+> +	if (ml < mm) /* overflow */
+> +		mh++;
+> +
+> +	/*
+> +	 * Reduce the 128bit result to fit in a 64bit dividend:
+> +	 *   m / d -> (m / 2^n) / (d / 2^n)
+> +	 */
+> +	while (mh) {
+> +		ml >>= 1;
+> +		if (mh & 1)
+> +			ml |= 1ULL << 63;
+> +		mh >>= 1;
+> +		d >>= 1;
+> +	}
+> +
+> +	if (unlikely(!d))
+> +		return ml;
+> +
+> +	return div64_u64(ml, d);
+> +}
+> +
+>  static int tg_set_rt_bandwidth(struct task_group *tg,
+>  		u64 rt_period, u64 rt_runtime)
+>  {
+>  	int i, err = 0;
+> +	u64 g_period = global_rt_period();
+> +	u64 g_runtime = global_rt_runtime();
+>  
+>  	mutex_lock(&rt_constraints_mutex);
+>  	read_lock(&tasklist_lock);
+> @@ -7400,6 +7449,9 @@ static int tg_set_rt_bandwidth(struct ta
+>  	raw_spin_lock_irq(&tg->rt_bandwidth.rt_runtime_lock);
+>  	tg->rt_bandwidth.rt_period = ns_to_ktime(rt_period);
+>  	tg->rt_bandwidth.rt_runtime = rt_runtime;
+> +	tg->rt_bandwidth.rt_max_runtime = (g_runtime == RUNTIME_INF) ?
+> +		rt_period :
+> +		mul_u64_u64_div_u64(rt_period, g_runtime, g_period);
+>  
+>  	for_each_possible_cpu(i) {
+>  		struct rt_rq *rt_rq = tg->rt_rq[i];
+> @@ -7577,6 +7629,7 @@ static int sched_rt_global_validate(void
+>  static void sched_rt_do_global(void)
+>  {
+>  	def_rt_bandwidth.rt_runtime = global_rt_runtime();
+> +	def_rt_bandwidth.rt_max_runtime = global_rt_runtime();
+>  	def_rt_bandwidth.rt_period = ns_to_ktime(global_rt_period());
+>  }
+>  
+> --- a/kernel/sched/rt.c
+> +++ b/kernel/sched/rt.c
+> @@ -614,12 +614,12 @@ static int do_balance_runtime(struct rt_
+>  	struct rt_bandwidth *rt_b = sched_rt_bandwidth(rt_rq);
+>  	struct root_domain *rd = rq_of_rt_rq(rt_rq)->rd;
+>  	int i, weight, more = 0;
+> -	u64 rt_period;
+> +	u64 rt_max_runtime;
+>  
+>  	weight = cpumask_weight(rd->span);
+>  
+>  	raw_spin_lock(&rt_b->rt_runtime_lock);
+> -	rt_period = ktime_to_ns(rt_b->rt_period);
+> +	rt_max_runtime = rt_b->rt_max_runtime;
+>  	for_each_cpu(i, rd->span) {
+>  		struct rt_rq *iter = sched_rt_period_rt_rq(rt_b, i);
+>  		s64 diff;
+> @@ -643,12 +643,12 @@ static int do_balance_runtime(struct rt_
+>  		diff = iter->rt_runtime - iter->rt_time;
+>  		if (diff > 0) {
+>  			diff = div_u64((u64)diff, weight);
+> -			if (rt_rq->rt_runtime + diff > rt_period)
+> -				diff = rt_period - rt_rq->rt_runtime;
+> +			if (rt_rq->rt_runtime + diff > rt_max_runtime)
+> +				diff = rt_max_runtime - rt_rq->rt_runtime;
+>  			iter->rt_runtime -= diff;
+>  			rt_rq->rt_runtime += diff;
+>  			more = 1;
+> -			if (rt_rq->rt_runtime == rt_period) {
+> +			if (rt_rq->rt_runtime == rt_max_runtime) {
+>  				raw_spin_unlock(&iter->rt_runtime_lock);
+>  				break;
+>  			}
+> --- a/kernel/sched/sched.h
+> +++ b/kernel/sched/sched.h
+> @@ -124,6 +124,7 @@ struct rt_bandwidth {
+>  	raw_spinlock_t		rt_runtime_lock;
+>  	ktime_t			rt_period;
+>  	u64			rt_runtime;
+> +	u64			rt_max_runtime;
+>  	struct hrtimer		rt_period_timer;
+>  };
+>  /*
+> 
