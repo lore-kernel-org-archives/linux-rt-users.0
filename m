@@ -1,102 +1,188 @@
-From: "Brad Mouring" <bmouring@ni.com>
-Subject: [PATCH 0/1] Faux deadlock detection fixup
-Date: Fri, 23 May 2014 09:30:09 -0500
-Message-ID: <1400855410-14773-1-git-send-email-brad.mouring@ni.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Brad Mouring <brad.mouring@ni.com>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:36782 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752541AbaEWOka (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 23 May 2014 10:40:30 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch v2] rt/sched: fix resursion when CONTEXT_TRACKING and
+ PREEMPT_LAZY are enabled
+Date: Sun, 25 May 2014 10:16:39 +0200
+Message-ID: <1401005799.15399.44.camel@marge.simpson.net>
+References: <20140509181214.GK29014@linutronix.de>
+	 <1399695303.5146.21.camel@marge.simpson.net>
+	 <20140513154002.GD15049@linutronix.de>
+	 <1400248411.5877.10.camel@marge.simpson.net>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1400248411.5877.10.camel@marge.simpson.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Greetings punctual folks (or at least folks who make linux punctual).
+On Fri, 2014-05-16 at 15:53 +0200, Mike Galbraith wrote: 
+> On Tue, 2014-05-13 at 17:40 +0200, Sebastian Andrzej Siewior wrote: 
+> > * Mike Galbraith | 2014-05-10 06:15:03 [+0200]:
+> > 
+> > >On Fri, 2014-05-09 at 20:12 +0200, Sebastian Andrzej Siewior wrote:
+> > >
+> > >> Known issues:
+> > >> 
+> > >>       - bcache is disabled.
+> > >> 
+> > >>       - lazy preempt on x86_64 leads to a crash with some load.
+> > >
+> > >That is only with NO_HZ_FUL enabled here.  Box blows the stack during
+> > >task exit, eyeballing hasn't spotted the why.
+> > 
+> > Even if I disable NO_HZ_FULL it explodes as soon as hackbench starts.
+> 
+> Ah, you didn't turn CONTEXT_TRACKING off too.  The below made the dirty
+> little SOB die here.
 
-I recently ran into an issue that I've been spending a few
-weeks trying to characterize, which includes trying my best to
-comprehend glibc's pthread_mutex implementation that uses futexes
-(which, in turn, use rtmutexes). I'll try my best to describe the
-situation I saw before presenting the patch that I wrote to fix the
-issue. By all means, if I get some part of this wrong or the approach
-taken to resolve the issue is incorrect, please let me know. Without
-futher ado, consider the following scenario for a priority chain:
+Something obviously went wrong with retest after deciding to do..
 
-All tasks involved here are SCHED_OTHER, so same priority. All user-
-space mutexes are pthread_mutexes configured to be PI (useless if all
-threads are SCHED_OTHER, I know, but we allow users to give rt
-priorities to threads, just not in this instance) and recursive (this
-doesn't seem to be involved here, as that keeps things in userspace.)
+> --- a/include/linux/preempt_mask.h
+> +++ b/include/linux/preempt_mask.h
+> @@ -118,9 +118,15 @@ extern int in_serving_softirq(void);
+>  		((preempt_count() & ~PREEMPT_ACTIVE) != PREEMPT_CHECK_OFFSET)
+>  
+>  #ifdef CONFIG_PREEMPT_COUNT
+> -# define preemptible()	(preempt_count() == 0 && !irqs_disabled())
+> +# define preemptible()		(preempt_count() == 0 && !irqs_disabled())
+> +#ifdef CONFIG_PREEMPT_LAZY
+> +# define preemptible_lazy()	(preempt_lazy_count() !=0 && !need_resched_now())
+                             ahem ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Thread (task) C attempts to take a pthread_mutex that's already
-owned, resulting in a sys_futex call. The current priority chain is
-as follows
+..that preemptible_lazy() bit.  Turn that back right side up.
 
-task A owns lock L1
- task^           L1 blocks task D < top_waiter on L1
-                 L1 blocks task B
-             lock^         task B owns lock L2
-                                            L2 blocks task C
-                                                    current^
+(or you can do something completely different, like make it just not go
+there ala 12-rt, or do the fold thing for rt as well, vs flag being set
+meaning try to schedule and bail if not allowed [as usual])
 
-We walk the chain, at the point when we attempt to take task A's
-pi_lock (and it is contended) or from the explicit attempt at L1's
-wait_lock, either one being contended can result in C being scheduled
-out. The top_waiter variable currently points at "L1 blocks task D".
-The task variable currently points at A.
+If context tracking is enabled, we can recurse, and explode violently.
+Add missing checks to preempt_schedule_context().
 
-When C scheduled out, A is scheduled in. A releases L1, wins L3 (in
-userspace, since it's uncontended), and turns around and blocks on L2.
+Fix other inconsistencies spotted while searching for the little SOB.
 
-Since A released L1, this frees D to take it. D is running the same
-code path as A, so it does what it needs to with L1, releases it,
-attempts to take L3 and blocks. Funny thing is, the waiter for this
-dependency is at the same address pointed to by the top_waiter, that
-previously expressed "L1 blocks D" when top_waiter was set when C
-blocked on L2.
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ arch/x86/include/asm/thread_info.h |    1 +
+ include/linux/preempt.h            |    2 +-
+ include/linux/preempt_mask.h       |   10 ++++++++--
+ kernel/context_tracking.c          |    2 +-
+ kernel/fork.c                      |    1 +
+ kernel/sched/core.c                |   16 +++++-----------
+ kernel/sched/fair.c                |    2 +-
+ 7 files changed, 18 insertions(+), 16 deletions(-)
 
-At this point, the chain resembles some facsimile of the of the
-following:
-
-task B owns L2
-            L2 blocks task C
-            L2 blocks task A
-                      task A owns L3
-                       task^      L3 blocks task D < top_waiter
-
-Task C is scheduled back in after this shuffle, resumes walking the
-prio_chain, *passes* the test looking at top_waiter and task's top
-pi_waiter (top_waiter is tragically pointing at "L3 blocks D" now),
-and the test to see if the lock that's blocking A is the original
-lock that C originally blocked on. Hmm.
-
-We report EDEADLK to userspace that, sanely, SIGABRTs our process.
-
-This series of events seems outlandish, but I have traces that show
-just this behavior (and similar notes) at 
-http://www.the-bradlands.net/waitergate.tar.gz
-
-Anyway, this patch simply checks to ensure that the current task is
-indeed the owner of the current lock examined. A test in our 
-(unfortunately complicated) execution framework (LabVIEW) would
-reproduce the issue on an arm cortex-a9 within minutes and an x64
-Atom within hours. After applying this patch, we were unable to 
-reproduce the issue after running the test for days.
-
-Originally, the check and fixup happened outside of the deadlock
-detection block but we found the fixup code was being hit with
-alarming regularity, considering we only wanted to address the false
-deadlock case, and as such, I was convinced to move it inside the
-deadlock detected block.
-
-Brad Mouring (1):
-  rtmutex: Handle when top lock owner changes
-
- kernel/locking/rtmutex.c | 19 +++++++++++++++++++
- 1 file changed, 19 insertions(+)
-
--- 
-1.8.3-rc3
-
+--- a/arch/x86/include/asm/thread_info.h
++++ b/arch/x86/include/asm/thread_info.h
+@@ -51,6 +51,7 @@ struct thread_info {
+ 	.flags		= 0,			\
+ 	.cpu		= 0,			\
+ 	.saved_preempt_count = INIT_PREEMPT_COUNT,	\
++	.preempt_lazy_count = 0,		\
+ 	.addr_limit	= KERNEL_DS,		\
+ 	.restart_block = {			\
+ 		.fn = do_no_restart_syscall,	\
+--- a/include/linux/preempt.h
++++ b/include/linux/preempt.h
+@@ -91,8 +91,8 @@ do { \
+ 
+ #define preempt_lazy_enable() \
+ do { \
+-	dec_preempt_lazy_count(); \
+ 	barrier(); \
++	dec_preempt_lazy_count(); \
+ 	preempt_check_resched(); \
+ } while (0)
+ 
+--- a/include/linux/preempt_mask.h
++++ b/include/linux/preempt_mask.h
+@@ -118,9 +118,15 @@ extern int in_serving_softirq(void);
+ 		((preempt_count() & ~PREEMPT_ACTIVE) != PREEMPT_CHECK_OFFSET)
+ 
+ #ifdef CONFIG_PREEMPT_COUNT
+-# define preemptible()	(preempt_count() == 0 && !irqs_disabled())
++# define preemptible()		(preempt_count() == 0 && !irqs_disabled())
++#ifdef CONFIG_PREEMPT_LAZY
++# define preemptible_lazy()	(preempt_lazy_count() == 0 || need_resched_now())
+ #else
+-# define preemptible()	0
++# define preemptible_lazy()	1
++#endif
++#else
++# define preemptible()		0
++# define preemptible_lazy()	0
+ #endif
+ 
+ #endif /* LINUX_PREEMPT_MASK_H */
+--- a/kernel/context_tracking.c
++++ b/kernel/context_tracking.c
+@@ -124,7 +124,7 @@ asmlinkage void __sched notrace preempt_
+ {
+ 	enum ctx_state prev_ctx;
+ 
+-	if (likely(!preemptible()))
++	if (likely(!preemptible() || !preemptible_lazy()))
+ 		return;
+ 
+ 	/*
+--- a/kernel/fork.c
++++ b/kernel/fork.c
+@@ -329,6 +329,7 @@ static struct task_struct *dup_task_stru
+ 	setup_thread_stack(tsk, orig);
+ 	clear_user_return_notifier(tsk);
+ 	clear_tsk_need_resched(tsk);
++	clear_tsk_need_resched_lazy(tsk);
+ 	stackend = end_of_stack(tsk);
+ 	*stackend = STACK_END_MAGIC;	/* for overflow detection */
+ 
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2866,8 +2866,8 @@ void migrate_enable(void)
+ 		p->migrate_disable = 0;
+ 
+ 	unpin_current_cpu();
+-	preempt_enable();
+ 	preempt_lazy_enable();
++	preempt_enable();
+ }
+ EXPORT_SYMBOL(migrate_enable);
+ #else
+@@ -3101,19 +3101,13 @@ asmlinkage void __sched notrace preempt_
+ {
+ 	/*
+ 	 * If there is a non-zero preempt_count or interrupts are disabled,
+-	 * we do not want to preempt the current task. Just return..
++	 * we do not want to preempt the current task. Just return.  For
++	 * lazy preemption we also check for non-zero preempt_count_lazy,
++	 * and bail if no immediate preemption is required.
+ 	 */
+-	if (likely(!preemptible()))
++	if (likely(!preemptible() || !preemptible_lazy()))
+ 		return;
+ 
+-#ifdef CONFIG_PREEMPT_LAZY
+-	/*
+-	 * Check for lazy preemption
+-	 */
+-	if (current_thread_info()->preempt_lazy_count &&
+-			!test_thread_flag(TIF_NEED_RESCHED))
+-		return;
+-#endif
+ 	do {
+ 		__preempt_count_add(PREEMPT_ACTIVE);
+ 		/*
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -4447,7 +4447,7 @@ static void check_preempt_wakeup(struct
+ 	 * prevents us from potentially nominating it as a false LAST_BUDDY
+ 	 * below.
+ 	 */
+-	if (test_tsk_need_resched(curr))
++	if (test_tsk_need_resched(curr) || test_tsk_need_resched_lazy(curr))
+ 		return;
+ 
+ 	/* Idle tasks are by definition preempted by non-idle tasks. */
