@@ -1,188 +1,48 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch v2] rt/sched: fix resursion when CONTEXT_TRACKING and
- PREEMPT_LAZY are enabled
-Date: Sun, 25 May 2014 10:16:39 +0200
-Message-ID: <1401005799.15399.44.camel@marge.simpson.net>
-References: <20140509181214.GK29014@linutronix.de>
-	 <1399695303.5146.21.camel@marge.simpson.net>
-	 <20140513154002.GD15049@linutronix.de>
-	 <1400248411.5877.10.camel@marge.simpson.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: minyard@acm.org
+Subject: [PATCH] arm: Set hardirq tracing to on when idling
+Date: Sun, 25 May 2014 14:15:23 -0500
+Message-ID: <1401045323-7116-1-git-send-email-minyard@acm.org>
+Cc: Corey Minyard <cminyard@mvista.com>
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1400248411.5877.10.camel@marge.simpson.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2014-05-16 at 15:53 +0200, Mike Galbraith wrote: 
-> On Tue, 2014-05-13 at 17:40 +0200, Sebastian Andrzej Siewior wrote: 
-> > * Mike Galbraith | 2014-05-10 06:15:03 [+0200]:
-> > 
-> > >On Fri, 2014-05-09 at 20:12 +0200, Sebastian Andrzej Siewior wrote:
-> > >
-> > >> Known issues:
-> > >> 
-> > >>       - bcache is disabled.
-> > >> 
-> > >>       - lazy preempt on x86_64 leads to a crash with some load.
-> > >
-> > >That is only with NO_HZ_FUL enabled here.  Box blows the stack during
-> > >task exit, eyeballing hasn't spotted the why.
-> > 
-> > Even if I disable NO_HZ_FULL it explodes as soon as hackbench starts.
-> 
-> Ah, you didn't turn CONTEXT_TRACKING off too.  The below made the dirty
-> little SOB die here.
+From: Corey Minyard <cminyard@mvista.com>
 
-Something obviously went wrong with retest after deciding to do..
+The CPU will go to idle with interrupts off, but the interrupts
+will wake up the idle.  This was causing very long irqsoff trace
+values because, basically, the whole idle time was traces with
+irqs off, even though they weren't really off.  Rework the idle
+code to turn hardirq tracing to on befor calling idle.
 
-> --- a/include/linux/preempt_mask.h
-> +++ b/include/linux/preempt_mask.h
-> @@ -118,9 +118,15 @@ extern int in_serving_softirq(void);
->  		((preempt_count() & ~PREEMPT_ACTIVE) != PREEMPT_CHECK_OFFSET)
->  
->  #ifdef CONFIG_PREEMPT_COUNT
-> -# define preemptible()	(preempt_count() == 0 && !irqs_disabled())
-> +# define preemptible()		(preempt_count() == 0 && !irqs_disabled())
-> +#ifdef CONFIG_PREEMPT_LAZY
-> +# define preemptible_lazy()	(preempt_lazy_count() !=0 && !need_resched_now())
-                             ahem ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-..that preemptible_lazy() bit.  Turn that back right side up.
-
-(or you can do something completely different, like make it just not go
-there ala 12-rt, or do the fold thing for rt as well, vs flag being set
-meaning try to schedule and bail if not allowed [as usual])
-
-If context tracking is enabled, we can recurse, and explode violently.
-Add missing checks to preempt_schedule_context().
-
-Fix other inconsistencies spotted while searching for the little SOB.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
 ---
- arch/x86/include/asm/thread_info.h |    1 +
- include/linux/preempt.h            |    2 +-
- include/linux/preempt_mask.h       |   10 ++++++++--
- kernel/context_tracking.c          |    2 +-
- kernel/fork.c                      |    1 +
- kernel/sched/core.c                |   16 +++++-----------
- kernel/sched/fair.c                |    2 +-
- 7 files changed, 18 insertions(+), 16 deletions(-)
+ arch/arm/kernel/process.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
---- a/arch/x86/include/asm/thread_info.h
-+++ b/arch/x86/include/asm/thread_info.h
-@@ -51,6 +51,7 @@ struct thread_info {
- 	.flags		= 0,			\
- 	.cpu		= 0,			\
- 	.saved_preempt_count = INIT_PREEMPT_COUNT,	\
-+	.preempt_lazy_count = 0,		\
- 	.addr_limit	= KERNEL_DS,		\
- 	.restart_block = {			\
- 		.fn = do_no_restart_syscall,	\
---- a/include/linux/preempt.h
-+++ b/include/linux/preempt.h
-@@ -91,8 +91,8 @@ do { \
+I'm not sure this is correct for all ARM boards, but it fixes the
+issue for the Vexpress board I have.  No more 4 second irqsoff
+times.
+
+diff --git a/arch/arm/kernel/process.c b/arch/arm/kernel/process.c
+index 1ca6cf1..92413af 100644
+--- a/arch/arm/kernel/process.c
++++ b/arch/arm/kernel/process.c
+@@ -133,11 +133,12 @@ void (*arm_pm_idle)(void);
  
- #define preempt_lazy_enable() \
- do { \
--	dec_preempt_lazy_count(); \
- 	barrier(); \
-+	dec_preempt_lazy_count(); \
- 	preempt_check_resched(); \
- } while (0)
- 
---- a/include/linux/preempt_mask.h
-+++ b/include/linux/preempt_mask.h
-@@ -118,9 +118,15 @@ extern int in_serving_softirq(void);
- 		((preempt_count() & ~PREEMPT_ACTIVE) != PREEMPT_CHECK_OFFSET)
- 
- #ifdef CONFIG_PREEMPT_COUNT
--# define preemptible()	(preempt_count() == 0 && !irqs_disabled())
-+# define preemptible()		(preempt_count() == 0 && !irqs_disabled())
-+#ifdef CONFIG_PREEMPT_LAZY
-+# define preemptible_lazy()	(preempt_lazy_count() == 0 || need_resched_now())
- #else
--# define preemptible()	0
-+# define preemptible_lazy()	1
-+#endif
-+#else
-+# define preemptible()		0
-+# define preemptible_lazy()	0
- #endif
- 
- #endif /* LINUX_PREEMPT_MASK_H */
---- a/kernel/context_tracking.c
-+++ b/kernel/context_tracking.c
-@@ -124,7 +124,7 @@ asmlinkage void __sched notrace preempt_
+ static void default_idle(void)
  {
- 	enum ctx_state prev_ctx;
- 
--	if (likely(!preemptible()))
-+	if (likely(!preemptible() || !preemptible_lazy()))
- 		return;
- 
- 	/*
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -329,6 +329,7 @@ static struct task_struct *dup_task_stru
- 	setup_thread_stack(tsk, orig);
- 	clear_user_return_notifier(tsk);
- 	clear_tsk_need_resched(tsk);
-+	clear_tsk_need_resched_lazy(tsk);
- 	stackend = end_of_stack(tsk);
- 	*stackend = STACK_END_MAGIC;	/* for overflow detection */
- 
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2866,8 +2866,8 @@ void migrate_enable(void)
- 		p->migrate_disable = 0;
- 
- 	unpin_current_cpu();
--	preempt_enable();
- 	preempt_lazy_enable();
-+	preempt_enable();
++	trace_hardirqs_on();
+ 	if (arm_pm_idle)
+ 		arm_pm_idle();
+ 	else
+ 		cpu_do_idle();
+-	local_irq_enable();
++	raw_local_irq_enable();
  }
- EXPORT_SYMBOL(migrate_enable);
- #else
-@@ -3101,19 +3101,13 @@ asmlinkage void __sched notrace preempt_
- {
- 	/*
- 	 * If there is a non-zero preempt_count or interrupts are disabled,
--	 * we do not want to preempt the current task. Just return..
-+	 * we do not want to preempt the current task. Just return.  For
-+	 * lazy preemption we also check for non-zero preempt_count_lazy,
-+	 * and bail if no immediate preemption is required.
- 	 */
--	if (likely(!preemptible()))
-+	if (likely(!preemptible() || !preemptible_lazy()))
- 		return;
  
--#ifdef CONFIG_PREEMPT_LAZY
--	/*
--	 * Check for lazy preemption
--	 */
--	if (current_thread_info()->preempt_lazy_count &&
--			!test_thread_flag(TIF_NEED_RESCHED))
--		return;
--#endif
- 	do {
- 		__preempt_count_add(PREEMPT_ACTIVE);
- 		/*
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -4447,7 +4447,7 @@ static void check_preempt_wakeup(struct
- 	 * prevents us from potentially nominating it as a false LAST_BUDDY
- 	 * below.
- 	 */
--	if (test_tsk_need_resched(curr))
-+	if (test_tsk_need_resched(curr) || test_tsk_need_resched_lazy(curr))
- 		return;
- 
- 	/* Idle tasks are by definition preempted by non-idle tasks. */
+ void arch_cpu_idle_prepare(void)
+-- 
+1.8.3.1
