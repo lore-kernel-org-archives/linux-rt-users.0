@@ -1,38 +1,101 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: [PATCH] arm: Set hardirq tracing to on when idling
-Date: Tue, 27 May 2014 18:38:33 +0200
-Message-ID: <5384BF89.6010509@meduna.org>
-References: <1401045323-7116-1-git-send-email-minyard@acm.org> <4559339.apo3Fd10HK@wuerfel>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 3.14-rt] sched/numa: Fix task_numa_free() lockdep splat
+Date: Tue, 27 May 2014 14:18:36 -0400
+Message-ID: <20140527141836.4f466086@gandalf.local.home>
+References: <20140509181214.GK29014@linutronix.de>
+	<1400297819.9493.11.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: minyard@acm.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, Corey Minyard <cminyard@mvista.com>
-To: Arnd Bergmann <arnd@arndb.de>, linux-arm-kernel@lists.infradead.org
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Sasha Levin <sasha.levin@oracle.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:42398 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751615AbaE0Qip (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 May 2014 12:38:45 -0400
-In-Reply-To: <4559339.apo3Fd10HK@wuerfel>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:10496 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751575AbaE0SSj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 May 2014 14:18:39 -0400
+In-Reply-To: <1400297819.9493.11.camel@marge.simpson.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 26.05.2014 11:26, Arnd Bergmann wrote:
+[ moving this to LKML from linux-rt-users, as that's where it should be ]
 
-> It seems like the right thing to do, I just don't understand
-> why nobody hit this before.
+On Sat, 17 May 2014 05:36:59 +0200
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-Looks like this is what I did hit a month ago and
-was not able to find the culprit:
-http://www.spinics.net/lists/linux-rt-users/msg11656.html
+> 3.14-rt being build with a non-rt config is unlikely, but..
+> 
+> >From 60e69eed85bb7b5198ef70643b5895c26ad76ef7 Mon Sep 17 00:00:00 2001
+> From: Mike Galbraith <bitbucket@online.de>
+> Date: Mon, 7 Apr 2014 10:55:15 +0200
+> Subject: [PATCH] sched/numa: Fix task_numa_free() lockdep splat
+> 
+> Sasha reported that lockdep claims that the following commit:
+> made numa_group.lock interrupt unsafe:
+> 
+>   156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct()")
+> 
+> While I don't see how that could be, given the commit in question moved
+> task_numa_free() from one irq enabled region to another, the below does
+> make both gripes and lockups upon gripe with numa=fake=4 go away.
 
-> How exactly do you see this manifest? If it's clear
-> that the trace comes from the idle function, maybe
-> everybody just ignores it?
+It wasn't the irqs that was causing the lockdep splat, but the
+softirqs. You moved it into __put_task_struct() which is called as a
+rcu callback that gets called from soft irqs. So yes, you need to
+prevent softirqs from happening whenever you take the lock.
+spin_lock_irq() is a bigger hammer than needed. The patch below should
+be good enough.
 
-That was definitely what I did ;)
+I kept the double_lock_irq() as there is no double_lock_bh(). Should we
+bother to make one?
 
--- 
-                                       Stano
+-- Steve
 
+
+diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
+index 7570dd9..f072ea9 100644
+--- a/kernel/sched/fair.c
++++ b/kernel/sched/fair.c
+@@ -1497,7 +1497,7 @@ static void task_numa_placement(struct task_struct *p)
+ 	/* If the task is part of a group prevent parallel updates to group stats */
+ 	if (p->numa_group) {
+ 		group_lock = &p->numa_group->lock;
+-		spin_lock_irq(group_lock);
++		spin_lock_bh(group_lock);
+ 	}
+ 
+ 	/* Find the node with the highest number of faults */
+@@ -1572,7 +1572,7 @@ static void task_numa_placement(struct task_struct *p)
+ 			}
+ 		}
+ 
+-		spin_unlock_irq(group_lock);
++		spin_unlock_bh(group_lock);
+ 	}
+ 
+ 	/* Preferred node as the node with the most faults */
+@@ -1711,14 +1711,14 @@ void task_numa_free(struct task_struct *p)
+ 	void *numa_faults = p->numa_faults_memory;
+ 
+ 	if (grp) {
+-		spin_lock_irq(&grp->lock);
++		spin_lock_bh(&grp->lock);
+ 		for (i = 0; i < NR_NUMA_HINT_FAULT_STATS * nr_node_ids; i++)
+ 			grp->faults[i] -= p->numa_faults_memory[i];
+ 		grp->total_faults -= p->total_numa_faults;
+ 
+ 		list_del(&p->numa_entry);
+ 		grp->nr_tasks--;
+-		spin_unlock_irq(&grp->lock);
++		spin_unlock_bh(&grp->lock);
+ 		rcu_assign_pointer(p->numa_group, NULL);
+ 		put_numa_group(grp);
+ 	}
