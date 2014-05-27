@@ -1,106 +1,50 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 3.14-rt] sched/numa: Fix task_numa_free() lockdep splat
-Date: Tue, 27 May 2014 20:25:41 +0200
-Message-ID: <20140527182541.GH11096@twins.programming.kicks-ass.net>
-References: <20140509181214.GK29014@linutronix.de>
- <1400297819.9493.11.camel@marge.simpson.net>
- <20140527141836.4f466086@gandalf.local.home>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] arm: Set hardirq tracing to on when idling
+Date: Tue, 27 May 2014 20:49:27 +0200
+Message-ID: <4475199.26Fs5MKAfh@wuerfel>
+References: <1401045323-7116-1-git-send-email-minyard@acm.org> <4559339.apo3Fd10HK@wuerfel> <5384BF89.6010509@meduna.org>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="a1taQt+5gib656GU"
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Sasha Levin <sasha.levin@oracle.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: Stanislav Meduna <stano@meduna.org>,
+	Corey Minyard <cminyard@mvista.com>,
+	linux-rt-users@vger.kernel.org, minyard@acm.org,
+	linux-kernel@vger.kernel.org
+To: linux-arm-kernel@lists.infradead.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140527141836.4f466086@gandalf.local.home>
+In-Reply-To: <5384BF89.6010509@meduna.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Tuesday 27 May 2014 18:38:33 Stanislav Meduna wrote:
+> On 26.05.2014 11:26, Arnd Bergmann wrote:
+> 
+> > It seems like the right thing to do, I just don't understand
+> > why nobody hit this before.
+> 
+> Looks like this is what I did hit a month ago and
+> was not able to find the culprit:
+> http://www.spinics.net/lists/linux-rt-users/msg11656.html
 
---a1taQt+5gib656GU
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Ok, so you get a 2.2ms latency on i.mx28 here, which comes
+from exactly the same code location, and is quite alarming
+by itself, but much less so than the 4 second latency that
+Corey is seeing. This could just be an artifact of i.mx28
+not staying idle for as long as vexpress.
 
-On Tue, May 27, 2014 at 02:18:36PM -0400, Steven Rostedt wrote:
-> [ moving this to LKML from linux-rt-users, as that's where it should be ]
->=20
-> On Sat, 17 May 2014 05:36:59 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
->=20
-> > 3.14-rt being build with a non-rt config is unlikely, but..
-> >=20
-> > >From 60e69eed85bb7b5198ef70643b5895c26ad76ef7 Mon Sep 17 00:00:00 2001
-> > From: Mike Galbraith <bitbucket@online.de>
-> > Date: Mon, 7 Apr 2014 10:55:15 +0200
-> > Subject: [PATCH] sched/numa: Fix task_numa_free() lockdep splat
-> >=20
-> > Sasha reported that lockdep claims that the following commit:
-> > made numa_group.lock interrupt unsafe:
-> >=20
-> >   156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct=
-()")
-> >=20
-> > While I don't see how that could be, given the commit in question moved
-> > task_numa_free() from one irq enabled region to another, the below does
-> > make both gripes and lockups upon gripe with numa=3Dfake=3D4 go away.
->=20
-> It wasn't the irqs that was causing the lockdep splat, but the
-> softirqs. You moved it into __put_task_struct() which is called as a
-> rcu callback that gets called from soft irqs. So yes, you need to
-> prevent softirqs from happening whenever you take the lock.
-> spin_lock_irq() is a bigger hammer than needed. The patch below should
-> be good enough.
->=20
-> I kept the double_lock_irq() as there is no double_lock_bh(). Should we
-> bother to make one?
+> > How exactly do you see this manifest? If it's clear
+> > that the trace comes from the idle function, maybe
+> > everybody just ignores it?
+> 
+> That was definitely what I did 
 
-Nope, its really IRQs.
+You also commented in that thread about stop_critical_timings()/
+start_critical_timings(). Corey, can you look at that, too? I
+think it's designed to avoid the issue you are seeing but
+for some reason doesn't.
 
-do_exit()
-  exit_itimers()
-    itimer_delete()
-      spin_lock_irqsave(&timer->it_lock, &flags);
-      timer_delete_hook(timer);
-        kc->timer_del(timer) :=3D posix_cpu_timer_del()
-          put_task_struct()
-            __put_task_struct()
-              task_numa_free()
-                spin_lock(&grp->lock);
+Maybe the problem is that the tracing infrastructure gets confused
+when the irq_disable() happens in a different function from
+irq_enable().
 
-Which nests the grp->lock inside the timer->it_lock, and where the
-timer->it_lock is IRQ-safe, the grp->lock is not.
-
-This allows for IRQ deadlocks.
-
-
-
---a1taQt+5gib656GU
-Content-Type: application/pgp-signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1.4.12 (GNU/Linux)
-
-iQIcBAEBAgAGBQJThNigAAoJEHZH4aRLwOS6CNkP/2VOcM1IJzxgAnQ/HRCCzCCQ
-7zKQtE5uPJC3EQcsIHAZnIyvT03ZJBDgESLxeFL30DpnZdMw6IWGkSnLq8tlrbR2
-PvFiC2hUrEh3FRRkgg9GCW3hvxV+BN1wMCFPuYgjfuYxDIfocI5+yaRHGLEII4bO
-FMi8WJf3LU7hlAns1j4TneUd/huwoKFACPQM16vfr+qr8aI1Zi9/rKflJcBR9MKS
-N9pNNcji0Er+4PxzytEVCQpJyc88i7Yh967+JlusI7dj2nJ9UeV5ZAKjySHk62zV
-fWNHT78WIqc3GcBOy96bdRZlXvqVqyCGBw5JthpouvsDdqdXziBjLroRczgarh+x
-4moIPpjb6PlFl9EBaMO9QOARBP/GniWhbdWJex6MGRO7SCvm0Q9CkNK4LxwJr8J9
-EzU+kQdYCgXNAdXGpVbgIUbjD+RiXf8gyMJaQ9/yKgV6CzfXGZReJpRbh/aWmEFg
-k77pabDfFpoqia9CrioEKH0PGljm0EKLlWJu4zqOUfxOIG64a1lSM/7tidODxojC
-p/ihd0fxs29s6pqfQzksZKpavvvT/0rme+bsBiCMsgZXH4qSkuawKfo7l7RInLyA
-BrxVFfvZpsiVgbMH/vT325fzK7/nDobXU8REXdq4QfesyLZS3RRJR19REaMk4cKE
-qp9oF1EGyF03OiQ37I2J
-=8LYl
------END PGP SIGNATURE-----
-
---a1taQt+5gib656GU--
+	Arnd
