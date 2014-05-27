@@ -1,31 +1,40 @@
-From: Arve Barsnes <arve.barsnes@gmail.com>
-Subject: Re: linux 3.9 rt patch
-Date: Tue, 27 May 2014 21:09:40 +0200
-Message-ID: <CAJjrzcVhhde3Ek57DM5e6oAbubPFeM7Ppvu4J9+C6banXs2GBw@mail.gmail.com>
-References: <1401170492.8351.YahooMailNeo@web120104.mail.ne1.yahoo.com>
+From: Arnd Bergmann <arnd@arndb.de>
+Subject: Re: [PATCH] arm: Set hardirq tracing to on when idling
+Date: Tue, 27 May 2014 21:27:06 +0200
+Message-ID: <6082113.tHepRBe99K@wuerfel>
+References: <1401045323-7116-1-git-send-email-minyard@acm.org> <4475199.26Fs5MKAfh@wuerfel> <5384DF47.2070904@codeaurora.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yk0-f169.google.com ([209.85.160.169]:48570 "EHLO
-	mail-yk0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751778AbaE0TKB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 May 2014 15:10:01 -0400
-Received: by mail-yk0-f169.google.com with SMTP id 200so7556263ykr.28
-        for <linux-rt-users@vger.kernel.org>; Tue, 27 May 2014 12:10:01 -0700 (PDT)
-In-Reply-To: <1401170492.8351.YahooMailNeo@web120104.mail.ne1.yahoo.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: Stephen Boyd <sboyd@codeaurora.org>,
+	Corey Minyard <cminyard@mvista.com>,
+	linux-rt-users@vger.kernel.org, minyard@acm.org,
+	linux-kernel@vger.kernel.org, Stanislav Meduna <stano@meduna.org>
+To: linux-arm-kernel@lists.infradead.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5384DF47.2070904@codeaurora.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 27 May 2014 08:01, monmon icem <icy_monk@yahoo.com.au> wrote:
->
-> Hi,
->
-> sorry for the noob question. I'm little desperate, I'm looking for an RT  patch for  linux 3.9 kernel, I've noticed the patches are even numbered version only. Is there a patch for linux 3.9
->
+On Tuesday 27 May 2014 11:53:59 Stephen Boyd wrote:
+> On 05/27/14 11:49, Arnd Bergmann wrote:
+> >
+> > You also commented in that thread about stop_critical_timings()/
+> > start_critical_timings(). Corey, can you look at that, too? I
+> > think it's designed to avoid the issue you are seeing but
+> > for some reason doesn't.
+> 
+> I sent a patch last week to "solve" this problem. I'm not sure if it's
+> right but it works for me.
+> 
+> https://lkml.org/lkml/2014/5/19/607
 
-Unless any developers have any personal 3.9-rt branch where they were
-keeping up with the kernel until 3.10, I assume your best bet is to
-pick up the 3.8.13.14-rt31 or 3.10.4-rt1 patches and manually go
-through them until they apply to your kernel.
+I think that one was also wrong, as the intention of the existing
+stop_critical_timings() function is already to do the same that
+Corey's patch does, i.e. stop the trace before we go to idle as
+if we were turning IRQs on.
+
+Corey, does it work for you if you replace the new trace_hardirqs_on()
+you added with time_hardirqs_on() or stop_critical_timing()?
+
+	Arnd
