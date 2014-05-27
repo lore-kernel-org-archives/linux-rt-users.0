@@ -1,101 +1,106 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH 3.14-rt] sched/numa: Fix task_numa_free() lockdep splat
-Date: Tue, 27 May 2014 14:18:36 -0400
-Message-ID: <20140527141836.4f466086@gandalf.local.home>
+Date: Tue, 27 May 2014 20:25:41 +0200
+Message-ID: <20140527182541.GH11096@twins.programming.kicks-ass.net>
 References: <20140509181214.GK29014@linutronix.de>
-	<1400297819.9493.11.camel@marge.simpson.net>
+ <1400297819.9493.11.camel@marge.simpson.net>
+ <20140527141836.4f466086@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="a1taQt+5gib656GU"
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Sasha Levin <sasha.levin@oracle.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:10496 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751575AbaE0SSj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 May 2014 14:18:39 -0400
-In-Reply-To: <1400297819.9493.11.camel@marge.simpson.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-[ moving this to LKML from linux-rt-users, as that's where it should be ]
-
-On Sat, 17 May 2014 05:36:59 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-
-> 3.14-rt being build with a non-rt config is unlikely, but..
-> 
-> >From 60e69eed85bb7b5198ef70643b5895c26ad76ef7 Mon Sep 17 00:00:00 2001
-> From: Mike Galbraith <bitbucket@online.de>
-> Date: Mon, 7 Apr 2014 10:55:15 +0200
-> Subject: [PATCH] sched/numa: Fix task_numa_free() lockdep splat
-> 
-> Sasha reported that lockdep claims that the following commit:
-> made numa_group.lock interrupt unsafe:
-> 
->   156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct()")
-> 
-> While I don't see how that could be, given the commit in question moved
-> task_numa_free() from one irq enabled region to another, the below does
-> make both gripes and lockups upon gripe with numa=fake=4 go away.
-
-It wasn't the irqs that was causing the lockdep splat, but the
-softirqs. You moved it into __put_task_struct() which is called as a
-rcu callback that gets called from soft irqs. So yes, you need to
-prevent softirqs from happening whenever you take the lock.
-spin_lock_irq() is a bigger hammer than needed. The patch below should
-be good enough.
-
-I kept the double_lock_irq() as there is no double_lock_bh(). Should we
-bother to make one?
-
--- Steve
+	Sasha Levin <sasha.levin@oracle.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20140527141836.4f466086@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
-diff --git a/kernel/sched/fair.c b/kernel/sched/fair.c
-index 7570dd9..f072ea9 100644
---- a/kernel/sched/fair.c
-+++ b/kernel/sched/fair.c
-@@ -1497,7 +1497,7 @@ static void task_numa_placement(struct task_struct *p)
- 	/* If the task is part of a group prevent parallel updates to group stats */
- 	if (p->numa_group) {
- 		group_lock = &p->numa_group->lock;
--		spin_lock_irq(group_lock);
-+		spin_lock_bh(group_lock);
- 	}
- 
- 	/* Find the node with the highest number of faults */
-@@ -1572,7 +1572,7 @@ static void task_numa_placement(struct task_struct *p)
- 			}
- 		}
- 
--		spin_unlock_irq(group_lock);
-+		spin_unlock_bh(group_lock);
- 	}
- 
- 	/* Preferred node as the node with the most faults */
-@@ -1711,14 +1711,14 @@ void task_numa_free(struct task_struct *p)
- 	void *numa_faults = p->numa_faults_memory;
- 
- 	if (grp) {
--		spin_lock_irq(&grp->lock);
-+		spin_lock_bh(&grp->lock);
- 		for (i = 0; i < NR_NUMA_HINT_FAULT_STATS * nr_node_ids; i++)
- 			grp->faults[i] -= p->numa_faults_memory[i];
- 		grp->total_faults -= p->total_numa_faults;
- 
- 		list_del(&p->numa_entry);
- 		grp->nr_tasks--;
--		spin_unlock_irq(&grp->lock);
-+		spin_unlock_bh(&grp->lock);
- 		rcu_assign_pointer(p->numa_group, NULL);
- 		put_numa_group(grp);
- 	}
+--a1taQt+5gib656GU
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
+
+On Tue, May 27, 2014 at 02:18:36PM -0400, Steven Rostedt wrote:
+> [ moving this to LKML from linux-rt-users, as that's where it should be ]
+>=20
+> On Sat, 17 May 2014 05:36:59 +0200
+> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+>=20
+> > 3.14-rt being build with a non-rt config is unlikely, but..
+> >=20
+> > >From 60e69eed85bb7b5198ef70643b5895c26ad76ef7 Mon Sep 17 00:00:00 2001
+> > From: Mike Galbraith <bitbucket@online.de>
+> > Date: Mon, 7 Apr 2014 10:55:15 +0200
+> > Subject: [PATCH] sched/numa: Fix task_numa_free() lockdep splat
+> >=20
+> > Sasha reported that lockdep claims that the following commit:
+> > made numa_group.lock interrupt unsafe:
+> >=20
+> >   156654f491dd ("sched/numa: Move task_numa_free() to __put_task_struct=
+()")
+> >=20
+> > While I don't see how that could be, given the commit in question moved
+> > task_numa_free() from one irq enabled region to another, the below does
+> > make both gripes and lockups upon gripe with numa=3Dfake=3D4 go away.
+>=20
+> It wasn't the irqs that was causing the lockdep splat, but the
+> softirqs. You moved it into __put_task_struct() which is called as a
+> rcu callback that gets called from soft irqs. So yes, you need to
+> prevent softirqs from happening whenever you take the lock.
+> spin_lock_irq() is a bigger hammer than needed. The patch below should
+> be good enough.
+>=20
+> I kept the double_lock_irq() as there is no double_lock_bh(). Should we
+> bother to make one?
+
+Nope, its really IRQs.
+
+do_exit()
+  exit_itimers()
+    itimer_delete()
+      spin_lock_irqsave(&timer->it_lock, &flags);
+      timer_delete_hook(timer);
+        kc->timer_del(timer) :=3D posix_cpu_timer_del()
+          put_task_struct()
+            __put_task_struct()
+              task_numa_free()
+                spin_lock(&grp->lock);
+
+Which nests the grp->lock inside the timer->it_lock, and where the
+timer->it_lock is IRQ-safe, the grp->lock is not.
+
+This allows for IRQ deadlocks.
+
+
+
+--a1taQt+5gib656GU
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1.4.12 (GNU/Linux)
+
+iQIcBAEBAgAGBQJThNigAAoJEHZH4aRLwOS6CNkP/2VOcM1IJzxgAnQ/HRCCzCCQ
+7zKQtE5uPJC3EQcsIHAZnIyvT03ZJBDgESLxeFL30DpnZdMw6IWGkSnLq8tlrbR2
+PvFiC2hUrEh3FRRkgg9GCW3hvxV+BN1wMCFPuYgjfuYxDIfocI5+yaRHGLEII4bO
+FMi8WJf3LU7hlAns1j4TneUd/huwoKFACPQM16vfr+qr8aI1Zi9/rKflJcBR9MKS
+N9pNNcji0Er+4PxzytEVCQpJyc88i7Yh967+JlusI7dj2nJ9UeV5ZAKjySHk62zV
+fWNHT78WIqc3GcBOy96bdRZlXvqVqyCGBw5JthpouvsDdqdXziBjLroRczgarh+x
+4moIPpjb6PlFl9EBaMO9QOARBP/GniWhbdWJex6MGRO7SCvm0Q9CkNK4LxwJr8J9
+EzU+kQdYCgXNAdXGpVbgIUbjD+RiXf8gyMJaQ9/yKgV6CzfXGZReJpRbh/aWmEFg
+k77pabDfFpoqia9CrioEKH0PGljm0EKLlWJu4zqOUfxOIG64a1lSM/7tidODxojC
+p/ihd0fxs29s6pqfQzksZKpavvvT/0rme+bsBiCMsgZXH4qSkuawKfo7l7RInLyA
+BrxVFfvZpsiVgbMH/vT325fzK7/nDobXU8REXdq4QfesyLZS3RRJR19REaMk4cKE
+qp9oF1EGyF03OiQ37I2J
+=8LYl
+-----END PGP SIGNATURE-----
+
+--a1taQt+5gib656GU--
