@@ -1,48 +1,33 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3.14-rt] sched/numa: Fix task_numa_free() lockdep splat
-Date: Tue, 27 May 2014 14:53:49 -0400
-Message-ID: <20140527145349.0bc2030e@gandalf.local.home>
-References: <20140509181214.GK29014@linutronix.de>
-	<1400297819.9493.11.camel@marge.simpson.net>
-	<20140527141836.4f466086@gandalf.local.home>
-	<20140527182541.GH11096@twins.programming.kicks-ass.net>
-	<20140527145201.6e79230f@gandalf.local.home>
+From: Stephen Boyd <sboyd@codeaurora.org>
+Subject: Re: [PATCH] arm: Set hardirq tracing to on when idling
+Date: Tue, 27 May 2014 11:53:59 -0700
+Message-ID: <5384DF47.2070904@codeaurora.org>
+References: <1401045323-7116-1-git-send-email-minyard@acm.org> <4559339.apo3Fd10HK@wuerfel> <5384BF89.6010509@meduna.org> <4475199.26Fs5MKAfh@wuerfel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Sasha Levin <sasha.levin@oracle.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:6370 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753169AbaE0Sxy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 27 May 2014 14:53:54 -0400
-In-Reply-To: <20140527145201.6e79230f@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-arm-kernel@lists.infradead.org,
+	Corey Minyard <cminyard@mvista.com>,
+	linux-kernel@vger.kernel.org, Stanislav Meduna <stano@meduna.org>,
+	minyard@acm.org, linux-rt-users@vger.kernel.org
+To: Arnd Bergmann <arnd@arndb.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <4475199.26Fs5MKAfh@wuerfel>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 27 May 2014 14:52:01 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On 05/27/14 11:49, Arnd Bergmann wrote:
+>
+> You also commented in that thread about stop_critical_timings()/
+> start_critical_timings(). Corey, can you look at that, too? I
+> think it's designed to avoid the issue you are seeing but
+> for some reason doesn't.
 
- 
-> Ah crap. I did a search on all the callers of put_task_struct(), and
-> somehow missed this one.  Yep, I was looking for places that called
-> this while holding other irq safe locks.
-> 
+I sent a patch last week to "solve" this problem. I'm not sure if it's
+right but it works for me.
 
-Anyway, this nicely answers Mike's question to why it causes lockdep
-splat. There exists a location that calls put_task_struct() with irqs
-disabled (not to mention holding irq unsafe locks).
+https://lkml.org/lkml/2014/5/19/607
 
-I was having problems just finding a place that called it with irqs off.
-
--- Steve
+-- 
+Qualcomm Innovation Center, Inc. is a member of Code Aurora Forum,
+hosted by The Linux Foundation
