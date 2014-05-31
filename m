@@ -1,45 +1,55 @@
-From: Juri Lelli <juri.lelli@gmail.com>
-Subject: Re: SCHED_DEADLINE hands-on workshop
-Date: Thu, 29 May 2014 10:37:27 +0200
-Message-ID: <20140529103727.7b0b39242c0fea785a1cfb6f@gmail.com>
-References: <20140528182051.1a21bab86c4d053131e2b4f4@gmail.com>
-	<53865A2D.4010105@pavlinux.ru>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Mainline patch-3.14.4-5.xz
+Date: Sun, 01 Jun 2014 03:27:14 +0400
+Message-ID: <538A6552.3050501@pavlinux.ru>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: pavel@pavlinux.ru
+Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f178.google.com ([74.125.82.178]:51062 "EHLO
-	mail-we0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932814AbaE2IhY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 May 2014 04:37:24 -0400
-Received: by mail-we0-f178.google.com with SMTP id u56so15753wes.37
-        for <linux-rt-users@vger.kernel.org>; Thu, 29 May 2014 01:37:22 -0700 (PDT)
-In-Reply-To: <53865A2D.4010105@pavlinux.ru>
+Received: from imp02.mtu.ru ([62.5.255.19]:57633 "EHLO imp02.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753046AbaEaX2I (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 31 May 2014 19:28:08 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 29 May 2014 01:50:37 +0400
-Pavel Vasilyev <pavel@pavlinux.ru> wrote:
+Vanila patch:
 
-> 28.05.2014 20:20, Juri Lelli =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> > organizing a two-days hands-on workshop open to anybody
-> >
->=20
->=20
-> after the workshop here publish materials :)
->
+--- a/include/linux/thread_info.h
++++ b/include/linux/thread_info.h
+@@ -118,8 +118,6 @@ static inline __deprecated void set_need_resched(void)
+           */
+  }
 
-Sure. We are actually setting up a site where to put such things in the
-future.
+-#define tif_need_resched() test_thread_flag(TIF_NEED_RESCHED)
+-
+  #if defined TIF_RESTORE_SIGMASK && !defined HAVE_SET_RESTORE_SIGMASK
+  /*
+   * An arch can define its own version of set_restore_sigmask() to get the
 
-Thanks,
+RT Code (same file):
 
-- Juri=20
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+#ifdef CONFIG_PREEMPT_LAZY
+#define tif_need_resched() (test_thread_flag(TIF_NEED_RESCHED) || \
+                 test_thread_flag(TIF_NEED_RESCHED_LAZY))
+#define tif_need_resched_now() (test_thread_flag(TIF_NEED_RESCHED))
+#define tif_need_resched_lazy() (test_thread_flag(TIF_NEED_RESCHED_LAZY))
+
+#else
+#define tif_need_resched() (test_thread_flag(TIF_NEED_RESCHED))
+#define tif_need_resched_now() (test_thread_flag(TIF_NEED_RESCHED))
+#define tif_need_resched_lazy() (0)
+
+#endif
+
+1 out of 1 hunk ignored -- saving rejects to file include/linux/thread_info.h.rej
+
+
+What to do? :)
+
+-- 
+
+                                                          Pavel.
