@@ -1,94 +1,78 @@
-From: "Brad Mouring" <bmouring@ni.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: [PATCH 1/1] rtmutex: Handle when top lock owner changes
-Date: Wed, 4 Jun 2014 14:25:41 -0500
-Message-ID: <20140604192541.GA9496@linuxgetsreal>
-References: <1400855410-14773-1-git-send-email-brad.mouring@ni.com>
- <1400855410-14773-2-git-send-email-brad.mouring@ni.com>
- <20140603210609.62de6451@gandalf.local.home>
- <alpine.DEB.2.10.1406041623170.3319@nanos>
- <20140604114411.0fe51c1d@gandalf.local.home>
- <alpine.DEB.2.10.1406041951210.3319@nanos>
+Date: Wed, 4 Jun 2014 21:53:16 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1406042147080.18296@nanos>
+References: <1400855410-14773-1-git-send-email-brad.mouring@ni.com> <1400855410-14773-2-git-send-email-brad.mouring@ni.com> <20140603210609.62de6451@gandalf.local.home> <alpine.DEB.2.10.1406041623170.3319@nanos> <20140604114411.0fe51c1d@gandalf.local.home>
+ <alpine.DEB.2.10.1406041951210.3319@nanos> <20140604192541.GA9496@linuxgetsreal>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Brad Mouring <bmouring@ni.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Ingo Molnar <mingo@kernel.org>,
 	Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+To: Brad Mouring <bmouring@ni.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.10.1406041951210.3319@nanos>
-Content-Disposition: inline
+In-Reply-To: <20140604192541.GA9496@linuxgetsreal>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Jun 04, 2014 at 08:02:16PM +0200, Thomas Gleixner wrote:
-> On Wed, 4 Jun 2014, Steven Rostedt wrote:
+On Wed, 4 Jun 2014, Brad Mouring wrote:
+> On Wed, Jun 04, 2014 at 08:02:16PM +0200, Thomas Gleixner wrote:
+> > I'll fixup the check so it wont break the real deadlock case and queue
+> > it.
 > 
-> > On Wed, 4 Jun 2014 17:32:37 +0200 (CEST)
-> > Thomas Gleixner <tglx@linutronix.de> wrote:
-> > 
-> > > T3 releases L3
-> > > T2 gets L3
-> > > T2 drops L3 and L2
-> > > T2 blocks on L4 held by T4
-> > > T4 blocked on L5 held by T5
-> > > 
-> > > So we happily boost T4 and T5. Not what we really want to do.
-> > > 
-> > > Nasty, isn't it ?
-> > > 
-> > 
-> > Actually, we may go up a chain, but we never do any unnecessary
-> > boosting. That's because the boost is done with rt_mutex_adjust_prio()
-> > which gets the prio from rt_mutex_getprio() which reads the
-> > task->normal_prio and compares it to the task_top_pi_waiter(task)->prio,
-> > which will always be correct as we have the necessary locks.
-> 
-> Indeed.
+> How would the change break the real deadlock case?
 
-I had thought through how to try to determine, from what we knew at
-this point, whether or not we were walking a different chain for just
-this concern, but I had convinced myself that it would be cumbersome,
-error-prone, and, as pointed out here, not vital.
+> >  	/* Deadlock detection */
+> >  	if (lock == orig_lock || rt_mutex_owner(lock) == top_task) {
+> > +		/*
+> > +		 * If the prio chain has changed out from under us, set the task
+> > +		 * to the current owner of the lock in the current waiter and
+> > +		 * continue walking the prio chain
+> > +		 */
+> > +		if (rt_mutex_owner(lock) && rt_mutex_owner(lock) != task) {
 
->  
-> > And we don't even need to worry about the chain we miss. That is, if
-> > task A is blocked on a lock owned by D at the time, but as we go up the
-> > chain, D releases the lock and B grabs it, B will still up its priority
-> > based on the waiters of the lock (that is A), and if B blocks, it will
-> > boost the tasks that own the lock it blocks on, where B is still
-> > influenced by A.
-> > 
-> > The fact that we only update the prio based on the actual waiters and
-> > don't carry a prio up the chain (which you designed, and I thought was
-> > quite ingenious by the way), we may waste time going up a chain, but
-> > the priority inheritance is still accurate.
-> 
-> Duh. I actually had to lookup my notes from back then. There is even a
-> lenghty IRC discussion about not propagating the least waiters prio,
-> but lookup the actual lock waiters. Good, so we just walk for nothing
-> and waste some cpu cycles.
-> 
-I put the check within the deadlock detection block to try to minimize
-this case. As evidenced by the spinning on this, it's a rare case where
-your userspace code has to be doing some wacky (but valid) stuff.
+No, sorry. That's wrong.
 
-> My brain still suffers from 3 days staring into futex.c
-> 
-> I'll fixup the check so it wont break the real deadlock case and queue
-> it.
+Your change wreckages the rt_mutex_owner(lock) == top_task test
+simply because in that case:
 
-How would the change break the real deadlock case?
+   (rt_mutex_owner(lock) && rt_mutex_owner(lock) != task)
 
-> 
-> Thanks,
-> 
-> 	tglx
-> 
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+evaluates to true.
+
+So we want this:
+
+Index: tip/kernel/locking/rtmutex.c
+===================================================================
+--- tip.orig/kernel/locking/rtmutex.c
++++ tip/kernel/locking/rtmutex.c
+@@ -375,6 +375,26 @@ static int rt_mutex_adjust_prio_chain(st
+ 	 * walk, we detected a deadlock.
+ 	 */
+ 	if (lock == orig_lock || rt_mutex_owner(lock) == top_task) {
++		/*
++		 * If the prio chain has changed out from under us, set the task
++		 * to the current owner of the lock in the current waiter and
++		 * continue walking the prio chain
++		 */
++		if (rt_mutex_owner(lock) && rt_mutex_owner(lock) != task &&
++		    rt_mutex_owner(lock) != top_task) {
++			/* Release the old owner */
++			raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++			put_task_struct(task);
++
++			/* Move to the new owner */
++			task = rt_mutex_owner(lock);
++			get_task_struct(task);
++
++			/* Let's try this again */
++			raw_spin_unlock(&lock->wait_lock);
++			goto retry;
++		}
++
+ 		debug_rt_mutex_deadlock(deadlock_detect, orig_waiter, lock);
+ 		raw_spin_unlock(&lock->wait_lock);
+ 		ret = deadlock_detect ? -EDEADLK : 0;
