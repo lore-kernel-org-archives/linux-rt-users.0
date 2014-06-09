@@ -1,78 +1,102 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [RFC PATCH] rt/aio: fix rcu garbage collection might_sleep()
- splat
-Date: Mon, 09 Jun 2014 08:22:08 +0200
-Message-ID: <1402294928.6316.38.camel@marge.simpson.net>
-References: <1402216538.31630.7.camel@marge.simpson.net>
-	 <5395172E.4010007@cn.fujitsu.com>
-	 <1402283822.5195.3.camel@marge.simpson.net>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+ [was SCHED_DEADLINE hands-on workshop]
+Date: Mon, 9 Jun 2014 09:55:03 +0200
+Message-ID: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Lai Jiangshan <laijs@cn.fujitsu.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f41.google.com ([74.125.82.41]:40859 "EHLO
-	mail-wg0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750980AbaFIGWL (ORCPT
+Received: from mail-wi0-f169.google.com ([209.85.212.169]:63447 "EHLO
+	mail-wi0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753950AbaFIHzB (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Jun 2014 02:22:11 -0400
-In-Reply-To: <1402283822.5195.3.camel@marge.simpson.net>
+	Mon, 9 Jun 2014 03:55:01 -0400
+Received: by mail-wi0-f169.google.com with SMTP id hi2so1485971wib.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Jun 2014 00:55:00 -0700 (PDT)
+Received: from neville (nat-cataldo.sssup.it. [193.205.81.5])
+        by mx.google.com with ESMTPSA id u1sm13211932wia.16.2014.06.09.00.54.58
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Mon, 09 Jun 2014 00:54:59 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2014-06-09 at 05:17 +0200, Mike Galbraith wrote: 
-> On Mon, 2014-06-09 at 10:08 +0800, Lai Jiangshan wrote: 
-> > Hi, rt-people
-> > 
-> > I don't think it is the correct direction.
-> 
-> Yup, it's a band-aid, ergo RFC.
+[Our sincere apologies if you receive multiple copies of this announce]
 
-Making aio play by the rules is safe.  Another option is to bend the
-rules up a little.  With the below, ltp aio-stress testcases haven't yet
-griped or exploded either.. which somehow isn't quite as comforting as
-"is safe" :)
+----------------------------------------------------------------------
 
----
- fs/aio.c |    6 ++++++
- 1 file changed, 6 insertions(+)
+   Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+			   June 26-27, 2014
+		      Scuola Superiore Sant'Anna
+			     Pisa, Italy
 
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -509,7 +509,9 @@ static void free_ioctx_reqs(struct percp
- 	struct kioctx *ctx = container_of(ref, struct kioctx, reqs);
- 
- 	INIT_WORK(&ctx->free_work, free_ioctx);
-+	preempt_enable_rt();
- 	schedule_work(&ctx->free_work);
-+	preempt_disable_rt();
- }
- 
- /*
-@@ -522,7 +524,9 @@ static void free_ioctx_users(struct perc
- 	struct kioctx *ctx = container_of(ref, struct kioctx, users);
- 	struct kiocb *req;
- 
-+	preempt_enable_rt();
- 	spin_lock_irq(&ctx->ctx_lock);
-+	local_irq_disable_rt();
- 
- 	while (!list_empty(&ctx->active_reqs)) {
- 		req = list_first_entry(&ctx->active_reqs,
-@@ -536,6 +540,8 @@ static void free_ioctx_users(struct perc
- 
- 	percpu_ref_kill(&ctx->reqs);
- 	percpu_ref_put(&ctx->reqs);
-+	preempt_disable_rt();
-+	local_irq_enable_rt();
- }
- 
- static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
+	   ***** Registration deadline June 19, 2014 *****
 
+----------------------------------------------------------------------
+  Web site: http://retis.sssup.it/rts-like/
+----------------------------------------------------------------------
 
+Since  March  30 2014,  the  new  scheduling  class SCHED_DEADLINE  is
+available in  the Linux kernel (from version  3.14).  This opportunity
+enables  the enforcement  of a  real-time behavior  to  the scheduled
+threads.
+
+The Workshop  on Real-Time Scheduling  in the Linux  Kernel (RTS-LIKE)
+aims  at  introducing  the   participants  to  real-time  issues  when
+scheduling threads, and present how this issues are addressed with the
+SCHED_DEADLINE scheduling class.
+
+Finally,  the  SCHED_DEADLINE internals  and  the current  development
+status  will be presented,  as well  as an  open discussion  on future
+directions of the Linux kernel scheduler
+
+----------------------------------------------------------------------
+PROGRAM
+
+Thursday 26/06/2014
+  Morning
+    - Welcome
+    - Real-time  scheduling and threads:  basics (Luca  Abeni, Giorgio
+      Buttazzo)
+    - SCHED_DEADLINE: presentation, how to use it (Juri Lelli)
+    - Use cases with time-sensitive characteristics (contributors) 
+  Lunch break
+  Afternoon
+    - hands-on  session: play  with SCHED_DEADLINE:  participants will
+      attach SCHED_DEADLINE to the preferred application
+  Social event (dinner in Marina di Pisa) 
+
+Friday 27/06/2014
+  Morning
+    - Overview  of  the  Linux  scheduler  framework  (speaker  to  be
+      confirmed)
+    - SCHED_DEADLINE: internals  and current development  status (Juri
+      Lelli)
+    - Panel  on open  problems  and future  development directions  in
+      Linux kernel scheduler
+  Lunch break
+  Afternoon
+    - hands-on session: modify, compile, and debug your own kernel 
+
+----------------------------------------------------------------------
+MORE INFO
+
+Details about live streaming and workshop recorded sessions will
+follow shortly.
+
+----------------------------------------------------------------------
+IMPORTANT DATES
+
+      Registration deadline:               June 19, 2014
+      Workshop:                            June 26-27, 2014
+
+----------------------------------------------------------------------
+ORGANIZERS
+
+  Luca Abeni, University of Trento
+  Enrico Bini, Scuola Superiore Sant'Anna, Pisa
+  Juri Lelli, Scuola Superiore Sant'Anna, Pisa 
+
+----------------------------------------------------------------------
