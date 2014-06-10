@@ -1,177 +1,78 @@
-From: Benjamin LaHaise <bcrl@kvack.org>
-Subject: Re: [RFC PATCH V2] rt/aio: fix rcu garbage collection might_sleep() splat
-Date: Tue, 10 Jun 2014 13:50:01 -0400
-Message-ID: <20140610175001.GF27015@kvack.org>
-References: <1402216538.31630.7.camel@marge.simpson.net> <5395172E.4010007@cn.fujitsu.com> <1402372048.5124.20.camel@marge.simpson.net>
+From: Andrey Smirnov <andrew.smirnov@gmail.com>
+Subject: i.MX6, PREEMPT-RT and interactive cpufreq governor
+Date: Tue, 10 Jun 2014 11:52:05 -0700
+Message-ID: <CAHQ1cqGy5gwEUFLS79y3=5_KmUEO+Q3ygDB-jXBZj5yN5xVqUg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Lai Jiangshan <laijs@cn.fujitsu.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Kent Overstreet <kmo@daterainc.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1402372048.5124.20.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: linux-rt-users@vger.kernel.org, asmirnov@kymetacorp.com,
+	panos@kymetacorp.com
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pb0-f51.google.com ([209.85.160.51]:52297 "EHLO
+	mail-pb0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751135AbaFJSwG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 10 Jun 2014 14:52:06 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jun 10, 2014 at 05:47:28AM +0200, Mike Galbraith wrote:
-> On Mon, 2014-06-09 at 10:08 +0800, Lai Jiangshan wrote: 
-> > Hi, rt-people
-> > 
-> > I don't think it is the correct direction.
-> > Softirq (including local_bh_disable()) in RT kernel should be preemptible.
-> 
-> How about the below then?
-> 
-> I was sorely tempted to post a tiny variant that dropped taking ctx_lock
-> in free_ioctx_users() entirely, as someone diddling with no reference
-> didn't make sense.  Cc Ben, he would know.
+Hello everyone,
 
-That should be okay...  Let's ask Kent to chime in on whether this looks 
-safe to him on the percpu ref front as well, since he's the one who wrote 
-this code.
+I am working on integrating PREEMPT-RT patches into 3.10.17 kernel BSP
+release from Freescale which can be found at:
 
-		-ben
+http://git.freescale.com/git/cgit.cgi/imx/linux-2.6-imx.git (tag
+imx_3.10.17_1.0.0_ga)
+
+and what I am finding is that if I select "interactive" cpufreq
+governor I get a kernel the kernel that occasionally spouts this
+
+BUG: scheduling while atomic: swapper/3/0/0x00000002
+Modules linked in:
+Preemption disabled at:[<  (null)>]   (null)
+
+CPU: 3 PID: 0 Comm: swapper/3 Not tainted 3.10.17-rt12-80705-g232293e-dirty #3
+[<800139c4>] (unwind_backtrace+0x0/0xf8) from [<80011420>]
+(show_stack+0x10/0x14)
+[<80011420>] (show_stack+0x10/0x14) from [<805bfbbc>] (__schedule_bug+0x78/0x9c)
+[<805bfbbc>] (__schedule_bug+0x78/0x9c) from [<805c431c>]
+(__schedule+0x398/0x49c)
+[<805c431c>] (__schedule+0x398/0x49c) from [<805c44d0>] (schedule+0x34/0xa0)
+[<805c44d0>] (schedule+0x34/0xa0) from [<805c5250>]
+(rt_spin_lock_slowlock+0xc0/0x258)
+[<805c5250>] (rt_spin_lock_slowlock+0xc0/0x258) from [<80031d44>]
+(lock_timer_base+0x2c/0x4c)
+[<80031d44>] (lock_timer_base+0x2c/0x4c) from [<80032024>]
+(mod_timer+0x60/0x1c0)
+[<80032024>] (mod_timer+0x60/0x1c0) from [<803fe860>]
+(cpufreq_interactive_idle_notifier+0xa4/0x13c)
+[<803fe860>] (cpufreq_interactive_idle_notifier+0xa4/0x13c) from
+[<80048444>] (notifier_call_chain+0)
+[<80048444>] (notifier_call_chain+0x44/0x84) from [<80048754>]
+(__atomic_notifier_call_chain+0x38/0x)
+[<80048754>] (__atomic_notifier_call_chain+0x38/0x4c) from
+[<80048780>] (atomic_notifier_call_chain+)
+[<80048780>] (atomic_notifier_call_chain+0x18/0x20) from [<80058df8>]
+(cpu_startup_entry+0x68/0x1a4)
+[....] [<80058df8>] (cpu_startup_entry+0x68/0x1a4) from [<105bc204>]
+(0x105bc204)
 
 
-> [  172.743098] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:768
-> [  172.743116] in_atomic(): 1, irqs_disabled(): 0, pid: 26, name: rcuos/2
-> [  172.743117] 2 locks held by rcuos/2/26:
-> [  172.743128]  #0:  (rcu_callback){.+.+..}, at: [<ffffffff810b1a12>] rcu_nocb_kthread+0x1e2/0x380
-> [  172.743135]  #1:  (rcu_read_lock_sched){.+.+..}, at: [<ffffffff812acd26>] percpu_ref_kill_rcu+0xa6/0x1c0
-> [  172.743138] Preemption disabled at:[<ffffffff810b1a93>] rcu_nocb_kthread+0x263/0x380
-> [  172.743138]
-> [  172.743142] CPU: 0 PID: 26 Comm: rcuos/2 Not tainted 3.14.4-rt5 #31
-> [  172.743143] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
-> [  172.743148]  ffff8802231aa190 ffff8802231a5d08 ffffffff81582e9e 0000000000000000
-> [  172.743151]  ffff8802231a5d28 ffffffff81077aeb ffff880209f68140 ffff880209f681c0
-> [  172.743154]  ffff8802231a5d48 ffffffff81589304 ffff880209f68000 ffff880209f68000
-> [  172.743155] Call Trace:
-> [  172.743160]  [<ffffffff81582e9e>] dump_stack+0x4e/0x9c
-> [  172.743163]  [<ffffffff81077aeb>] __might_sleep+0xfb/0x170
-> [  172.743167]  [<ffffffff81589304>] rt_spin_lock+0x24/0x70
-> [  172.743171]  [<ffffffff811c5790>] free_ioctx_users+0x30/0x130
-> [  172.743174]  [<ffffffff812ace34>] percpu_ref_kill_rcu+0x1b4/0x1c0
-> [  172.743177]  [<ffffffff812acd26>] ? percpu_ref_kill_rcu+0xa6/0x1c0
-> [  172.743180]  [<ffffffff812acc80>] ? percpu_ref_kill_and_confirm+0x70/0x70
-> [  172.743183]  [<ffffffff810b1a93>] rcu_nocb_kthread+0x263/0x380
-> [  172.743185]  [<ffffffff810b1a12>] ? rcu_nocb_kthread+0x1e2/0x380
-> [  172.743189]  [<ffffffff810b1830>] ? rcu_report_exp_rnp.isra.52+0xc0/0xc0
-> [  172.743192]  [<ffffffff8106e046>] kthread+0xd6/0xf0
-> [  172.743194]  [<ffffffff8158900c>] ? _raw_spin_unlock_irq+0x2c/0x70
-> [  172.743197]  [<ffffffff8106df70>] ? __kthread_parkme+0x70/0x70
-> [  172.743200]  [<ffffffff81591eec>] ret_from_fork+0x7c/0xb0
-> [  172.743203]  [<ffffffff8106df70>] ? __kthread_parkme+0x70/0x70
-> 
-> crash> gdb list *percpu_ref_kill_rcu+0x1b4
-> 0xffffffff812ace34 is in percpu_ref_kill_rcu (include/linux/percpu-refcount.h:169).
-> 164             pcpu_count = ACCESS_ONCE(ref->pcpu_count);
-> 165
-> 166             if (likely(REF_STATUS(pcpu_count) == PCPU_REF_PTR))
-> 167                     __this_cpu_dec(*pcpu_count);
-> 168             else if (unlikely(atomic_dec_and_test(&ref->count)))
-> 169                     ref->release(ref);
-> 170
-> 171             rcu_read_unlock_sched();
-> 172     }
-> 173
-> 
-> ref->release() path can't take sleeping locks, but in an rt kernel it does.
-> Defer ->release() work via call_rcu() to move sleeping locks out from under
-> rcu_read_lock_sched().
-> 
-> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-> ---
->  fs/aio.c |   38 +++++++++++++++++++++++++-------------
->  1 file changed, 25 insertions(+), 13 deletions(-)
-> 
-> --- a/fs/aio.c
-> +++ b/fs/aio.c
-> @@ -110,8 +110,6 @@ struct kioctx {
->  	struct page		**ring_pages;
->  	long			nr_pages;
->  
-> -	struct work_struct	free_work;
-> -
->  	struct {
->  		/*
->  		 * This counts the number of available slots in the ringbuffer,
-> @@ -143,6 +141,7 @@ struct kioctx {
->  	struct file		*aio_ring_file;
->  
->  	unsigned		id;
-> +	struct rcu_head		rcu;
->  };
->  
->  /*------ sysctl variables----*/
-> @@ -493,9 +492,9 @@ static int kiocb_cancel(struct kioctx *c
->  	return cancel(kiocb);
->  }
->  
-> -static void free_ioctx(struct work_struct *work)
-> +static void free_ioctx_rcu(struct rcu_head *rcu)
->  {
-> -	struct kioctx *ctx = container_of(work, struct kioctx, free_work);
-> +	struct kioctx *ctx = container_of(rcu, struct kioctx, rcu);
->  
->  	pr_debug("freeing %p\n", ctx);
->  
-> @@ -508,18 +507,12 @@ static void free_ioctx_reqs(struct percp
->  {
->  	struct kioctx *ctx = container_of(ref, struct kioctx, reqs);
->  
-> -	INIT_WORK(&ctx->free_work, free_ioctx);
-> -	schedule_work(&ctx->free_work);
-> +	call_rcu(&ctx->rcu, free_ioctx_rcu);
->  }
->  
-> -/*
-> - * When this function runs, the kioctx has been removed from the "hash table"
-> - * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
-> - * now it's safe to cancel any that need to be.
-> - */
-> -static void free_ioctx_users(struct percpu_ref *ref)
-> +static void free_ioctx_users_rcu(struct rcu_head *rcu)
->  {
-> -	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-> +	struct kioctx *ctx = container_of(rcu, struct kioctx, rcu);
->  	struct kiocb *req;
->  
->  	spin_lock_irq(&ctx->ctx_lock);
-> @@ -538,6 +531,25 @@ static void free_ioctx_users(struct perc
->  	percpu_ref_put(&ctx->reqs);
->  }
->  
-> +/*
-> + * When this function runs, the kioctx has been removed from the "hash table"
-> + * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
-> + * now it's safe to cancel any that need to be.
-> + *
-> + * NOTE: -rt must defer this to avoid taking sleeping ctx_lock while under
-> + * rcu_real_lock_sched() during ->release().
-> + */
-> +static void free_ioctx_users(struct percpu_ref *ref)
-> +{
-> +	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-> +
-> +#ifdef CONFIG_PREEMPT_RT_BASE
-> +	call_rcu(&ctx->rcu, free_ioctx_users_rcu);
-> +#else
-> +	free_ioctx_users_rcu(&ctx->rcu);
-> +#endif
-> +}
-> +
->  static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
->  {
->  	unsigned i, new_nr;
-> 
-> 
+and eventually crashes. After doing some digging I believe the
+sequence of events leading to this is following:
 
--- 
-"Thought is the essence of where you are now."
+secondary_start_kernel() calls preempt_disable(), then
+cpu_startup_entry(CPUHP_ONLINE), which results in a call to
+cpufreq_interactive_idle_notifier() which in turn tries to use
+mod_timer(). Mod_timer() internally tries to acquire a spinlock, but
+with RT
+patches applied it unfolds into a rt_mutex, the attempt of acquisition
+of which results in the call to schedule() and that's when we
+see that backtrace.
+
+Eventually I am hoping to disable any sorts of frequency scaling or
+power management on our system, but I am still curious to know if that
+is a known issue patches for which exist. Does anyone has any leads/suggestions?
+
+Thank you,
+Andrey Smirnov
