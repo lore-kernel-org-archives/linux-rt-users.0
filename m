@@ -1,95 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.22-rt34
-Date: Thu, 19 Jun 2014 11:07:28 -0400
-Message-ID: <20140619110728.795da4ee@gandalf.local.home>
+From: Rolf Peukert <rolf.peukert@imms.de>
+Subject: 3.2.60-rt87: arm: Doesn't boot in certain case
+Date: Thu, 19 Jun 2014 21:04:06 +0200
+Message-ID: <53A33426.6080505@imms.de>
+References: <20140618201355.3f8baecb@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="ISO-8859-1"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:16167 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S933153AbaFSPHb (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Jun 2014 11:07:31 -0400
+Received: from infosrv.imms.de ([194.95.250.51]:37709 "EHLO infosrv.imms.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757780AbaFSTdn (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Jun 2014 15:33:43 -0400
+In-Reply-To: <20140618201355.3f8baecb@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hello Steven,
 
-Dear RT Folks,
+I just tried the new kernel version 3.2.60-rt87 on our ARM-Cortex-A8
+board and while it works fine with the standard configuration, it won't
+boot if the option CONFIG_MISSED_TIMER_OFFSETS_HIST is set.
 
-I'm pleased to announce the 3.12.22-rt34 stable release.
-
-Usually for non stable merged releases I post an -rc iteration. But as
-this is a small simple fix, I'm posting this next version directly.
-
--- Steve
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.12-rt
-  Head SHA1: e07e87d7680b060c0c19f1595952fd74a565b17d
+The kernel error message reports a NULL pointer dereference at
+__hrtimer_start_range_ns+0xf4, which probably is line 1038 in file
+kernel/hrtimer.c, where new_base->get_time() is called before new_base
+is set.
+(actually there was a compiler warning too, but I didn't pay enough
+attention to the compiler output...)
 
 
-Or to build 3.12.22-rt34 directly, the following patches should be applied:
+#ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
+        {
+                ktime_t now = new_base->get_time();
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+                if (ktime_to_ns(tim) < ktime_to_ns(now))
+                        timer->praecox = now;
+                else
+                        timer->praecox = ktime_set(0, 0);
+        }
+#endif
+        hrtimer_set_expires_range_ns(timer, tim, delta_ns);
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.22.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.22-rt34.patch.xz
-
-
-
-You can also build from 3.12.22-rt33 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.22-rt33-rt34.patch.xz
-
-
-
-Enjoy,
-
--- Steve
+        /* Switch the timer base, if necessary: */
+        new_base = switch_hrtimer_base(timer, base, mode &
+HRTIMER_MODE_PINNED);
 
 
-Changes from v3.12.22-rt33:
+Since I moved the #ifdef...#endif block down below the
+new_base=switch_hrtimer... statement, the kernel boots and works so far,
+but I'm not sure if this is what was originally intended here.
 
----
+Best regards
+Rolf
 
-Steven Rostedt (Red Hat) (2):
-      Revert "drivers/net: tulip_remove_one needs to call pci_disable_device()"
-      Linux 3.12.22-rt34
-
-----
- drivers/net/ethernet/dec/tulip/tulip_core.c | 1 -
- localversion-rt                             | 2 +-
- 2 files changed, 1 insertion(+), 2 deletions(-)
----------------------------
-diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
-index a6d4653ebbc3..779016068a82 100644
---- a/drivers/net/ethernet/dec/tulip/tulip_core.c
-+++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
-@@ -1939,7 +1939,6 @@ static void tulip_remove_one(struct pci_dev *pdev)
- 	pci_iounmap(pdev, tp->base_addr);
- 	free_netdev (dev);
- 	pci_release_regions (pdev);
--	pci_disable_device(pdev);
- 	pci_set_drvdata (pdev, NULL);
- 	pci_disable_device(pdev);
- 
-diff --git a/localversion-rt b/localversion-rt
-index e1d836252017..21988f9ad53f 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt33
-+-rt34
