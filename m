@@ -1,49 +1,95 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.60-rt87
-Date: Wed, 18 Jun 2014 20:13:55 -0400
-Message-ID: <20140618201355.3f8baecb@gandalf.local.home>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.12.22-rt33
+Date: Thu, 19 Jun 2014 05:46:43 +0200
+Message-ID: <1403149603.5189.10.camel@marge.simpson.net>
+References: <20140618201233.4dd3a59d@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140618201233.4dd3a59d@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-
-Dear RT Folks,
-
-I'm pleased to announce the 3.2.60-rt87 stable release.
-
-
-This release is just an update to the new stable 3.2.60 version
-and no RT specific changes have been made.
+On Wed, 2014-06-18 at 20:12 -0400, Steven Rostedt wrote: 
+> Dear RT Folks,
+> 
+> I'm pleased to announce the 3.12.22-rt33 stable release.
 
 
-You can get this release via the git tree at:
+git@marge:~/linux-2.6> git diff v3.12... drivers/net/ethernet/dec/tulip/tulip_core.c
+diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
+index 4e8cfa2ac803..a6d4653ebbc3 100644
+--- a/drivers/net/ethernet/dec/tulip/tulip_core.c
++++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
+@@ -1939,7 +1939,9 @@ static void tulip_remove_one(struct pci_dev *pdev)
+ 	pci_iounmap(pdev, tp->base_addr);
+ 	free_netdev (dev);
+ 	pci_release_regions (pdev);
++	pci_disable_device(pdev);
+ 	pci_set_drvdata (pdev, NULL);
++	pci_disable_device(pdev);
+ 
+ 	/* pci_power_off (pdev, -1); */
+ }
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+commit 4a77edc195f0b03644e84dda00fcfe9827868e8e
+Author: Ingo Molnar <mingo@elte.hu>
+Date:   Fri Jul 3 08:30:18 2009 -0500
 
-  branch: v3.2-rt
-  Head SHA1: f36f978f8ef9b46688a3a3b1c4406984790a9303
+    drivers/net: tulip_remove_one needs to call pci_disable_device()
+    
+    Otherwise the device is not completely shut down.
+    
+    Signed-off-by: Ingo Molnar <mingo@elte.hu>
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+
+diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
+index 4e8cfa2ac803..7565b994ec50 100644
+--- a/drivers/net/ethernet/dec/tulip/tulip_core.c
++++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
+@@ -1939,6 +1939,7 @@ static void tulip_remove_one(struct pci_dev *pdev)
+ 	pci_iounmap(pdev, tp->base_addr);
+ 	free_netdev (dev);
+ 	pci_release_regions (pdev);
++	pci_disable_device(pdev);
+ 	pci_set_drvdata (pdev, NULL);
+ 
+ 	/* pci_power_off (pdev, -1); */
 
 
-Or to build 3.2.60-rt87 directly, the following patches should be applied:
+commit 831bb5573dcbeb0da783c82e21084ac191dafc24
+Author: Ingo Molnar <mingo@elte.hu>
+Date:   Fri Feb 14 15:32:20 2014 +0100
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+    drivers/net: tulip_remove_one needs to call pci_disable_device()
+    
+    commit c321f7d7c87cdc623c87845f6378620573e57512 upstream.
+    
+    Otherwise the device is not completely shut down.
+    
+    Signed-off-by: Ingo Molnar <mingo@elte.hu>
+    Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+    Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+    Signed-off-by: David S. Miller <davem@davemloft.net>
+    Signed-off-by: Jiri Slaby <jslaby@suse.cz>
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt87.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
+index 4e8cfa2ac803..779016068a82 100644
+--- a/drivers/net/ethernet/dec/tulip/tulip_core.c
++++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
+@@ -1940,6 +1940,7 @@ static void tulip_remove_one(struct pci_dev *pdev)
+ 	free_netdev (dev);
+ 	pci_release_regions (pdev);
+ 	pci_set_drvdata (pdev, NULL);
++	pci_disable_device(pdev);
+ 
+ 	/* pci_power_off (pdev, -1); */
+ }
