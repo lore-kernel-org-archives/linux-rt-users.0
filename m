@@ -1,114 +1,95 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.12.22-rt33
-Date: Thu, 19 Jun 2014 09:44:16 -0400
-Message-ID: <20140619094416.302f5ef3@gandalf.local.home>
-References: <20140618201233.4dd3a59d@gandalf.local.home>
-	<1403149603.5189.10.camel@marge.simpson.net>
+Subject: [ANNOUNCE] 3.12.22-rt34
+Date: Thu, 19 Jun 2014 11:07:28 -0400
+Message-ID: <20140619110728.795da4ee@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1403149603.5189.10.camel@marge.simpson.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:16167 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S933153AbaFSPHb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Jun 2014 11:07:31 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 19 Jun 2014 05:46:43 +0200
-Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-> On Wed, 2014-06-18 at 20:12 -0400, Steven Rostedt wrote: 
-> > Dear RT Folks,
-> > 
-> > I'm pleased to announce the 3.12.22-rt33 stable release.
+Dear RT Folks,
 
-Didn't we have this issue before?
+I'm pleased to announce the 3.12.22-rt34 stable release.
 
-> 
-> 
-> git@marge:~/linux-2.6> git diff v3.12... drivers/net/ethernet/dec/tulip/tulip_core.c
-> diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> index 4e8cfa2ac803..a6d4653ebbc3 100644
-> --- a/drivers/net/ethernet/dec/tulip/tulip_core.c
-> +++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> @@ -1939,7 +1939,9 @@ static void tulip_remove_one(struct pci_dev *pdev)
->  	pci_iounmap(pdev, tp->base_addr);
->  	free_netdev (dev);
->  	pci_release_regions (pdev);
-> +	pci_disable_device(pdev);
->  	pci_set_drvdata (pdev, NULL);
-> +	pci_disable_device(pdev);
->  
->  	/* pci_power_off (pdev, -1); */
->  }
-> 
-> commit 4a77edc195f0b03644e84dda00fcfe9827868e8e
-> Author: Ingo Molnar <mingo@elte.hu>
-> Date:   Fri Jul 3 08:30:18 2009 -0500
-> 
->     drivers/net: tulip_remove_one needs to call pci_disable_device()
->     
->     Otherwise the device is not completely shut down.
-
-Grumble, this was a fix that went into -rt without going into stable
-first.
-
-OK, I'll remove this commit and keep the stable one.
-
-Thanks!
+Usually for non stable merged releases I post an -rc iteration. But as
+this is a small simple fix, I'm posting this next version directly.
 
 -- Steve
 
->     
->     Signed-off-by: Ingo Molnar <mingo@elte.hu>
->     Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> 
-> diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> index 4e8cfa2ac803..7565b994ec50 100644
-> --- a/drivers/net/ethernet/dec/tulip/tulip_core.c
-> +++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> @@ -1939,6 +1939,7 @@ static void tulip_remove_one(struct pci_dev *pdev)
->  	pci_iounmap(pdev, tp->base_addr);
->  	free_netdev (dev);
->  	pci_release_regions (pdev);
-> +	pci_disable_device(pdev);
->  	pci_set_drvdata (pdev, NULL);
->  
->  	/* pci_power_off (pdev, -1); */
-> 
-> 
-> commit 831bb5573dcbeb0da783c82e21084ac191dafc24
-> Author: Ingo Molnar <mingo@elte.hu>
-> Date:   Fri Feb 14 15:32:20 2014 +0100
-> 
->     drivers/net: tulip_remove_one needs to call pci_disable_device()
->     
->     commit c321f7d7c87cdc623c87845f6378620573e57512 upstream.
->     
->     Otherwise the device is not completely shut down.
->     
->     Signed-off-by: Ingo Molnar <mingo@elte.hu>
->     Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
->     Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
->     Signed-off-by: David S. Miller <davem@davemloft.net>
->     Signed-off-by: Jiri Slaby <jslaby@suse.cz>
-> 
-> diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> index 4e8cfa2ac803..779016068a82 100644
-> --- a/drivers/net/ethernet/dec/tulip/tulip_core.c
-> +++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
-> @@ -1940,6 +1940,7 @@ static void tulip_remove_one(struct pci_dev *pdev)
->  	free_netdev (dev);
->  	pci_release_regions (pdev);
->  	pci_set_drvdata (pdev, NULL);
-> +	pci_disable_device(pdev);
 
->  
->  	/* pci_power_off (pdev, -1); */
->  }
-> 
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.12-rt
+  Head SHA1: e07e87d7680b060c0c19f1595952fd74a565b17d
+
+
+Or to build 3.12.22-rt34 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.22.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.22-rt34.patch.xz
+
+
+
+You can also build from 3.12.22-rt33 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.22-rt33-rt34.patch.xz
+
+
+
+Enjoy,
+
+-- Steve
+
+
+Changes from v3.12.22-rt33:
+
+---
+
+Steven Rostedt (Red Hat) (2):
+      Revert "drivers/net: tulip_remove_one needs to call pci_disable_device()"
+      Linux 3.12.22-rt34
+
+----
+ drivers/net/ethernet/dec/tulip/tulip_core.c | 1 -
+ localversion-rt                             | 2 +-
+ 2 files changed, 1 insertion(+), 2 deletions(-)
+---------------------------
+diff --git a/drivers/net/ethernet/dec/tulip/tulip_core.c b/drivers/net/ethernet/dec/tulip/tulip_core.c
+index a6d4653ebbc3..779016068a82 100644
+--- a/drivers/net/ethernet/dec/tulip/tulip_core.c
++++ b/drivers/net/ethernet/dec/tulip/tulip_core.c
+@@ -1939,7 +1939,6 @@ static void tulip_remove_one(struct pci_dev *pdev)
+ 	pci_iounmap(pdev, tp->base_addr);
+ 	free_netdev (dev);
+ 	pci_release_regions (pdev);
+-	pci_disable_device(pdev);
+ 	pci_set_drvdata (pdev, NULL);
+ 	pci_disable_device(pdev);
+ 
+diff --git a/localversion-rt b/localversion-rt
+index e1d836252017..21988f9ad53f 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt33
++-rt34
