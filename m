@@ -1,37 +1,45 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.12.22-rt33
-Date: Fri, 20 Jun 2014 10:03:51 +0200
-Message-ID: <1403251431.4857.5.camel@marge.simpson.net>
-References: <20140618201233.4dd3a59d@gandalf.local.home>
-	 <1403149603.5189.10.camel@marge.simpson.net>
-	 <20140619094416.302f5ef3@gandalf.local.home>
+From: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+Subject: [v3.10-rt / v3.12-rt] scheduling while atomic in cgroup code
+Date: Sat, 21 Jun 2014 07:55:04 +0400
+Message-ID: <53A50218.6020506@dev.rtsoft.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: 'Alexey Lugovskoy' <lugovskoy@dev.rtsoft.ru>,
+	Konstantin Kholopov <kkholopov@dev.rtsoft.ru>,
+	linux-kernel@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20140619094416.302f5ef3@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2014-06-19 at 09:44 -0400, Steven Rostedt wrote: 
-> On Thu, 19 Jun 2014 05:46:43 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> 
-> > On Wed, 2014-06-18 at 20:12 -0400, Steven Rostedt wrote: 
-> > > Dear RT Folks,
-> > > 
-> > > I'm pleased to announce the 3.12.22-rt33 stable release.
-> 
-> Didn't we have this issue before?
+Hi.
 
-Yup, and correcting it didn't go all that well for either of us ;-)
-It's all better now.
+Call Trace:
+[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+[e22d5bf0] [c060bacc] schedule+0x30/0xbc
+[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+[e22d5d90] [c0117284] __do_fault+0x38c/0x510
+[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
 
--Mike
+What happens:
+
+- refill_stock() calls get_cpu_var() and thus disables preemption until
+matching put_cpu_var() is called,
+
+- then it calls drain_stock() -> res_counter_uncharge() ->
+res_counter_uncharge_until()
+
+- and here we have spin_lock(), which under RT can sleep. Thus we have 
+sleeping with preemption disabled.
+
+
+Any ideas how to fix?
