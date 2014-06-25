@@ -1,63 +1,40 @@
-From: Juri Lelli <juri.lelli@gmail.com>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
 Subject: Re: Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
  [was SCHED_DEADLINE hands-on workshop]
-Date: Wed, 25 Jun 2014 21:08:40 +0200
-Message-ID: <20140625210840.e2541c23418f6a44c026503d@gmail.com>
-References: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
+Date: Wed, 25 Jun 2014 23:15:10 +0400
+Message-ID: <53AB1FBE.3020101@pavlinux.ru>
+References: <20140609095503.41a80ead8450dcf868e5f989@gmail.com> <20140625210840.e2541c23418f6a44c026503d@gmail.com>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: Juri Lelli <juri.lelli@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f174.google.com ([209.85.212.174]:45345 "EHLO
-	mail-wi0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752955AbaFYTIu (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Jun 2014 15:08:50 -0400
-Received: by mail-wi0-f174.google.com with SMTP id bs8so8354317wib.13
-        for <linux-rt-users@vger.kernel.org>; Wed, 25 Jun 2014 12:08:46 -0700 (PDT)
-Received: from pablo (ppp-193-194.29-151.libero.it. [151.29.194.193])
-        by mx.google.com with ESMTPSA id l5sm15336800wif.22.2014.06.25.12.08.43
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Wed, 25 Jun 2014 12:08:44 -0700 (PDT)
-In-Reply-To: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
+Received: from imp01.mtu.ru ([62.5.255.10]:54791 "EHLO imp01.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751419AbaFYTRR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jun 2014 15:17:17 -0400
+In-Reply-To: <20140625210840.e2541c23418f6a44c026503d@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+25.06.2014 23:08, Juri Lelli =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
 
-On Mon, 9 Jun 2014 09:55:03 +0200
-Juri Lelli <juri.lelli@gmail.com> wrote:
+> Definitive schedule and all info on the web site:
+> http://retis.sssup.it/rts-like/program.html
+>
+> See you tomorrow,
 
-> [Our sincere apologies if you receive multiple copies of this announce]
-> 
-> ----------------------------------------------------------------------
-> 
->    Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
-> 			   June 26-27, 2014
-> 		      Scuola Superiore Sant'Anna
-> 			     Pisa, Italy
-> 
-> 	   ***** Registration deadline June 19, 2014 *****
-> 
-> ----------------------------------------------------------------------
->   Web site: http://retis.sssup.it/rts-like/
-> ----------------------------------------------------------------------
-> 
+Wow!!! Cool!!! Will look....
 
-We are almost ready!
 
-> ----------------------------------------------------------------------
-> MORE INFO
-> 
-> Details about live streaming and workshop recorded sessions will
-> follow shortly.
-> 
+--=20
 
-Definitive schedule and all info on the web site:
-http://retis.sssup.it/rts-like/program.html
-
-See you tomorrow,
-
-- Juri
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
