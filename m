@@ -1,99 +1,63 @@
-From: Benjamin LaHaise <bcrl@kvack.org>
-Subject: Re: [RFC PATCH V2] rt/aio: fix rcu garbage collection might_sleep() splat
-Date: Wed, 25 Jun 2014 11:24:45 -0400
-Message-ID: <20140625152445.GS23137@kvack.org>
-References: <1402216538.31630.7.camel@marge.simpson.net> <5395172E.4010007@cn.fujitsu.com> <1402372048.5124.20.camel@marge.simpson.net> <20140610175001.GF27015@kvack.org> <20140612202602.GI10871@kmo-pixel>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+ [was SCHED_DEADLINE hands-on workshop]
+Date: Wed, 25 Jun 2014 21:08:40 +0200
+Message-ID: <20140625210840.e2541c23418f6a44c026503d@gmail.com>
+References: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Lai Jiangshan <laijs@cn.fujitsu.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Kent Overstreet <kmo@daterainc.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20140612202602.GI10871@kmo-pixel>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f174.google.com ([209.85.212.174]:45345 "EHLO
+	mail-wi0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752955AbaFYTIu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 25 Jun 2014 15:08:50 -0400
+Received: by mail-wi0-f174.google.com with SMTP id bs8so8354317wib.13
+        for <linux-rt-users@vger.kernel.org>; Wed, 25 Jun 2014 12:08:46 -0700 (PDT)
+Received: from pablo (ppp-193-194.29-151.libero.it. [151.29.194.193])
+        by mx.google.com with ESMTPSA id l5sm15336800wif.22.2014.06.25.12.08.43
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Wed, 25 Jun 2014 12:08:44 -0700 (PDT)
+In-Reply-To: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jun 12, 2014 at 01:26:02PM -0700, Kent Overstreet wrote:
-> On Tue, Jun 10, 2014 at 01:50:01PM -0400, Benjamin LaHaise wrote:
-> > On Tue, Jun 10, 2014 at 05:47:28AM +0200, Mike Galbraith wrote:
-> > > On Mon, 2014-06-09 at 10:08 +0800, Lai Jiangshan wrote: 
-> > > > Hi, rt-people
-> > > > 
-> > > > I don't think it is the correct direction.
-> > > > Softirq (including local_bh_disable()) in RT kernel should be preemptible.
-> > > 
-> > > How about the below then?
-> > > 
-> > > I was sorely tempted to post a tiny variant that dropped taking ctx_lock
-> > > in free_ioctx_users() entirely, as someone diddling with no reference
-> > > didn't make sense.  Cc Ben, he would know.
-> > 
-> > That should be okay...  Let's ask Kent to chime in on whether this looks 
-> > safe to him on the percpu ref front as well, since he's the one who wrote 
-> > this code.
+Hi all,
+
+On Mon, 9 Jun 2014 09:55:03 +0200
+Juri Lelli <juri.lelli@gmail.com> wrote:
+
+> [Our sincere apologies if you receive multiple copies of this announce]
 > 
-> Ok, finally got around to reading the whole thread - honestly, I would just punt
-> to workqueue to do the free_ioctx_users(). AFAICT that should be perfectly safe
-> and even aside from rt it would be good change so we're not cancelling an
-> arbitrary number of kiocbs from rcu callback context.
+> ----------------------------------------------------------------------
+> 
+>    Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+> 			   June 26-27, 2014
+> 		      Scuola Superiore Sant'Anna
+> 			     Pisa, Italy
+> 
+> 	   ***** Registration deadline June 19, 2014 *****
+> 
+> ----------------------------------------------------------------------
+>   Web site: http://retis.sssup.it/rts-like/
+> ----------------------------------------------------------------------
+> 
 
-I finally have some time to look at this patch in detail.  I'd rather do the 
-below variant that does what Kent suggested.  Mike, can you confirm that 
-this fixes the issue you reported?  It's on top of my current aio-next tree 
-at git://git.kvack.org/~bcrl/aio-next.git .  If that's okay, I'll queue it 
-up.  Does this bug fix need to end up in -stable kernels as well or would it 
-end up in the -rt tree?
+We are almost ready!
 
-> Kind of a related change, it should be possible to just grab the entire list of
-> kiocbs with ctx_lock held (remove them all at once from ctx->active_reqs), then
-> cancel them without ctx_lock held.
+> ----------------------------------------------------------------------
+> MORE INFO
+> 
+> Details about live streaming and workshop recorded sessions will
+> follow shortly.
+> 
 
-No, that is not safe.  Cancellation has to be done under ctx_lock.
+Definitive schedule and all info on the web site:
+http://retis.sssup.it/rts-like/program.html
 
-		-ben
--- 
-"Thought is the essence of where you are now."
+See you tomorrow,
 
-
-diff --git a/fs/aio.c b/fs/aio.c
-index c1d8c48..0b038f2 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -526,9 +526,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
-  * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
-  * now it's safe to cancel any that need to be.
-  */
--static void free_ioctx_users(struct percpu_ref *ref)
-+static void free_ioctx_users_work(struct work_struct *work)
- {
--	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-+	struct kioctx *ctx = container_of(work, struct kioctx, free_work);
- 	struct kiocb *req;
- 
- 	spin_lock_irq(&ctx->ctx_lock);
-@@ -547,6 +547,18 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	percpu_ref_put(&ctx->reqs);
- }
- 
-+static void free_ioctx_users(struct percpu_ref *ref)
-+{
-+	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-+#ifdef CONFIG_PREEMPT_RT_BAS
-+	INIT_WORK(&ctx->free_work, free_ioctx_users_work);
-+	schedule_work(&ctx->free_work);
-+#else
-+	free_ioctx_users_work(&ctx->free_work);
-+#endif
-+}
-+
-+
- static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
- {
- 	unsigned i, new_nr;
+- Juri
