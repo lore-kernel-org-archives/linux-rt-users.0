@@ -1,131 +1,99 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [v3.10-rt / v3.12-rt] scheduling while atomic in cgroup code
-Date: Sat, 21 Jun 2014 10:09:48 +0200
-Message-ID: <1403338188.6766.6.camel@marge.simpson.net>
-References: <53A50218.6020506@dev.rtsoft.ru>
+From: Benjamin LaHaise <bcrl@kvack.org>
+Subject: Re: [RFC PATCH V2] rt/aio: fix rcu garbage collection might_sleep() splat
+Date: Wed, 25 Jun 2014 11:24:45 -0400
+Message-ID: <20140625152445.GS23137@kvack.org>
+References: <1402216538.31630.7.camel@marge.simpson.net> <5395172E.4010007@cn.fujitsu.com> <1402372048.5124.20.camel@marge.simpson.net> <20140610175001.GF27015@kvack.org> <20140612202602.GI10871@kmo-pixel>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	'Alexey Lugovskoy' <lugovskoy@dev.rtsoft.ru>,
-	Konstantin Kholopov <kkholopov@dev.rtsoft.ru>,
-	linux-kernel@vger.kernel.org, Steven Rostedt <rostedt@goodmis.org>
-To: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+Content-Type: text/plain; charset=us-ascii
+Cc: Lai Jiangshan <laijs@cn.fujitsu.com>,
+	RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Kent Overstreet <kmo@daterainc.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <53A50218.6020506@dev.rtsoft.ru>
+Content-Disposition: inline
+In-Reply-To: <20140612202602.GI10871@kmo-pixel>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2014-06-21 at 07:55 +0400, Nikita Yushchenko wrote: 
-> Hi.
+On Thu, Jun 12, 2014 at 01:26:02PM -0700, Kent Overstreet wrote:
+> On Tue, Jun 10, 2014 at 01:50:01PM -0400, Benjamin LaHaise wrote:
+> > On Tue, Jun 10, 2014 at 05:47:28AM +0200, Mike Galbraith wrote:
+> > > On Mon, 2014-06-09 at 10:08 +0800, Lai Jiangshan wrote: 
+> > > > Hi, rt-people
+> > > > 
+> > > > I don't think it is the correct direction.
+> > > > Softirq (including local_bh_disable()) in RT kernel should be preemptible.
+> > > 
+> > > How about the below then?
+> > > 
+> > > I was sorely tempted to post a tiny variant that dropped taking ctx_lock
+> > > in free_ioctx_users() entirely, as someone diddling with no reference
+> > > didn't make sense.  Cc Ben, he would know.
+> > 
+> > That should be okay...  Let's ask Kent to chime in on whether this looks 
+> > safe to him on the percpu ref front as well, since he's the one who wrote 
+> > this code.
 > 
-> Call Trace:
-> [e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
-> [e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
-> [e22d5ae0] [c060b9ec] __schedule+0x530/0x550
-> [e22d5bf0] [c060bacc] schedule+0x30/0xbc
-> [e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
-> [e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
-> [e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
-> [e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
-> [e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
-> [e22d5d90] [c0117284] __do_fault+0x38c/0x510
-> [e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
-> [e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
-> [e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
-> 
-> What happens:
-> 
-> - refill_stock() calls get_cpu_var() and thus disables preemption until
-> matching put_cpu_var() is called,
-> 
-> - then it calls drain_stock() -> res_counter_uncharge() ->
-> res_counter_uncharge_until()
-> 
-> - and here we have spin_lock(), which under RT can sleep. Thus we have 
-> sleeping with preemption disabled.
-> 
-> 
-> Any ideas how to fix?
+> Ok, finally got around to reading the whole thread - honestly, I would just punt
+> to workqueue to do the free_ioctx_users(). AFAICT that should be perfectly safe
+> and even aside from rt it would be good change so we're not cancelling an
+> arbitrary number of kiocbs from rcu callback context.
 
-The below should work.. though not as well as turning it off.
+I finally have some time to look at this patch in detail.  I'd rather do the 
+below variant that does what Kent suggested.  Mike, can you confirm that 
+this fixes the issue you reported?  It's on top of my current aio-next tree 
+at git://git.kvack.org/~bcrl/aio-next.git .  If that's okay, I'll queue it 
+up.  Does this bug fix need to end up in -stable kernels as well or would it 
+end up in the -rt tree?
 
-mm, memcg: make refill_stock()/consume_stock() use get_cpu_light()
+> Kind of a related change, it should be possible to just grab the entire list of
+> kiocbs with ctx_lock held (remove them all at once from ctx->active_reqs), then
+> cancel them without ctx_lock held.
 
-Nikita reported the following memcg scheduling while atomic bug:
+No, that is not safe.  Cancellation has to be done under ctx_lock.
 
-Call Trace:
-[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
-[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
-[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
-[e22d5bf0] [c060bacc] schedule+0x30/0xbc
-[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
-[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
-[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
-[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
-[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
-[e22d5d90] [c0117284] __do_fault+0x38c/0x510
-[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
-[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
-[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
+		-ben
+-- 
+"Thought is the essence of where you are now."
 
-What happens:
 
-   refill_stock()
-      get_cpu_var()
-      drain_stock()
-         res_counter_uncharge()
-            res_counter_uncharge_until()
-               spin_lock() <== boom
-
-Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
-
-Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- mm/memcontrol.c |   13 +++++++++----
- 1 file changed, 9 insertions(+), 4 deletions(-)
-
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2398,16 +2398,18 @@ static bool consume_stock(struct mem_cgr
- {
- 	struct memcg_stock_pcp *stock;
- 	bool ret = true;
-+	int cpu;
- 
- 	if (nr_pages > CHARGE_BATCH)
- 		return false;
- 
--	stock = &get_cpu_var(memcg_stock);
-+	cpu = get_cpu_light();
-+	stock = &per_cpu(memcg_stock, cpu);
- 	if (memcg == stock->cached && stock->nr_pages >= nr_pages)
- 		stock->nr_pages -= nr_pages;
- 	else /* need to call res_counter_charge */
- 		ret = false;
--	put_cpu_var(memcg_stock);
-+	put_cpu_light();
- 	return ret;
- }
- 
-@@ -2457,14 +2459,17 @@ static void __init memcg_stock_init(void
+diff --git a/fs/aio.c b/fs/aio.c
+index c1d8c48..0b038f2 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -526,9 +526,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
+  * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
+  * now it's safe to cancel any that need to be.
   */
- static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+-static void free_ioctx_users(struct percpu_ref *ref)
++static void free_ioctx_users_work(struct work_struct *work)
  {
--	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
-+	struct memcg_stock_pcp *stock;
-+	int cpu = get_cpu_light();
-+
-+	stock = &per_cpu(memcg_stock, cpu);
+-	struct kioctx *ctx = container_of(ref, struct kioctx, users);
++	struct kioctx *ctx = container_of(work, struct kioctx, free_work);
+ 	struct kiocb *req;
  
- 	if (stock->cached != memcg) { /* reset if necessary */
- 		drain_stock(stock);
- 		stock->cached = memcg;
- 	}
- 	stock->nr_pages += nr_pages;
--	put_cpu_var(memcg_stock);
-+	put_cpu_light();
+ 	spin_lock_irq(&ctx->ctx_lock);
+@@ -547,6 +547,18 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 	percpu_ref_put(&ctx->reqs);
  }
  
- /*
++static void free_ioctx_users(struct percpu_ref *ref)
++{
++	struct kioctx *ctx = container_of(ref, struct kioctx, users);
++#ifdef CONFIG_PREEMPT_RT_BAS
++	INIT_WORK(&ctx->free_work, free_ioctx_users_work);
++	schedule_work(&ctx->free_work);
++#else
++	free_ioctx_users_work(&ctx->free_work);
++#endif
++}
++
++
+ static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
+ {
+ 	unsigned i, new_nr;
