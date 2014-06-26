@@ -1,94 +1,134 @@
-From: Benjamin LaHaise <bcrl@kvack.org>
-Subject: Re: [RFC PATCH V2] rt/aio: fix rcu garbage collection might_sleep() splat
-Date: Thu, 26 Jun 2014 12:42:02 -0400
-Message-ID: <20140626164202.GA16643@kvack.org>
-References: <1402216538.31630.7.camel@marge.simpson.net> <5395172E.4010007@cn.fujitsu.com> <1402372048.5124.20.camel@marge.simpson.net> <20140610175001.GF27015@kvack.org> <20140612202602.GI10871@kmo-pixel> <20140625152445.GS23137@kvack.org> <1403768234.5948.14.camel@marge.simpson.net>
+From: Austin Schuh <austin@peloton-tech.com>
+Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
+Date: Thu, 26 Jun 2014 12:50:24 -0700
+Message-ID: <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
+References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
+ <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com> <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Kent Overstreet <kmo@daterainc.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: multipart/mixed; boundary=047d7b2e15df332bda04fcc28216
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Richard Weinberger <richard.weinberger@gmail.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1403768234.5948.14.camel@marge.simpson.net>
+In-Reply-To: <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jun 26, 2014 at 09:37:14AM +0200, Mike Galbraith wrote:
-> Hi Ben,
-> 
-> On Wed, 2014-06-25 at 11:24 -0400, Benjamin LaHaise wrote:
-> 
-> > I finally have some time to look at this patch in detail.  I'd rather do the 
-> > below variant that does what Kent suggested.  Mike, can you confirm that 
-> > this fixes the issue you reported?  It's on top of my current aio-next tree 
-> > at git://git.kvack.org/~bcrl/aio-next.git .  If that's okay, I'll queue it 
-> > up.  Does this bug fix need to end up in -stable kernels as well or would it 
-> > end up in the -rt tree?
-> 
-> It's an -rt specific problem, so presumably any fix would only go into
-> -rt trees until it manages to get merged.
-> 
-> I knew intervening change wasn't likely to fix the might_sleep() splat
-> up, but did the test anyway with fixed up CONFIG_PREEMPT_RT_BASE typo.
-> schedule_work() leads to an rtmutex, so -rt still has to ship that out
-> from under rcu_read_lock_sched().
+--047d7b2e15df332bda04fcc28216
+Content-Type: text/plain; charset=UTF-8
 
-So that doesn't fix it.  I think you should fix schedule_work(), because 
-that should be callable from any context.  Abusing RCU instead of using 
-schedule_work() is not the right way to fix this.
+On Wed, May 21, 2014 at 12:33 AM, Richard Weinberger
+<richard.weinberger@gmail.com> wrote:
+> CC'ing RT folks
+>
+> On Wed, May 21, 2014 at 8:23 AM, Austin Schuh <austin@peloton-tech.com> wrote:
+>> On Tue, May 13, 2014 at 7:29 PM, Austin Schuh <austin@peloton-tech.com> wrote:
+>>> Hi,
+>>>
+>>> I am observing a filesystem lockup with XFS on a CONFIG_PREEMPT_RT
+>>> patched kernel.  I have currently only triggered it using dpkg.  Dave
+>>> Chinner on the XFS mailing list suggested that it was a rt-kernel
+>>> workqueue issue as opposed to a XFS problem after looking at the
+>>> kernel messages.
 
-		-ben
+I've got a 100% reproducible test case that doesn't involve a
+filesystem.  I wrote a module that triggers the bug when the device is
+written to, making it easy to enable tracing during the event and
+capture everything.
 
-> marge:/usr/local/src/kernel/linux-3.14-rt # quilt applied|tail
-> patches/mm-memcg-make-refill_stock-use-get_cpu_light.patch
-> patches/printk-fix-lockdep-instrumentation-of-console_sem.patch
-> patches/aio-block-io_destroy-until-all-context-requests-are-completed.patch
-> patches/fs-aio-Remove-ctx-parameter-in-kiocb_cancel.patch
-> patches/aio-report-error-from-io_destroy-when-threads-race-in-io_destroy.patch
-> patches/aio-cleanup-flatten-kill_ioctx.patch
-> patches/aio-fix-aio-request-leak-when-events-are-reaped-by-userspace.patch
-> patches/aio-fix-kernel-memory-disclosure-in-io_getevents-introduced-in-v3.10.patch
-> patches/aio-change-exit_aio-to-load-mm-ioctx_table-once-and-avoid-rcu_read_lock.patch
-> patches/rt-aio-fix-rcu-garbage-collection-might_sleep-splat-ben.patch
-> 
-> [  191.057656] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:792
-> [  191.057672] in_atomic(): 1, irqs_disabled(): 0, pid: 22, name: rcuc/0
-> [  191.057674] 2 locks held by rcuc/0/22:
-> [  191.057684]  #0:  (rcu_callback){.+.+..}, at: [<ffffffff810ceb87>] rcu_cpu_kthread+0x2d7/0x840
-> [  191.057691]  #1:  (rcu_read_lock_sched){.+.+..}, at: [<ffffffff812e52f6>] percpu_ref_kill_rcu+0xa6/0x1c0
-> [  191.057694] Preemption disabled at:[<ffffffff810cebca>] rcu_cpu_kthread+0x31a/0x840
-> [  191.057695] 
-> [  191.057698] CPU: 0 PID: 22 Comm: rcuc/0 Tainted: GF       W    3.14.8-rt5 #47
-> [  191.057699] Hardware name: MEDIONPC MS-7502/MS-7502, BIOS 6.00 PG 12/26/2007
-> [  191.057704]  ffff88007c5d8000 ffff88007c5d7c98 ffffffff815696ed 0000000000000000
-> [  191.057708]  ffff88007c5d7cb8 ffffffff8108c3e5 ffff88007dc0e120 000000000000e120
-> [  191.057711]  ffff88007c5d7cd8 ffffffff8156f404 ffff88007dc0e120 ffff88007dc0e120
-> [  191.057712] Call Trace:
-> [  191.057716]  [<ffffffff815696ed>] dump_stack+0x4e/0x9c
-> [  191.057720]  [<ffffffff8108c3e5>] __might_sleep+0x105/0x180
-> [  191.057723]  [<ffffffff8156f404>] rt_spin_lock+0x24/0x70
-> [  191.057727]  [<ffffffff81078897>] queue_work_on+0x67/0x1a0
-> [  191.057731]  [<ffffffff81216fc2>] free_ioctx_users+0x72/0x80
-> [  191.057734]  [<ffffffff812e5404>] percpu_ref_kill_rcu+0x1b4/0x1c0
-> [  191.057737]  [<ffffffff812e52f6>] ? percpu_ref_kill_rcu+0xa6/0x1c0
-> [  191.057740]  [<ffffffff812e5250>] ? percpu_ref_kill_and_confirm+0x70/0x70
-> [  191.057742]  [<ffffffff810cebca>] rcu_cpu_kthread+0x31a/0x840
-> [  191.057745]  [<ffffffff810ceb87>] ? rcu_cpu_kthread+0x2d7/0x840
-> [  191.057749]  [<ffffffff8108a76d>] smpboot_thread_fn+0x1dd/0x340
-> [  191.057752]  [<ffffffff8156c45a>] ? schedule+0x2a/0xa0
-> [  191.057755]  [<ffffffff8108a590>] ? smpboot_register_percpu_thread+0x100/0x100
-> [  191.057758]  [<ffffffff81081ca6>] kthread+0xd6/0xf0
-> [  191.057761]  [<ffffffff81081bd0>] ? __kthread_parkme+0x70/0x70
-> [  191.057764]  [<ffffffff815780bc>] ret_from_fork+0x7c/0xb0
-> [  191.057767]  [<ffffffff81081bd0>] ? __kthread_parkme+0x70/0x70
-> 
+It looks like rw_semaphores don't trigger wq_worker_sleeping to run
+when work goes to sleep on a rw_semaphore.  This only happens with the
+RT patches, not with the mainline kernel.  I'm foreseeing a second
+deadlock/bug coming into play shortly.  If a task holding the work
+pool spinlock gets preempted, and we need to schedule more work from
+another worker thread which was just blocked by a mutex, we'll then
+end up trying to go to sleep on 2 locks at once.
 
--- 
-"Thought is the essence of where you are now."
+That is getting a bit deep into the scheduler for me...  Any
+suggestions on how to fix it?
+
+Austin
+
+--047d7b2e15df332bda04fcc28216
+Content-Type: text/x-csrc; charset=US-ASCII; name="killer_module.c"
+Content-Disposition: attachment; filename="killer_module.c"
+Content-Transfer-Encoding: base64
+X-Attachment-Id: f_hwwg8kj90
+
+I2luY2x1ZGUgPGxpbnV4L21vZHVsZS5oPgojaW5jbHVkZSA8bGludXgva2VybmVsLmg+CiNpbmNs
+dWRlIDxsaW51eC9pbml0Lmg+CiNpbmNsdWRlIDxsaW51eC9mcy5oPgojaW5jbHVkZSA8YXNtL3Vh
+Y2Nlc3MuaD4KI2luY2x1ZGUgPGxpbnV4L3NlbWFwaG9yZS5oPgoKc3RhdGljIGludCBkZXZpY2Vf
+b3BlbihzdHJ1Y3QgaW5vZGUgKiwgc3RydWN0IGZpbGUgKik7CnN0YXRpYyBpbnQgZGV2aWNlX3Jl
+bGVhc2Uoc3RydWN0IGlub2RlICosIHN0cnVjdCBmaWxlICopOwpzdGF0aWMgc3NpemVfdCBkZXZp
+Y2VfcmVhZChzdHJ1Y3QgZmlsZSAqLCBjaGFyICosIHNpemVfdCwgbG9mZl90ICopOwpzdGF0aWMg
+c3NpemVfdCBkZXZpY2Vfd3JpdGUoc3RydWN0IGZpbGUgKiwgY29uc3QgY2hhciAqLCBzaXplX3Qs
+IGxvZmZfdCAqKTsKCi8vIERldiBuYW1lIGFzIGl0IGFwcGVhcnMgaW4gL3Byb2MvZGV2aWNlcwoj
+ZGVmaW5lIERFVklDRV9OQU1FICJhc2NodWgiCgovLyBNYWpvciBudW1iZXIgYXNzaWduZWQgdG8g
+b3VyIGRldmljZSBkcml2ZXIKc3RhdGljIGludCBtYWpvcjsKc3RhdGljIHN0cnVjdCB3b3JrcXVl
+dWVfc3RydWN0ICpsb2NrdXBfd3ExOwpzdGF0aWMgc3RydWN0IHdvcmtxdWV1ZV9zdHJ1Y3QgKmxv
+Y2t1cF93cTI7CgpzdGF0aWMgc3RydWN0IGZpbGVfb3BlcmF0aW9ucyBmb3BzID0gewogIC5yZWFk
+ID0gZGV2aWNlX3JlYWQsCiAgLndyaXRlID0gZGV2aWNlX3dyaXRlLAogIC5vcGVuID0gZGV2aWNl
+X29wZW4sCiAgLnJlbGVhc2UgPSBkZXZpY2VfcmVsZWFzZQp9OwoKc3RhdGljIGludCBfX2luaXQg
+aW5pdF9raWxsZXJfbW9kdWxlKHZvaWQpIHsKCiAgbG9ja3VwX3dxMSA9IGFsbG9jX3dvcmtxdWV1
+ZSgibG9ja3VwX3dxMSIsIFdRX01FTV9SRUNMQUlNLCAwKTsKICBpZiAoIWxvY2t1cF93cTEpIHJl
+dHVybiAtRU5PTUVNOwoKICBsb2NrdXBfd3EyID0gYWxsb2Nfd29ya3F1ZXVlKCJsb2NrdXBfd3Ey
+IiwgV1FfTUVNX1JFQ0xBSU0sIDApOwogIGlmICghbG9ja3VwX3dxMikgewogICAgZGVzdHJveV93
+b3JrcXVldWUobG9ja3VwX3dxMSk7CiAgICByZXR1cm4gLUVOT01FTTsKICB9CgogIG1ham9yID0g
+cmVnaXN0ZXJfY2hyZGV2KDAsIERFVklDRV9OQU1FLCAmZm9wcyk7CiAgaWYgKG1ham9yIDwgMCkg
+ewogICAgcHJpbnRrKEtFUk5fQUxFUlQgIlJlZ2lzdGVyaW5nIGNoYXIgZGV2aWNlIGZhaWxlZCB3
+aXRoICVkXG4iLCBtYWpvcik7CiAgICBkZXN0cm95X3dvcmtxdWV1ZShsb2NrdXBfd3ExKTsKICAg
+IGRlc3Ryb3lfd29ya3F1ZXVlKGxvY2t1cF93cTIpOwoKICAgIHJldHVybiBtYWpvcjsKICB9Cgog
+IHByaW50ayhLRVJOX0lORk8gIidta25vZCAvZGV2LyVzIGMgJWQgMCcuXG4iLCBERVZJQ0VfTkFN
+RSwgbWFqb3IpOwoKICAvLyBBIG5vbiAwIHJldHVybiBtZWFucyBpbml0X21vZHVsZSBmYWlsZWQ7
+IG1vZHVsZSBjYW4ndCBiZSBsb2FkZWQuCiAgcmV0dXJuIDA7Cn0KCi8vIENhbGxlZCB3aGVuIGEg
+cHJvY2VzcyB0cmllcyB0byBvcGVuIHRoZSBkZXZpY2UgZmlsZS4Kc3RhdGljIGludCBkZXZpY2Vf
+b3BlbihzdHJ1Y3QgaW5vZGUgKmlub2RlLCBzdHJ1Y3QgZmlsZSAqZmlsZSkgewogIHRyeV9tb2R1
+bGVfZ2V0KFRISVNfTU9EVUxFKTsKICByZXR1cm4gMDsKfQoKLy8gQ2FsbGVkIHdoZW4gYSBwcm9j
+ZXNzIGNsb3NlcyB0aGUgZGV2aWNlIGZpbGUuCnN0YXRpYyBpbnQgZGV2aWNlX3JlbGVhc2Uoc3Ry
+dWN0IGlub2RlICppbm9kZSwgc3RydWN0IGZpbGUgKmZpbGUpIHsKICAvLyBEZWNyZW1lbnQgdGhl
+IHVzYWdlIGNvdW50LCBvciBlbHNlIG9uY2UgeW91IG9wZW5lZCB0aGUgZmlsZSwgeW91J2xsIG5l
+dmVyCiAgLy8gZ2V0IGdldCByaWQgb2YgdGhlIG1vZHVsZS4KICBtb2R1bGVfcHV0KFRISVNfTU9E
+VUxFKTsKCiAgcmV0dXJuIDA7Cn0KCnN0YXRpYyBzc2l6ZV90IGRldmljZV9yZWFkKHN0cnVjdCBm
+aWxlICpmaWxwLCBjaGFyICpidWZmZXIsIHNpemVfdCBsZW5ndGgsCiAgICAgICAgICAgICAgICAg
+ICAgICAgICAgIGxvZmZfdCAqb2Zmc2V0KSB7CiAgcmV0dXJuIDA7Cn0KCiNpZiAwCgojZGVmaW5l
+IFNFTV9JTklUKHNlbSkgc2VtYV9pbml0KHNlbSwgMSkKI2RlZmluZSBTRU1fVFlQRSBzdHJ1Y3Qg
+c2VtYXBob3JlCiNkZWZpbmUgU0VNX0RPV04oc2VtKSBkb3duKHNlbSkKI2RlZmluZSBTRU1fVVAo
+c2VtKSB1cChzZW0pCgojZWxzZQoKI2RlZmluZSBTRU1fSU5JVChzZW0pIGluaXRfcndzZW0oc2Vt
+KQojZGVmaW5lIFNFTV9UWVBFIHN0cnVjdCByd19zZW1hcGhvcmUKI2RlZmluZSBTRU1fRE9XTihz
+ZW0pIGRvd25fd3JpdGVfbmVzdGVkKHNlbSwgMCkKI2RlZmluZSBTRU1fVVAoc2VtKSB1cF93cml0
+ZShzZW0pCgojZW5kaWYKCnN0cnVjdCBteXdvcmsgewogIHN0cnVjdCB3b3JrX3N0cnVjdCB3b3Jr
+OwogIGludCBpbmRleDsKICBTRU1fVFlQRSAqc2VtOwp9OwoKc3RhdGljIHZvaWQgd29yazEoc3Ry
+dWN0IHdvcmtfc3RydWN0ICp3b3JrKSB7CiAgc3RydWN0IG15d29yayAqbXlfd29yayA9IGNvbnRh
+aW5lcl9vZih3b3JrLCBzdHJ1Y3QgbXl3b3JrLCB3b3JrKTsKICB0cmFjZV9wcmludGsoIndvcmsx
+IENhbGxlZCB3aXRoIGluZGV4ICVkXG4iLCBteV93b3JrLT5pbmRleCk7Cn0KCnN0YXRpYyB2b2lk
+IHdvcmsyKHN0cnVjdCB3b3JrX3N0cnVjdCAqd29yaykgewogIHN0cnVjdCBteXdvcmsgKm15X3dv
+cmsgPSBjb250YWluZXJfb2Yod29yaywgc3RydWN0IG15d29yaywgd29yayk7CiAgdHJhY2VfcHJp
+bnRrKCJ3b3JrMiBDYWxsZWQgd2l0aCBpbmRleCAlZFxuIiwgbXlfd29yay0+aW5kZXgpOwogIFNF
+TV9ET1dOKG15X3dvcmstPnNlbSk7CiAgU0VNX1VQKG15X3dvcmstPnNlbSk7CiAgdHJhY2VfcHJp
+bnRrKCJ3b3JrMiBGaW5pc2hlZCB3aXRoIGluZGV4ICVkXG4iLCBteV93b3JrLT5pbmRleCk7Cn0K
+CgpzdGF0aWMgc3NpemVfdCBkZXZpY2Vfd3JpdGUoc3RydWN0IGZpbGUgKmZpbHAsIGNvbnN0IGNo
+YXIgKmJ1ZmYsIHNpemVfdCBsZW4sCiAgICAgICAgICAgICAgICAgICAgICAgICAgICBsb2ZmX3Qg
+Km9mZikgewogIFNFTV9UWVBFIHdyaXRlX3NlbTsKICBTRU1fSU5JVCgmd3JpdGVfc2VtKTsKICAK
+ICBzdHJ1Y3QgbXl3b3JrIG15X3dvcmsxOwogIHN0cnVjdCBteXdvcmsgbXlfd29yazI7CiAgdHJh
+Y2VfcHJpbnRrKCJsb2NrdXBfd3ExICVwIGxvY2t1cF93cTIgJXBcbiIsIGxvY2t1cF93cTEsIGxv
+Y2t1cF93cTIpOwoKICB0cmFjZV9wcmludGsoIkdvdCBhIHdyaXRlXG4iKTsKCiAgU0VNX0RPV04o
+JndyaXRlX3NlbSk7CiAgbXlfd29yazEuaW5kZXggPSBsZW47CiAgbXlfd29yazEuc2VtID0gJndy
+aXRlX3NlbTsKICBJTklUX1dPUktfT05TVEFDSygmbXlfd29yazEud29yaywgd29yazEpOwoKICBt
+eV93b3JrMi5pbmRleCA9IGxlbjsKICBteV93b3JrMi5zZW0gPSAmd3JpdGVfc2VtOwogIElOSVRf
+V09SS19PTlNUQUNLKCZteV93b3JrMi53b3JrLCB3b3JrMik7CgogIHF1ZXVlX3dvcmsobG9ja3Vw
+X3dxMiwgJm15X3dvcmsyLndvcmspOwoKICBxdWV1ZV93b3JrKGxvY2t1cF93cTEsICZteV93b3Jr
+MS53b3JrKTsKICBmbHVzaF93b3JrKCZteV93b3JrMS53b3JrKTsKICBkZXN0cm95X3dvcmtfb25f
+c3RhY2soJm15X3dvcmsxLndvcmspOwoKICBTRU1fVVAoJndyaXRlX3NlbSk7CgogIGZsdXNoX3dv
+cmsoJm15X3dvcmsyLndvcmspOwogIGRlc3Ryb3lfd29ya19vbl9zdGFjaygmbXlfd29yazIud29y
+ayk7CiAgdHJhY2VfcHJpbnRrKCJXcml0ZSBkb25lXG4iKTsKICB0cmFjaW5nX29mZigpOwoKICBy
+ZXR1cm4gbGVuOwp9CgpzdGF0aWMgdm9pZCBfX2V4aXQgY2xlYW51cF9raWxsZXJfbW9kdWxlKHZv
+aWQpIHsKICBwcmludGsoS0VSTl9JTkZPICJHb29kYnllIHdvcmxkIDEuXG4iKTsKICB1bnJlZ2lz
+dGVyX2NocmRldihtYWpvciwgREVWSUNFX05BTUUpOwoJZGVzdHJveV93b3JrcXVldWUobG9ja3Vw
+X3dxMSk7CglkZXN0cm95X3dvcmtxdWV1ZShsb2NrdXBfd3EyKTsKfQoKbW9kdWxlX2luaXQoaW5p
+dF9raWxsZXJfbW9kdWxlKTsKbW9kdWxlX2V4aXQoY2xlYW51cF9raWxsZXJfbW9kdWxlKTsKCk1P
+RFVMRV9MSUNFTlNFKCJHUEwiKTsKTU9EVUxFX0FVVEhPUigiQXVzdGluIFNjaHVoIDxhdXN0aW5A
+cGVsb3Rvbi10ZWNoLmNvbT4iKTsKTU9EVUxFX0RFU0NSSVBUSU9OKCJUcmlnZ2VycyBhIHdvcmtx
+dWV1ZSBidWcgb24gd3JpdGUuIik7Cg==
+--047d7b2e15df332bda04fcc28216--
