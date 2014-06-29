@@ -1,53 +1,67 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Sat, 28 Jun 2014 09:11:18 +0200
-Message-ID: <1403939478.5930.30.camel@marge.simpson.net>
-References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
-	 <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
-	 <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
-	 <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
-	 <alpine.DEB.2.10.1406270027300.5170@nanos>
-	 <CANGgnMa+qtgJ3wwg_h5Rynw5vEvZpQZ6PvaUfXNQ8+Y3Yu5U0g@mail.gmail.com>
-	 <1403873856.5827.56.camel@marge.simpson.net>
-	 <20140627100157.6b0143a5@gandalf.local.home>
-	 <1403890493.5830.33.camel@marge.simpson.net>
-	 <20140627135415.7246e87e@gandalf.local.home>
-	 <1403892474.5830.41.camel@marge.simpson.net>
-	 <20140627141903.16817c28@gandalf.local.home>
-	 <CANGgnMZrx1s5AomG-L_F74215RE1uJOekTjYmLX0voG4NgakTg@mail.gmail.com>
-	 <1403926333.5113.12.camel@marge.simpson.net>
-	 <CANGgnMbJ9f4gSz0HbtnCLosYHKyfXwhMt-svUQbBe_d9bv2LGQ@mail.gmail.com>
+From: Raz <raziebe@gmail.com>
+Subject: hpet0 versus hpet2
+Date: Sun, 29 Jun 2014 15:49:31 +0300
+Message-ID: <CAPB=Z-q3HyP7W3Env8m=VELPMfBhRhAQwmfPyT3G9_9PQhFW2w@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Richard Weinberger <richard.weinberger@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Austin Schuh <austin@peloton-tech.com>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f176.google.com ([209.85.212.176]:47760 "EHLO
-	mail-wi0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751001AbaF1HLW (ORCPT
+Received: from mail-ob0-f178.google.com ([209.85.214.178]:49084 "EHLO
+	mail-ob0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752600AbaF2Mtw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 28 Jun 2014 03:11:22 -0400
-In-Reply-To: <CANGgnMbJ9f4gSz0HbtnCLosYHKyfXwhMt-svUQbBe_d9bv2LGQ@mail.gmail.com>
+	Sun, 29 Jun 2014 08:49:52 -0400
+Received: by mail-ob0-f178.google.com with SMTP id wn1so7574983obc.37
+        for <linux-rt-users@vger.kernel.org>; Sun, 29 Jun 2014 05:49:51 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2014-06-27 at 23:20 -0700, Austin Schuh wrote:
+Hey Rt folks
 
-> For workqueues, as long as the helper doesn't block on a lock which
-> requires the work queue to be freed up, it will eventually become
-> unblocked and make progress.  The helper _should_ only need the pool
-> lock, which will wake the helper back up when it is available again.
-> Nothing should go to sleep in an un-recoverable way with the work pool
-> lock held.
+I performed a benchmark that compares the jitter of hpet2 to hpet0.
+hpet0 is reserved to the kernel use ( hpet_reserve_timer(&hd, 0).
+and hd.hd_irq[0] = HPET_LEGACY_8254; in arch/x86/kernel/hpet.c).
+I removed these two lines.
+The bellow is a histogram compares the default hpet2 to hpet0 in atom D525.
+The test performed is a simple udp sender, it sends a single udp
+packet each 1ms interval.
+Time stamping were made by Beckhoff ET2000 ,so that the timestamps
+taken by a reliable and accurate tool.
+Question is whether it is possible to push a new kernel boot command
+line option that gives
+the user hpet0 ?
 
-Well, Thomas killed taking a lock from within the core of a lock, so
-that wart shrank back to microscopic.  Applying that same ointment to
-the plug puller gizmo and schedule_work() would be most excellent.
+hpet0
+-50    0
+-40    0
+-20    2
+-10    14
+-5    143
+-1    3992
+1    95217
+5    544
+10    74
+20    14
+30    0
+40    0
+50    0
+More    0
 
--Mike
 
+hpet2
+
+Bin    Frequency
+-50    1
+-40    0
+-20    0
+-10    0
+-5    0
+-1    1
+1    18
+5    71
+10    854
+20    93098
+30    237
+40    1069
+50    0
+More    0
