@@ -1,67 +1,56 @@
-From: Raz <raziebe@gmail.com>
-Subject: hpet0 versus hpet2
-Date: Sun, 29 Jun 2014 15:49:31 +0300
-Message-ID: <CAPB=Z-q3HyP7W3Env8m=VELPMfBhRhAQwmfPyT3G9_9PQhFW2w@mail.gmail.com>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+ [was SCHED_DEADLINE hands-on workshop]
+Date: Mon, 30 Jun 2014 10:16:24 +0200
+Message-ID: <20140630101624.154c662001f912b01c54bf5b@gmail.com>
+References: <20140609095503.41a80ead8450dcf868e5f989@gmail.com>
+	<20140625210840.e2541c23418f6a44c026503d@gmail.com>
+	<CAH9NwWcYsQtijKwX0oUy2MCWDhd9PbCGSu0Guy6LFR_dBU6HWw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Christian Gmeiner <christian.gmeiner@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f178.google.com ([209.85.214.178]:49084 "EHLO
-	mail-ob0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752600AbaF2Mtw (ORCPT
+Received: from mail-wg0-f50.google.com ([74.125.82.50]:42898 "EHLO
+	mail-wg0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754642AbaF3IQA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 29 Jun 2014 08:49:52 -0400
-Received: by mail-ob0-f178.google.com with SMTP id wn1so7574983obc.37
-        for <linux-rt-users@vger.kernel.org>; Sun, 29 Jun 2014 05:49:51 -0700 (PDT)
+	Mon, 30 Jun 2014 04:16:00 -0400
+Received: by mail-wg0-f50.google.com with SMTP id m15so7544906wgh.33
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Jun 2014 01:15:58 -0700 (PDT)
+In-Reply-To: <CAH9NwWcYsQtijKwX0oUy2MCWDhd9PbCGSu0Guy6LFR_dBU6HWw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey Rt folks
+On Thu, 26 Jun 2014 08:30:45 +0200
+Christian Gmeiner <christian.gmeiner@gmail.com> wrote:
 
-I performed a benchmark that compares the jitter of hpet2 to hpet0.
-hpet0 is reserved to the kernel use ( hpet_reserve_timer(&hd, 0).
-and hd.hd_irq[0] = HPET_LEGACY_8254; in arch/x86/kernel/hpet.c).
-I removed these two lines.
-The bellow is a histogram compares the default hpet2 to hpet0 in atom D525.
-The test performed is a simple udp sender, it sends a single udp
-packet each 1ms interval.
-Time stamping were made by Beckhoff ET2000 ,so that the timestamps
-taken by a reliable and accurate tool.
-Question is whether it is possible to push a new kernel boot command
-line option that gives
-the user hpet0 ?
+> Hi
+> 
+> > On Mon, 9 Jun 2014 09:55:03 +0200
+> > Juri Lelli <juri.lelli@gmail.com> wrote:
+> >
+> >> ----------------------------------------------------------------------
+> >>
+> >>    Workshop on Real-Time Scheduling in the Linux Kernel (RTS-LIKE)
+> >>                          June 26-27, 2014
+> >>                     Scuola Superiore Sant'Anna
+> >>                            Pisa, Italy
+> >>
+> >>          ***** Registration deadline June 19, 2014 *****
+> >>
+> >> ----------------------------------------------------------------------
+> >>   Web site: http://retis.sssup.it/rts-like/
+> >> ----------------------------------------------------------------------
+> 
+> Nice! Will the streamed talks be available on YouTube after the
+> workshop for later watching?
+>
 
-hpet0
--50    0
--40    0
--20    2
--10    14
--5    143
--1    3992
-1    95217
-5    544
-10    74
-20    14
-30    0
-40    0
-50    0
-More    0
+Yes. They are on YouTube. Links on the workshop program page:
+http://retis.sssup.it/rts-like/program.html
 
+Thanks,
 
-hpet2
-
-Bin    Frequency
--50    1
--40    0
--20    0
--10    0
--5    0
--1    1
-1    18
-5    71
-10    854
-20    93098
-30    237
-40    1069
-50    0
-More    0
+- Juri
