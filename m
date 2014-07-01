@@ -1,69 +1,38 @@
-From: Austin Schuh <austin@peloton-tech.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Mon, 30 Jun 2014 20:01:46 -0700
-Message-ID: <CANGgnMZ8qemTgzoiq96=YvTnz-h945b8zSw1VtmDMSrbY3kcUg@mail.gmail.com>
-References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
- <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
- <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
- <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
- <alpine.DEB.2.10.1406270027300.5170@nanos> <CANGgnMa+qtgJ3wwg_h5Rynw5vEvZpQZ6PvaUfXNQ8+Y3Yu5U0g@mail.gmail.com>
- <alpine.DEB.2.10.1406271249510.5170@nanos>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: 3.14.10 patch falied
+Date: Tue, 01 Jul 2014 16:23:06 +0400
+Message-ID: <53B2A82A.3020003@pavlinux.ru>
+References: <20140618201355.3f8baecb@gandalf.local.home>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Richard Weinberger <richard.weinberger@gmail.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.10.1406271249510.5170@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from imp02.mtu.ru ([62.5.255.19]:33894 "EHLO imp02.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757061AbaGAMZ3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 1 Jul 2014 08:25:29 -0400
+In-Reply-To: <20140618201355.3f8baecb@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jun 27, 2014 at 7:24 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
-> Completely untested patch below.
+19.06.2014 04:13, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
 
-By chance, I found this in my boot logs.  I'll do some more startup
-testing tomorrow.
 
-Jun 30 19:54:40 vpc5 kernel: [    0.670955] ------------[ cut here ]------------
-Jun 30 19:54:40 vpc5 kernel: [    0.670962] WARNING: CPU: 0 PID: 4 at
-kernel/workqueue.c:1604 worker_enter_idle+0x65/0x16b()
-Jun 30 19:54:40 vpc5 kernel: [    0.670970] Modules linked in:
-Jun 30 19:54:40 vpc5 kernel: [    0.670973] CPU: 0 PID: 4 Comm:
-kworker/0:0 Not tainted 3.14.3-rt4abs+ #8
-Jun 30 19:54:40 vpc5 kernel: [    0.670974] Hardware name: CompuLab
-Intense-PC/Intense-PC, BIOS CR_2.2.0.377 X64 04/10/2013
-Jun 30 19:54:40 vpc5 kernel: [    0.670983]  0000000000000009
-ffff88040ce75de8 ffffffff81510faf 0000000000000002
-Jun 30 19:54:40 vpc5 kernel: [    0.670985]  0000000000000000
-ffff88040ce75e28 ffffffff81042085 0000000000000001
-Jun 30 19:54:40 vpc5 kernel: [    0.670987]  ffffffff81057a60
-ffff88042d406900 ffff88042da63fc0 ffff88042da64030
-Jun 30 19:54:40 vpc5 kernel: [    0.670988] Call Trace:
-Jun 30 19:54:40 vpc5 kernel: [    0.670995]  [<ffffffff81510faf>]
-dump_stack+0x4f/0x7c
-Jun 30 19:54:40 vpc5 kernel: [    0.670999]  [<ffffffff81042085>]
-warn_slowpath_common+0x81/0x9c
-Jun 30 19:54:40 vpc5 kernel: [    0.671002]  [<ffffffff81057a60>] ?
-worker_enter_idle+0x65/0x16b
-Jun 30 19:54:40 vpc5 kernel: [    0.671005]  [<ffffffff810420ba>]
-warn_slowpath_null+0x1a/0x1c
-Jun 30 19:54:40 vpc5 kernel: [    0.671007]  [<ffffffff81057a60>]
-worker_enter_idle+0x65/0x16b
-Jun 30 19:54:40 vpc5 kernel: [    0.671010]  [<ffffffff8105a0a9>]
-worker_thread+0x1b3/0x22b
-Jun 30 19:54:40 vpc5 kernel: [    0.671013]  [<ffffffff81059ef6>] ?
-rescuer_thread+0x293/0x293
-Jun 30 19:54:40 vpc5 kernel: [    0.671015]  [<ffffffff81059ef6>] ?
-rescuer_thread+0x293/0x293
-Jun 30 19:54:40 vpc5 kernel: [    0.671018]  [<ffffffff8105f7ab>]
-kthread+0xdc/0xe4
-Jun 30 19:54:40 vpc5 kernel: [    0.671022]  [<ffffffff8105f6cf>] ?
-flush_kthread_worker+0xe1/0xe1
-Jun 30 19:54:40 vpc5 kernel: [    0.671025]  [<ffffffff8151586c>]
-ret_from_fork+0x7c/0xb0
-Jun 30 19:54:40 vpc5 kernel: [    0.671027]  [<ffffffff8105f6cf>] ?
-flush_kthread_worker+0xe1/0xe1
-Jun 30 19:54:40 vpc5 kernel: [    0.671029] ---[ end trace 0000000000000001 ]---
+5 out of 22 hunks FAILED -- saving rejects to file kernel/locking/rtmut=
+ex.c.rej
+
+diffs:=20
+https://www.kernel.org/diff/diffview.cgi?file=3D%2Fpub%2Flinux%2Fkernel=
+%2Fv3.x%2Fincr%2Fpatch-3.14.9-10.xz;z=3D104
+
+--=20
+
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
