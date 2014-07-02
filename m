@@ -1,121 +1,70 @@
-From: Austin Schuh <austin@peloton-tech.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Tue, 1 Jul 2014 12:32:50 -0700
-Message-ID: <CANGgnMZBXbBnr1J+HDtDTo3TD-KgjerLA7BH9x6tmsdDfrNWbA@mail.gmail.com>
-References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
- <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
- <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
- <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
- <alpine.DEB.2.10.1406270027300.5170@nanos> <CANGgnMa+qtgJ3wwg_h5Rynw5vEvZpQZ6PvaUfXNQ8+Y3Yu5U0g@mail.gmail.com>
- <alpine.DEB.2.10.1406271249510.5170@nanos> <CANGgnMZ8qemTgzoiq96=YvTnz-h945b8zSw1VtmDMSrbY3kcUg@mail.gmail.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Richard Weinberger <richard.weinberger@gmail.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ig0-f180.google.com ([209.85.213.180]:41952 "EHLO
-	mail-ig0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752667AbaGATdM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Jul 2014 15:33:12 -0400
-Received: by mail-ig0-f180.google.com with SMTP id h18so5815650igc.13
-        for <linux-rt-users@vger.kernel.org>; Tue, 01 Jul 2014 12:33:10 -0700 (PDT)
-In-Reply-To: <CANGgnMZ8qemTgzoiq96=YvTnz-h945b8zSw1VtmDMSrbY3kcUg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 0/4] Linux 3.12.22-rt35-rc1
+Date: Wed, 02 Jul 2014 13:14:14 -0400
+Message-ID: <20140702171414.482562827@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jun 30, 2014 at 8:01 PM, Austin Schuh <austin@peloton-tech.com> wrote:
-> On Fri, Jun 27, 2014 at 7:24 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
->> Completely untested patch below.
->
-> By chance, I found this in my boot logs.  I'll do some more startup
-> testing tomorrow.
->
-> Jun 30 19:54:40 vpc5 kernel: [    0.670955] ------------[ cut here ]------------
-> Jun 30 19:54:40 vpc5 kernel: [    0.670962] WARNING: CPU: 0 PID: 4 at
-> kernel/workqueue.c:1604 worker_enter_idle+0x65/0x16b()
-> Jun 30 19:54:40 vpc5 kernel: [    0.670970] Modules linked in:
-> Jun 30 19:54:40 vpc5 kernel: [    0.670973] CPU: 0 PID: 4 Comm:
-> kworker/0:0 Not tainted 3.14.3-rt4abs+ #8
-> Jun 30 19:54:40 vpc5 kernel: [    0.670974] Hardware name: CompuLab
-> Intense-PC/Intense-PC, BIOS CR_2.2.0.377 X64 04/10/2013
-> Jun 30 19:54:40 vpc5 kernel: [    0.670983]  0000000000000009
-> ffff88040ce75de8 ffffffff81510faf 0000000000000002
-> Jun 30 19:54:40 vpc5 kernel: [    0.670985]  0000000000000000
-> ffff88040ce75e28 ffffffff81042085 0000000000000001
-> Jun 30 19:54:40 vpc5 kernel: [    0.670987]  ffffffff81057a60
-> ffff88042d406900 ffff88042da63fc0 ffff88042da64030
-> Jun 30 19:54:40 vpc5 kernel: [    0.670988] Call Trace:
-> Jun 30 19:54:40 vpc5 kernel: [    0.670995]  [<ffffffff81510faf>]
-> dump_stack+0x4f/0x7c
-> Jun 30 19:54:40 vpc5 kernel: [    0.670999]  [<ffffffff81042085>]
-> warn_slowpath_common+0x81/0x9c
-> Jun 30 19:54:40 vpc5 kernel: [    0.671002]  [<ffffffff81057a60>] ?
-> worker_enter_idle+0x65/0x16b
-> Jun 30 19:54:40 vpc5 kernel: [    0.671005]  [<ffffffff810420ba>]
-> warn_slowpath_null+0x1a/0x1c
-> Jun 30 19:54:40 vpc5 kernel: [    0.671007]  [<ffffffff81057a60>]
-> worker_enter_idle+0x65/0x16b
-> Jun 30 19:54:40 vpc5 kernel: [    0.671010]  [<ffffffff8105a0a9>]
-> worker_thread+0x1b3/0x22b
-> Jun 30 19:54:40 vpc5 kernel: [    0.671013]  [<ffffffff81059ef6>] ?
-> rescuer_thread+0x293/0x293
-> Jun 30 19:54:40 vpc5 kernel: [    0.671015]  [<ffffffff81059ef6>] ?
-> rescuer_thread+0x293/0x293
-> Jun 30 19:54:40 vpc5 kernel: [    0.671018]  [<ffffffff8105f7ab>]
-> kthread+0xdc/0xe4
-> Jun 30 19:54:40 vpc5 kernel: [    0.671022]  [<ffffffff8105f6cf>] ?
-> flush_kthread_worker+0xe1/0xe1
-> Jun 30 19:54:40 vpc5 kernel: [    0.671025]  [<ffffffff8151586c>]
-> ret_from_fork+0x7c/0xb0
-> Jun 30 19:54:40 vpc5 kernel: [    0.671027]  [<ffffffff8105f6cf>] ?
-> flush_kthread_worker+0xe1/0xe1
-> Jun 30 19:54:40 vpc5 kernel: [    0.671029] ---[ end trace 0000000000000001 ]---
 
-Bug in my extra locking...  Sorry for the noise.  The second diff is a
-cleaner way of destroying the workers.
+Dear RT Folks,
 
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 8900da8..590cc26 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -1567,10 +1602,16 @@ static void worker_enter_idle(struct worker *worker)
- {
-        struct worker_pool *pool = worker->pool;
+This is the RT stable review cycle of patch 3.12.22-rt35-rc1.
 
--       if (WARN_ON_ONCE(worker->flags & WORKER_IDLE) ||
--           WARN_ON_ONCE(!list_empty(&worker->entry) &&
--                        (worker->hentry.next || worker->hentry.pprev)))
-+       if (WARN_ON_ONCE(worker->flags & WORKER_IDLE)) return;
-+
-+       rt_lock_idle_list(pool);
-+       if (WARN_ON_ONCE(!list_empty(&worker->entry) &&
-+                        (worker->hentry.next || worker->hentry.pprev))) {
-+               rt_unlock_idle_list(pool);
-                return;
-+       } else {
-+               rt_unlock_idle_list(pool);
-+       }
+Please scream at me if I messed something up. Please test the patches too.
 
-        /* can't use worker_set_flags(), also called from start_worker() */
-        worker->flags |= WORKER_IDLE;
-@@ -3584,8 +3637,14 @@ static void put_unbound_pool(struct worker_pool *pool)
-        mutex_lock(&pool->manager_mutex);
-        spin_lock_irq(&pool->lock);
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
--       while ((worker = first_worker(pool)))
-+       rt_lock_idle_list(pool);
-+       while ((worker = first_worker(pool))) {
-+               rt_unlock_idle_list(pool);
-                destroy_worker(worker);
-+               rt_lock_idle_list(pool);
-+       }
-+       rt_unlock_idle_list(pool);
-+
-        WARN_ON(pool->nr_workers || pool->nr_idle);
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-        spin_unlock_irq(&pool->lock);
+If all goes well, this patch will be converted to the next main release
+on 7/7/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.12.22-rt35-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.22.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.22-rt35-rc1.patch.xz
+
+You can also build from 3.12.22-rt34 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.22-rt34-rt35-rc1.patch.xz
+
+
+Changes from 3.12.22-rt34:
+
+---
+
+
+Ben Hutchings (1):
+      Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
+
+Sebastian Andrzej Siewior (2):
+      Revert "migrate_disable pushd down in atomic_dec_and_spin_lock"
+      timer: do not spin_trylock() on UP
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.12.22-rt35-rc1
+
+----
+ kernel/hrtimer.c | 10 +++++-----
+ kernel/rtmutex.c |  6 +++---
+ kernel/timer.c   | 13 +++++++++++++
+ localversion-rt  |  2 +-
+ 4 files changed, 22 insertions(+), 9 deletions(-)
