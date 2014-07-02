@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/3] Linux 3.10.44-rt46-rc1
-Date: Wed, 02 Jul 2014 15:52:23 -0400
-Message-ID: <20140702195231.892301254@goodmis.org>
-References: <20140702195220.872585955@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH RT 0/3] Linux 3.10.44-rt46-rc1
+Date: Wed, 02 Jul 2014 15:52:20 -0400
+Message-ID: <20140702195220.872585955@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,27 +10,59 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-Linux-3.10.44-rt46-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.44-rt46-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+This is the RT stable review cycle of patch 3.10.44-rt46-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/7/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.44-rt46-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.44.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.44-rt46-rc1.patch.xz
+
+You can also build from 3.10.44-rt45 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.44-rt45-rt46-rc1.patch.xz
+
+
+Changes from 3.10.44-rt45:
 
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index 38c40b21a885..2a08cf6d539b 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt45
-+-rt46-rc1
--- 
-2.0.0
+
+Ben Hutchings (1):
+      Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
+
+Sebastian Andrzej Siewior (1):
+      timer: do not spin_trylock() on UP
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.44-rt46-rc1
+
+----
+ kernel/hrtimer.c | 10 +++++-----
+ kernel/timer.c   | 13 +++++++++++++
+ localversion-rt  |  2 +-
+ 3 files changed, 19 insertions(+), 6 deletions(-)
