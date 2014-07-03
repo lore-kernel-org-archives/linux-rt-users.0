@@ -1,50 +1,41 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 0/4] Linux 3.12.22-rt35-rc1
-Date: Thu, 03 Jul 2014 15:15:29 +0200
-Message-ID: <1404393329.6068.2.camel@marge.simpson.net>
-References: <20140702171414.482562827@goodmis.org>
-	 <1404365326.5137.76.camel@marge.simpson.net>
-	 <20140703083908.54a82e5e@gandalf.local.home>
+From: Austin Schuh <austin@peloton-tech.com>
+Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
+Date: Thu, 3 Jul 2014 16:08:11 -0700
+Message-ID: <CANGgnMYq+QHaic1pRugDbudDAd8985KxSoUKRTbfnhwrZ5zSBQ@mail.gmail.com>
+References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
+ <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
+ <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
+ <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
+ <alpine.DEB.2.10.1406270027300.5170@nanos> <CANGgnMa+qtgJ3wwg_h5Rynw5vEvZpQZ6PvaUfXNQ8+Y3Yu5U0g@mail.gmail.com>
+ <alpine.DEB.2.10.1406271249510.5170@nanos> <CANGgnMZ8qemTgzoiq96=YvTnz-h945b8zSw1VtmDMSrbY3kcUg@mail.gmail.com>
+ <CANGgnMZBXbBnr1J+HDtDTo3TD-KgjerLA7BH9x6tmsdDfrNWbA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f47.google.com ([74.125.82.47]:39296 "EHLO
-	mail-wg0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756010AbaGCNPf (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Jul 2014 09:15:35 -0400
-In-Reply-To: <20140703083908.54a82e5e@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Cc: Richard Weinberger <richard.weinberger@gmail.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CANGgnMZBXbBnr1J+HDtDTo3TD-KgjerLA7BH9x6tmsdDfrNWbA@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2014-07-03 at 08:39 -0400, Steven Rostedt wrote: 
-> On Thu, 03 Jul 2014 07:28:46 +0200
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> 
-> > 
-> > On Wed, 2014-07-02 at 13:14 -0400, Steven Rostedt wrote: 
-> > > Dear RT Folks,
-> > > 
-> > > This is the RT stable review cycle of patch 3.12.22-rt35-rc1.
-> > > 
-> > > Please scream at me if I messed something up. Please test the patches too.
-> > 
-> > [PATCH RT 5/4] sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq() ?
-> > 
-> 
-> Is that in 3.14-rt yet? I didn't see it. As with stable mainline,
-> nothing goes into stable-rt until it is in -rt upstream.
+On Tue, Jul 1, 2014 at 12:32 PM, Austin Schuh <austin@peloton-tech.com> wrote:
+> On Mon, Jun 30, 2014 at 8:01 PM, Austin Schuh <austin@peloton-tech.com> wrote:
+>> On Fri, Jun 27, 2014 at 7:24 AM, Thomas Gleixner <tglx@linutronix.de> wrote:
+>>> Completely untested patch below.
 
-Oh right, no, not yet.
+I've tested it and looked it over now, and feel pretty confident in
+the patch.  Thanks Thomas!
 
--Mike
+I've been running this fix with my extra lock steps for a couple days
+now on 3 machines, and haven't seen any issues.  On each of the
+machines, I've got a CAN card generating about 1 CPU worth of load
+from interrupts, and the rest of the cores are tied up putting work on
+the work queues with the killer_module.
 
+What next?
+
+Austin
