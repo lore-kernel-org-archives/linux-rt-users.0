@@ -1,69 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2] Fix latency histogram after "hrtimer: Set expiry time before
- switch_hrtimer_base()"
-Date: Thu, 03 Jul 2014 08:55:30 -0400
-Message-ID: <20140703125539.165672321@goodmis.org>
-References: <20140703125529.692457366@goodmis.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 0/4] Linux 3.12.22-rt35-rc1
+Date: Thu, 03 Jul 2014 15:15:29 +0200
+Message-ID: <1404393329.6068.2.camel@marge.simpson.net>
+References: <20140702171414.482562827@goodmis.org>
+	 <1404365326.5137.76.camel@marge.simpson.net>
+	 <20140703083908.54a82e5e@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	stable-rt@vger.kernel.org, Ben Hutchings <ben@decadent.org.uk>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:41765 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756573AbaGCMzm (ORCPT
+Received: from mail-wg0-f47.google.com ([74.125.82.47]:39296 "EHLO
+	mail-wg0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756010AbaGCNPf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Jul 2014 08:55:42 -0400
-Content-Disposition: inline; filename=0001-Fix-latency-histogram-after-hrtimer-Set-expiry-time-.patch
+	Thu, 3 Jul 2014 09:15:35 -0400
+In-Reply-To: <20140703083908.54a82e5e@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.2.60-rt88-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On Thu, 2014-07-03 at 08:39 -0400, Steven Rostedt wrote: 
+> On Thu, 03 Jul 2014 07:28:46 +0200
+> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+> 
+> > 
+> > On Wed, 2014-07-02 at 13:14 -0400, Steven Rostedt wrote: 
+> > > Dear RT Folks,
+> > > 
+> > > This is the RT stable review cycle of patch 3.12.22-rt35-rc1.
+> > > 
+> > > Please scream at me if I messed something up. Please test the patches too.
+> > 
+> > [PATCH RT 5/4] sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq() ?
+> > 
+> 
+> Is that in 3.14-rt yet? I didn't see it. As with stable mainline,
+> nothing goes into stable-rt until it is in -rt upstream.
 
-------------------
+Oh right, no, not yet.
 
-From: Ben Hutchings <ben@decadent.org.uk>
+-Mike
 
-In an rt-kernel with CONFIG_MISSED_TIMER_OFFSETS_HIST enabled,
-__hrtimer_start_range_ns() now crashes, as new_base is not assigned
-before it is used.
-
-Tested-by: Carsten Emde <C.Emde@osadl.org>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Ben Hutchings <ben@decadent.org.uk>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/hrtimer.c | 10 +++++-----
- 1 file changed, 5 insertions(+), 5 deletions(-)
-
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index f54379023e16..2bd88f06a6d0 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1033,6 +1033,11 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- #endif
- 	}
- 
-+	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
-+
-+	/* Switch the timer base, if necessary: */
-+	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
-+
- #ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
- 	{
- 		ktime_t now = new_base->get_time();
-@@ -1044,11 +1049,6 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- 	}
- #endif
- 
--	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
--
--	/* Switch the timer base, if necessary: */
--	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
