@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/2] Linux 3.2.60-rt88-rc1
-Date: Wed, 02 Jul 2014 23:00:43 -0400
-Message-ID: <20140703030043.202302661@goodmis.org>
+Subject: [PATCH RT 2/2] Linux 3.2.60-rt88-rc1
+Date: Wed, 02 Jul 2014 23:00:45 -0400
+Message-ID: <20140703030055.406490429@goodmis.org>
+References: <20140703030043.202302661@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -9,56 +12,35 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:37977 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754004AbaGCDA4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Jul 2014 23:00:56 -0400
+Content-Disposition: inline; filename=0002-Linux-3.2.60-rt88-rc1.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+3.2.60-rt88-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.60-rt88-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 7/7/2014.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.60-rt88-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt88-rc1.patch.xz
-
-You can also build from 3.2.60-rt87 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.60-rt87-rt88-rc1.patch.xz
-
-
-Changes from 3.2.60-rt87:
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/localversion-rt b/localversion-rt
+index bd5aee366a48..ac94086b6693 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt87
++-rt88-rc1
+-- 
+2.0.0
 
 
-Ben Hutchings (1):
-      Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.60-rt88-rc1
-
-----
- kernel/hrtimer.c | 10 +++++-----
- localversion-rt  |  2 +-
- 2 files changed, 6 insertions(+), 6 deletions(-)
