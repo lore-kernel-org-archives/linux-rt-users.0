@@ -1,46 +1,32 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2] Linux 3.2.60-rt88-rc1
-Date: Wed, 02 Jul 2014 23:00:45 -0400
-Message-ID: <20140703030055.406490429@goodmis.org>
-References: <20140703030043.202302661@goodmis.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 0/4] Linux 3.12.22-rt35-rc1
+Date: Thu, 03 Jul 2014 07:28:46 +0200
+Message-ID: <1404365326.5137.76.camel@marge.simpson.net>
+References: <20140702171414.482562827@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:37977 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754004AbaGCDA4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Jul 2014 23:00:56 -0400
-Content-Disposition: inline; filename=0002-Linux-3.2.60-rt88-rc1.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-3.2.60-rt88-rc1 stable review patch.
-If anyone has any objections, please let me know.
-
-------------------
-
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
-
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/localversion-rt b/localversion-rt
-index bd5aee366a48..ac94086b6693 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt87
-+-rt88-rc1
--- 
-2.0.0
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20140702171414.482562827@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
+On Wed, 2014-07-02 at 13:14 -0400, Steven Rostedt wrote: 
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 3.12.22-rt35-rc1.
+> 
+> Please scream at me if I messed something up. Please test the patches too.
+
+[PATCH RT 5/4] sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq() ?
+
+-Mike
