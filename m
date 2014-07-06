@@ -1,50 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Austin Schuh <austin@peloton-tech.com>
 Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Sat, 5 Jul 2014 22:36:10 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1407052233230.22031@nanos>
-References: <537CFECF.9070701@ccur.com>
+Date: Sat, 5 Jul 2014 21:55:42 -0700
+Message-ID: <CANGgnMYhpEHWzfZd6WytoU_a3WVM9GqP15i+TNtLov=JrHAKEA@mail.gmail.com>
+References: <CANGgnMbHckBQdKGN_N5Q6qEKc9n1CenxvMpeXog1NbSdL8UrTw@mail.gmail.com>
+ <CANGgnMYDXerOUDOO9-RHMJKadKACA2KBGskZwoP-1ZwAhDEfVA@mail.gmail.com>
+ <CAFLxGvxfBt7OvW=a2Kz08GLHSEiiOZsN-vB19CXnQiwqFxqMsA@mail.gmail.com>
+ <CANGgnMYVoP-Z0Bv-VDEkJnvfa7Fi4-zY2F4A0PhMewGvwo3VVw@mail.gmail.com>
+ <alpine.DEB.2.10.1406270027300.5170@nanos> <CANGgnMa+qtgJ3wwg_h5Rynw5vEvZpQZ6PvaUfXNQ8+Y3Yu5U0g@mail.gmail.com>
+ <alpine.DEB.2.10.1406271249510.5170@nanos> <CANGgnMYcSoJa32CdGBxvj0c3NEnU=S=DD35YmZAtn8miCtK6kw@mail.gmail.com>
+ <CANGgnMbhYB4VY+4L7qrWvRomi6tRjK+7hs7qBXzsDLND_sjpFA@mail.gmail.com> <alpine.DEB.2.10.1407052226300.22031@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
 Cc: Richard Weinberger <richard.weinberger@gmail.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Austin Schuh <austin@peloton-tech.com>, xfs@oss.sgi.com
-To: John Blackwood <john.blackwood@ccur.com>
-Return-path: <xfs-bounces@oss.sgi.com>
-In-Reply-To: <537CFECF.9070701@ccur.com>
-List-Unsubscribe: <http://oss.sgi.com/mailman/options/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=unsubscribe>
-List-Archive: <http://oss.sgi.com/pipermail/xfs>
-List-Post: <mailto:xfs@oss.sgi.com>
-List-Help: <mailto:xfs-request@oss.sgi.com?subject=help>
-List-Subscribe: <http://oss.sgi.com/mailman/listinfo/xfs>,
-	<mailto:xfs-request@oss.sgi.com?subject=subscribe>
-Errors-To: xfs-bounces@oss.sgi.com
-Sender: xfs-bounces@oss.sgi.com
-List-Id: linux-rt-users.vger.kernel.org
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ie0-f169.google.com ([209.85.223.169]:62530 "EHLO
+	mail-ie0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752407AbaGFE4E (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 6 Jul 2014 00:56:04 -0400
+Received: by mail-ie0-f169.google.com with SMTP id rl12so2676134iec.28
+        for <linux-rt-users@vger.kernel.org>; Sat, 05 Jul 2014 21:56:03 -0700 (PDT)
+In-Reply-To: <alpine.DEB.2.10.1407052226300.22031@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 21 May 2014, John Blackwood wrote:
-> I'm not 100% sure that the patch below will fix your problem, but we
-> saw something that sounds pretty familiar to your issue involving the
-> nvidia driver and the preempt-rt patch.  The nvidia driver uses the
-> completion support to create their own driver's notion of an internally
-> used semaphore.
+On Sat, Jul 5, 2014 at 1:26 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Mon, 30 Jun 2014, Austin Schuh wrote:
+>> I think I might have an answer for my own question, but I would
+>> appreciate someone else to double check.  If list_empty erroneously
+>> returns that there is work to do when there isn't work to do, we wake
+>> up an extra worker which then goes back to sleep.  Not a big loss.  If
+>> list_empty erroneously returns that there isn't work to do when there
+>> is, this should only be because someone is modifying the work list.
+>> When they finish, as far as I can tell, all callers then check to see
+>> if a worker needs to be started up, and start one.
+>
+> Precisely.
 
-And why should we care about that? If they abuse the completion code
-then it's their problem. And it has nothing to do at all with the
-problem Austin is observing.
- 
-> Some tasks were failing to ever wakeup from wait_for_completion() calls
-> due to a race in the underlying do_wait_for_common() routine.
-
-Why are you not fixing the nvidia crap instead of hacking utter shite
-into the core kernel?
-
-Thanks,
-
-	tglx
-
-_______________________________________________
-xfs mailing list
-xfs@oss.sgi.com
-http://oss.sgi.com/mailman/listinfo/xfs
+A comment there when you put together a polished patch for inclusion
+would be awesome.  I'm assuming that you will put the patch together?
