@@ -1,66 +1,30 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.4.10-rt7
-Date: Mon, 07 Jul 2014 16:54:49 +0200
-Message-ID: <1404744889.4709.83.camel@marge.simpson.net>
-References: <alpine.DEB.2.10.1407071027170.22031@nanos>
+From: Austin Schuh <austin@peloton-tech.com>
+Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
+Date: Mon, 7 Jul 2014 09:23:32 -0700
+Message-ID: <CANGgnMZ9rCD1nyrBNa41AHsrYDLoGn8=aOrRP9T0Rfp1oeC4VA@mail.gmail.com>
+References: <CAA85NCgJPczdQ0mhH3n6cwuZ0kTT-ZFayn3RAjpGAJOB3AM47g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Sewior <bigeasy@linutronix.de>,
-	Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Carsten Emde <cbe@osadl.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Jan de Kruyf <jan.de.kruyf@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f45.google.com ([74.125.82.45]:65036 "EHLO
-	mail-wg0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751591AbaGGOyz (ORCPT
+Received: from mail-ig0-f169.google.com ([209.85.213.169]:39740 "EHLO
+	mail-ig0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751077AbaGGQXx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Jul 2014 10:54:55 -0400
-In-Reply-To: <alpine.DEB.2.10.1407071027170.22031@nanos>
+	Mon, 7 Jul 2014 12:23:53 -0400
+Received: by mail-ig0-f169.google.com with SMTP id c1so10602376igq.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 07 Jul 2014 09:23:53 -0700 (PDT)
+In-Reply-To: <CAA85NCgJPczdQ0mhH3n6cwuZ0kTT-ZFayn3RAjpGAJOB3AM47g@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2014-07-07 at 14:47 +0200, Thomas Gleixner wrote: 
-> Dear RT Folks,
-> 
-> I'm pleased to announce the 3.14.10-rt7 release. 3.14.10-rt6 is a not
-> announced update to 3.14.10 without any RT changes aside of resolving
-> the patch conflicts.
-> 
-> Changes since 3.14.10-rt6:
-> 
->    * Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq() -
->      from Steven
-> 
->    * Prevent workqueue deadlock/stall observed with XFS
-> 
-> 
-> A few words on the status and the future of RT:
-> -----------------------------------------------
-> 
-> The situation since last years RTLWS (https://lwn.net/Articles/572740/)
-> has not improved at all, it's worse than before. 
-> 
-> While shortly after RTLWS quite some people promised to whip up proper
-> funding, nothing has materialized and my personal situation is worse
-> than before.
+On Mon, Jul 7, 2014 at 1:48 AM, Jan de Kruyf <jan.de.kruyf@gmail.com> wrote:
+> does not give the same problem that I experienced with XFS.
+> So there is a hickup between version 3.2-rt and 3.10-rt I would say.
 
-Sorry to hear that funding hasn't as yet happened.
+I posted a simple kernel module that reliably triggers the lockup by
+recreating the circumstances in a controlled manner.  Try testing with
+that module.
 
-> I'm really tired of all the politics involved, the blantant lies and
-> the marketing bullshit which I have to bear. I learned a few month ago
-> that a certain kernel vendor invented most of RT anyway and is the
-> expert in this field, so the customers dont have to worry about my
-> statements.
-
-Wow, so someone thinks their customers either can't or won't read.  That
-kind of marketing can backfire in a big way.
-
--Mike
-
-
+Austin
