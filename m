@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.94-rt117
-Date: Tue, 8 Jul 2014 19:01:29 -0400
-Message-ID: <20140708190129.5d8323cc@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.60-rt88
+Date: Tue, 8 Jul 2014 19:02:01 -0400
+Message-ID: <20140708190201.007d1bc9@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,42 +11,37 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:22873 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753808AbaGHXBb (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jul 2014 19:01:31 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.94-rt117 stable release.
+I'm pleased to announce the 3.2.60-rt88 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 0044386692bbe6ce190be1847cf56c9a7cc1d8ce
+  branch: v3.2-rt
+  Head SHA1: 34960baced3e54506f23abfac25544f212eddea2
 
 
-Or to build 3.4.94-rt117 directly, the following patches should be applied:
+Or to build 3.2.60-rt88 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.94.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.94-rt117.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt88.patch.xz
 
 
 
-You can also build from 3.4.94-rt116 by applying the incremental patch:
+You can also build from 3.2.60-rt87 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.94-rt116-rt117.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.60-rt87-rt88.patch.xz
 
 
 
@@ -55,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.94-rt116:
+Changes from v3.2.60-rt87:
 
 ---
 
@@ -63,7 +58,7 @@ Ben Hutchings (1):
       Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.94-rt117
+      Linux 3.2.60-rt88
 
 ----
  kernel/hrtimer.c | 10 +++++-----
@@ -71,10 +66,10 @@ Steven Rostedt (Red Hat) (1):
  2 files changed, 6 insertions(+), 6 deletions(-)
 ---------------------------
 diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index b62a3a7541c7..3f7d3b5b0717 100644
+index f54379023e16..2bd88f06a6d0 100644
 --- a/kernel/hrtimer.c
 +++ b/kernel/hrtimer.c
-@@ -1038,6 +1038,11 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+@@ -1033,6 +1033,11 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
  #endif
  	}
  
@@ -86,7 +81,7 @@ index b62a3a7541c7..3f7d3b5b0717 100644
  #ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
  	{
  		ktime_t now = new_base->get_time();
-@@ -1049,11 +1054,6 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+@@ -1044,11 +1049,6 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
  	}
  #endif
  
@@ -94,3 +89,14 @@ index b62a3a7541c7..3f7d3b5b0717 100644
 -
 -	/* Switch the timer base, if necessary: */
 -	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
+-
+ 	timer_stats_hrtimer_set_start_info(timer);
+ 
+ 	leftmost = enqueue_hrtimer(timer, new_base);
+diff --git a/localversion-rt b/localversion-rt
+index bd5aee366a48..666227d921a3 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt87
++-rt88
