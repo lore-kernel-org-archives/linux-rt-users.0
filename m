@@ -1,48 +1,28 @@
-From: Jan de Kruyf <jan.de.kruyf@gmail.com>
+From: Austin Schuh <austin@peloton-tech.com>
 Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Tue, 8 Jul 2014 10:03:01 +0200
-Message-ID: <CAA85NCg3NRwkupqbr+Krv3=ySp8EhFH_wKO2F1rB56yCz-vEsQ@mail.gmail.com>
+Date: Tue, 8 Jul 2014 09:09:32 -0700
+Message-ID: <CANGgnMbaQtiinErQKB+kDReE_8pQgs2EQWwrAZeTEzmrH9R=PQ@mail.gmail.com>
 References: <CAA85NCgJPczdQ0mhH3n6cwuZ0kTT-ZFayn3RAjpGAJOB3AM47g@mail.gmail.com>
-	<CANGgnMZ9rCD1nyrBNa41AHsrYDLoGn8=aOrRP9T0Rfp1oeC4VA@mail.gmail.com>
+ <CANGgnMZ9rCD1nyrBNa41AHsrYDLoGn8=aOrRP9T0Rfp1oeC4VA@mail.gmail.com> <CAA85NCg3NRwkupqbr+Krv3=ySp8EhFH_wKO2F1rB56yCz-vEsQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-To: rt-users <linux-rt-users@vger.kernel.org>, austin@peloton-tech.com
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Jan de Kruyf <jan.de.kruyf@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qg0-f43.google.com ([209.85.192.43]:33585 "EHLO
-	mail-qg0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750927AbaGHIDC (ORCPT
+Received: from mail-ig0-f178.google.com ([209.85.213.178]:56035 "EHLO
+	mail-ig0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753063AbaGHQJx (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jul 2014 04:03:02 -0400
-Received: by mail-qg0-f43.google.com with SMTP id z60so4653378qgd.2
-        for <linux-rt-users@vger.kernel.org>; Tue, 08 Jul 2014 01:03:01 -0700 (PDT)
-In-Reply-To: <CANGgnMZ9rCD1nyrBNa41AHsrYDLoGn8=aOrRP9T0Rfp1oeC4VA@mail.gmail.com>
+	Tue, 8 Jul 2014 12:09:53 -0400
+Received: by mail-ig0-f178.google.com with SMTP id hn18so844151igb.17
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Jul 2014 09:09:52 -0700 (PDT)
+In-Reply-To: <CAA85NCg3NRwkupqbr+Krv3=ySp8EhFH_wKO2F1rB56yCz-vEsQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thank you Austin,
-
-One of these days we will have Kernel Day to see what gives with
-Thomas's new patches.
-In the mean time I get 45usec max latency under heavy disk io with the
-3.2 kernel on some cheap 5 years old Foxconn board (1600Meg duo core)
-and no midnight surprises, so I am smiling. It averages between 3 and
-4 usec.
-
-When did you post that module? I did not spot it going through the
-discussion on rt-users.
-
-cheers,
-
-j.
+On Tue, Jul 8, 2014 at 1:03 AM, Jan de Kruyf <jan.de.kruyf@gmail.com> wrote:
+> When did you post that module? I did not spot it going through the
+> discussion on rt-users.
 
 
-On Mon, Jul 7, 2014 at 6:23 PM, Austin Schuh <austin@peloton-tech.com> wrote:
-> On Mon, Jul 7, 2014 at 1:48 AM, Jan de Kruyf <jan.de.kruyf@gmail.com> wrote:
->> does not give the same problem that I experienced with XFS.
->> So there is a hickup between version 3.2-rt and 3.10-rt I would say.
->
-> I posted a simple kernel module that reliably triggers the lockup by
-> recreating the circumstances in a controlled manner.  Try testing with
-> that module.
->
-> Austin
+https://lkml.org/lkml/2014/6/26/436
