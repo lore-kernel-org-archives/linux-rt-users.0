@@ -1,28 +1,117 @@
-From: Austin Schuh <austin@peloton-tech.com>
-Subject: Re: Filesystem lockup with CONFIG_PREEMPT_RT
-Date: Tue, 8 Jul 2014 09:09:32 -0700
-Message-ID: <CANGgnMbaQtiinErQKB+kDReE_8pQgs2EQWwrAZeTEzmrH9R=PQ@mail.gmail.com>
-References: <CAA85NCgJPczdQ0mhH3n6cwuZ0kTT-ZFayn3RAjpGAJOB3AM47g@mail.gmail.com>
- <CANGgnMZ9rCD1nyrBNa41AHsrYDLoGn8=aOrRP9T0Rfp1oeC4VA@mail.gmail.com> <CAA85NCg3NRwkupqbr+Krv3=ySp8EhFH_wKO2F1rB56yCz-vEsQ@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 3.4-rt] hrtimer:fix the miss of
+ hrtimer_peek_ahead_timers in nort code
+Date: Tue, 8 Jul 2014 15:13:23 -0400
+Message-ID: <20140708151323.2a5c864b@gandalf.local.home>
+References: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: rt-users <linux-rt-users@vger.kernel.org>
-To: Jan de Kruyf <jan.de.kruyf@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: <stable-rt@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	Zhao Hongjiang <zhaohongjiang@huawei.com>,
+	Weng Meiling <wengmeiling.weng@huawei.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ig0-f178.google.com ([209.85.213.178]:56035 "EHLO
-	mail-ig0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753063AbaGHQJx (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:25489 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755445AbaGHTN1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jul 2014 12:09:53 -0400
-Received: by mail-ig0-f178.google.com with SMTP id hn18so844151igb.17
-        for <linux-rt-users@vger.kernel.org>; Tue, 08 Jul 2014 09:09:52 -0700 (PDT)
-In-Reply-To: <CAA85NCg3NRwkupqbr+Krv3=ySp8EhFH_wKO2F1rB56yCz-vEsQ@mail.gmail.com>
+	Tue, 8 Jul 2014 15:13:27 -0400
+In-Reply-To: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jul 8, 2014 at 1:03 AM, Jan de Kruyf <jan.de.kruyf@gmail.com> wrote:
-> When did you post that module? I did not spot it going through the
-> discussion on rt-users.
+Blast from the past. (cleaning out inbox)
 
+On Mon, 15 Jul 2013 11:32:44 -0400
+Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
 
-https://lkml.org/lkml/2014/6/26/436
+> From: Zhao Hongjiang <zhaohongjiang@huawei.com>
+> 
+> When we run the test "taskset -c 1 stress -m 1 --vm-bytes 50M" and
+> "taskset -c 1 cyclictest -t 1 -p 80 -n -m -v" with rt closed 3.4.26-rt38 kernel,
+> the cyclictest's result is anomalous as follow:
+>        0:     278:       1
+>        0:     279:       2
+>        0:     280:      17
+>        0:     281:    1657
+>        0:     282:    1680
+>        0:     283:    4678
+>        0:     284:    7026
+>        0:     285:    6678
+>        0:     286:    9677
+>        0:     287:   12678
+>        0:     288:   13090
+>        0:     289:   14678
+>        0:     290:   17677
+>        0:     291:   20155
+>        0:     292:   19678
+>        0:     293:   22679
+>        0:     294:   25676
+>        0:     295:   26218
+>        0:     296:   27679
+>        0:     297:   30677
+>        0:     298:   33283
+>        0:     299:   32677
+>        0:     300:   35676
+> and the result is increase continuously forever. We find that the patch
+> ("hrtimer: fixup hrtimer callback changes for preempt-rt") has missed
+> hrtimer_peek_ahead_timers() in hrtimer_rt_run_pending() fuction in nort
+> code. We fix this and the test result isn't increase continuously as same
+> as the result with nort 3.4.26 kernel as follow:
+>        0:     636:       8
+>        0:     637:       7
+>        0:     638:       8
+>        0:     639:       9
+>        0:     640:       7
+>        0:     641:       9
+>        0:     642:       8
+>        0:     643:       8
+>        0:     644:       8
+>        0:     645:      32
+>        0:     646:    8683
+>        0:     647:    7760
+>        0:     648:    6784
+>        0:     649:    5797
+>        0:     650:    4810
+>        0:     651:    3823
+>        0:     652:    2836
+>        0:     653:    1849
+>        0:     654:     862
+>        0:     655:       7
+>        0:     656:       7
+>        0:     657:       7
+>        0:     658:       6
+>        0:     659:       8
+>        0:     660:       7
+> 
+> Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
+> Signed-off-by: Weng Meiling <wengmeiling.weng@huawei.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> [PG: direct cherry pick of b236e408 from v3.6-rt]
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+> 
+> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+> index c5f8b11..9d96d7a 100644
+> --- a/kernel/hrtimer.c
+> +++ b/kernel/hrtimer.c
+> @@ -1430,7 +1430,11 @@ static int hrtimer_rt_defer(struct hrtimer *timer)
+>  
+>  #else
+>  
+> -static inline void hrtimer_rt_run_pending(void) { }
+> +static inline void hrtimer_rt_run_pending(void)
+> +{
+> +	hrtimer_peek_ahead_timers();
+> +}
+> +
+>  static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
+>  
+>  #endif
+
+Looking at my latest 3.4-rt, this doesn't look like it was applied.
+Should I still apply it? Nobody seemed to notice.
+
+-- Steve
+
