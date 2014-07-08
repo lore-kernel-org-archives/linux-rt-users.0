@@ -1,117 +1,152 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3.4-rt] hrtimer:fix the miss of
- hrtimer_peek_ahead_timers in nort code
-Date: Tue, 8 Jul 2014 15:13:23 -0400
-Message-ID: <20140708151323.2a5c864b@gandalf.local.home>
-References: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
+Subject: [ANNOUNCE] 3.12.22-rt35
+Date: Tue, 8 Jul 2014 19:00:43 -0400
+Message-ID: <20140708190043.42c8996c@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: <stable-rt@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Zhao Hongjiang <zhaohongjiang@huawei.com>,
-	Weng Meiling <wengmeiling.weng@huawei.com>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:25489 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755445AbaGHTN1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Jul 2014 15:13:27 -0400
-In-Reply-To: <1373902364-24233-1-git-send-email-paul.gortmaker@windriver.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Blast from the past. (cleaning out inbox)
 
-On Mon, 15 Jul 2013 11:32:44 -0400
-Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
+Dear RT Folks,
 
-> From: Zhao Hongjiang <zhaohongjiang@huawei.com>
-> 
-> When we run the test "taskset -c 1 stress -m 1 --vm-bytes 50M" and
-> "taskset -c 1 cyclictest -t 1 -p 80 -n -m -v" with rt closed 3.4.26-rt38 kernel,
-> the cyclictest's result is anomalous as follow:
->        0:     278:       1
->        0:     279:       2
->        0:     280:      17
->        0:     281:    1657
->        0:     282:    1680
->        0:     283:    4678
->        0:     284:    7026
->        0:     285:    6678
->        0:     286:    9677
->        0:     287:   12678
->        0:     288:   13090
->        0:     289:   14678
->        0:     290:   17677
->        0:     291:   20155
->        0:     292:   19678
->        0:     293:   22679
->        0:     294:   25676
->        0:     295:   26218
->        0:     296:   27679
->        0:     297:   30677
->        0:     298:   33283
->        0:     299:   32677
->        0:     300:   35676
-> and the result is increase continuously forever. We find that the patch
-> ("hrtimer: fixup hrtimer callback changes for preempt-rt") has missed
-> hrtimer_peek_ahead_timers() in hrtimer_rt_run_pending() fuction in nort
-> code. We fix this and the test result isn't increase continuously as same
-> as the result with nort 3.4.26 kernel as follow:
->        0:     636:       8
->        0:     637:       7
->        0:     638:       8
->        0:     639:       9
->        0:     640:       7
->        0:     641:       9
->        0:     642:       8
->        0:     643:       8
->        0:     644:       8
->        0:     645:      32
->        0:     646:    8683
->        0:     647:    7760
->        0:     648:    6784
->        0:     649:    5797
->        0:     650:    4810
->        0:     651:    3823
->        0:     652:    2836
->        0:     653:    1849
->        0:     654:     862
->        0:     655:       7
->        0:     656:       7
->        0:     657:       7
->        0:     658:       6
->        0:     659:       8
->        0:     660:       7
-> 
-> Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
-> Signed-off-by: Weng Meiling <wengmeiling.weng@huawei.com>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> [PG: direct cherry pick of b236e408 from v3.6-rt]
-> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-> 
-> diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-> index c5f8b11..9d96d7a 100644
-> --- a/kernel/hrtimer.c
-> +++ b/kernel/hrtimer.c
-> @@ -1430,7 +1430,11 @@ static int hrtimer_rt_defer(struct hrtimer *timer)
->  
->  #else
->  
-> -static inline void hrtimer_rt_run_pending(void) { }
-> +static inline void hrtimer_rt_run_pending(void)
-> +{
-> +	hrtimer_peek_ahead_timers();
-> +}
-> +
->  static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
->  
->  #endif
+I'm pleased to announce the 3.12.22-rt35 stable release.
 
-Looking at my latest 3.4-rt, this doesn't look like it was applied.
-Should I still apply it? Nobody seemed to notice.
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.12-rt
+  Head SHA1: 3d9a32ec9382bfb61fdc45c1eb038dc514cd0bfb
+
+
+Or to build 3.12.22-rt35 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.22.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.22-rt35.patch.xz
+
+
+
+You can also build from 3.12.22-rt34 by applying the incremental patch:
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.22-rt34-rt35.patch.xz
+
+
+
+Enjoy,
 
 -- Steve
 
+
+Changes from v3.12.22-rt34:
+
+---
+
+Ben Hutchings (1):
+      Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
+
+Sebastian Andrzej Siewior (2):
+      Revert "migrate_disable pushd down in atomic_dec_and_spin_lock"
+      timer: do not spin_trylock() on UP
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.12.22-rt35
+
+----
+ kernel/hrtimer.c | 10 +++++-----
+ kernel/rtmutex.c |  6 +++---
+ kernel/timer.c   | 13 +++++++++++++
+ localversion-rt  |  2 +-
+ 4 files changed, 22 insertions(+), 9 deletions(-)
+---------------------------
+diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
+index bc0e47dc0a05..c967b718ab37 100644
+--- a/kernel/hrtimer.c
++++ b/kernel/hrtimer.c
+@@ -1105,6 +1105,11 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+ #endif
+ 	}
+ 
++	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
++
++	/* Switch the timer base, if necessary: */
++	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
++
+ #ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
+ 	{
+ 		ktime_t now = new_base->get_time();
+@@ -1116,11 +1121,6 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
+ 	}
+ #endif
+ 
+-	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
+-
+-	/* Switch the timer base, if necessary: */
+-	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
+-
+ 	timer_stats_hrtimer_set_start_info(timer);
+ 
+ 	leftmost = enqueue_hrtimer(timer, new_base);
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 4057bc607923..d1b2ca08b160 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -952,12 +952,12 @@ int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock)
+ 	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
+ 	if (atomic_add_unless(atomic, -1, 1))
+ 		return 0;
++	migrate_disable();
+ 	rt_spin_lock(lock);
+-	if (atomic_dec_and_test(atomic)){
+-		migrate_disable();
++	if (atomic_dec_and_test(atomic))
+ 		return 1;
+-	}
+ 	rt_spin_unlock(lock);
++	migrate_enable();
+ 	return 0;
+ }
+ EXPORT_SYMBOL(atomic_dec_and_spin_lock);
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 611a5973d9e1..3b79da2f9c67 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1461,6 +1461,19 @@ void run_local_timers(void)
+ 	 * the timer softirq.
+ 	 */
+ #ifdef CONFIG_PREEMPT_RT_FULL
++
++#ifndef CONFIG_SMP
++	/*
++	 * The spin_do_trylock() later may fail as the lock may be hold before
++	 * the interrupt arrived. The spin-lock debugging code will raise a
++	 * warning if the try_lock fails on UP. Since this is only an
++	 * optimization for the FULL_NO_HZ case (not to run the timer softirq on
++	 * an nohz_full CPU) we don't really care and shedule the softirq.
++	 */
++	raise_softirq(TIMER_SOFTIRQ);
++	return;
++#endif
++
+ 	/* On RT, irq work runs from softirq */
+ 	if (irq_work_needs_cpu()) {
+ 		raise_softirq(TIMER_SOFTIRQ);
+diff --git a/localversion-rt b/localversion-rt
+index 21988f9ad53f..366440d74b77 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt34
++-rt35
