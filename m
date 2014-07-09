@@ -1,102 +1,59 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.60-rt88
-Date: Tue, 8 Jul 2014 19:02:01 -0400
-Message-ID: <20140708190201.007d1bc9@gandalf.local.home>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [ANNOUNCE] 3.14.10-rt7
+Date: Wed, 09 Jul 2014 14:01:58 +0400
+Message-ID: <53BD1316.5090901@pavlinux.ru>
+References: <alpine.DEB.2.10.1407071027170.22031@nanos> <alpine.DEB.2.10.1407071633460.22031@nanos>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Sebastian Sewior <bigeasy@linutronix.de>,
+	Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Carsten Emde <cbe@osadl.org>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.10.1407071633460.22031@nanos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+07.07.2014 18:34, Thomas Gleixner =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+> This time with proper Subject line :)
+>
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.14.10-rt7 release. 3.14.10-rt6 is a not
+> announced update to 3.14.10 without any RT changes aside of resolving
+> the patch conflicts.
+>
+> Changes since 3.14.10-rt6:
+>
+>     * Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq() -
+>       from Steven
+>
+>     * Prevent workqueue deadlock/stall observed with XFS
+>
+>
+> A few words on the status and the future of RT:
+> -----------------------------------------------
+>
+> The situation since last years RTLWS (https://lwn.net/Articles/572740=
+/)
+> has not improved at all, it's worse than before.
+>
+> While shortly after RTLWS quite some people promised to whip up prope=
+r
+> funding, nothing has materialized and my personal situation is worse
+> than before.
 
-Dear RT Folks,
-
-I'm pleased to announce the 3.2.60-rt88 stable release.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 34960baced3e54506f23abfac25544f212eddea2
-
-
-Or to build 3.2.60-rt88 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt88.patch.xz
-
-
-
-You can also build from 3.2.60-rt87 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.60-rt87-rt88.patch.xz
-
-
-
-Enjoy,
-
--- Steve
+Create site, add PayPal [DOANTE] button.
 
 
-Changes from v3.2.60-rt87:
+--=20
 
----
-
-Ben Hutchings (1):
-      Fix latency histogram after "hrtimer: Set expiry time before switch_hrtimer_base()"
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.60-rt88
-
-----
- kernel/hrtimer.c | 10 +++++-----
- localversion-rt  |  2 +-
- 2 files changed, 6 insertions(+), 6 deletions(-)
----------------------------
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index f54379023e16..2bd88f06a6d0 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1033,6 +1033,11 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- #endif
- 	}
- 
-+	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
-+
-+	/* Switch the timer base, if necessary: */
-+	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
-+
- #ifdef CONFIG_MISSED_TIMER_OFFSETS_HIST
- 	{
- 		ktime_t now = new_base->get_time();
-@@ -1044,11 +1049,6 @@ int __hrtimer_start_range_ns(struct hrtimer *timer, ktime_t tim,
- 	}
- #endif
- 
--	hrtimer_set_expires_range_ns(timer, tim, delta_ns);
--
--	/* Switch the timer base, if necessary: */
--	new_base = switch_hrtimer_base(timer, base, mode & HRTIMER_MODE_PINNED);
--
- 	timer_stats_hrtimer_set_start_info(timer);
- 
- 	leftmost = enqueue_hrtimer(timer, new_base);
-diff --git a/localversion-rt b/localversion-rt
-index bd5aee366a48..666227d921a3 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt87
-+-rt88
+                                                          Pavel.
