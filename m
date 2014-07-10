@@ -1,49 +1,67 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.97-rt120
-Date: Wed, 9 Jul 2014 23:12:00 -0400
-Message-ID: <20140709231200.77f34e38@gandalf.local.home>
+From: Juri Lelli <juri.lelli@gmail.com>
+Subject: Re: set_schedattr + cpuset issue
+Date: Thu, 10 Jul 2014 12:20:33 +0200
+Message-ID: <20140710122033.58bdd366fe3f869a71b1c05e@gmail.com>
+References: <CAMLzMweCcxPBJExGsY-2oHK6sdF6EVgBsa1XVxQT0=kzNRZAJQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Kevin Burns <kevinpb@vt.edu>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-we0-f171.google.com ([74.125.82.171]:34757 "EHLO
+	mail-we0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751134AbaGJKUh (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 10 Jul 2014 06:20:37 -0400
+Received: by mail-we0-f171.google.com with SMTP id q58so8843562wes.16
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Jul 2014 03:20:36 -0700 (PDT)
+In-Reply-To: <CAMLzMweCcxPBJExGsY-2oHK6sdF6EVgBsa1XVxQT0=kzNRZAJQ@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Kevin,
 
-Dear RT Folks,
+On Wed, 2 Jul 2014 17:08:47 -0400
+Kevin Burns <kevinpb@vt.edu> wrote:
 
-I'm pleased to announce the 3.4.97-rt120 stable release.
+> Hello Mr. Lelli,
+> 
+> I am a graduate student at Virginia Tech and am having an issue with
+> sched_setattr.
+> 
+> The folks over at at #linux-rt on irc.oftc.net suggested I bring the issue
+> to your attention.
+> 
 
+Sorry for the late reply, but I'm traveling in these days.
 
-This release is just an update to the new stable 3.4.97 version
-and no RT specific changes have been made.
+> Here's the issue:
+> 
+> I am able to allocate a bandwidth with a ratio of .1 to two processes using
+> the sched_setattr() system call.
+> 
+> I then am able to add said tasks to a cpuset (with one physical processor)
+> using cset.
+> 
+> However, when I then try to update the runtime or period of either task,
+> sched_setattr returns a -EBUSY error.
+> 
+> Now, if I repeat the above experiment with just one task, I am able to
+> update the runtime or period without issue. I ran trace-cmd and kernelshark
+> to verify that the bandwidths were indeed being updated correctly. That and
+> htop was reporting a higher percentage of CPUusage, which correlated to the
+> ratios of my task's bandwidth.
+> 
+> Any ideas as to why cpuset would cause this behaviour?
+> 
 
+Could you create a script that I can use to run your setup and reproduce
+the problem?
 
-You can get this release via the git tree at:
+Thanks,
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+- Juri
 
-  branch: v3.4-rt
-  Head SHA1: c22c066b1893a3f0204b7a197a04ded6d26aa47b
-
-
-Or to build 3.4.97-rt120 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.97.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.97-rt120.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+> Thanks,
+> -Kevin
