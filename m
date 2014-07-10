@@ -1,34 +1,37 @@
-From: Stanislav Meduna <stano@meduna.org>
-Subject: Re: [ANNOUNCE] 3.14.10-rt7
-Date: Wed, 09 Jul 2014 15:30:09 +0200
-Message-ID: <53BD43E1.40902@meduna.org>
-References: <alpine.DEB.2.10.1407071027170.22031@nanos> <alpine.DEB.2.10.1407071633460.22031@nanos> <53BD1316.5090901@pavlinux.ru> <20140709113436.GB26330@austad.us> <53BD2FD0.6000200@pavlinux.ru>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: SysRQ via ICMP does not work in 3.14
+Date: Thu, 10 Jul 2014 04:09:58 +0400
+Message-ID: <53BDD9D6.5080508@pavlinux.ru>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:36452 "EHLO meduna.org"
+Received: from imp02.mtu.ru ([62.5.255.19]:41869 "EHLO imp02.mtu.ru"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753076AbaGINtJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Jul 2014 09:49:09 -0400
-Received: from dial-95-105-163-217-orange.orange.sk ([95.105.163.217] helo=[127.0.0.1])
-	by meduna.org with esmtpsa (TLS1.0:DHE_RSA_AES_128_CBC_SHA1:16)
-	(Exim 4.72)
-	(envelope-from <stano@meduna.org>)
-	id 1X4rwq-0000c0-Rq
-	for linux-rt-users@vger.kernel.org; Wed, 09 Jul 2014 15:30:14 +0200
-In-Reply-To: <53BD2FD0.6000200@pavlinux.ru>
+	id S1751235AbaGJAMp (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Jul 2014 20:12:45 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 09.07.2014 14:04, Pavel Vasilyev wrote:
+- Remote side:
 
-> Why not? Grsecurity project so lives. When I worked actively with
-> grsecurity, 10-20$ sent almost every month.
+# sysctl -w net.ipv4.icmp_echo_sysrq=305419896
 
-Exactly - I am quite sure I could talk my employer into donating.
+- Local side:
 
+$ ping -c1 -s57 -p1122338862 172.16.0.26
+PATTERN: 0x1122338862
+PING 172.16.0.26 (172.16.0.26) 57(85) bytes of data.
+65 bytes from 172.16.0.26: icmp_req=1 ttl=64 time=0.508 ms
+
+--- 172.16.0.26 ping statistics ---
+1 packets transmitted, 1 received, 0% packet loss, time 0ms
+rtt min/avg/max/mdev = 0.508/0.508/0.508/0.000 ms
+
+
+- Remote side: Hello, i'm live!
 -- 
-                                        Stano
 
+                                                          Pavel.
