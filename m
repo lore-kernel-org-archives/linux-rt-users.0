@@ -1,67 +1,55 @@
-From: Juri Lelli <juri.lelli@gmail.com>
-Subject: Re: set_schedattr + cpuset issue
-Date: Thu, 10 Jul 2014 12:20:33 +0200
-Message-ID: <20140710122033.58bdd366fe3f869a71b1c05e@gmail.com>
-References: <CAMLzMweCcxPBJExGsY-2oHK6sdF6EVgBsa1XVxQT0=kzNRZAJQ@mail.gmail.com>
+From: Richard Weinberger <richard.weinberger@gmail.com>
+Subject: Re: SysRQ via ICMP does not work in 3.14
+Date: Thu, 10 Jul 2014 14:16:55 +0200
+Message-ID: <CAFLxGvwrckrNs6xEm7ntt3aeawaFJm9HkNiV1S7QPf6tcxy1OQ@mail.gmail.com>
+References: <53BDD9D6.5080508@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Kevin Burns <kevinpb@vt.edu>
+Content-Type: text/plain; charset=UTF-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Pavel Vasilyev <pavel@pavlinux.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f171.google.com ([74.125.82.171]:34757 "EHLO
-	mail-we0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751134AbaGJKUh (ORCPT
+Received: from mail-vc0-f180.google.com ([209.85.220.180]:50712 "EHLO
+	mail-vc0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751572AbaGJMQ4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 10 Jul 2014 06:20:37 -0400
-Received: by mail-we0-f171.google.com with SMTP id q58so8843562wes.16
-        for <linux-rt-users@vger.kernel.org>; Thu, 10 Jul 2014 03:20:36 -0700 (PDT)
-In-Reply-To: <CAMLzMweCcxPBJExGsY-2oHK6sdF6EVgBsa1XVxQT0=kzNRZAJQ@mail.gmail.com>
+	Thu, 10 Jul 2014 08:16:56 -0400
+Received: by mail-vc0-f180.google.com with SMTP id im17so10138284vcb.25
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Jul 2014 05:16:55 -0700 (PDT)
+In-Reply-To: <53BDD9D6.5080508@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Kevin,
+On Thu, Jul 10, 2014 at 2:09 AM, Pavel Vasilyev <pavel@pavlinux.ru> wrote:
+> - Remote side:
+>
+> # sysctl -w net.ipv4.icmp_echo_sysrq=305419896
+>
+> - Local side:
+>
+> $ ping -c1 -s57 -p1122338862 172.16.0.26
+> PATTERN: 0x1122338862
 
-On Wed, 2 Jul 2014 17:08:47 -0400
-Kevin Burns <kevinpb@vt.edu> wrote:
+This pattern does not match net.ipv4.icmp_echo_sysrq.
 
-> Hello Mr. Lelli,
-> 
-> I am a graduate student at Virginia Tech and am having an issue with
-> sched_setattr.
-> 
-> The folks over at at #linux-rt on irc.oftc.net suggested I bring the issue
-> to your attention.
-> 
+> PING 172.16.0.26 (172.16.0.26) 57(85) bytes of data.
+> 65 bytes from 172.16.0.26: icmp_req=1 ttl=64 time=0.508 ms
+>
+> --- 172.16.0.26 ping statistics ---
+> 1 packets transmitted, 1 received, 0% packet loss, time 0ms
+> rtt min/avg/max/mdev = 0.508/0.508/0.508/0.000 ms
+>
+>
+> - Remote side: Hello, i'm live!
+> --
+>
+>                                                          Pavel.
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 
-Sorry for the late reply, but I'm traveling in these days.
 
-> Here's the issue:
-> 
-> I am able to allocate a bandwidth with a ratio of .1 to two processes using
-> the sched_setattr() system call.
-> 
-> I then am able to add said tasks to a cpuset (with one physical processor)
-> using cset.
-> 
-> However, when I then try to update the runtime or period of either task,
-> sched_setattr returns a -EBUSY error.
-> 
-> Now, if I repeat the above experiment with just one task, I am able to
-> update the runtime or period without issue. I ran trace-cmd and kernelshark
-> to verify that the bandwidths were indeed being updated correctly. That and
-> htop was reporting a higher percentage of CPUusage, which correlated to the
-> ratios of my task's bandwidth.
-> 
-> Any ideas as to why cpuset would cause this behaviour?
-> 
 
-Could you create a script that I can use to run your setup and reproduce
-the problem?
-
+-- 
 Thanks,
-
-- Juri
-
-> Thanks,
-> -Kevin
+//richard
