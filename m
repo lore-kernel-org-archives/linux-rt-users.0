@@ -1,53 +1,143 @@
 From: Daniel Wagner <daniel.wagner@oss.bmw-carit.de>
-Subject: [RFC v1 0/3] Add simple work framework
-Date: Fri, 11 Jul 2014 15:26:10 +0200
-Message-ID: <1405085173-20449-1-git-send-email-daniel.wagner@oss.bmw-carit.de>
-Cc: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: [RFC v1 3/3] thermal: Defer thermal wakups to threads
+Date: Fri, 11 Jul 2014 15:26:13 +0200
+Message-ID: <1405085173-20449-4-git-send-email-daniel.wagner@oss.bmw-carit.de>
+References: <1405085173-20449-1-git-send-email-daniel.wagner@oss.bmw-carit.de>
+Cc: Daniel Wagner <daniel.wagner@bmw-carit.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:52410 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:52412 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753856AbaGKNco (ORCPT
+	with ESMTP id S1753459AbaGKNco (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 11 Jul 2014 09:32:44 -0400
+In-Reply-To: <1405085173-20449-1-git-send-email-daniel.wagner@oss.bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-Hi,
+On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
+call schedule while we run in irq context.
 
-here is my next attempt to fix the crash I see on my system.
+[<ffffffff816850ac>] dump_stack+0x4e/0x8f
+[<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
+[<ffffffff816896b4>] __schedule+0x5b4/0x700
+[<ffffffff8168982a>] schedule+0x2a/0x90
+[<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
+[<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
+[<ffffffffa03a7b75>] pkg_temp_thermal_platform_thermal_notify+0x45/0x134 [x86_pkg_temp_thermal]
+[<ffffffff8103d4db>] ? therm_throt_process+0x1b/0x160
+[<ffffffff8103d831>] intel_thermal_interrupt+0x211/0x250
+[<ffffffff8103d8c1>] smp_thermal_interrupt+0x21/0x40
+[<ffffffff8169415d>] thermal_interrupt+0x6d/0x80
 
-I spend considerable time reading up on memory barriers and etc.  Many
-thanks to the authors of the excellent documentation
-(memory-barriers.txt and Is Parallel Programming hard, And, If So,
-What Can You Do About It?)!
+Let's defer the work to a kthread.
 
-After reading it I am pretty sure I got it wrong.
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ drivers/thermal/x86_pkg_temp_thermal.c | 48 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 46 insertions(+), 2 deletions(-)
 
-The framework is inspired by the irq_work.c infrastructure. Maybe it
-could be merged somehow but I don't know if that is a clever idea.
-
-cheers,
-daniel
-
-Daniel Wagner (2):
-  work-simple: Simple work queue implemenation
-  thermal: Defer thermal wakups to threads
-
-Steven Rostedt (1):
-  x86/mce: Defer mce wakeups to threads for PREEMPT_RT
-
- arch/x86/kernel/cpu/mcheck/mce.c       |  57 +++++++++---
- drivers/thermal/x86_pkg_temp_thermal.c |  48 +++++++++-
- include/linux/work-simple.h            |  35 +++++++
- kernel/sched/Makefile                  |   1 +
- kernel/sched/work-simple.c             | 165 +++++++++++++++++++++++++++++++++
- 5 files changed, 292 insertions(+), 14 deletions(-)
- create mode 100644 include/linux/work-simple.h
- create mode 100644 kernel/sched/work-simple.c
-
+diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+index 081fd7e..a54ec65 100644
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,6 +29,7 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
++#include <linux/work-simple.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
+ 
+@@ -352,7 +353,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	}
+ }
+ 
+-static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++static void platform_thermal_notify_work(struct swork_event *event)
+ {
+ 	unsigned long flags;
+ 	int cpu = smp_processor_id();
+@@ -369,7 +370,7 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 			pkg_work_scheduled[phy_id]) {
+ 		disable_pkg_thres_interrupt();
+ 		spin_unlock_irqrestore(&pkg_work_lock, flags);
+-		return -EINVAL;
++		return;
+ 	}
+ 	pkg_work_scheduled[phy_id] = 1;
+ 	spin_unlock_irqrestore(&pkg_work_lock, flags);
+@@ -378,9 +379,48 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 	schedule_delayed_work_on(cpu,
+ 				&per_cpu(pkg_temp_thermal_threshold_work, cpu),
+ 				msecs_to_jiffies(notify_delay_ms));
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++static struct swork_event notify_work;
++
++static int thermal_notify_work_init(void)
++{
++	int err;
++
++	err = swork_get();
++	if (!err)
++		return err;
++
++	init_swork_event(&notify_work, platform_thermal_notify_work);
+ 	return 0;
+ }
+ 
++static void thermal_notify_work_cleanup(void)
++{
++	swork_put();
++}
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	swork_queue(&notify_work);
++	return 0;
++}
++
++#else  /* !CONFIG_PREEMPT_RT_FULL */
++
++static int thermal_notify_work_init(void) { return 0; }
++
++static int thermal_notify_work_cleanup(void) {  }
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	platform_thermal_notify_work(NULL);
++
++	return 0;
++}
++#endif /* CONFIG_PREEMPT_RT_FULL */
++
+ static int find_siblings_cpu(int cpu)
+ {
+ 	int i;
+@@ -594,6 +634,9 @@ static int __init pkg_temp_thermal_init(void)
+ 	for_each_online_cpu(i)
+ 		if (get_core_online(i))
+ 			goto err_ret;
++	if (!thermal_notify_work_init())
++		goto err_ret;
++
+ 	register_hotcpu_notifier(&pkg_temp_thermal_notifier);
+ 	put_online_cpus();
+ 
+@@ -619,6 +662,7 @@ static void __exit pkg_temp_thermal_exit(void)
+ 
+ 	get_online_cpus();
+ 	unregister_hotcpu_notifier(&pkg_temp_thermal_notifier);
++	thermal_notify_work_cleanup();
+ 	mutex_lock(&phy_dev_list_mutex);
+ 	list_for_each_entry_safe(phdev, n, &phy_dev_list, list) {
+ 		/* Retore old MSR value for package thermal interrupt */
 -- 
 1.9.3
 
