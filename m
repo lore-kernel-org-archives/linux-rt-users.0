@@ -1,113 +1,77 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/4] hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
-Date: Mon, 14 Jul 2014 16:06:37 -0400
-Message-ID: <20140714200652.530444427@goodmis.org>
-References: <20140714200634.590977709@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH RT 0/4] Linux 3.2.60-rt89-rc1
+Date: Mon, 14 Jul 2014 16:06:34 -0400
+Message-ID: <20140714200634.590977709@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Zhao Hongjiang <zhaohongjiang@huawei.com>,
-	Weng Meiling <wengmeiling.weng@huawei.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-hrtimer-fix-the-miss-of-hrtimer_peek_ahead_timers-in.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:17963 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756946AbaGNUGx (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Jul 2014 16:06:53 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.2.60-rt89-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Zhao Hongjiang <zhaohongjiang@huawei.com>
+This is the RT stable review cycle of patch 3.2.60-rt89-rc1.
 
-When we run the test "taskset -c 1 stress -m 1 --vm-bytes 50M" and
-"taskset -c 1 cyclictest -t 1 -p 80 -n -m -v" with rt closed 3.4.26-rt38 kernel,
-the cyclictest's result is anomalous as follow:
-       0:     278:       1
-       0:     279:       2
-       0:     280:      17
-       0:     281:    1657
-       0:     282:    1680
-       0:     283:    4678
-       0:     284:    7026
-       0:     285:    6678
-       0:     286:    9677
-       0:     287:   12678
-       0:     288:   13090
-       0:     289:   14678
-       0:     290:   17677
-       0:     291:   20155
-       0:     292:   19678
-       0:     293:   22679
-       0:     294:   25676
-       0:     295:   26218
-       0:     296:   27679
-       0:     297:   30677
-       0:     298:   33283
-       0:     299:   32677
-       0:     300:   35676
-and the result is increase continuously forever. We find that the patch
-("hrtimer: fixup hrtimer callback changes for preempt-rt") has missed
-hrtimer_peek_ahead_timers() in hrtimer_rt_run_pending() fuction in nort
-code. We fix this and the test result isn't increase continuously as same
-as the result with nort 3.4.26 kernel as follow:
-       0:     636:       8
-       0:     637:       7
-       0:     638:       8
-       0:     639:       9
-       0:     640:       7
-       0:     641:       9
-       0:     642:       8
-       0:     643:       8
-       0:     644:       8
-       0:     645:      32
-       0:     646:    8683
-       0:     647:    7760
-       0:     648:    6784
-       0:     649:    5797
-       0:     650:    4810
-       0:     651:    3823
-       0:     652:    2836
-       0:     653:    1849
-       0:     654:     862
-       0:     655:       7
-       0:     656:       7
-       0:     657:       7
-       0:     658:       6
-       0:     659:       8
-       0:     660:       7
+Please scream at me if I messed something up. Please test the patches too.
 
-Signed-off-by: Zhao Hongjiang <zhaohongjiang@huawei.com>
-Signed-off-by: Weng Meiling <wengmeiling.weng@huawei.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-[PG: direct cherry pick of b236e408 from v3.6-rt]
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/17/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.60-rt89-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt89-rc1.patch.xz
+
+You can also build from 3.2.60-rt88 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.60-rt88-rt89-rc1.patch.xz
+
+
+Changes from 3.2.60-rt88:
+
 ---
- kernel/hrtimer.c | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 2bd88f06a6d0..928473aa0aec 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1452,7 +1452,11 @@ static int hrtimer_rt_defer(struct hrtimer *timer)
- 
- #else
- 
--static inline void hrtimer_rt_run_pending(void) { }
-+static inline void hrtimer_rt_run_pending(void)
-+{
-+	hrtimer_peek_ahead_timers();
-+}
-+
- static inline int hrtimer_rt_defer(struct hrtimer *timer) { return 0; }
- 
- #endif
--- 
-2.0.0
+
+Steven Rostedt (1):
+      sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.2.60-rt89-rc1
+
+Thomas Gleixner (1):
+      workqueue: Prevent deadlock/stall on RT
+
+Zhao Hongjiang (1):
+      hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
+
+----
+ kernel/hrtimer.c   |  6 +++++-
+ kernel/sched.c     | 16 +++++-----------
+ kernel/workqueue.c | 41 +++++++++++++++++++++++++++++++++++------
+ localversion-rt    |  2 +-
+ 4 files changed, 46 insertions(+), 19 deletions(-)
