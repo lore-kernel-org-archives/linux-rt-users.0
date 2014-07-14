@@ -1,77 +1,80 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/4] Linux 3.2.60-rt89-rc1
-Date: Mon, 14 Jul 2014 16:06:34 -0400
-Message-ID: <20140714200634.590977709@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:17963 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756946AbaGNUGx (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jul 2014 16:06:53 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: [ANNOUNCE] 3.14.12-rt9
+Date: Mon, 14 Jul 2014 23:57:42 +0200 (CEST)
+Message-ID: <alpine.DEB.2.10.1407142242270.24854@nanos>
+Mime-Version: 1.0
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.2.60-rt89-rc1.
+I'm pleased to announce the 3.14.12-rt9 release. 3.14.10-rt8 is a not
+announced update to 3.14.12 without any RT changes.
 
-Please scream at me if I messed something up. Please test the patches too.
+Changes since 3.14.12-rt8:
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+   * Bring back the interrupt randomness hunk which got dropped due
+     an unresolved reject. Thanks to Ben Hutchings for spotting that!
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+<politics>
 
-If all goes well, this patch will be converted to the next main release
-on 7/17/2014.
+Thanks a lot for all the supportive mails on- and offlist!
 
-Enjoy,
+  The most intriguing idea so far was to jump on the momentum of the
+  most hilarious crowd funding nonsense:
 
--- Steve
+    https://www.kickstarter.com/projects/324283889/potato-salad
 
+  So in consequence we might turn RT into a crowdfunded nonsense
+  project which serves the purpose of controlling the potato-salad
+  machine to make sure that Zack Danger Brown can deliver all the
+  potato salad people have pledged for.
 
-To build 3.2.60-rt89-rc1 directly, the following patches should be applied:
+</politics>
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+Thanks,
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.60.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.60-rt89-rc1.patch.xz
-
-You can also build from 3.2.60-rt88 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.60-rt88-rt89-rc1.patch.xz
-
-
-Changes from 3.2.60-rt88:
+      Thomas
 
 ---
+The delta patch against 3.14.12-rt8 is appended below and can be found
+here:
 
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.10-rt8-rt9.patch.xz
 
-Steven Rostedt (1):
-      sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq()
+The RT patch against 3.14.12 can be found here:
 
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.60-rt89-rc1
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.12-rt9.patch.xz
 
-Thomas Gleixner (1):
-      workqueue: Prevent deadlock/stall on RT
+The split quilt queue is available at:
 
-Zhao Hongjiang (1):
-      hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patches-3.14.12-rt9.tar.xz
 
-----
- kernel/hrtimer.c   |  6 +++++-
- kernel/sched.c     | 16 +++++-----------
- kernel/workqueue.c | 41 +++++++++++++++++++++++++++++++++++------
- localversion-rt    |  2 +-
- 4 files changed, 46 insertions(+), 19 deletions(-)
+Index: linux-stable/kernel/irq/manage.c
+===================================================================
+--- linux-stable.orig/kernel/irq/manage.c
++++ linux-stable/kernel/irq/manage.c
+@@ -942,6 +942,12 @@ static int irq_thread(void *data)
+ 		if (action_ret == IRQ_HANDLED)
+ 			atomic_inc(&desc->threads_handled);
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++		migrate_disable();
++		add_interrupt_randomness(action->irq, 0,
++				 desc->random_ip ^ (unsigned long) action);
++		migrate_enable();
++#endif
+ 		wake_threads_waitq(desc);
+ 	}
+ 
+Index: linux-stable/localversion-rt
+===================================================================
+--- linux-stable.orig/localversion-rt
++++ linux-stable/localversion-rt
+@@ -1 +1 @@
+--rt8
++-rt9
