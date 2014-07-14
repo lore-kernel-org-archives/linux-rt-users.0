@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] workqueue: Prevent deadlock/stall on RT
-Date: Mon, 14 Jul 2014 16:05:37 -0400
-Message-ID: <20140714200545.784094924@goodmis.org>
+Subject: [PATCH RT 1/4] sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq()
+Date: Mon, 14 Jul 2014 16:05:36 -0400
+Message-ID: <20140714200545.576509660@goodmis.org>
 References: <20140714200535.671192970@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,171 +10,65 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Richard Weinberger <richard.weinberger@gmail.com>,
-	stable-rt@vger.kernel.org
+	stable-rt@vger.kernel.org, Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:61424 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1757264AbaGNUFr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Jul 2014 16:05:47 -0400
-Content-Disposition: inline; filename=0002-workqueue-Prevent-deadlock-stall-on-RT.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-sched-Do-not-clear-PF_NO_SETAFFINITY-flag-in-select_.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.4.97-rt121-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-Austin reported a XFS deadlock/stall on RT where scheduled work gets
-never exececuted and tasks are waiting for each other for ever.
+I talked with Peter Zijlstra about this, and he told me that the clearing
+of the PF_NO_SETAFFINITY flag was to deal with the optimization of
+migrate_disable/enable() that ignores tasks that have that flag set. But
+that optimization was removed when I did a rework of the cpu hotplug code.
 
-The underlying problem is the modification of the RT code to the
-handling of workers which are about to go to sleep. In mainline a
-worker thread which goes to sleep wakes an idle worker if there is
-more work to do. This happens from the guts of the schedule()
-function. On RT this must be outside and the accessed data structures
-are not protected against scheduling due to the spinlock to rtmutex
-conversion. So the naive solution to this was to move the code outside
-of the scheduler and protect the data structures by the pool
-lock. That approach turned out to be a little naive as we cannot call
-into that code when the thread blocks on a lock, as it is not allowed
-to block on two locks in parallel. So we dont call into the worker
-wakeup magic when the worker is blocked on a lock, which causes the
-deadlock/stall observed by Austin and Mike.
+I found that ignoring tasks that had that flag set would cause those tasks
+to not sync with the hotplug code and cause the kernel to crash. Thus it
+needed to not treat them special and those tasks had to go though the same
+work as tasks without that flag set.
 
-Looking deeper into that worker code it turns out that the only
-relevant data structure which needs to be protected is the list of
-idle workers which can be woken up.
+Now that those tasks are not treated special, there's no reason to clear the
+flag.
 
-So the solution is to protect the list manipulation operations with
-preempt_enable/disable pairs on RT and call unconditionally into the
-worker code even when the worker is blocked on a lock. The preemption
-protection is safe as there is nothing which can fiddle with the list
-outside of thread context.
+May still need to be tested as the migrate_me() code does not ignore those
+flags.
 
-Reported-and_tested-by: Austin Schuh <austin@peloton-tech.com>
-Reported-and_tested-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Link: http://vger.kernel.org/r/alpine.DEB.2.10.1406271249510.5170@nanos
-Cc: Richard Weinberger <richard.weinberger@gmail.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Clark Williams <williams@redhat.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Link: http://lkml.kernel.org/r/20140701111444.0cfebaa1@gandalf.local.home
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 ---
- kernel/sched/core.c |  7 +++++--
- kernel/workqueue.c  | 41 +++++++++++++++++++++++++++++++++++------
- 2 files changed, 40 insertions(+), 8 deletions(-)
+ kernel/sched/core.c | 6 ------
+ 1 file changed, 6 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 2b2863972dd1..5ba55a8b26e0 100644
+index 1199054adb2e..2b2863972dd1 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -3574,9 +3574,8 @@ need_resched:
- 
- static inline void sched_submit_work(struct task_struct *tsk)
- {
--	if (!tsk->state || tsk_is_pi_blocked(tsk))
-+	if (!tsk->state)
- 		return;
--
- 	/*
- 	 * If a worker went to sleep, notify and ask workqueue whether
- 	 * it wants to wake up a task to maintain concurrency.
-@@ -3586,6 +3585,10 @@ static inline void sched_submit_work(struct task_struct *tsk)
- 	if (tsk->flags & PF_WQ_WORKER && !tsk->saved_state)
- 		wq_worker_sleeping(tsk);
- 
-+
-+	if (tsk_is_pi_blocked(tsk))
-+		return;
-+
- 	/*
- 	 * If we are going to sleep and we have plugged IO queued,
- 	 * make sure to submit it to avoid deadlocks.
-diff --git a/kernel/workqueue.c b/kernel/workqueue.c
-index 4d21bfdc1637..653d7fccb762 100644
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -319,6 +319,31 @@ static inline int __next_wq_cpu(int cpu, const struct cpumask *mask,
- 	     (cpu) < WORK_CPU_NONE;					\
- 	     (cpu) = __next_wq_cpu((cpu), cpu_possible_mask, (wq)))
- 
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+static inline void rt_lock_idle_list(struct global_cwq *gcwq)
-+{
-+	preempt_disable();
-+}
-+static inline void rt_unlock_idle_list(struct global_cwq *gcwq)
-+{
-+	preempt_enable();
-+}
-+static inline void sched_lock_idle_list(struct global_cwq *gcwq) { }
-+static inline void sched_unlock_idle_list(struct global_cwq *gcwq) { }
-+#else
-+static inline void rt_lock_idle_list(struct global_cwq *gcwq) { }
-+static inline void rt_unlock_idle_list(struct global_cwq *gcwq) { }
-+static inline void sched_lock_idle_list(struct global_cwq *gcwq)
-+{
-+	spin_lock_irq(&gcwq->lock);
-+}
-+static inline void sched_unlock_idle_list(struct global_cwq *gcwq)
-+{
-+	spin_unlock_irq(&gcwq->lock);
-+}
-+#endif
-+
-+
- #ifdef CONFIG_DEBUG_OBJECTS_WORK
- 
- static struct debug_obj_descr work_debug_descr;
-@@ -650,10 +675,16 @@ static struct worker *first_worker(struct global_cwq *gcwq)
-  */
- static void wake_up_worker(struct global_cwq *gcwq)
- {
--	struct worker *worker = first_worker(gcwq);
-+	struct worker *worker;
-+
-+	rt_lock_idle_list(gcwq);
-+
-+	worker = first_worker(gcwq);
- 
- 	if (likely(worker))
- 		wake_up_process(worker->task);
-+
-+	rt_unlock_idle_list(gcwq);
- }
- 
- /**
-@@ -696,7 +727,6 @@ void wq_worker_sleeping(struct task_struct *task)
- 
- 	cpu = smp_processor_id();
- 	gcwq = get_gcwq(cpu);
--	spin_lock_irq(&gcwq->lock);
- 	/*
- 	 * The counterpart of the following dec_and_test, implied mb,
- 	 * worklist not empty test sequence is in insert_work().
-@@ -704,11 +734,10 @@ void wq_worker_sleeping(struct task_struct *task)
- 	 */
- 	if (atomic_dec_and_test(get_gcwq_nr_running(cpu)) &&
- 	    !list_empty(&gcwq->worklist)) {
--		worker = first_worker(gcwq);
--		if (worker)
--			wake_up_process(worker->task);
-+		sched_lock_idle_list(gcwq);
-+		wake_up_worker(gcwq);
-+		sched_unlock_idle_list(gcwq);
+@@ -1325,12 +1325,6 @@ out:
+ 		}
  	}
--	spin_unlock_irq(&gcwq->lock);
+ 
+-	/*
+-	 * Clear PF_THREAD_BOUND, otherwise we wreckage
+-	 * migrate_disable/enable. See optimization for
+-	 * PF_THREAD_BOUND tasks there.
+-	 */
+-	p->flags &= ~PF_THREAD_BOUND;
+ 	return dest_cpu;
  }
  
- /**
 -- 
 2.0.0
-
-
