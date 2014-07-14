@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/4] Linux 3.4.97-rt121-rc1
-Date: Mon, 14 Jul 2014 16:05:39 -0400
-Message-ID: <20140714200546.168809687@goodmis.org>
-References: <20140714200535.671192970@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Subject: [PATCH RT 0/4] Linux 3.4.97-rt121-rc1
+Date: Mon, 14 Jul 2014 16:05:35 -0400
+Message-ID: <20140714200535.671192970@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,27 +10,63 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-Linux-3.4.97-rt121-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.4.97-rt121-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+This is the RT stable review cycle of patch 3.4.97-rt121-rc1.
+
+Please scream at me if I messed something up. Please test the patches too.
+
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 7/17/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.4.97-rt121-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.97.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.97-rt121-rc1.patch.xz
+
+You can also build from 3.4.97-rt120 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.97-rt120-rt121-rc1.patch.xz
+
+
+Changes from 3.4.97-rt120:
 
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/localversion-rt b/localversion-rt
-index fff72aad59ab..6096ce5ed673 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt120
-+-rt121-rc1
--- 
-2.0.0
+
+Steven Rostedt (1):
+      sched: Do not clear PF_NO_SETAFFINITY flag in select_fallback_rq()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.4.97-rt121-rc1
+
+Thomas Gleixner (1):
+      workqueue: Prevent deadlock/stall on RT
+
+Zhao Hongjiang (1):
+      hrtimer:fix the miss of hrtimer_peek_ahead_timers in nort code
+
+----
+ kernel/hrtimer.c    |  6 +++++-
+ kernel/sched/core.c | 13 +++++--------
+ kernel/workqueue.c  | 41 +++++++++++++++++++++++++++++++++++------
+ localversion-rt     |  2 +-
+ 4 files changed, 46 insertions(+), 16 deletions(-)
