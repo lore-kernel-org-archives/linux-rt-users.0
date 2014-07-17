@@ -1,104 +1,49 @@
-From: minyard@acm.org
-Subject: [PATCH] tracing: Always run per-cpu ring buffer resize with schedule_work_on()
-Date: Wed, 16 Jul 2014 14:07:13 -0500
-Message-ID: <1405537633-31518-1-git-send-email-cminyard@mvista.com>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	tglx@linutronix.d, C.Emde@osadl.org, bigeasy@linutronix.de,
-	jkacur@redhat.com, paul.gortmaker@windriver.com,
-	Corey Minyard <cminyard@mvista.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Sasha Levin <sasha.levin@oracle.com>
+Subject: Re: [PATCH RFC tip/core/rcu 1/2] rcu: Rationalize kthread spawning
+Date: Wed, 16 Jul 2014 22:57:39 -0400
+Message-ID: <53C73BA3.1070303@oracle.com>
+References: <20140714100604.GA9905@linux.vnet.ibm.com> <1405332404-10094-1-git-send-email-paulmck@linux.vnet.ibm.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: mingo@kernel.org, laijs@cn.fujitsu.com, dipankar@in.ibm.com,
+	akpm@linux-foundation.org, mathieu.desnoyers@efficios.com,
+	josh@joshtriplett.org, niv@us.ibm.com, tglx@linutronix.de,
+	peterz@infradead.org, rostedt@goodmis.org, dhowells@redhat.com,
+	edumazet@google.com, dvhart@linux.intel.com, fweisbec@gmail.com,
+	oleg@redhat.com, sbw@mit.edu, linux-rt-users@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	linux-kernel@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from aserp1040.oracle.com ([141.146.126.69]:48431 "EHLO
+	aserp1040.oracle.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750994AbaGQC6p (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 16 Jul 2014 22:58:45 -0400
+In-Reply-To: <1405332404-10094-1-git-send-email-paulmck@linux.vnet.ibm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Corey Minyard <cminyard@mvista.com>
+On 07/14/2014 06:06 AM, Paul E. McKenney wrote:
+> From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+> 
+> Currently, RCU spawns kthreads from several different early_initcall()
+> functions.  Although this has served RCU well for quite some time,
+> as more kthreads are added a more deterministic approach is required.
+> This commit therefore causes all of RCU's early-boot kthreads to be
+> spawned from a single early_initcall() function.
+> 
+> Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 
-The code for resizing the trace ring buffers has to run the per-cpu
-resize on the CPU itself.  The code was using preempt_off() and
-running the code for the current CPU directly, otherwise calling
-schedule_work_on().
+Hey Paul,
 
-At least on RT this could result in the following:
+I've updated to today's -next and my VM started hanging on boot. Bisect
+pointed out this patch.
 
-|BUG: sleeping function called from invalid context at kernel/rtmutex.c:673
-|in_atomic(): 1, irqs_disabled(): 0, pid: 607, name: bash
-|3 locks held by bash/607:
-|CPU: 0 PID: 607 Comm: bash Not tainted 3.12.15-rt25+ #124
-|(rt_spin_lock+0x28/0x68)
-|(free_hot_cold_page+0x84/0x3b8)
-|(free_buffer_page+0x14/0x20)
-|(rb_update_pages+0x280/0x338)
-|(ring_buffer_resize+0x32c/0x3dc)
-|(free_snapshot+0x18/0x38)
-|(tracing_set_tracer+0x27c/0x2ac)
+I don't have any further info right now, but can provide whatever you'll
+find useful.
 
-probably via
-|cd /sys/kernel/debug/tracing/
-|echo 1 > events/enable ; sleep 2
-|echo 1024 > buffer_size_kb
 
-If we just always use schedule_work_on(), there's no need for the
-preempt_off().  So do that.
+Thanks,
+Sasha
 
-Reported-by: Stanislav Meduna <stano@meduna.org>
-Signed-off-by: Corey Minyard <cminyard@mvista.com>
----
- kernel/trace/ring_buffer.c | 24 ++++--------------------
- 1 file changed, 4 insertions(+), 20 deletions(-)
-
-diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
-index 7c56c3d..35825a8 100644
---- a/kernel/trace/ring_buffer.c
-+++ b/kernel/trace/ring_buffer.c
-@@ -1693,22 +1693,14 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
- 			if (!cpu_buffer->nr_pages_to_update)
- 				continue;
- 
--			/* The update must run on the CPU that is being updated. */
--			preempt_disable();
--			if (cpu == smp_processor_id() || !cpu_online(cpu)) {
-+			/* Can't run something on an offline CPU. */
-+			if (!cpu_online(cpu)) {
- 				rb_update_pages(cpu_buffer);
- 				cpu_buffer->nr_pages_to_update = 0;
- 			} else {
--				/*
--				 * Can not disable preemption for schedule_work_on()
--				 * on PREEMPT_RT.
--				 */
--				preempt_enable();
- 				schedule_work_on(cpu,
- 						&cpu_buffer->update_pages_work);
--				preempt_disable();
- 			}
--			preempt_enable();
- 		}
- 
- 		/* wait for all the updates to complete */
-@@ -1746,22 +1738,14 @@ int ring_buffer_resize(struct ring_buffer *buffer, unsigned long size,
- 
- 		get_online_cpus();
- 
--		preempt_disable();
--		/* The update must run on the CPU that is being updated. */
--		if (cpu_id == smp_processor_id() || !cpu_online(cpu_id))
-+		/* Can't run something on an offline CPU. */
-+		if (!cpu_online(cpu_id))
- 			rb_update_pages(cpu_buffer);
- 		else {
--			/*
--			 * Can not disable preemption for schedule_work_on()
--			 * on PREEMPT_RT.
--			 */
--			preempt_enable();
- 			schedule_work_on(cpu_id,
- 					 &cpu_buffer->update_pages_work);
- 			wait_for_completion(&cpu_buffer->update_done);
--			preempt_disable();
- 		}
--		preempt_enable();
- 
- 		cpu_buffer->nr_pages_to_update = 0;
- 		put_online_cpus();
--- 
-1.8.3.1
