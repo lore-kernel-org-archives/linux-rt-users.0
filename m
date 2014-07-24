@@ -1,54 +1,42 @@
-From: Yoann LE BARS <yoann@le-bars.net>
-Subject: What is to become concerning real time in Linux kernel?
-Date: Thu, 24 Jul 2014 00:24:11 +0200
-Message-ID: <53D0360B.30001@le-bars.net>
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: CLOCK_REALTIME instead of CLOCK_MONOTONIC for PTP coupled
+ RT_PREEMPT systems?
+Date: Thu, 24 Jul 2014 07:36:06 +0000
+Message-ID: <4c361c69cd0a4b2690542c1a5bc1c2a1@FE-MBX1012.de.bosch.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from 1.mo66.mail-out.ovh.net ([178.33.109.87]:53618 "EHLO
-	mo66.mail-out.ovh.net" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1758405AbaGWXxk convert rfc822-to-8bit (ORCPT
+Received: from imta22.fe.bosch.de ([139.15.243.26]:30318 "EHLO
+	imta22.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934061AbaGXHgp convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Jul 2014 19:53:40 -0400
-Received: from ex.mail.ovh.net (gw2.ex.mail.ovh.net [176.31.149.1])
-	by mo66.mail-out.ovh.net (Postfix) with SMTP id EFA4BFFB4D2
-	for <linux-rt-users@vger.kernel.org>; Thu, 24 Jul 2014 00:24:12 +0200 (CEST)
+	Thu, 24 Jul 2014 03:36:45 -0400
+Received: from smtp6-v.fe.bosch.de (imta23.fe.bosch.de [139.15.243.227])
+	by imta22.fe.bosch.de (Postfix) with ESMTP id 8AC2A8406F3
+	for <linux-rt-users@vger.kernel.org>; Thu, 24 Jul 2014 09:36:43 +0200 (CEST)
+Received: from vsmta13.fe.internet.bosch.com (unknown [10.4.98.53])
+	by imta23.fe.bosch.de (Postfix) with ESMTP id 18D631580220
+	for <linux-rt-users@vger.kernel.org>; Thu, 24 Jul 2014 09:36:11 +0200 (CEST)
+Received: from localhost (vsgw23.fe.internet.bosch.com [10.4.98.23])
+	by vsmta13.fe.internet.bosch.com (Postfix) with SMTP id E65B1601030
+	for <linux-rt-users@vger.kernel.org>; Thu, 24 Jul 2014 09:36:10 +0200 (CEST)
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi all,
 
-Hello everybody out there!
+as far as I know is the standard recommendation to use the clock CLOCK_MONOTONIC with e.g. clock_gettime and clock_nanosleep for real time usage.
+I have now the requirement that a couple of (x86) PCs are coupled and synchronized using PTP (linuxptp Project).
+The idea of this coupling is that all PCs have always the same (absolute) time stamp (with the PTP accuracy). For this I have to use the clock CLOCK_REALTIME
+instead of CLOCK_MONOTONIC.
+What speaks against using CLOCK_REALTIME for the real time application?
+Are there any drawbacks? 
+With our application I can ensure that no manually set of the time occurs.
 
-	As a user of soft real-time Linux kernel, I have some question about
-its future.
+Thanks for any feedback on this question.
 
-	During Real Time Linux Workshop in November 2013, developers involved
-in the real-time patch have indicated the project will be done in 2014,
-=93one way or another=94 (<http://lwn.net/Articles/572740/>). In this
-workshop, it has also been said that 95 % of the real-time work was
-already upstream.
+Mathias
 
-	The question was how will it be done? In considering that the 95 % is
-good enough? Get the rest of the code upstream =96 which imply an
-important effort and several people involved in it? Something between
-these two options?
-
-	As SCHED_DEADLINE has been incorporated into Linux 3.14 kernel
-(<http://www.phoronix.com/scan.php?page=3Dnews_item&px=3DMTU3Njk>), it =
-seems
-to me that it has been decided to get some more code upstream. Still,
-the question remains: what way will be the project done?
-
-	Does anyone have any more information about it? As for my part, I
-cannot find anything more.
-
-	Regards.
-
-							Yoann
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
