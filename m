@@ -1,26 +1,26 @@
 From: Sadasivan Shaiju <sshaiju@mvista.com>
-Subject: PATCH[2.6.32] kgdb patch
-Date: Mon, 11 Aug 2014 14:33:59 -0700
-Message-ID: <fe0d3c9469ec5339a06a472ddc418ba8@mail.gmail.com>
+Subject: PATCH[2.6.32 and 2.6.32] interrupt
+Date: Mon, 11 Aug 2014 14:47:42 -0700
+Message-ID: <e208f19b818dd8d72a202be28f7012ce@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=001a113941d6b80eed050061501d
+Content-Type: multipart/mixed; boundary=047d7bdcac381947a60500618226
 Cc: shaiju_sada@yahoo.com
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f42.google.com ([209.85.216.42]:52647 "EHLO
-	mail-qa0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752519AbaHKVeK (ORCPT
+Received: from mail-qc0-f173.google.com ([209.85.216.173]:60739 "EHLO
+	mail-qc0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752050AbaHKVr6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2014 17:34:10 -0400
-Received: by mail-qa0-f42.google.com with SMTP id j15so8402693qaq.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2014 14:34:09 -0700 (PDT)
+	Mon, 11 Aug 2014 17:47:58 -0400
+Received: by mail-qc0-f173.google.com with SMTP id w7so2118798qcr.18
+        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2014 14:47:58 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---001a113941d6b80eed050061501d
+--047d7bdcac381947a60500618226
 Content-Type: text/plain; charset=UTF-8
 
-Hi,
+Hi ,
 
 I  work for Montavista (Cavium Inc) as  a  Technical  Lead .  I want to
 push some  of the kernel  patches to  rt community (2.6.32 kernel 2.6.33
@@ -29,64 +29,70 @@ reviewed  and approved  by  our system Architect.  I request  you to
 include  in the main line .  These  issues  were  reported  by our
 customer CISCO.
 
-
 Problem Description:
-If  kprobes  is  enabled  along  with  kgdb, kgdb gives a SIGHUP on the
-host side.
+When CONFIG_DEBUG_PREEMPT is enabled the following stack trace occurs.
+
+[ 170.814470] BUG: using smp_processor_id() in preemptible [00000000]
+code: sirq-timer/4/62
+[ 170.814482] caller is hrtimer_run_pending+0x10/0x20
+[ 170.814488] Call Trace:
+[ 170.814496] [<ffffffff8010d844>] dump_stack+0x8/0x34
+[ 170.814507] [<ffffffff803c2598>] debug_smp_processor_id+0xe0/0xf0
+[ 170.814517] [<ffffffff80254158>] hrtimer_run_pending+0x10/0x20
+[ 170.814528] [<ffffffff80242400>] run_timer_softirq+0x60/0x348
+[ 170.814539] [<ffffffff8023ae80>] run_ksoftirqd+0x1c8/0x348
+[ 170.814550] [<ffffffff802503f8>] kthread+0x88/0x90
+[ 170.814561] [<ffffffff80206c80>] kernel_thread_helper+0x10/0x18
 
 Root Cause:
-Inside the do_page_fault() (arch/mips/mm/fault.c) there is a call to
-notify_die() when kprobes is enabled.
-
-When kgdb is enabled the register_die_notifier() handler catches this
-exception
-(which is 3 - TLB miss on store) and says it does not know it and returns
-it as
-a SIGHUP.
+Interrupt was occurring before the processor was completely up, and the
+softirq
+threads were unable to schedule on the processor and then ran on the wrong
+CPU.
 
 How Solved:
-Made kgdb ignore this particular die notification (cmd == DIE_PAGE_FAULT)
-in its
-handler.
+Enabling of interrupt has been delayed till smp_finish so that
+kthread_bind
+can safely bind threads to any possible CPU.
 
-
-I  request you to include the above patch in to the main line kernel . If
-any questions  please contact me at  sshaiju@mvista.com
+I  request you to include this patch into the main line community .  If
+any questions  please contact me  at  sshaiju@mvista.com
 (shaiju_sada@yahoo.com)
-
 
 Regards,
 Shaiju.
 
---001a113941d6b80eed050061501d
+--047d7bdcac381947a60500618226
 Content-Type: application/octet-stream;
-	name="4995-kgdb-Ignore-DIE_PAGE_FAULT-event-in-notify-handler.patch"
+	name="0001-Interrupt-delaying-enabling-of-interrupt.patch"
 Content-Disposition: attachment;
-	filename="4995-kgdb-Ignore-DIE_PAGE_FAULT-event-in-notify-handler.patch"
+	filename="0001-Interrupt-delaying-enabling-of-interrupt.patch"
 Content-Transfer-Encoding: base64
-X-Attachment-Id: 94a297ddda1b478f_0.1
+X-Attachment-Id: da8e1a4dcf7dd3e7_0.1
 
-RnJvbSAwNTZjYWE5OTkxNTEyNzA0Y2IzOWY2NTgyOGUxZmZlYTQ3ODMwYzZjIE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBzYWRhc2l2YW4gc2hhaWp1IDxzaGFpanVAbG9jYWxob3N0Lmxv
-Y2FsZG9tYWluPgpEYXRlOiBXZWQsIDI3IEp1bCAyMDExIDE0OjU0OjM5IC0wNzAwClN1YmplY3Q6
-IFtQQVRDSF0ga2dkYjogSWdub3JlIERJRV9QQUdFX0ZBVUxUIGV2ZW50IGluIG5vdGlmeSBoYW5k
-bGVyCgpTb3VyY2U6IE1vbnRhVmlzdGEgU29mdHdhcmUsIExMQwpNUjogNDUyODAKVHlwZTogRGVm
-ZWN0IEZpeApEaXNwb3NpdGlvbjogTmVlZHMgc3VibWl0dGluZyB0byBrZXJuZWwub3JnCkNoYW5n
-ZUlEOiA1YmVjMDlmN2VjMGE0Nzc1MTY5ZjVjYmExNjk3NmJjM2E2YjQ1NTk4CkRlc2NyaXB0aW9u
-OgoKSWdub3JlIG5vdGlmeV9kaWUoKSBmcm9tIGRvX3BhZ2VmYXVsdCgpLCBpbiBrZ2RiJ3MgcmVn
-aXN0ZXJfZGllX25vdGlmaWVyKCkKaGFuZGxlcgoKU2lnbmVkLW9mZi1ieTogU2FkYXNpdmFuIDxz
-c2hhaWp1QG12aXN0YS5jb20+ClNpZ25lZC1vZmYtYnk6IERhbGUgRmFybnN3b3J0aCA8ZGZhcm5z
-d29ydGhAbXZpc3RhLmNvbT4KLS0tCiBhcmNoL21pcHMva2VybmVsL2tnZGIuYyB8ICAgIDUgKysr
-KysKIDEgZmlsZXMgY2hhbmdlZCwgNSBpbnNlcnRpb25zKCspLCAwIGRlbGV0aW9ucygtKQoKZGlm
-ZiAtLWdpdCBhL2FyY2gvbWlwcy9rZXJuZWwva2dkYi5jIGIvYXJjaC9taXBzL2tlcm5lbC9rZ2Ri
-LmMKaW5kZXggNTBjOWJiOC4uM2U0YWUzMSAxMDA2NDQKLS0tIGEvYXJjaC9taXBzL2tlcm5lbC9r
-Z2RiLmMKKysrIGIvYXJjaC9taXBzL2tlcm5lbC9rZ2RiLmMKQEAgLTE5MSw2ICsxOTEsMTEgQEAg
-c3RhdGljIGludCBrZ2RiX21pcHNfbm90aWZ5KHN0cnVjdCBub3RpZmllcl9ibG9jayAqc2VsZiwg
-dW5zaWduZWQgbG9uZyBjbWQsCiAJc3RydWN0IHB0X3JlZ3MgKnJlZ3MgPSBhcmdzLT5yZWdzOwog
-CWludCB0cmFwID0gKHJlZ3MtPmNwMF9jYXVzZSAmIDB4N2MpID4+IDI7CiAKKyAgICAgICAgLyog
-aWdub3JlIHRoZSBub3RpZnlfZGllKCkgZnJvbSBkb19wYWdlX2ZhdWx0KCksIHdoaWNoIGlzIG1l
-YW50IGZvciBrcHJvYmVzICovCisKKwlpZihjbWQgPT0gRElFX1BBR0VfRkFVTFQpCisJCXJldHVy
-biBOT1RJRllfRE9ORTsgICAgICAgCisKIAkvKiBVc2VycGFjZSBldmVudHMsIGlnbm9yZS4gKi8K
-IAlpZiAodXNlcl9tb2RlKHJlZ3MpKQogCQlyZXR1cm4gTk9USUZZX0RPTkU7Ci0tIAoxLjcuMC4x
-Cgo=
---001a113941d6b80eed050061501d--
+RnJvbSA1ODUxMjQ3NWNiYTkzMDAzYzIzZjJiMzgwYjU3M2U2NGVlYmNhYmQ1IE1vbiBTZXAgMTcg
+MDA6MDA6MDAgMjAwMQpGcm9tOiBTYWRhc2l2YW4gU2hhaWp1IDxzc2hhaWp1QG12aXN0YS5jb20+
+CkRhdGU6IE1vbiwgMjAgRmViIDIwMTIgMTM6MjU6NTAgLTA4MDAKU3ViamVjdDogW1BBVENIXSBJ
+bnRlcnJ1cHQgOiBkZWxheWluZyBlbmFibGluZyBvZiBpbnRlcnJ1cHQKClNvdXJjZTogTW9udGFW
+aXN0YSBTb2Z0d2FyZSwgTExDCk1SOiA0NzE1NwpUeXBlOiBEZWZlY3QgRml4CkRpc3Bvc2l0aW9u
+OiBMb2NhbApDaGFuZ2VJRDogNDhjODM3MzI5NTU2YjE2MWYzMTExZTZmZGVkMWM5ODU3ZmEzYTE0
+OQpEZXNjcmlwdGlvbjoKClRoaXMgcGF0Y2ggaXMgdG8gZGVsYXkgdGhlIGVuYWJsaW5nIG9mIGlu
+dGVycnVwdCB0aWxsCnNtcF9maW5pc2ggLiBTbyB0aGF0IGt0aHJlYWRfYmluZCBjYW4gc2FmZWx5
+IGJpbmQKdGhyZWFkcyB0byBhbnkgcG9zc2libGUgY3B1LiBXaXRob3V0IHRoaXMgY2hhbmdlCmlu
+dGVycnVwdCBzaG91bGQgb2NjdXIgYmVvZnJlICB0aGUgIHByb2Nlc3NvciB3YXMKY29tcGxldGVs
+eSB1cCwgYW5kICB0aGUgc29mdGlycSB0aHJlYWRzIHdlcmUgdW5hYmxlCnRvIHNjaGVkdWxlIG9u
+IHRoZSBwcm9jZXNzb3IgYW5kICB0aGVuICByYW4gb24gdGhlCndyb25nIENQVS4KClNpZ25lZC1v
+ZmYtYnk6IFNhZGFzaXZhbiBTaGFpanUgPHNzaGFpanVAbXZpc3RhLmNvbT4KLS0tCiBhcmNoL21p
+cHMvY2F2aXVtLW9jdGVvbi9zbXAuYyB8ICAgIDMgKystCiAxIGZpbGVzIGNoYW5nZWQsIDIgaW5z
+ZXJ0aW9ucygrKSwgMSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9hcmNoL21pcHMvY2F2aXVt
+LW9jdGVvbi9zbXAuYyBiL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCmluZGV4IGZmMjE1
+NDIuLmM3ZGU3YWMgMTAwNjQ0Ci0tLSBhL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCisr
+KyBiL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCkBAIC0zMDgsNyArMzA4LDYgQEAgc3Rh
+dGljIHZvaWQgb2N0ZW9uX2luaXRfc2Vjb25kYXJ5KHZvaWQpCiAJb2N0ZW9uX2luaXRfY3ZtY291
+bnQoKTsKIAogCW9jdGVvbl9pcnFfc2V0dXBfc2Vjb25kYXJ5KCk7Ci0JcmF3X2xvY2FsX2lycV9l
+bmFibGUoKTsKIH0KIAogLyoqCkBAIC0zNjUsNiArMzY0LDggQEAgc3RhdGljIHZvaWQgb2N0ZW9u
+X3NtcF9maW5pc2godm9pZCkKIAogCS8qIHRvIGdlbmVyYXRlIHRoZSBmaXJzdCBDUFUgdGltZXIg
+aW50ZXJydXB0ICovCiAJd3JpdGVfYzBfY29tcGFyZShyZWFkX2MwX2NvdW50KCkgKyBtaXBzX2hw
+dF9mcmVxdWVuY3kgLyBIWik7CisJLyogZW5hYmxlIGxvY2FsIGludGVycnVwdHMgKi8KKwlyYXdf
+bG9jYWxfaXJxX2VuYWJsZSgpOwogfQogCiAvKioKLS0gCjEuNy4wLjEKCg==
+--047d7bdcac381947a60500618226--
