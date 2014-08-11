@@ -1,98 +1,42 @@
-From: Sadasivan Shaiju <sshaiju@mvista.com>
-Subject: PATCH[2.6.32 and 2.6.32] interrupt
-Date: Mon, 11 Aug 2014 14:47:42 -0700
-Message-ID: <e208f19b818dd8d72a202be28f7012ce@mail.gmail.com>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: PATCH[2.6.32 and 2.6.32] interrupt
+Date: Tue, 12 Aug 2014 02:52:36 +0400
+Message-ID: <53E94934.3000005@pavlinux.ru>
+References: <e208f19b818dd8d72a202be28f7012ce@mail.gmail.com>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary=047d7bdcac381947a60500618226
+Content-Type: text/plain; charset=UTF-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: shaiju_sada@yahoo.com
-To: linux-rt-users@vger.kernel.org
+To: Sadasivan Shaiju <sshaiju@mvista.com>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f173.google.com ([209.85.216.173]:60739 "EHLO
-	mail-qc0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752050AbaHKVr6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 11 Aug 2014 17:47:58 -0400
-Received: by mail-qc0-f173.google.com with SMTP id w7so2118798qcr.18
-        for <linux-rt-users@vger.kernel.org>; Mon, 11 Aug 2014 14:47:58 -0700 (PDT)
+Received: from imp01.mtu.ru ([62.5.255.10]:41524 "EHLO imp01.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753190AbaHKW5U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 11 Aug 2014 18:57:20 -0400
+In-Reply-To: <e208f19b818dd8d72a202be28f7012ce@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---047d7bdcac381947a60500618226
-Content-Type: text/plain; charset=UTF-8
+12.08.2014 01:47, Sadasivan Shaiju =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>  I request  you to include  in the main line .
 
-Hi ,
+Tell Monta Vista, Cisco and Cavium Inc. that while they do not allocate=
+ money,=20
+nothing will happen.
 
-I  work for Montavista (Cavium Inc) as  a  Technical  Lead .  I want to
-push some  of the kernel  patches to  rt community (2.6.32 kernel 2.6.33
-rt patch)  , so  that  It  will  go  to  the  main line These patches  are
-reviewed  and approved  by  our system Architect.  I request  you to
-include  in the main line .  These  issues  were  reported  by our
-customer CISCO.
+And it is, now 2014, a stable kernel 3.16 (LTS 3.14), the hell us your =
+junk ??!
+Three years hid patches, hide on. Is not necessary. :-P
 
-Problem Description:
-When CONFIG_DEBUG_PREEMPT is enabled the following stack trace occurs.
 
-[ 170.814470] BUG: using smp_processor_id() in preemptible [00000000]
-code: sirq-timer/4/62
-[ 170.814482] caller is hrtimer_run_pending+0x10/0x20
-[ 170.814488] Call Trace:
-[ 170.814496] [<ffffffff8010d844>] dump_stack+0x8/0x34
-[ 170.814507] [<ffffffff803c2598>] debug_smp_processor_id+0xe0/0xf0
-[ 170.814517] [<ffffffff80254158>] hrtimer_run_pending+0x10/0x20
-[ 170.814528] [<ffffffff80242400>] run_timer_softirq+0x60/0x348
-[ 170.814539] [<ffffffff8023ae80>] run_ksoftirqd+0x1c8/0x348
-[ 170.814550] [<ffffffff802503f8>] kthread+0x88/0x90
-[ 170.814561] [<ffffffff80206c80>] kernel_thread_helper+0x10/0x18
+--=20
 
-Root Cause:
-Interrupt was occurring before the processor was completely up, and the
-softirq
-threads were unable to schedule on the processor and then ran on the wrong
-CPU.
-
-How Solved:
-Enabling of interrupt has been delayed till smp_finish so that
-kthread_bind
-can safely bind threads to any possible CPU.
-
-I  request you to include this patch into the main line community .  If
-any questions  please contact me  at  sshaiju@mvista.com
-(shaiju_sada@yahoo.com)
-
-Regards,
-Shaiju.
-
---047d7bdcac381947a60500618226
-Content-Type: application/octet-stream;
-	name="0001-Interrupt-delaying-enabling-of-interrupt.patch"
-Content-Disposition: attachment;
-	filename="0001-Interrupt-delaying-enabling-of-interrupt.patch"
-Content-Transfer-Encoding: base64
-X-Attachment-Id: da8e1a4dcf7dd3e7_0.1
-
-RnJvbSA1ODUxMjQ3NWNiYTkzMDAzYzIzZjJiMzgwYjU3M2U2NGVlYmNhYmQ1IE1vbiBTZXAgMTcg
-MDA6MDA6MDAgMjAwMQpGcm9tOiBTYWRhc2l2YW4gU2hhaWp1IDxzc2hhaWp1QG12aXN0YS5jb20+
-CkRhdGU6IE1vbiwgMjAgRmViIDIwMTIgMTM6MjU6NTAgLTA4MDAKU3ViamVjdDogW1BBVENIXSBJ
-bnRlcnJ1cHQgOiBkZWxheWluZyBlbmFibGluZyBvZiBpbnRlcnJ1cHQKClNvdXJjZTogTW9udGFW
-aXN0YSBTb2Z0d2FyZSwgTExDCk1SOiA0NzE1NwpUeXBlOiBEZWZlY3QgRml4CkRpc3Bvc2l0aW9u
-OiBMb2NhbApDaGFuZ2VJRDogNDhjODM3MzI5NTU2YjE2MWYzMTExZTZmZGVkMWM5ODU3ZmEzYTE0
-OQpEZXNjcmlwdGlvbjoKClRoaXMgcGF0Y2ggaXMgdG8gZGVsYXkgdGhlIGVuYWJsaW5nIG9mIGlu
-dGVycnVwdCB0aWxsCnNtcF9maW5pc2ggLiBTbyB0aGF0IGt0aHJlYWRfYmluZCBjYW4gc2FmZWx5
-IGJpbmQKdGhyZWFkcyB0byBhbnkgcG9zc2libGUgY3B1LiBXaXRob3V0IHRoaXMgY2hhbmdlCmlu
-dGVycnVwdCBzaG91bGQgb2NjdXIgYmVvZnJlICB0aGUgIHByb2Nlc3NvciB3YXMKY29tcGxldGVs
-eSB1cCwgYW5kICB0aGUgc29mdGlycSB0aHJlYWRzIHdlcmUgdW5hYmxlCnRvIHNjaGVkdWxlIG9u
-IHRoZSBwcm9jZXNzb3IgYW5kICB0aGVuICByYW4gb24gdGhlCndyb25nIENQVS4KClNpZ25lZC1v
-ZmYtYnk6IFNhZGFzaXZhbiBTaGFpanUgPHNzaGFpanVAbXZpc3RhLmNvbT4KLS0tCiBhcmNoL21p
-cHMvY2F2aXVtLW9jdGVvbi9zbXAuYyB8ICAgIDMgKystCiAxIGZpbGVzIGNoYW5nZWQsIDIgaW5z
-ZXJ0aW9ucygrKSwgMSBkZWxldGlvbnMoLSkKCmRpZmYgLS1naXQgYS9hcmNoL21pcHMvY2F2aXVt
-LW9jdGVvbi9zbXAuYyBiL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCmluZGV4IGZmMjE1
-NDIuLmM3ZGU3YWMgMTAwNjQ0Ci0tLSBhL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCisr
-KyBiL2FyY2gvbWlwcy9jYXZpdW0tb2N0ZW9uL3NtcC5jCkBAIC0zMDgsNyArMzA4LDYgQEAgc3Rh
-dGljIHZvaWQgb2N0ZW9uX2luaXRfc2Vjb25kYXJ5KHZvaWQpCiAJb2N0ZW9uX2luaXRfY3ZtY291
-bnQoKTsKIAogCW9jdGVvbl9pcnFfc2V0dXBfc2Vjb25kYXJ5KCk7Ci0JcmF3X2xvY2FsX2lycV9l
-bmFibGUoKTsKIH0KIAogLyoqCkBAIC0zNjUsNiArMzY0LDggQEAgc3RhdGljIHZvaWQgb2N0ZW9u
-X3NtcF9maW5pc2godm9pZCkKIAogCS8qIHRvIGdlbmVyYXRlIHRoZSBmaXJzdCBDUFUgdGltZXIg
-aW50ZXJydXB0ICovCiAJd3JpdGVfYzBfY29tcGFyZShyZWFkX2MwX2NvdW50KCkgKyBtaXBzX2hw
-dF9mcmVxdWVuY3kgLyBIWik7CisJLyogZW5hYmxlIGxvY2FsIGludGVycnVwdHMgKi8KKwlyYXdf
-bG9jYWxfaXJxX2VuYWJsZSgpOwogfQogCiAvKioKLS0gCjEuNy4wLjEKCg==
---047d7bdcac381947a60500618226--
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
