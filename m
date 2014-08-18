@@ -1,8 +1,9 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 5/6] cyclictest: Fix help for long options only
-Date: Mon, 18 Aug 2014 16:45:35 -0400 (EDT)
-Message-ID: <1269424668.40443200.1408394735524.JavaMail.zimbra@redhat.com>
-References: <1408033090-24866-1-git-send-email-jkacur@redhat.com> <1408033090-24866-6-git-send-email-jkacur@redhat.com> <53F2615F.3090007@michaeljones.de>
+Subject: Re: [PATCH 6/6] cyclictest: Add long option --laptop to preserve
+ battery power
+Date: Mon, 18 Aug 2014 16:46:55 -0400 (EDT)
+Message-ID: <1540110357.40443582.1408394815941.JavaMail.zimbra@redhat.com>
+References: <1408033090-24866-1-git-send-email-jkacur@redhat.com> <1408033090-24866-7-git-send-email-jkacur@redhat.com> <53F26219.2000302@michaeljones.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
@@ -10,38 +11,24 @@ Cc: rt-users <linux-rt-users@vger.kernel.org>,
 	Clark Williams <williams@redhat.com>
 To: Michael <dev@michaeljones.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx4-phx2.redhat.com ([209.132.183.25]:50780 "EHLO
-	mx4-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751941AbaHRUpl (ORCPT
+Received: from mx6-phx2.redhat.com ([209.132.183.39]:55757 "EHLO
+	mx6-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751066AbaHRUq7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Aug 2014 16:45:41 -0400
-In-Reply-To: <53F2615F.3090007@michaeljones.de>
+	Mon, 18 Aug 2014 16:46:59 -0400
+In-Reply-To: <53F26219.2000302@michaeljones.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 
 ----- Original Message -----
-> Hi John,
+> On 08/14/2014 06:18 PM, John Kacur wrote:
+> > Some people running cyclictest on laptops don't want to automatically
+> > take advantage of the trick that prevents the power management to
+> > transistion to high cstates, since it eats up their battery power.
 > 
-> I submitted an almost identical patch to this one a few weeks ago, but
-> haven't heard anything:
-> http://www.spinics.net/lists/linux-rt-users/msg12140.html
+> s/transistion/transition/
 > 
-> I thought I might follow-up with some more patches to bring the
-> comments/docs in sync with the code, but I didn't see anything happening
-> with my first submission, so I haven't bothered.
-> 
-> What to do?  Can I resubmit mine to add the one change you made which I
-> didn't (--notrace)?
-> 
-
-Sorry about that, we probably missed it because of a combination of being
-busy with other things and vacations, but yes please, if you have another
-patch on top of what's already there, then please submit it.
-
-You can get my development branch here:
-Repo: git://git.kernel.org/pub/scm/linux/kernel/git/jkacur/rt-tests.git
-Branch: v0.89-devel
 
 Thanks
