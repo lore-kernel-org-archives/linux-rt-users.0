@@ -1,34 +1,42 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 6/6] cyclictest: Add long option --laptop to preserve
- battery power
-Date: Mon, 18 Aug 2014 16:46:55 -0400 (EDT)
-Message-ID: <1540110357.40443582.1408394815941.JavaMail.zimbra@redhat.com>
-References: <1408033090-24866-1-git-send-email-jkacur@redhat.com> <1408033090-24866-7-git-send-email-jkacur@redhat.com> <53F26219.2000302@michaeljones.de>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Some benchmark results
+Date: Mon, 25 Aug 2014 11:02:32 +0200
+Message-ID: <53FAFBA8.3050009@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset=ISO-8859-1
 Content-Transfer-Encoding: 7bit
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: Michael <dev@michaeljones.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx6-phx2.redhat.com ([209.132.183.39]:55757 "EHLO
-	mx6-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751066AbaHRUq7 (ORCPT
+Received: from mail-wi0-f180.google.com ([209.85.212.180]:50519 "EHLO
+	mail-wi0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750923AbaHYJCf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Aug 2014 16:46:59 -0400
-In-Reply-To: <53F26219.2000302@michaeljones.de>
+	Mon, 25 Aug 2014 05:02:35 -0400
+Received: by mail-wi0-f180.google.com with SMTP id n3so2190780wiv.7
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Aug 2014 02:02:34 -0700 (PDT)
+Received: from handman.bmw-carit.intra (mail.bmw-carit.de. [62.245.222.98])
+        by mx.google.com with ESMTPSA id d2sm29625551wiy.13.2014.08.25.02.02.33
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1 cipher=ECDHE-RSA-RC4-SHA bits=128/128);
+        Mon, 25 Aug 2014 02:02:33 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
+I wanted to know how good or bad mainline vs RT is, therefore I let
+MMTests torture my laptop for a while. I selected a few of the supported
+benchmarks by MMTests in order to keep to a reasonable time frame.
 
------ Original Message -----
-> On 08/14/2014 06:18 PM, John Kacur wrote:
-> > Some people running cyclictest on laptops don't want to automatically
-> > take advantage of the trick that prevents the power management to
-> > transistion to high cstates, since it eats up their battery power.
-> 
-> s/transistion/transition/
-> 
+The aim was to see the impact of normal (no RT) workloads with different
+preempt configurations on mainline and RT patched kernel. I tried to not
+to change other configuration flags except the preempt one. There are
+some small difference due to dependencies but the rest looks ok to me.
 
-Thanks
+http://www.monom.org/rt/mmtests/
+
+Suggestion, improvements, comments?
+
+cheers,
+daniel
+
