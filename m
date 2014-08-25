@@ -1,42 +1,50 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Some benchmark results
-Date: Mon, 25 Aug 2014 11:02:32 +0200
-Message-ID: <53FAFBA8.3050009@monom.org>
+From: Harry van Haaren <harryhaaren@gmail.com>
+Subject: CpuFreq Laptop Scaling broken?
+Date: Mon, 25 Aug 2014 13:28:27 +0100
+Message-ID: <CAKudYbOjXe3JRGDsE3A_=Vd7NEU+_eDO3po3+47CS80=TN363g@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=UTF-8
+Cc: rjw@sisk.pl, viresh.kumar@linaro.org, tglx@linutronix.de,
+	rostedt@goodmis.org
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f180.google.com ([209.85.212.180]:50519 "EHLO
-	mail-wi0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750923AbaHYJCf (ORCPT
+Received: from mail-lb0-f178.google.com ([209.85.217.178]:54444 "EHLO
+	mail-lb0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932379AbaHYM22 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Aug 2014 05:02:35 -0400
-Received: by mail-wi0-f180.google.com with SMTP id n3so2190780wiv.7
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Aug 2014 02:02:34 -0700 (PDT)
-Received: from handman.bmw-carit.intra (mail.bmw-carit.de. [62.245.222.98])
-        by mx.google.com with ESMTPSA id d2sm29625551wiy.13.2014.08.25.02.02.33
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1 cipher=ECDHE-RSA-RC4-SHA bits=128/128);
-        Mon, 25 Aug 2014 02:02:33 -0700 (PDT)
+	Mon, 25 Aug 2014 08:28:28 -0400
+Received: by mail-lb0-f178.google.com with SMTP id c11so12090446lbj.37
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Aug 2014 05:28:27 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hi -rt users, and CC's,
 
-I wanted to know how good or bad mainline vs RT is, therefore I let
-MMTests torture my laptop for a while. I selected a few of the supported
-benchmarks by MMTests in order to keep to a reasonable time frame.
+I'm attempting to squeeze the lowest audio-latency out of a laptop as possible,
+and in doing so would like to set the CPU to performance.
 
-The aim was to see the impact of normal (no RT) workloads with different
-preempt configurations on mainline and RT patched kernel. I tried to not
-to change other configuration flags except the preempt one. There are
-some small difference due to dependencies but the rest looks ok to me.
+CPU in laptop: Intel(R) Core(TM)2 Duo CPU T7300 @ 2.00GHz
 
-http://www.monom.org/rt/mmtests/
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_available_governors
+ondemand performance
 
-Suggestion, improvements, comments?
+$ cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver
+acpi-cpufreq
 
-cheers,
-daniel
+# Attempt to set performance governer
+$ echo "performance" >/sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+bash: echo: write error: Invalid argument
 
+# Attempt to set min freq of 2GHz (max) of this core2duo
+$ echo 2000000 > /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq
+bash: /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_min_freq: Permission denied
+
+As far as I can tell, it is currently impossible on the -rt kernel to
+change CPU governer?
+This is necessary for reliable low-latency audio for laptop musicians.
+
+What is necessary to fix cpufreq on -rt? Cheers, -Harry
+
+PS: I've CC'd maintainers of cpufreq, I hope that's OK, otherwise
+please inform me of
+normal practices on linux-rt-users ML
