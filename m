@@ -1,42 +1,49 @@
-From: Harry van Haaren <harryhaaren@gmail.com>
-Subject: Re: CpuFreq Laptop Scaling broken?
-Date: Tue, 26 Aug 2014 23:44:16 +0100
-Message-ID: <CAKudYbOMKp437Sqq-A8m4A-d-rLHCGLXM5cH3ep13vp11ocJyg@mail.gmail.com>
-References: <CAKudYbOjXe3JRGDsE3A_=Vd7NEU+_eDO3po3+47CS80=TN363g@mail.gmail.com>
-	<CAKohpoktdiBvOY=xTY==kLaAfSqqAcfHxAq9Jkk7cHE3f_NyHA@mail.gmail.com>
-	<CAKudYbNNA3TLR0gyesiwy_38AtjNgf4bVjgd7+rguLxiVHCzUw@mail.gmail.com>
-	<CAKohpokc+PiviEt3_2h0JjiH-XUuxiR5Tt6=NnJqTrCL_i98sA@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH -rt 3.10.x] mce: don't try to wake thread before it
+ exists.
+Date: Tue, 26 Aug 2014 19:07:03 -0400
+Message-ID: <20140826190703.57a93cf7@gandalf.local.home>
+References: <1409091053-45412-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"Rafael J. Wysocki" <rjw@rjwysocki.net>
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f49.google.com ([209.85.215.49]:44589 "EHLO
-	mail-la0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755798AbaHZWoS (ORCPT
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:54531 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755522AbaHZXIH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2014 18:44:18 -0400
-Received: by mail-la0-f49.google.com with SMTP id hz20so15856487lab.36
-        for <linux-rt-users@vger.kernel.org>; Tue, 26 Aug 2014 15:44:16 -0700 (PDT)
-In-Reply-To: <CAKohpokc+PiviEt3_2h0JjiH-XUuxiR5Tt6=NnJqTrCL_i98sA@mail.gmail.com>
+	Tue, 26 Aug 2014 19:08:07 -0400
+In-Reply-To: <1409091053-45412-1-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Aug 26, 2014 at 5:34 AM, Viresh Kumar <viresh.kumar@linaro.org> wrote:
-> Can you try to debug it with some prints?
->
-> The functions  of interest would be, drivers/cpufreq/cpufreq.c:
-> - static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
-> - static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
-> const char *buf, size_t count)
->
-> Try to add some prints there while returning errors and then try to change
-> governor from userspace and things might get somewhat better then..
+On Tue, 26 Aug 2014 18:10:53 -0400
+Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
 
-I will: unfortunatly I won't have time due to buisness trip until next week.
-I've scheduled some time for rebuilding with prints then.
+> diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+> index aaf4b9b94f38..94860c521fb8 100644
+> --- a/arch/x86/kernel/cpu/mcheck/mce.c
+> +++ b/arch/x86/kernel/cpu/mcheck/mce.c
+> @@ -1391,6 +1391,11 @@ static int mce_notify_work_init(void)
+>  
+>  static void mce_notify_work(void)
+>  {
+> +	if (unlikely(!mce_notify_helper)) {
+> +		pr_info(HW_ERR "Machine check event before MCE init; ignored\n");
 
-Thanks for the suggestion, I'll update once I have more info, -Harry
+Hmm, maybe we should make this a bit more noticeable?  Not just an
+"ignored" event with pr_info(). Maybe a:
+
+	if (WARN_ON_ONCE(!mce_notify_helper)) {
+
+-- Steve
+
+> +		return;
+> +	}
+> +
+>  	wake_up_process(mce_notify_helper);
+>  }
+>  #else
+
