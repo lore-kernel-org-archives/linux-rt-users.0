@@ -1,49 +1,55 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH -rt 3.10.x] mce: don't try to wake thread before it
- exists.
-Date: Tue, 26 Aug 2014 19:07:03 -0400
-Message-ID: <20140826190703.57a93cf7@gandalf.local.home>
-References: <1409091053-45412-1-git-send-email-paul.gortmaker@windriver.com>
+Subject: [ANNOUNCE] 3.12.26-rt40
+Date: Tue, 26 Aug 2014 21:54:43 -0400
+Message-ID: <20140826215443.66395965@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:54531 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:2769 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755522AbaHZXIH (ORCPT
+	by vger.kernel.org with ESMTP id S1753971AbaH0Byq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 26 Aug 2014 19:08:07 -0400
-In-Reply-To: <1409091053-45412-1-git-send-email-paul.gortmaker@windriver.com>
+	Tue, 26 Aug 2014 21:54:46 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 26 Aug 2014 18:10:53 -0400
-Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
 
-> diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-> index aaf4b9b94f38..94860c521fb8 100644
-> --- a/arch/x86/kernel/cpu/mcheck/mce.c
-> +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-> @@ -1391,6 +1391,11 @@ static int mce_notify_work_init(void)
->  
->  static void mce_notify_work(void)
->  {
-> +	if (unlikely(!mce_notify_helper)) {
-> +		pr_info(HW_ERR "Machine check event before MCE init; ignored\n");
+Dear RT Folks,
 
-Hmm, maybe we should make this a bit more noticeable?  Not just an
-"ignored" event with pr_info(). Maybe a:
+I'm pleased to announce the 3.12.26-rt40 stable release.
 
-	if (WARN_ON_ONCE(!mce_notify_helper)) {
+
+This release is just an update to the new stable 3.12.26 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.12-rt
+  Head SHA1: 5b55c23934a2d5fb61cf0a82ade85042783308c9
+
+
+Or to build 3.12.26-rt40 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.26.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.26-rt40.patch.xz
+
+
+
+
+Enjoy,
 
 -- Steve
-
-> +		return;
-> +	}
-> +
->  	wake_up_process(mce_notify_helper);
->  }
->  #else
 
