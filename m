@@ -1,69 +1,70 @@
-From: Harry van Haaren <harryhaaren@gmail.com>
-Subject: Re: CpuFreq Laptop Scaling broken?
-Date: Wed, 27 Aug 2014 15:53:52 +0100
-Message-ID: <CAKudYbPyN0GZ1pMPLQMd_Ks0hELBhE35SN8A1hi3_v8MMPVAjg@mail.gmail.com>
-References: <CAKudYbOjXe3JRGDsE3A_=Vd7NEU+_eDO3po3+47CS80=TN363g@mail.gmail.com>
-	<CAKohpoktdiBvOY=xTY==kLaAfSqqAcfHxAq9Jkk7cHE3f_NyHA@mail.gmail.com>
-	<CAKudYbNNA3TLR0gyesiwy_38AtjNgf4bVjgd7+rguLxiVHCzUw@mail.gmail.com>
-	<CAKohpokc+PiviEt3_2h0JjiH-XUuxiR5Tt6=NnJqTrCL_i98sA@mail.gmail.com>
-	<CAKudYbOMKp437Sqq-A8m4A-d-rLHCGLXM5cH3ep13vp11ocJyg@mail.gmail.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH RT]  rt: add rwsem_is_contended() definition to rwsem_rt.h
+Date: Wed, 27 Aug 2014 16:09:28 -0500
+Message-ID: <20140827160928.6f323642@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"Rafael J. Wysocki" <rjw@rjwysocki.net>
-To: Viresh Kumar <viresh.kumar@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f54.google.com ([209.85.215.54]:62695 "EHLO
-	mail-la0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933630AbaH0Oxy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 27 Aug 2014 10:53:54 -0400
-Received: by mail-la0-f54.google.com with SMTP id hz20so43088lab.27
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Aug 2014 07:53:53 -0700 (PDT)
-In-Reply-To: <CAKudYbOMKp437Sqq-A8m4A-d-rLHCGLXM5cH3ep13vp11ocJyg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/Chg.jXDUw.DpAsyvoMAecDr"; protocol="application/pgp-signature"
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Aug 26, 2014 at 11:44 PM, Harry van Haaren
-<harryhaaren@gmail.com> wrote:
-> On Tue, Aug 26, 2014 at 5:34 AM, Viresh Kumar <viresh.kumar@linaro.org> wrote:
->> The functions  of interest would be, drivers/cpufreq/cpufreq.c:
->> - static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
->> - static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
->> const char *buf, size_t count)
->>
->> Try to add some prints there while returning errors and then try to change
->> governor from userspace and things might get somewhat better then..
->
-> Thanks for the suggestion, I'll update once I have more info
+--Sig_/Chg.jXDUw.DpAsyvoMAecDr
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Found a little time to check this: the cpufreq_get_policy() call
-returns non-zero:
+Thomas,
 
-static ssize_t store_scaling_governor(struct cpufreq_policy *policy,
-                    const char *buf, size_t count)
-{
-    int ret;
-    char    str_governor[16];
-    struct cpufreq_policy new_policy;
+The latest btrfs code uses rwsem_is_contended() in the function
+caching_thread(). On RT systems, include/linux/rwsem.h is replaced with
+include/linux/rwsem_rt.h which does not provide a definition for
+rwsem_is_contended().  This commit provides a definition that should
+work on RT (where the lock is actually an rt_mutex).
 
-  printk( "RT debug: store_scaling_governor() with %s\n", buf );
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ include/linux/rwsem_rt.h | 5 +++++
+ 1 file changed, 5 insertions(+)
 
-    ret = cpufreq_get_policy(&new_policy, policy->cpu);
-    if (ret)
-  {
-    printk( "RT debug: ERROR: get policy() returned \n" );
-        return ret;
-  }
+diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
+index e94d945c5844..77035d7abc04 100644
+--- a/include/linux/rwsem_rt.h
++++ b/include/linux/rwsem_rt.h
+@@ -125,4 +125,9 @@ static inline void down_write_nest_lock(struct rw_semap=
+hore *sem,
+        rt_down_write_nested_lock(sem, NULL);
+ }
+ #endif
++
++static inline int rwsem_is_contended(struct rw_semaphore *sem)
++{
++       return !plist_head_empty(&sem->lock.wait_list);
++}
+ #endif
 
+--Sig_/Chg.jXDUw.DpAsyvoMAecDr
+Content-Type: application/pgp-signature; name=signature.asc
+Content-Disposition: attachment; filename=signature.asc
 
-dmesg:
-[   43.186804] RT debug: store_scaling_governor() with performance
-[   43.186811] RT debug: ERROR: get policy() returned
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
 
+iQIcBAEBAgAGBQJT/kkOAAoJEEersVlSw9NzDfkP/jJcV92Q9WGZysW6639FRuae
+C0jx7hf5cmXbjfFdpIfPwF/Av6k09gfxIBnZi4Bgrjc9AyI3OYTwx7pMYXg0g9dg
+s7aPHQhONb0qpzhdbN5Y58nYi7qXGPPhCvY5pH8OZsB8gVXcEu2rHAqWl8nsrMJC
+zIfB5eUzXOsJEYZ0FoFvpCYgDwqNBZN28HFBMT7ceqKlkzYvMGzwYT+SkeV9RpoG
+lKFD2dhnoTbTF4fYzgTp/kocF/kxdv671ZR028MYzCewnMG1G8qC37/3SPSbbqnb
+u7S/lTcP447xiwlW0Ldw8QELO3OhzvWkQrP7E9RID/I2lqoSSjUESe4VT2D4uRxN
+H+NWzY5025kioSuoGqinqZAbfeWulQ9a6yWnFyOGrlFH7YxtcI+o2SchPnXlR0RR
+Ax76MrmX0PBb4mpOauwwdEjT6aI9njtguWXm1ce2oNMXfZmlW63GeYFj7hwYUf3w
+AOdHOTxweauWFavoiLdYef2kGqxHCs2SE5LxR7grgkGUIwo/SA2QxvzOdyaeMVkI
+6VrjmzIyNrY8i6FIPJkptqbdQWhMFGTTvXfuAvQMJMReoVLevnoyVXI1zFMDdk0f
+M4ziZeKFPrQVSelwDor/cdYEsLtln7wVO1oY+ZtVClUxWQlq0EuN74lUj/gxEDvD
+jvsyNIWO6H9p460pIvae
+=SDKB
+-----END PGP SIGNATURE-----
 
-This output is from a fresh boot: so it seems that the getting the
-current policy after
-a boot isn't functioning right here.
+--Sig_/Chg.jXDUw.DpAsyvoMAecDr--
