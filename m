@@ -1,23 +1,23 @@
 From: Asier Tamayo <asier.tamayo@onaedm.com>
-Subject: RE: Migrating from Xenomai
-Date: Thu, 28 Aug 2014 10:46:07 +0000
-Message-ID: <4F6C25B906613147991AA0B688C61D1F41FB2D18@SRVEXCHANGE.ona-electroerosion.com>
+Subject: RV: Migrating from Xenomai
+Date: Thu, 28 Aug 2014 10:24:13 +0000
+Message-ID: <4F6C25B906613147991AA0B688C61D1F41FB2CAC@SRVEXCHANGE.ona-electroerosion.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="us-ascii"
 Content-Transfer-Encoding: 8BIT
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from srv20453.emailfirewall.spamina.com ([92.54.22.49]:38769 "EHLO
-	srv20453.emailfirewall.spamina.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S936558AbaH1KqL convert rfc822-to-8bit
+Received: from srv20311.emailfirewall.spamina.com ([92.54.22.44]:60918 "EHLO
+	srv20311.emailfirewall.spamina.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S936558AbaH1KqS convert rfc822-to-8bit
 	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Aug 2014 06:46:11 -0400
+	Thu, 28 Aug 2014 06:46:18 -0400
 Received: from [212.81.200.66] (helo=mail.ona-electroerosion.com)
-	by srv20453.emailfirewall.spamina.com with esmtpsa (TLS1.0:RSA_AES_128_CBC_SHA1:128)
+	by srv20311.emailfirewall.spamina.com with esmtpsa (TLS1.0:RSA_AES_128_CBC_SHA1:128)
 	(Exim 4.80)
 	(envelope-from <asier.tamayo@onaedm.com>)
-	id 1XMxDV-0004Hz-4b
-	for linux-rt-users@vger.kernel.org; Thu, 28 Aug 2014 12:46:09 +0200
+	id 1XMwrd-0005eL-JB
+	for linux-rt-users@vger.kernel.org; Thu, 28 Aug 2014 12:23:34 +0200
 Content-Language: es-ES
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
