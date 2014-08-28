@@ -1,97 +1,39 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: Some benchmark results
-Date: Thu, 28 Aug 2014 08:11:47 +0200
-Message-ID: <53FEC823.5030709@monom.org>
-References: <53FAFBA8.3050009@monom.org> <1657147.MGSNxR1uXh@bs8>
+From: Asier Tamayo <asier.tamayo@onaedm.com>
+Subject: RE: Migrating from Xenomai
+Date: Thu, 28 Aug 2014 10:46:07 +0000
+Message-ID: <4F6C25B906613147991AA0B688C61D1F41FB2D18@SRVEXCHANGE.ona-electroerosion.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Bernhard Schiffner <bernhard@schiffner-limbach.de>,
-	linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f173.google.com ([74.125.82.173]:36306 "EHLO
-	mail-we0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751235AbaH1GLw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 28 Aug 2014 02:11:52 -0400
-Received: by mail-we0-f173.google.com with SMTP id t60so254987wes.32
-        for <linux-rt-users@vger.kernel.org>; Wed, 27 Aug 2014 23:11:50 -0700 (PDT)
-In-Reply-To: <1657147.MGSNxR1uXh@bs8>
+Received: from srv20453.emailfirewall.spamina.com ([92.54.22.49]:38769 "EHLO
+	srv20453.emailfirewall.spamina.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S936558AbaH1KqL convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 28 Aug 2014 06:46:11 -0400
+Received: from [212.81.200.66] (helo=mail.ona-electroerosion.com)
+	by srv20453.emailfirewall.spamina.com with esmtpsa (TLS1.0:RSA_AES_128_CBC_SHA1:128)
+	(Exim 4.80)
+	(envelope-from <asier.tamayo@onaedm.com>)
+	id 1XMxDV-0004Hz-4b
+	for linux-rt-users@vger.kernel.org; Thu, 28 Aug 2014 12:46:09 +0200
+Content-Language: es-ES
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Bernhard,
 
-On 08/25/2014 04:14 PM, Bernhard Schiffner wrote:
-> Am Montag, 25. August 2014, 11:02:32 schrieb Daniel Wagner:
->> Hi,
->>
->> I wanted to know how good or bad mainline vs RT is, therefore I let
->> MMTests torture my laptop for a while. I selected a few of the suppo=
-rted
->> benchmarks by MMTests in order to keep to a reasonable time frame.
->>
->> The aim was to see the impact of normal (no RT) workloads with diffe=
-rent
->> preempt configurations on mainline and RT patched kernel. I tried to=
- not
->> to change other configuration flags except the preempt one. There ar=
-e
->> some small difference due to dependencies but the rest looks ok to m=
-e.
->>
->> http://www.monom.org/rt/mmtests/
->>
->> Suggestion, improvements, comments?
->>
->> cheers,
->> daniel
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
-sers" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->=20
-> Hi Daniel,
->=20
-> I had a first look at the above mentioned page.
->=20
-> The thing I'am complety missing in the huge amount of numbers is: Wha=
-t is your=20
-> demand, your primary topic to solve in or with RT?
+Hello all,
 
-Thanks looking at the numbers and the feedback from you. I really
-appreciate that.
+I have been using Xenomai for some time, in an Atom N270 based board, running a kernel 2.6.34 compiled with Sysgo's ELinOS 5.2 tool. I have mainly used the native skin, as well as some RTDM drivers.
 
-To your question: My goal is to help out to get this patch set merged
-into mainline. I know an ambitious goal and I might be too incompetent
-(I may suffering from the Dunning=96Kruger effect. but hey, I am not th=
-e
-one who recognize this).
+Now, I have to start using a new AMD G-Series T52R based board, and kernel 2.6.34 shows some problems with it. Therefore, I have to update the kernel to a newer one, but ELinOS has dropped the Xenomai support. 
 
-So I figured the best thing is to start playing with different loads an=
-d
-see how they compare to mainline and trying to understand why they are
-different.
+One of the options I see is migrating my application to the PREEMPT_RT patch, which is already supported by ELinOS. Has anyone got any experience with it? Which difficulties should I expect to find in the migration process? Any special problems with RTDM, shared memory...?
 
-> And as I interprete the numbers: a RT kernel is a little bit more CPU=
--hungry=20
-> then normal and this is nothing new.
+Has anyone got information about latencies and performance comparison between Xenomai and PREEMPT_RT patch? I have found some in https://www.osadl.org/fileadmin/dam/rtlws/12/Brown.pdf, but it is a bit outdated.
+ 
+Best regards,
 
-Sure, I am well aware that RT is  'a little bit more CPU-hungry', but I
-wondered how much is a little and what are the effects of it?
+Asier Tamayo
 
-I am doing those tests for myself to get a better understanding. I just
-shared the results in case someone else finds them interesting. I shoul=
-d
-have stated that more clearly to avoid burning time from you. Sorry
-about that.
-
-cheers,
-daniel
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
