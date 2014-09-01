@@ -1,85 +1,72 @@
 From: Jeff Epler <jepler@unpythonic.net>
-Subject: [RFC 0/4] Improving SPI driver latency (vs v3.8.13.14-rt31)
-Date: Mon,  1 Sep 2014 09:30:31 -0500
-Message-ID: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
+Subject: [PATCH 4/4] spidev-s3c64xx: allocate dma channel at startup
+Date: Mon,  1 Sep 2014 09:30:35 -0500
+Message-ID: <1409581835-70814-5-git-send-email-jepler@unpythonic.net>
+References: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from rrcs-76-79-27-186.west.biz.rr.com ([76.79.27.186]:62597 "EHLO
+Received: from rrcs-76-79-27-186.west.biz.rr.com ([76.79.27.186]:48319 "EHLO
 	rrcs-76-79-27-186.west.biz.rr.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754517AbaIAPAb (ORCPT
+	by vger.kernel.org with ESMTP id S1754516AbaIAPAd (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 1 Sep 2014 11:00:31 -0400
+	Mon, 1 Sep 2014 11:00:33 -0400
+In-Reply-To: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I recently became interested in realtime access to an SPI device on the
-Odroid U3 platform, with a goal of running a repetitive task every 1ms
-that performs two SPI transactions. (for http://linuxcnc.org/
-interfacing to a http://mesanet.com/ "Anything I/O" card)
-
-Unfortunately, I found that there were frequent large latencies, some
-over 10ms, when using /dev/spidev.  This seems to be typical of others'
-experience using it (for instance, one can find threads discussing
-disappointing RT performance of SPI on the beaglebone and pandaboard; at
-least one raspberry pi project chose to implement a pure userspace SPI
-driver instead of using spidev)
-
-At all levels of the SPI stack, I found things that could be improved if
-lowest delays are the goal.  I doubt that in their current form these
-changes are suitable to be incorporated in preempt-rt, but I hope that 
-this might spur some discussion that would ultimately lead to better
-realtime performance of SPI in the preempt-rt kernel.
-
-As you may know, the kernel's spi driver stack consists of
-    spidev    - implementation of the /dev/spidev* device
-    spi       - hardware-independent kernel layer
-    spi-xyzzy - hardware-dependent driver for xyzzy hardware
-                (s3c64xx in my device)
-
-I fixed causes of latency at each layer
- * First, I eliminated per-ioctl memory allocations in spidev 
- * Second, I made __spi_sync *actually* synchronous, rather than
-   being a wrapper over spi_async + wait_for_completion; and changed
-   spidev to use spi_sync
- * Third, in the hardware-dependent code I moved DMA acquisition to
-   device initialization time rather than transaction time
-
-I did not quite achieve my goal of a 1ms repetitive rate yet, but with
-these changes I have run for 12+ hours at a rate of 3 transactions per
-2ms with acceptable worst-case performance---under 250us for the biggest
-transaction, and 465us for all three (they have different sizes), with
-typical figures of more like 200us for all three transactions.  This is
-in contrast to the original performance, in which transactions taking
-over 10ms were seen multiple times per hour.  (12 hours is about 64
-million spi transations)
-
-(I changed from talking about 2 transactions to 3, because for an
-unrelated reason the communication in my program is currently divided
-into 3 SPI transactions when two would do)
-
-I know that 3.8 is by no means current, but 3.8.y is the default kernel
-shipped by hardkernel for their U3 devices so it was a rational version
-choice for me.  I did skim spi changes from version 3.8 to the present
-and didn't see anything that looked like it was directed at improving
-SPI latency, though the underlying code has probably changed enough over
-time that I assume my patches wouldn't actually apply at the tip of the
-latest and greatest branches.
-
-PS The fact that the first PREEMPT-RT kernel I built for the odroid
-worked and has basically good latency (until trying to talk to the
-hardware :-/) impressed the heck out of me.
-
-Jeff Epler (4):
-  spi: reenable sync SPI transfers
-  spidev: Avoid runtime memory allocations
-  spidev: actually use synchronous transfers
-  spidev-s3c64xx: allocate dma channel at startup
-
+it appears that acquire_dma introduces intolerable delays; the system
+is fine with the dma channnels allocated all the time.
+---
  drivers/spi/spi-s3c64xx.c | 15 +++++++--------
- drivers/spi/spi.c         | 22 ++++++++++++++++------
- drivers/spi/spidev.c      | 43 ++++++++++++++++++++++++++++++-------------
- 3 files changed, 53 insertions(+), 27 deletions(-)
+ 1 file changed, 7 insertions(+), 8 deletions(-)
 
+diff --git a/drivers/spi/spi-s3c64xx.c b/drivers/spi/spi-s3c64xx.c
+index 92de1b5..e6a46c9 100644
+--- a/drivers/spi/spi-s3c64xx.c
++++ b/drivers/spi/spi-s3c64xx.c
+@@ -797,10 +797,6 @@ static int s3c64xx_spi_prepare_transfer(struct spi_master *spi)
+ {
+ 	struct s3c64xx_spi_driver_data *sdd = spi_master_get_devdata(spi);
+ 
+-	/* Acquire DMA channels */
+-	while (!acquire_dma(sdd))
+-		msleep(10);
+-
+ 	pm_runtime_get_sync(&sdd->pdev->dev);
+ 
+ 	return 0;
+@@ -810,10 +806,6 @@ static int s3c64xx_spi_unprepare_transfer(struct spi_master *spi)
+ {
+ 	struct s3c64xx_spi_driver_data *sdd = spi_master_get_devdata(spi);
+ 
+-	/* Free DMA channels */
+-	sdd->ops->release(sdd->rx_dma.ch, &s3c64xx_spi_dma_client);
+-	sdd->ops->release(sdd->tx_dma.ch, &s3c64xx_spi_dma_client);
+-
+ 	pm_runtime_put(&sdd->pdev->dev);
+ 
+ 	return 0;
+@@ -1344,6 +1336,9 @@ static int __init s3c64xx_spi_probe(struct platform_device *pdev)
+ 		goto err7;
+ 	}
+ 
++        // cannot fail(?)
++	acquire_dma(sdd);
++
+ 	writel(S3C64XX_SPI_INT_RX_OVERRUN_EN | S3C64XX_SPI_INT_RX_UNDERRUN_EN |
+ 	       S3C64XX_SPI_INT_TX_OVERRUN_EN | S3C64XX_SPI_INT_TX_UNDERRUN_EN,
+ 	       sdd->regs + S3C64XX_SPI_INT_EN);
+@@ -1396,6 +1391,10 @@ static int s3c64xx_spi_remove(struct platform_device *pdev)
+ 
+ 	spi_unregister_master(master);
+ 
++	/* Free DMA channels */
++	sdd->ops->release(sdd->rx_dma.ch, &s3c64xx_spi_dma_client);
++	sdd->ops->release(sdd->tx_dma.ch, &s3c64xx_spi_dma_client);
++
+ 	writel(0, sdd->regs + S3C64XX_SPI_INT_EN);
+ 
+ 	free_irq(platform_get_irq(pdev, 0), sdd);
 -- 
 2.0.1
 
