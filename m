@@ -1,62 +1,63 @@
-From: Sadasivan Shaiju <sshaiju@mvista.com>
-Subject: RE: PATCH[2.6.32] softirq patch
-Date: Tue, 2 Sep 2014 16:00:30 -0700
-Message-ID: <3be0d5e44f0593659cfd2d6ca990a906@mail.gmail.com>
-References: <9dcf49abe0cd0e331df7b5faa37265ca@mail.gmail.com>
- <alpine.DEB.2.10.1409022332030.3333@nanos> <540647B1.409@pavlinux.ru>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: set_schedattr + cpuset issue
+Date: Wed, 03 Sep 2014 12:00:32 +0200
+Message-ID: <5406E6C0.1060606@monom.org>
+References: <CAMLzMweCcxPBJExGsY-2oHK6sdF6EVgBsa1XVxQT0=kzNRZAJQ@mail.gmail.com>	<20140710122033.58bdd366fe3f869a71b1c05e@gmail.com>	<871ts0s4pn.fsf@cecht.legt.fr>	<CAE-h8tG6VCG0oX=AsPA-jKGqC=FheJD=4awByMukkUgD4uOUDg@mail.gmail.com> <87sika5cqb.fsf@cecht.legt.fr>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, shaiju_sada@yahoo.com
-To: pavel@pavlinux.ru, Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: 7bit
+Cc: Kevin Burns <kevinpb@vt.edu>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	juri.lelli@arm.com
+To: Vincent Legout <vincent@legout.info>,
+	Juri Lelli <juri.lelli@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f52.google.com ([209.85.216.52]:62897 "EHLO
-	mail-qa0-f52.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755478AbaIBXEF convert rfc822-to-8bit (ORCPT
+Received: from mail-we0-f172.google.com ([74.125.82.172]:64444 "EHLO
+	mail-we0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754979AbaICKAi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Sep 2014 19:04:05 -0400
-Received: by mail-qa0-f52.google.com with SMTP id f12so7159791qad.11
-        for <linux-rt-users@vger.kernel.org>; Tue, 02 Sep 2014 16:04:04 -0700 (PDT)
-In-Reply-To: <540647B1.409@pavlinux.ru>
+	Wed, 3 Sep 2014 06:00:38 -0400
+Received: by mail-we0-f172.google.com with SMTP id q59so8284609wes.17
+        for <linux-rt-users@vger.kernel.org>; Wed, 03 Sep 2014 03:00:36 -0700 (PDT)
+In-Reply-To: <87sika5cqb.fsf@cecht.legt.fr>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi  Thomas,Pavel,
 
-I  will  talk  to  the concerned  people  in  Montavista/cavium   and  =
-make
-sure  the  relationship  improves.
+On 09/02/2014 04:16 PM, Vincent Legout wrote:
+> Hi,
+> 
+> Juri Lelli <juri.lelli@gmail.com> writes:
+> 
+>> thanks a lot for your report. I was also actually experiencing something that I
+>> think is related to your issue, but then I didn't find any time to send out
+>> a proper patch :/.
+>>
+>> Could you please test what I've attached and see if it fixes your problem?
+> 
+> Thanks for the patch, it fixes the second issue I mentioned in my
+> previous email, i.e. the one for which I posted a patch. For this issue,
+> FWIW:
+> 
+>  Tested-by: Vincent Legout <vincent@legout.info>
+>  Tested-by: Kevin Burns <kevinpb@vt.edu>
+> 
+> But it doesn't seem to fix the main issue related to cpusets and
+> SCHED_DEADLINE. It still fails if we don't come back to SCHED_OTHER
+> before moving the task to another cpuset. I think it's due to the fact
+> that SCHED_DEADLINE's data structures don't seem to be aware that a task
+> migrated, they are not updated during this process. Any idea where I
+> could have a look? Or if this is not supported, would it be possible to
+> add some checks such that total_bw doesn't overflow when calling
+> __dl_clear? If yes, I can try to provide a patch.
 
-I  will  make  a  note  of  the  points  you  have  made.
+I just saw this thread after sending a patch for this problem. It's not
+yet in the archive, though it is called:
 
-Regards,
-Shaiju.
+"[PATCH] sched: Reset bandwith on task when switching from
+SCHED_DEADLINE away"
 
------Original Message-----
-=46rom: Pavel Vasilyev [mailto:pavel@pavlinux.ru]
-Sent: Tuesday, September 02, 2014 3:42 PM
-To: Thomas Gleixner; Sadasivan Shaiju
-Cc: linux-rt-users@vger.kernel.org; shaiju_sada@yahoo.com
-Subject: Re: PATCH[2.6.32] softirq patch
+And obviously, I forgot to cc Juri. Sorry about that.
 
-03.09.2014 02:07, Thomas Gleixner =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Mon, 11 Aug 2014, Sadasivan Shaiju wrote:
-
-> Aside of failing to submit a proper patch:
->
-> If this is MVistas answer to the concerns I raised in the last year,
-> then please tell those who tasked you to waste your time on providing
-> completely useless shit to those, who provided the technology on whic=
-h
-> that useless shit is based on, that they are on the wrong track.
-
-Kill'em all! :D
-
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+cheers,
+daniel
