@@ -1,46 +1,61 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: CpuFreq Laptop Scaling broken?
-Date: Sat, 6 Sep 2014 00:47:35 +0200 (CEST)
-Message-ID: <alpine.DEB.2.10.1409060046530.5472@nanos>
-References: <CAKudYbOjXe3JRGDsE3A_=Vd7NEU+_eDO3po3+47CS80=TN363g@mail.gmail.com> <CAKohpoktdiBvOY=xTY==kLaAfSqqAcfHxAq9Jkk7cHE3f_NyHA@mail.gmail.com> <CAKudYbNNA3TLR0gyesiwy_38AtjNgf4bVjgd7+rguLxiVHCzUw@mail.gmail.com> <CAKohpokc+PiviEt3_2h0JjiH-XUuxiR5Tt6=NnJqTrCL_i98sA@mail.gmail.com>
- <CAKudYbOMKp437Sqq-A8m4A-d-rLHCGLXM5cH3ep13vp11ocJyg@mail.gmail.com> <CAKudYbPyN0GZ1pMPLQMd_Ks0hELBhE35SN8A1hi3_v8MMPVAjg@mail.gmail.com> <CAKohpokeUufzx7so6FcEd8rAg-MPw+2c9Aug9L_vXdu_4MvNOA@mail.gmail.com> <CAKudYbP09tc8JbBt82pOSy5nfQ42BVv=4knEUhHzz6nbs03SvQ@mail.gmail.com>
- <CAKohpokO6+=5LMr99CVyZYbTHRaUvgkAhHLkgfRaV3LJSfgpkg@mail.gmail.com>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [RFC 0/4] Improving SPI driver latency (vs v3.8.13.14-rt31)
+Date: Tue, 9 Sep 2014 22:01:17 +0200
+Message-ID: <20140909200117.GU23009@pengutronix.de>
+References: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Harry van Haaren <harryhaaren@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	"Rafael J. Wysocki" <rjw@rjwysocki.net>,
-	Carsten Emde <cbe@osadl.org>
-To: Viresh Kumar <viresh.kumar@linaro.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Jeff Epler <jepler@unpythonic.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35100 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751470AbaIEWrj (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:57170 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751102AbaIIUBT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 5 Sep 2014 18:47:39 -0400
-In-Reply-To: <CAKohpokO6+=5LMr99CVyZYbTHRaUvgkAhHLkgfRaV3LJSfgpkg@mail.gmail.com>
+	Tue, 9 Sep 2014 16:01:19 -0400
+Content-Disposition: inline
+In-Reply-To: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 5 Sep 2014, Viresh Kumar wrote:
+Hello Jeff,
 
-> On 5 September 2014 17:36, Harry van Haaren <harryhaaren@gmail.com> wrote:
-> > The down_read_trylock() fails, the other checks are fine.
-> 
-> So my initial guess was correct :)
-> 
-> > If i'm understanding correctly, the cpufreq_rwsem locks the module
-> > from being unloaded during critical sections while writing to CPU
-> > speed etc?
-> 
-> Its not about changing speed, but its more of a lock for critical sections
-> only.. So, yes its required..
-> 
-> > Would that mean that an un-matched pair of down_read() up_write()
-> > could cause the failure of changing CPU speed?
-> 
-> Probably yes, but why doesn't that happen without rt?
+On Mon, Sep 01, 2014 at 09:30:31AM -0500, Jeff Epler wrote:
+> Unfortunately, I found that there were frequent large latencies, some
+> over 10ms, when using /dev/spidev.  This seems to be typical of other=
+s'
+> experience using it (for instance, one can find threads discussing
+> disappointing RT performance of SPI on the beaglebone and pandaboard;=
+ at
+> least one raspberry pi project chose to implement a pure userspace SP=
+I
+> driver instead of using spidev)
+>=20
+> At all levels of the SPI stack, I found things that could be improved=
+ if
+> lowest delays are the goal.  I doubt that in their current form these
+> changes are suitable to be incorporated in preempt-rt, but I hope tha=
+t=20
+> this might spur some discussion that would ultimately lead to better
+> realtime performance of SPI in the preempt-rt kernel.
+I wonder why you didn't consider mainline as target for your patches
+instead of preempt-rt. Also you might want to cc the spi maintainer on
+this topic. I didn't check in detail what you did, but if it's useful
+for others it would be a pity if it were not picked up because the
+responsible people were not aware of your effort.
 
-I think Carsten had looked into this.
+Best regards
+Uwe
 
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
