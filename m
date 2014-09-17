@@ -1,61 +1,80 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [RFC 0/4] Improving SPI driver latency (vs v3.8.13.14-rt31)
-Date: Tue, 9 Sep 2014 22:01:17 +0200
-Message-ID: <20140909200117.GU23009@pengutronix.de>
-References: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
+From: Mushtaq Khan <mushtaqk921@gmail.com>
+Subject: BUG: scheduling while atomic
+Date: Wed, 17 Sep 2014 14:42:30 +0530
+Message-ID: <CAP6rfc-1i2LkwVJory31cj8XzaYfXrBcpmKLPE2GP709LEw=Jg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Jeff Epler <jepler@unpythonic.net>
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:57170 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751102AbaIIUBT (ORCPT
+Received: from mail-qa0-f54.google.com ([209.85.216.54]:57321 "EHLO
+	mail-qa0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754061AbaIQJMb (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Sep 2014 16:01:19 -0400
-Content-Disposition: inline
-In-Reply-To: <1409581835-70814-1-git-send-email-jepler@unpythonic.net>
+	Wed, 17 Sep 2014 05:12:31 -0400
+Received: by mail-qa0-f54.google.com with SMTP id v10so1360907qac.41
+        for <linux-rt-users@vger.kernel.org>; Wed, 17 Sep 2014 02:12:30 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello Jeff,
+Hi,
+ I see error message "BUG: scheduling while atomic"intermittently. As
+per other post on similar  issue, this happens when schedule is called
+from either interrupt
+ context or some other atomic operation (Might be after acquiring
+spinlock). But from the call trace am not getting any clue, please
+help me guide  on this issue.
+Using Linux 3.4rt.
 
-On Mon, Sep 01, 2014 at 09:30:31AM -0500, Jeff Epler wrote:
-> Unfortunately, I found that there were frequent large latencies, some
-> over 10ms, when using /dev/spidev.  This seems to be typical of other=
-s'
-> experience using it (for instance, one can find threads discussing
-> disappointing RT performance of SPI on the beaglebone and pandaboard;=
- at
-> least one raspberry pi project chose to implement a pure userspace SP=
-I
-> driver instead of using spidev)
->=20
-> At all levels of the SPI stack, I found things that could be improved=
- if
-> lowest delays are the goal.  I doubt that in their current form these
-> changes are suitable to be incorporated in preempt-rt, but I hope tha=
-t=20
-> this might spur some discussion that would ultimately lead to better
-> realtime performance of SPI in the preempt-rt kernel.
-I wonder why you didn't consider mainline as target for your patches
-instead of preempt-rt. Also you might want to cc the spi maintainer on
-this topic. I didn't check in detail what you did, but if it's useful
-for others it would be a pity if it were not picked up because the
-responsible people were not aware of your effort.
+ BUG: scheduling while atomic: dslmgmt/538/0x00000201
+ Modules linked in: iptable_mangle init_addr(  (null) -   (null)),
+core_addr(c036
+ 9000 - c0369210)
+  iptable_filter init_addr(  (null) -   (null)), core_addr(c0362000 - c03620b0)
+  ip_tables init_addr(  (null) -   (null)), core_addr(c0359000 - c035b618)
+  xt_multiport init_addr(  (null) -   (null)), core_addr(c034f000 - c034f2d8)
+  xt_mark init_addr(  (null) -   (null)), core_addr(c0348000 - c0348098)
+  xt_mac init_addr(  (null) -   (null)), core_addr(c0342000 - c03420b4)
+  xt_DSCP init_addr(  (null) -   (null)), core_addr(c033c000 - c033c388)
+  xt_dscp init_addr(  (null) -   (null)), core_addr(c0335000 - c0335128)
+  pwrmngtd(P) init_addr(  (null) -   (null)), core_addr(c032e000 - c032f54c)
+  bcmvlan(P) init_addr(  (null) -   (null)), core_addr(c030a000 - c031a598)
+  p8021ag(P) init_addr(  (null) -   (null)), core_addr(c02e0000 - c02e1120)
+  bcmarl(P) init_addr(  (null) -   (null)), core_addr(c02d7000 - c02d7e74)
+  nciTMSkmod(P) init_addr(  (null) -   (null)), core_addr(c0280000 - c029ffc8)
+  bcm_enet init_addr(  (null) -   (null)), core_addr(c01e4000 - c02078f4)
+  adsldd(P) init_addr(  (null) -   (null)), core_addr(c011b000 - c0150c78)
+  bcmxtmcfg(P) init_addr(  (null) -   (null)), core_addr(c009a000 - c00a5e28)
+  pktflow(P) init_addr(  (null) -   (null)), core_addr(c0067000 - c0074800)
+  bcm_bpm(P) init_addr(  (null) -   (null)), core_addr(c0045000 - c0046470)
+  bcm_ingqos(P) init_addr(  (null) -   (null)), core_addr(c003a000 - c003b070)
+  chipinfo(P) init_addr(  (null) -   (null)), core_addr(c0031000 - c0031198)
+ Call Trace:
+ [<802a0d6c>] printk+0x24/0x30
+ [<80074714>] print_modules+0x88/0x144
+ [<802a43c8>] __schedule+0x54c/0x58c
+ [<802a12d0>] __schedule_bug+0x38/0x54
+ [<802a0b30>] dump_stack+0x8/0x34
+ [<802a43c8>] __schedule+0x54c/0x58c
+ [<8017d0f0>] do_output_char+0x1b4/0x220
+ [<801876ec>] uart_write+0xd8/0x15c
+ [<8017d19c>] process_output+0x40/0x6c
+ [<802a4580>] schedule+0x58/0xb4
+ [<800f1dc0>] fsnotify+0x1b0/0x2dc
+ [<802a3514>] do_nanosleep+0xf8/0x13c
+ [<80055c98>] hrtimer_nanosleep+0xb4/0x158
+ [<80054dd8>] hrtimer_wakeup+0x0/0x2c
+ [<80044f00>] sys_rt_sigaction+0x78/0xd4
+ [<80055da8>] sys_nanosleep+0x6c/0x94
+ [<8001b95c>] stack_done+0x20/0x40
 
-Best regards
-Uwe
+ Call Trace:
+ [<802a0b30>] dump_stack+0x8/0x34
+ [<802a43c8>] __schedule+0x54c/0x58c
+ [<802a4580>] schedule+0x58/0xb4
+ [<802a3514>] do_nanosleep+0xf8/0x13c
+ [<80055c98>] hrtimer_nanosleep+0xb4/0x158
+ [<80055da8>] sys_nanosleep+0x6c/0x94
+ [<8001b95c>] stack_done+0x20/0x40
 
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+ Regards,
+ Mushtaq Khan
