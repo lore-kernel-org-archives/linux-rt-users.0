@@ -1,40 +1,42 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
+From: Chris.Pringle@grassvalley.com
 Subject: Re: Workqueue "scheduling while atomic" issues in v3.12.19-rt30
-Date: Tue, 23 Sep 2014 15:27:04 +0400
-Message-ID: <54215908.4020605@pavlinux.ru>
-References: <OF7A166039.4A11D04A-ON80257D5C.00394E82-80257D5C.003C09F4@belden.com>
-Reply-To: pavel@pavlinux.ru
+Date: Tue, 23 Sep 2014 12:59:47 +0100
+Message-ID: <OFE7B4800D.11C7C7BE-ON80257D5C.00419263-80257D5C.0041E38A@belden.com>
+References: <OF7A166039.4A11D04A-ON80257D5C.00394E82-80257D5C.003C09F4@belden.com> <54215908.4020605@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Chris.Pringle@grassvalley.com, linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="KOI8-R"
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org
+To: <pavel@pavlinux.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:56844 "EHLO imp01.mtu.ru"
+Received: from mx1.belden.com ([12.161.118.90]:49517 "EHLO mx1.belden.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753689AbaIWL1P (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Sep 2014 07:27:15 -0400
-In-Reply-To: <OF7A166039.4A11D04A-ON80257D5C.00394E82-80257D5C.003C09F4@belden.com>
+	id S1751020AbaIWMPJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Sep 2014 08:15:09 -0400
+In-Reply-To: <54215908.4020605@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-23.09.2014 14:55, Chris.Pringle@grassvalley.com =D0=BF=D0=B8=D1=88=D0=B5=
-=D1=82:
-> Dear All,
->
-> We've come across a number of "scheduling while atomic" BUGs after
-> upgrading from v3.0 (Freescale SDK v1.2.1) to v3.12.19-rt30 (Freescal=
-e SDK
-> v1.6) on a P2041 (e500mc core).
-
-Use 3.2.x or 3.14, other - buggy patches.
-
-
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+PiAyMy4wOS4yMDE0IDE0OjU1LCBDaHJpcy5QcmluZ2xlQGdyYXNzdmFsbGV5LmNvbSDQydvF
+1DoNCj4gPiBXZSd2ZSBjb21lIGFjcm9zcyBhIG51bWJlciBvZiAic2NoZWR1bGluZyB3aGls
+ZSBhdG9taWMiIEJVR3MgYWZ0ZXINCj4gPiB1cGdyYWRpbmcgZnJvbSB2My4wIChGcmVlc2Nh
+bGUgU0RLIHYxLjIuMSkgdG8gdjMuMTIuMTktcnQzMCAoRnJlZXNjYWxlIA0KU0RLDQo+ID4g
+djEuNikgb24gYSBQMjA0MSAoZTUwMG1jIGNvcmUpLg0KPiANCj4gVXNlIDMuMi54IG9yIDMu
+MTQsIG90aGVyIC0gYnVnZ3kgcGF0Y2hlcy4NCg0KUGF2ZWwgLSB0aGFua3MgZm9yIHRoZSBm
+ZWVkYmFjay4gVW5mb3J0dW5hdGVseSB1cGdyYWRpbmcvZG93bmdyYWRpbmcgaXMgDQpub3Qg
+YW4gb3B0aW9uIGZvciB1cyBhcyB3ZSByZWx5IG9uIHRoZSBGcmVlc2NhbGUgZHJpdmVycyBj
+b250YWluZWQgaW4gZWFjaCANCm9mIHRoZWlyIFNES3MuIFdlIGhhZCB0cmllZCBhbiBlYXJs
+aWVyIFNESyBob3dldmVyIGhhZCBvdGhlciBrZXJuZWwgDQpyZWxhdGVkIGlzc3VlcyAobm93
+IGZpeGVkIGluIHYzLjEyKS4NCg0KRG8geW91IGtub3cgd2hhdCBjaGFuZ2VzIHdlcmUgbWFk
+ZSBpbiBtb3JlIHJlY2VudCBwYXRjaGVzIHRoYXQgZml4IHRoaXM/IEkgDQpoYWQgYSBsb29r
+IGF0IHRoZSB2My4xMiBydDQwIHBhdGNoZXMgYXMgd2VsbCBhcyB0aGUgdjMuMTQgcnQgcGF0
+Y2hlcyBidXQgDQppdCB3YXNuJ3Qgb2J2aW91cyB0byBtZSB3aGF0IGhhZCBjaGFuZ2VkLg0K
+DQpESVNDTEFJTUVSOg0KUHJpdmlsZWdlZCBhbmQvb3IgQ29uZmlkZW50aWFsIGluZm9ybWF0
+aW9uIG1heSBiZSBjb250YWluZWQgaW4gdGhpcw0KbWVzc2FnZS4gSWYgeW91IGFyZSBub3Qg
+dGhlIGFkZHJlc3NlZSBvZiB0aGlzIG1lc3NhZ2UsIHlvdSBtYXkgbm90DQpjb3B5LCB1c2Ug
+b3IgZGVsaXZlciB0aGlzIG1lc3NhZ2UgdG8gYW55b25lLiBJbiBzdWNoIGV2ZW50LCB5b3UN
+CnNob3VsZCBkZXN0cm95IHRoZSBtZXNzYWdlIGFuZCBraW5kbHkgbm90aWZ5IHRoZSBzZW5k
+ZXIgYnkgcmVwbHkNCmUtbWFpbC4gSXQgaXMgdW5kZXJzdG9vZCB0aGF0IG9waW5pb25zIG9y
+IGNvbmNsdXNpb25zIHRoYXQgZG8gbm90DQpyZWxhdGUgdG8gdGhlIG9mZmljaWFsIGJ1c2lu
+ZXNzIG9mIHRoZSBjb21wYW55IGFyZSBuZWl0aGVyIGdpdmVuDQpub3IgZW5kb3JzZWQgYnkg
+dGhlIGNvbXBhbnkuDQpUaGFuayBZb3UuDQo=
