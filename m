@@ -1,101 +1,82 @@
-From: Chris.Pringle@grassvalley.com
-Subject: Re: Workqueue "scheduling while atomic" issues in v3.12.19-rt30
-Date: Thu, 25 Sep 2014 10:01:43 +0100
-Message-ID: <OFDAF9162A.D6F73659-ON80257D5E.002D0063-80257D5E.0031965A@belden.com>
-References: <OF7A166039.4A11D04A-ON80257D5C.00394E82-80257D5C.003C09F4@belden.com> <5421781B.9090507@pavlinux.ru> <OFB1717EE3.8216B47D-ON80257D5D.00291BAB-80257D5D.00326544@belden.com>
+From: Harry van Haaren <harryhaaren@gmail.com>
+Subject: Re: CpuFreq Laptop Scaling broken?
+Date: Thu, 25 Sep 2014 13:44:06 +0100
+Message-ID: <CAKudYbOJPvfX+1EfYC2nNJAtZpNuXugxtzVb6aV=91Tm8-ohkg@mail.gmail.com>
+References: <CAKudYbOjXe3JRGDsE3A_=Vd7NEU+_eDO3po3+47CS80=TN363g@mail.gmail.com>
+	<CAKohpoktdiBvOY=xTY==kLaAfSqqAcfHxAq9Jkk7cHE3f_NyHA@mail.gmail.com>
+	<CAKudYbNNA3TLR0gyesiwy_38AtjNgf4bVjgd7+rguLxiVHCzUw@mail.gmail.com>
+	<CAKohpokc+PiviEt3_2h0JjiH-XUuxiR5Tt6=NnJqTrCL_i98sA@mail.gmail.com>
+	<CAKudYbOMKp437Sqq-A8m4A-d-rLHCGLXM5cH3ep13vp11ocJyg@mail.gmail.com>
+	<CAKudYbPyN0GZ1pMPLQMd_Ks0hELBhE35SN8A1hi3_v8MMPVAjg@mail.gmail.com>
+	<CAKohpokeUufzx7so6FcEd8rAg-MPw+2c9Aug9L_vXdu_4MvNOA@mail.gmail.com>
+	<CAKudYbP09tc8JbBt82pOSy5nfQ42BVv=4knEUhHzz6nbs03SvQ@mail.gmail.com>
+	<CAKohpokO6+=5LMr99CVyZYbTHRaUvgkAhHLkgfRaV3LJSfgpkg@mail.gmail.com>
+	<alpine.DEB.2.10.1409060046530.5472@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="KOI8-R"
-Content-Transfer-Encoding: base64
-Cc: pavel@pavlinux.ru
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=ISO-8859-1
+Cc: Viresh Kumar <viresh.kumar@linaro.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	"Rafael J. Wysocki" <rjw@rjwysocki.net>,
+	Carsten Emde <cbe@osadl.org>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.belden.com ([12.161.118.90]:61189 "EHLO mx1.belden.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752095AbaIYJRK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Sep 2014 05:17:10 -0400
-In-Reply-To: <OFB1717EE3.8216B47D-ON80257D5D.00291BAB-80257D5D.00326544@belden.com>
+Received: from mail-lb0-f175.google.com ([209.85.217.175]:60588 "EHLO
+	mail-lb0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751921AbaIYMoI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Sep 2014 08:44:08 -0400
+Received: by mail-lb0-f175.google.com with SMTP id w7so6749851lbi.6
+        for <linux-rt-users@vger.kernel.org>; Thu, 25 Sep 2014 05:44:06 -0700 (PDT)
+In-Reply-To: <alpine.DEB.2.10.1409060046530.5472@nanos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-PiA+IDIzLjA5LjIwMTQgMTQ6NTUsIENocmlzLlByaW5nbGVAZ3Jhc3N2YWxsZXkuY29tINDJ
-28XUOg0KPiA+IA0KPiA+IA0KPiA+ID4gSSd2ZSBhdHRhY2hlZCB0aGUgcGF0Y2ggZm9yIHJl
-ZmVyZW5jZS4NCj4gPiANCj4gPiBwb3J0ZWQgeW91IGZpeGVzIHRvIDMuMTQuMTkgKyBwYXRj
-aC0zLjE0LjEyLXJ0OS5wYXRjaC5neg0KPiA+IEludGVsIENlbGVyb24gRzE2MjAsIHdoaWxl
-IHdvcmtpbmcgOikNCj4gPiANCj4gPiANCj4gDQpodHRwOi8vaTY3LmZhc3RwaWMucnUvYmln
-LzIwMTQvMDkyMy8zOS9kZjM4NjYzYmQyNDE0YWZlMDY0YzE5NzhhZDdiM2QzOS5qcGcNCg0K
-PiANCj4gDQo+IFRoYW5rcyBmb3IgdHJ5aW5nLiBVbmZvcnR1bmF0ZWx5LCBJIGRvbid0IHRo
-aW5rIHRoaXMgaXMgYSB3b3JrYWJsZSBmaXggDQphcyANCj4gSSdtIHByZXR0eSBjb252aW5j
-ZWQgdGhhdCBjaGFuZ2luZyB0aGUgc3BpbiBsb2NrIHR5cGUgaXMgbm90IHRoZSByaWdodCAN
-Cj4gdGhpbmcgdG8gZG8gZm9yIFJULi4gSSBoYXZlIGJhY2twb3J0ZWQgYWxsIGZpeGVzIGlu
-IGFpby5jIGFuZCANCndvcmtxdWV1ZS5jIA0KPiBmcm9tIHYzLjE0IChydDkpIHRvIHYzLjEy
-IGFuZCBoYXZlIHNlZW4gc29tZSBpbXByb3ZlbWVudCBpbiBvbmUgb2YgbXkgDQp0ZXN0IA0K
-PiBjYXNlcyAoYWx0aG91Z2ggSSBoYXZlIHN1c3BpY2lvbnMgaXQncyBqdXN0IG1hc2tpbmcg
-dGhlIHByb2JsZW0pLCANCmhvd2V2ZXIgDQo+IHRoZSBvdGhlciBpcyBzdGlsbCBmYWlsaW5n
-IGFzIHByZXZpb3VzbHkgcG9zdGVkLiBJbiB2My4wIG9mIHRoZSBrZXJuZWwsIA0KPiB0aGUg
-YWlvIHN0dWZmIG5ldmVyIHVzZWQgdGhlIG5ldyBwZXJjcHUgcmVmIGNvdW50aW5nIHNvIEkg
-dGhpbmsgdGhpcyBpcyANCmEgDQo+IG5ldyBwcm9ibGVtIGludHJvZHVjZWQvcmV2ZWFsZWQg
-YnkgdGhhdC4gSSBndWVzcyB0aGUgcXVlc3Rpb24gaXMsIGRvIHdlIA0KPiBleHBlY3QgaXQg
-dG8gYmUgc2FmZSB0byBjYWxsIHNjaGVkdWxlX3dvcmsoKSBmcm9tIGF0b21pYyBjb250ZXh0
-IChhcyBCZW4gDQoNCj4gTGFIYWlzZSBzdWdnZXN0ZWQpPyBJZiB0aGUgYW5zd2VyIGlzIHll
-cywgdGhlbiB0aGVyZSBpcyBhIGJ1ZyBpbiB0aGUgDQo+IHdvcmtxdWV1ZXMsIGlmIHRoZSBh
-bnN3ZXIgaXMgbm8sIHRoZW4gdGhlIGJ1ZyBpcyBpbiBmcy9haW8uYyBpbiB0aGUgd2F5IA0K
-aXQgDQo+IGNsZWFucyB1cCByZXFzIHZpYSB0aGUgcGVyY3B1IHJlZmNvdW50aW5nICh3aGlj
-aCBldmVudHVhbGx5IGNhbGxzIA0KPiBzY2hlZHVsZV93b3JrKCkpLiANCg0KT2theSAtIGp1
-c3QgZm9yIGNvbXBsZXRlLW5lc3MgaW4gY2FzZSBhbnlvbmUgZWxzZSBydW5zIGludG8gdGhp
-cyBpc3N1ZSBvciANCndhbnRzIHRvIHBpY2sgaXQgdXAuLi4gVGhlIG9yaWdpbmFsIHBhdGNo
-IEkgc2VudCBvdXQgZG9lcyBub3QgZml4IHRoZSANCnByb2JsZW0gYXMgdGhlcmUgaXMgYW5v
-dGhlciBsb2NrIChsb2NhbF9sb2NrX2lycXNhdmUgZXRjKSBpbiB0aGVyZSB3aGljaCANCndv
-dWxkIGFsc28gbmVlZCBjaGFuZ2luZzsgY2hhbmdpbmcgdGhpcyB0byBhIHJhdyBzcGlubG9j
-ayBjYXVzZXMgb3RoZXIgDQphcmVhcyBvZiB0aGUga2VybmVsIHRvIGdldCBjb21wbGFpbiBh
-Ym91dCBzY2hlZHVsaW5nIHdoaWxzdCBhdG9taWMuIEkgDQpkaWRuJ3QgdGhpbmsgdGhpcyB3
-YXMgdGhlIHJpZ2h0IHdheSB0byBmaXggaXQgYW55d2F5Lg0KIA0KDQpJIGJlbGlldmUgdGhl
-IHByb2JsZW0gaXMgd2l0aCB0aGUgd2F5IGFpbyBpcyB1c2luZyB0aGUgcGVyY3B1IHJlZiAN
-CmNvdW50aW5nOyBpdCdzIGZpbmUgd2l0aG91dCBSVCwgYnV0IHdpdGggUlQgdGhlIHdheSBh
-aW8gdXNlcyBwZXIgY3B1IHJlZiANCmNvdW50aW5nICBldmVudHVhbGx5IGNhbGxzIHNjaGVk
-dWxlX3dvcmsgKG5vdCBjdXJyZW50bHkgYXRvbWljKSBmcm9tIA0Kd2l0aGluIHBlcmNwdV9y
-ZWZfa2lsbF9yY3UgKGF0b21pYykgYW5kIHRoZW4gc3BpdHMgb3V0IGEga2VybmVsIEJVRy4g
-DQoNCkkgdGhpbmsgdGhlcmUgYXJlIGEgZmV3IHdheXMgd2UgY291bGQgZml4IHRoaXMgc3Bl
-Y2lmaWMgcHJvYmxlbToNCjEpIFdlIGNvdWxkIGZpeCBzY2hlZHVsZV93b3JrKCkgc28gaXQg
-Y2FuIGJlIGNhbGxlZCBmcm9tIGF0b21pYyBjb250ZXh0IA0Kd2hpY2ggd291bGQgc29sdmUg
-dGhlIHByb2JsZW0gZm9yIGFpbyB3aXRoIHRoZSB3YXkgaXQgdXNlcyBwZXJjcHUgcmVmIA0K
-Y291bnRpbmcuIEl0IG9ubHkgc29sdmVzIHRoaXMgb25lIGNhc2UgaG93ZXZlciBhbmQgSSB0
-aGluayBzb21lIA0KY2xhcmlmaWNhdGlvbiBhcm91bmQgd2hhdCBzaG91bGQgYW5kIHNob3Vs
-ZG4ndCBiZSBjYWxsYWJsZSBmcm9tIGF0b21pYyANCmNvbnRleHQgd291bGQgYmUgaGVscGZ1
-bC4NCg0KMikgRm9yIFJUIHdlIGNvdWxkIGNoYW5nZSBhaW8gc28gaXQncyBub3QgcmVsaWFu
-dCBvbiBwZXJjcHUgcmVmIGNvdW50aW5nIA0KKGxpa2UgdGhlIHYzLjAgaW1wbGVtZW50YXRp
-b24pIGJ1dCB0aGlzIGlzIGxpa2VseSB0byBnaXZlIHF1aXRlIGEgDQpkaWZmZXJlbnQgaW1w
-bGVtZW50YXRpb24gdGhhbiB0aGUgc3RvY2sga2VybmVsOyBlaXRoZXIgdGhhdCBvciBsb29r
-IGF0IGF0IA0KYSBjaGFuZ2UgdG8gdGhlIG1haW5saW5lIGtlcm5lbHMgYWlvIGltcGxlbWVu
-dGF0aW9uIChpLmUuIG5vdCBpbiBSVCANCnBhdGNoZXMpLg0KDQozKSBNYXliZSB3ZSBjb3Vs
-ZCBmaW5kIGEgd2F5IG9mIGNoYW5naW5nIHRoZSBwZXJjcHUgcmVmIGNvdW50aW5nIHRvIG1h
-a2UgDQppdCBzYWZlIHRvIGNhbGwgbm9uLWF0b21pYyBjb2RlICh3aXRoIFJUIHBhdGNoZXMp
-IC0gc28gaXQgZXhlY3V0ZXMgDQpmdW5jdGlvbnMgaW4gYSBub24tYXRvbWljIGNvbnRleHQg
-cGVyaGFwcz8uLi4gDQoNCg0KSSBhbHNvIHRoaW5rIHNvbWUgY2xhcmlmaWNhdGlvbiBvbiB0
-aGUgZm9sbG93aW5nIHR3byB0aGluZ3Mgd291bGQgYWxzbyANCmhlbHAgZGVjaWRlIG9uIHRo
-ZSBiZXN0IHdheSB0byBhZGRyZXNzIHRoaXM6DQoxKSBJcyBpdCBpbnRlbmRlZCB0aGF0IHNj
-aGVkdWxlX3dvcmsoKSBiZSBjYWxsYWJsZSBmcm9tIGFuIGF0b21pYyBjb250ZXh0PyANCkN1
-cnJlbnRseSBpdCdzIG5vdCwgYnV0IEkndmUgbm90IHNlZW4gYW55IGRvY3VtZW50YXRpb24g
-dG8gc3VnZ2VzdCB3aGV0aGVyIA0KaXQgaXMgb3IgaXMgbm90IHN1cHBvc2VkIHRvIGJlIGNh
-bGxhYmxlIGZyb20gYXRvbWljIGNvbnRleHQNCjIpIFNob3VsZCBmdW5jdGlvbnMgcnVuIGJ5
-IHBlcmNwdV9yZWZfa2lsbF9yY3UgYmUgcnVubmluZyBpbiBhbiBhdG9taWMgb3IgDQpub24t
-YXRvbWljIGNvbnRleHQ/IEN1cnJlbnRseSBpdCdzIGF0b21pYywgYnV0IGFnYWluLCBJJ3Zl
-IG5vdCBzZWVuIGFueSANCmRvY3VtZW50YXRpb24gdG8gc3VnZ2VzdCB3aGV0aGVyIGl0IGlz
-IG9yIGlzIG5vdCBzdXBwb3NlZCB0byBiZSBydW5uaW5nIGluIA0KYXRvbWljIGNvbnRleHQN
-Cg0KDQpJIHRoaW5rIGl0IG5lZWRzIHNvbWVvbmUgd2hvIGhhcyBleHRlbnNpdmUga25vd2xl
-ZGdlL2V4cGVyaWVuY2Ugd2l0aCB0aGVzZSANCmFyZWFzIG9mIGNvZGUgdG8gdGFrZSBjYXJl
-IG9mIHRoaXMgaXNzdWUgYXMgdGhpcyBpcyBub3QgcmVhbGx5IG15IGFyZWEgb2YgDQpleHBl
-cnRpc2UuIEZvciBub3cgSSd2ZSBnb25lIHdpdGggc29sdXRpb24gKDIpIGFuZCBwb3J0ZWQg
-dGhlIG9yaWdpbmFsIA0KdjMuMCBhaW8gaW1wbGVtZW50YXRpb24gb250byB2My4xMiB0byBy
-ZXNvbHZlIHRoZSBwcm9ibGVtIGZvciBvdXIgdXNlLg0KDQoNCkhhcHB5IHRvIGFzc2lzdCB3
-aXRoIHRlc3RpbmcgYSB2My4xMiBmaXggb24gb3VyIHBsYXRmb3JtICh3ZSBjYW4ndCB1cGdy
-YWRlIA0KdG8gdjMuMTQgZHVlIHRvIGxvY2staW4gd2l0aCB0aGUgRnJlZXNjYWxlIFNESykg
-aWYgYW55b25lIGhhcyBhbnkgDQpzdWdnZXN0ZWQgZml4ZXMuDQoNCkRJU0NMQUlNRVI6DQpQ
-cml2aWxlZ2VkIGFuZC9vciBDb25maWRlbnRpYWwgaW5mb3JtYXRpb24gbWF5IGJlIGNvbnRh
-aW5lZCBpbiB0aGlzDQptZXNzYWdlLiBJZiB5b3UgYXJlIG5vdCB0aGUgYWRkcmVzc2VlIG9m
-IHRoaXMgbWVzc2FnZSwgeW91IG1heSBub3QNCmNvcHksIHVzZSBvciBkZWxpdmVyIHRoaXMg
-bWVzc2FnZSB0byBhbnlvbmUuIEluIHN1Y2ggZXZlbnQsIHlvdQ0Kc2hvdWxkIGRlc3Ryb3kg
-dGhlIG1lc3NhZ2UgYW5kIGtpbmRseSBub3RpZnkgdGhlIHNlbmRlciBieSByZXBseQ0KZS1t
-YWlsLiBJdCBpcyB1bmRlcnN0b29kIHRoYXQgb3BpbmlvbnMgb3IgY29uY2x1c2lvbnMgdGhh
-dCBkbyBub3QNCnJlbGF0ZSB0byB0aGUgb2ZmaWNpYWwgYnVzaW5lc3Mgb2YgdGhlIGNvbXBh
-bnkgYXJlIG5laXRoZXIgZ2l2ZW4NCm5vciBlbmRvcnNlZCBieSB0aGUgY29tcGFueS4NClRo
-YW5rIFlvdS4NCg==
+Hi,
+
+Small update: there's an mail-thread on Linux-Audio-User of somebody
+who seems to have a similar issue as this. The thread in question:
+http://linux-audio.4202.n7.nabble.com/Problems-with-real-time-kernel-thermal-throttling-and-cpu-freq-governors-td93209.html
+
+Note that the CPU the OP of that thread has is an i7, and they're
+using an older -rt kernel (3.14-2-rt-amd64). On a vanilla 3.14-2-amd64
+all is reported to be fine (see forum post mentioned in first mail by
+OP, link: http://forums.debian.net/viewtopic.php?f=5&t=117613&p=554270#p554270
+)
+
+The OP of that thread mentions that the machine hangs, forcing a
+hard-reboot. I've been experiencing that too, but had not concidered
+that the issues might be one-and-the-same.
+
+What is the next step I can take to help this issue along?
+Cheers, -Harry
+
+
+On Fri, Sep 5, 2014 at 11:47 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+> On Fri, 5 Sep 2014, Viresh Kumar wrote:
+>
+>> On 5 September 2014 17:36, Harry van Haaren <harryhaaren@gmail.com> wrote:
+>> > The down_read_trylock() fails, the other checks are fine.
+>>
+>> So my initial guess was correct :)
+>>
+>> > If i'm understanding correctly, the cpufreq_rwsem locks the module
+>> > from being unloaded during critical sections while writing to CPU
+>> > speed etc?
+>>
+>> Its not about changing speed, but its more of a lock for critical sections
+>> only.. So, yes its required..
+>>
+>> > Would that mean that an un-matched pair of down_read() up_write()
+>> > could cause the failure of changing CPU speed?
+>>
+>> Probably yes, but why doesn't that happen without rt?
+>
+> I think Carsten had looked into this.
+>
+
+
+
+-- 
+
+www.openavproductions.com
