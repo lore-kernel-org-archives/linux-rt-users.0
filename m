@@ -1,111 +1,101 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH] sched: Do not try to replenish from a non deadline tasks
-Date: Wed, 24 Sep 2014 15:24:16 +0200
-Message-ID: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de>
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: juri.lelli@gmail.com
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Chris.Pringle@grassvalley.com
+Subject: Re: Workqueue "scheduling while atomic" issues in v3.12.19-rt30
+Date: Thu, 25 Sep 2014 10:01:43 +0100
+Message-ID: <OFDAF9162A.D6F73659-ON80257D5E.002D0063-80257D5E.0031965A@belden.com>
+References: <OF7A166039.4A11D04A-ON80257D5C.00394E82-80257D5C.003C09F4@belden.com> <5421781B.9090507@pavlinux.ru> <OFB1717EE3.8216B47D-ON80257D5D.00291BAB-80257D5D.00326544@belden.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="KOI8-R"
+Content-Transfer-Encoding: base64
+Cc: pavel@pavlinux.ru
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.belden.com ([12.161.118.90]:61189 "EHLO mx1.belden.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752095AbaIYJRK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Sep 2014 05:17:10 -0400
+In-Reply-To: <OFB1717EE3.8216B47D-ON80257D5D.00291BAB-80257D5D.00326544@belden.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-When a PI mutex is shared between an deadline task and normal task we
-might end up trying to replenish from the normal task. In this case neither
-dl_runtime, dl_period or dl_deadline are set. replenish_dl_entity() can't do
-anything useful.
-
-The following log is created by
-
-[root@test-kvm ~]# echo 1 > /proc/sys/kernel/ftrace_dump_on_oops
-[root@test-kvm ~]# trace-cmd start -e sched -e syscalls:*_futex
-
-I also added an additional trace point to de/enqueue_dl_entity which
-prints the PID of dl_se and pi_se.
-
-PID 1534 runs as SCHED_OTHER and PID 1535 runs under SCHED_DEADLINE.
-
-[  654.000276] pthread_-1535    0.... 4435294us : sys_futex(uaddr: 6010a0, op: 86, val: 1, utime: 0, uaddr2: 0, val3: 5ff)
-[  654.000276] pthread_-1535    0d... 4435295us : sched_pi_setprio: comm=pthread_test pid=1535 oldprio=-1 newprio=-1
-[  654.000276] pthread_-1535    0d... 4435295us : sched_dequeue_dl_entity: comm=pthread_test pid=1535 flags=0
-[  654.000276] pthread_-1535    0d... 4435295us : sched_enqueue_dl_entity: comm=pthread_test pid=1535 pi_comm=pthread_test pi_pid=1535 flags=0
-[  654.000276] pthread_-1535    0dN.. 4435295us : sched_pi_setprio: comm=pthread_test pid=1534 oldprio=120 newprio=-1
-[  654.000276] pthread_-1535    0dN.. 4435296us : sched_dequeue_dl_entity: comm=pthread_test pid=1535 flags=0
-[  654.000276] pthread_-1535    0dN.. 4435296us : sched_stat_wait: comm=ksoftirqd/0 pid=3 delay=5043 [ns]
-[  654.000276] pthread_-1535    0d... 4435296us : sched_switch: prev_comm=pthread_test prev_pid=1535 prev_prio=-1 prev_state=S ==> next_comm=ksoftirqd/0 next_pid=3 next_prio=120
-[  654.000276] ksoftirq-3       0d... 4435297us : sched_stat_runtime: comm=ksoftirqd/0 pid=3 runtime=926 [ns] vruntime=2618803465 [ns]
-[  654.000276] ksoftirq-3       0d... 4435297us : sched_stat_wait: comm=sshd pid=1536 delay=5969 [ns]
-[  654.000276] ksoftirq-3       0d... 4435297us : sched_switch: prev_comm=ksoftirqd/0 prev_pid=3 prev_prio=120 prev_state=S ==> next_comm=sshd next_pid=1536 next_prio=120
-[  654.000276]     sshd-1536    0d.h. 4435345us : sched_enqueue_dl_entity: comm=pthread_test pid=1534 pi_comm=pthread_test pi_pid=1535 flags=1
-[  654.000276]     sshd-1536    0dNh. 4435346us : sched_wakeup: comm=pthread_test pid=1534 prio=-1 success=1 target_cpu=000
-[  654.000276]     sshd-1536    0dN.. 4435501us : sched_stat_sleep: comm=ksoftirqd/0 pid=3 delay=48519 [ns]
-[  654.000276]     sshd-1536    0dN.. 4435501us : sched_wakeup: comm=ksoftirqd/0 pid=3 prio=120 success=1 target_cpu=000
-[  654.000276]     sshd-1536    0dN.. 4435502us : sched_stat_runtime: comm=sshd pid=1536 runtime=48519 [ns] vruntime=9541100 [ns]
-[  654.000276]     sshd-1536    0d... 4435502us : sched_switch: prev_comm=sshd prev_pid=1536 prev_prio=120 prev_state=R ==> next_comm=pthread_test next_pid=1534 next_prio=-1
-[  654.000276] pthread_-1534    0.... 4435503us : sys_futex(uaddr: 6010a0, op: 87, val: 0, utime: 0, uaddr2: 6010a0, val3: 5fe)
-[  654.000276] pthread_-1534    0d... 4435504us : sched_enqueue_dl_entity: comm=pthread_test pid=1535 pi_comm=pthread_test pi_pid=1535 flags=1
-[  654.000276] pthread_-1534    0d... 4435504us : sched_wakeup: comm=pthread_test pid=1535 prio=-1 success=1 target_cpu=000
-[  654.000276] pthread_-1534    0d... 4435504us : sched_pi_setprio: comm=pthread_test pid=1534 oldprio=-1 newprio=120
-[  654.000276] pthread_-1534    0d... 4435504us : sched_dequeue_dl_entity: comm=pthread_test pid=1534 flags=0
-[  654.000276] pthread_-1534    0d... 4435505us : sched_enqueue_dl_entity: comm=pthread_test pid=1534 pi_comm=pthread_test pi_pid=1534 flags=8
-[  654.000276] ---------------------------------
-[  654.000276] Modules linked in:
-[  654.000276] CPU: 0 PID: 1534 Comm: pthread_test Not tainted 3.17.0-rc5+ #49
-[  654.000276] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2011
-[  654.000276] task: ffff88007a1f7380 ti: ffff88007d2b8000 task.ti: ffff88007d2b8000
-[  654.000276] RIP: 0010:[<ffffffff810653f2>]  [<ffffffff810653f2>] enqueue_task_dl+0x2b2/0x330
-[  654.000276] RSP: 0018:ffff88007d2bbd08  EFLAGS: 00010046
-[  654.000276] RAX: 0000000000000000 RBX: ffff88007a1f7380 RCX: 0000000000000000
-[  654.000276] RDX: 0000000000000000 RSI: 0000000000000046 RDI: ffff88007d006c00
-[  654.000276] RBP: ffff88007d2bbd38 R08: 0000000000000000 R09: ffff88007a3d3fa4
-[  654.000276] R10: 0000009837497dad R11: 000000000000000d R12: ffff88007a1f7568
-[  654.000276] R13: 0000000000000008 R14: ffff88007a1f7568 R15: ffff88007a1f7568
-[  654.000276] FS:  00007f48db1bc740(0000) GS:ffffffff81e26000(0000) knlGS:0000000000000000
-[  654.000276] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-[  654.000276] CR2: 00007f1b9095f330 CR3: 0000000076d0a000 CR4: 00000000000006f0
-[  654.000276] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-[  654.000276] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-[  654.000276] Stack:
-[  654.000276]  ffff88007a1f7380 ffff88007a1f7380 0000000000026e10 ffffffff81e46520
-[  654.000276]  ffff88007c8e5820 ffff88007a1f7568 ffff88007d2bbd70 ffffffff81065578
-[  654.000276]  ffffffff81e46520 ffff88007a1f7380 ffff88007a1f7568 ffffffff81a0d800
-[  654.000276] Call Trace:
-[  654.000276]  [<ffffffff81065578>] update_curr_dl+0x108/0x230
-[  654.000276]  [<ffffffff81065859>] dequeue_task_dl+0x19/0x70
-[  654.000276]  [<ffffffff8105c605>] dequeue_task+0x55/0x80
-[  654.000276]  [<ffffffff8105f849>] rt_mutex_setprio+0x109/0x2c0
-[  654.000276]  [<ffffffff8106b5fb>] __rt_mutex_adjust_prio+0x1b/0x40
-[  654.000276]  [<ffffffff8183d058>] rt_mutex_unlock+0x68/0x90
-[  654.000276]  [<ffffffff81092aa4>] do_futex+0x594/0x950
-[  654.000276]  [<ffffffff81092ecc>] SyS_futex+0x6c/0x150
-[  654.000276]  [<ffffffff8100edd1>] ? syscall_trace_enter+0x211/0x220
-[  654.000276]  [<ffffffff8183e606>] tracesys+0xdc/0xe1
-[  654.000276] Code: 00 00 00 00 00 00 48 89 83 20 02 00 00 eb 9b be 1a 01 00 00 48 c7 c7 cb 4c bd 81 e8 69 a9 fd ff 48 8b 93 e8 01 00 00 eb bd 0f 0b <0f> 0b 48 c7 c7 78 c4 bc 81 31 c0 c6 05 61 5a eb 00 01 e8 47 ca
-[  654.000276] RIP  [<ffffffff810653f2>] enqueue_task_dl+0x2b2/0x330
-[  654.000276]  RSP <ffff88007d2bbd08>
-[  654.000276] ---[ end trace aed7e30a2c9541d9 ]---
-
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Cc: Ingo Molnar <mingo@redhat.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Juri Lelli <juri.lelli@gmail.com>
----
- kernel/sched/deadline.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-index 2799441..4b3a80f 100644
---- a/kernel/sched/deadline.c
-+++ b/kernel/sched/deadline.c
-@@ -630,7 +630,7 @@ static void update_curr_dl(struct rq *rq)
- 		__dequeue_task_dl(rq, curr, 0);
- 		if (likely(start_dl_timer(dl_se, curr->dl.dl_boosted)))
- 			dl_se->dl_throttled = 1;
--		else
-+		else if (curr->dl.dl_runtime > 0)
- 			enqueue_task_dl(rq, curr, ENQUEUE_REPLENISH);
- 
- 		if (!is_leftmost(curr, &rq->dl))
--- 
-1.9.3
+PiA+IDIzLjA5LjIwMTQgMTQ6NTUsIENocmlzLlByaW5nbGVAZ3Jhc3N2YWxsZXkuY29tINDJ
+28XUOg0KPiA+IA0KPiA+IA0KPiA+ID4gSSd2ZSBhdHRhY2hlZCB0aGUgcGF0Y2ggZm9yIHJl
+ZmVyZW5jZS4NCj4gPiANCj4gPiBwb3J0ZWQgeW91IGZpeGVzIHRvIDMuMTQuMTkgKyBwYXRj
+aC0zLjE0LjEyLXJ0OS5wYXRjaC5neg0KPiA+IEludGVsIENlbGVyb24gRzE2MjAsIHdoaWxl
+IHdvcmtpbmcgOikNCj4gPiANCj4gPiANCj4gDQpodHRwOi8vaTY3LmZhc3RwaWMucnUvYmln
+LzIwMTQvMDkyMy8zOS9kZjM4NjYzYmQyNDE0YWZlMDY0YzE5NzhhZDdiM2QzOS5qcGcNCg0K
+PiANCj4gDQo+IFRoYW5rcyBmb3IgdHJ5aW5nLiBVbmZvcnR1bmF0ZWx5LCBJIGRvbid0IHRo
+aW5rIHRoaXMgaXMgYSB3b3JrYWJsZSBmaXggDQphcyANCj4gSSdtIHByZXR0eSBjb252aW5j
+ZWQgdGhhdCBjaGFuZ2luZyB0aGUgc3BpbiBsb2NrIHR5cGUgaXMgbm90IHRoZSByaWdodCAN
+Cj4gdGhpbmcgdG8gZG8gZm9yIFJULi4gSSBoYXZlIGJhY2twb3J0ZWQgYWxsIGZpeGVzIGlu
+IGFpby5jIGFuZCANCndvcmtxdWV1ZS5jIA0KPiBmcm9tIHYzLjE0IChydDkpIHRvIHYzLjEy
+IGFuZCBoYXZlIHNlZW4gc29tZSBpbXByb3ZlbWVudCBpbiBvbmUgb2YgbXkgDQp0ZXN0IA0K
+PiBjYXNlcyAoYWx0aG91Z2ggSSBoYXZlIHN1c3BpY2lvbnMgaXQncyBqdXN0IG1hc2tpbmcg
+dGhlIHByb2JsZW0pLCANCmhvd2V2ZXIgDQo+IHRoZSBvdGhlciBpcyBzdGlsbCBmYWlsaW5n
+IGFzIHByZXZpb3VzbHkgcG9zdGVkLiBJbiB2My4wIG9mIHRoZSBrZXJuZWwsIA0KPiB0aGUg
+YWlvIHN0dWZmIG5ldmVyIHVzZWQgdGhlIG5ldyBwZXJjcHUgcmVmIGNvdW50aW5nIHNvIEkg
+dGhpbmsgdGhpcyBpcyANCmEgDQo+IG5ldyBwcm9ibGVtIGludHJvZHVjZWQvcmV2ZWFsZWQg
+YnkgdGhhdC4gSSBndWVzcyB0aGUgcXVlc3Rpb24gaXMsIGRvIHdlIA0KPiBleHBlY3QgaXQg
+dG8gYmUgc2FmZSB0byBjYWxsIHNjaGVkdWxlX3dvcmsoKSBmcm9tIGF0b21pYyBjb250ZXh0
+IChhcyBCZW4gDQoNCj4gTGFIYWlzZSBzdWdnZXN0ZWQpPyBJZiB0aGUgYW5zd2VyIGlzIHll
+cywgdGhlbiB0aGVyZSBpcyBhIGJ1ZyBpbiB0aGUgDQo+IHdvcmtxdWV1ZXMsIGlmIHRoZSBh
+bnN3ZXIgaXMgbm8sIHRoZW4gdGhlIGJ1ZyBpcyBpbiBmcy9haW8uYyBpbiB0aGUgd2F5IA0K
+aXQgDQo+IGNsZWFucyB1cCByZXFzIHZpYSB0aGUgcGVyY3B1IHJlZmNvdW50aW5nICh3aGlj
+aCBldmVudHVhbGx5IGNhbGxzIA0KPiBzY2hlZHVsZV93b3JrKCkpLiANCg0KT2theSAtIGp1
+c3QgZm9yIGNvbXBsZXRlLW5lc3MgaW4gY2FzZSBhbnlvbmUgZWxzZSBydW5zIGludG8gdGhp
+cyBpc3N1ZSBvciANCndhbnRzIHRvIHBpY2sgaXQgdXAuLi4gVGhlIG9yaWdpbmFsIHBhdGNo
+IEkgc2VudCBvdXQgZG9lcyBub3QgZml4IHRoZSANCnByb2JsZW0gYXMgdGhlcmUgaXMgYW5v
+dGhlciBsb2NrIChsb2NhbF9sb2NrX2lycXNhdmUgZXRjKSBpbiB0aGVyZSB3aGljaCANCndv
+dWxkIGFsc28gbmVlZCBjaGFuZ2luZzsgY2hhbmdpbmcgdGhpcyB0byBhIHJhdyBzcGlubG9j
+ayBjYXVzZXMgb3RoZXIgDQphcmVhcyBvZiB0aGUga2VybmVsIHRvIGdldCBjb21wbGFpbiBh
+Ym91dCBzY2hlZHVsaW5nIHdoaWxzdCBhdG9taWMuIEkgDQpkaWRuJ3QgdGhpbmsgdGhpcyB3
+YXMgdGhlIHJpZ2h0IHdheSB0byBmaXggaXQgYW55d2F5Lg0KIA0KDQpJIGJlbGlldmUgdGhl
+IHByb2JsZW0gaXMgd2l0aCB0aGUgd2F5IGFpbyBpcyB1c2luZyB0aGUgcGVyY3B1IHJlZiAN
+CmNvdW50aW5nOyBpdCdzIGZpbmUgd2l0aG91dCBSVCwgYnV0IHdpdGggUlQgdGhlIHdheSBh
+aW8gdXNlcyBwZXIgY3B1IHJlZiANCmNvdW50aW5nICBldmVudHVhbGx5IGNhbGxzIHNjaGVk
+dWxlX3dvcmsgKG5vdCBjdXJyZW50bHkgYXRvbWljKSBmcm9tIA0Kd2l0aGluIHBlcmNwdV9y
+ZWZfa2lsbF9yY3UgKGF0b21pYykgYW5kIHRoZW4gc3BpdHMgb3V0IGEga2VybmVsIEJVRy4g
+DQoNCkkgdGhpbmsgdGhlcmUgYXJlIGEgZmV3IHdheXMgd2UgY291bGQgZml4IHRoaXMgc3Bl
+Y2lmaWMgcHJvYmxlbToNCjEpIFdlIGNvdWxkIGZpeCBzY2hlZHVsZV93b3JrKCkgc28gaXQg
+Y2FuIGJlIGNhbGxlZCBmcm9tIGF0b21pYyBjb250ZXh0IA0Kd2hpY2ggd291bGQgc29sdmUg
+dGhlIHByb2JsZW0gZm9yIGFpbyB3aXRoIHRoZSB3YXkgaXQgdXNlcyBwZXJjcHUgcmVmIA0K
+Y291bnRpbmcuIEl0IG9ubHkgc29sdmVzIHRoaXMgb25lIGNhc2UgaG93ZXZlciBhbmQgSSB0
+aGluayBzb21lIA0KY2xhcmlmaWNhdGlvbiBhcm91bmQgd2hhdCBzaG91bGQgYW5kIHNob3Vs
+ZG4ndCBiZSBjYWxsYWJsZSBmcm9tIGF0b21pYyANCmNvbnRleHQgd291bGQgYmUgaGVscGZ1
+bC4NCg0KMikgRm9yIFJUIHdlIGNvdWxkIGNoYW5nZSBhaW8gc28gaXQncyBub3QgcmVsaWFu
+dCBvbiBwZXJjcHUgcmVmIGNvdW50aW5nIA0KKGxpa2UgdGhlIHYzLjAgaW1wbGVtZW50YXRp
+b24pIGJ1dCB0aGlzIGlzIGxpa2VseSB0byBnaXZlIHF1aXRlIGEgDQpkaWZmZXJlbnQgaW1w
+bGVtZW50YXRpb24gdGhhbiB0aGUgc3RvY2sga2VybmVsOyBlaXRoZXIgdGhhdCBvciBsb29r
+IGF0IGF0IA0KYSBjaGFuZ2UgdG8gdGhlIG1haW5saW5lIGtlcm5lbHMgYWlvIGltcGxlbWVu
+dGF0aW9uIChpLmUuIG5vdCBpbiBSVCANCnBhdGNoZXMpLg0KDQozKSBNYXliZSB3ZSBjb3Vs
+ZCBmaW5kIGEgd2F5IG9mIGNoYW5naW5nIHRoZSBwZXJjcHUgcmVmIGNvdW50aW5nIHRvIG1h
+a2UgDQppdCBzYWZlIHRvIGNhbGwgbm9uLWF0b21pYyBjb2RlICh3aXRoIFJUIHBhdGNoZXMp
+IC0gc28gaXQgZXhlY3V0ZXMgDQpmdW5jdGlvbnMgaW4gYSBub24tYXRvbWljIGNvbnRleHQg
+cGVyaGFwcz8uLi4gDQoNCg0KSSBhbHNvIHRoaW5rIHNvbWUgY2xhcmlmaWNhdGlvbiBvbiB0
+aGUgZm9sbG93aW5nIHR3byB0aGluZ3Mgd291bGQgYWxzbyANCmhlbHAgZGVjaWRlIG9uIHRo
+ZSBiZXN0IHdheSB0byBhZGRyZXNzIHRoaXM6DQoxKSBJcyBpdCBpbnRlbmRlZCB0aGF0IHNj
+aGVkdWxlX3dvcmsoKSBiZSBjYWxsYWJsZSBmcm9tIGFuIGF0b21pYyBjb250ZXh0PyANCkN1
+cnJlbnRseSBpdCdzIG5vdCwgYnV0IEkndmUgbm90IHNlZW4gYW55IGRvY3VtZW50YXRpb24g
+dG8gc3VnZ2VzdCB3aGV0aGVyIA0KaXQgaXMgb3IgaXMgbm90IHN1cHBvc2VkIHRvIGJlIGNh
+bGxhYmxlIGZyb20gYXRvbWljIGNvbnRleHQNCjIpIFNob3VsZCBmdW5jdGlvbnMgcnVuIGJ5
+IHBlcmNwdV9yZWZfa2lsbF9yY3UgYmUgcnVubmluZyBpbiBhbiBhdG9taWMgb3IgDQpub24t
+YXRvbWljIGNvbnRleHQ/IEN1cnJlbnRseSBpdCdzIGF0b21pYywgYnV0IGFnYWluLCBJJ3Zl
+IG5vdCBzZWVuIGFueSANCmRvY3VtZW50YXRpb24gdG8gc3VnZ2VzdCB3aGV0aGVyIGl0IGlz
+IG9yIGlzIG5vdCBzdXBwb3NlZCB0byBiZSBydW5uaW5nIGluIA0KYXRvbWljIGNvbnRleHQN
+Cg0KDQpJIHRoaW5rIGl0IG5lZWRzIHNvbWVvbmUgd2hvIGhhcyBleHRlbnNpdmUga25vd2xl
+ZGdlL2V4cGVyaWVuY2Ugd2l0aCB0aGVzZSANCmFyZWFzIG9mIGNvZGUgdG8gdGFrZSBjYXJl
+IG9mIHRoaXMgaXNzdWUgYXMgdGhpcyBpcyBub3QgcmVhbGx5IG15IGFyZWEgb2YgDQpleHBl
+cnRpc2UuIEZvciBub3cgSSd2ZSBnb25lIHdpdGggc29sdXRpb24gKDIpIGFuZCBwb3J0ZWQg
+dGhlIG9yaWdpbmFsIA0KdjMuMCBhaW8gaW1wbGVtZW50YXRpb24gb250byB2My4xMiB0byBy
+ZXNvbHZlIHRoZSBwcm9ibGVtIGZvciBvdXIgdXNlLg0KDQoNCkhhcHB5IHRvIGFzc2lzdCB3
+aXRoIHRlc3RpbmcgYSB2My4xMiBmaXggb24gb3VyIHBsYXRmb3JtICh3ZSBjYW4ndCB1cGdy
+YWRlIA0KdG8gdjMuMTQgZHVlIHRvIGxvY2staW4gd2l0aCB0aGUgRnJlZXNjYWxlIFNESykg
+aWYgYW55b25lIGhhcyBhbnkgDQpzdWdnZXN0ZWQgZml4ZXMuDQoNCkRJU0NMQUlNRVI6DQpQ
+cml2aWxlZ2VkIGFuZC9vciBDb25maWRlbnRpYWwgaW5mb3JtYXRpb24gbWF5IGJlIGNvbnRh
+aW5lZCBpbiB0aGlzDQptZXNzYWdlLiBJZiB5b3UgYXJlIG5vdCB0aGUgYWRkcmVzc2VlIG9m
+IHRoaXMgbWVzc2FnZSwgeW91IG1heSBub3QNCmNvcHksIHVzZSBvciBkZWxpdmVyIHRoaXMg
+bWVzc2FnZSB0byBhbnlvbmUuIEluIHN1Y2ggZXZlbnQsIHlvdQ0Kc2hvdWxkIGRlc3Ryb3kg
+dGhlIG1lc3NhZ2UgYW5kIGtpbmRseSBub3RpZnkgdGhlIHNlbmRlciBieSByZXBseQ0KZS1t
+YWlsLiBJdCBpcyB1bmRlcnN0b29kIHRoYXQgb3BpbmlvbnMgb3IgY29uY2x1c2lvbnMgdGhh
+dCBkbyBub3QNCnJlbGF0ZSB0byB0aGUgb2ZmaWNpYWwgYnVzaW5lc3Mgb2YgdGhlIGNvbXBh
+bnkgYXJlIG5laXRoZXIgZ2l2ZW4NCm5vciBlbmRvcnNlZCBieSB0aGUgY29tcGFueS4NClRo
+YW5rIFlvdS4NCg==
