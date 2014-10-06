@@ -1,22 +1,47 @@
 From: Armin Steinhoff <armin@steinhoff.de>
 Subject: Re: Operation not permitted / pthread_setschedparam
-Date: Mon, 06 Oct 2014 10:03:39 +0200
-Message-ID: <54324CDB.6030402@steinhoff.de>
+Date: Mon, 06 Oct 2014 15:34:03 +0200
+Message-ID: <54329A4B.7080706@steinhoff.de>
 References: <542A88A8.7060800@steinhoff.de> <alpine.DEB.2.11.1410010058160.4455@nanos> <542BACF1.3090405@steinhoff.de> <CAA7pwKPcT_YvQx9_nvSXCq3sFB3aCRZ-mGWTk4GOvLn0k7c3_w@mail.gmail.com> <542D0689.8050602@steinhoff.de> <542FD0BE.10508@osadl.org> <542FE9B4.3060708@steinhoff.de> <alpine.DEB.2.11.1410042312440.4383@nanos> <54312C88.8060609@steinhoff.de> <alpine.DEB.2.11.1410051453590.4383@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8BIT
 Cc: rt-users <linux-rt-users@vger.kernel.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.kundenserver.de ([212.227.17.13]:60146 "EHLO
+Received: from mout.kundenserver.de ([212.227.126.130]:61249 "EHLO
 	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750809AbaJFIDs (ORCPT
+	with ESMTP id S1752330AbaJFNeI convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Oct 2014 04:03:48 -0400
+	Mon, 6 Oct 2014 09:34:08 -0400
 In-Reply-To: <alpine.DEB.2.11.1410051453590.4383@nanos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+Sorry ... I got now time to read your test code and results in detail.
+Your test shows only the absence of failures in your "test" scenario.
+
+My bug report provided in Bugzilla shows all informations about the facts.
+I could upload my test app to the bug report ... so you get a chance to
+replicate these problems and get out of your "realty distortion".
+
+Asking question for a confusing failure situation has nothing to with
+"abusing the community!
+Yes, I got 3 good hints ... no statement about the arrogant "hint" from you.
+It's quite normal to "have theories about a failures" as long as I
+verify these in order to find the real problem.
+
+Are you trying to kidding me with this statement: "Why should we be
+bothered to solve your business problems,"
+
+Do you really believe I have a business problem ?  There is simpy absolute no business with PREEMPT_RT!
+I do only some strategic work for a potential usage of PREEMP_RT ... hope this solves your problem.
+
+I'm working since 25 years wit QNX and other classical real-time operation systems. I did also operating system development for many years ... but before the first LINUX version was released. So be careful to tell me something about "incompetence" ...
+
+--Armin
+
+
 
 Thomas Gleixner schrieb:
 > On Sun, 5 Oct 2014, Armin Steinhoff wrote:
@@ -24,43 +49,7 @@ Thomas Gleixner schrieb:
 >> earlier PREEMPT_RT kernel!
 >> And pointing out such a problem and problems of "ps" is for you:
 > Lets look at the problems.
-
-*What problem ? *
-*I wrote already before:*
---------------------------------------------------------------------------------------
-
->A bug in the good old "ps" would be very unlikely.
-
-This statement is'nt correct ! 
-
-The "ps -elf"  command shows a lot of nonsense ... when I can trust the
-command "ps -e -L -o class,rtprio,pri,nice,cmd" there are no priority
-changes of other processes!
-
-But after start of the demo  the command "ps -e -L -o
-class,rtprio,pri,nice,cmd" is swapping the values of "pri" of "nice" ...
-without changing theire values!
-
-What's going on here ??  However ,,, *it's good to see that the problem
-seems not to be in the kernel ...*
-
---Armin
-
------------------------------------------------------------------------
-
-*And this is already part of a submitted bug report !!*
-
-So what your problem?? You should better read ...
-
-Your statements are simply pointless, arrogant and insulting!
-
-The real problem is the crazy output of "ps -elf" ... 
-
---Armin
-
-
-
-
+>
 > I built the random kernel version which you used for testing and
 > against which you reported a bug.
 >
@@ -196,4 +185,5 @@ The real problem is the crazy output of "ps -elf" ...
 >
 > 	tglx
 >
+
 
