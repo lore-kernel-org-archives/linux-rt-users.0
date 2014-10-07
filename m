@@ -1,74 +1,67 @@
-From: Juri Lelli <juri.lelli@arm.com>
+From: Daniel Wagner <wagi@monom.org>
 Subject: Re: [PATCH] sched: Do not try to replenish from a non deadline tasks
-Date: Tue, 07 Oct 2014 10:43:21 +0100
-Message-ID: <5433B5B9.70006@arm.com>
-References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de>
+Date: Tue, 07 Oct 2014 14:02:28 +0200
+Message-ID: <5433D654.2020108@monom.org>
+References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de> <5433B5B9.70006@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=WINDOWS-1252
-Content-Transfer-Encoding: 8BIT
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Ingo Molnar <mingo@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>,
+To: Juri Lelli <juri.lelli@arm.com>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>,
 	"juri.lelli@gmail.com" <juri.lelli@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wg0-f51.google.com ([74.125.82.51]:43082 "EHLO
+	mail-wg0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753273AbaJGMCa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 7 Oct 2014 08:02:30 -0400
+Received: by mail-wg0-f51.google.com with SMTP id b13so9083714wgh.22
+        for <linux-rt-users@vger.kernel.org>; Tue, 07 Oct 2014 05:02:29 -0700 (PDT)
+In-Reply-To: <5433B5B9.70006@arm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Daniel,
+Hi Juri,
 
-On 24/09/14 14:24, Daniel Wagner wrote:
-> When a PI mutex is shared between an deadline task and normal task we
-> might end up trying to replenish from the normal task. In this case neither
-> dl_runtime, dl_period or dl_deadline are set. replenish_dl_entity() can't do
-> anything useful.
+On 10/07/2014 11:43 AM, Juri Lelli wrote:
+> Hi Daniel,
 > 
+> On 24/09/14 14:24, Daniel Wagner wrote:
+>> When a PI mutex is shared between an deadline task and normal task we
+>> might end up trying to replenish from the normal task. In this case neither
+>> dl_runtime, dl_period or dl_deadline are set. replenish_dl_entity() can't do
+>> anything useful.
+>>
+> 
+> Is this same bug we have with rt_mutex_setprio or something different?
+> I'm sorry, but I don't remember anymore :/. It looks like a different
+> issue, though.
 
-Is this same bug we have with rt_mutex_setprio or something different?
-I'm sorry, but I don't remember anymore :/. It looks like a different
-issue, though.
+There are two independent bugs but in both cases BUG_ON in
+enqueue_dl_entity() is triggered.
 
-Anyway, the callpath you talked about on IRC seems to make sense, does
-what below fix the thing? Could you please point me again to where the
-tests you are running are hosted, so that I can easily reproduce the
-bug here?
+The first one (this patch) is triggered by trying to use the sched_attr
+of the non deadline task. The second one is the double queuing.
 
-Thanks a lot,
+> Anyway, the callpath you talked about on IRC seems to make sense, does
+> what below fix the thing?
 
-- Juri
+I'll give it a spin.
 
->From f39b7668aeca5c48be1d4baed217cdd6c8d61150 Mon Sep 17 00:00:00 2001
-From: Juri Lelli <juri.lelli@arm.com>
-Date: Tue, 7 Oct 2014 10:29:09 +0100
-Subject: [PATCH] sched/deadline: fix double enqueue on dl_task_timer.
+> Could you please point me again to where the
+> tests you are running are hosted, so that I can easily reproduce the
+> bug here?
 
-Signed-off-by: Juri Lelli <juri.lelli@arm.com>
----
- kernel/sched/deadline.c | 9 ++++++---
- 1 file changed, 6 insertions(+), 3 deletions(-)
+Sure. I reduced my original program to this:
 
-diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-index 255ce13..d0beefa 100644
---- a/kernel/sched/deadline.c
-+++ b/kernel/sched/deadline.c
-@@ -520,10 +520,13 @@ again:
- 	/*
- 	 * We need to take care of a possible races here. In fact, the
- 	 * task might have changed its scheduling policy to something
--	 * different from SCHED_DEADLINE or changed its reservation
--	 * parameters (through sched_setattr()).
-+	 * different from SCHED_DEADLINE, changed its reservation
-+	 * parameters (through sched_setattr()) or inherited priority
-+	 * (and parameters) from someone else (in this last case it is
-+	 * also outside of bandwidth enforcement, so we can safely bail
-+	 * out).
- 	 */
--	if (!dl_task(p) || dl_se->dl_new)
-+	if (!dl_task(p) || dl_se->dl_new || dl_se->dl_boosted)
- 		goto unlock;
- 
- 	sched_clock_tick();
--- 
-2.1.0
+http://www.monom.org/rt/pthread_test.c
+
+If you let it run with 'pthread_test inherit' you should see the bugs
+eventually.
+
+cheers,
+daniel
