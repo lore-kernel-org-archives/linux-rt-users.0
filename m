@@ -1,32 +1,54 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH] sched: Do not try to replenish from a non deadline tasks
-Date: Tue, 07 Oct 2014 15:20:51 +0200
-Message-ID: <5433E8B3.6040708@monom.org>
-References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de> <5433B5B9.70006@arm.com> <5433D654.2020108@monom.org> <5433D84F.3040003@monom.org>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: Operation not permitted / pthread_setschedparam / EOD
+Date: Thu, 09 Oct 2014 10:35:18 +0200
+Message-ID: <543648C6.3040606@steinhoff.de>
+References: <542A88A8.7060800@steinhoff.de> <alpine.DEB.2.11.1410010058160.4455@nanos> <542BACF1.3090405@steinhoff.de> <CAA7pwKPcT_YvQx9_nvSXCq3sFB3aCRZ-mGWTk4GOvLn0k7c3_w@mail.gmail.com> <542D0689.8050602@steinhoff.de> <542FD0BE.10508@osadl.org> <542FE9B4.3060708@steinhoff.de> <alpine.DEB.2.11.1410042312440.4383@nanos> <54312C88.8060609@steinhoff.de> <alpine.DEB.2.11.1410051453590.4383@nanos> <54329A4B.7080706@steinhoff.de> <alpine.DEB.2.11.1410070237190.4383@nanos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Juri Lelli <juri.lelli@arm.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	"juri.lelli@gmail.com" <juri.lelli@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5433D84F.3040003@monom.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.kundenserver.de ([212.227.126.130]:51611 "EHLO
+	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750873AbaJIIf1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Oct 2014 04:35:27 -0400
+In-Reply-To: <alpine.DEB.2.11.1410070237190.4383@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 10/07/2014 02:10 PM, Daniel Wagner wrote:
-> [   36.689416] pthread_-1555    0d..5 18486408us : sched_stat_sleep: comm=pthread_test pid=1554 delay=143975 [ns]
-> [   36.689416] pthread_-1555    0d..5 18486408us : sched_wakeup: comm=pthread_test pid=1554 prio=120 success=1 target_cpu=000
-> [   36.689416] pthread_-1555    0d..4 18486420us : sched_pi_setprio: comm=pthread_test pid=1555 oldprio=-1 newprio=-1
-> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
-> [   36.689416] pthread_-1555    0d..4 18486421us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
-> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
-> [   36.689416] pthread_-1555    0d..4 18486422us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=0
-> [   36.689416] pthread_-1555    0d.H4 18486539us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
+Thomas Gleixner schrieb:
+[ clip]
 
-I noticed that the last two lines are different. Maybe that is yet
-another path into enqueue_task_dl().
+>that it is calling setpriority() with the arguments
+
+>     which = 2 	   (PRIO_USER)
+>     who   = 0     (root)
+>     prio  = 0x14  (20)
+
+>And that's exactly what is causing your problem.
+
+
+OK, thanks a lot!! 
+
+
+I jumped back to PREEMPT_RT  after several years and wonder:
+
+- why isn't on kernel.org a direct link to this project? There is only a reference to an outdated page of RTwiki
+
+- why is in the "latest News" of RTwiki (from 2012 / Reporting Bugs)) mentioned: 
+"As always, please search the existing bug list and consider posting the issue to the linux-rt-users <https://rt.wiki.kernel.org/index.php/Mailinglists> mailing list before opening a new defect." ?
+
+Do we have to add: "If you do so, you must be prepared to get personal attacks from kernel developers ??
+ 
+- why is it neccessary to scroll down 4 screens of a 27" monitor to find the released "vanilla" kernels in 3.x?
+  I gave up after the second screen and used then a "testing" kernel  -> and that's at the end the root of the chaos! 
+
+Are you sure that the current representation of the PREEMPT_RT project will convince customers or developers to use it?
+
+Next station in my test work is Minix 3.0: true mikrokernel system, drivers in user space ...
+
+--Armin
+
+
