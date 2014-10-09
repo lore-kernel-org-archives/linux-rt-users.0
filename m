@@ -1,8 +1,8 @@
 From: Juri Lelli <juri.lelli@arm.com>
 Subject: Re: [PATCH] sched: Do not try to replenish from a non deadline tasks
-Date: Thu, 09 Oct 2014 14:48:33 +0100
-Message-ID: <54369231.7060107@arm.com>
-References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de>
+Date: Thu, 09 Oct 2014 14:51:27 +0100
+Message-ID: <543692DF.9020705@arm.com>
+References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de> <5433B5B9.70006@arm.com> <5433D654.2020108@monom.org> <5433D84F.3040003@monom.org> <5433E8B3.6040708@monom.org> <5436599C.9000207@monom.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=WINDOWS-1252
 Content-Transfer-Encoding: 8BIT
@@ -10,161 +10,291 @@ Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
 	Ingo Molnar <mingo@redhat.com>,
 	Peter Zijlstra <peterz@infradead.org>
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>,
+To: Daniel Wagner <wagi@monom.org>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>,
 	"juri.lelli@gmail.com" <juri.lelli@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from service87.mimecast.com ([91.220.42.44]:60780 "EHLO
+Received: from service87.mimecast.com ([91.220.42.44]:42529 "EHLO
 	service87.mimecast.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755987AbaJINsJ convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1757183AbaJINvK convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Oct 2014 09:48:09 -0400
-In-Reply-To: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de>
+	Thu, 9 Oct 2014 09:51:10 -0400
+In-Reply-To: <5436599C.9000207@monom.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi Daniel,
 
-On 24/09/14 14:24, Daniel Wagner wrote:
-> When a PI mutex is shared between an deadline task and normal task we
-> might end up trying to replenish from the normal task. In this case neither
-> dl_runtime, dl_period or dl_deadline are set. replenish_dl_entity() can't do
-> anything useful.
+On 09/10/14 10:47, Daniel Wagner wrote:
+> Hi Juri,
 > 
-> The following log is created by
+> On 10/07/2014 03:20 PM, Daniel Wagner wrote:
+>> On 10/07/2014 02:10 PM, Daniel Wagner wrote:
+>>> [   36.689416] pthread_-1555    0d..5 18486408us : sched_stat_sleep: comm=pthread_test pid=1554 delay=143975 [ns]
+>>> [   36.689416] pthread_-1555    0d..5 18486408us : sched_wakeup: comm=pthread_test pid=1554 prio=120 success=1 target_cpu=000
+>>> [   36.689416] pthread_-1555    0d..4 18486420us : sched_pi_setprio: comm=pthread_test pid=1555 oldprio=-1 newprio=-1
+>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
+>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
+>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
+>>> [   36.689416] pthread_-1555    0d..4 18486422us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=0
+>>> [   36.689416] pthread_-1555    0d.H4 18486539us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
+>>
+>> I noticed that the last two lines are different. Maybe that is yet
+>> another path into enqueue_task_dl().
 > 
-> [root@test-kvm ~]# echo 1 > /proc/sys/kernel/ftrace_dump_on_oops
-> [root@test-kvm ~]# trace-cmd start -e sched -e syscalls:*_futex
-> 
-> I also added an additional trace point to de/enqueue_dl_entity which
-> prints the PID of dl_se and pi_se.
-> 
-> PID 1534 runs as SCHED_OTHER and PID 1535 runs under SCHED_DEADLINE.
-> 
-> [  654.000276] pthread_-1535    0.... 4435294us : sys_futex(uaddr: 6010a0, op: 86, val: 1, utime: 0, uaddr2: 0, val3: 5ff)
-> [  654.000276] pthread_-1535    0d... 4435295us : sched_pi_setprio: comm=pthread_test pid=1535 oldprio=-1 newprio=-1
-> [  654.000276] pthread_-1535    0d... 4435295us : sched_dequeue_dl_entity: comm=pthread_test pid=1535 flags=0
-> [  654.000276] pthread_-1535    0d... 4435295us : sched_enqueue_dl_entity: comm=pthread_test pid=1535 pi_comm=pthread_test pi_pid=1535 flags=0
-> [  654.000276] pthread_-1535    0dN.. 4435295us : sched_pi_setprio: comm=pthread_test pid=1534 oldprio=120 newprio=-1
-> [  654.000276] pthread_-1535    0dN.. 4435296us : sched_dequeue_dl_entity: comm=pthread_test pid=1535 flags=0
-> [  654.000276] pthread_-1535    0dN.. 4435296us : sched_stat_wait: comm=ksoftirqd/0 pid=3 delay=5043 [ns]
-> [  654.000276] pthread_-1535    0d... 4435296us : sched_switch: prev_comm=pthread_test prev_pid=1535 prev_prio=-1 prev_state=S ==> next_comm=ksoftirqd/0 next_pid=3 next_prio=120
-> [  654.000276] ksoftirq-3       0d... 4435297us : sched_stat_runtime: comm=ksoftirqd/0 pid=3 runtime=926 [ns] vruntime=2618803465 [ns]
-> [  654.000276] ksoftirq-3       0d... 4435297us : sched_stat_wait: comm=sshd pid=1536 delay=5969 [ns]
-> [  654.000276] ksoftirq-3       0d... 4435297us : sched_switch: prev_comm=ksoftirqd/0 prev_pid=3 prev_prio=120 prev_state=S ==> next_comm=sshd next_pid=1536 next_prio=120
-> [  654.000276]     sshd-1536    0d.h. 4435345us : sched_enqueue_dl_entity: comm=pthread_test pid=1534 pi_comm=pthread_test pi_pid=1535 flags=1
-> [  654.000276]     sshd-1536    0dNh. 4435346us : sched_wakeup: comm=pthread_test pid=1534 prio=-1 success=1 target_cpu=000
-> [  654.000276]     sshd-1536    0dN.. 4435501us : sched_stat_sleep: comm=ksoftirqd/0 pid=3 delay=48519 [ns]
-> [  654.000276]     sshd-1536    0dN.. 4435501us : sched_wakeup: comm=ksoftirqd/0 pid=3 prio=120 success=1 target_cpu=000
-> [  654.000276]     sshd-1536    0dN.. 4435502us : sched_stat_runtime: comm=sshd pid=1536 runtime=48519 [ns] vruntime=9541100 [ns]
-> [  654.000276]     sshd-1536    0d... 4435502us : sched_switch: prev_comm=sshd prev_pid=1536 prev_prio=120 prev_state=R ==> next_comm=pthread_test next_pid=1534 next_prio=-1
-> [  654.000276] pthread_-1534    0.... 4435503us : sys_futex(uaddr: 6010a0, op: 87, val: 0, utime: 0, uaddr2: 6010a0, val3: 5fe)
-> [  654.000276] pthread_-1534    0d... 4435504us : sched_enqueue_dl_entity: comm=pthread_test pid=1535 pi_comm=pthread_test pi_pid=1535 flags=1
-> [  654.000276] pthread_-1534    0d... 4435504us : sched_wakeup: comm=pthread_test pid=1535 prio=-1 success=1 target_cpu=000
-> [  654.000276] pthread_-1534    0d... 4435504us : sched_pi_setprio: comm=pthread_test pid=1534 oldprio=-1 newprio=120
-> [  654.000276] pthread_-1534    0d... 4435504us : sched_dequeue_dl_entity: comm=pthread_test pid=1534 flags=0
-> [  654.000276] pthread_-1534    0d... 4435505us : sched_enqueue_dl_entity: comm=pthread_test pid=1534 pi_comm=pthread_test pi_pid=1534 flags=8
-> [  654.000276] ---------------------------------
-> [  654.000276] Modules linked in:
-> [  654.000276] CPU: 0 PID: 1534 Comm: pthread_test Not tainted 3.17.0-rc5+ #49
-> [  654.000276] Hardware name: Bochs Bochs, BIOS Bochs 01/01/2011
-> [  654.000276] task: ffff88007a1f7380 ti: ffff88007d2b8000 task.ti: ffff88007d2b8000
-> [  654.000276] RIP: 0010:[<ffffffff810653f2>]  [<ffffffff810653f2>] enqueue_task_dl+0x2b2/0x330
-> [  654.000276] RSP: 0018:ffff88007d2bbd08  EFLAGS: 00010046
-> [  654.000276] RAX: 0000000000000000 RBX: ffff88007a1f7380 RCX: 0000000000000000
-> [  654.000276] RDX: 0000000000000000 RSI: 0000000000000046 RDI: ffff88007d006c00
-> [  654.000276] RBP: ffff88007d2bbd38 R08: 0000000000000000 R09: ffff88007a3d3fa4
-> [  654.000276] R10: 0000009837497dad R11: 000000000000000d R12: ffff88007a1f7568
-> [  654.000276] R13: 0000000000000008 R14: ffff88007a1f7568 R15: ffff88007a1f7568
-> [  654.000276] FS:  00007f48db1bc740(0000) GS:ffffffff81e26000(0000) knlGS:0000000000000000
-> [  654.000276] CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-> [  654.000276] CR2: 00007f1b9095f330 CR3: 0000000076d0a000 CR4: 00000000000006f0
-> [  654.000276] DR0: 0000000000000000 DR1: 0000000000000000 DR2: 0000000000000000
-> [  654.000276] DR3: 0000000000000000 DR6: 00000000fffe0ff0 DR7: 0000000000000400
-> [  654.000276] Stack:
-> [  654.000276]  ffff88007a1f7380 ffff88007a1f7380 0000000000026e10 ffffffff81e46520
-> [  654.000276]  ffff88007c8e5820 ffff88007a1f7568 ffff88007d2bbd70 ffffffff81065578
-> [  654.000276]  ffffffff81e46520 ffff88007a1f7380 ffff88007a1f7568 ffffffff81a0d800
-> [  654.000276] Call Trace:
-> [  654.000276]  [<ffffffff81065578>] update_curr_dl+0x108/0x230
-> [  654.000276]  [<ffffffff81065859>] dequeue_task_dl+0x19/0x70
-> [  654.000276]  [<ffffffff8105c605>] dequeue_task+0x55/0x80
-> [  654.000276]  [<ffffffff8105f849>] rt_mutex_setprio+0x109/0x2c0
-> [  654.000276]  [<ffffffff8106b5fb>] __rt_mutex_adjust_prio+0x1b/0x40
-> [  654.000276]  [<ffffffff8183d058>] rt_mutex_unlock+0x68/0x90
-> [  654.000276]  [<ffffffff81092aa4>] do_futex+0x594/0x950
-> [  654.000276]  [<ffffffff81092ecc>] SyS_futex+0x6c/0x150
-> [  654.000276]  [<ffffffff8100edd1>] ? syscall_trace_enter+0x211/0x220
-> [  654.000276]  [<ffffffff8183e606>] tracesys+0xdc/0xe1
-> [  654.000276] Code: 00 00 00 00 00 00 48 89 83 20 02 00 00 eb 9b be 1a 01 00 00 48 c7 c7 cb 4c bd 81 e8 69 a9 fd ff 48 8b 93 e8 01 00 00 eb bd 0f 0b <0f> 0b 48 c7 c7 78 c4 bc 81 31 c0 c6 05 61 5a eb 00 01 e8 47 ca
-> [  654.000276] RIP  [<ffffffff810653f2>] enqueue_task_dl+0x2b2/0x330
-> [  654.000276]  RSP <ffff88007d2bbd08>
-> [  654.000276] ---[ end trace aed7e30a2c9541d9 ]---
-> 
-> Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> Cc: Ingo Molnar <mingo@redhat.com>
-> Cc: Peter Zijlstra <peterz@infradead.org>
-> Cc: Juri Lelli <juri.lelli@gmail.com>
-> ---
->  kernel/sched/deadline.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-> index 2799441..4b3a80f 100644
-> --- a/kernel/sched/deadline.c
-> +++ b/kernel/sched/deadline.c
-> @@ -630,7 +630,7 @@ static void update_curr_dl(struct rq *rq)
->  		__dequeue_task_dl(rq, curr, 0);
->  		if (likely(start_dl_timer(dl_se, curr->dl.dl_boosted)))
->  			dl_se->dl_throttled = 1;
-> -		else
-> +		else if (curr->dl.dl_runtime > 0)
->  			enqueue_task_dl(rq, curr, ENQUEUE_REPLENISH);
->  
->  		if (!is_leftmost(curr, &rq->dl))
+> So more testing revealed that the patch also starve both task
+> eventually. Both process make no progress at all.
 > 
 
-I'd have a slightly different solution for this, can you give it a try?
+Mmm, that's bad.
 
-Thanks,
+Can you give a try to this different patch (after applying
+the other one I sent out)?
+
+This thing is looking good on my box. I'd like to do more
+testing, but I have to context switch for a bit now :/.
+
+Thanks a lot,
 
 - Juri
 
->From 4b7bdeb706d8636beda2a11946289d76ee7e30cd Mon Sep 17 00:00:00 2001
+>From f07e6373f89ad4d4173c8c5cd51c1595328888c2 Mon Sep 17 00:00:00 2001
 From: Juri Lelli <juri.lelli@arm.com>
-Date: Wed, 8 Oct 2014 14:06:16 +0100
-Subject: [PATCH 1/2] sched/deadline: don't replenish from a !SCHED_DEADLINE
- entity
+Date: Thu, 9 Oct 2014 11:36:55 +0100
+Subject: [PATCH 2/2] sched/deadline: fix races between rt_mutex_setprio and
+ dl_task_timer
 
 Signed-off-by: Juri Lelli <juri.lelli@arm.com>
 ---
- kernel/sched/deadline.c | 13 ++++++++++++-
- 1 file changed, 12 insertions(+), 1 deletion(-)
+ kernel/sched/deadline.c | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
 
 diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
-index 2799441..e89c27b 100644
+index e89c27b..16a10f0 100644
 --- a/kernel/sched/deadline.c
 +++ b/kernel/sched/deadline.c
-@@ -847,8 +847,19 @@ static void enqueue_task_dl(struct rq *rq, struct task_struct *p, int flags)
- 	 * smaller than our one... OTW we keep our runtime and
- 	 * deadline.
- 	 */
--	if (pi_task && p->dl.dl_boosted && dl_prio(pi_task->normal_prio))
-+	if (pi_task && p->dl.dl_boosted && dl_prio(pi_task->normal_prio)) {
- 		pi_se = &pi_task->dl;
-+	} else if (!dl_prio(p->normal_prio)) {
-+		/*
-+		 * Special case in which we have a !SCHED_DEADLINE task
-+		 * that is going to be deboosted, but exceedes its
-+		 * runtime while doing so. No point in replenishing
-+		 * it, as it's going to return back to its original
-+		 * scheduling class after this.
-+		 */
-+		BUG_ON(!p->dl.dl_boosted || flags != ENQUEUE_REPLENISH);
-+		return;
-+	}
+@@ -518,12 +518,20 @@ again:
+ 	}
  
  	/*
- 	 * If p is throttled, we do nothing. In fact, if it exhausted
+-	 * We need to take care of a possible races here. In fact, the
+-	 * task might have changed its scheduling policy to something
+-	 * different from SCHED_DEADLINE or changed its reservation
+-	 * parameters (through sched_setattr()).
++	 * We need to take care of several possible races here:
++	 *
++	 *   - the task might have changed its scheduling policy
++	 *     to something different than SCHED_DEADLINE
++	 *   - the task might have changed its reservation parameters
++	 *     (through sched_setattr())
++	 *   - the task might have been boosted by someone else and
++	 *     might be in the boosting/deboosting path
++	 *
++	 * In all this cases we bail out, has the task is already
++	 * in the runqueue or is going to be enqueued back anyway.
+ 	 */
+-	if (!dl_task(p) || dl_se->dl_new)
++	if (!dl_task(p) || dl_se->dl_new ||
++	    dl_se->dl_boosted || !dl_se->dl_throttled)
+ 		goto unlock;
+ 
+ 	sched_clock_tick();
 -- 
 2.1.0
+
+> runnable tasks:
+>             task   PID         tree-key  switches  prio     exec-runtime         sum-exec        sum-sleep
+> ----------------------------------------------------------------------------------------------------------
+>          systemd     1       170.771190      2147   120       170.771190       433.550134    359375.395748 /autogroup-1
+>         kthreadd     2     12481.085697        66   120     12481.085697         1.062411    848978.893057 /
+>      ksoftirqd/0     3     12486.586001     10125   120     12486.586001        48.522819    856220.673708 /
+>     kworker/0:0H     5      1218.349308         6   100      1218.349308         0.106697       835.585066 /
+>     kworker/u2:0     6     12483.710138      1947   120     12483.710138        45.712779    854218.654119 /
+>          khelper     7        13.326326         2   100        13.326326         0.000000         0.000000 /
+>        kdevtmpfs     8      2001.861157       139   120      2001.861157         1.787992     10775.571085 /
+>            netns     9        17.326324         2   100        17.326324         0.000000         0.000000 /
+>     kworker/u2:1    10      2001.760377       678   120      2001.760377         9.362114     10766.675796 /
+>        writeback    19        32.293597         2   100        32.293597         0.003126         0.002243 /
+>           crypto    21        33.494501         2   100        33.494501         0.002662         0.002051 /
+>           bioset    23        34.995536         2   100        34.995536         0.002601         0.002002 /
+>          kblockd    25        36.497285         2   100        36.497285         0.003835         0.002050 /
+>          ata_sff    61        78.865458         2   100        78.865458         0.004438         0.002205 /
+>            khubd    64        80.079505         2   120        80.079505         0.015444         0.003833 /
+>               md    66        81.268188         2   100        81.268188         0.003050         0.002173 /
+>      kworker/0:1    68     12484.564192       957   120     12484.564192        49.238817    855345.418329 /
+>         cfg80211    69        82.636198         2   100        82.636198         0.003627         0.002132 /
+>           rpciod   130       156.580245         2   100       156.580245         0.005374         0.004012 /
+>          kswapd0   138       928.454330         3   120       928.454330         0.048229        99.749401 /
+>    fsnotify_mark   143      1963.891522        14   120      1963.891522         0.065959      3496.886517 /
+>           nfsiod   146       171.432785         2   100       171.432785         0.004305         0.003535 /
+>         xfsalloc   149       174.366108         2   100       174.366108         0.002861         0.002284 /
+>    xfs_mru_cache   151       175.567171         2   100       175.567171         0.002752         0.002090 /
+>          xfslogd   153       177.068445         2   100       177.068445         0.003142         0.002171 /
+>  acpi_thermal_pm   177       192.956400         2   100       192.956400         0.003639         0.002317 /
+>        scsi_eh_0   203      1188.912866         8   120      1188.912866         2.029062       153.702869 /
+>       scsi_tmf_0   205       223.187411         2   100       223.187411         0.003086         0.002421 /
+>        scsi_eh_1   207      1531.958332        29   120      1531.958332         2.988008      1276.298054 /
+>       scsi_tmf_1   209       226.190410         2   100       226.190410         0.004007         0.002328 /
+>        kpsmoused   218       235.418718         2   100       235.418718         0.003621         0.002384 /
+>    ipv6_addrconf   227       244.650047         2   100       244.650047         0.004004         0.004044 /
+>          deferwq   232       247.754373         2   100       247.754373         0.003005         0.002112 /
+>     kworker/0:1H   882     12482.321178      1873   100     12482.321178        51.220049    850000.764070 /
+>    xfs-data/sda2   887      1230.066143         2   100      1230.066143         0.003715         0.002886 /
+>    xfs-conv/sda2   888      1231.567109         2   100      1231.567109         0.002769         0.002330 /
+>     xfs-cil/sda2   889      1233.568672         2   100      1233.568672         0.044412         0.002514 /
+>     xfsaild/sda2   890     12484.343046      4544   120     12484.343046        74.991234    847492.165181 /
+>  systemd-journal   902      1019.896708       410   120      1019.896708      1021.188821    848668.196674 /autogroup-5
+>          kauditd   905      7231.521873        59   120      7231.521873         0.606636    358980.677314 /
+>    systemd-udevd   971        60.572337       520   120        60.572337        53.544845     12283.357288 /autogroup-10
+>      jbd2/sda1-8  1422      1957.029513         2   120      1957.029513         0.062018         0.004464 /
+>  ext4-rsv-conver  1423      1959.032062         2   100      1959.032062         0.004310         0.002700 /
+>           auditd  1428         6.142863        98   116         6.142863        10.602551    845312.563408 /autogroup-21
+>           auditd  1436         5.502422        81   116         5.502422         2.335235    357502.433148 /autogroup-21
+>   NetworkManager  1445        82.669958       562   120        82.669958        64.904912    844091.171520 /autogroup-26
+>   NetworkManager  1467        20.709072         1   120        20.709072         0.014731         0.000000 /autogroup-26
+>            gmain  1470        66.064602         6   120        66.064602         0.366758      3699.249128 /autogroup-26
+>            gdbus  1474        79.637929       140   120        79.637929         4.511798    838151.788025 /autogroup-26
+>   systemd-logind  1446         8.311585       106   120         8.311585         9.677422    355305.433254 /autogroup-27
+>      dbus-daemon  1447        23.241715       345   120        23.241715        24.616880    844172.717523 /autogroup-28
+>            crond  1449         3.123550        18   120         3.123550         4.516948    841485.755390 /autogroup-29
+>           agetty  1455         2.936206         7   120         2.936206         7.052828      4305.395671 /autogroup-37
+>           agetty  1456        12.159459        11   120        12.159459        16.314073      3286.999222 /autogroup-36
+>          polkitd  1475        20.631235        93   120        20.631235        15.310572    349234.784825 /autogroup-32
+>            gmain  1478         8.881526         2   120         8.881526         0.065824         0.000000 /autogroup-32
+>            gdbus  1479        21.328501        38   120        21.328501         2.320225    349229.316491 /autogroup-32
+>     JS GC Helper  1480        14.370672         1   120        14.370672         0.031663         0.000000 /autogroup-32
+>  JS Sour~ Thread  1481        17.473336         7   120        17.473336         0.071963         3.840505 /autogroup-32
+>  runaway-killer-  1482        20.472425         5   120        20.472425         0.051006         0.250475 /autogroup-32
+>             sshd  1486        13.338015        67   120        13.338015        14.729391    349142.506840 /autogroup-35
+>         dhclient  1490        66.072235        65   120        66.072235        17.853255      1029.655591 /autogroup-26
+>             sshd  1505        27.497743       218   120        27.497743        25.950965    340666.314097 /autogroup-39
+>          systemd  1507         9.239660        26   120         9.239660        10.300048       729.175924 /autogroup-40
+>             bash  1508      4560.989053        99   120      4560.989053        14.807953    340582.911272 /autogroup-41
+>         (sd-pam)  1511         3.251482         1   120         3.251482         0.050250         0.000000 /autogroup-40
+>      kworker/0:0  1529     12482.288839       648   120     12482.288839        24.882158    535264.262021 /
+>     pthread_test  1536         0.000000   1510185    -1         0.000000      7142.137941     61496.639384 /autogroup-41
+>     pthread_test  1537         0.000000   1508994    -1         0.000000     19830.272655         0.000000 /autogroup-41
+>             sshd  1538        45.693223       859   120        45.693223        44.510292    497299.440632 /autogroup-42
+>             bash  1540       336.221438       292   120       336.221438        15.725550    496379.865890 /autogroup-43
+>      kworker/0:2  1561     12486.603821        72   120     12486.603821         1.009523      8366.740527 /
+> R            cat  1562       337.711978         0   120       337.711978         0.655400         0.000000 /autogroup-43
+> 
+> 
+> [  478.792528] pthread_test    R  running task    14232  1536   1508 0x10000080
+> [  478.793133]  ffff880078d1bf60 0000000000000046 ffff88007caee5e0 ffff880078d1bfd8
+> [  478.793774]  ffffffff81e1d4c0 00007fffa9c5e7b0 ffffffff8136187e 0000000000000000
+> [  478.794451]  00000000004009d0 00007fffa9c5e890 0000000000000000 0000000000000000
+> [  478.795118] Call Trace:
+> [  478.795326]  [<ffffffff8136187e>] ? trace_hardirqs_on_thunk+0x3a/0x3f
+> [  478.795846]  [<ffffffff818b6d13>] schedule+0x23/0x60
+> [  478.796256]  [<ffffffff818bd20f>] retint_careful+0x12/0x2d
+> [  478.796695] pthread_test    S ffff88007caea8c0 14424  1537   1508 0x10000080
+> [  478.797287]  ffff880078e63bd8 0000000000000046 ffff88007caea8c0 ffff880078e63fd8
+> [  478.797909]  ffffffff81e1d4c0 ffff88007caea8c0 ffff880078e63be8 ffff880000158010
+> [  478.798542]  ffff880078e63c58 0000000000000001 0000000000000001 ffff88007caea8c0
+> [  478.799175] Call Trace:
+> [  478.799376]  [<ffffffff818b6d13>] schedule+0x23/0x60
+> [  478.799773]  [<ffffffff818ba2fb>] __rt_mutex_slowlock+0x5b/0xe0
+> [  478.800257]  [<ffffffff818ba4ce>] rt_mutex_slowlock+0xbe/0x1c0
+> [  478.800725]  [<ffffffff8107cbea>] rt_mutex_timed_futex_lock+0x3a/0x40
+> [  478.801252]  [<ffffffff810a6437>] futex_lock_pi.isra.20+0x257/0x370
+> [  478.801753]  [<ffffffff81068cd5>] ? sched_clock_local.constprop.6+0x15/0x80
+> [  478.802317]  [<ffffffff81068ec5>] ? sched_clock_cpu+0x55/0x80
+> [  478.802774]  [<ffffffff81068f45>] ? local_clock+0x15/0x30
+> [  478.803225]  [<ffffffff81068cd5>] ? sched_clock_local.constprop.6+0x15/0x80
+> [  478.803784]  [<ffffffff810a720c>] do_futex+0x2bc/0xa90
+> [  478.804209]  [<ffffffff81068cd5>] ? sched_clock_local.constprop.6+0x15/0x80
+> [  478.804766]  [<ffffffff81068ec5>] ? sched_clock_cpu+0x55/0x80
+> [  478.805236]  [<ffffffff81068f45>] ? local_clock+0x15/0x30
+> [  478.805669]  [<ffffffff8109a936>] ? current_kernel_time+0x56/0xb0
+> [  478.806165]  [<ffffffff8107648d>] ? trace_hardirqs_on+0xd/0x10
+> [  478.806629]  [<ffffffff810a7a4c>] SyS_futex+0x6c/0x150
+> [  478.807046]  [<ffffffff8100f60f>] ? syscall_trace_enter+0x21f/0x230
+> [  478.807549]  [<ffffffff818bc75f>] tracesys+0xdc/0xe1
+> 
+> (gdb) p $lx_task_by_pid(1536).dl
+> $1 = {
+>   rb_node = {
+>     __rb_parent_color = 18446612134406055880,
+>     rb_right = 0x0,
+>     rb_left = 0x0
+>   },
+>   dl_runtime = 0,
+>   dl_deadline = 0,
+>   dl_period = 0,
+>   dl_bw = 0,
+>   runtime = -283620,
+>   deadline = 441965145261,
+>   flags = 0,
+>   dl_throttled = 0,
+>   dl_new = 0,
+>   dl_boosted = 1,
+>   dl_yielded = 0,
+>   dl_timer = {
+>     node = {
+>       node = {
+>         __rb_parent_color = 18446612134406055976,
+>         rb_right = 0x0,
+>         rb_left = 0x0
+>       },
+>       expires = {
+>         tv64 = 0
+>       }
+>     },
+>     _softexpires = {
+>       tv64 = 0
+>     },
+>     function = 0x0,
+>     base = 0xffffffff82010d68 <hrtimer_bases+136>,
+>     state = 0,
+>     start_pid = -1,
+>     start_site = 0x0,
+>     start_comm = '\000' <repeats 15 times>
+>   }
+> }
+> 
+> (gdb) p $lx_task_by_pid(1537).dl
+> $2 = {
+>   rb_node = {
+>     __rb_parent_color = 18446612134406040232,
+>     rb_right = 0x0,
+>     rb_left = 0x0
+>   },
+>   dl_runtime = 100000,
+>   dl_deadline = 200000,
+>   dl_period = 200000,
+>   dl_bw = 524288,
+>   runtime = 70824,
+>   deadline = 441965047345,
+>   flags = 0,
+>   dl_throttled = 0,
+>   dl_new = 0,
+>   dl_boosted = 0,
+>   dl_yielded = 0,
+>   dl_timer = {
+>     node = {
+>       node = {
+>         __rb_parent_color = 18446612134406040328,
+>         rb_right = 0x0,
+>         rb_left = 0x0
+>       },
+>       expires = {
+>         tv64 = 441824359503
+>       }
+>     },
+>     _softexpires = {
+>       tv64 = 441824359503
+>     },
+>     function = 0xffffffff8106ce50 <dl_task_timer>,
+>     base = 0xffffffff82010d68 <hrtimer_bases+136>,
+>     state = 0,
+>     start_pid = 1537,
+>     start_site = 0xffffffff8106d178 <update_curr_dl+552>,
+>     start_comm = "pthread_test\000\000\000"
+>   }
+> }
+> 
+> cheers,
+> daniel
+> 
 
