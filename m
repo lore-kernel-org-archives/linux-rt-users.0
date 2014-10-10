@@ -1,66 +1,44 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH] sched: Do not try to replenish from a non deadline tasks
-Date: Fri, 10 Oct 2014 10:17:28 +0200
-Message-ID: <54379618.9050305@monom.org>
-References: <1411565056-15577-1-git-send-email-daniel.wagner@bmw-carit.de> <5433B5B9.70006@arm.com> <5433D654.2020108@monom.org> <5433D84F.3040003@monom.org> <5433E8B3.6040708@monom.org> <5436599C.9000207@monom.org> <543692DF.9020705@arm.com>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: Crowd Funding ?
+Date: Fri, 10 Oct 2014 14:14:17 +0200
+Message-ID: <5437CD99.2000904@steinhoff.de>
+References: <542A88A8.7060800@steinhoff.de>	<alpine.DEB.2.11.1410010058160.4455@nanos>	<542BACF1.3090405@steinhoff.de>	<CAA7pwKPcT_YvQx9_nvSXCq3sFB3aCRZ-mGWTk4GOvLn0k7c3_w@mail.gmail.com>	<542D0689.8050602@steinhoff.de>	<542FD0BE.10508@osadl.org>	<542FE9B4.3060708@steinhoff.de>	<alpine.DEB.2.11.1410042312440.4383@nanos>	<54312C88.8060609@steinhoff.de>	<alpine.DEB.2.11.1410051453590.4383@nanos>	<54329A4B.7080706@steinhoff.de>	<alpine.DEB.2.11.1410070237190.4383@nanos>	<543648C6.3040606@steinhoff.de>	<54365859.8040909@pavlinux.ru>	<54367E01.7010702@steinhoff.de> <CAFLxGvzD=fVkPX3-MZT1U9ML+E+1KHQKetDay-sYhSvNR3en5Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Juri Lelli <juri.lelli@arm.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	"juri.lelli@gmail.com" <juri.lelli@gmail.com>
+Cc: Pavel Vasilyev <pavel@pavlinux.ru>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Richard Weinberger <richard.weinberger@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f173.google.com ([209.85.212.173]:47840 "EHLO
-	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751492AbaJJIRc (ORCPT
+Received: from mout.kundenserver.de ([212.227.126.130]:64003 "EHLO
+	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750999AbaJJMO0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Oct 2014 04:17:32 -0400
-Received: by mail-wi0-f173.google.com with SMTP id fb4so1252690wid.6
-        for <linux-rt-users@vger.kernel.org>; Fri, 10 Oct 2014 01:17:31 -0700 (PDT)
-In-Reply-To: <543692DF.9020705@arm.com>
+	Fri, 10 Oct 2014 08:14:26 -0400
+In-Reply-To: <CAFLxGvzD=fVkPX3-MZT1U9ML+E+1KHQKetDay-sYhSvNR3en5Q@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Good Morning Juri,
-
-On 10/09/2014 03:51 PM, Juri Lelli wrote:
-> Hi Daniel,
-> 
-> On 09/10/14 10:47, Daniel Wagner wrote:
->> Hi Juri,
+Richard Weinberger schrieb:
+> On Thu, Oct 9, 2014 at 2:22 PM, Armin Steinhoff <armin@steinhoff.de> wrote:
+>> Thanks Pavel,
 >>
->> On 10/07/2014 03:20 PM, Daniel Wagner wrote:
->>> On 10/07/2014 02:10 PM, Daniel Wagner wrote:
->>>> [   36.689416] pthread_-1555    0d..5 18486408us : sched_stat_sleep: comm=pthread_test pid=1554 delay=143975 [ns]
->>>> [   36.689416] pthread_-1555    0d..5 18486408us : sched_wakeup: comm=pthread_test pid=1554 prio=120 success=1 target_cpu=000
->>>> [   36.689416] pthread_-1555    0d..4 18486420us : sched_pi_setprio: comm=pthread_test pid=1555 oldprio=-1 newprio=-1
->>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
->>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
->>>> [   36.689416] pthread_-1555    0d..4 18486421us : sched_dequeue_dl_entity: comm=pthread_test pid=1555 flags=0
->>>> [   36.689416] pthread_-1555    0d..4 18486422us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=0
->>>> [   36.689416] pthread_-1555    0d.H4 18486539us : sched_enqueue_dl_entity: comm=pthread_test pid=1555 pi_comm=pthread_test pi_pid=1555 flags=8
->>>
->>> I noticed that the last two lines are different. Maybe that is yet
->>> another path into enqueue_task_dl().
+>>> http://article.gmane.org/gmane.linux.rt.user/12370
+>> If the supporter of the mainline are not really interested, why not
+>> create a "crowd fundig" for a RT distribution and a neccessary
+>> development team ??
 >>
->> So more testing revealed that the patch also starve both task
->> eventually. Both process make no progress at all.
->>
-> 
-> Mmm, that's bad.
-> 
-> Can you give a try to this different patch (after applying
-> the other one I sent out)?
-> 
-> This thing is looking good on my box. I'd like to do more
-> testing, but I have to context switch for a bit now :/.
+>> Well, it would be a fundig which makes really sense  ...
+> Did you ran out of potato salad? ;-)
+Good point :-)
 
-I'll applied both patches and my test program runs fine since a couple
-hours. Before that a panic triggered within minutes.
+If you get funding for hacking potatos to salad  -> then it must be 
+posible to get fundig for "hacking" Linux to RT Linux ( w/o having salad 
+in mind :) )
 
-cheers,
-daniel
+It would be a shame if the german kernel professionals wouldn't be able 
+to bring PREEMPT_RT to the commercial  market ... for paying theire 
+bills e.g.!
+
+
