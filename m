@@ -1,98 +1,79 @@
-From: Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
-Subject: Re: Hang writing to nfs-mounted filesystem from client -- expected
- code path?
-Date: Sat, 18 Oct 2014 11:05:40 -0600
-Message-ID: <54429DE4.2040504@windriver.com>
-References: <544156FE.7070905@windriver.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 3/7] wait.[ch]: Introduce the simple waitqueue (swait)
+ implementation
+Date: Sat, 18 Oct 2014 23:34:17 +0200
+Message-ID: <20141018213417.GE23531@worktop.programming.kicks-ass.net>
+References: <1413591782-23453-1-git-send-email-paul.gortmaker@windriver.com>
+ <1413591782-23453-4-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
-Content-Transfer-Encoding: 7bit
-To: <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	"J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>,
-	<linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, <tytso-3s7WtUTddSA@public.gmane.org>,
-	<adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <544156FE.7070905-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
-Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1413591782-23453-4-git-send-email-paul.gortmaker@windriver.com>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 10/17/2014 11:50 AM, Chris Friesen wrote:
-> Looking through the other tracebacks, it appears that pid 1803 [nfsd]
-> probably has this mutex. Also, looking at the block_start in
-> /proc/1803/sched (, it appears that this was the first process to block:
->
-> se.statistics.block_start          :      13948189.066634
->
-> Its traceback looks like this:
-> [<ffffffff8125dc55>] jbd2_log_wait_commit+0xc5/0x150
-> [<ffffffff8125f628>] jbd2_complete_transaction+0xb8/0xd0
-> [<ffffffff81205dcd>] ext4_sync_file+0x1fd/0x4b0
-> [<ffffffff81197ad5>] generic_write_sync+0x55/0x70
-> [<ffffffff8110fdb6>] generic_file_aio_write+0xc6/0xe0
-> [<ffffffff8120591f>] ext4_file_write+0xbf/0x250
-> [<ffffffff811689ab>] do_sync_readv_writev+0xdb/0x120
-> [<ffffffff81168c94>] do_readv_writev+0xd4/0x1d0
-> [<ffffffff81168dcc>] vfs_writev+0x3c/0x50
-> [<ffffffffa01701b8>] nfsd_vfs_write.isra.12+0xf8/0x2e0 [nfsd]
-> [<ffffffffa0172888>] nfsd_write+0xf8/0x110 [nfsd]
-> [<ffffffffa0178b5f>] nfsd3_proc_write+0x9f/0xe0 [nfsd]
-> [<ffffffffa016cade>] nfsd_dispatch+0xbe/0x1c0 [nfsd]
-> [<ffffffff81871679>] svc_process+0x499/0x790
-> [<ffffffffa016c125>] nfsd+0xc5/0x1a0 [nfsd]
-> [<ffffffff810609bb>] kthread+0xdb/0xe0
-> [<ffffffff8193b904>] kernel_thread_helper+0x4/0x10
->
-> The inode-i_mutex seems to be taken in ext4_sync_file() before the call
-> to jbd2_complete_transaction().
->
-> It looks like jbd2_log_wait_commit() has just called schedule() in
-> wait_event() in the code below:
->
-> while (tid_gt(tid, journal->j_commit_sequence)) {
->      jbd_debug(1, "JBD2: want %d, j_commit_sequence=%d\n",
->          tid, journal->j_commit_sequence);
->      wake_up(&journal->j_wait_commit);
->      read_unlock(&journal->j_state_lock);
->      wait_event(journal->j_wait_done_commit,
->          !tid_gt(tid, journal->j_commit_sequence));
->      read_lock(&journal->j_state_lock);
-> }
->
->
-> The kjournald2 thread (pid 5305) blocks significantly later:
-> se.statistics.block_start          :      13953712.751778
->
-> Here is the traceback:
-> [<ffffffff8110e3ae>] sleep_on_page+0xe/0x20
-> [<ffffffff8110e5b8>] wait_on_page_bit+0x78/0x80
-> [<ffffffff8110e81c>] filemap_fdatawait_range+0x10c/0x1b0
-> [<ffffffff8110e8eb>] filemap_fdatawait+0x2b/0x30
-> [<ffffffff8125832c>] jbd2_journal_commit_transaction+0x8dc/0x1a70
->      This calls journal_finish_inode_data_buffers which calls
->      filemap_fdatawait()
-> [<ffffffff8125ddaf>] kjournald2+0xbf/0x280
-> [<ffffffff810609bb>] kthread+0xdb/0xe0
-> [<ffffffff8193b904>] kernel_thread_helper+0x4/0x10
->
-> It is stuck in jbd2_journal_commit_transaction, apparently waiting for
-> inodes to be written to disk? I'm not sure what would be preventing that
-> from happening.
+On Fri, Oct 17, 2014 at 08:22:58PM -0400, Paul Gortmaker wrote:
+> @@ -75,6 +123,32 @@ static void __cwake_up_common(struct cwait_head *q, unsigned int mode,
+>  	}
+>  }
+>  
+> +static void __swake_up_common(struct swait_head *q, unsigned int mode,
+> +			      int nr_exclusive)
+> +{
+> +	struct swait *curr, *next;
+> +	int woken = 0;
+> +
+> +	list_for_each_entry_safe(curr, next, &q->task_list, node) {
+> +		if (wake_up_state(curr->task, mode)) { /* <-- calls ttwu() */
+> +			__remove_swait(q, curr);
+> +			curr->task = NULL;
+> +			/*
+> +			 * The waiting task can free the waiter as
+> +			 * soon as curr->task = NULL is written,
+> +			 * without taking any locks. A memory barrier
+> +			 * is required here to prevent the following
+> +			 * store to curr->task from getting ahead of
+> +			 * the dequeue operation.
+> +			 */
+> +			smp_wmb();
+> +			if (++woken == nr_exclusive)
+> +				break;
+> +		}
+> +
+> +	}
+> +}
+> +
+>  /**
+>   * __cwake_up - wake up threads blocked on a waitqueue.
+>   * @q: the complex waitqueue
+> @@ -96,6 +170,19 @@ void __cwake_up(struct cwait_head *q, unsigned int mode, int nr_exclusive,
+>  }
+>  EXPORT_SYMBOL(__cwake_up);
+>  
+> +void __swake_up(struct swait_head *q, unsigned int mode, int nr_exclusive)
+> +{
+> +	unsigned long flags;
+> +
+> +	if (!swait_active(q))
+> +		return;
+> +
+> +	raw_spin_lock_irqsave(&q->lock, flags);
+> +	__swake_up_common(q, mode, nr_exclusive);
+> +	raw_spin_unlock_irqrestore(&q->lock, flags);
+> +}
+> +EXPORT_SYMBOL(__swake_up);
 
-Given the above traces, it appears that nfsd is waiting for jbd2 to 
-commit a transaction to the journal, and jbd2 is waiting for a page to 
-finish writing to disk.
+Same comment as before, that is an unbounded loop in a non preemptible
+section and therefore violates RT design principles.
 
-Can someone point me to the code path that actually starts the writing 
-process, and also the code path we would expect to follow when the page 
-has been written?  I assume we're going to be calling 
-set_page_writeback/end_page_writeback, but I don't know how we're going 
-to get there given the above tracebacks.
+We actually did talk about ways of fixing that.
 
-Thanks,
-Chris
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Also, I'm not entirely sure we want to do the cwait thing, it looks
+painful.
