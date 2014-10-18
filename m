@@ -1,87 +1,98 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH 7/7] simplewait: do we make barriers reflect what was in use in -rt?
-Date: Fri, 17 Oct 2014 20:23:02 -0400
-Message-ID: <1413591782-23453-8-git-send-email-paul.gortmaker@windriver.com>
-References: <1413591782-23453-1-git-send-email-paul.gortmaker@windriver.com>
+From: Chris Friesen <chris.friesen-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
+Subject: Re: Hang writing to nfs-mounted filesystem from client -- expected
+ code path?
+Date: Sat, 18 Oct 2014 11:05:40 -0600
+Message-ID: <54429DE4.2040504@windriver.com>
+References: <544156FE.7070905@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1413591782-23453-1-git-send-email-paul.gortmaker@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
+To: <linux-nfs-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
+	"J. Bruce Fields" <bfields-uC3wQj2KruNg9hUCZPvPmw@public.gmane.org>,
+	<linux-ext4-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>, <tytso-3s7WtUTddSA@public.gmane.org>,
+	<adilger.kernel-m1MBpc4rdrD3fQ9qLvQP4Q@public.gmane.org>, <linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Return-path: <linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <544156FE.7070905-CWA4WttNNZF54TAoqtyWWQ@public.gmane.org>
+Sender: linux-nfs-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
- *** not for merge ; for discussion only ***
+On 10/17/2014 11:50 AM, Chris Friesen wrote:
+> Looking through the other tracebacks, it appears that pid 1803 [nfsd]
+> probably has this mutex. Also, looking at the block_start in
+> /proc/1803/sched (, it appears that this was the first process to block:
+>
+> se.statistics.block_start          :      13948189.066634
+>
+> Its traceback looks like this:
+> [<ffffffff8125dc55>] jbd2_log_wait_commit+0xc5/0x150
+> [<ffffffff8125f628>] jbd2_complete_transaction+0xb8/0xd0
+> [<ffffffff81205dcd>] ext4_sync_file+0x1fd/0x4b0
+> [<ffffffff81197ad5>] generic_write_sync+0x55/0x70
+> [<ffffffff8110fdb6>] generic_file_aio_write+0xc6/0xe0
+> [<ffffffff8120591f>] ext4_file_write+0xbf/0x250
+> [<ffffffff811689ab>] do_sync_readv_writev+0xdb/0x120
+> [<ffffffff81168c94>] do_readv_writev+0xd4/0x1d0
+> [<ffffffff81168dcc>] vfs_writev+0x3c/0x50
+> [<ffffffffa01701b8>] nfsd_vfs_write.isra.12+0xf8/0x2e0 [nfsd]
+> [<ffffffffa0172888>] nfsd_write+0xf8/0x110 [nfsd]
+> [<ffffffffa0178b5f>] nfsd3_proc_write+0x9f/0xe0 [nfsd]
+> [<ffffffffa016cade>] nfsd_dispatch+0xbe/0x1c0 [nfsd]
+> [<ffffffff81871679>] svc_process+0x499/0x790
+> [<ffffffffa016c125>] nfsd+0xc5/0x1a0 [nfsd]
+> [<ffffffff810609bb>] kthread+0xdb/0xe0
+> [<ffffffff8193b904>] kernel_thread_helper+0x4/0x10
+>
+> The inode-i_mutex seems to be taken in ext4_sync_file() before the call
+> to jbd2_complete_transaction().
+>
+> It looks like jbd2_log_wait_commit() has just called schedule() in
+> wait_event() in the code below:
+>
+> while (tid_gt(tid, journal->j_commit_sequence)) {
+>      jbd_debug(1, "JBD2: want %d, j_commit_sequence=%d\n",
+>          tid, journal->j_commit_sequence);
+>      wake_up(&journal->j_wait_commit);
+>      read_unlock(&journal->j_state_lock);
+>      wait_event(journal->j_wait_done_commit,
+>          !tid_gt(tid, journal->j_commit_sequence));
+>      read_lock(&journal->j_state_lock);
+> }
+>
+>
+> The kjournald2 thread (pid 5305) blocks significantly later:
+> se.statistics.block_start          :      13953712.751778
+>
+> Here is the traceback:
+> [<ffffffff8110e3ae>] sleep_on_page+0xe/0x20
+> [<ffffffff8110e5b8>] wait_on_page_bit+0x78/0x80
+> [<ffffffff8110e81c>] filemap_fdatawait_range+0x10c/0x1b0
+> [<ffffffff8110e8eb>] filemap_fdatawait+0x2b/0x30
+> [<ffffffff8125832c>] jbd2_journal_commit_transaction+0x8dc/0x1a70
+>      This calls journal_finish_inode_data_buffers which calls
+>      filemap_fdatawait()
+> [<ffffffff8125ddaf>] kjournald2+0xbf/0x280
+> [<ffffffff810609bb>] kthread+0xdb/0xe0
+> [<ffffffff8193b904>] kernel_thread_helper+0x4/0x10
+>
+> It is stuck in jbd2_journal_commit_transaction, apparently waiting for
+> inodes to be written to disk? I'm not sure what would be preventing that
+> from happening.
 
-This matches the simple wait code barrier usage with what was
-in use in the -rt version of simplewait support - where without
-this commit, it is matching the barrier usage from the existing
-mainline complex wait code.
+Given the above traces, it appears that nfsd is waiting for jbd2 to 
+commit a transaction to the journal, and jbd2 is waiting for a page to 
+finish writing to disk.
 
-After the previous submission of simple wait for mainline, there was
-some discussion about the valididty of the barriers between Steve
-and Peter on IRC, so I'm putting this here as a point of discussion
-to continue/close on that previous discussion.
+Can someone point me to the code path that actually starts the writing 
+process, and also the code path we would expect to follow when the page 
+has been written?  I assume we're going to be calling 
+set_page_writeback/end_page_writeback, but I don't know how we're going 
+to get there given the above tracebacks.
 
-One of the original -rt additions from Steve can be seen here:
-	https://lkml.org/lkml/2013/8/19/275
+Thanks,
+Chris
 
-With the delta highlighted here in this standalone change, it
-almost seems that the additional barriers used in -rt are a
-consequence of -rt using __set_current_state() instead of the
-barrier version set_current_state() -- as the complex wait
-version has an explicit comment of why it needs the barrier
-enabled version of set_current_state() vs. the non-barrier one.
 
-But that is just my guess; the barrier experts need to throw
-their $0.02 into this discussion.
-
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Not-signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-
-diff --git a/include/linux/wait.h b/include/linux/wait.h
-index 46e2591c22b6..21271b61aec8 100644
---- a/include/linux/wait.h
-+++ b/include/linux/wait.h
-@@ -181,6 +181,8 @@ static inline int cwait_active(struct cwait_head *q)
- 
- static inline int swait_active(struct swait_head *q)
- {
-+	/* Make sure the condition is visible before checking list_empty() */
-+	smp_mb();
- 	return !list_empty(&q->task_list);
- }
- 
-@@ -205,6 +207,8 @@ static inline void __add_cwait(struct cwait_head *head, struct cwait *new)
- static inline void __add_swait(struct swait_head *head, struct swait *new)
- {
- 	list_add(&new->node, &head->task_list);
-+	/* We can't let the condition leak before the setting of head */
-+	smp_mb();
- }
- 
- /*
-diff --git a/kernel/sched/wait.c b/kernel/sched/wait.c
-index 25e5886ed8d9..c0575973d4d4 100644
---- a/kernel/sched/wait.c
-+++ b/kernel/sched/wait.c
-@@ -298,7 +298,7 @@ void prepare_to_swait(struct swait_head *q, struct swait *wait, int state)
- 
- 	raw_spin_lock_irqsave(&q->lock, flags);
- 	__prepare_to_swait(q, wait);
--	set_current_state(state);
-+	__set_current_state(state);	/* urk! see cwait barrier note above */
- 	raw_spin_unlock_irqrestore(&q->lock, flags);
- }
- EXPORT_SYMBOL(prepare_to_swait);
--- 
-1.9.2
+--
+To unsubscribe from this list: send the line "unsubscribe linux-nfs" in
+the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
