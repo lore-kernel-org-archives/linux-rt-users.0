@@ -1,78 +1,60 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: semantics of reader/writer semaphores in rt patch
-Date: Sun, 26 Oct 2014 09:47:42 +0100
-Message-ID: <20141026084742.GD15602@worktop.programming.kicks-ass.net>
-References: <544956B8.2000406@windriver.com>
- <alpine.DEB.2.11.1410252354030.5308@nanos>
- <alpine.DEB.2.11.1410260019280.5308@nanos>
- <20141026074257.GC10501@worktop.programming.kicks-ass.net>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: RT/ext4/jbd2 circular dependency (was: Re: Hang writing to
+ nfs-mounted filesystem from client)
+Date: Sun, 26 Oct 2014 15:25:38 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1410261516020.5308@nanos>
+References: <544156FE.7070905@windriver.com> <54415991.1070907@pavlinux.ru> <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com> <544940EF.7090907@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Chris Friesen <chris.friesen@windriver.com>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20141026074257.GC10501@worktop.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
+	"J. Bruce Fields" <bfields@fieldses.org>,
+	linux-ext4@vger.kernel.org, tytso@mit.edu,
+	adilger.kernel@dilger.ca, rt-users <linux-rt-users@vger.kernel.org>
+To: Chris Friesen <chris.friesen@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:52264 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751671AbaJZOZw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 26 Oct 2014 10:25:52 -0400
+In-Reply-To: <544940EF.7090907@windriver.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, Oct 26, 2014 at 08:42:57AM +0100, Peter Zijlstra wrote:
-> On Sun, Oct 26, 2014 at 12:21:31AM +0200, Thomas Gleixner wrote:
-> > On Sun, 26 Oct 2014, Thomas Gleixner wrote:
-> > > On Thu, 23 Oct 2014, Chris Friesen wrote:
-> > > > Does the RT kernel just disallow this sort of algorithm?
-> > > 
-> > > Yes. For a good reason. Let's add thread C
-> > > 
-> > > A    	   	B		C
-> > > down_read(X)
-> > > 				down_write(X)
-> > > lock(Y)
-> > > modify data
-> > > unlock(Y)
-> > > wake(B)
-> > > 		down_read(X)
-> > > 
-> > > Due to the mainline rwsem fairness semantics:
-> > > 
-> > > A holds X, C is blocked on A and B is blocked on A.
-> > > 
-> > > Deadlock, without RT and the single reader restriction being involved.
-> > > 
-> > > So RT does not violate ANY of the existing mainline semantics, it just
-> > > imposes a performance impact of not allowing multiple readers.
-> > 
-> > @peterz: It might be worthwhile to have a CONFIG_LOCKDEP=y dependent
-> > mode which restricts concurrent readers to 1 in mainline to catch this
-> > kind of stuff. Hmm?
+On Thu, 23 Oct 2014, Chris Friesen wrote:
+> On 10/17/2014 12:55 PM, Austin Schuh wrote:
+> > Use the 121 patch.  This sounds very similar to the issue that I helped
+> > debug with XFS.  There ended up being a deadlock due to a bug in the
+> > kernel work queues.  You can search the RT archives for more info.
 > 
-> There were patches by ego that fix lockdep's read side tracking. I need
-> to find a few spare days to look at those :/
-
-Hmm, that's only for the rwlock_t because that has 'creative' locking
-rules, I'm not sure why rwsem would need a distinction between read and
-write at all; so something simple like the below might just be all we
-need.
-
-Entirely untested..
-
----
- include/linux/lockdep.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/include/linux/lockdep.h b/include/linux/lockdep.h
-index 74ab23176e9b..10606beb5672 100644
---- a/include/linux/lockdep.h
-+++ b/include/linux/lockdep.h
-@@ -505,7 +505,7 @@ static inline void print_irqtrace_events(struct task_struct *curr)
+> I can confirm that the problem still shows up with the rt121 patch. (And
+> also with Paul Gortmaker's proposed 3.4.103-rt127 patch.)
  
- #define rwsem_acquire(l, s, t, i)		lock_acquire_exclusive(l, s, t, NULL, i)
- #define rwsem_acquire_nest(l, s, t, n, i)	lock_acquire_exclusive(l, s, t, n, i)
--#define rwsem_acquire_read(l, s, t, i)		lock_acquire_shared(l, s, t, NULL, i)
-+#define rwsem_acquire_read(l, s, t, i)		lock_acquire_exclusive(l, s, t, NULL, i)
- #define rwsem_release(l, n, i)			lock_release(l, n, i)
+> We added some instrumentation and it looks like we've tracked down the problem.
+> Figuring out how to fix it is proving to be tricky.
+> 
+> Basically it looks like we have a circular dependency involving the
+> inode->i_data_sem rt_mutex, the PG_writeback bit, and the BJ_Shadow list.  It
+> goes something like this:
+> 
+> jbd2_journal_commit_transaction:
+> 1) set page for writeback (set PG_writeback bit)
+> 2) put jbd2 journal head on BJ_Shadow list
+> 3) sleep on PG_writeback bit waiting for page writeback complete
+> 
+> ext4_da_writepages:
+> 1) ext4_map_blocks() acquires inode->i_data_sem for writing
+> 2) do_get_write_access() sleeps waiting for jbd2 journal head to come off
+> the BJ_Shadow list
+> 
+> At this point the flush code can't run because it can't acquire
+> inode->i_data_sem for reading, so the page will never get written out.
+> Deadlock.
+
+Sorry, I really cannot map that sparse description to any code
+flow. Proper callchains for the involved parts might help to actually
+understand what you are looking for.
  
- #define lock_map_acquire(l)			lock_acquire_exclusive(l, 0, 0, NULL, _THIS_IP_)
+Thanks,
+
+	tglx
