@@ -1,60 +1,95 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: RT/ext4/jbd2 circular dependency (was: Re: Hang writing to
- nfs-mounted filesystem from client)
-Date: Sun, 26 Oct 2014 15:25:38 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1410261516020.5308@nanos>
-References: <544156FE.7070905@windriver.com> <54415991.1070907@pavlinux.ru> <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com> <544940EF.7090907@windriver.com>
+From: Chris Friesen <chris.friesen@windriver.com>
+Subject: Re: semantics of reader/writer semaphores in rt patch
+Date: Mon, 27 Oct 2014 09:02:15 -0600
+Message-ID: <544E5E77.1000000@windriver.com>
+References: <544956B8.2000406@windriver.com> <alpine.DEB.2.11.1410252354030.5308@nanos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
-	"J. Bruce Fields" <bfields@fieldses.org>,
-	linux-ext4@vger.kernel.org, tytso@mit.edu,
-	adilger.kernel@dilger.ca, rt-users <linux-rt-users@vger.kernel.org>
-To: Chris Friesen <chris.friesen@windriver.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52264 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751671AbaJZOZw (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 26 Oct 2014 10:25:52 -0400
-In-Reply-To: <544940EF.7090907@windriver.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="ISO-8859-1"; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1410252354030.5308@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 23 Oct 2014, Chris Friesen wrote:
-> On 10/17/2014 12:55 PM, Austin Schuh wrote:
-> > Use the 121 patch.  This sounds very similar to the issue that I helped
-> > debug with XFS.  There ended up being a deadlock due to a bug in the
-> > kernel work queues.  You can search the RT archives for more info.
-> 
-> I can confirm that the problem still shows up with the rt121 patch. (And
-> also with Paul Gortmaker's proposed 3.4.103-rt127 patch.)
- 
-> We added some instrumentation and it looks like we've tracked down the problem.
-> Figuring out how to fix it is proving to be tricky.
-> 
-> Basically it looks like we have a circular dependency involving the
-> inode->i_data_sem rt_mutex, the PG_writeback bit, and the BJ_Shadow list.  It
-> goes something like this:
-> 
-> jbd2_journal_commit_transaction:
-> 1) set page for writeback (set PG_writeback bit)
-> 2) put jbd2 journal head on BJ_Shadow list
-> 3) sleep on PG_writeback bit waiting for page writeback complete
-> 
-> ext4_da_writepages:
-> 1) ext4_map_blocks() acquires inode->i_data_sem for writing
-> 2) do_get_write_access() sleeps waiting for jbd2 journal head to come off
-> the BJ_Shadow list
-> 
-> At this point the flush code can't run because it can't acquire
-> inode->i_data_sem for reading, so the page will never get written out.
-> Deadlock.
+On 10/25/2014 04:19 PM, Thomas Gleixner wrote:
+> On Thu, 23 Oct 2014, Chris Friesen wrote:
+>
+>> I recently noticed that when CONFIG_PREEMPT_RT_FULL is enabled we the
+>> semantics change.  From "include/linux/rwsem_rt.h":
+>>
+>>   * Note that the semantics are different from the usual
+>>   * Linux rw-sems, in PREEMPT_RT mode we do not allow
+>>   * multiple readers to hold the lock at once, we only allow
+>>   * a read-lock owner to read-lock recursively. This is
+>>   * better for latency, makes the implementation inherently
+>>   * fair and makes it simpler as well.
+>>
+>> How is this valid?  It seems to me that there are any number of code paths
+>> that could depend on having multiple threads of execution be able to hold the
+>> reader lock simultaneously.  Something as simple as:
+>>
+>> thread A:
+>> take rw_semaphore X for reading
+>> take lock Y, modify data, release lock Y
+>> wake up thread B
+>> wait on conditional protected by lock Y
+>> free rw_semaphore X
+>>
+>> thread B:
+>> take rw_semaphore X for reading
+>> wait on conditional protected by lock Y
+>> send message to wake up thread A
+>> free rw_semaphore X
+>
+> I don't see why B should wake A without changing the conditional. A
+> won't make progress by being woken by B as the conditional does not
+> magically change just because B wakes A.
+>
+> So what you wanted to say is:
+>
+>    thread B:
+>    take rw_semaphore X for reading
+>    wait on conditional protected by lock Y
+> + take lock Y, modify data, release lock Y
+>    send message to wake up thread A
+>    free rw_semaphore X
+>
+> Otherwise your example does not make any sense at all. And that has
+> some serious non RT related implications.
 
-Sorry, I really cannot map that sparse description to any code
-flow. Proper callchains for the involved parts might help to actually
-understand what you are looking for.
- 
-Thanks,
 
-	tglx
+Yes, your reformulated version is what I meant to say.  Sorry for any 
+confusion.
+
+
+>> Does the RT kernel just disallow this sort of algorithm?
+>
+> Yes. For a good reason. Let's add thread C
+>
+> A    	   	B		C
+> down_read(X)
+> 				down_write(X)
+> lock(Y)
+> modify data
+> unlock(Y)
+> wake(B)
+> 		down_read(X)
+>
+> Due to the mainline rwsem fairness semantics:
+>
+> A holds X, C is blocked on A and B is blocked on A.
+>
+> Deadlock, without RT and the single reader restriction being involved.
+
+
+Crap, I had forgotten about the fairness semantics stuff.  That makes 
+perfect sense.
+
+Thanks for the explanation.
+
+Chris
