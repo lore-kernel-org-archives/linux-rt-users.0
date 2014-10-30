@@ -1,62 +1,55 @@
-From: Theodore Ts'o <tytso@mit.edu>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: RT/ext4/jbd2 circular dependency
-Date: Thu, 30 Oct 2014 08:24:17 -0400
-Message-ID: <20141030122417.GB5032@thunk.org>
-References: <544940EF.7090907@windriver.com>
- <alpine.DEB.2.11.1410261516020.5308@nanos>
- <544E7144.4080809@windriver.com>
- <alpine.DEB.2.11.1410291854090.5308@nanos>
- <54513BDA.1050804@windriver.com>
- <alpine.DEB.2.11.1410292013510.5308@nanos>
- <20141029231916.GD5000@thunk.org>
- <54517A1F.1060102@windriver.com>
- <20141030014405.GE5000@thunk.org>
- <CAF_MivGWF6BVZbztKSHQ+EKNkfm-9UhZ61fKXZzpfXdL=2RhvA@mail.gmail.com>
+Date: Thu, 30 Oct 2014 22:11:26 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1410302204570.5308@nanos>
+References: <544156FE.7070905@windriver.com> <54415991.1070907@pavlinux.ru> <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com> <544940EF.7090907@windriver.com> <alpine.DEB.2.11.1410261516020.5308@nanos> <544E7144.4080809@windriver.com>
+ <alpine.DEB.2.11.1410291854090.5308@nanos> <54513BDA.1050804@windriver.com> <alpine.DEB.2.11.1410292013510.5308@nanos> <20141029231916.GD5000@thunk.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: Chris Friesen <chris.friesen@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
 	"J. Bruce Fields" <bfields@fieldses.org>,
-	Ext4 Developers List <linux-ext4@vger.kernel.org>,
-	adilger.kernel@dilger.ca, rt-users <linux-rt-users@vger.kernel.org>
-To: Kevin Liao <kevinlia@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imap.thunk.org ([74.207.234.97]:52879 "EHLO imap.thunk.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759083AbaJ3MYf (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Oct 2014 08:24:35 -0400
-Content-Disposition: inline
-In-Reply-To: <CAF_MivGWF6BVZbztKSHQ+EKNkfm-9UhZ61fKXZzpfXdL=2RhvA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	linux-ext4@vger.kernel.org, adilger.kernel@dilger.ca,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Theodore Ts'o <tytso@mit.edu>
+Return-path: <linux-ext4-owner@vger.kernel.org>
+In-Reply-To: <20141029231916.GD5000@thunk.org>
+Sender: linux-ext4-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Oct 30, 2014 at 04:15:45PM +0800, Kevin Liao wrote:
+On Wed, 29 Oct 2014, Theodore Ts'o wrote:
+> On Wed, Oct 29, 2014 at 08:26:36PM +0100, Thomas Gleixner wrote:
+> > > For what it's worth, I'm currently testing a backport of commit b34090e from
+> > > mainline (which in turn required backporting commits e5a120a and f5113ef).  It
+> > > switches from using the BJ_Shadow list to using the BH_Shadow flag on the
+> > > buffer head.  More interestingly, waiters now get woken up from
+> > > journal_end_buffer_io_sync() instead of from
+> > > jbd2_journal_commit_transaction().
+> > > 
+> > > So far this seems to be helping a lot.  It's lasted about 15x as long under
+> > > stress as without the patches.
+> > 
+> > I fear that this is just papering over the problem, but you have to
+> > talk to the jbd2 folks about that.
 > 
-> I also have similar jbd2 hang problem for kernel 3.4. Could you kindly
-> specify what are the three commits to fix the issue? Cause I can not
-> find them using the keyword "commit b34090e e5a120a f5113ef".
+> No, it's a clean fix for the problem.  The main issue is that what the
+> jbd2 commit was doing was starting inode writeback for those blocks
+> needed to guarantee data=ordered mode (so this is what caused various
+> pages to have writeback page set) as well as starting metadata writes
+> to the commit (which is what caused the shadow bit to be set on the
+> metadata buffers). 
+> 
+> Now that we clear the shadow flag when the metadata writes is
+> complete, the writeback will eventually be allowed to complete and
+> this prevents the deadlock.
 
-Those *are* the three commits:
+That's a way better explanation than what I saw in the commit logs and
+it actually maps to the observed traces and stackdumps.
 
-% git log -3 --oneline  b34090e 
-b34090e jbd2: refine waiting for shadow buffers
-e5a120a jbd2: remove journal_head from descriptor buffers
-f5113ef jbd2: don't create journal_head for temporary journal buffers
+Thanks for the clarification! I'm just getting nervous when 'picked
+some backports' magically 'fixes' an issue without a proper
+explanation.
 
-Or if you need the full git commit ID's
+Thanks,
 
-% git log --pretty=oneline -3  b34090e 
-b34090e5e22a02fba0e4473056cce9420ad9dd0b jbd2: refine waiting for shadow buffers
-e5a120aeb57f40ae568a5ca1dd6ace53d0213582 jbd2: remove journal_head from descriptor buffers
-f5113effc2a2ee6b86a4b345ce557353dcbcfffe jbd2: don't create journal_head for temporary journal buffers
-
-Or the URL's:
-
-https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=b34090e5e22a02fba0e4473056cce9420ad9dd0b
-https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=e5a120aeb57f40ae568a5ca1dd6ace53d0213582
-https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/?id=f5113effc2a2ee6b86a4b345ce557353dcbcfffe
-
-Cheers,
-
-						- Ted
+       tglx
