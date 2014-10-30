@@ -1,40 +1,85 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.2.63-rt92
-Date: Thu, 30 Oct 2014 18:46:43 -0400
-Message-ID: <20141030184643.615d2e19@gandalf.local.home>
-References: <20141030180729.256bb5b9@gandalf.local.home>
-	<5452BAD5.7080007@pavlinux.ru>
+From: Theodore Ts'o <tytso@mit.edu>
+Subject: Re: RT/ext4/jbd2 circular dependency
+Date: Thu, 30 Oct 2014 19:24:37 -0400
+Message-ID: <20141030232437.GF31927@thunk.org>
+References: <54415991.1070907@pavlinux.ru>
+ <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com>
+ <544940EF.7090907@windriver.com>
+ <alpine.DEB.2.11.1410261516020.5308@nanos>
+ <544E7144.4080809@windriver.com>
+ <alpine.DEB.2.11.1410291854090.5308@nanos>
+ <54513BDA.1050804@windriver.com>
+ <alpine.DEB.2.11.1410292013510.5308@nanos>
+ <20141029231916.GD5000@thunk.org>
+ <alpine.DEB.2.11.1410302204570.5308@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Pavel Vasilyev <pavel@pavlinux.ru>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5452BAD5.7080007@pavlinux.ru>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Chris Friesen <chris.friesen@windriver.com>,
+	Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
+	"J. Bruce Fields" <bfields@fieldses.org>,
+	linux-ext4@vger.kernel.org, adilger.kernel@dilger.ca,
+	rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from imap.thunk.org ([74.207.234.97]:54116 "EHLO imap.thunk.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1161211AbaJ3XYw (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Oct 2014 19:24:52 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1410302204570.5308@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 31 Oct 2014 01:25:25 +0300
-Pavel Vasilyev <pavel@pavlinux.ru> wrote:
+On Thu, Oct 30, 2014 at 10:11:26PM +0100, Thomas Gleixner wrote:
+> 
+> That's a way better explanation than what I saw in the commit logs and
+> it actually maps to the observed traces and stackdumps.
 
-> 31.10.2014 01:07, Steven Rostedt =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> >
-> > Dear RT Folks,
-> >
-> > I'm pleased to announce the 3.2.63-rt92 stable release.
->=20
-> Cool!!!
->=20
-> For latest, stable,... 3.14/3.16/3.18 will be?
->=20
->=20
+I can't speak for Jan, but I suspect he didn't realize that there was
+a problem.  The commit description in b34090e5e2 makes it clear that
+the intent was a performance improvement, and not an attempt to fix a
+potential deadlock bug.
 
-If Thomas and Sebastian are done with 3.14, I'll be happy to add it to
-the stable releases.
+Looking at the commit history, the problem was introduced in 2.6.27
+(July 2008), in commit c851ed54017373, so this problem wasn't noticed
+in the RHEL 6 and RHEL 7 enterprise linux QA runs, and it wasn't
+noticed in all of the regression testing that we've been doing.
 
-As for 3.16/3.18? Please read:
+I've certainly seen this before.  Two years ago we found a bug that
+was only noticed when we deployed ext4 in production at Google, and
+stress tested it at Google scale with the appropriate monitoring
+systems so we could find a bug that had existed since the very
+beginning of ext3, and which had never been noticed in all of the
+enterprise testing done by Red Hat, SuSE, IBM, HP, etc.  Actually, it
+probably was noticed, but never in a reproducible way, and so it was
+probably written off as some kind of flaky hardware induced
+corruption.
 
-  https://lwn.net/Articles/617140/
+The difference is that in this case, it seems that Chris and Kevin was
+able to reproduce the problem reliably.  (It also might be that the RT
+patch kits widens the race window and makes it much more likely to
+trigger.)  Chris or Kevin, if you have time to try to create a
+reliable repro that is small/simple enough that we could propose it as
+an new test to add to xfstests, that would be great.  If you can't,
+that's completely understable.
 
--- Steve
+In the case I described above, it was an extremely hard to hit race
+that only happened under high memory pressure, so we never able to
+create a reliable repro.  Instead we had a theory that was consistent
+pattern of metadata corruption we were seeing, deployed a kernel with
+the fix, and after a few weeks were able to conclude we had finally
+fixed the bug.  Welcome to file system debugging.  :-)
+
+> Thanks for the clarification! I'm just getting nervous when 'picked
+> some backports' magically 'fixes' an issue without a proper
+> explanation.
+
+Well, thanks to Chris for pointing out that b34090e5 seemed to make
+the problem go away.  Once I looked at what that patch changed, it was
+a lot more obvious what might have been going wrong.  It's always
+helpful if you can beek at the answer key, even if it's a only
+potential answer key.  :-)
+
+Cheers,
+
+						- Ted
