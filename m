@@ -1,69 +1,58 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2] lockdep: Fix backport of "Correctly annotate hardirq context in
- irq_exit()"
-Date: Thu, 30 Oct 2014 21:09:46 -0400
-Message-ID: <20141031011009.702592774@goodmis.org>
-References: <20141031010945.211059309@goodmis.org>
+Subject: [ANNOUNCE] 3.14.23-rt20
+Date: Fri, 31 Oct 2014 17:03:26 -0400
+Message-ID: <20141031170326.1491a63f@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: linux-kernel@vger.kernel.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>
+To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-lockdep-Fix-backport-of-Correctly-annotate-hardirq-c.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.63-rt93-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+I'm pleased to announce the 3.14.23-rt20 stable release.
 
-The backport of f1a83e652bed "lockdep: Correctly annotate hardirq context
-in irq_exit()" to v3.2.53-rt76 wasn't correct because v3.2-rt had two
-calls to invoke_softirq(). One when __ARCH_IRQ_EXIT_IRQS_DISABLED is defined
-and another when it is not defined. v3.14 which introduced this change
-only had one version.
+This is the first 3.14-rt release in the stable-rt series. Normally I
+wait till the next development release is out before I pull in a new
+one. That is, I would pull in 3.14-rt when 3.16-rt or later was
+released. But because development is now moving at a "hobbyist rate" 
+ (read http://lwn.net/Articles/617140/ for details)
+and 3.14-rt is no longer being developed against, I figured it was time
+to put it under the "stable-rt" umbrella.
 
-When I backported this change, I didn't see the two places and only one
-was added. Unfortunately, it was the one that x86 does not use, and this
-caused a lockdep splat on one of my tests. It only affected the -rt patch
-when PREEMPT_RT_FULL was not set, so I did not spend much time looking to
-see what broke.
+This release is just an update to the new stable 3.14.23 version
+and no RT specific changes have been made.
 
-Well, I finally spent a little time and found the cause, and this was
-a simple fix. Now my all my tests pass on the v3.2-rt kernel, even the
-one where I test CONFIG_PREEMPT_RT_FULL not set.
 
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/softirq.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+You can get this release via the git tree at:
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 7d882ccfa22b..56d30853345d 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -637,9 +637,10 @@ static inline void invoke_softirq(void)
- static inline void invoke_softirq(void)
- {
- #ifndef CONFIG_PREEMPT_RT_FULL
--	if (!force_irqthreads)
-+	if (!force_irqthreads) {
-+		lockdep_softirq_from_hardirq();
- 		do_softirq();
--	else {
-+	} else {
- 		__local_bh_disable((unsigned long)__builtin_return_address(0),
- 				SOFTIRQ_OFFSET);
- 		wakeup_softirqd();
--- 
-2.1.1
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.14-rt
+  Head SHA1: 98a86c73c8828ba724eafaef832d71e3c909fb73
+
+
+Or to build 3.14.23-rt20 directly, the following patches should be
+applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.23.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.23-rt20.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
