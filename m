@@ -1,56 +1,62 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: RT/ext4/jbd2 circular dependency
-Date: Fri, 31 Oct 2014 01:16:52 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1410310101540.5308@nanos>
-References: <54415991.1070907@pavlinux.ru> <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com> <544940EF.7090907@windriver.com> <alpine.DEB.2.11.1410261516020.5308@nanos> <544E7144.4080809@windriver.com> <alpine.DEB.2.11.1410291854090.5308@nanos>
- <54513BDA.1050804@windriver.com> <alpine.DEB.2.11.1410292013510.5308@nanos> <20141029231916.GD5000@thunk.org> <alpine.DEB.2.11.1410302204570.5308@nanos> <20141030232437.GF31927@thunk.org>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Chris Friesen <chris.friesen@windriver.com>,
-	Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
-	"J. Bruce Fields" <bfields@fieldses.org>,
-	linux-ext4@vger.kernel.org, adilger.kernel@dilger.ca,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Theodore Ts'o <tytso@mit.edu>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:37686 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161019AbaJaARD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Oct 2014 20:17:03 -0400
-In-Reply-To: <20141030232437.GF31927@thunk.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 0/2] Linux 3.2.63-rt93-rc1
+Date: Thu, 30 Oct 2014 21:09:45 -0400
+Message-ID: <20141031010945.211059309@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Ted,
 
-On Thu, 30 Oct 2014, Theodore Ts'o wrote:
-> On Thu, Oct 30, 2014 at 10:11:26PM +0100, Thomas Gleixner wrote:
-> > 
-> > That's a way better explanation than what I saw in the commit logs and
-> > it actually maps to the observed traces and stackdumps.
-> 
-> I can't speak for Jan, but I suspect he didn't realize that there was
-> a problem.  The commit description in b34090e5e2 makes it clear that
-> the intent was a performance improvement, and not an attempt to fix a
-> potential deadlock bug.
+Dear RT Folks,
 
-Indeed. The changelog does not look like a bug fix. That's why I was
-worried about Chris 'magic resolution' report.
- 
-> The difference is that in this case, it seems that Chris and Kevin was
-> able to reproduce the problem reliably.  (It also might be that the RT
-> patch kits widens the race window and makes it much more likely to
-> trigger.)
+This is the RT stable review cycle of patch 3.2.63-rt93-rc1.
 
-We've seen that before. RT indeed makes race conditions more prominent
-by opening way more race windows than a mainline kernel ever does.
+Please scream at me if I messed something up. Please test the patches too.
 
-But there is a caveat. With the recent per cpu assumptions RT might
-very well run into some completely not mainline relevant RT specific
-pitfalls. And that's becoming worse with every day that RT is out of
-tree. But that's a totally different story.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Thanks again for your profound analysis of the issue at hand!
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-	tglx
+If all goes well, this patch will be converted to the next main release
+on 11/3/2014.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.63-rt93-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.63.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.63-rt93-rc1.patch.xz
+
+You can also build from 3.2.63-rt92 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.63-rt92-rt93-rc1.patch.xz
+
+
+Changes from 3.2.63-rt92:
+
+---
+
+
+Steven Rostedt (Red Hat) (2):
+      lockdep: Fix backport of "Correctly annotate hardirq context in irq_exit()"
+      Linux 3.2.63-rt93-rc1
+
+----
+ kernel/softirq.c | 5 +++--
+ localversion-rt  | 2 +-
+ 2 files changed, 4 insertions(+), 3 deletions(-)
