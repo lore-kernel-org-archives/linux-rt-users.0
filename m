@@ -1,58 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.23-rt20
-Date: Fri, 31 Oct 2014 17:03:26 -0400
-Message-ID: <20141031170326.1491a63f@gandalf.local.home>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.14.23-rt20
+Date: Sun, 02 Nov 2014 08:30:27 +0100
+Message-ID: <1414913427.5380.110.camel@marge.simpson.net>
+References: <20141031170326.1491a63f@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <williams@redhat.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20141031170326.1491a63f@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Fri, 2014-10-31 at 17:03 -0400, Steven Rostedt wrote:
+> Dear RT Folks,
+> 
+> I'm pleased to announce the 3.14.23-rt20 stable release.
+> 
+> This is the first 3.14-rt release in the stable-rt series. Normally I
+> wait till the next development release is out before I pull in a new
+> one. That is, I would pull in 3.14-rt when 3.16-rt or later was
+> released. But because development is now moving at a "hobbyist rate" 
+> (read http://lwn.net/Articles/617140/ for details)
+> and 3.14-rt is no longer being developed against, I figured it was
+time
+> to put it under the "stable-rt" umbrella.
 
-Dear RT Folks,
+I piddled about with it yesterday, found that you can't change cpufreq
+governor IFF the tree is configured as rt, but works fine as voluntary
+preempt.  I'll poke about for the entertainment value.  Having no
+personal need/use for rt detracts from its hobby value somewhat, but rt
+problems do have a tendency to be 'entertaining'.
 
-I'm pleased to announce the 3.14.23-rt20 stable release.
+I'll follow up with a few patches that folks can apply to their trees if
+they so desire.  There being no devel tree to submit against, I can't do
+a proper submission (rules), and some of them you surely don't want :) 
 
-This is the first 3.14-rt release in the stable-rt series. Normally I
-wait till the next development release is out before I pull in a new
-one. That is, I would pull in 3.14-rt when 3.16-rt or later was
-released. But because development is now moving at a "hobbyist rate" 
- (read http://lwn.net/Articles/617140/ for details)
-and 3.14-rt is no longer being developed against, I figured it was time
-to put it under the "stable-rt" umbrella.
-
-This release is just an update to the new stable 3.14.23 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.14-rt
-  Head SHA1: 98a86c73c8828ba724eafaef832d71e3c909fb73
-
-
-Or to build 3.14.23-rt20 directly, the following patches should be
-applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.23.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.23-rt20.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+	-Mike
