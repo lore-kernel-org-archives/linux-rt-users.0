@@ -1,43 +1,61 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [RFC v0 1/9] hackbench: Don't re-assign context for each fd
-Date: Wed,  5 Nov 2014 10:09:37 +0100
-Message-ID: <1415178585-3192-2-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [RFC v0 4/9] error: Add debug() function
+Date: Wed,  5 Nov 2014 10:09:40 +0100
+Message-ID: <1415178585-3192-5-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1415178585-3192-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-rt-users@vger.kernel.org,
 	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:52808 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:52818 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1753268AbaKEJJt (ORCPT
+	with ESMTP id S1751396AbaKEJJt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 5 Nov 2014 04:09:49 -0500
 In-Reply-To: <1415178585-3192-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-A small optimization. Setting it once is enough.
-
 Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
 ---
- src/hackbench/hackbench.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ src/include/error.h |  1 +
+ src/lib/error.c     | 10 ++++++++++
+ 2 files changed, 11 insertions(+)
 
-diff --git a/src/hackbench/hackbench.c b/src/hackbench/hackbench.c
-index 34a27ef..c42257c 100644
---- a/src/hackbench/hackbench.c
-+++ b/src/hackbench/hackbench.c
-@@ -326,12 +326,12 @@ static unsigned int group(childinfo_t *child,
- 			close(fds[0]);
- 	}
+diff --git a/src/include/error.h b/src/include/error.h
+index 1e33f6c..ae05a2e 100644
+--- a/src/include/error.h
++++ b/src/include/error.h
+@@ -10,6 +10,7 @@ void err_exit(int err, char *fmt, ...);
+ void err_msg(char *fmt, ...);
+ void err_msg_n(int err, char *fmt, ...);
+ void err_quit(char *fmt, ...);
++void debug(char *fmt, ...);
+ void info(char *fmt, ...);
+ void warn(char *fmt, ...);
+ void fatal(char *fmt, ...);
+diff --git a/src/lib/error.c b/src/lib/error.c
+index 1b5de5d..0cef245 100644
+--- a/src/lib/error.c
++++ b/src/lib/error.c
+@@ -46,6 +46,16 @@ void err_quit(char *fmt, ...)
+ 	exit(1);
+ }
  
-+	snd_ctx->ready_out = ready_out;
-+	snd_ctx->wakefd = wakefd;
-+	snd_ctx->num_fds = num_fds;
++void debug(char *fmt, ...)
++{
++	va_list ap;
 +
- 	/* Now we have all the fds, fork the senders */
- 	for (i = 0; i < num_fds; i++) {
--		snd_ctx->ready_out = ready_out;
--		snd_ctx->wakefd = wakefd;
--		snd_ctx->num_fds = num_fds;
++	va_start(ap, fmt);
++	fputs("DEBUG: ", stderr);
++	err_doit(0, fmt, ap);
++	va_end(ap);
++}
++
+ void info(char *fmt, ...)
+ {
+ 	va_list ap;
+-- 
+1.9.3
+
