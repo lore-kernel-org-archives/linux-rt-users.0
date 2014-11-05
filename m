@@ -1,17 +1,17 @@
-From: Harry van Haaren <harryhaaren@gmail.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [ANNOUNCE] 3.14.23-rt20
-Date: Wed, 5 Nov 2014 15:35:51 +0000
-Message-ID: <CAKudYbNhjdNmw27tMz261p+6q4OStBp2zUoBsgtJdQGcJ9fkKw@mail.gmail.com>
+Date: Wed, 05 Nov 2014 16:44:19 +0100
+Message-ID: <1415202259.5402.90.camel@marge.simpson.net>
 References: <20141031170326.1491a63f@gandalf.local.home>
-	<1414913427.5380.110.camel@marge.simpson.net>
-	<CADLDEKvFvw7Aa98tVtM3z5JV8oocKqAdV4PqOMoZH2mXZ6x2jg@mail.gmail.com>
-	<20141105092707.7c9bb1ae@gandalf.local.home>
-	<CADLDEKsYzpN4uPD7wEE6bxZP21gd3xY4c0fsRqfB1RwEZ53iKg@mail.gmail.com>
-	<20141105100056.152fd532@gandalf.local.home>
+	 <1414913427.5380.110.camel@marge.simpson.net>
+	 <CADLDEKvFvw7Aa98tVtM3z5JV8oocKqAdV4PqOMoZH2mXZ6x2jg@mail.gmail.com>
+	 <20141105092707.7c9bb1ae@gandalf.local.home>
+	 <CADLDEKsYzpN4uPD7wEE6bxZP21gd3xY4c0fsRqfB1RwEZ53iKg@mail.gmail.com>
+	 <20141105100056.152fd532@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 Cc: Juerg Haefliger <juergh@gmail.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -25,25 +25,18 @@ In-Reply-To: <20141105100056.152fd532@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 5 Nov 2014 14:50:41 +0100 Juerg Haefliger <juergh@gmail.com> wrote:
-> The cpufreq code does nested down_read_trylocks and only the first one succeeds:
->drivers/cpufreq/cpufreq.c:
->store
->  down_read_trylock(cpufreq_rwsem)  <- succeeds
->  store_scaling_governor
->    cpufreq_get_policy
->      cpufreq_cpu_get
->        down_read_trylock(cpufreq_rwsem)  <-- fails
+On Wed, 2014-11-05 at 10:00 -0500, Steven Rostedt wrote: 
+> On Wed, 5 Nov 2014 15:43:24 +0100
+> Juerg Haefliger <juergh@gmail.com> wrote:
+> 
+> > Thanks for the explanation. So is this considered a temporary failure
+> > until multiple readers are allowed or does cpufreq need fixing or
+> > something else? Just trying to figure out what to do next.
+> 
+> Good question. Unfortunately I don't know the answer to that.
 
-On a related note: I think this patch/issue may be the cause of the
--rt CPU frequency scaling bug I reported a couple of months ago.
-http://comments.gmane.org/gmane.linux.rt.user/12472
+[RFC PATCH RT] rwsem: The return of multi-reader PI rwsems
 
-I'm currently using the performance governor by default as a
-workaround; thanks to JackWinter for packaging in the ArchAudio repos.
+The above springs to mind.
 
-Cheers, -Harry
-
--- 
-
-http://www.openavproductions.com
+-Mike
