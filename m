@@ -1,82 +1,106 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [ANNOUNCE] 3.14.23-rt20
-Date: Thu, 6 Nov 2014 00:11:32 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1411052357110.24960@nanos>
-References: <20141031170326.1491a63f@gandalf.local.home> <1414913427.5380.110.camel@marge.simpson.net> <CADLDEKvFvw7Aa98tVtM3z5JV8oocKqAdV4PqOMoZH2mXZ6x2jg@mail.gmail.com> <20141105092707.7c9bb1ae@gandalf.local.home> <alpine.DEB.2.11.1411051703440.4245@nanos>
- <alpine.DEB.2.11.1411052314150.24960@nanos> <20141105174822.491e1eff@gandalf.local.home>
+From: Yang Shi <yang.shi@windriver.com>
+Subject: [PATCH v3.14-rt] mips: rt: Replace pagefault_* to raw version
+Date: Thu, 6 Nov 2014 15:45:27 -0800
+Message-ID: <1415317527-15266-1-git-send-email-yang.shi@windriver.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Juerg Haefliger <juergh@gmail.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20141105174822.491e1eff@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>,
+	<yang.shi@windriver.com>
+To: <tglx@linutronix.de>, <bigeasy@linutronix.de>,
+	<rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail1.windriver.com ([147.11.146.13]:59597 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751173AbaKFXrl (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 6 Nov 2014 18:47:41 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 5 Nov 2014, Steven Rostedt wrote:
-> On Wed, 5 Nov 2014 23:29:32 +0100 (CET)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> 
-> > > > When we allow multiple readers, this will be allowed. But even in
-> > > > mainline, if a writer were to come in and block between those two
-> > > > down_read_trylocks(), the second trylock would fail.
-> > > > 
-> > > > PREEMPT_RT just has that fail all the time as we only allow an rwsem to
-> > > > be held by a single reader.
-> > > 
-> > > Errm. The reader holds the sem already. So that's a recursive read
-> > > lock which should always succeed. And rt_read_trylock() has that
-> > > implemented.
-> > 
-> > Bah. That's the rwlock path. Untested patch below should fix the issue.
-> 
-> This is basically a revert of my patch that removed rwsems as being
-> recursive, because they are not recursive in mainline.
+In k{un}map_coherent, pagefault_disable and pagefault_enable are called
+respectively, but k{un}map_coherent needs preempt disabled according to
+commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
+in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
 
-Well, they are. Just not in the presence of a writer.
+k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
+However, actually, the most modern MIPS processors have PIPT dcache without
+dcache alias issue. In such case, k{un}map_atomic will be called with preempt
+enabled.
 
-Which is silly, but due to the fact that we do not track the readers
-unavoidable. If the reader holds the sem already there is no real
-reason why it should not succeed with the recursive lock.
+To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
+disables preempt, otherwise the following kernel panic may be caught:
 
-If anything relies on that behaviour then we have a way bigger
-problem at some other place.
+CPU 0 Unable to handle kernel paging request at virtual address fffffffffffd5000, epc == ffffffff80122c00, ra == ffffffff8011fbcc
+Oops[#1]:
+CPU: 0 PID: 409 Comm: runltp Not tainted 3.14.17-rt5 #1
+task: 980000000fa936f0 ti: 980000000eed0000 task.ti: 980000000eed0000
+$ 0 : 0000000000000000 000000001400a4e1 fffffffffffd5000 0000000000000001
+$ 4 : 980000000cded000 fffffffffffd5000 980000000cdedf00 ffffffffffff00fe
+$ 8 : 0000000000000000 ffffffffffffff00 000000000000000d 0000000000000004
+$12 : 980000000eed3fe0 000000000000a400 ffffffffa00ae278 0000000000000000
+$16 : 980000000cded000 000000726eb855c8 98000000012ccfe8 ffffffff8095e0c0
+$20 : ffffffff80ad0000 ffffffff8095e0c0 98000000012d0bd8 980000000fb92000
+$24 : 0000000000000000 ffffffff80177fb0
+$28 : 980000000eed0000 980000000eed3b60 980000000fb92060 ffffffff8011fbcc
+Hi : 000000000002cb02
+Lo : 000000000000ee56
+epc : ffffffff80122c00 copy_page+0x38/0x548
+    Not tainted
+ra : ffffffff8011fbcc copy_user_highpage+0x16c/0x180
+Status: 1400a4e3 KX SX UX KERNEL EXL IE
+Cause : 10800408
+BadVA : fffffffffffd5000
+PrId : 00010000 (MIPS64R2-generic)
+Modules linked in: i2c_piix4 i2c_core uhci_hcd
+Process runltp (pid: 409, threadinfo=980000000eed0000, task=980000000fa936f0, tls=000000fff7756700)
+Stack : 98000000012ccfe8 980000000eeb7ba8 980000000ecc7508 000000000666da5b
+000000726eb855c8 ffffffff802156e0 000000726ea4a000 98000000010007e0
+980000000fb92060 0000000000000000 0000000000000000 6db6db6db6db6db7
+0000000000000080 000000726eb855c8 980000000fb92000 980000000eeeec28
+980000000ecc7508 980000000fb92060 0000000000000001 00000000000000a9
+ffffffff80995e60 ffffffff80218910 000000001400a4e0 ffffffff804efd24
+980000000ee25b90 ffffffff8079cec4 ffffffff8079d49c ffffffff80979658
+000000000666da5b 980000000eeb7ba8 000000726eb855c8 00000000000000a9
+980000000fb92000 980000000fa936f0 980000000eed3eb0 0000000000000001
+980000000fb92088 0000000000030002 980000000ecc7508 ffffffff8011ecd0
+...
+Call Trace:
+[<ffffffff80122c00>] copy_page+0x38/0x548
+[<ffffffff8011fbcc>] copy_user_highpage+0x16c/0x180
+[<ffffffff802156e0>] do_wp_page+0x658/0xcd8
+[<ffffffff80218910>] handle_mm_fault+0x7d8/0x1070
+[<ffffffff8011ecd0>] __do_page_fault+0x1a0/0x508
+[<ffffffff80104d84>] resume_userspace_check+0x0/0x10
 
-> If you have the following:
-> 
-> 	down_read(&A);
-> 
-> 				down_write(&A);
-> 
-> 	down_read(&A);
-> 
-> in mainline, you will have a deadlock. With this change, it will not
-> deadlock on -rt.
+Or there may be random segmentation fault happened.
 
-And that's fine on RT in the face of a single reader.
+Signed-off-by: Yang Shi <yang.shi@windriver.com>
+---
+ arch/mips/mm/init.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-> This is probably why that cpu governor code uses down_read_trylock()
-> otherwise, it would have suffered from possible deadlock scenarios.
+diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
+index 6b59617..740219e 100644
+--- a/arch/mips/mm/init.c
++++ b/arch/mips/mm/init.c
+@@ -124,7 +124,7 @@ void *kmap_coherent(struct page *page, unsigned long addr)
+ 
+ 	BUG_ON(Page_dcache_dirty(page));
+ 
+-	pagefault_disable();
++	raw_pagefault_disable();
+ 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
+ #ifdef CONFIG_MIPS_MT_SMTC
+ 	idx += FIX_N_COLOURS * smp_processor_id() +
+@@ -191,7 +191,7 @@ void kunmap_coherent(void)
+ 	write_c0_entryhi(old_ctx);
+ 	EXIT_CRITICAL(flags);
+ #endif
+-	pagefault_enable();
++	raw_pagefault_enable();
+ }
+ 
+ void copy_user_highpage(struct page *to, struct page *from,
+-- 
+2.0.2
 
-Right.
-
-> But, for a quick solution, just use this patch. I'll start working on
-> the multi rwsem readers again, and then I'll have to revert this to do
-> that. But when we have multi readers again, we wont need to have this
-> hack.
-
-And how exactly are multi reader rwsem solving that problem?
-
-Not at all. You still need to track recursion of an already 'owning'
-reader unless you want to add it twice on the 'owner' list.
-
-Thanks,
-
-	tglx
