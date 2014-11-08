@@ -1,106 +1,98 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [PATCH v3.14-rt] mips: rt: Replace pagefault_* to raw version
-Date: Thu, 6 Nov 2014 15:45:27 -0800
-Message-ID: <1415317527-15266-1-git-send-email-yang.shi@windriver.com>
+From: Marc =?UTF-8?B?TWFyw60=?= <marc.mari.barcelo@gmail.com>
+Subject: Solving WARNING: Enabled interrupts issues
+Date: Sat, 8 Nov 2014 23:56:47 +0100
+Message-ID: <20141108235647.68a2a00f@crunchbang>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>,
-	<yang.shi@windriver.com>
-To: <tglx@linutronix.de>, <bigeasy@linutronix.de>,
-	<rostedt@goodmis.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:59597 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751173AbaKFXrl (ORCPT
+Received: from mail-wg0-f41.google.com ([74.125.82.41]:46201 "EHLO
+	mail-wg0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751231AbaKHW4x (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Nov 2014 18:47:41 -0500
+	Sat, 8 Nov 2014 17:56:53 -0500
+Received: by mail-wg0-f41.google.com with SMTP id k14so6188107wgh.28
+        for <linux-rt-users@vger.kernel.org>; Sat, 08 Nov 2014 14:56:51 -0800 (PST)
+Received: from crunchbang ([80.31.85.60])
+        by mx.google.com with ESMTPSA id lp14sm5254688wic.20.2014.11.08.14.56.50
+        for <linux-rt-users@vger.kernel.org>
+        (version=SSLv3 cipher=RC4-SHA bits=128/128);
+        Sat, 08 Nov 2014 14:56:51 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In k{un}map_coherent, pagefault_disable and pagefault_enable are called
-respectively, but k{un}map_coherent needs preempt disabled according to
-commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
-in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
+Hello everyone
 
-k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
-However, actually, the most modern MIPS processors have PIPT dcache without
-dcache alias issue. In such case, k{un}map_atomic will be called with preempt
-enabled.
+I'm working in the porting of a platform-specific linux kernel to RT. I
+think I'm in the right way, but I'm looking on the best approach to
+solve issues with IRQS in drivers.
 
-To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
-disables preempt, otherwise the following kernel panic may be caught:
+At this moment I have this warning:
+[    5.079524] WARNING: at kernel/irq/handle.c:146
+handle_irq_event_percpu+0x2d8/0x2fc()
+[    5.087378] irq 305 handler
+irq_default_primary_handler+0x0/0x1c enabled interrupts
+[    5.095008]
+[<c010dc4c>] (unwind_backtrace+0x0/0x144) from [<c0a4e8e0>]
+(dump_stack+0x20/0x24)
+[    5.103600] [<c0a4e8e0>]
+(dump_stack+0x20/0x24) from [<c01939e8>]
+(warn_slowpath_common+0x58/0x70)
+[    5.112548] [<c01939e8>]
+(warn_slowpath_common+0x58/0x70) from [<c0193a7c>]
+(warn_slowpath_fmt+0x40/0x48)
+[    5.122100] [<c0193a7c>]
+(warn_slowpath_fmt+0x40/0x48) from [<c01fa66c>]
+(handle_irq_event_percpu+0x2d8/0x2fc)
+[    5.132077] [<c01fa66c>]
+(handle_irq_event_percpu+0x2d8/0x2fc) from [<c01fa718>]
+(handle_irq_event+0x88/0xb0)
+[    5.141975] [<c01fa718>]
+(handle_irq_event+0x88/0xb0) from [<c01fd50c>]
+(handle_level_irq+0xbc/0x15c)
+[    5.151144] [<c01fd50c>]
+(handle_level_irq+0xbc/0x15c) from [<c01f9ce4>]
+(generic_handle_irq+0x30/0x40
+[    5.160553] [<c01f9ce4>]
+(generic_handle_irq+0x30/0x40) from [<c0552d68>]
+(qpnpint_handle_irq+0x6c/0xd8)
+[    5.170012] [<c0552d68>]
+(qpnpint_handle_irq+0x6c/0xd8) from [<c0551f38>]
+(pmic_arb_periph_irq+0x174/0x21c)
+[    5.179733] [<c0551f38>]
+(pmic_arb_periph_irq+0x174/0x21c) from [<c01face0>]
+(irq_forced_thread_fn+0x30/0x74)
+[    5.189629] [<c01face0>]
+(irq_forced_thread_fn+0x30/0x74) from [<c01fab44>]
+(irq_thread+0x124/0x164)
+[    5.198744] [<c01fab44>]
+(irq_thread+0x124/0x164) from [<c01b4e48>] (kthread+0x98/0xa4)
+[    5.206701] [<c01b4e48>] (kthread+0x98/0xa4) from [<c0107c90>]
+(kernel_thread_exit+0x0/0x8)
 
-CPU 0 Unable to handle kernel paging request at virtual address fffffffffffd5000, epc == ffffffff80122c00, ra == ffffffff8011fbcc
-Oops[#1]:
-CPU: 0 PID: 409 Comm: runltp Not tainted 3.14.17-rt5 #1
-task: 980000000fa936f0 ti: 980000000eed0000 task.ti: 980000000eed0000
-$ 0 : 0000000000000000 000000001400a4e1 fffffffffffd5000 0000000000000001
-$ 4 : 980000000cded000 fffffffffffd5000 980000000cdedf00 ffffffffffff00fe
-$ 8 : 0000000000000000 ffffffffffffff00 000000000000000d 0000000000000004
-$12 : 980000000eed3fe0 000000000000a400 ffffffffa00ae278 0000000000000000
-$16 : 980000000cded000 000000726eb855c8 98000000012ccfe8 ffffffff8095e0c0
-$20 : ffffffff80ad0000 ffffffff8095e0c0 98000000012d0bd8 980000000fb92000
-$24 : 0000000000000000 ffffffff80177fb0
-$28 : 980000000eed0000 980000000eed3b60 980000000fb92060 ffffffff8011fbcc
-Hi : 000000000002cb02
-Lo : 000000000000ee56
-epc : ffffffff80122c00 copy_page+0x38/0x548
-    Not tainted
-ra : ffffffff8011fbcc copy_user_highpage+0x16c/0x180
-Status: 1400a4e3 KX SX UX KERNEL EXL IE
-Cause : 10800408
-BadVA : fffffffffffd5000
-PrId : 00010000 (MIPS64R2-generic)
-Modules linked in: i2c_piix4 i2c_core uhci_hcd
-Process runltp (pid: 409, threadinfo=980000000eed0000, task=980000000fa936f0, tls=000000fff7756700)
-Stack : 98000000012ccfe8 980000000eeb7ba8 980000000ecc7508 000000000666da5b
-000000726eb855c8 ffffffff802156e0 000000726ea4a000 98000000010007e0
-980000000fb92060 0000000000000000 0000000000000000 6db6db6db6db6db7
-0000000000000080 000000726eb855c8 980000000fb92000 980000000eeeec28
-980000000ecc7508 980000000fb92060 0000000000000001 00000000000000a9
-ffffffff80995e60 ffffffff80218910 000000001400a4e0 ffffffff804efd24
-980000000ee25b90 ffffffff8079cec4 ffffffff8079d49c ffffffff80979658
-000000000666da5b 980000000eeb7ba8 000000726eb855c8 00000000000000a9
-980000000fb92000 980000000fa936f0 980000000eed3eb0 0000000000000001
-980000000fb92088 0000000000030002 980000000ecc7508 ffffffff8011ecd0
-...
-Call Trace:
-[<ffffffff80122c00>] copy_page+0x38/0x548
-[<ffffffff8011fbcc>] copy_user_highpage+0x16c/0x180
-[<ffffffff802156e0>] do_wp_page+0x658/0xcd8
-[<ffffffff80218910>] handle_mm_fault+0x7d8/0x1070
-[<ffffffff8011ecd0>] __do_page_fault+0x1a0/0x508
-[<ffffffff80104d84>] resume_userspace_check+0x0/0x10
+I can see, that the driver that is causing issues is the one that
+contains the pmic_arb_periph_irq handler. This is the requester:
+ret = devm_request_irq(&pdev->dev, pmic_arb->pic_irq,
+     pmic_arb_periph_irq, IRQF_TRIGGER_HIGH, pdev->name, pmic_arb);
 
-Or there may be random segmentation fault happened.
+And the handler is a bit long, so I won't post it here. Just say that
+it does its own tasks without any lock, just a memory barrier (mb()),
+and then it calls generic_handle_irq(irq); I also know that irqs are
+enabled even when the handler is called (and, as far as I understand,
+this is due to threaded interrupts) because I printed the value of
+irqs_disabled();
 
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
----
- arch/mips/mm/init.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+I can solve the warning by adding the flag IRQF_NO_THREAD to the
+requester, or adding local_irq_save - restore in the handler. The
+device also has spin locks, that are not used in the IRQ context. But I
+would like to know what is the best approach to disable irqs
+(IRQF_NO_THREAD, local_irq_save for the whole handler, local_irq_save
+just for the generic_handle_irq call, spin_locks for the whole
+hander or just for the generic_handle_irq call...)
 
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index 6b59617..740219e 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -124,7 +124,7 @@ void *kmap_coherent(struct page *page, unsigned long addr)
- 
- 	BUG_ON(Page_dcache_dirty(page));
- 
--	pagefault_disable();
-+	raw_pagefault_disable();
- 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
- #ifdef CONFIG_MIPS_MT_SMTC
- 	idx += FIX_N_COLOURS * smp_processor_id() +
-@@ -191,7 +191,7 @@ void kunmap_coherent(void)
- 	write_c0_entryhi(old_ctx);
- 	EXIT_CRITICAL(flags);
- #endif
--	pagefault_enable();
-+	raw_pagefault_enable();
- }
- 
- void copy_user_highpage(struct page *to, struct page *from,
--- 
-2.0.2
+(Sorry for my ignorance. I'm learning as fast as I can, but there are
+points where I'm lacking examples).
 
+Thanks in advance
+Marc
