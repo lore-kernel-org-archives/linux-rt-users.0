@@ -1,56 +1,172 @@
-From: Alexey Brodkin <Alexey.Brodkin@synopsys.com>
-Subject: [PATCH] Makefile: allow building selected tests with non-NPTL toolchain
-Date: Mon, 10 Nov 2014 10:16:54 +0300
-Message-ID: <1415603814-7682-1-git-send-email-abrodkin@synopsys.com>
-Cc: linux-kernel@vger.kernel.org,
-	Alexey Brodkin <Alexey.Brodkin@synopsys.com>,
-	Vineet Gupta <Vineet.Gupta1@synopsys.com>,
-	Clark Williams <clark.williams@gmail.com>
-To: linux-rt-users@vger.kernel.org
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Highres timers broken on i.mx28 for CONFIG_HZ_PERIODIC
+Date: Tue, 11 Nov 2014 01:55:37 +0100
+Message-ID: <54615E89.7020902@meduna.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Some architectures are still stuck with non-NPTL toolchains.
-These are for example ARC, Blackfin, Xtensa etc.
+Hi,
 
-Still rt-tests are very good benchmarks and it would be good to enable use of
-at least selected (those that will be built) tests on those architectures.
+something between 3.12.19(-rt30) and 3.12.31(-rt45) broke
+hrtimers on (at least) i.MX28 for CONFIG_HZ_PERIODIC.
+Switching to CONFIG_NO_HZ_IDLE restores them.
 
-This change makes it possible to only build subset of tests that don't require
-NPTL calls.
+Is this the expected behaviour or a regression?
 
-By default behavior is not modified - all tests are built, but if one wants
-to build with non-NPTL toolchain just add "HAVE_NPTL=no" in command line
-or modify "HAVE_NPTL" variable right in Makefile and execute "make".
 
-Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
-Cc: Vineet Gupta <vgupta@synopsys.com>
-Cc: Clark Williams <clark.williams@gmail.com>
----
- Makefile | 11 ++++++++---
- 1 file changed, 8 insertions(+), 3 deletions(-)
+The difference in the /proc/timer_list is the
+Tick Device: mode:     0 (new) or 1 (old)
 
-diff --git a/Makefile b/Makefile
-index 318a5c6..675edf7 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,8 +1,13 @@
- VERSION_STRING = 0.89
- 
--sources = cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
--	  ptsematest.c sigwaittest.c svsematest.c pmqtest.c sendme.c 	\
--	  pip_stress.c hackbench.c
-+HAVE_NPTL ?= yes
-+
-+ifeq ($(HAVE_NPTL),yes)
-+sources = cyclictest.c pi_stress.c pip_stress.c pmqtest.c rt-migrate-test.c
-+endif
-+
-+sources += signaltest.c ptsematest.c sigwaittest.c svsematest.c sendme.c \
-+	  hackbench.c
- 
- TARGETS = $(sources:.c=)
- 
+# cat /proc/timer_list
+
+Timer List Version: v0.7
+HRTIMER_MAX_CLOCK_BASES: 4
+now at 3551448891259 nsecs
+
+cpu: 0
+ clock 0:
+  .base:       c03694e0
+  .index:      0
+  .resolution: 4000000 nsecs
+  .get_time:   ktime_get
+  .offset:     0 nsecs
+active timers:
+...
+ clock 1:
+  .base:       c0369520
+  .index:      1
+  .resolution: 4000000 nsecs
+  .get_time:   ktime_get_real
+  .offset:     0 nsecs
+active timers:
+ clock 2:
+  .base:       c0369560
+  .index:      2
+  .resolution: 4000000 nsecs
+  .get_time:   ktime_get_boottime
+  .offset:     0 nsecs
+active timers:
+ clock 3:
+  .base:       c03695a0
+  .index:      3
+  .resolution: 4000000 nsecs
+  .get_time:   ktime_get_clocktai
+  .offset:     0 nsecs
+active timers:
+  .expires_next   : 9223372036854775807 nsecs
+  .hres_active    : 0
+  .nr_events      : 0
+  .nr_retries     : 0
+  .nr_hangs       : 0
+  .max_hang_time  : 0 nsecs
+  .nohz_mode      : 0
+  .last_tick      : 0 nsecs
+  .tick_stopped   : 0
+  .idle_jiffies   : 0
+  .idle_calls     : 0
+  .idle_sleeps    : 0
+  .idle_entrytime : 0 nsecs
+  .idle_waketime  : 0 nsecs
+  .idle_exittime  : 0 nsecs
+  .idle_sleeptime : 0 nsecs
+  .iowait_sleeptime: 0 nsecs
+  .last_jiffies   : 0
+  .next_jiffies   : 0
+  .idle_expires   : 0 nsecs
+jiffies: 812862
+
+Tick Device: mode:     0
+Per CPU device: 0
+Clock Event Device: mxs_timrot
+ max_delta_ns:   178956969028
+ min_delta_ns:   1000
+ mult:           51539608
+ shift:          31
+ mode:           3
+ next_event:     3551452000000 nsecs
+ set_next_event: timrotv2_set_next_event
+ set_mode:       mxs_set_mode
+ event_handler:  tick_handle_periodic
+ retries:        0
+
+
+In the 3.2.19 it was
+Timer List Version: v0.7
+HRTIMER_MAX_CLOCK_BASES: 4
+now at 280235727915168 nsecs
+
+cpu: 0
+ clock 0:
+  .base:       c03654c0
+  .index:      0
+  .resolution: 1 nsecs
+  .get_time:   ktime_get
+  .offset:     0 nsecs
+active timers:
+...
+ clock 1:
+  .base:       c0365500
+  .index:      1
+  .resolution: 1 nsecs
+  .get_time:   ktime_get_real
+  .offset:     1415385038639056250 nsecs
+active timers:
+ clock 2:
+  .base:       c0365540
+  .index:      2
+  .resolution: 1 nsecs
+  .get_time:   ktime_get_boottime
+  .offset:     0 nsecs
+active timers:
+ clock 3:
+  .base:       c0365580
+  .index:      3
+  .resolution: 1 nsecs
+  .get_time:   ktime_get_clocktai
+  .offset:     1415385038639056250 nsecs
+active timers:
+  .expires_next   : 280235730396263 nsecs
+  .hres_active    : 1
+  .nr_events      : 207916570
+  .nr_retries     : 2164032
+  .nr_hangs       : 7
+  .max_hang_time  : 107499 nsecs
+  .nohz_mode      : 0
+  .last_tick      : 0 nsecs
+  .tick_stopped   : 0
+  .idle_jiffies   : 0
+  .idle_calls     : 0
+  .idle_sleeps    : 0
+  .idle_entrytime : 0 nsecs
+  .idle_waketime  : 0 nsecs
+  .idle_exittime  : 0 nsecs
+  .idle_sleeptime : 0 nsecs
+  .iowait_sleeptime: 0 nsecs
+  .last_jiffies   : 0
+  .next_jiffies   : 0
+  .idle_expires   : 0 nsecs
+jiffies: 69983932
+
+Tick Device: mode:     1
+Per CPU device: 0
+Clock Event Device: mxs_timrot
+ max_delta_ns:   178956969028
+ min_delta_ns:   1000
+ mult:           51539608
+ shift:          31
+ mode:           3
+ next_event:     280235730396263 nsecs
+ set_next_event: timrotv2_set_next_event
+ set_mode:       mxs_set_mode
+ event_handler:  hrtimer_interrupt
+ retries:        0
+
+
+Thanks
 -- 
-1.9.3
+                                 Stano
