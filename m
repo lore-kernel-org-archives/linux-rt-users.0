@@ -1,52 +1,32 @@
-From: Jan Kara <jack@suse.cz>
-Subject: Re: RT/ext4/jbd2 circular dependency
-Date: Thu, 13 Nov 2014 20:06:44 +0100
-Message-ID: <20141113190644.GA12075@quack.suse.cz>
-References: <CANGgnMbQmsdMDJUx7Bop9Xs=jQMmAJgWRjhXVFUGx-DwF=inYw@mail.gmail.com>
- <544940EF.7090907@windriver.com>
- <alpine.DEB.2.11.1410261516020.5308@nanos>
- <544E7144.4080809@windriver.com>
- <alpine.DEB.2.11.1410291854090.5308@nanos>
- <54513BDA.1050804@windriver.com>
- <alpine.DEB.2.11.1410292013510.5308@nanos>
- <20141029231916.GD5000@thunk.org>
- <alpine.DEB.2.11.1410302204570.5308@nanos>
- <20141030232437.GF31927@thunk.org>
+From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Subject: How to modify priority uart/serial interrupt on 3.14.23-rt20?
+Date: Tue, 18 Nov 2014 10:11:27 +0100
+Message-ID: <CEE27071B8F0914B91B3076CEB63C2B6104C7C8F43@de01ex08.GLOBAL.JHCN.NET>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Chris Friesen <chris.friesen@windriver.com>,
-	Austin Schuh <austin@peloton-tech.com>, pavel@pavlinux.ru,
-	"J. Bruce Fields" <bfields@fieldses.org>,
-	linux-ext4@vger.kernel.org, adilger.kernel@dilger.ca,
-	rt-users <linux-rt-users@vger.kernel.org>
-To: Theodore Ts'o <tytso@mit.edu>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+To: "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cantor2.suse.de ([195.135.220.15]:45116 "EHLO mx2.suse.de"
+Received: from mx02.jhcn.net ([194.25.102.130]:26320 "EHLO mx02.jhcn.net"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932939AbaKMTGr (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Nov 2014 14:06:47 -0500
-Content-Disposition: inline
-In-Reply-To: <20141030232437.GF31927@thunk.org>
+	id S1751615AbaKRJXz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 18 Nov 2014 04:23:55 -0500
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu 30-10-14 19:24:37, Ted Tso wrote:
-> On Thu, Oct 30, 2014 at 10:11:26PM +0100, Thomas Gleixner wrote:
-> > 
-> > That's a way better explanation than what I saw in the commit logs and
-> > it actually maps to the observed traces and stackdumps.
-> 
-> I can't speak for Jan, but I suspect he didn't realize that there was
-> a problem.  The commit description in b34090e5e2 makes it clear that
-> the intent was a performance improvement, and not an attempt to fix a
-> potential deadlock bug.
-  Yeah, correct. When I wrote b34090e5e2 I did that because I have realized
-that journal reservations would create similar deadlock opportunity as
-Chris has observed. I hadn't realized the problem is already in the code :)
+SGVsbG8sCgpkb2VzIGFueW9uZSBoYXZlIGEgaGludCBob3cgbW9kaWZ5IChpbmNyZWFzZSkgdGhl
+IHByaW9yaXR5IG9mIAp0aGUgc2VyaWFsL3VhcnQgaW50ZXJydXB0IG9uIGEgMy4xNC4yMy1ydDIw
+IGtlcm5lbD8KCkFGQUlLIHRoZSBrZXJuZWwgdGhyZWFkIGZvciBzZXJpYWwgY29tbXVuaWNhdGlv
+biBpcyBjcmVhdGVkIAp3aGVuIHRoZSBjb21tdW5pY2F0aW9uIHN0YXJ0cywgYnV0IEkgd2FudCB0
+byBjaGFuZ2UgdGhlCnByaW9yaXR5IHdoZW4gdGhlIGRyaXZlciBsb2FkcyAobW9kcHJvYmUgODI1
+MCkuCgpUaGFuaydzIGZvciB5b3VyIGhlbHAhCkFuZHJlYXMKCi0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQpSZWdpc3RlcmdlcmljaHQ6IFRyYXVuc3RlaW4gLyBS
+ZWdpc3RyeSBDb3VydDogSFJCIDI3NSAtIFNpdHogLyBIZWFkIE9mZmljZTogVHJhdW5yZXV0CkF1
+ZnNpY2h0c3JhdHN2b3JzaXR6ZW5kZXIgLyBDaGFpcm1hbiBvZiBTdXBlcnZpc29yeSBCb2FyZDog
+UmFpbmVyIEJ1cmtoYXJkCkdlc2Now6RmdHNmw7xocnVuZyAvIE1hbmFnZW1lbnQgQm9hcmQ6IFRo
+b21hcyBTZXNzZWxtYW5uIChWb3JzaXR6ZW5kZXIgLyBDaGFpcm1hbiksIE1pY2hhZWwgR3JpbW0K
+CkUtTWFpbCBIYWZ0dW5nc2F1c3NjaGx1c3MgLyBFLU1haWwgRGlzY2xhaW1lcjogaHR0cDovL3d3
+dy5oZWlkZW5oYWluLmRlL2Rpc2NsYWltZXIK
 
-								Honza
-
--- 
-Jan Kara <jack@suse.cz>
-SUSE Labs, CR
