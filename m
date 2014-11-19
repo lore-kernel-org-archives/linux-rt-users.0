@@ -1,42 +1,44 @@
-From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
+From: Stanislav Meduna <stano@meduna.org>
 Subject: Re: Measuring scheduling latency for RT threads
-Date: Wed, 19 Nov 2014 14:11:37 +0100
-Message-ID: <9785835.e6QRrDJeRk@bs8>
+Date: Wed, 19 Nov 2014 14:19:49 +0100
+Message-ID: <546C98F5.1020103@meduna.org>
 References: <trinity-4b6e4283-c92f-4553-af86-5fb9e1fb1541-1416401016597@3capp-gmx-bs35>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: =?UTF-8?B?SsO8cmdlbiBMYW5uZXI=?= <jue.lanner@gmx.at>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.kundenserver.de ([212.227.126.130]:57507 "EHLO
-	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752736AbaKSNLq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 19 Nov 2014 08:11:46 -0500
+Received: from www.meduna.org ([92.240.244.38]:60878 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751747AbaKSNT6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 19 Nov 2014 08:19:58 -0500
 In-Reply-To: <trinity-4b6e4283-c92f-4553-af86-5fb9e1fb1541-1416401016597@3capp-gmx-bs35>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Am Mittwoch, 19. November 2014, 13:43:36 schrieben Sie:
-> I have a complex automation project with makes heavy use of real time prio
-> threads working with external hardware connected by e.g. TCP/IP. IMHO most
-> of my latencies simply come from the fact that there are multiple threads
-> running on the same RT prio being scheduled FIFO. (poor design, yes, but
-> that's what I want to fix) Expected response time is in low millsecond
-> area, so no miroseconds juggling here. The process is running (alone, no
-> other processes there) on one CPU of an i5 quad core (using 3.13.0-35
-> ubuntu 14.04)
+On 19.11.2014 13:43, "J=C3=BCrgen Lanner" wrote:
 
-The expected behavior is "in general" only achiveable with patched kernels. 
-The RT-patches are available here:
-https://www.kernel.org/pub/linux/kernel/projects/rt/
-(Notice availability only for even kernel numbers.)
+> My first goal is to find out about the worst case latency:
+> Is there a way I can find out how long (worst case) a RT thread
+> being ready to run is just waiting to be dispatched? =20
 
-So please get first of all a kernel working suited for "real realtime". This 
-step should be quite simple :-)
+ftrace, trace-cmd, kernelshark
 
-Good luck!
+The latency for the highest prio runnable task is available
+right away with the wakeup tracer. For other tasks you can
+trace the scheduling functions and interpret the results
+using a script (or look at them graphically using kernelshark).
 
+Note that the function tracing is not free and will skew
+the results a bit, but should be good enough to identify
+the offenders.
 
-Bernhard
+--=20
+                                 Stano
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
