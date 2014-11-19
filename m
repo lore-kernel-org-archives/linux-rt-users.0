@@ -1,63 +1,58 @@
-From: Austin Schuh <austin@peloton-tech.com>
-Subject: Re: How to modify priority uart/serial interrupt on 3.14.23-rt20?
-Date: Tue, 18 Nov 2014 10:40:50 -0800
-Message-ID: <CANGgnMZqGLhRUaCRfD1egLp-qvsUX0hZWKcaGJzLwnj3_khGtQ@mail.gmail.com>
-References: <CEE27071B8F0914B91B3076CEB63C2B6104C7C8F43@de01ex08.GLOBAL.JHCN.NET>
+From: =?UTF-8?Q?=22J=C3=BCrgen_Lanner=22?= <jue.lanner@gmx.at>
+Subject: Measuring scheduling latency for RT threads
+Date: Wed, 19 Nov 2014 13:43:36 +0100
+Message-ID: <trinity-4b6e4283-c92f-4553-af86-5fb9e1fb1541-1416401016597@3capp-gmx-bs35>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f50.google.com ([74.125.82.50]:59558 "EHLO
-	mail-wg0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753829AbaKRSlM convert rfc822-to-8bit (ORCPT
+Received: from mout.gmx.net ([212.227.17.22]:51701 "EHLO mout.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752578AbaKSMni convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 18 Nov 2014 13:41:12 -0500
-Received: by mail-wg0-f50.google.com with SMTP id k14so10458968wgh.9
-        for <linux-rt-users@vger.kernel.org>; Tue, 18 Nov 2014 10:41:10 -0800 (PST)
-In-Reply-To: <CEE27071B8F0914B91B3076CEB63C2B6104C7C8F43@de01ex08.GLOBAL.JHCN.NET>
+	Wed, 19 Nov 2014 07:43:38 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2 ways come to mind.  I've done one of them.  Others may have better
-suggestions.
-
-1) After you open the uart, iterate through /proc/, find the uart
-interrupt thread, and bump it's priority.
-
-2) Set up a background task which polls /proc/ for the uart interrupt
-thread and bumps the priority.
-
-(Sigh, resending since I forgot to use plain-text again...)
-
-Austin
-
-On Tue, Nov 18, 2014 at 1:11 AM, Lampersperger Andreas
-<lampersperger.andreas@heidenhain.de> wrote:
-> Hello,
->
-> does anyone have a hint how modify (increase) the priority of
-> the serial/uart interrupt on a 3.14.23-rt20 kernel?
->
-> AFAIK the kernel thread for serial communication is created
-> when the communication starts, but I want to change the
-> priority when the driver loads (modprobe 8250).
->
-> Thank's for your help!
-> Andreas
->
-> ---------------------------------------------------------------------=
----------------------------------
-> Registergericht: Traunstein / Registry Court: HRB 275 - Sitz / Head O=
-ffice: Traunreut
-> Aufsichtsratsvorsitzender / Chairman of Supervisory Board: Rainer Bur=
-khard
-> Gesch=C3=A4ftsf=C3=BChrung / Management Board: Thomas Sesselmann (Vor=
-sitzender / Chairman), Michael Grimm
->
-> E-Mail Haftungsausschluss / E-Mail Disclaimer: http://www.heidenhain.=
-de/disclaimer
+I have a complex automation project with makes heavy use of real time p=
+rio threads working with external hardware connected by e.g. TCP/IP.
+IMHO most of my latencies simply come from the fact that there are mult=
+iple threads running on the same RT prio being scheduled FIFO. (poor de=
+sign, yes, but that's what I want to fix)
+Expected response time is in low millsecond area, so no miroseconds jug=
+gling here.
+The process is running (alone, no other processes there) on one CPU of =
+an i5 quad core (using 3.13.0-35 ubuntu 14.04)
+=C2=A0
+My first goal is to find out about the worst case latency:
+Is there a way I can find out how long (worst case) a RT thread being r=
+eady to run is just waiting to be dispatched? =C2=A0
+I tried /proc/pid/sched and was looking for se.statistics.wait_max but =
+this was always 0.
+Going through the kernel sources I found out that these value (among ma=
+ny of the neighbors) is not calculated for real time threads (rt.c).
+Is there a reason for this?
+Is there another, maybe better way how I can achieve my goal?
+=C2=A0
+My second goal would be to identify the tasks (which ones?) consuming s=
+o much time (how much?) in this situation and thus causing the delay.
+Is there something built in to track down these bad guys?
+I think of something that keeps capturing the PIDs and exec time of all=
+ dispatched threads while a thread is waiting.
+If it turns out that it runs into worst case latency, the collected dat=
+a could give a hint where to dig.
+On proc/pid/sched there is se.statistics.exec_max, some thread having a=
+ large number there can be a candidate, yes, but that is not necessaril=
+y causing my latency.. =C2=A0
+But I think more of a bad situation where a lot of tasks need to work a=
+t the same time bloating the run queue and thus causing the latency.
+I feel my solution is more "intelligent workload distribution" by ident=
+ifying not so urgent work and shifting it to a later point in time.
+=C2=A0
+Thanks in advance
+=C2=A0
+jue
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
