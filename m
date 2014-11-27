@@ -1,49 +1,68 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.64-rt94
-Date: Wed, 26 Nov 2014 15:27:46 -0500
-Message-ID: <20141126152746.7aba282c@gandalf.local.home>
+From: Wanpeng Li <kernellwp@gmail.com>
+Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
+ futile
+Date: Thu, 27 Nov 2014 17:17:38 +0800
+Message-ID: <5476EC32.9030005@gmail.com>
+References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>	 <20140514154459.GE4570@linux.vnet.ibm.com>	 <20140514191100.GA24155@windriver.com> <1400122194.5175.18.camel@marge.simpson.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Ingo Molnar <mingo@redhat.com>,
+	Frederic Weisbecker <fweisbec@gmail.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pd0-f171.google.com ([209.85.192.171]:34351 "EHLO
+	mail-pd0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932114AbaK0JR5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 27 Nov 2014 04:17:57 -0500
+In-Reply-To: <1400122194.5175.18.camel@marge.simpson.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Mike,
+On 5/15/14, 10:49 AM, Mike Galbraith wrote:
+> On Wed, 2014-05-14 at 15:11 -0400, Paul Gortmaker wrote:
+>
+>> Given that, perhaps a separate change to sched_rt_runtime_exceeded()
+>> that works out the CPU from the rt_rq, and returns zero if it is a
+>> nohz_full cpu?  Does that make sense?  Then the nohz_full people won't
+>> get the throttling message even if they go 100%.
+> I don't get it.  What reason would there be to run a hog on a dedicated
+> core as realtime policy/priority?  Given no competition, there's nothing
+> to prioritize, you could just as well run a critical task as SCHED_IDLE.
+>
+> I would also expect that anyone wanting bare metal will have all of
+> their critical cores isolated from the scheduler, watchdogs turned off
+> as well as that noisy throttle, the whole point being to make as much
+> silent as possible.  Seems to me tick_nohz_full_cpu(cpu) should be
+> predicated by that cpu being isolated from the #1 noise source, the
+> scheduler and its load balancing.  There's just no point to nohz_full
+> without that, or if there is, I sure don't see it.
 
-Dear RT Folks,
+If the tick is still need to be handled if cpu is isolated w/o nohz full 
+enabled?
 
-I'm pleased to announce the 3.2.64-rt94 stable release.
+Regards,
+Wanpeng Li
 
+>
+> When I see people trying to run a hog as a realtime task, it's because
+> they are trying in vain to keep competition away from precious cores..
+> and one mlockall with a realtime hog blocking flush_work() gives them a
+> wakeup call.
+>
+> -Mike
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Please read the FAQ at  http://www.tux.org/lkml/
 
-This release is just an update to the new stable 3.2.64 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 9042e0e8b3a3c0cdb87377937d437a316871c8a2
-
-
-Or to build 3.2.64-rt94 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.64.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.64-rt94.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
