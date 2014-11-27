@@ -1,68 +1,47 @@
-From: Wanpeng Li <kernellwp@gmail.com>
-Subject: Re: [PATCH] sched/rt: don't try to balance rt_runtime when it is
- futile
-Date: Thu, 27 Nov 2014 17:17:38 +0800
-Message-ID: <5476EC32.9030005@gmail.com>
-References: <1400080115-12339-1-git-send-email-paul.gortmaker@windriver.com>	 <20140514154459.GE4570@linux.vnet.ibm.com>	 <20140514191100.GA24155@windriver.com> <1400122194.5175.18.camel@marge.simpson.net>
+From: Boris Egorov <egorov@linux.com>
+Subject: [PATCH] rt-migrate-test: exit early if nr_runs is non-positive
+Date: Thu, 27 Nov 2014 16:20:34 +0600
+Message-ID: <5476FAF2.1060702@linux.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@redhat.com>,
-	Frederic Weisbecker <fweisbec@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: Boris Egorov <egorov@linux.com>
+To: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pd0-f171.google.com ([209.85.192.171]:34351 "EHLO
-	mail-pd0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932114AbaK0JR5 (ORCPT
+Received: from mail-la0-f51.google.com ([209.85.215.51]:33066 "EHLO
+	mail-la0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751476AbaK0KUk (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 27 Nov 2014 04:17:57 -0500
-In-Reply-To: <1400122194.5175.18.camel@marge.simpson.net>
+	Thu, 27 Nov 2014 05:20:40 -0500
+Received: by mail-la0-f51.google.com with SMTP id ms9so3888718lab.24
+        for <linux-rt-users@vger.kernel.org>; Thu, 27 Nov 2014 02:20:38 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Mike,
-On 5/15/14, 10:49 AM, Mike Galbraith wrote:
-> On Wed, 2014-05-14 at 15:11 -0400, Paul Gortmaker wrote:
->
->> Given that, perhaps a separate change to sched_rt_runtime_exceeded()
->> that works out the CPU from the rt_rq, and returns zero if it is a
->> nohz_full cpu?  Does that make sense?  Then the nohz_full people won't
->> get the throttling message even if they go 100%.
-> I don't get it.  What reason would there be to run a hog on a dedicated
-> core as realtime policy/priority?  Given no competition, there's nothing
-> to prioritize, you could just as well run a critical task as SCHED_IDLE.
->
-> I would also expect that anyone wanting bare metal will have all of
-> their critical cores isolated from the scheduler, watchdogs turned off
-> as well as that noisy throttle, the whole point being to make as much
-> silent as possible.  Seems to me tick_nohz_full_cpu(cpu) should be
-> predicated by that cpu being isolated from the #1 noise source, the
-> scheduler and its load balancing.  There's just no point to nohz_full
-> without that, or if there is, I sure don't see it.
+Program will crash if nr_runs is 0 due to dividing by it in
+print_results(). Let's exit early instead.
 
-If the tick is still need to be handled if cpu is isolated w/o nohz full 
-enabled?
+Fixes: http://bugs.debian.org/716237
 
-Regards,
-Wanpeng Li
+Signed-off-by: Boris Egorov <egorov@linux.com>
+---
+ src/rt-migrate-test/rt-migrate-test.c | 5 +++++
+ 1 file changed, 5 insertions(+)
 
->
-> When I see people trying to run a hog as a realtime task, it's because
-> they are trying in vain to keep competition away from precious cores..
-> and one mlockall with a realtime hog blocking flush_work() gives them a
-> wakeup call.
->
-> -Mike
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-> Please read the FAQ at  http://www.tux.org/lkml/
+diff --git a/src/rt-migrate-test/rt-migrate-test.c
+b/src/rt-migrate-test/rt-migrate-test.c
+index e3c7a09..876a122 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -465,6 +465,11 @@ int main (int argc, char **argv)
+  	parse_options(argc, argv);
++	if (nr_runs <= 0) {
++		fprintf(stderr, "Warning, --loops argument is non-positive. Exiting.\n");
++		exit(-1);
++	}
++
+ 	signal(SIGINT, stop_log);
+  	if (argc >= (optind + 1))
+-- 
+2.1.3
 
