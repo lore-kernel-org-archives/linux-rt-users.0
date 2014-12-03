@@ -1,70 +1,189 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH v3.14-rt] netpoll: guard the access to dev->npinfo with
- rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
-Date: Wed, 3 Dec 2014 13:19:11 -0800
-Message-ID: <20141203211911.GR25340@linux.vnet.ibm.com>
-References: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
- <20141203125020.GA5775@opentech.at>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
+Date: Wed, 03 Dec 2014 15:39:57 -0700
+Message-ID: <547F913D.20405@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Kevin Hao <haokexin@gmail.com>, linux-rt-users@vger.kernel.org
-To: Nicholas Mc Guire <der.herr@hofr.at>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org,
+	"Haefliger, Juerg" <Juerg.Haefliger@hp.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e33.co.us.ibm.com ([32.97.110.151]:37088 "EHLO
-	e33.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751153AbaLCVTR (ORCPT
+Received: from g4t3427.houston.hp.com ([15.201.208.55]:40522 "EHLO
+	g4t3427.houston.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751088AbaLCWj7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Dec 2014 16:19:17 -0500
-Received: from /spool/local
-	by e33.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Wed, 3 Dec 2014 14:19:17 -0700
-Received: from b03cxnp08026.gho.boulder.ibm.com (b03cxnp08026.gho.boulder.ibm.com [9.17.130.18])
-	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id 97A811FF0040
-	for <linux-rt-users@vger.kernel.org>; Wed,  3 Dec 2014 14:07:58 -0700 (MST)
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by b03cxnp08026.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id sB3LJuWC49479900
-	for <linux-rt-users@vger.kernel.org>; Wed, 3 Dec 2014 14:19:56 -0700
-Received: from d03av01.boulder.ibm.com (localhost [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id sB3LJDBF032036
-	for <linux-rt-users@vger.kernel.org>; Wed, 3 Dec 2014 14:19:14 -0700
-Content-Disposition: inline
-In-Reply-To: <20141203125020.GA5775@opentech.at>
+	Wed, 3 Dec 2014 17:39:59 -0500
+Received: from g9t2301.houston.hp.com (g9t2301.houston.hp.com [16.216.185.78])
+	by g4t3427.houston.hp.com (Postfix) with ESMTP id CE72C22B
+	for <linux-rt-users@vger.kernel.org>; Wed,  3 Dec 2014 22:39:58 +0000 (UTC)
+In-Reply-To: CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Dec 03, 2014 at 01:50:20PM +0100, Nicholas Mc Guire wrote:
-> On Wed, 03 Dec 2014, Kevin Hao wrote:
-> 
-> > For vanilla kernel we don't need to invoke rcu_read_lock/unlock_bh
-> > explicitly to mark an RCU-bh critical section in the softirq context
-> > because bh is already disabled in this case. But for a rt kernel,
-> > the commit ("rcu: Merge RCU-bh into RCU-preempt") implements the
-> > RCU-bh in term of RCU-preempt. So we have to use
-> > rcu_read_lock/unlock_bh() to mark an RCU-bh critical section even in
-> > +
-> > +#ifdef CONFIG_PREEMPT_RT_FULL
-> > +	rcu_read_lock_bh();
-> > +#endif
-> > +
-> > +	npinfo = rcu_dereference_bh(skb->dev->npinfo);
-> > +	ret = npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
-> > +
-> > +#ifdef CONFIG_PREEMPT_RT_FULL
-> > +	rcu_read_unlock_bh();
-> > +#endif
-> 
-> Is that not actually a bug indepedent of RT ? 
-> without the rcu_read_lock/unlock who says that the 
-> rcu_dereference is still valid at this point ? 
-> I though that if bh are already disabled you still
-> need the read_lock. disabled bh would allow to "downgrad" 
-> the rcu_read_lock_bh to rcu_read_lock but you still need it.
 
-In vanilla kernels, anything that disables BH acts as rcu_read_lock_bh().
-So yes, you can have cases where rcu_read_lock_bh() is needed only in
-the -rt kernel.
+On 12/03/2014 09:56 AM, Juerg Haefliger wrote:
+> Added lots of tracing and here is the sequence of events that lead to
+the deadlock:
+>
+> mutex A is free
+> mutex B is free>
+>
+> eth1: acquires mutex B (rt_spin_lock_nested)
+>
+> iperf: wants to acquire mutex B (rt_spin_lock)
+>   iperf: blocks on rtmutex (mutex B, owner eth1)
+>     iperf: enqueue iperf on mutex B
+>     iperf: top waiter of mutex B is iperf
+>     iperf: enqueue_pi iperf on eth1
+>     iperf: chain_walk = 0
+>   iperf: for (;;)
+>     iperf: __try_to_take_rt_mutex(mutex B, owner eth1)
+>
+> At this point iperf is in a tight loop trying to take mutex B
+>
+> iperf: receives an smp_apic_timer_interrupt (which yankes it out of
+> the previous for (;;) loop)
+>   iperf: acquires mutex A (rt_spin_trylock)
+>
+> eth1: wants to acquire mutex A (rt_spin_lock)
+>   eth1: gets wait_lock of mutex A
+>   eth1: blocks on rtmutex (mutex A, owner iperf)
+>
+> iperf: tries to release mutex A (rt_spin_unlock_after_trylock_in_irq)
+>   iperf: spins on trying to get wait_lock of mutex A (in
+> rt_spin_lock_slowunlock_hirq)
+>
+>     eth1: enqueue eth1 on mutex A
+>     eth1: top waiter of mutex A is eth1
+>     eth1: enqueue_pi eth1 on iperf
+>     eth1: adjust prio of iperf from 120 to 49
+>     eth1: iperf is blocked on mutex B
+>     eth1: chain_walk = 1
+>     eth1: releases wait_lock of mutex A
+>
+>   iperf: gets wait_lock of mutex A
+>     iperf: __rt_spin_lock_slowunlock mutex A
+>
+>     eth1: rt_mutex_adjust_prio_chain(task=iperf, orig_lock=mutex A,
+> next_lock=mutex B, orig_waiter=eth1,mutex A, top_task=eth1)
+>       eth1: waiter is iperf,mutex B
+>       eth1: lock is mutex B
+>       eth1: raw_spin_trylock mutex B
+>       eth1: rt_mutex_owner(mutex B) == eth1 ---> -EDEADLOCK
+>
+> Does that make sense? Please let me know if I need to provide more
+> info. I have detailed ftrace and crash dumps that I could provided if
+> need be.
+> Is this a 'real' problem or is the above fix (ignore the deadlock)
+> sufficient?
+>
+> Thanks
+> ...Juerg
 
-							Thanx, Paul
+I believe this is a problem with spin_do_trylock()->rt_mutex_trylock()
+called by update_process_times as a result of the
+smp_apic_timer_interrupt in the interrupt context.  rt_mutex_trylock(),
+both the fast and slow paths, uses current (current running task) as the
+mutex's owner.
+
+In the interrupt context, though current is readable it is invalid and
+should not be used as the owner of the mutex.  The mutex's real owner is
+the interrupt handler, not the interrupted executing task.  Using
+current as the mutex's owner causes the false negative in
+rt_mutex_adjust_prio_chain(), predicting a deadlock, when it is not
+really a deadlock.
+
+>From your scenario above, assuming that there is a way to indicate a
+mutex is owned by interrupt handler rather than the interrupted iperf,
+the portion of iperf interrupted by sm_apic_timer_interrupt would be
+rephrased as  sm_apic_timer_interrupt_handler and the above scenario
+would now be,
+
+iperf receives an smp_apic_timer_interrupt (which yankes it out of the
+previous loop)
+   sm_apic_timer_interrupt_handler acquires mutex A (rt_spin_trylock)
+
+eth1 wants to acqsire mutex A (rt_spin_lock)
+  eth1 gets wait_lock of mutex A
+  eth1 blocks on rtmutex (mutex A, owner sm_apic_timer_interrupt_handler)
+
+sm_apic_timer_interrupt_handler  tries to release mutex A
+(rt_spin_unlock_after_trylock_in_irq)
+  sm_apic_timer_interrupt_handler spins on trying to get wait_lock of
+mutex A (owner eth1)
+
+    eth1: enqueue eth1 on mutex A
+    eth1: top waiter of mutex A is eth1
+    eth1: enqueue_pi eth1 on sm_apic_timer_interrupt_handler
+    eth1: adjust prio of sm_apic_timer_interrupt_handler from 120 to 49
+    eth1: sm_apic_timer_interrupt_handler is not blocked on mutex B
+    eth1: chain_walk = 0
+    eth1: releases wait_lock of mutex A
+
+  sm_apic_timer_interrupt_handler gets wait_lock of mutex A
+    __rt_spin_lock_slowunlock mutex A
+
+Instead of,
+
+    eth1:
+rt_mutex_adjust_prio_chain(task=sm_apic_timer_interrupt_handler,
+orig_lock=mutex A, next_lock=mutex B, orig_waiter=eth1,mutex A,
+top_task=eth1)
+      eth1: waiter is iperf,mutex B
+      eth1: lock is mutex B
+      eth1: raw_spin_trylock mutex B
+      eth1: rt_mutex_owner(mutex B) == eth1 ---> -EDEADLOCK
+
+we'll have,
+    eth1: both chain_walk == 0 and next_lock == NULL(instead of
+chain_walk == 1 and next_lock == mutex B, since
+sm_apic_timer_interrupt_handler is not actually waiting for mutex B)
+    eth1: return 0 ---> No deadlock.
+
+As mentioned, the fact that rt_mutex_trylock() inaccurately attributed
+the owner of mutex B to iperf causes rt_mutex_adjust_prio_chain() to
+inacurrately announce a deadlock.  In this situation there will be no
+deadlock as sm_apic_timer_interrupt_handler will eventually complete the
+interrupt handling and release mutex A and return to the interrupted
+iperf which is to continue waiting on mutex B.  eth1 will eventually get
+mutex A and releases both mutex B and A, and eventually iperf will get
+mutex B without any deadlock.
+
+
+At the moment, I can think of two ways to fix the problem.
+
+One, to change the mutual exclusion mechanism of timer->base to use real
+spin_lock, raw_spin-lock_t in RT patch, instead of rt_mutex.  But looks
+like a lot of thought and work has already been done to make sure that
+sm_apic_timer_interrupt handler works with rt_mutex (particularly with a
+special non-blocking rt_mutex locking path(), spin_do_trylock(), that
+can be safely used in interrupt context, get_next_timer_interrupt() and
+update_process_times()).  This approach however would require changing
+complex logic in kernel/timer.c module and would be a high risk change.
+
+Another approach is the come up with a mechanism to accurately attribute
+mutex's owner to an interrupt handler when acquired in an interrupt
+context, instead of the interrupted current task.
+
+This approach would involve only changes in the rt_mutex.c module and is
+the one I'm looking at.  What I'm trying to do is in
+rt_mutex_fasttrylock() and rt_mutex_fastunlock(), the two functions
+callable in the interrupt context, when called in the interrupt context
+instead of using current as the owner, uses a dummy (struct task_struct
+*)~(0xf) as the owner.  Unfortunately this would involve additional
+changes not to do additional work such as rt_mutex_enqueue_pi(),
+rt_mutex_enqueue_pi() and __rt_mutex_adjust_prio(), etc., when the owner
+is a dummy interrupt handler task.  With all the required changes, this
+seems to be a lower risk and preferable change to the first approach.
+
+At the moment I'm still debugging the above changes.  Will send it out
+for comments once I get it to work.
+
+Please let me know if you or anyone else has any question, comment
+and/or suggestion.
+
+Thanks in advance.
+
+Thanks,
+Mak.
 
