@@ -1,84 +1,50 @@
-From: Kevin Hao <haokexin@gmail.com>
-Subject: [PATCH v3.14-rt] netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
-Date: Wed,  3 Dec 2014 20:05:57 +0800
-Message-ID: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: linux-rt-users@vger.kernel.org
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [PATCH v3.14-rt] netpoll: guard the access to dev->npinfo with
+	rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
+Date: Wed, 3 Dec 2014 13:50:20 +0100
+Message-ID: <20141203125020.GA5775@opentech.at>
+References: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Kevin Hao <haokexin@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pd0-f180.google.com ([209.85.192.180]:40707 "EHLO
-	mail-pd0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751061AbaLCMHX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Dec 2014 07:07:23 -0500
-Received: by mail-pd0-f180.google.com with SMTP id p10so15402083pdj.39
-        for <linux-rt-users@vger.kernel.org>; Wed, 03 Dec 2014 04:07:23 -0800 (PST)
+Received: from hofr.at ([212.69.189.236]:46934 "EHLO mail.hofr.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751053AbaLCM5U (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 3 Dec 2014 07:57:20 -0500
+Content-Disposition: inline
+In-Reply-To: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-For vanilla kernel we don't need to invoke rcu_read_lock/unlock_bh
-explicitly to mark an RCU-bh critical section in the softirq context
-because bh is already disabled in this case. But for a rt kernel,
-the commit ("rcu: Merge RCU-bh into RCU-preempt") implements the
-RCU-bh in term of RCU-preempt. So we have to use
-rcu_read_lock/unlock_bh() to mark an RCU-bh critical section even in
-a softirq context. Otherwise we will get a call trace like this:
-  include/linux/netpoll.h:90 suspicious rcu_dereference_check() usage!
-  other info that might help us debug this:
-  rcu_scheduler_active = 1, debug_locks = 0
-  1 lock held by irq/177-eth0_g0/129:
-   #0:  (&per_cpu(local_softirq_locks[i], __cpu).lock){+.+...}, at: [<8002f544>] do_current_softirqs+0x12c/0x5ec
+On Wed, 03 Dec 2014, Kevin Hao wrote:
 
-  stack backtrace:
-  CPU: 0 PID: 129 Comm: irq/177-eth0_g0 Not tainted 3.14.23 #11
-  [<80018c0c>] (unwind_backtrace) from [<800138b0>] (show_stack+0x20/0x24)
-  [<800138b0>] (show_stack) from [<8075c3bc>] (dump_stack+0x84/0xd0)
-  [<8075c3bc>] (dump_stack) from [<8008111c>] (lockdep_rcu_suspicious+0xe8/0x11c)
-  [<8008111c>] (lockdep_rcu_suspicious) from [<805e94e8>] (dev_gro_receive+0x240/0x724)
-  [<805e94e8>] (dev_gro_receive) from [<805e9c34>] (napi_gro_receive+0x3c/0x1e8)
-  [<805e9c34>] (napi_gro_receive) from [<804b01ac>] (gfar_clean_rx_ring+0x2d4/0x624)
-  [<804b01ac>] (gfar_clean_rx_ring) from [<804b078c>] (gfar_poll_rx_sq+0x58/0xe8)
-  [<804b078c>] (gfar_poll_rx_sq) from [<805eada8>] (net_rx_action+0x1c8/0x418)
-  [<805eada8>] (net_rx_action) from [<8002f62c>] (do_current_softirqs+0x214/0x5ec)
-  [<8002f62c>] (do_current_softirqs) from [<8002fa88>] (__local_bh_enable+0x84/0x9c)
-  [<8002fa88>] (__local_bh_enable) from [<8002fab8>] (local_bh_enable+0x18/0x1c)
-  [<8002fab8>] (local_bh_enable) from [<80093924>] (irq_forced_thread_fn+0x50/0x74)
-  [<80093924>] (irq_forced_thread_fn) from [<80093c30>] (irq_thread+0x158/0x1c4)
-  [<80093c30>] (irq_thread) from [<800555b8>] (kthread+0xd4/0xe8)
-  [<800555b8>] (kthread) from [<8000ee88>] (ret_from_fork+0x14/0x20)
+> For vanilla kernel we don't need to invoke rcu_read_lock/unlock_bh
+> explicitly to mark an RCU-bh critical section in the softirq context
+> because bh is already disabled in this case. But for a rt kernel,
+> the commit ("rcu: Merge RCU-bh into RCU-preempt") implements the
+> RCU-bh in term of RCU-preempt. So we have to use
+> rcu_read_lock/unlock_bh() to mark an RCU-bh critical section even in
+> +
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +	rcu_read_lock_bh();
+> +#endif
+> +
+> +	npinfo = rcu_dereference_bh(skb->dev->npinfo);
+> +	ret = npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
+> +
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +	rcu_read_unlock_bh();
+> +#endif
 
-Signed-off-by: Kevin Hao <kexin.hao@windriver.com>
----
- include/linux/netpoll.h | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
+Is that not actually a bug indepedent of RT ? 
+without the rcu_read_lock/unlock who says that the 
+rcu_dereference is still valid at this point ? 
+I though that if bh are already disabled you still
+need the read_lock. disabled bh would allow to "downgrad" 
+the rcu_read_lock_bh to rcu_read_lock but you still need it.
 
-diff --git a/include/linux/netpoll.h b/include/linux/netpoll.h
-index fbfdb9d8d3a7..039dd5df0ef7 100644
---- a/include/linux/netpoll.h
-+++ b/include/linux/netpoll.h
-@@ -87,9 +87,21 @@ static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
- #ifdef CONFIG_NETPOLL
- static inline bool netpoll_rx_on(struct sk_buff *skb)
- {
--	struct netpoll_info *npinfo = rcu_dereference_bh(skb->dev->npinfo);
-+	struct netpoll_info *npinfo;
-+	bool ret;
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	rcu_read_lock_bh();
-+#endif
-+
-+	npinfo = rcu_dereference_bh(skb->dev->npinfo);
-+	ret = npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	rcu_read_unlock_bh();
-+#endif
- 
--	return npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
-+	return ret;
- }
- 
- static inline bool netpoll_rx(struct sk_buff *skb)
--- 
-1.9.3
-
+thx!
+hofrat
