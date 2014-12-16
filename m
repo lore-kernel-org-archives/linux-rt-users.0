@@ -1,65 +1,128 @@
-From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Subject: Re: [PATCH] rtmutex.c: Fix incorrect waiter check
-Date: Mon, 15 Dec 2014 17:35:24 -0700
-Message-ID: <548F7E4C.90805@hp.com>
-References: <1417808100-21626-1-git-send-email-brad.mouring@ni.com>
+From: yhu2 <yadi.hu@windriver.com>
+Subject: Re: [PATCH 3.14.x-rt] ARM: enable irq in translation/section permission
+ fault handlers
+Date: Tue, 16 Dec 2014 10:33:53 +0800
+Message-ID: <548F9A11.9000802@windriver.com>
+References: <1418178729-2279-1-git-send-email-yadi.hu@windriver.com> <1418178729-2279-2-git-send-email-yadi.hu@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>,
-	linux-rt-users@vger.kernel.org, Brad Mouring <brad.mouring@ni.com>
-To: Brad Mouring <bmouring@ni.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: Yadi Hu <yadi.hu@windriver.com>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from g2t1383g.austin.hp.com ([15.217.136.92]:39713 "EHLO
-	g2t1383g.austin.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751248AbaLPAff (ORCPT
+Received: from mail1.windriver.com ([147.11.146.13]:34554 "EHLO
+	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750777AbaLPCfh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 15 Dec 2014 19:35:35 -0500
-Received: from g6t1524.atlanta.hp.com (g6t1524.atlanta.hp.com [15.193.200.67])
-	(using TLSv1.2 with cipher DHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by g2t1383g.austin.hp.com (Postfix) with ESMTPS id 2ECDF4253
-	for <linux-rt-users@vger.kernel.org>; Tue, 16 Dec 2014 00:35:35 +0000 (UTC)
-In-Reply-To: <1417808100-21626-1-git-send-email-brad.mouring@ni.com>
+	Mon, 15 Dec 2014 21:35:37 -0500
+Received: from ALA-HCA.corp.ad.wrs.com (ala-hca.corp.ad.wrs.com [147.11.189.40])
+	by mail1.windriver.com (8.14.9/8.14.5) with ESMTP id sBG2YHaS019804
+	(version=TLSv1/SSLv3 cipher=AES256-SHA bits=256 verify=FAIL)
+	for <linux-rt-users@vger.kernel.org>; Mon, 15 Dec 2014 18:34:17 -0800 (PST)
+In-Reply-To: <1418178729-2279-2-git-send-email-yadi.hu@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Yes, agreed.  Using the macro (), as done in the patch, is the correct
-way to avoid invalid pointer dereferencing.
+Any comments would be appreciated!@
 
-Tested with patch-3.14.25-rt22 patch on a 2 socket platform.
-
-Reviewed-by: T Makphaibulchoke <tmac@hp.cojm>
-Tested-by: T Makphaibulchoke <tmac@hp.cojm>
-
-
-On 12/05/2014 12:35 PM, Brad Mouring wrote:
-> In task_blocks_on_lock, there's a null check on pi_blocked_on
-> of the task_struct. This pointer can encode the fact that the
-> task that contains the pointer is waking (preventing requeuing)
-> and therefore is non-null. Use the inline function to avoid
-> dereferencing an invalid "pointer"
-> 
-> Signed-off-by: Brad Mouring <brad.mouring@ni.com>
-> Reported-by: Ben Shelton <ben.shelton@ni.com>
+On 12/10/2014 10:32 AM, Yadi Hu wrote:
+> From: Yadi.hu <yadi.hu@windriver.com>
+>
+> Probably happens on all ARM, with
+> CONFIG_PREEMPT_RT_FULL
+> CONFIG_DEBUG_ATOMIC_SLEEP
+>
+> This simple program....
+>
+> int main() {
+>     *((char*)0xc0001000) =3D 0;
+> };
+>
+> [ 512.742724] BUG: sleeping function called from invalid context at k=
+ernel/rtmutex.c:658
+> [ 512.743000] in_atomic(): 0, irqs_disabled(): 128, pid: 994, name: a
+> [ 512.743217] INFO: lockdep is turned off.
+> [ 512.743360] irq event stamp: 0
+> [ 512.743482] hardirqs last enabled at (0): [< (null)>] (null)
+> [ 512.743714] hardirqs last disabled at (0): [<c0426370>] copy_proces=
+s+0x3b0/0x11c0
+> [ 512.744013] softirqs last enabled at (0): [<c0426370>] copy_process=
++0x3b0/0x11c0
+> [ 512.744303] softirqs last disabled at (0): [< (null)>] (null)
+> [ 512.744631] [<c041872c>] (unwind_backtrace+0x0/0x104)
+> [ 512.745001] [<c09af0c4>] (dump_stack+0x20/0x24)
+> [ 512.745355] [<c0462490>] (__might_sleep+0x1dc/0x1e0)
+> [ 512.745717] [<c09b6770>] (rt_spin_lock+0x34/0x6c)
+> [ 512.746073] [<c0441bf0>] (do_force_sig_info+0x34/0xf0)
+> [ 512.746457] [<c0442668>] (force_sig_info+0x18/0x1c)
+> [ 512.746829] [<c041d880>] (__do_user_fault+0x9c/0xd8)
+> [ 512.747185] [<c041d938>] (do_bad_area+0x7c/0x94)
+> [ 512.747536] [<c041d990>] (do_sect_fault+0x40/0x48)
+> [ 512.747898] [<c040841c>] (do_DataAbort+0x40/0xa0)
+> [ 512.748181] Exception stack(0xecaa1fb0 to 0xecaa1ff8)
+>
+> Oxc0000000 belongs to kernel address space, user task can not be
+> allowed to access it. For above condition, correct result is that
+> test case should receive a =E2=80=9Csegment fault=E2=80=9D and exits =
+but not stacks.
+>
+> the root cause is commit 02fe2845d6a8 ("avoid enabling interrupts in
+> prefetch/data abort handlers"),it deletes irq enable block in Data
+> abort assemble code and move them into page/breakpiont/alignment faul=
+t
+> handlers instead. But author does not enable irq in translation/secti=
+on
+> permission fault handlers. ARM disables irq when it enters exception/
+> interrupt mode, if kernel doesn't enable irq, it would be still disab=
+led
+> during translation/section permission fault.
+>
+> We see the above splat because do_force_sig_info is still called with
+> IRQs off, and that code eventually does a:
+>
+>          spin_lock_irqsave(&t->sighand->siglock, flags);
+>
+> As this is architecture independent code, and we've not seen any othe=
+r
+> need for other arch to have the siglock converted to raw lock, we can
+> conclude that we should enable irq for ARM translation/section
+> permission exception.
+>
+> Signed-off-by: Yadi.hu <yadi.hu@windriver.com>
 > ---
->  kernel/locking/rtmutex.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 6c40660..535321e 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -335,7 +335,8 @@ int max_lock_depth = 1024;
->  
->  static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
->  {
-> -	return p->pi_blocked_on ? p->pi_blocked_on->lock : NULL;
-> +	return rt_mutex_real_waiter(p->pi_blocked_on) ?
-> +		p->pi_blocked_on->lock : NULL;
->  }
->  
->  /*
-> 
+>   arch/arm/mm/fault.c |    6 ++++++
+>   1 files changed, 6 insertions(+), 0 deletions(-)
+>
+> diff --git a/arch/arm/mm/fault.c b/arch/arm/mm/fault.c
+> index 5dbf13f..272519f 100644
+> --- a/arch/arm/mm/fault.c
+> +++ b/arch/arm/mm/fault.c
+> @@ -428,6 +428,9 @@ do_translation_fault(unsigned long addr, unsigned=
+ int fsr,
+>   	if (addr < TASK_SIZE)
+>   		return do_page_fault(addr, fsr, regs);
+>  =20
+> +	if (interrupts_enabled(regs))
+> +		local_irq_enable();
+> +
+>   	if (user_mode(regs))
+>   		goto bad_area;
+>  =20
+> @@ -494,6 +497,9 @@ do_translation_fault(unsigned long addr, unsigned=
+ int fsr,
+>   static int
+>   do_sect_fault(unsigned long addr, unsigned int fsr, struct pt_regs =
+*regs)
+>   {
+> +	if (interrupts_enabled(regs))
+> +		local_irq_enable();
+> +
+>   	do_bad_area(addr, fsr, regs);
+>   	return 0;
+>   }
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
