@@ -1,31 +1,51 @@
-From: Joshua Hernstrom <joshua.hernstrom@ni.com>
-Subject: Requesting suggestions on ARM based test platforms
-Date: Wed, 17 Dec 2014 16:30:01 -0600
-Message-ID: <20141217163001.6c22f5ba@tyr.amer.corp.natinst.com>
-References: <S1751095AbaLQVaK/20141217213010Z+547@vger.kernel.org>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: cyclictest abstime vs. reltime
+Date: Thu, 18 Dec 2014 09:22:19 +0100
+Message-ID: <20141218082219.GC10857@pengutronix.de>
+References: <20141217151650.6ee5649c@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>, williams@redhat.com,
+	riel@redhat.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:52899 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751189AbaLQWaQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 17 Dec 2014 17:30:16 -0500
-Received: from us-aus-mgwout2.amer.corp.natinst.com (nb-chan1-1338.natinst.com [130.164.19.134])
-	by us-aus-skprod3.natinst.com (8.14.5/8.14.5) with ESMTP id sBHMUFCe026327
-	for <linux-rt-users@vger.kernel.org>; Wed, 17 Dec 2014 16:30:15 -0600
-In-Reply-To: <S1751095AbaLQVaK/20141217213010Z+547@vger.kernel.org>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:44941 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751501AbaLRIWV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Dec 2014 03:22:21 -0500
+Content-Disposition: inline
+In-Reply-To: <20141217151650.6ee5649c@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Hello Luiz,
 
-I am investigating an increase in baseline jitter on my ARMv7 platform after moving from a 3.2 to 3.14 kernel and want to gather data on similar platforms. Can anyone recommend ARM boards (ideally v7 family, but all suggestions welcome) that you think would make a good candidate for me to test upon?  The main criteria being that it has support as far back as 3.2, and that more recent kernels (roughly, 3.10 and later) still show good baseline jitter (<100us).
+On Wed, Dec 17, 2014 at 03:16:50PM -0500, Luiz Capitulino wrote:
+> So, my question boils down to: is there a relevant difference between
+> the two modes? Why isn't reltime the default mode?
+I don't know, but I think in reality you want abstime. Consider a proce=
+ss
+that does something with items that pass at your machine on a belt conv=
+eyor.
+Then you need to handle one item (say) each 200ms and using reltime mea=
+ns
+that your latencies add and even with a latency of 1=B5s you'd miss
+approx. 1 item per year.
 
-I have been trying to use an OMAP3505-based Gumstix Overo but having trouble getting reasonable looking numbers with more recent kernels, and before spending any more time digging on that front, I'd like to compare some other boards.
+Best regards
+Uwe
 
-Poking around on the OSADL site, the Beaglebone-Black looks like a good candidate; any other suggestions that the wisdom of the crowd can throw my way?
-
-Thank you,
-Josh
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
