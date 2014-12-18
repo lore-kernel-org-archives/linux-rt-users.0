@@ -1,55 +1,84 @@
-From: Rolf Wojtech <rolf.wojtech@fos4x.de>
-Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
-Date: Thu, 18 Dec 2014 13:35:38 +0000 (UTC)
-Message-ID: <loom.20141218T143235-363@post.gmane.org>
-References: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com>
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: Re: cyclictest abstime vs. reltime
+Date: Thu, 18 Dec 2014 09:33:57 -0500
+Message-ID: <20141218093357.1fa51822@redhat.com>
+References: <20141217151650.6ee5649c@redhat.com>
+	<87fvcd9suh.fsf@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>, williams@redhat.com,
+	riel@redhat.com
+To: John Ogness <john.ogness@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:35166 "EHLO plane.gmane.org"
+Received: from mx1.redhat.com ([209.132.183.28]:60109 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752457AbaLRNkF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 18 Dec 2014 08:40:05 -0500
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1Y1bJD-0005PD-Tz
-	for linux-rt-users@vger.kernel.org; Thu, 18 Dec 2014 14:40:03 +0100
-Received: from pd907f7af.dip0.t-ipconnect.de ([217.7.247.175])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Dec 2014 14:40:03 +0100
-Received: from rolf.wojtech by pd907f7af.dip0.t-ipconnect.de with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 18 Dec 2014 14:40:03 +0100
+	id S1751470AbaLROeH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 18 Dec 2014 09:34:07 -0500
+In-Reply-To: <87fvcd9suh.fsf@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Juerg Haefliger <juergh <at> gmail.com> writes:
+On Thu, 18 Dec 2014 11:04:38 +0100
+John Ogness <john.ogness@linutronix.de> wrote:
+
+> On 2014-12-17, Luiz Capitulino <lcapitulino@redhat.com> wrote:
+> > We're doing some scheduling latency measurements with KVM. While
+> > analyzing some traces and reading cyclictest code in the process, I
+> > found out that by default cyclictest uses the absolute time algorithm,
+> > which basically does:
+> >
+> > clock_gettime(&now)
+> > next = now + interval   /* interval == 1000us */
+> > /* do some quick stuff */
+> > while() {
+> >     clock_nanosleep(&next) /* ie. sleeps until now + 1000us, 'next' is abs */
+> >     clock_gettime(&now)
+> >     diff = calcdiff(now, next)
+> >     /* update a bunch of stats and the histogram data, also
+> >        check if we're finished */
+> >     next += interval
+> > }
+> >
+> > Now, doesn't this mean that the timerthread will actually sleep less
+> > than interval?
+> 
+> Correct. In cyclictest you are not specifying sleep time. You are
+> specifing the wake interval.
+> 
+> > This is so because we have fixed sleeping points which don't take into
+> > consideration the sleeping latency
+> 
+> Sleep latency is taken into account. That is exactly what cyclictest
+> measures.
+> 
+> > nor the bunch of things the timerthread does (eg. update histogram).
+> 
+> cyclictest does not (and should not) care about this.
+> 
+> > If I'm making sense, won't this behavior cause better numbers to be
+> > reported?
+> 
+> Using _relative_ mode causes _worse_ numbers to be reported because it
+> assumes that a new relative time can be prepared and set
+> instantaneously, which is not correct. So you are not only measuring
+> sleep latency, but also mixing in timer setup duration. I think these
+> numbers would be misleading, since I would expect real-world RT projects
+> to be using absolute time.
+
+This makes sense. Thanks a lot for your answers!
 
 > 
-> Dear RT experts,
+> Absolute (and relative) mode mixes in timer interrupt handling
+> duration. But that is appropriate here since we are not only interested
+> in how good the hardware timer is, but also how fast PREEMPT_RT can
+> allow software to respond to it.
 > 
-> I have a simple test that runs two iperf clients in parallel with the
-> ltp network tests and it triggers a deadlock within a few minutes.
-> This is 100% repeatable. I've tried this on different RT kernels and
-> determined that prior to the following commit (which went into 3.10
-> upstream), the machine doesn't deadlock and seems to run just fine:
+> John Ogness
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 > 
-> fb52f40e085ef4074f1335672cd62c1f832af13b rtmutex: Handle deadlock
-> detection smarter
-> 
-[...]
-
-Hi Juerg,
-it seems like we share the same problem.
-There is a proposed fix by Paul Gortmaker from October 2014 that I replied 
-to here: http://permalink.gmane.org/gmane.linux.rt.user/12699
-We will try to reproduce the problem quicker using your suggestion (2 iperf 
-clients). Keep us posted if you get a reply from someone with more RT and 
-mutex experience.
-
-
-
 
