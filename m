@@ -1,95 +1,92 @@
-From: Chanchal Paul <paulchanchal.ece@gmail.com>
+From: Valdis.Kletnieks@vt.edu
 Subject: Re: Help needed to implement parameter in SCHED_DEADLINE policy
-Date: Sun, 28 Dec 2014 00:09:36 +0530
-Message-ID: <CAD2dHrTRVYp+5u+B=EAcryP6s5BFCvOyzs6ntDgMQkNTpDQDPg@mail.gmail.com>
+Date: Sat, 27 Dec 2014 15:19:47 -0500
+Message-ID: <45259.1419711587@turing-police.cc.vt.edu>
 References: <CAD2dHrTBZd6a_QdEqh4xhVj1c-e4bzAKF5uC4N6B+UEh-zgxvg@mail.gmail.com>
 	<20141226221424.GA8000@sisyphus.home.austad.us>
+	<CAD2dHrTRVYp+5u+B=EAcryP6s5BFCvOyzs6ntDgMQkNTpDQDPg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: kernelnewbies@kernelnewbies.org, linux-rt-users@vger.kernel.org
-To: Henrik Austad <henrik@austad.us>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yh0-f41.google.com ([209.85.213.41]:49132 "EHLO
-	mail-yh0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751497AbaL0Sjj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Dec 2014 13:39:39 -0500
-Received: by mail-yh0-f41.google.com with SMTP id a41so5752603yho.14
-        for <linux-rt-users@vger.kernel.org>; Sat, 27 Dec 2014 10:39:36 -0800 (PST)
-In-Reply-To: <20141226221424.GA8000@sisyphus.home.austad.us>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/mixed; boundary="===============2185233373370688081=="
+Cc: Henrik Austad <henrik@austad.us>, linux-rt-users@vger.kernel.org,
+	kernelnewbies@kernelnewbies.org
+To: Chanchal Paul <paulchanchal.ece@gmail.com>
+Return-path: <kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org>
+In-Reply-To: Your message of "Sun, 28 Dec 2014 00:09:36 +0530."
+	<CAD2dHrTRVYp+5u+B=EAcryP6s5BFCvOyzs6ntDgMQkNTpDQDPg@mail.gmail.com>
+List-Unsubscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
+	<mailto:kernelnewbies-request@kernelnewbies.org?subject=unsubscribe>
+List-Archive: <http://lists.kernelnewbies.org/pipermail/kernelnewbies>
+List-Post: <mailto:kernelnewbies@kernelnewbies.org>
+List-Help: <mailto:kernelnewbies-request@kernelnewbies.org?subject=help>
+List-Subscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
+	<mailto:kernelnewbies-request@kernelnewbies.org?subject=subscribe>
+Sender: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
+Errors-To: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+--===============2185233373370688081==
+Content-Type: multipart/signed; boundary="==_Exmh_1419711587_1876P";
+	micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Transfer-Encoding: 7bit
 
-Let me explain what I am thinking.
+--==_Exmh_1419711587_1876P
+Content-Type: text/plain; charset=us-ascii
 
-I am only concerned about EDF scheduling policy. The scheduler
-determines the order in which it should schedule tasks according to
-their DEADLINE. I dont want to disturb that order. If a scheduler
-picks up a task which is computationally intensive and lets it run
-then due to its thermal characteristic it may heat up processor so
-much that eventually a hardware DTM or a frequency scaling occurs and
-the system slows down as a effect. Where as if the processor would
-have waited a little bit (only that much due to which the task would
-not miss its deadline) before letting the task run, and eventually
-lets the other computationally non intensive tasks run (from the other
-scheduling classes) then may be that DTM would have not occurred and
-may be the system would not have slowed down.
+On Sun, 28 Dec 2014 00:09:36 +0530, Chanchal Paul said:
+> their DEADLINE. I dont want to disturb that order. If a scheduler
+> picks up a task which is computationally intensive and lets it run
+> then due to its thermal characteristic it may heat up processor so
+> much that eventually a hardware DTM or a frequency scaling occurs and
+> the system slows down as a effect.
 
-So I want to solve this problem. or at least see what are the results
-after implementation. I can think that the scheduler need more
-information about the EDF tasks about their thermal (or computational)
-characteristics. Initially I want to supply that information when I
-submit a EDF task.
+This is properly the domain of CPU governors, not schedulers. Modern Intel
+chipsets with the Turbo feature will dynamically up-throttle to whatever the
+cooling budget allows, and if you have an older chipset that doesn't do that,
+you're better off creating a custom governor that doesn't allow selection of
+the highest CPU frequenc(y|ies) that exceed the current cooling budget
 
-Thank you.
+Note that this gets tricky on multi-core sockets, as activity on other
+cores affects the cooling budget for the core you're scheduling onto.
 
-On Sat, Dec 27, 2014 at 3:44 AM, Henrik Austad <henrik@austad.us> wrote:
-> On Fri, Dec 26, 2014 at 09:14:22PM +0530, Chanchal Paul wrote:
->> Hi all,
->
-> Hi Paul,
->
->> I am trying to implement my custom scheduling policy in rt patched
->> linux kernel. I am working with version 3.14.25-rt22. I have
->> successfully installed the kernel after patching with rt patch of same
->> version.
->>
->> Now the installed kernel also has SCHED_DEADLINE i.e. the EDF scheduling policy.
->>
->> The problem in my hand is to introduce a parameter in the
->> SCHED_DEADLINE policy which will further dynamically change the
->> priority according to the supplied value while the task is submitted.
->
-> You do know that SCHED_DEADLINE does not use priorities but _deadlines_,
-> right?
->
-> care to elaborate a bit?
->
->> I have already simulated and tested my requirement. I am having
->> problem with understanding the hierarchy of scheduler code.
->
-> You mean the order of the scheduling policies? If you look at the
-> sched_class in the different classes, you'll find the following hierarchy:
->
-> stop_sched_class
-> dl_sched_class
-> rt_sched_class
-> fair_sched_class
-> idle_sched_class
->
-> So, first the scheduler sees if there's any deadline tasks, then -rt and so
-> on.
->
-> I (we) need a bit more info about what exactly it is you're struggling with
->
->>
->> Thanks in advance
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->
-> --
-> Henrik Austad
+And if your hardware is throwing actual thermal shutdown events, you have
+bigger problems that scheduler hacks won't help.
+
+
+
+--==_Exmh_1419711587_1876P
+Content-Type: application/pgp-signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+Comment: Exmh version 2.5 07/13/2001
+
+iQIVAwUBVJ8UYwdmEQWDXROgAQJ/RBAAlb3j460aI0pm91Wc5k5ePnSDfPstmU90
+AJ0+2qJHqvvdFAbliw5/2xQGXYPiX1pKDMpFoFkGkF9NK1eO4ZULu7km+DKF0O4B
+xeLlg8vNqpRQAEawmVHSnSkvJQ63DTwjfNjgRxGKxEf2eXVhVUXHQeW5/vm9NyBQ
+VWPnyIIMf4bdnMu2TqtfYT6uThInLsJmuavBDKQaZJP/yRcifMJZeTAuT6BhPuws
+iuaBMtHUj9kCLj5U+fcG8oKaSB6vO655LHATprWyr6u2Xrgp8XfmTNZdR0beNpMv
+JPfE5a+c+k75lE0T9PMzzl9Yco1orl9n1tswdgJPOkC+hyxJKkKwx9yHCwIzSeZc
+ABHFEsZDyLF2bxYl4Z5SPXM1vayzt9Y5J28R9BBFTCx9WE+i7Nwts0NPZLv0yUWv
+tKbBV+4FHMkmxxx8nXzjNerHOpN03BlvbLkcXLb147fvVYSPJyZF86R54WI9ZSKX
+fKF5rryu9+VnvTfRizSFhfPU/VdVmfEArOF+pVt9lb0aZbFbSt/PYYxASoLTKpSr
+FarkYUXQpQ3trGyeUwgsSTJKfeFBcF3hgLy8DJGG2fDC1y7WPVeKR1BQ9co5Y2mE
+5Q+ERV6p5oQGeO3NpkifagT6dA/xsdYJ3+GAbIlHokIWop1rTbyTFq5idzYiOlus
+s6KVNSKtD/w=
+=IxA/
+-----END PGP SIGNATURE-----
+
+--==_Exmh_1419711587_1876P--
+
+
+--===============2185233373370688081==
+Content-Type: text/plain; charset="us-ascii"
+MIME-Version: 1.0
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+
+_______________________________________________
+Kernelnewbies mailing list
+Kernelnewbies@kernelnewbies.org
+http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies
+
+--===============2185233373370688081==--
