@@ -1,92 +1,133 @@
-From: Valdis.Kletnieks@vt.edu
-Subject: Re: Help needed to implement parameter in SCHED_DEADLINE policy
-Date: Sat, 27 Dec 2014 15:19:47 -0500
-Message-ID: <45259.1419711587@turing-police.cc.vt.edu>
-References: <CAD2dHrTBZd6a_QdEqh4xhVj1c-e4bzAKF5uC4N6B+UEh-zgxvg@mail.gmail.com>
-	<20141226221424.GA8000@sisyphus.home.austad.us>
-	<CAD2dHrTRVYp+5u+B=EAcryP6s5BFCvOyzs6ntDgMQkNTpDQDPg@mail.gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: Dynamic rt_mutexes?
+Date: Mon, 5 Jan 2015 14:37:19 -0500
+Message-ID: <20150105143719.6a49b127@gandalf.local.home>
+References: <CAF7YWnzxUr6sgULqOzJ549k3Rt2PaW56dJPXJBnMqkHSJNnAGw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; boundary="===============2185233373370688081=="
-Cc: Henrik Austad <henrik@austad.us>, linux-rt-users@vger.kernel.org,
-	kernelnewbies@kernelnewbies.org
-To: Chanchal Paul <paulchanchal.ece@gmail.com>
-Return-path: <kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org>
-In-Reply-To: Your message of "Sun, 28 Dec 2014 00:09:36 +0530."
-	<CAD2dHrTRVYp+5u+B=EAcryP6s5BFCvOyzs6ntDgMQkNTpDQDPg@mail.gmail.com>
-List-Unsubscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
-	<mailto:kernelnewbies-request@kernelnewbies.org?subject=unsubscribe>
-List-Archive: <http://lists.kernelnewbies.org/pipermail/kernelnewbies>
-List-Post: <mailto:kernelnewbies@kernelnewbies.org>
-List-Help: <mailto:kernelnewbies-request@kernelnewbies.org?subject=help>
-List-Subscribe: <http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies>,
-	<mailto:kernelnewbies-request@kernelnewbies.org?subject=subscribe>
-Sender: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
-Errors-To: kernelnewbies-bounces+glkk-kernelnewbies=gmane.org@kernelnewbies.org
-List-Id: linux-rt-users.vger.kernel.org
-
---===============2185233373370688081==
-Content-Type: multipart/signed; boundary="==_Exmh_1419711587_1876P";
-	micalg=pgp-sha1; protocol="application/pgp-signature"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
+Cc: tglx@linutronix.de, mingo@kernel.org,
+	RT <linux-rt-users@vger.kernel.org>,
+	Anders Roxell <anders.roxell@linaro.org>,
+	Mike Holmes <mike.holmes@linaro.org>,
+	Raj Murali <raj.murali@linaro.org>
+To: Gary Robertson <gary.robertson@linaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0248.hostedemail.com ([216.40.44.248]:49879 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1753459AbbAETpS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 5 Jan 2015 14:45:18 -0500
+Received: from smtprelay.hostedemail.com (10.5.19.251.rfc1918.com [10.5.19.251])
+	by smtpgrave06.hostedemail.com (Postfix) with ESMTP id 19129172AF4
+	for <linux-rt-users@vger.kernel.org>; Mon,  5 Jan 2015 19:37:23 +0000 (UTC)
+In-Reply-To: <CAF7YWnzxUr6sgULqOzJ549k3Rt2PaW56dJPXJBnMqkHSJNnAGw@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---==_Exmh_1419711587_1876P
-Content-Type: text/plain; charset=us-ascii
+On Mon, 5 Jan 2015 11:53:43 -0600
+Gary Robertson <gary.robertson@linaro.org> wrote:
 
-On Sun, 28 Dec 2014 00:09:36 +0530, Chanchal Paul said:
-> their DEADLINE. I dont want to disturb that order. If a scheduler
-> picks up a task which is computationally intensive and lets it run
-> then due to its thermal characteristic it may heat up processor so
-> much that eventually a hardware DTM or a frequency scaling occurs and
-> the system slows down as a effect.
+> As a latecomer to this list and the detailed history of RT patch
+> development, I apologize if this is an old and previously discounted idea -
+> but - in light of the impending discontinuation of professionally
+> subsidized support for the RT patch set I felt maybe this question needs
+> asking...
+> 
+> The transformation of kernel locking primitives via the macros in the RT
+> patch set was and remains a brilliant piece of work... kudos to you all for
+> that contribution!
+> 
+> However, as we are all painfully aware, the impact of that transformation
+> on code which runs outside of a schedulable context creates a huge
+> maintenance burden,
+> since such code has to be modified to avoid encounters with rt_mutexes
+> resulting from the
+> spinlock transformation.
+> 
+> It occurs to me that if the behavior of the transformed locking primitives
+> could be made
+> more transparent then the added maintenance burden might be avoided.
+> 
+> The gist of the idea is that the rt_mutex code could assess at runtime
+> whether the lock-seeking caller was in an execution context which could
+> safely sleep, and could then behave accordingly.
+> If the caller couldn't sleep then the rt_mutex code would 'spin' while
+> waiting to acquire the lock,
+> rather than putting the caller to sleep.  The existing 'sleeping lock'
+> behavior
+> would be manifested only for those callers in a schedulable context.
+> 
+> I think this 'dynamic waiting method' should make the lock transformation
+> more or less
+> transparent to existing code regardless of its execution context,
+> and might yield similar improvements in latency reduction and determinism
+> without having to rewrite spinlock calls made from critical sections in
+> existing code.
+> 
+> The big question as I see it is whether the caller's schedulability can be
+> determined reliably enough to support such a decision at the time the lock
+> is sought...
+> and I don't have comprehensive enough knowledge of the current kernel code
+> to be certain this is the case - despite the presence of diagnostic macros
+> to warn of
+> such scenarios.
+> 
+> SO I thought I would quickly poll the experts as to the feasibility of such
+> an approach before investing too much time in attempting to research or
+> implement it.
+> 
+> If the caller's execution context cannot be assessed reliably enough to
+> catch all possible
+> 'scheduling while atomic' scenarios when the caller seeks to acquire an
+> rt_mutex,
+> then this approach obviously won't work.  If there are other factors I am
+> missing which might
+> prevent this approach from working I would appreciate a quick dismissal of
+> the idea and
+> - hopefully - some hints as to why it wouldn't work.
 
-This is properly the domain of CPU governors, not schedulers. Modern Intel
-chipsets with the Turbo feature will dynamically up-throttle to whatever the
-cooling budget allows, and if you have an older chipset that doesn't do that,
-you're better off creating a custom governor that doesn't allow selection of
-the highest CPU frequenc(y|ies) that exceed the current cooling budget
+I'll answer this here. It wont work.
 
-Note that this gets tricky on multi-core sockets, as activity on other
-cores affects the cooling budget for the core you're scheduling onto.
+The problem isn't that the current runtime context we can't schedule or
+not. The problem is if something did schedule that holds the lock the
+current context can't schedule for. Then you are stuck. Spinning wont
+help. In fact, it will just make it worse.
 
-And if your hardware is throwing actual thermal shutdown events, you have
-bigger problems that scheduler hacks won't help.
+A lock really can't be "OK to schedule here but not OK to schedule
+there". The point being, we can't spin on a lock that is held by a task
+that isn't running. The system isn't designed to handle such a
+paradigm. You can either always schedule out, or always spin, you can't
+mix and match.
 
+The "adaptive" locks do spin and schedule. But they can also do both in
+all locations. That is, a task will spin as long as the owner of the
+lock is still running, since it will probably not be worth going
+through the overhead of a schedule if the running task could release it
+at any moment. But once the owner goes to sleep, there's no point in
+spinning (in fact, it could cause deadlocks). It must too sleep as well.
 
+How could you have a deadlock? Well, if you never sleep, what happens
+if the owner was preempted by the task that wants the lock, and the
+owner is pinned to that CPU? The task that is spinning is preventing
+the owner from releasing the lock, and now that task will spin forever.
 
---==_Exmh_1419711587_1876P
-Content-Type: application/pgp-signature
+This idea has come up before, and it creates more holes to the system
+than it can fill.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-Comment: Exmh version 2.5 07/13/2001
-
-iQIVAwUBVJ8UYwdmEQWDXROgAQJ/RBAAlb3j460aI0pm91Wc5k5ePnSDfPstmU90
-AJ0+2qJHqvvdFAbliw5/2xQGXYPiX1pKDMpFoFkGkF9NK1eO4ZULu7km+DKF0O4B
-xeLlg8vNqpRQAEawmVHSnSkvJQ63DTwjfNjgRxGKxEf2eXVhVUXHQeW5/vm9NyBQ
-VWPnyIIMf4bdnMu2TqtfYT6uThInLsJmuavBDKQaZJP/yRcifMJZeTAuT6BhPuws
-iuaBMtHUj9kCLj5U+fcG8oKaSB6vO655LHATprWyr6u2Xrgp8XfmTNZdR0beNpMv
-JPfE5a+c+k75lE0T9PMzzl9Yco1orl9n1tswdgJPOkC+hyxJKkKwx9yHCwIzSeZc
-ABHFEsZDyLF2bxYl4Z5SPXM1vayzt9Y5J28R9BBFTCx9WE+i7Nwts0NPZLv0yUWv
-tKbBV+4FHMkmxxx8nXzjNerHOpN03BlvbLkcXLb147fvVYSPJyZF86R54WI9ZSKX
-fKF5rryu9+VnvTfRizSFhfPU/VdVmfEArOF+pVt9lb0aZbFbSt/PYYxASoLTKpSr
-FarkYUXQpQ3trGyeUwgsSTJKfeFBcF3hgLy8DJGG2fDC1y7WPVeKR1BQ9co5Y2mE
-5Q+ERV6p5oQGeO3NpkifagT6dA/xsdYJ3+GAbIlHokIWop1rTbyTFq5idzYiOlus
-s6KVNSKtD/w=
-=IxA/
------END PGP SIGNATURE-----
-
---==_Exmh_1419711587_1876P--
+-- Steve
 
 
---===============2185233373370688081==
-Content-Type: text/plain; charset="us-ascii"
-MIME-Version: 1.0
-Content-Transfer-Encoding: 7bit
-Content-Disposition: inline
+> 
+> BUT - if it could work - this approach might make the macro-based kernel
+> lock transformation
+> transparent enough to make it easier to merge into the mainstream kernel.
+> 
+> Thanks again for your contributions, hard work and dedication to Linux
+> real-time support.
+> I'll be looking forward to any replies you may offer.
+> 
+> Gary Robertson
+> 
+> Real-time engineer, Linaro Networking Group
 
-_______________________________________________
-Kernelnewbies mailing list
-Kernelnewbies@kernelnewbies.org
-http://lists.kernelnewbies.org/mailman/listinfo/kernelnewbies
-
---===============2185233373370688081==--
