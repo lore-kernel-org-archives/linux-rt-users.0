@@ -1,33 +1,19 @@
-From: Rik van Riel <riel@redhat.com>
-Subject: Re: [patch -rt 2/2] KVM: lapic: mark LAPIC timer handler as irqsafe
-Date: Wed, 14 Jan 2015 13:23:54 -0500
-Message-ID: <54B6B43A.9070506@redhat.com>
-References: <20150114171251.882318257@redhat.com> <20150114171459.694888126@redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Luiz Capitulino <lcapitulino@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+From: "Brad Mouring" <bmouring@ni.com>
+Subject: [re: PATCH] rtmutex.c: Fix incorrect waiter check
+Date: Wed, 14 Jan 2015 15:11:37 -0600
+Message-ID: <1421269898-30591-1-git-send-email-brad.mouring@ni.com>
+References: <548F7E4C.90805@hp.com>
+Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>,
+	linux-rt-users@vger.kernel.org, T Makphaibulchoke <tmac@hp.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:50173 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751343AbbANSX7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Jan 2015 13:23:59 -0500
-In-Reply-To: <20150114171459.694888126@redhat.com>
+Received: from skprod3.natinst.com ([130.164.80.24]:52407 "EHLO ni.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752308AbbANVL5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 14 Jan 2015 16:11:57 -0500
+In-Reply-To: <548F7E4C.90805@hp.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/14/2015 12:12 PM, Marcelo Tosatti wrote:
-> Since lapic timer handler only wakes up a simple waitqueue,
-> it can be executed from hardirq context.
-> 
-> Reduces average cyclictest latency by 3us.
-> 
-> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
 
-Acked-by: Rik van Riel <riel@redhat.com>
-
+Putting this back to the list since I've only received positive feedback for this simple change.
