@@ -1,35 +1,114 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH 3/7] wait.[ch]: Introduce the simple waitqueue (swait)
- implementation
-Date: Wed, 14 Jan 2015 16:29:02 +0100
-Message-ID: <20150114152902.GH22386@worktop.programming.kicks-ass.net>
-References: <1413591782-23453-1-git-send-email-paul.gortmaker@windriver.com>
- <1413591782-23453-4-git-send-email-paul.gortmaker@windriver.com>
- <20150114103834.GN23965@worktop.programming.kicks-ass.net>
- <20150114091849.501a0a72@gandalf.local.home>
- <20150114143102.GE22386@worktop.programming.kicks-ass.net>
- <20150114100102.55c78715@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:59656 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752950AbbANP3H (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 14 Jan 2015 10:29:07 -0500
-Content-Disposition: inline
-In-Reply-To: <20150114100102.55c78715@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: [patch -rt 2/2] KVM: lapic: mark LAPIC timer handler as irqsafe
+Date: Wed, 14 Jan 2015 15:12:53 -0200
+Message-ID: <20150114171459.694888126@redhat.com>
+References: <20150114171251.882318257@redhat.com>
+Cc: Luiz Capitulino <lcapitulino@redhat.com>,
+	Rik van Riel <riel@redhat.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	Marcelo Tosatti <mtosatti@redhat.com>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=kvm-lapic-irqsafe
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Jan 14, 2015 at 10:01:02AM -0500, Steven Rostedt wrote:
-> Then why even bother with the wake_up_state, and not just call
-> wake_up_process()?
+Since lapic timer handler only wakes up a simple waitqueue,
+it can be executed from hardirq context.
 
-Ah indeed. TASK_NORMAL should be fine for all.
+Reduces average cyclictest latency by 3us.
+
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+---
+ arch/x86/kvm/lapic.c |   42 +++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 39 insertions(+), 3 deletions(-)
+
+Index: linux-stable-rt/arch/x86/kvm/lapic.c
+===================================================================
+--- linux-stable-rt.orig/arch/x86/kvm/lapic.c	2014-11-25 14:14:38.636810068 -0200
++++ linux-stable-rt/arch/x86/kvm/lapic.c	2015-01-14 14:59:17.840251874 -0200
+@@ -1031,8 +1031,38 @@
+ 				   apic->divide_count);
+ }
+ 
++
++static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
++
++static void apic_timer_expired(struct hrtimer *data)
++{
++	int ret, i = 0;
++	enum hrtimer_restart r;
++	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
++
++	r = apic_timer_fn(data);
++
++	if (r == HRTIMER_RESTART) {
++		do {
++			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
++			if (ret == -ETIME)
++				hrtimer_add_expires_ns(&ktimer->timer,
++							ktimer->period);
++			i++;
++		} while (ret == -ETIME && i < 10);
++
++		if (ret == -ETIME) {
++			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
++			       __func__);
++			WARN_ON_ONCE(1);
++		}
++	}
++}
++
++
+ static void start_apic_timer(struct kvm_lapic *apic)
+ {
++	int ret;
+ 	ktime_t now;
+ 	atomic_set(&apic->lapic_timer.pending, 0);
+ 
+@@ -1062,9 +1092,11 @@
+ 			}
+ 		}
+ 
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			      ktime_add_ns(now, apic->lapic_timer.period),
+ 			      HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
+ 			   PRIx64 ", "
+@@ -1094,8 +1126,10 @@
+ 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
+ 			do_div(ns, this_tsc_khz);
+ 		}
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		local_irq_restore(flags);
+ 	}
+@@ -1581,6 +1615,7 @@
+ 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
+ 		     HRTIMER_MODE_ABS);
+ 	apic->lapic_timer.timer.function = apic_timer_fn;
++	apic->lapic_timer.timer.irqsafe = 1;
+ 
+ 	/*
+ 	 * APIC is created enabled. This will prevent kvm_lapic_set_base from
+@@ -1699,7 +1734,8 @@
+ 
+ 	timer = &vcpu->arch.apic->lapic_timer.timer;
+ 	if (hrtimer_cancel(timer))
+-		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
++		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
++			apic_timer_expired(timer);
+ }
+ 
+ /*
