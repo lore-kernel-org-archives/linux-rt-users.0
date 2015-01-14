@@ -1,46 +1,58 @@
 From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: [patch -rt 0/2] use simple waitqueue for kvm vcpu waitqueue (v3)
-Date: Wed, 14 Jan 2015 15:12:51 -0200
-Message-ID: <20150114171251.882318257@redhat.com>
-Cc: Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Subject: Re: [PATCH -rt] timer: upper bound on loops of __run_timers
+ processing
+Date: Wed, 14 Jan 2015 15:21:47 -0200
+Message-ID: <20150114172147.GA16570@amt.cnet>
+References: <20141230195228.GA3057@amt.cnet>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	Luiz Capitulino <lcapitulino@redhat.com>,
+	Rik van Riel <riel@redhat.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20141230195228.GA3057@amt.cnet>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Against v3.14-rt branch of 
-git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-The problem:
+Ping?
 
-On -RT, an emulated LAPIC timer instance has the following path:
-
-1) hard interrupt
-2) ksoftirqd is scheduled
-3) ksoftirqd wakes up vcpu thread
-4) vcpu thread is scheduled
-
-This extra context switch introduces unnecessary latency in the
-LAPIC path for a KVM guest.
-
-The solution:
-
-Allow waking up vcpu thread from hardirq context,
-thus avoiding the need for ksoftirqd to be scheduled.
-
-Normal waitqueues make use of spinlocks, which on -RT
-are sleepable locks. Therefore, waking up a waitqueue
-waiter involves locking a sleeping lock, which
-is not allowed from hard interrupt context.
-
-cyclictest command line:
-# cyclictest -m -n -q -p99 -l 1000000 -h60  -D 1m
-
-This patch reduces the average latency in my tests from 14us to 11us.
-
-v2: improve changelog (Rik van Riel)
-v3: limit (once) guest triggered printk and WARN_ON (Paolo Bonzini)
+On Tue, Dec 30, 2014 at 05:52:28PM -0200, Marcelo Tosatti wrote:
+> 
+> Commit "timers: do not raise softirq unconditionally", allows for timer
+> wheel processing (__run_timers) to be delayed for long periods of time.
+> 
+> The effect is that 
+> 
+> loops = jiffies - base->timer_jiffies
+> 
+> Can grow to very large values resulting in __run_timers taking hundreds
+> of milliseconds to execute.
+> 
+> Fix by creating an upper bound on the number of loops to be processed.
+> This allows a nohz=off kernel to achieve desired latencies.
+> 
+> Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+> 
+> diff --git a/kernel/timer.c b/kernel/timer.c
+> index f59e18c..c128416 100644
+> --- a/kernel/timer.c
+> +++ b/kernel/timer.c
+> @@ -1488,6 +1488,12 @@ void run_local_timers(void)
+>  	}
+>  #endif
+>  
+> +	if (time_after_eq(jiffies, base->timer_jiffies)) {
+> +		unsigned long jiffies_delta = jiffies - base->timer_jiffies;
+> +		if (jiffies_delta > TVR_SIZE)
+> +			raise_softirq(TIMER_SOFTIRQ);
+> +	}
+> +
+>  	if (!base->active_timers)
+>  		goto out;
+>  
