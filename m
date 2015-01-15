@@ -1,182 +1,112 @@
 From: Clark Williams <clark.williams@gmail.com>
-Subject: Re: [PATCH] pip_stress: increase usleep for ARM devices
-Date: Thu, 15 Jan 2015 12:44:08 -0600
-Message-ID: <20150115124408.457e1c83@sluggy>
-References: <1418199901-3175-1-git-send-email-chase.qi@linaro.org>
-	<54885564.2050904@linaro.org>
-	<20141210151650.1995581e@sluggy>
+Subject: Re: [PATCH] Makefile: allow building selected tests with non-NPTL
+ toolchain
+Date: Thu, 15 Jan 2015 12:45:57 -0600
+Message-ID: <20150115124557.5d2d34ad@sluggy>
+References: <1415603814-7682-1-git-send-email-abrodkin@synopsys.com>
+	<1421307300.3008.2.camel@synopsys.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/Rb6X2+p0TsljGM=cNTN6rnR"; protocol="application/pgp-signature"
-Cc: chase.qi@linaro.org, linux-rt-users@vger.kernel.org,
-	milosz.wasilewski@linaro.org, naresh.kamboju@linaro.org,
-	anders.roxell@linaro.org, mike.holmes@linaro.org,
-	John Kacur <jkacur@gmail.com>
-To: Jorge Ramirez-Ortiz <jorge.ramirez-ortiz@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qg0-f47.google.com ([209.85.192.47]:44766 "EHLO
-	mail-qg0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753512AbbAOSoS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 15 Jan 2015 13:44:18 -0500
-Received: by mail-qg0-f47.google.com with SMTP id q108so13072371qgd.6
-        for <linux-rt-users@vger.kernel.org>; Thu, 15 Jan 2015 10:44:18 -0800 (PST)
-In-Reply-To: <20141210151650.1995581e@sluggy>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+ boundary="Sig_/gj+h4Or+poHF0sk.1f6_RJ3"; protocol="application/pgp-signature"
+Cc: "jkacur@redhat.com" <jkacur@redhat.com>,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"Vineet Gupta" <Vineet.Gupta1@synopsys.com>
+To: Alexey Brodkin <Alexey.Brodkin@synopsys.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1421307300.3008.2.camel@synopsys.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/Rb6X2+p0TsljGM=cNTN6rnR
+--Sig_/gj+h4Or+poHF0sk.1f6_RJ3
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Wed, 10 Dec 2014 15:16:50 -0600
-Clark Williams <clark.williams@gmail.com> wrote:
+On Thu, 15 Jan 2015 07:35:01 +0000
+Alexey Brodkin <Alexey.Brodkin@synopsys.com> wrote:
 
-> On Wed, 10 Dec 2014 09:15:00 -0500
-> Jorge Ramirez-Ortiz <jorge.ramirez-ortiz@linaro.org> wrote:
+> Hi Clark, John,
 >=20
-> > On 12/10/2014 03:25 AM, chase.qi@linaro.org wrote:
-> > > From: Chase Qi <chase.qi@linaro.org>
-> > >
-> > > Hello,
-> > >
-> > > pip_stress works out of the box on my x86 based laptop, but
-> > > doesn't work on ARM devices, returned 'no inversion incurred'.
-> > > Follow the comment to increase usleep value, 2500 worked for
-> > > pandaboard and 3000 worked for Beaglebone Black board.
-> > >
-> > > I propose that increase the usleep value to 3500 from upstream,
-> > > so that we can use pip_stress right out of the box.
-> > >
-> > > Please let me know if this is acceptable.
+> On Mon, 2014-11-10 at 10:16 +0300, Alexey Brodkin wrote:
+> > Some architectures are still stuck with non-NPTL toolchains.
+> > These are for example ARC, Blackfin, Xtensa etc.
 > >=20
-> > I think they should have modified main() to accept the lock time as a p=
-arameter
-> > instead of simply adding some instructions in the comments
+> > Still rt-tests are very good benchmarks and it would be good to enable =
+use of
+> > at least selected (those that will be built) tests on those architectur=
+es.
 > >=20
-> >  * to show that it works. If you are having difficulty triggering an in=
-version,
-> >  * merely increase the time that the low priority process sleeps while
-> >  * holding the lock. (usleep);
-> >  * Also note that you have to run as a user with permission to change
-> >  * scheduling priorities.
-> >  */
+> > This change makes it possible to only build subset of tests that don't =
+require
+> > NPTL calls.
 > >=20
-> > what I would do is actually
-> > 1. modify main to accept lock_time
-> > 2. send the patch to the rt-tests team
+> > By default behavior is not modified - all tests are built, but if one w=
+ants
+> > to build with non-NPTL toolchain just add "HAVE_NPTL=3Dno" in command l=
+ine
+> > or modify "HAVE_NPTL" variable right in Makefile and execute "make".
 > >=20
+> > Signed-off-by: Alexey Brodkin <abrodkin@synopsys.com>
+> > Cc: Vineet Gupta <vgupta@synopsys.com>
+> > Cc: Clark Williams <clark.williams@gmail.com>
+> > ---
+> >  Makefile | 11 ++++++++---
+> >  1 file changed, 8 insertions(+), 3 deletions(-)
 > >=20
-> >
+> > diff --git a/Makefile b/Makefile
+> > index 318a5c6..675edf7 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -1,8 +1,13 @@
+> >  VERSION_STRING =3D 0.89
+> > =20
+> > -sources =3D cyclictest.c signaltest.c pi_stress.c rt-migrate-test.c	\
+> > -	  ptsematest.c sigwaittest.c svsematest.c pmqtest.c sendme.c 	\
+> > -	  pip_stress.c hackbench.c
+> > +HAVE_NPTL ?=3D yes
+> > +
+> > +ifeq ($(HAVE_NPTL),yes)
+> > +sources =3D cyclictest.c pi_stress.c pip_stress.c pmqtest.c rt-migrate=
+-test.c
+> > +endif
+> > +
+> > +sources +=3D signaltest.c ptsematest.c sigwaittest.c svsematest.c send=
+me.c \
+> > +	  hackbench.c
+> > =20
+> >  TARGETS =3D $(sources:.c=3D)
 >=20
-> I wish we didn't have to deal with timers here. I used barriers when I
-> wrote pi_stress.c and obviously we don't have that luxury with
-> pip_stress.c. I guess the best thing we can do right now is add a
-> parameter to change the default timer value for pip_stress and see if
-> someone comes up with a brilliant state-machine solution that will work
-> between processes :).
+> I'm wondering if there's a chance to get this patch reviewed and if
+> there're no objections applied?
 >=20
-> John and I are about to start a sweep through the tests and will
-> probably come out with a new rt-tests around the first of the year.=20
->=20
-> Clark
+> Regards,
+> Alexey
 
-Here's what I've got for the problem. Comments?
+Changes looked good to me. I've pulled it in and it will be in the next
+release.
 
+Clark
 
-commit 57f700830439fd036cfd8231f4b4a077c9fc461b
-Author: Clark Williams <clark.williams@gmail.com>
-Date:   Thu Jan 15 12:35:05 2015 -0600
-
-    pip_stress: parameterize usleep value to work-around platform
-    issuess=20
-    ARM platforms have timing issues with pip_stress:
-   =20
-        Hello,
-   =20
-        pip_stress works out of the box on my x86 based laptop, but
-        doesn't work on ARM devices, returned 'no inversion incurred'.
-        Follow the comment to increase usleep value, 2500 worked for
-        pandaboard and 3000 worked for Beaglebone Black board.
-   =20
-        I propose that increase the usleep value to 3500 from upstream,
-        so that we can use pip_stress right out of the box.
-   =20
-    Rather than hardcode the usleep value used by pip_stress, I made
-    the command line option --usleep which takes a microsecond value
-    that defaults to 500us.
-   =20
-    Reported-by: Chase Qi <chase.qi@linaro.org>
-    Signed-off-by: Clark Williams <clark.williams@gmail.com>
-
-diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
-index 2b42b8ff2491..66b3dc1c9fea 100644
---- a/src/pi_tests/pip_stress.c
-+++ b/src/pi_tests/pip_stress.c
-@@ -56,6 +56,12 @@
-=20
- #include "pip_stress.h"
-=20
-+#include <unistd.h>
-+#include <getopt.h>
-+
-+/* default time for low priority thread usleep */
-+useconds_t usleep_val =3D 500;
-+
- pthread_mutex_t *resource;
-=20
- /* This records the state to determine whether a priority inversion
-occured */ @@ -73,6 +79,11 @@ struct State *statep;
- const int policy =3D SCHED_FIFO;
- const int prio_min;    /* Initialized for the minimum priority of
-policy */=20
-+struct option long_options[] =3D {
-+    { "usleep", required_argument, 0, 0 },
-+    { 0,        0,                 0, 0 },
-+};
-+
- int main(void)
- {
-        void *mptr;     /* memory pointer */
-@@ -80,6 +91,7 @@ int main(void)
-        cpu_set_t set, *setp =3D &set;
-        int res;
-        int *minimum_priority =3D (int*)&prio_min;
-+       int c;
-=20
-        *minimum_priority =3D sched_get_priority_min(policy);
-=20
-@@ -162,7 +174,7 @@ void low(pid_t pid)
-                                statep->inversion =3D 0;
-                        }
-                Pthread_mutex_unlock(statep->mutex);
--               usleep(500);
-+               usleep(usleep_val);
-        Pthread_mutex_unlock(resource);
-        waitpid(pid, &status, 0);
- }
-
-
---Sig_/Rb6X2+p0TsljGM=cNTN6rnR
+--Sig_/gj+h4Or+poHF0sk.1f6_RJ3
 Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2
 
-iQIcBAEBAgAGBQJUuAp8AAoJEEersVlSw9NzjBgP/34vnsfXBSYfLpWWb/0Yuep+
-W7XmiEYjcVKOSQ1RpsF1uANE+Gh9YQBBEUThGBPSJcpBTBG0Bd+sZnf6yX8Gj3Pk
-pLkVrL5bpTuSUJPK87diBByA64qQpopR2mVOhoS89MPvuM9C52Qh9Oe8uQNwT+SS
-gYTVlD08vQB0weJANrxGvxbu3CWIC6yXh2Hmw3aMl9Eh5bLSwzkWU+PbOTnol1nv
-OxnIF7WcoaWjpWFQzlvEhMMhlTbMgsKYgLMiPpmYq/wjutoEd3nasPYnRZ3EvCVh
-GoylXSHN6/T4hj5INSU4Slb5yoojAQiUZH+QwecbZ3ImzOmRaSdzTZhRWAeevXhK
-NT3mrbvEWyGt6BHKMqRYhhiqd4aUrjcRAEmyzbX1cD+T3GT+3sHGOxJEq+nTJHqQ
-Bm7ti4TgjtiOFQUVTjQ6bJdt85vqIGloqqomkbXBQYXfPotgn65eCLQKkrjbadm/
-i/JqgRZd/jQ97xx9ub4u+Dd4JNhZawAIQ6+PGiYYMdS0fcefm24l3z0omEQrRC/m
-KD53l8vW0/GCHYHGBV69NQN/aBpY1E5fXGUU8u1NYzguVD/lygIWGWU7yBw5CfFn
-CM4+85HroeWPQDBDh5NIDNzYDww3157CEyZxp/IQFcwQLfywnIQdR0sMiHVeztE5
-Dd39a4lhEBDdK+8mQo/N
-=814I
+iQIcBAEBAgAGBQJUuArlAAoJEEersVlSw9NziSQP/RSPeQX+CybelMFWUiK+5s9v
+e9KqAF8qwXHD26tjo5y/q7FS2rq9i7vU8tgN/u2jQwzl87zxiwoGxwVzq2GZc+Wd
+jD+T13obAbi5Utuk/X2U6sHzjY0VVhcEK1SF5PrMLjbCctmAmzSI+ymhg+3IZ3tt
+cYCLTblmutrCExl4QvRuqXcQvPscrUeKtAdqN2Y3+7jYtjQYKQyZPDn7QLL972q6
+m5VBg9Q49E1dV8gpivlj0ziSaEyRSXYtsp0f1hXQw9kJurrK5JZMoSl6TOPdvfJs
+BlLr6kZzXFEVWWsNWPHT5VlGjAHxbf1cALz1qHSw7sPHupBQcbtX/aFJFC3n2FZu
+7Bdce5hJvxyu6GChWzqEtosI983i5aHYExDLFGKaMcFDB0eo0kWNWWzJGUYGK2Zt
+pNclV21KnkBwq4TTK4A0I0dsdTLciqQSYb56H4AKKF64aBFFKtkjuIM2ljo7zMEo
+z1PXEmUPWJ2MyRXR9URX9k43xCiHXZKwlTYwalDn6vYupZZsTTnDTJj873uaYHeE
+C0ndrUMIwrv4CnUA7BByOmCR1HtUpG2vjxuFHie8Ufbx4e00JuAywBhcJCk9mJMY
+yfJbYo3VF1AqJqi1CRGhC3IJDYoeH+nXW+C3OdoTqT3aTfxVc/fa14qHHonA+PXu
+yBT41sQFJx9z4k3BJPyt
+=KAzq
 -----END PGP SIGNATURE-----
 
---Sig_/Rb6X2+p0TsljGM=cNTN6rnR--
+--Sig_/gj+h4Or+poHF0sk.1f6_RJ3--
