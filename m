@@ -1,53 +1,99 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: RT Patch to use for Kernel 3.2.0
-Date: Sat, 17 Jan 2015 01:23:54 +0300
-Message-ID: <54B98F7A.5040208@pavlinux.ru>
+From: Jing Shao <Jing.Shao@liteon.com>
+Subject: RE: RT Patch to use for Kernel 3.2.0
+Date: Fri, 16 Jan 2015 23:08:01 +0000
+Message-ID: <2181AC96E5EC8347999039A22D7597B7C6D8D5@MAL901.liteon.com>
 References: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com>
-Reply-To: pavel@pavlinux.ru
+ <54B98F7A.5040208@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Jing Shao <Jing.Shao@liteon.com>,
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+To: "pavel@pavlinux.ru" <pavel@pavlinux.ru>,
 	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp03.mtu.ru ([62.5.255.20]:56794 "EHLO imp03.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751506AbbAPWaz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Jan 2015 17:30:55 -0500
-In-Reply-To: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com>
+Received: from mal901.liteon.com ([209.125.238.116]:12612 "EHLO
+	mal901.liteon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751271AbbAPXHv (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Jan 2015 18:07:51 -0500
+In-Reply-To: <54B98F7A.5040208@pavlinux.ru>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-17.01.2015 01:14, Jing Shao =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> Dear sir,
->
-> I am trying to patch a Linux 3.2.0 kernel with PREEMPT_RT patch, I tr=
-ied the patch-3.2.64-rt94.patch.gz, but the Linux kernel fails to compi=
-le afterwards, is this the right patch to use?
-> For your info, the ouput of "uname -r" is 3.2.0. The kernel comes in =
-as part of the SDK for a TI Sitara processor.
-
-wget https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.64.tar.xz
-wget=20
-https://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.64-rt=
-94.patch.xz
-
-tar -xf linux-3.2.64.tar.xz && cd linux-3.2.64
-xz -cd ../patch-3.2.64-rt94.patch.xz | patch -p1
-make menuconfig
-=2E..
-=2E..
-=2E..
-make;
-
-
-
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+UGF2ZWwsDQoNCkFmdGVyIHBhdGNoaW5nIHRoZSBrZXJuZWwgMy4yLjAgd2l0aCAzLjIuNjQtcnQ5
+NCwgSSBhbSBnZXR0aW5nIGJ1aWxkIGVycm9ycywgd2hpY2ggbWFkZSBtZSB0aGluayB0aGF0IEkg
+YW0gdXNpbmcgdGhlIHdyb25nIHBhdGNoIGZpbGUuDQoNCkkgc2VlIHRoZXJlIGlzIG9sZCBwYXRj
+aCBmaWxlcyBmb3IgMy4yLnh4LCBidXQgbm9uZSBmb3IgMy4yLjAuDQoNClJlZ2FyZHMsDQoNCkpp
+bmcNCg0KPT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09
+PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PT09PQ0KDQppbmNsdWRl
+L2xpbnV4L3JhZGl4LXRyZWUuaDoyNjU6Mjogd2FybmluZzogaW1wbGljaXQgZGVjbGFyYXRpb24g
+b2YgZnVuY3Rpb24g4oCYcHJlZW1wdF9lbmFibGVfbm9ydOKAmSBbLVdpbXBsaWNpdC1mdW5jdGlv
+bi1kZWNsYXJhdGlvbl0NCm1tL3N3YXAuYzogQXQgdG9wIGxldmVsOg0KbW0vc3dhcC5jOjQ0Ojg6
+IHdhcm5pbmc6IHR5cGUgZGVmYXVsdHMgdG8g4oCYaW504oCZIGluIGRlY2xhcmF0aW9uIG9mIOKA
+mERFRklORV9MT0NBTF9JUlFfTE9DS+KAmSBbLVdpbXBsaWNpdC1pbnRdDQptbS9zd2FwLmM6NDQ6
+MTogd2FybmluZzogcGFyYW1ldGVyIG5hbWVzICh3aXRob3V0IHR5cGVzKSBpbiBmdW5jdGlvbiBk
+ZWNsYXJhdGlvbiBbZW5hYmxlZCBieSBkZWZhdWx0XQ0KbW0vc3dhcC5jOjQ1Ojg6IHdhcm5pbmc6
+IHR5cGUgZGVmYXVsdHMgdG8g4oCYaW504oCZIGluIGRlY2xhcmF0aW9uIG9mIOKAmERFRklORV9M
+T0NBTF9JUlFfTE9DS+KAmSBbLVdpbXBsaWNpdC1pbnRdDQptbS9zd2FwLmM6NDU6MTogd2Fybmlu
+ZzogcGFyYW1ldGVyIG5hbWVzICh3aXRob3V0IHR5cGVzKSBpbiBmdW5jdGlvbiBkZWNsYXJhdGlv
+biBbZW5hYmxlZCBieSBkZWZhdWx0XQ0KbW0vc3dhcC5jOiBJbiBmdW5jdGlvbiDigJhyb3RhdGVf
+cmVjbGFpbWFibGVfcGFnZeKAmToNCm1tL3N3YXAuYzoyNzM6Mzogd2FybmluZzogaW1wbGljaXQg
+ZGVjbGFyYXRpb24gb2YgZnVuY3Rpb24g4oCYbG9jYWxfbG9ja19pcnFzYXZl4oCZIFstV2ltcGxp
+Y2l0LWZ1bmN0aW9uLWRlY2xhcmF0aW9uXQ0KbW0vc3dhcC5jOjI3MzoyMjogZXJyb3I6IOKAmHJv
+dGF0ZV9sb2Nr4oCZIHVuZGVjbGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKQ0KbW0v
+c3dhcC5jOjI3MzoyMjogbm90ZTogZWFjaCB1bmRlY2xhcmVkIGlkZW50aWZpZXIgaXMgcmVwb3J0
+ZWQgb25seSBvbmNlIGZvciBlYWNoIGZ1bmN0aW9uIGl0IGFwcGVhcnMgaW4NCm1tL3N3YXAuYzoy
+Nzc6Mzogd2FybmluZzogaW1wbGljaXQgZGVjbGFyYXRpb24gb2YgZnVuY3Rpb24g4oCYbG9jYWxf
+dW5sb2NrX2lycXJlc3RvcmXigJkgWy1XaW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25dDQpt
+bS9zd2FwLmM6IEluIGZ1bmN0aW9uIOKAmF9fbHJ1X2NhY2hlX2FkZOKAmToNCm1tL3N3YXAuYzoz
+ODA6OTogd2FybmluZzogaW1wbGljaXQgZGVjbGFyYXRpb24gb2YgZnVuY3Rpb24g4oCYZ2V0X2xv
+Y2tlZF92YXLigJkgWy1XaW1wbGljaXQtZnVuY3Rpb24tZGVjbGFyYXRpb25dDQptbS9zd2FwLmM6
+MzgwOjQxOiBlcnJvcjog4oCYc3dhcHZlY19sb2Nr4oCZIHVuZGVjbGFyZWQgKGZpcnN0IHVzZSBp
+biB0aGlzIGZ1bmN0aW9uKQ0KbW0vc3dhcC5jOjM4NToyOiB3YXJuaW5nOiBpbXBsaWNpdCBkZWNs
+YXJhdGlvbiBvZiBmdW5jdGlvbiDigJhwdXRfbG9ja2VkX3ZhcuKAmSBbLVdpbXBsaWNpdC1mdW5j
+dGlvbi1kZWNsYXJhdGlvbl0NCm1tL3N3YXAuYzogSW4gZnVuY3Rpb24g4oCYZHJhaW5fY3B1X3Bh
+Z2V2ZWNz4oCZOg0KbW0vc3dhcC5jOjUxOToyMjogZXJyb3I6IOKAmHJvdGF0ZV9sb2Nr4oCZIHVu
+ZGVjbGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKQ0KbW0vc3dhcC5jOiBJbiBmdW5j
+dGlvbiDigJhkZWFjdGl2YXRlX3BhZ2XigJk6DQptbS9zd2FwLmM6NTQ5OjQyOiBlcnJvcjog4oCY
+c3dhcHZlY19sb2Nr4oCZIHVuZGVjbGFyZWQgKGZpcnN0IHVzZSBpbiB0aGlzIGZ1bmN0aW9uKQ0K
+bW0vc3dhcC5jOiBJbiBmdW5jdGlvbiDigJhscnVfYWRkX2RyYWlu4oCZOg0KbW0vc3dhcC5jOjU2
+MDoyOiB3YXJuaW5nOiBpbXBsaWNpdCBkZWNsYXJhdGlvbiBvZiBmdW5jdGlvbiDigJhsb2NhbF9s
+b2NrX2NwdeKAmSBbLVdpbXBsaWNpdC1mdW5jdGlvbi1kZWNsYXJhdGlvbl0NCm1tL3N3YXAuYzo1
+NjA6MzY6IGVycm9yOiDigJhzd2FwdmVjX2xvY2vigJkgdW5kZWNsYXJlZCAoZmlyc3QgdXNlIGlu
+IHRoaXMgZnVuY3Rpb24pDQptbS9zd2FwLmM6NTYxOjI6IHdhcm5pbmc6IGltcGxpY2l0IGRlY2xh
+cmF0aW9uIG9mIGZ1bmN0aW9uIOKAmGxvY2FsX3VubG9ja19jcHXigJkgWy1XaW1wbGljaXQtZnVu
+Y3Rpb24tZGVjbGFyYXRpb25dDQptbS9zd2FwLmM6IEluIGZ1bmN0aW9uIOKAmHN3YXBfaW5pdF9s
+b2Nrc+KAmToNCm1tL3N3YXAuYzo3Nzc6Mjogd2FybmluZzogaW1wbGljaXQgZGVjbGFyYXRpb24g
+b2YgZnVuY3Rpb24g4oCYbG9jYWxfaXJxX2xvY2tfaW5pdOKAmSBbLVdpbXBsaWNpdC1mdW5jdGlv
+bi1kZWNsYXJhdGlvbl0NCm1tL3N3YXAuYzo3Nzc6MjI6IGVycm9yOiDigJhyb3RhdGVfbG9ja+KA
+mSB1bmRlY2xhcmVkIChmaXJzdCB1c2UgaW4gdGhpcyBmdW5jdGlvbikNCm1tL3N3YXAuYzo3Nzg6
+MjI6IGVycm9yOiDigJhzd2FwdmVjX2xvY2vigJkgdW5kZWNsYXJlZCAoZmlyc3QgdXNlIGluIHRo
+aXMgZnVuY3Rpb24pDQptbS9zd2FwLmM6IEF0IHRvcCBsZXZlbDoNCm1tL3N3YXAuYzo0NTo4OiB3
+YXJuaW5nOiDigJhERUZJTkVfTE9DQUxfSVJRX0xPQ0vigJkgZGVjbGFyZWQg4oCYc3RhdGlj4oCZ
+IGJ1dCBuZXZlciBkZWZpbmVkIFstV3VudXNlZC1mdW5jdGlvbl0NCm1ha2VbMV06ICoqKiBbbW0v
+c3dhcC5vXSBFcnJvciAxDQptYWtlWzFdOiAqKiogV2FpdGluZyBmb3IgdW5maW5pc2hlZCBqb2Jz
+Li4uLg0KDQoNCg0KLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCkZyb206IFBhdmVsIFZhc2ls
+eWV2IFttYWlsdG86cGF2ZWxAcGF2bGludXgucnVdDQpTZW50OiBGcmlkYXksIEphbnVhcnkgMTYs
+IDIwMTUgNDoyNCBQTQ0KVG86IEppbmcgU2hhbzsgbGludXgtcnQtdXNlcnNAdmdlci5rZXJuZWwu
+b3JnDQpTdWJqZWN0OiBSZTogUlQgUGF0Y2ggdG8gdXNlIGZvciBLZXJuZWwgMy4yLjANCg0KMTcu
+MDEuMjAxNSAwMToxNCwgSmluZyBTaGFvINC/0LjRiNC10YI6DQo+IERlYXIgc2lyLA0KPg0KPiBJ
+IGFtIHRyeWluZyB0byBwYXRjaCBhIExpbnV4IDMuMi4wIGtlcm5lbCB3aXRoIFBSRUVNUFRfUlQg
+cGF0Y2gsIEkgdHJpZWQgdGhlIHBhdGNoLTMuMi42NC1ydDk0LnBhdGNoLmd6LCBidXQgdGhlIExp
+bnV4IGtlcm5lbCBmYWlscyB0byBjb21waWxlIGFmdGVyd2FyZHMsIGlzIHRoaXMgdGhlIHJpZ2h0
+IHBhdGNoIHRvIHVzZT8NCj4gRm9yIHlvdXIgaW5mbywgdGhlIG91cHV0IG9mICJ1bmFtZSAtciIg
+aXMgMy4yLjAuIFRoZSBrZXJuZWwgY29tZXMgaW4gYXMgcGFydCBvZiB0aGUgU0RLIGZvciBhIFRJ
+IFNpdGFyYSBwcm9jZXNzb3IuDQoNCndnZXQgaHR0cHM6Ly93d3cua2VybmVsLm9yZy9wdWIvbGlu
+dXgva2VybmVsL3YzLngvbGludXgtMy4yLjY0LnRhci54eg0Kd2dldA0KaHR0cHM6Ly93d3cua2Vy
+bmVsLm9yZy9wdWIvbGludXgva2VybmVsL3Byb2plY3RzL3J0LzMuMi9wYXRjaC0zLjIuNjQtcnQ5
+NC5wYXRjaC54eg0KDQp0YXIgLXhmIGxpbnV4LTMuMi42NC50YXIueHogJiYgY2QgbGludXgtMy4y
+LjY0IHh6IC1jZCAuLi9wYXRjaC0zLjIuNjQtcnQ5NC5wYXRjaC54eiB8IHBhdGNoIC1wMSBtYWtl
+IG1lbnVjb25maWcgLi4uDQouLi4NCi4uLg0KbWFrZTsNCg0KDQoNCi0tDQoNCiAgICAgICAgICAg
+ICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBQYXZlbC4NCg0K
+Q29uZmlkZW50aWFsIEluZm9ybWF0aW9uOlRoaXMgbWVzc2FnZSBpcyBzZW50IHRvIHRoZSBpbnRl
+bmRlZCByZWNpcGllbnQgYW5kIG1heSBjb250YWluIHByaXZpbGVnZWQgb3IgY29uZmlkZW50aWFs
+IGluZm9ybWF0aW9uLiBJZiB5b3UgcmVjZWl2ZWQgdGhpcyB0cmFuc21pc3Npb24gaW4gZXJyb3Is
+IHBsZWFzZSBub3RpZnkgdGhlIHNlbmRlciB3aXRoIGEgcmVwbHlpbmcgZS1tYWlsIGFuZCBkZWxl
+dGUgdGhlIG1lc3NhZ2UgYW5kIGFueSBhdHRhY2htZW50LlRyYW5zbWlzc2lvbiBDYXZlYXQgYW5k
+IFZpcnVzIEFsZXJ0OiBJbnRlcm5ldCBjb21tdW5pY2F0aW9ucyBjYW5ub3QgYmUgZ3VhcmFudGVl
+ZCB0byBiZSB0aW1lbHksIHNlY3VyZSwgZXJyb3Igb3IgdmlydXMtZnJlZS4gVGhlIHNlbmRlciBk
+b2VzIG5vdCBhY2NlcHQgbGlhYmlsaXR5IGZvciBhbnkgZXJyb3JzIG9yIG9taXNzaW9ucy4NCg==
