@@ -1,58 +1,40 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Fri, 16 Jan 2015 11:56:27 -0500
-Message-ID: <20150116115627.425daf95@gandalf.local.home>
-References: <20150114171251.882318257@redhat.com>
-	<20150114171459.593877145@redhat.com>
-	<20150116114846.4e7b718d@gandalf.local.home>
+From: Jing Shao <Jing.Shao@liteon.com>
+Subject: RT Patch to use for Kernel 3.2.0
+Date: Fri, 16 Jan 2015 22:14:10 +0000
+Message-ID: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150116114846.4e7b718d@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mal901.liteon.com ([209.125.238.116]:6058 "EHLO
+	mal901.liteon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750934AbbAPWN5 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 16 Jan 2015 17:13:57 -0500
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 16 Jan 2015 11:48:46 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+Dear sir,
 
-> >  static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
-> >  {
-> > -	DEFINE_WAIT(wait);
-> > +	DEFINE_SWAITER(wait);
-> >  
-> > -	prepare_to_wait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
-> > +	swait_prepare(&vc->wq, &wait, TASK_INTERRUPTIBLE);
-> >  	vc->vcore_state = VCORE_SLEEPING;
-> >  	spin_unlock(&vc->lock);
-> >  	schedule();
-> > -	finish_wait(&vc->wq, &wait);
-> > +	swait_finish(&vc->wq, &wait);
-> >  	spin_lock(&vc->lock);
-> >  	vc->vcore_state = VCORE_INACTIVE;
-> >  }
-> > @@ -1613,7 +1613,7 @@
-> >  			kvmppc_create_dtl_entry(vcpu, vc);
-> >  			kvmppc_start_thread(vcpu);
-> >  		} else if (vc->vcore_state == VCORE_SLEEPING) {
-> > -			wake_up(&vc->wq);
-> > +			swait_wake(&vc->wq);
-> 
-> I notice everywhere you have a swait_wake_interruptible() but here. Is
-> there a reason why?
-> 
+I am trying to patch a Linux 3.2.0 kernel with PREEMPT_RT patch, I tried the patch-3.2.64-rt94.patch.gz, but the Linux kernel fails to compile afterwards, is this the right patch to use?
 
-Of course I could have misread this patch, and this specific work queue
-will only be woken up by swait_wake() and not
-swait_wake_interruptible(). If that's the case, then its fine as is
-(except for that typo I pointed out before).
+For your info, the ouput of "uname -r" is 3.2.0. The kernel comes in as part of the SDK for a TI Sitara processor.
 
--- Steve
+Your help are greatly appreciated.
+
+Regards,
+
+Jing Shao
+Senior Software Engineer
+
+Power System Solutions
+3001 Summit Avenue Ste. 400
+Plano, Texas 75074
+469-331-9844 x8881
+jing.shao@liteon.com
+
+
+
+Confidential Information:This message is sent to the intended recipient and may contain privileged or confidential information. If you received this transmission in error, please notify the sender with a replying e-mail and delete the message and any attachment.Transmission Caveat and Virus Alert: Internet communications cannot be guaranteed to be timely, secure, error or virus-free. The sender does not accept liability for any errors or omissions.
