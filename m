@@ -1,41 +1,48 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Sat, 17 Jan 2015 08:57:44 +0100
-Message-ID: <20150117075744.GM25256@twins.programming.kicks-ass.net>
-References: <20150114171251.882318257@redhat.com>
- <20150114171459.593877145@redhat.com>
- <20150116114846.4e7b718d@gandalf.local.home>
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: Re: RT Patch to use for Kernel 3.2.0
+Date: Sat, 17 Jan 2015 20:30:58 +0100
+Message-ID: <20150117193058.GB22880@pengutronix.de>
+References: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Jing Shao <Jing.Shao@liteon.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:35874 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751348AbbAQTbC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 17 Jan 2015 14:31:02 -0500
 Content-Disposition: inline
-In-Reply-To: <20150116114846.4e7b718d@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Jan 16, 2015 at 11:48:46AM -0500, Steven Rostedt wrote:
-> I notice everywhere you have a swait_wake_interruptible() but here. Is
-> there a reason why?
-> 
-> IIRC, Peter wants to make swait wakeup usage homogenous. That is, you
-> either sleep in an interruptible state, or you don't. You can't mix and
-> match it.
-> 
-> Peter is that what you plan?
+Hello,
 
-Yes, this is required for the single wakeup case to be bounded.
+On Fri, Jan 16, 2015 at 10:14:10PM +0000, Jing Shao wrote:
+> I am trying to patch a Linux 3.2.0 kernel with PREEMPT_RT patch, I
+> tried the patch-3.2.64-rt94.patch.gz, but the Linux kernel fails to
+> compile afterwards, is this the right patch to use?
+>=20
+> For your info, the ouput of "uname -r" is 3.2.0. The kernel comes in
+> as part of the SDK for a TI Sitara processor.
+You don't want to use 3.2.0. There is a pile of fixes available. So
+switch to 3.2.66 and try to apply the patch from 3.2.64-rt94 on top of
+that.
 
-If you have both INTERRUPTIBLE and UNINTERRUPTIBLE waiters on a list,
-and you were allowed to do INTERRUPTIBLE/UNINTERRUPTIBLE wakeups, the
-wakeup would have to do O(n) iteration to find a matching waiter.
+Best regards
+Uwe
 
-Seeing that the entire purpose of simple wait queues was to retain RT
-properties, that's entirely retarded ;-)
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
