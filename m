@@ -1,38 +1,41 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: RT Patch to use for Kernel 3.2.0
-Date: Sat, 17 Jan 2015 03:47:45 +0300
-Message-ID: <54B9B131.3060403@pavlinux.ru>
-References: <2181AC96E5EC8347999039A22D7597B7C6D8AA@MAL901.liteon.com> <54B98F7A.5040208@pavlinux.ru> <2181AC96E5EC8347999039A22D7597B7C6D8D5@MAL901.liteon.com>
-Reply-To: pavel@pavlinux.ru
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
+Date: Sat, 17 Jan 2015 08:57:44 +0100
+Message-ID: <20150117075744.GM25256@twins.programming.kicks-ass.net>
+References: <20150114171251.882318257@redhat.com>
+ <20150114171459.593877145@redhat.com>
+ <20150116114846.4e7b718d@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Jing Shao <Jing.Shao@liteon.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp04.mtu.ru ([62.5.255.37]:54269 "EHLO imp04.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752952AbbAQAru (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 16 Jan 2015 19:47:50 -0500
-In-Reply-To: <2181AC96E5EC8347999039A22D7597B7C6D8D5@MAL901.liteon.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Marcelo Tosatti <mtosatti@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Luiz Capitulino <lcapitulino@redhat.com>,
+	Rik van Riel <riel@redhat.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
+	Paolo Bonzini <pbonzini@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150116114846.4e7b718d@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-17.01.2015 02:08, Jing Shao =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+On Fri, Jan 16, 2015 at 11:48:46AM -0500, Steven Rostedt wrote:
+> I notice everywhere you have a swait_wake_interruptible() but here. Is
+> there a reason why?
+> 
+> IIRC, Peter wants to make swait wakeup usage homogenous. That is, you
+> either sleep in an interruptible state, or you don't. You can't mix and
+> match it.
+> 
+> Peter is that what you plan?
 
-> I see there is old patch files for 3.2.xx, but none for 3.2.0.
+Yes, this is required for the single wakeup case to be bounded.
 
-Try this=20
-https://www.kernel.org/pub/linux/kernel/projects/rt/3.2/older/patches-3=
-=2E2-rt10.tar.xz
+If you have both INTERRUPTIBLE and UNINTERRUPTIBLE waiters on a list,
+and you were allowed to do INTERRUPTIBLE/UNINTERRUPTIBLE wakeups, the
+wakeup would have to do O(n) iteration to find a matching waiter.
 
-
---=20
-
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Seeing that the entire purpose of simple wait queues was to retain RT
+properties, that's entirely retarded ;-)
