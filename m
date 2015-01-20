@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.29-rt26
-Date: Mon, 19 Jan 2015 23:21:32 -0500
-Message-ID: <20150119232132.704772de@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.36-rt50
+Date: Mon, 19 Jan 2015 23:22:01 -0500
+Message-ID: <20150119232201.24b6cc21@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.29-rt26 stable release.
+I'm pleased to announce the 3.12.36-rt50 stable release.
 
 
-This release is just an update to the new stable 3.14.29 version
+This release is just an update to the new stable 3.12.36 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 3af4a72c71387c38fe88def573dbb80837927862
+  branch: v3.12-rt
+  Head SHA1: e9c64350d30c0d4c6dc6361a897b632444dde95d
 
 
-Or to build 3.14.29-rt26 directly, the following patches should be applied:
+Or to build 3.12.36-rt50 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.29.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.36.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.29-rt26.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.36-rt50.patch.xz
 
 
 
