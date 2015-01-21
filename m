@@ -1,63 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] rtmutex.c: Fix incorrect waiter check
-Date: Wed, 21 Jan 2015 15:13:52 -0500
-Message-ID: <20150121151352.7e4ef150@gandalf.local.home>
-References: <548F7E4C.90805@hp.com>
-	<1421269898-30591-1-git-send-email-brad.mouring@ni.com>
-	<1421269898-30591-2-git-send-email-brad.mouring@ni.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>,
-	linux-rt-users@vger.kernel.org, T Makphaibulchoke <tmac@hp.com>,
-	Brad Mouring <brad.mouring@ni.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: "Brad Mouring" <bmouring@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0050.hostedemail.com ([216.40.44.50]:34027 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750768AbbAUUNz (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Jan 2015 15:13:55 -0500
-In-Reply-To: <1421269898-30591-2-git-send-email-brad.mouring@ni.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: [patch -rt 0/2] use simple waitqueue for kvm vcpu waitqueue (v4)
+Date: Wed, 21 Jan 2015 18:36:00 -0200
+Message-ID: <20150121203600.745949083@redhat.com>
+Cc: Luiz Capitulino <lcapitulino@redhat.com>,
+	Rik van Riel <riel@redhat.com>,
+	Steven Rostedt <srostedt@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
+	Paolo Bonzini <pbonzini@redhat.com>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 14 Jan 2015 15:11:38 -0600
-"Brad Mouring" <bmouring@ni.com> wrote:
+Against v3.14-rt branch of
+git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-> In task_blocks_on_lock, there's a null check on pi_blocked_on
-> of the task_struct. This pointer can encode the fact that the
-> task that contains the pointer is waking (preventing requeuing)
-> and therefore is non-null. Use the inline function to avoid
-> dereferencing an invalid "pointer"
+The problem:
 
-Yep, this looks legit. I can apply it to the series I maintain.
+On -RT, an emulated LAPIC timer instance has the following path:
 
--- Steve
+1) hard interrupt
+2) ksoftirqd is scheduled
+3) ksoftirqd wakes up vcpu thread
+4) vcpu thread is scheduled
 
-> 
-> Signed-off-by: Brad Mouring <brad.mouring@ni.com>
-> Reported-by: Ben Shelton <ben.shelton@ni.com>
-> Reviewed-by: T Makphaibulchoke <tmac@hp.com>
-> Tested-by: T Makphaibulchoke <tmac@hp.com>
-> ---
->  kernel/locking/rtmutex.c | 3 ++-
->  1 file changed, 2 insertions(+), 1 deletion(-)
-> 
-> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-> index 6c40660..535321e 100644
-> --- a/kernel/locking/rtmutex.c
-> +++ b/kernel/locking/rtmutex.c
-> @@ -335,7 +335,8 @@ int max_lock_depth = 1024;
->  
->  static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
->  {
-> -	return p->pi_blocked_on ? p->pi_blocked_on->lock : NULL;
-> +	return rt_mutex_real_waiter(p->pi_blocked_on) ?
-> +		p->pi_blocked_on->lock : NULL;
->  }
->  
->  /*
+This extra context switch introduces unnecessary latency in the
+LAPIC path for a KVM guest.
 
+The solution:
+
+Allow waking up vcpu thread from hardirq context,
+thus avoiding the need for ksoftirqd to be scheduled.
+
+Normal waitqueues make use of spinlocks, which on -RT
+are sleepable locks. Therefore, waking up a waitqueue
+waiter involves locking a sleeping lock, which
+is not allowed from hard interrupt context.
+
+cyclictest command line:
+# cyclictest -m -n -q -p99 -l 1000000 -h60  -D 1m
+
+This patch reduces the average latency in my tests from 14us to 11us.
+
+v2: improve changelog (Rik van Riel)
+v3: limit (once) guest triggered printk and WARN_ON (Paolo Bonzini)
+v4: fix typo (Steven Rostedt)
