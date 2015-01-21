@@ -1,38 +1,63 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Wed, 21 Jan 2015 16:07:16 +0100
-Message-ID: <20150121150716.GD11596@twins.programming.kicks-ass.net>
-References: <20150114171251.882318257@redhat.com>
- <20150114171459.593877145@redhat.com>
- <20150116114846.4e7b718d@gandalf.local.home>
- <20150119144100.GA10794@amt.cnet>
- <20150120054653.GA6473@iris.ozlabs.ibm.com>
- <20150120131613.009903a0@gandalf.local.home>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH] rtmutex.c: Fix incorrect waiter check
+Date: Wed, 21 Jan 2015 15:13:52 -0500
+Message-ID: <20150121151352.7e4ef150@gandalf.local.home>
+References: <548F7E4C.90805@hp.com>
+	<1421269898-30591-1-git-send-email-brad.mouring@ni.com>
+	<1421269898-30591-2-git-send-email-brad.mouring@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Paul Mackerras <paulus@samba.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150120131613.009903a0@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Paul McKenney <paulmck@linux.vnet.ibm.com>,
+	linux-rt-users@vger.kernel.org, T Makphaibulchoke <tmac@hp.com>,
+	Brad Mouring <brad.mouring@ni.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: "Brad Mouring" <bmouring@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0050.hostedemail.com ([216.40.44.50]:34027 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750768AbbAUUNz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 21 Jan 2015 15:13:55 -0500
+In-Reply-To: <1421269898-30591-2-git-send-email-brad.mouring@ni.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Jan 20, 2015 at 01:16:13PM -0500, Steven Rostedt wrote:
-> I'm actually wondering if we should just nuke the _interruptible()
-> version of swait. As it should only be all interruptible or all not
-> interruptible, that the swait_wake() should just do the wake up
-> regardless. In which case, swait_wake() is good enough. No need to have
-> different versions where people may think do something special.
+On Wed, 14 Jan 2015 15:11:38 -0600
+"Brad Mouring" <bmouring@ni.com> wrote:
+
+> In task_blocks_on_lock, there's a null check on pi_blocked_on
+> of the task_struct. This pointer can encode the fact that the
+> task that contains the pointer is waking (preventing requeuing)
+> and therefore is non-null. Use the inline function to avoid
+> dereferencing an invalid "pointer"
+
+Yep, this looks legit. I can apply it to the series I maintain.
+
+-- Steve
+
 > 
-> Peter?
+> Signed-off-by: Brad Mouring <brad.mouring@ni.com>
+> Reported-by: Ben Shelton <ben.shelton@ni.com>
+> Reviewed-by: T Makphaibulchoke <tmac@hp.com>
+> Tested-by: T Makphaibulchoke <tmac@hp.com>
+> ---
+>  kernel/locking/rtmutex.c | 3 ++-
+>  1 file changed, 2 insertions(+), 1 deletion(-)
+> 
+> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+> index 6c40660..535321e 100644
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -335,7 +335,8 @@ int max_lock_depth = 1024;
+>  
+>  static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
+>  {
+> -	return p->pi_blocked_on ? p->pi_blocked_on->lock : NULL;
+> +	return rt_mutex_real_waiter(p->pi_blocked_on) ?
+> +		p->pi_blocked_on->lock : NULL;
+>  }
+>  
+>  /*
 
-Yeah, I think the lastest thing I have sitting here on my disk only has
-the swake_up() which does TASK_NORMAL, no choice there.
