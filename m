@@ -1,73 +1,71 @@
-From: Dorian VEGARA <dorian.vegara@gmail.com>
-Subject: Re: Cannot boot RTLinux
-Date: Sun, 25 Jan 2015 21:19:12 +0100
-Message-ID: <CAOQDsMwN5iT4PfG=YDKLxEOd8p4ms_V=OAXXNM=q2HeCY9ehsQ@mail.gmail.com>
-References: <CAOQDsMw6H_eQg9-kVCi2HVxO9-Di4es82VW_Wm2K4OqfM_9N_A@mail.gmail.com>
-	<20150123082852.37d5dfe3@archlinux>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH] rtmutex: enable deadlock detection in ww_mutex_lock functions
+Date: Sun, 25 Jan 2015 15:55:08 -0500
+Message-ID: <CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com>
+References: <20150120200229.GA17473@gbitten>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt users <linux-rt-users@vger.kernel.org>
-To: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Gustavo Bittencourt <gbitten@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f169.google.com ([209.85.217.169]:64860 "EHLO
-	mail-lb0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753727AbbAYUTO (ORCPT
+Received: from mail-wg0-f47.google.com ([74.125.82.47]:52358 "EHLO
+	mail-wg0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753507AbbAYUzj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 25 Jan 2015 15:19:14 -0500
-Received: by mail-lb0-f169.google.com with SMTP id f15so4839346lbj.0
-        for <linux-rt-users@vger.kernel.org>; Sun, 25 Jan 2015 12:19:13 -0800 (PST)
-In-Reply-To: <20150123082852.37d5dfe3@archlinux>
+	Sun, 25 Jan 2015 15:55:39 -0500
+Received: by mail-wg0-f47.google.com with SMTP id n12so5963798wgh.6
+        for <linux-rt-users@vger.kernel.org>; Sun, 25 Jan 2015 12:55:38 -0800 (PST)
+In-Reply-To: <20150120200229.GA17473@gbitten>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
-
-Ralf, you was right : I typed the root=UUID=[...] and the initrd line
-in the GRUB2 config file and now, I can boot RTLinux.
-
-However, another problem appeared. I believe mouse and keyboard are
-not recognized.
-
-In fact, when RTLinux is booted :
-1. First, the graphical display is shown. There is nothing, except the
-same desktop-background-image than my OpenSUZE's one. Even the mouse's
-cursor isn't shown.
-2. Secondly, after I typed CTRL+ALT+F10, the command line display
-appears. That's OK. But there is a problem... : I can't do nothing.
-When I type something with my keyboard, nothing appears in the
-console. For example, if I type the letter 'a', then it won't be
-printed in the console.
-
-So : do you think the mouse and the keyboard aren't recognized by the kernel ?
-
-Thanks a lot,
-Best regards
-
-2015-01-23 8:28 GMT+01:00 Ralf Mardorf <ralf.mardorf@alice-dsl.net>:
-> On Thu, 22 Jan 2015 20:39:34 +0100, Dorian VEGARA wrote:
->> The GRUB2 configuration is OK.
+On Tue, Jan 20, 2015 at 3:02 PM, Gustavo Bittencourt <gbitten@gmail.com> wrote:
+> The functions ww_mutex_lock_interruptible and ww_mutex_lock should return -EDEADLK when faced with
+> a deadlock. To do so, the paramenter detect_deadlock in rt_mutex_slowlock must be TRUE.
+> This patch corrects potential deadlocks when running PREEMPT_RT with nouveau driver.
 >
-> Are you sure?
-> Isn't there missing something similar too
-> linux   /boot/foo root=UUID=1234 ro
->                   ^^^^^^^^^^^^^^^^^
-> initrd  /boot/init*-foo
-> ^^^^^^^^^^^^^^^^^^^^^^^
-> ?
+> Kernel version: 3.14.25-rt22
+
+You might want to have a look at this:
+
+http://www.spinics.net/lists/linux-rt-users/msg12259.html
+
+as it also impacts what the deadlock detection flag does.
+
+Paul.
+--
+
 >
->> http://nsa33.casimages.com/img/2015/01/22/150122084114722488.jpg
->> https://drive.google.com/file/d/0BxBRiO4INcfxWnltOFZDeDNBZmM/view?usp=sharing
+> Signed-off-by: Gustavo Bittencourt <gbitten@gmail.com>
+> ---
+>  kernel/locking/rtmutex.c | 4 ++--
+>  1 file changed, 2 insertions(+), 2 deletions(-)
 >
-> I didn't read all the screenshots, consider to post ASCII log files
-> instead of photos and the output of
->> uname -a
-> Does it include PREEMPT RT?
+> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+> index 6c40660..3f6ef91 100644
+> --- a/kernel/locking/rtmutex.c
+> +++ b/kernel/locking/rtmutex.c
+> @@ -1965,7 +1965,7 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
+>         might_sleep();
 >
-> You can quasi chroot in by
+>         mutex_acquire(&lock->base.dep_map, 0, 0, _RET_IP_);
+> -       ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
+> +       ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 1, ww_ctx);
+>         if (ret)
+>                 mutex_release(&lock->base.dep_map, 1, _RET_IP_);
+>         else if (!ret && ww_ctx->acquired > 1)
+> @@ -1984,7 +1984,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
 >
-> # systemd-nspawn -D /mnt/point/of/your/suse
+>         mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map,
+>                         _RET_IP_);
+> -       ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
+> +       ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 1, ww_ctx);
+>         if (ret)
+>                 mutex_release(&lock->base.dep_map, 1, _RET_IP_);
+>         else if (!ret && ww_ctx->acquired > 1)
+> --
+> 1.9.1
 >
-> to get ASCII output of the odd binary journalctl files and uname.
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
 > the body of a message to majordomo@vger.kernel.org
