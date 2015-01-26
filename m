@@ -1,150 +1,97 @@
-From: Gustavo Bittencourt <gbitten@gmail.com>
-Subject: Re: [PATCH] rtmutex: enable deadlock detection in ww_mutex_lock functions
-Date: Mon, 26 Jan 2015 13:06:35 -0200
-Message-ID: <54C657FB.2060106@gmail.com>
-References: <20150120200229.GA17473@gbitten> <CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com>
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: kernel-rt rcuc lock contention problem
+Date: Mon, 26 Jan 2015 14:14:03 -0500
+Message-ID: <20150126141403.469dc92f@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: linux-rt-users@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>
+To: paulmck@linux.vnet.ibm.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qa0-f41.google.com ([209.85.216.41]:39332 "EHLO
-	mail-qa0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751221AbbAZPGm (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Jan 2015 10:06:42 -0500
-Received: by mail-qa0-f41.google.com with SMTP id bm13so7063848qab.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Jan 2015 07:06:41 -0800 (PST)
-In-Reply-To: <CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:37880 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753422AbbAZTOJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 26 Jan 2015 14:14:09 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm not sure if those patches are connected, so I am posting my findings 
-for anyone.
+Paul,
 
-ABOUT NOUVEAU AND WW_MUTEX:
-The nouveau driver intensely uses the ww_mutex. According the 
-ww-mutex-design.txt documentation, the ww_mutex makes the following 
-steps when try to lock a resource:
+We're running some measurements with cyclictest running inside a
+KVM guest where we could observe spinlock contention among rcuc
+threads.
 
-1) It calls the ww_mutex_lock (or ww_mutex_lock_interruptible) function 
-for normal lock acquisition.
-2) If it returns -EDEADLK,  the wounded task must drop all already 
-acquired locks and call the ww_mutex_lock_slow (or 
-ww_mutex_lock_slow_interruptible) function.
+Basically, we have a 16-CPU NUMA machine very well setup for RT.
+This machine and the guest run the RT kernel. As our test-case
+requires an application in the guest taking 100% of the CPU, the
+RT priority configuration that gives the best latency is this one:
 
-In the nouveau driver, those steps happen in the validate_init function 
-(drivers/gpu/drm/nouveau_gem.c) when it calls the functions 
-ttm_bo_reserve (step 1) and ttm_bo_reserve_slowpath (step 2):
+ 263  FF   3  [rcuc/15]
+  13  FF   3  [rcub/1]
+  12  FF   3  [rcub/0]
+ 265  FF   2  [ksoftirqd/15]
+3181  FF   1  qemu-kvm
 
-validate_init(...)
+In this configuration, the rcuc can preempt the guest's vcpu
+thread. This shouldn't be a problem, except for the fact that
+we're seeing that in some cases the rcuc/15 thread spends 10us
+or more spinning in this spinlock (note that IRQs are disabled
+during this period):
+
+__rcu_process_callbacks()
 {
 ...
-		ret = ttm_bo_reserve(&nvbo->bo, true, false, true, &op->ticket);
-		if (ret) {
-			validate_fini_no_ticket(op, NULL);
-			if (unlikely(ret == -EDEADLK)) {
-				ret = ttm_bo_reserve_slowpath(&nvbo->bo, true,
-							      &op->ticket);
+	local_irq_save(flags);
+	if (cpu_needs_another_gp(rsp, rdp)) {
+		raw_spin_lock(&rcu_get_root(rsp)->lock); /* irqs disabled. */
+		rcu_start_gp(rsp);
+		raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
 ...
-}
 
-THE PROBLEM:
-When I run the PREEMPT_RT in my computer, it freezes as soon I start 
-some big graphical application (e.g. Firefox or Chrome). The following 
-execution path happens until reaching an infinite loop:
+We've tried playing with the rcu_nocbs= option. However, it
+did not help because, for reasons we don't understand, the rcuc
+threads have to handle grace period start even when callback
+offloading is used. Handling this case requires this code path
+to be executed.
 
-a) nouveau_gem_ioctl_pushbuf()
-b) nouveau_gem_pushbuf_validate()
-c) validate_init()
-d) ttm_bo_reserve()
-e) ttm_bo_reserve_nolru()
-f) ww_mutex_lock_interruptible()
-g) __ww_mutex_lock_interruptible()
-h) rt_mutex_slowlock()
-i) rt_mutex_handle_deadlock() -> infinite loop
+We've cooked the following extremely dirty patch, just to see
+what would happen:
 
-The infinite loop that I mentioned above is the while(1){...} inside the 
-rt_mutex_handle_deadlock function:
+diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+index eaed1ef..c0771cc 100644
+--- a/kernel/rcutree.c
++++ b/kernel/rcutree.c
+@@ -2298,9 +2298,19 @@ __rcu_process_callbacks(struct rcu_state *rsp)
+ 	/* Does this CPU require a not-yet-started grace period? */
+ 	local_irq_save(flags);
+ 	if (cpu_needs_another_gp(rsp, rdp)) {
+-		raw_spin_lock(&rcu_get_root(rsp)->lock); /* irqs disabled. */
+-		rcu_start_gp(rsp);
+-		raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
++		for (;;) {
++			if (!raw_spin_trylock(&rcu_get_root(rsp)->lock)) {
++				local_irq_restore(flags);
++				local_bh_enable();
++				schedule_timeout_interruptible(2);
++				local_bh_disable();
++				local_irq_save(flags);
++				continue;
++			}
++			rcu_start_gp(rsp);
++			raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
++			break;
++		}
+ 	} else {
+ 		local_irq_restore(flags);
+ 	}
 
-static void rt_mutex_handle_deadlock(int res, int detect_deadlock,
-                      struct rt_mutex_waiter *w)
-{
-     /*
-      * If the result is not -EDEADLOCK or the caller requested
-      * deadlock detection, nothing to do here.
-      */
-     if (res != -EDEADLOCK || detect_deadlock)
-         return;
+With this patch rcuc is gone from our traces and the scheduling
+latency is reduced by 3us in our CPU-bound test-case.
 
-     /*
-      * Yell lowdly and stop the task right here.
-      */
-     rt_mutex_print_deadlock(w);
-     while (1) {
-         set_current_state(TASK_INTERRUPTIBLE);
-         schedule();
-     }
-}
+Could you please advice on how to solve this contention problem?
 
-CONCLUSION:
-My conclusion was the detect_deadlock should be enabled to the 
-rt_mutex_handle_deadlock function returns -EDEADLK and hence the 
-ww_mutex_lock_interruptible returns -EDEADLK too. BTW, since I have 
-applied my patch, I've not had anymore freezing issue.
+Can we test whether the local CPU is nocb, and in that case, 
+skip rcu_start_gp entirely for example?
 
-PS: I am a kernelnewbie so it is possible that I am writing some BS here.
-
-On 01/25/2015 06:55 PM, Paul Gortmaker wrote:
-> On Tue, Jan 20, 2015 at 3:02 PM, Gustavo Bittencourt <gbitten@gmail.com> wrote:
->> The functions ww_mutex_lock_interruptible and ww_mutex_lock should return -EDEADLK when faced with
->> a deadlock. To do so, the paramenter detect_deadlock in rt_mutex_slowlock must be TRUE.
->> This patch corrects potential deadlocks when running PREEMPT_RT with nouveau driver.
->>
->> Kernel version: 3.14.25-rt22
->
-> You might want to have a look at this:
->
-> http://www.spinics.net/lists/linux-rt-users/msg12259.html
->
-> as it also impacts what the deadlock detection flag does.
->
-> Paul.
-> --
->
->>
->> Signed-off-by: Gustavo Bittencourt <gbitten@gmail.com>
->> ---
->>   kernel/locking/rtmutex.c | 4 ++--
->>   1 file changed, 2 insertions(+), 2 deletions(-)
->>
->> diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
->> index 6c40660..3f6ef91 100644
->> --- a/kernel/locking/rtmutex.c
->> +++ b/kernel/locking/rtmutex.c
->> @@ -1965,7 +1965,7 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
->>          might_sleep();
->>
->>          mutex_acquire(&lock->base.dep_map, 0, 0, _RET_IP_);
->> -       ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
->> +       ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 1, ww_ctx);
->>          if (ret)
->>                  mutex_release(&lock->base.dep_map, 1, _RET_IP_);
->>          else if (!ret && ww_ctx->acquired > 1)
->> @@ -1984,7 +1984,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
->>
->>          mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map,
->>                          _RET_IP_);
->> -       ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
->> +       ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 1, ww_ctx);
->>          if (ret)
->>                  mutex_release(&lock->base.dep_map, 1, _RET_IP_);
->>          else if (!ret && ww_ctx->acquired > 1)
->> --
->> 1.9.1
->>
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Thanks!
