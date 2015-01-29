@@ -1,76 +1,212 @@
-From: Nathan Sullivan <nathan.sullivan@ni.com>
-Subject: __HAVE_ARCH_CMPXCHG on ARM?
-Date: Thu, 29 Jan 2015 12:56:18 -0600
-Message-ID: <20150129185618.GA31459@nathan3500-linux-VM>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: kernel-rt rcuc lock contention problem
+Date: Thu, 29 Jan 2015 10:36:53 -0800
+Message-ID: <20150129183653.GH19109@linux.vnet.ibm.com>
+References: <20150126141403.469dc92f@redhat.com>
+ <20150127203752.GD19109@linux.vnet.ibm.com>
+ <20150128015508.GA12233@amt.cnet>
+ <20150128180335.GR19109@linux.vnet.ibm.com>
+ <20150128182512.GB1259@amt.cnet>
+ <20150128185552.GT19109@linux.vnet.ibm.com>
+ <20150129181324.GA30701@amt.cnet>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: yong.zhang0@gmail.com, will.deacon@arm.com,
-	linux-arm-kernel@lists.infradead.org,
+Cc: Luiz Capitulino <lcapitulino@redhat.com>,
 	linux-rt-users@vger.kernel.org
-To: yong.zhang@windriver.com
+To: Marcelo Tosatti <mtosatti@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:43625 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1750744AbbA2TLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2015 14:11:18 -0500
+Received: from e38.co.us.ibm.com ([32.97.110.159]:60805 "EHLO
+	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758978AbbA2WSp (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Jan 2015 17:18:45 -0500
+Received: from /spool/local
+	by e38.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Thu, 29 Jan 2015 15:18:44 -0700
+Received: from b03cxnp07029.gho.boulder.ibm.com (b03cxnp07029.gho.boulder.ibm.com [9.17.130.16])
+	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id 21C35C40003
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:09:53 -0700 (MST)
+Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
+	by b03cxnp07029.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t0TMIXab36896982
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:18:41 -0700
+Received: from d03av01.boulder.ibm.com (localhost [127.0.0.1])
+	by d03av01.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t0TMI82t006717
+	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:18:08 -0700
 Content-Disposition: inline
+In-Reply-To: <20150129181324.GA30701@amt.cnet>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Thu, Jan 29, 2015 at 04:13:24PM -0200, Marcelo Tosatti wrote:
+> 
+> On Wed, Jan 28, 2015 at 10:55:53AM -0800, Paul E. McKenney wrote:
+> > > The host. Imagine a Windows 95 guest running a realtime app.
+> > > That should help.
+> > 
+> > Then force the critical services to run on a housekeeping CPU.  If the
+> > host is permitted to preempt the guest, the latency blows you are seeing
+> > are expected behavior.
+> 
+> ksoftirqd must preempt the vcpu as it executes irq_work
+> routines for example.
+> 
+> IRQ threads must preempt the vcpu to inject HW interrupts
+> to the guest.
 
-While investigating a performance issue on RT 3.14, I noticed that
-__HAVE_ARCH_CMPXCHG is not defined for ARM.  This causes -rt locks to
-always use the slow path and impacts performance.  ARMv6 and above
-have a cmpxchg implementation already that will work just fine.
+Understood, and hopefully these short preemptions are not causing excessive
+trouble.
 
-In 2012, Yong Zhang submitted a patch to fix this[1], but it mysteriously
-disappeared afterwards.  I did notice that the s-o-b line has a different
-email address than the windriver one.  Yong, do you mind re-submitting the
-patch with a fixed s-o-b?
+And my concern with this was partly due to my assumption that you were
+seeing high lock contention in the guest.
 
-Thanks!
-   Nathan Sullivan
+> > automatically.  If that is infeasible, then yes, it should be possible
+> > to add an explicit quiescent state in the host at vCPU entry/exit, at
+> > least assuming that the host is in a state permitting this.
+> > 
+> > > > > > > We've cooked the following extremely dirty patch, just to see
+> > > > > > > what would happen:
+> > > > > > > 
+> > > > > > > diff --git a/kernel/rcutree.c b/kernel/rcutree.c
+> > > > > > > index eaed1ef..c0771cc 100644
+> > > > > > > --- a/kernel/rcutree.c
+> > > > > > > +++ b/kernel/rcutree.c
+> > > > > > > @@ -2298,9 +2298,19 @@ __rcu_process_callbacks(struct rcu_state *rsp)
+> > > > > > >  	/* Does this CPU require a not-yet-started grace period? */
+> > > > > > >  	local_irq_save(flags);
+> > > > > > >  	if (cpu_needs_another_gp(rsp, rdp)) {
+> > > > > > > -		raw_spin_lock(&rcu_get_root(rsp)->lock); /* irqs disabled. */
+> > > > > > > -		rcu_start_gp(rsp);
+> > > > > > > -		raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
+> > > > > > > +		for (;;) {
+> > > > > > > +			if (!raw_spin_trylock(&rcu_get_root(rsp)->lock)) {
+> > > > > > > +				local_irq_restore(flags);
+> > > > > > > +				local_bh_enable();
+> > > > > > > +				schedule_timeout_interruptible(2);
+> > > > > > 
+> > > > > > Yes, the above will get you a splat in mainline kernels, which do not
+> > > > > > necessarily push softirq processing to the ksoftirqd kthreads.  ;-)
+> > > > > > 
+> > > > > > > +				local_bh_disable();
+> > > > > > > +				local_irq_save(flags);
+> > > > > > > +				continue;
+> > > > > > > +			}
+> > > > > > > +			rcu_start_gp(rsp);
+> > > > > > > +			raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
+> > > > > > > +			break;
+> > > > > > > +		}
+> > > > > > >  	} else {
+> > > > > > >  		local_irq_restore(flags);
+> > > > > > >  	}
+> > > > > > > 
+> > > > > > > With this patch rcuc is gone from our traces and the scheduling
+> > > > > > > latency is reduced by 3us in our CPU-bound test-case.
+> > > > > > > 
+> > > > > > > Could you please advice on how to solve this contention problem?
+> > > > > > 
+> > > > > > The usual advice would be to configure the system such that the guest's
+> > > > > > VCPUs do not get preempted.
+> > > > > 
+> > > > > The guest vcpus can consume 100% of CPU time (imagine a guest vcpu busy
+> > > > > spinning). In that case, rcuc would never execute, because it has a 
+> > > > > lower priority than guest VCPUs.
+> > > > 
+> > > > OK, this leads me to believe that you are talking about the rcuc kthreads
+> > > > in the host, not the guest.  In which case the usual approach is to
+> > > > reserve a CPU or two on the host which never runs guest VCPUs, and to
+> > > > force the rcuc kthreads there.  Note that CONFIG_NO_HZ_FULL will do this
+> > > > automatically for you, reserving the boot CPU.  And CONFIG_NO_HZ_FULL
+> > > > might well be very useful in this scenario.  And reserving a CPU or two
+> > > > for housekeeping purposes is quite common for heavy CPU-bound workloads.
+> > > > 
+> > > > Of course, you need to make sure that the reserved CPU or two is sufficient
+> > > > for all the rcuc kthreads, but if your guests are mostly CPU bound, this
+> > > > should not be a problem.
+> > > > 
+> > > > > I do not think we want that.
+> > > > 
+> > > > Assuming "that" is "rcuc would never execute" -- agreed, that would be
+> > > > very bad.  You would eventually OOM the system.
+> > > > 
+> > > > > > Or is the contention on the root rcu_node structure's ->lock field
+> > > > > > high for some other reason?
+> > > > > 
+> > > > > Luiz?
+> > > > > 
+> > > > > > > Can we test whether the local CPU is nocb, and in that case, 
+> > > > > > > skip rcu_start_gp entirely for example?
+> > > > > > 
+> > > > > > If you do that, you can see system hangs due to needed grace periods never
+> > > > > > getting started.
+> > > > > 
+> > > > > So it is not enough for CB CPUs to execute rcu_start_gp. Why is it
+> > > > > necessary for nocb CPUs to execute rcu_start_gp?
+> > > > 
+> > > > Sigh.  Are we in the host or the guest OS at this point?
+> > > 
+> > > Host.
+> > 
+> > Can you build the host with NO_HZ_FULL and boot with nohz_full=?
+> > That should get rid of of much of your problems here.
+> > 
+> > > > In any case, if you want the best real-time response for a CPU-bound
+> > > > workload on a given CPU, careful use of NO_HZ_FULL would prevent
+> > > > that CPU from ever invoking __rcu_process_callbacks() in the first
+> > > > place, which would have the beneficial side effect of preventing
+> > > > __rcu_process_callbacks() from ever invoking rcu_start_gp().
+> > > > 
+> > > > Of course, NO_HZ_FULL does have the drawback of increasing the cost
+> > > > of user-kernel transitions.
+> > > 
+> > > We need periodic processing of __run_timers to keep timer wheel
+> > > processing from falling behind too much.
+> > > 
+> > > See http://www.gossamer-threads.com/lists/linux/kernel/2094151.
+> > 
+> > Hmmm...  Do you have the following commits in your build?
+> > 
+> > fff421580f51 timers: Track total number of timers in list
+> > d550e81dc0dd timers: Reduce __run_timers() latency for empty list
+> > 16d937f88031 timers: Reduce future __run_timers() latency for newly emptied list
+> > 18d8cb64c9c0 timers: Reduce future __run_timers() latency for first add to empty list
+> > aea369b959be timers: Make internal_add_timer() update ->next_timer if ->active_timers == 0
+> > 
+> > Keeping extraneous processing off of the CPUs running the real-time
+> > guest will minimize the number of timers, allowing these commits to
+> > do their jobs.
+> 
+> Clocksource watchdog:
+> 
+>         /*
+>          * Cycle through CPUs to check if the CPUs stay synchronized
+>          * to each other.
+>          */
+>         next_cpu = cpumask_next(raw_smp_processor_id(), cpu_online_mask);
+>         if (next_cpu >= nr_cpu_ids)
+>                 next_cpu = cpumask_first(cpu_online_mask);
+>         watchdog_timer.expires += WATCHDOG_INTERVAL;
+>         add_timer_on(&watchdog_timer, next_cpu);
+> 
+> OK to disable...
 
-[1]: http://lists.infradead.org/pipermail/linux-arm-kernel/2012-May/102122.html (duplicated below)
+I have to defer to John Stultz and Thomas Gleixner on this one.
 
--- 8< --
-From: Yong Zhang <yong.zhang at windriver.com>
+> MCE:
+> 
+>    2   1317  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_timer_fn>>
+>              add_timer_on(t, smp_processor_id());
+>    3   1335  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_timer_kick>>
+>              add_timer_on(t, smp_processor_id());
+>    4   1657  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_start_timer>>
+>              add_timer_on(t, cpu);
+> 
+> Unsure how realistic the expectation to be able to exclude add_timer_on
+> and queue_delayed_work_on users is.
+> 
+> NOK to disable, i suppose.
 
-Both pi_stress and sigwaittest in rt-test show performance gain with
-__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
+And I must defer to x86 MCE experts on this one.
 
-pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
-  vanilla:     Total inversion performed: 5493381
-  patched:     Total inversion performed: 5621746
-
-sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
-  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
-  patched:     Min   19, Cur   21, Avg   23, Max   96
-
-Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
-Cc: Russell King <rmk+kernel at arm.linux.org.uk>
-Cc: Nicolas Pitre <nico at linaro.org>
-Cc: Will Deacon <will.deacon at arm.com>
-Cc: Catalin Marinas <catalin.marinas at arm.com>
-Cc: Thomas Gleixner <tglx at linutronix.de>
-Cc: linux-arm-kernel at lists.infradead.org
----
- arch/arm/include/asm/cmpxchg.h |    2 ++
- 1 files changed, 2 insertions(+), 0 deletions(-)
-
-diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-index 7eb18c1..a91b44e 100644
---- a/arch/arm/include/asm/cmpxchg.h
-+++ b/arch/arm/include/asm/cmpxchg.h
-@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
- 
- #else	/* min ARCH >= ARMv6 */
- 
-+#define __HAVE_ARCH_CMPXCHG 1
-+
- extern void __bad_cmpxchg(volatile void *ptr, int size);
- 
- /*
--- 
-1.7.5.4
+							Thanx, Paul
 
