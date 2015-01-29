@@ -1,96 +1,76 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: kernel-rt rcuc lock contention problem
-Date: Thu, 29 Jan 2015 10:11:23 -0800
-Message-ID: <20150129181123.GF19109@linux.vnet.ibm.com>
-References: <20150126141403.469dc92f@redhat.com>
- <20150127203752.GD19109@linux.vnet.ibm.com>
- <20150128015508.GA12233@amt.cnet>
- <20150128180335.GR19109@linux.vnet.ibm.com>
- <20150128182512.GB1259@amt.cnet>
- <20150128185552.GT19109@linux.vnet.ibm.com>
- <20150129120644.1d052e16@gandalf.local.home>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Nathan Sullivan <nathan.sullivan@ni.com>
+Subject: __HAVE_ARCH_CMPXCHG on ARM?
+Date: Thu, 29 Jan 2015 12:56:18 -0600
+Message-ID: <20150129185618.GA31459@nathan3500-linux-VM>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Marcelo Tosatti <mtosatti@redhat.com>,
-	Luiz Capitulino <lcapitulino@redhat.com>,
+Cc: yong.zhang0@gmail.com, will.deacon@arm.com,
+	linux-arm-kernel@lists.infradead.org,
 	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+To: yong.zhang@windriver.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:46556 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751615AbbA2SR6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2015 13:17:58 -0500
-Received: from /spool/local
-	by e31.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Thu, 29 Jan 2015 11:17:58 -0700
-Received: from b03cxnp08028.gho.boulder.ibm.com (b03cxnp08028.gho.boulder.ibm.com [9.17.130.20])
-	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id E32871FF0049
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 11:09:06 -0700 (MST)
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by b03cxnp08028.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t0TIHtx542139882
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 11:18:03 -0700
-Received: from d03av01.boulder.ibm.com (localhost [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t0TIHLVk007065
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 11:17:22 -0700
+Received: from skprod2.natinst.com ([130.164.80.23]:43625 "EHLO ni.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1750744AbbA2TLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Jan 2015 14:11:18 -0500
 Content-Disposition: inline
-In-Reply-To: <20150129120644.1d052e16@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Jan 29, 2015 at 12:06:44PM -0500, Steven Rostedt wrote:
-> On Wed, 28 Jan 2015 10:55:53 -0800
-> "Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
-> 
-> > Then your only hope is to prevent the host (and other guests) from
-> > preempting the real-time guest.
-> 
-> Right!
-> 
-> I think there's a miscommunication here.
 
-I can easily believe that!
+While investigating a performance issue on RT 3.14, I noticed that
+__HAVE_ARCH_CMPXCHG is not defined for ARM.  This causes -rt locks to
+always use the slow path and impacts performance.  ARMv6 and above
+have a cmpxchg implementation already that will work just fine.
 
-> Basically what is needed is to run the RT guest on a CPU by itself. We
-> can all agree on that. That guest runs at a high priority where nothing
-> should preempt it. We should enable NO_HZ_FULL, and move as much off of
-> that CPU as possible (including rcu callbacks).
-> 
-> I'm not sure if the code does this or not, but I believe it does. When
-> we enter the guest, the host should be in an RCU quiescent state, where
-> RCU will ignore the CPU that is running the guest. Remember, we are only
-> talking about interactions of the host, not the workings of the guest.
+In 2012, Yong Zhang submitted a patch to fix this[1], but it mysteriously
+disappeared afterwards.  I did notice that the s-o-b line has a different
+email address than the windriver one.  Yong, do you mind re-submitting the
+patch with a fixed s-o-b?
 
-NO_HZ_FULL will automatically tell RCU about the guest-execution quiescent
-state because the guest is seen by the host as user-mode execution.
-(Right?  Or is KVM treating this specially such that RCU doesn't see
-guest execution as a quiescent state?  I think this is currently handled
-correctly, because if it wasn't, you would get RCU CPU stall warning
-messages.)
+Thanks!
+   Nathan Sullivan
 
-> Once this isolation happens, then the guest should be running in a
-> state that it could handle RT reaction times for its own processes (if
-> the guest OS supports it). The guest shouldn't be preempted by anything
-> unless it does something that requires a service (interacting with the
-> network or other baremetal device), then it will need to do the same
-> things that any RT task must do.
+[1]: http://lists.infradead.org/pipermail/linux-arm-kernel/2012-May/102122.html (duplicated below)
 
-Agreed!
+-- 8< --
+From: Yong Zhang <yong.zhang at windriver.com>
 
-> I think all this is feasible.
+Both pi_stress and sigwaittest in rt-test show performance gain with
+__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
 
-The one thing that gives me pause is the high contention on the root
-(AKA only) rcu_node structure's ->lock field.  If this persists, one
-thing to try would be to build with CONFIG_RCU_FANOUT_LEAF=8 (or 4).
-If that helps, it would be worthwhile to do some tracing or lock
-profiling to see about reducing the ->lock contention for the default
-CONFIG_RCU_FANOUT_LEAF=16.
+pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
+  vanilla:     Total inversion performed: 5493381
+  patched:     Total inversion performed: 5621746
 
-My first thought when I saw the high contention was to introduce
-funnel locking for grace-period start, but that is unlikely to help
-in cases where there is only one rcu_node structure.  ;-)
+sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
+  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
+  patched:     Min   19, Cur   21, Avg   23, Max   96
 
-							Thanx, Paul
+Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
+Cc: Russell King <rmk+kernel at arm.linux.org.uk>
+Cc: Nicolas Pitre <nico at linaro.org>
+Cc: Will Deacon <will.deacon at arm.com>
+Cc: Catalin Marinas <catalin.marinas at arm.com>
+Cc: Thomas Gleixner <tglx at linutronix.de>
+Cc: linux-arm-kernel at lists.infradead.org
+---
+ arch/arm/include/asm/cmpxchg.h |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
+index 7eb18c1..a91b44e 100644
+--- a/arch/arm/include/asm/cmpxchg.h
++++ b/arch/arm/include/asm/cmpxchg.h
+@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
+ 
+ #else	/* min ARCH >= ARMv6 */
+ 
++#define __HAVE_ARCH_CMPXCHG 1
++
+ extern void __bad_cmpxchg(volatile void *ptr, int size);
+ 
+ /*
+-- 
+1.7.5.4
 
