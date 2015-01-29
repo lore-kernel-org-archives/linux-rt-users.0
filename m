@@ -1,47 +1,57 @@
-From: Bernhard Schiffner <bernhard@schiffner-limbach.de>
-Subject: slightly optimistic news
-Date: Thu, 29 Jan 2015 16:22:33 +0100
-Message-ID: <61852341.LKrPFZFJFv@laptop>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: kernel-rt rcuc lock contention problem
+Date: Thu, 29 Jan 2015 12:06:44 -0500
+Message-ID: <20150129120644.1d052e16@gandalf.local.home>
+References: <20150126141403.469dc92f@redhat.com>
+	<20150127203752.GD19109@linux.vnet.ibm.com>
+	<20150128015508.GA12233@amt.cnet>
+	<20150128180335.GR19109@linux.vnet.ibm.com>
+	<20150128182512.GB1259@amt.cnet>
+	<20150128185552.GT19109@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 7Bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Marcelo Tosatti <mtosatti@redhat.com>,
+	Luiz Capitulino <lcapitulino@redhat.com>,
+	linux-rt-users@vger.kernel.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.kundenserver.de ([212.227.126.131]:51638 "EHLO
-	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753314AbbA2PWg (ORCPT
+Received: from smtprelay0009.hostedemail.com ([216.40.44.9]:48382 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755347AbbA2RGs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2015 10:22:36 -0500
-Received: from laptop.localnet ([88.73.214.24]) by mrelayeu.kundenserver.de
- (mreue002) with ESMTPSA (Nemesis) id 0LtA6t-1XWUpF1kc7-012rIV for
- <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 16:22:34 +0100
+	Thu, 29 Jan 2015 12:06:48 -0500
+In-Reply-To: <20150128185552.GT19109@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi all,
+On Wed, 28 Jan 2015 10:55:53 -0800
+"Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
 
-have a look here (in German):
-http://www.elektroniknet.de/embedded/sonstiges/artikel/116408/ 
+> Then your only hope is to prevent the host (and other guests) from
+> preempting the real-time guest.
 
-It states that Dr. Carsten Emde was successfull in getting (some) money to
-continue the work of him and Thomas Gleixner  regarding the RT-patch.
+Right!
 
-It states too that after Redhat and IBM reached their goals regarding RT
-(stopping their support) smaller companies joined OSADL or increased their
-level of involement significantly.
+I think there's a miscommunication here.
 
-I'd like you  to spread the word that there is a place where money spent to
-RT is in the right hands and used carefully.
+Basically what is needed is to run the RT guest on a CPU by itself. We
+can all agree on that. That guest runs at a high priority where nothing
+should preempt it. We should enable NO_HZ_FULL, and move as much off of
+that CPU as possible (including rcu callbacks).
 
-Congarts Carsten and good luck finding other partners for OSADL!
+I'm not sure if the code does this or not, but I believe it does. When
+we enter the guest, the host should be in an RCU quiescent state, where
+RCU will ignore the CPU that is running the guest. Remember, we are only
+talking about interactions of the host, not the workings of the guest.
 
-BTW: This is the site organzied by Carsten
-http://osadl.org/
+Once this isolation happens, then the guest should be running in a
+state that it could handle RT reaction times for its own processes (if
+the guest OS supports it). The guest shouldn't be preempted by anything
+unless it does something that requires a service (interacting with the
+network or other baremetal device), then it will need to do the same
+things that any RT task must do.
 
+I think all this is feasible.
 
-Bernhard
-
-
-
-
-
+-- Steve
