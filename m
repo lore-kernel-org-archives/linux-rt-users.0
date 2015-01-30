@@ -1,212 +1,218 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: kernel-rt rcuc lock contention problem
-Date: Thu, 29 Jan 2015 10:36:53 -0800
-Message-ID: <20150129183653.GH19109@linux.vnet.ibm.com>
-References: <20150126141403.469dc92f@redhat.com>
- <20150127203752.GD19109@linux.vnet.ibm.com>
- <20150128015508.GA12233@amt.cnet>
- <20150128180335.GR19109@linux.vnet.ibm.com>
- <20150128182512.GB1259@amt.cnet>
- <20150128185552.GT19109@linux.vnet.ibm.com>
- <20150129181324.GA30701@amt.cnet>
-Reply-To: paulmck@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Luiz Capitulino <lcapitulino@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e38.co.us.ibm.com ([32.97.110.159]:60805 "EHLO
-	e38.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758978AbbA2WSp (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 29 Jan 2015 17:18:45 -0500
-Received: from /spool/local
-	by e38.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Thu, 29 Jan 2015 15:18:44 -0700
-Received: from b03cxnp07029.gho.boulder.ibm.com (b03cxnp07029.gho.boulder.ibm.com [9.17.130.16])
-	by d03dlp01.boulder.ibm.com (Postfix) with ESMTP id 21C35C40003
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:09:53 -0700 (MST)
-Received: from d03av01.boulder.ibm.com (d03av01.boulder.ibm.com [9.17.195.167])
-	by b03cxnp07029.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t0TMIXab36896982
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:18:41 -0700
-Received: from d03av01.boulder.ibm.com (localhost [127.0.0.1])
-	by d03av01.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t0TMI82t006717
-	for <linux-rt-users@vger.kernel.org>; Thu, 29 Jan 2015 15:18:08 -0700
-Content-Disposition: inline
-In-Reply-To: <20150129181324.GA30701@amt.cnet>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Thavatchai Makphaibulchoke <tmac@hp.com>
+Subject: [PATCH RT v2] kernel/res_counter.c: Change lock of struct res_counter to raw_spinlock_t
+Date: Fri, 30 Jan 2015 11:59:49 -0700
+Message-ID: <1422644389-33074-1-git-send-email-tmac@hp.com>
+References: <1420745917-50747-1-git-send-email-tmac@hp.com>
+Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org,
+	Thavatchai Makphaibulchoke <tmac@hp.com>
+To: rostedt@goodmis.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1420745917-50747-1-git-send-email-tmac@hp.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Jan 29, 2015 at 04:13:24PM -0200, Marcelo Tosatti wrote:
-> 
-> On Wed, Jan 28, 2015 at 10:55:53AM -0800, Paul E. McKenney wrote:
-> > > The host. Imagine a Windows 95 guest running a realtime app.
-> > > That should help.
-> > 
-> > Then force the critical services to run on a housekeeping CPU.  If the
-> > host is permitted to preempt the guest, the latency blows you are seeing
-> > are expected behavior.
-> 
-> ksoftirqd must preempt the vcpu as it executes irq_work
-> routines for example.
-> 
-> IRQ threads must preempt the vcpu to inject HW interrupts
-> to the guest.
+Since memory cgroups can be called from a page fault handler as shown
+by the stack dump here,
 
-Understood, and hopefully these short preemptions are not causing excessive
-trouble.
+[12679.513255] BUG: scheduling while atomic: ssh/10621/0x00000002
+[12679.513305] Preemption disabled at:[<ffffffff811a20f7>] mem_cgroup_charge_common+0x37/0x60
+[12679.513305]
+[12679.513322] Call Trace:
+[12679.513331]  [<ffffffff81512f62>] dump_stack+0x4f/0x7c
+[12679.513333]  [<ffffffff8150f4f1>] __schedule_bug+0x9f/0xad
+[12679.513338]  [<ffffffff815155f3>] __schedule+0x653/0x720
+[12679.513340]  [<ffffffff815180ce>] ? _raw_spin_unlock_irqrestore+0x2e/0x70
+[12679.513343]  [<ffffffff81515784>] schedule+0x34/0xa0
+[12679.513345]  [<ffffffff81516fdb>] rt_spin_lock_slowlock+0x10b/0x250
+[12679.513348]  [<ffffffff815183a5>] rt_spin_lock+0x35/0x40
+[12679.513352]  [<ffffffff810ec1d9>] res_counter_uncharge_until+0x69/0xb0
+[12679.513354]  [<ffffffff810ec233>] res_counter_uncharge+0x13/0x20
+[12679.513358]  [<ffffffff8119c0be>] drain_stock.isra.38+0x5e/0x90
+[12679.513360]  [<ffffffff811a16a2>] __mem_cgroup_try_charge+0x3f2/0x8a0
+[12679.513363]  [<ffffffff811a20f7>] mem_cgroup_charge_common+0x37/0x60
+[12679.513365]  [<ffffffff811a3b06>] mem_cgroup_newpage_charge+0x26/0x30
+[12679.513369]  [<ffffffff8116c8d2>] handle_mm_fault+0x9b2/0xdb0
+[12679.513374]  [<ffffffff81400474>] ? sock_aio_read.part.11+0x104/0x130
+[12679.513379]  [<ffffffff8151c072>] __do_page_fault+0x182/0x4f0
+[12679.513381]  [<ffffffff814004c1>] ? sock_aio_read+0x21/0x30
+[12679.513385]  [<ffffffff811ab25a>] ? do_sync_read+0x5a/0x90
+[12679.513390]  [<ffffffff8108c981>] ? get_parent_ip+0x11/0x50
+[12679.513392]  [<ffffffff8151c41e>] do_page_fault+0x3e/0x80
+[12679.513395]  [<ffffffff81518e68>] page_fault+0x28/0x30
 
-And my concern with this was partly due to my assumption that you were
-seeing high lock contention in the guest.
+the lock member of struct res_counter should be of type raw_spinlock_t,
+not spinlock_t which can go to sleep.
 
-> > automatically.  If that is infeasible, then yes, it should be possible
-> > to add an explicit quiescent state in the host at vCPU entry/exit, at
-> > least assuming that the host is in a state permitting this.
-> > 
-> > > > > > > We've cooked the following extremely dirty patch, just to see
-> > > > > > > what would happen:
-> > > > > > > 
-> > > > > > > diff --git a/kernel/rcutree.c b/kernel/rcutree.c
-> > > > > > > index eaed1ef..c0771cc 100644
-> > > > > > > --- a/kernel/rcutree.c
-> > > > > > > +++ b/kernel/rcutree.c
-> > > > > > > @@ -2298,9 +2298,19 @@ __rcu_process_callbacks(struct rcu_state *rsp)
-> > > > > > >  	/* Does this CPU require a not-yet-started grace period? */
-> > > > > > >  	local_irq_save(flags);
-> > > > > > >  	if (cpu_needs_another_gp(rsp, rdp)) {
-> > > > > > > -		raw_spin_lock(&rcu_get_root(rsp)->lock); /* irqs disabled. */
-> > > > > > > -		rcu_start_gp(rsp);
-> > > > > > > -		raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
-> > > > > > > +		for (;;) {
-> > > > > > > +			if (!raw_spin_trylock(&rcu_get_root(rsp)->lock)) {
-> > > > > > > +				local_irq_restore(flags);
-> > > > > > > +				local_bh_enable();
-> > > > > > > +				schedule_timeout_interruptible(2);
-> > > > > > 
-> > > > > > Yes, the above will get you a splat in mainline kernels, which do not
-> > > > > > necessarily push softirq processing to the ksoftirqd kthreads.  ;-)
-> > > > > > 
-> > > > > > > +				local_bh_disable();
-> > > > > > > +				local_irq_save(flags);
-> > > > > > > +				continue;
-> > > > > > > +			}
-> > > > > > > +			rcu_start_gp(rsp);
-> > > > > > > +			raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
-> > > > > > > +			break;
-> > > > > > > +		}
-> > > > > > >  	} else {
-> > > > > > >  		local_irq_restore(flags);
-> > > > > > >  	}
-> > > > > > > 
-> > > > > > > With this patch rcuc is gone from our traces and the scheduling
-> > > > > > > latency is reduced by 3us in our CPU-bound test-case.
-> > > > > > > 
-> > > > > > > Could you please advice on how to solve this contention problem?
-> > > > > > 
-> > > > > > The usual advice would be to configure the system such that the guest's
-> > > > > > VCPUs do not get preempted.
-> > > > > 
-> > > > > The guest vcpus can consume 100% of CPU time (imagine a guest vcpu busy
-> > > > > spinning). In that case, rcuc would never execute, because it has a 
-> > > > > lower priority than guest VCPUs.
-> > > > 
-> > > > OK, this leads me to believe that you are talking about the rcuc kthreads
-> > > > in the host, not the guest.  In which case the usual approach is to
-> > > > reserve a CPU or two on the host which never runs guest VCPUs, and to
-> > > > force the rcuc kthreads there.  Note that CONFIG_NO_HZ_FULL will do this
-> > > > automatically for you, reserving the boot CPU.  And CONFIG_NO_HZ_FULL
-> > > > might well be very useful in this scenario.  And reserving a CPU or two
-> > > > for housekeeping purposes is quite common for heavy CPU-bound workloads.
-> > > > 
-> > > > Of course, you need to make sure that the reserved CPU or two is sufficient
-> > > > for all the rcuc kthreads, but if your guests are mostly CPU bound, this
-> > > > should not be a problem.
-> > > > 
-> > > > > I do not think we want that.
-> > > > 
-> > > > Assuming "that" is "rcuc would never execute" -- agreed, that would be
-> > > > very bad.  You would eventually OOM the system.
-> > > > 
-> > > > > > Or is the contention on the root rcu_node structure's ->lock field
-> > > > > > high for some other reason?
-> > > > > 
-> > > > > Luiz?
-> > > > > 
-> > > > > > > Can we test whether the local CPU is nocb, and in that case, 
-> > > > > > > skip rcu_start_gp entirely for example?
-> > > > > > 
-> > > > > > If you do that, you can see system hangs due to needed grace periods never
-> > > > > > getting started.
-> > > > > 
-> > > > > So it is not enough for CB CPUs to execute rcu_start_gp. Why is it
-> > > > > necessary for nocb CPUs to execute rcu_start_gp?
-> > > > 
-> > > > Sigh.  Are we in the host or the guest OS at this point?
-> > > 
-> > > Host.
-> > 
-> > Can you build the host with NO_HZ_FULL and boot with nohz_full=?
-> > That should get rid of of much of your problems here.
-> > 
-> > > > In any case, if you want the best real-time response for a CPU-bound
-> > > > workload on a given CPU, careful use of NO_HZ_FULL would prevent
-> > > > that CPU from ever invoking __rcu_process_callbacks() in the first
-> > > > place, which would have the beneficial side effect of preventing
-> > > > __rcu_process_callbacks() from ever invoking rcu_start_gp().
-> > > > 
-> > > > Of course, NO_HZ_FULL does have the drawback of increasing the cost
-> > > > of user-kernel transitions.
-> > > 
-> > > We need periodic processing of __run_timers to keep timer wheel
-> > > processing from falling behind too much.
-> > > 
-> > > See http://www.gossamer-threads.com/lists/linux/kernel/2094151.
-> > 
-> > Hmmm...  Do you have the following commits in your build?
-> > 
-> > fff421580f51 timers: Track total number of timers in list
-> > d550e81dc0dd timers: Reduce __run_timers() latency for empty list
-> > 16d937f88031 timers: Reduce future __run_timers() latency for newly emptied list
-> > 18d8cb64c9c0 timers: Reduce future __run_timers() latency for first add to empty list
-> > aea369b959be timers: Make internal_add_timer() update ->next_timer if ->active_timers == 0
-> > 
-> > Keeping extraneous processing off of the CPUs running the real-time
-> > guest will minimize the number of timers, allowing these commits to
-> > do their jobs.
-> 
-> Clocksource watchdog:
-> 
->         /*
->          * Cycle through CPUs to check if the CPUs stay synchronized
->          * to each other.
->          */
->         next_cpu = cpumask_next(raw_smp_processor_id(), cpu_online_mask);
->         if (next_cpu >= nr_cpu_ids)
->                 next_cpu = cpumask_first(cpu_online_mask);
->         watchdog_timer.expires += WATCHDOG_INTERVAL;
->         add_timer_on(&watchdog_timer, next_cpu);
-> 
-> OK to disable...
+Tested on a 2 node, 32 thread, plaform with cyclictest.
 
-I have to defer to John Stultz and Thomas Gleixner on this one.
+Kernel version 3.14.25 + patch-3.14.25-rt22
 
-> MCE:
-> 
->    2   1317  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_timer_fn>>
->              add_timer_on(t, smp_processor_id());
->    3   1335  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_timer_kick>>
->              add_timer_on(t, smp_processor_id());
->    4   1657  ../../arch/x86/kernel/cpu/mcheck/mce.c <<mce_start_timer>>
->              add_timer_on(t, cpu);
-> 
-> Unsure how realistic the expectation to be able to exclude add_timer_on
-> and queue_delayed_work_on users is.
-> 
-> NOK to disable, i suppose.
+Signed-off-by: T Makphaibulchoke <tmac@hp.com>
+---
 
-And I must defer to x86 MCE experts on this one.
+Changed in v2:
+	- Fixed Signed-off-by tag.
 
-							Thanx, Paul
+ include/linux/res_counter.h | 26 +++++++++++++-------------
+ kernel/res_counter.c        | 18 +++++++++---------
+ 2 files changed, 22 insertions(+), 22 deletions(-)
 
+diff --git a/include/linux/res_counter.h b/include/linux/res_counter.h
+index 201a697..61d94a4 100644
+--- a/include/linux/res_counter.h
++++ b/include/linux/res_counter.h
+@@ -47,7 +47,7 @@ struct res_counter {
+ 	 * the lock to protect all of the above.
+ 	 * the routines below consider this to be IRQ-safe
+ 	 */
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	/*
+ 	 * Parent counter, used for hierarchial resource accounting
+ 	 */
+@@ -148,12 +148,12 @@ static inline unsigned long long res_counter_margin(struct res_counter *cnt)
+ 	unsigned long long margin;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	if (cnt->limit > cnt->usage)
+ 		margin = cnt->limit - cnt->usage;
+ 	else
+ 		margin = 0;
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ 	return margin;
+ }
+ 
+@@ -170,12 +170,12 @@ res_counter_soft_limit_excess(struct res_counter *cnt)
+ 	unsigned long long excess;
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	if (cnt->usage <= cnt->soft_limit)
+ 		excess = 0;
+ 	else
+ 		excess = cnt->usage - cnt->soft_limit;
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ 	return excess;
+ }
+ 
+@@ -183,18 +183,18 @@ static inline void res_counter_reset_max(struct res_counter *cnt)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	cnt->max_usage = cnt->usage;
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ }
+ 
+ static inline void res_counter_reset_failcnt(struct res_counter *cnt)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	cnt->failcnt = 0;
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ }
+ 
+ static inline int res_counter_set_limit(struct res_counter *cnt,
+@@ -203,12 +203,12 @@ static inline int res_counter_set_limit(struct res_counter *cnt,
+ 	unsigned long flags;
+ 	int ret = -EBUSY;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	if (cnt->usage <= limit) {
+ 		cnt->limit = limit;
+ 		ret = 0;
+ 	}
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ 	return ret;
+ }
+ 
+@@ -218,9 +218,9 @@ res_counter_set_soft_limit(struct res_counter *cnt,
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&cnt->lock, flags);
++	raw_spin_lock_irqsave(&cnt->lock, flags);
+ 	cnt->soft_limit = soft_limit;
+-	spin_unlock_irqrestore(&cnt->lock, flags);
++	raw_spin_unlock_irqrestore(&cnt->lock, flags);
+ 	return 0;
+ }
+ 
+diff --git a/kernel/res_counter.c b/kernel/res_counter.c
+index 3fbcb0d..59a7a62 100644
+--- a/kernel/res_counter.c
++++ b/kernel/res_counter.c
+@@ -16,7 +16,7 @@
+ 
+ void res_counter_init(struct res_counter *counter, struct res_counter *parent)
+ {
+-	spin_lock_init(&counter->lock);
++	raw_spin_lock_init(&counter->lock);
+ 	counter->limit = RES_COUNTER_MAX;
+ 	counter->soft_limit = RES_COUNTER_MAX;
+ 	counter->parent = parent;
+@@ -51,9 +51,9 @@ static int __res_counter_charge(struct res_counter *counter, unsigned long val,
+ 	*limit_fail_at = NULL;
+ 	local_irq_save_nort(flags);
+ 	for (c = counter; c != NULL; c = c->parent) {
+-		spin_lock(&c->lock);
++		raw_spin_lock(&c->lock);
+ 		r = res_counter_charge_locked(c, val, force);
+-		spin_unlock(&c->lock);
++		raw_spin_unlock(&c->lock);
+ 		if (r < 0 && !ret) {
+ 			ret = r;
+ 			*limit_fail_at = c;
+@@ -64,9 +64,9 @@ static int __res_counter_charge(struct res_counter *counter, unsigned long val,
+ 
+ 	if (ret < 0 && !force) {
+ 		for (u = counter; u != c; u = u->parent) {
+-			spin_lock(&u->lock);
++			raw_spin_lock(&u->lock);
+ 			res_counter_uncharge_locked(u, val);
+-			spin_unlock(&u->lock);
++			raw_spin_unlock(&u->lock);
+ 		}
+ 	}
+ 	local_irq_restore_nort(flags);
+@@ -106,11 +106,11 @@ u64 res_counter_uncharge_until(struct res_counter *counter,
+ 	local_irq_save_nort(flags);
+ 	for (c = counter; c != top; c = c->parent) {
+ 		u64 r;
+-		spin_lock(&c->lock);
++		raw_spin_lock(&c->lock);
+ 		r = res_counter_uncharge_locked(c, val);
+ 		if (c == counter)
+ 			ret = r;
+-		spin_unlock(&c->lock);
++		raw_spin_unlock(&c->lock);
+ 	}
+ 	local_irq_restore_nort(flags);
+ 	return ret;
+@@ -164,9 +164,9 @@ u64 res_counter_read_u64(struct res_counter *counter, int member)
+ 	unsigned long flags;
+ 	u64 ret;
+ 
+-	spin_lock_irqsave(&counter->lock, flags);
++	raw_spin_lock_irqsave(&counter->lock, flags);
+ 	ret = *res_counter_member(counter, member);
+-	spin_unlock_irqrestore(&counter->lock, flags);
++	raw_spin_unlock_irqrestore(&counter->lock, flags);
+ 
+ 	return ret;
+ }
+-- 
+1.9.1
