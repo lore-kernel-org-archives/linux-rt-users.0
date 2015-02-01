@@ -1,218 +1,49 @@
-From: Thavatchai Makphaibulchoke <tmac@hp.com>
-Subject: [PATCH RT v2] kernel/res_counter.c: Change lock of struct res_counter to raw_spinlock_t
-Date: Fri, 30 Jan 2015 11:59:49 -0700
-Message-ID: <1422644389-33074-1-git-send-email-tmac@hp.com>
-References: <1420745917-50747-1-git-send-email-tmac@hp.com>
-Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
-	linux-rt-users@vger.kernel.org,
-	Thavatchai Makphaibulchoke <tmac@hp.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1420745917-50747-1-git-send-email-tmac@hp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Dorian VEGARA <dorian.vegara@gmail.com>
+Subject: sbin/init error 8 (exists but couldn't execute it)
+Date: Sun, 1 Feb 2015 14:53:14 +0100
+Message-ID: <CAOQDsMw55EW19JHpHxX=+oZHGo79ru6CMf4dcTBEK2XXUf2NoQ@mail.gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-la0-f47.google.com ([209.85.215.47]:43077 "EHLO
+	mail-la0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753111AbbBANxQ convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 1 Feb 2015 08:53:16 -0500
+Received: by mail-la0-f47.google.com with SMTP id hz20so33482987lab.6
+        for <linux-rt-users@vger.kernel.org>; Sun, 01 Feb 2015 05:53:14 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Since memory cgroups can be called from a page fault handler as shown
-by the stack dump here,
+Hello to everyone,
 
-[12679.513255] BUG: scheduling while atomic: ssh/10621/0x00000002
-[12679.513305] Preemption disabled at:[<ffffffff811a20f7>] mem_cgroup_charge_common+0x37/0x60
-[12679.513305]
-[12679.513322] Call Trace:
-[12679.513331]  [<ffffffff81512f62>] dump_stack+0x4f/0x7c
-[12679.513333]  [<ffffffff8150f4f1>] __schedule_bug+0x9f/0xad
-[12679.513338]  [<ffffffff815155f3>] __schedule+0x653/0x720
-[12679.513340]  [<ffffffff815180ce>] ? _raw_spin_unlock_irqrestore+0x2e/0x70
-[12679.513343]  [<ffffffff81515784>] schedule+0x34/0xa0
-[12679.513345]  [<ffffffff81516fdb>] rt_spin_lock_slowlock+0x10b/0x250
-[12679.513348]  [<ffffffff815183a5>] rt_spin_lock+0x35/0x40
-[12679.513352]  [<ffffffff810ec1d9>] res_counter_uncharge_until+0x69/0xb0
-[12679.513354]  [<ffffffff810ec233>] res_counter_uncharge+0x13/0x20
-[12679.513358]  [<ffffffff8119c0be>] drain_stock.isra.38+0x5e/0x90
-[12679.513360]  [<ffffffff811a16a2>] __mem_cgroup_try_charge+0x3f2/0x8a0
-[12679.513363]  [<ffffffff811a20f7>] mem_cgroup_charge_common+0x37/0x60
-[12679.513365]  [<ffffffff811a3b06>] mem_cgroup_newpage_charge+0x26/0x30
-[12679.513369]  [<ffffffff8116c8d2>] handle_mm_fault+0x9b2/0xdb0
-[12679.513374]  [<ffffffff81400474>] ? sock_aio_read.part.11+0x104/0x130
-[12679.513379]  [<ffffffff8151c072>] __do_page_fault+0x182/0x4f0
-[12679.513381]  [<ffffffff814004c1>] ? sock_aio_read+0x21/0x30
-[12679.513385]  [<ffffffff811ab25a>] ? do_sync_read+0x5a/0x90
-[12679.513390]  [<ffffffff8108c981>] ? get_parent_ip+0x11/0x50
-[12679.513392]  [<ffffffff8151c41e>] do_page_fault+0x3e/0x80
-[12679.513395]  [<ffffffff81518e68>] page_fault+0x28/0x30
+I want to boot RT Linux 3.14.29-rt26 on my laptop. But I'm
+encountering a problem : the boot stops with this error : "sbin/init
+error 8 (exists but couldn't execute it)".
 
-the lock member of struct res_counter should be of type raw_spinlock_t,
-not spinlock_t which can go to sleep.
+I don't know why this error is displayed... I succeeded in patching
+the kernel, configuring it, compiling it and making its initrd.
 
-Tested on a 2 node, 32 thread, plaform with cyclictest.
+Moreover, when I boot openSUZE (the distribution I use to
+patch/compile/etc. RT Linux), there isn't any problem.
+I tried to remove and setup again and again openSUZE, because I
+thought it would regenerate the init file (which is corrupted
+according to Google - "init error n=C2=B08"). It didn't work.
 
-Kernel version 3.14.25 + patch-3.14.25-rt22
+I don't know how to fix this bug. Could you please help me ?
+You can find two files here :
 
-Signed-off-by: T Makphaibulchoke <tmac@hp.com>
----
+1- .config du noyau patch=C3=A9 : http://textup.fr/117717qW
+2- /boot/grub2/grub.cfg (configuration de GRUB2) : http://textup.fr/117=
+719l2
 
-Changed in v2:
-	- Fixed Signed-off-by tag.
 
- include/linux/res_counter.h | 26 +++++++++++++-------------
- kernel/res_counter.c        | 18 +++++++++---------
- 2 files changed, 22 insertions(+), 22 deletions(-)
-
-diff --git a/include/linux/res_counter.h b/include/linux/res_counter.h
-index 201a697..61d94a4 100644
---- a/include/linux/res_counter.h
-+++ b/include/linux/res_counter.h
-@@ -47,7 +47,7 @@ struct res_counter {
- 	 * the lock to protect all of the above.
- 	 * the routines below consider this to be IRQ-safe
- 	 */
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	/*
- 	 * Parent counter, used for hierarchial resource accounting
- 	 */
-@@ -148,12 +148,12 @@ static inline unsigned long long res_counter_margin(struct res_counter *cnt)
- 	unsigned long long margin;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->limit > cnt->usage)
- 		margin = cnt->limit - cnt->usage;
- 	else
- 		margin = 0;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return margin;
- }
- 
-@@ -170,12 +170,12 @@ res_counter_soft_limit_excess(struct res_counter *cnt)
- 	unsigned long long excess;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->usage <= cnt->soft_limit)
- 		excess = 0;
- 	else
- 		excess = cnt->usage - cnt->soft_limit;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return excess;
- }
- 
-@@ -183,18 +183,18 @@ static inline void res_counter_reset_max(struct res_counter *cnt)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->max_usage = cnt->usage;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- }
- 
- static inline void res_counter_reset_failcnt(struct res_counter *cnt)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->failcnt = 0;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- }
- 
- static inline int res_counter_set_limit(struct res_counter *cnt,
-@@ -203,12 +203,12 @@ static inline int res_counter_set_limit(struct res_counter *cnt,
- 	unsigned long flags;
- 	int ret = -EBUSY;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	if (cnt->usage <= limit) {
- 		cnt->limit = limit;
- 		ret = 0;
- 	}
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return ret;
- }
- 
-@@ -218,9 +218,9 @@ res_counter_set_soft_limit(struct res_counter *cnt,
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&cnt->lock, flags);
-+	raw_spin_lock_irqsave(&cnt->lock, flags);
- 	cnt->soft_limit = soft_limit;
--	spin_unlock_irqrestore(&cnt->lock, flags);
-+	raw_spin_unlock_irqrestore(&cnt->lock, flags);
- 	return 0;
- }
- 
-diff --git a/kernel/res_counter.c b/kernel/res_counter.c
-index 3fbcb0d..59a7a62 100644
---- a/kernel/res_counter.c
-+++ b/kernel/res_counter.c
-@@ -16,7 +16,7 @@
- 
- void res_counter_init(struct res_counter *counter, struct res_counter *parent)
- {
--	spin_lock_init(&counter->lock);
-+	raw_spin_lock_init(&counter->lock);
- 	counter->limit = RES_COUNTER_MAX;
- 	counter->soft_limit = RES_COUNTER_MAX;
- 	counter->parent = parent;
-@@ -51,9 +51,9 @@ static int __res_counter_charge(struct res_counter *counter, unsigned long val,
- 	*limit_fail_at = NULL;
- 	local_irq_save_nort(flags);
- 	for (c = counter; c != NULL; c = c->parent) {
--		spin_lock(&c->lock);
-+		raw_spin_lock(&c->lock);
- 		r = res_counter_charge_locked(c, val, force);
--		spin_unlock(&c->lock);
-+		raw_spin_unlock(&c->lock);
- 		if (r < 0 && !ret) {
- 			ret = r;
- 			*limit_fail_at = c;
-@@ -64,9 +64,9 @@ static int __res_counter_charge(struct res_counter *counter, unsigned long val,
- 
- 	if (ret < 0 && !force) {
- 		for (u = counter; u != c; u = u->parent) {
--			spin_lock(&u->lock);
-+			raw_spin_lock(&u->lock);
- 			res_counter_uncharge_locked(u, val);
--			spin_unlock(&u->lock);
-+			raw_spin_unlock(&u->lock);
- 		}
- 	}
- 	local_irq_restore_nort(flags);
-@@ -106,11 +106,11 @@ u64 res_counter_uncharge_until(struct res_counter *counter,
- 	local_irq_save_nort(flags);
- 	for (c = counter; c != top; c = c->parent) {
- 		u64 r;
--		spin_lock(&c->lock);
-+		raw_spin_lock(&c->lock);
- 		r = res_counter_uncharge_locked(c, val);
- 		if (c == counter)
- 			ret = r;
--		spin_unlock(&c->lock);
-+		raw_spin_unlock(&c->lock);
- 	}
- 	local_irq_restore_nort(flags);
- 	return ret;
-@@ -164,9 +164,9 @@ u64 res_counter_read_u64(struct res_counter *counter, int member)
- 	unsigned long flags;
- 	u64 ret;
- 
--	spin_lock_irqsave(&counter->lock, flags);
-+	raw_spin_lock_irqsave(&counter->lock, flags);
- 	ret = *res_counter_member(counter, member);
--	spin_unlock_irqrestore(&counter->lock, flags);
-+	raw_spin_unlock_irqrestore(&counter->lock, flags);
- 
- 	return ret;
- }
--- 
-1.9.1
+Thank you.
+Best regards,
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
