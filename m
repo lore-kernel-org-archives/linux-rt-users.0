@@ -1,106 +1,67 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: kernel-rt rcuc lock contention problem
-Date: Mon, 2 Feb 2015 19:02:29 -0200
-Message-ID: <20150202210229.GA14624@amt.cnet>
-References: <20150126141403.469dc92f@redhat.com>
- <20150127203752.GD19109@linux.vnet.ibm.com>
- <20150128015508.GA12233@amt.cnet>
- <20150128180335.GR19109@linux.vnet.ibm.com>
- <20150128182512.GB1259@amt.cnet>
- <20150128185552.GT19109@linux.vnet.ibm.com>
- <20150202182450.GA9526@amt.cnet>
- <20150202153553.70dd1a5a@gandalf.local.home>
- <20150202204659.GA13864@amt.cnet>
- <20150202155528.31bcb406@gandalf.local.home>
+From: Nathan Sullivan <nathan.sullivan@ni.com>
+Subject: Re: __HAVE_ARCH_CMPXCHG on ARM?
+Date: Tue, 3 Feb 2015 10:48:48 -0600
+Message-ID: <20150203164848.GA15156@nathan3500-linux-VM>
+References: <20150129185618.GA31459@nathan3500-linux-VM>
+ <CAM2zO=CVCZFNiSukgcgNNT0==xgLK4w5HF3Pz=dcFmrEHPtLdw@mail.gmail.com>
+ <20150202133933.GD31847@arm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: Yong Zhang <yong.zhang0@gmail.com>,
+	Yong Zhang <yong.zhang@windriver.com>,
+	"linux-arm-kernel@lists.infradead.org"
+	<linux-arm-kernel@lists.infradead.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Will Deacon <will.deacon@arm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:59319 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933516AbbBBVCs (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Feb 2015 16:02:48 -0500
+Received: from skprod3.natinst.com ([130.164.80.24]:60654 "EHLO ni.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S965822AbbBCQtR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Feb 2015 11:49:17 -0500
+In-Reply-To: <20150202133933.GD31847@arm.com>
 Content-Disposition: inline
-In-Reply-To: <20150202155528.31bcb406@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Feb 02, 2015 at 03:55:28PM -0500, Steven Rostedt wrote:
-> On Mon, 2 Feb 2015 18:46:59 -0200
-> Marcelo Tosatti <mtosatti@redhat.com> wrote:
-> 
->  
-> > > > The second commit, d550e81dc0dd should be part of -RT, and currently is
-> > > > not, because:
-> > > > 
-> > > > -> Any IRQ work item will raise timer softirq.
-> > > > -> __run_timers will do a full round of processing,
-> > > > ruining latency.
-> > > 
-> > > Was this discussed?
+On Mon, Feb 02, 2015 at 01:39:33PM +0000, Will Deacon wrote:
+> On Fri, Jan 30, 2015 at 08:44:48AM +0000, Yong Zhang wrote:
+> > On Fri, Jan 30, 2015 at 2:56 AM, Nathan Sullivan <nathan.sullivan@ni.com<mailto:nathan.sullivan@ni.com>> wrote:
 > > 
-> > Discussed where?
-> 
-> It sounded like that commit was not added because of the above. That's
-> why I asked, was it discussed. Sounded like you were saying that commit
-> d550e81dc0dd should be part of -RT but it is not because ..., which
-> sounds like there were some decisions made.
-> 
+> > While investigating a performance issue on RT 3.14, I noticed that
+> > __HAVE_ARCH_CMPXCHG is not defined for ARM.  This causes -rt locks to
+> > always use the slow path and impacts performance.  ARMv6 and above
+> > have a cmpxchg implementation already that will work just fine.
 > > 
-> > The point is this: __run_timers has horrible latency.
-> > How to avoid it: configure the system in such a way that no timers 
-> > (old interface, add_timers) expire on the local CPU.
+> > In 2012, Yong Zhang submitted a patch to fix this[1], but it mysteriously
+> > disappeared afterwards.  I did notice that the s-o-b line has a different
+> > email address than the windriver one.  Yong, do you mind re-submitting the
 > > 
-> > The patches Paul listed above limit the issue allowing
-> > you to call raise_softirq(TIMER_SOFTIRQ) without having to go
-> > through __run_timers, in the case of no pending timers.
-> 
-> OK, so you are asking for me to add those patches?
-
-Yes.
-
-> > Then you rely on the sched timer interrupt to notice there is a pending 
-> > irq_work item? 
-> 
-> On, x86, there shouldn't be. irq_work can usually trigger its own
-> interrupt. In the case that it can not, it requires the softirq to
-> trigger when there's irq work to be done.
-> 
+> > It actually doesn't matter. Anyway feel free to add another s-o-b to
+> > the patch:
 > > 
-> > If you have no sched timer interrupts, then what happens with that
-> > irq_work item?
+> > Signed-off-by: Yong Zhang <yong.zhang@windriver.com<mailto:yong.zhang@windriver.com>>
+> 
+> [...]
+> 
+> > diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
+> > index 7eb18c1..a91b44e 100644
+> > --- a/arch/arm/include/asm/cmpxchg.h
+> > +++ b/arch/arm/include/asm/cmpxchg.h
+> > @@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
 > > 
+> >  #else  /* min ARCH >= ARMv6 */
+> > 
+> > +#define __HAVE_ARCH_CMPXCHG 1
 > 
-> That's what that patch does. It should trigger some. Hmm, I have to see
-> if no_hz_full checks irq work too.
+> Is it even possible to have CONFIG_SMP=y on an architecture that doesn't
+> support native cmpxchg? Certainly, the asm-generic cmpxchg.h barfs if
+> SMP, so couldn't we just change/extend the __HAVE_ARCH_CMPXCHG check in
+> rtmutex.c to work automatically with SMP architectures? That would help
+> arm64 too.
 > 
-> But again, of there's no irq_work to do then this should not matter. If
-> there's irq_work to do, then something on that CPU asked to do irq
-> work. 
+> Will
 
-Right.
+What about single Cortex-A8s, for example?  Seems like a non-SMP build should still
+have cmpxchg.
 
-> If you are worried about run_timers, make sure nothing is on that
-> CPU that can trigger a timer.
-
-I am worried about two things:
-
-1) Something calling raise_softirq(TIMER_SOFTIRQ) and lack of 
-Paul's d550e81dc0dd.
-
-The result is __run_timers checking all timer wheel "nodes" 
-and updating base->timer_jiffies, latency is ruined.
-
-Even if one carefully made sure no timer is present.
-
-2) Reliance on sched timer interrupt to raise timer softirq 
-in case of pending irq work (your patch) AND no_hz_full.
-
-> Isolation is the *only* way to make that work.
-
-Fine. Please see item 1) above.
-
+Nathan
