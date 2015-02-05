@@ -1,33 +1,154 @@
-From: Philipp =?utf-8?b?VMO2bGtl?= <philipp.toelke@fos4x.de>
-Subject: Re: [PATCH-rt] rtmutex/rt: don't BUG for -EDEADLK when =?utf-8?b?ZGV0ZWN0X2RlYWRsb2Nr?= is off
-Date: Thu, 5 Feb 2015 07:58:56 +0000 (UTC)
-Message-ID: <loom.20150205T085239-980@post.gmane.org>
-References: <1413418164-9405-1-git-send-email-paul.gortmaker@windriver.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC][PATCH] sched/rt: Use IPI to trigger RT task push migration
+ instead of pulling
+Date: Thu, 5 Feb 2015 15:58:33 +0100
+Message-ID: <20150205145833.GJ5029@twins.programming.kicks-ass.net>
+References: <20150204143906.742287b4@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:53642 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751193AbbBEIAG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Feb 2015 03:00:06 -0500
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1YJHM4-0004We-4I
-	for linux-rt-users@vger.kernel.org; Thu, 05 Feb 2015 09:00:04 +0100
-Received: from pd907f7af.dip0.t-ipconnect.de ([217.7.247.175])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Feb 2015 09:00:04 +0100
-Received: from philipp.toelke by pd907f7af.dip0.t-ipconnect.de with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 05 Feb 2015 09:00:04 +0100
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150204143906.742287b4@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgZXZlcnlib2R5LAoKUGF1bCBHb3J0bWFrZXIgPHBhdWwuZ29ydG1ha2VyIDxhdD4gd2luZHJpdmVyLmNvbT4gd3JpdGVzOgo+ICAtdGhpcyBwYXRjaCBpcyBhZ2FpbnN0IDMuMTAtcnQsIGJ1dCB0aGUgY29kZSBmb3IgYWxsIHJlY2VudCAtcnQKPiAgIHRoYXQgaW5jbHVkZSB0aGUgcmVjZW50IGxpbnV4LXN0YWJsZSBydG11dGV4IGNoYW5nZXMgc2hvdWxkIGhhdmUKPiAgIHRoZSBzYW1lIGlzc3VlLiAgW1RoZSAzLjE0LXJ0IGhhcyBhIHRyaXZpYWwgcGF0aCBjaGFuZ2Ugd2hlcmUgdGhlCj4gICBrZXJuZWwvcnRtdXRleC5jIG9mIHYzLjEwIGJlY29tZXMga2VybmVsL2xvY2tpbmcvcnRtdXRleC5jIGJ1dAo+ICAgYXNpZGUgZnJvbSB0aGF0IGl0IGFwcGxpZXMgdG8gMy4xNCB0b29dCj4gCj4gIC1JJ2QgZ290IGEgcmVwb3J0IG9mIHRoaXMgQlVHX09OIHRyaWdnZXJpbmcgb24gYSB2My40LXJ0IGJhc2VkCj4gICBrZXJuZWw7IHRoYXQga2VybmVsIHdhcyB1c2luZyBteSBpbnRlZ3JhdGlvbiBvZiB0aGUgdGdseCBydG11dGV4Cj4gICBzdGFibGUgY2hhbmdlcyBpbnRvIDMuNC1ydCBhcyBkZXNjcmliZWQgaGVyZToKPiAJaHR0cHM6Ly9sa21sLm9yZy9s
- a21sLzIwMTQvOS8yMy85NDQKPiAgIGJ1dCB0aGUgcmVsYXRlZCBjb2RlIGluIHJvc3RlZHQncyAzLjEwLjUzLXJ0NTYgKGluIGxpbnV4LXN0YWJsZS1ydCkKPiAgIGFuZCBpbiB0Z2x4J3MgMy4xNC4xMi1ydDkgcGF0Y2ggcXVldWUgaXMgQUZBSUNUIGlkZW50aWNhbC4gIFNvIEkKPiAgIGhhdmUgdG8gY29uY2x1ZGUgdGhhdCBhbnl0aGluZyB1c2luZyB0aGUgc3RhYmxlIHJ0bXV0ZXggY2hhbmdlcwo+ICAgY2FuIGluYWR2ZXJ0ZW50bHkgc3VmZmVyIHRoZSBzYW1lIEJVRyB0cmlnZ2VyLgo+IAo+ICAtdGhpcyBjaGFuZ2UgZ2V0cyB1cyBiYWNrIHRvIHRoZSBwcmUtcnRtdXRleCBzdGFibGUgY29tbWl0IGJlaGF2aW91ciwKPiAgIGJ1dCBJIHN1c3BlY3QgdGhhdCBzbWFydGVyIHBlb3BsZSB0aGFuIG1lIGNhbiBhZHZpc2Ugb24gYSB3YXkgdG8KPiAgIGFjaGlldmUgdGhlIHNhbWUgZW5kIHJlc3VsdC4gIFNvIEknbGwgd2FpdCBiZWZvcmUgYWRkaW5nIGFueXRoaW5nCj4gICB0byB0aGUgbGludXgtc3RhYmxlLXJ0IGJyYW5jaGVzIEknZCBwdXQgaGVyZSBhdDoKPiAJaHR0cHM6Ly9naXQua2VybmVsLm9yZy9jZ2l0L2xpbnV4L2tlcm5lbC9naXQvcGF1bG
- cvbGludXgtc3RhYmxlLXJ0LmdpdAoKV2hhdCBpcyB0aGUgc3RhdHVzIG9mIHRoaXMgcGF0Y2g/IEkgaGF2ZSBhIG1hY2hpbmUgaGVyZSBJIGNhbiBnZXQgdG8gY3Jhc2ggaW4KYWJvdXQgaGFsZiBhbiBob3VyIGJ5IGRvaW5nIGEgYmlkaXJlY3Rpb25hbCBpcGVyZiBhcyBwcm9wb3NlZCBpbgo8aHR0cDovL3RocmVhZC5nbWFuZS5vcmcvZ21hbmUubGludXgucnQudXNlci8xMjY4MT4uCgpGZm9yIHBvc3Rlcml0eTogVGhlIGNvbW1hbmQgaXMgImlwZXJmIC1jIDEuMi4zLjQgLWkgMTAgLWQgLWwgNjRrIC10IDUwNDAwIgp3aGljaCB3b3VsZCBub3JtYWxseSBkbyBhIDE0IGhvdXItaXBlcmYgdGVzdCBhZ2FpbnN0IDEuMi4zLjQuCgpNeSBtYWNoaW5lIGNyYXNoZXMgd2l0aCBib3RoIDMuMTAuNTMtcnQ1NiBhbmQgMy4xNC4yOS1ydDI2LiBBZnRlcgphcHBseWluZyB5b3VyIHBhdGNoIHRvIDMuMTQgdGhlIG1hY2hpbmUgaGFzIG5vdCBjcmFzaGVkIGluIDI0IGhvdXJzLgoKSGF2ZSAic21hcnRlciBwZW9wbGUiIGhhZCBhIGNoYW5jZSB0byBhZHZpc2UgYWJvdXQgdGhpcyBwYXRjaD8gSXMgdGhlcmUgYW55CnJlYXNvbiBub3QgdG8gdXNlIGl0PwoKUmVnYXJk
- cywKUGhpbGlwcCBUw7Zsa2UK
+On Wed, Feb 04, 2015 at 02:39:06PM -0500, Steven Rostedt wrote:
+> Can this be wildly non-deterministic? 
 
+You're not actually answering the question here; so basically its doing
+push_rt_tasks() - and you 'need' to show that that has bounded behaviour.
+
+Saying the current thing is bad doesn't mean the proposed thing is good.
+
+Now clearly spinlock contention is O(nr_cpus) and while that sucks rock,
+its actually fairly bounded.
+
+> Comments?
+
+A few.. find below.
+
+>  kernel/sched/core.c     |   18 ++++++++++++++++++
+>  kernel/sched/features.h |   14 ++++++++++++++
+>  kernel/sched/rt.c       |   37 +++++++++++++++++++++++++++++++++++++
+>  kernel/sched/sched.h    |    5 +++++
+>  4 files changed, 74 insertions(+)
+> 
+> Index: linux-rt.git/kernel/sched/core.c
+> ===================================================================
+> --- linux-rt.git.orig/kernel/sched/core.c	2015-02-04 14:08:15.688111069 -0500
+> +++ linux-rt.git/kernel/sched/core.c	2015-02-04 14:08:17.382088074 -0500
+> @@ -1582,6 +1582,9 @@
+>  	 */
+>  	preempt_fold_need_resched();
+>  
+> +	if (sched_feat(RT_PUSH_IPI))
+> +		sched_rt_push_check();
+
+This should be in the irq_enter()/exit() part, but better still, move
+this into an smp_call_fuction_single_async() or queue_irq_work_on(), no
+reason to make the scheduler IPI do yet more work.
+
+>  	if (llist_empty(&this_rq()->wake_list) && !got_nohz_idle_kick())
+>  		return;
+>  
+> @@ -7271,6 +7274,21 @@
+>  		zalloc_cpumask_var(&cpu_isolated_map, GFP_NOWAIT);
+>  	idle_thread_set_boot_cpu();
+>  	set_cpu_rq_start_time();
+> +
+> +	/*
+> +	 * To avoid heavy contention on large CPU boxes,
+> +	 * when there is an RT overloaded CPU (two or more RT tasks
+> +	 * queued to run on a CPU and one of the waiting RT tasks
+> +	 * can migrate) and another CPU lowers its priority, instead
+> +	 * of grabbing both rq locks of the CPUS (as many CPUs lowering
+> +	 * their priority at the same time may create large latencies)
+> +	 * send an IPI to the CPU that is overloaded so that it can
+> +	 * do an efficent push.
+> +	 */
+> +	if (num_possible_cpus() > 16) {
+> +		sched_feat_enable(__SCHED_FEAT_RT_PUSH_IPI);
+> +		sysctl_sched_features |= (1UL << __SCHED_FEAT_RT_PUSH_IPI);
+> +	}
+
+*boom* this won't compile for !CONFIG_SCHED_DEBUG, sysctl_sched_features
+is const in that case.
+
+So I'm sure that it doesn't make sense to tie to an arbitrary CPU
+number, better tie it to a topology property, like the machine having
+two LLC cache domains -- or just always enable the thing.
+
+>  #endif
+>  	init_sched_fair_class();
+>  
+> Index: linux-rt.git/kernel/sched/rt.c
+> ===================================================================
+> --- linux-rt.git.orig/kernel/sched/rt.c	2015-02-04 14:08:15.688111069 -0500
+> +++ linux-rt.git/kernel/sched/rt.c	2015-02-04 14:08:17.383088061 -0500
+> @@ -1760,6 +1760,31 @@
+>  		;
+>  }
+>  
+> +/**
+> + * sched_rt_push_check - check if we can push waiting RT tasks
+> + *
+> + * Called from sched IPI when sched feature RT_PUSH_IPI is enabled.
+> + *
+> + * Checks if there is an RT task that can migrate and there exists
+> + * a CPU in its affinity that only has tasks lower in priority than
+> + * the waiting RT task. If so, then it will push the task off to that
+> + * CPU.
+> + */
+> +void sched_rt_push_check(void)
+> +{
+> +	struct rq *rq = cpu_rq(smp_processor_id());
+> +
+> +	if (WARN_ON_ONCE(!irqs_disabled()))
+> +		return;
+> +
+> +	if (!has_pushable_tasks(rq))
+> +		return;
+> +
+> +	raw_spin_lock(&rq->lock);
+> +	push_rt_tasks(rq);
+
+So this, on first sight, looks like an unbounded while loop; better
+present some runtime bound analysis on it.
+
+At present I find a worst case O(inf * nr_tries * nr_prios * nr_cpus),
+which while on average might run faster, is actually quite horrible.
+
+RT isn't won on avg or median execution times :-)
+
+> +	raw_spin_unlock(&rq->lock);
+> +}
+> +
+>  static int pull_rt_task(struct rq *this_rq)
+>  {
+>  	int this_cpu = this_rq->cpu, ret = 0, cpu;
+> Index: linux-rt.git/kernel/sched/sched.h
+> ===================================================================
+> --- linux-rt.git.orig/kernel/sched/sched.h	2015-02-04 14:08:15.688111069 -0500
+> +++ linux-rt.git/kernel/sched/sched.h	2015-02-04 14:08:17.392087939 -0500
+> @@ -1540,6 +1542,9 @@
+>  	__release(rq2->lock);
+>  }
+>  
+> +void sched_rt_push_check(void)
+
+I'm very sure you mean static inline there.. otherwise the linker will
+get upset about multiple instances of the same symbol.
+
+> +{
+> +}
+>  #endif
+>  
+>  extern struct sched_entity *__pick_first_entity(struct cfs_rq *cfs_rq);
