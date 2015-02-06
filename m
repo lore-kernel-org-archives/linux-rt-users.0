@@ -1,45 +1,49 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [RFC][PATCH] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Fri, 06 Feb 2015 16:58:08 +0100
-Message-ID: <1423238288.3377.83.camel@gmail.com>
-References: <20150204143906.742287b4@gandalf.local.home>
-	 <20150205145833.GJ5029@twins.programming.kicks-ass.net>
-	 <20150205110420.398fb3c8@gandalf.local.home>
-	 <20150206124051.GN21418@twins.programming.kicks-ass.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.14.31-rt28
+Date: Fri, 6 Feb 2015 13:17:26 -0500
+Message-ID: <20150206131726.6c7b3a8a@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150206124051.GN21418@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2015-02-06 at 13:40 +0100, Peter Zijlstra wrote:
-> On Thu, Feb 05, 2015 at 11:04:20AM -0500, Steven Rostedt wrote:
 
-> Well, the thing is, with or without this patch, the worst case is still
-> the very same. The likelihood of actually triggering it goes down
-> dramatically [*], but any spin_lock() has that O(nr_cpus) worst case, and
-> that spinlock op isn't going away.
-> 
-> Now, lowering avg/median cases is good, but don't kid yourself that the
-> worst case is going to be better.
-> 
-> People running -RT on big boxes had better be aware of this.
+Dear RT Folks,
 
-The folks I know of running -RT on big boxen isolate cores and nail
-absolutely everything to the floor.  The only way to survive in a big
-box is to chop the thing into tiny pieces.  A plasma cutter would be
-even better.. 'course you could just _buy smaller boxen_ and connect
-what you want connected, take the lazy path to big box solution ;-)
-  
-	-Mike
+I'm pleased to announce the 3.14.31-rt28 stable release.
+
+
+This release is just an update to the new stable 3.14.31 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.14-rt
+  Head SHA1: 13183ef2dec4ab599aaac988f8506941d7428d30
+
+
+Or to build 3.14.31-rt28 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.31.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.31-rt28.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
