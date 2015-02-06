@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.31-rt28
-Date: Fri, 6 Feb 2015 13:17:26 -0500
-Message-ID: <20150206131726.6c7b3a8a@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.37-rt51
+Date: Fri, 6 Feb 2015 13:17:51 -0500
+Message-ID: <20150206131751.193c1717@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.31-rt28 stable release.
+I'm pleased to announce the 3.12.37-rt51 stable release.
 
 
-This release is just an update to the new stable 3.14.31 version
+This release is just an update to the new stable 3.12.37 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 13183ef2dec4ab599aaac988f8506941d7428d30
+  branch: v3.12-rt
+  Head SHA1: d0aade6703d37747b5a82edbf84dd07a32cf30fa
 
 
-Or to build 3.14.31-rt28 directly, the following patches should be applied:
+Or to build 3.12.37-rt51 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.31.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.37.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.31-rt28.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.37-rt51.patch.xz
 
 
 
