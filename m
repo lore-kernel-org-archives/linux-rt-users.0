@@ -1,11 +1,12 @@
 From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [RFC][PATCH] sched/rt: Use IPI to trigger RT task push migration
  instead of pulling
-Date: Fri, 6 Feb 2015 14:23:41 +0100
-Message-ID: <20150206132341.GO21418@twins.programming.kicks-ass.net>
+Date: Fri, 6 Feb 2015 14:59:45 +0100
+Message-ID: <20150206135945.GM24151@twins.programming.kicks-ass.net>
 References: <20150204143906.742287b4@gandalf.local.home>
  <20150205152144.GM21418@twins.programming.kicks-ass.net>
  <20150205115501.1da27f32@gandalf.local.home>
+ <20150206132341.GO21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: LKML <linux-kernel@vger.kernel.org>,
@@ -16,70 +17,91 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:33823 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752667AbbBFNXq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Feb 2015 08:23:46 -0500
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150205115501.1da27f32@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <20150206132341.GO21418@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 05, 2015 at 11:55:01AM -0500, Steven Rostedt wrote:
-> On Thu, 5 Feb 2015 16:21:44 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > So can't we flip the problem around; 99 overloaded cpus and 1 going
-> > 'low', then we IPI the 99, and they're all going to try and push their
-> > tasks on the one (now) sad cpu?
-> > 
-> 
-> Ug, you're right :-/
-> 
-> 
-> OK, then we could do this, because if there's 10 CPUS with overloaded
-> RT tasks (more than one queued), and 20 CPUs drop prios, if they all
-> send to one CPU to do a pull, it will miss pulling from the other CPUs.
-> 
-> 
-> But we do not want to send to all CPUS with overloaded RT queues,
-> because, as you say, they could all try to push to the same queue and
-> we hit the same problem this patch is trying to solve (lots of CPUs
-> grabbing the same rq lock).
-> 
-> Thus, we could proxy it.
-> 
-> Send an IPI to just one CPU. When that CPU receives it, it pushes off
-> only one task (as only one CPU told it it lowered its CPU).
-> 
-> If it receives the IPI and there's no tasks to push, it means that a
-> there was another CPU that lowered its priority and asked this CPU to
-> push a task to it. But another CPU got there first. Then this CPU could
-> check to see if there's another rq out there with overloaded CPUs and
-> send the IPI to that one. This way, only one CPU is pushing its tasks
-> off at a time, and we only push if it is likely to succeed.
-> 
-> Pass the IPI around!
+On Fri, Feb 06, 2015 at 02:23:41PM +0100, Peter Zijlstra wrote:
+> A more advanced version might use an LFSR to iterate the mask, where we
+> give each cpu a different seed (say its cpuid) -- be careful to
+> artificially insert 0 when we loop.
 
-The IPI needs some state; it needs to also check that the condition that
-triggered its existence on its dst cpu is still true. If somehow its dst
-gained work (say a wakeup) we should stop.
+And since I already stared at this longer than I should have... its got
+a few quirks and is slower than the regular iteration but it should
+still have bounded behaviour.
 
-Equally, if the dst cpu drops in prio again and there's already one IPI
-out and about looking for work for it, we should not start another.
 
-To further avoid collisions; eg. two CPUs dropping and ending up sending
-an IPI to the same overloaded CPU; one could consider randomized
-algorithms for selecting a (next) src cpu.
+static unsigned long lfsr_taps;
 
-A trivial option might be to start the rto_mask iteration at the current
-cpu number and wrap around until you hit self again.
+void __init lfsr_init(void)
+{
+	int bits = ilog2(nr_cpu_ids) + 1;
 
-A more advanced version might use an LFSR to iterate the mask, where we
-give each cpu a different seed (say its cpuid) -- be careful to
-artificially insert 0 when we loop.
+	switch (bits) {
+		case  1: lfsr_taps = 0x0001; break;
+		case  2: lfsr_taps = 0x0001; break;
+		case  3: lfsr_taps = 0x0003; break;
+		case  4: lfsr_taps = 0x0009; break;
+		case  5: lfsr_taps = 0x0012; break;
+		case  5: lfsr_taps = 0x0012; break;
+		case  6: lfsr_taps = 0x0021; break;
+		case  7: lfsr_taps = 0x0041; break;
+		case  8: lfsr_taps = 0x008E; break;
+		case  9: lfsr_taps = 0x0108; break;
+		case 10: lfsr_taps = 0x0204; break;
+		case 11: lfsr_taps = 0x0402; break;
+		case 12: lfsr_taps = 0x0829; break;
+		case 13: lfsr_taps = 0x100D; break;
+		case 14: lfsr_taps = 0x2015; break;
 
-But again; this will only affect the avg case, people should realize
-that that 1ms latency is still entirely possible. Nothing changes that.
+		default:
+			BUG_ON(1); /* add more numbers */
+	}
+}
+
+static inline int __lfsr_next(int lfsr)
+{
+	unsigned int bit = lfsr & 1;
+	lfsr >>= 1;
+	if (bit)
+		lfsr ^= lfsr_taps;
+	return lfsr;
+}
+
+int cpumask_next_lfsr(int cpu, const struct cpumask *mask, int seed)
+{
+	seed |= 1; /* must not be 0 */
+
+	/* kick-start, avoid the termination condition */
+	if (cpu == -1) {
+		cpu = seed;
+		goto test;
+	}
+
+again:
+	/* when we cycle, we're done, test cpu 0 last */
+	if (cpu == seed)
+		cpu = 0;
+	/* if we just tested cpu 0, we're done */
+	else if (cpu == 0)
+		return nr_cpu_ids;
+	/* otherwise, next please! */
+	else
+		cpu = __lfsr_next(cpu);
+
+test:
+	/* cycle through the unused space; <= 2^(n-1) loops */
+	if (cpu >= nr_cpu_ids)
+		goto again;
+
+	if (!cpumask_test_cpu(cpu), mask)
+		goto again;
+
+	return cpu;
+}
+
+#define for_each_cpu_lfsr(cpu, mask, seed)				  \
+	for ((cpu) = -1; (cpu) = cpumask_next_lfsr((cpu), (mask), (seed)), \
+			 (cpu) < nr_cpu_ids;)
