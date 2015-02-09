@@ -1,45 +1,53 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [ANNOUNCE] 3.4.106-rt131
-Date: Fri, 6 Feb 2015 14:45:21 -0500
-Message-ID: <20150206144521.3d50317f@gandalf.local.home>
-References: <20150206131842.06b07b37@gandalf.local.home>
-	<CAMjaK3D_fBFoO2p-98vfViDL5DUg7ZZ+f0eVdv_sLx8SBpyVLg@mail.gmail.com>
-	<20150206144048.2a75eb8f@gandalf.local.home>
+Subject: Re: [PATCH] trace-cmd: Make read nonblocking in find_time_stamp().
+Date: Mon, 9 Feb 2015 17:51:53 -0500
+Message-ID: <20150209175153.77c945b9@gandalf.local.home>
+References: <CAF+KLxuutGDHxzLLaWL-wXsDRyM=4syJcm7wDdEgNxNCpg2TWQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Dmitry Lysenko <dvl36.ripe.nick@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0138.hostedemail.com ([216.40.44.138]:53244 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753612AbbBFTpX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Feb 2015 14:45:23 -0500
-In-Reply-To: <20150206144048.2a75eb8f@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	yoshihiro.yunomae.ez@hitachi.com
+To: Aaron Fabbri <ajfabbri@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAF+KLxuutGDHxzLLaWL-wXsDRyM=4syJcm7wDdEgNxNCpg2TWQ@mail.gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 6 Feb 2015 14:40:48 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Mon, 4 Nov 2013 16:51:48 -0800
+Aaron Fabbri <ajfabbri@gmail.com> wrote:
 
-> On Fri, 6 Feb 2015 21:34:22 +0200
-> Dmitry Lysenko <dvl36.ripe.nick@gmail.com> wrote:
+> This only affects the tsc -> time of day correlation when doing
+> `trace-cmd record --date`.
 > 
-> > So 3.2.x-RTx does not supported anymore? Or maybe I missed something.
-> > 
+> get_date_to_ts() writes a dummy event to trace_marker and then reads it back.
+> Reading it back is done by looping over all per-cpu raw trace pipes and trying
+> to read.  This read should be non-blocking, because the dummy event can end up
+> on any CPU.
 > 
-> No, a regression in 3.2 was added to stable that makes 3.2-rt fail
-> (and breaks 3.2 in general). I reported this to Ben Hutchings and he is
-> aware of it. As I will not push out a known broken version of -rt, I'm
-> waiting till another 3.2 comes out that fixes the issue.
-> 
+> Signed-off-by: Aaron Fabbri <ajfabbri@gmail.com>
 
-Note, if you are curious to what the regressions are, I posted them to
-the list. There were two of them.
-
-http://marc.info/?l=linux-kernel&m=142150909924885
-http://marc.info/?l=linux-kernel&m=142170417702964
+Hmm, I somehow missed this patch. I just applied (way late :-/), and
+I'm placing it in the stable releases. I'm starting my testing now.
 
 -- Steve
 
+> ---
+>  trace-record.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/trace-record.c b/trace-record.c
+> index 1b1d293..dca8a92 100644
+> --- a/trace-record.c
+> +++ b/trace-record.c
+> @@ -2092,7 +2092,7 @@ static unsigned long long find_time_stamp(struct
+> pevent *pevent)
+>                         continue;
+> 
+>                 sprintf(file, "%s/%s/trace_pipe_raw", path, name);
+> -               fd = open(file, O_RDONLY);
+> +               fd = open(file, O_RDONLY | O_NONBLOCK);
+>                 if (fd < 0)
+>                         continue;
+>                 do {
