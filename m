@@ -1,53 +1,31 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] trace-cmd: Make read nonblocking in find_time_stamp().
-Date: Mon, 9 Feb 2015 17:51:53 -0500
-Message-ID: <20150209175153.77c945b9@gandalf.local.home>
-References: <CAF+KLxuutGDHxzLLaWL-wXsDRyM=4syJcm7wDdEgNxNCpg2TWQ@mail.gmail.com>
+From: Gustavo Bittencourt <gbitten@gmail.com>
+Subject: Doubt about v3.14-rt-rebase commits
+Date: Mon, 9 Feb 2015 21:52:21 -0200
+Message-ID: <CAA8Xd+8CxjOFo_SLPfgAnrC7fo-kLxzamTkiOZPTkLVSX1zh7A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	yoshihiro.yunomae.ez@hitachi.com
-To: Aaron Fabbri <ajfabbri@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAF+KLxuutGDHxzLLaWL-wXsDRyM=4syJcm7wDdEgNxNCpg2TWQ@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ob0-f174.google.com ([209.85.214.174]:53880 "EHLO
+	mail-ob0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751111AbbBIXwW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Feb 2015 18:52:22 -0500
+Received: by mail-ob0-f174.google.com with SMTP id wo20so28275431obc.5
+        for <linux-rt-users@vger.kernel.org>; Mon, 09 Feb 2015 15:52:21 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 4 Nov 2013 16:51:48 -0800
-Aaron Fabbri <ajfabbri@gmail.com> wrote:
+This is probably a silly question. I noticed that the below commits
+revert each other. Is any reason to maintain those commits in recent
+releases?
 
-> This only affects the tsc -> time of day correlation when doing
-> `trace-cmd record --date`.
-> 
-> get_date_to_ts() writes a dummy event to trace_marker and then reads it back.
-> Reading it back is done by looping over all per-cpu raw trace pipes and trying
-> to read.  This read should be non-blocking, because the dummy event can end up
-> on any CPU.
-> 
-> Signed-off-by: Aaron Fabbri <ajfabbri@gmail.com>
+commit: migrate_disable pushd down in atomic_dec_and_spin_lock
+9056f04da7fd3bd39d5bc05cb42cf9d0f5b7b98c
+https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v3.14-rt-rebase&id=9056f04da7fd3bd39d5bc05cb42cf9d0f5b7b98c
 
-Hmm, I somehow missed this patch. I just applied (way late :-/), and
-I'm placing it in the stable releases. I'm starting my testing now.
-
--- Steve
-
-> ---
->  trace-record.c | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> diff --git a/trace-record.c b/trace-record.c
-> index 1b1d293..dca8a92 100644
-> --- a/trace-record.c
-> +++ b/trace-record.c
-> @@ -2092,7 +2092,7 @@ static unsigned long long find_time_stamp(struct
-> pevent *pevent)
->                         continue;
-> 
->                 sprintf(file, "%s/%s/trace_pipe_raw", path, name);
-> -               fd = open(file, O_RDONLY);
-> +               fd = open(file, O_RDONLY | O_NONBLOCK);
->                 if (fd < 0)
->                         continue;
->                 do {
+commit: Revert "migrate_disable pushd down in atomic_dec_and_spin_lock"
+2137b9fff666c62077c7ae35e865eec86da0a499
+https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v3.14-rt-rebase&id=2137b9fff666c62077c7ae35e865eec86da0a499
