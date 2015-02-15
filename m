@@ -1,7 +1,7 @@
 From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH-rt 2/2] aio: fix splat in free_ioctx_reqs by using percpu callback
-Date: Sun, 15 Feb 2015 15:52:39 -0500
-Message-ID: <1424033559-63051-3-git-send-email-paul.gortmaker@windriver.com>
+Subject: [PATCH-rt 1/2] aio: don't take the ctx_lock during rcu garbage collection at reboot
+Date: Sun, 15 Feb 2015 15:52:38 -0500
+Message-ID: <1424033559-63051-2-git-send-email-paul.gortmaker@windriver.com>
 References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain
@@ -11,86 +11,96 @@ Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:46176 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754889AbbBOUyH (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:44443 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755266AbbBOUyH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Sun, 15 Feb 2015 15:54:07 -0500
 In-Reply-To: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Even after we fix the use of a non raw lock in free_ioctx_users()
-we still get another follow on splat.  This one looks as follows:
+On reboot in 3.14-rt we see this splat:
 
 BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
-in_atomic(): 1, irqs_disabled(): 0, pid: 14, name: rcuc/0
-Preemption disabled at:[<ffffffff810ada55>] rcu_cpu_kthread+0x295/0x6f0
+in_atomic(): 1, irqs_disabled(): 0, pid: 84, name: rcuc/12
+Preemption disabled at:[<ffffffff810b29bc>] rcu_cpu_kthread+0x28c/0x700
 
-CPU: 0 PID: 14 Comm: rcuc/0 Not tainted 3.14.31-rt28-WR7.0.0.0_ovp+ #5
+CPU: 18 PID: 121 Comm: rcuc/18 Tainted: G      D      3.14.33-rt28-WR7.0.0.0_ovp+ #2
 Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
- 000000000000c3c0 ffff880fb393fd28 ffffffff819ffe6b 0000000000000000
- ffff880fb393fd40 ffffffff8107b6cb ffff880ffe60c3c0 ffff880fb393fd58
- ffffffff81a077c0 ffff880ffe60c3c0 ffff880fb393fd98 ffffffff81066f05
+ ffff880fad3e7a70 ffff880fb11cfd58 ffffffff81a0bcee 0000000000000000
+ ffff880fb11cfd70 ffffffff8107b5eb ffff880fad3e7a40 ffff880fb11cfd88
+ ffffffff81a136b0 ffff880fad3e7900 ffff880fb11cfdb0 ffffffff811c925c
 Call Trace:
- [<ffffffff819ffe6b>] dump_stack+0x4e/0x7a
- [<ffffffff8107b6cb>] __might_sleep+0xdb/0x150
- [<ffffffff81a077c0>] rt_spin_lock+0x20/0x50
- [<ffffffff81066f05>] queue_work_on+0x65/0x110
- [<ffffffff811c714b>] free_ioctx_reqs+0x5b/0x60
- [<ffffffff813ff06b>] percpu_ref_kill_rcu+0x11b/0x120
- [<ffffffff810ada55>] rcu_cpu_kthread+0x295/0x6f0
- [<ffffffff81076c7d>] smpboot_thread_fn+0x17d/0x2b0
- [<ffffffff81a05220>] ? schedule+0x30/0xa0
- [<ffffffff81076b00>] ? SyS_setgroups+0x170/0x170
- [<ffffffff8106f3f4>] kthread+0xc4/0xe0
- [<ffffffff8106f330>] ? flush_kthread_worker+0x90/0x90
- [<ffffffff81a088ec>] ret_from_fork+0x7c/0xb0
- [<ffffffff8106f330>] ? flush_kthread_worker+0x90/0x90
+ [<ffffffff81a0bcee>] dump_stack+0x4e/0x7a
+ [<ffffffff8107b5eb>] __might_sleep+0xdb/0x150
+ [<ffffffff81a136b0>] rt_spin_lock+0x20/0x50
+ [<ffffffff811c925c>] free_ioctx_users+0x2c/0xe0
+ [<ffffffff8140136b>] percpu_ref_kill_rcu+0x11b/0x120
+ [<ffffffff810aded5>] rcu_cpu_kthread+0x295/0x6f0
+ [<ffffffff81076d8d>] smpboot_thread_fn+0x17d/0x2b0
+ [<ffffffff81a110f0>] ? schedule+0x30/0xa0
+ [<ffffffff81076c10>] ? SyS_setgroups+0x170/0x170
+ [<ffffffff8106f4a4>] kthread+0xc4/0xe0
+ [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
+ [<ffffffff81a147ec>] ret_from_fork+0x7c/0xb0
+ [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
 
-This is caused by schedule_work() being called from free_ioctx_reqs(),
-and the underlying reason is the same, that this release fcn...
+The problem is as stated in lib/percpu-refcount.c:
 
-  * Note that @release must not sleep - it may potentially be called from RCU
-  * callback context by percpu_ref_kill().
+ * Note that @release must not sleep - it may potentially be called from RCU
+ * callback context by percpu_ref_kill().
 
-and the sleep is spin_lock_irqsave(&lv->lock, lv->flags) inside
-queue_work_on().
+So in -rt the non-raw spinlock trips due to this.  The same problem was
+reported by Mike Galbraith earlier[1] but no conclusive fix was added
+to the -rt series from that thread.  In one post[2], Mike mentions:
 
-We can fix this up by using the callback version percpu_ref_kill
-and register the callback to do the schedule_work().  With this
-in place a reboot doesn't splat during aio garbage collection.
+   I was sorely tempted to post a tiny variant that dropped taking
+   ctx_lock in free_ioctx_users() entirely, as someone diddling with
+   no reference didn't make sense.
 
+I was thinking the same thing but with a safety net in where we
+check and warn if anyone else tries to take the lock while we are
+doing the final garbage collection, which is what we now do here.
+
+[1] https://lkml.org/lkml/2014/6/8/10
+[2] https://lkml.org/lkml/2014/6/9/979
+
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
- fs/aio.c | 7 ++++++-
- 1 file changed, 6 insertions(+), 1 deletion(-)
+ fs/aio.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
 diff --git a/fs/aio.c b/fs/aio.c
-index d806f7223822..db1ce6d73cc7 100644
+index 2f7e8c2e3e76..d806f7223822 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
-@@ -524,6 +524,11 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
- 	/* At this point we know that there are no any in-flight requests */
- 	if (ctx->requests_done)
- 		complete(ctx->requests_done);
-+}
-+
-+static void free_ioctx_reqs_callback(struct percpu_ref *ref)
-+{
-+	struct kioctx *ctx = container_of(ref, struct kioctx, reqs);
+@@ -539,9 +539,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 	struct kioctx *ctx = container_of(ref, struct kioctx, users);
+ 	struct kiocb *req;
  
- 	INIT_WORK(&ctx->free_work, free_ioctx);
- 	schedule_work(&ctx->free_work);
-@@ -558,7 +563,7 @@ static void free_ioctx_users(struct percpu_ref *ref)
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	spin_lock_irq(&ctx->ctx_lock);
++#endif
+ 
+ 	while (!list_empty(&ctx->active_reqs)) {
++#ifdef CONFIG_PREEMPT_RT_BASE
++		WARN_ON(spin_is_locked(&ctx->ctx_lock));
++#endif
+ 		req = list_first_entry(&ctx->active_reqs,
+ 				       struct kiocb, ki_list);
+ 
+@@ -549,7 +554,9 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 		kiocb_cancel(ctx, req);
+ 	}
+ 
++#ifndef CONFIG_PREEMPT_RT_BASE
  	spin_unlock_irq(&ctx->ctx_lock);
- #endif
++#endif
  
--	percpu_ref_kill(&ctx->reqs);
-+	percpu_ref_kill_and_confirm(&ctx->reqs, free_ioctx_reqs_callback);
+ 	percpu_ref_kill(&ctx->reqs);
  	percpu_ref_put(&ctx->reqs);
- }
- 
 -- 
 2.1.0
 
