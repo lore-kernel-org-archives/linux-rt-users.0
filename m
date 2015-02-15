@@ -1,106 +1,117 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH-rt 1/2] aio: don't take the ctx_lock during rcu garbage collection at reboot
-Date: Sun, 15 Feb 2015 15:52:38 -0500
-Message-ID: <1424033559-63051-2-git-send-email-paul.gortmaker@windriver.com>
-References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
+From: Benjamin LaHaise <bcrl@kvack.org>
+Subject: Re: [PATCH-rt 1/2] aio: don't take the ctx_lock during rcu garbage collection at reboot
+Date: Sun, 15 Feb 2015 18:50:05 -0500
+Message-ID: <20150215235005.GA26974@kvack.org>
+References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com> <1424033559-63051-2-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Benjamin LaHaise <bcrl@kvack.org>,
-	Kent Overstreet <kmo@daterainc.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Kent Overstreet <kmo@daterainc.com>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:44443 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755266AbbBOUyH (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Feb 2015 15:54:07 -0500
-In-Reply-To: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
+Received: from kanga.kvack.org ([205.233.56.17]:55977 "EHLO kanga.kvack.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751520AbbBOXuI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 15 Feb 2015 18:50:08 -0500
+Content-Disposition: inline
+In-Reply-To: <1424033559-63051-2-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On reboot in 3.14-rt we see this splat:
+On Sun, Feb 15, 2015 at 03:52:38PM -0500, Paul Gortmaker wrote:
+> On reboot in 3.14-rt we see this splat:
+> 
+> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
+> in_atomic(): 1, irqs_disabled(): 0, pid: 84, name: rcuc/12
+> Preemption disabled at:[<ffffffff810b29bc>] rcu_cpu_kthread+0x28c/0x700
+> 
+> CPU: 18 PID: 121 Comm: rcuc/18 Tainted: G      D      3.14.33-rt28-WR7.0.0.0_ovp+ #2
+> Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
+>  ffff880fad3e7a70 ffff880fb11cfd58 ffffffff81a0bcee 0000000000000000
+>  ffff880fb11cfd70 ffffffff8107b5eb ffff880fad3e7a40 ffff880fb11cfd88
+>  ffffffff81a136b0 ffff880fad3e7900 ffff880fb11cfdb0 ffffffff811c925c
+> Call Trace:
+>  [<ffffffff81a0bcee>] dump_stack+0x4e/0x7a
+>  [<ffffffff8107b5eb>] __might_sleep+0xdb/0x150
+>  [<ffffffff81a136b0>] rt_spin_lock+0x20/0x50
+>  [<ffffffff811c925c>] free_ioctx_users+0x2c/0xe0
+>  [<ffffffff8140136b>] percpu_ref_kill_rcu+0x11b/0x120
+>  [<ffffffff810aded5>] rcu_cpu_kthread+0x295/0x6f0
+>  [<ffffffff81076d8d>] smpboot_thread_fn+0x17d/0x2b0
+>  [<ffffffff81a110f0>] ? schedule+0x30/0xa0
+>  [<ffffffff81076c10>] ? SyS_setgroups+0x170/0x170
+>  [<ffffffff8106f4a4>] kthread+0xc4/0xe0
+>  [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
+>  [<ffffffff81a147ec>] ret_from_fork+0x7c/0xb0
+>  [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
+> 
+> The problem is as stated in lib/percpu-refcount.c:
+> 
+>  * Note that @release must not sleep - it may potentially be called from RCU
+>  * callback context by percpu_ref_kill().
+> 
+> So in -rt the non-raw spinlock trips due to this.  The same problem was
+> reported by Mike Galbraith earlier[1] but no conclusive fix was added
+> to the -rt series from that thread.  In one post[2], Mike mentions:
+> 
+>    I was sorely tempted to post a tiny variant that dropped taking
+>    ctx_lock in free_ioctx_users() entirely, as someone diddling with
+>    no reference didn't make sense.
+> 
+> I was thinking the same thing but with a safety net in where we
+> check and warn if anyone else tries to take the lock while we are
+> doing the final garbage collection, which is what we now do here.
 
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
-in_atomic(): 1, irqs_disabled(): 0, pid: 84, name: rcuc/12
-Preemption disabled at:[<ffffffff810b29bc>] rcu_cpu_kthread+0x28c/0x700
+Your code introduces a bug: the lock is necessary to protect teardown 
+initiated cancellation of an iocb against the simultaneous completion of 
+that iocb.  Checking the is locked state is not sufficient protection and 
+can lead to awful to debug bugs.  So this is a NAK, unless you want to 
+introduce more bugs.  You need to actually fix the problem while somehow 
+maintaining the consistency the lock provides.
 
-CPU: 18 PID: 121 Comm: rcuc/18 Tainted: G      D      3.14.33-rt28-WR7.0.0.0_ovp+ #2
-Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
- ffff880fad3e7a70 ffff880fb11cfd58 ffffffff81a0bcee 0000000000000000
- ffff880fb11cfd70 ffffffff8107b5eb ffff880fad3e7a40 ffff880fb11cfd88
- ffffffff81a136b0 ffff880fad3e7900 ffff880fb11cfdb0 ffffffff811c925c
-Call Trace:
- [<ffffffff81a0bcee>] dump_stack+0x4e/0x7a
- [<ffffffff8107b5eb>] __might_sleep+0xdb/0x150
- [<ffffffff81a136b0>] rt_spin_lock+0x20/0x50
- [<ffffffff811c925c>] free_ioctx_users+0x2c/0xe0
- [<ffffffff8140136b>] percpu_ref_kill_rcu+0x11b/0x120
- [<ffffffff810aded5>] rcu_cpu_kthread+0x295/0x6f0
- [<ffffffff81076d8d>] smpboot_thread_fn+0x17d/0x2b0
- [<ffffffff81a110f0>] ? schedule+0x30/0xa0
- [<ffffffff81076c10>] ? SyS_setgroups+0x170/0x170
- [<ffffffff8106f4a4>] kthread+0xc4/0xe0
- [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
- [<ffffffff81a147ec>] ret_from_fork+0x7c/0xb0
- [<ffffffff8106f3e0>] ? flush_kthread_worker+0x90/0x90
+		-ben
 
-The problem is as stated in lib/percpu-refcount.c:
+> [1] https://lkml.org/lkml/2014/6/8/10
+> [2] https://lkml.org/lkml/2014/6/9/979
+> 
+> Cc: Mike Galbraith <umgwanakikbuti@gmail.com>
+> Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+> ---
+>  fs/aio.c | 7 +++++++
+>  1 file changed, 7 insertions(+)
+> 
+> diff --git a/fs/aio.c b/fs/aio.c
+> index 2f7e8c2e3e76..d806f7223822 100644
+> --- a/fs/aio.c
+> +++ b/fs/aio.c
+> @@ -539,9 +539,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
+>  	struct kioctx *ctx = container_of(ref, struct kioctx, users);
+>  	struct kiocb *req;
+>  
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	spin_lock_irq(&ctx->ctx_lock);
+> +#endif
+>  
+>  	while (!list_empty(&ctx->active_reqs)) {
+> +#ifdef CONFIG_PREEMPT_RT_BASE
+> +		WARN_ON(spin_is_locked(&ctx->ctx_lock));
+> +#endif
+>  		req = list_first_entry(&ctx->active_reqs,
+>  				       struct kiocb, ki_list);
+>  
+> @@ -549,7 +554,9 @@ static void free_ioctx_users(struct percpu_ref *ref)
+>  		kiocb_cancel(ctx, req);
+>  	}
+>  
+> +#ifndef CONFIG_PREEMPT_RT_BASE
+>  	spin_unlock_irq(&ctx->ctx_lock);
+> +#endif
+>  
+>  	percpu_ref_kill(&ctx->reqs);
+>  	percpu_ref_put(&ctx->reqs);
+> -- 
+> 2.1.0
 
- * Note that @release must not sleep - it may potentially be called from RCU
- * callback context by percpu_ref_kill().
-
-So in -rt the non-raw spinlock trips due to this.  The same problem was
-reported by Mike Galbraith earlier[1] but no conclusive fix was added
-to the -rt series from that thread.  In one post[2], Mike mentions:
-
-   I was sorely tempted to post a tiny variant that dropped taking
-   ctx_lock in free_ioctx_users() entirely, as someone diddling with
-   no reference didn't make sense.
-
-I was thinking the same thing but with a safety net in where we
-check and warn if anyone else tries to take the lock while we are
-doing the final garbage collection, which is what we now do here.
-
-[1] https://lkml.org/lkml/2014/6/8/10
-[2] https://lkml.org/lkml/2014/6/9/979
-
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
----
- fs/aio.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/fs/aio.c b/fs/aio.c
-index 2f7e8c2e3e76..d806f7223822 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -539,9 +539,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	struct kioctx *ctx = container_of(ref, struct kioctx, users);
- 	struct kiocb *req;
- 
-+#ifndef CONFIG_PREEMPT_RT_BASE
- 	spin_lock_irq(&ctx->ctx_lock);
-+#endif
- 
- 	while (!list_empty(&ctx->active_reqs)) {
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+		WARN_ON(spin_is_locked(&ctx->ctx_lock));
-+#endif
- 		req = list_first_entry(&ctx->active_reqs,
- 				       struct kiocb, ki_list);
- 
-@@ -549,7 +554,9 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 		kiocb_cancel(ctx, req);
- 	}
- 
-+#ifndef CONFIG_PREEMPT_RT_BASE
- 	spin_unlock_irq(&ctx->ctx_lock);
-+#endif
- 
- 	percpu_ref_kill(&ctx->reqs);
- 	percpu_ref_put(&ctx->reqs);
 -- 
-2.1.0
-
+"Thought is the essence of where you are now."
