@@ -1,7 +1,8 @@
 From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH-rt 0/2] Fix up aio splats at reboot garbage collection
-Date: Sun, 15 Feb 2015 15:52:37 -0500
-Message-ID: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
+Subject: [PATCH-rt 2/2] aio: fix splat in free_ioctx_reqs by using percpu callback
+Date: Sun, 15 Feb 2015 15:52:39 -0500
+Message-ID: <1424033559-63051-3-git-send-email-paul.gortmaker@windriver.com>
+References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
 Mime-Version: 1.0
 Content-Type: text/plain
 Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
@@ -10,44 +11,86 @@ Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:46175 "EHLO
+Received: from mail1.windriver.com ([147.11.146.13]:46176 "EHLO
 	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754889AbbBOUwz (ORCPT
+	with ESMTP id S1754889AbbBOUyH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 15 Feb 2015 15:52:55 -0500
+	Sun, 15 Feb 2015 15:54:07 -0500
+In-Reply-To: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-We ran into a splat during reboot that was caused by the percpu_ref_kill
-garbage collection in the fs/aio code.
+Even after we fix the use of a non raw lock in free_ioctx_users()
+we still get another follow on splat.  This one looks as follows:
 
-After researching a bit, it was determined that this was the same
-problem reported by Mike a few months ago[1].  In that thread, several
-possibilities were discussed, but no patches were added to -rt in
-the end out of that discussion.
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
+in_atomic(): 1, irqs_disabled(): 0, pid: 14, name: rcuc/0
+Preemption disabled at:[<ffffffff810ada55>] rcu_cpu_kthread+0x295/0x6f0
 
-This implements one of the possible solutions discussed there, which
-is -rt specific and not mainline appropriate.
+CPU: 0 PID: 14 Comm: rcuc/0 Not tainted 3.14.31-rt28-WR7.0.0.0_ovp+ #5
+Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
+ 000000000000c3c0 ffff880fb393fd28 ffffffff819ffe6b 0000000000000000
+ ffff880fb393fd40 ffffffff8107b6cb ffff880ffe60c3c0 ffff880fb393fd58
+ ffffffff81a077c0 ffff880ffe60c3c0 ffff880fb393fd98 ffffffff81066f05
+Call Trace:
+ [<ffffffff819ffe6b>] dump_stack+0x4e/0x7a
+ [<ffffffff8107b6cb>] __might_sleep+0xdb/0x150
+ [<ffffffff81a077c0>] rt_spin_lock+0x20/0x50
+ [<ffffffff81066f05>] queue_work_on+0x65/0x110
+ [<ffffffff811c714b>] free_ioctx_reqs+0x5b/0x60
+ [<ffffffff813ff06b>] percpu_ref_kill_rcu+0x11b/0x120
+ [<ffffffff810ada55>] rcu_cpu_kthread+0x295/0x6f0
+ [<ffffffff81076c7d>] smpboot_thread_fn+0x17d/0x2b0
+ [<ffffffff81a05220>] ? schedule+0x30/0xa0
+ [<ffffffff81076b00>] ? SyS_setgroups+0x170/0x170
+ [<ffffffff8106f3f4>] kthread+0xc4/0xe0
+ [<ffffffff8106f330>] ? flush_kthread_worker+0x90/0x90
+ [<ffffffff81a088ec>] ret_from_fork+0x7c/0xb0
+ [<ffffffff8106f330>] ? flush_kthread_worker+0x90/0x90
 
-After using that patch, we found another new follow on splat that
-was also in aio garbage collection and so we deal with that by using
-the callback ("confirm") version of percpu_ref_kill to delay the
-schedule_work to a non-atomic context to avoid the second splat.  I
-think this second patch could be used in mainline, if one desired to
-do so.
+This is caused by schedule_work() being called from free_ioctx_reqs(),
+and the underlying reason is the same, that this release fcn...
 
-[1] https://lkml.org/lkml/2014/6/8/10
+  * Note that @release must not sleep - it may potentially be called from RCU
+  * callback context by percpu_ref_kill().
 
-Paul.
+and the sleep is spin_lock_irqsave(&lv->lock, lv->flags) inside
+queue_work_on().
+
+We can fix this up by using the callback version percpu_ref_kill
+and register the callback to do the schedule_work().  With this
+in place a reboot doesn't splat during aio garbage collection.
+
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
+ fs/aio.c | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
 
-Paul Gortmaker (2):
-  aio: don't take the ctx_lock during rcu garbage collection at reboot
-  aio: fix splat in free_ioctx_reqs by using percpu callback
-
- fs/aio.c | 14 +++++++++++++-
- 1 file changed, 13 insertions(+), 1 deletion(-)
-
+diff --git a/fs/aio.c b/fs/aio.c
+index d806f7223822..db1ce6d73cc7 100644
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -524,6 +524,11 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
+ 	/* At this point we know that there are no any in-flight requests */
+ 	if (ctx->requests_done)
+ 		complete(ctx->requests_done);
++}
++
++static void free_ioctx_reqs_callback(struct percpu_ref *ref)
++{
++	struct kioctx *ctx = container_of(ref, struct kioctx, reqs);
+ 
+ 	INIT_WORK(&ctx->free_work, free_ioctx);
+ 	schedule_work(&ctx->free_work);
+@@ -558,7 +563,7 @@ static void free_ioctx_users(struct percpu_ref *ref)
+ 	spin_unlock_irq(&ctx->ctx_lock);
+ #endif
+ 
+-	percpu_ref_kill(&ctx->reqs);
++	percpu_ref_kill_and_confirm(&ctx->reqs, free_ioctx_reqs_callback);
+ 	percpu_ref_put(&ctx->reqs);
+ }
+ 
 -- 
 2.1.0
 
