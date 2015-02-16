@@ -1,54 +1,46 @@
-From: Juri Lelli <juri.lelli@arm.com>
-Subject: Re: [ANNOUNCE] 3.14.3-rt5
-Date: Mon, 16 Feb 2015 12:34:33 +0000
-Message-ID: <54E1E3D9.7090501@arm.com>
-References: <20140509181214.GK29014@linutronix.de> <20140513153020.35c0e9d08db60c7b3919e593@gmail.com> <20150216112954.GB21649@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: w1-gpio: sleeping function called from invalid context
+Date: Mon, 16 Feb 2015 14:29:36 +0100
+Message-ID: <20150216132936.GC21649@linutronix.de>
+References: <534E97C8.5090407@meduna.org>
+ <534ED833.6020303@windriver.com>
+ <534FE2A8.2030203@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Juri Lelli <juri.lelli@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from service87.mimecast.com ([91.220.42.44]:32913 "EHLO
-	service87.mimecast.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752024AbbBPMeU convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Feb 2015 07:34:20 -0500
-In-Reply-To: <20150216112954.GB21649@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>, zbr@ioremap.net,
+	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Stanislav Meduna <stano@meduna.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <534FE2A8.2030203@meduna.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian,
+* Stanislav Meduna | 2014-04-17 16:18:16 [+0200]:
 
-On 16/02/15 11:29, Sebastian Andrzej Siewior wrote:
-> * Juri Lelli | 2014-05-13 15:30:20 [+0200]:
-> 
->> Hi,
-> Hi Juri,
-> 
->> Also SCHED_DEADLINE dies without the following.
->>
->> Thanks,
->>
->> - Juri
->>
->> ---From 3ca5943538c728399037823e5632431bc2da707c Mon Sep 17 00:00:00 2001
->> From: Juri Lelli <juri.lelli@gmail.com>
->> Date: Tue, 13 May 2014 15:21:16 +0200
->> Subject: [PATCH] sched/deadline: dl_task_timer has to be irqsafe
-> 
-> applied.
-> 
+>diff --git a/drivers/w1/w1_io.c b/drivers/w1/w1_io.c
+>index e10acc2..7065486 100644
+>--- a/drivers/w1/w1_io.c
+>+++ b/drivers/w1/w1_io.c
+>@@ -170,14 +170,14 @@ static u8 w1_read_bit(struct w1_master *dev)
+>        unsigned long flags = 0;
+>
+>        /* sample timing is critical here */
+>-       local_irq_save(flags);
+>+       if(w1_disable_irqs) local_irq_save(flags);
+>        dev->bus_master->write_bit(dev->bus_master->data, 0);
+>        w1_delay(6);
+>        dev->bus_master->write_bit(dev->bus_master->data, 1);
+>        w1_delay(9);
+>
+>        result = dev->bus_master->read_bit(dev->bus_master->data);
+>-       local_irq_restore(flags);
+>+       if(w1_disable_irqs) local_irq_restore(flags);
+>
+>        w1_delay(55);
+>
 
-Thanks!
+there is local_irq_save_nort() and its friends.
 
-- Juri
-
-> Sebastian
-> 
-
+Sebastian
