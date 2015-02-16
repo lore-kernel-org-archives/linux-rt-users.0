@@ -1,126 +1,261 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RFC PATCH V2] rt/aio: fix rcu garbage collection might_sleep()
- splat
-Date: Mon, 16 Feb 2015 18:59:10 +0100
-Message-ID: <20150216175910.GH21649@linutronix.de>
-References: <1402216538.31630.7.camel@marge.simpson.net>
- <5395172E.4010007@cn.fujitsu.com>
- <1402372048.5124.20.camel@marge.simpson.net>
- <20140610175001.GF27015@kvack.org>
- <20140612202602.GI10871@kmo-pixel>
- <20140625152445.GS23137@kvack.org>
+Subject: (unknown)
+Date: Mon, 16 Feb 2015 19:03:37 +0100
+Message-ID: <20150216180337.GI21649@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Kent Overstreet <kmo@daterainc.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-To: Benjamin LaHaise <bcrl@kvack.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Daniel Wagner <daniel.wagner@oss.bmw-carit.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20140625152445.GS23137@kvack.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Benjamin LaHaise | 2014-06-25 11:24:45 [-0400]:
+rostedt@goodmis.org, paul.gortmaker@windriver.com
+Bcc:=20
+Subject: [PATCH RT] work-simple: Simple work queue implemenation
+Reply-To:=20
 
->I finally have some time to look at this patch in detail.  I'd rather do the 
->below variant that does what Kent suggested.  Mike, can you confirm that 
->this fixes the issue you reported?  It's on top of my current aio-next tree 
->at git://git.kvack.org/~bcrl/aio-next.git .  If that's okay, I'll queue it 
->up.  Does this bug fix need to end up in -stable kernels as well or would it 
->end up in the -rt tree?
+This is swork patch which is in -RT since v3.18. Two users so far=E2=80=
+=A6
 
-This looks smaller compared to the RCU version. Since recently I have
-simple-workqueue in -RT so I could replace schedule_work() with it. And
-looking at the code I would have to do this change to free_ioctx_users()
-and free_ioctx_reqs(). So here is what I am about to add for next -RT.
+=46rom: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-Ach. It compiles and I've never seen that splat so any feedback is
-welcome :)
+Provides a framework for enqueuing callbacks from irq context
+PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
 
-diff --git a/fs/aio.c b/fs/aio.c
-index 14b93159ef83..551fcfe3fd58 100644
---- a/fs/aio.c
-+++ b/fs/aio.c
-@@ -40,6 +40,7 @@
- #include <linux/ramfs.h>
- #include <linux/percpu-refcount.h>
- #include <linux/mount.h>
-+#include <linux/work-simple.h>
- 
- #include <asm/kmap_types.h>
- #include <asm/uaccess.h>
-@@ -110,7 +111,7 @@ struct kioctx {
- 	struct page		**ring_pages;
- 	long			nr_pages;
- 
--	struct work_struct	free_work;
-+	struct swork_event	free_work;
- 
- 	/*
- 	 * signals when all in-flight requests are done
-@@ -226,6 +227,7 @@ static int __init aio_setup(void)
- 		.mount		= aio_mount,
- 		.kill_sb	= kill_anon_super,
- 	};
-+	BUG_ON(swork_get());
- 	aio_mnt = kern_mount(&aio_fs);
- 	if (IS_ERR(aio_mnt))
- 		panic("Failed to create aio fs mount.");
-@@ -505,9 +507,9 @@ static int kiocb_cancel(struct kiocb *kiocb)
- 	return cancel(kiocb);
- }
- 
--static void free_ioctx(struct work_struct *work)
-+static void free_ioctx(struct swork_event *sev)
- {
--	struct kioctx *ctx = container_of(work, struct kioctx, free_work);
-+	struct kioctx *ctx = container_of(sev, struct kioctx, free_work);
- 
- 	pr_debug("freeing %p\n", ctx);
- 
-@@ -526,8 +528,8 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
- 	if (ctx->requests_done)
- 		complete(ctx->requests_done);
- 
--	INIT_WORK(&ctx->free_work, free_ioctx);
--	schedule_work(&ctx->free_work);
-+	INIT_SWORK(&ctx->free_work, free_ioctx);
-+	swork_queue(&ctx->free_work);
- }
- 
- /*
-@@ -535,9 +537,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
-  * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
-  * now it's safe to cancel any that need to be.
-  */
--static void free_ioctx_users(struct percpu_ref *ref)
-+static void free_ioctx_users_work(struct swork_event *sev)
- {
--	struct kioctx *ctx = container_of(ref, struct kioctx, users);
-+	struct kioctx *ctx = container_of(sev, struct kioctx, free_work);
- 	struct kiocb *req;
- 
- 	spin_lock_irq(&ctx->ctx_lock);
-@@ -556,6 +558,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
- 	percpu_ref_put(&ctx->reqs);
- }
- 
-+static void free_ioctx_users(struct percpu_ref *ref)
-+{
-+	struct kioctx *ctx = container_of(ref, struct kioctx, users);
+Bases on wait-simple.
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ include/linux/work-simple.h |   24 ++++++
+ kernel/sched/Makefile       |    2=20
+ kernel/sched/work-simple.c  |  176 +++++++++++++++++++++++++++++++++++=
++++++++++
+ 3 files changed, 201 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/work-simple.h
+ create mode 100644 kernel/sched/work-simple.c
+
+--- /dev/null
++++ b/include/linux/work-simple.h
+@@ -0,0 +1,24 @@
++#ifndef _LINUX_SWORK_H
++#define _LINUX_SWORK_H
 +
-+	INIT_SWORK(&ctx->free_work, free_ioctx_users_work);
-+	swork_queue(&ctx->free_work);
++#include <linux/list.h>
++
++struct swork_event {
++	struct list_head item;
++	unsigned long flags;
++	void (*func)(struct swork_event *);
++};
++
++static inline void INIT_SWORK(struct swork_event *event,
++			      void (*func)(struct swork_event *))
++{
++	event->flags =3D 0;
++	event->func =3D func;
 +}
 +
- static int ioctx_add_table(struct kioctx *ctx, struct mm_struct *mm)
- {
- 	unsigned i, new_nr;
--- 
-2.1.4
++bool swork_queue(struct swork_event *sev);
++
++int swork_get(void);
++void swork_put(void);
++
++#endif /* _LINUX_SWORK_H */
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -13,7 +13,7 @@ endif
+=20
+ obj-y +=3D core.o proc.o clock.o cputime.o
+ obj-y +=3D idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y +=3D wait.o wait-simple.o completion.o idle.o
++obj-y +=3D wait.o wait-simple.o work-simple.o completion.o idle.o
+ obj-$(CONFIG_SMP) +=3D cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) +=3D auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) +=3D stats.o
+--- /dev/null
++++ b/kernel/sched/work-simple.c
+@@ -0,0 +1,176 @@
++/*
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw=
+-carit.de
++ *
++ * Provides a framework for enqueuing callbacks from irq context
++ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context=
+=2E
++ */
++
++#include <linux/wait-simple.h>
++#include <linux/work-simple.h>
++#include <linux/kthread.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++
++#define SWORK_EVENT_PENDING     (1 << 0)
++
++static DEFINE_MUTEX(worker_mutex);
++static struct sworker *glob_worker;
++
++struct sworker {
++	struct list_head events;
++	struct swait_head wq;
++
++	raw_spinlock_t lock;
++
++	struct task_struct *task;
++	int refs;
++};
++
++static bool swork_readable(struct sworker *worker)
++{
++	bool r;
++
++	if (kthread_should_stop())
++		return true;
++
++	raw_spin_lock(&worker->lock);
++	r =3D !list_empty(&worker->events);
++	raw_spin_unlock(&worker->lock);
++
++	return r;
++}
++
++static int swork_kthread(void *arg)
++{
++	struct sworker *worker =3D arg;
++
++	pr_info("swork_kthread enter\n");
++
++	for (;;) {
++		swait_event_interruptible(worker->wq,
++					swork_readable(worker));
++		if (kthread_should_stop())
++			break;
++
++		raw_spin_lock(&worker->lock);
++		while (!list_empty(&worker->events)) {
++			struct swork_event *sev;
++
++			sev =3D list_first_entry(&worker->events,
++					struct swork_event, item);
++			list_del(&sev->item);
++			raw_spin_unlock(&worker->lock);
++
++			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
++							 &sev->flags));
++			sev->func(sev);
++			raw_spin_lock(&worker->lock);
++		}
++		raw_spin_unlock(&worker->lock);
++	}
++
++	pr_info("swork_kthread exit\n");
++	return 0;
++}
++
++static struct sworker *swork_create(void)
++{
++	struct sworker *worker;
++
++	worker =3D kzalloc(sizeof(*worker), GFP_KERNEL);
++	if (!worker)
++		return ERR_PTR(-ENOMEM);
++
++	INIT_LIST_HEAD(&worker->events);
++	raw_spin_lock_init(&worker->lock);
++	init_swait_head(&worker->wq);
++
++	worker->task =3D kthread_run(swork_kthread, worker, "kswork");
++	if (IS_ERR(worker->task)) {
++		kfree(worker);
++		return ERR_PTR(-ENOMEM);
++	}
++
++	return worker;
++}
++
++static void swork_destroy(struct sworker *worker)
++{
++	kthread_stop(worker->task);
++
++	WARN_ON(!list_empty(&worker->events));
++	kfree(worker);
++}
++
++/**
++ * swork_queue - queue swork
++ *
++ * Returns %false if @work was already on a queue, %true otherwise.
++ *
++ * The work is queued and processed on a random CPU
++ */
++bool swork_queue(struct swork_event *sev)
++{
++	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
++		return false;
++
++	WARN_ON(irqs_disabled());
++
++	raw_spin_lock(&glob_worker->lock);
++	list_add_tail(&sev->item, &glob_worker->events);
++	raw_spin_unlock(&glob_worker->lock);
++
++	swait_wake(&glob_worker->wq);
++	return true;
++}
++EXPORT_SYMBOL_GPL(swork_queue);
++
++/**
++ * swork_get - get an instance of the sworker
++ *
++ * Returns an negative error code if the initialization if the worker =
+did not
++ * work, %0 otherwise.
++ *
++ */
++int swork_get(void)
++{
++	struct sworker *worker;
++
++	mutex_lock(&worker_mutex);
++	if (!glob_worker) {
++		worker =3D swork_create();
++		if (IS_ERR(worker)) {
++			mutex_unlock(&worker_mutex);
++			return -ENOMEM;
++		}
++
++		glob_worker =3D worker;
++	}
++
++	glob_worker->refs++;
++	mutex_unlock(&worker_mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(swork_get);
++
++/**
++ * swork_put - puts an instance of the sworker
++ *
++ * Will destroy the sworker thread. This function must not be called u=
+ntil all
++ * queued events have been completed.
++ */
++void swork_put(void)
++{
++	mutex_lock(&worker_mutex);
++
++	glob_worker->refs--;
++	if (glob_worker->refs > 0)
++		goto out;
++
++	swork_destroy(glob_worker);
++	glob_worker =3D NULL;
++out:
++	mutex_unlock(&worker_mutex);
++}
++EXPORT_SYMBOL_GPL(swork_put);
