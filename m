@@ -1,56 +1,44 @@
-From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: [PATCH rt-tests] pi_stress: remove timestamp of compilation from version output
-Date: Tue, 17 Feb 2015 16:08:59 +0100
-Message-ID: <1424185739-29680-1-git-send-email-u.kleine-koenig@pengutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <clark.williams@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:35436 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753334AbbBQPJD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 10:09:03 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] locking/rt-mutex: avoid a NULL pointer dereference on deadlock
+Date: Tue, 17 Feb 2015 16:43:43 +0100
+Message-ID: <1424187823-19600-1-git-send-email-bigeasy@linutronix.de>
+Cc: Ingo Molnar <mingo@redhat.com>, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, tglx@linutronix.de,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Peter Zijlstra <peterz@infradead.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Having the date and time of compilation is hardly useful and is in the
-way for reproducible building binaries.
+With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
+waiter to the waitqueue. Later, we try to remove it via remove_waiter()
+and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
+pointer.
+Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
+to get one twice in a row.
 
-Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
+detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
+detection smarter").
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
-Hello,
+ kernel/locking/rtmutex.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-a few people work on getting reproducible builds for Debian. Using
-__DATE__ and __TIME__ obviously makes the rt-tests package fail to
-compile in a deterministic fashion.
-
-Best regards
-Uwe
-
- src/pi_tests/pi_stress.c | 1 -
- 1 file changed, 1 deletion(-)
-
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index e273d62..9b33fad 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -1235,7 +1235,6 @@ void process_command_line(int argc, char **argv)
- 			break;
- 		case 'V':
- 			printf("pi_stress v%1.2f ", VERSION_STRING);
--			printf("(%s %s)\n", __DATE__, __TIME__);
- 			exit(0);
- 		case 'u':
- 			uniprocessor =3D 1;
---=20
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 5906c14a4e64..2f95e56ed33e 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1700,7 +1700,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	set_current_state(TASK_RUNNING);
+ 
+ 	if (unlikely(ret)) {
+-		remove_waiter(lock, &waiter);
++		if (rt_mutex_has_waiters(lock))
++			remove_waiter(lock, &waiter);
+ 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
+ 	} else if (ww_ctx) {
+ 		ww_mutex_account_lock(lock, ww_ctx);
+-- 
 2.1.4
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
