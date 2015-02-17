@@ -1,30 +1,38 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH -rt] timer: upper bound on loops of __run_timers
- processing
-Date: Tue, 17 Feb 2015 18:24:02 +0100
-Message-ID: <20150217172402.GX26177@linutronix.de>
-References: <20141230195228.GA3057@amt.cnet>
- <20150114172147.GA16570@amt.cnet>
- <20150126211231.GA32649@amt.cnet>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org
-To: Marcelo Tosatti <mtosatti@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150126211231.GA32649@amt.cnet>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Boris Egorov <egorov@linux.com>
+Subject: [PATCH v2 0/2] rt-migrate-test: few sanity fixes
+Date: Tue, 17 Feb 2015 23:43:57 +0600
+Message-ID: <cover.1424194150.git.egorov@linux.com>
+References: <5476FAF2.1060702@linux.com>
+Cc: clark.williams@gmail.com, jkacur@redhat.com, bigeasy@linutronix.de,
+	Boris Egorov <egorov@linux.com>
+To: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-la0-f41.google.com ([209.85.215.41]:32785 "EHLO
+	mail-la0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751591AbbBQRoQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2015 12:44:16 -0500
+Received: by labhz20 with SMTP id hz20so37077201lab.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 09:44:14 -0800 (PST)
+In-Reply-To: <5476FAF2.1060702@linux.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Marcelo Tosatti | 2015-01-26 19:12:31 [-0200]:
+Few fixes for rt-migrate-test, one to fix arithmetic error and others
+to properly handle options passed by user.
 
->Ping ?
+Difference of this series from the first patch:
 
-please resent.
+* value checks now taking place in parse_options() instead of main()
+* added second sanity patch
 
-Sebastian
+Boris Egorov (2):
+  rt-migrate-test: exit early if nr_runs is non-positive
+  rt-migrate-test: use variables instead of macros
+
+ src/rt-migrate-test/rt-migrate-test.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
+
+-- 
+2.1.4
+
