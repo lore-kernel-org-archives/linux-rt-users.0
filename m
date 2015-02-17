@@ -1,76 +1,77 @@
-From: Clark Williams <clark.williams@gmail.com>
-Subject: Re: [PATCH v2 0/2] rt-migrate-test: few sanity fixes
-Date: Tue, 17 Feb 2015 13:27:38 -0600
-Message-ID: <20150217132738.55cc923d@sluggy>
-References: <5476FAF2.1060702@linux.com>
-	<cover.1424194150.git.egorov@linux.com>
+From: Clark Williams <williams@redhat.com>
+Subject: ANNOUNCE: rt-tests version 0.91
+Date: Tue, 17 Feb 2015 14:57:34 -0600
+Message-ID: <20150217145734.2897d2ff@sluggy>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/YFx1jXf1vBx2IzJn./L0h+_"; protocol="application/pgp-signature"
-Cc: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org,
-	jkacur@redhat.com, bigeasy@linutronix.de
-To: Boris Egorov <egorov@linux.com>
+ boundary="Sig_/7lCctKvqOMVN8D1bYQXHENe"; protocol="application/pgp-signature"
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f179.google.com ([209.85.216.179]:34509 "EHLO
-	mail-qc0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754491AbbBQT1o (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 14:27:44 -0500
-Received: by mail-qc0-f179.google.com with SMTP id r5so30419354qcx.10
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 11:27:43 -0800 (PST)
-In-Reply-To: <cover.1424194150.git.egorov@linux.com>
+Received: from mx1.redhat.com ([209.132.183.28]:35457 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750846AbbBQU5v (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2015 15:57:51 -0500
+Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
+	by mx1.redhat.com (8.14.4/8.14.4) with ESMTP id t1HKvo2g005771
+	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL)
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 15:57:50 -0500
+Received: from sluggy (dhcp-10-15-1-15.hsv.redhat.com [10.15.1.15])
+	by int-mx13.intmail.prod.int.phx2.redhat.com (8.14.4/8.14.4) with ESMTP id t1HKvo5B003487
+	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 15:57:50 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/YFx1jXf1vBx2IzJn./L0h+_
-Content-Type: text/plain; charset=US-ASCII
+--Sig_/7lCctKvqOMVN8D1bYQXHENe
+Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, 17 Feb 2015 23:43:57 +0600
-Boris Egorov <egorov@linux.com> wrote:
+I'm pleased to announce the v0.91 release of rt-tests
 
-> Few fixes for rt-migrate-test, one to fix arithmetic error and others
-> to properly handle options passed by user.
->=20
-> Difference of this series from the first patch:
->=20
-> * value checks now taking place in parse_options() instead of main()
-> * added second sanity patch
->=20
-> Boris Egorov (2):
->   rt-migrate-test: exit early if nr_runs is non-positive
->   rt-migrate-test: use variables instead of macros
->=20
->  src/rt-migrate-test/rt-migrate-test.c | 11 +++++++----
->  1 file changed, 7 insertions(+), 4 deletions(-)
->=20
-> --=20
+The changes from v0.90 are command line option fixups
+in rt-migrate-test and an output format fix in pi_stress.
 
-I've pulled these into my tree and they will be in rt-tests-0.91.
-Should come out this week.
+Repo: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
+Branch: master
+Tag: v0.91
+Tarfile: https://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests-=
+0.91.tar.xz
+
+Uwe Kleine-K=C3=B6nig (1):
+  pi_stress: remove timestamp of compilation from version output
+
+Boris Egorov (2):
+  rt-migrate-test: use variables instead of macros=20
+  rt-migrate-test: exit early if nr_runs is non-positive
+
+Clark Williams (2):=20
+  rt-migrate-test: sanity check --prio value
+  rt-migrate-test: make sure input parameters are converted
+                   to correct units=20
+
+Enjoy! Comments, patches, suggestions and snide remarks welcome.
 
 Clark
 
---Sig_/YFx1jXf1vBx2IzJn./L0h+_
+--Sig_/7lCctKvqOMVN8D1bYQXHENe
 Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2
 
-iQIcBAEBAgAGBQJU45YqAAoJEEersVlSw9NzUUsP/1S+My9Uo8pECG5woqbN1hiz
-JExPZsGw2nmO3fYvnwLWIrCiH1VCFu+Rbl2R5U84+HBkEIYBcjRkBJ85dwgDGrHE
-DmmECEvez8AGg3oq4TAGLWvhFcj7cjYXhxlFleVhEh8HewJf4Zda7s+gzC9uLckH
-783W1Q5e3Ew15uQkFMIbXFRbPN7BcAxk+QqOiFpXUv0FTtFjD32PD/3nwU4B0TYo
-5wl0q7Dfuzlek3ut1y8zKpYRru56/wZseWL/lMFaFixzV+TvcMkIoL1B8y+uQDxn
-s5+pg0wMPTew4o3Y+J0d/wjr6JL8Xjjxzf1h/8lbLE8MnWxzK4wjaViHfK4cI0Ta
-7Oc5AlAr48NaYIflCJRokNQymlqveQP2883sPJvclLhfqhh30BMHvXb3vBj4AS9G
-42n3AlUBE+5b8Cqvn7BcJ8d8kS2ulIt+aE33G/N8e2eHryDy98WfqXobjuYplHUD
-lDVNsrRsoevpKjhUMrrznGB/HWxBmb4CmbVpB2EnUPKGt8wBIXG+VtJJVrj2crQg
-+2fGqQcYo/R/VMPb8fmQF88MymT4zxpBVLgkUwsjhXM+beIXym8wYzTW1O/7v/vM
-V1Jl/U8PRhxP93wp9u/1cFrxhitLRDm9BPCa7TukcA6nMI8HAWit5J4gr6mZdy0V
-wA73Vo2R7ZBMKivNwXG5
-=sQDa
+iQIcBAEBAgAGBQJU46tNAAoJEEersVlSw9Nz7bEP+wauP9jM/mvfH72RyAZI0e1G
+YqcGEw4Vl+YPPNvmqAfXAWqOkC4XeXbykXB/aM6yrR/IN1kdu4EzeaqOPqg6w6N/
+Lu/v7K0i3aORcLTTodFHc0JC1HdJCVcNEHlKa9m90nrtf2D3C35qU7shJoHPZmR5
+KAtW6F3remBM8e1fhEIo2E1NJ411/D3iYMy6TbgA39AT2QMcouRB4KCcKZ3sf3Yp
+HS9kIB8+vwWaZjfU90STBY7myGUpxCb3l+zQyw2lDFVbB9TVnXnv3WZSa25uUxSf
+IceJDoTx4jmB5jm0OecaBZmjEQA2T5X/ANWuiGow+8KK63TebvGqqqoFajjiIv++
+mOGJuPlDM6EpZacs4XZP6lizcELYieEJotfBDNkPBL2GBmrYwOkGARwaf6tWHqyd
+Z8FdChHXCeulasfPn0DinpP1k6k9riO4Rrr1OORLjEvgYCRNpTesoHcF4VG8Sr69
+VG/fJXoQLsWS2deGgtsXNaTXdmWwSQcE4Zq85R9bLOqBMqvSaoRqAMWuJpmTfi0q
+A1rXXDDJS4ykhXRFva3bbvIZ3DXrnpa0+CCtjZX6Jf7I+i5DLMdDeZJzANMHuHuQ
+wsKwqMMrg3LtpXC52wzmvxUW/KNv/JYfrb5FfwLQ85Vb6/sQjNlTPKUtPZ5/AQRH
+ggROJ6B5ra98/RSlVgFK
+=tPBt
 -----END PGP SIGNATURE-----
 
---Sig_/YFx1jXf1vBx2IzJn./L0h+_--
+--Sig_/7lCctKvqOMVN8D1bYQXHENe--
