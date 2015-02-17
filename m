@@ -1,44 +1,75 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH rt-tests] pi_stress: remove timestamp of compilation from
- version output
-Date: Tue, 17 Feb 2015 19:03:55 +0100
-Message-ID: <20150217180355.GD26177@linutronix.de>
-References: <1424185739-29680-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RT]  rt: add rwsem_is_contended() definition to
+ rwsem_rt.h
+Date: Tue, 17 Feb 2015 13:08:57 -0600
+Message-ID: <20150217130857.24e233ea@sluggy>
+References: <20140827160928.6f323642@sluggy>
+	<20150217100911.GG26177@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <clark.williams@gmail.com>,
-	linux-rt-users@vger.kernel.org
-To: Uwe =?utf-8?Q?Kleine-K=C3=B6nig?= <u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:44584 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753090AbbBQSD6 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 13:03:58 -0500
-Content-Disposition: inline
-In-Reply-To: <1424185739-29680-1-git-send-email-u.kleine-koenig@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ boundary="Sig_/Ucr2bKFykdCmvlboJvk9Lrm"; protocol="application/pgp-signature"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150217100911.GG26177@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Uwe Kleine-K=C3=B6nig | 2015-02-17 16:08:59 [+0100]:
+--Sig_/Ucr2bKFykdCmvlboJvk9Lrm
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
->Hello,
->
->a few people work on getting reproducible builds for Debian. Using
->__DATE__ and __TIME__ obviously makes the rt-tests package fail to
->compile in a deterministic fashion.
+On Tue, 17 Feb 2015 11:09:11 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-We used faketime (fed from changelog) to achieve the same goal but we
-still got the warning while beeing deterministic. As a plus the build
-crashed on hurd :)
+> * Clark Williams | 2014-08-27 16:09:28 [-0500]:
+>=20
+> >Thomas,
+> >
+> >The latest btrfs code uses rwsem_is_contended() in the function
+> >caching_thread(). On RT systems, include/linux/rwsem.h is replaced with
+> >include/linux/rwsem_rt.h which does not provide a definition for
+> >rwsem_is_contended().  This commit provides a definition that should
+> >work on RT (where the lock is actually an rt_mutex).
+>=20
+> I see that I added rwsem_is_contended() in v3.14-rt1 which does:
+> |static inline int rwsem_is_contended(struct rw_semaphore *sem)
+> |{
+> |      /* rt_mutex_has_waiters() */
+> |      return !RB_EMPTY_ROOT(&sem->lock.waiters);
+> |}
+>=20
+> Do you lack this in kernel prior to v3.14?
+>=20
+> Sebastian
 
->Best regards
->Uwe
+Yes, that was the problem. I was back-porting to a 3.10 and was missing
+the definition. Sorry for the noise.
 
-Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Clark
+
+--Sig_/Ucr2bKFykdCmvlboJvk9Lrm
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQIcBAEBAgAGBQJU45HNAAoJEEersVlSw9Nzp5gQAJgeaxEmza6O7aSyoNDqgwrV
+dUd2Er3NdeERY+kfuf3NbDZrYT2u3wzSjT3alitHReyLtP1qIMzNQ6iCYTQIvka+
+OL42SHFJR+Nc4+xV9QhxbqAWtTfK6YLMCwZdqwrOmYMWzorJCGnvD+KDgjiZuULe
+wbBD599DteGhbouPL2trloPZL2P1Ap+mPar/dGfKQszNLhoVqMFf6b+ye5OQXFKA
+IqlX5maEYX3FyLobaXySiLKiQnC8iXsbPP5amVuNy9VzmEZ/M0aEETla4nM8NAT8
+opB6l9EIJVbUHkFCwLRt0kXED9VtlO+y5kqly/ZBlQPY++bUUwigF+9LmgQkLKkO
+AdJDNqTquI4yLS67dEWh/WqR6JsfxJ7NcSfJP0xLh6I90oKKwWfo2wSoFPuO0a+s
+XPDU+geUx20KBKNzALxfPV24T62Lk7gdi1QFNKMEKelk5AxVUIG4/gQgPWEC9FOH
+Ekp8w5Ismhc2nqfBABvxkq0gzt9LSNCrWzj45cpQVgmMDKJeFQZJMg9Lz+AUZXaH
+zKbv9iLaVfn2T+HHV+p+ieeqiKXGOMeknQb05S08OaVe+ZgbZDl1dedEHOt5V6ij
++ImCN5eYH/fPvelb8+JKW2XSA2c2/z96HRyfPRxX3pYVl4/2ri2BjdQXvKSqjZHG
+e/iv/wWF3wa0iRRttLcG
+=Z6KZ
+-----END PGP SIGNATURE-----
+
+--Sig_/Ucr2bKFykdCmvlboJvk9Lrm--
