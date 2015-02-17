@@ -1,75 +1,76 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH RT]  rt: add rwsem_is_contended() definition to
- rwsem_rt.h
-Date: Tue, 17 Feb 2015 13:08:57 -0600
-Message-ID: <20150217130857.24e233ea@sluggy>
-References: <20140827160928.6f323642@sluggy>
-	<20150217100911.GG26177@linutronix.de>
+From: Clark Williams <clark.williams@gmail.com>
+Subject: Re: [PATCH v2 0/2] rt-migrate-test: few sanity fixes
+Date: Tue, 17 Feb 2015 13:27:38 -0600
+Message-ID: <20150217132738.55cc923d@sluggy>
+References: <5476FAF2.1060702@linux.com>
+	<cover.1424194150.git.egorov@linux.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/Ucr2bKFykdCmvlboJvk9Lrm"; protocol="application/pgp-signature"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150217100911.GG26177@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+ boundary="Sig_/YFx1jXf1vBx2IzJn./L0h+_"; protocol="application/pgp-signature"
+Cc: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org,
+	jkacur@redhat.com, bigeasy@linutronix.de
+To: Boris Egorov <egorov@linux.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qc0-f179.google.com ([209.85.216.179]:34509 "EHLO
+	mail-qc0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754491AbbBQT1o (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2015 14:27:44 -0500
+Received: by mail-qc0-f179.google.com with SMTP id r5so30419354qcx.10
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 11:27:43 -0800 (PST)
+In-Reply-To: <cover.1424194150.git.egorov@linux.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/Ucr2bKFykdCmvlboJvk9Lrm
+--Sig_/YFx1jXf1vBx2IzJn./L0h+_
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Tue, 17 Feb 2015 11:09:11 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Tue, 17 Feb 2015 23:43:57 +0600
+Boris Egorov <egorov@linux.com> wrote:
 
-> * Clark Williams | 2014-08-27 16:09:28 [-0500]:
+> Few fixes for rt-migrate-test, one to fix arithmetic error and others
+> to properly handle options passed by user.
 >=20
-> >Thomas,
-> >
-> >The latest btrfs code uses rwsem_is_contended() in the function
-> >caching_thread(). On RT systems, include/linux/rwsem.h is replaced with
-> >include/linux/rwsem_rt.h which does not provide a definition for
-> >rwsem_is_contended().  This commit provides a definition that should
-> >work on RT (where the lock is actually an rt_mutex).
+> Difference of this series from the first patch:
 >=20
-> I see that I added rwsem_is_contended() in v3.14-rt1 which does:
-> |static inline int rwsem_is_contended(struct rw_semaphore *sem)
-> |{
-> |      /* rt_mutex_has_waiters() */
-> |      return !RB_EMPTY_ROOT(&sem->lock.waiters);
-> |}
+> * value checks now taking place in parse_options() instead of main()
+> * added second sanity patch
 >=20
-> Do you lack this in kernel prior to v3.14?
+> Boris Egorov (2):
+>   rt-migrate-test: exit early if nr_runs is non-positive
+>   rt-migrate-test: use variables instead of macros
 >=20
-> Sebastian
+>  src/rt-migrate-test/rt-migrate-test.c | 11 +++++++----
+>  1 file changed, 7 insertions(+), 4 deletions(-)
+>=20
+> --=20
 
-Yes, that was the problem. I was back-porting to a 3.10 and was missing
-the definition. Sorry for the noise.
+I've pulled these into my tree and they will be in rt-tests-0.91.
+Should come out this week.
 
 Clark
 
---Sig_/Ucr2bKFykdCmvlboJvk9Lrm
+--Sig_/YFx1jXf1vBx2IzJn./L0h+_
 Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
 Version: GnuPG v2
 
-iQIcBAEBAgAGBQJU45HNAAoJEEersVlSw9Nzp5gQAJgeaxEmza6O7aSyoNDqgwrV
-dUd2Er3NdeERY+kfuf3NbDZrYT2u3wzSjT3alitHReyLtP1qIMzNQ6iCYTQIvka+
-OL42SHFJR+Nc4+xV9QhxbqAWtTfK6YLMCwZdqwrOmYMWzorJCGnvD+KDgjiZuULe
-wbBD599DteGhbouPL2trloPZL2P1Ap+mPar/dGfKQszNLhoVqMFf6b+ye5OQXFKA
-IqlX5maEYX3FyLobaXySiLKiQnC8iXsbPP5amVuNy9VzmEZ/M0aEETla4nM8NAT8
-opB6l9EIJVbUHkFCwLRt0kXED9VtlO+y5kqly/ZBlQPY++bUUwigF+9LmgQkLKkO
-AdJDNqTquI4yLS67dEWh/WqR6JsfxJ7NcSfJP0xLh6I90oKKwWfo2wSoFPuO0a+s
-XPDU+geUx20KBKNzALxfPV24T62Lk7gdi1QFNKMEKelk5AxVUIG4/gQgPWEC9FOH
-Ekp8w5Ismhc2nqfBABvxkq0gzt9LSNCrWzj45cpQVgmMDKJeFQZJMg9Lz+AUZXaH
-zKbv9iLaVfn2T+HHV+p+ieeqiKXGOMeknQb05S08OaVe+ZgbZDl1dedEHOt5V6ij
-+ImCN5eYH/fPvelb8+JKW2XSA2c2/z96HRyfPRxX3pYVl4/2ri2BjdQXvKSqjZHG
-e/iv/wWF3wa0iRRttLcG
-=Z6KZ
+iQIcBAEBAgAGBQJU45YqAAoJEEersVlSw9NzUUsP/1S+My9Uo8pECG5woqbN1hiz
+JExPZsGw2nmO3fYvnwLWIrCiH1VCFu+Rbl2R5U84+HBkEIYBcjRkBJ85dwgDGrHE
+DmmECEvez8AGg3oq4TAGLWvhFcj7cjYXhxlFleVhEh8HewJf4Zda7s+gzC9uLckH
+783W1Q5e3Ew15uQkFMIbXFRbPN7BcAxk+QqOiFpXUv0FTtFjD32PD/3nwU4B0TYo
+5wl0q7Dfuzlek3ut1y8zKpYRru56/wZseWL/lMFaFixzV+TvcMkIoL1B8y+uQDxn
+s5+pg0wMPTew4o3Y+J0d/wjr6JL8Xjjxzf1h/8lbLE8MnWxzK4wjaViHfK4cI0Ta
+7Oc5AlAr48NaYIflCJRokNQymlqveQP2883sPJvclLhfqhh30BMHvXb3vBj4AS9G
+42n3AlUBE+5b8Cqvn7BcJ8d8kS2ulIt+aE33G/N8e2eHryDy98WfqXobjuYplHUD
+lDVNsrRsoevpKjhUMrrznGB/HWxBmb4CmbVpB2EnUPKGt8wBIXG+VtJJVrj2crQg
++2fGqQcYo/R/VMPb8fmQF88MymT4zxpBVLgkUwsjhXM+beIXym8wYzTW1O/7v/vM
+V1Jl/U8PRhxP93wp9u/1cFrxhitLRDm9BPCa7TukcA6nMI8HAWit5J4gr6mZdy0V
+wA73Vo2R7ZBMKivNwXG5
+=sQDa
 -----END PGP SIGNATURE-----
 
---Sig_/Ucr2bKFykdCmvlboJvk9Lrm--
+--Sig_/YFx1jXf1vBx2IzJn./L0h+_--
