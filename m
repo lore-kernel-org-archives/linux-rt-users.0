@@ -1,52 +1,33 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Tue, 17 Feb 2015 18:44:19 +0100
-Message-ID: <20150217174419.GY26177@linutronix.de>
-References: <20150114171251.882318257@redhat.com>
- <20150114171459.593877145@redhat.com>
- <20150116114846.4e7b718d@gandalf.local.home>
- <20150119144100.GA10794@amt.cnet>
- <20150120054653.GA6473@iris.ozlabs.ibm.com>
- <20150120131613.009903a0@gandalf.local.home>
- <20150121150716.GD11596@twins.programming.kicks-ass.net>
+Subject: Re: [PATCH] rtmutex: enable deadlock detection in ww_mutex_lock
+ functions
+Date: Tue, 17 Feb 2015 18:46:40 +0100
+Message-ID: <20150217174640.GZ26177@linutronix.de>
+References: <20150120200229.GA17473@gbitten>
+ <CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com>
+ <54C657FB.2060106@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Gustavo Bittencourt <gbitten@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:44533 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751591AbbBQRqn (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2015 12:46:43 -0500
 Content-Disposition: inline
-In-Reply-To: <20150121150716.GD11596@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <54C657FB.2060106@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Peter Zijlstra | 2015-01-21 16:07:16 [+0100]:
+* Gustavo Bittencourt | 2015-01-26 13:06:35 [-0200]:
 
->On Tue, Jan 20, 2015 at 01:16:13PM -0500, Steven Rostedt wrote:
->> I'm actually wondering if we should just nuke the _interruptible()
->> version of swait. As it should only be all interruptible or all not
->> interruptible, that the swait_wake() should just do the wake up
->> regardless. In which case, swait_wake() is good enough. No need to h=
-ave
->> different versions where people may think do something special.
->>=20
->> Peter?
->
->Yeah, I think the lastest thing I have sitting here on my disk only ha=
-s
->the swake_up() which does TASK_NORMAL, no choice there.
+>I'm not sure if those patches are connected, so I am posting my
+>findings for anyone.
 
-what is the swait status in terms of mainline? This sounds like it
-beeing worked on.
-I could take the series but then I would drop it again if the mainline
-implementation changes=E2=80=A6
+could please re-test again v3.18-RT and tell if this patch is still
+required or not?
 
 Sebastian
