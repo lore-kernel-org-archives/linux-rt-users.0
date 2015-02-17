@@ -1,30 +1,165 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: i.MX6, PREEMPT-RT and interactive cpufreq governor
-Date: Tue, 17 Feb 2015 09:35:24 +0100
-Message-ID: <20150217083523.GA26177@linutronix.de>
-References: <CAHQ1cqGy5gwEUFLS79y3=5_KmUEO+Q3ygDB-jXBZj5yN5xVqUg@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [ANNOUNCE] 3.18.7-rt1
+Date: Tue, 17 Feb 2015 09:37:44 +0100
+Message-ID: <54E2FDD8.8090008@monom.org>
+References: <20150216111822.GA21649@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	asmirnov@kymetacorp.com, panos@kymetacorp.com
-To: Andrey Smirnov <andrew.smirnov@gmail.com>
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <CAHQ1cqGy5gwEUFLS79y3=5_KmUEO+Q3ygDB-jXBZj5yN5xVqUg@mail.gmail.com>
+In-Reply-To: <20150216111822.GA21649@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Andrey Smirnov | 2014-06-10 11:52:05 [-0700]:
+Hi Sebastian,
 
->Eventually I am hoping to disable any sorts of frequency scaling or
->power management on our system, but I am still curious to know if that
->is a known issue patches for which exist. Does anyone has any leads/suggestions?
+On 02/16/2015 12:18 PM, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+> 
+> I'm pleased to announce the v3.18.7-rt1 patch set. It was running over
+> the weekend on my x86 box and was still alive this morning. However it
+> is still the first release for the v3.18 -RT series.
+> I haven't follow the mailing list or commented / applied any patches
+> from the list for -RT while being busy getting this release done (except
+> one patch I needed to have anyway). This is about to change. I will try to
+> go through my RT-inbox before doing the next release.
 
-You need to breakout of the preempt_disable() region. However having
-cpufreq running will have major effect on your latency so this might not
-what you want in the long term.
+I needed the patch below to get it running stable under load on my shiny box.
 
->Thank you,
->Andrey Smirnov
+cheers,
+daniel
 
-Sebastian
+
+>From c517743659575932d7b7c94a08276d0cee8a2fdd Mon Sep 17 00:00:00 2001
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Date: Fri, 11 Jul 2014 15:26:13 +0200
+Subject: [PATCH] thermal: Defer thermal wakups to threads
+
+On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
+call schedule while we run in irq context.
+
+[<ffffffff816850ac>] dump_stack+0x4e/0x8f
+[<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
+[<ffffffff816896b4>] __schedule+0x5b4/0x700
+[<ffffffff8168982a>] schedule+0x2a/0x90
+[<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
+[<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
+[<ffffffffa03a7b75>] pkg_temp_thermal_platform_thermal_notify+0x45/0x134 [x86_pkg_temp_thermal]
+[<ffffffff8103d4db>] ? therm_throt_process+0x1b/0x160
+[<ffffffff8103d831>] intel_thermal_interrupt+0x211/0x250
+[<ffffffff8103d8c1>] smp_thermal_interrupt+0x21/0x40
+[<ffffffff8169415d>] thermal_interrupt+0x6d/0x80
+
+Let's defer the work to a kthread.
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ drivers/thermal/x86_pkg_temp_thermal.c | 49 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 47 insertions(+), 2 deletions(-)
+
+diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+index 9ea3d9d..001ba02 100644
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,6 +29,7 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
++#include <linux/work-simple.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
+ 
+@@ -352,7 +353,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	}
+ }
+ 
+-static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++static void platform_thermal_notify_work(struct swork_event *event)
+ {
+ 	unsigned long flags;
+ 	int cpu = smp_processor_id();
+@@ -369,7 +370,7 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 			pkg_work_scheduled[phy_id]) {
+ 		disable_pkg_thres_interrupt();
+ 		spin_unlock_irqrestore(&pkg_work_lock, flags);
+-		return -EINVAL;
++		return;
+ 	}
+ 	pkg_work_scheduled[phy_id] = 1;
+ 	spin_unlock_irqrestore(&pkg_work_lock, flags);
+@@ -378,9 +379,48 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 	schedule_delayed_work_on(cpu,
+ 				&per_cpu(pkg_temp_thermal_threshold_work, cpu),
+ 				msecs_to_jiffies(notify_delay_ms));
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++static struct swork_event notify_work;
++
++static int thermal_notify_work_init(void)
++{
++	int err;
++
++	err = swork_get();
++	if (!err)
++		return err;
++
++	INIT_SWORK(&notify_work, platform_thermal_notify_work);
++	return 0;
++}
++
++static void thermal_notify_work_cleanup(void)
++{
++	swork_put();
++}
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	swork_queue(&notify_work);
+ 	return 0;
+ }
+ 
++#else  /* !CONFIG_PREEMPT_RT_FULL */
++
++static int thermal_notify_work_init(void) { return 0; }
++
++static int thermal_notify_work_cleanup(void) {  }
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	platform_thermal_notify_work(NULL);
++
++	return 0;
++}
++#endif /* CONFIG_PREEMPT_RT_FULL */
++
+ static int find_siblings_cpu(int cpu)
+ {
+ 	int i;
+@@ -594,6 +634,10 @@ static int __init pkg_temp_thermal_init(void)
+ 	for_each_online_cpu(i)
+ 		if (get_core_online(i))
+ 			goto err_ret;
++
++	if (!thermal_notify_work_init())
++		goto err_ret;
++
+ 	__register_hotcpu_notifier(&pkg_temp_thermal_notifier);
+ 	cpu_notifier_register_done();
+ 
+@@ -619,6 +663,7 @@ static void __exit pkg_temp_thermal_exit(void)
+ 
+ 	cpu_notifier_register_begin();
+ 	__unregister_hotcpu_notifier(&pkg_temp_thermal_notifier);
++	thermal_notify_work_cleanup();
+ 	mutex_lock(&phy_dev_list_mutex);
+ 	list_for_each_entry_safe(phdev, n, &phy_dev_list, list) {
+ 		/* Retore old MSR value for package thermal interrupt */
+-- 
+2.1.0
