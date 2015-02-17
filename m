@@ -1,35 +1,48 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
-Date: Tue, 17 Feb 2015 15:13:33 +0100
-Message-ID: <20150217141333.GR26177@linutronix.de>
-References: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com>
+Subject: Re: [PATCH v3.14-rt] netpoll: guard the access to dev->npinfo with
+ rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
+Date: Tue, 17 Feb 2015 15:29:53 +0100
+Message-ID: <20150217142953.GS26177@linutronix.de>
+References: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
+ <20141203125020.GA5775@opentech.at>
+ <20141203211911.GR25340@linux.vnet.ibm.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Juerg Haefliger <juergh@gmail.com>
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Kevin Hao <haokexin@gmail.com>, linux-rt-users@vger.kernel.org,
+	rostedt@goodmis.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:43877 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:43942 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756534AbbBQONf (ORCPT
+	with ESMTP id S933601AbbBQO37 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 09:13:35 -0500
+	Tue, 17 Feb 2015 09:29:59 -0500
 Content-Disposition: inline
-In-Reply-To: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com>
+In-Reply-To: <20141203211911.GR25340@linux.vnet.ibm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Juerg Haefliger | 2014-12-02 12:09:47 [+0100]:
+* Paul E. McKenney | 2014-12-03 13:19:11 [-0800]:
 
->I have a simple test that runs two iperf clients in parallel with the
->ltp network tests and it triggers a deadlock within a few minutes.
->This is 100% repeatable. I've tried this on different RT kernels and
->determined that prior to the following commit (which went into 3.10
->upstream), the machine doesn't deadlock and seems to run just fine:
+>> Is that not actually a bug indepedent of RT ? 
+>> without the rcu_read_lock/unlock who says that the 
+>> rcu_dereference is still valid at this point ? 
+>> I though that if bh are already disabled you still
+>> need the read_lock. disabled bh would allow to "downgrad" 
+>> the rcu_read_lock_bh to rcu_read_lock but you still need it.
 >
->fb52f40e085ef4074f1335672cd62c1f832af13b rtmutex: Handle deadlock
->detection smarter
+>In vanilla kernels, anything that disables BH acts as rcu_read_lock_bh().
+>So yes, you can have cases where rcu_read_lock_bh() is needed only in
+>the -rt kernel.
 
-has this been resolved in the meantime? Do you see the same problem with
-v3.18-RT?
+But it won't hurt mainline using rcu_read_lock_bh() around
+rcu_dereference_bh() right?
+I am not going to apply this because that code is gone shortly after
+v3.14 was released. The fm10k however does the same thing so atleast RCU
+knows when to scream :)
+
+>
+>							Thanx, Paul
 
 Sebastian
