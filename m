@@ -1,48 +1,72 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v3.14-rt] netpoll: guard the access to dev->npinfo with
- rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
-Date: Tue, 17 Feb 2015 15:29:53 +0100
-Message-ID: <20150217142953.GS26177@linutronix.de>
-References: <1417608357-26552-1-git-send-email-kexin.hao@windriver.com>
- <20141203125020.GA5775@opentech.at>
- <20141203211911.GR25340@linux.vnet.ibm.com>
+From: Boris Egorov <egorov@linux.com>
+Subject: Re: [PATCH] rt-migrate-test: exit early if nr_runs is non-positive
+Date: Tue, 17 Feb 2015 20:30:36 +0600
+Message-ID: <54E3508C.3080704@linux.com>
+References: <5476FAF2.1060702@linux.com> <20150217140838.GP26177@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Nicholas Mc Guire <der.herr@hofr.at>,
-	Kevin Hao <haokexin@gmail.com>, linux-rt-users@vger.kernel.org,
-	rostedt@goodmis.org
-To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Content-Transfer-Encoding: 7bit
+Cc: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <clark.williams@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:43942 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933601AbbBQO37 (ORCPT
+Received: from mail-la0-f54.google.com ([209.85.215.54]:45982 "EHLO
+	mail-la0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932920AbbBQOan (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 09:29:59 -0500
-Content-Disposition: inline
-In-Reply-To: <20141203211911.GR25340@linux.vnet.ibm.com>
+	Tue, 17 Feb 2015 09:30:43 -0500
+Received: by labge10 with SMTP id ge10so35919787lab.12
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 06:30:41 -0800 (PST)
+In-Reply-To: <20150217140838.GP26177@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Paul E. McKenney | 2014-12-03 13:19:11 [-0800]:
+Looks like this patch is not applied yet.
 
->> Is that not actually a bug indepedent of RT ? 
->> without the rcu_read_lock/unlock who says that the 
->> rcu_dereference is still valid at this point ? 
->> I though that if bh are already disabled you still
->> need the read_lock. disabled bh would allow to "downgrad" 
->> the rcu_read_lock_bh to rcu_read_lock but you still need it.
->
->In vanilla kernels, anything that disables BH acts as rcu_read_lock_bh().
->So yes, you can have cases where rcu_read_lock_bh() is needed only in
->the -rt kernel.
+I can move value check to parse_options and send another version of
+patch. As for macros - yes, I already mentioned them in debian bug
+report thread. There are three of them (INTERVAL, RUN_INTERVAL,
+PROGRESS_CHARS) which are improperly (IMO) used instead of corresponding
+lowercase variables. I thought these changes should go to another patch.
 
-But it won't hurt mainline using rcu_read_lock_bh() around
-rcu_dereference_bh() right?
-I am not going to apply this because that code is gone shortly after
-v3.14 was released. The fm10k however does the same thing so atleast RCU
-knows when to scream :)
+On 02/17/2015 08:08 PM, Sebastian Andrzej Siewior wrote:
+> * Boris Egorov | 2014-11-27 16:20:34 [+0600]:
+> 
+>> Program will crash if nr_runs is 0 due to dividing by it in
+>> print_results(). Let's exit early instead.
+>>
+>> Fixes: http://bugs.debian.org/716237
+> 
+> Has this been dealt with? I can't see this applied. I would prefer
+> doing the value check in parse_options() itself. And looking at it, it
+> seems that run_interval is interval ignored. Or is there macro magic
+> invovled?
+> 
+>> Signed-off-by: Boris Egorov <egorov@linux.com>
+>> ---
+>> src/rt-migrate-test/rt-migrate-test.c | 5 +++++
+>> 1 file changed, 5 insertions(+)
+>>
+>> diff --git a/src/rt-migrate-test/rt-migrate-test.c
+>> b/src/rt-migrate-test/rt-migrate-test.c
+>> index e3c7a09..876a122 100644
+>> --- a/src/rt-migrate-test/rt-migrate-test.c
+>> +++ b/src/rt-migrate-test/rt-migrate-test.c
+>> @@ -465,6 +465,11 @@ int main (int argc, char **argv)
+>>  	parse_options(argc, argv);
+>> +	if (nr_runs <= 0) {
+>> +		fprintf(stderr, "Warning, --loops argument is non-positive. Exiting.\n");
+>> +		exit(-1);
+>> +	}
+>> +
+>> 	signal(SIGINT, stop_log);
+>>  	if (argc >= (optind + 1))
+>> -- 
+>> 2.1.3
+> 
+> Sebastian
+> 
 
->
->							Thanx, Paul
-
-Sebastian
+-- 
+Best regards,
+Boris Egorov
