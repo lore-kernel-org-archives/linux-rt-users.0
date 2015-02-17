@@ -1,78 +1,56 @@
-From: Boris Egorov <egorov@linux.com>
-Subject: Re: [PATCH] rt-migrate-test: exit early if nr_runs is non-positive
-Date: Tue, 17 Feb 2015 20:35:23 +0600
-Message-ID: <54E351AB.60301@linux.com>
-References: <5476FAF2.1060702@linux.com> <20150217140838.GP26177@linutronix.de> <54E3508C.3080704@linux.com>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+Subject: [PATCH rt-tests] pi_stress: remove timestamp of compilation from version output
+Date: Tue, 17 Feb 2015 16:08:59 +0100
+Message-ID: <1424185739-29680-1-git-send-email-u.kleine-koenig@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: 716237@bugs.debian.org, linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <clark.williams@gmail.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <clark.williams@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f42.google.com ([209.85.215.42]:41406 "EHLO
-	mail-la0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751604AbbBQOfa (ORCPT
+Received: from metis.ext.pengutronix.de ([92.198.50.35]:35436 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753334AbbBQPJD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 09:35:30 -0500
-Received: by labpv20 with SMTP id pv20so35824605lab.8
-        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 06:35:29 -0800 (PST)
-In-Reply-To: <54E3508C.3080704@linux.com>
+	Tue, 17 Feb 2015 10:09:03 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Sorry, PROGRESS_CHARS macro is used correctly, but INTERVAL and
-RUN_INTERVAL not. In my opinion, they should be defined and used once in
-static variable assigning, and nowhere else.
+Having the date and time of compilation is hardly useful and is in the
+way for reproducible building binaries.
 
-On 02/17/2015 08:30 PM, Boris Egorov wrote:
-> Looks like this patch is not applied yet.
-> 
-> I can move value check to parse_options and send another version of
-> patch. As for macros - yes, I already mentioned them in debian bug
-> report thread. There are three of them (INTERVAL, RUN_INTERVAL,
-> PROGRESS_CHARS) which are improperly (IMO) used instead of corresponding
-> lowercase variables. I thought these changes should go to another patch.
-> 
-> On 02/17/2015 08:08 PM, Sebastian Andrzej Siewior wrote:
->> * Boris Egorov | 2014-11-27 16:20:34 [+0600]:
->>
->>> Program will crash if nr_runs is 0 due to dividing by it in
->>> print_results(). Let's exit early instead.
->>>
->>> Fixes: http://bugs.debian.org/716237
->>
->> Has this been dealt with? I can't see this applied. I would prefer
->> doing the value check in parse_options() itself. And looking at it, it
->> seems that run_interval is interval ignored. Or is there macro magic
->> invovled?
->>
->>> Signed-off-by: Boris Egorov <egorov@linux.com>
->>> ---
->>> src/rt-migrate-test/rt-migrate-test.c | 5 +++++
->>> 1 file changed, 5 insertions(+)
->>>
->>> diff --git a/src/rt-migrate-test/rt-migrate-test.c
->>> b/src/rt-migrate-test/rt-migrate-test.c
->>> index e3c7a09..876a122 100644
->>> --- a/src/rt-migrate-test/rt-migrate-test.c
->>> +++ b/src/rt-migrate-test/rt-migrate-test.c
->>> @@ -465,6 +465,11 @@ int main (int argc, char **argv)
->>>  	parse_options(argc, argv);
->>> +	if (nr_runs <= 0) {
->>> +		fprintf(stderr, "Warning, --loops argument is non-positive. Exiting.\n");
->>> +		exit(-1);
->>> +	}
->>> +
->>> 	signal(SIGINT, stop_log);
->>>  	if (argc >= (optind + 1))
->>> -- 
->>> 2.1.3
->>
->> Sebastian
->>
-> 
+Signed-off-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+---
+Hello,
 
--- 
-Best regards,
-Boris Egorov
+a few people work on getting reproducible builds for Debian. Using
+__DATE__ and __TIME__ obviously makes the rt-tests package fail to
+compile in a deterministic fashion.
+
+Best regards
+Uwe
+
+ src/pi_tests/pi_stress.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index e273d62..9b33fad 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -1235,7 +1235,6 @@ void process_command_line(int argc, char **argv)
+ 			break;
+ 		case 'V':
+ 			printf("pi_stress v%1.2f ", VERSION_STRING);
+-			printf("(%s %s)\n", __DATE__, __TIME__);
+ 			exit(0);
+ 		case 'u':
+ 			uniprocessor =3D 1;
+--=20
+2.1.4
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
