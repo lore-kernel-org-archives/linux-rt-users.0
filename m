@@ -1,10 +1,11 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH] KVM: PPC: Convert openpic lock to raw_spinlock
-Date: Tue, 17 Feb 2015 18:53:17 +0100
-Message-ID: <20150217175317.GB26177@linutronix.de>
+Date: Tue, 17 Feb 2015 18:59:22 +0100
+Message-ID: <20150217175922.GC26177@linutronix.de>
 References: <1421919555-11631-1-git-send-email-bogdan.purcareata@freescale.com>
  <54CF44EC.3050007@freescale.com>
  <54E333C0.5000908@freescale.com>
+ <20150217175317.GB26177@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org, scottwood@freescale.com,
@@ -13,18 +14,36 @@ Cc: linux-rt-users@vger.kernel.org, scottwood@freescale.com,
 To: Purcareata Bogdan <b43198@freescale.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <54E333C0.5000908@freescale.com>
+In-Reply-To: <20150217175317.GB26177@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Purcareata Bogdan | 2015-02-17 14:27:44 [+0200]:
+* Sebastian Andrzej Siewior | 2015-02-17 18:53:17 [+0100]:
 
->Ping?
+>* Purcareata Bogdan | 2015-02-17 14:27:44 [+0200]:
 >
->On 02.02.2015 11:35, Purcareata Bogdan wrote:
 >>Ping?
+>>
+>>On 02.02.2015 11:35, Purcareata Bogdan wrote:
+>>>Ping?
+>
+>No body?
+bah! That mutt thing is too fast.
 
-No body?
+The raw conversation looks sane and could go upstream. This other chunk:
 
+|+#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_KVM_MPIC)
+|+/* Limit the number of vcpus due to in-kernel mpic concurrency */
+|+#define KVM_MAX_VCPUS          4
+|+#define KVM_MAX_VCORES         4
+|+#else
+| #define KVM_MAX_VCPUS          NR_CPUS
+| #define KVM_MAX_VCORES         NR_CPUS
+|+#endif
+
+should be a separate patch. Please repost including ppc ml.
+
+This remains of my multiple-MSI patch which someone other posted a while
+ago. What happend to it?
 
 Sebatian
