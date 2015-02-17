@@ -1,77 +1,60 @@
-From: Clark Williams <williams@redhat.com>
-Subject: ANNOUNCE: rt-tests version 0.91
-Date: Tue, 17 Feb 2015 14:57:34 -0600
-Message-ID: <20150217145734.2897d2ff@sluggy>
+From: Yang Shi <yang.shi@windriver.com>
+Subject: Re: [PATCH v3.14-rt] mips: rt: Replace pagefault_* to raw version
+Date: Tue, 17 Feb 2015 13:40:01 -0800
+Message-ID: <54E3B531.8050600@windriver.com>
+References: <1415317527-15266-1-git-send-email-yang.shi@windriver.com> <20150217135404.GM26177@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- boundary="Sig_/7lCctKvqOMVN8D1bYQXHENe"; protocol="application/pgp-signature"
-To: RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: <tglx@linutronix.de>, <rostedt@goodmis.org>,
+	<linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:35457 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750846AbbBQU5v (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 15:57:51 -0500
-Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
-	by mx1.redhat.com (8.14.4/8.14.4) with ESMTP id t1HKvo2g005771
-	(version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-GCM-SHA384 bits=256 verify=FAIL)
-	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 15:57:50 -0500
-Received: from sluggy (dhcp-10-15-1-15.hsv.redhat.com [10.15.1.15])
-	by int-mx13.intmail.prod.int.phx2.redhat.com (8.14.4/8.14.4) with ESMTP id t1HKvo5B003487
-	for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 15:57:50 -0500
+Received: from mail.windriver.com ([147.11.1.11]:36389 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750846AbbBQVkQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Feb 2015 16:40:16 -0500
+In-Reply-To: <20150217135404.GM26177@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/7lCctKvqOMVN8D1bYQXHENe
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: quoted-printable
+On 2/17/2015 5:54 AM, Sebastian Andrzej Siewior wrote:
+> * Yang Shi | 2014-11-06 15:45:27 [-0800]:
+>
+>> In k{un}map_coherent, pagefault_disable and pagefault_enable are called
+>> respectively, but k{un}map_coherent needs preempt disabled according to
+>> commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
+>> in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
+>>
+>> k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
+>> However, actually, the most modern MIPS processors have PIPT dcache without
+>> dcache alias issue. In such case, k{un}map_atomic will be called with preempt
+>> enabled.
+>>
+>> To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
+>> disables preempt, otherwise the following kernel panic may be caught:
+> And this works? One thing that confuses me is that you talk about kmap()
+> while there is no HIGHMEM support in MIPS. The other thing is that I had
+> a longson a while ago and I don't remember this. But it could have no
+> dcache alias problem :)
 
-I'm pleased to announce the v0.91 release of rt-tests
+Yes, it works. I found it on mips64 target.
 
-The changes from v0.90 are command line option fixups
-in rt-migrate-test and an output format fix in pi_stress.
+>
+> Your registers look 64bit wide so this highpage thingy is probably
+> just to deal with the dcache alias. So if this is the only problem you
+> have I would be happy to take your patch. Could you please rebase it
+> against v3.18? The code changed slightly and I would not want to touch
+> and break it :)
 
-Repo: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-Branch: master
-Tag: v0.91
-Tarfile: https://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests-=
-0.91.tar.xz
+Yes, the highpage is just used for dealing with MIPS dcache alias issue.
 
-Uwe Kleine-K=C3=B6nig (1):
-  pi_stress: remove timestamp of compilation from version output
+I'm going to rebase it onto 3.18.
 
-Boris Egorov (2):
-  rt-migrate-test: use variables instead of macros=20
-  rt-migrate-test: exit early if nr_runs is non-positive
+Thanks,
+Yang
 
-Clark Williams (2):=20
-  rt-migrate-test: sanity check --prio value
-  rt-migrate-test: make sure input parameters are converted
-                   to correct units=20
+>
+> Sebastian
 
-Enjoy! Comments, patches, suggestions and snide remarks welcome.
-
-Clark
-
---Sig_/7lCctKvqOMVN8D1bYQXHENe
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIcBAEBAgAGBQJU46tNAAoJEEersVlSw9Nz7bEP+wauP9jM/mvfH72RyAZI0e1G
-YqcGEw4Vl+YPPNvmqAfXAWqOkC4XeXbykXB/aM6yrR/IN1kdu4EzeaqOPqg6w6N/
-Lu/v7K0i3aORcLTTodFHc0JC1HdJCVcNEHlKa9m90nrtf2D3C35qU7shJoHPZmR5
-KAtW6F3remBM8e1fhEIo2E1NJ411/D3iYMy6TbgA39AT2QMcouRB4KCcKZ3sf3Yp
-HS9kIB8+vwWaZjfU90STBY7myGUpxCb3l+zQyw2lDFVbB9TVnXnv3WZSa25uUxSf
-IceJDoTx4jmB5jm0OecaBZmjEQA2T5X/ANWuiGow+8KK63TebvGqqqoFajjiIv++
-mOGJuPlDM6EpZacs4XZP6lizcELYieEJotfBDNkPBL2GBmrYwOkGARwaf6tWHqyd
-Z8FdChHXCeulasfPn0DinpP1k6k9riO4Rrr1OORLjEvgYCRNpTesoHcF4VG8Sr69
-VG/fJXoQLsWS2deGgtsXNaTXdmWwSQcE4Zq85R9bLOqBMqvSaoRqAMWuJpmTfi0q
-A1rXXDDJS4ykhXRFva3bbvIZ3DXrnpa0+CCtjZX6Jf7I+i5DLMdDeZJzANMHuHuQ
-wsKwqMMrg3LtpXC52wzmvxUW/KNv/JYfrb5FfwLQ85Vb6/sQjNlTPKUtPZ5/AQRH
-ggROJ6B5ra98/RSlVgFK
-=tPBt
------END PGP SIGNATURE-----
-
---Sig_/7lCctKvqOMVN8D1bYQXHENe--
