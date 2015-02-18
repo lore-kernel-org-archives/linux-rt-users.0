@@ -1,80 +1,32 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: 3.14.23-rt20 - fs,btrfs: fix rt deadlock on extent_buffer->lock
-Date: Wed, 18 Feb 2015 11:47:57 +0100
-Message-ID: <1424256477.3819.13.camel@gmail.com>
-References: <20141031170326.1491a63f@gandalf.local.home>
-	 <1414910967.5380.81.camel@marge.simpson.net>
-	 <1414913478.5380.114.camel@marge.simpson.net>
-	 <20150217115641.GI26177@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT v2] kernel/res_counter.c: Change lock of struct
+ res_counter to raw_spinlock_t
+Date: Wed, 18 Feb 2015 12:05:52 +0100
+Message-ID: <20150218110552.GE28763@linutronix.de>
+References: <1420745917-50747-1-git-send-email-tmac@hp.com>
+ <1422644389-33074-1-git-send-email-tmac@hp.com>
+ <20150213191909.GA8299@windriver.com>
+ <54DE6AD5.9070000@hp.com>
+ <20150213213016.GC7102@windriver.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Clark Williams <williams@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>,
+	Thavatchai Makphaibulchoke <tmac@hp.com>, rostedt@goodmis.org,
+	linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150217115641.GI26177@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <20150213213016.GC7102@windriver.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2015-02-17 at 12:56 +0100, Sebastian Andrzej Siewior wrote:
-> * Mike Galbraith | 2014-11-02 08:31:18 [+0100]:
-> 
-> >--- a/fs/btrfs/ctree.c
-> >+++ b/fs/btrfs/ctree.c
-> >@@ -80,7 +80,7 @@ noinline void btrfs_clear_path_blocking(
-> > {
-> > 	int i;
-> > 
-> >-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-> >+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
-> > 	/* lockdep really cares that we take all of these spinlocks
-> > 	 * in the right order.  If any of the locks in the path are not
-> > 	 * currently blocking, it is going to complain.  So, make really
-> 
-> This is gone since commit f82c458 ("btrfs: fix lockups from
-> btrfs_clear_path_blocking")
+* Paul Gortmaker | 2015-02-13 16:30:17 [-0500]:
 
-Goody, BTRFS took a modest workout without a whimper.  When that patch
-was born, you didn't have to try, deadlock was immediate gratification.
+there is the thread "[v3.10-rt / v3.12-rt] scheduling while atomic in
+cgroup code" where I applied Mike's patch. This should fix the problem
+reported and be part of the next release.
+Could please double check (either by grabing the patch or waiting for
+the next release).
 
-> >@@ -107,7 +107,7 @@ noinline void btrfs_clear_path_blocking(
-> > 		}
-> > 	}
-> > 
-> >-#ifdef CONFIG_DEBUG_LOCK_ALLOC
-> >+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
-> > 	if (held)
-> > 		btrfs_clear_lock_blocking_rw(held, held_rw);
-> > #endif
-> >--- a/fs/btrfs/extent-tree.c
-> >+++ b/fs/btrfs/extent-tree.c
-> >@@ -6938,14 +6938,6 @@ use_block_rsv(struct btrfs_trans_handle
-> > 		goto again;
-> > 	}
-> > 
-> >-	if (btrfs_test_opt(root, ENOSPC_DEBUG)) {
-> >-		static DEFINE_RATELIMIT_STATE(_rs,
-> >-				DEFAULT_RATELIMIT_INTERVAL * 10,
-> >-				/*DEFAULT_RATELIMIT_BURST*/ 1);
-> >-		if (__ratelimit(&_rs))
-> >-			WARN(1, KERN_DEBUG
-> >-				"BTRFS: block rsv returned %d\n", ret);
-> >-	}
-> > try_reserve:
-> > 	ret = reserve_metadata_bytes(root, block_rsv, blocksize,
-> > 				     BTRFS_RESERVE_NO_FLUSH);
-> >
-> and this look like just a warning with enabled debug that is supressed.
-> May I drop this patch?
-
-Yup, that was a cosmetic thing, also suggested by Chris Mason.  BTRFS
-seems to now just work.  Hopefully it'll keep on just working, I don't
-want to ever go back there :)
-
-	-Mike
+Sebastian
