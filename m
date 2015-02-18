@@ -1,53 +1,60 @@
-From: Purcareata Bogdan <b43198@freescale.com>
-Subject: Re: [PATCH] KVM: PPC: Convert openpic lock to raw_spinlock
-Date: Wed, 18 Feb 2015 10:31:52 +0200
-Message-ID: <54E44DF8.1080906@freescale.com>
-References: <1421919555-11631-1-git-send-email-bogdan.purcareata@freescale.com> <54CF44EC.3050007@freescale.com> <54E333C0.5000908@freescale.com> <20150217175317.GB26177@linutronix.de> <20150217175922.GC26177@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, <scottwood@freescale.com>,
-	Mihai Caraman <mihai.caraman@freescale.com>,
-	<linux-kernel@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150217175922.GC26177@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: [PATCH] pi_stress: Clear affinity for DEADLINE tasks
+Date: Wed, 18 Feb 2015 09:55:13 +0100
+Message-ID: <1424249713-2615-1-git-send-email-daniel.wagner@bmw-carit.de>
+Cc: linux-rt-users@vger.kernel.org, jkacur@redhat.com,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
+To: williams@redhat.com
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.bmw-carit.de ([62.245.222.98]:53377 "EHLO
+	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751010AbbBRJEf (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 18 Feb 2015 04:04:35 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 17.02.2015 19:59, Sebastian Andrzej Siewior wrote:
-> * Sebastian Andrzej Siewior | 2015-02-17 18:53:17 [+0100]:
->
->> * Purcareata Bogdan | 2015-02-17 14:27:44 [+0200]:
->>
->>> Ping?
->>>
->>> On 02.02.2015 11:35, Purcareata Bogdan wrote:
->>>> Ping?
->>
->> No body?
-> bah! That mutt thing is too fast.
->
-> The raw conversation looks sane and could go upstream. This other chunk:
->
-> |+#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_KVM_MPIC)
-> |+/* Limit the number of vcpus due to in-kernel mpic concurrency */
-> |+#define KVM_MAX_VCPUS          4
-> |+#define KVM_MAX_VCORES         4
-> |+#else
-> | #define KVM_MAX_VCPUS          NR_CPUS
-> | #define KVM_MAX_VCORES         NR_CPUS
-> |+#endif
->
-> should be a separate patch. Please repost including ppc ml.
+Deadline tasks are not allowed to set smp affinity.
 
-Thanks! Will send a patchset separating these 2 functional changes - the 
-openpic raw_spinlock for upstream ppc (since it doesn't bring any 
-changes anyway), and the MAX_VCPUS limitation for the RT tree.
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+---
 
-> This remains of my multiple-MSI patch which someone other posted a while
-> ago. What happend to it?
+Hi Clark,
 
-I'm not aware of this patch, could you give more details, please?
+I missed that one because I tested it only on a UP. Sorry about that.
 
-Bogdan P.
+cheers,
+daniel
+
+src/pi_tests/pi_stress.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index cf55712..aaa36c3 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -882,8 +882,21 @@ void *high_priority(void *arg)
+ 	pthread_barrier_t *loop_barr = &p->loop_barr;
+ 	pthread_mutex_t *loop_mtx = &p->loop_mtx;
+ 	int *loop = &p->loop;
++	cpu_set_t cpu_mask;
++	int i;
+ 
+ 	if (high_sa.sched_policy == SCHED_DEADLINE) {
++		CPU_ZERO(&cpu_mask);
++		for (i = 0; i < num_processors; i++)
++			CPU_SET(i, &cpu_mask);
++		status = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_mask);
++		if (status < 0) {
++			pi_error
++			    ("high_priority[%d]: set cpu affinity*dl): %x\n",
++			    p->id, status);
++			return NULL;
++		}
++
+ 		status = sched_setattr(gettid(), &high_sa, 0);
+ 		if (status < 0) {
+ 			pi_error
+-- 
+2.1.0
+
