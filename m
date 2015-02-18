@@ -1,37 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
-Date: Wed, 18 Feb 2015 09:32:29 +0100
-Message-ID: <54E44E1D.4060302@linutronix.de>
-References: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com> <20150217141333.GR26177@linutronix.de> <54E4453C.8060508@fos4x.de>
+Subject: Re: [PATCH] KVM: PPC: Convert openpic lock to raw_spinlock
+Date: Wed, 18 Feb 2015 09:40:51 +0100
+Message-ID: <54E45013.4020005@linutronix.de>
+References: <1421919555-11631-1-git-send-email-bogdan.purcareata@freescale.com> <54CF44EC.3050007@freescale.com> <54E333C0.5000908@freescale.com> <20150217175317.GB26177@linutronix.de> <20150217175922.GC26177@linutronix.de> <54E44DF8.1080906@freescale.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: =?UTF-8?B?UGhpbGlwcCBUw7Zsa2U=?= <philipp.toelke@fos4x.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46590 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751562AbbBRIca (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Feb 2015 03:32:30 -0500
-In-Reply-To: <54E4453C.8060508@fos4x.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org, scottwood@freescale.com,
+	Mihai Caraman <mihai.caraman@freescale.com>,
+	linux-kernel@vger.kernel.org
+To: Purcareata Bogdan <b43198@freescale.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54E44DF8.1080906@freescale.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 02/18/2015 08:54 AM, Philipp T=C3=B6lke wrote:
->> Do you see the same problem with v3.18-RT?
->=20
-> I do feel kind of stupid to ask this: Where would I find 3.18-RT? The
-> git only goes to 3.14...
+On 02/18/2015 09:31 AM, Purcareata Bogdan wrote:
+> Thanks! Will send a patchset separating these 2 functional changes - the
+> openpic raw_spinlock for upstream ppc (since it doesn't bring any
+> changes anyway), and the MAX_VCPUS limitation for the RT tree.
 
-https://www.kernel.org/pub/linux/kernel/projects/rt/3.18/
+thanks. please cc me on both.
 
->=20
-> Cheers,
+>> This remains of my multiple-MSI patch which someone other posted a while
+>> ago. What happend to it?
+> 
+> I'm not aware of this patch, could you give more details, please?
+
+I just grabed them from archive and it seems that there were change
+requests from Scott which were not done. Forget it then, I had it
+differently in memory.
+
+> 
+> Bogdan P.
 
 Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
