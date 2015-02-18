@@ -1,111 +1,34 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [PATCH v3.18-rt] mips: rt: Replace pagefault_* to raw version
-Date: Tue, 17 Feb 2015 14:18:24 -0800
-Message-ID: <1424211504-11720-1-git-send-email-yang.shi@windriver.com>
+From: Gustavo Bittencourt <gbitten@gmail.com>
+Subject: Re: [PATCH] rtmutex: enable deadlock detection in ww_mutex_lock functions
+Date: Tue, 17 Feb 2015 22:18:53 -0200
+Message-ID: <54E3DA6D.1000204@gmail.com>
+References: <20150120200229.GA17473@gbitten> <CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com> <54C657FB.2060106@gmail.com> <20150217174640.GZ26177@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-rt-users@vger.kernel.org>, <paul.gortmaker@windriver.com>,
-	<yang.shi@windriver.com>
-To: <bigeasy@linutronix.de>, <tglx@linutronix.de>,
-	<rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:44794 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752156AbbBQW0V (ORCPT
+Received: from mail-qg0-f50.google.com ([209.85.192.50]:38827 "EHLO
+	mail-qg0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751769AbbBRAS6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Feb 2015 17:26:21 -0500
+	Tue, 17 Feb 2015 19:18:58 -0500
+Received: by mail-qg0-f50.google.com with SMTP id e89so30718375qgf.9
+        for <linux-rt-users@vger.kernel.org>; Tue, 17 Feb 2015 16:18:58 -0800 (PST)
+In-Reply-To: <20150217174640.GZ26177@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In k{un}map_coherent, pagefault_disable and pagefault_enable are called
-respectively, but k{un}map_coherent needs preempt disabled according to
-commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
-in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
 
-k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
-However, actually, the most modern MIPS processors have PIPT dcache without
-dcache alias issue. In such case, k{un}map_atomic will be called with preempt
-enabled.
-
-To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
-disables preempt, otherwise the following kernel panic may be caught:
-
-CPU 0 Unable to handle kernel paging request at virtual address fffffffffffd5000, epc == ffffffff80122c00, ra == ffffffff8011fbcc
-Oops[#1]:
-CPU: 0 PID: 409 Comm: runltp Not tainted 3.14.17-rt5 #1
-task: 980000000fa936f0 ti: 980000000eed0000 task.ti: 980000000eed0000
-$ 0 : 0000000000000000 000000001400a4e1 fffffffffffd5000 0000000000000001
-$ 4 : 980000000cded000 fffffffffffd5000 980000000cdedf00 ffffffffffff00fe
-$ 8 : 0000000000000000 ffffffffffffff00 000000000000000d 0000000000000004
-$12 : 980000000eed3fe0 000000000000a400 ffffffffa00ae278 0000000000000000
-$16 : 980000000cded000 000000726eb855c8 98000000012ccfe8 ffffffff8095e0c0
-$20 : ffffffff80ad0000 ffffffff8095e0c0 98000000012d0bd8 980000000fb92000
-$24 : 0000000000000000 ffffffff80177fb0
-$28 : 980000000eed0000 980000000eed3b60 980000000fb92060 ffffffff8011fbcc
-Hi : 000000000002cb02
-Lo : 000000000000ee56
-epc : ffffffff80122c00 copy_page+0x38/0x548
-    Not tainted
-ra : ffffffff8011fbcc copy_user_highpage+0x16c/0x180
-Status: 1400a4e3 KX SX UX KERNEL EXL IE
-Cause : 10800408
-BadVA : fffffffffffd5000
-PrId : 00010000 (MIPS64R2-generic)
-Modules linked in: i2c_piix4 i2c_core uhci_hcd
-Process runltp (pid: 409, threadinfo=980000000eed0000, task=980000000fa936f0, tls=000000fff7756700)
-Stack : 98000000012ccfe8 980000000eeb7ba8 980000000ecc7508 000000000666da5b
-000000726eb855c8 ffffffff802156e0 000000726ea4a000 98000000010007e0
-980000000fb92060 0000000000000000 0000000000000000 6db6db6db6db6db7
-0000000000000080 000000726eb855c8 980000000fb92000 980000000eeeec28
-980000000ecc7508 980000000fb92060 0000000000000001 00000000000000a9
-ffffffff80995e60 ffffffff80218910 000000001400a4e0 ffffffff804efd24
-980000000ee25b90 ffffffff8079cec4 ffffffff8079d49c ffffffff80979658
-000000000666da5b 980000000eeb7ba8 000000726eb855c8 00000000000000a9
-980000000fb92000 980000000fa936f0 980000000eed3eb0 0000000000000001
-980000000fb92088 0000000000030002 980000000ecc7508 ffffffff8011ecd0
-...
-Call Trace:
-[<ffffffff80122c00>] copy_page+0x38/0x548
-[<ffffffff8011fbcc>] copy_user_highpage+0x16c/0x180
-[<ffffffff802156e0>] do_wp_page+0x658/0xcd8
-[<ffffffff80218910>] handle_mm_fault+0x7d8/0x1070
-[<ffffffff8011ecd0>] __do_page_fault+0x1a0/0x508
-[<ffffffff80104d84>] resume_userspace_check+0x0/0x10
-
-Or there may be random segmentation fault happened.
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
----
-
-Notes:
-
- Rebase to 3.18.7-rt1.
-
- arch/mips/mm/init.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index f42e35e..e09dae6 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -90,7 +90,7 @@ static void *__kmap_pgprot(struct page *page, unsigned long addr, pgprot_t prot)
- 
- 	BUG_ON(Page_dcache_dirty(page));
- 
--	pagefault_disable();
-+	raw_pagefault_disable();
- 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
- 	idx += in_interrupt() ? FIX_N_COLOURS : 0;
- 	vaddr = __fix_to_virt(FIX_CMAP_END - idx);
-@@ -146,7 +146,7 @@ void kunmap_coherent(void)
- 	tlbw_use_hazard();
- 	write_c0_entryhi(old_ctx);
- 	local_irq_restore(flags);
--	pagefault_enable();
-+	raw_pagefault_enable();
- }
- 
- void copy_user_highpage(struct page *to, struct page *from,
--- 
-2.0.2
-
+On 02/17/2015 03:46 PM, Sebastian Andrzej Siewior wrote:
+> * Gustavo Bittencourt | 2015-01-26 13:06:35 [-0200]:
+>
+>> I'm not sure if those patches are connected, so I am posting my
+>> findings for anyone.
+> could please re-test again v3.18-RT and tell if this patch is still
+> required or not?
+>
+> Sebastian
+It is still required.
