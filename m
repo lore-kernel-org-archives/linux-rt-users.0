@@ -1,60 +1,45 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH] pi_stress: Clear affinity for DEADLINE tasks
-Date: Wed, 18 Feb 2015 09:55:13 +0100
-Message-ID: <1424249713-2615-1-git-send-email-daniel.wagner@bmw-carit.de>
-Cc: linux-rt-users@vger.kernel.org, jkacur@redhat.com,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
-To: williams@redhat.com
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:53377 "EHLO
-	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751010AbbBRJEf (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Feb 2015 04:04:35 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Bogdan Purcareata <bogdan.purcareata@freescale.com>
+Subject: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Wed, 18 Feb 2015 09:32:33 +0000
+Message-ID: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Cc: <linux-kernel@vger.kernel.org>, <scottwood@freescale.com>,
+	<mihai.caraman@freescale.com>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>
+To: <linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<bigeasy@linutronix.de>, <agraf@suse.de>, <pbonzini@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Deadline tasks are not allowed to set smp affinity.
+This patchset enables running KVM SMP guests with external interrupts on an
+underlying RT-enabled Linux. Previous to this patch, a guest with in-kernel MPIC
+emulation could easily panic the kernel due to preemption when delivering IPIs
+and external interrupts, because of the openpic spinlock becoming a sleeping
+mutex on PREEMPT_RT_FULL Linux.
 
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
----
+0001: converts the openpic spinlock to a raw spinlock, in order to circumvent
+this behavior. While this change is targeted for a RT enabled Linux, it has no
+effect on upstream kvm-ppc, so send it upstream for better future maintenance.
 
-Hi Clark,
+0002: introduces a limit on the maximum VCPUs a guest can have, in order to
+prevent potential DoS attack due to large system latencies. This patch is
+targeted to RT (due to CONFIG_PREEMPT_RT_FULL), but it can also be applied on
+upstream Linux, with no effect. Not sure if it's best to send it upstream and
+have a hanging CONFIG_PREEMPT_RT_FULL check there, with no effect, or send it
+against linux-stable-rt. Please apply as you consider appropriate.
 
-I missed that one because I tested it only on a UP. Sorry about that.
+- applied & compiled against upstream 3.19
+- applied & compiled against stable-rt 3.14-rt (0002 with minor fuzz)
 
-cheers,
-daniel
+Bogdan Purcareata (2):
+  powerpc/kvm: Convert openpic lock to raw_spinlock
+  powerpc/kvm: Limit MAX_VCPUS for guests running on RT Linux
 
-src/pi_tests/pi_stress.c | 13 +++++++++++++
- 1 file changed, 13 insertions(+)
+ arch/powerpc/include/asm/kvm_host.h |  6 +++++
+ arch/powerpc/kvm/mpic.c             | 44 ++++++++++++++++++-------------------
+ 2 files changed, 28 insertions(+), 22 deletions(-)
 
-diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-index cf55712..aaa36c3 100644
---- a/src/pi_tests/pi_stress.c
-+++ b/src/pi_tests/pi_stress.c
-@@ -882,8 +882,21 @@ void *high_priority(void *arg)
- 	pthread_barrier_t *loop_barr = &p->loop_barr;
- 	pthread_mutex_t *loop_mtx = &p->loop_mtx;
- 	int *loop = &p->loop;
-+	cpu_set_t cpu_mask;
-+	int i;
- 
- 	if (high_sa.sched_policy == SCHED_DEADLINE) {
-+		CPU_ZERO(&cpu_mask);
-+		for (i = 0; i < num_processors; i++)
-+			CPU_SET(i, &cpu_mask);
-+		status = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_mask);
-+		if (status < 0) {
-+			pi_error
-+			    ("high_priority[%d]: set cpu affinity*dl): %x\n",
-+			    p->id, status);
-+			return NULL;
-+		}
-+
- 		status = sched_setattr(gettid(), &high_sa, 0);
- 		if (status < 0) {
- 			pi_error
 -- 
-2.1.0
-
+2.1.4
