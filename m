@@ -1,46 +1,39 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 3.14-rt] sas-ata/isci: dont't disable interrupts in
- qc_issue handler
-Date: Wed, 18 Feb 2015 12:38:03 +0100
-Message-ID: <20150218113803.GG28763@linutronix.de>
-References: <1423929676-35724-1-git-send-email-paul.gortmaker@windriver.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH-rt 0/2] Fix up aio splats at reboot garbage collection
+Date: Wed, 18 Feb 2015 14:33:53 +0100
+Message-ID: <1424266433.7113.1.camel@gmail.com>
+References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
+	 <20150218112823.GF28763@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
+	linux-rt-users@vger.kernel.org, Benjamin LaHaise <bcrl@kvack.org>,
+	Kent Overstreet <kmo@daterainc.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47539 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751054AbbBRLiF convert rfc822-to-8bit (ORCPT
+Received: from mail-wg0-f44.google.com ([74.125.82.44]:60016 "EHLO
+	mail-wg0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750985AbbBRNd5 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Feb 2015 06:38:05 -0500
-Content-Disposition: inline
-In-Reply-To: <1423929676-35724-1-git-send-email-paul.gortmaker@windriver.com>
+	Wed, 18 Feb 2015 08:33:57 -0500
+Received: by mail-wg0-f44.google.com with SMTP id k14so1199634wgh.3
+        for <linux-rt-users@vger.kernel.org>; Wed, 18 Feb 2015 05:33:56 -0800 (PST)
+In-Reply-To: <20150218112823.GF28763@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Paul Gortmaker | 2015-02-14 11:01:16 [-0500]:
+On Wed, 2015-02-18 at 12:28 +0100, Sebastian Andrzej Siewior wrote:
+> * Paul Gortmaker | 2015-02-15 15:52:37 [-0500]:
+> 
+> >We ran into a splat during reboot that was caused by the percpu_ref_kill
+> >garbage collection in the fs/aio code.
+> 
+> Could you please check if
+>     https://lkml.org/lkml/2015/2/16/391
+> works for you?
 
->On 3.14-rt we see the following trace on Canoe Pass for
->SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
->when the sas qc_issue handler is run:
+I did not see a gripe with that and ltp.
 
-So I have finally something that is using isci I would have assumed tha=
-t
-I would be affected by this. But somehow it does not pop up=E2=80=A6
+	-Mike
 
-Applied.
-
-And we are down to
-| $ git grep -c 'local_irq_save\W' drivers/scsi/  | wc -l
-| 14
-
-I hope the others are just old things nobody is using=E2=80=A6
-
-Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
