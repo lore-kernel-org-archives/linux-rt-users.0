@@ -1,8 +1,8 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch-3.18.7-rt1] snd/pcm: fix snd_pcm_stream_lock*()
- irqs_disabled() splats
-Date: Wed, 18 Feb 2015 15:09:23 +0100
-Message-ID: <1424268563.7035.5.camel@gmail.com>
+Subject: [patch-3.18.7-rt1]sunrpc: make svc_xprt_do_enqueue() use
+ get_cpu_light()
+Date: Wed, 18 Feb 2015 16:05:28 +0100
+Message-ID: <1424271928.6903.3.camel@gmail.com>
 References: <20150216111822.GA21649@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -17,85 +17,59 @@ In-Reply-To: <20150216111822.GA21649@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Locking functions previously using read_lock_irq()/read_lock_irqsave() were
-changed to local_irq_disable/save(), leading to gripes.  Use nort variants.
+[   37.667792] Installing knfsd (copyright (C) 1996 okir@monad.swb.de).
+[   37.720307] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
+[   37.720307] in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
+[   37.720318] Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
 
-[ 2423.966857] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-[ 2423.966858] in_atomic(): 0, irqs_disabled(): 1, pid: 5947, name: alsa-sink-ALC88
-[ 2423.966860] CPU: 5 PID: 5947 Comm: alsa-sink-ALC88 Not tainted 3.18.7-rt1 #9
-[ 2423.966860] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-[ 2423.966862]  ffff880409316240 ffff88040866fa38 ffffffff815bdeb5 0000000000000002
-[ 2423.966863]  0000000000000000 ffff88040866fa58 ffffffff81073c86 ffffffffa03b2640
-[ 2423.966864]  ffff88040239ec00 ffff88040866fa78 ffffffff815c3d34 ffffffffa03b2640
-[ 2423.966864] Call Trace:
-[ 2423.966868]  [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-[ 2423.966870]  [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-[ 2423.966880]  [<ffffffff815c3d34>] __rt_spin_lock+0x24/0x50
-[ 2423.966883]  [<ffffffff815c4044>] rt_read_lock+0x34/0x40
-[ 2423.966887]  [<ffffffffa03a2979>] snd_pcm_stream_lock+0x29/0x70 [snd_pcm]
-[ 2423.966890]  [<ffffffffa03a355d>] snd_pcm_playback_poll+0x5d/0x120 [snd_pcm]
-[ 2423.966892]  [<ffffffff811937a2>] do_sys_poll+0x322/0x5b0
-[ 2423.966895]  [<ffffffff812bcfe7>] ? debug_smp_processor_id+0x17/0x20
-[ 2423.966897]  [<ffffffffa03fa023>] ? azx_cc_read+0x23/0x30 [snd_hda_controller]
-[ 2423.966899]  [<ffffffff810b9029>] ? timecounter_read+0x19/0x50
-[ 2423.966901]  [<ffffffffa03fb187>] ? azx_get_wallclock_tstamp+0x97/0xc0 [snd_hda_controller]
-[ 2423.966904]  [<ffffffffa03aaed1>] ? snd_pcm_update_hw_ptr0+0x1b1/0x470 [snd_pcm]
-[ 2423.966906]  [<ffffffff812bcfe7>] ? debug_smp_processor_id+0x17/0x20
-[ 2423.966907]  [<ffffffff81051d2a>] ? unpin_current_cpu+0x1a/0x70
-[ 2423.966910]  [<ffffffff81079ec0>] ? migrate_enable+0xe0/0x1e0
-[ 2423.966912]  [<ffffffff811923c0>] ? poll_select_copy_remaining+0x130/0x130
-[ 2423.966914]  [<ffffffff811923c0>] ? poll_select_copy_remaining+0x130/0x130
-[ 2423.966915]  [<ffffffff811923c0>] ? poll_select_copy_remaining+0x130/0x130
-[ 2423.966916]  [<ffffffff811923c0>] ? poll_select_copy_remaining+0x130/0x130
-[ 2423.966919]  [<ffffffffa03a5ba2>] ? snd_pcm_common_ioctl1+0x1c2/0xda0 [snd_pcm]
-[ 2423.966920]  [<ffffffff812bcfe7>] ? debug_smp_processor_id+0x17/0x20
-[ 2423.966923]  [<ffffffffa03a690b>] ? snd_pcm_playback_ioctl1+0x18b/0x2d0 [snd_pcm]
-[ 2423.966924]  [<ffffffff811c6fa9>] ? eventfd_ctx_read+0x179/0x1e0
-[ 2423.966926]  [<ffffffffa03a6a84>] ? snd_pcm_playback_ioctl+0x34/0x40 [snd_pcm]
-[ 2423.966927]  [<ffffffff810b661e>] ? ktime_get_ts64+0x4e/0xf0
-[ 2423.966928]  [<ffffffff81193d48>] SyS_ppoll+0x1a8/0x1c0
-[ 2423.966930]  [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+[   37.720320] CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
+[   37.720320] Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
+[   37.720321]  ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
+[   37.720322]  0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
+[   37.720322]  ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
+[   37.720323] Call Trace:
+[   37.720326]  [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
+[   37.720328]  [<ffffffff81073c86>] __might_sleep+0xe6/0x150
+[   37.720329]  [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
+[   37.720335]  [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
+[   37.720340]  [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
+[   37.720345]  [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
+[   37.720349]  [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
+[   37.720351]  [<ffffffff810b6f47>] ? __getnstimeofday64+0x37/0xd0
+[   37.720352]  [<ffffffff810b6fee>] ? getnstimeofday64+0xe/0x30
+[   37.720353]  [<ffffffff810b702a>] ? do_gettimeofday+0x1a/0x50
+[   37.720356]  [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
+[   37.720358]  [<ffffffff812bcfe7>] ? debug_smp_processor_id+0x17/0x20
+[   37.720361]  [<ffffffff811512c7>] ? might_fault+0x47/0x50
+[   37.720363]  [<ffffffffa072e410>] ? write_versions+0x320/0x320 [nfsd]
+[   37.720365]  [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
+[   37.720366]  [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
+[   37.720368]  [<ffffffff814c5082>] ? release_sock+0x152/0x1a0
+[   37.720369]  [<ffffffff8117f889>] SyS_write+0x49/0xb0
+[   37.720371]  [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- sound/core/pcm_native.c |    8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ net/sunrpc/svc_xprt.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
---- a/sound/core/pcm_native.c
-+++ b/sound/core/pcm_native.c
-@@ -104,7 +104,7 @@ EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock)
- void snd_pcm_stream_lock_irq(struct snd_pcm_substream *substream)
- {
- 	if (!substream->pcm->nonatomic)
--		local_irq_disable();
-+		local_irq_disable_nort();
- 	snd_pcm_stream_lock(substream);
- }
- EXPORT_SYMBOL_GPL(snd_pcm_stream_lock_irq);
-@@ -113,7 +113,7 @@ void snd_pcm_stream_unlock_irq(struct sn
- {
- 	snd_pcm_stream_unlock(substream);
- 	if (!substream->pcm->nonatomic)
--		local_irq_enable();
-+		local_irq_enable_nort();
- }
- EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irq);
+--- a/net/sunrpc/svc_xprt.c
++++ b/net/sunrpc/svc_xprt.c
+@@ -357,7 +357,7 @@ static void svc_xprt_do_enqueue(struct s
+ 		return;
+ 	}
  
-@@ -121,7 +121,7 @@ unsigned long _snd_pcm_stream_lock_irqsa
- {
- 	unsigned long flags = 0;
- 	if (!substream->pcm->nonatomic)
--		local_irq_save(flags);
-+		local_irq_save_nort(flags);
- 	snd_pcm_stream_lock(substream);
- 	return flags;
- }
-@@ -132,7 +132,7 @@ void snd_pcm_stream_unlock_irqrestore(st
- {
- 	snd_pcm_stream_unlock(substream);
- 	if (!substream->pcm->nonatomic)
--		local_irq_restore(flags);
-+		local_irq_restore_nort(flags);
- }
- EXPORT_SYMBOL_GPL(snd_pcm_stream_unlock_irqrestore);
+-	cpu = get_cpu();
++	cpu = get_cpu_light();
+ 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
+ 	spin_lock_bh(&pool->sp_lock);
  
+@@ -390,7 +390,7 @@ static void svc_xprt_do_enqueue(struct s
+ 	}
+ 
+ 	spin_unlock_bh(&pool->sp_lock);
+-	put_cpu();
++	put_cpu_light();
+ }
+ 
+ /*
