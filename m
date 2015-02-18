@@ -1,39 +1,56 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH-rt 0/2] Fix up aio splats at reboot garbage collection
-Date: Wed, 18 Feb 2015 14:33:53 +0100
-Message-ID: <1424266433.7113.1.camel@gmail.com>
-References: <1424033559-63051-1-git-send-email-paul.gortmaker@windriver.com>
-	 <20150218112823.GF28763@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users@vger.kernel.org, Benjamin LaHaise <bcrl@kvack.org>,
-	Kent Overstreet <kmo@daterainc.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f44.google.com ([74.125.82.44]:60016 "EHLO
-	mail-wg0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750985AbbBRNd5 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Feb 2015 08:33:57 -0500
-Received: by mail-wg0-f44.google.com with SMTP id k14so1199634wgh.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 Feb 2015 05:33:56 -0800 (PST)
-In-Reply-To: <20150218112823.GF28763@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+Date: Wed, 18 Feb 2015 14:48:11 +0100
+Message-ID: <1424267291-10495-1-git-send-email-bigeasy@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2015-02-18 at 12:28 +0100, Sebastian Andrzej Siewior wrote:
-> * Paul Gortmaker | 2015-02-15 15:52:37 [-0500]:
-> 
-> >We ran into a splat during reboot that was caused by the percpu_ref_kill
-> >garbage collection in the fs/aio code.
-> 
-> Could you please check if
->     https://lkml.org/lkml/2015/2/16/391
-> works for you?
+The ARM UP implementation of futex_atomic_cmpxchg_inatomic() assumes that
+pagefault_disable() inherits a preempt disabled section. This assumtion
+is true for mainline but -RT reverts this and allows preemption in
+pagefault disabled regions.
+The code sequence of futex_atomic_cmpxchg_inatomic():
 
-I did not see a gripe with that and ltp.
+|   x = *futex;
+|   if (x == oldval)
+|           *futex = newval;
 
-	-Mike
+The problem occurs if the code is preempted after reading the futex value or
+after comparing it with x. While preempted, the futex owner has to be
+scheduled which then releases the lock (in userland because it has no waiter
+yet). Once the code is back on the CPU, it overwrites the futex value
+with with the old PID and the waiter bit set.
 
+The workaround is to explicit disable code preemption to avoid the
+described race window.
+
+Debugged-by:  Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/arm/include/asm/futex.h |    4 ++++
+ 1 file changed, 4 insertions(+)
+
+--- a/arch/arm/include/asm/futex.h
++++ b/arch/arm/include/asm/futex.h
+@@ -93,6 +93,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval,
+ 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
+ 		return -EFAULT;
+ 
++	preempt_disable_rt();
++
+ 	__asm__ __volatile__("@futex_atomic_cmpxchg_inatomic\n"
+ 	"1:	" TUSER(ldr) "	%1, [%4]\n"
+ 	"	teq	%1, %2\n"
+@@ -104,6 +106,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval,
+ 	: "cc", "memory");
+ 
+ 	*uval = val;
++
++	preempt_enable_rt();
+ 	return ret;
+ }
+ 
