@@ -1,168 +1,55 @@
-From: Joakim Hernberg <jhernberg@alchemy.lu>
-Subject: Re: [ANNOUNCE] 3.18.7-rt1
-Date: Thu, 19 Feb 2015 10:36:01 +0100
-Message-ID: <20150219103601.7e40d0af@tor.valhalla.alchemy.lu>
-References: <20150216111822.GA21649@linutronix.de>
-	<54E2FDD8.8090008@monom.org>
+From: =?UTF-8?B?UGhpbGlwcCBUw7Zsa2U=?= <philipp.toelke@fos4x.de>
+Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
+Date: Thu, 19 Feb 2015 15:25:55 +0100
+Message-ID: <54E5F273.9020508@fos4x.de>
+References: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com> <20150217141333.GR26177@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
-To: Daniel Wagner <wagi@monom.org>, John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailsafe.webbplatsen.se ([94.247.172.109]:49595 "EHLO
-	mailsafe.webbplatsen.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752075AbbBSJwP (ORCPT
+Received: from mail-we0-f173.google.com ([74.125.82.173]:39429 "EHLO
+	mail-we0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752920AbbBSOZ6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Feb 2015 04:52:15 -0500
-In-Reply-To: <54E2FDD8.8090008@monom.org>
+	Thu, 19 Feb 2015 09:25:58 -0500
+Received: by wesx3 with SMTP id x3so57276wes.6
+        for <linux-rt-users@vger.kernel.org>; Thu, 19 Feb 2015 06:25:57 -0800 (PST)
+In-Reply-To: <20150217141333.GR26177@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 17 Feb 2015 09:37:44 +0100
-Daniel Wagner <wagi@monom.org> wrote:
+On 17.02.2015 15:13, Sebastian Andrzej Siewior wrote:
+>> I have a simple test that runs two iperf clients in parallel with th=
+e
+>> ltp network tests and it triggers a deadlock within a few minutes.
+>> This is 100% repeatable. I've tried this on different RT kernels and
+>> determined that prior to the following commit (which went into 3.10
+>> upstream), the machine doesn't deadlock and seems to run just fine:
+>>
+>> fb52f40e085ef4074f1335672cd62c1f832af13b rtmutex: Handle deadlock
+>> detection smarter
+>
+> has this been resolved in the meantime? Do you see the same problem w=
+ith
+> v3.18-RT?
 
-> I needed the patch below to get it running stable under load on my
-> shiny box.
+I was not able to reproduce the issue with 3.18.7-rt1 in 24hours. I wil=
+l=20
+repeat the test to be sure.
 
-FWIW, this patch makes 3.18-rt survive thermal events on my laptop.
-
-> From c517743659575932d7b7c94a08276d0cee8a2fdd Mon Sep 17 00:00:00 2001
-> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> Date: Fri, 11 Jul 2014 15:26:13 +0200
-> Subject: [PATCH] thermal: Defer thermal wakups to threads
-> 
-> On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
-> call schedule while we run in irq context.
-> 
-> [<ffffffff816850ac>] dump_stack+0x4e/0x8f
-> [<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
-> [<ffffffff816896b4>] __schedule+0x5b4/0x700
-> [<ffffffff8168982a>] schedule+0x2a/0x90
-> [<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
-> [<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
-> [<ffffffffa03a7b75>]
-> pkg_temp_thermal_platform_thermal_notify+0x45/0x134
-> [x86_pkg_temp_thermal] [<ffffffff8103d4db>] ?
-> therm_throt_process+0x1b/0x160 [<ffffffff8103d831>]
-> intel_thermal_interrupt+0x211/0x250 [<ffffffff8103d8c1>]
-> smp_thermal_interrupt+0x21/0x40 [<ffffffff8169415d>]
-> thermal_interrupt+0x6d/0x80
-> 
-> Let's defer the work to a kthread.
-> 
-> Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->  drivers/thermal/x86_pkg_temp_thermal.c | 49
-> ++++++++++++++++++++++++++++++++-- 1 file changed, 47 insertions(+),
-> 2 deletions(-)
-> 
-> diff --git a/drivers/thermal/x86_pkg_temp_thermal.c
-> b/drivers/thermal/x86_pkg_temp_thermal.c index 9ea3d9d..001ba02 100644
-> --- a/drivers/thermal/x86_pkg_temp_thermal.c
-> +++ b/drivers/thermal/x86_pkg_temp_thermal.c
-> @@ -29,6 +29,7 @@
->  #include <linux/pm.h>
->  #include <linux/thermal.h>
->  #include <linux/debugfs.h>
-> +#include <linux/work-simple.h>
->  #include <asm/cpu_device_id.h>
->  #include <asm/mce.h>
->  
-> @@ -352,7 +353,7 @@ static void
-> pkg_temp_thermal_threshold_work_fn(struct work_struct *work) }
->  }
->  
-> -static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-> +static void platform_thermal_notify_work(struct swork_event *event)
->  {
->  	unsigned long flags;
->  	int cpu = smp_processor_id();
-> @@ -369,7 +370,7 @@ static int
-> pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-> pkg_work_scheduled[phy_id]) { disable_pkg_thres_interrupt();
->  		spin_unlock_irqrestore(&pkg_work_lock, flags);
-> -		return -EINVAL;
-> +		return;
->  	}
->  	pkg_work_scheduled[phy_id] = 1;
->  	spin_unlock_irqrestore(&pkg_work_lock, flags);
-> @@ -378,9 +379,48 @@ static int
-> pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-> schedule_delayed_work_on(cpu,
-> &per_cpu(pkg_temp_thermal_threshold_work, cpu),
-> msecs_to_jiffies(notify_delay_ms)); +}
-> +
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +static struct swork_event notify_work;
-> +
-> +static int thermal_notify_work_init(void)
-> +{
-> +	int err;
-> +
-> +	err = swork_get();
-> +	if (!err)
-> +		return err;
-> +
-> +	INIT_SWORK(&notify_work, platform_thermal_notify_work);
-> +	return 0;
-> +}
-> +
-> +static void thermal_notify_work_cleanup(void)
-> +{
-> +	swork_put();
-> +}
-> +
-> +static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-> +{
-> +	swork_queue(&notify_work);
->  	return 0;
->  }
->  
-> +#else  /* !CONFIG_PREEMPT_RT_FULL */
-> +
-> +static int thermal_notify_work_init(void) { return 0; }
-> +
-> +static int thermal_notify_work_cleanup(void) {  }
-> +
-> +static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-> +{
-> +	platform_thermal_notify_work(NULL);
-> +
-> +	return 0;
-> +}
-> +#endif /* CONFIG_PREEMPT_RT_FULL */
-> +
->  static int find_siblings_cpu(int cpu)
->  {
->  	int i;
-> @@ -594,6 +634,10 @@ static int __init pkg_temp_thermal_init(void)
->  	for_each_online_cpu(i)
->  		if (get_core_online(i))
->  			goto err_ret;
-> +
-> +	if (!thermal_notify_work_init())
-> +		goto err_ret;
-> +
->  	__register_hotcpu_notifier(&pkg_temp_thermal_notifier);
->  	cpu_notifier_register_done();
->  
-> @@ -619,6 +663,7 @@ static void __exit pkg_temp_thermal_exit(void)
->  
->  	cpu_notifier_register_begin();
->  	__unregister_hotcpu_notifier(&pkg_temp_thermal_notifier);
-> +	thermal_notify_work_cleanup();
->  	mutex_lock(&phy_dev_list_mutex);
->  	list_for_each_entry_safe(phdev, n, &phy_dev_list, list) {
->  		/* Retore old MSR value for package thermal
-> interrupt */
-
-
-
--- 
-
-   Joakim
+Cheers,
+--=20
+Philipp T=C3=B6lke, M.Sc. - Software-Developer - fos4X GmbH - www.fos4x=
+=2Ede
+Thalkirchner Str. 210, Geb. 6 - D-81371 M=C3=BCnchen; AG M=C3=BCnchen H=
+RB 189 218
+T +49 89 999 542 58 - F +49 89 999 542 01
+Managing Directors: Dr. Lars Hoffmann, Dr. Mathias M=C3=BCller
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
