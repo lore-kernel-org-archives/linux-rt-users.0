@@ -1,112 +1,168 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [patch-3.18.7-rt1] sched/context-tracking: fix PREEMPT_LAZY
- explosions
-Date: Thu, 19 Feb 2015 07:30:40 +0100
-Message-ID: <1424327440.7438.10.camel@gmail.com>
+From: Joakim Hernberg <jhernberg@alchemy.lu>
+Subject: Re: [ANNOUNCE] 3.18.7-rt1
+Date: Thu, 19 Feb 2015 10:36:01 +0100
+Message-ID: <20150219103601.7e40d0af@tor.valhalla.alchemy.lu>
 References: <20150216111822.GA21649@linutronix.de>
-	 <1424258514.3819.39.camel@gmail.com>
+	<54E2FDD8.8090008@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424258514.3819.39.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
+To: Daniel Wagner <wagi@monom.org>, John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mailsafe.webbplatsen.se ([94.247.172.109]:49595 "EHLO
+	mailsafe.webbplatsen.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752075AbbBSJwP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Feb 2015 04:52:15 -0500
+In-Reply-To: <54E2FDD8.8090008@monom.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 2015-02-18 at 12:21 +0100, Mike Galbraith wrote:
-> On Mon, 2015-02-16 at 12:18 +0100, Sebastian Andrzej Siewior wrote:
+On Tue, 17 Feb 2015 09:37:44 +0100
+Daniel Wagner <wagi@monom.org> wrote:
+
+> I needed the patch below to get it running stable under load on my
+> shiny box.
+
+FWIW, this patch makes 3.18-rt survive thermal events on my laptop.
+
+> From c517743659575932d7b7c94a08276d0cee8a2fdd Mon Sep 17 00:00:00 2001
+> From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+> Date: Fri, 11 Jul 2014 15:26:13 +0200
+> Subject: [PATCH] thermal: Defer thermal wakups to threads
 > 
-> > Known issues:
-> >
-> >       - lazy preempt on x86_64 leads to a crash with some load.
+> On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
+> call schedule while we run in irq context.
 > 
-> The below still works for me.  (it doesn't make nohz_full actually work
-> in rt, but at least folks who want to tinker with it can do so)
+> [<ffffffff816850ac>] dump_stack+0x4e/0x8f
+> [<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
+> [<ffffffff816896b4>] __schedule+0x5b4/0x700
+> [<ffffffff8168982a>] schedule+0x2a/0x90
+> [<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
+> [<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
+> [<ffffffffa03a7b75>]
+> pkg_temp_thermal_platform_thermal_notify+0x45/0x134
+> [x86_pkg_temp_thermal] [<ffffffff8103d4db>] ?
+> therm_throt_process+0x1b/0x160 [<ffffffff8103d831>]
+> intel_thermal_interrupt+0x211/0x250 [<ffffffff8103d8c1>]
+> smp_thermal_interrupt+0x21/0x40 [<ffffffff8169415d>]
+> thermal_interrupt+0x6d/0x80
+> 
+> Let's defer the work to a kthread.
+> 
+> Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+>  drivers/thermal/x86_pkg_temp_thermal.c | 49
+> ++++++++++++++++++++++++++++++++-- 1 file changed, 47 insertions(+),
+> 2 deletions(-)
+> 
+> diff --git a/drivers/thermal/x86_pkg_temp_thermal.c
+> b/drivers/thermal/x86_pkg_temp_thermal.c index 9ea3d9d..001ba02 100644
+> --- a/drivers/thermal/x86_pkg_temp_thermal.c
+> +++ b/drivers/thermal/x86_pkg_temp_thermal.c
+> @@ -29,6 +29,7 @@
+>  #include <linux/pm.h>
+>  #include <linux/thermal.h>
+>  #include <linux/debugfs.h>
+> +#include <linux/work-simple.h>
+>  #include <asm/cpu_device_id.h>
+>  #include <asm/mce.h>
+>  
+> @@ -352,7 +353,7 @@ static void
+> pkg_temp_thermal_threshold_work_fn(struct work_struct *work) }
+>  }
+>  
+> -static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+> +static void platform_thermal_notify_work(struct swork_event *event)
+>  {
+>  	unsigned long flags;
+>  	int cpu = smp_processor_id();
+> @@ -369,7 +370,7 @@ static int
+> pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+> pkg_work_scheduled[phy_id]) { disable_pkg_thres_interrupt();
+>  		spin_unlock_irqrestore(&pkg_work_lock, flags);
+> -		return -EINVAL;
+> +		return;
+>  	}
+>  	pkg_work_scheduled[phy_id] = 1;
+>  	spin_unlock_irqrestore(&pkg_work_lock, flags);
+> @@ -378,9 +379,48 @@ static int
+> pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+> schedule_delayed_work_on(cpu,
+> &per_cpu(pkg_temp_thermal_threshold_work, cpu),
+> msecs_to_jiffies(notify_delay_ms)); +}
+> +
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +static struct swork_event notify_work;
+> +
+> +static int thermal_notify_work_init(void)
+> +{
+> +	int err;
+> +
+> +	err = swork_get();
+> +	if (!err)
+> +		return err;
+> +
+> +	INIT_SWORK(&notify_work, platform_thermal_notify_work);
+> +	return 0;
+> +}
+> +
+> +static void thermal_notify_work_cleanup(void)
+> +{
+> +	swork_put();
+> +}
+> +
+> +static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+> +{
+> +	swork_queue(&notify_work);
+>  	return 0;
+>  }
+>  
+> +#else  /* !CONFIG_PREEMPT_RT_FULL */
+> +
+> +static int thermal_notify_work_init(void) { return 0; }
+> +
+> +static int thermal_notify_work_cleanup(void) {  }
+> +
+> +static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+> +{
+> +	platform_thermal_notify_work(NULL);
+> +
+> +	return 0;
+> +}
+> +#endif /* CONFIG_PREEMPT_RT_FULL */
+> +
+>  static int find_siblings_cpu(int cpu)
+>  {
+>  	int i;
+> @@ -594,6 +634,10 @@ static int __init pkg_temp_thermal_init(void)
+>  	for_each_online_cpu(i)
+>  		if (get_core_online(i))
+>  			goto err_ret;
+> +
+> +	if (!thermal_notify_work_init())
+> +		goto err_ret;
+> +
+>  	__register_hotcpu_notifier(&pkg_temp_thermal_notifier);
+>  	cpu_notifier_register_done();
+>  
+> @@ -619,6 +663,7 @@ static void __exit pkg_temp_thermal_exit(void)
+>  
+>  	cpu_notifier_register_begin();
+>  	__unregister_hotcpu_notifier(&pkg_temp_thermal_notifier);
+> +	thermal_notify_work_cleanup();
+>  	mutex_lock(&phy_dev_list_mutex);
+>  	list_for_each_entry_safe(phdev, n, &phy_dev_list, list) {
+>  		/* Retore old MSR value for package thermal
+> interrupt */
 
-Actually, with the below (and other local hacks obviously), it's looking
-pretty darn good on my little desktop box.
 
----
- kernel/sched/core.c      |    2 +-
- kernel/time/tick-sched.c |    2 +-
- 2 files changed, 2 insertions(+), 2 deletions(-)
 
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -810,7 +810,7 @@ bool sched_can_stop_tick(void)
- 	 * nr_running update is assumed to be visible
- 	 * after IPI is sent from wakers.
- 	 */
--	if (this_rq()->nr_running > 1)
-+	if (this_rq()->nr_running - task_is_softirqd(current) > 1)
- 		return false;
- 
- 	return true;
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -164,7 +164,7 @@ bool tick_nohz_full_running;
- 
- static bool can_stop_full_tick(void)
- {
--	WARN_ON_ONCE(!irqs_disabled());
-+	WARN_ON_ONCE_NONRT(!irqs_disabled());  <== better way to shut warning up ;-)
- 
- 	if (!sched_can_stop_tick()) {
- 		trace_tick_stop(0, "more than 1 task in runqueue\n");
+-- 
 
-With 2 shielded cored measuring perturbations (output 1 line/min)
-
-homer:~ # cgexec -g cpuset:rtcpus taskset -c 2 pert 60
-3591.74 MHZ CPU
-perturbation threshold 0.013 usecs.
-pert/s:       12 >7.76us:        0 min:  0.04 max:  0.78 avg:  0.09 sum/s:     1us overhead: 0.00%
-pert/s:        7 >7.02us:        0 min:  0.04 max:  0.70 avg:  0.05 sum/s:     0us overhead: 0.00%
-pert/s:       14 >8.11us:        1 min:  0.04 max: 35.72 avg:  0.09 sum/s:     1us overhead: 0.00%
-pert/s:       39 >7.35us:        0 min:  0.04 max:  0.93 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       44 >6.66us:        0 min:  0.04 max:  0.84 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       46 >6.05us:        0 min:  0.04 max:  1.00 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       36 >5.49us:        0 min:  0.04 max:  0.71 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       42 >5.21us:        0 min:  0.04 max:  5.43 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       24 >4.73us:        0 min:  0.04 max:  0.74 avg:  0.10 sum/s:     2us overhead: 0.00%
-pert/s:       33 >4.31us:        0 min:  0.04 max:  0.90 avg:  0.10 sum/s:     3us overhead: 0.00%
-pert/s:       34 >3.92us:        0 min:  0.04 max:  0.70 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       64 >3.59us:        0 min:  0.04 max:  1.05 avg:  0.12 sum/s:     7us overhead: 0.00%
-pert/s:       53 >3.27us:        0 min:  0.04 max:  0.66 avg:  0.11 sum/s:     6us overhead: 0.00%
-pert/s:       55 >2.98us:        0 min:  0.04 max:  0.72 avg:  0.11 sum/s:     6us overhead: 0.00%
-pert/s:       38 >2.70us:        0 min:  0.04 max:  0.35 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       35 >2.46us:        0 min:  0.04 max:  0.43 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       36 >2.25us:        0 min:  0.04 max:  0.58 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       44 >2.08us:        0 min:  0.04 max:  0.93 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       45 >1.91us:        0 min:  0.04 max:  0.76 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       33 >1.75us:        0 min:  0.04 max:  0.55 avg:  0.10 sum/s:     3us overhead: 0.00%
-Terminated
-
-homer:~ # cgexec -g cpuset:rtcpus taskset -c 3 pert 60
-3591.73 MHZ CPU
-perturbation threshold 0.013 usecs.
-pert/s:       11 >6.26us:        0 min:  0.04 max:  0.77 avg:  0.08 sum/s:     1us overhead: 0.00%
-pert/s:        7 >5.67us:        0 min:  0.04 max:  0.71 avg:  0.06 sum/s:     0us overhead: 0.00%
-pert/s:        8 >5.14us:        0 min:  0.04 max:  0.57 avg:  0.05 sum/s:     0us overhead: 0.00%
-pert/s:       39 >4.67us:        0 min:  0.04 max:  0.94 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       44 >4.25us:        0 min:  0.04 max:  0.83 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       46 >3.89us:        0 min:  0.04 max:  1.12 avg:  0.12 sum/s:     5us overhead: 0.00%
-pert/s:       36 >3.54us:        0 min:  0.04 max:  0.70 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       40 >3.42us:        1 min:  0.04 max:  4.63 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       24 >3.12us:        0 min:  0.04 max:  0.60 avg:  0.10 sum/s:     2us overhead: 0.00%
-pert/s:       34 >2.86us:        0 min:  0.04 max:  0.97 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       35 >2.60us:        0 min:  0.04 max:  0.39 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       64 >2.39us:        0 min:  0.04 max:  0.94 avg:  0.12 sum/s:     8us overhead: 0.00%
-pert/s:       52 >2.19us:        0 min:  0.04 max:  0.73 avg:  0.12 sum/s:     6us overhead: 0.00%
-pert/s:       55 >2.01us:        0 min:  0.04 max:  0.62 avg:  0.12 sum/s:     6us overhead: 0.00%
-pert/s:       38 >1.83us:        0 min:  0.04 max:  0.35 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       35 >1.68us:        0 min:  0.04 max:  0.43 avg:  0.10 sum/s:     4us overhead: 0.00%
-pert/s:       36 >1.54us:        0 min:  0.04 max:  0.61 avg:  0.11 sum/s:     4us overhead: 0.00%
-pert/s:       45 >1.44us:        0 min:  0.04 max:  0.92 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       43 >1.33us:        0 min:  0.04 max:  0.64 avg:  0.11 sum/s:     5us overhead: 0.00%
-pert/s:       34 >1.23us:        0 min:  0.04 max:  0.54 avg:  0.10 sum/s:     4us overhead: 0.00%
-Terminated
+   Joakim
