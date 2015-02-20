@@ -1,71 +1,49 @@
-From: Alexander Graf <agraf@suse.de>
-Subject: Re: [PATCH 2/2] powerpc/kvm: Limit MAX_VCPUS for guests running on
- RT Linux
-Date: Fri, 20 Feb 2015 14:45:08 +0100
-Message-ID: <54E73A64.5020608@suse.de>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com> <1424251955-308-3-git-send-email-bogdan.purcareata@freescale.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Fri, 20 Feb 2015 15:12:55 +0100
+Message-ID: <54E740E7.5090806@redhat.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com> <54E73A6C.9080500@suse.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
 Cc: linux-kernel@vger.kernel.org, scottwood@freescale.com,
-	mihai.caraman@freescale.com
-To: Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	mihai.caraman@freescale.com, Thomas Gleixner <tglx@linutronix.de>
+To: Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
 	linuxppc-dev@lists.ozlabs.org, linux-rt-users@vger.kernel.org,
-	bigeasy@linutronix.de, pbonzini@redhat.com
+	bigeasy@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424251955-308-3-git-send-email-bogdan.purcareata@freescale.com>
+In-Reply-To: <54E73A6C.9080500@suse.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
 
-On 18.02.15 10:32, Bogdan Purcareata wrote:
-> Due to the introduction of the raw_spinlock for the KVM openpic, guests with a
-> high number of VCPUs may induce great latencies on the underlying RT Linux
-> system (e.g. cyclictest reports latencies of ~15ms for guests with 24 VCPUs).
-> This can be further aggravated by sending a lot of external interrupts to the
-> guest.
+On 20/02/2015 14:45, Alexander Graf wrote:
 > 
-> A malicious app can abuse this scenario, causing a DoS of the host Linux.
-> Until the KVM openpic code is refactored to use finer lock granularity, impose
-> a limitation on the number of VCPUs a guest can have when running on a
-> PREEMPT_RT_FULL system with KVM_MPIC emulation.
 > 
-> Signed-off-by: Mihai Caraman <mihai.caraman@freescale.com>
-> Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
-> Reviewed-by: Scott Wood <scottwood@freescale.com>
-
-I don't think this patch is reasonable to take upstream. If we have a
-latency issue, whoever spawned KVM VMs made a decision to spawn such big
-VMs.
-
-I'd say let's leave it at MAX_VCPUS == NR_CPUS for now and rather get
-someone to resolve any locking problems for real ;).
-
-
-Alex
-
-> ---
->  arch/powerpc/include/asm/kvm_host.h | 6 ++++++
->  1 file changed, 6 insertions(+)
+> On 18.02.15 10:32, Bogdan Purcareata wrote:
+>> This patchset enables running KVM SMP guests with external interrupts on an
+>> underlying RT-enabled Linux. Previous to this patch, a guest with in-kernel MPIC
+>> emulation could easily panic the kernel due to preemption when delivering IPIs
+>> and external interrupts, because of the openpic spinlock becoming a sleeping
+>> mutex on PREEMPT_RT_FULL Linux.
+>>
+>> 0001: converts the openpic spinlock to a raw spinlock, in order to circumvent
+>> this behavior. While this change is targeted for a RT enabled Linux, it has no
+>> effect on upstream kvm-ppc, so send it upstream for better future maintenance.
+>>
+>> 0002: introduces a limit on the maximum VCPUs a guest can have, in order to
+>> prevent potential DoS attack due to large system latencies. This patch is
+>> targeted to RT (due to CONFIG_PREEMPT_RT_FULL), but it can also be applied on
+>> upstream Linux, with no effect. Not sure if it's best to send it upstream and
+>> have a hanging CONFIG_PREEMPT_RT_FULL check there, with no effect, or send it
+>> against linux-stable-rt. Please apply as you consider appropriate.
 > 
-> diff --git a/arch/powerpc/include/asm/kvm_host.h b/arch/powerpc/include/asm/kvm_host.h
-> index 8ef0512..6f6b928 100644
-> --- a/arch/powerpc/include/asm/kvm_host.h
-> +++ b/arch/powerpc/include/asm/kvm_host.h
-> @@ -36,8 +36,14 @@
->  #include <asm/cacheflush.h>
->  #include <asm/hvcall.h>
->  
-> +#if defined(CONFIG_PREEMPT_RT_FULL) && defined(CONFIG_KVM_MPIC)
-> +/* Limit the number of vcpus due to in-kernel mpic concurrency */
-> +#define KVM_MAX_VCPUS		4
-> +#define KVM_MAX_VCORES		4
-> +#else
->  #define KVM_MAX_VCPUS		NR_CPUS
->  #define KVM_MAX_VCORES		NR_CPUS
-> +#endif
->  #define KVM_USER_MEM_SLOTS 32
->  #define KVM_MEM_SLOTS_NUM KVM_USER_MEM_SLOTS
->  
-> 
+> Thomas, what is the usual approach for patches like this? Do you take
+> them into your rt tree or should they get integrated to upstream?
+
+Patch 1 is definitely suitable for upstream, that's the reason why we
+have raw_spin_lock vs. raw_spin_unlock.
+
+Paolo
