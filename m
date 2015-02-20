@@ -1,48 +1,107 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH RT v2] kernel/res_counter.c: Change lock of struct res_counter
- to raw_spinlock_t
-Date: Fri, 20 Feb 2015 13:53:24 -0500
-Message-ID: <54E782A4.3030502@windriver.com>
-References: <1420745917-50747-1-git-send-email-tmac@hp.com> <1422644389-33074-1-git-send-email-tmac@hp.com> <20150213191909.GA8299@windriver.com> <54DE6AD5.9070000@hp.com> <20150213213016.GC7102@windriver.com> <20150218110552.GE28763@linutronix.de>
+From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
+ BUG at kernel/locking/rtmutex.c:997!
+Date: Fri, 20 Feb 2015 11:54:45 -0700
+Message-ID: <54E782F5.8060405@hp.com>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>	<1424395866-81589-2-git-send-email-tmac@hp.com> <20150219235321.0acf3c75@grimm.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>,
-	Thavatchai Makphaibulchoke <tmac@hp.com>,
-	<rostedt@goodmis.org>, <linux-kernel@vger.kernel.org>,
-	<mingo@redhat.com>, <tglx@linutronix.de>,
-	<linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Thavatchai Makphaibulchoke <tmac@hp.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150218110552.GE28763@linutronix.de>
+In-Reply-To: <20150219235321.0acf3c75@grimm.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2015-02-18 06:05 AM, Sebastian Andrzej Siewior wrote:
-> * Paul Gortmaker | 2015-02-13 16:30:17 [-0500]:
->
-> there is the thread "[v3.10-rt / v3.12-rt] scheduling while atomic in
-> cgroup code" where I applied Mike's patch. This should fix the problem
-> reported and be part of the next release.
-> Could please double check (either by grabing the patch or waiting for
-> the next release).
 
-I've applied Mike's patch from here:
+On 02/19/2015 09:53 PM, Steven Rostedt wrote:
+> On Thu, 19 Feb 2015 18:31:05 -0700
+> Thavatchai Makphaibulchoke <tmac@hp.com> wrote:
+> 
+>> This patch fixes the problem that the ownership of a mutex acquired by an
+>> interrupt handler(IH) gets incorrectly attributed to the interrupted thread.
+> 
+> *blink*
+> 
+>>
+>> This could result in an incorrect deadlock detection in function
+>> rt_mutex_adjust_prio_chain(), causing thread to be killed and possibly leading
+>> up to a system hang.
+> 
+> I highly doubt this is an incorrect deadlock that was detected. My
+> money is on a real deadlock that happened.
+> 
+>>
+>> Here is the approach taken: when calling from an interrupt handler, instead of
+>> attributing ownership to the interrupted task, use a reserved task_struct value
+>> to indicate that the owner is a interrupt handler.  This approach avoids the
+>> incorrect deadlock detection.
+> 
+> How is this an incorrect deadlock? Please explain.
+> 
 
-     https://lkml.org/lkml/2014/6/21/11
+Thanks for the comments.
 
-and tested it on the old dell core2 that reliably showed the splat
-at boot, and it is now gone.  This is on vanilla 3.14-rt plus isci
-fix + simpleworkqueue + aio-swq fix (all pending for 3.18-rt next).
+Sorry for not explaining the problem in more details.
 
-I also tested it on the 20 core canoe pass where the rawlock
-conversion patch from Thavatchai caused strange and unpredictable 
-failure modes and that box seems fine with this smaller footprint 
-cpulight change.
+IH here means the bottom half of interrupt handler, executing in the
+interrupt context (IC), not the preemptible interrupt kernel thread.
+interrupt.
 
-Paul.
---
+Here is the problem we encountered.
 
->
-> Sebastian
->
+An smp_apic_timer_interrupt comes in while task X is in the process of
+waiting for mutex A .  The IH successfully locks mutex B (in this case
+run_local_timers() gets the timer base's lock, base->lock, via
+spin_trylock()).
+
+At the same time, task Y holding mutex A requests mutex B.
+
+With current rtmutex code, mutex B ownership is incorrectly attributed
+to task X (using current, which is inaccurate in the IC). To task Y the
+situation effectively looks like it is holding mutex A and reuqesting B,
+which is held by task X holding mutex B and is now waiting for mutex A.
+ The deadlock detection is correct, a classic potential circular mutex
+deadlock.
+
+In reality, it is not.  The IH the actual owner of mutex B will
+eventually completes and releases mutex B and task Y will eventually get
+mutex B and proceed and so will task X.  Actually either deleting or
+changing BUG_ON(ret) to WARN_ON(ret) in line 997 in fucntion
+rt_spin_lock_slowlock(), the test ran fine without any problem.
+
+A more detailed description of the problem could also be found at,
+
+http://markmail.org/message/np33it233hoot4b2#query:+page:1+mid:np33it233hoot4b2+state:results
+
+
+Please let me know what you think or need any additional info.
+
+Thanks,
+Mak.
+
+>>
+>> This also includes changes in several function in rtmutex.c now that the lock's
+>> requester may be a interrupt handler, not a real task struct.  This impacts
+>> the way how the lock is acquired and prioritized and decision whether to do
+>> the house keeping functions required for a real task struct.
+>>
+>> The reserved task_struct values for interrupt handler are
+>>
+>> 	current | 0x2
+>>
+>> where current is the task_struct value of the interrupted task.
+>>
+>> Since IH will both acquire and release the lock only during an interrupt
+>> handling, during which current is not changed, the reserved task_struct value
+>> for an IH should be distinct from another instances of IH on a different cpu.
+>>
+> 
+> The interrupt handler is a thread just like any other task. It's not
+> special. If there was a deadlock detected, it most likely means that a
+> deadlock exists.
+> 
+> -- Steve
