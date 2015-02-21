@@ -1,59 +1,86 @@
-From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Subject: Re: kernel BUG at /build/linux-rt/kernel/locking/rtmutex.c:997!
-Date: Fri, 20 Feb 2015 12:25:33 -0700
-Message-ID: <54E78A2D.5070409@hp.com>
-References: <CADLDEKuPf3UNf-CB_xpmjcmQxQA_drFkXzBMQYUF_7K0dM7V3w@mail.gmail.com> <20150217141333.GR26177@linutronix.de> <54E5F273.9020508@fos4x.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
+ BUG at kernel/locking/rtmutex.c:997!
+Date: Fri, 20 Feb 2015 20:49:04 -0500
+Message-ID: <20150220204904.4db61d19@grimm.local.home>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>
+	<1424395866-81589-2-git-send-email-tmac@hp.com>
+	<20150219235321.0acf3c75@grimm.local.home>
+	<54E782F5.8060405@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: =?UTF-8?B?UGhpbGlwcCBUw7Zsa2U=?= <philipp.toelke@fos4x.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from g2t2354.austin.hp.com ([15.217.128.53]:41188 "EHLO
-	g2t2354.austin.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754246AbbBTT01 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Feb 2015 14:26:27 -0500
-In-Reply-To: <54E5F273.9020508@fos4x.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thavatchai Makphaibulchoke <tmac@hp.com>,
+	linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
+To: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <54E782F5.8060405@hp.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+On Fri, 20 Feb 2015 11:54:45 -0700
+Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com> wrote:
+
+> Sorry for not explaining the problem in more details.
+> 
+> IH here means the bottom half of interrupt handler, executing in the
+> interrupt context (IC), not the preemptible interrupt kernel thread.
+> interrupt.
+> 
+> Here is the problem we encountered.
+> 
+> An smp_apic_timer_interrupt comes in while task X is in the process of
+> waiting for mutex A .  The IH successfully locks mutex B (in this case
+> run_local_timers() gets the timer base's lock, base->lock, via
+> spin_trylock()).
+> 
+> At the same time, task Y holding mutex A requests mutex B.
+> 
+> With current rtmutex code, mutex B ownership is incorrectly attributed
+> to task X (using current, which is inaccurate in the IC). To task Y the
+> situation effectively looks like it is holding mutex A and reuqesting B,
+> which is held by task X holding mutex B and is now waiting for mutex A.
+>  The deadlock detection is correct, a classic potential circular mutex
+> deadlock.
+> 
+> In reality, it is not.  The IH the actual owner of mutex B will
+> eventually completes and releases mutex B and task Y will eventually get
+> mutex B and proceed and so will task X.  Actually either deleting or
+> changing BUG_ON(ret) to WARN_ON(ret) in line 997 in fucntion
+> rt_spin_lock_slowlock(), the test ran fine without any problem.
+> 
+
+Ah, I see the problem you have. Let me explain it in my own words to
+make sure that you and I are on the same page.
+
+Task X tries to grab rt_mutex A, but it's held by task Y. But as Y is
+still running, the adaptive mutex code is in play and task X is
+spinning (with it's blocked on A set). An interrupt comes in,
+preempting task X and does a trylock on rt_mutex B, and succeeds. Now it
+looks like task X has mutex B and is blocked on mutex A.
+
+Task Y tries to take mutex B and sees that is held by task X which is
+blocked on mutex A which Y owns. Thus you get a false deadlock detect.
+
+I'm I correct?
+
+Now, the question is, can we safely change the ownership of mutex B in
+the interrupt context where it wont cause another side effect?
 
 
+> A more detailed description of the problem could also be found at,
+> 
+> http://markmail.org/message/np33it233hoot4b2#query:+page:1+mid:np33it233hoot4b2+state:results
+> 
+> 
+> Please let me know what you think or need any additional info.
+> 
 
-On 02/19/2015 07:25 AM, Philipp T=C3=B6lke wrote:
-> On 17.02.2015 15:13, Sebastian Andrzej Siewior wrote:
->>> I have a simple test that runs two iperf clients in parallel with t=
-he
->>> ltp network tests and it triggers a deadlock within a few minutes.
->>> This is 100% repeatable. I've tried this on different RT kernels an=
-d
->>> determined that prior to the following commit (which went into 3.10
->>> upstream), the machine doesn't deadlock and seems to run just fine:
->>>
->>> fb52f40e085ef4074f1335672cd62c1f832af13b rtmutex: Handle deadlock
->>> detection smarter
->>
->> has this been resolved in the meantime? Do you see the same problem =
-with
->> v3.18-RT?
->=20
-> I was not able to reproduce the issue with 3.18.7-rt1 in 24hours. I w=
-ill
-> repeat the test to be sure.
->=20
-> Cheers,
+I haven't looked at the above link. I'll have to think about this some
+more, but as I'm currently traveling, it will have to be done sometime
+next week. Feel free top ping me on Monday or Tuesday. Tuesday would
+probably be better, as I'm sure I'm going to be overloaded with other
+work when I get back to my office on Monday.
 
-I was not able to reproduce the issue either with 3.18.7-rt1.  I believ=
-e
-this is mainly attributed to the fact that run-local_timers() in
-3.18.7-rt1 no longer calls spin_trylock(&base->lock), removing the
-condition that could lead to the problem.
-
-Thanks,
-Mak.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- Steve
