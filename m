@@ -1,37 +1,69 @@
-From: Gustavo Bittencourt <gbitten@gmail.com>
-Subject: Re: [PATCH] rtmutex: enable deadlock detection in ww_mutex_lock functions
-Date: Mon, 23 Feb 2015 13:31:17 -0300
-Message-ID: <CAA8Xd+9KscOxUuOazdY=8vqnQ+oX4aayGufORR=TtFoVjb+UUQ@mail.gmail.com>
-References: <20150120200229.GA17473@gbitten>
-	<CAP=VYLq2JS0072Y0P=A+oWrt2MHjy42uG0LgQvfyHXfzf7PXeg@mail.gmail.com>
-	<54C657FB.2060106@gmail.com>
-	<20150217174640.GZ26177@linutronix.de>
-	<54E3DA6D.1000204@gmail.com>
-	<20150218094336.GB28763@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
+ BUG at kernel/locking/rtmutex.c:997!
+Date: Mon, 23 Feb 2015 13:37:19 -0500
+Message-ID: <20150223133719.2b7c604e@gandalf.local.home>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>
+	<1424395866-81589-2-git-send-email-tmac@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f180.google.com ([209.85.214.180]:44347 "EHLO
-	mail-ob0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751618AbbBWQbS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 23 Feb 2015 11:31:18 -0500
-Received: by mail-ob0-f180.google.com with SMTP id vb8so37407294obc.11
-        for <linux-rt-users@vger.kernel.org>; Mon, 23 Feb 2015 08:31:17 -0800 (PST)
-In-Reply-To: <20150218094336.GB28763@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
+To: Thavatchai Makphaibulchoke <tmac@hp.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424395866-81589-2-git-send-email-tmac@hp.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Feb 18, 2015 at 7:43 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> * Gustavo Bittencourt | 2015-02-17 22:18:53 [-0200]:
->
->>It is still required.
-> Applied. Please let me know how that nouveau driver behaves. Last thing
-> I know is that it randomly explodes.
->
+On Thu, 19 Feb 2015 18:31:05 -0700
+Thavatchai Makphaibulchoke <tmac@hp.com> wrote:
 
-3.18.7-rt2 is working smoothly.
+> This patch fixes the problem that the ownership of a mutex acquired by an
+> interrupt handler(IH) gets incorrectly attributed to the interrupted thread.
+> 
+> This could result in an incorrect deadlock detection in function
+> rt_mutex_adjust_prio_chain(), causing thread to be killed and possibly leading
+> up to a system hang.
+> 
+> Here is the approach taken: when calling from an interrupt handler, instead of
+> attributing ownership to the interrupted task, use a reserved task_struct value
+> to indicate that the owner is a interrupt handler.  This approach avoids the
+> incorrect deadlock detection.
+> 
+> This also includes changes in several function in rtmutex.c now that the lock's
+> requester may be a interrupt handler, not a real task struct.  This impacts
+> the way how the lock is acquired and prioritized and decision whether to do
+> the house keeping functions required for a real task struct.
+> 
+> The reserved task_struct values for interrupt handler are
+> 
+> 	current | 0x2
+> 
+> where current is the task_struct value of the interrupted task.
+> 
+> Since IH will both acquire and release the lock only during an interrupt
+> handling, during which current is not changed, the reserved task_struct value
+> for an IH should be distinct from another instances of IH on a different cpu.
+> 
+> Kernel version 3.14.25 + patch-3.14.25-rt22
+> 
+> Signed-off-by: T. Makphaibulchoke <tmac@hp.com>
+
+OK, I believe I understand the issue. Perhaps it would be much better
+to create a fake task per CPU that we use when grabbing locks in
+interrupt mode. And make these have a priority of 0 (highest), since
+they can not be preempted, they do have such a priority.
+
+Then in the fast trylock and unlock code, we can add:
+
+	struct task_struct *curr = current;
+
+	if (unlikely(in_irq()))
+		curr = this_cpu_read(irq_task);
+
+This way the priority inheritance will stop when it hits this task (no
+need to boost a task of highest priority), and we can leave that code
+alone.
+
+-- Steve
