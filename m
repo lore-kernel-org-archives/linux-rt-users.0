@@ -1,56 +1,64 @@
 From: Scott Wood <scottwood@freescale.com>
-Subject: Re: [PATCH 2/2] powerpc/kvm: Limit MAX_VCPUS for guests running on
- RT Linux
-Date: Mon, 23 Feb 2015 16:48:30 -0600
-Message-ID: <1424731710.4698.15.camel@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Mon, 23 Feb 2015 17:27:31 -0600
+Message-ID: <1424734051.4698.17.camel@freescale.com>
 References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
-	 <1424251955-308-3-git-send-email-bogdan.purcareata@freescale.com>
-	 <54E73A64.5020608@suse.de>
+ <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
+ <54E74A8C.30802@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
-	<bigeasy@linutronix.de>, <pbonzini@redhat.com>,
-	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>
-To: Alexander Graf <agraf@suse.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54E73A64.5020608@suse.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: linux-rt-users@vger.kernel.org, Alexander Graf <agraf@suse.de>,
+ linux-kernel@vger.kernel.org,
+ Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+ mihai.caraman@freescale.com, Paolo Bonzini <pbonzini@redhat.com>, Thomas
+ Gleixner <tglx@linutronix.de>, linuxppc-dev@lists.ozlabs.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <54E74A8C.30802@linutronix.de>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2015-02-20 at 14:45 +0100, Alexander Graf wrote:
-> 
-> On 18.02.15 10:32, Bogdan Purcareata wrote:
-> > Due to the introduction of the raw_spinlock for the KVM openpic, guests with a
-> > high number of VCPUs may induce great latencies on the underlying RT Linux
-> > system (e.g. cyclictest reports latencies of ~15ms for guests with 24 VCPUs).
-> > This can be further aggravated by sending a lot of external interrupts to the
-> > guest.
-> > 
-> > A malicious app can abuse this scenario, causing a DoS of the host Linux.
-> > Until the KVM openpic code is refactored to use finer lock granularity, impose
-> > a limitation on the number of VCPUs a guest can have when running on a
-> > PREEMPT_RT_FULL system with KVM_MPIC emulation.
-> > 
-> > Signed-off-by: Mihai Caraman <mihai.caraman@freescale.com>
-> > Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
-> > Reviewed-by: Scott Wood <scottwood@freescale.com>
-> 
-> I don't think this patch is reasonable to take upstream.
-
-I agree (or at least, I don't think the raw lock conversion should be
-separated from the vcpu limitation that makes it clear that it's a
-temporary hack), because it ought to be fixed properly.
-
->  If we have a
-> latency issue, whoever spawned KVM VMs made a decision to spawn such big
-> VMs.
-
-I disagree.  The point of PREEMPT_RT is to prevent the majority of
-kernel code from excessively impacting latency.  When you start using
-raw locks you're stepping outside those bounds and need to ensure that
-you don't hand things within those bounds (which includes userspace) the
-ability to excessively impact latency.
-
--Scott
+T24gRnJpLCAyMDE1LTAyLTIwIGF0IDE1OjU0ICswMTAwLCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3
+aW9yIHdyb3RlOgo+IE9uIDAyLzIwLzIwMTUgMDM6MTIgUE0sIFBhb2xvIEJvbnppbmkgd3JvdGU6
+Cj4gPj4gVGhvbWFzLCB3aGF0IGlzIHRoZSB1c3VhbCBhcHByb2FjaCBmb3IgcGF0Y2hlcyBsaWtl
+IHRoaXM/IERvIHlvdSB0YWtlCj4gPj4gdGhlbSBpbnRvIHlvdXIgcnQgdHJlZSBvciBzaG91bGQg
+dGhleSBnZXQgaW50ZWdyYXRlZCB0byB1cHN0cmVhbT8KPiA+IAo+ID4gUGF0Y2ggMSBpcyBkZWZp
+bml0ZWx5IHN1aXRhYmxlIGZvciB1cHN0cmVhbSwgdGhhdCdzIHRoZSByZWFzb24gd2h5IHdlCj4g
+PiBoYXZlIHJhd19zcGluX2xvY2sgdnMuIHJhd19zcGluX3VubG9jay4KPiAKPiByYXdfc3Bpbl9s
+b2NrIHdlcmUgaW50cm9kdWNlZCBpbiBjMmYyMWNlMmUzMTI4NmEwYTMyICgibG9ja2luZzoKPiBJ
+bXBsZW1lbnQgbmV3IHJhd19zcGlubG9jaykuIFRoZXkgYXJlIHVzZWQgaW4gY29udGV4dCB3aGlj
+aCBydW5zIHdpdGgKPiBJUlFzIG9mZiAtIGVzcGVjaWFsbHkgb24gLVJULiBUaGlzIGluY2x1ZGVz
+IHVzdWFsbHkgaW50ZXJydXB0Cj4gY29udHJvbGxlcnMgYW5kIHJlbGF0ZWQgY29yZS1jb2RlIHBp
+ZWNlcy4KPiAKPiBVc3VhbGx5IHlvdSBzZWUgInNjaGVkdWxpbmcgd2hpbGUgYXRvbWljIiBvbiAt
+UlQgYW5kIGNvbnZlcnQgdGhlbSB0bwo+IHJhdyBsb2NrcyBpZiBpdCBpcyBhcHByb3ByaWF0ZS4K
+PiAKPiBCb2dkYW4gd3JvdGUgaW4gMi8yIHRoYXQgaGUgbmVlZHMgdG8gbGltaXQgdGhlIG51bWJl
+ciBvZiBDUFVzIGluIG9kZXIKPiBub3QgY2F1c2UgYSBEb1MgYW5kIGxhcmdlIGxhdGVuY2llcyBp
+biB0aGUgaG9zdC4gSSBoYXZlbid0IHNlZW4gYW4KPiBhbnN3ZXIgdG8gbXkgd2h5IHF1ZXN0aW9u
+LiBCZWNhdXNlIGlmIHRoZSBjb252ZXJzYXRpb24gbGVhZHMgdG8KPiBsYXJnZSBsYXRlbmNpZXMg
+aW4gdGhlIGhvc3QgdGhlbiBpdCBkb2VzIG5vdCBsb29rIHJpZ2h0Lgo+IAo+IEVhY2ggaG9zdCBQ
+SUMgaGFzIGEgcmF3bG9jayBhbmQgZG9lcyBtb3N0bHkganVzdCBtYXNrL3VubWFzayBhbmQgdGhl
+Cj4gcmF3IGxvY2sgbWFrZXMgc3VyZSB0aGUgdmFsdWUgd3JpdHRlbiBpcyBub3QgbWl4ZWQgdXAg
+ZHVlIHRvCj4gcHJlZW1wdGlvbi4KPiBUaGlzIGhhcmRseSBpbmNyZWFzZSBsYXRlbmNpZXMgYmVj
+YXVzZSB0aGUgImxvY2tlZCIgcGF0aCBpcyB2ZXJ5IHNob3J0Lgo+IElmIHRoaXMgY29udmVyc2F0
+aW9uIGxlYWRzIHRvIGhpZ2hlciBsYXRlbmNpZXMgdGhlbiB0aGUgbG9ja2VkIHBhdGggaXMKPiB0
+b28gbG9uZyBhbmQgaGFyZGx5IHN1aXRhYmxlIHRvIGJlY29tZSBhIHJhd2xvY2suCgpUaGlzIGlz
+bid0IGEgaG9zdCBQSUMgZHJpdmVyLiAgSXQncyBndWVzdCBQSUMgZW11bGF0aW9uLCBzb21lIG9m
+IHdoaWNoCmlzIGluZGVlZCBub3Qgc3VpdGFibGUgZm9yIGEgcmF3bG9jayAoaW4gcGFydGljdWxh
+ciwgb3BlbnBpY191cGRhdGVfaXJxCndoaWNoIGxvb3BzIG9uIHRoZSBudW1iZXIgb2YgdmNwdXMs
+IHdpdGggYSBsb29wIGJvZHkgdGhhdCBjYWxscwpJUlFfY2hlY2soKSB3aGljaCBsb29wcyBvdmVy
+IGFsbCBwZW5kaW5nIElSUXMpLiAgVGhlIHZjcHUgbGltaXRzIGFyZSBhCnRlbXBvcmFyeSBiYW5k
+YWlkIHRvIGF2b2lkIHRoZSB3b3JzdCBsYXRlbmNpZXMsIGJ1dCBJJ20gc3RpbGwgc2tlcHRpY2Fs
+CmFib3V0IHRoaXMgYmVpbmcgdXBzdHJlYW0gbWF0ZXJpYWwuCgotU2NvdHQKCgpfX19fX19fX19f
+X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eHBwYy1kZXYgbWFpbGlu
+ZyBsaXN0CkxpbnV4cHBjLWRldkBsaXN0cy5vemxhYnMub3JnCmh0dHBzOi8vbGlzdHMub3psYWJz
+Lm9yZy9saXN0aW5mby9saW51eHBwYy1kZXY=
