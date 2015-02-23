@@ -1,86 +1,78 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
- BUG at kernel/locking/rtmutex.c:997!
-Date: Fri, 20 Feb 2015 20:49:04 -0500
-Message-ID: <20150220204904.4db61d19@grimm.local.home>
-References: <1424395866-81589-1-git-send-email-tmac@hp.com>
-	<1424395866-81589-2-git-send-email-tmac@hp.com>
-	<20150219235321.0acf3c75@grimm.local.home>
-	<54E782F5.8060405@hp.com>
+From: Purcareata Bogdan <b43198@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Mon, 23 Feb 2015 09:29:06 +0200
+Message-ID: <54EAD6C2.3080601@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com> <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com> <54E74A8C.30802@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thavatchai Makphaibulchoke <tmac@hp.com>,
-	linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
-	linux-rt-users@vger.kernel.org
-To: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54E782F5.8060405@hp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: <linux-kernel@vger.kernel.org>, <scottwood@freescale.com>,
+	<mihai.caraman@freescale.com>, Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bl2on0117.outbound.protection.outlook.com ([65.55.169.117]:42466
+	"EHLO na01-bl2-obe.outbound.protection.outlook.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1750818AbbBWH32 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Feb 2015 02:29:28 -0500
+In-Reply-To: <54E74A8C.30802@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 20 Feb 2015 11:54:45 -0700
-Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com> wrote:
+On 20.02.2015 16:54, Sebastian Andrzej Siewior wrote:
+> On 02/20/2015 03:12 PM, Paolo Bonzini wrote:
+>>> Thomas, what is the usual approach for patches like this? Do you take
+>>> them into your rt tree or should they get integrated to upstream?
+>>
+>> Patch 1 is definitely suitable for upstream, that's the reason why we
+>> have raw_spin_lock vs. raw_spin_unlock.
+>
+> raw_spin_lock were introduced in c2f21ce2e31286a0a32 ("locking:
+> Implement new raw_spinlock). They are used in context which runs with
+> IRQs off - especially on -RT. This includes usually interrupt
+> controllers and related core-code pieces.
+>
+> Usually you see "scheduling while atomic" on -RT and convert them to
+> raw locks if it is appropriate.
+>
+> Bogdan wrote in 2/2 that he needs to limit the number of CPUs in oder
+> not cause a DoS and large latencies in the host. I haven't seen an
+> answer to my why question. Because if the conversation leads to
+> large latencies in the host then it does not look right.
 
-> Sorry for not explaining the problem in more details.
-> 
-> IH here means the bottom half of interrupt handler, executing in the
-> interrupt context (IC), not the preemptible interrupt kernel thread.
-> interrupt.
-> 
-> Here is the problem we encountered.
-> 
-> An smp_apic_timer_interrupt comes in while task X is in the process of
-> waiting for mutex A .  The IH successfully locks mutex B (in this case
-> run_local_timers() gets the timer base's lock, base->lock, via
-> spin_trylock()).
-> 
-> At the same time, task Y holding mutex A requests mutex B.
-> 
-> With current rtmutex code, mutex B ownership is incorrectly attributed
-> to task X (using current, which is inaccurate in the IC). To task Y the
-> situation effectively looks like it is holding mutex A and reuqesting B,
-> which is held by task X holding mutex B and is now waiting for mutex A.
->  The deadlock detection is correct, a classic potential circular mutex
-> deadlock.
-> 
-> In reality, it is not.  The IH the actual owner of mutex B will
-> eventually completes and releases mutex B and task Y will eventually get
-> mutex B and proceed and so will task X.  Actually either deleting or
-> changing BUG_ON(ret) to WARN_ON(ret) in line 997 in fucntion
-> rt_spin_lock_slowlock(), the test ran fine without any problem.
-> 
+What I did notice were bad cyclictest results, when run in a guest with 
+24 VCPUs. There were 24 netperf flows running in the guest. The max 
+cyclictest latencies got up to 15ms in the guest, however I haven't 
+captured any host side information related to preemptirqs off statistics.
 
-Ah, I see the problem you have. Let me explain it in my own words to
-make sure that you and I are on the same page.
+What I was planning to do in the past days was to rerun the test and 
+come up with the host preemptirqs off disabled statistics (mainly the 
+max latency), so I could have a more reliable argument. I haven't had 
+the time nor the setup to do that yet, and will come back with this as 
+soon as I have them available.
 
-Task X tries to grab rt_mutex A, but it's held by task Y. But as Y is
-still running, the adaptive mutex code is in play and task X is
-spinning (with it's blocked on A set). An interrupt comes in,
-preempting task X and does a trylock on rt_mutex B, and succeeds. Now it
-looks like task X has mutex B and is blocked on mutex A.
+> Each host PIC has a rawlock and does mostly just mask/unmask and the
+> raw lock makes sure the value written is not mixed up due to
+> preemption.
+> This hardly increase latencies because the "locked" path is very short.
+> If this conversation leads to higher latencies then the locked path is
+> too long and hardly suitable to become a rawlock.
 
-Task Y tries to take mutex B and sees that is held by task X which is
-blocked on mutex A which Y owns. Thus you get a false deadlock detect.
+ From my understanding, the kvm openpic emulation code does more than 
+just that - it requires to be atomic with interrupt delivery. This might 
+mean the bad cyclictest max latencies visible from the guest side 
+(15ms), may also have a correspondent to how much time that raw spinlock 
+is taken, leading to an unresponsive host.
 
-I'm I correct?
+Best regards,
+Bogdan P.
 
-Now, the question is, can we safely change the ownership of mutex B in
-the interrupt context where it wont cause another side effect?
-
-
-> A more detailed description of the problem could also be found at,
-> 
-> http://markmail.org/message/np33it233hoot4b2#query:+page:1+mid:np33it233hoot4b2+state:results
-> 
-> 
-> Please let me know what you think or need any additional info.
-> 
-
-I haven't looked at the above link. I'll have to think about this some
-more, but as I'm currently traveling, it will have to be done sometime
-next week. Feel free top ping me on Monday or Tuesday. Tuesday would
-probably be better, as I'm sure I'm going to be overloaded with other
-work when I get back to my office on Monday.
-
--- Steve
+>> Paolo
+>>
+>
+> Sebastian
+>
