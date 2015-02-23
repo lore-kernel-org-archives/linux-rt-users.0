@@ -1,69 +1,50 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
- BUG at kernel/locking/rtmutex.c:997!
-Date: Mon, 23 Feb 2015 13:37:19 -0500
-Message-ID: <20150223133719.2b7c604e@gandalf.local.home>
-References: <1424395866-81589-1-git-send-email-tmac@hp.com>
-	<1424395866-81589-2-git-send-email-tmac@hp.com>
+From: Scott Wood <scottwood@freescale.com>
+Subject: Re: [PATCH 1/2] powerpc/kvm: Convert openpic lock to raw_spinlock
+Date: Mon, 23 Feb 2015 16:43:40 -0600
+Message-ID: <1424731420.4698.13.camel@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
+	 <1424251955-308-2-git-send-email-bogdan.purcareata@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
-	linux-rt-users@vger.kernel.org
-To: Thavatchai Makphaibulchoke <tmac@hp.com>
+Cc: <linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<bigeasy@linutronix.de>, <agraf@suse.de>, <pbonzini@redhat.com>,
+	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>
+To: Bogdan Purcareata <bogdan.purcareata@freescale.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424395866-81589-2-git-send-email-tmac@hp.com>
+In-Reply-To: <1424251955-308-2-git-send-email-bogdan.purcareata@freescale.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 19 Feb 2015 18:31:05 -0700
-Thavatchai Makphaibulchoke <tmac@hp.com> wrote:
+On Wed, 2015-02-18 at 09:32 +0000, Bogdan Purcareata wrote:
+> This patch enables running intensive I/O workloads, e.g. netperf, in a guest
+> deployed on a RT host. It also enable guests to be SMP.
+> 
+> The openpic spinlock becomes a sleeping mutex on a RT system. This no longer
+> guarantees that EPR is atomic with exception delivery. The guest VCPU thread
+> fails due to a BUG_ON(preemptible()) when running netperf.
+> 
+> In order to make the kvmppc_mpic_set_epr() call safe on RT from non-atomic
+> context, convert the openpic lock to a raw_spinlock. A similar approach can
+> be seen for x86 platforms in the following commit [1].
+> 
+> Here are some comparative cyclitest measurements run inside a high priority RT
+> guest run on a RT host. The guest has 1 VCPU and the test has been run for 15
+> minutes. The guest runs ~750 hackbench processes as background stress.
+> 
+>                   spinlock  raw_spinlock
+> Min latency (us)  4         4
+> Avg latency (us)  15        19
+> Max latency (us)  70        62
+> 
+> [1] https://lkml.org/lkml/2010/1/11/289
+> 
+> Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
+> Reviewed-by: Scott Wood <scottwood@freescale.com>
 
-> This patch fixes the problem that the ownership of a mutex acquired by an
-> interrupt handler(IH) gets incorrectly attributed to the interrupted thread.
-> 
-> This could result in an incorrect deadlock detection in function
-> rt_mutex_adjust_prio_chain(), causing thread to be killed and possibly leading
-> up to a system hang.
-> 
-> Here is the approach taken: when calling from an interrupt handler, instead of
-> attributing ownership to the interrupted task, use a reserved task_struct value
-> to indicate that the owner is a interrupt handler.  This approach avoids the
-> incorrect deadlock detection.
-> 
-> This also includes changes in several function in rtmutex.c now that the lock's
-> requester may be a interrupt handler, not a real task struct.  This impacts
-> the way how the lock is acquired and prioritized and decision whether to do
-> the house keeping functions required for a real task struct.
-> 
-> The reserved task_struct values for interrupt handler are
-> 
-> 	current | 0x2
-> 
-> where current is the task_struct value of the interrupted task.
-> 
-> Since IH will both acquire and release the lock only during an interrupt
-> handling, during which current is not changed, the reserved task_struct value
-> for an IH should be distinct from another instances of IH on a different cpu.
-> 
-> Kernel version 3.14.25 + patch-3.14.25-rt22
-> 
-> Signed-off-by: T. Makphaibulchoke <tmac@hp.com>
+Where did that Reviewed-by: come from?
 
-OK, I believe I understand the issue. Perhaps it would be much better
-to create a fake task per CPU that we use when grabbing locks in
-interrupt mode. And make these have a priority of 0 (highest), since
-they can not be preempted, they do have such a priority.
+A +1 in Gerrit on an internal tree does not translate into an upstream
+Reviewed-by.
 
-Then in the fast trylock and unlock code, we can add:
-
-	struct task_struct *curr = current;
-
-	if (unlikely(in_irq()))
-		curr = this_cpu_read(irq_task);
-
-This way the priority inheritance will stop when it hits this task (no
-need to boost a task of highest priority), and we can leave that code
-alone.
-
--- Steve
+-Scott
