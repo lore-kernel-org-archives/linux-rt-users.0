@@ -1,122 +1,90 @@
-From: =?UTF-8?B?TWljaGFsIMWgbXVjcg==?= <msmucr@gmail.com>
-Subject: Kenrel panic with 3.18.7-rt2 - rootfs at MMC
-Date: Tue, 24 Feb 2015 10:46:39 +0100
-Message-ID: <54EC487F.8020109@gmail.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 3.18.7-rt2
+Date: Tue, 24 Feb 2015 14:41:41 +0100
+Message-ID: <1424785301.8767.11.camel@gmail.com>
+References: <20150223090617.GA26453@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/mixed;
- boundary="------------020604060009020200040403"
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-we0-f182.google.com ([74.125.82.182]:45400 "EHLO
-	mail-we0-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751721AbbBXJqj (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 Feb 2015 04:46:39 -0500
-Received: by wesw62 with SMTP id w62so23930953wes.12
-        for <linux-rt-users@vger.kernel.org>; Tue, 24 Feb 2015 01:46:38 -0800 (PST)
-Received: from [10.9.8.100] ([88.103.91.82])
-        by mx.google.com with ESMTPSA id cj12sm59410869wjb.35.2015.02.24.01.46.37
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Tue, 24 Feb 2015 01:46:37 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-This is a multi-part message in MIME format.
---------------020604060009020200040403
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>,
+	Gustavo Bittencourt <gbitten@gmail.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150223090617.GA26453@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello to all,
+On Mon, 2015-02-23 at 10:06 +0100, Sebastian Andrzej Siewior wrote:
 
-I'm getting kernel panics, when I'm using kernel 3.18.7 with recently 
-released rt1 and rt2 patches. Platform is x86_64.
-It happens only when root filesystem is at SDHC card.
-At 3.14.31-rt28 or recent plain vanilla kernels I haven't spotted this 
-issue.
+> - a patch to properly use the rtmutex deadlock detector in ww-mutex
+>   which seems to cure a nouveau deadlock (Gustavo Bittencourt)
 
-Boot panic is possible to workaround by adding kernel parameter: 
-"scsi_mod.scan=sync", but it still happens during initrd rebuild using 
-update-initramfs at Debian Jessie.
+How about the below instead.  In 4.0.0-rt, i915 deadlocked, and the
+below fixed that.  DRM doesn't actually _work_ in 4.0-rt mind you,
+there's something else lurking as well, but the locking is now happy,
+and 3.18-rt continues to work just fine.
 
-Log from panic is attached.
 
-Thanks for any comment regarding issue or better way for bug-report,
+locking, ww_mutex: fix ww_mutex vs self-deadlock
 
-Michal
+If the caller already holds the mutex, task_blocks_on_rt_mutex()
+returns -EDEADLK, we proceed directly to rt_mutex_handle_deadlock()
+where it's instant game over.
 
---------------020604060009020200040403
-Content-Type: text/plain; charset=windows-1250;
- name="panic-mmc-3.18.7-rt2.log"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment;
- filename="panic-mmc-3.18.7-rt2.log"
+Let ww_mutexes return EDEADLK/EALREADY as they want to instead.
 
-WyAgICAzLjE4NDA1M10gdGFzazogZmZmZjg4MDAzNmUxNzE3MCB0aTogZmZmZjg4MDAzNmY0
-YzAwMCB0YXNrLnRpOiBmZmZmODgwMDM2ZjRjMDAwClsgICAgMy4xODQwNzZdIFJJUDogMDAx
-MDpbPGZmZmZmZmZmODE2ZDIxNjg+XSAgWzxmZmZmZmZmZjgxNmQyMTY4Pl0gcnRfc3Bpbl9s
-b2NrX3Nsb3dsb2NrKzB4MjM4LzB4MjUwClsgICAgMy4xODQwODJdIFJTUDogMDAxODpmZmZm
-ODgwMDc5NDAzZGM4ICBFRkxBR1M6IDAwMDEwMDQ2ClsgICAgMy4xODQwODZdIFJBWDogZmZm
-Zjg4MDAzNmUxNzE3MCBSQlg6IGZmZmY4ODAwNzUzOTQ3OTAgUkNYOiAwMDAwMDAwMDAwMDAw
-MDAxClsgICAgMy4xODQwOTBdIFJEWDogMDAwMDAwMDAwMDAwMDAwMCBSU0k6IGZmZmY4ODAw
-MzZlMTcxNzAgUkRJOiBmZmZmODgwMDc1Mzk0NzkwClsgICAgMy4xODQwOTVdIFJCUDogZmZm
-Zjg4MDA3OTQwM2RlMCBSMDg6IGZmZmY4ODAwMzZlMTcxNzAgUjA5OiBmZmZmODgwMDc1Mzk0
-N2E4ClsgICAgMy4xODQwOTldIFIxMDogZmZmZjg4MDAzNmUxNzE3MSBSMTE6IDAwMDAwMDAw
-MDAwMDAwMDAgUjEyOiBmZmZmODgwMDM2ZTE3MTcwClsgICAgMy4xODQxMDNdIFIxMzogMDAw
-MDAwMDAwMDAwMDAwMCBSMTQ6IGZmZmY4ODAwN2E5YTJlMDAgUjE1OiBmZmZmODgwMDc1Mzk0
-NjAwClsgICAgMy4xODQxMTBdIEZTOiAgMDAwMDAwMDAwMDAwMDAwMCgwMDAwKSBHUzpmZmZm
-ODgwMDc5NDAwMDAwKDAwMDApIGtubEdTOjAwMDAwMDAwMDAwMDAwMDAKWyAgICAzLjE4NDEx
-NV0gQ1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzYgpb
-ICAgIDMuMTg0MTE5XSBDUjI6IDAwMDA3ZjIyMjRiZDcwMDAgQ1IzOiAwMDAwMDAwMDM2ZGEx
-MDAwIENSNDogMDAwMDAwMDAwMDEwMDdmMApbICAgIDMuMTg0MTIxXSBTdGFjazoKWyAgICAz
-LjE4NDEzMl0gIGZmZmY4ODAwNzUxY2U3MjAgZmZmZmZmZmY4MWM1NzVjMCBmZmZmZmZmZjgx
-ZDEzNDgwIGZmZmY4ODAwNzk0MDNkZTAKWyAgICAzLjE4NDE0MF0gIDAwMDAwMDAwMDAwMDAw
-MDAgMDAwMDAwMDAwMDAwMDA4NiBmZmZmODgwMDc5NDAzZGY4IGZmZmY4ODAwNzk0MGRhYzAK
-WyAgICAzLjE4NDE0OF0gIGZmZmZmZmZmODFjNTc1YzAgMDAwMDAwMDAwMDAwMDAwMCAwMDAw
-MDAwMDAwMDAwMDg2IDAwMDAwMDAwMDAwMDAwMDEKWyAgICAzLjE4NDE1MF0gQ2FsbCBUcmFj
-ZToKWyAgICAzLjE4NDE2MF0gIDxJUlE+ClsgICAgMy4xODQxNzJdICBbPGZmZmZmZmZmODE1
-OGU3OWY+XSA/IHNkaGNpX2lycSsweDJmLzB4OTMwClsgICAgMy4xODQxODZdICBbPGZmZmZm
-ZmZmODEwYTdkMWY+XSA/IGRlcXVldWVfcnRfc3RhY2srMHg0Zi8weDIzMApbICAgIDMuMTg0
-MTk4XSAgWzxmZmZmZmZmZjgxMGMxM2FkPl0gPyBoYW5kbGVfaXJxX2V2ZW50X3BlcmNwdSsw
-eDRkLzB4MjAwClsgICAgMy4xODQyMDddICBbPGZmZmZmZmZmODE2ZDA3NWQ+XSA/IHByZWVt
-cHRfc2NoZWR1bGVfaXJxKzB4M2QvMHg3MApbICAgIDMuMTg0MjE3XSAgWzxmZmZmZmZmZjgx
-MGMxNWI0Pl0gPyBoYW5kbGVfaXJxX2V2ZW50KzB4NTQvMHg4MApbICAgIDMuMTg0MjI3XSAg
-WzxmZmZmZmZmZjgxMGM0NWY3Pl0gPyBoYW5kbGVfZmFzdGVvaV9pcnErMHhkNy8weDFhMApb
-ICAgIDMuMTg0MjQwXSAgWzxmZmZmZmZmZjgxMDE3NmNkPl0gPyBoYW5kbGVfaXJxKzB4MWQv
-MHgzMApbICAgIDMuMTg0MjUwXSAgWzxmZmZmZmZmZjgxNmQ2YmM0Pl0gPyBkb19JUlErMHg1
-NC8weGYwClsgICAgMy4xODQyNjBdICBbPGZmZmZmZmZmODE2ZDRhNmQ+XSA/IGNvbW1vbl9p
-bnRlcnJ1cHQrMHg2ZC8weDZkClsgICAgMy4xODQyNjVdICA8RU9JPgpbICAgIDMuMTg0Mjc4
-XSAgWzxmZmZmZmZmZjgxMmY0ZmU5Pl0gPyBjaGVja19wcmVlbXB0aW9uX2Rpc2FibGVkKzB4
-YTkvMHgxNjAKWyAgICAzLjE4NDI4OF0gIFs8ZmZmZmZmZmY4MTZkMDc1ZD5dID8gcHJlZW1w
-dF9zY2hlZHVsZV9pcnErMHgzZC8weDcwClsgICAgMy4xODQyOTldICBbPGZmZmZmZmZmODE2
-ZDRjNTA+XSA/IHJldGludF9rZXJuZWwrMHgyMC8weDMwClsgICAgMy4xODQzMTNdICBbPGZm
-ZmZmZmZmODE1OGQxMzg+XSA/IHNkaGNpX3NlbmRfY29tbWFuZCsweDM0OC8weGQxMApbICAg
-IDMuMTg0MzI0XSAgWzxmZmZmZmZmZjgxNThlMDk4Pl0gPyBzZGhjaV9yZXF1ZXN0KzB4Yzgv
-MHgxZjAKWyAgICAzLjE4NDMzN10gIFs8ZmZmZmZmZmY4MTU3YmU4NT5dID8gbW1jX3N0YXJ0
-X3JlcSsweDMwNS8weDQwMApbICAgIDMuMTg0MzUzXSAgWzxmZmZmZmZmZmEwMDFkOWE2Pl0g
-PyBtbWNfYmxrX3J3X3JxX3ByZXArMHgxZjYvMHg0YTAgW21tY19ibG9ja10KWyAgICAzLjE4
-NDM2Nl0gIFs8ZmZmZmZmZmZhMDAxZmNhMD5dID8gbW1jX2Jsa19pc3N1ZV9yd19ycSsweGUw
-LzB4YjgwIFttbWNfYmxvY2tdClsgICAgMy4xODQzNzldICBbPGZmZmZmZmZmODEwOTk0MDA+
-XSA/IHdha2VfdXBfc3RhdGUrMHgyMC8weDIwClsgICAgMy4xODQzOTJdICBbPGZmZmZmZmZm
-YTAwMjA5NGM+XSA/IG1tY19ibGtfaXNzdWVfcnErMHgyMGMvMHg1NTAgW21tY19ibG9ja10K
-WyAgICAzLjE4NDQwNF0gIFs8ZmZmZmZmZmY4MTA2ZDc5Mj5dID8gdW5waW5fY3VycmVudF9j
-cHUrMHgxMi8weDcwClsgICAgMy4xODQ0MTZdICBbPGZmZmZmZmZmYTAwMjBkNzA+XSA/IG1t
-Y19xdWV1ZV90aHJlYWQrMHhlMC8weDFmMCBbbW1jX2Jsb2NrXQpbICAgIDMuMTg0NDI5XSAg
-WzxmZmZmZmZmZmEwMDIwYzkwPl0gPyBtbWNfYmxrX2lzc3VlX3JxKzB4NTUwLzB4NTUwIFtt
-bWNfYmxvY2tdClsgICAgMy4xODQ0MzldICBbPGZmZmZmZmZmODEwOGMxNjU+XSA/IGt0aHJl
-YWQrMHhjNS8weGUwClsgICAgMy4xODQ0NDldICBbPGZmZmZmZmZmODEwOGMwYTA+XSA/IGt0
-aHJlYWRfd29ya2VyX2ZuKzB4MWQwLzB4MWQwClsgICAgMy4xODQ0NTldICBbPGZmZmZmZmZm
-ODE2ZDNkN2M+XSA/IHJldF9mcm9tX2ZvcmsrMHg3Yy8weGIwClsgICAgMy4xODQ0NjldICBb
-PGZmZmZmZmZmODEwOGMwYTA+XSA/IGt0aHJlYWRfd29ya2VyX2ZuKzB4MWQwLzB4MWQwClsg
-ICAgMy4xODQ1NThdIENvZGU6IDAwIDAwIDAwIGU4IGRiIDYzIDlmIGZmIGU5IGIzIGZlIGZm
-IGZmIDY2IDBmIDFmIDQ0IDAwIDAwIDQ4IDhiIDQzIDEwIDQ4IDNiIDU4IDM4IDc1IDIxIDQ4
-IDM5IGU4IDc1IGE3IDBmIDBiIDBmIDFmIDgwIDAwIDAwIDAwIDAwIDwwZj4gMGIgNjYgMGYg
-MWYgNDQgMDAgMDAgMGYgMGIgMGYgMGIgZTggYjkgNjcgYzEgZmYgZWIgYWMgZTggMTAKWyAg
-ICAzLjE4NDU2N10gUklQICBbPGZmZmZmZmZmODE2ZDIxNjg+XSBydF9zcGluX2xvY2tfc2xv
-d2xvY2srMHgyMzgvMHgyNTAKWyAgICAzLjE4NDU3MF0gIFJTUCA8ZmZmZjg4MDA3OTQwM2Rj
-OD4KWyAgICAzLjU1OTYxMF0gLS0tWyBlbmQgdHJhY2UgMDAwMDAwMDAwMDAwMDAwMiBdLS0t
-ClsgICAgMy41NTk2MTVdIEtlcm5lbCBwYW5pYyAtIG5vdCBzeW5jaW5nOiBGYXRhbCBleGNl
-cHRpb24gaW4gaW50ZXJydXB0ClsgICAgMy41NTk5MzZdIEtlcm5lbCBPZmZzZXQ6IDB4MCBm
-cm9tIDB4ZmZmZmZmZmY4MTAwMDAwMCAocmVsb2NhdGlvbiByYW5nZTogMHhmZmZmZmZmZjgw
-MDAwMDAwLTB4ZmZmZmZmZmY5ZmZmZmZmZikK
---------------020604060009020200040403--
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ kernel/locking/rtmutex.c |   17 +++++++++++------
+ 1 file changed, 11 insertions(+), 6 deletions(-)
+
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1706,8 +1706,12 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 	ret = task_blocks_on_rt_mutex(lock, &waiter, current, chwalk);
+ 
+ 	if (likely(!ret))
+-		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter,
+-					  ww_ctx);
++		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter, ww_ctx);
++	else if (ww_ctx) {
++		/* ww_mutex received EDEADLK, let it become EALREADY */
++		ret = __mutex_lock_check_stamp(lock, ww_ctx);
++		BUG_ON(!ret);
++	}
+ 
+ 	set_current_state(TASK_RUNNING);
+ 
+@@ -1715,6 +1719,9 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+ 		if (rt_mutex_has_waiters(lock))
+ 			remove_waiter(lock, &waiter);
+ 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
++		/* ww_mutex want to report EDEADLK/EALREADY, let them */
++		if (!ww_ctx)
++			rt_mutex_handle_deadlock(ret, chwalk, &waiter);
+ 	} else if (ww_ctx) {
+ 		ww_mutex_account_lock(lock, ww_ctx);
+ 	}
+@@ -2258,8 +2265,7 @@ __ww_mutex_lock_interruptible(struct ww_
+ 	might_sleep();
+ 
+ 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
+-	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL,
+-				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
++	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
+ 	if (ret)
+ 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
+ 	else if (!ret && ww_ctx->acquired > 1)
+@@ -2277,8 +2283,7 @@ __ww_mutex_lock(struct ww_mutex *lock, s
+ 	might_sleep();
+ 
+ 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
+-	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL,
+-				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
++	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
+ 	if (ret)
+ 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
+ 	else if (!ret && ww_ctx->acquired > 1)
