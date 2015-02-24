@@ -1,56 +1,122 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
- BUG at kernel/locking/rtmutex.c:997!
-Date: Mon, 23 Feb 2015 19:57:43 -0500
-Message-ID: <20150223195743.546b2ef0@grimm.local.home>
-References: <1424395866-81589-1-git-send-email-tmac@hp.com>
- <1424395866-81589-2-git-send-email-tmac@hp.com>
- <20150223133719.2b7c604e@gandalf.local.home>
- <54EBC2DB.3050904@hp.com>
+From: =?UTF-8?B?TWljaGFsIMWgbXVjcg==?= <msmucr@gmail.com>
+Subject: Kenrel panic with 3.18.7-rt2 - rootfs at MMC
+Date: Tue, 24 Feb 2015 10:46:39 +0100
+Message-ID: <54EC487F.8020109@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: multipart/mixed;
+ boundary="------------020604060009020200040403"
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-we0-f182.google.com ([74.125.82.182]:45400 "EHLO
+	mail-we0-f182.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751721AbbBXJqj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 Feb 2015 04:46:39 -0500
+Received: by wesw62 with SMTP id w62so23930953wes.12
+        for <linux-rt-users@vger.kernel.org>; Tue, 24 Feb 2015 01:46:38 -0800 (PST)
+Received: from [10.9.8.100] ([88.103.91.82])
+        by mx.google.com with ESMTPSA id cj12sm59410869wjb.35.2015.02.24.01.46.37
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 24 Feb 2015 01:46:37 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
+
+This is a multi-part message in MIME format.
+--------------020604060009020200040403
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thavatchai Makphaibulchoke <tmac@hp.com>,
-	linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
-	linux-rt-users@vger.kernel.org
-To: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54EBC2DB.3050904@hp.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 23 Feb 2015 17:16:27 -0700
-Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com> wrote:
+Hello to all,
 
+I'm getting kernel panics, when I'm using kernel 3.18.7 with recently 
+released rt1 and rt2 patches. Platform is x86_64.
+It happens only when root filesystem is at SDHC card.
+At 3.14.31-rt28 or recent plain vanilla kernels I haven't spotted this 
+issue.
 
-> Thanks again for the comments and suggestion.
-> 
-> Yes, creating a per cpu fake task was one of the alternative considered.
->  I believe one of the reasons I did not purse is the amount of extra
-> storage it requires (sizeof(struct task_struct) * number of cpus.
-> Though the changes may not be as intrusive as the one I sent, some are
-> still required, mainly with current (one in particular came to mind is
-> in wakeup_next-watier()).
+Boot panic is possible to workaround by adding kernel parameter: 
+"scsi_mod.scan=sync", but it still happens during initrd rebuild using 
+update-initramfs at Debian Jessie.
 
-Yeah, that's a draw back, but still. Big CPU machines should have big
-memory. If we really are concerned, we could tidy up task_struct a bit,
-rearranging the fields to make sure like fields are together (helps
-with cache too) and move the RT stuff up further. Then we could
-allocate just enough to cover all the task struct fields that are
-accessed in the rtmutex code.
+Log from panic is attached.
 
+Thanks for any comment regarding issue or better way for bug-report,
 
-> 
-> If I'm not mistaken, another reason could also be due to the rate of the
-> timer interrupt, in the case that the mutex is highly contested IH could
-> stall the non-real-time requester for a long time, even to the point of
-> the cpu is perceived as hung.
+Michal
 
-Perhaps we should just have trylocks fail if there are other waiters.
-As it wont slow down the high priority task. And doing that would
-probably even help other rt tasks that are blocked on the lock waiting
-for a release. Why make those tasks wait more if even a higher priority
-task is simply doing a trylock and can safely fail it. At least we
-could do that if the task trying to get the lock is a interrupt.
+--------------020604060009020200040403
+Content-Type: text/plain; charset=windows-1250;
+ name="panic-mmc-3.18.7-rt2.log"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment;
+ filename="panic-mmc-3.18.7-rt2.log"
 
--- Steve
+WyAgICAzLjE4NDA1M10gdGFzazogZmZmZjg4MDAzNmUxNzE3MCB0aTogZmZmZjg4MDAzNmY0
+YzAwMCB0YXNrLnRpOiBmZmZmODgwMDM2ZjRjMDAwClsgICAgMy4xODQwNzZdIFJJUDogMDAx
+MDpbPGZmZmZmZmZmODE2ZDIxNjg+XSAgWzxmZmZmZmZmZjgxNmQyMTY4Pl0gcnRfc3Bpbl9s
+b2NrX3Nsb3dsb2NrKzB4MjM4LzB4MjUwClsgICAgMy4xODQwODJdIFJTUDogMDAxODpmZmZm
+ODgwMDc5NDAzZGM4ICBFRkxBR1M6IDAwMDEwMDQ2ClsgICAgMy4xODQwODZdIFJBWDogZmZm
+Zjg4MDAzNmUxNzE3MCBSQlg6IGZmZmY4ODAwNzUzOTQ3OTAgUkNYOiAwMDAwMDAwMDAwMDAw
+MDAxClsgICAgMy4xODQwOTBdIFJEWDogMDAwMDAwMDAwMDAwMDAwMCBSU0k6IGZmZmY4ODAw
+MzZlMTcxNzAgUkRJOiBmZmZmODgwMDc1Mzk0NzkwClsgICAgMy4xODQwOTVdIFJCUDogZmZm
+Zjg4MDA3OTQwM2RlMCBSMDg6IGZmZmY4ODAwMzZlMTcxNzAgUjA5OiBmZmZmODgwMDc1Mzk0
+N2E4ClsgICAgMy4xODQwOTldIFIxMDogZmZmZjg4MDAzNmUxNzE3MSBSMTE6IDAwMDAwMDAw
+MDAwMDAwMDAgUjEyOiBmZmZmODgwMDM2ZTE3MTcwClsgICAgMy4xODQxMDNdIFIxMzogMDAw
+MDAwMDAwMDAwMDAwMCBSMTQ6IGZmZmY4ODAwN2E5YTJlMDAgUjE1OiBmZmZmODgwMDc1Mzk0
+NjAwClsgICAgMy4xODQxMTBdIEZTOiAgMDAwMDAwMDAwMDAwMDAwMCgwMDAwKSBHUzpmZmZm
+ODgwMDc5NDAwMDAwKDAwMDApIGtubEdTOjAwMDAwMDAwMDAwMDAwMDAKWyAgICAzLjE4NDEx
+NV0gQ1M6ICAwMDEwIERTOiAwMDAwIEVTOiAwMDAwIENSMDogMDAwMDAwMDA4MDA1MDAzYgpb
+ICAgIDMuMTg0MTE5XSBDUjI6IDAwMDA3ZjIyMjRiZDcwMDAgQ1IzOiAwMDAwMDAwMDM2ZGEx
+MDAwIENSNDogMDAwMDAwMDAwMDEwMDdmMApbICAgIDMuMTg0MTIxXSBTdGFjazoKWyAgICAz
+LjE4NDEzMl0gIGZmZmY4ODAwNzUxY2U3MjAgZmZmZmZmZmY4MWM1NzVjMCBmZmZmZmZmZjgx
+ZDEzNDgwIGZmZmY4ODAwNzk0MDNkZTAKWyAgICAzLjE4NDE0MF0gIDAwMDAwMDAwMDAwMDAw
+MDAgMDAwMDAwMDAwMDAwMDA4NiBmZmZmODgwMDc5NDAzZGY4IGZmZmY4ODAwNzk0MGRhYzAK
+WyAgICAzLjE4NDE0OF0gIGZmZmZmZmZmODFjNTc1YzAgMDAwMDAwMDAwMDAwMDAwMCAwMDAw
+MDAwMDAwMDAwMDg2IDAwMDAwMDAwMDAwMDAwMDEKWyAgICAzLjE4NDE1MF0gQ2FsbCBUcmFj
+ZToKWyAgICAzLjE4NDE2MF0gIDxJUlE+ClsgICAgMy4xODQxNzJdICBbPGZmZmZmZmZmODE1
+OGU3OWY+XSA/IHNkaGNpX2lycSsweDJmLzB4OTMwClsgICAgMy4xODQxODZdICBbPGZmZmZm
+ZmZmODEwYTdkMWY+XSA/IGRlcXVldWVfcnRfc3RhY2srMHg0Zi8weDIzMApbICAgIDMuMTg0
+MTk4XSAgWzxmZmZmZmZmZjgxMGMxM2FkPl0gPyBoYW5kbGVfaXJxX2V2ZW50X3BlcmNwdSsw
+eDRkLzB4MjAwClsgICAgMy4xODQyMDddICBbPGZmZmZmZmZmODE2ZDA3NWQ+XSA/IHByZWVt
+cHRfc2NoZWR1bGVfaXJxKzB4M2QvMHg3MApbICAgIDMuMTg0MjE3XSAgWzxmZmZmZmZmZjgx
+MGMxNWI0Pl0gPyBoYW5kbGVfaXJxX2V2ZW50KzB4NTQvMHg4MApbICAgIDMuMTg0MjI3XSAg
+WzxmZmZmZmZmZjgxMGM0NWY3Pl0gPyBoYW5kbGVfZmFzdGVvaV9pcnErMHhkNy8weDFhMApb
+ICAgIDMuMTg0MjQwXSAgWzxmZmZmZmZmZjgxMDE3NmNkPl0gPyBoYW5kbGVfaXJxKzB4MWQv
+MHgzMApbICAgIDMuMTg0MjUwXSAgWzxmZmZmZmZmZjgxNmQ2YmM0Pl0gPyBkb19JUlErMHg1
+NC8weGYwClsgICAgMy4xODQyNjBdICBbPGZmZmZmZmZmODE2ZDRhNmQ+XSA/IGNvbW1vbl9p
+bnRlcnJ1cHQrMHg2ZC8weDZkClsgICAgMy4xODQyNjVdICA8RU9JPgpbICAgIDMuMTg0Mjc4
+XSAgWzxmZmZmZmZmZjgxMmY0ZmU5Pl0gPyBjaGVja19wcmVlbXB0aW9uX2Rpc2FibGVkKzB4
+YTkvMHgxNjAKWyAgICAzLjE4NDI4OF0gIFs8ZmZmZmZmZmY4MTZkMDc1ZD5dID8gcHJlZW1w
+dF9zY2hlZHVsZV9pcnErMHgzZC8weDcwClsgICAgMy4xODQyOTldICBbPGZmZmZmZmZmODE2
+ZDRjNTA+XSA/IHJldGludF9rZXJuZWwrMHgyMC8weDMwClsgICAgMy4xODQzMTNdICBbPGZm
+ZmZmZmZmODE1OGQxMzg+XSA/IHNkaGNpX3NlbmRfY29tbWFuZCsweDM0OC8weGQxMApbICAg
+IDMuMTg0MzI0XSAgWzxmZmZmZmZmZjgxNThlMDk4Pl0gPyBzZGhjaV9yZXF1ZXN0KzB4Yzgv
+MHgxZjAKWyAgICAzLjE4NDMzN10gIFs8ZmZmZmZmZmY4MTU3YmU4NT5dID8gbW1jX3N0YXJ0
+X3JlcSsweDMwNS8weDQwMApbICAgIDMuMTg0MzUzXSAgWzxmZmZmZmZmZmEwMDFkOWE2Pl0g
+PyBtbWNfYmxrX3J3X3JxX3ByZXArMHgxZjYvMHg0YTAgW21tY19ibG9ja10KWyAgICAzLjE4
+NDM2Nl0gIFs8ZmZmZmZmZmZhMDAxZmNhMD5dID8gbW1jX2Jsa19pc3N1ZV9yd19ycSsweGUw
+LzB4YjgwIFttbWNfYmxvY2tdClsgICAgMy4xODQzNzldICBbPGZmZmZmZmZmODEwOTk0MDA+
+XSA/IHdha2VfdXBfc3RhdGUrMHgyMC8weDIwClsgICAgMy4xODQzOTJdICBbPGZmZmZmZmZm
+YTAwMjA5NGM+XSA/IG1tY19ibGtfaXNzdWVfcnErMHgyMGMvMHg1NTAgW21tY19ibG9ja10K
+WyAgICAzLjE4NDQwNF0gIFs8ZmZmZmZmZmY4MTA2ZDc5Mj5dID8gdW5waW5fY3VycmVudF9j
+cHUrMHgxMi8weDcwClsgICAgMy4xODQ0MTZdICBbPGZmZmZmZmZmYTAwMjBkNzA+XSA/IG1t
+Y19xdWV1ZV90aHJlYWQrMHhlMC8weDFmMCBbbW1jX2Jsb2NrXQpbICAgIDMuMTg0NDI5XSAg
+WzxmZmZmZmZmZmEwMDIwYzkwPl0gPyBtbWNfYmxrX2lzc3VlX3JxKzB4NTUwLzB4NTUwIFtt
+bWNfYmxvY2tdClsgICAgMy4xODQ0MzldICBbPGZmZmZmZmZmODEwOGMxNjU+XSA/IGt0aHJl
+YWQrMHhjNS8weGUwClsgICAgMy4xODQ0NDldICBbPGZmZmZmZmZmODEwOGMwYTA+XSA/IGt0
+aHJlYWRfd29ya2VyX2ZuKzB4MWQwLzB4MWQwClsgICAgMy4xODQ0NTldICBbPGZmZmZmZmZm
+ODE2ZDNkN2M+XSA/IHJldF9mcm9tX2ZvcmsrMHg3Yy8weGIwClsgICAgMy4xODQ0NjldICBb
+PGZmZmZmZmZmODEwOGMwYTA+XSA/IGt0aHJlYWRfd29ya2VyX2ZuKzB4MWQwLzB4MWQwClsg
+ICAgMy4xODQ1NThdIENvZGU6IDAwIDAwIDAwIGU4IGRiIDYzIDlmIGZmIGU5IGIzIGZlIGZm
+IGZmIDY2IDBmIDFmIDQ0IDAwIDAwIDQ4IDhiIDQzIDEwIDQ4IDNiIDU4IDM4IDc1IDIxIDQ4
+IDM5IGU4IDc1IGE3IDBmIDBiIDBmIDFmIDgwIDAwIDAwIDAwIDAwIDwwZj4gMGIgNjYgMGYg
+MWYgNDQgMDAgMDAgMGYgMGIgMGYgMGIgZTggYjkgNjcgYzEgZmYgZWIgYWMgZTggMTAKWyAg
+ICAzLjE4NDU2N10gUklQICBbPGZmZmZmZmZmODE2ZDIxNjg+XSBydF9zcGluX2xvY2tfc2xv
+d2xvY2srMHgyMzgvMHgyNTAKWyAgICAzLjE4NDU3MF0gIFJTUCA8ZmZmZjg4MDA3OTQwM2Rj
+OD4KWyAgICAzLjU1OTYxMF0gLS0tWyBlbmQgdHJhY2UgMDAwMDAwMDAwMDAwMDAwMiBdLS0t
+ClsgICAgMy41NTk2MTVdIEtlcm5lbCBwYW5pYyAtIG5vdCBzeW5jaW5nOiBGYXRhbCBleGNl
+cHRpb24gaW4gaW50ZXJydXB0ClsgICAgMy41NTk5MzZdIEtlcm5lbCBPZmZzZXQ6IDB4MCBm
+cm9tIDB4ZmZmZmZmZmY4MTAwMDAwMCAocmVsb2NhdGlvbiByYW5nZTogMHhmZmZmZmZmZjgw
+MDAwMDAwLTB4ZmZmZmZmZmY5ZmZmZmZmZikK
+--------------020604060009020200040403--
