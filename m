@@ -1,63 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Tue, 24 Feb 2015 13:45:32 -0500
-Message-ID: <20150224134532.1c7c5060@gandalf.local.home>
-References: <20150224133946.3948c4b7@gandalf.local.home>
+From: Gustavo Bittencourt <gbitten@gmail.com>
+Subject: Re: [ANNOUNCE] 3.18.7-rt2
+Date: Tue, 24 Feb 2015 17:00:31 -0300
+Message-ID: <CAA8Xd+-+zGz8R2H2t1Smp0erN7NtwDLbxAWshRz_FjU2T8CnEA@mail.gmail.com>
+References: <20150223090617.GA26453@linutronix.de>
+	<1424785301.8767.11.camel@gmail.com>
+	<CAA8Xd+9QEn0XE2pV-7fW0cBXKBSK9=oZyTaFH2urGvJLGb=gFw@mail.gmail.com>
+	<1424800214.6955.30.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
+Content-Type: text/plain; charset=UTF-8
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
-To: LKML <linux-kernel@vger.kernel.org>
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150224133946.3948c4b7@gandalf.local.home>
+In-Reply-To: <1424800214.6955.30.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 24 Feb 2015 13:39:46 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
-  
-> +static void tell_cpu_to_push(int cpu, struct rq *rq, int prio)
-> +{
-> +	/* We should never be here if the IPI is already out. */
-> +	BUG_ON(rq->rt.push_csd_pending);
-> +
-> +	rq->rt.push_csd_pending = 1;
-> +	rq->rt.push_csd_cpu = cpu;
-> +	/* Save the prio that we used to find this CPU */
-> +	rq->rt.push_csd_prio = prio;
-> +
-> +	/* Make sure csd_cpu is visible before we send the ipi */
-> +	smp_mb();
-> +
-> +	smp_call_function_single_async(cpu, &rq->rt.push_csd);
-> +}
+On Tue, Feb 24, 2015 at 2:50 PM, Mike Galbraith
+<umgwanakikbuti@gmail.com> wrote:
+> On Tue, 2015-02-24 at 13:19 -0300, Gustavo Bittencourt wrote:
 
+>>
+>> The deadlock returned after I applied this patch in v3.18.7-rt2. Here is my log:
+>
+>
+> Hrmph.  I definitely want your patch to die ;-)  It adds a whole new
+> dimension to ww_mutex that only now exists in -rt.  That's not good.
 
+No problem.
 
-> +	rt_rq->push_csd_cpu = next_cpu;
-> +	rt_rq->push_csd_prio = next_prio;
-> +
-> +	/* Make sure the next cpu is seen on remote CPU */
-> +	smp_mb();
+> My
+> patchlet may not be perfect either, but it lets ww_mutex do that return
+> EALREADY business it's supposed to, vs going straight to while(1).  We
+> can't have it both ways, so I suppose I'll fire up my old Q6600 box
+> (that doesn't have annoying GTX980 that my userspace can't deal with DRM
+> wise), and see if I can chase the nouveau thing down.  I'm not all that
+> enthusiastic though, as there are or at least were other issues with
+> nouveau.  Sebastian reported some completely _missing_ locking IIRC,
+> that led to his box exploding.
 
-BTW, would a smp_wmb() be enough here. I was a little paranoid about
-the irq work and smp_call_functon above some how leaking before the
-barrier. I'm probably just being too paranoid, and these can be
-switched to smp_wmb(). But for now I'll just keep being a freak.
-
--- Steve
-
-
-> +
-> +	irq_work_queue_on(&rt_rq->push_csd_work, next_cpu);
-> +
-> +	return;
-> +
+Is there anyway that I could help? I think I can write a code to
+reproduce the deadlock without the nouveau driver.
