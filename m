@@ -1,47 +1,48 @@
-From: Gustavo Bittencourt <gbitten@gmail.com>
-Subject: Re: [ANNOUNCE] 3.18.7-rt2
-Date: Tue, 24 Feb 2015 17:00:31 -0300
-Message-ID: <CAA8Xd+-+zGz8R2H2t1Smp0erN7NtwDLbxAWshRz_FjU2T8CnEA@mail.gmail.com>
-References: <20150223090617.GA26453@linutronix.de>
-	<1424785301.8767.11.camel@gmail.com>
-	<CAA8Xd+9QEn0XE2pV-7fW0cBXKBSK9=oZyTaFH2urGvJLGb=gFw@mail.gmail.com>
-	<1424800214.6955.30.camel@gmail.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
+ migration instead of pulling
+Date: Tue, 24 Feb 2015 16:23:39 -0500
+Message-ID: <20150224162339.36670d94@gandalf.local.home>
+References: <20150224133946.3948c4b7@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	John Kacur <jkacur@redhat.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424800214.6955.30.camel@gmail.com>
+In-Reply-To: <20150224133946.3948c4b7@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Feb 24, 2015 at 2:50 PM, Mike Galbraith
-<umgwanakikbuti@gmail.com> wrote:
-> On Tue, 2015-02-24 at 13:19 -0300, Gustavo Bittencourt wrote:
+On Tue, 24 Feb 2015 13:39:46 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
->>
->> The deadlock returned after I applied this patch in v3.18.7-rt2. Here is my log:
->
->
-> Hrmph.  I definitely want your patch to die ;-)  It adds a whole new
-> dimension to ww_mutex that only now exists in -rt.  That's not good.
+> @@ -1775,6 +1946,15 @@ static int pull_rt_task(struct rq *this_
+>  	 */
+>  	smp_rmb();
+>  
+> +	/* Use local just in case a feature is switched in the middle of this */
+> +	if ((use_ipi = sched_feat(RT_PUSH_IPI))) {
+> +		/* Make sure the update to pending is visible here. */
+> +		smp_rmb();
 
-No problem.
+While porting this to the -rt kernel, I noticed that this rmb is
+unneeded. It's already called above for a different reason :-p
 
-> My
-> patchlet may not be perfect either, but it lets ww_mutex do that return
-> EALREADY business it's supposed to, vs going straight to while(1).  We
-> can't have it both ways, so I suppose I'll fire up my old Q6600 box
-> (that doesn't have annoying GTX980 that my userspace can't deal with DRM
-> wise), and see if I can chase the nouveau thing down.  I'm not all that
-> enthusiastic though, as there are or at least were other issues with
-> nouveau.  Sebastian reported some completely _missing_ locking IIRC,
-> that led to his box exploding.
+-- Steve
 
-Is there anyway that I could help? I think I can write a code to
-reproduce the deadlock without the nouveau driver.
+> +
+> +		/* If a push ipi is out, then we must do the old method */
+> +		push_pending = READ_ONCE(this_rq->rt.push_csd_pending);
+> +	}
+> +
+>  	for_each_cpu(cpu, this_rq->rd->rto_mask) {
+>  		if (this_cpu == cpu)
+>  			continue;
