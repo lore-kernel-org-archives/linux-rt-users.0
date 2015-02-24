@@ -1,64 +1,71 @@
-From: Scott Wood <scottwood@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Mon, 23 Feb 2015 17:27:31 -0600
-Message-ID: <1424734051.4698.17.camel@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
- <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
- <54E74A8C.30802@linutronix.de>
+From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
+ BUG at kernel/locking/rtmutex.c:997!
+Date: Mon, 23 Feb 2015 17:16:27 -0700
+Message-ID: <54EBC2DB.3050904@hp.com>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>	<1424395866-81589-2-git-send-email-tmac@hp.com> <20150223133719.2b7c604e@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: linux-rt-users@vger.kernel.org, Alexander Graf <agraf@suse.de>,
- linux-kernel@vger.kernel.org,
- Bogdan Purcareata <bogdan.purcareata@freescale.com>,
- mihai.caraman@freescale.com, Paolo Bonzini <pbonzini@redhat.com>, Thomas
- Gleixner <tglx@linutronix.de>, linuxppc-dev@lists.ozlabs.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <54E74A8C.30802@linutronix.de>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Thavatchai Makphaibulchoke <tmac@hp.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from g9t1613g.houston.hp.com ([15.240.0.71]:48611 "EHLO
+	g9t1613g.houston.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752028AbbBXARY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 23 Feb 2015 19:17:24 -0500
+In-Reply-To: <20150223133719.2b7c604e@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-T24gRnJpLCAyMDE1LTAyLTIwIGF0IDE1OjU0ICswMTAwLCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3
-aW9yIHdyb3RlOgo+IE9uIDAyLzIwLzIwMTUgMDM6MTIgUE0sIFBhb2xvIEJvbnppbmkgd3JvdGU6
-Cj4gPj4gVGhvbWFzLCB3aGF0IGlzIHRoZSB1c3VhbCBhcHByb2FjaCBmb3IgcGF0Y2hlcyBsaWtl
-IHRoaXM/IERvIHlvdSB0YWtlCj4gPj4gdGhlbSBpbnRvIHlvdXIgcnQgdHJlZSBvciBzaG91bGQg
-dGhleSBnZXQgaW50ZWdyYXRlZCB0byB1cHN0cmVhbT8KPiA+IAo+ID4gUGF0Y2ggMSBpcyBkZWZp
-bml0ZWx5IHN1aXRhYmxlIGZvciB1cHN0cmVhbSwgdGhhdCdzIHRoZSByZWFzb24gd2h5IHdlCj4g
-PiBoYXZlIHJhd19zcGluX2xvY2sgdnMuIHJhd19zcGluX3VubG9jay4KPiAKPiByYXdfc3Bpbl9s
-b2NrIHdlcmUgaW50cm9kdWNlZCBpbiBjMmYyMWNlMmUzMTI4NmEwYTMyICgibG9ja2luZzoKPiBJ
-bXBsZW1lbnQgbmV3IHJhd19zcGlubG9jaykuIFRoZXkgYXJlIHVzZWQgaW4gY29udGV4dCB3aGlj
-aCBydW5zIHdpdGgKPiBJUlFzIG9mZiAtIGVzcGVjaWFsbHkgb24gLVJULiBUaGlzIGluY2x1ZGVz
-IHVzdWFsbHkgaW50ZXJydXB0Cj4gY29udHJvbGxlcnMgYW5kIHJlbGF0ZWQgY29yZS1jb2RlIHBp
-ZWNlcy4KPiAKPiBVc3VhbGx5IHlvdSBzZWUgInNjaGVkdWxpbmcgd2hpbGUgYXRvbWljIiBvbiAt
-UlQgYW5kIGNvbnZlcnQgdGhlbSB0bwo+IHJhdyBsb2NrcyBpZiBpdCBpcyBhcHByb3ByaWF0ZS4K
-PiAKPiBCb2dkYW4gd3JvdGUgaW4gMi8yIHRoYXQgaGUgbmVlZHMgdG8gbGltaXQgdGhlIG51bWJl
-ciBvZiBDUFVzIGluIG9kZXIKPiBub3QgY2F1c2UgYSBEb1MgYW5kIGxhcmdlIGxhdGVuY2llcyBp
-biB0aGUgaG9zdC4gSSBoYXZlbid0IHNlZW4gYW4KPiBhbnN3ZXIgdG8gbXkgd2h5IHF1ZXN0aW9u
-LiBCZWNhdXNlIGlmIHRoZSBjb252ZXJzYXRpb24gbGVhZHMgdG8KPiBsYXJnZSBsYXRlbmNpZXMg
-aW4gdGhlIGhvc3QgdGhlbiBpdCBkb2VzIG5vdCBsb29rIHJpZ2h0Lgo+IAo+IEVhY2ggaG9zdCBQ
-SUMgaGFzIGEgcmF3bG9jayBhbmQgZG9lcyBtb3N0bHkganVzdCBtYXNrL3VubWFzayBhbmQgdGhl
-Cj4gcmF3IGxvY2sgbWFrZXMgc3VyZSB0aGUgdmFsdWUgd3JpdHRlbiBpcyBub3QgbWl4ZWQgdXAg
-ZHVlIHRvCj4gcHJlZW1wdGlvbi4KPiBUaGlzIGhhcmRseSBpbmNyZWFzZSBsYXRlbmNpZXMgYmVj
-YXVzZSB0aGUgImxvY2tlZCIgcGF0aCBpcyB2ZXJ5IHNob3J0Lgo+IElmIHRoaXMgY29udmVyc2F0
-aW9uIGxlYWRzIHRvIGhpZ2hlciBsYXRlbmNpZXMgdGhlbiB0aGUgbG9ja2VkIHBhdGggaXMKPiB0
-b28gbG9uZyBhbmQgaGFyZGx5IHN1aXRhYmxlIHRvIGJlY29tZSBhIHJhd2xvY2suCgpUaGlzIGlz
-bid0IGEgaG9zdCBQSUMgZHJpdmVyLiAgSXQncyBndWVzdCBQSUMgZW11bGF0aW9uLCBzb21lIG9m
-IHdoaWNoCmlzIGluZGVlZCBub3Qgc3VpdGFibGUgZm9yIGEgcmF3bG9jayAoaW4gcGFydGljdWxh
-ciwgb3BlbnBpY191cGRhdGVfaXJxCndoaWNoIGxvb3BzIG9uIHRoZSBudW1iZXIgb2YgdmNwdXMs
-IHdpdGggYSBsb29wIGJvZHkgdGhhdCBjYWxscwpJUlFfY2hlY2soKSB3aGljaCBsb29wcyBvdmVy
-IGFsbCBwZW5kaW5nIElSUXMpLiAgVGhlIHZjcHUgbGltaXRzIGFyZSBhCnRlbXBvcmFyeSBiYW5k
-YWlkIHRvIGF2b2lkIHRoZSB3b3JzdCBsYXRlbmNpZXMsIGJ1dCBJJ20gc3RpbGwgc2tlcHRpY2Fs
-CmFib3V0IHRoaXMgYmVpbmcgdXBzdHJlYW0gbWF0ZXJpYWwuCgotU2NvdHQKCgpfX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eHBwYy1kZXYgbWFpbGlu
-ZyBsaXN0CkxpbnV4cHBjLWRldkBsaXN0cy5vemxhYnMub3JnCmh0dHBzOi8vbGlzdHMub3psYWJz
-Lm9yZy9saXN0aW5mby9saW51eHBwYy1kZXY=
+
+
+On 02/23/2015 11:37 AM, Steven Rostedt wrote:
+> 
+> OK, I believe I understand the issue. Perhaps it would be much better
+> to create a fake task per CPU that we use when grabbing locks in
+> interrupt mode. And make these have a priority of 0 (highest), since
+> they can not be preempted, they do have such a priority.
+> 
+> Then in the fast trylock and unlock code, we can add:
+> 
+> 	struct task_struct *curr = current;
+> 
+> 	if (unlikely(in_irq()))
+> 		curr = this_cpu_read(irq_task);
+> 
+> This way the priority inheritance will stop when it hits this task (no
+> need to boost a task of highest priority), and we can leave that code
+> alone.
+> 
+
+Thanks again for the comments and suggestion.
+
+Yes, creating a per cpu fake task was one of the alternative considered.
+ I believe one of the reasons I did not purse is the amount of extra
+storage it requires (sizeof(struct task_struct) * number of cpus.
+Though the changes may not be as intrusive as the one I sent, some are
+still required, mainly with current (one in particular came to mind is
+in wakeup_next-watier()).
+
+If I'm not mistaken, another reason could also be due to the rate of the
+timer interrupt, in the case that the mutex is highly contested IH could
+stall the non-real-time requester for a long time, even to the point of
+the cpu is perceived as hung.
+
+Anyway, I'll retry the fake task approach a try and report back if there
+is any issue.
+
+Thanks,
+Mak.
+
+
+> -- Steve
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
