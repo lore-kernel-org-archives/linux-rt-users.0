@@ -1,456 +1,403 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Wed, 25 Feb 2015 22:02:50 +0100
-Message-ID: <20150225210250.GA25858@linutronix.de>
-References: <20150114171251.882318257@redhat.com>
- <20150114171459.593877145@redhat.com>
- <20150116114846.4e7b718d@gandalf.local.home>
- <20150119144100.GA10794@amt.cnet>
- <20150120054653.GA6473@iris.ozlabs.ibm.com>
- <20150120131613.009903a0@gandalf.local.home>
- <20150121150716.GD11596@twins.programming.kicks-ass.net>
- <20150217174419.GY26177@linutronix.de>
- <20150218140320.GY5029@twins.programming.kicks-ass.net>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH v3] sched/rt: Use IPI to trigger RT task push migration
+ instead of pulling
+Date: Wed, 25 Feb 2015 22:26:44 -0500
+Message-ID: <20150225222644.042841cc@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
+To: LKML <linux-kernel@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150218140320.GY5029@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Peter Zijlstra | 2015-02-18 15:03:20 [+0100]:
 
->On Tue, Feb 17, 2015 at 06:44:19PM +0100, Sebastian Andrzej Siewior wr=
-ote:
->> * Peter Zijlstra | 2015-01-21 16:07:16 [+0100]:
->>=20
->> >On Tue, Jan 20, 2015 at 01:16:13PM -0500, Steven Rostedt wrote:
->> >> I'm actually wondering if we should just nuke the _interruptible(=
-)
->> >> version of swait. As it should only be all interruptible or all n=
-ot
->> >> interruptible, that the swait_wake() should just do the wake up
->> >> regardless. In which case, swait_wake() is good enough. No need t=
-o have
->> >> different versions where people may think do something special.
->> >>=20
->> >> Peter?
->> >
->> >Yeah, I think the lastest thing I have sitting here on my disk only=
- has
->> >the swake_up() which does TASK_NORMAL, no choice there.
->>=20
->> what is the swait status in terms of mainline? This sounds like it
->> beeing worked on.
->> I could take the series but then I would drop it again if the mainli=
-ne
->> implementation changes=E2=80=A6
->
->Well, 'worked' on might be putting too much on it, its one of the many
->many 'spare' time things that never get attention unless people bug me
->;-)
->
->The below is my current patch, I've not actually tried it yet, I (thin=
-k
->I) had one patch doing some conversions but I'm having trouble locatin=
-g
->it.
->
->Mostly-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
->---
-> include/linux/swait.h |  172 ++++++++++++++++++++++++++++++++++++++++=
-++++++++++
-> kernel/sched/swait.c  |  122 +++++++++++++++++++++++++++++++++++
-> 2 files changed, 294 insertions(+)
->
->--- /dev/null
->+++ b/include/linux/swait.h
->@@ -0,0 +1,172 @@
->+#ifndef _LINUX_SWAIT_H
->+#define _LINUX_SWAIT_H
->+
->+#include <linux/list.h>
->+#include <linux/stddef.h>
->+#include <linux/spinlock.h>
->+#include <asm/current.h>
->+
->+/*
->+ * Simple wait queues
->+ *
->+ * While these are very similar to the other/complex wait queues (wai=
-t.h) the
->+ * most important difference is that the simple waitqueue allows for
->+ * deterministic behaviour -- IOW it has strictly bounded IRQ and loc=
-k hold
->+ * times.
->+ *
->+ * In order to make this so, we had to drop a fair number of features=
- of the
->+ * other waitqueue code; notably:
->+ *
->+ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same wai=
-tqueue;
->+ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for =
-the right
->+ *    sleeper state.
->+ *
->+ *  - the exclusive mode; because this requires preserving the list o=
-rder
->+ *    and this is hard.
->+ *
->+ *  - custom wake functions; because you cannot give any guarantees a=
-bout
->+ *    random code.
->+ *
->+ * As a side effect of this; the data structures are slimmer.
->+ *
->+ * One would recommend using this wait queue where possible.
->+ */
->+
->+struct task_struct;
->+
->+struct swait_queue_head {
->+	raw_spinlock_t		lock;
->+	struct list_head	task_list;
->+};
->+
->+struct swait_queue {
->+	struct task_struct	*task;
->+	struct list_head	task_list;
+When debugging the latencies on a 40 core box, where we hit 300 to
+500 microsecond latencies, I found there was a huge contention on the
+runqueue locks.
 
-I would prefer something different than task_list here since this is an
-item. Scrolling down you tried to use node once so maybe that would be
-good here :)
+Investigating it further, running ftrace, I found that it was due to
+the pulling of RT tasks.
 
->+};
->+
->+#define __SWAITQUEUE_INITIALIZER(name) {				\
->+	.task		=3D current,					\
->+	.task_list	=3D LIST_HEAD_INIT((name).task_list),		\
->+}
->+
->+#define DECLARE_SWAITQUEUE(name)					\
->+	struct swait_queue name =3D __SWAITQUEUE_INITIALIZER(name)
->+
->+#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
->+	.lock		=3D __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
->+	.task_list	=3D LIST_HEAD_INIT((name).task_list),		\
->+}
->+
->+#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
->+	struct swait_queue_head name =3D __SWAIT_QUEUE_HEAD_INITIALIZER(name=
-)
->+
->+extern void __init_swait_queue_head(struct swait_queue_head *q, const=
- char *name,
->+				    struct lock_class_key *key);
->+
->+#define init_swait_queue_head(q)				\
->+	do {							\
->+		static struct lock_class_key __key;		\
->+		__init_swait_queue_head((q), #q, &__key);	\
->+	} while (0)
->+
->+#ifdef CONFIG_LOCKDEP
->+# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
->+	({ init_swait_queue_head(&name); name; })
->+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
->+	struct swait_queue_head name =3D __SWAIT_QUEUE_HEAD_INIT_ONSTACK(nam=
-e)
->+#else
->+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
->+	DECLARE_SWAIT_QUEUE_HEAD(name)
->+#endif
->+
->+static inline int swait_active(struct swait_queue_head *q)
->+{
->+	return !list_empty(&q->task_list);
+The test that was run was the following:
 
-In RT there was a smp_mb() which you dropped and I assume you had
-reasons for it. I assumed that one can perform list_empty_careful()
-without a lock if the items were removed with list_del_init(). But sinc=
-e
-nothing in -RT blow up so far I guess this here is legal, too :)
+ cyclictest --numa -p95 -m -d0 -i100
 
->+}
->+
->+extern void swake_up(struct swait_queue_head *q);
->+extern void swake_up_all(struct swait_queue_head *q);
->+extern void swake_up_locked(struct swait_queue_head *q);
->+
->+extern void __prepare_to_swait(struct swait_queue_head *q, struct swa=
-it_queue *wait);
->+extern void prepare_to_swait(struct swait_queue_head *q, struct swait=
-_queue *wait, int state);
->+extern long prepare_to_swait_event(struct swait_queue_head *q, struct=
- swait_queue *wait, int state);
->+
->+extern void __finish_swait(struct swait_queue_head *q, struct swait_q=
-ueue *wait);
->+extern void finish_swait(struct swait_queue_head *q, struct swait_que=
-ue *wait);
->+
->+/* as per ___wait_event() but for swait, therefore "exclusive =3D=3D =
-0" */
->+#define ___swait_event(wq, condition, state, ret, cmd)			\
->+({									\
->+	struct swait_queue __wait;					\
->+	long __ret =3D ret;						\
->+									\
->+	INIT_LIST_HEAD(&__wait.task_list);				\
->+	for (;;) {							\
->+		long __int =3D prepare_to_swait_event(&wq, &__wait, state);\
->+									\
->+		if (condition)						\
->+			break;						\
->+									\
->+		if (___wait_is_interruptible(state) && __int) {		\
->+			__ret =3D __int;					\
->+			break;						\
->+		}							\
->+									\
->+		cmd;							\
->+	}								\
->+	finish_swait(&wq, &__wait);					\
->+	__ret;								\
->+})
->+
->+#define __swait_event(wq, condition)					\
->+	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
->+			    schedule())
->+
->+#define swait_event(wq, condition)					\
->+do {									\
->+	if (condition)							\
->+		break;							\
->+	__swait_event(wq, condition);					\
->+} while (0)
->+
->+#define __swait_event_timeout(wq, condition, timeout)			\
->+	___swait_event(wq, ___wait_cond_timeout(condition),		\
->+		      TASK_UNINTERRUPTIBLE, timeout,			\
->+		      __ret =3D schedule_timeout(__ret))
->+
->+#define swait_event_timeout(wq, condition, timeout)			\
->+({									\
->+	long __ret =3D timeout;						\
->+	if (!___wait_cond_timeout(condition))				\
->+		__ret =3D __swait_event_timeout(wq, condition, timeout);	\
->+	__ret;								\
->+})
->+
->+#define __swait_event_interruptible(wq, condition)			\
->+	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
->+		      schedule())
->+
->+#define swait_event_interruptible(wq, condition)			\
->+({									\
->+	int __ret =3D 0;							\
->+	if (!(condition))						\
->+		__ret =3D __swait_event_interruptible(wq, condition);	\
->+	__ret;								\
->+})
->+
->+#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
->+	___swait_event(wq, ___wait_cond_timeout(condition),		\
->+		      TASK_INTERRUPTIBLE, timeout,			\
->+		      __ret =3D schedule_timeout(__ret))
->+
->+#define swait_event_interruptible_timeout(wq, condition, timeout)	\
->+({									\
->+	long __ret =3D timeout;						\
->+	if (!___wait_cond_timeout(condition))				\
->+		__ret =3D __swait_event_interruptible_timeout(wq,		\
->+						condition, timeout);	\
->+	__ret;								\
->+})
->+
->+#endif /* _LINUX_SWAIT_H */
->--- /dev/null
->+++ b/kernel/sched/swait.c
->@@ -0,0 +1,122 @@
->+
->+#include <linux/swait.h>
->+
->+void __init_swait_queue_head(struct swait_queue_head *q, const char *=
-name,
->+			     struct lock_class_key *key)
->+{
->+	raw_spin_lock_init(&q->lock);
->+	lockdep_set_class_and_name(&q->lock, key, name);
->+	INIT_LIST_HEAD(&q->task_list);
->+}
->+EXPORT_SYMBOL(__init_swait_queue_head);
->+
->+/*
->+ * The thing about the wake_up_state() return value; I think we can i=
-gnore it.
->+ *
->+ * If for some reason it would return 0, that means the previously wa=
-iting
->+ * task is already running, so it will observe condition true (or has=
- already).
->+ */
->+void swake_up_locked(struct swait_queue_head *q)
->+{
->+	struct swait_queue *curr;
->+
->+	list_for_each_entry(curr, &q->task_list, task_list) {
->+		wake_up_process(curr->task);
+This created a thread on each CPU, that would set its wakeup in interations
+of 100 microseconds. The -d0 means that all the threads had the same
+interval (100us). Each thread sleeps for 100us and wakes up and measures
+its latencies.
 
-okay. So since we limit everything to TASK_NORMAL which has to sleep
-while on the list there is no need to check if we actually woken up
-someone.
+What happened was another RT task would be scheduled on one of the CPUs
+that was running our test, when the other CPU tests went to sleep and
+scheduled idle. This caused the "pull" operation to execute on all
+these CPUs. Each one of these saw the RT task that was overloaded on
+the CPU of the test that was still running, and each one tried
+to grab that task in a thundering herd way.
 
->+		list_del_init(&curr->task_list);
->+		break;
->+	}
->+}
->+EXPORT_SYMBOL(swake_up_locked);
->+
->+void swake_up(struct swait_queue_head *q)
->+{
->+	unsigned long flags;
->+
->+	if (!swait_active(q))
->+		return;
->+
->+	raw_spin_lock_irqsave(&q->lock, flags);
->+	__swake_up_locked(q);
+To grab the task, each thread would do a double rq lock grab, grabbing
+its own lock as well as the rq of the overloaded CPU. As the sched
+domains on this box was rather flat for its size, I saw up to 12 CPUs
+block on this lock at once. This caused a ripple affect with the
+rq locks. As these locks were blocked, any wakeups or load balanceing
+on these CPUs would also block on these locks, and the wait time escalated.
 
-I thing this should have been swake_up_locked() instead since
-__swake_up_locked() isn't part of this patch.
+I've tried various methods to lesson the load, but things like an
+atomic counter to only let one CPU grab the task wont work, because
+the task may have a limited affinity, and we may pick the wrong
+CPU to take that lock and do the pull, to only find out that the
+CPU we picked isn't in the task's affinity.
 
-Just a nitpick: later there is __prepare_to_swait() and __finish_swait(=
-)
-which have the __ prefix instead a _locked suffix. Not sure what is
-better for a better for a public API but maybe one way would be good.
+Instead of doing the PULL, I now have the CPUs that want the pull to
+send over an IPI to the overloaded CPU, and let that CPU pick what
+CPU to push the task to. No more need to grab the rq lock, and the
+push/pull algorithm still works fine.
 
->+	raw_spin_unlock_irqrestore(&q->lock, flags);
->+}
->+EXPORT_SYMBOL(swake_up);
->+
->+/*
->+ * Does not allow usage from IRQ disabled, since we must be able to
->+ * release IRQs to guarantee bounded hold time.
->+ */
->+void swake_up_all(struct swait_queue_head *q)
->+{
->+	struct swait_queue *curr, *next;
->+	LIST_HEAD(tmp);
+With this patch, the latency dropped to just 150us over a 20 hour run.
+Without the patch, the huge latencies would trigger in seconds.
 
-WARN_ON(irqs_disabled()) ?
+I've created a new sched feature called RT_PUSH_IPI, which is enabled
+by default.
 
->+	if (!swait_active(q))
->+		return;
->+
->+	raw_spin_lock_irq(&q->lock);
->+	list_splice_init(&q->task_list, &tmp);
->+	while (!list_empty(&tmp)) {
->+		curr =3D list_first_entry(&tmp, typeof(curr), task_list);
->+
->+		wake_up_state(curr->task, state);
->+		list_del_init(&curr->task_list);
+When RT_PUSH_IPI is not enabled, the old method of grabbing the rq locks
+and having the pulling CPU do the work is implemented. When RT_PUSH_IPI
+is enabled, the IPI is sent to the overloaded CPU to do a push.
 
-So because the task may timeout and remove itself from the list at
-anytime you need to hold the lock during wakeup and the removal from th=
-e
-list
+To enabled or disable this at run time:
 
->+
->+		if (list_empty(&tmp))
->+			break;
->+
->+		raw_spin_unlock_irq(&q->lock);
+ # mount -t debugfs nodev /sys/kernel/debug
+ # echo RT_PUSH_IPI > /sys/kernel/debug/sched_features
+or
+ # echo NO_RT_PUSH_IPI > /sys/kernel/debug/sched_features
 
-and you drop the lock after each iteration in case there is an IRQ=20
-pending or the task, that has been just woken up, has a higher priority
-than the current task and needs to get on the CPU.
-Not sure if this case matters:
-- _this_ task (wake_all) prio 120
-- first task in queue prio 10, RR
-- second task in queue prio 9, RR
+Update: This original patch would send an IPI to all CPUs in the RT overload
+list. But that could theoretically cause the reverse issue. That is, there
+could be lots of overloaded RT queues and on CPU lowers its priority. It would
+then send an IPI to all the overloaded RT queues and they could then all try
+to grab the rq lock of the CPU lowering its priority, and then we have the
+same problem.
 
-the *old* behavior would put the second task before the first task on
-CPU. The *new* behaviour puts the first task on the CPU after dropping
-the lock. The second task (that has a higher priority but nobody knows)
-has to wait until the first one is done (and anything else that might
-been woken up in the meantime with a higher prio than 120).
+The latest design sends out only one IPI to the first overloaded CPU. It tries to
+push any tasks that it can, and then looks for the next overloaded CPU that can
+push to the source CPU. The IPIs stop when all overloaded CPUs that have pushable
+tasks that have priorities greater than the source CPU are covered. In case the
+source CPU lowers its priority again, a flag is set to tell the IPI traversal to
+restart with the first RT overloaded CPU after the source CPU.
 
->+		raw_spin_lock_irq(&q->lock);
->+	}
->+	raw_spin_unlock_irq(&q->lock);
->+}
->+EXPORT_SYMBOL(swake_up_all);
->+
->+void __prepare_to_swait(struct swait_queue_head *q, struct swait_queu=
-e *wait)
->+{
->+	wait->task =3D current;
->+	if (list_empty(&wait->node))
->+		list_add(&wait->task_list, &q->task_list);
->+}
->+
->+void prepare_to_swait(struct swait_queue_head *q, struct swait_queue =
-*wait, int state)
->+{
->+	unsigned long flags;
->+
->+	raw_spin_lock_irqsave(&q->lock, flags);
->+	__prepare_to_swait(q, wait);
->+	set_current_state(state);
->+	raw_spin_unlock_irqrestore(&q->lock, flags);
->+}
->+EXPORT_SYMBOL(prepare_to_swait);
->+
->+long prepare_to_swait_event(struct swait_queue_head *q, struct swait_=
-queue *wait, int state)
->+{
->+	if (signal_pending_state(state, current))
->+		return -ERESTARTSYS;
->+
->+	prepare_to_swait(q, wait, state);
->+
->+	return 0;
->+}
->+EXPORT_SYMBOL(prepare_to_swait_event);
->+
->+void __finish_swait(struct swait_queue_head *q, struct swait_queue *w=
-ait)
-this one has no users the __ suggests that it is locked edition. Maybe
-it is for the completions=E2=80=A6
+Parts-suggested-by: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
->+{
->+	__set_current_state(TASK_RUNNING);
->+	if (!list_empty(&wait->task_list))
->+		list_del_init(&wait->task_list);
->+}
->+
->+void finish_swait(struct swait_queue_head *q, struct swait_queue *wai=
-t)
->+{
->+	unsigned long flags;
->+
->+	__set_current_state(TASK_RUNNING);
->+
->+	if (!list_empty_careful(&wait->task_list)) {
->+		raw_spin_lock_irqsave(&q->lock, flags);
->+		list_del_init(&wait->task_list);
->+		raw_spin_unlock_irqrestore(&q->lock, flags);
->+	}
->+}
->+EXPORT_SYMBOL(finish_swait);
+---
+Changes since V2:
 
-Sebastian
+ o Redesigned to mostly eliminate the covering of for each cpu on the rto mask.
+   I say mostly, because it skips over any CPU that does not have a task that
+   has high enough priority to push to the original CPU.
+
+   The new design finds the next CPU that has an RT overload with a pushable
+   task of priority greater than the source CPU and sends an IPI to it. Instead
+   of stopping if that CPU succeeds in pushing a task, it instead will continue
+   the IPI to the next CPU with a pushable task higher in priority than the
+   source CPU tasks. It continues until it covers all the CPUs in the rto_mask
+   up to the source CPU.
+
+   There's also a "reset" flag that gets set if the source CPU changes its priority
+   before the IPI loop completes. That is, the IPI will start again with the first
+   overloaded CPU after the source CPU.
+
+   This version is actually cleaner than the previous version.
+
+Changes since V1:
+
+ o As already mentioned in the "update", a redesign was done to send
+   only one IPI, and to the highest rt overloaded queue. If for some
+   reason that could not push a task, it would look for the next rq and
+   send an ipi (irq work actually) to the next one. Limits are in place
+   to prevent any ping pong affect of two rqs sending IPIs back and
+   forth.
+
+ o Made this sched feature enabled by default instead of enabling it
+   when we have 16 or more CPUs.
+
+
+ kernel/sched/features.h |   11 +++
+ kernel/sched/rt.c       |  176 +++++++++++++++++++++++++++++++++++++++++++++++-
+ kernel/sched/sched.h    |    6 +
+ 3 files changed, 192 insertions(+), 1 deletion(-)
+
+Index: linux-rt.git/kernel/sched/rt.c
+===================================================================
+--- linux-rt.git.orig/kernel/sched/rt.c	2015-02-25 13:56:15.714165180 -0500
++++ linux-rt.git/kernel/sched/rt.c	2015-02-25 21:59:20.091920349 -0500
+@@ -6,6 +6,7 @@
+ #include "sched.h"
+ 
+ #include <linux/slab.h>
++#include <linux/irq_work.h>
+ 
+ int sched_rr_timeslice = RR_TIMESLICE;
+ 
+@@ -59,6 +60,10 @@ static void start_rt_bandwidth(struct rt
+ 	raw_spin_unlock(&rt_b->rt_runtime_lock);
+ }
+ 
++#ifdef CONFIG_SMP
++static void push_irq_work_func(struct irq_work *work);
++#endif
++
+ void init_rt_rq(struct rt_rq *rt_rq, struct rq *rq)
+ {
+ 	struct rt_prio_array *array;
+@@ -78,6 +83,11 @@ void init_rt_rq(struct rt_rq *rt_rq, str
+ 	rt_rq->rt_nr_migratory = 0;
+ 	rt_rq->overloaded = 0;
+ 	plist_head_init(&rt_rq->pushable_tasks);
++
++	rt_rq->push_flags = 0;
++	rt_rq->push_cpu = nr_cpu_ids;
++	raw_spin_lock_init(&rt_rq->push_lock);
++	init_irq_work(&rt_rq->push_work, push_irq_work_func);
+ #endif
+ 	/* We start is dequeued state, because no RT tasks are queued */
+ 	rt_rq->rt_queued = 0;
+@@ -1760,6 +1770,165 @@ static void push_rt_tasks(struct rq *rq)
+ 		;
+ }
+ 
++/*
++ * The search for the next cpu always starts at rq->cpu and ends
++ * when we reach rq->cpu again. It will never return rq->cpu.
++ * This returns the next cpu to check, or nr_cpu_ids if the loop
++ * is complete.
++ *
++ * rq->rt.push_cpu holds the last cpu returned by this function,
++ * or if this is the first instance, it must hold rq->cpu.
++ */
++static int rto_next_cpu(struct rq *rq)
++{
++	int prev_cpu = rq->rt.push_cpu;
++	int cpu;
++
++	cpu = cpumask_next(prev_cpu, rq->rd->rto_mask);
++
++	/*
++	 * If the previous cpu is less than the rq's CPU, then it already
++	 * passed the end of the mask, and has started from the beginning.
++	 * We end if the next CPU is greater or equal to rq's CPU.
++	 */
++	if (prev_cpu < rq->cpu) {
++		if (cpu >= rq->cpu)
++			return nr_cpu_ids;
++
++	} else if (cpu >= nr_cpu_ids) {
++		/*
++		 * We passed the end of the mask, start at the beginning.
++		 * If the result is greater or equal to the rq's CPU, then
++		 * the loop is finished.
++		 */
++		cpu = cpumask_first(rq->rd->rto_mask);
++		if (cpu >= rq->cpu)
++			return nr_cpu_ids;
++	}
++	rq->rt.push_cpu = cpu;
++
++	/* Return cpu to let the caller know if the loop is finished or not */
++	return cpu;
++}
++
++static int find_next_push_cpu(struct rq *rq)
++{
++	struct rq *next_rq;
++	int cpu;
++
++	while (1) {
++		cpu = rto_next_cpu(rq);
++		if (cpu >= nr_cpu_ids)
++			break;
++		next_rq = cpu_rq(cpu);
++
++		/* Make sure the next rq can push to this rq */
++		if (next_rq->rt.highest_prio.next <
++		    rq->rt.highest_prio.curr &&
++		    next_rq->rt.highest_prio.next <
++		    rq->rt.highest_prio.next)
++			break;
++	}
++
++	return cpu;
++}
++
++#define RT_PUSH_IPI_EXECUTING		1
++#define RT_PUSH_IPI_RESTART		2
++
++static void tell_cpu_to_push(struct rq *rq)
++{
++	int cpu;
++
++	if (rq->rt.push_flags & RT_PUSH_IPI_EXECUTING) {
++		raw_spin_lock(&rq->rt.push_lock);
++		/* Make sure it's still executing */
++		if (rq->rt.push_flags & RT_PUSH_IPI_EXECUTING) {
++			/*
++			 * Tell the IPI to restart the loop as things have
++			 * have changed since it started.
++			 */
++			rq->rt.push_flags |= RT_PUSH_IPI_RESTART;
++			raw_spin_unlock(&rq->rt.push_lock);
++			return;
++		}
++		raw_spin_unlock(&rq->rt.push_lock);
++	}
++
++	/* When here, there's no IPI going around */
++
++	rq->rt.push_cpu = rq->cpu;
++	cpu = find_next_push_cpu(rq);
++	if (cpu >= nr_cpu_ids)
++		return;
++
++	rq->rt.push_flags = RT_PUSH_IPI_EXECUTING;
++
++	irq_work_queue_on(&rq->rt.push_work, cpu);
++}
++
++/* Called from hardirq context */
++static void try_to_push_tasks(void *arg)
++{
++	struct rt_rq *rt_rq = arg;
++	struct rq *rq, *src_rq;
++	int this_cpu;
++	int cpu;
++
++	this_cpu = rt_rq->push_cpu;
++
++	/* Paranoid check */
++	BUG_ON(this_cpu != smp_processor_id());
++
++	rq = cpu_rq(this_cpu);
++	src_rq = rq_of_rt_rq(rt_rq);
++
++ again:
++	if (has_pushable_tasks(rq)) {
++		raw_spin_lock(&rq->lock);
++		push_rt_task(rq);
++		raw_spin_unlock(&rq->lock);
++	}
++
++	/* Pass the IPI to the next rt overloaded queue */
++	raw_spin_lock(&rt_rq->push_lock);
++	/*
++	 * If the source queue changed since the IPI went out,
++	 * we need to restart the search from that CPU again.
++	 */
++	if (rt_rq->push_flags & RT_PUSH_IPI_RESTART) {
++		rt_rq->push_flags &= ~RT_PUSH_IPI_RESTART;
++		rt_rq->push_cpu = src_rq->cpu;
++	}
++
++	cpu = find_next_push_cpu(src_rq);
++
++	if (cpu >= nr_cpu_ids)
++		rt_rq->push_flags &= ~RT_PUSH_IPI_EXECUTING;
++	raw_spin_unlock(&rt_rq->push_lock);
++
++	if (cpu >= nr_cpu_ids)
++		return;
++
++	/*
++	 * It is possible that a restart caused this CPU to be
++	 * chosen again. Don't bother with an IPI, just see if we
++	 * have more to push.
++	 */
++	if (unlikely(cpu == rq->cpu))
++		goto again;
++
++	/* Try the next RT overloaded CPU */
++	irq_work_queue_on(&rt_rq->push_work, cpu);
++}
++
++static void push_irq_work_func(struct irq_work *work)
++{
++	struct rt_rq *rt_rq = container_of(work, struct rt_rq, push_work);
++
++	try_to_push_tasks(rt_rq);
++}
++
+ static int pull_rt_task(struct rq *this_rq)
+ {
+ 	int this_cpu = this_rq->cpu, ret = 0, cpu;
+@@ -1775,6 +1944,11 @@ static int pull_rt_task(struct rq *this_
+ 	 */
+ 	smp_rmb();
+ 
++	if (sched_feat(RT_PUSH_IPI)) {
++		tell_cpu_to_push(this_rq);
++		return 0;
++	}
++
+ 	for_each_cpu(cpu, this_rq->rd->rto_mask) {
+ 		if (this_cpu == cpu)
+ 			continue;
+@@ -1793,7 +1967,7 @@ static int pull_rt_task(struct rq *this_
+ 		 */
+ 		if (src_rq->rt.highest_prio.next >=
+ 		    this_rq->rt.highest_prio.curr ||
+-		    src_rq->rt.higest_prio.next >=
++		    src_rq->rt.highest_prio.next >=
+ 		    this_rq->rt.highest_prio.next)
+ 			continue;
+ 
+Index: linux-rt.git/kernel/sched/sched.h
+===================================================================
+--- linux-rt.git.orig/kernel/sched/sched.h	2015-02-25 13:26:41.550503277 -0500
++++ linux-rt.git/kernel/sched/sched.h	2015-02-25 14:51:00.364755633 -0500
+@@ -6,6 +6,7 @@
+ #include <linux/mutex.h>
+ #include <linux/spinlock.h>
+ #include <linux/stop_machine.h>
++#include <linux/irq_work.h>
+ #include <linux/tick.h>
+ #include <linux/slab.h>
+ 
+@@ -435,6 +436,11 @@ struct rt_rq {
+ 	unsigned long rt_nr_total;
+ 	int overloaded;
+ 	struct plist_head pushable_tasks;
++	struct call_single_data push_csd;
++	int push_flags;
++	int push_cpu;
++	struct irq_work push_work;
++	raw_spinlock_t push_lock;
+ #endif
+ 	int rt_queued;
+ 
+Index: linux-rt.git/kernel/sched/features.h
+===================================================================
+--- linux-rt.git.orig/kernel/sched/features.h	2015-02-25 13:26:41.550503277 -0500
++++ linux-rt.git/kernel/sched/features.h	2015-02-25 13:57:25.298202845 -0500
+@@ -56,6 +56,17 @@ SCHED_FEAT(NONTASK_CAPACITY, true)
+  */
+ SCHED_FEAT(TTWU_QUEUE, true)
+ 
++/*
++ * In order to avoid a thundering herd attack of CPUS that are
++ * lowering their priorities at the same time, and there being
++ * a single CPU that has an RT task that can migrate and is waiting
++ * to run, where the other CPUs will try to take that CPUs
++ * rq lock and possibly create a large contention, sending an
++ * IPI to that CPU and let that CPU push the RT task to where
++ * it should go may be a better scenario.
++ */
++SCHED_FEAT(RT_PUSH_IPI, true)
++
+ SCHED_FEAT(FORCE_SD_OVERLAP, false)
+ SCHED_FEAT(RT_RUNTIME_SHARE, true)
+ SCHED_FEAT(LB_MIN, false)
