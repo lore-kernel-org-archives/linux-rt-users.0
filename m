@@ -1,14 +1,14 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
  migration instead of pulling
-Date: Thu, 26 Feb 2015 07:43:01 -0500
-Message-ID: <20150226074301.0db88af3@grimm.local.home>
+Date: Thu, 26 Feb 2015 07:46:09 -0500
+Message-ID: <20150226074609.27ccd39d@grimm.local.home>
 References: <20150224133946.3948c4b7@gandalf.local.home>
 	<20150225103535.GJ5029@twins.programming.kicks-ass.net>
 	<20150225105116.7fa03cc9@gandalf.local.home>
 	<20150225171110.GO21418@twins.programming.kicks-ass.net>
 	<20150225125015.6c5110ca@gandalf.local.home>
-	<20150226074559.GP21418@twins.programming.kicks-ass.net>
+	<20150226074907.GQ21418@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -19,54 +19,31 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>,
-	Oleg Nesterov <oleg@redhat.com>
+	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
 To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150226074559.GP21418@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:8943 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S932272AbbBZMpR (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 26 Feb 2015 07:45:17 -0500
+In-Reply-To: <20150226074907.GQ21418@twins.programming.kicks-ass.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 26 Feb 2015 08:45:59 +0100
+On Thu, 26 Feb 2015 08:49:07 +0100
 Peter Zijlstra <peterz@infradead.org> wrote:
-
-> On Wed, Feb 25, 2015 at 12:50:15PM -0500, Steven Rostedt wrote:
-> > It can't be used for state?
-> > 
-> > If one CPU writes "zero", and the other CPU wants to decide if the
-> > system is in the state to do something, isn't a rmb() fine to use?
-> > 
-> > 
-> > CPU 1:
-> > 
-> > 	x = 0;
-> > 	/* Tell other CPUs they can now do something */
-> > 	smp_wmb();
-> > 
-> > CPU 2:
-> > 	/* Make sure we see current state of x */
-> > 	smp_rmb();
-> > 	if (x == 0)
-> > 		do_something();
-> > 
-> > The above situation is not acceptable?
+ 
+> Yes, notice that we don't start iterating at the beginning; this in on
+> purpose. If we start iterating at the beginning, _every_ cpu will again
+> pile up on the first one.
 > 
-> Acceptable is just not the word. It plain doesn't work that way.
+> By starting at the current cpu, each cpu will start iteration some place
+> else and hopefully, with a big enough system, different CPUs end up on a
+> different rto cpu.
 
-Thinking about this more, is it because a wmb just forces the CPU to
-write everything before this before it writes anything after it. That
-is, the writes themselves can happen at a much later time. Does a plain
-mb() work the same way if there are no reads required?
-
-> 
-> > Otherwise, we fail to be able to do_something() when it is perfectly
-> > fine to do so.
-> 
-> Can't be helped.
-
-What about using atomic_t?
-
-Note, my latest code doesn't have any of this, but I just want to
-understand the semantics of these operations a bit better.
+Note, v3 doesn't start at the current CPU, it starts at the original
+CPU again. As the start of every IPI comes from a different CPU, this
+still keeps a restart from clobbering the same CPU.
 
 -- Steve
