@@ -1,57 +1,92 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Thu, 26 Feb 2015 14:31:17 +0100
-Message-ID: <54EF2025.80404@linutronix.de>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>	 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>	 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com> <54EF196E.4090805@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
+ migration instead of pulling
+Date: Thu, 26 Feb 2015 14:47:54 +0100
+Message-ID: <20150226134754.GS21418@twins.programming.kicks-ass.net>
+References: <20150224133946.3948c4b7@gandalf.local.home>
+ <20150225103535.GJ5029@twins.programming.kicks-ass.net>
+ <20150225105116.7fa03cc9@gandalf.local.home>
+ <20150225171110.GO21418@twins.programming.kicks-ass.net>
+ <20150225125015.6c5110ca@gandalf.local.home>
+ <20150226074559.GP21418@twins.programming.kicks-ass.net>
+ <20150226074301.0db88af3@grimm.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8bit
-Cc: Alexander Graf <agraf@suse.de>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	linuxppc-dev@lists.ozlabs.org, linux-rt-users@vger.kernel.org,
-	linux-kernel@vger.kernel.org, mihai.caraman@freescale.com,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Paolo Bonzini <pbonzini@redhat.com>,
-	Scott Wood <scottwood@freescale.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	=?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>,
+	Oleg Nesterov <oleg@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <54EF196E.4090805@redhat.com>
+Content-Disposition: inline
+In-Reply-To: <20150226074301.0db88af3@grimm.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
+On Thu, Feb 26, 2015 at 07:43:01AM -0500, Steven Rostedt wrote:
+> On Thu, 26 Feb 2015 08:45:59 +0100
+> Peter Zijlstra <peterz@infradead.org> wrote:
 > 
+> > On Wed, Feb 25, 2015 at 12:50:15PM -0500, Steven Rostedt wrote:
+> > > It can't be used for state?
+> > > 
+> > > If one CPU writes "zero", and the other CPU wants to decide if the
+> > > system is in the state to do something, isn't a rmb() fine to use?
+> > > 
+> > > 
+> > > CPU 1:
+> > > 
+> > > 	x = 0;
+> > > 	/* Tell other CPUs they can now do something */
+> > > 	smp_wmb();
+> > > 
+> > > CPU 2:
+> > > 	/* Make sure we see current state of x */
+> > > 	smp_rmb();
+> > > 	if (x == 0)
+> > > 		do_something();
+> > > 
+> > > The above situation is not acceptable?
+> > 
+> > Acceptable is just not the word. It plain doesn't work that way.
 > 
-> On 24/02/2015 00:27, Scott Wood wrote:
->> This isn't a host PIC driver.  It's guest PIC emulation, some of which
->> is indeed not suitable for a rawlock (in particular, openpic_update_irq
->> which loops on the number of vcpus, with a loop body that calls
->> IRQ_check() which loops over all pending IRQs).
-> 
-> The question is what behavior is wanted of code that isn't quite
-> RT-ready.  What is preferred, bugs or bad latency?
-> 
-> If the answer is bad latency (which can be avoided simply by not running
-> KVM on a RT kernel in production), patch 1 can be applied.  If the
-can be applied *but* makes no difference if applied or not.
+> Thinking about this more, is it because a wmb just forces the CPU to
+> write everything before this before it writes anything after it. That
+> is, the writes themselves can happen at a much later time. Does a plain
+> mb() work the same way if there are no reads required?
 
-> answer is bugs, patch 1 is not upstream material.
+No, neither smp_wmb nor smp_mb are required to flush the store buffers.
+
+The only thing barriers do is guarantee order, this can be done by
+flushing store buffers but it can also be done by making sure store
+buffers flush writes in the 'right' order.
+
+Nor does an rmb help anything with ordering against a possible store
+buffer flush. Again rmb only guarantees two loads are issued in that
+particular order, it doesn't disallow the CPU speculating the load at
+all.
+
+So that load of X could come out of thin air, or a year ago, or
+whatever, definitely before any store buffers were, or were not, flushed
+on another cpu.
+
+> > > Otherwise, we fail to be able to do_something() when it is perfectly
+> > > fine to do so.
+> > 
+> > Can't be helped.
 > 
-> I myself prefer to have bad latency; if something takes a spinlock in
-> atomic context, that spinlock should be raw.  If it hurts (latency),
-> don't do it (use the affected code).
-
-The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
-only in -RT. There is no change upstream. In general we fix such things
-in -RT first and forward the patches upstream if possible. This convert
-thingy would be possible.
-Bug fixing comes before latency no matter if RT or not. Converting
-every lock into a rawlock is not always the answer.
-Last thing I read from Scott is that he is not entirely sure if this is
-the right approach or not and patch #1 was not acked-by him either.
-
-So for now I wait for Scott's feedback and maybe a backtrace :)
-
+> What about using atomic_t?
 > 
-> Paolo
+> Note, my latest code doesn't have any of this, but I just want to
+> understand the semantics of these operations a bit better.
 
-Sebastian
+Nope, atomic_t doesn't help here either. Atomics only make sure the RmW
+cycle is atomic.
+
+Note that even if wmb or mb did flush the store buffer, you would still
+have a race here.
