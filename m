@@ -1,92 +1,78 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Thu, 26 Feb 2015 14:47:54 +0100
-Message-ID: <20150226134754.GS21418@twins.programming.kicks-ass.net>
-References: <20150224133946.3948c4b7@gandalf.local.home>
- <20150225103535.GJ5029@twins.programming.kicks-ass.net>
- <20150225105116.7fa03cc9@gandalf.local.home>
- <20150225171110.GO21418@twins.programming.kicks-ass.net>
- <20150225125015.6c5110ca@gandalf.local.home>
- <20150226074559.GP21418@twins.programming.kicks-ass.net>
- <20150226074301.0db88af3@grimm.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 3.14.25-rt22 1/2] rtmutex Real-Time Linux: Fixing kernel
+ BUG at kernel/locking/rtmutex.c:997!
+Date: Thu, 26 Feb 2015 14:56:30 +0100
+Message-ID: <20150226135630.GD12992@linutronix.de>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>
+ <1424395866-81589-2-git-send-email-tmac@hp.com>
+ <20150223133719.2b7c604e@gandalf.local.home>
+ <54EBC2DB.3050904@hp.com>
+ <20150223195743.546b2ef0@grimm.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>,
-	Oleg Nesterov <oleg@redhat.com>
+Content-Type: text/plain; charset=utf-8
+Cc: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>,
+	Thavatchai Makphaibulchoke <tmac@hp.com>,
+	linux-kernel@vger.kernel.org, mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org
 To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150226074301.0db88af3@grimm.local.home>
+In-Reply-To: <20150223195743.546b2ef0@grimm.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 26, 2015 at 07:43:01AM -0500, Steven Rostedt wrote:
-> On Thu, 26 Feb 2015 08:45:59 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
-> 
-> > On Wed, Feb 25, 2015 at 12:50:15PM -0500, Steven Rostedt wrote:
-> > > It can't be used for state?
-> > > 
-> > > If one CPU writes "zero", and the other CPU wants to decide if the
-> > > system is in the state to do something, isn't a rmb() fine to use?
-> > > 
-> > > 
-> > > CPU 1:
-> > > 
-> > > 	x = 0;
-> > > 	/* Tell other CPUs they can now do something */
-> > > 	smp_wmb();
-> > > 
-> > > CPU 2:
-> > > 	/* Make sure we see current state of x */
-> > > 	smp_rmb();
-> > > 	if (x == 0)
-> > > 		do_something();
-> > > 
-> > > The above situation is not acceptable?
-> > 
-> > Acceptable is just not the word. It plain doesn't work that way.
-> 
-> Thinking about this more, is it because a wmb just forces the CPU to
-> write everything before this before it writes anything after it. That
-> is, the writes themselves can happen at a much later time. Does a plain
-> mb() work the same way if there are no reads required?
+* Steven Rostedt | 2015-02-23 19:57:43 [-0500]:
 
-No, neither smp_wmb nor smp_mb are required to flush the store buffers.
+>On Mon, 23 Feb 2015 17:16:27 -0700
+>Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com> wrote:
+>> If I'm not mistaken, another reason could also be due to the rate of the
+>> timer interrupt, in the case that the mutex is highly contested IH could
+>> stall the non-real-time requester for a long time, even to the point of
+>> the cpu is perceived as hung.
+>
+>Perhaps we should just have trylocks fail if there are other waiters.
+>As it wont slow down the high priority task. And doing that would
+>probably even help other rt tasks that are blocked on the lock waiting
+>for a release. Why make those tasks wait more if even a higher priority
+>task is simply doing a trylock and can safely fail it. At least we
+>could do that if the task trying to get the lock is a interrupt.
 
-The only thing barriers do is guarantee order, this can be done by
-flushing store buffers but it can also be done by making sure store
-buffers flush writes in the 'right' order.
+What happened so far? The events I remember:
+- we gained FULL_NO_HZ
+- people started to isolate CPUs and push their work / RT tasks there
+- it has been noticed that the kernel is raising the timer softirq even
+  there is nothing going on once the softirq was started.
+- tglx came with a patch which could go mainline if solves the problem.
+- this patch did not make its way upstream (yet) and I pulled it into
+  -RT. Isn't this a problem in mainline, too? Why isn't there anyone
+  screaming?
+- we had dead locks because the inner-lock of the sleeping was not safe
+  to be used from hardirq context. #1
+- we had boxes freezing on startup and not making progress due to missed
+  irq_work wakeups. #2
+- we had a deadlock splat on UP because the trylock failed. This was
+  fixed by only allowing this feature on SMP (since it only makes sense
+  with isolated CPUs). #3
+- Now since the rtmutex rework we have dead lock splats which BUG()s the
+  systems. #4
 
-Nor does an rmb help anything with ordering against a possible store
-buffer flush. Again rmb only guarantees two loads are issued in that
-particular order, it doesn't disallow the CPU speculating the load at
-all.
+The four problems we had/have so far are -RT specific but still
+plainfull when I think back.
+rtmutex wasn't made to be accessed from hardirq context. That is where we
+use the rawlocks. One problem that we still have and Peter pointer out
+around #1 is about owner boosting if the lock is held in hardirq context
+and the wrong owner is recorded. This problem was ignored so far.
 
-So that load of X could come out of thin air, or a year ago, or
-whatever, definitely before any store buffers were, or were not, flushed
-on another cpu.
+Using a fake task as you suggest in irq context and ignoring would
+somehow fix the boosting problem and avoid the deadlock we see now.
 
-> > > Otherwise, we fail to be able to do_something() when it is perfectly
-> > > fine to do so.
-> > 
-> > Can't be helped.
-> 
-> What about using atomic_t?
-> 
-> Note, my latest code doesn't have any of this, but I just want to
-> understand the semantics of these operations a bit better.
+I am not sure if we want keep doing that. The only reason why we grab
+the lock in the first place was to check if there is a timer pending
+and we run on the isolated CPU. It should not matter for the other CPUs,
+right?
+So instead going further that road, what about storing base->next_timer
+someplace so it can be obtained via atomic_read() for the isolated CPUs?
 
-Nope, atomic_t doesn't help here either. Atomics only make sure the RmW
-cycle is atomic.
+>-- Steve
 
-Note that even if wmb or mb did flush the store buffer, you would still
-have a race here.
+Sebastian
