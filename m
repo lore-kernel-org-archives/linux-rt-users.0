@@ -1,49 +1,58 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RFC PATCH] tasklet: correct the comments about tasklet schedule
-Date: Thu, 26 Feb 2015 15:35:55 +0100
-Message-ID: <20150226143555.GG12992@linutronix.de>
-References: <536075C1.2080704@huawei.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC][PATCH v3] sched/rt: Use IPI to trigger RT task push
+ migration instead of pulling
+Date: Thu, 26 Feb 2015 10:58:13 -0500
+Message-ID: <20150226105813.2659c8ea@gandalf.local.home>
+References: <20150225222644.042841cc@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Steven Rostedt <rostedt@goodmis.org>, mingo@kernel.org,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	zhangwei <jovi.zhangwei@huawei.com>,
-	Li Zefan <lizefan@huawei.com>, peterz@infradead.org
-To: Qiang Huang <h.huangqiang@huawei.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49212 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753432AbbBZOf7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Feb 2015 09:35:59 -0500
-Content-Disposition: inline
-In-Reply-To: <536075C1.2080704@huawei.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150225222644.042841cc@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Qiang Huang | 2014-04-30 12:02:09 [+0800]:
+On Wed, 25 Feb 2015 22:26:44 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
->--- a/include/linux/interrupt.h
->+++ b/include/linux/interrupt.h
->@@ -514,9 +514,8 @@ extern void __send_remote_softirq(struct call_single_data *cp, int cpu,
->      to be executed on some cpu at least once after this.
->    * If the tasklet is already scheduled, but its execution is still not
->      started, it will be executed only once.
->-   * If this tasklet is already running on another CPU, it is rescheduled
->-     for later.
-This is true
+> +static int find_next_push_cpu(struct rq *rq)
+> +{
+> +	struct rq *next_rq;
+> +	int cpu;
+> +
+> +	while (1) {
+> +		cpu = rto_next_cpu(rq);
+> +		if (cpu >= nr_cpu_ids)
+> +			break;
+> +		next_rq = cpu_rq(cpu);
+> +
+> +		/* Make sure the next rq can push to this rq */
+> +		if (next_rq->rt.highest_prio.next <
+> +		    rq->rt.highest_prio.curr &&
 
->-   * Schedule must not be called from the tasklet itself (a lockup occurs)
-This is true
+> +		    next_rq->rt.highest_prio.next <
+> +		    rq->rt.highest_prio.next)
 
->+   * If this tasklet is already running on another CPU (or schedule is called
->+     from tasklet itself), it wound not be rescheduled.
-that are two statements.
+OK, this second comparison is not needed. I was looking at the code in
+more detail, and see that the .curr is updated when a new task is
+enqueued, and it does not represent the task currently running, but the
+highest priority task that is on the rq.
 
-I suggest you fix the driver instead poking at the tasklet code.
+I'll be sending a v4 soon with this update.
 
->    * Tasklet is strictly serialized wrt itself, but not
->      wrt another tasklets. If client needs some intertask synchronization,
->      he makes it with spinlocks.
+-- Steve
 
-Sebastian
+> +			break;
+> +	}
+> +
+> +	return cpu;
+> +}
