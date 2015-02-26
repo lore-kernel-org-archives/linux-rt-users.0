@@ -1,124 +1,170 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 3.18.7-rt2
-Date: Thu, 26 Feb 2015 09:02:05 +0100
-Message-ID: <1424937725.3622.31.camel@gmail.com>
-References: <20150223090617.GA26453@linutronix.de>
-	 <1424785301.8767.11.camel@gmail.com>
-	 <CAA8Xd+9QEn0XE2pV-7fW0cBXKBSK9=oZyTaFH2urGvJLGb=gFw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 3.18.7-rt1
+Date: Thu, 26 Feb 2015 09:48:50 +0100
+Message-ID: <20150226084850.GA12992@linutronix.de>
+References: <20150216111822.GA21649@linutronix.de>
+ <54E2FDD8.8090008@monom.org>
+ <20150219103601.7e40d0af@tor.valhalla.alchemy.lu>
+ <20150225135501.GA6823@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Cc: Daniel Wagner <wagi@monom.org>, John Kacur <jkacur@redhat.com>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Gustavo Bittencourt <gbitten@gmail.com>
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org
+To: Joakim Hernberg <jhernberg@alchemy.lu>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CAA8Xd+9QEn0XE2pV-7fW0cBXKBSK9=oZyTaFH2urGvJLGb=gFw@mail.gmail.com>
+Content-Disposition: inline
+In-Reply-To: <20150225135501.GA6823@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 2015-02-24 at 13:19 -0300, Gustavo Bittencourt wrote:
+* Sebastian Andrzej Siewior | 2015-02-25 14:55:01 [+0100]:
 
-> The deadlock returned after I applied this patch in v3.18.7-rt2.
+>Okay. I applied a slightly modified version of it. That init() is
 
-Grr, because dummy here munged a reject when he backported to 3.18-rt.
-Please try the below, my trusty old Q6600 box is now running with
-nouveau/drm in both 3.18-rt and 4.0-rt.
+>From 8334ac498f104c00e5d93e3e83d3bcec1a993cec Mon Sep 17 00:00:00 2001
+From: Daniel Wagner <wagi@monom.org>
+Date: Tue, 17 Feb 2015 09:37:44 +0100
+Subject: [PATCH] thermal: Defer thermal wakups to threads
 
-I found what was breaking my core2 lappy in 4.0-rt as well, namely the
-rtmutex.c set_current_state() munging that went into mainline recently,
-and that also broke my Q6600 box with nouveau/drm as well!  Seems you
-need a slow box and drm to experience the breakage nice and repeatably,
-which is kinda worrisome.  Anyway, all of my boxen can use drm just fine
-in both rt trees now, so your box _should_ be happy too.
+On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
+call schedule while we run in irq context.
 
-WRT nouveau locking, per lockdep it has at least one rt issue with or
-without my patch. i915 OTOH runs lockdep clean.
+[<ffffffff816850ac>] dump_stack+0x4e/0x8f
+[<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
+[<ffffffff816896b4>] __schedule+0x5b4/0x700
+[<ffffffff8168982a>] schedule+0x2a/0x90
+[<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
+[<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
+[<ffffffffa03a7b75>] pkg_temp_thermal_platform_thermal_notify+0x45/0x134 [x86_pkg_temp_thermal]
+[<ffffffff8103d4db>] ? therm_throt_process+0x1b/0x160
+[<ffffffff8103d831>] intel_thermal_interrupt+0x211/0x250
+[<ffffffff8103d8c1>] smp_thermal_interrupt+0x21/0x40
+[<ffffffff8169415d>] thermal_interrupt+0x6d/0x80
 
+Let's defer the work to a kthread.
 
-locking, ww_mutex: fix ww_mutex vs self-deadlock
-
-If the caller already holds the mutex, task_blocks_on_rt_mutex()
-returns -EDEADLK, we proceed directly to rt_mutex_handle_deadlock()
-where it's instant game over.
-
-Let ww_mutexes return EDEADLK/EALREADY as they want to instead.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+[bigeasy: reoder init/denit position. TODO: flush swork on exit]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/locking/rtmutex.c |   24 +++++++++++++++---------
- 1 file changed, 15 insertions(+), 9 deletions(-)
+ drivers/thermal/x86_pkg_temp_thermal.c | 51 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 48 insertions(+), 3 deletions(-)
 
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1706,15 +1706,21 @@ rt_mutex_slowlock(struct rt_mutex *lock,
- 	ret = task_blocks_on_rt_mutex(lock, &waiter, current, chwalk);
+diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+index 9ea3d9d49ffc..ab7c400a9d5c 100644
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,6 +29,7 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
++#include <linux/work-simple.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
  
- 	if (likely(!ret))
--		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter,
--					  ww_ctx);
-+		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter, ww_ctx);
-+	else if (ww_ctx) {
-+		/* ww_mutex received EDEADLK, let it become EALREADY */
-+		ret = __mutex_lock_check_stamp(lock, ww_ctx);
-+		BUG_ON(!ret);
-+	}
- 
- 	set_current_state(TASK_RUNNING);
- 
- 	if (unlikely(ret)) {
- 		if (rt_mutex_has_waiters(lock))
- 			remove_waiter(lock, &waiter);
--		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
-+		/* ww_mutex want to report EDEADLK/EALREADY, let them */
-+		if (!ww_ctx)
-+			rt_mutex_handle_deadlock(ret, chwalk, &waiter);
- 	} else if (ww_ctx) {
- 		ww_mutex_account_lock(lock, ww_ctx);
+@@ -352,7 +353,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
  	}
-@@ -2258,8 +2264,7 @@ __ww_mutex_lock_interruptible(struct ww_
- 	might_sleep();
- 
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL,
--				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
-@@ -2277,8 +2282,7 @@ __ww_mutex_lock(struct ww_mutex *lock, s
- 	might_sleep();
- 
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL,
--				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
-@@ -2290,11 +2294,13 @@ EXPORT_SYMBOL_GPL(__ww_mutex_lock);
- 
- void __sched ww_mutex_unlock(struct ww_mutex *lock)
- {
-+	int nest = !!lock->ctx;
-+
- 	/*
- 	 * The unlocking fastpath is the 0->1 transition from 'locked'
- 	 * into 'unlocked' state:
- 	 */
--	if (lock->ctx) {
-+	if (nest) {
- #ifdef CONFIG_DEBUG_MUTEXES
- 		DEBUG_LOCKS_WARN_ON(!lock->ctx->acquired);
- #endif
-@@ -2303,7 +2309,7 @@ void __sched ww_mutex_unlock(struct ww_m
- 		lock->ctx = NULL;
- 	}
- 
--	mutex_release(&lock->base.dep_map, 1, _RET_IP_);
-+	mutex_release(&lock->base.dep_map, nest, _RET_IP_);
- 	rt_mutex_unlock(&lock->base.lock);
  }
- EXPORT_SYMBOL(ww_mutex_unlock);
+ 
+-static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++static void platform_thermal_notify_work(struct swork_event *event)
+ {
+ 	unsigned long flags;
+ 	int cpu = smp_processor_id();
+@@ -369,7 +370,7 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 			pkg_work_scheduled[phy_id]) {
+ 		disable_pkg_thres_interrupt();
+ 		spin_unlock_irqrestore(&pkg_work_lock, flags);
+-		return -EINVAL;
++		return;
+ 	}
+ 	pkg_work_scheduled[phy_id] = 1;
+ 	spin_unlock_irqrestore(&pkg_work_lock, flags);
+@@ -378,9 +379,48 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 	schedule_delayed_work_on(cpu,
+ 				&per_cpu(pkg_temp_thermal_threshold_work, cpu),
+ 				msecs_to_jiffies(notify_delay_ms));
++}
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++static struct swork_event notify_work;
++
++static int thermal_notify_work_init(void)
++{
++	int err;
++
++	err = swork_get();
++	if (!err)
++		return err;
++
++	INIT_SWORK(&notify_work, platform_thermal_notify_work);
+ 	return 0;
+ }
+ 
++static void thermal_notify_work_cleanup(void)
++{
++	swork_put();
++}
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	swork_queue(&notify_work);
++	return 0;
++}
++
++#else  /* !CONFIG_PREEMPT_RT_FULL */
++
++static int thermal_notify_work_init(void) { return 0; }
++
++static int thermal_notify_work_cleanup(void) {  }
++
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	platform_thermal_notify_work(NULL);
++
++	return 0;
++}
++#endif /* CONFIG_PREEMPT_RT_FULL */
++
+ static int find_siblings_cpu(int cpu)
+ {
+ 	int i;
+@@ -584,6 +624,9 @@ static int __init pkg_temp_thermal_init(void)
+ 	if (!x86_match_cpu(pkg_temp_thermal_ids))
+ 		return -ENODEV;
+ 
++	if (!thermal_notify_work_init())
++		return -ENODEV;
++
+ 	spin_lock_init(&pkg_work_lock);
+ 	platform_thermal_package_notify =
+ 			pkg_temp_thermal_platform_thermal_notify;
+@@ -594,6 +637,7 @@ static int __init pkg_temp_thermal_init(void)
+ 	for_each_online_cpu(i)
+ 		if (get_core_online(i))
+ 			goto err_ret;
++
+ 	__register_hotcpu_notifier(&pkg_temp_thermal_notifier);
+ 	cpu_notifier_register_done();
+ 
+@@ -608,7 +652,7 @@ static int __init pkg_temp_thermal_init(void)
+ 	kfree(pkg_work_scheduled);
+ 	platform_thermal_package_notify = NULL;
+ 	platform_thermal_package_rate_control = NULL;
+-
++	thermal_notify_work_cleanup();
+ 	return -ENODEV;
+ }
+ 
+@@ -633,6 +677,7 @@ static void __exit pkg_temp_thermal_exit(void)
+ 	mutex_unlock(&phy_dev_list_mutex);
+ 	platform_thermal_package_notify = NULL;
+ 	platform_thermal_package_rate_control = NULL;
++	thermal_notify_work_cleanup();
+ 	for_each_online_cpu(i)
+ 		cancel_delayed_work_sync(
+ 			&per_cpu(pkg_temp_thermal_threshold_work, i));
+-- 
+2.1.4
