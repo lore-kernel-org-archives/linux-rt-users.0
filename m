@@ -1,49 +1,44 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v2] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Thu, 26 Feb 2015 07:46:09 -0500
-Message-ID: <20150226074609.27ccd39d@grimm.local.home>
-References: <20150224133946.3948c4b7@gandalf.local.home>
-	<20150225103535.GJ5029@twins.programming.kicks-ass.net>
-	<20150225105116.7fa03cc9@gandalf.local.home>
-	<20150225171110.GO21418@twins.programming.kicks-ass.net>
-	<20150225125015.6c5110ca@gandalf.local.home>
-	<20150226074907.GQ21418@twins.programming.kicks-ass.net>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Thu, 26 Feb 2015 14:02:38 +0100
+Message-ID: <54EF196E.4090805@redhat.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>	 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>	 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:8943 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932272AbbBZMpR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 26 Feb 2015 07:45:17 -0500
-In-Reply-To: <20150226074907.GQ21418@twins.programming.kicks-ass.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	linuxppc-dev@lists.ozlabs.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, mihai.caraman@freescale.com,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Scott Wood <scottwood@freescale.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1424734051.4698.17.camel@freescale.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 26 Feb 2015 08:49:07 +0100
-Peter Zijlstra <peterz@infradead.org> wrote:
- 
-> Yes, notice that we don't start iterating at the beginning; this in on
-> purpose. If we start iterating at the beginning, _every_ cpu will again
-> pile up on the first one.
-> 
-> By starting at the current cpu, each cpu will start iteration some place
-> else and hopefully, with a big enough system, different CPUs end up on a
-> different rto cpu.
 
-Note, v3 doesn't start at the current CPU, it starts at the original
-CPU again. As the start of every IPI comes from a different CPU, this
-still keeps a restart from clobbering the same CPU.
 
--- Steve
+On 24/02/2015 00:27, Scott Wood wrote:
+> This isn't a host PIC driver.  It's guest PIC emulation, some of which
+> is indeed not suitable for a rawlock (in particular, openpic_update_irq
+> which loops on the number of vcpus, with a loop body that calls
+> IRQ_check() which loops over all pending IRQs).
+
+The question is what behavior is wanted of code that isn't quite
+RT-ready.  What is preferred, bugs or bad latency?
+
+If the answer is bad latency (which can be avoided simply by not running
+KVM on a RT kernel in production), patch 1 can be applied.  If the
+answer is bugs, patch 1 is not upstream material.
+
+I myself prefer to have bad latency; if something takes a spinlock in
+atomic context, that spinlock should be raw.  If it hurts (latency),
+don't do it (use the affected code).
+
+Paolo
+
+> The vcpu limits are a
+> temporary bandaid to avoid the worst latencies, but I'm still skeptical
+> about this being upstream material.
