@@ -1,117 +1,55 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [RFC][PATCH v4] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Fri, 27 Feb 2015 10:08:30 +0100
-Message-ID: <20150227090830.GF21418@twins.programming.kicks-ass.net>
-References: <20150226112635.69b5870f@gandalf.local.home>
+From: =?UTF-8?B?TWljaGFsIMWgbXVjcg==?= <msmucr@gmail.com>
+Subject: Re: [RT PATCH] mmc: sdhci: don't provide hard irq handler
+Date: Fri, 27 Feb 2015 10:33:15 +0100
+Message-ID: <54F039DB.6020008@gmail.com>
+References: <54EC487F.8020109@gmail.com> <20150226112925.GC12992@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150226112635.69b5870f@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org, linux-mmc@vger.kernel.org,
+	Chris Ball <chris@printf.net>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-mmc-owner@vger.kernel.org>
+In-Reply-To: <20150226112925.GC12992@linutronix.de>
+Sender: linux-mmc-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, Feb 26, 2015 at 11:26:35AM -0500, Steven Rostedt wrote:
-> Index: linux-rt.git/kernel/sched/rt.c
-> ===================================================================
-> --- linux-rt.git.orig/kernel/sched/rt.c	2015-02-26 10:55:26.107945935 -0500
-> +++ linux-rt.git/kernel/sched/rt.c	2015-02-26 10:55:38.277777892 -0500
+On 26.2.2015 12:29, Sebastian Andrzej Siewior wrote:
+> the sdhci code provides both irq handlers: the primary and the thread
+> handler. Initially it was meant for the primary handler to be very
+> short.
+> The result is not that on -RT we have the primrary handler grabing lo=
+cks
+> and this isn't really working. As a hack for now I just push both
+> handler into the threaded mode.
+>
+> Reported-By: Michal =C5=A0mucr <msmucr@gmail.com>
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> ---
+> The "same thing" was reported against the iwlwifi driver
+> (request_threaded_irq(=E2=80=A6, iwl_pcie_isr, iwl_pcie_irq_handler, =
+=E2=80=A6) and they
+> managed to rework it and not do anything that would break -RT in thei=
+r
+> primary handler. Besides sdhci there are a few others drivers in the
+> same tree doing similar things.
+> I'm not sure what to do here in general. Motivating upstream maintain=
+er
+> to rework their code or introducing IRQF_RT_SAFE and for others doing
+> the conversation like in the patch below.
+>
+> Michal: This is untested but should fix the issue, reported.
+>
 
-> +/* Called from hardirq context */
-> +static void try_to_push_tasks(void *arg)
-> +{
-> +	struct rt_rq *rt_rq = arg;
-> +	struct rq *rq, *src_rq;
-> +	int this_cpu;
-> +	int cpu;
-> +
-> +	this_cpu = rt_rq->push_cpu;
-> +
-> +	/* Paranoid check */
-> +	BUG_ON(this_cpu != smp_processor_id());
-> +
-> +	rq = cpu_rq(this_cpu);
-> +	src_rq = rq_of_rt_rq(rt_rq);
-> +
-> + again:
+Sebastian,
 
-Superfluous space there!
+thank you very much for the patch and explanation of what's going on. I=
+t=20
+is very handy to know for possible similar issues with other modules.=20
+The trick with forced threaded handlers seems to be working well and I=20
+haven't been able to crash it again during all of my tests.
 
-> +	if (has_pushable_tasks(rq)) {
-> +		raw_spin_lock(&rq->lock);
-> +		push_rt_task(rq);
-> +		raw_spin_unlock(&rq->lock);
-> +	}
+Michal
 
-So push_rt_task() has a return value; should we use it?
 
-That is, currently we iterate the entire rto mask and migrate everything
-we come across, is there an argument to be had to only migrate 1 task
-and then call it quits?
-
-> Index: linux-rt.git/kernel/sched/sched.h
-> ===================================================================
-> --- linux-rt.git.orig/kernel/sched/sched.h	2015-02-26 10:55:26.107945935 -0500
-> +++ linux-rt.git/kernel/sched/sched.h	2015-02-26 10:55:28.082918664 -0500
-> @@ -6,6 +6,7 @@
->  #include <linux/mutex.h>
->  #include <linux/spinlock.h>
->  #include <linux/stop_machine.h>
-> +#include <linux/irq_work.h>
->  #include <linux/tick.h>
->  #include <linux/slab.h>
->  
-> @@ -435,6 +436,11 @@ struct rt_rq {
->  	unsigned long rt_nr_total;
->  	int overloaded;
->  	struct plist_head pushable_tasks;
-> +	struct call_single_data push_csd;
-
-You waaztin' maa spaaz!
-
-> +	int push_flags;
-> +	int push_cpu;
-> +	struct irq_work push_work;
-> +	raw_spinlock_t push_lock;
->  #endif
->  	int rt_queued;
->  
-
-One could make an argument for using a separate per-cpu variable and
-cacheline align the thing...
-
-> Index: linux-rt.git/kernel/sched/features.h
-> ===================================================================
-> --- linux-rt.git.orig/kernel/sched/features.h	2015-02-26 10:55:26.107945935 -0500
-> +++ linux-rt.git/kernel/sched/features.h	2015-02-26 10:55:28.083918650 -0500
-> @@ -56,6 +56,17 @@ SCHED_FEAT(NONTASK_CAPACITY, true)
->   */
->  SCHED_FEAT(TTWU_QUEUE, true)
->  
-> +/*
-> + * In order to avoid a thundering herd attack of CPUS that are
-
-I would suggest you remap your caps-lock to some useful key :-)
-
-> + * lowering their priorities at the same time, and there being
-> + * a single CPU that has an RT task that can migrate and is waiting
-> + * to run, where the other CPUs will try to take that CPUs
-> + * rq lock and possibly create a large contention, sending an
-> + * IPI to that CPU and let that CPU push the RT task to where
-> + * it should go may be a better scenario.
-> + */
-> +SCHED_FEAT(RT_PUSH_IPI, true)
-> +
->  SCHED_FEAT(FORCE_SD_OVERLAP, false)
->  SCHED_FEAT(RT_RUNTIME_SHARE, true)
->  SCHED_FEAT(LB_MIN, false)
