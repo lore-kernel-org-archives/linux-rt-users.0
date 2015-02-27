@@ -1,65 +1,67 @@
-From: Marcelo Tosatti <mtosatti@redhat.com>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Thu, 26 Feb 2015 21:23:57 -0300
-Message-ID: <20150227002357.GA11577@amt.cnet>
-References: <20150114171251.882318257@redhat.com>
- <20150114171459.593877145@redhat.com>
- <20150116114846.4e7b718d@gandalf.local.home>
- <20150119144100.GA10794@amt.cnet>
- <20150120054653.GA6473@iris.ozlabs.ibm.com>
- <20150120131613.009903a0@gandalf.local.home>
- <20150121150716.GD11596@twins.programming.kicks-ass.net>
- <20150217174419.GY26177@linutronix.de>
+From: Scott Wood <scottwood@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Thu, 26 Feb 2015 19:05:59 -0600
+Message-ID: <1424999159.4698.78.camel@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
+	 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
+	 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>
+	 <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Paul Mackerras <paulus@samba.org>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Paolo Bonzini <pbonzini@redhat.com>,
+	Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
+	"Thomas Gleixner" <tglx@linutronix.de>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150217174419.GY26177@linutronix.de>
+In-Reply-To: <54EF2025.80404@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Feb 17, 2015 at 06:44:19PM +0100, Sebastian Andrzej Siewior wro=
-te:
-> * Peter Zijlstra | 2015-01-21 16:07:16 [+0100]:
->=20
-> >On Tue, Jan 20, 2015 at 01:16:13PM -0500, Steven Rostedt wrote:
-> >> I'm actually wondering if we should just nuke the _interruptible()
-> >> version of swait. As it should only be all interruptible or all no=
-t
-> >> interruptible, that the swait_wake() should just do the wake up
-> >> regardless. In which case, swait_wake() is good enough. No need to=
- have
-> >> different versions where people may think do something special.
-> >>=20
-> >> Peter?
-> >
-> >Yeah, I think the lastest thing I have sitting here on my disk only =
-has
-> >the swake_up() which does TASK_NORMAL, no choice there.
->=20
-> what is the swait status in terms of mainline? This sounds like it
-> beeing worked on.
-> I could take the series but then I would drop it again if the mainlin=
-e
-> implementation changes=E2=80=A6
+On Thu, 2015-02-26 at 14:31 +0100, Sebastian Andrzej Siewior wrote:
+> On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
+> > 
+> > 
+> > On 24/02/2015 00:27, Scott Wood wrote:
+> >> This isn't a host PIC driver.  It's guest PIC emulation, some of which
+> >> is indeed not suitable for a rawlock (in particular, openpic_update_irq
+> >> which loops on the number of vcpus, with a loop body that calls
+> >> IRQ_check() which loops over all pending IRQs).
+> > 
+> > The question is what behavior is wanted of code that isn't quite
+> > RT-ready.  What is preferred, bugs or bad latency?
+> > 
+> > If the answer is bad latency (which can be avoided simply by not running
+> > KVM on a RT kernel in production), patch 1 can be applied.  If the
+> can be applied *but* makes no difference if applied or not.
+> 
+> > answer is bugs, patch 1 is not upstream material.
+> > 
+> > I myself prefer to have bad latency; if something takes a spinlock in
+> > atomic context, that spinlock should be raw.  If it hurts (latency),
+> > don't do it (use the affected code).
+> 
+> The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
+> only in -RT. There is no change upstream. In general we fix such things
+> in -RT first and forward the patches upstream if possible. This convert
+> thingy would be possible.
+> Bug fixing comes before latency no matter if RT or not. Converting
+> every lock into a rawlock is not always the answer.
+> Last thing I read from Scott is that he is not entirely sure if this is
+> the right approach or not and patch #1 was not acked-by him either.
+> 
+> So for now I wait for Scott's feedback and maybe a backtrace :)
 
-Hi Sebastian,
+Obviously leaving it in a buggy state is not what we want -- but I lean
+towards a short term "fix" of putting "depends on !PREEMPT_RT" on the
+in-kernel MPIC emulation (which is itself just an optimization -- you
+can still use KVM without it).  This way people don't enable it with RT
+without being aware of the issue, and there's more of an incentive to
+fix it properly.
 
-No, you would just adjust it to the upstream kernel interfaces, as the =
-rest of
-the -rt users of the swait interfaces.
+I'll let Bogdan supply the backtrace.
 
-Can you please include the series?
-
-Thanks
+-Scott
