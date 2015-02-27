@@ -1,160 +1,384 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH v4] sched/rt: Use IPI to trigger RT task push
- migration instead of pulling
-Date: Fri, 27 Feb 2015 09:29:43 -0500
-Message-ID: <20150227092943.00cbe7ea@gandalf.local.home>
-References: <20150226112635.69b5870f@gandalf.local.home>
-	<20150227090830.GF21418@twins.programming.kicks-ass.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH] Introduce the simple waitqueue (swait) implementation
+Date: Fri, 27 Feb 2015 18:39:24 +0100
+Message-ID: <20150227173924.GA30248@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
-To: Peter Zijlstra <peterz@infradead.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, rostedt@goodmis.org,
+	peterz@infradead.org, paul.gortmaker@windriver.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150227090830.GF21418@twins.programming.kicks-ass.net>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 27 Feb 2015 10:08:30 +0100
-Peter Zijlstra <peterz@infradead.org> wrote:
+From: Peter Zijlstra <peterz@infradead.org>
 
-> On Thu, Feb 26, 2015 at 11:26:35AM -0500, Steven Rostedt wrote:
-> > Index: linux-rt.git/kernel/sched/rt.c
-> > ===================================================================
-> > --- linux-rt.git.orig/kernel/sched/rt.c	2015-02-26 10:55:26.107945935 -0500
-> > +++ linux-rt.git/kernel/sched/rt.c	2015-02-26 10:55:38.277777892 -0500
-> 
-> > +/* Called from hardirq context */
-> > +static void try_to_push_tasks(void *arg)
-> > +{
-> > +	struct rt_rq *rt_rq = arg;
-> > +	struct rq *rq, *src_rq;
-> > +	int this_cpu;
-> > +	int cpu;
-> > +
-> > +	this_cpu = rt_rq->push_cpu;
-> > +
-> > +	/* Paranoid check */
-> > +	BUG_ON(this_cpu != smp_processor_id());
-> > +
-> > +	rq = cpu_rq(this_cpu);
-> > +	src_rq = rq_of_rt_rq(rt_rq);
-> > +
-> > + again:
-> 
-> Superfluous space there!
+The existing wait queue support has support for custom wake up call
+backs, wake flags, wake key (passed to call back) and exclusive
+flags that allow wakers to be tagged as exclusive, for limiting
+the number of wakers.
 
-I like to give homes to superfluous spaces.
+In a lot of cases, none of these features are used, and hence we
+can benefit from a slimmed down version that lowers memory overhead
+and reduces runtime overhead.
 
-> 
-> > +	if (has_pushable_tasks(rq)) {
-> > +		raw_spin_lock(&rq->lock);
-> > +		push_rt_task(rq);
-> > +		raw_spin_unlock(&rq->lock);
-> > +	}
-> 
-> So push_rt_task() has a return value; should we use it?
-> 
-> That is, currently we iterate the entire rto mask and migrate everything
-> we come across, is there an argument to be had to only migrate 1 task
-> and then call it quits?
+The concept originated from RT, where waitqueues are a constant
+source of trouble, as we can't convert the head lock to a raw
+spinlock due to fancy and long lasting callbacks.
 
-No we can't do that. We want the highest priority task that isn't
-running to be able to run. We can't stop when we migrate one, because
-that may be the lowest priority task waiting. There may still be a
-higher priority task on another rq that can run on the newly opened CPU.
+With the removal of custom callbacks, we can use a raw lock for
+queue list manipulations, hence allowing the simple wait support
+to be used in RT.
 
-In fact, I was thinking that we do use the return value, but in a
-different way:
+Originally-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Mostly-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 
-	raw_spin_lock(&rq->lock);
-	while (push_rt_task(rq))
-		;
-	raw_spin_unlock(&rq->lock);
+---
+Peters' last version .. this:
+  - task_list -> node for struct swait_queue (se we have task_list for
+    head and node for the "items")
+  - various things to get the beast to compile
+  - +WARN_ON(irqs_disabled()) in swake_up_all()
+  - grabed Paul's last version from my mailbox for the description and
+    removed that parts that were no longer up to date.
 
-and unload all waiting tasks on this rq if possible.
+ include/linux/swait.h | 177 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched/Makefile |   2 +-
+ kernel/sched/swait.c  | 127 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 305 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/swait.h
+ create mode 100644 kernel/sched/swait.c
 
-Hmm, maybe not. The IPI gets sent out because a single rq has just
-lowered its priority, and is looking for the highest priority task to
-migrate to it. The first one to succeed to migrate would be the
-highest prio task on this rq. It makes sense to then check other run
-queues on other CPUs.
-
-> 
-> > Index: linux-rt.git/kernel/sched/sched.h
-> > ===================================================================
-> > --- linux-rt.git.orig/kernel/sched/sched.h	2015-02-26 10:55:26.107945935 -0500
-> > +++ linux-rt.git/kernel/sched/sched.h	2015-02-26 10:55:28.082918664 -0500
-> > @@ -6,6 +6,7 @@
-> >  #include <linux/mutex.h>
-> >  #include <linux/spinlock.h>
-> >  #include <linux/stop_machine.h>
-> > +#include <linux/irq_work.h>
-> >  #include <linux/tick.h>
-> >  #include <linux/slab.h>
-> >  
-> > @@ -435,6 +436,11 @@ struct rt_rq {
-> >  	unsigned long rt_nr_total;
-> >  	int overloaded;
-> >  	struct plist_head pushable_tasks;
-> > +	struct call_single_data push_csd;
-> 
-> You waaztin' maa spaaz!
-
-This space didn't want to go homeless. But I need to kick him out
-regardless.
-
-> 
-> > +	int push_flags;
-> > +	int push_cpu;
-> > +	struct irq_work push_work;
-> > +	raw_spinlock_t push_lock;
-> >  #endif
-> >  	int rt_queued;
-> >  
-> 
-> One could make an argument for using a separate per-cpu variable and
-> cacheline align the thing...
-
-We could. Think it's worth it, or should I just keep this for now?
-
-> 
-> > Index: linux-rt.git/kernel/sched/features.h
-> > ===================================================================
-> > --- linux-rt.git.orig/kernel/sched/features.h	2015-02-26 10:55:26.107945935 -0500
-> > +++ linux-rt.git/kernel/sched/features.h	2015-02-26 10:55:28.083918650 -0500
-> > @@ -56,6 +56,17 @@ SCHED_FEAT(NONTASK_CAPACITY, true)
-> >   */
-> >  SCHED_FEAT(TTWU_QUEUE, true)
-> >  
-> > +/*
-> > + * In order to avoid a thundering herd attack of CPUS that are
-> 
-> I would suggest you remap your caps-lock to some useful key :-)
-
-I have short stubby fingers. I can't hit the shift key and another key
-at the same time very well. CAPS LOCK is my friend (I use it much more
-than Ctrl, and I'm an emacs user!)
-
--- Steve
-
-> 
-> > + * lowering their priorities at the same time, and there being
-> > + * a single CPU that has an RT task that can migrate and is waiting
-> > + * to run, where the other CPUs will try to take that CPUs
-> > + * rq lock and possibly create a large contention, sending an
-> > + * IPI to that CPU and let that CPU push the RT task to where
-> > + * it should go may be a better scenario.
-> > + */
-> > +SCHED_FEAT(RT_PUSH_IPI, true)
-> > +
-> >  SCHED_FEAT(FORCE_SD_OVERLAP, false)
-> >  SCHED_FEAT(RT_RUNTIME_SHARE, true)
-> >  SCHED_FEAT(LB_MIN, false)
+diff --git a/include/linux/swait.h b/include/linux/swait.h
+new file mode 100644
+index 000000000000..b174fb6eadb8
+--- /dev/null
++++ b/include/linux/swait.h
+@@ -0,0 +1,177 @@
++#ifndef _LINUX_SWAIT_H
++#define _LINUX_SWAIT_H
++
++#include <linux/list.h>
++#include <linux/stddef.h>
++#include <linux/spinlock.h>
++#include <asm/current.h>
++
++/*
++ * Simple wait queues
++ *
++ * While these are very similar to the other/complex wait queues (wait.h) the
++ * most important difference is that the simple waitqueue allows for
++ * deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
++ * times.
++ *
++ * In order to make this so, we had to drop a fair number of features of the
++ * other waitqueue code; notably:
++ *
++ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
++ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
++ *    sleeper state.
++ *
++ *  - the exclusive mode; because this requires preserving the list order
++ *    and this is hard.
++ *
++ *  - custom wake functions; because you cannot give any guarantees about
++ *    random code.
++ *
++ * As a side effect of this; the data structures are slimmer.
++ *
++ * One would recommend using this wait queue where possible.
++ */
++
++struct task_struct;
++
++struct swait_queue_head {
++	raw_spinlock_t		lock;
++	struct list_head	task_list;
++};
++
++struct swait_queue {
++	struct task_struct	*task;
++	struct list_head	node;
++};
++
++#define __SWAITQUEUE_INITIALIZER(name) {				\
++	.task		= current,					\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
++}
++
++#define DECLARE_SWAITQUEUE(name)					\
++	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
++
++#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
++	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
++}
++
++#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
++
++extern void __init_swait_queue_head(struct swait_queue_head *q,
++				    const char *name,
++				    struct lock_class_key *key);
++
++#define init_swait_queue_head(q)				\
++	do {							\
++		static struct lock_class_key __key;		\
++		__init_swait_queue_head((q), #q, &__key);	\
++	} while (0)
++
++#ifdef CONFIG_LOCKDEP
++# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
++	({ init_swait_queue_head(&name); name; })
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
++#else
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	DECLARE_SWAIT_QUEUE_HEAD(name)
++#endif
++
++static inline int swait_active(struct swait_queue_head *q)
++{
++	return !list_empty(&q->task_list);
++}
++
++extern void swake_up(struct swait_queue_head *q);
++extern void swake_up_all(struct swait_queue_head *q);
++extern void swake_up_locked(struct swait_queue_head *q);
++
++extern void __prepare_to_swait(struct swait_queue_head *q,
++			       struct swait_queue *wait);
++extern void prepare_to_swait(struct swait_queue_head *q,
++			     struct swait_queue *wait, int state);
++extern long prepare_to_swait_event(struct swait_queue_head *q,
++				   struct swait_queue *wait, int state);
++
++extern void __finish_swait(struct swait_queue_head *q,
++			   struct swait_queue *wait);
++extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
++
++/* as per ___wait_event() but for swait, therefore "exclusive == 0" */
++#define ___swait_event(wq, condition, state, ret, cmd)			\
++({									\
++	struct swait_queue __wait;					\
++	long __ret = ret;						\
++									\
++	INIT_LIST_HEAD(&__wait.task_list);				\
++	for (;;) {							\
++		long __int = prepare_to_swait_event(&wq, &__wait, state);\
++									\
++		if (condition)						\
++			break;						\
++									\
++		if (___wait_is_interruptible(state) && __int) {		\
++			__ret = __int;					\
++			break;						\
++		}							\
++									\
++		cmd;							\
++	}								\
++	finish_swait(&wq, &__wait);					\
++	__ret;								\
++})
++
++#define __swait_event(wq, condition)					\
++	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
++			    schedule())
++
++#define swait_event(wq, condition)					\
++do {									\
++	if (condition)							\
++		break;							\
++	__swait_event(wq, condition);					\
++} while (0)
++
++#define __swait_event_timeout(wq, condition, timeout)			\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_UNINTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_timeout(wq, condition, timeout)			\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_timeout(wq, condition, timeout);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible(wq, condition)			\
++	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
++		      schedule())
++
++#define swait_event_interruptible(wq, condition)			\
++({									\
++	int __ret = 0;							\
++	if (!(condition))						\
++		__ret = __swait_event_interruptible(wq, condition);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_INTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_interruptible_timeout(wq, condition, timeout)	\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_interruptible_timeout(wq,		\
++						condition, timeout);	\
++	__ret;								\
++})
++
++#endif /* _LINUX_SWAIT_H */
+diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
+index 46be87024875..27bfc846d300 100644
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -13,7 +13,7 @@ endif
+ 
+ obj-y += core.o proc.o clock.o cputime.o
+ obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y += wait.o completion.o idle.o
++obj-y += wait.o swait.o completion.o idle.o
+ obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
+new file mode 100644
+index 000000000000..01914162d235
+--- /dev/null
++++ b/kernel/sched/swait.c
+@@ -0,0 +1,127 @@
++
++#include <linux/swait.h>
++#include <linux/sched.h>
++
++void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
++			     struct lock_class_key *key)
++{
++	raw_spin_lock_init(&q->lock);
++	lockdep_set_class_and_name(&q->lock, key, name);
++	INIT_LIST_HEAD(&q->task_list);
++}
++EXPORT_SYMBOL(__init_swait_queue_head);
++
++/*
++ * The thing about the wake_up_process() return value; I think we can ignore it.
++ *
++ * If for some reason it would return 0, that means the previously waiting
++ * task is already running, so it will observe condition true (or has already).
++ */
++void swake_up_locked(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++
++	list_for_each_entry(curr, &q->task_list, node) {
++		wake_up_process(curr->task);
++		list_del_init(&curr->node);
++		break;
++	}
++}
++EXPORT_SYMBOL(swake_up_locked);
++
++void swake_up(struct swait_queue_head *q)
++{
++	unsigned long flags;
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	swake_up_locked(q);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(swake_up);
++
++/*
++ * Does not allow usage from IRQ disabled, since we must be able to
++ * release IRQs to guarantee bounded hold time.
++ */
++void swake_up_all(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++	LIST_HEAD(tmp);
++
++	WARN_ON(irqs_disabled())
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irq(&q->lock);
++	list_splice_init(&q->task_list, &tmp);
++	while (!list_empty(&tmp)) {
++		curr = list_first_entry(&tmp, typeof(*curr), node);
++
++		wake_up_process(curr->task);
++		list_del_init(&curr->node);
++
++		if (list_empty(&tmp))
++			break;
++
++		raw_spin_unlock_irq(&q->lock);
++		raw_spin_lock_irq(&q->lock);
++	}
++	raw_spin_unlock_irq(&q->lock);
++}
++EXPORT_SYMBOL(swake_up_all);
++
++void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	wait->task = current;
++	if (list_empty(&wait->node))
++		list_add(&wait->node, &q->task_list);
++}
++
++void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait,
++		      int state)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	__prepare_to_swait(q, wait);
++	set_current_state(state);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(prepare_to_swait);
++
++long prepare_to_swait_event(struct swait_queue_head *q,
++			    struct swait_queue *wait, int state)
++{
++	if (signal_pending_state(state, current))
++		return -ERESTARTSYS;
++
++	prepare_to_swait(q, wait, state);
++
++	return 0;
++}
++EXPORT_SYMBOL(prepare_to_swait_event);
++
++void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	__set_current_state(TASK_RUNNING);
++	if (!list_empty(&wait->node))
++		list_del_init(&wait->node);
++}
++
++void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	unsigned long flags;
++
++	__set_current_state(TASK_RUNNING);
++
++	if (!list_empty_careful(&wait->node)) {
++		raw_spin_lock_irqsave(&q->lock, flags);
++		list_del_init(&wait->node);
++		raw_spin_unlock_irqrestore(&q->lock, flags);
++	}
++}
++EXPORT_SYMBOL(finish_swait);
+-- 
+2.1.4
