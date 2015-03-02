@@ -1,58 +1,40 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+From: =?UTF-8?B?TWljaGFsIMWgbXVjcg==?= <msmucr@gmail.com>
 Subject: Re: Kenrel panic with 3.18.7-rt2 - rootfs at MMC
-Date: Mon, 2 Mar 2015 04:34:04 +0100
-Message-ID: <20150302043404.13bdf10e@archlinux>
-References: <54EC487F.8020109@gmail.com>
-	<CAP=VYLr=vMTRYCqoXcQBjrMT1-7dGp8fsThTYWzf=4L2tEYyyA@mail.gmail.com>
+Date: Mon, 02 Mar 2015 12:43:24 +0100
+Message-ID: <54F44CDC.9070908@gmail.com>
+References: <54EC487F.8020109@gmail.com> <CAP=VYLr=vMTRYCqoXcQBjrMT1-7dGp8fsThTYWzf=4L2tEYyyA@mail.gmail.com> <CAP=VYLqqDRfpz+LH21ZPQ3sVJ-Re4bUjWW9aRvzCB6=OCnQuWQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail229c50.megamailservers.eu ([91.136.10.239]:55161 "EHLO
-	mail36c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753447AbbCBEAV (ORCPT
+Received: from mail-wi0-f174.google.com ([209.85.212.174]:44210 "EHLO
+	mail-wi0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754459AbbCBLn0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 1 Mar 2015 23:00:21 -0500
-Received: from archlinux (g224210086.adsl.alicedsl.de [92.224.210.86])
-	(authenticated bits=0)
-	by mail36c50.megamailservers.eu (8.13.6/8.13.1) with ESMTP id t223Y32J032557
-	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Mon, 2 Mar 2015 03:34:06 +0000
-In-Reply-To: <CAP=VYLr=vMTRYCqoXcQBjrMT1-7dGp8fsThTYWzf=4L2tEYyyA@mail.gmail.com>
+	Mon, 2 Mar 2015 06:43:26 -0500
+Received: by wiwl15 with SMTP id l15so14097409wiw.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 02 Mar 2015 03:43:25 -0800 (PST)
+In-Reply-To: <CAP=VYLqqDRfpz+LH21ZPQ3sVJ-Re4bUjWW9aRvzCB6=OCnQuWQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sun, 1 Mar 2015 20:25:24 -0500, Paul Gortmaker wrote:
->In the future, putting the log lines in line (vs attachment) makes
->it easier to reply and comment - meaning more people will look
->at the report.
+On 2.3.2015 2:31, Paul Gortmaker wrote:
+>> Seems sdhci_irq is operating on a (non-raw) host->lock and you
+>> are running that code in hard IRQ context, which will trigger the
+>> alarm for operating on a sleeping lock while in atomic context.
+>> (i.e code is not currently -rt friendly as-is).
 
-I get kernel panic for 3.18.7-rt2 on an AMD Athlon dual-core x86_64
-machine, but I don't know what log files to post.
+>> In the future, putting the log lines in line (vs attachment) makes
+>> it easier to reply and comment - meaning more people will look
+>> at the report.
 
-When first booting
+Paul,
 
-$ pacman -Q linux-rt
-linux-rt 3.18.7_rt2-3
+thank you for comment and advice, I will post logs recommended way in 
+the future.
 
-at the beginning the startup messages were as usual, but after a while
-a high amount of unreadable fast messages scrolled, finished with
-something similar to "recursive fixed, restart is needed".
+Best regards,
 
-When booting for the second time at the beginning the startup messages
-were as usual, but then several kernel panic messages were displayed.
-
-$ journalctl -b -1
-$ journalctl -b -2
-etc. would take much too long to display something, I only hear the HDD
-working.
-
-$ journalctl --since "15 min ago"
-$ journalctl -k
-$ dmesg
-don't show useful output, at least they don't show the strange startup
-messages.
-
-Regards,
-Ralf
+Michal
