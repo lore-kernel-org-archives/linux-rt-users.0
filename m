@@ -1,62 +1,75 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH] rcutorture: fix missing function at build time
-Date: Mon, 2 Mar 2015 13:30:19 -0800
-Message-ID: <20150302213019.GZ15405@linux.vnet.ibm.com>
-References: <20150302201530.GA4189@uudg.org>
- <20150302211815.GY15405@linux.vnet.ibm.com>
- <20150302212053.GB4189@uudg.org>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] pi_stress: Clear affinity for DEADLINE tasks
+Date: Tue, 3 Mar 2015 13:59:55 +0100 (CET)
+Message-ID: <alpine.LFD.2.10.1503031359220.5674@riemann>
+References: <1424249713-2615-1-git-send-email-daniel.wagner@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org
-To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: williams@redhat.com, linux-rt-users@vger.kernel.org,
+	jkacur@redhat.com
+To: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e39.co.us.ibm.com ([32.97.110.160]:37308 "EHLO
-	e39.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755904AbbCBVaY (ORCPT
+Received: from mail-we0-f178.google.com ([74.125.82.178]:37965 "EHLO
+	mail-we0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756511AbbCCM77 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 2 Mar 2015 16:30:24 -0500
-Received: from /spool/local
-	by e39.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Mon, 2 Mar 2015 14:30:24 -0700
-Received: from b03cxnp08026.gho.boulder.ibm.com (b03cxnp08026.gho.boulder.ibm.com [9.17.130.18])
-	by d03dlp03.boulder.ibm.com (Postfix) with ESMTP id 788E819D803E
-	for <linux-rt-users@vger.kernel.org>; Mon,  2 Mar 2015 14:21:29 -0700 (MST)
-Received: from d03av05.boulder.ibm.com (d03av05.boulder.ibm.com [9.17.195.85])
-	by b03cxnp08026.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t22LUZVk41025748
-	for <linux-rt-users@vger.kernel.org>; Mon, 2 Mar 2015 14:30:35 -0700
-Received: from d03av05.boulder.ibm.com (localhost [127.0.0.1])
-	by d03av05.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t22LUKSE008020
-	for <linux-rt-users@vger.kernel.org>; Mon, 2 Mar 2015 14:30:21 -0700
-Content-Disposition: inline
-In-Reply-To: <20150302212053.GB4189@uudg.org>
+	Tue, 3 Mar 2015 07:59:59 -0500
+Received: by wesw55 with SMTP id w55so39625864wes.5
+        for <linux-rt-users@vger.kernel.org>; Tue, 03 Mar 2015 04:59:58 -0800 (PST)
+In-Reply-To: <1424249713-2615-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Mar 02, 2015 at 06:20:53PM -0300, Luis Claudio R. Goncalves wrote:
-> On Mon, Mar 02, 2015 at 01:18:15PM -0800, Paul E. McKenney wrote:
-> ...
-> | > diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-> | > index a4e9e25..28a54f6 100644
-> | > --- a/kernel/rcu/tree.c
-> | > +++ b/kernel/rcu/tree.c
-> | > @@ -378,6 +378,11 @@ void rcu_bh_force_quiescent_state(void)
-> | >  	force_quiescent_state(&rcu_bh_state);
-> | >  }
-> | >  EXPORT_SYMBOL_GPL(rcu_bh_force_quiescent_state);
-> | > +#else
-> | > +void rcu_force_quiescent_state(void)
-> | > +{
-> | > +}
-> | > +EXPORT_SYMBOL_GPL(rcu_force_quiescent_state);
-> | 
-> | This is -rt only, correct?
+
+
+On Wed, 18 Feb 2015, Daniel Wagner wrote:
+
+> Deadline tasks are not allowed to set smp affinity.
 > 
-> Yes, -rt only. And the only complaint I saw was from rcutorture.
+> Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+> ---
+> 
+> Hi Clark,
+> 
+> I missed that one because I tested it only on a UP. Sorry about that.
+> 
+> cheers,
+> daniel
+> 
+> src/pi_tests/pi_stress.c | 13 +++++++++++++
+>  1 file changed, 13 insertions(+)
+> 
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index cf55712..aaa36c3 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -882,8 +882,21 @@ void *high_priority(void *arg)
+>  	pthread_barrier_t *loop_barr = &p->loop_barr;
+>  	pthread_mutex_t *loop_mtx = &p->loop_mtx;
+>  	int *loop = &p->loop;
+> +	cpu_set_t cpu_mask;
+> +	int i;
+>  
+>  	if (high_sa.sched_policy == SCHED_DEADLINE) {
+> +		CPU_ZERO(&cpu_mask);
+> +		for (i = 0; i < num_processors; i++)
+> +			CPU_SET(i, &cpu_mask);
+> +		status = sched_setaffinity(0, sizeof(cpu_set_t), &cpu_mask);
+> +		if (status < 0) {
+> +			pi_error
+> +			    ("high_priority[%d]: set cpu affinity*dl): %x\n",
+> +			    p->id, status);
+> +			return NULL;
+> +		}
+> +
+>  		status = sched_setattr(gettid(), &high_sa, 0);
+>  		if (status < 0) {
+>  			pi_error
+> -- 
+> 2.1.0
+> 
+> --
 
-Agreed, nothing other than rcutorture should use these.  Just thinking
-out loud about what (if anything) should happen in mainline.
+Signed-off-by: John Kacur <jkacur@redhat.com>
 
-							Thanx, Paul
-
+(this will be in the next build)
