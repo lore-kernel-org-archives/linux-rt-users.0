@@ -1,40 +1,107 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Kenrel panic with 3.18.7-rt2  - Was: Kenrel panic with 3.18.7-rt2 -
- rootfs at MMC
-Date: Fri, 6 Mar 2015 17:47:00 +0100
-Message-ID: <20150306174700.29fc83bf@archlinux>
-References: <20150306174336.2eb1fea9@archlinux>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: 3.18.7-rt2: NOHZ_FULL warning at boot
+Date: Fri, 6 Mar 2015 19:13:45 +0100
+Message-ID: <20150306181345.GD10155@linutronix.de>
+References: <20150226200547.GL4111@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, Carsten Emde <C.Emde@osadl.org>
+To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail56c50.megamailservers.eu ([91.136.10.66]:60379 "EHLO
-	mail56c50.megamailservers.eu" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1752608AbbCFQrF (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:56232 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751134AbbCFSNr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Mar 2015 11:47:05 -0500
-Received: from archlinux (e182016094.adsl.alicedsl.de [85.182.16.94])
-	(authenticated bits=0)
-	by mail56c50.megamailservers.eu (8.13.6/8.13.1) with ESMTP id t26Gl0Am001804
-	(version=TLSv1/SSLv3 cipher=AES128-SHA bits=128 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Fri, 6 Mar 2015 16:47:02 +0000
-In-Reply-To: <20150306174336.2eb1fea9@archlinux>
+	Fri, 6 Mar 2015 13:13:47 -0500
+Content-Disposition: inline
+In-Reply-To: <20150226200547.GL4111@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 6 Mar 2015 17:43:36 +0100, Ralf Mardorf wrote:
->On Fri, 6 Mar 2015 13:24:41 +0100, Sebastian Andrzej Siewior wrote:
->>if the system is still responsible you could "dmesg > file" and then
->>that file would interresting as long as there is no systemd crap in
->>it.
->
->That's the problem, the system isn't responsive anymore. There also is
->no file /var/log/dmesg. I can reboot and run the dmesg command, but it
->only shows the messages for the last boot.
->I guess I'm a power user regarding several Linux things, but I'm
->completely lost regarding some issues, since several distros switched
->to systemd.
+* Luis Claudio R. Goncalves | 2015-02-26 17:05:47 [-0300]:
 
-Sorry, I didn't keep the thread as wanted, but forgot to change the
-subject. Fixed ;).
+>I have been seeing the warning below at boot time on 3.18.7-rt2. Anybody
+>else seeing it?
+
+This should fix it.
+
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index 19c363a..0c64912 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -71,6 +71,8 @@ void __weak arch_irq_work_raise(void)
+  */
+ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ {
++	bool raise_irqwork;
++
+ 	/* All work should have been flushed before going offline */
+ 	WARN_ON_ONCE(cpu_is_offline(cpu));
+ 
+@@ -81,7 +83,19 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ 	if (!irq_work_claim(work))
+ 		return false;
+ 
+-	if (llist_add(&work->llnode, &per_cpu(raised_list, cpu)))
++#ifdef CONFIG_PREEMPT_RT_FULL
++	if (work->flags & IRQ_WORK_HARD_IRQ)
++		raise_irqwork = llist_add(&work->llnode,
++					  &per_cpu(hirq_work_list, cpu));
++	else
++		raise_irqwork = llist_add(&work->llnode,
++					  &per_cpu(lazy_list, cpu));
++#else
++		raise_irqwork = llist_add(&work->llnode,
++					  &per_cpu(raised_list, cpu));
++#endif
++
++	if (raise_irqwork)
+ 		arch_send_call_function_single_ipi(cpu);
+ 
+ 	return true;
+@@ -101,19 +115,14 @@ bool irq_work_queue(struct irq_work *work)
+ 
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	if (work->flags & IRQ_WORK_HARD_IRQ) {
+-		if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list))) {
+-			if (work->flags & IRQ_WORK_LAZY) {
+-				if (tick_nohz_tick_stopped())
+-					arch_irq_work_raise();
+-			} else {
+-				arch_irq_work_raise();
+-			}
+-		}
+-	/* If the work is "lazy", handle it from next tick if any */
+-	} else if (work->flags & IRQ_WORK_LAZY) {
++		if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list)))
++			arch_irq_work_raise();
++	} else {
++		if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)))
++			arch_irq_work_raise();
++	}
+ #else
+ 	if (work->flags & IRQ_WORK_LAZY) {
+-#endif
+ 		if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+ 		    tick_nohz_tick_stopped())
+ 			arch_irq_work_raise();
+@@ -121,6 +130,7 @@ bool irq_work_queue(struct irq_work *work)
+ 		if (llist_add(&work->llnode, this_cpu_ptr(&raised_list)))
+ 			arch_irq_work_raise();
+ 	}
++#endif
+ 
+ 	preempt_enable();
+ 
+@@ -137,7 +147,8 @@ bool irq_work_needs_cpu(void)
+ 
+ 	if (llist_empty(raised))
+ 		if (llist_empty(lazy))
+-			return false;
++			if (llist_empty(this_cpu_ptr(&hirq_work_list)))
++				return false;
+ 
+ 	/* All work should have been flushed before going offline */
+ 	WARN_ON_ONCE(cpu_is_offline(smp_processor_id()));
+
+Sebastian
