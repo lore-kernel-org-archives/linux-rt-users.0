@@ -1,38 +1,34 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Kenrel panic with 3.18.7-rt2  - Was: Kenrel panic with
- 3.18.7-rt2 - rootfs at MMC
-Date: Fri, 6 Mar 2015 19:21:28 +0100
-Message-ID: <20150306182128.GF10155@linutronix.de>
-References: <20150306174336.2eb1fea9@archlinux>
- <20150306174700.29fc83bf@archlinux>
+Subject: Re: [PATCH] rcutorture: fix missing function at build time
+Date: Fri, 6 Mar 2015 19:32:59 +0100
+Message-ID: <20150306183259.GG10155@linutronix.de>
+References: <20150302201530.GA4189@uudg.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Cc: linux-rt-users@vger.kernel.org,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:56281 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:56322 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932121AbbCFSVa (ORCPT
+	with ESMTP id S1753979AbbCFSdD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Mar 2015 13:21:30 -0500
+	Fri, 6 Mar 2015 13:33:03 -0500
 Content-Disposition: inline
-In-Reply-To: <20150306174700.29fc83bf@archlinux>
+In-Reply-To: <20150302201530.GA4189@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Ralf Mardorf | 2015-03-06 17:47:00 [+0100]:
+* Luis Claudio R. Goncalves | 2015-03-02 17:15:31 [-0300]:
 
->On Fri, 6 Mar 2015 13:24:41 +0100, Sebastian Andrzej Siewior wrote:
->>if the system is still responsible you could "dmesg > file" and then
->>that file would interresting as long as there is no systemd crap in
->>it.
+>Hello,
 >
->That's the problem, the system isn't responsive anymore. There also is
->no file /var/log/dmesg. I can reboot and run the dmesg command, but it
->only shows the messages for the last boot.
-So if you don't get the crash message anymore then it gets tricky. You
-could use the serial console and read it there (if you have a serial
-port and another machine). The other trick might be to use "printk
-delay" and then memorize it or use a camera :)
+>This is a minor issue, but as I seem to have woken up Paul at 4AM with the
+>many beeps from IRC I would feel bad if I did not send this patch to the
+>list. Actually, as that patch has been sitting on my computer for a few
+>days now, i already feel bad :)
+
+Thanks. I folded this into
+rcu-merge-rcu-bh-into-rcu-preempt-for-rt.patch since it is v3.18 only.
 
 Sebastian
