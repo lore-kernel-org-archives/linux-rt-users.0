@@ -1,72 +1,36 @@
-From: "mikhail.avkhimenia@emlid.com" <mikhail.avkhimenia@emlid.com>
+From: Julien Ciesla <jciesla@resologis.com>
 Subject: Re: 3.18 RT freezes on Raspberry Pi 2
-Date: Fri, 06 Mar 2015 00:26:48 +0300
-Message-ID: <845351425590808@web20g.yandex.ru>
-References: <3671201425478878@web10j.yandex.ru> <20150305130111.GB668@unpythonic.net>
+Date: Fri, 6 Mar 2015 03:36:17 +0000 (UTC)
+Message-ID: <loom.20150306T043408-818@post.gmane.org>
+References: <3671201425478878@web10j.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Jeff Epler <jepler@unpythonic.net>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: base64
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from forward20.mail.yandex.net ([95.108.253.145]:45084 "EHLO
-	forward20.mail.yandex.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750906AbbCEVf0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 5 Mar 2015 16:35:26 -0500
-In-Reply-To: <20150305130111.GB668@unpythonic.net>
+Received: from plane.gmane.org ([80.91.229.3]:51353 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750937AbbCFDuI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 5 Mar 2015 22:50:08 -0500
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1YTjH2-0004rJ-38
+	for linux-rt-users@vger.kernel.org; Fri, 06 Mar 2015 04:50:04 +0100
+Received: from modemcable134.76-19-135.mc.videotron.ca ([135.19.76.134])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Mar 2015 04:50:04 +0100
+Received: from jciesla by modemcable134.76-19-135.mc.videotron.ca with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 06 Mar 2015 04:50:04 +0100
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Thanks for the good hint!
+IDxtaWtoYWlsLmF2a2hpbWVuaWEgPGF0PiBlbWxpZC5jb20+IHdyaXRlczoKCj4gCj4gSGVsbG8sCj4gCj4gUmVjZW50bHksIFJhc3BiZXJyeSBQaSBGb3VuZGF0aW9uIHByZXNlbnRlZCBhbmQgc3RhcnRlZCBzZWxsaW5nIG5ldyAKUmFzcGJlcnJ5IFBpIDIgU0JDLiBJdOKAmXMgYmFzZWQgb24KPiBCQ00yNzA5IHByb2Nlc3Nvciwgd2hpY2ggaXMgYW4gdXBncmFkZWQgdmVyc2lvbiBvZiBCQ00yNzA4LiBUaGUgbWFpbiAKZGlmZmVyZW5jZSBpcyB0aGF0IG9sZCBCQ00yNzA4IGhhcwo+IG9uZSBjb3JlIGFuZCBpdHMgYXJjaGl0ZWN0dXJlIGlzIEFSTXY2LCB3aGlsZSB0aGUgbmV3IEJDTTI3MDkgaGFzIDQgY29yZXMgCmFuZCBBUk12NyBhcmNoaXRlY3R1cmUuIE1vc3Qgb2YKPiB0aGUgcGVyaXBoZXJhbCBibG9ja3MgYXJlIHRoZSBzYW1lIC0gRE1BLCBJMkMsIFVBUlQsIGV0Yy4gCj4gCj4gUlQgcGF0Y2ggaGFzIGJlZW4gd29ya2luZyB2ZXJ5IHdlbGwgKGFmdGVyIGZpeGluZyB0aGUgc2QgZHJpdmVyIGEgY291cGxlIApvZiB5ZWFycyBhZ28pIHdpdGggUmFzcGJlcnJ5IFBpIDEgYW5kCj4ga2VybmVsIDMuMTIuIAo+IFdpdGggdGhlIHJlbGVhc2Ugb2Yg
+ dGhlIG5ldyBib2FyZCBSYXNwYmVycnkgUGkgRm91bmRhdGlvbiBhbHNvIHN3aXRjaGVkIAp0byB0aGUgbmV3IGtlcm5lbCB2ZXJzaW9uIC0gMy4xOCwKPiBzdXBwb3J0IGZvciBSYXNwYmVycnkgUGkgMiBoYXMgYmVlbiBpbnRyb2R1Y2VkIGluIHRoYXQgdmVyc2lvbi4KPiBJIGFwcGxpZWQgcGF0Y2gtMy4xOC43LXJ0MiBvbiBSUGnigJlzIGtlcm5lbCBmb3JrIGFuZCBidWlsdCB0d28ga2VybmVscyAtIApvbmUgZm9yIFJhc3BiZXJyeSBQaSAxIGFuZCBhbm90aGVyCj4gb25lIGZvciBSYXNwYmVycnkgUGkgMi4KPiBPbiBvbGRlciBSYXNwYmVycnkgUGkgMSAzLjE4LjctcnQyIHNlZW1zIHRvIHdvcmsgd2l0aG91dCBhbnkgcHJvYmxlbXMsIEkgCnJhbiBjeWNsaWN0ZXN0IGFuZCBzdHJlc3MgYW5kIGl0Cj4gcGVyZm9ybWVkIHdlbGwuIAo+IEJ1dCBvbiBuZXcgUmFzcGJlcnJ5IFBpIDIgSeKAmW0gZXhwZXJpZW5jaW5nIGZyZXF1ZW50IGZyZWV6ZXMuIAo+IAo+IFN0ZXBzIHRvIHJlcHJvZHVjZTogCj4gMS4gQ2xvbmUgaHR0cHM6Ly9naXRodWIuY29tL3Jhc3BiZXJyeXBpL2xpbnV4ICwgY2hlY2tvdXQgMy4xOC43IC0gCjBiZTgyZjcyMmMwOTczNDA2Mz
+ JhNTliODc5ZmJmZWU5YzYxNDhmNTMKPiAyLiBBcHBseSBwYXRjaC0zLjE4LjctcnQyCj4gMy4gKG9wdGlvbmFsbHkpIGFwcGx5IOKAnFtSVCBQQVRDSF0gbW1jOiBzZGhjaTogZG9uJ3QgcHJvdmlkZSBoYXJkIGlycSAKaGFuZGxlcuKAnQo+IDQuIE1ha2UgbWVudWNvbmZpZyBiY20yNzA5X2RlZmNvbmZpZwo+IDUgQ29uZmlndXJlOiBmdWxsIHJ0IHByZWVtcHRpb24sIHBlcmlvZGljIHRpY2tzLCBwZXJmb3JtYW5jZSBnb3Zlcm5vciBhcyAKZGVmYXVsdCBhbmQgb3B0aW9uYWxseQo+IHByZWVtcHRpb24gZGVidWdnaW5nCj4gNi4gQ29tcGlsZSBrZXJuZWwgJiBtb2R1bGVzCj4gNy4gQ29weSBJbWFnZSB0byAvYm9vdC9rZXJuZWw3LmltZyBhbmQgYXJjaC9hcm0vYm9vdC9kdHMvYmNtMjcwOS1ycGktCjItYi5kdGIgdG8KPiAvYm9vdC9iY20yNzA5LXJwaS0yLWIuZHRiLCBjb3B5IG1vZHVsZXMuCj4gQm9vdCBhbmQgcnVuOiBzdWRvIGN5Y2xpY3Rlc3QgLS1zbXAgLXA1MSAtbQo+IAo+IFRoZSBiYWQgdGhpbmcgaXMgdGhhdCBpdCBmcmVlemVzIHdpdGhvdXQgYW55IG1lc3NhZ2UsIGV2ZW4gd2l0aCAKcHJlZW1wdGlvbiBkZWJ1ZyBpbmZvcm1hdGlvbiBh
+ bmQgbG9ja3VwCj4gZGV0ZWN0aW9uIGVuYWJsZWQuCj4gCj4gSGVyZeKAmXMgaG93IGl0IGhhcHBlbnM6Cj4gMS4gSSBjb25uZWN0IHRvIFJhc3BiZXJyeSBQaSAyIG92ZXIgc2VyaWFsCj4gMi4gSSBjb25uZWN0IHRvIFJhc3BiZXJyeSBQaSAyIG92ZXIgRXRoZXJuZXQgb3IgV2lGaQo+IDMuIEluIHRoZSBzc2ggdGVybWluYWwgSSBydW4g4oCcc3VkbyBjeWNsaWN0ZXN0IC0tc21wIC1wNTEgLW3igJ0sIGl0IHdvcmtzIApmb3IgMzAgc2Vjb25kcyBhbmQgdGhlIHRlcm1pbmFsCj4gaGFuZ3MuIExFRHMgb24gV2lGaSBvciBFdGhlcm5ldCBjb25uZWN0aW9uIHN0b3AgYmxpbmtpbmcuCj4gNC4gU2VyaWFsIHRlcm1pbmFsIGlzIHN0aWxsIHdvcmtpbmcsIGJ1dCBhZnRlciBydW5uaW5nIGEgY291cGxlIG9mIApjb21tYW5kcyBpdCBhbHNvIGZyZWV6ZXMuIElmIEkgdHJ5IHRvIHJ1bgo+IGN5Y2xpY3Rlc3Qgb24gc2VyaWFsIGluIHRoYXQgY2FzZSBpdCBtb3N0bHkgZnJlZXplcyBpbW1lZGlhdGVseSwgYnV0IGEgCmNvdXBsZSBvZiB0aW1lcyBpdCByYW4gYW5kIGRpc3BsYXllZAo+IHRoYXQgYSBjb3VwbGUgb2Yga2VybmVsIGFyZSB1bmF2YWlsYWJsZSBhbm
+ QgYWZ0ZXIgc29tZSB0aW1lIGFsc28gZnJvemUuCj4gCj4gSWYgSSBydW4gY3ljbGljdGVzdCBvbiBzZXJpYWwgY29ubmVjdGlvbiBpdCBhbHNvIGZyZWV6ZXMgcmVnYXJkbGVzcyBpZiAKV2lGaSBvciBFdGhlcm5ldCBhcmUgY29ubmVjdGVkLgo+IAo+IElmIEkgcnVuIOKAnHN1ZG8gY3ljbGljdGVzdCAtLXNtcCAtcDQ5IC1t4oCdIGl0IGRvZXMgbm90IGZyZWV6ZS4gU28gc2VlbXMgCmxpa2UgaXTigJlzIG9ubHkgYWZmZWN0ZWQgd2hlbiB5b3UKPiBydW4gc29tZXRoaW5nIHdpdGggcHJpb3JpdHkgZXF1YWwgb3IgaGlnaGVyIHRoYW4gdGhlIHByaW9yaXR5IG9mIApwZXJpcGhlcmFsIGludGVycnVwdCBoYW5kbGVycy4KPiAKPiBFdmVuIHRob3VnaCBhZmZpbml0eSBtYXNrIGZvciBwZXJpcGhlcmFsIGludGVycnVwdHMgc2hvd3Mg4oCcZuKAnSBpdCBzZWVtcyAKdGhhdCB0aGV5IGFsbCBydW4gb24gY3B1MCBieQo+IGNoZWNraW5nIC9wcm9jL2ludGVycnVwdHMuIEkgdHJpZWQgYWRkaW5nIOKAnGlzb2xjcHVzPTDigJ0gCnRvIC9ib290L2NtZGxpbmUudHh0IGFuZCB3aXRoIGl0IHRoZQo+IGtlcm5lbCBkb2VzIG5vdCBmcmVlemUgb24g4oCcc3VkbyBj
+ eWNsaWN0ZXN0IC0tc21wIC1wNTEgLW3igJ0gYW55bW9yZS4gQnV0IGl0IApzdGlsbCBmcmVlemVzIG9jY2FzaW9uYWxseQo+IHdoaWxlIHdvcmtpbmcsIGl0IGp1c3QgdGFrZXMgbXVjaCBsb25nZXIgbm93IHRvIGNhdGNoIHRoZSBmcmVlemUgKDMwLTYwIAptaW51dGVzKS4KPiAKPiBJ4oCZbSB0cnlpbmcgdG8gdW5kZXJzdGFuZCB3aGF0IGNhdXNlcyBzdWNoIGJlaGF2aW91ciwgYXMgbW9zdCBvZiB0aGUgCmRyaXZlcnMgZm9yIFJhc3BiZXJyeSBQaSAxIGFuZCAyIGFyZSB0aGUKPiBzYW1lLiBJ4oCZdmUgcnVsZWQgb3V0IG1tYyBieSBjb21wbGV0ZWx5IGRpc2FibGluZyBpdCBpbiB0aGUga2VybmVsIGFuZCAKcnVubmluZyBmcm9tIFVTQiBmbGFzaC4gCj4gCj4gQW55IGlkZWFzIHdoYXQgY2FuIGJlIGRvbmUgdG8gdW5kZXJzdGFuZCB3aGF0IGlzIGNhdXNpbmcgdGhpcz8KPiAtLQo+IFRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5lICJ1bnN1YnNjcmliZSBsaW51eC1ydC11c2VycyIgCmluCj4gdGhlIGJvZHkgb2YgYSBtZXNzYWdlIHRvIG1ham9yZG9tbyA8YXQ+IHZnZXIua2VybmVsLm9yZwo+IE1vcmUgbWFqb3Jkb2
+ 1vIGluZm8gYXQgIGh0dHA6Ly92Z2VyLmtlcm5lbC5vcmcvbWFqb3Jkb21vLWluZm8uaHRtbAo+IAo+IAoKCkhlbGxvIE1pa2hhw69sLCBJIGhhdmUgdGhlIHNhbWUgaXNzdWUsIGxldCBtZSBub3cgaWYgeW91IGZpbmQgYW55dGhpbmcu
 
-I started setting priority 49 for interrupt threads (while running cycl=
-ictest -p49) and most of them showed no effect, but as soon as I did th=
-at to one of the three dwc_otg interrupts it hanged.=20
-Tried with the other two dwc_otg interrupt threads and also got a hang.=
-=20
-
-I've found that dwc_otg driver was updated for BCM2709 and probably tha=
-t's the source of a problem:
-https://github.com/Clouded/linux-rt-rpi2/commits/rpi-3.18.7-rt2/drivers=
-/usb/host/dwc_otg
-
---=9A
-Best regards,
-Mikhail
-
-05.03.2015, 16:01, "Jeff Epler" <jepler@unpythonic.net>:
-> =9A=9AIt occurs to me that you could adjust the priority of IRQs (by =
-sudo
-> =9A=9Achrt). =9AWith cyclictest running at priority 49, adjust each i=
-rq down
-> =9A=9Afrom 50 to 48 in turn and see if you get your hang. =9AOnce you=
- have a
-> =9A=9Aspecific irq, perhaps that will in turn point toward an actual =
-cause.
->
-> =9A=9AJeff
-
---=9A
-Best regards,
-Mikhail Avkhimenia
-Emlid Ltd
-emlid.com
-
-
-05.03.2015, 16:01, "Jeff Epler" <jepler@unpythonic.net>:
-> =9AIt occurs to me that you could adjust the priority of IRQs (by sud=
-o
-> =9Achrt). =9AWith cyclictest running at priority 49, adjust each irq =
-down
-> =9Afrom 50 to 48 in turn and see if you get your hang. =9AOnce you ha=
-ve a
-> =9Aspecific irq, perhaps that will in turn point toward an actual cau=
-se.
->
-> =9AJeff
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
