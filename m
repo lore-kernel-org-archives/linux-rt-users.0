@@ -1,84 +1,175 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: RCU stalls on heavy socket traffic
-Date: Mon, 9 Mar 2015 08:59:47 -0700
-Message-ID: <20150309155947.GW5236@linux.vnet.ibm.com>
-References: <20150309152651.GD13768@linutronix.de>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: CONFIG_PREEMPT_RT local_softirq_pending warning when ISR blocks
+Date: Mon, 9 Mar 2015 17:08:45 +0100
+Message-ID: <20150309160845.GE13768@linutronix.de>
+References: <CAGt3f4na1EMtViiLym3JnzGbOGSMXwy9puOccOyrOWKjd4QOnQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	Austin Schuh <austin@peloton-tech.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: Brian Silverman <brian@peloton-tech.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150309152651.GD13768@linutronix.de>
+In-Reply-To: <CAGt3f4na1EMtViiLym3JnzGbOGSMXwy9puOccOyrOWKjd4QOnQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Mar 09, 2015 at 04:26:51PM +0100, Sebastian Andrzej Siewior wrote:
-> So I run "hackbench -g 600 -l 350 -s 250" which takes approx 77 seconds
-> to complete. Then this popped up:
-> 
-> |INFO: rcu_preempt detected stalls on CPUs/tasks:
-> | Tasks blocked on level-0 rcu_node (CPUs 0-3): P24858 P28514 P25185 P25184 P28713 P19549 P3139 P25275 P28474 P29062 P6703 P10 106 P14309 P27910 P4514 P14834 P28385 P21073 P27701 P642 P10340 P16939 P19147 P16949 P16945 P16952 P16941 P16937 P16938 P16946 P16954 P28664  P18701 P17782 P4875 P8873
-> | Tasks blocked on level-0 rcu_node (CPUs 0-3): P24858 P28514 P25185 P25184 P28713 P19549 P3139 P25275 P28474 P29062 P6703 P10 106 P14309 P27910 P4514 P14834 P28385 P21073 P27701 P642 P10340 P16939 P19147 P16949 P16945 P16952 P16941 P16937 P16938 P16946 P16954 P28664  P18701 P17782 P4875 P8873
+* Brian Silverman | 2015-03-05 00:16:20 [-0500]:
 
-Definitely lots of tasks recently preempted within RCU read-side
-critical sections!
+>Beforehand, 000 is spending most of its time in interrupts, but bash
+>is doing something related to memory management on it in between.
+>            bash-14721 [000] ......1  6854.629126: rt_spin_lock <-free=
+_pcppages_bulk
+>            bash-14721 [000] ....1.1  6854.629126: mm_page_pcpu_drain:=
+ page=3Dffffea000fa1aa40 pfn=3D4097705 order=3D0 migratetype=3D1
+>            bash-14721 [000] ......1  6854.629127: get_pfnblock_flags_=
+mask <-free_pcppages_bulk
+>            bash-14721 [000] ......1  6854.629127: __mod_zone_page_sta=
+te <-free_pcppages_bulk
+>            bash-14721 [000] ....1.1  6854.629127: mm_page_pcpu_drain:=
+ page=3Dffffea000f572ac0 pfn=3D4021419 order=3D0 migratetype=3D0
+>            bash-14721 [000] ......1  6854.629128: get_pfnblock_flags_=
+mask <-free_pcppages_bulk
+>            bash-14721 [000] ......1  6854.629128: __mod_zone_page_sta=
+te <-free_pcppages_bulk
+>... # lots more virtually identical repetitions of those last 3 lines
+>            bash-14721 [000] ....1.1  6854.629139: mm_page_pcpu_drain:=
+ page=3Dffffea000f481a80 pfn=3D4005994 order=3D0 migratetype=3D1
+>            bash-14721 [000] ......1  6854.629139: get_pfnblock_flags_=
+mask <-free_pcppages_bulk
+You free memory and hold the zone->lock
 
-For example, the P24858 says that the task with PID 24858 was preempted
-(or blocked) while within an RCU read-side critical section that blocks
-the current grace period, and that this task has not yet exited that
-critical section.  This might be because that task has been preempted
-throughout by a higher-priority task, that there is an infinite loop in
-that critical section, or that the task is blocked on a spinlock that
-is being held indefinitely by some other task (possibly because that
-other task is being indefinitely preempted).
+>            bash-14721 [000] d.....1  6854.629139: do_IRQ <-ret_from_i=
+ntr
+>            bash-14721 [000] d.....1  6854.629139: irq_enter <-do_IRQ
+>... # wakes up the can1 ISR thread on 001 and the can0 one on 000
+>(same physical IRQ line)
+>            bash-14721 [000] d...3.1  6854.629261: sched_switch: prev_=
+comm=3Dbash prev_pid=3D14721 prev_prio=3D120 prev_state=3DR+ =3D=3D> ne=
+xt_comm=3Dirq/18-can0 next_pid=3D2015 next_prio=3D28
 
-> | (detected by 0, t=5252 jiffies, g=2385, c=2384, q=41180)
-> |hackbench       R  running task        0 24858   1995 0x00000000
-> | ffff880058d9bb18 0000000000000082 0000000000012e40 ffff880058d9bfd8
-> | 0000000000012e40 ffff8804226627c0 ffff880058d9bb38 ffff880058d9bfd8
-> | 0000000000000001 ffff880058d5ccf8 0000000000000292 0000000000000002
-> |Call Trace:
-> | [<ffffffff81568e9f>] preempt_schedule+0x3f/0x60
-> | [<ffffffff812d84d7>] ___preempt_schedule+0x35/0x67
-> | [<ffffffff8156b725>] ? _raw_spin_unlock_irqrestore+0x25/0x30
-> | [<ffffffff81088503>] try_to_wake_up+0x63/0x2f0
-> | [<ffffffff8108881d>] default_wake_function+0xd/0x10
-> | [<ffffffff8109b011>] autoremove_wake_function+0x11/0x40
-> | [<ffffffff8109aa05>] __wake_up_common+0x55/0x90
-> | [<ffffffff8109afd3>] __wake_up_sync_key+0x43/0x60
-> | [<ffffffff8145c95e>] sock_def_readable+0x3e/0x70
-> | [<ffffffff8150f9d1>] unix_stream_sendmsg+0x211/0x470
-> | [<ffffffff81458b48>] sock_aio_write+0xf8/0x120
-> | [<ffffffff8109ec19>] ? rt_up_read+0x19/0x20
-> | [<ffffffff8116e855>] do_sync_write+0x55/0x90
-> | [<ffffffff8116f435>] vfs_write+0x175/0x1f0
-> | [<ffffffff8116fde4>] SyS_write+0x44/0xb0
-> | [<ffffffff8156c1ed>] system_call_fastpath+0x16/0x1b
-> 
-> The other processes look more or less the same. I have the full splat
-> here [0]. My understanding is that sock_def_readable() does a
-> rcu_read_lock() which forbids a grace period. Since there are many
-> processes (preempted) in this section, the grace period never starts
-> since it never blocks new readers from getting into a read critical
-> section.
-> Is my understanding correct so far? Is it likely that -RT does not do
-> something correctly to forbid such a situation or is it more or less
-> "expected" ?
-> 
-> [0] https://breakpoint.cc/rt-rcu-stall.txt
+I would assume that this one raises NET_RX softirq. But at the bottom
+you have the irq handler on the other CPU which confuses me=E2=80=A6
 
-If you don't have CONFIG_RCU_BOOST=y with priority set above that of
-any CPU-bound components of your workload, then yes, this is expected
-behavior.  The priority boosting will be inherited, so that this covers
-the case of indefinite preemption.  Of course, this won't help with
-infinite loops.
+>... # runs the can0 ISR
+>     irq/18-can0-2015  [000] d...3..  6854.629283: sched_switch: prev_=
+comm=3Dirq/18-can0 prev_pid=3D2015 prev_prio=3D28 prev_state=3DS =3D=3D=
+> next_comm=3Dksoftirqd/0 next_pid=3D3 next_prio=3D98
+>...
+>     ksoftirqd/0-3     [000] ....1.1  6854.629291: softirq_entry: vec=3D=
+1 [action=3DTIMER]
+>...
+>     ksoftirqd/0-3     [000] ....1.1  6854.629293: softirq_exit: vec=3D=
+1 [action=3DTIMER]
+only the timer since nobody raised NET_RX
 
-That said, someone was having trouble with the rcuoc kthreads that are
-generated by CONFIG_RCU_BOOST=y when running NO_HZ_FULL.  So there might
-need to be different kernel configs for different workloads.  Or we might
-need some way to enable and disable boosting at boot time, I suppose.
+>...
+>     ksoftirqd/0-3     [000] .......  6854.629298: schedule <-smpboot_=
+thread_fn ...
+>     ksoftirqd/0-3     [000] d...3..  6854.629304: sched_switch: prev_=
+comm=3Dksoftirqd/0 prev_pid=3D3 prev_prio=3D98 prev_state=3DS =3D=3D> n=
+ext_comm=3Dbash next_pid=3D14721 next_prio=3D28
+>...
+>            bash-14721 [000] d...1.1  6854.629308: smp_trace_reschedul=
+e_interrupt <-trace_reschedule_interrupt
+># Actually unnecessary schedule IPI from 001?
+>            bash-14721 [000] d...1.1  6854.629309: irq_enter <-smp_tra=
+ce_reschedule_interrupt
+>...
+>            bash-14721 [000] ....1.1  6854.629316: __tick_nohz_task_sw=
+itch <-__schedule
+>            bash-14721 [000] ......1  6854.629316: __mod_zone_page_sta=
+te <-free_pcppages_bulk
+>            bash-14721 [000] ....1.1  6854.629317: mm_page_pcpu_drain:=
+ page=3Dffffea000f57a900 pfn=3D4021924 order=3D0 migratetype=3D0
+>            bash-14721 [000] ......1  6854.629317: get_pfnblock_flags_=
+mask <-free_pcppages_bulk
+>            bash-14721 [000] ......1  6854.629317: __mod_zone_page_sta=
+te <-free_pcppages_bulk
+and it continues cleaning up memory.
 
-							Thanx, Paul
+>... # more of this like it was doing before
+>I don't see it unlocking the problematic mutex before the trace ends.
+>
+>The relevant part for 001 starts while it's running the can1 ISR.
+>     irq/18-can1-7228  [001] ....1.1  6854.629275: netif_rx: dev=3Dcan=
+1 skbaddr=3Dffff880412d8fc00 len=3D16
+>     irq/18-can1-7228  [001] ......1  6854.629275: migrate_disable <-n=
+etif_rx_internal
+>     irq/18-can1-7228  [001] ......2  6854.629275: enqueue_to_backlog =
+<-netif_rx_internal
+
+enqueue_to_backlog() looks like packet reception so this should be
+handled in napi so I assume we run in NET_RX softirq
+
+>     irq/18-can1-7228  [001] d.....2  6854.629276: _raw_spin_lock <-en=
+queue_to_backlog
+>     irq/18-can1-7228  [001] d...1.2  6854.629276: __raise_softirq_irq=
+off <-enqueue_to_backlog
+>     irq/18-can1-7228  [001] d...1.2  6854.629276: do_raise_softirq_ir=
+qoff <-__raise_softirq_irqoff
+>     irq/18-can1-7228  [001] d...2.2  6854.629276: softirq_raise: vec=3D=
+3 [action=3DNET_RX]
+>... # continues handling the can1 interrupt
+>     irq/18-can1-7228  [001] ......6  6854.629286: rt_spin_lock <-get_=
+page_from_freelist
+>     irq/18-can1-7228  [001] ......6  6854.629287: rt_spin_lock_slowlo=
+ck <-get_page_from_freelist
+>     irq/18-can1-7228  [001] ......6  6854.629287: _raw_spin_lock <-rt=
+_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629287: __try_to_take_rt_mu=
+tex <-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629287: _raw_spin_lock_irq =
+<-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] d...2.6  6854.629288: _raw_spin_unlock_ir=
+q <-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629288: task_blocks_on_rt_m=
+utex <-rt_spin_lock_slowlock
+
+it might be zone->lock it goes after. It boosts the bash process which
+seems to free memory so it would make sense.
+
+>... # rt_mutex/scheduling stuff
+>     irq/18-can1-7228  [001] d...4.6  6854.629291: sched_pi_setprio: c=
+omm=3Dbash pid=3D14721 oldprio=3D120 newprio=3D28
+>... # more scheduler stuff
+>     irq/18-can1-7228  [001] d...3.6  6854.629299: native_smp_send_res=
+chedule <-rt_mutex_setprio
+>... # more scheduler stuff
+>     irq/18-can1-7228  [001] d...2.6  6854.629307: pick_next_task_fair=
+ <-__schedule
+>     irq/18-can1-7228  [001] d...2.6  6854.629307: pick_next_task_stop=
+ <-__schedule
+>     irq/18-can1-7228  [001] d...2.6  6854.629307: pick_next_task_dl <=
+-__schedule
+>     irq/18-can1-7228  [001] d...2.6  6854.629307: pick_next_task_rt <=
+-__schedule
+>     irq/18-can1-7228  [001] d...2.6  6854.629307: pick_next_task_fair=
+ <-__schedule
+>     irq/18-can1-7228  [001] d...2.6  6854.629308: pick_next_task_idle=
+ <-__schedule
+>     irq/18-can1-7228  [001] d...3.6  6854.629308: sched_switch: prev_=
+comm=3Dirq/18-can1 prev_pid=3D7228 prev_prio=3D28 prev_state=3DD =3D=3D=
+>
+>next_comm=3Dswapper/1 next_pid=3D0 next_prio=3D120
+>...
+>          <idle>-0     [001] d...1..  6854.629319: softirq_check_pendi=
+ng_idle <-tick_nohz_idle_enter
+>My tracing_off() call is in softirq_check_pending_idle, so that's it.
+
+It looks like your softirq for net_rx is getting a packet and then afte=
+r
+raising NET_RX (again?) it blocks on a lock. In order to get this lock
+it boosts and schedules bash. It gets runable but on the other CPU. On
+CPU1 there is nothig going is nothing going and the only runable task i=
+s
+the idle thread. And this is probably where the warning is written
+because we go to idle while we should process a softirq instead.
+
+>Thanks,
+>Brian Silverman
+
+Sebastian
