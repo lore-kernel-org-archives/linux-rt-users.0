@@ -1,33 +1,46 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: RCU stalls on heavy socket traffic
-Date: Mon, 9 Mar 2015 13:44:33 -0700
-Message-ID: <20150309204433.GA5236@linux.vnet.ibm.com>
-References: <20150309152651.GD13768@linutronix.de>
- <20150309155947.GW5236@linux.vnet.ibm.com>
- <20150309163915.GF13768@linutronix.de>
- <20150309180212.GX5236@linux.vnet.ibm.com>
- <54FE0177.7010407@linutronix.de>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Neil Bradley <neil.bradley@windowslive.com>
+Subject: Re: [ANNOUNCE] 3.18.9-rt4
+Date: Mon, 9 Mar 2015 22:54:54 +0000 (UTC)
+Message-ID: <loom.20150309T235034-919@post.gmane.org>
+References: <20150307141536.GA6485@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <54FE0177.7010407@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from plane.gmane.org ([80.91.229.3]:48504 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750933AbbCIXAG (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 Mar 2015 19:00:06 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1YV6eZ-0000ew-OQ
+	for linux-rt-users@vger.kernel.org; Tue, 10 Mar 2015 00:00:04 +0100
+Received: from 97.246.109.203.static.cust.vf.net.nz ([203.109.246.97])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Mar 2015 00:00:03 +0100
+Received: from neil.bradley by 97.246.109.203.static.cust.vf.net.nz with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 10 Mar 2015 00:00:03 +0100
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Mar 09, 2015 at 09:24:23PM +0100, Sebastian Andrzej Siewior wrote:
-> On 03/09/2015 07:02 PM, Paul E. McKenney wrote:
-> > abaf3f9d275b (rcu: Revert "Allow post-unlock reference for rt_mutex" to avoid priority-inversion)
-> > 
-> > This patch fixed a priority-inversion problem, so might well fix your
-> > RCU CPU stall-warning problem.
+Sebastian Andrzej Siewior <bigeasy <at> linutronix.de> writes:
+
 > 
-> Yes, it fixes the problem. Thank you.
+> Dear RT folks!
+> 
+.. <snip>
 
-Glad it helped!  Whew!!!  ;-)
 
-							Thanx, Paul
+Hi there.
+
+If I compile the rt patch with any pre-emption model other than full
+preemption, I get a compile error in kernel/irq_work:150:20.
+hirq_work_list Undeclared.
+
+Using current 3.18.9 sources & patch-3.18.9-rt4.
+
+Cheers, Neil.
+
