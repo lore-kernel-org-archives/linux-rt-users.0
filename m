@@ -1,29 +1,41 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: 3.18 RT freezes on Raspberry Pi 2
-Date: Mon, 9 Mar 2015 15:10:38 +0100
-Message-ID: <20150309141038.GC13768@linutronix.de>
-References: <3671201425478878@web10j.yandex.ru>
- <loom.20150306T043408-818@post.gmane.org>
- <loom.20150309T025355-426@post.gmane.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [patch-3.18.7-rt1] sched/context-tracking: fix PREEMPT_LAZY
+ explosions
+Date: Mon, 09 Mar 2015 15:36:11 +0100
+Message-ID: <1425911771.30469.8.camel@gmail.com>
+References: <20150216111822.GA21649@linutronix.de>
+	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Julien Ciesla <jciesla@resologis.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35622 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752218AbbCIOKk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 Mar 2015 10:10:40 -0400
-Content-Disposition: inline
-In-Reply-To: <loom.20150309T025355-426@post.gmane.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150309134535.GA13768@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Julien Ciesla | 2015-03-09 01:55:49 [+0000]:
+On Mon, 2015-03-09 at 14:45 +0100, Sebastian Andrzej Siewior wrote:
+> * Mike Galbraith | 2015-02-18 12:21:54 [+0100]:
+> 
+> >On Mon, 2015-02-16 at 12:18 +0100, Sebastian Andrzej Siewior wrote:
+> >
+> >> Known issues:
+> >>
+> >>       - lazy preempt on x86_64 leads to a crash with some load.
+> >
+> >The below still works for me.  (it doesn't make nohz_full actually work
+> >in rt, but at least folks who want to tinker with it can do so)
+> So your box still crashes without it?
+> 
+> The thing is I tried to reproduce it and it does not occur anymore.
+> Neither in KVM nor on real HW.
 
->Same issue on linux raspberrypi 3.18.9 with patch rt4.
+Heh, well that's interesting, I just presumed it would still explode
+because you said it would.  I'll beat on it any let you know if I'm
+carrying a placebo patch or not :)
 
-Then disable USB completely.
-
-Sebastian
+	-Mike
