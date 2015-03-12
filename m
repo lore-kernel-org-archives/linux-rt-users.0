@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 28/36] locking: ww_mutex: fix ww_mutex vs self-deadlock
-Date: Thu, 12 Mar 2015 15:22:07 -0400
-Message-ID: <20150312192159.371569780@goodmis.org>
+Subject: [PATCH RT 25/36] scheduling while atomic in cgroup code
+Date: Thu, 12 Mar 2015 15:22:04 -0400
+Message-ID: <20150312192158.874600655@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,13 +11,19 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	<stable-rt@vger.kernel.org>,
+	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
 	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0028-locking-ww_mutex-fix-ww_mutex-vs-self-deadlock.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:58615 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S932267AbbCLTWE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2015 15:22:04 -0400
+Content-Disposition: inline; filename=0025-scheduling-while-atomic-in-cgroup-code.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -26,89 +32,70 @@ If anyone has any objections, please let me know.
 
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-If the caller already holds the mutex, task_blocks_on_rt_mutex()
-returns -EDEADLK, we proceed directly to rt_mutex_handle_deadlock()
-where it's instant game over.
+mm, memcg: make refill_stock() use get_cpu_light()
 
-Let ww_mutexes return EDEADLK/EALREADY as they want to instead.
+Nikita reported the following memcg scheduling while atomic bug:
+
+Call Trace:
+[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+[e22d5bf0] [c060bacc] schedule+0x30/0xbc
+[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+[e22d5d90] [c0117284] __do_fault+0x38c/0x510
+[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
+
+What happens:
+
+   refill_stock()
+      get_cpu_var()
+      drain_stock()
+         res_counter_uncharge()
+            res_counter_uncharge_until()
+               spin_lock() <== boom
+
+Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
 
 Cc: stable-rt@vger.kernel.org
+Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 21 ++++++++++++++-------
- 1 file changed, 14 insertions(+), 7 deletions(-)
+ mm/memcontrol.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index e8a6555a670a..7601c1332a88 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1621,13 +1621,20 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 
- 	if (likely(!ret))
- 		ret = __rt_mutex_slowlock(lock, state, timeout, &waiter, ww_ctx);
-+	else if (ww_ctx) {
-+		/* ww_mutex received EDEADLK, let it become EALREADY */
-+		ret = __mutex_lock_check_stamp(lock, ww_ctx);
-+		BUG_ON(!ret);
-+	}
- 
- 	set_current_state(TASK_RUNNING);
- 
- 	if (unlikely(ret)) {
- 		if (rt_mutex_has_waiters(lock))
- 			remove_waiter(lock, &waiter);
--		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
-+		/* ww_mutex want to report EDEADLK/EALREADY, let them */
-+		if (!ww_ctx)
-+			rt_mutex_handle_deadlock(ret, chwalk, &waiter);
- 	} else if (ww_ctx) {
- 		ww_mutex_account_lock(lock, ww_ctx);
- 	}
-@@ -2166,8 +2173,7 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
- 	might_sleep();
- 
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL,
--				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
-@@ -2185,8 +2191,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
- 	might_sleep();
- 
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL,
--				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
-@@ -2198,11 +2203,13 @@ EXPORT_SYMBOL_GPL(__ww_mutex_lock);
- 
- void __sched ww_mutex_unlock(struct ww_mutex *lock)
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 003521e47622..ba7a8ae06476 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2474,14 +2474,17 @@ static void __init memcg_stock_init(void)
+  */
+ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
  {
-+	int nest = !!lock->ctx;
+-	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
++	struct memcg_stock_pcp *stock;
++	int cpu = get_cpu_light();
 +
- 	/*
- 	 * The unlocking fastpath is the 0->1 transition from 'locked'
- 	 * into 'unlocked' state:
- 	 */
--	if (lock->ctx) {
-+	if (nest) {
- #ifdef CONFIG_DEBUG_MUTEXES
- 		DEBUG_LOCKS_WARN_ON(!lock->ctx->acquired);
- #endif
-@@ -2211,7 +2218,7 @@ void __sched ww_mutex_unlock(struct ww_mutex *lock)
- 		lock->ctx = NULL;
- 	}
++	stock = &per_cpu(memcg_stock, cpu);
  
--	mutex_release(&lock->base.dep_map, 1, _RET_IP_);
-+	mutex_release(&lock->base.dep_map, nest, _RET_IP_);
- 	rt_mutex_unlock(&lock->base.lock);
+ 	if (stock->cached != memcg) { /* reset if necessary */
+ 		drain_stock(stock);
+ 		stock->cached = memcg;
+ 	}
+ 	stock->nr_pages += nr_pages;
+-	put_cpu_var(memcg_stock);
++	put_cpu_light();
  }
- EXPORT_SYMBOL(ww_mutex_unlock);
+ 
+ /*
 -- 
 2.1.4
+
+
