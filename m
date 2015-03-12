@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 19/39] rtmutex: enable deadlock detection in ww_mutex_lock functions
-Date: Thu, 12 Mar 2015 15:13:26 -0400
-Message-ID: <20150312191410.203632821@goodmis.org>
+Subject: [PATCH RT 27/39] work-simple: Simple work queue implemenation
+Date: Thu, 12 Mar 2015 15:13:34 -0400
+Message-ID: <20150312191411.528019431@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Gustavo Bittencourt <gbitten@gmail.com>
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0019-rtmutex-enable-deadlock-detection-in-ww_mutex_lock-f.patch
+Content-Disposition: inline; filename=0027-work-simple-Simple-work-queue-implemenation.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,43 +23,244 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Gustavo Bittencourt <gbitten@gmail.com>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-The functions ww_mutex_lock_interruptible and ww_mutex_lock should return -EDEADLK when faced with
-a deadlock. To do so, the paramenter detect_deadlock in rt_mutex_slowlock must be TRUE.
-This patch corrects potential deadlocks when running PREEMPT_RT with nouveau driver.
+Provides a framework for enqueuing callbacks from irq context
+PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Gustavo Bittencourt <gbitten@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Bases on wait-simple.
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ include/linux/work-simple.h |  24 +++++++
+ kernel/sched/Makefile       |   2 +-
+ kernel/sched/work-simple.c  | 172 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 197 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/work-simple.h
+ create mode 100644 kernel/sched/work-simple.c
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 1794fae96a2a..27a1993111f9 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2239,7 +2239,8 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
- 	might_sleep();
+diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
+new file mode 100644
+index 000000000000..f175fa9a6016
+--- /dev/null
++++ b/include/linux/work-simple.h
+@@ -0,0 +1,24 @@
++#ifndef _LINUX_SWORK_H
++#define _LINUX_SWORK_H
++
++#include <linux/list.h>
++
++struct swork_event {
++	struct list_head item;
++	unsigned long flags;
++	void (*func)(struct swork_event *);
++};
++
++static inline void INIT_SWORK(struct swork_event *event,
++			      void (*func)(struct swork_event *))
++{
++	event->flags = 0;
++	event->func = func;
++}
++
++bool swork_queue(struct swork_event *sev);
++
++int swork_get(void);
++void swork_put(void);
++
++#endif /* _LINUX_SWORK_H */
+diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
+index b14a512da520..d8374f999e9b 100644
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -13,7 +13,7 @@ endif
  
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL,
-+				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
-@@ -2257,7 +2258,8 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
- 	might_sleep();
- 
- 	mutex_acquire_nest(&lock->base.dep_map, 0, 0, &ww_ctx->dep_map, _RET_IP_);
--	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
-+	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL,
-+				RT_MUTEX_FULL_CHAINWALK, ww_ctx);
- 	if (ret)
- 		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
- 	else if (!ret && ww_ctx->acquired > 1)
+ obj-y += core.o proc.o clock.o cputime.o
+ obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y += wait.o wait-simple.o completion.o
++obj-y += wait.o wait-simple.o work-simple.o completion.o
+ obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
+new file mode 100644
+index 000000000000..c996f755dba6
+--- /dev/null
++++ b/kernel/sched/work-simple.c
+@@ -0,0 +1,172 @@
++/*
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
++ *
++ * Provides a framework for enqueuing callbacks from irq context
++ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
++ */
++
++#include <linux/wait-simple.h>
++#include <linux/work-simple.h>
++#include <linux/kthread.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++
++#define SWORK_EVENT_PENDING     (1 << 0)
++
++static DEFINE_MUTEX(worker_mutex);
++static struct sworker *glob_worker;
++
++struct sworker {
++	struct list_head events;
++	struct swait_head wq;
++
++	raw_spinlock_t lock;
++
++	struct task_struct *task;
++	int refs;
++};
++
++static bool swork_readable(struct sworker *worker)
++{
++	bool r;
++
++	if (kthread_should_stop())
++		return true;
++
++	raw_spin_lock_irq(&worker->lock);
++	r = !list_empty(&worker->events);
++	raw_spin_unlock_irq(&worker->lock);
++
++	return r;
++}
++
++static int swork_kthread(void *arg)
++{
++	struct sworker *worker = arg;
++
++	for (;;) {
++		swait_event_interruptible(worker->wq,
++					swork_readable(worker));
++		if (kthread_should_stop())
++			break;
++
++		raw_spin_lock_irq(&worker->lock);
++		while (!list_empty(&worker->events)) {
++			struct swork_event *sev;
++
++			sev = list_first_entry(&worker->events,
++					struct swork_event, item);
++			list_del(&sev->item);
++			raw_spin_unlock_irq(&worker->lock);
++
++			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
++							 &sev->flags));
++			sev->func(sev);
++			raw_spin_lock_irq(&worker->lock);
++		}
++		raw_spin_unlock_irq(&worker->lock);
++	}
++	return 0;
++}
++
++static struct sworker *swork_create(void)
++{
++	struct sworker *worker;
++
++	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
++	if (!worker)
++		return ERR_PTR(-ENOMEM);
++
++	INIT_LIST_HEAD(&worker->events);
++	raw_spin_lock_init(&worker->lock);
++	init_swait_head(&worker->wq);
++
++	worker->task = kthread_run(swork_kthread, worker, "kswork");
++	if (IS_ERR(worker->task)) {
++		kfree(worker);
++		return ERR_PTR(-ENOMEM);
++	}
++
++	return worker;
++}
++
++static void swork_destroy(struct sworker *worker)
++{
++	kthread_stop(worker->task);
++
++	WARN_ON(!list_empty(&worker->events));
++	kfree(worker);
++}
++
++/**
++ * swork_queue - queue swork
++ *
++ * Returns %false if @work was already on a queue, %true otherwise.
++ *
++ * The work is queued and processed on a random CPU
++ */
++bool swork_queue(struct swork_event *sev)
++{
++	unsigned long flags;
++
++	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
++		return false;
++
++	raw_spin_lock_irqsave(&glob_worker->lock, flags);
++	list_add_tail(&sev->item, &glob_worker->events);
++	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
++
++	swait_wake(&glob_worker->wq);
++	return true;
++}
++EXPORT_SYMBOL_GPL(swork_queue);
++
++/**
++ * swork_get - get an instance of the sworker
++ *
++ * Returns an negative error code if the initialization if the worker did not
++ * work, %0 otherwise.
++ *
++ */
++int swork_get(void)
++{
++	struct sworker *worker;
++
++	mutex_lock(&worker_mutex);
++	if (!glob_worker) {
++		worker = swork_create();
++		if (IS_ERR(worker)) {
++			mutex_unlock(&worker_mutex);
++			return -ENOMEM;
++		}
++
++		glob_worker = worker;
++	}
++
++	glob_worker->refs++;
++	mutex_unlock(&worker_mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(swork_get);
++
++/**
++ * swork_put - puts an instance of the sworker
++ *
++ * Will destroy the sworker thread. This function must not be called until all
++ * queued events have been completed.
++ */
++void swork_put(void)
++{
++	mutex_lock(&worker_mutex);
++
++	glob_worker->refs--;
++	if (glob_worker->refs > 0)
++		goto out;
++
++	swork_destroy(glob_worker);
++	glob_worker = NULL;
++out:
++	mutex_unlock(&worker_mutex);
++}
++EXPORT_SYMBOL_GPL(swork_put);
 -- 
 2.1.4
