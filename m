@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/36] rtmutex: No need to keep task ref for lock owner check
-Date: Thu, 12 Mar 2015 15:21:44 -0400
-Message-ID: <20150312192155.278519340@goodmis.org>
+Subject: [PATCH RT 06/36] rtmutex: Clarify the boost/deboost part
+Date: Thu, 12 Mar 2015 15:21:45 -0400
+Message-ID: <20150312192155.454731391@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,17 +9,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:42218 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:58615 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755778AbbCLTV6 (ORCPT
+	by vger.kernel.org with ESMTP id S1755777AbbCLTV6 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 12 Mar 2015 15:21:58 -0400
-Content-Disposition: inline; filename=0005-rtmutex-No-need-to-keep-task-ref-for-lock-owner-chec.patch
+Content-Disposition: inline; filename=0006-rtmutex-Clarify-the-boost-deboost-part.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -30,45 +29,144 @@ If anyone has any objections, please let me know.
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: 2ffa5a5cd2fe792b6399c903d5172adf088d8ff7
+upstream commit: a57594a13a446d1a6ab1dcd48339f799ce586843
 
-There is no point to keep the task ref across the check for lock
-owner. Drop the ref before that, so the protection context is clear.
-
-Found while documenting the chain walk.
+Add a separate local variable for the boost/deboost logic to make the
+code more readable. Add comments where appropriate.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+
+Conflicts:
+	kernel/rtmutex.c
 ---
- kernel/rtmutex.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ kernel/rtmutex.c | 57 +++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 48 insertions(+), 9 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 27420e448a9f..7a089565d869 100644
+index 7a089565d869..5e3029f936e9 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -410,6 +410,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+@@ -292,9 +292,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 				      struct rt_mutex_waiter *orig_waiter,
+ 				      struct task_struct *top_task)
+ {
+-	struct rt_mutex *lock;
+ 	struct rt_mutex_waiter *waiter, *top_waiter = orig_waiter;
++	struct rt_mutex_waiter *prerequeue_top_waiter;
+ 	int detect_deadlock, ret = 0, depth = 0;
++	struct rt_mutex *lock;
+ 	unsigned long flags;
  
- 	/* Release the task */
+ 	detect_deadlock = debug_rt_mutex_detect_deadlock(orig_waiter,
+@@ -401,9 +402,14 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		goto out_unlock_pi;
+ 	}
+ 
+-	top_waiter = rt_mutex_top_waiter(lock);
++	/*
++	 * Store the current top waiter before doing the requeue
++	 * operation on @lock. We need it for the boost/deboost
++	 * decision below.
++	 */
++	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
+ 
+-	/* Requeue the waiter */
++	/* Requeue the waiter in the lock waiter list. */
+ 	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+ 	rt_mutex_enqueue(lock, waiter);
+@@ -412,6 +418,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-+	put_task_struct(task);
-+
+ 	put_task_struct(task);
+ 
++	/*
++	 * We must abort the chain walk if there is no lock owner even
++	 * in the dead lock detection case, as we have nothing to
++	 * follow here. This is the end of the chain we are walking.
++	 */
  	if (!rt_mutex_owner(lock)) {
  		struct rt_mutex_waiter *lock_top_waiter;
  
-@@ -421,9 +423,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 		if (top_waiter != lock_top_waiter)
+@@ -420,29 +431,48 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		 * to wake the new top waiter up to try to get the lock.
+ 		 */
+ 		lock_top_waiter = rt_mutex_top_waiter(lock);
+-		if (top_waiter != lock_top_waiter)
++		if (prerequeue_top_waiter != lock_top_waiter)
  			rt_mutex_wake_waiter(lock_top_waiter);
  		raw_spin_unlock(&lock->wait_lock);
--		goto out_put_task;
-+		return 0;
+ 		return 0;
  	}
--	put_task_struct(task);
  
- 	/* Grab the next task */
+-	/* Grab the next task */
++	/* Grab the next task, i.e. the owner of @lock */
  	task = rt_mutex_owner(lock);
+ 	get_task_struct(task);
+ 	raw_spin_lock_irqsave(&task->pi_lock, flags);
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		/* Boost the owner */
+-		rt_mutex_dequeue_pi(task, top_waiter);
++		/*
++		 * The waiter became the new top (highest priority)
++		 * waiter on the lock. Replace the previous top waiter
++		 * in the owner tasks pi waiters list with this waiter
++		 * and adjust the priority of the owner.
++		 */
++		rt_mutex_dequeue_pi(task, prerequeue_top_waiter);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 
+-	} else if (top_waiter == waiter) {
+-		/* Deboost the owner */
++	} else if (prerequeue_top_waiter == waiter) {
++		/*
++		 * The waiter was the top waiter on the lock, but is
++		 * no longer the top prority waiter. Replace waiter in
++		 * the owner tasks pi waiters list with the new top
++		 * (highest priority) waiter and adjust the priority
++		 * of the owner.
++		 * The new top waiter is stored in @waiter so that
++		 * @waiter == @top_waiter evaluates to true below and
++		 * we continue to deboost the rest of the chain.
++		 */
+ 		rt_mutex_dequeue_pi(task, waiter);
+ 		waiter = rt_mutex_top_waiter(lock);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
++	} else {
++		/*
++		 * Nothing changed. No need to do any priority
++		 * adjustment.
++		 */
+ 	}
+ 
+ 	/*
+@@ -455,6 +485,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 
++	/*
++	 * Store the top waiter of @lock for the end of chain walk
++	 * decision below.
++	 */
+ 	top_waiter = rt_mutex_top_waiter(lock);
+ 	raw_spin_unlock(&lock->wait_lock);
+ 
+@@ -465,6 +499,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	if (!next_lock)
+ 		goto out_put_task;
+ 
++	/*
++	 * If the current waiter is not the top waiter on the lock,
++	 * then we can stop the chain walk here if we are not in full
++	 * deadlock detection mode.
++	 */
+ 	if (!detect_deadlock && waiter != top_waiter)
+ 		goto out_put_task;
+ 
 -- 
 2.1.4
 
