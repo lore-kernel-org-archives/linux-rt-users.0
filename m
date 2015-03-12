@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 29/39] Revert "rwsem-rt: Do not allow readers to nest"
-Date: Thu, 12 Mar 2015 15:13:36 -0400
-Message-ID: <20150312191411.837383984@goodmis.org>
+Subject: [PATCH RT 22/39] arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+Date: Thu, 12 Mar 2015 15:13:29 -0400
+Message-ID: <20150312191410.704703415@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,15 +13,10 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:15728 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752465AbbCLTOW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:14:22 -0400
-Content-Disposition: inline; filename=0029-Revert-rwsem-rt-Do-not-allow-readers-to-nest.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0022-arm-futex-disable-preemption-during-futex_atomic_cmp.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.14.34-rt32-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -30,103 +25,54 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-This behaviour is required by cpufreq and its logic is "okay": It does a
-read_lock followed by a try_read_lock.
-Lockdep warns if one try a read_lock twice in -RT and vanilla so it
-should be good. We still only allow multiple readers as long as it is in
-the same process.
+The ARM UP implementation of futex_atomic_cmpxchg_inatomic() assumes that
+pagefault_disable() inherits a preempt disabled section. This assumtion
+is true for mainline but -RT reverts this and allows preemption in
+pagefault disabled regions.
+The code sequence of futex_atomic_cmpxchg_inatomic():
 
+|   x = *futex;
+|   if (x == oldval)
+|           *futex = newval;
+
+The problem occurs if the code is preempted after reading the futex value or
+after comparing it with x. While preempted, the futex owner has to be
+scheduled which then releases the lock (in userland because it has no waiter
+yet). Once the code is back on the CPU, it overwrites the futex value
+with with the old PID and the waiter bit set.
+
+The workaround is to explicit disable code preemption to avoid the
+described race window.
+
+Debugged-by:  Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/rwsem_rt.h |  1 +
- kernel/locking/rt.c      | 29 +++++++++++++++++++++++------
- 2 files changed, 24 insertions(+), 6 deletions(-)
+ arch/arm/include/asm/futex.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
-index 0065b08fbb7a..924c2d274ab5 100644
---- a/include/linux/rwsem_rt.h
-+++ b/include/linux/rwsem_rt.h
-@@ -20,6 +20,7 @@
+diff --git a/arch/arm/include/asm/futex.h b/arch/arm/include/asm/futex.h
+index 2aff798fbef4..54d26a98ff84 100644
+--- a/arch/arm/include/asm/futex.h
++++ b/arch/arm/include/asm/futex.h
+@@ -90,6 +90,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+ 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
+ 		return -EFAULT;
  
- struct rw_semaphore {
- 	struct rt_mutex		lock;
-+	int			read_depth;
- #ifdef CONFIG_DEBUG_LOCK_ALLOC
- 	struct lockdep_map	dep_map;
- #endif
-diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
-index eac2ddea9c45..9a972e996185 100644
---- a/kernel/locking/rt.c
-+++ b/kernel/locking/rt.c
-@@ -322,7 +322,8 @@ EXPORT_SYMBOL(rt_up_write);
- void  rt_up_read(struct rw_semaphore *rwsem)
- {
- 	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
--	rt_mutex_unlock(&rwsem->lock);
-+	if (--rwsem->read_depth == 0)
-+		rt_mutex_unlock(&rwsem->lock);
- }
- EXPORT_SYMBOL(rt_up_read);
++	preempt_disable_rt();
++
+ 	__asm__ __volatile__("@futex_atomic_cmpxchg_inatomic\n"
+ 	"1:	" TUSER(ldr) "	%1, [%4]\n"
+ 	"	teq	%1, %2\n"
+@@ -101,6 +103,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+ 	: "cc", "memory");
  
-@@ -333,6 +334,7 @@ EXPORT_SYMBOL(rt_up_read);
- void  rt_downgrade_write(struct rw_semaphore *rwsem)
- {
- 	BUG_ON(rt_mutex_owner(&rwsem->lock) != current);
-+	rwsem->read_depth = 1;
- }
- EXPORT_SYMBOL(rt_downgrade_write);
- 
-@@ -370,12 +372,23 @@ EXPORT_SYMBOL(rt_down_write_nested_lock);
- 
- int  rt_down_read_trylock(struct rw_semaphore *rwsem)
- {
--	int ret;
-+	struct rt_mutex *lock = &rwsem->lock;
-+	int ret = 1;
- 
--	ret = rt_mutex_trylock(&rwsem->lock);
--	if (ret)
--		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
-+	/*
-+	 * recursive read locks succeed when current owns the rwsem,
-+	 * but not when read_depth == 0 which means that the rwsem is
-+	 * write locked.
-+	 */
-+	if (rt_mutex_owner(lock) != current)
-+		ret = rt_mutex_trylock(&rwsem->lock);
-+	else if (!rwsem->read_depth)
-+		ret = 0;
- 
-+	if (ret) {
-+		rwsem->read_depth++;
-+		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
-+	}
+ 	*uval = val;
++
++	preempt_enable_rt();
  	return ret;
  }
- EXPORT_SYMBOL(rt_down_read_trylock);
-@@ -383,7 +396,10 @@ EXPORT_SYMBOL(rt_down_read_trylock);
- static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
- {
- 	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
--	rt_mutex_lock(&rwsem->lock);
-+
-+	if (rt_mutex_owner(&rwsem->lock) != current)
-+		rt_mutex_lock(&rwsem->lock);
-+	rwsem->read_depth++;
- }
  
- void  rt_down_read(struct rw_semaphore *rwsem)
-@@ -408,6 +424,7 @@ void  __rt_rwsem_init(struct rw_semaphore *rwsem, const char *name,
- 	debug_check_no_locks_freed((void *)rwsem, sizeof(*rwsem));
- 	lockdep_init_map(&rwsem->dep_map, name, key, 0);
- #endif
-+	rwsem->read_depth = 0;
- 	rwsem->lock.save_state = 0;
- }
- EXPORT_SYMBOL(__rt_rwsem_init);
 -- 
 2.1.4
-
-
