@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 25/39] sas-ata/isci: dontt disable interrupts in qc_issue handler
-Date: Thu, 12 Mar 2015 15:13:32 -0400
-Message-ID: <20150312191411.207321260@goodmis.org>
+Subject: [PATCH RT 24/39] mips: rt: Replace pagefault_* to raw version
+Date: Thu, 12 Mar 2015 15:13:31 -0400
+Message-ID: <20150312191411.043963138@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,16 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>, Yang Shi <yang.shi@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:53484 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:31531 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754591AbbCLTOX (ORCPT
+	by vger.kernel.org with ESMTP id S1754454AbbCLTOS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:14:23 -0400
-Content-Disposition: inline; filename=0025-sas-ata-isci-dont-t-disable-interrupts-in-qc_issue-h.patch
+	Thu, 12 Mar 2015 15:14:18 -0400
+Content-Disposition: inline; filename=0024-mips-rt-Replace-pagefault_-to-raw-version.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,85 +28,95 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Yang Shi <yang.shi@windriver.com>
 
-On 3.14-rt we see the following trace on Canoe Pass for
-SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
-when the sas qc_issue handler is run:
+In k{un}map_coherent, pagefault_disable and pagefault_enable are called
+respectively, but k{un}map_coherent needs preempt disabled according to
+commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
+in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
 
- BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
- in_atomic(): 0, irqs_disabled(): 1, pid: 432, name: udevd
- CPU: 11 PID: 432 Comm: udevd Not tainted 3.14.28-rt22 #2
- Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
- ffff880fab500000 ffff880fa9f239c0 ffffffff81a2d273 0000000000000000
- ffff880fa9f239d8 ffffffff8107f023 ffff880faac23dc0 ffff880fa9f239f0
- ffffffff81a33cc0 ffff880faaeb1400 ffff880fa9f23a40 ffffffff815de891
- Call Trace:
- [<ffffffff81a2d273>] dump_stack+0x4e/0x7a
- [<ffffffff8107f023>] __might_sleep+0xe3/0x160
- [<ffffffff81a33cc0>] rt_spin_lock+0x20/0x50
- [<ffffffff815de891>] isci_task_execute_task+0x171/0x2f0  <-----
- [<ffffffff815cfecb>] sas_ata_qc_issue+0x25b/0x2a0
- [<ffffffff81606363>] ata_qc_issue+0x1f3/0x370
- [<ffffffff8160c600>] ? ata_scsi_invalid_field+0x40/0x40
- [<ffffffff8160c8f5>] ata_scsi_translate+0xa5/0x1b0
- [<ffffffff8160efc6>] ata_sas_queuecmd+0x86/0x280
- [<ffffffff815ce446>] sas_queuecommand+0x196/0x230
- [<ffffffff81081fad>] ? get_parent_ip+0xd/0x50
- [<ffffffff815b05a4>] scsi_dispatch_cmd+0xb4/0x210
- [<ffffffff815b7744>] scsi_request_fn+0x314/0x530
+k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
+However, actually, the most modern MIPS processors have PIPT dcache without
+dcache alias issue. In such case, k{un}map_atomic will be called with preempt
+enabled.
 
-and gdb shows:
+To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
+disables preempt, otherwise the following kernel panic may be caught:
 
-(gdb) list * isci_task_execute_task+0x171
-0xffffffff815ddfb1 is in isci_task_execute_task (drivers/scsi/isci/task.c:138).
-133             dev_dbg(&ihost->pdev->dev, "%s: num=%d\n", __func__, num);
-134
-135             for_each_sas_task(num, task) {
-136                     enum sci_status status = SCI_FAILURE;
-137
-138                     spin_lock_irqsave(&ihost->scic_lock, flags);    <-----
-139                     idev = isci_lookup_device(task->dev);
-140                     io_ready = isci_device_io_ready(idev, task);
-141                     tag = isci_alloc_tag(ihost);
-142                     spin_unlock_irqrestore(&ihost->scic_lock, flags);
-(gdb)
+CPU 0 Unable to handle kernel paging request at virtual address fffffffffffd5000, epc == ffffffff80122c00, ra == ffffffff8011fbcc
+Oops[#1]:
+CPU: 0 PID: 409 Comm: runltp Not tainted 3.14.17-rt5 #1
+task: 980000000fa936f0 ti: 980000000eed0000 task.ti: 980000000eed0000
+$ 0 : 0000000000000000 000000001400a4e1 fffffffffffd5000 0000000000000001
+$ 4 : 980000000cded000 fffffffffffd5000 980000000cdedf00 ffffffffffff00fe
+$ 8 : 0000000000000000 ffffffffffffff00 000000000000000d 0000000000000004
+$12 : 980000000eed3fe0 000000000000a400 ffffffffa00ae278 0000000000000000
+$16 : 980000000cded000 000000726eb855c8 98000000012ccfe8 ffffffff8095e0c0
+$20 : ffffffff80ad0000 ffffffff8095e0c0 98000000012d0bd8 980000000fb92000
+$24 : 0000000000000000 ffffffff80177fb0
+$28 : 980000000eed0000 980000000eed3b60 980000000fb92060 ffffffff8011fbcc
+Hi : 000000000002cb02
+Lo : 000000000000ee56
+epc : ffffffff80122c00 copy_page+0x38/0x548
+    Not tainted
+ra : ffffffff8011fbcc copy_user_highpage+0x16c/0x180
+Status: 1400a4e3 KX SX UX KERNEL EXL IE
+Cause : 10800408
+BadVA : fffffffffffd5000
+PrId : 00010000 (MIPS64R2-generic)
+Modules linked in: i2c_piix4 i2c_core uhci_hcd
+Process runltp (pid: 409, threadinfo=980000000eed0000, task=980000000fa936f0, tls=000000fff7756700)
+Stack : 98000000012ccfe8 980000000eeb7ba8 980000000ecc7508 000000000666da5b
+000000726eb855c8 ffffffff802156e0 000000726ea4a000 98000000010007e0
+980000000fb92060 0000000000000000 0000000000000000 6db6db6db6db6db7
+0000000000000080 000000726eb855c8 980000000fb92000 980000000eeeec28
+980000000ecc7508 980000000fb92060 0000000000000001 00000000000000a9
+ffffffff80995e60 ffffffff80218910 000000001400a4e0 ffffffff804efd24
+980000000ee25b90 ffffffff8079cec4 ffffffff8079d49c ffffffff80979658
+000000000666da5b 980000000eeb7ba8 000000726eb855c8 00000000000000a9
+980000000fb92000 980000000fa936f0 980000000eed3eb0 0000000000000001
+980000000fb92088 0000000000030002 980000000ecc7508 ffffffff8011ecd0
+...
+Call Trace:
+[<ffffffff80122c00>] copy_page+0x38/0x548
+[<ffffffff8011fbcc>] copy_user_highpage+0x16c/0x180
+[<ffffffff802156e0>] do_wp_page+0x658/0xcd8
+[<ffffffff80218910>] handle_mm_fault+0x7d8/0x1070
+[<ffffffff8011ecd0>] __do_page_fault+0x1a0/0x508
+[<ffffffff80104d84>] resume_userspace_check+0x0/0x10
 
-In addition to the scic_lock, the function also contains locking of
-the task_state_lock -- which is clearly not a candidate for raw lock
-conversion.  As can be seen by the comment nearby, we really should
-be running the qc_issue code with interrupts enabled anyway.
+Or there may be random segmentation fault happened.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Yang Shi <yang.shi@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/scsi/libsas/sas_ata.c | 4 ++--
+ arch/mips/mm/init.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/scsi/libsas/sas_ata.c b/drivers/scsi/libsas/sas_ata.c
-index d2895836f9fa..c85e07ab51e4 100644
---- a/drivers/scsi/libsas/sas_ata.c
-+++ b/drivers/scsi/libsas/sas_ata.c
-@@ -191,7 +191,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
- 	/* TODO: audit callers to ensure they are ready for qc_issue to
- 	 * unconditionally re-enable interrupts
- 	 */
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	spin_unlock(ap->lock);
+diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
+index 6b59617760c1..740219e35d6c 100644
+--- a/arch/mips/mm/init.c
++++ b/arch/mips/mm/init.c
+@@ -124,7 +124,7 @@ void *kmap_coherent(struct page *page, unsigned long addr)
  
- 	/* If the device fell off, no sense in issuing commands */
-@@ -261,7 +261,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
+ 	BUG_ON(Page_dcache_dirty(page));
  
-  out:
- 	spin_lock(ap->lock);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
- 	return ret;
+-	pagefault_disable();
++	raw_pagefault_disable();
+ 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
+ #ifdef CONFIG_MIPS_MT_SMTC
+ 	idx += FIX_N_COLOURS * smp_processor_id() +
+@@ -191,7 +191,7 @@ void kunmap_coherent(void)
+ 	write_c0_entryhi(old_ctx);
+ 	EXIT_CRITICAL(flags);
+ #endif
+-	pagefault_enable();
++	raw_pagefault_enable();
  }
  
+ void copy_user_highpage(struct page *to, struct page *from,
 -- 
 2.1.4
 
