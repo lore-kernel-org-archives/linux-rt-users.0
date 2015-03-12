@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 24/39] mips: rt: Replace pagefault_* to raw version
-Date: Thu, 12 Mar 2015 15:13:31 -0400
-Message-ID: <20150312191411.043963138@goodmis.org>
+Subject: [PATCH RT 29/39] Revert "rwsem-rt: Do not allow readers to nest"
+Date: Thu, 12 Mar 2015 15:13:36 -0400
+Message-ID: <20150312191411.837383984@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,16 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Yang Shi <yang.shi@windriver.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:31531 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:15728 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754454AbbCLTOS (ORCPT
+	by vger.kernel.org with ESMTP id S1752465AbbCLTOW (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:14:18 -0400
-Content-Disposition: inline; filename=0024-mips-rt-Replace-pagefault_-to-raw-version.patch
+	Thu, 12 Mar 2015 15:14:22 -0400
+Content-Disposition: inline; filename=0029-Revert-rwsem-rt-Do-not-allow-readers-to-nest.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,95 +28,104 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-In k{un}map_coherent, pagefault_disable and pagefault_enable are called
-respectively, but k{un}map_coherent needs preempt disabled according to
-commit f8829caee311207afbc882794bdc5aa0db5caf33 ("[MIPS] Fix aliasing bug
-in copy_to_user_page / copy_from_user_page") to avoid dcache alias on COW.
-
-k{un}map_coherent are just called when cpu_has_dc_aliases == 1 with VIPT cache.
-However, actually, the most modern MIPS processors have PIPT dcache without
-dcache alias issue. In such case, k{un}map_atomic will be called with preempt
-enabled.
-
-To fix this, we replace pagefault_* to raw version in k{un}map_coherent, which
-disables preempt, otherwise the following kernel panic may be caught:
-
-CPU 0 Unable to handle kernel paging request at virtual address fffffffffffd5000, epc == ffffffff80122c00, ra == ffffffff8011fbcc
-Oops[#1]:
-CPU: 0 PID: 409 Comm: runltp Not tainted 3.14.17-rt5 #1
-task: 980000000fa936f0 ti: 980000000eed0000 task.ti: 980000000eed0000
-$ 0 : 0000000000000000 000000001400a4e1 fffffffffffd5000 0000000000000001
-$ 4 : 980000000cded000 fffffffffffd5000 980000000cdedf00 ffffffffffff00fe
-$ 8 : 0000000000000000 ffffffffffffff00 000000000000000d 0000000000000004
-$12 : 980000000eed3fe0 000000000000a400 ffffffffa00ae278 0000000000000000
-$16 : 980000000cded000 000000726eb855c8 98000000012ccfe8 ffffffff8095e0c0
-$20 : ffffffff80ad0000 ffffffff8095e0c0 98000000012d0bd8 980000000fb92000
-$24 : 0000000000000000 ffffffff80177fb0
-$28 : 980000000eed0000 980000000eed3b60 980000000fb92060 ffffffff8011fbcc
-Hi : 000000000002cb02
-Lo : 000000000000ee56
-epc : ffffffff80122c00 copy_page+0x38/0x548
-    Not tainted
-ra : ffffffff8011fbcc copy_user_highpage+0x16c/0x180
-Status: 1400a4e3 KX SX UX KERNEL EXL IE
-Cause : 10800408
-BadVA : fffffffffffd5000
-PrId : 00010000 (MIPS64R2-generic)
-Modules linked in: i2c_piix4 i2c_core uhci_hcd
-Process runltp (pid: 409, threadinfo=980000000eed0000, task=980000000fa936f0, tls=000000fff7756700)
-Stack : 98000000012ccfe8 980000000eeb7ba8 980000000ecc7508 000000000666da5b
-000000726eb855c8 ffffffff802156e0 000000726ea4a000 98000000010007e0
-980000000fb92060 0000000000000000 0000000000000000 6db6db6db6db6db7
-0000000000000080 000000726eb855c8 980000000fb92000 980000000eeeec28
-980000000ecc7508 980000000fb92060 0000000000000001 00000000000000a9
-ffffffff80995e60 ffffffff80218910 000000001400a4e0 ffffffff804efd24
-980000000ee25b90 ffffffff8079cec4 ffffffff8079d49c ffffffff80979658
-000000000666da5b 980000000eeb7ba8 000000726eb855c8 00000000000000a9
-980000000fb92000 980000000fa936f0 980000000eed3eb0 0000000000000001
-980000000fb92088 0000000000030002 980000000ecc7508 ffffffff8011ecd0
-...
-Call Trace:
-[<ffffffff80122c00>] copy_page+0x38/0x548
-[<ffffffff8011fbcc>] copy_user_highpage+0x16c/0x180
-[<ffffffff802156e0>] do_wp_page+0x658/0xcd8
-[<ffffffff80218910>] handle_mm_fault+0x7d8/0x1070
-[<ffffffff8011ecd0>] __do_page_fault+0x1a0/0x508
-[<ffffffff80104d84>] resume_userspace_check+0x0/0x10
-
-Or there may be random segmentation fault happened.
+This behaviour is required by cpufreq and its logic is "okay": It does a
+read_lock followed by a try_read_lock.
+Lockdep warns if one try a read_lock twice in -RT and vanilla so it
+should be good. We still only allow multiple readers as long as it is in
+the same process.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/mips/mm/init.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ include/linux/rwsem_rt.h |  1 +
+ kernel/locking/rt.c      | 29 +++++++++++++++++++++++------
+ 2 files changed, 24 insertions(+), 6 deletions(-)
 
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index 6b59617760c1..740219e35d6c 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -124,7 +124,7 @@ void *kmap_coherent(struct page *page, unsigned long addr)
+diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
+index 0065b08fbb7a..924c2d274ab5 100644
+--- a/include/linux/rwsem_rt.h
++++ b/include/linux/rwsem_rt.h
+@@ -20,6 +20,7 @@
  
- 	BUG_ON(Page_dcache_dirty(page));
- 
--	pagefault_disable();
-+	raw_pagefault_disable();
- 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
- #ifdef CONFIG_MIPS_MT_SMTC
- 	idx += FIX_N_COLOURS * smp_processor_id() +
-@@ -191,7 +191,7 @@ void kunmap_coherent(void)
- 	write_c0_entryhi(old_ctx);
- 	EXIT_CRITICAL(flags);
+ struct rw_semaphore {
+ 	struct rt_mutex		lock;
++	int			read_depth;
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ 	struct lockdep_map	dep_map;
  #endif
--	pagefault_enable();
-+	raw_pagefault_enable();
+diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
+index eac2ddea9c45..9a972e996185 100644
+--- a/kernel/locking/rt.c
++++ b/kernel/locking/rt.c
+@@ -322,7 +322,8 @@ EXPORT_SYMBOL(rt_up_write);
+ void  rt_up_read(struct rw_semaphore *rwsem)
+ {
+ 	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
+-	rt_mutex_unlock(&rwsem->lock);
++	if (--rwsem->read_depth == 0)
++		rt_mutex_unlock(&rwsem->lock);
+ }
+ EXPORT_SYMBOL(rt_up_read);
+ 
+@@ -333,6 +334,7 @@ EXPORT_SYMBOL(rt_up_read);
+ void  rt_downgrade_write(struct rw_semaphore *rwsem)
+ {
+ 	BUG_ON(rt_mutex_owner(&rwsem->lock) != current);
++	rwsem->read_depth = 1;
+ }
+ EXPORT_SYMBOL(rt_downgrade_write);
+ 
+@@ -370,12 +372,23 @@ EXPORT_SYMBOL(rt_down_write_nested_lock);
+ 
+ int  rt_down_read_trylock(struct rw_semaphore *rwsem)
+ {
+-	int ret;
++	struct rt_mutex *lock = &rwsem->lock;
++	int ret = 1;
+ 
+-	ret = rt_mutex_trylock(&rwsem->lock);
+-	if (ret)
+-		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
++	/*
++	 * recursive read locks succeed when current owns the rwsem,
++	 * but not when read_depth == 0 which means that the rwsem is
++	 * write locked.
++	 */
++	if (rt_mutex_owner(lock) != current)
++		ret = rt_mutex_trylock(&rwsem->lock);
++	else if (!rwsem->read_depth)
++		ret = 0;
+ 
++	if (ret) {
++		rwsem->read_depth++;
++		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
++	}
+ 	return ret;
+ }
+ EXPORT_SYMBOL(rt_down_read_trylock);
+@@ -383,7 +396,10 @@ EXPORT_SYMBOL(rt_down_read_trylock);
+ static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
+ {
+ 	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
+-	rt_mutex_lock(&rwsem->lock);
++
++	if (rt_mutex_owner(&rwsem->lock) != current)
++		rt_mutex_lock(&rwsem->lock);
++	rwsem->read_depth++;
  }
  
- void copy_user_highpage(struct page *to, struct page *from,
+ void  rt_down_read(struct rw_semaphore *rwsem)
+@@ -408,6 +424,7 @@ void  __rt_rwsem_init(struct rw_semaphore *rwsem, const char *name,
+ 	debug_check_no_locks_freed((void *)rwsem, sizeof(*rwsem));
+ 	lockdep_init_map(&rwsem->dep_map, name, key, 0);
+ #endif
++	rwsem->read_depth = 0;
+ 	rwsem->lock.save_state = 0;
+ }
+ EXPORT_SYMBOL(__rt_rwsem_init);
 -- 
 2.1.4
 
