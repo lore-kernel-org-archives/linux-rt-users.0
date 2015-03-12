@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 34/36] timers: Reduce future __run_timers() latency for newly emptied list
-Date: Thu, 12 Mar 2015 15:22:13 -0400
-Message-ID: <20150312192200.369597331@goodmis.org>
+Subject: [PATCH RT 33/36] timers: Reduce __run_timers() latency for empty list
+Date: Thu, 12 Mar 2015 15:22:12 -0400
+Message-ID: <20150312192200.209937203@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -18,12 +18,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.232]:58636 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:11830 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932491AbbCLTWJ (ORCPT
+	by vger.kernel.org with ESMTP id S932486AbbCLTWJ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 12 Mar 2015 15:22:09 -0400
-Content-Disposition: inline; filename=0034-timers-Reduce-future-__run_timers-latency-for-newly-.patch
+Content-Disposition: inline; filename=0033-timers-Reduce-__run_timers-latency-for-empty-list.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -34,17 +34,14 @@ If anyone has any objections, please let me know.
 
 From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 
-upstream commit: 16d937f880312e3f47157d4d6d6ebf7e61523378
+upstream commit: d550e81dc0ddc04f1b417c179c214103a28e0ee8
 
 The __run_timers() function currently steps through the list one jiffy at
 a time in order to update the timer wheel.  However, if the timer wheel
 is empty, no adjustment is needed other than updating ->timer_jiffies.
-Therefore, if we just emptied the timer wheel, for example, by deleting
-the last timer, we should mark the timer wheel as being up to date.
-This marking will reduce (and perhaps eliminate) the jiffy-stepping that
-a future __run_timers() call will need to do in response to some future
-timer posting or migration.  This commit therefore catches ->timer_jiffies
-for this case.
+In this case, which is likely to be common for NO_HZ_FULL kernels, the
+kernel currently incurs a large latency for no good reason.  This commit
+therefore short-circuits this case.
 
 Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
 Reviewed-by: Josh Triplett <josh@joshtriplett.org>
@@ -54,29 +51,45 @@ Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
 Tested-by: Mike Galbraith <bitbucket@online.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 2 ++
- 1 file changed, 2 insertions(+)
+ kernel/timer.c | 18 ++++++++++++++++++
+ 1 file changed, 18 insertions(+)
 
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 763ca9af64ae..c3017c06f212 100644
+index 1f1795734b70..763ca9af64ae 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
-@@ -691,6 +691,7 @@ detach_expired_timer(struct timer_list *timer, struct tvec_base *base)
- 	if (!tbase_get_deferrable(timer->base))
- 		base->active_timers--;
- 	base->all_timers--;
-+	(void)catchup_timer_jiffies(base);
+@@ -341,6 +341,20 @@ void set_timer_slack(struct timer_list *timer, int slack_hz)
  }
+ EXPORT_SYMBOL_GPL(set_timer_slack);
  
- static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
-@@ -706,6 +707,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
- 			base->next_timer = base->timer_jiffies;
- 	}
- 	base->all_timers--;
-+	(void)catchup_timer_jiffies(base);
- 	return 1;
- }
++/*
++ * If the list is empty, catch up ->timer_jiffies to the current time.
++ * The caller must hold the tvec_base lock.  Returns true if the list
++ * was empty and therefore ->timer_jiffies was updated.
++ */
++static bool catchup_timer_jiffies(struct tvec_base *base)
++{
++	if (!base->all_timers) {
++		base->timer_jiffies = jiffies;
++		return true;
++	}
++	return false;
++}
++
+ static void
+ __internal_add_timer(struct tvec_base *base, struct timer_list *timer)
+ {
+@@ -1203,6 +1217,10 @@ static inline void __run_timers(struct tvec_base *base)
+ 	struct timer_list *timer;
  
+ 	spin_lock_irq(&base->lock);
++	if (catchup_timer_jiffies(base)) {
++		spin_unlock_irq(&base->lock);
++		return;
++	}
+ 	while (time_after_eq(jiffies, base->timer_jiffies)) {
+ 		struct list_head work_list;
+ 		struct list_head *head = &work_list;
 -- 
 2.1.4
 
