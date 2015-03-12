@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 32/36] timers: Track total number of timers in list
-Date: Thu, 12 Mar 2015 15:22:11 -0400
-Message-ID: <20150312192200.050690834@goodmis.org>
+Subject: [PATCH RT 30/36] lockdep: selftest: fix warnings due to missing PREEMPT_RT
+ conditionals
+Date: Thu, 12 Mar 2015 15:22:09 -0400
+Message-ID: <20150312192159.689815494@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,87 +11,170 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Triplett <josh@joshtriplett.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	<stable-rt@vger.kernel.org>,
+	Josh Cartwright <josh.cartwright@ni.com>,
+	Xander Huff <xander.huff@ni.com>,
+	Gratian Crisan <gratian.crisan@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0032-timers-Track-total-number-of-timers-in-list.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:11711 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S932428AbbCLTWG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2015 15:22:06 -0400
+Content-Disposition: inline; filename=0030-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Josh Cartwright <josh.cartwright@ni.com>
 
-upstream commit: fff421580f512fc044cc7421fdff31a7a6997350
+"lockdep: Selftest: Only do hardirq context test for raw spinlock"
+disabled the execution of certain tests with PREEMPT_RT_FULL, but did
+not prevent the tests from still being defined.  This leads to warnings
+like:
 
-Currently, the tvec_base structure's ->active_timers field tracks only
-the non-deferrable timers, which means that even if ->active_timers is
-zero, there might well be deferrable timers in the list.  This commit
-therefore adds an ->all_timers field to track all the timers, whether
-deferrable or not.
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
+  ...
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Reviewed-by: Josh Triplett <josh@joshtriplett.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Tested-by: Mike Galbraith <bitbucket@online.de>
+Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
+conditionals.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
+Signed-off-by: Xander Huff <xander.huff@ni.com>
+Acked-by: Gratian Crisan <gratian.crisan@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 3b79da2f9c67..1f1795734b70 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -84,6 +84,7 @@ struct tvec_base {
- 	unsigned long timer_jiffies;
- 	unsigned long next_timer;
- 	unsigned long active_timers;
-+	unsigned long all_timers;
- 	struct tvec_root tv1;
- 	struct tvec tv2;
- 	struct tvec tv3;
-@@ -395,6 +396,7 @@ static void internal_add_timer(struct tvec_base *base, struct timer_list *timer)
- 			base->next_timer = timer->expires;
- 		base->active_timers++;
- 	}
-+	base->all_timers++;
- }
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index 0acf3549c17e..bd3eaf8a875e 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -590,6 +590,8 @@ GENERATE_TESTCASE(init_held_rsem)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
  
- #ifdef CONFIG_TIMER_STATS
-@@ -674,6 +676,7 @@ detach_expired_timer(struct timer_list *timer, struct tvec_base *base)
- 	detach_timer(timer, true);
- 	if (!tbase_get_deferrable(timer->base))
- 		base->active_timers--;
-+	base->all_timers--;
- }
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
  
- static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
-@@ -688,6 +691,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
- 		if (timer->expires == base->next_timer)
- 			base->next_timer = base->timer_jiffies;
- 	}
-+	base->all_timers--;
- 	return 1;
- }
+@@ -605,9 +607,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
  
-@@ -1678,6 +1682,7 @@ static int init_timers_cpu(int cpu)
- 	base->timer_jiffies = jiffies;
- 	base->next_timer = base->timer_jiffies;
- 	base->active_timers = 0;
-+	base->all_timers = 0;
- 	return 0;
- }
++#endif
++
+ #undef E1
+ #undef E2
  
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Enabling hardirqs with a softirq-safe lock held:
+  */
+@@ -640,6 +645,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #undef E1
+ #undef E2
+ 
++#endif
++
+ /*
+  * Enabling irqs with an irq-safe lock held:
+  */
+@@ -663,6 +670,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
+ 
+@@ -678,6 +687,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ 
+@@ -709,6 +720,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
+ 
+@@ -724,6 +737,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+@@ -757,6 +772,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
+ 
+@@ -772,10 +789,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock irq inversion.
+  *
+@@ -838,6 +859,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
+ #undef E2
+ #undef E3
+ 
++#endif
++
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock recursion that is actually safe.
+  */
+@@ -876,6 +901,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
+ #undef E2
+ #undef E3
+ 
++#endif
++
+ /*
+  * read-lock / write-lock recursion that is unsafe.
+  */
 -- 
 2.1.4
+
+
