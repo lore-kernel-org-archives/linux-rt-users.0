@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 27/39] work-simple: Simple work queue implemenation
-Date: Thu, 12 Mar 2015 15:13:34 -0400
-Message-ID: <20150312191411.528019431@goodmis.org>
+Subject: [PATCH RT 20/39] x86: UV: raw_spinlock conversion
+Date: Thu, 12 Mar 2015 15:13:27 -0400
+Message-ID: <20150312191410.355388618@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
+	<stable-rt@vger.kernel.org>, Mike Galbraith <mgalbraith@suse.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0027-work-simple-Simple-work-queue-implemenation.patch
+Content-Disposition: inline; filename=0020-x86-UV-raw_spinlock-conversion.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,244 +23,258 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Provides a framework for enqueuing callbacks from irq context
-PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
+Shrug.  Lots of hobbyists have a beast in their basement, right?
 
-Bases on wait-simple.
-
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/work-simple.h |  24 +++++++
- kernel/sched/Makefile       |   2 +-
- kernel/sched/work-simple.c  | 172 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 197 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/work-simple.h
- create mode 100644 kernel/sched/work-simple.c
+ arch/x86/include/asm/uv/uv_bau.h   | 14 +++++++-------
+ arch/x86/include/asm/uv/uv_hub.h   |  2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c |  2 +-
+ arch/x86/platform/uv/tlb_uv.c      | 26 +++++++++++++-------------
+ arch/x86/platform/uv/uv_time.c     | 21 +++++++++++++--------
+ 5 files changed, 35 insertions(+), 30 deletions(-)
 
-diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
-new file mode 100644
-index 000000000000..f175fa9a6016
---- /dev/null
-+++ b/include/linux/work-simple.h
-@@ -0,0 +1,24 @@
-+#ifndef _LINUX_SWORK_H
-+#define _LINUX_SWORK_H
-+
-+#include <linux/list.h>
-+
-+struct swork_event {
-+	struct list_head item;
-+	unsigned long flags;
-+	void (*func)(struct swork_event *);
-+};
-+
-+static inline void INIT_SWORK(struct swork_event *event,
-+			      void (*func)(struct swork_event *))
-+{
-+	event->flags = 0;
-+	event->func = func;
-+}
-+
-+bool swork_queue(struct swork_event *sev);
-+
-+int swork_get(void);
-+void swork_put(void);
-+
-+#endif /* _LINUX_SWORK_H */
-diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index b14a512da520..d8374f999e9b 100644
---- a/kernel/sched/Makefile
-+++ b/kernel/sched/Makefile
-@@ -13,7 +13,7 @@ endif
+diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
+index 0b46ef261c77..c2c8a7828f04 100644
+--- a/arch/x86/include/asm/uv/uv_bau.h
++++ b/arch/x86/include/asm/uv/uv_bau.h
+@@ -611,9 +611,9 @@ struct bau_control {
+ 	cycles_t		send_message;
+ 	cycles_t		period_end;
+ 	cycles_t		period_time;
+-	spinlock_t		uvhub_lock;
+-	spinlock_t		queue_lock;
+-	spinlock_t		disable_lock;
++	raw_spinlock_t		uvhub_lock;
++	raw_spinlock_t		queue_lock;
++	raw_spinlock_t		disable_lock;
+ 	/* tunables */
+ 	int			max_concurr;
+ 	int			max_concurr_const;
+@@ -773,15 +773,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
+  * to be lowered below the current 'v'.  atomic_add_unless can only stop
+  * on equal.
+  */
+-static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
++static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
+ {
+-	spin_lock(lock);
++	raw_spin_lock(lock);
+ 	if (atomic_read(v) >= u) {
+-		spin_unlock(lock);
++		raw_spin_unlock(lock);
+ 		return 0;
+ 	}
+ 	atomic_inc(v);
+-	spin_unlock(lock);
++	raw_spin_unlock(lock);
+ 	return 1;
+ }
  
- obj-y += core.o proc.o clock.o cputime.o
- obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
--obj-y += wait.o wait-simple.o completion.o
-+obj-y += wait.o wait-simple.o work-simple.o completion.o
- obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
- obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
- obj-$(CONFIG_SCHEDSTATS) += stats.o
-diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
-new file mode 100644
-index 000000000000..c996f755dba6
---- /dev/null
-+++ b/kernel/sched/work-simple.c
-@@ -0,0 +1,172 @@
-+/*
-+ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
-+ *
-+ * Provides a framework for enqueuing callbacks from irq context
-+ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
-+ */
+diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
+index a30836c8ac4d..f559a092d8fa 100644
+--- a/arch/x86/include/asm/uv/uv_hub.h
++++ b/arch/x86/include/asm/uv/uv_hub.h
+@@ -502,7 +502,7 @@ struct uv_blade_info {
+ 	unsigned short	nr_online_cpus;
+ 	unsigned short	pnode;
+ 	short		memory_nid;
+-	spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
++	raw_spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
+ 	unsigned long	nmi_count;	/* obsolete, see uv_hub_nmi */
+ };
+ extern struct uv_blade_info *uv_blade_info;
+diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
+index d263b1307de1..1ef690e5459f 100644
+--- a/arch/x86/kernel/apic/x2apic_uv_x.c
++++ b/arch/x86/kernel/apic/x2apic_uv_x.c
+@@ -911,7 +911,7 @@ void __init uv_system_init(void)
+ 			uv_blade_info[blade].pnode = pnode;
+ 			uv_blade_info[blade].nr_possible_cpus = 0;
+ 			uv_blade_info[blade].nr_online_cpus = 0;
+-			spin_lock_init(&uv_blade_info[blade].nmi_lock);
++			raw_spin_lock_init(&uv_blade_info[blade].nmi_lock);
+ 			min_pnode = min(pnode, min_pnode);
+ 			max_pnode = max(pnode, max_pnode);
+ 			blade++;
+diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
+index dfe605ac1bcd..999fd5be9aa1 100644
+--- a/arch/x86/platform/uv/tlb_uv.c
++++ b/arch/x86/platform/uv/tlb_uv.c
+@@ -719,9 +719,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
+ 
+ 		quiesce_local_uvhub(hmaster);
+ 
+-		spin_lock(&hmaster->queue_lock);
++		raw_spin_lock(&hmaster->queue_lock);
+ 		reset_with_ipi(&bau_desc->distribution, bcp);
+-		spin_unlock(&hmaster->queue_lock);
++		raw_spin_unlock(&hmaster->queue_lock);
+ 
+ 		end_uvhub_quiesce(hmaster);
+ 
+@@ -741,9 +741,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
+ 
+ 		quiesce_local_uvhub(hmaster);
+ 
+-		spin_lock(&hmaster->queue_lock);
++		raw_spin_lock(&hmaster->queue_lock);
+ 		reset_with_ipi(&bau_desc->distribution, bcp);
+-		spin_unlock(&hmaster->queue_lock);
++		raw_spin_unlock(&hmaster->queue_lock);
+ 
+ 		end_uvhub_quiesce(hmaster);
+ 
+@@ -764,7 +764,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
+ 	cycles_t tm1;
+ 
+ 	hmaster = bcp->uvhub_master;
+-	spin_lock(&hmaster->disable_lock);
++	raw_spin_lock(&hmaster->disable_lock);
+ 	if (!bcp->baudisabled) {
+ 		stat->s_bau_disabled++;
+ 		tm1 = get_cycles();
+@@ -777,7 +777,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
+ 			}
+ 		}
+ 	}
+-	spin_unlock(&hmaster->disable_lock);
++	raw_spin_unlock(&hmaster->disable_lock);
+ }
+ 
+ static void count_max_concurr(int stat, struct bau_control *bcp,
+@@ -840,7 +840,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
+  */
+ static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
+ {
+-	spinlock_t *lock = &hmaster->uvhub_lock;
++	raw_spinlock_t *lock = &hmaster->uvhub_lock;
+ 	atomic_t *v;
+ 
+ 	v = &hmaster->active_descriptor_count;
+@@ -972,7 +972,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
+ 	struct bau_control *hmaster;
+ 
+ 	hmaster = bcp->uvhub_master;
+-	spin_lock(&hmaster->disable_lock);
++	raw_spin_lock(&hmaster->disable_lock);
+ 	if (bcp->baudisabled && (get_cycles() >= bcp->set_bau_on_time)) {
+ 		stat->s_bau_reenabled++;
+ 		for_each_present_cpu(tcpu) {
+@@ -984,10 +984,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
+ 				tbcp->period_giveups = 0;
+ 			}
+ 		}
+-		spin_unlock(&hmaster->disable_lock);
++		raw_spin_unlock(&hmaster->disable_lock);
+ 		return 0;
+ 	}
+-	spin_unlock(&hmaster->disable_lock);
++	raw_spin_unlock(&hmaster->disable_lock);
+ 	return -1;
+ }
+ 
+@@ -1895,9 +1895,9 @@ static void __init init_per_cpu_tunables(void)
+ 		bcp->cong_reps			= congested_reps;
+ 		bcp->disabled_period =		sec_2_cycles(disabled_period);
+ 		bcp->giveup_limit =		giveup_limit;
+-		spin_lock_init(&bcp->queue_lock);
+-		spin_lock_init(&bcp->uvhub_lock);
+-		spin_lock_init(&bcp->disable_lock);
++		raw_spin_lock_init(&bcp->queue_lock);
++		raw_spin_lock_init(&bcp->uvhub_lock);
++		raw_spin_lock_init(&bcp->disable_lock);
+ 	}
+ }
+ 
+diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
+index 5c86786bbfd2..c039afa26aa2 100644
+--- a/arch/x86/platform/uv/uv_time.c
++++ b/arch/x86/platform/uv/uv_time.c
+@@ -58,7 +58,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
+ 
+ /* There is one of these allocated per node */
+ struct uv_rtc_timer_head {
+-	spinlock_t	lock;
++	raw_spinlock_t	lock;
+ 	/* next cpu waiting for timer, local node relative: */
+ 	int		next_cpu;
+ 	/* number of cpus on this node: */
+@@ -178,7 +178,7 @@ static __init int uv_rtc_allocate_timers(void)
+ 				uv_rtc_deallocate_timers();
+ 				return -ENOMEM;
+ 			}
+-			spin_lock_init(&head->lock);
++			raw_spin_lock_init(&head->lock);
+ 			head->ncpus = uv_blade_nr_possible_cpus(bid);
+ 			head->next_cpu = -1;
+ 			blade_info[bid] = head;
+@@ -232,7 +232,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
+ 	unsigned long flags;
+ 	int next_cpu;
+ 
+-	spin_lock_irqsave(&head->lock, flags);
++	raw_spin_lock_irqsave(&head->lock, flags);
+ 
+ 	next_cpu = head->next_cpu;
+ 	*t = expires;
+@@ -244,12 +244,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
+ 		if (uv_setup_intr(cpu, expires)) {
+ 			*t = ULLONG_MAX;
+ 			uv_rtc_find_next_timer(head, pnode);
+-			spin_unlock_irqrestore(&head->lock, flags);
++			raw_spin_unlock_irqrestore(&head->lock, flags);
+ 			return -ETIME;
+ 		}
+ 	}
+ 
+-	spin_unlock_irqrestore(&head->lock, flags);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 	return 0;
+ }
+ 
+@@ -268,7 +268,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ 	unsigned long flags;
+ 	int rc = 0;
+ 
+-	spin_lock_irqsave(&head->lock, flags);
++	raw_spin_lock_irqsave(&head->lock, flags);
+ 
+ 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
+ 		rc = 1;
+@@ -280,7 +280,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ 			uv_rtc_find_next_timer(head, pnode);
+ 	}
+ 
+-	spin_unlock_irqrestore(&head->lock, flags);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 
+ 	return rc;
+ }
+@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ static cycle_t uv_read_rtc(struct clocksource *cs)
+ {
+ 	unsigned long offset;
++	cycle_t cycles;
+ 
++	preempt_disable();
+ 	if (uv_get_min_hub_revision_id() == 1)
+ 		offset = 0;
+ 	else
+ 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
+ 
+-	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
++	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
++	preempt_enable();
 +
-+#include <linux/wait-simple.h>
-+#include <linux/work-simple.h>
-+#include <linux/kthread.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+
-+#define SWORK_EVENT_PENDING     (1 << 0)
-+
-+static DEFINE_MUTEX(worker_mutex);
-+static struct sworker *glob_worker;
-+
-+struct sworker {
-+	struct list_head events;
-+	struct swait_head wq;
-+
-+	raw_spinlock_t lock;
-+
-+	struct task_struct *task;
-+	int refs;
-+};
-+
-+static bool swork_readable(struct sworker *worker)
-+{
-+	bool r;
-+
-+	if (kthread_should_stop())
-+		return true;
-+
-+	raw_spin_lock_irq(&worker->lock);
-+	r = !list_empty(&worker->events);
-+	raw_spin_unlock_irq(&worker->lock);
-+
-+	return r;
-+}
-+
-+static int swork_kthread(void *arg)
-+{
-+	struct sworker *worker = arg;
-+
-+	for (;;) {
-+		swait_event_interruptible(worker->wq,
-+					swork_readable(worker));
-+		if (kthread_should_stop())
-+			break;
-+
-+		raw_spin_lock_irq(&worker->lock);
-+		while (!list_empty(&worker->events)) {
-+			struct swork_event *sev;
-+
-+			sev = list_first_entry(&worker->events,
-+					struct swork_event, item);
-+			list_del(&sev->item);
-+			raw_spin_unlock_irq(&worker->lock);
-+
-+			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
-+							 &sev->flags));
-+			sev->func(sev);
-+			raw_spin_lock_irq(&worker->lock);
-+		}
-+		raw_spin_unlock_irq(&worker->lock);
-+	}
-+	return 0;
-+}
-+
-+static struct sworker *swork_create(void)
-+{
-+	struct sworker *worker;
-+
-+	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
-+	if (!worker)
-+		return ERR_PTR(-ENOMEM);
-+
-+	INIT_LIST_HEAD(&worker->events);
-+	raw_spin_lock_init(&worker->lock);
-+	init_swait_head(&worker->wq);
-+
-+	worker->task = kthread_run(swork_kthread, worker, "kswork");
-+	if (IS_ERR(worker->task)) {
-+		kfree(worker);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	return worker;
-+}
-+
-+static void swork_destroy(struct sworker *worker)
-+{
-+	kthread_stop(worker->task);
-+
-+	WARN_ON(!list_empty(&worker->events));
-+	kfree(worker);
-+}
-+
-+/**
-+ * swork_queue - queue swork
-+ *
-+ * Returns %false if @work was already on a queue, %true otherwise.
-+ *
-+ * The work is queued and processed on a random CPU
-+ */
-+bool swork_queue(struct swork_event *sev)
-+{
-+	unsigned long flags;
-+
-+	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
-+		return false;
-+
-+	raw_spin_lock_irqsave(&glob_worker->lock, flags);
-+	list_add_tail(&sev->item, &glob_worker->events);
-+	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
-+
-+	swait_wake(&glob_worker->wq);
-+	return true;
-+}
-+EXPORT_SYMBOL_GPL(swork_queue);
-+
-+/**
-+ * swork_get - get an instance of the sworker
-+ *
-+ * Returns an negative error code if the initialization if the worker did not
-+ * work, %0 otherwise.
-+ *
-+ */
-+int swork_get(void)
-+{
-+	struct sworker *worker;
-+
-+	mutex_lock(&worker_mutex);
-+	if (!glob_worker) {
-+		worker = swork_create();
-+		if (IS_ERR(worker)) {
-+			mutex_unlock(&worker_mutex);
-+			return -ENOMEM;
-+		}
-+
-+		glob_worker = worker;
-+	}
-+
-+	glob_worker->refs++;
-+	mutex_unlock(&worker_mutex);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(swork_get);
-+
-+/**
-+ * swork_put - puts an instance of the sworker
-+ *
-+ * Will destroy the sworker thread. This function must not be called until all
-+ * queued events have been completed.
-+ */
-+void swork_put(void)
-+{
-+	mutex_lock(&worker_mutex);
-+
-+	glob_worker->refs--;
-+	if (glob_worker->refs > 0)
-+		goto out;
-+
-+	swork_destroy(glob_worker);
-+	glob_worker = NULL;
-+out:
-+	mutex_unlock(&worker_mutex);
-+}
-+EXPORT_SYMBOL_GPL(swork_put);
++	return cycles;
+ }
+ 
+ /*
 -- 
 2.1.4
