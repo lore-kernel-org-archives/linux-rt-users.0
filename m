@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 24/36] sas-ata/isci: dontt disable interrupts in qc_issue handler
-Date: Thu, 12 Mar 2015 15:22:03 -0400
-Message-ID: <20150312192158.718272881@goodmis.org>
+Subject: [PATCH RT 22/36] arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+Date: Thu, 12 Mar 2015 15:22:01 -0400
+Message-ID: <20150312192158.217734389@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,101 +13,66 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:20754 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932279AbbCLTWE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:22:04 -0400
-Content-Disposition: inline; filename=0024-sas-ata-isci-dont-t-disable-interrupts-in-qc_issue-h.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0022-arm-futex-disable-preemption-during-futex_atomic_cmp.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-On 3.14-rt we see the following trace on Canoe Pass for
-SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
-when the sas qc_issue handler is run:
+The ARM UP implementation of futex_atomic_cmpxchg_inatomic() assumes that
+pagefault_disable() inherits a preempt disabled section. This assumtion
+is true for mainline but -RT reverts this and allows preemption in
+pagefault disabled regions.
+The code sequence of futex_atomic_cmpxchg_inatomic():
 
- BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
- in_atomic(): 0, irqs_disabled(): 1, pid: 432, name: udevd
- CPU: 11 PID: 432 Comm: udevd Not tainted 3.14.28-rt22 #2
- Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
- ffff880fab500000 ffff880fa9f239c0 ffffffff81a2d273 0000000000000000
- ffff880fa9f239d8 ffffffff8107f023 ffff880faac23dc0 ffff880fa9f239f0
- ffffffff81a33cc0 ffff880faaeb1400 ffff880fa9f23a40 ffffffff815de891
- Call Trace:
- [<ffffffff81a2d273>] dump_stack+0x4e/0x7a
- [<ffffffff8107f023>] __might_sleep+0xe3/0x160
- [<ffffffff81a33cc0>] rt_spin_lock+0x20/0x50
- [<ffffffff815de891>] isci_task_execute_task+0x171/0x2f0  <-----
- [<ffffffff815cfecb>] sas_ata_qc_issue+0x25b/0x2a0
- [<ffffffff81606363>] ata_qc_issue+0x1f3/0x370
- [<ffffffff8160c600>] ? ata_scsi_invalid_field+0x40/0x40
- [<ffffffff8160c8f5>] ata_scsi_translate+0xa5/0x1b0
- [<ffffffff8160efc6>] ata_sas_queuecmd+0x86/0x280
- [<ffffffff815ce446>] sas_queuecommand+0x196/0x230
- [<ffffffff81081fad>] ? get_parent_ip+0xd/0x50
- [<ffffffff815b05a4>] scsi_dispatch_cmd+0xb4/0x210
- [<ffffffff815b7744>] scsi_request_fn+0x314/0x530
+|   x = *futex;
+|   if (x == oldval)
+|           *futex = newval;
 
-and gdb shows:
+The problem occurs if the code is preempted after reading the futex value or
+after comparing it with x. While preempted, the futex owner has to be
+scheduled which then releases the lock (in userland because it has no waiter
+yet). Once the code is back on the CPU, it overwrites the futex value
+with with the old PID and the waiter bit set.
 
-(gdb) list * isci_task_execute_task+0x171
-0xffffffff815ddfb1 is in isci_task_execute_task (drivers/scsi/isci/task.c:138).
-133             dev_dbg(&ihost->pdev->dev, "%s: num=%d\n", __func__, num);
-134
-135             for_each_sas_task(num, task) {
-136                     enum sci_status status = SCI_FAILURE;
-137
-138                     spin_lock_irqsave(&ihost->scic_lock, flags);    <-----
-139                     idev = isci_lookup_device(task->dev);
-140                     io_ready = isci_device_io_ready(idev, task);
-141                     tag = isci_alloc_tag(ihost);
-142                     spin_unlock_irqrestore(&ihost->scic_lock, flags);
-(gdb)
+The workaround is to explicit disable code preemption to avoid the
+described race window.
 
-In addition to the scic_lock, the function also contains locking of
-the task_state_lock -- which is clearly not a candidate for raw lock
-conversion.  As can be seen by the comment nearby, we really should
-be running the qc_issue code with interrupts enabled anyway.
-
+Debugged-by:  Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/scsi/libsas/sas_ata.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ arch/arm/include/asm/futex.h | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-diff --git a/drivers/scsi/libsas/sas_ata.c b/drivers/scsi/libsas/sas_ata.c
-index d2895836f9fa..c85e07ab51e4 100644
---- a/drivers/scsi/libsas/sas_ata.c
-+++ b/drivers/scsi/libsas/sas_ata.c
-@@ -191,7 +191,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
- 	/* TODO: audit callers to ensure they are ready for qc_issue to
- 	 * unconditionally re-enable interrupts
- 	 */
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	spin_unlock(ap->lock);
+diff --git a/arch/arm/include/asm/futex.h b/arch/arm/include/asm/futex.h
+index 2aff798fbef4..54d26a98ff84 100644
+--- a/arch/arm/include/asm/futex.h
++++ b/arch/arm/include/asm/futex.h
+@@ -90,6 +90,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+ 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
+ 		return -EFAULT;
  
- 	/* If the device fell off, no sense in issuing commands */
-@@ -261,7 +261,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
++	preempt_disable_rt();
++
+ 	__asm__ __volatile__("@futex_atomic_cmpxchg_inatomic\n"
+ 	"1:	" TUSER(ldr) "	%1, [%4]\n"
+ 	"	teq	%1, %2\n"
+@@ -101,6 +103,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
+ 	: "cc", "memory");
  
-  out:
- 	spin_lock(ap->lock);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
+ 	*uval = val;
++
++	preempt_enable_rt();
  	return ret;
  }
  
 -- 
 2.1.4
-
-
