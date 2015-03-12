@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 22/39] arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-Date: Thu, 12 Mar 2015 15:13:29 -0400
-Message-ID: <20150312191410.704703415@goodmis.org>
+Subject: [PATCH RT 26/39] scheduling while atomic in cgroup code
+Date: Thu, 12 Mar 2015 15:13:33 -0400
+Message-ID: <20150312191411.381735145@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>,
+	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0022-arm-futex-disable-preemption-during-futex_atomic_cmp.patch
+Content-Disposition: inline; filename=0026-scheduling-while-atomic-in-cgroup-code.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,56 +25,70 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-The ARM UP implementation of futex_atomic_cmpxchg_inatomic() assumes that
-pagefault_disable() inherits a preempt disabled section. This assumtion
-is true for mainline but -RT reverts this and allows preemption in
-pagefault disabled regions.
-The code sequence of futex_atomic_cmpxchg_inatomic():
+mm, memcg: make refill_stock() use get_cpu_light()
 
-|   x = *futex;
-|   if (x == oldval)
-|           *futex = newval;
+Nikita reported the following memcg scheduling while atomic bug:
 
-The problem occurs if the code is preempted after reading the futex value or
-after comparing it with x. While preempted, the futex owner has to be
-scheduled which then releases the lock (in userland because it has no waiter
-yet). Once the code is back on the CPU, it overwrites the futex value
-with with the old PID and the waiter bit set.
+Call Trace:
+[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+[e22d5bf0] [c060bacc] schedule+0x30/0xbc
+[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+[e22d5d90] [c0117284] __do_fault+0x38c/0x510
+[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
 
-The workaround is to explicit disable code preemption to avoid the
-described race window.
+What happens:
 
-Debugged-by:  Thomas Gleixner <tglx@linutronix.de>
+   refill_stock()
+      get_cpu_var()
+      drain_stock()
+         res_counter_uncharge()
+            res_counter_uncharge_until()
+               spin_lock() <== boom
+
+Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
+
 Cc: stable-rt@vger.kernel.org
+Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/include/asm/futex.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ mm/memcontrol.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/arch/arm/include/asm/futex.h b/arch/arm/include/asm/futex.h
-index 2aff798fbef4..54d26a98ff84 100644
---- a/arch/arm/include/asm/futex.h
-+++ b/arch/arm/include/asm/futex.h
-@@ -90,6 +90,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
- 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
- 		return -EFAULT;
- 
-+	preempt_disable_rt();
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index fa54408b66b2..be24d2d186fa 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2512,14 +2512,17 @@ static void __init memcg_stock_init(void)
+  */
+ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ {
+-	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
++	struct memcg_stock_pcp *stock;
++	int cpu = get_cpu_light();
 +
- 	__asm__ __volatile__("@futex_atomic_cmpxchg_inatomic\n"
- 	"1:	" TUSER(ldr) "	%1, [%4]\n"
- 	"	teq	%1, %2\n"
-@@ -101,6 +103,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
- 	: "cc", "memory");
++	stock = &per_cpu(memcg_stock, cpu);
  
- 	*uval = val;
-+
-+	preempt_enable_rt();
- 	return ret;
+ 	if (stock->cached != memcg) { /* reset if necessary */
+ 		drain_stock(stock);
+ 		stock->cached = memcg;
+ 	}
+ 	stock->nr_pages += nr_pages;
+-	put_cpu_var(memcg_stock);
++	put_cpu_light();
  }
  
+ /*
 -- 
 2.1.4
