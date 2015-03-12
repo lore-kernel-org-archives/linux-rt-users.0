@@ -1,68 +1,145 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 35/36] timers: Reduce future __run_timers() latency for first add to empty
- list
-Date: Thu, 12 Mar 2015 15:22:14 -0400
-Message-ID: <20150312192200.529548051@goodmis.org>
-References: <20150312192139.799127123@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/36] Linux 3.12.38-rt53-rc1
+Date: Thu, 12 Mar 2015 15:21:39 -0400
+Message-ID: <20150312192139.799127123@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Triplett <josh@joshtriplett.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0035-timers-Reduce-future-__run_timers-latency-for-first-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.38-rt53-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+This is the RT stable review cycle of patch 3.12.38-rt53-rc1.
 
-upstream commit: 18d8cb64c9c074cbe2bd677ab10fff8283abdb62
+Please scream at me if I messed something up. Please test the patches too.
 
-The __run_timers() function currently steps through the list one jiffy at
-a time in order to update the timer wheel.  However, if the timer wheel
-is empty, no adjustment is needed other than updating ->timer_jiffies.
-Therefore, just before we add a timer to an empty timer wheel, we should
-mark the timer wheel as being up to date.  This marking will reduce (and
-perhaps eliminate) the jiffy-stepping that a future __run_timers() call
-will need to do in response to some future timer posting or migration.
-This commit therefore updates ->timer_jiffies for this case.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Reviewed-by: Josh Triplett <josh@joshtriplett.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Tested-by: Mike Galbraith <bitbucket@online.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 3/16/2015.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.12.38-rt53-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.38.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.38-rt53-rc1.patch.xz
+
+You can also build from 3.12.38-rt52 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.38-rt52-rt53-rc1.patch.xz
+
+
+Changes from 3.12.38-rt52:
+
 ---
- kernel/timer.c | 1 +
- 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index c3017c06f212..0ee72212b99c 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -401,6 +401,7 @@ __internal_add_timer(struct tvec_base *base, struct timer_list *timer)
- 
- static void internal_add_timer(struct tvec_base *base, struct timer_list *timer)
- {
-+	(void)catchup_timer_jiffies(base);
- 	__internal_add_timer(base, timer);
- 	/*
- 	 * Update base->active_timers and base->next_timer
--- 
-2.1.4
+
+Daniel Wagner (2):
+      work-simple: Simple work queue implemenation
+      thermal: Defer thermal wakups to threads
+
+Gustavo Bittencourt (1):
+      rtmutex: enable deadlock detection in ww_mutex_lock functions
+
+Josh Cartwright (1):
+      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
+
+Mike Galbraith (5):
+      rt: fix __ww_mutex_lock_interruptible() lockdep annotation
+      x86: UV: raw_spinlock conversion
+      scheduling while atomic in cgroup code
+      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+      locking: ww_mutex: fix ww_mutex vs self-deadlock
+
+Paul E. McKenney (4):
+      timers: Track total number of timers in list
+      timers: Reduce __run_timers() latency for empty list
+      timers: Reduce future __run_timers() latency for newly emptied list
+      timers: Reduce future __run_timers() latency for first add to empty list
+
+Paul Gortmaker (1):
+      sas-ata/isci: dont't disable interrupts in qc_issue handler
+
+Sebastian Andrzej Siewior (4):
+      gpio: omap: use raw locks for locking
+      rt-mutex: avoid a NULL pointer dereference on deadlock
+      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+      fs/aio: simple simple work
+
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.12.38-rt53-rc1
+
+Thomas Gleixner (14):
+      rtmutex: Simplify rtmutex_slowtrylock()
+      rtmutex: Simplify and document try_to_take_rtmutex()
+      rtmutex: No need to keep task ref for lock owner check
+      rtmutex: Clarify the boost/deboost part
+      rtmutex: Document pi chain walk
+      rtmutex: Simplify remove_waiter()
+      rtmutex: Confine deadlock logic to futex
+      rtmutex: Cleanup deadlock detector debug logic
+      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
+      futex: Make unlock_pi more robust
+      futex: Use futex_top_waiter() in lookup_pi_state()
+      futex: Split out the waiter check from lookup_pi_state()
+      futex: Split out the first waiter attachment from lookup_pi_state()
+      futex: Simplify futex_lock_pi_atomic() and make it more robust
+
+Yadi.hu (1):
+      ARM: enable irq in translation/section permission fault handlers
+
+Yong Zhang (1):
+      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+
+----
+ arch/arm/include/asm/cmpxchg.h         |   2 +
+ arch/arm/include/asm/futex.h           |   4 +
+ arch/arm/mm/fault.c                    |   6 +
+ arch/x86/include/asm/uv/uv_bau.h       |  14 +-
+ arch/x86/include/asm/uv/uv_hub.h       |   2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c     |   2 +-
+ arch/x86/platform/uv/tlb_uv.c          |  26 +-
+ arch/x86/platform/uv/uv_time.c         |  21 +-
+ drivers/gpio/gpio-omap.c               |  70 ++--
+ drivers/scsi/libsas/sas_ata.c          |   4 +-
+ drivers/thermal/x86_pkg_temp_thermal.c |  50 ++-
+ fs/aio.c                               |  24 +-
+ include/linux/rtmutex.h                |   8 +-
+ include/linux/work-simple.h            |  24 ++
+ kernel/futex.c                         | 407 ++++++++++-----------
+ kernel/rt.c                            |   8 +-
+ kernel/rtmutex-debug.c                 |   5 +-
+ kernel/rtmutex-debug.h                 |   7 +-
+ kernel/rtmutex-tester.c                |   4 +-
+ kernel/rtmutex.c                       | 628 ++++++++++++++++++++++++---------
+ kernel/rtmutex.h                       |   7 +-
+ kernel/rtmutex_common.h                |  22 +-
+ kernel/sched/Makefile                  |   1 +
+ kernel/sched/work-simple.c             | 172 +++++++++
+ kernel/timer.c                         |  26 ++
+ lib/locking-selftest.c                 |  27 ++
+ localversion-rt                        |   2 +-
+ mm/memcontrol.c                        |   7 +-
+ net/sunrpc/svc_xprt.c                  |   4 +-
+ 29 files changed, 1095 insertions(+), 489 deletions(-)
