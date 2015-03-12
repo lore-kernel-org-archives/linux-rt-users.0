@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/39] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
-Date: Thu, 12 Mar 2015 15:13:30 -0400
-Message-ID: <20150312191410.885758234@goodmis.org>
+Subject: [PATCH RT 25/39] sas-ata/isci: dontt disable interrupts in qc_issue handler
+Date: Thu, 12 Mar 2015 15:13:32 -0400
+Message-ID: <20150312191411.207321260@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,12 +14,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:31573 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:53484 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754576AbbCLTOX (ORCPT
+	by vger.kernel.org with ESMTP id S1754591AbbCLTOX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 12 Mar 2015 15:14:23 -0400
-Content-Disposition: inline; filename=0023-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
+Content-Disposition: inline; filename=0025-sas-ata-isci-dont-t-disable-interrupts-in-qc_issue-h.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,44 +28,85 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-Both pi_stress and sigwaittest in rt-test show performance gain with
-__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
-  vanilla:     Total inversion performed: 5493381
-  patched:     Total inversion performed: 5621746
+On 3.14-rt we see the following trace on Canoe Pass for
+SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
+when the sas qc_issue handler is run:
 
-sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
-  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
-  patched:     Min   19, Cur   21, Avg   23, Max   96
+ BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
+ in_atomic(): 0, irqs_disabled(): 1, pid: 432, name: udevd
+ CPU: 11 PID: 432 Comm: udevd Not tainted 3.14.28-rt22 #2
+ Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
+ ffff880fab500000 ffff880fa9f239c0 ffffffff81a2d273 0000000000000000
+ ffff880fa9f239d8 ffffffff8107f023 ffff880faac23dc0 ffff880fa9f239f0
+ ffffffff81a33cc0 ffff880faaeb1400 ffff880fa9f23a40 ffffffff815de891
+ Call Trace:
+ [<ffffffff81a2d273>] dump_stack+0x4e/0x7a
+ [<ffffffff8107f023>] __might_sleep+0xe3/0x160
+ [<ffffffff81a33cc0>] rt_spin_lock+0x20/0x50
+ [<ffffffff815de891>] isci_task_execute_task+0x171/0x2f0  <-----
+ [<ffffffff815cfecb>] sas_ata_qc_issue+0x25b/0x2a0
+ [<ffffffff81606363>] ata_qc_issue+0x1f3/0x370
+ [<ffffffff8160c600>] ? ata_scsi_invalid_field+0x40/0x40
+ [<ffffffff8160c8f5>] ata_scsi_translate+0xa5/0x1b0
+ [<ffffffff8160efc6>] ata_sas_queuecmd+0x86/0x280
+ [<ffffffff815ce446>] sas_queuecommand+0x196/0x230
+ [<ffffffff81081fad>] ? get_parent_ip+0xd/0x50
+ [<ffffffff815b05a4>] scsi_dispatch_cmd+0xb4/0x210
+ [<ffffffff815b7744>] scsi_request_fn+0x314/0x530
 
-Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
-Cc: Russell King <rmk+kernel at arm.linux.org.uk>
-Cc: Nicolas Pitre <nico at linaro.org>
-Cc: Will Deacon <will.deacon at arm.com>
-Cc: Catalin Marinas <catalin.marinas at arm.com>
-Cc: Thomas Gleixner <tglx at linutronix.de>
-Cc: linux-arm-kernel at lists.infradead.org
+and gdb shows:
+
+(gdb) list * isci_task_execute_task+0x171
+0xffffffff815ddfb1 is in isci_task_execute_task (drivers/scsi/isci/task.c:138).
+133             dev_dbg(&ihost->pdev->dev, "%s: num=%d\n", __func__, num);
+134
+135             for_each_sas_task(num, task) {
+136                     enum sci_status status = SCI_FAILURE;
+137
+138                     spin_lock_irqsave(&ihost->scic_lock, flags);    <-----
+139                     idev = isci_lookup_device(task->dev);
+140                     io_ready = isci_device_io_ready(idev, task);
+141                     tag = isci_alloc_tag(ihost);
+142                     spin_unlock_irqrestore(&ihost->scic_lock, flags);
+(gdb)
+
+In addition to the scic_lock, the function also contains locking of
+the task_state_lock -- which is clearly not a candidate for raw lock
+conversion.  As can be seen by the comment nearby, we really should
+be running the qc_issue code with interrupts enabled anyway.
+
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/include/asm/cmpxchg.h | 2 ++
- 1 file changed, 2 insertions(+)
+ drivers/scsi/libsas/sas_ata.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-index df2fbba7efc8..30b1a4010b89 100644
---- a/arch/arm/include/asm/cmpxchg.h
-+++ b/arch/arm/include/asm/cmpxchg.h
-@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
+diff --git a/drivers/scsi/libsas/sas_ata.c b/drivers/scsi/libsas/sas_ata.c
+index d2895836f9fa..c85e07ab51e4 100644
+--- a/drivers/scsi/libsas/sas_ata.c
++++ b/drivers/scsi/libsas/sas_ata.c
+@@ -191,7 +191,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
+ 	/* TODO: audit callers to ensure they are ready for qc_issue to
+ 	 * unconditionally re-enable interrupts
+ 	 */
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	spin_unlock(ap->lock);
  
- #else	/* min ARCH >= ARMv6 */
+ 	/* If the device fell off, no sense in issuing commands */
+@@ -261,7 +261,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
  
-+#define __HAVE_ARCH_CMPXCHG 1
-+
- extern void __bad_cmpxchg(volatile void *ptr, int size);
+  out:
+ 	spin_lock(ap->lock);
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
+ 	return ret;
+ }
  
- /*
 -- 
 2.1.4
 
