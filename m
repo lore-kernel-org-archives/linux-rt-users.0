@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 27/36] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-Date: Thu, 12 Mar 2015 15:22:06 -0400
-Message-ID: <20150312192159.219555496@goodmis.org>
+Subject: [PATCH RT 24/36] sas-ata/isci: dontt disable interrupts in qc_issue handler
+Date: Thu, 12 Mar 2015 15:22:03 -0400
+Message-ID: <20150312192158.718272881@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,67 +10,104 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0027-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.227]:20754 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S932279AbbCLTWE (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2015 15:22:04 -0400
+Content-Disposition: inline; filename=0024-sas-ata-isci-dont-t-disable-interrupts-in-qc_issue-h.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
-|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
-|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
-| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
-| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
-|Call Trace:
-| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
-| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
-| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
-| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
-| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
-| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
-| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
-| [<ffffffff8117f889>] SyS_write+0x49/0xb0
-| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+On 3.14-rt we see the following trace on Canoe Pass for
+SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
+when the sas qc_issue handler is run:
+
+ BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
+ in_atomic(): 0, irqs_disabled(): 1, pid: 432, name: udevd
+ CPU: 11 PID: 432 Comm: udevd Not tainted 3.14.28-rt22 #2
+ Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
+ ffff880fab500000 ffff880fa9f239c0 ffffffff81a2d273 0000000000000000
+ ffff880fa9f239d8 ffffffff8107f023 ffff880faac23dc0 ffff880fa9f239f0
+ ffffffff81a33cc0 ffff880faaeb1400 ffff880fa9f23a40 ffffffff815de891
+ Call Trace:
+ [<ffffffff81a2d273>] dump_stack+0x4e/0x7a
+ [<ffffffff8107f023>] __might_sleep+0xe3/0x160
+ [<ffffffff81a33cc0>] rt_spin_lock+0x20/0x50
+ [<ffffffff815de891>] isci_task_execute_task+0x171/0x2f0  <-----
+ [<ffffffff815cfecb>] sas_ata_qc_issue+0x25b/0x2a0
+ [<ffffffff81606363>] ata_qc_issue+0x1f3/0x370
+ [<ffffffff8160c600>] ? ata_scsi_invalid_field+0x40/0x40
+ [<ffffffff8160c8f5>] ata_scsi_translate+0xa5/0x1b0
+ [<ffffffff8160efc6>] ata_sas_queuecmd+0x86/0x280
+ [<ffffffff815ce446>] sas_queuecommand+0x196/0x230
+ [<ffffffff81081fad>] ? get_parent_ip+0xd/0x50
+ [<ffffffff815b05a4>] scsi_dispatch_cmd+0xb4/0x210
+ [<ffffffff815b7744>] scsi_request_fn+0x314/0x530
+
+and gdb shows:
+
+(gdb) list * isci_task_execute_task+0x171
+0xffffffff815ddfb1 is in isci_task_execute_task (drivers/scsi/isci/task.c:138).
+133             dev_dbg(&ihost->pdev->dev, "%s: num=%d\n", __func__, num);
+134
+135             for_each_sas_task(num, task) {
+136                     enum sci_status status = SCI_FAILURE;
+137
+138                     spin_lock_irqsave(&ihost->scic_lock, flags);    <-----
+139                     idev = isci_lookup_device(task->dev);
+140                     io_ready = isci_device_io_ready(idev, task);
+141                     tag = isci_alloc_tag(ihost);
+142                     spin_unlock_irqrestore(&ihost->scic_lock, flags);
+(gdb)
+
+In addition to the scic_lock, the function also contains locking of
+the task_state_lock -- which is clearly not a candidate for raw lock
+conversion.  As can be seen by the comment nearby, we really should
+be running the qc_issue code with interrupts enabled anyway.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/sunrpc/svc_xprt.c | 4 ++--
+ drivers/scsi/libsas/sas_ata.c | 4 ++--
  1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index b9aad4723a9d..ab50dbd58c20 100644
---- a/net/sunrpc/svc_xprt.c
-+++ b/net/sunrpc/svc_xprt.c
-@@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
- 	if (!svc_xprt_has_something_to_do(xprt))
- 		return;
+diff --git a/drivers/scsi/libsas/sas_ata.c b/drivers/scsi/libsas/sas_ata.c
+index d2895836f9fa..c85e07ab51e4 100644
+--- a/drivers/scsi/libsas/sas_ata.c
++++ b/drivers/scsi/libsas/sas_ata.c
+@@ -191,7 +191,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
+ 	/* TODO: audit callers to ensure they are ready for qc_issue to
+ 	 * unconditionally re-enable interrupts
+ 	 */
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	spin_unlock(ap->lock);
  
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
--	put_cpu();
-+	put_cpu_light();
+ 	/* If the device fell off, no sense in issuing commands */
+@@ -261,7 +261,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
  
- 	spin_lock_bh(&pool->sp_lock);
+  out:
+ 	spin_lock(ap->lock);
+-	local_irq_restore(flags);
++	local_irq_restore_nort(flags);
+ 	return ret;
+ }
  
 -- 
 2.1.4
+
+
