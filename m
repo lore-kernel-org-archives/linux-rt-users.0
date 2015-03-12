@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 16/39] locking/rt-mutex: avoid a NULL pointer dereference on deadlock
-Date: Thu, 12 Mar 2015 15:13:23 -0400
-Message-ID: <20150312191409.707856750@goodmis.org>
+Subject: [PATCH RT 13/39] futex: Split out the waiter check from lookup_pi_state()
+Date: Thu, 12 Mar 2015 15:13:20 -0400
+Message-ID: <20150312191409.261030392@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,16 +10,19 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Darren Hart <darren@dvhart.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:16561 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:7574 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755353AbbCLTP2 (ORCPT
+	by vger.kernel.org with ESMTP id S1755347AbbCLTP1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:15:28 -0400
-Content-Disposition: inline; filename=0016-locking-rt-mutex-avoid-a-NULL-pointer-dereference-on.patch
+	Thu, 12 Mar 2015 15:15:27 -0400
+Content-Disposition: inline; filename=0013-futex-Split-out-the-waiter-check-from-lookup_pi_stat.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,40 +31,195 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
-waiter to the waitqueue. Later, we try to remove it via remove_waiter()
-and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
-pointer.
-Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
-to get one twice in a row.
+upstream commit: e60cbc5ceaa518d630ab8f35a7d05cee1c752648
 
-Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
-detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
-detection smarter").
+We want to be a bit more clever in futex_lock_pi_atomic() and separate
+the possible states. Split out the waiter verification into a separate
+function. No functional change.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Darren Hart <darren@dvhart.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.180458410@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ kernel/futex.c | 138 +++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 71 insertions(+), 67 deletions(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index a0d9eadcfe02..ec72272ab73a 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1697,7 +1697,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 	set_current_state(TASK_RUNNING);
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 8bb158215e2c..8377eec3f650 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -782,92 +782,96 @@ void exit_pi_state_list(struct task_struct *curr)
+  * [10] There is no transient state which leaves owner and user space
+  *	TID out of sync.
+  */
+-static int
+-lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+-		union futex_key *key, struct futex_pi_state **ps)
++
++/*
++ * Validate that the existing waiter has a pi_state and sanity check
++ * the pi_state against the user space value. If correct, attach to
++ * it.
++ */
++static int attach_to_pi_state(u32 uval, struct futex_pi_state *pi_state,
++			      struct futex_pi_state **ps)
+ {
+-	struct futex_q *match = futex_top_waiter(hb, key);
+-	struct futex_pi_state *pi_state = NULL;
+-	struct task_struct *p;
+ 	pid_t pid = uval & FUTEX_TID_MASK;
  
- 	if (unlikely(ret)) {
--		remove_waiter(lock, &waiter);
-+		if (rt_mutex_has_waiters(lock))
-+			remove_waiter(lock, &waiter);
- 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
- 	} else if (ww_ctx) {
- 		ww_mutex_account_lock(lock, ww_ctx);
+-	if (match) {
+-		/*
+-		 * Sanity check the waiter before increasing the
+-		 * refcount and attaching to it.
+-		 */
+-		pi_state = match->pi_state;
+-		/*
+-		 * Userspace might have messed up non-PI and PI
+-		 * futexes [3]
+-		 */
+-		if (unlikely(!pi_state))
+-			return -EINVAL;
++	/*
++	 * Userspace might have messed up non-PI and PI futexes [3]
++	 */
++	if (unlikely(!pi_state))
++		return -EINVAL;
+ 
+-		WARN_ON(!atomic_read(&pi_state->refcount));
++	WARN_ON(!atomic_read(&pi_state->refcount));
+ 
++	/*
++	 * Handle the owner died case:
++	 */
++	if (uval & FUTEX_OWNER_DIED) {
+ 		/*
+-		 * Handle the owner died case:
++		 * exit_pi_state_list sets owner to NULL and wakes the
++		 * topmost waiter. The task which acquires the
++		 * pi_state->rt_mutex will fixup owner.
+ 		 */
+-		if (uval & FUTEX_OWNER_DIED) {
+-			/*
+-			 * exit_pi_state_list sets owner to NULL and
+-			 * wakes the topmost waiter. The task which
+-			 * acquires the pi_state->rt_mutex will fixup
+-			 * owner.
+-			 */
+-			if (!pi_state->owner) {
+-				/*
+-				 * No pi state owner, but the user
+-				 * space TID is not 0. Inconsistent
+-				 * state. [5]
+-				 */
+-				if (pid)
+-					return -EINVAL;
+-				/*
+-				 * Take a ref on the state and
+-				 * return. [4]
+-				 */
+-				goto out_state;
+-			}
+-
++		if (!pi_state->owner) {
+ 			/*
+-			 * If TID is 0, then either the dying owner
+-			 * has not yet executed exit_pi_state_list()
+-			 * or some waiter acquired the rtmutex in the
+-			 * pi state, but did not yet fixup the TID in
+-			 * user space.
+-			 *
+-			 * Take a ref on the state and return. [6]
++			 * No pi state owner, but the user space TID
++			 * is not 0. Inconsistent state. [5]
+ 			 */
+-			if (!pid)
+-				goto out_state;
+-		} else {
++			if (pid)
++				return -EINVAL;
+ 			/*
+-			 * If the owner died bit is not set,
+-			 * then the pi_state must have an
+-			 * owner. [7]
++			 * Take a ref on the state and return success. [4]
+ 			 */
+-			if (!pi_state->owner)
+-				return -EINVAL;
++			goto out_state;
+ 		}
+ 
+ 		/*
+-		 * Bail out if user space manipulated the
+-		 * futex value. If pi state exists then the
+-		 * owner TID must be the same as the user
+-		 * space TID. [9/10]
++		 * If TID is 0, then either the dying owner has not
++		 * yet executed exit_pi_state_list() or some waiter
++		 * acquired the rtmutex in the pi state, but did not
++		 * yet fixup the TID in user space.
++		 *
++		 * Take a ref on the state and return success. [6]
++		 */
++		if (!pid)
++			goto out_state;
++	} else {
++		/*
++		 * If the owner died bit is not set, then the pi_state
++		 * must have an owner. [7]
+ 		 */
+-		if (pid != task_pid_vnr(pi_state->owner))
++		if (!pi_state->owner)
+ 			return -EINVAL;
+-
+-	out_state:
+-		atomic_inc(&pi_state->refcount);
+-		*ps = pi_state;
+-		return 0;
+ 	}
+ 
+ 	/*
++	 * Bail out if user space manipulated the futex value. If pi
++	 * state exists then the owner TID must be the same as the
++	 * user space TID. [9/10]
++	 */
++	if (pid != task_pid_vnr(pi_state->owner))
++		return -EINVAL;
++out_state:
++	atomic_inc(&pi_state->refcount);
++	*ps = pi_state;
++	return 0;
++}
++
++static int
++lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
++		union futex_key *key, struct futex_pi_state **ps)
++{
++	struct futex_q *match = futex_top_waiter(hb, key);
++	struct futex_pi_state *pi_state = NULL;
++	struct task_struct *p;
++	pid_t pid = uval & FUTEX_TID_MASK;
++
++	/*
++	 * If there is a waiter on that futex, validate it and
++	 * attach to the pi_state when the validation succeeds.
++	 */
++	if (match)
++		return attach_to_pi_state(uval, match->pi_state, ps);
++
++	/*
+ 	 * We are the first waiter - try to look up the real owner and attach
+ 	 * the new pi_state to it, but bail out when TID = 0 [1]
+ 	 */
 -- 
 2.1.4
 
