@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 25/36] scheduling while atomic in cgroup code
-Date: Thu, 12 Mar 2015 15:22:04 -0400
-Message-ID: <20150312192158.874600655@goodmis.org>
+Subject: [PATCH RT 23/36] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+Date: Thu, 12 Mar 2015 15:22:02 -0400
+Message-ID: <20150312192158.508988103@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,18 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.228]:58615 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:36529 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932267AbbCLTWE (ORCPT
+	by vger.kernel.org with ESMTP id S932230AbbCLTWE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Thu, 12 Mar 2015 15:22:04 -0400
-Content-Disposition: inline; filename=0025-scheduling-while-atomic-in-cgroup-code.patch
+Content-Disposition: inline; filename=0023-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -30,69 +28,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Both pi_stress and sigwaittest in rt-test show performance gain with
+__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
 
-mm, memcg: make refill_stock() use get_cpu_light()
+pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
+  vanilla:     Total inversion performed: 5493381
+  patched:     Total inversion performed: 5621746
 
-Nikita reported the following memcg scheduling while atomic bug:
+sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
+  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
+  patched:     Min   19, Cur   21, Avg   23, Max   96
 
-Call Trace:
-[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
-[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
-[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
-[e22d5bf0] [c060bacc] schedule+0x30/0xbc
-[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
-[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
-[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
-[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
-[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
-[e22d5d90] [c0117284] __do_fault+0x38c/0x510
-[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
-[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
-[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
-
-What happens:
-
-   refill_stock()
-      get_cpu_var()
-      drain_stock()
-         res_counter_uncharge()
-            res_counter_uncharge_until()
-               spin_lock() <== boom
-
-Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
-
+Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
+Cc: Russell King <rmk+kernel at arm.linux.org.uk>
+Cc: Nicolas Pitre <nico at linaro.org>
+Cc: Will Deacon <will.deacon at arm.com>
+Cc: Catalin Marinas <catalin.marinas at arm.com>
+Cc: Thomas Gleixner <tglx at linutronix.de>
+Cc: linux-arm-kernel at lists.infradead.org
 Cc: stable-rt@vger.kernel.org
-Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/memcontrol.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ arch/arm/include/asm/cmpxchg.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 003521e47622..ba7a8ae06476 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2474,14 +2474,17 @@ static void __init memcg_stock_init(void)
-  */
- static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
- {
--	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
-+	struct memcg_stock_pcp *stock;
-+	int cpu = get_cpu_light();
-+
-+	stock = &per_cpu(memcg_stock, cpu);
+diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
+index 4f009c10540d..a86b680dd7cf 100644
+--- a/arch/arm/include/asm/cmpxchg.h
++++ b/arch/arm/include/asm/cmpxchg.h
+@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
  
- 	if (stock->cached != memcg) { /* reset if necessary */
- 		drain_stock(stock);
- 		stock->cached = memcg;
- 	}
- 	stock->nr_pages += nr_pages;
--	put_cpu_var(memcg_stock);
-+	put_cpu_light();
- }
+ #else	/* min ARCH >= ARMv6 */
+ 
++#define __HAVE_ARCH_CMPXCHG 1
++
+ extern void __bad_cmpxchg(volatile void *ptr, int size);
  
  /*
 -- 
