@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/36] rtmutex: Simplify rtmutex_slowtrylock()
-Date: Thu, 12 Mar 2015 15:21:42 -0400
-Message-ID: <20150312192154.969859501@goodmis.org>
+Subject: [PATCH RT 35/36] timers: Reduce future __run_timers() latency for first add to empty
+ list
+Date: Thu, 12 Mar 2015 15:22:14 -0400
+Message-ID: <20150312192200.529548051@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +11,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Josh Triplett <josh@joshtriplett.org>,
+	Peter Zijlstra <peterz@infradead.org>,
 	Oleg Nesterov <oleg@redhat.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
+	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rtmutex-Simplify-rtmutex_slowtrylock.patch
+Content-Disposition: inline; filename=0035-timers-Reduce-future-__run_timers-latency-for-first-.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,84 +28,41 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 
-upstream-commit: 88f2b4c15e561bb5c28709d666364f273bf54b98
+upstream commit: 18d8cb64c9c074cbe2bd677ab10fff8283abdb62
 
-Oleg noticed that rtmutex_slowtrylock() has a pointless check for
-rt_mutex_owner(lock) != current.
+The __run_timers() function currently steps through the list one jiffy at
+a time in order to update the timer wheel.  However, if the timer wheel
+is empty, no adjustment is needed other than updating ->timer_jiffies.
+Therefore, just before we add a timer to an empty timer wheel, we should
+mark the timer wheel as being up to date.  This marking will reduce (and
+perhaps eliminate) the jiffy-stepping that a future __run_timers() call
+will need to do in response to some future timer posting or migration.
+This commit therefore updates ->timer_jiffies for this case.
 
-To avoid calling try_to_take_rtmutex() we really want to check whether
-the lock has an owner at all or whether the trylock failed because the
-owner is NULL, but the RT_MUTEX_HAS_WAITERS bit is set. This covers
-the lock is owned by caller situation as well.
-
-We can actually do this check lockless. trylock is taking a chance
-whether we take lock->wait_lock to do the check or not.
-
-Add comments to the function while at it.
-
-Reported-by: Oleg Nesterov <oleg@redhat.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Reviewed-by: Josh Triplett <josh@joshtriplett.org>
+Acked-by: Peter Zijlstra <peterz@infradead.org>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
 Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
+Tested-by: Mike Galbraith <bitbucket@online.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Conflicts:
-	kernel/rtmutex.c
 ---
- kernel/rtmutex.c | 33 +++++++++++++++++++++------------
- 1 file changed, 21 insertions(+), 12 deletions(-)
+ kernel/timer.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 41c42591ef8c..85e03e15c7f9 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1392,24 +1392,33 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- /*
-  * Slow path try-lock function:
-  */
--static inline int
--rt_mutex_slowtrylock(struct rt_mutex *lock)
-+static inline int rt_mutex_slowtrylock(struct rt_mutex *lock)
+diff --git a/kernel/timer.c b/kernel/timer.c
+index c3017c06f212..0ee72212b99c 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -401,6 +401,7 @@ __internal_add_timer(struct tvec_base *base, struct timer_list *timer)
+ 
+ static void internal_add_timer(struct tvec_base *base, struct timer_list *timer)
  {
--	int ret = 0;
-+	int ret;
- 
-+	/*
-+	 * If the lock already has an owner we fail to get the lock.
-+	 * This can be done without taking the @lock->wait_lock as
-+	 * it is only being read, and this is a trylock anyway.
-+	 */
-+	if (rt_mutex_owner(lock))
-+		return 0;
-+
-+	/*
-+	 * The mutex has currently no owner. Lock the wait lock and
-+	 * try to acquire the lock.
-+	 */
- 	if (!raw_spin_trylock(&lock->wait_lock))
--		return ret;
-+		return 0;
- 	init_lists(lock);
- 
--	if (likely(rt_mutex_owner(lock) != current)) {
-+	ret = try_to_take_rt_mutex(lock, current, NULL);
- 
--		ret = try_to_take_rt_mutex(lock, current, NULL);
--		/*
--		 * try_to_take_rt_mutex() sets the lock waiters
--		 * bit unconditionally. Clean this up.
--		 */
--		fixup_rt_mutex_waiters(lock);
--	}
-+	/*
-+	 * try_to_take_rt_mutex() sets the lock waiters bit
-+	 * unconditionally. Clean this up.
-+	 */
-+	fixup_rt_mutex_waiters(lock);
- 
- 	raw_spin_unlock(&lock->wait_lock);
- 
++	(void)catchup_timer_jiffies(base);
+ 	__internal_add_timer(base, timer);
+ 	/*
+ 	 * Update base->active_timers and base->next_timer
 -- 
 2.1.4
