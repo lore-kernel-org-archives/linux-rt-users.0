@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 35/39] timers: Reduce __run_timers() latency for empty list
-Date: Thu, 12 Mar 2015 15:13:42 -0400
-Message-ID: <20150312191412.783756948@goodmis.org>
+Subject: [PATCH RT 16/39] locking/rt-mutex: avoid a NULL pointer dereference on deadlock
+Date: Thu, 12 Mar 2015 15:13:23 -0400
+Message-ID: <20150312191409.707856750@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,20 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Triplett <josh@joshtriplett.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:54317 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:16561 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755351AbbCLTP1 (ORCPT
+	by vger.kernel.org with ESMTP id S1755353AbbCLTP2 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:15:27 -0400
-Content-Disposition: inline; filename=0035-timers-Reduce-__run_timers-latency-for-empty-list.patch
+	Thu, 12 Mar 2015 15:15:28 -0400
+Content-Disposition: inline; filename=0016-locking-rt-mutex-avoid-a-NULL-pointer-dereference-on.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -32,64 +28,40 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-upstream commit: d550e81dc0ddc04f1b417c179c214103a28e0ee8
+With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
+waiter to the waitqueue. Later, we try to remove it via remove_waiter()
+and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
+pointer.
+Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
+to get one twice in a row.
 
-The __run_timers() function currently steps through the list one jiffy at
-a time in order to update the timer wheel.  However, if the timer wheel
-is empty, no adjustment is needed other than updating ->timer_jiffies.
-In this case, which is likely to be common for NO_HZ_FULL kernels, the
-kernel currently incurs a large latency for no good reason.  This commit
-therefore short-circuits this case.
+Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
+detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
+detection smarter").
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Reviewed-by: Josh Triplett <josh@joshtriplett.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Tested-by: Mike Galbraith <bitbucket@online.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 18 ++++++++++++++++++
- 1 file changed, 18 insertions(+)
+ kernel/locking/rtmutex.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 251fdacfebdb..9cf70c562fac 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -341,6 +341,20 @@ void set_timer_slack(struct timer_list *timer, int slack_hz)
- }
- EXPORT_SYMBOL_GPL(set_timer_slack);
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index a0d9eadcfe02..ec72272ab73a 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1697,7 +1697,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	set_current_state(TASK_RUNNING);
  
-+/*
-+ * If the list is empty, catch up ->timer_jiffies to the current time.
-+ * The caller must hold the tvec_base lock.  Returns true if the list
-+ * was empty and therefore ->timer_jiffies was updated.
-+ */
-+static bool catchup_timer_jiffies(struct tvec_base *base)
-+{
-+	if (!base->all_timers) {
-+		base->timer_jiffies = jiffies;
-+		return true;
-+	}
-+	return false;
-+}
-+
- static void
- __internal_add_timer(struct tvec_base *base, struct timer_list *timer)
- {
-@@ -1203,6 +1217,10 @@ static inline void __run_timers(struct tvec_base *base)
- 	struct timer_list *timer;
- 
- 	spin_lock_irq(&base->lock);
-+	if (catchup_timer_jiffies(base)) {
-+		spin_unlock_irq(&base->lock);
-+		return;
-+	}
- 	while (time_after_eq(jiffies, base->timer_jiffies)) {
- 		struct list_head work_list;
- 		struct list_head *head = &work_list;
+ 	if (unlikely(ret)) {
+-		remove_waiter(lock, &waiter);
++		if (rt_mutex_has_waiters(lock))
++			remove_waiter(lock, &waiter);
+ 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
+ 	} else if (ww_ctx) {
+ 		ww_mutex_account_lock(lock, ww_ctx);
 -- 
 2.1.4
 
