@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 36/39] timers: Reduce future __run_timers() latency for newly emptied list
-Date: Thu, 12 Mar 2015 15:13:43 -0400
-Message-ID: <20150312191412.939946383@goodmis.org>
+Subject: [PATCH RT 23/39] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+Date: Thu, 12 Mar 2015 15:13:30 -0400
+Message-ID: <20150312191410.885758234@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,20 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Triplett <josh@joshtriplett.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:37199 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.231]:31573 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754745AbbCLTOZ (ORCPT
+	by vger.kernel.org with ESMTP id S1754576AbbCLTOX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:14:25 -0400
-Content-Disposition: inline; filename=0036-timers-Reduce-future-__run_timers-latency-for-newly-.patch
+	Thu, 12 Mar 2015 15:14:23 -0400
+Content-Disposition: inline; filename=0023-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -32,51 +28,44 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Both pi_stress and sigwaittest in rt-test show performance gain with
+__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
 
-upstream commit: 16d937f880312e3f47157d4d6d6ebf7e61523378
+pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
+  vanilla:     Total inversion performed: 5493381
+  patched:     Total inversion performed: 5621746
 
-The __run_timers() function currently steps through the list one jiffy at
-a time in order to update the timer wheel.  However, if the timer wheel
-is empty, no adjustment is needed other than updating ->timer_jiffies.
-Therefore, if we just emptied the timer wheel, for example, by deleting
-the last timer, we should mark the timer wheel as being up to date.
-This marking will reduce (and perhaps eliminate) the jiffy-stepping that
-a future __run_timers() call will need to do in response to some future
-timer posting or migration.  This commit therefore catches ->timer_jiffies
-for this case.
+sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
+  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
+  patched:     Min   19, Cur   21, Avg   23, Max   96
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Reviewed-by: Josh Triplett <josh@joshtriplett.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Tested-by: Mike Galbraith <bitbucket@online.de>
+Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
+Cc: Russell King <rmk+kernel at arm.linux.org.uk>
+Cc: Nicolas Pitre <nico at linaro.org>
+Cc: Will Deacon <will.deacon at arm.com>
+Cc: Catalin Marinas <catalin.marinas at arm.com>
+Cc: Thomas Gleixner <tglx at linutronix.de>
+Cc: linux-arm-kernel at lists.infradead.org
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 2 ++
+ arch/arm/include/asm/cmpxchg.h | 2 ++
  1 file changed, 2 insertions(+)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 9cf70c562fac..380f125ad100 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -691,6 +691,7 @@ detach_expired_timer(struct timer_list *timer, struct tvec_base *base)
- 	if (!tbase_get_deferrable(timer->base))
- 		base->active_timers--;
- 	base->all_timers--;
-+	(void)catchup_timer_jiffies(base);
- }
+diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
+index df2fbba7efc8..30b1a4010b89 100644
+--- a/arch/arm/include/asm/cmpxchg.h
++++ b/arch/arm/include/asm/cmpxchg.h
+@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
  
- static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
-@@ -706,6 +707,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
- 			base->next_timer = base->timer_jiffies;
- 	}
- 	base->all_timers--;
-+	(void)catchup_timer_jiffies(base);
- 	return 1;
- }
+ #else	/* min ARCH >= ARMv6 */
  
++#define __HAVE_ARCH_CMPXCHG 1
++
+ extern void __bad_cmpxchg(volatile void *ptr, int size);
+ 
+ /*
 -- 
 2.1.4
 
