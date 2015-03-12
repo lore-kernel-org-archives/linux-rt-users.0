@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 31/39] thermal: Defer thermal wakups to threads
-Date: Thu, 12 Mar 2015 15:13:38 -0400
-Message-ID: <20150312191412.144062231@goodmis.org>
+Subject: [PATCH RT 17/39] rtmutex.c: Fix incorrect waiter check
+Date: Thu, 12 Mar 2015 15:13:24 -0400
+Message-ID: <20150312191409.880520048@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,17 +10,18 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
+	Brad Mouring <brad.mouring@ni.com>,
+	Ben Shelton <ben.shelton@ni.com>,
+	T Makphaibulchoke <tmac@hp.com>, <stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:32518 "EHLO
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:54317 "EHLO
 	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752591AbbCLTPm (ORCPT
+	by vger.kernel.org with ESMTP id S1755343AbbCLTP1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:15:42 -0400
-Content-Disposition: inline; filename=0031-thermal-Defer-thermal-wakups-to-threads.patch
+	Thu, 12 Mar 2015 15:15:27 -0400
+Content-Disposition: inline; filename=0017-rtmutex.c-Fix-incorrect-waiter-check.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -29,124 +30,40 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Wagner <wagi@monom.org>
+From: Brad Mouring <bmouring@ni.com>
 
-On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
-call schedule while we run in irq context.
+In task_blocks_on_lock, there's a null check on pi_blocked_on
+of the task_struct. This pointer can encode the fact that the
+task that contains the pointer is waking (preventing requeuing)
+and therefore is non-null. Use the inline function to avoid
+dereferencing an invalid "pointer"
 
-[<ffffffff816850ac>] dump_stack+0x4e/0x8f
-[<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
-[<ffffffff816896b4>] __schedule+0x5b4/0x700
-[<ffffffff8168982a>] schedule+0x2a/0x90
-[<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
-[<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
-[<ffffffffa03a7b75>] pkg_temp_thermal_platform_thermal_notify+0x45/0x134 [x86_pkg_temp_thermal]
-[<ffffffff8103d4db>] ? therm_throt_process+0x1b/0x160
-[<ffffffff8103d831>] intel_thermal_interrupt+0x211/0x250
-[<ffffffff8103d8c1>] smp_thermal_interrupt+0x21/0x40
-[<ffffffff8169415d>] thermal_interrupt+0x6d/0x80
-
-Let's defer the work to a kthread.
-
+Signed-off-by: Brad Mouring <brad.mouring@ni.com>
+Reported-by: Ben Shelton <ben.shelton@ni.com>
+Reviewed-by: T Makphaibulchoke <tmac@hp.com>
+Tested-by: T Makphaibulchoke <tmac@hp.com>
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-[bigeasy: reoder init/denit position. TODO: flush swork on exit]
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/thermal/x86_pkg_temp_thermal.c | 50 ++++++++++++++++++++++++++++++++--
- 1 file changed, 47 insertions(+), 3 deletions(-)
+ kernel/locking/rtmutex.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
-index 081fd7e6a9f0..f297ddd3365c 100644
---- a/drivers/thermal/x86_pkg_temp_thermal.c
-+++ b/drivers/thermal/x86_pkg_temp_thermal.c
-@@ -29,6 +29,7 @@
- #include <linux/pm.h>
- #include <linux/thermal.h>
- #include <linux/debugfs.h>
-+#include <linux/work-simple.h>
- #include <asm/cpu_device_id.h>
- #include <asm/mce.h>
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index ec72272ab73a..74a824523d3a 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -361,7 +361,8 @@ int max_lock_depth = 1024;
  
-@@ -352,7 +353,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
- 	}
+ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
+ {
+-	return p->pi_blocked_on ? p->pi_blocked_on->lock : NULL;
++	return rt_mutex_real_waiter(p->pi_blocked_on) ?
++		p->pi_blocked_on->lock : NULL;
  }
  
--static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-+static void platform_thermal_notify_work(struct swork_event *event)
- {
- 	unsigned long flags;
- 	int cpu = smp_processor_id();
-@@ -369,7 +370,7 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
- 			pkg_work_scheduled[phy_id]) {
- 		disable_pkg_thres_interrupt();
- 		spin_unlock_irqrestore(&pkg_work_lock, flags);
--		return -EINVAL;
-+		return;
- 	}
- 	pkg_work_scheduled[phy_id] = 1;
- 	spin_unlock_irqrestore(&pkg_work_lock, flags);
-@@ -378,9 +379,48 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
- 	schedule_delayed_work_on(cpu,
- 				&per_cpu(pkg_temp_thermal_threshold_work, cpu),
- 				msecs_to_jiffies(notify_delay_ms));
-+}
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static struct swork_event notify_work;
-+
-+static int thermal_notify_work_init(void)
-+{
-+	int err;
-+
-+	err = swork_get();
-+	if (err)
-+		return err;
-+
-+	INIT_SWORK(&notify_work, platform_thermal_notify_work);
- 	return 0;
- }
- 
-+static void thermal_notify_work_cleanup(void)
-+{
-+	swork_put();
-+}
-+
-+static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-+{
-+	swork_queue(&notify_work);
-+	return 0;
-+}
-+
-+#else  /* !CONFIG_PREEMPT_RT_FULL */
-+
-+static int thermal_notify_work_init(void) { return 0; }
-+
-+static int thermal_notify_work_cleanup(void) {  }
-+
-+static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
-+{
-+	platform_thermal_notify_work(NULL);
-+
-+	return 0;
-+}
-+#endif /* CONFIG_PREEMPT_RT_FULL */
-+
- static int find_siblings_cpu(int cpu)
- {
- 	int i;
-@@ -584,6 +624,9 @@ static int __init pkg_temp_thermal_init(void)
- 	if (!x86_match_cpu(pkg_temp_thermal_ids))
- 		return -ENODEV;
- 
-+	if (!thermal_notify_work_init())
-+		return -ENODEV;
-+
- 	spin_lock_init(&pkg_work_lock);
- 	platform_thermal_package_notify =
- 			pkg_temp_thermal_platform_thermal_notify;
-@@ -608,7 +651,7 @@ err_ret:
- 	kfree(pkg_work_scheduled);
- 	platform_thermal_package_notify = NULL;
- 	platform_thermal_package_rate_control = NULL;
+ /*
+-- 
+2.1.4
+
+
