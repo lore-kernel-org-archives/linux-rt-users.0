@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 20/39] x86: UV: raw_spinlock conversion
-Date: Thu, 12 Mar 2015 15:13:27 -0400
-Message-ID: <20150312191410.355388618@goodmis.org>
-References: <20150312191307.081068717@goodmis.org>
+Subject: [PATCH RT 01/36] gpio: omap: use raw locks for locking
+Date: Thu, 12 Mar 2015 15:21:40 -0400
+Message-ID: <20150312192154.655860250@goodmis.org>
+References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,271 +10,322 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Mike Galbraith <mgalbraith@suse.de>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0020-x86-UV-raw_spinlock-conversion.patch
+Content-Disposition: inline; filename=0001-gpio-omap-use-raw-locks-for-locking.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.14.34-rt32-rc1 stable review patch.
+3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Shrug.  Lots of hobbyists have a beast in their basement, right?
+This patch converts gpio_bank.lock from a spin_lock into a
+raw_spin_lock. The call path is to access this lock is always under a
+raw_spin_lock, for instance
+- __setup_irq() holds &desc->lock with irq off
+  + __irq_set_trigger()
+   + omap_gpio_irq_type()
+
+- handle_level_irq() (runs with irqs off therefore raw locks)
+  + mask_ack_irq()
+   + omap_gpio_mask_irq()
+
+This fixes the obvious backtrace on -RT. However the locking vs context
+is not and this is not limited to -RT:
+- omap_gpio_irq_type() is called with IRQ off and has an conditional
+  call to pm_runtime_get_sync() which may sleep. Either it may happen or
+  it may not happen but pm_runtime_get_sync() should not be called with
+  irqs off.
+
+- omap_gpio_debounce() is holding the lock with IRQs off.
+  + omap2_set_gpio_debounce()
+   + clk_prepare_enable()
+    + clk_prepare() this one might sleep.
+  The number of users of gpiod_set_debounce() / gpio_set_debounce()
+  looks low but still this is not good.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/include/asm/uv/uv_bau.h   | 14 +++++++-------
- arch/x86/include/asm/uv/uv_hub.h   |  2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |  2 +-
- arch/x86/platform/uv/tlb_uv.c      | 26 +++++++++++++-------------
- arch/x86/platform/uv/uv_time.c     | 21 +++++++++++++--------
- 5 files changed, 35 insertions(+), 30 deletions(-)
+ drivers/gpio/gpio-omap.c | 70 ++++++++++++++++++++++++------------------------
+ 1 file changed, 35 insertions(+), 35 deletions(-)
 
-diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
-index 0b46ef261c77..c2c8a7828f04 100644
---- a/arch/x86/include/asm/uv/uv_bau.h
-+++ b/arch/x86/include/asm/uv/uv_bau.h
-@@ -611,9 +611,9 @@ struct bau_control {
- 	cycles_t		send_message;
- 	cycles_t		period_end;
- 	cycles_t		period_time;
--	spinlock_t		uvhub_lock;
--	spinlock_t		queue_lock;
--	spinlock_t		disable_lock;
-+	raw_spinlock_t		uvhub_lock;
-+	raw_spinlock_t		queue_lock;
-+	raw_spinlock_t		disable_lock;
- 	/* tunables */
- 	int			max_concurr;
- 	int			max_concurr_const;
-@@ -773,15 +773,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
-  * to be lowered below the current 'v'.  atomic_add_unless can only stop
-  * on equal.
-  */
--static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
-+static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
- {
--	spin_lock(lock);
-+	raw_spin_lock(lock);
- 	if (atomic_read(v) >= u) {
--		spin_unlock(lock);
-+		raw_spin_unlock(lock);
- 		return 0;
+diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
+index 89675f862308..0e8c552f937f 100644
+--- a/drivers/gpio/gpio-omap.c
++++ b/drivers/gpio/gpio-omap.c
+@@ -59,7 +59,7 @@ struct gpio_bank {
+ 	u32 saved_datain;
+ 	u32 level_mask;
+ 	u32 toggle_mask;
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct gpio_chip chip;
+ 	struct clk *dbck;
+ 	u32 mod_usage;
+@@ -503,19 +503,19 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
+ 		(type & (IRQ_TYPE_LEVEL_LOW|IRQ_TYPE_LEVEL_HIGH)))
+ 		return -EINVAL;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	offset = GPIO_INDEX(bank, gpio);
+ 	retval = _set_gpio_triggering(bank, offset, type);
+ 	if (!LINE_USED(bank->mod_usage, offset)) {
+ 		_enable_gpio_module(bank, offset);
+ 		_set_gpio_direction(bank, offset, 1);
+ 	} else if (!gpio_is_input(bank, 1 << offset)) {
+-		spin_unlock_irqrestore(&bank->lock, flags);
++		raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 		return -EINVAL;
  	}
- 	atomic_inc(v);
--	spin_unlock(lock);
-+	raw_spin_unlock(lock);
- 	return 1;
- }
  
-diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
-index a30836c8ac4d..f559a092d8fa 100644
---- a/arch/x86/include/asm/uv/uv_hub.h
-+++ b/arch/x86/include/asm/uv/uv_hub.h
-@@ -502,7 +502,7 @@ struct uv_blade_info {
- 	unsigned short	nr_online_cpus;
- 	unsigned short	pnode;
- 	short		memory_nid;
--	spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
-+	raw_spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
- 	unsigned long	nmi_count;	/* obsolete, see uv_hub_nmi */
- };
- extern struct uv_blade_info *uv_blade_info;
-diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
-index d263b1307de1..1ef690e5459f 100644
---- a/arch/x86/kernel/apic/x2apic_uv_x.c
-+++ b/arch/x86/kernel/apic/x2apic_uv_x.c
-@@ -911,7 +911,7 @@ void __init uv_system_init(void)
- 			uv_blade_info[blade].pnode = pnode;
- 			uv_blade_info[blade].nr_possible_cpus = 0;
- 			uv_blade_info[blade].nr_online_cpus = 0;
--			spin_lock_init(&uv_blade_info[blade].nmi_lock);
-+			raw_spin_lock_init(&uv_blade_info[blade].nmi_lock);
- 			min_pnode = min(pnode, min_pnode);
- 			max_pnode = max(pnode, max_pnode);
- 			blade++;
-diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
-index dfe605ac1bcd..999fd5be9aa1 100644
---- a/arch/x86/platform/uv/tlb_uv.c
-+++ b/arch/x86/platform/uv/tlb_uv.c
-@@ -719,9 +719,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
+ 	bank->irq_usage |= 1 << GPIO_INDEX(bank, gpio);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -741,9 +741,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -764,7 +764,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 	cycles_t tm1;
- 
- 	hmaster = bcp->uvhub_master;
--	spin_lock(&hmaster->disable_lock);
-+	raw_spin_lock(&hmaster->disable_lock);
- 	if (!bcp->baudisabled) {
- 		stat->s_bau_disabled++;
- 		tm1 = get_cycles();
-@@ -777,7 +777,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 			}
- 		}
+ 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
+ 		__irq_set_handler_locked(d->irq, handle_level_irq);
+@@ -632,14 +632,14 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
+ 		return -EINVAL;
  	}
--	spin_unlock(&hmaster->disable_lock);
-+	raw_spin_unlock(&hmaster->disable_lock);
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	if (enable)
+ 		bank->context.wake_en |= gpio_bit;
+ 	else
+ 		bank->context.wake_en &= ~gpio_bit;
+ 
+ 	__raw_writel(bank->context.wake_en, bank->base + bank->regs->wkup_en);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
  }
+@@ -674,7 +674,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+ 	if (!BANK_USED(bank))
+ 		pm_runtime_get_sync(bank->dev);
  
- static void count_max_concurr(int stat, struct bau_control *bcp,
-@@ -840,7 +840,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
-  */
- static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
- {
--	spinlock_t *lock = &hmaster->uvhub_lock;
-+	raw_spinlock_t *lock = &hmaster->uvhub_lock;
- 	atomic_t *v;
- 
- 	v = &hmaster->active_descriptor_count;
-@@ -972,7 +972,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 	struct bau_control *hmaster;
- 
- 	hmaster = bcp->uvhub_master;
--	spin_lock(&hmaster->disable_lock);
-+	raw_spin_lock(&hmaster->disable_lock);
- 	if (bcp->baudisabled && (get_cycles() >= bcp->set_bau_on_time)) {
- 		stat->s_bau_reenabled++;
- 		for_each_present_cpu(tcpu) {
-@@ -984,10 +984,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 				tbcp->period_giveups = 0;
- 			}
- 		}
--		spin_unlock(&hmaster->disable_lock);
-+		raw_spin_unlock(&hmaster->disable_lock);
- 		return 0;
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	/* Set trigger to none. You need to enable the desired trigger with
+ 	 * request_irq() or set_irq_type(). Only do this if the IRQ line has
+ 	 * not already been requested.
+@@ -684,7 +684,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+ 		_enable_gpio_module(bank, offset);
  	}
--	spin_unlock(&hmaster->disable_lock);
-+	raw_spin_unlock(&hmaster->disable_lock);
- 	return -1;
+ 	bank->mod_usage |= 1 << offset;
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
  }
- 
-@@ -1895,9 +1895,9 @@ static void __init init_per_cpu_tunables(void)
- 		bcp->cong_reps			= congested_reps;
- 		bcp->disabled_period =		sec_2_cycles(disabled_period);
- 		bcp->giveup_limit =		giveup_limit;
--		spin_lock_init(&bcp->queue_lock);
--		spin_lock_init(&bcp->uvhub_lock);
--		spin_lock_init(&bcp->disable_lock);
-+		raw_spin_lock_init(&bcp->queue_lock);
-+		raw_spin_lock_init(&bcp->uvhub_lock);
-+		raw_spin_lock_init(&bcp->disable_lock);
- 	}
- }
- 
-diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
-index 5c86786bbfd2..c039afa26aa2 100644
---- a/arch/x86/platform/uv/uv_time.c
-+++ b/arch/x86/platform/uv/uv_time.c
-@@ -58,7 +58,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
- 
- /* There is one of these allocated per node */
- struct uv_rtc_timer_head {
--	spinlock_t	lock;
-+	raw_spinlock_t	lock;
- 	/* next cpu waiting for timer, local node relative: */
- 	int		next_cpu;
- 	/* number of cpus on this node: */
-@@ -178,7 +178,7 @@ static __init int uv_rtc_allocate_timers(void)
- 				uv_rtc_deallocate_timers();
- 				return -ENOMEM;
- 			}
--			spin_lock_init(&head->lock);
-+			raw_spin_lock_init(&head->lock);
- 			head->ncpus = uv_blade_nr_possible_cpus(bid);
- 			head->next_cpu = -1;
- 			blade_info[bid] = head;
-@@ -232,7 +232,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
+@@ -694,11 +694,11 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
+ 	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
  	unsigned long flags;
- 	int next_cpu;
  
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->mod_usage &= ~(1 << offset);
+ 	_disable_gpio_module(bank, offset);
+ 	_reset_gpio(bank, bank->chip.base + offset);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
- 	next_cpu = head->next_cpu;
- 	*t = expires;
-@@ -244,12 +244,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 		if (uv_setup_intr(cpu, expires)) {
- 			*t = ULLONG_MAX;
- 			uv_rtc_find_next_timer(head, pnode);
--			spin_unlock_irqrestore(&head->lock, flags);
-+			raw_spin_unlock_irqrestore(&head->lock, flags);
- 			return -ETIME;
- 		}
+ 	/*
+ 	 * If this is the last gpio to be freed in the bank,
+@@ -796,11 +796,11 @@ static void gpio_irq_shutdown(struct irq_data *d)
+ 	unsigned long flags;
+ 	unsigned offset = GPIO_INDEX(bank, gpio);
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->irq_usage &= ~(1 << offset);
+ 	_disable_gpio_module(bank, offset);
+ 	_reset_gpio(bank, gpio);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	/*
+ 	 * If this is the last IRQ to be freed in the bank,
+@@ -824,10 +824,10 @@ static void gpio_mask_irq(struct irq_data *d)
+ 	unsigned int gpio = irq_to_gpio(bank, d->hwirq);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_irqenable(bank, gpio, 0);
+ 	_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), IRQ_TYPE_NONE);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static void gpio_unmask_irq(struct irq_data *d)
+@@ -838,7 +838,7 @@ static void gpio_unmask_irq(struct irq_data *d)
+ 	u32 trigger = irqd_get_trigger_type(d);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	if (trigger)
+ 		_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), trigger);
+ 
+@@ -850,7 +850,7 @@ static void gpio_unmask_irq(struct irq_data *d)
  	}
  
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 	_set_gpio_irqenable(bank, gpio, 1);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static struct irq_chip gpio_irq_chip = {
+@@ -873,9 +873,9 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
+ 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
+ 	unsigned long		flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	__raw_writel(0xffff & ~bank->context.wake_en, mask_reg);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -888,9 +888,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
+ 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
+ 	unsigned long		flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	__raw_writel(bank->context.wake_en, mask_reg);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -933,9 +933,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
+ 	unsigned long flags;
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_direction(bank, offset, 1);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
  	return 0;
  }
  
-@@ -268,7 +268,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
+@@ -960,7 +960,7 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
+ 	int retval = 0;
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 
+ 	if (LINE_USED(bank->irq_usage, offset)) {
+ 			retval = -EINVAL;
+@@ -971,7 +971,7 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
+ 	_set_gpio_direction(bank, offset, 0);
+ 
+ exit:
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	return retval;
+ }
+ 
+@@ -983,9 +983,9 @@ static int gpio_debounce(struct gpio_chip *chip, unsigned offset,
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_debounce(bank, offset, debounce);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -996,9 +996,9 @@ static void gpio_set(struct gpio_chip *chip, unsigned offset, int value)
  	unsigned long flags;
- 	int rc = 0;
  
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->set_dataout(bank, offset, value);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
  
- 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
- 		rc = 1;
-@@ -280,7 +280,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 			uv_rtc_find_next_timer(head, pnode);
+ /*---------------------------------------------------------------------*/
+@@ -1210,7 +1210,7 @@ static int omap_gpio_probe(struct platform_device *pdev)
+ 	else
+ 		bank->set_dataout = _set_gpio_dataout_mask;
+ 
+-	spin_lock_init(&bank->lock);
++	raw_spin_lock_init(&bank->lock);
+ 
+ 	/* Static mapping, never released */
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+@@ -1267,7 +1267,7 @@ static int omap_gpio_runtime_suspend(struct device *dev)
+ 	unsigned long flags;
+ 	u32 wake_low, wake_hi;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 
+ 	/*
+ 	 * Only edges can generate a wakeup event to the PRCM.
+@@ -1320,7 +1320,7 @@ update_gpio_context_count:
+ 				bank->get_context_loss_count(bank->dev);
+ 
+ 	_gpio_dbck_disable(bank);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -1335,7 +1335,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
+ 	unsigned long flags;
+ 	int c;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 
+ 	/*
+ 	 * On the first resume during the probe, the context has not
+@@ -1371,14 +1371,14 @@ static int omap_gpio_runtime_resume(struct device *dev)
+ 			if (c != bank->context_loss_count) {
+ 				omap_gpio_restore_context(bank);
+ 			} else {
+-				spin_unlock_irqrestore(&bank->lock, flags);
++				raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 				return 0;
+ 			}
+ 		}
  	}
  
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 	if (!bank->workaround_enabled) {
+-		spin_unlock_irqrestore(&bank->lock, flags);
++		raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 		return 0;
+ 	}
  
- 	return rc;
+@@ -1433,7 +1433,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
+ 	}
+ 
+ 	bank->workaround_enabled = false;
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
  }
-@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, int force)
- static cycle_t uv_read_rtc(struct clocksource *cs)
- {
- 	unsigned long offset;
-+	cycle_t cycles;
- 
-+	preempt_disable();
- 	if (uv_get_min_hub_revision_id() == 1)
- 		offset = 0;
- 	else
- 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
- 
--	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	preempt_enable();
-+
-+	return cycles;
- }
- 
- /*
 -- 
 2.1.4
