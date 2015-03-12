@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 30/36] lockdep: selftest: fix warnings due to missing PREEMPT_RT
- conditionals
-Date: Thu, 12 Mar 2015 15:22:09 -0400
-Message-ID: <20150312192159.689815494@goodmis.org>
+Subject: [PATCH RT 29/36] thermal: Defer thermal wakups to threads
+Date: Thu, 12 Mar 2015 15:22:08 -0400
+Message-ID: <20150312192159.532995095@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -12,169 +11,152 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	<stable-rt@vger.kernel.org>,
-	Josh Cartwright <josh.cartwright@ni.com>,
-	Xander Huff <xander.huff@ni.com>,
-	Gratian Crisan <gratian.crisan@ni.com>
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.230]:11711 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932428AbbCLTWG (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:22:06 -0400
-Content-Disposition: inline; filename=0030-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0029-thermal-Defer-thermal-wakups-to-threads.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <josh.cartwright@ni.com>
+From: Daniel Wagner <wagi@monom.org>
 
-"lockdep: Selftest: Only do hardirq context test for raw spinlock"
-disabled the execution of certain tests with PREEMPT_RT_FULL, but did
-not prevent the tests from still being defined.  This leads to warnings
-like:
+On RT the spin lock in pkg_temp_thermal_platfrom_thermal_notify will
+call schedule while we run in irq context.
 
-  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
-  ...
+[<ffffffff816850ac>] dump_stack+0x4e/0x8f
+[<ffffffff81680f7d>] __schedule_bug+0xa6/0xb4
+[<ffffffff816896b4>] __schedule+0x5b4/0x700
+[<ffffffff8168982a>] schedule+0x2a/0x90
+[<ffffffff8168a8b5>] rt_spin_lock_slowlock+0xe5/0x2d0
+[<ffffffff8168afd5>] rt_spin_lock+0x25/0x30
+[<ffffffffa03a7b75>] pkg_temp_thermal_platform_thermal_notify+0x45/0x134 [x86_pkg_temp_thermal]
+[<ffffffff8103d4db>] ? therm_throt_process+0x1b/0x160
+[<ffffffff8103d831>] intel_thermal_interrupt+0x211/0x250
+[<ffffffff8103d8c1>] smp_thermal_interrupt+0x21/0x40
+[<ffffffff8169415d>] thermal_interrupt+0x6d/0x80
 
-Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
-conditionals.
+Let's defer the work to a kthread.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
-Signed-off-by: Xander Huff <xander.huff@ni.com>
-Acked-by: Gratian Crisan <gratian.crisan@ni.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+[bigeasy: reoder init/denit position. TODO: flush swork on exit]
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ drivers/thermal/x86_pkg_temp_thermal.c | 50 ++++++++++++++++++++++++++++++++--
+ 1 file changed, 47 insertions(+), 3 deletions(-)
 
-diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
-index 0acf3549c17e..bd3eaf8a875e 100644
---- a/lib/locking-selftest.c
-+++ b/lib/locking-selftest.c
-@@ -590,6 +590,8 @@ GENERATE_TESTCASE(init_held_rsem)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
+diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
+index 72573661a14a..a1c23180c309 100644
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,6 +29,7 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
++#include <linux/work-simple.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
+@@ -352,7 +353,7 @@ static void pkg_temp_thermal_threshold_work_fn(struct work_struct *work)
+ 	}
+ }
+ 
+-static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++static void platform_thermal_notify_work(struct swork_event *event)
+ {
+ 	unsigned long flags;
+ 	int cpu = smp_processor_id();
+@@ -369,7 +370,7 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 			pkg_work_scheduled[phy_id]) {
+ 		disable_pkg_thres_interrupt();
+ 		spin_unlock_irqrestore(&pkg_work_lock, flags);
+-		return -EINVAL;
++		return;
+ 	}
+ 	pkg_work_scheduled[phy_id] = 1;
+ 	spin_unlock_irqrestore(&pkg_work_lock, flags);
+@@ -378,9 +379,48 @@ static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
+ 	schedule_delayed_work_on(cpu,
+ 				&per_cpu(pkg_temp_thermal_threshold_work, cpu),
+ 				msecs_to_jiffies(notify_delay_ms));
++}
 +
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
- 
-@@ -605,9 +607,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
- 
-+#endif
++#ifdef CONFIG_PREEMPT_RT_FULL
++static struct swork_event notify_work;
 +
- #undef E1
- #undef E2
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Enabling hardirqs with a softirq-safe lock held:
-  */
-@@ -640,6 +645,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
- #undef E1
- #undef E2
- 
-+#endif
++static int thermal_notify_work_init(void)
++{
++	int err;
 +
- /*
-  * Enabling irqs with an irq-safe lock held:
-  */
-@@ -663,6 +670,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
++	err = swork_get();
++	if (err)
++		return err;
 +
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
++	INIT_SWORK(&notify_work, platform_thermal_notify_work);
+ 	return 0;
+ }
  
-@@ -678,6 +687,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
- 
-+#endif
++static void thermal_notify_work_cleanup(void)
++{
++	swork_put();
++}
 +
- #undef E1
- #undef E2
- 
-@@ -709,6 +720,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	swork_queue(&notify_work);
++	return 0;
++}
 +
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
- 
-@@ -724,6 +737,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
- 
-+#endif
++#else  /* !CONFIG_PREEMPT_RT_FULL */
 +
- #undef E1
- #undef E2
- #undef E3
-@@ -757,6 +772,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
++static int thermal_notify_work_init(void) { return 0; }
 +
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
- 
-@@ -772,10 +789,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
- 
-+#endif
++static int thermal_notify_work_cleanup(void) {  }
 +
- #undef E1
- #undef E2
- #undef E3
++static int pkg_temp_thermal_platform_thermal_notify(__u64 msr_val)
++{
++	platform_thermal_notify_work(NULL);
++
++	return 0;
++}
++#endif /* CONFIG_PREEMPT_RT_FULL */
++
+ static int find_siblings_cpu(int cpu)
+ {
+ 	int i;
+@@ -587,6 +627,9 @@ static int __init pkg_temp_thermal_init(void)
+ 	if (!x86_match_cpu(pkg_temp_thermal_ids))
+ 		return -ENODEV;
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
++	if (!thermal_notify_work_init())
++		return -ENODEV;
 +
- /*
-  * read-lock / write-lock irq inversion.
-  *
-@@ -838,6 +859,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
- #undef E2
- #undef E3
+ 	spin_lock_init(&pkg_work_lock);
+ 	platform_thermal_package_notify =
+ 			pkg_temp_thermal_platform_thermal_notify;
+@@ -611,7 +654,7 @@ err_ret:
+ 	kfree(pkg_work_scheduled);
+ 	platform_thermal_package_notify = NULL;
+ 	platform_thermal_package_rate_control = NULL;
+-
++	thermal_notify_work_cleanup();
+ 	return -ENODEV;
+ }
  
-+#endif
-+
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- /*
-  * read-lock / write-lock recursion that is actually safe.
-  */
-@@ -876,6 +901,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
- #undef E2
- #undef E3
- 
-+#endif
-+
- /*
-  * read-lock / write-lock recursion that is unsafe.
-  */
+@@ -636,6 +679,7 @@ static void __exit pkg_temp_thermal_exit(void)
+ 	mutex_unlock(&phy_dev_list_mutex);
+ 	platform_thermal_package_notify = NULL;
+ 	platform_thermal_package_rate_control = NULL;
++	thermal_notify_work_cleanup();
+ 	for_each_online_cpu(i)
+ 		cancel_delayed_work_sync(
+ 			&per_cpu(pkg_temp_thermal_threshold_work, i));
 -- 
 2.1.4
-
-
