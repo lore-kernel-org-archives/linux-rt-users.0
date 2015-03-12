@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 28/39] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-Date: Thu, 12 Mar 2015 15:13:35 -0400
-Message-ID: <20150312191411.684327409@goodmis.org>
+Subject: [PATCH RT 36/39] timers: Reduce future __run_timers() latency for newly emptied list
+Date: Thu, 12 Mar 2015 15:13:43 -0400
+Message-ID: <20150312191412.939946383@goodmis.org>
 References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,67 +10,74 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Josh Triplett <josh@joshtriplett.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Oleg Nesterov <oleg@redhat.com>,
+	Mike Galbraith <bitbucket@online.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0028-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.229]:37199 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754745AbbCLTOZ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2015 15:14:25 -0400
+Content-Disposition: inline; filename=0036-timers-Reduce-future-__run_timers-latency-for-newly-.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.14.34-rt32-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
-|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
-|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
-| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
-| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
-|Call Trace:
-| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
-| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
-| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
-| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
-| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
-| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
-| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
-| [<ffffffff8117f889>] SyS_write+0x49/0xb0
-| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+upstream commit: 16d937f880312e3f47157d4d6d6ebf7e61523378
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+The __run_timers() function currently steps through the list one jiffy at
+a time in order to update the timer wheel.  However, if the timer wheel
+is empty, no adjustment is needed other than updating ->timer_jiffies.
+Therefore, if we just emptied the timer wheel, for example, by deleting
+the last timer, we should mark the timer wheel as being up to date.
+This marking will reduce (and perhaps eliminate) the jiffy-stepping that
+a future __run_timers() call will need to do in response to some future
+timer posting or migration.  This commit therefore catches ->timer_jiffies
+for this case.
+
+Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Reviewed-by: Josh Triplett <josh@joshtriplett.org>
+Acked-by: Peter Zijlstra <peterz@infradead.org>
+Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Tested-by: Mike Galbraith <bitbucket@online.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/sunrpc/svc_xprt.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ kernel/timer.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index a4acaf2bcf18..22ca25818120 100644
---- a/net/sunrpc/svc_xprt.c
-+++ b/net/sunrpc/svc_xprt.c
-@@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
- 	if (!svc_xprt_has_something_to_do(xprt))
- 		return;
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 9cf70c562fac..380f125ad100 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -691,6 +691,7 @@ detach_expired_timer(struct timer_list *timer, struct tvec_base *base)
+ 	if (!tbase_get_deferrable(timer->base))
+ 		base->active_timers--;
+ 	base->all_timers--;
++	(void)catchup_timer_jiffies(base);
+ }
  
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
--	put_cpu();
-+	put_cpu_light();
- 
- 	spin_lock_bh(&pool->sp_lock);
+ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
+@@ -706,6 +707,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
+ 			base->next_timer = base->timer_jiffies;
+ 	}
+ 	base->all_timers--;
++	(void)catchup_timer_jiffies(base);
+ 	return 1;
+ }
  
 -- 
 2.1.4
+
+
