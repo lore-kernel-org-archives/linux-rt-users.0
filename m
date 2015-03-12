@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 20/36] x86: UV: raw_spinlock conversion
-Date: Thu, 12 Mar 2015 15:21:59 -0400
-Message-ID: <20150312192157.882657814@goodmis.org>
+Subject: [PATCH RT 12/36] futex: Make unlock_pi more robust
+Date: Thu, 12 Mar 2015 15:21:51 -0400
+Message-ID: <20150312192156.401155402@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,271 +10,176 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Mike Galbraith <mgalbraith@suse.de>
+	Peter Zijlstra <peterz@infradead.org>,
+	Darren Hart <darren@dvhart.com>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0020-x86-UV-raw_spinlock-conversion.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.226]:20782 "EHLO
+	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755805AbbCLTWA (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 12 Mar 2015 15:22:00 -0400
+Content-Disposition: inline; filename=0012-futex-Make-unlock_pi-more-robust.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Shrug.  Lots of hobbyists have a beast in their basement, right?
+upstream commit: ccf9e6a80d9e1b9df69c98e6b9745cf49869ee15
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+The kernel tries to atomically unlock the futex without checking
+whether there is kernel state associated to the futex.
+
+So if user space manipulated the user space value, this will leave
+kernel internal state around associated to the owner task.
+
+For robustness sake, lookup first whether there are waiters on the
+futex. If there are waiters, wake the top priority waiter with all the
+proper sanity checks applied.
+
+If there are no waiters, do the atomic release. We do not have to
+preserve the waiters bit in this case, because a potentially incoming
+waiter is blocked on the hb->lock and will acquire the futex
+atomically. We neither have to preserve the owner died bit. The caller
+is the owner and it was supposed to cleanup the mess.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Darren Hart <darren@dvhart.com>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.016987332@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/include/asm/uv/uv_bau.h   | 14 +++++++-------
- arch/x86/include/asm/uv/uv_hub.h   |  2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |  2 +-
- arch/x86/platform/uv/tlb_uv.c      | 26 +++++++++++++-------------
- arch/x86/platform/uv/uv_time.c     | 21 +++++++++++++--------
- 5 files changed, 35 insertions(+), 30 deletions(-)
+ kernel/futex.c | 80 +++++++++++++++++++---------------------------------------
+ 1 file changed, 26 insertions(+), 54 deletions(-)
 
-diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
-index 0b46ef261c77..c2c8a7828f04 100644
---- a/arch/x86/include/asm/uv/uv_bau.h
-+++ b/arch/x86/include/asm/uv/uv_bau.h
-@@ -611,9 +611,9 @@ struct bau_control {
- 	cycles_t		send_message;
- 	cycles_t		period_end;
- 	cycles_t		period_time;
--	spinlock_t		uvhub_lock;
--	spinlock_t		queue_lock;
--	spinlock_t		disable_lock;
-+	raw_spinlock_t		uvhub_lock;
-+	raw_spinlock_t		queue_lock;
-+	raw_spinlock_t		disable_lock;
- 	/* tunables */
- 	int			max_concurr;
- 	int			max_concurr_const;
-@@ -773,15 +773,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
-  * to be lowered below the current 'v'.  atomic_add_unless can only stop
-  * on equal.
-  */
--static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
-+static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
- {
--	spin_lock(lock);
-+	raw_spin_lock(lock);
- 	if (atomic_read(v) >= u) {
--		spin_unlock(lock);
-+		raw_spin_unlock(lock);
- 		return 0;
- 	}
- 	atomic_inc(v);
--	spin_unlock(lock);
-+	raw_spin_unlock(lock);
- 	return 1;
- }
- 
-diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
-index 2c32df95bb78..2c676e8d39ac 100644
---- a/arch/x86/include/asm/uv/uv_hub.h
-+++ b/arch/x86/include/asm/uv/uv_hub.h
-@@ -502,7 +502,7 @@ struct uv_blade_info {
- 	unsigned short	nr_online_cpus;
- 	unsigned short	pnode;
- 	short		memory_nid;
--	spinlock_t	nmi_lock;
-+	raw_spinlock_t	nmi_lock;
- 	unsigned long	nmi_count;
- };
- extern struct uv_blade_info *uv_blade_info;
-diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
-index a419814cea57..1d5859eff889 100644
---- a/arch/x86/kernel/apic/x2apic_uv_x.c
-+++ b/arch/x86/kernel/apic/x2apic_uv_x.c
-@@ -980,7 +980,7 @@ void __init uv_system_init(void)
- 			uv_blade_info[blade].pnode = pnode;
- 			uv_blade_info[blade].nr_possible_cpus = 0;
- 			uv_blade_info[blade].nr_online_cpus = 0;
--			spin_lock_init(&uv_blade_info[blade].nmi_lock);
-+			raw_spin_lock_init(&uv_blade_info[blade].nmi_lock);
- 			min_pnode = min(pnode, min_pnode);
- 			max_pnode = max(pnode, max_pnode);
- 			blade++;
-diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
-index a6b5affb024a..e9e67512d4a6 100644
---- a/arch/x86/platform/uv/tlb_uv.c
-+++ b/arch/x86/platform/uv/tlb_uv.c
-@@ -695,9 +695,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -717,9 +717,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -740,7 +740,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 	cycles_t tm1;
- 
- 	hmaster = bcp->uvhub_master;
--	spin_lock(&hmaster->disable_lock);
-+	raw_spin_lock(&hmaster->disable_lock);
- 	if (!bcp->baudisabled) {
- 		stat->s_bau_disabled++;
- 		tm1 = get_cycles();
-@@ -753,7 +753,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
- 			}
- 		}
- 	}
--	spin_unlock(&hmaster->disable_lock);
-+	raw_spin_unlock(&hmaster->disable_lock);
- }
- 
- static void count_max_concurr(int stat, struct bau_control *bcp,
-@@ -816,7 +816,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
-  */
- static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
- {
--	spinlock_t *lock = &hmaster->uvhub_lock;
-+	raw_spinlock_t *lock = &hmaster->uvhub_lock;
- 	atomic_t *v;
- 
- 	v = &hmaster->active_descriptor_count;
-@@ -948,7 +948,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 	struct bau_control *hmaster;
- 
- 	hmaster = bcp->uvhub_master;
--	spin_lock(&hmaster->disable_lock);
-+	raw_spin_lock(&hmaster->disable_lock);
- 	if (bcp->baudisabled && (get_cycles() >= bcp->set_bau_on_time)) {
- 		stat->s_bau_reenabled++;
- 		for_each_present_cpu(tcpu) {
-@@ -960,10 +960,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
- 				tbcp->period_giveups = 0;
- 			}
- 		}
--		spin_unlock(&hmaster->disable_lock);
-+		raw_spin_unlock(&hmaster->disable_lock);
- 		return 0;
- 	}
--	spin_unlock(&hmaster->disable_lock);
-+	raw_spin_unlock(&hmaster->disable_lock);
- 	return -1;
- }
- 
-@@ -1885,9 +1885,9 @@ static void __init init_per_cpu_tunables(void)
- 		bcp->cong_reps			= congested_reps;
- 		bcp->disabled_period =		sec_2_cycles(disabled_period);
- 		bcp->giveup_limit =		giveup_limit;
--		spin_lock_init(&bcp->queue_lock);
--		spin_lock_init(&bcp->uvhub_lock);
--		spin_lock_init(&bcp->disable_lock);
-+		raw_spin_lock_init(&bcp->queue_lock);
-+		raw_spin_lock_init(&bcp->uvhub_lock);
-+		raw_spin_lock_init(&bcp->disable_lock);
- 	}
- }
- 
-diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
-index 5c86786bbfd2..c039afa26aa2 100644
---- a/arch/x86/platform/uv/uv_time.c
-+++ b/arch/x86/platform/uv/uv_time.c
-@@ -58,7 +58,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
- 
- /* There is one of these allocated per node */
- struct uv_rtc_timer_head {
--	spinlock_t	lock;
-+	raw_spinlock_t	lock;
- 	/* next cpu waiting for timer, local node relative: */
- 	int		next_cpu;
- 	/* number of cpus on this node: */
-@@ -178,7 +178,7 @@ static __init int uv_rtc_allocate_timers(void)
- 				uv_rtc_deallocate_timers();
- 				return -ENOMEM;
- 			}
--			spin_lock_init(&head->lock);
-+			raw_spin_lock_init(&head->lock);
- 			head->ncpus = uv_blade_nr_possible_cpus(bid);
- 			head->next_cpu = -1;
- 			blade_info[bid] = head;
-@@ -232,7 +232,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 	unsigned long flags;
- 	int next_cpu;
- 
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
- 
- 	next_cpu = head->next_cpu;
- 	*t = expires;
-@@ -244,12 +244,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 		if (uv_setup_intr(cpu, expires)) {
- 			*t = ULLONG_MAX;
- 			uv_rtc_find_next_timer(head, pnode);
--			spin_unlock_irqrestore(&head->lock, flags);
-+			raw_spin_unlock_irqrestore(&head->lock, flags);
- 			return -ETIME;
- 		}
- 	}
- 
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 1170418e4dd6..4dfbd5d57c5c 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -1041,22 +1041,6 @@ static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this)
  	return 0;
  }
  
-@@ -268,7 +268,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 	unsigned long flags;
- 	int rc = 0;
- 
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
- 
- 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
- 		rc = 1;
-@@ -280,7 +280,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 			uv_rtc_find_next_timer(head, pnode);
- 	}
- 
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
- 
- 	return rc;
- }
-@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, int force)
- static cycle_t uv_read_rtc(struct clocksource *cs)
- {
- 	unsigned long offset;
-+	cycle_t cycles;
- 
-+	preempt_disable();
- 	if (uv_get_min_hub_revision_id() == 1)
- 		offset = 0;
- 	else
- 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
- 
--	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	preempt_enable();
-+
-+	return cycles;
- }
- 
+-static int unlock_futex_pi(u32 __user *uaddr, u32 uval)
+-{
+-	u32 uninitialized_var(oldval);
+-
+-	/*
+-	 * There is no waiter, so we unlock the futex. The owner died
+-	 * bit has not to be preserved here. We are the owner:
+-	 */
+-	if (cmpxchg_futex_value_locked(&oldval, uaddr, uval, 0))
+-		return -EFAULT;
+-	if (oldval != uval)
+-		return -EAGAIN;
+-
+-	return 0;
+-}
+-
  /*
--- 
-2.1.4
+  * Express the locking dependencies for lockdep:
+  */
+@@ -2250,11 +2234,10 @@ uaddr_faulted:
+  */
+ static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+ {
+-	struct futex_hash_bucket *hb;
+-	struct futex_q *this, *next;
+-	struct plist_head *head;
++	u32 uninitialized_var(curval), uval, vpid = task_pid_vnr(current);
+ 	union futex_key key = FUTEX_KEY_INIT;
+-	u32 uval, vpid = task_pid_vnr(current);
++	struct futex_hash_bucket *hb;
++	struct futex_q *match;
+ 	int ret;
+ 
+ retry:
+@@ -2267,61 +2250,50 @@ retry:
+ 		return -EPERM;
+ 
+ 	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, VERIFY_WRITE);
+-	if (unlikely(ret != 0))
+-		goto out;
++	if (ret)
++		return ret;
+ 
+ 	hb = hash_futex(&key);
+ 	spin_lock(&hb->lock);
+ 
+ 	/*
+-	 * To avoid races, try to do the TID -> 0 atomic transition
+-	 * again. If it succeeds then we can return without waking
+-	 * anyone else up. We only try this if neither the waiters nor
+-	 * the owner died bit are set.
++	 * Check waiters first. We do not trust user space values at
++	 * all and we at least want to know if user space fiddled
++	 * with the futex value instead of blindly unlocking.
+ 	 */
+-	if (!(uval & ~FUTEX_TID_MASK) &&
+-	    cmpxchg_futex_value_locked(&uval, uaddr, vpid, 0))
+-		goto pi_faulted;
+-	/*
+-	 * Rare case: we managed to release the lock atomically,
+-	 * no need to wake anyone else up:
+-	 */
+-	if (unlikely(uval == vpid))
+-		goto out_unlock;
+-
+-	/*
+-	 * Ok, other tasks may need to be woken up - check waiters
+-	 * and do the wakeup if necessary:
+-	 */
+-	head = &hb->chain;
+-
+-	plist_for_each_entry_safe(this, next, head, list) {
+-		if (!match_futex (&this->key, &key))
+-			continue;
+-		ret = wake_futex_pi(uaddr, uval, this);
++	match = futex_top_waiter(hb, &key);
++	if (match) {
++		ret = wake_futex_pi(uaddr, uval, match);
+ 		/*
+-		 * The atomic access to the futex value
+-		 * generated a pagefault, so retry the
+-		 * user-access and the wakeup:
++		 * The atomic access to the futex value generated a
++		 * pagefault, so retry the user-access and the wakeup:
+ 		 */
+ 		if (ret == -EFAULT)
+ 			goto pi_faulted;
+ 		goto out_unlock;
+ 	}
++
+ 	/*
+-	 * No waiters - kernel unlocks the futex:
++	 * We have no kernel internal state, i.e. no waiters in the
++	 * kernel. Waiters which are about to queue themselves are stuck
++	 * on hb->lock. So we can safely ignore them. We do neither
++	 * preserve the WAITERS bit not the OWNER_DIED one. We are the
++	 * owner.
+ 	 */
+-	ret = unlock_futex_pi(uaddr, uval);
+-	if (ret == -EFAULT)
++	if (cmpxchg_futex_value_locked(&curval, uaddr, uval, 0))
+ 		goto pi_faulted;
+ 
++	/*
++	 * If uval has changed, let user space handle it.
++	 */
++	ret = (curval == uval) ? 0 : -EAGAIN;
++
+ out_unlock:
+ 	spin_unlock(&hb->lock);
+ 	put_futex_key(&key);
