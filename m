@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/36] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
-Date: Thu, 12 Mar 2015 15:22:02 -0400
-Message-ID: <20150312192158.508988103@goodmis.org>
+Subject: [PATCH RT 27/36] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+Date: Thu, 12 Mar 2015 15:22:06 -0400
+Message-ID: <20150312192159.219555496@goodmis.org>
 References: <20150312192139.799127123@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,63 +10,67 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cdptpa-outbound-snat.email.rr.com ([107.14.166.225]:36529 "EHLO
-	cdptpa-oedge-vip.email.rr.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932230AbbCLTWE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 15:22:04 -0400
-Content-Disposition: inline; filename=0023-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0027-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-Both pi_stress and sigwaittest in rt-test show performance gain with
-__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
-  vanilla:     Total inversion performed: 5493381
-  patched:     Total inversion performed: 5621746
+|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
+|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
+|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
+|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
+|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
+| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
+| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
+| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
+|Call Trace:
+| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
+| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
+| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
+| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
+| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
+| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
+| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
+| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
+| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
+| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
+| [<ffffffff8117f889>] SyS_write+0x49/0xb0
+| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
 
-sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
-  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
-  patched:     Min   19, Cur   21, Avg   23, Max   96
-
-Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
-Cc: Russell King <rmk+kernel at arm.linux.org.uk>
-Cc: Nicolas Pitre <nico at linaro.org>
-Cc: Will Deacon <will.deacon at arm.com>
-Cc: Catalin Marinas <catalin.marinas at arm.com>
-Cc: Thomas Gleixner <tglx at linutronix.de>
-Cc: linux-arm-kernel at lists.infradead.org
 Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/include/asm/cmpxchg.h | 2 ++
- 1 file changed, 2 insertions(+)
+ net/sunrpc/svc_xprt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-index 4f009c10540d..a86b680dd7cf 100644
---- a/arch/arm/include/asm/cmpxchg.h
-+++ b/arch/arm/include/asm/cmpxchg.h
-@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
+diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
+index b9aad4723a9d..ab50dbd58c20 100644
+--- a/net/sunrpc/svc_xprt.c
++++ b/net/sunrpc/svc_xprt.c
+@@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
+ 	if (!svc_xprt_has_something_to_do(xprt))
+ 		return;
  
- #else	/* min ARCH >= ARMv6 */
+-	cpu = get_cpu();
++	cpu = get_cpu_light();
+ 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
+-	put_cpu();
++	put_cpu_light();
  
-+#define __HAVE_ARCH_CMPXCHG 1
-+
- extern void __bad_cmpxchg(volatile void *ptr, int size);
+ 	spin_lock_bh(&pool->sp_lock);
  
- /*
 -- 
 2.1.4
-
-
