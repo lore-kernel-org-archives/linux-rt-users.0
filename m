@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/27] gpio: omap: use raw locks for locking
-Date: Fri, 13 Mar 2015 11:17:42 -0400
-Message-ID: <20150313151755.067980264@goodmis.org>
+Subject: [PATCH RT 06/27] rtmutex: Clarify the boost/deboost part
+Date: Fri, 13 Mar 2015 11:17:47 -0400
+Message-ID: <20150313151755.869177856@goodmis.org>
 References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,338 +9,165 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-gpio-omap-use-raw-locks-for-locking.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0018.hostedemail.com ([216.40.44.18]:41569 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756075AbbCMPR6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:17:58 -0400
+Content-Disposition: inline; filename=0006-rtmutex-Clarify-the-boost-deboost-part.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-This patch converts gpio_bank.lock from a spin_lock into a
-raw_spin_lock. The call path is to access this lock is always under a
-raw_spin_lock, for instance
-- __setup_irq() holds &desc->lock with irq off
-  + __irq_set_trigger()
-   + omap_gpio_irq_type()
+upstream commit: a57594a13a446d1a6ab1dcd48339f799ce586843
 
-- handle_level_irq() (runs with irqs off therefore raw locks)
-  + mask_ack_irq()
-   + omap_gpio_mask_irq()
+Add a separate local variable for the boost/deboost logic to make the
+code more readable. Add comments where appropriate.
 
-This fixes the obvious backtrace on -RT. However the locking vs context
-is not and this is not limited to -RT:
-- omap_gpio_irq_type() is called with IRQ off and has an conditional
-  call to pm_runtime_get_sync() which may sleep. Either it may happen or
-  it may not happen but pm_runtime_get_sync() should not be called with
-  irqs off.
-
-- omap_gpio_debounce() is holding the lock with IRQs off.
-  + omap2_set_gpio_debounce()
-   + clk_prepare_enable()
-    + clk_prepare() this one might sleep.
-  The number of users of gpiod_set_debounce() / gpio_set_debounce()
-  looks low but still this is not good.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- drivers/gpio/gpio-omap.c | 76 ++++++++++++++++++++++++------------------------
- 1 file changed, 38 insertions(+), 38 deletions(-)
 
-diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
-index 4461540653a8..58ba0595c9a2 100644
---- a/drivers/gpio/gpio-omap.c
-+++ b/drivers/gpio/gpio-omap.c
-@@ -67,7 +67,7 @@ struct gpio_bank {
- 	u32 saved_risingdetect;
- 	u32 level_mask;
- 	u32 toggle_mask;
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct gpio_chip chip;
- 	struct clk *dbck;
- 	u32 mod_usage;
-@@ -395,9 +395,9 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
- 		(type & (IRQ_TYPE_LEVEL_LOW|IRQ_TYPE_LEVEL_HIGH)))
- 		return -EINVAL;
+Conflicts:
+	kernel/rtmutex.c
+---
+ kernel/rtmutex.c | 57 +++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 48 insertions(+), 9 deletions(-)
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 865190821088..5431db127f64 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -273,9 +273,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 				      struct rt_mutex_waiter *orig_waiter,
+ 				      struct task_struct *top_task)
+ {
+-	struct rt_mutex *lock;
+ 	struct rt_mutex_waiter *waiter, *top_waiter = orig_waiter;
++	struct rt_mutex_waiter *prerequeue_top_waiter;
+ 	int detect_deadlock, ret = 0, depth = 0;
++	struct rt_mutex *lock;
+ 	unsigned long flags;
  
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	retval = _set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), type);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
- 		__irq_set_handler_locked(d->irq, handle_level_irq);
-@@ -514,14 +514,14 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
- 		return -EINVAL;
+ 	detect_deadlock = debug_rt_mutex_detect_deadlock(orig_waiter,
+@@ -382,9 +383,14 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		goto out_unlock_pi;
  	}
  
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	if (enable)
- 		bank->suspend_wakeup |= gpio_bit;
- 	else
- 		bank->suspend_wakeup &= ~gpio_bit;
+-	top_waiter = rt_mutex_top_waiter(lock);
++	/*
++	 * Store the current top waiter before doing the requeue
++	 * operation on @lock. We need it for the boost/deboost
++	 * decision below.
++	 */
++	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
  
- 	__raw_writel(bank->suspend_wakeup, bank->base + bank->regs->wkup_en);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
+-	/* Requeue the waiter */
++	/* Requeue the waiter in the lock waiter list. */
+ 	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+ 	rt_mutex_enqueue(lock, waiter);
+@@ -393,6 +399,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 	put_task_struct(task);
  
- 	return 0;
- }
-@@ -555,7 +555,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
- 	if (!bank->mod_usage)
- 		pm_runtime_get_sync(bank->dev);
++	/*
++	 * We must abort the chain walk if there is no lock owner even
++	 * in the dead lock detection case, as we have nothing to
++	 * follow here. This is the end of the chain we are walking.
++	 */
+ 	if (!rt_mutex_owner(lock)) {
+ 		struct rt_mutex_waiter *lock_top_waiter;
  
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	/* Set trigger to none. You need to enable the desired trigger with
- 	 * request_irq() or set_irq_type().
- 	 */
-@@ -581,7 +581,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
- 
- 	bank->mod_usage |= 1 << offset;
- 
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -592,7 +592,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
- 	void __iomem *base = bank->base;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 
- 	if (bank->regs->wkup_en) {
- 		/* Disable wake-up during idle for dynamic tick */
-@@ -615,7 +615,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
- 	}
- 
- 	_reset_gpio(bank, bank->chip.base + offset);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	/*
- 	 * If this is the last gpio to be freed in the bank,
-@@ -720,9 +720,9 @@ static void gpio_irq_shutdown(struct irq_data *d)
- 	unsigned int gpio = irq_to_gpio(bank, d->irq);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_reset_gpio(bank, gpio);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static void gpio_ack_irq(struct irq_data *d)
-@@ -739,10 +739,10 @@ static void gpio_mask_irq(struct irq_data *d)
- 	unsigned int gpio = irq_to_gpio(bank, d->irq);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_irqenable(bank, gpio, 0);
- 	_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), IRQ_TYPE_NONE);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static void gpio_unmask_irq(struct irq_data *d)
-@@ -753,7 +753,7 @@ static void gpio_unmask_irq(struct irq_data *d)
- 	u32 trigger = irqd_get_trigger_type(d);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	if (trigger)
- 		_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), trigger);
- 
-@@ -765,7 +765,7 @@ static void gpio_unmask_irq(struct irq_data *d)
- 	}
- 
- 	_set_gpio_irqenable(bank, gpio, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static struct irq_chip gpio_irq_chip = {
-@@ -788,10 +788,10 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
- 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
- 	unsigned long		flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->saved_wakeup = __raw_readl(mask_reg);
- 	__raw_writel(0xffff & ~bank->suspend_wakeup, mask_reg);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -804,9 +804,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
- 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
- 	unsigned long		flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	__raw_writel(bank->saved_wakeup, mask_reg);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -849,9 +849,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
- 	unsigned long flags;
- 
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_direction(bank, offset, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 	return 0;
- }
- 
-@@ -882,10 +882,10 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
- 	unsigned long flags;
- 
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->set_dataout(bank, offset, value);
- 	_set_gpio_direction(bank, offset, 0);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 	return 0;
- }
- 
-@@ -903,9 +903,9 @@ static int gpio_debounce(struct gpio_chip *chip, unsigned offset,
- 			dev_err(bank->dev, "Could not get gpio dbck\n");
- 	}
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_debounce(bank, offset, debounce);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -916,9 +916,9 @@ static void gpio_set(struct gpio_chip *chip, unsigned offset, int value)
- 	unsigned long flags;
- 
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->set_dataout(bank, offset, value);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static int gpio_2irq(struct gpio_chip *chip, unsigned offset)
-@@ -1109,7 +1109,7 @@ static int __devinit omap_gpio_probe(struct platform_device *pdev)
- 	else
- 		bank->set_dataout = _set_gpio_dataout_mask;
- 
--	spin_lock_init(&bank->lock);
-+	raw_spin_lock_init(&bank->lock);
- 
- 	/* Static mapping, never released */
- 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-@@ -1169,11 +1169,11 @@ static int omap_gpio_suspend(struct device *dev)
- 
- 	wakeup_enable = bank->base + bank->regs->wkup_en;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->saved_wakeup = __raw_readl(wakeup_enable);
- 	_gpio_rmw(base, bank->regs->wkup_en, 0xffffffff, 0);
- 	_gpio_rmw(base, bank->regs->wkup_en, bank->suspend_wakeup, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -1191,10 +1191,10 @@ static int omap_gpio_resume(struct device *dev)
- 	if (!bank->regs->wkup_en || !bank->saved_wakeup)
- 		return 0;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_gpio_rmw(base, bank->regs->wkup_en, 0xffffffff, 0);
- 	_gpio_rmw(base, bank->regs->wkup_en, bank->saved_wakeup, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -1211,7 +1211,7 @@ static int omap_gpio_runtime_suspend(struct device *dev)
- 	unsigned long flags;
- 	u32 wake_low, wake_hi;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 
- 	/*
- 	 * Only edges can generate a wakeup event to the PRCM.
-@@ -1263,7 +1263,7 @@ update_gpio_context_count:
- 				bank->get_context_loss_count(bank->dev);
- 
- 	_gpio_dbck_disable(bank);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -1276,7 +1276,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
- 	u32 l = 0, gen, gen0, gen1;
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_gpio_dbck_enable(bank);
- 
- 	/*
-@@ -1291,7 +1291,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
- 		     bank->base + bank->regs->risingdetect);
- 
- 	if (!bank->workaround_enabled) {
--		spin_unlock_irqrestore(&bank->lock, flags);
-+		raw_spin_unlock_irqrestore(&bank->lock, flags);
+@@ -401,29 +412,48 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		 * to wake the new top waiter up to try to get the lock.
+ 		 */
+ 		lock_top_waiter = rt_mutex_top_waiter(lock);
+-		if (top_waiter != lock_top_waiter)
++		if (prerequeue_top_waiter != lock_top_waiter)
+ 			rt_mutex_wake_waiter(lock_top_waiter);
+ 		raw_spin_unlock(&lock->wait_lock);
  		return 0;
  	}
  
-@@ -1302,7 +1302,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
- 						!context_lost_cnt_after) {
- 			omap_gpio_restore_context(bank);
- 		} else {
--			spin_unlock_irqrestore(&bank->lock, flags);
-+			raw_spin_unlock_irqrestore(&bank->lock, flags);
- 			return 0;
- 		}
- 	}
-@@ -1361,7 +1361,7 @@ static int omap_gpio_runtime_resume(struct device *dev)
+-	/* Grab the next task */
++	/* Grab the next task, i.e. the owner of @lock */
+ 	task = rt_mutex_owner(lock);
+ 	get_task_struct(task);
+ 	raw_spin_lock_irqsave(&task->pi_lock, flags);
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		/* Boost the owner */
+-		rt_mutex_dequeue_pi(task, top_waiter);
++		/*
++		 * The waiter became the new top (highest priority)
++		 * waiter on the lock. Replace the previous top waiter
++		 * in the owner tasks pi waiters list with this waiter
++		 * and adjust the priority of the owner.
++		 */
++		rt_mutex_dequeue_pi(task, prerequeue_top_waiter);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 
+-	} else if (top_waiter == waiter) {
+-		/* Deboost the owner */
++	} else if (prerequeue_top_waiter == waiter) {
++		/*
++		 * The waiter was the top waiter on the lock, but is
++		 * no longer the top prority waiter. Replace waiter in
++		 * the owner tasks pi waiters list with the new top
++		 * (highest priority) waiter and adjust the priority
++		 * of the owner.
++		 * The new top waiter is stored in @waiter so that
++		 * @waiter == @top_waiter evaluates to true below and
++		 * we continue to deboost the rest of the chain.
++		 */
+ 		rt_mutex_dequeue_pi(task, waiter);
+ 		waiter = rt_mutex_top_waiter(lock);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
++	} else {
++		/*
++		 * Nothing changed. No need to do any priority
++		 * adjustment.
++		 */
  	}
  
- 	bank->workaround_enabled = false;
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	/*
+@@ -436,6 +466,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  
- 	return 0;
- }
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 
++	/*
++	 * Store the top waiter of @lock for the end of chain walk
++	 * decision below.
++	 */
+ 	top_waiter = rt_mutex_top_waiter(lock);
+ 	raw_spin_unlock(&lock->wait_lock);
+ 
+@@ -446,6 +480,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	if (!next_lock)
+ 		goto out_put_task;
+ 
++	/*
++	 * If the current waiter is not the top waiter on the lock,
++	 * then we can stop the chain walk here if we are not in full
++	 * deadlock detection mode.
++	 */
+ 	if (!detect_deadlock && waiter != top_waiter)
+ 		goto out_put_task;
+ 
 -- 
 2.1.4
+
+
