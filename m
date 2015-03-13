@@ -1,114 +1,141 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/31] rtmutex: Simplify rtmutex_slowtrylock()
-Date: Fri, 13 Mar 2015 11:14:57 -0400
-Message-ID: <20150313151515.365546754@goodmis.org>
-References: <20150313151454.809081378@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/31] Linux 3.10.70-rt75-rc1
+Date: Fri, 13 Mar 2015 11:14:54 -0400
+Message-ID: <20150313151454.809081378@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0117.hostedemail.com ([216.40.44.117]:44354 "EHLO
+Received: from smtprelay0235.hostedemail.com ([216.40.44.235]:33577 "EHLO
 	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755878AbbCMPPS (ORCPT
+	by vger.kernel.org with ESMTP id S1755884AbbCMPPS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 13 Mar 2015 11:15:18 -0400
-Content-Disposition: inline; filename=0003-rtmutex-Simplify-rtmutex_slowtrylock.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.70-rt75-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Thomas Gleixner <tglx@linutronix.de>
+This is the RT stable review cycle of patch 3.10.70-rt75-rc1.
 
-upstream-commit: 88f2b4c15e561bb5c28709d666364f273bf54b98
+Please scream at me if I messed something up. Please test the patches too.
 
-Oleg noticed that rtmutex_slowtrylock() has a pointless check for
-rt_mutex_owner(lock) != current.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-To avoid calling try_to_take_rtmutex() we really want to check whether
-the lock has an owner at all or whether the trylock failed because the
-owner is NULL, but the RT_MUTEX_HAS_WAITERS bit is set. This covers
-the lock is owned by caller situation as well.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-We can actually do this check lockless. trylock is taking a chance
-whether we take lock->wait_lock to do the check or not.
+If all goes well, this patch will be converted to the next main release
+on 3/16/2015.
 
-Add comments to the function while at it.
+Enjoy,
 
-Reported-by: Oleg Nesterov <oleg@redhat.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+-- Steve
 
-Conflicts:
-	kernel/rtmutex.c
+
+To build 3.10.70-rt75-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.70.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.70-rt75-rc1.patch.xz
+
+You can also build from 3.10.70-rt74 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.70-rt74-rt75-rc1.patch.xz
+
+
+Changes from 3.10.70-rt74:
+
 ---
- kernel/rtmutex.c | 33 +++++++++++++++++++++------------
- 1 file changed, 21 insertions(+), 12 deletions(-)
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 7cd751bb891a..c9989ae1cfa5 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1255,24 +1255,33 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- /*
-  * Slow path try-lock function:
-  */
--static inline int
--rt_mutex_slowtrylock(struct rt_mutex *lock)
-+static inline int rt_mutex_slowtrylock(struct rt_mutex *lock)
- {
--	int ret = 0;
-+	int ret;
- 
-+	/*
-+	 * If the lock already has an owner we fail to get the lock.
-+	 * This can be done without taking the @lock->wait_lock as
-+	 * it is only being read, and this is a trylock anyway.
-+	 */
-+	if (rt_mutex_owner(lock))
-+		return 0;
-+
-+	/*
-+	 * The mutex has currently no owner. Lock the wait lock and
-+	 * try to acquire the lock.
-+	 */
- 	if (!raw_spin_trylock(&lock->wait_lock))
--		return ret;
-+		return 0;
- 	init_lists(lock);
- 
--	if (likely(rt_mutex_owner(lock) != current)) {
-+	ret = try_to_take_rt_mutex(lock, current, NULL);
- 
--		ret = try_to_take_rt_mutex(lock, current, NULL);
--		/*
--		 * try_to_take_rt_mutex() sets the lock waiters
--		 * bit unconditionally. Clean this up.
--		 */
--		fixup_rt_mutex_waiters(lock);
--	}
-+	/*
-+	 * try_to_take_rt_mutex() sets the lock waiters bit
-+	 * unconditionally. Clean this up.
-+	 */
-+	fixup_rt_mutex_waiters(lock);
- 
- 	raw_spin_unlock(&lock->wait_lock);
- 
--- 
-2.1.4
 
 
+Daniel Wagner (1):
+      work-simple: Simple work queue implemenation
+
+Josh Cartwright (1):
+      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
+
+Mike Galbraith (3):
+      x86: UV: raw_spinlock conversion
+      scheduling while atomic in cgroup code
+      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+
+Paul E. McKenney (4):
+      timers: Track total number of timers in list
+      timers: Reduce __run_timers() latency for empty list
+      timers: Reduce future __run_timers() latency for newly emptied list
+      timers: Reduce future __run_timers() latency for first add to empty list
+
+Paul Gortmaker (1):
+      sas-ata/isci: dont't disable interrupts in qc_issue handler
+
+Sebastian Andrzej Siewior (3):
+      gpio: omap: use raw locks for locking
+      rt-mutex: avoid a NULL pointer dereference on deadlock
+      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.10.70-rt75-rc1
+
+Thomas Gleixner (14):
+      rtmutex: Simplify rtmutex_slowtrylock()
+      rtmutex: Simplify and document try_to_take_rtmutex()
+      rtmutex: No need to keep task ref for lock owner check
+      rtmutex: Clarify the boost/deboost part
+      rtmutex: Document pi chain walk
+      rtmutex: Simplify remove_waiter()
+      rtmutex: Confine deadlock logic to futex
+      rtmutex: Cleanup deadlock detector debug logic
+      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
+      futex: Make unlock_pi more robust
+      futex: Use futex_top_waiter() in lookup_pi_state()
+      futex: Split out the waiter check from lookup_pi_state()
+      futex: Split out the first waiter attachment from lookup_pi_state()
+      futex: Simplify futex_lock_pi_atomic() and make it more robust
+
+Yadi.hu (1):
+      ARM: enable irq in translation/section permission fault handlers
+
+Yong Zhang (1):
+      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+
+----
+ arch/arm/include/asm/cmpxchg.h     |   2 +
+ arch/arm/include/asm/futex.h       |   4 +
+ arch/arm/mm/fault.c                |   6 +
+ arch/x86/include/asm/uv/uv_bau.h   |  14 +-
+ arch/x86/include/asm/uv/uv_hub.h   |   2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c |   2 +-
+ arch/x86/platform/uv/tlb_uv.c      |  26 +-
+ arch/x86/platform/uv/uv_time.c     |  21 +-
+ drivers/gpio/gpio-omap.c           |  70 ++---
+ drivers/scsi/libsas/sas_ata.c      |   4 +-
+ include/linux/rtmutex.h            |   8 +-
+ include/linux/work-simple.h        |  24 ++
+ kernel/futex.c                     | 407 +++++++++++--------------
+ kernel/rt.c                        |   8 +-
+ kernel/rtmutex-debug.c             |   5 +-
+ kernel/rtmutex-debug.h             |   7 +-
+ kernel/rtmutex-tester.c            |   4 +-
+ kernel/rtmutex.c                   | 604 +++++++++++++++++++++++++++----------
+ kernel/rtmutex.h                   |   7 +-
+ kernel/rtmutex_common.h            |  22 +-
+ kernel/sched/Makefile              |   1 +
+ kernel/sched/work-simple.c         | 172 +++++++++++
+ kernel/timer.c                     |  26 ++
+ lib/locking-selftest.c             |  27 ++
+ localversion-rt                    |   2 +-
+ mm/memcontrol.c                    |   7 +-
+ net/sunrpc/svc_xprt.c              |   4 +-
+ 27 files changed, 1013 insertions(+), 473 deletions(-)
