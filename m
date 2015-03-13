@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 21/31] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
-Date: Fri, 13 Mar 2015 11:15:15 -0400
-Message-ID: <20150313151518.501261317@goodmis.org>
+Subject: [PATCH RT 17/31] rt-mutex: avoid a NULL pointer dereference on deadlock
+Date: Fri, 13 Mar 2015 11:15:11 -0400
+Message-ID: <20150313151517.785489999@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,60 +13,49 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0016.hostedemail.com ([216.40.44.16]:41256 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932137AbbCMPPV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:15:21 -0400
-Content-Disposition: inline; filename=0021-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0017-rt-mutex-avoid-a-NULL-pointer-dereference-on-deadloc.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.10.70-rt75-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-Both pi_stress and sigwaittest in rt-test show performance gain with
-__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
-  vanilla:     Total inversion performed: 5493381
-  patched:     Total inversion performed: 5621746
+With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
+waiter to the waitqueue. Later, we try to remove it via remove_waiter()
+and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
+pointer.
+Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
+to get one twice in a row.
 
-sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
-  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
-  patched:     Min   19, Cur   21, Avg   23, Max   96
+Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
+detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
+detection smarter").
 
-Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
-Cc: Russell King <rmk+kernel at arm.linux.org.uk>
-Cc: Nicolas Pitre <nico at linaro.org>
-Cc: Will Deacon <will.deacon at arm.com>
-Cc: Catalin Marinas <catalin.marinas at arm.com>
-Cc: Thomas Gleixner <tglx at linutronix.de>
-Cc: linux-arm-kernel at lists.infradead.org
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/include/asm/cmpxchg.h | 2 ++
- 1 file changed, 2 insertions(+)
+ kernel/rtmutex.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-index 4f009c10540d..a86b680dd7cf 100644
---- a/arch/arm/include/asm/cmpxchg.h
-+++ b/arch/arm/include/asm/cmpxchg.h
-@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index b7b1de2acf0b..5388ba98acaf 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1490,7 +1490,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	set_current_state(TASK_RUNNING);
  
- #else	/* min ARCH >= ARMv6 */
+ 	if (unlikely(ret)) {
+-		remove_waiter(lock, &waiter);
++		if (rt_mutex_has_waiters(lock))
++			remove_waiter(lock, &waiter);
+ 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
+ 	}
  
-+#define __HAVE_ARCH_CMPXCHG 1
-+
- extern void __bad_cmpxchg(volatile void *ptr, int size);
- 
- /*
 -- 
 2.1.4
-
-
