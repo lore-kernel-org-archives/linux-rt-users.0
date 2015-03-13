@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/31] create-rt-enqueue
-Date: Fri, 13 Mar 2015 11:14:56 -0400
-Message-ID: <20150313151515.187101395@goodmis.org>
+Subject: [PATCH RT 13/31] futex: Use futex_top_waiter() in lookup_pi_state()
+Date: Fri, 13 Mar 2015 11:15:07 -0400
+Message-ID: <20150313151517.017974101@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,182 +9,197 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Darren Hart <darren@dvhart.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0205.hostedemail.com ([216.40.44.205]:43406 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755890AbbCMPPU (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:15:20 -0400
-Content-Disposition: inline; filename=0002-create-rt-enqueue.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0013-futex-Use-futex_top_waiter-in-lookup_pi_state.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.10.70-rt75-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-To ease backporting patches, replace the plist functions with
-rt_mutex_enqueue{_pi}() and rt_mutex_dequeue{_pi}() like upstream -rt does.
-This will lower the conflicts in backporting patches.
+upstream commit: bd1dbcc67cd2c1181e2c01daac51eabf1b964dd8
 
-This also makes sure that every time a waiter is added to the pi_list it
-matches the priority of the waiter list.
+No point in open coding the same function again.
 
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Darren Hart <darren@dvhart.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.092947239@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 58 ++++++++++++++++++++++++++++++++++++++------------------
- 1 file changed, 40 insertions(+), 18 deletions(-)
+ kernel/futex.c | 127 +++++++++++++++++++++++++++------------------------------
+ 1 file changed, 61 insertions(+), 66 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 2671e5532534..7cd751bb891a 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -155,6 +155,31 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock)
- }
- #endif
- 
-+static inline void
-+rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
-+{
-+	plist_add(&waiter->list_entry, &lock->wait_list);
-+}
-+
-+static inline void
-+rt_mutex_dequeue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
-+{
-+	plist_del(&waiter->list_entry, &lock->wait_list);
-+}
-+
-+static inline void
-+rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
-+{
-+	waiter->pi_list_entry.prio = waiter->list_entry.prio;
-+	plist_add(&waiter->pi_list_entry, &task->pi_waiters);
-+}
-+
-+static inline void
-+rt_mutex_dequeue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
-+{
-+	plist_del(&waiter->pi_list_entry, &task->pi_waiters);
-+}
-+
- static inline void init_lists(struct rt_mutex *lock)
+diff --git a/kernel/futex.c b/kernel/futex.c
+index d9189e82f3a2..816b7f53d3f0 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -647,90 +647,85 @@ static int
+ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+ 		union futex_key *key, struct futex_pi_state **ps)
  {
- 	if (unlikely(!lock->wait_list.node_list.prev))
-@@ -363,9 +388,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	top_waiter = rt_mutex_top_waiter(lock);
++	struct futex_q *match = futex_top_waiter(hb, key);
+ 	struct futex_pi_state *pi_state = NULL;
+-	struct futex_q *this, *next;
+-	struct plist_head *head;
+ 	struct task_struct *p;
+ 	pid_t pid = uval & FUTEX_TID_MASK;
  
- 	/* Requeue the waiter */
--	plist_del(&waiter->list_entry, &lock->wait_list);
-+	rt_mutex_dequeue(lock, waiter);
- 	waiter->list_entry.prio = task->prio;
--	plist_add(&waiter->list_entry, &lock->wait_list);
-+	rt_mutex_enqueue(lock, waiter);
+-	head = &hb->chain;
+-
+-	plist_for_each_entry_safe(this, next, head, list) {
+-		if (match_futex(&this->key, key)) {
+-			/*
+-			 * Sanity check the waiter before increasing
+-			 * the refcount and attaching to it.
+-			 */
+-			pi_state = this->pi_state;
+-			/*
+-			 * Userspace might have messed up non-PI and
+-			 * PI futexes [3]
+-			 */
+-			if (unlikely(!pi_state))
+-				return -EINVAL;
++	if (match) {
++		/*
++		 * Sanity check the waiter before increasing the
++		 * refcount and attaching to it.
++		 */
++		pi_state = match->pi_state;
++		/*
++		 * Userspace might have messed up non-PI and PI
++		 * futexes [3]
++		 */
++		if (unlikely(!pi_state))
++			return -EINVAL;
  
- 	/* Release the task */
- 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-@@ -391,17 +416,15 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+-			WARN_ON(!atomic_read(&pi_state->refcount));
++		WARN_ON(!atomic_read(&pi_state->refcount));
  
- 	if (waiter == rt_mutex_top_waiter(lock)) {
- 		/* Boost the owner */
--		plist_del(&top_waiter->pi_list_entry, &task->pi_waiters);
--		waiter->pi_list_entry.prio = waiter->list_entry.prio;
--		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
-+		rt_mutex_dequeue_pi(task, top_waiter);
-+		rt_mutex_enqueue_pi(task, waiter);
- 		__rt_mutex_adjust_prio(task);
++		/*
++		 * Handle the owner died case:
++		 */
++		if (uval & FUTEX_OWNER_DIED) {
+ 			/*
+-			 * Handle the owner died case:
++			 * exit_pi_state_list sets owner to NULL and
++			 * wakes the topmost waiter. The task which
++			 * acquires the pi_state->rt_mutex will fixup
++			 * owner.
+ 			 */
+-			if (uval & FUTEX_OWNER_DIED) {
++			if (!pi_state->owner) {
+ 				/*
+-				 * exit_pi_state_list sets owner to NULL and
+-				 * wakes the topmost waiter. The task which
+-				 * acquires the pi_state->rt_mutex will fixup
+-				 * owner.
++				 * No pi state owner, but the user
++				 * space TID is not 0. Inconsistent
++				 * state. [5]
+ 				 */
+-				if (!pi_state->owner) {
+-					/*
+-					 * No pi state owner, but the user
+-					 * space TID is not 0. Inconsistent
+-					 * state. [5]
+-					 */
+-					if (pid)
+-						return -EINVAL;
+-					/*
+-					 * Take a ref on the state and
+-					 * return. [4]
+-					 */
+-					goto out_state;
+-				}
+-
+-				/*
+-				 * If TID is 0, then either the dying owner
+-				 * has not yet executed exit_pi_state_list()
+-				 * or some waiter acquired the rtmutex in the
+-				 * pi state, but did not yet fixup the TID in
+-				 * user space.
+-				 *
+-				 * Take a ref on the state and return. [6]
+-				 */
+-				if (!pid)
+-					goto out_state;
+-			} else {
++				if (pid)
++					return -EINVAL;
+ 				/*
+-				 * If the owner died bit is not set,
+-				 * then the pi_state must have an
+-				 * owner. [7]
++				 * Take a ref on the state and
++				 * return. [4]
+ 				 */
+-				if (!pi_state->owner)
+-					return -EINVAL;
++				goto out_state;
+ 			}
  
- 	} else if (top_waiter == waiter) {
- 		/* Deboost the owner */
--		plist_del(&waiter->pi_list_entry, &task->pi_waiters);
-+		rt_mutex_dequeue_pi(task, waiter);
- 		waiter = rt_mutex_top_waiter(lock);
--		waiter->pi_list_entry.prio = waiter->list_entry.prio;
--		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
-+		rt_mutex_enqueue_pi(task, waiter);
- 		__rt_mutex_adjust_prio(task);
- 	}
- 
-@@ -517,7 +540,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
- 
- 		/* remove the queued waiter. */
- 		if (waiter) {
--			plist_del(&waiter->list_entry, &lock->wait_list);
-+			rt_mutex_dequeue(lock, waiter);
- 			task->pi_blocked_on = NULL;
+ 			/*
+-			 * Bail out if user space manipulated the
+-			 * futex value. If pi state exists then the
+-			 * owner TID must be the same as the user
+-			 * space TID. [9/10]
++			 * If TID is 0, then either the dying owner
++			 * has not yet executed exit_pi_state_list()
++			 * or some waiter acquired the rtmutex in the
++			 * pi state, but did not yet fixup the TID in
++			 * user space.
++			 *
++			 * Take a ref on the state and return. [6]
++			 */
++			if (!pid)
++				goto out_state;
++		} else {
++			/*
++			 * If the owner died bit is not set,
++			 * then the pi_state must have an
++			 * owner. [7]
+ 			 */
+-			if (pid != task_pid_vnr(pi_state->owner))
++			if (!pi_state->owner)
+ 				return -EINVAL;
+-
+-		out_state:
+-			atomic_inc(&pi_state->refcount);
+-			*ps = pi_state;
+-			return 0;
  		}
- 
-@@ -527,8 +550,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
- 		 */
- 		if (rt_mutex_has_waiters(lock)) {
- 			top = rt_mutex_top_waiter(lock);
--			top->pi_list_entry.prio = top->list_entry.prio;
--			plist_add(&top->pi_list_entry, &task->pi_waiters);
-+			rt_mutex_enqueue_pi(task, top);
- 		}
- 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++
++		/*
++		 * Bail out if user space manipulated the
++		 * futex value. If pi state exists then the
++		 * owner TID must be the same as the user
++		 * space TID. [9/10]
++		 */
++		if (pid != task_pid_vnr(pi_state->owner))
++			return -EINVAL;
++
++	out_state:
++		atomic_inc(&pi_state->refcount);
++		*ps = pi_state;
++		return 0;
  	}
-@@ -606,7 +628,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 	/* Get the top priority waiter on the lock */
- 	if (rt_mutex_has_waiters(lock))
- 		top_waiter = rt_mutex_top_waiter(lock);
--	plist_add(&waiter->list_entry, &lock->wait_list);
-+	rt_mutex_enqueue(lock, waiter);
- 
- 	task->pi_blocked_on = waiter;
- 
-@@ -617,8 +639,8 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
- 
- 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
- 	if (waiter == rt_mutex_top_waiter(lock)) {
--		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
--		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
-+		rt_mutex_dequeue_pi(owner, top_waiter);
-+		rt_mutex_enqueue_pi(owner, waiter);
- 
- 		__rt_mutex_adjust_prio(owner);
- 		if (rt_mutex_real_waiter(owner->pi_blocked_on))
-@@ -679,7 +701,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
- 	 * boosted mode and go back to normal after releasing
- 	 * lock->wait_lock.
- 	 */
--	plist_del(&waiter->pi_list_entry, &current->pi_waiters);
-+	rt_mutex_dequeue_pi(current, waiter);
  
  	/*
- 	 * As we are waking up the top waiter, and the waiter stays
-@@ -716,7 +738,7 @@ static void remove_waiter(struct rt_mutex *lock,
- 	unsigned long flags;
- 
- 	raw_spin_lock_irqsave(&current->pi_lock, flags);
--	plist_del(&waiter->list_entry, &lock->wait_list);
-+	rt_mutex_dequeue(lock, waiter);
- 	current->pi_blocked_on = NULL;
- 	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
- 
-@@ -727,13 +749,13 @@ static void remove_waiter(struct rt_mutex *lock,
- 
- 		raw_spin_lock_irqsave(&owner->pi_lock, flags);
- 
--		plist_del(&waiter->pi_list_entry, &owner->pi_waiters);
-+		rt_mutex_dequeue_pi(owner, waiter);
- 
- 		if (rt_mutex_has_waiters(lock)) {
- 			struct rt_mutex_waiter *next;
- 
- 			next = rt_mutex_top_waiter(lock);
--			plist_add(&next->pi_list_entry, &owner->pi_waiters);
-+			rt_mutex_enqueue_pi(owner, next);
- 		}
- 		__rt_mutex_adjust_prio(owner);
- 
 -- 
 2.1.4
-
-
