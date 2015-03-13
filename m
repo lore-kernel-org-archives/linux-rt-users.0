@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 25/27] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-Date: Fri, 13 Mar 2015 11:18:06 -0400
-Message-ID: <20150313151759.301266229@goodmis.org>
-References: <20150313151741.132137234@goodmis.org>
+Subject: [PATCH RT 01/25] gpio: omap: use raw locks for locking
+Date: Fri, 13 Mar 2015 11:18:26 -0400
+Message-ID: <20150313151834.331603148@goodmis.org>
+References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,67 +10,282 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0025-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
+Content-Disposition: inline; filename=0001-gpio-omap-use-raw-locks-for-locking.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.4.106-rt132-rc1 stable review patch.
+3.2.68-rt99-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
-|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
-|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
-| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
-| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
-|Call Trace:
-| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
-| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
-| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
-| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
-| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
-| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
-| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
-| [<ffffffff8117f889>] SyS_write+0x49/0xb0
-| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+This patch converts gpio_bank.lock from a spin_lock into a
+raw_spin_lock. The call path is to access this lock is always under a
+raw_spin_lock, for instance
+- __setup_irq() holds &desc->lock with irq off
+  + __irq_set_trigger()
+   + omap_gpio_irq_type()
+
+- handle_level_irq() (runs with irqs off therefore raw locks)
+  + mask_ack_irq()
+   + omap_gpio_mask_irq()
+
+This fixes the obvious backtrace on -RT. However the locking vs context
+is not and this is not limited to -RT:
+- omap_gpio_irq_type() is called with IRQ off and has an conditional
+  call to pm_runtime_get_sync() which may sleep. Either it may happen or
+  it may not happen but pm_runtime_get_sync() should not be called with
+  irqs off.
+
+- omap_gpio_debounce() is holding the lock with IRQs off.
+  + omap2_set_gpio_debounce()
+   + clk_prepare_enable()
+    + clk_prepare() this one might sleep.
+  The number of users of gpiod_set_debounce() / gpio_set_debounce()
+  looks low but still this is not good.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/sunrpc/svc_xprt.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/gpio/gpio-omap.c | 64 ++++++++++++++++++++++++------------------------
+ 1 file changed, 32 insertions(+), 32 deletions(-)
 
-diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index aec7dbb9d3dd..6686f46d673e 100644
---- a/net/sunrpc/svc_xprt.c
-+++ b/net/sunrpc/svc_xprt.c
-@@ -323,9 +323,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
- 	if (!svc_xprt_has_something_to_do(xprt))
- 		return;
+diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
+index a6c10e849e61..e4d11e424b5b 100644
+--- a/drivers/gpio/gpio-omap.c
++++ b/drivers/gpio/gpio-omap.c
+@@ -46,7 +46,7 @@ struct gpio_bank {
+ 	u32 saved_risingdetect;
+ 	u32 level_mask;
+ 	u32 toggle_mask;
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct gpio_chip chip;
+ 	struct clk *dbck;
+ 	u32 mod_usage;
+@@ -418,9 +418,9 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
+ 		return -EINVAL;
  
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
--	put_cpu();
-+	put_cpu_light();
+ 	bank = irq_data_get_irq_chip_data(d);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	retval = _set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), type);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
- 	spin_lock_bh(&pool->sp_lock);
+ 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
+ 		__irq_set_handler_locked(d->irq, handle_level_irq);
+@@ -533,13 +533,13 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
+ 		return -EINVAL;
+ 	}
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	if (enable)
+ 		bank->suspend_wakeup |= gpio_bit;
+ 	else
+ 		bank->suspend_wakeup &= ~gpio_bit;
+ 
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -570,7 +570,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+ 	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 
+ 	/* Set trigger to none. You need to enable the desired trigger with
+ 	 * request_irq() or set_irq_type().
+@@ -602,7 +602,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+ 		}
+ 		bank->mod_usage |= 1 << offset;
+ 	}
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -612,7 +612,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
+ 	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ #ifdef CONFIG_ARCH_OMAP16XX
+ 	if (bank->method == METHOD_GPIO_1610) {
+ 		/* Disable wake-up during idle for dynamic tick */
+@@ -651,7 +651,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
+ 		}
+ 	}
+ 	_reset_gpio(bank, bank->chip.base + offset);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ /*
+@@ -751,9 +751,9 @@ static void gpio_irq_shutdown(struct irq_data *d)
+ 	struct gpio_bank *bank = irq_data_get_irq_chip_data(d);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_reset_gpio(bank, gpio);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static void gpio_ack_irq(struct irq_data *d)
+@@ -770,10 +770,10 @@ static void gpio_mask_irq(struct irq_data *d)
+ 	struct gpio_bank *bank = irq_data_get_irq_chip_data(d);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_irqenable(bank, gpio, 0);
+ 	_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), IRQ_TYPE_NONE);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static void gpio_unmask_irq(struct irq_data *d)
+@@ -784,7 +784,7 @@ static void gpio_unmask_irq(struct irq_data *d)
+ 	u32 trigger = irqd_get_trigger_type(d);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	if (trigger)
+ 		_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), trigger);
+ 
+@@ -796,7 +796,7 @@ static void gpio_unmask_irq(struct irq_data *d)
+ 	}
+ 
+ 	_set_gpio_irqenable(bank, gpio, 1);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static struct irq_chip gpio_irq_chip = {
+@@ -827,10 +827,10 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
+ 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
+ 	unsigned long		flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->saved_wakeup = __raw_readl(mask_reg);
+ 	__raw_writel(0xffff & ~bank->suspend_wakeup, mask_reg);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -843,9 +843,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
+ 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
+ 	unsigned long		flags;
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	__raw_writel(bank->saved_wakeup, mask_reg);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -904,9 +904,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
+ 	unsigned long flags;
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_direction(bank, offset, 1);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	return 0;
+ }
+ 
+@@ -941,10 +941,10 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
+ 	unsigned long flags;
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->set_dataout(bank, offset, value);
+ 	_set_gpio_direction(bank, offset, 0);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	return 0;
+ }
+ 
+@@ -962,9 +962,9 @@ static int gpio_debounce(struct gpio_chip *chip, unsigned offset,
+ 			dev_err(bank->dev, "Could not get gpio dbck\n");
+ 	}
+ 
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	_set_gpio_debounce(bank, offset, debounce);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 
+ 	return 0;
+ }
+@@ -975,9 +975,9 @@ static void gpio_set(struct gpio_chip *chip, unsigned offset, int value)
+ 	unsigned long flags;
+ 
+ 	bank = container_of(chip, struct gpio_bank, chip);
+-	spin_lock_irqsave(&bank->lock, flags);
++	raw_spin_lock_irqsave(&bank->lock, flags);
+ 	bank->set_dataout(bank, offset, value);
+-	spin_unlock_irqrestore(&bank->lock, flags);
++	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ }
+ 
+ static int gpio_2irq(struct gpio_chip *chip, unsigned offset)
+@@ -1207,7 +1207,7 @@ static int __devinit omap_gpio_probe(struct platform_device *pdev)
+ 	else
+ 		bank->set_dataout = _set_gpio_dataout_mask;
+ 
+-	spin_lock_init(&bank->lock);
++	raw_spin_lock_init(&bank->lock);
+ 
+ 	/* Static mapping, never released */
+ 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+@@ -1276,11 +1276,11 @@ static int omap_gpio_suspend(void)
+ 			continue;
+ 		}
+ 
+-		spin_lock_irqsave(&bank->lock, flags);
++		raw_spin_lock_irqsave(&bank->lock, flags);
+ 		bank->saved_wakeup = __raw_readl(wake_status);
+ 		__raw_writel(0xffffffff, wake_clear);
+ 		__raw_writel(bank->suspend_wakeup, wake_set);
+-		spin_unlock_irqrestore(&bank->lock, flags);
++		raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	}
+ 
+ 	return 0;
+@@ -1322,10 +1322,10 @@ static void omap_gpio_resume(void)
+ 			continue;
+ 		}
+ 
+-		spin_lock_irqsave(&bank->lock, flags);
++		raw_spin_lock_irqsave(&bank->lock, flags);
+ 		__raw_writel(0xffffffff, wake_clear);
+ 		__raw_writel(bank->saved_wakeup, wake_set);
+-		spin_unlock_irqrestore(&bank->lock, flags);
++		raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	}
+ }
  
 -- 
 2.1.4
