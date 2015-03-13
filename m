@@ -1,348 +1,343 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/25] rtmutex: Confine deadlock logic to futex
-Date: Fri, 13 Mar 2015 11:18:34 -0400
-Message-ID: <20150313151835.682524298@goodmis.org>
-References: <20150313151825.583263173@goodmis.org>
+Subject: [PATCH RT 18/27] x86: UV: raw_spinlock conversion
+Date: Fri, 13 Mar 2015 11:17:59 -0400
+Message-ID: <20150313151758.005512246@goodmis.org>
+References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>, Mike Galbraith <mgalbraith@suse.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-rtmutex-Confine-deadlock-logic-to-futex.patch
+Content-Disposition: inline; filename=0018-x86-UV-raw_spinlock-conversion.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.68-rt99-rc1 stable review patch.
+3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-upstream commit: c051b21f71d1ffdfd7ad406a1ef5ede5e5f974c5
+Shrug.  Lots of hobbyists have a beast in their basement, right?
 
-The deadlock logic is only required for futexes.
-
-Remove the extra arguments for the public functions and also for the
-futex specific ones which get always called with deadlock detection
-enabled.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Conflicts:
-	include/linux/rtmutex.h
-	kernel/rtmutex.c
 ---
- include/linux/rtmutex.h |  8 +++-----
- kernel/futex.c          | 10 ++++-----
- kernel/rt.c             |  8 ++++----
- kernel/rtmutex-tester.c |  4 ++--
- kernel/rtmutex.c        | 54 ++++++++++++++++++++++++-------------------------
- kernel/rtmutex_common.h |  7 +++----
- 6 files changed, 43 insertions(+), 48 deletions(-)
+ arch/x86/include/asm/uv/uv_bau.h   | 12 ++++++------
+ arch/x86/include/asm/uv/uv_hub.h   |  2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c | 12 ++++++------
+ arch/x86/platform/uv/tlb_uv.c      | 30 +++++++++++++++---------------
+ arch/x86/platform/uv/uv_time.c     | 21 +++++++++++++--------
+ 5 files changed, 41 insertions(+), 36 deletions(-)
 
-diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
-index 5ebd0bbb6eaa..9340b866ce21 100644
---- a/include/linux/rtmutex.h
-+++ b/include/linux/rtmutex.h
-@@ -109,12 +109,10 @@ extern void __rt_mutex_init(struct rt_mutex *lock, const char *name);
- extern void rt_mutex_destroy(struct rt_mutex *lock);
- 
- extern void rt_mutex_lock(struct rt_mutex *lock);
--extern int rt_mutex_lock_interruptible(struct rt_mutex *lock,
--						int detect_deadlock);
--extern int rt_mutex_lock_killable(struct rt_mutex *lock, int detect_deadlock);
-+extern int rt_mutex_lock_interruptible(struct rt_mutex *lock);
-+extern int rt_mutex_lock_killable(struct rt_mutex *lock);
- extern int rt_mutex_timed_lock(struct rt_mutex *lock,
--					struct hrtimer_sleeper *timeout,
--					int detect_deadlock);
-+			       struct hrtimer_sleeper *timeout);
- 
- extern int rt_mutex_trylock(struct rt_mutex *lock);
- 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 749e297bc3df..8ed0948e6459 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1563,7 +1563,7 @@ retry_private:
- 			this->pi_state = pi_state;
- 			ret = rt_mutex_start_proxy_lock(&pi_state->pi_mutex,
- 							this->rt_waiter,
--							this->task, 1);
-+							this->task);
- 			if (ret == 1) {
- 				/* We got the lock. */
- 				requeue_pi_wake_futex(this, &key2, hb2);
-@@ -2178,9 +2178,9 @@ retry_private:
- 	/*
- 	 * Block on the PI mutex:
- 	 */
--	if (!trylock)
--		ret = rt_mutex_timed_lock(&q.pi_state->pi_mutex, to, 1);
--	else {
-+	if (!trylock) {
-+		ret = rt_mutex_timed_futex_lock(&q.pi_state->pi_mutex, to);
-+	} else {
- 		ret = rt_mutex_trylock(&q.pi_state->pi_mutex);
- 		/* Fixup the trylock return value: */
- 		ret = ret ? 0 : -EWOULDBLOCK;
-@@ -2547,7 +2547,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
- 		 */
- 		WARN_ON(!q.pi_state);
- 		pi_mutex = &q.pi_state->pi_mutex;
--		ret = rt_mutex_finish_proxy_lock(pi_mutex, to, &rt_waiter, 1);
-+		ret = rt_mutex_finish_proxy_lock(pi_mutex, to, &rt_waiter);
- 		debug_rt_mutex_free_waiter(&rt_waiter);
- 
- 		spin_lock(&hb2->lock);
-diff --git a/kernel/rt.c b/kernel/rt.c
-index aa10504d733d..389f9bdec9be 100644
---- a/kernel/rt.c
-+++ b/kernel/rt.c
-@@ -98,7 +98,7 @@ int __lockfunc _mutex_lock_interruptible(struct mutex *lock)
- 	int ret;
- 
- 	mutex_acquire(&lock->dep_map, 0, 0, _RET_IP_);
--	ret = rt_mutex_lock_interruptible(&lock->lock, 0);
-+	ret = rt_mutex_lock_interruptible(&lock->lock);
- 	if (ret)
- 		mutex_release(&lock->dep_map, 1, _RET_IP_);
- 	return ret;
-@@ -110,7 +110,7 @@ int __lockfunc _mutex_lock_killable(struct mutex *lock)
- 	int ret;
- 
- 	mutex_acquire(&lock->dep_map, 0, 0, _RET_IP_);
--	ret = rt_mutex_lock_killable(&lock->lock, 0);
-+	ret = rt_mutex_lock_killable(&lock->lock);
- 	if (ret)
- 		mutex_release(&lock->dep_map, 1, _RET_IP_);
- 	return ret;
-@@ -137,7 +137,7 @@ int __lockfunc _mutex_lock_interruptible_nested(struct mutex *lock, int subclass
- 	int ret;
- 
- 	mutex_acquire_nest(&lock->dep_map, subclass, 0, NULL, _RET_IP_);
--	ret = rt_mutex_lock_interruptible(&lock->lock, 0);
-+	ret = rt_mutex_lock_interruptible(&lock->lock);
- 	if (ret)
- 		mutex_release(&lock->dep_map, 1, _RET_IP_);
- 	return ret;
-@@ -149,7 +149,7 @@ int __lockfunc _mutex_lock_killable_nested(struct mutex *lock, int subclass)
- 	int ret;
- 
- 	mutex_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
--	ret = rt_mutex_lock_killable(&lock->lock, 0);
-+	ret = rt_mutex_lock_killable(&lock->lock);
- 	if (ret)
- 		mutex_release(&lock->dep_map, 1, _RET_IP_);
- 	return ret;
-diff --git a/kernel/rtmutex-tester.c b/kernel/rtmutex-tester.c
-index 3d9f31cd79e7..9eb84bb55881 100644
---- a/kernel/rtmutex-tester.c
-+++ b/kernel/rtmutex-tester.c
-@@ -14,7 +14,7 @@
- #include <linux/timer.h>
- #include <linux/freezer.h>
- 
--#include "rtmutex.h"
-+#include "rtmutex_common.h"
- 
- #define MAX_RT_TEST_THREADS	8
- #define MAX_RT_TEST_MUTEXES	8
-@@ -105,7 +105,7 @@ static int handle_op(struct test_thread_data *td, int lockwakeup)
- 
- 		td->mutexes[id] = 1;
- 		td->event = atomic_add_return(1, &rttest_event);
--		ret = rt_mutex_lock_interruptible(&mutexes[id], 0);
-+		ret = rt_mutex_lock_interruptible(&mutexes[id]);
- 		td->event = atomic_add_return(1, &rttest_event);
- 		td->mutexes[id] = ret ? 0 : 4;
- 		return ret ? -EINTR : 0;
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 6405f7bc81f7..799efec18e7a 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1548,16 +1548,15 @@ rt_mutex_slowunlock(struct rt_mutex *lock)
+diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
+index 6149b476d9df..ca5cfc1a3c6e 100644
+--- a/arch/x86/include/asm/uv/uv_bau.h
++++ b/arch/x86/include/asm/uv/uv_bau.h
+@@ -602,8 +602,8 @@ struct bau_control {
+ 	unsigned short		uvhub_quiesce;
+ 	short			socket_acknowledge_count[DEST_Q_SIZE];
+ 	cycles_t		send_message;
+-	spinlock_t		uvhub_lock;
+-	spinlock_t		queue_lock;
++	raw_spinlock_t		uvhub_lock;
++	raw_spinlock_t		queue_lock;
+ 	/* tunables */
+ 	int			max_concurr;
+ 	int			max_concurr_const;
+@@ -760,15 +760,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
+  * to be lowered below the current 'v'.  atomic_add_unless can only stop
+  * on equal.
   */
- static inline int
- rt_mutex_fastlock(struct rt_mutex *lock, int state,
--		  int detect_deadlock,
- 		  int (*slowfn)(struct rt_mutex *lock, int state,
- 				struct hrtimer_sleeper *timeout,
- 				int detect_deadlock))
+-static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
++static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
  {
--	if (!detect_deadlock && likely(rt_mutex_cmpxchg(lock, NULL, current))) {
-+	if (likely(rt_mutex_cmpxchg(lock, NULL, current))) {
- 		rt_mutex_deadlock_account_lock(lock, current);
+-	spin_lock(lock);
++	raw_spin_lock(lock);
+ 	if (atomic_read(v) >= u) {
+-		spin_unlock(lock);
++		raw_spin_unlock(lock);
  		return 0;
- 	} else
--		return slowfn(lock, state, NULL, detect_deadlock);
-+		return slowfn(lock, state, NULL, 0);
+ 	}
+ 	atomic_inc(v);
+-	spin_unlock(lock);
++	raw_spin_unlock(lock);
+ 	return 1;
  }
  
- static inline int
-@@ -1604,7 +1603,7 @@ void __sched rt_mutex_lock(struct rt_mutex *lock)
+diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
+index 21f7385badb8..953f5c666ee0 100644
+--- a/arch/x86/include/asm/uv/uv_hub.h
++++ b/arch/x86/include/asm/uv/uv_hub.h
+@@ -475,7 +475,7 @@ struct uv_blade_info {
+ 	unsigned short	nr_online_cpus;
+ 	unsigned short	pnode;
+ 	short		memory_nid;
+-	spinlock_t	nmi_lock;
++	raw_spinlock_t	nmi_lock;
+ 	unsigned long	nmi_count;
+ };
+ extern struct uv_blade_info *uv_blade_info;
+diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
+index 87bfa69e216e..8e56e4f72694 100644
+--- a/arch/x86/kernel/apic/x2apic_uv_x.c
++++ b/arch/x86/kernel/apic/x2apic_uv_x.c
+@@ -56,7 +56,7 @@ int uv_min_hub_revision_id;
+ EXPORT_SYMBOL_GPL(uv_min_hub_revision_id);
+ unsigned int uv_apicid_hibits;
+ EXPORT_SYMBOL_GPL(uv_apicid_hibits);
+-static DEFINE_SPINLOCK(uv_nmi_lock);
++static DEFINE_RAW_SPINLOCK(uv_nmi_lock);
+ 
+ static struct apic apic_x2apic_uv_x;
+ 
+@@ -695,13 +695,13 @@ int uv_handle_nmi(unsigned int reason, struct pt_regs *regs)
+ 	real_uv_nmi = (uv_read_local_mmr(UVH_NMI_MMR) & UV_NMI_PENDING_MASK);
+ 
+ 	if (unlikely(real_uv_nmi)) {
+-		spin_lock(&uv_blade_info[bid].nmi_lock);
++		raw_spin_lock(&uv_blade_info[bid].nmi_lock);
+ 		real_uv_nmi = (uv_read_local_mmr(UVH_NMI_MMR) & UV_NMI_PENDING_MASK);
+ 		if (real_uv_nmi) {
+ 			uv_blade_info[bid].nmi_count++;
+ 			uv_write_local_mmr(UVH_NMI_MMR_CLEAR, UV_NMI_PENDING_MASK);
+ 		}
+-		spin_unlock(&uv_blade_info[bid].nmi_lock);
++		raw_spin_unlock(&uv_blade_info[bid].nmi_lock);
+ 	}
+ 
+ 	if (likely(__get_cpu_var(cpu_last_nmi_count) == uv_blade_info[bid].nmi_count))
+@@ -713,10 +713,10 @@ int uv_handle_nmi(unsigned int reason, struct pt_regs *regs)
+ 	 * Use a lock so only one cpu prints at a time.
+ 	 * This prevents intermixed output.
+ 	 */
+-	spin_lock(&uv_nmi_lock);
++	raw_spin_lock(&uv_nmi_lock);
+ 	pr_info("UV NMI stack dump cpu %u:\n", smp_processor_id());
+ 	dump_stack();
+-	spin_unlock(&uv_nmi_lock);
++	raw_spin_unlock(&uv_nmi_lock);
+ 
+ 	return NMI_HANDLED;
+ }
+@@ -811,7 +811,7 @@ void __init uv_system_init(void)
+ 			uv_blade_info[blade].pnode = pnode;
+ 			uv_blade_info[blade].nr_possible_cpus = 0;
+ 			uv_blade_info[blade].nr_online_cpus = 0;
+-			spin_lock_init(&uv_blade_info[blade].nmi_lock);
++			raw_spin_lock_init(&uv_blade_info[blade].nmi_lock);
+ 			max_pnode = max(pnode, max_pnode);
+ 			blade++;
+ 		}
+diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
+index 59880afa851f..0664c9920e58 100644
+--- a/arch/x86/platform/uv/tlb_uv.c
++++ b/arch/x86/platform/uv/tlb_uv.c
+@@ -39,7 +39,7 @@ static int timeout_base_ns[] = {
+ static int timeout_us;
+ static int nobau;
+ static int baudisabled;
+-static spinlock_t disable_lock;
++static raw_spinlock_t disable_lock;
+ static cycles_t congested_cycles;
+ 
+ /* tunables: */
+@@ -545,7 +545,7 @@ int handle_uv2_busy(struct bau_control *bcp)
+ 	cycles_t ttm;
+ 
+ 	stat->s_uv2_wars++;
+-	spin_lock(&hmaster->uvhub_lock);
++	raw_spin_lock(&hmaster->uvhub_lock);
+ 	/* try for the original first */
+ 	if (busy_one != normal) {
+ 		if (!normal_busy(bcp))
+@@ -595,12 +595,12 @@ int handle_uv2_busy(struct bau_control *bcp)
+ 		 * free up.
+ 		 */
+ 		stat->s_uv2_war_waits++;
+-		spin_unlock(&hmaster->uvhub_lock);
++		raw_spin_unlock(&hmaster->uvhub_lock);
+ 		ttm = get_cycles();
+ 		do {
+ 			cpu_relax();
+ 		} while (normal_busy(bcp));
+-		spin_lock(&hmaster->uvhub_lock);
++		raw_spin_lock(&hmaster->uvhub_lock);
+ 		/* switch to the original descriptor */
+ 		bcp->using_desc = normal;
+ 		bau_desc_old = bcp->descriptor_base;
+@@ -610,7 +610,7 @@ int handle_uv2_busy(struct bau_control *bcp)
+ 		bau_desc_new += (ITEMS_PER_DESC * normal);
+ 		*bau_desc_new = *bau_desc_old; /* copy the entire descriptor */
+ 	}
+-	spin_unlock(&hmaster->uvhub_lock);
++	raw_spin_unlock(&hmaster->uvhub_lock);
+ 	return FLUSH_RETRY_BUSYBUG;
+ }
+ 
+@@ -724,9 +724,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
+ 
+ 		quiesce_local_uvhub(hmaster);
+ 
+-		spin_lock(&hmaster->queue_lock);
++		raw_spin_lock(&hmaster->queue_lock);
+ 		reset_with_ipi(&bau_desc->distribution, bcp);
+-		spin_unlock(&hmaster->queue_lock);
++		raw_spin_unlock(&hmaster->queue_lock);
+ 
+ 		end_uvhub_quiesce(hmaster);
+ 
+@@ -746,9 +746,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
+ 
+ 		quiesce_local_uvhub(hmaster);
+ 
+-		spin_lock(&hmaster->queue_lock);
++		raw_spin_lock(&hmaster->queue_lock);
+ 		reset_with_ipi(&bau_desc->distribution, bcp);
+-		spin_unlock(&hmaster->queue_lock);
++		raw_spin_unlock(&hmaster->queue_lock);
+ 
+ 		end_uvhub_quiesce(hmaster);
+ 
+@@ -765,7 +765,7 @@ static void disable_for_congestion(struct bau_control *bcp,
+ 					struct ptc_stats *stat)
  {
- 	might_sleep();
+ 	/* let only one cpu do this disabling */
+-	spin_lock(&disable_lock);
++	raw_spin_lock(&disable_lock);
  
--	rt_mutex_fastlock(lock, TASK_UNINTERRUPTIBLE, 0, rt_mutex_slowlock);
-+	rt_mutex_fastlock(lock, TASK_UNINTERRUPTIBLE, rt_mutex_slowlock);
+ 	if (!baudisabled && bcp->period_requests &&
+ 	    ((bcp->period_time / bcp->period_requests) > congested_cycles)) {
+@@ -784,7 +784,7 @@ static void disable_for_congestion(struct bau_control *bcp,
+ 		}
+ 	}
+ 
+-	spin_unlock(&disable_lock);
++	raw_spin_unlock(&disable_lock);
  }
- EXPORT_SYMBOL_GPL(rt_mutex_lock);
  
-@@ -1612,41 +1611,46 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock);
-  * rt_mutex_lock_interruptible - lock a rt_mutex interruptible
-  *
-  * @lock:		the rt_mutex to be locked
-- * @detect_deadlock:	deadlock detection on/off
-  *
-  * Returns:
-  *  0		on success
-  * -EINTR	when interrupted by a signal
-- * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
+ static void count_max_concurr(int stat, struct bau_control *bcp,
+@@ -833,7 +833,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
   */
--int __sched rt_mutex_lock_interruptible(struct rt_mutex *lock,
--						 int detect_deadlock)
-+int __sched rt_mutex_lock_interruptible(struct rt_mutex *lock)
+ static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
  {
- 	might_sleep();
+-	spinlock_t *lock = &hmaster->uvhub_lock;
++	raw_spinlock_t *lock = &hmaster->uvhub_lock;
+ 	atomic_t *v;
  
--	return rt_mutex_fastlock(lock, TASK_INTERRUPTIBLE,
--				 detect_deadlock, rt_mutex_slowlock);
-+	return rt_mutex_fastlock(lock, TASK_INTERRUPTIBLE, rt_mutex_slowlock);
+ 	v = &hmaster->active_descriptor_count;
+@@ -1850,8 +1850,8 @@ static void __init init_per_cpu_tunables(void)
+ 		bcp->cong_reps			= congested_reps;
+ 		bcp->cong_period		= congested_period;
+ 		bcp->clocks_per_100_usec =	usec_2_cycles(100);
+-		spin_lock_init(&bcp->queue_lock);
+-		spin_lock_init(&bcp->uvhub_lock);
++		raw_spin_lock_init(&bcp->queue_lock);
++		raw_spin_lock_init(&bcp->uvhub_lock);
+ 	}
  }
- EXPORT_SYMBOL_GPL(rt_mutex_lock_interruptible);
  
-+/*
-+ * Futex variant with full deadlock detection.
-+ */
-+int rt_mutex_timed_futex_lock(struct rt_mutex *lock,
-+			      struct hrtimer_sleeper *timeout)
-+{
-+	might_sleep();
+@@ -2078,7 +2078,7 @@ static int __init uv_bau_init(void)
+ 	}
+ 
+ 	nuvhubs = uv_num_possible_blades();
+-	spin_lock_init(&disable_lock);
++	raw_spin_lock_init(&disable_lock);
+ 	congested_cycles = usec_2_cycles(congested_respns_us);
+ 
+ 	uv_base_pnode = 0x7fffffff;
+diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
+index 5032e0d19b86..eb55dd021c64 100644
+--- a/arch/x86/platform/uv/uv_time.c
++++ b/arch/x86/platform/uv/uv_time.c
+@@ -58,7 +58,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
+ 
+ /* There is one of these allocated per node */
+ struct uv_rtc_timer_head {
+-	spinlock_t	lock;
++	raw_spinlock_t	lock;
+ 	/* next cpu waiting for timer, local node relative: */
+ 	int		next_cpu;
+ 	/* number of cpus on this node: */
+@@ -178,7 +178,7 @@ static __init int uv_rtc_allocate_timers(void)
+ 				uv_rtc_deallocate_timers();
+ 				return -ENOMEM;
+ 			}
+-			spin_lock_init(&head->lock);
++			raw_spin_lock_init(&head->lock);
+ 			head->ncpus = uv_blade_nr_possible_cpus(bid);
+ 			head->next_cpu = -1;
+ 			blade_info[bid] = head;
+@@ -232,7 +232,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
+ 	unsigned long flags;
+ 	int next_cpu;
+ 
+-	spin_lock_irqsave(&head->lock, flags);
++	raw_spin_lock_irqsave(&head->lock, flags);
+ 
+ 	next_cpu = head->next_cpu;
+ 	*t = expires;
+@@ -244,12 +244,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
+ 		if (uv_setup_intr(cpu, expires)) {
+ 			*t = ULLONG_MAX;
+ 			uv_rtc_find_next_timer(head, pnode);
+-			spin_unlock_irqrestore(&head->lock, flags);
++			raw_spin_unlock_irqrestore(&head->lock, flags);
+ 			return -ETIME;
+ 		}
+ 	}
+ 
+-	spin_unlock_irqrestore(&head->lock, flags);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 	return 0;
+ }
+ 
+@@ -268,7 +268,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ 	unsigned long flags;
+ 	int rc = 0;
+ 
+-	spin_lock_irqsave(&head->lock, flags);
++	raw_spin_lock_irqsave(&head->lock, flags);
+ 
+ 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
+ 		rc = 1;
+@@ -280,7 +280,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ 			uv_rtc_find_next_timer(head, pnode);
+ 	}
+ 
+-	spin_unlock_irqrestore(&head->lock, flags);
++	raw_spin_unlock_irqrestore(&head->lock, flags);
+ 
+ 	return rc;
+ }
+@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, int force)
+ static cycle_t uv_read_rtc(struct clocksource *cs)
+ {
+ 	unsigned long offset;
++	cycle_t cycles;
+ 
++	preempt_disable();
+ 	if (uv_get_min_hub_revision_id() == 1)
+ 		offset = 0;
+ 	else
+ 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
+ 
+-	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
++	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
++	preempt_enable();
 +
-+	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout, 1,
-+				       rt_mutex_slowlock);
-+}
-+
- /**
-  * rt_mutex_lock_killable - lock a rt_mutex killable
-  *
-  * @lock:		the rt_mutex to be locked
-- * @detect_deadlock:	deadlock detection on/off
-  *
-  * Returns:
-  *  0		on success
-  * -EINTR	when interrupted by a signal
-  * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
-  */
--int __sched rt_mutex_lock_killable(struct rt_mutex *lock,
--				   int detect_deadlock)
-+int __sched rt_mutex_lock_killable(struct rt_mutex *lock)
- {
- 	might_sleep();
- 
--	return rt_mutex_fastlock(lock, TASK_KILLABLE,
--				 detect_deadlock, rt_mutex_slowlock);
-+	return rt_mutex_fastlock(lock, TASK_KILLABLE, rt_mutex_slowlock);
++	return cycles;
  }
- EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
  
-@@ -1657,22 +1661,19 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
-  *
-  * @lock:		the rt_mutex to be locked
-  * @timeout:		timeout structure or NULL (no timeout)
-- * @detect_deadlock:	deadlock detection on/off
-  *
-  * Returns:
-  *  0		on success
-  * -EINTR	when interrupted by a signal
-  * -ETIMEDOUT	when the timeout expired
-- * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
-  */
- int
--rt_mutex_timed_lock(struct rt_mutex *lock, struct hrtimer_sleeper *timeout,
--		    int detect_deadlock)
-+rt_mutex_timed_lock(struct rt_mutex *lock, struct hrtimer_sleeper *timeout)
- {
- 	might_sleep();
- 
--	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout,
--				       detect_deadlock, rt_mutex_slowlock);
-+	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout, 0,
-+				       rt_mutex_slowlock);
- }
- EXPORT_SYMBOL_GPL(rt_mutex_timed_lock);
- 
-@@ -1776,7 +1777,6 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
-  * @lock:		the rt_mutex to take
-  * @waiter:		the pre-initialized rt_mutex_waiter
-  * @task:		the task to prepare
-- * @detect_deadlock:	perform deadlock detection (1) or not (0)
-  *
-  * Returns:
-  *  0 - task blocked on lock
-@@ -1787,7 +1787,7 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
-  */
- int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 			      struct rt_mutex_waiter *waiter,
--			      struct task_struct *task, int detect_deadlock)
-+			      struct task_struct *task)
- {
- 	int ret;
- 
-@@ -1874,22 +1874,20 @@ struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock)
-  * rt_mutex_finish_proxy_lock() - Complete lock acquisition
-  * @lock:		the rt_mutex we were woken on
-  * @to:			the timeout, null if none. hrtimer should already have
-- * 			been started.
-+ *			been started.
-  * @waiter:		the pre-initialized rt_mutex_waiter
-- * @detect_deadlock:	perform deadlock detection (1) or not (0)
-  *
-  * Complete the lock acquisition started our behalf by another thread.
-  *
-  * Returns:
-  *  0 - success
-- * <0 - error, one of -EINTR, -ETIMEDOUT, or -EDEADLK
-+ * <0 - error, one of -EINTR, -ETIMEDOUT
-  *
-  * Special API call for PI-futex requeue support
-  */
- int rt_mutex_finish_proxy_lock(struct rt_mutex *lock,
- 			       struct hrtimer_sleeper *to,
--			       struct rt_mutex_waiter *waiter,
--			       int detect_deadlock)
-+			       struct rt_mutex_waiter *waiter)
- {
- 	int ret;
- 
-diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
-index 6ec3dc1eab10..efde34108ebc 100644
---- a/kernel/rtmutex_common.h
-+++ b/kernel/rtmutex_common.h
-@@ -114,12 +114,11 @@ extern void rt_mutex_proxy_unlock(struct rt_mutex *lock,
- 				  struct task_struct *proxy_owner);
- extern int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 				     struct rt_mutex_waiter *waiter,
--				     struct task_struct *task,
--				     int detect_deadlock);
-+				     struct task_struct *task);
- extern int rt_mutex_finish_proxy_lock(struct rt_mutex *lock,
- 				      struct hrtimer_sleeper *to,
--				      struct rt_mutex_waiter *waiter,
--				      int detect_deadlock);
-+				      struct rt_mutex_waiter *waiter);
-+extern int rt_mutex_timed_futex_lock(struct rt_mutex *l, struct hrtimer_sleeper *to);
- 
- #ifdef CONFIG_DEBUG_RT_MUTEXES
- # include "rtmutex-debug.h"
+ /*
 -- 
 2.1.4
