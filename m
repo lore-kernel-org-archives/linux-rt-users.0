@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/25] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-Date: Fri, 13 Mar 2015 11:18:48 -0400
-Message-ID: <20150313151838.717324783@goodmis.org>
+Subject: [PATCH RT 03/25] rtmutex: Simplify rtmutex_slowtrylock()
+Date: Fri, 13 Mar 2015 11:18:28 -0400
+Message-ID: <20150313151834.646837400@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	Oleg Nesterov <oleg@redhat.com>,
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0023-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
+Content-Disposition: inline; filename=0003-rtmutex-Simplify-rtmutex_slowtrylock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,53 +24,84 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
-|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
-|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
-| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
-| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
-|Call Trace:
-| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
-| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
-| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
-| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
-| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
-| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
-| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
-| [<ffffffff8117f889>] SyS_write+0x49/0xb0
-| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+upstream-commit: 88f2b4c15e561bb5c28709d666364f273bf54b98
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Oleg noticed that rtmutex_slowtrylock() has a pointless check for
+rt_mutex_owner(lock) != current.
+
+To avoid calling try_to_take_rtmutex() we really want to check whether
+the lock has an owner at all or whether the trylock failed because the
+owner is NULL, but the RT_MUTEX_HAS_WAITERS bit is set. This covers
+the lock is owned by caller situation as well.
+
+We can actually do this check lockless. trylock is taking a chance
+whether we take lock->wait_lock to do the check or not.
+
+Add comments to the function while at it.
+
+Reported-by: Oleg Nesterov <oleg@redhat.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- net/sunrpc/svc_xprt.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index 9acee9d0c57f..877ec8cd4a05 100644
---- a/net/sunrpc/svc_xprt.c
-+++ b/net/sunrpc/svc_xprt.c
-@@ -322,9 +322,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
- 	if (!svc_xprt_has_something_to_do(xprt))
- 		return;
+Conflicts:
+	kernel/rtmutex.c
+---
+ kernel/rtmutex.c | 33 +++++++++++++++++++++------------
+ 1 file changed, 21 insertions(+), 12 deletions(-)
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 972ec87bd1d9..d19060236770 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1275,24 +1275,33 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ /*
+  * Slow path try-lock function:
+  */
+-static inline int
+-rt_mutex_slowtrylock(struct rt_mutex *lock)
++static inline int rt_mutex_slowtrylock(struct rt_mutex *lock)
+ {
+-	int ret = 0;
++	int ret;
  
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
--	put_cpu();
-+	put_cpu_light();
++	/*
++	 * If the lock already has an owner we fail to get the lock.
++	 * This can be done without taking the @lock->wait_lock as
++	 * it is only being read, and this is a trylock anyway.
++	 */
++	if (rt_mutex_owner(lock))
++		return 0;
++
++	/*
++	 * The mutex has currently no owner. Lock the wait lock and
++	 * try to acquire the lock.
++	 */
+ 	if (!raw_spin_trylock(&lock->wait_lock))
+-		return ret;
++		return 0;
+ 	init_lists(lock);
  
- 	spin_lock_bh(&pool->sp_lock);
+-	if (likely(rt_mutex_owner(lock) != current)) {
++	ret = try_to_take_rt_mutex(lock, current, NULL);
+ 
+-		ret = try_to_take_rt_mutex(lock, current, NULL);
+-		/*
+-		 * try_to_take_rt_mutex() sets the lock waiters
+-		 * bit unconditionally. Clean this up.
+-		 */
+-		fixup_rt_mutex_waiters(lock);
+-	}
++	/*
++	 * try_to_take_rt_mutex() sets the lock waiters bit
++	 * unconditionally. Clean this up.
++	 */
++	fixup_rt_mutex_waiters(lock);
+ 
+ 	raw_spin_unlock(&lock->wait_lock);
  
 -- 
 2.1.4
