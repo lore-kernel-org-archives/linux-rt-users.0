@@ -1,54 +1,101 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 00/39] Linux 3.14.34-rt32-rc1
-Date: Fri, 13 Mar 2015 11:24:23 -0400
-Message-ID: <20150313112423.7badad50@gandalf.local.home>
-References: <20150312191307.081068717@goodmis.org>
- <1426222153.17611.4.camel@gmail.com>
- <20150313151134.GF3042@home.goodmis.org>
+Subject: [PATCH RT 23/31] scheduling while atomic in cgroup code
+Date: Fri, 13 Mar 2015 11:15:17 -0400
+Message-ID: <20150313151518.828107573@goodmis.org>
+References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150313151134.GF3042@home.goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>,
+	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0246.hostedemail.com ([216.40.44.246]:33546 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S932145AbbCMPPW (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:15:22 -0400
+Content-Disposition: inline; filename=0023-scheduling-while-atomic-in-cgroup-code.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 13 Mar 2015 11:11:35 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+3.10.70-rt75-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> On Fri, Mar 13, 2015 at 05:49:13AM +0100, Mike Galbraith wrote:
-> > On Thu, 2015-03-12 at 15:13 -0400, Steven Rostedt wrote:
-> > > Dear RT Folks,
-> > > 
-> > > This is the RT stable review cycle of patch 3.14.34-rt32-rc1.
-> > > 
-> > > Please scream at me if I messed something up.
-> > 
-> > Hm, in both 12/14 series, 21/N went on a walkabout.
-> 
+------------------
 
-I missed the error message about these. For some reason this patch
-causes the following errors:
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+
+mm, memcg: make refill_stock() use get_cpu_light()
+
+Nikita reported the following memcg scheduling while atomic bug:
+
+Call Trace:
+[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+[e22d5bf0] [c060bacc] schedule+0x30/0xbc
+[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+[e22d5d90] [c0117284] __do_fault+0x38c/0x510
+[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
+
+What happens:
+
+   refill_stock()
+      get_cpu_var()
+      drain_stock()
+         res_counter_uncharge()
+            res_counter_uncharge_until()
+               spin_lock() <== boom
+
+Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
+
+Cc: stable-rt@vger.kernel.org
+Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ mm/memcontrol.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 33d8392f33eb..89540bca5c5b 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2463,14 +2463,17 @@ static void __init memcg_stock_init(void)
+  */
+ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ {
+-	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
++	struct memcg_stock_pcp *stock;
++	int cpu = get_cpu_light();
++
++	stock = &per_cpu(memcg_stock, cpu);
+ 
+ 	if (stock->cached != memcg) { /* reset if necessary */
+ 		drain_stock(stock);
+ 		stock->cached = memcg;
+ 	}
+ 	stock->nr_pages += nr_pages;
+-	put_cpu_var(memcg_stock);
++	put_cpu_light();
+ }
+ 
+ /*
+-- 
+2.1.4
 
 
-<linux-kernel@vger.kernel.org>: host vger.kernel.org[209.132.180.67]
-said: 550 5.7.1 Content-Policy reject msg: Wrong MIME labeling on 8-bit
-character texts. BF:<H 0>; S932171AbbCMPPW (in reply to end of DATA
-command)
-
-<linux-rt-users@vger.kernel.org>: host vger.kernel.org[209.132.180.67]
-said: 550 5.7.1 Content-Policy reject msg: Wrong MIME labeling on 8-bit
-character texts. BF:<H 0>; S932171AbbCMPPW (in reply to end of DATA
-command)
-
-My other series will be missing them too.
-
--- Steve
