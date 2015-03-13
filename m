@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 16/31] futex: Simplify futex_lock_pi_atomic() and make it more robust
-Date: Fri, 13 Mar 2015 11:15:10 -0400
-Message-ID: <20150313151517.621477960@goodmis.org>
+Subject: [PATCH RT 24/31] work-simple: Simple work queue implemenation
+Date: Fri, 13 Mar 2015 11:15:18 -0400
+Message-ID: <20150313151519.013346453@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,14 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>,
-	Darren Hart <darren@dvhart.com>
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0016-futex-Simplify-futex_lock_pi_atomic-and-make-it-more.patch
+Content-Disposition: inline; filename=0024-work-simple-Simple-work-queue-implemenation.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,243 +23,243 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
-upstream commit: af54d6a1c3ad474bbc9893c9905022646be6092c
+Provides a framework for enqueuing callbacks from irq context
+PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
 
-futex_lock_pi_atomic() is a maze of retry hoops and loops.
+Bases on wait-simple.
 
-Reduce it to simple and understandable states:
-
-First step is to lookup existing waiters (state) in the kernel.
-
-If there is an existing waiter, validate it and attach to it.
-
-If there is no existing waiter, check the user space value
-
-If the TID encoded in the user space value is 0, take over the futex
-preserving the owner died bit.
-
-If the TID encoded in the user space value is != 0, lookup the owner
-task, validate it and attach to it.
-
-Reduces text size by 128 bytes on x8664.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Cc: Darren Hart <darren@dvhart.com>
-Link: http://lkml.kernel.org/r/alpine.DEB.2.10.1406131137020.5170@nanos
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/futex.c | 148 ++++++++++++++++++++++++---------------------------------
- 1 file changed, 61 insertions(+), 87 deletions(-)
+ include/linux/work-simple.h |  24 +++++++
+ kernel/sched/Makefile       |   1 +
+ kernel/sched/work-simple.c  | 172 ++++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 197 insertions(+)
+ create mode 100644 include/linux/work-simple.h
+ create mode 100644 kernel/sched/work-simple.c
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 0b83f9ff2615..e820a56daa6b 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -807,6 +807,17 @@ static int lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
- 	return attach_to_pi_owner(uval, key, ps);
- }
- 
-+static int lock_pi_update_atomic(u32 __user *uaddr, u32 uval, u32 newval)
+diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
+new file mode 100644
+index 000000000000..f175fa9a6016
+--- /dev/null
++++ b/include/linux/work-simple.h
+@@ -0,0 +1,24 @@
++#ifndef _LINUX_SWORK_H
++#define _LINUX_SWORK_H
++
++#include <linux/list.h>
++
++struct swork_event {
++	struct list_head item;
++	unsigned long flags;
++	void (*func)(struct swork_event *);
++};
++
++static inline void INIT_SWORK(struct swork_event *event,
++			      void (*func)(struct swork_event *))
 +{
-+	u32 uninitialized_var(curval);
-+
-+	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
-+		return -EFAULT;
-+
-+	/*If user space value changed, let the caller retry */
-+	return curval != uval ? -EAGAIN : 0;
++	event->flags = 0;
++	event->func = func;
 +}
 +
- /**
-  * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
-  * @uaddr:		the pi futex user address
-@@ -830,113 +841,69 @@ static int futex_lock_pi_atomic(u32 __user *uaddr, struct futex_hash_bucket *hb,
- 				struct futex_pi_state **ps,
- 				struct task_struct *task, int set_waiters)
- {
--	int lock_taken, ret, force_take = 0;
--	u32 uval, newval, curval, vpid = task_pid_vnr(task);
--
--retry:
--	ret = lock_taken = 0;
-+	u32 uval, newval, vpid = task_pid_vnr(task);
-+	struct futex_q *match;
-+	int ret;
- 
- 	/*
--	 * To avoid races, we attempt to take the lock here again
--	 * (by doing a 0 -> TID atomic cmpxchg), while holding all
--	 * the locks. It will most likely not succeed.
-+	 * Read the user space value first so we can validate a few
-+	 * things before proceeding further.
- 	 */
--	newval = vpid;
--	if (set_waiters)
--		newval |= FUTEX_WAITERS;
--
--	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, 0, newval)))
-+	if (get_futex_value_locked(&uval, uaddr))
- 		return -EFAULT;
- 
- 	/*
- 	 * Detect deadlocks.
- 	 */
--	if ((unlikely((curval & FUTEX_TID_MASK) == vpid)))
-+	if ((unlikely((uval & FUTEX_TID_MASK) == vpid)))
- 		return -EDEADLK;
- 
- 	/*
--	 * Surprise - we got the lock, but we do not trust user space at all.
-+	 * Lookup existing state first. If it exists, try to attach to
-+	 * its pi_state.
- 	 */
--	if (unlikely(!curval)) {
--		/*
--		 * We verify whether there is kernel state for this
--		 * futex. If not, we can safely assume, that the 0 ->
--		 * TID transition is correct. If state exists, we do
--		 * not bother to fixup the user space state as it was
--		 * corrupted already.
--		 */
--		return futex_top_waiter(hb, key) ? -EINVAL : 1;
--	}
--
--	uval = curval;
--
--	/*
--	 * Set the FUTEX_WAITERS flag, so the owner will know it has someone
--	 * to wake at the next unlock.
--	 */
--	newval = curval | FUTEX_WAITERS;
-+	match = futex_top_waiter(hb, key);
-+	if (match)
-+		return attach_to_pi_state(uval, match->pi_state, ps);
- 
- 	/*
--	 * Should we force take the futex? See below.
-+	 * No waiter and user TID is 0. We are here because the
-+	 * waiters or the owner died bit is set or called from
-+	 * requeue_cmp_pi or for whatever reason something took the
-+	 * syscall.
- 	 */
--	if (unlikely(force_take)) {
-+	if (!(uval & FUTEX_TID_MASK)) {
- 		/*
--		 * Keep the OWNER_DIED and the WAITERS bit and set the
--		 * new TID value.
-+		 * We take over the futex. No other waiters and the user space
-+		 * TID is 0. We preserve the owner died bit.
- 		 */
--		newval = (curval & ~FUTEX_TID_MASK) | vpid;
--		force_take = 0;
--		lock_taken = 1;
--	}
-+		newval = uval & FUTEX_OWNER_DIED;
-+		newval |= vpid;
- 
--	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
--		return -EFAULT;
--	if (unlikely(curval != uval))
--		goto retry;
-+		/* The futex requeue_pi code can enforce the waiters bit */
-+		if (set_waiters)
-+			newval |= FUTEX_WAITERS;
++bool swork_queue(struct swork_event *sev);
 +
-+		ret = lock_pi_update_atomic(uaddr, uval, newval);
-+		/* If the take over worked, return 1 */
-+		return ret < 0 ? ret : 1;
++int swork_get(void);
++void swork_put(void);
++
++#endif /* _LINUX_SWORK_H */
+diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
+index deaf90e4a1de..45759d3d5451 100644
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -12,6 +12,7 @@ CFLAGS_core.o := $(PROFILING) -fno-omit-frame-pointer
+ endif
+ 
+ obj-y += core.o clock.o cputime.o idle_task.o fair.o rt.o stop_task.o
++obj-y += work-simple.o
+ obj-$(CONFIG_SMP) += cpupri.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
+new file mode 100644
+index 000000000000..c996f755dba6
+--- /dev/null
++++ b/kernel/sched/work-simple.c
+@@ -0,0 +1,172 @@
++/*
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
++ *
++ * Provides a framework for enqueuing callbacks from irq context
++ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
++ */
++
++#include <linux/wait-simple.h>
++#include <linux/work-simple.h>
++#include <linux/kthread.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++
++#define SWORK_EVENT_PENDING     (1 << 0)
++
++static DEFINE_MUTEX(worker_mutex);
++static struct sworker *glob_worker;
++
++struct sworker {
++	struct list_head events;
++	struct swait_head wq;
++
++	raw_spinlock_t lock;
++
++	struct task_struct *task;
++	int refs;
++};
++
++static bool swork_readable(struct sworker *worker)
++{
++	bool r;
++
++	if (kthread_should_stop())
++		return true;
++
++	raw_spin_lock_irq(&worker->lock);
++	r = !list_empty(&worker->events);
++	raw_spin_unlock_irq(&worker->lock);
++
++	return r;
++}
++
++static int swork_kthread(void *arg)
++{
++	struct sworker *worker = arg;
++
++	for (;;) {
++		swait_event_interruptible(worker->wq,
++					swork_readable(worker));
++		if (kthread_should_stop())
++			break;
++
++		raw_spin_lock_irq(&worker->lock);
++		while (!list_empty(&worker->events)) {
++			struct swork_event *sev;
++
++			sev = list_first_entry(&worker->events,
++					struct swork_event, item);
++			list_del(&sev->item);
++			raw_spin_unlock_irq(&worker->lock);
++
++			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
++							 &sev->flags));
++			sev->func(sev);
++			raw_spin_lock_irq(&worker->lock);
++		}
++		raw_spin_unlock_irq(&worker->lock);
 +	}
- 
- 	/*
--	 * We took the lock due to forced take over.
-+	 * First waiter. Set the waiters bit before attaching ourself to
-+	 * the owner. If owner tries to unlock, it will be forced into
-+	 * the kernel and blocked on hb->lock.
- 	 */
--	if (unlikely(lock_taken))
--		return 1;
--
-+	newval = uval | FUTEX_WAITERS;
-+	ret = lock_pi_update_atomic(uaddr, uval, newval);
-+	if (ret)
-+		return ret;
- 	/*
--	 * We dont have the lock. Look up the PI state (or create it if
--	 * we are the first waiter):
-+	 * If the update of the user space value succeeded, we try to
-+	 * attach to the owner. If that fails, no harm done, we only
-+	 * set the FUTEX_WAITERS bit in the user space variable.
- 	 */
--	ret = lookup_pi_state(uval, hb, key, ps);
--
--	if (unlikely(ret)) {
--		switch (ret) {
--		case -ESRCH:
--			/*
--			 * We failed to find an owner for this
--			 * futex. So we have no pi_state to block
--			 * on. This can happen in two cases:
--			 *
--			 * 1) The owner died
--			 * 2) A stale FUTEX_WAITERS bit
--			 *
--			 * Re-read the futex value.
--			 */
--			if (get_futex_value_locked(&curval, uaddr))
--				return -EFAULT;
--
--			/*
--			 * If the owner died or we have a stale
--			 * WAITERS bit the owner TID in the user space
--			 * futex is 0.
--			 */
--			if (!(curval & FUTEX_TID_MASK)) {
--				force_take = 1;
--				goto retry;
--			}
--		default:
--			break;
--		}
--	}
--
--	return ret;
-+	return attach_to_pi_owner(uval, key, ps);
- }
- 
- /**
-@@ -1506,7 +1473,12 @@ retry_private:
- 				goto retry;
- 			goto out;
- 		case -EAGAIN:
--			/* The owner was exiting, try again. */
-+			/*
-+			 * Two reasons for this:
-+			 * - Owner is exiting and we just wait for the
-+			 *   exit to complete.
-+			 * - The user space value changed.
-+			 */
- 			double_unlock_hb(hb1, hb2);
- 			put_futex_key(&key2);
- 			put_futex_key(&key1);
-@@ -2160,8 +2132,10 @@ retry_private:
- 			goto uaddr_faulted;
- 		case -EAGAIN:
- 			/*
--			 * Task is exiting and we just wait for the
--			 * exit to complete.
-+			 * Two reasons for this:
-+			 * - Task is exiting and we just wait for the
-+			 *   exit to complete.
-+			 * - The user space value changed.
- 			 */
- 			queue_unlock(&q, hb);
- 			put_futex_key(&q.key);
++	return 0;
++}
++
++static struct sworker *swork_create(void)
++{
++	struct sworker *worker;
++
++	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
++	if (!worker)
++		return ERR_PTR(-ENOMEM);
++
++	INIT_LIST_HEAD(&worker->events);
++	raw_spin_lock_init(&worker->lock);
++	init_swait_head(&worker->wq);
++
++	worker->task = kthread_run(swork_kthread, worker, "kswork");
++	if (IS_ERR(worker->task)) {
++		kfree(worker);
++		return ERR_PTR(-ENOMEM);
++	}
++
++	return worker;
++}
++
++static void swork_destroy(struct sworker *worker)
++{
++	kthread_stop(worker->task);
++
++	WARN_ON(!list_empty(&worker->events));
++	kfree(worker);
++}
++
++/**
++ * swork_queue - queue swork
++ *
++ * Returns %false if @work was already on a queue, %true otherwise.
++ *
++ * The work is queued and processed on a random CPU
++ */
++bool swork_queue(struct swork_event *sev)
++{
++	unsigned long flags;
++
++	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
++		return false;
++
++	raw_spin_lock_irqsave(&glob_worker->lock, flags);
++	list_add_tail(&sev->item, &glob_worker->events);
++	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
++
++	swait_wake(&glob_worker->wq);
++	return true;
++}
++EXPORT_SYMBOL_GPL(swork_queue);
++
++/**
++ * swork_get - get an instance of the sworker
++ *
++ * Returns an negative error code if the initialization if the worker did not
++ * work, %0 otherwise.
++ *
++ */
++int swork_get(void)
++{
++	struct sworker *worker;
++
++	mutex_lock(&worker_mutex);
++	if (!glob_worker) {
++		worker = swork_create();
++		if (IS_ERR(worker)) {
++			mutex_unlock(&worker_mutex);
++			return -ENOMEM;
++		}
++
++		glob_worker = worker;
++	}
++
++	glob_worker->refs++;
++	mutex_unlock(&worker_mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(swork_get);
++
++/**
++ * swork_put - puts an instance of the sworker
++ *
++ * Will destroy the sworker thread. This function must not be called until all
++ * queued events have been completed.
++ */
++void swork_put(void)
++{
++	mutex_lock(&worker_mutex);
++
++	glob_worker->refs--;
++	if (glob_worker->refs > 0)
++		goto out;
++
++	swork_destroy(glob_worker);
++	glob_worker = NULL;
++out:
++	mutex_unlock(&worker_mutex);
++}
++EXPORT_SYMBOL_GPL(swork_put);
 -- 
 2.1.4
