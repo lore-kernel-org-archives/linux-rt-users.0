@@ -1,141 +1,173 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/31] Linux 3.10.70-rt75-rc1
-Date: Fri, 13 Mar 2015 11:14:54 -0400
-Message-ID: <20150313151454.809081378@goodmis.org>
+Subject: [PATCH RT 26/31] lockdep: selftest: fix warnings due to missing PREEMPT_RT
+ conditionals
+Date: Fri, 13 Mar 2015 11:15:20 -0400
+Message-ID: <20150313151519.355773134@goodmis.org>
+References: <20150313151454.809081378@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>,
+	Josh Cartwright <josh.cartwright@ni.com>,
+	Xander Huff <xander.huff@ni.com>,
+	Gratian Crisan <gratian.crisan@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0235.hostedemail.com ([216.40.44.235]:33577 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755884AbbCMPPS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:15:18 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0026-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+3.10.70-rt75-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.70-rt75-rc1.
+From: Josh Cartwright <josh.cartwright@ni.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+"lockdep: Selftest: Only do hardirq context test for raw spinlock"
+disabled the execution of certain tests with PREEMPT_RT_FULL, but did
+not prevent the tests from still being defined.  This leads to warnings
+like:
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
+  ...
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
+conditionals.
 
-If all goes well, this patch will be converted to the next main release
-on 3/16/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.10.70-rt75-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.70.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.70-rt75-rc1.patch.xz
-
-You can also build from 3.10.70-rt74 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.70-rt74-rt75-rc1.patch.xz
-
-
-Changes from 3.10.70-rt74:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
+Signed-off-by: Xander Huff <xander.huff@ni.com>
+Acked-by: Gratian Crisan <gratian.crisan@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-
-Daniel Wagner (1):
-      work-simple: Simple work queue implemenation
-
-Josh Cartwright (1):
-      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
-
-Mike Galbraith (3):
-      x86: UV: raw_spinlock conversion
-      scheduling while atomic in cgroup code
-      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-
-Paul E. McKenney (4):
-      timers: Track total number of timers in list
-      timers: Reduce __run_timers() latency for empty list
-      timers: Reduce future __run_timers() latency for newly emptied list
-      timers: Reduce future __run_timers() latency for first add to empty list
-
-Paul Gortmaker (1):
-      sas-ata/isci: dont't disable interrupts in qc_issue handler
-
-Sebastian Andrzej Siewior (3):
-      gpio: omap: use raw locks for locking
-      rt-mutex: avoid a NULL pointer dereference on deadlock
-      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-
-Steven Rostedt (1):
-      create-rt-enqueue
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.70-rt75-rc1
-
-Thomas Gleixner (14):
-      rtmutex: Simplify rtmutex_slowtrylock()
-      rtmutex: Simplify and document try_to_take_rtmutex()
-      rtmutex: No need to keep task ref for lock owner check
-      rtmutex: Clarify the boost/deboost part
-      rtmutex: Document pi chain walk
-      rtmutex: Simplify remove_waiter()
-      rtmutex: Confine deadlock logic to futex
-      rtmutex: Cleanup deadlock detector debug logic
-      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
-      futex: Make unlock_pi more robust
-      futex: Use futex_top_waiter() in lookup_pi_state()
-      futex: Split out the waiter check from lookup_pi_state()
-      futex: Split out the first waiter attachment from lookup_pi_state()
-      futex: Simplify futex_lock_pi_atomic() and make it more robust
-
-Yadi.hu (1):
-      ARM: enable irq in translation/section permission fault handlers
-
-Yong Zhang (1):
-      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
-
-----
- arch/arm/include/asm/cmpxchg.h     |   2 +
- arch/arm/include/asm/futex.h       |   4 +
- arch/arm/mm/fault.c                |   6 +
- arch/x86/include/asm/uv/uv_bau.h   |  14 +-
- arch/x86/include/asm/uv/uv_hub.h   |   2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |   2 +-
- arch/x86/platform/uv/tlb_uv.c      |  26 +-
- arch/x86/platform/uv/uv_time.c     |  21 +-
- drivers/gpio/gpio-omap.c           |  70 ++---
- drivers/scsi/libsas/sas_ata.c      |   4 +-
- include/linux/rtmutex.h            |   8 +-
- include/linux/work-simple.h        |  24 ++
- kernel/futex.c                     | 407 +++++++++++--------------
- kernel/rt.c                        |   8 +-
- kernel/rtmutex-debug.c             |   5 +-
- kernel/rtmutex-debug.h             |   7 +-
- kernel/rtmutex-tester.c            |   4 +-
- kernel/rtmutex.c                   | 604 +++++++++++++++++++++++++++----------
- kernel/rtmutex.h                   |   7 +-
- kernel/rtmutex_common.h            |  22 +-
- kernel/sched/Makefile              |   1 +
- kernel/sched/work-simple.c         | 172 +++++++++++
- kernel/timer.c                     |  26 ++
- lib/locking-selftest.c             |  27 ++
- localversion-rt                    |   2 +-
- mm/memcontrol.c                    |   7 +-
- net/sunrpc/svc_xprt.c              |   4 +-
- 27 files changed, 1013 insertions(+), 473 deletions(-)
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index 23b856400e5c..3508e2c80465 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -569,6 +569,8 @@ GENERATE_TESTCASE(init_held_rsem)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
+ 
+@@ -584,9 +586,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Enabling hardirqs with a softirq-safe lock held:
+  */
+@@ -619,6 +624,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #undef E1
+ #undef E2
+ 
++#endif
++
+ /*
+  * Enabling irqs with an irq-safe lock held:
+  */
+@@ -642,6 +649,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
+ 
+@@ -657,6 +666,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ 
+@@ -688,6 +699,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
+ 
+@@ -703,6 +716,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+@@ -736,6 +751,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
+ 
+@@ -751,10 +768,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock irq inversion.
+  *
+@@ -817,6 +838,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
+ #undef E2
+ #undef E3
+ 
++#endif
++
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock recursion that is actually safe.
+  */
+@@ -855,6 +880,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
+ #undef E2
+ #undef E3
+ 
++#endif
++
+ /*
+  * read-lock / write-lock recursion that is unsafe.
+  */
+-- 
+2.1.4
