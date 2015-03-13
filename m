@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/27] rtmutex: Simplify remove_waiter()
-Date: Fri, 13 Mar 2015 11:17:49 -0400
-Message-ID: <20150313151756.193739780@goodmis.org>
+Subject: [PATCH RT 02/27] create-rt-enqueue
+Date: Fri, 13 Mar 2015 11:17:43 -0400
+Message-ID: <20150313151755.218355511@goodmis.org>
 References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,99 +9,182 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-rtmutex-Simplify-remove_waiter.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0146.hostedemail.com ([216.40.44.146]:33831 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756064AbbCMPR5 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:17:57 -0400
+Content-Disposition: inline; filename=0002-create-rt-enqueue.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-upstream commit: 1ca7b86062ec8473d03c5cdfd336abc8b1c8098c
+To ease backporting patches, replace the plist functions with
+rt_mutex_enqueue{_pi}() and rt_mutex_dequeue{_pi}() like upstream -rt does.
+This will lower the conflicts in backporting patches.
 
-Exit right away, when the removed waiter was not the top priority
-waiter on the lock. Get rid of the extra indent level.
+This also makes sure that every time a waiter is added to the pi_list it
+matches the priority of the waiter list.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Conflicts:
-	kernel/rtmutex.c
 ---
- kernel/rtmutex.c | 33 ++++++++++++++++++---------------
- 1 file changed, 18 insertions(+), 15 deletions(-)
+ kernel/rtmutex.c | 58 ++++++++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 40 insertions(+), 18 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 0d1705119700..6c3a28231fa6 100644
+index a195da517edf..98d563b18c0e 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -895,7 +895,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
- static void remove_waiter(struct rt_mutex *lock,
- 			  struct rt_mutex_waiter *waiter)
+@@ -154,6 +154,31 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock)
+ }
+ #endif
+ 
++static inline void
++rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_add(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_dequeue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	waiter->pi_list_entry.prio = waiter->list_entry.prio;
++	plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
++static inline void
++rt_mutex_dequeue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
+ static inline void init_lists(struct rt_mutex *lock)
  {
--	int first = (waiter == rt_mutex_top_waiter(lock));
-+	bool is_top_waiter = (waiter == rt_mutex_top_waiter(lock));
- 	struct task_struct *owner = rt_mutex_owner(lock);
- 	struct rt_mutex *next_lock = NULL;
+ 	if (unlikely(!lock->wait_list.node_list.prev))
+@@ -360,9 +385,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	top_waiter = rt_mutex_top_waiter(lock);
+ 
+ 	/* Requeue the waiter */
+-	plist_del(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
+ 
+ 	/* Release the task */
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+@@ -388,17 +413,15 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+ 		/* Boost the owner */
+-		plist_del(&top_waiter->pi_list_entry, &task->pi_waiters);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_dequeue_pi(task, top_waiter);
++		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 
+ 	} else if (top_waiter == waiter) {
+ 		/* Deboost the owner */
+-		plist_del(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_dequeue_pi(task, waiter);
+ 		waiter = rt_mutex_top_waiter(lock);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 	}
+ 
+@@ -514,7 +537,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
+ 
+ 		/* remove the queued waiter. */
+ 		if (waiter) {
+-			plist_del(&waiter->list_entry, &lock->wait_list);
++			rt_mutex_dequeue(lock, waiter);
+ 			task->pi_blocked_on = NULL;
+ 		}
+ 
+@@ -524,8 +547,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
+ 		 */
+ 		if (rt_mutex_has_waiters(lock)) {
+ 			top = rt_mutex_top_waiter(lock);
+-			top->pi_list_entry.prio = top->list_entry.prio;
+-			plist_add(&top->pi_list_entry, &task->pi_waiters);
++			rt_mutex_enqueue_pi(task, top);
+ 		}
+ 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 	}
+@@ -603,7 +625,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 	/* Get the top priority waiter on the lock */
+ 	if (rt_mutex_has_waiters(lock))
+ 		top_waiter = rt_mutex_top_waiter(lock);
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
+ 
+ 	task->pi_blocked_on = waiter;
+ 
+@@ -614,8 +636,8 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 
+ 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
+-		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
++		rt_mutex_dequeue_pi(owner, top_waiter);
++		rt_mutex_enqueue_pi(owner, waiter);
+ 
+ 		__rt_mutex_adjust_prio(owner);
+ 		if (rt_mutex_real_waiter(owner->pi_blocked_on))
+@@ -676,7 +698,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
+ 	 * boosted mode and go back to normal after releasing
+ 	 * lock->wait_lock.
+ 	 */
+-	plist_del(&waiter->pi_list_entry, &current->pi_waiters);
++	rt_mutex_dequeue_pi(current, waiter);
+ 
+ 	/*
+ 	 * As we are waking up the top waiter, and the waiter stays
+@@ -713,7 +735,7 @@ static void remove_waiter(struct rt_mutex *lock,
  	unsigned long flags;
-@@ -905,31 +905,34 @@ static void remove_waiter(struct rt_mutex *lock,
+ 
+ 	raw_spin_lock_irqsave(&current->pi_lock, flags);
+-	plist_del(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_dequeue(lock, waiter);
  	current->pi_blocked_on = NULL;
  	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
  
--	if (!owner)
-+	/*
-+	 * Only update priority if the waiter was the highest priority
-+	 * waiter of the lock and there is an owner to update.
-+	 */
-+	if (!owner || !is_top_waiter)
- 		return;
+@@ -724,13 +746,13 @@ static void remove_waiter(struct rt_mutex *lock,
  
--	if (first) {
--
--		raw_spin_lock_irqsave(&owner->pi_lock, flags);
-+	raw_spin_lock_irqsave(&owner->pi_lock, flags);
+ 		raw_spin_lock_irqsave(&owner->pi_lock, flags);
  
--		rt_mutex_dequeue_pi(owner, waiter);
-+	rt_mutex_dequeue_pi(owner, waiter);
+-		plist_del(&waiter->pi_list_entry, &owner->pi_waiters);
++		rt_mutex_dequeue_pi(owner, waiter);
  
--		if (rt_mutex_has_waiters(lock)) {
--			struct rt_mutex_waiter *next;
-+	if (rt_mutex_has_waiters(lock))
-+		rt_mutex_enqueue_pi(owner, rt_mutex_top_waiter(lock));
+ 		if (rt_mutex_has_waiters(lock)) {
+ 			struct rt_mutex_waiter *next;
  
--			next = rt_mutex_top_waiter(lock);
--			rt_mutex_enqueue_pi(owner, next);
--		}
--		__rt_mutex_adjust_prio(owner);
-+	__rt_mutex_adjust_prio(owner);
- 
--		/* Store the lock on which owner is blocked or NULL */
-+	/* Store the lock on which owner is blocked or NULL */
-+	if (rt_mutex_real_waiter(owner->pi_blocked_on))
- 		next_lock = task_blocked_on_lock(owner);
- 
--		raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
--	}
-+	raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
- 
- 	WARN_ON(!plist_node_empty(&waiter->pi_list_entry));
- 
-+	/*
-+	 * Don't walk the chain, if the owner task is not blocked
-+	 * itself.
-+	 */
- 	if (!next_lock)
- 		return;
+ 			next = rt_mutex_top_waiter(lock);
+-			plist_add(&next->pi_list_entry, &owner->pi_waiters);
++			rt_mutex_enqueue_pi(owner, next);
+ 		}
+ 		__rt_mutex_adjust_prio(owner);
  
 -- 
 2.1.4
+
+
