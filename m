@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 22/25] work-simple: Simple work queue implemenation
-Date: Fri, 13 Mar 2015 11:18:47 -0400
-Message-ID: <20150313151838.402273312@goodmis.org>
+Subject: [PATCH RT 05/25] rtmutex: No need to keep task ref for lock owner check
+Date: Fri, 13 Mar 2015 11:18:30 -0400
+Message-ID: <20150313151834.941479507@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,263 +10,59 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60445 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755829AbbCMPep (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:34:45 -0400
-Content-Disposition: inline; filename=0022-work-simple-Simple-work-queue-implemenation.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0005-rtmutex-No-need-to-keep-task-ref-for-lock-owner-chec.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.2.68-rt99-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Provides a framework for enqueuing callbacks from irq context
-PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
+upstream commit: 2ffa5a5cd2fe792b6399c903d5172adf088d8ff7
 
-Bases on wait-simple.
+There is no point to keep the task ref across the check for lock
+owner. Drop the ref before that, so the protection context is clear.
 
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Found while documenting the chain walk.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/work-simple.h |  24 +++++++
- kernel/Makefile             |   2 +-
- kernel/work-simple.c        | 172 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 197 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/work-simple.h
- create mode 100644 kernel/work-simple.c
+ kernel/rtmutex.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
-new file mode 100644
-index 000000000000..f175fa9a6016
---- /dev/null
-+++ b/include/linux/work-simple.h
-@@ -0,0 +1,24 @@
-+#ifndef _LINUX_SWORK_H
-+#define _LINUX_SWORK_H
-+
-+#include <linux/list.h>
-+
-+struct swork_event {
-+	struct list_head item;
-+	unsigned long flags;
-+	void (*func)(struct swork_event *);
-+};
-+
-+static inline void INIT_SWORK(struct swork_event *event,
-+			      void (*func)(struct swork_event *))
-+{
-+	event->flags = 0;
-+	event->func = func;
-+}
-+
-+bool swork_queue(struct swork_event *sev);
-+
-+int swork_get(void);
-+void swork_put(void);
-+
-+#endif /* _LINUX_SWORK_H */
-diff --git a/kernel/Makefile b/kernel/Makefile
-index 0b0ed50948b3..b34456ece18e 100644
---- a/kernel/Makefile
-+++ b/kernel/Makefile
-@@ -11,7 +11,7 @@ obj-y     = sched.o fork.o exec_domain.o panic.o printk.o \
- 	    hrtimer.o nsproxy.o srcu.o semaphore.o \
- 	    notifier.o ksysfs.o sched_clock.o cred.o \
- 	    async.o range.o
--obj-y += groups.o wait-simple.o
-+obj-y += groups.o wait-simple.o work-simple.o
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index a74c57a75269..7d338c8b23b9 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -407,6 +407,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  
- ifdef CONFIG_FUNCTION_TRACER
- # Do not trace debug files and internal ftrace files
-diff --git a/kernel/work-simple.c b/kernel/work-simple.c
-new file mode 100644
-index 000000000000..c996f755dba6
---- /dev/null
-+++ b/kernel/work-simple.c
-@@ -0,0 +1,172 @@
-+/*
-+ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
-+ *
-+ * Provides a framework for enqueuing callbacks from irq context
-+ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
-+ */
+ 	/* Release the task */
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++	put_task_struct(task);
 +
-+#include <linux/wait-simple.h>
-+#include <linux/work-simple.h>
-+#include <linux/kthread.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+
-+#define SWORK_EVENT_PENDING     (1 << 0)
-+
-+static DEFINE_MUTEX(worker_mutex);
-+static struct sworker *glob_worker;
-+
-+struct sworker {
-+	struct list_head events;
-+	struct swait_head wq;
-+
-+	raw_spinlock_t lock;
-+
-+	struct task_struct *task;
-+	int refs;
-+};
-+
-+static bool swork_readable(struct sworker *worker)
-+{
-+	bool r;
-+
-+	if (kthread_should_stop())
-+		return true;
-+
-+	raw_spin_lock_irq(&worker->lock);
-+	r = !list_empty(&worker->events);
-+	raw_spin_unlock_irq(&worker->lock);
-+
-+	return r;
-+}
-+
-+static int swork_kthread(void *arg)
-+{
-+	struct sworker *worker = arg;
-+
-+	for (;;) {
-+		swait_event_interruptible(worker->wq,
-+					swork_readable(worker));
-+		if (kthread_should_stop())
-+			break;
-+
-+		raw_spin_lock_irq(&worker->lock);
-+		while (!list_empty(&worker->events)) {
-+			struct swork_event *sev;
-+
-+			sev = list_first_entry(&worker->events,
-+					struct swork_event, item);
-+			list_del(&sev->item);
-+			raw_spin_unlock_irq(&worker->lock);
-+
-+			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
-+							 &sev->flags));
-+			sev->func(sev);
-+			raw_spin_lock_irq(&worker->lock);
-+		}
-+		raw_spin_unlock_irq(&worker->lock);
-+	}
-+	return 0;
-+}
-+
-+static struct sworker *swork_create(void)
-+{
-+	struct sworker *worker;
-+
-+	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
-+	if (!worker)
-+		return ERR_PTR(-ENOMEM);
-+
-+	INIT_LIST_HEAD(&worker->events);
-+	raw_spin_lock_init(&worker->lock);
-+	init_swait_head(&worker->wq);
-+
-+	worker->task = kthread_run(swork_kthread, worker, "kswork");
-+	if (IS_ERR(worker->task)) {
-+		kfree(worker);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	return worker;
-+}
-+
-+static void swork_destroy(struct sworker *worker)
-+{
-+	kthread_stop(worker->task);
-+
-+	WARN_ON(!list_empty(&worker->events));
-+	kfree(worker);
-+}
-+
-+/**
-+ * swork_queue - queue swork
-+ *
-+ * Returns %false if @work was already on a queue, %true otherwise.
-+ *
-+ * The work is queued and processed on a random CPU
-+ */
-+bool swork_queue(struct swork_event *sev)
-+{
-+	unsigned long flags;
-+
-+	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
-+		return false;
-+
-+	raw_spin_lock_irqsave(&glob_worker->lock, flags);
-+	list_add_tail(&sev->item, &glob_worker->events);
-+	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
-+
-+	swait_wake(&glob_worker->wq);
-+	return true;
-+}
-+EXPORT_SYMBOL_GPL(swork_queue);
-+
-+/**
-+ * swork_get - get an instance of the sworker
-+ *
-+ * Returns an negative error code if the initialization if the worker did not
-+ * work, %0 otherwise.
-+ *
-+ */
-+int swork_get(void)
-+{
-+	struct sworker *worker;
-+
-+	mutex_lock(&worker_mutex);
-+	if (!glob_worker) {
-+		worker = swork_create();
-+		if (IS_ERR(worker)) {
-+			mutex_unlock(&worker_mutex);
-+			return -ENOMEM;
-+		}
-+
-+		glob_worker = worker;
-+	}
-+
-+	glob_worker->refs++;
-+	mutex_unlock(&worker_mutex);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(swork_get);
-+
-+/**
-+ * swork_put - puts an instance of the sworker
-+ *
-+ * Will destroy the sworker thread. This function must not be called until all
-+ * queued events have been completed.
-+ */
-+void swork_put(void)
-+{
-+	mutex_lock(&worker_mutex);
-+
-+	glob_worker->refs--;
-+	if (glob_worker->refs > 0)
-+		goto out;
-+
-+	swork_destroy(glob_worker);
-+	glob_worker = NULL;
-+out:
-+	mutex_unlock(&worker_mutex);
-+}
-+EXPORT_SYMBOL_GPL(swork_put);
+ 	if (!rt_mutex_owner(lock)) {
+ 		struct rt_mutex_waiter *lock_top_waiter;
+ 
+@@ -418,9 +420,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		if (top_waiter != lock_top_waiter)
+ 			rt_mutex_wake_waiter(lock_top_waiter);
+ 		raw_spin_unlock(&lock->wait_lock);
+-		goto out_put_task;
++		return 0;
+ 	}
+-	put_task_struct(task);
+ 
+ 	/* Grab the next task */
+ 	task = rt_mutex_owner(lock);
 -- 
 2.1.4
-
-
