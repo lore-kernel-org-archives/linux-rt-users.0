@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/31] scheduling while atomic in cgroup code
-Date: Fri, 13 Mar 2015 11:15:17 -0400
-Message-ID: <20150313151518.828107573@goodmis.org>
+Subject: [PATCH RT 25/31] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+Date: Fri, 13 Mar 2015 11:15:19 -0400
+Message-ID: <20150313151519.195066142@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,19 +11,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	<stable-rt@vger.kernel.org>,
-	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
 	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0246.hostedemail.com ([216.40.44.246]:33546 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S932145AbbCMPPW (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:15:22 -0400
-Content-Disposition: inline; filename=0023-scheduling-while-atomic-in-cgroup-code.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0025-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.10.70-rt75-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -32,70 +26,51 @@ If anyone has any objections, please let me know.
 
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-mm, memcg: make refill_stock() use get_cpu_light()
-
-Nikita reported the following memcg scheduling while atomic bug:
-
-Call Trace:
-[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
-[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
-[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
-[e22d5bf0] [c060bacc] schedule+0x30/0xbc
-[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
-[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
-[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
-[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
-[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
-[e22d5d90] [c0117284] __do_fault+0x38c/0x510
-[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
-[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
-[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
-
-What happens:
-
-   refill_stock()
-      get_cpu_var()
-      drain_stock()
-         res_counter_uncharge()
-            res_counter_uncharge_until()
-               spin_lock() <== boom
-
-Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
+|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
+|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
+|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
+|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
+|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
+| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
+| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
+| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
+|Call Trace:
+| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
+| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
+| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
+| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
+| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
+| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
+| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
+| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
+| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
+| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
+| [<ffffffff8117f889>] SyS_write+0x49/0xb0
+| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
 
 Cc: stable-rt@vger.kernel.org
-Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/memcontrol.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ net/sunrpc/svc_xprt.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 33d8392f33eb..89540bca5c5b 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2463,14 +2463,17 @@ static void __init memcg_stock_init(void)
-  */
- static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
- {
--	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
-+	struct memcg_stock_pcp *stock;
-+	int cpu = get_cpu_light();
-+
-+	stock = &per_cpu(memcg_stock, cpu);
+diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
+index b9aad4723a9d..ab50dbd58c20 100644
+--- a/net/sunrpc/svc_xprt.c
++++ b/net/sunrpc/svc_xprt.c
+@@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
+ 	if (!svc_xprt_has_something_to_do(xprt))
+ 		return;
  
- 	if (stock->cached != memcg) { /* reset if necessary */
- 		drain_stock(stock);
- 		stock->cached = memcg;
- 	}
- 	stock->nr_pages += nr_pages;
--	put_cpu_var(memcg_stock);
+-	cpu = get_cpu();
++	cpu = get_cpu_light();
+ 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
+-	put_cpu();
 +	put_cpu_light();
- }
  
- /*
+ 	spin_lock_bh(&pool->sp_lock);
+ 
 -- 
 2.1.4
-
-
