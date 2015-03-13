@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/25] gpio: omap: use raw locks for locking
-Date: Fri, 13 Mar 2015 11:18:26 -0400
-Message-ID: <20150313151834.331603148@goodmis.org>
+Subject: [PATCH RT 15/25] futex: Split out the first waiter attachment from lookup_pi_state()
+Date: Fri, 13 Mar 2015 11:18:40 -0400
+Message-ID: <20150313151836.766648114@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Darren Hart <darren@dvhart.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-gpio-omap-use-raw-locks-for-locking.patch
+Content-Disposition: inline; filename=0015-futex-Split-out-the-first-waiter-attachment-from-loo.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,269 +26,95 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-This patch converts gpio_bank.lock from a spin_lock into a
-raw_spin_lock. The call path is to access this lock is always under a
-raw_spin_lock, for instance
-- __setup_irq() holds &desc->lock with irq off
-  + __irq_set_trigger()
-   + omap_gpio_irq_type()
+upstream commit: 04e1b2e52b17195c9a1daa5935c55a4c8716095c
 
-- handle_level_irq() (runs with irqs off therefore raw locks)
-  + mask_ack_irq()
-   + omap_gpio_mask_irq()
+We want to be a bit more clever in futex_lock_pi_atomic() and separate
+the possible states. Split out the code which attaches the first
+waiter to the owner into a separate function. No functional change.
 
-This fixes the obvious backtrace on -RT. However the locking vs context
-is not and this is not limited to -RT:
-- omap_gpio_irq_type() is called with IRQ off and has an conditional
-  call to pm_runtime_get_sync() which may sleep. Either it may happen or
-  it may not happen but pm_runtime_get_sync() should not be called with
-  irqs off.
-
-- omap_gpio_debounce() is holding the lock with IRQs off.
-  + omap2_set_gpio_debounce()
-   + clk_prepare_enable()
-    + clk_prepare() this one might sleep.
-  The number of users of gpiod_set_debounce() / gpio_set_debounce()
-  looks low but still this is not good.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Darren Hart <darren@dvhart.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.271300614@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/gpio/gpio-omap.c | 64 ++++++++++++++++++++++++------------------------
- 1 file changed, 32 insertions(+), 32 deletions(-)
+ kernel/futex.c | 42 ++++++++++++++++++++++++++++--------------
+ 1 file changed, 28 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
-index a6c10e849e61..e4d11e424b5b 100644
---- a/drivers/gpio/gpio-omap.c
-+++ b/drivers/gpio/gpio-omap.c
-@@ -46,7 +46,7 @@ struct gpio_bank {
- 	u32 saved_risingdetect;
- 	u32 level_mask;
- 	u32 toggle_mask;
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct gpio_chip chip;
- 	struct clk *dbck;
- 	u32 mod_usage;
-@@ -418,9 +418,9 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
- 		return -EINVAL;
- 
- 	bank = irq_data_get_irq_chip_data(d);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	retval = _set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), type);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
- 		__irq_set_handler_locked(d->irq, handle_level_irq);
-@@ -533,13 +533,13 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
- 		return -EINVAL;
- 	}
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	if (enable)
- 		bank->suspend_wakeup |= gpio_bit;
- 	else
- 		bank->suspend_wakeup &= ~gpio_bit;
- 
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -570,7 +570,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
- 	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 
- 	/* Set trigger to none. You need to enable the desired trigger with
- 	 * request_irq() or set_irq_type().
-@@ -602,7 +602,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
- 		}
- 		bank->mod_usage |= 1 << offset;
- 	}
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -612,7 +612,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
- 	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- #ifdef CONFIG_ARCH_OMAP16XX
- 	if (bank->method == METHOD_GPIO_1610) {
- 		/* Disable wake-up during idle for dynamic tick */
-@@ -651,7 +651,7 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
- 		}
- 	}
- 	_reset_gpio(bank, bank->chip.base + offset);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- /*
-@@ -751,9 +751,9 @@ static void gpio_irq_shutdown(struct irq_data *d)
- 	struct gpio_bank *bank = irq_data_get_irq_chip_data(d);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_reset_gpio(bank, gpio);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static void gpio_ack_irq(struct irq_data *d)
-@@ -770,10 +770,10 @@ static void gpio_mask_irq(struct irq_data *d)
- 	struct gpio_bank *bank = irq_data_get_irq_chip_data(d);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_irqenable(bank, gpio, 0);
- 	_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), IRQ_TYPE_NONE);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static void gpio_unmask_irq(struct irq_data *d)
-@@ -784,7 +784,7 @@ static void gpio_unmask_irq(struct irq_data *d)
- 	u32 trigger = irqd_get_trigger_type(d);
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	if (trigger)
- 		_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), trigger);
- 
-@@ -796,7 +796,7 @@ static void gpio_unmask_irq(struct irq_data *d)
- 	}
- 
- 	_set_gpio_irqenable(bank, gpio, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static struct irq_chip gpio_irq_chip = {
-@@ -827,10 +827,10 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
- 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
- 	unsigned long		flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->saved_wakeup = __raw_readl(mask_reg);
- 	__raw_writel(0xffff & ~bank->suspend_wakeup, mask_reg);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -843,9 +843,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
- 					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
- 	unsigned long		flags;
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	__raw_writel(bank->saved_wakeup, mask_reg);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -904,9 +904,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
- 	unsigned long flags;
- 
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_direction(bank, offset, 1);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 58c66defd69b..5015fbcb2d34 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -716,21 +716,16 @@ out_state:
  	return 0;
  }
  
-@@ -941,10 +941,10 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
- 	unsigned long flags;
+-static int
+-lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+-		union futex_key *key, struct futex_pi_state **ps)
++/*
++ * Lookup the task for the TID provided from user space and attach to
++ * it after doing proper sanity checks.
++ */
++static int attach_to_pi_owner(u32 uval, union futex_key *key,
++			      struct futex_pi_state **ps)
+ {
+-	struct futex_q *match = futex_top_waiter(hb, key);
+-	struct futex_pi_state *pi_state = NULL;
+-	struct task_struct *p;
+ 	pid_t pid = uval & FUTEX_TID_MASK;
+-
+-	/*
+-	 * If there is a waiter on that futex, validate it and
+-	 * attach to the pi_state when the validation succeeds.
+-	 */
+-	if (match)
+-		return attach_to_pi_state(uval, match->pi_state, ps);
++	struct futex_pi_state *pi_state;
++	struct task_struct *p;
  
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->set_dataout(bank, offset, value);
- 	_set_gpio_direction(bank, offset, 0);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
+ 	/*
+ 	 * We are the first waiter - try to look up the real owner and attach
+@@ -773,7 +768,7 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+ 	pi_state = alloc_pi_state();
+ 
+ 	/*
+-	 * Initialize the pi_mutex in locked state and make 'p'
++	 * Initialize the pi_mutex in locked state and make @p
+ 	 * the owner of it:
+ 	 */
+ 	rt_mutex_init_proxy_locked(&pi_state->pi_mutex, p);
+@@ -793,6 +788,25 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
  	return 0;
  }
  
-@@ -962,9 +962,9 @@ static int gpio_debounce(struct gpio_chip *chip, unsigned offset,
- 			dev_err(bank->dev, "Could not get gpio dbck\n");
- 	}
- 
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	_set_gpio_debounce(bank, offset, debounce);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 
- 	return 0;
- }
-@@ -975,9 +975,9 @@ static void gpio_set(struct gpio_chip *chip, unsigned offset, int value)
- 	unsigned long flags;
- 
- 	bank = container_of(chip, struct gpio_bank, chip);
--	spin_lock_irqsave(&bank->lock, flags);
-+	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->set_dataout(bank, offset, value);
--	spin_unlock_irqrestore(&bank->lock, flags);
-+	raw_spin_unlock_irqrestore(&bank->lock, flags);
- }
- 
- static int gpio_2irq(struct gpio_chip *chip, unsigned offset)
-@@ -1207,7 +1207,7 @@ static int __devinit omap_gpio_probe(struct platform_device *pdev)
- 	else
- 		bank->set_dataout = _set_gpio_dataout_mask;
- 
--	spin_lock_init(&bank->lock);
-+	raw_spin_lock_init(&bank->lock);
- 
- 	/* Static mapping, never released */
- 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-@@ -1276,11 +1276,11 @@ static int omap_gpio_suspend(void)
- 			continue;
- 		}
- 
--		spin_lock_irqsave(&bank->lock, flags);
-+		raw_spin_lock_irqsave(&bank->lock, flags);
- 		bank->saved_wakeup = __raw_readl(wake_status);
- 		__raw_writel(0xffffffff, wake_clear);
- 		__raw_writel(bank->suspend_wakeup, wake_set);
--		spin_unlock_irqrestore(&bank->lock, flags);
-+		raw_spin_unlock_irqrestore(&bank->lock, flags);
- 	}
- 
- 	return 0;
-@@ -1322,10 +1322,10 @@ static void omap_gpio_resume(void)
- 			continue;
- 		}
- 
--		spin_lock_irqsave(&bank->lock, flags);
-+		raw_spin_lock_irqsave(&bank->lock, flags);
- 		__raw_writel(0xffffffff, wake_clear);
- 		__raw_writel(bank->saved_wakeup, wake_set);
--		spin_unlock_irqrestore(&bank->lock, flags);
-+		raw_spin_unlock_irqrestore(&bank->lock, flags);
- 	}
- }
- 
++static int lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
++			   union futex_key *key, struct futex_pi_state **ps)
++{
++	struct futex_q *match = futex_top_waiter(hb, key);
++
++	/*
++	 * If there is a waiter on that futex, validate it and
++	 * attach to the pi_state when the validation succeeds.
++	 */
++	if (match)
++		return attach_to_pi_state(uval, match->pi_state, ps);
++
++	/*
++	 * We are the first waiter - try to look up the owner based on
++	 * @uval and attach to it.
++	 */
++	return attach_to_pi_owner(uval, key, ps);
++}
++
+ /**
+  * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
+  * @uaddr:		the pi futex user address
 -- 
 2.1.4
