@@ -1,76 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 25/31] sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-Date: Fri, 13 Mar 2015 11:15:19 -0400
-Message-ID: <20150313151519.195066142@goodmis.org>
-References: <20150313151454.809081378@goodmis.org>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: Kenrel panic with 3.18.7-rt2 - Was: Kenrel panic with
+ 3.18.7-rt2 - rootfs at MMC
+Date: Fri, 13 Mar 2015 16:26:58 +0100
+Message-ID: <20150313162658.756416ec@archlinux>
+References: <20150306174336.2eb1fea9@archlinux>
+	<20150306174700.29fc83bf@archlinux>
+	<CAP=VYLofi0bYu5Lk+cnxyZ3upv2xueDDvHbO9B4Q8CgxpL0CGA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0025-sunrpc-make-svc_xprt_do_enqueue-use-get_cpu_light.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail159c50.megamailservers.eu ([91.136.10.169]:60292 "EHLO
+	mail51c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751480AbbCMP1E (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:27:04 -0400
+In-Reply-To: <CAP=VYLofi0bYu5Lk+cnxyZ3upv2xueDDvHbO9B4Q8CgxpL0CGA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.70-rt75-rc1 stable review patch.
-If anyone has any objections, please let me know.
+On Fri, 13 Mar 2015 10:26:39 -0400, Paul Gortmaker wrote:
+>unless you can capture some of the log with a camera
 
-------------------
+Hi,
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+in the meanwhile I noticed that 3.14.28-rt25 works on my machine and
+3.14.34-rt31 already doesn't work on my machine.
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:915
-|in_atomic(): 1, irqs_disabled(): 0, pid: 3194, name: rpc.nfsd
-|Preemption disabled at:[<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-|CPU: 6 PID: 3194 Comm: rpc.nfsd Not tainted 3.18.7-rt1 #9
-|Hardware name: MEDION MS-7848/MS-7848, BIOS M7848W08.404 11/06/2014
-| ffff880409630000 ffff8800d9a33c78 ffffffff815bdeb5 0000000000000002
-| 0000000000000000 ffff8800d9a33c98 ffffffff81073c86 ffff880408dd6008
-| ffff880408dd6000 ffff8800d9a33cb8 ffffffff815c3d84 ffff88040b3ac000
-|Call Trace:
-| [<ffffffff815bdeb5>] dump_stack+0x4f/0x9e
-| [<ffffffff81073c86>] __might_sleep+0xe6/0x150
-| [<ffffffff815c3d84>] rt_spin_lock+0x24/0x50
-| [<ffffffffa06beec0>] svc_xprt_do_enqueue+0x80/0x230 [sunrpc]
-| [<ffffffffa06bf0bb>] svc_xprt_received+0x4b/0xc0 [sunrpc]
-| [<ffffffffa06c03ed>] svc_add_new_perm_xprt+0x6d/0x80 [sunrpc]
-| [<ffffffffa06b2693>] svc_addsock+0x143/0x200 [sunrpc]
-| [<ffffffffa072e69c>] write_ports+0x28c/0x340 [nfsd]
-| [<ffffffffa072d2ac>] nfsctl_transaction_write+0x4c/0x80 [nfsd]
-| [<ffffffff8117ee83>] vfs_write+0xb3/0x1d0
-| [<ffffffff8117f889>] SyS_write+0x49/0xb0
-| [<ffffffff815c4556>] system_call_fastpath+0x16/0x1b
+Can I send a pic as attachment or should I paste a link?
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- net/sunrpc/svc_xprt.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index b9aad4723a9d..ab50dbd58c20 100644
---- a/net/sunrpc/svc_xprt.c
-+++ b/net/sunrpc/svc_xprt.c
-@@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
- 	if (!svc_xprt_has_something_to_do(xprt))
- 		return;
- 
--	cpu = get_cpu();
-+	cpu = get_cpu_light();
- 	pool = svc_pool_for_cpu(xprt->xpt_server, cpu);
--	put_cpu();
-+	put_cpu_light();
- 
- 	spin_lock_bh(&pool->sp_lock);
- 
--- 
-2.1.4
+Regards,
+Ralf
