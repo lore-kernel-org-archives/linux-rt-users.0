@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 16/25] futex: Simplify futex_lock_pi_atomic() and make it more robust
-Date: Fri, 13 Mar 2015 11:18:41 -0400
-Message-ID: <20150313151836.932378017@goodmis.org>
-References: <20150313151825.583263173@goodmis.org>
+Subject: [PATCH RT 23/27] scheduling while atomic in cgroup code
+Date: Fri, 13 Mar 2015 11:18:04 -0400
+Message-ID: <20150313151758.981271216@goodmis.org>
+References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,264 +10,90 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>,
-	Darren Hart <darren@dvhart.com>
+	<stable-rt@vger.kernel.org>,
+	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60768 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:60713 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1161102AbbCMPfV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:35:21 -0400
-Content-Disposition: inline; filename=0016-futex-Simplify-futex_lock_pi_atomic-and-make-it-more.patch
+	id S1945905AbbCMPfQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:35:16 -0400
+Content-Disposition: inline; filename=0023-scheduling-while-atomic-in-cgroup-code.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.2.68-rt99-rc1 stable review patch.
+3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-upstream commit: af54d6a1c3ad474bbc9893c9905022646be6092c
+mm, memcg: make refill_stock() use get_cpu_light()
 
-futex_lock_pi_atomic() is a maze of retry hoops and loops.
+Nikita reported the following memcg scheduling while atomic bug:
 
-Reduce it to simple and understandable states:
+Call Trace:
+[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
+[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
+[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
+[e22d5bf0] [c060bacc] schedule+0x30/0xbc
+[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
+[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
+[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
+[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
+[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
+[e22d5d90] [c0117284] __do_fault+0x38c/0x510
+[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
+[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
+[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
 
-First step is to lookup existing waiters (state) in the kernel.
+What happens:
 
-If there is an existing waiter, validate it and attach to it.
+   refill_stock()
+      get_cpu_var()
+      drain_stock()
+         res_counter_uncharge()
+            res_counter_uncharge_until()
+               spin_lock() <== boom
 
-If there is no existing waiter, check the user space value
+Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
 
-If the TID encoded in the user space value is 0, take over the futex
-preserving the owner died bit.
-
-If the TID encoded in the user space value is != 0, lookup the owner
-task, validate it and attach to it.
-
-Reduces text size by 128 bytes on x8664.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Cc: Darren Hart <darren@dvhart.com>
-Link: http://lkml.kernel.org/r/alpine.DEB.2.10.1406131137020.5170@nanos
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/futex.c | 148 ++++++++++++++++++++++++---------------------------------
- 1 file changed, 61 insertions(+), 87 deletions(-)
+ mm/memcontrol.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 5015fbcb2d34..cd2b055ea680 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -807,6 +807,17 @@ static int lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
- 	return attach_to_pi_owner(uval, key, ps);
- }
- 
-+static int lock_pi_update_atomic(u32 __user *uaddr, u32 uval, u32 newval)
-+{
-+	u32 uninitialized_var(curval);
-+
-+	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
-+		return -EFAULT;
-+
-+	/*If user space value changed, let the caller retry */
-+	return curval != uval ? -EAGAIN : 0;
-+}
-+
- /**
-  * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
-  * @uaddr:		the pi futex user address
-@@ -830,113 +841,69 @@ static int futex_lock_pi_atomic(u32 __user *uaddr, struct futex_hash_bucket *hb,
- 				struct futex_pi_state **ps,
- 				struct task_struct *task, int set_waiters)
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index 107c0ba7b383..8c3dd645ac10 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2061,14 +2061,17 @@ static void drain_local_stock(struct work_struct *dummy)
+  */
+ static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
  {
--	int lock_taken, ret, force_take = 0;
--	u32 uval, newval, curval, vpid = task_pid_vnr(task);
--
--retry:
--	ret = lock_taken = 0;
-+	u32 uval, newval, vpid = task_pid_vnr(task);
-+	struct futex_q *match;
-+	int ret;
- 
- 	/*
--	 * To avoid races, we attempt to take the lock here again
--	 * (by doing a 0 -> TID atomic cmpxchg), while holding all
--	 * the locks. It will most likely not succeed.
-+	 * Read the user space value first so we can validate a few
-+	 * things before proceeding further.
- 	 */
--	newval = vpid;
--	if (set_waiters)
--		newval |= FUTEX_WAITERS;
--
--	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, 0, newval)))
-+	if (get_futex_value_locked(&uval, uaddr))
- 		return -EFAULT;
- 
- 	/*
- 	 * Detect deadlocks.
- 	 */
--	if ((unlikely((curval & FUTEX_TID_MASK) == vpid)))
-+	if ((unlikely((uval & FUTEX_TID_MASK) == vpid)))
- 		return -EDEADLK;
- 
- 	/*
--	 * Surprise - we got the lock, but we do not trust user space at all.
-+	 * Lookup existing state first. If it exists, try to attach to
-+	 * its pi_state.
- 	 */
--	if (unlikely(!curval)) {
--		/*
--		 * We verify whether there is kernel state for this
--		 * futex. If not, we can safely assume, that the 0 ->
--		 * TID transition is correct. If state exists, we do
--		 * not bother to fixup the user space state as it was
--		 * corrupted already.
--		 */
--		return futex_top_waiter(hb, key) ? -EINVAL : 1;
--	}
--
--	uval = curval;
--
--	/*
--	 * Set the FUTEX_WAITERS flag, so the owner will know it has someone
--	 * to wake at the next unlock.
--	 */
--	newval = curval | FUTEX_WAITERS;
-+	match = futex_top_waiter(hb, key);
-+	if (match)
-+		return attach_to_pi_state(uval, match->pi_state, ps);
- 
- 	/*
--	 * Should we force take the futex? See below.
-+	 * No waiter and user TID is 0. We are here because the
-+	 * waiters or the owner died bit is set or called from
-+	 * requeue_cmp_pi or for whatever reason something took the
-+	 * syscall.
- 	 */
--	if (unlikely(force_take)) {
-+	if (!(uval & FUTEX_TID_MASK)) {
- 		/*
--		 * Keep the OWNER_DIED and the WAITERS bit and set the
--		 * new TID value.
-+		 * We take over the futex. No other waiters and the user space
-+		 * TID is 0. We preserve the owner died bit.
- 		 */
--		newval = (curval & ~FUTEX_TID_MASK) | vpid;
--		force_take = 0;
--		lock_taken = 1;
--	}
-+		newval = uval & FUTEX_OWNER_DIED;
-+		newval |= vpid;
- 
--	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
--		return -EFAULT;
--	if (unlikely(curval != uval))
--		goto retry;
-+		/* The futex requeue_pi code can enforce the waiters bit */
-+		if (set_waiters)
-+			newval |= FUTEX_WAITERS;
+-	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
++	struct memcg_stock_pcp *stock;
++	int cpu = get_cpu_light();
 +
-+		ret = lock_pi_update_atomic(uaddr, uval, newval);
-+		/* If the take over worked, return 1 */
-+		return ret < 0 ? ret : 1;
-+	}
++	stock = &per_cpu(memcg_stock, cpu);
  
- 	/*
--	 * We took the lock due to forced take over.
-+	 * First waiter. Set the waiters bit before attaching ourself to
-+	 * the owner. If owner tries to unlock, it will be forced into
-+	 * the kernel and blocked on hb->lock.
- 	 */
--	if (unlikely(lock_taken))
--		return 1;
--
-+	newval = uval | FUTEX_WAITERS;
-+	ret = lock_pi_update_atomic(uaddr, uval, newval);
-+	if (ret)
-+		return ret;
- 	/*
--	 * We dont have the lock. Look up the PI state (or create it if
--	 * we are the first waiter):
-+	 * If the update of the user space value succeeded, we try to
-+	 * attach to the owner. If that fails, no harm done, we only
-+	 * set the FUTEX_WAITERS bit in the user space variable.
- 	 */
--	ret = lookup_pi_state(uval, hb, key, ps);
--
--	if (unlikely(ret)) {
--		switch (ret) {
--		case -ESRCH:
--			/*
--			 * We failed to find an owner for this
--			 * futex. So we have no pi_state to block
--			 * on. This can happen in two cases:
--			 *
--			 * 1) The owner died
--			 * 2) A stale FUTEX_WAITERS bit
--			 *
--			 * Re-read the futex value.
--			 */
--			if (get_futex_value_locked(&curval, uaddr))
--				return -EFAULT;
--
--			/*
--			 * If the owner died or we have a stale
--			 * WAITERS bit the owner TID in the user space
--			 * futex is 0.
--			 */
--			if (!(curval & FUTEX_TID_MASK)) {
--				force_take = 1;
--				goto retry;
--			}
--		default:
--			break;
--		}
--	}
--
--	return ret;
-+	return attach_to_pi_owner(uval, key, ps);
+ 	if (stock->cached != memcg) { /* reset if necessary */
+ 		drain_stock(stock);
+ 		stock->cached = memcg;
+ 	}
+ 	stock->nr_pages += nr_pages;
+-	put_cpu_var(memcg_stock);
++	put_cpu_light();
  }
  
- /**
-@@ -1499,7 +1466,12 @@ retry_private:
- 				goto retry;
- 			goto out;
- 		case -EAGAIN:
--			/* The owner was exiting, try again. */
-+			/*
-+			 * Two reasons for this:
-+			 * - Owner is exiting and we just wait for the
-+			 *   exit to complete.
-+			 * - The user space value changed.
-+			 */
- 			free_pi_state(pi_state);
- 			pi_state = NULL;
- 			double_unlock_hb(hb1, hb2);
-@@ -2154,8 +2126,10 @@ retry_private:
- 			goto uaddr_faulted;
- 		case -EAGAIN:
- 			/*
--			 * Task is exiting and we just wait for the
--			 * exit to complete.
-+			 * Two reasons for this:
-+			 * - Task is exiting and we just wait for the
-+			 *   exit to complete.
-+			 * - The user space value changed.
- 			 */
- 			queue_unlock(&q, hb);
- 			put_futex_key(&q.key);
+ /*
 -- 
 2.1.4
 
