@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 14/25] futex: Split out the waiter check from lookup_pi_state()
-Date: Fri, 13 Mar 2015 11:18:39 -0400
-Message-ID: <20150313151836.621637688@goodmis.org>
+Subject: [PATCH RT 24/25] lockdep: selftest: fix warnings due to missing PREEMPT_RT
+ conditionals
+Date: Fri, 13 Mar 2015 11:18:49 -0400
+Message-ID: <20150313151838.856970012@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,14 +11,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Darren Hart <darren@dvhart.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>
+	<stable-rt@vger.kernel.org>,
+	Josh Cartwright <josh.cartwright@ni.com>,
+	Xander Huff <xander.huff@ni.com>,
+	Gratian Crisan <gratian.crisan@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0014-futex-Split-out-the-waiter-check-from-lookup_pi_stat.patch
+Content-Disposition: inline; filename=0024-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,194 +27,147 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Josh Cartwright <josh.cartwright@ni.com>
 
-upstream commit: e60cbc5ceaa518d630ab8f35a7d05cee1c752648
+"lockdep: Selftest: Only do hardirq context test for raw spinlock"
+disabled the execution of certain tests with PREEMPT_RT_FULL, but did
+not prevent the tests from still being defined.  This leads to warnings
+like:
 
-We want to be a bit more clever in futex_lock_pi_atomic() and separate
-the possible states. Split out the waiter verification into a separate
-function. No functional change.
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
+  ...
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Darren Hart <darren@dvhart.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Link: http://lkml.kernel.org/r/20140611204237.180458410@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
+conditionals.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
+Signed-off-by: Xander Huff <xander.huff@ni.com>
+Acked-by: Gratian Crisan <gratian.crisan@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/futex.c | 138 +++++++++++++++++++++++++++++----------------------------
- 1 file changed, 71 insertions(+), 67 deletions(-)
+ lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 73b91f7e7f61..58c66defd69b 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -643,92 +643,96 @@ void exit_pi_state_list(struct task_struct *curr)
-  * [10] There is no transient state which leaves owner and user space
-  *	TID out of sync.
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index 507a22fab738..51e558f5c93d 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -570,6 +570,8 @@ GENERATE_TESTCASE(init_held_rsem)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
+ 
+@@ -585,9 +587,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Enabling hardirqs with a softirq-safe lock held:
   */
--static int
--lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
--		union futex_key *key, struct futex_pi_state **ps)
+@@ -620,6 +625,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #undef E1
+ #undef E2
+ 
++#endif
 +
-+/*
-+ * Validate that the existing waiter has a pi_state and sanity check
-+ * the pi_state against the user space value. If correct, attach to
-+ * it.
-+ */
-+static int attach_to_pi_state(u32 uval, struct futex_pi_state *pi_state,
-+			      struct futex_pi_state **ps)
- {
--	struct futex_q *match = futex_top_waiter(hb, key);
--	struct futex_pi_state *pi_state = NULL;
--	struct task_struct *p;
- 	pid_t pid = uval & FUTEX_TID_MASK;
+ /*
+  * Enabling irqs with an irq-safe lock held:
+  */
+@@ -643,6 +650,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
  
--	if (match) {
--		/*
--		 * Sanity check the waiter before increasing the
--		 * refcount and attaching to it.
--		 */
--		pi_state = match->pi_state;
--		/*
--		 * Userspace might have messed up non-PI and PI
--		 * futexes [3]
--		 */
--		if (unlikely(!pi_state))
--			return -EINVAL;
-+	/*
-+	 * Userspace might have messed up non-PI and PI futexes [3]
-+	 */
-+	if (unlikely(!pi_state))
-+		return -EINVAL;
- 
--		WARN_ON(!atomic_read(&pi_state->refcount));
-+	WARN_ON(!atomic_read(&pi_state->refcount));
- 
-+	/*
-+	 * Handle the owner died case:
-+	 */
-+	if (uval & FUTEX_OWNER_DIED) {
- 		/*
--		 * Handle the owner died case:
-+		 * exit_pi_state_list sets owner to NULL and wakes the
-+		 * topmost waiter. The task which acquires the
-+		 * pi_state->rt_mutex will fixup owner.
- 		 */
--		if (uval & FUTEX_OWNER_DIED) {
--			/*
--			 * exit_pi_state_list sets owner to NULL and
--			 * wakes the topmost waiter. The task which
--			 * acquires the pi_state->rt_mutex will fixup
--			 * owner.
--			 */
--			if (!pi_state->owner) {
--				/*
--				 * No pi state owner, but the user
--				 * space TID is not 0. Inconsistent
--				 * state. [5]
--				 */
--				if (pid)
--					return -EINVAL;
--				/*
--				 * Take a ref on the state and
--				 * return. [4]
--				 */
--				goto out_state;
--			}
--
-+		if (!pi_state->owner) {
- 			/*
--			 * If TID is 0, then either the dying owner
--			 * has not yet executed exit_pi_state_list()
--			 * or some waiter acquired the rtmutex in the
--			 * pi state, but did not yet fixup the TID in
--			 * user space.
--			 *
--			 * Take a ref on the state and return. [6]
-+			 * No pi state owner, but the user space TID
-+			 * is not 0. Inconsistent state. [5]
- 			 */
--			if (!pid)
--				goto out_state;
--		} else {
-+			if (pid)
-+				return -EINVAL;
- 			/*
--			 * If the owner died bit is not set,
--			 * then the pi_state must have an
--			 * owner. [7]
-+			 * Take a ref on the state and return success. [4]
- 			 */
--			if (!pi_state->owner)
--				return -EINVAL;
-+			goto out_state;
- 		}
- 
- 		/*
--		 * Bail out if user space manipulated the
--		 * futex value. If pi state exists then the
--		 * owner TID must be the same as the user
--		 * space TID. [9/10]
-+		 * If TID is 0, then either the dying owner has not
-+		 * yet executed exit_pi_state_list() or some waiter
-+		 * acquired the rtmutex in the pi state, but did not
-+		 * yet fixup the TID in user space.
-+		 *
-+		 * Take a ref on the state and return success. [6]
-+		 */
-+		if (!pid)
-+			goto out_state;
-+	} else {
-+		/*
-+		 * If the owner died bit is not set, then the pi_state
-+		 * must have an owner. [7]
- 		 */
--		if (pid != task_pid_vnr(pi_state->owner))
-+		if (!pi_state->owner)
- 			return -EINVAL;
--
--	out_state:
--		atomic_inc(&pi_state->refcount);
--		*ps = pi_state;
--		return 0;
- 	}
- 
- 	/*
-+	 * Bail out if user space manipulated the futex value. If pi
-+	 * state exists then the owner TID must be the same as the
-+	 * user space TID. [9/10]
-+	 */
-+	if (pid != task_pid_vnr(pi_state->owner))
-+		return -EINVAL;
-+out_state:
-+	atomic_inc(&pi_state->refcount);
-+	*ps = pi_state;
-+	return 0;
-+}
++#ifndef CONFIG_PREEMPT_RT_FULL
 +
-+static int
-+lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
-+		union futex_key *key, struct futex_pi_state **ps)
-+{
-+	struct futex_q *match = futex_top_waiter(hb, key);
-+	struct futex_pi_state *pi_state = NULL;
-+	struct task_struct *p;
-+	pid_t pid = uval & FUTEX_TID_MASK;
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
+ 
+@@ -658,6 +667,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ 
++#endif
 +
-+	/*
-+	 * If there is a waiter on that futex, validate it and
-+	 * attach to the pi_state when the validation succeeds.
-+	 */
-+	if (match)
-+		return attach_to_pi_state(uval, match->pi_state, ps);
+ #undef E1
+ #undef E2
+ 
+@@ -689,6 +700,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
 +
-+	/*
- 	 * We are the first waiter - try to look up the real owner and attach
- 	 * the new pi_state to it, but bail out when TID = 0 [1]
- 	 */
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
+ 
+@@ -704,6 +717,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+@@ -737,6 +752,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
+ 
+@@ -752,10 +769,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock irq inversion.
+  *
+@@ -818,6 +839,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
+ #undef E2
+ #undef E3
+ 
++#endif
++
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock recursion that is actually safe.
+  */
+@@ -856,6 +881,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
+ #undef E2
+ #undef E3
+ 
++#endif
++
+ /*
+  * read-lock / write-lock recursion that is unsafe.
+  */
 -- 
 2.1.4
