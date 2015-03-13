@@ -1,8 +1,9 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 24/27] work-simple: Simple work queue implemenation
-Date: Fri, 13 Mar 2015 11:18:05 -0400
-Message-ID: <20150313151759.128223084@goodmis.org>
-References: <20150313151741.132137234@goodmis.org>
+Subject: [PATCH RT 11/25] rtmutex: Avoid pointless requeueing in the deadlock detection chain
+ walk
+Date: Fri, 13 Mar 2015 11:18:36 -0400
+Message-ID: <20150313151836.011138668@goodmis.org>
+References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,262 +11,152 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
+	Peter Zijlstra <peterz@infradead.org>,
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:32870 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1946046AbbCMPfy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:35:54 -0400
-Content-Disposition: inline; filename=0024-work-simple-Simple-work-queue-implemenation.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0011-rtmutex-Avoid-pointless-requeueing-in-the-deadlock-d.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.4.106-rt132-rc1 stable review patch.
+3.2.68-rt99-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Provides a framework for enqueuing callbacks from irq context
-PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
+upstream commit: 67792e2cabadbadd1a93f6790fa7bcbd47eca7c3
 
-Bases on wait-simple.
+In case the dead lock detector is enabled we follow the lock chain to
+the end in rt_mutex_adjust_prio_chain, even if we could stop earlier
+due to the priority/waiter constellation.
 
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+But once we are no longer the top priority waiter in a certain step
+or the task holding the lock has already the same priority then there
+is no point in dequeing and enqueing along the lock chain as there is
+no change at all.
+
+So stop the queueing at this point.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Lai Jiangshan <laijs@cn.fujitsu.com>
+Link: http://lkml.kernel.org/r/20140522031950.280830190@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/work-simple.h |  24 +++++++
- kernel/sched/Makefile       |   1 +
- kernel/sched/work-simple.c  | 172 ++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 197 insertions(+)
- create mode 100644 include/linux/work-simple.h
- create mode 100644 kernel/sched/work-simple.c
+ kernel/rtmutex.c | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++------
+ 1 file changed, 70 insertions(+), 7 deletions(-)
 
-diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
-new file mode 100644
-index 000000000000..f175fa9a6016
---- /dev/null
-+++ b/include/linux/work-simple.h
-@@ -0,0 +1,24 @@
-+#ifndef _LINUX_SWORK_H
-+#define _LINUX_SWORK_H
-+
-+#include <linux/list.h>
-+
-+struct swork_event {
-+	struct list_head item;
-+	unsigned long flags;
-+	void (*func)(struct swork_event *);
-+};
-+
-+static inline void INIT_SWORK(struct swork_event *event,
-+			      void (*func)(struct swork_event *))
-+{
-+	event->flags = 0;
-+	event->func = func;
-+}
-+
-+bool swork_queue(struct swork_event *sev);
-+
-+int swork_get(void);
-+void swork_put(void);
-+
-+#endif /* _LINUX_SWORK_H */
-diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index 9a7dd35102a3..20b5b4a9a27a 100644
---- a/kernel/sched/Makefile
-+++ b/kernel/sched/Makefile
-@@ -12,6 +12,7 @@ CFLAGS_core.o := $(PROFILING) -fno-omit-frame-pointer
- endif
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 5b100b361a64..a94f3a316dca 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -363,6 +363,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	struct rt_mutex *lock;
+ 	bool detect_deadlock;
+ 	unsigned long flags;
++	bool requeue = true;
  
- obj-y += core.o clock.o idle_task.o fair.o rt.o stop_task.o
-+obj-y += work-simple.o
- obj-$(CONFIG_SMP) += cpupri.o
- obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
- obj-$(CONFIG_SCHEDSTATS) += stats.o
-diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
-new file mode 100644
-index 000000000000..c996f755dba6
---- /dev/null
-+++ b/kernel/sched/work-simple.c
-@@ -0,0 +1,172 @@
-+/*
-+ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
-+ *
-+ * Provides a framework for enqueuing callbacks from irq context
-+ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
-+ */
-+
-+#include <linux/wait-simple.h>
-+#include <linux/work-simple.h>
-+#include <linux/kthread.h>
-+#include <linux/slab.h>
-+#include <linux/spinlock.h>
-+
-+#define SWORK_EVENT_PENDING     (1 << 0)
-+
-+static DEFINE_MUTEX(worker_mutex);
-+static struct sworker *glob_worker;
-+
-+struct sworker {
-+	struct list_head events;
-+	struct swait_head wq;
-+
-+	raw_spinlock_t lock;
-+
-+	struct task_struct *task;
-+	int refs;
-+};
-+
-+static bool swork_readable(struct sworker *worker)
-+{
-+	bool r;
-+
-+	if (kthread_should_stop())
-+		return true;
-+
-+	raw_spin_lock_irq(&worker->lock);
-+	r = !list_empty(&worker->events);
-+	raw_spin_unlock_irq(&worker->lock);
-+
-+	return r;
-+}
-+
-+static int swork_kthread(void *arg)
-+{
-+	struct sworker *worker = arg;
-+
-+	for (;;) {
-+		swait_event_interruptible(worker->wq,
-+					swork_readable(worker));
-+		if (kthread_should_stop())
-+			break;
-+
-+		raw_spin_lock_irq(&worker->lock);
-+		while (!list_empty(&worker->events)) {
-+			struct swork_event *sev;
-+
-+			sev = list_first_entry(&worker->events,
-+					struct swork_event, item);
-+			list_del(&sev->item);
-+			raw_spin_unlock_irq(&worker->lock);
-+
-+			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
-+							 &sev->flags));
-+			sev->func(sev);
-+			raw_spin_lock_irq(&worker->lock);
+ 	detect_deadlock = rt_mutex_cond_detect_deadlock(orig_waiter, chwalk);
+ 
+@@ -452,18 +453,31 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 			goto out_unlock_pi;
+ 		/*
+ 		 * If deadlock detection is off, we stop here if we
+-		 * are not the top pi waiter of the task.
++		 * are not the top pi waiter of the task. If deadlock
++		 * detection is enabled we continue, but stop the
++		 * requeueing in the chain walk.
+ 		 */
+-		if (!detect_deadlock && top_waiter != task_top_pi_waiter(task))
+-			goto out_unlock_pi;
++		if (top_waiter != task_top_pi_waiter(task)) {
++			if (!detect_deadlock)
++				goto out_unlock_pi;
++			else
++				requeue = false;
 +		}
-+		raw_spin_unlock_irq(&worker->lock);
+ 	}
+ 
+ 	/*
+-	 * When deadlock detection is off then we check, if further
+-	 * priority adjustment is necessary.
++	 * If the waiter priority is the same as the task priority
++	 * then there is no further priority adjustment necessary.  If
++	 * deadlock detection is off, we stop the chain walk. If its
++	 * enabled we continue, but stop the requeueing in the chain
++	 * walk.
+ 	 */
+-	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
+-		goto out_unlock_pi;
++	if (waiter->list_entry.prio == task->prio) {
++		if (!detect_deadlock)
++			goto out_unlock_pi;
++		else
++			requeue = false;
 +	}
-+	return 0;
-+}
+ 
+ 	/*
+ 	 * [4] Get the next lock
+@@ -497,6 +511,55 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	}
+ 
+ 	/*
++	 * If we just follow the lock chain for deadlock detection, no
++	 * need to do all the requeue operations. To avoid a truckload
++	 * of conditionals around the various places below, just do the
++	 * minimum chain walk checks.
++	 */
++	if (!requeue) {
++		/*
++		 * No requeue[7] here. Just release @task [8]
++		 */
++		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++		put_task_struct(task);
 +
-+static struct sworker *swork_create(void)
-+{
-+	struct sworker *worker;
-+
-+	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
-+	if (!worker)
-+		return ERR_PTR(-ENOMEM);
-+
-+	INIT_LIST_HEAD(&worker->events);
-+	raw_spin_lock_init(&worker->lock);
-+	init_swait_head(&worker->wq);
-+
-+	worker->task = kthread_run(swork_kthread, worker, "kswork");
-+	if (IS_ERR(worker->task)) {
-+		kfree(worker);
-+		return ERR_PTR(-ENOMEM);
-+	}
-+
-+	return worker;
-+}
-+
-+static void swork_destroy(struct sworker *worker)
-+{
-+	kthread_stop(worker->task);
-+
-+	WARN_ON(!list_empty(&worker->events));
-+	kfree(worker);
-+}
-+
-+/**
-+ * swork_queue - queue swork
-+ *
-+ * Returns %false if @work was already on a queue, %true otherwise.
-+ *
-+ * The work is queued and processed on a random CPU
-+ */
-+bool swork_queue(struct swork_event *sev)
-+{
-+	unsigned long flags;
-+
-+	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
-+		return false;
-+
-+	raw_spin_lock_irqsave(&glob_worker->lock, flags);
-+	list_add_tail(&sev->item, &glob_worker->events);
-+	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
-+
-+	swait_wake(&glob_worker->wq);
-+	return true;
-+}
-+EXPORT_SYMBOL_GPL(swork_queue);
-+
-+/**
-+ * swork_get - get an instance of the sworker
-+ *
-+ * Returns an negative error code if the initialization if the worker did not
-+ * work, %0 otherwise.
-+ *
-+ */
-+int swork_get(void)
-+{
-+	struct sworker *worker;
-+
-+	mutex_lock(&worker_mutex);
-+	if (!glob_worker) {
-+		worker = swork_create();
-+		if (IS_ERR(worker)) {
-+			mutex_unlock(&worker_mutex);
-+			return -ENOMEM;
++		/*
++		 * [9] check_exit_conditions_3 protected by lock->wait_lock.
++		 * If there is no owner of the lock, end of chain.
++		 */
++		if (!rt_mutex_owner(lock)) {
++			raw_spin_unlock(&lock->wait_lock);
++			return 0;
 +		}
 +
-+		glob_worker = worker;
++		/* [10] Grab the next task, i.e. owner of @lock */
++		task = rt_mutex_owner(lock);
++		get_task_struct(task);
++		raw_spin_lock_irqsave(&task->pi_lock, flags);
++
++		/*
++		 * No requeue [11] here. We just do deadlock detection.
++		 *
++		 * [12] Store whether owner is blocked
++		 * itself. Decision is made after dropping the locks
++		 */
++		next_lock = task_blocked_on_lock(task);
++		/*
++		 * Get the top waiter for the next iteration
++		 */
++		top_waiter = rt_mutex_top_waiter(lock);
++
++		/* [13] Drop locks */
++		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++		raw_spin_unlock(&lock->wait_lock);
++
++		/* If owner is not blocked, end of chain. */
++		if (!next_lock)
++			goto out_put_task;
++		goto again;
 +	}
 +
-+	glob_worker->refs++;
-+	mutex_unlock(&worker_mutex);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL_GPL(swork_get);
-+
-+/**
-+ * swork_put - puts an instance of the sworker
-+ *
-+ * Will destroy the sworker thread. This function must not be called until all
-+ * queued events have been completed.
-+ */
-+void swork_put(void)
-+{
-+	mutex_lock(&worker_mutex);
-+
-+	glob_worker->refs--;
-+	if (glob_worker->refs > 0)
-+		goto out;
-+
-+	swork_destroy(glob_worker);
-+	glob_worker = NULL;
-+out:
-+	mutex_unlock(&worker_mutex);
-+}
-+EXPORT_SYMBOL_GPL(swork_put);
++	/*
+ 	 * Store the current top waiter before doing the requeue
+ 	 * operation on @lock. We need it for the boost/deboost
+ 	 * decision below.
 -- 
 2.1.4
-
-
