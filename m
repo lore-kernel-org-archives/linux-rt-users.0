@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 20/27] arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-Date: Fri, 13 Mar 2015 11:18:01 -0400
-Message-ID: <20150313151758.366853155@goodmis.org>
+Subject: [PATCH RT 17/27] rt-mutex: avoid a NULL pointer dereference on deadlock
+Date: Fri, 13 Mar 2015 11:17:58 -0400
+Message-ID: <20150313151757.724517846@goodmis.org>
 References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -13,10 +13,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0020-arm-futex-disable-preemption-during-futex_atomic_cmp.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0054.hostedemail.com ([216.40.44.54]:33859 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1756136AbbCMPSC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:18:02 -0400
+Content-Disposition: inline; filename=0017-rt-mutex-avoid-a-NULL-pointer-dereference-on-deadloc.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -25,54 +30,39 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The ARM UP implementation of futex_atomic_cmpxchg_inatomic() assumes that
-pagefault_disable() inherits a preempt disabled section. This assumtion
-is true for mainline but -RT reverts this and allows preemption in
-pagefault disabled regions.
-The code sequence of futex_atomic_cmpxchg_inatomic():
+With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
+waiter to the waitqueue. Later, we try to remove it via remove_waiter()
+and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
+pointer.
+Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
+to get one twice in a row.
 
-|   x = *futex;
-|   if (x == oldval)
-|           *futex = newval;
+Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
+detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
+detection smarter").
 
-The problem occurs if the code is preempted after reading the futex value or
-after comparing it with x. While preempted, the futex owner has to be
-scheduled which then releases the lock (in userland because it has no waiter
-yet). Once the code is back on the CPU, it overwrites the futex value
-with with the old PID and the waiter bit set.
-
-The workaround is to explicit disable code preemption to avoid the
-described race window.
-
-Debugged-by:  Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/include/asm/futex.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ kernel/rtmutex.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm/include/asm/futex.h b/arch/arm/include/asm/futex.h
-index 7be54690aeec..3d1ae210c4b5 100644
---- a/arch/arm/include/asm/futex.h
-+++ b/arch/arm/include/asm/futex.h
-@@ -94,6 +94,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
- 	if (!access_ok(VERIFY_WRITE, uaddr, sizeof(u32)))
- 		return -EFAULT;
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 1889aedfad86..4cc273b85beb 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1487,7 +1487,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+ 	set_current_state(TASK_RUNNING);
  
-+	preempt_disable_rt();
-+
- 	__asm__ __volatile__("@futex_atomic_cmpxchg_inatomic\n"
- 	"1:	" TUSER(ldr) "	%1, [%4]\n"
- 	"	teq	%1, %2\n"
-@@ -105,6 +107,8 @@ futex_atomic_cmpxchg_inatomic(u32 *uval, u32 __user *uaddr,
- 	: "cc", "memory");
- 
- 	*uval = val;
-+
-+	preempt_enable_rt();
- 	return ret;
- }
+ 	if (unlikely(ret)) {
+-		remove_waiter(lock, &waiter);
++		if (rt_mutex_has_waiters(lock))
++			remove_waiter(lock, &waiter);
+ 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
+ 	}
  
 -- 
 2.1.4
+
+
