@@ -1,85 +1,52 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [rfc patch] rt,nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Fri, 13 Mar 2015 03:13:15 +0100
-Message-ID: <1426212795.3328.21.camel@gmail.com>
-References: <20150216111822.GA21649@linutronix.de>
-	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>
-	 <1425911771.30469.8.camel@gmail.com> <1425980136.3507.17.camel@gmail.com>
-	 <1426153093.4190.2.camel@gmail.com>
-	 <20150312110911.1a93c8e8@gandalf.local.home>
+From: =?UTF-8?Q?Michel_D=c3=a4nzer?= <michel@daenzer.net>
+Subject: Re: [OSADL QA 3.18.9-rt4 #1] Radeon driver hangs
+Date: Fri, 13 Mar 2015 11:23:38 +0900
+Message-ID: <55024A2A.8000206@daenzer.net>
+References: <55021FFE.904@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f49.google.com ([74.125.82.49]:44448 "EHLO
-	mail-wg0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752225AbbCMCNS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 Mar 2015 22:13:18 -0400
-In-Reply-To: <20150312110911.1a93c8e8@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
+ DRI Development <dri-devel@lists.freedesktop.org>
+To: Carsten Emde <C.Emde@osadl.org>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <55021FFE.904@osadl.org>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2015-03-12 at 11:09 -0400, Steven Rostedt wrote:
-> On Thu, 12 Mar 2015 10:38:13 +0100
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> 
-
-> > --- a/kernel/sched/core.c
-> > +++ b/kernel/sched/core.c
-> > @@ -783,12 +783,16 @@ static inline bool got_nohz_idle_kick(vo
-> >  #ifdef CONFIG_NO_HZ_FULL
-> >  bool sched_can_stop_tick(void)
-> >  {
-> > +	int softirqd = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
-> > +
-> > +	softirqd &= current == this_cpu_ksoftirqd();
-> 
-> Ug, binary and logical ANDs should not be combined. Just looks nasty.
-> What about:
-> 
-> 	softirqd = !!(IS_ENABLED(CONFIG_PREEMPT_RT_FULL) &&
-> 			current == this_cpu_ksoftirqd());
-
-My way looks prettier to me, but I seem to be the only who thinks so
-(this is not the first time it got a gripe), so I'll change it ;-)
-
-> > +
-> >  	/*
-> >  	 * More than one running task need preemption.
-> >  	 * nr_running update is assumed to be visible
-> >  	 * after IPI is sent from wakers.
-> >  	 */
-> > -	if (this_rq()->nr_running > 1)
-> > +	if (this_rq()->nr_running - softirqd > 1)
-> 
-> There should also be a comment explaining this hack.
-
-Yeah.
-  
-> > --- a/kernel/time/tick-sched.c
-> > +++ b/kernel/time/tick-sched.c
-> > @@ -222,7 +222,14 @@ void __tick_nohz_full_check(void)
-> >  
-> >  static void nohz_full_kick_work_func(struct irq_work *work)
-> >  {
-> > +	unsigned long flags;
-> > +
-> > +	local_save_flags(flags);
-> > +	/* ksoftirqd processes softirqs with interrupts enabled */
-> > +	if (current == this_cpu_ksoftirqd())
-> > +		local_irq_disable();
-> 
-> Why the funkiness above? Why not just call local_irq_save()?
-
-Gone.  It would be good to make the rest gone too, it's ain't pretty it
-just works.
-
-	-Mike
-
+T24gMTMuMDMuMjAxNSAwODoyMywgQ2Fyc3RlbiBFbWRlIHdyb3RlOgo+IChBYm91dCAzMCBPU0FE
+TCBRQSBGYXJtIHN5c3RlbXMgYXJlIG5vdyBydW5uaW5nIDMuMTguOS1ydDQuIEJUVzogVG8KPiBj
+aGVjayBvdXQgd2hhdCBrZXJuZWxzIGFyZSB1bmRlciB0ZXN0IHlvdSBtYXkgc29ydCB0aGUga2Vy
+bmVsIGxpc3QKPiAoaHR0cHM6Ly93d3cub3NhZGwub3JnLz9pZD05MzMpIGJ5IGtlcm5lbCB2ZXJz
+aW9uCj4gKGh0dHBzOi8vd3d3Lm9zYWRsLm9yZy8/aWQ9MTAwMSkgYW5kIHNjcm9sbCBkb3duIHRo
+ZSBwYWdlLikKPiAKPiBUaGUgbW9zdCBzdHJpa2luZyBwcm9ibGVtIG9mIGtlcm5lbCAzLjE4Ljkt
+cnQ0IGFmZmVjdHMgYWxsIHN5c3RlbXMgdGhhdAo+IGFyZSBlcXVpcHBlZCB3aXRoIFJhZGVvbiBn
+cmFwaGljcyAoaXJyZXNwZWN0aXZlIHdoZXRoZXIgUENJZSBjYXJkcyBvcgo+IEFQVXMgd2l0aCBv
+bi1jaGlwIGdyYXBoaWNzKS4gVGhleSBzdWZmZXIgZnJvbSBhIGhhbmdpbmcgcmFkZW9uIGRyaXZl
+ci4KPiBUaGUgYmxvY2sgb2NjdXJzIHdoZW4gYWNjZWxlcmF0ZWQgZ3JhcGhpY3MgbG9hZCBpcyBj
+cmVhdGVkIGJ5IHgxMXBlcmYgb3IKPiBnbHRlc3RwZXJmLiBTb21ldGltZXMgb25seSB0aGUgZ3Jh
+cGhpY3MgYXJlIGZyb3plbiB3aGlsZSBzc2ggbG9naW4gc3RpbGwKPiBpcyBwb3NzaWJsZSwgc29t
+dGltZXMgdGhlIGVudGlyZSBib3ggaXMgbm8gbG9uZ2VyIGFjY2Vzc2libGUgYXQgYWxsLiBJbgo+
+IGFueSBjYXNlLCBhIHJlYm9vdCBpcyBuZWVkZWQgdG8gcmVjb3ZlciBmcm9tIHRoaXMgc2l0dWF0
+aW9uLgo+IAo+IEhlcmUgaXMgYSBzZWxlY3Rpb24gb2Yga2VybmVsIG1lc3NhZ2VzOgoKWy4uLl0K
+ClRoZSBjb21taXRzIGZyb20KaHR0cDovL2NnaXQuZnJlZWRlc2t0b3Aub3JnL35haXJsaWVkL2xp
+bnV4L2NvbW1pdC8/aD1kcm0tZml4ZXMmaWQ9Zjk1NzA2M2ZlZTYzOTJiYjkzNjUzNzBkYjZkYjc0
+ZGMwYjJkY2UwYQp0bwpodHRwOi8vY2dpdC5mcmVlZGVza3RvcC5vcmcvfmFpcmxpZWQvbGludXgv
+Y29tbWl0Lz9oPWRybS1maXhlcyZpZD1jZmZlZmQ5YmIzMWNkMzVhYjc0NWQzYjQ5MDA1ZDEwNjE2
+ZDI1YmRjCmFuZApodHRwOi8vY2dpdC5mcmVlZGVza3RvcC5vcmcvfmFpcmxpZWQvbGludXgvY29t
+bWl0Lz9oPWRybS1maXhlcyZpZD1iNjYxMDEwMTcxOGQ0YWI5MGQ3OTNjNDgyNjI1ZTk4ZWIxMjYy
+Y2FkCm1pZ2h0IGhlbHAgZm9yIHRoaXMuCgoKLS0gCkVhcnRobGluZyBNaWNoZWwgRMOkbnplciAg
+ICAgICAgICAgICAgIHwgICAgICAgICAgICAgICBodHRwOi8vd3d3LmFtZC5jb20KTGlicmUgc29m
+dHdhcmUgZW50aHVzaWFzdCAgICAgICAgICAgICB8ICAgICAgICAgICAgIE1lc2EgYW5kIFggZGV2
+ZWxvcGVyCl9fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fCmRy
+aS1kZXZlbCBtYWlsaW5nIGxpc3QKZHJpLWRldmVsQGxpc3RzLmZyZWVkZXNrdG9wLm9yZwpodHRw
+Oi8vbGlzdHMuZnJlZWRlc2t0b3Aub3JnL21haWxtYW4vbGlzdGluZm8vZHJpLWRldmVsCg==
