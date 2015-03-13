@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 27/31] timers: Track total number of timers in list
-Date: Fri, 13 Mar 2015 11:15:21 -0400
-Message-ID: <20150313151519.552895619@goodmis.org>
+Subject: [PATCH RT 05/31] rtmutex: No need to keep task ref for lock owner check
+Date: Fri, 13 Mar 2015 11:14:59 -0400
+Message-ID: <20150313151515.716153490@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,15 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Triplett <josh@joshtriplett.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Oleg Nesterov <oleg@redhat.com>,
-	Mike Galbraith <bitbucket@online.de>
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0027-timers-Track-total-number-of-timers-in-list.patch
+Content-Disposition: inline; filename=0005-rtmutex-No-need-to-keep-task-ref-for-lock-owner-chec.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -27,70 +23,46 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: fff421580f512fc044cc7421fdff31a7a6997350
+upstream commit: 2ffa5a5cd2fe792b6399c903d5172adf088d8ff7
 
-Currently, the tvec_base structure's ->active_timers field tracks only
-the non-deferrable timers, which means that even if ->active_timers is
-zero, there might well be deferrable timers in the list.  This commit
-therefore adds an ->all_timers field to track all the timers, whether
-deferrable or not.
+There is no point to keep the task ref across the check for lock
+owner. Drop the ref before that, so the protection context is clear.
 
-Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Reviewed-by: Josh Triplett <josh@joshtriplett.org>
-Acked-by: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Oleg Nesterov <oleg@redhat.com>
+Found while documenting the chain walk.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Tested-by: Mike Galbraith <bitbucket@online.de>
+Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/timer.c | 5 +++++
- 1 file changed, 5 insertions(+)
+ kernel/rtmutex.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 40cfa14131ca..23919c7c212f 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -84,6 +84,7 @@ struct tvec_base {
- 	unsigned long timer_jiffies;
- 	unsigned long next_timer;
- 	unsigned long active_timers;
-+	unsigned long all_timers;
- 	struct tvec_root tv1;
- 	struct tvec tv2;
- 	struct tvec tv3;
-@@ -395,6 +396,7 @@ static void internal_add_timer(struct tvec_base *base, struct timer_list *timer)
- 			base->next_timer = timer->expires;
- 		base->active_timers++;
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 1052a337fa2c..eb748b542095 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -394,6 +394,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 	/* Release the task */
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
++	put_task_struct(task);
++
+ 	if (!rt_mutex_owner(lock)) {
+ 		struct rt_mutex_waiter *lock_top_waiter;
+ 
+@@ -405,9 +407,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		if (top_waiter != lock_top_waiter)
+ 			rt_mutex_wake_waiter(lock_top_waiter);
+ 		raw_spin_unlock(&lock->wait_lock);
+-		goto out_put_task;
++		return 0;
  	}
-+	base->all_timers++;
- }
+-	put_task_struct(task);
  
- #ifdef CONFIG_TIMER_STATS
-@@ -674,6 +676,7 @@ detach_expired_timer(struct timer_list *timer, struct tvec_base *base)
- 	detach_timer(timer, true);
- 	if (!tbase_get_deferrable(timer->base))
- 		base->active_timers--;
-+	base->all_timers--;
- }
- 
- static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
-@@ -688,6 +691,7 @@ static int detach_if_pending(struct timer_list *timer, struct tvec_base *base,
- 		if (timer->expires == base->next_timer)
- 			base->next_timer = base->timer_jiffies;
- 	}
-+	base->all_timers--;
- 	return 1;
- }
- 
-@@ -1678,6 +1682,7 @@ static int __cpuinit init_timers_cpu(int cpu)
- 	base->timer_jiffies = jiffies;
- 	base->next_timer = base->timer_jiffies;
- 	base->active_timers = 0;
-+	base->all_timers = 0;
- 	return 0;
- }
- 
+ 	/* Grab the next task */
+ 	task = rt_mutex_owner(lock);
 -- 
 2.1.4
