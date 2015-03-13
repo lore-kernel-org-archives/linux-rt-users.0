@@ -1,49 +1,29 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 00/39] Linux 3.14.34-rt32-rc1
-Date: Fri, 13 Mar 2015 11:11:35 -0400
-Message-ID: <20150313151134.GF3042@home.goodmis.org>
-References: <20150312191307.081068717@goodmis.org>
- <1426222153.17611.4.camel@gmail.com>
+Subject: [PATCH RT 21/36] ARM: enable irq in translation/section permission
+ fault handlers
+Date: Fri, 13 Mar 2015 11:13:49 -0400
+Message-ID: <20150313151349.GG3042@home.goodmis.org>
+References: <20150312192139.799127123@goodmis.org>
+ <20150312192157.882657814@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	stable-rt@vger.kernel.org, Mike Galbraith <mgalbraith@suse.de>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1426222153.17611.4.camel@gmail.com>
+In-Reply-To: <20150312192157.882657814@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Mar 13, 2015 at 05:49:13AM +0100, Mike Galbraith wrote:
-> On Thu, 2015-03-12 at 15:13 -0400, Steven Rostedt wrote:
-> > Dear RT Folks,
-> >=20
-> > This is the RT stable review cycle of patch 3.14.34-rt32-rc1.
-> >=20
-> > Please scream at me if I messed something up.
->=20
-> Hm, in both 12/14 series, 21/N went on a walkabout.
 
-Here's 21 in 3.14-rt:
-
-
-=46rom fe58592f2863d70ef37866d99d32b69d3cc0c3f3 Mon Sep 17 00:00:00 200=
-1
-Date: Wed, 10 Dec 2014 10:32:09 +0800
-Subject: ARM: enable irq in translation/section permission fault handle=
-rs
-MIME-Version: 1.0
-Content-Type: text/plain; charset=3DUTF-8
-Content-Transfer-Encoding: 8bit
-
-3.14.34-rt32-rc1 stable review patch.
+3.12.38-rt53-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
