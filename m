@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/31] rtmutex: Avoid pointless requeueing in the deadlock detection chain
- walk
-Date: Fri, 13 Mar 2015 11:15:05 -0400
-Message-ID: <20150313151516.703355477@goodmis.org>
+Subject: [PATCH RT 02/31] create-rt-enqueue
+Date: Fri, 13 Mar 2015 11:14:56 -0400
+Message-ID: <20150313151515.187101395@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,153 +9,182 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-rtmutex-Avoid-pointless-requeueing-in-the-deadlock-d.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0205.hostedemail.com ([216.40.44.205]:43406 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1755890AbbCMPPU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 13 Mar 2015 11:15:20 -0400
+Content-Disposition: inline; filename=0002-create-rt-enqueue.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.10.70-rt75-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
 
-upstream commit: 67792e2cabadbadd1a93f6790fa7bcbd47eca7c3
+To ease backporting patches, replace the plist functions with
+rt_mutex_enqueue{_pi}() and rt_mutex_dequeue{_pi}() like upstream -rt does.
+This will lower the conflicts in backporting patches.
 
-In case the dead lock detector is enabled we follow the lock chain to
-the end in rt_mutex_adjust_prio_chain, even if we could stop earlier
-due to the priority/waiter constellation.
+This also makes sure that every time a waiter is added to the pi_list it
+matches the priority of the waiter list.
 
-But once we are no longer the top priority waiter in a certain step
-or the task holding the lock has already the same priority then there
-is no point in dequeing and enqueing along the lock chain as there is
-no change at all.
-
-So stop the queueing at this point.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Cc: Lai Jiangshan <laijs@cn.fujitsu.com>
-Link: http://lkml.kernel.org/r/20140522031950.280830190@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 77 ++++++++++++++++++++++++++++++++++++++++++++++++++------
- 1 file changed, 70 insertions(+), 7 deletions(-)
+ kernel/rtmutex.c | 58 ++++++++++++++++++++++++++++++++++++++------------------
+ 1 file changed, 40 insertions(+), 18 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 31555c11c58a..b7b1de2acf0b 100644
+index 2671e5532534..7cd751bb891a 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -350,6 +350,7 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	struct rt_mutex *lock;
- 	bool detect_deadlock;
- 	unsigned long flags;
-+	bool requeue = true;
+@@ -155,6 +155,31 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock)
+ }
+ #endif
  
- 	detect_deadlock = rt_mutex_cond_detect_deadlock(orig_waiter, chwalk);
++static inline void
++rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_add(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_dequeue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	waiter->pi_list_entry.prio = waiter->list_entry.prio;
++	plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
++static inline void
++rt_mutex_dequeue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
+ static inline void init_lists(struct rt_mutex *lock)
+ {
+ 	if (unlikely(!lock->wait_list.node_list.prev))
+@@ -363,9 +388,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	top_waiter = rt_mutex_top_waiter(lock);
  
-@@ -439,18 +440,31 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 			goto out_unlock_pi;
- 		/*
- 		 * If deadlock detection is off, we stop here if we
--		 * are not the top pi waiter of the task.
-+		 * are not the top pi waiter of the task. If deadlock
-+		 * detection is enabled we continue, but stop the
-+		 * requeueing in the chain walk.
+ 	/* Requeue the waiter */
+-	plist_del(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
+ 
+ 	/* Release the task */
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+@@ -391,17 +416,15 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+ 		/* Boost the owner */
+-		plist_del(&top_waiter->pi_list_entry, &task->pi_waiters);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_dequeue_pi(task, top_waiter);
++		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 
+ 	} else if (top_waiter == waiter) {
+ 		/* Deboost the owner */
+-		plist_del(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_dequeue_pi(task, waiter);
+ 		waiter = rt_mutex_top_waiter(lock);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 	}
+ 
+@@ -517,7 +540,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
+ 
+ 		/* remove the queued waiter. */
+ 		if (waiter) {
+-			plist_del(&waiter->list_entry, &lock->wait_list);
++			rt_mutex_dequeue(lock, waiter);
+ 			task->pi_blocked_on = NULL;
+ 		}
+ 
+@@ -527,8 +550,7 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
  		 */
--		if (!detect_deadlock && top_waiter != task_top_pi_waiter(task))
--			goto out_unlock_pi;
-+		if (top_waiter != task_top_pi_waiter(task)) {
-+			if (!detect_deadlock)
-+				goto out_unlock_pi;
-+			else
-+				requeue = false;
-+		}
+ 		if (rt_mutex_has_waiters(lock)) {
+ 			top = rt_mutex_top_waiter(lock);
+-			top->pi_list_entry.prio = top->list_entry.prio;
+-			plist_add(&top->pi_list_entry, &task->pi_waiters);
++			rt_mutex_enqueue_pi(task, top);
+ 		}
+ 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
  	}
+@@ -606,7 +628,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 	/* Get the top priority waiter on the lock */
+ 	if (rt_mutex_has_waiters(lock))
+ 		top_waiter = rt_mutex_top_waiter(lock);
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
  
- 	/*
--	 * When deadlock detection is off then we check, if further
--	 * priority adjustment is necessary.
-+	 * If the waiter priority is the same as the task priority
-+	 * then there is no further priority adjustment necessary.  If
-+	 * deadlock detection is off, we stop the chain walk. If its
-+	 * enabled we continue, but stop the requeueing in the chain
-+	 * walk.
+ 	task->pi_blocked_on = waiter;
+ 
+@@ -617,8 +639,8 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 
+ 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
+-		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
++		rt_mutex_dequeue_pi(owner, top_waiter);
++		rt_mutex_enqueue_pi(owner, waiter);
+ 
+ 		__rt_mutex_adjust_prio(owner);
+ 		if (rt_mutex_real_waiter(owner->pi_blocked_on))
+@@ -679,7 +701,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
+ 	 * boosted mode and go back to normal after releasing
+ 	 * lock->wait_lock.
  	 */
--	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
--		goto out_unlock_pi;
-+	if (waiter->list_entry.prio == task->prio) {
-+		if (!detect_deadlock)
-+			goto out_unlock_pi;
-+		else
-+			requeue = false;
-+	}
+-	plist_del(&waiter->pi_list_entry, &current->pi_waiters);
++	rt_mutex_dequeue_pi(current, waiter);
  
  	/*
- 	 * [4] Get the next lock
-@@ -484,6 +498,55 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	}
+ 	 * As we are waking up the top waiter, and the waiter stays
+@@ -716,7 +738,7 @@ static void remove_waiter(struct rt_mutex *lock,
+ 	unsigned long flags;
  
- 	/*
-+	 * If we just follow the lock chain for deadlock detection, no
-+	 * need to do all the requeue operations. To avoid a truckload
-+	 * of conditionals around the various places below, just do the
-+	 * minimum chain walk checks.
-+	 */
-+	if (!requeue) {
-+		/*
-+		 * No requeue[7] here. Just release @task [8]
-+		 */
-+		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-+		put_task_struct(task);
-+
-+		/*
-+		 * [9] check_exit_conditions_3 protected by lock->wait_lock.
-+		 * If there is no owner of the lock, end of chain.
-+		 */
-+		if (!rt_mutex_owner(lock)) {
-+			raw_spin_unlock(&lock->wait_lock);
-+			return 0;
-+		}
-+
-+		/* [10] Grab the next task, i.e. owner of @lock */
-+		task = rt_mutex_owner(lock);
-+		get_task_struct(task);
-+		raw_spin_lock_irqsave(&task->pi_lock, flags);
-+
-+		/*
-+		 * No requeue [11] here. We just do deadlock detection.
-+		 *
-+		 * [12] Store whether owner is blocked
-+		 * itself. Decision is made after dropping the locks
-+		 */
-+		next_lock = task_blocked_on_lock(task);
-+		/*
-+		 * Get the top waiter for the next iteration
-+		 */
-+		top_waiter = rt_mutex_top_waiter(lock);
-+
-+		/* [13] Drop locks */
-+		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-+		raw_spin_unlock(&lock->wait_lock);
-+
-+		/* If owner is not blocked, end of chain. */
-+		if (!next_lock)
-+			goto out_put_task;
-+		goto again;
-+	}
-+
-+	/*
- 	 * Store the current top waiter before doing the requeue
- 	 * operation on @lock. We need it for the boost/deboost
- 	 * decision below.
+ 	raw_spin_lock_irqsave(&current->pi_lock, flags);
+-	plist_del(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_dequeue(lock, waiter);
+ 	current->pi_blocked_on = NULL;
+ 	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
+ 
+@@ -727,13 +749,13 @@ static void remove_waiter(struct rt_mutex *lock,
+ 
+ 		raw_spin_lock_irqsave(&owner->pi_lock, flags);
+ 
+-		plist_del(&waiter->pi_list_entry, &owner->pi_waiters);
++		rt_mutex_dequeue_pi(owner, waiter);
+ 
+ 		if (rt_mutex_has_waiters(lock)) {
+ 			struct rt_mutex_waiter *next;
+ 
+ 			next = rt_mutex_top_waiter(lock);
+-			plist_add(&next->pi_list_entry, &owner->pi_waiters);
++			rt_mutex_enqueue_pi(owner, next);
+ 		}
+ 		__rt_mutex_adjust_prio(owner);
+ 
 -- 
 2.1.4
+
+
