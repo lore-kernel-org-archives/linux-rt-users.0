@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 12/25] futex: Make unlock_pi more robust
-Date: Fri, 13 Mar 2015 11:18:37 -0400
-Message-ID: <20150313151836.152005078@goodmis.org>
+Subject: [PATCH RT 06/25] rtmutex: Clarify the boost/deboost part
+Date: Fri, 13 Mar 2015 11:18:31 -0400
+Message-ID: <20150313151835.093875256@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,15 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Darren Hart <darren@dvhart.com>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0012-futex-Make-unlock_pi-more-robust.patch
+Content-Disposition: inline; filename=0006-rtmutex-Clarify-the-boost-deboost-part.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,163 +24,143 @@ If anyone has any objections, please let me know.
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: ccf9e6a80d9e1b9df69c98e6b9745cf49869ee15
+upstream commit: a57594a13a446d1a6ab1dcd48339f799ce586843
 
-The kernel tries to atomically unlock the futex without checking
-whether there is kernel state associated to the futex.
-
-So if user space manipulated the user space value, this will leave
-kernel internal state around associated to the owner task.
-
-For robustness sake, lookup first whether there are waiters on the
-futex. If there are waiters, wake the top priority waiter with all the
-proper sanity checks applied.
-
-If there are no waiters, do the atomic release. We do not have to
-preserve the waiters bit in this case, because a potentially incoming
-waiter is blocked on the hb->lock and will acquire the futex
-atomically. We neither have to preserve the owner died bit. The caller
-is the owner and it was supposed to cleanup the mess.
+Add a separate local variable for the boost/deboost logic to make the
+code more readable. Add comments where appropriate.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Darren Hart <darren@dvhart.com>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Link: http://lkml.kernel.org/r/20140611204237.016987332@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/futex.c | 80 +++++++++++++++++++---------------------------------------
- 1 file changed, 26 insertions(+), 54 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 8ed0948e6459..71d414b4ce34 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1039,22 +1039,6 @@ static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this)
- 	return 0;
- }
- 
--static int unlock_futex_pi(u32 __user *uaddr, u32 uval)
--{
--	u32 uninitialized_var(oldval);
--
--	/*
--	 * There is no waiter, so we unlock the futex. The owner died
--	 * bit has not to be preserved here. We are the owner:
--	 */
--	if (cmpxchg_futex_value_locked(&oldval, uaddr, uval, 0))
--		return -EFAULT;
--	if (oldval != uval)
--		return -EAGAIN;
--
--	return 0;
--}
--
- /*
-  * Express the locking dependencies for lockdep:
-  */
-@@ -2242,11 +2226,10 @@ uaddr_faulted:
-  */
- static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
+Conflicts:
+	kernel/rtmutex.c
+---
+ kernel/rtmutex.c | 57 +++++++++++++++++++++++++++++++++++++++++++++++---------
+ 1 file changed, 48 insertions(+), 9 deletions(-)
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 7d338c8b23b9..34c63cb7ff22 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -289,9 +289,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 				      struct rt_mutex_waiter *orig_waiter,
+ 				      struct task_struct *top_task)
  {
--	struct futex_hash_bucket *hb;
--	struct futex_q *this, *next;
--	struct plist_head *head;
-+	u32 uninitialized_var(curval), uval, vpid = task_pid_vnr(current);
- 	union futex_key key = FUTEX_KEY_INIT;
--	u32 uval, vpid = task_pid_vnr(current);
-+	struct futex_hash_bucket *hb;
-+	struct futex_q *match;
- 	int ret;
+-	struct rt_mutex *lock;
+ 	struct rt_mutex_waiter *waiter, *top_waiter = orig_waiter;
++	struct rt_mutex_waiter *prerequeue_top_waiter;
+ 	int detect_deadlock, ret = 0, depth = 0;
++	struct rt_mutex *lock;
+ 	unsigned long flags;
  
- retry:
-@@ -2259,61 +2242,50 @@ retry:
- 		return -EPERM;
- 
- 	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, VERIFY_WRITE);
--	if (unlikely(ret != 0))
--		goto out;
-+	if (ret)
-+		return ret;
- 
- 	hb = hash_futex(&key);
- 	spin_lock(&hb->lock);
- 
- 	/*
--	 * To avoid races, try to do the TID -> 0 atomic transition
--	 * again. If it succeeds then we can return without waking
--	 * anyone else up. We only try this if neither the waiters nor
--	 * the owner died bit are set.
-+	 * Check waiters first. We do not trust user space values at
-+	 * all and we at least want to know if user space fiddled
-+	 * with the futex value instead of blindly unlocking.
- 	 */
--	if (!(uval & ~FUTEX_TID_MASK) &&
--	    cmpxchg_futex_value_locked(&uval, uaddr, vpid, 0))
--		goto pi_faulted;
--	/*
--	 * Rare case: we managed to release the lock atomically,
--	 * no need to wake anyone else up:
--	 */
--	if (unlikely(uval == vpid))
--		goto out_unlock;
--
--	/*
--	 * Ok, other tasks may need to be woken up - check waiters
--	 * and do the wakeup if necessary:
--	 */
--	head = &hb->chain;
--
--	plist_for_each_entry_safe(this, next, head, list) {
--		if (!match_futex (&this->key, &key))
--			continue;
--		ret = wake_futex_pi(uaddr, uval, this);
-+	match = futex_top_waiter(hb, &key);
-+	if (match) {
-+		ret = wake_futex_pi(uaddr, uval, match);
- 		/*
--		 * The atomic access to the futex value
--		 * generated a pagefault, so retry the
--		 * user-access and the wakeup:
-+		 * The atomic access to the futex value generated a
-+		 * pagefault, so retry the user-access and the wakeup:
- 		 */
- 		if (ret == -EFAULT)
- 			goto pi_faulted;
- 		goto out_unlock;
+ 	detect_deadlock = debug_rt_mutex_detect_deadlock(orig_waiter,
+@@ -398,9 +399,14 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		goto out_unlock_pi;
  	}
-+
- 	/*
--	 * No waiters - kernel unlocks the futex:
-+	 * We have no kernel internal state, i.e. no waiters in the
-+	 * kernel. Waiters which are about to queue themselves are stuck
-+	 * on hb->lock. So we can safely ignore them. We do neither
-+	 * preserve the WAITERS bit not the OWNER_DIED one. We are the
-+	 * owner.
- 	 */
--	ret = unlock_futex_pi(uaddr, uval);
--	if (ret == -EFAULT)
-+	if (cmpxchg_futex_value_locked(&curval, uaddr, uval, 0))
- 		goto pi_faulted;
+ 
+-	top_waiter = rt_mutex_top_waiter(lock);
++	/*
++	 * Store the current top waiter before doing the requeue
++	 * operation on @lock. We need it for the boost/deboost
++	 * decision below.
++	 */
++	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
+ 
+-	/* Requeue the waiter */
++	/* Requeue the waiter in the lock waiter list. */
+ 	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+ 	rt_mutex_enqueue(lock, waiter);
+@@ -409,6 +415,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 	put_task_struct(task);
  
 +	/*
-+	 * If uval has changed, let user space handle it.
++	 * We must abort the chain walk if there is no lock owner even
++	 * in the dead lock detection case, as we have nothing to
++	 * follow here. This is the end of the chain we are walking.
 +	 */
-+	ret = (curval == uval) ? 0 : -EAGAIN;
-+
- out_unlock:
- 	spin_unlock(&hb->lock);
- 	put_futex_key(&key);
--
--out:
- 	return ret;
+ 	if (!rt_mutex_owner(lock)) {
+ 		struct rt_mutex_waiter *lock_top_waiter;
  
-+
- pi_faulted:
- 	spin_unlock(&hb->lock);
- 	put_futex_key(&key);
+@@ -417,29 +428,48 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		 * to wake the new top waiter up to try to get the lock.
+ 		 */
+ 		lock_top_waiter = rt_mutex_top_waiter(lock);
+-		if (top_waiter != lock_top_waiter)
++		if (prerequeue_top_waiter != lock_top_waiter)
+ 			rt_mutex_wake_waiter(lock_top_waiter);
+ 		raw_spin_unlock(&lock->wait_lock);
+ 		return 0;
+ 	}
+ 
+-	/* Grab the next task */
++	/* Grab the next task, i.e. the owner of @lock */
+ 	task = rt_mutex_owner(lock);
+ 	get_task_struct(task);
+ 	raw_spin_lock_irqsave(&task->pi_lock, flags);
+ 
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		/* Boost the owner */
+-		rt_mutex_dequeue_pi(task, top_waiter);
++		/*
++		 * The waiter became the new top (highest priority)
++		 * waiter on the lock. Replace the previous top waiter
++		 * in the owner tasks pi waiters list with this waiter
++		 * and adjust the priority of the owner.
++		 */
++		rt_mutex_dequeue_pi(task, prerequeue_top_waiter);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
+ 
+-	} else if (top_waiter == waiter) {
+-		/* Deboost the owner */
++	} else if (prerequeue_top_waiter == waiter) {
++		/*
++		 * The waiter was the top waiter on the lock, but is
++		 * no longer the top prority waiter. Replace waiter in
++		 * the owner tasks pi waiters list with the new top
++		 * (highest priority) waiter and adjust the priority
++		 * of the owner.
++		 * The new top waiter is stored in @waiter so that
++		 * @waiter == @top_waiter evaluates to true below and
++		 * we continue to deboost the rest of the chain.
++		 */
+ 		rt_mutex_dequeue_pi(task, waiter);
+ 		waiter = rt_mutex_top_waiter(lock);
+ 		rt_mutex_enqueue_pi(task, waiter);
+ 		__rt_mutex_adjust_prio(task);
++	} else {
++		/*
++		 * Nothing changed. No need to do any priority
++		 * adjustment.
++		 */
+ 	}
+ 
+ 	/*
+@@ -452,6 +482,10 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 
++	/*
++	 * Store the top waiter of @lock for the end of chain walk
++	 * decision below.
++	 */
+ 	top_waiter = rt_mutex_top_waiter(lock);
+ 	raw_spin_unlock(&lock->wait_lock);
+ 
+@@ -462,6 +496,11 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	if (!next_lock)
+ 		goto out_put_task;
+ 
++	/*
++	 * If the current waiter is not the top waiter on the lock,
++	 * then we can stop the chain walk here if we are not in full
++	 * deadlock detection mode.
++	 */
+ 	if (!detect_deadlock && waiter != top_waiter)
+ 		goto out_put_task;
+ 
 -- 
 2.1.4
