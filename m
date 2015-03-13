@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 17/31] rt-mutex: avoid a NULL pointer dereference on deadlock
-Date: Fri, 13 Mar 2015 11:15:11 -0400
-Message-ID: <20150313151517.785489999@goodmis.org>
+Subject: [PATCH RT 16/31] futex: Simplify futex_lock_pi_atomic() and make it more robust
+Date: Fri, 13 Mar 2015 11:15:10 -0400
+Message-ID: <20150313151517.621477960@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>,
+	Darren Hart <darren@dvhart.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0017-rt-mutex-avoid-a-NULL-pointer-dereference-on-deadloc.patch
+Content-Disposition: inline; filename=0016-futex-Simplify-futex_lock_pi_atomic-and-make-it-more.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,39 +26,243 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-With task_blocks_on_rt_mutex() returning early -EDEADLK we never add the
-waiter to the waitqueue. Later, we try to remove it via remove_waiter()
-and go boom in rt_mutex_top_waiter() because rb_entry() gives a NULL
-pointer.
-Tested on v3.18-RT where rtmutex is used for regular mutex and I tried
-to get one twice in a row.
+upstream commit: af54d6a1c3ad474bbc9893c9905022646be6092c
 
-Not sure when this started but I guess 397335f00 ("rtmutex: Fix deadlock
-detector for real") or commit 3d5c9340 ("rtmutex: Handle deadlock
-detection smarter").
+futex_lock_pi_atomic() is a maze of retry hoops and loops.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reduce it to simple and understandable states:
+
+First step is to lookup existing waiters (state) in the kernel.
+
+If there is an existing waiter, validate it and attach to it.
+
+If there is no existing waiter, check the user space value
+
+If the TID encoded in the user space value is 0, take over the futex
+preserving the owner died bit.
+
+If the TID encoded in the user space value is != 0, lookup the owner
+task, validate it and attach to it.
+
+Reduces text size by 128 bytes on x8664.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Cc: Darren Hart <darren@dvhart.com>
+Link: http://lkml.kernel.org/r/alpine.DEB.2.10.1406131137020.5170@nanos
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ kernel/futex.c | 148 ++++++++++++++++++++++++---------------------------------
+ 1 file changed, 61 insertions(+), 87 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index b7b1de2acf0b..5388ba98acaf 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1490,7 +1490,8 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
- 	set_current_state(TASK_RUNNING);
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 0b83f9ff2615..e820a56daa6b 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -807,6 +807,17 @@ static int lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+ 	return attach_to_pi_owner(uval, key, ps);
+ }
  
- 	if (unlikely(ret)) {
--		remove_waiter(lock, &waiter);
-+		if (rt_mutex_has_waiters(lock))
-+			remove_waiter(lock, &waiter);
- 		rt_mutex_handle_deadlock(ret, chwalk, &waiter);
- 	}
++static int lock_pi_update_atomic(u32 __user *uaddr, u32 uval, u32 newval)
++{
++	u32 uninitialized_var(curval);
++
++	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
++		return -EFAULT;
++
++	/*If user space value changed, let the caller retry */
++	return curval != uval ? -EAGAIN : 0;
++}
++
+ /**
+  * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
+  * @uaddr:		the pi futex user address
+@@ -830,113 +841,69 @@ static int futex_lock_pi_atomic(u32 __user *uaddr, struct futex_hash_bucket *hb,
+ 				struct futex_pi_state **ps,
+ 				struct task_struct *task, int set_waiters)
+ {
+-	int lock_taken, ret, force_take = 0;
+-	u32 uval, newval, curval, vpid = task_pid_vnr(task);
+-
+-retry:
+-	ret = lock_taken = 0;
++	u32 uval, newval, vpid = task_pid_vnr(task);
++	struct futex_q *match;
++	int ret;
  
+ 	/*
+-	 * To avoid races, we attempt to take the lock here again
+-	 * (by doing a 0 -> TID atomic cmpxchg), while holding all
+-	 * the locks. It will most likely not succeed.
++	 * Read the user space value first so we can validate a few
++	 * things before proceeding further.
+ 	 */
+-	newval = vpid;
+-	if (set_waiters)
+-		newval |= FUTEX_WAITERS;
+-
+-	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, 0, newval)))
++	if (get_futex_value_locked(&uval, uaddr))
+ 		return -EFAULT;
+ 
+ 	/*
+ 	 * Detect deadlocks.
+ 	 */
+-	if ((unlikely((curval & FUTEX_TID_MASK) == vpid)))
++	if ((unlikely((uval & FUTEX_TID_MASK) == vpid)))
+ 		return -EDEADLK;
+ 
+ 	/*
+-	 * Surprise - we got the lock, but we do not trust user space at all.
++	 * Lookup existing state first. If it exists, try to attach to
++	 * its pi_state.
+ 	 */
+-	if (unlikely(!curval)) {
+-		/*
+-		 * We verify whether there is kernel state for this
+-		 * futex. If not, we can safely assume, that the 0 ->
+-		 * TID transition is correct. If state exists, we do
+-		 * not bother to fixup the user space state as it was
+-		 * corrupted already.
+-		 */
+-		return futex_top_waiter(hb, key) ? -EINVAL : 1;
+-	}
+-
+-	uval = curval;
+-
+-	/*
+-	 * Set the FUTEX_WAITERS flag, so the owner will know it has someone
+-	 * to wake at the next unlock.
+-	 */
+-	newval = curval | FUTEX_WAITERS;
++	match = futex_top_waiter(hb, key);
++	if (match)
++		return attach_to_pi_state(uval, match->pi_state, ps);
+ 
+ 	/*
+-	 * Should we force take the futex? See below.
++	 * No waiter and user TID is 0. We are here because the
++	 * waiters or the owner died bit is set or called from
++	 * requeue_cmp_pi or for whatever reason something took the
++	 * syscall.
+ 	 */
+-	if (unlikely(force_take)) {
++	if (!(uval & FUTEX_TID_MASK)) {
+ 		/*
+-		 * Keep the OWNER_DIED and the WAITERS bit and set the
+-		 * new TID value.
++		 * We take over the futex. No other waiters and the user space
++		 * TID is 0. We preserve the owner died bit.
+ 		 */
+-		newval = (curval & ~FUTEX_TID_MASK) | vpid;
+-		force_take = 0;
+-		lock_taken = 1;
+-	}
++		newval = uval & FUTEX_OWNER_DIED;
++		newval |= vpid;
+ 
+-	if (unlikely(cmpxchg_futex_value_locked(&curval, uaddr, uval, newval)))
+-		return -EFAULT;
+-	if (unlikely(curval != uval))
+-		goto retry;
++		/* The futex requeue_pi code can enforce the waiters bit */
++		if (set_waiters)
++			newval |= FUTEX_WAITERS;
++
++		ret = lock_pi_update_atomic(uaddr, uval, newval);
++		/* If the take over worked, return 1 */
++		return ret < 0 ? ret : 1;
++	}
+ 
+ 	/*
+-	 * We took the lock due to forced take over.
++	 * First waiter. Set the waiters bit before attaching ourself to
++	 * the owner. If owner tries to unlock, it will be forced into
++	 * the kernel and blocked on hb->lock.
+ 	 */
+-	if (unlikely(lock_taken))
+-		return 1;
+-
++	newval = uval | FUTEX_WAITERS;
++	ret = lock_pi_update_atomic(uaddr, uval, newval);
++	if (ret)
++		return ret;
+ 	/*
+-	 * We dont have the lock. Look up the PI state (or create it if
+-	 * we are the first waiter):
++	 * If the update of the user space value succeeded, we try to
++	 * attach to the owner. If that fails, no harm done, we only
++	 * set the FUTEX_WAITERS bit in the user space variable.
+ 	 */
+-	ret = lookup_pi_state(uval, hb, key, ps);
+-
+-	if (unlikely(ret)) {
+-		switch (ret) {
+-		case -ESRCH:
+-			/*
+-			 * We failed to find an owner for this
+-			 * futex. So we have no pi_state to block
+-			 * on. This can happen in two cases:
+-			 *
+-			 * 1) The owner died
+-			 * 2) A stale FUTEX_WAITERS bit
+-			 *
+-			 * Re-read the futex value.
+-			 */
+-			if (get_futex_value_locked(&curval, uaddr))
+-				return -EFAULT;
+-
+-			/*
+-			 * If the owner died or we have a stale
+-			 * WAITERS bit the owner TID in the user space
+-			 * futex is 0.
+-			 */
+-			if (!(curval & FUTEX_TID_MASK)) {
+-				force_take = 1;
+-				goto retry;
+-			}
+-		default:
+-			break;
+-		}
+-	}
+-
+-	return ret;
++	return attach_to_pi_owner(uval, key, ps);
+ }
+ 
+ /**
+@@ -1506,7 +1473,12 @@ retry_private:
+ 				goto retry;
+ 			goto out;
+ 		case -EAGAIN:
+-			/* The owner was exiting, try again. */
++			/*
++			 * Two reasons for this:
++			 * - Owner is exiting and we just wait for the
++			 *   exit to complete.
++			 * - The user space value changed.
++			 */
+ 			double_unlock_hb(hb1, hb2);
+ 			put_futex_key(&key2);
+ 			put_futex_key(&key1);
+@@ -2160,8 +2132,10 @@ retry_private:
+ 			goto uaddr_faulted;
+ 		case -EAGAIN:
+ 			/*
+-			 * Task is exiting and we just wait for the
+-			 * exit to complete.
++			 * Two reasons for this:
++			 * - Task is exiting and we just wait for the
++			 *   exit to complete.
++			 * - The user space value changed.
+ 			 */
+ 			queue_unlock(&q, hb);
+ 			put_futex_key(&q.key);
 -- 
 2.1.4
