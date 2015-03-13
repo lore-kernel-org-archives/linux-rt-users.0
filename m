@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 13/31] futex: Use futex_top_waiter() in lookup_pi_state()
-Date: Fri, 13 Mar 2015 11:15:07 -0400
-Message-ID: <20150313151517.017974101@goodmis.org>
+Subject: [PATCH RT 09/31] rtmutex: Confine deadlock logic to futex
+Date: Fri, 13 Mar 2015 11:15:03 -0400
+Message-ID: <20150313151516.322147408@goodmis.org>
 References: <20150313151454.809081378@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,15 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Darren Hart <darren@dvhart.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0013-futex-Use-futex_top_waiter-in-lookup_pi_state.patch
+Content-Disposition: inline; filename=0009-rtmutex-Confine-deadlock-logic-to-futex.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,178 +24,325 @@ If anyone has any objections, please let me know.
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: bd1dbcc67cd2c1181e2c01daac51eabf1b964dd8
+upstream commit: c051b21f71d1ffdfd7ad406a1ef5ede5e5f974c5
 
-No point in open coding the same function again.
+The deadlock logic is only required for futexes.
+
+Remove the extra arguments for the public functions and also for the
+futex specific ones which get always called with deadlock detection
+enabled.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Darren Hart <darren@dvhart.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Link: http://lkml.kernel.org/r/20140611204237.092947239@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/futex.c | 127 +++++++++++++++++++++++++++------------------------------
- 1 file changed, 61 insertions(+), 66 deletions(-)
 
+Conflicts:
+	include/linux/rtmutex.h
+	kernel/rtmutex.c
+---
+ include/linux/rtmutex.h |  8 +++-----
+ kernel/futex.c          | 10 ++++-----
+ kernel/rt.c             |  8 ++++----
+ kernel/rtmutex-tester.c |  4 ++--
+ kernel/rtmutex.c        | 54 ++++++++++++++++++++++++-------------------------
+ kernel/rtmutex_common.h |  7 +++----
+ 6 files changed, 43 insertions(+), 48 deletions(-)
+
+diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
+index 5ebd0bbb6eaa..9340b866ce21 100644
+--- a/include/linux/rtmutex.h
++++ b/include/linux/rtmutex.h
+@@ -109,12 +109,10 @@ extern void __rt_mutex_init(struct rt_mutex *lock, const char *name);
+ extern void rt_mutex_destroy(struct rt_mutex *lock);
+ 
+ extern void rt_mutex_lock(struct rt_mutex *lock);
+-extern int rt_mutex_lock_interruptible(struct rt_mutex *lock,
+-						int detect_deadlock);
+-extern int rt_mutex_lock_killable(struct rt_mutex *lock, int detect_deadlock);
++extern int rt_mutex_lock_interruptible(struct rt_mutex *lock);
++extern int rt_mutex_lock_killable(struct rt_mutex *lock);
+ extern int rt_mutex_timed_lock(struct rt_mutex *lock,
+-					struct hrtimer_sleeper *timeout,
+-					int detect_deadlock);
++			       struct hrtimer_sleeper *timeout);
+ 
+ extern int rt_mutex_trylock(struct rt_mutex *lock);
+ 
 diff --git a/kernel/futex.c b/kernel/futex.c
-index d9189e82f3a2..816b7f53d3f0 100644
+index ae1068fdd786..75f386961a8d 100644
 --- a/kernel/futex.c
 +++ b/kernel/futex.c
-@@ -647,90 +647,85 @@ static int
- lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
- 		union futex_key *key, struct futex_pi_state **ps)
- {
-+	struct futex_q *match = futex_top_waiter(hb, key);
- 	struct futex_pi_state *pi_state = NULL;
--	struct futex_q *this, *next;
--	struct plist_head *head;
- 	struct task_struct *p;
- 	pid_t pid = uval & FUTEX_TID_MASK;
- 
--	head = &hb->chain;
--
--	plist_for_each_entry_safe(this, next, head, list) {
--		if (match_futex(&this->key, key)) {
--			/*
--			 * Sanity check the waiter before increasing
--			 * the refcount and attaching to it.
--			 */
--			pi_state = this->pi_state;
--			/*
--			 * Userspace might have messed up non-PI and
--			 * PI futexes [3]
--			 */
--			if (unlikely(!pi_state))
--				return -EINVAL;
-+	if (match) {
-+		/*
-+		 * Sanity check the waiter before increasing the
-+		 * refcount and attaching to it.
-+		 */
-+		pi_state = match->pi_state;
-+		/*
-+		 * Userspace might have messed up non-PI and PI
-+		 * futexes [3]
-+		 */
-+		if (unlikely(!pi_state))
-+			return -EINVAL;
- 
--			WARN_ON(!atomic_read(&pi_state->refcount));
-+		WARN_ON(!atomic_read(&pi_state->refcount));
- 
-+		/*
-+		 * Handle the owner died case:
-+		 */
-+		if (uval & FUTEX_OWNER_DIED) {
- 			/*
--			 * Handle the owner died case:
-+			 * exit_pi_state_list sets owner to NULL and
-+			 * wakes the topmost waiter. The task which
-+			 * acquires the pi_state->rt_mutex will fixup
-+			 * owner.
- 			 */
--			if (uval & FUTEX_OWNER_DIED) {
-+			if (!pi_state->owner) {
- 				/*
--				 * exit_pi_state_list sets owner to NULL and
--				 * wakes the topmost waiter. The task which
--				 * acquires the pi_state->rt_mutex will fixup
--				 * owner.
-+				 * No pi state owner, but the user
-+				 * space TID is not 0. Inconsistent
-+				 * state. [5]
- 				 */
--				if (!pi_state->owner) {
--					/*
--					 * No pi state owner, but the user
--					 * space TID is not 0. Inconsistent
--					 * state. [5]
--					 */
--					if (pid)
--						return -EINVAL;
--					/*
--					 * Take a ref on the state and
--					 * return. [4]
--					 */
--					goto out_state;
--				}
--
--				/*
--				 * If TID is 0, then either the dying owner
--				 * has not yet executed exit_pi_state_list()
--				 * or some waiter acquired the rtmutex in the
--				 * pi state, but did not yet fixup the TID in
--				 * user space.
--				 *
--				 * Take a ref on the state and return. [6]
--				 */
--				if (!pid)
--					goto out_state;
--			} else {
-+				if (pid)
-+					return -EINVAL;
- 				/*
--				 * If the owner died bit is not set,
--				 * then the pi_state must have an
--				 * owner. [7]
-+				 * Take a ref on the state and
-+				 * return. [4]
- 				 */
--				if (!pi_state->owner)
--					return -EINVAL;
-+				goto out_state;
- 			}
- 
- 			/*
--			 * Bail out if user space manipulated the
--			 * futex value. If pi state exists then the
--			 * owner TID must be the same as the user
--			 * space TID. [9/10]
-+			 * If TID is 0, then either the dying owner
-+			 * has not yet executed exit_pi_state_list()
-+			 * or some waiter acquired the rtmutex in the
-+			 * pi state, but did not yet fixup the TID in
-+			 * user space.
-+			 *
-+			 * Take a ref on the state and return. [6]
-+			 */
-+			if (!pid)
-+				goto out_state;
-+		} else {
-+			/*
-+			 * If the owner died bit is not set,
-+			 * then the pi_state must have an
-+			 * owner. [7]
- 			 */
--			if (pid != task_pid_vnr(pi_state->owner))
-+			if (!pi_state->owner)
- 				return -EINVAL;
--
--		out_state:
--			atomic_inc(&pi_state->refcount);
--			*ps = pi_state;
--			return 0;
- 		}
-+
-+		/*
-+		 * Bail out if user space manipulated the
-+		 * futex value. If pi state exists then the
-+		 * owner TID must be the same as the user
-+		 * space TID. [9/10]
-+		 */
-+		if (pid != task_pid_vnr(pi_state->owner))
-+			return -EINVAL;
-+
-+	out_state:
-+		atomic_inc(&pi_state->refcount);
-+		*ps = pi_state;
-+		return 0;
- 	}
- 
+@@ -1568,7 +1568,7 @@ retry_private:
+ 			this->pi_state = pi_state;
+ 			ret = rt_mutex_start_proxy_lock(&pi_state->pi_mutex,
+ 							this->rt_waiter,
+-							this->task, 1);
++							this->task);
+ 			if (ret == 1) {
+ 				/* We got the lock. */
+ 				requeue_pi_wake_futex(this, &key2, hb2);
+@@ -2184,9 +2184,9 @@ retry_private:
  	/*
+ 	 * Block on the PI mutex:
+ 	 */
+-	if (!trylock)
+-		ret = rt_mutex_timed_lock(&q.pi_state->pi_mutex, to, 1);
+-	else {
++	if (!trylock) {
++		ret = rt_mutex_timed_futex_lock(&q.pi_state->pi_mutex, to);
++	} else {
+ 		ret = rt_mutex_trylock(&q.pi_state->pi_mutex);
+ 		/* Fixup the trylock return value: */
+ 		ret = ret ? 0 : -EWOULDBLOCK;
+@@ -2551,7 +2551,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 		 */
+ 		WARN_ON(!q.pi_state);
+ 		pi_mutex = &q.pi_state->pi_mutex;
+-		ret = rt_mutex_finish_proxy_lock(pi_mutex, to, &rt_waiter, 1);
++		ret = rt_mutex_finish_proxy_lock(pi_mutex, to, &rt_waiter);
+ 		debug_rt_mutex_free_waiter(&rt_waiter);
+ 
+ 		spin_lock(&hb2->lock);
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 433ae4236181..1b3497d3b848 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
+@@ -98,7 +98,7 @@ int __lockfunc _mutex_lock_interruptible(struct mutex *lock)
+ 	int ret;
+ 
+ 	mutex_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+-	ret = rt_mutex_lock_interruptible(&lock->lock, 0);
++	ret = rt_mutex_lock_interruptible(&lock->lock);
+ 	if (ret)
+ 		mutex_release(&lock->dep_map, 1, _RET_IP_);
+ 	return ret;
+@@ -110,7 +110,7 @@ int __lockfunc _mutex_lock_killable(struct mutex *lock)
+ 	int ret;
+ 
+ 	mutex_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+-	ret = rt_mutex_lock_killable(&lock->lock, 0);
++	ret = rt_mutex_lock_killable(&lock->lock);
+ 	if (ret)
+ 		mutex_release(&lock->dep_map, 1, _RET_IP_);
+ 	return ret;
+@@ -137,7 +137,7 @@ int __lockfunc _mutex_lock_interruptible_nested(struct mutex *lock, int subclass
+ 	int ret;
+ 
+ 	mutex_acquire_nest(&lock->dep_map, subclass, 0, NULL, _RET_IP_);
+-	ret = rt_mutex_lock_interruptible(&lock->lock, 0);
++	ret = rt_mutex_lock_interruptible(&lock->lock);
+ 	if (ret)
+ 		mutex_release(&lock->dep_map, 1, _RET_IP_);
+ 	return ret;
+@@ -149,7 +149,7 @@ int __lockfunc _mutex_lock_killable_nested(struct mutex *lock, int subclass)
+ 	int ret;
+ 
+ 	mutex_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
+-	ret = rt_mutex_lock_killable(&lock->lock, 0);
++	ret = rt_mutex_lock_killable(&lock->lock);
+ 	if (ret)
+ 		mutex_release(&lock->dep_map, 1, _RET_IP_);
+ 	return ret;
+diff --git a/kernel/rtmutex-tester.c b/kernel/rtmutex-tester.c
+index 1d96dd0d93c1..a6b605b51b97 100644
+--- a/kernel/rtmutex-tester.c
++++ b/kernel/rtmutex-tester.c
+@@ -16,7 +16,7 @@
+ #include <linux/freezer.h>
+ #include <linux/stat.h>
+ 
+-#include "rtmutex.h"
++#include "rtmutex_common.h"
+ 
+ #define MAX_RT_TEST_THREADS	8
+ #define MAX_RT_TEST_MUTEXES	8
+@@ -107,7 +107,7 @@ static int handle_op(struct test_thread_data *td, int lockwakeup)
+ 
+ 		td->mutexes[id] = 1;
+ 		td->event = atomic_add_return(1, &rttest_event);
+-		ret = rt_mutex_lock_interruptible(&mutexes[id], 0);
++		ret = rt_mutex_lock_interruptible(&mutexes[id]);
+ 		td->event = atomic_add_return(1, &rttest_event);
+ 		td->mutexes[id] = ret ? 0 : 4;
+ 		return ret ? -EINTR : 0;
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 823f782b1847..21f8990ac37c 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1528,16 +1528,15 @@ rt_mutex_slowunlock(struct rt_mutex *lock)
+  */
+ static inline int
+ rt_mutex_fastlock(struct rt_mutex *lock, int state,
+-		  int detect_deadlock,
+ 		  int (*slowfn)(struct rt_mutex *lock, int state,
+ 				struct hrtimer_sleeper *timeout,
+ 				int detect_deadlock))
+ {
+-	if (!detect_deadlock && likely(rt_mutex_cmpxchg(lock, NULL, current))) {
++	if (likely(rt_mutex_cmpxchg(lock, NULL, current))) {
+ 		rt_mutex_deadlock_account_lock(lock, current);
+ 		return 0;
+ 	} else
+-		return slowfn(lock, state, NULL, detect_deadlock);
++		return slowfn(lock, state, NULL, 0);
+ }
+ 
+ static inline int
+@@ -1584,7 +1583,7 @@ void __sched rt_mutex_lock(struct rt_mutex *lock)
+ {
+ 	might_sleep();
+ 
+-	rt_mutex_fastlock(lock, TASK_UNINTERRUPTIBLE, 0, rt_mutex_slowlock);
++	rt_mutex_fastlock(lock, TASK_UNINTERRUPTIBLE, rt_mutex_slowlock);
+ }
+ EXPORT_SYMBOL_GPL(rt_mutex_lock);
+ 
+@@ -1592,41 +1591,46 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock);
+  * rt_mutex_lock_interruptible - lock a rt_mutex interruptible
+  *
+  * @lock:		the rt_mutex to be locked
+- * @detect_deadlock:	deadlock detection on/off
+  *
+  * Returns:
+  *  0		on success
+  * -EINTR	when interrupted by a signal
+- * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
+  */
+-int __sched rt_mutex_lock_interruptible(struct rt_mutex *lock,
+-						 int detect_deadlock)
++int __sched rt_mutex_lock_interruptible(struct rt_mutex *lock)
+ {
+ 	might_sleep();
+ 
+-	return rt_mutex_fastlock(lock, TASK_INTERRUPTIBLE,
+-				 detect_deadlock, rt_mutex_slowlock);
++	return rt_mutex_fastlock(lock, TASK_INTERRUPTIBLE, rt_mutex_slowlock);
+ }
+ EXPORT_SYMBOL_GPL(rt_mutex_lock_interruptible);
+ 
++/*
++ * Futex variant with full deadlock detection.
++ */
++int rt_mutex_timed_futex_lock(struct rt_mutex *lock,
++			      struct hrtimer_sleeper *timeout)
++{
++	might_sleep();
++
++	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout, 1,
++				       rt_mutex_slowlock);
++}
++
+ /**
+  * rt_mutex_lock_killable - lock a rt_mutex killable
+  *
+  * @lock:		the rt_mutex to be locked
+- * @detect_deadlock:	deadlock detection on/off
+  *
+  * Returns:
+  *  0		on success
+  * -EINTR	when interrupted by a signal
+  * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
+  */
+-int __sched rt_mutex_lock_killable(struct rt_mutex *lock,
+-				   int detect_deadlock)
++int __sched rt_mutex_lock_killable(struct rt_mutex *lock)
+ {
+ 	might_sleep();
+ 
+-	return rt_mutex_fastlock(lock, TASK_KILLABLE,
+-				 detect_deadlock, rt_mutex_slowlock);
++	return rt_mutex_fastlock(lock, TASK_KILLABLE, rt_mutex_slowlock);
+ }
+ EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
+ 
+@@ -1637,22 +1641,19 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
+  *
+  * @lock:		the rt_mutex to be locked
+  * @timeout:		timeout structure or NULL (no timeout)
+- * @detect_deadlock:	deadlock detection on/off
+  *
+  * Returns:
+  *  0		on success
+  * -EINTR	when interrupted by a signal
+  * -ETIMEDOUT	when the timeout expired
+- * -EDEADLK	when the lock would deadlock (when deadlock detection is on)
+  */
+ int
+-rt_mutex_timed_lock(struct rt_mutex *lock, struct hrtimer_sleeper *timeout,
+-		    int detect_deadlock)
++rt_mutex_timed_lock(struct rt_mutex *lock, struct hrtimer_sleeper *timeout)
+ {
+ 	might_sleep();
+ 
+-	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout,
+-				       detect_deadlock, rt_mutex_slowlock);
++	return rt_mutex_timed_fastlock(lock, TASK_INTERRUPTIBLE, timeout, 0,
++				       rt_mutex_slowlock);
+ }
+ EXPORT_SYMBOL_GPL(rt_mutex_timed_lock);
+ 
+@@ -1756,7 +1757,6 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+  * @lock:		the rt_mutex to take
+  * @waiter:		the pre-initialized rt_mutex_waiter
+  * @task:		the task to prepare
+- * @detect_deadlock:	perform deadlock detection (1) or not (0)
+  *
+  * Returns:
+  *  0 - task blocked on lock
+@@ -1767,7 +1767,7 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+  */
+ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+ 			      struct rt_mutex_waiter *waiter,
+-			      struct task_struct *task, int detect_deadlock)
++			      struct task_struct *task)
+ {
+ 	int ret;
+ 
+@@ -1854,22 +1854,20 @@ struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock)
+  * rt_mutex_finish_proxy_lock() - Complete lock acquisition
+  * @lock:		the rt_mutex we were woken on
+  * @to:			the timeout, null if none. hrtimer should already have
+- * 			been started.
++ *			been started.
+  * @waiter:		the pre-initialized rt_mutex_waiter
+- * @detect_deadlock:	perform deadlock detection (1) or not (0)
+  *
+  * Complete the lock acquisition started our behalf by another thread.
+  *
+  * Returns:
+  *  0 - success
+- * <0 - error, one of -EINTR, -ETIMEDOUT, or -EDEADLK
++ * <0 - error, one of -EINTR, -ETIMEDOUT
+  *
+  * Special API call for PI-futex requeue support
+  */
+ int rt_mutex_finish_proxy_lock(struct rt_mutex *lock,
+ 			       struct hrtimer_sleeper *to,
+-			       struct rt_mutex_waiter *waiter,
+-			       int detect_deadlock)
++			       struct rt_mutex_waiter *waiter)
+ {
+ 	int ret;
+ 
+diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
+index 6ec3dc1eab10..efde34108ebc 100644
+--- a/kernel/rtmutex_common.h
++++ b/kernel/rtmutex_common.h
+@@ -114,12 +114,11 @@ extern void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+ 				  struct task_struct *proxy_owner);
+ extern int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+ 				     struct rt_mutex_waiter *waiter,
+-				     struct task_struct *task,
+-				     int detect_deadlock);
++				     struct task_struct *task);
+ extern int rt_mutex_finish_proxy_lock(struct rt_mutex *lock,
+ 				      struct hrtimer_sleeper *to,
+-				      struct rt_mutex_waiter *waiter,
+-				      int detect_deadlock);
++				      struct rt_mutex_waiter *waiter);
++extern int rt_mutex_timed_futex_lock(struct rt_mutex *l, struct hrtimer_sleeper *to);
+ 
+ #ifdef CONFIG_DEBUG_RT_MUTEXES
+ # include "rtmutex-debug.h"
 -- 
 2.1.4
