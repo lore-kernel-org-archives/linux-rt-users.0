@@ -1,68 +1,97 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/25] rtmutex: No need to keep task ref for lock owner check
-Date: Fri, 13 Mar 2015 11:18:30 -0400
-Message-ID: <20150313151834.941479507@goodmis.org>
-References: <20150313151825.583263173@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: CONFIG_PREEMPT_RT local_softirq_pending warning when ISR blocks
+Date: Fri, 13 Mar 2015 17:38:49 +0100
+Message-ID: <20150313163849.GF5592@linutronix.de>
+References: <CAGt3f4na1EMtViiLym3JnzGbOGSMXwy9puOccOyrOWKjd4QOnQ@mail.gmail.com>
+ <20150309160845.GE13768@linutronix.de>
+ <CAGt3f4k0d5LRwuec1gpm=+NW325OskPxZbuTroEBSO9d1MMZaQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Lai Jiangshan <laijs@cn.fujitsu.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Austin Schuh <austin@peloton-tech.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Ingo Molnar <mingo@elte.hu>
+To: Brian Silverman <brian@peloton-tech.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-rtmutex-No-need-to-keep-task-ref-for-lock-owner-chec.patch
+Content-Disposition: inline
+In-Reply-To: <CAGt3f4k0d5LRwuec1gpm=+NW325OskPxZbuTroEBSO9d1MMZaQ@mail.gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.68-rt99-rc1 stable review patch.
-If anyone has any objections, please let me know.
+* Brian Silverman | 2015-03-09 20:36:27 [-0400]:
 
-------------------
+>> It looks like your softirq for net_rx is getting a packet and then a=
+fter
+>> raising NET_RX (again?) it blocks on a lock. In order to get this lo=
+ck
+>> it boosts and schedules bash. It gets runable but on the other CPU. =
+On
+>> CPU1 there is nothig going is nothing going and the only runable tas=
+k is
+>> the idle thread. And this is probably where the warning is written
+>> because we go to idle while we should process a softirq instead.
+>
+>That sounds like the issue. Doing the softirq instead of going idle in
+>this situation seems like it means calling thread_do_softirq() from
+>__schedule, but I don't know where the right place is. Can anybody
+>give me some help on where exactly to check for softirqs from?
 
-From: Thomas Gleixner <tglx@linutronix.de>
+I was slightly wrong.
 
-upstream commit: 2ffa5a5cd2fe792b6399c903d5172adf088d8ff7
+>     irq/18-can1-7228  [001] d.....2  6854.629276: _raw_spin_lock <-en=
+queue_to_backlog
+>     irq/18-can1-7228  [001] d...1.2  6854.629276: __raise_softirq_irq=
+off <-enqueue_to_backlog
+>     irq/18-can1-7228  [001] d...1.2  6854.629276: do_raise_softirq_ir=
+qoff <-__raise_softirq_irqoff
+>     irq/18-can1-7228  [001] d...2.2  6854.629276: softirq_raise: vec=3D=
+3 [action=3DNET_RX]
+>... # continues handling the can1 interrupt
+>     irq/18-can1-7228  [001] ......6  6854.629286: rt_spin_lock <-get_=
+page_from_freelist
+>     irq/18-can1-7228  [001] ......6  6854.629287: rt_spin_lock_slowlo=
+ck <-get_page_from_freelist
+>     irq/18-can1-7228  [001] ......6  6854.629287: _raw_spin_lock <-rt=
+_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629287: __try_to_take_rt_mu=
+tex <-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629287: _raw_spin_lock_irq =
+<-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] d...2.6  6854.629288: _raw_spin_unlock_ir=
+q <-rt_spin_lock_slowlock
+>     irq/18-can1-7228  [001] ....1.6  6854.629288: task_blocks_on_rt_m=
+utex <-rt_spin_lock_slowlock
+You raised the softirq but you did not wakeup softirqd. It is expected
+that you process softirq(s) in irq-thread context once you leave the
+interrupt thread (that is on local_bh_enable() because the thread is ru=
+n
+with BH off).
+But this did not happen yet. While you are in your interrupt thread you
+got blocked on a lock. And since your CPU is idle otherwise, the
+scheduler puts the idle task on.
+softirq_check_pending_idle() has a check for this kind of things but
+only if the ksoftirqd itself got blocked. In your case it is a process
+with BH switched off.
+You wouldn't see the warning if you start a task in userland that just
+loops and keeps the CPU busy :)
 
-There is no point to keep the task ref across the check for lock
-owner. Drop the ref before that, so the protection context is clear.
+So. One thing I noticed from looking at the code, is that if a thread i=
+s
+marked IRQF_NO_SOFTIRQ_CALL() then it won't raise process softirqs at
+all. This is a bug but since nobody uses IRQF_NO_SOFTIRQ_CALL nobody
+noticed it so far (or nobody uses it because it is not working).
 
-Found while documenting the chain walk.
+And for you. I'm not sure yet what is the best thing to do here. We
+could
+- teach softirq_check_pending_idle() to ignore these things because
+  once the irq thread is unblocked, it will process the softirq.
+- utilize the otherwise idle CPU and schedule ksoftirq with the proper
+  mask.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/rtmutex.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+Both isn't that easy, I think=E2=80=A6
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index a74c57a75269..7d338c8b23b9 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -407,6 +407,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 
- 	/* Release the task */
- 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
-+	put_task_struct(task);
-+
- 	if (!rt_mutex_owner(lock)) {
- 		struct rt_mutex_waiter *lock_top_waiter;
- 
-@@ -418,9 +420,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 		if (top_waiter != lock_top_waiter)
- 			rt_mutex_wake_waiter(lock_top_waiter);
- 		raw_spin_unlock(&lock->wait_lock);
--		goto out_put_task;
-+		return 0;
- 	}
--	put_task_struct(task);
- 
- 	/* Grab the next task */
- 	task = rt_mutex_owner(lock);
--- 
-2.1.4
+>Thanks,
+>Brian
+
+Sebastian
