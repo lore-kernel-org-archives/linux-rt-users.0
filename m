@@ -1,343 +1,240 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 18/27] x86: UV: raw_spinlock conversion
-Date: Fri, 13 Mar 2015 11:17:59 -0400
-Message-ID: <20150313151758.005512246@goodmis.org>
-References: <20150313151741.132137234@goodmis.org>
+Subject: [PATCH RT 07/25] rtmutex: Document pi chain walk
+Date: Fri, 13 Mar 2015 11:18:32 -0400
+Message-ID: <20150313151835.368179705@goodmis.org>
+References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Mike Galbraith <mgalbraith@suse.de>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0018-x86-UV-raw_spinlock-conversion.patch
+Content-Disposition: inline; filename=0007-rtmutex-Document-pi-chain-walk.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.4.106-rt132-rc1 stable review patch.
+3.2.68-rt99-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Shrug.  Lots of hobbyists have a beast in their basement, right?
+upstream commit: 3eb65aeadf701976b084e9171e16bb7d1e83fbb0
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Mike Galbraith <mgalbraith@suse.de>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Add commentry to document the chain walk and the protection mechanisms
+and their scope.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/include/asm/uv/uv_bau.h   | 12 ++++++------
- arch/x86/include/asm/uv/uv_hub.h   |  2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c | 12 ++++++------
- arch/x86/platform/uv/tlb_uv.c      | 30 +++++++++++++++---------------
- arch/x86/platform/uv/uv_time.c     | 21 +++++++++++++--------
- 5 files changed, 41 insertions(+), 36 deletions(-)
+ kernel/rtmutex.c | 100 ++++++++++++++++++++++++++++++++++++++++++++++++++-----
+ 1 file changed, 91 insertions(+), 9 deletions(-)
 
-diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
-index 6149b476d9df..ca5cfc1a3c6e 100644
---- a/arch/x86/include/asm/uv/uv_bau.h
-+++ b/arch/x86/include/asm/uv/uv_bau.h
-@@ -602,8 +602,8 @@ struct bau_control {
- 	unsigned short		uvhub_quiesce;
- 	short			socket_acknowledge_count[DEST_Q_SIZE];
- 	cycles_t		send_message;
--	spinlock_t		uvhub_lock;
--	spinlock_t		queue_lock;
-+	raw_spinlock_t		uvhub_lock;
-+	raw_spinlock_t		queue_lock;
- 	/* tunables */
- 	int			max_concurr;
- 	int			max_concurr_const;
-@@ -760,15 +760,15 @@ static inline int atom_asr(short i, struct atomic_short *v)
-  * to be lowered below the current 'v'.  atomic_add_unless can only stop
-  * on equal.
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 34c63cb7ff22..5c581a7b715f 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -281,6 +281,48 @@ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
+  * @top_task:	the current top waiter
+  *
+  * Returns 0 or -EDEADLK.
++ *
++ * Chain walk basics and protection scope
++ *
++ * [R] refcount on task
++ * [P] task->pi_lock held
++ * [L] rtmutex->wait_lock held
++ *
++ * Step	Description				Protected by
++ *	function arguments:
++ *	@task					[R]
++ *	@orig_lock if != NULL			@top_task is blocked on it
++ *	@next_lock				Unprotected. Cannot be
++ *						dereferenced. Only used for
++ *						comparison.
++ *	@orig_waiter if != NULL			@top_task is blocked on it
++ *	@top_task				current, or in case of proxy
++ *						locking protected by calling
++ *						code
++ *	again:
++ *	  loop_sanity_check();
++ *	retry:
++ * [1]	  lock(task->pi_lock);			[R] acquire [P]
++ * [2]	  waiter = task->pi_blocked_on;		[P]
++ * [3]	  check_exit_conditions_1();		[P]
++ * [4]	  lock = waiter->lock;			[P]
++ * [5]	  if (!try_lock(lock->wait_lock)) {	[P] try to acquire [L]
++ *	    unlock(task->pi_lock);		release [P]
++ *	    goto retry;
++ *	  }
++ * [6]	  check_exit_conditions_2();		[P] + [L]
++ * [7]	  requeue_lock_waiter(lock, waiter);	[P] + [L]
++ * [8]	  unlock(task->pi_lock);		release [P]
++ *	  put_task_struct(task);		release [R]
++ * [9]	  check_exit_conditions_3();		[L]
++ * [10]	  task = owner(lock);			[L]
++ *	  get_task_struct(task);		[L] acquire [R]
++ *	  lock(task->pi_lock);			[L] acquire [P]
++ * [11]	  requeue_pi_waiter(tsk, waiters(lock));[P] + [L]
++ * [12]	  check_exit_conditions_4();		[P] + [L]
++ * [13]	  unlock(task->pi_lock);		release [P]
++ *	  unlock(lock->wait_lock);		release [L]
++ *	  goto again;
   */
--static inline int atomic_inc_unless_ge(spinlock_t *lock, atomic_t *v, int u)
-+static inline int atomic_inc_unless_ge(raw_spinlock_t *lock, atomic_t *v, int u)
- {
--	spin_lock(lock);
-+	raw_spin_lock(lock);
- 	if (atomic_read(v) >= u) {
--		spin_unlock(lock);
-+		raw_spin_unlock(lock);
+ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 				      int deadlock_detect,
+@@ -305,6 +347,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	 * carefully whether things change under us.
+ 	 */
+  again:
++	/*
++	 * We limit the lock chain length for each invocation.
++	 */
+ 	if (++depth > max_lock_depth) {
+ 		static int prev_max;
+ 
+@@ -322,13 +367,28 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 
+ 		return -EDEADLK;
+ 	}
++
++	/*
++	 * We are fully preemptible here and only hold the refcount on
++	 * @task. So everything can have changed under us since the
++	 * caller or our own code below (goto retry/again) dropped all
++	 * locks.
++	 */
+  retry:
+ 	/*
+-	 * Task can not go away as we did a get_task() before !
++	 * [1] Task cannot go away as we did a get_task() before !
+ 	 */
+ 	raw_spin_lock_irqsave(&task->pi_lock, flags);
+ 
++	/*
++	 * [2] Get the waiter on which @task is blocked on.
++	 */
+ 	waiter = task->pi_blocked_on;
++
++	/*
++	 * [3] check_exit_conditions_1() protected by task->pi_lock.
++	 */
++
+ 	/*
+ 	 * Check whether the end of the boosting chain has been
+ 	 * reached or the state of the chain has changed while we
+@@ -379,7 +439,15 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
+ 		goto out_unlock_pi;
+ 
++	/*
++	 * [4] Get the next lock
++	 */
+ 	lock = waiter->lock;
++	/*
++	 * [5] We need to trylock here as we are holding task->pi_lock,
++	 * which is the reverse lock order versus the other rtmutex
++	 * operations.
++	 */
+ 	if (!raw_spin_trylock(&lock->wait_lock)) {
+ 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 		cpu_relax();
+@@ -387,6 +455,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	}
+ 
+ 	/*
++	 * [6] check_exit_conditions_2() protected by task->pi_lock and
++	 * lock->wait_lock.
++	 *
+ 	 * Deadlock detection. If the lock is the same as the original
+ 	 * lock which caused us to walk the lock chain or if the
+ 	 * current lock is owned by the task which initiated the chain
+@@ -406,16 +477,18 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 	 */
+ 	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
+ 
+-	/* Requeue the waiter in the lock waiter list. */
++	/* [7] Requeue the waiter in the lock waiter list. */
+ 	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+ 	rt_mutex_enqueue(lock, waiter);
+ 
+-	/* Release the task */
++	/* [8] Release the task */
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 	put_task_struct(task);
+ 
+ 	/*
++	 * [9] check_exit_conditions_3 protected by lock->wait_lock.
++	 *
+ 	 * We must abort the chain walk if there is no lock owner even
+ 	 * in the dead lock detection case, as we have nothing to
+ 	 * follow here. This is the end of the chain we are walking.
+@@ -424,8 +497,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		struct rt_mutex_waiter *lock_top_waiter;
+ 
+ 		/*
+-		 * If the requeue above changed the top waiter, then we need
+-		 * to wake the new top waiter up to try to get the lock.
++		 * If the requeue [7] above changed the top waiter,
++		 * then we need to wake the new top waiter up to try
++		 * to get the lock.
+ 		 */
+ 		lock_top_waiter = rt_mutex_top_waiter(lock);
+ 		if (prerequeue_top_waiter != lock_top_waiter)
+@@ -434,11 +508,12 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  		return 0;
  	}
- 	atomic_inc(v);
--	spin_unlock(lock);
-+	raw_spin_unlock(lock);
- 	return 1;
- }
  
-diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
-index 21f7385badb8..953f5c666ee0 100644
---- a/arch/x86/include/asm/uv/uv_hub.h
-+++ b/arch/x86/include/asm/uv/uv_hub.h
-@@ -475,7 +475,7 @@ struct uv_blade_info {
- 	unsigned short	nr_online_cpus;
- 	unsigned short	pnode;
- 	short		memory_nid;
--	spinlock_t	nmi_lock;
-+	raw_spinlock_t	nmi_lock;
- 	unsigned long	nmi_count;
- };
- extern struct uv_blade_info *uv_blade_info;
-diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
-index 87bfa69e216e..8e56e4f72694 100644
---- a/arch/x86/kernel/apic/x2apic_uv_x.c
-+++ b/arch/x86/kernel/apic/x2apic_uv_x.c
-@@ -56,7 +56,7 @@ int uv_min_hub_revision_id;
- EXPORT_SYMBOL_GPL(uv_min_hub_revision_id);
- unsigned int uv_apicid_hibits;
- EXPORT_SYMBOL_GPL(uv_apicid_hibits);
--static DEFINE_SPINLOCK(uv_nmi_lock);
-+static DEFINE_RAW_SPINLOCK(uv_nmi_lock);
+-	/* Grab the next task, i.e. the owner of @lock */
++	/* [10] Grab the next task, i.e. the owner of @lock */
+ 	task = rt_mutex_owner(lock);
+ 	get_task_struct(task);
+ 	raw_spin_lock_irqsave(&task->pi_lock, flags);
  
- static struct apic apic_x2apic_uv_x;
- 
-@@ -695,13 +695,13 @@ int uv_handle_nmi(unsigned int reason, struct pt_regs *regs)
- 	real_uv_nmi = (uv_read_local_mmr(UVH_NMI_MMR) & UV_NMI_PENDING_MASK);
- 
- 	if (unlikely(real_uv_nmi)) {
--		spin_lock(&uv_blade_info[bid].nmi_lock);
-+		raw_spin_lock(&uv_blade_info[bid].nmi_lock);
- 		real_uv_nmi = (uv_read_local_mmr(UVH_NMI_MMR) & UV_NMI_PENDING_MASK);
- 		if (real_uv_nmi) {
- 			uv_blade_info[bid].nmi_count++;
- 			uv_write_local_mmr(UVH_NMI_MMR_CLEAR, UV_NMI_PENDING_MASK);
- 		}
--		spin_unlock(&uv_blade_info[bid].nmi_lock);
-+		raw_spin_unlock(&uv_blade_info[bid].nmi_lock);
++	/* [11] requeue the pi waiters if necessary */
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+ 		/*
+ 		 * The waiter became the new top (highest priority)
+@@ -473,23 +548,30 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  	}
  
- 	if (likely(__get_cpu_var(cpu_last_nmi_count) == uv_blade_info[bid].nmi_count))
-@@ -713,10 +713,10 @@ int uv_handle_nmi(unsigned int reason, struct pt_regs *regs)
- 	 * Use a lock so only one cpu prints at a time.
- 	 * This prevents intermixed output.
+ 	/*
++	 * [12] check_exit_conditions_4() protected by task->pi_lock
++	 * and lock->wait_lock. The actual decisions are made after we
++	 * dropped the locks.
++	 *
+ 	 * Check whether the task which owns the current lock is pi
+ 	 * blocked itself. If yes we store a pointer to the lock for
+ 	 * the lock chain change detection above. After we dropped
+ 	 * task->pi_lock next_lock cannot be dereferenced anymore.
  	 */
--	spin_lock(&uv_nmi_lock);
-+	raw_spin_lock(&uv_nmi_lock);
- 	pr_info("UV NMI stack dump cpu %u:\n", smp_processor_id());
- 	dump_stack();
--	spin_unlock(&uv_nmi_lock);
-+	raw_spin_unlock(&uv_nmi_lock);
- 
- 	return NMI_HANDLED;
- }
-@@ -811,7 +811,7 @@ void __init uv_system_init(void)
- 			uv_blade_info[blade].pnode = pnode;
- 			uv_blade_info[blade].nr_possible_cpus = 0;
- 			uv_blade_info[blade].nr_online_cpus = 0;
--			spin_lock_init(&uv_blade_info[blade].nmi_lock);
-+			raw_spin_lock_init(&uv_blade_info[blade].nmi_lock);
- 			max_pnode = max(pnode, max_pnode);
- 			blade++;
- 		}
-diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
-index 59880afa851f..0664c9920e58 100644
---- a/arch/x86/platform/uv/tlb_uv.c
-+++ b/arch/x86/platform/uv/tlb_uv.c
-@@ -39,7 +39,7 @@ static int timeout_base_ns[] = {
- static int timeout_us;
- static int nobau;
- static int baudisabled;
--static spinlock_t disable_lock;
-+static raw_spinlock_t disable_lock;
- static cycles_t congested_cycles;
- 
- /* tunables: */
-@@ -545,7 +545,7 @@ int handle_uv2_busy(struct bau_control *bcp)
- 	cycles_t ttm;
- 
- 	stat->s_uv2_wars++;
--	spin_lock(&hmaster->uvhub_lock);
-+	raw_spin_lock(&hmaster->uvhub_lock);
- 	/* try for the original first */
- 	if (busy_one != normal) {
- 		if (!normal_busy(bcp))
-@@ -595,12 +595,12 @@ int handle_uv2_busy(struct bau_control *bcp)
- 		 * free up.
- 		 */
- 		stat->s_uv2_war_waits++;
--		spin_unlock(&hmaster->uvhub_lock);
-+		raw_spin_unlock(&hmaster->uvhub_lock);
- 		ttm = get_cycles();
- 		do {
- 			cpu_relax();
- 		} while (normal_busy(bcp));
--		spin_lock(&hmaster->uvhub_lock);
-+		raw_spin_lock(&hmaster->uvhub_lock);
- 		/* switch to the original descriptor */
- 		bcp->using_desc = normal;
- 		bau_desc_old = bcp->descriptor_base;
-@@ -610,7 +610,7 @@ int handle_uv2_busy(struct bau_control *bcp)
- 		bau_desc_new += (ITEMS_PER_DESC * normal);
- 		*bau_desc_new = *bau_desc_old; /* copy the entire descriptor */
- 	}
--	spin_unlock(&hmaster->uvhub_lock);
-+	raw_spin_unlock(&hmaster->uvhub_lock);
- 	return FLUSH_RETRY_BUSYBUG;
- }
- 
-@@ -724,9 +724,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -746,9 +746,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
- 
- 		quiesce_local_uvhub(hmaster);
- 
--		spin_lock(&hmaster->queue_lock);
-+		raw_spin_lock(&hmaster->queue_lock);
- 		reset_with_ipi(&bau_desc->distribution, bcp);
--		spin_unlock(&hmaster->queue_lock);
-+		raw_spin_unlock(&hmaster->queue_lock);
- 
- 		end_uvhub_quiesce(hmaster);
- 
-@@ -765,7 +765,7 @@ static void disable_for_congestion(struct bau_control *bcp,
- 					struct ptc_stats *stat)
- {
- 	/* let only one cpu do this disabling */
--	spin_lock(&disable_lock);
-+	raw_spin_lock(&disable_lock);
- 
- 	if (!baudisabled && bcp->period_requests &&
- 	    ((bcp->period_time / bcp->period_requests) > congested_cycles)) {
-@@ -784,7 +784,7 @@ static void disable_for_congestion(struct bau_control *bcp,
- 		}
- 	}
- 
--	spin_unlock(&disable_lock);
-+	raw_spin_unlock(&disable_lock);
- }
- 
- static void count_max_concurr(int stat, struct bau_control *bcp,
-@@ -833,7 +833,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
-  */
- static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
- {
--	spinlock_t *lock = &hmaster->uvhub_lock;
-+	raw_spinlock_t *lock = &hmaster->uvhub_lock;
- 	atomic_t *v;
- 
- 	v = &hmaster->active_descriptor_count;
-@@ -1850,8 +1850,8 @@ static void __init init_per_cpu_tunables(void)
- 		bcp->cong_reps			= congested_reps;
- 		bcp->cong_period		= congested_period;
- 		bcp->clocks_per_100_usec =	usec_2_cycles(100);
--		spin_lock_init(&bcp->queue_lock);
--		spin_lock_init(&bcp->uvhub_lock);
-+		raw_spin_lock_init(&bcp->queue_lock);
-+		raw_spin_lock_init(&bcp->uvhub_lock);
- 	}
- }
- 
-@@ -2078,7 +2078,7 @@ static int __init uv_bau_init(void)
- 	}
- 
- 	nuvhubs = uv_num_possible_blades();
--	spin_lock_init(&disable_lock);
-+	raw_spin_lock_init(&disable_lock);
- 	congested_cycles = usec_2_cycles(congested_respns_us);
- 
- 	uv_base_pnode = 0x7fffffff;
-diff --git a/arch/x86/platform/uv/uv_time.c b/arch/x86/platform/uv/uv_time.c
-index 5032e0d19b86..eb55dd021c64 100644
---- a/arch/x86/platform/uv/uv_time.c
-+++ b/arch/x86/platform/uv/uv_time.c
-@@ -58,7 +58,7 @@ static DEFINE_PER_CPU(struct clock_event_device, cpu_ced);
- 
- /* There is one of these allocated per node */
- struct uv_rtc_timer_head {
--	spinlock_t	lock;
-+	raw_spinlock_t	lock;
- 	/* next cpu waiting for timer, local node relative: */
- 	int		next_cpu;
- 	/* number of cpus on this node: */
-@@ -178,7 +178,7 @@ static __init int uv_rtc_allocate_timers(void)
- 				uv_rtc_deallocate_timers();
- 				return -ENOMEM;
- 			}
--			spin_lock_init(&head->lock);
-+			raw_spin_lock_init(&head->lock);
- 			head->ncpus = uv_blade_nr_possible_cpus(bid);
- 			head->next_cpu = -1;
- 			blade_info[bid] = head;
-@@ -232,7 +232,7 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 	unsigned long flags;
- 	int next_cpu;
- 
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
- 
- 	next_cpu = head->next_cpu;
- 	*t = expires;
-@@ -244,12 +244,12 @@ static int uv_rtc_set_timer(int cpu, u64 expires)
- 		if (uv_setup_intr(cpu, expires)) {
- 			*t = ULLONG_MAX;
- 			uv_rtc_find_next_timer(head, pnode);
--			spin_unlock_irqrestore(&head->lock, flags);
-+			raw_spin_unlock_irqrestore(&head->lock, flags);
- 			return -ETIME;
- 		}
- 	}
- 
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
- 	return 0;
- }
- 
-@@ -268,7 +268,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 	unsigned long flags;
- 	int rc = 0;
- 
--	spin_lock_irqsave(&head->lock, flags);
-+	raw_spin_lock_irqsave(&head->lock, flags);
- 
- 	if ((head->next_cpu == bcpu && uv_read_rtc(NULL) >= *t) || force)
- 		rc = 1;
-@@ -280,7 +280,7 @@ static int uv_rtc_unset_timer(int cpu, int force)
- 			uv_rtc_find_next_timer(head, pnode);
- 	}
- 
--	spin_unlock_irqrestore(&head->lock, flags);
-+	raw_spin_unlock_irqrestore(&head->lock, flags);
- 
- 	return rc;
- }
-@@ -300,13 +300,18 @@ static int uv_rtc_unset_timer(int cpu, int force)
- static cycle_t uv_read_rtc(struct clocksource *cs)
- {
- 	unsigned long offset;
-+	cycle_t cycles;
- 
-+	preempt_disable();
- 	if (uv_get_min_hub_revision_id() == 1)
- 		offset = 0;
- 	else
- 		offset = (uv_blade_processor_id() * L1_CACHE_BYTES) % PAGE_SIZE;
- 
--	return (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	cycles = (cycle_t)uv_read_local_mmr(UVH_RTC | offset);
-+	preempt_enable();
+ 	next_lock = task_blocked_on_lock(task);
+-
+-	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+-
+ 	/*
+ 	 * Store the top waiter of @lock for the end of chain walk
+ 	 * decision below.
+ 	 */
+ 	top_waiter = rt_mutex_top_waiter(lock);
 +
-+	return cycles;
- }
++	/* [13] Drop the locks */
++	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 	raw_spin_unlock(&lock->wait_lock);
  
- /*
+ 	/*
++	 * Make the actual exit decisions [12], based on the stored
++	 * values.
++	 *
+ 	 * We reached the end of the lock chain. Stop right here. No
+ 	 * point to go back just to figure that out.
+ 	 */
 -- 
 2.1.4
