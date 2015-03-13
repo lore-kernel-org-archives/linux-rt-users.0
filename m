@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 23/27] scheduling while atomic in cgroup code
-Date: Fri, 13 Mar 2015 11:18:04 -0400
-Message-ID: <20150313151758.981271216@goodmis.org>
-References: <20150313151741.132137234@goodmis.org>
+Subject: [PATCH RT 13/25] futex: Use futex_top_waiter() in lookup_pi_state()
+Date: Fri, 13 Mar 2015 11:18:38 -0400
+Message-ID: <20150313151836.324908865@goodmis.org>
+References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,91 +10,196 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	Darren Hart <darren@dvhart.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60713 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1945905AbbCMPfQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:35:16 -0400
-Content-Disposition: inline; filename=0023-scheduling-while-atomic-in-cgroup-code.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0013-futex-Use-futex_top_waiter-in-lookup_pi_state.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.4.106-rt132-rc1 stable review patch.
+3.2.68-rt99-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-mm, memcg: make refill_stock() use get_cpu_light()
+upstream commit: bd1dbcc67cd2c1181e2c01daac51eabf1b964dd8
 
-Nikita reported the following memcg scheduling while atomic bug:
+No point in open coding the same function again.
 
-Call Trace:
-[e22d5a90] [c0007ea8] show_stack+0x4c/0x168 (unreliable)
-[e22d5ad0] [c0618c04] __schedule_bug+0x94/0xb0
-[e22d5ae0] [c060b9ec] __schedule+0x530/0x550
-[e22d5bf0] [c060bacc] schedule+0x30/0xbc
-[e22d5c00] [c060ca24] rt_spin_lock_slowlock+0x180/0x27c
-[e22d5c70] [c00b39dc] res_counter_uncharge_until+0x40/0xc4
-[e22d5ca0] [c013ca88] drain_stock.isra.20+0x54/0x98
-[e22d5cc0] [c01402ac] __mem_cgroup_try_charge+0x2e8/0xbac
-[e22d5d70] [c01410d4] mem_cgroup_charge_common+0x3c/0x70
-[e22d5d90] [c0117284] __do_fault+0x38c/0x510
-[e22d5df0] [c011a5f4] handle_pte_fault+0x98/0x858
-[e22d5e50] [c060ed08] do_page_fault+0x42c/0x6fc
-[e22d5f40] [c000f5b4] handle_page_fault+0xc/0x80
-
-What happens:
-
-   refill_stock()
-      get_cpu_var()
-      drain_stock()
-         res_counter_uncharge()
-            res_counter_uncharge_until()
-               spin_lock() <== boom
-
-Fix it by replacing get/put_cpu_var() with get/put_cpu_light().
-
-Cc: stable-rt@vger.kernel.org
-Reported-by: Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Darren Hart <darren@dvhart.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.092947239@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/memcontrol.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ kernel/futex.c | 127 +++++++++++++++++++++++++++------------------------------
+ 1 file changed, 61 insertions(+), 66 deletions(-)
 
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 107c0ba7b383..8c3dd645ac10 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2061,14 +2061,17 @@ static void drain_local_stock(struct work_struct *dummy)
-  */
- static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 71d414b4ce34..73b91f7e7f61 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -647,90 +647,85 @@ static int
+ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+ 		union futex_key *key, struct futex_pi_state **ps)
  {
--	struct memcg_stock_pcp *stock = &get_cpu_var(memcg_stock);
-+	struct memcg_stock_pcp *stock;
-+	int cpu = get_cpu_light();
++	struct futex_q *match = futex_top_waiter(hb, key);
+ 	struct futex_pi_state *pi_state = NULL;
+-	struct futex_q *this, *next;
+-	struct plist_head *head;
+ 	struct task_struct *p;
+ 	pid_t pid = uval & FUTEX_TID_MASK;
+ 
+-	head = &hb->chain;
+-
+-	plist_for_each_entry_safe(this, next, head, list) {
+-		if (match_futex(&this->key, key)) {
+-			/*
+-			 * Sanity check the waiter before increasing
+-			 * the refcount and attaching to it.
+-			 */
+-			pi_state = this->pi_state;
+-			/*
+-			 * Userspace might have messed up non-PI and
+-			 * PI futexes [3]
+-			 */
+-			if (unlikely(!pi_state))
+-				return -EINVAL;
++	if (match) {
++		/*
++		 * Sanity check the waiter before increasing the
++		 * refcount and attaching to it.
++		 */
++		pi_state = match->pi_state;
++		/*
++		 * Userspace might have messed up non-PI and PI
++		 * futexes [3]
++		 */
++		if (unlikely(!pi_state))
++			return -EINVAL;
+ 
+-			WARN_ON(!atomic_read(&pi_state->refcount));
++		WARN_ON(!atomic_read(&pi_state->refcount));
+ 
++		/*
++		 * Handle the owner died case:
++		 */
++		if (uval & FUTEX_OWNER_DIED) {
+ 			/*
+-			 * Handle the owner died case:
++			 * exit_pi_state_list sets owner to NULL and
++			 * wakes the topmost waiter. The task which
++			 * acquires the pi_state->rt_mutex will fixup
++			 * owner.
+ 			 */
+-			if (uval & FUTEX_OWNER_DIED) {
++			if (!pi_state->owner) {
+ 				/*
+-				 * exit_pi_state_list sets owner to NULL and
+-				 * wakes the topmost waiter. The task which
+-				 * acquires the pi_state->rt_mutex will fixup
+-				 * owner.
++				 * No pi state owner, but the user
++				 * space TID is not 0. Inconsistent
++				 * state. [5]
+ 				 */
+-				if (!pi_state->owner) {
+-					/*
+-					 * No pi state owner, but the user
+-					 * space TID is not 0. Inconsistent
+-					 * state. [5]
+-					 */
+-					if (pid)
+-						return -EINVAL;
+-					/*
+-					 * Take a ref on the state and
+-					 * return. [4]
+-					 */
+-					goto out_state;
+-				}
+-
+-				/*
+-				 * If TID is 0, then either the dying owner
+-				 * has not yet executed exit_pi_state_list()
+-				 * or some waiter acquired the rtmutex in the
+-				 * pi state, but did not yet fixup the TID in
+-				 * user space.
+-				 *
+-				 * Take a ref on the state and return. [6]
+-				 */
+-				if (!pid)
+-					goto out_state;
+-			} else {
++				if (pid)
++					return -EINVAL;
+ 				/*
+-				 * If the owner died bit is not set,
+-				 * then the pi_state must have an
+-				 * owner. [7]
++				 * Take a ref on the state and
++				 * return. [4]
+ 				 */
+-				if (!pi_state->owner)
+-					return -EINVAL;
++				goto out_state;
+ 			}
+ 
+ 			/*
+-			 * Bail out if user space manipulated the
+-			 * futex value. If pi state exists then the
+-			 * owner TID must be the same as the user
+-			 * space TID. [9/10]
++			 * If TID is 0, then either the dying owner
++			 * has not yet executed exit_pi_state_list()
++			 * or some waiter acquired the rtmutex in the
++			 * pi state, but did not yet fixup the TID in
++			 * user space.
++			 *
++			 * Take a ref on the state and return. [6]
++			 */
++			if (!pid)
++				goto out_state;
++		} else {
++			/*
++			 * If the owner died bit is not set,
++			 * then the pi_state must have an
++			 * owner. [7]
+ 			 */
+-			if (pid != task_pid_vnr(pi_state->owner))
++			if (!pi_state->owner)
+ 				return -EINVAL;
+-
+-		out_state:
+-			atomic_inc(&pi_state->refcount);
+-			*ps = pi_state;
+-			return 0;
+ 		}
 +
-+	stock = &per_cpu(memcg_stock, cpu);
- 
- 	if (stock->cached != memcg) { /* reset if necessary */
- 		drain_stock(stock);
- 		stock->cached = memcg;
++		/*
++		 * Bail out if user space manipulated the
++		 * futex value. If pi state exists then the
++		 * owner TID must be the same as the user
++		 * space TID. [9/10]
++		 */
++		if (pid != task_pid_vnr(pi_state->owner))
++			return -EINVAL;
++
++	out_state:
++		atomic_inc(&pi_state->refcount);
++		*ps = pi_state;
++		return 0;
  	}
- 	stock->nr_pages += nr_pages;
--	put_cpu_var(memcg_stock);
-+	put_cpu_light();
- }
  
- /*
+ 	/*
 -- 
 2.1.4
-
-
