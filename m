@@ -1,125 +1,219 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/25] Linux 3.2.68-rt99-rc1
-Date: Fri, 13 Mar 2015 11:18:25 -0400
-Message-ID: <20150313151825.583263173@goodmis.org>
+Subject: [PATCH RT 14/25] futex: Split out the waiter check from lookup_pi_state()
+Date: Fri, 13 Mar 2015 11:18:39 -0400
+Message-ID: <20150313151836.621637688@goodmis.org>
+References: <20150313151825.583263173@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Darren Hart <darren@dvhart.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Davidlohr Bueso <davidlohr@hp.com>,
+	Kees Cook <kees@outflux.net>, <wad@chromium.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60807 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1945921AbbCMPfY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:35:24 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0014-futex-Split-out-the-waiter-check-from-lookup_pi_stat.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
+3.2.68-rt99-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.68-rt99-rc1.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+upstream commit: e60cbc5ceaa518d630ab8f35a7d05cee1c752648
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+We want to be a bit more clever in futex_lock_pi_atomic() and separate
+the possible states. Split out the waiter verification into a separate
+function. No functional change.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 3/16/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.68-rt99-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt99-rc1.patch.xz
-
-You can also build from 3.2.68-rt98 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt98-rt99-rc1.patch.xz
-
-
-Changes from 3.2.68-rt98:
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Darren Hart <darren@dvhart.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Davidlohr Bueso <davidlohr@hp.com>
+Cc: Kees Cook <kees@outflux.net>
+Cc: wad@chromium.org
+Link: http://lkml.kernel.org/r/20140611204237.180458410@linutronix.de
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/futex.c | 138 +++++++++++++++++++++++++++++----------------------------
+ 1 file changed, 71 insertions(+), 67 deletions(-)
 
-
-Daniel Wagner (1):
-      work-simple: Simple work queue implemenation
-
-Josh Cartwright (1):
-      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
-
-Mike Galbraith (3):
-      x86: UV: raw_spinlock conversion
-      scheduling while atomic in cgroup code
-      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-
-Sebastian Andrzej Siewior (3):
-      gpio: omap: use raw locks for locking
-      rt-mutex: avoid a NULL pointer dereference on deadlock
-      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-
-Steven Rostedt (1):
-      create-rt-enqueue
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.68-rt99-rc1
-
-Thomas Gleixner (14):
-      rtmutex: Simplify rtmutex_slowtrylock()
-      rtmutex: Simplify and document try_to_take_rtmutex()
-      rtmutex: No need to keep task ref for lock owner check
-      rtmutex: Clarify the boost/deboost part
-      rtmutex: Document pi chain walk
-      rtmutex: Simplify remove_waiter()
-      rtmutex: Confine deadlock logic to futex
-      rtmutex: Cleanup deadlock detector debug logic
-      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
-      futex: Make unlock_pi more robust
-      futex: Use futex_top_waiter() in lookup_pi_state()
-      futex: Split out the waiter check from lookup_pi_state()
-      futex: Split out the first waiter attachment from lookup_pi_state()
-      futex: Simplify futex_lock_pi_atomic() and make it more robust
-
-Yadi.hu (1):
-      ARM: enable irq in translation/section permission fault handlers
-
-----
- arch/arm/include/asm/futex.h       |   4 +
- arch/arm/mm/fault.c                |   6 +
- arch/x86/include/asm/uv/uv_bau.h   |  12 +-
- arch/x86/include/asm/uv/uv_hub.h   |   2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |  12 +-
- arch/x86/platform/uv/tlb_uv.c      |  30 +-
- arch/x86/platform/uv/uv_time.c     |  21 +-
- drivers/gpio/gpio-omap.c           |  64 ++--
- include/linux/rtmutex.h            |   8 +-
- include/linux/work-simple.h        |  24 ++
- kernel/Makefile                    |   2 +-
- kernel/futex.c                     | 407 +++++++++++--------------
- kernel/rt.c                        |   8 +-
- kernel/rtmutex-debug.c             |   5 +-
- kernel/rtmutex-debug.h             |   7 +-
- kernel/rtmutex-tester.c            |   4 +-
- kernel/rtmutex.c                   | 603 +++++++++++++++++++++++++++----------
- kernel/rtmutex.h                   |   7 +-
- kernel/rtmutex_common.h            |  22 +-
- kernel/work-simple.c               | 172 +++++++++++
- lib/locking-selftest.c             |  27 ++
- localversion-rt                    |   2 +-
- mm/memcontrol.c                    |   7 +-
- net/sunrpc/svc_xprt.c              |   4 +-
- 24 files changed, 986 insertions(+), 474 deletions(-)
+diff --git a/kernel/futex.c b/kernel/futex.c
+index 73b91f7e7f61..58c66defd69b 100644
+--- a/kernel/futex.c
++++ b/kernel/futex.c
+@@ -643,92 +643,96 @@ void exit_pi_state_list(struct task_struct *curr)
+  * [10] There is no transient state which leaves owner and user space
+  *	TID out of sync.
+  */
+-static int
+-lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+-		union futex_key *key, struct futex_pi_state **ps)
++
++/*
++ * Validate that the existing waiter has a pi_state and sanity check
++ * the pi_state against the user space value. If correct, attach to
++ * it.
++ */
++static int attach_to_pi_state(u32 uval, struct futex_pi_state *pi_state,
++			      struct futex_pi_state **ps)
+ {
+-	struct futex_q *match = futex_top_waiter(hb, key);
+-	struct futex_pi_state *pi_state = NULL;
+-	struct task_struct *p;
+ 	pid_t pid = uval & FUTEX_TID_MASK;
+ 
+-	if (match) {
+-		/*
+-		 * Sanity check the waiter before increasing the
+-		 * refcount and attaching to it.
+-		 */
+-		pi_state = match->pi_state;
+-		/*
+-		 * Userspace might have messed up non-PI and PI
+-		 * futexes [3]
+-		 */
+-		if (unlikely(!pi_state))
+-			return -EINVAL;
++	/*
++	 * Userspace might have messed up non-PI and PI futexes [3]
++	 */
++	if (unlikely(!pi_state))
++		return -EINVAL;
+ 
+-		WARN_ON(!atomic_read(&pi_state->refcount));
++	WARN_ON(!atomic_read(&pi_state->refcount));
+ 
++	/*
++	 * Handle the owner died case:
++	 */
++	if (uval & FUTEX_OWNER_DIED) {
+ 		/*
+-		 * Handle the owner died case:
++		 * exit_pi_state_list sets owner to NULL and wakes the
++		 * topmost waiter. The task which acquires the
++		 * pi_state->rt_mutex will fixup owner.
+ 		 */
+-		if (uval & FUTEX_OWNER_DIED) {
+-			/*
+-			 * exit_pi_state_list sets owner to NULL and
+-			 * wakes the topmost waiter. The task which
+-			 * acquires the pi_state->rt_mutex will fixup
+-			 * owner.
+-			 */
+-			if (!pi_state->owner) {
+-				/*
+-				 * No pi state owner, but the user
+-				 * space TID is not 0. Inconsistent
+-				 * state. [5]
+-				 */
+-				if (pid)
+-					return -EINVAL;
+-				/*
+-				 * Take a ref on the state and
+-				 * return. [4]
+-				 */
+-				goto out_state;
+-			}
+-
++		if (!pi_state->owner) {
+ 			/*
+-			 * If TID is 0, then either the dying owner
+-			 * has not yet executed exit_pi_state_list()
+-			 * or some waiter acquired the rtmutex in the
+-			 * pi state, but did not yet fixup the TID in
+-			 * user space.
+-			 *
+-			 * Take a ref on the state and return. [6]
++			 * No pi state owner, but the user space TID
++			 * is not 0. Inconsistent state. [5]
+ 			 */
+-			if (!pid)
+-				goto out_state;
+-		} else {
++			if (pid)
++				return -EINVAL;
+ 			/*
+-			 * If the owner died bit is not set,
+-			 * then the pi_state must have an
+-			 * owner. [7]
++			 * Take a ref on the state and return success. [4]
+ 			 */
+-			if (!pi_state->owner)
+-				return -EINVAL;
++			goto out_state;
+ 		}
+ 
+ 		/*
+-		 * Bail out if user space manipulated the
+-		 * futex value. If pi state exists then the
+-		 * owner TID must be the same as the user
+-		 * space TID. [9/10]
++		 * If TID is 0, then either the dying owner has not
++		 * yet executed exit_pi_state_list() or some waiter
++		 * acquired the rtmutex in the pi state, but did not
++		 * yet fixup the TID in user space.
++		 *
++		 * Take a ref on the state and return success. [6]
++		 */
++		if (!pid)
++			goto out_state;
++	} else {
++		/*
++		 * If the owner died bit is not set, then the pi_state
++		 * must have an owner. [7]
+ 		 */
+-		if (pid != task_pid_vnr(pi_state->owner))
++		if (!pi_state->owner)
+ 			return -EINVAL;
+-
+-	out_state:
+-		atomic_inc(&pi_state->refcount);
+-		*ps = pi_state;
+-		return 0;
+ 	}
+ 
+ 	/*
++	 * Bail out if user space manipulated the futex value. If pi
++	 * state exists then the owner TID must be the same as the
++	 * user space TID. [9/10]
++	 */
++	if (pid != task_pid_vnr(pi_state->owner))
++		return -EINVAL;
++out_state:
++	atomic_inc(&pi_state->refcount);
++	*ps = pi_state;
++	return 0;
++}
++
++static int
++lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
++		union futex_key *key, struct futex_pi_state **ps)
++{
++	struct futex_q *match = futex_top_waiter(hb, key);
++	struct futex_pi_state *pi_state = NULL;
++	struct task_struct *p;
++	pid_t pid = uval & FUTEX_TID_MASK;
++
++	/*
++	 * If there is a waiter on that futex, validate it and
++	 * attach to the pi_state when the validation succeeds.
++	 */
++	if (match)
++		return attach_to_pi_state(uval, match->pi_state, ps);
++
++	/*
+ 	 * We are the first waiter - try to look up the real owner and attach
+ 	 * the new pi_state to it, but bail out when TID = 0 [1]
+ 	 */
+-- 
+2.1.4
