@@ -1,9 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 24/25] lockdep: selftest: fix warnings due to missing PREEMPT_RT
- conditionals
-Date: Fri, 13 Mar 2015 11:18:49 -0400
-Message-ID: <20150313151838.856970012@goodmis.org>
-References: <20150313151825.583263173@goodmis.org>
+Subject: [PATCH RT 21/27] ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+Date: Fri, 13 Mar 2015 11:18:02 -0400
+Message-ID: <20150313151758.565724156@goodmis.org>
+References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -11,163 +10,56 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>,
-	Josh Cartwright <josh.cartwright@ni.com>,
-	Xander Huff <xander.huff@ni.com>,
-	Gratian Crisan <gratian.crisan@ni.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0024-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
+Content-Disposition: inline; filename=0021-ARM-cmpxchg-define-__HAVE_ARCH_CMPXCHG-for-armv6-and.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.68-rt99-rc1 stable review patch.
+3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <josh.cartwright@ni.com>
+Both pi_stress and sigwaittest in rt-test show performance gain with
+__HAVE_ARCH_CMPXCHG. Testing result on coretile_express_a9x4:
 
-"lockdep: Selftest: Only do hardirq context test for raw spinlock"
-disabled the execution of certain tests with PREEMPT_RT_FULL, but did
-not prevent the tests from still being defined.  This leads to warnings
-like:
+pi_stress -p 99 --duration=300 (on linux-3.4-rc5; bigger is better)
+  vanilla:     Total inversion performed: 5493381
+  patched:     Total inversion performed: 5621746
 
-  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
-  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
-  ...
+sigwaittest -p 99 -l 100000 (on linux-3.4-rc5-rt6; less is better)
+  3.4-rc5-rt6: Min   24, Cur   27, Avg   30, Max   98
+  patched:     Min   19, Cur   21, Avg   23, Max   96
 
-Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
-conditionals.
-
+Signed-off-by: Yong Zhang <yong.zhang0 at gmail.com>
+Cc: Russell King <rmk+kernel at arm.linux.org.uk>
+Cc: Nicolas Pitre <nico at linaro.org>
+Cc: Will Deacon <will.deacon at arm.com>
+Cc: Catalin Marinas <catalin.marinas at arm.com>
+Cc: Thomas Gleixner <tglx at linutronix.de>
+Cc: linux-arm-kernel at lists.infradead.org
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
-Signed-off-by: Xander Huff <xander.huff@ni.com>
-Acked-by: Gratian Crisan <gratian.crisan@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
- 1 file changed, 27 insertions(+)
+ arch/arm/include/asm/cmpxchg.h | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
-index 507a22fab738..51e558f5c93d 100644
---- a/lib/locking-selftest.c
-+++ b/lib/locking-selftest.c
-@@ -570,6 +570,8 @@ GENERATE_TESTCASE(init_held_rsem)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
+diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
+index d41d7cbf0ada..249dfc34a36f 100644
+--- a/arch/arm/include/asm/cmpxchg.h
++++ b/arch/arm/include/asm/cmpxchg.h
+@@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
+ #else	/* min ARCH >= ARMv6 */
+ 
++#define __HAVE_ARCH_CMPXCHG 1
 +
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
+ extern void __bad_cmpxchg(volatile void *ptr, int size);
  
-@@ -585,9 +587,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
- 
-+#endif
-+
- #undef E1
- #undef E2
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
  /*
-  * Enabling hardirqs with a softirq-safe lock held:
-  */
-@@ -620,6 +625,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
- #undef E1
- #undef E2
- 
-+#endif
-+
- /*
-  * Enabling irqs with an irq-safe lock held:
-  */
-@@ -643,6 +650,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
- 
-@@ -658,6 +667,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
- 
-+#endif
-+
- #undef E1
- #undef E2
- 
-@@ -689,6 +700,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
- 
-@@ -704,6 +717,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
- 
-+#endif
-+
- #undef E1
- #undef E2
- #undef E3
-@@ -737,6 +752,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
- #include "locking-selftest-spin-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- #include "locking-selftest-rlock-hardirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
- 
-@@ -752,10 +769,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
- #include "locking-selftest-wlock-softirq.h"
- GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
- 
-+#endif
-+
- #undef E1
- #undef E2
- #undef E3
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- /*
-  * read-lock / write-lock irq inversion.
-  *
-@@ -818,6 +839,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
- #undef E2
- #undef E3
- 
-+#endif
-+
-+#ifndef CONFIG_PREEMPT_RT_FULL
-+
- /*
-  * read-lock / write-lock recursion that is actually safe.
-  */
-@@ -856,6 +881,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
- #undef E2
- #undef E3
- 
-+#endif
-+
- /*
-  * read-lock / write-lock recursion that is unsafe.
-  */
 -- 
 2.1.4
