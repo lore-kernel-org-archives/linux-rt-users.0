@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/27] rtmutex: Document pi chain walk
-Date: Fri, 13 Mar 2015 11:17:48 -0400
-Message-ID: <20150313151756.021322654@goodmis.org>
+Subject: [PATCH RT 05/27] rtmutex: No need to keep task ref for lock owner check
+Date: Fri, 13 Mar 2015 11:17:46 -0400
+Message-ID: <20150313151755.723587668@goodmis.org>
 References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-rtmutex-Document-pi-chain-walk.patch
+Content-Disposition: inline; filename=0005-rtmutex-No-need-to-keep-task-ref-for-lock-owner-chec.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,217 +25,44 @@ If anyone has any objections, please let me know.
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: 3eb65aeadf701976b084e9171e16bb7d1e83fbb0
+upstream commit: 2ffa5a5cd2fe792b6399c903d5172adf088d8ff7
 
-Add commentry to document the chain walk and the protection mechanisms
-and their scope.
+There is no point to keep the task ref across the check for lock
+owner. Drop the ref before that, so the protection context is clear.
+
+Found while documenting the chain walk.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 100 ++++++++++++++++++++++++++++++++++++++++++++++++++-----
- 1 file changed, 91 insertions(+), 9 deletions(-)
+ kernel/rtmutex.c | 5 +++--
+ 1 file changed, 3 insertions(+), 2 deletions(-)
 
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 5431db127f64..0d1705119700 100644
+index 16e01f2a834d..865190821088 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -265,6 +265,48 @@ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
-  * Adjust the priority chain. Also used for deadlock detection.
-  * Decreases task's usage by one - may thus free the task.
-  * Returns 0 or -EDEADLK.
-+ *
-+ * Chain walk basics and protection scope
-+ *
-+ * [R] refcount on task
-+ * [P] task->pi_lock held
-+ * [L] rtmutex->wait_lock held
-+ *
-+ * Step	Description				Protected by
-+ *	function arguments:
-+ *	@task					[R]
-+ *	@orig_lock if != NULL			@top_task is blocked on it
-+ *	@next_lock				Unprotected. Cannot be
-+ *						dereferenced. Only used for
-+ *						comparison.
-+ *	@orig_waiter if != NULL			@top_task is blocked on it
-+ *	@top_task				current, or in case of proxy
-+ *						locking protected by calling
-+ *						code
-+ *	again:
-+ *	  loop_sanity_check();
-+ *	retry:
-+ * [1]	  lock(task->pi_lock);			[R] acquire [P]
-+ * [2]	  waiter = task->pi_blocked_on;		[P]
-+ * [3]	  check_exit_conditions_1();		[P]
-+ * [4]	  lock = waiter->lock;			[P]
-+ * [5]	  if (!try_lock(lock->wait_lock)) {	[P] try to acquire [L]
-+ *	    unlock(task->pi_lock);		release [P]
-+ *	    goto retry;
-+ *	  }
-+ * [6]	  check_exit_conditions_2();		[P] + [L]
-+ * [7]	  requeue_lock_waiter(lock, waiter);	[P] + [L]
-+ * [8]	  unlock(task->pi_lock);		release [P]
-+ *	  put_task_struct(task);		release [R]
-+ * [9]	  check_exit_conditions_3();		[L]
-+ * [10]	  task = owner(lock);			[L]
-+ *	  get_task_struct(task);		[L] acquire [R]
-+ *	  lock(task->pi_lock);			[L] acquire [P]
-+ * [11]	  requeue_pi_waiter(tsk, waiters(lock));[P] + [L]
-+ * [12]	  check_exit_conditions_4();		[P] + [L]
-+ * [13]	  unlock(task->pi_lock);		release [P]
-+ *	  unlock(lock->wait_lock);		release [L]
-+ *	  goto again;
-  */
- static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 				      int deadlock_detect,
-@@ -289,6 +331,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	 * carefully whether things change under us.
- 	 */
-  again:
-+	/*
-+	 * We limit the lock chain length for each invocation.
-+	 */
- 	if (++depth > max_lock_depth) {
- 		static int prev_max;
+@@ -391,6 +391,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  
-@@ -306,13 +351,28 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 
- 		return -EDEADLK;
- 	}
-+
-+	/*
-+	 * We are fully preemptible here and only hold the refcount on
-+	 * @task. So everything can have changed under us since the
-+	 * caller or our own code below (goto retry/again) dropped all
-+	 * locks.
-+	 */
-  retry:
- 	/*
--	 * Task can not go away as we did a get_task() before !
-+	 * [1] Task cannot go away as we did a get_task() before !
- 	 */
- 	raw_spin_lock_irqsave(&task->pi_lock, flags);
- 
-+	/*
-+	 * [2] Get the waiter on which @task is blocked on.
-+	 */
- 	waiter = task->pi_blocked_on;
-+
-+	/*
-+	 * [3] check_exit_conditions_1() protected by task->pi_lock.
-+	 */
-+
- 	/*
- 	 * Check whether the end of the boosting chain has been
- 	 * reached or the state of the chain has changed while we
-@@ -363,7 +423,15 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
- 		goto out_unlock_pi;
- 
-+	/*
-+	 * [4] Get the next lock
-+	 */
- 	lock = waiter->lock;
-+	/*
-+	 * [5] We need to trylock here as we are holding task->pi_lock,
-+	 * which is the reverse lock order versus the other rtmutex
-+	 * operations.
-+	 */
- 	if (!raw_spin_trylock(&lock->wait_lock)) {
- 		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 		cpu_relax();
-@@ -371,6 +439,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	}
- 
- 	/*
-+	 * [6] check_exit_conditions_2() protected by task->pi_lock and
-+	 * lock->wait_lock.
-+	 *
- 	 * Deadlock detection. If the lock is the same as the original
- 	 * lock which caused us to walk the lock chain or if the
- 	 * current lock is owned by the task which initiated the chain
-@@ -390,16 +461,18 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	 */
- 	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
- 
--	/* Requeue the waiter in the lock waiter list. */
-+	/* [7] Requeue the waiter in the lock waiter list. */
- 	rt_mutex_dequeue(lock, waiter);
- 	waiter->list_entry.prio = task->prio;
- 	rt_mutex_enqueue(lock, waiter);
- 
--	/* Release the task */
-+	/* [8] Release the task */
+ 	/* Release the task */
  	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 	put_task_struct(task);
- 
- 	/*
-+	 * [9] check_exit_conditions_3 protected by lock->wait_lock.
-+	 *
- 	 * We must abort the chain walk if there is no lock owner even
- 	 * in the dead lock detection case, as we have nothing to
- 	 * follow here. This is the end of the chain we are walking.
-@@ -408,8 +481,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
++	put_task_struct(task);
++
+ 	if (!rt_mutex_owner(lock)) {
  		struct rt_mutex_waiter *lock_top_waiter;
  
- 		/*
--		 * If the requeue above changed the top waiter, then we need
--		 * to wake the new top waiter up to try to get the lock.
-+		 * If the requeue [7] above changed the top waiter,
-+		 * then we need to wake the new top waiter up to try
-+		 * to get the lock.
- 		 */
- 		lock_top_waiter = rt_mutex_top_waiter(lock);
- 		if (prerequeue_top_waiter != lock_top_waiter)
-@@ -418,11 +492,12 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 		return 0;
+@@ -402,9 +404,8 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+ 		if (top_waiter != lock_top_waiter)
+ 			rt_mutex_wake_waiter(lock_top_waiter);
+ 		raw_spin_unlock(&lock->wait_lock);
+-		goto out_put_task;
++		return 0;
  	}
+-	put_task_struct(task);
  
--	/* Grab the next task, i.e. the owner of @lock */
-+	/* [10] Grab the next task, i.e. the owner of @lock */
+ 	/* Grab the next task */
  	task = rt_mutex_owner(lock);
- 	get_task_struct(task);
- 	raw_spin_lock_irqsave(&task->pi_lock, flags);
- 
-+	/* [11] requeue the pi waiters if necessary */
- 	if (waiter == rt_mutex_top_waiter(lock)) {
- 		/*
- 		 * The waiter became the new top (highest priority)
-@@ -457,23 +532,30 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
- 	}
- 
- 	/*
-+	 * [12] check_exit_conditions_4() protected by task->pi_lock
-+	 * and lock->wait_lock. The actual decisions are made after we
-+	 * dropped the locks.
-+	 *
- 	 * Check whether the task which owns the current lock is pi
- 	 * blocked itself. If yes we store a pointer to the lock for
- 	 * the lock chain change detection above. After we dropped
- 	 * task->pi_lock next_lock cannot be dereferenced anymore.
- 	 */
- 	next_lock = task_blocked_on_lock(task);
--
--	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
--
- 	/*
- 	 * Store the top waiter of @lock for the end of chain walk
- 	 * decision below.
- 	 */
- 	top_waiter = rt_mutex_top_waiter(lock);
-+
-+	/* [13] Drop the locks */
-+	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 	raw_spin_unlock(&lock->wait_lock);
- 
- 	/*
-+	 * Make the actual exit decisions [12], based on the stored
-+	 * values.
-+	 *
- 	 * We reached the end of the lock chain. Stop right here. No
- 	 * point to go back just to figure that out.
- 	 */
 -- 
 2.1.4
