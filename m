@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 13/25] futex: Use futex_top_waiter() in lookup_pi_state()
-Date: Fri, 13 Mar 2015 11:18:38 -0400
-Message-ID: <20150313151836.324908865@goodmis.org>
+Subject: [PATCH RT 08/25] rtmutex: Simplify remove_waiter()
+Date: Fri, 13 Mar 2015 11:18:33 -0400
+Message-ID: <20150313151835.508998403@goodmis.org>
 References: <20150313151825.583263173@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,14 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Darren Hart <darren@dvhart.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Davidlohr Bueso <davidlohr@hp.com>,
-	Kees Cook <kees@outflux.net>, <wad@chromium.org>
+	Lai Jiangshan <laijs@cn.fujitsu.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0013-futex-Use-futex_top_waiter-in-lookup_pi_state.patch
+Content-Disposition: inline; filename=0008-rtmutex-Simplify-remove_waiter.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,178 +25,83 @@ If anyone has any objections, please let me know.
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-upstream commit: bd1dbcc67cd2c1181e2c01daac51eabf1b964dd8
+upstream commit: 1ca7b86062ec8473d03c5cdfd336abc8b1c8098c
 
-No point in open coding the same function again.
+Exit right away, when the removed waiter was not the top priority
+waiter on the lock. Get rid of the extra indent level.
 
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Reviewed-by: Darren Hart <darren@dvhart.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Davidlohr Bueso <davidlohr@hp.com>
-Cc: Kees Cook <kees@outflux.net>
-Cc: wad@chromium.org
-Link: http://lkml.kernel.org/r/20140611204237.092947239@linutronix.de
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Reviewed-by: Lai Jiangshan <laijs@cn.fujitsu.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/futex.c | 127 +++++++++++++++++++++++++++------------------------------
- 1 file changed, 61 insertions(+), 66 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 71d414b4ce34..73b91f7e7f61 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -647,90 +647,85 @@ static int
- lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
- 		union futex_key *key, struct futex_pi_state **ps)
+Conflicts:
+	kernel/rtmutex.c
+---
+ kernel/rtmutex.c | 33 ++++++++++++++++++---------------
+ 1 file changed, 18 insertions(+), 15 deletions(-)
+
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 5c581a7b715f..6405f7bc81f7 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -911,7 +911,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
+ static void remove_waiter(struct rt_mutex *lock,
+ 			  struct rt_mutex_waiter *waiter)
  {
-+	struct futex_q *match = futex_top_waiter(hb, key);
- 	struct futex_pi_state *pi_state = NULL;
--	struct futex_q *this, *next;
--	struct plist_head *head;
- 	struct task_struct *p;
- 	pid_t pid = uval & FUTEX_TID_MASK;
+-	int first = (waiter == rt_mutex_top_waiter(lock));
++	bool is_top_waiter = (waiter == rt_mutex_top_waiter(lock));
+ 	struct task_struct *owner = rt_mutex_owner(lock);
+ 	struct rt_mutex *next_lock = NULL;
+ 	unsigned long flags;
+@@ -921,31 +921,34 @@ static void remove_waiter(struct rt_mutex *lock,
+ 	current->pi_blocked_on = NULL;
+ 	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
  
--	head = &hb->chain;
+-	if (!owner)
++	/*
++	 * Only update priority if the waiter was the highest priority
++	 * waiter of the lock and there is an owner to update.
++	 */
++	if (!owner || !is_top_waiter)
+ 		return;
+ 
+-	if (first) {
 -
--	plist_for_each_entry_safe(this, next, head, list) {
--		if (match_futex(&this->key, key)) {
--			/*
--			 * Sanity check the waiter before increasing
--			 * the refcount and attaching to it.
--			 */
--			pi_state = this->pi_state;
--			/*
--			 * Userspace might have messed up non-PI and
--			 * PI futexes [3]
--			 */
--			if (unlikely(!pi_state))
--				return -EINVAL;
-+	if (match) {
-+		/*
-+		 * Sanity check the waiter before increasing the
-+		 * refcount and attaching to it.
-+		 */
-+		pi_state = match->pi_state;
-+		/*
-+		 * Userspace might have messed up non-PI and PI
-+		 * futexes [3]
-+		 */
-+		if (unlikely(!pi_state))
-+			return -EINVAL;
+-		raw_spin_lock_irqsave(&owner->pi_lock, flags);
++	raw_spin_lock_irqsave(&owner->pi_lock, flags);
  
--			WARN_ON(!atomic_read(&pi_state->refcount));
-+		WARN_ON(!atomic_read(&pi_state->refcount));
+-		rt_mutex_dequeue_pi(owner, waiter);
++	rt_mutex_dequeue_pi(owner, waiter);
  
-+		/*
-+		 * Handle the owner died case:
-+		 */
-+		if (uval & FUTEX_OWNER_DIED) {
- 			/*
--			 * Handle the owner died case:
-+			 * exit_pi_state_list sets owner to NULL and
-+			 * wakes the topmost waiter. The task which
-+			 * acquires the pi_state->rt_mutex will fixup
-+			 * owner.
- 			 */
--			if (uval & FUTEX_OWNER_DIED) {
-+			if (!pi_state->owner) {
- 				/*
--				 * exit_pi_state_list sets owner to NULL and
--				 * wakes the topmost waiter. The task which
--				 * acquires the pi_state->rt_mutex will fixup
--				 * owner.
-+				 * No pi state owner, but the user
-+				 * space TID is not 0. Inconsistent
-+				 * state. [5]
- 				 */
--				if (!pi_state->owner) {
--					/*
--					 * No pi state owner, but the user
--					 * space TID is not 0. Inconsistent
--					 * state. [5]
--					 */
--					if (pid)
--						return -EINVAL;
--					/*
--					 * Take a ref on the state and
--					 * return. [4]
--					 */
--					goto out_state;
--				}
--
--				/*
--				 * If TID is 0, then either the dying owner
--				 * has not yet executed exit_pi_state_list()
--				 * or some waiter acquired the rtmutex in the
--				 * pi state, but did not yet fixup the TID in
--				 * user space.
--				 *
--				 * Take a ref on the state and return. [6]
--				 */
--				if (!pid)
--					goto out_state;
--			} else {
-+				if (pid)
-+					return -EINVAL;
- 				/*
--				 * If the owner died bit is not set,
--				 * then the pi_state must have an
--				 * owner. [7]
-+				 * Take a ref on the state and
-+				 * return. [4]
- 				 */
--				if (!pi_state->owner)
--					return -EINVAL;
-+				goto out_state;
- 			}
+-		if (rt_mutex_has_waiters(lock)) {
+-			struct rt_mutex_waiter *next;
++	if (rt_mutex_has_waiters(lock))
++		rt_mutex_enqueue_pi(owner, rt_mutex_top_waiter(lock));
  
- 			/*
--			 * Bail out if user space manipulated the
--			 * futex value. If pi state exists then the
--			 * owner TID must be the same as the user
--			 * space TID. [9/10]
-+			 * If TID is 0, then either the dying owner
-+			 * has not yet executed exit_pi_state_list()
-+			 * or some waiter acquired the rtmutex in the
-+			 * pi state, but did not yet fixup the TID in
-+			 * user space.
-+			 *
-+			 * Take a ref on the state and return. [6]
-+			 */
-+			if (!pid)
-+				goto out_state;
-+		} else {
-+			/*
-+			 * If the owner died bit is not set,
-+			 * then the pi_state must have an
-+			 * owner. [7]
- 			 */
--			if (pid != task_pid_vnr(pi_state->owner))
-+			if (!pi_state->owner)
- 				return -EINVAL;
--
--		out_state:
--			atomic_inc(&pi_state->refcount);
--			*ps = pi_state;
--			return 0;
- 		}
-+
-+		/*
-+		 * Bail out if user space manipulated the
-+		 * futex value. If pi state exists then the
-+		 * owner TID must be the same as the user
-+		 * space TID. [9/10]
-+		 */
-+		if (pid != task_pid_vnr(pi_state->owner))
-+			return -EINVAL;
-+
-+	out_state:
-+		atomic_inc(&pi_state->refcount);
-+		*ps = pi_state;
-+		return 0;
- 	}
+-			next = rt_mutex_top_waiter(lock);
+-			rt_mutex_enqueue_pi(owner, next);
+-		}
+-		__rt_mutex_adjust_prio(owner);
++	__rt_mutex_adjust_prio(owner);
  
- 	/*
+-		/* Store the lock on which owner is blocked or NULL */
++	/* Store the lock on which owner is blocked or NULL */
++	if (rt_mutex_real_waiter(owner->pi_blocked_on))
+ 		next_lock = task_blocked_on_lock(owner);
+ 
+-		raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
+-	}
++	raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
+ 
+ 	WARN_ON(!plist_node_empty(&waiter->pi_list_entry));
+ 
++	/*
++	 * Don't walk the chain, if the owner task is not blocked
++	 * itself.
++	 */
+ 	if (!next_lock)
+ 		return;
+ 
 -- 
 2.1.4
