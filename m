@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 22/27] sas-ata/isci: dontt disable interrupts in qc_issue handler
-Date: Fri, 13 Mar 2015 11:18:03 -0400
-Message-ID: <20150313151758.807420172@goodmis.org>
+Subject: [PATCH RT 26/27] lockdep: selftest: fix warnings due to missing PREEMPT_RT
+ conditionals
+Date: Fri, 13 Mar 2015 11:18:07 -0400
+Message-ID: <20150313151759.461885617@goodmis.org>
 References: <20150313151741.132137234@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,103 +11,163 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>,
+	Josh Cartwright <josh.cartwright@ni.com>,
+	Xander Huff <xander.huff@ni.com>,
+	Gratian Crisan <gratian.crisan@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:32803 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1946017AbbCMPfu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 13 Mar 2015 11:35:50 -0400
-Content-Disposition: inline; filename=0022-sas-ata-isci-dont-t-disable-interrupts-in-qc_issue-h.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0026-lockdep-selftest-fix-warnings-due-to-missing-PREEMPT.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.4.106-rt132-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+From: Josh Cartwright <josh.cartwright@ni.com>
 
-On 3.14-rt we see the following trace on Canoe Pass for
-SCSI_ISCI "Intel(R) C600 Series Chipset SAS Controller"
-when the sas qc_issue handler is run:
+"lockdep: Selftest: Only do hardirq context test for raw spinlock"
+disabled the execution of certain tests with PREEMPT_RT_FULL, but did
+not prevent the tests from still being defined.  This leads to warnings
+like:
 
- BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:905
- in_atomic(): 0, irqs_disabled(): 1, pid: 432, name: udevd
- CPU: 11 PID: 432 Comm: udevd Not tainted 3.14.28-rt22 #2
- Hardware name: Intel Corporation S2600CP/S2600CP, BIOS SE5C600.86B.02.01.0002.082220131453 08/22/2013
- ffff880fab500000 ffff880fa9f239c0 ffffffff81a2d273 0000000000000000
- ffff880fa9f239d8 ffffffff8107f023 ffff880faac23dc0 ffff880fa9f239f0
- ffffffff81a33cc0 ffff880faaeb1400 ffff880fa9f23a40 ffffffff815de891
- Call Trace:
- [<ffffffff81a2d273>] dump_stack+0x4e/0x7a
- [<ffffffff8107f023>] __might_sleep+0xe3/0x160
- [<ffffffff81a33cc0>] rt_spin_lock+0x20/0x50
- [<ffffffff815de891>] isci_task_execute_task+0x171/0x2f0  <-----
- [<ffffffff815cfecb>] sas_ata_qc_issue+0x25b/0x2a0
- [<ffffffff81606363>] ata_qc_issue+0x1f3/0x370
- [<ffffffff8160c600>] ? ata_scsi_invalid_field+0x40/0x40
- [<ffffffff8160c8f5>] ata_scsi_translate+0xa5/0x1b0
- [<ffffffff8160efc6>] ata_sas_queuecmd+0x86/0x280
- [<ffffffff815ce446>] sas_queuecommand+0x196/0x230
- [<ffffffff81081fad>] ? get_parent_ip+0xd/0x50
- [<ffffffff815b05a4>] scsi_dispatch_cmd+0xb4/0x210
- [<ffffffff815b7744>] scsi_request_fn+0x314/0x530
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:574:1: warning: 'irqsafe1_hard_rlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_12' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:577:1: warning: 'irqsafe1_hard_wlock_21' defined but not used [-Wunused-function]
+  ./linux/lib/locking-selftest.c:580:1: warning: 'irqsafe1_soft_spin_12' defined but not used [-Wunused-function]
+  ...
 
-and gdb shows:
-
-(gdb) list * isci_task_execute_task+0x171
-0xffffffff815ddfb1 is in isci_task_execute_task (drivers/scsi/isci/task.c:138).
-133             dev_dbg(&ihost->pdev->dev, "%s: num=%d\n", __func__, num);
-134
-135             for_each_sas_task(num, task) {
-136                     enum sci_status status = SCI_FAILURE;
-137
-138                     spin_lock_irqsave(&ihost->scic_lock, flags);    <-----
-139                     idev = isci_lookup_device(task->dev);
-140                     io_ready = isci_device_io_ready(idev, task);
-141                     tag = isci_alloc_tag(ihost);
-142                     spin_unlock_irqrestore(&ihost->scic_lock, flags);
-(gdb)
-
-In addition to the scic_lock, the function also contains locking of
-the task_state_lock -- which is clearly not a candidate for raw lock
-conversion.  As can be seen by the comment nearby, we really should
-be running the qc_issue code with interrupts enabled anyway.
+Fixed by wrapping the test definitions in #ifndef CONFIG_PREEMPT_RT_FULL
+conditionals.
 
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
+Signed-off-by: Josh Cartwright <josh.cartwright@ni.com>
+Signed-off-by: Xander Huff <xander.huff@ni.com>
+Acked-by: Gratian Crisan <gratian.crisan@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/scsi/libsas/sas_ata.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ lib/locking-selftest.c | 27 +++++++++++++++++++++++++++
+ 1 file changed, 27 insertions(+)
 
-diff --git a/drivers/scsi/libsas/sas_ata.c b/drivers/scsi/libsas/sas_ata.c
-index 51ee663c1310..38c9f30d1064 100644
---- a/drivers/scsi/libsas/sas_ata.c
-+++ b/drivers/scsi/libsas/sas_ata.c
-@@ -191,7 +191,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
- 	/* TODO: audit callers to ensure they are ready for qc_issue to
- 	 * unconditionally re-enable interrupts
- 	 */
--	local_irq_save(flags);
-+	local_irq_save_nort(flags);
- 	spin_unlock(ap->lock);
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index 23b856400e5c..3508e2c80465 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -569,6 +569,8 @@ GENERATE_TESTCASE(init_held_rsem)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_spin)
  
- 	/* If the device fell off, no sense in issuing commands */
-@@ -261,7 +261,7 @@ static unsigned int sas_ata_qc_issue(struct ata_queued_cmd *qc)
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_hard_rlock)
  
-  out:
- 	spin_lock(ap->lock);
--	local_irq_restore(flags);
-+	local_irq_restore_nort(flags);
- 	return ret;
- }
+@@ -584,9 +586,12 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe1_soft_wlock)
  
++#endif
++
+ #undef E1
+ #undef E2
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Enabling hardirqs with a softirq-safe lock held:
+  */
+@@ -619,6 +624,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #undef E1
+ #undef E2
+ 
++#endif
++
+ /*
+  * Enabling irqs with an irq-safe lock held:
+  */
+@@ -642,6 +649,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2A_rlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_hard_rlock)
+ 
+@@ -657,6 +666,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ 
+@@ -688,6 +699,8 @@ GENERATE_PERMUTATIONS_2_EVENTS(irqsafe2B_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_hard_rlock)
+ 
+@@ -703,6 +716,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+@@ -736,6 +751,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe3_soft_wlock)
+ #include "locking-selftest-spin-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_spin)
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ #include "locking-selftest-rlock-hardirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_hard_rlock)
+ 
+@@ -751,10 +768,14 @@ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_rlock)
+ #include "locking-selftest-wlock-softirq.h"
+ GENERATE_PERMUTATIONS_3_EVENTS(irqsafe4_soft_wlock)
+ 
++#endif
++
+ #undef E1
+ #undef E2
+ #undef E3
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock irq inversion.
+  *
+@@ -817,6 +838,10 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_inversion_soft_wlock)
+ #undef E2
+ #undef E3
+ 
++#endif
++
++#ifndef CONFIG_PREEMPT_RT_FULL
++
+ /*
+  * read-lock / write-lock recursion that is actually safe.
+  */
+@@ -855,6 +880,8 @@ GENERATE_PERMUTATIONS_3_EVENTS(irq_read_recursion_soft)
+ #undef E2
+ #undef E3
+ 
++#endif
++
+ /*
+  * read-lock / write-lock recursion that is unsafe.
+  */
 -- 
 2.1.4
-
-
