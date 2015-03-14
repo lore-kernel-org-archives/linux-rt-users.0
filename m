@@ -1,55 +1,41 @@
-From: Daniel Kasak <d.j.kasak.dk@gmail.com>
-Subject: Re: btrfs and linux-rt
-Date: Sat, 14 Mar 2015 17:52:55 +1100
-Message-ID: <CAF73Y=ROMtF_4F-Gfq=jgTv6u=+NzTo+Nw5gU=B_w=z4iKra6Q@mail.gmail.com>
-References: <CAF73Y=Qfsw=Yre6d_kP7Vmn+Ln1L4viBVRPksdomdGKVzDu+6Q@mail.gmail.com>
-	<20150313113832.GE5592@linutronix.de>
-	<20150313211409.GA29519@linutronix.de>
+From: Ralf Mardorf <ralf.mardorf@rocketmail.com>
+Subject: 3.18.9-rt4 kernel panic - Was: 3.18.9-rt4
+Date: Sat, 14 Mar 2015 10:43:36 +0100
+Message-ID: <20150314104336.756a6f0e@archlinux>
+References: <20150313223041.0a8bf390@archlinux>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+To: linux-rt users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f43.google.com ([209.85.215.43]:36638 "EHLO
-	mail-la0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750739AbbCNGw4 convert rfc822-to-8bit (ORCPT
+Received: from nm1-vm6.bullet.mail.ne1.yahoo.com ([98.138.91.253]:44354 "EHLO
+	nm1-vm6.bullet.mail.ne1.yahoo.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1750848AbbCNJuZ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 14 Mar 2015 02:52:56 -0400
-Received: by lamx15 with SMTP id x15so5299794lam.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 13 Mar 2015 23:52:55 -0700 (PDT)
-In-Reply-To: <20150313211409.GA29519@linutronix.de>
+	Sat, 14 Mar 2015 05:50:25 -0400
+In-Reply-To: <20150313223041.0a8bf390@archlinux>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Interesting.
+On Fri, 13 Mar 2015 22:30:41 +0100, Ralf Mardorf wrote:
+>all kernels >= 3.14.34-rt31 I tested, don't finish startup on my
+>machine [1]. This are the last messages of startups for 4 different
+>startups for 3.18.9-rt4.
+>
+>Picture URLs:
+>http://picpaste.com/3.18.9-rt4.x86_64.end_of_startup_2.jpg
+>http://picpaste.com/3.18.9-rt4.x86_64.end_of_startup_3.jpg
+>http://picpaste.com/3.18.9-rt4.x86_64.end_of_startup_4.jpg
+>http://picpaste.com/3.18.9-rt4.x86_64.end_of_startup_5.jpg
+>
+>The last kernel I tested that does work is 3.14.28-rt25.
 
-Nah I wasn't doing anything special with btrfs. I'll try again with a
-3.18 kernel and see if it's magically resolved :)
+Hi,
 
-Dan
+this morning the messages finished with a kernel panic.
 
-On Sat, Mar 14, 2015 at 8:14 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> * Sebastian Andrzej Siewior | 2015-03-13 12:38:32 [+0100]:
->
->>I remember some people complained about btrfs. I then bootet a kvm
->>machine with btrfs as rootfs and it worked fine=E2=80=A6 Are you usin=
-g some
->>"special" btrfs features or is this just a plain install?
->
-> Okay. Among other things I manged to install fc21 on btrfs and it
-> booted (well systemd complain about missing things and did not want t=
-o
-> continue but I got a shell and could login which means btrfs got
-> mounted).
->
->>>Thanks :)
->>>
->>>Dan
->
-> Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Picture URL:
+http://picpaste.com/3.18.9-rt4.x86_64.end_of_startup_6.jpg
+
+Regards,
+Ralf
