@@ -1,44 +1,51 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 00/39] Linux 3.14.34-rt32-rc1
-Date: Mon, 16 Mar 2015 14:59:10 +0100
-Message-ID: <20150316135910.GA28130@linutronix.de>
-References: <20150312191307.081068717@goodmis.org>
+Subject: Re: 3.18.9-rt4 kernel panic - Was: 3.18.9-rt4
+Date: Mon, 16 Mar 2015 15:01:50 +0100
+Message-ID: <20150316140150.GB28130@linutronix.de>
+References: <20150313223041.0a8bf390@archlinux>
+ <20150314104336.756a6f0e@archlinux>
+ <20150315145153.44f5217c@tor.valhalla.alchemy.lu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Joakim Hernberg <jhernberg@alchemy.lu>,
+	Ralf Mardorf <ralf.mardorf@rocketmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35404 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:35422 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751799AbbCPN7N (ORCPT
+	with ESMTP id S1750948AbbCPOBy convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Mar 2015 09:59:13 -0400
+	Mon, 16 Mar 2015 10:01:54 -0400
 Content-Disposition: inline
-In-Reply-To: <20150312191307.081068717@goodmis.org>
+In-Reply-To: <20150315145153.44f5217c@tor.valhalla.alchemy.lu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2015-03-12 15:13:07 [-0400]:
+* Joakim Hernberg | 2015-03-15 14:51:53 [+0100]:
 
->Please scream at me if I messed something up. Please test the patches too.
+>I remember that you had boot problems a while ago, together
+>with a couple of other AMD cpu users.  IIRC it just affected a few
+>specific AMD cpus.  AFAIK, you could not succesfully boot any kernel
+>starting with with 3.12.6-rt9, and I have another report from another
+>afflicted user saying that the boot problem was fixed by reverting:
+>
+>timers-do-not-raise-softirq-unconditionally.patch
+>timer-Raise-softirq-if-there-s-irq_work.patch
+>timer-rt-Always-raise-the-softirq-if-there-s-irq_wor.patch
+>
+>This might be significant, as these patches are in play again, at
+>least on 3.18-rt.
 
-So Paul remided us about the dead lock thingy that has been reported.
-Users reported that it does not occur with v3.18-RT and they think it is
-due to 'Revert "timers: do not raise softirq unconditionally"' in 
-Revert-timers-do-not-raise-softirq-unconditionally.patch.
-
-I reverted it because I couldn't get highres to get to work at all on
-v3.18 due to different synchronisation / expectaion of the timer
-framework. Since the trylock might record a different lock owner it is
-possible that this causes the deadlock (it thinks). Therefore it has no
-stable tag nor any reference to the deadlock problem.
-
-With this patch applied FULL_NOHZ should not properly work (again) due
-to timer softirq wake ups (but this is a different problem).
+As of v3.18-RT these patches are revereted. In two pix I see cpufreq
+with k8. My AMD here uses acpi-cpufreq so I never run into this. So
+maybe I find something once I look=E2=80=A6. I the meantime you could y=
+ou please
+drop cpufreq from your .config and try again?
 
 Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
