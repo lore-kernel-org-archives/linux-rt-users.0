@@ -1,49 +1,44 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: Kenrel panic with 3.18.7-rt2 - Was: Kenrel panic with 3.18.7-rt2
- - rootfs at MMC
-Date: Mon, 16 Mar 2015 09:22:13 -0400
-Message-ID: <20150316132212.GE21256@windriver.com>
-References: <20150306174336.2eb1fea9@archlinux>
- <20150306174700.29fc83bf@archlinux>
- <CAP=VYLofi0bYu5Lk+cnxyZ3upv2xueDDvHbO9B4Q8CgxpL0CGA@mail.gmail.com>
- <20150313162658.756416ec@archlinux>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 00/39] Linux 3.14.34-rt32-rc1
+Date: Mon, 16 Mar 2015 14:59:10 +0100
+Message-ID: <20150316135910.GA28130@linutronix.de>
+References: <20150312191307.081068717@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail1.windriver.com ([147.11.146.13]:57059 "EHLO
-	mail1.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753164AbbCPNVx (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:35404 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751799AbbCPN7N (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Mar 2015 09:21:53 -0400
+	Mon, 16 Mar 2015 09:59:13 -0400
 Content-Disposition: inline
-In-Reply-To: <20150313162658.756416ec@archlinux>
+In-Reply-To: <20150312191307.081068717@goodmis.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[Re: Kenrel panic with 3.18.7-rt2 - Was: Kenrel panic with 3.18.7-rt2 - rootfs at MMC] On 13/03/2015 (Fri 16:26) Ralf Mardorf wrote:
+* Steven Rostedt | 2015-03-12 15:13:07 [-0400]:
 
-> On Fri, 13 Mar 2015 10:26:39 -0400, Paul Gortmaker wrote:
-> >unless you can capture some of the log with a camera
-> 
-> Hi,
-> 
-> in the meanwhile I noticed that 3.14.28-rt25 works on my machine and
-> 3.14.34-rt31 already doesn't work on my machine.
+>Please scream at me if I messed something up. Please test the patches too.
 
-Not a lot changed in there ; mostly stable merges, so if you could test
-the interim points, that might give a clue as to what happened.
+So Paul remided us about the dead lock thingy that has been reported.
+Users reported that it does not occur with v3.18-RT and they think it is
+due to 'Revert "timers: do not raise softirq unconditionally"' in 
+Revert-timers-do-not-raise-softirq-unconditionally.patch.
 
-> 
-> Can I send a pic as attachment or should I paste a link?
+I reverted it because I couldn't get highres to get to work at all on
+v3.18 due to different synchronisation / expectaion of the timer
+framework. Since the trylock might record a different lock owner it is
+possible that this causes the deadlock (it thinks). Therefore it has no
+stable tag nor any reference to the deadlock problem.
 
-Not sure the list will pass through an attachment that isn't just a
-plain text patch or similar; you might need a link instead.
+With this patch applied FULL_NOHZ should not properly work (again) due
+to timer softirq wake ups (but this is a different problem).
 
-P.
---
-
-> 
-> Regards,
-> Ralf
+Sebastian
