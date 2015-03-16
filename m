@@ -1,34 +1,36 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] irq_work: Hide access to hirq_work_list in
- PREEMPT_RT_FULL
-Date: Mon, 16 Mar 2015 18:48:29 +0100
-Message-ID: <20150316174829.GD28130@linutronix.de>
-References: <20150312180857.31a0f7d1@gandalf.local.home>
+Subject: Re: [ANNOUNCE] 3.18.9-rt4
+Date: Mon, 16 Mar 2015 18:50:42 +0100
+Message-ID: <20150316175042.GE28130@linutronix.de>
+References: <20150307141536.GA6485@linutronix.de>
+ <loom.20150309T235034-919@post.gmane.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Neil Bradley <neil.bradley@windowslive.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:36744 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:36762 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757045AbbCPRsb (ORCPT
+	with ESMTP id S1754572AbbCPRun (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 16 Mar 2015 13:48:31 -0400
+	Mon, 16 Mar 2015 13:50:43 -0400
 Content-Disposition: inline
-In-Reply-To: <20150312180857.31a0f7d1@gandalf.local.home>
+In-Reply-To: <loom.20150309T235034-919@post.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2015-03-12 18:08:57 [-0400]:
+* Neil Bradley | 2015-03-09 22:54:54 [+0000]:
 
->The hirq_work_list is only defined when PREEMPT_RT_FULL is configured.
->Most access to it is within an #ifdef CONFIG_PREEMPT_RT_FULL, except
->for one. Encapsulate that location too.
+>Hi there.
+Hi,
 >
->Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+>If I compile the rt patch with any pre-emption model other than full
+>preemption, I get a compile error in kernel/irq_work:150:20.
+>hirq_work_list Undeclared.
+>
+>Using current 3.18.9 sources & patch-3.18.9-rt4.
+thx, Steven sent a fix, will be fixed in the next release.
 
-Applied
+>Cheers, Neil.
 
 Sebastian
