@@ -1,110 +1,39 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/4] fs,btrfs: fix rt deadlock on extent_buffer->lock
-Date: Tue, 17 Mar 2015 12:22:01 -0400
-Message-ID: <20150317162311.214314372@goodmis.org>
-References: <20150317162200.500077099@goodmis.org>
+Subject: [PATCH RT 4/4] Linux 3.14.34-rt32-rc2
+Date: Tue, 17 Mar 2015 12:25:25 -0400
+Message-ID: <20150317162557.506527760@goodmis.org>
+References: <20150317162521.748798934@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Chris Mason <chris.mason@fusionio.com>,
-	Mike Galbraith <efault@gmx.de>
-To: unlisted-recipients:; (no To-header on input)
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:36533 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754314AbbCQQXT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Mar 2015 12:23:19 -0400
-Content-Disposition: inline; filename=0039-fs-btrfs-fix-rt-deadlock-on-extent_buffer-lock.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-3.14.34-rt32-rc2ls stable review patch.
-If anyone has any objections, please let me know.
-
-------------------
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0042-Linux-3.14.34-rt32-rc2.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.14.34-rt32-rc2 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <mgalbraith@suse.de>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Sat Jul 14 12:30:41 CEST 2012
-
-Trivially repeatable deadlock is cured by enabling lockdep code in
-btrfs_clear_path_blocking() as suggested by Chris Mason.  He also
-suggested restricting blocking reader count to one, and not allowing
-a spinning reader while blocking reader exists.  This has proven to
-be unnecessary, the strict lock order enforcement is enough.. or
-rather that's my box's opinion after long hours of hard pounding.
-
-Note: extent-tree.c bit is additional recommendation from Chris
-      Mason, split into a separate patch after discussion.
-
-Link: http://lkml.kernel.org/r/1414913478.5380.114.camel@marge.simpson.net
-
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Carsten Emde <C.Emde@osadl.org>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Chris Mason <chris.mason@fusionio.com>
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/btrfs/ctree.c       | 4 ++--
- fs/btrfs/extent-tree.c | 8 --------
- 2 files changed, 2 insertions(+), 10 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/btrfs/ctree.c b/fs/btrfs/ctree.c
-index cbd3a7d6fa68..50c7edc8f4d2 100644
---- a/fs/btrfs/ctree.c
-+++ b/fs/btrfs/ctree.c
-@@ -80,7 +80,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
- {
- 	int i;
- 
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
- 	/* lockdep really cares that we take all of these spinlocks
- 	 * in the right order.  If any of the locks in the path are not
- 	 * currently blocking, it is going to complain.  So, make really
-@@ -107,7 +107,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
- 		}
- 	}
- 
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
- 	if (held)
- 		btrfs_clear_lock_blocking_rw(held, held_rw);
- #endif
-diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
-index d2f1c011d73a..73035cf6681a 100644
---- a/fs/btrfs/extent-tree.c
-+++ b/fs/btrfs/extent-tree.c
-@@ -6940,14 +6940,6 @@ again:
- 		goto again;
- 	}
- 
--	if (btrfs_test_opt(root, ENOSPC_DEBUG)) {
--		static DEFINE_RATELIMIT_STATE(_rs,
--				DEFAULT_RATELIMIT_INTERVAL * 10,
--				/*DEFAULT_RATELIMIT_BURST*/ 1);
--		if (__ratelimit(&_rs))
--			WARN(1, KERN_DEBUG
--				"BTRFS: block rsv returned %d\n", ret);
--	}
- try_reserve:
- 	ret = reserve_metadata_bytes(root, block_rsv, blocksize,
- 				     BTRFS_RESERVE_NO_FLUSH);
+diff --git a/localversion-rt b/localversion-rt
+index a68b4337d4ce..b9cdd26a5bd9 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt31
++-rt32-rc2
 -- 
 2.1.4
-
-
