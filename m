@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/4] netpoll: guard the access to dev->npinfo with
- rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
-Date: Tue, 17 Mar 2015 12:35:44 -0400
-Message-ID: <20150317163617.376058513@goodmis.org>
+Subject: [PATCH RT 1/4] fs,btrfs: fix rt deadlock on extent_buffer->lock
+Date: Tue, 17 Mar 2015 12:35:42 -0400
+Message-ID: <20150317163617.069855535@goodmis.org>
 References: <20150317163541.080310081@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,11 +10,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Kevin Hao <kexin.hao@windriver.com>
+	Clark Williams <williams@redhat.com>,
+	Chris Mason <chris.mason@fusionio.com>,
+	Mike Galbraith <efault@gmx.de>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0033-netpoll-guard-the-access-to-dev-npinfo-with-rcu_read.patch
+Content-Disposition: inline; filename=0031-fs-btrfs-fix-rt-deadlock-on-extent_buffer-lock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,72 +25,79 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Kevin Hao <haokexin@gmail.com>
+From: Mike Galbraith <mgalbraith@suse.de>
 
-For vanilla kernel we don't need to invoke rcu_read_lock/unlock_bh
-explicitly to mark an RCU-bh critical section in the softirq context
-because bh is already disabled in this case. But for a rt kernel,
-the commit ("rcu: Merge RCU-bh into RCU-preempt") implements the
-RCU-bh in term of RCU-preempt. So we have to use
-rcu_read_lock/unlock_bh() to mark an RCU-bh critical section even in
-a softirq context. Otherwise we will get a call trace like this:
-  include/linux/netpoll.h:90 suspicious rcu_dereference_check() usage!
-  other info that might help us debug this:
-  rcu_scheduler_active = 1, debug_locks = 0
-  1 lock held by irq/177-eth0_g0/129:
-   #0:  (&per_cpu(local_softirq_locks[i], __cpu).lock){+.+...}, at: [<8002f544>] do_current_softirqs+0x12c/0x5ec
+Sat Jul 14 12:30:41 CEST 2012
 
-  stack backtrace:
-  CPU: 0 PID: 129 Comm: irq/177-eth0_g0 Not tainted 3.14.23 #11
-  [<80018c0c>] (unwind_backtrace) from [<800138b0>] (show_stack+0x20/0x24)
-  [<800138b0>] (show_stack) from [<8075c3bc>] (dump_stack+0x84/0xd0)
-  [<8075c3bc>] (dump_stack) from [<8008111c>] (lockdep_rcu_suspicious+0xe8/0x11c)
-  [<8008111c>] (lockdep_rcu_suspicious) from [<805e94e8>] (dev_gro_receive+0x240/0x724)
-  [<805e94e8>] (dev_gro_receive) from [<805e9c34>] (napi_gro_receive+0x3c/0x1e8)
-  [<805e9c34>] (napi_gro_receive) from [<804b01ac>] (gfar_clean_rx_ring+0x2d4/0x624)
-  [<804b01ac>] (gfar_clean_rx_ring) from [<804b078c>] (gfar_poll_rx_sq+0x58/0xe8)
-  [<804b078c>] (gfar_poll_rx_sq) from [<805eada8>] (net_rx_action+0x1c8/0x418)
-  [<805eada8>] (net_rx_action) from [<8002f62c>] (do_current_softirqs+0x214/0x5ec)
-  [<8002f62c>] (do_current_softirqs) from [<8002fa88>] (__local_bh_enable+0x84/0x9c)
-  [<8002fa88>] (__local_bh_enable) from [<8002fab8>] (local_bh_enable+0x18/0x1c)
-  [<8002fab8>] (local_bh_enable) from [<80093924>] (irq_forced_thread_fn+0x50/0x74)
-  [<80093924>] (irq_forced_thread_fn) from [<80093c30>] (irq_thread+0x158/0x1c4)
-  [<80093c30>] (irq_thread) from [<800555b8>] (kthread+0xd4/0xe8)
-  [<800555b8>] (kthread) from [<8000ee88>] (ret_from_fork+0x14/0x20)
+Trivially repeatable deadlock is cured by enabling lockdep code in
+btrfs_clear_path_blocking() as suggested by Chris Mason.  He also
+suggested restricting blocking reader count to one, and not allowing
+a spinning reader while blocking reader exists.  This has proven to
+be unnecessary, the strict lock order enforcement is enough.. or
+rather that's my box's opinion after long hours of hard pounding.
 
-Signed-off-by: Kevin Hao <kexin.hao@windriver.com>
+Note: extent-tree.c bit is additional recommendation from Chris
+      Mason, split into a separate patch after discussion.
+
+Link: http://lkml.kernel.org/r/1414913478.5380.114.camel@marge.simpson.net
+
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Carsten Emde <C.Emde@osadl.org>
+Cc: John Kacur <jkacur@redhat.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Clark Williams <williams@redhat.com>
+Cc: Chris Mason <chris.mason@fusionio.com>
+Signed-off-by: Mike Galbraith <efault@gmx.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- include/linux/netpoll.h | 16 ++++++++++++++--
- 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/netpoll.h b/include/linux/netpoll.h
-index fa2cb76a7029..c1e80c6272aa 100644
---- a/include/linux/netpoll.h
-+++ b/include/linux/netpoll.h
-@@ -86,9 +86,21 @@ static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
- #ifdef CONFIG_NETPOLL
- static inline bool netpoll_rx_on(struct sk_buff *skb)
+Conflicts:
+	fs/btrfs/extent-tree.c
+---
+ fs/btrfs/ctree.c       | 4 ++--
+ fs/btrfs/extent-tree.c | 8 --------
+ 2 files changed, 2 insertions(+), 10 deletions(-)
+
+diff --git a/fs/btrfs/ctree.c b/fs/btrfs/ctree.c
+index 7fb054ba1b60..07753ee246f1 100644
+--- a/fs/btrfs/ctree.c
++++ b/fs/btrfs/ctree.c
+@@ -81,7 +81,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
  {
--	struct netpoll_info *npinfo = rcu_dereference_bh(skb->dev->npinfo);
-+	struct netpoll_info *npinfo;
-+	bool ret;
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	rcu_read_lock_bh();
-+#endif
-+
-+	npinfo = rcu_dereference_bh(skb->dev->npinfo);
-+	ret = npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
-+
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	rcu_read_unlock_bh();
-+#endif
+ 	int i;
  
--	return npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
-+	return ret;
- }
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
++#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
+ 	/* lockdep really cares that we take all of these spinlocks
+ 	 * in the right order.  If any of the locks in the path are not
+ 	 * currently blocking, it is going to complain.  So, make really
+@@ -108,7 +108,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
+ 		}
+ 	}
  
- static inline bool netpoll_rx(struct sk_buff *skb)
+-#ifdef CONFIG_DEBUG_LOCK_ALLOC
++#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
+ 	if (held)
+ 		btrfs_clear_lock_blocking_rw(held, held_rw);
+ #endif
+diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
+index f99c71e40f8b..920a85e82beb 100644
+--- a/fs/btrfs/extent-tree.c
++++ b/fs/btrfs/extent-tree.c
+@@ -6678,14 +6678,6 @@ again:
+ 		goto again;
+ 	}
+ 
+-	if (btrfs_test_opt(root, ENOSPC_DEBUG)) {
+-		static DEFINE_RATELIMIT_STATE(_rs,
+-				DEFAULT_RATELIMIT_INTERVAL * 10,
+-				/*DEFAULT_RATELIMIT_BURST*/ 1);
+-		if (__ratelimit(&_rs))
+-			WARN(1, KERN_DEBUG
+-				"btrfs: block rsv returned %d\n", ret);
+-	}
+ try_reserve:
+ 	ret = reserve_metadata_bytes(root, block_rsv, blocksize,
+ 				     BTRFS_RESERVE_NO_FLUSH);
 -- 
 2.1.4
