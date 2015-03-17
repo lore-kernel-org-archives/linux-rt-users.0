@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] Linux 3.10.70-rt75-rc3
-Date: Tue, 17 Mar 2015 18:23:35 -0400
-Message-ID: <20150317182335.69b3e615@gandalf.local.home>
+Subject: [PATCH] Linux 3.4.106-rt132-rc3
+Date: Tue, 17 Mar 2015 18:25:42 -0400
+Message-ID: <20150317182542.109ab6fe@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,19 +12,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0148.hostedemail.com ([216.40.44.148]:44883 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753350AbbCQWXi (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Mar 2015 18:23:38 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.10.70-rt75-rc3.
+This is the RT stable review cycle of patch 3.4.106-rt132-rc3.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -42,20 +37,20 @@ Enjoy,
 -- Steve
 
 
-To build 3.10.70-rt75-rc3 directly, the following patches should be applied:
+To build 3.4.106-rt132-rc3 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.70.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.106.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.70-rt75-rc3.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.106-rt132-rc3.patch.xz
 
-You can also build from 3.10.70-rt74 by applying the incremental patch:
+You can also build from 3.4.106-rt131 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.70-rt74-rt75-rc3.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.106-rt131-rt132-rc3.patch.xz
 
 
-Changes from 3.10.70-rt74:
+Changes from 3.4.106-rt131:
 
 ---
 
@@ -66,20 +61,11 @@ Daniel Wagner (1):
 Josh Cartwright (1):
       lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
 
-Kevin Hao (1):
-      netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
-
 Mike Galbraith (4):
       x86: UV: raw_spinlock conversion
       scheduling while atomic in cgroup code
       sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
       fs,btrfs: fix rt deadlock on extent_buffer->lock
-
-Paul E. McKenney (4):
-      timers: Track total number of timers in list
-      timers: Reduce __run_timers() latency for empty list
-      timers: Reduce future __run_timers() latency for newly emptied list
-      timers: Reduce future __run_timers() latency for first add to empty list
 
 Paul Gortmaker (1):
       sas-ata/isci: dont't disable interrupts in qc_issue handler
@@ -92,9 +78,8 @@ Sebastian Andrzej Siewior (3):
 Steven Rostedt (1):
       create-rt-enqueue
 
-Steven Rostedt (Red Hat) (2):
-      Revert "timers: do not raise softirq unconditionally"
-      Linux 3.10.70-rt75-rc3
+Steven Rostedt (Red Hat) (1):
+      Linux 3.4.106-rt132-rc3
 
 Thomas Gleixner (14):
       rtmutex: Simplify rtmutex_slowtrylock()
@@ -122,64 +107,56 @@ Yong Zhang (1):
  arch/arm/include/asm/cmpxchg.h     |   2 +
  arch/arm/include/asm/futex.h       |   4 +
  arch/arm/mm/fault.c                |   6 +
- arch/x86/include/asm/uv/uv_bau.h   |  14 +-
+ arch/x86/include/asm/uv/uv_bau.h   |  12 +-
  arch/x86/include/asm/uv/uv_hub.h   |   2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |   2 +-
- arch/x86/platform/uv/tlb_uv.c      |  26 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c |  12 +-
+ arch/x86/platform/uv/tlb_uv.c      |  30 +-
  arch/x86/platform/uv/uv_time.c     |  21 +-
- drivers/gpio/gpio-omap.c           |  70 ++---
+ drivers/gpio/gpio-omap.c           |  76 ++---
  drivers/scsi/libsas/sas_ata.c      |   4 +-
  fs/btrfs/ctree.c                   |   4 +-
- fs/btrfs/extent-tree.c             |   8 -
- include/linux/hrtimer.h            |   3 +-
- include/linux/netpoll.h            |  16 +-
  include/linux/rtmutex.h            |   8 +-
  include/linux/work-simple.h        |  24 ++
  kernel/futex.c                     | 407 +++++++++++--------------
- kernel/hrtimer.c                   |  31 +-
  kernel/rt.c                        |   8 +-
  kernel/rtmutex-debug.c             |   5 +-
  kernel/rtmutex-debug.h             |   7 +-
  kernel/rtmutex-tester.c            |   4 +-
- kernel/rtmutex.c                   | 604 +++++++++++++++++++++++++++----------
+ kernel/rtmutex.c                   | 603 +++++++++++++++++++++++++++----------
  kernel/rtmutex.h                   |   7 +-
  kernel/rtmutex_common.h            |  22 +-
  kernel/sched/Makefile              |   1 +
  kernel/sched/work-simple.c         | 172 +++++++++++
- kernel/timer.c                     |  72 ++---
  lib/locking-selftest.c             |  27 ++
  localversion-rt                    |   2 +-
  mm/memcontrol.c                    |  13 +-
  net/sunrpc/svc_xprt.c              |   4 +-
- 32 files changed, 1061 insertions(+), 539 deletions(-)
+ 27 files changed, 1002 insertions(+), 485 deletions(-)
 
 Diff from -rc2:
 ---
 diff --git a/localversion-rt b/localversion-rt
-index 2d2ca36685e5..40ea10c84f99 100644
+index 8f02c3a9ffa7..c70c2e0b2d32 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt75-rc2
-+-rt75-rc3
+--rt132-rc2
++-rt132-rc3
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 89540bca5c5b..bc91369c196d 100644
+index 8c3dd645ac10..8cfff961ad4b 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -2404,16 +2404,18 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+@@ -2016,13 +2016,15 @@ static bool consume_stock(struct mem_cgroup *memcg)
  {
  	struct memcg_stock_pcp *stock;
  	bool ret = true;
 +	int cpu;
  
- 	if (nr_pages > CHARGE_BATCH)
- 		return false;
- 
 -	stock = &get_cpu_var(memcg_stock);
 +	cpu = get_cpu_light();
 +	stock = &per_cpu(memcg_stock, cpu);
- 	if (memcg == stock->cached && stock->nr_pages >= nr_pages)
- 		stock->nr_pages -= nr_pages;
+ 	if (memcg == stock->cached && stock->nr_pages)
+ 		stock->nr_pages--;
  	else /* need to call res_counter_charge */
  		ret = false;
 -	put_cpu_var(memcg_stock);
