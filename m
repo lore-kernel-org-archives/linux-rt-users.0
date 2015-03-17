@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] Revert "timers: do not raise softirq unconditionally"
-Date: Tue, 17 Mar 2015 12:35:43 -0400
-Message-ID: <20150317163617.218582800@goodmis.org>
-References: <20150317163541.080310081@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/4] Linux 3.10.70-rt75-rc2
+Date: Tue, 17 Mar 2015 12:35:41 -0400
+Message-ID: <20150317163541.080310081@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,147 +10,143 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:37813 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:37830 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932358AbbCQQgX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	id S933090AbbCQQgX (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Tue, 17 Mar 2015 12:36:23 -0400
-Content-Disposition: inline; filename=0032-Revert-timers-do-not-raise-softirq-unconditionally.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.70-rt75-rc2 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+This is the RT stable review cycle of patch 3.10.70-rt75-rc2.
 
-This reverts commit f406cca1f3ecb370bc2915d176557b1cbafb8d4c
+Please scream at me if I messed something up. Please test the patches too.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Conflicts:
-	kernel/timer.c
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 3/20/2015.
+
+I'm only posting the patches that were added since rc1.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.10.70-rt75-rc2 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.70.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.70-rt75-rc2.patch.xz
+
+You can also build from 3.10.70-rt74 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.70-rt74-rt75-rc2.patch.xz
+
+
+Changes from 3.10.70-rt74:
+
 ---
- include/linux/hrtimer.h |  3 ++-
- kernel/hrtimer.c        | 31 ++++++++++++++++++++++++-------
- kernel/timer.c          | 46 ++--------------------------------------------
- 3 files changed, 28 insertions(+), 52 deletions(-)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index bdbf77db0f4d..79a7a35e1a6e 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -461,8 +461,9 @@ extern int schedule_hrtimeout_range_clock(ktime_t *expires,
- 		unsigned long delta, const enum hrtimer_mode mode, int clock);
- extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mode mode);
- 
--/* Called from the periodic timer tick */
-+/* Soft interrupt function to run the hrtimer queues: */
- extern void hrtimer_run_queues(void);
-+extern void hrtimer_run_pending(void);
- 
- /* Bootup initialization: */
- extern void __init hrtimers_init(void);
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index 1defbda1def8..1a28cafbac91 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1713,6 +1713,30 @@ static void run_hrtimer_softirq(struct softirq_action *h)
- }
- 
- /*
-+ * Called from timer softirq every jiffy, expire hrtimers:
-+ *
-+ * For HRT its the fall back code to run the softirq in the timer
-+ * softirq context in case the hrtimer initialization failed or has
-+ * not been done yet.
-+ */
-+void hrtimer_run_pending(void)
-+{
-+	if (hrtimer_hres_active())
-+		return;
-+
-+	/*
-+	 * This _is_ ugly: We have to check in the softirq context,
-+	 * whether we can switch to highres and / or nohz mode. The
-+	 * clocksource switch happens in the timer interrupt with
-+	 * xtime_lock held. Notification from there only sets the
-+	 * check bit in the tick_oneshot code, otherwise we might
-+	 * deadlock vs. xtime_lock.
-+	 */
-+	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
-+		hrtimer_switch_to_hres();
-+}
-+
-+/*
-  * Called from hardirq context every jiffy
-  */
- void hrtimer_run_queues(void)
-@@ -1725,13 +1749,6 @@ void hrtimer_run_queues(void)
- 	if (hrtimer_hres_active())
- 		return;
- 
--	/*
--	 * Check whether we can switch to highres mode.
--	 */
--	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled())
--	    && hrtimer_switch_to_hres())
--		return;
--
- 	for (index = 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
- 		base = &cpu_base->clock_base[index];
- 		if (!timerqueue_getnext(&base->active))
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 06050920aee5..a2bfef4a8f23 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1464,6 +1464,8 @@ static void run_timer_softirq(struct softirq_action *h)
- {
- 	struct tvec_base *base = __this_cpu_read(tvec_bases);
- 
-+	hrtimer_run_pending();
-+
- #if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
- 	irq_work_run();
- #endif
-@@ -1477,52 +1479,8 @@ static void run_timer_softirq(struct softirq_action *h)
-  */
- void run_local_timers(void)
- {
--	struct tvec_base *base = __this_cpu_read(tvec_bases);
--
- 	hrtimer_run_queues();
--	/*
--	 * We can access this lockless as we are in the timer
--	 * interrupt. If there are no timers queued, nothing to do in
--	 * the timer softirq.
--	 */
--#ifdef CONFIG_PREEMPT_RT_FULL
--
--#ifndef CONFIG_SMP
--	/*
--	 * The spin_do_trylock() later may fail as the lock may be hold before
--	 * the interrupt arrived. The spin-lock debugging code will raise a
--	 * warning if the try_lock fails on UP. Since this is only an
--	 * optimization for the FULL_NO_HZ case (not to run the timer softirq on
--	 * an nohz_full CPU) we don't really care and shedule the softirq.
--	 */
- 	raise_softirq(TIMER_SOFTIRQ);
--	return;
--#endif
--
--	/* On RT, irq work runs from softirq */
--	if (irq_work_needs_cpu()) {
--		raise_softirq(TIMER_SOFTIRQ);
--		return;
--	}
--
--	if (!spin_do_trylock(&base->lock)) {
--		raise_softirq(TIMER_SOFTIRQ);
--		return;
--	}
--#endif
--
--	if (!base->active_timers)
--		goto out;
+
+Daniel Wagner (1):
+      work-simple: Simple work queue implemenation
+
+Josh Cartwright (1):
+      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
+
+Kevin Hao (1):
+      netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
+
+Mike Galbraith (4):
+      x86: UV: raw_spinlock conversion
+      scheduling while atomic in cgroup code
+      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+      fs,btrfs: fix rt deadlock on extent_buffer->lock
+
+Paul E. McKenney (4):
+      timers: Track total number of timers in list
+      timers: Reduce __run_timers() latency for empty list
+      timers: Reduce future __run_timers() latency for newly emptied list
+      timers: Reduce future __run_timers() latency for first add to empty list
+
+Paul Gortmaker (1):
+      sas-ata/isci: dont't disable interrupts in qc_issue handler
+
+Sebastian Andrzej Siewior (3):
+      gpio: omap: use raw locks for locking
+      rt-mutex: avoid a NULL pointer dereference on deadlock
+      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (2):
+      Revert "timers: do not raise softirq unconditionally"
+      Linux 3.10.70-rt75-rc2
+
+Thomas Gleixner (14):
+      rtmutex: Simplify rtmutex_slowtrylock()
+      rtmutex: Simplify and document try_to_take_rtmutex()
+      rtmutex: No need to keep task ref for lock owner check
+      rtmutex: Clarify the boost/deboost part
+      rtmutex: Document pi chain walk
+      rtmutex: Simplify remove_waiter()
+      rtmutex: Confine deadlock logic to futex
+      rtmutex: Cleanup deadlock detector debug logic
+      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
+      futex: Make unlock_pi more robust
+      futex: Use futex_top_waiter() in lookup_pi_state()
+      futex: Split out the waiter check from lookup_pi_state()
+      futex: Split out the first waiter attachment from lookup_pi_state()
+      futex: Simplify futex_lock_pi_atomic() and make it more robust
+
+Yadi.hu (1):
+      ARM: enable irq in translation/section permission fault handlers
+
+Yong Zhang (1):
+      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+
+----
+ arch/arm/include/asm/cmpxchg.h     |   2 +
+ arch/arm/include/asm/futex.h       |   4 +
+ arch/arm/mm/fault.c                |   6 +
+ arch/x86/include/asm/uv/uv_bau.h   |  14 +-
+ arch/x86/include/asm/uv/uv_hub.h   |   2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c |   2 +-
+ arch/x86/platform/uv/tlb_uv.c      |  26 +-
+ arch/x86/platform/uv/uv_time.c     |  21 +-
+ drivers/gpio/gpio-omap.c           |  70 ++---
+ drivers/scsi/libsas/sas_ata.c      |   4 +-
+ fs/btrfs/ctree.c                   |   4 +-
+ fs/btrfs/extent-tree.c             |   8 -
+ include/linux/hrtimer.h            |   3 +-
+ include/linux/netpoll.h            |  16 +-
+ include/linux/rtmutex.h            |   8 +-
+ include/linux/work-simple.h        |  24 ++
+ kernel/futex.c                     | 407 +++++++++++--------------
+ kernel/hrtimer.c                   |  31 +-
+ kernel/rt.c                        |   8 +-
+ kernel/rtmutex-debug.c             |   5 +-
+ kernel/rtmutex-debug.h             |   7 +-
+ kernel/rtmutex-tester.c            |   4 +-
+ kernel/rtmutex.c                   | 604 +++++++++++++++++++++++++++----------
+ kernel/rtmutex.h                   |   7 +-
+ kernel/rtmutex_common.h            |  22 +-
+ kernel/sched/Makefile              |   1 +
+ kernel/sched/work-simple.c         | 172 +++++++++++
+ kernel/timer.c                     |  72 ++---
+ lib/locking-selftest.c             |  27 ++
+ localversion-rt                    |   2 +-
+ mm/memcontrol.c                    |   7 +-
+ net/sunrpc/svc_xprt.c              |   4 +-
+ 32 files changed, 1057 insertions(+), 537 deletions(-)
