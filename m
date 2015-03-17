@@ -1,42 +1,35 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [rfc patch v2] rt,nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Tue, 17 Mar 2015 05:45:22 +0100
-Message-ID: <1426567522.12107.8.camel@gmail.com>
-References: <20150216111822.GA21649@linutronix.de>
-	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>
-	 <1425911771.30469.8.camel@gmail.com> <1425980136.3507.17.camel@gmail.com>
-	 <1426153093.4190.2.camel@gmail.com> <1426222405.17611.7.camel@gmail.com>
-	 <20150316202409.GF28130@linutronix.de> <1426557233.20938.8.camel@gmail.com>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: 3.18.9-rt4 kernel panic - Was: 3.18.9-rt4
+Date: Tue, 17 Mar 2015 06:13:12 +0100
+Message-ID: <20150317061312.3713cff0@archlinux>
+References: <20150313223041.0a8bf390@archlinux>
+	<20150314104336.756a6f0e@archlinux>
+	<20150316162348.GC28130@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
+Cc: linux-rt users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1426557233.20938.8.camel@gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail233c50.megamailservers.eu ([91.136.10.243]:41803 "EHLO
+	mail37c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750777AbbCQFNU (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 17 Mar 2015 01:13:20 -0400
+In-Reply-To: <20150316162348.GC28130@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2015-03-17 at 02:53 +0100, Mike Galbraith wrote:
-> On Mon, 2015-03-16 at 21:24 +0100, Sebastian Andrzej Siewior wrote:
+On Mon, 16 Mar 2015 17:23:48 +0100, Sebastian Andrzej Siewior wrote:
+>What happens if you apply this:
+>
+>diff --git a/drivers/cpufreq/powernow-k8.c
+>b/drivers/cpufreq/powernow-k8.c index f9ce7e4bf0fe..ddf3a9006339 100644
 
-> > What you do is that you accept the fact that the timer-softirq is
-> > scheduled for no reason and then you try to disable the tick from within
-> > the timer-softirq. I assumed that it would work get the "expired timer"
-> > somehow.
-> 
-> Yup, it works around that otherwise crippling wakeup.  If I re-apply..
-> 
->      timers-do-not-raise-softirq-unconditionally.patch
-> 
-> ..the workaround is not needed of course, but the livelock fix still is.
-> I haven't yet tested that in 3.18-rt though, only 4.0-rt, but I presume
-> it'll be the same deal there when I do.
+Thank you,
 
-Did that, and it is.  Fire up tbench 4 + make -j4 on my i7-4790+smt box
-booted nohz_full=2,3,6,7, death spiral begins shortly thereafter.
+I'm doing an audio production at the moment. I tagged this and the
+other mails as todo. Building and testing a kernel unfortunately can't
+be done at the same time.
 
-	-Mike
+To be continued...
