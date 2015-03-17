@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq
- unconditionally"
-Date: Tue, 17 Mar 2015 16:35:51 -0400
-Message-ID: <20150317163551.3093b6c2@gandalf.local.home>
-References: <20150317163541.080310081@goodmis.org>
-	<20150317163617.218582800@goodmis.org>
+Subject: [PATCH] Linux 3.14.34-rt32-rc3
+Date: Tue, 17 Mar 2015 18:17:44 -0400
+Message-ID: <20150317181744.15c27cb3@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -13,60 +10,193 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-kernel@vger.kernel.org,
+To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150317163617.218582800@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 17 Mar 2015 12:35:43 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> 3.10.70-rt75-rc2 stable review patch.
-> If anyone has any objections, please let me know.
-> 
-> ------------------
-> 
+Dear RT Folks,
 
-Here's the missing change log for this revert. I'll go back and add it
-in:
+This is the RT stable review cycle of patch 3.14.34-rt32-rc3.
 
+Please scream at me if I messed something up. Please test the patches too.
 
-An issue arisen that if a rt_mutex (spin_lock converted to a mutex
-in PREEMPT_RT) is taken in hard interrupt context, it could cause
-a false deadlock detection and trigger a BUG_ON() from the return
-value of task_blocks_on_rt_mutex() in rt_spin_lock_slowlock().
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-The problem is this:
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-    CPU0			CPU1
-    ----			----
-  spin_lock(A)
-				spin_lock(A)
-			[ blocks, but spins as owner on
-			  CPU 0 is running ]
+If all goes well, this patch will be converted to the next main release
+on 3/20/2015.
 
-				<interrupt>
-					spin_trylock(B)
-					[ succeeds ]
-
-  spin_lock(B)
-  <blocks>
-
-Now the deadlock detection triggers and follows the locking:
-
-  Task X (on CPU0) blocked on spinlock B owned by task Y on
-  CPU1 (via the interrupt taking it with a try lock)
-
-  The owner of B (Y) is blocked on spin_lock A (still spinning)
-  A is owned by task X (self). DEADLOCK detected! BUG_ON triggered.
-
-This was caused by the code to try to not raise softirq unconditionally
-to allow NO_HZ_FULL to work. Unfortunately, reverting that patch causes
-NO_HZ_FULL to break again, but that's still better than triggering
-a BUG_ON().
-
-
+Enjoy,
 
 -- Steve
+
+
+To build 3.14.34-rt32-rc3 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.34.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.34-rt32-rc3.patch.xz
+
+You can also build from 3.14.34-rt31 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.34-rt31-rt32-rc3.patch.xz
+
+
+Changes from 3.14.34-rt31:
+
+---
+
+
+Brad Mouring (1):
+      rtmutex.c: Fix incorrect waiter check
+
+Daniel Wagner (2):
+      work-simple: Simple work queue implemenation
+      thermal: Defer thermal wakups to threads
+
+Gustavo Bittencourt (1):
+      rtmutex: enable deadlock detection in ww_mutex_lock functions
+
+Josh Cartwright (1):
+      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
+
+Kevin Hao (1):
+      netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
+
+Mike Galbraith (6):
+      rt,locking: fix __ww_mutex_lock_interruptible() lockdep annotation
+      x86: UV: raw_spinlock conversion
+      scheduling while atomic in cgroup code
+      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+      locking: ww_mutex: fix ww_mutex vs self-deadlock
+      fs,btrfs: fix rt deadlock on extent_buffer->lock
+
+Paul E. McKenney (4):
+      timers: Track total number of timers in list
+      timers: Reduce __run_timers() latency for empty list
+      timers: Reduce future __run_timers() latency for newly emptied list
+      timers: Reduce future __run_timers() latency for first add to empty list
+
+Paul Gortmaker (1):
+      sas-ata/isci: dont't disable interrupts in qc_issue handler
+
+Sebastian Andrzej Siewior (5):
+      gpio: omap: use raw locks for locking
+      locking/rt-mutex: avoid a NULL pointer dereference on deadlock
+      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+      Revert "rwsem-rt: Do not allow readers to nest"
+      fs/aio: simple simple work
+
+Steven Rostedt (Red Hat) (3):
+      staging: Mark rtl8821ae as broken
+      Revert "timers: do not raise softirq unconditionally"
+      Linux 3.14.34-rt32-rc3
+
+Thomas Gleixner (14):
+      rtmutex: Simplify rtmutex_slowtrylock()
+      rtmutex: Simplify and document try_to_take_rtmutex()
+      rtmutex: No need to keep task ref for lock owner check
+      rtmutex: Clarify the boost/deboost part
+      rtmutex: Document pi chain walk
+      rtmutex: Simplify remove_waiter()
+      rtmutex: Confine deadlock logic to futex
+      rtmutex: Cleanup deadlock detector debug logic
+      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
+      futex: Make unlock_pi more robust
+      futex: Use futex_top_waiter() in lookup_pi_state()
+      futex: Split out the waiter check from lookup_pi_state()
+      futex: Split out the first waiter attachment from lookup_pi_state()
+      futex: Simplify futex_lock_pi_atomic() and make it more robust
+
+Yadi.hu (1):
+      ARM: enable irq in translation/section permission fault handlers
+
+Yang Shi (1):
+      mips: rt: Replace pagefault_* to raw version
+
+Yong Zhang (1):
+      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+
+----
+ arch/arm/include/asm/cmpxchg.h         |   2 +
+ arch/arm/include/asm/futex.h           |   4 +
+ arch/arm/mm/fault.c                    |   6 +
+ arch/mips/mm/init.c                    |   4 +-
+ arch/x86/include/asm/uv/uv_bau.h       |  14 +-
+ arch/x86/include/asm/uv/uv_hub.h       |   2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c     |   2 +-
+ arch/x86/platform/uv/tlb_uv.c          |  26 +-
+ arch/x86/platform/uv/uv_time.c         |  21 +-
+ drivers/gpio/gpio-omap.c               |  72 ++--
+ drivers/scsi/libsas/sas_ata.c          |   4 +-
+ drivers/staging/rtl8821ae/Kconfig      |   1 +
+ drivers/thermal/x86_pkg_temp_thermal.c |  50 ++-
+ fs/aio.c                               |  24 +-
+ fs/btrfs/ctree.c                       |   4 +-
+ fs/btrfs/extent-tree.c                 |   8 -
+ include/linux/hrtimer.h                |   3 +-
+ include/linux/netpoll.h                |  16 +-
+ include/linux/rtmutex.h                |   8 +-
+ include/linux/rwsem_rt.h               |   1 +
+ include/linux/work-simple.h            |  24 ++
+ kernel/futex.c                         | 402 +++++++++++------------
+ kernel/hrtimer.c                       |  31 +-
+ kernel/locking/rt.c                    |  37 ++-
+ kernel/locking/rtmutex-debug.c         |   5 +-
+ kernel/locking/rtmutex-debug.h         |   7 +-
+ kernel/locking/rtmutex-tester.c        |   4 +-
+ kernel/locking/rtmutex.c               | 582 ++++++++++++++++++++++++---------
+ kernel/locking/rtmutex.h               |   7 +-
+ kernel/locking/rtmutex_common.h        |  22 +-
+ kernel/sched/Makefile                  |   2 +-
+ kernel/sched/work-simple.c             | 172 ++++++++++
+ kernel/timer.c                         |  72 ++--
+ lib/locking-selftest.c                 |  27 ++
+ localversion-rt                        |   2 +-
+ mm/memcontrol.c                        |  13 +-
+ net/sunrpc/svc_xprt.c                  |   4 +-
+ 37 files changed, 1137 insertions(+), 548 deletions(-)
+
+
+Diff from v2:
+---
+diff --git a/localversion-rt b/localversion-rt
+index b9cdd26a5bd9..a745e52f1919 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt32-rc2
++-rt32-rc3
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+index be24d2d186fa..6f4bcdb951d9 100644
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -2453,16 +2453,18 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+ {
+ 	struct memcg_stock_pcp *stock;
+ 	bool ret = true;
++	int cpu;
+ 
+ 	if (nr_pages > CHARGE_BATCH)
+ 		return false;
+ 
+-	stock = &get_cpu_var(memcg_stock);
++	cpu = get_cpu_light();
++	stock = &per_cpu(memcg_stock, cpu);
+ 	if (memcg == stock->cached && stock->nr_pages >= nr_pages)
+ 		stock->nr_pages -= nr_pages;
+ 	else /* need to call res_counter_charge */
+ 		ret = false;
+-	put_cpu_var(memcg_stock);
++	put_cpu_light();
+ 	return ret;
+ }
+ 
