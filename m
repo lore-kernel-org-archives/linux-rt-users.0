@@ -1,57 +1,72 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 26/39] scheduling while atomic in cgroup code
-Date: Tue, 17 Mar 2015 16:13:09 -0400
-Message-ID: <20150317161309.52eb2b9d@gandalf.local.home>
-References: <20150312191307.081068717@goodmis.org>
-	<20150312191411.381735145@goodmis.org>
-	<20150317201010.GB26043@windriver.com>
+Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq
+ unconditionally"
+Date: Tue, 17 Mar 2015 16:35:51 -0400
+Message-ID: <20150317163551.3093b6c2@gandalf.local.home>
+References: <20150317163541.080310081@goodmis.org>
+	<20150317163617.218582800@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>, <stable-rt@vger.kernel.org>,
-	Nikita Yushchenko <nyushchenko@dev.rtsoft.ru>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0110.hostedemail.com ([216.40.44.110]:41819 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752529AbbCQUNO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Mar 2015 16:13:14 -0400
-In-Reply-To: <20150317201010.GB26043@windriver.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150317163617.218582800@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 17 Mar 2015 16:10:11 -0400
-Paul Gortmaker <paul.gortmaker@windriver.com> wrote:
+On Tue, 17 Mar 2015 12:35:43 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> [[PATCH RT 26/39] scheduling while atomic in cgroup code] On 12/03/2015 (Thu 15:13) Steven Rostedt wrote:
+> 3.10.70-rt75-rc2 stable review patch.
+> If anyone has any objections, please let me know.
 > 
-> > 3.14.34-rt32-rc1 stable review patch.
-> > If anyone has any objections, please let me know.
-> > 
-> > ------------------
-> > 
-> > From: Mike Galbraith <umgwanakikbuti@gmail.com>
-> > 
-> > mm, memcg: make refill_stock() use get_cpu_light()
+> ------------------
 > 
-> This looks like only 1/2 of Mike's original patch:
-> 
-> https://lkml.org/lkml/2014/6/21/11 
-> 
-> I suspect that is because 3.18 could only use 1/2 of it, and based on
-> the SOB lines, this is backported from 3.18.
-> 
-> The other half applies to 3.14 -- testing in progress; not sure about
-> the 3.10-rt and earlier....
 
-Grumble. Yeah, I'm sure I got this from 3.18 and backported it.
+Here's the missing change log for this revert. I'll go back and add it
+in:
+
+
+An issue arisen that if a rt_mutex (spin_lock converted to a mutex
+in PREEMPT_RT) is taken in hard interrupt context, it could cause
+a false deadlock detection and trigger a BUG_ON() from the return
+value of task_blocks_on_rt_mutex() in rt_spin_lock_slowlock().
+
+The problem is this:
+
+    CPU0			CPU1
+    ----			----
+  spin_lock(A)
+				spin_lock(A)
+			[ blocks, but spins as owner on
+			  CPU 0 is running ]
+
+				<interrupt>
+					spin_trylock(B)
+					[ succeeds ]
+
+  spin_lock(B)
+  <blocks>
+
+Now the deadlock detection triggers and follows the locking:
+
+  Task X (on CPU0) blocked on spinlock B owned by task Y on
+  CPU1 (via the interrupt taking it with a try lock)
+
+  The owner of B (Y) is blocked on spin_lock A (still spinning)
+  A is owned by task X (self). DEADLOCK detected! BUG_ON triggered.
+
+This was caused by the code to try to not raise softirq unconditionally
+to allow NO_HZ_FULL to work. Unfortunately, reverting that patch causes
+NO_HZ_FULL to break again, but that's still better than triggering
+a BUG_ON().
+
+
 
 -- Steve
-
