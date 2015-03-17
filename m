@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/4] Revert "timers: do not raise softirq unconditionally"
-Date: Tue, 17 Mar 2015 12:25:23 -0400
-Message-ID: <20150317162556.939032422@goodmis.org>
+Subject: [PATCH RT 3/4] netpoll: guard the access to dev->npinfo with
+ rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
+Date: Tue, 17 Mar 2015 12:25:24 -0400
+Message-ID: <20150317162557.193136503@goodmis.org>
 References: <20150317162521.748798934@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Kevin Hao <kexin.hao@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0040-Revert-timers-do-not-raise-softirq-unconditionally.patch
+Content-Disposition: inline; filename=0041-netpoll-guard-the-access-to-dev-npinfo-with-rcu_read.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,149 +24,72 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Kevin Hao <haokexin@gmail.com>
 
-This reverts commit 891f510568343d93c5aa2f477b6bebe009b48f05.
+For vanilla kernel we don't need to invoke rcu_read_lock/unlock_bh
+explicitly to mark an RCU-bh critical section in the softirq context
+because bh is already disabled in this case. But for a rt kernel,
+the commit ("rcu: Merge RCU-bh into RCU-preempt") implements the
+RCU-bh in term of RCU-preempt. So we have to use
+rcu_read_lock/unlock_bh() to mark an RCU-bh critical section even in
+a softirq context. Otherwise we will get a call trace like this:
+  include/linux/netpoll.h:90 suspicious rcu_dereference_check() usage!
+  other info that might help us debug this:
+  rcu_scheduler_active = 1, debug_locks = 0
+  1 lock held by irq/177-eth0_g0/129:
+   #0:  (&per_cpu(local_softirq_locks[i], __cpu).lock){+.+...}, at: [<8002f544>] do_current_softirqs+0x12c/0x5ec
 
+  stack backtrace:
+  CPU: 0 PID: 129 Comm: irq/177-eth0_g0 Not tainted 3.14.23 #11
+  [<80018c0c>] (unwind_backtrace) from [<800138b0>] (show_stack+0x20/0x24)
+  [<800138b0>] (show_stack) from [<8075c3bc>] (dump_stack+0x84/0xd0)
+  [<8075c3bc>] (dump_stack) from [<8008111c>] (lockdep_rcu_suspicious+0xe8/0x11c)
+  [<8008111c>] (lockdep_rcu_suspicious) from [<805e94e8>] (dev_gro_receive+0x240/0x724)
+  [<805e94e8>] (dev_gro_receive) from [<805e9c34>] (napi_gro_receive+0x3c/0x1e8)
+  [<805e9c34>] (napi_gro_receive) from [<804b01ac>] (gfar_clean_rx_ring+0x2d4/0x624)
+  [<804b01ac>] (gfar_clean_rx_ring) from [<804b078c>] (gfar_poll_rx_sq+0x58/0xe8)
+  [<804b078c>] (gfar_poll_rx_sq) from [<805eada8>] (net_rx_action+0x1c8/0x418)
+  [<805eada8>] (net_rx_action) from [<8002f62c>] (do_current_softirqs+0x214/0x5ec)
+  [<8002f62c>] (do_current_softirqs) from [<8002fa88>] (__local_bh_enable+0x84/0x9c)
+  [<8002fa88>] (__local_bh_enable) from [<8002fab8>] (local_bh_enable+0x18/0x1c)
+  [<8002fab8>] (local_bh_enable) from [<80093924>] (irq_forced_thread_fn+0x50/0x74)
+  [<80093924>] (irq_forced_thread_fn) from [<80093c30>] (irq_thread+0x158/0x1c4)
+  [<80093c30>] (irq_thread) from [<800555b8>] (kthread+0xd4/0xe8)
+  [<800555b8>] (kthread) from [<8000ee88>] (ret_from_fork+0x14/0x20)
+
+Signed-off-by: Kevin Hao <kexin.hao@windriver.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-
-Conflicts:
-	kernel/timer.c
 ---
- include/linux/hrtimer.h |  3 ++-
- kernel/hrtimer.c        | 31 ++++++++++++++++++++++++-------
- kernel/timer.c          | 46 ++--------------------------------------------
- 3 files changed, 28 insertions(+), 52 deletions(-)
+ include/linux/netpoll.h | 16 ++++++++++++++--
+ 1 file changed, 14 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/hrtimer.h b/include/linux/hrtimer.h
-index bdbf77db0f4d..79a7a35e1a6e 100644
---- a/include/linux/hrtimer.h
-+++ b/include/linux/hrtimer.h
-@@ -461,8 +461,9 @@ extern int schedule_hrtimeout_range_clock(ktime_t *expires,
- 		unsigned long delta, const enum hrtimer_mode mode, int clock);
- extern int schedule_hrtimeout(ktime_t *expires, const enum hrtimer_mode mode);
+diff --git a/include/linux/netpoll.h b/include/linux/netpoll.h
+index fbfdb9d8d3a7..039dd5df0ef7 100644
+--- a/include/linux/netpoll.h
++++ b/include/linux/netpoll.h
+@@ -87,9 +87,21 @@ static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
+ #ifdef CONFIG_NETPOLL
+ static inline bool netpoll_rx_on(struct sk_buff *skb)
+ {
+-	struct netpoll_info *npinfo = rcu_dereference_bh(skb->dev->npinfo);
++	struct netpoll_info *npinfo;
++	bool ret;
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++	rcu_read_lock_bh();
++#endif
++
++	npinfo = rcu_dereference_bh(skb->dev->npinfo);
++	ret = npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
++
++#ifdef CONFIG_PREEMPT_RT_FULL
++	rcu_read_unlock_bh();
++#endif
  
--/* Called from the periodic timer tick */
-+/* Soft interrupt function to run the hrtimer queues: */
- extern void hrtimer_run_queues(void);
-+extern void hrtimer_run_pending(void);
- 
- /* Bootup initialization: */
- extern void __init hrtimers_init(void);
-diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index f97b9f65c5fa..164201aba52f 100644
---- a/kernel/hrtimer.c
-+++ b/kernel/hrtimer.c
-@@ -1717,6 +1717,30 @@ static void run_hrtimer_softirq(struct softirq_action *h)
+-	return npinfo && (!list_empty(&npinfo->rx_np) || npinfo->rx_flags);
++	return ret;
  }
  
- /*
-+ * Called from timer softirq every jiffy, expire hrtimers:
-+ *
-+ * For HRT its the fall back code to run the softirq in the timer
-+ * softirq context in case the hrtimer initialization failed or has
-+ * not been done yet.
-+ */
-+void hrtimer_run_pending(void)
-+{
-+	if (hrtimer_hres_active())
-+		return;
-+
-+	/*
-+	 * This _is_ ugly: We have to check in the softirq context,
-+	 * whether we can switch to highres and / or nohz mode. The
-+	 * clocksource switch happens in the timer interrupt with
-+	 * xtime_lock held. Notification from there only sets the
-+	 * check bit in the tick_oneshot code, otherwise we might
-+	 * deadlock vs. xtime_lock.
-+	 */
-+	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled()))
-+		hrtimer_switch_to_hres();
-+}
-+
-+/*
-  * Called from hardirq context every jiffy
-  */
- void hrtimer_run_queues(void)
-@@ -1729,13 +1753,6 @@ void hrtimer_run_queues(void)
- 	if (hrtimer_hres_active())
- 		return;
- 
--	/*
--	 * Check whether we can switch to highres mode.
--	 */
--	if (tick_check_oneshot_change(!hrtimer_is_hres_enabled())
--	    && hrtimer_switch_to_hres())
--		return;
--
- 	for (index = 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
- 		base = &cpu_base->clock_base[index];
- 		if (!timerqueue_getnext(&base->active))
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 2059f6b27595..34fd2dbba3e3 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1464,6 +1464,8 @@ static void run_timer_softirq(struct softirq_action *h)
- {
- 	struct tvec_base *base = __this_cpu_read(tvec_bases);
- 
-+	hrtimer_run_pending();
-+
- #if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
- 	irq_work_run();
- #endif
-@@ -1477,52 +1479,8 @@ static void run_timer_softirq(struct softirq_action *h)
-  */
- void run_local_timers(void)
- {
--	struct tvec_base *base = __this_cpu_read(tvec_bases);
--
- 	hrtimer_run_queues();
--	/*
--	 * We can access this lockless as we are in the timer
--	 * interrupt. If there are no timers queued, nothing to do in
--	 * the timer softirq.
--	 */
--#ifdef CONFIG_PREEMPT_RT_FULL
--
--#ifndef CONFIG_SMP
--	/*
--	 * The spin_do_trylock() later may fail as the lock may be hold before
--	 * the interrupt arrived. The spin-lock debugging code will raise a
--	 * warning if the try_lock fails on UP. Since this is only an
--	 * optimization for the FULL_NO_HZ case (not to run the timer softirq on
--	 * an nohz_full CPU) we don't really care and shedule the softirq.
--	 */
- 	raise_softirq(TIMER_SOFTIRQ);
--	return;
--#endif
--
--	/* On RT, irq work runs from softirq */
--	if (irq_work_needs_cpu()) {
--		raise_softirq(TIMER_SOFTIRQ);
--		return;
--	}
--
--	if (!spin_do_trylock(&base->lock)) {
--		raise_softirq(TIMER_SOFTIRQ);
--		return;
--	}
--#endif
--
--	if (!base->active_timers)
--		goto out;
--
--	/* Check whether the next pending timer has expired */
--	if (time_before_eq(base->next_timer, jiffies))
--		raise_softirq(TIMER_SOFTIRQ);
--out:
--#ifdef CONFIG_PREEMPT_RT_FULL
--	rt_spin_unlock_after_trylock_in_irq(&base->lock);
--#endif
--	/* The ; ensures that gcc won't complain in the !RT case */
--	;
- }
- 
- #ifdef __ARCH_WANT_SYS_ALARM
+ static inline bool netpoll_rx(struct sk_buff *skb)
 -- 
 2.1.4
