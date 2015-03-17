@@ -1,88 +1,133 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/2] fs,btrfs: fix rt deadlock on extent_buffer->lock
-Date: Tue, 17 Mar 2015 12:38:47 -0400
-Message-ID: <20150317163926.666399381@goodmis.org>
-References: <20150317163846.461046825@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Subject: [PATCH RT 0/2] Linux 3.4.106-rt132-rc2
+Date: Tue, 17 Mar 2015 12:48:47 -0400
+Message-ID: <20150317164847.304560387@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Chris Mason <chris.mason@fusionio.com>,
-	Mike Galbraith <efault@gmx.de>
-To: unlisted-recipients:; (no To-header on input)
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:38161 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932561AbbCQQj3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 17 Mar 2015 12:39:29 -0400
-Content-Disposition: inline; filename=0027-fs-btrfs-fix-rt-deadlock-on-extent_buffer-lock.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.4.106-rt132-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Mike Galbraith <mgalbraith@suse.de>
+This is the RT stable review cycle of patch 3.4.106-rt132-rc2.
 
-Sat Jul 14 12:30:41 CEST 2012
+Please scream at me if I messed something up. Please test the patches too.
 
-Trivially repeatable deadlock is cured by enabling lockdep code in
-btrfs_clear_path_blocking() as suggested by Chris Mason.  He also
-suggested restricting blocking reader count to one, and not allowing
-a spinning reader while blocking reader exists.  This has proven to
-be unnecessary, the strict lock order enforcement is enough.. or
-rather that's my box's opinion after long hours of hard pounding.
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Note: extent-tree.c bit is additional recommendation from Chris
-      Mason, split into a separate patch after discussion.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Link: http://lkml.kernel.org/r/1414913478.5380.114.camel@marge.simpson.net
+If all goes well, this patch will be converted to the next main release
+on 3/20/2015.
 
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: Carsten Emde <C.Emde@osadl.org>
-Cc: John Kacur <jkacur@redhat.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Clark Williams <williams@redhat.com>
-Cc: Chris Mason <chris.mason@fusionio.com>
-Signed-off-by: Mike Galbraith <efault@gmx.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+I'm only including the patches that were added since rc1.
 
-Conflicts:
-	fs/btrfs/extent-tree.c
+Enjoy,
+
+-- Steve
+
+
+To build 3.4.106-rt132-rc2 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.106.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.106-rt132-rc2.patch.xz
+
+You can also build from 3.4.106-rt131 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.106-rt131-rt132-rc2.patch.xz
+
+
+Changes from 3.4.106-rt131:
+
 ---
- fs/btrfs/ctree.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/fs/btrfs/ctree.c b/fs/btrfs/ctree.c
-index 4106264fbc65..ae47cc2c9f2f 100644
---- a/fs/btrfs/ctree.c
-+++ b/fs/btrfs/ctree.c
-@@ -77,7 +77,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
- {
- 	int i;
- 
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
- 	/* lockdep really cares that we take all of these spinlocks
- 	 * in the right order.  If any of the locks in the path are not
- 	 * currently blocking, it is going to complain.  So, make really
-@@ -104,7 +104,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
- 		}
- 	}
- 
--#ifdef CONFIG_DEBUG_LOCK_ALLOC
-+#if (defined(CONFIG_DEBUG_LOCK_ALLOC) || defined(CONFIG_PREEMPT_RT_BASE))
- 	if (held)
- 		btrfs_clear_lock_blocking_rw(held, held_rw);
- #endif
--- 
-2.1.4
 
 
+Daniel Wagner (1):
+      work-simple: Simple work queue implemenation
+
+Josh Cartwright (1):
+      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
+
+Mike Galbraith (4):
+      x86: UV: raw_spinlock conversion
+      scheduling while atomic in cgroup code
+      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
+      fs,btrfs: fix rt deadlock on extent_buffer->lock
+
+Paul Gortmaker (1):
+      sas-ata/isci: dont't disable interrupts in qc_issue handler
+
+Sebastian Andrzej Siewior (3):
+      gpio: omap: use raw locks for locking
+      rt-mutex: avoid a NULL pointer dereference on deadlock
+      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
+
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.4.106-rt132-rc2
+
+Thomas Gleixner (14):
+      rtmutex: Simplify rtmutex_slowtrylock()
+      rtmutex: Simplify and document try_to_take_rtmutex()
+      rtmutex: No need to keep task ref for lock owner check
+      rtmutex: Clarify the boost/deboost part
+      rtmutex: Document pi chain walk
+      rtmutex: Simplify remove_waiter()
+      rtmutex: Confine deadlock logic to futex
+      rtmutex: Cleanup deadlock detector debug logic
+      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
+      futex: Make unlock_pi more robust
+      futex: Use futex_top_waiter() in lookup_pi_state()
+      futex: Split out the waiter check from lookup_pi_state()
+      futex: Split out the first waiter attachment from lookup_pi_state()
+      futex: Simplify futex_lock_pi_atomic() and make it more robust
+
+Yadi.hu (1):
+      ARM: enable irq in translation/section permission fault handlers
+
+Yong Zhang (1):
+      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
+
+----
+ arch/arm/include/asm/cmpxchg.h     |   2 +
+ arch/arm/include/asm/futex.h       |   4 +
+ arch/arm/mm/fault.c                |   6 +
+ arch/x86/include/asm/uv/uv_bau.h   |  12 +-
+ arch/x86/include/asm/uv/uv_hub.h   |   2 +-
+ arch/x86/kernel/apic/x2apic_uv_x.c |  12 +-
+ arch/x86/platform/uv/tlb_uv.c      |  30 +-
+ arch/x86/platform/uv/uv_time.c     |  21 +-
+ drivers/gpio/gpio-omap.c           |  76 ++---
+ drivers/scsi/libsas/sas_ata.c      |   4 +-
+ fs/btrfs/ctree.c                   |   4 +-
+ include/linux/rtmutex.h            |   8 +-
+ include/linux/work-simple.h        |  24 ++
+ kernel/futex.c                     | 407 +++++++++++--------------
+ kernel/rt.c                        |   8 +-
+ kernel/rtmutex-debug.c             |   5 +-
+ kernel/rtmutex-debug.h             |   7 +-
+ kernel/rtmutex-tester.c            |   4 +-
+ kernel/rtmutex.c                   | 603 +++++++++++++++++++++++++++----------
+ kernel/rtmutex.h                   |   7 +-
+ kernel/rtmutex_common.h            |  22 +-
+ kernel/sched/Makefile              |   1 +
+ kernel/sched/work-simple.c         | 172 +++++++++++
+ lib/locking-selftest.c             |  27 ++
+ localversion-rt                    |   2 +-
+ mm/memcontrol.c                    |   7 +-
+ net/sunrpc/svc_xprt.c              |   4 +-
+ 27 files changed, 998 insertions(+), 483 deletions(-)
