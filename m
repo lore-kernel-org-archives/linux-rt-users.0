@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] Linux 3.4.106-rt132-rc4
-Date: Wed, 18 Mar 2015 10:02:58 -0400
-Message-ID: <20150318100258.54c3889e@gandalf.local.home>
+Subject: [PATCH] Linux 3.2.68-rt99-rc4
+Date: Wed, 18 Mar 2015 10:04:36 -0400
+Message-ID: <20150318100436.33c90fe5@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,19 +12,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0217.hostedemail.com ([216.40.44.217]:58547 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755962AbbCRODC (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Mar 2015 10:03:02 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.4.106-rt132-rc4.
+This is the RT stable review cycle of patch 3.2.68-rt99-rc4.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -42,20 +37,20 @@ Enjoy,
 -- Steve
 
 
-To build 3.4.106-rt132-rc4 directly, the following patches should be applied:
+To build 3.2.68-rt99-rc4 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.106.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.106-rt132-rc4.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt99-rc4.patch.xz
 
-You can also build from 3.4.106-rt131 by applying the incremental patch:
+You can also build from 3.2.68-rt98 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.106-rt131-rt132-rc4.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt98-rt99-rc4.patch.xz
 
 
-Changes from 3.4.106-rt131:
+Changes from 3.2.68-rt98:
 
 ---
 
@@ -72,9 +67,6 @@ Mike Galbraith (4):
       sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
       fs,btrfs: fix rt deadlock on extent_buffer->lock
 
-Paul Gortmaker (1):
-      sas-ata/isci: dont't disable interrupts in qc_issue handler
-
 Sebastian Andrzej Siewior (3):
       gpio: omap: use raw locks for locking
       rt-mutex: avoid a NULL pointer dereference on deadlock
@@ -84,7 +76,7 @@ Steven Rostedt (1):
       create-rt-enqueue
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.106-rt132-rc4
+      Linux 3.2.68-rt99-rc4
 
 Thomas Gleixner (14):
       rtmutex: Simplify rtmutex_slowtrylock()
@@ -105,11 +97,7 @@ Thomas Gleixner (14):
 Yadi.hu (1):
       ARM: enable irq in translation/section permission fault handlers
 
-Yong Zhang (1):
-      ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
-
 ----
- arch/arm/include/asm/cmpxchg.h     |   2 +
  arch/arm/include/asm/futex.h       |   4 +
  arch/arm/mm/fault.c                |   6 +
  arch/x86/include/asm/uv/uv_bau.h   |  12 +-
@@ -117,11 +105,11 @@ Yong Zhang (1):
  arch/x86/kernel/apic/x2apic_uv_x.c |  12 +-
  arch/x86/platform/uv/tlb_uv.c      |  30 +-
  arch/x86/platform/uv/uv_time.c     |  21 +-
- drivers/gpio/gpio-omap.c           |  76 ++---
- drivers/scsi/libsas/sas_ata.c      |   4 +-
+ drivers/gpio/gpio-omap.c           |  64 ++--
  fs/btrfs/ctree.c                   |   4 +-
  include/linux/rtmutex.h            |   8 +-
  include/linux/work-simple.h        |  24 ++
+ kernel/Makefile                    |   2 +-
  kernel/futex.c                     | 407 +++++++++++--------------
  kernel/rt.c                        |   8 +-
  kernel/rtmutex-debug.c             |   5 +-
@@ -130,28 +118,27 @@ Yong Zhang (1):
  kernel/rtmutex.c                   | 603 +++++++++++++++++++++++++++----------
  kernel/rtmutex.h                   |   7 +-
  kernel/rtmutex_common.h            |  22 +-
- kernel/sched/Makefile              |   1 +
- kernel/sched/work-simple.c         | 172 +++++++++++
+ kernel/work-simple.c               | 172 +++++++++++
  lib/locking-selftest.c             |  27 ++
  localversion-rt                    |   2 +-
  mm/memcontrol.c                    |   7 +-
  net/sunrpc/svc_xprt.c              |   4 +-
- 27 files changed, 998 insertions(+), 483 deletions(-)
+ 25 files changed, 988 insertions(+), 476 deletions(-)
 
 Diff from -rc3:
 ---
 diff --git a/localversion-rt b/localversion-rt
-index c70c2e0b2d32..2650b0e76d19 100644
+index f756c3d9344c..057634ab6b28 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt132-rc3
-+-rt132-rc4
+--rt99-rc3
++-rt99-rc4
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 8cfff961ad4b..8c3dd645ac10 100644
+index 00a1012ecfec..663f1a01b519 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -2016,15 +2016,13 @@ static bool consume_stock(struct mem_cgroup *memcg)
+@@ -2011,15 +2011,13 @@ static bool consume_stock(struct mem_cgroup *memcg)
  {
  	struct memcg_stock_pcp *stock;
  	bool ret = true;
