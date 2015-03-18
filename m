@@ -1,158 +1,148 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] Linux 3.2.68-rt99-rc4
-Date: Wed, 18 Mar 2015 10:04:36 -0400
-Message-ID: <20150318100436.33c90fe5@gandalf.local.home>
+Subject: Re: [PATCH V5] Allow compaction of unevictable pages
+Date: Wed, 18 Mar 2015 11:40:54 -0400
+Message-ID: <20150318154054.GH3042@home.goodmis.org>
+References: <1426267597-25811-1-git-send-email-emunson@akamai.com>
+ <550332CE.7040404@redhat.com>
+ <20150313190915.GA12589@akamai.com>
+ <20150313201954.GB28848@dhcp22.suse.cz>
+ <5506ACEC.9010403@suse.cz>
+ <20150316134956.GA15324@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Vlastimil Babka <vbabka@suse.cz>, Michal Hocko <mhocko@suse.cz>,
+	Rik van Riel <riel@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Christoph Lameter <cl@linux.com>,
+	Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>,
+	David Rientjes <rientjes@google.com>, linux-mm@kvack.org,
+	linux-kernel@vger.kernel.org, Linux API <linux-api@vger.kernel.org>,
+	linux-rt-users@vger.kernel.org
+To: Eric B Munson <emunson@akamai.com>
+Return-path: <owner-linux-mm@kvack.org>
+Content-Disposition: inline
+In-Reply-To: <20150316134956.GA15324@akamai.com>
+Sender: owner-linux-mm@kvack.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, Mar 16, 2015 at 09:49:56AM -0400, Eric B Munson wrote:
+> On Mon, 16 Mar 2015, Vlastimil Babka wrote:
+> 
+> > [CC += linux-api@]
+> > 
+> > Since this is a kernel-user-space API change, please CC linux-api@.
+> > The kernel source file Documentation/SubmitChecklist notes that all
+> > Linux kernel patches that change userspace interfaces should be CCed
+> > to linux-api@vger.kernel.org, so that the various parties who are
+> > interested in API changes are informed. For further information, see
+> > https://urldefense.proofpoint.com/v2/url?u=https-3A__www.kernel.org_doc_man-2Dpages_linux-2Dapi-2Dml.html&d=AwIC-g&c=96ZbZZcaMF4w0F4jpN6LZg&r=aUmMDRRT0nx4IfILbQLv8xzE0wB9sQxTHI3QrQ2lkBU&m=GUotTNnv26L0HxtXrBgiHqu6kwW3ufx2_TQpXIA216c&s=IFFYQ7Zr-4SIaF3slOZqiSP_noyva42kCwVRxxDm5wo&e=
+> 
+> Added to the Cc list, thanks.
+> 
+> > 
+> > 
+> > On 03/13/2015 09:19 PM, Michal Hocko wrote:
+> > >On Fri 13-03-15 15:09:15, Eric B Munson wrote:
+> > >>On Fri, 13 Mar 2015, Rik van Riel wrote:
+> > >>
+> > >>>On 03/13/2015 01:26 PM, Eric B Munson wrote:
+> > >>>
+> > >>>>--- a/mm/compaction.c
+> > >>>>+++ b/mm/compaction.c
+> > >>>>@@ -1046,6 +1046,8 @@ typedef enum {
+> > >>>>  	ISOLATE_SUCCESS,	/* Pages isolated, migrate */
+> > >>>>  } isolate_migrate_t;
+> > >>>>
+> > >>>>+int sysctl_compact_unevictable;
+> > 
+> > A comment here would be useful I think, as well as explicit default
+> > value. Maybe also __read_mostly although I don't know how much that
+> > matters.
+> 
+> I am going to sit on V6 for a couple of days incase anyone from rt wants
+> to chime in.  But these will be in V6.
+> 
+> > 
+> > I also wonder if it might be confusing that "compact_memory" is a
+> > write-only trigger that doesn't even show under "sysctl -a", while
+> > "compact_unevictable" is a read/write setting. But I don't have a
+> > better suggestion right now.
+> 
+> Does allow_unevictable_compaction sound better?  It feels too much like
+> variable naming conventions from other languages which seems to
+> encourage verbosity to me, but does indicate a difference from
+> compact_memory.
+> 
+> > 
+> > >>>>+
+> > >>>>  /*
+> > >>>>   * Isolate all pages that can be migrated from the first suitable block,
+> > >>>>   * starting at the block pointed to by the migrate scanner pfn within
+> > >>>
+> > >>>I suspect that the use cases where users absolutely do not want
+> > >>>unevictable pages migrated are special cases, and it may make
+> > >>>sense to enable sysctl_compact_unevictable by default.
+> > >>
+> > >>Given that sysctl_compact_unevictable=0 is the way the kernel behaves
+> > >>now and the push back against always enabling compaction on unevictable
+> > >>pages, I left the default to be the behavior as it is today.
+> > >
+> > >The question is _why_ we have this behavior now. Is it intentional?
+> > 
+> > It's there since 748446bb6 ("mm: compaction: memory compaction
+> > core"). Commit c53919adc0 ("mm: vmscan: remove lumpy reclaim")
+> > changes the comment in __isolate_lru_page() handling of unevictable
+> > pages to mention compaction explicitly. It could have been
+> > accidental in 748446bb6 though, maybe it just reused
+> > __isolate_lru_page() for compaction - it seems that the skipping of
+> > unevictable was initially meant to optimize lumpy reclaim.
+> > 
+> > >e46a28790e59 (CMA: migrate mlocked pages) is a precedence in that
+> > 
+> > Well, CMA and realtime kernels are probably mutually exclusive enough.
+> > 
+> > >direction. Vlastimil has then changed that by edc2ca612496 (mm,
+> > >compaction: move pageblock checks up from isolate_migratepages_range()).
+> > >There is no mention about mlock pages so I guess it was more an
+> > >unintentional side effect of the patch. At least that is my current
+> > >understanding. I might be wrong here.
+> > 
+> > Although that commit did change unintentionally more details that I
+> > would have liked (unfortunately), I think you are wrong on this one.
+> > ISOLATE_UNEVICTABLE is still passed from
+> > isolate_migratepages_range() which is used by CMA, while the
+> > compaction variant isolate_migratepages() does not pass it. So it's
+> > kept CMA-specific as before.
+> > 
+> > >The thing about RT is that it is not usable with the upstream kernel
+> > >without the RT patchset AFAIU. So the default should be reflect what is
+> > >better for the standard kernel. RT loads have to tune the system anyway
+> > >so it is not so surprising they would disable this option as well. We
+> > >should help those guys and do not require them to touch the code but the
+> > >knob is reasonable IMHO.
+> > >
+> > >Especially when your changelog suggests that having this enabled by
+> > >default is beneficial for the standard kernel.
+> > 
+> > I agree, but if there's a danger of becoming too of a bikeshed
+> > topic, I'm fine with keeping the default same as current behavior
+> > and changing it later. Or maybe we should ask some -rt mailing list
+> > instead of just Peter and Thomas?
+> 
+> According to the rt wiki, there is no -rt development list so lkml is
+> it.  I will change the default to 1 for V6 if I don't hear otherwise by
+> the time I get back around to spinning V6.
+> 
 
-Dear RT Folks,
-
-This is the RT stable review cycle of patch 3.2.68-rt99-rc4.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 3/20/2015.
-
-Enjoy,
+For kernel development, yes. But this change affects users. Cc'ing the
+linux-rt-users mailing list (which I did) is appropriate in this case.
 
 -- Steve
 
 
-To build 3.2.68-rt99-rc4 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt99-rc4.patch.xz
-
-You can also build from 3.2.68-rt98 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt98-rt99-rc4.patch.xz
-
-
-Changes from 3.2.68-rt98:
-
----
-
-
-Daniel Wagner (1):
-      work-simple: Simple work queue implemenation
-
-Josh Cartwright (1):
-      lockdep: selftest: fix warnings due to missing PREEMPT_RT conditionals
-
-Mike Galbraith (4):
-      x86: UV: raw_spinlock conversion
-      scheduling while atomic in cgroup code
-      sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
-      fs,btrfs: fix rt deadlock on extent_buffer->lock
-
-Sebastian Andrzej Siewior (3):
-      gpio: omap: use raw locks for locking
-      rt-mutex: avoid a NULL pointer dereference on deadlock
-      arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-
-Steven Rostedt (1):
-      create-rt-enqueue
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.68-rt99-rc4
-
-Thomas Gleixner (14):
-      rtmutex: Simplify rtmutex_slowtrylock()
-      rtmutex: Simplify and document try_to_take_rtmutex()
-      rtmutex: No need to keep task ref for lock owner check
-      rtmutex: Clarify the boost/deboost part
-      rtmutex: Document pi chain walk
-      rtmutex: Simplify remove_waiter()
-      rtmutex: Confine deadlock logic to futex
-      rtmutex: Cleanup deadlock detector debug logic
-      rtmutex: Avoid pointless requeueing in the deadlock detection chain walk
-      futex: Make unlock_pi more robust
-      futex: Use futex_top_waiter() in lookup_pi_state()
-      futex: Split out the waiter check from lookup_pi_state()
-      futex: Split out the first waiter attachment from lookup_pi_state()
-      futex: Simplify futex_lock_pi_atomic() and make it more robust
-
-Yadi.hu (1):
-      ARM: enable irq in translation/section permission fault handlers
-
-----
- arch/arm/include/asm/futex.h       |   4 +
- arch/arm/mm/fault.c                |   6 +
- arch/x86/include/asm/uv/uv_bau.h   |  12 +-
- arch/x86/include/asm/uv/uv_hub.h   |   2 +-
- arch/x86/kernel/apic/x2apic_uv_x.c |  12 +-
- arch/x86/platform/uv/tlb_uv.c      |  30 +-
- arch/x86/platform/uv/uv_time.c     |  21 +-
- drivers/gpio/gpio-omap.c           |  64 ++--
- fs/btrfs/ctree.c                   |   4 +-
- include/linux/rtmutex.h            |   8 +-
- include/linux/work-simple.h        |  24 ++
- kernel/Makefile                    |   2 +-
- kernel/futex.c                     | 407 +++++++++++--------------
- kernel/rt.c                        |   8 +-
- kernel/rtmutex-debug.c             |   5 +-
- kernel/rtmutex-debug.h             |   7 +-
- kernel/rtmutex-tester.c            |   4 +-
- kernel/rtmutex.c                   | 603 +++++++++++++++++++++++++++----------
- kernel/rtmutex.h                   |   7 +-
- kernel/rtmutex_common.h            |  22 +-
- kernel/work-simple.c               | 172 +++++++++++
- lib/locking-selftest.c             |  27 ++
- localversion-rt                    |   2 +-
- mm/memcontrol.c                    |   7 +-
- net/sunrpc/svc_xprt.c              |   4 +-
- 25 files changed, 988 insertions(+), 476 deletions(-)
-
-Diff from -rc3:
----
-diff --git a/localversion-rt b/localversion-rt
-index f756c3d9344c..057634ab6b28 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt99-rc3
-+-rt99-rc4
-diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 00a1012ecfec..663f1a01b519 100644
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -2011,15 +2011,13 @@ static bool consume_stock(struct mem_cgroup *memcg)
- {
- 	struct memcg_stock_pcp *stock;
- 	bool ret = true;
--	int cpu;
- 
--	cpu = get_cpu_light();
--	stock = &per_cpu(memcg_stock, cpu);
-+	stock = &get_cpu_var(memcg_stock);
- 	if (memcg == stock->cached && stock->nr_pages)
- 		stock->nr_pages--;
- 	else /* need to call res_counter_charge */
- 		ret = false;
--	put_cpu_light();
-+	put_cpu_var(memcg_stock);
- 	return ret;
- }
- 
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
