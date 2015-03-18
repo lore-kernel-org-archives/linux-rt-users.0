@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH] Linux 3.14.34-rt32-rc4
-Date: Wed, 18 Mar 2015 09:43:29 -0400
-Message-ID: <20150318094329.63c9ec2a@gandalf.local.home>
+Subject: [PATCH] Linux 3.12.38-rt53-rc4
+Date: Wed, 18 Mar 2015 09:48:38 -0400
+Message-ID: <20150318094838.1dee3f60@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,19 +12,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0095.hostedemail.com ([216.40.44.95]:42772 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1756493AbbCRNnd (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 Mar 2015 09:43:33 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.14.34-rt32-rc4.
+This is the RT stable review cycle of patch 3.12.38-rt53-rc4.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -42,26 +37,23 @@ Enjoy,
 -- Steve
 
 
-To build 3.14.34-rt32-rc4 directly, the following patches should be applied:
+To build 3.12.38-rt53-rc4 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.34.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.34-rt32-rc4.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.38-rt53-rc4.patch.xz
 
-You can also build from 3.14.34-rt31 by applying the incremental patch:
+You can also build from 3.12.38-rt52 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.34-rt31-rt32-rc4.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.38-rt52-rt53-rc4.patch.xz
 
 
-Changes from 3.14.34-rt31:
+Changes from 3.12.38-rt52:
 
 ---
 
-
-Brad Mouring (1):
-      rtmutex.c: Fix incorrect waiter check
 
 Daniel Wagner (2):
       work-simple: Simple work queue implemenation
@@ -77,7 +69,7 @@ Kevin Hao (1):
       netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
 
 Mike Galbraith (6):
-      rt,locking: fix __ww_mutex_lock_interruptible() lockdep annotation
+      rt: fix __ww_mutex_lock_interruptible() lockdep annotation
       x86: UV: raw_spinlock conversion
       scheduling while atomic in cgroup code
       sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
@@ -93,17 +85,18 @@ Paul E. McKenney (4):
 Paul Gortmaker (1):
       sas-ata/isci: dont't disable interrupts in qc_issue handler
 
-Sebastian Andrzej Siewior (5):
+Sebastian Andrzej Siewior (4):
       gpio: omap: use raw locks for locking
-      locking/rt-mutex: avoid a NULL pointer dereference on deadlock
+      rt-mutex: avoid a NULL pointer dereference on deadlock
       arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-      Revert "rwsem-rt: Do not allow readers to nest"
       fs/aio: simple simple work
 
-Steven Rostedt (Red Hat) (3):
-      staging: Mark rtl8821ae as broken
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (2):
       Revert "timers: do not raise softirq unconditionally"
-      Linux 3.14.34-rt32-rc4
+      Linux 3.12.38-rt53-rc4
 
 Thomas Gleixner (14):
       rtmutex: Simplify rtmutex_slowtrylock()
@@ -124,9 +117,6 @@ Thomas Gleixner (14):
 Yadi.hu (1):
       ARM: enable irq in translation/section permission fault handlers
 
-Yang Shi (1):
-      mips: rt: Replace pagefault_* to raw version
-
 Yong Zhang (1):
       ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
 
@@ -134,15 +124,13 @@ Yong Zhang (1):
  arch/arm/include/asm/cmpxchg.h         |   2 +
  arch/arm/include/asm/futex.h           |   4 +
  arch/arm/mm/fault.c                    |   6 +
- arch/mips/mm/init.c                    |   4 +-
  arch/x86/include/asm/uv/uv_bau.h       |  14 +-
  arch/x86/include/asm/uv/uv_hub.h       |   2 +-
  arch/x86/kernel/apic/x2apic_uv_x.c     |   2 +-
  arch/x86/platform/uv/tlb_uv.c          |  26 +-
  arch/x86/platform/uv/uv_time.c         |  21 +-
- drivers/gpio/gpio-omap.c               |  72 ++--
+ drivers/gpio/gpio-omap.c               |  70 ++--
  drivers/scsi/libsas/sas_ata.c          |   4 +-
- drivers/staging/rtl8821ae/Kconfig      |   1 +
  drivers/thermal/x86_pkg_temp_thermal.c |  50 ++-
  fs/aio.c                               |  24 +-
  fs/btrfs/ctree.c                       |   4 +-
@@ -150,40 +138,39 @@ Yong Zhang (1):
  include/linux/hrtimer.h                |   3 +-
  include/linux/netpoll.h                |  16 +-
  include/linux/rtmutex.h                |   8 +-
- include/linux/rwsem_rt.h               |   1 +
  include/linux/work-simple.h            |  24 ++
- kernel/futex.c                         | 402 +++++++++++------------
+ kernel/futex.c                         | 407 ++++++++++-----------
  kernel/hrtimer.c                       |  31 +-
- kernel/locking/rt.c                    |  37 ++-
- kernel/locking/rtmutex-debug.c         |   5 +-
- kernel/locking/rtmutex-debug.h         |   7 +-
- kernel/locking/rtmutex-tester.c        |   4 +-
- kernel/locking/rtmutex.c               | 582 ++++++++++++++++++++++++---------
- kernel/locking/rtmutex.h               |   7 +-
- kernel/locking/rtmutex_common.h        |  22 +-
- kernel/sched/Makefile                  |   2 +-
- kernel/sched/work-simple.c             | 172 ++++++++++
+ kernel/rt.c                            |   8 +-
+ kernel/rtmutex-debug.c                 |   5 +-
+ kernel/rtmutex-debug.h                 |   7 +-
+ kernel/rtmutex-tester.c                |   4 +-
+ kernel/rtmutex.c                       | 628 ++++++++++++++++++++++++---------
+ kernel/rtmutex.h                       |   7 +-
+ kernel/rtmutex_common.h                |  22 +-
+ kernel/sched/Makefile                  |   1 +
+ kernel/sched/work-simple.c             | 172 +++++++++
  kernel/timer.c                         |  72 ++--
  lib/locking-selftest.c                 |  27 ++
  localversion-rt                        |   2 +-
  mm/memcontrol.c                        |   7 +-
  net/sunrpc/svc_xprt.c                  |   4 +-
- 37 files changed, 1133 insertions(+), 546 deletions(-)
+ 34 files changed, 1139 insertions(+), 553 deletions(-)
 
 Diff from -rc3:
 ---
 diff --git a/localversion-rt b/localversion-rt
-index a745e52f1919..e2267abd0c4d 100644
+index 28146e914ab2..8298490e40e7 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt32-rc3
-+-rt32-rc4
+--rt53-rc3
++-rt53-rc4
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index 6f4bcdb951d9..be24d2d186fa 100644
+index 8565a826543e..ba7a8ae06476 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -2453,18 +2453,16 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
+@@ -2415,18 +2415,16 @@ static bool consume_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
  {
  	struct memcg_stock_pcp *stock;
  	bool ret = true;
