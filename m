@@ -1,48 +1,61 @@
-From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq unconditionally"
-Date: Thu, 19 Mar 2015 10:42:18 -0600
-Message-ID: <550AFC6A.4050901@hp.com>
-References: <20150317163541.080310081@goodmis.org>	<20150317163617.218582800@goodmis.org>	<20150317163551.3093b6c2@gandalf.local.home>	<1426753029.4168.80.camel@gmail.com> <20150319122611.0d002d48@gandalf.local.home>
+From: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+Subject: Re: [PATCH V6] Allow compaction of unevictable pages
+Date: Thu, 19 Mar 2015 12:42:44 -0700 (PDT)
+Message-ID: <alpine.DEB.2.10.1503191242150.20092@chino.kir.corp.google.com>
+References: <1426773430-31052-1-git-send-email-emunson@akamai.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150319122611.0d002d48@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Andrew Morton <akpm-de/tnXTf+JLsfHDXvbKv3WD2FQJk+8+b@public.gmane.org>,
+	Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>,
+	Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
+	Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>,
+	Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>,
+	Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>, Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>,
+	Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org, linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Return-path: <linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <1426773430-31052-1-git-send-email-emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+Sender: linux-api-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Thu, 19 Mar 2015, Eric B Munson wrote:
 
-On 03/19/2015 10:26 AM, Steven Rostedt wrote:
-> On Thu, 19 Mar 2015 09:17:09 +0100
-> Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+> Currently, pages which are marked as unevictable are protected from
+> compaction, but not from other types of migration.  The POSIX real time
+> extension explicitly states that mlock() will prevent a major page
+> fault, but the spirit of is is that mlock() should give a process the
+> ability to control sources of latency, including minor page faults.
+> However, the mlock manpage only explicitly says that a locked page will
+> not be written to swap and this can cause some confusion.  The
+> compaction code today, does not give a developer who wants to avoid swap
+> but wants to have large contiguous areas available any method to achieve
+> this state.  This patch introduces a sysctl for controlling compaction
+> behavoir with respect to the unevictable lru.  Users that demand no page
+> faults after a page is present can set compact_unevictable to 0 and
+> users who need the large contiguous areas can enable compaction on
+> locked memory by leaving the default value of 1.
 > 
+> To illustrate this problem I wrote a quick test program that mmaps a
+> large number of 1MB files filled with random data.  These maps are
+> created locked and read only.  Then every other mmap is unmapped and I
+> attempt to allocate huge pages to the static huge page pool.  When the
+> compact_unevictable sysctl is 0, I cannot allocate hugepages after
+> fragmenting memory.  When the value is set to 1, allocations succeed.
 > 
->> (aw crap, let's go shopping)... so why is the one in timer.c ok?
-> 
-> It's not. Sebastian, you said there were no other cases of rt_mutexes
-> being taken in hard irq context. Looks like timer.c has one.
-> 
-> So perhaps the real fix is to get that special case of ownership in
-> hard interrupt context?
-> 
-> -- Steve
-> 
+> Signed-off-by: Eric B Munson <emunson-JqFfY2XvxFXQT0dZR+AlfA@public.gmane.org>
+> Cc: Vlastimil Babka <vbabka-AlSwsSmVLrQ@public.gmane.org>
+> Cc: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+> Cc: Christoph Lameter <cl-vYTEC60ixJUAvxtiuMwx3w@public.gmane.org>
+> Cc: Peter Zijlstra <peterz-wEGCiKHe2LqWVfeAwA7xHQ@public.gmane.org>
+> Cc: Mel Gorman <mgorman-l3A5Bk7waGM@public.gmane.org>
+> Cc: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
+> Cc: Rik van Riel <riel-H+wXaHxf7aLQT0dZR+AlfA@public.gmane.org>
+> Cc: Michal Hocko <mhocko-AlSwsSmVLrQ@public.gmane.org>
+> Cc: linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-mm-Bw31MaZKKs3YtjvyW6yDsg@public.gmane.org
+> Cc: linux-api-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> Cc: linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
 
-Steve, I'm still working on the fix we discussed using dummy irq_task.
-I should be able to submit some time next week, if still interested.
-
-Either that, or I think we should remove the function
-spin_do_trylock_in_interrupt() to prevent any possibility of running
-into similar problems in the future.
-
-Thanks,
-Mak.
+Acked-by: David Rientjes <rientjes-hpIqsD4AKlfQT0dZR+AlfA@public.gmane.org>
