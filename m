@@ -1,35 +1,44 @@
-From: Christoph Lameter <cl@linux.com>
-Subject: Re: [PATCH V6] Allow compaction of unevictable pages
-Date: Thu, 19 Mar 2015 11:18:12 -0500 (CDT)
-Message-ID: <alpine.DEB.2.11.1503191117380.26866@gentwo.org>
-References: <1426773430-31052-1-git-send-email-emunson@akamai.com> <550AE38E.7090006@suse.cz> <550AEC8B.1080806@akamai.com>
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Vlastimil Babka <vbabka@suse.cz>,
-    Andrew Morton <akpm@linux-foundation.org>,
-    Thomas Gleixner <tglx@linutronix.de>,
-    Peter Zijlstra <peterz@infradead.org>, Mel Gorman <mgorman@suse.de>,
-    David Rientjes <rientjes@google.com>, Rik van Riel <riel@redhat.com>,
-    Michal Hocko <mhocko@suse.cz>, linux-rt-users@vger.kernel.org,
-    linux-mm@kvack.org, linux-api@vger.kernel.org,
-    linux-kernel@vger.kernel.org
-To: Eric B Munson <emunson@akamai.com>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <550AEC8B.1080806@akamai.com>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq
+ unconditionally"
+Date: Thu, 19 Mar 2015 12:26:11 -0400
+Message-ID: <20150319122611.0d002d48@gandalf.local.home>
+References: <20150317163541.080310081@goodmis.org>
+	<20150317163617.218582800@goodmis.org>
+	<20150317163551.3093b6c2@gandalf.local.home>
+	<1426753029.4168.80.camel@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0101.hostedemail.com ([216.40.44.101]:43322 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751129AbbCSQ0P (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 19 Mar 2015 12:26:15 -0400
+In-Reply-To: <1426753029.4168.80.camel@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 19 Mar 2015, Eric B Munson wrote:
-
-> Thanks, I have a version with the changelog fixed up to actually make
-> sense and can submit that if the patch is acceptable otherwise.
+On Thu, 19 Mar 2015 09:17:09 +0100
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
 
-Looks good as far as I can see.
+> (aw crap, let's go shopping)... so why is the one in timer.c ok?
 
-Acked-by: Christoph Lameter <cl@linux.com>
+It's not. Sebastian, you said there were no other cases of rt_mutexes
+being taken in hard irq context. Looks like timer.c has one.
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+So perhaps the real fix is to get that special case of ownership in
+hard interrupt context?
+
+-- Steve
+
