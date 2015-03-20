@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.34-rt32
-Date: Fri, 20 Mar 2015 11:29:08 -0400
-Message-ID: <20150320112908.5a0798b8@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.38-rt53
+Date: Fri, 20 Mar 2015 11:29:35 -0400
+Message-ID: <20150320112935.59fff237@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.34-rt32 stable release.
+I'm pleased to announce the 3.12.38-rt53 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 9001336e1e5062158c9feaf69d8429f9de954af6
+  branch: v3.12-rt
+  Head SHA1: c9c847162b0bacd1a4ddd093df701d19b3fd3f0b
 
 
-Or to build 3.14.34-rt32 directly, the following patches should be applied:
+Or to build 3.12.38-rt53 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.34.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.38.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.34-rt32.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.38-rt53.patch.xz
 
 
 
-You can also build from 3.14.34-rt31 by applying the incremental patch:
+You can also build from 3.12.38-rt52 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.34-rt31-rt32.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.38-rt52-rt53.patch.xz
 
 
 
@@ -50,12 +50,9 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.14.34-rt31:
+Changes from v3.12.38-rt52:
 
 ---
-
-Brad Mouring (1):
-      rtmutex.c: Fix incorrect waiter check
 
 Daniel Wagner (2):
       work-simple: Simple work queue implemenation
@@ -71,7 +68,7 @@ Kevin Hao (1):
       netpoll: guard the access to dev->npinfo with rcu_read_lock/unlock_bh() for CONFIG_PREEMPT_RT_FULL=y
 
 Mike Galbraith (6):
-      rt,locking: fix __ww_mutex_lock_interruptible() lockdep annotation
+      rt: fix __ww_mutex_lock_interruptible() lockdep annotation
       x86: UV: raw_spinlock conversion
       scheduling while atomic in cgroup code
       sunrpc: make svc_xprt_do_enqueue() use get_cpu_light()
@@ -87,17 +84,18 @@ Paul E. McKenney (4):
 Paul Gortmaker (1):
       sas-ata/isci: dont't disable interrupts in qc_issue handler
 
-Sebastian Andrzej Siewior (5):
+Sebastian Andrzej Siewior (4):
       gpio: omap: use raw locks for locking
-      locking/rt-mutex: avoid a NULL pointer dereference on deadlock
+      rt-mutex: avoid a NULL pointer dereference on deadlock
       arm/futex: disable preemption during futex_atomic_cmpxchg_inatomic()
-      Revert "rwsem-rt: Do not allow readers to nest"
       fs/aio: simple simple work
 
-Steven Rostedt (Red Hat) (3):
-      staging: Mark rtl8821ae as broken
+Steven Rostedt (1):
+      create-rt-enqueue
+
+Steven Rostedt (Red Hat) (2):
       Revert "timers: do not raise softirq unconditionally"
-      Linux 3.14.34-rt32
+      Linux 3.12.38-rt53
 
 Thomas Gleixner (14):
       rtmutex: Simplify rtmutex_slowtrylock()
@@ -118,9 +116,6 @@ Thomas Gleixner (14):
 Yadi.hu (1):
       ARM: enable irq in translation/section permission fault handlers
 
-Yang Shi (1):
-      mips: rt: Replace pagefault_* to raw version
-
 Yong Zhang (1):
       ARM: cmpxchg: define __HAVE_ARCH_CMPXCHG for armv6 and later
 
@@ -128,15 +123,13 @@ Yong Zhang (1):
  arch/arm/include/asm/cmpxchg.h         |   2 +
  arch/arm/include/asm/futex.h           |   4 +
  arch/arm/mm/fault.c                    |   6 +
- arch/mips/mm/init.c                    |   4 +-
  arch/x86/include/asm/uv/uv_bau.h       |  14 +-
  arch/x86/include/asm/uv/uv_hub.h       |   2 +-
  arch/x86/kernel/apic/x2apic_uv_x.c     |   2 +-
  arch/x86/platform/uv/tlb_uv.c          |  26 +-
  arch/x86/platform/uv/uv_time.c         |  21 +-
- drivers/gpio/gpio-omap.c               |  72 ++--
+ drivers/gpio/gpio-omap.c               |  70 ++--
  drivers/scsi/libsas/sas_ata.c          |   4 +-
- drivers/staging/rtl8821ae/Kconfig      |   1 +
  drivers/thermal/x86_pkg_temp_thermal.c |  50 ++-
  fs/aio.c                               |  24 +-
  fs/btrfs/ctree.c                       |   4 +-
@@ -144,28 +137,27 @@ Yong Zhang (1):
  include/linux/hrtimer.h                |   3 +-
  include/linux/netpoll.h                |  16 +-
  include/linux/rtmutex.h                |   8 +-
- include/linux/rwsem_rt.h               |   1 +
  include/linux/work-simple.h            |  24 ++
- kernel/futex.c                         | 402 +++++++++++------------
+ kernel/futex.c                         | 407 ++++++++++-----------
  kernel/hrtimer.c                       |  31 +-
- kernel/locking/rt.c                    |  37 ++-
- kernel/locking/rtmutex-debug.c         |   5 +-
- kernel/locking/rtmutex-debug.h         |   7 +-
- kernel/locking/rtmutex-tester.c        |   4 +-
- kernel/locking/rtmutex.c               | 582 ++++++++++++++++++++++++---------
- kernel/locking/rtmutex.h               |   7 +-
- kernel/locking/rtmutex_common.h        |  22 +-
- kernel/sched/Makefile                  |   2 +-
- kernel/sched/work-simple.c             | 172 ++++++++++
+ kernel/rt.c                            |   8 +-
+ kernel/rtmutex-debug.c                 |   5 +-
+ kernel/rtmutex-debug.h                 |   7 +-
+ kernel/rtmutex-tester.c                |   4 +-
+ kernel/rtmutex.c                       | 628 ++++++++++++++++++++++++---------
+ kernel/rtmutex.h                       |   7 +-
+ kernel/rtmutex_common.h                |  22 +-
+ kernel/sched/Makefile                  |   1 +
+ kernel/sched/work-simple.c             | 172 +++++++++
  kernel/timer.c                         |  72 ++--
  lib/locking-selftest.c                 |  27 ++
  localversion-rt                        |   2 +-
  mm/memcontrol.c                        |   7 +-
  net/sunrpc/svc_xprt.c                  |   4 +-
- 37 files changed, 1133 insertions(+), 546 deletions(-)
+ 34 files changed, 1139 insertions(+), 553 deletions(-)
 ---------------------------
 diff --git a/arch/arm/include/asm/cmpxchg.h b/arch/arm/include/asm/cmpxchg.h
-index df2fbba7efc8..30b1a4010b89 100644
+index 4f009c10540d..a86b680dd7cf 100644
 --- a/arch/arm/include/asm/cmpxchg.h
 +++ b/arch/arm/include/asm/cmpxchg.h
 @@ -127,6 +127,8 @@ static inline unsigned long __xchg(unsigned long x, volatile void *ptr, int size
@@ -223,28 +215,6 @@ index b40d4bab8e07..c15d2a0826c6 100644
  	do_bad_area(addr, fsr, regs);
  	return 0;
  }
-diff --git a/arch/mips/mm/init.c b/arch/mips/mm/init.c
-index 6b59617760c1..740219e35d6c 100644
---- a/arch/mips/mm/init.c
-+++ b/arch/mips/mm/init.c
-@@ -124,7 +124,7 @@ void *kmap_coherent(struct page *page, unsigned long addr)
- 
- 	BUG_ON(Page_dcache_dirty(page));
- 
--	pagefault_disable();
-+	raw_pagefault_disable();
- 	idx = (addr >> PAGE_SHIFT) & (FIX_N_COLOURS - 1);
- #ifdef CONFIG_MIPS_MT_SMTC
- 	idx += FIX_N_COLOURS * smp_processor_id() +
-@@ -191,7 +191,7 @@ void kunmap_coherent(void)
- 	write_c0_entryhi(old_ctx);
- 	EXIT_CRITICAL(flags);
- #endif
--	pagefault_enable();
-+	raw_pagefault_enable();
- }
- 
- void copy_user_highpage(struct page *to, struct page *from,
 diff --git a/arch/x86/include/asm/uv/uv_bau.h b/arch/x86/include/asm/uv/uv_bau.h
 index 0b46ef261c77..c2c8a7828f04 100644
 --- a/arch/x86/include/asm/uv/uv_bau.h
@@ -283,23 +253,23 @@ index 0b46ef261c77..c2c8a7828f04 100644
  }
  
 diff --git a/arch/x86/include/asm/uv/uv_hub.h b/arch/x86/include/asm/uv/uv_hub.h
-index a30836c8ac4d..f559a092d8fa 100644
+index 2c32df95bb78..2c676e8d39ac 100644
 --- a/arch/x86/include/asm/uv/uv_hub.h
 +++ b/arch/x86/include/asm/uv/uv_hub.h
 @@ -502,7 +502,7 @@ struct uv_blade_info {
  	unsigned short	nr_online_cpus;
  	unsigned short	pnode;
  	short		memory_nid;
--	spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
-+	raw_spinlock_t	nmi_lock;	/* obsolete, see uv_hub_nmi */
- 	unsigned long	nmi_count;	/* obsolete, see uv_hub_nmi */
+-	spinlock_t	nmi_lock;
++	raw_spinlock_t	nmi_lock;
+ 	unsigned long	nmi_count;
  };
  extern struct uv_blade_info *uv_blade_info;
 diff --git a/arch/x86/kernel/apic/x2apic_uv_x.c b/arch/x86/kernel/apic/x2apic_uv_x.c
-index d263b1307de1..1ef690e5459f 100644
+index a419814cea57..1d5859eff889 100644
 --- a/arch/x86/kernel/apic/x2apic_uv_x.c
 +++ b/arch/x86/kernel/apic/x2apic_uv_x.c
-@@ -911,7 +911,7 @@ void __init uv_system_init(void)
+@@ -980,7 +980,7 @@ void __init uv_system_init(void)
  			uv_blade_info[blade].pnode = pnode;
  			uv_blade_info[blade].nr_possible_cpus = 0;
  			uv_blade_info[blade].nr_online_cpus = 0;
@@ -309,10 +279,10 @@ index d263b1307de1..1ef690e5459f 100644
  			max_pnode = max(pnode, max_pnode);
  			blade++;
 diff --git a/arch/x86/platform/uv/tlb_uv.c b/arch/x86/platform/uv/tlb_uv.c
-index dfe605ac1bcd..999fd5be9aa1 100644
+index a6b5affb024a..e9e67512d4a6 100644
 --- a/arch/x86/platform/uv/tlb_uv.c
 +++ b/arch/x86/platform/uv/tlb_uv.c
-@@ -719,9 +719,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
+@@ -695,9 +695,9 @@ static void destination_plugged(struct bau_desc *bau_desc,
  
  		quiesce_local_uvhub(hmaster);
  
@@ -324,7 +294,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  
  		end_uvhub_quiesce(hmaster);
  
-@@ -741,9 +741,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
+@@ -717,9 +717,9 @@ static void destination_timeout(struct bau_desc *bau_desc,
  
  		quiesce_local_uvhub(hmaster);
  
@@ -336,7 +306,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  
  		end_uvhub_quiesce(hmaster);
  
-@@ -764,7 +764,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
+@@ -740,7 +740,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
  	cycles_t tm1;
  
  	hmaster = bcp->uvhub_master;
@@ -345,7 +315,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  	if (!bcp->baudisabled) {
  		stat->s_bau_disabled++;
  		tm1 = get_cycles();
-@@ -777,7 +777,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
+@@ -753,7 +753,7 @@ static void disable_for_period(struct bau_control *bcp, struct ptc_stats *stat)
  			}
  		}
  	}
@@ -354,7 +324,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  }
  
  static void count_max_concurr(int stat, struct bau_control *bcp,
-@@ -840,7 +840,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
+@@ -816,7 +816,7 @@ static void record_send_stats(cycles_t time1, cycles_t time2,
   */
  static void uv1_throttle(struct bau_control *hmaster, struct ptc_stats *stat)
  {
@@ -363,7 +333,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  	atomic_t *v;
  
  	v = &hmaster->active_descriptor_count;
-@@ -972,7 +972,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
+@@ -948,7 +948,7 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
  	struct bau_control *hmaster;
  
  	hmaster = bcp->uvhub_master;
@@ -372,7 +342,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  	if (bcp->baudisabled && (get_cycles() >= bcp->set_bau_on_time)) {
  		stat->s_bau_reenabled++;
  		for_each_present_cpu(tcpu) {
-@@ -984,10 +984,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
+@@ -960,10 +960,10 @@ static int check_enable(struct bau_control *bcp, struct ptc_stats *stat)
  				tbcp->period_giveups = 0;
  			}
  		}
@@ -385,7 +355,7 @@ index dfe605ac1bcd..999fd5be9aa1 100644
  	return -1;
  }
  
-@@ -1895,9 +1895,9 @@ static void __init init_per_cpu_tunables(void)
+@@ -1885,9 +1885,9 @@ static void __init init_per_cpu_tunables(void)
  		bcp->cong_reps			= congested_reps;
  		bcp->disabled_period =		sec_2_cycles(disabled_period);
  		bcp->giveup_limit =		giveup_limit;
@@ -483,7 +453,7 @@ index 5c86786bbfd2..c039afa26aa2 100644
  
  /*
 diff --git a/drivers/gpio/gpio-omap.c b/drivers/gpio/gpio-omap.c
-index 424319061e09..0f057af22fb1 100644
+index 89675f862308..0e8c552f937f 100644
 --- a/drivers/gpio/gpio-omap.c
 +++ b/drivers/gpio/gpio-omap.c
 @@ -59,7 +59,7 @@ struct gpio_bank {
@@ -495,7 +465,7 @@ index 424319061e09..0f057af22fb1 100644
  	struct gpio_chip chip;
  	struct clk *dbck;
  	u32 mod_usage;
-@@ -503,14 +503,14 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
+@@ -503,19 +503,19 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
  		(type & (IRQ_TYPE_LEVEL_LOW|IRQ_TYPE_LEVEL_HIGH)))
  		return -EINVAL;
  
@@ -512,22 +482,13 @@ index 424319061e09..0f057af22fb1 100644
  		return -EINVAL;
  	}
  
-@@ -518,12 +518,12 @@ static int gpio_irq_type(struct irq_data *d, unsigned type)
- 	if (retval) {
- 		dev_err(bank->dev, "unable to lock offset %d for IRQ\n",
- 			offset);
--		spin_unlock_irqrestore(&bank->lock, flags);
-+		raw_spin_unlock_irqrestore(&bank->lock, flags);
- 		return retval;
- 	}
- 
  	bank->irq_usage |= 1 << GPIO_INDEX(bank, gpio);
 -	spin_unlock_irqrestore(&bank->lock, flags);
 +	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
  	if (type & (IRQ_TYPE_LEVEL_LOW | IRQ_TYPE_LEVEL_HIGH))
  		__irq_set_handler_locked(d->irq, handle_level_irq);
-@@ -640,14 +640,14 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
+@@ -632,14 +632,14 @@ static int _set_gpio_wakeup(struct gpio_bank *bank, int gpio, int enable)
  		return -EINVAL;
  	}
  
@@ -538,13 +499,13 @@ index 424319061e09..0f057af22fb1 100644
  	else
  		bank->context.wake_en &= ~gpio_bit;
  
- 	writel_relaxed(bank->context.wake_en, bank->base + bank->regs->wkup_en);
+ 	__raw_writel(bank->context.wake_en, bank->base + bank->regs->wkup_en);
 -	spin_unlock_irqrestore(&bank->lock, flags);
 +	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
  	return 0;
  }
-@@ -682,7 +682,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+@@ -674,7 +674,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
  	if (!BANK_USED(bank))
  		pm_runtime_get_sync(bank->dev);
  
@@ -553,7 +514,7 @@ index 424319061e09..0f057af22fb1 100644
  	/* Set trigger to none. You need to enable the desired trigger with
  	 * request_irq() or set_irq_type(). Only do this if the IRQ line has
  	 * not already been requested.
-@@ -692,7 +692,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
+@@ -684,7 +684,7 @@ static int omap_gpio_request(struct gpio_chip *chip, unsigned offset)
  		_enable_gpio_module(bank, offset);
  	}
  	bank->mod_usage |= 1 << offset;
@@ -562,7 +523,7 @@ index 424319061e09..0f057af22fb1 100644
  
  	return 0;
  }
-@@ -702,11 +702,11 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
+@@ -694,11 +694,11 @@ static void omap_gpio_free(struct gpio_chip *chip, unsigned offset)
  	struct gpio_bank *bank = container_of(chip, struct gpio_bank, chip);
  	unsigned long flags;
  
@@ -576,13 +537,12 @@ index 424319061e09..0f057af22fb1 100644
  
  	/*
  	 * If this is the last gpio to be freed in the bank,
-@@ -804,12 +804,12 @@ static void gpio_irq_shutdown(struct irq_data *d)
+@@ -796,11 +796,11 @@ static void gpio_irq_shutdown(struct irq_data *d)
  	unsigned long flags;
  	unsigned offset = GPIO_INDEX(bank, gpio);
  
 -	spin_lock_irqsave(&bank->lock, flags);
 +	raw_spin_lock_irqsave(&bank->lock, flags);
- 	gpio_unlock_as_irq(&bank->chip, offset);
  	bank->irq_usage &= ~(1 << offset);
  	_disable_gpio_module(bank, offset);
  	_reset_gpio(bank, gpio);
@@ -591,7 +551,7 @@ index 424319061e09..0f057af22fb1 100644
  
  	/*
  	 * If this is the last IRQ to be freed in the bank,
-@@ -833,10 +833,10 @@ static void gpio_mask_irq(struct irq_data *d)
+@@ -824,10 +824,10 @@ static void gpio_mask_irq(struct irq_data *d)
  	unsigned int gpio = irq_to_gpio(bank, d->hwirq);
  	unsigned long flags;
  
@@ -604,7 +564,7 @@ index 424319061e09..0f057af22fb1 100644
  }
  
  static void gpio_unmask_irq(struct irq_data *d)
-@@ -847,7 +847,7 @@ static void gpio_unmask_irq(struct irq_data *d)
+@@ -838,7 +838,7 @@ static void gpio_unmask_irq(struct irq_data *d)
  	u32 trigger = irqd_get_trigger_type(d);
  	unsigned long flags;
  
@@ -613,7 +573,7 @@ index 424319061e09..0f057af22fb1 100644
  	if (trigger)
  		_set_gpio_triggering(bank, GPIO_INDEX(bank, gpio), trigger);
  
-@@ -859,7 +859,7 @@ static void gpio_unmask_irq(struct irq_data *d)
+@@ -850,7 +850,7 @@ static void gpio_unmask_irq(struct irq_data *d)
  	}
  
  	_set_gpio_irqenable(bank, gpio, 1);
@@ -622,31 +582,31 @@ index 424319061e09..0f057af22fb1 100644
  }
  
  static struct irq_chip gpio_irq_chip = {
-@@ -882,9 +882,9 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
+@@ -873,9 +873,9 @@ static int omap_mpuio_suspend_noirq(struct device *dev)
  					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
  	unsigned long		flags;
  
 -	spin_lock_irqsave(&bank->lock, flags);
 +	raw_spin_lock_irqsave(&bank->lock, flags);
- 	writel_relaxed(0xffff & ~bank->context.wake_en, mask_reg);
+ 	__raw_writel(0xffff & ~bank->context.wake_en, mask_reg);
 -	spin_unlock_irqrestore(&bank->lock, flags);
 +	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
  	return 0;
  }
-@@ -897,9 +897,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
+@@ -888,9 +888,9 @@ static int omap_mpuio_resume_noirq(struct device *dev)
  					OMAP_MPUIO_GPIO_MASKIT / bank->stride;
  	unsigned long		flags;
  
 -	spin_lock_irqsave(&bank->lock, flags);
 +	raw_spin_lock_irqsave(&bank->lock, flags);
- 	writel_relaxed(bank->context.wake_en, mask_reg);
+ 	__raw_writel(bank->context.wake_en, mask_reg);
 -	spin_unlock_irqrestore(&bank->lock, flags);
 +	raw_spin_unlock_irqrestore(&bank->lock, flags);
  
  	return 0;
  }
-@@ -942,9 +942,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
+@@ -933,9 +933,9 @@ static int gpio_input(struct gpio_chip *chip, unsigned offset)
  	unsigned long flags;
  
  	bank = container_of(chip, struct gpio_bank, chip);
@@ -658,17 +618,22 @@ index 424319061e09..0f057af22fb1 100644
  	return 0;
  }
  
-@@ -968,10 +968,10 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
- 	unsigned long flags;
+@@ -960,7 +960,7 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
+ 	int retval = 0;
  
  	bank = container_of(chip, struct gpio_bank, chip);
 -	spin_lock_irqsave(&bank->lock, flags);
 +	raw_spin_lock_irqsave(&bank->lock, flags);
- 	bank->set_dataout(bank, offset, value);
+ 
+ 	if (LINE_USED(bank->irq_usage, offset)) {
+ 			retval = -EINVAL;
+@@ -971,7 +971,7 @@ static int gpio_output(struct gpio_chip *chip, unsigned offset, int value)
  	_set_gpio_direction(bank, offset, 0);
+ 
+ exit:
 -	spin_unlock_irqrestore(&bank->lock, flags);
 +	raw_spin_unlock_irqrestore(&bank->lock, flags);
- 	return 0;
+ 	return retval;
  }
  
 @@ -983,9 +983,9 @@ static int gpio_debounce(struct gpio_chip *chip, unsigned offset,
@@ -779,20 +744,8 @@ index d2895836f9fa..c85e07ab51e4 100644
  	return ret;
  }
  
-diff --git a/drivers/staging/rtl8821ae/Kconfig b/drivers/staging/rtl8821ae/Kconfig
-index abccc9dabd65..50a407f71717 100644
---- a/drivers/staging/rtl8821ae/Kconfig
-+++ b/drivers/staging/rtl8821ae/Kconfig
-@@ -2,6 +2,7 @@ config R8821AE
- 	tristate "RealTek RTL8821AE Wireless LAN NIC driver"
- 	depends on PCI && WLAN && MAC80211
- 	depends on m
-+	depends on BROKEN
- 	select WIRELESS_EXT
- 	select WEXT_PRIV
- 	select EEPROM_93CX6
 diff --git a/drivers/thermal/x86_pkg_temp_thermal.c b/drivers/thermal/x86_pkg_temp_thermal.c
-index 081fd7e6a9f0..f297ddd3365c 100644
+index 72573661a14a..a1c23180c309 100644
 --- a/drivers/thermal/x86_pkg_temp_thermal.c
 +++ b/drivers/thermal/x86_pkg_temp_thermal.c
 @@ -29,6 +29,7 @@
@@ -870,7 +823,7 @@ index 081fd7e6a9f0..f297ddd3365c 100644
  static int find_siblings_cpu(int cpu)
  {
  	int i;
-@@ -584,6 +624,9 @@ static int __init pkg_temp_thermal_init(void)
+@@ -587,6 +627,9 @@ static int __init pkg_temp_thermal_init(void)
  	if (!x86_match_cpu(pkg_temp_thermal_ids))
  		return -ENODEV;
  
@@ -880,7 +833,7 @@ index 081fd7e6a9f0..f297ddd3365c 100644
  	spin_lock_init(&pkg_work_lock);
  	platform_thermal_package_notify =
  			pkg_temp_thermal_platform_thermal_notify;
-@@ -608,7 +651,7 @@ err_ret:
+@@ -611,7 +654,7 @@ err_ret:
  	kfree(pkg_work_scheduled);
  	platform_thermal_package_notify = NULL;
  	platform_thermal_package_rate_control = NULL;
@@ -889,7 +842,7 @@ index 081fd7e6a9f0..f297ddd3365c 100644
  	return -ENODEV;
  }
  
-@@ -633,6 +676,7 @@ static void __exit pkg_temp_thermal_exit(void)
+@@ -636,6 +679,7 @@ static void __exit pkg_temp_thermal_exit(void)
  	mutex_unlock(&phy_dev_list_mutex);
  	platform_thermal_package_notify = NULL;
  	platform_thermal_package_rate_control = NULL;
@@ -898,7 +851,7 @@ index 081fd7e6a9f0..f297ddd3365c 100644
  		cancel_delayed_work_sync(
  			&per_cpu(pkg_temp_thermal_threshold_work, i));
 diff --git a/fs/aio.c b/fs/aio.c
-index 2f7e8c2e3e76..5cddcbfe1b71 100644
+index 307d7708dc00..6fadd7a282da 100644
 --- a/fs/aio.c
 +++ b/fs/aio.c
 @@ -40,6 +40,7 @@
@@ -918,7 +871,7 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  
  	/*
  	 * signals when all in-flight requests are done
-@@ -227,6 +228,7 @@ static int __init aio_setup(void)
+@@ -226,6 +227,7 @@ static int __init aio_setup(void)
  		.mount		= aio_mount,
  		.kill_sb	= kill_anon_super,
  	};
@@ -926,7 +879,7 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  	aio_mnt = kern_mount(&aio_fs);
  	if (IS_ERR(aio_mnt))
  		panic("Failed to create aio fs mount.");
-@@ -506,9 +508,9 @@ static int kiocb_cancel(struct kioctx *ctx, struct kiocb *kiocb)
+@@ -505,9 +507,9 @@ static int kiocb_cancel(struct kioctx *ctx, struct kiocb *kiocb)
  	return cancel(kiocb);
  }
  
@@ -938,7 +891,7 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  
  	pr_debug("freeing %p\n", ctx);
  
-@@ -525,8 +527,8 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
+@@ -524,8 +526,8 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
  	if (ctx->requests_done)
  		complete(ctx->requests_done);
  
@@ -949,7 +902,7 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  }
  
  /*
-@@ -534,9 +536,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
+@@ -533,9 +535,9 @@ static void free_ioctx_reqs(struct percpu_ref *ref)
   * and ctx->users has dropped to 0, so we know no more kiocbs can be submitted -
   * now it's safe to cancel any that need to be.
   */
@@ -961,7 +914,7 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  	struct kiocb *req;
  
  	spin_lock_irq(&ctx->ctx_lock);
-@@ -555,6 +557,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
+@@ -554,6 +556,14 @@ static void free_ioctx_users(struct percpu_ref *ref)
  	percpu_ref_put(&ctx->reqs);
  }
  
@@ -977,10 +930,10 @@ index 2f7e8c2e3e76..5cddcbfe1b71 100644
  {
  	unsigned i, new_nr;
 diff --git a/fs/btrfs/ctree.c b/fs/btrfs/ctree.c
-index cbd3a7d6fa68..50c7edc8f4d2 100644
+index c1123ecde6c9..a623af2ec69d 100644
 --- a/fs/btrfs/ctree.c
 +++ b/fs/btrfs/ctree.c
-@@ -80,7 +80,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
+@@ -81,7 +81,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
  {
  	int i;
  
@@ -989,7 +942,7 @@ index cbd3a7d6fa68..50c7edc8f4d2 100644
  	/* lockdep really cares that we take all of these spinlocks
  	 * in the right order.  If any of the locks in the path are not
  	 * currently blocking, it is going to complain.  So, make really
-@@ -107,7 +107,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
+@@ -108,7 +108,7 @@ noinline void btrfs_clear_path_blocking(struct btrfs_path *p,
  		}
  	}
  
@@ -999,10 +952,10 @@ index cbd3a7d6fa68..50c7edc8f4d2 100644
  		btrfs_clear_lock_blocking_rw(held, held_rw);
  #endif
 diff --git a/fs/btrfs/extent-tree.c b/fs/btrfs/extent-tree.c
-index d2f1c011d73a..73035cf6681a 100644
+index b1c6e490379c..bcaf2601577e 100644
 --- a/fs/btrfs/extent-tree.c
 +++ b/fs/btrfs/extent-tree.c
-@@ -6940,14 +6940,6 @@ again:
+@@ -6900,14 +6900,6 @@ again:
  		goto again;
  	}
  
@@ -1012,7 +965,7 @@ index d2f1c011d73a..73035cf6681a 100644
 -				/*DEFAULT_RATELIMIT_BURST*/ 1);
 -		if (__ratelimit(&_rs))
 -			WARN(1, KERN_DEBUG
--				"BTRFS: block rsv returned %d\n", ret);
+-				"btrfs: block rsv returned %d\n", ret);
 -	}
  try_reserve:
  	ret = reserve_metadata_bytes(root, block_rsv, blocksize,
@@ -1033,10 +986,10 @@ index bdbf77db0f4d..79a7a35e1a6e 100644
  /* Bootup initialization: */
  extern void __init hrtimers_init(void);
 diff --git a/include/linux/netpoll.h b/include/linux/netpoll.h
-index fbfdb9d8d3a7..039dd5df0ef7 100644
+index f3c7c24bec1c..5a77fc924892 100644
 --- a/include/linux/netpoll.h
 +++ b/include/linux/netpoll.h
-@@ -87,9 +87,21 @@ static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
+@@ -86,9 +86,21 @@ static inline void netpoll_send_skb(struct netpoll *np, struct sk_buff *skb)
  #ifdef CONFIG_NETPOLL
  static inline bool netpoll_rx_on(struct sk_buff *skb)
  {
@@ -1061,10 +1014,10 @@ index fbfdb9d8d3a7..039dd5df0ef7 100644
  
  static inline bool netpoll_rx(struct sk_buff *skb)
 diff --git a/include/linux/rtmutex.h b/include/linux/rtmutex.h
-index edb77fd15803..d5a04ea47a13 100644
+index fa18682c331e..a9bb1042ec19 100644
 --- a/include/linux/rtmutex.h
 +++ b/include/linux/rtmutex.h
-@@ -105,12 +105,10 @@ extern void __rt_mutex_init(struct rt_mutex *lock, const char *name);
+@@ -113,12 +113,10 @@ extern void __rt_mutex_init(struct rt_mutex *lock, const char *name);
  extern void rt_mutex_destroy(struct rt_mutex *lock);
  
  extern void rt_mutex_lock(struct rt_mutex *lock);
@@ -1080,18 +1033,6 @@ index edb77fd15803..d5a04ea47a13 100644
  
  extern int rt_mutex_trylock(struct rt_mutex *lock);
  
-diff --git a/include/linux/rwsem_rt.h b/include/linux/rwsem_rt.h
-index 0065b08fbb7a..924c2d274ab5 100644
---- a/include/linux/rwsem_rt.h
-+++ b/include/linux/rwsem_rt.h
-@@ -20,6 +20,7 @@
- 
- struct rw_semaphore {
- 	struct rt_mutex		lock;
-+	int			read_depth;
- #ifdef CONFIG_DEBUG_LOCK_ALLOC
- 	struct lockdep_map	dep_map;
- #endif
 diff --git a/include/linux/work-simple.h b/include/linux/work-simple.h
 new file mode 100644
 index 000000000000..f175fa9a6016
@@ -1123,10 +1064,10 @@ index 000000000000..f175fa9a6016
 +
 +#endif /* _LINUX_SWORK_H */
 diff --git a/kernel/futex.c b/kernel/futex.c
-index 5ba3c0fc4d19..e7f392e56be4 100644
+index 2d98dc9a66d1..db69139e2f1e 100644
 --- a/kernel/futex.c
 +++ b/kernel/futex.c
-@@ -782,94 +782,91 @@ void exit_pi_state_list(struct task_struct *curr)
+@@ -645,95 +645,89 @@ void exit_pi_state_list(struct task_struct *curr)
   * [10] There is no transient state which leaves owner and user space
   *	TID out of sync.
   */
@@ -1144,31 +1085,26 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  {
 -	struct futex_pi_state *pi_state = NULL;
 -	struct futex_q *this, *next;
+-	struct plist_head *head;
 -	struct task_struct *p;
  	pid_t pid = uval & FUTEX_TID_MASK;
  
--	plist_for_each_entry_safe(this, next, &hb->chain, list) {
--		if (match_futex(&this->key, key)) {
--			/*
--			 * Sanity check the waiter before increasing
--			 * the refcount and attaching to it.
--			 */
--			pi_state = this->pi_state;
--			/*
--			 * Userspace might have messed up non-PI and
--			 * PI futexes [3]
--			 */
--			if (unlikely(!pi_state))
--				return -EINVAL;
+-	head = &hb->chain;
 +	/*
 +	 * Userspace might have messed up non-PI and PI futexes [3]
 +	 */
 +	if (unlikely(!pi_state))
 +		return -EINVAL;
  
--			WARN_ON(!atomic_read(&pi_state->refcount));
+-	plist_for_each_entry_safe(this, next, head, list) {
+-		if (match_futex(&this->key, key)) {
+-			/*
+-			 * Sanity check the waiter before increasing
+-			 * the refcount and attaching to it.
+-			 */
+-			pi_state = this->pi_state;
 +	WARN_ON(!atomic_read(&pi_state->refcount));
- 
++
 +	/*
 +	 * Handle the owner died case:
 +	 */
@@ -1180,9 +1116,20 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +		 */
 +		if (!pi_state->owner) {
  			/*
--			 * Handle the owner died case:
+-			 * Userspace might have messed up non-PI and
+-			 * PI futexes [3]
 +			 * No pi state owner, but the user space TID
 +			 * is not 0. Inconsistent state. [5]
+ 			 */
+-			if (unlikely(!pi_state))
++			if (pid)
+ 				return -EINVAL;
+-
+-			WARN_ON(!atomic_read(&pi_state->refcount));
+-
+ 			/*
+-			 * Handle the owner died case:
++			 * Take a ref on the state and return success. [4]
  			 */
 -			if (uval & FUTEX_OWNER_DIED) {
 -				/*
@@ -1205,7 +1152,9 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 -					 */
 -					goto out_state;
 -				}
--
++			goto out_state;
++		}
+ 
 -				/*
 -				 * If TID is 0, then either the dying owner
 -				 * has not yet executed exit_pi_state_list()
@@ -1226,26 +1175,6 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 -				if (!pi_state->owner)
 -					return -EINVAL;
 -			}
--
-+			if (pid)
-+				return -EINVAL;
- 			/*
--			 * Bail out if user space manipulated the
--			 * futex value. If pi state exists then the
--			 * owner TID must be the same as the user
--			 * space TID. [9/10]
-+			 * Take a ref on the state and return success. [4]
- 			 */
--			if (pid != task_pid_vnr(pi_state->owner))
--				return -EINVAL;
--
--		out_state:
--			atomic_inc(&pi_state->refcount);
--			*ps = pi_state;
--			return 0;
-+			goto out_state;
- 		}
-+
 +		/*
 +		 * If TID is 0, then either the dying owner has not
 +		 * yet executed exit_pi_state_list() or some waiter
@@ -1263,9 +1192,17 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +		 */
 +		if (!pi_state->owner)
 +			return -EINVAL;
- 	}
++	}
  
- 	/*
+-			/*
+-			 * Bail out if user space manipulated the
+-			 * futex value. If pi state exists then the
+-			 * owner TID must be the same as the user
+-			 * space TID. [9/10]
+-			 */
+-			if (pid != task_pid_vnr(pi_state->owner))
+-				return -EINVAL;
++	/*
 +	 * Bail out if user space manipulated the futex value. If pi
 +	 * state exists then the owner TID must be the same as the
 +	 * user space TID. [9/10]
@@ -1277,7 +1214,13 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +	*ps = pi_state;
 +	return 0;
 +}
-+
+ 
+-		out_state:
+-			atomic_inc(&pi_state->refcount);
+-			*ps = pi_state;
+-			return 0;
+-		}
+-	}
 +/*
 + * Lookup the task for the TID provided from user space and attach to
 + * it after doing proper sanity checks.
@@ -1288,12 +1231,10 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +	pid_t pid = uval & FUTEX_TID_MASK;
 +	struct futex_pi_state *pi_state;
 +	struct task_struct *p;
-+
-+	/*
+ 
+ 	/*
  	 * We are the first waiter - try to look up the real owner and attach
- 	 * the new pi_state to it, but bail out when TID = 0 [1]
- 	 */
-@@ -910,7 +907,7 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+@@ -776,7 +770,7 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
  	pi_state = alloc_pi_state();
  
  	/*
@@ -1302,7 +1243,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  	 * the owner of it:
  	 */
  	rt_mutex_init_proxy_locked(&pi_state->pi_mutex, p);
-@@ -930,6 +927,36 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
+@@ -796,6 +790,36 @@ lookup_pi_state(u32 uval, struct futex_hash_bucket *hb,
  	return 0;
  }
  
@@ -1339,7 +1280,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  /**
   * futex_lock_pi_atomic() - Atomic work required to acquire a pi aware futex
   * @uaddr:		the pi futex user address
-@@ -953,113 +980,69 @@ static int futex_lock_pi_atomic(u32 __user *uaddr, struct futex_hash_bucket *hb,
+@@ -819,113 +843,69 @@ static int futex_lock_pi_atomic(u32 __user *uaddr, struct futex_hash_bucket *hb,
  				struct futex_pi_state **ps,
  				struct task_struct *task, int set_waiters)
  {
@@ -1493,7 +1434,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  }
  
  /**
-@@ -1176,22 +1159,6 @@ static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this)
+@@ -1041,22 +1021,6 @@ static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this)
  	return 0;
  }
  
@@ -1516,7 +1457,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  /*
   * Express the locking dependencies for lockdep:
   */
-@@ -1649,7 +1616,12 @@ retry_private:
+@@ -1511,7 +1475,12 @@ retry_private:
  				goto retry;
  			goto out;
  		case -EAGAIN:
@@ -1528,9 +1469,9 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +			 * - The user space value changed.
 +			 */
  			double_unlock_hb(hb1, hb2);
- 			hb_waiters_dec(hb2);
  			put_futex_key(&key2);
-@@ -1708,7 +1680,7 @@ retry_private:
+ 			put_futex_key(&key1);
+@@ -1570,7 +1539,7 @@ retry_private:
  			this->pi_state = pi_state;
  			ret = rt_mutex_start_proxy_lock(&pi_state->pi_mutex,
  							this->rt_waiter,
@@ -1539,7 +1480,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  			if (ret == 1) {
  				/* We got the lock. */
  				requeue_pi_wake_futex(this, &key2, hb2);
-@@ -2316,8 +2288,10 @@ retry_private:
+@@ -2165,8 +2134,10 @@ retry_private:
  			goto uaddr_faulted;
  		case -EAGAIN:
  			/*
@@ -1550,9 +1491,9 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 +			 *   exit to complete.
 +			 * - The user space value changed.
  			 */
- 			queue_unlock(hb);
+ 			queue_unlock(&q, hb);
  			put_futex_key(&q.key);
-@@ -2337,9 +2311,9 @@ retry_private:
+@@ -2186,9 +2157,9 @@ retry_private:
  	/*
  	 * Block on the PI mutex:
  	 */
@@ -1565,12 +1506,13 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  		ret = rt_mutex_trylock(&q.pi_state->pi_mutex);
  		/* Fixup the trylock return value: */
  		ret = ret ? 0 : -EWOULDBLOCK;
-@@ -2401,10 +2375,10 @@ uaddr_faulted:
+@@ -2250,11 +2221,10 @@ uaddr_faulted:
   */
  static int futex_unlock_pi(u32 __user *uaddr, unsigned int flags)
  {
 -	struct futex_hash_bucket *hb;
 -	struct futex_q *this, *next;
+-	struct plist_head *head;
 +	u32 uninitialized_var(curval), uval, vpid = task_pid_vnr(current);
  	union futex_key key = FUTEX_KEY_INIT;
 -	u32 uval, vpid = task_pid_vnr(current);
@@ -1579,7 +1521,7 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  	int ret;
  
  retry:
-@@ -2417,57 +2391,47 @@ retry:
+@@ -2267,61 +2237,50 @@ retry:
  		return -EPERM;
  
  	ret = get_futex_key(uaddr, flags & FLAGS_SHARED, &key, VERIFY_WRITE);
@@ -1596,7 +1538,10 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 -	 * again. If it succeeds then we can return without waking
 -	 * anyone else up. We only try this if neither the waiters nor
 -	 * the owner died bit are set.
--	 */
++	 * Check waiters first. We do not trust user space values at
++	 * all and we at least want to know if user space fiddled
++	 * with the futex value instead of blindly unlocking.
+ 	 */
 -	if (!(uval & ~FUTEX_TID_MASK) &&
 -	    cmpxchg_futex_value_locked(&uval, uaddr, vpid, 0))
 -		goto pi_faulted;
@@ -1610,11 +1555,10 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 -	/*
 -	 * Ok, other tasks may need to be woken up - check waiters
 -	 * and do the wakeup if necessary:
-+	 * Check waiters first. We do not trust user space values at
-+	 * all and we at least want to know if user space fiddled
-+	 * with the futex value instead of blindly unlocking.
- 	 */
--	plist_for_each_entry_safe(this, next, &hb->chain, list) {
+-	 */
+-	head = &hb->chain;
+-
+-	plist_for_each_entry_safe(this, next, head, list) {
 -		if (!match_futex (&this->key, &key))
 -			continue;
 -		ret = wake_futex_pi(uaddr, uval, this);
@@ -1658,8 +1602,11 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
 -out:
  	return ret;
  
++
  pi_faulted:
-@@ -2703,7 +2667,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
+ 	spin_unlock(&hb->lock);
+ 	put_futex_key(&key);
+@@ -2554,7 +2513,7 @@ static int futex_wait_requeue_pi(u32 __user *uaddr, unsigned int flags,
  		 */
  		WARN_ON(!q.pi_state);
  		pi_mutex = &q.pi_state->pi_mutex;
@@ -1669,10 +1616,10 @@ index 5ba3c0fc4d19..e7f392e56be4 100644
  
  		spin_lock(&hb2->lock);
 diff --git a/kernel/hrtimer.c b/kernel/hrtimer.c
-index f97b9f65c5fa..164201aba52f 100644
+index c967b718ab37..ba64ab0d5792 100644
 --- a/kernel/hrtimer.c
 +++ b/kernel/hrtimer.c
-@@ -1717,6 +1717,30 @@ static void run_hrtimer_softirq(struct softirq_action *h)
+@@ -1716,6 +1716,30 @@ static void run_hrtimer_softirq(struct softirq_action *h)
  }
  
  /*
@@ -1703,7 +1650,7 @@ index f97b9f65c5fa..164201aba52f 100644
   * Called from hardirq context every jiffy
   */
  void hrtimer_run_queues(void)
-@@ -1729,13 +1753,6 @@ void hrtimer_run_queues(void)
+@@ -1728,13 +1752,6 @@ void hrtimer_run_queues(void)
  	if (hrtimer_hres_active())
  		return;
  
@@ -1717,10 +1664,10 @@ index f97b9f65c5fa..164201aba52f 100644
  	for (index = 0; index < HRTIMER_MAX_CLOCK_BASES; index++) {
  		base = &cpu_base->clock_base[index];
  		if (!timerqueue_getnext(&base->active))
-diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
-index 90b8ba03e2a4..9a972e996185 100644
---- a/kernel/locking/rt.c
-+++ b/kernel/locking/rt.c
+diff --git a/kernel/rt.c b/kernel/rt.c
+index 5f44defabe02..b31716c7ac76 100644
+--- a/kernel/rt.c
++++ b/kernel/rt.c
 @@ -98,7 +98,7 @@ int __lockfunc _mutex_lock_interruptible(struct mutex *lock)
  	int ret;
  
@@ -1757,76 +1704,10 @@ index 90b8ba03e2a4..9a972e996185 100644
  	if (ret)
  		mutex_release(&lock->dep_map, 1, _RET_IP_);
  	return ret;
-@@ -322,7 +322,8 @@ EXPORT_SYMBOL(rt_up_write);
- void  rt_up_read(struct rw_semaphore *rwsem)
- {
- 	rwsem_release(&rwsem->dep_map, 1, _RET_IP_);
--	rt_mutex_unlock(&rwsem->lock);
-+	if (--rwsem->read_depth == 0)
-+		rt_mutex_unlock(&rwsem->lock);
- }
- EXPORT_SYMBOL(rt_up_read);
- 
-@@ -333,6 +334,7 @@ EXPORT_SYMBOL(rt_up_read);
- void  rt_downgrade_write(struct rw_semaphore *rwsem)
- {
- 	BUG_ON(rt_mutex_owner(&rwsem->lock) != current);
-+	rwsem->read_depth = 1;
- }
- EXPORT_SYMBOL(rt_downgrade_write);
- 
-@@ -370,12 +372,23 @@ EXPORT_SYMBOL(rt_down_write_nested_lock);
- 
- int  rt_down_read_trylock(struct rw_semaphore *rwsem)
- {
--	int ret;
-+	struct rt_mutex *lock = &rwsem->lock;
-+	int ret = 1;
- 
--	ret = rt_mutex_trylock(&rwsem->lock);
--	if (ret)
--		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
-+	/*
-+	 * recursive read locks succeed when current owns the rwsem,
-+	 * but not when read_depth == 0 which means that the rwsem is
-+	 * write locked.
-+	 */
-+	if (rt_mutex_owner(lock) != current)
-+		ret = rt_mutex_trylock(&rwsem->lock);
-+	else if (!rwsem->read_depth)
-+		ret = 0;
- 
-+	if (ret) {
-+		rwsem->read_depth++;
-+		rwsem_acquire(&rwsem->dep_map, 0, 1, _RET_IP_);
-+	}
- 	return ret;
- }
- EXPORT_SYMBOL(rt_down_read_trylock);
-@@ -383,7 +396,10 @@ EXPORT_SYMBOL(rt_down_read_trylock);
- static void __rt_down_read(struct rw_semaphore *rwsem, int subclass)
- {
- 	rwsem_acquire(&rwsem->dep_map, subclass, 0, _RET_IP_);
--	rt_mutex_lock(&rwsem->lock);
-+
-+	if (rt_mutex_owner(&rwsem->lock) != current)
-+		rt_mutex_lock(&rwsem->lock);
-+	rwsem->read_depth++;
- }
- 
- void  rt_down_read(struct rw_semaphore *rwsem)
-@@ -408,6 +424,7 @@ void  __rt_rwsem_init(struct rw_semaphore *rwsem, const char *name,
- 	debug_check_no_locks_freed((void *)rwsem, sizeof(*rwsem));
- 	lockdep_init_map(&rwsem->dep_map, name, key, 0);
- #endif
-+	rwsem->read_depth = 0;
- 	rwsem->lock.save_state = 0;
- }
- EXPORT_SYMBOL(__rt_rwsem_init);
-diff --git a/kernel/locking/rtmutex-debug.c b/kernel/locking/rtmutex-debug.c
-index 49b2ed3dced8..62b6cee8ea7f 100644
---- a/kernel/locking/rtmutex-debug.c
-+++ b/kernel/locking/rtmutex-debug.c
+diff --git a/kernel/rtmutex-debug.c b/kernel/rtmutex-debug.c
+index 13b243a323fa..2035a46ca489 100644
+--- a/kernel/rtmutex-debug.c
++++ b/kernel/rtmutex-debug.c
 @@ -66,12 +66,13 @@ void rt_mutex_debug_task_free(struct task_struct *task)
   * the deadlock. We print when we return. act_waiter can be NULL in
   * case of a remove waiter operation.
@@ -1843,10 +1724,10 @@ index 49b2ed3dced8..62b6cee8ea7f 100644
  		return;
  
  	task = rt_mutex_owner(act_waiter->lock);
-diff --git a/kernel/locking/rtmutex-debug.h b/kernel/locking/rtmutex-debug.h
+diff --git a/kernel/rtmutex-debug.h b/kernel/rtmutex-debug.h
 index ab29b6a22669..d0519c3432b6 100644
---- a/kernel/locking/rtmutex-debug.h
-+++ b/kernel/locking/rtmutex-debug.h
+--- a/kernel/rtmutex-debug.h
++++ b/kernel/rtmutex-debug.h
 @@ -20,14 +20,15 @@ extern void debug_rt_mutex_unlock(struct rt_mutex *lock);
  extern void debug_rt_mutex_proxy_lock(struct rt_mutex *lock,
  				      struct task_struct *powner);
@@ -1866,10 +1747,10 @@ index ab29b6a22669..d0519c3432b6 100644
  {
  	return (waiter != NULL);
  }
-diff --git a/kernel/locking/rtmutex-tester.c b/kernel/locking/rtmutex-tester.c
+diff --git a/kernel/rtmutex-tester.c b/kernel/rtmutex-tester.c
 index 1d96dd0d93c1..a6b605b51b97 100644
---- a/kernel/locking/rtmutex-tester.c
-+++ b/kernel/locking/rtmutex-tester.c
+--- a/kernel/rtmutex-tester.c
++++ b/kernel/rtmutex-tester.c
 @@ -16,7 +16,7 @@
  #include <linux/freezer.h>
  #include <linux/stat.h>
@@ -1888,11 +1769,43 @@ index 1d96dd0d93c1..a6b605b51b97 100644
  		td->event = atomic_add_return(1, &rttest_event);
  		td->mutexes[id] = ret ? 0 : 4;
  		return ret ? -EINTR : 0;
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index 6c40660d1168..ee4e7e747e06 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -329,13 +329,40 @@ static void rt_mutex_wake_waiter(struct rt_mutex_waiter *waiter)
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 5c70d7914f4d..7601c1332a88 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -156,6 +156,31 @@ static inline bool unlock_rt_mutex_safe(struct rt_mutex *lock)
+ }
+ #endif
+ 
++static inline void
++rt_mutex_enqueue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_add(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_dequeue(struct rt_mutex *lock, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->list_entry, &lock->wait_list);
++}
++
++static inline void
++rt_mutex_enqueue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	waiter->pi_list_entry.prio = waiter->list_entry.prio;
++	plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
++static inline void
++rt_mutex_dequeue_pi(struct task_struct *task, struct rt_mutex_waiter *waiter)
++{
++	plist_del(&waiter->pi_list_entry, &task->pi_waiters);
++}
++
+ static inline void init_lists(struct rt_mutex *lock)
+ {
+ 	if (unlikely(!lock->wait_list.node_list.prev))
+@@ -229,6 +254,32 @@ static void rt_mutex_wake_waiter(struct rt_mutex_waiter *waiter)
  }
  
  /*
@@ -1925,16 +1838,7 @@ index 6c40660d1168..ee4e7e747e06 100644
   * Max number of times we'll walk the boosting chain:
   */
  int max_lock_depth = 1024;
- 
- static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
- {
--	return p->pi_blocked_on ? p->pi_blocked_on->lock : NULL;
-+	return rt_mutex_real_waiter(p->pi_blocked_on) ?
-+		p->pi_blocked_on->lock : NULL;
- }
- 
- /*
-@@ -358,21 +385,65 @@ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
+@@ -259,21 +310,65 @@ static inline struct rt_mutex *task_blocked_on_lock(struct task_struct *p)
   * @top_task:	the current top waiter
   *
   * Returns 0 or -EDEADLK.
@@ -2005,7 +1909,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  
  	/*
  	 * The (de)boosting is a step by step approach with a lot of
-@@ -381,6 +452,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+@@ -282,6 +377,9 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  	 * carefully whether things change under us.
  	 */
   again:
@@ -2015,7 +1919,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (++depth > max_lock_depth) {
  		static int prev_max;
  
-@@ -398,13 +472,28 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+@@ -299,13 +397,28 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  
  		return -EDEADLK;
  	}
@@ -2045,7 +1949,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	/*
  	 * Check whether the end of the boosting chain has been
  	 * reached or the state of the chain has changed while we
-@@ -442,20 +531,41 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+@@ -343,20 +456,41 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  			goto out_unlock_pi;
  		/*
  		 * If deadlock detection is off, we stop here if we
@@ -2073,9 +1977,9 @@ index 6c40660d1168..ee4e7e747e06 100644
 +	 * enabled we continue, but stop the requeueing in the chain
 +	 * walk.
  	 */
--	if (!detect_deadlock && waiter->prio == task->prio)
+-	if (!detect_deadlock && waiter->list_entry.prio == task->prio)
 -		goto out_unlock_pi;
-+	if (waiter->prio == task->prio) {
++	if (waiter->list_entry.prio == task->prio) {
 +		if (!detect_deadlock)
 +			goto out_unlock_pi;
 +		else
@@ -2094,7 +1998,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (!raw_spin_trylock(&lock->wait_lock)) {
  		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
  		cpu_relax();
-@@ -463,81 +573,183 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
+@@ -364,83 +498,183 @@ static int rt_mutex_adjust_prio_chain(struct task_struct *task,
  	}
  
  	/*
@@ -2127,7 +2031,9 @@ index 6c40660d1168..ee4e7e747e06 100644
 +		 */
 +		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
 +		put_task_struct(task);
-+
+ 
+-	/* Requeue the waiter */
+-	plist_del(&waiter->list_entry, &lock->wait_list);
 +		/*
 +		 * [9] check_exit_conditions_3 protected by lock->wait_lock.
 +		 * If there is no owner of the lock, end of chain.
@@ -2141,8 +2047,7 @@ index 6c40660d1168..ee4e7e747e06 100644
 +		task = rt_mutex_owner(lock);
 +		get_task_struct(task);
 +		raw_spin_lock_irqsave(&task->pi_lock, flags);
- 
--	/* Requeue the waiter */
++
 +		/*
 +		 * No requeue [11] here. We just do deadlock detection.
 +		 *
@@ -2173,9 +2078,10 @@ index 6c40660d1168..ee4e7e747e06 100644
 +	prerequeue_top_waiter = rt_mutex_top_waiter(lock);
 +
 +	/* [7] Requeue the waiter in the lock waiter list. */
- 	rt_mutex_dequeue(lock, waiter);
- 	waiter->prio = task->prio;
- 	rt_mutex_enqueue(lock, waiter);
++	rt_mutex_dequeue(lock, waiter);
+ 	waiter->list_entry.prio = task->prio;
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
  
 -	/* Release the task */
 +	/* [8] Release the task */
@@ -2218,7 +2124,9 @@ index 6c40660d1168..ee4e7e747e06 100644
 +	/* [11] requeue the pi waiters if necessary */
  	if (waiter == rt_mutex_top_waiter(lock)) {
 -		/* Boost the owner */
--		rt_mutex_dequeue_pi(task, top_waiter);
+-		plist_del(&top_waiter->pi_list_entry, &task->pi_waiters);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
 +		/*
 +		 * The waiter became the new top (highest priority)
 +		 * waiter on the lock. Replace the previous top waiter
@@ -2226,11 +2134,12 @@ index 6c40660d1168..ee4e7e747e06 100644
 +		 * and adjust the priority of the owner.
 +		 */
 +		rt_mutex_dequeue_pi(task, prerequeue_top_waiter);
- 		rt_mutex_enqueue_pi(task, waiter);
++		rt_mutex_enqueue_pi(task, waiter);
  		__rt_mutex_adjust_prio(task);
  
 -	} else if (top_waiter == waiter) {
 -		/* Deboost the owner */
+-		plist_del(&waiter->pi_list_entry, &task->pi_waiters);
 +	} else if (prerequeue_top_waiter == waiter) {
 +		/*
 +		 * The waiter was the top waiter on the lock, but is
@@ -2242,9 +2151,11 @@ index 6c40660d1168..ee4e7e747e06 100644
 +		 * @waiter == @top_waiter evaluates to true below and
 +		 * we continue to deboost the rest of the chain.
 +		 */
- 		rt_mutex_dequeue_pi(task, waiter);
++		rt_mutex_dequeue_pi(task, waiter);
  		waiter = rt_mutex_top_waiter(lock);
- 		rt_mutex_enqueue_pi(task, waiter);
+-		waiter->pi_list_entry.prio = waiter->list_entry.prio;
+-		plist_add(&waiter->pi_list_entry, &task->pi_waiters);
++		rt_mutex_enqueue_pi(task, waiter);
  		__rt_mutex_adjust_prio(task);
 +	} else {
 +		/*
@@ -2294,7 +2205,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (!detect_deadlock && waiter != top_waiter)
  		goto out_put_task;
  
-@@ -575,78 +787,120 @@ static inline int lock_is_stealable(struct task_struct *task,
+@@ -478,79 +712,122 @@ static inline int lock_is_stealable(struct task_struct *task,
   *
   * Must be called with lock->wait_lock held.
   *
@@ -2384,7 +2295,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  
 -		/* remove the queued waiter. */
 -		if (waiter) {
--			rt_mutex_dequeue(lock, waiter);
+-			plist_del(&waiter->list_entry, &lock->wait_list);
 -			task->pi_blocked_on = NULL;
 -		}
 +		/*
@@ -2406,13 +2317,16 @@ index 6c40660d1168..ee4e7e747e06 100644
  		 */
  		if (rt_mutex_has_waiters(lock)) {
 -			top = rt_mutex_top_waiter(lock);
--			rt_mutex_enqueue_pi(task, top);
+-			top->pi_list_entry.prio = top->list_entry.prio;
+-			plist_add(&top->pi_list_entry, &task->pi_waiters);
++			struct task_struct *pown = rt_mutex_top_waiter(lock)->task;
++
 +			/*
 +			 * If @task->prio is greater than or equal to
 +			 * the top waiter priority (kernel view),
 +			 * @task lost.
 +			 */
-+			if (task->prio >= rt_mutex_top_waiter(lock)->prio)
++			if (task != pown && !lock_is_stealable(task, pown, mode))
 +				return 0;
 +
 +			/*
@@ -2460,7 +2374,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	rt_mutex_set_owner(lock, task);
  
  	rt_mutex_deadlock_account_lock(lock, task);
-@@ -671,7 +925,7 @@ try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
+@@ -575,7 +852,7 @@ try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
  static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
  				   struct rt_mutex_waiter *waiter,
  				   struct task_struct *task,
@@ -2469,7 +2383,24 @@ index 6c40660d1168..ee4e7e747e06 100644
  {
  	struct task_struct *owner = rt_mutex_owner(lock);
  	struct rt_mutex_waiter *top_waiter = waiter;
-@@ -734,7 +988,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+@@ -622,7 +899,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 	/* Get the top priority waiter on the lock */
+ 	if (rt_mutex_has_waiters(lock))
+ 		top_waiter = rt_mutex_top_waiter(lock);
+-	plist_add(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_enqueue(lock, waiter);
+ 
+ 	task->pi_blocked_on = waiter;
+ 
+@@ -633,13 +910,13 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+ 
+ 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
+ 	if (waiter == rt_mutex_top_waiter(lock)) {
+-		plist_del(&top_waiter->pi_list_entry, &owner->pi_waiters);
+-		plist_add(&waiter->pi_list_entry, &owner->pi_waiters);
++		rt_mutex_dequeue_pi(owner, top_waiter);
++		rt_mutex_enqueue_pi(owner, waiter);
+ 
  		__rt_mutex_adjust_prio(owner);
  		if (rt_mutex_real_waiter(owner->pi_blocked_on))
  			chain_walk = 1;
@@ -2478,7 +2409,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  		chain_walk = 1;
  	}
  
-@@ -759,7 +1013,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+@@ -664,7 +941,7 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
  
  	raw_spin_unlock(&lock->wait_lock);
  
@@ -2487,7 +2418,16 @@ index 6c40660d1168..ee4e7e747e06 100644
  					 next_lock, waiter, task);
  
  	raw_spin_lock(&lock->wait_lock);
-@@ -821,7 +1075,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
+@@ -695,7 +972,7 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
+ 	 * boosted mode and go back to normal after releasing
+ 	 * lock->wait_lock.
+ 	 */
+-	plist_del(&waiter->pi_list_entry, &current->pi_waiters);
++	rt_mutex_dequeue_pi(current, waiter);
+ 
+ 	/*
+ 	 * As we are waking up the top waiter, and the waiter stays
+@@ -726,41 +1003,44 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
  static void remove_waiter(struct rt_mutex *lock,
  			  struct rt_mutex_waiter *waiter)
  {
@@ -2496,7 +2436,10 @@ index 6c40660d1168..ee4e7e747e06 100644
  	struct task_struct *owner = rt_mutex_owner(lock);
  	struct rt_mutex *next_lock = NULL;
  	unsigned long flags;
-@@ -831,30 +1085,32 @@ static void remove_waiter(struct rt_mutex *lock,
+ 
+ 	raw_spin_lock_irqsave(&current->pi_lock, flags);
+-	plist_del(&waiter->list_entry, &lock->wait_list);
++	rt_mutex_dequeue(lock, waiter);
  	current->pi_blocked_on = NULL;
  	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
  
@@ -2513,7 +2456,7 @@ index 6c40660d1168..ee4e7e747e06 100644
 -		raw_spin_lock_irqsave(&owner->pi_lock, flags);
 +	raw_spin_lock_irqsave(&owner->pi_lock, flags);
  
--		rt_mutex_dequeue_pi(owner, waiter);
+-		plist_del(&waiter->pi_list_entry, &owner->pi_waiters);
 +	rt_mutex_dequeue_pi(owner, waiter);
  
 -		if (rt_mutex_has_waiters(lock)) {
@@ -2522,21 +2465,21 @@ index 6c40660d1168..ee4e7e747e06 100644
 +		rt_mutex_enqueue_pi(owner, rt_mutex_top_waiter(lock));
  
 -			next = rt_mutex_top_waiter(lock);
--			rt_mutex_enqueue_pi(owner, next);
+-			plist_add(&next->pi_list_entry, &owner->pi_waiters);
 -		}
 -		__rt_mutex_adjust_prio(owner);
 +	__rt_mutex_adjust_prio(owner);
  
 -		/* Store the lock on which owner is blocked or NULL */
--		if (rt_mutex_real_waiter(owner->pi_blocked_on))
--			next_lock = task_blocked_on_lock(owner);
 +	/* Store the lock on which owner is blocked or NULL */
 +	if (rt_mutex_real_waiter(owner->pi_blocked_on))
-+		next_lock = task_blocked_on_lock(owner);
+ 		next_lock = task_blocked_on_lock(owner);
  
 -		raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
 -	}
 +	raw_spin_unlock_irqrestore(&owner->pi_lock, flags);
+ 
+ 	WARN_ON(!plist_node_empty(&waiter->pi_list_entry));
  
 +	/*
 +	 * Don't walk the chain, if the owner task is not blocked
@@ -2545,7 +2488,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (!next_lock)
  		return;
  
-@@ -863,7 +1119,8 @@ static void remove_waiter(struct rt_mutex *lock,
+@@ -769,7 +1049,8 @@ static void remove_waiter(struct rt_mutex *lock,
  
  	raw_spin_unlock(&lock->wait_lock);
  
@@ -2555,17 +2498,18 @@ index 6c40660d1168..ee4e7e747e06 100644
  
  	raw_spin_lock(&lock->wait_lock);
  }
-@@ -892,7 +1149,8 @@ void rt_mutex_adjust_pi(struct task_struct *task)
+@@ -798,8 +1079,8 @@ void rt_mutex_adjust_pi(struct task_struct *task)
  	/* gets dropped in rt_mutex_adjust_prio_chain()! */
  	get_task_struct(task);
  	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+-
 -	rt_mutex_adjust_prio_chain(task, 0, NULL, next_lock, NULL, task);
 +	rt_mutex_adjust_prio_chain(task, RT_MUTEX_MIN_CHAINWALK, NULL,
 +				   next_lock, NULL, task);
  }
  
  #ifdef CONFIG_PREEMPT_RT_FULL
-@@ -1405,7 +1663,8 @@ static void ww_mutex_account_lock(struct rt_mutex *lock,
+@@ -1308,7 +1589,8 @@ static void rt_mutex_handle_deadlock(int res, int detect_deadlock,
  static int __sched
  rt_mutex_slowlock(struct rt_mutex *lock, int state,
  		  struct hrtimer_sleeper *timeout,
@@ -2575,7 +2519,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  {
  	struct rt_mutex_waiter waiter;
  	int ret = 0;
-@@ -1431,16 +1690,24 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+@@ -1335,17 +1617,24 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
  			timeout->task = NULL;
  	}
  
@@ -2595,6 +2539,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (unlikely(ret)) {
 -		remove_waiter(lock, &waiter);
 -		rt_mutex_handle_deadlock(ret, detect_deadlock, &waiter);
+-
 +		if (rt_mutex_has_waiters(lock))
 +			remove_waiter(lock, &waiter);
 +		/* ww_mutex want to report EDEADLK/EALREADY, let them */
@@ -2603,7 +2548,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	} else if (ww_ctx) {
  		ww_mutex_account_lock(lock, ww_ctx);
  	}
-@@ -1465,23 +1732,32 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
+@@ -1370,24 +1659,33 @@ rt_mutex_slowlock(struct rt_mutex *lock, int state,
  /*
   * Slow path try-lock function:
   */
@@ -2613,7 +2558,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  {
 -	int ret = 0;
 +	int ret;
-+
+ 
 +	/*
 +	 * If the lock already has an owner we fail to get the lock.
 +	 * This can be done without taking the @lock->wait_lock as
@@ -2621,7 +2566,7 @@ index 6c40660d1168..ee4e7e747e06 100644
 +	 */
 +	if (rt_mutex_owner(lock))
 +		return 0;
- 
++
 +	/*
 +	 * The mutex has currently no owner. Lock the wait lock and
 +	 * try to acquire the lock.
@@ -2629,6 +2574,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	if (!raw_spin_trylock(&lock->wait_lock))
 -		return ret;
 +		return 0;
+ 	init_lists(lock);
  
 -	if (likely(rt_mutex_owner(lock) != current)) {
 +	ret = try_to_take_rt_mutex(lock, current, NULL);
@@ -2648,7 +2594,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  
  	raw_spin_unlock(&lock->wait_lock);
  
-@@ -1559,33 +1835,35 @@ rt_mutex_slowunlock(struct rt_mutex *lock)
+@@ -1465,33 +1763,35 @@ rt_mutex_slowunlock(struct rt_mutex *lock)
   */
  static inline int
  rt_mutex_fastlock(struct rt_mutex *lock, int state,
@@ -2692,7 +2638,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  }
  
  static inline int
-@@ -1618,7 +1896,7 @@ void __sched rt_mutex_lock(struct rt_mutex *lock)
+@@ -1524,7 +1824,7 @@ void __sched rt_mutex_lock(struct rt_mutex *lock)
  {
  	might_sleep();
  
@@ -2701,7 +2647,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  }
  EXPORT_SYMBOL_GPL(rt_mutex_lock);
  
-@@ -1626,41 +1904,48 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock);
+@@ -1532,41 +1832,48 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock);
   * rt_mutex_lock_interruptible - lock a rt_mutex interruptible
   *
   * @lock:		the rt_mutex to be locked
@@ -2760,7 +2706,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  }
  EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
  
-@@ -1671,22 +1956,20 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
+@@ -1577,22 +1884,20 @@ EXPORT_SYMBOL_GPL(rt_mutex_lock_killable);
   *
   * @lock:		the rt_mutex to be locked
   * @timeout:		timeout structure or NULL (no timeout)
@@ -2786,7 +2732,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  }
  EXPORT_SYMBOL_GPL(rt_mutex_timed_lock);
  
-@@ -1791,7 +2074,6 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+@@ -1696,7 +2001,6 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
   * @lock:		the rt_mutex to take
   * @waiter:		the pre-initialized rt_mutex_waiter
   * @task:		the task to prepare
@@ -2794,7 +2740,7 @@ index 6c40660d1168..ee4e7e747e06 100644
   *
   * Returns:
   *  0 - task blocked on lock
-@@ -1802,7 +2084,7 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+@@ -1707,7 +2011,7 @@ void rt_mutex_proxy_unlock(struct rt_mutex *lock,
   */
  int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
  			      struct rt_mutex_waiter *waiter,
@@ -2803,7 +2749,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  {
  	int ret;
  
-@@ -1843,7 +2125,8 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+@@ -1748,7 +2052,8 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
  #endif
  
  	/* We enforce deadlock detection for futexes */
@@ -2813,7 +2759,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  
  	if (ret && !rt_mutex_owner(lock)) {
  		/*
-@@ -1889,22 +2172,20 @@ struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock)
+@@ -1794,22 +2099,20 @@ struct task_struct *rt_mutex_next_owner(struct rt_mutex *lock)
   * rt_mutex_finish_proxy_lock() - Complete lock acquisition
   * @lock:		the rt_mutex we were woken on
   * @to:			the timeout, null if none. hrtimer should already have
@@ -2839,7 +2785,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  {
  	int ret;
  
-@@ -1964,7 +2245,7 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
+@@ -1869,7 +2172,7 @@ __ww_mutex_lock_interruptible(struct ww_mutex *lock, struct ww_acquire_ctx *ww_c
  
  	might_sleep();
  
@@ -2848,7 +2794,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	ret = rt_mutex_slowlock(&lock->base.lock, TASK_INTERRUPTIBLE, NULL, 0, ww_ctx);
  	if (ret)
  		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
-@@ -1982,8 +2263,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
+@@ -1887,8 +2190,7 @@ __ww_mutex_lock(struct ww_mutex *lock, struct ww_acquire_ctx *ww_ctx)
  
  	might_sleep();
  
@@ -2858,7 +2804,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  	ret = rt_mutex_slowlock(&lock->base.lock, TASK_UNINTERRUPTIBLE, NULL, 0, ww_ctx);
  	if (ret)
  		mutex_release(&lock->base.dep_map, 1, _RET_IP_);
-@@ -1996,11 +2276,13 @@ EXPORT_SYMBOL_GPL(__ww_mutex_lock);
+@@ -1901,11 +2203,13 @@ EXPORT_SYMBOL_GPL(__ww_mutex_lock);
  
  void __sched ww_mutex_unlock(struct ww_mutex *lock)
  {
@@ -2873,7 +2819,7 @@ index 6c40660d1168..ee4e7e747e06 100644
  #ifdef CONFIG_DEBUG_MUTEXES
  		DEBUG_LOCKS_WARN_ON(!lock->ctx->acquired);
  #endif
-@@ -2009,7 +2291,7 @@ void __sched ww_mutex_unlock(struct ww_mutex *lock)
+@@ -1914,7 +2218,7 @@ void __sched ww_mutex_unlock(struct ww_mutex *lock)
  		lock->ctx = NULL;
  	}
  
@@ -2882,10 +2828,10 @@ index 6c40660d1168..ee4e7e747e06 100644
  	rt_mutex_unlock(&lock->base.lock);
  }
  EXPORT_SYMBOL(ww_mutex_unlock);
-diff --git a/kernel/locking/rtmutex.h b/kernel/locking/rtmutex.h
+diff --git a/kernel/rtmutex.h b/kernel/rtmutex.h
 index f6a1f3c133b1..c4060584c407 100644
---- a/kernel/locking/rtmutex.h
-+++ b/kernel/locking/rtmutex.h
+--- a/kernel/rtmutex.h
++++ b/kernel/rtmutex.h
 @@ -22,10 +22,15 @@
  #define debug_rt_mutex_init(m, n)			do { } while (0)
  #define debug_rt_mutex_deadlock(d, a ,l)		do { } while (0)
@@ -2903,11 +2849,11 @@ index f6a1f3c133b1..c4060584c407 100644
 +{
 +	return walk == RT_MUTEX_FULL_CHAINWALK;
 +}
-diff --git a/kernel/locking/rtmutex_common.h b/kernel/locking/rtmutex_common.h
-index ac636d37ec32..c6dcda5e53af 100644
---- a/kernel/locking/rtmutex_common.h
-+++ b/kernel/locking/rtmutex_common.h
-@@ -103,6 +103,21 @@ static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
+diff --git a/kernel/rtmutex_common.h b/kernel/rtmutex_common.h
+index 6ec3dc1eab10..213c7bf3c0d9 100644
+--- a/kernel/rtmutex_common.h
++++ b/kernel/rtmutex_common.h
+@@ -102,6 +102,21 @@ static inline struct task_struct *rt_mutex_owner(struct rt_mutex *lock)
  }
  
  /*
@@ -2929,7 +2875,7 @@ index ac636d37ec32..c6dcda5e53af 100644
   * PI-futex support (proxy locking functions, etc.):
   */
  #define PI_WAKEUP_INPROGRESS	((struct rt_mutex_waiter *) 1)
-@@ -115,12 +130,11 @@ extern void rt_mutex_proxy_unlock(struct rt_mutex *lock,
+@@ -114,12 +129,11 @@ extern void rt_mutex_proxy_unlock(struct rt_mutex *lock,
  				  struct task_struct *proxy_owner);
  extern int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
  				     struct rt_mutex_waiter *waiter,
@@ -2946,16 +2892,15 @@ index ac636d37ec32..c6dcda5e53af 100644
  #ifdef CONFIG_DEBUG_RT_MUTEXES
  # include "rtmutex-debug.h"
 diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index b14a512da520..d8374f999e9b 100644
+index 54adcf35f495..fc4b0c1d9823 100644
 --- a/kernel/sched/Makefile
 +++ b/kernel/sched/Makefile
-@@ -13,7 +13,7 @@ endif
+@@ -12,6 +12,7 @@ CFLAGS_core.o := $(PROFILING) -fno-omit-frame-pointer
+ endif
  
- obj-y += core.o proc.o clock.o cputime.o
- obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
--obj-y += wait.o wait-simple.o completion.o
-+obj-y += wait.o wait-simple.o work-simple.o completion.o
- obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-y += core.o proc.o clock.o cputime.o idle_task.o fair.o rt.o stop_task.o
++obj-y += work-simple.o
+ obj-$(CONFIG_SMP) += cpupri.o
  obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
  obj-$(CONFIG_SCHEDSTATS) += stats.o
 diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
@@ -3137,7 +3082,7 @@ index 000000000000..c996f755dba6
 +}
 +EXPORT_SYMBOL_GPL(swork_put);
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 8f1687a4b9c2..34fd2dbba3e3 100644
+index 3b79da2f9c67..2d9ba1b9f698 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -84,6 +84,7 @@ struct tvec_base {
@@ -3276,7 +3221,7 @@ index 8f1687a4b9c2..34fd2dbba3e3 100644
  }
  
  #ifdef __ARCH_WANT_SYS_ALARM
-@@ -1677,6 +1660,7 @@ static int init_timers_cpu(int cpu)
+@@ -1678,6 +1661,7 @@ static int init_timers_cpu(int cpu)
  	base->timer_jiffies = jiffies;
  	base->next_timer = base->timer_jiffies;
  	base->active_timers = 0;
@@ -3285,7 +3230,7 @@ index 8f1687a4b9c2..34fd2dbba3e3 100644
  }
  
 diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
-index 19ae2366a7a9..b93a6103fa4d 100644
+index 0acf3549c17e..bd3eaf8a875e 100644
 --- a/lib/locking-selftest.c
 +++ b/lib/locking-selftest.c
 @@ -590,6 +590,8 @@ GENERATE_TESTCASE(init_held_rsem)
@@ -3400,17 +3345,17 @@ index 19ae2366a7a9..b93a6103fa4d 100644
   * read-lock / write-lock recursion that is unsafe.
   */
 diff --git a/localversion-rt b/localversion-rt
-index a68b4337d4ce..ce6a482618d5 100644
+index 66a5ed8bf3d7..e6c0dc6a54cd 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt31
-+-rt32
+--rt52
++-rt53
 diff --git a/mm/memcontrol.c b/mm/memcontrol.c
-index fa54408b66b2..be24d2d186fa 100644
+index 003521e47622..ba7a8ae06476 100644
 --- a/mm/memcontrol.c
 +++ b/mm/memcontrol.c
-@@ -2512,14 +2512,17 @@ static void __init memcg_stock_init(void)
+@@ -2474,14 +2474,17 @@ static void __init memcg_stock_init(void)
   */
  static void refill_stock(struct mem_cgroup *memcg, unsigned int nr_pages)
  {
@@ -3431,7 +3376,7 @@ index fa54408b66b2..be24d2d186fa 100644
  
  /*
 diff --git a/net/sunrpc/svc_xprt.c b/net/sunrpc/svc_xprt.c
-index a4acaf2bcf18..22ca25818120 100644
+index b9aad4723a9d..ab50dbd58c20 100644
 --- a/net/sunrpc/svc_xprt.c
 +++ b/net/sunrpc/svc_xprt.c
 @@ -349,9 +349,9 @@ void svc_xprt_enqueue(struct svc_xprt *xprt)
