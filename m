@@ -1,10 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH v5] sched/rt: Use IPI to trigger RT task push migration
  instead of pulling
-Date: Fri, 20 Mar 2015 10:27:33 -0400
-Message-ID: <20150320102733.10316214@gandalf.local.home>
+Date: Fri, 20 Mar 2015 10:30:05 -0400
+Message-ID: <20150320103005.3914fd8d@gandalf.local.home>
 References: <20150318144946.2f3cc982@gandalf.local.home>
-	<20150320102542.GY23123@twins.programming.kicks-ass.net>
+	<20150320103120.GZ23123@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -17,55 +17,26 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
 	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
 To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0093.hostedemail.com ([216.40.44.93]:38992 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750764AbbCTO1h (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 20 Mar 2015 10:27:37 -0400
-In-Reply-To: <20150320102542.GY23123@twins.programming.kicks-ass.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150320103120.GZ23123@twins.programming.kicks-ass.net>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 20 Mar 2015 11:25:42 +0100
+On Fri, 20 Mar 2015 11:31:20 +0100
 Peter Zijlstra <peterz@infradead.org> wrote:
 
-> On Wed, Mar 18, 2015 at 02:49:46PM -0400, Steven Rostedt wrote:
-> > +static int find_next_push_cpu(struct rq *rq)
-> > +{
-> > +	struct rq *next_rq;
-> > +	int cpu;
-> > +
-> > +	while (1) {
+> > Parts-suggested-by: Peter Zijlstra <peterz@infradead.org>
+> > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 > 
-> We typically tend to write: for (;;), instead, however would a do { }
-> while () loop not make more sense here?
+> OK, queued it.
 
-You know, I use to do "for (;;)" instead of "while (1)" because to me
-"for (;;)" == "forever". But people have since convinced me that
-"while (1)" is better. I don't really care so I just did the switch :-p
+Feel free to update that loop.
 
+> Do we want to look into making the same change for
+> deadline once this has settled?
 
-> 
-> 	do {
-> 		cpu = rto_next_cpu(rq);
-> 		if (cpu >= nr_cpu_ids)
-> 			break;
-> 
-> 		next_rq = cpu_rq(cpu);
-> 	} while (next_rq->rt.highest_prio.next >= rq->rt.highest_prio.curr);
-
-Ah, that does make sense. Not sure why I had it the way I did. I think
-it had to do with the way I thought about the algorithm. I did it in
-layers. As there were more than one break, I probably just figured to
-do them explicitly.
-
-Want me to send an updated patch?
+Hmm, looks like it could use it as well. Should that code be made a bit
+more generic to share the same algorithm? Would need to pass in a
+pointer to the mask to check.
 
 -- Steve
-
-
-> 
-> > +	return cpu;
-> > +}
-
