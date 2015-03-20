@@ -1,108 +1,160 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH v5] sched/rt: Use IPI to trigger RT task push migration
- instead of pulling
-Date: Fri, 20 Mar 2015 11:31:20 +0100
-Message-ID: <20150320103120.GZ23123@twins.programming.kicks-ass.net>
-References: <20150318144946.2f3cc982@gandalf.local.home>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
+From: Eric B Munson <emunson@akamai.com>
+Subject: [PATCH V7] Allow compaction of unevictable pages
+Date: Fri, 20 Mar 2015 09:49:50 -0400
+Message-ID: <1426859390-10974-1-git-send-email-emunson@akamai.com>
+Cc: Eric B Munson <emunson@akamai.com>,
+	Vlastimil Babka <vbabka@suse.cz>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150318144946.2f3cc982@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
+	Christoph Lameter <cl@linux.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Mel Gorman <mgorman@suse.de>,
+	David Rientjes <rientjes@google.com>,
+	Rik van Riel <riel@redhat.com>,
+	Michal Hocko <mhocko@suse.cz>, linux-doc@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, linux-mm@kvack.org,
+	linux-api@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Andrew Morton <akpm@linux-foundation.org>
+Return-path: <linux-doc-owner@vger.kernel.org>
+Sender: linux-doc-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Mar 18, 2015 at 02:49:46PM -0400, Steven Rostedt wrote:
-> 
-> When debugging the latencies on a 40 core box, where we hit 300 to
-> 500 microsecond latencies, I found there was a huge contention on the
-> runqueue locks.
-> 
-> Investigating it further, running ftrace, I found that it was due to
-> the pulling of RT tasks.
-> 
-> The test that was run was the following:
-> 
->  cyclictest --numa -p95 -m -d0 -i100
-> 
-> This created a thread on each CPU, that would set its wakeup in iterations
-> of 100 microseconds. The -d0 means that all the threads had the same
-> interval (100us). Each thread sleeps for 100us and wakes up and measures
-> its latencies.
-> 
-> cyclictest is maintained at:
->  git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-> 
-> What happened was another RT task would be scheduled on one of the CPUs
-> that was running our test, when the other CPU tests went to sleep and
-> scheduled idle. This caused the "pull" operation to execute on all
-> these CPUs. Each one of these saw the RT task that was overloaded on
-> the CPU of the test that was still running, and each one tried
-> to grab that task in a thundering herd way.
-> 
-> To grab the task, each thread would do a double rq lock grab, grabbing
-> its own lock as well as the rq of the overloaded CPU. As the sched
-> domains on this box was rather flat for its size, I saw up to 12 CPUs
-> block on this lock at once. This caused a ripple affect with the
-> rq locks especially since the taking was done via a double rq lock, which
-> means that several of the CPUs had their own rq locks held while trying
-> to take this rq lock. As these locks were blocked, any wakeups or load
-> balanceing on these CPUs would also block on these locks, and the wait
-> time escalated.
-> 
-> I've tried various methods to lessen the load, but things like an
-> atomic counter to only let one CPU grab the task wont work, because
-> the task may have a limited affinity, and we may pick the wrong
-> CPU to take that lock and do the pull, to only find out that the
-> CPU we picked isn't in the task's affinity.
-> 
-> Instead of doing the PULL, I now have the CPUs that want the pull to
-> send over an IPI to the overloaded CPU, and let that CPU pick what
-> CPU to push the task to. No more need to grab the rq lock, and the
-> push/pull algorithm still works fine.
-> 
-> With this patch, the latency dropped to just 150us over a 20 hour run.
-> Without the patch, the huge latencies would trigger in seconds.
-> 
-> I've created a new sched feature called RT_PUSH_IPI, which is enabled
-> by default.
-> 
-> When RT_PUSH_IPI is not enabled, the old method of grabbing the rq locks
-> and having the pulling CPU do the work is implemented. When RT_PUSH_IPI
-> is enabled, the IPI is sent to the overloaded CPU to do a push.
-> 
-> To enabled or disable this at run time:
-> 
->  # mount -t debugfs nodev /sys/kernel/debug
->  # echo RT_PUSH_IPI > /sys/kernel/debug/sched_features
-> or
->  # echo NO_RT_PUSH_IPI > /sys/kernel/debug/sched_features
-> 
-> Update: This original patch would send an IPI to all CPUs in the RT overload
-> list. But that could theoretically cause the reverse issue. That is, there
-> could be lots of overloaded RT queues and one CPU lowers its priority. It would
-> then send an IPI to all the overloaded RT queues and they could then all try
-> to grab the rq lock of the CPU lowering its priority, and then we have the
-> same problem.
-> 
-> The latest design sends out only one IPI to the first overloaded CPU. It tries to
-> push any tasks that it can, and then looks for the next overloaded CPU that can
-> push to the source CPU. The IPIs stop when all overloaded CPUs that have pushable
-> tasks that have priorities greater than the source CPU are covered. In case the
-> source CPU lowers its priority again, a flag is set to tell the IPI traversal to
-> restart with the first RT overloaded CPU after the source CPU.
-> 
-> Parts-suggested-by: Peter Zijlstra <peterz@infradead.org>
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Currently, pages which are marked as unevictable are protected from
+compaction, but not from other types of migration.  The POSIX real time
+extension explicitly states that mlock() will prevent a major page
+fault, but the spirit of this is that mlock() should give a process the
+ability to control sources of latency, including minor page faults.
+However, the mlock manpage only explicitly says that a locked page will
+not be written to swap and this can cause some confusion.  The
+compaction code today does not give a developer who wants to avoid swap
+but wants to have large contiguous areas available any method to achieve
+this state.  This patch introduces a sysctl for controlling compaction
+behavior with respect to the unevictable lru.  Users that demand no page
+faults after a page is present can set compact_unevictable_allowed to 0
+and users who need the large contiguous areas can enable compaction on
+locked memory by leaving the default value of 1.
 
-OK, queued it. Do we want to look into making the same change for
-deadline once this has settled?
+To illustrate this problem I wrote a quick test program that mmaps a
+large number of 1MB files filled with random data.  These maps are
+created locked and read only.  Then every other mmap is unmapped and I
+attempt to allocate huge pages to the static huge page pool.  When the
+compact_unevictable_allowed sysctl is 0, I cannot allocate hugepages
+after fragmenting memory.  When the value is set to 1, allocations
+succeed.
+
+Signed-off-by: Eric B Munson <emunson@akamai.com>
+Acked-by: Michal Hocko <mhocko@suse.cz>
+Acked-by: Vlastimil Babka <vbabka@suse.cz>
+Acked-by: Christoph Lameter <cl@linux.com>
+Acked-by: David Rientjes <rientjes@google.com>
+Cc: Vlastimil Babka <vbabka@suse.cz>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Christoph Lameter <cl@linux.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Mel Gorman <mgorman@suse.de>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Rik van Riel <riel@redhat.com>
+Cc: Michal Hocko <mhocko@suse.cz>
+Cc: linux-doc@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+Cc: linux-mm@kvack.org
+Cc: linux-api@vger.kernel.org
+Cc: linux-kernel@vger.kernel.org
+---
+Changes from V6:
+* Fixed changelog spelling
+
+ Documentation/sysctl/vm.txt |   11 +++++++++++
+ include/linux/compaction.h  |    1 +
+ kernel/sysctl.c             |    9 +++++++++
+ mm/compaction.c             |    7 +++++++
+ 4 files changed, 28 insertions(+)
+
+diff --git a/Documentation/sysctl/vm.txt b/Documentation/sysctl/vm.txt
+index 902b457..9832ec5 100644
+--- a/Documentation/sysctl/vm.txt
++++ b/Documentation/sysctl/vm.txt
+@@ -21,6 +21,7 @@ Currently, these files are in /proc/sys/vm:
+ - admin_reserve_kbytes
+ - block_dump
+ - compact_memory
++- compact_unevictable_allowed
+ - dirty_background_bytes
+ - dirty_background_ratio
+ - dirty_bytes
+@@ -106,6 +107,16 @@ huge pages although processes will also directly compact memory as required.
+ 
+ ==============================================================
+ 
++compact_unevictable_allowed
++
++Available only when CONFIG_COMPACTION is set. When set to 1, compaction is
++allowed to examine the unevictable lru (mlocked pages) for pages to compact.
++This should be used on systems where stalls for minor page faults are an
++acceptable trade for large contiguous free memory.  Set to 0 to prevent
++compaction from moving pages that are unevictable.  Default value is 1.
++
++==============================================================
++
+ dirty_background_bytes
+ 
+ Contains the amount of dirty memory at which the background kernel
+diff --git a/include/linux/compaction.h b/include/linux/compaction.h
+index a014559..aa8f61c 100644
+--- a/include/linux/compaction.h
++++ b/include/linux/compaction.h
+@@ -34,6 +34,7 @@ extern int sysctl_compaction_handler(struct ctl_table *table, int write,
+ extern int sysctl_extfrag_threshold;
+ extern int sysctl_extfrag_handler(struct ctl_table *table, int write,
+ 			void __user *buffer, size_t *length, loff_t *ppos);
++extern int sysctl_compact_unevictable_allowed;
+ 
+ extern int fragmentation_index(struct zone *zone, unsigned int order);
+ extern unsigned long try_to_compact_pages(gfp_t gfp_mask, unsigned int order,
+diff --git a/kernel/sysctl.c b/kernel/sysctl.c
+index 88ea2d6..2f6c880 100644
+--- a/kernel/sysctl.c
++++ b/kernel/sysctl.c
+@@ -1313,6 +1313,15 @@ static struct ctl_table vm_table[] = {
+ 		.extra1		= &min_extfrag_threshold,
+ 		.extra2		= &max_extfrag_threshold,
+ 	},
++	{
++		.procname	= "compact_unevictable_allowed",
++		.data		= &sysctl_compact_unevictable_allowed,
++		.maxlen		= sizeof(int),
++		.mode		= 0644,
++		.proc_handler	= proc_dointvec,
++		.extra1		= &zero,
++		.extra2		= &one,
++	},
+ 
+ #endif /* CONFIG_COMPACTION */
+ 	{
+diff --git a/mm/compaction.c b/mm/compaction.c
+index 8c0d945..ad88a8c 100644
+--- a/mm/compaction.c
++++ b/mm/compaction.c
+@@ -1047,6 +1047,12 @@ typedef enum {
+ } isolate_migrate_t;
+ 
+ /*
++ * Allow userspace to control policy on scanning the unevictable LRU for
++ * compactable pages.
++ */
++int sysctl_compact_unevictable_allowed __read_mostly = 1;
++
++/*
+  * Isolate all pages that can be migrated from the first suitable block,
+  * starting at the block pointed to by the migrate scanner pfn within
+  * compact_control.
+@@ -1057,6 +1063,7 @@ static isolate_migrate_t isolate_migratepages(struct zone *zone,
+ 	unsigned long low_pfn, end_pfn;
+ 	struct page *page;
+ 	const isolate_mode_t isolate_mode =
++		(sysctl_compact_unevictable_allowed ? ISOLATE_UNEVICTABLE : 0) |
+ 		(cc->mode == MIGRATE_ASYNC ? ISOLATE_ASYNC_MIGRATE : 0);
+ 
+ 	/*
+-- 
+1.7.9.5
+
