@@ -1,60 +1,218 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH V7] Allow compaction of unevictable pages
-Date: Sat, 21 Mar 2015 14:33:11 +0100
-Message-ID: <20150321133311.GA23123@twins.programming.kicks-ass.net>
-References: <1426859390-10974-1-git-send-email-emunson@akamai.com>
- <20150320151703.dfd116931ddb397ade8bfd8c@linux-foundation.org>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq
+ unconditionally"
+Date: Sat, 21 Mar 2015 19:02:23 +0100
+Message-ID: <1426960943.4677.34.camel@gmail.com>
+References: <20150317163541.080310081@goodmis.org>
+	 <20150317163617.218582800@goodmis.org>
+	 <20150317163551.3093b6c2@gandalf.local.home>
+	 <1426753029.4168.80.camel@gmail.com>
+	 <20150319122611.0d002d48@gandalf.local.home> <550AFC6A.4050901@hp.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Eric B Munson <emunson@akamai.com>, Vlastimil Babka <vbabka@suse.cz>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Christoph Lameter <cl@linux.com>, Mel Gorman <mgorman@suse.de>,
-	David Rientjes <rientjes@google.com>,
-	Rik van Riel <riel@redhat.com>, Michal Hocko <mhocko@suse.cz>,
-	linux-doc@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-mm@kvack.org, linux-api@vger.kernel.org,
-	linux-kernel@vger.kernel.org
-To: Andrew Morton <akpm@linux-foundation.org>
-Return-path: <owner-linux-mm@kvack.org>
-Content-Disposition: inline
-In-Reply-To: <20150320151703.dfd116931ddb397ade8bfd8c@linux-foundation.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wg0-f42.google.com ([74.125.82.42]:33662 "EHLO
+	mail-wg0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751784AbbCUSCZ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 21 Mar 2015 14:02:25 -0400
+In-Reply-To: <550AFC6A.4050901@hp.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Mar 20, 2015 at 03:17:03PM -0700, Andrew Morton wrote:
-> On Fri, 20 Mar 2015 09:49:50 -0400 Eric B Munson <emunson@akamai.com> wrote:
+On Thu, 2015-03-19 at 10:42 -0600, Thavatchai Makphaibulchoke wrote:
+> On 03/19/2015 10:26 AM, Steven Rostedt wrote:
+> > On Thu, 19 Mar 2015 09:17:09 +0100
+> > Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
+> > 
+> > 
+> >> (aw crap, let's go shopping)... so why is the one in timer.c ok?
+> > 
+> > It's not. Sebastian, you said there were no other cases of rt_mutexes
+> > being taken in hard irq context. Looks like timer.c has one.
+> > 
+> > So perhaps the real fix is to get that special case of ownership in
+> > hard interrupt context?
+> > 
+> > -- Steve
+> > 
 > 
-> > Currently, pages which are marked as unevictable are protected from
-> > compaction, but not from other types of migration.  The POSIX real time
-> > extension explicitly states that mlock() will prevent a major page
-> > fault, but the spirit of this is that mlock() should give a process the
-> > ability to control sources of latency, including minor page faults.
-> > However, the mlock manpage only explicitly says that a locked page will
-> > not be written to swap and this can cause some confusion.  The
-> > compaction code today does not give a developer who wants to avoid swap
-> > but wants to have large contiguous areas available any method to achieve
-> > this state.  This patch introduces a sysctl for controlling compaction
-> > behavior with respect to the unevictable lru.  Users that demand no page
-> > faults after a page is present can set compact_unevictable_allowed to 0
-> > and users who need the large contiguous areas can enable compaction on
-> > locked memory by leaving the default value of 1.
+> Steve, I'm still working on the fix we discussed using dummy irq_task.
+> I should be able to submit some time next week, if still interested.
 > 
-> Do we really really really need the /proc knob?  We're already
-> migrating these pages so users of mlock will occasionally see some
-> latency - how likely is it that this patch will significantly damage
-> anyone?
+> Either that, or I think we should remove the function
+> spin_do_trylock_in_interrupt() to prevent any possibility of running
+> into similar problems in the future.
 
--rt disables everything that causes those migrations (with exception of
-sys_migrate_pages).
+Why can't we just Let swapper be the owner when in irq with no dummy?
 
-And like I've argued before; mlock() is part of the posix real-time
-extensions and the real-time people really do not want those migrations.
-And while the letter of the posix spec allows migrations, the spirit
-clearly does not.
+I have "don't raise timer unconditionally" re-applied, the check for a
+running callback bits of my nohz_full fixlet, and the below on top of
+that, and all _seems_ well.
+
+---
+ include/linux/spinlock_rt.h |    1 
+ kernel/locking/rtmutex.c    |   58 ++++++++++++++++++--------------------------
+ kernel/time/timer.c         |    4 +--
+ 3 files changed, 27 insertions(+), 36 deletions(-)
+
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -22,7 +22,6 @@ extern void __lockfunc rt_spin_lock(spin
+ extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
+ extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
+ extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
+-extern void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock);
+ extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
+ extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
+ extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -934,8 +934,10 @@ static inline void rt_spin_lock_fastlock
+ static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
+ 					   void  (*slowfn)(struct rt_mutex *lock))
+ {
+-	if (likely(rt_mutex_cmpxchg(lock, current, NULL)))
+-		rt_mutex_deadlock_account_unlock(current);
++	struct task_struct *owner = rt_mutex_owner(lock);
++
++	if (likely(rt_mutex_cmpxchg(lock, owner, NULL)))
++		rt_mutex_deadlock_account_unlock(owner);
+ 	else
+ 		slowfn(lock);
+ }
+@@ -1072,11 +1074,16 @@ static void wakeup_next_waiter(struct rt
+ /*
+  * Slow path to release a rt_mutex spin_lock style
+  */
+-static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
++static void noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ {
++	struct task_struct *owner;
++
++	raw_spin_lock(&lock->wait_lock);
++
+ 	debug_rt_mutex_unlock(lock);
+ 
+-	rt_mutex_deadlock_account_unlock(current);
++	owner = rt_mutex_owner(lock);
++	rt_mutex_deadlock_account_unlock(owner);
+ 
+ 	if (!rt_mutex_has_waiters(lock)) {
+ 		lock->owner = NULL;
+@@ -1089,24 +1096,8 @@ static void __sched __rt_spin_lock_slowu
+ 	raw_spin_unlock(&lock->wait_lock);
+ 
+ 	/* Undo pi boosting.when necessary */
+-	rt_mutex_adjust_prio(current);
+-}
+-
+-static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+-{
+-	raw_spin_lock(&lock->wait_lock);
+-	__rt_spin_lock_slowunlock(lock);
+-}
+-
+-static void  noinline __sched rt_spin_lock_slowunlock_hirq(struct rt_mutex *lock)
+-{
+-	int ret;
+-
+-	do {
+-		ret = raw_spin_trylock(&lock->wait_lock);
+-	} while (!ret);
+-
+-	__rt_spin_lock_slowunlock(lock);
++	if (likely(!is_idle_task(owner)))
++		rt_mutex_adjust_prio(owner);
+ }
+ 
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+@@ -1139,13 +1130,6 @@ void __lockfunc rt_spin_unlock(spinlock_
+ }
+ EXPORT_SYMBOL(rt_spin_unlock);
+ 
+-void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock)
+-{
+-	/* NOTE: we always pass in '1' for nested, for simplicity */
+-	spin_release(&lock->dep_map, 1, _RET_IP_);
+-	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_hirq);
+-}
+-
+ void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
+ {
+ 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
+@@ -1341,7 +1325,7 @@ static int task_blocks_on_rt_mutex(struc
+ 
+ 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 
+-	if (!owner)
++	if (!owner || is_idle_task(owner))
+ 		return 0;
+ 
+ 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
+@@ -1746,6 +1730,7 @@ rt_mutex_slowlock(struct rt_mutex *lock,
+  */
+ static inline int rt_mutex_slowtrylock(struct rt_mutex *lock)
+ {
++	struct task_struct *owner;
+ 	int ret;
+ 
+ 	/*
+@@ -1763,7 +1748,9 @@ static inline int rt_mutex_slowtrylock(s
+ 	if (!raw_spin_trylock(&lock->wait_lock))
+ 		return 0;
+ 
+-	ret = try_to_take_rt_mutex(lock, current, NULL);
++	owner = in_irq() ? idle_task(raw_smp_processor_id()) : current;
++
++	ret = try_to_take_rt_mutex(lock, owner, NULL);
+ 
+ 	/*
+ 	 * try_to_take_rt_mutex() sets the lock waiters bit
+@@ -1886,8 +1873,13 @@ static inline int
+ rt_mutex_fasttrylock(struct rt_mutex *lock,
+ 		     int (*slowfn)(struct rt_mutex *lock))
+ {
+-	if (likely(rt_mutex_cmpxchg(lock, NULL, current))) {
+-		rt_mutex_deadlock_account_lock(lock, current);
++	struct task_struct *owner = current;
++
++	if (unlikely(in_irq()))
++		owner = idle_task(raw_smp_processor_id());
++
++	if (likely(rt_mutex_cmpxchg(lock, NULL, owner))) {
++		rt_mutex_deadlock_account_lock(lock, owner);
+ 		return 1;
+ 	}
+ 	return slowfn(lock);
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1425,7 +1425,7 @@ unsigned long get_next_timer_interrupt(u
+ 		expires = base->next_timer;
+ 	}
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-	rt_spin_unlock_after_trylock_in_irq(&base->lock);
++	rt_spin_unlock(&base->lock);
+ #else
+ 	spin_unlock(&base->lock);
+ #endif
+@@ -1518,7 +1518,7 @@ void run_local_timers(void)
+ 		raise_softirq(TIMER_SOFTIRQ);
+ out:
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-	rt_spin_unlock_after_trylock_in_irq(&base->lock);
++	rt_spin_unlock(&base->lock);
+ #endif
+ 	/* The ; ensures that gcc won't complain in the !RT case */
+ 	;
 
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
