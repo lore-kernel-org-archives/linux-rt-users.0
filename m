@@ -1,218 +1,133 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq
- unconditionally"
-Date: Sat, 21 Mar 2015 19:02:23 +0100
-Message-ID: <1426960943.4677.34.camel@gmail.com>
-References: <20150317163541.080310081@goodmis.org>
-	 <20150317163617.218582800@goodmis.org>
-	 <20150317163551.3093b6c2@gandalf.local.home>
-	 <1426753029.4168.80.camel@gmail.com>
-	 <20150319122611.0d002d48@gandalf.local.home> <550AFC6A.4050901@hp.com>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: [OSADL QA 3.18.9-rt4 #1] Radeon driver hangs
+Date: Sun, 22 Mar 2015 23:14:32 +0100
+Message-ID: <550F3EC8.1080109@osadl.org>
+References: <55021FFE.904@osadl.org> <55024A2A.8000206@daenzer.net>
+ <5506EE34.4030803@osadl.org> <550791E4.5070301@daenzer.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f42.google.com ([74.125.82.42]:33662 "EHLO
-	mail-wg0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751784AbbCUSCZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 21 Mar 2015 14:02:25 -0400
-In-Reply-To: <550AFC6A.4050901@hp.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Linux RT Users <linux-rt-users@vger.kernel.org>,
+ DRI Development <dri-devel@lists.freedesktop.org>
+To: =?UTF-8?B?TWljaGVsIETDpG56ZXI=?= <michel@daenzer.net>
+Return-path: <dri-devel-bounces@lists.freedesktop.org>
+In-Reply-To: <550791E4.5070301@daenzer.net>
+List-Unsubscribe: <http://lists.freedesktop.org/mailman/options/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=unsubscribe>
+List-Archive: <http://lists.freedesktop.org/archives/dri-devel>
+List-Post: <mailto:dri-devel@lists.freedesktop.org>
+List-Help: <mailto:dri-devel-request@lists.freedesktop.org?subject=help>
+List-Subscribe: <http://lists.freedesktop.org/mailman/listinfo/dri-devel>,
+ <mailto:dri-devel-request@lists.freedesktop.org?subject=subscribe>
+Errors-To: dri-devel-bounces@lists.freedesktop.org
+Sender: "dri-devel" <dri-devel-bounces@lists.freedesktop.org>
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2015-03-19 at 10:42 -0600, Thavatchai Makphaibulchoke wrote:
-> On 03/19/2015 10:26 AM, Steven Rostedt wrote:
-> > On Thu, 19 Mar 2015 09:17:09 +0100
-> > Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
-> > 
-> > 
-> >> (aw crap, let's go shopping)... so why is the one in timer.c ok?
-> > 
-> > It's not. Sebastian, you said there were no other cases of rt_mutexes
-> > being taken in hard irq context. Looks like timer.c has one.
-> > 
-> > So perhaps the real fix is to get that special case of ownership in
-> > hard interrupt context?
-> > 
-> > -- Steve
-> > 
-> 
-> Steve, I'm still working on the fix we discussed using dummy irq_task.
-> I should be able to submit some time next week, if still interested.
-> 
-> Either that, or I think we should remove the function
-> spin_do_trylock_in_interrupt() to prevent any possibility of running
-> into similar problems in the future.
-
-Why can't we just Let swapper be the owner when in irq with no dummy?
-
-I have "don't raise timer unconditionally" re-applied, the check for a
-running callback bits of my nohz_full fixlet, and the below on top of
-that, and all _seems_ well.
-
----
- include/linux/spinlock_rt.h |    1 
- kernel/locking/rtmutex.c    |   58 ++++++++++++++++++--------------------------
- kernel/time/timer.c         |    4 +--
- 3 files changed, 27 insertions(+), 36 deletions(-)
-
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -22,7 +22,6 @@ extern void __lockfunc rt_spin_lock(spin
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
- extern void __lockfunc rt_spin_unlock(spinlock_t *lock);
--extern void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock);
- extern void __lockfunc rt_spin_unlock_wait(spinlock_t *lock);
- extern int __lockfunc rt_spin_trylock_irqsave(spinlock_t *lock, unsigned long *flags);
- extern int __lockfunc rt_spin_trylock_bh(spinlock_t *lock);
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -934,8 +934,10 @@ static inline void rt_spin_lock_fastlock
- static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
- 					   void  (*slowfn)(struct rt_mutex *lock))
- {
--	if (likely(rt_mutex_cmpxchg(lock, current, NULL)))
--		rt_mutex_deadlock_account_unlock(current);
-+	struct task_struct *owner = rt_mutex_owner(lock);
-+
-+	if (likely(rt_mutex_cmpxchg(lock, owner, NULL)))
-+		rt_mutex_deadlock_account_unlock(owner);
- 	else
- 		slowfn(lock);
- }
-@@ -1072,11 +1074,16 @@ static void wakeup_next_waiter(struct rt
- /*
-  * Slow path to release a rt_mutex spin_lock style
-  */
--static void __sched __rt_spin_lock_slowunlock(struct rt_mutex *lock)
-+static void noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- {
-+	struct task_struct *owner;
-+
-+	raw_spin_lock(&lock->wait_lock);
-+
- 	debug_rt_mutex_unlock(lock);
- 
--	rt_mutex_deadlock_account_unlock(current);
-+	owner = rt_mutex_owner(lock);
-+	rt_mutex_deadlock_account_unlock(owner);
- 
- 	if (!rt_mutex_has_waiters(lock)) {
- 		lock->owner = NULL;
-@@ -1089,24 +1096,8 @@ static void __sched __rt_spin_lock_slowu
- 	raw_spin_unlock(&lock->wait_lock);
- 
- 	/* Undo pi boosting.when necessary */
--	rt_mutex_adjust_prio(current);
--}
--
--static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
--{
--	raw_spin_lock(&lock->wait_lock);
--	__rt_spin_lock_slowunlock(lock);
--}
--
--static void  noinline __sched rt_spin_lock_slowunlock_hirq(struct rt_mutex *lock)
--{
--	int ret;
--
--	do {
--		ret = raw_spin_trylock(&lock->wait_lock);
--	} while (!ret);
--
--	__rt_spin_lock_slowunlock(lock);
-+	if (likely(!is_idle_task(owner)))
-+		rt_mutex_adjust_prio(owner);
- }
- 
- void __lockfunc rt_spin_lock(spinlock_t *lock)
-@@ -1139,13 +1130,6 @@ void __lockfunc rt_spin_unlock(spinlock_
- }
- EXPORT_SYMBOL(rt_spin_unlock);
- 
--void __lockfunc rt_spin_unlock_after_trylock_in_irq(spinlock_t *lock)
--{
--	/* NOTE: we always pass in '1' for nested, for simplicity */
--	spin_release(&lock->dep_map, 1, _RET_IP_);
--	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock_hirq);
--}
--
- void __lockfunc __rt_spin_unlock(struct rt_mutex *lock)
- {
- 	rt_spin_lock_fastunlock(lock, rt_spin_lock_slowunlock);
-@@ -1341,7 +1325,7 @@ static int task_blocks_on_rt_mutex(struc
- 
- 	raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 
--	if (!owner)
-+	if (!owner || is_idle_task(owner))
- 		return 0;
- 
- 	raw_spin_lock_irqsave(&owner->pi_lock, flags);
-@@ -1746,6 +1730,7 @@ rt_mutex_slowlock(struct rt_mutex *lock,
-  */
- static inline int rt_mutex_slowtrylock(struct rt_mutex *lock)
- {
-+	struct task_struct *owner;
- 	int ret;
- 
- 	/*
-@@ -1763,7 +1748,9 @@ static inline int rt_mutex_slowtrylock(s
- 	if (!raw_spin_trylock(&lock->wait_lock))
- 		return 0;
- 
--	ret = try_to_take_rt_mutex(lock, current, NULL);
-+	owner = in_irq() ? idle_task(raw_smp_processor_id()) : current;
-+
-+	ret = try_to_take_rt_mutex(lock, owner, NULL);
- 
- 	/*
- 	 * try_to_take_rt_mutex() sets the lock waiters bit
-@@ -1886,8 +1873,13 @@ static inline int
- rt_mutex_fasttrylock(struct rt_mutex *lock,
- 		     int (*slowfn)(struct rt_mutex *lock))
- {
--	if (likely(rt_mutex_cmpxchg(lock, NULL, current))) {
--		rt_mutex_deadlock_account_lock(lock, current);
-+	struct task_struct *owner = current;
-+
-+	if (unlikely(in_irq()))
-+		owner = idle_task(raw_smp_processor_id());
-+
-+	if (likely(rt_mutex_cmpxchg(lock, NULL, owner))) {
-+		rt_mutex_deadlock_account_lock(lock, owner);
- 		return 1;
- 	}
- 	return slowfn(lock);
---- a/kernel/time/timer.c
-+++ b/kernel/time/timer.c
-@@ -1425,7 +1425,7 @@ unsigned long get_next_timer_interrupt(u
- 		expires = base->next_timer;
- 	}
- #ifdef CONFIG_PREEMPT_RT_FULL
--	rt_spin_unlock_after_trylock_in_irq(&base->lock);
-+	rt_spin_unlock(&base->lock);
- #else
- 	spin_unlock(&base->lock);
- #endif
-@@ -1518,7 +1518,7 @@ void run_local_timers(void)
- 		raise_softirq(TIMER_SOFTIRQ);
- out:
- #ifdef CONFIG_PREEMPT_RT_FULL
--	rt_spin_unlock_after_trylock_in_irq(&base->lock);
-+	rt_spin_unlock(&base->lock);
- #endif
- 	/* The ; ensures that gcc won't complain in the !RT case */
- 	;
-
-
+SGkgTWljaGVsLAoKPj4+PiBbLi5dCj4+Pj4gVGhlIG1vc3Qgc3RyaWtpbmcgcHJvYmxlbSBvZiBr
+ZXJuZWwgMy4xOC45LXJ0NCBhZmZlY3RzIGFsbCBzeXN0ZW1zIHRoYXQKPj4+PiBhcmUgZXF1aXBw
+ZWQgd2l0aCBSYWRlb24gZ3JhcGhpY3MgKGlycmVzcGVjdGl2ZSB3aGV0aGVyIFBDSWUgY2FyZHMg
+b3IKPj4+PiBBUFVzIHdpdGggb24tY2hpcCBncmFwaGljcykuIFRoZXkgc3VmZmVyIGZyb20gYSBo
+YW5naW5nIHJhZGVvbiBkcml2ZXIuCj4+Pj4gVGhlIGJsb2NrIG9jY3VycyB3aGVuIGFjY2VsZXJh
+dGVkIGdyYXBoaWNzIGxvYWQgaXMgY3JlYXRlZCBieSB4MTFwZXJmIG9yCj4+Pj4gZ2x0ZXN0cGVy
+Zi4gU29tZXRpbWVzIG9ubHkgdGhlIGdyYXBoaWNzIGFyZSBmcm96ZW4gd2hpbGUgc3NoIGxvZ2lu
+IHN0aWxsCj4+Pj4gaXMgcG9zc2libGUsIHNvbXRpbWVzIHRoZSBlbnRpcmUgYm94IGlzIG5vIGxv
+bmdlciBhY2Nlc3NpYmxlIGF0IGFsbC4gSW4KPj4+PiBhbnkgY2FzZSwgYSByZWJvb3QgaXMgbmVl
+ZGVkIHRvIHJlY292ZXIgZnJvbSB0aGlzIHNpdHVhdGlvbi4KPj4+Pgo+Pj4+IEhlcmUgaXMgYSBz
+ZWxlY3Rpb24gb2Yga2VybmVsIG1lc3NhZ2VzOgo+Pj4gWy4uLl0KPj4+IFRoZSBjb21taXRzIGZy
+b20KPj4+IGh0dHA6Ly9jZ2l0LmZyZWVkZXNrdG9wLm9yZy9+YWlybGllZC9saW51eC9jb21taXQv
+P2g9ZHJtLWZpeGVzJmlkPWY5NTcwNjNmZWU2MzkyYmI5MzY1MzcwZGI2ZGI3NGRjMGIyZGNlMGEK
+Pj4+Cj4+PiB0bwo+Pj4gaHR0cDovL2NnaXQuZnJlZWRlc2t0b3Aub3JnL35haXJsaWVkL2xpbnV4
+L2NvbW1pdC8/aD1kcm0tZml4ZXMmaWQ9Y2ZmZWZkOWJiMzFjZDM1YWI3NDVkM2I0OTAwNWQxMDYx
+NmQyNWJkYwo+Pj4KPj4+IGFuZAo+Pj4gaHR0cDovL2NnaXQuZnJlZWRlc2t0b3Aub3JnL35haXJs
+aWVkL2xpbnV4L2NvbW1pdC8/aD1kcm0tZml4ZXMmaWQ9YjY2MTAxMDE3MThkNGFiOTBkNzkzYzQ4
+MjYyNWU5OGViMTI2MmNhZAo+Pj4KPj4+IG1pZ2h0IGhlbHAgZm9yIHRoaXMuCj4+Cj4+IFRoYW5r
+cyBhIGxvdC4gSSBoYXZlIGFwcGxpZWQgdGhlc2UgcGF0Y2hlcyB0byBhIG51bWJlciBvZiBzeXN0
+ZW1zOgo+PiAjIHF1aWx0IGFwcGxpZWQgfCB0YWlsIC03Cj4+IHBhdGNoZXMvZHJtLXJhZGVvbi1k
+by1hLXBvc3RpbmctcmVhZC1pbi1yMTAwX3NldF9pcnEucGF0Y2gKPj4gcGF0Y2hlcy9kcm0tcmFk
+ZW9uLWRvLWEtcG9zdGluZy1yZWFkLWluLXJzNjAwX3NldF9pcnEucGF0Y2gKPj4gcGF0Y2hlcy9k
+cm0tcmFkZW9uLWRvLWEtcG9zdGluZy1yZWFkLWluLXI2MDBfc2V0X2lycS5wYXRjaAo+PiBwYXRj
+aGVzL2RybS1yYWRlb24tZG8tYS1wb3N0aW5nLXJlYWQtaW4tZXZlcmdyZWVuX3NldF9pcnEucGF0
+Y2gKPj4gcGF0Y2hlcy9kcm0tcmFkZW9uLWRvLWEtcG9zdGluZy1yZWFkLWluLXNpX3NldF9pcnEu
+cGF0Y2gKPj4gcGF0Y2hlcy9kcm0tcmFkZW9uLWRvLWEtcG9zdGluZy1yZWFkLWluLWNpa19zZXRf
+aXJxLnBhdGNoCj4+IHBhdGNoZXMvZHJtLXJhZGVvbi1maXgtd2FpdC10by1hY3R1YWxseS1vY2N1
+ci1hZnRlci10aGUtc2lnbmFsaW5nLWNhbGxiYWNrLnBhdGNoCj4+Cj4+Cj4+ICAgVGhlIGdyYXBo
+aWMgYm9hcmRzIHN0aWxsIGNyYXNoIGFuZCBmcmVlemUgdGhlIHNjcmVlbiwgYnV0IGluIGNvbnRy
+YXN0Cj4+IHRvIHRoZSBlYXJsaWVyIHNpdHVhdGlvbiB0aGUgc3lzdGVtcyByZW1haW4gYWNjZXNz
+aWJsZSwgYW5kIHRoZSBYCj4+IFdpbmRvdyBzZXJ2ZXIgY2FuIGJlIHJlc3RhcnRlZCBhZnRlciB0
+aGUgb2ZmZW5zaXZlIHByb2dyYW1zIGFyZQo+PiByZW1vdmVkLiBUaGUgY3Jhc2hlcyB3ZXJlIHJl
+bGlhYmx5IHRyaWdnZXJlZCBieQo+PiAtIGdsdGVzdHBlcmYKPj4gICAgb3IKPj4gLSB4MTFwZXJm
+IC1yZXBlYXQgMyAtc3VicyAyNSAtdGltZSAyIC1yZWN0MTAKVGhpcyBpcyBub3QgZW50aXJlbHkg
+Y29ycmVjdCwgc2luY2UgZ2x0ZXN0cGVyZiBkb2VzIG5vdCByZWxpYWJseSBjcmFzaAp0aGUgZ3Jh
+cGhpY3MgY29udHJvbGxlci4gSG93ZXZlciwgIngxMXBlcmYgLXJlcGVhdCAzIC1zdWJzIDI1IC10
+aW1lIDIKLXJlY3QxMCIgYWx3YXlzIGRvZXMgYSByZWxpYWJsZSBqb2IgdG8gdHJpZ2dlciB0aGUg
+Y3Jhc2guCgo+PiBidXQgdGhlIGNyYXNoZXMgYWxzbyBvY2N1ciBzZXZlcmFsIHRpbWVzIHBlciBk
+YXkgZHVyaW5nIG5vcm1hbCB3b3JrCj4+IHN1Y2ggYXMgYnJvd3NpbmcgdGhlIEludGVybmV0IG9y
+IHdyaXRpbmcgYSB0ZXh0IGRvY3VtZW50LiBJZiB5b3Ugd2lzaAo+PiBtZSB0byBwcm92aWRlIGFk
+ZGl0aW9uYWwgZGlhZ25vc3RpYyBpbmZvcm1hdGlvbiBzdWNoIGFzIHJ1bm5pbmcgdGVzdAo+PiBw
+cm9ncmFtcyB3aGlsZSB0aGUgZ3JhcGhpYyBib2FyZHMgYXJlIHVucmVzcG9uc2l2ZSwgSSBjZXJ0
+YWlubHkgY2FuIGRvCj4+IHRoYXQuCj4KPiBEb2VzIGl0IGFsc28gaGFwcGVuIHdpdGggYSBrZXJu
+ZWwgYnVpbHQgZnJvbSBhIGN1cnJlbnQgZHJtLWZpeGVzIHRyZWU/Cj4gaHR0cDovL2NnaXQuZnJl
+ZWRlc2t0b3Aub3JnL35haXJsaWVkL2xpbnV4L2xvZy8/aD1kcm0tZml4ZXMKTm8uIEFwcGFyZW50
+bHksIHlvdSBuZWVkIGZ1bGwgcHJlZW1wdGlvbiB0byBleHBvc2UgdGhlIHByb2JsZW0uCgpUaGUg
+Zm9sbG93aW5nIGxpc3QgY29udGFpbnMgdGhlIHJlc3VsdHMgd2hldGhlciB0aGUgY29tbWFuZCAi
+eDExcGVyZgotcmVwZWF0IDMgLXN1YnMgMjUgLXRpbWUgMiAtcmVjdDEwIiBmcmVlemVzIHRoZSBS
+YWRlb24gYm9hcmQgdW5kZXIgdGVzdAooUmFkZW9uIEhEIDc5NzAgWEZTIC8gUjkgMjgwWCkgb3Ig
+bm90OgpsaW51eC0zLjEyLjMzLXJ0NDcgICAgICAgICAgICAgICBubwpsaW51eC0zLjE0LjM0LXJ0
+MzIgICAgICAgICAgICAgICBubwpsaW51eC0zLjE0LjM0LWRybS0zLjE2LjctcnQzMiogICBubwps
+aW51eC0zLjE4LjctcnQxICAgICAgICAgICAgICAgIFlFUwpsaW51eC0zLjE4LjktcnQ0ICAgICAg
+ICAgICAgICAgIFlFUwpsaW51eC0zLjE4LjktcnQ1ICAgICAgICAgICAgICAgIFlFUwpsaW51eC0z
+LjE4LjktZHJtLTMuMTYuNy1ydDUqKiAgICBubwpsaW51eC00LjAuMC1yYzQgICAgICAgICAgICAg
+ICAgICBubwpsaW51eC1kcm0tZml4ZXMgICAgICAgICAgICAgICAgICBubwoqRFJNIHN1YnN5c3Rl
+bSBiYWNrcG9ydGVkIGZyb20gbGludXgtMy4xNi43IHRvIGxpbnV4LTMuMTQuMzQtcnQzMi4KKipE
+Uk0gc3Vic3lzdGVtIHBvcnRlZCBmcm9tIGxpbnV4LTMuMTYuNyB0byBsaW51eC0zLjE4LjktcnQ1
+LgoKTW9yZSBvYnNlcnZhdGlvbnM6CklmIGZ1bGwgZnVuY3Rpb24gdHJhY2luZyBpcyBlbmFibGVk
+ICh3aGljaCBtYWtlcyB0aGUgc3lzdGVtIGFib3V0IGZpdmUKdGltZXMgc2xvd2VyKSwgdGhlIGdy
+YXBoaWNzIGNvbnRyb2xsZXIgbm8gbG9uZ2VyIGZyZWV6ZXMuIFdpdGggcGFydGlhbApmdW5jdGlv
+biB0cmFjaW5nIHN1Y2ggYXMgImVjaG8gKmRybSogPnNldF9mdHJhY2VfZmlsdGVyIiwgdGhlCmNv
+bnRyb2xsZXIgc3RpbGwgZnJlZXplcy4gVGhlIHRyYWNlIHRoZW4gY29udGFpbnMgdmJsYW5rIGlu
+dGVycnVwdApwcm9jZXNzaW5nIG9ubHksIGlvY3RscyBhcmUgbm8gbG9uZ2VyIGV4ZWN1dGVkLgoK
+VGhpcyBpcyB0aGUgbG9jYXRpb24gd2hlcmUgdGhlIGRyaXZlciBoYW5nczoKWzI1MTA0LjUwOTI1
+OF0gSU5GTzogdGFzayBYb3JnLmJpbjoxNjU5MSBibG9ja2VkIGZvciBtb3JlIHRoYW4gMTIwIHNl
+Y29uZHMuClsyNTEwNC41MTYzMjJdICAgICAgIE5vdCB0YWludGVkIDMuMTguOS1ydDUgIzIKWzI1
+MTA0LjUyMDcxNV0gImVjaG8gMCA+IC9wcm9jL3N5cy9rZXJuZWwvaHVuZ190YXNrX3RpbWVvdXRf
+c2VjcyIgCmRpc2FibGVzIHRoaXMgbWVzc2FnZS4KWzI1MTA0LjUyODg1M10gWG9yZy5iaW4gICAg
+ICAgIEQgZmZmZmZmZmY4MTcxZWQ5MCAgICAgMCAxNjU5MSAgMTYyMzkgCjB4MTA0MDAwODAKWzI1
+MTA0LjUzNjEwMl0gIGZmZmY4ODAwYmEwYmI4ZDggMDAwMDAwMDAwMDAwMDAwMiBmZmZmODgwMGJh
+MGJiZmQ4IAowMDAwMDAwMDAwMDAwMDA2ClsyNTEwNC41MzYxMDNdICAwMDAwMDAwMDAwMDBkYzA4
+IGZmZmY4ODA2MjZkMGRjMDggZmZmZjg4MDBiYTBiYmZkOCAKMDAwMDAwMDAwMDAwZGMwOApbMjUx
+MDQuNTM2MTA0XSAgZmZmZjg4MDYxYjJjZGNkMCBmZmZmODgwNjE2ZDNhOTQwIGZmZmY4ODAwMzVj
+MTAwMDAgCmZmZmY4ODA2MTZkM2E5NDAKWzI1MTA0LjU1OTI3NF0gQ2FsbCBUcmFjZToKWzI1MTA0
+LjU2MTg0NF0gIFs8ZmZmZmZmZmY4MTcxYmI1ND5dIHNjaGVkdWxlKzB4MzQvMHhhMApbMjUxMDQu
+NTYxODQ2XSAgWzxmZmZmZmZmZjgxNzFlMmFjPl0gc2NoZWR1bGVfdGltZW91dCsweDIzYy8weDJh
+MApbMjUxMDQuNTYxODcwXSAgWzxmZmZmZmZmZmEwMGUzYWI2Pl0gPyByYWRlb25fZmVuY2VfcHJv
+Y2VzcysweDE2LzB4NDAgCltyYWRlb25dClsyNTEwNC41NjE4NzldICBbPGZmZmZmZmZmYTAwZTNi
+MjQ+XSA/IApyYWRlb25fZmVuY2VfYW55X3NlcV9zaWduYWxlZCsweDQ0LzB4OTAgW3JhZGVvbl0K
+WzI1MTA0LjU2MTg4N10gIFs8ZmZmZmZmZmZhMDBlM2U5Nz5dIApyYWRlb25fZmVuY2Vfd2FpdF9z
+ZXFfdGltZW91dC5jb25zdHByb3AuOCsweDMyNy8weDM4MCBbcmFkZW9uXQpbMjUxMDQuNTYxODg5
+XSAgWzxmZmZmZmZmZjgxMGQxOWMwPl0gPyBfX3dha2VfdXBfc3luYysweDIwLzB4MjAKWzI1MTA0
+LjU2MTg5OF0gIFs8ZmZmZmZmZmZhMDBlNDI4Nz5dIHJhZGVvbl9mZW5jZV93YWl0X2FueSsweDU3
+LzB4NzAgCltyYWRlb25dClsyNTEwNC41NjE5MTRdICBbPGZmZmZmZmZmYTAxNWEzNmY+XSByYWRl
+b25fc2FfYm9fbmV3KzB4MmFmLzB4NGIwIFtyYWRlb25dClsyNTEwNC41NjE5MTZdICBbPGZmZmZm
+ZmZmODEzNzliMDc+XSA/IGRlYnVnX3NtcF9wcm9jZXNzb3JfaWQrMHgxNy8weDIwClsyNTEwNC41
+NjE5MThdICBbPGZmZmZmZmZmODExZDBiNGE+XSA/IF9fa21hbGxvYysweDhhLzB4MzAwClsyNTEw
+NC41NjE5MzJdICBbPGZmZmZmZmZmYTAxYjIxOTc+XSByYWRlb25faWJfZ2V0KzB4MzcvMHhlMCBb
+cmFkZW9uXQpbMjUxMDQuNTYxOTQzXSAgWzxmZmZmZmZmZmEwMTAwM2VlPl0gcmFkZW9uX2NzX2lv
+Y3RsKzB4MjJlLzB4ODYwIFtyYWRlb25dClsyNTEwNC41NjE5NTJdICBbPGZmZmZmZmZmYTAwMDVi
+Yzc+XSBkcm1faW9jdGwrMHgxOTcvMHg2NzAgW2RybV0KWzI1MTA0LjU2MTk1NF0gIFs8ZmZmZmZm
+ZmY4MTM3OWIwNz5dID8gZGVidWdfc21wX3Byb2Nlc3Nvcl9pZCsweDE3LzB4MjAKWzI1MTA0LjU2
+MTk1Nl0gIFs8ZmZmZmZmZmY4MTA5MDFiYT5dID8gdW5waW5fY3VycmVudF9jcHUrMHgxYS8weDgw
+ClsyNTEwNC41NjE5NTldICBbPGZmZmZmZmZmODEwYmEyMDA+XSA/IG1pZ3JhdGVfZW5hYmxlKzB4
+OTAvMHgxYTAKWzI1MTA0LjU2MTk2Nl0gIFs8ZmZmZmZmZmZhMDBjNjA0Yz5dIHJhZGVvbl9kcm1f
+aW9jdGwrMHg0Yy8weDgwIFtyYWRlb25dClsyNTEwNC41NjE5NjddICBbPGZmZmZmZmZmODExZmRi
+ODg+XSBkb192ZnNfaW9jdGwrMHgyYzgvMHg0YzAKWzI1MTA0LjU2MTk2OV0gIFs8ZmZmZmZmZmY4
+MTIwOGE5Mj5dID8gX19mZ2V0KzB4NzIvMHhiMApbMjUxMDQuNTYxOTcwXSAgWzxmZmZmZmZmZjgx
+MWZkZTAxPl0gU3lTX2lvY3RsKzB4ODEvMHhhMApbMjUxMDQuNTYxOTcxXSAgWzxmZmZmZmZmZjgx
+NzFmOTllPl0gdHJhY2VzeXNfcGhhc2UyKzB4ZDQvMHhkOQoKQ29uY2x1c2lvbjoKQW4gdXBncmFk
+ZSBjaGFuZ2Ugb2YgdGhlIERSTSBzdWJzeXN0ZW0gYmV0d2VlbiAzLjE2LjcgYW5kIDMuMTguOQpp
+bnRyb2R1Y2VkIGEgcmFjZSBjb25kaXRpb24gdGhhdCBmcmVlemVzIFJhZGVvbiBncmFwaGljcy4g
+SXQgcmVxdWlyZXMKZnVsbCBwcmVlbXB0aW9uIHRvIGJlIGV4cG9zZWQgcmVsaWFibHkuCgpUaGFu
+a3MsCgktQ2Fyc3Rlbi4KX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX18KZHJpLWRldmVsIG1haWxpbmcgbGlzdApkcmktZGV2ZWxAbGlzdHMuZnJlZWRlc2t0b3Au
+b3JnCmh0dHA6Ly9saXN0cy5mcmVlZGVza3RvcC5vcmcvbWFpbG1hbi9saXN0aW5mby9kcmktZGV2
+ZWwK
