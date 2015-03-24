@@ -1,13 +1,12 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.72-rt77
-Date: Mon, 23 Mar 2015 11:04:13 -0400
-Message-ID: <20150323110413.6ef4777e@gandalf.local.home>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch] rt, hotplug: Use set_cpus_allowed_ptr() in
+ sync_unplug_thread()
+Date: Tue, 24 Mar 2015 08:14:49 +0100
+Message-ID: <1427181289.3316.27.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
+Cc: Steven Rostedt <rostedt@goodmis.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
@@ -16,34 +15,44 @@ Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
-Dear RT Folks,
+do_set_cpus_allowed() is not safe vs ->sched_class change.
 
-I'm pleased to announce the 3.10.72-rt77 stable release.
+crash> bt
+PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
+ #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
+ #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
+ #2 [ffff880274d25cd8] oops_end at ffffffff81525818
+ #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
+ #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
+    [exception RIP: set_cpus_allowed_rt+18]
+    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
+    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
+    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
+    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
+    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
+    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
+    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
+ #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
+ #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
+ #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
+ #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
+crash> task_struct ffff88026f979da0 | grep class
+  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
 
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Cc: stable-rt@vger.kernel.org
+---
+ kernel/cpu.c |    2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-This release is just an update to the new stable 3.10.72 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.10-rt
-  Head SHA1: 23da46008151c14a3cda863e2dff24c97b69773f
-
-
-Or to build 3.10.72-rt77 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.72.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.72-rt77.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -265,7 +265,7 @@ static int sync_unplug_thread(void *data
+ 	 * we don't want any more work on this CPU.
+ 	 */
+ 	current->flags &= ~PF_NO_SETAFFINITY;
+-	do_set_cpus_allowed(current, cpu_present_mask);
++	set_cpus_allowed_ptr(current, cpu_present_mask);
+ 	migrate_me();
+ 	return 0;
+ }
