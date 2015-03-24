@@ -1,58 +1,25 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch] rt, hotplug: Use set_cpus_allowed_ptr() in
- sync_unplug_thread()
-Date: Tue, 24 Mar 2015 08:14:49 +0100
-Message-ID: <1427181289.3316.27.camel@gmail.com>
+Subject: Re: [ANNOUNCE] 3.18.9-rt5
+Date: Tue, 24 Mar 2015 09:42:05 +0100
+Message-ID: <1427186525.3316.30.camel@gmail.com>
+References: <20150316210146.GG28130@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150316210146.GG28130@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+On Mon, 2015-03-16 at 22:01 +0100, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
 
-do_set_cpus_allowed() is not safe vs ->sched_class change.
+> - lazy preempt on x86_64 is enabled again. It seems that it fixed
+>   itself.
 
-crash> bt
-PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
- #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
- #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
- #2 [ffff880274d25cd8] oops_end at ffffffff81525818
- #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
- #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
-    [exception RIP: set_cpus_allowed_rt+18]
-    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
-    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
-    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
-    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
-    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
-    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
-    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
- #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
- #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
- #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
- #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
-crash> task_struct ffff88026f979da0 | grep class
-  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Cc: stable-rt@vger.kernel.org
----
- kernel/cpu.c |    2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -265,7 +265,7 @@ static int sync_unplug_thread(void *data
- 	 * we don't want any more work on this CPU.
- 	 */
- 	current->flags &= ~PF_NO_SETAFFINITY;
--	do_set_cpus_allowed(current, cpu_present_mask);
-+	set_cpus_allowed_ptr(current, cpu_present_mask);
- 	migrate_me();
- 	return 0;
- }
+009f60e2 sched: stop the unbound recursion in preempt_schedule_context()
