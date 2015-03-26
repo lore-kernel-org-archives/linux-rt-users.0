@@ -1,63 +1,50 @@
-From: Wanpeng Li <wanpeng.li@linux.intel.com>
-Subject: Re: [PATCH v5] sched/rt: Use IPI to trigger RT task push migration
- instead of pulling
-Date: Thu, 26 Mar 2015 09:24:22 +0800
-Message-ID: <20150326012422.GA12167@kernel>
-References: <20150318144946.2f3cc982@gandalf.local.home>
- <20150320103120.GZ23123@twins.programming.kicks-ass.net>
- <20150320103005.3914fd8d@gandalf.local.home>
-Reply-To: Wanpeng Li <wanpeng.li@linux.intel.com>
+From: Thavatchai Makphaibulchoke <thavatchai.makpahibulchoke@hp.com>
+Subject: Re: [PATCH RT 2/4] Revert "timers: do not raise softirq unconditionally"
+Date: Wed, 25 Mar 2015 20:17:14 -0600
+Message-ID: <55136C2A.60508@hp.com>
+References: <20150317163541.080310081@goodmis.org>	 <20150317163617.218582800@goodmis.org>	 <20150317163551.3093b6c2@gandalf.local.home>	 <1426753029.4168.80.camel@gmail.com>	 <20150319122611.0d002d48@gandalf.local.home> <550AFC6A.4050901@hp.com>	 <1426960943.4677.34.camel@gmail.com> <1427085774.3151.7.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?iso-8859-1?Q?J=F6rn?= Engel <joern@purestorage.com>,
-	Wanpeng Li <wanpeng.li@linux.intel.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga03.intel.com ([134.134.136.65]:35875 "EHLO mga03.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751133AbbCZBmW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 25 Mar 2015 21:42:22 -0400
-Content-Disposition: inline
-In-Reply-To: <20150320103005.3914fd8d@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1427085774.3151.7.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Mar 20, 2015 at 10:30:05AM -0400, Steven Rostedt wrote:
->On Fri, 20 Mar 2015 11:31:20 +0100
->Peter Zijlstra <peterz@infradead.org> wrote:
->
->> > Parts-suggested-by: Peter Zijlstra <peterz@infradead.org>
->> > Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
->> 
->> OK, queued it.
->
->Feel free to update that loop.
->
->> Do we want to look into making the same change for
->> deadline once this has settled?
->
->Hmm, looks like it could use it as well. Should that code be made a bit
->more generic to share the same algorithm? Would need to pass in a
->pointer to the mask to check.
 
-Is there any one doing it currently? Otherwise, I can be the volunteer 
-for dealine part. ;)
 
-Regards,
-Wanpeng Li 
+On 03/22/2015 10:42 PM, Mike Galbraith wrote:
+>> Why can't we just Let swapper be the owner when in irq with no dummy?
+>>
 
->
->-- Steve
->--
->To unsubscribe from this list: send the line "unsubscribe linux-kernel" in
->the body of a message to majordomo@vger.kernel.org
->More majordomo info at  http://vger.kernel.org/majordomo-info.html
->Please read the FAQ at  http://www.tux.org/lkml/
+Thanks Mike for the suggestion.  That may also work. Unfortunately
+somehow I'm still having a hung problem, which may be related to the
+priority of the interrupt handler task.
+
+>> I have "don't raise timer unconditionally" re-applied, the check for a
+>> running callback bits of my nohz_full fixlet, and the below on top of
+>> that, and all _seems_ well.
+> 
+> But not so well on 64 core box.  That has nothing to do with hacklet
+> though, re-applying timers-do-not-raise-softirq-unconditionally.patch
+> without thta hangs the 64 core box during boot with no help from me
+> other than to patchlet to let nohz work at all, seems there's another
+> issue lurking there.  Hohum.  Without 'don't raise..", big box is fine.
+> 
+
+If you get your patch to work, I could try my test that was able to
+reproduce the problem consistently.
+
+Thanks,
+Mak.
+
+> 	-Mike
+> 
