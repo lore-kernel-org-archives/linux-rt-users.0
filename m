@@ -1,37 +1,121 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH v5] sched/rt: Use IPI to trigger RT task push migration
- instead of pulling
-Date: Fri, 27 Mar 2015 12:14:00 -0400
-Message-ID: <20150327121400.3695e893@gandalf.local.home>
-References: <20150318144946.2f3cc982@gandalf.local.home>
-	<20150320103120.GZ23123@twins.programming.kicks-ass.net>
-	<20150320103005.3914fd8d@gandalf.local.home>
-	<20150326012422.GA12167@kernel>
+From: Purcareata Bogdan <b43198@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Fri, 27 Mar 2015 19:07:57 +0200
+Message-ID: <55158E6D.40304@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>	 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>	 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>	 <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de> <1424999159.4698.78.camel@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Ingo Molnar <mingo@kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	=?UTF-8?B?SsO2cm4=?= Engel <joern@purestorage.com>
-To: Wanpeng Li <wanpeng.li@linux.intel.com>
+Cc: Paolo Bonzini <pbonzini@redhat.com>,
+	Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
+	"Thomas Gleixner" <tglx@linutronix.de>
+To: Scott Wood <scottwood@freescale.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150326012422.GA12167@kernel>
+In-Reply-To: <1424999159.4698.78.camel@freescale.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 26 Mar 2015 09:24:22 +0800
-Wanpeng Li <wanpeng.li@linux.intel.com> wrote:
+On 27.02.2015 03:05, Scott Wood wrote:
+> On Thu, 2015-02-26 at 14:31 +0100, Sebastian Andrzej Siewior wrote:
+>> On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
+>>>
+>>>
+>>> On 24/02/2015 00:27, Scott Wood wrote:
+>>>> This isn't a host PIC driver.  It's guest PIC emulation, some of which
+>>>> is indeed not suitable for a rawlock (in particular, openpic_update_irq
+>>>> which loops on the number of vcpus, with a loop body that calls
+>>>> IRQ_check() which loops over all pending IRQs).
+>>>
+>>> The question is what behavior is wanted of code that isn't quite
+>>> RT-ready.  What is preferred, bugs or bad latency?
+>>>
+>>> If the answer is bad latency (which can be avoided simply by not running
+>>> KVM on a RT kernel in production), patch 1 can be applied.  If the
+>> can be applied *but* makes no difference if applied or not.
+>>
+>>> answer is bugs, patch 1 is not upstream material.
+>>>
+>>> I myself prefer to have bad latency; if something takes a spinlock in
+>>> atomic context, that spinlock should be raw.  If it hurts (latency),
+>>> don't do it (use the affected code).
+>>
+>> The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
+>> only in -RT. There is no change upstream. In general we fix such things
+>> in -RT first and forward the patches upstream if possible. This convert
+>> thingy would be possible.
+>> Bug fixing comes before latency no matter if RT or not. Converting
+>> every lock into a rawlock is not always the answer.
+>> Last thing I read from Scott is that he is not entirely sure if this is
+>> the right approach or not and patch #1 was not acked-by him either.
+>>
+>> So for now I wait for Scott's feedback and maybe a backtrace :)
+>
+> Obviously leaving it in a buggy state is not what we want -- but I lean
+> towards a short term "fix" of putting "depends on !PREEMPT_RT" on the
+> in-kernel MPIC emulation (which is itself just an optimization -- you
+> can still use KVM without it).  This way people don't enable it with RT
+> without being aware of the issue, and there's more of an incentive to
+> fix it properly.
+>
+> I'll let Bogdan supply the backtrace.
 
-> Is there any one doing it currently? Otherwise, I can be the volunteer 
-> for dealine part. ;)
-> 
+So about the backtrace. Wasn't really sure how to "catch" this, so what 
+I did was to start a 24 VCPUs guest on a 24 CPU board, and in the guest 
+run 24 netperf flows with an external back to back board of the same 
+kind. I assumed this would provide the sufficient VCPUs and external 
+interrupt to expose an alleged culprit.
 
-You can try if you want.
+With regards to measuring the latency, I thought of using ftrace, 
+specifically the preemptirqsoff latency histogram. Unfortunately, I 
+wasn't able to capture any major differences between running a guest 
+with in-kernel MPIC emulation (with the openpic raw_spinlock_conversion 
+applied) vs. no in-kernel MPIC emulation. Function profiling 
+(trace_stat) shows that in the second case there's a far greater time 
+spent in kvm_handle_exit (100x), but overall, the maximum latencies for 
+preemptirqsoff don't look that much different.
 
--- Steve
+Here are the max numbers (preemptirqsoff) for the 24 CPUs, on the host 
+RT Linux, sorted in descending order, expressed in microseconds:
+
+In-kernel MPIC		QEMU MPIC
+3975			5105
+2079			3972
+1303			3557
+1106			1725
+447			907
+423			853
+362			723
+343			182
+260			121
+133			116
+131			116
+118			115
+116			114
+114			114
+114			114
+114			99
+113			99
+103			98
+98			98
+95			97
+87			96
+83			83
+83			82
+80			81
+
+I'm not sure if this captures openpic behavior or just scheduler behavior.
+
+Anyways, I'm pro adding the openpic raw_spinlock conversion along with 
+disabling the in-kernel MPIC emulation for upstream. But just wanted to 
+catch up with this last request from a while ago.
+
+Do you think it would be better to just submit the new patch or should I 
+do some further testing? Do you have any suggestions regarding what else 
+I should look at / how to test?
+
+Thank you,
+Bogdan P.
