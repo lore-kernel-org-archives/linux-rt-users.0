@@ -1,121 +1,68 @@
-From: Purcareata Bogdan <b43198@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Fri, 27 Mar 2015 19:07:57 +0200
-Message-ID: <55158E6D.40304@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>	 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>	 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>	 <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de> <1424999159.4698.78.camel@freescale.com>
+From: Daniel Kasak <d.j.kasak.dk@gmail.com>
+Subject: Re: btrfs and linux-rt
+Date: Sun, 29 Mar 2015 10:55:09 +1100
+Message-ID: <CAF73Y=SQvfHGvNJ_yhQ4Tbkyiq5ZSTUhOTMLTe-6_Js2orjwPw@mail.gmail.com>
+References: <CAF73Y=Qfsw=Yre6d_kP7Vmn+Ln1L4viBVRPksdomdGKVzDu+6Q@mail.gmail.com>
+	<20150313113832.GE5592@linutronix.de>
+	<20150313211409.GA29519@linutronix.de>
+	<CAF73Y=RDjYCZK_YbLy9KCvNz_x9dtjZV=Q0uo-V9SWZ27TQBCA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Paolo Bonzini <pbonzini@redhat.com>,
-	Alexander Graf <agraf@suse.de>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: Scott Wood <scottwood@freescale.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1424999159.4698.78.camel@freescale.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lb0-f176.google.com ([209.85.217.176]:35614 "EHLO
+	mail-lb0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751743AbbC1XzK convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 28 Mar 2015 19:55:10 -0400
+Received: by lbdc10 with SMTP id c10so31492004lbd.2
+        for <linux-rt-users@vger.kernel.org>; Sat, 28 Mar 2015 16:55:09 -0700 (PDT)
+In-Reply-To: <CAF73Y=RDjYCZK_YbLy9KCvNz_x9dtjZV=Q0uo-V9SWZ27TQBCA@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 27.02.2015 03:05, Scott Wood wrote:
-> On Thu, 2015-02-26 at 14:31 +0100, Sebastian Andrzej Siewior wrote:
->> On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
->>>
->>>
->>> On 24/02/2015 00:27, Scott Wood wrote:
->>>> This isn't a host PIC driver.  It's guest PIC emulation, some of which
->>>> is indeed not suitable for a rawlock (in particular, openpic_update_irq
->>>> which loops on the number of vcpus, with a loop body that calls
->>>> IRQ_check() which loops over all pending IRQs).
->>>
->>> The question is what behavior is wanted of code that isn't quite
->>> RT-ready.  What is preferred, bugs or bad latency?
->>>
->>> If the answer is bad latency (which can be avoided simply by not running
->>> KVM on a RT kernel in production), patch 1 can be applied.  If the
->> can be applied *but* makes no difference if applied or not.
->>
->>> answer is bugs, patch 1 is not upstream material.
->>>
->>> I myself prefer to have bad latency; if something takes a spinlock in
->>> atomic context, that spinlock should be raw.  If it hurts (latency),
->>> don't do it (use the affected code).
->>
->> The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
->> only in -RT. There is no change upstream. In general we fix such things
->> in -RT first and forward the patches upstream if possible. This convert
->> thingy would be possible.
->> Bug fixing comes before latency no matter if RT or not. Converting
->> every lock into a rawlock is not always the answer.
->> Last thing I read from Scott is that he is not entirely sure if this is
->> the right approach or not and patch #1 was not acked-by him either.
->>
->> So for now I wait for Scott's feedback and maybe a backtrace :)
+I've tested with 3.18.9-rt5, and I'm happy to report that this kernel
+works fine for me :)
+
+Dan
+
+On Sat, Mar 14, 2015 at 5:51 PM, Daniel Kasak <d.j.kasak.dk@gmail.com> =
+wrote:
+> Interesting.
 >
-> Obviously leaving it in a buggy state is not what we want -- but I lean
-> towards a short term "fix" of putting "depends on !PREEMPT_RT" on the
-> in-kernel MPIC emulation (which is itself just an optimization -- you
-> can still use KVM without it).  This way people don't enable it with RT
-> without being aware of the issue, and there's more of an incentive to
-> fix it properly.
+> Nah I wasn't doing anything special with btrfs. I'll try again with a=
+ 3.18
+> kernel and see if it's magically resolved :)
 >
-> I'll let Bogdan supply the backtrace.
-
-So about the backtrace. Wasn't really sure how to "catch" this, so what 
-I did was to start a 24 VCPUs guest on a 24 CPU board, and in the guest 
-run 24 netperf flows with an external back to back board of the same 
-kind. I assumed this would provide the sufficient VCPUs and external 
-interrupt to expose an alleged culprit.
-
-With regards to measuring the latency, I thought of using ftrace, 
-specifically the preemptirqsoff latency histogram. Unfortunately, I 
-wasn't able to capture any major differences between running a guest 
-with in-kernel MPIC emulation (with the openpic raw_spinlock_conversion 
-applied) vs. no in-kernel MPIC emulation. Function profiling 
-(trace_stat) shows that in the second case there's a far greater time 
-spent in kvm_handle_exit (100x), but overall, the maximum latencies for 
-preemptirqsoff don't look that much different.
-
-Here are the max numbers (preemptirqsoff) for the 24 CPUs, on the host 
-RT Linux, sorted in descending order, expressed in microseconds:
-
-In-kernel MPIC		QEMU MPIC
-3975			5105
-2079			3972
-1303			3557
-1106			1725
-447			907
-423			853
-362			723
-343			182
-260			121
-133			116
-131			116
-118			115
-116			114
-114			114
-114			114
-114			99
-113			99
-103			98
-98			98
-95			97
-87			96
-83			83
-83			82
-80			81
-
-I'm not sure if this captures openpic behavior or just scheduler behavior.
-
-Anyways, I'm pro adding the openpic raw_spinlock conversion along with 
-disabling the in-kernel MPIC emulation for upstream. But just wanted to 
-catch up with this last request from a while ago.
-
-Do you think it would be better to just submit the new patch or should I 
-do some further testing? Do you have any suggestions regarding what else 
-I should look at / how to test?
-
-Thank you,
-Bogdan P.
+> Dan
+>
+> On Sat, Mar 14, 2015 at 8:14 AM, Sebastian Andrzej Siewior
+> <bigeasy@linutronix.de> wrote:
+>>
+>> * Sebastian Andrzej Siewior | 2015-03-13 12:38:32 [+0100]:
+>>
+>> >I remember some people complained about btrfs. I then bootet a kvm
+>> >machine with btrfs as rootfs and it worked fine=E2=80=A6 Are you us=
+ing some
+>> >"special" btrfs features or is this just a plain install?
+>>
+>> Okay. Among other things I manged to install fc21 on btrfs and it
+>> booted (well systemd complain about missing things and did not want =
+to
+>> continue but I got a shell and could login which means btrfs got
+>> mounted).
+>>
+>> >>Thanks :)
+>> >>
+>> >>Dan
+>>
+>> Sebastian
+>
+>
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
