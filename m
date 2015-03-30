@@ -1,103 +1,45 @@
-From: Mikhail Avkhimenia <mikhail.avkhimenia@emlid.com>
-Subject: Re: 3.18 RT freezes on Raspberry Pi 2
-Date: Mon, 30 Mar 2015 13:40:41 +0300
-Message-ID: <3863561427712041@web3j.yandex.ru>
-References: <3671201425478878@web10j.yandex.ru>
-	 <loom.20150306T043408-818@post.gmane.org>
-	 <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de>
+From: Gustavo Bittencourt <gbitten@gmail.com>
+Subject: Re: Tracing within functions.
+Date: Mon, 30 Mar 2015 10:49:22 -0300
+Message-ID: <CAA8Xd+-oD2woif3+s9PSR1yyJE6fJzuf02RYnBpoRbO8agMxWw@mail.gmail.com>
+References: <CAAVaN8yOYUf_+5Pxh4qOWxb5rqMu__LcqSxr0YMVA114A41YWA@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=koi8-r
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Julien Ciesla <jciesla@resologis.com>
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=UTF-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Andy Ng <andreas2025@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from forward15j.cmail.yandex.net ([5.255.227.179]:57561 "EHLO
-	forward15j.cmail.yandex.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1750938AbbC3Kse (ORCPT
+Received: from mail-oi0-f43.google.com ([209.85.218.43]:34186 "EHLO
+	mail-oi0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753120AbbC3NtX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Mar 2015 06:48:34 -0400
-In-Reply-To: <20150309141038.GC13768@linutronix.de>
+	Mon, 30 Mar 2015 09:49:23 -0400
+Received: by oigz129 with SMTP id z129so84188911oig.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2015 06:49:22 -0700 (PDT)
+In-Reply-To: <CAAVaN8yOYUf_+5Pxh4qOWxb5rqMu__LcqSxr0YMVA114A41YWA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+I think you can use FTRACE (http://lwn.net/Articles/365835/) and set
+function_graph as the tracer. To filter the output, you must enable
+CONFIG_DYNAMIC_FTRACE and set which function should be traced.
 
-I think I found the solution.=20
-The problem is that new USB driver for Raspberry Pi uses FIQ in a manne=
-r that leads to lockups on SMP systems, while booting of the older non-=
-=46IQ driver was broken.=20
-The following patch fixes an error and allows to boot the non-FIQ drive=
-r:
-
----
- drivers/usb/host/dwc_otg/dwc_otg_hcd.c | 16 ++++++++++++----
- 1 file changed, 12 insertions(+), 4 deletions(-)
-
-diff --git a/drivers/usb/host/dwc_otg/dwc_otg_hcd.c b/drivers/usb/host/=
-dwc_otg/dwc_otg_hcd.c
-index 68534d4..6a006c5 100644
---- a/drivers/usb/host/dwc_otg/dwc_otg_hcd.c
-+++ b/drivers/usb/host/dwc_otg/dwc_otg_hcd.c
-@@ -1414,8 +1414,12 @@ static void assign_and_init_hc(dwc_otg_hcd_t * h=
-cd, dwc_otg_qh_t * qh)
- 	dwc_otg_hc_init(hcd->core_if, hc);
-=20
- 	local_irq_save(flags);
--	local_fiq_disable();
--	fiq_fsm_spin_lock(&hcd->fiq_state->lock);
-+
-+	if (fiq_enable) {
-+		local_fiq_disable();
-+		fiq_fsm_spin_lock(&hcd->fiq_state->lock);
-+	}
-+
- 	/* Enable the top level host channel interrupt. */
- 	intr_enable =3D (1 << hc->hc_num);
- 	DWC_MODIFY_REG32(&hcd->core_if->host_if->host_global_regs->haintmsk, =
-0, intr_enable);
-@@ -1423,8 +1427,12 @@ static void assign_and_init_hc(dwc_otg_hcd_t * h=
-cd, dwc_otg_qh_t * qh)
- 	/* Make sure host channel interrupts are enabled. */
- 	gintmsk.b.hcintr =3D 1;
- 	DWC_MODIFY_REG32(&hcd->core_if->core_global_regs->gintmsk, 0, gintmsk=
-=2Ed32);
--	fiq_fsm_spin_unlock(&hcd->fiq_state->lock);
--	local_fiq_enable();
-+
-+	if (fiq_enable) {
-+		fiq_fsm_spin_unlock(&hcd->fiq_state->lock);
-+		local_fiq_enable();
-+	}
-+=09
- 	local_irq_restore(flags);
- 	hc->qh =3D qh;
- }
---
-
-
-To boot the with the non-FIQ driver add this to the /boot/cmdline.txt:
-dwc_otg.fiq_enable=3D0 dwc_otg.fiq_fsm_enable=3D0 dwc_otg.nak_holdoff=3D=
-0
-=9A
-
-Best regards,
-Mikhail Avkhimenia
-
-
-09.03.2015, 17:13, "Sebastian Andrzej Siewior" <bigeasy@linutronix.de>:
-> * Julien Ciesla | 2015-03-09 01:55:49 [+0000]:
->> Same issue on linux raspberrypi 3.18.9 with patch rt4.
+On Sun, Mar 29, 2015 at 5:16 PM, Andy Ng <andreas2025@gmail.com> wrote:
+> Hello,
 >
-> Then disable USB completely.
+> I am using an RT kernel and in my  driver there is  an atomic code
+> path that just makes some critical I/O operations. I would like to
+> trigger a system function trace when kernel enters into a specific
+> function in my driver and stop the system trace at the end of the
+> function. I would like to identify time execution latencies for a
+> specific code path. I am using Cortex A9 and I have perf and PMU up
+> and running, but still it is not clear to me how to retrieve the
+> traces with those latencies in my code path.
 >
-> Sebastian
+> Any ideas how to trace/measure that  will be very much appreciated.
+>
+> Best regards,
+> Andy
 > --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers" in
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
 > the body of a message to majordomo@vger.kernel.org
-> More majordomo info at =9Ahttp://vger.kernel.org/majordomo-info.html
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
