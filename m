@@ -1,45 +1,42 @@
-From: Gustavo Bittencourt <gbitten@gmail.com>
-Subject: Re: Tracing within functions.
-Date: Mon, 30 Mar 2015 10:49:22 -0300
-Message-ID: <CAA8Xd+-oD2woif3+s9PSR1yyJE6fJzuf02RYnBpoRbO8agMxWw@mail.gmail.com>
-References: <CAAVaN8yOYUf_+5Pxh4qOWxb5rqMu__LcqSxr0YMVA114A41YWA@mail.gmail.com>
+From: Julien Ciesla <jciesla@resologis.com>
+Subject: Re: 3.18 RT freezes on Raspberry Pi 2
+Date: Tue, 31 Mar 2015 13:47:10 +0000 (UTC)
+Message-ID: <loom.20150331T153850-579@post.gmane.org>
+References: <3671201425478878@web10j.yandex.ru>  <loom.20150306T043408-818@post.gmane.org>  <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de> <3863561427712041@web3j.yandex.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Andy Ng <andreas2025@gmail.com>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oi0-f43.google.com ([209.85.218.43]:34186 "EHLO
-	mail-oi0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753120AbbC3NtX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 30 Mar 2015 09:49:23 -0400
-Received: by oigz129 with SMTP id z129so84188911oig.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 30 Mar 2015 06:49:22 -0700 (PDT)
-In-Reply-To: <CAAVaN8yOYUf_+5Pxh4qOWxb5rqMu__LcqSxr0YMVA114A41YWA@mail.gmail.com>
+Received: from plane.gmane.org ([80.91.229.3]:41474 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754248AbbCaNrq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 31 Mar 2015 09:47:46 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1YcwVt-0000OW-Is
+	for linux-rt-users@vger.kernel.org; Tue, 31 Mar 2015 15:47:29 +0200
+Received: from modemcable043.17-37-24.static.videotron.ca ([24.37.17.43])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 31 Mar 2015 15:47:29 +0200
+Received: from jciesla by modemcable043.17-37-24.static.videotron.ca with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Tue, 31 Mar 2015 15:47:29 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I think you can use FTRACE (http://lwn.net/Articles/365835/) and set
-function_graph as the tracer. To filter the output, you must enable
-CONFIG_DYNAMIC_FTRACE and set which function should be traced.
+Hello Mikhail,
 
-On Sun, Mar 29, 2015 at 5:16 PM, Andy Ng <andreas2025@gmail.com> wrote:
-> Hello,
->
-> I am using an RT kernel and in my  driver there is  an atomic code
-> path that just makes some critical I/O operations. I would like to
-> trigger a system function trace when kernel enters into a specific
-> function in my driver and stop the system trace at the end of the
-> function. I would like to identify time execution latencies for a
-> specific code path. I am using Cortex A9 and I have perf and PMU up
-> and running, but still it is not clear to me how to retrieve the
-> traces with those latencies in my code path.
->
-> Any ideas how to trace/measure that  will be very much appreciated.
->
-> Best regards,
-> Andy
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+With my own branch 3.18.9, I applyed your solution with "patch-3.18.9-
+rt5" but my Pi2 was not able to boot anymore. So I synced to the latest 
+3.18.y commit on raspberry linux 
+(https://github.com/raspberrypi/linux/commit/2e529746b6de7633ffd02c27c1f
+70a1df30fe243), which is on linux 3.18.10. I updated the "patch-3.18.9-
+rt5" to fit on the latest kernel and now, All is working well. Let me 
+know if you want the updated RT5 patch for kernel 3.18.10.
+
+Regards,
+
+Julien Ciesla
+
