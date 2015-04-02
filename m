@@ -1,51 +1,94 @@
-From: Andy Ng <andreas2025@gmail.com>
-Subject: Re: Tracing within functions.
-Date: Thu, 2 Apr 2015 18:52:57 +0100
-Message-ID: <CAAVaN8zXt86tnW6rkFb9Eo7MPROBPbD8QDGKtvdKcAre7rNj5w@mail.gmail.com>
-References: <CAAVaN8yOYUf_+5Pxh4qOWxb5rqMu__LcqSxr0YMVA114A41YWA@mail.gmail.com>
-	<CAA8Xd+-oD2woif3+s9PSR1yyJE6fJzuf02RYnBpoRbO8agMxWw@mail.gmail.com>
+From: Scott Wood <scottwood@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Thu, 2 Apr 2015 18:11:50 -0500
+Message-ID: <1428016310.22867.289.camel@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
+		 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
+		 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>
+		 <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de>
+	 <1424999159.4698.78.camel@freescale.com> <55158E6D.40304@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Gustavo Bittencourt <gbitten@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ie0-f179.google.com ([209.85.223.179]:34452 "EHLO
-	mail-ie0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752666AbbDBRw6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Apr 2015 13:52:58 -0400
-Received: by iedfl3 with SMTP id fl3so84037961ied.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 02 Apr 2015 10:52:57 -0700 (PDT)
-In-Reply-To: <CAA8Xd+-oD2woif3+s9PSR1yyJE6fJzuf02RYnBpoRbO8agMxWw@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	Alexander Graf <agraf@suse.de>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Purcareata Bogdan <b43198@freescale.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <55158E6D.40304@freescale.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Thank you very much for your reply. You pointed to me to  the right direction.
+On Fri, 2015-03-27 at 19:07 +0200, Purcareata Bogdan wrote:
+> On 27.02.2015 03:05, Scott Wood wrote:
+> > On Thu, 2015-02-26 at 14:31 +0100, Sebastian Andrzej Siewior wrote:
+> >> On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
+> >>>
+> >>>
+> >>> On 24/02/2015 00:27, Scott Wood wrote:
+> >>>> This isn't a host PIC driver.  It's guest PIC emulation, some of which
+> >>>> is indeed not suitable for a rawlock (in particular, openpic_update_irq
+> >>>> which loops on the number of vcpus, with a loop body that calls
+> >>>> IRQ_check() which loops over all pending IRQs).
+> >>>
+> >>> The question is what behavior is wanted of code that isn't quite
+> >>> RT-ready.  What is preferred, bugs or bad latency?
+> >>>
+> >>> If the answer is bad latency (which can be avoided simply by not running
+> >>> KVM on a RT kernel in production), patch 1 can be applied.  If the
+> >> can be applied *but* makes no difference if applied or not.
+> >>
+> >>> answer is bugs, patch 1 is not upstream material.
+> >>>
+> >>> I myself prefer to have bad latency; if something takes a spinlock in
+> >>> atomic context, that spinlock should be raw.  If it hurts (latency),
+> >>> don't do it (use the affected code).
+> >>
+> >> The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
+> >> only in -RT. There is no change upstream. In general we fix such things
+> >> in -RT first and forward the patches upstream if possible. This convert
+> >> thingy would be possible.
+> >> Bug fixing comes before latency no matter if RT or not. Converting
+> >> every lock into a rawlock is not always the answer.
+> >> Last thing I read from Scott is that he is not entirely sure if this is
+> >> the right approach or not and patch #1 was not acked-by him either.
+> >>
+> >> So for now I wait for Scott's feedback and maybe a backtrace :)
+> >
+> > Obviously leaving it in a buggy state is not what we want -- but I lean
+> > towards a short term "fix" of putting "depends on !PREEMPT_RT" on the
+> > in-kernel MPIC emulation (which is itself just an optimization -- you
+> > can still use KVM without it).  This way people don't enable it with RT
+> > without being aware of the issue, and there's more of an incentive to
+> > fix it properly.
+> >
+> > I'll let Bogdan supply the backtrace.
+> 
+> So about the backtrace. Wasn't really sure how to "catch" this, so what 
+> I did was to start a 24 VCPUs guest on a 24 CPU board, and in the guest 
+> run 24 netperf flows with an external back to back board of the same 
+> kind. I assumed this would provide the sufficient VCPUs and external 
+> interrupt to expose an alleged culprit.
+> 
+> With regards to measuring the latency, I thought of using ftrace, 
+> specifically the preemptirqsoff latency histogram. Unfortunately, I 
+> wasn't able to capture any major differences between running a guest 
+> with in-kernel MPIC emulation (with the openpic raw_spinlock_conversion 
+> applied) vs. no in-kernel MPIC emulation. Function profiling 
+> (trace_stat) shows that in the second case there's a far greater time 
+> spent in kvm_handle_exit (100x), but overall, the maximum latencies for 
+> preemptirqsoff don't look that much different.
+> 
+> Here are the max numbers (preemptirqsoff) for the 24 CPUs, on the host 
+> RT Linux, sorted in descending order, expressed in microseconds:
+> 
+> In-kernel MPIC		QEMU MPIC
+> 3975			5105
 
-Andy
+What are you measuring?  Latency in the host, or in the guest?
 
-On Mon, Mar 30, 2015 at 2:49 PM, Gustavo Bittencourt <gbitten@gmail.com> wrote:
-> I think you can use FTRACE (http://lwn.net/Articles/365835/) and set
-> function_graph as the tracer. To filter the output, you must enable
-> CONFIG_DYNAMIC_FTRACE and set which function should be traced.
->
-> On Sun, Mar 29, 2015 at 5:16 PM, Andy Ng <andreas2025@gmail.com> wrote:
->> Hello,
->>
->> I am using an RT kernel and in my  driver there is  an atomic code
->> path that just makes some critical I/O operations. I would like to
->> trigger a system function trace when kernel enters into a specific
->> function in my driver and stop the system trace at the end of the
->> function. I would like to identify time execution latencies for a
->> specific code path. I am using Cortex A9 and I have perf and PMU up
->> and running, but still it is not clear to me how to retrieve the
->> traces with those latencies in my code path.
->>
->> Any ideas how to trace/measure that  will be very much appreciated.
->>
->> Best regards,
->> Andy
->> --
->> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->> the body of a message to majordomo@vger.kernel.org
->> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-Scott
