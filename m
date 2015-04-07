@@ -1,102 +1,119 @@
-From: Scott Wood <scottwood@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Fri, 3 Apr 2015 16:26:15 -0500
-Message-ID: <1428096375.22867.369.camel@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
-			 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
-			 <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>
-			 <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de>
-		 <1424999159.4698.78.camel@freescale.com> <55158E6D.40304@freescale.com>
-	 <1428016310.22867.289.camel@freescale.com> <551E4A41.1080705@freescale.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	Alexander Graf <agraf@suse.de>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Purcareata Bogdan <b43198@freescale.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <551E4A41.1080705@freescale.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Thavatchai Makphaibulchoke <tmac@hp.com>
+Subject: [PATCH v2 2/2] kernel/locking/rtmutex.c: some code optimization
+Date: Mon,  6 Apr 2015 19:26:02 -0600
+Message-ID: <1428369962-74723-3-git-send-email-tmac@hp.com>
+References: <1424395866-81589-1-git-send-email-tmac@hp.com>
+ <1428369962-74723-1-git-send-email-tmac@hp.com>
+Cc: mingo@redhat.com, tglx@linutronix.de,
+	linux-rt-users@vger.kernel.org, umgwanakikbuti@gmail.com,
+	Thavatchai Makphaibulchoke <tmac@hp.com>
+To: rostedt@goodmis.org, linux-kernel@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from g4t3427.houston.hp.com ([15.201.208.55]:50454 "EHLO
+	g4t3427.houston.hp.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752673AbbDGB0Z (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Apr 2015 21:26:25 -0400
+In-Reply-To: <1428369962-74723-1-git-send-email-tmac@hp.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2015-04-03 at 11:07 +0300, Purcareata Bogdan wrote:
-> On 03.04.2015 02:11, Scott Wood wrote:
-> > On Fri, 2015-03-27 at 19:07 +0200, Purcareata Bogdan wrote:
-> >> On 27.02.2015 03:05, Scott Wood wrote:
-> >>> On Thu, 2015-02-26 at 14:31 +0100, Sebastian Andrzej Siewior wrote:
-> >>>> On 02/26/2015 02:02 PM, Paolo Bonzini wrote:
-> >>>>>
-> >>>>>
-> >>>>> On 24/02/2015 00:27, Scott Wood wrote:
-> >>>>>> This isn't a host PIC driver.  It's guest PIC emulation, some of which
-> >>>>>> is indeed not suitable for a rawlock (in particular, openpic_update_irq
-> >>>>>> which loops on the number of vcpus, with a loop body that calls
-> >>>>>> IRQ_check() which loops over all pending IRQs).
-> >>>>>
-> >>>>> The question is what behavior is wanted of code that isn't quite
-> >>>>> RT-ready.  What is preferred, bugs or bad latency?
-> >>>>>
-> >>>>> If the answer is bad latency (which can be avoided simply by not running
-> >>>>> KVM on a RT kernel in production), patch 1 can be applied.  If the
-> >>>> can be applied *but* makes no difference if applied or not.
-> >>>>
-> >>>>> answer is bugs, patch 1 is not upstream material.
-> >>>>>
-> >>>>> I myself prefer to have bad latency; if something takes a spinlock in
-> >>>>> atomic context, that spinlock should be raw.  If it hurts (latency),
-> >>>>> don't do it (use the affected code).
-> >>>>
-> >>>> The problem, that is fixed by this s/spin_lock/raw_spin_lock/, exists
-> >>>> only in -RT. There is no change upstream. In general we fix such things
-> >>>> in -RT first and forward the patches upstream if possible. This convert
-> >>>> thingy would be possible.
-> >>>> Bug fixing comes before latency no matter if RT or not. Converting
-> >>>> every lock into a rawlock is not always the answer.
-> >>>> Last thing I read from Scott is that he is not entirely sure if this is
-> >>>> the right approach or not and patch #1 was not acked-by him either.
-> >>>>
-> >>>> So for now I wait for Scott's feedback and maybe a backtrace :)
-> >>>
-> >>> Obviously leaving it in a buggy state is not what we want -- but I lean
-> >>> towards a short term "fix" of putting "depends on !PREEMPT_RT" on the
-> >>> in-kernel MPIC emulation (which is itself just an optimization -- you
-> >>> can still use KVM without it).  This way people don't enable it with RT
-> >>> without being aware of the issue, and there's more of an incentive to
-> >>> fix it properly.
-> >>>
-> >>> I'll let Bogdan supply the backtrace.
-> >>
-> >> So about the backtrace. Wasn't really sure how to "catch" this, so what
-> >> I did was to start a 24 VCPUs guest on a 24 CPU board, and in the guest
-> >> run 24 netperf flows with an external back to back board of the same
-> >> kind. I assumed this would provide the sufficient VCPUs and external
-> >> interrupt to expose an alleged culprit.
-> >>
-> >> With regards to measuring the latency, I thought of using ftrace,
-> >> specifically the preemptirqsoff latency histogram. Unfortunately, I
-> >> wasn't able to capture any major differences between running a guest
-> >> with in-kernel MPIC emulation (with the openpic raw_spinlock_conversion
-> >> applied) vs. no in-kernel MPIC emulation. Function profiling
-> >> (trace_stat) shows that in the second case there's a far greater time
-> >> spent in kvm_handle_exit (100x), but overall, the maximum latencies for
-> >> preemptirqsoff don't look that much different.
-> >>
-> >> Here are the max numbers (preemptirqsoff) for the 24 CPUs, on the host
-> >> RT Linux, sorted in descending order, expressed in microseconds:
-> >>
-> >> In-kernel MPIC		QEMU MPIC
-> >> 3975			5105
-> >
-> > What are you measuring?  Latency in the host, or in the guest?
-> 
-> This is in the host kernel.
+Adding the following code optimization,
 
-Those are terrible numbers in both cases.  Can you use those tracing
-tools to find out what the code path is for QEMU MPIC?
+- Reducing the number of cmpxchgs.  Only call mark_rt_mutex_waiters() when
+  needed, waiters bit is not set.
+- Reducing the hold time of wait_lock lock.
+- Calling fixup_rt_mutex_waiters() only when needed.
+- When unlocking rt_spin_lock in IRQ, alternate between attempting fast
+  unlocking and attempting to lock mutex's wait_lock.
 
--Scott
+Signed-off-by: T. Makphaibulchoke <tmac@hp.com>
+---
+ kernel/locking/rtmutex.c | 30 +++++++++++++++++-------------
+ 1 file changed, 17 insertions(+), 13 deletions(-)
+
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index ae5c13f..cadba20 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -608,7 +608,8 @@ __try_to_take_rt_mutex(struct rt_mutex *lock, struct task_struct *task,
+ 	 * any more. This is fixed up when we take the ownership.
+ 	 * This is the transitional state explained at the top of this file.
+ 	 */
+-	mark_rt_mutex_waiters(lock);
++	if (!((unsigned long)lock->owner & RT_MUTEX_HAS_WAITERS))
++		mark_rt_mutex_waiters(lock);
+ 
+ 	if (rt_mutex_owner(lock))
+ 		return 0;
+@@ -832,8 +833,8 @@ static void remove_waiter(struct rt_mutex *lock,
+ 	struct rt_mutex *next_lock = NULL;
+ 	unsigned long flags;
+ 
+-	raw_spin_lock_irqsave(&current->pi_lock, flags);
+ 	rt_mutex_dequeue(lock, waiter);
++	raw_spin_lock_irqsave(&current->pi_lock, flags);
+ 	current->pi_blocked_on = NULL;
+ 	raw_spin_unlock_irqrestore(&current->pi_lock, flags);
+ 
+@@ -1019,11 +1020,11 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner))
+ 			schedule_rt_mutex(lock);
+ 
+-		raw_spin_lock(&lock->wait_lock);
+-
+ 		pi_lock(&self->pi_lock);
+ 		__set_current_state(TASK_UNINTERRUPTIBLE);
+ 		pi_unlock(&self->pi_lock);
++
++		raw_spin_lock(&lock->wait_lock);
+ 	}
+ 
+ 	/*
+@@ -1038,12 +1039,6 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	self->saved_state = TASK_RUNNING;
+ 	pi_unlock(&self->pi_lock);
+ 
+-	/*
+-	 * try_to_take_rt_mutex() sets the waiter bit
+-	 * unconditionally. We might have to fix that up:
+-	 */
+-	fixup_rt_mutex_waiters(lock);
+-
+ 	BUG_ON(rt_mutex_has_waiters(lock) && &waiter == rt_mutex_top_waiter(lock));
+ 	BUG_ON(!RB_EMPTY_NODE(&waiter.tree_entry));
+ 
+@@ -1096,7 +1091,14 @@ static inline void rt_spin_lock_fastunlock_in_irq(struct rt_mutex *lock,
+ 		return;
+ 	}
+ 	do {
++		/*
++		 * Alternate between fast acquire and try lock and proceed
++		 * to slow lock whichever succeeds first.
++		 */
+ 		ret = raw_spin_trylock(&lock->wait_lock);
++		if (!ret && unlikely(rt_mutex_cmpxchg(lock, intr_owner,
++			NULL)))
++			return;
+ 	} while (!ret);
+ 
+ 	slowfn(lock, intr_owner);
+@@ -1499,10 +1501,12 @@ rt_mutex_slowtrylock(struct rt_mutex *lock, struct task_struct *task)
+ 
+ 		ret = try_to_take_rt_mutex(lock, task, NULL);
+ 		/*
+-		 * try_to_take_rt_mutex() sets the lock waiters
+-		 * bit unconditionally. Clean this up.
++		 * try_to_take_rt_mutex() keeps the lock waiters
++		 * bit set when failed to grab lock. Clean this
++		 * in case of a failure.
+ 		 */
+-		fixup_rt_mutex_waiters(lock);
++		if (!ret)
++			fixup_rt_mutex_waiters(lock);
+ 	}
+ 
+ 	raw_spin_unlock(&lock->wait_lock);
+-- 
+1.9.1
+
