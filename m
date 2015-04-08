@@ -1,68 +1,121 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] hwlat_detector: Detect hardware-induced latencies
-Date: Wed, 8 Apr 2015 12:35:50 -0400
-Message-ID: <20150408123550.7dbd61b4@gandalf.local.home>
-References: <1428508021-28166-1-git-send-email-daniel.wagner@bmw-carit.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, Jon Masters <jcm@redhat.com>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <bitbucket@online.de>,
-	linux-kernel@vger.kernel.org
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1428508021-28166-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Marcelo Tosatti <mtosatti@redhat.com>
+Subject: [patch -rt 2/2] KVM: lapic: mark LAPIC timer handler as irqsafe
+Date: Wed, 08 Apr 2015 20:33:25 -0300
+Message-ID: <20150408233413.802814411@redhat.com>
+References: <20150408233323.842124241@redhat.com>
+Cc: Rik van Riel <riel@redhat.com>,
+	Luiz Capitulino <lcapitulino@redhat.com>,
+	linux-rt-users@vger.kernel.org, kvm@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:37664 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754853AbbDHXfE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Apr 2015 19:35:04 -0400
+Content-Disposition: inline; filename=kvm-use-simplewaitqueue-2-lapic
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 08 Apr 2015 12:28:34 -0400
-Daniel Wagner <daniel.wagner@bmw-carit.de> wrote:
+Since lapic timer handler only wakes up a simple waitqueue,
+it can be executed from hardirq context.
 
-> A simple hardware latency detector. Use this module to detect large
-> latencies introduced by the behavior of the underlying system firmware
-> external to Linux. The hardware latency detector works by disabling
-> interrupts while running a tight loop taking timestams and measure for
-> unexplainable gaps in the CPU timestamp counter(s). Any gap indicates
-> a time when the polling was interrupted and interrupts turned off the
-> only thing that could do that would be an SMI.
-> 
-> By default, the module is not enabled until the "enable" file within
-> the "hwlat_detector" debugfs directory is toggled.
-> 
-> Jon Masters developed this wonderful SMI detector. For details please
-> consult Documentation/hwlat_detector.txt.
-> 
-> [dw: rewrote everything except the detector itself (sample_get()]
-> 
-> Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-> Cc: Jon Masters <jcm@redhat.com>
-> Cc: Carsten Emde <C.Emde@osadl.org>
-> Cc: Steven Rostedt <srostedt@redhat.com>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Cc: Mike Galbraith <bitbucket@online.de>
-> Cc: linux-kernel@vger.kernel.org
-> Cc; linux-rt-users@vger.kernel.org
-> 
-> Link: http://www.spinics.net/lists/linux-rt-users/msg10350.html
-> ---
-> Hi,
-> 
-> Here is my attempt to rewritte hwlat_detector. Most of the code is a
-> new except the detection routine itself. With some luck I didn't break
-> it.  I hope I updated the documentation correctly and also added all
-> the credits.
-> 
-> @Carsten, I haven't found your original post of the hwlatdetect.patch
-> patch. I assume you have written most of the documentation. I guess
-> should be also added as copyright holder.
-> 
+Also handle the case where hrtimer_start_expires fails due to -ETIME,
+by injecting the interrupt to the guest immediately.
 
-Funny you are working on this. I'm actually working on porting the
-hwlat_detector to ftrace as a tracer and removing it as a module. It
-will be similar to the irqsoff tracer, although it wont be doing
-"latency" tests. It will just report the output to the ring buffer as
-the other tracers do.
+Reduces average cyclictest latency by 3us.
 
--- Steve
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+
+---
+ arch/x86/kvm/lapic.c |   42 +++++++++++++++++++++++++++++++++++++++---
+ 1 file changed, 39 insertions(+), 3 deletions(-)
+
+Index: rt-linux/arch/x86/kvm/lapic.c
+===================================================================
+--- rt-linux.orig/arch/x86/kvm/lapic.c	2015-04-08 20:20:41.000000000 -0300
++++ rt-linux/arch/x86/kvm/lapic.c	2015-04-08 20:21:16.592739674 -0300
+@@ -1034,8 +1034,38 @@
+ 				   apic->divide_count);
+ }
+ 
++
++static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
++
++static void apic_timer_expired(struct hrtimer *data)
++{
++	int ret, i = 0;
++	enum hrtimer_restart r;
++	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
++
++	r = apic_timer_fn(data);
++
++	if (r == HRTIMER_RESTART) {
++		do {
++			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
++			if (ret == -ETIME)
++				hrtimer_add_expires_ns(&ktimer->timer,
++							ktimer->period);
++			i++;
++		} while (ret == -ETIME && i < 10);
++
++		if (ret == -ETIME) {
++			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
++			       __func__);
++			WARN_ON_ONCE(1);
++		}
++	}
++}
++
++
+ static void start_apic_timer(struct kvm_lapic *apic)
+ {
++	int ret;
+ 	ktime_t now;
+ 	atomic_set(&apic->lapic_timer.pending, 0);
+ 
+@@ -1065,9 +1095,11 @@
+ 			}
+ 		}
+ 
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			      ktime_add_ns(now, apic->lapic_timer.period),
+ 			      HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
+ 			   PRIx64 ", "
+@@ -1097,8 +1129,10 @@
+ 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
+ 			do_div(ns, this_tsc_khz);
+ 		}
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		local_irq_restore(flags);
+ 	}
+@@ -1587,6 +1621,7 @@
+ 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
+ 		     HRTIMER_MODE_ABS);
+ 	apic->lapic_timer.timer.function = apic_timer_fn;
++	apic->lapic_timer.timer.irqsafe = 1;
+ 
+ 	/*
+ 	 * APIC is created enabled. This will prevent kvm_lapic_set_base from
+@@ -1707,7 +1742,8 @@
+ 
+ 	timer = &vcpu->arch.apic->lapic_timer.timer;
+ 	if (hrtimer_cancel(timer))
+-		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
++		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
++			apic_timer_expired(timer);
+ }
+ 
+ /*
+
+
