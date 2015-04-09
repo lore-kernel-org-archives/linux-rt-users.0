@@ -1,38 +1,70 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: [PATCH] hwlat_detector: Detect hardware-induced latencies
-Date: Thu, 09 Apr 2015 15:46:12 +0200
-Message-ID: <552682A4.4000309@osadl.org>
-References: <1428508021-28166-1-git-send-email-daniel.wagner@bmw-carit.de> <20150408123550.7dbd61b4@gandalf.local.home> <5526458E.5050202@bmw-carit.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [patch] rt, hotplug: Use set_cpus_allowed_ptr() in
+ sync_unplug_thread()
+Date: Thu, 9 Apr 2015 16:05:12 +0200
+Message-ID: <20150409140512.GB2416@linutronix.de>
+References: <1427181289.3316.27.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org, Jon Masters <jcm@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:57465 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751445AbbDINuR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Apr 2015 09:50:17 -0400
-In-Reply-To: <5526458E.5050202@bmw-carit.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1427181289.3316.27.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Daniel,
+* Mike Galbraith | 2015-03-24 08:14:49 [+0100]:
 
-> BTW, are you also taking care of the latency-hist.patch patch?
-I do.
+>do_set_cpus_allowed() is not safe vs ->sched_class change.
+>
+>crash> bt
+>PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
+> #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
+> #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
+> #2 [ffff880274d25cd8] oops_end at ffffffff81525818
+> #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
+> #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
+>    [exception RIP: set_cpus_allowed_rt+18]
+>    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
+>    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
+>    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
+>    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
+>    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
+>    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
+>    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
+> #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
+> #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
+> #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
+> #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
+>crash> task_struct ffff88026f979da0 | grep class
+>  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
 
-However, the request (and the challenge) is not to simply rewrite the 
-code. The idea is to provide a general histogram framework that can be 
-used from anywhere in the kernel and to equip it with everything needed 
-by the existing histograms. This framework should no longer be part of 
-the RT patches but submitted directly to mainline Linux. In a second 
-step, we will then rewrite the existing histogram code to use the new 
-framework.
+Is this a one-time thing or can you reproduce this?
+What happen here? I doubt p vanished. +18 is mostlikely the
+"migrate_disabled_updated()" check.
 
-Any help is greatly appreciated!
+I doubt p->sched_class->set_cpus_allowed or p->sched_class vanish
+between testing for it and invoking it, or did it?
 
-	-Carsten.
+>Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+>Cc: stable-rt@vger.kernel.org
+>---
+> kernel/cpu.c |    2 +-
+> 1 file changed, 1 insertion(+), 1 deletion(-)
+>
+>--- a/kernel/cpu.c
+>+++ b/kernel/cpu.c
+>@@ -265,7 +265,7 @@ static int sync_unplug_thread(void *data
+> 	 * we don't want any more work on this CPU.
+> 	 */
+> 	current->flags &= ~PF_NO_SETAFFINITY;
+>-	do_set_cpus_allowed(current, cpu_present_mask);
+>+	set_cpus_allowed_ptr(current, cpu_present_mask);
+> 	migrate_me();
+> 	return 0;
+> }
+
+Sebastian
