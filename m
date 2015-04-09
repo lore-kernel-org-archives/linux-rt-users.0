@@ -1,47 +1,42 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: [PATCH] hwlat_detector: Detect hardware-induced latencies
-Date: Thu, 9 Apr 2015 11:25:34 +0200
-Message-ID: <5526458E.5050202@bmw-carit.de>
-References: <1428508021-28166-1-git-send-email-daniel.wagner@bmw-carit.de> <20150408123550.7dbd61b4@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [OSADL QA 3.18.9-rt5 #1]
+Date: Thu, 09 Apr 2015 14:37:19 +0200
+Message-ID: <5526727F.1060703@linutronix.de>
+References: <55245FC8.9090509@osadl.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, Jon Masters <jcm@redhat.com>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	<linux-kernel@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150408123550.7dbd61b4@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Carsten Emde <C.Emde@osadl.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:47201 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755018AbbDIMhV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Apr 2015 08:37:21 -0400
+In-Reply-To: <55245FC8.9090509@osadl.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Steven,
+On 04/08/2015 12:52 AM, Carsten Emde wrote:
+> Hi Sebastian,
 
-On 04/08/2015 06:35 PM, Steven Rostedt wrote:
-> On Wed, 08 Apr 2015 12:28:34 -0400
->> Hi,
->>
->> Here is my attempt to rewritte hwlat_detector. Most of the code is a
->> new except the detection routine itself. With some luck I didn't break
->> it.  I hope I updated the documentation correctly and also added all
->> the credits.
->>
->> @Carsten, I haven't found your original post of the hwlatdetect.patch
->> patch. I assume you have written most of the documentation. I guess
->> should be also added as copyright holder.
->>
+Hi Carsten,
+
+> an Intel Bay Trail board (Intel(R) Celeron(R) CPU  J1900  @ 1.99GHz) at
+> the OSADL QA Farm rack #b/slot #6 (https://www.osadl.org/?id=1894) stops
+> working every 12 to 36 hours. The only way to get the board back to work
+> is to power cycle it. Such crashes did not happen with any of the
+> previously tested 3.12-rt kernels. About eight crashes have been
+> observed so far - the kernel message obtained at the serial console (see
+> below) was similar in all cases.
+
+This backtrace looks familiar I think. I think the problem is that
+hrtimer_cancel() is called from hrtimer_interrupt() and deadlocks. Is
+there anything special you do here except runnin FULL_NOHZ?
+
 > 
-> Funny you are working on this. I'm actually working on porting the
-> hwlat_detector to ftrace as a tracer and removing it as a module. It
-> will be similar to the irqsoff tracer, although it wont be doing
-> "latency" tests. It will just report the output to the ring buffer as
-> the other tracers do.
+> Thanks,
+> Carsten.
+Sebastian
 
-Good to know. So best thing is to let this patch rest :) If need help
-(e.g. testing) just let me know.
-
-BTW, are you also taking care of the latency-hist.patch patch?
-
-cheers,
-daniel
