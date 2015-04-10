@@ -1,7 +1,7 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [rfc patch v2] rt,nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Fri, 10 Apr 2015 16:24:12 +0200
-Message-ID: <1428675852.4309.108.camel@gmail.com>
+Date: Fri, 10 Apr 2015 16:28:34 +0200
+Message-ID: <1428676114.4309.112.camel@gmail.com>
 References: <20150216111822.GA21649@linutronix.de>
 	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>
 	 <1425911771.30469.8.camel@gmail.com> <1425980136.3507.17.camel@gmail.com>
@@ -37,15 +37,7 @@ On Fri, 2015-04-10 at 16:15 +0200, Sebastian Andrzej Siewior wrote:
 > 
 > So with this patch
 >     http://marc.info/?l=linux-rt-users&m=142866940327602&w=2
-> 
-> you could drop the hrtimer hacks. Is this the remaining part all 
-> that is
-> required or we shorten the following patch a little more?
 
-It's better to let the task that awakened ksoftirqd do the subtracting 
-instead of waiting for ksoftirqd to try again after waker fails, so it 
-wants to know that ksoftirqd is running due to that timer wakeup.
+Oh duh, too much of a hurry, I'll give that a spin.
 
-If you remove the hrtimer bit, you should quickly meet the livelock.
-
-        -Mike
+        -Mike 
