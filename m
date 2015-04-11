@@ -1,43 +1,57 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [rfc patch v2] rt,nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Fri, 10 Apr 2015 16:28:34 +0200
-Message-ID: <1428676114.4309.112.camel@gmail.com>
-References: <20150216111822.GA21649@linutronix.de>
-	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>
-	 <1425911771.30469.8.camel@gmail.com> <1425980136.3507.17.camel@gmail.com>
-	 <1426153093.4190.2.camel@gmail.com> <1426222405.17611.7.camel@gmail.com>
-	 <20150410141552.GC3057@linutronix.de>
+From: Carsten Emde <C.Emde@osadl.org>
+Subject: Re: [OSADL QA 3.18.9-rt5 #1]
+Date: Sat, 11 Apr 2015 03:35:24 +0200
+Message-ID: <55287A5C.8020402@osadl.org>
+References: <55245FC8.9090509@osadl.org> <5526AE86.7030708@linutronix.de> <20150410123634.GA3057@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150410141552.GC3057@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from toro.web-alm.net ([62.245.132.31]:37810 "EHLO toro.web-alm.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754034AbbDKBkK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Apr 2015 21:40:10 -0400
+In-Reply-To: <20150410123634.GA3057@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 2015-04-10 at 16:15 +0200, Sebastian Andrzej Siewior wrote:
-> * Mike Galbraith | 2015-03-13 05:53:25 [+0100]:
-> 
-> > First of all, a task being ticked and trying to shut the tick down 
-> > will
-> > fail to do so due to having just awakened ksoftirqd, so let 
-> > ksoftirqd
-> > try to do that after SOFTIRQ_TIMER processing.  Secondly, should 
-> > the
-> > tick be shut down, we may livelock in hrtimer-cancel() because in -
-> > rt
-> > a callback may be running.  Break the loop, and let 
-> > tick_nohz_restart()
-> > know that the timer is busy so it can bail.
-> 
-> So with this patch
->     http://marc.info/?l=linux-rt-users&m=142866940327602&w=2
+Hi Sebastian,
 
-Oh duh, too much of a hurry, I'll give that a spin.
+>>> an Intel Bay Trail board (Intel(R) Celeron(R) CPU  J1900  @ 1.99GHz) at
+>>> the OSADL QA Farm rack #b/slot #6 (https://www.osadl.org/?id=1894) stops
+>>> working every 12 to 36 hours. The only way to get the board back to work
+>> [..]
+> Could you try this:
+> --
+> Subject: [PATCH] kernel/irq_work: fix no_hz deadlock
+>
+> Invoking NO_HZ's irq_work callback from timer irq is not working very
+> well if the callback decides to invoke hrtimer_cancel():
+>
+> |hrtimer_try_to_cancel+0x55/0x5f
+> |hrtimer_cancel+0x16/0x28
+> |tick_nohz_restart+0x17/0x72
+> |__tick_nohz_full_check+0x8e/0x93
+> |nohz_full_kick_work_func+0xe/0x10
+> |irq_work_run_list+0x39/0x57
+> |irq_work_tick+0x60/0x67
+> |update_process_times+0x57/0x67
+> |tick_sched_handle+0x4a/0x59
+> |tick_sched_timer+0x3b/0x64
+> |__run_hrtimer+0x7a/0x149
+> |hrtimer_interrupt+0x1cc/0x2c5
+>
+> and here we deadlock while waiting for the lock which we are holding.
+> To fix this I'm doing the same thing that upstream is doing: is the
+> irq_work dedicated IRQ and use it only for what is marked as "hirq"
+> which should only be the FULL_NO_HZ related work.
+> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+> [..]
+Thanks a lot! Applied the patch and restarted the box. Given the fact 
+that it took up to 36 hours until the board stopped, we unfortunately 
+need to see at least one week of crash-free operation, before we may 
+consider the bug as fixed.
 
-        -Mike 
+	-Carsten.
