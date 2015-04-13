@@ -1,34 +1,66 @@
-From: Christian Jann <Christian.Jann@elektrobit.com>
-Subject: Re: 3.14.3-rt5: at91: Crash early at boot
-Date: Mon, 13 Apr 2015 13:37:30 +0000 (UTC)
-Message-ID: <loom.20150413T150403-767@post.gmane.org>
-References: <20140613142506.GL3448@lukather> <20150217083859.GB26177@linutronix.de> <20150316181900.GA4638@lukather> <20150316183033.GH4560@piout.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] arch/arm64: Enable PREEMPT_RT_FULL
+Date: Mon, 13 Apr 2015 16:02:03 +0200
+Message-ID: <20150413140203.GB27894@linutronix.de>
+References: <1428825578-12326-1-git-send-email-anders.roxell@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: base64
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: Anders Roxell <anders.roxell@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:47772 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932097AbbDMOAO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Apr 2015 10:00:14 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1YheuC-0007We-8U
-	for linux-rt-users@vger.kernel.org; Mon, 13 Apr 2015 16:00:04 +0200
-Received: from eth1-fw1-nbg6.eb.noris.de ([213.95.148.172])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Apr 2015 16:00:04 +0200
-Received: from Christian.Jann by eth1-fw1-nbg6.eb.noris.de with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Apr 2015 16:00:04 +0200
+Received: from www.linutronix.de ([62.245.132.108]:60223 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932289AbbDMOCF (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Apr 2015 10:02:05 -0400
+Content-Disposition: inline
+In-Reply-To: <1428825578-12326-1-git-send-email-anders.roxell@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-QWxleGFuZHJlIEJlbGxvbmkgPGFsZXhhbmRyZS5iZWxsb25pIDxhdD4gZnJlZS1lbGVjdHJvbnMuY29tPiB3cml0ZXM6CgpIaSBhbGwsCgo+IAo+IEhpIE1heGltZSwKPiAKPiBPbiAxNi8wMy8yMDE1IGF0IDE5OjE5OjAwICswMTAwLCBNYXhpbWUgUmlwYXJkIHdyb3RlIDoKPiA+IEhpLAo+ID4gCj4gPiBPbiBUdWUsIEZlYiAxNywgMjAxNSBhdCAwOTozODo1OUFNICswMTAwLCBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIHdyb3RlOgo+ID4gPiAqIE1heGltZSBSaXBhcmQgfCAyMDE0LTA2LTEzIDE2OjI1OjA2IFsrMDIwMF06Cj4gPiA+IAo+ID4gPiA+UHJlZW1wdGlibGUgaGllcmFyY2hpY2FsIFJDVSBpbXBsZW1lbnRhdGlvbi4KPiA+ID4gPk5SX0lSUVM6MTYgbnJfaXJxczoxNiAxNgo+ID4gPiA+VW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGF0IHZpcnR1YWwgYWRkcmVzcwowMDAwMDAwMAo+ID4gPiA+cGdkID0gYzAwMDQwMDAKPiA+ID4gPlswMDAwMDAwMF0gKnBnZD0wMDAwMDAwMAo+ID4gPiA+SW50ZXJuYWwgZXJyb3I6IE9vcHM6IDUgWyMxXSBQUkVFTVBUIEFSTQo+ID4gPiA+TW9kdWxlcyBsaW5rZWQg
- aW46Cj4gPiA+ID5DUFU6IDAgUElEOiAwIENvbW06IHN3YXBwZXIgTm90IHRhaW50ZWQgMy4xNC4zLXJ0NCsgIzExCj4gPiA+ID50YXNrOiBjMDVlY2IyOCB0aTogYzA1ZTIwMDAgdGFzay50aTogYzA1ZTIwMDAKPiA+ID4gPlBDIGlzIGF0IHdha2VfdXBfcHJvY2VzcysweDgvMHg0MAo+ID4gPiA+TFIgaXMgYXQga3RocmVhZF9jcmVhdGVfb25fbm9kZSsweGIwLzB4MTc4Cj4gPiA+IOKApgo+ID4gPiA+RG8geW91IGtub3cgd2hhdCBjb3VsZCBiZSB0aGUgY2F1c2Ugb2YgdGhpcywgb3IgaXMgdGhpcyBhbnkga25vd24gaXNzdWU/Cj4gPiA+IAo+ID4gPiBOby4gVGhpcyBpcyB2ZXJ5IGVhcmx5IGluIHRoZSBib290IHByb2Nlc3MuIEkgdXBncmFkZSB0aGUgYXQ5MSdzIHRpbWVyCj4gPiA+IHBhdGNoZXMgYnV0IGhhdmUgbm8gSFcgdG8gYWN0dWFsbHkgY2hlY2sgaWYgdGhpcyBpcyBzdGlsbCB3b3JraW5nLgo+ID4gCj4gPiBEbyB5b3UgaGF2ZSBhIGxpbmsgdG8gdGhlc2UgcGF0Y2hlcz8KPiA+IAo+IFRoZSBpc3N1ZSBoYXMgYmVlbiBzb2x2ZWQgYXQgZW10cmlvbiBidXQgSSB0aGluayB0aGUgcGF0Y2hlcyB3ZXJlIG5vdAo+IHNlbnQgeWV0LiBUaGUgaX
- NzdWUgaXMgdGhhdCB0aHJlYWRpbmcgdGhlIHRpbWVyIElSUXMgbGVhZHMgdG8gYSBjcmFzaAo+IGJlY2F1c2Uga3RocmVhZGQgaXMgbm90IHN0YXJ0ZWQgeWV0Lgo+IAoKCkFyZSB0aGVyZSBhbnkgdXBkYXRlcyBjb25jZXJuaW5nIHRoZSBwYXRjaGVzIG9yIGRvZXMgYW55Ym9keSBoYXZlIHNvbWUgbW9yZQppbmZvcm1hdGlvbiBvbiBob3cgdGhlIHByb2JsZW0gd2FzIHJlc29sdmVkIG9uIHRoZSBBdG1lbCBjb250cm9sbGVyPwoKSSdtIGVuY291bnRlcmluZyB0aGUgc2FtZSBwcm9ibGVtIG9uIGEgVGVncmEgSzEgcHJvY2Vzc29yIHdpdGggYQozLjEwLjYxLXJ0NjUga2VybmVsIGFuZCBJJ20gdW5zdXJlIHdoYXQncyB0aGUgYmVzdCB3YXkgdG8gZml4IGl0LgoKVW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGF0IHZpcnR1YWwgYWRkcmVzcyAwMDAwMDAwMApbPGMwMDcyYzgwPl0gKHdha2VfdXBfcHJvY2VzcysweDEwLzB4NGMpIGZyb20gWzxjMDA1ZmYyMD5dCihrdGhyZWFkX2NyZWF0ZV9vbl9ub2RlKzB4ODQvMHhlYykKWzxjMDA1ZmYyMD5dIChrdGhyZWFkX2NyZWF0ZV9vbl9ub2RlKzB4ODQvMHhlYykgZnJv
- bSBbPGMwMGJiNjdjPl0KKF9fc2V0dXBfaXJxKzB4MjljLzB4NGNjKQpbPGMwMGJiNjdjPl0gKF9fc2V0dXBfaXJxKzB4MjljLzB4NGNjKSBmcm9tIFs8YzAwYmI4ZjQ+XSAoc2V0dXBfaXJxKzB4NDgvMHg5MCkKWzxjMDBiYjhmND5dIChzZXR1cF9pcnErMHg0OC8weDkwKSBmcm9tIFs8YzA2ZDlmMzg+XQoodGVncmEzX3JlZ2lzdGVyX3dha2VfdGltZXIrMHgyOC8weDY0KQpbPGMwNmQ5ZjM4Pl0gKHRlZ3JhM19yZWdpc3Rlcl93YWtlX3RpbWVyKzB4MjgvMHg2NCkgZnJvbSBbPGMwY2VhMGZjPl0KKHRlZ3JhX2luaXRfdGltZXIrMHgyM2MvMHgzNmMpCls8YzBjZWEwZmM+XSAodGVncmFfaW5pdF90aW1lcisweDIzYy8weDM2YykgZnJvbSBbPGMwY2U5YTg4Pl0KKGNsb2Nrc291cmNlX29mX2luaXQrMHgzNC8weDU4KQpbPGMwY2U5YTg4Pl0gKGNsb2Nrc291cmNlX29mX2luaXQrMHgzNC8weDU4KSBmcm9tIFs8YzBjYmEyYjQ+XQoodGltZV9pbml0KzB4MmMvMHgzOCkKWzxjMGNiYTJiND5dICh0aW1lX2luaXQrMHgyYy8weDM4KSBmcm9tIFs8YzBjYjc5YWM+XSAoc3RhcnRfa2VybmVsKzB4MjM0LzB4MzcwKQpLZXJuZWwgcGFuaWMgLSBub3Qgc3luY2luZz
- ogQXR0ZW1wdGVkIHRvIGtpbGwgdGhlIGlkbGUgdGFzayEKClRoZSBwcm9ibGVtIGlzIHRpbWVfaW5pdCgpIGdldHMgZXhlY3V0ZWQgZmFyIGJlZm9yZSByZXN0X2luaXQoKSB3aGVyZQprdGhyZWFkZF90YXNrIGdldHMgaW5pdGlhbGl6ZWQgYW5kIHdha2VfdXBfcHJvY2VzcyhrdGhyZWFkZF90YXNrKSBmYWlsZXMgaW4Ka3RocmVhZF9jcmVhdGVfb25fbm9kZSgpLgoKQmVzdCByZWdhcmRzCkNocmlzdGlhbiBKYW5uCg==
+* Anders Roxell | 2015-04-12 09:59:38 [+0200]:
 
+>arm64 is missing support for PREEMPT_RT. The main feature which is
+>lacking is support for lazy preemption. The arch-specific entry code,
+>thread information structure definitions, and associated data tables
+>have to be extended to provide this support. Then the Kconfig file has
+>to be extended to indicate the support is available, and also to
+>indicate that support for full RT preemption is now available.
+>
+>Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
+>---
+>
+>I tested this on an arm64 juno target, to get that to boot I had to
+>backport the dtb from v4.0-rc6 to v3.18.11-rt6.
+
+Seriously? It all works by itself? Out of curiosity, how likely is it
+that I can login on one of these machines if I send you a ssh key?
+
+> arch/arm64/Kconfig                   |  2 ++
+> arch/arm64/include/asm/thread_info.h |  3 +++
+> arch/arm64/kernel/asm-offsets.c      |  1 +
+> arch/arm64/kernel/entry.S            | 14 ++++++++++----
+> 4 files changed, 16 insertions(+), 4 deletions(-)
+>
+>diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
+>index 9532f8d..62f4e00 100644
+>--- a/arch/arm64/Kconfig
+>+++ b/arch/arm64/Kconfig
+>@@ -59,7 +59,9 @@ config ARM64
+> 	select HAVE_PERF_REGS
+> 	select HAVE_PERF_USER_STACK_DUMP
+> 	select HAVE_RCU_TABLE_FREE
+>+	select HAVE_PREEMPT_LAZY
+> 	select HAVE_SYSCALL_TRACEPOINTS
+>+	select IRQ_FORCED_THREADING
+
+Did you mark all non-threadable interrupts? Commit da0ec6f7c1e ("ARM:
+7814/2: Allow forced irq threading") was the patch for ARM. If so you
+could take this piece and send upstream and get the kernel commandline
+"threadirqs" working without -RT :)
+
+For the lazy-preempt pieces, arch/arm64/kernel/entry.S, work_pending
+checks only for TIF_NEED_RESCHED while arm checks for both (this and
+_TIF_NEED_RESCHED_LAZY). You sure you don't need it?
+
+Sebastian
