@@ -1,62 +1,104 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH] hwlat_detector: Detect hardware-induced latencies
-Date: Mon, 13 Apr 2015 10:31:30 +0200
-Message-ID: <552B7EE2.1090005@monom.org>
-References: <1428508021-28166-1-git-send-email-daniel.wagner@bmw-carit.de>	<20150408123550.7dbd61b4@gandalf.local.home>	<5526458E.5050202@bmw-carit.de>	<552682A4.4000309@osadl.org> <20150409101037.4dd0837a@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [rfc patch v2] rt,nohz_full: fix nohz_full for PREEMPT_RT_FULL
+Date: Mon, 13 Apr 2015 11:41:45 +0200
+Message-ID: <552B8F59.3020708@linutronix.de>
+References: <20150216111822.GA21649@linutronix.de>	 <1424258514.3819.39.camel@gmail.com> <20150309134535.GA13768@linutronix.de>	 <1425911771.30469.8.camel@gmail.com> <1425980136.3507.17.camel@gmail.com>	 <1426153093.4190.2.camel@gmail.com> <1426222405.17611.7.camel@gmail.com>	 <20150410141552.GC3057@linutronix.de> <1428758159.10417.13.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	linux-rt-users@vger.kernel.org, Jon Masters <jcm@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-kernel@vger.kernel.org,
-	Tom Zanussi <tom.zanussi@linux.intel.com>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Carsten Emde <C.Emde@osadl.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f173.google.com ([209.85.212.173]:35334 "EHLO
-	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751604AbbDMIbe (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Apr 2015 04:31:34 -0400
-Received: by widdi4 with SMTP id di4so62719947wid.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Apr 2015 01:31:33 -0700 (PDT)
-In-Reply-To: <20150409101037.4dd0837a@gandalf.local.home>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1428758159.10417.13.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
-
-On 04/09/2015 04:10 PM, Steven Rostedt wrote:
-> On Thu, 09 Apr 2015 15:46:12 +0200
-> Carsten Emde <C.Emde@osadl.org> wrote:
+On 04/11/2015 03:15 PM, Mike Galbraith wrote:
+> @@ -117,10 +113,8 @@ bool irq_work_queue(struct irq_work *wor
+>         if (work->flags & IRQ_WORK_HARD_IRQ) {
+>                 if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list)))
+>                         arch_irq_work_raise();
+> -       } else {
+> -               if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)))
+> -                       arch_irq_work_raise();
+> -       }
+> +       } /* for lazy_list we have the timer irq */
 > 
->> Hi Daniel,
->>
->>> BTW, are you also taking care of the latency-hist.patch patch?
->> I do.
->>
->> However, the request (and the challenge) is not to simply rewrite the 
->> code. The idea is to provide a general histogram framework that can be 
->> used from anywhere in the kernel and to equip it with everything needed 
->> by the existing histograms. This framework should no longer be part of 
->> the RT patches but submitted directly to mainline Linux. In a second 
->> step, we will then rewrite the existing histogram code to use the new 
->> framework.
->>
->> Any help is greatly appreciated!
+> If we don't queue work without IRQ_WORK_HARD_IRQ set, how does it run?
 
-I'll start poking around then :)
+We schedule the timer softirq which does the work in the non
+IRQ_WORK_HARD_IRQ case.
 
-> Hmm, Currently Tom Zanussi is working on a hist trigger for tracing.
-> Not sure it can be used here, but perhaps ideas can be spawned.
+> Anyway, box did not livelock, nor did it with that bit reverted.
 > 
-> http://marc.info/?l=linux-kernel&m=142807630917288
+>> you could drop the hrtimer hacks. Is this the remaining part all 
+>> that is
+>> required or we shorten the following patch a little more?
+> 
+> rt, nohz_full: fix nohz_full for PREEMPT_RT_FULL
+> 
+> A task being ticked and trying to shut the tick down will fail due
+> to having just awakened ksoftirqd, subtract it from nr_running.
 
->From a quick look, it should be possible to add on top of those patches
-the two TRACE_EVENTs (preemptirqsoff_hist, hrtimer_interrupt), annotate
-start_critical_*() & and friends (from latency-hist.patch). I'll try
-that and see what explodes.
+thanks.
 
-cheers,
-daniel
+> 
+> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+> ---
+>  kernel/sched/core.c      |   17 ++++++++++++++++-
+>  kernel/time/tick-sched.c |    5 +++++
+>  2 files changed, 21 insertions(+), 1 deletion(-)
+> 
+> --- a/kernel/sched/core.c
+> +++ b/kernel/sched/core.c
+> @@ -781,14 +781,29 @@ static inline bool got_nohz_idle_kick(vo
+>  #endif /* CONFIG_NO_HZ_COMMON */
+>  
+>  #ifdef CONFIG_NO_HZ_FULL
+> +
+> +static int ksoftirqd_running(void)
+> +{
+> +       struct task_struct *softirqd;
+> +
+> +       if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
+> +               return 0;
+> +       softirqd = this_cpu_ksoftirqd();
+> +       if (softirqd && softirqd->on_rq)
+> +               return 1;
+> +       return 0;
+> +}
+> +
+>  bool sched_can_stop_tick(void)
+>  {
+>         /*
+>          * More than one running task need preemption.
+>          * nr_running update is assumed to be visible
+>          * after IPI is sent from wakers.
+> +        *
+> +        * NOTE, RT: if ksoftirqd is awake, subtract it.
+>          */
+> -       if (this_rq()->nr_running > 1)
+> +       if (this_rq()->nr_running - ksoftirqd_running() > 1)
+>                 return false;
+>  
+>         return true;
+> --- a/kernel/time/tick-sched.c
+> +++ b/kernel/time/tick-sched.c
+> @@ -227,7 +227,12 @@ void __tick_nohz_full_check(void)
+>  
+>  static void nohz_full_kick_work_func(struct irq_work *work)
+>  {
+> +       unsigned long flags;
+> +
+> +       /* ksoftirqd processes sirqs with interrupts enabled */
+> +       local_irq_save(flags);
+>         __tick_nohz_full_check();
+> +       local_irq_restore(flags);
+>  }
+>  
+>  static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) = {
+> 
+Sebastian
