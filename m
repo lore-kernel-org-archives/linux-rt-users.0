@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.40-rt55
-Date: Wed, 15 Apr 2015 16:04:22 -0400
-Message-ID: <20150415160422.6811dc6a@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.74-rt79
+Date: Wed, 15 Apr 2015 16:04:48 -0400
+Message-ID: <20150415160448.556b8e2b@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,22 +11,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0035.hostedemail.com ([216.40.44.35]:59090 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751607AbbDOUEY (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Apr 2015 16:04:24 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.40-rt55 stable release.
+I'm pleased to announce the 3.10.74-rt79 stable release.
 
 
-This release is just an update to the new stable 3.12.40 version
+This release is just an update to the new stable 3.10.74 version
 and no RT specific changes have been made.
 
 
@@ -34,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: d7cf447c4d1375d53e43e5b9779910240bd09d89
+  branch: v3.10-rt
+  Head SHA1: efb60c129fca2257b9e745b35059037caadc5bc3
 
 
-Or to build 3.12.40-rt55 directly, the following patches should be applied:
+Or to build 3.10.74-rt79 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.40.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.74.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.40-rt55.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.74-rt79.patch.xz
 
 
 
@@ -52,4 +47,3 @@ Or to build 3.12.40-rt55 directly, the following patches should be applied:
 Enjoy,
 
 -- Steve
-
