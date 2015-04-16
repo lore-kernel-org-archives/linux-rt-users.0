@@ -1,41 +1,61 @@
-From: Christian Jann <Christian.Jann@elektrobit.com>
-Subject: Re: 3.14.3-rt5: at91: Crash early at boot
-Date: Thu, 16 Apr 2015 09:55:19 +0000 (UTC)
-Message-ID: <loom.20150416T115355-757@post.gmane.org>
-References: <20140613142506.GL3448@lukather> <20150217083859.GB26177@linutronix.de> <20150316181900.GA4638@lukather> <20150316183033.GH4560@piout.net> <loom.20150413T150403-767@post.gmane.org> <20150416075033.GC26573@linutronix.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 3.18] ring-buffer: Mark irq_work as HARD_IRQ to
+ prevent deadlocks
+Date: Thu, 16 Apr 2015 10:12:00 -0400
+Message-ID: <20150416101200.0633e93d@gandalf.local.home>
+References: <552FC1FE.4020406@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:35678 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753473AbbDPJzk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 16 Apr 2015 05:55:40 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1YigW9-0004mP-8B
-	for linux-rt-users@vger.kernel.org; Thu, 16 Apr 2015 11:55:39 +0200
-Received: from eth1-fw1-nbg6.eb.noris.de ([213.95.148.172])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Apr 2015 11:55:29 +0200
-Received: from Christian.Jann by eth1-fw1-nbg6.eb.noris.de with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Thu, 16 Apr 2015 11:55:29 +0200
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Jan Kiszka <jan.kiszka@siemens.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <552FC1FE.4020406@siemens.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Sebastian Andrzej Siewior <bigeasy <at> linutronix.de> writes:
+On Thu, 16 Apr 2015 16:06:54 +0200
+Jan Kiszka <jan.kiszka@siemens.com> wrote:
 
-> in general what you want is to mark timer interrupt with IRQF_TIMER and
-> that should be enough. The at91 has a few problems here. One thing is
-> that it switches from periodic mode to oneshot and this seems not to
-> work perfectly. The other thing is that the timer interrupt is shared
-> with the uart.
+> ftrace may trigger rb_wakeups while holding pi_lock which will also be
+> requested via trace_...->...->ring_buffer_unlock_commit->...->
+> irq_work_queue->raise_softirq->try_to_wake_up. This quickly causes
+> deadlocks when trying to use ftrace under -rt.
+> 
+> Resolve this by marking the ring buffer's irq_work as HARD_IRQ.
 
-Thanks, I replaced the outdated IRQF_DISABLED flag with IRQF_TIMER and now
-it works like a charm. :)
+Hmm,  I could have sworn I wrote a patch like this not too long ago.
 
+I'll have to check that out.
 
+Thanks,
 
+-- Steve
+
+> 
+> Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+> ---
+> 
+> I'm not yet sure if this doesn't push work into hard-irq context that
+> is better not done there on -rt.
+> 
+> I'm also not sure if there aren't more such cases, given that -rt turns
+> the default irq_work wakeup policy around. But maybe we are lucky.
+> 
+>  kernel/trace/ring_buffer.c | 1 +
+>  1 file changed, 1 insertion(+)
+> 
+> diff --git a/kernel/trace/ring_buffer.c b/kernel/trace/ring_buffer.c
+> index f4fbbfc..6a1939e 100644
+> --- a/kernel/trace/ring_buffer.c
+> +++ b/kernel/trace/ring_buffer.c
+> @@ -1252,6 +1252,7 @@ rb_allocate_cpu_buffer(struct ring_buffer *buffer, int nr_pages, int cpu)
+>  	init_irq_work(&cpu_buffer->irq_work.work, rb_wake_up_waiters);
+>  	init_waitqueue_head(&cpu_buffer->irq_work.waiters);
+>  	init_waitqueue_head(&cpu_buffer->irq_work.full_waiters);
+> +	cpu_buffer->irq_work.work.flags = IRQ_WORK_HARD_IRQ;
+>  
+>  	bpage = kzalloc_node(ALIGN(sizeof(*bpage), cache_line_size()),
+>  			    GFP_KERNEL, cpu_to_node(cpu));
