@@ -1,53 +1,118 @@
-From: Ayyappa Ch <ayyappa.ch.linux@gmail.com>
-Subject: Need information how to verify Linux RT Kernel latency
-Date: Mon, 20 Apr 2015 10:49:53 +0530
-Message-ID: <CAPyr0yJr+3gKwA4VeNNsaCAqxcJVUhxksGc3au5Bi8iAs7c6mQ@mail.gmail.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
+Date: Mon, 20 Apr 2015 10:03:56 +0200
+Message-ID: <1429517036.3226.9.camel@gmail.com>
+References: <552FC1FE.4020406@siemens.com>	<552FC6B1.1040000@linutronix.de>
+	 <552FC72A.8060709@siemens.com> <20150416111041.66043164@gandalf.local.home>
+	 <552FD55F.8000105@siemens.com> <552FE320.6050601@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Jan Kiszka <jan.kiszka@siemens.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qk0-f181.google.com ([209.85.220.181]:34451 "EHLO
-	mail-qk0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751188AbbDTFTy convert rfc822-to-8bit (ORCPT
+Received: from mail-wg0-f50.google.com ([74.125.82.50]:36039 "EHLO
+	mail-wg0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752327AbbDTIEM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Apr 2015 01:19:54 -0400
-Received: by qkgx75 with SMTP id x75so175293035qkg.1
-        for <linux-rt-users@vger.kernel.org>; Sun, 19 Apr 2015 22:19:53 -0700 (PDT)
+	Mon, 20 Apr 2015 04:04:12 -0400
+In-Reply-To: <552FE320.6050601@siemens.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello All,
+On Thu, 2015-04-16 at 18:28 +0200, Jan Kiszka wrote:
+> Instead of turning all irq_work requests into lazy ones on -rt, just
+> move their execution from hard into soft-irq context.
+> 
+> This resolves deadlocks of ftrace which will queue work from 
+> arbitrary
+> contexts, including those that have locks held that are needed for
+> raising a soft-irq.
 
-I would like to run my system regressively to verify latency of RT
-Kernel. From OSADL side i got to know that only running Cyclic test is
-not enough to verify RT linux latency of the system.
+Yup, trace-cmd record -> dead-box fully repeatable, and now fixed.
 
-I got below infor from
-"https://www.osadl.org/Single-View.111+M52212cb1379.0.html"
-
-***********************************************************************=
-****************
-# cyclictest -a -t -n -p99 -i100 -d50
-560.44 586.11 606.12 211/1160 3727
-T: 0 (18617) P:99 I:100 C:1011846111 Min:  2 Act:  4 Avg:  5 Max: 39
-T: 1 (18618) P:98 I:150 C: 708641019 Min:  2 Act:  5 Avg: 11 Max: 57
-
-The test was running on a linux-2.6.24.7-rt15 kernel in parallel with
-repeated loops of "hackbench 25","ls -Ral /", and flood ping from
-outside. After having executed more than one billion cyclictest loops,
-the internal worst-case latency is still only 39 =C2=B5s!
-***********************************************************************=
-********************
-
-I am able to run Cyclic test . But I am not sure how to run "hackbench
-25","ls -Ral /", and flood ping from outside. Can anyone help how to
-run these .
-
-Thanks and regards,
-Ayyappa.Ch
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+> ---
+> 
+> Second try, looks much better so far. And it also removes my concerns
+> regarding other potential cases besides ftrace.
+> 
+>  kernel/irq_work.c | 26 ++++++++++----------------
+>  1 file changed, 10 insertions(+), 16 deletions(-)
+> 
+> diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+> index 9dda38a..3f6ffcd 100644
+> --- a/kernel/irq_work.c
+> +++ b/kernel/irq_work.c
+> @@ -85,12 +85,9 @@ bool irq_work_queue_on(struct irq_work *work, int 
+> cpu)
+>               raise_irqwork = llist_add(&work->llnode,
+>                                         &per_cpu(hirq_work_list, cpu));
+>       else
+> -             raise_irqwork = llist_add(&work->llnode,
+> -                                       &per_cpu(lazy_list, cpu));
+> -#else
+> +#endif
+>               raise_irqwork = llist_add(&work->llnode,
+>                                         &per_cpu(raised_list, cpu));
+> -#endif
+>  
+>       if (raise_irqwork)
+>               arch_send_call_function_single_ipi(cpu);
+> @@ -114,21 +111,20 @@ bool irq_work_queue(struct irq_work *work)
+>       if (work->flags & IRQ_WORK_HARD_IRQ) {
+>               if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list)))
+>                       arch_irq_work_raise();
+> -     } else {
+> +     } else
+> +#endif
+> +     if (work->flags & IRQ_WORK_LAZY) {
+>               if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+>                   tick_nohz_tick_stopped())
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+>                       raise_softirq(TIMER_SOFTIRQ);
+> -     }
+>  #else
+> -     if (work->flags & IRQ_WORK_LAZY) {
+> -             if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+> -                 tick_nohz_tick_stopped())
+>                       arch_irq_work_raise();
+> +#endif
+>       } else {
+>               if (llist_add(&work->llnode, this_cpu_ptr(&raised_list)))
+>                       arch_irq_work_raise();
+>       }
+> -#endif
+>  
+>       preempt_enable();
+>  
+> @@ -202,6 +198,8 @@ void irq_work_run(void)
+>  {
+>  #ifdef CONFIG_PREEMPT_RT_FULL
+>       irq_work_run_list(this_cpu_ptr(&hirq_work_list));
+> +     if (!llist_empty(this_cpu_ptr(&raised_list)))
+> +             raise_softirq(TIMER_SOFTIRQ);
+>  #else
+>       irq_work_run_list(this_cpu_ptr(&raised_list));
+>       irq_work_run_list(this_cpu_ptr(&lazy_list));
+> @@ -211,15 +209,11 @@ EXPORT_SYMBOL_GPL(irq_work_run);
+>  
+>  void irq_work_tick(void)
+>  {
+> -#ifdef CONFIG_PREEMPT_RT_FULL
+> -     irq_work_run_list(this_cpu_ptr(&lazy_list));
+> -#else
+> -     struct llist_head *raised = &__get_cpu_var(raised_list);
+> +     struct llist_head *raised = this_cpu_ptr(&raised_list);
+>  
+>       if (!llist_empty(raised) && !arch_irq_work_has_interrupt())
+>               irq_work_run_list(raised);
+> -     irq_work_run_list(&__get_cpu_var(lazy_list));
+> -#endif
+> +     irq_work_run_list(this_cpu_ptr(&lazy_list));
+>  }
+>  
+>  /*
