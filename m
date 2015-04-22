@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.39-rt37
-Date: Wed, 22 Apr 2015 10:40:17 -0400
-Message-ID: <20150422104017.53ed0d2a@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.75-rt80
+Date: Wed, 22 Apr 2015 10:40:53 -0400
+Message-ID: <20150422104053.7c62eada@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.39-rt37 stable release.
+I'm pleased to announce the 3.10.75-rt80 stable release.
 
 
-This release is just an update to the new stable 3.14.39 version
+This release is just an update to the new stable 3.10.75 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 259119167a2ab64621db3d36466b42a773e58a38
+  branch: v3.10-rt
+  Head SHA1: 1234f8915238e35e35c915be373134f5a1a1fb4b
 
 
-Or to build 3.14.39-rt37 directly, the following patches should be applied:
+Or to build 3.10.75-rt80 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.39.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.75.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.39-rt37.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.75-rt80.patch.xz
 
 
 
