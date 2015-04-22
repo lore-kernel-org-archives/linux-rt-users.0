@@ -1,25 +1,108 @@
-From: "Jiang, Yunhong" <yunhong.jiang@intel.com>
-Subject: Should I still use pm_timer as clock source for hrt mode
-Date: Tue, 21 Apr 2015 17:08:58 +0000
-Message-ID: <DDCAE26804250545B9934A2056554AA0208A7A44@ORSMSX112.amr.corp.intel.com>
+From: Purcareata Bogdan <b43198@freescale.com>
+Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Wed, 22 Apr 2015 15:06:28 +0300
+Message-ID: <55378EC4.2080302@freescale.com>
+References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>					
+ <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>					
+ <54E74A8C.30802@linutronix.de> <1424734051.4698.17.camel@freescale.com>					
+ <54EF196E.4090805@redhat.com> <54EF2025.80404@linutronix.de>				
+ <1424999159.4698.78.camel@freescale.com> <55158E6D.40304@freescale.com>			
+ <1428016310.22867.289.camel@freescale.com>		
+ <551E4A41.1080705@freescale.com>	
+ <1428096375.22867.369.camel@freescale.com>		
+ <55262DD3.2050707@freescale.com>	 <1428623611.22867.561.camel@freescale.com>
+ <5534DAA4.3050809@freescale.com> <1429577566.4352.68.camel@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga03.intel.com ([134.134.136.65]:25428 "EHLO mga03.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753058AbbDURJD convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Apr 2015 13:09:03 -0400
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="utf-8"; Format="flowed"
+Content-Transfer-Encoding: base64
+Cc: Laurentiu Tudor <b10716@freescale.com>, linux-rt-users@vger.kernel.org,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+ Alexander Graf <agraf@suse.de>, linux-kernel@vger.kernel.org,
+ Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+ mihai.caraman@freescale.com, Paolo Bonzini <pbonzini@redhat.com>,
+ Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev@lists.ozlabs.org
+To: Scott Wood <scottwood@freescale.com>
+Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+In-Reply-To: <1429577566.4352.68.camel@freescale.com>
+List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
+List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
+List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
+List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
+List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
+ <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
+Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
+Sender: "Linuxppc-dev"
+ <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi, all
-	I noticed followed statement about TSC timer on https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO , " Since the TSC timer on PC platforms, as used in the previous versions, are now marked as unsuitable for hrt mode due to many lacks of functionalities and reliabilities, you will need i.E. pm_timer as provided by ACPI to use as clock source".
-
-	I'm testing on Intel Xeon CPU E5-2640 and has "Switched to clocksource tsc" on kernel log, I think it mean the TSC on my system is stable and reliable enough to use as clock source, right? With the invariant and synchronized TSC support in latest hardware, can I assume generally TSC would be better than pm_timer? 
-
-Thanks
---jyh
+T24gMjEuMDQuMjAxNSAwMzo1MiwgU2NvdHQgV29vZCB3cm90ZToKPiBPbiBNb24sIDIwMTUtMDQt
+MjAgYXQgMTM6NTMgKzAzMDAsIFB1cmNhcmVhdGEgQm9nZGFuIHdyb3RlOgo+PiBUaGVyZSB3YXMg
+YSB3ZWlyZCBzaXR1YXRpb24gZm9yIC5rdm1wcGNfbXBpY19zZXRfZXByIC0gaXRzIGNvcnJlc3Bv
+bmRpbmcgaW5uZXIKPj4gZnVuY3Rpb24gaXMga3ZtcHBjX3NldF9lcHIsIHdoaWNoIGlzIGEgc3Rh
+dGljIGlubGluZS4gUmVtb3ZpbmcgdGhlIHN0YXRpYyBpbmxpbmUKPj4geWllbGRzIGEgY29tcGls
+ZXIgY3Jhc2ggKFNlZ21lbnRhdGlvbiBmYXVsdCAoY29yZSBkdW1wZWQpIC0KPj4gc2NyaXB0cy9N
+YWtlZmlsZS5idWlsZDo0NDE6IHJlY2lwZSBmb3IgdGFyZ2V0ICdhcmNoL3Bvd2VycGMva3ZtL2t2
+bS5vJyBmYWlsZWQpLAo+PiBidXQgdGhhdCdzIGEgZGlmZmVyZW50IHN0b3J5LCBzbyBJIGp1c3Qg
+bGV0IGl0IGJlIGZvciBub3cuIFBvaW50IGlzIHRoZSB0aW1lIG1heQo+PiBpbmNsdWRlIG90aGVy
+IHdvcmsgYWZ0ZXIgdGhlIGxvY2sgaGFzIGJlZW4gcmVsZWFzZWQsIGJ1dCBiZWZvcmUgdGhlIGZ1
+bmN0aW9uCj4+IGFjdHVhbGx5IHJldHVybmVkLiBJIG5vdGljZWQgdGhpcyB3YXMgdGhlIGNhc2Ug
+Zm9yIC5rdm1fc2V0X21zaSwgd2hpY2ggY291bGQKPj4gd29yayB1cCB0byA5MCBtcywgbm90IGFj
+dHVhbGx5IHVuZGVyIHRoZSBsb2NrLiBUaGlzIG1hZGUgbWUgY2hhbmdlIHdoYXQgSSdtCj4+IGxv
+b2tpbmcgYXQuCj4KPiBrdm1fc2V0X21zaSBkb2VzIHByZXR0eSBtdWNoIG5vdGhpbmcgb3V0c2lk
+ZSB0aGUgbG9jayAtLSBJIHN1c3BlY3QKPiB5b3UncmUgbWVhc3VyaW5nIGFuIGludGVycnVwdCB0
+aGF0IGhhcHBlbmVkIGFzIHNvb24gYXMgdGhlIGxvY2sgd2FzCj4gcmVsZWFzZWQuCgpUaGF0J3Mg
+ZXhhY3RseSByaWdodC4gSSd2ZSBzZWVuIHRoaW5ncyBsaWtlIGEgdGltZXIgaW50ZXJydXB0IG9j
+Y3VyaW5nIHJpZ2h0IAphZnRlciB0aGUgc3BpbmxvY2tfaXJxcmVzdG9yZSwgYnV0IGJlZm9yZSBr
+dm1fc2V0X21zaSBhY3R1YWxseSByZXR1cm5lZC4KClsuLi5dCgo+PiAgIE9yIHBlcmhhcHMgYSBk
+aWZmZXJlbnQgc3RyZXNzIHNjZW5hcmlvIGludm9sdmluZyBhIGxvdCBvZiBWQ1BVcwo+PiBhbmQg
+ZXh0ZXJuYWwgaW50ZXJydXB0cz8KPgo+IFlvdSBjb3VsZCBpbnN0cnVtZW50IHRoZSBNUElDIGNv
+ZGUgdG8gZmluZCBvdXQgaG93IG1hbnkgbG9vcCBpdGVyYXRpb25zCj4geW91IG1heGVkIG91dCBv
+biwgYW5kIGNvbXBhcmUgdGhhdCB0byB0aGUgdGhlb3JldGljYWwgbWF4aW11bS4KCk51bWJlcnMg
+YXJlIHByZXR0eSBsb3csIGFuZCBJJ2xsIHRyeSB0byBleHBsYWluIGJhc2VkIG9uIG15IG9ic2Vy
+dmF0aW9ucy4KClRoZSBwcm9ibGVtYXRpYyBzZWN0aW9uIGluIG9wZW5waWNfdXBkYXRlX2lycSBp
+cyB0aGlzIFsxXSwgc2luY2UgaXQgbG9vcHMgCnRocm91Z2ggYWxsIFZDUFVzLCBhbmQgSVJRX2xv
+Y2FsX3BpcGUgZnVydGhlciBjYWxscyBJUlFfY2hlY2ssIHdoaWNoIGxvb3BzIAp0aHJvdWdoIGFs
+bCBwZW5kaW5nIGludGVycnVwdHMgZm9yIGEgVkNQVSBbMl0uCgpUaGUgZ3Vlc3QgaW50ZXJmYWNl
+cyBhcmUgdmlydGlvLXZob3N0bmV0LCB3aGljaCBhcmUgYmFzZWQgb24gTVNJIAooL3Byb2MvaW50
+ZXJydXB0cyBpbiBndWVzdCBzaG93cyB0aGV5IGFyZSBNU0kpLiBGb3IgZXh0ZXJuYWwgaW50ZXJy
+dXB0cyB0byB0aGUgCmd1ZXN0LCB0aGUgaXJxX3NvdXJjZSBkZXN0bWFzayBpcyBjdXJyZW50bHkg
+MCwgYW5kIGxhc3RfY3B1IGlzIDAgKHVuaXRpYWxpemVkKSwgCnNvIFsxXSB3aWxsIGdvIG9uIGFu
+ZCBkZWxpdmVyIHRoZSBpbnRlcnJ1cHQgZGlyZWN0bHkgYW5kIHVuaWNhc3QgKG5vIFZDUFVzIGxv
+b3ApLgoKSSBhY3RpdmF0ZWQgdGhlIHByX2RlYnVncyBpbiBhcmNoL3Bvd2VycGMva3ZtL21waWMu
+YywgdG8gc2VlIGhvdyBtYW55IGludGVycnVwdHMgCmFyZSBhY3R1YWxseSBwZW5kaW5nIGZvciB0
+aGUgZGVzdGluYXRpb24gVkNQVS4gQXQgbW9zdCwgdGhlcmUgd2VyZSAzIGludGVycnVwdHMgCi0g
+bl9JUlEgPSB7MjI0LDIyNSwyMjZ9IC0gZXZlbiBmb3IgMjQgZmxvd3Mgb2YgcGluZyBmbG9vZC4g
+SSB1bmRlcnN0YW5kIHRoYXQgCmd1ZXN0IHZpcnRpbyBpbnRlcnJ1cHRzIGFyZSBjYXNjYWRlZCBv
+dmVyIDEgb3IgYSBjb3VwbGUgb2Ygc2hhcmVkIE1TSSBpbnRlcnJ1cHRzLgoKU28gd29yc3QgY2Fz
+ZSwgaW4gdGhpcyBzY2VuYXJpbywgd2FzIGNoZWNraW5nIHRoZSBwcmlvcml0aWVzIGZvciAzIHBl
+bmRpbmcgCmludGVycnVwdHMgZm9yIDEgVkNQVS4gU29tZXRoaW5nIGxpa2UgdGhpcyAoc29tZSBv
+ZiBteSBwcmludHMgaW5jbHVkZWQpOgoKWzYxMDEwLjU4MjAzM10gb3BlbnBpY191cGRhdGVfaXJx
+OiBkZXN0bWFzayAxIGxhc3RfY3B1IDAKWzYxMDEwLjU4MjAzNF0gb3BlbnBpY191cGRhdGVfaXJx
+OiBPbmx5IG9uZSBDUFUgaXMgYWxsb3dlZCB0byByZWNlaXZlIHRoaXMgSVJRCls2MTAxMC41ODIw
+MzZdIElSUV9sb2NhbF9waXBlOiBJUlEgMjI0IGFjdGl2ZSAwIHdhcyAxCls2MTAxMC41ODIwMzdd
+IElSUV9jaGVjazogaXJxIDIyNiBzZXQgaXZwcl9wcj04IHByPS0xCls2MTAxMC41ODIwMzhdIElS
+UV9jaGVjazogaXJxIDIyNSBzZXQgaXZwcl9wcj04IHByPS0xCls2MTAxMC41ODIwMzldIElSUV9j
+aGVjazogaXJxIDIyNCBzZXQgaXZwcl9wcj04IHByPS0xCgpJdCB3b3VsZCBiZSByZWFsbHkgaGVs
+cGZ1bCB0byBnZXQgeW91ciBjb21tZW50cyByZWdhcmRpbmcgd2hldGhlciB0aGVzZSBhcmUgCnJl
+YWxpc3RpY2FsIG51bWJlciBmb3IgZXZlcnlkYXkgdXNlLCBvciB0aGV5IGFyZSByZWxldmFudCBv
+bmx5IHRvIHRoaXMgCnBhcnRpY3VsYXIgc2NlbmFyaW8uCgotIENhbiB0aGVzZSBpbnRlcnJ1cHRz
+IGJlIHVzZWQgaW4gZGlyZWN0ZWQgZGVsaXZlcnksIHNvIHRoYXQgdGhlIGRlc3RpbmF0aW9uIApt
+YXNrIGNhbiBpbmNsdWRlIG11bHRpcGxlIFZDUFVzPyBUaGUgTVBJQyBtYW51YWwgc3RhdGVzIHRo
+YXQgdGltZXIgYW5kIElQSSAKaW50ZXJydXB0cyBhcmUgc3VwcG9ydGVkIGZvciBkaXJlY3RlZCBk
+ZWxpdmVyeSwgYWx0b3VnaCBJJ20gbm90IHN1cmUgaG93IG11Y2ggb2YgCnRoaXMgaXMgdXNlZCBp
+biB0aGUgZW11bGF0aW9uLiBJIGtub3cgdGhhdCBrdm1wcGMgdXNlcyB0aGUgZGVjcmVtZW50ZXIg
+b3V0c2lkZSAKb2YgdGhlIE1QSUMuCgotIEhvdyBhcmUgdmlydGlvIGludGVycnVwdHMgY2FzY2Fk
+ZWQgb3ZlciB0aGUgc2hhcmVkIE1TSSBpbnRlcnJ1cHRzPyAKL3Byb2MvZGV2aWNlLXRyZWUvc29j
+QGUwMDAwMDAwL21zaUA0MTYwMC9pbnRlcnJ1cHRzIGluIHRoZSBndWVzdCBzaG93cyA4IHZhbHVl
+cyAKLSAyMjQgLSAyMzEgLSBzbyBhdCBtb3N0IHRoZXJlIG1pZ2h0IGJlIDggcGVuZGluZyBpbnRl
+cnJ1cHRzIGluIElSUV9jaGVjaywgaXMgCnRoYXQgY29ycmVjdD8KCkxvb2tpbmcgZm9yd2FyZCB0
+byB5b3VyIGZlZWRiYWNrLgoKWzFdIGh0dHA6Ly9seHIuZnJlZS1lbGVjdHJvbnMuY29tL3NvdXJj
+ZS9hcmNoL3Bvd2VycGMva3ZtL21waWMuYyNMNDU0ClsyXSBodHRwOi8vbHhyLmZyZWUtZWxlY3Ry
+b25zLmNvbS9zb3VyY2UvYXJjaC9wb3dlcnBjL2t2bS9tcGljLmMjTDMwMwpbM10gCmh0dHBzOi8v
+d3d3LTAxLmlibS5jb20vY2hpcHMvdGVjaGxpYi90ZWNobGliLm5zZi90ZWNoZG9jcy9GMjc5NzE1
+NTFDOUVFRDhFODUyNTc3NEEwMDQ4NzcwQS8kZmlsZS9tcGljX2RiXzA1XzE2XzIwMTEucGRmCgpC
+ZXN0IHJlZ2FyZHMsCkJvZ2RhbiBQLgpfX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX19fX19fXwpMaW51eHBwYy1kZXYgbWFpbGluZyBsaXN0CkxpbnV4cHBjLWRldkBsaXN0
+cy5vemxhYnMub3JnCmh0dHBzOi8vbGlzdHMub3psYWJzLm9yZy9saXN0aW5mby9saW51eHBwYy1k
+ZXY=
