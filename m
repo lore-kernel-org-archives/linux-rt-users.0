@@ -1,97 +1,119 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
-Date: Thu, 23 Apr 2015 09:19:26 +0200
-Message-ID: <1429773566.3419.42.camel@gmail.com>
-References: <552FC1FE.4020406@siemens.com>	<552FC6B1.1040000@linutronix.de>
-	 <552FC72A.8060709@siemens.com> <20150416111041.66043164@gandalf.local.home>
-	 <552FD55F.8000105@siemens.com> <552FE320.6050601@siemens.com>
-	 <1429517036.3226.9.camel@gmail.com> <1429769505.3419.9.camel@gmail.com>
-	 <55389632.50308@siemens.com> <1429772482.3419.40.camel@gmail.com>
-	 <55389B67.3000703@siemens.com>
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Subject: [PATCH v2 RT 3.18] irq_work: Provide a soft-irq based queue
+Date: Thu, 23 Apr 2015 09:35:59 +0200
+Message-ID: <5538A0DF.50401@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Jan Kiszka <jan.kiszka@siemens.com>
+Content-Type: text/plain; charset=iso-8859-15
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f176.google.com ([209.85.212.176]:37237 "EHLO
-	mail-wi0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751073AbbDWHT3 (ORCPT
+Received: from goliath.siemens.de ([192.35.17.28]:56116 "EHLO
+	goliath.siemens.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752057AbbDWHgH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 23 Apr 2015 03:19:29 -0400
-In-Reply-To: <55389B67.3000703@siemens.com>
+	Thu, 23 Apr 2015 03:36:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2015-04-23 at 09:12 +0200, Jan Kiszka wrote:
-> On 2015-04-23 09:01, Mike Galbraith wrote:
-> > On Thu, 2015-04-23 at 08:50 +0200, Jan Kiszka wrote:
-> > > On 2015-04-23 08:11, Mike Galbraith wrote:
-> > > > @@ -103,6 +98,9 @@ EXPORT_SYMBOL_GPL(irq_work_queue_on);
-> > > >  /* Enqueue the irq work @work on the current CPU */
-> > > >  bool irq_work_queue(struct irq_work *work)
-> > > >  {
-> > > > +       bool realtime =3D IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
-> > > > +       bool raise =3D false;
-> > > > +
-> > > >         /* Only queue if not already pending */
-> > > >         if (!irq_work_claim(work))
-> > > >                 return false;
-> > > > @@ -110,25 +108,22 @@ bool irq_work_queue(struct irq_work *wor
-> > > >         /* Queue the entry and raise the IPI if needed. */
-> > > >         preempt_disable();
-> > > > =20
-> > > > -#ifdef CONFIG_PREEMPT_RT_FULL
-> > > > -       if (work->flags & IRQ_WORK_HARD_IRQ) {
-> > > > +       if (realtime && (work->flags & IRQ_WORK_HARD_IRQ)) {
-> > > >                 if (llist_add(&work->llnode,=20
-> > > > this_cpu_ptr(&hirq_work_list)))
-> > >=20
-> > > This boils down to
-> > >=20
-> > > #ifdef CONFIG_X
-> > > some_type x;
-> > > #endif
-> > > ...
-> > >=20
-> > > if (IS_ENABLED(CONFIG_X) && ...)
-> > >       use(x);
-> > >=20
-> > > And here we even have an indirection for IS_ENABLED via that=20
-> > > local=20
-> > > bool
-> > > variable. Is that pattern OK for Linux? Does it compile in all=20
-> > > supported
-> > > optimization levels of all supported compilers?
-> >=20
-> > I hope it all goes away, that being what IS_ENABLED() is there for.
->=20
-> Hope is good - but not enough here: it breaks the build under
-> !CONFIG_X, even the case without the bool var.
->=20
->   CC      kernel/irq_work.o
-> In file included from ../include/asm-generic/percpu.h:6:0,
->                  from ../arch/x86/include/asm/percpu.h:522,
->                  from ../arch/x86/include/asm/current.h:5,
->                  from ../arch/x86/include/asm/processor.h:15,
->                  from ../arch/x86/include/asm/irq_work.h:4,
->                  from ../include/linux/irq_work.h:47,
->                  from ../kernel/irq_work.c:11:
-> ../kernel/irq_work.c: In function =E2=80=98irq_work_queue_on=E2=80=99=
-:
-> ../kernel/irq_work.c:85:17: error: =E2=80=98hirq_work_list=E2=80=99 u=
-ndeclared=20
-> (first use in this function)
->         &per_cpu(hirq_work_list, cpu));
+Instead of turning all irq_work requests into lazy ones on -rt, just
+move their execution from hard into soft-irq context.
 
-Aw poo, so that's just what I _thought_ it was for.
+This resolves deadlocks of ftrace which will queue work from arbitrary
+contexts, including those that have locks held that are needed for
+raising a soft-irq.
 
-        -Mike
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+---
+
+Changes in v2:
+ - fix execution of raised list (discovered by Mike Galbraith)
+ - added comment of irq_work_run (derived from Mike's suggestion)
+
+ kernel/irq_work.c | 34 +++++++++++++++++-----------------
+ 1 file changed, 17 insertions(+), 17 deletions(-)
+
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index 9dda38a..171dfac 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -85,12 +85,9 @@ bool irq_work_queue_on(struct irq_work *work, int cpu)
+ 		raise_irqwork = llist_add(&work->llnode,
+ 					  &per_cpu(hirq_work_list, cpu));
+ 	else
+-		raise_irqwork = llist_add(&work->llnode,
+-					  &per_cpu(lazy_list, cpu));
+-#else
++#endif
+ 		raise_irqwork = llist_add(&work->llnode,
+ 					  &per_cpu(raised_list, cpu));
+-#endif
+ 
+ 	if (raise_irqwork)
+ 		arch_send_call_function_single_ipi(cpu);
+@@ -114,21 +111,20 @@ bool irq_work_queue(struct irq_work *work)
+ 	if (work->flags & IRQ_WORK_HARD_IRQ) {
+ 		if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list)))
+ 			arch_irq_work_raise();
+-	} else {
++	} else
++#endif
++	if (work->flags & IRQ_WORK_LAZY) {
+ 		if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+ 		    tick_nohz_tick_stopped())
++#ifdef CONFIG_PREEMPT_RT_FULL
+ 			raise_softirq(TIMER_SOFTIRQ);
+-	}
+ #else
+-	if (work->flags & IRQ_WORK_LAZY) {
+-		if (llist_add(&work->llnode, this_cpu_ptr(&lazy_list)) &&
+-		    tick_nohz_tick_stopped())
+ 			arch_irq_work_raise();
++#endif
+ 	} else {
+ 		if (llist_add(&work->llnode, this_cpu_ptr(&raised_list)))
+ 			arch_irq_work_raise();
+ 	}
+-#endif
+ 
+ 	preempt_enable();
+ 
+@@ -202,6 +198,13 @@ void irq_work_run(void)
+ {
+ #ifdef CONFIG_PREEMPT_RT_FULL
+ 	irq_work_run_list(this_cpu_ptr(&hirq_work_list));
++	/*
++	 * NOTE: we raise softirq via IPI for safety (caller may hold locks
++	 * that raise_softirq needs) and execute in irq_work_tick() to move
++	 * the overhead from hard to soft irq context.
++	 */
++	if (!llist_empty(this_cpu_ptr(&raised_list)))
++		raise_softirq(TIMER_SOFTIRQ);
+ #else
+ 	irq_work_run_list(this_cpu_ptr(&raised_list));
+ 	irq_work_run_list(this_cpu_ptr(&lazy_list));
+@@ -211,15 +214,12 @@ EXPORT_SYMBOL_GPL(irq_work_run);
+ 
+ void irq_work_tick(void)
+ {
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-	irq_work_run_list(this_cpu_ptr(&lazy_list));
+-#else
+-	struct llist_head *raised = &__get_cpu_var(raised_list);
++	struct llist_head *raised = this_cpu_ptr(&raised_list);
+ 
+-	if (!llist_empty(raised) && !arch_irq_work_has_interrupt())
++	if (!llist_empty(raised) && (!arch_irq_work_has_interrupt() ||
++				     IS_ENABLED(CONFIG_PREEMPT_RT_FULL)))
+ 		irq_work_run_list(raised);
+-	irq_work_run_list(&__get_cpu_var(lazy_list));
+-#endif
++	irq_work_run_list(this_cpu_ptr(&lazy_list));
+ }
+ 
+ /*
+-- 
+2.1.4
