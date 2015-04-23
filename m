@@ -1,57 +1,149 @@
-From: Jan Kiszka <jan.kiszka@siemens.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
-Date: Thu, 23 Apr 2015 08:50:26 +0200
-Message-ID: <55389632.50308@siemens.com>
-References: <552FC1FE.4020406@siemens.com>	<552FC6B1.1040000@linutronix.de>	 <552FC72A.8060709@siemens.com> <20150416111041.66043164@gandalf.local.home>	 <552FD55F.8000105@siemens.com> <552FE320.6050601@siemens.com>	 <1429517036.3226.9.camel@gmail.com> <1429769505.3419.9.camel@gmail.com>
+Date: Thu, 23 Apr 2015 08:58:33 +0200
+Message-ID: <1429772313.3419.38.camel@gmail.com>
+References: <552FC1FE.4020406@siemens.com>	<552FC6B1.1040000@linutronix.de>
+	 <552FC72A.8060709@siemens.com> <20150416111041.66043164@gandalf.local.home>
+	 <552FD55F.8000105@siemens.com> <552FE320.6050601@siemens.com>
+	 <1429517036.3226.9.camel@gmail.com> <1429769505.3419.9.camel@gmail.com>
+	 <5538915C.8010904@siemens.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/mixed; boundary="=-EJc7KCFdSyQOllPCvxaW"
 Cc: Steven Rostedt <rostedt@goodmis.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Jan Kiszka <jan.kiszka@siemens.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1429769505.3419.9.camel@gmail.com>
+In-Reply-To: <5538915C.8010904@siemens.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 2015-04-23 08:11, Mike Galbraith wrote:
-> @@ -103,6 +98,9 @@ EXPORT_SYMBOL_GPL(irq_work_queue_on);
->  /* Enqueue the irq work @work on the current CPU */
->  bool irq_work_queue(struct irq_work *work)
->  {
-> +       bool realtime = IS_ENABLED(CONFIG_PREEMPT_RT_FULL);
-> +       bool raise = false;
-> +
->         /* Only queue if not already pending */
->         if (!irq_work_claim(work))
->                 return false;
-> @@ -110,25 +108,22 @@ bool irq_work_queue(struct irq_work *wor
->         /* Queue the entry and raise the IPI if needed. */
->         preempt_disable();
->  
-> -#ifdef CONFIG_PREEMPT_RT_FULL
-> -       if (work->flags & IRQ_WORK_HARD_IRQ) {
-> +       if (realtime && (work->flags & IRQ_WORK_HARD_IRQ)) {
->                 if (llist_add(&work->llnode, this_cpu_ptr(&hirq_work_list)))
 
-This boils down to
+--=-EJc7KCFdSyQOllPCvxaW
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
 
-#ifdef CONFIG_X
-some_type x;
-#endif
-...
+On Thu, 2015-04-23 at 08:29 +0200, Jan Kiszka wrote:
+> 
+> >  void irq_work_tick(void)
+> >  {
+> > -#ifdef CONFIG_PREEMPT_RT_FULL
+> > -       irq_work_run_list(this_cpu_ptr(&lazy_list));
+> > -#else
+> > -       struct llist_head *raised = &__get_cpu_var(raised_list);
+> > +       struct llist_head *raised = this_cpu_ptr(&raised_list);
+> >  
+> > -       if (!llist_empty(raised) && !arch_irq_work_has_interrupt())
+> > +       if (!llist_empty(raised) && 
+> > (!arch_irq_work_has_interrupt() ||
+> > +           IS_ENABLED(CONFIG_PREEMPT_RT_FULL)))
+> 
+> OK, that additional condition is addressing archs that don't have
+> irq_work support and fall back to the timer, right?
 
-if (IS_ENABLED(CONFIG_X) && ...)
-	use(x);
+How will ever run if it is not run in either irq_work_run() or 
+irq_work_tick()?  There are two choices, we better pick one.
 
-And here we even have an indirection for IS_ENABLED via that local bool
-variable. Is that pattern OK for Linux? Does it compile in all supported
-optimization levels of all supported compilers?
+Attaching patch since either evolution fscked up again (it does that), 
+or someone has managed to turn it into a completely useless piece of 
+crap... if so, likely the same dipstick who made it save messages such 
+that you need fromdos to wipe away the shite it smears all over it.
 
-Jan
+        -Mike
+--=-EJc7KCFdSyQOllPCvxaW
+Content-Disposition: attachment; filename="irq_work-Provide-a-soft-irq-based-queue.patch"
+Content-Type: text/x-patch; name="irq_work-Provide-a-soft-irq-based-queue.patch";
+	charset="UTF-8"
+Content-Transfer-Encoding: base64
 
--- 
-Siemens AG, Corporate Technology, CT RTC ITP SES-DE
-Corporate Competence Center Embedded Linux
+U3ViamVjdDogW1BBVENIIFJUIDMuMThdIGlycV93b3JrOiBQcm92aWRlIGEgc29mdC1pcnEgYmFz
+ZWQgcXVldWUKRGF0ZToJVGh1LCAxNiBBcHIgMjAxNSAxODoyODoxNiArMDIwMApGcm9tOglKYW4g
+S2lzemthIDxqYW4ua2lzemthQHNpZW1lbnMuY29tPgoKSW5zdGVhZCBvZiB0dXJuaW5nIGFsbCBp
+cnFfd29yayByZXF1ZXN0cyBpbnRvIGxhenkgb25lcyBvbiAtcnQsIGp1c3QKbW92ZSB0aGVpciBl
+eGVjdXRpb24gZnJvbSBoYXJkIGludG8gc29mdC1pcnEgY29udGV4dC4KClRoaXMgcmVzb2x2ZXMg
+ZGVhZGxvY2tzIG9mIGZ0cmFjZSB3aGljaCB3aWxsIHF1ZXVlIHdvcmsgZnJvbSBhcmJpdHJhcnkK
+Y29udGV4dHMsIGluY2x1ZGluZyB0aG9zZSB0aGF0IGhhdmUgbG9ja3MgaGVsZCB0aGF0IGFyZSBu
+ZWVkZWQgZm9yCnJhaXNpbmcgYSBzb2Z0LWlycS4KClNpZ25lZC1vZmYtYnk6IEphbiBLaXN6a2Eg
+PGphbi5raXN6a2FAc2llbWVucy5jb20+Ci0tLQoKU2Vjb25kIHRyeSwgbG9va3MgbXVjaCBiZXR0
+ZXIgc28gZmFyLiBBbmQgaXQgYWxzbyByZW1vdmVzIG15IGNvbmNlcm5zCnJlZ2FyZGluZyBvdGhl
+ciBwb3RlbnRpYWwgY2FzZXMgYmVzaWRlcyBmdHJhY2UuCgoga2VybmVsL2lycV93b3JrLmMgfCAg
+IDg0ICsrKysrKysrKysrKysrKysrKysrKysrKysrLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LQogMSBmaWxlIGNoYW5nZWQsIDQxIGluc2VydGlvbnMoKyksIDQzIGRlbGV0aW9ucygtKQoKLS0t
+IGEva2VybmVsL2lycV93b3JrLmMKKysrIGIva2VybmVsL2lycV93b3JrLmMKQEAgLTgwLDE3ICs4
+MCwxMiBAQCBib29sIGlycV93b3JrX3F1ZXVlX29uKHN0cnVjdCBpcnFfd29yayAqCiAJaWYgKCFp
+cnFfd29ya19jbGFpbSh3b3JrKSkKIAkJcmV0dXJuIGZhbHNlOwogCi0jaWZkZWYgQ09ORklHX1BS
+RUVNUFRfUlRfRlVMTAotCWlmICh3b3JrLT5mbGFncyAmIElSUV9XT1JLX0hBUkRfSVJRKQorCWlm
+IChJU19FTkFCTEVEKENPTkZJR19QUkVFTVBUX1JUX0ZVTEwpICYmICh3b3JrLT5mbGFncyAmIElS
+UV9XT1JLX0hBUkRfSVJRKSkKIAkJcmFpc2VfaXJxd29yayA9IGxsaXN0X2FkZCgmd29yay0+bGxu
+b2RlLAogCQkJCQkgICZwZXJfY3B1KGhpcnFfd29ya19saXN0LCBjcHUpKTsKIAllbHNlCiAJCXJh
+aXNlX2lycXdvcmsgPSBsbGlzdF9hZGQoJndvcmstPmxsbm9kZSwKLQkJCQkJICAmcGVyX2NwdShs
+YXp5X2xpc3QsIGNwdSkpOwotI2Vsc2UKLQkJcmFpc2VfaXJxd29yayA9IGxsaXN0X2FkZCgmd29y
+ay0+bGxub2RlLAogCQkJCQkgICZwZXJfY3B1KHJhaXNlZF9saXN0LCBjcHUpKTsKLSNlbmRpZgog
+CiAJaWYgKHJhaXNlX2lycXdvcmspCiAJCWFyY2hfc2VuZF9jYWxsX2Z1bmN0aW9uX3NpbmdsZV9p
+cGkoY3B1KTsKQEAgLTEwMyw2ICs5OCw5IEBAIEVYUE9SVF9TWU1CT0xfR1BMKGlycV93b3JrX3F1
+ZXVlX29uKTsKIC8qIEVucXVldWUgdGhlIGlycSB3b3JrIEB3b3JrIG9uIHRoZSBjdXJyZW50IENQ
+VSAqLwogYm9vbCBpcnFfd29ya19xdWV1ZShzdHJ1Y3QgaXJxX3dvcmsgKndvcmspCiB7CisJYm9v
+bCByZWFsdGltZSA9IElTX0VOQUJMRUQoQ09ORklHX1BSRUVNUFRfUlRfRlVMTCk7CisJYm9vbCBy
+YWlzZSA9IGZhbHNlOworCiAJLyogT25seSBxdWV1ZSBpZiBub3QgYWxyZWFkeSBwZW5kaW5nICov
+CiAJaWYgKCFpcnFfd29ya19jbGFpbSh3b3JrKSkKIAkJcmV0dXJuIGZhbHNlOwpAQCAtMTEwLDI1
+ICsxMDgsMjIgQEAgYm9vbCBpcnFfd29ya19xdWV1ZShzdHJ1Y3QgaXJxX3dvcmsgKndvcgogCS8q
+IFF1ZXVlIHRoZSBlbnRyeSBhbmQgcmFpc2UgdGhlIElQSSBpZiBuZWVkZWQuICovCiAJcHJlZW1w
+dF9kaXNhYmxlKCk7CiAKLSNpZmRlZiBDT05GSUdfUFJFRU1QVF9SVF9GVUxMCi0JaWYgKHdvcmst
+PmZsYWdzICYgSVJRX1dPUktfSEFSRF9JUlEpIHsKKwlpZiAocmVhbHRpbWUgJiYgKHdvcmstPmZs
+YWdzICYgSVJRX1dPUktfSEFSRF9JUlEpKSB7CiAJCWlmIChsbGlzdF9hZGQoJndvcmstPmxsbm9k
+ZSwgdGhpc19jcHVfcHRyKCZoaXJxX3dvcmtfbGlzdCkpKQotCQkJYXJjaF9pcnFfd29ya19yYWlz
+ZSgpOwotCX0gZWxzZSB7Ci0JCWlmIChsbGlzdF9hZGQoJndvcmstPmxsbm9kZSwgdGhpc19jcHVf
+cHRyKCZsYXp5X2xpc3QpKSAmJgotCQkgICAgdGlja19ub2h6X3RpY2tfc3RvcHBlZCgpKQotCQkJ
+cmFpc2Vfc29mdGlycShUSU1FUl9TT0ZUSVJRKTsKLQl9Ci0jZWxzZQotCWlmICh3b3JrLT5mbGFn
+cyAmIElSUV9XT1JLX0xBWlkpIHsKKwkJCXJhaXNlID0gMTsKKwl9IGVsc2UgaWYgKHdvcmstPmZs
+YWdzICYgSVJRX1dPUktfTEFaWSkgewogCQlpZiAobGxpc3RfYWRkKCZ3b3JrLT5sbG5vZGUsIHRo
+aXNfY3B1X3B0cigmbGF6eV9saXN0KSkgJiYKLQkJICAgIHRpY2tfbm9oel90aWNrX3N0b3BwZWQo
+KSkKLQkJCWFyY2hfaXJxX3dvcmtfcmFpc2UoKTsKLQl9IGVsc2UgewotCQlpZiAobGxpc3RfYWRk
+KCZ3b3JrLT5sbG5vZGUsIHRoaXNfY3B1X3B0cigmcmFpc2VkX2xpc3QpKSkKLQkJCWFyY2hfaXJx
+X3dvcmtfcmFpc2UoKTsKLQl9Ci0jZW5kaWYKKwkJICAgIHRpY2tfbm9oel90aWNrX3N0b3BwZWQo
+KSkgeworCQkJaWYgKHJlYWx0aW1lKQorCQkJCXJhaXNlX3NvZnRpcnEoVElNRVJfU09GVElSUSk7
+CisJCQllbHNlCisJCQkJcmFpc2UgPSB0cnVlOworCQl9CisJfSBlbHNlIGlmIChsbGlzdF9hZGQo
+JndvcmstPmxsbm9kZSwgdGhpc19jcHVfcHRyKCZyYWlzZWRfbGlzdCkpKQorCQlyYWlzZSA9IHRy
+dWU7CisKKwlpZiAocmFpc2UpCisJCWFyY2hfaXJxX3dvcmtfcmFpc2UoKTsKIAogCXByZWVtcHRf
+ZW5hYmxlKCk7CiAKQEAgLTE0MywxMiArMTM4LDEzIEBAIGJvb2wgaXJxX3dvcmtfbmVlZHNfY3B1
+KHZvaWQpCiAJcmFpc2VkID0gdGhpc19jcHVfcHRyKCZyYWlzZWRfbGlzdCk7CiAJbGF6eSA9IHRo
+aXNfY3B1X3B0cigmbGF6eV9saXN0KTsKIAotCWlmIChsbGlzdF9lbXB0eShyYWlzZWQpKQotCQlp
+ZiAobGxpc3RfZW1wdHkobGF6eSkpCi0jaWZkZWYgQ09ORklHX1BSRUVNUFRfUlRfRlVMTAorCWlm
+IChsbGlzdF9lbXB0eShyYWlzZWQpICYmIGxsaXN0X2VtcHR5KGxhenkpKSB7CisJCWlmIChJU19F
+TkFCTEVEKENPTkZJR19QUkVFTVBUX1JUX0ZVTEwpKSB7CiAJCQlpZiAobGxpc3RfZW1wdHkodGhp
+c19jcHVfcHRyKCZoaXJxX3dvcmtfbGlzdCkpKQotI2VuZGlmCiAJCQkJcmV0dXJuIGZhbHNlOwor
+CQl9IGVsc2UKKwkJCXJldHVybiBmYWxzZTsKKwl9CiAKIAkvKiBBbGwgd29yayBzaG91bGQgaGF2
+ZSBiZWVuIGZsdXNoZWQgYmVmb3JlIGdvaW5nIG9mZmxpbmUgKi8KIAlXQVJOX09OX09OQ0UoY3B1
+X2lzX29mZmxpbmUoc21wX3Byb2Nlc3Nvcl9pZCgpKSk7CkBAIC0xNjIsOSArMTU4LDcgQEAgc3Rh
+dGljIHZvaWQgaXJxX3dvcmtfcnVuX2xpc3Qoc3RydWN0IGxsaQogCXN0cnVjdCBpcnFfd29yayAq
+d29yazsKIAlzdHJ1Y3QgbGxpc3Rfbm9kZSAqbGxub2RlOwogCi0jaWZuZGVmIENPTkZJR19QUkVF
+TVBUX1JUX0ZVTEwKLQlCVUdfT04oIWlycXNfZGlzYWJsZWQoKSk7Ci0jZW5kaWYKKwlCVUdfT04o
+IUlTX0VOQUJMRUQoQ09ORklHX1BSRUVNUFRfUlRfRlVMTCkgJiYgIWlycXNfZGlzYWJsZWQoKSk7
+CiAKIAlpZiAobGxpc3RfZW1wdHkobGlzdCkpCiAJCXJldHVybjsKQEAgLTIwMCwyNiArMTk0LDMw
+IEBAIHN0YXRpYyB2b2lkIGlycV93b3JrX3J1bl9saXN0KHN0cnVjdCBsbGkKICAqLwogdm9pZCBp
+cnFfd29ya19ydW4odm9pZCkKIHsKLSNpZmRlZiBDT05GSUdfUFJFRU1QVF9SVF9GVUxMCi0JaXJx
+X3dvcmtfcnVuX2xpc3QodGhpc19jcHVfcHRyKCZoaXJxX3dvcmtfbGlzdCkpOwotI2Vsc2UKLQlp
+cnFfd29ya19ydW5fbGlzdCh0aGlzX2NwdV9wdHIoJnJhaXNlZF9saXN0KSk7Ci0JaXJxX3dvcmtf
+cnVuX2xpc3QodGhpc19jcHVfcHRyKCZsYXp5X2xpc3QpKTsKLSNlbmRpZgorCWlmIChJU19FTkFC
+TEVEKENPTkZJR19QUkVFTVBUX1JUX0ZVTEwpKSB7CisJCWlycV93b3JrX3J1bl9saXN0KHRoaXNf
+Y3B1X3B0cigmaGlycV93b3JrX2xpc3QpKTsKKwkJLyoKKwkJICogTk9URTogd2UgcmFpc2Ugc29m
+dGlycSB2aWEgSVBJIGZvciBzYWZldHksCisJCSAqIGFuZCBleGVjdXRlIGluIGlycV93b3JrX3Rp
+Y2soKSB0byBtb3ZlIHRoZQorCQkgKiBvdmVyaGVhZCBmcm9tIGhhcmQgdG8gc29mdCBpcnEgY29u
+dGV4dC4KKwkJICovCisJCWlmICghbGxpc3RfZW1wdHkodGhpc19jcHVfcHRyKCZyYWlzZWRfbGlz
+dCkpKQorCQkJcmFpc2Vfc29mdGlycShUSU1FUl9TT0ZUSVJRKTsKKwl9IGVsc2UgeworCQlpcnFf
+d29ya19ydW5fbGlzdCh0aGlzX2NwdV9wdHIoJnJhaXNlZF9saXN0KSk7CisJCWlycV93b3JrX3J1
+bl9saXN0KHRoaXNfY3B1X3B0cigmbGF6eV9saXN0KSk7CisJfQogfQogRVhQT1JUX1NZTUJPTF9H
+UEwoaXJxX3dvcmtfcnVuKTsKIAogdm9pZCBpcnFfd29ya190aWNrKHZvaWQpCiB7Ci0jaWZkZWYg
+Q09ORklHX1BSRUVNUFRfUlRfRlVMTAotCWlycV93b3JrX3J1bl9saXN0KHRoaXNfY3B1X3B0cigm
+bGF6eV9saXN0KSk7Ci0jZWxzZQotCXN0cnVjdCBsbGlzdF9oZWFkICpyYWlzZWQgPSAmX19nZXRf
+Y3B1X3ZhcihyYWlzZWRfbGlzdCk7CisJc3RydWN0IGxsaXN0X2hlYWQgKnJhaXNlZCA9IHRoaXNf
+Y3B1X3B0cigmcmFpc2VkX2xpc3QpOwogCi0JaWYgKCFsbGlzdF9lbXB0eShyYWlzZWQpICYmICFh
+cmNoX2lycV93b3JrX2hhc19pbnRlcnJ1cHQoKSkKKwlpZiAoIWxsaXN0X2VtcHR5KHJhaXNlZCkg
+JiYgKCFhcmNoX2lycV93b3JrX2hhc19pbnRlcnJ1cHQoKSB8fAorCSAgICBJU19FTkFCTEVEKENP
+TkZJR19QUkVFTVBUX1JUX0ZVTEwpKSkKIAkJaXJxX3dvcmtfcnVuX2xpc3QocmFpc2VkKTsKLQlp
+cnFfd29ya19ydW5fbGlzdCgmX19nZXRfY3B1X3ZhcihsYXp5X2xpc3QpKTsKLSNlbmRpZgorCWly
+cV93b3JrX3J1bl9saXN0KHRoaXNfY3B1X3B0cigmbGF6eV9saXN0KSk7CiB9CiAKIC8qCg==
+
+
+--=-EJc7KCFdSyQOllPCvxaW--
