@@ -1,125 +1,58 @@
-From: Purcareata Bogdan <b43198@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Thu, 23 Apr 2015 15:31:32 +0300
-Message-ID: <5538E624.8080904@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>						
- <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>						
- <54E74A8C.30802@linutronix.de>	 <1424734051.4698.17.camel@freescale.com>					
- <54EF196E.4090805@redhat.com>	 <54EF2025.80404@linutronix.de>				
- <1424999159.4698.78.camel@freescale.com>	 <55158E6D.40304@freescale.com>				
- <1428016310.22867.289.camel@freescale.com>			
- <551E4A41.1080705@freescale.com>		
- <1428096375.22867.369.camel@freescale.com>			
- <55262DD3.2050707@freescale.com>		
- <1428623611.22867.561.camel@freescale.com>	 <5534DAA4.3050809@freescale.com>
- <1429577566.4352.68.camel@freescale.com>	 <55378EC4.2080302@freescale.com>
- <1429749001.16357.7.camel@freescale.com>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: Re: Should I still use pm_timer as clock source for hrt mode
+Date: Thu, 23 Apr 2015 10:15:19 -0300
+Message-ID: <20150423131519.GD28465@uudg.org>
+References: <DDCAE26804250545B9934A2056554AA0208A7A44@ORSMSX112.amr.corp.intel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; Format="flowed"
-Content-Transfer-Encoding: base64
-Cc: Laurentiu Tudor <b10716@freescale.com>, linux-rt-users@vger.kernel.org,
- Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
- Alexander Graf <agraf@suse.de>, linux-kernel@vger.kernel.org,
- Bogdan Purcareata <bogdan.purcareata@freescale.com>,
- mihai.caraman@freescale.com, Paolo Bonzini <pbonzini@redhat.com>,
- Thomas Gleixner <tglx@linutronix.de>, linuxppc-dev@lists.ozlabs.org
-To: Scott Wood <scottwood@freescale.com>
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <1429749001.16357.7.camel@freescale.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Jiang, Yunhong" <yunhong.jiang@intel.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qc0-f181.google.com ([209.85.216.181]:36082 "EHLO
+	mail-qc0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965927AbbDWNPX (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 23 Apr 2015 09:15:23 -0400
+Received: by qcpm10 with SMTP id m10so8614832qcp.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 23 Apr 2015 06:15:23 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <DDCAE26804250545B9934A2056554AA0208A7A44@ORSMSX112.amr.corp.intel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-T24gMjMuMDQuMjAxNSAwMzozMCwgU2NvdHQgV29vZCB3cm90ZToKPiBPbiBXZWQsIDIwMTUtMDQt
-MjIgYXQgMTU6MDYgKzAzMDAsIFB1cmNhcmVhdGEgQm9nZGFuIHdyb3RlOgo+PiBPbiAyMS4wNC4y
-MDE1IDAzOjUyLCBTY290dCBXb29kIHdyb3RlOgo+Pj4gT24gTW9uLCAyMDE1LTA0LTIwIGF0IDEz
-OjUzICswMzAwLCBQdXJjYXJlYXRhIEJvZ2RhbiB3cm90ZToKPj4+PiBUaGVyZSB3YXMgYSB3ZWly
-ZCBzaXR1YXRpb24gZm9yIC5rdm1wcGNfbXBpY19zZXRfZXByIC0gaXRzIGNvcnJlc3BvbmRpbmcg
-aW5uZXIKPj4+PiBmdW5jdGlvbiBpcyBrdm1wcGNfc2V0X2Vwciwgd2hpY2ggaXMgYSBzdGF0aWMg
-aW5saW5lLiBSZW1vdmluZyB0aGUgc3RhdGljIGlubGluZQo+Pj4+IHlpZWxkcyBhIGNvbXBpbGVy
-IGNyYXNoIChTZWdtZW50YXRpb24gZmF1bHQgKGNvcmUgZHVtcGVkKSAtCj4+Pj4gc2NyaXB0cy9N
-YWtlZmlsZS5idWlsZDo0NDE6IHJlY2lwZSBmb3IgdGFyZ2V0ICdhcmNoL3Bvd2VycGMva3ZtL2t2
-bS5vJyBmYWlsZWQpLAo+Pj4+IGJ1dCB0aGF0J3MgYSBkaWZmZXJlbnQgc3RvcnksIHNvIEkganVz
-dCBsZXQgaXQgYmUgZm9yIG5vdy4gUG9pbnQgaXMgdGhlIHRpbWUgbWF5Cj4+Pj4gaW5jbHVkZSBv
-dGhlciB3b3JrIGFmdGVyIHRoZSBsb2NrIGhhcyBiZWVuIHJlbGVhc2VkLCBidXQgYmVmb3JlIHRo
-ZSBmdW5jdGlvbgo+Pj4+IGFjdHVhbGx5IHJldHVybmVkLiBJIG5vdGljZWQgdGhpcyB3YXMgdGhl
-IGNhc2UgZm9yIC5rdm1fc2V0X21zaSwgd2hpY2ggY291bGQKPj4+PiB3b3JrIHVwIHRvIDkwIG1z
-LCBub3QgYWN0dWFsbHkgdW5kZXIgdGhlIGxvY2suIFRoaXMgbWFkZSBtZSBjaGFuZ2Ugd2hhdCBJ
-J20KPj4+PiBsb29raW5nIGF0Lgo+Pj4KPj4+IGt2bV9zZXRfbXNpIGRvZXMgcHJldHR5IG11Y2gg
-bm90aGluZyBvdXRzaWRlIHRoZSBsb2NrIC0tIEkgc3VzcGVjdAo+Pj4geW91J3JlIG1lYXN1cmlu
-ZyBhbiBpbnRlcnJ1cHQgdGhhdCBoYXBwZW5lZCBhcyBzb29uIGFzIHRoZSBsb2NrIHdhcwo+Pj4g
-cmVsZWFzZWQuCj4+Cj4+IFRoYXQncyBleGFjdGx5IHJpZ2h0LiBJJ3ZlIHNlZW4gdGhpbmdzIGxp
-a2UgYSB0aW1lciBpbnRlcnJ1cHQgb2NjdXJpbmcgcmlnaHQKPj4gYWZ0ZXIgdGhlIHNwaW5sb2Nr
-X2lycXJlc3RvcmUsIGJ1dCBiZWZvcmUga3ZtX3NldF9tc2kgYWN0dWFsbHkgcmV0dXJuZWQuCj4+
-Cj4+IFsuLi5dCj4+Cj4+Pj4gICAgT3IgcGVyaGFwcyBhIGRpZmZlcmVudCBzdHJlc3Mgc2NlbmFy
-aW8gaW52b2x2aW5nIGEgbG90IG9mIFZDUFVzCj4+Pj4gYW5kIGV4dGVybmFsIGludGVycnVwdHM/
-Cj4+Pgo+Pj4gWW91IGNvdWxkIGluc3RydW1lbnQgdGhlIE1QSUMgY29kZSB0byBmaW5kIG91dCBo
-b3cgbWFueSBsb29wIGl0ZXJhdGlvbnMKPj4+IHlvdSBtYXhlZCBvdXQgb24sIGFuZCBjb21wYXJl
-IHRoYXQgdG8gdGhlIHRoZW9yZXRpY2FsIG1heGltdW0uCj4+Cj4+IE51bWJlcnMgYXJlIHByZXR0
-eSBsb3csIGFuZCBJJ2xsIHRyeSB0byBleHBsYWluIGJhc2VkIG9uIG15IG9ic2VydmF0aW9ucy4K
-Pj4KPj4gVGhlIHByb2JsZW1hdGljIHNlY3Rpb24gaW4gb3BlbnBpY191cGRhdGVfaXJxIGlzIHRo
-aXMgWzFdLCBzaW5jZSBpdCBsb29wcwo+PiB0aHJvdWdoIGFsbCBWQ1BVcywgYW5kIElSUV9sb2Nh
-bF9waXBlIGZ1cnRoZXIgY2FsbHMgSVJRX2NoZWNrLCB3aGljaCBsb29wcwo+PiB0aHJvdWdoIGFs
-bCBwZW5kaW5nIGludGVycnVwdHMgZm9yIGEgVkNQVSBbMl0uCj4+Cj4+IFRoZSBndWVzdCBpbnRl
-cmZhY2VzIGFyZSB2aXJ0aW8tdmhvc3RuZXQsIHdoaWNoIGFyZSBiYXNlZCBvbiBNU0kKPj4gKC9w
-cm9jL2ludGVycnVwdHMgaW4gZ3Vlc3Qgc2hvd3MgdGhleSBhcmUgTVNJKS4gRm9yIGV4dGVybmFs
-IGludGVycnVwdHMgdG8gdGhlCj4+IGd1ZXN0LCB0aGUgaXJxX3NvdXJjZSBkZXN0bWFzayBpcyBj
-dXJyZW50bHkgMCwgYW5kIGxhc3RfY3B1IGlzIDAgKHVuaXRpYWxpemVkKSwKPj4gc28gWzFdIHdp
-bGwgZ28gb24gYW5kIGRlbGl2ZXIgdGhlIGludGVycnVwdCBkaXJlY3RseSBhbmQgdW5pY2FzdCAo
-bm8gVkNQVXMgbG9vcCkuCj4+Cj4+IEkgYWN0aXZhdGVkIHRoZSBwcl9kZWJ1Z3MgaW4gYXJjaC9w
-b3dlcnBjL2t2bS9tcGljLmMsIHRvIHNlZSBob3cgbWFueSBpbnRlcnJ1cHRzCj4+IGFyZSBhY3R1
-YWxseSBwZW5kaW5nIGZvciB0aGUgZGVzdGluYXRpb24gVkNQVS4gQXQgbW9zdCwgdGhlcmUgd2Vy
-ZSAzIGludGVycnVwdHMKPj4gLSBuX0lSUSA9IHsyMjQsMjI1LDIyNn0gLSBldmVuIGZvciAyNCBm
-bG93cyBvZiBwaW5nIGZsb29kLiBJIHVuZGVyc3RhbmQgdGhhdAo+PiBndWVzdCB2aXJ0aW8gaW50
-ZXJydXB0cyBhcmUgY2FzY2FkZWQgb3ZlciAxIG9yIGEgY291cGxlIG9mIHNoYXJlZCBNU0kgaW50
-ZXJydXB0cy4KPj4KPj4gU28gd29yc3QgY2FzZSwgaW4gdGhpcyBzY2VuYXJpbywgd2FzIGNoZWNr
-aW5nIHRoZSBwcmlvcml0aWVzIGZvciAzIHBlbmRpbmcKPj4gaW50ZXJydXB0cyBmb3IgMSBWQ1BV
-LiBTb21ldGhpbmcgbGlrZSB0aGlzIChzb21lIG9mIG15IHByaW50cyBpbmNsdWRlZCk6Cj4+Cj4+
-IFs2MTAxMC41ODIwMzNdIG9wZW5waWNfdXBkYXRlX2lycTogZGVzdG1hc2sgMSBsYXN0X2NwdSAw
-Cj4+IFs2MTAxMC41ODIwMzRdIG9wZW5waWNfdXBkYXRlX2lycTogT25seSBvbmUgQ1BVIGlzIGFs
-bG93ZWQgdG8gcmVjZWl2ZSB0aGlzIElSUQo+PiBbNjEwMTAuNTgyMDM2XSBJUlFfbG9jYWxfcGlw
-ZTogSVJRIDIyNCBhY3RpdmUgMCB3YXMgMQo+PiBbNjEwMTAuNTgyMDM3XSBJUlFfY2hlY2s6IGly
-cSAyMjYgc2V0IGl2cHJfcHI9OCBwcj0tMQo+PiBbNjEwMTAuNTgyMDM4XSBJUlFfY2hlY2s6IGly
-cSAyMjUgc2V0IGl2cHJfcHI9OCBwcj0tMQo+PiBbNjEwMTAuNTgyMDM5XSBJUlFfY2hlY2s6IGly
-cSAyMjQgc2V0IGl2cHJfcHI9OCBwcj0tMQo+Pgo+PiBJdCB3b3VsZCBiZSByZWFsbHkgaGVscGZ1
-bCB0byBnZXQgeW91ciBjb21tZW50cyByZWdhcmRpbmcgd2hldGhlciB0aGVzZSBhcmUKPj4gcmVh
-bGlzdGljYWwgbnVtYmVyIGZvciBldmVyeWRheSB1c2UsIG9yIHRoZXkgYXJlIHJlbGV2YW50IG9u
-bHkgdG8gdGhpcwo+PiBwYXJ0aWN1bGFyIHNjZW5hcmlvLgo+Cj4gUlQgaXNuJ3QgYWJvdXQgInJl
-YWxpc3RpYyBudW1iZXJzIGZvciBldmVyeWRheSB1c2UiLiAgSXQncyBhYm91dCB3b3JzdAo+IGNh
-c2VzLgo+Cj4+IC0gQ2FuIHRoZXNlIGludGVycnVwdHMgYmUgdXNlZCBpbiBkaXJlY3RlZCBkZWxp
-dmVyeSwgc28gdGhhdCB0aGUgZGVzdGluYXRpb24KPj4gbWFzayBjYW4gaW5jbHVkZSBtdWx0aXBs
-ZSBWQ1BVcz8KPgo+IFRoZSBGcmVlc2NhbGUgTVBJQyBkb2VzIG5vdCBzdXBwb3J0IG11bHRpcGxl
-IGRlc3RpbmF0aW9ucyBmb3IgbW9zdAo+IGludGVycnVwdHMsIGJ1dCB0aGUgKG5vbi1GU0wtc3Bl
-Y2lmaWMpIGVtdWxhdGlvbiBjb2RlIGFwcGVhcnMgdG8gYWxsb3cKPiBpdC4KPgo+PiAgIFRoZSBN
-UElDIG1hbnVhbCBzdGF0ZXMgdGhhdCB0aW1lciBhbmQgSVBJCj4+IGludGVycnVwdHMgYXJlIHN1
-cHBvcnRlZCBmb3IgZGlyZWN0ZWQgZGVsaXZlcnksIGFsdG91Z2ggSSdtIG5vdCBzdXJlIGhvdyBt
-dWNoIG9mCj4+IHRoaXMgaXMgdXNlZCBpbiB0aGUgZW11bGF0aW9uLiBJIGtub3cgdGhhdCBrdm1w
-cGMgdXNlcyB0aGUgZGVjcmVtZW50ZXIgb3V0c2lkZQo+PiBvZiB0aGUgTVBJQy4KPj4KPj4gLSBI
-b3cgYXJlIHZpcnRpbyBpbnRlcnJ1cHRzIGNhc2NhZGVkIG92ZXIgdGhlIHNoYXJlZCBNU0kgaW50
-ZXJydXB0cz8KPj4gL3Byb2MvZGV2aWNlLXRyZWUvc29jQGUwMDAwMDAwL21zaUA0MTYwMC9pbnRl
-cnJ1cHRzIGluIHRoZSBndWVzdCBzaG93cyA4IHZhbHVlcwo+PiAtIDIyNCAtIDIzMSAtIHNvIGF0
-IG1vc3QgdGhlcmUgbWlnaHQgYmUgOCBwZW5kaW5nIGludGVycnVwdHMgaW4gSVJRX2NoZWNrLCBp
-cwo+PiB0aGF0IGNvcnJlY3Q/Cj4KPiBJdCBsb29rcyBsaWtlIHRoYXQncyBjdXJyZW50bHkgdGhl
-IGNhc2UsIGJ1dCBhY3R1YWwgaGFyZHdhcmUgc3VwcG9ydHMKPiBtb3JlIHRoYW4gdGhhdCwgc28g
-aXQncyBwb3NzaWJsZSAoYWxiZWl0IHVubGlrZWx5IGFueSB0aW1lIHNvb24pIHRoYXQKPiB0aGUg
-ZW11bGF0aW9uIGV2ZW50dWFsbHkgZG9lcyBhcyB3ZWxsLgo+Cj4gQnV0IGl0J3MgcG9zc2libGUg
-dG8gaGF2ZSBpbnRlcnJ1cHRzIG90aGVyIHRoYW4gTVNJcy4uLgoKUmlnaHQuCgpTbyBnaXZlbiB0
-aGF0IHRoZSByYXcgc3BpbmxvY2sgY29udmVyc2lvbiBpcyBub3Qgc3VpdGFibGUgZm9yIGFsbCB0
-aGUgc2NlbmFyaW9zIApzdXBwb3J0ZWQgYnkgdGhlIE9wZW5QSUMgZW11bGF0aW9uLCBpcyBpdCBv
-ayB0aGF0IG15IG5leHQgc3RlcCB3b3VsZCBiZSB0byBzZW5kIAphIHBhdGNoIGNvbnRhaW5pbmcg
-Ym90aCB0aGUgcmF3IHNwaW5sb2NrIGNvbnZlcnNpb24gYW5kIGEgbWFuZGF0b3J5IGRpc2FibGUg
-b2YgCnRoZSBpbi1rZXJuZWwgTVBJQz8gVGhpcyBpcyBhY3R1YWxseSB0aGUgbGFzdCBjb25jbHVz
-aW9uIHdlIGNhbWUgdXAgd2l0aCBzb21lIAp0aW1lIGFnbywgYnV0IEkgZ3Vlc3MgaXQgd2FzIGdv
-b2QgdG8gZ2V0IHNvbWUgbW9yZSBpbnNpZ2h0IG9uIGhvdyB0aGluZ3MgCmFjdHVhbGx5IHdvcmsg
-KGF0IGxlYXN0IGZvciBtZSkuCgpUaGFua3MsCkJvZ2RhbiBQLgpfX19fX19fX19fX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fXwpMaW51eHBwYy1kZXYgbWFpbGluZyBsaXN0Ckxp
-bnV4cHBjLWRldkBsaXN0cy5vemxhYnMub3JnCmh0dHBzOi8vbGlzdHMub3psYWJzLm9yZy9saXN0
-aW5mby9saW51eHBwYy1kZXY=
+On Tue, Apr 21, 2015 at 05:08:58PM +0000, Jiang, Yunhong wrote:
+| Hi, all
+| 	I noticed followed statement about TSC timer on
+| https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO , " Since the TSC
+| timer on PC platforms, as used in the previous versions, are now marked as
+| unsuitable for hrt mode due to many lacks of functionalities and
+| reliabilities, you will need i.E. pm_timer as provided by ACPI to use as
+| clock source".
+| 
+| 	I'm testing on Intel Xeon CPU E5-2640 and has "Switched to
+| clocksource tsc" on kernel log, I think it mean the TSC on my system is
+| stable and reliable enough to use as clock source, right? With the
+| invariant and synchronized TSC support in latest hardware, can I assume
+| generally TSC would be better than pm_timer? 
+
+Nowadays the clocksourse selection code is a bit smarter than it was a
+while ago. Some TSC clocks will be reliable as long as your system does not
+enter deeper C-states, some will stop in idle... the kernel will select TSC
+as the preferred clocksource and will use it until the event that could
+render that specific TSC unreliable happens. Then the next better
+clocksource option will be selected.
+
+And yes, reading the TSC is way faster and cheaper than reading pm_timer.
+So, if TSC is available and is considered reliable, use the TSC.
+
+Depending on your environment and operation parameters you could take some
+extra steps to ensure the condition that would turn your TSC clock unreliable
+never happens. E.g. avoid entering deeper C-states, booting with
+idle=pool, ...
+
+Of course, any these changes have an effect, be it in power consumption or
+processor temperature. Be sure to understand that balance and then decide
+whether the cost of a lighter clock (in terms of cost to read the current
+time) is more important than saving a few Watts on the end of day.
+
+Luis
