@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH 4/4] hwlat: Add per cpu mask for hwlat_detector
-Date: Thu, 23 Apr 2015 15:08:29 -0400
-Message-ID: <20150423191725.363886450@goodmis.org>
+Subject: [RFC][PATCH 2/4] tracing: Add hwlat_detector tracer
+Date: Thu, 23 Apr 2015 15:08:27 -0400
+Message-ID: <20150423191724.945833470@goodmis.org>
 References: <20150423190825.714359844@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -15,618 +15,737 @@ Cc: Ingo Molnar <mingo@kernel.org>,
 	Clark Williams <williams@redhat.com>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-hwlat-Add-per-cpu-mask-for-hwlat_detector.patch
+Content-Disposition: inline; filename=0002-tracing-Add-hwlat_detector-tracer.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Instead of just running a single kernel thread to do the hardware latency
-detection, run one on each CPU that the user specificies. By default
-this will be just one CPU (on CPU 0). But the user may specify what
-CPUs they would like to run the tests on.
+Connect the hwlat_detector written by Jon Masters with the
+tracing system as a new ftrace tracer.
+
+A few files are created when the hwlat_detector is enabled
+that exist in the tracing directory.
+
+   hwlat_detector/count  - the count of records of latencies found
+   hwlat_detector/width  - time in usecs for how long to spin for
+   hwlat_detector/window - time in usecs between the start of each
+			    iteration
+
+The kernel thread will spin with interrupts disabled for "width"
+microseconds in every "widow" cycle. It will not spin for
+"window - width" microseconds, where the system can continue to operate.
+
+To enable the tracer, simple echo in "hwlat_detector" into
+"current_tracer"
+
+ # echo hwlat_detector > /sys/kernel/debug/tracing/current_tracer
+
+Every time a hardware latency is found that is greater than
+tracing_thresh (set and viewed by the tracing_thresh file in the
+tracing directory), it is reported into the ftrace ring buffer.
+
+The default value of tracing_thresh (if it was zero when the
+hwlat_detector tracer began) is 10us. If it is not zero, the
+threshold does not change.
+
+The max latency found is set in the tracing_max_latency file.
 
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- Documentation/trace/hwlat_detector.txt |   5 +
- kernel/trace/Kconfig                   |  21 +--
- kernel/trace/trace.c                   |   9 +-
- kernel/trace/trace.h                   |   2 +
- kernel/trace/trace_hwlatdetect.c       | 245 +++++++++++++++++++++++++--------
- 5 files changed, 212 insertions(+), 70 deletions(-)
+ kernel/trace/Kconfig             |  37 ++++++
+ kernel/trace/Makefile            |   1 +
+ kernel/trace/trace.c             |   2 +-
+ kernel/trace/trace.h             |   3 +
+ kernel/trace/trace_entries.h     |  23 ++++
+ kernel/trace/trace_hwlatdetect.c | 245 ++++++++++++++++++++++++++-------------
+ kernel/trace/trace_output.c      |  84 ++++++++++++++
+ 7 files changed, 311 insertions(+), 84 deletions(-)
 
-diff --git a/Documentation/trace/hwlat_detector.txt b/Documentation/trace/hwlat_detector.txt
-index db98dd1fa4ed..de08fd5ce931 100644
---- a/Documentation/trace/hwlat_detector.txt
-+++ b/Documentation/trace/hwlat_detector.txt
-@@ -46,6 +46,7 @@ count			- number of latency spikes observed since last reset
- width			- time period to sample with CPUs held (usecs)
- 			  must be less than the total window size (enforced)
- window			- total period of sampling, width being inside (usecs)
-+cpumask			- the cpu mask to run the hwlat detector kthreads on
- 
- By default we will set width to 500,000 and window to 1,000,000, meaning that
- we will sample every 1,000,000 usecs (1s) for 500,000 usecs (0.5s). If we
-@@ -53,6 +54,10 @@ observe any latencies that exceed the threshold (initially 100 usecs),
- then we write to a global sample ring buffer of 8K samples, which is
- consumed by reading from the "sample" (pipe) debugfs file interface.
- 
-+The cpumask is set to default of 1, meaning it will only kick off one thread
-+on CPU 0. If you want to test other CPUs, writing a cpumask number (hex digit
-+like 'e') into the cpumask file will spawn new threads to run on those CPUs.
-+
- Also the following tracing directory files are used by the hwlat_detector:
- 
- in /sys/kernel/debug/tracing:
 diff --git a/kernel/trace/Kconfig b/kernel/trace/Kconfig
-index 9b46a3322a89..54a78fdfb56a 100644
+index fedbdd7d5d1e..9b46a3322a89 100644
 --- a/kernel/trace/Kconfig
 +++ b/kernel/trace/Kconfig
-@@ -226,8 +226,9 @@ config HWLAT_TRACER
-      	select GENERIC_TRACER
- 	select TRACER_MAX_TRACE
- 	help
--	 This tracer, when enabled will create a kernel thread that
--	 spins in a loop looking for interruptions caused by
-+	 This tracer, when enabled will create one or more kernel threads,
-+	 depening on what the cpumask file is set to, which each thread
-+	 spinning in a loop looking for interruptions caused by
- 	 something other than the kernel. For example, if a
- 	 System Management Interrupt (SMI) takes a noticeable amount of
- 	 time, this tracer will detect it. This is useful for testing
-@@ -236,18 +237,20 @@ config HWLAT_TRACER
- 	 Some files are created in the tracing directory when this
- 	 is enabled:
+@@ -221,6 +221,43 @@ config SCHED_TRACER
+ 	  This tracer tracks the latency of the highest priority task
+ 	  to be scheduled in, starting from the point it has woken up.
  
--	   hwlat_detector/count  - the count of records of latencies found
--	   hwlat_detector/width  - time in usecs for how long to spin for
--	   hwlat_detector/window - time in usecs between the start of each
--				    iteration
-+	   hwlat_detector/count   - the count of records of latencies found
-+	   hwlat_detector/width   - time in usecs for how long to spin for
-+	   hwlat_detector/window  - time in usecs between the start of each
-+				     iteration
-+	   hwlat_detector/cpumask - The mask of what CPUs the test should run on.
- 
--	 The kernel thread will spin with interrupts disabled for
-+	 A kernel thread is created on each CPU specified by "cpumask".
++config HWLAT_TRACER
++        bool "Tracer to detect hardware latencies (like SMIs)"
++     	select GENERIC_TRACER
++	select TRACER_MAX_TRACE
++	help
++	 This tracer, when enabled will create a kernel thread that
++	 spins in a loop looking for interruptions caused by
++	 something other than the kernel. For example, if a
++	 System Management Interrupt (SMI) takes a noticeable amount of
++	 time, this tracer will detect it. This is useful for testing
++	 if a system is reliable for Real Time tasks.
 +
-+	 Each kernel thread will spin with interrupts disabled for
- 	 "width" microseconds in every "widow" cycle. It will not spin
- 	 for "window - width" microseconds, where the system can
- 	 continue to operate.
- 
--	 Only a single thread is created that runs this tracer. The
--	 output will appear in the trace and trace_pipe files.
-+	 The output will appear in the trace and trace_pipe files.
- 
- 	 When the tracer is not running, it has no affect on the system,
- 	 but when it is running, it can cause the system to be
++	 Some files are created in the tracing directory when this
++	 is enabled:
++
++	   hwlat_detector/count  - the count of records of latencies found
++	   hwlat_detector/width  - time in usecs for how long to spin for
++	   hwlat_detector/window - time in usecs between the start of each
++				    iteration
++
++	 The kernel thread will spin with interrupts disabled for
++	 "width" microseconds in every "widow" cycle. It will not spin
++	 for "window - width" microseconds, where the system can
++	 continue to operate.
++
++	 Only a single thread is created that runs this tracer. The
++	 output will appear in the trace and trace_pipe files.
++
++	 When the tracer is not running, it has no affect on the system,
++	 but when it is running, it can cause the system to be
++	 periodically non responsive. Do not run this tracer on a
++	 production system.
++
++	 To enable this tracer, echo in "hwlat_detector" into the current_tracer
++	 file. Every time a latency is greater than tracing_thresh, it will
++	 be recorded into the ring buffer.
++
+ config ENABLE_DEFAULT_TRACERS
+ 	bool "Trace process context switches and events"
+ 	depends on !GENERIC_TRACER
+diff --git a/kernel/trace/Makefile b/kernel/trace/Makefile
+index 98f26588255e..0655bb6a0589 100644
+--- a/kernel/trace/Makefile
++++ b/kernel/trace/Makefile
+@@ -36,6 +36,7 @@ obj-$(CONFIG_FUNCTION_TRACER) += trace_functions.o
+ obj-$(CONFIG_IRQSOFF_TRACER) += trace_irqsoff.o
+ obj-$(CONFIG_PREEMPT_TRACER) += trace_irqsoff.o
+ obj-$(CONFIG_SCHED_TRACER) += trace_sched_wakeup.o
++obj-$(CONFIG_HWLAT_TRACER) += trace_hwlatdetect.o
+ obj-$(CONFIG_NOP_TRACER) += trace_nop.o
+ obj-$(CONFIG_STACK_TRACER) += trace_stack.o
+ obj-$(CONFIG_MMIOTRACE) += trace_mmiotrace.o
 diff --git a/kernel/trace/trace.c b/kernel/trace/trace.c
-index 7312418a1498..8e806ac2849c 100644
+index 39e69568302e..7312418a1498 100644
 --- a/kernel/trace/trace.c
 +++ b/kernel/trace/trace.c
-@@ -3372,13 +3372,13 @@ static const struct file_operations show_traces_fops = {
-  * The tracer itself will not take this lock, but still we want
-  * to provide a consistent cpumask to user-space:
+@@ -781,7 +781,7 @@ void disable_trace_on_warning(void)
+  *
+  * Shows real state of the ring buffer if it is enabled or not.
   */
--static DEFINE_MUTEX(tracing_cpumask_update_lock);
-+DEFINE_MUTEX(tracing_cpumask_update_lock);
- 
- /*
-  * Temporary storage for the character representation of the
-  * CPU bitmask (and one more byte for the newline):
-  */
--static char mask_str[NR_CPUS + 1];
-+char tracing_mask_str[NR_CPUS + 1];
- 
- static ssize_t
- tracing_cpumask_read(struct file *filp, char __user *ubuf,
-@@ -3389,13 +3389,14 @@ tracing_cpumask_read(struct file *filp, char __user *ubuf,
- 
- 	mutex_lock(&tracing_cpumask_update_lock);
- 
--	len = snprintf(mask_str, count, "%*pb\n",
-+	len = snprintf(tracing_mask_str, count, "%*pb\n",
- 		       cpumask_pr_args(tr->tracing_cpumask));
- 	if (len >= count) {
- 		count = -EINVAL;
- 		goto out_err;
- 	}
--	count = simple_read_from_buffer(ubuf, count, ppos, mask_str, NR_CPUS+1);
-+	count = simple_read_from_buffer(ubuf, count, ppos,
-+					tracing_mask_str, NR_CPUS+1);
- 
- out_err:
- 	mutex_unlock(&tracing_cpumask_update_lock);
+-static int tracer_tracing_is_on(struct trace_array *tr)
++int tracer_tracing_is_on(struct trace_array *tr)
+ {
+ 	if (tr->trace_buffer.buffer)
+ 		return ring_buffer_record_is_on(tr->trace_buffer.buffer);
 diff --git a/kernel/trace/trace.h b/kernel/trace/trace.h
-index d321f8c70d76..d4686d1f130e 100644
+index b48d4b08f691..d321f8c70d76 100644
 --- a/kernel/trace/trace.h
 +++ b/kernel/trace/trace.h
-@@ -598,6 +598,8 @@ int is_tracing_stopped(void);
- loff_t tracing_lseek(struct file *file, loff_t offset, int whence);
+@@ -38,6 +38,7 @@ enum trace_type {
+ 	TRACE_USER_STACK,
+ 	TRACE_BLK,
+ 	TRACE_BPUTS,
++	TRACE_HWLAT,
  
- extern cpumask_var_t __read_mostly tracing_buffer_mask;
-+extern char tracing_mask_str[NR_CPUS + 1];
-+extern struct mutex tracing_cpumask_update_lock;
+ 	__TRACE_LAST_TYPE,
+ };
+@@ -307,6 +308,7 @@ extern void __ftrace_bad_type(void);
+ 			  TRACE_GRAPH_ENT);		\
+ 		IF_ASSIGN(var, ent, struct ftrace_graph_ret_entry,	\
+ 			  TRACE_GRAPH_RET);		\
++		IF_ASSIGN(var, ent, struct trace_hwlat_detector, TRACE_HWLAT);	\
+ 		__ftrace_bad_type();					\
+ 	} while (0)
  
- #define for_each_tracing_cpu(cpu)	\
- 	for_each_cpu(cpu, tracing_buffer_mask)
+@@ -528,6 +530,7 @@ trace_buffer_iter(struct trace_iterator *iter, int cpu)
+ 	return NULL;
+ }
+ 
++int tracer_tracing_is_on(struct trace_array *tr);
+ int tracer_init(struct tracer *t, struct trace_array *tr);
+ int tracing_is_enabled(void);
+ void tracing_reset(struct trace_buffer *buf, int cpu);
+diff --git a/kernel/trace/trace_entries.h b/kernel/trace/trace_entries.h
+index ee7b94a4810a..05592beacfdc 100644
+--- a/kernel/trace/trace_entries.h
++++ b/kernel/trace/trace_entries.h
+@@ -322,3 +322,26 @@ FTRACE_ENTRY(branch, trace_branch,
+ 	FILTER_OTHER
+ );
+ 
++
++FTRACE_ENTRY(hwlat_detector, trace_hwlat_detector,
++
++	TRACE_HWLAT,
++
++	F_STRUCT(
++		__field(	u64,			duration	)
++		__field(	u64,			outer_duration	)
++		__field_struct( struct timespec,	timestamp	)
++		__field_desc(	long,	timestamp,	tv_sec		)
++		__field_desc(	long,	timestamp,	tv_nsec		)
++		__field(	unsigned int,		seqnum		)
++	),
++
++	F_printk("cnt:%u\tts:%010lu.%010lu\tinner:%llu\touter:%llu\n",
++		 __entry->seqnum,
++		 __entry->tv_sec,
++		 __entry->tv_nsec,
++		 __entry->duration,
++		 __entry->outer_duration),
++
++	FILTER_OTHER
++);
 diff --git a/kernel/trace/trace_hwlatdetect.c b/kernel/trace/trace_hwlatdetect.c
-index 7437c992746a..393d37da6f6c 100644
+index 87ccb313afe0..7437c992746a 100644
 --- a/kernel/trace/trace_hwlatdetect.c
 +++ b/kernel/trace/trace_hwlatdetect.c
-@@ -48,6 +48,7 @@
- #include <linux/debugfs.h>
- #include <linux/uaccess.h>
- #include <linux/version.h>
-+#include <linux/percpu.h>
- #include <linux/delay.h>
- #include <linux/init.h>
- #include <linux/time.h>
-@@ -66,17 +67,23 @@
+@@ -31,7 +31,7 @@
+  *          guarantee(s).
+  *
+  * Copyright (C) 2008-2009 Jon Masters, Red Hat, Inc. <jcm@redhat.com>
+- * Copyright (C) 2013 Steven Rostedt, Red Hat, Inc. <srostedt@redhat.com>
++ * Copyright (C) 2013-2015 Steven Rostedt, Red Hat, Inc. <srostedt@redhat.com>
+  *
+  * Includes useful feedback from Clark Williams <clark@redhat.com>
+  *
+@@ -55,8 +55,6 @@
  
- static struct trace_array *hwlat_detector_trace_array;
+ #include "trace.h"
  
--static struct task_struct *kthread;		/* sampling thread */
-+/* sampling threads*/
-+static DEFINE_PER_CPU(struct task_struct *, hwlat_kthread);
-+static cpumask_var_t kthread_mask;
+-#define BUF_SIZE_DEFAULT	262144UL		/* 8K*(sizeof(entry)) */
+-#define BUF_FLAGS		(RB_FL_OVERWRITE)	/* no block on full */
+ #define U64STR_SIZE		22			/* 20 digits max */
+ 
+ #define BANNER			"hwlat_detector: "
+@@ -64,9 +62,10 @@
+ #define DEFAULT_SAMPLE_WIDTH	500000			/* 0.5s */
+ #define DEFAULT_LAT_THRESHOLD	10			/* 10us */
+ 
+-static int threshold;
+-static struct ring_buffer *ring_buffer;		/* sample buffer */
+-static unsigned long buf_size = BUF_SIZE_DEFAULT;
++/* Tracer handle */
++
++static struct trace_array *hwlat_detector_trace_array;
++
+ static struct task_struct *kthread;		/* sampling thread */
  
  /* DebugFS filesystem entries */
- 
- static struct dentry *debug_count;		/* total detect count */
+@@ -75,8 +74,14 @@ static struct dentry *debug_count;		/* total detect count */
  static struct dentry *debug_sample_width;	/* sample width us */
  static struct dentry *debug_sample_window;	/* sample window us */
-+static struct dentry *debug_hwlat_cpumask;	/* cpumask to run on */
  
- /* Save the previous tracing_thresh value */
- static unsigned long save_tracing_thresh;
- 
-+/* Set when hwlat_detector is running */
-+static bool hwlat_detector_enabled;
++/* Save the previous tracing_thresh value */
++static unsigned long save_tracing_thresh;
 +
  /* Individual samples and global state */
  
- /* If the user changed threshold, remember it */
-@@ -85,9 +92,9 @@ static u64 last_tracing_thresh = DEFAULT_LAT_THRESHOLD * NSEC_PER_USEC;
++/* If the user changed threshold, remember it */
++static u64 last_tracing_thresh = DEFAULT_LAT_THRESHOLD * NSEC_PER_USEC;
++
  /*
   * Individual latency samples are stored here when detected and packed into
   * the ring_buffer circular buffer, where they are overwritten when
-- * more than buf_size/sizeof(sample) samples are received.
-+ * more than buf_size/sizeof(hwlat_sample) samples are received.
-  */
--struct sample {
-+struct hwlat_sample {
- 	u64		seqnum;		/* unique sequence */
- 	u64		duration;	/* ktime delta */
- 	u64		outer_duration;	/* ktime delta (outer loop) */
-@@ -95,7 +102,7 @@ struct sample {
- };
- 
- /* keep the global state somewhere. */
--static struct data {
-+static struct hwlat_data {
- 
+@@ -95,14 +100,41 @@ static struct data {
  	struct mutex lock;		/* protect changes */
  
-@@ -104,12 +111,12 @@ static struct data {
+ 	u64	count;			/* total since reset */
+-	u64	max_sample;		/* max hardware latency */
+-	u64	threshold;		/* sample threshold level */
+ 
  	u64	sample_window;		/* total sampling window (on+off) */
  	u64	sample_width;		/* active sampling portion of window */
  
--} data = {
-+} hwlat_data = {
- 	.sample_window		= DEFAULT_SAMPLE_WINDOW,
- 	.sample_width		= DEFAULT_SAMPLE_WIDTH,
- };
+-	atomic_t sample_open;		/* whether the sample file is open */
+-} data;
++} data = {
++	.sample_window		= DEFAULT_SAMPLE_WINDOW,
++	.sample_width		= DEFAULT_SAMPLE_WIDTH,
++};
++
++static void trace_hwlat_sample(struct sample *sample)
++{
++	struct trace_array *tr = hwlat_detector_trace_array;
++	struct ftrace_event_call *call = &event_hwlat_detector;
++	struct ring_buffer *buffer = tr->trace_buffer.buffer;
++	struct ring_buffer_event *event;
++	struct trace_hwlat_detector *entry;
++	unsigned long flags;
++	int pc;
++
++	pc = preempt_count();
++	local_save_flags(flags);
++
++	event = trace_buffer_lock_reserve(buffer, TRACE_HWLAT, sizeof(*entry),
++					  flags, pc);
++	if (!event)
++		return;
++	entry	= ring_buffer_event_data(event);
++	entry->seqnum			= sample->seqnum;
++	entry->duration			= sample->duration;
++	entry->outer_duration		= sample->outer_duration;
++	entry->timestamp		= sample->timestamp;
++
++	if (!call_filter_check_discard(call, entry, buffer, event))
++		__buffer_unlock_commit(buffer, event);
++}
  
--static void trace_hwlat_sample(struct sample *sample)
-+static void trace_hwlat_sample(struct hwlat_sample *sample)
- {
- 	struct trace_array *tr = hwlat_detector_trace_array;
- 	struct ftrace_event_call *call = &event_hwlat_detector;
-@@ -149,7 +156,7 @@ static void trace_hwlat_sample(struct sample *sample)
+ /* Macros used in case the time capture is changed */
+ #define time_type	u64
+@@ -113,19 +145,6 @@ static struct data {
+ #define time_u64(a)	a
+ 
+ /**
+- * __buffer_add_sample - add a new latency sample recording to the ring buffer
+- * @sample: The new latency sample value
+- *
+- * This receives a new latency sample and records it in a global ring buffer.
+- * No additional locking is used in this case.
+- */
+-static int __buffer_add_sample(struct sample *sample)
+-{
+-	return ring_buffer_write(ring_buffer,
+-				 sizeof(struct sample), sample);
+-}
+-
+-/**
+  * get_sample - sample the CPU TSC and look for likely hardware latencies
   *
   * Used to repeatedly capture the CPU TSC (or similar), looking for potential
-  * hardware-induced latency. Called with interrupts disabled and with
-- * data.lock held.
-+ * hwlat_data.lock held.
+@@ -134,12 +153,16 @@ static int __buffer_add_sample(struct sample *sample)
   */
  static int get_sample(void)
  {
-@@ -205,18 +212,18 @@ static int get_sample(void)
- 		if (diff > sample)
- 			sample = diff; /* only want highest value */
++	struct trace_array *tr = hwlat_detector_trace_array;
+ 	time_type start, t1, t2, last_t2;
+-	s64 diff, total = 0;
++	s64 diff, total = 0, last_total = 0;
+ 	u64 sample = 0;
++	u64 thresh = tracing_thresh;
+ 	u64 outer_sample = 0;
+ 	int ret = -1;
  
--	} while (total <= data.sample_width);
-+	} while (total <= hwlat_data.sample_width);
++	do_div(thresh, NSEC_PER_USEC); /* modifies interval value */
++
+ 	init_time(last_t2, 0);
+ 	start = time_get(); /* start timestamp */
  
+@@ -163,6 +186,13 @@ static int get_sample(void)
+ 
+ 		total = time_to_us(time_sub(t2, start)); /* sample width */
+ 
++		/* Check for possible overflows */
++		if (total < last_total) {
++			pr_err("Time total overflowed\n");
++			break;
++		}
++		last_total = total;
++
+ 		/* This checks the inner loop (t1 to t2) */
+ 		diff = time_to_us(time_sub(t2, t1));     /* current diff */
+ 
+@@ -180,7 +210,7 @@ static int get_sample(void)
  	ret = 0;
  
  	/* If we exceed the threshold value, we have found a hardware latency */
- 	if (sample > thresh || outer_sample > thresh) {
--		struct sample s;
-+		struct hwlat_sample s;
+-	if (sample > data.threshold || outer_sample > data.threshold) {
++	if (sample > thresh || outer_sample > thresh) {
+ 		struct sample s;
  
  		ret = 1;
- 
--		data.count++;
--		s.seqnum = data.count;
-+		hwlat_data.count++;
-+		s.seqnum = hwlat_data.count;
+@@ -190,11 +220,11 @@ static int get_sample(void)
  		s.duration = sample;
  		s.outer_duration = outer_sample;
  		s.timestamp = CURRENT_TIME;
-@@ -244,20 +251,27 @@ out:
-  * but we might later generalize this if we find there are any actualy
-  * systems with alternate SMI delivery or other hardware latencies.
-  */
--static int kthread_fn(void *unused)
-+static int kthread_fn(void *data)
- {
-+	unsigned long cpu = (unsigned long)data;
- 	int ret;
- 	u64 interval;
+-		__buffer_add_sample(&s);
++		trace_hwlat_sample(&s);
  
-+	preempt_disable();
-+	WARN(cpu != smp_processor_id(),
-+	     "hwlat_detector thread on wrong cpu %d (expected %ld)",
-+	     smp_processor_id(), cpu);
-+	preempt_enable();
-+
+ 		/* Keep a running maximum ever recorded hardware latency */
+-		if (sample > data.max_sample)
+-			data.max_sample = sample;
++		if (sample > tr->max_latency)
++			tr->max_latency = sample;
+ 	}
+ 
+ out:
+@@ -203,11 +233,10 @@ out:
+ 
+ /*
+  * kthread_fn - The CPU time sampling/hardware latency detection kernel thread
+- * @unused: A required part of the kthread API.
+  *
+  * Used to periodically sample the CPU TSC via a call to get_sample. We
+  * disable interrupts, which does (intentionally) introduce latency since we
+- * need to ensure nothing else might be running (and thus pre-empting).
++ * need to ensure nothing else might be running (and thus preempting).
+  * Obviously this should never be used in production environments.
+  *
+  * Currently this runs on which ever CPU it was scheduled on, but most
+@@ -222,17 +251,16 @@ static int kthread_fn(void *unused)
+ 
  	while (!kthread_should_stop()) {
  
+-		mutex_lock(&data.lock);
+-
  		local_irq_disable();
  		ret = get_sample();
  		local_irq_enable();
  
--		mutex_lock(&data.lock);
--		interval = data.sample_window - data.sample_width;
--		mutex_unlock(&data.lock);
-+		mutex_lock(&hwlat_data.lock);
-+		interval = hwlat_data.sample_window - hwlat_data.sample_width;
-+		mutex_unlock(&hwlat_data.lock);
- 
- 		do_div(interval, USEC_PER_MSEC); /* modifies interval value */
- 
-@@ -269,58 +283,79 @@ static int kthread_fn(void *unused)
- }
- 
- /**
-- * start_kthread - Kick off the hardware latency sampling/detector kthread
-+ * start_kthreads - Kick off the hardware latency sampling/detector kthreads
-  *
-- * This starts a kernel thread that will sit and sample the CPU timestamp
-+ * This starts the kernel threads that will sit and sample the CPU timestamp
-  * counter (TSC or similar) and look for potential hardware latencies.
-  */
--static int start_kthread(void)
-+static int start_kthreads(void)
- {
--	kthread = kthread_run(kthread_fn, NULL, "hwlat_detector");
--	if (IS_ERR(kthread)) {
--		kthread = NULL;
--		pr_err(BANNER "could not start sampling thread\n");
--		return -ENOMEM;
-+	struct task_struct *kthread;
-+	unsigned long cpu;
-+
-+	for_each_cpu(cpu, kthread_mask) {
-+		kthread = kthread_create(kthread_fn, (void *)cpu,
-+					 "hwlatd/%ld", cpu);
-+		if (IS_ERR(kthread)) {
-+			pr_err(BANNER "could not start sampling thread\n");
-+			goto fail;
-+		}
-+		kthread_bind(kthread, cpu);
-+		per_cpu(hwlat_kthread, cpu) = kthread;
-+		wake_up_process(kthread);
- 	}
- 
- 	return 0;
-+ fail:
-+	for_each_cpu(cpu, kthread_mask) {
-+		kthread = per_cpu(hwlat_kthread, cpu);
-+		if (!kthread)
-+			continue;
-+		kthread_stop(kthread);
-+	}
-+		
-+	return -ENOMEM;
-+
- }
- 
- /**
-- * stop_kthread - Inform the hardware latency samping/detector kthread to stop
-+ * stop_kthreads - Inform the hardware latency samping/detector kthread to stop
-  *
-  * This kicks the running hardware latency sampling/detector kernel thread and
-  * tells it to stop sampling now. Use this on unload and at system shutdown.
-  */
--static int stop_kthread(void)
-+static int stop_kthreads(void)
- {
--	int ret = 0;
++		mutex_lock(&data.lock);
+ 		interval = data.sample_window - data.sample_width;
+-		do_div(interval, USEC_PER_MSEC); /* modifies interval value */
 -
--	if (kthread) {
--		ret = kthread_stop(kthread);
--		kthread = NULL;
-+	struct task_struct *kthread;
-+	int cpu;
-+
-+	for_each_cpu(cpu, kthread_mask) {
-+		kthread = per_cpu(hwlat_kthread, cpu);
-+		per_cpu(hwlat_kthread, cpu) = NULL;
-+		if (WARN_ON_ONCE(!kthread))
-+			continue;
-+		kthread_stop(kthread);
- 	}
--
--	return ret;
-+	return 0;
- }
+ 		mutex_unlock(&data.lock);
  
- /**
-  * __reset_stats - Reset statistics for the hardware latency detector
-  *
-- * We use data to store various statistics and global state. We call this
-+ * We use hwlat_data to store various statistics and global state. We call this
++		do_div(interval, USEC_PER_MSEC); /* modifies interval value */
++
+ 		if (msleep_interruptible(interval))
+ 			break;
+ 	}
+@@ -283,64 +311,44 @@ static int stop_kthread(void)
   * function in order to reset those when "enable" is toggled on or off, and
   * also at initialization.
   */
- static void __reset_stats(struct trace_array *tr)
+-static void __reset_stats(void)
++static void __reset_stats(struct trace_array *tr)
  {
--	data.count = 0;
-+	hwlat_data.count = 0;
- 	tr->max_latency = 0;
+ 	data.count = 0;
+-	data.max_sample = 0;
+-	ring_buffer_reset(ring_buffer); /* flush out old sample entries */
++	tr->max_latency = 0;
  }
  
  /**
   * init_stats - Setup global state statistics for the hardware latency detector
   *
-- * We use data to store various statistics and global state.
-+ * We use hwlat_data to store various statistics and global state.
+- * We use data to store various statistics and global state. We also use
+- * a global ring buffer (ring_buffer) to keep raw samples of detected hardware
+- * induced system latencies. This function initializes these structures and
+- * allocates the global ring buffer also.
++ * We use data to store various statistics and global state.
   */
- static void init_stats(struct trace_array *tr)
+-static int init_stats(void)
++static void init_stats(struct trace_array *tr)
  {
-@@ -333,6 +368,80 @@ static void init_stats(struct trace_array *tr)
- 		tracing_thresh = last_tracing_thresh;
- }
- 
-+static ssize_t
-+hwlat_cpumask_read(struct file *filp, char __user *ubuf,
-+		   size_t count, loff_t *ppos)
-+{
-+	int len;
-+
-+	mutex_lock(&tracing_cpumask_update_lock);
-+
-+	len = snprintf(tracing_mask_str, count, "%*pb\n",
-+		       cpumask_pr_args(kthread_mask));
-+	if (len >= count) {
-+		count = -EINVAL;
-+		goto out_err;
-+	}
-+	count = simple_read_from_buffer(ubuf, count, ppos,
-+					tracing_mask_str, NR_CPUS+1);
-+
-+out_err:
-+	mutex_unlock(&tracing_cpumask_update_lock);
-+
-+	return count;
-+}
-+
-+static ssize_t
-+hwlat_cpumask_write(struct file *filp, const char __user *ubuf,
-+		    size_t count, loff_t *ppos)
-+{
-+	struct trace_array *tr = hwlat_detector_trace_array;
-+	cpumask_var_t tracing_cpumask_new;
-+	int err;
-+
-+	if (!alloc_cpumask_var(&tracing_cpumask_new, GFP_KERNEL))
-+		return -ENOMEM;
-+
-+	err = cpumask_parse_user(ubuf, count, tracing_cpumask_new);
-+	if (err)
-+		goto err_unlock;
-+
-+	/* Keep the tracer from changing midstream */
-+	mutex_lock(&trace_types_lock);
-+
-+	/* Protect the kthread_mask from changing */
-+	mutex_lock(&tracing_cpumask_update_lock);
-+
-+	/* Stop the threads */
-+	if (hwlat_detector_enabled && tracer_tracing_is_on(tr))
-+		stop_kthreads();
-+
-+	cpumask_copy(kthread_mask, tracing_cpumask_new);
-+
-+	/* Restart the kthreads with the new mask */
-+	if (hwlat_detector_enabled && tracer_tracing_is_on(tr))
-+		start_kthreads();
-+
-+	mutex_unlock(&tracing_cpumask_update_lock);
-+	mutex_unlock(&trace_types_lock);
-+
-+	free_cpumask_var(tracing_cpumask_new);
-+
-+	return count;
-+
-+err_unlock:
-+	free_cpumask_var(tracing_cpumask_new);
-+
-+	return err;
-+}
-+
-+static const struct file_operations hwlat_cpumask_fops = {
-+	.open		= tracing_open_generic,
-+	.read		= hwlat_cpumask_read,
-+	.write		= hwlat_cpumask_write,
-+	.llseek		= generic_file_llseek,
-+};
-+
- /*
-  * hwlat_read - Wrapper read function for global state debugfs entries
-  * @filp: The active open file structure for the debugfs "file"
-@@ -341,7 +450,7 @@ static void init_stats(struct trace_array *tr)
-  * @ppos: The current "file" position
-  *
-  * This function provides a generic read implementation for the global state
-- * "data" structure debugfs filesystem entries.
-+ * "hwlat_data" structure debugfs filesystem entries.
-  */
- static ssize_t hwlat_read(struct file *filp, char __user *ubuf,
- 			  size_t cnt, loff_t *ppos)
-@@ -372,7 +481,7 @@ static ssize_t hwlat_read(struct file *filp, char __user *ubuf,
-  * @ppos: The current "file" position
-  *
-  * This function provides a generic write implementation for the global state
-- * "data" structure debugfs filesystem entries.
-+ * "hwlat_data" structure debugfs filesystem entries.
-  */
- static ssize_t hwlat_write(struct file *filp, const char __user *ubuf,
- 			   size_t cnt, loff_t *ppos)
-@@ -414,10 +523,12 @@ static ssize_t
- debug_width_write(struct file *filp, const char __user *ubuf,
- 		  size_t cnt, loff_t *ppos)
- {
-+	struct task_struct *kthread;
- 	char buf[U64STR_SIZE];
- 	int csize = min(cnt, sizeof(buf));
- 	u64 val = 0;
- 	int err = 0;
-+	int cpu;
- 
- 	memset(buf, '\0', sizeof(buf));
- 	if (copy_from_user(buf, ubuf, csize))
-@@ -428,15 +539,18 @@ debug_width_write(struct file *filp, const char __user *ubuf,
- 	if (0 != err)
- 		return -EINVAL;
- 
--	mutex_lock(&data.lock);
--	if (val < data.sample_window)
--		data.sample_width = val;
-+	mutex_lock(&hwlat_data.lock);
-+	if (val < hwlat_data.sample_window)
-+		hwlat_data.sample_width = val;
- 	else
- 		csize = -EINVAL;
--	mutex_unlock(&data.lock);
-+	mutex_unlock(&hwlat_data.lock);
- 
--	if (kthread)
--		wake_up_process(kthread);
-+	for_each_cpu(cpu, kthread_mask) {
-+		kthread = per_cpu(hwlat_kthread, cpu);
-+		if (kthread)
-+			wake_up_process(kthread);
-+	}
- 
- 	return csize;
- }
-@@ -474,12 +588,12 @@ debug_window_write(struct file *filp, const char __user *ubuf,
- 	if (0 != err)
- 		return -EINVAL;
- 
--	mutex_lock(&data.lock);
--	if (data.sample_width < val)
--		data.sample_window = val;
-+	mutex_lock(&hwlat_data.lock);
-+	if (hwlat_data.sample_width < val)
-+		hwlat_data.sample_window = val;
- 	else
- 		csize = -EINVAL;
--	mutex_unlock(&data.lock);
-+	mutex_unlock(&hwlat_data.lock);
- 
- 	return csize;
- }
-@@ -533,25 +647,35 @@ static int init_debugfs(void)
- 		goto err_debug_dir;
- 
- 	debug_count = debugfs_create_file("count", 0440,
--					  debug_dir, &data.count,
-+					  debug_dir, &hwlat_data.count,
- 					  &count_fops);
- 	if (!debug_count)
- 		goto err_count;
- 
- 	debug_sample_window = debugfs_create_file("window", 0640,
--						      debug_dir, &data.sample_window,
--						      &window_fops);
-+						  debug_dir,
-+						  &hwlat_data.sample_window,
-+						  &window_fops);
- 	if (!debug_sample_window)
- 		goto err_window;
- 
- 	debug_sample_width = debugfs_create_file("width", 0644,
--						     debug_dir, &data.sample_width,
--						     &width_fops);
-+						 debug_dir,
-+						 &hwlat_data.sample_width,
-+						 &width_fops);
- 	if (!debug_sample_width)
- 		goto err_width;
- 
-+	debug_hwlat_cpumask = debugfs_create_file("cpumask", 0644,
-+						  debug_dir, NULL,
-+						  &hwlat_cpumask_fops);
-+	if (!debug_hwlat_cpumask)
-+		goto err_cpumask;
-+
- 	return 0;
- 
-+err_cpumask:
-+	debugfs_remove(debug_sample_width);
- err_width:
- 	debugfs_remove(debug_sample_window);
- err_window:
-@@ -566,7 +690,7 @@ static void hwlat_detector_tracer_start(struct trace_array *tr)
- {
- 	int err;
- 
--	err = start_kthread();
-+	err = start_kthreads();
- 	if (err)
- 		pr_err(BANNER "cannot start kthread\n");
- }
-@@ -575,13 +699,11 @@ static void hwlat_detector_tracer_stop(struct trace_array *tr)
- {
- 	int err;
- 
--	err = stop_kthread();
-+	err = stop_kthreads();
- 	if (err)
- 		pr_err(BANNER "cannot stop kthread\n");
- }
- 
--static bool hwlat_detector_enabled;
--
- static int hwlat_detector_tracer_init(struct trace_array *tr)
- {
- 	/* Only allow one instance to enable this */
-@@ -623,9 +745,18 @@ static struct tracer hwlatdetect_tracer __read_mostly = {
- 
- static int __init init_hwlat_detector_tracer(void)
- {
-+	int ret;
-+
-+	ret = alloc_cpumask_var(&kthread_mask, GFP_KERNEL);
-+	if (WARN_ON(!ret))
-+		return -ENOMEM;
-+
-+	/* By default, only CPU 0 runs the hwlat detector thread */
-+	cpumask_set_cpu(0, kthread_mask);
-+
- 	register_tracer(&hwlatdetect_tracer);
+-	int ret = -ENOMEM;
++	__reset_stats(tr);
  
 -	mutex_init(&data.lock);
-+	mutex_init(&hwlat_data.lock);
- 	init_debugfs();
- 	return 0;
+-	atomic_set(&data.sample_open, 0);
+-
+-	ring_buffer = ring_buffer_alloc(buf_size, BUF_FLAGS);
+-
+-	if (WARN(!ring_buffer, KERN_ERR BANNER
+-			       "failed to allocate ring buffer!\n"))
+-		goto out;
+-
+-	__reset_stats();
+-	data.threshold = threshold ?: DEFAULT_LAT_THRESHOLD; /* threshold us */
+-	data.sample_window = DEFAULT_SAMPLE_WINDOW; /* window us */
+-	data.sample_width = DEFAULT_SAMPLE_WIDTH;   /* width us */
+-
+-	ret = 0;
+-
+-out:
+-	return ret;
++	save_tracing_thresh = tracing_thresh;
+ 
++	/* tracing_thresh is in nsecs, we speak in usecs */
++	if (!tracing_thresh)
++		tracing_thresh = last_tracing_thresh;
  }
+ 
+ /*
+- * simple_data_read - Wrapper read function for global state debugfs entries
++ * hwlat_read - Wrapper read function for global state debugfs entries
+  * @filp: The active open file structure for the debugfs "file"
+  * @ubuf: The userspace provided buffer to read value into
+  * @cnt: The maximum number of bytes to read
+  * @ppos: The current "file" position
+- * @entry: The entry to read from
+  *
+  * This function provides a generic read implementation for the global state
+- * "data" structure debugfs filesystem entries. It would be nice to use
+- * simple_attr_read directly, but we need to make sure that the data.lock
+- * is held during the actual read.
++ * "data" structure debugfs filesystem entries.
+  */
+-static ssize_t simple_data_read(struct file *filp, char __user *ubuf,
+-				size_t cnt, loff_t *ppos, const u64 *entry)
++static ssize_t hwlat_read(struct file *filp, char __user *ubuf,
++			  size_t cnt, loff_t *ppos)
+ {
++	unsigned long *entry = filp->private_data;
+ 	char buf[U64STR_SIZE];
+-	u64 val = 0;
++	unsigned long val = 0;
+ 	int len = 0;
+ 
+ 	memset(buf, 0, sizeof(buf));
+@@ -357,21 +365,19 @@ static ssize_t simple_data_read(struct file *filp, char __user *ubuf,
+ }
+ 
+ /*
+- * simple_data_write - Wrapper write function for global state debugfs entries
++ * hwlat_write - Wrapper write function for global state debugfs entries
+  * @filp: The active open file structure for the debugfs "file"
+  * @ubuf: The userspace provided buffer to write value from
+  * @cnt: The maximum number of bytes to write
+  * @ppos: The current "file" position
+- * @entry: The entry to write to
+  *
+  * This function provides a generic write implementation for the global state
+- * "data" structure debugfs filesystem entries. It would be nice to use
+- * simple_attr_write directly, but we need to make sure that the data.lock
+- * is held during the actual write.
++ * "data" structure debugfs filesystem entries.
+  */
+-static ssize_t simple_data_write(struct file *filp, const char __user *ubuf,
+-				 size_t cnt, loff_t *ppos, u64 *entry)
++static ssize_t hwlat_write(struct file *filp, const char __user *ubuf,
++			   size_t cnt, loff_t *ppos)
+ {
++	unsigned long *entry = filp->private_data;
+ 	char buf[U64STR_SIZE];
+ 	int csize = min(cnt, sizeof(buf)-1);
+ 	u64 val = 0;
+@@ -390,7 +396,7 @@ static ssize_t simple_data_write(struct file *filp, const char __user *ubuf,
+ }
+ 
+ /**
+- * debug_width_fwrite - Write function for "width" debugfs entry
++ * debug_width_write - Write function for "width" debugfs entry
+  * @filp: The active open file structure for the debugfs "file"
+  * @ubuf: The user buffer that contains the value to write
+  * @cnt: The maximum number of bytes to write to "file"
+@@ -436,13 +442,13 @@ debug_width_write(struct file *filp, const char __user *ubuf,
+ }
+ 
+ /**
+- * debug_window_fwrite - Write function for "window" debugfs entry
++ * debug_window_write - Write function for "window" debugfs entry
+  * @filp: The active open file structure for the debugfs "file"
+  * @ubuf: The user buffer that contains the value to write
+  * @cnt: The maximum number of bytes to write to "file"
+  * @ppos: The current position in the debugfs "file"
+  *
+- * This function provides a write implementation for the "window" debufds
++ * This function provides a write implementation for the "window" debugfs
+  * interface to the hardware latency detetector. The window is the total time
+  * in us that will be considered one sample period. Conceptually, windows
+  * occur back-to-back and contain a sample width period during which
+@@ -483,6 +489,8 @@ debug_window_write(struct file *filp, const char __user *ubuf,
+  */
+ static const struct file_operations count_fops = {
+ 	.open		= tracing_open_generic,
++	.read		= hwlat_read,
++	.write		= hwlat_write,
+ };
+ 
+ /*
+@@ -490,6 +498,7 @@ static const struct file_operations count_fops = {
+  */
+ static const struct file_operations width_fops = {
+ 	.open		= tracing_open_generic,
++	.read		= hwlat_read,
+ 	.write		= debug_width_write,
+ };
+ 
+@@ -498,16 +507,17 @@ static const struct file_operations width_fops = {
+  */
+ static const struct file_operations window_fops = {
+ 	.open		= tracing_open_generic,
++	.read		= hwlat_read,
+ 	.write		= debug_window_write,
+ };
+ 
+ /**
+  * init_debugfs - A function to initialize the debugfs interface files
+  *
+- * This function creates entries in debugfs for "hwlat_detector", including
+- * files to read values from the detector, current samples, and the
+- * maximum sample that has been captured since the hardware latency
+- * dectector was started.
++ * This function creates entries in debugfs for "hwlat_detector".
++ * It creates the hwlat_detector directory in the tracing directory,
++ * and within that directory is the count, width and window files to
++ * change and view those values.
+  */
+ static int init_debugfs(void)
+ {
+@@ -551,3 +561,72 @@ err_count:
+ err_debug_dir:
+ 	return -ENOMEM;
+ }
++
++static void hwlat_detector_tracer_start(struct trace_array *tr)
++{
++	int err;
++
++	err = start_kthread();
++	if (err)
++		pr_err(BANNER "cannot start kthread\n");
++}
++
++static void hwlat_detector_tracer_stop(struct trace_array *tr)
++{
++	int err;
++
++	err = stop_kthread();
++	if (err)
++		pr_err(BANNER "cannot stop kthread\n");
++}
++
++static bool hwlat_detector_enabled;
++
++static int hwlat_detector_tracer_init(struct trace_array *tr)
++{
++	/* Only allow one instance to enable this */
++	if (hwlat_detector_enabled)
++		return -EBUSY;
++
++	hwlat_detector_trace_array = tr;
++
++	init_stats(tr);
++
++	if (tracer_tracing_is_on(tr))
++		hwlat_detector_tracer_start(tr);
++
++	hwlat_detector_enabled = true;
++
++	return 0;
++}
++
++static void hwlat_detector_tracer_reset(struct trace_array *tr)
++{
++	if (tracer_tracing_is_on(tr))
++		hwlat_detector_tracer_stop(tr);
++
++	/* the tracing threshold is static between runs */
++	last_tracing_thresh = tracing_thresh;
++
++	tracing_thresh = save_tracing_thresh;
++	hwlat_detector_enabled = false;
++}
++
++static struct tracer hwlatdetect_tracer __read_mostly = {
++	.name		= "hwlat_detector",
++	.init		= hwlat_detector_tracer_init,
++	.reset		= hwlat_detector_tracer_reset,
++	.start		= hwlat_detector_tracer_start,
++	.stop		= hwlat_detector_tracer_stop,
++	.allow_instances = true,
++};
++
++static int __init init_hwlat_detector_tracer(void)
++{
++	register_tracer(&hwlatdetect_tracer);
++
++	mutex_init(&data.lock);
++	init_debugfs();
++	return 0;
++}
++fs_initcall(init_hwlat_detector_tracer);
+diff --git a/kernel/trace/trace_output.c b/kernel/trace/trace_output.c
+index 692bf7184c8c..7c89b4fd9ce1 100644
+--- a/kernel/trace/trace_output.c
++++ b/kernel/trace/trace_output.c
+@@ -1221,6 +1221,89 @@ static struct trace_event trace_print_event = {
+ 	.funcs		= &trace_print_funcs,
+ };
+ 
++/* TRACE_HWLAT */
++static enum print_line_t
++trace_hwlat_trace(struct trace_iterator *iter, int flags,
++		  struct trace_event *event)
++{
++	struct trace_hwlat_detector *field;
++	struct trace_seq *s = &iter->seq;
++
++	trace_assign_type(field, iter->ent);
++
++	trace_seq_printf(s, "cnt:%u\tts:%010lu.%010lu\tinner:%llu\touter:%llu\n",
++			 field->seqnum,
++			 field->timestamp.tv_sec,
++			 field->timestamp.tv_nsec,
++			 field->duration,
++			 field->outer_duration);
++
++	return trace_handle_return(s);
++}
++
++static enum print_line_t trace_hwlat_raw(struct trace_iterator *iter, int flags,
++				      struct trace_event *event)
++{
++	struct trace_hwlat_detector *field;
++
++	trace_assign_type(field, iter->ent);
++
++	trace_seq_printf(&iter->seq, "%u %010lu.%010lu %llu %llu",
++			 field->seqnum,
++			 field->timestamp.tv_sec,
++			 field->timestamp.tv_nsec,
++			 field->duration,
++			 field->outer_duration);
++
++	return trace_handle_return(&iter->seq);
++}
++
++static enum print_line_t trace_hwlat_hex(struct trace_iterator *iter, int flags,
++					 struct trace_event *event)
++{
++	struct trace_hwlat_detector *field;
++	struct trace_seq *s = &iter->seq;
++
++	trace_assign_type(field, iter->ent);
++
++	SEQ_PUT_HEX_FIELD(s, field->seqnum);
++	SEQ_PUT_HEX_FIELD(s, field->timestamp.tv_sec);
++	SEQ_PUT_HEX_FIELD(s, field->timestamp.tv_nsec);
++	SEQ_PUT_HEX_FIELD(s, field->duration);
++	SEQ_PUT_HEX_FIELD(s, field->outer_duration);
++
++	return trace_handle_return(s);
++}
++
++static enum print_line_t trace_hwlat_bin(struct trace_iterator *iter, int flags,
++					 struct trace_event *event)
++{
++	struct trace_hwlat_detector *field;
++	struct trace_seq *s = &iter->seq;
++
++	trace_assign_type(field, iter->ent);
++
++	SEQ_PUT_FIELD(s, field->seqnum);
++	SEQ_PUT_FIELD(s, field->timestamp.tv_sec);
++	SEQ_PUT_FIELD(s, field->timestamp.tv_nsec);
++	SEQ_PUT_FIELD(s, field->duration);
++	SEQ_PUT_FIELD(s, field->outer_duration);
++
++	return trace_handle_return(s);
++}
++
++static struct trace_event_functions trace_hwlat_funcs = {
++	.trace		= trace_hwlat_trace,
++	.raw		= trace_hwlat_raw,
++	.hex		= trace_hwlat_hex,
++	.binary		= trace_hwlat_bin,
++};
++
++static struct trace_event trace_hwlat_event = {
++	.type		= TRACE_HWLAT,
++	.funcs		= &trace_hwlat_funcs,
++};
++
+ 
+ static struct trace_event *events[] __initdata = {
+ 	&trace_fn_event,
+@@ -1231,6 +1314,7 @@ static struct trace_event *events[] __initdata = {
+ 	&trace_bputs_event,
+ 	&trace_bprint_event,
+ 	&trace_print_event,
++	&trace_hwlat_event,
+ 	NULL
+ };
+ 
 -- 
 2.1.4
