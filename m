@@ -1,63 +1,57 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH 0/4] tracing: Add new hwlat_detector tracer
-Date: Thu, 23 Apr 2015 16:56:58 -0400
-Message-ID: <20150423165658.30f0b046@gandalf.local.home>
-References: <20150423190825.714359844@goodmis.org>
-	<alpine.DEB.2.11.1504232148520.13914@nanos>
-	<20150423160925.7d108eaa@gandalf.local.home>
-	<alpine.DEB.2.11.1504232211540.13914@nanos>
-	<20150423164039.623193a3@gandalf.local.home>
+Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
+Date: Thu, 23 Apr 2015 17:00:26 -0400
+Message-ID: <20150423170026.0de65c90@gandalf.local.home>
+References: <552FC1FE.4020406@siemens.com>
+	<552FC6B1.1040000@linutronix.de>
+	<552FC72A.8060709@siemens.com>
+	<20150416111041.66043164@gandalf.local.home>
+	<552FD55F.8000105@siemens.com>
+	<552FE320.6050601@siemens.com>
+	<1429517036.3226.9.camel@gmail.com>
+	<1429769505.3419.9.camel@gmail.com>
+	<55389632.50308@siemens.com>
+	<1429772482.3419.40.camel@gmail.com>
+	<55389B67.3000703@siemens.com>
+	<1429773566.3419.42.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Ingo Molnar <mingo@kernel.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Daniel Wagner <wagi@monom.org>, Jon Masters <jcm@redhat.com>,
-	Clark Williams <williams@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Jan Kiszka <jan.kiszka@siemens.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150423164039.623193a3@gandalf.local.home>
+In-Reply-To: <1429773566.3419.42.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 23 Apr 2015 16:40:39 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+On Thu, 23 Apr 2015 09:19:26 +0200
+Mike Galbraith <umgwanakikbuti@gmail.com> wrote:
 
-> On Thu, 23 Apr 2015 22:21:11 +0200 (CEST)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> 
->  
-> > > Is the NMI code generic enough now to know that an NMI triggered, and
-> > > we could detect that and ignore the latencies if one did. Or perhaps
-> > > even add a tracepoint in the start and end of an NMI, to account for
-> > > it, (add hooks there), in case there's any SMIs that sneak in after an
-> > > NMI.
-> > 
-> > There are tracepoints in nmi_enter() and nmi_exit() at least in the
-> > kernel source I'm looking at.
-> 
-> Ah, the "trace_hardirq_enter()". That would be something I could hook
-> into, as the only thing that could trigger that when interrupts are
-> disabled happen to be NMIs.
-> 
+> >   CC      kernel/irq_work.o
+> > In file included from ../include/asm-generic/percpu.h:6:0,
+> >                  from ../arch/x86/include/asm/percpu.h:522,
+> >                  from ../arch/x86/include/asm/current.h:5,
+> >                  from ../arch/x86/include/asm/processor.h:15,
+> >                  from ../arch/x86/include/asm/irq_work.h:4,
+> >                  from ../include/linux/irq_work.h:47,
+> >                  from ../kernel/irq_work.c:11:
+> > ../kernel/irq_work.c: In function =E2=80=98irq_work_queue_on=E2=80=99=
+:
+> > ../kernel/irq_work.c:85:17: error: =E2=80=98hirq_work_list=E2=80=99=
+ undeclared=20
+> > (first use in this function)
+> >         &per_cpu(hirq_work_list, cpu));
+>=20
+> Aw poo, so that's just what I _thought_ it was for.
 
-and the naming convention fooled me :-(
+It helps optimization but does nothing for undefined symbols.
 
-That's not a tracepoint, it's a hook into lockdep. There's also a
-ftrace_nmi_enter/exit() there too, that was once used for handling NMIs
-when modifying the function counters via stop machine. But now that we
-have switched to breakpoints, we do not need that anymore.
-
-The only user of the ftrace_nmi_enter/exit() calls is sh. Although it's
-not supported anymore, I'm sure I could use these handlers for the
-hwlat_detector too. I believe jump_labels are allowed in NMI context,
-and we could add hooks there to be able to jump to hwlat code.
-
-I can add a wrapper for sh to make sure that still works (even though
-there's no more maintainer that I know of for the arch).
+That said, why don't we clean up that irq_work code and at least
+declare both lists, and get rid of all the #ifdefs. I wonder if gcc is
+smart enough to not allocate a static variable if it happens to be
+optimized out?
 
 -- Steve
