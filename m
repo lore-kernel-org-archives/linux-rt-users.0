@@ -1,135 +1,40 @@
-From: Scott Wood <scottwood@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Thu, 23 Apr 2015 16:26:58 -0500
-Message-ID: <1429824418.16357.26.camel@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>
-							 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>
-							 <54E74A8C.30802@linutronix.de>
-		 <1424734051.4698.17.camel@freescale.com>
-						 <54EF196E.4090805@redhat.com>	 <54EF2025.80404@linutronix.de>
-					 <1424999159.4698.78.camel@freescale.com>
-		 <55158E6D.40304@freescale.com>
-					 <1428016310.22867.289.camel@freescale.com>
-				 <551E4A41.1080705@freescale.com>
-			 <1428096375.22867.369.camel@freescale.com>
-				 <55262DD3.2050707@freescale.com>
-			 <1428623611.22867.561.camel@freescale.com>
-		 <5534DAA4.3050809@freescale.com> <1429577566.4352.68.camel@freescale.com>
-		 <55378EC4.2080302@freescale.com> <1429749001.16357.7.camel@freescale.com>
-	 <5538E624.8080904@freescale.com>
+From: Linus Torvalds <torvalds@linux-foundation.org>
+Subject: Re: [RFC][PATCH 0/4] tracing: Add new hwlat_detector tracer
+Date: Thu, 23 Apr 2015 15:50:29 -0700
+Message-ID: <CA+55aFzUBvhu1TmFgjfHDF+SGirEbfs0-5KgpxQGG1ZE2UvK3Q@mail.gmail.com>
+References: <20150423190825.714359844@goodmis.org>
+	<alpine.DEB.2.11.1504232148520.13914@nanos>
+	<20150423160925.7d108eaa@gandalf.local.home>
+	<alpine.DEB.2.11.1504232211540.13914@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	Alexander Graf <agraf@suse.de>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Laurentiu Tudor <b10716@freescale.com>
-To: Purcareata Bogdan <b43198@freescale.com>
+Content-Type: text/plain; charset=UTF-8
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	Ingo Molnar <mingo@kernel.org>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Daniel Wagner <wagi@monom.org>, Jon Masters <jcm@redhat.com>,
+	Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5538E624.8080904@freescale.com>
+In-Reply-To: <alpine.DEB.2.11.1504232211540.13914@nanos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 2015-04-23 at 15:31 +0300, Purcareata Bogdan wrote:
-> On 23.04.2015 03:30, Scott Wood wrote:
-> > On Wed, 2015-04-22 at 15:06 +0300, Purcareata Bogdan wrote:
-> >> On 21.04.2015 03:52, Scott Wood wrote:
-> >>> On Mon, 2015-04-20 at 13:53 +0300, Purcareata Bogdan wrote:
-> >>>> There was a weird situation for .kvmppc_mpic_set_epr - its corresponding inner
-> >>>> function is kvmppc_set_epr, which is a static inline. Removing the static inline
-> >>>> yields a compiler crash (Segmentation fault (core dumped) -
-> >>>> scripts/Makefile.build:441: recipe for target 'arch/powerpc/kvm/kvm.o' failed),
-> >>>> but that's a different story, so I just let it be for now. Point is the time may
-> >>>> include other work after the lock has been released, but before the function
-> >>>> actually returned. I noticed this was the case for .kvm_set_msi, which could
-> >>>> work up to 90 ms, not actually under the lock. This made me change what I'm
-> >>>> looking at.
-> >>>
-> >>> kvm_set_msi does pretty much nothing outside the lock -- I suspect
-> >>> you're measuring an interrupt that happened as soon as the lock was
-> >>> released.
-> >>
-> >> That's exactly right. I've seen things like a timer interrupt occuring right
-> >> after the spinlock_irqrestore, but before kvm_set_msi actually returned.
-> >>
-> >> [...]
-> >>
-> >>>>    Or perhaps a different stress scenario involving a lot of VCPUs
-> >>>> and external interrupts?
-> >>>
-> >>> You could instrument the MPIC code to find out how many loop iterations
-> >>> you maxed out on, and compare that to the theoretical maximum.
-> >>
-> >> Numbers are pretty low, and I'll try to explain based on my observations.
-> >>
-> >> The problematic section in openpic_update_irq is this [1], since it loops
-> >> through all VCPUs, and IRQ_local_pipe further calls IRQ_check, which loops
-> >> through all pending interrupts for a VCPU [2].
-> >>
-> >> The guest interfaces are virtio-vhostnet, which are based on MSI
-> >> (/proc/interrupts in guest shows they are MSI). For external interrupts to the
-> >> guest, the irq_source destmask is currently 0, and last_cpu is 0 (unitialized),
-> >> so [1] will go on and deliver the interrupt directly and unicast (no VCPUs loop).
-> >>
-> >> I activated the pr_debugs in arch/powerpc/kvm/mpic.c, to see how many interrupts
-> >> are actually pending for the destination VCPU. At most, there were 3 interrupts
-> >> - n_IRQ = {224,225,226} - even for 24 flows of ping flood. I understand that
-> >> guest virtio interrupts are cascaded over 1 or a couple of shared MSI interrupts.
-> >>
-> >> So worst case, in this scenario, was checking the priorities for 3 pending
-> >> interrupts for 1 VCPU. Something like this (some of my prints included):
-> >>
-> >> [61010.582033] openpic_update_irq: destmask 1 last_cpu 0
-> >> [61010.582034] openpic_update_irq: Only one CPU is allowed to receive this IRQ
-> >> [61010.582036] IRQ_local_pipe: IRQ 224 active 0 was 1
-> >> [61010.582037] IRQ_check: irq 226 set ivpr_pr=8 pr=-1
-> >> [61010.582038] IRQ_check: irq 225 set ivpr_pr=8 pr=-1
-> >> [61010.582039] IRQ_check: irq 224 set ivpr_pr=8 pr=-1
-> >>
-> >> It would be really helpful to get your comments regarding whether these are
-> >> realistical number for everyday use, or they are relevant only to this
-> >> particular scenario.
-> >
-> > RT isn't about "realistic numbers for everyday use".  It's about worst
-> > cases.
-> >
-> >> - Can these interrupts be used in directed delivery, so that the destination
-> >> mask can include multiple VCPUs?
-> >
-> > The Freescale MPIC does not support multiple destinations for most
-> > interrupts, but the (non-FSL-specific) emulation code appears to allow
-> > it.
-> >
-> >>   The MPIC manual states that timer and IPI
-> >> interrupts are supported for directed delivery, altough I'm not sure how much of
-> >> this is used in the emulation. I know that kvmppc uses the decrementer outside
-> >> of the MPIC.
-> >>
-> >> - How are virtio interrupts cascaded over the shared MSI interrupts?
-> >> /proc/device-tree/soc@e0000000/msi@41600/interrupts in the guest shows 8 values
-> >> - 224 - 231 - so at most there might be 8 pending interrupts in IRQ_check, is
-> >> that correct?
-> >
-> > It looks like that's currently the case, but actual hardware supports
-> > more than that, so it's possible (albeit unlikely any time soon) that
-> > the emulation eventually does as well.
-> >
-> > But it's possible to have interrupts other than MSIs...
-> 
-> Right.
-> 
-> So given that the raw spinlock conversion is not suitable for all the scenarios 
-> supported by the OpenPIC emulation, is it ok that my next step would be to send 
-> a patch containing both the raw spinlock conversion and a mandatory disable of 
-> the in-kernel MPIC? This is actually the last conclusion we came up with some 
-> time ago, but I guess it was good to get some more insight on how things 
-> actually work (at least for me).
+On Thu, Apr 23, 2015 at 1:21 PM, Thomas Gleixner <tglx@linutronix.de> wrote:
+>
+> But at least on the machines which have the event counter it would be
+> usefull to include that information as well.
 
-Fine with me.  Have you given any thought to ways to restructure the
-code to eliminate the problem?
+In fact, I'd argue that we should *not* do this odd magic latency
+measurement thing at all, exactly because Intel gave is the SMI
+counter, and it's much more likely to be useful in real life. The odd
+"stop machine and busy loop adn do magic" thing is a incredibly
+invasive hack that sane people will never enable at all, while the
+"add support for the hadrware we asked for and got" is a small thing
+that we can do on all modern Intel chips, and can be enabled by
+default because there is no downside.
 
--Scott
+                       Linus
