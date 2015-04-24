@@ -1,33 +1,48 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
-Date: Fri, 24 Apr 2015 11:59:37 +0200
-Message-ID: <1429869577.3587.4.camel@gmail.com>
-References: <552FC1FE.4020406@siemens.com> <552FC6B1.1040000@linutronix.de>
-	 <552FC72A.8060709@siemens.com> <20150416111041.66043164@gandalf.local.home>
-	 <552FD55F.8000105@siemens.com> <552FE320.6050601@siemens.com>
-	 <1429517036.3226.9.camel@gmail.com> <1429769505.3419.9.camel@gmail.com>
-	 <55389632.50308@siemens.com> <1429772482.3419.40.camel@gmail.com>
-	 <55389B67.3000703@siemens.com> <1429773566.3419.42.camel@gmail.com>
-	 <20150423170026.0de65c90@gandalf.local.home>
-	 <1429858489.3461.28.camel@gmail.com> <553A062D.6090608@siemens.com>
+From: Bogdan Purcareata <bogdan.purcareata@freescale.com>
+Subject: [PATCH v2 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Fri, 24 Apr 2015 15:53:11 +0000
+Message-ID: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Jan Kiszka <jan.kiszka@siemens.com>
+Content-Type: text/plain
+To: <tglx@linutronix.de>, <bigeasy@linutronix.de>,
+	<pbonzini@redhat.com>, <agraf@suse.de>, <scottwood@freescale.com>,
+	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
+	<b10716@freescale.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <553A062D.6090608@siemens.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 2015-04-24 at 11:00 +0200, Jan Kiszka wrote:
+This patchset enables running KVM SMP guests with external interrupts on an
+underlying RT-enabled Linux. Previous to this patch, a guest with in-kernel MPIC
+emulation could easily panic the kernel due to preemption when delivering IPIs
+and external interrupts, because of the openpic spinlock becoming a sleeping
+mutex on PREEMPT_RT_FULL Linux.
 
-> The approach looks good to me, but the commit log deserves a rework now.
+0001: converts the openpic spinlock to a raw spinlock, in order to circumvent
+this behavior. While this change is targeted for a RT enabled Linux, it has no
+effect on upstream kvm-ppc, so send it upstream for better future maintenance.
 
-Yeah.  While you're at it, you should change my chop to an ack or a
-tested-by too, as it's your patch, I just rearranged a bit.
+0002: disables in-kernel MPIC emulation for guest running on RT, in order to
+prevent a potential DoS attack due to large system latencies. This patch is
+targeted to RT (due to CONFIG_PREEMPT_RT_FULL), but it can also be applied on
+upstream Linux, with no effect.
 
-	-Mike
+- applied & compiled against vanilla 4.0
+- applied & compiled against stable-rt 3.18-rt
+
+v2:
+- updated commit messages
+- change the fix for potentially large latencies from limiting the max number of
+  VCPUs a guest can have to disabling the in-kernel MPIC
+
+Bogdan Purcareata (2):
+  powerpc/kvm: Convert openpic lock to raw_spinlock
+  powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
+
+ arch/powerpc/kvm/Kconfig |  1 +
+ arch/powerpc/kvm/mpic.c  | 44 ++++++++++++++++++++++----------------------
+ 2 files changed, 23 insertions(+), 22 deletions(-)
+
+-- 
+2.1.4
