@@ -1,136 +1,77 @@
-From: Bogdan Purcareata <bogdan.purcareata@freescale.com>
-Subject: [PATCH v2 1/2] powerpc/kvm: Convert openpic lock to raw_spinlock
-Date: Fri, 24 Apr 2015 15:53:12 +0000
-Message-ID: <1429890793-19487-2-git-send-email-bogdan.purcareata@freescale.com>
-References: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
+From: "Jiang, Yunhong" <yunhong.jiang@intel.com>
+Subject: RE: Should I still use pm_timer as clock source for hrt mode
+Date: Fri, 24 Apr 2015 18:15:00 +0000
+Message-ID: <DDCAE26804250545B9934A2056554AA0208C499B@ORSMSX112.amr.corp.intel.com>
+References: <DDCAE26804250545B9934A2056554AA0208A7A44@ORSMSX112.amr.corp.intel.com>
+ <20150423131519.GD28465@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: <tglx@linutronix.de>, <bigeasy@linutronix.de>, <pbonzini@redhat.com>,
- <agraf@suse.de>, <scottwood@freescale.com>, <linuxppc-dev@lists.ozlabs.org>,
- <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
- <mihai.caraman@freescale.com>, <b10716@freescale.com>
-Return-path: <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-In-Reply-To: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
-List-Unsubscribe: <https://lists.ozlabs.org/options/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=unsubscribe>
-List-Archive: <http://lists.ozlabs.org/pipermail/linuxppc-dev/>
-List-Post: <mailto:linuxppc-dev@lists.ozlabs.org>
-List-Help: <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=help>
-List-Subscribe: <https://lists.ozlabs.org/listinfo/linuxppc-dev>,
- <mailto:linuxppc-dev-request@lists.ozlabs.org?subject=subscribe>
-Errors-To: linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org
-Sender: "Linuxppc-dev"
- <linuxppc-dev-bounces+glppe-linuxppc-embedded-2=m.gmane.org@lists.ozlabs.org>
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "'Luis Claudio R. Goncalves'" <lclaudio@uudg.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga02.intel.com ([134.134.136.20]:44825 "EHLO mga02.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1031418AbbDXSPB convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 24 Apr 2015 14:15:01 -0400
+In-Reply-To: <20150423131519.GD28465@uudg.org>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-VGhlIGxvY2sgaW4gdGhlIEtWTSBvcGVucGljIGVtdWxhdGlvbiBvbiBQUEMgaXMgYSBzcGlubG9j
-a190LCBtZWFuaW5nIGl0IGJlY29tZXMKYSBzbGVlcGluZyBtdXRleCB1bmRlciBQUkVFTVBUX1JU
-X0ZVTEwuIFRoaXMgeWllbGRzIHRvIGEgc2l0dWF0aW9uIHdoZXJlIHRoaXMKbm9uLXJhdyBsb2Nr
-IGlzIGdyYWJiZWQgd2l0aCBpbnRlcnJ1cHRzIGFscmVhZHkgZGlzYWJsZWQgYnkgaGFyZF9pcnFf
-ZGlzYWJsZSgpOgoKa3ZtcHBjX3ByZXBhcmVfdG9fZW50ZXIoKQogIGhhcmRfaXJxX2Rpc2FibGUo
-KQogIGt2bXBwY19jb3JlX3ByZXBhcmVfdG9fZW50ZXIoKQogICAga3ZtcHBjX2NvcmVfY2hlY2tf
-ZXhjZXB0aW9ucygpCiAgICAgIGt2bXBwY19ib29rZV9pcnFwcmlvX2RlbGl2ZXIoKQogICAgICAg
-IGt2bXBwY19tcGljX3NldF9lcHIoKQogICAgICAgICAgc3Bpbl9sb2NrX2lycXNhdmUoKQogICAg
-ICAgICAgICAuLi4KClRoaXMgaGFwcGVucyBmb3IgZ3Vlc3QgaW50ZXJydXB0cyB0aGF0IGdvIHRo
-cm91Z2ggdGhpcyBvcGVucGljIGVtdWxhdGlvbiBjb2RlLgpUaGUgcmVzdWx0IGlzIGEga2VybmVs
-IGNyYXNoIG9uIGd1ZXN0IGVudGVyIChpbmNsdWRlL2xpbnV4L2t2bV9ob3N0Lmg6Nzg0KS4KCkNv
-bnZlcnRpbmcgdGhlIGxvY2sgdG8gYSByYXdfc3BpbmxvY2sgZml4ZXMgdGhlIGlzc3VlIGFuZCBl
-bmFibGVzIHRoZSBndWVzdCB0bwpydW4gSS9PIGludGVuc2l2ZSB3b3JrbG9hZHMgaW4gYSBTTVAg
-Y29uZmlndXJhdGlvbi4gQSBzaW1pbGFyIGZpeCBjYW4gYmUgZm91bmQKZm9yIHRoZSBpODI1NCBQ
-SVQgZW11bGF0aW9uIG9uIHg4NiBbMV0uCgpbMV0gaHR0cHM6Ly9sa21sLm9yZy9sa21sLzIwMTAv
-MS8xMS8yODkKCnYyOgotIHVwZGF0ZWQgY29tbWl0IG1lc3NhZ2UKClNpZ25lZC1vZmYtYnk6IEJv
-Z2RhbiBQdXJjYXJlYXRhIDxib2dkYW4ucHVyY2FyZWF0YUBmcmVlc2NhbGUuY29tPgotLS0KIGFy
-Y2gvcG93ZXJwYy9rdm0vbXBpYy5jIHwgNDQgKysrKysrKysrKysrKysrKysrKysrKy0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0KIDEgZmlsZSBjaGFuZ2VkLCAyMiBpbnNlcnRpb25zKCspLCAyMiBkZWxl
-dGlvbnMoLSkKCmRpZmYgLS1naXQgYS9hcmNoL3Bvd2VycGMva3ZtL21waWMuYyBiL2FyY2gvcG93
-ZXJwYy9rdm0vbXBpYy5jCmluZGV4IDYyNDljZGMuLjJmNzA2NjAgMTAwNjQ0Ci0tLSBhL2FyY2gv
-cG93ZXJwYy9rdm0vbXBpYy5jCisrKyBiL2FyY2gvcG93ZXJwYy9rdm0vbXBpYy5jCkBAIC0xOTYs
-NyArMTk2LDcgQEAgc3RydWN0IG9wZW5waWMgewogCWludCBudW1fbW1pb19yZWdpb25zOwogCiAJ
-Z3BhX3QgcmVnX2Jhc2U7Ci0Jc3BpbmxvY2tfdCBsb2NrOworCXJhd19zcGlubG9ja190IGxvY2s7
-CiAKIAkvKiBCZWhhdmlvciBjb250cm9sICovCiAJc3RydWN0IGZzbF9tcGljX2luZm8gKmZzbDsK
-QEAgLTExMDMsOSArMTEwMyw5IEBAIHN0YXRpYyBpbnQgb3BlbnBpY19jcHVfd3JpdGVfaW50ZXJu
-YWwodm9pZCAqb3BhcXVlLCBncGFfdCBhZGRyLAogCQkJbXBpY19pcnFfcmFpc2Uob3BwLCBkc3Qs
-IElMUl9JTlRUR1RfSU5UKTsKIAkJfQogCi0JCXNwaW5fdW5sb2NrKCZvcHAtPmxvY2spOworCQly
-YXdfc3Bpbl91bmxvY2soJm9wcC0+bG9jayk7CiAJCWt2bV9ub3RpZnlfYWNrZWRfaXJxKG9wcC0+
-a3ZtLCAwLCBub3RpZnlfZW9pKTsKLQkJc3Bpbl9sb2NrKCZvcHAtPmxvY2spOworCQlyYXdfc3Bp
-bl9sb2NrKCZvcHAtPmxvY2spOwogCiAJCWJyZWFrOwogCX0KQEAgLTExODAsMTIgKzExODAsMTIg
-QEAgdm9pZCBrdm1wcGNfbXBpY19zZXRfZXByKHN0cnVjdCBrdm1fdmNwdSAqdmNwdSkKIAlpbnQg
-Y3B1ID0gdmNwdS0+YXJjaC5pcnFfY3B1X2lkOwogCXVuc2lnbmVkIGxvbmcgZmxhZ3M7CiAKLQlz
-cGluX2xvY2tfaXJxc2F2ZSgmb3BwLT5sb2NrLCBmbGFncyk7CisJcmF3X3NwaW5fbG9ja19pcnFz
-YXZlKCZvcHAtPmxvY2ssIGZsYWdzKTsKIAogCWlmICgob3BwLT5nY3IgJiBvcHAtPm1waWNfbW9k
-ZV9tYXNrKSA9PSBHQ1JfTU9ERV9QUk9YWSkKIAkJa3ZtcHBjX3NldF9lcHIodmNwdSwgb3BlbnBp
-Y19pYWNrKG9wcCwgJm9wcC0+ZHN0W2NwdV0sIGNwdSkpOwogCi0Jc3Bpbl91bmxvY2tfaXJxcmVz
-dG9yZSgmb3BwLT5sb2NrLCBmbGFncyk7CisJcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmUoJm9w
-cC0+bG9jaywgZmxhZ3MpOwogfQogCiBzdGF0aWMgaW50IG9wZW5waWNfY3B1X3JlYWRfaW50ZXJu
-YWwodm9pZCAqb3BhcXVlLCBncGFfdCBhZGRyLApAQCAtMTM4Niw5ICsxMzg2LDkgQEAgc3RhdGlj
-IGludCBrdm1fbXBpY19yZWFkKHN0cnVjdCBrdm1fdmNwdSAqdmNwdSwKIAkJcmV0dXJuIC1FSU5W
-QUw7CiAJfQogCi0Jc3Bpbl9sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwlyYXdfc3Bpbl9sb2NrX2ly
-cSgmb3BwLT5sb2NrKTsKIAlyZXQgPSBrdm1fbXBpY19yZWFkX2ludGVybmFsKG9wcCwgYWRkciAt
-IG9wcC0+cmVnX2Jhc2UsICZ1LnZhbCk7Ci0Jc3Bpbl91bmxvY2tfaXJxKCZvcHAtPmxvY2spOwor
-CXJhd19zcGluX3VubG9ja19pcnEoJm9wcC0+bG9jayk7CiAKIAkvKgogCSAqIFRlY2huaWNhbGx5
-IG9ubHkgMzItYml0IGFjY2Vzc2VzIGFyZSBhbGxvd2VkLCBidXQgYmUgbmljZSB0bwpAQCAtMTQy
-NywxMCArMTQyNywxMCBAQCBzdGF0aWMgaW50IGt2bV9tcGljX3dyaXRlKHN0cnVjdCBrdm1fdmNw
-dSAqdmNwdSwKIAkJcmV0dXJuIC1FT1BOT1RTVVBQOwogCX0KIAotCXNwaW5fbG9ja19pcnEoJm9w
-cC0+bG9jayk7CisJcmF3X3NwaW5fbG9ja19pcnEoJm9wcC0+bG9jayk7CiAJcmV0ID0ga3ZtX21w
-aWNfd3JpdGVfaW50ZXJuYWwob3BwLCBhZGRyIC0gb3BwLT5yZWdfYmFzZSwKIAkJCQkgICAgICAq
-KGNvbnN0IHUzMiAqKXB0cik7Ci0Jc3Bpbl91bmxvY2tfaXJxKCZvcHAtPmxvY2spOworCXJhd19z
-cGluX3VubG9ja19pcnEoJm9wcC0+bG9jayk7CiAKIAlwcl9kZWJ1ZygiJXM6IGFkZHIgJWxseCBy
-ZXQgJWQgdmFsICV4XG4iLAogCQkgX19mdW5jX18sIGFkZHIsIHJldCwgKihjb25zdCB1MzIgKilw
-dHIpOwpAQCAtMTUwMSwxNCArMTUwMSwxNCBAQCBzdGF0aWMgaW50IGFjY2Vzc19yZWcoc3RydWN0
-IG9wZW5waWMgKm9wcCwgZ3BhX3QgYWRkciwgdTMyICp2YWwsIGludCB0eXBlKQogCWlmIChhZGRy
-ICYgMykKIAkJcmV0dXJuIC1FTlhJTzsKIAotCXNwaW5fbG9ja19pcnEoJm9wcC0+bG9jayk7CisJ
-cmF3X3NwaW5fbG9ja19pcnEoJm9wcC0+bG9jayk7CiAKIAlpZiAodHlwZSA9PSBBVFRSX1NFVCkK
-IAkJcmV0ID0ga3ZtX21waWNfd3JpdGVfaW50ZXJuYWwob3BwLCBhZGRyLCAqdmFsKTsKIAllbHNl
-CiAJCXJldCA9IGt2bV9tcGljX3JlYWRfaW50ZXJuYWwob3BwLCBhZGRyLCB2YWwpOwogCi0Jc3Bp
-bl91bmxvY2tfaXJxKCZvcHAtPmxvY2spOworCXJhd19zcGluX3VubG9ja19pcnEoJm9wcC0+bG9j
-ayk7CiAKIAlwcl9kZWJ1ZygiJXM6IHR5cGUgJWQgYWRkciAlbGx4IHZhbCAleFxuIiwgX19mdW5j
-X18sIHR5cGUsIGFkZHIsICp2YWwpOwogCkBAIC0xNTQ1LDkgKzE1NDUsOSBAQCBzdGF0aWMgaW50
-IG1waWNfc2V0X2F0dHIoc3RydWN0IGt2bV9kZXZpY2UgKmRldiwgc3RydWN0IGt2bV9kZXZpY2Vf
-YXR0ciAqYXR0cikKIAkJaWYgKGF0dHIzMiAhPSAwICYmIGF0dHIzMiAhPSAxKQogCQkJcmV0dXJu
-IC1FSU5WQUw7CiAKLQkJc3Bpbl9sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwkJcmF3X3NwaW5fbG9j
-a19pcnEoJm9wcC0+bG9jayk7CiAJCW9wZW5waWNfc2V0X2lycShvcHAsIGF0dHItPmF0dHIsIGF0
-dHIzMik7Ci0JCXNwaW5fdW5sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwkJcmF3X3NwaW5fdW5sb2Nr
-X2lycSgmb3BwLT5sb2NrKTsKIAkJcmV0dXJuIDA7CiAJfQogCkBAIC0xNTkyLDkgKzE1OTIsOSBA
-QCBzdGF0aWMgaW50IG1waWNfZ2V0X2F0dHIoc3RydWN0IGt2bV9kZXZpY2UgKmRldiwgc3RydWN0
-IGt2bV9kZXZpY2VfYXR0ciAqYXR0cikKIAkJaWYgKGF0dHItPmF0dHIgPiBNQVhfU1JDKQogCQkJ
-cmV0dXJuIC1FSU5WQUw7CiAKLQkJc3Bpbl9sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwkJcmF3X3Nw
-aW5fbG9ja19pcnEoJm9wcC0+bG9jayk7CiAJCWF0dHIzMiA9IG9wcC0+c3JjW2F0dHItPmF0dHJd
-LnBlbmRpbmc7Ci0JCXNwaW5fdW5sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwkJcmF3X3NwaW5fdW5s
-b2NrX2lycSgmb3BwLT5sb2NrKTsKIAogCQlpZiAocHV0X3VzZXIoYXR0cjMyLCAodTMyIF9fdXNl
-ciAqKShsb25nKWF0dHItPmFkZHIpKQogCQkJcmV0dXJuIC1FRkFVTFQ7CkBAIC0xNjcwLDcgKzE2
-NzAsNyBAQCBzdGF0aWMgaW50IG1waWNfY3JlYXRlKHN0cnVjdCBrdm1fZGV2aWNlICpkZXYsIHUz
-MiB0eXBlKQogCW9wcC0+a3ZtID0gZGV2LT5rdm07CiAJb3BwLT5kZXYgPSBkZXY7CiAJb3BwLT5t
-b2RlbCA9IHR5cGU7Ci0Jc3Bpbl9sb2NrX2luaXQoJm9wcC0+bG9jayk7CisJcmF3X3NwaW5fbG9j
-a19pbml0KCZvcHAtPmxvY2spOwogCiAJYWRkX21taW9fcmVnaW9uKG9wcCwgJm9wZW5waWNfZ2Js
-X21taW8pOwogCWFkZF9tbWlvX3JlZ2lvbihvcHAsICZvcGVucGljX3Rtcl9tbWlvKTsKQEAgLTE3
-NDMsNyArMTc0Myw3IEBAIGludCBrdm1wcGNfbXBpY19jb25uZWN0X3ZjcHUoc3RydWN0IGt2bV9k
-ZXZpY2UgKmRldiwgc3RydWN0IGt2bV92Y3B1ICp2Y3B1LAogCWlmIChjcHUgPCAwIHx8IGNwdSA+
-PSBNQVhfQ1BVKQogCQlyZXR1cm4gLUVQRVJNOwogCi0Jc3Bpbl9sb2NrX2lycSgmb3BwLT5sb2Nr
-KTsKKwlyYXdfc3Bpbl9sb2NrX2lycSgmb3BwLT5sb2NrKTsKIAogCWlmIChvcHAtPmRzdFtjcHVd
-LnZjcHUpIHsKIAkJcmV0ID0gLUVFWElTVDsKQEAgLTE3NjYsNyArMTc2Niw3IEBAIGludCBrdm1w
-cGNfbXBpY19jb25uZWN0X3ZjcHUoc3RydWN0IGt2bV9kZXZpY2UgKmRldiwgc3RydWN0IGt2bV92
-Y3B1ICp2Y3B1LAogCQl2Y3B1LT5hcmNoLmVwcl9mbGFncyB8PSBLVk1QUENfRVBSX0tFUk5FTDsK
-IAogb3V0OgotCXNwaW5fdW5sb2NrX2lycSgmb3BwLT5sb2NrKTsKKwlyYXdfc3Bpbl91bmxvY2tf
-aXJxKCZvcHAtPmxvY2spOwogCXJldHVybiByZXQ7CiB9CiAKQEAgLTE3OTYsOSArMTc5Niw5IEBA
-IHN0YXRpYyBpbnQgbXBpY19zZXRfaXJxKHN0cnVjdCBrdm1fa2VybmVsX2lycV9yb3V0aW5nX2Vu
-dHJ5ICplLAogCXN0cnVjdCBvcGVucGljICpvcHAgPSBrdm0tPmFyY2gubXBpYzsKIAl1bnNpZ25l
-ZCBsb25nIGZsYWdzOwogCi0Jc3Bpbl9sb2NrX2lycXNhdmUoJm9wcC0+bG9jaywgZmxhZ3MpOwor
-CXJhd19zcGluX2xvY2tfaXJxc2F2ZSgmb3BwLT5sb2NrLCBmbGFncyk7CiAJb3BlbnBpY19zZXRf
-aXJxKG9wcCwgaXJxLCBsZXZlbCk7Ci0Jc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmb3BwLT5sb2Nr
-LCBmbGFncyk7CisJcmF3X3NwaW5fdW5sb2NrX2lycXJlc3RvcmUoJm9wcC0+bG9jaywgZmxhZ3Mp
-OwogCiAJLyogQWxsIGNvZGUgcGF0aHMgd2UgY2FyZSBhYm91dCBkb24ndCBjaGVjayBmb3IgdGhl
-IHJldHVybiB2YWx1ZSAqLwogCXJldHVybiAwOwpAQCAtMTgxMCwxNCArMTgxMCwxNCBAQCBpbnQg
-a3ZtX3NldF9tc2koc3RydWN0IGt2bV9rZXJuZWxfaXJxX3JvdXRpbmdfZW50cnkgKmUsCiAJc3Ry
-dWN0IG9wZW5waWMgKm9wcCA9IGt2bS0+YXJjaC5tcGljOwogCXVuc2lnbmVkIGxvbmcgZmxhZ3M7
-CiAKLQlzcGluX2xvY2tfaXJxc2F2ZSgmb3BwLT5sb2NrLCBmbGFncyk7CisJcmF3X3NwaW5fbG9j
-a19pcnFzYXZlKCZvcHAtPmxvY2ssIGZsYWdzKTsKIAogCS8qCiAJICogWFhYIFdlIGlnbm9yZSB0
-aGUgdGFyZ2V0IGFkZHJlc3MgZm9yIG5vdywgYXMgd2Ugb25seSBzdXBwb3J0CiAJICogICAgIGEg
-c2luZ2xlIE1TSSBiYW5rLgogCSAqLwogCW9wZW5waWNfbXNpX3dyaXRlKGt2bS0+YXJjaC5tcGlj
-LCBNU0lJUl9PRkZTRVQsIGUtPm1zaS5kYXRhKTsKLQlzcGluX3VubG9ja19pcnFyZXN0b3JlKCZv
-cHAtPmxvY2ssIGZsYWdzKTsKKwlyYXdfc3Bpbl91bmxvY2tfaXJxcmVzdG9yZSgmb3BwLT5sb2Nr
-LCBmbGFncyk7CiAKIAkvKiBBbGwgY29kZSBwYXRocyB3ZSBjYXJlIGFib3V0IGRvbid0IGNoZWNr
-IGZvciB0aGUgcmV0dXJuIHZhbHVlICovCiAJcmV0dXJuIDA7Ci0tIAoyLjEuNAoKX19fX19fX19f
-X19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX19fX18KTGludXhwcGMtZGV2IG1haWxp
-bmcgbGlzdApMaW51eHBwYy1kZXZAbGlzdHMub3psYWJzLm9yZwpodHRwczovL2xpc3RzLm96bGFi
-cy5vcmcvbGlzdGluZm8vbGludXhwcGMtZGV2
+> -----Original Message-----
+> From: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
+> owner@vger.kernel.org] On Behalf Of Luis Claudio R. Goncalves
+> Sent: Thursday, April 23, 2015 6:15 AM
+> To: Jiang, Yunhong
+> Cc: linux-rt-users@vger.kernel.org
+> Subject: Re: Should I still use pm_timer as clock source for hrt mode
+> 
+> On Tue, Apr 21, 2015 at 05:08:58PM +0000, Jiang, Yunhong wrote:
+> | Hi, all
+> | 	I noticed followed statement about TSC timer on
+> | https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO , " Since the
+> TSC
+> | timer on PC platforms, as used in the previous versions, are now marked as
+> | unsuitable for hrt mode due to many lacks of functionalities and
+> | reliabilities, you will need i.E. pm_timer as provided by ACPI to use as
+> | clock source".
+> |
+> | 	I'm testing on Intel Xeon CPU E5-2640 and has "Switched to
+> | clocksource tsc" on kernel log, I think it mean the TSC on my system is
+> | stable and reliable enough to use as clock source, right? With the
+> | invariant and synchronized TSC support in latest hardware, can I assume
+> | generally TSC would be better than pm_timer?
+> 
+> Nowadays the clocksourse selection code is a bit smarter than it was a
+> while ago. Some TSC clocks will be reliable as long as your system does not
+> enter deeper C-states, some will stop in idle... the kernel will select TSC
+> as the preferred clocksource and will use it until the event that could
+> render that specific TSC unreliable happens. Then the next better
+> clocksource option will be selected.
+> 
+> And yes, reading the TSC is way faster and cheaper than reading pm_timer.
+> So, if TSC is available and is considered reliable, use the TSC.
+> 
+> Depending on your environment and operation parameters you could take
+> some
+> extra steps to ensure the condition that would turn your TSC clock unreliable
+> never happens. E.g. avoid entering deeper C-states, booting with
+> idle=pool, ...
+> 
+> Of course, any these changes have an effect, be it in power consumption or
+> processor temperature. Be sure to understand that balance and then decide
+> whether the cost of a lighter clock (in terms of cost to read the current
+> time) is more important than saving a few Watts on the end of day.
+> 
+> Luis
+
+Thanks for your detailed reply and analysis.
+
+--jyh
+
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
