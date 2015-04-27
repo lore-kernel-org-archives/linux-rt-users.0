@@ -1,135 +1,63 @@
-From: Purcareata Bogdan <b43198@freescale.com>
-Subject: Re: [PATCH 0/2] powerpc/kvm: Enable running guests on RT Linux
-Date: Mon, 27 Apr 2015 09:45:09 +0300
-Message-ID: <553DDAF5.6030005@freescale.com>
-References: <1424251955-308-1-git-send-email-bogdan.purcareata@freescale.com>							 <54E73A6C.9080500@suse.de> <54E740E7.5090806@redhat.com>							 <54E74A8C.30802@linutronix.de>		 <1424734051.4698.17.camel@freescale.com>						 <54EF196E.4090805@redhat.com>	 <54EF2025.80404@linutronix.de>					 <1424999159.4698.78.camel@freescale.com>		 <55158E6D.40304@freescale.com>					 <1428016310.22867.289.camel@freescale.com>				 <551E4A41.1080705@freescale.com>			 <1428096375.22867.369.camel@freescale.com>				 <55262DD3.2050707@freescale.com>			 <1428623611.22867.561.camel@freescale.com>		 <5534DAA4.3050809@freescale.com> <1429577566.4352.68.camel@freescale.com>		 <55378EC4.2080302@freescale.com> <1429749001.16357.7.camel@freescale.com>	 <5538E624.8080904@freescale.com> <1429824418.16357.26.camel@fre
- escale.com>
+From: Alexandre COFFIGNAL <acoffignal@geral.com>
+Subject: Re: 3.14.36-rt34 kernel crash on imx6
+Date: Mon, 27 Apr 2015 10:18:14 +0200
+Message-ID: <553DF0C6.2060500@geral.com>
+References: <552F7406.1030806@geral.com> <5534C848.4010809@geral.com>
+ <20150423163219.3c354d19@gandalf.local.home>
+ <20150424070209.GI19431@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	Alexander Graf <agraf@suse.de>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>,
-	<linuxppc-dev@lists.ozlabs.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kernel@vger.kernel.org>, <mihai.caraman@freescale.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Laurentiu Tudor <b10716@freescale.com>
-To: Scott Wood <scottwood@freescale.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1429824418.16357.26.camel@freescale.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: =?windows-1252?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mailhost.geral.com ([37.58.166.5]:8333 "EHLO mailhost.geral.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752871AbbD0IST (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 27 Apr 2015 04:18:19 -0400
+In-Reply-To: <20150424070209.GI19431@pengutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 24.04.2015 00:26, Scott Wood wrote:
-> On Thu, 2015-04-23 at 15:31 +0300, Purcareata Bogdan wrote:
->> On 23.04.2015 03:30, Scott Wood wrote:
->>> On Wed, 2015-04-22 at 15:06 +0300, Purcareata Bogdan wrote:
->>>> On 21.04.2015 03:52, Scott Wood wrote:
->>>>> On Mon, 2015-04-20 at 13:53 +0300, Purcareata Bogdan wrote:
->>>>>> There was a weird situation for .kvmppc_mpic_set_epr - its corresponding inner
->>>>>> function is kvmppc_set_epr, which is a static inline. Removing the static inline
->>>>>> yields a compiler crash (Segmentation fault (core dumped) -
->>>>>> scripts/Makefile.build:441: recipe for target 'arch/powerpc/kvm/kvm.o' failed),
->>>>>> but that's a different story, so I just let it be for now. Point is the time may
->>>>>> include other work after the lock has been released, but before the function
->>>>>> actually returned. I noticed this was the case for .kvm_set_msi, which could
->>>>>> work up to 90 ms, not actually under the lock. This made me change what I'm
->>>>>> looking at.
->>>>>
->>>>> kvm_set_msi does pretty much nothing outside the lock -- I suspect
->>>>> you're measuring an interrupt that happened as soon as the lock was
->>>>> released.
->>>>
->>>> That's exactly right. I've seen things like a timer interrupt occuring right
->>>> after the spinlock_irqrestore, but before kvm_set_msi actually returned.
->>>>
->>>> [...]
->>>>
->>>>>>     Or perhaps a different stress scenario involving a lot of VCPUs
->>>>>> and external interrupts?
->>>>>
->>>>> You could instrument the MPIC code to find out how many loop iterations
->>>>> you maxed out on, and compare that to the theoretical maximum.
->>>>
->>>> Numbers are pretty low, and I'll try to explain based on my observations.
->>>>
->>>> The problematic section in openpic_update_irq is this [1], since it loops
->>>> through all VCPUs, and IRQ_local_pipe further calls IRQ_check, which loops
->>>> through all pending interrupts for a VCPU [2].
->>>>
->>>> The guest interfaces are virtio-vhostnet, which are based on MSI
->>>> (/proc/interrupts in guest shows they are MSI). For external interrupts to the
->>>> guest, the irq_source destmask is currently 0, and last_cpu is 0 (unitialized),
->>>> so [1] will go on and deliver the interrupt directly and unicast (no VCPUs loop).
->>>>
->>>> I activated the pr_debugs in arch/powerpc/kvm/mpic.c, to see how many interrupts
->>>> are actually pending for the destination VCPU. At most, there were 3 interrupts
->>>> - n_IRQ = {224,225,226} - even for 24 flows of ping flood. I understand that
->>>> guest virtio interrupts are cascaded over 1 or a couple of shared MSI interrupts.
->>>>
->>>> So worst case, in this scenario, was checking the priorities for 3 pending
->>>> interrupts for 1 VCPU. Something like this (some of my prints included):
->>>>
->>>> [61010.582033] openpic_update_irq: destmask 1 last_cpu 0
->>>> [61010.582034] openpic_update_irq: Only one CPU is allowed to receive this IRQ
->>>> [61010.582036] IRQ_local_pipe: IRQ 224 active 0 was 1
->>>> [61010.582037] IRQ_check: irq 226 set ivpr_pr=8 pr=-1
->>>> [61010.582038] IRQ_check: irq 225 set ivpr_pr=8 pr=-1
->>>> [61010.582039] IRQ_check: irq 224 set ivpr_pr=8 pr=-1
->>>>
->>>> It would be really helpful to get your comments regarding whether these are
->>>> realistical number for everyday use, or they are relevant only to this
->>>> particular scenario.
->>>
->>> RT isn't about "realistic numbers for everyday use".  It's about worst
->>> cases.
->>>
->>>> - Can these interrupts be used in directed delivery, so that the destination
->>>> mask can include multiple VCPUs?
->>>
->>> The Freescale MPIC does not support multiple destinations for most
->>> interrupts, but the (non-FSL-specific) emulation code appears to allow
->>> it.
->>>
->>>>    The MPIC manual states that timer and IPI
->>>> interrupts are supported for directed delivery, altough I'm not sure how much of
->>>> this is used in the emulation. I know that kvmppc uses the decrementer outside
->>>> of the MPIC.
->>>>
->>>> - How are virtio interrupts cascaded over the shared MSI interrupts?
->>>> /proc/device-tree/soc@e0000000/msi@41600/interrupts in the guest shows 8 values
->>>> - 224 - 231 - so at most there might be 8 pending interrupts in IRQ_check, is
->>>> that correct?
->>>
->>> It looks like that's currently the case, but actual hardware supports
->>> more than that, so it's possible (albeit unlikely any time soon) that
->>> the emulation eventually does as well.
->>>
->>> But it's possible to have interrupts other than MSIs...
->>
->> Right.
->>
->> So given that the raw spinlock conversion is not suitable for all the scenarios
->> supported by the OpenPIC emulation, is it ok that my next step would be to send
->> a patch containing both the raw spinlock conversion and a mandatory disable of
->> the in-kernel MPIC? This is actually the last conclusion we came up with some
->> time ago, but I guess it was good to get some more insight on how things
->> actually work (at least for me).
+Hello,
+
+Le 24/04/2015 09:02, Uwe Kleine-K=F6nig a =E9crit :
+> Helo,
 >
-> Fine with me.  Have you given any thought to ways to restructure the
-> code to eliminate the problem?
+> On Thu, Apr 23, 2015 at 04:32:19PM -0400, Steven Rostedt wrote:
+>> On Mon, 20 Apr 2015 11:35:04 +0200
+>> Alexandre COFFIGNAL <acoffignal@geral.com> wrote:
+>>> we are running PREEMPT_RT 3.14.36-rt34 on a imx6 board which works =
+really fine.
+>>> But we see the following trace when we run this very simple app ove=
+r ssh :
+>> I tried to see if I could reproduce this on my ARM board, but my
+>> snowball board is dead, and my beaglebone white, for some reason won=
+t
+>> boot 3.14 (vanilla or -rt).
+> Another thing to try is 3.14.36 without -rt.
+>
+> Best regards
+> Uwe
+>
+>
+Thank you for your prompt reply.
 
-My first thought would be to create a separate lock for each VCPU pending 
-interrupts queue, so that we make the whole openpic_irq_update more granular. 
-However, this is just a very preliminary thought. Before I can come up with 
-anything worthy of consideration, I must read the OpenPIC specification and the 
-current KVM emulated OpenPIC implementation thoroughly. I currently have other 
-things on my hands, and will come back to this once I have some time.
+I tried to see if I could reproduce this on 3.14.39-rt37 and 3.14.36 wi=
+thout -rt , and both still crashes. But if I send console msg into a ne=
+tcat pipe,  ./gtest_msg_kernel_oops | nc 192.168.44.180 1234, i don't g=
+et the crash message anymore.
 
-Meanwhile, I've sent a v2 on the PPC and RT mailing lists for this raw_spinlock 
-conversion, alongside disabling the in-kernel MPIC emulation for PREEMPT_RT. I 
-would be grateful to hear your feedback on that, so that it can get applied.
+ =20
+Best regards
+Alexandre
 
-Thank you,
-Bogdan P.
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
