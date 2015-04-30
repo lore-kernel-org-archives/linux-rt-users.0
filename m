@@ -1,158 +1,140 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [RFD 2/5] tracing: Add support to sort on the key
-Date: Thu, 30 Apr 2015 12:06:22 +0200
-Message-ID: <1430388385-29558-3-git-send-email-daniel.wagner@bmw-carit.de>
-References: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
-Cc: Ingo Molnar <mingo@redhat.com>,
-	Tom Zanussi <tom.zanussi@linux.intel.com>,
-	Carsten Emde <C.Emde@osadl.org>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
-To: Steven Rostedt <rostedt@goodmis.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH][RT] xfs: Disable preemption when grabbing all icsb counter
+ locks
+Date: Thu, 30 Apr 2015 12:33:03 -0400
+Message-ID: <20150430123303.30f5bd12@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Dave Chinner <david@fromorbit.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:49346 "EHLO
-	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751504AbbD3KGa (ORCPT
+Received: from smtprelay0053.hostedemail.com ([216.40.44.53]:44885 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1750891AbbD3QdH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Apr 2015 06:06:30 -0400
-In-Reply-To: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
+	Thu, 30 Apr 2015 12:33:07 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The hist patch allows sorting on values only. By allowing to
-sort also on the key we can do something like this:
+Running a test on a large CPU count box with xfs, I hit a live lock
+with the following backtraces on several CPUs:
 
-'hist:key=latency:val=hitcount:sort=latency'
+ Call Trace:              
+  [<ffffffff812c34f8>] __const_udelay+0x28/0x30 
+  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs] 
+  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs] 
+  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs] 
+  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs] 
+  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0 
+  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs] 
+  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs] 
+  [<ffffffff811b0edd>] vfs_create+0xcd/0x130 
+  [<ffffffff811b21ef>] do_last+0xb8f/0x1240 
+  [<ffffffff811b39b2>] path_openat+0xc2/0x490 
 
-latency:         16 hitcount:          3
-latency:         17 hitcount:        171
-latency:         18 hitcount:        626
-latency:         19 hitcount:        594
-latency:         20 hitcount:        306
-latency:         21 hitcount:        214
-latency:         22 hitcount:        232
-latency:         23 hitcount:        283
-latency:         24 hitcount:        235
-latency:         25 hitcount:        105
-latency:         26 hitcount:         54
-latency:         27 hitcount:         79
-latency:         28 hitcount:        214
-latency:         29 hitcount:        895
-latency:         30 hitcount:       1400
-latency:         31 hitcount:        774
-latency:         32 hitcount:        653
-[...]
+Looking at the code I see it was stuck at: 
 
-The obvious choice for the bool was already taken. I haven't found a
-good name for the the flag. I guess it would make sense to refactor the
-sorting code so that it doesn't really matter what kind of field it
-is.
+STATIC void
+xfs_icsb_lock_cntr(
+	xfs_icsb_cnts_t	*icsbp)
+{
+	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
+		ndelay(1000);
+	}
+}
 
-BTW, I wonder if it would possible to drop the need to always provide
-the 'val' argument and just assume the 'val=hitcount' in this case.
+I'm not sure why it does the ndelay() and not just a cpu_relax(), but
+that's besides the point. In xfs_icsb_modify_counters() the code is
+fine. There's a preempt_disable() called when taking this bit spinlock
+and a preempt_enable() after it is released. The issue is that not all
+locations are protected by preempt_disable() when PREEMPT_RT is set.
+Namely the places that grab all CPU cntr locks.
 
-Not for inclusion!
+STATIC void
+xfs_icsb_lock_all_counters(
+	xfs_mount_t	*mp)
+{
+	xfs_icsb_cnts_t *cntp;
+	int		i;
 
-Not-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+	for_each_online_cpu(i) {
+		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
+		xfs_icsb_lock_cntr(cntp);
+	}
+}
+
+STATIC void
+xfs_icsb_disable_counter()
+{
+	[...]
+	xfs_icsb_lock_all_counters(mp);
+	[...]
+	xfs_icsb_unlock_all_counters(mp);
+}
+
+
+STATIC void
+xfs_icsb_balance_counter_locked()
+{
+	[...]
+	xfs_icsb_disable_counter();
+	[...]
+}
+
+STATIC void
+xfs_icsb_balance_counter(
+	xfs_mount_t	*mp,
+	xfs_sb_field_t  fields,
+	int		min_per_cpu)
+{
+	spin_lock(&mp->m_sb_lock);
+	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
+	spin_unlock(&mp->m_sb_lock);
+}
+
+Now, when PREEMPT_RT is not enabled, that spin_lock() disables
+preemption. But for PREEMPT_RT, it does not. Although with my test box I
+was not able to produce a task state of all tasks, but I'm assuming that
+some task called the xfs_icsb_lock_all_counters() and was preempted by
+an RT task and could not finish, causing all callers of that lock to
+block indefinitely.
+
+Looking at all users of xfs_icsb_lock_all_counters(), they are leaf
+functions and do not call anything that may block on PREEMPT_RT. I
+believe the proper fix here is to simply disable preemption in
+xfs_icsb_lock_all_counters() when PREEMPT_RT is enabled.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/trace/trace_events_hist.c | 35 +++++++++++++++++++++++++++++++----
- 1 file changed, 31 insertions(+), 4 deletions(-)
-
-diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
-index 9a7a675..fe06707 100644
---- a/kernel/trace/trace_events_hist.c
-+++ b/kernel/trace/trace_events_hist.c
-@@ -89,6 +89,7 @@ enum hist_field_flags {
- struct hist_trigger_sort_key {
- 	bool		use_hitcount;
- 	bool		use_key;
-+	bool		use_real_key;
- 	bool		descending;
- 	unsigned int	idx;
- };
-@@ -260,7 +261,7 @@ static void destroy_hist_fields(struct hist_trigger_data *hist_data)
+diff --git a/fs/xfs/xfs_mount.c b/fs/xfs/xfs_mount.c
+index 51435dbce9c4..dbaa1ce3f308 100644
+--- a/fs/xfs/xfs_mount.c
++++ b/fs/xfs/xfs_mount.c
+@@ -1660,6 +1660,12 @@ xfs_icsb_lock_all_counters(
+ 	xfs_icsb_cnts_t *cntp;
+ 	int		i;
+ 
++	/*
++	 * In PREEMPT_RT, preemption is not disabled here, and it
++	 * must be to take the xfs_icsb_lock_cntr.
++	 */
++	preempt_disable_rt();
++
+ 	for_each_online_cpu(i) {
+ 		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
+ 		xfs_icsb_lock_cntr(cntp);
+@@ -1677,6 +1683,8 @@ xfs_icsb_unlock_all_counters(
+ 		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
+ 		xfs_icsb_unlock_cntr(cntp);
  	}
++
++	preempt_enable_rt();
  }
  
--static inline struct hist_trigger_sort_key *create_default_sort_key(void)
-+static inline struct hist_trigger_sort_key *create_hitcount_sort_key(void)
- {
- 	struct hist_trigger_sort_key *sort_key;
- 
-@@ -273,6 +274,19 @@ static inline struct hist_trigger_sort_key *create_default_sort_key(void)
- 	return sort_key;
- }
- 
-+static inline struct hist_trigger_sort_key *create_real_key_sort_key(void)
-+{
-+	struct hist_trigger_sort_key *sort_key;
-+
-+	sort_key = kzalloc(sizeof(*sort_key), GFP_KERNEL);
-+	if (!sort_key)
-+		return ERR_PTR(-ENOMEM);
-+
-+	sort_key->use_real_key = true;
-+
-+	return sort_key;
-+}
-+
- static inline struct hist_trigger_sort_key *
- create_sort_key(char *field_name, struct hist_trigger_data *hist_data)
- {
-@@ -280,7 +294,10 @@ create_sort_key(char *field_name, struct hist_trigger_data *hist_data)
- 	unsigned int i;
- 
- 	if (!strcmp(field_name, "hitcount"))
--		return create_default_sort_key();
-+		return create_hitcount_sort_key();
-+
-+	if (!strcmp(field_name, hist_data->key->field->name))
-+		return create_real_key_sort_key();
- 
- 	for (i = 0; i < hist_data->n_vals; i++)
- 		if (!strcmp(field_name, hist_data->vals[i]->field->name))
-@@ -306,7 +323,7 @@ static int create_sort_keys(struct hist_trigger_data *hist_data)
- 	int ret = 0;
- 
- 	if (!fields_str) {
--		sort_key = create_default_sort_key();
-+		sort_key = create_hitcount_sort_key();
- 		if (IS_ERR(sort_key)) {
- 			ret = PTR_ERR(sort_key);
- 			goto out;
-@@ -984,6 +1001,12 @@ static int cmp_entries(const struct hist_trigger_sort_entry **a,
- 	hist_data = entry_a->hist_data;
- 	sort_key = hist_data->sort_key_cur;
- 
-+	if (sort_key->use_real_key) {
-+		val_a = *(u64 *)entry_a->key;
-+		val_b = *(u64 *)entry_b->key;
-+		goto out;
-+	}
-+
- 	if (sort_key->use_key) {
- 		if (memcmp((*a)->key, (*b)->key, hist_data->map->key_size))
- 			ret = 1;
-@@ -998,6 +1021,7 @@ static int cmp_entries(const struct hist_trigger_sort_entry **a,
- 		val_b = atomic64_read(&entry_b->sums[sort_key->idx]);
- 	}
- 
-+out:
- 	if (val_a > val_b)
- 		ret = 1;
- 	else if (val_a < val_b)
-@@ -1372,7 +1396,10 @@ static int event_hist_trigger_print(struct seq_file *m,
- 		else {
- 			unsigned int idx = hist_data->sort_keys[i]->idx;
- 
--			hist_field_print(m, hist_data->vals[idx]);
-+			if (hist_data->sort_keys[i]->use_real_key)
-+				hist_field_print(m, hist_data->key);
-+			else
-+				hist_field_print(m, hist_data->vals[idx]);
- 		}
- 	}
- 
--- 
-2.1.0
-
+ STATIC void
