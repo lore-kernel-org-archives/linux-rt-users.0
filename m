@@ -1,41 +1,39 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Austin Schuh <austin@peloton-tech.com>
 Subject: Re: [PATCH][RT] xfs: Disable preemption when grabbing all icsb
  counter locks
-Date: Thu, 30 Apr 2015 14:36:53 -0400
-Message-ID: <20150430143653.4ee3bed6@gandalf.local.home>
-References: <20150430123303.30f5bd12@gandalf.local.home>
-	<20150430183327.GA28821@infradead.org>
+Date: Thu, 30 Apr 2015 11:40:07 -0700
+Message-ID: <CANGgnMZSiNXRxESzdCCU9F-aAc_sa0nfBFqSdX3t4W8ThpwVhA@mail.gmail.com>
+References: <20150430123303.30f5bd12@gandalf.local.home> <20150430180721.GX5029@twins.programming.kicks-ass.net>
+ <20150430143226.061202df@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: LKML <linux-kernel@vger.kernel.org>,
+Content-Type: text/plain; charset=UTF-8
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Clark Williams <williams@redhat.com>,
-	Dave Chinner <david@fromorbit.com>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Christoph Hellwig <hch@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0178.hostedemail.com ([216.40.44.178]:56548 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751231AbbD3Sg4 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Apr 2015 14:36:56 -0400
-In-Reply-To: <20150430183327.GA28821@infradead.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Dave Chinner <david@fromorbit.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150430143226.061202df@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 30 Apr 2015 11:33:27 -0700
-Christoph Hellwig <hch@infradead.org> wrote:
+On Thu, Apr 30, 2015 at 11:32 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> On Thu, 30 Apr 2015 20:07:21 +0200
+> Peter Zijlstra <peterz@infradead.org> wrote:
+>> The irony, this is distinctly non deterministic code you're putting
+>> under a RT specific preempt_disable ;-)
+>
+> I know :-(
+>
+> Unfortunately, a RT behaving fix would be much more invasive and would
+> probably require the help of the xfs folks. For now, this just prevents
+> a live lock that can happen and halt the system, where it becomes
+> deterministic catastrophe.
+>
+> -- Steve
 
-> FYI, this code is gone in 4.1-rc.
-
-:-)
-
-Well, when we port -rt to 4.1 that will be the answer!
-
-But for now, we need to band-aid the older versions of the kernel that
-we do support.
-
--- Steve
+Would it work to instead create a lock to replace the
+preempt_enable_rt/preempt_disable_rt pair in XFS?
