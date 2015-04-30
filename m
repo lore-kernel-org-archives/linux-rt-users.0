@@ -1,7 +1,7 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [RFD 5/5] tracing: Add trace_irqsoff tracepoints
-Date: Thu, 30 Apr 2015 12:06:25 +0200
-Message-ID: <1430388385-29558-6-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [RFD 3/5] tracing: Add option to quantize key values
+Date: Thu, 30 Apr 2015 12:06:23 +0200
+Message-ID: <1430388385-29558-4-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: Ingo Molnar <mingo@redhat.com>,
 	Tom Zanussi <tom.zanussi@linux.intel.com>,
@@ -9,195 +9,101 @@ Cc: Ingo Molnar <mingo@redhat.com>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.bmw-carit.de ([62.245.222.98]:49352 "EHLO
+	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S1751508AbbD3KGa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Apr 2015 06:06:30 -0400
 In-Reply-To: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Finally we place a few tracepoint at the end of critical section. With
-the hist trigger in place we can generate the plots.
+Let's group some values together. This avoids a too detailed
+histogram. Some sort of logarythmic scale could be useful
+for latency plots.
 
-There are a few drawbacks compared to the latency_hist.patch [1]
+Now we can write something like:
 
-The latency plots contain the values from all CPUs. In theory you
-can also filter with something like
+'hist:key=latency.bucket:val=hitcount:sort=latency'
 
-'hist:key=latency.bucket:val=hitcount:sort=latency if cpu==0'
+latency:          0 hitcount:     166440
+latency:        256 hitcount:      21104
+latency:        512 hitcount:       7754
+latency:        768 hitcount:       3269
+latency:       1024 hitcount:       1647
+latency:       1280 hitcount:        841
+latency:       1536 hitcount:        524
+latency:       1792 hitcount:        371
+latency:       2048 hitcount:        302
+latency:       2304 hitcount:        240
+latency:       2560 hitcount:        207
+latency:       2816 hitcount:        149
+latency:       3072 hitcount:        123
+latency:       3328 hitcount:        119
+latency:       3584 hitcount:        102
+latency:       3840 hitcount:         94
+latency:       4096 hitcount:         89
+latency:       4352 hitcount:         79
+latency:       4608 hitcount:         88
 
-but I haven't got this working. I didn't spend much time figuring out
-why this doesn't work. Even if the above is working you still
-don't get the per CPU breakdown of the events. I don't know if this is
-a must have feature.
+One thing I struggled with the grammatic above is that I haven't found
+a nice way to pass in arguments, for example the bucket size. There a lot
+of options to do it. Just a couple random ideas, not necessarly consistent
+or clever:
 
-Another point is the need for placing at least one tracepoint so that
-the hist code is able to do something. Also I think it would be a good
-idea to reuse the time diff from the tracer instead. Some refactoring
-would be necessary for this. For simplicity I just added a hack for
-getting the time diff. And I am not really sure if it is okay to use
-the *_enabled() in this way, splitting the time stamping and adding
-the tracepoint in two sections.
+'hist:key=latency.bucket[10,1.5]:val=hitcount:sort=latency'
+   where [x,y]: x first bucket size, y scaling factor
 
-Steven was tossing the idea around to introduce a 'variable' to the
-tracepoints which can be used for timestamping etc. I'd like to avoid
-placing two tracepoints and doing later the time diff. It sounds like
-too much overhead.
+'hist:key=latency:val=hitcount:sort=latency:bucket=latency,10,1.5'
 
 Not for inclusion!
 
 Not-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-
-[1] https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v3.14-rt-rebase&id=56d50cc34943bbba12b8c5942ee1ae3b29f73acb
 ---
- include/trace/events/latency.h | 40 ++++++++++++++++++++++++++++++++++++++++
- kernel/trace/trace_irqsoff.c   | 38 ++++++++++++++++++++++++++++++++++++++
- 2 files changed, 78 insertions(+)
- create mode 100644 include/trace/events/latency.h
+ kernel/trace/trace_events_hist.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/include/trace/events/latency.h b/include/trace/events/latency.h
-new file mode 100644
-index 0000000..9659b08
---- /dev/null
-+++ b/include/trace/events/latency.h
-@@ -0,0 +1,40 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM latency
-+
-+#if !defined(_TRACE_HIST_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_HIST_H
-+
-+#include <linux/tracepoint.h>
-+
-+DECLARE_EVENT_CLASS(latency_template,
-+	TP_PROTO(cycles_t latency),
-+
-+	TP_ARGS(latency),
-+
-+	TP_STRUCT__entry(
-+		__field(cycles_t,	latency)
-+	),
-+
-+	TP_fast_assign(
-+		__entry->latency	= latency;
-+	),
-+
-+	TP_printk("latency=%llu", __entry->latency)
-+);
-+
-+DEFINE_EVENT(latency_template, latency_irqs,
-+	    TP_PROTO(cycles_t latency),
-+	    TP_ARGS(latency));
-+
-+DEFINE_EVENT(latency_template, latency_preempt,
-+	    TP_PROTO(cycles_t latency),
-+	    TP_ARGS(latency));
-+
-+DEFINE_EVENT(latency_template, latency_critical_timings,
-+	    TP_PROTO(cycles_t latency),
-+	    TP_ARGS(latency));
-+
-+#endif /* _TRACE_HIST_H */
-+
-+/* This part must be outside protection */
-+#include <trace/define_trace.h>
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index 8523ea3..7465c72 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -14,12 +14,20 @@
- #include <linux/module.h>
- #include <linux/ftrace.h>
+diff --git a/kernel/trace/trace_events_hist.c b/kernel/trace/trace_events_hist.c
+index fe06707..cac94a6 100644
+--- a/kernel/trace/trace_events_hist.c
++++ b/kernel/trace/trace_events_hist.c
+@@ -84,6 +84,7 @@ enum hist_field_flags {
+ 	HIST_FIELD_STRING	= 8,
+ 	HIST_FIELD_EXECNAME	= 16,
+ 	HIST_FIELD_SYSCALL	= 32,
++	HIST_FIELD_BUCKET	= 64,
+ };
  
-+#include <trace/events/sched.h>
-+
- #include "trace.h"
+ struct hist_trigger_sort_key {
+@@ -400,6 +401,8 @@ static int create_key_field(struct hist_trigger_data *hist_data,
+ 				flags |= HIST_FIELD_EXECNAME;
+ 			else if (!strcmp(field_str, "syscall"))
+ 				flags |= HIST_FIELD_SYSCALL;
++			else if (!strcmp(field_str, "bucket"))
++				flags |= HIST_FIELD_BUCKET;
+ 		}
  
-+#define CREATE_TRACE_POINTS
-+#include <trace/events/latency.h>
+ 		field = trace_find_event_field(file->event_call, field_name);
+@@ -900,6 +903,9 @@ static void event_hist_trigger(struct event_trigger_data *data, void *rec)
+ 		key = entries;
+ 	} else {
+ 		field_contents = hist_data->key->fn(hist_data->key, rec);
++		if (hist_data->key->flags & HIST_FIELD_BUCKET)
++			field_contents &= ~0xff;
 +
- static struct trace_array		*irqsoff_trace __read_mostly;
- static int				tracer_enabled __read_mostly;
- 
- static DEFINE_PER_CPU(int, tracing_cpu);
-+static DEFINE_PER_CPU(cycle_t, ts_irqs);
-+static DEFINE_PER_CPU(cycle_t, ts_preempt);
-+static DEFINE_PER_CPU(cycle_t, ts_critical_timings);
- 
- static DEFINE_RAW_SPINLOCK(max_trace_lock);
- 
-@@ -428,9 +436,24 @@ stop_critical_timing(unsigned long ip, unsigned long parent_ip)
- 	atomic_dec(&data->disabled);
- }
- 
-+static void do_timestamp(cycle_t __percpu *ts)
-+{
-+	int cpu = raw_smp_processor_id();
-+	per_cpu(*ts, cpu) = ftrace_now(cpu);
-+}
-+
-+static cycle_t get_delta(cycle_t __percpu *ts)
-+{
-+	int cpu = raw_smp_processor_id();
-+	return ftrace_now(cpu) - per_cpu(*ts, cpu);
-+}
-+
- /* start and stop critical timings used to for stoppage (in idle) */
- void start_critical_timings(void)
- {
-+	if (trace_latency_critical_timings_enabled())
-+		do_timestamp(&ts_critical_timings);
-+
- 	if (preempt_trace() || irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -440,6 +463,9 @@ void stop_critical_timings(void)
- {
- 	if (preempt_trace() || irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
-+
-+	if (trace_latency_critical_timings_enabled())
-+		trace_latency_critical_timings(get_delta(&ts_critical_timings));
- }
- EXPORT_SYMBOL_GPL(stop_critical_timings);
- 
-@@ -447,6 +473,9 @@ EXPORT_SYMBOL_GPL(stop_critical_timings);
- #ifdef CONFIG_PROVE_LOCKING
- void time_hardirqs_on(unsigned long a0, unsigned long a1)
- {
-+	if (trace_latency_irqs_enabled())
-+		do_timestamp(&ts_irqs);
-+
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(a0, a1);
- }
-@@ -455,6 +484,9 @@ void time_hardirqs_off(unsigned long a0, unsigned long a1)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(a0, a1);
-+
-+	if (trace_latency_irqs_enabled())
-+		trace_latency_irqs(get_delta(&ts_irqs));
- }
- 
- #else /* !CONFIG_PROVE_LOCKING */
-@@ -512,6 +544,9 @@ EXPORT_SYMBOL(trace_hardirqs_off_caller);
- #ifdef CONFIG_PREEMPT_TRACER
- void trace_preempt_on(unsigned long a0, unsigned long a1)
- {
-+	if (trace_latency_preempt_enabled())
-+		do_timestamp(&ts_preempt);
-+
- 	if (preempt_trace() && !irq_trace())
- 		stop_critical_timing(a0, a1);
- }
-@@ -520,6 +555,9 @@ void trace_preempt_off(unsigned long a0, unsigned long a1)
- {
- 	if (preempt_trace() && !irq_trace())
- 		start_critical_timing(a0, a1);
-+
-+	if (trace_latency_preempt_enabled())
-+		trace_latency_preempt(get_delta(&ts_preempt));
- }
- #endif /* CONFIG_PREEMPT_TRACER */
+ 		if (hist_data->key->flags & HIST_FIELD_STRING)
+ 			key = (void *)field_contents;
+ 		else
+@@ -1343,6 +1349,8 @@ static const char *get_hist_field_flags(struct hist_field *hist_field)
+ 		flags_str = "hex";
+ 	else if (hist_field->flags & HIST_FIELD_SYSCALL)
+ 		flags_str = "syscall";
++	else if (hist_field->flags & HIST_FIELD_BUCKET)
++		flags_str = "bucket";
+ 	else if (hist_field->flags & HIST_FIELD_EXECNAME)
+ 		flags_str = "execname";
  
 -- 
 2.1.0
+
