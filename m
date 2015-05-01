@@ -1,54 +1,78 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH][RT] xfs: Disable preemption when grabbing all icsb
- counter locks
-Date: Thu, 30 Apr 2015 15:07:24 -0400
-Message-ID: <20150430150724.519d4054@gandalf.local.home>
-References: <20150430123303.30f5bd12@gandalf.local.home>
-	<20150430180721.GX5029@twins.programming.kicks-ass.net>
-	<20150430143226.061202df@gandalf.local.home>
-	<CANGgnMZSiNXRxESzdCCU9F-aAc_sa0nfBFqSdX3t4W8ThpwVhA@mail.gmail.com>
+From: Tom Zanussi <tom.zanussi@linux.intel.com>
+Subject: Re: [RFD 0/5] Add latency histogram
+Date: Thu, 30 Apr 2015 20:52:04 -0500
+Message-ID: <1430445124.17922.12.camel@picadillo>
+References: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Clark Williams <williams@redhat.com>,
-	Dave Chinner <david@fromorbit.com>
-To: Austin Schuh <austin@peloton-tech.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <CANGgnMZSiNXRxESzdCCU9F-aAc_sa0nfBFqSdX3t4W8ThpwVhA@mail.gmail.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Carsten Emde <C.Emde@osadl.org>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
+To: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga09.intel.com ([134.134.136.24]:50818 "EHLO mga09.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750966AbbEABwJ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 30 Apr 2015 21:52:09 -0400
+In-Reply-To: <1430388385-29558-1-git-send-email-daniel.wagner@bmw-carit.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 30 Apr 2015 11:40:07 -0700
-Austin Schuh <austin@peloton-tech.com> wrote:
+Hi Daniel,
 
-> On Thu, Apr 30, 2015 at 11:32 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
-> > On Thu, 30 Apr 2015 20:07:21 +0200
-> > Peter Zijlstra <peterz@infradead.org> wrote:
-> >> The irony, this is distinctly non deterministic code you're putting
-> >> under a RT specific preempt_disable ;-)
-> >
-> > I know :-(
-> >
-> > Unfortunately, a RT behaving fix would be much more invasive and would
-> > probably require the help of the xfs folks. For now, this just prevents
-> > a live lock that can happen and halt the system, where it becomes
-> > deterministic catastrophe.
-> >
-> > -- Steve
+On Thu, 2015-04-30 at 12:06 +0200, Daniel Wagner wrote:
+> Hi,
 > 
-> Would it work to instead create a lock to replace the
-> preempt_enable_rt/preempt_disable_rt pair in XFS?
+> I would like to discuss a possible way of getting the feature of the
+> latecy_hist.patch [1] added to mainline.
+> 
+> "Latency histograms are primarily relevant in the context of real-time
+> enabled kernels (CONFIG_PREEMPT/CONFIG_PREEMPT_RT)and are used in the
+> quality management of the Linux real-time capabilities."
+> 
+> Steven pointed out that this might be doable based on Tom Zanussi's
+> "[PATCH v4 0/7] tracing: 'hist' triggers" [2].
+> 
+> Here are my findings. It was not too complicated to get it working,
+> though I had to add some hacks. I have added comments to each patch.
+> 
 
-Not just the place where the preempt_enable and disable is done, but it
-would need to replace all the per cpu bit spin locks (the
-XFS_ICSB_FLAG_LOCK bit in icsbp->icsb_flags).
+It looks like you were able to do quite a bit here with not much code -
+nice!
 
-If we can replace them with a rtmutex (spin_lock() in vanilla kernel),
-then that would work.
+Just FYI, I'll be working on a v5 of the hist triggers patchset that
+will incorporate the stuff from patch 1 (needs to be split into a
+separate patch for the triggers code already upstream, and one for hist
+triggers) and your comments from patch 2 (see comments in my reply to
+that patch), along with  a couple other unrelated changes...
 
--- Steve
+Tom
+
+> cheers,
+> daniel
+> 
+> [2] https://lkml.org/lkml/2015/4/10/591
+> [1] https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/commit/?h=v3.14-rt-rebase&id=56d50cc34943bbba12b8c5942ee1ae3b29f73acb
+> 
+> Daniel Wagner (4):
+>   tracing: Add support to sort on the key
+>   tracing: Add option to quantize key values
+>   tracing: Deference pointers without RCU checks
+>   tracing: Add trace_irqsoff tracepoints
+> 
+> Tom Zanussi (1):
+>   tracing: 'hist' triggers
+> 
+>  include/linux/rculist.h             | 36 +++++++++++++++++++++++++++++
+>  include/linux/tracepoint.h          |  4 ++--
+>  include/trace/events/latency.h      | 40 ++++++++++++++++++++++++++++++++
+>  kernel/trace/trace_events_hist.c    | 46 +++++++++++++++++++++++++++++++++----
+>  kernel/trace/trace_events_trigger.c | 18 +++++++++------
+>  kernel/trace/trace_irqsoff.c        | 38 ++++++++++++++++++++++++++++++
+>  6 files changed, 168 insertions(+), 14 deletions(-)
+>  create mode 100644 include/trace/events/latency.h
+> 
+
+
