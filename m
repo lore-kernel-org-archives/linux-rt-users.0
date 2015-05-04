@@ -1,193 +1,99 @@
-From: Ayyappa Ch <ayyappa.ch.linux@gmail.com>
-Subject: Re: [PATCH] arch/arm64 :Cyclic Test fix in ARM64 fpsimd
-Date: Fri, 1 May 2015 20:59:41 +0530
-Message-ID: <CAPyr0yJSGqvxkUWLtNKe0q5mNanBczAfAVx0tPKuzYeDG+eJ=Q@mail.gmail.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [PATCH][RT] xfs: Disable preemption when grabbing all icsb
+ counter locks
+Date: Mon, 4 May 2015 10:48:44 +1000
+Message-ID: <20150504004844.GA21261@dastard>
+References: <20150430123303.30f5bd12@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: kevin.hilman@linaro.org
-To: linux-arm-kernel@lists.infradead.org,
-	Anders Roxell <anders.roxell@linaro.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f178.google.com ([209.85.216.178]:36432 "EHLO
-	mail-qc0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753956AbbEAP3l (ORCPT
+Received: from ipmail05.adl6.internode.on.net ([150.101.137.143]:63290 "EHLO
+	ipmail05.adl6.internode.on.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751013AbbEDAvm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 May 2015 11:29:41 -0400
-Received: by qcbdu2 with SMTP id du2so3805189qcb.3
-        for <linux-rt-users@vger.kernel.org>; Fri, 01 May 2015 08:29:41 -0700 (PDT)
+	Sun, 3 May 2015 20:51:42 -0400
+Content-Disposition: inline
+In-Reply-To: <20150430123303.30f5bd12@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Floating point operations in arm64 should not disable preempt .
-Activating realtime features with below code.
+On Thu, Apr 30, 2015 at 12:33:03PM -0400, Steven Rostedt wrote:
+> Running a test on a large CPU count box with xfs, I hit a live lock
+> with the following backtraces on several CPUs:
+> 
+>  Call Trace:              
+>   [<ffffffff812c34f8>] __const_udelay+0x28/0x30 
+>   [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs] 
+>   [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs] 
+>   [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs] 
+>   [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs] 
+>   [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0 
+>   [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs] 
+>   [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs] 
+>   [<ffffffff811b0edd>] vfs_create+0xcd/0x130 
+>   [<ffffffff811b21ef>] do_last+0xb8f/0x1240 
+>   [<ffffffff811b39b2>] path_openat+0xc2/0x490 
+> 
+> Looking at the code I see it was stuck at: 
+> 
+> STATIC void
+> xfs_icsb_lock_cntr(
+> 	xfs_icsb_cnts_t	*icsbp)
+> {
+> 	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
+> 		ndelay(1000);
+> 	}
+> }
+> 
+> I'm not sure why it does the ndelay() and not just a cpu_relax(), but
 
->From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
-From: Ayyappa Ch <ayyappa.chandolu@amd.com>
-Date: Tue, 28 Apr 2015 11:53:00 +0530
-Subject: [PATCH ] floating point realtime fix
+Because the code was writtenlong before cpu_relax() existed, just
+like it was written long before the generic percpu counter code was
+added...
 
----
- arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
- 1 file changed, 8 insertions(+), 8 deletions(-)
+....
 
-diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
-index 2438497..3dca156 100644
---- a/arch/arm64/kernel/fpsimd.c
-+++ b/arch/arm64/kernel/fpsimd.c
-@@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
-  */
- void fpsimd_preserve_current_state(void)
- {
-- preempt_disable();
-+ migrate_disable();
-  if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
-  fpsimd_save_state(&current->thread.fpsimd_state);
-- preempt_enable();
-+ migrate_enable();
- }
+> Now, when PREEMPT_RT is not enabled, that spin_lock() disables
+> preemption. But for PREEMPT_RT, it does not. Although with my test box I
+> was not able to produce a task state of all tasks, but I'm assuming that
+> some task called the xfs_icsb_lock_all_counters() and was preempted by
+> an RT task and could not finish, causing all callers of that lock to
+> block indefinitely.
+> 
+> Looking at all users of xfs_icsb_lock_all_counters(), they are leaf
+> functions and do not call anything that may block on PREEMPT_RT. I
+> believe the proper fix here is to simply disable preemption in
+> xfs_icsb_lock_all_counters() when PREEMPT_RT is enabled.
 
- /*
-@@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
-  */
- void fpsimd_restore_current_state(void)
- {
-- preempt_disable();
-+ migrate_disable();
-  if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
-  struct fpsimd_state *st = &current->thread.fpsimd_state;
+RT is going to have other performance problems that are probably
+going to negate the scalability this code provides. If you want a
+hack that you can easily backport (as this code now uses the generic
+percpu counters) then have a look at fs/xfs/xfs_linux.h:
 
-@@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
-  this_cpu_write(fpsimd_last_state, st);
-  st->cpu = smp_processor_id();
-  }
-- preempt_enable();
-+ migrate_enable();
- }
+/*
+ * Feature macros (disable/enable)
+ */
+#ifdef CONFIG_SMP
+#define HAVE_PERCPU_SB  /* per cpu superblock counters are a 2.6 feature */
+#else
+#undef  HAVE_PERCPU_SB  /* per cpu superblock counters are a 2.6 feature */
+#endif
 
- /*
-@@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
-  */
- void fpsimd_update_current_state(struct fpsimd_state *state)
- {
-- preempt_disable();
-+ migrate_disable();
-  fpsimd_load_state(state);
-  if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
-  struct fpsimd_state *st = &current->thread.fpsimd_state;
-@@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
-  this_cpu_write(fpsimd_last_state, st);
-  st->cpu = smp_processor_id();
-  }
-- preempt_enable();
-+ migrate_enable();
- }
+You can turn off all that per-cpu code simply by:
 
- /*
-@@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
-  * that there is no longer userland FPSIMD state in the
-  * registers.
-  */
-- preempt_disable();
-+ migrate_disable();
-  if (current->mm &&
-     !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
-  fpsimd_save_state(&current->thread.fpsimd_state);
-@@ -255,7 +255,7 @@ void kernel_neon_end(void)
-  in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
-  fpsimd_load_partial_state(s);
-  } else {
-- preempt_enable();
-+ migrate_enable();
-  }
- }
- EXPORT_SYMBOL(kernel_neon_end);
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT)
 
-On Fri, May 1, 2015 at 1:03 PM, Ayyappa Ch <ayyappa.ch.linux@gmail.com> wrote:
-> Following Anders Roxell  patch on "Enable PREEMPT_RT_FULL" , observed
-> one issue with Cyclic test while running floating point operations. So
-> , modified below changes for that.
->
-> From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
-> From: Ayyappa Ch <ayyappa.chandolu@amd.com>
-> Date: Tue, 28 Apr 2015 11:53:00 +0530
-> Subject: [PATCH ] floating point realtime fix
->
-> ---
->  arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
->  1 file changed, 8 insertions(+), 8 deletions(-)
->
-> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
-> index 2438497..3dca156 100644
-> --- a/arch/arm64/kernel/fpsimd.c
-> +++ b/arch/arm64/kernel/fpsimd.c
-> @@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
->   */
->  void fpsimd_preserve_current_state(void)
->  {
-> - preempt_disable();
-> + migrate_disable();
->   if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
->   fpsimd_save_state(&current->thread.fpsimd_state);
-> - preempt_enable();
-> + migrate_enable();
->  }
->
->  /*
-> @@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
->   */
->  void fpsimd_restore_current_state(void)
->  {
-> - preempt_disable();
-> + migrate_disable();
->   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->   struct fpsimd_state *st = &current->thread.fpsimd_state;
->
-> @@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
->   this_cpu_write(fpsimd_last_state, st);
->   st->cpu = smp_processor_id();
->   }
-> - preempt_enable();
-> + migrate_enable();
->  }
->
->  /*
-> @@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
->   */
->  void fpsimd_update_current_state(struct fpsimd_state *state)
->  {
-> - preempt_disable();
-> + migrate_disable();
->   fpsimd_load_state(state);
->   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->   struct fpsimd_state *st = &current->thread.fpsimd_state;
-> @@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
->   this_cpu_write(fpsimd_last_state, st);
->   st->cpu = smp_processor_id();
->   }
-> - preempt_enable();
-> + migrate_enable();
->  }
->
->  /*
-> @@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
->   * that there is no longer userland FPSIMD state in the
->   * registers.
->   */
-> - preempt_disable();
-> + migrate_disable();
->   if (current->mm &&
->      !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
->   fpsimd_save_state(&current->thread.fpsimd_state);
-> @@ -255,7 +255,7 @@ void kernel_neon_end(void)
->   in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
->   fpsimd_load_partial_state(s);
->   } else {
-> - preempt_enable();
-> + migrate_enable();
->   }
->  }
->  EXPORT_SYMBOL(kernel_neon_end);
-> --
-> 1.9.1
+Cheers,
+
+Dave.
+-- 
+Dave Chinner
+david@fromorbit.com
