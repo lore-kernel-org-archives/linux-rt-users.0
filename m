@@ -1,231 +1,199 @@
-From: Ayyappa Ch <ayyappa.ch.linux@gmail.com>
-Subject: Re: [PATCH] arch/arm64 :Cyclic Test fix in ARM64 fpsimd
-Date: Thu, 7 May 2015 16:39:45 +0530
-Message-ID: <CAPyr0y+OYikc2Euh++2nTWnVb-aZ4i-tifLLk3XUiRahtHKjCA@mail.gmail.com>
-References: <CAPyr0yJSGqvxkUWLtNKe0q5mNanBczAfAVx0tPKuzYeDG+eJ=Q@mail.gmail.com>
-	<20150506193803.GC32577@8074w.roxell.se>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-arm-kernel@lists.infradead.org,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	Kevin Hilman <kevin.hilman@linaro.org>
-To: Anders Roxell <anders.roxell@linaro.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qc0-f181.google.com ([209.85.216.181]:33205 "EHLO
-	mail-qc0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753309AbbEGLJq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 7 May 2015 07:09:46 -0400
-Received: by qctx5 with SMTP id x5so18948180qct.0
-        for <linux-rt-users@vger.kernel.org>; Thu, 07 May 2015 04:09:45 -0700 (PDT)
-In-Reply-To: <20150506193803.GC32577@8074w.roxell.se>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+Subject: [PATCH] iio: adc: xilinx-xadc: Convert to raw spinlock
+Date: Thu, 7 May 2015 10:38:10 -0500
+Message-ID: <1431013090-18996-1-git-send-email-xander.huff@ni.com>
+Cc: michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
+	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
+	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ben.shelton-acOepvfBmUk@public.gmane.org,
+	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org,
+	Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org,
+	pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-./cyclictest -p 80 -t5 -n  => Cyclic test is failing after 6Lack iterations
-T: 0 ( 1364) P:99 I:1000 C: 668664 Min:      3 Act:    5 Avg:   11 Max:  100116
+The driver currently registers a pair of irq handlers using
+request_threaded_irq(), however the synchronization mechanism
+between the hardirq and the threadedirq handler is a regular spinlock.
 
-After analyzing the trace log , we observed the sudden change in
-latency due to calling of fpsimd_preserve_current_state function.
+Unfortunately, this breaks PREEMPT_RT builds, where a spinlock can
+sleep, and is thus not able to be acquired from a hardirq handler.
+Because the set of operations performed under the spinlock is already
+minimal and bounded, it is a suitable candidate for being a raw_spinlock.
 
-Line 149766:     ntpd-925     1....1.. 512046976us :
-fpsimd_preserve_current_state <-do_signal
-Line 149768:     ntpd-925     1....1.. 512046977us : preempt_count_add
-<-fpsimd_preserve_current_state
-Line 149770:     ntpd-925     1....2.. 512046978us : preempt_count_sub
-<-fpsimd_preserve_current_state
+This patch should not impact behavior on !PREEMPT_RT builds.
 
-.......
-Line 163170: cyclicte-964     0.....11 512065181us :
-tracing_mark_write: hit latency threshold (98383 > 500)
+Signed-off-by: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+Reviewed-by: Joe Hershberger <joe.hershberger-acOepvfBmUk@public.gmane.org>
+Reviewed-by: Ben Shelton <ben.shelton-acOepvfBmUk@public.gmane.org>
+Reviewed-by: Josh Cartwright <joshc-acOepvfBmUk@public.gmane.org>
+---
+ drivers/iio/adc/xilinx-xadc-core.c | 34 +++++++++++++++++-----------------
+ drivers/iio/adc/xilinx-xadc.h      |  2 +-
+ 2 files changed, 18 insertions(+), 18 deletions(-)
 
-
-Thanks and regards,
-Ayyappa.Ch
-
-...
-
-On Thu, May 7, 2015 at 1:08 AM, Anders Roxell <anders.roxell@linaro.org> wrote:
-> On 2015-05-01 20:59, Ayyappa Ch wrote:
->> Floating point operations in arm64 should not disable preempt .
->
-> I thought that I would see a problem if I ran a floating point
-> workload and cyclictest at the same time but I don't.
->
-> Can you please provide me some more details on how I can reproduce the
-> problem?
->
-> Cheers,
-> Anders
->
->> Activating realtime features with below code.
->>
->> From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
->> From: Ayyappa Ch <ayyappa.chandolu@amd.com>
->> Date: Tue, 28 Apr 2015 11:53:00 +0530
->> Subject: [PATCH ] floating point realtime fix
->>
->> ---
->>  arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
->>  1 file changed, 8 insertions(+), 8 deletions(-)
->>
->> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
->> index 2438497..3dca156 100644
->> --- a/arch/arm64/kernel/fpsimd.c
->> +++ b/arch/arm64/kernel/fpsimd.c
->> @@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
->>   */
->>  void fpsimd_preserve_current_state(void)
->>  {
->> - preempt_disable();
->> + migrate_disable();
->>   if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
->>   fpsimd_save_state(&current->thread.fpsimd_state);
->> - preempt_enable();
->> + migrate_enable();
->>  }
->>
->>  /*
->> @@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
->>   */
->>  void fpsimd_restore_current_state(void)
->>  {
->> - preempt_disable();
->> + migrate_disable();
->>   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->>   struct fpsimd_state *st = &current->thread.fpsimd_state;
->>
->> @@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
->>   this_cpu_write(fpsimd_last_state, st);
->>   st->cpu = smp_processor_id();
->>   }
->> - preempt_enable();
->> + migrate_enable();
->>  }
->>
->>  /*
->> @@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
->>   */
->>  void fpsimd_update_current_state(struct fpsimd_state *state)
->>  {
->> - preempt_disable();
->> + migrate_disable();
->>   fpsimd_load_state(state);
->>   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->>   struct fpsimd_state *st = &current->thread.fpsimd_state;
->> @@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
->>   this_cpu_write(fpsimd_last_state, st);
->>   st->cpu = smp_processor_id();
->>   }
->> - preempt_enable();
->> + migrate_enable();
->>  }
->>
->>  /*
->> @@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
->>   * that there is no longer userland FPSIMD state in the
->>   * registers.
->>   */
->> - preempt_disable();
->> + migrate_disable();
->>   if (current->mm &&
->>      !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
->>   fpsimd_save_state(&current->thread.fpsimd_state);
->> @@ -255,7 +255,7 @@ void kernel_neon_end(void)
->>   in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
->>   fpsimd_load_partial_state(s);
->>   } else {
->> - preempt_enable();
->> + migrate_enable();
->>   }
->>  }
->>  EXPORT_SYMBOL(kernel_neon_end);
->>
->> On Fri, May 1, 2015 at 1:03 PM, Ayyappa Ch <ayyappa.ch.linux@gmail.com> wrote:
->> > Following Anders Roxell  patch on "Enable PREEMPT_RT_FULL" , observed
->> > one issue with Cyclic test while running floating point operations. So
->> > , modified below changes for that.
->> >
->> > From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
->> > From: Ayyappa Ch <ayyappa.chandolu@amd.com>
->> > Date: Tue, 28 Apr 2015 11:53:00 +0530
->> > Subject: [PATCH ] floating point realtime fix
->> >
->> > ---
->> >  arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
->> >  1 file changed, 8 insertions(+), 8 deletions(-)
->> >
->> > diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
->> > index 2438497..3dca156 100644
->> > --- a/arch/arm64/kernel/fpsimd.c
->> > +++ b/arch/arm64/kernel/fpsimd.c
->> > @@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
->> >   */
->> >  void fpsimd_preserve_current_state(void)
->> >  {
->> > - preempt_disable();
->> > + migrate_disable();
->> >   if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
->> >   fpsimd_save_state(&current->thread.fpsimd_state);
->> > - preempt_enable();
->> > + migrate_enable();
->> >  }
->> >
->> >  /*
->> > @@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
->> >   */
->> >  void fpsimd_restore_current_state(void)
->> >  {
->> > - preempt_disable();
->> > + migrate_disable();
->> >   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->> >   struct fpsimd_state *st = &current->thread.fpsimd_state;
->> >
->> > @@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
->> >   this_cpu_write(fpsimd_last_state, st);
->> >   st->cpu = smp_processor_id();
->> >   }
->> > - preempt_enable();
->> > + migrate_enable();
->> >  }
->> >
->> >  /*
->> > @@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
->> >   */
->> >  void fpsimd_update_current_state(struct fpsimd_state *state)
->> >  {
->> > - preempt_disable();
->> > + migrate_disable();
->> >   fpsimd_load_state(state);
->> >   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
->> >   struct fpsimd_state *st = &current->thread.fpsimd_state;
->> > @@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
->> >   this_cpu_write(fpsimd_last_state, st);
->> >   st->cpu = smp_processor_id();
->> >   }
->> > - preempt_enable();
->> > + migrate_enable();
->> >  }
->> >
->> >  /*
->> > @@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
->> >   * that there is no longer userland FPSIMD state in the
->> >   * registers.
->> >   */
->> > - preempt_disable();
->> > + migrate_disable();
->> >   if (current->mm &&
->> >      !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
->> >   fpsimd_save_state(&current->thread.fpsimd_state);
->> > @@ -255,7 +255,7 @@ void kernel_neon_end(void)
->> >   in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
->> >   fpsimd_load_partial_state(s);
->> >   } else {
->> > - preempt_enable();
->> > + migrate_enable();
->> >   }
->> >  }
->> >  EXPORT_SYMBOL(kernel_neon_end);
->> > --
->> > 1.9.1
+diff --git a/drivers/iio/adc/xilinx-xadc-core.c b/drivers/iio/adc/xilinx-xadc-core.c
+index a221f73..4bdf03b 100644
+--- a/drivers/iio/adc/xilinx-xadc-core.c
++++ b/drivers/iio/adc/xilinx-xadc-core.c
+@@ -163,7 +163,7 @@ static int xadc_zynq_write_adc_reg(struct xadc *xadc, unsigned int reg,
+ 	uint32_t tmp;
+ 	int ret;
+ 
+-	spin_lock_irq(&xadc->lock);
++	raw_spin_lock_irq(&xadc->lock);
+ 	xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_DFIFO_GTH,
+ 			XADC_ZYNQ_INT_DFIFO_GTH);
+ 
+@@ -177,7 +177,7 @@ static int xadc_zynq_write_adc_reg(struct xadc *xadc, unsigned int reg,
+ 	xadc_write_reg(xadc, XADC_ZYNQ_REG_CFG, tmp);
+ 
+ 	xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_DFIFO_GTH, 0);
+-	spin_unlock_irq(&xadc->lock);
++	raw_spin_unlock_irq(&xadc->lock);
+ 
+ 	ret = wait_for_completion_interruptible_timeout(&xadc->completion, HZ);
+ 	if (ret == 0)
+@@ -200,7 +200,7 @@ static int xadc_zynq_read_adc_reg(struct xadc *xadc, unsigned int reg,
+ 	cmd[0] = XADC_ZYNQ_CMD(XADC_ZYNQ_CMD_READ, reg, 0);
+ 	cmd[1] = XADC_ZYNQ_CMD(XADC_ZYNQ_CMD_NOP, 0, 0);
+ 
+-	spin_lock_irq(&xadc->lock);
++	raw_spin_lock_irq(&xadc->lock);
+ 	xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_DFIFO_GTH,
+ 			XADC_ZYNQ_INT_DFIFO_GTH);
+ 	xadc_zynq_drain_fifo(xadc);
+@@ -213,7 +213,7 @@ static int xadc_zynq_read_adc_reg(struct xadc *xadc, unsigned int reg,
+ 	xadc_write_reg(xadc, XADC_ZYNQ_REG_CFG, tmp);
+ 
+ 	xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_DFIFO_GTH, 0);
+-	spin_unlock_irq(&xadc->lock);
++	raw_spin_unlock_irq(&xadc->lock);
+ 	ret = wait_for_completion_interruptible_timeout(&xadc->completion, HZ);
+ 	if (ret == 0)
+ 		ret = -EIO;
+@@ -252,7 +252,7 @@ static void xadc_zynq_unmask_worker(struct work_struct *work)
+ 
+ 	misc_sts &= XADC_ZYNQ_INT_ALARM_MASK;
+ 
+-	spin_lock_irq(&xadc->lock);
++	raw_spin_lock_irq(&xadc->lock);
+ 
+ 	/* Clear those bits which are not active anymore */
+ 	unmask = (xadc->zynq_masked_alarm ^ misc_sts) & xadc->zynq_masked_alarm;
+@@ -266,7 +266,7 @@ static void xadc_zynq_unmask_worker(struct work_struct *work)
+ 
+ 	xadc_zynq_update_intmsk(xadc, 0, 0);
+ 
+-	spin_unlock_irq(&xadc->lock);
++	raw_spin_unlock_irq(&xadc->lock);
+ 
+ 	/* if still pending some alarm re-trigger the timer */
+ 	if (xadc->zynq_masked_alarm) {
+@@ -281,10 +281,10 @@ static irqreturn_t xadc_zynq_threaded_interrupt_handler(int irq, void *devid)
+ 	struct xadc *xadc = iio_priv(indio_dev);
+ 	unsigned int alarm;
+ 
+-	spin_lock_irq(&xadc->lock);
++	raw_spin_lock_irq(&xadc->lock);
+ 	alarm = xadc->zynq_alarm;
+ 	xadc->zynq_alarm = 0;
+-	spin_unlock_irq(&xadc->lock);
++	raw_spin_unlock_irq(&xadc->lock);
+ 
+ 	xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
+ 
+@@ -309,7 +309,7 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
+ 	if (!status)
+ 		return IRQ_NONE;
+ 
+-	spin_lock(&xadc->lock);
++	raw_spin_lock(&xadc->lock);
+ 
+ 	xadc_write_reg(xadc, XADC_ZYNQ_REG_INTSTS, status);
+ 
+@@ -330,7 +330,7 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
+ 		xadc_zynq_update_intmsk(xadc, 0, 0);
+ 		ret = IRQ_WAKE_THREAD;
+ 	}
+-	spin_unlock(&xadc->lock);
++	raw_spin_unlock(&xadc->lock);
+ 
+ 	return ret;
+ }
+@@ -419,7 +419,7 @@ static void xadc_zynq_update_alarm(struct xadc *xadc, unsigned int alarm)
+ 	/* Move OT to bit 7 */
+ 	alarm = ((alarm & 0x08) << 4) | ((alarm & 0xf0) >> 1) | (alarm & 0x07);
+ 
+-	spin_lock_irqsave(&xadc->lock, flags);
++	raw_spin_lock_irqsave(&xadc->lock, flags);
+ 
+ 	/* Clear previous interrupts if any. */
+ 	xadc_read_reg(xadc, XADC_ZYNQ_REG_INTSTS, &status);
+@@ -428,7 +428,7 @@ static void xadc_zynq_update_alarm(struct xadc *xadc, unsigned int alarm)
+ 	xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_ALARM_MASK,
+ 		~alarm & XADC_ZYNQ_INT_ALARM_MASK);
+ 
+-	spin_unlock_irqrestore(&xadc->lock, flags);
++	raw_spin_unlock_irqrestore(&xadc->lock, flags);
+ }
+ 
+ static const struct xadc_ops xadc_zynq_ops = {
+@@ -520,12 +520,12 @@ static void xadc_axi_update_alarm(struct xadc *xadc, unsigned int alarm)
+ 	alarm = ((alarm & 0x07) << 1) | ((alarm & 0x08) >> 3) |
+ 			((alarm & 0xf0) << 6);
+ 
+-	spin_lock_irqsave(&xadc->lock, flags);
++	raw_spin_lock_irqsave(&xadc->lock, flags);
+ 	xadc_read_reg(xadc, XADC_AXI_REG_IPIER, &val);
+ 	val &= ~XADC_AXI_INT_ALARM_MASK;
+ 	val |= alarm;
+ 	xadc_write_reg(xadc, XADC_AXI_REG_IPIER, val);
+-	spin_unlock_irqrestore(&xadc->lock, flags);
++	raw_spin_unlock_irqrestore(&xadc->lock, flags);
+ }
+ 
+ static unsigned long xadc_axi_get_dclk(struct xadc *xadc)
+@@ -674,7 +674,7 @@ static int xadc_trigger_set_state(struct iio_trigger *trigger, bool state)
+ 		xadc->trigger = NULL;
+ 	}
+ 
+-	spin_lock_irqsave(&xadc->lock, flags);
++	raw_spin_lock_irqsave(&xadc->lock, flags);
+ 	xadc_read_reg(xadc, XADC_AXI_REG_IPIER, &val);
+ 	xadc_write_reg(xadc, XADC_AXI_REG_IPISR, val & XADC_AXI_INT_EOS);
+ 	if (state)
+@@ -682,7 +682,7 @@ static int xadc_trigger_set_state(struct iio_trigger *trigger, bool state)
+ 	else
+ 		val &= ~XADC_AXI_INT_EOS;
+ 	xadc_write_reg(xadc, XADC_AXI_REG_IPIER, val);
+-	spin_unlock_irqrestore(&xadc->lock, flags);
++	raw_spin_unlock_irqrestore(&xadc->lock, flags);
+ 
+ err_out:
+ 	mutex_unlock(&xadc->mutex);
+@@ -1175,7 +1175,7 @@ static int xadc_probe(struct platform_device *pdev)
+ 	xadc->ops = id->data;
+ 	init_completion(&xadc->completion);
+ 	mutex_init(&xadc->mutex);
+-	spin_lock_init(&xadc->lock);
++	raw_spin_lock_init(&xadc->lock);
+ 	INIT_DELAYED_WORK(&xadc->zynq_unmask_work, xadc_zynq_unmask_worker);
+ 
+ 	mem = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+diff --git a/drivers/iio/adc/xilinx-xadc.h b/drivers/iio/adc/xilinx-xadc.h
+index c7487e8..d945e25 100644
+--- a/drivers/iio/adc/xilinx-xadc.h
++++ b/drivers/iio/adc/xilinx-xadc.h
+@@ -66,7 +66,7 @@ struct xadc {
+ 	struct delayed_work zynq_unmask_work;
+ 
+ 	struct mutex mutex;
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 
+ 	struct completion completion;
+ };
+-- 
+1.9.1
