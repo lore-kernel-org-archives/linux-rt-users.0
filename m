@@ -1,43 +1,125 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [OSADL QA 3.18.9-rt5 #1]
-Date: Wed, 13 May 2015 11:23:56 -0400
-Message-ID: <20150513112356.1e1ebfb8@gandalf.local.home>
-References: <55245FC8.9090509@osadl.org>
-	<5526AE86.7030708@linutronix.de>
-	<20150410123634.GA3057@linutronix.de>
-	<20150511201506.29a5c3e2@gandalf.local.home>
-	<20150513081236.GA21106@linutronix.de>
+Subject: [PATCH][RT] xfs: Disable percpu SB on PREEMPT_RT_FULL
+Date: Wed, 13 May 2015 11:36:32 -0400
+Message-ID: <20150513113632.7d902a0f@gandalf.local.home>
+References: <20150430123303.30f5bd12@gandalf.local.home>
+	<20150504004844.GA21261@dastard>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Carsten Emde <C.Emde@osadl.org>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0009.hostedemail.com ([216.40.44.9]:41437 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S934488AbbEMPYA (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 May 2015 11:24:00 -0400
-In-Reply-To: <20150513081236.GA21106@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Dave Chinner <david@fromorbit.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>
+To: LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150504004844.GA21261@dastard>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 13 May 2015 10:12:36 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+Running a test on a large CPU count box with xfs, I hit a live lock
+with the following backtraces on several CPUs:
 
-> * Steven Rostedt | 2015-05-11 20:15:06 [-0400]:
-> 
-> >I'm backporting this to the stable releases, and I'm a bit worried
-> >about the above comment. The new Scheduler IPI code uses work queues and
-> >requires it to be done in a hard irq.
-> 
-> The IPI part is only done for the high-prio which is only used by NOHZ.
-> Everyone else gets in via softiq as we did it before.
-> 
+ Call Trace:              
+  [<ffffffff812c34f8>] __const_udelay+0x28/0x30 
+  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs] 
+  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs] 
+  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs] 
+  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs] 
+  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0 
+  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs] 
+  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs] 
+  [<ffffffff811b0edd>] vfs_create+0xcd/0x130 
+  [<ffffffff811b21ef>] do_last+0xb8f/0x1240 
+  [<ffffffff811b39b2>] path_openat+0xc2/0x490 
 
-My push/pull RT tasks via IPI, uses the irq_work to do this. It has
-nothing to do with NOHZ, and will cause serious latencies if it is done
-by softirq.
+Looking at the code I see it was stuck at: 
 
--- Steve
+STATIC void
+xfs_icsb_lock_cntr(
+	xfs_icsb_cnts_t	*icsbp)
+{
+	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
+		ndelay(1000);
+	}
+}
+
+In xfs_icsb_modify_counters() the code is fine. There's a
+preempt_disable() called when taking this bit spinlock and a
+preempt_enable() after it is released. The issue is that not all
+locations are protected by preempt_disable() when PREEMPT_RT is set.
+Namely the places that grab all CPU cntr locks.
+
+STATIC void
+xfs_icsb_lock_all_counters(
+	xfs_mount_t	*mp)
+{
+	xfs_icsb_cnts_t *cntp;
+	int		i;
+
+	for_each_online_cpu(i) {
+		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
+		xfs_icsb_lock_cntr(cntp);
+	}
+}
+
+STATIC void
+xfs_icsb_disable_counter()
+{
+	[...]
+	xfs_icsb_lock_all_counters(mp);
+	[...]
+	xfs_icsb_unlock_all_counters(mp);
+}
+
+
+STATIC void
+xfs_icsb_balance_counter_locked()
+{
+	[...]
+	xfs_icsb_disable_counter();
+	[...]
+}
+
+STATIC void
+xfs_icsb_balance_counter(
+	xfs_mount_t	*mp,
+	xfs_sb_field_t  fields,
+	int		min_per_cpu)
+{
+	spin_lock(&mp->m_sb_lock);
+	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
+	spin_unlock(&mp->m_sb_lock);
+}
+
+Now, when PREEMPT_RT is not enabled, that spin_lock() disables
+preemption. But for PREEMPT_RT, it does not. Although with my test box I
+was not able to produce a task state of all tasks, but I'm assuming that
+some task called the xfs_icsb_lock_all_counters() and was preempted by
+an RT task and could not finish, causing all callers of that lock to
+block indefinitely.
+
+Dave Chinner has stated that the scalability of that code will probably
+be negated by PREEMPT_RT, and that it is probably best to just disable
+the code in question. Also, this code has been rewritten in newer kernels.
+
+Link: http://lkml.kernel.org/r/20150504004844.GA21261@dastard
+
+Suggested-by: Dave Chinner <david@fromorbit.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
+index 825249d2dfc1..c43cb979a46d 100644
+--- a/fs/xfs/xfs_linux.h
++++ b/fs/xfs/xfs_linux.h
+@@ -132,7 +132,7 @@ typedef __uint64_t __psunsigned_t;
+ /*
+  * Feature macros (disable/enable)
+  */
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT_FULL)
+ #define HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
+ #else
+ #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
