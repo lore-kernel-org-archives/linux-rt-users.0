@@ -1,57 +1,45 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [OSADL QA 3.18.9-rt5 #1]
-Date: Wed, 13 May 2015 12:34:27 -0400
-Message-ID: <20150513123427.2ff23a9a@gandalf.local.home>
-References: <55245FC8.9090509@osadl.org>
-	<5526AE86.7030708@linutronix.de>
-	<20150410123634.GA3057@linutronix.de>
+Subject: [PATCH RT 5/5] Linux 3.14.39-rt38-rc1
+Date: Thu, 14 May 2015 09:59:41 -0400
+Message-ID: <20150514140001.506268266@goodmis.org>
+References: <20150514135936.609231479@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Carsten Emde <C.Emde@osadl.org>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>,
-	Peter Zijlstra <peterz@infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0122.hostedemail.com ([216.40.44.122]:36565 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752555AbbEMQea (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 May 2015 12:34:30 -0400
-In-Reply-To: <20150410123634.GA3057@linutronix.de>
+Received: from mail.kernel.org ([198.145.29.136]:35394 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S933373AbbENOAE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 May 2015 10:00:04 -0400
+Content-Disposition: inline; filename=0005-Linux-3.14.39-rt38-rc1.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 10 Apr 2015 14:36:34 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+3.14.39-rt38-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> --- a/kernel/time/timer.c
-> +++ b/kernel/time/timer.c
-> @@ -1450,9 +1450,9 @@ void update_process_times(int user_tick)
->  	scheduler_tick();
->  	run_local_timers();
->  	rcu_check_callbacks(cpu, user_tick);
-> -#ifdef CONFIG_IRQ_WORK
-> -	if (in_irq())
-> -		irq_work_tick();
-> +
-> +#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
-> +	irq_work_tick();
->  #endif
+------------------
 
-Found the bug. The above actually changes the code
-for !CONFIG_PREEMPT_RT_FULL. You still need to keep that
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-	if (in_irq())
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-check, otherwise you can call irq_work_tick() from softirq in non RT
-configs, which talking to Peter Zijlstra, is a no no.
+diff --git a/localversion-rt b/localversion-rt
+index a3b2408c1da6..625367387621 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt37
++-rt38-rc1
+-- 
+2.1.4
 
-Note, my tests were failing on CONFIG_PREEMPT_LL (low latency).
-
--- Steve
-
-
->  	run_posix_cpu_timers(p);
->  }
 
