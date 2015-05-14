@@ -1,64 +1,131 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/2] Linux 3.2.68-rt100-rc1
-Date: Thu, 14 May 2015 10:08:42 -0400
-Message-ID: <20150514140842.425346693@goodmis.org>
+Subject: [PATCH RT 1/2] KVM: lapic: mark LAPIC timer handler as irqsafe
+Date: Thu, 14 May 2015 10:08:43 -0400
+Message-ID: <20150514140853.289870988@goodmis.org>
+References: <20150514140842.425346693@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>, Marcelo Tosatti <mtosatti@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-KVM-lapic-mark-LAPIC-timer-handler-as-irqsafe.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.2.68-rt100-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.68-rt100-rc1.
+From: Marcelo Tosatti <mtosatti@redhat.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+Since lapic timer handler only wakes up a simple waitqueue,
+it can be executed from hardirq context.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+Also handle the case where hrtimer_start_expires fails due to -ETIME,
+by injecting the interrupt to the guest immediately.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+Reduces average cyclictest latency by 3us.
 
-If all goes well, this patch will be converted to the next main release
-on 5/18/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.68-rt100-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt100-rc1.patch.xz
-
-You can also build from 3.2.68-rt99 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt99-rt100-rc1.patch.xz
-
-
-Changes from 3.2.68-rt99:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Marcelo Tosatti (1):
-      KVM: lapic: mark LAPIC timer handler as irqsafe
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.68-rt100-rc1
-
-----
  arch/x86/kvm/lapic.c | 42 +++++++++++++++++++++++++++++++++++++++---
- localversion-rt      |  2 +-
- 2 files changed, 40 insertions(+), 4 deletions(-)
+ 1 file changed, 39 insertions(+), 3 deletions(-)
+
+diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
+index 176205ab0ca8..745cbfe4b51c 100644
+--- a/arch/x86/kvm/lapic.c
++++ b/arch/x86/kvm/lapic.c
+@@ -679,8 +679,38 @@ static void update_divide_count(struct kvm_lapic *apic)
+ 				   apic->divide_count);
+ }
+ 
++
++static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
++
++static void apic_timer_expired(struct hrtimer *data)
++{
++	int ret, i = 0;
++	enum hrtimer_restart r;
++	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
++
++	r = apic_timer_fn(data);
++
++	if (r == HRTIMER_RESTART) {
++		do {
++			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
++			if (ret == -ETIME)
++				hrtimer_add_expires_ns(&ktimer->timer,
++							ktimer->period);
++			i++;
++		} while (ret == -ETIME && i < 10);
++
++		if (ret == -ETIME) {
++			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
++			       __func__);
++			WARN_ON_ONCE(1);
++		}
++	}
++}
++
++
+ static void start_apic_timer(struct kvm_lapic *apic)
+ {
++	int ret;
+ 	ktime_t now;
+ 	atomic_set(&apic->lapic_timer.pending, 0);
+ 
+@@ -710,9 +740,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
+ 			}
+ 		}
+ 
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			      ktime_add_ns(now, apic->lapic_timer.period),
+ 			      HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
+ 			   PRIx64 ", "
+@@ -742,8 +774,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
+ 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
+ 			do_div(ns, this_tsc_khz);
+ 		}
+-		hrtimer_start(&apic->lapic_timer.timer,
++		ret = hrtimer_start(&apic->lapic_timer.timer,
+ 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
++		if (ret == -ETIME)
++			apic_timer_expired(&apic->lapic_timer.timer);
+ 
+ 		local_irq_restore(flags);
+ 	}
+@@ -1173,6 +1207,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
+ 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
+ 		     HRTIMER_MODE_ABS);
+ 	apic->lapic_timer.timer.function = kvm_timer_fn;
++	apic->lapic_timer.timer.irqsafe = 1;
+ 	apic->lapic_timer.t_ops = &lapic_timer_ops;
+ 	apic->lapic_timer.kvm = vcpu->kvm;
+ 	apic->lapic_timer.vcpu = vcpu;
+@@ -1269,7 +1304,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
+ 
+ 	timer = &apic->lapic_timer.timer;
+ 	if (hrtimer_cancel(timer))
+-		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
++		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
++			apic_timer_expired(timer);
+ }
+ 
+ void kvm_lapic_sync_from_vapic(struct kvm_vcpu *vcpu)
+-- 
+2.1.4
