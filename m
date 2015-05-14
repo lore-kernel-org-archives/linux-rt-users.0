@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] kernel/irq_work: fix no_hz deadlock
-Date: Thu, 14 May 2015 09:59:37 -0400
-Message-ID: <20150514140000.900105266@goodmis.org>
+Subject: [PATCH RT 3/5] KVM: use simple waitqueue for vcpu->wq
+Date: Thu, 14 May 2015 09:59:39 -0400
+Message-ID: <20150514140001.199742310@goodmis.org>
 References: <20150514135936.609231479@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,175 +10,326 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>, Marcelo Tosatti <mtosatti@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-kernel-irq_work-fix-no_hz-deadlock.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:35427 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S933553AbbENOAI (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 May 2015 10:00:08 -0400
+Content-Disposition: inline; filename=0003-KVM-use-simple-waitqueue-for-vcpu-wq.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.14.39-rt38-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Marcelo Tosatti <mtosatti@redhat.com>
 
-Invoking NO_HZ's irq_work callback from timer irq is not working very
-well if the callback decides to invoke hrtimer_cancel():
+The problem:
 
-|hrtimer_try_to_cancel+0x55/0x5f
-|hrtimer_cancel+0x16/0x28
-|tick_nohz_restart+0x17/0x72
-|__tick_nohz_full_check+0x8e/0x93
-|nohz_full_kick_work_func+0xe/0x10
-|irq_work_run_list+0x39/0x57
-|irq_work_tick+0x60/0x67
-|update_process_times+0x57/0x67
-|tick_sched_handle+0x4a/0x59
-|tick_sched_timer+0x3b/0x64
-|__run_hrtimer+0x7a/0x149
-|hrtimer_interrupt+0x1cc/0x2c5
+On -RT, an emulated LAPIC timer instances has the following path:
 
-and here we deadlock while waiting for the lock which we are holding.
-To fix this I'm doing the same thing that upstream is doing: is the
-irq_work dedicated IRQ and use it only for what is marked as "hirq"
-which should only be the FULL_NO_HZ related work.
+1) hard interrupt
+2) ksoftirqd is scheduled
+3) ksoftirqd wakes up vcpu thread
+4) vcpu thread is scheduled
+
+This extra context switch introduces unnecessary latency in the
+LAPIC path for a KVM guest.
+
+The solution:
+
+Allow waking up vcpu thread from hardirq context,
+thus avoiding the need for ksoftirqd to be scheduled.
+
+Normal waitqueues make use of spinlocks, which on -RT
+are sleepable locks. Therefore, waking up a waitqueue
+waiter involves locking a sleeping lock, which
+is not allowed from hard interrupt context.
+
+cyclictest command line:
+
+This patch reduces the average latency in my tests from 14us to 11us.
 
 Cc: stable-rt@vger.kernel.org
-Reported-by: Carsten Emde <C.Emde@osadl.org>
+Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-[ Added back in_irq() check for non PREEMPT_RT configs ]
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/kernel/smp.c      | 2 --
- arch/powerpc/kernel/time.c | 2 +-
- arch/sparc/kernel/pcr.c    | 2 --
- arch/x86/kernel/irq_work.c | 2 --
- kernel/irq_work.c          | 5 +----
- kernel/time/tick-sched.c   | 5 +++++
- kernel/timer.c             | 2 +-
- 7 files changed, 8 insertions(+), 12 deletions(-)
+ arch/arm/kvm/arm.c                  |  4 ++--
+ arch/arm/kvm/psci.c                 |  4 ++--
+ arch/powerpc/include/asm/kvm_host.h |  4 ++--
+ arch/powerpc/kvm/book3s_hv.c        | 20 ++++++++++----------
+ arch/s390/include/asm/kvm_host.h    |  2 +-
+ arch/x86/kvm/lapic.c                |  6 +++---
+ include/linux/kvm_host.h            |  4 ++--
+ virt/kvm/async_pf.c                 |  4 ++--
+ virt/kvm/kvm_main.c                 | 16 ++++++++--------
+ 9 files changed, 32 insertions(+), 32 deletions(-)
 
-diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
-index 686f1d1eb32e..8cd3724714fe 100644
---- a/arch/arm/kernel/smp.c
-+++ b/arch/arm/kernel/smp.c
-@@ -463,14 +463,12 @@ void arch_send_call_function_single_ipi(int cpu)
- }
+diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
+index bd18bb8b2770..9100f8a609a2 100644
+--- a/arch/arm/kvm/arm.c
++++ b/arch/arm/kvm/arm.c
+@@ -495,9 +495,9 @@ static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
  
- #ifdef CONFIG_IRQ_WORK
--#ifndef CONFIG_PREEMPT_RT_FULL
- void arch_irq_work_raise(void)
+ static void vcpu_pause(struct kvm_vcpu *vcpu)
  {
- 	if (is_smp())
- 		smp_cross_call(cpumask_of(smp_processor_id()), IPI_IRQ_WORK);
- }
- #endif
--#endif
+-	wait_queue_head_t *wq = kvm_arch_vcpu_wq(vcpu);
++	struct swait_head *wq = kvm_arch_vcpu_wq(vcpu);
  
- static const char *ipi_types[NR_IPI] = {
- #define S(x,s)	[x] = s
-diff --git a/arch/powerpc/kernel/time.c b/arch/powerpc/kernel/time.c
-index 6d37d7603a8f..5bec5fd82a7e 100644
---- a/arch/powerpc/kernel/time.c
-+++ b/arch/powerpc/kernel/time.c
-@@ -423,7 +423,7 @@ unsigned long profile_pc(struct pt_regs *regs)
- EXPORT_SYMBOL(profile_pc);
- #endif
- 
--#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
-+#if defined(CONFIG_IRQ_WORK)
- 
- /*
-  * 64-bit uses a byte in the PACA, 32-bit uses a per-cpu variable...
-diff --git a/arch/sparc/kernel/pcr.c b/arch/sparc/kernel/pcr.c
-index 927d9c5e50f5..7e967c8018c8 100644
---- a/arch/sparc/kernel/pcr.c
-+++ b/arch/sparc/kernel/pcr.c
-@@ -43,12 +43,10 @@ void __irq_entry deferred_pcr_work_irq(int irq, struct pt_regs *regs)
- 	set_irq_regs(old_regs);
+-	wait_event_interruptible(*wq, !vcpu->arch.pause);
++	swait_event_interruptible(*wq, !vcpu->arch.pause);
  }
  
--#ifndef CONFIG_PREEMPT_RT_FULL
- void arch_irq_work_raise(void)
+ static int kvm_vcpu_initialized(struct kvm_vcpu *vcpu)
+diff --git a/arch/arm/kvm/psci.c b/arch/arm/kvm/psci.c
+index 448f60e8d23c..19c6c9c2118c 100644
+--- a/arch/arm/kvm/psci.c
++++ b/arch/arm/kvm/psci.c
+@@ -36,7 +36,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
  {
- 	set_softint(1 << PIL_DEFERRED_PCR_WORK);
- }
--#endif
+ 	struct kvm *kvm = source_vcpu->kvm;
+ 	struct kvm_vcpu *vcpu = NULL, *tmp;
+-	wait_queue_head_t *wq;
++	struct swait_head *wq;
+ 	unsigned long cpu_id;
+ 	unsigned long mpidr;
+ 	phys_addr_t target_pc;
+@@ -80,7 +80,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+ 	smp_mb();		/* Make sure the above is visible */
  
- const struct pcr_ops *pcr_ops;
- EXPORT_SYMBOL_GPL(pcr_ops);
-diff --git a/arch/x86/kernel/irq_work.c b/arch/x86/kernel/irq_work.c
-index 3d21f7bd7b42..1de84e3ab4e0 100644
---- a/arch/x86/kernel/irq_work.c
-+++ b/arch/x86/kernel/irq_work.c
-@@ -38,7 +38,6 @@ __visible void smp_trace_irq_work_interrupt(struct pt_regs *regs)
- 	exiting_irq();
- }
+ 	wq = kvm_arch_vcpu_wq(vcpu);
+-	wake_up_interruptible(wq);
++	swait_wake_interruptible(wq);
  
--#ifndef CONFIG_PREEMPT_RT_FULL
- void arch_irq_work_raise(void)
+ 	return KVM_PSCI_RET_SUCCESS;
+ }
+diff --git a/arch/powerpc/include/asm/kvm_host.h b/arch/powerpc/include/asm/kvm_host.h
+index 1eaea2dea174..dfaf2c2d8e7f 100644
+--- a/arch/powerpc/include/asm/kvm_host.h
++++ b/arch/powerpc/include/asm/kvm_host.h
+@@ -295,7 +295,7 @@ struct kvmppc_vcore {
+ 	u8 in_guest;
+ 	struct list_head runnable_threads;
+ 	spinlock_t lock;
+-	wait_queue_head_t wq;
++	struct swait_head wq;
+ 	u64 stolen_tb;
+ 	u64 preempt_tb;
+ 	struct kvm_vcpu *runner;
+@@ -612,7 +612,7 @@ struct kvm_vcpu_arch {
+ 	u8 prodded;
+ 	u32 last_inst;
+ 
+-	wait_queue_head_t *wqp;
++	struct swait_head *wqp;
+ 	struct kvmppc_vcore *vcore;
+ 	int ret;
+ 	int trap;
+diff --git a/arch/powerpc/kvm/book3s_hv.c b/arch/powerpc/kvm/book3s_hv.c
+index 7a25d9218a05..0019281510da 100644
+--- a/arch/powerpc/kvm/book3s_hv.c
++++ b/arch/powerpc/kvm/book3s_hv.c
+@@ -74,11 +74,11 @@ static void kvmppc_fast_vcpu_kick_hv(struct kvm_vcpu *vcpu)
  {
- #ifdef CONFIG_X86_LOCAL_APIC
-@@ -49,4 +48,3 @@ void arch_irq_work_raise(void)
- 	apic_wait_icr_idle();
- #endif
- }
--#endif
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index 35d21f93bbe8..5f7d93d89c7f 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -16,6 +16,7 @@
- #include <linux/tick.h>
- #include <linux/cpu.h>
- #include <linux/notifier.h>
-+#include <linux/interrupt.h>
- #include <asm/processor.h>
+ 	int me;
+ 	int cpu = vcpu->cpu;
+-	wait_queue_head_t *wqp;
++	struct swait_head *wqp;
  
- 
-@@ -51,11 +52,7 @@ static bool irq_work_claim(struct irq_work *work)
- 	return true;
- }
- 
--#ifdef CONFIG_PREEMPT_RT_FULL
--void arch_irq_work_raise(void)
--#else
- void __weak arch_irq_work_raise(void)
--#endif
- {
- 	/*
- 	 * Lame architectures will get the timer tick callback
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index ab32130964b6..6c97081f67f9 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -180,6 +180,11 @@ static bool can_stop_full_tick(void)
- 		return false;
+ 	wqp = kvm_arch_vcpu_wq(vcpu);
+-	if (waitqueue_active(wqp)) {
+-		wake_up_interruptible(wqp);
++	if (swaitqueue_active(wqp)) {
++		swait_wake_interruptible(wqp);
+ 		++vcpu->stat.halt_wakeup;
  	}
  
-+	if (!arch_irq_work_has_interrupt()) {
-+		trace_tick_stop(0, "missing irq work interrupt\n");
-+		return false;
-+	}
-+
- 	/* sched_clock_tick() needs us? */
- #ifdef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
+@@ -583,8 +583,8 @@ int kvmppc_pseries_do_hcall(struct kvm_vcpu *vcpu)
+ 		tvcpu->arch.prodded = 1;
+ 		smp_mb();
+ 		if (vcpu->arch.ceded) {
+-			if (waitqueue_active(&vcpu->wq)) {
+-				wake_up_interruptible(&vcpu->wq);
++			if (swaitqueue_active(&vcpu->wq)) {
++				swait_wake_interruptible(&vcpu->wq);
+ 				vcpu->stat.halt_wakeup++;
+ 			}
+ 		}
+@@ -1199,7 +1199,7 @@ static struct kvm_vcpu *kvmppc_core_vcpu_create_hv(struct kvm *kvm,
+ 		if (vcore) {
+ 			INIT_LIST_HEAD(&vcore->runnable_threads);
+ 			spin_lock_init(&vcore->lock);
+-			init_waitqueue_head(&vcore->wq);
++			init_swait_head(&vcore->wq);
+ 			vcore->preempt_tb = TB_NIL;
+ 			vcore->lpcr = kvm->arch.lpcr;
+ 			vcore->first_vcpuid = core * threads_per_core;
+@@ -1566,13 +1566,13 @@ static void kvmppc_wait_for_exec(struct kvm_vcpu *vcpu, int wait_state)
+  */
+ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
+ {
+-	DEFINE_WAIT(wait);
++	DEFINE_SWAITER(wait);
+ 
+-	prepare_to_wait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
++	swait_prepare(&vc->wq, &wait, TASK_INTERRUPTIBLE);
+ 	vc->vcore_state = VCORE_SLEEPING;
+ 	spin_unlock(&vc->lock);
+ 	schedule();
+-	finish_wait(&vc->wq, &wait);
++	swait_finish(&vc->wq, &wait);
+ 	spin_lock(&vc->lock);
+ 	vc->vcore_state = VCORE_INACTIVE;
+ }
+@@ -1613,7 +1613,7 @@ static int kvmppc_run_vcpu(struct kvm_run *kvm_run, struct kvm_vcpu *vcpu)
+ 			kvmppc_create_dtl_entry(vcpu, vc);
+ 			kvmppc_start_thread(vcpu);
+ 		} else if (vc->vcore_state == VCORE_SLEEPING) {
+-			wake_up(&vc->wq);
++			swait_wake(&vc->wq);
+ 		}
+ 
+ 	}
+diff --git a/arch/s390/include/asm/kvm_host.h b/arch/s390/include/asm/kvm_host.h
+index eef3dd3fd9a9..65402d300a26 100644
+--- a/arch/s390/include/asm/kvm_host.h
++++ b/arch/s390/include/asm/kvm_host.h
+@@ -233,7 +233,7 @@ struct kvm_s390_local_interrupt {
+ 	atomic_t active;
+ 	struct kvm_s390_float_interrupt *float_int;
+ 	int timer_due; /* event indicator for waitqueue below */
+-	wait_queue_head_t *wq;
++	struct swait_head *wq;
+ 	atomic_t *cpuflags;
+ 	unsigned int action_bits;
+ };
+diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
+index 6326cce914ab..8b25d010d5e4 100644
+--- a/arch/x86/kvm/lapic.c
++++ b/arch/x86/kvm/lapic.c
+@@ -1567,7 +1567,7 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
+ 	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
+ 	struct kvm_lapic *apic = container_of(ktimer, struct kvm_lapic, lapic_timer);
+ 	struct kvm_vcpu *vcpu = apic->vcpu;
+-	wait_queue_head_t *q = &vcpu->wq;
++	struct swait_head *q = &vcpu->wq;
+ 
  	/*
-diff --git a/kernel/timer.c b/kernel/timer.c
-index 34fd2dbba3e3..36b9f10bb3c7 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
- 	scheduler_tick();
- 	run_local_timers();
- 	rcu_check_callbacks(cpu, user_tick);
--#if defined(CONFIG_IRQ_WORK)
-+#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
- 	if (in_irq())
- 		irq_work_run();
+ 	 * There is a race window between reading and incrementing, but we do
+@@ -1581,8 +1581,8 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
+ 		kvm_make_request(KVM_REQ_PENDING_TIMER, vcpu);
+ 	}
+ 
+-	if (waitqueue_active(q))
+-		wake_up_interruptible(q);
++	if (swaitqueue_active(q))
++		swait_wake_interruptible(q);
+ 
+ 	if (lapic_is_periodic(apic)) {
+ 		hrtimer_add_expires_ns(&ktimer->timer, ktimer->period);
+diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
+index b8e9a43e501a..aebf20c9bfab 100644
+--- a/include/linux/kvm_host.h
++++ b/include/linux/kvm_host.h
+@@ -231,7 +231,7 @@ struct kvm_vcpu {
+ 
+ 	int fpu_active;
+ 	int guest_fpu_loaded, guest_xcr0_loaded;
+-	wait_queue_head_t wq;
++	struct swait_head wq;
+ 	struct pid *pid;
+ 	int sigset_active;
+ 	sigset_t sigset;
+@@ -677,7 +677,7 @@ static inline bool kvm_arch_has_noncoherent_dma(struct kvm *kvm)
+ }
  #endif
+ 
+-static inline wait_queue_head_t *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
++static inline struct swait_head *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
+ {
+ #ifdef __KVM_HAVE_ARCH_WQP
+ 	return vcpu->arch.wqp;
+diff --git a/virt/kvm/async_pf.c b/virt/kvm/async_pf.c
+index f2c80d5451c3..10634baf3b08 100644
+--- a/virt/kvm/async_pf.c
++++ b/virt/kvm/async_pf.c
+@@ -82,8 +82,8 @@ static void async_pf_execute(struct work_struct *work)
+ 
+ 	trace_kvm_async_pf_completed(addr, gva);
+ 
+-	if (waitqueue_active(&vcpu->wq))
+-		wake_up_interruptible(&vcpu->wq);
++	if (swaitqueue_active(&vcpu->wq))
++		swait_wake_interruptible(&vcpu->wq);
+ 
+ 	mmput(mm);
+ 	kvm_put_kvm(vcpu->kvm);
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index 66112533b1e9..38a0d7a5ce74 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -219,7 +219,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
+ 	vcpu->kvm = kvm;
+ 	vcpu->vcpu_id = id;
+ 	vcpu->pid = NULL;
+-	init_waitqueue_head(&vcpu->wq);
++	init_swait_head(&vcpu->wq);
+ 	kvm_async_pf_vcpu_init(vcpu);
+ 
+ 	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
+@@ -1675,10 +1675,10 @@ EXPORT_SYMBOL_GPL(mark_page_dirty);
+  */
+ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+ {
+-	DEFINE_WAIT(wait);
++	DEFINE_SWAITER(wait);
+ 
+ 	for (;;) {
+-		prepare_to_wait(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
++		swait_prepare(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
+ 
+ 		if (kvm_arch_vcpu_runnable(vcpu)) {
+ 			kvm_make_request(KVM_REQ_UNHALT, vcpu);
+@@ -1692,7 +1692,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+ 		schedule();
+ 	}
+ 
+-	finish_wait(&vcpu->wq, &wait);
++	swait_finish(&vcpu->wq, &wait);
+ }
+ EXPORT_SYMBOL_GPL(kvm_vcpu_block);
+ 
+@@ -1704,11 +1704,11 @@ void kvm_vcpu_kick(struct kvm_vcpu *vcpu)
+ {
+ 	int me;
+ 	int cpu = vcpu->cpu;
+-	wait_queue_head_t *wqp;
++	struct swait_head *wqp;
+ 
+ 	wqp = kvm_arch_vcpu_wq(vcpu);
+-	if (waitqueue_active(wqp)) {
+-		wake_up_interruptible(wqp);
++	if (swaitqueue_active(wqp)) {
++		swait_wake_interruptible(wqp);
+ 		++vcpu->stat.halt_wakeup;
+ 	}
+ 
+@@ -1814,7 +1814,7 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me)
+ 				continue;
+ 			if (vcpu == me)
+ 				continue;
+-			if (waitqueue_active(&vcpu->wq))
++			if (swaitqueue_active(&vcpu->wq))
+ 				continue;
+ 			if (!kvm_vcpu_eligible_for_directed_yield(vcpu))
+ 				continue;
 -- 
 2.1.4
+
+
