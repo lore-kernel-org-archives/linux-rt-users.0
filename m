@@ -1,87 +1,75 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/5] Linux 3.14.39-rt38-rc1
-Date: Thu, 14 May 2015 09:59:36 -0400
-Message-ID: <20150514135936.609231479@goodmis.org>
+Subject: [PATCH RT 4/5] hotplug: Use set_cpus_allowed_ptr() in sync_unplug_thread()
+Date: Thu, 14 May 2015 09:59:40 -0400
+Message-ID: <20150514140001.344824412@goodmis.org>
+References: <20150514135936.609231479@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-hotplug-Use-set_cpus_allowed_ptr-in-sync_unplug_thre.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.14.39-rt38-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.14.39-rt38-rc1.
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+do_set_cpus_allowed() is not safe vs ->sched_class change.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+crash> bt
+PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
+ #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
+ #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
+ #2 [ffff880274d25cd8] oops_end at ffffffff81525818
+ #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
+ #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
+    [exception RIP: set_cpus_allowed_rt+18]
+    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
+    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
+    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
+    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
+    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
+    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
+    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
+ #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
+ #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
+ #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
+ #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
+crash> task_struct ffff88026f979da0 | grep class
+  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 5/18/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.14.39-rt38-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.39.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.39-rt38-rc1.patch.xz
-
-You can also build from 3.14.39-rt37 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.39-rt37-rt38-rc1.patch.xz
-
-
-Changes from 3.14.39-rt37:
-
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/cpu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Marcelo Tosatti (2):
-      KVM: lapic: mark LAPIC timer handler as irqsafe
-      KVM: use simple waitqueue for vcpu->wq
-
-Mike Galbraith (1):
-      hotplug: Use set_cpus_allowed_ptr() in sync_unplug_thread()
-
-Sebastian Andrzej Siewior (1):
-      kernel/irq_work: fix no_hz deadlock
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.14.39-rt38-rc1
-
-----
- arch/arm/kernel/smp.c               |  2 --
- arch/arm/kvm/arm.c                  |  4 ++--
- arch/arm/kvm/psci.c                 |  4 ++--
- arch/powerpc/include/asm/kvm_host.h |  4 ++--
- arch/powerpc/kernel/time.c          |  2 +-
- arch/powerpc/kvm/book3s_hv.c        | 20 ++++++++--------
- arch/s390/include/asm/kvm_host.h    |  2 +-
- arch/sparc/kernel/pcr.c             |  2 --
- arch/x86/kernel/irq_work.c          |  2 --
- arch/x86/kvm/lapic.c                | 48 ++++++++++++++++++++++++++++++++-----
- include/linux/kvm_host.h            |  4 ++--
- kernel/cpu.c                        |  2 +-
- kernel/irq_work.c                   |  5 +---
- kernel/time/tick-sched.c            |  5 ++++
- kernel/timer.c                      |  2 +-
- localversion-rt                     |  2 +-
- virt/kvm/async_pf.c                 |  4 ++--
- virt/kvm/kvm_main.c                 | 16 ++++++-------
- 18 files changed, 81 insertions(+), 49 deletions(-)
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 285e18b2c420..a3890754e407 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -242,7 +242,7 @@ static int sync_unplug_thread(void *data)
+ 	 * we don't want any more work on this CPU.
+ 	 */
+ 	current->flags &= ~PF_NO_SETAFFINITY;
+-	do_set_cpus_allowed(current, cpu_present_mask);
++	set_cpus_allowed_ptr(current, cpu_present_mask);
+ 	migrate_me();
+ 	return 0;
+ }
+-- 
+2.1.4
