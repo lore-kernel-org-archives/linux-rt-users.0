@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/5] KVM: lapic: mark LAPIC timer handler as irqsafe
-Date: Thu, 14 May 2015 10:02:44 -0400
-Message-ID: <20150514140250.929809691@goodmis.org>
+Subject: [PATCH RT 4/5] hotplug: Use set_cpus_allowed_ptr() in sync_unplug_thread()
+Date: Thu, 14 May 2015 10:02:46 -0400
+Message-ID: <20150514140251.363619749@goodmis.org>
 References: <20150514140242.839416736@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Marcelo Tosatti <mtosatti@redhat.com>
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-KVM-lapic-mark-LAPIC-timer-handler-as-irqsafe.patch
+Content-Disposition: inline; filename=0004-hotplug-Use-set_cpus_allowed_ptr-in-sync_unplug_thre.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,109 +24,52 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Marcelo Tosatti <mtosatti@redhat.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Since lapic timer handler only wakes up a simple waitqueue,
-it can be executed from hardirq context.
+do_set_cpus_allowed() is not safe vs ->sched_class change.
 
-Also handle the case where hrtimer_start_expires fails due to -ETIME,
-by injecting the interrupt to the guest immediately.
+crash> bt
+PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
+ #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
+ #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
+ #2 [ffff880274d25cd8] oops_end at ffffffff81525818
+ #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
+ #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
+    [exception RIP: set_cpus_allowed_rt+18]
+    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
+    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
+    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
+    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
+    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
+    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
+    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
+ #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
+ #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
+ #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
+ #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
+crash> task_struct ffff88026f979da0 | grep class
+  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
 
-Reduces average cyclictest latency by 3us.
-
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Cc: stable-rt@vger.kernel.org
-Signed-off-by: Marcelo Tosatti <mtosatti@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kvm/lapic.c | 42 +++++++++++++++++++++++++++++++++++++++---
- 1 file changed, 39 insertions(+), 3 deletions(-)
+ kernel/cpu.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 681e4e251f00..4500d312f8d9 100644
---- a/arch/x86/kvm/lapic.c
-+++ b/arch/x86/kvm/lapic.c
-@@ -1045,8 +1045,38 @@ static void update_divide_count(struct kvm_lapic *apic)
- 				   apic->divide_count);
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index b460d99bc761..50ae129671f0 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -234,7 +234,7 @@ static int sync_unplug_thread(void *data)
+ 	 * we don't want any more work on this CPU.
+ 	 */
+ 	current->flags &= ~PF_NO_SETAFFINITY;
+-	do_set_cpus_allowed(current, cpu_present_mask);
++	set_cpus_allowed_ptr(current, cpu_present_mask);
+ 	migrate_me();
+ 	return 0;
  }
- 
-+
-+static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
-+
-+static void apic_timer_expired(struct hrtimer *data)
-+{
-+	int ret, i = 0;
-+	enum hrtimer_restart r;
-+	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
-+
-+	r = apic_timer_fn(data);
-+
-+	if (r == HRTIMER_RESTART) {
-+		do {
-+			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
-+			if (ret == -ETIME)
-+				hrtimer_add_expires_ns(&ktimer->timer,
-+							ktimer->period);
-+			i++;
-+		} while (ret == -ETIME && i < 10);
-+
-+		if (ret == -ETIME) {
-+			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
-+			       __func__);
-+			WARN_ON_ONCE(1);
-+		}
-+	}
-+}
-+
-+
- static void start_apic_timer(struct kvm_lapic *apic)
- {
-+	int ret;
- 	ktime_t now;
- 	atomic_set(&apic->lapic_timer.pending, 0);
- 
-@@ -1076,9 +1106,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			}
- 		}
- 
--		hrtimer_start(&apic->lapic_timer.timer,
-+		ret = hrtimer_start(&apic->lapic_timer.timer,
- 			      ktime_add_ns(now, apic->lapic_timer.period),
- 			      HRTIMER_MODE_ABS);
-+		if (ret == -ETIME)
-+			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
- 			   PRIx64 ", "
-@@ -1108,8 +1140,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
- 			do_div(ns, this_tsc_khz);
- 		}
--		hrtimer_start(&apic->lapic_timer.timer,
-+		ret = hrtimer_start(&apic->lapic_timer.timer,
- 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
-+		if (ret == -ETIME)
-+			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		local_irq_restore(flags);
- 	}
-@@ -1595,6 +1629,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
- 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
- 		     HRTIMER_MODE_ABS);
- 	apic->lapic_timer.timer.function = apic_timer_fn;
-+	apic->lapic_timer.timer.irqsafe = 1;
- 
- 	/*
- 	 * APIC is created enabled. This will prevent kvm_lapic_set_base from
-@@ -1713,7 +1748,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
- 
- 	timer = &vcpu->arch.apic->lapic_timer.timer;
- 	if (hrtimer_cancel(timer))
--		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
-+		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
-+			apic_timer_expired(timer);
- }
- 
- /*
 -- 
 2.1.4
