@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: [PATCH RT 2/5] KVM: lapic: mark LAPIC timer handler as irqsafe
-Date: Thu, 14 May 2015 09:59:38 -0400
-Message-ID: <20150514140001.046040544@goodmis.org>
-References: <20150514135936.609231479@goodmis.org>
+Date: Thu, 14 May 2015 10:01:39 -0400
+Message-ID: <20150514140146.649019055@goodmis.org>
+References: <20150514140137.396749660@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -18,7 +18,7 @@ Content-Disposition: inline; filename=0002-KVM-lapic-mark-LAPIC-timer-handler-as
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.14.39-rt38-rc1 stable review patch.
+3.12.40-rt56-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -42,10 +42,10 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  1 file changed, 39 insertions(+), 3 deletions(-)
 
 diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 453e5fbbb7ae..6326cce914ab 100644
+index 92bbb397f59d..0c4ebde0452f 100644
 --- a/arch/x86/kvm/lapic.c
 +++ b/arch/x86/kvm/lapic.c
-@@ -1031,8 +1031,38 @@ static void update_divide_count(struct kvm_lapic *apic)
+@@ -1010,8 +1010,38 @@ static void update_divide_count(struct kvm_lapic *apic)
  				   apic->divide_count);
  }
  
@@ -84,7 +84,7 @@ index 453e5fbbb7ae..6326cce914ab 100644
  	ktime_t now;
  	atomic_set(&apic->lapic_timer.pending, 0);
  
-@@ -1062,9 +1092,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -1041,9 +1071,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			}
  		}
  
@@ -97,7 +97,7 @@ index 453e5fbbb7ae..6326cce914ab 100644
  
  		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
  			   PRIx64 ", "
-@@ -1094,8 +1126,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -1073,8 +1105,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			ns = (tscdeadline - guest_tsc) * 1000000ULL;
  			do_div(ns, this_tsc_khz);
  		}
@@ -109,7 +109,7 @@ index 453e5fbbb7ae..6326cce914ab 100644
  
  		local_irq_restore(flags);
  	}
-@@ -1581,6 +1615,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
+@@ -1560,6 +1594,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
  	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
  		     HRTIMER_MODE_ABS);
  	apic->lapic_timer.timer.function = apic_timer_fn;
@@ -117,7 +117,7 @@ index 453e5fbbb7ae..6326cce914ab 100644
  
  	/*
  	 * APIC is created enabled. This will prevent kvm_lapic_set_base from
-@@ -1699,7 +1734,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
+@@ -1673,7 +1708,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
  
  	timer = &vcpu->arch.apic->lapic_timer.timer;
  	if (hrtimer_cancel(timer))
