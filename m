@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/5] hotplug: Use set_cpus_allowed_ptr() in sync_unplug_thread()
-Date: Thu, 14 May 2015 09:59:40 -0400
-Message-ID: <20150514140001.344824412@goodmis.org>
+Subject: [PATCH RT 1/5] kernel/irq_work: fix no_hz deadlock
+Date: Thu, 14 May 2015 09:59:37 -0400
+Message-ID: <20150514140000.900105266@goodmis.org>
 References: <20150514135936.609231479@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-hotplug-Use-set_cpus_allowed_ptr-in-sync_unplug_thre.patch
+Content-Disposition: inline; filename=0001-kernel-irq_work-fix-no_hz-deadlock.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,52 +23,162 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-do_set_cpus_allowed() is not safe vs ->sched_class change.
+Invoking NO_HZ's irq_work callback from timer irq is not working very
+well if the callback decides to invoke hrtimer_cancel():
 
-crash> bt
-PID: 11676  TASK: ffff88026f979da0  CPU: 22  COMMAND: "sync_unplug/22"
- #0 [ffff880274d25bc8] machine_kexec at ffffffff8103b41c
- #1 [ffff880274d25c18] crash_kexec at ffffffff810d881a
- #2 [ffff880274d25cd8] oops_end at ffffffff81525818
- #3 [ffff880274d25cf8] do_invalid_op at ffffffff81003096
- #4 [ffff880274d25d90] invalid_op at ffffffff8152d3de
-    [exception RIP: set_cpus_allowed_rt+18]
-    RIP: ffffffff8109e012  RSP: ffff880274d25e48  RFLAGS: 00010202
-    RAX: ffffffff8109e000  RBX: ffff88026f979da0  RCX: ffff8802770cb6e8
-    RDX: 0000000000000000  RSI: ffffffff81add700  RDI: ffff88026f979da0
-    RBP: ffff880274d25e78   R8: ffffffff816112e0   R9: 0000000000000001
-    R10: 0000000000000001  R11: 0000000000011940  R12: ffff88026f979da0
-    R13: ffff8802770cb6d0  R14: ffff880274d25fd8  R15: 0000000000000000
-    ORIG_RAX: ffffffffffffffff  CS: 0010  SS: 0018
- #5 [ffff880274d25e60] do_set_cpus_allowed at ffffffff8108e65f
- #6 [ffff880274d25e80] sync_unplug_thread at ffffffff81058c08
- #7 [ffff880274d25ed8] kthread at ffffffff8107cad6
- #8 [ffff880274d25f50] ret_from_fork at ffffffff8152bbbc
-crash> task_struct ffff88026f979da0 | grep class
-  sched_class = 0xffffffff816111e0 <fair_sched_class+64>,
+|hrtimer_try_to_cancel+0x55/0x5f
+|hrtimer_cancel+0x16/0x28
+|tick_nohz_restart+0x17/0x72
+|__tick_nohz_full_check+0x8e/0x93
+|nohz_full_kick_work_func+0xe/0x10
+|irq_work_run_list+0x39/0x57
+|irq_work_tick+0x60/0x67
+|update_process_times+0x57/0x67
+|tick_sched_handle+0x4a/0x59
+|tick_sched_timer+0x3b/0x64
+|__run_hrtimer+0x7a/0x149
+|hrtimer_interrupt+0x1cc/0x2c5
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+and here we deadlock while waiting for the lock which we are holding.
+To fix this I'm doing the same thing that upstream is doing: is the
+irq_work dedicated IRQ and use it only for what is marked as "hirq"
+which should only be the FULL_NO_HZ related work.
+
 Cc: stable-rt@vger.kernel.org
+Reported-by: Carsten Emde <C.Emde@osadl.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[ Added back in_irq() check for non PREEMPT_RT configs ]
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/cpu.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/arm/kernel/smp.c      | 2 --
+ arch/powerpc/kernel/time.c | 2 +-
+ arch/sparc/kernel/pcr.c    | 2 --
+ arch/x86/kernel/irq_work.c | 2 --
+ kernel/irq_work.c          | 5 +----
+ kernel/time/tick-sched.c   | 5 +++++
+ kernel/timer.c             | 2 +-
+ 7 files changed, 8 insertions(+), 12 deletions(-)
 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 285e18b2c420..a3890754e407 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -242,7 +242,7 @@ static int sync_unplug_thread(void *data)
- 	 * we don't want any more work on this CPU.
- 	 */
- 	current->flags &= ~PF_NO_SETAFFINITY;
--	do_set_cpus_allowed(current, cpu_present_mask);
-+	set_cpus_allowed_ptr(current, cpu_present_mask);
- 	migrate_me();
- 	return 0;
+diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
+index 686f1d1eb32e..8cd3724714fe 100644
+--- a/arch/arm/kernel/smp.c
++++ b/arch/arm/kernel/smp.c
+@@ -463,14 +463,12 @@ void arch_send_call_function_single_ipi(int cpu)
  }
+ 
+ #ifdef CONFIG_IRQ_WORK
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ void arch_irq_work_raise(void)
+ {
+ 	if (is_smp())
+ 		smp_cross_call(cpumask_of(smp_processor_id()), IPI_IRQ_WORK);
+ }
+ #endif
+-#endif
+ 
+ static const char *ipi_types[NR_IPI] = {
+ #define S(x,s)	[x] = s
+diff --git a/arch/powerpc/kernel/time.c b/arch/powerpc/kernel/time.c
+index 6d37d7603a8f..5bec5fd82a7e 100644
+--- a/arch/powerpc/kernel/time.c
++++ b/arch/powerpc/kernel/time.c
+@@ -423,7 +423,7 @@ unsigned long profile_pc(struct pt_regs *regs)
+ EXPORT_SYMBOL(profile_pc);
+ #endif
+ 
+-#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
++#if defined(CONFIG_IRQ_WORK)
+ 
+ /*
+  * 64-bit uses a byte in the PACA, 32-bit uses a per-cpu variable...
+diff --git a/arch/sparc/kernel/pcr.c b/arch/sparc/kernel/pcr.c
+index 927d9c5e50f5..7e967c8018c8 100644
+--- a/arch/sparc/kernel/pcr.c
++++ b/arch/sparc/kernel/pcr.c
+@@ -43,12 +43,10 @@ void __irq_entry deferred_pcr_work_irq(int irq, struct pt_regs *regs)
+ 	set_irq_regs(old_regs);
+ }
+ 
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ void arch_irq_work_raise(void)
+ {
+ 	set_softint(1 << PIL_DEFERRED_PCR_WORK);
+ }
+-#endif
+ 
+ const struct pcr_ops *pcr_ops;
+ EXPORT_SYMBOL_GPL(pcr_ops);
+diff --git a/arch/x86/kernel/irq_work.c b/arch/x86/kernel/irq_work.c
+index 3d21f7bd7b42..1de84e3ab4e0 100644
+--- a/arch/x86/kernel/irq_work.c
++++ b/arch/x86/kernel/irq_work.c
+@@ -38,7 +38,6 @@ __visible void smp_trace_irq_work_interrupt(struct pt_regs *regs)
+ 	exiting_irq();
+ }
+ 
+-#ifndef CONFIG_PREEMPT_RT_FULL
+ void arch_irq_work_raise(void)
+ {
+ #ifdef CONFIG_X86_LOCAL_APIC
+@@ -49,4 +48,3 @@ void arch_irq_work_raise(void)
+ 	apic_wait_icr_idle();
+ #endif
+ }
+-#endif
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index 35d21f93bbe8..5f7d93d89c7f 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -16,6 +16,7 @@
+ #include <linux/tick.h>
+ #include <linux/cpu.h>
+ #include <linux/notifier.h>
++#include <linux/interrupt.h>
+ #include <asm/processor.h>
+ 
+ 
+@@ -51,11 +52,7 @@ static bool irq_work_claim(struct irq_work *work)
+ 	return true;
+ }
+ 
+-#ifdef CONFIG_PREEMPT_RT_FULL
+-void arch_irq_work_raise(void)
+-#else
+ void __weak arch_irq_work_raise(void)
+-#endif
+ {
+ 	/*
+ 	 * Lame architectures will get the timer tick callback
+diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
+index ab32130964b6..6c97081f67f9 100644
+--- a/kernel/time/tick-sched.c
++++ b/kernel/time/tick-sched.c
+@@ -180,6 +180,11 @@ static bool can_stop_full_tick(void)
+ 		return false;
+ 	}
+ 
++	if (!arch_irq_work_has_interrupt()) {
++		trace_tick_stop(0, "missing irq work interrupt\n");
++		return false;
++	}
++
+ 	/* sched_clock_tick() needs us? */
+ #ifdef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
+ 	/*
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 34fd2dbba3e3..36b9f10bb3c7 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
+ 	scheduler_tick();
+ 	run_local_timers();
+ 	rcu_check_callbacks(cpu, user_tick);
+-#if defined(CONFIG_IRQ_WORK)
++#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
+ 	if (in_irq())
+ 		irq_work_run();
+ #endif
 -- 
 2.1.4
