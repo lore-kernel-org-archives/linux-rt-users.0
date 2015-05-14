@@ -1,45 +1,28 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/2] Linux 3.2.68-rt100-rc1
-Date: Thu, 14 May 2015 10:08:44 -0400
-Message-ID: <20150514140853.479104910@goodmis.org>
-References: <20150514140842.425346693@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH v2 0/2] powerpc/kvm: Enable running guests on RT Linux
+Date: Thu, 14 May 2015 17:36:39 +0200
+Message-ID: <20150514153639.GA13442@linutronix.de>
+References: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:36588 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1161085AbbENOJA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 May 2015 10:09:00 -0400
-Content-Disposition: inline; filename=0002-Linux-3.2.68-rt100-rc1.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: tglx@linutronix.de, pbonzini@redhat.com, agraf@suse.de,
+	linuxppc-dev@lists.ozlabs.org, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, mihai.caraman@freescale.com,
+	b10716@freescale.com
+To: Bogdan Purcareata <bogdan.purcareata@freescale.com>,
+	scottwood@freescale.com
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.2.68-rt100-rc1 stable review patch.
-If anyone has any objections, please let me know.
+* Bogdan Purcareata | 2015-04-24 15:53:11 [+0000]:
 
-------------------
+>0001: converts the openpic spinlock to a raw spinlock, in order to circumvent
+>0002: disables in-kernel MPIC emulation for guest running on RT, in order to
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+Scott, I'm asking here for your explicit Acked-by on those two patches.
+That you want it *that* way. We have now a nice explanation in #1 :)
 
----
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
-
-diff --git a/localversion-rt b/localversion-rt
-index 31145e774bbe..1830411b8ea3 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt99
-+-rt100-rc1
--- 
-2.1.4
-
-
+Sebastian
