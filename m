@@ -1,30 +1,31 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH v2 2/2] powerpc/kvm: Disable in-kernel MPIC emulation for
- PREEMPT_RT_FULL
-Date: Thu, 14 May 2015 21:36:01 +0200
-Message-ID: <20150514193601.GI13442@linutronix.de>
-References: <1429890793-19487-1-git-send-email-bogdan.purcareata@freescale.com>
- <1429890793-19487-3-git-send-email-bogdan.purcareata@freescale.com>
+Subject: Re: [PATCH v2 RT 3.18] irq_work: Provide a soft-irq based queue
+Date: Thu, 14 May 2015 21:58:11 +0200
+Message-ID: <20150514195811.GJ13442@linutronix.de>
+References: <5538A0DF.50401@siemens.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: tglx@linutronix.de, pbonzini@redhat.com, agraf@suse.de,
-	scottwood@freescale.com, linuxppc-dev@lists.ozlabs.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	mihai.caraman@freescale.com, b10716@freescale.com
-To: Bogdan Purcareata <bogdan.purcareata@freescale.com>
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Jan Kiszka <jan.kiszka@siemens.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1429890793-19487-3-git-send-email-bogdan.purcareata@freescale.com>
+In-Reply-To: <5538A0DF.50401@siemens.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Bogdan Purcareata | 2015-04-24 15:53:13 [+0000]:
+* Jan Kiszka | 2015-04-23 09:35:59 [+0200]:
 
->While converting the openpic emulation code to use a raw_spinlock_t enables
->guests to run on RT, there's still a performance issue. For interrupts sent in
-
->Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
-
-Applied with Scott's Acked-by
+>Instead of turning all irq_work requests into lazy ones on -rt, just
+>move their execution from hard into soft-irq context.
+>
+>This resolves deadlocks of ftrace which will queue work from arbitrary
+>contexts, including those that have locks held that are needed for
+>raising a soft-irq.
+>
+>Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+Applied
 
 Sebastian
