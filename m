@@ -1,61 +1,40 @@
-From: Jan Kiszka <jan.kiszka@web.de>
-Subject: Re: [PATCH v2 RT 3.18] irq_work: Provide a soft-irq based queue
-Date: Fri, 15 May 2015 09:43:14 +0200
-Message-ID: <5555A392.1050203@web.de>
-References: <5538A0DF.50401@siemens.com> <20150514195811.GJ13442@linutronix.de>
+From: Anders Roxell <anders.roxell@linaro.org>
+Subject: Re: [PATCHv2 3/3] arch/arm64: Enable PREEMPT_RT_FULL
+Date: Fri, 15 May 2015 14:08:10 +0200
+Message-ID: <20150515120810.GA10988@8074w.roxell.se>
+References: <1430167990-12333-1-git-send-email-anders.roxell@linaro.org>
+ <1430167990-12333-4-git-send-email-anders.roxell@linaro.org>
+ <20150514155723.GD13442@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
- protocol="application/pgp-signature";
- boundary="WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE"
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150514195811.GJ13442@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
-
-This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
---WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: quoted-printable
+Cc: ayyappa.ch.linux@gmail.com, linux-rt-users@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org, kevin.hilman@linaro.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-la0-f47.google.com ([209.85.215.47]:36064 "EHLO
+	mail-la0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S934325AbbEOMIP (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 May 2015 08:08:15 -0400
+Received: by lagv1 with SMTP id v1so116124536lag.3
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 May 2015 05:08:13 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <20150514155723.GD13442@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2015-05-14 21:58, Sebastian Andrzej Siewior wrote:
-> * Jan Kiszka | 2015-04-23 09:35:59 [+0200]:
->=20
->> Instead of turning all irq_work requests into lazy ones on -rt, just
->> move their execution from hard into soft-irq context.
->>
->> This resolves deadlocks of ftrace which will queue work from arbitrary=
+On 2015-05-14 17:57, Sebastian Andrzej Siewior wrote:
+> * Anders Roxell | 2015-04-27 22:53:10 [+0200]:
+> 
+> >arm64 is missing support for PREEMPT_RT. The main feature which is
+> >lacking is support for lazy preemption. The arch-specific entry code,
+> 
+> I'm taking this but I am renaming the subject. Lazy preempt is not
+> required by -RT but supporting it benefits it. That means you could run
+> arm64 without it.
 
->> contexts, including those that have locks held that are needed for
->> raising a soft-irq.
->>
->> Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
-> Applied
+Thanks for picking up the patch and fixing the subject,
+though I was surprised to see the ownership changed.
 
-The thread went on, and Mike suggested an alternative implementation [1]
-that works fine and is even cleaner. Let's pick his.
-
-Jan
-
-[1] http://thread.gmane.org/gmane.linux.kernel/1937960
-
-
-
---WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: OpenPGP digital signature
-Content-Disposition: attachment; filename="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iEYEARECAAYFAlVVo5IACgkQitSsb3rl5xT/FgCeIE05qXf3DpPNPCFuKIeDGB3n
-BI8AoJ06Aw3EnUu9ryI1lDXQGYU3TshL
-=dXrS
------END PGP SIGNATURE-----
-
---WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE--
+Cheers,
+Anders
