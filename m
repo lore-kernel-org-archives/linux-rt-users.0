@@ -1,53 +1,61 @@
-From: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
-Subject: Re: [PATCH] iio: adc: xilinx-xadc: Convert to raw spinlock
-Date: Thu, 14 May 2015 17:45:04 -0500
-Message-ID: <55552570.5050407@ni.com>
-References: <1431013090-18996-1-git-send-email-xander.huff@ni.com> <20150514171038.GG13442@linutronix.de>
+From: Jan Kiszka <jan.kiszka@web.de>
+Subject: Re: [PATCH v2 RT 3.18] irq_work: Provide a soft-irq based queue
+Date: Fri, 15 May 2015 09:43:14 +0200
+Message-ID: <5555A392.1050203@web.de>
+References: <5538A0DF.50401@siemens.com> <20150514195811.GJ13442@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org,
-	pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
-	soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ben.shelton-acOepvfBmUk@public.gmane.org,
-	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org
-To: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150514171038.GG13442-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150514195811.GJ13442@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 5/14/2015 12:10 PM, Sebastian Andrzej Siewior wrote:
->
-> Do you have any cyclictest numbers how much the latency increases on
-> heavy iio usage? Traditionally the primary handler should be very quick
-> / short.
->
-> Sebastian
->
-With no other processes running, I got the following results after a couple of 
-hours on one of our devices:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
 
-admin@Xander-roboRIO:~# cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 0.01 0.07 0.12 1/176 1473
+On 2015-05-14 21:58, Sebastian Andrzej Siewior wrote:
+> * Jan Kiszka | 2015-04-23 09:35:59 [+0200]:
+>=20
+>> Instead of turning all irq_work requests into lazy ones on -rt, just
+>> move their execution from hard into soft-irq context.
+>>
+>> This resolves deadlocks of ftrace which will queue work from arbitrary=
 
-T: 0 ( 1373) P:98 I:1000 C:6503872 Min:      9 Act:   13 Avg:   13 Max:      51
-T: 1 ( 1374) P:98 I:1500 C:4335914 Min:      9 Act:   12 Avg:   13 Max:      49
+>> contexts, including those that have locks held that are needed for
+>> raising a soft-irq.
+>>
+>> Signed-off-by: Jan Kiszka <jan.kiszka@siemens.com>
+> Applied
 
-With a VI reading all default handles (raw, offset, scale, sampling_frequency) 
-in /sys/bus/iio/devices/iio:device0 constantly in a while loop, I got the 
-following results after a couple hours on the same device:
+The thread went on, and Mike suggested an alternative implementation [1]
+that works fine and is even cleaner. Let's pick his.
 
-admin@Xander-roboRIO:~# cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 6.93 7.30 7.47 3/182 1530
+Jan
 
-T: 0 ( 1487) P:98 I:1000 C:4497008 Min:     11 Act:   20 Avg:   21 Max:      69
-T: 1 ( 1488) P:98 I:1500 C:2998005 Min:     11 Act:   20 Avg:   22 Max:      59
+[1] http://thread.gmane.org/gmane.linux.kernel/1937960
 
--- 
-Xander Huff
-Staff Software Engineer
-National Instruments
+
+
+--WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iEYEARECAAYFAlVVo5IACgkQitSsb3rl5xT/FgCeIE05qXf3DpPNPCFuKIeDGB3n
+BI8AoJ06Aw3EnUu9ryI1lDXQGYU3TshL
+=dXrS
+-----END PGP SIGNATURE-----
+
+--WEmAAsRuFw28C1u4pdj95Lvhfva9hfWbE--
