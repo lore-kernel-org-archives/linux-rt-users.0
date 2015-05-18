@@ -1,39 +1,30 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 3.18] irq_work: Provide a soft-irq based queue
-Date: Mon, 18 May 2015 21:52:01 +0200
-Message-ID: <20150518195201.GA4275@linutronix.de>
-References: <1429769505.3419.9.camel@gmail.com>
- <55389632.50308@siemens.com>
- <1429772482.3419.40.camel@gmail.com>
- <55389B67.3000703@siemens.com>
- <1429773566.3419.42.camel@gmail.com>
- <20150423170026.0de65c90@gandalf.local.home>
- <1429858489.3461.28.camel@gmail.com>
- <553A062D.6090608@siemens.com>
- <1429946448.3179.33.camel@gmail.com>
- <553B4195.5070207@web.de>
+From: =?UTF-8?B?SmFyb23DrXIgTWlrZcWh?= <mira.mikes@gmail.com>
+Subject: debian RT kernel
+Date: Mon, 18 May 2015 22:13:40 +0200
+Message-ID: <CAG_ZyaA83dFKKvEsNhzyGkjrbsY=_mFBGjmg+M1-+MPo=-hOUw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	RT <linux-rt-users@vger.kernel.org>,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>
-To: Jan Kiszka <jan.kiszka@web.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <553B4195.5070207@web.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ob0-f169.google.com ([209.85.214.169]:34142 "EHLO
+	mail-ob0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932302AbbERUNk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 May 2015 16:13:40 -0400
+Received: by obfe9 with SMTP id e9so139082113obf.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 18 May 2015 13:13:40 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Jan Kiszka | 2015-04-25 09:26:13 [+0200]:
+Hi all,
 
->Acked-by: Jan Kiszka <jan.kiszka@siemens.com>
->
->This way around makes more sense as you changed the patch significantly.
+We quite recently had RT in debian easily accessible for all users
+what I personally consider to be great achievement.
+But because RT development interruption we don't have fresh RT kernels anymore.
 
-Now I took the proper one.
+Pengutronix provided debian packages of RT kernels before.
+Is there any place where to get debian packages of RT kernels?
 
->Thanks,
->Jan
+best regards
 
-Sebastian
+mira
