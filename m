@@ -1,52 +1,87 @@
-From: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCH] iio: adc: xilinx-xadc: Convert to raw spinlock
-Date: Mon, 18 May 2015 23:17:28 +0200
-Message-ID: <20150518211728.GC4275@linutronix.de>
-References: <1431013090-18996-1-git-send-email-xander.huff@ni.com>
- <20150514171038.GG13442@linutronix.de>
- <55552570.5050407@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] arch/arm64 :Cyclic Test fix in ARM64 fpsimd
+Date: Mon, 18 May 2015 23:38:35 +0200
+Message-ID: <20150518213835.GD4275@linutronix.de>
+References: <CAPyr0yJSGqvxkUWLtNKe0q5mNanBczAfAVx0tPKuzYeDG+eJ=Q@mail.gmail.com>
+ <20150506193803.GC32577@8074w.roxell.se>
+ <CAPyr0y+OYikc2Euh++2nTWnVb-aZ4i-tifLLk3XUiRahtHKjCA@mail.gmail.com>
+ <20150508000929.GE31914@8074w.roxell.se>
+ <CAPyr0yLq7PsMW45G+oJzJLbQ-be6Xx9n2S2SU2CiV+AMH9jJ8Q@mail.gmail.com>
+ <20150514160733.GE13442@linutronix.de>
+ <CAPyr0yL8xJt4bj7poLFrauR0wtfKB7nPg+uy4A+R0dTT-eM3Qw@mail.gmail.com>
+ <CAF7YWnw08YK7ogAoLTYXusOvtGCxfDPJW0H+8LyWDzNi_CbR=w@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org,
-	pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
-	soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ben.shelton-acOepvfBmUk@public.gmane.org,
-	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org
-To: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+Cc: Ayyappa Ch <ayyappa.ch.linux@gmail.com>,
+	Anders Roxell <anders.roxell@linaro.org>,
+	linux-arm-kernel@lists.infradead.org,
+	RT <linux-rt-users@vger.kernel.org>,
+	Kevin Hilman <kevin.hilman@linaro.org>
+To: Gary Robertson <gary.robertson@linaro.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:51330 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752398AbbERVii (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 May 2015 17:38:38 -0400
 Content-Disposition: inline
-In-Reply-To: <55552570.5050407-acOepvfBmUk@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CAF7YWnw08YK7ogAoLTYXusOvtGCxfDPJW0H+8LyWDzNi_CbR=w@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Xander Huff | 2015-05-14 17:45:04 [-0500]:
+* Gary Robertson | 2015-05-18 08:23:16 [-0500]:
 
->With no other processes running, I got the following results after a
->couple of hours on one of our devices:
->
->admin@Xander-roboRIO:~# cyclictest -S -m -p 98
-># /dev/cpu_dma_latency set to 0us
->policy: fifo: loadavg: 0.01 0.07 0.12 1/176 1473
->
->T: 0 ( 1373) P:98 I:1000 C:6503872 Min:      9 Act:   13 Avg:   13 Max:      51
->T: 1 ( 1374) P:98 I:1500 C:4335914 Min:      9 Act:   12 Avg:   13 Max:      49
->
->With a VI reading all default handles (raw, offset, scale,
->sampling_frequency) in /sys/bus/iio/devices/iio:device0 constantly in
->a while loop, I got the following results after a couple hours on the
->same device:
->
->admin@Xander-roboRIO:~# cyclictest -S -m -p 98
-># /dev/cpu_dma_latency set to 0us
->policy: fifo: loadavg: 6.93 7.30 7.47 3/182 1530
->
->T: 0 ( 1487) P:98 I:1000 C:4497008 Min:     11 Act:   20 Avg:   21 Max:      69
->T: 1 ( 1488) P:98 I:1500 C:2998005 Min:     11 Act:   20 Avg:   22 Max:      59
+>I have been following this thread and was able to obtain a copy of the full
+>log from Anders.
+>My initial impression based upon the log entries is that the excessive
+>latencies did not occur during the fpsimd calls -
+>but the actual progress of an individual task is a bit difficult to follow
+>through the logs, so in my spare time
+>I started writing a parser to sort it into a format easier to follow.  I
+>hope to have it completed shortly.
+>This parser will sort the log first by CPU and then by thread so the cause
+>of the delay will be easier to see.
 
-So there is an increase. And there is even a for-loop and I don't know
-how deep it is nested. Anyway, do you think it is worth it or would it
-be better to get rid of the raw-locks and simply push everything into
-threaded context?
+There is a smaller version of it at 
+    https://breakpoint.cc/arm64_simd_trace_cpu.txt
+
+which contains only CPU0 around that "event. Here are a few pieces:
+|cyclicte-964     0....1.. 511965877us : __schedule <-schedule
+cyclictest goes away
+
+|kworker/-353     0....111 511965906us : rt_spin_unlock <-process_one_work
+kworker is now active
+
+|kworker/-353     0....112 511965954us : kernel_neon_begin_partial <-virt_efi_set_time
+|kworker/-353     0....112 511965955us : preempt_count_add <-kernel_neon_begin_partial
+and kworker invokes virt_efi_set_time which does the neon save thingy.
+
+|kworker/-353     0d...212 511966764us : __handle_domain_irq <-gic_handle_irq
+now we have an interrupt comming.
+
+|kworker/-353     0dn.h412 511966793us : task_woken_rt <-ttwu_do_wakeup
+it might be the timer for cyclictest wakeup it might not, however we
+have the N flag set and kworker has to go.
+
+|kworker/-353     0dn..212 511966806us : rcu_sysidle_enter <-rcu_irq_exit
+|kworker/-353     0dn..212 511967108us : __handle_domain_irq <-gic_handle_irq
+|kworker/-353     0dn..212 511967109us : irq_enter <-__handle_domain_irq
+so we finished handling one irq and we contiunue with the next one? This
+goes on and on and on until finally after a while we have this:
+
+|kworker/-353     0dn..212 512064373us : rcu_irq_exit <-irq_exit
+|kworker/-353     0dn..212 512064374us : rcu_sysidle_enter <-rcu_irq_exit
+|kworker/-353     0.n..212 512065116us : kernel_neon_end <-virt_efi_set_time
+|kworker/-353     0.n..212 512065116us : preempt_count_sub <-kernel_neon_end
+|kworker/-353     0.n..112 512065117us : __schedule <-preempt_schedule
+
+and this time we were able to return from rcu_irq_exit and continue with
+virt_efi_set_time and finally switch the task. So yes, preemption was
+disabled during kernel_neon_{being|end} but we also received 81
+interrupt ("gic_handle_irq invocation") during that time. Why is that?
+
+>Regards,
+>
+>Gary Robertson
 
 Sebastian
