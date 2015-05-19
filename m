@@ -1,43 +1,51 @@
-From: Carsten Emde <C.Emde@osadl.org>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
 Subject: Re: [ANNOUNCE] 4.0.4-rt1
-Date: Wed, 20 May 2015 00:33:54 +0200
-Message-ID: <555BBA52.9030809@osadl.org>
+Date: Wed, 20 May 2015 01:48:58 +0300
+Message-ID: <555BBDDA.2080904@pavlinux.ru>
 References: <20150519213923.GA26363@linutronix.de>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
 	John Kacur <jkacur@redhat.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:38126 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751230AbbESWfA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 May 2015 18:35:00 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20150519213923.GA26363@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian,
-
+20.05.2015 00:39, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
+=82:
+> Dear RT folks!
+>
 > I'm pleased to announce the v4.0.4-rt1 patch set.
-First smoke test on an Intel Gulftown 980X: Compiled and booted without 
-problem, no regression of real-time capabilities so far.
 
-> [..]
-> Known issues:
->        - My AMD box throws a lot of "cpufreq_stat_notifier_trans: No
->          policy found" warnings after boot. It is gone after manually
->          setting the policy (to something else than reported).
-Same here, probably a minor issue. The messages disappear after setting 
-cpufreq to performance, but they reappear when setting cpufreq back to 
-ondemand.
 
-On a side note: We need teach cyclictest 4.0 - right now, it says:
-WARN: Running on unknown kernel version...YMMV
+Patch worked with 4.1.0-rc2, exclude at91rm9200_time.c
 
-Thanks, Sebastian, for the good work!
+--- cut ---
 
-	-Carsten.
+can't find file to patch at input line 700
+Perhaps you used the wrong -p or --strip option?
+The text leading up to this was:
+--------------------------
+|diff --git a/arch/arm/mach-at91/at91rm9200_time.c=20
+b/arch/arm/mach-at91/at91rm9200_time.c
+|index b00d09555f2b..cc873c12181d 100644
+|--- a/arch/arm/mach-at91/at91rm9200_time.c
+|+++ b/arch/arm/mach-at91/at91rm9200_time.c
+--------------------------
+=46ile to patch:
+Skip this patch? [y]
+Skipping patch.
+1 out of 1 hunk ignored
+
+--- cut ---
+
+--=20
+
+                                                          Pavel.
