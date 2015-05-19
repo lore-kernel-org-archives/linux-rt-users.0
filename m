@@ -1,38 +1,61 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: debian RT kernel
-Date: Tue, 19 May 2015 15:06:21 -0400
-Message-ID: <20150519150621.128ecdb7@gandalf.local.home>
-References: <CAG_ZyaA83dFKKvEsNhzyGkjrbsY=_mFBGjmg+M1-+MPo=-hOUw@mail.gmail.com>
-	<20150519115633.55ec7739@gandalf.local.home>
-	<1432054729.12412.26.camel@decadent.org.uk>
-	<CAG_ZyaDHeu11MYGRveTcaEz+QyRR7=ZcuuN4ke4RJV3EfVNKnQ@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 4.0.4-rt1
+Date: Tue, 19 May 2015 23:39:23 +0200
+Message-ID: <20150519213923.GA26363@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Ben Hutchings <ben@decadent.org.uk>, linux-rt-users@vger.kernel.org
-To: =?UTF-8?B?SmFyb23DrXIgTWlrZcWh?= <mira.mikes@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0214.hostedemail.com ([216.40.44.214]:49676 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750956AbbESTGZ convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 19 May 2015 15:06:25 -0400
-In-Reply-To: <CAG_ZyaDHeu11MYGRveTcaEz+QyRR7=ZcuuN4ke4RJV3EfVNKnQ@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 19 May 2015 20:45:58 +0200
-Jarom=C3=ADr Mike=C5=A1 <mira.mikes@gmail.com> wrote:
+Dear RT folks!
 
-> Do you (rt devs) plan make patches again for latest kernels as you
-> have done before?
+I'm pleased to announce the v4.0.4-rt1 patch set.
 
-Ideally, we will get RT into mainline. There's still a lot of work to
-do, and that's somewhat where the focus is.
+Changes since v3.18.13-rt10
 
--- Steve
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+- Rebase to v4.0.
+
+- David Hildenbrand's series of decouple of preempt_disable from
+  pagefault_disable is part of the series.
+
+While doing the v4.0 I stumbled upon a few things. Therefore I plan to
+reorder the -RT queue and merge patches where possible. Also I intend t=
+o
+drop PREEMPT_RTB and PREEMPT_RT_BASE unless there is need for it=E2=80=A6
+
+Known issues:
+
+      - My AMD box throws a lot of "cpufreq_stat_notifier_trans: No
+        policy found" warnings after boot. It is gone after manually
+        setting the policy (to something else than reported).
+
+      - bcache is disabled.
+
+      - CPU hotplug works in general. Steven's test script however
+        deadlocks usually on the second invocation.
+
+      - xor / raid_pq
+        I had max latency jumping up to 67563us on one CPU while the ne=
+xt
+        lower max was 58us. I tracked it down to module's init code of
+        xor and raid_pq. Both disable preemption while measuring the
+        performance of the individual implementation.
+
+The RT patch against 4.0.4 can be found here:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/4.0/patch-4.0.4-=
+rt1.patch.xz
+
+The split quilt queue is available at:
+
+   https://www.kernel.org/pub/linux/kernel/projects/rt/4.0/patches-4.0.=
+4-rt1.tar.xz
+
+Sebastian
