@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.107-rt134
-Date: Wed, 20 May 2015 10:57:15 -0400
-Message-ID: <20150520105715.042f11a6@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.68-rt100
+Date: Wed, 20 May 2015 10:57:45 -0400
+Message-ID: <20150520105745.2fabfb66@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.107-rt134 stable release.
+I'm pleased to announce the 3.2.68-rt100 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 078c1c9a5d7b822c2dbf8944dca0f59c96e89088
+  branch: v3.2-rt
+  Head SHA1: 0ebfe81f7a834713ae0b2e0718aa34057fafa106
 
 
-Or to build 3.4.107-rt134 directly, the following patches should be applied:
+Or to build 3.2.68-rt100 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.107.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.107-rt134.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt100.patch.xz
 
 
 
-You can also build from 3.4.107-rt133 by applying the incremental patch:
+You can also build from 3.2.68-rt99 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.107-rt133-rt134.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt99-rt100.patch.xz
 
 
 
@@ -50,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.107-rt133:
+Changes from v3.2.68-rt99:
 
 ---
 
@@ -58,7 +58,7 @@ Marcelo Tosatti (1):
       KVM: lapic: mark LAPIC timer handler as irqsafe
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.107-rt134
+      Linux 3.2.68-rt100
 
 ----
  arch/x86/kvm/lapic.c | 42 +++++++++++++++++++++++++++++++++++++++---
@@ -66,10 +66,10 @@ Steven Rostedt (Red Hat) (1):
  2 files changed, 40 insertions(+), 4 deletions(-)
 ---------------------------
 diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 578613da251e..b4bdc60f171f 100644
+index 176205ab0ca8..745cbfe4b51c 100644
 --- a/arch/x86/kvm/lapic.c
 +++ b/arch/x86/kvm/lapic.c
-@@ -683,8 +683,38 @@ static void update_divide_count(struct kvm_lapic *apic)
+@@ -679,8 +679,38 @@ static void update_divide_count(struct kvm_lapic *apic)
  				   apic->divide_count);
  }
  
@@ -108,7 +108,7 @@ index 578613da251e..b4bdc60f171f 100644
  	ktime_t now;
  	atomic_set(&apic->lapic_timer.pending, 0);
  
-@@ -714,9 +744,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -710,9 +740,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			}
  		}
  
@@ -121,7 +121,7 @@ index 578613da251e..b4bdc60f171f 100644
  
  		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
  			   PRIx64 ", "
-@@ -746,8 +778,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -742,8 +774,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			ns = (tscdeadline - guest_tsc) * 1000000ULL;
  			do_div(ns, this_tsc_khz);
  		}
@@ -133,7 +133,7 @@ index 578613da251e..b4bdc60f171f 100644
  
  		local_irq_restore(flags);
  	}
-@@ -1177,6 +1211,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
+@@ -1173,6 +1207,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
  	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
  		     HRTIMER_MODE_ABS);
  	apic->lapic_timer.timer.function = kvm_timer_fn;
@@ -141,7 +141,7 @@ index 578613da251e..b4bdc60f171f 100644
  	apic->lapic_timer.t_ops = &lapic_timer_ops;
  	apic->lapic_timer.kvm = vcpu->kvm;
  	apic->lapic_timer.vcpu = vcpu;
-@@ -1273,7 +1308,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
+@@ -1269,7 +1304,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
  
  	timer = &apic->lapic_timer.timer;
  	if (hrtimer_cancel(timer))
@@ -152,9 +152,9 @@ index 578613da251e..b4bdc60f171f 100644
  
  void kvm_lapic_sync_from_vapic(struct kvm_vcpu *vcpu)
 diff --git a/localversion-rt b/localversion-rt
-index c2c7e0fb6685..6067da4c8c99 100644
+index 31145e774bbe..79d3e2b9f550 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt133
-+-rt134
+--rt99
++-rt100
