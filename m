@@ -1,160 +1,52 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.68-rt100
-Date: Wed, 20 May 2015 10:57:45 -0400
-Message-ID: <20150520105745.2fabfb66@gandalf.local.home>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] cyclictest: remove compatibilty hack for old libnuma,
+ repairs "-a" for isolcpus
+Date: Wed, 20 May 2015 21:54:15 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1505202153100.4225@nanos>
+References: <20150427125846.1de46037@sluggy> <1432126711-18618-1-git-send-email-henning.schild@siemens.com> <alpine.LFD.2.10.1505201629400.7867@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1746178683-1432151656=:4225"
+Cc: Henning Schild <henning.schild@siemens.com>,
+	RT <linux-rt-users@vger.kernel.org>,
+	John Kacur <jkacur@gmail.com>,
+	"Gary S. Robertson" <gary.robertson@linaro.org>,
+	Clark Williams <williams@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:34792 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754348AbbETTyH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 May 2015 15:54:07 -0400
+In-Reply-To: <alpine.LFD.2.10.1505201629400.7867@riemann>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
-Dear RT Folks,
+--8323329-1746178683-1432151656=:4225
+Content-Type: TEXT/PLAIN; charset=UTF-8
+Content-Transfer-Encoding: 8BIT
 
-I'm pleased to announce the 3.2.68-rt100 stable release.
+On Wed, 20 May 2015, John Kacur wrote:
+> This is a terrible hack, but I'm afraid to remove it yet.
+> Even systems as recent as Fedora 19 have a libnuma less than that.
+> pm -qf /usr/lib64/libnuma.so
+> numactl-devel-2.0.8-4.fc19.x86_64
+> [jkacur@riemann rt-tests]$ cat /etc/fedora-release 
+> Fedora release 19 (Schrödinger’s Cat)
+> 
+> This is causing problems for people who want to pin threads to 
+> CPUs isolated with isolcpus=, so we do need to do something about.
+> 
+> I could perhaps accept an improved hack that tests whether the hack itself 
+> is needed, until we have a better solution.
 
+I'm not a great fan of it, but I think that rt-tests really needs
+proper automake with proper tests for various bits and pieces.
 
-You can get this release via the git tree at:
+Thanks,
 
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 0ebfe81f7a834713ae0b2e0718aa34057fafa106
-
-
-Or to build 3.2.68-rt100 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.68.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.68-rt100.patch.xz
-
-
-
-You can also build from 3.2.68-rt99 by applying the incremental patch:
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.68-rt99-rt100.patch.xz
-
-
-
-Enjoy,
-
--- Steve
-
-
-Changes from v3.2.68-rt99:
-
----
-
-Marcelo Tosatti (1):
-      KVM: lapic: mark LAPIC timer handler as irqsafe
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.68-rt100
-
-----
- arch/x86/kvm/lapic.c | 42 +++++++++++++++++++++++++++++++++++++++---
- localversion-rt      |  2 +-
- 2 files changed, 40 insertions(+), 4 deletions(-)
----------------------------
-diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 176205ab0ca8..745cbfe4b51c 100644
---- a/arch/x86/kvm/lapic.c
-+++ b/arch/x86/kvm/lapic.c
-@@ -679,8 +679,38 @@ static void update_divide_count(struct kvm_lapic *apic)
- 				   apic->divide_count);
- }
- 
-+
-+static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
-+
-+static void apic_timer_expired(struct hrtimer *data)
-+{
-+	int ret, i = 0;
-+	enum hrtimer_restart r;
-+	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
-+
-+	r = apic_timer_fn(data);
-+
-+	if (r == HRTIMER_RESTART) {
-+		do {
-+			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
-+			if (ret == -ETIME)
-+				hrtimer_add_expires_ns(&ktimer->timer,
-+							ktimer->period);
-+			i++;
-+		} while (ret == -ETIME && i < 10);
-+
-+		if (ret == -ETIME) {
-+			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
-+			       __func__);
-+			WARN_ON_ONCE(1);
-+		}
-+	}
-+}
-+
-+
- static void start_apic_timer(struct kvm_lapic *apic)
- {
-+	int ret;
- 	ktime_t now;
- 	atomic_set(&apic->lapic_timer.pending, 0);
- 
-@@ -710,9 +740,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			}
- 		}
- 
--		hrtimer_start(&apic->lapic_timer.timer,
-+		ret = hrtimer_start(&apic->lapic_timer.timer,
- 			      ktime_add_ns(now, apic->lapic_timer.period),
- 			      HRTIMER_MODE_ABS);
-+		if (ret == -ETIME)
-+			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
- 			   PRIx64 ", "
-@@ -742,8 +774,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
- 			do_div(ns, this_tsc_khz);
- 		}
--		hrtimer_start(&apic->lapic_timer.timer,
-+		ret = hrtimer_start(&apic->lapic_timer.timer,
- 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
-+		if (ret == -ETIME)
-+			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		local_irq_restore(flags);
- 	}
-@@ -1173,6 +1207,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
- 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
- 		     HRTIMER_MODE_ABS);
- 	apic->lapic_timer.timer.function = kvm_timer_fn;
-+	apic->lapic_timer.timer.irqsafe = 1;
- 	apic->lapic_timer.t_ops = &lapic_timer_ops;
- 	apic->lapic_timer.kvm = vcpu->kvm;
- 	apic->lapic_timer.vcpu = vcpu;
-@@ -1269,7 +1304,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
- 
- 	timer = &apic->lapic_timer.timer;
- 	if (hrtimer_cancel(timer))
--		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
-+		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
-+			apic_timer_expired(timer);
- }
- 
- void kvm_lapic_sync_from_vapic(struct kvm_vcpu *vcpu)
-diff --git a/localversion-rt b/localversion-rt
-index 31145e774bbe..79d3e2b9f550 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt99
-+-rt100
+	tglx
+--8323329-1746178683-1432151656=:4225--
