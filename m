@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.39-rt38
-Date: Wed, 20 May 2015 10:55:35 -0400
-Message-ID: <20150520105535.63704e6b@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.40-rt56
+Date: Wed, 20 May 2015 10:56:19 -0400
+Message-ID: <20150520105619.0aa5ecec@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,30 +18,30 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.39-rt38 stable release.
+I'm pleased to announce the 3.12.40-rt56 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 7189db6fab1e3be351479097e6a043191e0f2c87
+  branch: v3.12-rt
+  Head SHA1: 32590d4c47d7924418dcf73896988e32d7f0ed02
 
 
-Or to build 3.14.39-rt38 directly, the following patches should be applied:
+Or to build 3.12.40-rt56 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.39.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.40.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.39-rt38.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.40-rt56.patch.xz
 
 
 
-You can also build from 3.14.39-rt37 by applying the incremental patch:
+You can also build from 3.12.40-rt55 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.39-rt37-rt38.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.40-rt55-rt56.patch.xz
 
 
 
@@ -50,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.14.39-rt37:
+Changes from v3.12.40-rt55:
 
 ---
 
@@ -66,10 +66,9 @@ Sebastian Andrzej Siewior (1):
       kernel/irq_work: fix no_hz deadlock
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.14.39-rt38
+      Linux 3.12.40-rt56
 
 ----
- arch/arm/kernel/smp.c               |  2 --
  arch/arm/kvm/arm.c                  |  4 ++--
  arch/arm/kvm/psci.c                 |  4 ++--
  arch/powerpc/include/asm/kvm_host.h |  4 ++--
@@ -88,32 +87,13 @@ Steven Rostedt (Red Hat) (1):
  localversion-rt                     |  2 +-
  virt/kvm/async_pf.c                 |  4 ++--
  virt/kvm/kvm_main.c                 | 16 ++++++-------
- 19 files changed, 109 insertions(+), 55 deletions(-)
+ 18 files changed, 109 insertions(+), 53 deletions(-)
 ---------------------------
-diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
-index 686f1d1eb32e..8cd3724714fe 100644
---- a/arch/arm/kernel/smp.c
-+++ b/arch/arm/kernel/smp.c
-@@ -463,14 +463,12 @@ void arch_send_call_function_single_ipi(int cpu)
- }
- 
- #ifdef CONFIG_IRQ_WORK
--#ifndef CONFIG_PREEMPT_RT_FULL
- void arch_irq_work_raise(void)
- {
- 	if (is_smp())
- 		smp_cross_call(cpumask_of(smp_processor_id()), IPI_IRQ_WORK);
- }
- #endif
--#endif
- 
- static const char *ipi_types[NR_IPI] = {
- #define S(x,s)	[x] = s
 diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
-index bd18bb8b2770..9100f8a609a2 100644
+index 9c697db2787e..5409d4d7c208 100644
 --- a/arch/arm/kvm/arm.c
 +++ b/arch/arm/kvm/arm.c
-@@ -495,9 +495,9 @@ static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
+@@ -491,9 +491,9 @@ static int kvm_vcpu_first_run_init(struct kvm_vcpu *vcpu)
  
  static void vcpu_pause(struct kvm_vcpu *vcpu)
  {
@@ -126,32 +106,32 @@ index bd18bb8b2770..9100f8a609a2 100644
  
  static int kvm_vcpu_initialized(struct kvm_vcpu *vcpu)
 diff --git a/arch/arm/kvm/psci.c b/arch/arm/kvm/psci.c
-index 448f60e8d23c..19c6c9c2118c 100644
+index 86a693a02ba3..49aed024ad78 100644
 --- a/arch/arm/kvm/psci.c
 +++ b/arch/arm/kvm/psci.c
-@@ -36,7 +36,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+@@ -35,7 +35,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
  {
  	struct kvm *kvm = source_vcpu->kvm;
- 	struct kvm_vcpu *vcpu = NULL, *tmp;
+ 	struct kvm_vcpu *vcpu;
 -	wait_queue_head_t *wq;
 +	struct swait_head *wq;
  	unsigned long cpu_id;
- 	unsigned long mpidr;
  	phys_addr_t target_pc;
-@@ -80,7 +80,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+ 
+@@ -66,7 +66,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+ 	vcpu->arch.pause = false;
  	smp_mb();		/* Make sure the above is visible */
  
- 	wq = kvm_arch_vcpu_wq(vcpu);
 -	wake_up_interruptible(wq);
 +	swait_wake_interruptible(wq);
  
  	return KVM_PSCI_RET_SUCCESS;
  }
 diff --git a/arch/powerpc/include/asm/kvm_host.h b/arch/powerpc/include/asm/kvm_host.h
-index 1eaea2dea174..dfaf2c2d8e7f 100644
+index 33283532e9d8..5fa50fc31ab3 100644
 --- a/arch/powerpc/include/asm/kvm_host.h
 +++ b/arch/powerpc/include/asm/kvm_host.h
-@@ -295,7 +295,7 @@ struct kvmppc_vcore {
+@@ -290,7 +290,7 @@ struct kvmppc_vcore {
  	u8 in_guest;
  	struct list_head runnable_threads;
  	spinlock_t lock;
@@ -160,7 +140,7 @@ index 1eaea2dea174..dfaf2c2d8e7f 100644
  	u64 stolen_tb;
  	u64 preempt_tb;
  	struct kvm_vcpu *runner;
-@@ -612,7 +612,7 @@ struct kvm_vcpu_arch {
+@@ -562,7 +562,7 @@ struct kvm_vcpu_arch {
  	u8 prodded;
  	u32 last_inst;
  
@@ -170,7 +150,7 @@ index 1eaea2dea174..dfaf2c2d8e7f 100644
  	int ret;
  	int trap;
 diff --git a/arch/powerpc/kernel/time.c b/arch/powerpc/kernel/time.c
-index 6d37d7603a8f..5bec5fd82a7e 100644
+index 03cbe6f231dc..945505e6ae9e 100644
 --- a/arch/powerpc/kernel/time.c
 +++ b/arch/powerpc/kernel/time.c
 @@ -423,7 +423,7 @@ unsigned long profile_pc(struct pt_regs *regs)
@@ -183,10 +163,10 @@ index 6d37d7603a8f..5bec5fd82a7e 100644
  /*
   * 64-bit uses a byte in the PACA, 32-bit uses a per-cpu variable...
 diff --git a/arch/powerpc/kvm/book3s_hv.c b/arch/powerpc/kvm/book3s_hv.c
-index 7a25d9218a05..0019281510da 100644
+index 211974a386d6..a4e71ea12cf7 100644
 --- a/arch/powerpc/kvm/book3s_hv.c
 +++ b/arch/powerpc/kvm/book3s_hv.c
-@@ -74,11 +74,11 @@ static void kvmppc_fast_vcpu_kick_hv(struct kvm_vcpu *vcpu)
+@@ -70,11 +70,11 @@ void kvmppc_fast_vcpu_kick(struct kvm_vcpu *vcpu)
  {
  	int me;
  	int cpu = vcpu->cpu;
@@ -201,7 +181,7 @@ index 7a25d9218a05..0019281510da 100644
  		++vcpu->stat.halt_wakeup;
  	}
  
-@@ -583,8 +583,8 @@ int kvmppc_pseries_do_hcall(struct kvm_vcpu *vcpu)
+@@ -534,8 +534,8 @@ int kvmppc_pseries_do_hcall(struct kvm_vcpu *vcpu)
  		tvcpu->arch.prodded = 1;
  		smp_mb();
  		if (vcpu->arch.ceded) {
@@ -212,16 +192,16 @@ index 7a25d9218a05..0019281510da 100644
  				vcpu->stat.halt_wakeup++;
  			}
  		}
-@@ -1199,7 +1199,7 @@ static struct kvm_vcpu *kvmppc_core_vcpu_create_hv(struct kvm *kvm,
+@@ -941,7 +941,7 @@ struct kvm_vcpu *kvmppc_core_vcpu_create(struct kvm *kvm, unsigned int id)
  		if (vcore) {
  			INIT_LIST_HEAD(&vcore->runnable_threads);
  			spin_lock_init(&vcore->lock);
 -			init_waitqueue_head(&vcore->wq);
 +			init_swait_head(&vcore->wq);
  			vcore->preempt_tb = TB_NIL;
- 			vcore->lpcr = kvm->arch.lpcr;
- 			vcore->first_vcpuid = core * threads_per_core;
-@@ -1566,13 +1566,13 @@ static void kvmppc_wait_for_exec(struct kvm_vcpu *vcpu, int wait_state)
+ 		}
+ 		kvm->arch.vcores[core] = vcore;
+@@ -1312,13 +1312,13 @@ static void kvmppc_wait_for_exec(struct kvm_vcpu *vcpu, int wait_state)
   */
  static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
  {
@@ -238,7 +218,7 @@ index 7a25d9218a05..0019281510da 100644
  	spin_lock(&vc->lock);
  	vc->vcore_state = VCORE_INACTIVE;
  }
-@@ -1613,7 +1613,7 @@ static int kvmppc_run_vcpu(struct kvm_run *kvm_run, struct kvm_vcpu *vcpu)
+@@ -1360,7 +1360,7 @@ static int kvmppc_run_vcpu(struct kvm_run *kvm_run, struct kvm_vcpu *vcpu)
  			kvmppc_create_dtl_entry(vcpu, vc);
  			kvmppc_start_thread(vcpu);
  		} else if (vc->vcore_state == VCORE_SLEEPING) {
@@ -248,10 +228,10 @@ index 7a25d9218a05..0019281510da 100644
  
  	}
 diff --git a/arch/s390/include/asm/kvm_host.h b/arch/s390/include/asm/kvm_host.h
-index eef3dd3fd9a9..65402d300a26 100644
+index e87ecaa2c569..295aab26f605 100644
 --- a/arch/s390/include/asm/kvm_host.h
 +++ b/arch/s390/include/asm/kvm_host.h
-@@ -233,7 +233,7 @@ struct kvm_s390_local_interrupt {
+@@ -228,7 +228,7 @@ struct kvm_s390_local_interrupt {
  	atomic_t active;
  	struct kvm_s390_float_interrupt *float_int;
  	int timer_due; /* event indicator for waitqueue below */
@@ -295,10 +275,10 @@ index 3d21f7bd7b42..1de84e3ab4e0 100644
  }
 -#endif
 diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 453e5fbbb7ae..8b25d010d5e4 100644
+index 92bbb397f59d..9644aac4334e 100644
 --- a/arch/x86/kvm/lapic.c
 +++ b/arch/x86/kvm/lapic.c
-@@ -1031,8 +1031,38 @@ static void update_divide_count(struct kvm_lapic *apic)
+@@ -1010,8 +1010,38 @@ static void update_divide_count(struct kvm_lapic *apic)
  				   apic->divide_count);
  }
  
@@ -337,7 +317,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  	ktime_t now;
  	atomic_set(&apic->lapic_timer.pending, 0);
  
-@@ -1062,9 +1092,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -1041,9 +1071,11 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			}
  		}
  
@@ -350,7 +330,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
  			   PRIx64 ", "
-@@ -1094,8 +1126,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
+@@ -1073,8 +1105,10 @@ static void start_apic_timer(struct kvm_lapic *apic)
  			ns = (tscdeadline - guest_tsc) * 1000000ULL;
  			do_div(ns, this_tsc_khz);
  		}
@@ -362,7 +342,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  		local_irq_restore(flags);
  	}
-@@ -1533,7 +1567,7 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
+@@ -1512,7 +1546,7 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
  	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
  	struct kvm_lapic *apic = container_of(ktimer, struct kvm_lapic, lapic_timer);
  	struct kvm_vcpu *vcpu = apic->vcpu;
@@ -371,7 +351,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  	/*
  	 * There is a race window between reading and incrementing, but we do
-@@ -1547,8 +1581,8 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
+@@ -1526,8 +1560,8 @@ static enum hrtimer_restart apic_timer_fn(struct hrtimer *data)
  		kvm_make_request(KVM_REQ_PENDING_TIMER, vcpu);
  	}
  
@@ -382,7 +362,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  	if (lapic_is_periodic(apic)) {
  		hrtimer_add_expires_ns(&ktimer->timer, ktimer->period);
-@@ -1581,6 +1615,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
+@@ -1560,6 +1594,7 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
  	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
  		     HRTIMER_MODE_ABS);
  	apic->lapic_timer.timer.function = apic_timer_fn;
@@ -390,7 +370,7 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  	/*
  	 * APIC is created enabled. This will prevent kvm_lapic_set_base from
-@@ -1699,7 +1734,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
+@@ -1673,7 +1708,8 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
  
  	timer = &vcpu->arch.apic->lapic_timer.timer;
  	if (hrtimer_cancel(timer))
@@ -401,10 +381,10 @@ index 453e5fbbb7ae..8b25d010d5e4 100644
  
  /*
 diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
-index b8e9a43e501a..aebf20c9bfab 100644
+index e47c7e2f4d04..7bb6c5ac2ad7 100644
 --- a/include/linux/kvm_host.h
 +++ b/include/linux/kvm_host.h
-@@ -231,7 +231,7 @@ struct kvm_vcpu {
+@@ -234,7 +234,7 @@ struct kvm_vcpu {
  
  	int fpu_active;
  	int guest_fpu_loaded, guest_xcr0_loaded;
@@ -413,7 +393,7 @@ index b8e9a43e501a..aebf20c9bfab 100644
  	struct pid *pid;
  	int sigset_active;
  	sigset_t sigset;
-@@ -677,7 +677,7 @@ static inline bool kvm_arch_has_noncoherent_dma(struct kvm *kvm)
+@@ -669,7 +669,7 @@ static inline void kvm_arch_free_vm(struct kvm *kvm)
  }
  #endif
  
@@ -423,7 +403,7 @@ index b8e9a43e501a..aebf20c9bfab 100644
  #ifdef __KVM_HAVE_ARCH_WQP
  	return vcpu->arch.wqp;
 diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 285e18b2c420..a3890754e407 100644
+index 6d2cab15a585..3566e74fae83 100644
 --- a/kernel/cpu.c
 +++ b/kernel/cpu.c
 @@ -242,7 +242,7 @@ static int sync_unplug_thread(void *data)
@@ -460,7 +440,7 @@ index 35d21f93bbe8..5f7d93d89c7f 100644
  	/*
  	 * Lame architectures will get the timer tick callback
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 883669d3e293..71c0bb1cdeb0 100644
+index af7418b7d212..76873807655a 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -696,17 +696,34 @@ static inline bool got_nohz_idle_kick(void)
@@ -505,10 +485,10 @@ index 883669d3e293..71c0bb1cdeb0 100644
  
         return true;
 diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index ab32130964b6..57d5bb1b3919 100644
+index 7e5c94b245e8..3238cfbfbeeb 100644
 --- a/kernel/time/tick-sched.c
 +++ b/kernel/time/tick-sched.c
-@@ -180,6 +180,11 @@ static bool can_stop_full_tick(void)
+@@ -175,6 +175,11 @@ static bool can_stop_full_tick(void)
  		return false;
  	}
  
@@ -520,7 +500,7 @@ index ab32130964b6..57d5bb1b3919 100644
  	/* sched_clock_tick() needs us? */
  #ifdef CONFIG_HAVE_UNSTABLE_SCHED_CLOCK
  	/*
-@@ -221,7 +226,12 @@ void __tick_nohz_full_check(void)
+@@ -216,7 +221,12 @@ void __tick_nohz_full_check(void)
  
  static void nohz_full_kick_work_func(struct irq_work *work)
  {
@@ -534,7 +514,7 @@ index ab32130964b6..57d5bb1b3919 100644
  
  static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) = {
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 34fd2dbba3e3..36b9f10bb3c7 100644
+index 2d9ba1b9f698..286ca044f767 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
@@ -547,32 +527,32 @@ index 34fd2dbba3e3..36b9f10bb3c7 100644
  		irq_work_run();
  #endif
 diff --git a/localversion-rt b/localversion-rt
-index a3b2408c1da6..49bae8d6aa67 100644
+index 51b05e9abe6f..fdb0f880c7e9 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt37
-+-rt38
+--rt55
++-rt56
 diff --git a/virt/kvm/async_pf.c b/virt/kvm/async_pf.c
-index f2c80d5451c3..10634baf3b08 100644
+index 8a39dda7a325..c8b49a1f9278 100644
 --- a/virt/kvm/async_pf.c
 +++ b/virt/kvm/async_pf.c
-@@ -82,8 +82,8 @@ static void async_pf_execute(struct work_struct *work)
+@@ -85,8 +85,8 @@ static void async_pf_execute(struct work_struct *work)
  
- 	trace_kvm_async_pf_completed(addr, gva);
+ 	trace_kvm_async_pf_completed(addr, page, gva);
  
 -	if (waitqueue_active(&vcpu->wq))
 -		wake_up_interruptible(&vcpu->wq);
 +	if (swaitqueue_active(&vcpu->wq))
 +		swait_wake_interruptible(&vcpu->wq);
  
- 	mmput(mm);
+ 	mmdrop(mm);
  	kvm_put_kvm(vcpu->kvm);
 diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-index 66112533b1e9..38a0d7a5ce74 100644
+index b9bf29490b12..efcd02d2a5c6 100644
 --- a/virt/kvm/kvm_main.c
 +++ b/virt/kvm/kvm_main.c
-@@ -219,7 +219,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
+@@ -213,7 +213,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
  	vcpu->kvm = kvm;
  	vcpu->vcpu_id = id;
  	vcpu->pid = NULL;
@@ -581,7 +561,7 @@ index 66112533b1e9..38a0d7a5ce74 100644
  	kvm_async_pf_vcpu_init(vcpu);
  
  	page = alloc_page(GFP_KERNEL | __GFP_ZERO);
-@@ -1675,10 +1675,10 @@ EXPORT_SYMBOL_GPL(mark_page_dirty);
+@@ -1672,10 +1672,10 @@ void mark_page_dirty(struct kvm *kvm, gfn_t gfn)
   */
  void kvm_vcpu_block(struct kvm_vcpu *vcpu)
  {
@@ -594,16 +574,16 @@ index 66112533b1e9..38a0d7a5ce74 100644
  
  		if (kvm_arch_vcpu_runnable(vcpu)) {
  			kvm_make_request(KVM_REQ_UNHALT, vcpu);
-@@ -1692,7 +1692,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+@@ -1689,7 +1689,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
  		schedule();
  	}
  
 -	finish_wait(&vcpu->wq, &wait);
 +	swait_finish(&vcpu->wq, &wait);
  }
- EXPORT_SYMBOL_GPL(kvm_vcpu_block);
  
-@@ -1704,11 +1704,11 @@ void kvm_vcpu_kick(struct kvm_vcpu *vcpu)
+ #ifndef CONFIG_S390
+@@ -1700,11 +1700,11 @@ void kvm_vcpu_kick(struct kvm_vcpu *vcpu)
  {
  	int me;
  	int cpu = vcpu->cpu;
@@ -618,7 +598,7 @@ index 66112533b1e9..38a0d7a5ce74 100644
  		++vcpu->stat.halt_wakeup;
  	}
  
-@@ -1814,7 +1814,7 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me)
+@@ -1816,7 +1816,7 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me)
  				continue;
  			if (vcpu == me)
  				continue;
