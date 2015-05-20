@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: [PATCH RT] rt, nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Tue, 19 May 2015 22:59:13 -0400
-Message-ID: <20150519225913.48617cd6@grimm.local.home>
-References: <20150514140137.396749660@goodmis.org>
+Date: Tue, 19 May 2015 23:01:36 -0400
+Message-ID: <20150519230136.1888d997@grimm.local.home>
+References: <20150514140242.839416736@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 8BIT
@@ -16,16 +16,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150514140137.396749660@goodmis.org>
+In-Reply-To: <20150514140242.839416736@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-I'm adding this to the next 3.12-rt release.
+I'm adding this patch to the next 3.10-rt release.
 
 -- Steve
 
-
->From 239f9f7716c6a2b466fcbb605fa0102de483c116 Mon Sep 17 00:00:00 2001
+>From 26a6945bebcccd8900370b76de2b94bbb0b4678f Mon Sep 17 00:00:00 2001
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Date: Sat, 11 Apr 2015 15:15:59 +0200
 Subject: [PATCH] rt, nohz_full: fix nohz_full for PREEMPT_RT_FULL
@@ -42,10 +41,10 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  2 files changed, 28 insertions(+), 6 deletions(-)
 
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index af7418b7d212..76873807655a 100644
+index f6d5587cc529..23e289ae4270 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -696,17 +696,34 @@ static inline bool got_nohz_idle_kick(void)
+@@ -694,17 +694,34 @@ static inline bool got_nohz_idle_kick(void)
  #endif /* CONFIG_NO_HZ_COMMON */
  
  #ifdef CONFIG_NO_HZ_FULL
@@ -87,10 +86,10 @@ index af7418b7d212..76873807655a 100644
  
         return true;
 diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index 2cfd4c740042..3238cfbfbeeb 100644
+index b280dba280b3..d2e137953d44 100644
 --- a/kernel/time/tick-sched.c
 +++ b/kernel/time/tick-sched.c
-@@ -221,7 +221,12 @@ void __tick_nohz_full_check(void)
+@@ -214,7 +214,12 @@ void tick_nohz_full_check(void)
  
  static void nohz_full_kick_work_func(struct irq_work *work)
  {
@@ -98,7 +97,7 @@ index 2cfd4c740042..3238cfbfbeeb 100644
 +
 +	/* ksoftirqd processes sirqs with interrupts enabled */
 +	local_irq_save(flags);
- 	__tick_nohz_full_check();
+ 	tick_nohz_full_check();
 +	local_irq_restore(flags);
  }
  
