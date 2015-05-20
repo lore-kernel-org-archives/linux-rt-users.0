@@ -1,106 +1,33 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT] rt, nohz_full: fix nohz_full for PREEMPT_RT_FULL
-Date: Tue, 19 May 2015 23:01:36 -0400
-Message-ID: <20150519230136.1888d997@grimm.local.home>
-References: <20150514140242.839416736@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Muli Baron <muli.baron@gmail.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150514140242.839416736@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
-
-I'm adding this patch to the next 3.10-rt release.
-
--- Steve
-
->From 26a6945bebcccd8900370b76de2b94bbb0b4678f Mon Sep 17 00:00:00 2001
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Date: Sat, 11 Apr 2015 15:15:59 +0200
-Subject: [PATCH] rt, nohz_full: fix nohz_full for PREEMPT_RT_FULL
+Subject: Re: [ANNOUNCE] 4.0.4-rt1
+Date: Wed, 20 May 2015 05:14:17 +0200
+Message-ID: <1432091657.3254.5.camel@gmail.com>
+References: <20150519213923.GA26363@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:38065 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751903AbbETDOV (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 May 2015 23:14:21 -0400
+In-Reply-To: <20150519213923.GA26363@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-A task being ticked and trying to shut the tick down will fail due
-to having just awakened ksoftirqd, subtract it from nr_running.
+On Tue, 2015-05-19 at 23:39 +0200, Sebastian Andrzej Siewior wrote:
+> Dear RT folks!
+> 
+> I'm pleased to announce the v4.0.4-rt1 patch set.
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- kernel/sched/core.c      | 29 +++++++++++++++++++++++------
- kernel/time/tick-sched.c |  5 +++++
- 2 files changed, 28 insertions(+), 6 deletions(-)
+Goody.  As soon as I have time to assemble the real deal 4.0-rt, I'll
+submit some little fixlets.
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f6d5587cc529..23e289ae4270 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -694,17 +694,34 @@ static inline bool got_nohz_idle_kick(void)
- #endif /* CONFIG_NO_HZ_COMMON */
- 
- #ifdef CONFIG_NO_HZ_FULL
-+
-+static int ksoftirqd_running(void)
-+{
-+	struct task_struct *softirqd;
-+
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-+		return 0;
-+	softirqd = this_cpu_ksoftirqd();
-+	if (softirqd && softirqd->on_rq)
-+		return 1;
-+	return 0;
-+}
-+
- bool sched_can_stop_tick(void)
- {
--       struct rq *rq;
-+	struct rq *rq;
- 
--       rq = this_rq();
-+	rq = this_rq();
- 
--       /* Make sure rq->nr_running update is visible after the IPI */
--       smp_rmb();
-+	/* Make sure rq->nr_running update is visible after the IPI */
-+	smp_rmb();
- 
--       /* More than one running task need preemption */
--       if (rq->nr_running > 1)
-+	/*
-+	 * More than one running task need preemption
-+	 *
-+	 * NOTE, RT: if ksoftirqd is awake, subtract it.
-+	 */
-+	if (rq->nr_running - ksoftirqd_running() > 1)
-                return false;
- 
-        return true;
-diff --git a/kernel/time/tick-sched.c b/kernel/time/tick-sched.c
-index b280dba280b3..d2e137953d44 100644
---- a/kernel/time/tick-sched.c
-+++ b/kernel/time/tick-sched.c
-@@ -214,7 +214,12 @@ void tick_nohz_full_check(void)
- 
- static void nohz_full_kick_work_func(struct irq_work *work)
- {
-+	unsigned long flags;
-+
-+	/* ksoftirqd processes sirqs with interrupts enabled */
-+	local_irq_save(flags);
- 	tick_nohz_full_check();
-+	local_irq_restore(flags);
- }
- 
- static DEFINE_PER_CPU(struct irq_work, nohz_full_kick_work) = {
--- 
-2.1.4
+	-Mike
+
