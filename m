@@ -1,57 +1,223 @@
-From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
-Subject: Re: [PATCH] cyclictest: remove compatibilty hack for old libnuma,
- repairs "-a" for isolcpus
-Date: Thu, 21 May 2015 12:23:25 +0000
-Message-ID: <1432211005.5810.29.camel@eagleseven.com>
-References: <20150427125846.1de46037@sluggy>
-	 <1432126711-18618-1-git-send-email-henning.schild@siemens.com>
-	 <alpine.LFD.2.10.1505201629400.7867@riemann>
-	 <20150521131119.4909a2dd@md1em3qc>
+From: Anders Roxell <anders.roxell@gmail.com>
+Subject: Re: [PATCH] arch/arm64 :Cyclic Test fix in ARM64 fpsimd
+Date: Thu, 21 May 2015 15:50:07 +0200
+Message-ID: <20150521135007.GC3983@localhost.localdomain>
+References: <CAPyr0yJSGqvxkUWLtNKe0q5mNanBczAfAVx0tPKuzYeDG+eJ=Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "tglx@linutronix.de" <tglx@linutronix.de>,
-	"jkacur@redhat.com" <jkacur@redhat.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"gary.robertson@linaro.org" <gary.robertson@linaro.org>,
-	"williams@redhat.com" <williams@redhat.com>
-To: "henning.schild@siemens.com" <henning.schild@siemens.com>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-arm-kernel@lists.infradead.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	linux-rt-users@vger.kernel.org, kevin.hilman@linaro.org,
+	ard.biesheuvel@linaro.org, arnd@linaro.org
+To: Ayyappa Ch <ayyappa.ch.linux@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.eagleseven.com ([76.74.2.20]:14059 "EHLO
-	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753362AbbEUM2v (ORCPT
+Received: from mail-lb0-f179.google.com ([209.85.217.179]:36510 "EHLO
+	mail-lb0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753309AbbEUNuQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 May 2015 08:28:51 -0400
-In-Reply-To: <20150521131119.4909a2dd@md1em3qc>
-Content-Language: en-US
-Content-ID: <53C8051D1E1FE74392C9E7742BE19ACE@eagleseven.com>
+	Thu, 21 May 2015 09:50:16 -0400
+Received: by lbbqq2 with SMTP id qq2so18484258lbb.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 May 2015 06:50:14 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <CAPyr0yJSGqvxkUWLtNKe0q5mNanBczAfAVx0tPKuzYeDG+eJ=Q@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-T24gVGh1LCAyMDE1LTA1LTIxIGF0IDEzOjExICswMjAwLCBIZW5uaW5nIFNjaGlsZCB3cm90ZToN
-Cj4gT24gV2VkLCAyMCBNYXkgMjAxNSAxNjozODoyNSArMDIwMA0KPiBKb2huIEthY3VyIDxqa2Fj
-dXJAcmVkaGF0LmNvbT4gd3JvdGU6DQo+IA0KPiA+IFRoaXMgaXMgYSB0ZXJyaWJsZSBoYWNrLCBi
-dXQgSSdtIGFmcmFpZCB0byByZW1vdmUgaXQgeWV0Lg0KPiA+IEV2ZW4gc3lzdGVtcyBhcyByZWNl
-bnQgYXMgRmVkb3JhIDE5IGhhdmUgYSBsaWJudW1hIGxlc3MgdGhhbiB0aGF0Lg0KPiA+IHBtIC1x
-ZiAvdXNyL2xpYjY0L2xpYm51bWEuc28NCj4gPiBudW1hY3RsLWRldmVsLTIuMC44LTQuZmMxOS54
-ODZfNjQNCj4gPiBbamthY3VyQHJpZW1hbm4gcnQtdGVzdHNdJCBjYXQgL2V0Yy9mZWRvcmEtcmVs
-ZWFzZSANCj4gPiBGZWRvcmEgcmVsZWFzZSAxOSAoU2NocsO2ZGluZ2Vy4oCZcyBDYXQpDQo+IA0K
-PiBBY2NvcmRpbmcgdG8gaHR0cHM6Ly9mZWRvcmFwcm9qZWN0Lm9yZy93aWtpL1JlbGVhc2VzIHRo
-YXQgaXMgYW4gb2xkDQo+IHVuc3VwcG9ydGVkIHJlbGVhc2UsIHNvIGkgd291bGQgbm90IGNhbGwg
-aXQgcmVjZW50LiBObyBmdW5ueSBzdGF0ZQ0KPiBpbmJldHdlZW4sIHRoYXQgY2F0IGlzIGRlYWQu
-IEFzIGZhciBhcyBpIGNhbiBzZWUgRmVkb3JhIDIwKyBzaG91bGQgaGF2ZQ0KPiAyLjAuOSssIHdo
-aWNoIGlzIGZpbmUuDQo+IElmIHlvdSBhc2sgbWUsIGEgY29tcGF0aWJpbHR5IGhhY2sgdGhhdCBi
-cmFrZXMgYWxsIG1vZGVybiBzeXN0ZW1zIGlzIG5vdA0KPiBhY2NlcHRhYmxlLg0KPiANCj4gSSBk
-byBub3Qga25vdyBob3cgbWFueSBiaXRzIGFuZCBwaWVjZXMgY291bGQgYmUgdHVuZWQsIGJ1dCBh
-dXRvbWFrZSBmb3INCj4gdGhhdCBvbmUgaXNzdWUgc2VlbXMgb3ZlcmtpbGwuDQo+IA0KPiBIZW5u
-aW5nDQo+IC0tDQo+IFRvIHVuc3Vic2NyaWJlIGZyb20gdGhpcyBsaXN0OiBzZW5kIHRoZSBsaW5l
-ICJ1bnN1YnNjcmliZSBsaW51eC1ydC11c2VycyIgaW4NCj4gdGhlIGJvZHkgb2YgYSBtZXNzYWdl
-IHRvIG1ham9yZG9tb0B2Z2VyLmtlcm5lbC5vcmcNCj4gTW9yZSBtYWpvcmRvbW8gaW5mbyBhdCAg
-aHR0cDovL3ZnZXIua2VybmVsLm9yZy9tYWpvcmRvbW8taW5mby5odG1sDQoNClRoZW4gYWdhaW4s
-IENlbnRPUyA1IChhbmQgb3RoZXIgdmFyaWFudHMgb2YgdGhhdCBpbGspIGlzIHVuZGVyIG9mZmlj
-aWFsDQpzdXBwb3J0IHVudGlsIGVhcmx5IDIwMTdbMV0sIGFuZCBpdCB1c2VzIDAuOS44WzJdDQot
-LSANCktpbmQgUmVnYXJkcyAvIG1lZCB2w6RubGlnIGjDpGxzbmluZywNCg0KU3RhZmZhbiBUamVy
-bnN0csO2bQ0KDQpbMV1odHRwOi8vd2lraS5jZW50b3Mub3JnL0ZBUS9HZW5lcmFsI2hlYWQtZmU4
-YTBiZTkxZWUzZTdkZWE4MTJlODY5NDQ5MWUxZGRlNWI3NWU2ZCANClsyXWh0dHA6Ly92YXVsdC5j
-ZW50b3Mub3JnL2NlbnRvcy81L29zL1NSUE1TL251bWFjdGwtMC45LjgtMTIuZWw1XzYuc3JjLnJw
-bQ0KDQo=
+On 2015-05-01 20:59, Ayyappa Ch wrote:
+> Floating point operations in arm64 should not disable preempt .
+> Activating realtime features with below code.
+
+I've talked with an engineer who worked on fpsimd and I was told that
+replacing preempt_disable with migrate_disable would leave fpsimd open
+to corruption.
+
+The kernel won't save the state of the simd registers when it is
+preempted so if another task runs on the same CPU and also uses simd, it
+clobbers the registers of the first task, and migrate_disable() does not
+prevent that.
+
+If we want to use SIMD with preemption enabled, we need to update the
+context switch code to do a full SIMD register state save&restore if
+necessary. However, this can have a noticeable cost in all task switch
+latencies.
+
+Cheers,
+Anders
+
+> 
+> From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
+> From: Ayyappa Ch <ayyappa.chandolu@amd.com>
+> Date: Tue, 28 Apr 2015 11:53:00 +0530
+> Subject: [PATCH ] floating point realtime fix
+> 
+> ---
+>  arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
+>  1 file changed, 8 insertions(+), 8 deletions(-)
+> 
+> diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+> index 2438497..3dca156 100644
+> --- a/arch/arm64/kernel/fpsimd.c
+> +++ b/arch/arm64/kernel/fpsimd.c
+> @@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
+>   */
+>  void fpsimd_preserve_current_state(void)
+>  {
+> - preempt_disable();
+> + migrate_disable();
+>   if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
+>   fpsimd_save_state(&current->thread.fpsimd_state);
+> - preempt_enable();
+> + migrate_enable();
+>  }
+> 
+>  /*
+> @@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
+>   */
+>  void fpsimd_restore_current_state(void)
+>  {
+> - preempt_disable();
+> + migrate_disable();
+>   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+>   struct fpsimd_state *st = &current->thread.fpsimd_state;
+> 
+> @@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
+>   this_cpu_write(fpsimd_last_state, st);
+>   st->cpu = smp_processor_id();
+>   }
+> - preempt_enable();
+> + migrate_enable();
+>  }
+> 
+>  /*
+> @@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
+>   */
+>  void fpsimd_update_current_state(struct fpsimd_state *state)
+>  {
+> - preempt_disable();
+> + migrate_disable();
+>   fpsimd_load_state(state);
+>   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+>   struct fpsimd_state *st = &current->thread.fpsimd_state;
+> @@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
+>   this_cpu_write(fpsimd_last_state, st);
+>   st->cpu = smp_processor_id();
+>   }
+> - preempt_enable();
+> + migrate_enable();
+>  }
+> 
+>  /*
+> @@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
+>   * that there is no longer userland FPSIMD state in the
+>   * registers.
+>   */
+> - preempt_disable();
+> + migrate_disable();
+>   if (current->mm &&
+>      !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
+>   fpsimd_save_state(&current->thread.fpsimd_state);
+> @@ -255,7 +255,7 @@ void kernel_neon_end(void)
+>   in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
+>   fpsimd_load_partial_state(s);
+>   } else {
+> - preempt_enable();
+> + migrate_enable();
+>   }
+>  }
+>  EXPORT_SYMBOL(kernel_neon_end);
+> 
+> On Fri, May 1, 2015 at 1:03 PM, Ayyappa Ch <ayyappa.ch.linux@gmail.com> wrote:
+> > Following Anders Roxell  patch on "Enable PREEMPT_RT_FULL" , observed
+> > one issue with Cyclic test while running floating point operations. So
+> > , modified below changes for that.
+> >
+> > From e6a5fce9b3b55f48656240036a9354a0997c2907 Mon Sep 17 00:00:00 2001
+> > From: Ayyappa Ch <ayyappa.chandolu@amd.com>
+> > Date: Tue, 28 Apr 2015 11:53:00 +0530
+> > Subject: [PATCH ] floating point realtime fix
+> >
+> > ---
+> >  arch/arm64/kernel/fpsimd.c | 16 ++++++++--------
+> >  1 file changed, 8 insertions(+), 8 deletions(-)
+> >
+> > diff --git a/arch/arm64/kernel/fpsimd.c b/arch/arm64/kernel/fpsimd.c
+> > index 2438497..3dca156 100644
+> > --- a/arch/arm64/kernel/fpsimd.c
+> > +++ b/arch/arm64/kernel/fpsimd.c
+> > @@ -166,10 +166,10 @@ void fpsimd_flush_thread(void)
+> >   */
+> >  void fpsimd_preserve_current_state(void)
+> >  {
+> > - preempt_disable();
+> > + migrate_disable();
+> >   if (!test_thread_flag(TIF_FOREIGN_FPSTATE))
+> >   fpsimd_save_state(&current->thread.fpsimd_state);
+> > - preempt_enable();
+> > + migrate_enable();
+> >  }
+> >
+> >  /*
+> > @@ -179,7 +179,7 @@ void fpsimd_preserve_current_state(void)
+> >   */
+> >  void fpsimd_restore_current_state(void)
+> >  {
+> > - preempt_disable();
+> > + migrate_disable();
+> >   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+> >   struct fpsimd_state *st = &current->thread.fpsimd_state;
+> >
+> > @@ -187,7 +187,7 @@ void fpsimd_restore_current_state(void)
+> >   this_cpu_write(fpsimd_last_state, st);
+> >   st->cpu = smp_processor_id();
+> >   }
+> > - preempt_enable();
+> > + migrate_enable();
+> >  }
+> >
+> >  /*
+> > @@ -197,7 +197,7 @@ void fpsimd_restore_current_state(void)
+> >   */
+> >  void fpsimd_update_current_state(struct fpsimd_state *state)
+> >  {
+> > - preempt_disable();
+> > + migrate_disable();
+> >   fpsimd_load_state(state);
+> >   if (test_and_clear_thread_flag(TIF_FOREIGN_FPSTATE)) {
+> >   struct fpsimd_state *st = &current->thread.fpsimd_state;
+> > @@ -205,7 +205,7 @@ void fpsimd_update_current_state(struct fpsimd_state *state)
+> >   this_cpu_write(fpsimd_last_state, st);
+> >   st->cpu = smp_processor_id();
+> >   }
+> > - preempt_enable();
+> > + migrate_enable();
+> >  }
+> >
+> >  /*
+> > @@ -239,7 +239,7 @@ void kernel_neon_begin_partial(u32 num_regs)
+> >   * that there is no longer userland FPSIMD state in the
+> >   * registers.
+> >   */
+> > - preempt_disable();
+> > + migrate_disable();
+> >   if (current->mm &&
+> >      !test_and_set_thread_flag(TIF_FOREIGN_FPSTATE))
+> >   fpsimd_save_state(&current->thread.fpsimd_state);
+> > @@ -255,7 +255,7 @@ void kernel_neon_end(void)
+> >   in_irq() ? &hardirq_fpsimdstate : &softirq_fpsimdstate);
+> >   fpsimd_load_partial_state(s);
+> >   } else {
+> > - preempt_enable();
+> > + migrate_enable();
+> >   }
+> >  }
+> >  EXPORT_SYMBOL(kernel_neon_end);
+> > --
+> > 1.9.1
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
+-- 
+Anders Roxell
+0708 22 71 05
