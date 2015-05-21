@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.79-rt85
-Date: Wed, 20 May 2015 23:24:55 -0400
-Message-ID: <20150520232455.148deb66@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.69-rt101
+Date: Wed, 20 May 2015 23:25:43 -0400
+Message-ID: <20150520232543.5b4f0011@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.79-rt85 stable release.
+I'm pleased to announce the 3.2.69-rt101 stable release.
 
 
-This release is just an update to the new stable 3.10.79 version
+This release is just an update to the new stable 3.2.69 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: 8d4dc31f95b5c32771116a103a9c6d76b6d7ea93
+  branch: v3.2-rt
+  Head SHA1: 2b29762144977785b1d2665c0a1aa904fc25b6ac
 
 
-Or to build 3.10.79-rt85 directly, the following patches should be applied:
+Or to build 3.2.69-rt101 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.79.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.69.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.79-rt85.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.69-rt101.patch.xz
 
 
 
