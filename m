@@ -1,52 +1,55 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] cyclictest: remove compatibilty hack for old libnuma,
- repairs "-a" for isolcpus
-Date: Wed, 20 May 2015 21:54:15 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1505202153100.4225@nanos>
-References: <20150427125846.1de46037@sluggy> <1432126711-18618-1-git-send-email-henning.schild@siemens.com> <alpine.LFD.2.10.1505201629400.7867@riemann>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.14.43-rt42
+Date: Wed, 20 May 2015 23:24:02 -0400
+Message-ID: <20150520232402.410e9fdb@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-1746178683-1432151656=:4225"
-Cc: Henning Schild <henning.schild@siemens.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	John Kacur <jkacur@gmail.com>,
-	"Gary S. Robertson" <gary.robertson@linaro.org>,
-	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:34792 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754348AbbETTyH (ORCPT
+Received: from smtprelay0177.hostedemail.com ([216.40.44.177]:59518 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752457AbbEUDYF (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 20 May 2015 15:54:07 -0400
-In-Reply-To: <alpine.LFD.2.10.1505201629400.7867@riemann>
+	Wed, 20 May 2015 23:24:05 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
 
---8323329-1746178683-1432151656=:4225
-Content-Type: TEXT/PLAIN; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Dear RT Folks,
 
-On Wed, 20 May 2015, John Kacur wrote:
-> This is a terrible hack, but I'm afraid to remove it yet.
-> Even systems as recent as Fedora 19 have a libnuma less than that.
-> pm -qf /usr/lib64/libnuma.so
-> numactl-devel-2.0.8-4.fc19.x86_64
-> [jkacur@riemann rt-tests]$ cat /etc/fedora-release 
-> Fedora release 19 (Schrödinger’s Cat)
-> 
-> This is causing problems for people who want to pin threads to 
-> CPUs isolated with isolcpus=, so we do need to do something about.
-> 
-> I could perhaps accept an improved hack that tests whether the hack itself 
-> is needed, until we have a better solution.
+I'm pleased to announce the 3.14.43-rt42 stable release.
 
-I'm not a great fan of it, but I think that rt-tests really needs
-proper automake with proper tests for various bits and pieces.
 
-Thanks,
+This release is just an update to the new stable 3.14.43 version
+and no RT specific changes have been made.
 
-	tglx
---8323329-1746178683-1432151656=:4225--
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.14-rt
+  Head SHA1: 2af10b11747b4336ac620aa93ba9bae16864315e
+
+
+Or to build 3.14.43-rt42 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.43.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.43-rt42.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
+
