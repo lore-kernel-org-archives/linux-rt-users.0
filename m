@@ -1,29 +1,47 @@
-From: Warter <warter@gmail.com>
-Subject: Full RT kernel problem on arm
-Date: Fri, 22 May 2015 14:36:35 +0200
-Message-ID: <CAOn_9a4vX9ixCJ-ZyhbjTAsghrH4UYW-UzWug3kKaUZvw5WUDA@mail.gmail.com>
+From: "Braud Caroline" <Caroline.Braud@univ-lille1.fr>
+Subject: Re: debian RT kernel
+Date: Fri, 22 May 2015 17:52:54 +0200
+Message-ID: <99f-555f5100-57-25827640@251569383>
+References: <1432081534.12412.37.camel@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8BIT
+Cc: "Steven Rostedt" <rostedt@goodmis.org>,
+	=?utf-8?q?Jarom=C3=ADr_Mike=C5=A1?= <mira.mikes@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: "Ben Hutchings" <ben@decadent.org.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f175.google.com ([209.85.212.175]:35161 "EHLO
-	mail-wi0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757118AbbEVMgg (ORCPT
+Received: from smtp02.univ-lille1.fr ([193.49.225.20]:57477 "EHLO
+	smtp02.univ-lille1.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1946059AbbEVP7T convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 22 May 2015 08:36:36 -0400
-Received: by wicmx19 with SMTP id mx19so46004244wic.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 22 May 2015 05:36:35 -0700 (PDT)
+	Fri, 22 May 2015 11:59:19 -0400
+in-reply-to: <1432081534.12412.37.camel@decadent.org.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello to all,
+Hello,
 
-I tried to use RT kernel for my streaming server (Music Player Daemon)
-on my Hummingboard (Debian Jessie). If I send some commands
-(stop-start-next track) in row the mpd starts to eat up the resources.
-It freezes and I cannot kill it or reboot/shutdown the board. I have
-to reset the board, no other solution. It works fine if I use Basic
-RT. I tried with several kernel versions (3.14, 3.18, 4.0, 4.1).
+Sorry to ask but where is  the Debian packaging repo for 4.0-rt ?
 
-Thanks for any comment regarding issue or better way for bug-report,
-Warter
+Thanks in advance,
+CB
+ 
+ 
+> > > Yes, but as I understand this process could last for years and some RT
+> > > patches will be always maintained out of mainline.
+> > > Or something changed?
+> > > What should do user which need RT kernel now?
+> > 
+> > Well, 4.0-rt has just been released :-)
+> 
+> ...and now imported into the Debian packaging repo.
+> 
+> Ben.
+> 
+> -- 
+> Ben Hutchings
+> I'm not a reverse psychological virus.  Please don't copy me into your sig.
+ 
+ 
+
