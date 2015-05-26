@@ -1,150 +1,69 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 4.0.4-rt1
-Date: Sun, 24 May 2015 13:59:46 -0700
-Message-ID: <55623BC2.80307@localhost>
-References: <20150519213923.GA26363@linutronix.de>
+From: "Braud Caroline" <Caroline.Braud@univ-lille1.fr>
+Subject: Re: debian RT kernel
+Date: Tue, 26 May 2015 09:24:48 +0200
+Message-ID: <7f79-55642000-25-50abc380@46760505>
+References: <1432329729.12412.48.camel@decadent.org.uk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: nando@ccrma.Stanford.EDU, LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150519213923.GA26363@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: "Steven Rostedt" <rostedt@goodmis.org>,
+	=?utf-8?q?Jarom=C3=ADr_Mike=C5=A1?= <mira.mikes@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: "Ben Hutchings" <ben@decadent.org.uk>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp01.univ-lille1.fr ([193.49.225.19]:34010 "EHLO
+	smtp01.univ-lille1.fr" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751203AbbEZHZH convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 May 2015 03:25:07 -0400
+in-reply-to: <1432329729.12412.48.camel@decadent.org.uk>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 05/19/2015 02:39 PM, Sebastian Andrzej Siewior wrote:
-> Dear RT folks!
->
-> I'm pleased to announce the v4.0.4-rt1 patch set.
+Hello,
 
-Great!!
+So if I understand well, the installation of RT package in a brand new =
+PC:
 
-> Changes since v3.18.13-rt10
->
-> - Rebase to v4.0.
->
-> - David Hildenbrand's series of decouple of preempt_disable from
->    pagefault_disable is part of the series.
->
-> While doing the v4.0 I stumbled upon a few things. Therefore I plan t=
-o
-> reorder the -RT queue and merge patches where possible. Also I intend=
- to
-> drop PREEMPT_RTB and PREEMPT_RT_BASE unless there is need for it=E2=80=
-=A6
+- step 1: installation of a distribution (I have installed debian jessi=
+e)
+- step 2: to be able to have access of RT packages in development:
+follow the link you gave me (4.3 and 4.2 steps) by replacing "dist" by =
+"sid"
+- step 3: install RT packages in development using apt-get install (hea=
+ders and image RT) ??
 
-=2E..
+Thanks a lot, and sorry for my level in linux kernel ... =20
+The RT kernel is very usefull for me and I find the RT-PREEMPT developm=
+ent very interesting :)
 
-I had to do this to get it to build (looks like it is not rt specific,=20
-probably just a typo in mainline):
+CB
 
---------
---- linux-4.0/sound/soc/intel/sst/sst.c~	2015-04-12 15:12:50.000000000 =
--0700
-+++ linux-4.0/sound/soc/intel/sst/sst.c	2015-05-23 21:51:46.000000000 -=
-0700
-@@ -368,8 +368,8 @@
-  	 * initialize by FW or driver when firmware is loaded
-  	 */
-  	spin_lock_irqsave(&ctx->ipc_spin_lock, irq_flags);
--	sst_shim_write64(shim, SST_IMRX, shim_regs->imrx),
--	sst_shim_write64(shim, SST_CSR, shim_regs->csr),
-+	sst_shim_write64(shim, SST_IMRX, shim_regs->imrx);
-+	sst_shim_write64(shim, SST_CSR, shim_regs->csr);
-  	spin_unlock_irqrestore(&ctx->ipc_spin_lock, irq_flags);
-  }
-
---------
-
-On a desktop with an i7-3770k it seems to run fine (but I have not have=
+Le Vendredi 22 Mai 2015 23:22 CEST, Ben Hutchings <ben@decadent.org.uk>=
+ a =C3=A9crit:=20
 =20
-time to test for latency problems).
+> On Fri, 2015-05-22 at 17:52 +0200, Braud Caroline wrote:
+> > Hello,
+> >=20
+> > Sorry to ask but where is  the Debian packaging repo for 4.0-rt ?
+>=20
+> See the kernel handbook:
+> http://kernel-handbook.alioth.debian.org/ch-common-tasks.html#s-commo=
+n-official-vcs
+>=20
+> In this case you want the 'sid' distribution.
+>=20
+> Ben.
+>=20
+> --=20
+> Ben Hutchings
+> One of the nice things about standards is that there are so many of t=
+hem.
+=20
+=20
 
-On my laptop, a lenovo w540, I get this continuously - so it is not=20
-really usable at this point:
-
---------
-May 24 13:51:41 localhost kernel: ------------[ cut here ]------------
-May 24 13:51:41 localhost kernel: WARNING: CPU: 5 PID: 361 at=20
-drivers/gpu/drm/i915/intel_display.c:9748=20
-intel_check_page_flip+0xaa/0xf0 [i915]()
-May 24 13:51:41 localhost kernel: WARN_ON(!in_interrupt())
-May 24 13:51:41 localhost kernel: Modules linked in:
-May 24 13:51:41 localhost kernel: rfcomm fuse ccm xt_CHECKSUM=20
-ipt_MASQUERADE nf_nat_masquerade_ipv4 nf_conntrack_netbios_ns=20
-nf_conntrack_broadcast ip6t_rpfilter ip6t_REJ\
-ECT nf_reject_ipv6 xt_conntrack ebtable_nat ebtable_broute bridge stp=20
-llc ebtable_filter ebtables ip6table_nat nf_conntrack_ipv6=20
-nf_defrag_ipv6 nf_nat_ipv6 ip6table_mang\
-le ip6table_security ip6table_raw ip6table_filter ip6_tables iptable_na=
-t=20
-nf_conntrack_ipv4 nf_defrag_ipv4 nf_nat_ipv4 nf_nat nf_conntrack=20
-iptable_mangle iptable_security\
-  iptable_raw bnep bbswitch(OE) vfat fat iTCO_wdt iTCO_vendor_support=20
-arc4 intel_rapl iosf_mbi coretemp kvm_intel kvm uvcvideo=20
-crct10dif_pclmul videobuf2_vmalloc videobuf\
-2_core crc32_pclmul crc32c_intel videobuf2_memops ghash_clmulni_intel=20
-v4l2_common videodev media iwlmvm btusb serio_raw mac80211 bluetooth=20
-snd_hda_codec_realtek
-May 24 13:51:41 localhost kernel: snd_hda_codec_hdmi=20
-snd_hda_codec_generic iwlwifi snd_hda_intel sdhci_pci snd_hda_controlle=
-r=20
-cfg80211 sdhci snd_hda_codec mmc_core snd_h\
-wdep lpc_ich snd_seq mei_me i2c_i801 mfd_core snd_seq_device mei snd_pc=
-m=20
-thinkpad_acpi snd_timer ie31200_edac snd shpchp edac_core soundcore=20
-tpm_tis rfkill tpm nfsd auth\
-_rpcgss nfs_acl lockd grace sunrpc i915 i2c_algo_bit e1000e=20
-drm_kms_helper ptp drm pps_core wmi video
-May 24 13:51:41 localhost kernel: CPU: 5 PID: 361 Comm: irq/30-i915=20
-Tainted: G        W  OE   4.0.4-201.rt1.2.fc21.ccrma.x86_64+rt #1
-May 24 13:51:41 localhost kernel: Hardware name: LENOVO=20
-20BGCTO1WW/20BGCTO1WW, BIOS GNET65WW (2.13 ) 06/20/2014
-May 24 13:51:41 localhost kernel: 0000000000000000 000000001f35af7b=20
-ffff8804651afc78 ffffffff8179c0b9
-May 24 13:51:41 localhost kernel: 0000000000000000 ffff8804651afcd0=20
-ffff8804651afcb8 ffffffff8109ee1a
-May 24 13:51:41 localhost kernel: ffff8804651afcb8 ffff88046638c000=20
-ffff880469dd7800 0000000000000001
-May 24 13:51:41 localhost kernel: Call Trace:
-May 24 13:51:41 localhost kernel: [<ffffffff8179c0b9>] dump_stack+0x4c/=
-0x81
-May 24 13:51:41 localhost kernel: [<ffffffff8109ee1a>]=20
-warn_slowpath_common+0x8a/0xe0
-May 24 13:51:41 localhost kernel: [<ffffffff8109eec5>]=20
-warn_slowpath_fmt+0x55/0x70
-May 24 13:51:41 localhost kernel: [<ffffffffa0186dda>]=20
-intel_check_page_flip+0xaa/0xf0 [i915]
-May 24 13:51:41 localhost kernel: [<ffffffffa0152018>]=20
-ironlake_irq_handler+0x2e8/0x1000 [i915]
-May 24 13:51:41 localhost kernel: [<ffffffff81014610>] ?=20
-__switch_to+0x150/0x610
-May 24 13:51:41 localhost kernel: [<ffffffff810fb040>] ?=20
-irq_thread_fn+0x50/0x50
-May 24 13:51:41 localhost kernel: [<ffffffff810fb067>]=20
-irq_forced_thread_fn+0x27/0x80
-May 24 13:51:41 localhost kernel: [<ffffffff810fb61f>]=20
-irq_thread+0x12f/0x180
-May 24 13:51:41 localhost kernel: [<ffffffff810fb0f0>] ?=20
-wake_threads_waitq+0x30/0x30
-May 24 13:51:41 localhost kernel: [<ffffffff810fb4f0>] ?=20
-irq_thread_check_affinity+0x90/0x90
-May 24 13:51:41 localhost kernel: [<ffffffff810bf4ba>] kthread+0xca/0xe=
-0
-May 24 13:51:41 localhost kernel: [<ffffffff810bf3f0>] ?=20
-kthread_worker_fn+0x180/0x180
-May 24 13:51:41 localhost kernel: [<ffffffff817a2098>]=20
-ret_from_fork+0x58/0x90
-May 24 13:51:41 localhost kernel: [<ffffffff810bf3f0>] ?=20
-kthread_worker_fn+0x180/0x180
-May 24 13:51:41 localhost kernel: ---[ end trace 00000000000005fe ]---
-May 24 13:51:41 localhost kernel: ------------[ cut here ]------------
---------
-
-Any patches I could try to fix this?
--- Fernando
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
