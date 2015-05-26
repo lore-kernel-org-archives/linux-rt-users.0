@@ -1,9 +1,10 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [ANNOUNCE] 4.0.4-rt1
-Date: Tue, 26 May 2015 09:38:32 -0400
-Message-ID: <20150526093832.558e2e46@gandalf.local.home>
+Date: Tue, 26 May 2015 08:48:02 -0500
+Message-ID: <20150526084802.2cfd055b@sluggy>
 References: <20150519213923.GA26363@linutronix.de>
 	<20150526083449.5357059b@sluggy>
+	<20150526093832.558e2e46@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,34 +13,72 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	John Kacur <jkacur@redhat.com>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150526083449.5357059b@sluggy>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:33634 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754263AbbEZNsK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 26 May 2015 09:48:10 -0400
+In-Reply-To: <20150526093832.558e2e46@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 26 May 2015 08:34:49 -0500
-Clark Williams <williams@redhat.com> wrote:
+On Tue, 26 May 2015 09:38:32 -0400
+Steven Rostedt <rostedt@goodmis.org> wrote:
+
+> On Tue, 26 May 2015 08:34:49 -0500
+> Clark Williams <williams@redhat.com> wrote:
+>  
+> > diff --git a/drivers/gpu/drm/i915/intel_display.c b/drivers/gpu/drm/i915/intel_display.c
+> > index f75173c20f47..f532b22f56ba 100644
+> > --- a/drivers/gpu/drm/i915/intel_display.c
+> > +++ b/drivers/gpu/drm/i915/intel_display.c
+> > @@ -9745,7 +9745,9 @@ void intel_check_page_flip(struct drm_device *dev, int pipe)
+> >  	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
+> >  	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
+> >  
+> > +#ifndef CONFIG_PREEMPT_RT_FULL
+> >  	WARN_ON(!in_interrupt());
+> > +#endif
+> 
+> Or just use our special WARN_ON() functions...
+> 
+> 
+> 	WARN_ON_NONRT(!in_interrupt());
+> 
+> -- Steve
+
+good point. Updated patch:
+
+From: Clark Williams <williams@redhat.com>
+Date: Thu, 21 May 2015 12:51:53 -0500
+Subject: [PATCH] [rt] i915: bogus warning from i915 when running on PREEMPT_RT
+
+The i915 driver has a 'WARN_ON(!in_interrupt())' in the display
+handler, which whines constanly on the RT kernel (since the interrupt
+is actually handled in a threaded handler and not actual interrupt
+context).
+
+Change the WARN_ON to WARN_ON_NORT
+
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ drivers/gpu/drm/i915/intel_display.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/drivers/gpu/drm/i915/intel_display.c b/drivers/gpu/drm/i915/intel_display.c
+index f75173c20f47..b21e3a334e4e 100644
+--- a/drivers/gpu/drm/i915/intel_display.c
++++ b/drivers/gpu/drm/i915/intel_display.c
+@@ -9745,7 +9745,7 @@ void intel_check_page_flip(struct drm_device *dev, int pipe)
+ 	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
+ 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
  
-> diff --git a/drivers/gpu/drm/i915/intel_display.c b/drivers/gpu/drm/i915/intel_display.c
-> index f75173c20f47..f532b22f56ba 100644
-> --- a/drivers/gpu/drm/i915/intel_display.c
-> +++ b/drivers/gpu/drm/i915/intel_display.c
-> @@ -9745,7 +9745,9 @@ void intel_check_page_flip(struct drm_device *dev, int pipe)
->  	struct drm_crtc *crtc = dev_priv->pipe_to_crtc_mapping[pipe];
->  	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
->  
-> +#ifndef CONFIG_PREEMPT_RT_FULL
->  	WARN_ON(!in_interrupt());
-> +#endif
+-	WARN_ON(!in_interrupt());
++	WARN_ON_NORT(!in_interrupt());
+ 
+ 	if (crtc == NULL)
+ 		return;
+-- 
+2.1.0
 
-Or just use our special WARN_ON() functions...
-
-
-	WARN_ON_NONRT(!in_interrupt());
-
--- Steve
-
->  
->  	if (crtc == NULL)
->  		return;
