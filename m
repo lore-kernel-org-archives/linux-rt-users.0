@@ -1,50 +1,60 @@
-From: Andrew Morton <akpm@linux-foundation.org>
-Subject: Re: [RFC] mm: change irqs_disabled() test to spin_is_locked() in
- mem_cgroup_swapout
-Date: Fri, 29 May 2015 14:26:14 -0700
-Message-ID: <20150529142614.37792b9ff867626dcf5e0f08@linux-foundation.org>
-References: <20150529104815.2d2e880c@sluggy>
+From: Anna-Maria Gleixner <anna-maria@glx-um.de>
+Subject: Re: [patch 2/3] cyclictest: Convert the offset of the alignment  option to microseconds
+Date: Sat, 30 May 2015 13:01:54 +0200
+Message-ID: <47e6a4612898bdcbcf3073f27ab93708@tglx.de>
+References: <20150526190333.510838769@glx-um.de>
+ <20150526190443.640221319@glx-um.de>
+ <alpine.LFD.2.10.1505272324180.13094@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=UTF-8;
+ format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Johannes Weiner <hannes@cmpxchg.org>,
-	Thomas Gleixner <tglx@glx-um.de>, linux-mm@kvack.org,
-	RT <linux-rt-users@vger.kernel.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: Clark Williams <williams@redhat.com>
+Cc: <linux-rt-users@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.linuxfoundation.org ([140.211.169.12]:56615 "EHLO
-	mail.linuxfoundation.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756539AbbE2V0Q (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 May 2015 17:26:16 -0400
-In-Reply-To: <20150529104815.2d2e880c@sluggy>
+Received: from www.tglx.de ([62.245.132.106]:46514 "EHLO Tesla.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932467AbbE3LB5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 May 2015 07:01:57 -0400
+In-Reply-To: <alpine.LFD.2.10.1505272324180.13094@riemann>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 29 May 2015 10:48:15 -0500 Clark Williams <williams@redhat.com> wrote:
+On 2015-05-27 23:32, John Kacur wrote:
+> On Tue, 26 May 2015, anna-maria@glx-um.de wrote:
+> Don't we need the conversion here too then?
+>>  				offset = atoi(argv[optind]);
 
-> The irqs_disabled() check in mem_cgroup_swapout() fails on the latest
-> RT kernel because RT mutexes do not disable interrupts when held. Change
-> the test for the lock being held to use spin_is_locked.
->
-> ...
->
-> --- a/mm/memcontrol.c
-> +++ b/mm/memcontrol.c
-> @@ -5845,7 +5845,7 @@ void mem_cgroup_swapout(struct page *page,
-> swp_entry_t entry) page_counter_uncharge(&memcg->memory, 1);
->  
->  	/* XXX: caller holds IRQ-safe mapping->tree_lock */
-> -	VM_BUG_ON(!irqs_disabled());
-> +	VM_BUG_ON(!spin_is_locked(&page_mapping(page)->tree_lock));
->  
->  	mem_cgroup_charge_statistics(memcg, page, -1);
->  	memcg_check_events(memcg, page);
+Jap, this is right. I forgot it. I changed the patch.
+I forgot the same in the third patch of this series. I'll fix it and 
+send the patch back to you.
 
-spin_is_locked() returns zero on uniprocessor builds.  The results will
-be unhappy.  
+	Anna-Maria
 
-I suggest just deleting the check.
+
+The offset is specified in microseconds according to the
+documentation, but, the microseconds to nanoseconds conversion is
+missing so the effective offset has the unit of nanoseconds.
+
+Signed-off-by: Anna-Maria Gleixner <anna-maria@glx-um.de>
+---
+  src/cyclictest/cyclictest.c |    4 ++--
+  1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: rt-tests/src/cyclictest/cyclictest.c
+===================================================================
+--- rt-tests.orig/src/cyclictest/cyclictest.c
++++ rt-tests/src/cyclictest/cyclictest.c
+@@ -1289,9 +1289,9 @@ static void process_options (int argc, c
+  		case OPT_ALIGNED:
+  			aligned=1;
+  			if (optarg != NULL)
+-				offset = atoi(optarg);
++				offset = atoi(optarg) * 1000;
+  			else if (optind<argc && atoi(argv[optind]))
+-				offset = atoi(argv[optind]);
++				offset = atoi(argv[optind]) * 1000;
+  			else
+  				offset = 0;
+  			break;
