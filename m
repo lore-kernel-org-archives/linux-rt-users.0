@@ -1,70 +1,67 @@
-From: Ben Hutchings <ben@decadent.org.uk>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
 Subject: Re: debian RT kernel
-Date: Sat, 30 May 2015 20:38:52 +0100
-Message-ID: <1433014732.6319.65.camel@decadent.org.uk>
-References: <7f79-55642000-25-50abc380@46760505>
-	 <1432681902.6319.10.camel@decadent.org.uk>
-	 <CAG_ZyaArK3knBuCqM68AdjqO_iVUySUZYAa546i9eje9hwJaJA@mail.gmail.com>
+Date: Sat, 30 May 2015 23:07:31 +0300
+Message-ID: <556A1883.8090006@pavlinux.ru>
+References: <7f79-55642000-25-50abc380@46760505>	 <1432681902.6319.10.camel@decadent.org.uk>	 <CAG_ZyaArK3knBuCqM68AdjqO_iVUySUZYAa546i9eje9hwJaJA@mail.gmail.com> <1433014732.6319.65.camel@decadent.org.uk>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg="pgp-sha512";
-	protocol="application/pgp-signature"; boundary="=-gURE0igE1+dnr3hH69VL"
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Braud Caroline <Caroline.Braud@univ-lille1.fr>,
 	Steven Rostedt <rostedt@goodmis.org>,
 	linux-rt-users@vger.kernel.org
-To: =?UTF-8?Q?Jarom=C3=ADr_Mike=C5=A1?= <mira.mikes@gmail.com>
+To: Ben Hutchings <ben@decadent.org.uk>,
+	=?UTF-8?B?SmFyb23DrXIgTWlrZcWh?= <mira.mikes@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from shadbolt.e.decadent.org.uk ([88.96.1.126]:54982 "EHLO
-	shadbolt.e.decadent.org.uk" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S932589AbbE3TjL (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 30 May 2015 15:39:11 -0400
-In-Reply-To: <CAG_ZyaArK3knBuCqM68AdjqO_iVUySUZYAa546i9eje9hwJaJA@mail.gmail.com>
+Received: from imp02.mtu.ru ([62.5.255.19]:60803 "EHLO imp02.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757707AbbE3UIW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 30 May 2015 16:08:22 -0400
+In-Reply-To: <1433014732.6319.65.camel@decadent.org.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+30.05.2015 22:38, Ben Hutchings =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
 
---=-gURE0igE1+dnr3hH69VL
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: quoted-printable
+>>> I uploaded a new linux package (version 4.0.4-1) to unstable earlie=
+r
+>>> today with the PREEMPT_RT patchset included, so you could also just=
+ wait
+>>> a day for it to hit the mirrors.
+>>
+>> Why we don't have linux-image-rt-amd64 but just linux-image-rt-686-p=
+ae?
+>
+> The build broke on amd64; it will be fixed in the next upload.
 
-On Sat, 2015-05-30 at 21:23 +0200, Jarom=C3=ADr Mike=C5=A1 wrote:
-> 2015-05-27 1:11 GMT+02:00 Ben Hutchings <ben@decadent.org.uk>:
->=20
-> > I uploaded a new linux package (version 4.0.4-1) to unstable earlier
-> > today with the PREEMPT_RT patchset included, so you could also just wai=
-t
-> > a day for it to hit the mirrors.
->=20
-> Why we don't have linux-image-rt-amd64 but just linux-image-rt-686-pae?
+My config http://pastebin.com/GcbQf6gK
 
-The build broke on amd64; it will be fixed in the next upload.
+$ cat /proc/cmdline
+root=3D/dev/sda2 ro quiet vga=3D0 noapg pci=3Drouteirq nmi_watchdog=3D0=
+ iommu=3Dnoagp=20
+clocksource=3Dhpet workqueue.power_efficient=3D0 hpet=3Dforce processor=
+=2Emax_cstate=3D1
 
-Ben.
+
+~$ uname -a
+Linux amd64 4.0.4-rt1+ #1 SMP PREEMPT RT Thu May 28 19:20:20 MSK 2015 x=
+86_64=20
+GNU/Linux
+
+~$ cat /etc/debian_version
+8.0
+
+~$ grep 'model name' /proc/cpuinfo | uniq
+model name      : AMD Opteron(tm) Processor 4386
+
+Motherboard: Tyan s8225
 
 --=20
-Ben Hutchings
-In a hierarchy, every employee tends to rise to his level of incompetence.
 
---=-gURE0igE1+dnr3hH69VL
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: This is a digitally signed message part
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQIVAwUAVWoR0ee/yOyVhhEJAQoRSg/+JpacPeDtziuiLhzpX4S6+6x9K3chXP1Z
-BH11AnFt2KKcjM4JflK3kHnra1u3ovwF4VDQbWhYh6i+c0dbaFG+7U3f6Yd39Pi0
-wzk7KNF4kavPDn9vAt61ka7NirLtRnyji0L65NC6LoV90mjU9u0gwYX12zON89n5
-rg58MuAS85rnCUmHGsblVlkZDDdD9VHS/gyvnrc7gbr1JPTybAr0eonAs5oTpjct
-q/D7qS9NYEOOEtzVp3rwD0wtvaSQMIcwFcIgzfJeE8KJ42UOEASli8sOW9gmxXed
-hJN3OZrKCOOVM61fmvbMvktTvgzt/Zp0neUihhnpW22/PD1UcTb5e1pLznAN3zEq
-K8FcOGUwvugsROH36B6uMmlmMooa/PYaI/5OrjAyfzZ0eVJ3SHXFVeiytumOXXXI
-FKzM6C9jbkklOTNbOLmb/i3xeyLqARi6YN8a6mb9E4s9CFmIOgxjDum1+7ZRTAYF
-iGLJeWDB1fphQkMMpQvPaqbA2mwPkaQwF5rxdTNRcY9rkYWJ152UGIAgCnjYiCwH
-AROAouYjuAixBx1FPukZBUBuVcsfnXHY9Kdyj3FaHTRjzKeECHEr8uE2orNIIAM3
-dEiK5tHyOfgK8Aq+MIyfcpSiLCY5Uu1UuHB38DLqOelIBTzWpkc0xypKtmkOXxMe
-aPBzaDgmqLA=
-=Yb2R
------END PGP SIGNATURE-----
-
---=-gURE0igE1+dnr3hH69VL--
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
