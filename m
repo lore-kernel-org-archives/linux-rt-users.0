@@ -1,74 +1,50 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 1/1] Clocksource: Add sched_clock to Atmel TCB
- clocksource
-Date: Tue, 2 Jun 2015 22:38:51 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1506022230590.20347@nanos>
-References: <20150602134631.969367833@osadl.org>
+Subject: Re: [patch 2/3] cyclictest: Convert the offset of the alignment
+ option to microseconds
+Date: Tue, 2 Jun 2015 23:01:06 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1506022247320.20347@nanos>
+References: <20150526190333.510838769@glx-um.de> <20150526190443.640221319@glx-um.de> <alpine.LFD.2.10.1505272324180.13094@riemann> <47e6a4612898bdcbcf3073f27ab93708@tglx.de> <alpine.LFD.2.10.1506021458180.13306@riemann>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	RT-users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Cc: Anna-Maria Gleixner <anna-maria@glx-um.de>,
+	linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:53052 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:53130 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751832AbbFBUit (ORCPT
+	with ESMTP id S1751424AbbFBVBD (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 2 Jun 2015 16:38:49 -0400
-In-Reply-To: <20150602134631.969367833@osadl.org>
+	Tue, 2 Jun 2015 17:01:03 -0400
+In-Reply-To: <alpine.LFD.2.10.1506021458180.13306@riemann>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 2 Jun 2015, Carsten Emde wrote:
->  static void __iomem *tcaddr;
-> +static cycle_t (*do_sched_clock_get_cycles)(struct clocksource *cs);
+On Tue, 2 Jun 2015, John Kacur wrote:
+> > ===================================================================
+> > --- rt-tests.orig/src/cyclictest/cyclictest.c
+> > +++ rt-tests/src/cyclictest/cyclictest.c
+> > @@ -1289,9 +1289,9 @@ static void process_options (int argc, c
+> 
+> 
+> I fixed your patch manually, but you are doing something wrong generating 
+> it, see how the function header get's cut off above there?
 
-what's that for? Indirection for indirection sake?
+No. This is entirely correct. diff cuts off the function declaration
+at some random column and it's completely irrelevant to the
+correctness of the patch. That line is merily an extra for navigation
+purpose and not at all relevant to the patch itself. 
+ 
+@@ -1289,9 +1289,9 @@
 
->  static cycle_t tc_get_cycles(struct clocksource *cs)
->  {
-> @@ -61,6 +63,13 @@ static cycle_t tc_get_cycles32(struct cl
->  	return __raw_readl(tcaddr + ATMEL_TC_REG(0, CV));
->  }
->  
-> +u64 sched_clock_get_cycles(void)
+would be a completly sufficient header for the hunk.
 
-Static? 
+The reason why this patch did not apply is, that it is a complete
+replacement of the original patch and not a delta patch.
 
-> +{
-> +	struct clocksource *cs = NULL;
-> +
-> +	return (u64) do_sched_clock_get_cycles(cs);
+Anna-Maria should have sent a new series(PATCH V2) instead of patches
+which can be mistaken as delta fixes.
 
-
-What's wrong with implementing this like:
-
-static u64 sched_clock_get_cycles(void)
-{
-	return tc_get_cycles(NULL); 
-}
-
-Hmm?
-
-> @@ -273,6 +282,7 @@ static int __init tcb_clksrc_init(void)
->  	int clk32k_divisor_idx = -1;
->  	int i;
->  	int ret;
-> +	unsigned long flags;
->  
->  	tc = atmel_tc_alloc(CONFIG_ATMEL_TCB_CLKSRC_BLOCK);
->  	if (!tc) {
-> @@ -339,6 +349,11 @@ static int __init tcb_clksrc_init(void)
->  	if (ret)
->  		goto err_disable_t1;
->  
-> +	do_sched_clock_get_cycles = clksrc.read;
-
-Sigh.
-
-> +	local_irq_save(flags);
-
-What's the purpose of this?
 
 Thanks,
 
