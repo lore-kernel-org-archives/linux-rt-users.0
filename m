@@ -1,54 +1,55 @@
-From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Subject: Re: [PATCH] iio: adc: xilinx-xadc: Convert to raw spinlock
-Date: Sun, 07 Jun 2015 16:29:03 +0100
-Message-ID: <5574633F.7090004@kernel.org>
-References: <1431013090-18996-1-git-send-email-xander.huff@ni.com> <20150514171038.GG13442@linutronix.de> <55552570.5050407@ni.com> <20150518211728.GC4275@linutronix.de>
+From: Anna-Maria Gleixner <anna-maria@glx-um.de>
+Subject: Re: [patch 2/3] cyclictest: Convert the offset of the alignment
+ option to microseconds
+Date: Mon, 8 Jun 2015 15:18:24 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1506081513220.2399@tomtetummetott>
+References: <20150526190333.510838769@glx-um.de> <20150526190443.640221319@glx-um.de> <alpine.LFD.2.10.1505272324180.13094@riemann> <47e6a4612898bdcbcf3073f27ab93708@tglx.de> <alpine.LFD.2.10.1506021458180.13306@riemann> <alpine.DEB.2.11.1506022247320.20347@nanos>
+ <alpine.LFD.2.10.1506022307210.13306@riemann> <alpine.DEB.2.11.1506022332290.20347@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org,
-	michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
-	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, ben.shelton-acOepvfBmUk@public.gmane.org,
-	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org
-To: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
-	Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <20150518211728.GC4275-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.tglx.de ([62.245.132.106]:33871 "EHLO Tesla.tglx.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752275AbbFHNR5 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Jun 2015 09:17:57 -0400
+In-Reply-To: <alpine.DEB.2.11.1506022332290.20347@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 18/05/15 22:17, Sebastian Andrzej Siewior wrote:
-> * Xander Huff | 2015-05-14 17:45:04 [-0500]:
-> 
->> With no other processes running, I got the following results after a
->> couple of hours on one of our devices:
->>
->> admin@Xander-roboRIO:~# cyclictest -S -m -p 98
->> # /dev/cpu_dma_latency set to 0us
->> policy: fifo: loadavg: 0.01 0.07 0.12 1/176 1473
->>
->> T: 0 ( 1373) P:98 I:1000 C:6503872 Min:      9 Act:   13 Avg:   13 Max:      51
->> T: 1 ( 1374) P:98 I:1500 C:4335914 Min:      9 Act:   12 Avg:   13 Max:      49
->>
->> With a VI reading all default handles (raw, offset, scale,
->> sampling_frequency) in /sys/bus/iio/devices/iio:device0 constantly in
->> a while loop, I got the following results after a couple hours on the
->> same device:
->>
->> admin@Xander-roboRIO:~# cyclictest -S -m -p 98
->> # /dev/cpu_dma_latency set to 0us
->> policy: fifo: loadavg: 6.93 7.30 7.47 3/182 1530
->>
->> T: 0 ( 1487) P:98 I:1000 C:4497008 Min:     11 Act:   20 Avg:   21 Max:      69
->> T: 1 ( 1488) P:98 I:1500 C:2998005 Min:     11 Act:   20 Avg:   22 Max:      59
-> 
-> So there is an increase. And there is even a for-loop and I don't know
-> how deep it is nested. Anyway, do you think it is worth it or would it
-> be better to get rid of the raw-locks and simply push everything into
-> threaded context?
-> 
-Certainly seems likely to be a better way forward to me but I don't
-really mind either way.
+On Tue, 2 Jun 2015, Thomas Gleixner wrote:
+> Fair enough. Let her resend then.
 
-J
+I'm sorry. Now it applies.
+    Anna-Maria
+
+
+cyclictest: Convert the offset of the alignment option to microseconds
+
+The offset is specified in microseconds according to the
+documentation, but, the microseconds to nanoseconds conversion is
+missing so the effective offset has the unit of nanoseconds.
+
+Signed-off-by: Anna-Maria Gleixner <anna-maria@glx-um.de>
+---
+ src/cyclictest/cyclictest.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+Index: rt-tests/src/cyclictest/cyclictest.c
+===================================================================
+--- rt-tests.orig/src/cyclictest/cyclictest.c
++++ rt-tests/src/cyclictest/cyclictest.c
+@@ -1289,9 +1289,9 @@ static void process_options (int argc, c
+ 		case OPT_ALIGNED:
+ 			aligned=1;
+ 			if (optarg != NULL)
+-				offset = atoi(optarg);
++				offset = atoi(optarg) * 1000;
+ 			else if (optind<argc && atoi(argv[optind]))
+-				offset = atoi(argv[optind]);
++				offset = atoi(argv[optind]) * 1000;
+ 			else
+ 				offset = 0;
+ 			break;
