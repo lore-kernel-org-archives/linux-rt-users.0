@@ -1,62 +1,34 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests v0.92
-Date: Tue, 9 Jun 2015 16:11:20 +0200 (CEST)
-Message-ID: <alpine.LFD.2.10.1506091552470.10554@riemann>
+From: =?UTF-8?B?U3TDqXBoYW5lIGFuY2Vsb3Q=?= <sancelot@numalliance.com>
+Subject: rt patch
+Date: Tue, 09 Jun 2015 16:47:12 +0200
+Message-ID: <5576FC70.8050908@numalliance.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Anna-Maria Gleixner <anna-maria@glx-um.de>,
-	Clark Williams <williams@redhat.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	Michael Olbrich <m.olbrich@pengutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>
-To: rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f47.google.com ([74.125.82.47]:33285 "EHLO
-	mail-wg0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932239AbbFIOLa (ORCPT
+Received: from mail.numalliance.com ([83.206.84.204]:47270 "EHLO
+	mail.numalliance.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753745AbbFIOzj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Jun 2015 10:11:30 -0400
-Received: by wgez8 with SMTP id z8so14593612wge.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 09 Jun 2015 07:11:29 -0700 (PDT)
+	Tue, 9 Jun 2015 10:55:39 -0400
+Received: from localhost (localhost.localdomain [127.0.0.1])
+	by mail.numalliance.com (Postfix) with ESMTP id 372B820AA428
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jun 2015 16:47:21 +0200 (CEST)
+Received: from mail.numalliance.com ([127.0.0.1])
+	by localhost (mail.numalliance.com [127.0.0.1]) (amavisd-new, port 10024)
+	with ESMTP id O6qm3p3nN1yu for <linux-rt-users@vger.kernel.org>;
+	Tue,  9 Jun 2015 16:47:13 +0200 (CEST)
+Received: from [192.168.1.242] (retd4-ubuntu.macsoft-sa.com [192.168.1.242])
+	by mail.numalliance.com (Postfix) with ESMTPSA id 0B92320B5C70
+	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jun 2015 16:47:13 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
+I have tried the rt patches available on kernel.org.
+Unfortunately none patches correctly with latests kernel !
 
-I'm pleased to announce v0.92 of rt-tests, thanks everyone for the 
-patches!
-
-Anna-Maria Gleixner (2):
-  cyclictest: Convert the offset of the alignment option to microseconds
-  cyclictest: Align measurement threads to the next full second
-  cyclictest: Ensure that next wakeup time is never in the past
-
-Daniel Wagner (1):
-  pi_stress: Clear affinity for DEADLINE tasks
-
-John Kacur (4):
-  Fix minor grammar mistake in the help output
-  Allow building with -DHAVE_PARSE_CPUSTRING_ALL
-  Add a MAINTAINERS file
-  Version bump to v0.92
-
-Michael Olbrich (2):
-  Makefile: pi_stress need librttest.a so it should depend on it
-  Makefile: cleanup linking to librttest.a
-
-Sebastian Andrzej Siewior (1):
-  cyclictest: consider the 4 as the major version
-
-Repo: git://git.kernel.org/pub/scm/linux/kernel/git/clrkwllms/rt-tests.git
-Branch: master
-Tag: v0.92
-Tarball: https://www.kernel.org/pub/linux/kernel/people/clrkwllms/rt-tests-0.92.tar.xz
-
-Comments, patches and all around snarkiness are generally welcome!
-I've opened a v0.92-devel branch.
-
-Cheers!
-
-John
- 
+Where can I download the good ones ?
+Regards,
+Steph
