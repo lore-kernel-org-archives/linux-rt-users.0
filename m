@@ -1,34 +1,55 @@
-From: =?UTF-8?B?U3TDqXBoYW5lIGFuY2Vsb3Q=?= <sancelot@numalliance.com>
-Subject: rt patch
-Date: Tue, 09 Jun 2015 16:47:12 +0200
-Message-ID: <5576FC70.8050908@numalliance.com>
+From: Romain Perier <romain.perier@gmail.com>
+Subject: Re: rt patch
+Date: Tue, 9 Jun 2015 17:12:07 +0200
+Message-ID: <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com>
+References: <5576FC70.8050908@numalliance.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: =?UTF-8?Q?St=C3=A9phane_ancelot?= <sancelot@numalliance.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.numalliance.com ([83.206.84.204]:47270 "EHLO
-	mail.numalliance.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753745AbbFIOzj (ORCPT
+Received: from mail-qk0-f172.google.com ([209.85.220.172]:33161 "EHLO
+	mail-qk0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753059AbbFIPMI convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Jun 2015 10:55:39 -0400
-Received: from localhost (localhost.localdomain [127.0.0.1])
-	by mail.numalliance.com (Postfix) with ESMTP id 372B820AA428
-	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jun 2015 16:47:21 +0200 (CEST)
-Received: from mail.numalliance.com ([127.0.0.1])
-	by localhost (mail.numalliance.com [127.0.0.1]) (amavisd-new, port 10024)
-	with ESMTP id O6qm3p3nN1yu for <linux-rt-users@vger.kernel.org>;
-	Tue,  9 Jun 2015 16:47:13 +0200 (CEST)
-Received: from [192.168.1.242] (retd4-ubuntu.macsoft-sa.com [192.168.1.242])
-	by mail.numalliance.com (Postfix) with ESMTPSA id 0B92320B5C70
-	for <linux-rt-users@vger.kernel.org>; Tue,  9 Jun 2015 16:47:13 +0200 (CEST)
+	Tue, 9 Jun 2015 11:12:08 -0400
+Received: by qkhg32 with SMTP id g32so10980586qkh.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 09 Jun 2015 08:12:07 -0700 (PDT)
+In-Reply-To: <5576FC70.8050908@numalliance.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi,
-I have tried the rt patches available on kernel.org.
-Unfortunately none patches correctly with latests kernel !
 
-Where can I download the good ones ?
+did you try the patches located at
+https://www.kernel.org/pub/linux/kernel/projects/rt/ ?
+Use the corresponding mainline kernel, for example if you want to use
+3.18.13-rt10, download linux 3.18.13 (from torvald's repo for example)
+and apply the rt patch on it .
+Latest rt patches are for linux 3.18 and 4.0, so if you use the
+correct version it should work just fine.
+
+Everything is explained on the wiki,
 Regards,
-Steph
+Romain
+
+2015-06-09 16:47 GMT+02:00 St=C3=A9phane ancelot <sancelot@numalliance.=
+com>:
+> Hi,
+> I have tried the rt patches available on kernel.org.
+> Unfortunately none patches correctly with latests kernel !
+>
+> Where can I download the good ones ?
+> Regards,
+> Steph
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
