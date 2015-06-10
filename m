@@ -1,66 +1,66 @@
-From: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Subject: Re: [ANNOUNCE] 4.0.4-rt1
-Date: Tue, 09 Jun 2015 20:10:10 -0700
-Message-ID: <5577AA92.5070203@localhost>
-References: <20150519213923.GA26363@linutronix.de>	<20150526083449.5357059b@sluggy>	<20150526093832.558e2e46@gandalf.local.home>	<20150526084802.2cfd055b@sluggy>	<20150526111924.20836deb@gandalf.local.home> <20150526104343.51fad474@sluggy> <5564CC80.3080101@localhost> <5567C741.5010007@localhost> <55771837.4020007@localhost> <5577633A.2060100@pavlinux.ru>
+From: =?UTF-8?B?U3TDqXBoYW5lIGFuY2Vsb3Q=?= <sancelot@numalliance.com>
+Subject: Re: rt patch
+Date: Wed, 10 Jun 2015 08:44:48 +0200
+Message-ID: <5577DCE0.3000805@numalliance.com>
+References: <5576FC70.8050908@numalliance.com> <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8;
 	format=flowed
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	John Kacur <jkacur@redhat.com>
-To: pavel@pavlinux.ru,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Clark Williams <williams@redhat.com>,
-	Steven Rostedt <rostedt@goodmis.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Romain Perier <romain.perier@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp1.stanford.edu ([171.67.219.81]:60537 "EHLO
-	smtp.stanford.edu" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S932760AbbFJDKd (ORCPT
+Received: from mail.numalliance.com ([83.206.84.204]:34262 "EHLO
+	mail.numalliance.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754176AbbFJGpU convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Jun 2015 23:10:33 -0400
-In-Reply-To: <5577633A.2060100@pavlinux.ru>
+	Wed, 10 Jun 2015 02:45:20 -0400
+In-Reply-To: <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/09/2015 03:05 PM, Pavel Vasilyev wrote:
-> 09.06.2015 19:45, Fernando Lopez-Lezcano =D0=BF=D0=B8=D1=88=D0=B5=D1=82=
-:
+Hi,
+
+Yes, I did ! This is why I asked ....
+and kernels from here , why v3.0 and v4.0 kernels, patch errors .
+
+https://www.kernel.org/pub/linux/kernel/
+
+
+Regards
+S.Ancelot
+
+
+On 09/06/2015 17:12, Romain Perier wrote:
+> Hi,
 >
->> This is still happening, about once a day. John Dulaney help me set =
-up a
->> crash kernel dump (thanks!) so now I have a kernel core dump for thi=
-s
->> one,
+> did you try the patches located at
+> https://www.kernel.org/pub/linux/kernel/projects/rt/ ?
+> Use the corresponding mainline kernel, for example if you want to use
+> 3.18.13-rt10, download linux 3.18.13 (from torvald's repo for example=
+)
+> and apply the rt patch on it .
+> Latest rt patches are for linux 3.18 and 4.0, so if you use the
+> correct version it should work just fine.
 >
-> Asus,Fedora,CGROUPS, iptables,snd_ac97,radeon,raid1,kvm - this realti=
-me
-> system? :D
-
-:-P
-
-Yup. I have been using rt for many years - and packaging it - for (very=
-)=20
-low latency sound processing. Linux + rt + jackd + rtirq + threaded irq=
-s=20
-+ jack clients, everything with the right priorities. Runs very nicely=20
-unless you hit an issue like the one I'm asking about[*]. Usually=20
-running snd_hdspm with RME hardware when in concert situations (this on=
-e=20
-with Asus mobo is my - quite old by now - desktop at work, but I'm also=
-=20
-having the same problem in my Lenovo laptop).
-
--- Fernando
-
-[*] for example a whole concert for a 24.8 3D sound system with a remot=
-e=20
-ethernet driven D/A and running all the time with 64 frame x 2 buffers=20
-at 48KHz.
-
+> Everything is explained on the wiki,
+> Regards,
+> Romain
+>
+> 2015-06-09 16:47 GMT+02:00 St=C3=A9phane ancelot <sancelot@numallianc=
+e.com>:
+>> Hi,
+>> I have tried the rt patches available on kernel.org.
+>> Unfortunately none patches correctly with latests kernel !
+>>
+>> Where can I download the good ones ?
+>> Regards,
+>> Steph
+>> --
+>> To unsubscribe from this list: send the line "unsubscribe linux-rt-u=
+sers" in
+>> the body of a message to majordomo@vger.kernel.org
+>> More majordomo info at  http://vger.kernel.org/majordomo-info.html
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
 s" in
