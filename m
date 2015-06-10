@@ -1,60 +1,87 @@
-From: Joe Korty <joe.korty@ccur.com>
-Subject: Re: rt patch
-Date: Wed, 10 Jun 2015 10:40:47 -0400
-Message-ID: <20150610144047.GB31886@zipoli.ccur.com>
-References: <5576FC70.8050908@numalliance.com>
- <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com>
- <5577DCE0.3000805@numalliance.com>
- <CABgxDoJdNJMc3tE1=pzhP-=VsSB6irPT7q3_CPJpJJuGwSwRmA@mail.gmail.com>
- <5577E019.6030106@numalliance.com>
-Reply-To: Joe Korty <joe.korty@ccur.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: CPU stall on 3.12.13-rt21
+Date: Wed, 10 Jun 2015 18:33:10 +0200
+Message-ID: <20150610163310.GA24273@linutronix.de>
+References: <AFDC53D21F2F1F4782A16D848C737357266239EE@srv01mail6.corp.trumpf.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Romain Perier <romain.perier@gmail.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: St??phane ancelot <sancelot@numalliance.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Matthias.Buehler@de.trumpf.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from vpnflf.ccur.com ([12.220.59.2]:39715 "EHLO zipoli.ccur.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S933280AbbFJP1J (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Jun 2015 11:27:09 -0400
+Received: from www.linutronix.de ([62.245.132.108]:52814 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S965894AbbFJQdM convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 10 Jun 2015 12:33:12 -0400
 Content-Disposition: inline
-In-Reply-To: <5577E019.6030106@numalliance.com>
+In-Reply-To: <AFDC53D21F2F1F4782A16D848C737357266239EE@srv01mail6.corp.trumpf.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Jun 10, 2015 at 02:58:33AM -0400, St??phane ancelot wrote:
-> here is an example with linux-3.18.13 and patch 3.18.13-rt10:
-> 3.18.13-rt10
-> 
-> zcat ../patches-3.18.13-rt10.tar.gz |patch -p1 --dry-run
-> patching file arch/arm64/kernel/perf_event.c
-> Hunk #1 succeeded at 461 (offset -6 lines).
-> patching file arch/sparc/Kconfig
-> patching file arch/arm64/Kconfig
-> Hunk #1 succeeded at 61 (offset -7 lines).
-> patching file include/linux/notifier.h
-> patching file include/linux/srcu.h
-> patching file arch/x86/mm/iomap_32.c
-> Hunk #1 FAILED at 65.
-> 1 out of 1 hunk FAILED -- saving rejects to file arch/x86/mm/iomap_32.c.rej
+* Matthias.Buehler@de.trumpf.com | 2015-05-28 07:55:16 [+0000]:
 
+>Hi,
+Hi,
 
-It appears you are applying the patch to an Android or other third-party
-derivative of Linux, instead of Linux proper, or that either the kernel
-or the patch you have fetched is corrupt.  Try re-fetching everything and
-try again.  This sequence works for me:
+>I am running two real-time processes on a 3.12.13.rt21.
+>The first process receives start commands from an external control
+>via network and relays these starts to the second process. This second
+>process does the actual job and tells the result back to the first.
+>This cycle is repeated several times a second.
+>
+>After some time (half an hour or so) the system stalls. There is no
+>network connection available. A parallel running GUI is also frozen.
+>
+>I tried this scenario with 3.12.40-rt55 and 3.18.13-rt9 with the same
+>result.
+>
+>Running the second process as SCHED_RR does not lead to this situation=
+=2E
 
-   cd
-   mkdir junk
-   cd junk
-   wget -q ftp://ftp.kernel.org/pub/linux/kernel/v3.0/linux-3.18.11.tar.xz
-   wget -q ftp://ftp.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.13-rt10.patch.xz
-   tar xf l*xz
-   cd linux*11
-   unxz <../pat*xz | patch -p1
+What do you mean by "second process as SCHED_RR". What was it before?
+SCHED_FIFO? Can you tell me the what your realtime applications are and
+their priorities? Is any of the applications pinned to a CPU?
 
-There are some (annoying) offset errors, but no fuzzies or rejects like you have
-been seeing.
+>On the serial console I can see the following output:
 
-Joe
+There is a RCU stall on CPU0. CPU1 looks idle all the time.
+
+>[ 4012.800040]=20
+>[ 4012.800040] runnable tasks:
+>[ 4012.800040]             task   PID         tree-key  switches  prio=
+     exec-runtime         sum-exec        sum-sleep
+>[ 4012.800040] -------------------------------------------------------=
+---------------------------------------------------
+>[ 4012.825647]      ksoftirqd/0     3        -3.000000    655617    98=
+        -3.000000      8702.785784         0.000000
+>[ 4012.836376]           rcuc/0    15        -3.000000    278716    98=
+        -3.000000      5810.323312         0.000000
+>[ 4012.847109]  systemd-journal   196   1513493.594716      2449   120=
+   1513493.594716       273.461656   2623283.352271
+>[ 4012.857844]    VisionLineGui  1622         0.000000   2388301    39=
+         0.000000    384277.128155   1916449.569945
+>[ 4012.868572]    VisionLineGui  1724   1513493.594716    102610   120=
+   1513493.594716      1919.879611   2587477.132774
+>[ 4012.879296]           screen  3572   1513493.594716     45227   120=
+   1513493.594716      1808.874962    769084.691362
+>[ 4012.890018] RVisionLineDaemo  3637         0.000000      4339    39=
+         0.000000   1405501.394654         0.000000
+>[ 4012.900740]          QThread  4224         0.000000    151421    59=
+         0.000000     15053.995468         0.000000
+
+VisionLineDaemo seems to run. VisionLineGui (1622) would also run if it
+could, it is likely next in line. Are those in two the tasks to which
+you refer that the stall can be avoided by setting a task SCHED_RR?
+A task traceback could show what VisionLineDaemo is doing (in case it
+stalls RCU and waits for something).
+
+>
+>Matthias B=C3=BChler
+
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
