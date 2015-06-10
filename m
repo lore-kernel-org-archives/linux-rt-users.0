@@ -1,37 +1,45 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH V2 0/1] Add sched_clock to Atmel TCB clock source
-Date: Wed, 10 Jun 2015 18:35:39 +0200
-Message-ID: <20150610163539.GB24273@linutronix.de>
-References: <20150602214617.585540231@osadl.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: rt patch
+Date: Thu, 11 Jun 2015 01:25:50 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1506110123520.3786@nanos>
+References: <5576FC70.8050908@numalliance.com> <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com> <5577DCE0.3000805@numalliance.com> <CABgxDoJdNJMc3tE1=pzhP-=VsSB6irPT7q3_CPJpJJuGwSwRmA@mail.gmail.com> <5577E019.6030106@numalliance.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT-users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-2140757472-1433978751=:3786"
+Cc: Romain Perier <romain.perier@gmail.com>,
+	linux-rt-users@vger.kernel.org
+To: =?ISO-8859-15?Q?St=E9phane_ancelot?= <sancelot@numalliance.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52848 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:54396 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965786AbbFJQfk (ORCPT
+	with ESMTP id S1751392AbbFJX0N (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 10 Jun 2015 12:35:40 -0400
-Content-Disposition: inline
-In-Reply-To: <20150602214617.585540231@osadl.org>
+	Wed, 10 Jun 2015 19:26:13 -0400
+In-Reply-To: <5577E019.6030106@numalliance.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Carsten Emde | 2015-06-02 23:46:17 [+0200]:
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
 
->Hi Thomas,
-Hi Carsten,
+--8323329-2140757472-1433978751=:3786
+Content-Type: TEXT/PLAIN; charset=utf-8
+Content-Transfer-Encoding: 8BIT
 
->here comes V2 of the patch to add sched_clock to the Atmel TCB clock source.
->It provides the sched_clock:
->32 bits at 16MHz, resolution 60ns, wraps every 260301047747ns 
->
->It is not yet clear, why interrupts are enabled when this code is running.
-Do I get access to the HW in question?
+On Wed, 10 Jun 2015, Stéphane ancelot wrote:
 
->Thanks,
->	-Carsten.
+Please:
+      - Do not top post
+      - Trim your replies
 
-Sebastian
+> here is an example with linux-3.18.13 and patch 3.18.13-rt10:
+> 3.18.13-rt10
+> 
+> zcat ../patches-3.18.13-rt10.tar.gz |patch -p1 --dry-run
+
+You are trying to apply a tarball of patches instead of a single
+combined patch. Use patch-3.18.13-rt10.gz instead.
+
+Thanks,
+
+	tglx
+--8323329-2140757472-1433978751=:3786--
