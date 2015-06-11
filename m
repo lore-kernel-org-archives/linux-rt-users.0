@@ -1,61 +1,111 @@
-From: =?UTF-8?B?U3TDqXBoYW5lIGFuY2Vsb3Q=?= <sancelot@numalliance.com>
-Subject: Re: rt patch
-Date: Thu, 11 Jun 2015 13:21:32 +0200
-Message-ID: <55796F3C.6070605@numalliance.com>
-References: <5576FC70.8050908@numalliance.com> <CABgxDo+cC7n8AbWvuwRrUWj-08DvtApL78OsqX66gN7U519iXA@mail.gmail.com> <5577DCE0.3000805@numalliance.com> <CABgxDoJdNJMc3tE1=pzhP-=VsSB6irPT7q3_CPJpJJuGwSwRmA@mail.gmail.com> <5577E019.6030106@numalliance.com> <20150610144047.GB31886@zipoli.ccur.com> <00f101d0a394$d66f73a0$834e5ae0$@pont@sdcsystems.com> <55792961.8080002@numalliance.com> <20150611101937.07d65235@archlinux> <55794C28.60505@numalliance.com> <55794FA1.20405@numalliance.com> <alpine.DEB.2.11.1506111256520.3786@nanos>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [RFC][PATCH] mm: ifdef out VM_BUG_ON check on PREEMPT_RT_FULL
+Date: Thu, 11 Jun 2015 13:40:42 +0200
+Message-ID: <20150611114042.GC16115@linutronix.de>
+References: <20150529104815.2d2e880c@sluggy>
+ <20150529142614.37792b9ff867626dcf5e0f08@linux-foundation.org>
+ <20150601131452.3e04f10a@sluggy>
+ <20150601190047.GA5879@cmpxchg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Ralf Mardorf <ralf.mardorf@alice-dsl.net>,
-	linux-rt users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: Clark Williams <williams@redhat.com>,
+	Andrew Morton <akpm@linux-foundation.org>,
+	Thomas Gleixner <tglx@glx-um.de>, linux-mm@kvack.org,
+	RT <linux-rt-users@vger.kernel.org>,
+	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Johannes Weiner <hannes@cmpxchg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from num-trut.pck.nerim.net ([62.212.97.179]:58502 "EHLO
-	mail.numalliance.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1751754AbbFKLaj convert rfc822-to-8bit (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:56056 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752462AbbFKLkt (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Jun 2015 07:30:39 -0400
-In-Reply-To: <alpine.DEB.2.11.1506111256520.3786@nanos>
+	Thu, 11 Jun 2015 07:40:49 -0400
+Content-Disposition: inline
+In-Reply-To: <20150601190047.GA5879@cmpxchg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/06/2015 13:03, Thomas Gleixner wrote:
-> On Thu, 11 Jun 2015, St=C3=A9phane ancelot wrote:
->
->> Using a more recent system, I have following mistakes:
->> trying to patch a file not present in the kernel.
->> Sincerely, I do not understand what is the problem !
->
-> Ok. This is the last attempt to help you. I told you before, that:
->
->>>>> zcat ../patches-3.18.13-rt10.tar.gz |patch -p1 --dry-run
->>>>
->>>> You are trying to apply a tarball of patches instead of a single
->>>> combined patch. Use patch-3.18.13-rt10.patch.gz instead.
->
-> https://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.1=
-3-rt10.patch.gz
->
-> This file can be applied with "patch -p1" after decompression.
->
-> The tarball, which you are trying to use contains a series of patches
-> and CANNOT be applied with patch.
->
-> Thanks,
->
-> 	tglx
->
-Yes, I tried using  this patch too. And the kernel was downloaded here =
-:
-https://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.13.tar.xz
+* Johannes Weiner | 2015-06-01 15:00:47 [-0400]:
 
-note: using ftp://ftp.kernel.org does not reply
+>Andrew's suggestion makes sense, we can probably just delete the check
+>as long as we keep the comment.
 
-Regards,
-S.Ancelot
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+that comment didn't get out attention - the BUG_ON() did because the
+latter helped to spot a bug in -RT. Also if the comment says that the
+preemption is expected to be disabled then I still miss the important
+piece of information: WHY. You explained it in an earlier email that
+this has something to do with the per CPU variables which are modified.
+This piece of information is important. In future updates of the code I
+would appreciate BUG_ON() statements like this to catch things I didn't
+see originally.
+
+>That being said, I think it's a little weird that this doesn't work:
+>
+>spin_lock_irq()
+>BUG_ON(!irqs_disabled())
+>spin_unlock_irq()
+
+This depends on the point of view. You expect interrupts to be disabled
+while taking a lock. This is not how the function is defined.
+The function ensures that the lock can be taken from process context while
+it may also be taken by another caller from interrupt context. The fact
+that it disables interrupts on vanilla to achieve its goal is an
+implementation detail. Same goes for spin_lock_bh() btw. Based on this
+semantic it works on vanilla and -RT. It does not disable interrupts on
+-RT because there is no need for it: the interrupt handler runs in thread
+context. The function delivers what it is expected to deliver from API
+point of view: "take the lock from process context which can also be
+taken in interrupt context".
+
+>I'd expect that if you change the meaning of spin_lock_irq() from
+>"mask hardware interrupts" to "disable preemption by tophalf", you
+>would update the irqs_disabled() macro to match.  Most people using
+>this check probably don't care about the hardware state, only that
+>they don't get preempted by an interfering interrupt handler, no?
+
+Most people that use irqs_disabled() or preempt_disabled() implement
+some kind locking which is not documented. It is either related to CPU
+features (which are per-CPU) or protect per-CPU variables (sometimes
+even global ones). It often ends with something that they rely on how
+the vanilla API works.
+For instance: preempt_disable() is used to for locking in all callers
+but one and this is because that one caller takes a spin_lock() (a
+totally unrelated lock) but since spin_lock() also performs
+preempt_disable() the author optimizes the "needed" preempt_disable()
+invocation away.
+
+Either way, those functions do perform some kind of locking, don't
+document what they are actually protecting and you can't test if the
+locks are held properly all the time since lockdep can't see them. This
+is bad. It is awful. This should not be done.
+
+So. Back to the actual problem. In short: The per-CPU variables were
+protected by local_irq_disable() in all places but one because it
+inherited the needed local_irq_disable() from spin_lock_irq().
+I did not make the preempt_disable() + spin_lock() case up, it happened
+unfortunately more than once - ask tglx.
+
+The function in question was introduced in v4.0-rc1. The other functions
+that were calling mem_cgroup_charge_statistics() + memcg_check_events()
+were converted to use local_lock_irq() for instance in
+mem_cgroup_move_account(). That happened in v3.18 I think. I didn't spot
+this new users while doing v4.0 -RT. So the next -RT release will get:
+
+diff --git a/mm/memcontrol.c b/mm/memcontrol.c
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -5822,6 +5822,7 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
+ {
+ 	struct mem_cgroup *memcg;
+ 	unsigned short oldid;
++	unsigned long flags;
+ 
+ 	VM_BUG_ON_PAGE(PageLRU(page), page);
+ 	VM_BUG_ON_PAGE(page_count(page), page);
+@@ -5844,11 +5845,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
+ 	if (!mem_cgroup_is_root(memcg))
+ 		page_counter_uncharge(&memcg->memory, 1);
+ 
+-	/* XXX: caller holds IRQ-safe mapping->tree_lock */
+-	VM_BUG_ON(!irqs_disabled());
