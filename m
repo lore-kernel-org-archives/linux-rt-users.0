@@ -1,46 +1,53 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH V2 RESEND  1/1] Clocksource: Add sched_clock to Atmel TCB
- clocksource
-Date: Thu, 11 Jun 2015 17:15:33 +0200
-Message-ID: <20150611151533.GK16115@linutronix.de>
-References: <20150602215215.577791619@osadl.org>
- <556E2945.4090800@osadl.org>
+Subject: Re: [OSADL QA 3.18.9-rt5 #1]
+Date: Thu, 11 Jun 2015 17:27:02 +0200
+Message-ID: <20150611152702.GL16115@linutronix.de>
+References: <55245FC8.9090509@osadl.org>
+ <5526AE86.7030708@linutronix.de>
+ <20150410123634.GA3057@linutronix.de>
+ <20150513123427.2ff23a9a@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	RT-users <linux-rt-users@vger.kernel.org>
-To: Carsten Emde <C.Emde@osadl.org>
+Cc: Carsten Emde <C.Emde@osadl.org>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:57088 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:57134 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750698AbbFKPPe (ORCPT
+	with ESMTP id S1751785AbbFKP1F (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Jun 2015 11:15:34 -0400
+	Thu, 11 Jun 2015 11:27:05 -0400
 Content-Disposition: inline
-In-Reply-To: <556E2945.4090800@osadl.org>
+In-Reply-To: <20150513123427.2ff23a9a@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Carsten Emde | 2015-06-03 00:08:05 [+0200]:
+* Steven Rostedt | 2015-05-13 12:34:27 [-0400]:
 
->@@ -339,6 +346,10 @@ static int __init tcb_clksrc_init(void)
-> 	if (ret)
-> 		goto err_disable_t1;
+>Found the bug. The above actually changes the code
+>for !CONFIG_PREEMPT_RT_FULL. You still need to keep that
 >
->+	local_irq_save(flags);
->+	sched_clock_register(sched_clock_get_cycles, 32, divided_rate);
->+	local_irq_restore(flags);
+>	if (in_irq())
+>
+>check, otherwise you can call irq_work_tick() from softirq in non RT
+>configs, which talking to Peter Zijlstra, is a no no.
+>
+>Note, my tests were failing on CONFIG_PREEMPT_LL (low latency).
 
-The other sched_clock_register() users don't do this and are invoked via
-CLOCKSOURCE_OF_DECLARE / clocksource_of_init() and this is probably
-early enough so the irqs stay off.
-Since this is not -RT specific at all, do you mind routing it via ARM/
-clocksource folks? They also may have an idea what is stopping them from
-using clocksource_of_init() so you wouldn't have to disable interrupts
-here.
+This was removed by mistake. Obviously. I am adding the chunk back:
 
-> 	/* channel 2:  periodic and oneshot timer support */
-> 	ret = setup_clkevents(tc, clk32k_divisor_idx);
-> 	if (ret)
+--- a/kernel/time/timer.c
++++ b/kernel/time/timer.c
+@@ -1450,7 +1450,8 @@ void update_process_times(int user_tick)
+ 	run_local_timers();
+ 	rcu_check_callbacks(user_tick);
+ #if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
+-	irq_work_tick();
++	if (in_irq())
++		irq_work_tick();
+ #endif
+ 	run_posix_cpu_timers(p);
+ }
 
 Sebastian
