@@ -1,63 +1,80 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH v2] ASoC: Intel: sst: use ; instead of , at the of a C
- statement
-Date: Thu, 11 Jun 2015 15:14:34 +0200
-Message-ID: <20150611131434.GI16115@linutronix.de>
-References: <20150519213923.GA26363@linutronix.de>
- <55623BC2.80307@localhost>
- <20150611122227.GF16115@linutronix.de>
- <55798759.8000607@gmail.com>
+Subject: Re: BUG: scheduling while atomic on 4.0.4-rt
+Date: Thu, 11 Jun 2015 16:21:35 +0200
+Message-ID: <20150611142135.GJ16115@linutronix.de>
+References: <20150601180529.76806ca5@tor.valhalla.alchemy.lu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Vinod Koul <vinod.koul@intel.com>, Mark Brown <broonie@kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	alsa-devel@alsa-project.org, Jie Yang <yang.jie@intel.com>
-To: Mats Karrman <mats.dev.list@gmail.com>
+Cc: linux-rt-users@vger.kernel.org
+To: Joakim Hernberg <jhernberg@alchemy.lu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:56530 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:56829 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752636AbbFKNOi (ORCPT
+	with ESMTP id S1750718AbbFKOVg (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 11 Jun 2015 09:14:38 -0400
+	Thu, 11 Jun 2015 10:21:36 -0400
 Content-Disposition: inline
-In-Reply-To: <55798759.8000607@gmail.com>
+In-Reply-To: <20150601180529.76806ca5@tor.valhalla.alchemy.lu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This was spotted by Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-while he tried to compile a -RT kernel with this driver enabled.
-"make C=2" would also warn about this. This is is based on his patch.
+* Joakim Hernberg | 2015-06-01 18:05:29 [+0200]:
 
-Reported-by: Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
-* Mats Karrman | 2015-06-11 15:04:25 [+0200]:
+>Just got this on 4.0.4-rt1.
+>
+>[74169.672071] BUG: scheduling while atomic: chromium/1566/0x00000002
+>[74169.672134] Call Trace:
+>[74169.672146]  [<ffffffff8158c6af>] schedule+0x3f/0xd0
+>[74169.672148]  [<ffffffff8158dc1d>] rt_spin_lock_slowlock+0xdd/0x290
+>[74169.672151]  [<ffffffff8158f749>] rt_spin_lock+0x29/0x30
+>[74169.672154]  [<ffffffff81177bdd>] pagevec_lru_move_fn+0x9d/0x120
+>[74169.672156]  [<ffffffff81176fb0>] ? ftrace_raw_output_mm_lru_activate+0x70/0x70
+>[74169.672158]  [<ffffffff8117873e>] lru_add_drain_cpu+0x12e/0x170
+>[74169.672160]  [<ffffffff81192587>] compact_zone+0x537/0x8e0
 
->>+	sst_shim_write64(shim, SST_IMRX, shim_regs->imrx):
->Don't you mean ';' and not ':'?
-Interresting, yes I do. Thanks.
+This should fix it:
 
- sound/soc/intel/atom/sst/sst.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
-
-diff --git a/sound/soc/intel/atom/sst/sst.c b/sound/soc/intel/atom/sst/sst.c
-index 96c2e420cce6..a4b458e77089 100644
---- a/sound/soc/intel/atom/sst/sst.c
-+++ b/sound/soc/intel/atom/sst/sst.c
-@@ -368,8 +368,8 @@ static inline void sst_restore_shim64(struct intel_sst_drv *ctx,
- 	 * initialize by FW or driver when firmware is loaded
- 	 */
- 	spin_lock_irqsave(&ctx->ipc_spin_lock, irq_flags);
--	sst_shim_write64(shim, SST_IMRX, shim_regs->imrx),
--	sst_shim_write64(shim, SST_CSR, shim_regs->csr),
-+	sst_shim_write64(shim, SST_IMRX, shim_regs->imrx);
-+	sst_shim_write64(shim, SST_CSR, shim_regs->csr);
- 	spin_unlock_irqrestore(&ctx->ipc_spin_lock, irq_flags);
- }
+diff --git a/include/linux/swap.h b/include/linux/swap.h
+--- a/include/linux/swap.h
++++ b/include/linux/swap.h
+@@ -298,6 +298,7 @@ extern unsigned long nr_free_pagecache_pages(void);
  
--- 
-2.1.4
+ 
+ /* linux/mm/swap.c */
++DECLARE_LOCAL_IRQ_LOCK(swapvec_lock);
+ extern void lru_cache_add(struct page *);
+ extern void lru_cache_add_anon(struct page *page);
+ extern void lru_cache_add_file(struct page *page);
+diff --git a/mm/compaction.c b/mm/compaction.c
+index 8c0d9459b54a..0b670021a977 100644
+--- a/mm/compaction.c
++++ b/mm/compaction.c
+@@ -1387,10 +1387,12 @@ static int compact_zone(struct zone *zone, struct compact_control *cc)
+ 				cc->migrate_pfn & ~((1UL << cc->order) - 1);
+ 
+ 			if (last_migrated_pfn < current_block_start) {
+-				cpu = get_cpu();
++				cpu = get_cpu_light();
++				local_lock_irq(swapvec_lock);
+ 				lru_add_drain_cpu(cpu);
++				local_unlock_irq(swapvec_lock);
+ 				drain_local_pages(zone);
+-				put_cpu();
++				put_cpu_light();
+ 				/* No more flushing until we migrate again */
+ 				last_migrated_pfn = 0;
+ 			}
+diff --git a/mm/swap.c b/mm/swap.c
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -46,7 +46,7 @@ static DEFINE_PER_CPU(struct pagevec, lru_rotate_pvecs);
+ static DEFINE_PER_CPU(struct pagevec, lru_deactivate_pvecs);
+ 
+ static DEFINE_LOCAL_IRQ_LOCK(rotate_lock);
+-static DEFINE_LOCAL_IRQ_LOCK(swapvec_lock);
++DEFINE_LOCAL_IRQ_LOCK(swapvec_lock);
+ 
+ /*
+  * This path almost never happens for VM activity - pages are normally
+
+Sebastian
