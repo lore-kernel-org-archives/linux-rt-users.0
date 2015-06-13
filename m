@@ -1,57 +1,41 @@
-From: Mark Brown <broonie@kernel.org>
-Subject: Re: [PATCH v2] ASoC: Intel: sst: use ; instead of , at the of a C
- statement
-Date: Fri, 12 Jun 2015 11:37:06 +0100
-Message-ID: <20150612103706.GG1921@sirena.org.uk>
-References: <20150519213923.GA26363@linutronix.de>
- <55623BC2.80307@localhost>
- <20150611122227.GF16115@linutronix.de>
- <55798759.8000607@gmail.com>
- <20150611131434.GI16115@linutronix.de>
+From: Joakim Hernberg <jhernberg@alchemy.lu>
+Subject: Re: [ANNOUNCE] rt-tests v0.92
+Date: Sat, 13 Jun 2015 11:41:04 +0200
+Message-ID: <20150613114104.6ff44c05@tor.valhalla.alchemy.lu>
+References: <alpine.LFD.2.10.1506091552470.10554@riemann>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="Cp3Cp8fzgozWLBWL"
-Cc: Mats Karrman <mats.dev.list@gmail.com>,
-	Vinod Koul <vinod.koul@intel.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	alsa-devel@alsa-project.org, Jie Yang <yang.jie@intel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150611131434.GI16115@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Anna-Maria Gleixner <anna-maria@glx-um.de>,
+	Clark Williams <williams@redhat.com>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>,
+	Michael Olbrich <m.olbrich@pengutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mailsafe.webbplatsen.se ([94.247.172.109]:54636 "EHLO
+	mailsafe.webbplatsen.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751126AbbFMJlK (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 13 Jun 2015 05:41:10 -0400
+In-Reply-To: <alpine.LFD.2.10.1506091552470.10554@riemann>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+On Tue, 9 Jun 2015 16:11:20 +0200 (CEST)
+John Kacur <jkacur@redhat.com> wrote:
 
---Cp3Cp8fzgozWLBWL
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
+> 
+> I'm pleased to announce v0.92 of rt-tests, thanks everyone for the 
+> patches!
 
-On Thu, Jun 11, 2015 at 03:14:34PM +0200, Sebastian Andrzej Siewior wrote:
-> This was spotted by Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>
-> while he tried to compile a -RT kernel with this driver enabled.
-> "make C=2" would also warn about this. This is is based on his patch.
+There is a test in the hwlatdetect script that checks for the existence
+of the hwlat_detector module.  This fails if the modules have been
+compressed and also if the driver is built into the kernel.
 
-Applied, thanks.
+-- 
 
---Cp3Cp8fzgozWLBWL
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAEBCAAGBQJVerZSAAoJECTWi3JdVIfQU64H/jnKxhOl9v1Hah/atkah0/1P
-aZISqGw8kt5+gSxO9R430LJRYRSd2liq2cWPzYXi/rOk/R56AQUNQizyWThcZQ1X
-P8VOn7uEA/pLhwINtuz+AXnz/+v19p9fB1lB4M7XzxphzX7R9Fgnu4OJO8a5akfl
-QLfootn6omflZaV0ImrxOEIYzlg/KXFnwFMiwUc25xVTlpw7P1OI+G2KpU051e47
-0K17nU4Cp1Y5jHsjcoUMZ8ulY7A9KdIVEMFf89mJThDv9/ZpdgOe4BbLFw7MSKyy
-IozxaP6xODZwb1nzeCYsI8U8f56jpKvS2Xcgg/OtuVirCLe22DkGbTg+06+NOZs=
-=X15Y
------END PGP SIGNATURE-----
-
---Cp3Cp8fzgozWLBWL--
+   Joakim
