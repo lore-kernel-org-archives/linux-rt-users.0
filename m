@@ -1,54 +1,50 @@
-From: =?UTF-8?B?SmFyb23DrXIgTWlrZcWh?= <mira.mikes@gmail.com>
-Subject: Re: debian RT kernel
-Date: Mon, 15 Jun 2015 02:23:52 +0200
-Message-ID: <CAG_ZyaCZ8JF19VpXpFbAEgSwGnHp3+oGpRj=u4VfQ64AQMKwJw@mail.gmail.com>
-References: <7f79-55642000-25-50abc380@46760505>
-	<1432681902.6319.10.camel@decadent.org.uk>
-	<CAG_ZyaArK3knBuCqM68AdjqO_iVUySUZYAa546i9eje9hwJaJA@mail.gmail.com>
-	<1433014732.6319.65.camel@decadent.org.uk>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [ANNOUNCE] rt-tests v0.92
+Date: Mon, 15 Jun 2015 09:25:00 -0400 (EDT)
+Message-ID: <2037002657.2007437.1434374700995.JavaMail.zimbra@redhat.com>
+References: <alpine.LFD.2.10.1506091552470.10554@riemann> <20150613114104.6ff44c05@tor.valhalla.alchemy.lu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Braud Caroline <Caroline.Braud@univ-lille1.fr>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: Ben Hutchings <ben@decadent.org.uk>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	Anna-Maria Gleixner <anna-maria@glx-um.de>,
+	Clark Williams <williams@redhat.com>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>,
+	Michael Olbrich <m.olbrich@pengutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>
+To: Joakim Hernberg <jhernberg@alchemy.lu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f170.google.com ([209.85.214.170]:32833 "EHLO
-	mail-ob0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752343AbbFOAXx convert rfc822-to-8bit (ORCPT
+Received: from mx5-phx2.redhat.com ([209.132.183.37]:38600 "EHLO
+	mx5-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754074AbbFONZj (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 14 Jun 2015 20:23:53 -0400
-Received: by obcej4 with SMTP id ej4so53858871obc.0
-        for <linux-rt-users@vger.kernel.org>; Sun, 14 Jun 2015 17:23:52 -0700 (PDT)
-In-Reply-To: <1433014732.6319.65.camel@decadent.org.uk>
+	Mon, 15 Jun 2015 09:25:39 -0400
+In-Reply-To: <20150613114104.6ff44c05@tor.valhalla.alchemy.lu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-2015-05-30 21:38 GMT+02:00 Ben Hutchings <ben@decadent.org.uk>:
-> On Sat, 2015-05-30 at 21:23 +0200, Jarom=C3=ADr Mike=C5=A1 wrote:
->> 2015-05-27 1:11 GMT+02:00 Ben Hutchings <ben@decadent.org.uk>:
+I'm thinking - without looking at any code here, just using my memory, that we purposely decided that this should not be used as a built-in.
+If this is true, perhaps we need a patch that eliminates that as an option.
 
-Hi Ben,
+Thanks
 
->> > I uploaded a new linux package (version 4.0.4-1) to unstable earli=
-er
->> > today with the PREEMPT_RT patchset included, so you could also jus=
-t wait
->> > a day for it to hit the mirrors.
->>
->> Why we don't have linux-image-rt-amd64 but just linux-image-rt-686-p=
-ae?
->
-> The build broke on amd64; it will be fixed in the next upload.
+John
 
-Maybe now with 4.0.5-rt3 ? ;)
-
-regards
-
-mira
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+----- Original Message -----
+> On Tue, 9 Jun 2015 16:11:20 +0200 (CEST)
+> John Kacur <jkacur@redhat.com> wrote:
+> 
+> > 
+> > I'm pleased to announce v0.92 of rt-tests, thanks everyone for the
+> > patches!
+> 
+> There is a test in the hwlatdetect script that checks for the existence
+> of the hwlat_detector module.  This fails if the modules have been
+> compressed and also if the driver is built into the kernel.
+> 
+> --
+> 
+>    Joakim
+> 
