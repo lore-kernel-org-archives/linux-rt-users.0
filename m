@@ -1,36 +1,43 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: problems rt-patch 3.18.13.rt-10
-Date: Sun, 21 Jun 2015 17:58:24 +0200
-Message-ID: <5586DF20.5060902@osadl.org>
-References: <CAObZbXRuziL+L-22yY1oz5fy9b+YjxY2kXuJKdH-Q=Ci+WaUhQ@mail.gmail.com>
+From: Giuliano Colla <giuliano.colla@fastwebnet.it>
+Subject: CLOCK_MONOTONIC issue
+Date: Mon, 22 Jun 2015 13:06:28 +0200
+Message-ID: <5587EC34.2070808@fastwebnet.it>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset=iso-8859-15; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Daniel Vidal <danielvidalchornet@gmail.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:46497 "EHLO toro.web-alm.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752928AbbFUQCL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 21 Jun 2015 12:02:11 -0400
-In-Reply-To: <CAObZbXRuziL+L-22yY1oz5fy9b+YjxY2kXuJKdH-Q=Ci+WaUhQ@mail.gmail.com>
+Received: from mr004msr.fastwebnet.it ([85.18.95.67]:53441 "EHLO
+	mr004msr.fastwebnet.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753921AbbFVLMQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Jun 2015 07:12:16 -0400
+Received: from microserver.localdomain (151.41.156.223) by mr004msr.fastwebnet.it (8.5.140.03) (authenticated as giuliano.colla)
+        id 54FF13C4065674D8 for linux-rt-users@vger.kernel.org; Mon, 22 Jun 2015 13:06:30 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Daniel,
+Hi all,
 
-> I have been compile an install a 3.18.13.rt-10.
-> My system hangs after a random time.
-> I must use SysRq keys to obtain any information.
-> The problem seems related with radeon or Xorg.
-> Here is the messages of kern.log
-> http://pastebin.com/MgQSyXi9
-This is a known misbehavior -> 
-http://comments.gmane.org/gmane.linux.rt.user/13192.
+in order both to profile the performance of my rt threads, and to 
+perform timed operations (such as sem_timedwait), I'm using the 
+clock_gettime() function.
 
-Please go back to 3.12 to run Radeon graphics with RT.
+Using as a parameter CLOCK_REALTIME everything appears to work as 
+expected, but if I attempt to use CLOCK_MONOTONIC (which should be a 
+more reliable timing source, from what I read), I get bogus times.
 
-Thanks,
-	-Carsten.
+This occurs on different platforms, and with different kernel 
+versions/rt patch. (3.10.10-rt7 - 3.10.67-rt71 - 3.12.31-rt45).
+
+Am I missing something obvious, such as a kernel misconfiguration, or 
+this is something to be expected?
+
+Any hint will be appreciated.
+
+Thanks in advance,
+
+Giuliano
+
 --
 To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
