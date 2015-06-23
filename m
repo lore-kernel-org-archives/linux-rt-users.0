@@ -1,76 +1,94 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: [PATCH v3.10-rt] rtmutex: fixup semi incomplete backport causing new warning spew
-Date: Mon, 22 Jun 2015 18:23:07 -0400
-Message-ID: <1435011787-29356-1-git-send-email-paul.gortmaker@windriver.com>
+From: Jan Kiszka <jan.kiszka@siemens.com>
+Subject: Re: [PATCH][RT][RFC] irq_work: Have non HARD_IRQ irq work just run
+ from ticks
+Date: Tue, 23 Jun 2015 16:12:29 +0200
+Message-ID: <5589694D.4040504@siemens.com>
+References: <20150622150959.44055b32@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.windriver.com ([147.11.1.11]:39012 "EHLO
-	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751107AbbFVWZq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Jun 2015 18:25:46 -0400
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150622150959.44055b32@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-We have a backport of commit 8930ed80f970a90a795239e7415c9b0e6f964649
-("rtmutex: Cleanup deadlock detector debug logic") which is commit
-8a3af0727b43a6e51e3699f62bd15f9bb60e0692 here on the v3.10-rt branch,
-added in the creation v3.10.70-rt75.  However it missed one of the
-conversions from the old int to the new enum, leading to this spew:
+On 2015-06-22 21:09, Steven Rostedt wrote:
+> With PREEMPT_RT, the irq work callbacks are called from the softirq
+> thread, unless the HARD_IRQ flag is set for the irq work. When an irq
+> work item is added without the HARD_IRQ flag set, and without the LAZY
+> flag set, an interrupt is raised, and that interrupt will wake up the
+> softirq thread to run the irq work like it would do without PREEMPT_RT.
+> 
+> The current logic in irq_work_queue() will not raise the interrupt when
+> the first irq work item added has the LAZY flag set. But if another
+> irq work item is added without the LAZY flag set, and without the
+> HARD_IRQ item set, the interrupt is not raised because the interrupt is
+> only raised when the list was empty before adding the current irq work
+> item.
+> 
+> This means that if an irq work item is added with the LAZY flag set, it
+> will not raise the interrupt and that work item will have to wait till
+> the next timer tick (which in computer terms is a long way away). Now
+> if in the mean time, another irq work item is added without the LAZY
+> flag set, and without the HARD_IRQ flag set (meaning it wants to run
+> from the softirq), the interrupt will still not be raised. This is
+> because the interrupt is only raised when the first item of the list is
+> added. Future items added will not raise the interrupt. This makes the
+> raising of the irq work callback non deterministic. Rather ironic
+> considering this only happens when PREEMPT_RT is enabled.
+> 
+> 
+> I have several ideas on how to fix this.
+> 
+> 1) Add another list (softirq_list), and add to it if PREEMPT_RT is
+> enabled and the flag doesn't have either LAZY or HARD_IRQ flags set.
+> This is what would be checked in the interrupt irq work callback
+> instead of the lazy_list.
+> 
+> 2) Raise the interrupt whenever a first item is added to a list (lazy
+> or otherwise) when PREEMPT_RT is enabled, and have the lazy with the
+> non lazy handled by softirq.
+> 
+> 3) Only raise the hard interrupt when something is added to the
+> raised_list. That is, for PREEMPT_RT, that would only be irq work that
+> has the HARD_IRQ flag set. All other irq_work will be done when the
+> tick happens. To keep things deterministic, the irq_work_run() no
+> longer checks the lazy_list and is the same as the vanilla kernel.
+> 
+> 
+> I'm thinking that ideally, #1 is the best choice. #2 has the issue
+> where something may add itself as lazy, really expecting to be done
+> from the next timer tick, but then happen from a "sooner" softirq.
+> Although, I doubt that will really be an issue.
+> 
+> #3 (this patch), is something that I discussed with Sebastian, and he
+> said that nothing should break if we wait at most 10ms for the next
+> tick.
+> 
+> My concern here, is that the ipi call function (sending an irq work
+> from another CPU without the HARD_IRQ flag set), on a NO_HZ cpu, may
+> not wake it up to run it. Although, I'm not sure there's anything that
+> uses cross CPU irq work without setting HARD_IRQ. I can add back the
+> check to wake up the softirq, but then we make the timing of irq_work
+> non deterministic again. Is that an issue?
+> 
+> But here's the patch presented to you as an RFC. I can write up #1 too
+> if people think that would be the better solution.
+> 
+> Oh, and then there's #4, which is to do nothing. Just let irq work come
+> in non deterministic, and that may not hurt anything either.
 
-  CC      kernel/rtmutex.o
-kernel/rtmutex.c: In function =E2=80=98rt_mutex_timed_futex_lock=E2=80=99=
-:
-kernel/rtmutex.c:1709:37: warning: passing argument 5 of =E2=80=98rt_mu=
-tex_timed_fastlock=E2=80=99 from incompatible pointer type
-            RT_MUTEX_FULL_CHAINWALK, rt_mutex_slowlock);
-                                     ^
-kernel/rtmutex.c:1634:1: note: expected =E2=80=98int (*)(struct rt_mute=
-x *, int,  struct hrtimer_sleeper *, int)=E2=80=99 but argument is of t=
-ype =E2=80=98int (*)(struct rt_mutex *, int,  struct hrtimer_sleeper *,=
- enum rtmutex_chainwalk)=E2=80=99
- rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
- ^
-kernel/rtmutex.c: In function =E2=80=98rt_mutex_timed_lock=E2=80=99:
-kernel/rtmutex.c:1749:36: warning: passing argument 5 of =E2=80=98rt_mu=
-tex_timed_fastlock=E2=80=99 from incompatible pointer type
-            RT_MUTEX_MIN_CHAINWALK, rt_mutex_slowlock);
-                                    ^
-kernel/rtmutex.c:1634:1: note: expected =E2=80=98int (*)(struct rt_mute=
-x *, int,  struct hrtimer_sleeper *, int)=E2=80=99 but argument is of t=
-ype =E2=80=98int (*)(struct rt_mutex *, int,  struct hrtimer_sleeper *,=
- enum rtmutex_chainwalk)=E2=80=99
- rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
- ^
+You could change upstream to be non-deterministic as well - then no one
+could complain about PREEMPT-RT falling behind the stock kernel here. ;)
 
-Slightly hard to wrap your head around, but once you do, the missing
-conversion is clear, and once fixed, all rtmutex warnings are gone.
+Jan
 
-Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
-
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 5388ba98acaf..7213fd35ffce 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1636,7 +1636,7 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, in=
-t state,
- 			enum rtmutex_chainwalk chwalk,
- 			int (*slowfn)(struct rt_mutex *lock, int state,
- 				      struct hrtimer_sleeper *timeout,
--				      int detect_deadlock))
-+				      enum rtmutex_chainwalk chwalk))
- {
- 	if (chwalk =3D=3D RT_MUTEX_MIN_CHAINWALK &&
- 	    likely(rt_mutex_cmpxchg(lock, NULL, current))) {
---=20
-2.4.3
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
+-- 
+Siemens AG, Corporate Technology, CT RTC ITP SES-DE
+Corporate Competence Center Embedded Linux
