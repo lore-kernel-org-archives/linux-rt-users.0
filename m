@@ -1,143 +1,66 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [RFC][PATCH] mm: ifdef out VM_BUG_ON check on PREEMPT_RT_FULL
-Date: Wed, 8 Jul 2015 17:44:32 +0200
-Message-ID: <20150708154432.GA31345@linutronix.de>
-References: <20150529104815.2d2e880c@sluggy>
- <20150529142614.37792b9ff867626dcf5e0f08@linux-foundation.org>
- <20150601131452.3e04f10a@sluggy>
- <20150601190047.GA5879@cmpxchg.org>
- <20150611114042.GC16115@linutronix.de>
- <20150619180002.GB11492@cmpxchg.org>
+From: Joe Korty <joe.korty@ccur.com>
+Subject: Re: How to measue the total CPU specific load (including real time
+ tasks)?
+Date: Wed, 8 Jul 2015 13:19:43 -0400
+Message-ID: <20150708171943.GA11993@zipoli.ccur.com>
+References: <0b987de237404a13b1753e28e3853d2f@FE-MBX1012.de.bosch.com>
+Reply-To: Joe Korty <joe.korty@ccur.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Clark Williams <williams@redhat.com>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Thomas Gleixner <tglx@glx-um.de>, linux-mm@kvack.org,
-	RT <linux-rt-users@vger.kernel.org>,
-	Fernando Lopez-Lezcano <nando@ccrma.Stanford.EDU>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Johannes Weiner <hannes@cmpxchg.org>
-Return-path: <owner-linux-mm@kvack.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from vpnflf.ccur.com ([12.220.59.2]:59311 "EHLO zipoli.ccur.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1758589AbbGHRTu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 8 Jul 2015 13:19:50 -0400
 Content-Disposition: inline
-In-Reply-To: <20150619180002.GB11492@cmpxchg.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <0b987de237404a13b1753e28e3853d2f@FE-MBX1012.de.bosch.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Johannes Weiner | 2015-06-19 14:00:02 [-0400]:
+On Tue, Jul 07, 2015 at 08:18:08AM -0400, Koehrer Mathias (ETAS/ESW5) wrote:
+> Hi all,
+> 
+> we use the RT_PREEMPT kernel fairly long now and it is working really fine.
+> However, I have one question that is related to measure the available "CPU
+> headroom" on all available CPU cores.  We are using an Intel Core i7 PC
+> (32 and 64bit, Debian distribution, vanilla kernel + rt_preempt patch).
+> The question is the same for kernel 3.2.x and 3.18.x.
+> 
+> On the PC a couple of real time threads are running. They are hard bound
+> to a particular CPU core (via pthread_setaffinity_np or sched_setaffinity).
+> As we are using the boot parameter  "isolcpus=1-31", all processes run per
+> default on CPU core 0.  Now, I want to measure the total CPU specific load.
+> How can this be done easily?
+> 
+> When I use "top" in thread-mode I see the relative CPU load for particular
+> threads/processes.  However the "idle" value in the "top" summary does
+> not fit. With some experiments I saw the idle value for a CPU core to
+> be nearly 100% even if on the very same CPU core a real time thread was
+> consuming about 40% CPU time.  I looked into /proc/stat to take the idle
+> tick value but this value seems not to consider the real time threads.
+> 
+> 
+> The only approach I found so far is to parse all /proc/PID/stat files
+> periodically and to extract the fields utime, stime, cutime, cstime,
+> task_cpu. These values can be used to compute the CPU specific load.
+> However, the effort to do so is really high.
+> 
+> Is there any /proc file (or something similar) I can use to get the total
+> CPU specific load (including real time threads)?  Or do I have to enable
+> a particular kernel configuration to get this value?
+> 
+> Thanks for any feedback on this question.
+> 
+> Regards
+> Mathias
 
->> This depends on the point of view. You expect interrupts to be disabled
->> while taking a lock. This is not how the function is defined.
->> The function ensures that the lock can be taken from process context while
->> it may also be taken by another caller from interrupt context. The fact
->> that it disables interrupts on vanilla to achieve its goal is an
->> implementation detail. Same goes for spin_lock_bh() btw. Based on this
->> semantic it works on vanilla and -RT. It does not disable interrupts on
->> -RT because there is no need for it: the interrupt handler runs in thread
->> context. The function delivers what it is expected to deliver from API
->> point of view: "take the lock from process context which can also be
->> taken in interrupt context".
->
->Uhm, that's really distorting reality to fit your requirements.  This
->helper has been defined to mean local_irq_disable() + spin_lock() for
->ages, it's been documented in books on Linux programming.  And people
->expect it to prevent interrupt handlers from executing, which it does.
 
-After all it documents the current implementation and the semantic
-requirement.
+I think that if you turn on CONFIG_VIRT_CPU_ACCOUNTING_GEN,
+you will get per-cpu high resolution idle time accounting
+as a side effect.  (I'm looking at the 3.18 kernel, YMMV
+for earlier kernels).
 
->But more importantly, people expect irqs_disabled() to mean that as
->well.  Check the callsites.  Except for maybe in the IRQ code itself,
->every single caller using irqs_disabled() cares exclusively about the
->serialization against interrupt handlers.
-
-I am aware of some people expect and we fix them in -RT. Using
-irqs_disabled() as a form locking for per-CPU variables is another way
-of creating a BKL.
-
->> Most people that use irqs_disabled() or preempt_disabled() implement
->> some kind locking which is not documented. It is either related to CPU
->> features (which are per-CPU) or protect per-CPU variables (sometimes
->> even global ones). It often ends with something that they rely on how
->> the vanilla API works.
->> For instance: preempt_disable() is used to for locking in all callers
->> but one and this is because that one caller takes a spin_lock() (a
->> totally unrelated lock) but since spin_lock() also performs
->> preempt_disable() the author optimizes the "needed" preempt_disable()
->> invocation away.
->
->That's different, and spin_lock() doesn't imply preemption-disabling
->on -rt.  But spin_lock_irq() prevents interrupt handlers from running,
->even on -rt.  And people expect irqs_disabled() to test this fact.
-
-What is the point of
-    spin_lock_irq(&a);
-    BUG_ON(!irqs_disabled())
-
-It should not trigger. It triggers on -RT. But there is no BUG as long
-as it safe to use it from IRQ handler and process context and this is
-what it has been built for in the first place.
-
-Lets have another example: Lets assume I come up with a way to lazy
-disable interrupts. That means spin_lock_irq() does not disable
-interrupts it simply simple sets a per-CPU bit that the interrupts
-should remain off. Should an interrupt arrive (because the CPU flag
-still enabled them) it will see the bit set and postpones the interrupt
-and return.
-Now: we don't deadlock with spin_lock_irq() against an interrupt even if
-we don't disable interrupts. There is a precaution for this. And my
-question: What should irqs_disabled() return within the spin_lock_irq()
-section? The real state or what people documented in books ages ago?
-
->> diff --git a/mm/memcontrol.c b/mm/memcontrol.c
->> --- a/mm/memcontrol.c
->> +++ b/mm/memcontrol.c
->> @@ -5822,6 +5822,7 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
->>  {
->>  	struct mem_cgroup *memcg;
->>  	unsigned short oldid;
->> +	unsigned long flags;
->>  
->>  	VM_BUG_ON_PAGE(PageLRU(page), page);
->>  	VM_BUG_ON_PAGE(page_count(page), page);
->> @@ -5844,11 +5845,10 @@ void mem_cgroup_swapout(struct page *page, swp_entry_t entry)
->>  	if (!mem_cgroup_is_root(memcg))
->>  		page_counter_uncharge(&memcg->memory, 1);
->>  
->> -	/* XXX: caller holds IRQ-safe mapping->tree_lock */
->> -	VM_BUG_ON(!irqs_disabled());
->> -
->> +	local_lock_irqsave(event_lock, flags);
->>  	mem_cgroup_charge_statistics(memcg, page, -1);
->>  	memcg_check_events(memcg, page);
->> +	local_unlock_irqrestore(event_lock, flags);
->>  }
->>  
->>  /**
->> 
->> The only downside for the non-RT version is that local_lock_irqsave()
->> expands to local_irq_save() (on non-RT) which disables IRQs which are
->> already disabled - a minor issue if at all.
->> 
->> Johannes, would you mind using local_lock_irqsave() if it would be
->> available in vanilla? As you see it documents what is locked :)
->
->WTF is event_lock?  This is even more obscure than anything else we
->had before.  Seriously, just fix irqs_disabled() to mean "interrupt
->handlers can't run", which is the expectation in pretty much all
->callsites that currently use it, except for maybe irq code itself.
-
-How is it more obscure than anything else? After all it disables
-interrupts and documents based on the lock named `event_lock' what is
-protected. Which means each section that share the same (per-CPU)
-ressources belong together and may not be accessed independently.
-
->Use raw_irqs_disabled() or something for the three callers that care
->about the actual hardware state.
-
-Sebastian
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Regards,
+Joe
