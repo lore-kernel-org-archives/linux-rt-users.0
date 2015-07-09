@@ -1,129 +1,73 @@
-From: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
-Subject: [PATCH v2] iio: adc: xilinx-xadc: Push interrupts into threaded context
-Date: Wed, 8 Jul 2015 16:38:22 -0500
-Message-ID: <1436391502-2604-1-git-send-email-xander.huff@ni.com>
-References: <5574633F.7090004@kernel.org>
-Cc: knaack.h-Mmb7MZpHnFY@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org,
-	michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
-	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, joe.hershberger-acOepvfBmUk@public.gmane.org,
-	joshc-acOepvfBmUk@public.gmane.org, nathan.sullivan-acOepvfBmUk@public.gmane.org, jaeden.amero-acOepvfBmUk@public.gmane.org,
-	Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <5574633F.7090004-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: BUG: unable to handle kernel NULL pointer dereference on 3.18.13-rt10
+Date: Thu, 9 Jul 2015 10:49:51 +0000
+Message-ID: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:50089 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750799AbbGIKty convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 9 Jul 2015 06:49:54 -0400
+Received: from vsmta14.fe.internet.bosch.com (unknown [10.4.98.54])
+	by imta24.fe.bosch.de (Postfix) with ESMTP id 9FC8AD80204
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jul 2015 12:49:52 +0200 (CEST)
+Received: from FE-MBX1012.de.bosch.com (vsgw23.fe.internet.bosch.com [10.4.98.23])
+	by vsmta14.fe.internet.bosch.com (Postfix) with ESMTP id 9D279A40299
+	for <linux-rt-users@vger.kernel.org>; Thu,  9 Jul 2015 12:49:52 +0200 (CEST)
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The driver currently registers a pair of irq handlers using
-request_threaded_irq(), however the synchronization mechanism between the
-hardirq and the threadedirq handler is a regular spinlock.
+Hi all,
 
-Unfortunately, this breaks PREEMPT_RT builds, where a spinlock can sleep,
-and is thus not able to be acquired from a hardirq handler. This patch gets
-rid of the hardirq handler and pushes all interrupt handling into the
-threaded context.
+I have 3.18.13-rt10 running on a x86 PC (32bit) system.
+Linux Distribution: Debian 8.1 "Jessie".
+Fairly often (but not reproducible for me) I got the following kernel bug.
+I looks like the systemd-journald reads some kind of /proc/PID/status file.
 
-To validate that this change has no impact on RT performance, here are
-cyclictest values with no processes running:
 
-$ sudo cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 0.05 0.04 0.05 1/237 828
-T: 0 ( 1861) P:98 I:1000 C:56925046 Min: 9 Act: 12 Avg: 12 Max: 71
-T: 1 ( 1862) P:98 I:1500 C:37950030 Min: 9 Act: 12 Avg: 13 Max: 74
+BUG: unable to handle kernel NULL pointer dereference at 0000001c
+IP: [<c107fb62>] __try_to_take_rt_mutex+0x52/0x100
+*pde = 00000000
+Oops: 0000 [#1] PREEMPT SMP
+Modules linked in: rtpc_dma(O) es53xx(O) nfsd nfs lockd grace sunrpc bridge stp llc e100 mii e1000 e1000e igb i2c_algo_bit ixgbe mdio ptp pps_core dca kvm_intel kvm ecikm(O) i2c_i801 pcspkr i2c_core video backlight processor coretemp autofs4 reiserfs microcode sg sd_mod ahci libahci ehci_pci ehci_hcd xhci_pci xhci_hcd fan thermal_sys hwmon
+CPU: 0 PID: 1522 Comm: systemd-journal Tainted: G           O   3.18.13-rt10-2 #2
+Hardware name: Supermicro X9SAE/X9SAE, BIOS 2.0b 07/10/2013
+task: dff76000 ti: f4760000 task.ti: f4760000
+EIP: 0060:[<c107fb62>] EFLAGS: 00010282 CPU: 0
+EIP is at __try_to_take_rt_mutex+0x52/0x100
+EAX: 00000000 EBX: 00000000 ECX: f4761df4 EDX: 00000000
+ESI: dff76000 EDI: dfdec944 EBP: f4761dd4 ESP: f4761dc4
+DS: 007b ES: 007b FS: 00d8 GS: 0033 SS: 0068
+CR0: 80050033 CR2: f8b5cbc0 CR3: 344ad000 CR4: 001407d0
+Stack:
+dff76000 dfdec944 dff764b0 f4761df4 f4761e28 c1404169 00000001 f4761fec
+f3ba9201 dff76000 dff764b0 dff76000 00000001 00000000 00000000 f4761e00
+00000000 00000000 dff76000 dfdec944 c1045b01 00000078 dff76000 f3bae000
+Call Trace:
+[<c1404169>] rt_spin_lock_slowlock+0xf9/0x240
+[<c1045b01>] ? pin_current_cpu+0x31/0x1a0
+[<c1405567>] rt_spin_lock+0x27/0x30
+[<c1051508>] __lock_task_sighand+0x38/0x70
+[<c119768b>] proc_pid_status+0x33b/0x620
+[<c1193312>] proc_single_show+0x42/0x80
+[<c1163d12>] seq_read+0x82/0x380
+[<c11283fa>] ? do_mmap_pgoff+0x27a/0x350
+[<c1080abd>] ? rt_up_write+0xd/0x10
+[<c1163c90>] ? seq_lseek+0x1c0/0x1c0
+[<c1142684>] vfs_read+0x74/0x140
+[<c1142ca6>] SyS_read+0x46/0x90
+[<c1405c54>] sysenter_do_call+0x12/0x12
+Code: 83 cb 01 f0 0f b1 1e 39 d0 75 ee 8b 5f 0c 31 c0 83 e3 fe 74 0c 83 c4 04 5b 5e 5f 5d c3 8d 74 26 00 8b 75 f0 85 c9 74 1d 8b 57 08 <3b> 7a 1c 0f 85 93 00 00 00 89 d8 39 d1 75 db 89 ca 89 f8 e8 c6
+EIP: [<c107fb62>] __try_to_take_rt_mutex+0x52/0x100 SS:ESP 0068:f4761dc4
+CR2: 000000000000001c
+---[ end trace 0000000000
 
-Then, all xadc raw handles were accessed in a continuous loop via
-/sys/bus/iio/devices/iio:device0:
 
-$ sudo cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 7.81 7.64 7.541 2/247 5751
-T: 0 ( 1568) P:98 I:1000 C:23845515 Min: 11 Act: 22 Avg: 21 Max: 71
-T: 1 ( 1569) P:98 I:1500 C:15897239 Min: 11 Act: 21 Avg: 22 Max: 68
+Thanks for any support or proposals on this issue.
 
-Signed-off-by: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
----
- drivers/iio/adc/xilinx-xadc-core.c | 35 ++++++++++++-----------------------
- 1 file changed, 12 insertions(+), 23 deletions(-)
-
-diff --git a/drivers/iio/adc/xilinx-xadc-core.c b/drivers/iio/adc/xilinx-xadc-core.c
-index ce93bd8..b309ad3 100644
---- a/drivers/iio/adc/xilinx-xadc-core.c
-+++ b/drivers/iio/adc/xilinx-xadc-core.c
-@@ -279,28 +279,9 @@ static irqreturn_t xadc_zynq_threaded_interrupt_handler(int irq, void *devid)
- {
- 	struct iio_dev *indio_dev = devid;
- 	struct xadc *xadc = iio_priv(indio_dev);
--	unsigned int alarm;
--
--	spin_lock_irq(&xadc->lock);
--	alarm = xadc->zynq_alarm;
--	xadc->zynq_alarm = 0;
--	spin_unlock_irq(&xadc->lock);
--
--	xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
--
--	/* unmask the required interrupts in timer. */
--	schedule_delayed_work(&xadc->zynq_unmask_work,
--			msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
--
--	return IRQ_HANDLED;
--}
--
--static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
--{
--	struct iio_dev *indio_dev = devid;
--	struct xadc *xadc = iio_priv(indio_dev);
- 	irqreturn_t ret = IRQ_HANDLED;
- 	uint32_t status;
-+	unsigned int alarm;
- 
- 	xadc_read_reg(xadc, XADC_ZYNQ_REG_INTSTS, &status);
- 
-@@ -312,7 +293,6 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
- 	spin_lock(&xadc->lock);
- 
- 	xadc_write_reg(xadc, XADC_ZYNQ_REG_INTSTS, status);
--
- 	if (status & XADC_ZYNQ_INT_DFIFO_GTH) {
- 		xadc_zynq_update_intmsk(xadc, XADC_ZYNQ_INT_DFIFO_GTH,
- 			XADC_ZYNQ_INT_DFIFO_GTH);
-@@ -330,8 +310,18 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
- 		xadc_zynq_update_intmsk(xadc, 0, 0);
- 		ret = IRQ_WAKE_THREAD;
- 	}
-+
-+	alarm = xadc->zynq_alarm;
-+	xadc->zynq_alarm = 0;
-+
- 	spin_unlock(&xadc->lock);
- 
-+	xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
-+
-+	/* unmask the required interrupts in timer. */
-+	schedule_delayed_work(&xadc->zynq_unmask_work,
-+			msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
-+
- 	return ret;
- }
- 
-@@ -436,7 +426,6 @@ static const struct xadc_ops xadc_zynq_ops = {
- 	.write = xadc_zynq_write_adc_reg,
- 	.setup = xadc_zynq_setup,
- 	.get_dclk_rate = xadc_zynq_get_dclk_rate,
--	.interrupt_handler = xadc_zynq_interrupt_handler,
- 	.threaded_interrupt_handler = xadc_zynq_threaded_interrupt_handler,
- 	.update_alarm = xadc_zynq_update_alarm,
- };
-@@ -1225,7 +1214,7 @@ static int xadc_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_free_samplerate_trigger;
- 
--	ret = request_threaded_irq(irq, xadc->ops->interrupt_handler,
-+	ret = request_threaded_irq(irq, 0,
- 				xadc->ops->threaded_interrupt_handler,
- 				0, dev_name(&pdev->dev), indio_dev);
- 	if (ret)
--- 
-1.9.1
+Mathias
