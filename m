@@ -1,35 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference on
- 3.18.13-rt10
-Date: Fri, 10 Jul 2015 15:23:18 +0200
-Message-ID: <20150710132318.GA27402@linutronix.de>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
- <alpine.DEB.2.11.1507091605410.5134@nanos>
- <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Re: [PATCH 5/6] Change VERSION_STRING to VERSION
+Date: Fri, 10 Jul 2015 16:42:52 +0300
+Message-ID: <559FCBDC.1090005@pavlinux.ru>
+References: <1436531131-9186-1-git-send-email-jkacur@redhat.com>
+ <1436531131-9186-6-git-send-email-jkacur@redhat.com>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Clark Williams <williams@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Siewior <bigeasy@linutronix.de>
+To: John Kacur <jkacur@redhat.com>,
+	rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46742 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932069AbbGJNXT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Jul 2015 09:23:19 -0400
-Content-Disposition: inline
-In-Reply-To: <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
+Received: from imp04.mtu.ru ([62.5.255.37]:47750 "EHLO imp04.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932515AbbGJNnE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Jul 2015 09:43:04 -0400
+In-Reply-To: <1436531131-9186-6-git-send-email-jkacur@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Koehrer Mathias (ETAS/ESW5) | 2015-07-10 12:49:46 [+0000]:
+10.07.2015 15:25, John Kacur =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
 
->Hi Thomas,
-Hi Mathias,
+> +VERSION =3D 0.92
+> ...
+> +	printf("cyclictest V %1.2f\n", VERSION);
 
->I have been able to catch this BUG again on a different PC during a reboot. Unfortunately, it happened before I had enabled ftrace_dump_on_oops.
+Eight other versions and overflow ? ;)
 
-if you managed to trigger it that reliably, could you revert
-slub_delay_ctor_on_rt.patch in the queue and try again?
 
-Sebastian
+--=20
+
+                                                          Pavel.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
