@@ -1,43 +1,42 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Re: [PATCH 5/6] Change VERSION_STRING to VERSION
-Date: Fri, 10 Jul 2015 16:42:52 +0300
-Message-ID: <559FCBDC.1090005@pavlinux.ru>
-References: <1436531131-9186-1-git-send-email-jkacur@redhat.com>
- <1436531131-9186-6-git-send-email-jkacur@redhat.com>
-Reply-To: pavel@pavlinux.ru
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [4.0.5-rt4] i915: sleeping function called from invalid context
+ at intel_pipe_update_start/end
+Date: Fri, 10 Jul 2015 16:08:26 +0200
+Message-ID: <20150710140826.GB27402@linutronix.de>
+References: <20150625150947.GA10320@uudg.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Siewior <bigeasy@linutronix.de>
-To: John Kacur <jkacur@redhat.com>,
-	rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp04.mtu.ru ([62.5.255.37]:47750 "EHLO imp04.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932515AbbGJNnE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 10 Jul 2015 09:43:04 -0400
-In-Reply-To: <1436531131-9186-6-git-send-email-jkacur@redhat.com>
+Received: from www.linutronix.de ([62.245.132.108]:46883 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754193AbbGJOI3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 10 Jul 2015 10:08:29 -0400
+Content-Disposition: inline
+In-Reply-To: <20150625150947.GA10320@uudg.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-10.07.2015 15:25, John Kacur =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+* Luis Claudio R. Goncalves | 2015-06-25 12:09:47 [-0300]:
 
-> +VERSION =3D 0.92
-> ...
-> +	printf("cyclictest V %1.2f\n", VERSION);
+>Hi!
+Hi,
 
-Eight other versions and overflow ? ;)
+>I have been seeing the annoying message below non-stop: 
+>
+>i915: sleeping function called from invalid context at intel_pipe_update_start/end
 
+I am not sure what we break here if we drop the irq-off. It waits to sync
+with the interrupt and expects no interruption after that. What about if
+we skip this mmio_flip thing entirely? Either via modprobe or kernel
+commandline
 
---=20
+    i915.use_mmio_flip=-1
 
-                                                          Pavel.
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+should do the trick. Either way
+    /sys/module/i915/parameters/use_mmio_flip
+should be -1. Could you please try and test?
+
+Sebastian
