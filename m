@@ -1,64 +1,134 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference on
- 3.18.13-rt10
-Date: Mon, 13 Jul 2015 11:12:37 +0200
-Message-ID: <20150713091237.GA31747@linutronix.de>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
- <alpine.DEB.2.11.1507091605410.5134@nanos>
- <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
- <20150710132318.GA27402@linutronix.de>
- <3c9ae4a1f9cb4ac3a96a28c3f65f9442@FE-MBX1012.de.bosch.com>
+From: Beethovenklc <beethovenklc@gmail.com>
+Subject: Re: Error using cyclictest's tracing
+Date: Mon, 13 Jul 2015 07:06:20 -0300
+Message-ID: <mo02is$639$1@ger.gmane.org>
+References: <mnq480$9ap$1@ger.gmane.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>,
-	Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52730 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750810AbbGMJMj convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jul 2015 05:12:39 -0400
-Content-Disposition: inline
-In-Reply-To: <3c9ae4a1f9cb4ac3a96a28c3f65f9442@FE-MBX1012.de.bosch.com>
+Received: from plane.gmane.org ([80.91.229.3]:38714 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752743AbbGMKG3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2015 06:06:29 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1ZEad0-0007DF-GE
+	for linux-rt-users@vger.kernel.org; Mon, 13 Jul 2015 12:06:26 +0200
+Received: from 71-205-16-190.fibertel.com.ar ([190.16.205.71])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2015 12:06:26 +0200
+Received: from beethovenklc by 71-205-16-190.fibertel.com.ar with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jul 2015 12:06:26 +0200
+In-Reply-To: <mnq480$9ap$1@ger.gmane.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Koehrer Mathias (ETAS/ESW5) | 2015-07-13 06:18:22 [+0000]:
+My mistake. Now its working. I've messed up and chose a different kernel 
+build without tracing.
 
->> if you managed to trigger it that reliably, could you revert
->> slub_delay_ctor_on_rt.patch in the queue and try again?
->>=20
->Over the weekend I ran a test that rebooted the PC permanently.
->After about 400 reboots I got another NULL pointer dereference.=20
->However the slub_delay_ctor_on_rt.patch has not been reverted yet.
->And: This looks somehow differently than the previous BUGs.
+Thanks!
+
+
+On 11/07/15 00:57, Beethovenklc wrote:
+> Hello.
+>
+> This is my first time posting in this newsgroup, here from Argentina :D
+>
+> I'm trying to sort out some latency problems on a system with Ubuntu
+> 14.04 LTS, kernel version 3.14.39-rt37 with rt-preempt patch and tracers
+> enabled and AMD A10-6800K with 4 core of 4GHz CPU.
+>
+> I'm having problems using cyclictest with -t flag to have more
+> information regarding unpredictable latency peaks, but it shows an error.
+>
+> $ sudo ./cyclictest -n -p99 -b200
+> # /dev/cpu_dma_latency set to 0us
+> INFO: debugfs mountpoint: /sys/kernel/debug/tracing/
+> WARN: tracing_enabled or tracing_on not found
+> debug fs not mounted, TRACERs not configured?
+> could not set ftrace_enabled to 0
+> FATAL: Can't open /sys/kernel/debug/tracing/available_tracers for reading
 >
 >
->[    3.299329] BUG: unable to handle kernel NULL pointer dereference a=
-t 0000008c
->[    3.299332] IP: [<c10df66c>] function_trace_call+0xc/0x190
+> When I list "/sys/kernel/debug" I get
+>
+>
+> sudo ls /sys/kernel/debug/
+> acpi        dma_buf       frontswap  kvm-guest  regulator     virtio-ports
+> bdi        dri           gpio       mce     sched_features  wakeup_sources
+> bluetooth   dynamic_debug  hid          pinctrl     sleep_time     x86
+> cleancache  eeepc-wmi       kprobes    pwm     suspend_stats
+> clk        extfrag       kvm          regmap     usb
+>
+>
+> It seems "tracing" folder is not present.. I've read that this folder is
+> created when you use ftrace. Kernel was compiled with ftrace and tracers
+> as you can see in my kernel .config file:
+>
+>
+> $ cat .config | grep _FTRACE
+> CONFIG_KPROBES_ON_FTRACE=y
+> CONFIG_HAVE_KPROBES_ON_FTRACE=y
+> # CONFIG_PSTORE_FTRACE is not set
+> CONFIG_HAVE_DYNAMIC_FTRACE=y
+> CONFIG_HAVE_DYNAMIC_FTRACE_WITH_REGS=y
+> CONFIG_HAVE_FTRACE_MCOUNT_RECORD=y
+> CONFIG_FTRACE=y
+> CONFIG_FTRACE_SYSCALLS=y
+> CONFIG_DYNAMIC_FTRACE=y
+> CONFIG_DYNAMIC_FTRACE_WITH_REGS=y
+> CONFIG_FTRACE_MCOUNT_RECORD=y
+> # CONFIG_FTRACE_STARTUP_TEST is not set
+>
+>
+> $ cat .config | grep _TRACE
+> # CONFIG_TREE_RCU_TRACE is not set
+> CONFIG_SYSCTL_EXCEPTION_TRACE=y
+> CONFIG_TRACEPOINTS=y
+> CONFIG_HAVE_ARCH_TRACEHOOK=y
+> CONFIG_NETFILTER_XT_TARGET_TRACE=m
+> # CONFIG_SCSI_IPR_TRACE is not set
+> # CONFIG_VXGE_DEBUG_TRACE_ALL is not set
+> # CONFIG_ATH5K_TRACER is not set
+> CONFIG_CAPI_TRACE=y
+> CONFIG_TRACE_ROUTER=m
+> CONFIG_TRACE_SINK=m
+> CONFIG_TRACE_IRQFLAGS_SUPPORT=y
+> CONFIG_TRACE_IRQFLAGS=y
+> # CONFIG_RCU_TRACE is not set
+> CONFIG_NOP_TRACER=y
+> CONFIG_HAVE_FUNCTION_TRACER=y
+> CONFIG_HAVE_FUNCTION_GRAPH_TRACER=y
+> CONFIG_HAVE_FUNCTION_TRACE_MCOUNT_TEST=y
+> CONFIG_HAVE_SYSCALL_TRACEPOINTS=y
+> CONFIG_TRACER_MAX_TRACE=y
+> CONFIG_TRACE_CLOCK=y
+> CONFIG_CONTEXT_SWITCH_TRACER=y
+> CONFIG_GENERIC_TRACER=y
+> CONFIG_FUNCTION_TRACER=y
+> CONFIG_FUNCTION_GRAPH_TRACER=y
+> CONFIG_IRQSOFF_TRACER=y
+> CONFIG_PREEMPT_TRACER=y
+> CONFIG_SCHED_TRACER=y
+> CONFIG_TRACER_SNAPSHOT=y
+> CONFIG_TRACER_SNAPSHOT_PER_CPU_SWAP=y
+> CONFIG_STACK_TRACER=y
+> CONFIG_BLK_DEV_IO_TRACE=y
+>
+>
+> Did I miss something?
+>
+> Thanks!
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe
+> linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-This is=20
-| static void
-| function_trace_call(unsigned long ip, unsigned long parent_ip,
-|                     struct ftrace_ops *op, struct pt_regs *pt_regs)
-| {
-|         struct trace_array *tr =3D op->private;
-|=E2=80=A6
-|=20
-|         if (unlikely(!tr->function_enabled))
-|                 return;
 
-and it looks like tr is null. BUG_ON(!tr) should prove this.
-Steven, is it somehow possible that on module load we get "op" set
-without its private member initialized?
-
-Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
