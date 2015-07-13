@@ -1,117 +1,121 @@
-From: Beethovenklc <beethovenklc@gmail.com>
-Subject: Error using cyclictest's tracing
-Date: Sat, 11 Jul 2015 00:57:51 -0300
-Message-ID: <mnq480$9ap$1@ger.gmane.org>
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: RE: BUG: unable to handle kernel NULL pointer dereference on
+ 3.18.13-rt10
+Date: Mon, 13 Jul 2015 06:18:22 +0000
+Message-ID: <3c9ae4a1f9cb4ac3a96a28c3f65f9442@FE-MBX1012.de.bosch.com>
+References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
+ <alpine.DEB.2.11.1507091605410.5134@nanos>
+ <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
+ <20150710132318.GA27402@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:41060 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751602AbbGKHAO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 11 Jul 2015 03:00:14 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1ZDlxK-0003u4-K1
-	for linux-rt-users@vger.kernel.org; Sat, 11 Jul 2015 06:00:03 +0200
-Received: from 71-205-16-190.fibertel.com.ar ([190.16.205.71])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sat, 11 Jul 2015 06:00:02 +0200
-Received: from beethovenklc by 71-205-16-190.fibertel.com.ar with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sat, 11 Jul 2015 06:00:02 +0200
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:61390 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751114AbbGMGSZ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jul 2015 02:18:25 -0400
+In-Reply-To: <20150710132318.GA27402@linutronix.de>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello.
-
-This is my first time posting in this newsgroup, here from Argentina :D
-
-I'm trying to sort out some latency problems on a system with Ubuntu 
-14.04 LTS, kernel version 3.14.39-rt37 with rt-preempt patch and tracers 
-enabled and AMD A10-6800K with 4 core of 4GHz CPU.
-
-I'm having problems using cyclictest with -t flag to have more 
-information regarding unpredictable latency peaks, but it shows an error.
-
-$ sudo ./cyclictest -n -p99 -b200
-# /dev/cpu_dma_latency set to 0us
-INFO: debugfs mountpoint: /sys/kernel/debug/tracing/
-WARN: tracing_enabled or tracing_on not found
-debug fs not mounted, TRACERs not configured?
-could not set ftrace_enabled to 0
-FATAL: Can't open /sys/kernel/debug/tracing/available_tracers for reading
-
-
-When I list "/sys/kernel/debug" I get
-
-
-sudo ls /sys/kernel/debug/
-acpi	    dma_buf	   frontswap  kvm-guest  regulator	 virtio-ports
-bdi	    dri		   gpio       mce	 sched_features  wakeup_sources
-bluetooth   dynamic_debug  hid	      pinctrl	 sleep_time	 x86
-cleancache  eeepc-wmi	   kprobes    pwm	 suspend_stats
-clk	    extfrag	   kvm	      regmap	 usb
-
-
-It seems "tracing" folder is not present.. I've read that this folder is 
-created when you use ftrace. Kernel was compiled with ftrace and tracers 
-as you can see in my kernel .config file:
-
-
-$ cat .config | grep _FTRACE
-CONFIG_KPROBES_ON_FTRACE=y
-CONFIG_HAVE_KPROBES_ON_FTRACE=y
-# CONFIG_PSTORE_FTRACE is not set
-CONFIG_HAVE_DYNAMIC_FTRACE=y
-CONFIG_HAVE_DYNAMIC_FTRACE_WITH_REGS=y
-CONFIG_HAVE_FTRACE_MCOUNT_RECORD=y
-CONFIG_FTRACE=y
-CONFIG_FTRACE_SYSCALLS=y
-CONFIG_DYNAMIC_FTRACE=y
-CONFIG_DYNAMIC_FTRACE_WITH_REGS=y
-CONFIG_FTRACE_MCOUNT_RECORD=y
-# CONFIG_FTRACE_STARTUP_TEST is not set
-
-
-$ cat .config | grep _TRACE
-# CONFIG_TREE_RCU_TRACE is not set
-CONFIG_SYSCTL_EXCEPTION_TRACE=y
-CONFIG_TRACEPOINTS=y
-CONFIG_HAVE_ARCH_TRACEHOOK=y
-CONFIG_NETFILTER_XT_TARGET_TRACE=m
-# CONFIG_SCSI_IPR_TRACE is not set
-# CONFIG_VXGE_DEBUG_TRACE_ALL is not set
-# CONFIG_ATH5K_TRACER is not set
-CONFIG_CAPI_TRACE=y
-CONFIG_TRACE_ROUTER=m
-CONFIG_TRACE_SINK=m
-CONFIG_TRACE_IRQFLAGS_SUPPORT=y
-CONFIG_TRACE_IRQFLAGS=y
-# CONFIG_RCU_TRACE is not set
-CONFIG_NOP_TRACER=y
-CONFIG_HAVE_FUNCTION_TRACER=y
-CONFIG_HAVE_FUNCTION_GRAPH_TRACER=y
-CONFIG_HAVE_FUNCTION_TRACE_MCOUNT_TEST=y
-CONFIG_HAVE_SYSCALL_TRACEPOINTS=y
-CONFIG_TRACER_MAX_TRACE=y
-CONFIG_TRACE_CLOCK=y
-CONFIG_CONTEXT_SWITCH_TRACER=y
-CONFIG_GENERIC_TRACER=y
-CONFIG_FUNCTION_TRACER=y
-CONFIG_FUNCTION_GRAPH_TRACER=y
-CONFIG_IRQSOFF_TRACER=y
-CONFIG_PREEMPT_TRACER=y
-CONFIG_SCHED_TRACER=y
-CONFIG_TRACER_SNAPSHOT=y
-CONFIG_TRACER_SNAPSHOT_PER_CPU_SWAP=y
-CONFIG_STACK_TRACER=y
-CONFIG_BLK_DEV_IO_TRACE=y
-
-
-Did I miss something?
-
-Thanks!
-
+PiBpZiB5b3UgbWFuYWdlZCB0byB0cmlnZ2VyIGl0IHRoYXQgcmVsaWFibHksIGNvdWxkIHlvdSBy
+ZXZlcnQNCj4gc2x1Yl9kZWxheV9jdG9yX29uX3J0LnBhdGNoIGluIHRoZSBxdWV1ZSBhbmQgdHJ5
+IGFnYWluPw0KPiANCk92ZXIgdGhlIHdlZWtlbmQgSSByYW4gYSB0ZXN0IHRoYXQgcmVib290ZWQg
+dGhlIFBDIHBlcm1hbmVudGx5Lg0KQWZ0ZXIgYWJvdXQgNDAwIHJlYm9vdHMgSSBnb3QgYW5vdGhl
+ciBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2UuIA0KSG93ZXZlciB0aGUgc2x1Yl9kZWxheV9jdG9y
+X29uX3J0LnBhdGNoIGhhcyBub3QgYmVlbiByZXZlcnRlZCB5ZXQuDQpBbmQ6IFRoaXMgbG9va3Mg
+c29tZWhvdyBkaWZmZXJlbnRseSB0aGFuIHRoZSBwcmV2aW91cyBCVUdzLg0KDQoNClsgICAgMy4y
+OTkzMjldIEJVRzogdW5hYmxlIHRvIGhhbmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVmZXJl
+bmNlIGF0IDAwMDAwMDhjDQpbICAgIDMuMjk5MzMyXSBJUDogWzxjMTBkZjY2Yz5dIGZ1bmN0aW9u
+X3RyYWNlX2NhbGwrMHhjLzB4MTkwDQpbICAgIDMuMjk5MzM0XSAqcGRlID0gMDAwMDAwMDAgDQpb
+ICAgIDMuMjk5MzM2XSBPb3BzOiAwMDAwIFsjMV0gUFJFRU1QVCBTTVAgDQpbICAgIDMuMjk5MzU2
+XSBNb2R1bGVzIGxpbmtlZCBpbjogZTEwMDAoKykga3ZtX2ludGVsIGt2bSBwY3Nwa3IgcHNtb3Vz
+ZSBpMmNfaTgwMSByYWRlb24oKykgZHJtX2ttc19oZWxwZXIgdHRtIGRybSBhZ3BnYXJ0IGUxMDAw
+ZSBpZ2IgaTJjX2FsZ29fYml0IGkyY19jb3JlIGl4Z2JlIG1kaW8gcHRwIHBwc19jb3JlIGRjYSBw
+YXJwb3J0X3BjIHBhcnBvcnQgdmlkZW8gYmFja2xpZ2h0IGFjcGlfY3B1ZnJlcSBwcm9jZXNzb3Ig
+Y29yZXRlbXAgYXV0b2ZzNCByZWlzZXJmcyBtaWNyb2NvZGUgc2cgc2RfbW9kIGFoY2kgbGliYWhj
+aSBlaGNpX3BjaSBlaGNpX2hjZCB4aGNpX3BjaSB4aGNpX2hjZCBmYW4gdGhlcm1hbF9zeXMgaHdt
+b24NClsgICAgMy4yOTkzNThdIENQVTogMCBQSUQ6IDE0NDcgQ29tbTogc3lzdGVtZC11ZGV2ZCBO
+b3QgdGFpbnRlZCAzLjE4LjEzLXJ0MTAtMiAjMQ0KWyAgICAzLjI5OTM1OV0gSGFyZHdhcmUgbmFt
+ZTogTEVOT1ZPIDMyMjgyWjgvTUFIT0JBWSwgQklPUyA5U0tUNzBBVVMgMDYvMDcvMjAxMw0KWyAg
+ICAzLjI5OTM2MF0gdGFzazogZWI3NmVjMDAgdGk6IGVhZTMwMDAwIHRhc2sudGk6IGVhZTMwMDAw
+DQpbICAgIDMuMjk5MzYxXSBFSVA6IDAwNjA6WzxjMTBkZjY2Yz5dIEVGTEFHUzogMDAwMTAyODIg
+Q1BVOiAwDQpbICAgIDMuMjk5MzYyXSBFSVAgaXMgYXQgZnVuY3Rpb25fdHJhY2VfY2FsbCsweGMv
+MHgxOTANClsgICAgMy4yOTkzNjNdIEVBWDogYzEwNjhmZTcgRUJYOiAwMDAwMDAwMCBFQ1g6IGMx
+NjMzZjgwIEVEWDogYzExZjVlNmMNClsgICAgMy4yOTkzNjRdIEVTSTogMDYwZGJjMGUgRURJOiAw
+MDMzYzMyMSBFQlA6IGVhZTMxYjNjIEVTUDogZWFlMzFiMjANClsgICAgMy4yOTkzNjVdICBEUzog
+MDA3YiBFUzogMDA3YiBGUzogMDBkOCBHUzogMDAzMyBTUzogMDA2OA0KWyAgICAzLjI5OTM2Nl0g
+Q1IwOiA4MDA1MDAzMyBDUjI6IDAwMDAwMDhjIENSMzogMmFjM2IwMDAgQ1I0OiAwMDE0MDdkMA0K
+WyAgICAzLjI5OTM2N10gU3RhY2s6DQpbICAgIDMuMjk5MzcxXSAgYzEwNjhmZWMgYzE2MDAwN2Ig
+YzExZjAwN2IgYzExZjAwZDggMDYzMjhjZWUgMDYwZGJjMGUgMDAzM2MzMjEgZWFlMzFiNmMNClsg
+ICAgMy4yOTkzNzVdICBjMTQwNjdkYSAwMDAwMDAwMCA4MDAwMDAwMSAwMDAwMDAwMCAwMDAwMDAw
+MSBjMTA2OGZlYyBjMTA2M2YzYiAwNjBkYmMwZQ0KWyAgICAzLjI5OTM4MF0gIDAwMzNjMzIxIGVh
+ZTMxYjZjIDA2MzI4Y2VlIGVhZTMxYjg4IGMxMWY1ZTZjIGVhZTMxZmVjIDAwMDAwMDAwIDAwMDAw
+MDI3DQpbICAgIDMuMjk5MzgwXSBDYWxsIFRyYWNlOg0KWyAgICAzLjI5OTM4NF0gIFs8YzEwNjhm
+ZWM+XSA/IHByZWVtcHRfY291bnRfYWRkKzB4Yy8weGEwDQpbICAgIDMuMjk5Mzg3XSAgWzxjMTFm
+MDA3Yj5dID8gcmFkaXhfdHJlZV90YWdfY2xlYXIrMHgxYi8weDExMA0KWyAgICAzLjI5OTM4OV0g
+IFs8YzExZjAwZDg+XSA/IHJhZGl4X3RyZWVfdGFnX2NsZWFyKzB4NzgvMHgxMTANClsgICAgMy4y
+OTkzOTNdICBbPGMxNDA2N2RhPl0gZnRyYWNlX2NhbGwrMHg1LzB4Yg0KWyAgICAzLjI5OTM5NV0g
+IFs8YzEwNjhmZWM+XSA/IHByZWVtcHRfY291bnRfYWRkKzB4Yy8weGEwDQpbICAgIDMuMjk5Mzk3
+XSAgWzxjMTA2M2YzYj5dID8gcHJlZW1wdF9jb3VudF9zdWIrMHhiLzB4ZDANClsgICAgMy4yOTk0
+MDBdICBbPGMxMWY1ZTZjPl0gZGVsYXlfdHNjKzB4NWMvMHhmMA0KWyAgICAzLjI5OTQwMl0gIFs8
+YzExZjVkYWU+XSBfX2NvbnN0X3VkZWxheSsweDFlLzB4MjANClsgICAgMy4yOTk0MjhdICBbPGYw
+MzY5ZjgyPl0gZXZlcmdyZWVuX3NldF91dmRfY2xvY2tzKzB4MzAyLzB4MzYwIFtyYWRlb25dDQpb
+ICAgIDMuMjk5NDUwXSAgWzxmMDNlMzI1MD5dIHV2ZF92MV8wX2luaXQrMHg3MC8weDVhMCBbcmFk
+ZW9uXQ0KWyAgICAzLjI5OTQ3MV0gIFs8ZjAzNzEzMzk+XSBldmVyZ3JlZW5fc3RhcnR1cCsweDY1
+OS8weDY3MCBbcmFkZW9uXQ0KWyAgICAzLjI5OTQ4OV0gIFs8ZjAzNzE1YjU+XSBldmVyZ3JlZW5f
+aW5pdCsweDFjNS8weDM4MCBbcmFkZW9uXQ0KWyAgICAzLjI5OTUwNF0gIFs8ZjAyZmE0ZTI+XSBy
+YWRlb25fZGV2aWNlX2luaXQrMHhiYTIvMHhkNzAgW3JhZGVvbl0NClsgICAgMy4yOTk1MThdICBb
+PGYwMmY4NDAwPl0gPyBjYWlsX21jX3dyaXRlKzB4MjAvMHgyMCBbcmFkZW9uXQ0KWyAgICAzLjI5
+OTUzM10gIFs8ZjAyZmM5YmE+XSByYWRlb25fZHJpdmVyX2xvYWRfa21zKzB4OGEvMHgyMDAgW3Jh
+ZGVvbl0NClsgICAgMy4yOTk1NDFdICBbPGYwMDdmN2RlPl0gZHJtX2Rldl9yZWdpc3RlcisweDhl
+LzB4ZDAgW2RybV0NClsgICAgMy4yOTk1NDhdICBbPGYwMDgyMzg5Pl0gZHJtX2dldF9wY2lfZGV2
+KzB4NzkvMHgxZDAgW2RybV0NClsgICAgMy4yOTk1NTBdICBbPGMxMTNiMjRhPl0gPyBrZnJlZSsw
+eDFiYS8weDFkMA0KWyAgICAzLjI5OTU2NF0gIFs8ZjAyZjgzNGU+XSA/IHJhZGVvbl9wY2lfcHJv
+YmUrMHg2ZS8weGEwIFtyYWRlb25dDQpbICAgIDMuMjk5NTc2XSAgWzxmMDJmODM0ZT5dID8gcmFk
+ZW9uX3BjaV9wcm9iZSsweDZlLzB4YTAgW3JhZGVvbl0NClsgICAgMy4yOTk1OTBdICBbPGYwMmY4
+MzVjPl0gcmFkZW9uX3BjaV9wcm9iZSsweDdjLzB4YTAgW3JhZGVvbl0NClsgICAgMy4yOTk1OTNd
+ICBbPGMxMjFhYzhmPl0gcGNpX2RldmljZV9wcm9iZSsweDZmLzB4ZDANClsgICAgMy4yOTk1OTVd
+ICBbPGMxMWEyNWU1Pl0gPyBzeXNmc19jcmVhdGVfbGluaysweDI1LzB4NTANClsgICAgMy4yOTk1
+OThdICBbPGMxMmM3YTdmPl0gZHJpdmVyX3Byb2JlX2RldmljZSsweDdmLzB4M2QwDQpbICAgIDMu
+Mjk5NjAwXSAgWzxjMTA2OTU4MD5dID8gbWlncmF0ZV9lbmFibGUrMHg4MC8weDE4MA0KWyAgICAz
+LjI5OTYwMl0gIFs8YzEyMWFiYjc+XSA/IHBjaV9tYXRjaF9kZXZpY2UrMHhkNy8weDExMA0KWyAg
+ICAzLjI5OTYwNV0gIFs8YzEyYzdlODk+XSBfX2RyaXZlcl9hdHRhY2grMHg3OS8weDgwDQpbICAg
+IDMuMjk5NjA3XSAgWzxjMTJjN2UxMD5dID8gX19kZXZpY2VfYXR0YWNoKzB4NDAvMHg0MA0KWyAg
+ICAzLjI5OTYwOV0gIFs8YzEyYzVkOWY+XSBidXNfZm9yX2VhY2hfZGV2KzB4NGYvMHg4MA0KWyAg
+ICAzLjI5OTYxMV0gIFs8YzEyYzc1OGU+XSBkcml2ZXJfYXR0YWNoKzB4MWUvMHgyMA0KWyAgICAz
+LjI5OTYxM10gIFs8YzEyYzdlMTA+XSA/IF9fZGV2aWNlX2F0dGFjaCsweDQwLzB4NDANClsgICAg
+My4yOTk2MTVdICBbPGMxMmM3MWY3Pl0gYnVzX2FkZF9kcml2ZXIrMHgxNjcvMHgyNDANClsgICAg
+My4yOTk2MTddICBbPGYwNDU4MDAwPl0gPyAweGYwNDU4MDAwDQpbICAgIDMuMjk5NjE5XSAgWzxm
+MDQ1ODAwMD5dID8gMHhmMDQ1ODAwMA0KWyAgICAzLjI5OTYyMV0gIFs8YzEyYzg2NGQ+XSBkcml2
+ZXJfcmVnaXN0ZXIrMHg1ZC8weGYwDQpbICAgIDMuMjk5NjIzXSAgWzxjMTIxOTQ2Zj5dIF9fcGNp
+X3JlZ2lzdGVyX2RyaXZlcisweDVmLzB4NzANClsgICAgMy4yOTk2MjldICBbPGYwMDgyNWJkPl0g
+ZHJtX3BjaV9pbml0KzB4ZGQvMHgxMDAgW2RybV0NClsgICAgMy4yOTk2MzJdICBbPGYwNDU4MDAw
+Pl0gPyAweGYwNDU4MDAwDQpbICAgIDMuMjk5NjQ1XSAgWzxmMDQ1ODA4ZD5dIHJhZGVvbl9pbml0
+KzB4OGQvMHhhOCBbcmFkZW9uXQ0KWyAgICAzLjI5OTY0N10gIFs8YzEwMDA0NGU+XSBkb19vbmVf
+aW5pdGNhbGwrMHhhZS8weDFlMA0KWyAgICAzLjI5OTY0OV0gIFs8ZjA0NTgwMDA+XSA/IDB4ZjA0
+NTgwMDANClsgICAgMy4yOTk2NTFdICBbPGMxMTNiMjRhPl0gPyBrZnJlZSsweDFiYS8weDFkMA0K
+WyAgICAzLjI5OTY1M10gIFs8YzExMmRjYTU+XSA/IF9fdnVubWFwKzB4YTUvMHhmMA0KWyAgICAz
+LjI5OTY1NF0gIFs8YzExMmRjYTU+XSA/IF9fdnVubWFwKzB4YTUvMHhmMA0KWyAgICAzLjI5OTY1
+N10gIFs8YzExMmRjYTU+XSA/IF9fdnVubWFwKzB4YTUvMHhmMA0KWyAgICAzLjI5OTY2MV0gIFs8
+YzEwYjZhNWI+XSBsb2FkX21vZHVsZSsweDE5OWIvMHgyMWUwDQpbICAgIDMuMjk5NjY5XSAgWzxj
+MTBiNzNmZD5dIFN5U19maW5pdF9tb2R1bGUrMHg3ZC8weGMwDQpbICAgIDMuMjk5NjcyXSAgWzxj
+MTA4MGFiZD5dID8gcnRfdXBfd3JpdGUrMHhkLzB4MTANClsgICAgMy4yOTk2NzhdICBbPGMxNDA1
+YzU0Pl0gc3lzZW50ZXJfZG9fY2FsbCsweDEyLzB4MTINClsgICAgMy4yOTk3MTJdIENvZGU6IDg1
+IGMwIDc0IDBmIDgzIGY4IGZmIDc0IDA1IDgzIGU4IDAxIDg5IDAzIGU4IDZjIDRjIGZmIGZmIDVi
+IDVkIGMzIDg5IGY2IDhkIGJjIDI3IDAwIDAwIDAwIDAwIDU1IDg5IGU1IDU3IDU2IDUzIDgzIGVj
+IDEwIDhiIDU5IDBjIDw4Yj4gOGIgOGMgMDAgMDAgMDAgODUgYzkgNzQgNmUgODkgNDUgZWMgODkg
+ZDYgNjQgYTEgZDAgZjYgNmIgYzENClsgICAgMy4yOTk3MTRdIEVJUDogWzxjMTBkZjY2Yz5dIGZ1
+bmN0aW9uX3RyYWNlX2NhbGwrMHhjLzB4MTkwIFNTOkVTUCAwMDY4OmVhZTMxYjIwDQpbICAgIDMu
+Mjk5NzE1XSBDUjI6IDAwMDAwMDAwMDAwMDAwOGMNClsgICAgMy43MzU5MTZdIGUxMDAwIDAwMDA6
+MDQ6MGEuMDogUmVjZWl2ZSBBYnNvbHV0ZSBJbnRlcnJ1cHQgRGVsYXkgc2V0IHRvIDANClsgICAg
+My43NDI3MjJdIGUxMDAwIDAwMDA6MDQ6MGEuMDogSW50ZXJydXB0IFRocm90dGxpbmcgUmF0ZSAo
+aW50cy9zZWMpIHR1cm5lZCBvZmYNClsgICAgMy43NzUwNjFdIC0tLVsgZW5kIHRyYWNlIDAwMDAw
+MDAwMDAwMDAwMDIgXS0tLQ0KDQoNCkkgd2lsbCB0cnkgYWdhaW4gd2l0aCBhIHJldmVydGVkIHNs
+dWJfZGVsYXlfY3Rvcl9vbl9ydC5wYXRjaC4NClJlZ2FyZHMNCg0KTWF0aGlhcw0K
