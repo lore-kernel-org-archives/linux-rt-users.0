@@ -1,8 +1,8 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 6/6] Create an rt-tests.tar file using git-archive
-Date: Tue, 14 Jul 2015 22:28:58 +0200 (CEST)
-Message-ID: <alpine.LFD.2.11.1507142226300.14459@riemann>
-References: <1436531131-9186-1-git-send-email-jkacur@redhat.com> <1436531131-9186-7-git-send-email-jkacur@redhat.com> <20150714161324.GG21820@linutronix.de>
+Subject: Re: [PATCH 4/6] Add .tar files to .gitignore
+Date: Tue, 14 Jul 2015 22:33:13 +0200 (CEST)
+Message-ID: <alpine.LFD.2.11.1507142230301.14459@riemann>
+References: <1436531131-9186-1-git-send-email-jkacur@redhat.com> <1436531131-9186-5-git-send-email-jkacur@redhat.com> <20150714155830.GD21820@linutronix.de>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
 Cc: John Kacur <jkacur@redhat.com>,
@@ -12,14 +12,14 @@ Cc: John Kacur <jkacur@redhat.com>,
 	Carsten Emde <C.Emde@osadl.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wg0-f65.google.com ([74.125.82.65]:36731 "EHLO
+Received: from mail-wg0-f65.google.com ([74.125.82.65]:35504 "EHLO
 	mail-wg0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752666AbbGNU3H (ORCPT
+	with ESMTP id S1752132AbbGNUdO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2015 16:29:07 -0400
-Received: by wgbbj7 with SMTP id bj7so1651146wgb.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2015 13:29:06 -0700 (PDT)
-In-Reply-To: <20150714161324.GG21820@linutronix.de>
+	Tue, 14 Jul 2015 16:33:14 -0400
+Received: by wgkl9 with SMTP id l9so1654352wgk.2
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jul 2015 13:33:13 -0700 (PDT)
+In-Reply-To: <20150714155830.GD21820@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -27,31 +27,39 @@ List-ID: <linux-rt-users.vger.kernel.org>
 
 On Tue, 14 Jul 2015, Sebastian Andrzej Siewior wrote:
 
-> * John Kacur | 2015-07-10 14:25:31 [+0200]:
+> * John Kacur | 2015-07-10 14:25:29 [+0200]:
 > 
-> >diff --git a/Makefile b/Makefile
-> >index 1f7640b82fa6..07394e1292f7 100644
-> >--- a/Makefile
-> >+++ b/Makefile
-> >@@ -165,6 +166,10 @@ release: distclean changelog
-> > 	rm -f ChangeLog
-> > 	cp rt-tests-$(VERSION).tar.gz rt-tests-$(VERSION).tar.asc releases
-> > 
-> >+.PHONY: tarball
-> >+tarball:
-> >+	git archive --worktree-attributes --prefix=rt-tests-${VERSION}/ -o rt-tests-${VERSION}.tar v${VERSION}
+> >Ignore .tar files too
+> >
+> >Signed-off-by: John Kacur <jkacur@redhat.com>
+> >---
+> > .gitignore | 1 +
+> > 1 file changed, 1 insertion(+)
+> >
+> >diff --git a/.gitignore b/.gitignore
+> >index 1924e73bef67..ceee8bfb6e9a 100644
+> >--- a/.gitignore
+> >+++ b/.gitignore
+> >@@ -2,6 +2,7 @@
+> > .*
+> > *.o
+> > *.tar.gz
+> >+*.tar
+> > *.d
+> > *.patch
+> > *.a
 > 
-> Okay. So this looks like the release target could go :)
-> 
-> > .PHONY: push
-> > push:	release
-> > 	scripts/do-git-push $(VERSION)
+> Wouldn't it make sense to remove *.tar* and *patch from that list?
+> After all if "git status" shows you that those exists then step two
+> should be remove them, right? Why would you want to them around?
 > 
 
-Right, like I said in Patch [0/6] - I'm planning on ripping everything out 
-that is for maintainence purposes, and either doing without it, or at 
-least putting it in the scripts dir, I don't think it should be in the 
-standard Makefile, but doing it in some baby steps, not making Clark quit 
-cold turkey. :)
+I don't know, I suppose it's a matter of taste, but there are a lot of 
+legitimate reasons to have *.tar and *.patch files in your local repo, 
+that you might not want to see in via git-status. This is pretty standard 
+practice, the Linux kernel has these in .gitignore too, so I'm going to 
+keep them in the list.
+
+Cheers!
 
 John
