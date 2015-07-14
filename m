@@ -1,60 +1,108 @@
-From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
-Subject: RE: BUG: unable to handle kernel NULL pointer dereference on
- 3.18.13-rt10
-Date: Tue, 14 Jul 2015 07:38:46 +0000
-Message-ID: <523c30ce4e4c4b53befcd288db178db9@FE-MBX1012.de.bosch.com>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
-	<alpine.DEB.2.11.1507091605410.5134@nanos>
-	<c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
-	<20150710132318.GA27402@linutronix.de>
-	<3c9ae4a1f9cb4ac3a96a28c3f65f9442@FE-MBX1012.de.bosch.com>
-	<20150713091237.GA31747@linutronix.de>
- <20150713113430.4c18c965@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 4.1.2-rt1
+Date: Tue, 14 Jul 2015 15:40:28 +0200
+Message-ID: <20150714134028.GA21820@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:45788 "EHLO
-	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751277AbbGNHit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jul 2015 03:38:49 -0400
-In-Reply-To: <20150713113430.4c18c965@gandalf.local.home>
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgU3RldmVuLA0KPiA+ID5PdmVyIHRoZSB3ZWVrZW5kIEkgcmFuIGEgdGVzdCB0aGF0IHJlYm9v
-dGVkIHRoZSBQQyBwZXJtYW5lbnRseS4NCj4gPiA+QWZ0ZXIgYWJvdXQgNDAwIHJlYm9vdHMgSSBn
-b3QgYW5vdGhlciBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2UuDQo+ID4gPkhvd2V2ZXIgdGhlIHNs
-dWJfZGVsYXlfY3Rvcl9vbl9ydC5wYXRjaCBoYXMgbm90IGJlZW4gcmV2ZXJ0ZWQgeWV0Lg0KPiA+
-ID5BbmQ6IFRoaXMgbG9va3Mgc29tZWhvdyBkaWZmZXJlbnRseSB0aGFuIHRoZSBwcmV2aW91cyBC
-VUdzLg0KPiA+ID4NCj4gPiA+DQo+ID4gPlsgICAgMy4yOTkzMjldIEJVRzogdW5hYmxlIHRvIGhh
-bmRsZSBrZXJuZWwgTlVMTCBwb2ludGVyIGRlcmVmZXJlbmNlIGF0DQo+IDAwMDAwMDhjDQo+ID4g
-PlsgICAgMy4yOTkzMzJdIElQOiBbPGMxMGRmNjZjPl0gZnVuY3Rpb25fdHJhY2VfY2FsbCsweGMv
-MHgxOTANCj4gPg0KPiA+IFRoaXMgaXMNCj4gPiB8IHN0YXRpYyB2b2lkDQo+ID4gfCBmdW5jdGlv
-bl90cmFjZV9jYWxsKHVuc2lnbmVkIGxvbmcgaXAsIHVuc2lnbmVkIGxvbmcgcGFyZW50X2lwLA0K
-PiA+IHwgICAgICAgICAgICAgICAgICAgICBzdHJ1Y3QgZnRyYWNlX29wcyAqb3AsIHN0cnVjdCBw
-dF9yZWdzICpwdF9yZWdzKQ0KPiA+IHwgew0KPiA+IHwgICAgICAgICBzdHJ1Y3QgdHJhY2VfYXJy
-YXkgKnRyID0gb3AtPnByaXZhdGU7DQo+ID4gfOKApg0KPiA+IHwNCj4gPiB8ICAgICAgICAgaWYg
-KHVubGlrZWx5KCF0ci0+ZnVuY3Rpb25fZW5hYmxlZCkpDQo+ID4gfCAgICAgICAgICAgICAgICAg
-cmV0dXJuOw0KPiA+DQo+ID4gYW5kIGl0IGxvb2tzIGxpa2UgdHIgaXMgbnVsbC4gQlVHX09OKCF0
-cikgc2hvdWxkIHByb3ZlIHRoaXMuDQo+ID4gU3RldmVuLCBpcyBpdCBzb21laG93IHBvc3NpYmxl
-IHRoYXQgb24gbW9kdWxlIGxvYWQgd2UgZ2V0ICJvcCIgc2V0DQo+ID4gd2l0aG91dCBpdHMgcHJp
-dmF0ZSBtZW1iZXIgaW5pdGlhbGl6ZWQ/DQo+ID4NCj4gDQo+IFdoYXQncyB0aGUgdGVzdCB0aGF0
-IHdhcyBydW4sIGFuZCBob3cgZGlkIGl0IGVuYWJsZSBmdW5jdGlvbiB0cmFjaW5nPw0KDQpUaGUg
-dHJhY2luZyB3YXMgZW5hYmxlZCB3aXRoaW4gYW4gaW5pdCBzY3JpcHQgdXNpbmcgdGhlIGZvbGxv
-d2luZyBiYXNoIGNvbW1hbmRzOg0KICAgIGlmICEgZ3JlcCAtcSAiL3N5cy9rZXJuZWwvZGVidWci
-IC9wcm9jL21vdW50czsgdGhlbg0KICAgICAgICBtb3VudCAtdCBkZWJ1Z2ZzIG5vZGV2IC9zeXMv
-a2VybmVsL2RlYnVnDQogICAgZmkNCiAgICBpZiBbIC1kIC9zeXMva2VybmVsL2RlYnVnL3RyYWNp
-bmcgXTsgdGhlbg0KICAgICAgICAoDQogICAgICAgIGNkIC9zeXMva2VybmVsL2RlYnVnL3RyYWNp
-bmcNCiAgICAgICAgZWNobyAiZnVuY3Rpb24iID4gY3VycmVudF90cmFjZXINCiAgICAgICAgZWNo
-byAiMSIgPiB0cmFjaW5nX29uDQoNCiAgICAgICAgZWNobyAiMSIgPiAvcHJvYy9zeXMva2VybmVs
-L2Z0cmFjZV9kdW1wX29uX29vcHMNCiAgICAgICAgKQ0KICAgIGZpDQoNCg0KVGhlIHRlc3Qgd2Fz
-IHRvIHJlYm9vdCB0aGUgUEMgcGVybWFuZW50bHkgKGV2ZXJ5IG1pbnV0ZSkuDQpUaGUgcmVib290
-IGhhcyBiZWVuIGluaXRpYXRlZCBieSBhbm90aGVyIFBDIHRoYXQgcmVtb3RlbHkgY29udHJvbHMg
-dGhlIFBDIHVuZGVyIHRlc3QuDQoNClJlZ2FyZHMNCg0KTWF0aGlhcw0K
+Dear RT folks!
+
+I'm pleased to announce the v4.1.2-rt1 patch set.
+
+The move from 4.0 to 4.1 was rather smooth, so we took the time for
+some overdue cleanups and restructuring of the patch queue.
+
+1) Patch folding
+
+   - Fold all fixlets into the proper patches
+
+   - Consolidate the patches which change the same piece of code over
+     and over (e.g. add/revert/redo).
+
+   These patches were mostly kept to be easily picked up for stable.
+
+2) Dropping obsolete patches
+
+   Some patches have been superseeded by different upstream changes,
+   so the RT variant is redundant.
+
+3) Changelogs
+
+   Quite some patches had no or useless changelogs. We updated them
+   all. Each patch has now a From+Subject+Date field. That means "git
+   quiltimport" will produce now the same commit id for each patch (as
+   long as the commit author and date remain unchanged).
+
+4) Reordering
+
+   The patches got reordered in topics, so patches related to the same
+   subsystem or problem space are grouped together.
+
+5) Ability to build and boot
+
+   Each step in the queue now builds with RT=n and RT=y. All steps
+   boot with RT=n. With RT=y the functionality is obviously dependent
+   on all patches, so a boot bisectability can not be achieved.
+
+As of now we provide a git tree with the RT changes as well. The tree
+is similar structured as Stevens stable RT tree. For each kernel
+version we provide 3 branches:
+
+ linux-m.n.y-rt
+
+	This branch starts when we move to a new kernel version. After
+	the first release this branch gets only incremental updates
+	(either from the mainline stable tree or from updates to the
+	rt patch queue)
+
+ linux-m.n.y-rt-rebase
+
+	This branch is rebased when a new stable version or a new RT
+	patch queue is available. The RT patch queue is applied on top
+	of the latest mainline stable version.
+
+ linux-m.n.y-queue
+ 
+	This branch contains the revisions of the rt patch queue -
+	patches and series file.
+
+Known issues:
+ 
+- My AMD box throws a lot of "cpufreq_stat_notifier_trans: No
+  policy found" warnings after boot. It is gone after manually
+  setting the policy (to something else than reported).
+
+- bcache is disabled.
+
+- CPU hotplug works in general. Steven's test script however
+  deadlocks usually on the second invocation.
+
+- xor / raid_pq
+  I had max latency jumping up to 67563us on one CPU while the next
+  lower max was 58us. I tracked it down to module's init code of
+  xor and raid_pq. Both disable preemption while measuring the
+  performance of the individual implementation.
+
+The git URLs for this release are
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git linux-4.1.y-rt
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git linux-4.1.y-rt-rebase
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git linux-4.1.y-rt-patches
+
+The RT patch against 4.1.2 can be found here:
+
+    https://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.2-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patches-4.1.2-rt1.tar.xz
+
+Sebastian
