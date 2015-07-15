@@ -1,46 +1,56 @@
-From: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+From: Xander Huff <xander.huff@ni.com>
 Subject: Re: [PATCH v2] iio: adc: xilinx-xadc: Push interrupts into threaded
  context
-Date: Wed, 15 Jul 2015 10:57:44 -0500
-Message-ID: <55A682F8.3090001@ni.com>
-References: <5574633F.7090004@kernel.org>	<1436391502-2604-1-git-send-email-xander.huff@ni.com> <CAKfKVtGTO81wLWk50M303t2WjcBEMEt_LUnsJ3_WmvR_3izUjg@mail.gmail.com>
+Date: Wed, 15 Jul 2015 10:59:25 -0500
+Message-ID: <55A6835D.1000401@ni.com>
+References: <5574633F.7090004@kernel.org> <1436391502-2604-1-git-send-email-xander.huff@ni.com> <20150714142846.GB21820@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org,
-	nathan.sullivan-acOepvfBmUk@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jaeden.amero-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org,
-	michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	joe.hershberger-acOepvfBmUk@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org
-To: Shubhrajyoti Datta <shubhrajyoti.datta-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKfKVtGTO81wLWk50M303t2WjcBEMEt_LUnsJ3_WmvR_3izUjg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Cc: jic23@kernel.org, knaack.h@gmx.de, lars@metafoo.de,
+	pmeerw@pmeerw.net, michal.simek@xilinx.com,
+	soren.brinkmann@xilinx.com, linux-iio@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linux-rt-users@vger.kernel.org, joe.hershberger@ni.com,
+	joshc@ni.com, nathan.sullivan@ni.com, jaeden.amero@ni.com,
+	linux-kernel@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150714142846.GB21820@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 7/9/2015 12:03 AM, Shubhrajyoti Datta wrote:
->     @@ -330,8 +310,18 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq,
->     void *devid)
->                      xadc_zynq_update_intmsk(xadc, 0, 0);
->                      ret = IRQ_WAKE_THREAD;
->              }
->     +
->     +       alarm = xadc->zynq_alarm;
->     +       xadc->zynq_alarm = 0;
->     +
->              spin_unlock(&xadc->lock);
+On 7/14/2015 9:28 AM, Sebastian Andrzej Siewior wrote:
+> * Xander Huff | 2015-07-08 16:38:22 [-0500]:
 >
->     +       xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
->     +
->     +       /* unmask the required interrupts in timer. */
->     +       schedule_delayed_work(&xadc->zynq_unmask_work,
->     +                       msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
->     +
+>> drivers/iio/adc/xilinx-xadc-core.c | 35 ++++++++++++-----------------------
+>> 1 file changed, 12 insertions(+), 23 deletions(-)
+>>
+>> diff --git a/drivers/iio/adc/xilinx-xadc-core.c b/drivers/iio/adc/xilinx-xadc-core.c
+>> index ce93bd8..b309ad3 100644
+>> --- a/drivers/iio/adc/xilinx-xadc-core.c
+>> +++ b/drivers/iio/adc/xilinx-xadc-core.c
+>> @@ -1225,7 +1214,7 @@ static int xadc_probe(struct platform_device *pdev)
+>> 	if (ret)
+>> 		goto err_free_samplerate_trigger;
+>>
+>> -	ret = request_threaded_irq(irq, xadc->ops->interrupt_handler,
+>> +	ret = request_threaded_irq(irq, 0,
 >
-> Now that we are in the threaded context do we need the  work queue stuff.
-Seems reasonable to try to remove it. I'll do some testing and send out a v3 if 
-it works, thanks.
+> NULL not 0
+> Other than that, it looks good. Thanks.
+> If you managed to get this merged upstream then feel free to ping me and
+> I pick this into -RT.
+>
+>> 				xadc->ops->threaded_interrupt_handler,
+>> 				0, dev_name(&pdev->dev), indio_dev);
+>> 	if (ret)
+>
+> Sebastian
+>
+Haven't got this merged in yet. I'm addressing another concern from Shubhrajyoti 
+Datta and will include this change in my v3 I'll send out sometime next week, 
+thanks!
 
 -- 
 Xander Huff
