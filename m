@@ -1,35 +1,48 @@
-From: "Mathias Koehrer" <mathias.koehrer@etas.com>
-Subject: Re: BUG: unable to handle kernel NULL pointer dereference on 3.18.13-rt10
-Date: Wed, 15 Jul 2015 09:12:12 +0200
-Message-ID: <55A607CC.3030808@etas.com>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com> <alpine.DEB.2.11.1507091605410.5134@nanos> <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com> <20150710132318.GA27402@linutronix.de> <e1b9f04b95504df78cab1eb4e6946238@FE-MBX1012.de.bosch.com> <55A36EF0.7020404@linutronix.de> <15fcff88e0b4417aba7fd635a98b1ad0@FE-MBX1012.de.bosch.com> <55A37DC9.6050604@linutronix.de>
+From: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+Subject: Re: [PATCH v2] iio: adc: xilinx-xadc: Push interrupts into threaded
+ context
+Date: Wed, 15 Jul 2015 10:57:44 -0500
+Message-ID: <55A682F8.3090001@ni.com>
+References: <5574633F.7090004@kernel.org>	<1436391502-2604-1-git-send-email-xander.huff@ni.com> <CAKfKVtGTO81wLWk50M303t2WjcBEMEt_LUnsJ3_WmvR_3izUjg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:35578 "EHLO
-	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751565AbbGOHMS (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 15 Jul 2015 03:12:18 -0400
-In-Reply-To: <55A37DC9.6050604@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org,
+	nathan.sullivan-acOepvfBmUk@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, jaeden.amero-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org,
+	michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	joe.hershberger-acOepvfBmUk@public.gmane.org, linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
+	pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org, soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org
+To: Shubhrajyoti Datta <shubhrajyoti.datta-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <CAKfKVtGTO81wLWk50M303t2WjcBEMEt_LUnsJ3_WmvR_3izUjg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian,
-
->>> Was this with or without the ctor patch I mentioned?
->> I was still without the reverted patch.
+On 7/9/2015 12:03 AM, Shubhrajyoti Datta wrote:
+>     @@ -330,8 +310,18 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq,
+>     void *devid)
+>                      xadc_zynq_update_intmsk(xadc, 0, 0);
+>                      ret = IRQ_WAKE_THREAD;
+>              }
+>     +
+>     +       alarm = xadc->zynq_alarm;
+>     +       xadc->zynq_alarm = 0;
+>     +
+>              spin_unlock(&xadc->lock);
 >
-> In that case I ignore this report unless you manage (or not) to
-> reproduce it without the patch.
-since I have reverted the patch the BUG has not occurred anymore.
-Even if this is not a proof that this was the reason, it improved the 
-stability.
+>     +       xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
+>     +
+>     +       /* unmask the required interrupts in timer. */
+>     +       schedule_delayed_work(&xadc->zynq_unmask_work,
+>     +                       msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
+>     +
+>
+> Now that we are in the threaded context do we need the  work queue stuff.
+Seems reasonable to try to remove it. I'll do some testing and send out a v3 if 
+it works, thanks.
 
-Regards
-
-Mathias
+-- 
+Xander Huff
+Staff Software Engineer
+National Instruments
