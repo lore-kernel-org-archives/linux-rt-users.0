@@ -1,91 +1,88 @@
-From: eg Engleder Gerhard <eg@keba.com>
-Subject: AW: unable to handle kernel NULL pointer dereference on 3.18.13-rt10
-Date: Mon, 20 Jul 2015 09:38:35 +0200
-Message-ID: <12C1B74BDFD05D40B2356A9B12DFA3396C276FDBA2@KEBMXSPMB01.keba.co.at>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
- <alpine.DEB.2.11.1507091605410.5134@nanos>
- <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
- <20150710132318.GA27402@linutronix.de>
- <e1b9f04b95504df78cab1eb4e6946238@FE-MBX1012.de.bosch.com>
- <55A36EF0.7020404@linutronix.de>
- <15fcff88e0b4417aba7fd635a98b1ad0@FE-MBX1012.de.bosch.com>
- <55A37DC9.6050604@linutronix.de> <55A607CC.3030808@etas.com>
+From: linuxball <linuxball@gmail.com>
+Subject: [PATCH 1/1] 3.18.17-rt14 locktorture: Do NOT include rwlock.h directly
+Date: Mon, 20 Jul 2015 11:33:12 +0200
+Message-ID: <55ACC058.2040407@gmail.com>
+References: <20150702152543.61bbb6eb@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from xlspam03.mdcs.at ([217.13.183.27]:59842 "EHLO xlspam03.mdcs.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753669AbbGTHuo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 20 Jul 2015 03:50:44 -0400
-In-Reply-To: <55A607CC.3030808@etas.com>
-Content-Language: de-DE
+Received: from mail-wi0-f194.google.com ([209.85.212.194]:34389 "EHLO
+	mail-wi0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751501AbbGTJdQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 20 Jul 2015 05:33:16 -0400
+Received: by wibuw6 with SMTP id uw6so3881934wib.1
+        for <linux-rt-users@vger.kernel.org>; Mon, 20 Jul 2015 02:33:15 -0700 (PDT)
+In-Reply-To: <20150702152543.61bbb6eb@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGVsbG8gU2ViYXN0aWFuLA0KDQpzaW1pbGFyIHNpdHVhdGlvbiBoZXJlIHdpdGggMy4xOC4xMS1y
-dDcuIFRoZSBwcm9ibGVtIG9jY3VycmVkIG9uY2Ugc28gZmFyLg0KDQo8MT5bMTI3MjA5LjM1OTY3
-Nl0gQlVHOiB1bmFibGUgdG8gaGFuZGxlIGtlcm5lbCBOVUxMIHBvaW50ZXIgZGVyZWZlcmVuY2Ug
-YXQgMDAwMDAwMWMNCjwxPlsxMjcyMDkuMzU5Njg1XSBJUDogWzxjMTA3YWRhOT5dIF9fdHJ5X3Rv
-X3Rha2VfcnRfbXV0ZXgucGFydC4xNSsweDE5LzB4MTEwDQo8ND5bMTI3MjA5LjM1OTY4N10gKnBk
-ZSA9IDAwMDAwMDAwIA0KPDQ+WzEyNzIwOS4zNTk2ODldIE9vcHM6IDAwMDAgWyMxXSBQUkVFTVBU
-IFNNUCANCjw0PlsxMjcyMDkuMzU5NzE2XSBNb2R1bGVzIGxpbmtlZCBpbjogdHVuIGtyZmIgc2Vy
-cG9ydCBtYXg2NjM5IHJ0Y19pc2wxMjA1OCByYW1vb3BzIHJlZWRfc29sb21vbiBrbW1pX2NwMzAw
-IGxlZF9jbGFzcyBrYmF0dF9sZWcgaTJjX2tlYmFfbGVnIGF0MjUgbTI1cDgwIHNwaV9ub3Iga3Rp
-Y2tfY3AzMDAga3NwaW1hc3RlciBrc3JhbSBrc3BpMiBlY20gY3AzMDAgZWNtcGNpIHBvd2VyZmFp
-bCBpMmNfaTgwMSB2aWRlbyBiYWNrbGlnaHQgcHJvY2Vzc29yIGFkdDc0NzUgaHdtb25fdmlkIGVt
-YzE0MDMgcmVnbWFwX2kyYyBjb3JldGVtcCBsb29wIGZ1c2UgYXV0b2ZzNCB1dmVzYWZiIGNmYmZp
-bGxyZWN0IGNmYmltZ2JsdCBjbiBjZmJjb3B5YXJlYSBzZyBzZF9tb2QgYXRhX2dlbmVyaWMgdXNi
-X3N0b3JhZ2UgYXRhX3BpaXggZWhjaV9wY2kgZWhjaV9oY2QgZTEwMDBlIHB0cCBwcHNfY29yZSB0
-aGVybWFsIHRoZXJtYWxfc3lzIGh3bW9uDQo8MD5bMTI3MjA5LjM1OTcyMV0gQ1BVOiAwIFBJRDog
-MjI1NCBDb21tOiB2YXJwdnByZiBOb3QgdGFpbnRlZCAzLjE4LjAtbm9uZS1rZWJhLXJ0LTY4NiAj
-MSBLRUJBIDMuMTguMTEtMX5+VGVzdDMrfmQ4DQo8MD5bMTI3MjA5LjM1OTcyMl0gSGFyZHdhcmUg
-bmFtZTogICAgL0JNNjcvQlM2Ny9UTTY3L1RTNjcsIEJJT1MgQkg2N1I5OCAxNy8xMi8yMDEyDQo8
-MD5bMTI3MjA5LjM1OTcyNF0gdGFzazogZjU4Nzk4ODAgdGk6IGY1MDRjMDAwIHRhc2sudGk6IGY1
-MDRjMDAwDQo8ND5bMTI3MjA5LjM1OTcyN10gRUlQOiAwMDYwOls8YzEwN2FkYTk+XSBFRkxBR1M6
-IDAwMDEwMjg2IENQVTogMA0KPDQ+WzEyNzIwOS4zNTk3MzBdIEVJUCBpcyBhdCBfX3RyeV90b190
-YWtlX3J0X211dGV4LnBhcnQuMTUrMHgxOS8weDExMA0KPDQ+WzEyNzIwOS4zNTk3MzJdIEVBWDog
-ZjUxNzA1MDQgRUJYOiBmNTE3MDUwNCBFQ1g6IGY1MDRkZGEwIEVEWDogMDAwMDAwMDANCjw0Plsx
-MjcyMDkuMzU5NzMzXSBFU0k6IGY1ODc5ODgwIEVESTogZjU4NzlkMmMgRUJQOiBmNTA0ZGQ4NCBF
-U1A6IGY1MDRkZDc0DQo8ND5bMTI3MjA5LjM1OTczNV0gIERTOiAwMDdiIEVTOiAwMDdiIEZTOiAw
-MGQ4IEdTOiAwMDMzIFNTOiAwMDY4DQo8ND5bMTI3MjA5LjM1OTczN10gQ1IwOiA4MDA1MDAzMyBD
-UjI6IDAwMDAwMDFjIENSMzogMzI4Y2MwMDAgQ1I0OiAwMDA0MDdkMA0KPDA+WzEyNzIwOS4zNTk3
-MzddIFN0YWNrOg0KPDQ+WzEyNzIwOS4zNTk3NDJdICBkODRiMjRjMCBmNTE3MDUwNCBkODRiMjRj
-MCBmNTg3OWQyYyBmNTA0ZGRlMCBjMTRhZDk5YyAwMDAwMDAwMSBmNTg3OTg4MA0KPDQ+WzEyNzIw
-OS4zNTk3NDZdICBmNTA0ZGZlYyBmNTg3OTg4MCBmNTg3OWQyYyAwMDAwMDAwMSAwMDAwMDAwMCAw
-MDAwMDAwMCBmNTA0ZGRhYyAwMDAwMDAwMA0KPDQ+WzEyNzIwOS4zNTk3NTBdICAwMDAwMDAwMCBm
-NTg3OTg4MCBmNTE3MDUwNCAxMTExMTEwMSAxMTExMTExMSAwMDAwMDAwMCAxMTExMTExMSAwMDAw
-MDA3OA0KPDA+WzEyNzIwOS4zNTk3NTFdIENhbGwgVHJhY2U6DQo8ND5bMTI3MjA5LjM1OTc1OV0g
-IFs8YzE0YWQ5OWM+XSBydF9zcGluX2xvY2tfc2xvd2xvY2srMHgxYWMvMHgyZjANCjw0PlsxMjcy
-MDkuMzU5NzY1XSAgWzxjMTRhZWU5ZD5dIHJ0X3NwaW5fbG9jaysweGQvMHgxMA0KPDQ+WzEyNzIw
-OS4zNTk3NjldICBbPGMxMDRmNWQ4Pl0gX19sb2NrX3Rhc2tfc2lnaGFuZCsweDM4LzB4NzANCjw0
-PlsxMjcyMDkuMzU5Nzc0XSAgWzxjMTE4ZWE4Mj5dIGRvX3Rhc2tfc3RhdCsweGYyLzB4ZDMwDQo8
-ND5bMTI3MjA5LjM1OTc3OF0gIFs8YzE0YWRhODQ+XSA/IHJ0X3NwaW5fbG9ja19zbG93bG9jaysw
-eDI5NC8weDJmMA0KPDQ+WzEyNzIwOS4zNTk3ODNdICBbPGMxMTU2Nzg1Pl0gPyBtbnRwdXRfbm9f
-ZXhwaXJlKzB4MjUvMHgxNTANCjw0PlsxMjcyMDkuMzU5Nzg4XSAgWzxjMTA2NDllNT5dID8gcHJl
-ZW1wdF9jb3VudF9zdWIrMHg0NS8weDUwDQo8ND5bMTI3MjA5LjM1OTc5Ml0gIFs8YzEwNjRmMDA+
-XSA/IG1pZ3JhdGVfZW5hYmxlKzB4ODAvMHgxODANCjw0PlsxMjcyMDkuMzU5Nzk3XSAgWzxjMTJi
-NjYwNz5dID8gX19wZXJjcHVfY291bnRlcl9hZGQrMHhhNy8weGYwDQo8ND5bMTI3MjA5LjM1OTgw
-MV0gIFs8YzE0YWViODU+XSA/IF9yYXdfc3Bpbl9sb2NrKzB4MTUvMHg2MA0KPDQ+WzEyNzIwOS4z
-NTk4MDVdICBbPGMxNGFkY2IwPl0gPyBydF9tdXRleF9zbG93bG9jaysweDFkMC8weDMxMA0KPDQ+
-WzEyNzIwOS4zNTk4MDldICBbPGMxMDY0OWU1Pl0gPyBwcmVlbXB0X2NvdW50X3N1YisweDQ1LzB4
-NTANCjw0PlsxMjcyMDkuMzU5ODEyXSAgWzxjMTRhZGNiMD5dID8gcnRfbXV0ZXhfc2xvd2xvY2sr
-MHgxZDAvMHgzMTANCjw0PlsxMjcyMDkuMzU5ODE3XSAgWzxjMTE4ZmRiZj5dIHByb2NfdGlkX3N0
-YXQrMHgxZi8weDMwDQo8ND5bMTI3MjA5LjM1OTgyMF0gIFs8YzExOGI3ZTI+XSBwcm9jX3Npbmds
-ZV9zaG93KzB4NDIvMHg4MA0KPDQ+WzEyNzIwOS4zNTk4MjVdICBbPGMxMTVhYWIyPl0gc2VxX3Jl
-YWQrMHg4Mi8weDM4MA0KPDQ+WzEyNzIwOS4zNTk4MjldICBbPGMxMTVhYTMwPl0gPyBzZXFfbHNl
-ZWsrMHgxYzAvMHgxYzANCjw0PlsxMjcyMDkuMzU5ODM0XSAgWzxjMTEzODcxND5dIHZmc19yZWFk
-KzB4NzQvMHgxNDANCjw0PlsxMjcyMDkuMzU5ODM4XSAgWzxjMTRhZWY5ZD5dID8gX211dGV4X2xv
-Y2srMHhkLzB4MTANCjw0PlsxMjcyMDkuMzU5ODQyXSAgWzxjMTEzOGQzNj5dIFN5U19yZWFkKzB4
-NDYvMHg5MA0KPDQ+WzEyNzIwOS4zNTk4NDddICBbPGMxNGFmNTljPl0gc3lzZW50ZXJfZG9fY2Fs
-bCsweDEyLzB4MTINCjwwPlsxMjcyMDkuMzU5ODc0XSBDb2RlOiA3NiAwMCAwZiAwYiA4ZCBiNCAy
-NiAwMCAwMCAwMCAwMCA4ZCBiYyAyNyAwMCAwMCAwMCAwMCA1NSA4OSBlNSA1NyA1NiA1MyA4MyBl
-YyAwNCA2NiA2NiA2NiA2NiA5MCA4NSBjOSA4OSBjMyA4OSBkNiA3NCAyMiA4YiA1MCAwOCA8M2I+
-IDQyIDFjIDBmIDg1IGNlIDAwIDAwIDAwIDMxIGMwIDM5IGQxIDBmIDg0IGNjIDAwIDAwIDAwIDgz
-IGM0DQo8MD5bMTI3MjA5LjM1OTg3OV0gRUlQOiBbPGMxMDdhZGE5Pl0gX190cnlfdG9fdGFrZV9y
-dF9tdXRleC5wYXJ0LjE1KzB4MTkvMHgxMTAgU1M6RVNQIDAwNjg6ZjUwNGRkNzQNCjw0PlsxMjcy
-MDkuMzU5ODgwXSBDUjI6IDAwMDAwMDAwMDAwMDAwMWMNCjw0PlsxMjcyMDkuMzk2MjE3XSAtLS1b
-IGVuZCB0cmFjZSAwMDAwMDAwMDAwMDAwMDAyIF0tLS0NCg0KcmVnYXJkcywgR2VyaGFyZCBFbmds
-ZWRlcg0K
+Including rwlock.h directly will cause kernel builds to fail
+if CONFIG_PREEMPT_RT_FULL is defined. The correct header file
+(rwlock_rt.h OR rwlock.h) will be included by spinlock.h which
+is included by locktorture.c anyway.
+---
+  kernel/locking/locktorture.c | 1 -
+  1 file changed, 1 deletion(-)
+
+diff --git a/kernel/locking/locktorture.c b/kernel/locking/locktorture.c
+index ec8cce2..aa60d91 100644
+--- a/kernel/locking/locktorture.c
++++ b/kernel/locking/locktorture.c
+@@ -24,7 +24,6 @@
+  #include <linux/module.h>
+  #include <linux/kthread.h>
+  #include <linux/spinlock.h>
+-#include <linux/rwlock.h>
+  #include <linux/mutex.h>
+  #include <linux/rwsem.h>
+  #include <linux/smp.h>
+-- 
+1.9.1
+
+
+On 02.07.2015 21:25, Steven Rostedt wrote:
+> Dear RT Folks,
+>
+> I'm pleased to announce the 3.18.17-rt14 stable release.
+>
+>
+> This release is just an update to the new stable 3.18.17 version
+> and no RT specific changes have been made.
+>
+>
+> You can get this release via the git tree at:
+>
+>    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+>
+>    branch: v3.18-rt
+>    Head SHA1: bba903c2bb20dbb6c57a8ba3889f9b8f09dcc6e0
+>
+>
+> Or to build 3.18.17-rt14 directly, the following patches should be applied:
+>
+>    http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+>
+>    http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.17.xz
+>
+>    http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.17-rt14.patch.xz
+>
+>
+>
+>
+> Enjoy,
+>
+> -- Steve
+>
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+
