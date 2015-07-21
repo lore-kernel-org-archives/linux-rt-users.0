@@ -1,63 +1,52 @@
-From: linuxball <linuxball@gmail.com>
-Subject: Re: [PATCH 1/1] 3.18.17-rt14 locktorture: Do NOT include rwlock.h
- directly
-Date: Tue, 21 Jul 2015 16:20:07 +0200
-Message-ID: <55AE5517.9040403@gmail.com>
-References: <20150702152543.61bbb6eb@gandalf.local.home> <55ACC058.2040407@gmail.com> <20150720154753.GC9559@linutronix.de>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: [4.1.2-rt1 PATCH] include/linux/pid.h: fix build error
+Date: Tue, 21 Jul 2015 19:43:56 +0300
+Message-ID: <1437497036-26111-1-git-send-email-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain
+Cc: Sekhar Nori <nsekhar@ti.com>,
+	Grygorii Strashko <Grygorii.Strashko@linaro.org>
+To: <bigeasy@linutronix.de>, <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f173.google.com ([209.85.212.173]:33034 "EHLO
-	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754211AbbGUOUM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Jul 2015 10:20:12 -0400
-Received: by wicmv11 with SMTP id mv11so43088969wic.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 21 Jul 2015 07:20:11 -0700 (PDT)
-In-Reply-To: <20150720154753.GC9559@linutronix.de>
+Received: from bear.ext.ti.com ([192.94.94.41]:56292 "EHLO bear.ext.ti.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755501AbbGUQoU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 21 Jul 2015 12:44:20 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Including rwlock.h directly will cause kernel builds to fail
-if CONFIG_PREEMPT_RT_FULL is defined. The correct header file
-(rwlock_rt.h OR rwlock.h) will be included by spinlock.h which
-is included by locktorture.c anyway.
+From: Grygorii Strashko <Grygorii.Strashko@linaro.org>
 
-Signed-off-by: Wolfgang M. Reimer <linuxball@gmail.com>
+This patch fixes build error:
+  CC      kernel/pid_namespace.o
+In file included from kernel/pid_namespace.c:11:0:
+include/linux/pid.h: In function 'get_pid':
+include/linux/pid.h:78:3: error: implicit declaration of function 'atomic_inc' [-Werror=implicit-function-declaration]
+   atomic_inc(&pid->count);
+   ^
+which happens when
+ CONFIG_PROVE_LOCKING=n
+ CONFIG_DEBUG_SPINLOCK=n
+ CONFIG_DEBUG_MUTEXES=n
+ CONFIG_DEBUG_LOCK_ALLOC=n
+
+Signed-off-by: Grygorii Strashko <Grygorii.Strashko@linaro.org>
 ---
-  kernel/locking/locktorture.c | 1 -
-  1 file changed, 1 deletion(-)
+ include/linux/pid.h | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/locking/locktorture.c b/kernel/locking/locktorture.c
-index ec8cce2..aa60d91 100644
---- a/kernel/locking/locktorture.c
-+++ b/kernel/locking/locktorture.c
-@@ -24,7 +24,6 @@
-  #include <linux/module.h>
-  #include <linux/kthread.h>
-  #include <linux/spinlock.h>
--#include <linux/rwlock.h>
-  #include <linux/mutex.h>
-  #include <linux/rwsem.h>
-  #include <linux/smp.h>
+diff --git a/include/linux/pid.h b/include/linux/pid.h
+index 23705a53..2cc64b7 100644
+--- a/include/linux/pid.h
++++ b/include/linux/pid.h
+@@ -2,6 +2,7 @@
+ #define _LINUX_PID_H
+ 
+ #include <linux/rcupdate.h>
++#include <linux/atomic.h>
+ 
+ enum pid_type
+ {
 -- 
-1.9.1
-
-On 20.07.2015 17:47, Sebastian Andrzej Siewior wrote:
-> * linuxball | 2015-07-20 11:33:12 [+0200]:
->
->> Including rwlock.h directly will cause kernel builds to fail
->> if CONFIG_PREEMPT_RT_FULL is defined. The correct header file
->> (rwlock_rt.h OR rwlock.h) will be included by spinlock.h which
->> is included by locktorture.c anyway.
-> Documentation/SubmittingPatches:
->      11) Sign your work
->
-> Sebastian
+2.4.6
 
