@@ -1,52 +1,41 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: [4.1.2-rt1 PATCH] include/linux/pid.h: fix build error
-Date: Tue, 21 Jul 2015 19:43:56 +0300
-Message-ID: <1437497036-26111-1-git-send-email-grygorii.strashko@ti.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH 1/1] 3.18.17-rt14 locktorture: Do NOT include rwlock.h
+ directly
+Date: Tue, 21 Jul 2015 18:45:27 +0200
+Message-ID: <20150721164527.GA21978@linutronix.de>
+References: <20150702152543.61bbb6eb@gandalf.local.home>
+ <55ACC058.2040407@gmail.com>
+ <20150720154753.GC9559@linutronix.de>
+ <55AE5517.9040403@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Sekhar Nori <nsekhar@ti.com>,
-	Grygorii Strashko <Grygorii.Strashko@linaro.org>
-To: <bigeasy@linutronix.de>, <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
+To: linuxball <linuxball@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bear.ext.ti.com ([192.94.94.41]:56292 "EHLO bear.ext.ti.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755501AbbGUQoU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Jul 2015 12:44:20 -0400
+Received: from www.linutronix.de ([62.245.132.108]:34237 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933280AbbGUQp3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 21 Jul 2015 12:45:29 -0400
+Content-Disposition: inline
+In-Reply-To: <55AE5517.9040403@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Grygorii Strashko <Grygorii.Strashko@linaro.org>
+* linuxball | 2015-07-21 16:20:07 [+0200]:
 
-This patch fixes build error:
-  CC      kernel/pid_namespace.o
-In file included from kernel/pid_namespace.c:11:0:
-include/linux/pid.h: In function 'get_pid':
-include/linux/pid.h:78:3: error: implicit declaration of function 'atomic_inc' [-Werror=implicit-function-declaration]
-   atomic_inc(&pid->count);
-   ^
-which happens when
- CONFIG_PROVE_LOCKING=n
- CONFIG_DEBUG_SPINLOCK=n
- CONFIG_DEBUG_MUTEXES=n
- CONFIG_DEBUG_LOCK_ALLOC=n
+>Including rwlock.h directly will cause kernel builds to fail
+>if CONFIG_PREEMPT_RT_FULL is defined. The correct header file
+>(rwlock_rt.h OR rwlock.h) will be included by spinlock.h which
+>is included by locktorture.c anyway.
+>
+>Signed-off-by: Wolfgang M. Reimer <linuxball@gmail.com>
 
-Signed-off-by: Grygorii Strashko <Grygorii.Strashko@linaro.org>
----
- include/linux/pid.h | 1 +
- 1 file changed, 1 insertion(+)
+If you don't mind I set From: to you have here. If you intendent to sent
+further patches I suggest that you get rid of "format=flowed" which adds
+a white space for no reason to the diff. I won't fix it again.
 
-diff --git a/include/linux/pid.h b/include/linux/pid.h
-index 23705a53..2cc64b7 100644
---- a/include/linux/pid.h
-+++ b/include/linux/pid.h
-@@ -2,6 +2,7 @@
- #define _LINUX_PID_H
- 
- #include <linux/rcupdate.h>
-+#include <linux/atomic.h>
- 
- enum pid_type
- {
--- 
-2.4.6
-
+Sebastian
