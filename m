@@ -1,44 +1,38 @@
-From: David VomLehn <dvomlehn@gmail.com>
-Subject: Scheduling while atomic in find_task_lock_mm
-Date: Wed, 22 Jul 2015 11:39:55 -0700
-Message-ID: <20150722183955.GA3188@Gracie>
+From: Pavel Vasilyev <pavel@pavlinux.ru>
+Subject: Where IOSCHED ?
+Date: Wed, 22 Jul 2015 23:05:24 +0300
+Message-ID: <55AFF784.7040900@pavlinux.ru>
+Reply-To: pavel@pavlinux.ru
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pd0-f171.google.com ([209.85.192.171]:32870 "EHLO
-	mail-pd0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751236AbbGVSkF (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Jul 2015 14:40:05 -0400
-Received: by pdbnt7 with SMTP id nt7so71765045pdb.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 22 Jul 2015 11:40:04 -0700 (PDT)
-Received: from Gracie ([2601:647:4d01:93c7:d451:357e:83c1:13e9])
-        by smtp.googlemail.com with ESMTPSA id fu2sm4611607pdb.32.2015.07.22.11.40.02
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1/SSLv3 cipher=OTHER);
-        Wed, 22 Jul 2015 11:40:03 -0700 (PDT)
-Content-Disposition: inline
+Received: from imp01.mtu.ru ([62.5.255.10]:46601 "EHLO imp01.mtu.ru"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752941AbbGVUFc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 22 Jul 2015 16:05:32 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I'm trying to port the RT patch to Android (based on Linux 3.10) and things have been
-going pretty smoothly. However, I've hit a snag--I have to have hot plugging enabled
-and when the system tries to take down a CPU, it gets "scheduling while atomic". At
-a high level, the code to take the CPU down is trying to clear the CPU's bit in the
-mm_struct associated with every task_struct.
+# dmesg | grep sched
+[    0.387902] io scheduler noop registered
+[    0.387989] io scheduler deadline registered
+[    0.388079] io scheduler cfq registered (default)
 
-In more detail, cpu_stopper_thread() disables preemption, then there is a sequence
-of calls, passing through the ARM-specific __cpu_disable(), finally atrriving at
-find_lock_task_mm(). That function calls task_lock(), which uses spin_lock() to
-lock a task_struct. When it encounters a task_struct that is already locked, schedule()
-gets called and Bad Things happen.
+# cat /boot/config-3.18.17-rt14 | grep IOSCHED
+CONFIG_IOSCHED_NOOP=y
+CONFIG_IOSCHED_DEADLINE=y
+CONFIG_IOSCHED_CFQ=y
+CONFIG_CFQ_GROUP_IOSCHED=y
+CONFIG_DEFAULT_IOSCHED="cfq"
 
-So:
-o	I don't think I can enable preemption here because it's pretty like another
-	task will swoop in and mess things up.
+# cat /sys/block/sda/queue/scheduler
+none
 
-o	Using a raw_spin_lock() just for ARM doesn't seem like a good choice.
+# uname -a
+Linux localhost 3.18.17-rt14 #1 SMP PREEMPT RT Wed Jul 22 18:49:51 MSK 2015 
+x86_64 GNU/Linux
+-- 
 
-o	I *think* I do need the spin_lock() before changing the CPU's bit in the
-	cpu_vm_mask_var element of the mm_struct.
+                                                          Pavel.
