@@ -1,43 +1,41 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.1.2-rt1 PATCH] include/linux/pid.h: fix build error
-Date: Wed, 22 Jul 2015 13:32:03 +0200
-Message-ID: <20150722113203.GA8704@linutronix.de>
-References: <1437497036-26111-1-git-send-email-grygorii.strashko@ti.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, Sekhar Nori <nsekhar@ti.com>,
-	Grygorii Strashko <Grygorii.Strashko@linaro.org>
-To: Grygorii Strashko <grygorii.strashko@ti.com>
+From: Alexander Stein <alexander.stein@systec-electronic.com>
+Subject: [PATCH 1/1] cyclictest: Fix long priority help text option
+Date: Wed, 22 Jul 2015 14:44:59 +0200
+Message-ID: <1437569099-2965-1-git-send-email-alexander.stein@systec-electronic.com>
+Cc: Alexander Stein <alexander.stein@systec-electronic.com>,
+	linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38116 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933788AbbGVLcF (ORCPT
+Received: from webbox1416.server-home.net ([77.236.96.61]:36262 "EHLO
+	webbox1416.server-home.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S932702AbbGVMxN (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Jul 2015 07:32:05 -0400
-Content-Disposition: inline
-In-Reply-To: <1437497036-26111-1-git-send-email-grygorii.strashko@ti.com>
+	Wed, 22 Jul 2015 08:53:13 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Grygorii Strashko | 2015-07-21 19:43:56 [+0300]:
+The help text shows prio as the long option name for the process priority.
+But it is actually priority.
 
->From: Grygorii Strashko <Grygorii.Strashko@linaro.org>
->
->This patch fixes build error:
->  CC      kernel/pid_namespace.o
->In file included from kernel/pid_namespace.c:11:0:
->include/linux/pid.h: In function 'get_pid':
->include/linux/pid.h:78:3: error: implicit declaration of function 'atomic_inc' [-Werror=implicit-function-declaration]
->   atomic_inc(&pid->count);
->   ^
->which happens when
-> CONFIG_PROVE_LOCKING=n
-> CONFIG_DEBUG_SPINLOCK=n
-> CONFIG_DEBUG_MUTEXES=n
-> CONFIG_DEBUG_LOCK_ALLOC=n
->
->Signed-off-by: Grygorii Strashko <Grygorii.Strashko@linaro.org>
+Signed-off-by: Alexander Stein <alexander.stein@systec-electronic.com>
+---
+ src/cyclictest/cyclictest.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Applied, thanks
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 34053c5..c178a74 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -1062,7 +1062,7 @@ static void display_help(int error)
+ 	       "-N       --nsecs           print results in ns instead of us (default us)\n"
+ 	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+ 	       "-O TOPT  --traceopt=TOPT   trace option\n"
+-	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
++	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
+ 	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
+ 	       "-q       --quiet           print only a summary on exit\n"
+ 	       "	 --priospread       spread priority levels starting at specified value\n"
+-- 
+2.3.6
 
-Sebastian
