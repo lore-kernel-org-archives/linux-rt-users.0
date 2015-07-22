@@ -1,41 +1,46 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 1/1] 3.18.17-rt14 locktorture: Do NOT include rwlock.h
- directly
-Date: Tue, 21 Jul 2015 18:45:27 +0200
-Message-ID: <20150721164527.GA21978@linutronix.de>
-References: <20150702152543.61bbb6eb@gandalf.local.home>
- <55ACC058.2040407@gmail.com>
- <20150720154753.GC9559@linutronix.de>
- <55AE5517.9040403@gmail.com>
+From: "Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>
+Subject: RE: unable to handle kernel NULL pointer dereference on 3.18.13-rt10
+Date: Wed, 22 Jul 2015 06:26:42 +0000
+Message-ID: <b4572ce5932444febd055f1403c58d9e@FE-MBX1012.de.bosch.com>
+References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
+ <alpine.DEB.2.11.1507091605410.5134@nanos>
+ <c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
+ <20150710132318.GA27402@linutronix.de>
+ <e1b9f04b95504df78cab1eb4e6946238@FE-MBX1012.de.bosch.com>
+ <55A36EF0.7020404@linutronix.de>
+ <15fcff88e0b4417aba7fd635a98b1ad0@FE-MBX1012.de.bosch.com>
+ <55A37DC9.6050604@linutronix.de> <55A607CC.3030808@etas.com>
+ <12C1B74BDFD05D40B2356A9B12DFA3396C276FDBA2@KEBMXSPMB01.keba.co.at>
+ <20150720145648.GA9559@linutronix.de>
+ <12C1B74BDFD05D40B2356A9B12DFA3396C27797F4A@KEBMXSPMB01.keba.co.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>, John Kacur <jkacur@redhat.com>
-To: linuxball <linuxball@gmail.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"Steven Rostedt" <rostedt@goodmis.org>
+To: eg Engleder Gerhard <eg@keba.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:34237 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933280AbbGUQp3 (ORCPT
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:43860 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755681AbbGVG0p (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 21 Jul 2015 12:45:29 -0400
-Content-Disposition: inline
-In-Reply-To: <55AE5517.9040403@gmail.com>
+	Wed, 22 Jul 2015 02:26:45 -0400
+In-Reply-To: <12C1B74BDFD05D40B2356A9B12DFA3396C27797F4A@KEBMXSPMB01.keba.co.at>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* linuxball | 2015-07-21 16:20:07 [+0200]:
-
->Including rwlock.h directly will cause kernel builds to fail
->if CONFIG_PREEMPT_RT_FULL is defined. The correct header file
->(rwlock_rt.h OR rwlock.h) will be included by spinlock.h which
->is included by locktorture.c anyway.
->
->Signed-off-by: Wolfgang M. Reimer <linuxball@gmail.com>
-
-If you don't mind I set From: to you have here. If you intendent to sent
-further patches I suggest that you get rid of "format=flowed" which adds
-a white space for no reason to the diff. I won't fix it again.
-
-Sebastian
+SGkgYWxsLA0KPiA+ID5zaW1pbGFyIHNpdHVhdGlvbiBoZXJlIHdpdGggMy4xOC4xMS1ydDcuIFRo
+ZSBwcm9ibGVtIG9jY3VycmVkIG9uY2Ugc28gZmFyLg0KPiA+DQo+ID4gSXMgdGhpcyBfd2l0aF8g
+b3IgX3dpdGhvdXRfIHRoZSBwYXRjaCBpbiBxdWVzdGlvbj8NCj4gDQo+IFdpdGggdGhlIHBhdGNo
+LiBzbHViX2RlbGF5X2N0b3Jfb25fcnQucGF0Y2ggaXMgYXBwbGllZC4gSXQgaXMgMy4xOC4xMS1y
+dDcgd2l0aA0KPiBhZGRpdGlvbmFsIGRyaXZlcnMNCj4gZm9yIG91ciBoYXJkd2FyZS4NCg0KU2lu
+Y2UgSSBoYXZlIHJlbW92ZWQgdGhlIHNsdWJfZGVsYXlfY3Rvcl9vbl9ydC5wYXRjaCBmcm9tIDMu
+MTguMTMtcnQxMCBJIGhhdmUgbmV2ZXIgc2VlbiB0aGlzIGlzc3VlIGFueW1vcmUgb24gb3VyIHN5
+c3RlbXMuDQoNCk5vdyBJIGhhZCBhIGxvb2sgYXQgdGhlIGxhdGVzdCAzLjE4LjE3LXJ0MTQ6IEhl
+cmUgSSBkbyBub3Qgc2VlIHRoYXQgcGF0Y2ggYW55bW9yZS4NCkhhcyBpdCBiZWVuIHJlbW92ZWQg
+ZnJvbSB0aGUgcGF0Y2hzZXQ/IA0KSXMgdGhlcmUgc3RpbGwgYSBuZWVkIHRvIGlnbm9yZSBvbmUg
+b2YgdGhlIHBhdGNoZXM/DQpOZWl0aGVyIGluIHRoZSBhbm5vdW5jZW1lbnQgdG8gMy4xOC4xNi1y
+dDEzIG5vciB0byAzLjE4LjE3LXJ0MTQgSSByZWFkIGFueSBjb21tZW50IG9uIHRoYXQuDQoNClJl
+Z2FyZHMNCg0KTWF0aGlhcw0K
