@@ -1,38 +1,34 @@
-From: Pavel Vasilyev <pavel@pavlinux.ru>
-Subject: Where IOSCHED ?
-Date: Wed, 22 Jul 2015 23:05:24 +0300
-Message-ID: <55AFF784.7040900@pavlinux.ru>
-Reply-To: pavel@pavlinux.ru
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Where IOSCHED ?
+Date: Thu, 23 Jul 2015 14:39:22 +0200
+Message-ID: <20150723123922.GA31936@linutronix.de>
+References: <55AFF784.7040900@pavlinux.ru>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org
+To: Pavel Vasilyev <pavel@pavlinux.ru>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from imp01.mtu.ru ([62.5.255.10]:46601 "EHLO imp01.mtu.ru"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752941AbbGVUFc (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 22 Jul 2015 16:05:32 -0400
+Received: from www.linutronix.de ([62.245.132.108]:43858 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751025AbbGWMjY (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 23 Jul 2015 08:39:24 -0400
+Content-Disposition: inline
+In-Reply-To: <55AFF784.7040900@pavlinux.ru>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-# dmesg | grep sched
-[    0.387902] io scheduler noop registered
-[    0.387989] io scheduler deadline registered
-[    0.388079] io scheduler cfq registered (default)
+* Pavel Vasilyev | 2015-07-22 23:05:24 [+0300]:
 
-# cat /boot/config-3.18.17-rt14 | grep IOSCHED
-CONFIG_IOSCHED_NOOP=y
-CONFIG_IOSCHED_DEADLINE=y
-CONFIG_IOSCHED_CFQ=y
-CONFIG_CFQ_GROUP_IOSCHED=y
-CONFIG_DEFAULT_IOSCHED="cfq"
+>[    0.388079] io scheduler cfq registered (default)
+># cat /sys/block/sda/queue/scheduler
+>none
 
-# cat /sys/block/sda/queue/scheduler
-none
+Does the same thing happen with plain v3.18.17? Because if it does then
+it is not a -RT problem.
 
-# uname -a
-Linux localhost 3.18.17-rt14 #1 SMP PREEMPT RT Wed Jul 22 18:49:51 MSK 2015 
-x86_64 GNU/Linux
--- 
+># uname -a
+>Linux localhost 3.18.17-rt14 #1 SMP PREEMPT RT Wed Jul 22 18:49:51
+>MSK 2015 x86_64 GNU/Linux
 
-                                                          Pavel.
+Sebastian
