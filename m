@@ -1,54 +1,46 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: unable to handle kernel NULL pointer dereference on
- 3.18.13-rt10
-Date: Fri, 24 Jul 2015 16:51:08 -0400
-Message-ID: <20150724165108.51bd5031@gandalf.local.home>
-References: <453aa7881ded41e7a843795863ac1712@FE-MBX1012.de.bosch.com>
-	<alpine.DEB.2.11.1507091605410.5134@nanos>
-	<c7ec9b06a341497687b03c367196f534@FE-MBX1012.de.bosch.com>
-	<20150710132318.GA27402@linutronix.de>
-	<e1b9f04b95504df78cab1eb4e6946238@FE-MBX1012.de.bosch.com>
-	<55A36EF0.7020404@linutronix.de>
-	<15fcff88e0b4417aba7fd635a98b1ad0@FE-MBX1012.de.bosch.com>
-	<55A37DC9.6050604@linutronix.de>
-	<55A607CC.3030808@etas.com>
-	<12C1B74BDFD05D40B2356A9B12DFA3396C276FDBA2@KEBMXSPMB01.keba.co.at>
-	<20150720145648.GA9559@linutronix.de>
-	<12C1B74BDFD05D40B2356A9B12DFA3396C27797F4A@KEBMXSPMB01.keba.co.at>
-	<b4572ce5932444febd055f1403c58d9e@FE-MBX1012.de.bosch.com>
-	<20150722092635.0766400e@gandalf.local.home>
-	<alpine.DEB.2.11.1507242054570.18576@nanos>
-	<20150724152159.79543722@gandalf.local.home>
-	<55B29E3E.9060200@ni.com>
+From: pavel <pavel@pavlinux.ru>
+Subject: Re: Where IOSCHED ?
+Date: Sat, 25 Jul 2015 04:44:08 +0300
+Message-ID: <55B2E9E8.7050000@pavlinux.ru>
+References: <55AFF784.7040900@pavlinux.ru>
+ <20150723123922.GA31936@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"Koehrer Mathias (ETAS/ESW5)" <mathias.koehrer@etas.com>,
-	eg Engleder Gerhard <eg@keba.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Gratian Crisan <gratian.crisan@ni.com>
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0168.hostedemail.com ([216.40.44.168]:36318 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754179AbbGXUvL (ORCPT
+Received: from forward17p.cmail.yandex.net ([87.250.241.131]:41753 "EHLO
+	forward17p.cmail.yandex.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753083AbbGYBr1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jul 2015 16:51:11 -0400
-In-Reply-To: <55B29E3E.9060200@ni.com>
+	Fri, 24 Jul 2015 21:47:27 -0400
+In-Reply-To: <20150723123922.GA31936@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 24 Jul 2015 15:21:18 -0500
-Gratian Crisan <gratian.crisan@ni.com> wrote:
 
-> 
-> In case it saves you some work, we've had some success getting NO_HZ to
-> work on 3.14 (x86_64) after back-porting the following commit:
-> 
-> 3010279f0fc36f0388872203e63ca49912f648fd x86: Tell irq work about self
-> IPI support
 
-Thanks, I marked this email so that I see it when I get back.
+23.07.2015 15:39, Sebastian Andrzej Siewior =D0=BF=D0=B8=D1=88=D0=B5=D1=
+=82:
+> * Pavel Vasilyev | 2015-07-22 23:05:24 [+0300]:
+>
+>> [    0.388079] io scheduler cfq registered (default)
+>> # cat /sys/block/sda/queue/scheduler
+>> none
+> Does the same thing happen with plain v3.18.17? Because if it does th=
+en
+> it is not a -RT problem.
+This production server, but i try compile plain kernel :)
+>
+>> # uname -a
+>> Linux localhost 3.18.17-rt14 #1 SMP PREEMPT RT Wed Jul 22 18:49:51
+>> MSK 2015 x86_64 GNU/Linux
+> Sebastian
 
--- Steve
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
