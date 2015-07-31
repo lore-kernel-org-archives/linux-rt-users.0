@@ -1,75 +1,113 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: rtmutex deadlock detected (3.18.19-rt15)
-Date: Fri, 31 Jul 2015 01:15:47 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1507310111200.3825@nanos>
-References: <55B39797.9020705@gmail.com> <alpine.DEB.2.11.1507262051430.18576@nanos> <55B54F7A.4030904@gmail.com>
-Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-35552752-1438298147=:3825"
-Cc: linux-rt-users@vger.kernel.org
-To: DIXLOR <dixlor@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49077 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752165AbbG3XQE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Jul 2015 19:16:04 -0400
-In-Reply-To: <55B54F7A.4030904@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] dump stack: don't disable preemption during trace
+Date: Fri, 31 Jul 2015 19:56:42 +0200
+Message-ID: <1438365402-895-1-git-send-email-bigeasy@linutronix.de>
+Cc: linux-kernel@vger.kernel.org,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+I see here large latencies during a stack dump on x86. The
+preempt_disable() and get_cpu() should forbid moving the task to another
+CPU during a stack dump and avoiding two stack traces in parallel on the
+same CPU. However a stack trace from a second CPU may still happen in
+parallel. Also nesting is allowed so a stack trace happens in
+process-context and we may have another one from IRQ context. With migrate
+disable we keep this code preemptible and allow a second backtrace on
+the same CPU by another task.
 
---8323329-35552752-1438298147=:3825
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ arch/x86/kernel/dumpstack_32.c | 4 ++--
+ arch/x86/kernel/dumpstack_64.c | 8 ++++----
+ lib/dump_stack.c               | 4 ++--
+ 3 files changed, 8 insertions(+), 8 deletions(-)
 
-On Mon, 27 Jul 2015, DIXLOR wrote:
-> 26.07.2015 21:56, Thomas Gleixner пишет:
-> > On Sat, 25 Jul 2015, DIXLOR wrote:
-> > > # xfs_fsr;
-> > > ^C
-> > > 
-> > > [ 3380.373641] WARNING: CPU: 6 PID: 3664 at kernel/locking/rtmutex.h:29
-> > > 0xffffffff814d4ea2()
-> > > [ 3380.373641] rtmutex deadlock detected
-> > > [ 3380.373645] Modules linked in: cpufreq_userspace cpufreq_powersave
-> > > cpufreq_conservative nct6775 hwmon_vid xhci_hcd usbcore iTCO_wdt
-> > > crct10dif_pclmul iTCO_vendor_support shpchp crc32c_intel i2c_i801 lpc_ich
-> > > i2c_core usb_common mfd_core button processor dm_mod raid1 ahci libahci
-> > > fan
-> > > thermal thermal_sys [last unloaded: xhci_pci]
-> > > [ 3380.373646] CPU: 6 PID: 3664 Comm: xfs_fsr Tainted: G D
-> > > 3.18.19-rt15
-> > > #3
-> > > [ 3380.373647] Hardware name: MSI MS-7823/B85M-G43 (MS-7823), BIOS V3.14B3
-> > > 06/23/2014
-> > > [ 3380.373647]  0000000000000000 0000000000000009 ffffffff814d1350
-> > > ffff8807ef65f538
-> > > [ 3380.373648]  ffffffff810498dd ffff8807cf289d10 ffff8807ef65f5c0
-> > > 0000000000000000
-> > > [ 3380.373648]  0000000000000000 0000000000000002 ffffffff81049955
-> > > ffffffff81680648
-> > > [ 3380.373649] Call Trace:
-> > > [ 3380.373649]  [<ffffffff814d1350>] ? 0xffffffff814d1350
-> > Can you please build your kernel with KALLSYSMS_ALL enabled, so we get
-> > a symbolic resolution of the call trace.
-> > 
-> > You can also try and enable CONFIG_PROVE_LOCKING. That will give us
-> > even more detailed information about the problem at hand. Note, that
-> > CONFIG_PROVE_LOCKING slows down your kernel, so don't try to run on a
-> > production environment.
-> I found the reason:  xfs mount with filestreams option.
-
-Ok. So we still need to investigate what happens there.
-
-Is there anything else required than
-
-   - xfs mount with filestreams option
-   - Running xfs_fsr and ^C it?
-
-Thanks,
-
-	tglx
-
---8323329-35552752-1438298147=:3825--
+diff --git a/arch/x86/kernel/dumpstack_32.c b/arch/x86/kernel/dumpstack_32.c
+index 464ffd69b92e..00db1aad1548 100644
+--- a/arch/x86/kernel/dumpstack_32.c
++++ b/arch/x86/kernel/dumpstack_32.c
+@@ -42,7 +42,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 		unsigned long *stack, unsigned long bp,
+ 		const struct stacktrace_ops *ops, void *data)
+ {
+-	const unsigned cpu = get_cpu();
++	const unsigned cpu = get_cpu_light();
+ 	int graph = 0;
+ 	u32 *prev_esp;
+ 
+@@ -86,7 +86,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 			break;
+ 		touch_nmi_watchdog();
+ 	}
+-	put_cpu();
++	put_cpu_light();
+ }
+ EXPORT_SYMBOL(dump_trace);
+ 
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index 5f1c6266eb30..c331e3fef465 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -152,7 +152,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 		unsigned long *stack, unsigned long bp,
+ 		const struct stacktrace_ops *ops, void *data)
+ {
+-	const unsigned cpu = get_cpu();
++	const unsigned cpu = get_cpu_light();
+ 	struct thread_info *tinfo;
+ 	unsigned long *irq_stack = (unsigned long *)per_cpu(irq_stack_ptr, cpu);
+ 	unsigned long dummy;
+@@ -241,7 +241,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 	 * This handles the process stack:
+ 	 */
+ 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
+-	put_cpu();
++	put_cpu_light();
+ }
+ EXPORT_SYMBOL(dump_trace);
+ 
+@@ -255,7 +255,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 	int cpu;
+ 	int i;
+ 
+-	preempt_disable();
++	migrate_disable();
+ 	cpu = smp_processor_id();
+ 
+ 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
+@@ -291,7 +291,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 			pr_cont(" %016lx", *stack++);
+ 		touch_nmi_watchdog();
+ 	}
+-	preempt_enable();
++	migrate_enable();
+ 
+ 	pr_cont("\n");
+ 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
+diff --git a/lib/dump_stack.c b/lib/dump_stack.c
+index 6745c6230db3..7ccbc6ff80ea 100644
+--- a/lib/dump_stack.c
++++ b/lib/dump_stack.c
+@@ -33,7 +33,7 @@ asmlinkage __visible void dump_stack(void)
+ 	 * Permit this cpu to perform nested stack dumps while serialising
+ 	 * against other CPUs
+ 	 */
+-	preempt_disable();
++	migrate_disable();
+ 
+ retry:
+ 	cpu = smp_processor_id();
+@@ -52,7 +52,7 @@ asmlinkage __visible void dump_stack(void)
+ 	if (!was_locked)
+ 		atomic_set(&dump_lock, -1);
+ 
+-	preempt_enable();
++	migrate_enable();
+ }
+ #else
+ asmlinkage __visible void dump_stack(void)
+-- 
+2.4.6
