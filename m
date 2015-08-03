@@ -1,162 +1,68 @@
-From: pavel <pavel@pavlinux.ru>
-Subject: Re: 1us latency?
-Date: Mon, 3 Aug 2015 22:03:30 +0300
-Message-ID: <55BFBB02.6080403@pavlinux.ru>
-References: <55BF4CD7.8000007@pavlinux.ru> <20150803114422.0efbea1b@sluggy>
- <55BFAC1C.9020508@pavlinux.ru> <55BFB4AA.4020901@pavlinux.ru>
- <20150803135326.3fd23809@sluggy>
+From: Clark Williams <williams@redhat.com>
+Subject: [RT] oops in 4.1.3-rt3
+Date: Mon, 3 Aug 2015 14:27:00 -0500
+Message-ID: <20150803142700.1de720e4@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from forward4h.cmail.yandex.net ([87.250.230.19]:57293 "EHLO
-	forward4h.cmail.yandex.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S932085AbbHCTDg (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 3 Aug 2015 15:03:36 -0400
-In-Reply-To: <20150803135326.3fd23809@sluggy>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
+
+Sebastian,
+
+Below is a traceback I hit while running 4.1.3-rt3 on my Lenovo T530.
+
+I was doing my normal, play music, copy files over the lan, do compiles,
+do email, etc., so I I can't really point you at a reproducer. The graphics
+system stayed up somewhat but the actual trace I hit scrolled off. This was
+extracted from the syslog with 'journalctl'. 
+
+If I encounter it again, I'll see if I can force a kdump. 
+
+Clark
 
 
-
-03.08.2015 21:53, Clark Williams =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Mon, 3 Aug 2015 21:36:26 +0300
-> pavel <pavel@pavlinux.ru> wrote:
->
->> 1. Without patch
->>
->> # ./cyclictest -S -p fifo -D60s
->> defaulting realtime priority to 9
->> # /dev/cpu_dma_latency set to 0us
->> policy: fifo: loadavg: 0.00 0.01 0.05 1/207 12378
->>
->> T: 0 (12361) P: 9 I:1000 C:  59993 Min:      1 Act:    1 Avg:    1 M=
-ax:       8
->> T: 1 (12362) P: 9 I:1500 C:  39995 Min:      1 Act:    1 Avg:    1 M=
-ax:       9
->> T: 2 (12363) P: 9 I:2000 C:  29996 Min:      1 Act:    1 Avg:    1 M=
-ax:      12
->> T: 3 (12364) P: 9 I:2500 C:  23997 Min:      1 Act:    1 Avg:    1 M=
-ax:       9
->> T: 4 (12365) P: 9 I:3000 C:  19997 Min:      1 Act:    1 Avg:    1 M=
-ax:       6
->> T: 5 (12366) P: 9 I:3500 C:  17141 Min:      1 Act:    1 Avg:    1 M=
-ax:       11
->> T: 6 (12367) P: 9 I:4000 C:  14998 Min:      0 Act:    1 Avg:    1 M=
-ax:       10
->> T: 7 (12368) P: 9 I:4500 C:  13331 Min:      0 Act:    1 Avg:    1 M=
-ax:       6
->>
->> 2. With patch
->>
->>    # ./cyclictest -S -p fifo -D60s
->> defaulting realtime priority to 9
->> # /dev/cpu_dma_latency set to 0us
->> policy: fifo: loadavg: 0.05 0.04 0.05 1/206 12469
->>
->> T: 0 (12452) P: 9 I:1000 C:  59997 Min:      1 Act:    1 Avg:    1 M=
-ax:       3
->> T: 1 (12453) P: 9 I:1500 C:  39998 Min:      1 Act:    1 Avg:    1 M=
-ax:       2
->> T: 2 (12454) P: 9 I:2000 C:  29998 Min:      1 Act:    1 Avg:    1 M=
-ax:       4
->> T: 3 (12455) P: 9 I:2500 C:  23999 Min:      1 Act:    1 Avg:    1 M=
-ax:       4
->> T: 4 (12456) P: 9 I:3000 C:  19999 Min:      1 Act:    1 Avg:    1 M=
-ax:       4
->> T: 5 (12457) P: 9 I:3500 C:  17142 Min:      1 Act:    1 Avg:    1 M=
-ax:       3
->> T: 6 (12458) P: 9 I:4000 C:  14999 Min:      1 Act:    1 Avg:    1 M=
-ax:       2
->> T: 7 (12459) P: 9 I:4500 C:  13332 Min:      1 Act:    1 Avg:    1 M=
-ax:       3
->>
->>
->> Patch  ---
->>
->> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest=
-=2Ec
->> index 34053c5..84a70de 100644
->> --- a/src/cyclictest/cyclictest.c
->> +++ b/src/cyclictest/cyclictest.c
->> @@ -1727,6 +1727,9 @@ static void print_stat(FILE *fp, struct thread=
-_param *par,
->> int index, int verbos
->>    {
->>           struct thread_stat *stat =3D par->stats;
->>
->> +       if ( stat->cycles < 5000)
->> +                stat->max =3D 0;
->> +
->>           if (!verbose) {
->>                   if (quiet !=3D 1) {
->>                           char *fmt;
->>
->> ---
->>
->>
->> 03.08.2015 20:59, pavel =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
->>>>> # ./cyclictest -S -p fifo
->>>>> defaulting realtime priority to 9
->>>>> # /dev/cpu_dma_latency set to 0us
->>>>> policy: fifo: loadavg: 0.00 0.03 0.05 1/218 4240
->>>>>
->>>>> T: 0 ( 4174) P: 9 I:1000 C: 430806 Min:      1 Act:    1 Avg:    =
-1 Max:      10
->>>>> T: 1 ( 4175) P: 9 I:1500 C: 287204 Min:      1 Act:    1 Avg:    =
-1 Max:       6
->>>>> T: 2 ( 4176) P: 9 I:2000 C: 215403 Min:      1 Act:    2 Avg:    =
-1 Max:      11
->>>>> T: 3 ( 4177) P: 9 I:2500 C: 172322 Min:      1 Act:    1 Avg:    =
-1 Max:       9
->>>>> T: 4 ( 4178) P: 9 I:3000 C: 143602 Min:      1 Act:    1 Avg:    =
-1 Max:      10
->>>>> T: 5 ( 4179) P: 9 I:3500 C: 123087 Min:      1 Act:    1 Avg:    =
-1 Max:      11
->>>>> T: 6 ( 4180) P: 9 I:4000 C: 107701 Min:      1 Act:    1 Avg:    =
-1 Max:      10
->>>>> T: 7 ( 4181) P: 9 I:4500 C: 108232 Min:      1 Act:    2 Avg:    =
-1 Max:      11
->>>>>
->>>>>
->>>>> It possible? 1us latency?  o_O
->>>> No, your latency is 11us. Max latency is what we care about, not t=
-he
->>>> average.
->>> By the way, max values appear only at the start, then they are roug=
-hly equal to
->>> the average.
-> Interesting. Betting that's page faults and cache filling.
->
-> I don't think we want to arbitrarily pick some number of cycles for a
-> "settle time" (i.e. a grace period for the application to reach stead=
-y
-> state). Possibly we should add an option for that? Specify some numbe=
-r
-> of cycles or some amount of time that where the measurement threads r=
-un
-> before actual measurements start?
->
->    $ cyclictest --numa -p95 -m --settle=3D10ms
->
-> That would say "run the measurement threads for ten milliseconds befo=
-re
-> actually starting the measurement period". That would allow them to
-> fault in and fill cache lines before starting real work.
->
-> Anyone else have an opinion?
-Add option and yet another utility for detect steady state, when the di=
-fference=20
-is not more than 10% (like an oldschool resistors with silver line :))
-
-
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Jul 28 20:29:07 sluggy systemd-udevd[831]: worker [13548] did not accept message -111 (Connection refused), kill it
+Jul 28 20:29:07 sluggy kernel: general protection fault: 0000 [#1] PREEMPT SMP 
+Jul 28 20:29:07 sluggy kernel: Modules linked in: hidp cmac rfcomm fuse xt_CHECKSUM ipt_MASQUERADE nf_nat_masquerade_ipv4 tun 
+Jul 28 20:29:07 sluggy kernel:  snd_hda_codec snd_usbmidi_lib snd_rawmidi snd_hda_core videodev iwlwifi btusb snd_hwdep btbcm 
+Jul 28 20:29:07 sluggy kernel: CPU: 4 PID: 13548 Comm: systemd-udevd Not tainted 4.1.3-rt3 #3
+Jul 28 20:29:07 sluggy kernel: Hardware name: LENOVO 24293E8/24293E8, BIOS G4ET94WW (2.54 ) 05/23/2013
+Jul 28 20:29:07 sluggy kernel: task: ffff8802ffb0aa40 ti: ffff88007871c000 task.ti: ffff88007871c000
+Jul 28 20:29:07 sluggy kernel: RIP: 0010:[<ffffffff8168a35d>]  [<ffffffff8168a35d>] sock_prot_inuse_add+0x2d/0x50
+Jul 28 20:29:07 sluggy kernel: RSP: 0018:ffff88007871fb68  EFLAGS: 00010296
+Jul 28 20:29:07 sluggy kernel: RAX: 0000000000000004 RBX: 00000000ffffffff RCX: 0000000000000000
+Jul 28 20:29:07 sluggy kernel: RDX: ffffffff81810428 RSI: ffffffff81ae0d87 RDI: ffffffff81a7f8c0
+Jul 28 20:29:07 sluggy kernel: RBP: ffff88007871fb88 R08: 0000000000000001 R09: 0000000000000000
+Jul 28 20:29:07 sluggy kernel: R10: ffff880088ebb390 R11: 0000000000000001 R12: 20303d6469752031
+Jul 28 20:29:08 sluggy kernel: R13: ffffffff81cea7a0 R14: 0000000000000000 R15: 0000000000000018
+Jul 28 20:29:08 sluggy kernel: FS:  0000000000000000(0000) GS:ffff88041e300000(0000) knlGS:0000000000000000
+Jul 28 20:29:08 sluggy kernel: CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+Jul 28 20:29:08 sluggy kernel: CR2: 000055da9fd30060 CR3: 0000000001c0e000 CR4: 00000000001407e0
+Jul 28 20:29:08 sluggy kernel: Stack:
+Jul 28 20:29:08 sluggy kernel:  ffff88031abe42d8 ffff88031abe42d8 ffff88031abe4000 ffff88031abe45d8
+Jul 28 20:29:08 sluggy kernel:  ffff88007871fbf8 ffffffff816db0b6 ffff880407f06400 ffff88040afbd1d0
+Jul 28 20:29:08 sluggy kernel:  0000000100000000 20303d6469752031 0000000fffffef45 00000000fa86c4d0
+Jul 28 20:29:08 sluggy kernel: Call Trace:
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff816db0b6>] netlink_release+0x316/0x540
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff8168615f>] sock_release+0x1f/0x90
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff816861e2>] sock_close+0x12/0x20
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff8123899b>] __fput+0xcb/0x1e0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff81238afe>] ____fput+0xe/0x10
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff810c4db4>] task_work_run+0xd4/0xf0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff810a8b57>] do_exit+0x3f7/0xbe0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff810a93e0>] do_group_exit+0x50/0xd0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff810b5fbb>] get_signal+0x29b/0x6e0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff810165b7>] do_signal+0x37/0x7c0
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff812833b3>] ? ep_poll+0x3b3/0x460
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff81157816>] ? __audit_syscall_exit+0x1f6/0x290
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff81016de8>] do_notify_resume+0xa8/0x100
+Jul 28 20:29:08 sluggy kernel:  [<ffffffff817cc1be>] int_signal+0x12/0x17
+Jul 28 20:29:08 sluggy kernel: Code: 44 00 00 55 48 89 e5 41 55 41 54 53 49 89 fc 49 89 f5 48 c7 c7 87 0d ae 81 89 d3 48 83 ec
+Jul 28 20:29:08 sluggy kernel: RIP  [<ffffffff8168a35d>] sock_prot_inuse_add+0x2d/0x50
+Jul 28 20:29:08 sluggy kernel:  RSP <ffff88007871fb68>
+Jul 28 20:29:08 sluggy kernel: ---[ end trace 0000000000000002 ]---
