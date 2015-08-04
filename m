@@ -1,36 +1,30 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Common clock framework API vs RT patchset
-Date: Tue, 4 Aug 2015 15:00:47 +0300
-Message-ID: <55C0A96F.80307@ti.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [RT] oops in 4.1.3-rt3
+Date: Tue, 4 Aug 2015 14:05:10 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1508041403550.3983@nanos>
+References: <20150803142700.1de720e4@sluggy> <20150804080829.GB9956@opentech.at>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: "Menon, Nishanth" <nm@ti.com>, Felipe Balbi <balbi@ti.com>,
-	Sekhar Nori <nsekhar@ti.com>
-To: <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from comal.ext.ti.com ([198.47.26.152]:33615 "EHLO comal.ext.ti.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933719AbbHDMAv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Aug 2015 08:00:51 -0400
-Received: from dflxv15.itg.ti.com ([128.247.5.124])
-	by comal.ext.ti.com (8.13.7/8.13.7) with ESMTP id t74C0om2030322
-	for <linux-rt-users@vger.kernel.org>; Tue, 4 Aug 2015 07:00:50 -0500
-Received: from DFLE72.ent.ti.com (dfle72.ent.ti.com [128.247.5.109])
-	by dflxv15.itg.ti.com (8.14.3/8.13.8) with ESMTP id t74C0oZH019607
-	for <linux-rt-users@vger.kernel.org>; Tue, 4 Aug 2015 07:00:50 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Clark Williams <williams@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Nicholas Mc Guire <der.herr@hofr.at>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150804080829.GB9956@opentech.at>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi All,
+On Tue, 4 Aug 2015, Nicholas Mc Guire wrote:
+> <snip>
+>     3 root      -2   0       0      0      0 R  60.3  0.0   5756:16 ksoftirqd/0 
+>    23 root      -2   0       0      0      0 R  50.8  0.0   4948:08 ksoftirqd/2
+>    17 root      -2   0       0      0      0 S  50.6  0.0   4897:13 ksoftirqd/1
+>    29 root      -2   0       0      0      0 S  50.4  0.0   4953:24 ksoftirqd/3
 
-I'd very appreciated if someone can clarify one point for me.
+So ksoftirqd eats 50+% CPU on each core. On an idle system!?! Any
+chance that you can get a function trace snapshot out of it?
 
-Is allowed/expected/prohibited to use CLK API like clk_enable/disable
-in atomic context now on RT-Kernel (HW IRQ or under RAW spinlocks)?
+Thanks,
 
-How safe is it to allow CLK API to be preemptive?
-
--- 
-regards,
--grygorii
+	tglx
