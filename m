@@ -1,64 +1,57 @@
-From: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
-Subject: Re: [PATCH v3] iio: adc: xilinx-xadc: Push interrupts into threaded
- context
-Date: Tue, 04 Aug 2015 10:05:00 +0200
-Message-ID: <55C0722C.7080904@metafoo.de>
-References: <CAKfKVtGTO81wLWk50M303t2WjcBEMEt_LUnsJ3_WmvR_3izUjg@mail.gmail.com>	<1437434050-32907-1-git-send-email-xander.huff@ni.com>	<55B231DE.4080308@metafoo.de> <CAKfKVtGegy2P_YWQAtKEzByN-+q+bq=uus4zNvO4sghXRjpGPQ@mail.gmail.com>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: [RT] oops in 4.1.3-rt3
+Date: Tue, 4 Aug 2015 10:08:29 +0200
+Message-ID: <20150804080829.GB9956@opentech.at>
+References: <20150803142700.1de720e4@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>, jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org,
-	bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org, knaack.h-Mmb7MZpHnFY@public.gmane.org,
-	Peter Meerwald <pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org>,
-	Michal Simek <michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>,
-	=?windows-1252?Q?S=F6ren_Brink?= =?windows-1252?Q?mann?=
-	<soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org>, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org, nathan.sullivan-acOepvfBmUk@public.gmane.org,
-	jaeden.amero-acOepvfBmUk@public.gmane.org
-To: Shubhrajyoti Datta <shubhrajyoti.datta-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org>
-Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAKfKVtGegy2P_YWQAtKEzByN-+q+bq=uus4zNvO4sghXRjpGPQ-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150803142700.1de720e4@sluggy>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 08/04/2015 07:34 AM, Shubhrajyoti Datta wrote:
-> On Fri, Jul 24, 2015 at 6:08 PM, Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org> wrote:
->> Hi,
->>
->> Sorry, but I don't think this patch has been sufficiently tested against a
->> mainline kernel. The driver wont even probe the way it is right now.
->>
->> On 07/21/2015 01:14 AM, Xander Huff wrote:
->>>
->>> The driver currently registers a pair of irq handlers using
->>> request_threaded_irq(), however the synchronization mechanism between the
->>> hardirq and the threadedirq handler is a regular spinlock.
->>
->>
->> If everything runs in threaded context we don't really need the spinlock
->> anymore and can use the mutex throughout.
-> 
-> that should be better from the performance point of view.
-> 
->>
->>>
->>> Unfortunately, this breaks PREEMPT_RT builds, where a spinlock can sleep,
->>> and is thus not able to be acquired from a hardirq handler. This patch
->>> gets
->>> rid of the hardirq handler and pushes all interrupt handling into the
->>> threaded context.
->>
->>
->> We actually might as well run everything in the hardirq handler (which will
->> be threaded in PREEMPT_RT). The reason why we have the threaded handler is
->> because xadc_handle_event() used to sleep, but it doesn't do this anymore.
-> 
-> The point is why have the hard irq. If we use hardirq then not mutex
-> can be used and spinlock will
-> be busy.
+On Mon, 03 Aug 2015, Clark Williams wrote:
 
-Well there is no need to use a threaded IRQ. The interrupt handler is quite
-small and doesn't take too much time and doesn't have any delays or sleeps
-in it either.
+> Sebastian,
+> 
+> Below is a traceback I hit while running 4.1.3-rt3 on my Lenovo T530.
+> 
+> I was doing my normal, play music, copy files over the lan, do compiles,
+> do email, etc., so I I can't really point you at a reproducer. The graphics
+> system stayed up somewhat but the actual trace I hit scrolled off. This was
+> extracted from the syslog with 'journalctl'. 
+> 
+> If I encounter it again, I'll see if I can force a kdump. 
+>
+have an i7 8-core here running 4.1.3-rt3 that is more or less idle (about 3 
+days) only one ssh login over the network running top and no other user logged 
+in - just the default processes of Debian 8.1 active and it slowly grinds
+to a halt (no rt user-space tasks running). the last screen that top 
+displayed was
+
+<snip>
+    3 root      -2   0       0      0      0 R  60.3  0.0   5756:16 ksoftirqd/0 
+   23 root      -2   0       0      0      0 R  50.8  0.0   4948:08 ksoftirqd/2
+   17 root      -2   0       0      0      0 S  50.6  0.0   4897:13 ksoftirqd/1
+   29 root      -2   0       0      0      0 S  50.4  0.0   4953:24 ksoftirqd/3
+   10 root      20   0       0      0      0 R  17.0  0.0   1836:35 rcuc/0     
+    1 root      20   0  177192   5628   3040 R  15.0  0.0   1715:07 systemd    
+   16 root      20   0       0      0      0 R  14.8  0.0   1780:42 rcuc/1     
+    7 root      20   0       0      0      0 R  12.6  0.0 717:42.70 rcu_preempt
+15052 hofrat    20   0   23640   2792   2352 R  11.5  0.0   0:54.54 top        
+ 1205 root      20   0       0      0      0 R  10.0  0.0 812:43.02 kworker/0:2
+ 1524 message+  20   0   43544   4624   3000 R   8.2  0.0   1049:19 dbus-daemon
+ 2070 root      20   0  307568  10492   9420 S   8.0  0.1   1023:26 packagekitd
+<snip>
+
+but I did not get any traces in syslog and no details that are of any help
+it would be interesting though to know if there is a similarity in the top 
+tasks on the system.
+
+thx!
+hofrat
