@@ -1,61 +1,175 @@
-From: Russell King - ARM Linux <linux@arm.linux.org.uk>
-Subject: Re: Common clock framework API vs RT patchset
-Date: Tue, 4 Aug 2015 16:36:41 +0100
-Message-ID: <20150804153641.GR7557@n2100.arm.linux.org.uk>
-References: <55C0A96F.80307@ti.com>
- <alpine.DEB.2.11.1508041405290.3983@nanos>
- <55C0D8F3.3030105@ti.com>
+From: Frank Rowand <frowand.list@gmail.com>
+Subject: Re: 1us latency?
+Date: Tue, 04 Aug 2015 13:27:25 -0700
+Message-ID: <55C1202D.9060108@gmail.com>
+References: <55BF4CD7.8000007@pavlinux.ru> <20150803114422.0efbea1b@sluggy> <55BFAC1C.9020508@pavlinux.ru> <55BFB4AA.4020901@pavlinux.ru> <20150803135326.3fd23809@sluggy>
+Reply-To: frowand.list@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Grygorii Strashko <grygorii.strashko@ti.com>,
-	linux-rt-users@vger.kernel.org, Felipe Balbi <balbi@ti.com>,
-	Sekhar Nori <nsekhar@ti.com>, linux-clk@vger.kernel.org
-To: Nishanth Menon <nm@ti.com>
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: pavel <pavel@pavlinux.ru>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from pandora.arm.linux.org.uk ([78.32.30.218]:34620 "EHLO
-	pandora.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752692AbbHDPgs (ORCPT
+Received: from mail-lb0-f171.google.com ([209.85.217.171]:36358 "EHLO
+	mail-lb0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753032AbbHDU13 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Aug 2015 11:36:48 -0400
-Content-Disposition: inline
-In-Reply-To: <55C0D8F3.3030105@ti.com>
+	Tue, 4 Aug 2015 16:27:29 -0400
+Received: by lbbud7 with SMTP id ud7so12907012lbb.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 04 Aug 2015 13:27:27 -0700 (PDT)
+In-Reply-To: <20150803135326.3fd23809@sluggy>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Aug 04, 2015 at 10:23:31AM -0500, Nishanth Menon wrote:
-> Consider clk_enable/disable/set_parent/setfreq operations. none of these
-> operations are "atomic" from hardware point of view. instead, they are a
-> set of steps which culminates to moving from state A to state B of the
-> clock tree configuration.
+On 8/3/2015 11:53 AM, Clark Williams wrote:
+> On Mon, 3 Aug 2015 21:36:26 +0300
+> pavel <pavel@pavlinux.ru> wrote:
+>=20
+>> 1. Without patch
+>>
+>> # ./cyclictest -S -p fifo -D60s
+>> defaulting realtime priority to 9
+>> # /dev/cpu_dma_latency set to 0us
+>> policy: fifo: loadavg: 0.00 0.01 0.05 1/207 12378
+>>
+>> T: 0 (12361) P: 9 I:1000 C:  59993 Min:      1 Act:    1 Avg:    1 M=
+ax:       8
+>> T: 1 (12362) P: 9 I:1500 C:  39995 Min:      1 Act:    1 Avg:    1 M=
+ax:       9
+>> T: 2 (12363) P: 9 I:2000 C:  29996 Min:      1 Act:    1 Avg:    1 M=
+ax:      12
+>> T: 3 (12364) P: 9 I:2500 C:  23997 Min:      1 Act:    1 Avg:    1 M=
+ax:       9
+>> T: 4 (12365) P: 9 I:3000 C:  19997 Min:      1 Act:    1 Avg:    1 M=
+ax:       6
+>> T: 5 (12366) P: 9 I:3500 C:  17141 Min:      1 Act:    1 Avg:    1 M=
+ax:       11
+>> T: 6 (12367) P: 9 I:4000 C:  14998 Min:      0 Act:    1 Avg:    1 M=
+ax:       10
+>> T: 7 (12368) P: 9 I:4500 C:  13331 Min:      0 Act:    1 Avg:    1 M=
+ax:       6
+>>
+>> 2. With patch
+>>
+>>   # ./cyclictest -S -p fifo -D60s
+>> defaulting realtime priority to 9
+>> # /dev/cpu_dma_latency set to 0us
+>> policy: fifo: loadavg: 0.05 0.04 0.05 1/206 12469
+>>
+>> T: 0 (12452) P: 9 I:1000 C:  59997 Min:      1 Act:    1 Avg:    1 M=
+ax:       3
+>> T: 1 (12453) P: 9 I:1500 C:  39998 Min:      1 Act:    1 Avg:    1 M=
+ax:       2
+>> T: 2 (12454) P: 9 I:2000 C:  29998 Min:      1 Act:    1 Avg:    1 M=
+ax:       4
+>> T: 3 (12455) P: 9 I:2500 C:  23999 Min:      1 Act:    1 Avg:    1 M=
+ax:       4
+>> T: 4 (12456) P: 9 I:3000 C:  19999 Min:      1 Act:    1 Avg:    1 M=
+ax:       4
+>> T: 5 (12457) P: 9 I:3500 C:  17142 Min:      1 Act:    1 Avg:    1 M=
+ax:       3
+>> T: 6 (12458) P: 9 I:4000 C:  14999 Min:      1 Act:    1 Avg:    1 M=
+ax:       2
+>> T: 7 (12459) P: 9 I:4500 C:  13332 Min:      1 Act:    1 Avg:    1 M=
+ax:       3
+>>
+>>
+>> Patch  ---
+>>
+>> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest=
+=2Ec
+>> index 34053c5..84a70de 100644
+>> --- a/src/cyclictest/cyclictest.c
+>> +++ b/src/cyclictest/cyclictest.c
+>> @@ -1727,6 +1727,9 @@ static void print_stat(FILE *fp, struct thread=
+_param *par,=20
+>> int index, int verbos
+>>   {
+>>          struct thread_stat *stat =3D par->stats;
+>>
+>> +       if ( stat->cycles < 5000)
+>> +                stat->max =3D 0;
+>> +
+>>          if (!verbose) {
+>>                  if (quiet !=3D 1) {
+>>                          char *fmt;
+>>
+>> ---
+>>
+>>
+>> 03.08.2015 20:59, pavel =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
+>>>
+>>>>
+>>>>> # ./cyclictest -S -p fifo
+>>>>> defaulting realtime priority to 9
+>>>>> # /dev/cpu_dma_latency set to 0us
+>>>>> policy: fifo: loadavg: 0.00 0.03 0.05 1/218 4240
+>>>>>
+>>>>> T: 0 ( 4174) P: 9 I:1000 C: 430806 Min:      1 Act:    1 Avg:    =
+1 Max:      10
+>>>>> T: 1 ( 4175) P: 9 I:1500 C: 287204 Min:      1 Act:    1 Avg:    =
+1 Max:       6
+>>>>> T: 2 ( 4176) P: 9 I:2000 C: 215403 Min:      1 Act:    2 Avg:    =
+1 Max:      11
+>>>>> T: 3 ( 4177) P: 9 I:2500 C: 172322 Min:      1 Act:    1 Avg:    =
+1 Max:       9
+>>>>> T: 4 ( 4178) P: 9 I:3000 C: 143602 Min:      1 Act:    1 Avg:    =
+1 Max:      10
+>>>>> T: 5 ( 4179) P: 9 I:3500 C: 123087 Min:      1 Act:    1 Avg:    =
+1 Max:      11
+>>>>> T: 6 ( 4180) P: 9 I:4000 C: 107701 Min:      1 Act:    1 Avg:    =
+1 Max:      10
+>>>>> T: 7 ( 4181) P: 9 I:4500 C: 108232 Min:      1 Act:    2 Avg:    =
+1 Max:      11
+>>>>>
+>>>>>
+>>>>> It possible? 1us latency?  o_O
+>>>> No, your latency is 11us. Max latency is what we care about, not t=
+he
+>>>> average.
+>>> By the way, max values appear only at the start, then they are roug=
+hly equal to
+>>> the average.
+>>
+>=20
+> Interesting. Betting that's page faults and cache filling.=20
 
-There's a world of difference between clk_enable()/clk_disable() and
-the rest of the clk API.
+You might want to try running a background load on the system that poll=
+utes
+the cache and TLB and see if you get larger values after the start up p=
+eriod.
 
-clk_enable()/clk_disable() _should_ be callable from any context, since
-you may need to enable or disable a clock from any context.  The remainder
-of the clk API is callable only from contexts where sleeping is permissible.
+>=20
+> I don't think we want to arbitrarily pick some number of cycles for a
+> "settle time" (i.e. a grace period for the application to reach stead=
+y
+> state). Possibly we should add an option for that? Specify some numbe=
+r
+> of cycles or some amount of time that where the measurement threads r=
+un
+> before actual measurements start?
+>=20
+>   $ cyclictest --numa -p95 -m --settle=3D10ms
+>=20
+> That would say "run the measurement threads for ten milliseconds befo=
+re
+> actually starting the measurement period". That would allow them to
+> fault in and fill cache lines before starting real work.
+>=20
+> Anyone else have an opinion?
+>=20
+> Clark
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
+ers" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> .
+>=20
 
-The reason we have this split is because clk_enable()/clk_disable() have
-historically been used in interrupt handlers, and they're specifically
-not supposed to impose big delays.
-
-Things like waiting for a PLL to re-lock is time-consuming, so it's not
-something I'd expect to see behind a clk_enable() implementation (the
-fact you can't sleep in there is a big hint.)  Such waits should be in
-the clk_prepare() stage instead.
-
-Now, as for clk_enable() being interrupted - if clk_enable() is interrupted
-and another clk_enable() comes along for the same clock, that second
-clk_enable() should not return until the clock has actually been enabled,
-and it's up to the implementation to decode how to achieve that.  If that
-means a RT implementation using a raw spinlock, then that's one option
-(which basically would have the side effect of blocking until the preempted
-clk_enable() finishes its business.)  Alternatively, if we can preempt
-inside clk_enable(), then the clk_enable() implementation should be written
-to cope with that (eg, by the second clk_enable() fiddling with the hardware,
-and the first thread noticing that it has nothing to do.)
-
--- 
-FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
-according to speedtest.net.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
