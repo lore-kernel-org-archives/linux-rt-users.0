@@ -1,88 +1,61 @@
-From: Nishanth Menon <nm@ti.com>
+From: Russell King - ARM Linux <linux@arm.linux.org.uk>
 Subject: Re: Common clock framework API vs RT patchset
-Date: Tue, 4 Aug 2015 10:23:31 -0500
-Message-ID: <55C0D8F3.3030105@ti.com>
-References: <55C0A96F.80307@ti.com> <alpine.DEB.2.11.1508041405290.3983@nanos>
+Date: Tue, 4 Aug 2015 16:36:41 +0100
+Message-ID: <20150804153641.GR7557@n2100.arm.linux.org.uk>
+References: <55C0A96F.80307@ti.com>
+ <alpine.DEB.2.11.1508041405290.3983@nanos>
+ <55C0D8F3.3030105@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
-Content-Transfer-Encoding: 7bit
-Cc: <linux-rt-users@vger.kernel.org>, Felipe Balbi <balbi@ti.com>,
-	Sekhar Nori <nsekhar@ti.com>, <linux-clk@vger.kernel.org>,
-	Russell King <linux@arm.linux.org.uk>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Grygorii Strashko <grygorii.strashko@ti.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Grygorii Strashko <grygorii.strashko@ti.com>,
+	linux-rt-users@vger.kernel.org, Felipe Balbi <balbi@ti.com>,
+	Sekhar Nori <nsekhar@ti.com>, linux-clk@vger.kernel.org
+To: Nishanth Menon <nm@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from devils.ext.ti.com ([198.47.26.153]:51700 "EHLO
-	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757566AbbHDPXy (ORCPT
+Received: from pandora.arm.linux.org.uk ([78.32.30.218]:34620 "EHLO
+	pandora.arm.linux.org.uk" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752692AbbHDPgs (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 4 Aug 2015 11:23:54 -0400
-In-Reply-To: <alpine.DEB.2.11.1508041405290.3983@nanos>
+	Tue, 4 Aug 2015 11:36:48 -0400
+Content-Disposition: inline
+In-Reply-To: <55C0D8F3.3030105@ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 08/04/2015 07:06 AM, Thomas Gleixner wrote:
-> On Tue, 4 Aug 2015, Grygorii Strashko wrote:
-> 
->> Hi All,
->>
->> I'd very appreciated if someone can clarify one point for me.
->>
->> Is allowed/expected/prohibited to use CLK API like clk_enable/disable
->> in atomic context now on RT-Kernel (HW IRQ or under RAW spinlocks)?
-> 
-> It's not possible, if the spinlock in the clock framework is not a raw
-> spinlock.
->  
->> How safe is it to allow CLK API to be preemptive?
-> 
-> The functions are protected by the locks. So it's not an issue at all.
+On Tue, Aug 04, 2015 at 10:23:31AM -0500, Nishanth Menon wrote:
+> Consider clk_enable/disable/set_parent/setfreq operations. none of these
+> operations are "atomic" from hardware point of view. instead, they are a
+> set of steps which culminates to moving from state A to state B of the
+> clock tree configuration.
 
-interesting topic, looping in linux-clk. original thread in [1].
+There's a world of difference between clk_enable()/clk_disable() and
+the rest of the clk API.
 
-clk apis are protected by spinlocks which in turn should make the clock
-apis pre-emptible in RT kernel build.
+clk_enable()/clk_disable() _should_ be callable from any context, since
+you may need to enable or disable a clock from any context.  The remainder
+of the clk API is callable only from contexts where sleeping is permissible.
 
-I think Grygorii's question is "what happens(is it safe) when clock APIs
-are pre-empted"? I think it is a bit dependent on the hardware behavior
-I think..
+The reason we have this split is because clk_enable()/clk_disable() have
+historically been used in interrupt handlers, and they're specifically
+not supposed to impose big delays.
 
-Two angles to this:
+Things like waiting for a PLL to re-lock is time-consuming, so it's not
+something I'd expect to see behind a clk_enable() implementation (the
+fact you can't sleep in there is a big hint.)  Such waits should be in
+the clk_prepare() stage instead.
 
-i) is there an upper time bound in the programming sequence: if any step
-x to step y in the sequence takes more than N time, then we can have  a
-failure - but then, that is a broken hardware in itself.. Linux (non-RT)
-cannot guarantee a strict upper bound either.
+Now, as for clk_enable() being interrupted - if clk_enable() is interrupted
+and another clk_enable() comes along for the same clock, that second
+clk_enable() should not return until the clock has actually been enabled,
+and it's up to the implementation to decode how to achieve that.  If that
+means a RT implementation using a raw spinlock, then that's one option
+(which basically would have the side effect of blocking until the preempted
+clk_enable() finishes its business.)  Alternatively, if we can preempt
+inside clk_enable(), then the clk_enable() implementation should be written
+to cope with that (eg, by the second clk_enable() fiddling with the hardware,
+and the first thread noticing that it has nothing to do.)
 
-ii) if by preempting the operation itself CPU cannot guarantee time
-accuracy for scheduling. This can be an issue. more below:
-
-Consider clk_enable/disable/set_parent/setfreq operations. none of these
-operations are "atomic" from hardware point of view. instead, they are a
-set of steps which culminates to moving from state A to state B of the
-clock tree configuration.
-
-specific example could be as follows: changing clock parent in the clock
-tree results in kernel tick timer configuration to be in an intermediate
-state before going to a final "relocked" state which is expected at the
-end of clock setparent call, could be involved in a few steps:
-step a) unlock pll (put in bypass)
-step b) change parent
-step c) relock pll with new parent frequency
-
-if interrupted between (a), (c), we could be in "bypass" frequency or
-"new parent" frequency... final frequency is guarenteed only when step
-(c) is completed.
-
-In the above example if the clock generated is fundamental to kernel
-scheduler accuracy, well, we do have a problem..
-
-
-I am not sure any of these cases can happen could happen in at least the
-hardware I am aware of... not sure if other SoC vendors might have
-interesting scenarios..
-
-[1] http://marc.info/?t=143868984600001&r=1&w=2
 -- 
-Regards,
-Nishanth Menon
+FTTC broadband for 0.8mile line: currently at 10.5Mbps down 400kbps up
+according to speedtest.net.
