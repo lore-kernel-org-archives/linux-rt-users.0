@@ -1,184 +1,163 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/7] mm/slub: move slab initialization into irq enabled region
-Date: Tue, 04 Aug 2015 21:18:28 -0400
-Message-ID: <20150805011852.582403660@goodmis.org>
-References: <20150805011826.881627614@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Lameter <cl@linux.com>,
-	Pekka Enberg <penberg@kernel.org>,
-	David Rientjes <rientjes@google.com>,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Andrew Morton <akpm@linux-foundation.org>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: [RFC v0 2/3] sched/completion: convert completions to use simple wait queues
+Date: Wed,  5 Aug 2015 15:30:47 +0200
+Message-ID: <1438781448-10760-3-git-send-email-daniel.wagner@bmw-carit.de>
+References: <1438781448-10760-1-git-send-email-daniel.wagner@bmw-carit.de>
+Cc: paul.gortmaker@windriver.com, peterz@infradead.org,
+	bigeasy@linutronix.de, tglx@linutronix.de,
+	paulmck@linux.vnet.ibm.com, rostedt@goodmis.org
+To: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
+In-Reply-To: <1438781448-10760-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.18.18-rt16-rc1 stable review patch.
-If anyone has any objections, please let me know.
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-------------------
+Completions have no long lasting callbacks and therefore do not need
+the complex waitqueue variant.  Use simple waitqueues which reduces
+the contention on the waitqueue lock.
 
-From: Thomas Gleixner <tglx@linutronix.de>
+This was a carry forward from v3.10-rt, with some RT specific chunks,
+dropped, and updated to align with names that were chosen to match the
+simple waitqueue support.
 
-Initializing a new slab can introduce rather large latencies because most
-of the initialization runs always with interrupts disabled.
-
-There is no point in doing so.  The newly allocated slab is not visible
-yet, so there is no reason to protect it against concurrent alloc/free.
-
-Move the expensive parts of the initialization into allocate_slab(), so
-for all allocations with GFP_WAIT set, interrupts are enabled.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Acked-by: Christoph Lameter <cl@linux.com>
-Cc: Pekka Enberg <penberg@kernel.org>
-Cc: David Rientjes <rientjes@google.com>
-Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Originally-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Paul Gortmaker <paul.gortmaker@windriver.com>
 ---
- mm/slub.c | 79 ++++++++++++++++++++++++++++++---------------------------------
- 1 file changed, 38 insertions(+), 41 deletions(-)
+ include/linux/completion.h |  8 ++++----
+ kernel/sched/completion.c  | 32 ++++++++++++++++----------------
+ 2 files changed, 20 insertions(+), 20 deletions(-)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 534609a0326a..e48bca049f21 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -1279,6 +1279,13 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x)
- 		debug_check_no_obj_freed(x, s->object_size);
- }
- 
-+static void setup_object(struct kmem_cache *s, struct page *page,
-+				void *object)
-+{
-+	setup_object_debug(s, page, object);
-+	if (unlikely(s->ctor))
-+		s->ctor(object);
-+}
- /*
-  * Slab allocation and freeing
+diff --git a/include/linux/completion.h b/include/linux/completion.h
+index 5d5aaae..8b3bca8 100644
+--- a/include/linux/completion.h
++++ b/include/linux/completion.h
+@@ -8,7 +8,7 @@
+  * See kernel/sched/completion.c for details.
   */
-@@ -1310,6 +1317,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	struct kmem_cache_order_objects oo = s->oo;
- 	gfp_t alloc_gfp;
- 	bool enableirqs;
-+	void *start, *p;
-+	int idx, order;
  
- 	flags &= gfp_allowed_mask;
+-#include <linux/wait.h>
++#include <linux/swait.h>
  
-@@ -1337,13 +1346,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 		 * Try a lower order alloc if possible
- 		 */
- 		page = alloc_slab_page(s, alloc_gfp, node, oo);
--
--		if (page)
--			stat(s, ORDER_FALLBACK);
-+		if (unlikely(!page))
-+			goto out;
-+		stat(s, ORDER_FALLBACK);
- 	}
+ /*
+  * struct completion - structure used to maintain state for a "completion"
+@@ -24,11 +24,11 @@
+  */
+ struct completion {
+ 	unsigned int done;
+-	wait_queue_head_t wait;
++	struct swait_queue_head wait;
+ };
  
--	if (kmemcheck_enabled && page
--		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
-+	if (kmemcheck_enabled &&
-+	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
- 		int pages = 1 << oo_order(oo);
+ #define COMPLETION_INITIALIZER(work) \
+-	{ 0, __WAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
++	{ 0, __SWAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
  
- 		kmemcheck_alloc_shadow(page, oo_order(oo), alloc_gfp, node);
-@@ -1358,45 +1367,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 			kmemcheck_mark_unallocated_pages(page, pages);
- 	}
- 
--	if (enableirqs)
--		local_irq_disable();
--	if (!page)
--		return NULL;
--
- 	page->objects = oo_objects(oo);
--	mod_zone_page_state(page_zone(page),
--		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
--		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
--		1 << oo_order(oo));
--
--	return page;
--}
--
--static void setup_object(struct kmem_cache *s, struct page *page,
--				void *object)
--{
--	setup_object_debug(s, page, object);
--	if (unlikely(s->ctor))
--		s->ctor(object);
--}
--
--static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
--{
--	struct page *page;
--	void *start;
--	void *p;
--	int order;
--	int idx;
--
--	BUG_ON(flags & GFP_SLAB_BUG_MASK);
--
--	page = allocate_slab(s,
--		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
--	if (!page)
--		goto out;
- 
- 	order = compound_order(page);
--	inc_slabs_node(s, page_to_nid(page), page->objects);
- 	page->slab_cache = s;
- 	__SetPageSlab(page);
- 	if (page->pfmemalloc)
-@@ -1418,10 +1391,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	page->freelist = start;
- 	page->inuse = page->objects;
- 	page->frozen = 1;
-+
- out:
-+	if (enableirqs)
-+		local_irq_disable();
-+	if (!page)
-+		return NULL;
-+
-+	mod_zone_page_state(page_zone(page),
-+		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
-+		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
-+		1 << oo_order(oo));
-+
-+	inc_slabs_node(s, page_to_nid(page), page->objects);
-+
- 	return page;
+ #define COMPLETION_INITIALIZER_ONSTACK(work) \
+ 	({ init_completion(&work); work; })
+@@ -73,7 +73,7 @@ struct completion {
+ static inline void init_completion(struct completion *x)
+ {
+ 	x->done = 0;
+-	init_waitqueue_head(&x->wait);
++	init_swait_queue_head(&x->wait);
  }
  
-+static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
-+{
-+	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
-+		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
-+		BUG();
-+	}
-+
-+	return allocate_slab(s,
-+		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
-+}
-+
- static void __free_slab(struct kmem_cache *s, struct page *page)
+ /**
+diff --git a/kernel/sched/completion.c b/kernel/sched/completion.c
+index 8d0f35d..b020159 100644
+--- a/kernel/sched/completion.c
++++ b/kernel/sched/completion.c
+@@ -30,10 +30,10 @@ void complete(struct completion *x)
  {
- 	int order = compound_order(page);
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	x->done++;
+-	__wake_up_locked(&x->wait, TASK_NORMAL, 1);
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	swake_up_locked(&x->wait);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ }
+ EXPORT_SYMBOL(complete);
+ 
+@@ -50,10 +50,10 @@ void complete_all(struct completion *x)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	x->done += UINT_MAX/2;
+-	__wake_up_locked(&x->wait, TASK_NORMAL, 0);
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	swake_up_locked(&x->wait);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ }
+ EXPORT_SYMBOL(complete_all);
+ 
+@@ -62,20 +62,20 @@ do_wait_for_common(struct completion *x,
+ 		   long (*action)(long), long timeout, int state)
+ {
+ 	if (!x->done) {
+-		DECLARE_WAITQUEUE(wait, current);
++		DECLARE_SWAITQUEUE(wait);
+ 
+-		__add_wait_queue_tail_exclusive(&x->wait, &wait);
++		__prepare_to_swait(&x->wait, &wait);
+ 		do {
+ 			if (signal_pending_state(state, current)) {
+ 				timeout = -ERESTARTSYS;
+ 				break;
+ 			}
+ 			__set_current_state(state);
+-			spin_unlock_irq(&x->wait.lock);
++			raw_spin_unlock_irq(&x->wait.lock);
+ 			timeout = action(timeout);
+-			spin_lock_irq(&x->wait.lock);
++			raw_spin_lock_irq(&x->wait.lock);
+ 		} while (!x->done && timeout);
+-		__remove_wait_queue(&x->wait, &wait);
++		__finish_swait(&x->wait, &wait);
+ 		if (!x->done)
+ 			return timeout;
+ 	}
+@@ -89,9 +89,9 @@ __wait_for_common(struct completion *x,
+ {
+ 	might_sleep();
+ 
+-	spin_lock_irq(&x->wait.lock);
++	raw_spin_lock_irq(&x->wait.lock);
+ 	timeout = do_wait_for_common(x, action, timeout, state);
+-	spin_unlock_irq(&x->wait.lock);
++	raw_spin_unlock_irq(&x->wait.lock);
+ 	return timeout;
+ }
+ 
+@@ -277,12 +277,12 @@ bool try_wait_for_completion(struct completion *x)
+ 	if (!READ_ONCE(x->done))
+ 		return 0;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	if (!x->done)
+ 		ret = 0;
+ 	else
+ 		x->done--;
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ 	return ret;
+ }
+ EXPORT_SYMBOL(try_wait_for_completion);
+@@ -311,7 +311,7 @@ bool completion_done(struct completion *x)
+ 	 * after it's acquired the lock.
+ 	 */
+ 	smp_rmb();
+-	spin_unlock_wait(&x->wait.lock);
++	raw_spin_unlock_wait(&x->wait.lock);
+ 	return true;
+ }
+ EXPORT_SYMBOL(completion_done);
 -- 
-2.1.4
+2.4.3
