@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/7] futex: Implement lockless wakeups
-Date: Tue, 04 Aug 2015 21:18:30 -0400
-Message-ID: <20150805011852.899106598@goodmis.org>
+Subject: [PATCH RT 2/7] mm/slub: move slab initialization into irq enabled region
+Date: Tue, 04 Aug 2015 21:18:28 -0400
+Message-ID: <20150805011852.582403660@goodmis.org>
 References: <20150805011826.881627614@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,20 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Davidlohr Bueso <dbueso@suse.de>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Andrew Morton <akpm@linux-foundation.org>,
-	Borislav Petkov <bp@alien8.de>, Chris Mason <clm@fb.com>,
-	Davidlohr Bueso <dave@stgolabs.net>,
-	George Spelvin <linux@horizon.com>,
-	"H. Peter Anvin" <hpa@zytor.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Manfred Spraul <manfred@colorfullife.com>,
-	Ingo Molnar <mingo@kernel.org>
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-futex-Implement-lockless-wakeups.patch
+Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -32,186 +28,157 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Davidlohr Bueso <dave@stgolabs.net>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Given the overall futex architecture, any chance of reducing
-hb->lock contention is welcome. In this particular case, using
-wake-queues to enable lockless wakeups addresses very much real
-world performance concerns, even cases of soft-lockups in cases
-of large amounts of blocked tasks (which is not hard to find in
-large boxes, using but just a handful of futex).
+Initializing a new slab can introduce rather large latencies because most
+of the initialization runs always with interrupts disabled.
 
-At the lowest level, this patch can reduce latency of a single thread
-attempting to acquire hb->lock in highly contended scenarios by a
-up to 2x. At lower counts of nr_wake there are no regressions,
-confirming, of course, that the wake_q handling overhead is practically
-non existent. For instance, while a fair amount of variation,
-the extended pef-bench wakeup benchmark shows for a 20 core machine
-the following avg per-thread time to wakeup its share of tasks:
+There is no point in doing so.  The newly allocated slab is not visible
+yet, so there is no reason to protect it against concurrent alloc/free.
 
-	nr_thr	ms-before	ms-after
-	16 	0.0590		0.0215
-	32 	0.0396		0.0220
-	48 	0.0417		0.0182
-	64 	0.0536		0.0236
-	80 	0.0414		0.0097
-	96 	0.0672		0.0152
+Move the expensive parts of the initialization into allocate_slab(), so
+for all allocations with GFP_WAIT set, interrupts are enabled.
 
-Naturally, this can cause spurious wakeups. However there is no core code
-that cannot handle them afaict, and furthermore tglx does have the point
-that other events can already trigger them anyway.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Davidlohr Bueso <dbueso@suse.de>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Acked-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Andrew Morton <akpm@linux-foundation.org>
-Cc: Borislav Petkov <bp@alien8.de>
-Cc: Chris Mason <clm@fb.com>
-Cc: Davidlohr Bueso <dave@stgolabs.net>
-Cc: George Spelvin <linux@horizon.com>
-Cc: H. Peter Anvin <hpa@zytor.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Manfred Spraul <manfred@colorfullife.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Cc: Steven Rostedt <rostedt@goodmis.org>
-Link: http://lkml.kernel.org/r/1430494072-30283-3-git-send-email-dave@stgolabs.net
-Signed-off-by: Ingo Molnar <mingo@kernel.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/futex.c | 33 +++++++++++++++++----------------
- 1 file changed, 17 insertions(+), 16 deletions(-)
+ mm/slub.c | 79 ++++++++++++++++++++++++++++++---------------------------------
+ 1 file changed, 38 insertions(+), 41 deletions(-)
 
-diff --git a/kernel/futex.c b/kernel/futex.c
-index 647ff4b3a150..f9172a5ee332 100644
---- a/kernel/futex.c
-+++ b/kernel/futex.c
-@@ -1092,9 +1092,11 @@ static void __unqueue_futex(struct futex_q *q)
- 
- /*
-  * The hash bucket lock must be held when this is called.
-- * Afterwards, the futex_q must not be accessed.
-+ * Afterwards, the futex_q must not be accessed. Callers
-+ * must ensure to later call wake_up_q() for the actual
-+ * wakeups to occur.
-  */
--static void wake_futex(struct futex_q *q)
-+static void mark_wake_futex(struct wake_q_head *wake_q, struct futex_q *q)
- {
- 	struct task_struct *p = q->task;
- 
-@@ -1102,14 +1104,10 @@ static void wake_futex(struct futex_q *q)
- 		return;
- 
- 	/*
--	 * We set q->lock_ptr = NULL _before_ we wake up the task. If
--	 * a non-futex wake up happens on another CPU then the task
--	 * might exit and p would dereference a non-existing task
--	 * struct. Prevent this by holding a reference on p across the
--	 * wake up.
-+	 * Queue the task for later wakeup for after we've released
-+	 * the hb->lock. wake_q_add() grabs reference to p.
- 	 */
--	get_task_struct(p);
--
-+	wake_q_add(wake_q, p);
- 	__unqueue_futex(q);
- 	/*
- 	 * The waiting task can free the futex_q as soon as
-@@ -1119,9 +1117,6 @@ static void wake_futex(struct futex_q *q)
- 	 */
- 	smp_wmb();
- 	q->lock_ptr = NULL;
--
--	wake_up_state(p, TASK_NORMAL);
--	put_task_struct(p);
+diff --git a/mm/slub.c b/mm/slub.c
+index 534609a0326a..e48bca049f21 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1279,6 +1279,13 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x)
+ 		debug_check_no_obj_freed(x, s->object_size);
  }
  
- static int wake_futex_pi(u32 __user *uaddr, u32 uval, struct futex_q *this)
-@@ -1219,6 +1214,7 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
- 	struct futex_q *this, *next;
- 	union futex_key key = FUTEX_KEY_INIT;
- 	int ret;
-+	WAKE_Q(wake_q);
++static void setup_object(struct kmem_cache *s, struct page *page,
++				void *object)
++{
++	setup_object_debug(s, page, object);
++	if (unlikely(s->ctor))
++		s->ctor(object);
++}
+ /*
+  * Slab allocation and freeing
+  */
+@@ -1310,6 +1317,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	struct kmem_cache_order_objects oo = s->oo;
+ 	gfp_t alloc_gfp;
+ 	bool enableirqs;
++	void *start, *p;
++	int idx, order;
  
- 	if (!bitset)
- 		return -EINVAL;
-@@ -1246,13 +1242,14 @@ futex_wake(u32 __user *uaddr, unsigned int flags, int nr_wake, u32 bitset)
- 			if (!(this->bitset & bitset))
- 				continue;
+ 	flags &= gfp_allowed_mask;
  
--			wake_futex(this);
-+			mark_wake_futex(&wake_q, this);
- 			if (++ret >= nr_wake)
- 				break;
- 		}
+@@ -1337,13 +1346,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 		 * Try a lower order alloc if possible
+ 		 */
+ 		page = alloc_slab_page(s, alloc_gfp, node, oo);
+-
+-		if (page)
+-			stat(s, ORDER_FALLBACK);
++		if (unlikely(!page))
++			goto out;
++		stat(s, ORDER_FALLBACK);
  	}
  
- 	spin_unlock(&hb->lock);
-+	wake_up_q(&wake_q);
- out_put_key:
- 	put_futex_key(&key);
+-	if (kmemcheck_enabled && page
+-		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
++	if (kmemcheck_enabled &&
++	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
+ 		int pages = 1 << oo_order(oo);
+ 
+ 		kmemcheck_alloc_shadow(page, oo_order(oo), alloc_gfp, node);
+@@ -1358,45 +1367,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 			kmemcheck_mark_unallocated_pages(page, pages);
+ 	}
+ 
+-	if (enableirqs)
+-		local_irq_disable();
+-	if (!page)
+-		return NULL;
+-
+ 	page->objects = oo_objects(oo);
+-	mod_zone_page_state(page_zone(page),
+-		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
+-		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
+-		1 << oo_order(oo));
+-
+-	return page;
+-}
+-
+-static void setup_object(struct kmem_cache *s, struct page *page,
+-				void *object)
+-{
+-	setup_object_debug(s, page, object);
+-	if (unlikely(s->ctor))
+-		s->ctor(object);
+-}
+-
+-static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+-{
+-	struct page *page;
+-	void *start;
+-	void *p;
+-	int order;
+-	int idx;
+-
+-	BUG_ON(flags & GFP_SLAB_BUG_MASK);
+-
+-	page = allocate_slab(s,
+-		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+-	if (!page)
+-		goto out;
+ 
+ 	order = compound_order(page);
+-	inc_slabs_node(s, page_to_nid(page), page->objects);
+ 	page->slab_cache = s;
+ 	__SetPageSlab(page);
+ 	if (page->pfmemalloc)
+@@ -1418,10 +1391,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	page->freelist = start;
+ 	page->inuse = page->objects;
+ 	page->frozen = 1;
++
  out:
-@@ -1271,6 +1268,7 @@ futex_wake_op(u32 __user *uaddr1, unsigned int flags, u32 __user *uaddr2,
- 	struct futex_hash_bucket *hb1, *hb2;
- 	struct futex_q *this, *next;
- 	int ret, op_ret;
-+	WAKE_Q(wake_q);
++	if (enableirqs)
++		local_irq_disable();
++	if (!page)
++		return NULL;
++
++	mod_zone_page_state(page_zone(page),
++		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
++		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
++		1 << oo_order(oo));
++
++	inc_slabs_node(s, page_to_nid(page), page->objects);
++
+ 	return page;
+ }
  
- retry:
- 	ret = get_futex_key(uaddr1, flags & FLAGS_SHARED, &key1, VERIFY_READ);
-@@ -1322,7 +1320,7 @@ retry_private:
- 				ret = -EINVAL;
- 				goto out_unlock;
- 			}
--			wake_futex(this);
-+			mark_wake_futex(&wake_q, this);
- 			if (++ret >= nr_wake)
- 				break;
- 		}
-@@ -1336,7 +1334,7 @@ retry_private:
- 					ret = -EINVAL;
- 					goto out_unlock;
- 				}
--				wake_futex(this);
-+				mark_wake_futex(&wake_q, this);
- 				if (++op_ret >= nr_wake2)
- 					break;
- 			}
-@@ -1346,6 +1344,7 @@ retry_private:
- 
- out_unlock:
- 	double_unlock_hb(hb1, hb2);
-+	wake_up_q(&wake_q);
- out_put_keys:
- 	put_futex_key(&key2);
- out_put_key1:
-@@ -1505,6 +1504,7 @@ static int futex_requeue(u32 __user *uaddr1, unsigned int flags,
- 	struct futex_pi_state *pi_state = NULL;
- 	struct futex_hash_bucket *hb1, *hb2;
- 	struct futex_q *this, *next;
-+	WAKE_Q(wake_q);
- 
- 	if (requeue_pi) {
- 		/*
-@@ -1681,7 +1681,7 @@ retry_private:
- 		 * woken by futex_unlock_pi().
- 		 */
- 		if (++task_count <= nr_wake && !requeue_pi) {
--			wake_futex(this);
-+			mark_wake_futex(&wake_q, this);
- 			continue;
- 		}
- 
-@@ -1731,6 +1731,7 @@ retry_private:
- out_unlock:
- 	free_pi_state(pi_state);
- 	double_unlock_hb(hb1, hb2);
-+	wake_up_q(&wake_q);
- 	hb_waiters_dec(hb2);
- 
- 	/*
++static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
++{
++	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
++		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
++		BUG();
++	}
++
++	return allocate_slab(s,
++		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
++}
++
+ static void __free_slab(struct kmem_cache *s, struct page *page)
+ {
+ 	int order = compound_order(page);
 -- 
 2.1.4
