@@ -1,151 +1,185 @@
-From: John Dulaney <j_dulaney@live.com>
-Subject: RE: [ANNOUNCE] 4.1.3-rt3 - xmit queue timeout, oops, rcu stalls
-Date: Thu, 6 Aug 2015 18:19:37 -0400
-Message-ID: <BLU180-W1458FC965E73F67EC8437DF8740@phx.gbl>
-References: <20150725103230.GA9470@linutronix.de>,<55C39E5E.3060500@ccrma.stanford.edu>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [PATCH RT 2/6] mm/slub: move slab initialization into irq enabled region
+Date: Thu, 06 Aug 2015 18:17:38 -0400
+Message-ID: <20150806221814.488480403@goodmis.org>
+References: <20150806221736.555188732@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	"rostedt@goodmis.org" <rostedt@goodmis.org>,
-	John Kacur <jkacur@redhat.com>
-To: Fernando Lopez-Lezcano <nando@ccrma.stanford.edu>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
+To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55C39E5E.3060500@ccrma.stanford.edu>
+Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-----------------------------------------
-> Subject: Re: [ANNOUNCE] 4.1.3-rt3 - xmit queue timeout, oops, rcu sta=
-lls
-> To: bigeasy@linutronix.de; linux-rt-users@vger.kernel.org
-> CC: nando@ccrma.Stanford.EDU; linux-kernel@vger.kernel.org; tglx@linu=
-tronix.de; rostedt@goodmis.org; jkacur@redhat.com
-> From: nando@ccrma.Stanford.EDU
-> Date: Thu, 6 Aug 2015 10:50:22 -0700
->
-> On 07/25/2015 03:32 AM, Sebastian Andrzej Siewior wrote:
->> Dear RT folks!
->>
->> I'm pleased to announce the v4.1.3-rt3 patch set.
-> ...
->
-> I've had a few hangs with nothing left behind to debug... but today I
-> find this:
->
-> (NOTE: I'm attaching a file with the details, I don't know if my mail=
-er
-> will mangled these lines)
->
-> ----
-> Aug 5 10:46:18 localhost kernel: [ 2343.673560] WARNING: CPU: 3 PID: =
-43
-> at net/sched/sch_generic.c:303 dev_watchdog+0x26f/0x280()
-> Aug 5 10:46:18 localhost kernel: [ 2343.673561] NETDEV WATCHDOG: eth1
-> (e1000e): transmit queue 0 timed out
-> ----
->
-> and then:
->
-> ----
-> Aug 5 10:46:18 localhost kernel: [ 2343.673679] e1000e 0000:04:00.0
-> eth1: Reset adapter unexpectedly
-> Aug 5 10:46:30 localhost kernel: [ 2355.706987] ata5.00: exception
-> Emask 0x40 SAct 0x0 SErr 0x80800 action 0x6 frozen
-> Aug 5 10:46:30 localhost kernel: [ 2355.706990] ata5: SError: { HostI=
-nt
-> 10B8B }
-> Aug 5 10:46:30 localhost kernel: [ 2355.707003] ata5.00: cmd
-> a0/00:00:00:08:00/00:00:00:00:00/a0 tag 0 pio 16392 in
-> Aug 5 10:46:30 localhost kernel: [ 2355.707003] Get event
-> status notification 4a 01 00 00 10 00 00 00 08 00res
-> 40/00:03:00:00:00/00:00:00:00:00/a0 Emask 0x44 (timeout)
-> Aug 5 10:46:30 localhost kernel: [ 2355.707005] ata5.00: status: { DR=
-DY }
-> Aug 5 10:46:30 localhost kernel: [ 2355.707007] ata5: hard resetting =
-link
-> ----
->
-> same one but later in the log:
->
-> ----
-> Aug 5 10:46:18 localhost kernel: WARNING: CPU: 3 PID: 43 at
-> net/sched/sch_generic.c:303 dev_watchdog+0x26f/0x280()
-> Aug 5 10:46:18 localhost kernel: NETDEV WATCHDOG: eth1 (e1000e):
-> transmit queue 0 timed out
-> ----
->
-> Things apparently keep working and then:
->
-> ----
-> Aug 5 11:58:36 localhost kernel: [ 6678.122596] Network Receive[2409]=
-:
-> segfault at 28 ip 0000003c4c293ca9 sp 00007fb6f64dbb58 error 6 in
-> libc-2.18.so[3c4c200000+1b4000]
-> Aug 5 11:58:36 localhost kernel: Network Receive[2409]: segfault at 2=
-8
-> ip 0000003c4c293ca9 sp 00007fb6f64dbb58 error 6 in
-> libc-2.18.so[3c4c200000+1b4000]
-> Aug 5 11:58:36 localhost kernel: timekeeping watchdog: Marking
-> clocksource 'tsc' as unstable, because the skew is too large:
-> Aug 5 11:58:36 localhost kernel: 'hpet' wd_now: 47ebf654 wd_last:
-> c0debfe6 mask: ffffffff
-> Aug 5 11:58:36 localhost kernel: 'tsc' cs_now: 154f6e564f7d cs_last:
-> 7784d315c59 mask: ffffffffffffffff
-> Aug 5 11:58:36 localhost systemd: Starting dnf makecache...
-> Aug 5 11:58:36 localhost kernel: [ 6678.123233] timekeeping watchdog:
-> Marking clocksource 'tsc' as unstable, because the skew is too large:
-> Aug 5 11:58:36 localhost kernel: [ 6678.123237] 'hpet' wd_now:
-> 47ebf654 wd_last: c0debfe6 mask: ffffffff
-> Aug 5 11:58:36 localhost kernel: [ 6678.123238] 'tsc' cs_now:
-> 154f6e564f7d cs_last: 7784d315c59 mask: ffffffffffffffff
-> Aug 5 11:58:36 localhost kernel: [ 6678.146207] Switched to clocksour=
-ce
-> hpet
-> Aug 5 11:58:36 localhost kernel: Switched to clocksource hpet
-> Aug 5 11:58:36 localhost kernel: [ 6678.150087] BUG: unable to handle
-> kernel NULL pointer dereference at 0000000000000ea0
-> Aug 5 11:58:36 localhost kernel: [ 6678.150097] IP:
-> [<ffffffffa05d922e>] nfs40_discover_server_trunking+0x5e/0x110 [nfsv4=
-]
-> Aug 5 11:58:36 localhost kernel: [ 6678.150098] PGD 7f3c83067 PUD
-> 7f46fb067 PMD 0
-> Aug 5 11:58:36 localhost kernel: [ 6678.150099] Oops: 0000 [#1] PREEM=
-PT
-> SMP
-> ----
->
-> And eventually (later) get a ton of these:
->
-> ----
-> Aug 5 11:59:36 localhost kernel: [ 6738.107181] INFO: rcu_preempt
-> detected stalls on CPUs/tasks: {} (detected by 3, t=3D60002 jiffies,
-> g=3D37092, c=3D37091, q=3D0)
-> Aug 5 11:59:36 localhost kernel: [ 6738.107183] All QSes seen, last
-> rcu_preempt kthread activity 1 (4301410925-4301410924),
-> jiffies_till_next_fqs=3D3, root ->qsmask 0x0
-> ----
->
-> So something is left in a not good state...
->
-> -- Fernando
+3.14.48-rt49-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Do you still have your box setup to capture a vmcore?=A0 Also, is this =
-my latest
-build?=A0 I've been having issues with LUKs.
+------------------
 
-If you do still have your system setup to capture a vmcore, maybe set:
+From: Thomas Gleixner <tglx@linutronix.de>
 
-kernel.panic_on_oops =3D 1
-In your /etc/sysctl.conf and then reboot to this kernel.
+Initializing a new slab can introduce rather large latencies because most
+of the initialization runs always with interrupts disabled.
 
-John.
- 		 	   		  --
-To unsubscribe from this list: send the line "unsubscribe linux-kernel"=
- in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
-Please read the FAQ at  http://www.tux.org/lkml/
+There is no point in doing so.  The newly allocated slab is not visible
+yet, so there is no reason to protect it against concurrent alloc/free.
+
+Move the expensive parts of the initialization into allocate_slab(), so
+for all allocations with GFP_WAIT set, interrupts are enabled.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ mm/slub.c | 80 +++++++++++++++++++++++++++++++--------------------------------
+ 1 file changed, 39 insertions(+), 41 deletions(-)
+
+diff --git a/mm/slub.c b/mm/slub.c
+index 5b0e9ee52f79..f21e9bcb9094 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1316,6 +1316,14 @@ struct slub_free_list {
+ };
+ static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
+ 
++static void setup_object(struct kmem_cache *s, struct page *page,
++				void *object)
++{
++	setup_object_debug(s, page, object);
++	if (unlikely(s->ctor))
++		s->ctor(object);
++}
++
+ /*
+  * Slab allocation and freeing
+  */
+@@ -1338,6 +1346,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	struct kmem_cache_order_objects oo = s->oo;
+ 	gfp_t alloc_gfp;
+ 	bool enableirqs;
++	void *start, *last, *p;
++	int idx, order;
+ 
+ 	flags &= gfp_allowed_mask;
+ 
+@@ -1364,13 +1374,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 		 * Try a lower order alloc if possible
+ 		 */
+ 		page = alloc_slab_page(flags, node, oo);
+-
+-		if (page)
+-			stat(s, ORDER_FALLBACK);
++		if (unlikely(!page))
++			goto out;
++		stat(s, ORDER_FALLBACK);
+ 	}
+ 
+-	if (kmemcheck_enabled && page
+-		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
++	if (kmemcheck_enabled &&
++	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
+ 		int pages = 1 << oo_order(oo);
+ 
+ 		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
+@@ -1385,45 +1395,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 			kmemcheck_mark_unallocated_pages(page, pages);
+ 	}
+ 
+-	if (enableirqs)
+-		local_irq_disable();
+-	if (!page)
+-		return NULL;
+-
+ 	page->objects = oo_objects(oo);
+-	mod_zone_page_state(page_zone(page),
+-		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
+-		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
+-		1 << oo_order(oo));
+-
+-	return page;
+-}
+-
+-static void setup_object(struct kmem_cache *s, struct page *page,
+-				void *object)
+-{
+-	setup_object_debug(s, page, object);
+-	if (unlikely(s->ctor))
+-		s->ctor(object);
+-}
+-
+-static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+-{
+-	struct page *page;
+-	void *start;
+-	void *last;
+-	void *p;
+-	int order;
+-
+-	BUG_ON(flags & GFP_SLAB_BUG_MASK);
+-
+-	page = allocate_slab(s,
+-		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+-	if (!page)
+-		goto out;
+ 
+ 	order = compound_order(page);
+-	inc_slabs_node(s, page_to_nid(page), page->objects);
+ 	memcg_bind_pages(s, order);
+ 	page->slab_cache = s;
+ 	__SetPageSlab(page);
+@@ -1447,10 +1421,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	page->freelist = start;
+ 	page->inuse = page->objects;
+ 	page->frozen = 1;
++
+ out:
++	if (enableirqs)
++		local_irq_disable();
++	if (!page)
++		return NULL;
++
++	mod_zone_page_state(page_zone(page),
++		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
++		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
++		1 << oo_order(oo));
++
++	inc_slabs_node(s, page_to_nid(page), page->objects);
++
+ 	return page;
+ }
+ 
++static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
++{
++	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
++		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
++		BUG();
++	}
++
++	return allocate_slab(s,
++		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
++}
++
+ static void __free_slab(struct kmem_cache *s, struct page *page)
+ {
+ 	int order = compound_order(page);
+-- 
+2.1.4
