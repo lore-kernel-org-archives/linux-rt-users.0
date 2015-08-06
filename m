@@ -1,136 +1,84 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/6] xfs: Disable percpu SB on PREEMPT_RT_FULL
-Date: Thu, 06 Aug 2015 18:17:40 -0400
-Message-ID: <20150806221814.792758659@goodmis.org>
-References: <20150806221736.555188732@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/6] Linux 3.14.48-rt49-rc1
+Date: Thu, 06 Aug 2015 18:17:36 -0400
+Message-ID: <20150806221736.555188732@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Dave Chinner <david@fromorbit.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-xfs-Disable-percpu-SB-on-PREEMPT_RT_FULL.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.14.48-rt49-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Steven Rostedt <rostedt@goodmis.org>
+This is the RT stable review cycle of patch 3.14.48-rt49-rc1.
 
-Running a test on a large CPU count box with xfs, I hit a live lock
-with the following backtraces on several CPUs:
+Please scream at me if I messed something up. Please test the patches too.
 
- Call Trace:
-  [<ffffffff812c34f8>] __const_udelay+0x28/0x30
-  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs]
-  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs]
-  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs]
-  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs]
-  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0
-  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs]
-  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs]
-  [<ffffffff811b0edd>] vfs_create+0xcd/0x130
-  [<ffffffff811b21ef>] do_last+0xb8f/0x1240
-  [<ffffffff811b39b2>] path_openat+0xc2/0x490
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Looking at the code I see it was stuck at:
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-STATIC void
-xfs_icsb_lock_cntr(
-	xfs_icsb_cnts_t	*icsbp)
-{
-	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
-		ndelay(1000);
-	}
-}
+If all goes well, this patch will be converted to the next main release
+on 8/10/2015.
 
-In xfs_icsb_modify_counters() the code is fine. There's a
-preempt_disable() called when taking this bit spinlock and a
-preempt_enable() after it is released. The issue is that not all
-locations are protected by preempt_disable() when PREEMPT_RT is set.
-Namely the places that grab all CPU cntr locks.
+Note, these changes appear to make NO_HZ_FULL work as well as 3.18-rt does.
 
-STATIC void
-xfs_icsb_lock_all_counters(
-	xfs_mount_t	*mp)
-{
-	xfs_icsb_cnts_t *cntp;
-	int		i;
+Enjoy,
 
-	for_each_online_cpu(i) {
-		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
-		xfs_icsb_lock_cntr(cntp);
-	}
-}
+-- Steve
 
-STATIC void
-xfs_icsb_disable_counter()
-{
-	[...]
-	xfs_icsb_lock_all_counters(mp);
-	[...]
-	xfs_icsb_unlock_all_counters(mp);
-}
 
-STATIC void
-xfs_icsb_balance_counter_locked()
-{
-	[...]
-	xfs_icsb_disable_counter();
-	[...]
-}
+To build 3.14.48-rt49-rc1 directly, the following patches should be applied:
 
-STATIC void
-xfs_icsb_balance_counter(
-	xfs_mount_t	*mp,
-	xfs_sb_field_t  fields,
-	int		min_per_cpu)
-{
-	spin_lock(&mp->m_sb_lock);
-	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
-	spin_unlock(&mp->m_sb_lock);
-}
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
 
-Now, when PREEMPT_RT is not enabled, that spin_lock() disables
-preemption. But for PREEMPT_RT, it does not. Although with my test box I
-was not able to produce a task state of all tasks, but I'm assuming that
-some task called the xfs_icsb_lock_all_counters() and was preempted by
-an RT task and could not finish, causing all callers of that lock to
-block indefinitely.
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.48.xz
 
-Dave Chinner has stated that the scalability of that code will probably
-be negated by PREEMPT_RT, and that it is probably best to just disable
-the code in question. Also, this code has been rewritten in newer kernels.
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.48-rt49-rc1.patch.xz
 
-Link: http://lkml.kernel.org/r/20150504004844.GA21261@dastard
+You can also build from 3.14.48-rt48 by applying the incremental patch:
 
-Cc: stable-rt@vger.kernel.org
-Suggested-by: Dave Chinner <david@fromorbit.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.48-rt48-rt49-rc1.patch.xz
+
+
+Changes from 3.14.48-rt48:
+
 ---
- fs/xfs/xfs_linux.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
-index f9bb590acc0e..8483f8cf432a 100644
---- a/fs/xfs/xfs_linux.h
-+++ b/fs/xfs/xfs_linux.h
-@@ -131,7 +131,7 @@ typedef __uint64_t __psunsigned_t;
- /*
-  * Feature macros (disable/enable)
-  */
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT_FULL)
- #define HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
- #else
- #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
--- 
-2.1.4
+
+Bogdan Purcareata (1):
+      powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
+
+Frederic Weisbecker (1):
+      x86-Tell-irq-work-about-self-IPI-support-3.14
+
+Sebastian Andrzej Siewior (1):
+      Revert "slub: delay ctor until the object is requested"
+
+Steven Rostedt (1):
+      xfs: Disable percpu SB on PREEMPT_RT_FULL
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.14.48-rt49-rc1
+
+Thomas Gleixner (1):
+      mm/slub: move slab initialization into irq enabled region
+
+----
+ arch/powerpc/kvm/Kconfig        |  1 +
+ arch/x86/include/asm/Kbuild     |  1 -
+ arch/x86/include/asm/irq_work.h | 11 ++++++
+ arch/x86/kernel/irq_work.c      |  2 +-
+ fs/xfs/xfs_linux.h              |  2 +-
+ localversion-rt                 |  2 +-
+ mm/slub.c                       | 86 +++++++++++++++++++----------------------
+ 7 files changed, 54 insertions(+), 51 deletions(-)
+ create mode 100644 arch/x86/include/asm/irq_work.h
