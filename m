@@ -1,44 +1,136 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC v0 0/3] Simple wait queue support
-Date: Thu, 6 Aug 2015 18:14:12 -0400
-Message-ID: <20150806181412.5b474213@gandalf.local.home>
-References: <1438781448-10760-1-git-send-email-daniel.wagner@bmw-carit.de>
-	<20150806192243.GD1342@windriver.com>
-	<20150806153120.61186803@gandalf.local.home>
-	<20150806213649.GB16853@twins.programming.kicks-ass.net>
+Subject: [PATCH RT 4/6] xfs: Disable percpu SB on PREEMPT_RT_FULL
+Date: Thu, 06 Aug 2015 18:17:40 -0400
+Message-ID: <20150806221814.792758659@goodmis.org>
+References: <20150806221736.555188732@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	bigeasy@linutronix.de, tglx@linutronix.de,
-	paulmck@linux.vnet.ibm.com
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0117.hostedemail.com ([216.40.44.117]:33893 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751861AbbHFWOP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 6 Aug 2015 18:14:15 -0400
-In-Reply-To: <20150806213649.GB16853@twins.programming.kicks-ass.net>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>, Dave Chinner <david@fromorbit.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-xfs-Disable-percpu-SB-on-PREEMPT_RT_FULL.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 6 Aug 2015 23:36:49 +0200
-Peter Zijlstra <peterz@infradead.org> wrote:
+3.14.48-rt49-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> On Thu, Aug 06, 2015 at 03:31:20PM -0400, Steven Rostedt wrote:
-> > > 4) poll_wait: currently it and poll_table_entry are both hard coupled
-> > >    to wait_queue_head_t -- so any users of poll_wait are not eligible
-> > >    for conversion to simple wait. (I just happened to notice that
-> > >    recently.)  A quick grep shows ~500 poll_wait users.
-> > 
-> > Looks like a good candidate to test the cwait on :-)
-> 
-> Poll uses custom wake functions, which disqualifies them on the spot.
+------------------
 
-For cwait? That's the complex wait queue (what the current wait queues
-will be called in the future).
+From: Steven Rostedt <rostedt@goodmis.org>
 
--- Steve
+Running a test on a large CPU count box with xfs, I hit a live lock
+with the following backtraces on several CPUs:
+
+ Call Trace:
+  [<ffffffff812c34f8>] __const_udelay+0x28/0x30
+  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs]
+  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs]
+  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs]
+  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs]
+  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0
+  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs]
+  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs]
+  [<ffffffff811b0edd>] vfs_create+0xcd/0x130
+  [<ffffffff811b21ef>] do_last+0xb8f/0x1240
+  [<ffffffff811b39b2>] path_openat+0xc2/0x490
+
+Looking at the code I see it was stuck at:
+
+STATIC void
+xfs_icsb_lock_cntr(
+	xfs_icsb_cnts_t	*icsbp)
+{
+	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
+		ndelay(1000);
+	}
+}
+
+In xfs_icsb_modify_counters() the code is fine. There's a
+preempt_disable() called when taking this bit spinlock and a
+preempt_enable() after it is released. The issue is that not all
+locations are protected by preempt_disable() when PREEMPT_RT is set.
+Namely the places that grab all CPU cntr locks.
+
+STATIC void
+xfs_icsb_lock_all_counters(
+	xfs_mount_t	*mp)
+{
+	xfs_icsb_cnts_t *cntp;
+	int		i;
+
+	for_each_online_cpu(i) {
+		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
+		xfs_icsb_lock_cntr(cntp);
+	}
+}
+
+STATIC void
+xfs_icsb_disable_counter()
+{
+	[...]
+	xfs_icsb_lock_all_counters(mp);
+	[...]
+	xfs_icsb_unlock_all_counters(mp);
+}
+
+STATIC void
+xfs_icsb_balance_counter_locked()
+{
+	[...]
+	xfs_icsb_disable_counter();
+	[...]
+}
+
+STATIC void
+xfs_icsb_balance_counter(
+	xfs_mount_t	*mp,
+	xfs_sb_field_t  fields,
+	int		min_per_cpu)
+{
+	spin_lock(&mp->m_sb_lock);
+	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
+	spin_unlock(&mp->m_sb_lock);
+}
+
+Now, when PREEMPT_RT is not enabled, that spin_lock() disables
+preemption. But for PREEMPT_RT, it does not. Although with my test box I
+was not able to produce a task state of all tasks, but I'm assuming that
+some task called the xfs_icsb_lock_all_counters() and was preempted by
+an RT task and could not finish, causing all callers of that lock to
+block indefinitely.
+
+Dave Chinner has stated that the scalability of that code will probably
+be negated by PREEMPT_RT, and that it is probably best to just disable
+the code in question. Also, this code has been rewritten in newer kernels.
+
+Link: http://lkml.kernel.org/r/20150504004844.GA21261@dastard
+
+Cc: stable-rt@vger.kernel.org
+Suggested-by: Dave Chinner <david@fromorbit.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ fs/xfs/xfs_linux.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
+index f9bb590acc0e..8483f8cf432a 100644
+--- a/fs/xfs/xfs_linux.h
++++ b/fs/xfs/xfs_linux.h
+@@ -131,7 +131,7 @@ typedef __uint64_t __psunsigned_t;
+ /*
+  * Feature macros (disable/enable)
+  */
+-#ifdef CONFIG_SMP
++#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT_FULL)
+ #define HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
+ #else
+ #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
+-- 
+2.1.4
