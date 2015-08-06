@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/6] mm/slub: move slab initialization into irq enabled region
-Date: Thu, 06 Aug 2015 18:17:38 -0400
-Message-ID: <20150806221814.488480403@goodmis.org>
+Subject: [PATCH RT 6/6] Linux 3.14.48-rt49-rc1
+Date: Thu, 06 Aug 2015 18:17:42 -0400
+Message-ID: <20150806221815.146874855@goodmis.org>
 References: <20150806221736.555188732@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,17 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Lameter <cl@linux.com>,
-	Pekka Enberg <penberg@kernel.org>,
-	David Rientjes <rientjes@google.com>,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Andrew Morton <akpm@linux-foundation.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
+Content-Disposition: inline; filename=0006-Linux-3.14.48-rt49-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -28,158 +22,18 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Initializing a new slab can introduce rather large latencies because most
-of the initialization runs always with interrupts disabled.
-
-There is no point in doing so.  The newly allocated slab is not visible
-yet, so there is no reason to protect it against concurrent alloc/free.
-
-Move the expensive parts of the initialization into allocate_slab(), so
-for all allocations with GFP_WAIT set, interrupts are enabled.
-
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Acked-by: Christoph Lameter <cl@linux.com>
-Cc: Pekka Enberg <penberg@kernel.org>
-Cc: David Rientjes <rientjes@google.com>
-Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/slub.c | 80 +++++++++++++++++++++++++++++++--------------------------------
- 1 file changed, 39 insertions(+), 41 deletions(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 5b0e9ee52f79..f21e9bcb9094 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -1316,6 +1316,14 @@ struct slub_free_list {
- };
- static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
- 
-+static void setup_object(struct kmem_cache *s, struct page *page,
-+				void *object)
-+{
-+	setup_object_debug(s, page, object);
-+	if (unlikely(s->ctor))
-+		s->ctor(object);
-+}
-+
- /*
-  * Slab allocation and freeing
-  */
-@@ -1338,6 +1346,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	struct kmem_cache_order_objects oo = s->oo;
- 	gfp_t alloc_gfp;
- 	bool enableirqs;
-+	void *start, *last, *p;
-+	int idx, order;
- 
- 	flags &= gfp_allowed_mask;
- 
-@@ -1364,13 +1374,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 		 * Try a lower order alloc if possible
- 		 */
- 		page = alloc_slab_page(flags, node, oo);
--
--		if (page)
--			stat(s, ORDER_FALLBACK);
-+		if (unlikely(!page))
-+			goto out;
-+		stat(s, ORDER_FALLBACK);
- 	}
- 
--	if (kmemcheck_enabled && page
--		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
-+	if (kmemcheck_enabled &&
-+	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
- 		int pages = 1 << oo_order(oo);
- 
- 		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
-@@ -1385,45 +1395,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 			kmemcheck_mark_unallocated_pages(page, pages);
- 	}
- 
--	if (enableirqs)
--		local_irq_disable();
--	if (!page)
--		return NULL;
--
- 	page->objects = oo_objects(oo);
--	mod_zone_page_state(page_zone(page),
--		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
--		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
--		1 << oo_order(oo));
--
--	return page;
--}
--
--static void setup_object(struct kmem_cache *s, struct page *page,
--				void *object)
--{
--	setup_object_debug(s, page, object);
--	if (unlikely(s->ctor))
--		s->ctor(object);
--}
--
--static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
--{
--	struct page *page;
--	void *start;
--	void *last;
--	void *p;
--	int order;
--
--	BUG_ON(flags & GFP_SLAB_BUG_MASK);
--
--	page = allocate_slab(s,
--		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
--	if (!page)
--		goto out;
- 
- 	order = compound_order(page);
--	inc_slabs_node(s, page_to_nid(page), page->objects);
- 	memcg_bind_pages(s, order);
- 	page->slab_cache = s;
- 	__SetPageSlab(page);
-@@ -1447,10 +1421,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	page->freelist = start;
- 	page->inuse = page->objects;
- 	page->frozen = 1;
-+
- out:
-+	if (enableirqs)
-+		local_irq_disable();
-+	if (!page)
-+		return NULL;
-+
-+	mod_zone_page_state(page_zone(page),
-+		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
-+		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
-+		1 << oo_order(oo));
-+
-+	inc_slabs_node(s, page_to_nid(page), page->objects);
-+
- 	return page;
- }
- 
-+static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
-+{
-+	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
-+		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
-+		BUG();
-+	}
-+
-+	return allocate_slab(s,
-+		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
-+}
-+
- static void __free_slab(struct kmem_cache *s, struct page *page)
- {
- 	int order = compound_order(page);
+diff --git a/localversion-rt b/localversion-rt
+index 24707986c321..623b4c9cb701 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt48
++-rt49-rc1
 -- 
 2.1.4
