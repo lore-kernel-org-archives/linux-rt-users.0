@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/6] Revert "slub: delay ctor until the object is requested"
-Date: Fri, 07 Aug 2015 10:01:10 -0400
-Message-ID: <20150807140121.157210960@goodmis.org>
+Subject: [PATCH RT 5/6] powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
+Date: Fri, 07 Aug 2015 10:01:14 -0400
+Message-ID: <20150807140121.803879150@goodmis.org>
 References: <20150807140109.299360883@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	<stable-rt@vger.kernel.org>, Scott Wood <scottwood@freescale.com>,
+	Bogdan Purcareata <bogdan.purcareata@freescale.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-Revert-slub-delay-ctor-until-the-object-is-requested.patch
+Content-Disposition: inline; filename=0005-powerpc-kvm-Disable-in-kernel-MPIC-emulation-for-PRE.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,43 +24,44 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Bogdan Purcareata <bogdan.purcareata@freescale.com>
 
-This approach is broken with SLAB_DESTROY_BY_RCU allocations.
-Reported by Steven Rostedt and Koehrer Mathias.
+While converting the openpic emulation code to use a raw_spinlock_t enables
+guests to run on RT, there's still a performance issue. For interrupts sent in
+directed delivery mode with a multiple CPU mask, the emulated openpic will loop
+through all of the VCPUs, and for each VCPUs, it call IRQ_check, which will loop
+through all the pending interrupts for that VCPU. This is done while holding the
+raw_lock, meaning that in all this time the interrupts and preemption are
+disabled on the host Linux. A malicious user app can max both these number and
+cause a DoS.
+
+This temporary fix is sent for two reasons. First is so that users who want to
+use the in-kernel MPIC emulation are aware of the potential latencies, thus
+making sure that the hardware MPIC and their usage scenario does not involve
+interrupts sent in directed delivery mode, and the number of possible pending
+interrupts is kept small. Secondly, this should incentivize the development of a
+proper openpic emulation that would be better suited for RT.
 
 Cc: stable-rt@vger.kernel.org
+Acked-by: Scott Wood <scottwood@freescale.com>
+Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/slub.c | 6 ------
- 1 file changed, 6 deletions(-)
+ arch/powerpc/kvm/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 90154580b304..b982cc52d454 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -1363,10 +1363,8 @@ static void setup_object(struct kmem_cache *s, struct page *page,
- 				void *object)
- {
- 	setup_object_debug(s, page, object);
--#ifndef CONFIG_PREEMPT_RT_FULL
- 	if (unlikely(s->ctor))
- 		s->ctor(object);
--#endif
- }
- 
- static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
-@@ -2470,10 +2468,6 @@ redo:
- 
- 	if (unlikely(gfpflags & __GFP_ZERO) && object)
- 		memset(object, 0, s->object_size);
--#ifdef CONFIG_PREEMPT_RT_FULL
--	if (unlikely(s->ctor) && object)
--		s->ctor(object);
--#endif
- 
- 	slab_post_alloc_hook(s, gfpflags, object);
- 
+diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
+index ffaef2cb101a..78c3c30de9fd 100644
+--- a/arch/powerpc/kvm/Kconfig
++++ b/arch/powerpc/kvm/Kconfig
+@@ -155,6 +155,7 @@ config KVM_E500MC
+ config KVM_MPIC
+ 	bool "KVM in-kernel MPIC emulation"
+ 	depends on KVM && E500
++	depends on !PREEMPT_RT_FULL
+ 	select HAVE_KVM_IRQCHIP
+ 	select HAVE_KVM_IRQ_ROUTING
+ 	select HAVE_KVM_MSI
 -- 
 2.1.4
