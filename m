@@ -1,82 +1,185 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/6] Linux 3.10.84-rt92-rc1
-Date: Fri, 07 Aug 2015 14:07:09 -0400
-Message-ID: <20150807180709.744130098@goodmis.org>
+Subject: [PATCH RT 2/6] mm/slub: move slab initialization into irq enabled region
+Date: Fri, 07 Aug 2015 14:07:11 -0400
+Message-ID: <20150807180723.683802240@goodmis.org>
+References: <20150807180709.744130098@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.84-rt92-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.84-rt92-rc1.
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+Initializing a new slab can introduce rather large latencies because most
+of the initialization runs always with interrupts disabled.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+There is no point in doing so.  The newly allocated slab is not visible
+yet, so there is no reason to protect it against concurrent alloc/free.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+Move the expensive parts of the initialization into allocate_slab(), so
+for all allocations with GFP_WAIT set, interrupts are enabled.
 
-If all goes well, this patch will be converted to the next main release
-on 8/10/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.10.84-rt92-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.84.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.84-rt92-rc1.patch.xz
-
-You can also build from 3.10.84-rt91 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.84-rt91-rt92-rc1.patch.xz
-
-
-Changes from 3.10.84-rt91:
-
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ mm/slub.c | 80 +++++++++++++++++++++++++++++++--------------------------------
+ 1 file changed, 39 insertions(+), 41 deletions(-)
 
-
-Bogdan Purcareata (1):
-      powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
-
-Frederic Weisbecker (1):
-      x86-Tell-irq-work-about-self-IPI-support-3.14
-
-Sebastian Andrzej Siewior (1):
-      Revert "slub: delay ctor until the object is requested"
-
-Steven Rostedt (1):
-      xfs: Disable percpu SB on PREEMPT_RT_FULL
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.84-rt92-rc1
-
-Thomas Gleixner (1):
-      mm/slub: move slab initialization into irq enabled region
-
-----
- arch/powerpc/kvm/Kconfig        |  1 +
- arch/x86/include/asm/Kbuild     |  1 -
- arch/x86/include/asm/irq_work.h | 11 ++++++
- arch/x86/kernel/irq_work.c      |  2 +-
- fs/xfs/xfs_linux.h              |  2 +-
- localversion-rt                 |  2 +-
- mm/slub.c                       | 86 +++++++++++++++++++----------------------
- 7 files changed, 54 insertions(+), 51 deletions(-)
- create mode 100644 arch/x86/include/asm/irq_work.h
+diff --git a/mm/slub.c b/mm/slub.c
+index 8ca44623dba7..eec1443acb92 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1260,6 +1260,14 @@ struct slub_free_list {
+ };
+ static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
+ 
++static void setup_object(struct kmem_cache *s, struct page *page,
++				void *object)
++{
++	setup_object_debug(s, page, object);
++	if (unlikely(s->ctor))
++		s->ctor(object);
++}
++
+ /*
+  * Slab allocation and freeing
+  */
+@@ -1282,6 +1290,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	struct kmem_cache_order_objects oo = s->oo;
+ 	gfp_t alloc_gfp;
+ 	bool enableirqs;
++	void *start, *last, *p;
++	int idx, order;
+ 
+ 	flags &= gfp_allowed_mask;
+ 
+@@ -1308,13 +1318,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 		 * Try a lower order alloc if possible
+ 		 */
+ 		page = alloc_slab_page(flags, node, oo);
+-
+-		if (page)
+-			stat(s, ORDER_FALLBACK);
++		if (unlikely(!page))
++			goto out;
++		stat(s, ORDER_FALLBACK);
+ 	}
+ 
+-	if (kmemcheck_enabled && page
+-		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
++	if (kmemcheck_enabled &&
++	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
+ 		int pages = 1 << oo_order(oo);
+ 
+ 		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
+@@ -1329,45 +1339,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 			kmemcheck_mark_unallocated_pages(page, pages);
+ 	}
+ 
+-	if (enableirqs)
+-		local_irq_disable();
+-	if (!page)
+-		return NULL;
+-
+ 	page->objects = oo_objects(oo);
+-	mod_zone_page_state(page_zone(page),
+-		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
+-		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
+-		1 << oo_order(oo));
+-
+-	return page;
+-}
+-
+-static void setup_object(struct kmem_cache *s, struct page *page,
+-				void *object)
+-{
+-	setup_object_debug(s, page, object);
+-	if (unlikely(s->ctor))
+-		s->ctor(object);
+-}
+-
+-static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+-{
+-	struct page *page;
+-	void *start;
+-	void *last;
+-	void *p;
+-	int order;
+-
+-	BUG_ON(flags & GFP_SLAB_BUG_MASK);
+-
+-	page = allocate_slab(s,
+-		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+-	if (!page)
+-		goto out;
+ 
+ 	order = compound_order(page);
+-	inc_slabs_node(s, page_to_nid(page), page->objects);
+ 	memcg_bind_pages(s, order);
+ 	page->slab_cache = s;
+ 	__SetPageSlab(page);
+@@ -1391,10 +1365,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	page->freelist = start;
+ 	page->inuse = page->objects;
+ 	page->frozen = 1;
++
+ out:
++	if (enableirqs)
++		local_irq_disable();
++	if (!page)
++		return NULL;
++
++	mod_zone_page_state(page_zone(page),
++		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
++		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
++		1 << oo_order(oo));
++
++	inc_slabs_node(s, page_to_nid(page), page->objects);
++
+ 	return page;
+ }
+ 
++static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
++{
++	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
++		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
++		BUG();
++	}
++
++	return allocate_slab(s,
++		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
++}
++
+ static void __free_slab(struct kmem_cache *s, struct page *page)
+ {
+ 	int order = compound_order(page);
+-- 
+2.4.6
