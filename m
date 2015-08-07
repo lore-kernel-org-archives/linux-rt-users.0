@@ -1,136 +1,57 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/6] xfs: Disable percpu SB on PREEMPT_RT_FULL
-Date: Fri, 07 Aug 2015 14:07:13 -0400
-Message-ID: <20150807180724.036679746@goodmis.org>
-References: <20150807180709.744130098@goodmis.org>
+From: Clark Williams <williams@redhat.com>
+Subject: [RT - hwlat_detector] correctly record max when the "outer" value
+ is maximum
+Date: Fri, 7 Aug 2015 15:20:37 -0500
+Message-ID: <20150807152037.02884401@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Dave Chinner <david@fromorbit.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8BIT
+Cc: Steven Rostedt <srostedt@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	RT <linux-rt-users@vger.kernel.org>,
+	Luiz Capitulino <lcapitulino@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-xfs-Disable-percpu-SB-on-PREEMPT_RT_FULL.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.84-rt92-rc1 stable review patch.
-If anyone has any objections, please let me know.
+Steven,
 
-------------------
+The hwlat_detector module does not correctly record when the "outer"
+calculation is the largest diff seen in consecutive clock reads. This
+patch should properly record when outer_sample is the largest value
+seen:
+>From 8b9c14ea45991fdda2040d45647ca4d5358e8221 Mon Sep 17 00:00:00 2001
+From: Clark Williams <williams@redhat.com>
+Date: Fri, 7 Aug 2015 15:07:30 -0500
+Subject: [PATCH] hwlat_detector: update stats code to record when "outer" interval exceeds threshold
 
-From: Steven Rostedt <rostedt@goodmis.org>
+The hwlat_detector polls the system clock (either ktime_get() or trace_clock_local())
+source looking for intervals between successive reads which exceed a specified threshold.
+There are two intervals examined, the "inner" interval which is between t1 and t2,
+and the "outer" interval which is between t2 and t1' (i.e. the "next" t1 value).
 
-Running a test on a large CPU count box with xfs, I hit a live lock
-with the following backtraces on several CPUs:
+This patch updates the detector module to record if the outer interval is the maximum
+interval encountered during a run.
 
- Call Trace:
-  [<ffffffff812c34f8>] __const_udelay+0x28/0x30
-  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs]
-  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs]
-  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs]
-  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs]
-  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0
-  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs]
-  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs]
-  [<ffffffff811b0edd>] vfs_create+0xcd/0x130
-  [<ffffffff811b21ef>] do_last+0xb8f/0x1240
-  [<ffffffff811b39b2>] path_openat+0xc2/0x490
-
-Looking at the code I see it was stuck at:
-
-STATIC void
-xfs_icsb_lock_cntr(
-	xfs_icsb_cnts_t	*icsbp)
-{
-	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
-		ndelay(1000);
-	}
-}
-
-In xfs_icsb_modify_counters() the code is fine. There's a
-preempt_disable() called when taking this bit spinlock and a
-preempt_enable() after it is released. The issue is that not all
-locations are protected by preempt_disable() when PREEMPT_RT is set.
-Namely the places that grab all CPU cntr locks.
-
-STATIC void
-xfs_icsb_lock_all_counters(
-	xfs_mount_t	*mp)
-{
-	xfs_icsb_cnts_t *cntp;
-	int		i;
-
-	for_each_online_cpu(i) {
-		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
-		xfs_icsb_lock_cntr(cntp);
-	}
-}
-
-STATIC void
-xfs_icsb_disable_counter()
-{
-	[...]
-	xfs_icsb_lock_all_counters(mp);
-	[...]
-	xfs_icsb_unlock_all_counters(mp);
-}
-
-STATIC void
-xfs_icsb_balance_counter_locked()
-{
-	[...]
-	xfs_icsb_disable_counter();
-	[...]
-}
-
-STATIC void
-xfs_icsb_balance_counter(
-	xfs_mount_t	*mp,
-	xfs_sb_field_t  fields,
-	int		min_per_cpu)
-{
-	spin_lock(&mp->m_sb_lock);
-	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
-	spin_unlock(&mp->m_sb_lock);
-}
-
-Now, when PREEMPT_RT is not enabled, that spin_lock() disables
-preemption. But for PREEMPT_RT, it does not. Although with my test box I
-was not able to produce a task state of all tasks, but I'm assuming that
-some task called the xfs_icsb_lock_all_counters() and was preempted by
-an RT task and could not finish, causing all callers of that lock to
-block indefinitely.
-
-Dave Chinner has stated that the scalability of that code will probably
-be negated by PREEMPT_RT, and that it is probably best to just disable
-the code in question. Also, this code has been rewritten in newer kernels.
-
-Link: http://lkml.kernel.org/r/20150504004844.GA21261@dastard
-
-Cc: stable-rt@vger.kernel.org
-Suggested-by: Dave Chinner <david@fromorbit.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+Reported-by: Luiz Capitulino <lcapitulino@redhat.com>
+Signed-off-by: Clark Williams <williams@redhat.com>
 ---
- fs/xfs/xfs_linux.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/misc/hwlat_detector.c | 2 ++
+ 1 file changed, 2 insertions(+)
 
-diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
-index 800f896a6cc4..6f07c0bcbed4 100644
---- a/fs/xfs/xfs_linux.h
-+++ b/fs/xfs/xfs_linux.h
-@@ -99,7 +99,7 @@
- /*
-  * Feature macros (disable/enable)
-  */
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT_FULL)
- #define HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
- #else
- #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
+diff --git a/drivers/misc/hwlat_detector.c b/drivers/misc/hwlat_detector.c
+index d2676b867e41..5ca7aa9780e0 100644
+--- a/drivers/misc/hwlat_detector.c
++++ b/drivers/misc/hwlat_detector.c
+@@ -294,6 +294,8 @@ static int get_sample(void)
+ 		/* Keep a running maximum ever recorded hardware latency */
+ 		if (sample > data.max_sample)
+ 			data.max_sample = sample;
++		if (outer_sample > data.max_sample)
++			data.max_sample = outer_sample;
+ 	}
+ 
+ out:
 -- 
-2.4.6
+2.4.3
