@@ -1,9 +1,8 @@
-From: Christoph Hellwig <hch@infradead.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Fri, 7 Aug 2015 09:41:31 -0700
-Message-ID: <20150807164131.GA20239@infradead.org>
-References: <20150116114846.4e7b718d@gandalf.local.home>
- <20150119144100.GA10794@amt.cnet>
+Date: Fri, 7 Aug 2015 18:45:26 +0200
+Message-ID: <20150807164526.GO12596@twins.programming.kicks-ass.net>
+References: <20150119144100.GA10794@amt.cnet>
  <20150120054653.GA6473@iris.ozlabs.ibm.com>
  <20150120131613.009903a0@gandalf.local.home>
  <20150121150716.GD11596@twins.programming.kicks-ass.net>
@@ -12,6 +11,7 @@ References: <20150116114846.4e7b718d@gandalf.local.home>
  <20150225210250.GA25858@linutronix.de>
  <20150807105738.GF16853@twins.programming.kicks-ass.net>
  <20150807111415.GC18673@twins.programming.kicks-ass.net>
+ <20150807164131.GA20239@infradead.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -24,17 +24,32 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Steven Rostedt <srostedt@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
 	Paolo Bonzini <pbonzini@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
+To: Christoph Hellwig <hch@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150807111415.GC18673@twins.programming.kicks-ass.net>
+In-Reply-To: <20150807164131.GA20239@infradead.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Aug 07, 2015 at 01:14:15PM +0200, Peter Zijlstra wrote:
-> On that, we cannot convert completions to swait. Because swait wake_all
-> must not happen from IRQ context, and complete_all() typically is used
-> from just that.
+On Fri, Aug 07, 2015 at 09:41:31AM -0700, Christoph Hellwig wrote:
+> On Fri, Aug 07, 2015 at 01:14:15PM +0200, Peter Zijlstra wrote:
+> > On that, we cannot convert completions to swait. Because swait wake_all
+> > must not happen from IRQ context, and complete_all() typically is used
+> > from just that.
+> 
+> If swait queues aren't useable from IRQ context they will be fairly
+> useless.  What's the problem with making them irq safe?
 
-If swait queues aren't useable from IRQ context they will be fairly
-useless.  What's the problem with making them irq safe?
+Its just the swait_wake_all() that is not. The entire purpose of them
+was to have something that allows bounded execution (RT and all).
+
+Since you can have unbounded numbers of tasks waiting on a waitqueue
+(well, reality has bounds of course, like total memory available etc..)
+a wake_all() can end up being many many wake_process() calls.
+
+We've had this be a problem in RT.
+
+So the proposed swait_wake_all() requires being called from task
+context, such that it can drop the lock (and IRQ disable) after every
+wakeup, and thereby guarantee that higher priority things will not
+experience undue latencies.
