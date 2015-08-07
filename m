@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/6] Linux 3.12.44-rt62-rc1
-Date: Fri, 07 Aug 2015 10:01:09 -0400
-Message-ID: <20150807140109.299360883@goodmis.org>
+Subject: [PATCH RT 6/6] Linux 3.12.44-rt62-rc1
+Date: Fri, 07 Aug 2015 10:01:15 -0400
+Message-ID: <20150807140121.986877481@goodmis.org>
+References: <20150807140109.299360883@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,73 +13,27 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0006-Linux-3.12.44-rt62-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.12.44-rt62-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.12.44-rt62-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 8/10/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.12.44-rt62-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.44.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.44-rt62-rc1.patch.xz
-
-You can also build from 3.12.44-rt61 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.44-rt61-rt62-rc1.patch.xz
-
-
-Changes from 3.12.44-rt61:
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Bogdan Purcareata (1):
-      powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
-
-Frederic Weisbecker (1):
-      x86-Tell-irq-work-about-self-IPI-support-3.14
-
-Sebastian Andrzej Siewior (1):
-      Revert "slub: delay ctor until the object is requested"
-
-Steven Rostedt (1):
-      xfs: Disable percpu SB on PREEMPT_RT_FULL
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.12.44-rt62-rc1
-
-Thomas Gleixner (1):
-      mm/slub: move slab initialization into irq enabled region
-
-----
- arch/powerpc/kvm/Kconfig        |  1 +
- arch/x86/include/asm/Kbuild     |  1 -
- arch/x86/include/asm/irq_work.h | 11 ++++++
- arch/x86/kernel/irq_work.c      |  2 +-
- fs/xfs/xfs_linux.h              |  2 +-
- localversion-rt                 |  2 +-
- mm/slub.c                       | 86 +++++++++++++++++++----------------------
- 7 files changed, 54 insertions(+), 51 deletions(-)
- create mode 100644 arch/x86/include/asm/irq_work.h
+diff --git a/localversion-rt b/localversion-rt
+index 9b7de9345ef4..fef6b3cf9384 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt61
++-rt62-rc1
+-- 
+2.1.4
