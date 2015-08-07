@@ -1,127 +1,105 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: [RFC v0 0/3] Simple wait queue support
-Date: Fri, 7 Aug 2015 08:42:23 +0200
-Message-ID: <55C4534F.9040409@bmw-carit.de>
-References: <1438781448-10760-1-git-send-email-daniel.wagner@bmw-carit.de>
+From: "Wolfgang M. Reimer" <linuxball@gmail.com>
+Subject: Re: [PATCH RT 0/7] Linux 3.18.18-rt16-rc1
+Date: Fri, 07 Aug 2015 10:47:03 +0200
+Message-ID: <55C47087.7050300@gmail.com>
+References: <20150805011826.881627614@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: <paul.gortmaker@windriver.com>, <peterz@infradead.org>,
-	<bigeasy@linutronix.de>, <tglx@linutronix.de>,
-	<paulmck@linux.vnet.ibm.com>, <rostedt@goodmis.org>
-To: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:39341 "EHLO
-	mail.bmw-carit.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751960AbbHGGsB (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Aug 2015 02:48:01 -0400
-In-Reply-To: <1438781448-10760-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150805011826.881627614@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 08/05/2015 03:30 PM, Daniel Wagner wrote:
-> My test system didn't crash or showed any obvious defects, so I
-> decided to apply some benchmarks utilizing mmtests. I have picked some
+Hi all,
 
-As it turns out, this is not really true. I forgot to enable lockdep:
+only after additionally installing my
+"3.18.17-rt14 locktorture: Do NOT include rwlock.h" patch
+I could build the kernel with CONFIG_PREEMPT_RT_FULL=y.
 
-[    0.053193] =================================
-[    0.053490] [ INFO: inconsistent lock state ]
-[    0.053790] 4.2.0-rc5-00022-g6d2f78c #63 Not tainted
-[    0.054000] ---------------------------------
-[    0.054000] inconsistent {IN-SOFTIRQ-W} -> {SOFTIRQ-ON-W} usage.
-[    0.054000] rcu_preempt/7 [HC0[0]:SC0[0]:HE1:SE1] takes:
-[    0.054000]  (rcu_node_0){+.?...}, at: [<ffffffff81133643>] rcu_gp_kthread+0xfe3/0x2390
-[    0.054000] {IN-SOFTIRQ-W} state was registered at:
-[    0.054000]   [<ffffffff81108a6c>] __lock_acquire+0xbfc/0x2050
-[    0.054000]   [<ffffffff8110acbf>] lock_acquire+0xdf/0x2b0
-[    0.054000]   [<ffffffff81913b19>] _raw_spin_lock_irqsave+0x59/0xa0
-[    0.054000]   [<ffffffff811357e9>] rcu_process_callbacks+0x109/0xf00
-[    0.054000]   [<ffffffff810b195d>] __do_softirq+0x14d/0x670
-[    0.054000]   [<ffffffff810b20d1>] irq_exit+0x101/0x110
-[    0.054000]   [<ffffffff81916d16>] smp_apic_timer_interrupt+0x46/0x60
-[    0.054000]   [<ffffffff81914cf0>] apic_timer_interrupt+0x70/0x80
-[    0.054000]   [<ffffffff814d7a97>] vsnprintf+0x367/0x530
-[    0.054000]   [<ffffffff814d7d03>] snprintf+0x43/0x60
-[    0.054000]   [<ffffffff810d90cf>] register_sched_domain_sysctl+0xdf/0x670
-[    0.054000]   [<ffffffff8217c74d>] sched_init_smp+0x524/0x5d7
-[    0.054000]   [<ffffffff8215a1e8>] kernel_init_freeable+0x171/0x28f
-[    0.054000]   [<ffffffff818fe3be>] kernel_init+0xe/0xe0
-[    0.054000]   [<ffffffff8191419f>] ret_from_fork+0x3f/0x70
-[    0.054000] irq event stamp: 46
-[    0.054000] hardirqs last  enabled at (45): [<ffffffff819131a0>] _raw_spin_unlock_irq+0x30/0x60
-[    0.054000] hardirqs last disabled at (46): [<ffffffff81912ebf>] _raw_spin_lock_irq+0x1f/0x90
-[    0.054000] softirqs last  enabled at (0): [<ffffffff810a8c98>] copy_process.part.26+0x628/0x1ce0
-[    0.054000] softirqs last disabled at (0): [<          (null)>]           (null)
-[    0.054000] 
-[    0.054000] other info that might help us debug this:
-[    0.054000]  Possible unsafe locking scenario:
-[    0.054000] 
-[    0.054000]        CPU0
-[    0.054000]        ----
-[    0.054000]   lock(rcu_node_0);
-[    0.054000]   <Interrupt>
-[    0.054000]     lock(rcu_node_0);
-[    0.054000] 
-[    0.054000]  *** DEADLOCK ***
-[    0.054000] 
-[    0.054000] 1 lock held by rcu_preempt/7:
-[    0.054000]  #0:  (rcu_node_0){+.?...}, at: [<ffffffff81133643>] rcu_gp_kthread+0xfe3/0x2390
-[    0.054000] 
-[    0.054000] stack backtrace:
-[    0.054000] CPU: 0 PID: 7 Comm: rcu_preempt Not tainted 4.2.0-rc5-00022-g6d2f78c #63
-[    0.054000] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.8.1-20150318_183358- 04/01/2014
-[    0.054000]  0000000000000000 00000000be272de7 ffff88007c0e7b98 ffffffff81908ed7
-[    0.054000]  0000000000000000 ffff88007c0e8000 ffff88007c0e7bf8 ffffffff81107195
-[    0.054000]  0000000000000000 ffff880000000001 ffff880000000001 ffffffff8102fa9f
-[    0.054000] Call Trace:
-[    0.054000]  [<ffffffff81908ed7>] dump_stack+0x4f/0x7b
-[    0.054000]  [<ffffffff81107195>] print_usage_bug+0x215/0x240
-[    0.054000]  [<ffffffff8102fa9f>] ? save_stack_trace+0x2f/0x50
-[    0.054000]  [<ffffffff81107767>] mark_lock+0x5a7/0x670
-[    0.054000]  [<ffffffff811066d0>] ? check_usage_forwards+0x150/0x150
-[    0.054000]  [<ffffffff811078ad>] mark_held_locks+0x7d/0xb0
-[    0.054000]  [<ffffffff819131a0>] ? _raw_spin_unlock_irq+0x30/0x60
-[    0.054000]  [<ffffffff81107a48>] trace_hardirqs_on_caller+0x168/0x220
-[    0.054000]  [<ffffffff81107b0d>] trace_hardirqs_on+0xd/0x10
-[    0.054000]  [<ffffffff819131a0>] _raw_spin_unlock_irq+0x30/0x60
-[    0.054000]  [<ffffffff810fc0bb>] swake_up_all+0xbb/0xe0
-[    0.054000]  [<ffffffff811336cd>] rcu_gp_kthread+0x106d/0x2390
-[    0.054000]  [<ffffffff819131a0>] ? _raw_spin_unlock_irq+0x30/0x60
-[    0.054000]  [<ffffffff8190c575>] ? __schedule+0x885/0x9e0
-[    0.054000]  [<ffffffff810d2329>] ? kthread+0xd9/0x120
-[    0.054000]  [<ffffffff81132660>] ? rcu_barrier+0x20/0x20
-[    0.054000]  [<ffffffff810d2354>] kthread+0x104/0x120
-[    0.054000]  [<ffffffff819131a0>] ? _raw_spin_unlock_irq+0x30/0x60
-[    0.054000]  [<ffffffff810d2250>] ? kthread_create_on_node+0x260/0x260
-[    0.054000]  [<ffffffff8191419f>] ret_from_fork+0x3f/0x70
-[    0.054000]  [<ffffffff810d2250>] ? kthread_create_on_node+0x260/0x260
+So far kernel 3.18.18-rt16-rc1 runs fine on my lenovo
+notebook as well as on a server with (an already 5 year
+old) ASUS Z8NA-D6(C) motherboard (in Ubuntu 14.04.3 LTS).
 
-If I decoded this correctly the call to rcu_future_gp_cleanup() is
-supposed to run with IRQs disabled. swake_up_all() though will reenable the
-IRQs:
+Regards,
 
-rcu_gp_cleanup() 
-	rcu_for_each_node_breadth_first(rsp, rnp) {
-		raw_spin_lock_irq(&rnp->lock);
-
-		nocb += rcu_future_gp_cleanup(rsp, rnp);
-		raw_spin_unlock_irq(&rnp->lock);
-	}
-
-rcu_future_gp_cleanup()
-	rcu_nocb_gp_cleanup()
-		swake_up_all()
+Wolfgang
 
 
-With IRQs enabled again and we end up in rcu_process_callbacks
-under SOFTIRQ. rcu_process_callbacks aquires the RCU lock again.
-
-Not sure what to do here.
-
-cheers,
-daniel
-      
-
-
+On 05.08.2015 03:18, Steven Rostedt wrote:
+> Dear RT Folks,
+> 
+> This is the RT stable review cycle of patch 3.18.18-rt16-rc1.
+> 
+> Please scream at me if I messed something up. Please test the patches too.
+> 
+> The -rc release will be uploaded to kernel.org and will be deleted when
+> the final release is out. This is just a review release (or release candidate).
+> 
+> The pre-releases will not be pushed to the git repository, only the
+> final release is.
+> 
+> If all goes well, this patch will be converted to the next main release
+> on 8/10/2015.
+> 
+> Enjoy,
+> 
+> -- Steve
+> 
+> 
+> To build 3.18.18-rt16-rc1 directly, the following patches should be applied:
+> 
+>   http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+> 
+>   http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.18.xz
+> 
+>   http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.18-rt16-rc1.patch.xz
+> 
+> You can also build from 3.18.18-rt15 by applying the incremental patch:
+> 
+> http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.18-rt15-rt16-rc1.patch.xz
+> 
+> 
+> Changes from 3.18.18-rt15:
+> 
+> ---
+> 
+> 
+> Davidlohr Bueso (2):
+>       futex: Implement lockless wakeups
+>       ipc/mqueue: Implement lockless pipelined wakeups
+> 
+> Peter Zijlstra (1):
+>       sched: Implement lockless wake-queues
+> 
+> Sebastian Andrzej Siewior (2):
+>       Revert "slub: delay ctor until the object is requested"
+>       kernel/irq_work: fix non RT case
+> 
+> Steven Rostedt (Red Hat) (1):
+>       Linux 3.18.18-rt16-rc1
+> 
+> Thomas Gleixner (1):
+>       mm/slub: move slab initialization into irq enabled region
+> 
+> ----
+>  include/linux/sched.h | 46 ++++++++++++++++++++++++++++
+>  ipc/mqueue.c          | 53 +++++++++++++++++++-------------
+>  kernel/futex.c        | 33 ++++++++++----------
+>  kernel/sched/core.c   | 46 ++++++++++++++++++++++++++++
+>  kernel/time/timer.c   |  3 +-
+>  localversion-rt       |  2 +-
+>  mm/slub.c             | 85 +++++++++++++++++++++++----------------------------
+>  7 files changed, 182 insertions(+), 86 deletions(-)
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
