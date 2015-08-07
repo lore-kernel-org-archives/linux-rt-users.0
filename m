@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 5/6] powerpc/kvm: Disable in-kernel MPIC emulation for PREEMPT_RT_FULL
-Date: Fri, 07 Aug 2015 10:01:14 -0400
-Message-ID: <20150807140121.803879150@goodmis.org>
+Subject: [PATCH RT 2/6] mm/slub: move slab initialization into irq enabled region
+Date: Fri, 07 Aug 2015 10:01:11 -0400
+Message-ID: <20150807140121.297225820@goodmis.org>
 References: <20150807140109.299360883@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Scott Wood <scottwood@freescale.com>,
-	Bogdan Purcareata <bogdan.purcareata@freescale.com>
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-powerpc-kvm-Disable-in-kernel-MPIC-emulation-for-PRE.patch
+Content-Disposition: inline; filename=0002-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,44 +28,158 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Bogdan Purcareata <bogdan.purcareata@freescale.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-While converting the openpic emulation code to use a raw_spinlock_t enables
-guests to run on RT, there's still a performance issue. For interrupts sent in
-directed delivery mode with a multiple CPU mask, the emulated openpic will loop
-through all of the VCPUs, and for each VCPUs, it call IRQ_check, which will loop
-through all the pending interrupts for that VCPU. This is done while holding the
-raw_lock, meaning that in all this time the interrupts and preemption are
-disabled on the host Linux. A malicious user app can max both these number and
-cause a DoS.
+Initializing a new slab can introduce rather large latencies because most
+of the initialization runs always with interrupts disabled.
 
-This temporary fix is sent for two reasons. First is so that users who want to
-use the in-kernel MPIC emulation are aware of the potential latencies, thus
-making sure that the hardware MPIC and their usage scenario does not involve
-interrupts sent in directed delivery mode, and the number of possible pending
-interrupts is kept small. Secondly, this should incentivize the development of a
-proper openpic emulation that would be better suited for RT.
+There is no point in doing so.  The newly allocated slab is not visible
+yet, so there is no reason to protect it against concurrent alloc/free.
 
-Cc: stable-rt@vger.kernel.org
-Acked-by: Scott Wood <scottwood@freescale.com>
-Signed-off-by: Bogdan Purcareata <bogdan.purcareata@freescale.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Move the expensive parts of the initialization into allocate_slab(), so
+for all allocations with GFP_WAIT set, interrupts are enabled.
+
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/powerpc/kvm/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ mm/slub.c | 80 +++++++++++++++++++++++++++++++--------------------------------
+ 1 file changed, 39 insertions(+), 41 deletions(-)
 
-diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index ffaef2cb101a..78c3c30de9fd 100644
---- a/arch/powerpc/kvm/Kconfig
-+++ b/arch/powerpc/kvm/Kconfig
-@@ -155,6 +155,7 @@ config KVM_E500MC
- config KVM_MPIC
- 	bool "KVM in-kernel MPIC emulation"
- 	depends on KVM && E500
-+	depends on !PREEMPT_RT_FULL
- 	select HAVE_KVM_IRQCHIP
- 	select HAVE_KVM_IRQ_ROUTING
- 	select HAVE_KVM_MSI
+diff --git a/mm/slub.c b/mm/slub.c
+index b982cc52d454..3a5d54e75ffe 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1276,6 +1276,14 @@ struct slub_free_list {
+ };
+ static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
+ 
++static void setup_object(struct kmem_cache *s, struct page *page,
++				void *object)
++{
++	setup_object_debug(s, page, object);
++	if (unlikely(s->ctor))
++		s->ctor(object);
++}
++
+ /*
+  * Slab allocation and freeing
+  */
+@@ -1298,6 +1306,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	struct kmem_cache_order_objects oo = s->oo;
+ 	gfp_t alloc_gfp;
+ 	bool enableirqs;
++	void *start, *last, *p;
++	int idx, order;
+ 
+ 	flags &= gfp_allowed_mask;
+ 
+@@ -1324,13 +1334,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 		 * Try a lower order alloc if possible
+ 		 */
+ 		page = alloc_slab_page(flags, node, oo);
+-
+-		if (page)
+-			stat(s, ORDER_FALLBACK);
++		if (unlikely(!page))
++			goto out;
++		stat(s, ORDER_FALLBACK);
+ 	}
+ 
+-	if (kmemcheck_enabled && page
+-		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
++	if (kmemcheck_enabled &&
++	    !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
+ 		int pages = 1 << oo_order(oo);
+ 
+ 		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
+@@ -1345,45 +1355,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 			kmemcheck_mark_unallocated_pages(page, pages);
+ 	}
+ 
+-	if (enableirqs)
+-		local_irq_disable();
+-	if (!page)
+-		return NULL;
+-
+ 	page->objects = oo_objects(oo);
+-	mod_zone_page_state(page_zone(page),
+-		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
+-		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
+-		1 << oo_order(oo));
+-
+-	return page;
+-}
+-
+-static void setup_object(struct kmem_cache *s, struct page *page,
+-				void *object)
+-{
+-	setup_object_debug(s, page, object);
+-	if (unlikely(s->ctor))
+-		s->ctor(object);
+-}
+-
+-static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+-{
+-	struct page *page;
+-	void *start;
+-	void *last;
+-	void *p;
+-	int order;
+-
+-	BUG_ON(flags & GFP_SLAB_BUG_MASK);
+-
+-	page = allocate_slab(s,
+-		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+-	if (!page)
+-		goto out;
+ 
+ 	order = compound_order(page);
+-	inc_slabs_node(s, page_to_nid(page), page->objects);
+ 	memcg_bind_pages(s, order);
+ 	page->slab_cache = s;
+ 	__SetPageSlab(page);
+@@ -1407,10 +1381,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	page->freelist = start;
+ 	page->inuse = page->objects;
+ 	page->frozen = 1;
++
+ out:
++	if (enableirqs)
++		local_irq_disable();
++	if (!page)
++		return NULL;
++
++	mod_zone_page_state(page_zone(page),
++		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
++		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
++		1 << oo_order(oo));
++
++	inc_slabs_node(s, page_to_nid(page), page->objects);
++
+ 	return page;
+ }
+ 
++static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
++{
++	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
++		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
++		BUG();
++	}
++
++	return allocate_slab(s,
++		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
++}
++
+ static void __free_slab(struct kmem_cache *s, struct page *page)
+ {
+ 	int order = compound_order(page);
 -- 
 2.1.4
