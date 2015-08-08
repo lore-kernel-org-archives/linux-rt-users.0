@@ -1,185 +1,105 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/3] mm/slub: move slab initialization into irq enabled region
-Date: Fri, 07 Aug 2015 21:50:46 -0400
-Message-ID: <20150808015057.378697682@goodmis.org>
-References: <20150808015045.470382182@goodmis.org>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH RT 0/6] Linux 3.14.48-rt49-rc1
+Date: Sat, 8 Aug 2015 19:10:17 -0400
+Message-ID: <20150808231017.GG5998@windriver.com>
+References: <20150806221736.555188732@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Lameter <cl@linux.com>,
-	Pekka Enberg <penberg@kernel.org>,
-	David Rientjes <rientjes@google.com>,
-	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Andrew Morton <akpm@linux-foundation.org>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:35174 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1946574AbbHHBvC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 7 Aug 2015 21:51:02 -0400
-Content-Disposition: inline; filename=0001-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	John Kacur <jkacur@redhat.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20150806221736.555188732@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.2.69-rt102-rc1 stable review patch.
-If anyone has any objections, please let me know.
+[[PATCH RT 0/6] Linux 3.14.48-rt49-rc1] On 06/08/2015 (Thu 18:17) Steven Rostedt wrote:
 
-------------------
+>
+> Dear RT Folks,
+>
+> This is the RT stable review cycle of patch 3.14.48-rt49-rc1.
+>
+> Please scream at me if I messed something up. Please test the patches too.
+>
+> The -rc release will be uploaded to kernel.org and will be deleted when
+> the final release is out. This is just a review release (or release candidate).
+>
+> The pre-releases will not be pushed to the git repository, only the
+> final release is.
+>
+> If all goes well, this patch will be converted to the next main release
+> on 8/10/2015.
+>
+> Note, these changes appear to make NO_HZ_FULL work as well as 3.18-rt does.
 
-From: Thomas Gleixner <tglx@linutronix.de>
+Appears to pass a simple sanity test here as well.  Built basically a
+defconfig + RT_FULL + NOHZ_FULL + FHANDLE + DEVTMPFS and ran this simple
+test "t" -- meant to test 1st NOHZ and then NOHZ_FULL (loaded core).
 
-Initializing a new slab can introduce rather large latencies because most
-of the initialization runs always with interrupts disabled.
+Bootargs (below) and irqaffine and rcu-affine scripts (also below) are
+meant to dump all housekeeping crap onto core zero.
 
-There is no point in doing so.  The newly allocated slab is not visible
-yet, so there is no reason to protect it against concurrent alloc/free.
+---------------------------------------
+root@testbox:/home/paul# cat t
+cat /proc/interrupts |grep LOC
+sleep 5
+cat /proc/interrupts |grep LOC
 
-Move the expensive parts of the initialization into allocate_slab(), so
-for all allocations with GFP_WAIT set, interrupts are enabled.
+taskset -c 5 ./eatme &
+sleep 5
+cat /proc/interrupts |grep LOC
+kill %
+root@testbox:/home/paul# ./t
+ LOC:     220787       1635       1614       1597       1579       1563       1543       1529       1512       1492       1414       1392       1375       1360       1342       1327       1307       1290       1277       1260   Local timer interrupts
+ LOC:     225795       1637       1616       1597       1579       1563       1543       1529       1512       1492       1414       1392       1375       1362       1345       1329       1310       1293       1279       1262   Local timer interrupts
+ LOC:     230800       1637       1616       1599       1582       1583       1545       1532       1514       1494       1416       1394       1377       1362       1345       1329       1310       1293       1279       1262   Local timer interrupts
+root@testbox:/home/paul# jobs
+root@testbox:/home/paul# cat /proc/version
+Linux version 3.14.48-rt49-rc1-00071-g3fdc6bccf1b7 (paul@yow-dellw-pg2) (gcc version 4.8.2 (Ubuntu 4.8.2-19ubuntu1) ) #1 SMP PREEMPT RT Sat Aug 8 15:08:25 EDT 2015
+root@testbox:/home/paul# cat /proc/cmdline
+root=/dev/sda2 ro console=ttyS0,115200 isolcpus=1-20 rcu_nocbs=1-20 rcu_nocb_poll nohz_full=1-20 irqaffinity=0 idle=poll tsc=perfect
+root@testbox:/home/paul# cat no-rcu
+for i in `pgrep rcuo` ; do taskset -c -p 0 $i ; done
+root@testbox:/home/paul# cat clear-core
+#!/bin/bash
+# for all interrupting devices; move them to core zero; assumes that
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Acked-by: Christoph Lameter <cl@linux.com>
-Cc: Pekka Enberg <penberg@kernel.org>
-Cc: David Rientjes <rientjes@google.com>
-Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- mm/slub.c | 77 ++++++++++++++++++++++++++++++---------------------------------
- 1 file changed, 37 insertions(+), 40 deletions(-)
+for i in `cat /proc/interrupts | grep '^ *[0-9]*[0-9]:' |awk {'print $1}'|sed 's/:$//' `; do
+        # Timer
+        if [ "$i" = "0" ]; then
+                continue
+        fi
+        # cascade
+        if [ "$i" = "2" ]; then
+                continue
+        fi
+        echo setting $i to affine for core zero
+        echo 1 > /proc/irq/$i/smp_affinity
+done
+root@testbox:/home/paul#
+---------------------------------------
 
-diff --git a/mm/slub.c b/mm/slub.c
-index 6a4c2fb83839..513c55ddbc3d 100644
---- a/mm/slub.c
-+++ b/mm/slub.c
-@@ -1258,6 +1258,14 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
- 
- #endif /* CONFIG_SLUB_DEBUG */
- 
-+static void setup_object(struct kmem_cache *s, struct page *page,
-+				void *object)
-+{
-+	setup_object_debug(s, page, object);
-+	if (unlikely(s->ctor))
-+		s->ctor(object);
-+}
-+
- /*
-  * Slab allocation and freeing
-  */
-@@ -1279,6 +1287,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	struct page *page;
- 	struct kmem_cache_order_objects oo = s->oo;
- 	gfp_t alloc_gfp;
-+	void *start, *last, *p;
-+	int idx, order;
- 
- 	flags &= gfp_allowed_mask;
- 
-@@ -1301,17 +1311,11 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 		 * Try a lower order alloc if possible
- 		 */
- 		page = alloc_slab_page(flags, node, oo);
--
--		if (page)
--			stat(s, ORDER_FALLBACK);
-+		if (unlikely(!page))
-+			goto out;
-+		stat(s, ORDER_FALLBACK);
- 	}
- 
--	if (flags & __GFP_WAIT)
--		local_irq_disable();
--
--	if (!page)
--		return NULL;
--
- 	if (kmemcheck_enabled
- 		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
- 		int pages = 1 << oo_order(oo);
-@@ -1329,37 +1333,6 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	}
- 
- 	page->objects = oo_objects(oo);
--	mod_zone_page_state(page_zone(page),
--		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
--		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
--		1 << oo_order(oo));
--
--	return page;
--}
--
--static void setup_object(struct kmem_cache *s, struct page *page,
--				void *object)
--{
--	setup_object_debug(s, page, object);
--	if (unlikely(s->ctor))
--		s->ctor(object);
--}
--
--static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
--{
--	struct page *page;
--	void *start;
--	void *last;
--	void *p;
--
--	BUG_ON(flags & GFP_SLAB_BUG_MASK);
--
--	page = allocate_slab(s,
--		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
--	if (!page)
--		goto out;
--
--	inc_slabs_node(s, page_to_nid(page), page->objects);
- 	page->slab = s;
- 	page->flags |= 1 << PG_slab;
- 
-@@ -1380,10 +1353,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
- 	page->freelist = start;
- 	page->inuse = page->objects;
- 	page->frozen = 1;
-+
- out:
-+	if (flags & __GFP_WAIT)
-+		local_irq_disable();
-+	if (!page)
-+		return NULL;
-+
-+	mod_zone_page_state(page_zone(page),
-+		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
-+		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
-+		1 << oo_order(oo));
-+
-+	inc_slabs_node(s, page_to_nid(page), page->objects);
-+
- 	return page;
- }
- 
-+static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
-+{
-+	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
-+		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
-+		BUG();
-+	}
-+
-+	return allocate_slab(s,
-+		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
-+}
-+
- static void __free_slab(struct kmem_cache *s, struct page *page)
- {
- 	int order = compound_order(page);
--- 
-2.4.6
+So we took 20 IRQs in 5s, or 4/s ; not quite the 1/s minimum, but definitely not
+the HZ/s we'd get w/o NOHZ_FULL.  Re-running it got consistently 18-20 IRQ / 5s.
 
+I specifically did NOT unplug and replug cores to "clean" them of tasks; the
+hotplug code just seems to unstable for that from what I've seen in the past,
+and by the looks of the irq counts above, there was no need to either.
 
+The rootfs was basically a ubu 14.10 server install (no X11/gfx) -- not that
+it should matter - so long as other tasks weren't running on the nohz cores.
+
+Paul.
+--
+
+>
+> Enjoy,
+>
+> -- Steve
+>
