@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 2/3] xfs: Disable percpu SB on PREEMPT_RT_FULL
-Date: Fri, 07 Aug 2015 21:50:47 -0400
-Message-ID: <20150808015057.527143128@goodmis.org>
+Subject: [PATCH RT 1/3] mm/slub: move slab initialization into irq enabled region
+Date: Fri, 07 Aug 2015 21:50:46 -0400
+Message-ID: <20150808015057.378697682@goodmis.org>
 References: <20150808015045.470382182@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -10,127 +10,176 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Dave Chinner <david@fromorbit.com>
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-xfs-Disable-percpu-SB-on-PREEMPT_RT_FULL.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:35174 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1946574AbbHHBvC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Aug 2015 21:51:02 -0400
+Content-Disposition: inline; filename=0001-mm-slub-move-slab-initialization-into-irq-enabled-re.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.2.69-rt102-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-Running a test on a large CPU count box with xfs, I hit a live lock
-with the following backtraces on several CPUs:
+Initializing a new slab can introduce rather large latencies because most
+of the initialization runs always with interrupts disabled.
 
- Call Trace:
-  [<ffffffff812c34f8>] __const_udelay+0x28/0x30
-  [<ffffffffa033ab9a>] xfs_icsb_lock_cntr+0x2a/0x40 [xfs]
-  [<ffffffffa033c871>] xfs_icsb_modify_counters+0x71/0x280 [xfs]
-  [<ffffffffa03413e1>] xfs_trans_reserve+0x171/0x210 [xfs]
-  [<ffffffffa0378cfd>] xfs_create+0x24d/0x6f0 [xfs]
-  [<ffffffff8124c8eb>] ? avc_has_perm_flags+0xfb/0x1e0
-  [<ffffffffa0336eeb>] xfs_vn_mknod+0xbb/0x1e0 [xfs]
-  [<ffffffffa0337043>] xfs_vn_create+0x13/0x20 [xfs]
-  [<ffffffff811b0edd>] vfs_create+0xcd/0x130
-  [<ffffffff811b21ef>] do_last+0xb8f/0x1240
-  [<ffffffff811b39b2>] path_openat+0xc2/0x490
+There is no point in doing so.  The newly allocated slab is not visible
+yet, so there is no reason to protect it against concurrent alloc/free.
 
-Looking at the code I see it was stuck at:
+Move the expensive parts of the initialization into allocate_slab(), so
+for all allocations with GFP_WAIT set, interrupts are enabled.
 
-STATIC void
-xfs_icsb_lock_cntr(
-	xfs_icsb_cnts_t	*icsbp)
-{
-	while (test_and_set_bit(XFS_ICSB_FLAG_LOCK, &icsbp->icsb_flags)) {
-		ndelay(1000);
-	}
-}
-
-In xfs_icsb_modify_counters() the code is fine. There's a
-preempt_disable() called when taking this bit spinlock and a
-preempt_enable() after it is released. The issue is that not all
-locations are protected by preempt_disable() when PREEMPT_RT is set.
-Namely the places that grab all CPU cntr locks.
-
-STATIC void
-xfs_icsb_lock_all_counters(
-	xfs_mount_t	*mp)
-{
-	xfs_icsb_cnts_t *cntp;
-	int		i;
-
-	for_each_online_cpu(i) {
-		cntp = (xfs_icsb_cnts_t *)per_cpu_ptr(mp->m_sb_cnts, i);
-		xfs_icsb_lock_cntr(cntp);
-	}
-}
-
-STATIC void
-xfs_icsb_disable_counter()
-{
-	[...]
-	xfs_icsb_lock_all_counters(mp);
-	[...]
-	xfs_icsb_unlock_all_counters(mp);
-}
-
-STATIC void
-xfs_icsb_balance_counter_locked()
-{
-	[...]
-	xfs_icsb_disable_counter();
-	[...]
-}
-
-STATIC void
-xfs_icsb_balance_counter(
-	xfs_mount_t	*mp,
-	xfs_sb_field_t  fields,
-	int		min_per_cpu)
-{
-	spin_lock(&mp->m_sb_lock);
-	xfs_icsb_balance_counter_locked(mp, fields, min_per_cpu);
-	spin_unlock(&mp->m_sb_lock);
-}
-
-Now, when PREEMPT_RT is not enabled, that spin_lock() disables
-preemption. But for PREEMPT_RT, it does not. Although with my test box I
-was not able to produce a task state of all tasks, but I'm assuming that
-some task called the xfs_icsb_lock_all_counters() and was preempted by
-an RT task and could not finish, causing all callers of that lock to
-block indefinitely.
-
-Dave Chinner has stated that the scalability of that code will probably
-be negated by PREEMPT_RT, and that it is probably best to just disable
-the code in question. Also, this code has been rewritten in newer kernels.
-
-Link: http://lkml.kernel.org/r/20150504004844.GA21261@dastard
-
-Cc: stable-rt@vger.kernel.org
-Suggested-by: Dave Chinner <david@fromorbit.com>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Acked-by: Christoph Lameter <cl@linux.com>
+Cc: Pekka Enberg <penberg@kernel.org>
+Cc: David Rientjes <rientjes@google.com>
+Cc: Joonsoo Kim <iamjoonsoo.kim@lge.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Signed-off-by: Andrew Morton <akpm@linux-foundation.org>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/xfs/xfs_linux.h | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ mm/slub.c | 77 ++++++++++++++++++++++++++++++---------------------------------
+ 1 file changed, 37 insertions(+), 40 deletions(-)
 
-diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
-index 828662f70d64..13d86a8dae43 100644
---- a/fs/xfs/xfs_linux.h
-+++ b/fs/xfs/xfs_linux.h
-@@ -97,7 +97,7 @@
+diff --git a/mm/slub.c b/mm/slub.c
+index 6a4c2fb83839..513c55ddbc3d 100644
+--- a/mm/slub.c
++++ b/mm/slub.c
+@@ -1258,6 +1258,14 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
+ 
+ #endif /* CONFIG_SLUB_DEBUG */
+ 
++static void setup_object(struct kmem_cache *s, struct page *page,
++				void *object)
++{
++	setup_object_debug(s, page, object);
++	if (unlikely(s->ctor))
++		s->ctor(object);
++}
++
  /*
-  * Feature macros (disable/enable)
+  * Slab allocation and freeing
   */
--#ifdef CONFIG_SMP
-+#if defined(CONFIG_SMP) && !defined(CONFIG_PREEMPT_RT_FULL)
- #define HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
- #else
- #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
+@@ -1279,6 +1287,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	struct page *page;
+ 	struct kmem_cache_order_objects oo = s->oo;
+ 	gfp_t alloc_gfp;
++	void *start, *last, *p;
++	int idx, order;
+ 
+ 	flags &= gfp_allowed_mask;
+ 
+@@ -1301,17 +1311,11 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 		 * Try a lower order alloc if possible
+ 		 */
+ 		page = alloc_slab_page(flags, node, oo);
+-
+-		if (page)
+-			stat(s, ORDER_FALLBACK);
++		if (unlikely(!page))
++			goto out;
++		stat(s, ORDER_FALLBACK);
+ 	}
+ 
+-	if (flags & __GFP_WAIT)
+-		local_irq_disable();
+-
+-	if (!page)
+-		return NULL;
+-
+ 	if (kmemcheck_enabled
+ 		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
+ 		int pages = 1 << oo_order(oo);
+@@ -1329,37 +1333,6 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	}
+ 
+ 	page->objects = oo_objects(oo);
+-	mod_zone_page_state(page_zone(page),
+-		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
+-		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
+-		1 << oo_order(oo));
+-
+-	return page;
+-}
+-
+-static void setup_object(struct kmem_cache *s, struct page *page,
+-				void *object)
+-{
+-	setup_object_debug(s, page, object);
+-	if (unlikely(s->ctor))
+-		s->ctor(object);
+-}
+-
+-static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+-{
+-	struct page *page;
+-	void *start;
+-	void *last;
+-	void *p;
+-
+-	BUG_ON(flags & GFP_SLAB_BUG_MASK);
+-
+-	page = allocate_slab(s,
+-		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
+-	if (!page)
+-		goto out;
+-
+-	inc_slabs_node(s, page_to_nid(page), page->objects);
+ 	page->slab = s;
+ 	page->flags |= 1 << PG_slab;
+ 
+@@ -1380,10 +1353,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+ 	page->freelist = start;
+ 	page->inuse = page->objects;
+ 	page->frozen = 1;
++
+ out:
++	if (flags & __GFP_WAIT)
++		local_irq_disable();
++	if (!page)
++		return NULL;
++
++	mod_zone_page_state(page_zone(page),
++		(s->flags & SLAB_RECLAIM_ACCOUNT) ?
++		NR_SLAB_RECLAIMABLE : NR_SLAB_UNRECLAIMABLE,
++		1 << oo_order(oo));
++
++	inc_slabs_node(s, page_to_nid(page), page->objects);
++
+ 	return page;
+ }
+ 
++static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
++{
++	if (unlikely(flags & GFP_SLAB_BUG_MASK)) {
++		pr_emerg("gfp: %u\n", flags & GFP_SLAB_BUG_MASK);
++		BUG();
++	}
++
++	return allocate_slab(s,
++		flags & (GFP_RECLAIM_MASK | GFP_CONSTRAINT_MASK), node);
++}
++
+ static void __free_slab(struct kmem_cache *s, struct page *page)
+ {
+ 	int order = compound_order(page);
 -- 
 2.4.6
+
+
