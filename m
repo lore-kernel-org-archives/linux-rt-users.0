@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/3] Linux 3.4.108-rt136-rc1
-Date: Fri, 07 Aug 2015 17:49:21 -0400
-Message-ID: <20150807214921.206117296@goodmis.org>
+Subject: [PATCH RT 0/3] Linux 3.2.69-rt102-rc1
+Date: Fri, 07 Aug 2015 21:50:45 -0400
+Message-ID: <20150808015045.470382182@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -9,14 +9,18 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:35141 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1946352AbbHHBvB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 7 Aug 2015 21:51:01 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-This is the RT stable review cycle of patch 3.4.108-rt136-rc1.
+This is the RT stable review cycle of patch 3.2.69-rt102-rc1.
 
 Please scream at me if I messed something up. Please test the patches too.
 
@@ -34,20 +38,20 @@ Enjoy,
 -- Steve
 
 
-To build 3.4.108-rt136-rc1 directly, the following patches should be applied:
+To build 3.2.69-rt102-rc1 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.108.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.69.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.108-rt136-rc1.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.69-rt102-rc1.patch.xz
 
-You can also build from 3.4.108-rt135 by applying the incremental patch:
+You can also build from 3.2.69-rt101 by applying the incremental patch:
 
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.108-rt135-rt136-rc1.patch.xz
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.69-rt101-rt102-rc1.patch.xz
 
 
-Changes from 3.4.108-rt135:
+Changes from 3.2.69-rt101:
 
 ---
 
@@ -56,7 +60,7 @@ Steven Rostedt (1):
       xfs: Disable percpu SB on PREEMPT_RT_FULL
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.108-rt136-rc1
+      Linux 3.2.69-rt102-rc1
 
 Thomas Gleixner (1):
       mm/slub: move slab initialization into irq enabled region
