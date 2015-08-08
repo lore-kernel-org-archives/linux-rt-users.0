@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/3] Linux 3.2.69-rt102-rc1
-Date: Fri, 07 Aug 2015 21:50:45 -0400
-Message-ID: <20150808015045.470382182@goodmis.org>
+Subject: [PATCH RT 3/3] Linux 3.2.69-rt102-rc1
+Date: Fri, 07 Aug 2015 21:50:48 -0400
+Message-ID: <20150808015057.697340359@goodmis.org>
+References: <20150808015045.470382182@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,63 +13,33 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:35141 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:35150 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1946352AbbHHBvB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	id S1946384AbbHHBvB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Fri, 7 Aug 2015 21:51:01 -0400
+Content-Disposition: inline; filename=0003-Linux-3.2.69-rt102-rc1.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+3.2.69-rt102-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.69-rt102-rc1.
-
-Please scream at me if I messed something up. Please test the patches too.
-
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 8/10/2015.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.2.69-rt102-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.69.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.69-rt102-rc1.patch.xz
-
-You can also build from 3.2.69-rt101 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.69-rt101-rt102-rc1.patch.xz
-
-
-Changes from 3.2.69-rt101:
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
 ---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/localversion-rt b/localversion-rt
+index 9ea5981fa956..04456d92828d 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt101
++-rt102-rc1
+-- 
+2.4.6
 
 
-Steven Rostedt (1):
-      xfs: Disable percpu SB on PREEMPT_RT_FULL
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.2.69-rt102-rc1
-
-Thomas Gleixner (1):
-      mm/slub: move slab initialization into irq enabled region
-
-----
- fs/xfs/xfs_linux.h |  2 +-
- localversion-rt    |  2 +-
- mm/slub.c          | 77 ++++++++++++++++++++++++++----------------------------
- 3 files changed, 39 insertions(+), 42 deletions(-)
