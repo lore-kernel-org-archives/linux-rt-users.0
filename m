@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.44-rt62
-Date: Mon, 10 Aug 2015 10:35:31 -0400
-Message-ID: <20150810103531.6bc57ff0@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.84-rt92
+Date: Mon, 10 Aug 2015 10:36:00 -0400
+Message-ID: <20150810103600.42874928@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0189.hostedemail.com ([216.40.44.189]:52275 "EHLO
+Received: from smtprelay0017.hostedemail.com ([216.40.44.17]:41329 "EHLO
 	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1754361AbbHJOff (ORCPT
+	by vger.kernel.org with ESMTP id S932210AbbHJOgE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 10 Aug 2015 10:35:35 -0400
+	Mon, 10 Aug 2015 10:36:04 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.44-rt62 stable release.
+I'm pleased to announce the 3.10.84-rt92 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: 5c430e983d975e4737aaed0f70ecb2c384f4c786
+  branch: v3.10-rt
+  Head SHA1: 5fba66d543ed031e3cb94088db58372ed92b5d51
 
 
-Or to build 3.12.44-rt62 directly, the following patches should be applied:
+Or to build 3.10.84-rt92 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.44.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.84.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.44-rt62.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.84-rt92.patch.xz
 
 
 
-You can also build from 3.12.44-rt61 by applying the incremental patch:
+You can also build from 3.10.84-rt91 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.44-rt61-rt62.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.84-rt91-rt92.patch.xz
 
 
 
@@ -55,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.12.44-rt61:
+Changes from v3.10.84-rt91:
 
 ---
 
@@ -72,7 +72,7 @@ Steven Rostedt (1):
       xfs: Disable percpu SB on PREEMPT_RT_FULL
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.12.44-rt62
+      Linux 3.10.84-rt92
 
 Thomas Gleixner (1):
       mm/slub: move slab initialization into irq enabled region
@@ -88,10 +88,10 @@ Thomas Gleixner (1):
  7 files changed, 54 insertions(+), 51 deletions(-)
 ---------------------------
 diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index ffaef2cb101a..78c3c30de9fd 100644
+index eb643f862579..2c3c4dff49b5 100644
 --- a/arch/powerpc/kvm/Kconfig
 +++ b/arch/powerpc/kvm/Kconfig
-@@ -155,6 +155,7 @@ config KVM_E500MC
+@@ -154,6 +154,7 @@ config KVM_E500MC
  config KVM_MPIC
  	bool "KVM in-kernel MPIC emulation"
  	depends on KVM && E500
@@ -126,10 +126,10 @@ index 000000000000..78162f8e248b
 +
 +#endif /* _ASM_IRQ_WORK_H */
 diff --git a/arch/x86/kernel/irq_work.c b/arch/x86/kernel/irq_work.c
-index 1de84e3ab4e0..15d741ddfeeb 100644
+index ca8f703a1e70..b4325a6c67c3 100644
 --- a/arch/x86/kernel/irq_work.c
 +++ b/arch/x86/kernel/irq_work.c
-@@ -41,7 +41,7 @@ __visible void smp_trace_irq_work_interrupt(struct pt_regs *regs)
+@@ -21,7 +21,7 @@ void smp_irq_work_interrupt(struct pt_regs *regs)
  void arch_irq_work_raise(void)
  {
  #ifdef CONFIG_X86_LOCAL_APIC
@@ -139,10 +139,10 @@ index 1de84e3ab4e0..15d741ddfeeb 100644
  
  	apic->send_IPI_self(IRQ_WORK_VECTOR);
 diff --git a/fs/xfs/xfs_linux.h b/fs/xfs/xfs_linux.h
-index f9bb590acc0e..8483f8cf432a 100644
+index 800f896a6cc4..6f07c0bcbed4 100644
 --- a/fs/xfs/xfs_linux.h
 +++ b/fs/xfs/xfs_linux.h
-@@ -131,7 +131,7 @@ typedef __uint64_t __psunsigned_t;
+@@ -99,7 +99,7 @@
  /*
   * Feature macros (disable/enable)
   */
@@ -152,17 +152,17 @@ index f9bb590acc0e..8483f8cf432a 100644
  #else
  #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
 diff --git a/localversion-rt b/localversion-rt
-index 9b7de9345ef4..40d81d8e61b6 100644
+index e95e3382b7be..4905d52a4828 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt61
-+-rt62
+--rt91
++-rt92
 diff --git a/mm/slub.c b/mm/slub.c
-index 90154580b304..3a5d54e75ffe 100644
+index 8d8a3a641f0b..eec1443acb92 100644
 --- a/mm/slub.c
 +++ b/mm/slub.c
-@@ -1276,6 +1276,14 @@ struct slub_free_list {
+@@ -1260,6 +1260,14 @@ struct slub_free_list {
  };
  static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
  
@@ -177,7 +177,7 @@ index 90154580b304..3a5d54e75ffe 100644
  /*
   * Slab allocation and freeing
   */
-@@ -1298,6 +1306,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1282,6 +1290,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  	struct kmem_cache_order_objects oo = s->oo;
  	gfp_t alloc_gfp;
  	bool enableirqs;
@@ -186,7 +186,7 @@ index 90154580b304..3a5d54e75ffe 100644
  
  	flags &= gfp_allowed_mask;
  
-@@ -1324,13 +1334,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1308,13 +1318,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  		 * Try a lower order alloc if possible
  		 */
  		page = alloc_slab_page(flags, node, oo);
@@ -205,7 +205,7 @@ index 90154580b304..3a5d54e75ffe 100644
  		int pages = 1 << oo_order(oo);
  
  		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
-@@ -1345,47 +1355,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1329,47 +1339,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  			kmemcheck_mark_unallocated_pages(page, pages);
  	}
  
@@ -253,7 +253,7 @@ index 90154580b304..3a5d54e75ffe 100644
  	memcg_bind_pages(s, order);
  	page->slab_cache = s;
  	__SetPageSlab(page);
-@@ -1409,10 +1381,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1393,10 +1365,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
  	page->freelist = start;
  	page->inuse = page->objects;
  	page->frozen = 1;
@@ -288,7 +288,7 @@ index 90154580b304..3a5d54e75ffe 100644
  static void __free_slab(struct kmem_cache *s, struct page *page)
  {
  	int order = compound_order(page);
-@@ -2470,10 +2466,6 @@ redo:
+@@ -2446,10 +2442,6 @@ redo:
  
  	if (unlikely(gfpflags & __GFP_ZERO) && object)
  		memset(object, 0, s->object_size);
