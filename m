@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.48-rt49
-Date: Mon, 10 Aug 2015 10:35:04 -0400
-Message-ID: <20150810103504.777a99be@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.44-rt62
+Date: Mon, 10 Aug 2015 10:35:31 -0400
+Message-ID: <20150810103531.6bc57ff0@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,37 +11,42 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0189.hostedemail.com ([216.40.44.189]:52275 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1754361AbbHJOff (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2015 10:35:35 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.48-rt49 stable release.
+I'm pleased to announce the 3.12.44-rt62 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 30bcf7e47d9cbce6a4fa058b34f3490183579f20
+  branch: v3.12-rt
+  Head SHA1: 5c430e983d975e4737aaed0f70ecb2c384f4c786
 
 
-Or to build 3.14.48-rt49 directly, the following patches should be applied:
+Or to build 3.12.44-rt62 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.48.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.44.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.48-rt49.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.44-rt62.patch.xz
 
 
 
-You can also build from 3.14.48-rt48 by applying the incremental patch:
+You can also build from 3.12.44-rt61 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.48-rt48-rt49.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.44-rt61-rt62.patch.xz
 
 
 
@@ -50,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.14.48-rt48:
+Changes from v3.12.44-rt61:
 
 ---
 
@@ -67,7 +72,7 @@ Steven Rostedt (1):
       xfs: Disable percpu SB on PREEMPT_RT_FULL
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.14.48-rt49
+      Linux 3.12.44-rt62
 
 Thomas Gleixner (1):
       mm/slub: move slab initialization into irq enabled region
@@ -83,10 +88,10 @@ Thomas Gleixner (1):
  7 files changed, 54 insertions(+), 51 deletions(-)
 ---------------------------
 diff --git a/arch/powerpc/kvm/Kconfig b/arch/powerpc/kvm/Kconfig
-index 141b2027189a..a0258b2b0f72 100644
+index ffaef2cb101a..78c3c30de9fd 100644
 --- a/arch/powerpc/kvm/Kconfig
 +++ b/arch/powerpc/kvm/Kconfig
-@@ -172,6 +172,7 @@ config KVM_E500MC
+@@ -155,6 +155,7 @@ config KVM_E500MC
  config KVM_MPIC
  	bool "KVM in-kernel MPIC emulation"
  	depends on KVM && E500
@@ -147,17 +152,17 @@ index f9bb590acc0e..8483f8cf432a 100644
  #else
  #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
 diff --git a/localversion-rt b/localversion-rt
-index 24707986c321..4b7dca68a5b4 100644
+index 9b7de9345ef4..40d81d8e61b6 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt48
-+-rt49
+--rt61
++-rt62
 diff --git a/mm/slub.c b/mm/slub.c
-index 93eeaca6cb53..f21e9bcb9094 100644
+index 90154580b304..3a5d54e75ffe 100644
 --- a/mm/slub.c
 +++ b/mm/slub.c
-@@ -1316,6 +1316,14 @@ struct slub_free_list {
+@@ -1276,6 +1276,14 @@ struct slub_free_list {
  };
  static DEFINE_PER_CPU(struct slub_free_list, slub_free_list);
  
@@ -172,7 +177,7 @@ index 93eeaca6cb53..f21e9bcb9094 100644
  /*
   * Slab allocation and freeing
   */
-@@ -1338,6 +1346,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1298,6 +1306,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  	struct kmem_cache_order_objects oo = s->oo;
  	gfp_t alloc_gfp;
  	bool enableirqs;
@@ -181,7 +186,7 @@ index 93eeaca6cb53..f21e9bcb9094 100644
  
  	flags &= gfp_allowed_mask;
  
-@@ -1364,13 +1374,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1324,13 +1334,13 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  		 * Try a lower order alloc if possible
  		 */
  		page = alloc_slab_page(flags, node, oo);
@@ -200,7 +205,7 @@ index 93eeaca6cb53..f21e9bcb9094 100644
  		int pages = 1 << oo_order(oo);
  
  		kmemcheck_alloc_shadow(page, oo_order(oo), flags, node);
-@@ -1385,47 +1395,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1345,47 +1355,9 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  			kmemcheck_mark_unallocated_pages(page, pages);
  	}
  
@@ -248,7 +253,7 @@ index 93eeaca6cb53..f21e9bcb9094 100644
  	memcg_bind_pages(s, order);
  	page->slab_cache = s;
  	__SetPageSlab(page);
-@@ -1449,10 +1421,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1409,10 +1381,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
  	page->freelist = start;
  	page->inuse = page->objects;
  	page->frozen = 1;
@@ -283,7 +288,7 @@ index 93eeaca6cb53..f21e9bcb9094 100644
  static void __free_slab(struct kmem_cache *s, struct page *page)
  {
  	int order = compound_order(page);
-@@ -2519,10 +2515,6 @@ redo:
+@@ -2470,10 +2466,6 @@ redo:
  
  	if (unlikely(gfpflags & __GFP_ZERO) && object)
  		memset(object, 0, s->object_size);
