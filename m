@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.108-rt136
-Date: Mon, 10 Aug 2015 10:36:28 -0400
-Message-ID: <20150810103628.6662544c@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.69-rt102
+Date: Mon, 10 Aug 2015 10:36:55 -0400
+Message-ID: <20150810103655.536d6e1a@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,37 +11,42 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0028.hostedemail.com ([216.40.44.28]:35612 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1753850AbbHJOg7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 10 Aug 2015 10:36:59 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.108-rt136 stable release.
+I'm pleased to announce the 3.2.69-rt102 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 32c06eee4342e13020d746cd4f925bc3398f9b6f
+  branch: v3.2-rt
+  Head SHA1: dbb2e1a6dca97185b5127eed3d5e2e2f47f86a1f
 
 
-Or to build 3.4.108-rt136 directly, the following patches should be applied:
+Or to build 3.2.69-rt102 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.108.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.69.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.108-rt136.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.69-rt102.patch.xz
 
 
 
-You can also build from 3.4.108-rt135 by applying the incremental patch:
+You can also build from 3.2.69-rt101 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.108-rt135-rt136.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.69-rt101-rt102.patch.xz
 
 
 
@@ -50,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.108-rt135:
+Changes from v3.2.69-rt101:
 
 ---
 
@@ -58,7 +63,7 @@ Steven Rostedt (1):
       xfs: Disable percpu SB on PREEMPT_RT_FULL
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.108-rt136
+      Linux 3.2.69-rt102
 
 Thomas Gleixner (1):
       mm/slub: move slab initialization into irq enabled region
@@ -83,17 +88,17 @@ index 828662f70d64..13d86a8dae43 100644
  #else
  #undef  HAVE_PERCPU_SB	/* per cpu superblock counters are a 2.6 feature */
 diff --git a/localversion-rt b/localversion-rt
-index e3026053f01e..f824f53c19ea 100644
+index 9ea5981fa956..33017cd072bb 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt135
-+-rt136
+--rt101
++-rt102
 diff --git a/mm/slub.c b/mm/slub.c
-index aff06374dd5c..9308c8a2865b 100644
+index 6a4c2fb83839..513c55ddbc3d 100644
 --- a/mm/slub.c
 +++ b/mm/slub.c
-@@ -1266,6 +1266,14 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
+@@ -1258,6 +1258,14 @@ static inline void slab_free_hook(struct kmem_cache *s, void *x) {}
  
  #endif /* CONFIG_SLUB_DEBUG */
  
@@ -108,7 +113,7 @@ index aff06374dd5c..9308c8a2865b 100644
  /*
   * Slab allocation and freeing
   */
-@@ -1287,6 +1295,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1279,6 +1287,8 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  	struct page *page;
  	struct kmem_cache_order_objects oo = s->oo;
  	gfp_t alloc_gfp;
@@ -117,7 +122,7 @@ index aff06374dd5c..9308c8a2865b 100644
  
  	flags &= gfp_allowed_mask;
  
-@@ -1309,17 +1319,11 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1301,17 +1311,11 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  		 * Try a lower order alloc if possible
  		 */
  		page = alloc_slab_page(flags, node, oo);
@@ -138,7 +143,7 @@ index aff06374dd5c..9308c8a2865b 100644
  	if (kmemcheck_enabled
  		&& !(s->flags & (SLAB_NOTRACK | DEBUG_DEFAULT_FLAGS))) {
  		int pages = 1 << oo_order(oo);
-@@ -1337,37 +1341,6 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1329,37 +1333,6 @@ static struct page *allocate_slab(struct kmem_cache *s, gfp_t flags, int node)
  	}
  
  	page->objects = oo_objects(oo);
@@ -176,7 +181,7 @@ index aff06374dd5c..9308c8a2865b 100644
  	page->slab = s;
  	page->flags |= 1 << PG_slab;
  
-@@ -1388,10 +1361,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
+@@ -1380,10 +1353,34 @@ static struct page *new_slab(struct kmem_cache *s, gfp_t flags, int node)
  	page->freelist = start;
  	page->inuse = page->objects;
  	page->frozen = 1;
