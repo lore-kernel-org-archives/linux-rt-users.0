@@ -1,40 +1,42 @@
-From: Christoph Hellwig <hch@infradead.org>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Sat, 8 Aug 2015 23:39:47 -0700
-Message-ID: <20150809063947.GA2436@infradead.org>
-References: <20150120054653.GA6473@iris.ozlabs.ibm.com>
- <20150120131613.009903a0@gandalf.local.home>
- <20150121150716.GD11596@twins.programming.kicks-ass.net>
- <20150217174419.GY26177@linutronix.de>
- <20150218140320.GY5029@twins.programming.kicks-ass.net>
- <20150225210250.GA25858@linutronix.de>
- <20150807105738.GF16853@twins.programming.kicks-ass.net>
- <20150807111415.GC18673@twins.programming.kicks-ass.net>
- <20150807164131.GA20239@infradead.org>
- <20150807164526.GO12596@twins.programming.kicks-ass.net>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 2/7] mm/slub: move slab initialization into irq
+ enabled region
+Date: Mon, 10 Aug 2015 08:33:43 +0200
+Message-ID: <1439188423.13546.0.camel@gmail.com>
+References: <20150805011826.881627614@goodmis.org>
+	 <20150805011852.582403660@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Christoph Hellwig <hch@infradead.org>,
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <kvm-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20150807164526.GO12596@twins.programming.kicks-ass.net>
-Sender: kvm-owner@vger.kernel.org
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Christoph Lameter <cl@linux.com>,
+	Pekka Enberg <penberg@kernel.org>,
+	David Rientjes <rientjes@google.com>,
+	Joonsoo Kim <iamjoonsoo.kim@lge.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Andrew Morton <akpm@linux-foundation.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20150805011852.582403660@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, Aug 07, 2015 at 06:45:26PM +0200, Peter Zijlstra wrote:
-> Its just the swait_wake_all() that is not. The entire purpose of them
-> was to have something that allows bounded execution (RT and all).
+On Tue, 2015-08-04 at 21:18 -0400, Steven Rostedt wrote:
+> @@ -1310,6 +1317,8 @@ static struct page *allocate_slab(struct
+> kmem_cache *s, gfp_t flags, int node)
+>         struct kmem_cache_order_objects oo = s->oo;
+>         gfp_t alloc_gfp;
+>         bool enableirqs;
+> +       void *start, *p;
+> +       int idx, order;
+>  
+>         flags &= gfp_allowed_mask;
+>  
 
-Still not sure i that might be a too big burden for mainline, but at
-least it's not as severe..
+Nit: idx is unused.
