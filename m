@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.18.20-rt18
-Date: Tue, 11 Aug 2015 10:58:44 -0400
-Message-ID: <20150811105844.3f2aed9d@gandalf.local.home>
+Subject: [ANNOUNCE] 3.14.49-rt50
+Date: Tue, 11 Aug 2015 10:59:15 -0400
+Message-ID: <20150811105915.718fda76@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,17 +11,22 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0115.hostedemail.com ([216.40.44.115]:58082 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S965098AbbHKO7S (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Aug 2015 10:59:18 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.18.20-rt18 stable release.
+I'm pleased to announce the 3.14.49-rt50 stable release.
 
 
-This release is just an update to the new stable 3.18.20 version
+This release is just an update to the new stable 3.14.49 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +34,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.18-rt
-  Head SHA1: 786cc916226f416b3a18a42512256593d3e1407b
+  branch: v3.14-rt
+  Head SHA1: 9f65f14415cf5f78ec3d16e70ce133c1de691208
 
 
-Or to build 3.18.20-rt18 directly, the following patches should be applied:
+Or to build 3.14.49-rt50 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.20.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.49.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.20-rt18.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.49-rt50.patch.xz
 
 
 
@@ -47,3 +52,4 @@ Or to build 3.18.20-rt18 directly, the following patches should be applied:
 Enjoy,
 
 -- Steve
+
