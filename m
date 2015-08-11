@@ -1,157 +1,50 @@
-From: Xander Huff <xander.huff@ni.com>
-Subject: [PATCH v4] iio: adc: xilinx-xadc: Push interrupts into hardirq context
-Date: Tue, 11 Aug 2015 18:00:49 -0500
-Message-ID: <1439334049-28671-1-git-send-email-xander.huff@ni.com>
-References: <55C07160.5040907@metafoo.de>
-Cc: knaack.h@gmx.de, pmeerw@pmeerw.net, michal.simek@xilinx.com,
-	soren.brinkmann@xilinx.com, linux-iio@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	joe.hershberger@ni.com, joshc@ni.com, nathan.sullivan@ni.com,
-	jaeden.amero@ni.com, Xander Huff <xander.huff@ni.com>
-To: jic23@kernel.org, bigeasy@linutronix.de, lars@metafoo.de
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <55C07160.5040907@metafoo.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: "Jiang, Yunhong" <yunhong.jiang@intel.com>
+Subject: RE: [PATCH RT 2/4] Revert "timers: do not raise softirq
+ unconditionally"
+Date: Tue, 11 Aug 2015 23:21:16 +0000
+Message-ID: <DDCAE26804250545B9934A2056554AA020AA0768@ORSMSX112.amr.corp.intel.com>
+References: <20150317163541.080310081@goodmis.org>
+ <20150317163617.218582800@goodmis.org>
+ <20150317163551.3093b6c2@gandalf.local.home>
+ <1426753029.4168.80.camel@gmail.com>
+ <20150319122611.0d002d48@gandalf.local.home>
+ <20150324181034.GD1321@linutronix.de> <1427250833.3459.4.camel@gmail.com>
+ <20150409133916.GA2416@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mga02.intel.com ([134.134.136.20]:58711 "EHLO mga02.intel.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753411AbbHKXVR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Aug 2015 19:21:17 -0400
+In-Reply-To: <20150409133916.GA2416@linutronix.de>
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-The driver currently registers a pair of irq handlers using
-request_threaded_irq(), however the synchronization mechanism between the
-hardirq and the threadedirq handler is a regular spinlock.
-
-Unfortunately, this breaks PREEMPT_RT builds, where a spinlock can sleep,
-and is thus not able to be acquired from a hardirq handler. This patch gets
-rid of the threaded handler and pushes all interrupt handling into the
-hardirq context, and uses request_irq().
-
-To validate that this change has no impact on RT performance, here are
-cyclictest values with no processes running:
-
-$ sudo cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 0.00 0.01 0.05 1/174 2539
-T: 0 ( 1405) P:98 I:1000 C:167010520 Min: 9 Act: 12 Avg: 12 Max: 75
-T: 1 ( 1862) P:98 I:1500 C:111340339 Min: 9 Act: 12 Avg: 12 Max: 73
-
-Then, all xadc raw handles were accessed in a continuous loop via
-/sys/bus/iio/devices/iio:device0:
-
-$ sudo cyclictest -S -m -p 98
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 7.84 7.70 7.63 3/182 4260
-T: 0 ( 2559) P:98 I:1000 C:241557018 Min: 11 Act: 18 Avg: 21 Max: 74
-T: 1 ( 2560) P:98 I:1500 C:161038006 Min: 10 Act: 21 Avg: 20 Max: 73
-
-Signed-off-by: Xander Huff <xander.huff@ni.com>
----
- drivers/iio/adc/xilinx-xadc-core.c | 37 ++++++++++---------------------------
- drivers/iio/adc/xilinx-xadc.h      |  2 --
- 2 files changed, 10 insertions(+), 29 deletions(-)
-
-diff --git a/drivers/iio/adc/xilinx-xadc-core.c b/drivers/iio/adc/xilinx-xadc-core.c
-index ce93bd8..0370624 100644
---- a/drivers/iio/adc/xilinx-xadc-core.c
-+++ b/drivers/iio/adc/xilinx-xadc-core.c
-@@ -273,33 +273,13 @@ static void xadc_zynq_unmask_worker(struct work_struct *work)
- 		schedule_delayed_work(&xadc->zynq_unmask_work,
- 				msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
- 	}
--}
--
--static irqreturn_t xadc_zynq_threaded_interrupt_handler(int irq, void *devid)
--{
--	struct iio_dev *indio_dev = devid;
--	struct xadc *xadc = iio_priv(indio_dev);
--	unsigned int alarm;
--
--	spin_lock_irq(&xadc->lock);
--	alarm = xadc->zynq_alarm;
--	xadc->zynq_alarm = 0;
--	spin_unlock_irq(&xadc->lock);
--
--	xadc_handle_events(indio_dev, xadc_zynq_transform_alarm(alarm));
- 
--	/* unmask the required interrupts in timer. */
--	schedule_delayed_work(&xadc->zynq_unmask_work,
--			msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
--
--	return IRQ_HANDLED;
- }
- 
- static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
- {
- 	struct iio_dev *indio_dev = devid;
- 	struct xadc *xadc = iio_priv(indio_dev);
--	irqreturn_t ret = IRQ_HANDLED;
- 	uint32_t status;
- 
- 	xadc_read_reg(xadc, XADC_ZYNQ_REG_INTSTS, &status);
-@@ -321,18 +301,23 @@ static irqreturn_t xadc_zynq_interrupt_handler(int irq, void *devid)
- 
- 	status &= XADC_ZYNQ_INT_ALARM_MASK;
- 	if (status) {
--		xadc->zynq_alarm |= status;
- 		xadc->zynq_masked_alarm |= status;
- 		/*
- 		 * mask the current event interrupt,
- 		 * unmask it when the interrupt is no more active.
- 		 */
- 		xadc_zynq_update_intmsk(xadc, 0, 0);
--		ret = IRQ_WAKE_THREAD;
-+
-+		xadc_handle_events(indio_dev,
-+				xadc_zynq_transform_alarm(status));
-+
-+		/* unmask the required interrupts in timer. */
-+		schedule_delayed_work(&xadc->zynq_unmask_work,
-+				msecs_to_jiffies(XADC_ZYNQ_UNMASK_TIMEOUT));
- 	}
- 	spin_unlock(&xadc->lock);
- 
--	return ret;
-+	return IRQ_HANDLED;
- }
- 
- #define XADC_ZYNQ_TCK_RATE_MAX 50000000
-@@ -437,7 +422,6 @@ static const struct xadc_ops xadc_zynq_ops = {
- 	.setup = xadc_zynq_setup,
- 	.get_dclk_rate = xadc_zynq_get_dclk_rate,
- 	.interrupt_handler = xadc_zynq_interrupt_handler,
--	.threaded_interrupt_handler = xadc_zynq_threaded_interrupt_handler,
- 	.update_alarm = xadc_zynq_update_alarm,
- };
- 
-@@ -1225,9 +1209,8 @@ static int xadc_probe(struct platform_device *pdev)
- 	if (ret)
- 		goto err_free_samplerate_trigger;
- 
--	ret = request_threaded_irq(irq, xadc->ops->interrupt_handler,
--				xadc->ops->threaded_interrupt_handler,
--				0, dev_name(&pdev->dev), indio_dev);
-+	ret = request_irq(irq, xadc->ops->interrupt_handler, 0,
-+			dev_name(&pdev->dev), indio_dev);
- 	if (ret)
- 		goto err_clk_disable_unprepare;
- 
-diff --git a/drivers/iio/adc/xilinx-xadc.h b/drivers/iio/adc/xilinx-xadc.h
-index 54adc50..f6f0819 100644
---- a/drivers/iio/adc/xilinx-xadc.h
-+++ b/drivers/iio/adc/xilinx-xadc.h
-@@ -60,7 +60,6 @@ struct xadc {
- 
- 	enum xadc_external_mux_mode external_mux_mode;
- 
--	unsigned int zynq_alarm;
- 	unsigned int zynq_masked_alarm;
- 	unsigned int zynq_intmask;
- 	struct delayed_work zynq_unmask_work;
-@@ -79,7 +78,6 @@ struct xadc_ops {
- 	void (*update_alarm)(struct xadc *, unsigned int);
- 	unsigned long (*get_dclk_rate)(struct xadc *);
- 	irqreturn_t (*interrupt_handler)(int, void *);
--	irqreturn_t (*threaded_interrupt_handler)(int, void *);
- 
- 	unsigned int flags;
- };
--- 
-1.9.1
+SGksIGFsbA0KCUp1c3Qgd2FudCB0byBjaGVjayBpZiBhbnlvbmUgaXMgd29ya2luZyB0byBicmlu
+ZyB0aGUgInRpbWVyczogZG8gbm90IHJhaXNlIHNvZnRpcnEgdW5jb25kaXRpb25hbGx5IiBiYWNr
+PyBTZWVtcyBpdCdzIG5vdCBpbiB0aGUgNC4xLjMtcnQgeWV0Lg0KDQpUaGFua3MNCi0tanloDQoN
+Cj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogbGludXgtcnQtdXNlcnMtb3du
+ZXJAdmdlci5rZXJuZWwub3JnIFttYWlsdG86bGludXgtcnQtdXNlcnMtDQo+IG93bmVyQHZnZXIu
+a2VybmVsLm9yZ10gT24gQmVoYWxmIE9mIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3INCj4gU2Vu
+dDogVGh1cnNkYXksIEFwcmlsIDksIDIwMTUgNjozOSBBTQ0KPiBUbzogTWlrZSBHYWxicmFpdGgN
+Cj4gQ2M6IFN0ZXZlbiBSb3N0ZWR0OyBsaW51eC1rZXJuZWxAdmdlci5rZXJuZWwub3JnOyBsaW51
+eC1ydC11c2VyczsgVGhvbWFzDQo+IEdsZWl4bmVyOyBDYXJzdGVuIEVtZGU7IEpvaG4gS2FjdXI7
+IEdvcnRtYWtlciwgUGF1bCAoV2luZCBSaXZlcikNCj4gU3ViamVjdDogUmU6IFtQQVRDSCBSVCAy
+LzRdIFJldmVydCAidGltZXJzOiBkbyBub3QgcmFpc2Ugc29mdGlycQ0KPiB1bmNvbmRpdGlvbmFs
+bHkiDQo+IA0KPiAqIE1pa2UgR2FsYnJhaXRoIHwgMjAxNS0wMy0yNSAwMzozMzo1MyBbKzAxMDBd
+Og0KPiANCj4gPk5haCwgSSB3YXMgcmVmZXJyaW5nIHRvIGdldF9uZXh0X3RpbWVyX2ludGVycnVw
+dCgpIGJlY2F1c2UgSSBzYXcgdGhhdA0KPiA+cnRfc3Bpbl91bmxvY2tfYWZ0ZXJfdHJ5bG9ja19p
+bl9pcnEoJmJhc2UtPmxvY2spIHNpdHRpbmcgdGhlcmUuDQo+IA0KPiBIbW0uIEdvb2QgcXVlc3Rp
+b24uIEJ1dCBpdCB3YXMgSW5nbyB3aG8gaW50cm9kdWNlZCB0aGUgbG9jaywgc28gaXQgbWlnaHQN
+Cj4gaGF2ZSBzcGVjaWFsIEluZ28gbWFnaWMgaW5jbHVkZWQuDQo+IA0KPiA+CS1NaWtlDQo+IA0K
+PiBTZWJhc3RpYW4NCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQg
+dGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBpbg0KPiB0aGUgYm9keSBvZiBh
+IG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiBNb3JlIG1ham9yZG9tbyBp
+bmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
