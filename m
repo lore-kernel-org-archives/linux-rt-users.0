@@ -1,50 +1,34 @@
-From: "Jiang, Yunhong" <yunhong.jiang@intel.com>
-Subject: RE: [PATCH RT 2/4] Revert "timers: do not raise softirq
- unconditionally"
-Date: Tue, 11 Aug 2015 23:21:16 +0000
-Message-ID: <DDCAE26804250545B9934A2056554AA020AA0768@ORSMSX112.amr.corp.intel.com>
-References: <20150317163541.080310081@goodmis.org>
- <20150317163617.218582800@goodmis.org>
- <20150317163551.3093b6c2@gandalf.local.home>
- <1426753029.4168.80.camel@gmail.com>
- <20150319122611.0d002d48@gandalf.local.home>
- <20150324181034.GD1321@linutronix.de> <1427250833.3459.4.camel@gmail.com>
- <20150409133916.GA2416@linutronix.de>
+From: DIXLOR <dixlor@gmail.com>
+Subject: Iozone write benchmark
+Date: Wed, 12 Aug 2015 05:52:24 +0300
+Message-ID: <55CAB4E8.9070202@gmail.com>
+Reply-To: dixlor@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mga02.intel.com ([134.134.136.20]:58711 "EHLO mga02.intel.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753411AbbHKXVR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 11 Aug 2015 19:21:17 -0400
-In-Reply-To: <20150409133916.GA2416@linutronix.de>
-Content-Language: en-US
+Received: from mail-lb0-f178.google.com ([209.85.217.178]:35975 "EHLO
+	mail-lb0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753546AbbHLCwa (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 11 Aug 2015 22:52:30 -0400
+Received: by lbbpu9 with SMTP id pu9so2090115lbb.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 11 Aug 2015 19:52:28 -0700 (PDT)
+Received: from [192.168.1.2] (ppp83-237-168-32.pppoe.mtu-net.ru. [83.237.168.32])
+        by smtp.googlemail.com with ESMTPSA id f10sm875530lae.23.2015.08.11.19.52.26
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Tue, 11 Aug 2015 19:52:27 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGksIGFsbA0KCUp1c3Qgd2FudCB0byBjaGVjayBpZiBhbnlvbmUgaXMgd29ya2luZyB0byBicmlu
-ZyB0aGUgInRpbWVyczogZG8gbm90IHJhaXNlIHNvZnRpcnEgdW5jb25kaXRpb25hbGx5IiBiYWNr
-PyBTZWVtcyBpdCdzIG5vdCBpbiB0aGUgNC4xLjMtcnQgeWV0Lg0KDQpUaGFua3MNCi0tanloDQoN
-Cj4gLS0tLS1PcmlnaW5hbCBNZXNzYWdlLS0tLS0NCj4gRnJvbTogbGludXgtcnQtdXNlcnMtb3du
-ZXJAdmdlci5rZXJuZWwub3JnIFttYWlsdG86bGludXgtcnQtdXNlcnMtDQo+IG93bmVyQHZnZXIu
-a2VybmVsLm9yZ10gT24gQmVoYWxmIE9mIFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3INCj4gU2Vu
-dDogVGh1cnNkYXksIEFwcmlsIDksIDIwMTUgNjozOSBBTQ0KPiBUbzogTWlrZSBHYWxicmFpdGgN
-Cj4gQ2M6IFN0ZXZlbiBSb3N0ZWR0OyBsaW51eC1rZXJuZWxAdmdlci5rZXJuZWwub3JnOyBsaW51
-eC1ydC11c2VyczsgVGhvbWFzDQo+IEdsZWl4bmVyOyBDYXJzdGVuIEVtZGU7IEpvaG4gS2FjdXI7
-IEdvcnRtYWtlciwgUGF1bCAoV2luZCBSaXZlcikNCj4gU3ViamVjdDogUmU6IFtQQVRDSCBSVCAy
-LzRdIFJldmVydCAidGltZXJzOiBkbyBub3QgcmFpc2Ugc29mdGlycQ0KPiB1bmNvbmRpdGlvbmFs
-bHkiDQo+IA0KPiAqIE1pa2UgR2FsYnJhaXRoIHwgMjAxNS0wMy0yNSAwMzozMzo1MyBbKzAxMDBd
-Og0KPiANCj4gPk5haCwgSSB3YXMgcmVmZXJyaW5nIHRvIGdldF9uZXh0X3RpbWVyX2ludGVycnVw
-dCgpIGJlY2F1c2UgSSBzYXcgdGhhdA0KPiA+cnRfc3Bpbl91bmxvY2tfYWZ0ZXJfdHJ5bG9ja19p
-bl9pcnEoJmJhc2UtPmxvY2spIHNpdHRpbmcgdGhlcmUuDQo+IA0KPiBIbW0uIEdvb2QgcXVlc3Rp
-b24uIEJ1dCBpdCB3YXMgSW5nbyB3aG8gaW50cm9kdWNlZCB0aGUgbG9jaywgc28gaXQgbWlnaHQN
-Cj4gaGF2ZSBzcGVjaWFsIEluZ28gbWFnaWMgaW5jbHVkZWQuDQo+IA0KPiA+CS1NaWtlDQo+IA0K
-PiBTZWJhc3RpYW4NCj4gLS0NCj4gVG8gdW5zdWJzY3JpYmUgZnJvbSB0aGlzIGxpc3Q6IHNlbmQg
-dGhlIGxpbmUgInVuc3Vic2NyaWJlIGxpbnV4LXJ0LXVzZXJzIiBpbg0KPiB0aGUgYm9keSBvZiBh
-IG1lc3NhZ2UgdG8gbWFqb3Jkb21vQHZnZXIua2VybmVsLm9yZw0KPiBNb3JlIG1ham9yZG9tbyBp
-bmZvIGF0ICBodHRwOi8vdmdlci5rZXJuZWwub3JnL21ham9yZG9tby1pbmZvLmh0bWwNCg==
+Kernels:
+      Debian 8 default (3.16.0-4)
+      RT 3.18.19-rt15
+
+# iozone -a -b out.xls -+u -p -B -e -E;
+
+http://pavlinux.ru/bench.html  (sorry for music :)
+
+
