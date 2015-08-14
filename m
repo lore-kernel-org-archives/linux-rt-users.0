@@ -1,35 +1,43 @@
-From: DIXLOR <dixlor@gmail.com>
-Subject: rt-tests-0.93: VERSION mistake
-Date: Fri, 14 Aug 2015 04:00:26 +0300
-Message-ID: <55CD3DAA.5020601@gmail.com>
-Reply-To: dixlor@gmail.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] Fix VERSION in rt-migrate-test
+Date: Fri, 14 Aug 2015 13:48:27 +0100
+Message-ID: <1439556507-28759-1-git-send-email-jkacur@redhat.com>
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-la0-f48.google.com ([209.85.215.48]:34052 "EHLO
-	mail-la0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754595AbbHNBAa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Aug 2015 21:00:30 -0400
-Received: by labd1 with SMTP id d1so35724023lab.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 13 Aug 2015 18:00:29 -0700 (PDT)
-Received: from [192.168.1.2] (ppp83-237-161-29.pppoe.mtu-net.ru. [83.237.161.29])
-        by smtp.googlemail.com with ESMTPSA id d9sm1006702lah.40.2015.08.13.18.00.28
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Thu, 13 Aug 2015 18:00:28 -0700 (PDT)
+Received: from mx1.redhat.com ([209.132.183.28]:34631 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754934AbbHNMsb (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 14 Aug 2015 08:48:31 -0400
+Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
+	by mx1.redhat.com (Postfix) with ESMTPS id 5150FA49F8
+	for <linux-rt-users@vger.kernel.org>; Fri, 14 Aug 2015 12:48:31 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-In /src/rt-migrate-test/rt-migrate-test.c
+- Change VERSION_STRING to VERSION to get the same version number as the
+  the rest of the suite
 
-#define VERSION_STRING 0.3
+- Assume that VERSION is defined, instead of replacing it with a
+  nonsensical number
 
-#  ./rt-migrate-test -h
+- Print the help option in the usage() function
 
-rt-migrate-test 0.30
-...
+Reported-by: DIXLOR <dixlor@gmail.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/rt-migrate-test/rt-migrate-test.c | 7 ++-----
+ 1 file changed, 2 insertions(+), 5 deletions(-)
 
-Version 3/10 ?  :)
+diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+index fc6fd81ba9ca..430e992fc066 100644
+--- a/src/rt-migrate-test/rt-migrate-test.c
++++ b/src/rt-migrate-test/rt-migrate-test.c
+@@ -47,10 +47,6 @@
+ 
+ #define gettid() syscall(__NR_gettid)
+ 
+-#ifndef VERSION_STRING
+-#define VERSION_STRING 0.3
+-#endif
