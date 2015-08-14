@@ -1,61 +1,35 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-0.93
-Date: Thu, 13 Aug 2015 17:20:26 +0100 (IST)
-Message-ID: <alpine.LFD.2.20.1508131717490.12209@riemann>
+From: DIXLOR <dixlor@gmail.com>
+Subject: rt-tests-0.93: VERSION mistake
+Date: Fri, 14 Aug 2015 04:00:26 +0300
+Message-ID: <55CD3DAA.5020601@gmail.com>
+Reply-To: dixlor@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463811327-80488839-1439482983=:12209"
-Cc: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Alexander Stein <alexander.stein@systec-electronic.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f173.google.com ([209.85.212.173]:34012 "EHLO
-	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752877AbbHMQXI (ORCPT
+Received: from mail-la0-f48.google.com ([209.85.215.48]:34052 "EHLO
+	mail-la0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754595AbbHNBAa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 13 Aug 2015 12:23:08 -0400
+	Thu, 13 Aug 2015 21:00:30 -0400
+Received: by labd1 with SMTP id d1so35724023lab.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 13 Aug 2015 18:00:29 -0700 (PDT)
+Received: from [192.168.1.2] (ppp83-237-161-29.pppoe.mtu-net.ru. [83.237.161.29])
+        by smtp.googlemail.com with ESMTPSA id d9sm1006702lah.40.2015.08.13.18.00.28
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 13 Aug 2015 18:00:28 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+In /src/rt-migrate-test/rt-migrate-test.c
 
----1463811327-80488839-1439482983=:12209
-Content-Type: text/plain; charset=ISO-8859-7
-Content-Transfer-Encoding: 8BIT
+#define VERSION_STRING 0.3
 
-Clark Williams and I are pleased to announce a new rt-tests release.
-Note we have a new git location, 
-make sure you update your repo to one of the following
+#  ./rt-migrate-test -h
 
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+rt-migrate-test 0.30
+...
 
-tag: v0.93
-
-Alexander Stein (1):
-  cyclictest: Fix long priority help text option
-
-Clark Williams (4):
-  makefile: fixed release target
-  hwlatdetect: added --watch option to watch output in realtime
-  doc: fix VERSION in release-checklist.txt
-  Version bump to v0.93
-
-John Kacur (6):
-  Fix warning: unused variable ¡c¢
-  Fix possible exit on error without releasing mutex
-  Create a .gitattribute file to specify what files git-archive should
-    ignore
-  Add .tar files to .gitignore
-  Change VERSION_STRING to VERSION
-  Create an rt-tests.tar file using git-archive
-
-Cheers!
-
-John Kacur
----1463811327-80488839-1439482983=:12209--
+Version 3/10 ?  :)
