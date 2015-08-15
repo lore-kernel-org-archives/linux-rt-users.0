@@ -1,58 +1,57 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [PATCH] Fix VERSION in rt-migrate-test
-Date: Fri, 14 Aug 2015 22:00:05 +0200
-Message-ID: <20150814200005.GX9999@pengutronix.de>
-References: <1439556507-28759-1-git-send-email-jkacur@redhat.com>
+From: Jonathan Cameron <jic23-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org>
+Subject: Re: [PATCH v4] iio: adc: xilinx-xadc: Push interrupts into hardirq
+ context
+Date: Sat, 15 Aug 2015 20:55:22 +0100
+Message-ID: <55CF992A.5040505@kernel.org>
+References: <55C07160.5040907@metafoo.de>
+ <1439334049-28671-1-git-send-email-xander.huff@ni.com>
+ <55CB6391.7060502@metafoo.de> <55CB7558.3090608@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.pengutronix.de ([92.198.50.35]:47989 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751691AbbHNUAI (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 14 Aug 2015 16:00:08 -0400
-Content-Disposition: inline
-In-Reply-To: <1439556507-28759-1-git-send-email-jkacur@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: knaack.h-Mmb7MZpHnFY@public.gmane.org, pmeerw-jW+XmwGofnusTnJN9+BGXg@public.gmane.org, michal.simek-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org,
+	soren.brinkmann-gjFFaj9aHVfQT0dZR+AlfA@public.gmane.org, linux-iio-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
+	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
+	joe.hershberger-acOepvfBmUk@public.gmane.org, joshc-acOepvfBmUk@public.gmane.org, nathan.sullivan-acOepvfBmUk@public.gmane.org,
+	jaeden.amero-acOepvfBmUk@public.gmane.org
+To: Sebastian Andrzej Siewior <bigeasy-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>,
+	Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>,
+	Xander Huff <xander.huff-acOepvfBmUk@public.gmane.org>
+Return-path: <linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
+In-Reply-To: <55CB7558.3090608-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
+Sender: linux-iio-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello,
+On 12/08/15 17:33, Sebastian Andrzej Siewior wrote:
+> On 08/12/2015 05:17 PM, Lars-Peter Clausen wrote:
+>> On 08/12/2015 01:00 AM, Xander Huff wrote:
+>>> Unfortunately, this breaks PREEMPT_RT builds, where a spinlock can sleep,
+>>> and is thus not able to be acquired from a hardirq handler. This patch gets
+>>> rid of the threaded handler and pushes all interrupt handling into the
+>>> hardirq context, and uses request_irq().
+>>>
+>>> To validate that this change has no impact on RT performance, here are
+>>> cyclictest values with no processes running:
+>>
+>> Looks good, thanks.
+>>
+>> Acked-by: Lars-Peter Clausen <lars-Qo5EllUWu/uELgA04lAiVw@public.gmane.org>
+> 
+> Yes, I'm fine with the rework, too.
+Formal Acked-by would be good but I'll take this on the basis of Lars' one
+and that the code clearly should work from a read through.
 
-On Fri, Aug 14, 2015 at 01:48:27PM +0100, John Kacur wrote:
-> - Change VERSION_STRING to VERSION to get the same version number as =
-the
->   the rest of the suite
->=20
-> - Assume that VERSION is defined, instead of replacing it with a
->   nonsensical number
->=20
-> - Print the help option in the usage() function
->=20
-> Reported-by: DIXLOR <dixlor@gmail.com>
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-Patch looks good. It makes me remember my rework to let rt-tests use
-autoconf (which I only sent to jkacur by private mail, but if you want
-to take a look:
+Applied to the togreg branch of iio.git.  Thanks for following through
+the various twists of this one. Will initially be pushed out as testing.
+Note this has almost certainly (unless Linus announces a delay) missed the
+upcoming merge window so will be lined up for the 4.4 one.
 
-	git://git.pengutronix.de/git/ukl/rt-tests.git convert-to-autoconf
-
-). Is it worth to rebase my work on top of v0.93?
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Jonathan
+> 
+> Sebastian
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-iio" in
+> the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
