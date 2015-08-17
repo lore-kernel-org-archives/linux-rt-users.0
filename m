@@ -1,151 +1,110 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.1.5-rt5
-Date: Sun, 16 Aug 2015 15:56:30 +0200
-Message-ID: <20150816135630.GE7004@linutronix.de>
+From: Alex Goebel <alex.goebel@gmail.com>
+Subject: Re: [RT] oops in 4.1.3-rt3
+Date: Mon, 17 Aug 2015 03:33:43 +0000 (UTC)
+Message-ID: <loom.20150817T051749-439@post.gmane.org>
+References: <20150803142700.1de720e4@sluggy> <20150804080829.GB9956@opentech.at> <alpine.DEB.2.11.1508041403550.3983@nanos> <20150816115859.GD7004@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:50174 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751361AbbHPN4e (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 16 Aug 2015 09:56:34 -0400
-Content-Disposition: inline
+Received: from plane.gmane.org ([80.91.229.3]:60930 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751034AbbHQDfH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 16 Aug 2015 23:35:07 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1ZRBCR-0004xN-KT
+	for linux-rt-users@vger.kernel.org; Mon, 17 Aug 2015 05:35:04 +0200
+Received: from S0106602ad0951f35.vc.shawcable.net ([24.84.40.136])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2015 05:35:03 +0200
+Received: from alex.goebel by S0106602ad0951f35.vc.shawcable.net with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2015 05:35:03 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+Hi,
 
-I'm pleased to announce the v4.1.5-rt5 patch set.
-Changes since v4.1.5-rt4:
+Sebastian Andrzej Siewior <bigeasy <at> linutronix.de> writes:
+> This might be a .config thing, device driver or user land behaviour.
+> Usually ksoftirqd should remain (almost) idle because most of BH work
+> remains in task-context and not in ksoftirqd. tasklets for instance
+> should run in ksoftirqd. So a function trace or event tracing to figure
+> out what is scheduling the softirq might give a pointer.
 
-- don't disable preemption in dump_stack(). We should not see a
-  backtrace on a production kernel but then it should not increase the
-  latency if trigger one.
+I have a problem that might be related, or at least I suffer from the same
+symptoms:
+Trying to run various Debian 4.1 (and 4.0 as well, IIRC) -rt kernels on a
+Core i7-720QM Thinkpad, it boots up, I can log in, everything seems normal,
+but then after a few minutes, not doing anything special, things get
+sluggish and within seconds everything grinds to a complete halt. In the
+last screen update I had, there was no double-digit percentage of ksoftirqd
+though.
 
-Known issues:
- 
-- bcache is disabled.
+Below is what I get in the logs. Note that it doesn't actually shut down, it
+just freezes and a hard reset is needed. The same kernels as non-RT work fine.
 
-- CPU hotplug works in general. Steven's test script however
-  deadlocks usually on the second invocation.
+Not sure if this is really related, but perhaps it helps.
+Cheers,
+Alex
 
-- Clark Williams reported an OOPS in netlink_release() which has not
-  been narrowed down yet.
- 
-- Nicholas Mc Guire reported high CPU usage by softirq on an idle system 
-  which seems to freeze / halt the system.
+Aug 10 17:04:52 linux kernel: [  189.542192] INFO: rcu_preempt detected
+stalls on CPUs/tasks: { 3} (detected by 0, t=5252 jiffies, g=3874, c=3873,
+q=8201)
+Aug 10 17:04:52 linux kernel: [  189.542194] Task dump for CPU 3:
+Aug 10 17:04:52 linux kernel: [  189.542200] swapper/3       R  running task
+       0     0      1 0x00200000
+Aug 10 17:04:52 linux kernel: [  189.542206]  ffffffff8136e2fa
+ffffffff8101f9e5 ffff8803333eee00 0000000008004000
+Aug 10 17:04:52 linux kernel: [  189.542209]  0000000000000004
+0000000000000004 ffffffff8145baf4 0000000000000000
+Aug 10 17:04:52 linux kernel: [  189.542212]  0000000000000000
+ffff88033338f020 ffff8803333eee00 ffffffff8190b640
+Aug 10 17:04:52 linux kernel: [  189.542213] Call Trace:
+Aug 10 17:04:52 linux kernel: [  189.542224]  [<ffffffff8136e2fa>] ?
+intel_idle+0x12a/0x140
+Aug 10 17:04:52 linux kernel: [  189.542230]  [<ffffffff8101f9e5>] ?
+read_tsc+0x5/0x10
+Aug 10 17:04:52 linux kernel: [  189.542238]  [<ffffffff8145baf4>] ?
+cpuidle_enter_state+0x74/0x270
+Aug 10 17:04:52 linux kernel: [  189.542244]  [<ffffffff810b9298>] ?
+cpu_startup_entry+0x3a8/0x4e0
+Aug 10 17:04:52 linux kernel: [  189.542249]  [<ffffffff8104e0d9>] ?
+start_secondary+0x169/0x190
+Aug 10 17:04:52 linux kernel: [  189.542254] rcu_preempt kthread starved for
+5251 jiffies!
+Aug 10 17:05:01 linux CRON[4531]: (root) CMD (command -v debian-sa1 >
+/dev/null && debian-sa1 1 1)
+Aug 10 17:05:33 linux kernel: [  210.562994] INFO: rcu_preempt detected
+stalls on CPUs/tasks: { 3} (detected by 1, t=5252 jiffies, g=3875, c=3874,
+q=14365)
+Aug 10 17:05:33 linux kernel: [  210.562997] Task dump for CPU 3:
+Aug 10 17:05:33 linux kernel: [  210.563003] swapper/3       R  running task
+       0     0      1 0x00200000
+Aug 10 17:05:33 linux kernel: [  210.563081]  ffffffff8136e2fa
+ffffffff8101f9e5 ffff8803333eee00 0000000008004000
+Aug 10 17:05:33 linux kernel: [  210.563085]  0000000000000004
+0000000000000004 ffffffff8145baf4 0000000000000000
+Aug 10 17:05:33 linux kernel: [  210.563090]  0000000000000000
+ffff88033338f020 ffff8803333eee00 ffffffff8190b640
+Aug 10 17:05:33 linux kernel: [  210.563091] Call Trace:
+Aug 10 17:05:33 linux kernel: [  210.563103]  [<ffffffff8136e2fa>] ?
+intel_idle+0x12a/0x140
+Aug 10 17:05:33 linux kernel: [  210.563111]  [<ffffffff8101f9e5>] ?
+read_tsc+0x5/0x10
+Aug 10 17:05:33 linux kernel: [  210.563121]  [<ffffffff8145baf4>] ?
+cpuidle_enter_state+0x74/0x270
+Aug 10 17:05:33 linux kernel: [  210.563133]  [<ffffffff810b9298>] ?
+cpu_startup_entry+0x3a8/0x4e0
+Aug 10 17:05:33 linux kernel: [  210.563139]  [<ffffffff8104e0d9>] ?
+start_secondary+0x169/0x190
+Aug 10 17:05:33 linux kernel: [  210.563143] rcu_preempt kthread starved for
+5252 jiffies!
+Aug 10 17:05:34 linux shutdown[4689]: shutting down for system halt
+Aug 10 17:05:34 linux init: Switching to runlevel: 0
+Aug 10 17:05:34 linux shutdown[4822]: shutting down for system halt
 
-The delta patch against 4.1.5-rt4 is appended below and can be found here:
 
-    https://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.5-rt4-rt5.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.1.5-rt5
-
-The RT patch against 4.1.5 can be found here:
-
-    https://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.5-rt5.patch.xz
-
-The split quilt queue is available at:
-
-    https://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patches-4.1.5-rt5.tar.xz
-
-Sebastian
-
-diff --git a/arch/x86/kernel/dumpstack_32.c b/arch/x86/kernel/dumpstack_32.c
-index 464ffd69b92e..00db1aad1548 100644
---- a/arch/x86/kernel/dumpstack_32.c
-+++ b/arch/x86/kernel/dumpstack_32.c
-@@ -42,7 +42,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 		unsigned long *stack, unsigned long bp,
- 		const struct stacktrace_ops *ops, void *data)
- {
--	const unsigned cpu = get_cpu();
-+	const unsigned cpu = get_cpu_light();
- 	int graph = 0;
- 	u32 *prev_esp;
- 
-@@ -86,7 +86,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 			break;
- 		touch_nmi_watchdog();
- 	}
--	put_cpu();
-+	put_cpu_light();
- }
- EXPORT_SYMBOL(dump_trace);
- 
-diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 5f1c6266eb30..c331e3fef465 100644
---- a/arch/x86/kernel/dumpstack_64.c
-+++ b/arch/x86/kernel/dumpstack_64.c
-@@ -152,7 +152,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 		unsigned long *stack, unsigned long bp,
- 		const struct stacktrace_ops *ops, void *data)
- {
--	const unsigned cpu = get_cpu();
-+	const unsigned cpu = get_cpu_light();
- 	struct thread_info *tinfo;
- 	unsigned long *irq_stack = (unsigned long *)per_cpu(irq_stack_ptr, cpu);
- 	unsigned long dummy;
-@@ -241,7 +241,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 	 * This handles the process stack:
- 	 */
- 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
--	put_cpu();
-+	put_cpu_light();
- }
- EXPORT_SYMBOL(dump_trace);
- 
-@@ -255,7 +255,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 	int cpu;
- 	int i;
- 
--	preempt_disable();
-+	migrate_disable();
- 	cpu = smp_processor_id();
- 
- 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
-@@ -291,7 +291,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 			pr_cont(" %016lx", *stack++);
- 		touch_nmi_watchdog();
- 	}
--	preempt_enable();
-+	migrate_enable();
- 
- 	pr_cont("\n");
- 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
-diff --git a/lib/dump_stack.c b/lib/dump_stack.c
-index 6745c6230db3..7ccbc6ff80ea 100644
---- a/lib/dump_stack.c
-+++ b/lib/dump_stack.c
-@@ -33,7 +33,7 @@ asmlinkage __visible void dump_stack(void)
- 	 * Permit this cpu to perform nested stack dumps while serialising
- 	 * against other CPUs
- 	 */
--	preempt_disable();
-+	migrate_disable();
- 
- retry:
- 	cpu = smp_processor_id();
-@@ -52,7 +52,7 @@ asmlinkage __visible void dump_stack(void)
- 	if (!was_locked)
- 		atomic_set(&dump_lock, -1);
- 
--	preempt_enable();
-+	migrate_enable();
- }
- #else
- asmlinkage __visible void dump_stack(void)
-diff --git a/localversion-rt b/localversion-rt
-index ad3da1bcab7e..0efe7ba1930e 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt4
-+-rt5
