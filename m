@@ -1,61 +1,53 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [ANNOUNCE] rt-tests-0.93
-Date: Mon, 17 Aug 2015 18:26:06 +0100 (IST)
-Message-ID: <alpine.LFD.2.20.1508171823090.13490@riemann>
-References: <alpine.LFD.2.20.1508131717490.12209@riemann> <20150817081722.GZ9999@pengutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
+Date: Mon, 17 Aug 2015 22:31:07 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1508172228130.3873@nanos>
+References: <20150114171459.593877145@redhat.com> <20150116114846.4e7b718d@gandalf.local.home> <20150119144100.GA10794@amt.cnet> <20150120054653.GA6473@iris.ozlabs.ibm.com> <20150120131613.009903a0@gandalf.local.home> <20150121150716.GD11596@twins.programming.kicks-ass.net>
+ <20150217174419.GY26177@linutronix.de> <20150218140320.GY5029@twins.programming.kicks-ass.net> <20150225210250.GA25858@linutronix.de> <20150807105738.GF16853@twins.programming.kicks-ass.net> <20150807111415.GC18673@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463810815-1467706177-1439832375=:13490"
-Cc: John Kacur <jkacur@redhat.com>,
-	rt-users <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Alexander Stein <alexander.stein@systec-electronic.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
+Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-203970585-1439843468=:3873"
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Paul Mackerras <paulus@samba.org>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Luiz Capitulino <lcapitulino@redhat.com>,
+	Rik van Riel <riel@redhat.com>,
+	Steven Rostedt <srostedt@redhat.com>, kvm@vger.kernel.org,
+	Paolo Bonzini <pbonzini@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150817081722.GZ9999@pengutronix.de>
+In-Reply-To: <20150807111415.GC18673@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
   This message is in MIME format.  The first part should be readable text,
   while the remaining parts are likely unreadable without MIME-aware tools.
 
----1463810815-1467706177-1439832375=:13490
-Content-Type: text/plain; charset=iso-8859-1
+--8323329-203970585-1439843468=:3873
+Content-Type: TEXT/PLAIN; charset=utf-8
 Content-Transfer-Encoding: 8BIT
 
-
-
-On Mon, 17 Aug 2015, Uwe Kleine-König wrote:
-
-> Hello John,
+On Fri, 7 Aug 2015, Peter Zijlstra wrote:
+> On Fri, Aug 07, 2015 at 12:57:38PM +0200, Peter Zijlstra wrote:
 > 
-> On Thu, Aug 13, 2015 at 05:20:26PM +0100, John Kacur wrote:
-> > Clark Williams and I are pleased to announce a new rt-tests release.
-> > Note we have a new git location, 
-> > make sure you update your repo to one of the following
+> > > >+void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
+> 
+> > > this one has no users the __ suggests that it is locked edition. Maybe
+> > > it is for the completionsâ€¦
 > > 
-> > git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-> > https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-> > https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+> > Yeah, who knows, I certainly do not anymore ;-)
 > 
-> https://www.kernel.org/pub/linux/utils/rt-tests/ doesn't have 0.93 yet.
-> (This URL is used to feed
-> https://qa.debian.org/cgi-bin/watch?pkg=rt-tests_0.92-1, so adding the
-> tarball there should make me aware there is a 0.93 release available :-)
+> On that, we cannot convert completions to swait. Because swait wake_all
+> must not happen from IRQ context, and complete_all() typically is used
+> from just that.
 
-It's there now, you can find the following three files
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.93.tar.xz
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.93.tar.sign
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.93.tar.gz
+Well, completions are not the ones which have a gazillion of waiters
+and we got quite some performance back from using swait in completions
+on RT.
 
-And I've archived the older ones at
-https://www.kernel.org/pub/linux/utils/rt-tests/older/
+Thanks,
 
-Cheers!
+	tglx
 
-John Kacur
----1463810815-1467706177-1439832375=:13490--
+--8323329-203970585-1439843468=:3873--
