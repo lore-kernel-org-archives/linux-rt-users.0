@@ -1,53 +1,32 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [patch -rt 1/2] KVM: use simple waitqueue for vcpu->wq
-Date: Mon, 17 Aug 2015 22:31:07 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1508172228130.3873@nanos>
-References: <20150114171459.593877145@redhat.com> <20150116114846.4e7b718d@gandalf.local.home> <20150119144100.GA10794@amt.cnet> <20150120054653.GA6473@iris.ozlabs.ibm.com> <20150120131613.009903a0@gandalf.local.home> <20150121150716.GD11596@twins.programming.kicks-ass.net>
- <20150217174419.GY26177@linutronix.de> <20150218140320.GY5029@twins.programming.kicks-ass.net> <20150225210250.GA25858@linutronix.de> <20150807105738.GF16853@twins.programming.kicks-ass.net> <20150807111415.GC18673@twins.programming.kicks-ass.net>
+From: Brian Silverman <brian@peloton-tech.com>
+Subject: problems with chained IRQ handlers
+Date: Mon, 17 Aug 2015 18:41:55 -0700
+Message-ID: <CAGt3f4k=-TW2qVhqMFk7U22NGZToZ5bxi1qVuUqcVRKqjhBbMw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-203970585-1439843468=:3873"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Paul Mackerras <paulus@samba.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Luiz Capitulino <lcapitulino@redhat.com>,
-	Rik van Riel <riel@redhat.com>,
-	Steven Rostedt <srostedt@redhat.com>, kvm@vger.kernel.org,
-	Paolo Bonzini <pbonzini@redhat.com>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150807111415.GC18673@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-ig0-f174.google.com ([209.85.213.174]:35016 "EHLO
+	mail-ig0-f174.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751078AbbHRBmZ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 17 Aug 2015 21:42:25 -0400
+Received: by igbjg10 with SMTP id jg10so69657315igb.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 17 Aug 2015 18:42:24 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hi,
 
---8323329-203970585-1439843468=:3873
-Content-Type: TEXT/PLAIN; charset=utf-8
-Content-Transfer-Encoding: 8BIT
+Chained IRQ handlers are always marked IRQ_NOTHREAD, which means
+forced threading doesn't apply to them. I think this means they can't
+safely use non-raw spinlocks under CONFIG_PREEMPT_RT_FULL. Is this
+correct?
 
-On Fri, 7 Aug 2015, Peter Zijlstra wrote:
-> On Fri, Aug 07, 2015 at 12:57:38PM +0200, Peter Zijlstra wrote:
-> 
-> > > >+void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-> 
-> > > this one has no users the __ suggests that it is locked edition. Maybe
-> > > it is for the completions…
-> > 
-> > Yeah, who knows, I certainly do not anymore ;-)
-> 
-> On that, we cannot convert completions to swait. Because swait wake_all
-> must not happen from IRQ context, and complete_all() typically is used
-> from just that.
-
-Well, completions are not the ones which have a gazillion of waiters
-and we got quite some performance back from using swait in completions
-on RT.
+I have an ARM system with a CONFIG_PREEMPT_RT_FULL kernel which prints
+lockdep warnings from many places because of this. It also locks up
+under moderate load, which I think is related to this issue. Any
+suggestions?
 
 Thanks,
-
-	tglx
-
---8323329-203970585-1439843468=:3873--
+Brian Silverman
