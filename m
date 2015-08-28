@@ -1,12 +1,12 @@
-From: Clark Williams <williams@redhat.com>
+From: Darren Hart <dvhart@infradead.org>
 Subject: Re: [PATCH rt-tests 0/4] build tweaks and a bug fix
-Date: Fri, 28 Aug 2015 12:50:13 -0500
-Message-ID: <20150828125013.77d181b0@sluggy>
+Date: Fri, 28 Aug 2015 10:54:00 -0700
+Message-ID: <20150828175400.GB33809@vmdeb7>
 References: <cover.1440720422.git.joshc@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
 	Darren Hart <dvhart@linux.intel.com>,
 	Robert Yang <liezhi.yang@windriver.com>,
 	Kai Kang <kai.kang@windriver.com>,
@@ -14,17 +14,17 @@ Cc: John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
 	Jesse Zhang <sen.zhang@windriver.com>
 To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:58932 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752962AbbH1RuQ (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 28 Aug 2015 13:50:16 -0400
+Received: from bombadil.infradead.org ([198.137.202.9]:49161 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752471AbbH1RyH (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 28 Aug 2015 13:54:07 -0400
+Content-Disposition: inline
 In-Reply-To: <cover.1440720422.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 27 Aug 2015 19:19:47 -0500
-Josh Cartwright <joshc@ni.com> wrote:
-
+On Thu, Aug 27, 2015 at 07:19:47PM -0500, Josh Cartwright wrote:
 > Hey John, Clark-
 > 
 > This series has a few minor rt-tests tweaks that make it a bit easier to build
@@ -35,6 +35,9 @@ Josh Cartwright <joshc@ni.com> wrote:
 > patch allows a packager to more easily split hwlatdetect into a separate
 > package.  (Both of these patches are unchanged since Darren's original
 > submission in 2012[1]).
+
+Yikes, did I not submit those to rt-tests? If not, shame on me!
+
 > 
 > The third patch works around crappy gzip implementations.
 > 
@@ -48,8 +51,21 @@ Josh Cartwright <joshc@ni.com> wrote:
 > Thanks,
 >   Josh
 > 
+> 1: http://permalink.gmane.org/gmane.linux.rt.user/8749
+> 
+> Cc: Darren Hart <dvhart@linux.intel.com>
+> Cc: Robert Yang <liezhi.yang@windriver.com>
+> Cc: Kai Kang <kai.kang@windriver.com>
+> Cc: Song.Li <Song.Li@windriver.com>
+> Cc: Jesse Zhang <sen.zhang@windriver.com>
+> 
+> Darren Hart (2):
+>   rt-tests: Allow for user-specified PYLIB
+>   rt-tests: Break out install_hwlatdetect
+> 
 
-These look reasonable to me Josh. I'll pull 'em in and we'll beat on
-them for a while.
+Re-Acked, thanks Josh.
 
-Clark
+-- 
+Darren Hart
+Intel Open Source Technology Center
