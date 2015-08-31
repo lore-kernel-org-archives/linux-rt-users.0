@@ -1,42 +1,50 @@
 From: Josh Cartwright <joshc@ni.com>
-Subject: [PATCH rt-tests 7/9] cyclictest: fail if use_fifo && thread creation failed
-Date: Mon, 31 Aug 2015 11:35:34 -0500
-Message-ID: <73a350e379f58fc06c879a6389dec78cb18ca3c7.1441038216.git.joshc@ni.com>
+Subject: [PATCH rt-tests 8/9] error: mark fatal, err_exit, err_quit as being noreturn
+Date: Mon, 31 Aug 2015 11:35:35 -0500
+Message-ID: <0e671c826ca8281e8ad005a9dbc4f553cc816e8d.1441038216.git.joshc@ni.com>
 References: <cover.1441038216.git.joshc@ni.com>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:44395 "EHLO ni.com"
+Received: from skprod3.natinst.com ([130.164.80.24]:44390 "EHLO ni.com"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753666AbbHaQfk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Aug 2015 12:35:40 -0400
+	id S1753585AbbHaQfj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 31 Aug 2015 12:35:39 -0400
 In-Reply-To: <cover.1441038216.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+These functions never return to their caller.  Mark them as such to aide
+in code generation and help out static analysis.
+
 Signed-off-by: Josh Cartwright <joshc@ni.com>
 ---
- src/cyclictest/cyclictest.c | 5 ++++-
- 1 file changed, 4 insertions(+), 1 deletion(-)
+ src/include/error.h | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 896cdd7..2c44f8e 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -2058,8 +2058,11 @@ int main(int argc, char **argv)
- 			fatal("failed to create thread %d: %s\n", i, strerror(status));
+diff --git a/src/include/error.h b/src/include/error.h
+index ae05a2e..4acff49 100644
+--- a/src/include/error.h
++++ b/src/include/error.h
+@@ -6,14 +6,14 @@
+ #include <stdarg.h>
+ #include <string.h>
  
- 	}
--	if (use_fifo)
-+	if (use_fifo) {
- 		status = pthread_create(&fifo_threadid, NULL, fifothread, NULL);
-+		if (status)
-+			fatal("failed to create fifo thread: %s\n", strerror(status));
-+	}
+-void err_exit(int err, char *fmt, ...);
++void err_exit(int err, char *fmt, ...) __attribute__((noreturn));
+ void err_msg(char *fmt, ...);
+ void err_msg_n(int err, char *fmt, ...);
+-void err_quit(char *fmt, ...);
++void err_quit(char *fmt, ...) __attribute__((noreturn));
+ void debug(char *fmt, ...);
+ void info(char *fmt, ...);
+ void warn(char *fmt, ...);
+-void fatal(char *fmt, ...);
++void fatal(char *fmt, ...) __attribute__((noreturn));
+ void err_doit(int err, const char *fmt, va_list ap);
  
- 	while (!shutdown) {
- 		char lavg[256];
+ #endif	/* __ERROR_H */
 -- 
 2.5.0
 
