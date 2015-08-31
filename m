@@ -1,35 +1,221 @@
 From: Josh Cartwright <joshc@ni.com>
-Subject: [PATCH rt-tests 6/9] cyclictest: drop impossible use_fifo conditional
-Date: Mon, 31 Aug 2015 11:35:33 -0500
-Message-ID: <6eca77cc0906aece69c31603b39a35c5e2f5e3c9.1441038216.git.joshc@ni.com>
+Subject: [PATCH rt-tests 9/9] cyclictest: add option for dumping the histogram in a file
+Date: Mon, 31 Aug 2015 11:35:36 -0500
+Message-ID: <ef2410217389a838ed5059c4ac23670fe22492ae.1441038216.git.joshc@ni.com>
 References: <cover.1441038216.git.joshc@ni.com>
-Cc: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org,
+	Gratian Crisan <gratian.crisan@ni.com>
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:37400 "EHLO ni.com"
+Received: from skprod2.natinst.com ([130.164.80.23]:37407 "EHLO ni.com"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753582AbbHaQfj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 31 Aug 2015 12:35:39 -0400
+	id S1753688AbbHaQfk (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 31 Aug 2015 12:35:40 -0400
 In-Reply-To: <cover.1441038216.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-The fifothread is only created when use_fifo is set; having the thread
-itself perform a check is redundant and unnecessary.  Drop it.
+From: Gratian Crisan <gratian.crisan@ni.com>
 
+Add an option '-J' or '--histfile' to dump the latency histogram to <path>
+instead of stdout. This allows for live update of the current min, avg, and max
+numbers while retaining the option to save histogram data for later analysis.
+
+Signed-off-by: Gratian Crisan <gratian.crisan@ni.com>
 Signed-off-by: Josh Cartwright <joshc@ni.com>
 ---
- src/cyclictest/cyclictest.c | 3 ---
- 1 file changed, 3 deletions(-)
+ src/cyclictest/cyclictest.c | 97 ++++++++++++++++++++++++++++-----------------
+ 1 file changed, 60 insertions(+), 37 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index dc754fd..896cdd7 100644
+index 2c44f8e..ec1ed17 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -1773,9 +1773,6 @@ static void *fifothread(void *param)
- 	FILE *fp;
- 	int i;
+@@ -188,6 +188,7 @@ static int aligned = 0;
+ static int secaligned = 0;
+ static int offset = 0;
+ static int laptop = 0;
++static int use_histfile = 0;
  
--	if (use_fifo == 0)
--		return NULL;
+ static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
+ static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
+@@ -210,6 +211,7 @@ static char *procfileprefix = "/proc/sys/kernel/";
+ static char *fileprefix;
+ static char tracer[MAX_PATH];
+ static char fifopath[MAX_PATH];
++static char histfile[MAX_PATH];
+ static char **traceptr;
+ static int traceopt_count;
+ static int traceopt_size;
+@@ -1049,6 +1051,7 @@ static void display_help(int error)
+ 	       "                           (with same priority about many threads)\n"
+ 	       "                           US is the max time to be be tracked in microseconds\n"
+ 	       "-H       --histofall=US    same as -h except with an additional summary column\n"
++	       "-J       --histfile=<path> dump the latency histogram to <path> instead of stdout\n"
+ 	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
+ 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
+ 	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+@@ -1214,13 +1217,13 @@ static char *policyname(int policy)
+ enum option_values {
+ 	OPT_AFFINITY=1, OPT_NOTRACE, OPT_BREAKTRACE, OPT_PREEMPTIRQ, OPT_CLOCK,
+ 	OPT_CONTEXT, OPT_DISTANCE, OPT_DURATION, OPT_LATENCY, OPT_EVENT,
+-	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_INTERVAL,
+-	OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANOSLEEP,
+-	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF,
+-	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM,
+-	OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
+-	OPT_WAKEUP, OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+-	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED,
++	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_HISTFILE,
++	OPT_INTERVAL, OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANOSLEEP,
++	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF, OPT_QUIET,
++	OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM, OPT_SMP, OPT_THREADS,
++	OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP, OPT_WAKEUPRT,
++	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS, OPT_ALIGNED, OPT_LAPTOP,
++	OPT_SECALIGNED,
+ };
+ 
+ /* Process commandline options */
+@@ -1251,6 +1254,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 			{"fifo",             required_argument, NULL, OPT_FIFO },
+ 			{"histogram",        required_argument, NULL, OPT_HISTOGRAM },
+ 			{"histofall",        required_argument, NULL, OPT_HISTOFALL },
++			{"histfile",	     required_argument, NULL, OPT_HISTFILE },
+ 			{"interval",         required_argument, NULL, OPT_INTERVAL },
+ 			{"irqsoff",          no_argument,       NULL, OPT_IRQSOFF },
+ 			{"laptop",	     no_argument,	NULL, OPT_LAPTOP },
+@@ -1348,6 +1352,11 @@ static void process_options (int argc, char *argv[], int max_cpus)
+ 		case 'h':
+ 		case OPT_HISTOGRAM:
+ 			histogram = atoi(optarg); break;
++		case 'J':
++		case OPT_HISTFILE:
++			use_histfile = 1;
++			strncpy(histfile, optarg, strlen(optarg));
++			break;
+ 		case 'i':
+ 		case OPT_INTERVAL:
+ 			interval = atoi(optarg); break;
+@@ -1653,74 +1662,88 @@ static void print_hist(struct thread_param *par[], int nthreads)
+ 	int i, j;
+ 	unsigned long long int log_entries[nthreads+1];
+ 	unsigned long maxmax, alloverflows;
++	FILE *fd;
+ 
+ 	bzero(log_entries, sizeof(log_entries));
+ 
+-	printf("# Histogram\n");
++	if (use_histfile) {
++		fd = fopen(histfile, "w");
++		if (!fd) {
++			perror("opening histogram file:");
++			return;
++		}
++	} else {
++		fd = stdout;
++	}
++
++	fprintf(fd, "# Histogram\n");
+ 	for (i = 0; i < histogram; i++) {
+ 		unsigned long long int allthreads = 0;
+ 
+-		printf("%06d ", i);
++		fprintf(fd, "%06d ", i);
+ 
+ 		for (j = 0; j < nthreads; j++) {
+ 			unsigned long curr_latency=par[j]->stats->hist_array[i];
+-			printf("%06lu", curr_latency);
++			fprintf(fd, "%06lu", curr_latency);
+ 			if (j < nthreads - 1)
+-				printf("\t");
++				fprintf(fd, "\t");
+ 			log_entries[j] += curr_latency;
+ 			allthreads += curr_latency;
+ 		}
+ 		if (histofall && nthreads > 1) {
+-			printf("\t%06llu", allthreads);
++			fprintf(fd, "\t%06llu", allthreads);
+ 			log_entries[nthreads] += allthreads;
+ 		}
+-		printf("\n");
++		fprintf(fd, "\n");
+ 	}
+-	printf("# Total:");
++	fprintf(fd, "# Total:");
+ 	for (j = 0; j < nthreads; j++)
+-		printf(" %09llu", log_entries[j]);
++		fprintf(fd, " %09llu", log_entries[j]);
+ 	if (histofall && nthreads > 1)
+-		printf(" %09llu", log_entries[nthreads]);
+-	printf("\n");
+-	printf("# Min Latencies:");
++		fprintf(fd, " %09llu", log_entries[nthreads]);
++	fprintf(fd, "\n");
++	fprintf(fd, "# Min Latencies:");
+ 	for (j = 0; j < nthreads; j++)
+-		printf(" %05lu", par[j]->stats->min);
+-	printf("\n");
+-	printf("# Avg Latencies:");
++		fprintf(fd, " %05lu", par[j]->stats->min);
++	fprintf(fd, "\n");
++	fprintf(fd, "# Avg Latencies:");
+ 	for (j = 0; j < nthreads; j++)
+-		printf(" %05lu", par[j]->stats->cycles ?
++		fprintf(fd, " %05lu", par[j]->stats->cycles ?
+ 		       (long)(par[j]->stats->avg/par[j]->stats->cycles) : 0);
+-	printf("\n");
+-	printf("# Max Latencies:");
++	fprintf(fd, "\n");
++	fprintf(fd, "# Max Latencies:");
+ 	maxmax = 0;
+ 	for (j = 0; j < nthreads; j++) {
+-		printf(" %05lu", par[j]->stats->max);
++		fprintf(fd, " %05lu", par[j]->stats->max);
+ 		if (par[j]->stats->max > maxmax)
+ 			maxmax = par[j]->stats->max;
+ 	}
+ 	if (histofall && nthreads > 1)
+-		printf(" %05lu", maxmax);
+-	printf("\n");
+-	printf("# Histogram Overflows:");
++		fprintf(fd, " %05lu", maxmax);
++	fprintf(fd, "\n");
++	fprintf(fd, "# Histogram Overflows:");
+ 	alloverflows = 0;
+ 	for (j = 0; j < nthreads; j++) {
+-		printf(" %05lu", par[j]->stats->hist_overflow);
++		fprintf(fd, " %05lu", par[j]->stats->hist_overflow);
+ 		alloverflows += par[j]->stats->hist_overflow;
+ 	}
+ 	if (histofall && nthreads > 1)
+-		printf(" %05lu", alloverflows);
+-	printf("\n");
++		fprintf(fd, " %05lu", alloverflows);
++	fprintf(fd, "\n");
+ 
+-	printf("# Histogram Overflow at cycle number:\n");
++	fprintf(fd, "# Histogram Overflow at cycle number:\n");
+ 	for (i = 0; i < nthreads; i++) {
+-		printf("# Thread %d:", i);
++		fprintf(fd, "# Thread %d:", i);
+ 		for (j = 0; j < par[i]->stats->num_outliers; j++)
+-			printf(" %05lu", par[i]->stats->outliers[j]);
++			fprintf(fd, " %05lu", par[i]->stats->outliers[j]);
+ 		if (par[i]->stats->num_outliers < par[i]->stats->hist_overflow)
+-			printf(" # %05lu others", par[i]->stats->hist_overflow - par[i]->stats->num_outliers);
+-		printf("\n");
++			fprintf(fd, " # %05lu others", par[i]->stats->hist_overflow - par[i]->stats->num_outliers);
++		fprintf(fd, "\n");
+ 	}
+-	printf("\n");
++	fprintf(fd, "\n");
++
++	if (use_histfile)
++		fclose(fd);
+ }
+ 
+ static void print_stat(FILE *fp, struct thread_param *par, int index, int verbose, int quiet)
+-- 
+2.5.0
+
