@@ -1,56 +1,78 @@
 From: Josh Cartwright <joshc@ni.com>
-Subject: [PATCH rt-tests 0/9] more rt-tests cleanups and a cyclictest feature
-Date: Mon, 31 Aug 2015 11:35:27 -0500
-Message-ID: <cover.1441038216.git.joshc@ni.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8BIT
+Subject: [PATCH rt-tests 1/9] cyclictest: consistently make all functions 'static'
+Date: Mon, 31 Aug 2015 11:35:28 -0500
+Message-ID: <60a552bb4d5fabbc615cf31f3533b696e30e7d5f.1441038216.git.joshc@ni.com>
+References: <cover.1441038216.git.joshc@ni.com>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:44387 "EHLO ni.com"
+Received: from skprod2.natinst.com ([130.164.80.23]:37404 "EHLO ni.com"
 	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753322AbbHaQfj convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
+	id S1753614AbbHaQfj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
 	Mon, 31 Aug 2015 12:35:39 -0400
+In-Reply-To: <cover.1441038216.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hey Clark, John-
+Most functions in cyclictest were already 'static', with a few
+exceptions.  Fixup those exceptions, in the interest of consistency,
+optimization, etc.
 
-Here's another set, this one contains eight patches are very minor cleanups
-(found mostly via code inspection and by building with warnings cranked up).
+Signed-off-by: Josh Cartwright <joshc@ni.com>
+---
+ src/cyclictest/cyclictest.c | 10 +++++-----
+ 1 file changed, 5 insertions(+), 5 deletions(-)
 
-The last patch introduces an option to cyclictest to control the dumping of
-histogram data into a separate file, it's useful for when you want to see the
-'normal' cyclictest live-updating, but also want to store away the generated
-histogram for later analysis.
-
-(My goal was to present a net-negative diffstat...I came so close!)
-
-Thanks!
-  Josh
-
-Gratian Crisan (1):
-  cyclictest: Add option for dumping the histogram in a file
-
-Josh Cartwright (8):
-  cyclictest: consistently make all functions 'static'
-  cyclictest: fixup documentation for --priority option
-  cyclictest: drop unnecessary numa_on_and_available() check
-  signaltest: drop unused tsnorm()
-  cyclictest: use correct type when allocating cpu bitmask size
-  cyclictest: drop impossible use_fifo conditional
-  cyclictest: fail if use_fifo && thread creation failed
-  error: mark fatal, err_exit, err_quit as being noreturn
-
- src/cyclictest/cyclictest.c | 120 ++++++++++++++++++++++++++------------------
- src/cyclictest/rt_numa.h    |  11 +---
- src/include/error.h         |   6 +--
- src/signaltest/signaltest.c |   8 ---
- 4 files changed, 74 insertions(+), 71 deletions(-)
-
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 34053c5..9aebe32 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -392,7 +392,7 @@ static inline int64_t calcdiff_ns(struct timespec t1, struct timespec t2)
+ 	return diff;
+ }
+ 
+-void traceopt(char *option)
++static void traceopt(char *option)
+ {
+ 	char *ptr;
+ 	if (traceopt_count + 1 > traceopt_size) {
+@@ -442,7 +442,7 @@ static void tracemark(char *fmt, ...)
+ 
+ 
+ 
+-void tracing(int on)
++static void tracing(int on)
+ {
+ 	if (on) {
+ 		switch (kernelversion) {
+@@ -638,7 +638,7 @@ static void setup_tracer(void)
+  *
+  * the return value is a value in seconds
+  */
+-int parse_time_string(char *val)
++static int parse_time_string(char *val)
+ {
+ 	char *end;
+ 	int t = strtol(val, &end, 10);
+@@ -749,7 +749,7 @@ try_again:
+  * - CLOCK_REALTIME
+  *
+  */
+-void *timerthread(void *param)
++static void *timerthread(void *param)
+ {
+ 	struct thread_param *par = param;
+ 	struct sched_param schedp;
+@@ -1766,7 +1766,7 @@ static void print_stat(FILE *fp, struct thread_param *par, int index, int verbos
+  * thread that creates a named fifo and hands out run stats when someone
+  * reads from the fifo.
+  */
+-void *fifothread(void *param)
++static void *fifothread(void *param)
+ {
+ 	int ret;
+ 	int fd;
 -- 
 2.5.0
 
