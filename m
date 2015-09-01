@@ -1,81 +1,66 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: RCU splat on boot from an idle CPU
-Date: Tue, 1 Sep 2015 17:35:23 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1509011721510.15006@nanos>
-References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH rt-tests 2/9] cyclictest: fixup documentation for --priority
+ option
+Date: Tue, 1 Sep 2015 23:03:08 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1509012301520.19826@riemann>
+References: <cover.1441038216.git.joshc@ni.com> <01e06fd455b51323577b0af9bb144e892281ecf8.1441038216.git.joshc@ni.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Philipp Schrader <philipp@peloton-tech.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
+To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:53530 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751665AbbIAPf4 (ORCPT
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:37169 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755647AbbIAVDT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Sep 2015 11:35:56 -0400
-In-Reply-To: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
+	Tue, 1 Sep 2015 17:03:19 -0400
+Received: by wicfx3 with SMTP id fx3so25526398wic.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 01 Sep 2015 14:03:18 -0700 (PDT)
+In-Reply-To: <01e06fd455b51323577b0af9bb144e892281ecf8.1441038216.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 31 Aug 2015, Philipp Schrader wrote:
 
-Cc'ing Paul and Steven
 
-> Hi all,
+On Mon, 31 Aug 2015, Josh Cartwright wrote:
+
+> Commit 15c6d81986b6 ("[cyclictest] added priority spreading option
+> --priospread") introduced an additional option with the prefix 'prio';
+> this means that it is no longer possible for a user to specify '--prio'
+> instead of the full '--priority'.  Doing so results in the following
+> error:
 > 
-> I've got a real-time kernel on a DRA7 evaluation module (EVM).
-> Very early in the boot process I get the following splat.
+>   $ cyclictest --prio=4
+>   cyclictest: option '--prio=4' is ambiguous; possibilities: '--priority' '--priospread'
 > 
-> [    0.055073]
-> [    0.055076] ===============================
-> [    0.055079] [ INFO: suspicious RCU usage. ]
-> [    0.055084] 4.1.6+ #2 Not tainted
-> [    0.055086] -------------------------------
-> [    0.055090] include/trace/events/hist.h:31 suspicious
-> rcu_dereference_check() usage!
-> [    0.055093]
-> [    0.055093] other info that might help us debug this:
-> [    0.055093]
-> [    0.055097]
-> [    0.055097] RCU used illegally from idle CPU!
-> [    0.055097] rcu_scheduler_active = 1, debug_locks = 1
-> [    0.055100] RCU used illegally from extended quiescent state!
-> [    0.055104] no locks held by swapper/0/0.
-> [    0.055106]
-> [    0.055106] stack backtrace:
-> [    0.055112] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.1.6+ #2
-> [    0.055116] Hardware name: Generic DRA74X (Flattened Device Tree)
-> [    0.055130] [<c00196b8>] (unwind_backtrace) from [<c001515c>]
-> (show_stack+0x20/0x24)
-> [    0.055146] [<c001515c>] (show_stack) from [<c07bc408>]
-> (dump_stack+0x84/0xa0)
-> [    0.055160] [<c07bc408>] (dump_stack) from [<c009bc38>]
-> (lockdep_rcu_suspicious+0xb0/0x110)
-> [    0.055172] [<c009bc38>] (lockdep_rcu_suspicious) from [<c01246c4>]
-> (time_hardirqs_off+0x2b8/0x3c8)
-> [    0.055184] [<c01246c4>] (time_hardirqs_off) from [<c009a218>]
-> (trace_hardirqs_off_caller+0x2c/0xf4)
-> [    0.055194] [<c009a218>] (trace_hardirqs_off_caller) from
-> [<c009a2f4>] (trace_hardirqs_off+0x14/0x18)
-> [    0.055204] [<c009a2f4>] (trace_hardirqs_off) from [<c00c7ecc>]
-> (rcu_idle_enter+0x78/0xcc)
-> [    0.055213] [<c00c7ecc>] (rcu_idle_enter) from [<c0093eb0>]
-> (cpu_startup_entry+0x190/0x518)
-> [    0.055222] [<c0093eb0>] (cpu_startup_entry) from [<c07b95b4>]
-> (rest_init+0x13c/0x17c)
-> [    0.055231] [<c07b95b4>] (rest_init) from [<c0b32c74>]
-> (start_kernel+0x320/0x380)
-> [    0.055238] [<c0b32c74>] (start_kernel) from [<8000807c>] (0x8000807c)
+> Fix this up by updating the 'help' output.
 > 
-> I'm not sure how to debug this; I'm still reading up on RCUs. Pretty
-> nifty ideas.
+> Signed-off-by: Josh Cartwright <joshc@ni.com>
+> ---
+>  src/cyclictest/cyclictest.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
 > 
-> Looking at include/trace/events/hist.h it appears line 31 is the end
-> of a TRACE_EVENT macro usage.
-> Does that mean the macro is using RCU improperly somehow?
-> 
-> Thanks,
-> Philipp
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index 9aebe32..4ced67f 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1062,7 +1062,7 @@ static void display_help(int error)
+>  	       "-N       --nsecs           print results in ns instead of us (default us)\n"
+>  	       "-o RED   --oscope=RED      oscilloscope mode, reduce verbose output by RED\n"
+>  	       "-O TOPT  --traceopt=TOPT   trace option\n"
+> -	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+> +	       "-p PRIO  --priority=PRIO   priority of highest prio thread\n"
+>  	       "-P       --preemptoff      Preempt off tracing (used with -b)\n"
+>  	       "-q       --quiet           print only a summary on exit\n"
+>  	       "	 --priospread       spread priority levels starting at specified value\n"
+> -- 
+> 2.5.0
+
+This was already fixed in v0.93
+417ddb5db0ab cyclictest: Fix long priority help text option
+
+Thanks> 
 > --
 > To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
 > the body of a message to majordomo@vger.kernel.org
