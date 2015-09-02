@@ -1,101 +1,60 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: [PATCH rt-tests 2/9] cyclictest: fixup documentation for
- --priority option
-Date: Tue, 1 Sep 2015 16:11:51 -0500
-Message-ID: <20150901211151.GN9309@jcartwri.amer.corp.natinst.com>
-References: <cover.1441038216.git.joshc@ni.com>
- <01e06fd455b51323577b0af9bb144e892281ecf8.1441038216.git.joshc@ni.com>
- <alpine.LFD.2.20.1509012301520.19826@riemann>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH rt-tests 1/4] rt-tests: Allow for user-specified PYLIB
+Date: Wed, 2 Sep 2015 14:53:55 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1509021453030.19826@riemann>
+References: <cover.1440720422.git.joshc@ni.com> <94d6daa3898ca4a5e8c210247638a2c3b80f1a51.1440720422.git.joshc@ni.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="aqWxf8ydqYKP8htK"
+Content-Type: text/plain; charset=US-ASCII
 Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org
-To: John Kacur <jkacur@redhat.com>
+	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
+	Darren Hart <dvhart@linux.intel.com>
+To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:45248 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751180AbbIAVLy (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Sep 2015 17:11:54 -0400
-In-Reply-To: <alpine.LFD.2.20.1509012301520.19826@riemann>
-Content-Disposition: inline
+Received: from mail-wi0-f176.google.com ([209.85.212.176]:34674 "EHLO
+	mail-wi0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752914AbbIBMx6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Sep 2015 08:53:58 -0400
+Received: by wicfx3 with SMTP id fx3so16652619wic.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 02 Sep 2015 05:53:57 -0700 (PDT)
+In-Reply-To: <94d6daa3898ca4a5e8c210247638a2c3b80f1a51.1440720422.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---aqWxf8ydqYKP8htK
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Tue, Sep 01, 2015 at 11:03:08PM +0200, John Kacur wrote:
-> On Mon, 31 Aug 2015, Josh Cartwright wrote:
->=20
-> > Commit 15c6d81986b6 ("[cyclictest] added priority spreading option
-> > --priospread") introduced an additional option with the prefix 'prio';
-> > this means that it is no longer possible for a user to specify '--prio'
-> > instead of the full '--priority'.  Doing so results in the following
-> > error:
-> >=20
-> >   $ cyclictest --prio=3D4
-> >   cyclictest: option '--prio=3D4' is ambiguous; possibilities: '--prior=
-ity' '--priospread'
-> >=20
-> > Fix this up by updating the 'help' output.
-> >=20
-> > Signed-off-by: Josh Cartwright <joshc@ni.com>
-> > ---
-> >  src/cyclictest/cyclictest.c | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> >=20
-> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> > index 9aebe32..4ced67f 100644
-> > --- a/src/cyclictest/cyclictest.c
-> > +++ b/src/cyclictest/cyclictest.c
-> > @@ -1062,7 +1062,7 @@ static void display_help(int error)
-> >  	       "-N       --nsecs           print results in ns instead of us =
-(default us)\n"
-> >  	       "-o RED   --oscope=3DRED      oscilloscope mode, reduce verbos=
-e output by RED\n"
-> >  	       "-O TOPT  --traceopt=3DTOPT   trace option\n"
-> > -	       "-p PRIO  --prio=3DPRIO       priority of highest prio thread\=
-n"
-> > +	       "-p PRIO  --priority=3DPRIO   priority of highest prio thread\=
-n"
-> >  	       "-P       --preemptoff      Preempt off tracing (used with -b)=
-\n"
-> >  	       "-q       --quiet           print only a summary on exit\n"
-> >  	       "	 --priospread       spread priority levels starting at speci=
-fied value\n"
-> > --=20
-> > 2.5.0
->=20
-> This was already fixed in v0.93
-> 417ddb5db0ab cyclictest: Fix long priority help text option
+On Thu, 27 Aug 2015, Josh Cartwright wrote:
 
-Ahh, so it was.  Sorry about that, I had my git remote pointed at
-clrkwllms/rt-tests.git instead of rt-tests/rt-tests.git which hadn't
-been updated.
+> From: Darren Hart <dvhart@linux.intel.com>
+> 
+> Allow users (build systems) to specify PYLIB. This allows for a
+> cross-build-system to specify the target PYLIB rather than the host
+> PYLIB.
+> 
+> Signed-off-by: Darren Hart <dvhart@linux.intel.com>
+> CC: Clark Williams <williams@redhat.com>
+> CC: John Kacur <jkacur@redhat.com>
+> Signed-off-by: Josh Cartwright <joshc@ni.com>
+> ---
+>  Makefile | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/Makefile b/Makefile
+> index a48e759..1ec7f6a 100644
+> --- a/Makefile
+> +++ b/Makefile
+> @@ -34,7 +34,7 @@ ifdef HAVE_PARSE_CPUSTRING_ALL
+>  endif
+>  endif
+>  
+> -PYLIB  := $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
+> +PYLIB  ?= $(shell python -c 'import distutils.sysconfig;  print distutils.sysconfig.get_python_lib()')
+>  
+>  ifndef DEBUG
+>  	CFLAGS	+= -O2
+> -- 
+> 2.5.0
+> 
 
-The rest should still be relevant.
-
-Thanks,
-
-  Josh
-
---aqWxf8ydqYKP8htK
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAABCAAGBQJV5hSUAAoJEKp7ZBKwQFAryKIIAIyihZwH+UmctVUAMGF2Qzm3
-mNfacyq25VqftCJC2K44eAT2qHkGoBOToByTa0l2kX2ccr9PhJaxP36rRxI/e06C
-Wk6FD/8IThZKHOn0dFiQhRSG9nh96jRykzoqqQVWQ8n/JOYoj7gwKl7T9cHw73a3
-78X1pxmEkFK05kNwrIjHUo2/Qcr2YGhBFgoeCXiwvMdygQhNKkZkndDw05hw/eut
-pZ26epItZpQQTFmKn32PboYN2sDhSMgKqcPjZIvv26+s8+NSohdckSLsFQTnJKHM
-B2zQxLA6HaPmuo5ek6pnneCCWprezVgpALJipRsqkjBQEOwL1SJvm2obIhIj0l8=
-=fi+d
------END PGP SIGNATURE-----
-
---aqWxf8ydqYKP8htK--
+Nice. I see Clark has already grabbed this one.
+Signed-off-by: John Kacur <jkacur@redhat.com>
