@@ -1,77 +1,65 @@
-From: Thomas Gleixner <tglx-hfZtesqFncYOwBW4kG4KsQ@public.gmane.org>
-Subject: Re: [PATCHv2] drivers: i2c: exynos5: irq spinlock rt-safe
-Date: Thu, 3 Sep 2015 23:31:01 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1509032319570.15006@nanos>
-References: <1440489125-20082-1-git-send-email-anders.roxell@linaro.org> <1441314363-9836-1-git-send-email-anders.roxell@linaro.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: RCU splat on boot from an idle CPU
+Date: Thu, 3 Sep 2015 14:39:40 -0700
+Message-ID: <20150903213940.GN4029@linux.vnet.ibm.com>
+References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
+ <alpine.DEB.2.11.1509011721510.15006@nanos>
+ <20150902153823.749a9f73@gandalf.local.home>
+ <CA+0CQ20mdGqWn6+rsA+Q6LWiDotXW=GUj-xmWBKcCrvHC=Z_vA@mail.gmail.com>
+ <20150902230729.GZ4029@linux.vnet.ibm.com>
+ <20150903125345.6343e76b@gandalf.local.home>
+Reply-To: paulmck@linux.vnet.ibm.com
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: kgene-DgEjT+Ai2ygdnm+yROfE0A@public.gmane.org, k.kozlowski-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, wsa-z923LK4zBo2bacvFa/9K2g@public.gmane.org,
-	ch.naveen-Sze3O3UU22JBDgjK7y7TUQ@public.gmane.org, linux-i2c-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	linux-arm-kernel-IAPFreCvJWM7uuMidbF8XUB+6BGkLq7r@public.gmane.org,
-	linux-samsung-soc-u79uwXL29TY76Z2rM5mHXA@public.gmane.org, linux-kernel-u79uwXL29TY76Z2rM5mHXA@public.gmane.org,
-	khilman-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org, linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: Anders Roxell <anders.roxell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Return-path: <linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <1441314363-9836-1-git-send-email-anders.roxell-QSEj5FYQhm4dnm+yROfE0A@public.gmane.org>
-Sender: linux-i2c-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Philipp Schrader <philipp@peloton-tech.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from e35.co.us.ibm.com ([32.97.110.153]:42432 "EHLO
+	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756741AbbICVjp (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 Sep 2015 17:39:45 -0400
+Received: from /spool/local
+	by e35.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
+	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
+	Thu, 3 Sep 2015 15:39:44 -0600
+Received: from b03cxnp08027.gho.boulder.ibm.com (b03cxnp08027.gho.boulder.ibm.com [9.17.130.19])
+	by d03dlp02.boulder.ibm.com (Postfix) with ESMTP id D17753E4003B
+	for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2015 15:39:42 -0600 (MDT)
+Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
+	by b03cxnp08027.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t83LdgYo40697942
+	for <linux-rt-users@vger.kernel.org>; Thu, 3 Sep 2015 14:39:42 -0700
+Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
+	by d03av04.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t83Ldfxg028583
+	for <linux-rt-users@vger.kernel.org>; Thu, 3 Sep 2015 15:39:42 -0600
+Content-Disposition: inline
+In-Reply-To: <20150903125345.6343e76b@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 3 Sep 2015, Anders Roxell wrote:
-
-> The current spin_lock_irqsave() protects the enabling of the device
-> interrupt.  In order to prevent recursion in the case of sleeping
-> spinlocks (e.g. with RT patch, stacktrace below), convert the spin lock
-> to a raw spin lock. No change for !RT kernels.
+On Thu, Sep 03, 2015 at 12:53:45PM -0400, Steven Rostedt wrote:
+> On Wed, 2 Sep 2015 16:07:29 -0700
+> "Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
 > 
-> [   10.992238] kernel BUG at ../kernel/locking/rtmutex.c:998!
-> [   10.992243] Internal error: Oops - BUG: 0 [#1] PREEMPT SMP ARM
-> [   10.992250] Modules linked in:
-> [   10.992258] CPU: 0 PID: 1 Comm: swapper/0 Not tainted 4.1.5-rt5
-> [   10.992263] Hardware name: SAMSUNG EXYNOS (Flattened Device Tree)
-> [   10.992268] task: ed880000 ti: ed888000 task.ti: ed888000
-> [   10.992281] PC is at rt_spin_lock_slowlock+0xa4/0x2ec
-> [   10.992288] LR is at rt_spin_lock_slowlock+0x54/0x2ec
-> [   10.992296] pc : [<c099e1bc>]    lr : [<c099e16c>]    psr: 60000193
-> [   10.992296] sp : ed889a28  ip : ed880001  fp : 00000089
-> [   10.992300] r10: ed889a28  r9 : c0f55654  r8 : 00000060
-> [   10.992305] r7 : ed880000  r6 : 00000000  r5 : 00000001  r4 : ed9f7288
-> [   10.992310] r3 : ed880000  r2 : 00000000  r1 : ed880000  r0 : 00000000
-> [   10.992316] Flags: nZCv  IRQs off  FIQs on  Mode SVC_32  ISA ARM
-> Segment kernel
-> ...
-> ...
-> [   10.992662] [<c099e1bc>] (rt_spin_lock_slowlock) from [<c07bc794>]
-> (exynos5_i2c_irq+0x20/0x2b0)
-> [   10.992678] [<c07bc794>] (exynos5_i2c_irq) from [<c028c8b4>]
-> (handle_irq_event_percpu+0x68/0x158)
-> [   10.992690] [<c028c8b4>] (handle_irq_event_percpu) from [<c028ca0c>]
-> (handle_irq_event+0x68/0xa8)
-> [   10.992702] [<c028ca0c>] (handle_irq_event) from [<c028f9c4>]
-> (handle_fasteoi_irq+0x11c/0x1d4)
-> [   10.992713] [<c028f9c4>] (handle_fasteoi_irq) from [<c028c17c>]
-> (generic_handle_irq+0x20/0x30)
-> [   10.992724] [<c028c17c>] (generic_handle_irq) from [<c028c290>]
-> (__handle_domain_irq+0x6c/0xe4)
-> [   10.992734] [<c028c290>] (__handle_domain_irq) from [<c020a71c>]
-> (gic_handle_irq+0x2c/0x68)
-> [   10.992744] [<c020a71c>] (gic_handle_irq) from [<c0214140>]
-> (__irq_svc+0x40/0x88)
-> [   10.992749] Exception stack(0xed889b28 to 0xed889b70)
+> 
+> > > Does that look reasonable?
+> > > Or could this cause a problem down the road?
+> > 
+> > Looks good to me!
+> 
+> If it looks good to Paul, it looks good to me :-)
+> 
+> > 
+> > > Still reading up on RCUs and how they work.
+> > 
+> > Me too.  ;-)
+> 
+> Who are you reading up on RCUs from?
 
-What you completely fail to explain how this can happen at all.
+Splats, oopses, and hangs when I try modifying it.  And bug reports
+from people using it.  ;-)
 
-On RT the interrupt of that device is force threaded, but the handler
-is called in hard interrupt context, which is wrong to begin with.
+							Thanx, Paul
 
-While the interrupt request in this driver is bogus:
-
-        ret = devm_request_irq(&pdev->dev, i2c->irq, exynos5_i2c_irq,
-                                IRQF_NO_SUSPEND | IRQF_ONESHOT,
-                                dev_name(&pdev->dev), i2c);
-
-because it sets the ONESHOT flag for no reason, it does not set the
-NOTRHEAD flag which would prevent force threading.
-
-Hmm?
-
-	tglx
