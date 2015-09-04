@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [RFC][PATCH RT 2/3] locking: Convert trylock spinners over to spin_try_or_boost_lock()
-Date: Thu, 03 Sep 2015 21:19:02 -0400
-Message-ID: <20150904012118.361644516@goodmis.org>
-References: <20150904011900.730816481@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [RFC][PATCH RT 0/3] RT: Fix trylock deadlock without msleep() hack
+Date: Thu, 03 Sep 2015 21:19:00 -0400
+Message-ID: <20150904011900.730816481@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -16,102 +13,87 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:52471 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751335AbbIDBVW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Sep 2015 21:21:22 -0400
-Content-Disposition: inline; filename=0002-locking-Convert-trylock-spinners-over-to-spin_try_or.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+(Frozen shark deflectors on)
 
-When trying to take locks in reverse order, it is possible that on
-PREEMPT_RT that the running task could have preempted the owner and never
-let it run, creating a live lock. This is because spinlocks in PREEMPT_RT
-can be preempted.
+Currently the solution to prevent the trylock livelock (described below)
+is to change cpu_relax() to cpu_chill() that is simply a msleep(1) that
+hopes that the owner of the lock runs and releases the lock and nobody
+else takes that lock by the time the task wakes up from the msleep.
+When I showed this at LinuxCon/LinuxPlumbers, I was able to see the entire
+audience wince at once. It was a beautiful sight, and I wish I took a picture.
+Interesting enough, everyone winced to their left side.
 
-Currently, this is solved by calling cpu_chill(), which on PREEMPT_RT is
-converted into a msleep(1), and we just hopen that the owner will have time
-to release the lock, and nobody else will take in when the task wakes up.
+This patch set is an attempt to solve the issue in a more deterministic
+manner. By introducing a new primitive called spin_try_or_boost_lock(), which
+will try to take the lock, and if it fails, it will boost the owner of the
+lock to its own priority if needed.
 
-By converting these to spin_try_or_boost_lock() which will boost the owners,
-the cpu_chill() can be converted into a sched_yield() which will allow the
-owners to make immediate progress even if it was preempted by a high
-priority task.
+Because we do not want to add an extra field to the locking, or have the
+trylock caller block in any way, the solution is to give the owner a temporary
+priority boost that is lost as soon as it releases any spinlock (that was
+converted to a rtmutex). This new boosted priority is saved in the task
+struct, and cleared on releasing any spinlock. Sure, it may release a
+different spinlock than the one it was boosted by, but it still will make
+progress, and will be boosted again by the trylock spinner. Each time
+the owner gets boosted it will move forward till it can release the wanted
+lock.
 
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The cpu_chill() will now become a sched_yield(), which will allow the newly
+boosted task to run ahead of the spinner (it is of the same priority). When the
+task releases a lock, it loses its priority, and the trylock spinner can
+try again.
+
+Now, there's a few locations where cpu_chill() is not used for a trylock,
+but instead it spins on a bit or some status that will be updated by another
+task. As this other task may also be blocked by the spinner, it needs to be
+handled as well. As we do not know who the updating task is, there's still
+no way to boost it. Maybe in the future we can come up with another API
+that can handle this. For now, we will still use the msleep(), but instead
+of using cpu_chill(), another primitive is created called cpu_rest() :-)
+The cpu_rest() (which I think is more descriptive of a msleep(1)) acts the
+same as the current cpu_chill(). Hopefully we can remove that too.
+
+There are a lot of trylocks in the kernel, and I'm sure there's more around
+that need to be convert to this method. I think this is an elegant solution
+but others may feel differently. As I think a msleep() hail mary is extremely
+non deterministic, it's a blemish for a kernel that prides itself on adding
+determinism.
+
+I tested this with a module that forces the race. If you want that too, I can
+supply it as well. I did some basic testing, but I just recently got this
+working so there may be bugs. This is an RFC to see if it is worth while
+to implement.
+
+[ Note, this still needs to be tested against non PREEMPT_RT configs ]
+
+Thanks!
+
+-- Steve
+
+Steven Rostedt (Red Hat) (3):
+      locking: Add spin_try_or_boost_lock() infrastructure
+      locking: Convert trylock spinners over to spin_try_or_boost_lock()
+      rt: Make cpu_chill() into yield() and add new cpu_rest() as msleep(1)
+
 ---
- block/blk-ioc.c     | 4 ++--
- fs/autofs4/expire.c | 2 +-
- fs/dcache.c         | 6 +++---
- 3 files changed, 6 insertions(+), 6 deletions(-)
-
-diff --git a/block/blk-ioc.c b/block/blk-ioc.c
-index 28f467e636cc..de5eccdc8abb 100644
---- a/block/blk-ioc.c
-+++ b/block/blk-ioc.c
-@@ -105,7 +105,7 @@ static void ioc_release_fn(struct work_struct *work)
- 						struct io_cq, ioc_node);
- 		struct request_queue *q = icq->q;
- 
--		if (spin_trylock(q->queue_lock)) {
-+		if (spin_try_or_boost_lock(q->queue_lock)) {
- 			ioc_destroy_icq(icq);
- 			spin_unlock(q->queue_lock);
- 		} else {
-@@ -183,7 +183,7 @@ retry:
- 	hlist_for_each_entry(icq, &ioc->icq_list, ioc_node) {
- 		if (icq->flags & ICQ_EXITED)
- 			continue;
--		if (spin_trylock(icq->q->queue_lock)) {
-+		if (spin_try_or_boost_lock(icq->q->queue_lock)) {
- 			ioc_exit_icq(icq);
- 			spin_unlock(icq->q->queue_lock);
- 		} else {
-diff --git a/fs/autofs4/expire.c b/fs/autofs4/expire.c
-index d487fa27add5..025bfc71dc6c 100644
---- a/fs/autofs4/expire.c
-+++ b/fs/autofs4/expire.c
-@@ -148,7 +148,7 @@ again:
- 			}
- 
- 			parent = p->d_parent;
--			if (!spin_trylock(&parent->d_lock)) {
-+			if (!spin_try_or_boost_lock(&parent->d_lock)) {
- 				spin_unlock(&p->d_lock);
- 				cpu_chill();
- 				goto relock;
-diff --git a/fs/dcache.c b/fs/dcache.c
-index c1dad92434d5..6b5643ecdf37 100644
---- a/fs/dcache.c
-+++ b/fs/dcache.c
-@@ -573,12 +573,12 @@ static struct dentry *dentry_kill(struct dentry *dentry)
- 	struct inode *inode = dentry->d_inode;
- 	struct dentry *parent = NULL;
- 
--	if (inode && unlikely(!spin_trylock(&inode->i_lock)))
-+	if (inode && unlikely(!spin_try_or_boost_lock(&inode->i_lock)))
- 		goto failed;
- 
- 	if (!IS_ROOT(dentry)) {
- 		parent = dentry->d_parent;
--		if (unlikely(!spin_trylock(&parent->d_lock))) {
-+		if (unlikely(!spin_try_or_boost_lock(&parent->d_lock))) {
- 			if (inode)
- 				spin_unlock(&inode->i_lock);
- 			goto failed;
-@@ -2394,7 +2394,7 @@ again:
- 	inode = dentry->d_inode;
- 	isdir = S_ISDIR(inode->i_mode);
- 	if (dentry->d_lockref.count == 1) {
--		if (!spin_trylock(&inode->i_lock)) {
-+		if (!spin_try_or_boost_lock(&inode->i_lock)) {
- 			spin_unlock(&dentry->d_lock);
- 			cpu_chill();
- 			goto again;
--- 
-2.4.6
-
-
+ block/blk-ioc.c             |   4 ++--
+ fs/autofs4/expire.c         |   2 +-
+ fs/dcache.c                 |   6 +++---
+ fs/namespace.c              |   2 +-
+ include/linux/delay.h       |  13 +++++++++++++
+ include/linux/init_task.h   |   8 ++++++++
+ include/linux/rtmutex.h     |   1 +
+ include/linux/sched.h       |  27 +++++++++++++++++++++++++
+ include/linux/spinlock.h    |   5 +++++
+ include/linux/spinlock_rt.h |  13 +++++++++++++
+ kernel/locking/rtmutex.c    | 121 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-----------
+ kernel/sched/core.c         |  14 +++++++++++++
+ kernel/time/hrtimer.c       |   4 ++--
+ kernel/workqueue.c          |   2 +-
+ net/packet/af_packet.c      |   4 ++--
+ net/rds/ib_rdma.c           |   2 +-
+ 16 files changed, 204 insertions(+), 24 deletions(-)
