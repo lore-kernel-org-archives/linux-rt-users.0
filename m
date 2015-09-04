@@ -1,65 +1,117 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: RCU splat on boot from an idle CPU
-Date: Thu, 3 Sep 2015 14:39:40 -0700
-Message-ID: <20150903213940.GN4029@linux.vnet.ibm.com>
-References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
- <alpine.DEB.2.11.1509011721510.15006@nanos>
- <20150902153823.749a9f73@gandalf.local.home>
- <CA+0CQ20mdGqWn6+rsA+Q6LWiDotXW=GUj-xmWBKcCrvHC=Z_vA@mail.gmail.com>
- <20150902230729.GZ4029@linux.vnet.ibm.com>
- <20150903125345.6343e76b@gandalf.local.home>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [RFC][PATCH RT 2/3] locking: Convert trylock spinners over to spin_try_or_boost_lock()
+Date: Thu, 03 Sep 2015 21:19:02 -0400
+Message-ID: <20150904012118.361644516@goodmis.org>
+References: <20150904011900.730816481@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Philipp Schrader <philipp@peloton-tech.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	Ingo Molnar <mingo@kernel.org>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e35.co.us.ibm.com ([32.97.110.153]:42432 "EHLO
-	e35.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756741AbbICVjp (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Sep 2015 17:39:45 -0400
-Received: from /spool/local
-	by e35.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Thu, 3 Sep 2015 15:39:44 -0600
-Received: from b03cxnp08027.gho.boulder.ibm.com (b03cxnp08027.gho.boulder.ibm.com [9.17.130.19])
-	by d03dlp02.boulder.ibm.com (Postfix) with ESMTP id D17753E4003B
-	for <linux-rt-users@vger.kernel.org>; Thu,  3 Sep 2015 15:39:42 -0600 (MDT)
-Received: from d03av04.boulder.ibm.com (d03av04.boulder.ibm.com [9.17.195.170])
-	by b03cxnp08027.gho.boulder.ibm.com (8.14.9/8.14.9/NCO v10.0) with ESMTP id t83LdgYo40697942
-	for <linux-rt-users@vger.kernel.org>; Thu, 3 Sep 2015 14:39:42 -0700
-Received: from d03av04.boulder.ibm.com (loopback [127.0.0.1])
-	by d03av04.boulder.ibm.com (8.14.4/8.14.4/NCO v10.0 AVout) with ESMTP id t83Ldfxg028583
-	for <linux-rt-users@vger.kernel.org>; Thu, 3 Sep 2015 15:39:42 -0600
-Content-Disposition: inline
-In-Reply-To: <20150903125345.6343e76b@gandalf.local.home>
+Received: from mail.kernel.org ([198.145.29.136]:52471 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751335AbbIDBVW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 Sep 2015 21:21:22 -0400
+Content-Disposition: inline; filename=0002-locking-Convert-trylock-spinners-over-to-spin_try_or.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Sep 03, 2015 at 12:53:45PM -0400, Steven Rostedt wrote:
-> On Wed, 2 Sep 2015 16:07:29 -0700
-> "Paul E. McKenney" <paulmck@linux.vnet.ibm.com> wrote:
-> 
-> 
-> > > Does that look reasonable?
-> > > Or could this cause a problem down the road?
-> > 
-> > Looks good to me!
-> 
-> If it looks good to Paul, it looks good to me :-)
-> 
-> > 
-> > > Still reading up on RCUs and how they work.
-> > 
-> > Me too.  ;-)
-> 
-> Who are you reading up on RCUs from?
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-Splats, oopses, and hangs when I try modifying it.  And bug reports
-from people using it.  ;-)
+When trying to take locks in reverse order, it is possible that on
+PREEMPT_RT that the running task could have preempted the owner and never
+let it run, creating a live lock. This is because spinlocks in PREEMPT_RT
+can be preempted.
 
-							Thanx, Paul
+Currently, this is solved by calling cpu_chill(), which on PREEMPT_RT is
+converted into a msleep(1), and we just hopen that the owner will have time
+to release the lock, and nobody else will take in when the task wakes up.
+
+By converting these to spin_try_or_boost_lock() which will boost the owners,
+the cpu_chill() can be converted into a sched_yield() which will allow the
+owners to make immediate progress even if it was preempted by a high
+priority task.
+
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ block/blk-ioc.c     | 4 ++--
+ fs/autofs4/expire.c | 2 +-
+ fs/dcache.c         | 6 +++---
+ 3 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/block/blk-ioc.c b/block/blk-ioc.c
+index 28f467e636cc..de5eccdc8abb 100644
+--- a/block/blk-ioc.c
++++ b/block/blk-ioc.c
+@@ -105,7 +105,7 @@ static void ioc_release_fn(struct work_struct *work)
+ 						struct io_cq, ioc_node);
+ 		struct request_queue *q = icq->q;
+ 
+-		if (spin_trylock(q->queue_lock)) {
++		if (spin_try_or_boost_lock(q->queue_lock)) {
+ 			ioc_destroy_icq(icq);
+ 			spin_unlock(q->queue_lock);
+ 		} else {
+@@ -183,7 +183,7 @@ retry:
+ 	hlist_for_each_entry(icq, &ioc->icq_list, ioc_node) {
+ 		if (icq->flags & ICQ_EXITED)
+ 			continue;
+-		if (spin_trylock(icq->q->queue_lock)) {
++		if (spin_try_or_boost_lock(icq->q->queue_lock)) {
+ 			ioc_exit_icq(icq);
+ 			spin_unlock(icq->q->queue_lock);
+ 		} else {
+diff --git a/fs/autofs4/expire.c b/fs/autofs4/expire.c
+index d487fa27add5..025bfc71dc6c 100644
+--- a/fs/autofs4/expire.c
++++ b/fs/autofs4/expire.c
+@@ -148,7 +148,7 @@ again:
+ 			}
+ 
+ 			parent = p->d_parent;
+-			if (!spin_trylock(&parent->d_lock)) {
++			if (!spin_try_or_boost_lock(&parent->d_lock)) {
+ 				spin_unlock(&p->d_lock);
+ 				cpu_chill();
+ 				goto relock;
+diff --git a/fs/dcache.c b/fs/dcache.c
+index c1dad92434d5..6b5643ecdf37 100644
+--- a/fs/dcache.c
++++ b/fs/dcache.c
+@@ -573,12 +573,12 @@ static struct dentry *dentry_kill(struct dentry *dentry)
+ 	struct inode *inode = dentry->d_inode;
+ 	struct dentry *parent = NULL;
+ 
+-	if (inode && unlikely(!spin_trylock(&inode->i_lock)))
++	if (inode && unlikely(!spin_try_or_boost_lock(&inode->i_lock)))
+ 		goto failed;
+ 
+ 	if (!IS_ROOT(dentry)) {
+ 		parent = dentry->d_parent;
+-		if (unlikely(!spin_trylock(&parent->d_lock))) {
++		if (unlikely(!spin_try_or_boost_lock(&parent->d_lock))) {
+ 			if (inode)
+ 				spin_unlock(&inode->i_lock);
+ 			goto failed;
+@@ -2394,7 +2394,7 @@ again:
+ 	inode = dentry->d_inode;
+ 	isdir = S_ISDIR(inode->i_mode);
+ 	if (dentry->d_lockref.count == 1) {
+-		if (!spin_trylock(&inode->i_lock)) {
++		if (!spin_try_or_boost_lock(&inode->i_lock)) {
+ 			spin_unlock(&dentry->d_lock);
+ 			cpu_chill();
+ 			goto again;
+-- 
+2.4.6
+
 
