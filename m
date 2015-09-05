@@ -1,12 +1,13 @@
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Ingo Molnar <mingo@kernel.org>
 Subject: Re: [RFC][PATCH RT 0/3] RT: Fix trylock deadlock without msleep()
  hack
-Date: Sat, 5 Sep 2015 12:30:59 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1509051217330.15006@nanos>
+Date: Sat, 5 Sep 2015 14:04:57 +0200
+Message-ID: <20150905120457.GA21338@gmail.com>
 References: <20150904011900.730816481@goodmis.org>
+ <alpine.DEB.2.11.1509051217330.15006@nanos>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-kernel@vger.kernel.org,
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -14,60 +15,68 @@ Cc: linux-kernel@vger.kernel.org,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Clark Williams <clark.williams@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	Ingo Molnar <mingo@kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150904011900.730816481@goodmis.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:35014 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750938AbbIEMFC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 5 Sep 2015 08:05:02 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1509051217330.15006@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 3 Sep 2015, Steven Rostedt wrote:
-> There are a lot of trylocks in the kernel, and I'm sure there's more around
-> that need to be convert to this method.
 
-The only ones we need to convert are those which do an actual trylock
-loop. The others, which simply bail if the trylock fails are
-completely irrelevant.
+* Thomas Gleixner <tglx@linutronix.de> wrote:
 
-> I think this is an elegant solution but others may feel
-> differently. As I think a msleep() hail mary is extremely non
-> deterministic, it's a blemish for a kernel that prides itself on
-> adding determinism.
+> So the problem we need to solve is:
+> 
+> retry:
+> 	lock(B);
+> 	if (!try_lock(A)) {
+> 		unlock(B);
+> 		cpu_relax();
+> 		goto retry;
+> 	}
+> 
+> So instead of doing that proposed magic boost, we can do something
+> more straight forward:
+> 
+> retry:
+> 	lock(B);
+> 	if (!try_lock(A)) {
+> 		lock_and_drop(A, B);
+> 		unlock(A);
+> 		goto retry;
+> 	}
+> 
+> lock_and_drop() queues the task as a waiter on A, drops B and then
+> does the PI adjustment on A. 
+> 
+> Thoughts?
 
-I agree that the msleep hack is horrible. Though I do not agree that
-this solution is elegant. It's clever.
+So why not do:
 
-I was looking into that a few days ago and did not come up with
-something sensible, but your patch and reading up on your well done
-explanation made me look another time.
-
-So the problem we need to solve is:
-
-retry:
 	lock(B);
-	if (!try_lock(A)) {
+	if (!trylock(A)) {
 		unlock(B);
-		cpu_relax();
-		goto retry;
+		lock(A);
+		lock(B);
 	}
 
-So instead of doing that proposed magic boost, we can do something
-more straight forward:
+?
 
-retry:
+Or, if this can be done, why didn't we do:
+
+	lock(A);
 	lock(B);
-	if (!try_lock(A)) {
-		lock_and_drop(A, B);
-		unlock(A);
-		goto retry;
-	}
 
-lock_and_drop() queues the task as a waiter on A, drops B and then
-does the PI adjustment on A. 
+to begin with?
 
-Thoughts?
+i.e. I'm not sure the problem is properly specified.
 
 Thanks,
 
-	tglx
+	Ingo
