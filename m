@@ -1,127 +1,62 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [RFC][PATCH RT 0/3] RT: Fix trylock deadlock without msleep()
- hack
-Date: Tue, 8 Sep 2015 15:35:25 -0400
-Message-ID: <20150908153525.7db8b543@gandalf.local.home>
-References: <20150904011900.730816481@goodmis.org>
-	<alpine.DEB.2.11.1509051217330.15006@nanos>
-	<20150905120457.GA21338@gmail.com>
-	<alpine.DEB.2.11.1509070959440.15006@nanos>
-	<20150908125934.7b60fca7@gandalf.local.home>
+From: Austin Schuh <austin@peloton-tech.com>
+Subject: [RT XFS] BUG from lockdep in xfs
+Date: Tue, 8 Sep 2015 23:54:07 -0700
+Message-ID: <CANGgnMa7jXARYkfCKOgvphunKvVaxRWZcSFgGC1b2m74Dgt+jQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@kernel.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150908125934.7b60fca7@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: rt-users <linux-rt-users@vger.kernel.org>, xfs <xfs@oss.sgi.com>,
+	Philipp Schrader <philipp@peloton-tech.com>,
+	Brian Silverman <brian@peloton-tech.com>,
+	Dave Chinner <david@fromorbit.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qg0-f46.google.com ([209.85.192.46]:36827 "EHLO
+	mail-qg0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751342AbbIIGy1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Sep 2015 02:54:27 -0400
+Received: by qgx61 with SMTP id 61so475890qgx.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 08 Sep 2015 23:54:26 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 8 Sep 2015 12:59:34 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+I'm running xfstests and got the following BUG with lockdep enabled.
+I'm running the 4.1.6-rt5 kernel from TI's tree on a TI ARM chip.
 
-> On Mon, 7 Sep 2015 10:35:25 +0200 (CEST)
-> Thomas Gleixner <tglx@linutronix.de> wrote:
-> > 			    
-> >    So, if taskC has higher priority than taskB and therefor than
-> >    taskA, taskB will do the lock/trylock/unlock/boost dance in
-> >    circles.
-> 
-> Yeah, I was aware of this scenario, in which case, it just shows the
-> nastiness of a spinning trylock. Even with the current situation, the
-> task is going to constantly be spinning until TaskA can run. The
-> difference, is that it will let other tasks run during that 1 ms sleep.
-> The current code works, but as you said, by some definition of works ;-)
->
+Any ideas on what could be causing it, or if it is a real problem?
 
-I thought about this a little more, but did not do any coding yet. Just
-wanted to bounce off some ideas.
+I see some patches in Dave's latest 4.3 pull request that discuss
+lockdep.  Are there any ones there that are worth backporting to my
+4.1.6 kernel?
 
-First, I still want to keep the spin_try_or_boost_lock() logic, maybe
-call it, spin_trylock_or_boost() as we are not really boosting the
-lock, but the owner.
+[ 4349.692989] run fstests generic/078 at 2015-09-09 04:58:56
+[ 4357.394974] BUG: looking up invalid subclass: 8
+[ 4357.394979] turning off the locking correctness validator.
+[ 4357.394989] CPU: 0 PID: 22963 Comm: renameat2 Not tainted 4.1.6-rt5+ #9
+[ 4357.394993] Hardware name: Generic DRA74X (Flattened Device Tree)
+[ 4357.395012] [<c00196b8>] (unwind_backtrace) from [<c001515c>]
+(show_stack+0x20/0x24)
+[ 4357.395026] [<c001515c>] (show_stack) from [<c07bb6e0>]
+(dump_stack+0x84/0xa0)
+[ 4357.395038] [<c07bb6e0>] (dump_stack) from [<c009ef0c>]
+(__lock_acquire+0x694/0x1ec0)
+[ 4357.395046] [<c009ef0c>] (__lock_acquire) from [<c00a1014>]
+(lock_acquire+0x10c/0x354)
+[ 4357.395055] [<c00a1014>] (lock_acquire) from [<c00a60ac>]
+(rt_down_write_nested+0x3c/0x4c)
+[ 4357.395069] [<c00a60ac>] (rt_down_write_nested) from [<c03b9874>]
+(xfs_ilock+0x110/0x328)
+[ 4357.395080] [<c03b9874>] (xfs_ilock) from [<c03baa84>]
+(xfs_lock_inodes+0x80/0x1b0)
+[ 4357.395088] [<c03baa84>] (xfs_lock_inodes) from [<c03bede0>]
+(xfs_rename+0x214/0xd24)
+[ 4357.395097] [<c03bede0>] (xfs_rename) from [<c03b7398>]
+(xfs_vn_rename+0x94/0xa8)
+[ 4357.395110] [<c03b7398>] (xfs_vn_rename) from [<c01a9c64>]
+(vfs_rename+0x5c0/0x870)
+[ 4357.395119] [<c01a9c64>] (vfs_rename) from [<c01af684>]
+(SyS_renameat2+0x458/0x48c)
+[ 4357.395130] [<c01af684>] (SyS_renameat2) from [<c0010940>]
+(ret_fast_syscall+0x0/0x54)
 
-Still have the requirement that if you don't get the lock, you must
-still call cpu_chill().
-
-But to get rid of the three issues you have with my current patch, I
-have some ideas.
-
-First let me express the three issues you have to make sure that we are
-in-sync.
-
- Issue #1) The task owning the requested lock is on another CPU and is
-  blocked by an even higher task. Thus the trylock spinner hogs its CPU
-  preventing further progress of other tasks that want to run on that
-  CPU.
-
- Issue #2) There could be a temporary leak of priority if the caller of
-  the trylock_or_boost returns after the cpu_chill() with -EAGAIN and
-  does something different.
-
- Issue #3) The boosting is not related to anything. If the trylock
-  spinner gets boosted (or deboosted), there's no trail back to the
-  owner of the lock.
-
-
-To solve the above, we need to keep some state between the failed call
-to spin_trylock_or_boost() and cpu_chill() (which is why there would be
-a requirement to call cpu_chill() on a failed attempt to acquire the
-lock).
-
-We could add a static waiter to the task_struct, such that a failed
-spin_trylock_or_boost() would add that waiter to the pi_list of the
-owner, and of the waiters of the lock. This waiter will need to have a
-flag stating that it's not a blocked task, and that a loop around the
-pi locking will not detect it as a deadlock.
-
-Now, if the trylock spinner either blocks on another lock, or fails to
-get another trylock_or_boost(), it would unhook this waiter, and do
-all the work that is required to unhook it (deboost owners, etc). That
-is, a task can only be using one waiter at a time (to prevent any other
-strange behaviors). It can only boost one task at a time, it can't be
-boosting more than one. The last call to a spin_lock or
-spin_trylock_or_boost() always wins (gets to use the waiter).
-
-When the owner of the lock releases the lock, if this waiter is the top
-waiter, it will have to grab the task's pi_lock, set the lock pointer to
-NULL, and wake it up.
-
-Then, when the trylock spinner gets around to the cpu_chill(), That
-code will check if the static waiter of the task_struct is in use. It
-will grab its own pi_lock, check if the waiter lock is NULL, if not, it
-will go to sleep.
-
-
-This solves:
-
- Issue #1) if the lock is still in use, the cpu_chill() will sleep, not
-  yield.
-
- Issue #2) The trylock spinner does not go past the cpu_chill() while
-  the last spin_trylock_or_boost() owner has not released the lock. The
-  owner will not have leaked that priority.
-
- Issue #3) Use of a static waiter allows changing of boosting to occur.
-  The priority chain will need to be modified to take this into account.
-
-
-This would be more complex than what I proposed, but it would also
-solve the issues that you brought up. The fact that a task can only
-block with one waiter (it gives up the last trylock_or_boost if it
-needs to block on something else that needs a waiter, or tries another
-trylock_or_boost and fails to get the lock) will keep the complexity
-down. It would prevent a task being in a chain twice.
-
-Thoughts?
-
--- Steve
+Thanks!
+Austin
