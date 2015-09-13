@@ -1,103 +1,55 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: [RFC][4.1.5-rt5 PATCH] ARM: smp: __cpu_disable: fix sleeping function called from invalid context
-Date: Fri, 11 Sep 2015 21:21:23 +0300
-Message-ID: <1441995683-30817-1-git-send-email-grygorii.strashko@ti.com>
+From: Dave Chinner <david@fromorbit.com>
+Subject: Re: [RT XFS] BUG from lockdep in xfs
+Date: Mon, 14 Sep 2015 09:50:59 +1000
+Message-ID: <20150913235059.GU26895@dastard>
+References: <CANGgnMa7jXARYkfCKOgvphunKvVaxRWZcSFgGC1b2m74Dgt+jQ@mail.gmail.com>
+ <20150909114451.GA30015@bfoster.bfoster>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	<linux-arm-kernel@lists.infradead.org>,
-	<linux-kernel@vger.kernel.org>, Sekhar Nori <nsekhar@ti.com>,
-	Austin Schuh <austin@peloton-tech.com>,
-	<philipp@peloton-tech.com>,
-	Grygorii Strashko <grygorii.strashko@ti.com>
-To: Russell King <linux@arm.linux.org.uk>, <bigeasy@linutronix.de>,
-	<linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: Austin Schuh <austin@peloton-tech.com>,
+	rt-users <linux-rt-users@vger.kernel.org>, xfs <xfs@oss.sgi.com>,
+	Philipp Schrader <philipp@peloton-tech.com>,
+	Brian Silverman <brian@peloton-tech.com>
+To: Brian Foster <bfoster@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from ipmail05.adl6.internode.on.net ([150.101.137.143]:35281 "EHLO
+	ipmail05.adl6.internode.on.net" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1753573AbbIMXvD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 13 Sep 2015 19:51:03 -0400
+Content-Disposition: inline
+In-Reply-To: <20150909114451.GA30015@bfoster.bfoster>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-When running with the RT-kernel (4.1.5-rt5) on TI OMAP dra7-evm and trying
-to do Suspend to RAM, the following backtrace occurs:
+On Wed, Sep 09, 2015 at 07:44:51AM -0400, Brian Foster wrote:
+> On Tue, Sep 08, 2015 at 11:54:07PM -0700, Austin Schuh wrote:
+> > I'm running xfstests and got the following BUG with lockdep enabled.
+> > I'm running the 4.1.6-rt5 kernel from TI's tree on a TI ARM chip.
+> > 
+> > Any ideas on what could be causing it, or if it is a real problem?
+> > 
+> > I see some patches in Dave's latest 4.3 pull request that discuss
+> > lockdep.  Are there any ones there that are worth backporting to my
+> > 4.1.6 kernel?
+> > 
+> 
+> I suspect Dave's recent rework of the lockdep namespace bits is what you
+> want:
+> 
+> 	0952c818 xfs: clean up inode lockdep annotations
 
- Disabling non-boot CPUs ...
- PM: noirq suspend of devices complete after 7.295 msecs
- Disabling non-boot CPUs ...
- BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
- in_atomic(): 1, irqs_disabled(): 128, pid: 18, name: migration/1
- INFO: lockdep is turned off.
- irq event stamp: 122
- hardirqs last  enabled at (121): [<c06ac0ac>] _raw_spin_unlock_irqrestore+0x88/0x90
- hardirqs last disabled at (122): [<c06abed0>] _raw_spin_lock_irq+0x28/0x5c
- softirqs last  enabled at (0): [<c003d294>] copy_process.part.52+0x410/0x19d8
- softirqs last disabled at (0): [<  (null)>]   (null)
- Preemption disabled at:[<  (null)>]   (null)
-  CPU: 1 PID: 18 Comm: migration/1 Tainted: G        W       4.1.4-rt3-01046-g96ac8da #204
- Hardware name: Generic DRA74X (Flattened Device Tree)
- [<c0019134>] (unwind_backtrace) from [<c0014774>] (show_stack+0x20/0x24)
- [<c0014774>] (show_stack) from [<c06a70f4>] (dump_stack+0x88/0xdc)
- [<c06a70f4>] (dump_stack) from [<c006cab8>] (___might_sleep+0x198/0x2a8)
- [<c006cab8>] (___might_sleep) from [<c06ac4dc>] (rt_spin_lock+0x30/0x70)
- [<c06ac4dc>] (rt_spin_lock) from [<c013f790>] (find_lock_task_mm+0x9c/0x174)
- [<c013f790>] (find_lock_task_mm) from [<c00409ac>] (clear_tasks_mm_cpumask+0xb4/0x1ac)
- [<c00409ac>] (clear_tasks_mm_cpumask) from [<c00166a4>] (__cpu_disable+0x98/0xbc)
- [<c00166a4>] (__cpu_disable) from [<c06a2e8c>] (take_cpu_down+0x1c/0x50)
- [<c06a2e8c>] (take_cpu_down) from [<c00f2600>] (multi_cpu_stop+0x11c/0x158)
- [<c00f2600>] (multi_cpu_stop) from [<c00f2a9c>] (cpu_stopper_thread+0xc4/0x184)
- [<c00f2a9c>] (cpu_stopper_thread) from [<c0069058>] (smpboot_thread_fn+0x18c/0x324)
- [<c0069058>] (smpboot_thread_fn) from [<c00649c4>] (kthread+0xe8/0x104)
- [<c00649c4>] (kthread) from [<c0010058>] (ret_from_fork+0x14/0x3c)
- CPU1: shutdown
- PM: Calling sched_clock_suspend+0x0/0x40
- PM: Calling timekeeping_suspend+0x0/0x2e0
- PM: Calling irq_gc_suspend+0x0/0x68
- PM: Calling fw_suspend+0x0/0x2c
- PM: Calling cpu_pm_suspend+0x0/0x28
+Yes, that works around the issue that causes this:
 
-Also, sometimes system stucks right after displaying "Disabling non-boot
-CPUs ...". The root cause of above backtrace is task_lock() which takes
-a sleeping lock on -RT.
+> > [ 4357.394974] BUG: looking up invalid subclass: 8
 
-To fix the issue, move clear_tasks_mm_cpumask() call from __cpu_disable()
-to __cpu_die() which is called on the thread which is asking for a target
-CPU to be shutdown. In addition, this change restores CPUhotplug functionality
-on TI OMAP dra7-evm and CPU1 can be unplugged/plugged many times.
+i.e. that we have about 15 different subclass annotations for
+different inode locking situations we need to shoe horn into 8
+subclasses...
 
-Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
----
+Cheers,
 
-RFC: I'm not sure how safe this change is and will be appreciated for any comments.
-Most of arches call clear_tasks_mm_cpumask() from __cpu_disable(), but *powerpc*
-calls it from CPU_DEAD notifier. This patch follows powerpc's approach in
-general.
-
-This issue was first reported in:
- http://www.spinics.net/lists/linux-rt-users/msg13752.html
-
- arch/arm/kernel/smp.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
-
-diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
-index 48185a7..7ee0912 100644
---- a/arch/arm/kernel/smp.c
-+++ b/arch/arm/kernel/smp.c
-@@ -230,8 +230,6 @@ int __cpu_disable(void)
- 	flush_cache_louis();
- 	local_flush_tlb_all();
- 
--	clear_tasks_mm_cpumask(cpu);
--
- 	return 0;
- }
- 
-@@ -247,6 +245,9 @@ void __cpu_die(unsigned int cpu)
- 		pr_err("CPU%u: cpu didn't die\n", cpu);
- 		return;
- 	}
-+
-+	clear_tasks_mm_cpumask(cpu);
-+
- 	pr_notice("CPU%u: shutdown\n", cpu);
- 
- 	/*
+Dave.
 -- 
-2.5.1
+Dave Chinner
+david@fromorbit.com
