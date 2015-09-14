@@ -1,55 +1,71 @@
-From: Dave Chinner <david@fromorbit.com>
-Subject: Re: [RT XFS] BUG from lockdep in xfs
-Date: Mon, 14 Sep 2015 09:50:59 +1000
-Message-ID: <20150913235059.GU26895@dastard>
-References: <CANGgnMa7jXARYkfCKOgvphunKvVaxRWZcSFgGC1b2m74Dgt+jQ@mail.gmail.com>
- <20150909114451.GA30015@bfoster.bfoster>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [RFC][PATCH RT 0/3] RT: Fix trylock deadlock without msleep()
+ hack
+Date: Mon, 14 Sep 2015 11:50:08 +0200
+Message-ID: <20150914095008.GA31704@gmail.com>
+References: <20150904011900.730816481@goodmis.org>
+ <alpine.DEB.2.11.1509051217330.15006@nanos>
+ <20150905120457.GA21338@gmail.com>
+ <alpine.DEB.2.11.1509070959440.15006@nanos>
+ <20150908073116.GA6565@gmail.com>
+ <alpine.DEB.2.11.1509080959460.15006@nanos>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Cc: Austin Schuh <austin@peloton-tech.com>,
-	rt-users <linux-rt-users@vger.kernel.org>, xfs <xfs@oss.sgi.com>,
-	Philipp Schrader <philipp@peloton-tech.com>,
-	Brian Silverman <brian@peloton-tech.com>
-To: Brian Foster <bfoster@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ipmail05.adl6.internode.on.net ([150.101.137.143]:35281 "EHLO
-	ipmail05.adl6.internode.on.net" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753573AbbIMXvD (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 13 Sep 2015 19:51:03 -0400
+Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <clark.williams@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20150909114451.GA30015@bfoster.bfoster>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <alpine.DEB.2.11.1509080959460.15006@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Sep 09, 2015 at 07:44:51AM -0400, Brian Foster wrote:
-> On Tue, Sep 08, 2015 at 11:54:07PM -0700, Austin Schuh wrote:
-> > I'm running xfstests and got the following BUG with lockdep enabled.
-> > I'm running the 4.1.6-rt5 kernel from TI's tree on a TI ARM chip.
+
+* Thomas Gleixner <tglx@linutronix.de> wrote:
+
+> > And if we are into getting reference counts, why not solve it at a higher 
+> > level and get a reference count to 'x' to make sure it's safe to use? Then we 
+> > could do:
+> >
+> >         lock(y->lock);
+> > retry:
+> >         x = y->x;
+> >         if (!trylock(x->lock)) {
+> >                 get_ref(x->count)
+> >                 unlock(y->lock);
+> >                 lock(x->lock);
+> >                 lock(y->lock);
+> >                 put_ref(x->count);
+> >                 if (y->x != x) { /* Retry if 'x' got dropped meanwhile */
+> >                         unlock(x->lock);
+> >                         goto retry;
+> >                 }
+> >          }
 > > 
-> > Any ideas on what could be causing it, or if it is a real problem?
-> > 
-> > I see some patches in Dave's latest 4.3 pull request that discuss
-> > lockdep.  Are there any ones there that are worth backporting to my
-> > 4.1.6 kernel?
-> > 
+> > Or so.
 > 
-> I suspect Dave's recent rework of the lockdep namespace bits is what you
-> want:
-> 
-> 	0952c818 xfs: clean up inode lockdep annotations
+> In the case of dcache::dentry_kill() we probably do not have to take refcounts 
+> and it might be actually counterproductive to do so. y->x, i.e. dentry->parent, 
+> cannot vanish under us, if I understand the life time rules correctly.
 
-Yes, that works around the issue that causes this:
+Ok, that's even better.
 
-> > [ 4357.394974] BUG: looking up invalid subclass: 8
+> Aside of that, yes, I was thinking about a similar scheme for that. I need some 
+> more time to grok all the rules there :)
 
-i.e. that we have about 15 different subclass annotations for
-different inode locking situations we need to shoe horn into 8
-subclasses...
+Ok, great! :-)
 
-Cheers,
+I really don't think we need a new locking primitive - and with something like the 
+above we could improve the code upstream as well and make it scale better in some 
+scenarios, right?
 
-Dave.
--- 
-Dave Chinner
-david@fromorbit.com
+Thanks,
+
+	Ingo
