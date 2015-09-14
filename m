@@ -1,71 +1,30 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [RFC][PATCH RT 0/3] RT: Fix trylock deadlock without msleep()
- hack
-Date: Mon, 14 Sep 2015 11:50:08 +0200
-Message-ID: <20150914095008.GA31704@gmail.com>
-References: <20150904011900.730816481@goodmis.org>
- <alpine.DEB.2.11.1509051217330.15006@nanos>
- <20150905120457.GA21338@gmail.com>
- <alpine.DEB.2.11.1509070959440.15006@nanos>
- <20150908073116.GA6565@gmail.com>
- <alpine.DEB.2.11.1509080959460.15006@nanos>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: When would be preempt_rt patchet available for 4.2 kernel
+Date: Mon, 14 Sep 2015 13:42:05 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1509141340240.3971@nanos>
+References: <55F0307E.8050501@caviumnetworks.com>,<alpine.DEB.2.11.1509091618300.3854@nanos> <BY1PR0701MB1594EEF7C277A35E066DAFE2E15D0@BY1PR0701MB1594.namprd07.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <clark.williams@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1509080959460.15006@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: "Jaggi, Manish" <Manish.Jaggi@caviumnetworks.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:38437 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754192AbbINLmi (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 14 Sep 2015 07:42:38 -0400
+In-Reply-To: <BY1PR0701MB1594EEF7C277A35E066DAFE2E15D0@BY1PR0701MB1594.namprd07.prod.outlook.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-
-* Thomas Gleixner <tglx@linutronix.de> wrote:
-
-> > And if we are into getting reference counts, why not solve it at a higher 
-> > level and get a reference count to 'x' to make sure it's safe to use? Then we 
-> > could do:
+On Mon, 14 Sep 2015, Jaggi, Manish wrote:
 > >
-> >         lock(y->lock);
-> > retry:
-> >         x = y->x;
-> >         if (!trylock(x->lock)) {
-> >                 get_ref(x->count)
-> >                 unlock(y->lock);
-> >                 lock(x->lock);
-> >                 lock(y->lock);
-> >                 put_ref(x->count);
-> >                 if (y->x != x) { /* Retry if 'x' got dropped meanwhile */
-> >                         unlock(x->lock);
-> >                         goto retry;
-> >                 }
-> >          }
-> > 
-> > Or so.
-> 
-> In the case of dcache::dentry_kill() we probably do not have to take refcounts 
-> and it might be actually counterproductive to do so. y->x, i.e. dentry->parent, 
-> cannot vanish under us, if I understand the life time rules correctly.
+> How can I help in forward porting of the patches on 4.2
 
-Ok, that's even better.
-
-> Aside of that, yes, I was thinking about a similar scheme for that. I need some 
-> more time to grok all the rules there :)
-
-Ok, great! :-)
-
-I really don't think we need a new locking primitive - and with something like the 
-above we could improve the code upstream as well and make it scale better in some 
-scenarios, right?
+I'm not going to support 4.2.  We switched to odd numbers due to 4.1
+being a LTS kernel.
 
 Thanks,
 
-	Ingo
+	tglx
