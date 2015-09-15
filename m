@@ -1,23 +1,23 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH rt-tests 5/9] cyclictest: use correct type when allocating
- cpu bitmask size
-Date: Wed, 16 Sep 2015 00:19:44 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1509160019040.13077@riemann.fritz.box>
-References: <cover.1441038216.git.joshc@ni.com> <d84777ffa73511c9343c2ebc71573f56a788e743.1441038216.git.joshc@ni.com>
+Subject: Re: [PATCH rt-tests 6/9] cyclictest: drop impossible use_fifo
+ conditional
+Date: Wed, 16 Sep 2015 00:24:17 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1509160023580.13077@riemann.fritz.box>
+References: <cover.1441038216.git.joshc@ni.com> <6eca77cc0906aece69c31603b39a35c5e2f5e3c9.1441038216.git.joshc@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
 To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f175.google.com ([209.85.212.175]:36837 "EHLO
-	mail-wi0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751272AbbIOWTr (ORCPT
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:38837 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751272AbbIOWYU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Sep 2015 18:19:47 -0400
-Received: by wicgb1 with SMTP id gb1so48556416wic.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2015 15:19:46 -0700 (PDT)
-In-Reply-To: <d84777ffa73511c9343c2ebc71573f56a788e743.1441038216.git.joshc@ni.com>
+	Tue, 15 Sep 2015 18:24:20 -0400
+Received: by wiclk2 with SMTP id lk2so46508423wic.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2015 15:24:18 -0700 (PDT)
+In-Reply-To: <6eca77cc0906aece69c31603b39a35c5e2f5e3c9.1441038216.git.joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -25,33 +25,30 @@ List-ID: <linux-rt-users.vger.kernel.org>
 
 On Mon, 31 Aug 2015, Josh Cartwright wrote:
 
-> On any sane platform sizeof(long) == sizeof(unsigned long), so this
-> does not actually fix a real bug, but the code should at least be
-> consistent.
+> The fifothread is only created when use_fifo is set; having the thread
+> itself perform a check is redundant and unnecessary.  Drop it.
 > 
 > Signed-off-by: Josh Cartwright <joshc@ni.com>
 > ---
->  src/cyclictest/rt_numa.h | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+>  src/cyclictest/cyclictest.c | 3 ---
+>  1 file changed, 3 deletions(-)
 > 
-> diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-> index caa80e6..9da9fd8 100644
-> --- a/src/cyclictest/rt_numa.h
-> +++ b/src/cyclictest/rt_numa.h
-> @@ -229,7 +229,7 @@ static inline struct bitmask* rt_numa_parse_cpustring(const char* s,
->  			 * max_cpus bits */
->  			int nlongs = (max_cpus+BITS_PER_LONG-1)/BITS_PER_LONG;
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index dc754fd..896cdd7 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -1773,9 +1773,6 @@ static void *fifothread(void *param)
+>  	FILE *fp;
+>  	int i;
 >  
-> -			mask->maskp = calloc(nlongs, sizeof(long));
-> +			mask->maskp = calloc(nlongs, sizeof(unsigned long));
->  			if (mask->maskp) {
->  				mask->maskp[cpu/BITS_PER_LONG] |=
->  					(1UL << (cpu % BITS_PER_LONG));
+> -	if (use_fifo == 0)
+> -		return NULL;
+> -
+>  	unlink(fifopath);
+>  	ret = mkfifo(fifopath, 0666);
+>  	if (ret) {
 > -- 
 > 2.5.0
 > 
 > --
-
-Suspect this isn't the only inconsistency here between longs and unsigned 
-longs, but
 Signed-off-by: John Kacur <jkacur@redhat.com>
