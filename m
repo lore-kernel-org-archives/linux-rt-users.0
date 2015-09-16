@@ -1,241 +1,43 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH rt-tests 9/9] cyclictest: add option for dumping the
- histogram in a file
-Date: Wed, 16 Sep 2015 01:05:51 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1509160103140.13077@riemann.fritz.box>
-References: <cover.1441038216.git.joshc@ni.com> <ef2410217389a838ed5059c4ac23670fe22492ae.1441038216.git.joshc@ni.com>
+From: Your name <nobelkernel@gmail.com>
+Subject: PCI: PCIe endpoint initiating write request to RC
+Date: Wed, 16 Sep 2015 12:23:40 +0530
+Message-ID: <20150916065338.GA24779@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org,
-	Gratian Crisan <gratian.crisan@ni.com>
-To: Josh Cartwright <joshc@ni.com>
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f171.google.com ([209.85.212.171]:38779 "EHLO
-	mail-wi0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750764AbbIOXFy (ORCPT
+Received: from mail-pa0-f54.google.com ([209.85.220.54]:34538 "EHLO
+	mail-pa0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751739AbbIPGxq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 15 Sep 2015 19:05:54 -0400
-Received: by wiclk2 with SMTP id lk2so47347329wic.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2015 16:05:53 -0700 (PDT)
-In-Reply-To: <ef2410217389a838ed5059c4ac23670fe22492ae.1441038216.git.joshc@ni.com>
+	Wed, 16 Sep 2015 02:53:46 -0400
+Received: by padhy16 with SMTP id hy16so200477888pad.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 15 Sep 2015 23:53:46 -0700 (PDT)
+Received: from gmail.com ([182.73.114.58])
+        by smtp.gmail.com with ESMTPSA id sl7sm25754295pbc.54.2015.09.15.23.53.43
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=RC4-SHA bits=128/128);
+        Tue, 15 Sep 2015 23:53:44 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
+I have a doubt, hope some one would have come across the same,
 
-On Mon, 31 Aug 2015, Josh Cartwright wrote:
+For a root complex to send data to PCIe endpoints, Then it has to write data
+that could hit the BAR region of PCIe endpoints.
 
-> From: Gratian Crisan <gratian.crisan@ni.com>
-> 
-> Add an option '-J' or '--histfile' to dump the latency histogram to <path>
-> instead of stdout. This allows for live update of the current min, avg, and max
-> numbers while retaining the option to save histogram data for later analysis.
-> 
-> Signed-off-by: Gratian Crisan <gratian.crisan@ni.com>
-> Signed-off-by: Josh Cartwright <joshc@ni.com>
-> ---
->  src/cyclictest/cyclictest.c | 97 ++++++++++++++++++++++++++++-----------------
->  1 file changed, 60 insertions(+), 37 deletions(-)
-> 
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 2c44f8e..ec1ed17 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -188,6 +188,7 @@ static int aligned = 0;
->  static int secaligned = 0;
->  static int offset = 0;
->  static int laptop = 0;
-> +static int use_histfile = 0;
->  
->  static pthread_cond_t refresh_on_max_cond = PTHREAD_COND_INITIALIZER;
->  static pthread_mutex_t refresh_on_max_lock = PTHREAD_MUTEX_INITIALIZER;
-> @@ -210,6 +211,7 @@ static char *procfileprefix = "/proc/sys/kernel/";
->  static char *fileprefix;
->  static char tracer[MAX_PATH];
->  static char fifopath[MAX_PATH];
-> +static char histfile[MAX_PATH];
->  static char **traceptr;
->  static int traceopt_count;
->  static int traceopt_size;
-> @@ -1049,6 +1051,7 @@ static void display_help(int error)
->  	       "                           (with same priority about many threads)\n"
->  	       "                           US is the max time to be be tracked in microseconds\n"
->  	       "-H       --histofall=US    same as -h except with an additional summary column\n"
-> +	       "-J       --histfile=<path> dump the latency histogram to <path> instead of stdout\n"
->  	       "-i INTV  --interval=INTV   base interval of thread in us default=1000\n"
->  	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
->  	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
-> @@ -1214,13 +1217,13 @@ static char *policyname(int policy)
->  enum option_values {
->  	OPT_AFFINITY=1, OPT_NOTRACE, OPT_BREAKTRACE, OPT_PREEMPTIRQ, OPT_CLOCK,
->  	OPT_CONTEXT, OPT_DISTANCE, OPT_DURATION, OPT_LATENCY, OPT_EVENT,
-> -	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_INTERVAL,
-> -	OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANOSLEEP,
-> -	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF,
-> -	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM,
-> -	OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
-> -	OPT_WAKEUP, OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
-> -	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED,
-> +	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_HISTFILE,
-> +	OPT_INTERVAL, OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANOSLEEP,
-> +	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF, OPT_QUIET,
-> +	OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM, OPT_SMP, OPT_THREADS,
-> +	OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP, OPT_WAKEUPRT,
-> +	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS, OPT_ALIGNED, OPT_LAPTOP,
-> +	OPT_SECALIGNED,
->  };
->  
->  /* Process commandline options */
-> @@ -1251,6 +1254,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
->  			{"fifo",             required_argument, NULL, OPT_FIFO },
->  			{"histogram",        required_argument, NULL, OPT_HISTOGRAM },
->  			{"histofall",        required_argument, NULL, OPT_HISTOFALL },
-> +			{"histfile",	     required_argument, NULL, OPT_HISTFILE },
->  			{"interval",         required_argument, NULL, OPT_INTERVAL },
->  			{"irqsoff",          no_argument,       NULL, OPT_IRQSOFF },
->  			{"laptop",	     no_argument,	NULL, OPT_LAPTOP },
-> @@ -1348,6 +1352,11 @@ static void process_options (int argc, char *argv[], int max_cpus)
->  		case 'h':
->  		case OPT_HISTOGRAM:
->  			histogram = atoi(optarg); break;
-> +		case 'J':
-> +		case OPT_HISTFILE:
-> +			use_histfile = 1;
-> +			strncpy(histfile, optarg, strlen(optarg));
-> +			break;
->  		case 'i':
->  		case OPT_INTERVAL:
->  			interval = atoi(optarg); break;
-> @@ -1653,74 +1662,88 @@ static void print_hist(struct thread_param *par[], int nthreads)
->  	int i, j;
->  	unsigned long long int log_entries[nthreads+1];
->  	unsigned long maxmax, alloverflows;
-> +	FILE *fd;
->  
->  	bzero(log_entries, sizeof(log_entries));
->  
-> -	printf("# Histogram\n");
-> +	if (use_histfile) {
-> +		fd = fopen(histfile, "w");
-> +		if (!fd) {
-> +			perror("opening histogram file:");
-> +			return;
-> +		}
-> +	} else {
-> +		fd = stdout;
-> +	}
-> +
-> +	fprintf(fd, "# Histogram\n");
->  	for (i = 0; i < histogram; i++) {
->  		unsigned long long int allthreads = 0;
->  
-> -		printf("%06d ", i);
-> +		fprintf(fd, "%06d ", i);
->  
->  		for (j = 0; j < nthreads; j++) {
->  			unsigned long curr_latency=par[j]->stats->hist_array[i];
-> -			printf("%06lu", curr_latency);
-> +			fprintf(fd, "%06lu", curr_latency);
->  			if (j < nthreads - 1)
-> -				printf("\t");
-> +				fprintf(fd, "\t");
->  			log_entries[j] += curr_latency;
->  			allthreads += curr_latency;
->  		}
->  		if (histofall && nthreads > 1) {
-> -			printf("\t%06llu", allthreads);
-> +			fprintf(fd, "\t%06llu", allthreads);
->  			log_entries[nthreads] += allthreads;
->  		}
-> -		printf("\n");
-> +		fprintf(fd, "\n");
->  	}
-> -	printf("# Total:");
-> +	fprintf(fd, "# Total:");
->  	for (j = 0; j < nthreads; j++)
-> -		printf(" %09llu", log_entries[j]);
-> +		fprintf(fd, " %09llu", log_entries[j]);
->  	if (histofall && nthreads > 1)
-> -		printf(" %09llu", log_entries[nthreads]);
-> -	printf("\n");
-> -	printf("# Min Latencies:");
-> +		fprintf(fd, " %09llu", log_entries[nthreads]);
-> +	fprintf(fd, "\n");
-> +	fprintf(fd, "# Min Latencies:");
->  	for (j = 0; j < nthreads; j++)
-> -		printf(" %05lu", par[j]->stats->min);
-> -	printf("\n");
-> -	printf("# Avg Latencies:");
-> +		fprintf(fd, " %05lu", par[j]->stats->min);
-> +	fprintf(fd, "\n");
-> +	fprintf(fd, "# Avg Latencies:");
->  	for (j = 0; j < nthreads; j++)
-> -		printf(" %05lu", par[j]->stats->cycles ?
-> +		fprintf(fd, " %05lu", par[j]->stats->cycles ?
->  		       (long)(par[j]->stats->avg/par[j]->stats->cycles) : 0);
-> -	printf("\n");
-> -	printf("# Max Latencies:");
-> +	fprintf(fd, "\n");
-> +	fprintf(fd, "# Max Latencies:");
->  	maxmax = 0;
->  	for (j = 0; j < nthreads; j++) {
-> -		printf(" %05lu", par[j]->stats->max);
-> +		fprintf(fd, " %05lu", par[j]->stats->max);
->  		if (par[j]->stats->max > maxmax)
->  			maxmax = par[j]->stats->max;
->  	}
->  	if (histofall && nthreads > 1)
-> -		printf(" %05lu", maxmax);
-> -	printf("\n");
-> -	printf("# Histogram Overflows:");
-> +		fprintf(fd, " %05lu", maxmax);
-> +	fprintf(fd, "\n");
-> +	fprintf(fd, "# Histogram Overflows:");
->  	alloverflows = 0;
->  	for (j = 0; j < nthreads; j++) {
-> -		printf(" %05lu", par[j]->stats->hist_overflow);
-> +		fprintf(fd, " %05lu", par[j]->stats->hist_overflow);
->  		alloverflows += par[j]->stats->hist_overflow;
->  	}
->  	if (histofall && nthreads > 1)
-> -		printf(" %05lu", alloverflows);
-> -	printf("\n");
-> +		fprintf(fd, " %05lu", alloverflows);
-> +	fprintf(fd, "\n");
->  
-> -	printf("# Histogram Overflow at cycle number:\n");
-> +	fprintf(fd, "# Histogram Overflow at cycle number:\n");
->  	for (i = 0; i < nthreads; i++) {
-> -		printf("# Thread %d:", i);
-> +		fprintf(fd, "# Thread %d:", i);
->  		for (j = 0; j < par[i]->stats->num_outliers; j++)
-> -			printf(" %05lu", par[i]->stats->outliers[j]);
-> +			fprintf(fd, " %05lu", par[i]->stats->outliers[j]);
->  		if (par[i]->stats->num_outliers < par[i]->stats->hist_overflow)
-> -			printf(" # %05lu others", par[i]->stats->hist_overflow - par[i]->stats->num_outliers);
-> -		printf("\n");
-> +			fprintf(fd, " # %05lu others", par[i]->stats->hist_overflow - par[i]->stats->num_outliers);
-> +		fprintf(fd, "\n");
->  	}
-> -	printf("\n");
-> +	fprintf(fd, "\n");
-> +
-> +	if (use_histfile)
-> +		fclose(fd);
->  }
->  
->  static void print_stat(FILE *fp, struct thread_param *par, int index, int verbose, int quiet)
-> -- 
-> 2.5.0
-> 
-> --
+For a vice versa, if PCIe endpoint which doesn't has DMA descriptor in it and
+it is trying to send data. which address I need to configure? Any
+physical address of ram or physical address got for kmalloc or endpoint BAR? 
 
-We worked really hard to remove the large amount of options, and we may 
-have been over zealous in some cases (Carsten?). If I were to accept this 
-patch, I would at least like you to remove the short form option, and just 
-have it in the long form.
+If PCIe endpoint can access the entire memory does it has a permission to
+corrupt the host memory from external. We know linux handle memory
+violation for process by memory structure assigned in each task_struct.
+But can someone explain me how it been managed for data comming out from
+endpoint to Root complex?
 
-Thanks
-
-John Kacur
+Regards
+Nobel
