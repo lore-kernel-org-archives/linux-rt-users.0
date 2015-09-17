@@ -1,302 +1,122 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: [PATCH rt-tests 9/9] cyclictest: add option for dumping the
- histogram in a file
-Date: Wed, 16 Sep 2015 14:56:50 -0500
-Message-ID: <20150916195650.GJ3126@jcartwri.amer.corp.natinst.com>
-References: <cover.1441038216.git.joshc@ni.com>
- <ef2410217389a838ed5059c4ac23670fe22492ae.1441038216.git.joshc@ni.com>
- <alpine.LFD.2.20.1509160103140.13077@riemann.fritz.box>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH rt-tests 3/9] cyclictest: drop unnecessary numa_on_and_available()
+ check
+Date: Thu, 17 Sep 2015 21:15:51 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1509172103120.10090@riemann>
+References: <cover.1441038216.git.joshc@ni.com> <787515a5a59861a892ac3a44b6c6c502cfc102fd.1441038216.git.joshc@ni.com> <alpine.LFD.2.20.1509152347280.13077@riemann.fritz.box> <20150916194728.GH3126@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="SdvjNjn6lL3tIsv0"
-Cc: Clark Williams <williams@redhat.com>,
-	linux-rt-users@vger.kernel.org,
-	Gratian Crisan <gratian.crisan@ni.com>
-To: John Kacur <jkacur@redhat.com>
+Content-Type: text/plain; charset=US-ASCII
+Cc: John Kacur <jkacur@redhat.com>,
+	Clark Williams <williams@redhat.com>,
+	linux-rt-users@vger.kernel.org
+To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:46973 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752483AbbIPT4w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Sep 2015 15:56:52 -0400
-In-Reply-To: <alpine.LFD.2.20.1509160103140.13077@riemann.fritz.box>
-Content-Disposition: inline
+Received: from mail-wi0-f173.google.com ([209.85.212.173]:34362 "EHLO
+	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751104AbbIQTQD (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Sep 2015 15:16:03 -0400
+Received: by wicfx3 with SMTP id fx3so36882714wic.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 17 Sep 2015 12:16:01 -0700 (PDT)
+In-Reply-To: <20150916194728.GH3126@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
---SdvjNjn6lL3tIsv0
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
 
-On Wed, Sep 16, 2015 at 01:05:51AM +0200, John Kacur wrote:
-> On Mon, 31 Aug 2015, Josh Cartwright wrote:
-> > From: Gratian Crisan <gratian.crisan@ni.com>
-> >=20
-> > Add an option '-J' or '--histfile' to dump the latency histogram to <pa=
-th>
-> > instead of stdout. This allows for live update of the current min, avg,=
- and max
-> > numbers while retaining the option to save histogram data for later ana=
-lysis.
-> >=20
-> > Signed-off-by: Gratian Crisan <gratian.crisan@ni.com>
-> > Signed-off-by: Josh Cartwright <joshc@ni.com>
-[..]
->=20
-> We worked really hard to remove the large amount of options, and we may=
-=20
-> have been over zealous in some cases (Carsten?).
+On Wed, 16 Sep 2015, Josh Cartwright wrote:
 
-Fair enough, cyclictest has way too many knobs.  Regardless, we've at
-least found this particular option useful.
+> On Tue, Sep 15, 2015 at 11:50:16PM +0200, John Kacur wrote:
+> > On Mon, 31 Aug 2015, Josh Cartwright wrote:
+> > 
+> > > The condition that numa_on_and_available() checks is impossible to hit,
+> > > as it's already being checked during process_options().
+> > > 
+> > > Removal of numa_on_and_available() also has the side effect of removing
+> > > the following warning during build:
+> > > 
+> > > src/cyclictest/rt_numa.h:259:15: warning: implicit declaration of function ???numa_available??? [-Wimplicit-function-declaration]
+> > > 
+> > > Signed-off-by: Josh Cartwright <joshc@ni.com>
+> 
+> [..]
+> 
+> > We don't support building without numa libs anymore, although we of
+> > course support running on machines without numa. Never-the-less I
+> > created two versions of numa_on_and_available, one for if you build with
+> > the unsupported NUMA=0 and one for if you build with NUMA=1, which is
+> > the default.
+> 
+> :(.  You risk plenty of embedded folks who don't much care about NUMA.
 
-> If I were to accept this patch, I would at least like you to remove
-> the short form option, and just have it in the long form.
+Sorry, there is some confusion here, and it's probably partly on my side.
+We do of course still support building without NUMA. All that I was really 
+referring to was, that if you are building on platforms that support NUMA,
+we are making the development libs a requirement for compiling, in our 
+distro spec files, even you are running without NUMA
+But please continue to test with NUMA=0 builds as well as the default, and 
+report / or fix any builds that don't work with NUMA=0
 
-Here is a v2 with the short form -J dropped.
+> 
+> > I would prefer not to drop this function, since I think it cleanly
+> > documents the fact that numa_available must be called before any other
+> > numa library functions are defined.
+> > 
+> > As Josh Cartwright reported though, there was no need to call it from
+> > main() since it was already tested in process_options(), so I tested it
+> > there.
+> > 
+> > Tested by building with NUMA=0, NUMA=1 and with the non-standard
+> > -Wimplicit-function-declaration
+> > 
+> > Reported-by: Signed-off-by: Josh Cartwright <joshc@ni.com>
+> 
+> s/Signed-off-by: /
+> 
 
-Thanks,
-  Josh
+Oops, okay, fixing that msg.
 
--- 8< --
-=46rom: Gratian Crisan <gratian.crisan@ni.com>
-Subject: [PATCH v2] cyclictest: add option for dumping the histogram in a f=
-ile
+> :)
+> 
+> > Signed-off-by: John Kacur <jkacur@redhat.com>
+> > ---
+> >  src/cyclictest/cyclictest.c |  7 ++-----
+> >  src/cyclictest/rt_numa.h    | 18 +++++++++++++-----
+> >  2 files changed, 15 insertions(+), 10 deletions(-)
+> > 
+> > diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> > index 213c527fd714..b3abfcc67407 100644
+> > --- a/src/cyclictest/cyclictest.c
+> > +++ b/src/cyclictest/cyclictest.c
+> > @@ -1451,12 +1451,11 @@ static void process_options (int argc, char *argv[], int max_cpus)
+> >  			setvbuf(stdout, NULL, _IONBF, 0); break;
+> >  		case 'U':
+> >  		case OPT_NUMA: /* NUMA testing */
+> > +			numa = 1;	/* Turn numa on */
+> >  			if (smp)
+> >  				fatal("numa and smp options are mutually exclusive\n");
+> > +			numa_on_and_available();
+> 
+> ...except numa is always on here.  So why check if NUMA is enabled
+> again?  Seems like a waste.
+> 
+> >  #ifdef NUMA
+> > -			if (numa_available() == -1)
+> > -				fatal("NUMA functionality not available!");
+> 
+> Perhaps a middle ground should be to keep this check around and define a
+> static inline numa_available() in the NUMA:=0 case which unconditionally
+> returns -1.
+> 
+> Thanks for taking a look,
 
-Add an option '--histfile' to dump the latency histogram to <path>
-instead of stdout. This allows for live update of the current min, avg,
-and max numbers while retaining the option to save histogram data for
-later analysis.
+You are of course correct here, but it's just one extra check at init 
+time, so the impact is pretty close to zero.
 
-Signed-off-by: Gratian Crisan <gratian.crisan@ni.com>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
----
- src/cyclictest/cyclictest.c | 96 ++++++++++++++++++++++++++++-------------=
-----
- 1 file changed, 59 insertions(+), 37 deletions(-)
+Will consider more clean-ups in the future, but it's probably not worth 
+obsessing about. Like I said, I like the api more as documentation for the 
+process of setting numa up.
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index 62f7cd9..5c9600c 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -188,6 +188,7 @@ static int aligned =3D 0;
- static int secaligned =3D 0;
- static int offset =3D 0;
- static int laptop =3D 0;
-+static int use_histfile =3D 0;
-=20
- static pthread_cond_t refresh_on_max_cond =3D PTHREAD_COND_INITIALIZER;
- static pthread_mutex_t refresh_on_max_lock =3D PTHREAD_MUTEX_INITIALIZER;
-@@ -210,6 +211,7 @@ static char *procfileprefix =3D "/proc/sys/kernel/";
- static char *fileprefix;
- static char tracer[MAX_PATH];
- static char fifopath[MAX_PATH];
-+static char histfile[MAX_PATH];
- static char **traceptr;
- static int traceopt_count;
- static int traceopt_size;
-@@ -1049,6 +1051,7 @@ static void display_help(int error)
- 	       "                           (with same priority about many threads=
-)\n"
- 	       "                           US is the max time to be be tracked in=
- microseconds\n"
- 	       "-H       --histofall=3DUS    same as -h except with an additional=
- summary column\n"
-+	       "	 --histfile=3D<path> dump the latency histogram to <path> instea=
-d of stdout\n"
- 	       "-i INTV  --interval=3DINTV   base interval of thread in us defaul=
-t=3D1000\n"
- 	       "-I       --irqsoff         Irqsoff tracing (used with -b)\n"
- 	       "-l LOOPS --loops=3DLOOPS     number of loops: default=3D0(endless=
-)\n"
-@@ -1214,13 +1217,13 @@ static char *policyname(int policy)
- enum option_values {
- 	OPT_AFFINITY=3D1, OPT_NOTRACE, OPT_BREAKTRACE, OPT_PREEMPTIRQ, OPT_CLOCK,
- 	OPT_CONTEXT, OPT_DISTANCE, OPT_DURATION, OPT_LATENCY, OPT_EVENT,
--	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_INTERVAL,
--	OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANOSLEEP,
--	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF,
--	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM,
--	OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
--	OPT_WAKEUP, OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPT=
-S,
--	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED,
-+	OPT_FTRACE, OPT_FIFO, OPT_HISTOGRAM, OPT_HISTOFALL, OPT_HISTFILE,
-+	OPT_INTERVAL, OPT_IRQSOFF, OPT_LOOPS, OPT_MLOCKALL, OPT_REFRESH, OPT_NANO=
-SLEEP,
-+	OPT_NSECS, OPT_OSCOPE, OPT_TRACEOPT, OPT_PRIORITY, OPT_PREEMPTOFF, OPT_QU=
-IET,
-+	OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM, OPT_SMP, OPT_TH=
-READS,
-+	OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP, OPT_WAKEUP=
-RT,
-+	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS, OPT_ALIGNED, OPT_LAPTOP,
-+	OPT_SECALIGNED,
- };
-=20
- /* Process commandline options */
-@@ -1251,6 +1254,7 @@ static void process_options (int argc, char *argv[], =
-int max_cpus)
- 			{"fifo",             required_argument, NULL, OPT_FIFO },
- 			{"histogram",        required_argument, NULL, OPT_HISTOGRAM },
- 			{"histofall",        required_argument, NULL, OPT_HISTOFALL },
-+			{"histfile",	     required_argument, NULL, OPT_HISTFILE },
- 			{"interval",         required_argument, NULL, OPT_INTERVAL },
- 			{"irqsoff",          no_argument,       NULL, OPT_IRQSOFF },
- 			{"laptop",	     no_argument,	NULL, OPT_LAPTOP },
-@@ -1348,6 +1352,10 @@ static void process_options (int argc, char *argv[],=
- int max_cpus)
- 		case 'h':
- 		case OPT_HISTOGRAM:
- 			histogram =3D atoi(optarg); break;
-+		case OPT_HISTFILE:
-+			use_histfile =3D 1;
-+			strncpy(histfile, optarg, strlen(optarg));
-+			break;
- 		case 'i':
- 		case OPT_INTERVAL:
- 			interval =3D atoi(optarg); break;
-@@ -1653,74 +1661,88 @@ static void print_hist(struct thread_param *par[], =
-int nthreads)
- 	int i, j;
- 	unsigned long long int log_entries[nthreads+1];
- 	unsigned long maxmax, alloverflows;
-+	FILE *fd;
-=20
- 	bzero(log_entries, sizeof(log_entries));
-=20
--	printf("# Histogram\n");
-+	if (use_histfile) {
-+		fd =3D fopen(histfile, "w");
-+		if (!fd) {
-+			perror("opening histogram file:");
-+			return;
-+		}
-+	} else {
-+		fd =3D stdout;
-+	}
-+
-+	fprintf(fd, "# Histogram\n");
- 	for (i =3D 0; i < histogram; i++) {
- 		unsigned long long int allthreads =3D 0;
-=20
--		printf("%06d ", i);
-+		fprintf(fd, "%06d ", i);
-=20
- 		for (j =3D 0; j < nthreads; j++) {
- 			unsigned long curr_latency=3Dpar[j]->stats->hist_array[i];
--			printf("%06lu", curr_latency);
-+			fprintf(fd, "%06lu", curr_latency);
- 			if (j < nthreads - 1)
--				printf("\t");
-+				fprintf(fd, "\t");
- 			log_entries[j] +=3D curr_latency;
- 			allthreads +=3D curr_latency;
- 		}
- 		if (histofall && nthreads > 1) {
--			printf("\t%06llu", allthreads);
-+			fprintf(fd, "\t%06llu", allthreads);
- 			log_entries[nthreads] +=3D allthreads;
- 		}
--		printf("\n");
-+		fprintf(fd, "\n");
- 	}
--	printf("# Total:");
-+	fprintf(fd, "# Total:");
- 	for (j =3D 0; j < nthreads; j++)
--		printf(" %09llu", log_entries[j]);
-+		fprintf(fd, " %09llu", log_entries[j]);
- 	if (histofall && nthreads > 1)
--		printf(" %09llu", log_entries[nthreads]);
--	printf("\n");
--	printf("# Min Latencies:");
-+		fprintf(fd, " %09llu", log_entries[nthreads]);
-+	fprintf(fd, "\n");
-+	fprintf(fd, "# Min Latencies:");
- 	for (j =3D 0; j < nthreads; j++)
--		printf(" %05lu", par[j]->stats->min);
--	printf("\n");
--	printf("# Avg Latencies:");
-+		fprintf(fd, " %05lu", par[j]->stats->min);
-+	fprintf(fd, "\n");
-+	fprintf(fd, "# Avg Latencies:");
- 	for (j =3D 0; j < nthreads; j++)
--		printf(" %05lu", par[j]->stats->cycles ?
-+		fprintf(fd, " %05lu", par[j]->stats->cycles ?
- 		       (long)(par[j]->stats->avg/par[j]->stats->cycles) : 0);
--	printf("\n");
--	printf("# Max Latencies:");
-+	fprintf(fd, "\n");
-+	fprintf(fd, "# Max Latencies:");
- 	maxmax =3D 0;
- 	for (j =3D 0; j < nthreads; j++) {
--		printf(" %05lu", par[j]->stats->max);
-+		fprintf(fd, " %05lu", par[j]->stats->max);
- 		if (par[j]->stats->max > maxmax)
- 			maxmax =3D par[j]->stats->max;
- 	}
- 	if (histofall && nthreads > 1)
--		printf(" %05lu", maxmax);
--	printf("\n");
--	printf("# Histogram Overflows:");
-+		fprintf(fd, " %05lu", maxmax);
-+	fprintf(fd, "\n");
-+	fprintf(fd, "# Histogram Overflows:");
- 	alloverflows =3D 0;
- 	for (j =3D 0; j < nthreads; j++) {
--		printf(" %05lu", par[j]->stats->hist_overflow);
-+		fprintf(fd, " %05lu", par[j]->stats->hist_overflow);
- 		alloverflows +=3D par[j]->stats->hist_overflow;
- 	}
- 	if (histofall && nthreads > 1)
--		printf(" %05lu", alloverflows);
--	printf("\n");
-+		fprintf(fd, " %05lu", alloverflows);
-+	fprintf(fd, "\n");
-=20
--	printf("# Histogram Overflow at cycle number:\n");
-+	fprintf(fd, "# Histogram Overflow at cycle number:\n");
- 	for (i =3D 0; i < nthreads; i++) {
--		printf("# Thread %d:", i);
-+		fprintf(fd, "# Thread %d:", i);
- 		for (j =3D 0; j < par[i]->stats->num_outliers; j++)
--			printf(" %05lu", par[i]->stats->outliers[j]);
-+			fprintf(fd, " %05lu", par[i]->stats->outliers[j]);
- 		if (par[i]->stats->num_outliers < par[i]->stats->hist_overflow)
--			printf(" # %05lu others", par[i]->stats->hist_overflow - par[i]->stats-=
->num_outliers);
--		printf("\n");
-+			fprintf(fd, " # %05lu others", par[i]->stats->hist_overflow - par[i]->s=
-tats->num_outliers);
-+		fprintf(fd, "\n");
- 	}
--	printf("\n");
-+	fprintf(fd, "\n");
-+
-+	if (use_histfile)
-+		fclose(fd);
- }
-=20
- static void print_stat(FILE *fp, struct thread_param *par, int index, int =
-verbose, int quiet)
---=20
-2.5.1
+Thanks
 
-
---SdvjNjn6lL3tIsv0
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAABCAAGBQJV+cmCAAoJEKp7ZBKwQFAre8UH/iCq2Id5U9g4H7GPoR3RWn5j
-Qq8HG4YX4PBDSl0F/fTQE5cBNkxwcVtHjfgoAJwvPNBgdtvMa+HS9LaIXBsn+IYs
-Fzo/rhiBussLhErciCYvKhFjA1iiwwdHHzeCRqwZ1rZOuvan15fnz+CQW5i5T5Zu
-PhZnrxoVLlef26wTODQ+ftM0MaCKwFOCJ+niYbKd6SjXj0FtBI014XjqpGgHw0Kw
-9DxoTJ5G7DLI63Vay4XLyvILsIV/p8v1UsjPlD7lypSmI8aEbXJGO0aXLUfLxGrs
-oyOpvnNPiTmO5D5hhWIY059foSHjmeHjCDiD5+sPdJ/2tUuw2k6Kvt92ZjA4g+k=
-=IPMA
------END PGP SIGNATURE-----
-
---SdvjNjn6lL3tIsv0--
+John
