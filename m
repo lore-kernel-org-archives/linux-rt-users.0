@@ -1,40 +1,26 @@
-From: Henrik Austad <haustad@cisco.com>
-Subject: [PATCH 3/7] Add a rebuild-switch to Makefile
-Date: Fri, 18 Sep 2015 18:52:46 +0200
-Message-ID: <1442595170-6229-4-git-send-email-haustad@cisco.com>
-References: <1442595170-6229-1-git-send-email-haustad@cisco.com>
-Cc: linux-rt-users@vger.kernel.org, Henrik Austad <haustad@cisco.com>
-To: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
+From: Nathan Sullivan <nathan.sullivan@ni.com>
+Subject: SDHCI interrupt handling
+Date: Fri, 18 Sep 2015 15:28:12 -0500
+Message-ID: <20150918202812.GA22647@nathan3500-linux-VM>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+To: linux-rt-users@vger.kernel.org, msmucr@gmail.com,
+	bigeasy@linutronix.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from aer-iport-2.cisco.com ([173.38.203.52]:17744 "EHLO
-	aer-iport-2.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753171AbbIRRE1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 18 Sep 2015 13:04:27 -0400
-In-Reply-To: <1442595170-6229-1-git-send-email-haustad@cisco.com>
+Received: from skprod3.natinst.com ([130.164.80.24]:47557 "EHLO ni.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751659AbbIRU2Z (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Sep 2015 16:28:25 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Signed-off-by: Henrik Austad <haustad@cisco.com>
----
- Makefile | 3 +++
- 1 file changed, 3 insertions(+)
+I have noticed that doing SDIO access from the SDHCI interrupt handler, like
+the ath6kl_sdio driver does, is currently broken in 4.1 RT due to d04ea10ba1ea
+'mmc: sdhci: don't provide hard irq handler'.  Since the SDHCI IRQ is masked in
+the threaded handler that calls the card IRQ handler, drivers cannot perform
+MMC IO from their card IRQ handlers since the SDHCI driver will time out
+waiting for the SDHCI hard IRQ to happen.
 
-diff --git a/Makefile b/Makefile
-index d4988c5..160547c 100644
---- a/Makefile
-+++ b/Makefile
-@@ -129,6 +129,9 @@ RPMDIRS = BUILD BUILDROOT RPMS SRPMS SPECS
- distclean: clean
- 	rm -rf $(RPMDIRS) releases *.tar.gz rt-tests.spec tmp
- 
-+.PHONY: rebuild
-+rebuild: clean all
-+
- .PHONY: changelog
- changelog:
- 	git log >ChangeLog
--- 
-1.9.1
-
+Is d04ea10ba1ea a temporary hack, or should drivers be fixed to perform IO a in
+a different way?
