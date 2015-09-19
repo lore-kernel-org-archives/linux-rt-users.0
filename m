@@ -1,64 +1,39 @@
-From: Henrik Austad <haustad@cisco.com>
-Subject: Re: [PATCH 3/7] Add a rebuild-switch to Makefile
-Date: Sat, 19 Sep 2015 07:41:27 +0200
-Message-ID: <20150919054127.GA8043@laethe.rd.cisco.com>
-References: <1442595170-6229-1-git-send-email-haustad@cisco.com>
- <1442595170-6229-4-git-send-email-haustad@cisco.com>
- <20150918211031.GF31303@jcartwri.amer.corp.natinst.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: SDHCI interrupt handling
+Date: Sat, 19 Sep 2015 09:23:29 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1509190922060.3951@nanos>
+References: <20150918202812.GA22647@nathan3500-linux-VM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
-To: Josh Cartwright <joshc@ni.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, msmucr@gmail.com,
+	bigeasy@linutronix.de
+To: Nathan Sullivan <nathan.sullivan@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from alln-iport-6.cisco.com ([173.37.142.93]:43788 "EHLO
-	alln-iport-6.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752238AbbISFwu (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:60263 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751521AbbISHYH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Sep 2015 01:52:50 -0400
-Content-Disposition: inline
-In-Reply-To: <20150918211031.GF31303@jcartwri.amer.corp.natinst.com>
+	Sat, 19 Sep 2015 03:24:07 -0400
+In-Reply-To: <20150918202812.GA22647@nathan3500-linux-VM>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Sep 18, 2015 at 04:10:31PM -0500, Josh Cartwright wrote:
-> On Fri, Sep 18, 2015 at 06:52:46PM +0200, Henrik Austad wrote:
-> > Signed-off-by: Henrik Austad <haustad@cisco.com>
-> > ---
-> >  Makefile | 3 +++
-> >  1 file changed, 3 insertions(+)
-> > 
-> > diff --git a/Makefile b/Makefile
-> > index d4988c5..160547c 100644
-> > --- a/Makefile
-> > +++ b/Makefile
-> > @@ -129,6 +129,9 @@ RPMDIRS = BUILD BUILDROOT RPMS SRPMS SPECS
-> >  distclean: clean
-> >  	rm -rf $(RPMDIRS) releases *.tar.gz rt-tests.spec tmp
-> >  
-> > +.PHONY: rebuild
-> > +rebuild: clean all
+On Fri, 18 Sep 2015, Nathan Sullivan wrote:
+
+> I have noticed that doing SDIO access from the SDHCI interrupt handler, like
+> the ath6kl_sdio driver does, is currently broken in 4.1 RT due to d04ea10ba1ea
+> 'mmc: sdhci: don't provide hard irq handler'.  Since the SDHCI IRQ is masked in
+> the threaded handler that calls the card IRQ handler, drivers cannot perform
+> MMC IO from their card IRQ handlers since the SDHCI driver will time out
+> waiting for the SDHCI hard IRQ to happen.
 > 
-> Does this actually work?  Make is free to execute 'clean' and 'all' at
-> the same time, with ... interesting side effects.
+> Is d04ea10ba1ea a temporary hack, or should drivers be fixed to perform IO a in
+> a different way?
 
-You're right. It works as long as you have -j1. Never had an issue as the 
-whole make-job is small enough to be run with just 'make rebuild' and not a 
-ton of jobs.
+That's temporary and looks not really well thought out. I have a
+mainline report against SDHCI + interrupt force threading as well, so
+I'm looking for a solution.
 
-> If you really want this (and I'm not sure you do):
+Thanks,
 
-Well, it became pretty apparent when I tested to see that I didn't break 
-tile or x86 when compiling for 64-bit arm android
-
-> .PHONY: rebuild
-> rebuild:
-> 	$(MAKE) clean
-> 	$(MAKE)
-
-Yep, that works much better, thanks
-
--- 
-Henrik Austad
-TIPBU Eng
-Cisco Systems Norway
+	tglx
