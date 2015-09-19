@@ -1,74 +1,62 @@
 From: Henrik Austad <haustad@cisco.com>
-Subject: Re: [PATCH 6/7] rt_test.h: add numa_available() for !NUMA
-Date: Sat, 19 Sep 2015 07:49:01 +0200
-Message-ID: <20150919054901.GB8043@laethe.rd.cisco.com>
+Subject: Re: [PATCH 3/7] Add a rebuild-switch to Makefile
+Date: Sat, 19 Sep 2015 07:41:27 +0200
+Message-ID: <20150919054127.GA8043@laethe.rd.cisco.com>
 References: <1442595170-6229-1-git-send-email-haustad@cisco.com>
- <1442595170-6229-7-git-send-email-haustad@cisco.com>
- <20150918212707.GG31303@jcartwri.amer.corp.natinst.com>
+ <1442595170-6229-4-git-send-email-haustad@cisco.com>
+ <20150918211031.GF31303@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
 Cc: Clark Williams <williams@redhat.com>,
 	John Kacur <jkacur@redhat.com>, linux-rt-users@vger.kernel.org
 To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from alln-iport-6.cisco.com ([173.37.142.93]:41040 "EHLO
+Received: from alln-iport-6.cisco.com ([173.37.142.93]:43788 "EHLO
 	alln-iport-6.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751147AbbISFux (ORCPT
+	with ESMTP id S1752238AbbISFwu (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 19 Sep 2015 01:50:53 -0400
+	Sat, 19 Sep 2015 01:52:50 -0400
 Content-Disposition: inline
-In-Reply-To: <20150918212707.GG31303@jcartwri.amer.corp.natinst.com>
+In-Reply-To: <20150918211031.GF31303@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Sep 18, 2015 at 04:27:07PM -0500, Josh Cartwright wrote:
-> On Fri, Sep 18, 2015 at 06:52:49PM +0200, Henrik Austad wrote:
-> > Code will snould not call numa_available(), but compiler will complain
-> 
-> snould -> should.
-> 
-> Why should it not call it?
-
-Because if numa is 0, it will stop evaluating the conditional and never get 
-to numa_available()
-
-        if (numa && (numa_available() == -1))
-                fatal("--numa specified and numa functions not available.\n");
-
-Even so, the compiler will try to find the symbol, which it couldn't. So 
-the warning was legit, but the problem would never arise in practice (as 
-you state below).
-
-> > with:
-> > 
-> >   src/cyclictest/rt_numa.h:263: warning: implicit declaration of function ???numa_available???
-> > 
+On Fri, Sep 18, 2015 at 04:10:31PM -0500, Josh Cartwright wrote:
+> On Fri, Sep 18, 2015 at 06:52:46PM +0200, Henrik Austad wrote:
 > > Signed-off-by: Henrik Austad <haustad@cisco.com>
 > > ---
-> >  src/cyclictest/rt_numa.h | 1 +
-> >  1 file changed, 1 insertion(+)
+> >  Makefile | 3 +++
+> >  1 file changed, 3 insertions(+)
 > > 
-> > diff --git a/src/cyclictest/rt_numa.h b/src/cyclictest/rt_numa.h
-> > index 06c9420..172d9b2 100644
-> > --- a/src/cyclictest/rt_numa.h
-> > +++ b/src/cyclictest/rt_numa.h
-> > @@ -200,6 +200,7 @@ struct bitmask {
-> >  };
-> >  #define BITS_PER_LONG    (8*sizeof(long))
+> > diff --git a/Makefile b/Makefile
+> > index d4988c5..160547c 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -129,6 +129,9 @@ RPMDIRS = BUILD BUILDROOT RPMS SRPMS SPECS
+> >  distclean: clean
+> >  	rm -rf $(RPMDIRS) releases *.tar.gz rt-tests.spec tmp
 > >  
-> > +static inline int numa_available(void) { return 0; }
+> > +.PHONY: rebuild
+> > +rebuild: clean all
 > 
-> I would have expected this to return -1, as libnuma isn't available...
+> Does this actually work?  Make is free to execute 'clean' and 'all' at
+> the same time, with ... interesting side effects.
 
-Ah, you're right, should have been -1.
+You're right. It works as long as you have -j1. Never had an issue as the 
+whole make-job is small enough to be run with just 'make rebuild' and not a 
+ton of jobs.
 
-> John and I were talking about this earlier this week:
-> 
-> http://lkml.kernel.org/r/787515a5a59861a892ac3a44b6c6c502cfc102fd.1441038216.git.joshc@ni.com
+> If you really want this (and I'm not sure you do):
 
-I agree, that is a much better way of dealing with it! 
+Well, it became pretty apparent when I tested to see that I didn't break 
+tile or x86 when compiling for 64-bit arm android
 
-Thanks!
+> .PHONY: rebuild
+> rebuild:
+> 	$(MAKE) clean
+> 	$(MAKE)
+
+Yep, that works much better, thanks
 
 -- 
 Henrik Austad
