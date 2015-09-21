@@ -1,71 +1,55 @@
-From: Nathan Sullivan <nathan.sullivan@ni.com>
-Subject: Re: [PATCH] genirq: Handle force threading of irqs with primary and
- thread handler
-Date: Mon, 21 Sep 2015 10:04:33 -0500
-Message-ID: <20150921150433.GA3460@nathan3500-linux-VM>
-References: <alpine.DEB.2.11.1509211101190.5606@nanos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org, msmucr@gmail.com,
-	bigeasy@linutronix.de
-To: Thomas Gleixner <tglx@linutronix.de>
+From: Henrik Austad <haustad@cisco.com>
+Subject: [PATCH 0/6]  RFC v2: add support for tilegx and (partial) android support to rt-test
+Date: Mon, 21 Sep 2015 17:27:22 +0200
+Message-ID: <1442849248-573-1-git-send-email-haustad@cisco.com>
+Cc: linux-rt-users@vger.kernel.org, Josh Cartwright <joshc@ni.com>,
+	Henrik Austad <haustad@cisco.com>
+To: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:51761 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1757067AbbIUPEn convert rfc822-to-8bit (ORCPT
+Received: from alln-iport-6.cisco.com ([173.37.142.93]:61554 "EHLO
+	alln-iport-6.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753417AbbIUP3a (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 21 Sep 2015 11:04:43 -0400
-In-Reply-To: <alpine.DEB.2.11.1509211101190.5606@nanos>
-Content-Disposition: inline
+	Mon, 21 Sep 2015 11:29:30 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Sep 21, 2015 at 11:04:31AM +0200, Thomas Gleixner wrote:
-> Force threading of interrupts does not deal with interrupts which are
-> requested with a primary and a threaded handler. The current policy i=
-s
-> to leave them alone and let the primary handler run in interrupt
-> context, but we set the ONESHOT flag for those interrupts as well.
->=20
-> Kohji Okuno debugged a problem with the SDHCI driver where the
-> interrupt thread waits for a hardware interrupt to trigger, which can=
-t
-> work well because the hardware interrupt is masked due to the ONESHOT
-> flag being set. He proposed to set the ONESHOT flag only if the
-> interrupt does not provide a thread handler.
->=20
-> Though that does not work either because these interrupts can be
-> shared. So the other interrupt would rightfully get the ONESHOT flag
-> set and therefor the same situation would happen again.
->=20
-> To deal with this proper, we need to force thread the primary handler
-> of such interrupts as well. That means that the primary interrupt
-> handler is treated as any other primary interrupt handler which is no=
-t
-> marked IRQF_NO_THREAD. The threaded handler becomes a separate thread
-> so the SDHCI flow logic can be handled gracefully.
->=20
-> The same issue was reported against 4.1-rt.
->=20
-> Reported-by: Kohji Okuno <okuno.kohji@jp.panasonic.com>
-> Reported-By: Michal =C5=A0mucr <msmucr@gmail.com>
-> Reported-by: Nathan Sullivan <nathan.sullivan@ni.com>
-> Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-> Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> ---
->=20
-> This requires to revert commit: d04ea10ba1ea 'mmc: sdhci: don't provi=
-de
-> hard irq handler'
->=20
+Take 2 on the series for adding cross-compile support to tilegx and 64
+bit arm android to rt-test.
 
-Tested on an Intel Bay Trail system with ath6kl SDIO wireless, works fi=
-ne.
+v2:
+- drop patch for numa_on_available call
+- change how makefile calls rebuild (thanks Josh!)
+- Rebased onto v0.94-devel
 
-Tested-by: Nathan Sullivan <nathan.sullivan@ni.com>
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+v1:
+So this is an attempt to consolidate some of the changes we've added to
+rt-test to use rt-test. It adds support for TileGx, and a subset of the
+binaries for android (cyclictest and hackbench to be precise).
+
+They will probably need some more work, any feedback is welcome
+
+Henrik Austad (6):
+  Add CROSS_COMPILE-switch to CC and AR
+  Add syscall-number for sched_(gs)etattr() for tile
+  Add a rebuild-switch to Makefile
+  Fix compile-warnings
+  Makefile: add librttest to rt-migrate-test
+  android: adjust target for android
+
+ Makefile                              | 38 ++++++++++++++++++++++--
+ src/backfire/sendme.c                 |  8 +++--
+ src/cyclictest/cyclictest.c           | 55 ++++++++++++++++++++++++++++-------
+ src/include/rt-sched.h                |  5 ++++
+ src/pmqtest/pmqtest.c                 |  3 +-
+ src/ptsematest/ptsematest.c           |  3 +-
+ src/rt-migrate-test/rt-migrate-test.c |  5 ++--
+ src/signaltest/signaltest.c           | 25 +++++++++-------
+ src/sigwaittest/sigwaittest.c         |  8 +++--
+ src/svsematest/svsematest.c           |  9 ++++--
+ 10 files changed, 125 insertions(+), 34 deletions(-)
+
+-- 
+1.9.1
+
