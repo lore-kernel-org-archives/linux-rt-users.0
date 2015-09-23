@@ -1,258 +1,304 @@
-From: Martin Steigerwald <martin-3kZCPVa5dk2azgQtNeiOUg@public.gmane.org>
-Subject: Re: chrt permission denied with kernel 4.3-rc2
-Date: Tue, 22 Sep 2015 14:32:14 +0200
-Message-ID: <1529840.Y79o7PkRCS@merkaba>
-References: <1948574.mCKV7sP6Yb@merkaba> <CAG27Bk3=gCmdsekNc9ZXYz1h-gz0VfNpRz23zMvx7-RqM+Qqdg@mail.gmail.com>
+From: Henrik Austad <haustad@cisco.com>
+Subject: [PATCH] RFC: Android: clean up the bypass ifdeffery
+Date: Wed, 23 Sep 2015 13:30:34 +0200
+Message-ID: <1443007834-31932-1-git-send-email-haustad@cisco.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: util-linux <util-linux-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>,
-	linux-rt-users-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-To: kerolasa-Re5JQEeQqe8AvxtiuMwx3w@public.gmane.org
-Return-path: <util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org>
-In-Reply-To: <CAG27Bk3=gCmdsekNc9ZXYz1h-gz0VfNpRz23zMvx7-RqM+Qqdg-JsoAwUIsXosN+BqQ9rBEUg@public.gmane.org>
-Sender: util-linux-owner-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Henrik Austad <haustad@cisco.com>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from aer-iport-3.cisco.com ([173.38.203.53]:48843 "EHLO
+	aer-iport-3.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753467AbbIWLcp (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 23 Sep 2015 07:32:45 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Cc=C2=B4ing rt-users mailinglist as some questions may exceed the scope=
- of
-util-linux mailinglist.
+This is an RFC patch, I'd like to get some feedback if this is a prefer=
+red
+way of doing it, or if I should seek other options (I really hate the i=
+fdef
+introduced earlier, and I know others do as well).
 
-Am Dienstag, 22. September 2015, 12:07:10 CEST schrieb Sami Kerola:
-> On 22 September 2015 at 11:19, Martin Steigerwald <martin@lichtvoll.d=
-e> wrote:
-> > with 4.3-rc2 kernel (self-compiled) I get:
-> >=20
-> > merkaba:~> LANG=3DC chrt -r -p 5 $$
-> > chrt: failed to set pid 3464's policy: Operation not permitted
-> >=20
-> > called with root rights (either su shell or even a direct tty)
-> >=20
-> > strace reports:
-> >=20
-> > sched_setscheduler(3464, SCHED_RR, { 5 }) =3D -1 EPERM (Operation n=
-ot
-> > permitted)
-> >=20
-> >=20
-> > With 4.1 standard Debian kernel it works.
-> >=20
-> >=20
-> > Any idea?
-> >=20
-> > I know I can use setcap to check file capabilities. But I am not su=
-re how
-> > to see the capabilities of a running process.
-> >=20
-> > Is it /proc/$$/status?
-> >=20
-> > On 4.3-rc2 kernel it tells me:
-> >=20
-> > CapInh: 0000000000000000
-> > CapPrm: 0000003fffffffff
-> > CapEff: 0000003fffffffff
-> > CapBnd: 0000003fffffffff
-> > CapAmb: 0000000000000000
-> >=20
-> > On 4.1 Debian kernel on a different machine it tells me:
-> >=20
-> > CapInh: 0000000000000000
-> > CapPrm: 0000003fffffffff
-> > CapEff: 0000003fffffffff
-> > CapBnd: 0000003fffffffff
-> >=20
-> > (there is no CapAmb there)
-> >=20
-> > as well, when logged in via SSH, yet chrt -r -p 5 $$ works there as=
- well.
-> >=20
-> > Is there a command displaying available capabilities of a process i=
-n clear
-> > text?
-> >=20
-> >> xzgrep SCHED config-4.3.0-rc2-tp520.xz
-> >=20
-> > CONFIG_HAVE_UNSTABLE_SCHED_CLOCK=3Dy
-> > CONFIG_CGROUP_SCHED=3Dy
-> > CONFIG_FAIR_GROUP_SCHED=3Dy
-> > CONFIG_RT_GROUP_SCHED=3Dy
-> > CONFIG_SCHED_AUTOGROUP=3Dy
-> > CONFIG_IOSCHED_NOOP=3Dy
-> > CONFIG_IOSCHED_DEADLINE=3Dy
-> > CONFIG_IOSCHED_CFQ=3Dy
-> > CONFIG_CFQ_GROUP_IOSCHED=3Dy
-> > CONFIG_DEFAULT_IOSCHED=3D"cfq"
-> > CONFIG_SCHED_OMIT_FRAME_POINTER=3Dy
-> > CONFIG_SCHED_SMT=3Dy
-> > CONFIG_SCHED_MC=3Dy
-> > CONFIG_SCHED_HRTICK=3Dy
-> > CONFIG_NET_SCHED=3Dy
-> > CONFIG_USB_EHCI_TT_NEWSCHED=3Dy
-> > CONFIG_SCHED_DEBUG=3Dy
-> > CONFIG_SCHED_INFO=3Dy
-> > CONFIG_SCHEDSTATS=3Dy
-> > # CONFIG_SCHED_STACK_END_CHECK is not set
-> > # CONFIG_SCHED_TRACER is not set
-> >=20
-> >=20
-> > mango:~# grep SCHED /boot/config-4.1.0-2-amd64
-> > CONFIG_HAVE_UNSTABLE_SCHED_CLOCK=3Dy
-> > CONFIG_CGROUP_SCHED=3Dy
-> > CONFIG_FAIR_GROUP_SCHED=3Dy
-> > # CONFIG_RT_GROUP_SCHED is not set
-> > CONFIG_SCHED_AUTOGROUP=3Dy
-> > CONFIG_IOSCHED_NOOP=3Dy
-> > CONFIG_IOSCHED_DEADLINE=3Dy
-> > CONFIG_IOSCHED_CFQ=3Dy
-> > CONFIG_CFQ_GROUP_IOSCHED=3Dy
-> > CONFIG_DEFAULT_IOSCHED=3D"cfq"
-> > CONFIG_SCHED_OMIT_FRAME_POINTER=3Dy
-> > CONFIG_SCHED_SMT=3Dy
-> > CONFIG_SCHED_MC=3Dy
-> > CONFIG_SCHED_HRTICK=3Dy
-> > CONFIG_NET_SCHED=3Dy
-> > CONFIG_USB_EHCI_TT_NEWSCHED=3Dy
-> > CONFIG_SCHED_DEBUG=3Dy
-> > # CONFIG_SCHEDSTATS is not set
-> > # CONFIG_SCHED_STACK_END_CHECK is not set
-> > # CONFIG_SCHED_TRACER is not set
-> >=20
-> >=20
-> > Both Debian Sid systems use systemd 226-3.
->=20
-> Hi Martin,
->=20
-> You might be hitting branch CONFIG_RT_GROUP_SCHED enabled.
->=20
-> http://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/tree/k=
-ernel/s
-> ched/core.c#n3863
->=20
-> See also.
->=20
-> http://cateee.net/lkddb/web-lkddb/RT_GROUP_SCHED.html
+END INTRO
+-H
 
-I see.
+Android: clean up the bypass ifdeffery
 
-Thanks, that was it. Detailed analysis below.
+88af643971b9 (android: adjust target for android) introduced some reall=
+y
+ugly ifdefs to avoid calling into pthread_barrier_wait and
+pthread_barrier_init.
 
+This patch attempts to coalesce this into a single place and let the
+compiler handle the linking so that cyclictest.c is untouched by evil
+ifdefs.
 
-I was aware of the system wide settings that are meant to prevent
-blocking a CPU completely:
+Compiled and tested on:
+- x86_64 (v3.13 kernel)
+- tilegx (v3.10 kernel)
+- arm64 android (v3.10 kernel)
 
-merkaba:~> cat /proc/sys/kernel/sched_rt_period_us=20
-1000000
-merkaba:~> cat /proc/sys/kernel/sched_rt_runtime_us=20
-950000
+Signed-off-by: Henrik Austad <haustad@cisco.com>
+Cc: Clark Williams <williams@redhat.com>
+Cc: John Kacur <jkacur@redhat.com>=C3=A5
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+---
+ Makefile                    |  4 +---
+ include/bionic.h            | 32 ++++++++++++++++++++++++++++++++
+ src/cyclictest/cyclictest.c | 25 +++----------------------
+ 3 files changed, 36 insertions(+), 25 deletions(-)
+ create mode 100644 include/bionic.h
 
-
-But yeah, kernel documentation also mentions this:
-
-119 Realtime group scheduling means you have to assign a portion of tot=
-al CPU
-120 bandwidth to the group before it will accept realtime tasks. Theref=
-ore you will
-121 not be able to run realtime tasks as any user other than root until=
- you have
-122 done that, even if the user has the rights to run processes with re=
-altime
-123 priority!
-
-scheduler/sched-rt-group.txt
-
-Still with the example "chrt -r -p 5 $$" in a root shell the bash proce=
-ss is
-running as root.
-
-
-Well lets see:
-
-merkaba:/sys/fs/cgroup> find -name "*cpu.rt_runtime_us*"
-=2E/cpu,cpuacct/cpu.rt_runtime_us
-=2E/cpu,cpuacct/init.scope/cpu.rt_runtime_us
-=2E/cpu,cpuacct/system.slice/cpu.rt_runtime_us
-=2E/cpu,cpuacct/user.slice/user-1000.slice/cpu.rt_runtime_us
-=2E/cpu,cpuacct/user.slice/user-2012.slice/cpu.rt_runtime_us
-=2E/cpu,cpuacct/user.slice/cpu.rt_runtime_us
-=2E/cpu,cpuacct/user.slice/user-132.slice/cpu.rt_runtime_us
-
-
-
-merkaba:/sys/fs/cgroup> cat cpuacct/user.slice/user-1000.slice/cpu.rt_r=
-untime_us
-0
-
-merkaba:/sys/fs/cgroup> echo "950000" > cpuacct/user.slice/user-1000.sl=
-ice/cpu.rt_runtime_us
-echo: write error: invalid argument
-
-merkaba:/sys/fs/cgroup> echo "950000" > cpu/user.slice/cpu.rt_runtime_u=
-s=20
-merkaba:/sys/fs/cgroup> echo "950000" > cpu/user.slice/user-1000.slice/=
-cpu.rt_runtime_us
-
-merkaba:/sys/fs/cgroup> LANG=3DC echo "950000" > cpu/user.slice/user-20=
-12.slice/cpu.rt_runtime_us
-echo: write error: invalid argument
-
-Okay, probably cannot allocate more than the 950000 combined to each us=
-er then.
-
-merkaba:/sys/fs/cgroup> echo "400000" > cpu/user.slice/user-1000.slice/=
-cpu.rt_runtime_us  =20
-merkaba:/sys/fs/cgroup> echo "400000" > cpu/user.slice/user-2012.slice/=
-cpu.rt_runtime_us
-
-
-merkaba:~> chrt -r -p 5 $$                               =20
-merkaba:~>
-
-So the RT accounting still thinks I am a user. Despite:
-
-merkaba:~> ps u -p $$ =20
-USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAN=
-D
-root      3464  0.0  0.0  44856  5944 pts/2    S    09:23   0:00 -su
-
-merkaba:~> whoami                        =20
-root
-
-Is this a kernel bug or I am overseeing something here? Maybe its tied =
-to the
-session somehow? But then it also didn=C2=B4t work as root shell starte=
-d from
-tty1. Well=E2=80=A6 if child processes are inheriting the same group de=
-spite the user
-they run at, and if systemd created a new slice for root sessions as we=
-ll=E2=80=A6
-
-but still, above documentation says the limit only applies to non root
-processes.
-
-
-Heck, I may just disable that feature again. A global option to prevent
-complete lockup is enough for me.
-
-It all started with me wanting to give PulseAudio real time prio in ord=
-er to
-get rid of the cracks in the audio on heavy GUI activity.
-
-merkaba:~#1> ps u -C pulseaudio
-USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAN=
-D
-martin    1283  0.1  0.0 573432 11996 ?        Sl   Sep21   1:36 /usr/b=
-in/pulseaudio --start --log-target=3Dsyslog
-ms       16888  0.8  0.0 433712 11400 ?        Sl   09:59   2:15 /usr/b=
-in/pulseaudio --start --log-target=3Dsyslog
-
-merkaba:~> chrt -afp 5 1283 =20
-merkaba:~> chrt -afp 5 16888
-
-Thanks,
+diff --git a/Makefile b/Makefile
+index 351c349..1f5e561 100644
+--- a/Makefile
++++ b/Makefile
+@@ -25,7 +25,7 @@ srcdir	?=3D $(prefix)/src
+ machinetype =3D $(shell $(CC) -dumpmachine | \
+     sed -e 's/-.*//' -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*=
+/powerpc/')
+=20
+-CFLAGS ?=3D -Wall -Wno-nonnull
++CFLAGS ?=3D -Wall -Wno-nonnull -Iinclude/
+ CPPFLAGS +=3D -D_GNU_SOURCE -Isrc/include
+ LDFLAGS ?=3D
+=20
+@@ -54,7 +54,6 @@ endif
+ # - pthread_[gs]etaffinity
+ #
+ # Typically see something like "aarch64-linux-android"
+-
+ ifneq ($(shell $(CC) -dumpmachine | grep -i android),)
+ 	USE_BIONIC :=3D 1
+ 	CFLAGS +=3D -DNO_PTHREAD_BARRIER
+@@ -70,7 +69,6 @@ ifneq ($(shell $(CC) -dumpmachine | grep -i android),=
+)
+ # and link properly:
+ # - cyclictest
+ # - hackbench
+-# - hwlatdetect
+ 	sources :=3D cyclictest.c hackbench.c
+ 	TARGETS =3D $(sources:.c=3D)
+ endif
+diff --git a/include/bionic.h b/include/bionic.h
+new file mode 100644
+index 0000000..5c46bec
+--- /dev/null
++++ b/include/bionic.h
+@@ -0,0 +1,32 @@
++#ifndef BIONIC_BYPASS_H
++#define BIONIC_BYPASS_H
++
++/* we do not have pthread barriers, add as small an emt */
++#ifdef NO_PTHREAD_BARRIER
++#warning Program is being compiled without PTHREAD_BARRIER support, so=
+me options may behave erratic.
++typedef int pthread_barrier_t;
++typedef int pthread_barrierattr_t;
++
++#ifndef PTHREAD_BARRIER_SERIAL_THREAD
++#define PTHREAD_BARRIER_SERIAL_THREAD 0
++#endif
++
++static inline int pthread_barrier_wait(pthread_barrier_t *barrier)
++{
++        return PTHREAD_BARRIER_SERIAL_THREAD;
++}
++
++static inline int pthread_barrier_destroy(pthread_barrier_t *barrier)
++{
++        return 0;
++}
++static inline int pthread_barrier_init(pthread_barrier_t * barrier,
++                                       const pthread_barrierattr_t * a=
+ttr,
++                                       unsigned count)
++{
++        return 0;
++}
++
++#endif /* NO_PTHREAD_BARRIER */
++
++#endif /* BIONIC_BYPASS_H */
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 96fa864..5167585 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -40,6 +40,8 @@
+=20
+ #include "rt-utils.h"
+=20
++#include <bionic.h>
++
+ #define DEFAULT_INTERVAL 1000
+ #define DEFAULT_DISTANCE 500
+=20
+@@ -203,14 +205,12 @@ static pthread_mutex_t break_thread_id_lock =3D P=
+THREAD_MUTEX_INITIALIZER;
+ static pid_t break_thread_id =3D 0;
+ static uint64_t break_thread_value =3D 0;
+=20
+-#ifndef NO_PTHREAD_BARRIER
+ static int aligned =3D 0;
+ static int secaligned =3D 0;
+ static int offset =3D 0;
+ static pthread_barrier_t align_barr;
+ static pthread_barrier_t globalt_barr;
+ static struct timespec globalt;
+-#endif
+=20
+ /* Backup of kernel variables that we modify */
+ static struct kvars {
+@@ -816,7 +816,6 @@ static void *timerthread(void *param)
+ 		fatal("timerthread%d: failed to set priority to %d\n", par->cpu, par=
+->prio);
+=20
+ 	/* Get current time */
+-#ifndef NO_PTHREAD_BARRIER
+ 	if(aligned || secaligned){
+ 		pthread_barrier_wait(&globalt_barr);
+ 		if (par->tnum =3D=3D 0) {
+@@ -842,7 +841,6 @@ static void *timerthread(void *param)
+ 		}
+ 	}
+ 	else
+-#endif
+ 		clock_gettime(par->clock, &now);
+=20
+ 	next =3D now;
+@@ -1049,9 +1047,7 @@ static void display_help(int error)
+ 	       "-a [NUM] --affinity        run thread #N on processor #N, if =
+possible\n"
+ 	       "                           with NUM pin all threads to the pr=
+ocessor NUM\n"
+ #endif
+-#ifndef NO_PTHREAD_BARRIER
+ 	       "-A USEC  --aligned=3DUSEC    align thread wakeups to a specif=
+ic offset\n"
+-#endif
+ 	       "-b USEC  --breaktrace=3DUSEC send break trace command when la=
+tency > USEC\n"
+ 	       "-B       --preemptirqs     both preempt and irqsoff tracing (=
+used with -b)\n"
+ 	       "-c CLOCK --clock=3DCLOCK     select clock\n"
+@@ -1092,9 +1088,7 @@ static void display_help(int error)
+ 	       "-R       --resolution      check clock resolution, calling cl=
+ock_gettime() many\n"
+ 	       "                           times.  list of clock_gettime() va=
+lues will be\n"
+ 	       "                           reported with -X\n"
+-#ifndef NO_PTHREAD_BARRIER
+ 	       "         --secaligned [USEC] align thread wakeups to the next=
+ full second,\n"
+-#endif
+ 	       "                           and apply the optional offset\n"
+ 	       "-s       --system          use sys_nanosleep and sys_setitime=
+r\n"
+ 	       "-S       --smp             Standard SMP testing: options -a -=
+t -n and\n"
+@@ -1244,10 +1238,7 @@ enum option_values {
+ 	OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM, OPT_SMP, OP=
+T_THREADS,
+ 	OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP, OPT_WA=
+KEUPRT,
+ 	OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
+-#ifndef NO_PTHREAD_BARRIER
+-	OPT_ALIGNED, OPT_SECALIGNED,
+-#endif
+-        OPT_LAPTOP,
++	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP,
+ };
+=20
+ /* Process commandline options */
+@@ -1265,9 +1256,7 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 		static struct option long_options[] =3D {
+ 			{"affinity",         optional_argument, NULL, OPT_AFFINITY},
+ 			{"notrace",          no_argument,       NULL, OPT_NOTRACE },
+-#ifndef NO_PTHREAD_BARRIER
+ 			{"aligned",          optional_argument, NULL, OPT_ALIGNED },
+-#endif
+ 			{"breaktrace",       required_argument, NULL, OPT_BREAKTRACE },
+ 			{"preemptirqs",      no_argument,       NULL, OPT_PREEMPTIRQ },
+ 			{"clock",            required_argument, NULL, OPT_CLOCK },
+@@ -1297,9 +1286,7 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 			{"priospread",       no_argument,       NULL, OPT_PRIOSPREAD },
+ 			{"relative",         no_argument,       NULL, OPT_RELATIVE },
+ 			{"resolution",       no_argument,       NULL, OPT_RESOLUTION },
+-#ifndef NO_PTHREAD_BARRIER
+ 			{"secaligned",       optional_argument, NULL, OPT_SECALIGNED },
+-#endif
+ 			{"system",           no_argument,       NULL, OPT_SYSTEM },
+ 			{"smp",              no_argument,       NULL, OPT_SMP },
+ 			{"threads",          optional_argument, NULL, OPT_THREADS },
+@@ -1334,7 +1321,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 				setaffinity =3D AFFINITY_USEALL;
+ 			}
+ 			break;
+-#ifndef NO_PTHREAD_BARRIER
+ 		case 'A':
+ 		case OPT_ALIGNED:
+ 			aligned=3D1;
+@@ -1345,7 +1331,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 			else
+ 				offset =3D 0;
+ 			break;
+-#endif
+ 		case 'b':
+ 		case OPT_BREAKTRACE:
+ 			tracelimit =3D atoi(optarg); break;
+@@ -1446,7 +1431,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 		case OPT_RESOLUTION:
+ 			check_clock_resolution =3D 1; break;
+ 		case 's':
+-#ifndef NO_PTHREAD_BARRIER
+ 		case OPT_SECALIGNED:
+ 			secaligned =3D 1;
+ 			if (optarg !=3D NULL)
+@@ -1456,7 +1440,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 			else
+ 				offset =3D 0;
+ 			break;
+-#endif
+ 		case OPT_SYSTEM:
+ 			use_system =3D MODE_SYS_OFFSET; break;
+ 		case 'S':
+@@ -1593,7 +1576,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 	if (num_threads < 1)
+ 		error =3D 1;
+=20
+-#ifndef NO_PTHREAD_BARRIER
+ 	if (aligned && secaligned)
+ 		error =3D 1;
+=20
+@@ -1601,7 +1583,6 @@ static void process_options (int argc, char *argv=
+[], int max_cpus)
+ 		pthread_barrier_init(&globalt_barr, NULL, num_threads);
+ 		pthread_barrier_init(&align_barr, NULL, num_threads);
+ 	}
+-#endif
+ 	if (error) {
+ 		if (affinity_mask)
+ 			rt_bitmask_free(affinity_mask);
 --=20
-Martin
+1.9.1
+
 --
-To unsubscribe from this list: send the line "unsubscribe util-linux" i=
-n
-the body of a message to majordomo-u79uwXL29TY76Z2rM5mHXA@public.gmane.org
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
 More majordomo info at  http://vger.kernel.org/majordomo-info.html
