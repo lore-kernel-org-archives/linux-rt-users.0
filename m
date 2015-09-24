@@ -1,141 +1,60 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 2/2] build: Generate .o, .a, and .d files in bld dir
-Date: Thu, 24 Sep 2015 00:33:59 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1509240033130.29601@riemann>
+Subject: Re: Is it possible to change Makefile to CMake
+Date: Thu, 24 Sep 2015 23:17:32 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1509242306120.7378@riemann>
+References: <CAAocCaLoe90YNajEy5ecxciTfu_BR7NLRk43gF2YAj_FwKYFsg@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>
-To: RT <linux-rt-users@vger.kernel.org>
+Cc: williams@redhat.com, jkacur@redhat.com,
+	linux-rt-users@vger.kernel.org
+To: yuanbin zhou <hduffddybz@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f177.google.com ([209.85.212.177]:33691 "EHLO
-	mail-wi0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754112AbbIWWeB (ORCPT
+Received: from mail-wi0-f178.google.com ([209.85.212.178]:35223 "EHLO
+	mail-wi0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752404AbbIXVRp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 23 Sep 2015 18:34:01 -0400
-Received: by wiclk2 with SMTP id lk2so4488458wic.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 23 Sep 2015 15:34:00 -0700 (PDT)
+	Thu, 24 Sep 2015 17:17:45 -0400
+Received: by wicge5 with SMTP id ge5so1336371wic.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 24 Sep 2015 14:17:42 -0700 (PDT)
+In-Reply-To: <CAAocCaLoe90YNajEy5ecxciTfu_BR7NLRk43gF2YAj_FwKYFsg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->From 19ddcbd5dc74e4d0ef212437b8a355afd861b938 Mon Sep 17 00:00:00 2001
-From: John Kacur <jkacur@redhat.com>
-Date: Thu, 24 Sep 2015 00:21:30 +0200
-Subject: [PATCH 2/2] build: Generate .o, .a, and .d files in bld dir
 
-When building rt-tests, object files, libs and .d (dependencies) were
-all generated in the base directory. Instead, place all of these
-build files in a dir called bld. The final programs are still in the
-basedir
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- Makefile       | 39 +++++++++++++++++++++------------------
- bld/.gitignore |  0
- 2 files changed, 21 insertions(+), 18 deletions(-)
- create mode 100644 bld/.gitignore
+On Thu, 24 Sep 2015, yuanbin zhou wrote:
 
-diff --git a/Makefile b/Makefile
-index 4c0c096eb919..87946fb5dd4e 100644
---- a/Makefile
-+++ b/Makefile
-@@ -2,6 +2,8 @@ VERSION = 0.94
- CC=$(CROSS_COMPILE)gcc
- AR=$(CROSS_COMPILE)ar
- 
-+OBJDIR = bld
-+
- HAVE_NPTL ?= yes
- 
- ifeq ($(HAVE_NPTL),yes)
-@@ -14,7 +16,7 @@ sources += signaltest.c ptsematest.c sigwaittest.c svsematest.c sendme.c \
- TARGETS = $(sources:.c=)
- 
- LIBS	= -lrt -lpthread
--RTTESTLIB = -lrttest -L.
-+RTTESTLIB = -lrttest -L$(OBJDIR)
- EXTRA_LIBS ?= -ldl	# for get_cpu
- DESTDIR	?=
- prefix  ?= /usr/local
-@@ -87,58 +89,59 @@ VPATH	+= src/backfire:
- VPATH	+= src/lib:
- VPATH	+= src/hackbench:
- 
--%.o: %.c
--	$(CC) -D VERSION=$(VERSION) -c $< $(CFLAGS) $(CPPFLAGS)
-+$(OBJDIR)/%.o: %.c
-+	$(CC) -D VERSION=$(VERSION) -c $< $(CFLAGS) $(CPPFLAGS) -o $@
- 
- # Pattern rule to generate dependency files from .c files
--%.d: %.c
-+$(OBJDIR)/%.d: %.c
- 	@$(CC) -MM $(CFLAGS) $(CPPFLAGS) $< | sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' > $@ || rm -f $@
- 
- .PHONY: all
- all: $(TARGETS) hwlatdetect
- 
- # Include dependency files, automatically generate them if needed.
---include $(sources:.c=.d)
-+-include $(addprefix $(OBJDIR)/,$(sources:.c=.d))
- 
--cyclictest: cyclictest.o librttest.a
-+cyclictest: $(OBJDIR)/cyclictest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(NUMA_LIBS)
- 
--signaltest: signaltest.o librttest.a
-+signaltest: $(OBJDIR)/signaltest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
- 
--pi_stress: pi_stress.o librttest.a
-+pi_stress: $(OBJDIR)/pi_stress.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
- 
- hwlatdetect:  src/hwlatdetect/hwlatdetect.py
- 	chmod +x src/hwlatdetect/hwlatdetect.py
- 	ln -s src/hwlatdetect/hwlatdetect.py hwlatdetect
- 
--rt-migrate-test: rt-migrate-test.o librttest.a
-+rt-migrate-test: $(OBJDIR)/rt-migrate-test.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
- 
--ptsematest: ptsematest.o librttest.a
-+ptsematest: $(OBJDIR)/ptsematest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(EXTRA_LIBS)
- 
--sigwaittest: sigwaittest.o librttest.a
-+sigwaittest: $(OBJDIR)/sigwaittest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(EXTRA_LIBS)
- 
--svsematest: svsematest.o librttest.a
-+svsematest: $(OBJDIR)/svsematest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(EXTRA_LIBS)
- 
--pmqtest: pmqtest.o librttest.a
-+pmqtest: $(OBJDIR)/pmqtest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(EXTRA_LIBS)
- 
--sendme: sendme.o librttest.a
-+sendme: $(OBJDIR)/sendme.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(EXTRA_LIBS)
- 
--pip_stress: pip_stress.o librttest.a
-+pip_stress: $(OBJDIR)/pip_stress.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
- 
--hackbench: hackbench.o
-+hackbench: $(OBJDIR)/hackbench.o
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS)
- 
--librttest.a: rt-utils.o error.o rt-get_cpu.o rt-sched.o
--	$(AR) rcs librttest.a $^
-+LIBOBJS =$(addprefix $(OBJDIR)/,error.o rt-get_cpu.o rt-sched.o rt-utils.o)
-+$(OBJDIR)/librttest.a: $(LIBOBJS)
-+	$(AR) rcs $@ $^
- 
- CLEANUP  = $(TARGETS) *.o .depend *.*~ *.orig *.rej rt-tests.spec *.d *.a
- CLEANUP += $(if $(wildcard .git), ChangeLog)
-diff --git a/bld/.gitignore b/bld/.gitignore
-new file mode 100644
-index 000000000000..e69de29bb2d1
--- 
-2.4.3
+> Hi,williams,jkacur
+>     Is it possible to change the build tool Makefile to CMake, since the
+> Makefile is so hard to read and write,instead CMake is a more efficient
+> tool to build project.Although rt-test is not a big complicated project,I
+> think it will bring more convernient.Can give me some advice to do this
+> work?
+> 
 
+Probably not. The thing about traditional makefiles, including with all 
+the GNU extensions, is that they are well understood by most of the people 
+programming in the Linux world. They are well understood by the 
+maintainers of this project, and by most of the users and contributers to 
+the rt-tests project. Is there something you need to do, that you are 
+being held back by because of our make system that I can help you with?
+
+Now, this is of course open source, so you're welcome to hack away at it. 
+If you come to me with a new make system that solves some problems that we 
+are having, then I might be persuaded, but I bet there are more useful 
+things you could be doing with your time - including time used to hack on 
+parts of this project.
+
+For most people, the make system works well enough. As you say, it isn't a 
+huge project, so we're trying to avoid big hammer solutions. That being 
+said, some folks are trying to persuade me that Autotools might be able to solve some 
+of the problems we have. Perhaps in the future if we are trying to add a 
+lot of odd architectures, it might be worthwhile for us to try something 
+like Autotools - and worthwhile for me to bite the bullet and learn it 
+well enough.
+
+So for now, no, it might be more convenient for you, if you know CMake 
+better, but it won't be more convenient for me, and most 
+contributers / users, so just a query out of the blue like that, of course not.
+
+John
