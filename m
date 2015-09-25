@@ -1,48 +1,47 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [RFC PATCH 6/7] gpio: omap: move pm runtime in
- irq_chip.irq_bus_lock/sync_unlock
-Date: Thu, 24 Sep 2015 15:35:30 -0700
-Message-ID: <56047AB2.80307@ti.com>
-References: <1439896258-26449-1-git-send-email-grygorii.strashko@ti.com>
- <1439896258-26449-7-git-send-email-grygorii.strashko@ti.com>
- <CACRpkdbJW6_-yR8CHnK79oEm2c3exUYU-dbKm3YRYe=VVsCMog@mail.gmail.com>
+Subject: [PATCH 0/2] convert to use generic irq handler
+Date: Fri, 25 Sep 2015 12:28:01 -0700
+Message-ID: <1443209283-20781-1-git-send-email-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Alexandre Courbot <gnurou@gmail.com>,
-	Santosh Shilimkar <ssantosh@kernel.org>,
-	Kevin Hilman <khilman@deeprootsystems.com>,
-	Tony Lindgren <tony@atomide.com>,
-	Javier Martinez Canillas <javier@dowhile0.org>,
-	Linux-OMAP <linux-omap@vger.kernel.org>,
-	"linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>,
-	<linux-rt-users@vger.kernel.org>
-To: Linus Walleij <linus.walleij@linaro.org>
+Content-Type: text/plain
+Cc: <linux-omap@vger.kernel.org>,
+	Austin Schuh <austin@peloton-tech.com>,
+	<philipp@peloton-tech.com>, <linux-rt-users@vger.kernel.org>,
+	<linux-gpio@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	Grygorii Strashko <grygorii.strashko@ti.com>
+To: Linus Walleij <linus.walleij@linaro.org>,
+	Alexandre Courbot <gnurou@gmail.com>, <ssantosh@kernel.org>,
+	<tony@atomide.com>
 Return-path: <linux-gpio-owner@vger.kernel.org>
-In-Reply-To: <CACRpkdbJW6_-yR8CHnK79oEm2c3exUYU-dbKm3YRYe=VVsCMog@mail.gmail.com>
 Sender: linux-gpio-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 09/24/2015 03:28 PM, Linus Walleij wrote:
-> On Tue, Aug 18, 2015 at 4:10 AM, Grygorii Strashko
-> <grygorii.strashko@ti.com> wrote:
->
->> The PM runtime API can't be used in atomic contex on -RT even if
->> it's configured as irqsafe. As result, below error report can
->> be seen when PM runtime API called from IRQ chip's callbacks
->> irq_startup/irq_shutdown/irq_set_type, because they are
->> protected by RAW spinlock:
->
-> Grygorri I have a massive backlog of mail but if patch 6&7 are
-> still applicable, can you rebase and send me these for the v4.3-rc2+
-> tree?
->
+This patch series contains patches which fixes wrong APIs usage in atomic
+context on RT-kernel. The final goal is to make TI OMAP GPIO driver
+compatible with -RT kernel as much as possible.
 
-sure.
+Patch 1: required to be compatible with -RT kernel, because PM runtime's
+irq_safe mode is incompatible with -RT.
+Patch 2: This patch converts TI OMAP GPIO driver to use generic irq
+ handler instead of chained IRQ handler. This way OMAP GPIO driver will be
+ compatible with RT-kernel where it will be forced thread IRQ handler
+ while in non-RT kernel it still will be executed in HW IRQ context.
 
-Thanks.
+Boot, basic gpio functionality tested on:
+ dra7-evm, BeagleBone(white), am43xx-gpevm, am437x-sk
+Manually tested on dra7-evm including suspend/resume and wakeup.
+
+Links on RFC:
+ https://lkml.org/lkml/2015/8/18/161
+ https://lkml.org/lkml/2015/8/18/162
+
+Grygorii Strashko (2):
+  gpio: omap: move pm runtime in irq_chip.irq_bus_lock/sync_unlock
+  gpio: omap: convert to use generic irq handler
+
+ drivers/gpio/gpio-omap.c | 80 +++++++++++++++++++++++++-----------------------
+ 1 file changed, 42 insertions(+), 38 deletions(-)
 
 -- 
-regards,
--grygorii
+2.5.1
+
