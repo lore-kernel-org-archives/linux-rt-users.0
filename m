@@ -1,57 +1,46 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Long max latencies on Wandbaord / Freescale i.MX6
-Date: Sun, 27 Sep 2015 13:49:02 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1509271346160.4500@nanos>
-References: <5606677A.1020705@gmx.net>
+From: Oliver <lich000king@yahoo.de>
+Subject: Re: 3.18 RT freezes on Raspberry Pi 2
+Date: Sun, 27 Sep 2015 15:44:58 +0000 (UTC)
+Message-ID: <loom.20150927T172648-968@post.gmane.org>
+References: <3671201425478878@web10j.yandex.ru>  <loom.20150306T043408-818@post.gmane.org>  <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de> <3863561427712041@web3j.yandex.ru> <loom.20150331T153850-579@post.gmane.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org
-To: Matthias Meier <matthias.j.meier@gmx.net>
+Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:56834 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751504AbbI0Lti (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Sep 2015 07:49:38 -0400
-In-Reply-To: <5606677A.1020705@gmx.net>
+Received: from plane.gmane.org ([80.91.229.3]:49371 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750946AbbI0RFM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Sep 2015 13:05:12 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1ZgFNo-0001lO-Ne
+	for linux-rt-users@vger.kernel.org; Sun, 27 Sep 2015 19:05:04 +0200
+Received: from 80-218-108-93.dclient.hispeed.ch ([80.218.108.93])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Sep 2015 19:05:04 +0200
+Received: from lich000king by 80-218-108-93.dclient.hispeed.ch with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sun, 27 Sep 2015 19:05:04 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 26 Sep 2015, Matthias Meier wrote:
+Hi
 
-> Hi,
-> 
-> using cyclictest I measure long max latencies of >10ms on a Wandboard dual
-> (Freescale i.MX6 dual Cortex-A9 SoC).
-> 
-> The latency problem happens with diffent scenarios:
-> - without or with rt-patch  (4.1.7-rt8 w. CONFIG_PREEMPT_RT_FULL)
-> - different Kernels (3.17, 4.1, 4.2 w. CONFIG_PREEMPT__LL)
-> - different CPU governors including 'performance'
-> - independant of CPU load
-> - even with no other userspace processes but init, the login sh and cyclictest
-> (I use a minimal builroot rfs).
-> - independant of cyclictest prio
-> 
-> Using the same buildroot rfs on a A20 SoC (bananapro) with 4.1.7-rt8 shows
-> acceptable rt-latencies of ~ 200us.
-> 
-> Ftracing 'irqsoff' on the rt-patched 4.1 kernel shows always long latency
-> after 'raw_spin_lock_irq' (see log below).
-> 
-> Do you think it is a driver which stalls or hrtimer not working correctly on
-> this SoC or someting else?
-> If it is a driver, how could I find out which it is?
+Same issue in RPi 2 running linux 4.1.6 with PREEMPT_RT_FULL.
 
-Try to capture the issue with full function tracing.
+Kodi-video playback gives skipped frames and freezes after a few minutes
+which does not happen when rt is disabled (with FIQ enabled or disabled, it
+does not matter).
 
-cyclictest --smp -p80 -m -f -b 5000
+Turning off FIQ as suggested by Mikhail gives the expected behaviour for
+cyclictest and also prevents the freezes in kodi which is great, so thanks
+for that hint!
 
-That stops the tracer when the latency is > 5ms. You might have to
-increase the trace buffer size. Please upload the trace to some place
-or send it to me privately (it's over the size limit of the list).
+However, I still get skipped frames in kodi.
 
-Thanks,
+Is it possible there is another/related issue?
 
-	tglx
+Oliver
 
