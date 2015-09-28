@@ -1,46 +1,50 @@
-From: Oliver <lich000king@yahoo.de>
-Subject: Re: 3.18 RT freezes on Raspberry Pi 2
-Date: Sun, 27 Sep 2015 15:44:58 +0000 (UTC)
-Message-ID: <loom.20150927T172648-968@post.gmane.org>
-References: <3671201425478878@web10j.yandex.ru>  <loom.20150306T043408-818@post.gmane.org>  <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de> <3863561427712041@web3j.yandex.ru> <loom.20150331T153850-579@post.gmane.org>
+From: Yuanbin Zhou <hduffddybz@gmail.com>
+Subject: [PATCH] Makefile:add cross_compiler for Makefile
+Date: Sun, 27 Sep 2015 22:12:05 -0800
+Message-ID: <20150928061205.GA6382@debian.debian>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+Cc: linux-rt-users@vger.kernel.org
+To: williams@redhat.com, jkacur@redhat.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:49371 "EHLO plane.gmane.org"
+Received: from m50-112.126.com ([123.125.50.112]:42097 "EHLO m50-112.126.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750946AbbI0RFM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 27 Sep 2015 13:05:12 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1ZgFNo-0001lO-Ne
-	for linux-rt-users@vger.kernel.org; Sun, 27 Sep 2015 19:05:04 +0200
-Received: from 80-218-108-93.dclient.hispeed.ch ([80.218.108.93])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 27 Sep 2015 19:05:04 +0200
-Received: from lich000king by 80-218-108-93.dclient.hispeed.ch with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Sun, 27 Sep 2015 19:05:04 +0200
+	id S1751193AbbI1GQP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 28 Sep 2015 02:16:15 -0400
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+In this site(https://rt.wiki.kernel.org/index.php/Cyclictest), It has been shown that you can use "make CROSS_COPILE=<your-compiler-prefix>" to build software ran in other platform like arm & mips, but in fact it does not work, this patch is used to solve this problem.
 
-Same issue in RPi 2 running linux 4.1.6 with PREEMPT_RT_FULL.
+Signed-off-by: Yuanbin Zhou <hduffddybz@gmail.com>
+---
+ Makefile | 11 +++++++++++
+ 1 file changed, 11 insertions(+)
 
-Kodi-video playback gives skipped frames and freezes after a few minutes
-which does not happen when rt is disabled (with FIQ enabled or disabled, it
-does not matter).
+diff --git a/Makefile b/Makefile
+index a48e759..9b31ce4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -11,6 +11,17 @@ sources += signaltest.c ptsematest.c sigwaittest.c svsematest.c sendme.c \
+ 
+ TARGETS = $(sources:.c=)
+ 
++CROSS_COMPILE ?= $(CONFIG_CROSS_COMPILE:"%"=%)
++AS = $(CROSS_COMPILE)as
++LD = $(CROSS_COMPILE)ld
++CC = $(CROSS_COMPILE)gcc
++CPP = $(CC) -E
++AR = $(CROSS_COMPILE)ar
++NM = $(CROSS_COMPILE)nm
++STRIP = $(CROSS_COMPILE)strip
++OBJCOPY = $(CROSS_COMPILE)objcopy
++OBJDUMP = $(CROSS_COMPILE)objdump
++
+ LIBS	= -lrt -lpthread
+ RTTESTLIB = -lrttest -L.
+ EXTRA_LIBS ?= -ldl	# for get_cpu
+-- 
+2.1.4
 
-Turning off FIQ as suggested by Mikhail gives the expected behaviour for
-cyclictest and also prevents the freezes in kodi which is great, so thanks
-for that hint!
-
-However, I still get skipped frames in kodi.
-
-Is it possible there is another/related issue?
-
-Oliver
 
