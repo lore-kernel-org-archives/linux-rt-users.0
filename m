@@ -1,42 +1,79 @@
-From: Oliver <lich000king@yahoo.de>
-Subject: Re: 3.18 RT freezes on Raspberry Pi 2
-Date: Wed, 30 Sep 2015 09:13:34 +0000 (UTC)
-Message-ID: <loom.20150930T110905-205@post.gmane.org>
-References: <3671201425478878@web10j.yandex.ru> <loom.20150306T043408-818@post.gmane.org> <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de> <3863561427712041@web3j.yandex.ru> <loom.20150331T153850-579@post.gmane.org> <loom.20150927T172648-968@post.gmane.org> <560B9543.1020106@autostatic.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from plane.gmane.org ([80.91.229.3]:52205 "EHLO plane.gmane.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752646AbbI3JNo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 30 Sep 2015 05:13:44 -0400
-Received: from list by plane.gmane.org with local (Exim 4.69)
-	(envelope-from <glru-linux-rt-users@m.gmane.org>)
-	id 1ZhDSH-00034E-Kh
-	for linux-rt-users@vger.kernel.org; Wed, 30 Sep 2015 11:13:41 +0200
-Received: from 80-218-108-93.dclient.hispeed.ch ([80.218.108.93])
-        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Sep 2015 11:13:41 +0200
-Received: from lich000king by 80-218-108-93.dclient.hispeed.ch with local (Gmexim 0.1 (Debian))
-        id 1AlnuQ-0007hv-00
-        for <linux-rt-users@vger.kernel.org>; Wed, 30 Sep 2015 11:13:41 +0200
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Yang Shi <yang.shi@linaro.org>
+Subject: [PATCH] arm64: convert patch_lock to raw lock
+Date: Wed, 30 Sep 2015 11:23:12 -0700
+Message-ID: <1443637392-6679-1-git-send-email-yang.shi@linaro.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org, yang.shi@linaro.org
+To: rostedt@goodmis.org, bigeasy@linutronix.de,
+	catalin.marinas@arm.com, will.deacon@arm.com, dave.long@linaro.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi Jeremy
+When running kprobe test on arm64 rt kernel, it reports the below warning:
 
-> Try removing all FIQ related stuff from your cmdline.txt and just use
-> the defaults. Works fine for me with 4.1.7-rt8.
+root@qemu7:~# modprobe kprobe_example
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+in_atomic(): 0, irqs_disabled(): 128, pid: 484, name: modprobe
+CPU: 0 PID: 484 Comm: modprobe Not tainted 4.1.6-rt5 #2
+Hardware name: linux,dummy-virt (DT)
+Call trace:
+[<ffffffc0000891b8>] dump_backtrace+0x0/0x128
+[<ffffffc000089300>] show_stack+0x20/0x30
+[<ffffffc00061dae8>] dump_stack+0x1c/0x28
+[<ffffffc0000bbad0>] ___might_sleep+0x120/0x198
+[<ffffffc0006223e8>] rt_spin_lock+0x28/0x40
+[<ffffffc000622b30>] __aarch64_insn_write+0x28/0x78
+[<ffffffc000622e48>] aarch64_insn_patch_text_nosync+0x18/0x48
+[<ffffffc000622ee8>] aarch64_insn_patch_text_cb+0x70/0xa0
+[<ffffffc000622f40>] aarch64_insn_patch_text_sync+0x28/0x48
+[<ffffffc0006236e0>] arch_arm_kprobe+0x38/0x48
+[<ffffffc00010e6f4>] arm_kprobe+0x34/0x50
+[<ffffffc000110374>] register_kprobe+0x4cc/0x5b8
+[<ffffffbffc002038>] kprobe_init+0x38/0x7c [kprobe_example]
+[<ffffffc000084240>] do_one_initcall+0x90/0x1b0
+[<ffffffc00061c498>] do_init_module+0x6c/0x1cc
+[<ffffffc0000fd0c0>] load_module+0x17f8/0x1db0
+[<ffffffc0000fd8cc>] SyS_finit_module+0xb4/0xc8
 
-Well I only ended up disabled FIQ because with it enabled I get the freezes
-described by Mikhail (and kodi video playback freezes as well). With FIQ
-disabled I non longer have the freezes, but the skipped frames (that I don't
-get when rt-preempt is disabled) remain.
+Convert patch_lock to raw loc kto avoid this issue.
 
-I will try 4.1.7.rt-8 though.
+Although the problem is found on rt kernel, the fix should be applicable to
+mainline kernel too.
 
-Oliver
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+---
+ arch/arm64/kernel/insn.c | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
 
+diff --git a/arch/arm64/kernel/insn.c b/arch/arm64/kernel/insn.c
+index f341866..c08b9ad 100644
+--- a/arch/arm64/kernel/insn.c
++++ b/arch/arm64/kernel/insn.c
+@@ -85,7 +85,7 @@ bool aarch64_insn_is_branch_imm(u32 insn)
+ 		aarch64_insn_is_bcond(insn));
+ }
+ 
+-static DEFINE_SPINLOCK(patch_lock);
++static DEFINE_RAW_SPINLOCK(patch_lock);
+ 
+ static void __kprobes *patch_map(void *addr, int fixmap)
+ {
+@@ -131,13 +131,13 @@ static int __kprobes __aarch64_insn_write(void *addr, u32 insn)
+ 	unsigned long flags = 0;
+ 	int ret;
+ 
+-	spin_lock_irqsave(&patch_lock, flags);
++	raw_spin_lock_irqsave(&patch_lock, flags);
+ 	waddr = patch_map(addr, FIX_TEXT_POKE0);
+ 
+ 	ret = probe_kernel_write(waddr, &insn, AARCH64_INSN_SIZE);
+ 
+ 	patch_unmap(FIX_TEXT_POKE0);
+-	spin_unlock_irqrestore(&patch_lock, flags);
++	raw_spin_unlock_irqrestore(&patch_lock, flags);
+ 
+ 	return ret;
+ }
+-- 
+2.0.2
