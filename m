@@ -1,74 +1,59 @@
-From: Yang Shi <yang.shi@linaro.org>
-Subject: [PATCH] arm64: replace read_lock to rcu lock in call_break_hook
-Date: Wed, 30 Sep 2015 15:59:04 -0700
-Message-ID: <1443653944-21885-1-git-send-email-yang.shi@linaro.org>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org, yang.shi@linaro.org
-To: rostedt@goodmis.org, catalin.marinas@arm.com, will.deacon@arm.com,
-	dave.long@linaro.org, panand@redhat.com
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Matthias Meier <matthias.j.meier@gmx.net>
+Subject: Re: Long max latencies on Wandbaord / Freescale i.MX6
+Date: Thu, 1 Oct 2015 10:08:18 +0200
+Message-ID: <560CE9F2.4010401@gmx.net>
+References: <5606677A.1020705@gmx.net>
+ <alpine.DEB.2.11.1509271346160.4500@nanos> <560A3020.5090909@gmx.net>
+ <alpine.DEB.2.11.1509300909240.4500@nanos>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mout.gmx.net ([212.227.15.15]:65146 "EHLO mout.gmx.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755246AbbJAIIV (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 1 Oct 2015 04:08:21 -0400
+Received: from localhost.localdomain ([213.188.224.136]) by mail.gmx.com
+ (mrgmx003) with ESMTPSA (Nemesis) id 0M9JYE-1ZnZiX1eIw-00ChJ4 for
+ <linux-rt-users@vger.kernel.org>; Thu, 01 Oct 2015 10:08:19 +0200
+In-Reply-To: <alpine.DEB.2.11.1509300909240.4500@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-in_atomic(): 0, irqs_disabled(): 128, pid: 342, name: perf
-1 lock held by perf/342:
- #0:  (break_hook_lock){+.+...}, at: [<ffffffc0000851ac>] call_break_hook+0x34/0xd0
-irq event stamp: 62224
-hardirqs last  enabled at (62223): [<ffffffc00010b7bc>] __call_rcu.constprop.59+0x104/0x270
-hardirqs last disabled at (62224): [<ffffffc0000fbe20>] vprintk_emit+0x68/0x640
-softirqs last  enabled at (0): [<ffffffc000097928>] copy_process.part.8+0x428/0x17f8
-softirqs last disabled at (0): [<          (null)>]           (null)
-CPU: 0 PID: 342 Comm: perf Not tainted 4.1.6-rt5 #4
-Hardware name: linux,dummy-virt (DT)
-Call trace:
-[<ffffffc000089968>] dump_backtrace+0x0/0x128
-[<ffffffc000089ab0>] show_stack+0x20/0x30
-[<ffffffc0007030d0>] dump_stack+0x7c/0xa0
-[<ffffffc0000c878c>] ___might_sleep+0x174/0x260
-[<ffffffc000708ac8>] __rt_spin_lock+0x28/0x40
-[<ffffffc000708db0>] rt_read_lock+0x60/0x80
-[<ffffffc0000851a8>] call_break_hook+0x30/0xd0
-[<ffffffc000085a70>] brk_handler+0x30/0x98
-[<ffffffc000082248>] do_debug_exception+0x50/0xb8
-Exception stack(0xffffffc00514fe30 to 0xffffffc00514ff50)
-fe20:                                     00000000 00000000 c1594680 0000007f
-fe40: ffffffff ffffffff 92063940 0000007f 0550dcd8 ffffffc0 00000000 00000000
-fe60: 0514fe70 ffffffc0 000be1f8 ffffffc0 0514feb0 ffffffc0 0008948c ffffffc0
-fe80: 00000004 00000000 0514fed0 ffffffc0 ffffffff ffffffff 9282a948 0000007f
-fea0: 00000000 00000000 9282b708 0000007f c1592820 0000007f 00083914 ffffffc0
-fec0: 00000000 00000000 00000010 00000000 00000064 00000000 00000001 00000000
-fee0: 005101e0 00000000 c1594680 0000007f c1594740 0000007f ffffffd8 ffffff80
-ff00: 00000000 00000000 00000000 00000000 c1594770 0000007f c1594770 0000007f
-ff20: 00665e10 00000000 7f7f7f7f 7f7f7f7f 01010101 01010101 00000000 00000000
-ff40: 928e4cc0 0000007f 91ff11e8 0000007f
+PROVE_LOCKING is not so bad I thought
 
-call_break_hook is called in atomic context (hard irq disabled), so replace
-the sleepable lock to rcu lock.
+finally I guess my latency problem is caused by a spurious interrupt on 
+a unused mmc slot causing heavy load when using PROVE_LOCKING ...
 
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
----
- arch/arm64/kernel/debug-monitors.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-index cebf786..eb520d0 100644
---- a/arch/arm64/kernel/debug-monitors.c
-+++ b/arch/arm64/kernel/debug-monitors.c
-@@ -292,11 +292,11 @@ static int call_break_hook(struct pt_regs *regs, unsigned int esr)
- 	struct break_hook *hook;
- 	int (*fn)(struct pt_regs *regs, unsigned int esr) = NULL;
- 
--	read_lock(&break_hook_lock);
-+	rcu_read_lock();
- 	list_for_each_entry(hook, &break_hook, node)
- 		if ((esr & hook->esr_mask) == hook->esr_val)
- 			fn = hook->fn;
--	read_unlock(&break_hook_lock);
-+	rcu_read_unlock();
- 
- 	return fn ? fn(regs, esr) : DBG_HOOK_ERROR;
- }
--- 
-2.0.2
+Here a little more in detail what I did:
+
+Disabling CONFIG_PROVE_LOCKING together with a lot other debug options 
+as Thomas proposed indeed gave max latencies in the range of 100us - at 
+least most of the time...
+
+After adding besides 'hackbench' additional heavy network load via the 
+on-board WiFi interface, the max latency raised further and finally I 
+the kernel fired a backtrace which ended in a "Disabling IRQ #284"
+
+/proc/interrupts indeed shows a hugh amout of interrupts on mmc1 
+although I don't use mmc1 at all (the Wandboard boots via mmc0)
+
+(possible a pullup config is missing at the mmc interfaces?)
+
+After reboot I tried to stop the spurious interrupts by inserting a 
+sd-card on mmc1 but this does not work - still high interrupts.
+
+Now I'm trying to disable mmc1 and mmc2 completely which is not as easy 
+as I thought: via sysfs it seems not to be possible and via DT I think I 
+would have to modify all imx6* DTS files of all imx6 boards - otherwise 
+the dtbs does not compile...
+
+
+Is there a simple solution to disable either a single interrupt or a 
+individual mmc interface from userspace?
+
+Thanks,
+	Matthias
+
