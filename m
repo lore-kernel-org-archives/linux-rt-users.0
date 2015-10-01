@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.14.53-rt54
-Date: Thu, 1 Oct 2015 17:23:32 -0400
-Message-ID: <20151001172332.0d3eba00@gandalf.local.home>
+Subject: [ANNOUNCE] 3.12.48-rt66
+Date: Thu, 1 Oct 2015 17:23:58 -0400
+Message-ID: <20151001172358.3df7d94e@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.14.53-rt54 stable release.
+I'm pleased to announce the 3.12.48-rt66 stable release.
 
 
-This release is just an update to the new stable 3.14.53 version
+This release is just an update to the new stable 3.12.48 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.14-rt
-  Head SHA1: 572355e69d6438460705c13cfea11868e5fc55b9
+  branch: v3.12-rt
+  Head SHA1: d73a0ecce276ba951bee923b36a4821d43b2b1d5
 
 
-Or to build 3.14.53-rt54 directly, the following patches should be applied:
+Or to build 3.12.48-rt66 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.14.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.14.53.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.48.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.53-rt54.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.48-rt66.patch.xz
 
 
 
