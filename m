@@ -1,9 +1,9 @@
 From: Linus Walleij <linus.walleij@linaro.org>
-Subject: Re: [PATCH 1/2] gpio: omap: move pm runtime in irq_chip.irq_bus_lock/sync_unlock
-Date: Fri, 2 Oct 2015 05:22:15 -0700
-Message-ID: <CACRpkdbHL=uBvPDqmxSGHbn=8nu7So87zEu2sCLBcfaytwk6tg@mail.gmail.com>
+Subject: Re: [PATCH 2/2] gpio: omap: convert to use generic irq handler
+Date: Fri, 2 Oct 2015 13:17:01 -0700
+Message-ID: <CACRpkdYDrcwa+h2Lxd65RBMc-1n9CCyVDz1qjc2U1MEU2GP7hA@mail.gmail.com>
 References: <1443209283-20781-1-git-send-email-grygorii.strashko@ti.com>
-	<1443209283-20781-2-git-send-email-grygorii.strashko@ti.com>
+	<1443209283-20781-3-git-send-email-grygorii.strashko@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Cc: Alexandre Courbot <gnurou@gmail.com>,
@@ -16,68 +16,65 @@ Cc: Alexandre Courbot <gnurou@gmail.com>,
 	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
 To: Grygorii Strashko <grygorii.strashko@ti.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1443209283-20781-2-git-send-email-grygorii.strashko@ti.com>
+In-Reply-To: <1443209283-20781-3-git-send-email-grygorii.strashko@ti.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 On Fri, Sep 25, 2015 at 12:28 PM, Grygorii Strashko
 <grygorii.strashko@ti.com> wrote:
 
-> The PM runtime API can't be used in atomic contex on -RT even if
-> it's configured as irqsafe. As result, below error report can
-> be seen when PM runtime API called from IRQ chip's callbacks
-> irq_startup/irq_shutdown/irq_set_type, because they are
-> protected by RAW spinlock:
+> This patch converts TI OMAP GPIO driver to use generic irq handler
+> instead of chained IRQ handler. This way OMAP GPIO driver will be
+> compatible with RT kernel where it will be forced thread IRQ handler
+> while in non-RT kernel it still will be executed in HW IRQ context.
+> As part of this change the IRQ wakeup configuration is applied to
+> GPIO Bank IRQ as it now will be under control of IRQ PM Core during
+> suspend.
 >
-> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-> in_atomic(): 1, irqs_disabled(): 128, pid: 96, name: insmod
-> 3 locks held by insmod/96:
->  #0:  (&dev->mutex){......}, at: [<c04752c8>] __driver_attach+0x54/0xa0
->  #1:  (&dev->mutex){......}, at: [<c04752d4>] __driver_attach+0x60/0xa0
->  #2:  (class){......}, at: [<c00a408c>] __irq_get_desc_lock+0x60/0xa4
-> irq event stamp: 1834
-> hardirqs last  enabled at (1833): [<c06ab2a4>] _raw_spin_unlock_irqrestore+0x88/0x90
-> hardirqs last disabled at (1834): [<c06ab068>] _raw_spin_lock_irqsave+0x2c/0x64
-> softirqs last  enabled at (0): [<c003d220>] copy_process.part.52+0x410/0x19d8
-> softirqs last disabled at (0): [<  (null)>]   (null)
-> Preemption disabled at:[<  (null)>]   (null)
+> There are also additional benefits:
+>  - on-RT kernel there will be no complains any more about PM runtime usage
+>    in atomic context  "BUG: sleeping function called from invalid context";
+>  - GPIO bank IRQs will appear in /proc/interrupts and its usage statistic
+>     will be  visible;
+>  - GPIO bank IRQs could be configured through IRQ proc_fs interface and,
+>    as result, could be a part of IRQ balancing process if needed;
+>  - GPIO bank IRQs will be under control of IRQ PM Core during
+>    suspend to RAM.
 >
-> CPU: 1 PID: 96 Comm: insmod Tainted: G        W  O    4.1.3-rt3-00618-g57e2387-dirty #184
-> Hardware name: Generic DRA74X (Flattened Device Tree)
-> [<c00190f4>] (unwind_backtrace) from [<c0014734>] (show_stack+0x20/0x24)
-> [<c0014734>] (show_stack) from [<c06a62ec>] (dump_stack+0x88/0xdc)
-> [<c06a62ec>] (dump_stack) from [<c006ca44>] (___might_sleep+0x198/0x2a8)
-> [<c006ca44>] (___might_sleep) from [<c06ab6d4>] (rt_spin_lock+0x30/0x70)
-> [<c06ab6d4>] (rt_spin_lock) from [<c04815ac>] (__pm_runtime_resume+0x68/0xa4)
-> [<c04815ac>] (__pm_runtime_resume) from [<c04123f4>] (omap_gpio_irq_type+0x188/0x1d8)
-> [<c04123f4>] (omap_gpio_irq_type) from [<c00a64e4>] (__irq_set_trigger+0x68/0x130)
-> [<c00a64e4>] (__irq_set_trigger) from [<c00a7bc4>] (irq_set_irq_type+0x44/0x6c)
-> [<c00a7bc4>] (irq_set_irq_type) from [<c00abbf8>] (irq_create_of_mapping+0x120/0x174)
-> [<c00abbf8>] (irq_create_of_mapping) from [<c0577b74>] (of_irq_get+0x48/0x58)
-> [<c0577b74>] (of_irq_get) from [<c0540a14>] (i2c_device_probe+0x54/0x15c)
-> [<c0540a14>] (i2c_device_probe) from [<c04750dc>] (driver_probe_device+0x184/0x2c8)
-> [<c04750dc>] (driver_probe_device) from [<c0475310>] (__driver_attach+0x9c/0xa0)
-> [<c0475310>] (__driver_attach) from [<c0473238>] (bus_for_each_dev+0x7c/0xb0)
-> [<c0473238>] (bus_for_each_dev) from [<c0474af4>] (driver_attach+0x28/0x30)
-> [<c0474af4>] (driver_attach) from [<c0474760>] (bus_add_driver+0x154/0x200)
-> [<c0474760>] (bus_add_driver) from [<c0476348>] (driver_register+0x88/0x108)
-> [<c0476348>] (driver_register) from [<c0541600>] (i2c_register_driver+0x3c/0x90)
-> [<c0541600>] (i2c_register_driver) from [<bf003018>] (pcf857x_init+0x18/0x24 [gpio_pcf857x])
-> [<bf003018>] (pcf857x_init [gpio_pcf857x]) from [<c000998c>] (do_one_initcall+0x128/0x1e8)
-> [<c000998c>] (do_one_initcall) from [<c06a4220>] (do_init_module+0x6c/0x1bc)
-> [<c06a4220>] (do_init_module) from [<c00dd0c8>] (load_module+0x18e8/0x21c4)
-> [<c00dd0c8>] (load_module) from [<c00ddaa0>] (SyS_init_module+0xfc/0x158)
-> [<c00ddaa0>] (SyS_init_module) from [<c000ff40>] (ret_fast_syscall+0x0/0x54)
+> Disadvantage:
+>  - additional runtime overhed as call chain till
+>    omap_gpio_irq_handler() will be longer now
+>  - necessity to use wa_lock in omap_gpio_irq_handler() to W/A warning
+>    in handle_irq_event_percpu()
+>    WARNING: CPU: 1 PID: 35 at kernel/irq/handle.c:149 handle_irq_event_percpu+0x51c/0x638()
 >
-> The IRQ chip interface defines only two callbacks which are executed in
-> non-atomic contex - irq_bus_lock/irq_bus_sync_unlock, so lets move
-> PM runtime calls there.
+> This patch doesn't fully follows recommendations provided by Sebastian
+> Andrzej Siewior [1], because It's required to go through and check all
+> GPIO IRQ pin states as fast as possible and pass control to handle_level_irq
+> or handle_edge_irq. handle_level_irq or handle_edge_irq will perform actions
+> specific for IRQ triggering type and wakeup corresponding registered
+> threaded IRQ handler (at least it's expected to be threaded).
+> IRQs can be lost if handle_nested_irq() will be used, because excecution
+> time of some pin specific GPIO IRQ handler can be very significant and
+> require accessing ext. devices (I2C).
+>
+> Idea of such kind reworking was also discussed in [2].
+>
+> [1] http://www.spinics.net/lists/linux-omap/msg120665.html
+> [2] http://www.spinics.net/lists/linux-omap/msg119516.html
 >
 > Tested-by: Tony Lindgren <tony@atomide.com>
 > Tested-by: Austin Schuh <austin@peloton-tech.com>
 > Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
 
-Patch applied with Santosh's ACK.
+Patch applied.
+
+I'm thinking that we need some recommendations on how to write
+IRQ handlers in order to be RT-compatible. Can you help me lining
+up the requirements in Documentation/gpio/driver.txt?
+
+I will write an RFC patch and let you write some additional text
+to it in response then we can iterate it a bit.
 
 Yours,
 Linus Walleij
