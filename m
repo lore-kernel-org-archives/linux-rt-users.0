@@ -1,42 +1,33 @@
-From: Matthias Meier <matthias.j.meier@gmx.net>
-Subject: Long max latencies on Wandbaord / Freescale i.MX6
-Date: Fri, 2 Oct 2015 08:48:00 +0200
-Message-ID: <560E28A0.4010203@gmx.net>
+From: Mats Karrman <mats.dev.list@gmail.com>
+Subject: Re: Long max latencies on Wandbaord / Freescale i.MX6
+Date: Fri, 2 Oct 2015 09:40:04 +0200
+Message-ID: <560E34D4.1010409@gmail.com>
 References: <5606677A.1020705@gmx.net>
  <alpine.DEB.2.11.1509271346160.4500@nanos> <560A3020.5090909@gmx.net>
- <alpine.DEB.2.11.1509300909240.4500@nanos>
+ <alpine.DEB.2.11.1509300909240.4500@nanos> <560E28A0.4010203@gmx.net>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+To: Matthias Meier <matthias.j.meier@gmx.net>,
+	linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mout.gmx.net ([212.227.15.15]:50241 "EHLO mout.gmx.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750709AbbJBGsF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 2 Oct 2015 02:48:05 -0400
-Received: from localhost.localdomain ([213.188.224.136]) by mail.gmx.com
- (mrgmx003) with ESMTPSA (Nemesis) id 0M1F72-1aWhNB2H2O-00tDSs for
- <linux-rt-users@vger.kernel.org>; Fri, 02 Oct 2015 08:48:01 +0200
-In-Reply-To: <alpine.DEB.2.11.1509300909240.4500@nanos>
+Received: from mail-la0-f47.google.com ([209.85.215.47]:34880 "EHLO
+	mail-la0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750882AbbJBHkM (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 2 Oct 2015 03:40:12 -0400
+Received: by laer8 with SMTP id r8so87791162lae.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 02 Oct 2015 00:40:11 -0700 (PDT)
+In-Reply-To: <560E28A0.4010203@gmx.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Comming to the end of my CONFIG_PROVE_LOCKING / "max latency" story:
 
-It is not a spurious interrupt...
-
-The source of problem is the WiFi driver (brcmfmac via SDIO) which 
-produces up to 6k interrupts per second, which when 
-CONFIG_PROOVE_LOCKING is enabled, results sporadically in very long 
-latencies (up to 10ms). (Possible because pending interrupts were queued).
-
-Further after exactly 1600001 interrupts, the kernel disables this mmc 
-interrupt with "__report_bad_irq"
-(The mmc driver is not only used for SD-cards but also for the SDIO 
-attached devices.)
-
-Or with other words: never use (this) WiFi on a realtime system...
-
-Regards and sorry for the noise I produced on this list
-	Matthias
-
+On 2015-10-02 08:48, Matthias Meier wrote:
+>
+> Regards and sorry for the noise I produced on this list
+>     Matthias
+>
+Don't be, it's cheaper to learn from other peoples mistakes!
+Thanks,
+Mats
