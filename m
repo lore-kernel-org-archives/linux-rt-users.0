@@ -1,140 +1,135 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-utils: Fix some checkpatch errors in rt-utils.c
-Date: Mon, 5 Oct 2015 16:10:47 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510051610010.14006@riemann>
+Subject: [PATCH] signaltest: Add a man page to signaltest
+Date: Mon, 5 Oct 2015 16:11:39 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1510051610540.14006@riemann>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Cc: Clark Williams <williams@redhat.com>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f181.google.com ([209.85.212.181]:33591 "EHLO
-	mail-wi0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752034AbbJEOKv (ORCPT
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:37428 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751256AbbJEOLp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 5 Oct 2015 10:10:51 -0400
-Received: by wiclk2 with SMTP id lk2so122543655wic.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 05 Oct 2015 07:10:50 -0700 (PDT)
+	Mon, 5 Oct 2015 10:11:45 -0400
+Received: by wicfx3 with SMTP id fx3so116399238wic.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 05 Oct 2015 07:11:44 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
->From 373987c151acb53f3a8392472c4068b382344e94 Mon Sep 17 00:00:00 2001
+>From 7d22087c84a612b6221c7addfc53ac79ab1bc4f7 Mon Sep 17 00:00:00 2001
 From: John Kacur <jkacur@redhat.com>
-Date: Thu, 1 Oct 2015 00:20:42 +0200
-Subject: [PATCH] rt-utils: Fix some checkpatch errors in rt-utils.c
+Date: Thu, 1 Oct 2015 11:20:25 +0200
+Subject: [PATCH] signaltest: Add a man page to signaltest
 
-Although we have less strict rules than the linux kernel
-some of the checkpatch complaints really do make the files better and
-easier to read. Fix a few of these.
+- Add a man page to signaltest
+- Improve the display_help in signaltest
+- Add install of new man page to makefile
 
 Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/lib/rt-utils.c | 28 +++++++++++++++-------------
- 1 file changed, 15 insertions(+), 13 deletions(-)
+ Makefile                    |  1 +
+ src/signaltest/signaltest.8 | 48 +++++++++++++++++++++++++++++++++++++++++++++
+ src/signaltest/signaltest.c | 19 +++++++++---------
+ 3 files changed, 59 insertions(+), 9 deletions(-)
+ create mode 100644 src/signaltest/signaltest.8
 
-diff --git a/src/lib/rt-utils.c b/src/lib/rt-utils.c
-index 462ea3ce394f..ac6878ccacf1 100644
---- a/src/lib/rt-utils.c
-+++ b/src/lib/rt-utils.c
-@@ -49,9 +49,9 @@ char *get_debugfileprefix(void)
- 		strcpy(debugfileprefix, "/debug/tracing/");
- 		goto out;
- 	}
--	
-+
- 	/* oh well, parse /proc/mounts and see if it's there */
--	if ((fp = fopen("/proc/mounts","r")) == NULL)
-+	if ((fp = fopen("/proc/mounts", "r")) == NULL)
- 		goto out;
+diff --git a/Makefile b/Makefile
+index 35a7d5a83fec..6e6ac1350fb2 100644
+--- a/Makefile
++++ b/Makefile
+@@ -192,6 +192,7 @@ install: all install_hwlatdetect
+ 	gzip -c src/pmqtest/pmqtest.8 >"$(DESTDIR)$(mandir)/man8/pmqtest.8.gz"
+ 	gzip -c src/backfire/sendme.8 >"$(DESTDIR)$(mandir)/man8/sendme.8.gz"
+ 	gzip -c src/hackbench/hackbench.8 >"$(DESTDIR)$(mandir)/man8/hackbench.8.gz"
++	gzip -c src/signaltest/signaltest.8 >"$(DESTDIR)$(mandir)/man8/signaltest.8.gz"
  
- 	while (fscanf(fp, "%*s %"
-@@ -98,15 +98,15 @@ int mount_debugfs(char *path)
- 	}
- 	if (!mountpoint)
- 		mountpoint = "/sys/kernel/debug";
--	
-+
- 	sprintf(cmd, "mount -t debugfs debugfs %s", mountpoint);
- 	ret = system(cmd);
- 	if (ret != 0) {
--		fprintf(stderr, "Error mounting debugfs at %s: %s\n", mountpoint, strerror(errno));
-+		fprintf(stderr, "Error mounting debugfs at %s: %s\n",
-+			mountpoint, strerror(errno));
- 		return -1;
- 	}
- 	return 0;
--		
- }
- 
- static char **tracer_list;
-@@ -137,7 +137,7 @@ int get_tracers(char ***list)
- 	/* open the tracing file available_tracers */
- 	sprintf(buffer, "%savailable_tracers", prefix);
- 	if ((fp = fopen(buffer, "r")) == NULL)
--		fatal ("Can't open %s for reading\n", buffer);
-+		fatal("Can't open %s for reading\n", buffer);
- 
- 	/* allocate initial buffer */
- 	ptr = tmpbuf = malloc(CHUNKSZ);
-@@ -145,7 +145,7 @@ int get_tracers(char ***list)
- 		fatal("error allocating initial space for tracer list\n");
- 
- 	/* read in the list of available tracers */
--	while((ret = fread(buffer, sizeof(char), CHUNKSZ, fp))) {
-+	while ((ret = fread(buffer, sizeof(char), CHUNKSZ, fp))) {
- 		if ((ptr+ret+1) > (tmpbuf+tmpsz)) {
- 			tmpbuf = realloc(tmpbuf, tmpsz + CHUNKSZ);
- 			if (tmpbuf == NULL)
-@@ -158,12 +158,12 @@ int get_tracers(char ***list)
- 	fclose(fp);
- 	if (tmpsz == 0)
- 		fatal("error reading available tracers\n");
--	
-+
- 	tracer_buffer = tmpbuf;
- 
- 	/* get a buffer for the pointers to tracers */
- 	if (!(tracer_list = malloc(sizeof(char *))))
--		fatal ("error allocatinging tracer list buffer\n");
-+		fatal("error allocatinging tracer list buffer\n");
- 
- 	/* parse the buffer */
- 	ptr = strtok(tmpbuf, " \t\n\r");
-@@ -179,8 +179,8 @@ int get_tracers(char ***list)
- }
- 
- 
--/* 
-- * return zero if tracername is not a valid tracer, non-zero if it is 
-+/*
-+ * return zero if tracername is not a valid tracer, non-zero if it is
-  */
- 
- int valid_tracer(char *tracername)
-@@ -232,9 +232,10 @@ int event_disable_all(void)
- 	return setevent("events/enable", "0");
- }
- 
--int event_enable(char *event) 
-+int event_enable(char *event)
+ .PHONY: install_hwlatdetect
+ install_hwlatdetect: hwlatdetect
+diff --git a/src/signaltest/signaltest.8 b/src/signaltest/signaltest.8
+new file mode 100644
+index 000000000000..d6c11c213e11
+--- /dev/null
++++ b/src/signaltest/signaltest.8
+@@ -0,0 +1,48 @@
++.\"
++.TH SIGNALTEST 8 "October 1, 2015"
++.\" Please adjust this date whenever updating this manpage
++.SH NAME
++signaltest \- signal roundtrip test software
++.SH SYNOPSIS
++.B signaltest
++.RI "[ \-b USEC ] [ \-l LOOPS ] [ \-p PRIO] [ \-q ] [ \-t NUM ] [ \-m ] [ \-v ] [ \-\-help ]"
++.SH OPTIONS
++These programs follow the usual GNU command line syntax, with long options
++starting with two dashes ('\-\-').
++.TP
++.B \-b, \-\-breaktrace=USEC
++Send break trace command whn latency > USEC
++.TP
++.B \-l, \-\-loops=LOOPS
++Number of loops: default=0 (endless)
++.TP
++.B \-p, \-\-priority=PRIO
++Priority of highest priority thread
++.TP
++.B \-q, \-\-quiet
++print a summary only on exit
++.TP
++.B \-t, \-\-threads=NUM
++number of threads: default=2
++.TP
++.B \-m, \-\-mlockall
++lock current and future memory allocations
++.TP
++.B \-v, \-\-verbose
++output values on stdout for statistics
++.br
++format: n:c:v n=tasknum c=count v=value in us
++.TP
++.B \-\-help
++display usage information
++.SH AUTHOR
++signaltest was written by Thomas Gleixner <tglx@linuxtronix.de>.
++.PP
++This manual page was originally written by
++.br
++John Kacur <jkacur@redhat.com>
++.PP
++Copying and distribution of this file, with or without modification,
++are permitted in any medium without royalty provided the copyright
++notice and this notice are preserved.  This file is offered as-is,
++without any warranty.
+diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+index 2ee1929f135b..b80969b021e3 100644
+--- a/src/signaltest/signaltest.c
++++ b/src/signaltest/signaltest.c
+@@ -205,15 +205,16 @@ static void display_help(void)
  {
- 	char path[MAX_PATH];
-+
- 	sprintf(path, "events/%s/enable", event);
- 	return setevent(path, "1");
+ 	printf("signaltest V %1.2f\n", VERSION);
+ 	printf("Usage:\n"
+-	       "signaltest <options>\n\n"
+-	       "-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
+-	       "-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
+-	       "-p PRIO  --prio=PRIO       priority of highest prio thread\n"
+-	       "-q       --quiet           print only a summary on exit\n"
+-	       "-t NUM   --threads=NUM     number of threads: default=2\n"
+-	       "-m       --mlockall        lock current and future memory allocations\n"
+-	       "-v       --verbose         output values on stdout for statistics\n"
+-	       "                           format: n:c:v n=tasknum c=count v=value in us\n");
++		"signaltest <options>\n\n"
++		"-b USEC  --breaktrace=USEC send break trace command when latency > USEC\n"
++		"-l LOOPS --loops=LOOPS     number of loops: default=0(endless)\n"
++		"-p PRIO  --prio=PRIO       priority of highest prio thread\n"
++		"-q       --quiet           print a summary only on exit\n"
++		"-t NUM   --threads=NUM     number of threads: default=2\n"
++		"-m       --mlockall        lock current and future memory allocations\n"
++		"-v       --verbose         output values on stdout for statistics\n"
++		"                           format: n:c:v n=tasknum c=count v=value in us\n"
++		"--help			    display usage information\n");
+ 	exit(0);
  }
-@@ -242,10 +243,11 @@ int event_enable(char *event)
- int event_disable(char *event)
- {
- 	char path[MAX_PATH];
-+
- 	sprintf(path, "events/%s/enable", event);
- 	return setevent(path, "0");
- }
--	
-+
- int check_privs(void)
- {
- 	int policy = sched_getscheduler(0);
+ 
 -- 
 2.4.3
 
