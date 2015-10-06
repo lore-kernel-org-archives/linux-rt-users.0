@@ -1,75 +1,74 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH rt-tests] drop compiling without NPTL support
-Date: Tue, 6 Oct 2015 08:49:56 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510060849280.14006@riemann>
-References: <alpine.LFD.2.20.1510052149190.14006@riemann> <1444113838-5123-1-git-send-email-u.kleine-koenig@pengutronix.de>
-Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463804494-1989304972-1444114197=:14006"
-Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
+From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
 	<u.kleine-koenig@pengutronix.de>
+Subject: Re: [PATCH rt-tests 3/3] remove license info containing an old FSF
+ address
+Date: Tue, 6 Oct 2015 09:01:00 +0200
+Message-ID: <20151006070100.GF3982@pengutronix.de>
+References: <1444071917-1450-1-git-send-email-u.kleine-koenig@pengutronix.de>
+ <1444071917-1450-3-git-send-email-u.kleine-koenig@pengutronix.de>
+ <alpine.LFD.2.20.1510052150570.14006@riemann>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f170.google.com ([209.85.212.170]:34077 "EHLO
-	mail-wi0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751073AbbJFGt7 (ORCPT
+Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:46615 "EHLO
+	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751073AbbJFHBE (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 6 Oct 2015 02:49:59 -0400
-Received: by wicfx3 with SMTP id fx3so151147354wic.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 05 Oct 2015 23:49:58 -0700 (PDT)
-In-Reply-To: <1444113838-5123-1-git-send-email-u.kleine-koenig@pengutronix.de>
+	Tue, 6 Oct 2015 03:01:04 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.20.1510052150570.14006@riemann>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Hello,
 
----1463804494-1989304972-1444114197=:14006
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
+On Mon, Oct 05, 2015 at 09:52:40PM +0200, John Kacur wrote:
+> On Mon, 5 Oct 2015, Uwe Kleine-K=F6nig wrote:
+>=20
+> > The source tree contains the complete GPL so that paragraph isn't t=
+hat
+> > useful.
+>=20
+> You can correct the address if you want to, but IANL, but if the Free=
+=20
+> Software Foundation says you should put that at the top of the file, =
+I=20
+> don't think you can just decide for yourself that you don't need to, =
+just=20
+> because you know you are doing the right thing by including a copy of=
+ the=20
+> licence.
 
+I'm not a lawyer either just applied common sense (or what I think is
+common sense). For GPL-3 the address isn't included any more, there it'=
+s
+just:
 
+	You should have received a copy of the GNU General Public
+	License along with this program.  If not, see
+	<http://www.gnu.org/licenses/>.
 
-On Tue, 6 Oct 2015, Uwe Kleine-König wrote:
+And I understand that snippet as an example. After all it also
+recommends to say "either version 2 of the License, or (at your option)
+any later version." which isn't used everywhere either.
 
-> all programs apart from sendme use pthreads so NPTL=no is hardly useful
-> any more.
-> ---
->  Makefile | 19 +++++++++++--------
->  1 file changed, 11 insertions(+), 8 deletions(-)
-> 
-> diff --git a/Makefile b/Makefile
-> index 1e255a983574..6ce2ecc7fc30 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -4,14 +4,17 @@ AR=$(CROSS_COMPILE)ar
->  
->  OBJDIR = bld
->  
-> -HAVE_NPTL ?= yes
-> -
-> -ifeq ($(HAVE_NPTL),yes)
-> -sources = cyclictest.c pi_stress.c pip_stress.c pmqtest.c rt-migrate-test.c
-> -endif
-> -
-> -sources += signaltest.c ptsematest.c sigwaittest.c svsematest.c sendme.c \
-> -	  hackbench.c
-> +sources = cyclictest.c \
-> +	  hackbench.c \
-> +	  pip_stress.c \
-> +	  pi_stress.c \
-> +	  pmqtest.c \
-> +	  ptsematest.c \
-> +	  rt-migrate-test.c \
-> +	  sendme.c \
-> +	  signaltest.c \
-> +	  sigwaittest.c \
-> +	  svsematest.c
->  
->  TARGETS = $(sources:.c=)
->  
-> -- 
-> 2.1.4
+And given that correcting the address now make us correct the address
+once more when the FSF moves the next time I still think dropping wrong
+addresses is the right thing to do.
 
-Yes, it's outdated
-Signed-off-by: John Kacur <jkacur@redhat.com>
----1463804494-1989304972-1444114197=:14006--
+Best regards
+Uwe
+
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
