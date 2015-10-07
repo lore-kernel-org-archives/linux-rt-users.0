@@ -1,86 +1,92 @@
 From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 3/4] Android: clean up the bypass ifdeffery
-Date: Wed, 7 Oct 2015 13:55:49 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510071355190.14006@riemann>
-References: <1444122503-8112-1-git-send-email-haustad@cisco.com> <1444122503-8112-3-git-send-email-haustad@cisco.com> <alpine.LFD.2.20.1510071231260.14006@riemann> <20151007111424.GA21765@laethe.rd.cisco.com>
+Subject: [ANNOUNCE] rt-tests-v0.95
+Date: Wed, 7 Oct 2015 15:53:19 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1510071533540.14006@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org,
+Content-Type: multipart/mixed; BOUNDARY="-1463804494-1892712943-1444226000=:14006"
+Cc: LKML <linux-kernel@vger.kernel.org>,
 	Clark Williams <williams@redhat.com>
-To: Henrik Austad <haustad@cisco.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f181.google.com ([209.85.212.181]:33365 "EHLO
-	mail-wi0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751054AbbJGLzx (ORCPT
+Received: from mail-wi0-f178.google.com ([209.85.212.178]:38875 "EHLO
+	mail-wi0-f178.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751460AbbJGNxX (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Oct 2015 07:55:53 -0400
-Received: by wiclk2 with SMTP id lk2so209500610wic.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 07 Oct 2015 04:55:52 -0700 (PDT)
-In-Reply-To: <20151007111424.GA21765@laethe.rd.cisco.com>
+	Wed, 7 Oct 2015 09:53:23 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+  This message is in MIME format.  The first part should be readable text,
+  while the remaining parts are likely unreadable without MIME-aware tools.
+
+---1463804494-1892712943-1444226000=:14006
+Content-Type: text/plain; charset=ISO-8859-15
+Content-Transfer-Encoding: 8BIT
 
 
-On Wed, 7 Oct 2015, Henrik Austad wrote:
+Dear RT Folks
+We're pleased to announce the latest version of rt-tests
 
-> On Wed, Oct 07, 2015 at 12:34:11PM +0200, John Kacur wrote:
-> > 
-> > 
-> > On Tue, 6 Oct 2015, Henrik Austad wrote:
-> > 
-> > > 88af643971b9 (android: adjust target for android) introduced some really
-> > > ugly ifdefs to avoid calling into pthread_barrier_wait and
-> > > pthread_barrier_init.
-> > > 
-> > > This patch attempts to coalesce this into a single place and let the
-> > > compiler handle the linking so that cyclictest.c is untouched by evil
-> > > ifdefs.
-> > > 
-> > > Compiled and tested on:
-> > > - x86_64 (v3.13 kernel)
-> > > - tilegx (v3.10 kernel)
-> > > - arm64 android (v3.10 kernel)
-> > > 
-> > > Signed-off-by: Henrik Austad <haustad@cisco.com>
-> > > Cc: Clark Williams <williams@redhat.com>
-> > > Cc: John Kacur <jkacur@redhat.com>
-> > > ---
-> > >  Makefile                    |  2 +-
-> > >  include/bionic.h            | 32 ++++++++++++++++++++++++++++++++
-> > >  src/arch/bionic/Makefile    |  4 +---
-> > >  src/cyclictest/cyclictest.c | 25 +++----------------------
-> > >  4 files changed, 37 insertions(+), 26 deletions(-)
-> > >  create mode 100644 include/bionic.h
-> > > 
-> > > diff --git a/Makefile b/Makefile
-> > > index 2d20ea4..24ef8fe 100644
-> > > --- a/Makefile
-> > > +++ b/Makefile
-> > > @@ -22,7 +22,7 @@ bindir  ?= $(prefix)/bin
-> > >  mandir	?= $(prefix)/share/man
-> > >  srcdir	?= $(prefix)/src
-> > >  
-> > > -CFLAGS ?= -Wall -Wno-nonnull
-> > > +CFLAGS ?= -Wall -Wno-nonnull -Iinclude/
-> > >  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
-> > 
-> > We already have an include dir. Why aren't you using it?
-> > If you think it would be cleaner to create your own include dir, you at 
-> > least have to put it some where in the src dir
-> 
-> You're right!
-> 
-> moving it to src/include/ now, do you want a new patch right away, or shall 
-> I wait for v0.96-devel before submitting?
-> 
-> 
-> -- 
-> Henrik Austad
-> TIPBU Eng
+The previous version included the first addition of the ability to build 
+some of the tests for android which uses the bionic library. (Thank you to 
+Henrik Austad for that) Henrik is continuing his development work on 
+that.
 
-Let's take our time and get it right, so wait for v0.96-devel
+This version includes a lot of changes to the build system that you will 
+hopefully find makes working with rt-tests a lot easier and more pleasant. 
+Chiefly the addition of a bld directory for the object files, plus some 
+clarification in the comments for different ways to build rt-tests. A 
+separate Makefile for bionic, and more.
 
-Thanks
+To clear-up any previous confusion, we do support building without the 
+numa libs.
 
-John
+And there are a few odds and ends, clean-ups and a new man page
+
+You can fetch it via git by cloning one of the following repos
+
+git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+
+tag: v0.95
+
+You can also fetch the tarball here
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.95.tar.xz
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.95.tar.gz
+
+older versions are in
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests/older
+
+I've pushed a branch for new development, so you can start sending us your 
+patches, and bug reports.
+
+branch: devel/v0.96
+
+Enjoy!
+
+List of Changes
+
+Henrik Austad (1):
+  cyclictest: move redefine of CPUSET back to uclib
+
+John Kacur (11):
+  Explicitly separate VPATH paths with a colon
+  build: Generate .o, .a, and .d files in bld dir
+  signaltest: call process_options before calling check_privs
+  signaltest: Check the status of pthread_create
+  rt-utils: Add John Kacur to the copyright
+  rt-utils: Fix some checkpatch errors in rt-utils.c
+  signaltest: Add a man page to signaltest
+  Makefile: Document certain compiling options
+  Makefile: Only call cc -dumpmachine once in the makefile
+  Bionic: Move android functionality into it's own arch Makefile
+  maintainence: VERSION bump and Change-log update
+
+Uwe Kleine-König (4):
+  backfire: remove unused header file
+  remove several unused Makefiles
+  rt-migrate-test: remove space before \n
+  drop compiling without NPTL support
+
+---1463804494-1892712943-1444226000=:14006--
