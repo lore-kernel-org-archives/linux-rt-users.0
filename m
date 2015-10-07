@@ -1,62 +1,70 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [v2 PATCH] arm64: convert patch_lock to raw lock
-Date: Wed, 7 Oct 2015 10:28:23 +0100
-Message-ID: <20151007092822.GB16065@arm.com>
-References: <1444165951-26065-1-git-send-email-yang.shi@linaro.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 4/4] cyclictest: move redefine of CPUSET back to uclib
+Date: Wed, 7 Oct 2015 12:28:30 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1510071228080.14006@riemann>
+References: <1444122503-8112-1-git-send-email-haustad@cisco.com> <1444122503-8112-4-git-send-email-haustad@cisco.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: rostedt@goodmis.org, catalin.marinas@arm.com,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org
-To: Yang Shi <yang.shi@linaro.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1444165951-26065-1-git-send-email-yang.shi@linaro.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org,
+	Clark Williams <williams@redhat.com>
+To: Henrik Austad <haustad@cisco.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f177.google.com ([209.85.212.177]:33554 "EHLO
+	mail-wi0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752543AbbJGK2e (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 7 Oct 2015 06:28:34 -0400
+Received: by wiclk2 with SMTP id lk2so206307956wic.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 07 Oct 2015 03:28:33 -0700 (PDT)
+In-Reply-To: <1444122503-8112-4-git-send-email-haustad@cisco.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Oct 06, 2015 at 02:12:31PM -0700, Yang Shi wrote:
-> When running kprobe test on arm64 rt kernel, it reports the below warning:
+
+
+On Tue, 6 Oct 2015, Henrik Austad wrote:
+
+> This was mistakenly included in the #ifdef in 88af643971b9 (android:
+> adjust target for android). Moved back into the correct #ifdef-entry.
 > 
-> root@qemu7:~# modprobe kprobe_example
-> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-> in_atomic(): 0, irqs_disabled(): 128, pid: 484, name: modprobe
-> CPU: 0 PID: 484 Comm: modprobe Not tainted 4.1.6-rt5 #2
-> Hardware name: linux,dummy-virt (DT)
-> Call trace:
-> [<ffffffc0000891b8>] dump_backtrace+0x0/0x128
-> [<ffffffc000089300>] show_stack+0x20/0x30
-> [<ffffffc00061dae8>] dump_stack+0x1c/0x28
-> [<ffffffc0000bbad0>] ___might_sleep+0x120/0x198
-> [<ffffffc0006223e8>] rt_spin_lock+0x28/0x40
-> [<ffffffc000622b30>] __aarch64_insn_write+0x28/0x78
-> [<ffffffc000622e48>] aarch64_insn_patch_text_nosync+0x18/0x48
-> [<ffffffc000622ee8>] aarch64_insn_patch_text_cb+0x70/0xa0
-> [<ffffffc000622f40>] aarch64_insn_patch_text_sync+0x28/0x48
-> [<ffffffc0006236e0>] arch_arm_kprobe+0x38/0x48
-> [<ffffffc00010e6f4>] arm_kprobe+0x34/0x50
-> [<ffffffc000110374>] register_kprobe+0x4cc/0x5b8
-> [<ffffffbffc002038>] kprobe_init+0x38/0x7c [kprobe_example]
-> [<ffffffc000084240>] do_one_initcall+0x90/0x1b0
-> [<ffffffc00061c498>] do_init_module+0x6c/0x1cc
-> [<ffffffc0000fd0c0>] load_module+0x17f8/0x1db0
-> [<ffffffc0000fd8cc>] SyS_finit_module+0xb4/0xc8
-> 
-> Convert patch_lock to raw lock to avoid this issue.
-> 
-> Although the problem is found on rt kernel, the fix should be applicable to
-> mainline kernel too.
-> 
-> Signed-off-by: Yang Shi <yang.shi@linaro.org>
-> Acked-by: Steven Rostedt <rostedt@goodmis.org>
+> Cc: Clark Williams <williams@redhat.com>
+> Cc: John Kacur <jkacur@redhat.com>
+> Signed-off-by: Henrik Austad <haustad@cisco.com>
 > ---
-> v1 -> v2:
->  Add Steven's Acked-by
->  Fix subject (remove unnecessary "make")
->  Fix a typo error in commit log
+>  src/cyclictest/cyclictest.c | 10 +++++-----
+>  1 file changed, 5 insertions(+), 5 deletions(-)
+> 
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index b52cabd..87a2d7e 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -80,6 +80,11 @@ int sched_setaffinity (__pid_t __pid, size_t __cpusetsize,
+>  	return -EINVAL;
+>  }
+>  
+> +#undef CPU_SET
+> +#undef CPU_ZERO
+> +#define CPU_SET(cpu, cpusetp)
+> +#define CPU_ZERO(cpusetp)
+> +
+>  #endif
+>  
+>  #ifdef NO_PTHREAD_SETAFFINITY
+> @@ -89,11 +94,6 @@ static inline int pthread_setaffinity_np(pthread_t thread, size_t cpusetsize,
+>      return sched_setaffinity(0, cpusetsize, cpuset);
+>  }
+>  
+> -#undef CPU_SET
+> -#undef CPU_ZERO
+> -#define CPU_SET(cpu, cpusetp)
+> -#define CPU_ZERO(cpusetp)
+> -
+>  #else
+>  extern int clock_nanosleep(clockid_t __clock_id, int __flags,
+>  			   __const struct timespec *__req,
+> -- 
+> 1.9.1
+> 
+> --
 
-I already queued with this Steve's Ack, so we'll just have to live with
-the typos.
-
-Will
+Signed-off-by: John Kacur <jkacur@redhat.com>
