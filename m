@@ -1,93 +1,78 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 2/4] signaltest: properly test return value from
- system()
-Date: Wed, 7 Oct 2015 12:44:07 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510071240120.14006@riemann>
-References: <1444122503-8112-1-git-send-email-haustad@cisco.com> <1444122503-8112-2-git-send-email-haustad@cisco.com>
+From: Henrik Austad <haustad@cisco.com>
+Subject: Re: [PATCH 3/4] Android: clean up the bypass ifdeffery
+Date: Wed, 7 Oct 2015 13:14:24 +0200
+Message-ID: <20151007111424.GA21765@laethe.rd.cisco.com>
+References: <1444122503-8112-1-git-send-email-haustad@cisco.com>
+ <1444122503-8112-3-git-send-email-haustad@cisco.com>
+ <alpine.LFD.2.20.1510071231260.14006@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=us-ascii
 Cc: linux-rt-users@vger.kernel.org,
 	Clark Williams <williams@redhat.com>
-To: Henrik Austad <haustad@cisco.com>
+To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f177.google.com ([209.85.212.177]:36592 "EHLO
-	mail-wi0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752780AbbJGKoK (ORCPT
+Received: from aer-iport-2.cisco.com ([173.38.203.52]:18693 "EHLO
+	aer-iport-2.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753727AbbJGLRf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 7 Oct 2015 06:44:10 -0400
-Received: by wicgb1 with SMTP id gb1so204919114wic.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 07 Oct 2015 03:44:09 -0700 (PDT)
-In-Reply-To: <1444122503-8112-2-git-send-email-haustad@cisco.com>
+	Wed, 7 Oct 2015 07:17:35 -0400
+Content-Disposition: inline
+In-Reply-To: <alpine.LFD.2.20.1510071231260.14006@riemann>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-On Tue, 6 Oct 2015, Henrik Austad wrote:
-
-> signaltest writes to several /proc/sys/kernel attributes without testing
-> if the system() call succeeds or not. We expect the writes from echo to
-> suceed (i.e. yield '0' in return), so we test explicitly for that.
+On Wed, Oct 07, 2015 at 12:34:11PM +0200, John Kacur wrote:
 > 
-> Signed-off-by: Henrik Austad <haustad@cisco.com>
-> Cc: Clark Williams <williams@redhat.com>
-> Cc: John Kacur <jkacur@redhat.com>
-> ---
->  src/signaltest/signaltest.c | 25 +++++++++++++++----------
->  1 file changed, 15 insertions(+), 10 deletions(-)
 > 
-> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
-> index b80969b..8074b68 100644
-> --- a/src/signaltest/signaltest.c
-> +++ b/src/signaltest/signaltest.c
-> @@ -65,6 +65,11 @@ struct thread_stat {
->  	int threadstarted;
->  	int tid;
->  };
-> +#define SYSTEM_W(x)				\
-> +	if (system((x)) != 0) {			\
-> +		fprintf(stderr, "Trouble running %s\n", (x));	\
-> +		return NULL;					\
-> +	}							\
->  
->  static int shutdown;
->  static int tracelimit = 0;
-> @@ -102,16 +107,16 @@ void *signalthread(void *param)
->  	int first = 1;
->  
->  	if (tracelimit) {
-> -		system("echo 1 > /proc/sys/kernel/trace_all_cpus");
-> -		system("echo 1 > /proc/sys/kernel/trace_enabled");
-> -		system("echo 1 > /proc/sys/kernel/trace_freerunning");
-> -		system("echo 0 > /proc/sys/kernel/trace_print_at_crash");
-> -		system("echo 1 > /proc/sys/kernel/trace_user_triggered");
-> -		system("echo -1 > /proc/sys/kernel/trace_user_trigger_irq");
-> -		system("echo 0 > /proc/sys/kernel/trace_verbose");
-> -		system("echo 0 > /proc/sys/kernel/preempt_thresh");
-> -		system("echo 0 > /proc/sys/kernel/wakeup_timing");
-> -		system("echo 0 > /proc/sys/kernel/preempt_max_latency");
-> +		SYSTEM_W("echo 1 > /proc/sys/kernel/trace_all_cpus");
-> +		SYSTEM_W("echo 1 > /proc/sys/kernel/trace_enabled");
-> +		SYSTEM_W("echo 1 > /proc/sys/kernel/trace_freerunning");
-> +		SYSTEM_W("echo 0 > /proc/sys/kernel/trace_print_at_crash");
-> +		SYSTEM_W("echo 1 > /proc/sys/kernel/trace_user_triggered");
-> +		SYSTEM_W("echo -1 > /proc/sys/kernel/trace_user_trigger_irq");
-> +		SYSTEM_W("echo 0 > /proc/sys/kernel/trace_verbose");
-> +		SYSTEM_W("echo 0 > /proc/sys/kernel/preempt_thresh");
-> +		SYSTEM_W("echo 0 > /proc/sys/kernel/wakeup_timing");
-> +		SYSTEM_W("echo 0 > /proc/sys/kernel/preempt_max_latency");
->  	}
->  
->  	stat->tid = gettid();
-> -- 
-> 1.9.1
+> On Tue, 6 Oct 2015, Henrik Austad wrote:
 > 
+> > 88af643971b9 (android: adjust target for android) introduced some really
+> > ugly ifdefs to avoid calling into pthread_barrier_wait and
+> > pthread_barrier_init.
+> > 
+> > This patch attempts to coalesce this into a single place and let the
+> > compiler handle the linking so that cyclictest.c is untouched by evil
+> > ifdefs.
+> > 
+> > Compiled and tested on:
+> > - x86_64 (v3.13 kernel)
+> > - tilegx (v3.10 kernel)
+> > - arm64 android (v3.10 kernel)
+> > 
+> > Signed-off-by: Henrik Austad <haustad@cisco.com>
+> > Cc: Clark Williams <williams@redhat.com>
+> > Cc: John Kacur <jkacur@redhat.com>
+> > ---
+> >  Makefile                    |  2 +-
+> >  include/bionic.h            | 32 ++++++++++++++++++++++++++++++++
+> >  src/arch/bionic/Makefile    |  4 +---
+> >  src/cyclictest/cyclictest.c | 25 +++----------------------
+> >  4 files changed, 37 insertions(+), 26 deletions(-)
+> >  create mode 100644 include/bionic.h
+> > 
+> > diff --git a/Makefile b/Makefile
+> > index 2d20ea4..24ef8fe 100644
+> > --- a/Makefile
+> > +++ b/Makefile
+> > @@ -22,7 +22,7 @@ bindir  ?= $(prefix)/bin
+> >  mandir	?= $(prefix)/share/man
+> >  srcdir	?= $(prefix)/src
+> >  
+> > -CFLAGS ?= -Wall -Wno-nonnull
+> > +CFLAGS ?= -Wall -Wno-nonnull -Iinclude/
+> >  CPPFLAGS += -D_GNU_SOURCE -Isrc/include
+> 
+> We already have an include dir. Why aren't you using it?
+> If you think it would be cleaner to create your own include dir, you at 
+> least have to put it some where in the src dir
 
-I really don't like patches like this that just exist to shut-up the 
-compiler's overzealous warnings. Are you actually having a problem with 
-this program that you need to debug? If you are, is the message "Trouble 
-running echo num to some /proc" file really useful? Have you carefully 
-read the system man page to see what kind of errors can be returned and 
-why? I'm going to pass on this one for now.
-Sorry
-John
+You're right!
+
+moving it to src/include/ now, do you want a new patch right away, or shall 
+I wait for v0.96-devel before submitting?
+
+
+-- 
+Henrik Austad
+TIPBU Eng
+Cisco Systems Norway
