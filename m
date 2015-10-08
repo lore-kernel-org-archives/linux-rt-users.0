@@ -1,65 +1,90 @@
-From: Uwe =?iso-8859-1?Q?Kleine-K=F6nig?=
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?=
 	<u.kleine-koenig@pengutronix.de>
-Subject: Re: [ANNOUNCE] rt-tests-v0.95
-Date: Thu, 8 Oct 2015 21:14:15 +0200
-Message-ID: <20151008191415.GS3982@pengutronix.de>
-References: <alpine.LFD.2.20.1510071533540.14006@riemann>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org,
-	Clark Williams <williams@redhat.com>
+Subject: [PATCH rt-tests] Fix some trivial typos found by codespell(1)
+Date: Thu,  8 Oct 2015 23:12:32 +0200
+Message-ID: <1444338752-30701-1-git-send-email-u.kleine-koenig@pengutronix.de>
+Cc: linux-rt-users@vger.kernel.org
 To: John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from metis.ext.4.pengutronix.de ([92.198.50.35]:44921 "EHLO
-	metis.ext.pengutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753399AbbJHTOR (ORCPT
+Received: from arcturus.kleine-koenig.org ([78.47.169.190]:55616 "EHLO
+	arcturus.kleine-koenig.org" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756422AbbJHVMp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 8 Oct 2015 15:14:17 -0400
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.20.1510071533540.14006@riemann>
+	Thu, 8 Oct 2015 17:12:45 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Inheritence ==> Inheritance
+occured ==> occurred
+surpress ==> suppress
+---
+ src/pi_tests/classic_pi.c    | 2 +-
+ src/pi_tests/pi_stress.c     | 4 ++--
+ src/pi_tests/pip_stress.c    | 2 +-
+ src/pi_tests/tst-mutexpi10.c | 2 +-
+ 4 files changed, 5 insertions(+), 5 deletions(-)
 
-[stripping lkml from recipents, guessing they are not that interested i=
-n
-general in this conversion]
+diff --git a/src/pi_tests/classic_pi.c b/src/pi_tests/classic_pi.c
+index 59e907bc98cc..695ee4c4bd03 100644
+--- a/src/pi_tests/classic_pi.c
++++ b/src/pi_tests/classic_pi.c
+@@ -18,7 +18,7 @@
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+    USA */
+ 
+-/* This program tests Priority Inheritence mutexes and their ability
++/* This program tests Priority Inheritance mutexes and their ability
+    to avoid Priority Inversion deadlocks
+   
+    The basic premise here is to set up a deadlock scenario and confirm that PI
+diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+index a4e6e3df1a3d..a02f70629aa4 100644
+--- a/src/pi_tests/pi_stress.c
++++ b/src/pi_tests/pi_stress.c
+@@ -132,7 +132,7 @@ unsigned long report_interval = (unsigned long)SEC_TO_USEC(0.75);
+ int shutdown = 0;		/* global indicating we should shut down */
+ pthread_mutex_t shutdown_mtx;	/* associated mutex */
+ 
+-/* indicate if errors have occured */
++/* indicate if errors have occurred */
+ int have_errors = 0;
+ 
+ /* indicated that keyboard interrupt has happened */
+@@ -1025,7 +1025,7 @@ void usage(void)
+ 	printf("usage: pi_stress <options>\n");
+ 	printf("    options:\n");
+ 	printf("\t--verbose\t- lots of output\n");
+-	printf("\t--quiet\t\t- surpress running output\n");
++	printf("\t--quiet\t\t- suppress running output\n");
+ 	printf
+ 	    ("\t--duration=<n>- length of the test run in seconds [infinite]\n");
+ 	printf("\t--groups=<n>\t- set the number of inversion groups [%d]\n",
+diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
+index 812a7030aa9d..a0477cc2a35d 100644
+--- a/src/pi_tests/pip_stress.c
++++ b/src/pi_tests/pip_stress.c
+@@ -64,7 +64,7 @@ useconds_t usleep_val = 500;
+ 
+ pthread_mutex_t *resource;
+ 
+-/* This records the state to determine whether a priority inversion occured */
++/* This records the state to determine whether a priority inversion occurred */
+ struct State {
+ 	int low_owns_resource;
+ 	int high_started;
+diff --git a/src/pi_tests/tst-mutexpi10.c b/src/pi_tests/tst-mutexpi10.c
+index 0244b4a7a7c1..a63ea23ba621 100644
+--- a/src/pi_tests/tst-mutexpi10.c
++++ b/src/pi_tests/tst-mutexpi10.c
+@@ -21,7 +21,7 @@
+    Boston, MA 02111-1307, USA.  */
+ 
+ 
+-/* This program tests Priority Inheritence mutexes and their ability
++/* This program tests Priority Inheritance mutexes and their ability
+    to avoid Priority Inversion deadlocks
+   
+    The basic premise here is to set up a deadlock scenario and confirm that PI
+-- 
+2.1.4
 
-On Wed, Oct 07, 2015 at 03:53:19PM +0200, John Kacur wrote:
-> I've pushed a branch for new development, so you can start sending us=
- your=20
-> patches, and bug reports.
->=20
-> branch: devel/v0.96
-I rebased my autoconf conversion on top of this branch. It's available
-at
-
-	git://git.pengutronix.de/git/ukl/rt-tests.git convert-to-autoconf
-
-=2E If you want to give that a try and report success or about things I=
-'ve
-broken, that would be great.
-
-One thing that is definitely missing is that for bionic all programs ar=
-e
-tried to be build. Still doing
-
-	make cyclictest
-
-there should work fine.
-
-Best regards
-Uwe
-
---=20
-Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
-    |
-Industrial Linux Solutions                 | http://www.pengutronix.de/=
-  |
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
