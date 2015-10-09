@@ -1,112 +1,71 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH rt-tests] Fix some trivial typos found by codespell(1)
-Date: Fri, 9 Oct 2015 09:30:15 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510090927430.6496@riemann.fritz.box>
-References: <1444338752-30701-1-git-send-email-u.kleine-koenig@pengutronix.de>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [v3 PATCH] arm64: replace read_lock to rcu lock in
+ call_break_hook
+Date: Fri, 9 Oct 2015 10:05:50 +0100
+Message-ID: <20151009090550.GA26278@arm.com>
+References: <1444080771-22468-1-git-send-email-yang.shi@linaro.org>
+ <20151008235538.GJ3910@linux.vnet.ibm.com>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="-1463804494-866389369-1444375826=:6496"
-Cc: linux-rt-users@vger.kernel.org
-To: =?ISO-8859-15?Q?Uwe_Kleine-K=F6nig?=
-	<u.kleine-koenig@pengutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f173.google.com ([209.85.212.173]:34553 "EHLO
-	mail-wi0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932938AbbJIHa2 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 9 Oct 2015 03:30:28 -0400
-Received: by wicfx3 with SMTP id fx3so58059950wic.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 09 Oct 2015 00:30:27 -0700 (PDT)
-In-Reply-To: <1444338752-30701-1-git-send-email-u.kleine-koenig@pengutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Yang Shi <yang.shi@linaro.org>, rostedt@goodmis.org,
+	catalin.marinas@arm.com, dave.long@linaro.org, panand@redhat.com,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linaro-kernel@lists.linaro.org
+To: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151008235538.GJ3910@linux.vnet.ibm.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
-
----1463804494-866389369-1444375826=:6496
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
-
-
-
-On Thu, 8 Oct 2015, Uwe Kleine-König wrote:
-
-> Inheritence ==> Inheritance
-> occured ==> occurred
-> surpress ==> suppress
-> ---
->  src/pi_tests/classic_pi.c    | 2 +-
->  src/pi_tests/pi_stress.c     | 4 ++--
->  src/pi_tests/pip_stress.c    | 2 +-
->  src/pi_tests/tst-mutexpi10.c | 2 +-
->  4 files changed, 5 insertions(+), 5 deletions(-)
+On Thu, Oct 08, 2015 at 04:55:38PM -0700, Paul E. McKenney wrote:
+> On Mon, Oct 05, 2015 at 02:32:51PM -0700, Yang Shi wrote:
+> > BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+> > in_atomic(): 0, irqs_disabled(): 128, pid: 342, name: perf
+> > 1 lock held by perf/342:
+> >  #0:  (break_hook_lock){+.+...}, at: [<ffffffc0000851ac>] call_break_hook+0x34/0xd0
+> > irq event stamp: 62224
+> > hardirqs last  enabled at (62223): [<ffffffc00010b7bc>] __call_rcu.constprop.59+0x104/0x270
+> > hardirqs last disabled at (62224): [<ffffffc0000fbe20>] vprintk_emit+0x68/0x640
+> > softirqs last  enabled at (0): [<ffffffc000097928>] copy_process.part.8+0x428/0x17f8
+> > softirqs last disabled at (0): [<          (null)>]           (null)
+> > CPU: 0 PID: 342 Comm: perf Not tainted 4.1.6-rt5 #4
+> > Hardware name: linux,dummy-virt (DT)
+> > Call trace:
+> > [<ffffffc000089968>] dump_backtrace+0x0/0x128
+> > [<ffffffc000089ab0>] show_stack+0x20/0x30
+> > [<ffffffc0007030d0>] dump_stack+0x7c/0xa0
+> > [<ffffffc0000c878c>] ___might_sleep+0x174/0x260
+> > [<ffffffc000708ac8>] __rt_spin_lock+0x28/0x40
+> > [<ffffffc000708db0>] rt_read_lock+0x60/0x80
+> > [<ffffffc0000851a8>] call_break_hook+0x30/0xd0
+> > [<ffffffc000085a70>] brk_handler+0x30/0x98
+> > [<ffffffc000082248>] do_debug_exception+0x50/0xb8
+> > Exception stack(0xffffffc00514fe30 to 0xffffffc00514ff50)
+> > fe20:                                     00000000 00000000 c1594680 0000007f
+> > fe40: ffffffff ffffffff 92063940 0000007f 0550dcd8 ffffffc0 00000000 00000000
+> > fe60: 0514fe70 ffffffc0 000be1f8 ffffffc0 0514feb0 ffffffc0 0008948c ffffffc0
+> > fe80: 00000004 00000000 0514fed0 ffffffc0 ffffffff ffffffff 9282a948 0000007f
+> > fea0: 00000000 00000000 9282b708 0000007f c1592820 0000007f 00083914 ffffffc0
+> > fec0: 00000000 00000000 00000010 00000000 00000064 00000000 00000001 00000000
+> > fee0: 005101e0 00000000 c1594680 0000007f c1594740 0000007f ffffffd8 ffffff80
+> > ff00: 00000000 00000000 00000000 00000000 c1594770 0000007f c1594770 0000007f
+> > ff20: 00665e10 00000000 7f7f7f7f 7f7f7f7f 01010101 01010101 00000000 00000000
+> > ff40: 928e4cc0 0000007f 91ff11e8 0000007f
+> > 
+> > call_break_hook is called in atomic context (hard irq disabled), so replace
+> > the sleepable lock to rcu lock, replace relevant list operations to rcu
+> > version and call synchronize_rcu() in unregister_break_hook().
+> > 
+> > And, replace write lock to spinlock in {un}register_break_hook.
+> > 
+> > Signed-off-by: Yang Shi <yang.shi@linaro.org>
 > 
-> diff --git a/src/pi_tests/classic_pi.c b/src/pi_tests/classic_pi.c
-> index 59e907bc98cc..695ee4c4bd03 100644
-> --- a/src/pi_tests/classic_pi.c
-> +++ b/src/pi_tests/classic_pi.c
-> @@ -18,7 +18,7 @@
->     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
->     USA */
->  
-> -/* This program tests Priority Inheritence mutexes and their ability
-> +/* This program tests Priority Inheritance mutexes and their ability
->     to avoid Priority Inversion deadlocks
->    
->     The basic premise here is to set up a deadlock scenario and confirm that PI
-> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
-> index a4e6e3df1a3d..a02f70629aa4 100644
-> --- a/src/pi_tests/pi_stress.c
-> +++ b/src/pi_tests/pi_stress.c
-> @@ -132,7 +132,7 @@ unsigned long report_interval = (unsigned long)SEC_TO_USEC(0.75);
->  int shutdown = 0;		/* global indicating we should shut down */
->  pthread_mutex_t shutdown_mtx;	/* associated mutex */
->  
-> -/* indicate if errors have occured */
-> +/* indicate if errors have occurred */
->  int have_errors = 0;
->  
->  /* indicated that keyboard interrupt has happened */
-> @@ -1025,7 +1025,7 @@ void usage(void)
->  	printf("usage: pi_stress <options>\n");
->  	printf("    options:\n");
->  	printf("\t--verbose\t- lots of output\n");
-> -	printf("\t--quiet\t\t- surpress running output\n");
-> +	printf("\t--quiet\t\t- suppress running output\n");
->  	printf
->  	    ("\t--duration=<n>- length of the test run in seconds [infinite]\n");
->  	printf("\t--groups=<n>\t- set the number of inversion groups [%d]\n",
-> diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
-> index 812a7030aa9d..a0477cc2a35d 100644
-> --- a/src/pi_tests/pip_stress.c
-> +++ b/src/pi_tests/pip_stress.c
-> @@ -64,7 +64,7 @@ useconds_t usleep_val = 500;
->  
->  pthread_mutex_t *resource;
->  
-> -/* This records the state to determine whether a priority inversion occured */
-> +/* This records the state to determine whether a priority inversion occurred */
->  struct State {
->  	int low_owns_resource;
->  	int high_started;
-> diff --git a/src/pi_tests/tst-mutexpi10.c b/src/pi_tests/tst-mutexpi10.c
-> index 0244b4a7a7c1..a63ea23ba621 100644
-> --- a/src/pi_tests/tst-mutexpi10.c
-> +++ b/src/pi_tests/tst-mutexpi10.c
-> @@ -21,7 +21,7 @@
->     Boston, MA 02111-1307, USA.  */
->  
->  
-> -/* This program tests Priority Inheritence mutexes and their ability
-> +/* This program tests Priority Inheritance mutexes and their ability
->     to avoid Priority Inversion deadlocks
->    
->     The basic premise here is to set up a deadlock scenario and confirm that PI
-> -- 
-> 2.1.4
+> Looks more plausible to me.  Does it look OK to you, Steven?
 
+This is already in mainline as a fix, so please shout loudly if you think
+it's broken (it looked ok to me and didn't cause any regressions in my
+testing).
 
-Applied, thanks
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
----1463804494-866389369-1444375826=:6496--
+Will
