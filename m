@@ -1,56 +1,34 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [4.1.3-rt8] [report][cpuhotplug] BUG: spinlock bad magic on
- CPU#0, sh/137
-Date: Mon, 12 Oct 2015 10:16:17 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1510120952560.6097@nanos>
-References: <5617CE6D.9060800@ti.com>
+From: Christoph Mathys <eraserix@gmail.com>
+Subject: [4.1.7-rt8][report] Very high cyclictest latency during glmark2 on
+ i915 gpu
+Date: Tue, 13 Oct 2015 17:35:54 +0200
+Message-ID: <CALqGcGpLJ+x_Gg7i4W4UCe4+GJEfdFNo-UryyOyQZJ1q5AAWJQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, David Miller <davem@davemloft.net>,
-	linux-kernel@vger.kernel.org, Eric Dumazet <edumazet@google.com>,
-	netdev@vger.kernel.org
-To: Grygorii Strashko <grygorii.strashko@ti.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <5617CE6D.9060800@ti.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: Linux RT Users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lb0-f176.google.com ([209.85.217.176]:34420 "EHLO
+	mail-lb0-f176.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752933AbbJMPf4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 13 Oct 2015 11:35:56 -0400
+Received: by lbbck17 with SMTP id ck17so25256814lbb.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 13 Oct 2015 08:35:54 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 9 Oct 2015, Grygorii Strashko wrote:
-> I can constantly see below error report with 4.1 RT-kernel on TI ARM dra7-evm 
-> if I'm trying to unplug cpu1:
-> 
-> [   57.737589] CPU1: shutdown
-> [   57.767537] BUG: spinlock bad magic on CPU#0, sh/137
-> [   57.767546]  lock: 0xee994730, .magic: 00000000, .owner: <none>/-1, .owner_cpu: 0
+When running cyclictest and the opengl benchmark tool glmark2 I see
+pretty severe latency spikes of about 1.8 milliseconds with kernel
+4.1.7-rt8.
 
-> It looks like this backtrace was introduces by 
-> 
-> commit 91df05da13a6c6c358e71182e80f19f3c48d1615
-> net: Use skbufhead with raw lock
->
-> I see the potential fix for this issue as below: 
-> 
-> index 4969c0d..f8c23de 100644
-> --- a/net/core/dev.c
-> +++ b/net/core/dev.c
-> @@ -7217,7 +7217,7 @@ static int dev_cpu_callback(struct notifier_block *nfb,
->                 netif_rx_ni(skb);
->                 input_queue_head_incr(oldsd);
->         }
-> -       while ((skb = skb_dequeue(&oldsd->input_pkt_queue))) {
-> +       while ((skb = __skb_dequeue(&oldsd->input_pkt_queue))) {
+Using the same machine with different RT kernels (also only one testrun)
+- 3.12 max latency is 66 microseconds.
+- 3.18 max latency is 157 microseconds
 
-Your patch is white space damaged ....
+The machine in question uses a Core i7-3770 CPU and the Intel i915
+kernel driver.
 
->                 netif_rx_ni(skb);
->                 input_queue_head_incr(oldsd);
->         }
-> 
-> input_pkt_queue is per-cpu queue and at this moment cpu is dead already,
-> so no one should touch it. But I'm not sure if my assumption is correct.
+Can anyone reproduce this? Any ideas? dmesg does not contain any funny
+reports...
 
-It is. Picking it up for the next release
-
-Thanks,
-
-	tglx
+Christoph
