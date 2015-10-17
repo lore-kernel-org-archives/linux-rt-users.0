@@ -1,194 +1,60 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: [ANNOUNCE] v4.10.10-rt10
-Date: Sat, 17 Oct 2015 12:38:19 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1510171235210.4212@nanos>
+Subject: Re: [4.1.7-rt8][report] Very high cyclictest latency during glmark2
+ on i915 gpu
+Date: Sat, 17 Oct 2015 12:59:34 +0200 (CEST)
+Message-ID: <alpine.DEB.2.11.1510171258170.4212@nanos>
+References: <CALqGcGpLJ+x_Gg7i4W4UCe4+GJEfdFNo-UryyOyQZJ1q5AAWJQ@mail.gmail.com> <CALqGcGo_CBrQynU1TeymxQJbL_LJgN9d5ADho_jM-DRB6c312w@mail.gmail.com> <20151016203629.GE12756@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
 Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Sebastian Sewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: LKML <linux-kernel@vger.kernel.org>
+Cc: Christoph Mathys <eraserix@gmail.com>,
+	Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40423 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:40456 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751101AbbJQKjC (ORCPT
+	with ESMTP id S1751587AbbJQLAT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 17 Oct 2015 06:39:02 -0400
+	Sat, 17 Oct 2015 07:00:19 -0400
+In-Reply-To: <20151016203629.GE12756@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On Fri, 16 Oct 2015, Josh Cartwright wrote:
+> On Wed, Oct 14, 2015 at 11:08:38AM +0200, Christoph Mathys wrote:
+> > On Tue, Oct 13, 2015 at 5:35 PM, Christoph Mathys <eraserix@gmail.com> wrote:
+> > > Can anyone reproduce this? Any ideas? dmesg does not contain any funny
+> > > reports...
+> >
+> > It is actually not true that there are no funny reports. After
+> > enabling more debug options I now get the BUG below once per second.
+> > There are other callpaths than the one below that trigger this
+> > message, but they all go through the function
+> > intel_pipe_update_start().
+> >
+> > [   17.694307] BUG: sleeping function called from invalid context at
+> > kernel/locking/rtmutex.c:917
+> > [   17.694308] in_atomic(): 0, irqs_disabled(): 1, pid: 102, name: kworker/3:1
+> [..]
+> > [   17.694347] hardirqs last disabled at (21082): [<ffffffffa02fabf3>] intel_pipe_update_start+0x113/0x640 [i915]
+> [..]
+> > [   17.694367] Call Trace:
+> > [   17.694370]  [<ffffffff817f961d>] dump_stack+0x4a/0x61
+> > [   17.694372]  [<ffffffff8108785a>] ___might_sleep+0x13a/0x200
+> > [   17.694373]  [<ffffffff81800f24>] rt_spin_lock+0x24/0x60
+> > [   17.694374]  [<ffffffff8108bbac>] ? migrate_disable+0x6c/0xe0
+> > [   17.694375]  [<ffffffff810a9bab>] prepare_to_wait+0x2b/0xa0
+> > [   17.694386]  [<ffffffffa02faca8>] intel_pipe_update_start+0x1c8/0x640 [i915]
+> 
+> Looks like intel_pipe_update_start() is trying to queue the caller up on
+> the drm_crtc_vblank_waitqueue() from an local_irq_disable()'d region,
+> which doesn't fly on -rt, as the internal waitqueue lock is a converted
+> rt_mutex w/ PREEMPT_RT (and thus can sleep if contended).
+> 
+> Perhaps this driver is a candidate for a simple waitqueue conversion.
 
-I'm pleased to announce the v4.1.10-rt10 patch set. v4.1.10-rt9 is a
-non-announced update to incorporate the linux-4.1.y stable tree
-changes.
+It can, but it calls some more functions with interrupts disabled
+which are taking regular spinlocks. So that does not cure it.
 
-Changes since v4.1.10-rt9:
+Thanks,
 
- Ben Hutchings (1):
-      work-simple: Add missing #include <linux/export.h>
-
- Grygorii Strashko (1):
-      net/core/cpuhotplug: Drain input_pkt_queue lockless
-
- Thomas Gleixner (2):
-      arm64/xen: Make XEN depend on !RT
-      v4.1.10-rt10
-
- Yang Shi (2):
-      arm64: Convert patch_lock to raw lock
-      arm64: Replace read_lock to rcu lock in call_break_hook
-
-Known issues:
-
- - bcache stays disabled
-
- - CPU hotplug is not better than before
-
- - The netlink_release() OOPS, reported by Clark, is still on the
-   list, but unsolved due to lack of information
-
-The delta patch against 4.1.10-rt10 is appended below and can be found here:
-
-   https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.10-rt9-rt10.patch.xz
-
-You can get this release via the git tree at:
-
-   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.1.10-rt10
-
-The RT patch against 4.1.10 can be found here:
-
-   https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.10-rt10.patch.xz
-
-The split quilt queue is available at:
-
-   https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.1/patches-4.1.10-rt10.tar.xz
-   
-Enjoy!
-    
- 	tglx
-    
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-
-diff --git a/arch/arm64/Kconfig b/arch/arm64/Kconfig
-index 2cc65a6f4bbd..09a41259b984 100644
---- a/arch/arm64/Kconfig
-+++ b/arch/arm64/Kconfig
-@@ -601,7 +601,7 @@ config XEN_DOM0
- 
- config XEN
- 	bool "Xen guest support on ARM64"
--	depends on ARM64 && OF
-+	depends on ARM64 && OF && !PREEMPT_RT_FULL
- 	select SWIOTLB_XEN
- 	help
- 	  Say Y if you want to run Linux in a Virtual Machine on Xen on ARM64.
-diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-index b056369fd47d..70654d843d9b 100644
---- a/arch/arm64/kernel/debug-monitors.c
-+++ b/arch/arm64/kernel/debug-monitors.c
-@@ -271,20 +271,21 @@ static int single_step_handler(unsigned long addr, unsigned int esr,
-  * Use reader/writer locks instead of plain spinlock.
-  */
- static LIST_HEAD(break_hook);
--static DEFINE_RWLOCK(break_hook_lock);
-+static DEFINE_SPINLOCK(break_hook_lock);
- 
- void register_break_hook(struct break_hook *hook)
- {
--	write_lock(&break_hook_lock);
--	list_add(&hook->node, &break_hook);
--	write_unlock(&break_hook_lock);
-+	spin_lock(&break_hook_lock);
-+	list_add_rcu(&hook->node, &break_hook);
-+	spin_unlock(&break_hook_lock);
- }
- 
- void unregister_break_hook(struct break_hook *hook)
- {
--	write_lock(&break_hook_lock);
--	list_del(&hook->node);
--	write_unlock(&break_hook_lock);
-+	spin_lock(&break_hook_lock);
-+	list_del_rcu(&hook->node);
-+	spin_unlock(&break_hook_lock);
-+	synchronize_rcu();
- }
- 
- static int call_break_hook(struct pt_regs *regs, unsigned int esr)
-@@ -292,11 +293,11 @@ static int call_break_hook(struct pt_regs *regs, unsigned int esr)
- 	struct break_hook *hook;
- 	int (*fn)(struct pt_regs *regs, unsigned int esr) = NULL;
- 
--	read_lock(&break_hook_lock);
--	list_for_each_entry(hook, &break_hook, node)
-+	rcu_read_lock();
-+	list_for_each_entry_rcu(hook, &break_hook, node)
- 		if ((esr & hook->esr_mask) == hook->esr_val)
- 			fn = hook->fn;
--	read_unlock(&break_hook_lock);
-+	rcu_read_unlock();
- 
- 	return fn ? fn(regs, esr) : DBG_HOOK_ERROR;
- }
-diff --git a/arch/arm64/kernel/insn.c b/arch/arm64/kernel/insn.c
-index 924902083e47..30eb88e5b896 100644
---- a/arch/arm64/kernel/insn.c
-+++ b/arch/arm64/kernel/insn.c
-@@ -77,7 +77,7 @@ bool __kprobes aarch64_insn_is_nop(u32 insn)
- 	}
- }
- 
--static DEFINE_SPINLOCK(patch_lock);
-+static DEFINE_RAW_SPINLOCK(patch_lock);
- 
- static void __kprobes *patch_map(void *addr, int fixmap)
- {
-@@ -124,13 +124,13 @@ static int __kprobes __aarch64_insn_write(void *addr, u32 insn)
- 	unsigned long flags = 0;
- 	int ret;
- 
--	spin_lock_irqsave(&patch_lock, flags);
-+	raw_spin_lock_irqsave(&patch_lock, flags);
- 	waddr = patch_map(addr, FIX_TEXT_POKE0);
- 
- 	ret = probe_kernel_write(waddr, &insn, AARCH64_INSN_SIZE);
- 
- 	patch_unmap(FIX_TEXT_POKE0);
--	spin_unlock_irqrestore(&patch_lock, flags);
-+	raw_spin_unlock_irqrestore(&patch_lock, flags);
- 
- 	return ret;
- }
-diff --git a/kernel/sched/work-simple.c b/kernel/sched/work-simple.c
-index c996f755dba6..e57a0522573f 100644
---- a/kernel/sched/work-simple.c
-+++ b/kernel/sched/work-simple.c
-@@ -10,6 +10,7 @@
- #include <linux/kthread.h>
- #include <linux/slab.h>
- #include <linux/spinlock.h>
-+#include <linux/export.h>
- 
- #define SWORK_EVENT_PENDING     (1 << 0)
- 
-diff --git a/localversion-rt b/localversion-rt
-index 22746d6390a4..d79dde624aaa 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt9
-+-rt10
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 4969c0d3dd67..f8c23dee5ae9 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -7217,7 +7217,7 @@ static int dev_cpu_callback(struct notifier_block *nfb,
- 		netif_rx_ni(skb);
- 		input_queue_head_incr(oldsd);
- 	}
--	while ((skb = skb_dequeue(&oldsd->input_pkt_queue))) {
-+	while ((skb = __skb_dequeue(&oldsd->input_pkt_queue))) {
- 		netif_rx_ni(skb);
- 		input_queue_head_incr(oldsd);
- 	}
+	tglx
