@@ -1,46 +1,225 @@
-From: Henrik Austad <haustad@cisco.com>
-Subject: [PATCH v2 4/4] rt-sched.h: do not unconditionally define syscall-numbers
-Date: Wed, 21 Oct 2015 21:00:11 +0200
-Message-ID: <1445454011-18839-5-git-send-email-haustad@cisco.com>
-References: <1445454011-18839-1-git-send-email-haustad@cisco.com>
-Cc: John Kacur <jkacur@redhat.com>, Henrik Austad <haustad@cisco.com>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from aer-iport-3.cisco.com ([173.38.203.53]:57073 "EHLO
-	aer-iport-3.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755540AbbJUTE0 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Oct 2015 15:04:26 -0400
-In-Reply-To: <1445454011-18839-1-git-send-email-haustad@cisco.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Haris Okanovic <haris.okanovic@ni.com>
+Subject: [RFC] [PATCH] fs/proc: add poll()ing support to /proc/interrupts
+Date: Wed, 21 Oct 2015 16:18:48 -0500
+Message-ID: <1445462328-14142-1-git-send-email-haris.okanovic@ni.com>
+Cc: linux-kernel@vger.kernel.org, josh.cartwright@ni.com,
+	Haris Okanovic <haris.okanovic@ni.com>
+To: linux-rt-users@vger.kernel.org, tglx@linutronix.de
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-These could be defined elsewhere, be careful when defining these
+Implement polling on procfs' "interrupts" file which observes changes
+to IRQ action handlers. A poll()ed file descriptor will be flagged
+EPOLLIN each time an action handler is registered or unregistered.
 
-Cc: John Kacur <jkacur@redhat.com>
-Signed-off-by: Henrik Austad <haustad@cisco.com>
+Use case:
+
+Designing a thread priority policy on a system is critically important
+for the correctness and performance of any application. Present tooling
+for the manipulation/implementation of irqthread priority policies
+assumes a one-shot configuration model, that is, they assume that all
+relevant irqthreads are created at boot.
+
+For example, Red Hat MRG offers two tools, rtctl and tuna, to configure
+irqthreads among other attributes in this manner. They can be run in
+boot scripts to tune irqthreads in early loaded drivers.
+
+However, many systems are much more dynamic: external devices may be
+hotplugged, modules may be loaded/unloaded, which means irqthreads may
+come-and-go throughout the lifetime of the system.
+
+This change implements a mechanism by which usermode might be aware of
+new irqthreads, so that it may act accordingly.
+
+Alternatives considered:
+
+Netlink can provide a similar usermode notification, but can't scope to
+only irqthreads or even kernel threads. It can notify on thread creation
+system wide, which is somewhat heavy handed as it increases the cost of
+all fork()s to capture a relatively limited event.
+
+Device managers like udev could also trigger irqthread configuration in
+some cases, like after hotplug. However, there's no guarantee that
+drivers are only loaded by the system's device manager or that
+irqthreads are only created during driver initialization.
+E.g. e1000 module creates irqthreads on load and on ifup.
+
+Race issue:
+
+Configuration from usermode is not entirely without problems. Daemons
+can't guarantee priority of new irqthreads before they start running.
+New drivers will operate under an invalid priority configuration for a
+period while a process executes to configure them.
+
+I'm not entirely sure how to deal with this or if it's worth added
+complexity. Delayed configuration seems sufficient so long as it's
+guaranteed in a reasonably short period. I believe that's achievable by
+appropriately prioritizing the config process.
+
+I'm curious how other RT developers deal with irqthread priority in a
+forced threading environment. Has anybody else seen a need for more
+dynamic configuration? Is this is a reasonable solution?
+
+Thanks,
+Haris
 ---
- src/include/rt-sched.h | 4 ++++
- 1 file changed, 4 insertions(+)
+ fs/proc/interrupts.c      | 65 ++++++++++++++++++++++++++++++++++++++++++++---
+ include/linux/interrupt.h |  3 +++
+ kernel/irq/manage.c       | 15 ++++++++++-
+ 3 files changed, 79 insertions(+), 4 deletions(-)
 
-diff --git a/src/include/rt-sched.h b/src/include/rt-sched.h
-index b46b1b16606f..679c4bd10ae2 100644
---- a/src/include/rt-sched.h
-+++ b/src/include/rt-sched.h
-@@ -43,9 +43,13 @@
+diff --git a/fs/proc/interrupts.c b/fs/proc/interrupts.c
+index a352d57..81ca63e 100644
+--- a/fs/proc/interrupts.c
++++ b/fs/proc/interrupts.c
+@@ -1,9 +1,11 @@
+ #include <linux/fs.h>
++#include <linux/poll.h>
+ #include <linux/init.h>
+ #include <linux/interrupt.h>
+ #include <linux/irqnr.h>
+ #include <linux/proc_fs.h>
+ #include <linux/seq_file.h>
++#include <linux/slab.h>
+ 
+ /*
+  * /proc/interrupts
+@@ -33,16 +35,73 @@ static const struct seq_operations int_seq_ops = {
+ 	.show  = show_interrupts
+ };
+ 
+-static int interrupts_open(struct inode *inode, struct file *filp)
++struct interrupts_fd_state {
++	atomic_long_t last_irq_change_count;
++};
++
++static int interrupts_open(struct inode *inode, struct file *file)
++{
++	int res;
++	struct interrupts_fd_state *privdata;
++	struct seq_file *sf;
++
++	privdata = kzalloc(sizeof(struct interrupts_fd_state), GFP_KERNEL);
++	if (!privdata) {
++		res = -ENOMEM;
++		goto exit;
++	}
++
++	res = seq_open(file, &int_seq_ops);
++	if (res) {
++		kfree(privdata);
++		goto exit;
++	}
++
++	sf = file->private_data;
++	sf->private = privdata;
++
++	atomic_long_set(&privdata->last_irq_change_count,
++		atomic_long_read(&irq_handler_change_count));
++
++exit:
++	return res;
++}
++
++static int interrupts_release(struct inode *inode, struct file *file)
++{
++	struct seq_file *sf = file->private_data;
++
++	kfree(sf->private);
++	return seq_release(inode, file);
++}
++
++static unsigned int interrupts_poll(struct file *file,
++	struct poll_table_struct *pt)
+ {
+-	return seq_open(filp, &int_seq_ops);
++	unsigned int mask = 0;
++	long newcount, oldcount;
++	struct seq_file *sf = file->private_data;
++	struct interrupts_fd_state *fds = sf->private;
++
++	/* Register for changes to IRQ handlers */
++	poll_wait(file, &irq_handler_change_wq, pt);
++
++	/* Store new change count in priv data */
++	newcount = atomic_long_read(&irq_handler_change_count);
++	oldcount = atomic_long_xchg(&fds->last_irq_change_count, newcount);
++
++	if (newcount != oldcount)
++		mask |= POLLIN | POLLRDNORM;
++
++	return mask;
+ }
+ 
+ static const struct file_operations proc_interrupts_operations = {
+ 	.open		= interrupts_open,
+ 	.read		= seq_read,
++	.poll		= interrupts_poll,
+ 	.llseek		= seq_lseek,
+-	.release	= seq_release,
++	.release	= interrupts_release,
+ };
+ 
+ static int __init proc_interrupts_init(void)
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index be7e75c..8d89eef 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -670,4 +670,7 @@ extern int early_irq_init(void);
+ extern int arch_probe_nr_irqs(void);
+ extern int arch_early_irq_init(void);
+ 
++extern atomic_long_t irq_handler_change_count;
++extern wait_queue_head_t irq_handler_change_wq;
++
+ #endif
+diff --git a/kernel/irq/manage.c b/kernel/irq/manage.c
+index f974485..5c7b34d 100644
+--- a/kernel/irq/manage.c
++++ b/kernel/irq/manage.c
+@@ -18,6 +18,7 @@
+ #include <linux/sched.h>
+ #include <linux/sched/rt.h>
+ #include <linux/task_work.h>
++#include <linux/poll.h>
+ 
+ #include "internals.h"
+ 
+@@ -32,6 +33,17 @@ static int __init setup_forced_irqthreads(char *arg)
+ early_param("threadirqs", setup_forced_irqthreads);
  #endif
  
- #ifdef __arm__
-+#ifndef __NR_sched_setattr
- #define __NR_sched_setattr		380
-+#endif
-+#ifndef __NR_sched_getattr
- #define __NR_sched_getattr		381
- #endif
-+#endif
++atomic_long_t irq_handler_change_count = ATOMIC_LONG_INIT(0);
++DECLARE_WAIT_QUEUE_HEAD(irq_handler_change_wq);
++
++/* Bump change count and wake up anything waiting on changes to
++ * IRQ handlers */
++static void __irq_handler_change_event(void)
++{
++	atomic_long_inc(&irq_handler_change_count);
++	wake_up_poll(&irq_handler_change_wq, POLLIN);
++}
++
+ static void __synchronize_hardirq(struct irq_desc *desc)
+ {
+ 	bool inprogress;
+@@ -1296,7 +1308,7 @@ __setup_irq(unsigned int irq, struct irq_desc *desc, struct irqaction *new)
+ 	new->dir = NULL;
+ 	register_handler_proc(irq, new);
+ 	free_cpumask_var(mask);
+-
++	__irq_handler_change_event();
+ 	return 0;
  
- #ifdef __tilegx__
- #define __NR_sched_setattr		274
+ mismatch:
+@@ -1431,6 +1443,7 @@ static struct irqaction *__free_irq(unsigned int irq, void *dev_id)
+ 	}
+ 
+ 	module_put(desc->owner);
++	__irq_handler_change_event();
+ 	return action;
+ }
+ 
 -- 
-1.9.1
-
+2.4.5
