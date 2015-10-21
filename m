@@ -1,114 +1,95 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: [PATCH] cyclictest: fix #ifdef broken by NO_PTHREAD_SETAFFINITY
-Date: Wed, 21 Oct 2015 20:13:50 +0200
-Message-ID: <20151021181350.GA32154@icarus.home.austad.us>
-References: <alpine.LFD.2.20.1510211833500.6297@riemann>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="0OAP2g/MAC+5xKAE"
-Cc: linux-rt-users@vger.kernel.org,
-	Clark Williams <williams@redhat.com>,
+From: Henrik Austad <haustad@cisco.com>
+Subject: [PATCH v2 2/4] Android: rename arch from bionic to android
+Date: Wed, 21 Oct 2015 21:00:09 +0200
+Message-ID: <1445454011-18839-3-git-send-email-haustad@cisco.com>
+References: <1445454011-18839-1-git-send-email-haustad@cisco.com>
+Cc: John Kacur <jkacur@redhat.com>, Henrik Austad <henrik@austad.us>,
 	Henrik Austad <haustad@cisco.com>
-To: John Kacur <jkacur@redhat.com>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f169.google.com ([209.85.212.169]:35312 "EHLO
-	mail-wi0-f169.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752156AbbJUSNz (ORCPT
+Received: from aer-iport-2.cisco.com ([173.38.203.52]:13993 "EHLO
+	aer-iport-2.cisco.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755566AbbJUTE1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 21 Oct 2015 14:13:55 -0400
-Received: by wicll6 with SMTP id ll6so103054538wic.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 21 Oct 2015 11:13:54 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <alpine.LFD.2.20.1510211833500.6297@riemann>
+	Wed, 21 Oct 2015 15:04:27 -0400
+In-Reply-To: <1445454011-18839-1-git-send-email-haustad@cisco.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Henrik Austad <henrik@austad.us>
 
---0OAP2g/MAC+5xKAE
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+Bionic is the libc implementation used in Android and should not be
+confused with the architecture.
 
-On Wed, Oct 21, 2015 at 06:34:48PM +0200, John Kacur wrote:
-> From 73bc7345eebb2244efc527928fdac7b8e29193cd Mon Sep 17 00:00:00 2001
-> From: John Kacur <jkacur@redhat.com>
-> Date: Wed, 21 Oct 2015 18:25:37 +0200
-> Subject: [PATCH] cyclictest: fix #ifdef broken by NO_PTHREAD_SETAFFINITY
->=20
-> Unfortunately c869f3cdcd023eec2f767eb4094caa88178717a4 wasn't sufficient
-> to fix #ifdef #else functionality for uclib, broken by the changes for
-> bionic.
+Cc: John Kacur <jkacur@redhat.com>
+Signed-off-by: Henrik Austad <haustad@cisco.com>
+---
+ Makefile                  |  3 +--
+ src/arch/android/Makefile | 22 ++++++++++++++++++++++
+ src/arch/bionic/Makefile  | 22 ----------------------
+ 3 files changed, 23 insertions(+), 24 deletions(-)
+ create mode 100644 src/arch/android/Makefile
+ delete mode 100644 src/arch/bionic/Makefile
 
-Yeah, you're right. The wonders of #ifdefs
-
-> In practice this probably didn't break anyone though, except possibly
-> for the new bionic code which probaly doesn't have too many adapters
-> (yet).
->=20
-> This should also help Henrik move the NO_PTHREAD_SETAFFINITY functionalit=
-y to
-> the bionic file.
-
-I'm ripping all of the NO_PTHREAD_SETAFFINITY out of cyclictest, so if you=
-=20
-don't mind, hold off pushing this to the repo -I'm cleaning up my mess.
-
-> Signed-off-by: John Kacur <jkacur@redhat.com>
-> ---
->  src/cyclictest/cyclictest.c | 9 ++++-----
->  1 file changed, 4 insertions(+), 5 deletions(-)
->=20
-> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-> index 00168e22fc7f..975e7858fb8e 100644
-> --- a/src/cyclictest/cyclictest.c
-> +++ b/src/cyclictest/cyclictest.c
-> @@ -83,6 +83,10 @@ int sched_setaffinity (__pid_t __pid, size_t __cpusets=
-ize,
->  #define CPU_SET(cpu, cpusetp)
->  #define CPU_ZERO(cpusetp)
-> =20
-> +#else
-> +extern int clock_nanosleep(clockid_t __clock_id, int __flags,
-> +			   __const struct timespec *__req,
-> +			   struct timespec *__rem);
->  #endif
-> =20
->  #ifdef NO_PTHREAD_SETAFFINITY
-> @@ -91,11 +95,6 @@ static inline int pthread_setaffinity_np(pthread_t thr=
-ead, size_t cpusetsize,
->  {
->      return sched_setaffinity(0, cpusetsize, cpuset);
->  }
-> -
-> -#else
-> -extern int clock_nanosleep(clockid_t __clock_id, int __flags,
-> -			   __const struct timespec *__req,
-> -			   struct timespec *__rem);
->  #endif
-> =20
->  #define USEC_PER_SEC		1000000
-> --=20
-> 2.4.3
->=20
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users"=
- in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
---=20
-Henrik Austad
-
---0OAP2g/MAC+5xKAE
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
-
-iEYEARECAAYFAlYn1d0ACgkQ6k5VT6v45ll2yACfVKs8ubJRLoeO0Fw38o+gRrxg
-29EAoNZ5tiBCyAjFVNVEXwBxz6hPHU6s
-=ZAjP
------END PGP SIGNATURE-----
-
---0OAP2g/MAC+5xKAE--
+diff --git a/Makefile b/Makefile
+index 703333fe1b42..86a5c4b211a0 100644
+--- a/Makefile
++++ b/Makefile
+@@ -69,8 +69,7 @@ ifdef HAVE_PARSE_CPUSTRING_ALL
+ endif
+ endif
+ 
+-# Include any arch specific makefiles here.
+-include src/arch/bionic/Makefile
++include src/arch/android/Makefile
+ 
+ VPATH	= src/cyclictest:
+ VPATH	+= src/signaltest:
+diff --git a/src/arch/android/Makefile b/src/arch/android/Makefile
+new file mode 100644
+index 000000000000..e25f67203e5a
+--- /dev/null
++++ b/src/arch/android/Makefile
+@@ -0,0 +1,22 @@
++
++# Bionic (android) does not have:
++# - pthread barriers
++# - pthread_[gs]etaffinity
++#
++# Typically see something like "aarch64-linux-android"
++ifeq (android,$(ostype))
++	USE_BIONIC := 1
++	CFLAGS += -DPTHREAD_BIONIC
++
++	LDFLAGS += -pie
++# -lrt and -lpthread is in standard bionic library, no standalone library
++	LIBS := $(filter-out -lrt,$(LIBS))
++	LIBS := $(filter-out -lpthread,$(LIBS))
++
++# BIONIC does not support PI, barriers and has different files in
++# include/. This means that currently, only these binaries will compile
++# and link properly:
++# - cyclictest
++# - hackbench
++	sources := cyclictest.c hackbench.c
++endif
+diff --git a/src/arch/bionic/Makefile b/src/arch/bionic/Makefile
+deleted file mode 100644
+index e25f67203e5a..000000000000
+--- a/src/arch/bionic/Makefile
++++ /dev/null
+@@ -1,22 +0,0 @@
+-
+-# Bionic (android) does not have:
+-# - pthread barriers
+-# - pthread_[gs]etaffinity
+-#
+-# Typically see something like "aarch64-linux-android"
+-ifeq (android,$(ostype))
+-	USE_BIONIC := 1
+-	CFLAGS += -DPTHREAD_BIONIC
+-
+-	LDFLAGS += -pie
+-# -lrt and -lpthread is in standard bionic library, no standalone library
+-	LIBS := $(filter-out -lrt,$(LIBS))
+-	LIBS := $(filter-out -lpthread,$(LIBS))
