@@ -1,118 +1,227 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [ANNOUNCE] rt-tests-v0.96
-Date: Thu, 22 Oct 2015 13:06:19 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510221252430.5687@riemann>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: [4.1.3-rt10][RFC PATCH] clk: use raw locks for locking
+Date: Thu, 22 Oct 2015 18:10:59 +0300
+Message-ID: <5628FC83.3020709@ti.com>
+References: <1445374759-26785-1-git-send-email-grygorii.strashko@ti.com>
+ <20151021092550.20687.52171@quantum>
 Mime-Version: 1.0
-Content-Type: multipart/mixed; BOUNDARY="461456403-1155104725-1445511980=:5687"
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Sekhar Nori <nsekhar@ti.com>, <linux-clk@vger.kernel.org>,
+	<linux-kernel@vger.kernel.org>
+To: Michael Turquette <mturquette@baylibre.com>, <tglx@linutronix.de>,
+	<linux@arm.linux.org.uk>, <linux-rt-users@vger.kernel.org>,
+	<balbi@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f180.google.com ([209.85.212.180]:33127 "EHLO
-	mail-wi0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756090AbbJVLGX (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Oct 2015 07:06:23 -0400
+Received: from comal.ext.ti.com ([198.47.26.152]:37949 "EHLO comal.ext.ti.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1756693AbbJVPLS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 22 Oct 2015 11:11:18 -0400
+In-Reply-To: <20151021092550.20687.52171@quantum>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On 10/21/2015 12:25 PM, Michael Turquette wrote:
+> Quoting Grygorii Strashko (2015-10-20 13:59:19)
+>> Hi Mike, All,
+>>
+>> [not for merge]
+>>
+>> As we discussed I've prepared patch which introduces config option
+>> COMMON_CLK_USE_RAW_LOCKS which, once enabled, switches CCF to use ra=
+w locks
+>> for locking=E2=80=8B. This way it will be possible to call clk_enabl=
+e()/clk_disable()
+>> from atomic context on -RT [1].
+>> Unfortunately (and as expected [2]), if COMMON_CLK_USE_RAW_LOCKS is =
+enebled
+>> it starts raising issues with TI's clock drivers (and this is like a=
+ avalanche):
+>> - some TI drivers calls platform specific code which, in turn, uses =
+spinlocks;
+>> - one driver is implemented using MMIO regmap which uses spinlocks.
+>>
+>> As result, to get a complete solution I've had to make more patches:
+>>   regmap: use raw locks for locking
+>>   ARM: OMAP2+: powerdomain: use raw locks for locking
+>>   clk: ti: drop locking code from mux/divider drivers
+>>   clk: use raw locks for locking
+>>
+>> This solution requires the use of raw locks in many places of kernel=
+,
+>> and it's bad for the -RT. For example, regmap is used by only one TI=
+'s clock,
+>> but after switching to use raw locks it will affect also on all driv=
+ers which
+>> use 'syscon'.
+>=20
+> Well that does sound like a clusterfuck. Out of curiosity, where do y=
+ou
+> need to call clk_enable/clk_disable from atomic context?
 
---461456403-1155104725-1445511980=:5687
-Content-Type: text/plain; charset=ISO-8859-15
-Content-Transfer-Encoding: 8BIT
+Yep :P omap_gpio_debounce as below.=20
 
-Dear RT Folks
+>=20
+> I wonder if the very idea of calling clk_enable/clk_disable from atom=
+ic
+> context is valid for -rt... Clearly the clk.h api states that these
+> functions are safe to call in irq context, which it seems is true for
+> -rt, right?
 
-We are pleased to announce the latest version of rt-tests
+This is game play with terminology :)
 
-There is the usual round of clean-ups.
-- we are continuing to improve the make system
-- Henrik cleaned up the new feature to run cyclictest in Android
-specifically he removed all the ugly #ifdefs to an android specific file
+/**
+ * clk_enable - inform the system when the clock source should be runni=
+ng.
+ * @clk: clock source
+ *
+ * If the clock can not be enabled/disabled, this should return success=
+=2E
+ *
+ * May be called from atomic contexts.
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Looks like above has to be updated for -RT.
++ RT_FULL: clk_enable() should not be called from atomic contexts
 
-There is a new feature to trace information about latency spikes,
-to see if we can find any patterns to the spikes
+ *
+ * Returns success (0) or negative errno.
+ */
+int clk_enable(struct clk *clk);
 
-Here is what a sample run with the new feature looks like. (non-rt kernel)
 
-su -c './cyclictest -t4 -p99 --spike=30 --duration=60'
-Password:
-policy: fifo: loadavg: 0.69 0.78 0.60 1/641 6420
+"Atomic context" means the same as for -RT as for non-RT.=20
+HW interrupt context means the same as for -RT as for non-RT.=20
 
-T: 0 ( 6385) P:99 I:1000 C:  59996 Min:      2 Act:    2 Avg:    2 Max:
-1476
-T: 1 ( 6386) P:99 I:1500 C:  39999 Min:      1 Act:    2 Avg:    2 Max:
-952
-T: 2 ( 6387) P:99 I:2000 C:  29999 Min:      2 Act:    2 Avg:    3 Max:
-504
-T: 3 ( 6388) P:99 I:2500 C:  23999 Min:      1 Act:    2 Avg:    2 Max:
-1423
+-RT is just some changes in SW to reduce number and size of atomic sect=
+ions,
+and amount of code executed in HW interrupt context.
+(preferably without interacting with people).
 
-T: 2 Spike:     504: TS:    490531620
-T: 2 Spike:     270: TS:    526847386
-T: 2 Spike:      51: TS:    527211167
-T: 2 Spike:      44: TS:    528261160
-T: 1 Spike:      31: TS:    528952631
-T: 2 Spike:      32: TS:    529253148
-T: 2 Spike:      52: TS:    529317169
-T: 0 Spike:    1444: TS:    530049519
-T: 1 Spike:     419: TS:    530049520
-T: 0 Spike:    1476: TS:    530318551
-T: 1 Spike:     952: TS:    530318553
-T: 3 Spike:    1423: TS:    530318551
-T: 0 Spike:     972: TS:    531532046
-T: 0 Spike:      34: TS:    531987109
-spikes = 14
+>=20
+> The problem is that you want to call them in a context whose meaning =
+is
+> different in the -rt world. So it would be helpful for me to get a
+> better understanding of some examples of where things are going wrong
+> for you.
+>=20
+>>
+>> So, it seems that in many cases it might be more simple to just move
+>> clk_enable()/clk_disable() calls out of atomic context :)
+>>
+>> FYI: Complete set of patches (based on v4.1.10-rt10) can be found at=
+:
+>> - git@git.ti.com:~gragst/ti-linux-kernel/gragsts-ti-linux-kernel.git
+>> - branch: linux-4.1.y-rt-10-clk-raw-lock
+>>
+>> [1] http://marc.info/?l=3Dlinux-rt-users&m=3D143937432529680&w=3D2
+>> [2] http://marc.info/?l=3Dlinux-rt-users&m=3D144284086804316&w=3D2
+>>
+>> --------------------------------------------------------------------=
+-
+>> This patch optionally allows CCF core to use raw locks in clk_enable=
+()/
+>> clk_disable() path. Also, convert generic clock drivers in
+>> the similar way (clk-divider, clk-fractional-divider,
+>> clk-gate, clk-mux).
+>>
+>> This patch introduces Kconfig option COMMON_CLK_USE_RAW_LOCKS.
+>> Once enabled, COMMON_CLK_USE_RAW_LOCKS will switch the common clock
+>> framework to use raw locks for locking and, this way, makes it
+>> possible to call clk_enable()/clk_disable() from atomic context.
+>>
+>> This fixes backtrace like:
+>> BUG: sleeping function called from invalid context at kernel/locking=
+/rtmutex.c:917
+>> in_atomic(): 1, irqs_disabled(): 128, pid: 128, name: sh
+>> 4 locks held by sh/128:
+>>   #0:  (sb_writers#4){.+.+.+}, at: [<c019d44c>] vfs_write+0x13c/0x16=
+4
+>>   #1:  (&of->mutex){+.+.+.}, at: [<c0214bbc>] kernfs_fop_write+0x48/=
+0x19c
+>>   #2:  (s_active#33){.+.+.+}, at: [<c0214bc4>] kernfs_fop_write+0x50=
+/0x19c
+>>   #3:  (&bank->lock){......}, at: [<c0405424>] omap_gpio_debounce+0x=
+1c/0x120
+>> irq event stamp: 3532
+>> hardirqs last  enabled at (3531): [<c0186ffc>] kfree+0xf8/0x464
+>> hardirqs last disabled at (3532): [<c06a0ef0>] _raw_spin_lock_irqsav=
+e+0x1c/0x54
+>> softirqs last  enabled at (0): [<c004572c>] copy_process.part.54+0x3=
+f4/0x1930
+>> softirqs last disabled at (0): [<  (null)>]   (null)
+>> Preemption disabled at:[<  (null)>]   (null)
+>>
+>> CPU: 1 PID: 128 Comm: sh Not tainted 4.1.9-rt8-01685-g0660ad10-dirty=
+ #39
+>> Hardware name: Generic DRA74X (Flattened Device Tree)
+>> [<c0019148>] (unwind_backtrace) from [<c00144b0>] (show_stack+0x10/0=
+x14)
+>> [<c00144b0>] (show_stack) from [<c069b4dc>] (dump_stack+0x7c/0x98)
+>> [<c069b4dc>] (dump_stack) from [<c06a148c>] (rt_spin_lock+0x20/0x60)
+>> [<c06a148c>] (rt_spin_lock) from [<c056cb6c>] (clk_enable_lock+0x14/=
+0xb0)
+>> [<c056cb6c>] (clk_enable_lock) from [<c056fed8>] (clk_enable+0xc/0x2=
+c)
+>> [<c056fed8>] (clk_enable) from [<c0405474>] (omap_gpio_debounce+0x6c=
+/0x120)
+>> [<c0405474>] (omap_gpio_debounce) from [<c0404034>] (export_store+0x=
+70/0xfc)
+>> [<c0404034>] (export_store) from [<c0214c2c>] (kernfs_fop_write+0xb8=
+/0x19c)
+>> [<c0214c2c>] (kernfs_fop_write) from [<c019cb00>] (__vfs_write+0x20/=
+0xd8)
+>> [<c019cb00>] (__vfs_write) from [<c019d3a0>] (vfs_write+0x90/0x164)
+>> [<c019d3a0>] (vfs_write) from [<c019dbc4>] (SyS_write+0x44/0x9c)
+>> [<c019dbc4>] (SyS_write) from [<c0010300>] (ret_fast_syscall+0x0/0x5=
+4)
+>> EXT4-fs (mmcblk1p2): error count since last fsck: 2
+>> EXT4-fs (mmcblk1p2): initial error at time 1437484540: ext4_put_supe=
+r:789
+>> EXT4-fs (mmcblk1p2): last error at time 1437484540: ext4_put_super:7=
+89
+>=20
+> Right, so things go sideways here because omap_gpio_debounce uses
+> raw_spin_lock_irqsave. Is this necessary? I notice that similar
+> implementations of the same .set_debounce callback are using regmap o=
+r
+> regular spinlocks (e.g. wm831x_gpio_set_debounce).
 
-Summary of Changes
-------------------
+Yes. this is only one place I identified for now and I'll try to update
+OMAP GPIO debounce code instead of trying to patch CCF
+(especially taking into account that I'm the only one who is asking
+ questions about CCF vs -RT). But we are not intensively testing PM
+(suspend/cpufreq/cpuidle) now, so...
+It's difficult to compare with other GPIO drivers simply because they m=
+ay
+belong to platforms which no one has tried to use with -RT.
 
-Clark Williams (3):
-  Makefile: add target to create OBJDIR before use
-  specfile: add signaltest manpage to files section and remove trailing
-    whitespace in changelog
-  Makefile: have distclean remove .asc file for tarball
+>=20
+> Thanks for educating me on this. I never look at the -rt stuff so I'm
+> sure to ask some dumb questions.
+>=20
+>>
+>> Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+>> ---
+>>   drivers/clk/Kconfig                  | 11 +++++++++++
+>>   drivers/clk/clk-divider.c            | 10 +++++-----
+>>   drivers/clk/clk-fractional-divider.c | 10 +++++-----
+>>   drivers/clk/clk-gate.c               |  6 +++---
+>>   drivers/clk/clk-mux.c                |  8 ++++----
+>>   drivers/clk/clk.c                    | 12 +++++++++---
+>>   include/linux/clk-provider.h         | 38 ++++++++++++++++++++++++=
+++----------
+>>   7 files changed, 65 insertions(+), 30 deletions(-)
+>>
 
-Henrik Austad (4):
-  Android: clean up the bypass ifdeffery
-  Android: rename arch from bionic to android
-  Android: Expand match for android in ostype
-  rt-sched.h: do not unconditionally define syscall-numbers
+[...]
 
-John Kacur (6):
-  cyclictest: Clean-ups in timerthread before working on it
-  Makefile: OBJDIR should be an order-only-prerequisite
-  Makefile: Move TARGETS back to a more logical place in the Makefile
-  cyclictest: Add a feature to record spikes
-  cyclictest: fix #ifdef broken by NO_PTHREAD_SETAFFINITY
-  Makefile: Version bump to v0.96
 
-Uwe Kleine-König (1):
-  Fix some trivial typos found by codespell(1)
-
-You can fetch it via git by cloning one of the following repos
-
-git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
-https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
-
-tag: v0.96
-
-You can also fetch the tarball here
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.96.tar.xz
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.96.tar.gz
-
-older versions are in
-https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests/older
-
-I've pushed a branch for new development, so you can start sending us your 
-patches, and bug reports.
-
-branch: devel/v0.97
-
-Enjoy!
-
-John Kacur
---461456403-1155104725-1445511980=:5687--
+--=20
+regards,
+-grygorii
+S/ILKP
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
