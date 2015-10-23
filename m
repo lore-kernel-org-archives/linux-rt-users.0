@@ -1,55 +1,61 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rt-tests: Makefile: fixed dropped quote in help target
-Date: Thu, 22 Oct 2015 22:50:00 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1510222249340.5508@riemann>
-References: <20151022144155.719760c4@sluggy>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: [PATCH v3 2/4] KVM: use simple waitqueue for vcpu->wq
+Date: Fri, 23 Oct 2015 13:51:05 +0200
+Message-ID: <562A1F29.9000101@bmw-carit.de>
+References: <1445326090-1698-1-git-send-email-daniel.wagner@bmw-carit.de>
+ <1445326090-1698-3-git-send-email-daniel.wagner@bmw-carit.de>
+ <20151020140031.GG17308@twins.programming.kicks-ass.net>
+ <20151021092411.GD15591@fergus.ozlabs.ibm.com>
+ <20151021111305.GL17308@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Paul Mackerras <paulus@ozlabs.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wi0-f171.google.com ([209.85.212.171]:34120 "EHLO
-	mail-wi0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932530AbbJVUuE (ORCPT
+Received: from mail.bmw-carit.de ([62.245.222.98]:47665 "EHLO
+	mail.bmw-carit.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751624AbbJWLvK (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 22 Oct 2015 16:50:04 -0400
-Received: by wikq8 with SMTP id q8so49640968wik.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 22 Oct 2015 13:50:03 -0700 (PDT)
-In-Reply-To: <20151022144155.719760c4@sluggy>
+	Fri, 23 Oct 2015 07:51:10 -0400
+In-Reply-To: <20151021111305.GL17308@twins.programming.kicks-ass.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi Paul,
 
-On Thu, 22 Oct 2015, Clark Williams wrote:
-
-> From 2b16becaef4e70cd7630785850d5fefe4949533b Mon Sep 17 00:00:00 2001
-> From: Clark Williams <williams@redhat.com>
-> Date: Thu, 22 Oct 2015 14:38:49 -0500
-> Subject: [PATCH] Makefile: fixed dropped quote in help target text
+On 10/21/2015 01:13 PM, Peter Zijlstra wrote:
+> On Wed, Oct 21, 2015 at 08:24:11PM +1100, Paul Mackerras wrote:
+>> On Tue, Oct 20, 2015 at 04:00:31PM +0200, Peter Zijlstra wrote:
+>>>
+>>> Should we not take this opportunity to get rid of these open-coded wait
+>>> loops?
+>>>
+>>>
+>>> Does this work?
+>>
+>> No, on Book3S HV (POWER8) the VM hangs immediately after the kernel
+>> brings up all the secondary vCPUs, and is then unkillable.  I'm not
+>> sure what's wrong, although I wonder why you have TASK_IDLE rather
+>> than TASK_INTERRUPTIBLE in the ___wait_event call.
 > 
-> Signed-off-by: Clark Williams <williams@redhat.com>
-> ---
->  Makefile | 2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
+> This was under the assumption that INTERRUPTIBLE was because you wanted
+> to avoid increasing load. Which was based on the lack of
+> signal_pending() tests near there (although there might have been in the
+> outermost loop which I overlooked).
 > 
-> diff --git a/Makefile b/Makefile
-> index 908187202ba3..2e6ad8a1107f 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -201,7 +201,7 @@ install_hwlatdetect: hwlatdetect
->  	@echo "    install   :  install tests to local filesystem"
->  	@echo "    clean     :  remove object files"
->  	@echo "    distclean :  remove all generated files"
-> -	@echo "	   tarball   :  make a rt-tests tarball suitable for release
-> +	@echo "    tarball   :  make a rt-tests tarball suitable for release"
->  	@echo "    help      :  print this message"
->  
->  .PHONY: tags
-> -- 
-> 2.4.3
-> 
-> --
+> If it does rely on signals, then this was obviously false and TASK_IDLE
+> is indeed wrong.
 
-Oops, thanks
+If I get this right, the current patch is okay but you are going to
+redactor the code? Maybe I can cherry pick your patch then and update
+this patch accordingly.
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+cheers,
+daniel
