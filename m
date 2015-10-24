@@ -1,61 +1,38 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: [PATCH v3 2/4] KVM: use simple waitqueue for vcpu->wq
-Date: Fri, 23 Oct 2015 13:51:05 +0200
-Message-ID: <562A1F29.9000101@bmw-carit.de>
-References: <1445326090-1698-1-git-send-email-daniel.wagner@bmw-carit.de>
- <1445326090-1698-3-git-send-email-daniel.wagner@bmw-carit.de>
- <20151020140031.GG17308@twins.programming.kicks-ass.net>
- <20151021092411.GD15591@fergus.ozlabs.ibm.com>
- <20151021111305.GL17308@twins.programming.kicks-ass.net>
+From: Oliver <lich000king@yahoo.de>
+Subject: Re: 3.18 RT freezes on Raspberry Pi 2
+Date: Sat, 24 Oct 2015 11:18:50 +0000 (UTC)
+Message-ID: <loom.20151024T131507-991@post.gmane.org>
+References: <3671201425478878@web10j.yandex.ru> <loom.20150306T043408-818@post.gmane.org> <loom.20150309T025355-426@post.gmane.org> <20150309141038.GC13768@linutronix.de> <3863561427712041@web3j.yandex.ru> <loom.20150331T153850-579@post.gmane.org> <loom.20150927T172648-968@post.gmane.org> <560B9543.1020106@autostatic.com> <loom.20150930T110905-205@post.gmane.org> <loom.20151011T141552-925@post.gmane.org> <5624051F.3070903@autostatic.com> <loom.20151019T173209-888@post.gmane.org> <5625472E.5030909@autostatic.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset=us-ascii
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Paul Mackerras <paulus@ozlabs.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:47665 "EHLO
-	mail.bmw-carit.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751624AbbJWLvK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 23 Oct 2015 07:51:10 -0400
-In-Reply-To: <20151021111305.GL17308@twins.programming.kicks-ass.net>
+Received: from plane.gmane.org ([80.91.229.3]:55365 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751205AbbJXLTF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 24 Oct 2015 07:19:05 -0400
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1Zpwqf-0002bG-7t
+	for linux-rt-users@vger.kernel.org; Sat, 24 Oct 2015 13:18:57 +0200
+Received: from 80-218-108-93.dclient.hispeed.ch ([80.218.108.93])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sat, 24 Oct 2015 13:18:57 +0200
+Received: from lich000king by 80-218-108-93.dclient.hispeed.ch with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Sat, 24 Oct 2015 13:18:57 +0200
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Paul,
+Ok, I am going to try this.
+Did you use this image:
+http://sjoerd.luon.net/posts/2015/02/debian-jessie-on-rpi2/
 
-On 10/21/2015 01:13 PM, Peter Zijlstra wrote:
-> On Wed, Oct 21, 2015 at 08:24:11PM +1100, Paul Mackerras wrote:
->> On Tue, Oct 20, 2015 at 04:00:31PM +0200, Peter Zijlstra wrote:
->>>
->>> Should we not take this opportunity to get rid of these open-coded wait
->>> loops?
->>>
->>>
->>> Does this work?
->>
->> No, on Book3S HV (POWER8) the VM hangs immediately after the kernel
->> brings up all the secondary vCPUs, and is then unkillable.  I'm not
->> sure what's wrong, although I wonder why you have TASK_IDLE rather
->> than TASK_INTERRUPTIBLE in the ___wait_event call.
-> 
-> This was under the assumption that INTERRUPTIBLE was because you wanted
-> to avoid increasing load. Which was based on the lack of
-> signal_pending() tests near there (although there might have been in the
-> outermost loop which I overlooked).
-> 
-> If it does rely on signals, then this was obviously false and TASK_IDLE
-> is indeed wrong.
+I have installed it. It is on 3.18.5
+How did you get to 4.1.7? Did you use some unstable repository/which one?
+And then you installed 4.1.7-rt8 the way Mikhail described?
 
-If I get this right, the current patch is okay but you are going to
-redactor the code? Maybe I can cherry pick your patch then and update
-this patch accordingly.
+Oliver
 
-cheers,
-daniel
