@@ -1,45 +1,74 @@
-From: Javier Sanz <jsanza@gmail.com>
-Subject: Re: numa.h for rt-test
-Date: Mon, 26 Oct 2015 12:05:28 +0100
-Message-ID: <CAOLSsAwhY1OnTHKfHW2_es4mbGrum5+s5iioNyLmem4SGMPcyw@mail.gmail.com>
-References: <CAOLSsAxE8ppH2_wVjMOxskOGKtporbwaztG8GzfvN88gJyO20Q@mail.gmail.com>
+From: Boqun Feng <boqun.feng@gmail.com>
+Subject: Re: [PATCH v3 1/4] wait.[ch]: Introduce the simple waitqueue (swait)
+ implementation
+Date: Mon, 26 Oct 2015 20:04:26 +0800
+Message-ID: <20151026120426.GA1497@fixme-laptop.cn.ibm.com>
+References: <1445326090-1698-1-git-send-email-daniel.wagner@bmw-carit.de>
+ <1445326090-1698-2-git-send-email-daniel.wagner@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: RT <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yk0-f171.google.com ([209.85.160.171]:36276 "EHLO
-	mail-yk0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752934AbbJZLF6 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 26 Oct 2015 07:05:58 -0400
-Received: by ykba4 with SMTP id a4so173285835ykb.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 26 Oct 2015 04:05:57 -0700 (PDT)
-In-Reply-To: <CAOLSsAxE8ppH2_wVjMOxskOGKtporbwaztG8GzfvN88gJyO20Q@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+	protocol="application/pgp-signature"; boundary="bp/iNruPH9dso1Pn"
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1445326090-1698-2-git-send-email-daniel.wagner@bmw-carit.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Sorry,
 
-make NUMA=0
+--bp/iNruPH9dso1Pn
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
 
-Tx
+Hi Daniel,
 
-2015-10-26 11:56 GMT+01:00 Javier Sanz <jsanza@gmail.com>:
-> Hello,
->
-> I am trying to compile rt-tests-0.96 and i got :
->
-> root@darkstar rt-tests-0.96]# make
-> gcc -D VERSION=0.96 -c src/cyclictest/cyclictest.c -Wall -Wno-nonnull
-> -O2 -DNUMA -D_GNU_SOURCE -Isrc/include -o bld/cyclictest.o
-> In file included from src/cyclictest/cyclictest.c:39:0:
-> src/cyclictest/rt_numa.h:29:18: fatal error: numa.h: No such file or directory
-> compilation terminated.
-> Makefile:87: recipe for target 'bld/cyclictest.o' failed
-> make: *** [bld/cyclictest.o] Error 1
-> [root@darkstar rt-tests-0.96]#
->
->
-> why do i need to get numa.h ??
->
-> Tx
+On Tue, Oct 20, 2015 at 09:28:07AM +0200, Daniel Wagner wrote:
+> +
+> +/*
+> + * The thing about the wake_up_state() return value; I think we can ignore it.
+> + *
+> + * If for some reason it would return 0, that means the previously waiting
+> + * task is already running, so it will observe condition true (or has already).
+> + */
+> +void swake_up_locked(struct swait_queue_head *q)
+> +{
+> +	struct swait_queue *curr;
+> +
+> +	list_for_each_entry(curr, &q->task_list, task_list) {
+> +		wake_up_process(curr->task);
+> +		list_del_init(&curr->task_list);
+> +		break;
+
+Just be curious, what's this break for? Or what's this loop(?) for?
+
+> +	}
+> +}
+> +EXPORT_SYMBOL(swake_up_locked);
+> +
+
+Regards,
+Boqun
+
+--bp/iNruPH9dso1Pn
+Content-Type: application/pgp-signature; name="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAABCAAGBQJWLhbHAAoJEEl56MO1B/q4oVsIAJ1lCadePFAx/gD3JHx0DTZa
+eub17aa4Wq48xCJkD7cxElsw2XppJEjSHEKx/4VcIGetuWtzBF1SyBe4PTXtbx4y
+pRBT/2Ly5wAunPv2D+r2tcwr6yLnuoKy0otDAKpSRoWI6mpS7wMFqTcPBV9qFHf2
+31HJrJIVl8yuLM3icIJxzUzSddJGVZvXC/lSjJ5VOxplL2IguuNUeracO1wuBhuv
+QKz+gLDeHkKA4LBEFalRw7Xmxgk6PRtgkJtz/u4ZenTVllYH9RldTII79iPugLU3
+jveEgdcmSYynYNFLVJiwIYwJLVDAaNarn0xWuApAj5s/7hqUUm6pFzcHCX2QDpw=
+=dJ25
+-----END PGP SIGNATURE-----
+
+--bp/iNruPH9dso1Pn--
