@@ -1,87 +1,61 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH -rt] Revert "net: use synchronize_rcu_expedited()"
-Date: Mon, 26 Oct 2015 17:44:22 -0700
-Message-ID: <20151027004422.GH5105@linux.vnet.ibm.com>
-References: <1445886895-3692-1-git-send-email-joshc@ni.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: numa.h for rt-test
+Date: Tue, 27 Oct 2015 09:49:54 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1510270946570.5915@riemann.fritz.box>
+References: <CAOLSsAxE8ppH2_wVjMOxskOGKtporbwaztG8GzfvN88gJyO20Q@mail.gmail.com> <CAOLSsAwhY1OnTHKfHW2_es4mbGrum5+s5iioNyLmem4SGMPcyw@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: tglx@linutronix.de, bigeasy@linutronix.de,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>
-To: Josh Cartwright <joshc@ni.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1445886895-3692-1-git-send-email-joshc@ni.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Javier Sanz <jsanza@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wi0-f179.google.com ([209.85.212.179]:35833 "EHLO
+	mail-wi0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753956AbbJ0IuC (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 27 Oct 2015 04:50:02 -0400
+Received: by wicll6 with SMTP id ll6so148832506wic.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 27 Oct 2015 01:50:01 -0700 (PDT)
+In-Reply-To: <CAOLSsAwhY1OnTHKfHW2_es4mbGrum5+s5iioNyLmem4SGMPcyw@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Oct 26, 2015 at 02:14:55PM -0500, Josh Cartwright wrote:
-> This reverts commit be3fc413da9eb17cce0991f214ab019d16c88c41.
+
+
+On Mon, 26 Oct 2015, Javier Sanz wrote:
+
+> Sorry,
 > 
-> While the use of synchronize_rcu_expedited() might make
-> synchronize_net() "faster", it does so at significant cost on RT
-> systems, as expediting a grace period forcibly preempts any
-> high-priority RT tasks (via the stop_machine() mechanism).
+> make NUMA=0
 > 
-> Without be3fc413da9e reverted, we can observe a latency spike up to 30us
-> with cyclictest by rapidly unplugging/reestablishing an ethernet link.
+> Tx
 > 
-> Cc: Eric Dumazet <eric.dumazet@gmail.com>
-> Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-> Cc: David S. Miller <davem@davemloft.net>
-> Signed-off-by: Josh Cartwright <joshc@ni.com>
+> 2015-10-26 11:56 GMT+01:00 Javier Sanz <jsanza@gmail.com>:
+> > Hello,
+> >
+> > I am trying to compile rt-tests-0.96 and i got :
+> >
+> > root@darkstar rt-tests-0.96]# make
+> > gcc -D VERSION=0.96 -c src/cyclictest/cyclictest.c -Wall -Wno-nonnull
+> > -O2 -DNUMA -D_GNU_SOURCE -Isrc/include -o bld/cyclictest.o
+> > In file included from src/cyclictest/cyclictest.c:39:0:
+> > src/cyclictest/rt_numa.h:29:18: fatal error: numa.h: No such file or directory
+> > compilation terminated.
+> > Makefile:87: recipe for target 'bld/cyclictest.o' failed
+> > make: *** [bld/cyclictest.o] Error 1
+> > [root@darkstar rt-tests-0.96]#
+> >
+> >
+> > why do i need to get numa.h ??
+> >
+> > Tx
+> --
 
-Hmmm...  If I remember correctly, using expedited here resulted
-in impressive performance improvements in some important cases.
-Perhaps things have changed (I must defer to Eric), but if not, how
-about something like this instead?
+I think the original thinking was that it is a trivial thing to install 
+the numa libs even if you are not going to use them, but I have personally 
+liked this. I could imagine that this requirement is not 
+always so simple in the embedded space. I'll look into seeing if I can 
+remove this. (or try yourself, and send me a patch.)
 
-	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREMPT_RT_FULL))
-		synchronize_rcu_expedited();
-	else
-		synchronize_rcu();
+Thanks
 
-Alternatively, a boot-time option could be used:
-
-	if (rtnl_is_locked() && !some_rt_boot_parameter)
-		synchronize_rcu_expedited();
-	else
-		synchronize_rcu();
-
-I believe that the first alternative is better because it does the right
-thing without user intervention.  The second would be preferred should
-distros want to offer full RT by default, but I am guessing thta most
-distros would be reluctant to do this for some time to come.
-
-Either way, these approaches have the advantage of giving RT users the
-latency they need, even in the face of networking configuration changes,
-while giving non-RT users the required performance of the networking
-configuration changes themselves.
-
-							Thanx, Paul
-
-> ---
->  net/core/dev.c | 5 +----
->  1 file changed, 1 insertion(+), 4 deletions(-)
-> 
-> diff --git a/net/core/dev.c b/net/core/dev.c
-> index f8c23de..869ef62 100644
-> --- a/net/core/dev.c
-> +++ b/net/core/dev.c
-> @@ -6969,10 +6969,7 @@ EXPORT_SYMBOL(free_netdev);
->  void synchronize_net(void)
->  {
->  	might_sleep();
-> -	if (rtnl_is_locked())
-> -		synchronize_rcu_expedited();
-> -	else
-> -		synchronize_rcu();
-> +	synchronize_rcu();
->  }
->  EXPORT_SYMBOL(synchronize_net);
-> 
-> -- 
-> 2.5.1
-> 
+John
