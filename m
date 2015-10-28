@@ -1,91 +1,138 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH 0/7] Backport of swait v3 patches to v4.1.10-rt10
-Date: Wed, 28 Oct 2015 11:05:05 +0100
-Message-ID: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH 6/7] block: blk-mq: Use swait
+Date: Wed, 28 Oct 2015 11:05:12 +0100
+Message-ID: <1446026713-13154-8-git-send-email-daniel.wagner@bmw-carit.de>
+References: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:46106 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:46117 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755691AbbJ1KFQ (ORCPT
+	with ESMTP id S1755686AbbJ1KFT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Oct 2015 06:05:16 -0400
+	Wed, 28 Oct 2015 06:05:19 -0400
+In-Reply-To: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Clark,
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-As you have indicated on IRQ you like to test the swait patches on how
-it performs with -rt. Here is the backport of the swait v3 patch set.
+| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:914
+| in_atomic(): 1, irqs_disabled(): 0, pid: 255, name: kworker/u257:6
+| 5 locks held by kworker/u257:6/255:
+|  #0:  ("events_unbound"){.+.+.+}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
+|  #1:  ((&entry->work)){+.+.+.}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
+|  #2:  (&shost->scan_mutex){+.+.+.}, at: [<ffffffffa000faa3>] __scsi_add_device+0xa3/0x130 [scsi_mod]
+|  #3:  (&set->tag_list_lock){+.+...}, at: [<ffffffff812f09fa>] blk_mq_init_queue+0x96a/0xa50
+|  #4:  (rcu_read_lock_sched){......}, at: [<ffffffff8132887d>] percpu_ref_kill_and_confirm+0x1d/0x120
+| Preemption disabled at:[<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
+|
+| CPU: 2 PID: 255 Comm: kworker/u257:6 Not tainted 3.18.7-rt0+ #1
+| Workqueue: events_unbound async_run_entry_fn
+|  0000000000000003 ffff8800bc29f998 ffffffff815b3a12 0000000000000000
+|  0000000000000000 ffff8800bc29f9b8 ffffffff8109aa16 ffff8800bc29fa28
+|  ffff8800bc5d1bc8 ffff8800bc29f9e8 ffffffff815b8dd4 ffff880000000000
+| Call Trace:
+|  [<ffffffff815b3a12>] dump_stack+0x4f/0x7c
+|  [<ffffffff8109aa16>] __might_sleep+0x116/0x190
+|  [<ffffffff815b8dd4>] rt_spin_lock+0x24/0x60
+|  [<ffffffff810b6089>] __wake_up+0x29/0x60
+|  [<ffffffff812ee06e>] blk_mq_usage_counter_release+0x1e/0x20
+|  [<ffffffff81328966>] percpu_ref_kill_and_confirm+0x106/0x120
+|  [<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
+|  [<ffffffff812f0000>] blk_mq_update_tag_set_depth+0x40/0xd0
+|  [<ffffffff812f0a1c>] blk_mq_init_queue+0x98c/0xa50
+|  [<ffffffffa000dcf0>] scsi_mq_alloc_queue+0x20/0x60 [scsi_mod]
+|  [<ffffffffa000ea35>] scsi_alloc_sdev+0x2f5/0x370 [scsi_mod]
+|  [<ffffffffa000f494>] scsi_probe_and_add_lun+0x9e4/0xdd0 [scsi_mod]
+|  [<ffffffffa000fb26>] __scsi_add_device+0x126/0x130 [scsi_mod]
+|  [<ffffffffa013033f>] ata_scsi_scan_host+0xaf/0x200 [libata]
+|  [<ffffffffa012b5b6>] async_port_probe+0x46/0x60 [libata]
+|  [<ffffffff810978fb>] async_run_entry_fn+0x3b/0xf0
+|  [<ffffffff8108ee81>] process_one_work+0x201/0x5e0
 
-In order to test these patches here drop following patches from
-the 4.1.10-rt10 tree:
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ block/blk-core.c       |  2 +-
+ block/blk-mq.c         | 10 +++++-----
+ include/linux/blkdev.h |  2 +-
+ 3 files changed, 7 insertions(+), 7 deletions(-)
 
-    wait-simple-implementation.patch
-    work-simple-Simple-work-queue-implemenation.patch
-    rcu-more-swait-conversions.patch
-    completion-use-simple-wait-queues.patch
-    block-blk-mq-use-swait.patch
-    KVM-use-simple-waitqueue-for-vcpu-wq.patch
-
-and apply the patche from this patch set. My test box is running since
-one hour without crashing. hackbench, cyclictest, kernel build
-and KVM torture running inside a KVM. 
-
-Daniel Wagner (2):
-  work-simple: Simple work queue implemenation
-  rcu: Do not call rcu_nocb_gp_cleanup() while holding rnp->lock
-
-Marcelo Tosatti (1):
-  KVM: use simple waitqueue for vcpu->wq
-
-Paul Gortmaker (1):
-  rcu: use simple wait queues where possible in rcutree
-
-Peter Zijlstra (Intel) (1):
-  wait.[ch]: Introduce the simple waitqueue (swait) implementation
-
-Sebastian Andrzej Siewior (1):
-  block: blk-mq: Use swait
-
-Thomas Gleixner (1):
-  completion: Use simple wait queues
-
- arch/arm/kvm/arm.c                         |   4 +-
- arch/arm/kvm/psci.c                        |   4 +-
- arch/mips/kvm/mips.c                       |   8 +-
- arch/powerpc/include/asm/kvm_host.h        |   4 +-
- arch/powerpc/kvm/book3s_hv.c               |  23 ++--
- arch/s390/include/asm/kvm_host.h           |   2 +-
- arch/s390/kvm/interrupt.c                  |   8 +-
- arch/x86/kvm/lapic.c                       |   6 +-
- block/blk-core.c                           |   2 +-
- block/blk-mq.c                             |  10 +-
- drivers/net/wireless/orinoco/orinoco_usb.c |   2 +-
- drivers/usb/gadget/function/f_fs.c         |   2 +-
- drivers/usb/gadget/legacy/inode.c          |   4 +-
- include/linux/blkdev.h                     |   2 +-
- include/linux/completion.h                 |   9 +-
- include/linux/kvm_host.h                   |   5 +-
- include/linux/swait.h                      | 172 ++++++++++++++++++++++++++++
- include/linux/uprobes.h                    |   1 +
- include/linux/work-simple.h                |  24 ++++
- kernel/rcu/tree.c                          |  16 +--
- kernel/rcu/tree.h                          |  10 +-
- kernel/rcu/tree_plugin.h                   |  32 ++++--
- kernel/sched/Makefile                      |   2 +-
- kernel/sched/completion.c                  |  32 +++---
- kernel/sched/core.c                        |  10 +-
- kernel/sched/swait.c                       | 122 ++++++++++++++++++++
- kernel/sched/work-simple.c                 | 173 +++++++++++++++++++++++++++++
- virt/kvm/async_pf.c                        |   4 +-
- virt/kvm/kvm_main.c                        |  16 +--
- 29 files changed, 610 insertions(+), 99 deletions(-)
- create mode 100644 include/linux/swait.h
- create mode 100644 include/linux/work-simple.h
- create mode 100644 kernel/sched/swait.c
- create mode 100644 kernel/sched/work-simple.c
-
+diff --git a/block/blk-core.c b/block/blk-core.c
+index ec4302b..e6d0aaa 100644
+--- a/block/blk-core.c
++++ b/block/blk-core.c
+@@ -664,7 +664,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
+ 	q->bypass_depth = 1;
+ 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
+ 
+-	init_waitqueue_head(&q->mq_freeze_wq);
++	init_swait_queue_head(&q->mq_freeze_wq);
+ 
+ 	if (blkcg_init_queue(q))
+ 		goto fail_bdi;
+diff --git a/block/blk-mq.c b/block/blk-mq.c
+index f3bba78..39ffaed 100644
+--- a/block/blk-mq.c
++++ b/block/blk-mq.c
+@@ -88,7 +88,7 @@ static int blk_mq_queue_enter(struct request_queue *q, gfp_t gfp)
+ 		if (!(gfp & __GFP_WAIT))
+ 			return -EBUSY;
+ 
+-		ret = wait_event_interruptible(q->mq_freeze_wq,
++		ret = swait_event_interruptible(q->mq_freeze_wq,
+ 				!q->mq_freeze_depth || blk_queue_dying(q));
+ 		if (blk_queue_dying(q))
+ 			return -ENODEV;
+@@ -107,7 +107,7 @@ static void blk_mq_usage_counter_release(struct percpu_ref *ref)
+ 	struct request_queue *q =
+ 		container_of(ref, struct request_queue, mq_usage_counter);
+ 
+-	wake_up_all(&q->mq_freeze_wq);
++	swake_up_all(&q->mq_freeze_wq);
+ }
+ 
+ void blk_mq_freeze_queue_start(struct request_queue *q)
+@@ -127,7 +127,7 @@ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
+ 
+ static void blk_mq_freeze_queue_wait(struct request_queue *q)
+ {
+-	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->mq_usage_counter));
++	swait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->mq_usage_counter));
+ }
+ 
+ /*
+@@ -151,7 +151,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
+ 	spin_unlock_irq(q->queue_lock);
+ 	if (wake) {
+ 		percpu_ref_reinit(&q->mq_usage_counter);
+-		wake_up_all(&q->mq_freeze_wq);
++		swake_up_all(&q->mq_freeze_wq);
+ 	}
+ }
+ EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
+@@ -170,7 +170,7 @@ void blk_mq_wake_waiters(struct request_queue *q)
+ 	 * dying, we need to ensure that processes currently waiting on
+ 	 * the queue are notified as well.
+ 	 */
+-	wake_up_all(&q->mq_freeze_wq);
++	swake_up_all(&q->mq_freeze_wq);
+ }
+ 
+ bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
+diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
+index 975dfb8..2ad9b8b 100644
+--- a/include/linux/blkdev.h
++++ b/include/linux/blkdev.h
+@@ -483,7 +483,7 @@ struct request_queue {
+ 	struct throtl_data *td;
+ #endif
+ 	struct rcu_head		rcu_head;
+-	wait_queue_head_t	mq_freeze_wq;
++	struct swait_queue_head	mq_freeze_wq;
+ 	struct percpu_ref	mq_usage_counter;
+ 	struct list_head	all_q_node;
+ 
 -- 
 2.4.3
 
