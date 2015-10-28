@@ -1,256 +1,375 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH 5/7] completion: Use simple wait queues
-Date: Wed, 28 Oct 2015 11:05:11 +0100
-Message-ID: <1446026713-13154-7-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH 1/7] wait.[ch]: Introduce the simple waitqueue (swait) implementation
+Date: Wed, 28 Oct 2015 11:05:07 +0100
+Message-ID: <1446026713-13154-3-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:46115 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:46107 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755685AbbJ1KFT (ORCPT
+	with ESMTP id S1755688AbbJ1KFQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Oct 2015 06:05:19 -0400
+	Wed, 28 Oct 2015 06:05:16 -0400
 In-Reply-To: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: "Peter Zijlstra (Intel)" <peterz@infradead.org>
 
-Completions have no long lasting callbacks and therefor do not need
-the complex waitqueue variant. Use simple waitqueues which reduces the
-contention on the waitqueue lock.
+The existing wait queue support has support for custom wake up call
+backs, wake flags, wake key (passed to call back) and exclusive
+flags that allow wakers to be tagged as exclusive, for limiting
+the number of wakers.
 
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+In a lot of cases, none of these features are used, and hence we
+can benefit from a slimmed down version that lowers memory overhead
+and reduces runtime overhead.
+
+The concept originated from -rt, where waitqueues are a constant
+source of trouble, as we can't convert the head lock to a raw
+spinlock due to fancy and long lasting callbacks.
+
+With the removal of custom callbacks, we can use a raw lock for
+queue list manipulations, hence allowing the simple wait support
+to be used in -rt.
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Mostly-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Originally-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: linux-kernel@vger.kernel.org
+
+[Patch is from PeterZ which is based on Thomas version.
+ Commit message is written by Paul G.
+ And some compile issues fixed by Daniel.]
 ---
- drivers/net/wireless/orinoco/orinoco_usb.c |  2 +-
- drivers/usb/gadget/function/f_fs.c         |  2 +-
- drivers/usb/gadget/legacy/inode.c          |  4 ++--
- include/linux/completion.h                 |  9 ++++-----
- include/linux/uprobes.h                    |  1 +
- kernel/sched/completion.c                  | 32 +++++++++++++++---------------
- kernel/sched/core.c                        | 10 ++++++++--
- 7 files changed, 33 insertions(+), 27 deletions(-)
+ include/linux/swait.h | 172 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched/Makefile |   2 +-
+ kernel/sched/swait.c  | 122 +++++++++++++++++++++++++++++++++++
+ 3 files changed, 295 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/swait.h
+ create mode 100644 kernel/sched/swait.c
 
-diff --git a/drivers/net/wireless/orinoco/orinoco_usb.c b/drivers/net/wireless/orinoco/orinoco_usb.c
-index 91f0544..8fb1c92 100644
---- a/drivers/net/wireless/orinoco/orinoco_usb.c
-+++ b/drivers/net/wireless/orinoco/orinoco_usb.c
-@@ -697,7 +697,7 @@ static void ezusb_req_ctx_wait(struct ezusb_priv *upriv,
- 			while (!ctx->done.done && msecs--)
- 				udelay(1000);
- 		} else {
--			wait_event_interruptible(ctx->done.wait,
-+			swait_event_interruptible(ctx->done.wait,
- 						 ctx->done.done);
- 		}
- 		break;
-diff --git a/drivers/usb/gadget/function/f_fs.c b/drivers/usb/gadget/function/f_fs.c
-index 6e7be91..f51bb89 100644
---- a/drivers/usb/gadget/function/f_fs.c
-+++ b/drivers/usb/gadget/function/f_fs.c
-@@ -1405,7 +1405,7 @@ static void ffs_data_put(struct ffs_data *ffs)
- 		pr_info("%s(): freeing\n", __func__);
- 		ffs_data_clear(ffs);
- 		BUG_ON(waitqueue_active(&ffs->ev.waitq) ||
--		       waitqueue_active(&ffs->ep0req_completion.wait));
-+		       swaitqueue_active(&ffs->ep0req_completion.wait));
- 		kfree(ffs->dev_name);
- 		kfree(ffs);
- 	}
-diff --git a/drivers/usb/gadget/legacy/inode.c b/drivers/usb/gadget/legacy/inode.c
-index 2030565..7b6da0f 100644
---- a/drivers/usb/gadget/legacy/inode.c
-+++ b/drivers/usb/gadget/legacy/inode.c
-@@ -345,7 +345,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 	spin_unlock_irq (&epdata->dev->lock);
+diff --git a/include/linux/swait.h b/include/linux/swait.h
+new file mode 100644
+index 0000000..c1f9c62
+--- /dev/null
++++ b/include/linux/swait.h
+@@ -0,0 +1,172 @@
++#ifndef _LINUX_SWAIT_H
++#define _LINUX_SWAIT_H
++
++#include <linux/list.h>
++#include <linux/stddef.h>
++#include <linux/spinlock.h>
++#include <asm/current.h>
++
++/*
++ * Simple wait queues
++ *
++ * While these are very similar to the other/complex wait queues (wait.h) the
++ * most important difference is that the simple waitqueue allows for
++ * deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
++ * times.
++ *
++ * In order to make this so, we had to drop a fair number of features of the
++ * other waitqueue code; notably:
++ *
++ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
++ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
++ *    sleeper state.
++ *
++ *  - the exclusive mode; because this requires preserving the list order
++ *    and this is hard.
++ *
++ *  - custom wake functions; because you cannot give any guarantees about
++ *    random code.
++ *
++ * As a side effect of this; the data structures are slimmer.
++ *
++ * One would recommend using this wait queue where possible.
++ */
++
++struct task_struct;
++
++struct swait_queue_head {
++	raw_spinlock_t		lock;
++	struct list_head	task_list;
++};
++
++struct swait_queue {
++	struct task_struct	*task;
++	struct list_head	task_list;
++};
++
++#define __SWAITQUEUE_INITIALIZER(name) {				\
++	.task		= current,					\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
++}
++
++#define DECLARE_SWAITQUEUE(name)					\
++	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
++
++#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
++	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
++}
++
++#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
++
++extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
++				    struct lock_class_key *key);
++
++#define init_swait_queue_head(q)				\
++	do {							\
++		static struct lock_class_key __key;		\
++		__init_swait_queue_head((q), #q, &__key);	\
++	} while (0)
++
++#ifdef CONFIG_LOCKDEP
++# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
++	({ init_swait_queue_head(&name); name; })
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
++#else
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	DECLARE_SWAIT_QUEUE_HEAD(name)
++#endif
++
++static inline int swait_active(struct swait_queue_head *q)
++{
++	return !list_empty(&q->task_list);
++}
++
++extern void swake_up(struct swait_queue_head *q);
++extern void swake_up_all(struct swait_queue_head *q);
++extern void swake_up_locked(struct swait_queue_head *q);
++
++extern void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
++extern void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state);
++extern long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state);
++
++extern void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
++extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
++
++/* as per ___wait_event() but for swait, therefore "exclusive == 0" */
++#define ___swait_event(wq, condition, state, ret, cmd)			\
++({									\
++	struct swait_queue __wait;					\
++	long __ret = ret;						\
++									\
++	INIT_LIST_HEAD(&__wait.task_list);				\
++	for (;;) {							\
++		long __int = prepare_to_swait_event(&wq, &__wait, state);\
++									\
++		if (condition)						\
++			break;						\
++									\
++		if (___wait_is_interruptible(state) && __int) {		\
++			__ret = __int;					\
++			break;						\
++		}							\
++									\
++		cmd;							\
++	}								\
++	finish_swait(&wq, &__wait);					\
++	__ret;								\
++})
++
++#define __swait_event(wq, condition)					\
++	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
++			    schedule())
++
++#define swait_event(wq, condition)					\
++do {									\
++	if (condition)							\
++		break;							\
++	__swait_event(wq, condition);					\
++} while (0)
++
++#define __swait_event_timeout(wq, condition, timeout)			\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_UNINTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_timeout(wq, condition, timeout)			\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_timeout(wq, condition, timeout);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible(wq, condition)			\
++	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
++		      schedule())
++
++#define swait_event_interruptible(wq, condition)			\
++({									\
++	int __ret = 0;							\
++	if (!(condition))						\
++		__ret = __swait_event_interruptible(wq, condition);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_INTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_interruptible_timeout(wq, condition, timeout)	\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_interruptible_timeout(wq,		\
++						condition, timeout);	\
++	__ret;								\
++})
++
++#endif /* _LINUX_SWAIT_H */
+diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
+index 46be870..27bfc84 100644
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -13,7 +13,7 @@ endif
  
- 	if (likely (value == 0)) {
--		value = wait_event_interruptible (done.wait, done.done);
-+		value = swait_event_interruptible (done.wait, done.done);
- 		if (value != 0) {
- 			spin_lock_irq (&epdata->dev->lock);
- 			if (likely (epdata->ep != NULL)) {
-@@ -354,7 +354,7 @@ ep_io (struct ep_data *epdata, void *buf, unsigned len)
- 				usb_ep_dequeue (epdata->ep, epdata->req);
- 				spin_unlock_irq (&epdata->dev->lock);
- 
--				wait_event (done.wait, done.done);
-+				swait_event (done.wait, done.done);
- 				if (epdata->status == -ECONNRESET)
- 					epdata->status = -EINTR;
- 			} else {
-diff --git a/include/linux/completion.h b/include/linux/completion.h
-index 5d5aaae..3bca159 100644
---- a/include/linux/completion.h
-+++ b/include/linux/completion.h
-@@ -7,8 +7,7 @@
-  * Atomic wait-for-completion handler data structures.
-  * See kernel/sched/completion.c for details.
-  */
--
--#include <linux/wait.h>
+ obj-y += core.o proc.o clock.o cputime.o
+ obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y += wait.o completion.o idle.o
++obj-y += wait.o swait.o completion.o idle.o
+ obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
+new file mode 100644
+index 0000000..533710e
+--- /dev/null
++++ b/kernel/sched/swait.c
+@@ -0,0 +1,122 @@
++#include <linux/sched.h>
 +#include <linux/swait.h>
- 
- /*
-  * struct completion - structure used to maintain state for a "completion"
-@@ -24,11 +23,11 @@
-  */
- struct completion {
- 	unsigned int done;
--	wait_queue_head_t wait;
-+	struct swait_queue_head wait;
- };
- 
- #define COMPLETION_INITIALIZER(work) \
--	{ 0, __WAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
-+	{ 0, __SWAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
- 
- #define COMPLETION_INITIALIZER_ONSTACK(work) \
- 	({ init_completion(&work); work; })
-@@ -73,7 +72,7 @@ struct completion {
- static inline void init_completion(struct completion *x)
- {
- 	x->done = 0;
--	init_waitqueue_head(&x->wait);
-+	init_swait_queue_head(&x->wait);
- }
- 
- /**
-diff --git a/include/linux/uprobes.h b/include/linux/uprobes.h
-index 60beb5d..19769d3 100644
---- a/include/linux/uprobes.h
-+++ b/include/linux/uprobes.h
-@@ -27,6 +27,7 @@
- #include <linux/errno.h>
- #include <linux/rbtree.h>
- #include <linux/types.h>
-+#include <linux/swait.h>
- 
- struct vm_area_struct;
- struct mm_struct;
-diff --git a/kernel/sched/completion.c b/kernel/sched/completion.c
-index 8d0f35d..0e2541b 100644
---- a/kernel/sched/completion.c
-+++ b/kernel/sched/completion.c
-@@ -30,10 +30,10 @@ void complete(struct completion *x)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&x->wait.lock, flags);
-+	raw_spin_lock_irqsave(&x->wait.lock, flags);
- 	x->done++;
--	__wake_up_locked(&x->wait, TASK_NORMAL, 1);
--	spin_unlock_irqrestore(&x->wait.lock, flags);
-+	swake_up_locked(&x->wait);
-+	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
- }
- EXPORT_SYMBOL(complete);
- 
-@@ -50,10 +50,10 @@ void complete_all(struct completion *x)
- {
- 	unsigned long flags;
- 
--	spin_lock_irqsave(&x->wait.lock, flags);
-+	raw_spin_lock_irqsave(&x->wait.lock, flags);
- 	x->done += UINT_MAX/2;
--	__wake_up_locked(&x->wait, TASK_NORMAL, 0);
--	spin_unlock_irqrestore(&x->wait.lock, flags);
-+	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
-+	swake_up_all(&x->wait);
- }
- EXPORT_SYMBOL(complete_all);
- 
-@@ -62,20 +62,20 @@ do_wait_for_common(struct completion *x,
- 		   long (*action)(long), long timeout, int state)
- {
- 	if (!x->done) {
--		DECLARE_WAITQUEUE(wait, current);
-+		DECLARE_SWAITQUEUE(wait);
- 
--		__add_wait_queue_tail_exclusive(&x->wait, &wait);
-+		__prepare_to_swait(&x->wait, &wait);
- 		do {
- 			if (signal_pending_state(state, current)) {
- 				timeout = -ERESTARTSYS;
- 				break;
- 			}
- 			__set_current_state(state);
--			spin_unlock_irq(&x->wait.lock);
-+			raw_spin_unlock_irq(&x->wait.lock);
- 			timeout = action(timeout);
--			spin_lock_irq(&x->wait.lock);
-+			raw_spin_lock_irq(&x->wait.lock);
- 		} while (!x->done && timeout);
--		__remove_wait_queue(&x->wait, &wait);
-+		__finish_swait(&x->wait, &wait);
- 		if (!x->done)
- 			return timeout;
- 	}
-@@ -89,9 +89,9 @@ __wait_for_common(struct completion *x,
- {
- 	might_sleep();
- 
--	spin_lock_irq(&x->wait.lock);
-+	raw_spin_lock_irq(&x->wait.lock);
- 	timeout = do_wait_for_common(x, action, timeout, state);
--	spin_unlock_irq(&x->wait.lock);
-+	raw_spin_unlock_irq(&x->wait.lock);
- 	return timeout;
- }
- 
-@@ -277,12 +277,12 @@ bool try_wait_for_completion(struct completion *x)
- 	if (!READ_ONCE(x->done))
- 		return 0;
- 
--	spin_lock_irqsave(&x->wait.lock, flags);
-+	raw_spin_lock_irqsave(&x->wait.lock, flags);
- 	if (!x->done)
- 		ret = 0;
- 	else
- 		x->done--;
--	spin_unlock_irqrestore(&x->wait.lock, flags);
-+	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
- 	return ret;
- }
- EXPORT_SYMBOL(try_wait_for_completion);
-@@ -311,7 +311,7 @@ bool completion_done(struct completion *x)
- 	 * after it's acquired the lock.
- 	 */
- 	smp_rmb();
--	spin_unlock_wait(&x->wait.lock);
-+	raw_spin_unlock_wait(&x->wait.lock);
- 	return true;
- }
- EXPORT_SYMBOL(completion_done);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index e1a68aa..799b75b 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2797,7 +2797,10 @@ void migrate_disable(void)
- 	}
- 
- #ifdef CONFIG_SCHED_DEBUG
--	WARN_ON_ONCE(p->migrate_disable_atomic);
-+	if (unlikely(p->migrate_disable_atomic)) {
-+		tracing_off();
-+		WARN_ON_ONCE(1);
++
++void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
++			     struct lock_class_key *key)
++{
++	raw_spin_lock_init(&q->lock);
++	lockdep_set_class_and_name(&q->lock, key, name);
++	INIT_LIST_HEAD(&q->task_list);
++}
++EXPORT_SYMBOL(__init_swait_queue_head);
++
++/*
++ * The thing about the wake_up_state() return value; I think we can ignore it.
++ *
++ * If for some reason it would return 0, that means the previously waiting
++ * task is already running, so it will observe condition true (or has already).
++ */
++void swake_up_locked(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++
++	list_for_each_entry(curr, &q->task_list, task_list) {
++		wake_up_process(curr->task);
++		list_del_init(&curr->task_list);
++		break;
 +	}
- #endif
- 
- 	if (p->migrate_disable) {
-@@ -2828,7 +2831,10 @@ void migrate_enable(void)
- 	}
- 
- #ifdef CONFIG_SCHED_DEBUG
--	WARN_ON_ONCE(p->migrate_disable_atomic);
-+	if (unlikely(p->migrate_disable_atomic)) {
-+		tracing_off();
-+		WARN_ON_ONCE(1);
++}
++EXPORT_SYMBOL(swake_up_locked);
++
++void swake_up(struct swait_queue_head *q)
++{
++	unsigned long flags;
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	swake_up_locked(q);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(swake_up);
++
++/*
++ * Does not allow usage from IRQ disabled, since we must be able to
++ * release IRQs to guarantee bounded hold time.
++ */
++void swake_up_all(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++	LIST_HEAD(tmp);
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irq(&q->lock);
++	list_splice_init(&q->task_list, &tmp);
++	while (!list_empty(&tmp)) {
++		curr = list_first_entry(&tmp, typeof(*curr), task_list);
++
++		wake_up_state(curr->task, TASK_NORMAL);
++		list_del_init(&curr->task_list);
++
++		if (list_empty(&tmp))
++			break;
++
++		raw_spin_unlock_irq(&q->lock);
++		raw_spin_lock_irq(&q->lock);
 +	}
- #endif
- 	WARN_ON_ONCE(p->migrate_disable <= 0);
- 
++	raw_spin_unlock_irq(&q->lock);
++}
++EXPORT_SYMBOL(swake_up_all);
++
++void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	wait->task = current;
++	if (list_empty(&wait->task_list))
++		list_add(&wait->task_list, &q->task_list);
++}
++
++void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	__prepare_to_swait(q, wait);
++	set_current_state(state);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(prepare_to_swait);
++
++long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state)
++{
++	if (signal_pending_state(state, current))
++		return -ERESTARTSYS;
++
++	prepare_to_swait(q, wait, state);
++
++	return 0;
++}
++EXPORT_SYMBOL(prepare_to_swait_event);
++
++void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	__set_current_state(TASK_RUNNING);
++	if (!list_empty(&wait->task_list))
++		list_del_init(&wait->task_list);
++}
++
++void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	unsigned long flags;
++
++	__set_current_state(TASK_RUNNING);
++
++	if (!list_empty_careful(&wait->task_list)) {
++		raw_spin_lock_irqsave(&q->lock, flags);
++		list_del_init(&wait->task_list);
++		raw_spin_unlock_irqrestore(&q->lock, flags);
++	}
++}
++EXPORT_SYMBOL(finish_swait);
 -- 
 2.4.3
 
