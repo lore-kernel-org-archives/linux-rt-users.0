@@ -1,23 +1,21 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Subject: [PATCH 0/7] Backport of swait v3 patches to v4.1.10-rt10
-Date: Wed, 28 Oct 2015 11:05:06 +0100
-Message-ID: <1446026713-13154-2-git-send-email-daniel.wagner@bmw-carit.de>
-References: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
+Date: Wed, 28 Oct 2015 11:05:05 +0100
+Message-ID: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:46105 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:46106 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755689AbbJ1KFQ (ORCPT
+	with ESMTP id S1755691AbbJ1KFQ (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 28 Oct 2015 06:05:16 -0400
-In-Reply-To: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 Hi Clark,
 
-As you have indicated that you like to test the swait patches on how
+As you have indicated on IRQ you like to test the swait patches on how
 it performs with -rt. Here is the backport of the swait v3 patch set.
 
 In order to test these patches here drop following patches from
