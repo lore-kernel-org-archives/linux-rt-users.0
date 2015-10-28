@@ -1,137 +1,242 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH 6/7] block: blk-mq: Use swait
-Date: Wed, 28 Oct 2015 11:05:12 +0100
-Message-ID: <1446026713-13154-8-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH 4/7] rcu: use simple wait queues where possible in rcutree
+Date: Wed, 28 Oct 2015 11:05:10 +0100
+Message-ID: <1446026713-13154-6-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-rt-users@vger.kernel.org
 To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:46117 "EHLO
+Received: from mail.bmw-carit.de ([62.245.222.98]:46116 "EHLO
 	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755686AbbJ1KFT (ORCPT
+	with ESMTP id S1755668AbbJ1KFT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
 	Wed, 28 Oct 2015 06:05:19 -0400
 In-Reply-To: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-| BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:914
-| in_atomic(): 1, irqs_disabled(): 0, pid: 255, name: kworker/u257:6
-| 5 locks held by kworker/u257:6/255:
-|  #0:  ("events_unbound"){.+.+.+}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
-|  #1:  ((&entry->work)){+.+.+.}, at: [<ffffffff8108edf1>] process_one_work+0x171/0x5e0
-|  #2:  (&shost->scan_mutex){+.+.+.}, at: [<ffffffffa000faa3>] __scsi_add_device+0xa3/0x130 [scsi_mod]
-|  #3:  (&set->tag_list_lock){+.+...}, at: [<ffffffff812f09fa>] blk_mq_init_queue+0x96a/0xa50
-|  #4:  (rcu_read_lock_sched){......}, at: [<ffffffff8132887d>] percpu_ref_kill_and_confirm+0x1d/0x120
-| Preemption disabled at:[<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
-|
-| CPU: 2 PID: 255 Comm: kworker/u257:6 Not tainted 3.18.7-rt0+ #1
-| Workqueue: events_unbound async_run_entry_fn
-|  0000000000000003 ffff8800bc29f998 ffffffff815b3a12 0000000000000000
-|  0000000000000000 ffff8800bc29f9b8 ffffffff8109aa16 ffff8800bc29fa28
-|  ffff8800bc5d1bc8 ffff8800bc29f9e8 ffffffff815b8dd4 ffff880000000000
-| Call Trace:
-|  [<ffffffff815b3a12>] dump_stack+0x4f/0x7c
-|  [<ffffffff8109aa16>] __might_sleep+0x116/0x190
-|  [<ffffffff815b8dd4>] rt_spin_lock+0x24/0x60
-|  [<ffffffff810b6089>] __wake_up+0x29/0x60
-|  [<ffffffff812ee06e>] blk_mq_usage_counter_release+0x1e/0x20
-|  [<ffffffff81328966>] percpu_ref_kill_and_confirm+0x106/0x120
-|  [<ffffffff812eff76>] blk_mq_freeze_queue_start+0x56/0x70
-|  [<ffffffff812f0000>] blk_mq_update_tag_set_depth+0x40/0xd0
-|  [<ffffffff812f0a1c>] blk_mq_init_queue+0x98c/0xa50
-|  [<ffffffffa000dcf0>] scsi_mq_alloc_queue+0x20/0x60 [scsi_mod]
-|  [<ffffffffa000ea35>] scsi_alloc_sdev+0x2f5/0x370 [scsi_mod]
-|  [<ffffffffa000f494>] scsi_probe_and_add_lun+0x9e4/0xdd0 [scsi_mod]
-|  [<ffffffffa000fb26>] __scsi_add_device+0x126/0x130 [scsi_mod]
-|  [<ffffffffa013033f>] ata_scsi_scan_host+0xaf/0x200 [libata]
-|  [<ffffffffa012b5b6>] async_port_probe+0x46/0x60 [libata]
-|  [<ffffffff810978fb>] async_run_entry_fn+0x3b/0xf0
-|  [<ffffffff8108ee81>] process_one_work+0x201/0x5e0
+As of commit dae6e64d2bcfd4b06304ab864c7e3a4f6b5fedf4 ("rcu: Introduce
+proper blocking to no-CBs kthreads GP waits") the RCU subsystem started
+making use of wait queues.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Here we convert all additions of RCU wait queues to use simple wait queues,
+since they don't need the extra overhead of the full wait queue features.
+
+Originally this was done for RT kernels[1], since we would get things like...
+
+  BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+  in_atomic(): 1, irqs_disabled(): 1, pid: 8, name: rcu_preempt
+  Pid: 8, comm: rcu_preempt Not tainted
+  Call Trace:
+   [<ffffffff8106c8d0>] __might_sleep+0xd0/0xf0
+   [<ffffffff817d77b4>] rt_spin_lock+0x24/0x50
+   [<ffffffff8106fcf6>] __wake_up+0x36/0x70
+   [<ffffffff810c4542>] rcu_gp_kthread+0x4d2/0x680
+   [<ffffffff8105f910>] ? __init_waitqueue_head+0x50/0x50
+   [<ffffffff810c4070>] ? rcu_gp_fqs+0x80/0x80
+   [<ffffffff8105eabb>] kthread+0xdb/0xe0
+   [<ffffffff8106b912>] ? finish_task_switch+0x52/0x100
+   [<ffffffff817e0754>] kernel_thread_helper+0x4/0x10
+   [<ffffffff8105e9e0>] ? __init_kthread_worker+0x60/0x60
+   [<ffffffff817e0750>] ? gs_change+0xb/0xb
+
+...and hence simple wait queues were deployed on RT out of necessity
+(as simple wait uses a raw lock), but mainline might as well take
+advantage of the more streamline support as well.
+
+[1] This is a carry forward of work from v3.10-rt; the original conversion
+was by Thomas on an earlier -rt version, and Sebastian extended it to
+additional post-3.10 added RCU waiters; here I've added a commit log and
+unified the RCU changes into one, and uprev'd it to match mainline RCU.
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-kernel@vger.kernel.org
 ---
- block/blk-core.c       |  2 +-
- block/blk-mq.c         | 10 +++++-----
- include/linux/blkdev.h |  2 +-
- 3 files changed, 7 insertions(+), 7 deletions(-)
+ kernel/rcu/tree.c        | 12 ++++++------
+ kernel/rcu/tree.h        |  7 ++++---
+ kernel/rcu/tree_plugin.h | 18 +++++++++---------
+ 3 files changed, 19 insertions(+), 18 deletions(-)
 
-diff --git a/block/blk-core.c b/block/blk-core.c
-index ec4302b..e6d0aaa 100644
---- a/block/blk-core.c
-+++ b/block/blk-core.c
-@@ -664,7 +664,7 @@ struct request_queue *blk_alloc_queue_node(gfp_t gfp_mask, int node_id)
- 	q->bypass_depth = 1;
- 	__set_bit(QUEUE_FLAG_BYPASS, &q->queue_flags);
- 
--	init_waitqueue_head(&q->mq_freeze_wq);
-+	init_swait_queue_head(&q->mq_freeze_wq);
- 
- 	if (blkcg_init_queue(q))
- 		goto fail_bdi;
-diff --git a/block/blk-mq.c b/block/blk-mq.c
-index f3bba78..39ffaed 100644
---- a/block/blk-mq.c
-+++ b/block/blk-mq.c
-@@ -88,7 +88,7 @@ static int blk_mq_queue_enter(struct request_queue *q, gfp_t gfp)
- 		if (!(gfp & __GFP_WAIT))
- 			return -EBUSY;
- 
--		ret = wait_event_interruptible(q->mq_freeze_wq,
-+		ret = swait_event_interruptible(q->mq_freeze_wq,
- 				!q->mq_freeze_depth || blk_queue_dying(q));
- 		if (blk_queue_dying(q))
- 			return -ENODEV;
-@@ -107,7 +107,7 @@ static void blk_mq_usage_counter_release(struct percpu_ref *ref)
- 	struct request_queue *q =
- 		container_of(ref, struct request_queue, mq_usage_counter);
- 
--	wake_up_all(&q->mq_freeze_wq);
-+	swake_up_all(&q->mq_freeze_wq);
- }
- 
- void blk_mq_freeze_queue_start(struct request_queue *q)
-@@ -127,7 +127,7 @@ EXPORT_SYMBOL_GPL(blk_mq_freeze_queue_start);
- 
- static void blk_mq_freeze_queue_wait(struct request_queue *q)
- {
--	wait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->mq_usage_counter));
-+	swait_event(q->mq_freeze_wq, percpu_ref_is_zero(&q->mq_usage_counter));
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 96bc765..4cefab9 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -1571,7 +1571,7 @@ static void rcu_gp_kthread_wake(struct rcu_state *rsp)
+ 	    !ACCESS_ONCE(rsp->gp_flags) ||
+ 	    !rsp->gp_kthread)
+ 		return;
+-	wake_up(&rsp->gp_wq);
++	swake_up(&rsp->gp_wq);
  }
  
  /*
-@@ -151,7 +151,7 @@ void blk_mq_unfreeze_queue(struct request_queue *q)
- 	spin_unlock_irq(q->queue_lock);
- 	if (wake) {
- 		percpu_ref_reinit(&q->mq_usage_counter);
--		wake_up_all(&q->mq_freeze_wq);
-+		swake_up_all(&q->mq_freeze_wq);
- 	}
- }
- EXPORT_SYMBOL_GPL(blk_mq_unfreeze_queue);
-@@ -170,7 +170,7 @@ void blk_mq_wake_waiters(struct request_queue *q)
- 	 * dying, we need to ensure that processes currently waiting on
- 	 * the queue are notified as well.
- 	 */
--	wake_up_all(&q->mq_freeze_wq);
-+	swake_up_all(&q->mq_freeze_wq);
+@@ -2015,7 +2015,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 					       ACCESS_ONCE(rsp->gpnum),
+ 					       TPS("reqwait"));
+ 			rsp->gp_state = RCU_GP_WAIT_GPS;
+-			wait_event_interruptible(rsp->gp_wq,
++			swait_event_interruptible(rsp->gp_wq,
+ 						 ACCESS_ONCE(rsp->gp_flags) &
+ 						 RCU_GP_FLAG_INIT);
+ 			/* Locking provides needed memory barrier. */
+@@ -2044,7 +2044,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 					       ACCESS_ONCE(rsp->gpnum),
+ 					       TPS("fqswait"));
+ 			rsp->gp_state = RCU_GP_WAIT_FQS;
+-			ret = wait_event_interruptible_timeout(rsp->gp_wq,
++			ret = swait_event_interruptible_timeout(rsp->gp_wq,
+ 					((gf = ACCESS_ONCE(rsp->gp_flags)) &
+ 					 RCU_GP_FLAG_FQS) ||
+ 					(!ACCESS_ONCE(rnp->qsmask) &&
+@@ -2167,7 +2167,7 @@ static void rcu_report_qs_rsp(struct rcu_state *rsp, unsigned long flags)
+ {
+ 	WARN_ON_ONCE(!rcu_gp_in_progress(rsp));
+ 	raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
+-	rcu_gp_kthread_wake(rsp);
++	swake_up(&rsp->gp_wq);  /* Memory barrier implied by swake_up() path. */
  }
  
- bool blk_mq_can_queue(struct blk_mq_hw_ctx *hctx)
-diff --git a/include/linux/blkdev.h b/include/linux/blkdev.h
-index 975dfb8..2ad9b8b 100644
---- a/include/linux/blkdev.h
-+++ b/include/linux/blkdev.h
-@@ -483,7 +483,7 @@ struct request_queue {
- 	struct throtl_data *td;
- #endif
- 	struct rcu_head		rcu_head;
--	wait_queue_head_t	mq_freeze_wq;
-+	struct swait_queue_head	mq_freeze_wq;
- 	struct percpu_ref	mq_usage_counter;
- 	struct list_head	all_q_node;
+ /*
+@@ -2846,7 +2846,7 @@ static void force_quiescent_state(struct rcu_state *rsp)
+ 	ACCESS_ONCE(rsp->gp_flags) =
+ 		ACCESS_ONCE(rsp->gp_flags) | RCU_GP_FLAG_FQS;
+ 	raw_spin_unlock_irqrestore(&rnp_old->lock, flags);
+-	rcu_gp_kthread_wake(rsp);
++	swake_up(&rsp->gp_wq); /* Memory barrier implied by swake_up() path. */
+ }
+ 
+ /*
+@@ -4142,7 +4142,7 @@ static void __init rcu_init_one(struct rcu_state *rsp,
+ 		}
+ 	}
+ 
+-	init_waitqueue_head(&rsp->gp_wq);
++	init_swait_queue_head(&rsp->gp_wq);
+ 	rnp = rsp->level[rcu_num_lvls - 1];
+ 	for_each_possible_cpu(i) {
+ 		while (i > rnp->grphi)
+diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
+index 003b2b1..fcf4abc 100644
+--- a/kernel/rcu/tree.h
++++ b/kernel/rcu/tree.h
+@@ -27,6 +27,7 @@
+ #include <linux/threads.h>
+ #include <linux/cpumask.h>
+ #include <linux/seqlock.h>
++#include <linux/swait.h>
+ 
+ /*
+  * Define shape of hierarchy based on NR_CPUS, CONFIG_RCU_FANOUT, and
+@@ -210,7 +211,7 @@ struct rcu_node {
+ 				/*  This can happen due to race conditions. */
+ #endif /* #ifdef CONFIG_RCU_BOOST */
+ #ifdef CONFIG_RCU_NOCB_CPU
+-	wait_queue_head_t nocb_gp_wq[2];
++	struct swait_queue_head nocb_gp_wq[2];
+ 				/* Place for rcu_nocb_kthread() to wait GP. */
+ #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
+ 	int need_future_gp[2];
+@@ -349,7 +350,7 @@ struct rcu_data {
+ 	atomic_long_t nocb_q_count_lazy; /*  invocation (all stages). */
+ 	struct rcu_head *nocb_follower_head; /* CBs ready to invoke. */
+ 	struct rcu_head **nocb_follower_tail;
+-	wait_queue_head_t nocb_wq;	/* For nocb kthreads to sleep on. */
++	struct swait_queue_head nocb_wq; /* For nocb kthreads to sleep on. */
+ 	struct task_struct *nocb_kthread;
+ 	int nocb_defer_wakeup;		/* Defer wakeup of nocb_kthread. */
+ 
+@@ -438,7 +439,7 @@ struct rcu_state {
+ 	unsigned long gpnum;			/* Current gp number. */
+ 	unsigned long completed;		/* # of last completed gp. */
+ 	struct task_struct *gp_kthread;		/* Task for grace periods. */
+-	wait_queue_head_t gp_wq;		/* Where GP task waits. */
++	struct swait_queue_head gp_wq;		/* Where GP task waits. */
+ 	short gp_flags;				/* Commands for GP task. */
+ 	short gp_state;				/* GP kthread sleep state. */
+ 
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index d7be323..25c513c 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -1753,7 +1753,7 @@ early_param("rcu_nocb_poll", parse_rcu_nocb_poll);
+  */
+ static void rcu_nocb_gp_cleanup(struct swait_queue_head *sq)
+ {
+-	wake_up_all(sq);
++	swake_up_all(sq);
+ }
+ 
+ /*
+@@ -1776,8 +1776,8 @@ static struct swait_queue_head *rcu_nocb_gp_get(struct rcu_node *rnp)
+ 
+ static void rcu_init_one_nocb(struct rcu_node *rnp)
+ {
+-	init_waitqueue_head(&rnp->nocb_gp_wq[0]);
+-	init_waitqueue_head(&rnp->nocb_gp_wq[1]);
++	init_swait_queue_head(&rnp->nocb_gp_wq[0]);
++	init_swait_queue_head(&rnp->nocb_gp_wq[1]);
+ }
+ 
+ #ifndef CONFIG_RCU_NOCB_CPU_ALL
+@@ -1802,7 +1802,7 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
+ 	if (ACCESS_ONCE(rdp_leader->nocb_leader_sleep) || force) {
+ 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
+ 		ACCESS_ONCE(rdp_leader->nocb_leader_sleep) = false;
+-		wake_up(&rdp_leader->nocb_wq);
++		swake_up(&rdp_leader->nocb_wq);
+ 	}
+ }
+ 
+@@ -2015,7 +2015,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
+ 	 */
+ 	trace_rcu_future_gp(rnp, rdp, c, TPS("StartWait"));
+ 	for (;;) {
+-		wait_event_interruptible(
++		swait_event_interruptible(
+ 			rnp->nocb_gp_wq[c & 0x1],
+ 			(d = ULONG_CMP_GE(ACCESS_ONCE(rnp->completed), c)));
+ 		if (likely(d))
+@@ -2043,7 +2043,7 @@ wait_again:
+ 	/* Wait for callbacks to appear. */
+ 	if (!rcu_nocb_poll) {
+ 		trace_rcu_nocb_wake(my_rdp->rsp->name, my_rdp->cpu, "Sleep");
+-		wait_event_interruptible(my_rdp->nocb_wq,
++		swait_event_interruptible(my_rdp->nocb_wq,
+ 				!ACCESS_ONCE(my_rdp->nocb_leader_sleep));
+ 		/* Memory barrier handled by smp_mb() calls below and repoll. */
+ 	} else if (firsttime) {
+@@ -2118,7 +2118,7 @@ wait_again:
+ 			 * List was empty, wake up the follower.
+ 			 * Memory barriers supplied by atomic_long_add().
+ 			 */
+-			wake_up(&rdp->nocb_wq);
++			swake_up(&rdp->nocb_wq);
+ 		}
+ 	}
+ 
+@@ -2139,7 +2139,7 @@ static void nocb_follower_wait(struct rcu_data *rdp)
+ 		if (!rcu_nocb_poll) {
+ 			trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu,
+ 					    "FollowerSleep");
+-			wait_event_interruptible(rdp->nocb_wq,
++			swait_event_interruptible(rdp->nocb_wq,
+ 						 ACCESS_ONCE(rdp->nocb_follower_head));
+ 		} else if (firsttime) {
+ 			/* Don't drown trace log with "Poll"! */
+@@ -2298,7 +2298,7 @@ void __init rcu_init_nohz(void)
+ static void __init rcu_boot_init_nocb_percpu_data(struct rcu_data *rdp)
+ {
+ 	rdp->nocb_tail = &rdp->nocb_head;
+-	init_waitqueue_head(&rdp->nocb_wq);
++	init_swait_queue_head(&rdp->nocb_wq);
+ 	rdp->nocb_follower_tail = &rdp->nocb_follower_head;
+ }
  
 -- 
 2.4.3
