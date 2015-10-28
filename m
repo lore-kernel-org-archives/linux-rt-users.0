@@ -1,375 +1,119 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH 1/7] wait.[ch]: Introduce the simple waitqueue (swait) implementation
-Date: Wed, 28 Oct 2015 11:05:07 +0100
-Message-ID: <1446026713-13154-3-git-send-email-daniel.wagner@bmw-carit.de>
-References: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
-Cc: linux-rt-users@vger.kernel.org
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.bmw-carit.de ([62.245.222.98]:46107 "EHLO
-	linuxmail.bmw-carit.de" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
-	with ESMTP id S1755688AbbJ1KFQ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 28 Oct 2015 06:05:16 -0400
-In-Reply-To: <1446026713-13154-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Subject: Re: [PATCH -rt] Revert "net: use synchronize_rcu_expedited()"
+Date: Wed, 28 Oct 2015 05:27:16 -0700
+Message-ID: <20151028122716.GA4122@linux.vnet.ibm.com>
+References: <1445886895-3692-1-git-send-email-joshc@ni.com>
+ <20151027004422.GH5105@linux.vnet.ibm.com>
+ <20151027123153.GG8245@jcartwri.amer.corp.natinst.com>
+ <1445955481.7476.21.camel@edumazet-glaptop2.roam.corp.google.com>
+ <20151027150251.GH9405@kernel.org>
+ <1445959673.7476.48.camel@edumazet-glaptop2.roam.corp.google.com>
+ <20151027231559.GA4814@linux.vnet.ibm.com>
+ <20151028083400.GI8245@jcartwri.amer.corp.natinst.com>
+Reply-To: paulmck@linux.vnet.ibm.com
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: Eric Dumazet <eric.dumazet@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@kernel.org>,
+	tglx@linutronix.de, bigeasy@linutronix.de,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	"David S. Miller" <davem@davemloft.net>,
+	Clark Williams <williams@redhat.com>
+To: Josh Cartwright <joshc@ni.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20151028083400.GI8245@jcartwri.amer.corp.natinst.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-From: "Peter Zijlstra (Intel)" <peterz@infradead.org>
+On Wed, Oct 28, 2015 at 03:34:00AM -0500, Josh Cartwright wrote:
+> On Tue, Oct 27, 2015 at 04:15:59PM -0700, Paul E. McKenney wrote:
+> > On Tue, Oct 27, 2015 at 08:27:53AM -0700, Eric Dumazet wrote:
+> > > On Tue, 2015-10-27 at 12:02 -0300, Arnaldo Carvalho de Melo wrote:
+> [..]
+> > > > The first suggestion, with it disabled by default seems to be the most
+> > > > flexible tho, i.e, Paul's original message plus the boot parameter line:
+> > > > 
+> > > > Alternatively, a boot-time option could be used:
+> > > > 
+> > > > int some_rt_boot_parameter = CONFIG_SYNC_NET_DEFAULT;
+> > > > 
+> > > >         if (rtnl_is_locked() && !some_rt_boot_parameter)
+> > > >                 synchronize_rcu_expedited();
+> > > >         else
+> > > >                 synchronize_rcu();
+> > 
+> > This could be OK, but why not start with something very simple and automatic?
+> > We can always add more knobs when and if they actually prove necessary.
+> 
+> I suppose the question is if, for acme's usecases the answer to "when
+> it's proven necessary" is "now".
+> 
+> > In contrast, unnecessary knobs can cause confusion and might at the same time
+> > get locked into some misbegotten userspace application, which would make the
+> > unnecessary knob really hard to get rid of.
+> 
+> I think I would make a stronger statement; the CONFIG_SYNC_NET_DEFAULT
+> proposed option would be a boot/compile time parameter which says "I
+> require networking (and network configuration) in my critical path", why
+> don't we have these flags for other I/O subsystems?  What's special
+> about networking?
+> 
+> We don't because applications can make use of thread priorities to
+> express exactly which tasks should be more important than others.  So
+> perhaps the failure here is that RCU (and networking, by implication)
+> doesn't (can't?) take into consideration the calling thread's priority?
+> (And, there may be a cascade of other problems as well, like deferred
+> work pushed to a waitqueue, and thus losing the callers priority, etc)
+> 
+> (I will admit that RCU is a black box to me, so it is entirely possible
+> it's already capable of this, or it's fundamentally impossible, or
+> somewhere in between :)
 
-The existing wait queue support has support for custom wake up call
-backs, wake flags, wake key (passed to call back) and exclusive
-flags that allow wakers to be tagged as exclusive, for limiting
-the number of wakers.
+CONFIG_RCU_KTHREAD_PRIO=nn, where 0 says SCHED_OTHER and 0 < nn <= 99
+says SCHED_FIFO with RT priority nn.
 
-In a lot of cases, none of these features are used, and hence we
-can benefit from a slimmed down version that lowers memory overhead
-and reduces runtime overhead.
+> > > > Then RT oriented kernel .config files would have CONFIG_SYNC_NET_DEFAULT
+> > > > set to 1, while upstream would have this default to 0.
+> > > > 
+> > > > RT oriented kernel users could try using this in some scenarios where
+> > > > networking is not the critical path.
+> > > 
+> > > Well, if synchronize_rcu_expedited() is such a problem on RT, then maybe
+> > > a generic solution would make synchronize_rcu_expedited() to fallback
+> > > synchronize_rcu() after boot time on RT.
+> > > 
+> > > Not sure why networking use of synchronize_rcu_expedited() would be
+> > > problematic, and not the others.
+> > 
+> > From what I can see, their testing just happened to run into this one.
+> > Perhaps further testing will run into others, or perhaps the others are
+> > off in code paths that should not be exercised while running RT apps.
+> 
+> I accidentally ran into this issue when I was doing testing with an
+> ethernet cable w/ a broken RJ-45 connector (without the tab, that I was
+> just too lazy to replace), and I kept accidentally knocking it out.  :)
+> 
+> Regardless, industrial automation environments aren't known for having
+> the most stable network environments; there may be deployed systems
+> doing high priority motion control tasks, we'd want to ensure that the
+> poor network technician sent in to repair a defective network switch
+> wouldn't end up being mangled.
+> 
+> > > scripts/checkpatch.pl has this comment about this :
+> 
+> Also, Documentation/RCU/checklist.txt mentions:
+> 
+> 	Use of the expedited primitives should be restricted to rare
+> 	configuration-change operations that would not normally be
+> 	undertaken while a real-time..
+> 
+> I think it could have been argued at the time, that operations under
+> rtnl_lock() were "configuration-change" operations.  However, for our
+> use cases, it's not, as link changes are external events beyond control.
 
-The concept originated from -rt, where waitqueues are a constant
-source of trouble, as we can't convert the head lock to a raw
-spinlock due to fancy and long lasting callbacks.
+Certainly the variety of operations that people are willing to run
+concurrently with real-time applications seems to be steadily growing
+over time...  But much depends on the RT deadlines.
 
-With the removal of custom callbacks, we can use a raw lock for
-queue list manipulations, hence allowing the simple wait support
-to be used in -rt.
-
-Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Mostly-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Originally-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
-Cc: linux-kernel@vger.kernel.org
-
-[Patch is from PeterZ which is based on Thomas version.
- Commit message is written by Paul G.
- And some compile issues fixed by Daniel.]
----
- include/linux/swait.h | 172 ++++++++++++++++++++++++++++++++++++++++++++++++++
- kernel/sched/Makefile |   2 +-
- kernel/sched/swait.c  | 122 +++++++++++++++++++++++++++++++++++
- 3 files changed, 295 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/swait.h
- create mode 100644 kernel/sched/swait.c
-
-diff --git a/include/linux/swait.h b/include/linux/swait.h
-new file mode 100644
-index 0000000..c1f9c62
---- /dev/null
-+++ b/include/linux/swait.h
-@@ -0,0 +1,172 @@
-+#ifndef _LINUX_SWAIT_H
-+#define _LINUX_SWAIT_H
-+
-+#include <linux/list.h>
-+#include <linux/stddef.h>
-+#include <linux/spinlock.h>
-+#include <asm/current.h>
-+
-+/*
-+ * Simple wait queues
-+ *
-+ * While these are very similar to the other/complex wait queues (wait.h) the
-+ * most important difference is that the simple waitqueue allows for
-+ * deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
-+ * times.
-+ *
-+ * In order to make this so, we had to drop a fair number of features of the
-+ * other waitqueue code; notably:
-+ *
-+ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
-+ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
-+ *    sleeper state.
-+ *
-+ *  - the exclusive mode; because this requires preserving the list order
-+ *    and this is hard.
-+ *
-+ *  - custom wake functions; because you cannot give any guarantees about
-+ *    random code.
-+ *
-+ * As a side effect of this; the data structures are slimmer.
-+ *
-+ * One would recommend using this wait queue where possible.
-+ */
-+
-+struct task_struct;
-+
-+struct swait_queue_head {
-+	raw_spinlock_t		lock;
-+	struct list_head	task_list;
-+};
-+
-+struct swait_queue {
-+	struct task_struct	*task;
-+	struct list_head	task_list;
-+};
-+
-+#define __SWAITQUEUE_INITIALIZER(name) {				\
-+	.task		= current,					\
-+	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-+}
-+
-+#define DECLARE_SWAITQUEUE(name)					\
-+	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
-+
-+#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
-+	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
-+	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-+}
-+
-+#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
-+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
-+
-+extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
-+				    struct lock_class_key *key);
-+
-+#define init_swait_queue_head(q)				\
-+	do {							\
-+		static struct lock_class_key __key;		\
-+		__init_swait_queue_head((q), #q, &__key);	\
-+	} while (0)
-+
-+#ifdef CONFIG_LOCKDEP
-+# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
-+	({ init_swait_queue_head(&name); name; })
-+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
-+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
-+#else
-+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
-+	DECLARE_SWAIT_QUEUE_HEAD(name)
-+#endif
-+
-+static inline int swait_active(struct swait_queue_head *q)
-+{
-+	return !list_empty(&q->task_list);
-+}
-+
-+extern void swake_up(struct swait_queue_head *q);
-+extern void swake_up_all(struct swait_queue_head *q);
-+extern void swake_up_locked(struct swait_queue_head *q);
-+
-+extern void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+extern void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state);
-+extern long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state);
-+
-+extern void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+
-+/* as per ___wait_event() but for swait, therefore "exclusive == 0" */
-+#define ___swait_event(wq, condition, state, ret, cmd)			\
-+({									\
-+	struct swait_queue __wait;					\
-+	long __ret = ret;						\
-+									\
-+	INIT_LIST_HEAD(&__wait.task_list);				\
-+	for (;;) {							\
-+		long __int = prepare_to_swait_event(&wq, &__wait, state);\
-+									\
-+		if (condition)						\
-+			break;						\
-+									\
-+		if (___wait_is_interruptible(state) && __int) {		\
-+			__ret = __int;					\
-+			break;						\
-+		}							\
-+									\
-+		cmd;							\
-+	}								\
-+	finish_swait(&wq, &__wait);					\
-+	__ret;								\
-+})
-+
-+#define __swait_event(wq, condition)					\
-+	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
-+			    schedule())
-+
-+#define swait_event(wq, condition)					\
-+do {									\
-+	if (condition)							\
-+		break;							\
-+	__swait_event(wq, condition);					\
-+} while (0)
-+
-+#define __swait_event_timeout(wq, condition, timeout)			\
-+	___swait_event(wq, ___wait_cond_timeout(condition),		\
-+		      TASK_UNINTERRUPTIBLE, timeout,			\
-+		      __ret = schedule_timeout(__ret))
-+
-+#define swait_event_timeout(wq, condition, timeout)			\
-+({									\
-+	long __ret = timeout;						\
-+	if (!___wait_cond_timeout(condition))				\
-+		__ret = __swait_event_timeout(wq, condition, timeout);	\
-+	__ret;								\
-+})
-+
-+#define __swait_event_interruptible(wq, condition)			\
-+	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
-+		      schedule())
-+
-+#define swait_event_interruptible(wq, condition)			\
-+({									\
-+	int __ret = 0;							\
-+	if (!(condition))						\
-+		__ret = __swait_event_interruptible(wq, condition);	\
-+	__ret;								\
-+})
-+
-+#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
-+	___swait_event(wq, ___wait_cond_timeout(condition),		\
-+		      TASK_INTERRUPTIBLE, timeout,			\
-+		      __ret = schedule_timeout(__ret))
-+
-+#define swait_event_interruptible_timeout(wq, condition, timeout)	\
-+({									\
-+	long __ret = timeout;						\
-+	if (!___wait_cond_timeout(condition))				\
-+		__ret = __swait_event_interruptible_timeout(wq,		\
-+						condition, timeout);	\
-+	__ret;								\
-+})
-+
-+#endif /* _LINUX_SWAIT_H */
-diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index 46be870..27bfc84 100644
---- a/kernel/sched/Makefile
-+++ b/kernel/sched/Makefile
-@@ -13,7 +13,7 @@ endif
- 
- obj-y += core.o proc.o clock.o cputime.o
- obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
--obj-y += wait.o completion.o idle.o
-+obj-y += wait.o swait.o completion.o idle.o
- obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
- obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
- obj-$(CONFIG_SCHEDSTATS) += stats.o
-diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
-new file mode 100644
-index 0000000..533710e
---- /dev/null
-+++ b/kernel/sched/swait.c
-@@ -0,0 +1,122 @@
-+#include <linux/sched.h>
-+#include <linux/swait.h>
-+
-+void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
-+			     struct lock_class_key *key)
-+{
-+	raw_spin_lock_init(&q->lock);
-+	lockdep_set_class_and_name(&q->lock, key, name);
-+	INIT_LIST_HEAD(&q->task_list);
-+}
-+EXPORT_SYMBOL(__init_swait_queue_head);
-+
-+/*
-+ * The thing about the wake_up_state() return value; I think we can ignore it.
-+ *
-+ * If for some reason it would return 0, that means the previously waiting
-+ * task is already running, so it will observe condition true (or has already).
-+ */
-+void swake_up_locked(struct swait_queue_head *q)
-+{
-+	struct swait_queue *curr;
-+
-+	list_for_each_entry(curr, &q->task_list, task_list) {
-+		wake_up_process(curr->task);
-+		list_del_init(&curr->task_list);
-+		break;
-+	}
-+}
-+EXPORT_SYMBOL(swake_up_locked);
-+
-+void swake_up(struct swait_queue_head *q)
-+{
-+	unsigned long flags;
-+
-+	if (!swait_active(q))
-+		return;
-+
-+	raw_spin_lock_irqsave(&q->lock, flags);
-+	swake_up_locked(q);
-+	raw_spin_unlock_irqrestore(&q->lock, flags);
-+}
-+EXPORT_SYMBOL(swake_up);
-+
-+/*
-+ * Does not allow usage from IRQ disabled, since we must be able to
-+ * release IRQs to guarantee bounded hold time.
-+ */
-+void swake_up_all(struct swait_queue_head *q)
-+{
-+	struct swait_queue *curr;
-+	LIST_HEAD(tmp);
-+
-+	if (!swait_active(q))
-+		return;
-+
-+	raw_spin_lock_irq(&q->lock);
-+	list_splice_init(&q->task_list, &tmp);
-+	while (!list_empty(&tmp)) {
-+		curr = list_first_entry(&tmp, typeof(*curr), task_list);
-+
-+		wake_up_state(curr->task, TASK_NORMAL);
-+		list_del_init(&curr->task_list);
-+
-+		if (list_empty(&tmp))
-+			break;
-+
-+		raw_spin_unlock_irq(&q->lock);
-+		raw_spin_lock_irq(&q->lock);
-+	}
-+	raw_spin_unlock_irq(&q->lock);
-+}
-+EXPORT_SYMBOL(swake_up_all);
-+
-+void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	wait->task = current;
-+	if (list_empty(&wait->task_list))
-+		list_add(&wait->task_list, &q->task_list);
-+}
-+
-+void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave(&q->lock, flags);
-+	__prepare_to_swait(q, wait);
-+	set_current_state(state);
-+	raw_spin_unlock_irqrestore(&q->lock, flags);
-+}
-+EXPORT_SYMBOL(prepare_to_swait);
-+
-+long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state)
-+{
-+	if (signal_pending_state(state, current))
-+		return -ERESTARTSYS;
-+
-+	prepare_to_swait(q, wait, state);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(prepare_to_swait_event);
-+
-+void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	__set_current_state(TASK_RUNNING);
-+	if (!list_empty(&wait->task_list))
-+		list_del_init(&wait->task_list);
-+}
-+
-+void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	unsigned long flags;
-+
-+	__set_current_state(TASK_RUNNING);
-+
-+	if (!list_empty_careful(&wait->task_list)) {
-+		raw_spin_lock_irqsave(&q->lock, flags);
-+		list_del_init(&wait->task_list);
-+		raw_spin_unlock_irqrestore(&q->lock, flags);
-+	}
-+}
-+EXPORT_SYMBOL(finish_swait);
--- 
-2.4.3
-
+							Thanx, Paul
