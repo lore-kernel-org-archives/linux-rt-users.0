@@ -1,119 +1,59 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: [PATCH -rt] Revert "net: use synchronize_rcu_expedited()"
-Date: Wed, 28 Oct 2015 05:27:16 -0700
-Message-ID: <20151028122716.GA4122@linux.vnet.ibm.com>
-References: <1445886895-3692-1-git-send-email-joshc@ni.com>
- <20151027004422.GH5105@linux.vnet.ibm.com>
- <20151027123153.GG8245@jcartwri.amer.corp.natinst.com>
- <1445955481.7476.21.camel@edumazet-glaptop2.roam.corp.google.com>
- <20151027150251.GH9405@kernel.org>
- <1445959673.7476.48.camel@edumazet-glaptop2.roam.corp.google.com>
- <20151027231559.GA4814@linux.vnet.ibm.com>
- <20151028083400.GI8245@jcartwri.amer.corp.natinst.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: "mr. sindar" <npc.sindar@gmail.com>
+Subject: Variscite VAR-SOM-AM33 with patch-3.12.10-rt15
+Date: Thu, 29 Oct 2015 11:38:00 +0300
+Message-ID: <5631DAE8.3000200@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Eric Dumazet <eric.dumazet@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@kernel.org>,
-	tglx@linutronix.de, bigeasy@linutronix.de,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	"David S. Miller" <davem@davemloft.net>,
-	Clark Williams <williams@redhat.com>
-To: Josh Cartwright <joshc@ni.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20151028083400.GI8245@jcartwri.amer.corp.natinst.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lf0-f48.google.com ([209.85.215.48]:36584 "EHLO
+	mail-lf0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751089AbbJ2IiI (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 29 Oct 2015 04:38:08 -0400
+Received: by lffz202 with SMTP id z202so15164712lff.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 29 Oct 2015 01:38:06 -0700 (PDT)
+Received: from MacBook-Pro-sindar.local ([79.120.48.186])
+        by smtp.googlemail.com with ESMTPSA id 200sm83281lfz.48.2015.10.29.01.38.05
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1.2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
+        Thu, 29 Oct 2015 01:38:06 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Oct 28, 2015 at 03:34:00AM -0500, Josh Cartwright wrote:
-> On Tue, Oct 27, 2015 at 04:15:59PM -0700, Paul E. McKenney wrote:
-> > On Tue, Oct 27, 2015 at 08:27:53AM -0700, Eric Dumazet wrote:
-> > > On Tue, 2015-10-27 at 12:02 -0300, Arnaldo Carvalho de Melo wrote:
-> [..]
-> > > > The first suggestion, with it disabled by default seems to be the most
-> > > > flexible tho, i.e, Paul's original message plus the boot parameter line:
-> > > > 
-> > > > Alternatively, a boot-time option could be used:
-> > > > 
-> > > > int some_rt_boot_parameter = CONFIG_SYNC_NET_DEFAULT;
-> > > > 
-> > > >         if (rtnl_is_locked() && !some_rt_boot_parameter)
-> > > >                 synchronize_rcu_expedited();
-> > > >         else
-> > > >                 synchronize_rcu();
-> > 
-> > This could be OK, but why not start with something very simple and automatic?
-> > We can always add more knobs when and if they actually prove necessary.
-> 
-> I suppose the question is if, for acme's usecases the answer to "when
-> it's proven necessary" is "now".
-> 
-> > In contrast, unnecessary knobs can cause confusion and might at the same time
-> > get locked into some misbegotten userspace application, which would make the
-> > unnecessary knob really hard to get rid of.
-> 
-> I think I would make a stronger statement; the CONFIG_SYNC_NET_DEFAULT
-> proposed option would be a boot/compile time parameter which says "I
-> require networking (and network configuration) in my critical path", why
-> don't we have these flags for other I/O subsystems?  What's special
-> about networking?
-> 
-> We don't because applications can make use of thread priorities to
-> express exactly which tasks should be more important than others.  So
-> perhaps the failure here is that RCU (and networking, by implication)
-> doesn't (can't?) take into consideration the calling thread's priority?
-> (And, there may be a cascade of other problems as well, like deferred
-> work pushed to a waitqueue, and thus losing the callers priority, etc)
-> 
-> (I will admit that RCU is a black box to me, so it is entirely possible
-> it's already capable of this, or it's fundamentally impossible, or
-> somewhere in between :)
+Hello. I need some help or maybe just advice of right use of 
+realtime-kernel. We are(company where i work) now developing PLC based 
+on Variscite VAR-SOM-AM33 processor 
+module(http://www.variscite.com/products/system-on-module-som/cortex-a8/var-som-am33-cpu-ti-am335x-am3354-am3352). 
+Variscite provides it with kernel version 3.12. I've patched it with 
+patch-3.12.10-rt15 and chose Full Preemptible Kernel(RT) preemption model.
+As result when i run cyclictest(like said in wiki - 
+https://rt.wiki.kernel.org/index.php/Cyclictest) with no other load in 
+system, i've got following results:
+cyclictest -t1 -p 80 -n -i 10000 -l 10000
+System without RT-patch:
+T: 0 ( 1399) P:80 I:10000 C:  10000 Min:     35 Act:   69 Avg:   63 Max: 
+     247
+System with RT-patch:
+T: 0 ( 1534) P:80 I:10000 C:  10000 Min:     39 Act:   61 Avg:   61 Max: 
+      91
+So it works.
 
-CONFIG_RCU_KTHREAD_PRIO=nn, where 0 says SCHED_OTHER and 0 < nn <= 99
-says SCHED_FIFO with RT priority nn.
+But when i enable load with codesyscontrol-system(about 80% CPU load), i 
+have following results:
+System without RT-patch:
+T: 0 ( 1412) P:80 I:10000 C:  10000 Min:      8 Act:   16 Avg:   13 Max: 
+     572
+System with RT-patch:
+T: 0 ( 1549) P:80 I:10000 C:  10000 Min:     11 Act:   14 Avg:   17 Max: 
+    2492
+Is it normal that max jitter in system with RT-patch more(almost 5x 
+time) than in system without RT-patch, in this case?
+Sorry, if this question silly. I've used only DOS-like(one-task) systems 
+earlier and wrote firmwares with one task only in embedded systems, and 
+Linux only on desktop and servers, without realtime.
+Thanks, in advance.
 
-> > > > Then RT oriented kernel .config files would have CONFIG_SYNC_NET_DEFAULT
-> > > > set to 1, while upstream would have this default to 0.
-> > > > 
-> > > > RT oriented kernel users could try using this in some scenarios where
-> > > > networking is not the critical path.
-> > > 
-> > > Well, if synchronize_rcu_expedited() is such a problem on RT, then maybe
-> > > a generic solution would make synchronize_rcu_expedited() to fallback
-> > > synchronize_rcu() after boot time on RT.
-> > > 
-> > > Not sure why networking use of synchronize_rcu_expedited() would be
-> > > problematic, and not the others.
-> > 
-> > From what I can see, their testing just happened to run into this one.
-> > Perhaps further testing will run into others, or perhaps the others are
-> > off in code paths that should not be exercised while running RT apps.
-> 
-> I accidentally ran into this issue when I was doing testing with an
-> ethernet cable w/ a broken RJ-45 connector (without the tab, that I was
-> just too lazy to replace), and I kept accidentally knocking it out.  :)
-> 
-> Regardless, industrial automation environments aren't known for having
-> the most stable network environments; there may be deployed systems
-> doing high priority motion control tasks, we'd want to ensure that the
-> poor network technician sent in to repair a defective network switch
-> wouldn't end up being mangled.
-> 
-> > > scripts/checkpatch.pl has this comment about this :
-> 
-> Also, Documentation/RCU/checklist.txt mentions:
-> 
-> 	Use of the expedited primitives should be restricted to rare
-> 	configuration-change operations that would not normally be
-> 	undertaken while a real-time..
-> 
-> I think it could have been argued at the time, that operations under
-> rtnl_lock() were "configuration-change" operations.  However, for our
-> use cases, it's not, as link changes are external events beyond control.
-
-Certainly the variety of operations that people are willing to run
-concurrently with real-time applications seems to be steadily growing
-over time...  But much depends on the RT deadlines.
-
-							Thanx, Paul
+-- 
+Best regards, Sergey.
