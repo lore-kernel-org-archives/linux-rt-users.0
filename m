@@ -1,27 +1,59 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [v4.1.10-rt10][PATCH 0/2] PCI: dra7xx/dwc: fix "WARNING: CPU: 1
- PID: 82 at kernel/irq/handle.c:150 handle_irq_event_percpu"
-Date: Tue, 3 Nov 2015 14:46:22 +0100
-Message-ID: <5638BAAE.6050909@linutronix.de>
-References: <1446492626-24396-1-git-send-email-grygorii.strashko@ti.com>
+From: Jonathan David <jonathan.david@ni.com>
+Subject: Re: [RFC] e1000e: Add delays after writing to registers
+Date: Tue, 3 Nov 2015 11:43:21 -0600
+Message-ID: <5638F239.1030804@ni.com>
+References: <1445465268-10347-1-git-send-email-jonathan.david@ni.com>
+ <20151022055909.GA7263@icarus.home.austad.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, Sekhar Nori <nsekhar@ti.com>
-To: Grygorii Strashko <grygorii.strashko@ti.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1446492626-24396-1-git-send-email-grygorii.strashko@ti.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: <linux-rt-users@vger.kernel.org>, <josh.cartwright@ni.com>
+To: Henrik Austad <henrik@austad.us>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bl2on0140.outbound.protection.outlook.com ([65.55.169.140]:29472
+	"EHLO na01-bl2-obe.outbound.protection.outlook.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1755213AbbKCR56 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Nov 2015 12:57:58 -0500
+In-Reply-To: <20151022055909.GA7263@icarus.home.austad.us>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/02/2015 08:30 PM, Grygorii Strashko wrote:
-> On -RT above code will generate warnings, because driver_xx_hw_irq_handler()
-> will be forced threaded (by default) and, as result, generic_handle_irq()
-> will be called with IRQs enabled. To W/A this issue generic_handle_irq() can
-> be surrounded by raw_spin_lock_irqsave/irqrestore(wa_lock).
+On 10/22/2015 12:59 AM, Henrik Austad wrote:
+> On Wed, Oct 21, 2015 at 05:07:48PM -0500, Jonathan David wrote:
+>> There is a noticeable impact on determinism when a large number of
+>> writes are flushed. Writes to the hardware registers are sent across
+>> the PCI bus and take a significant amount of time to complete after
+>> a flush, which causes high priority tasks (including interrupts) to
+>> be delayed.
+>
+> Do you see this in the entire system, or on the core where the write was
+> triggered?
 
-and what happens without -RT if you boot threadedirqs?
+Only on the core where the writes are issued.
 
-Sebastian
+>> Adding a delay after long series of writes gives them time to
+>> complete, and for higher priority tasks to run unimpeded.
+>
+> Aren't we running with threaded interrupts?
+>
+> What happens to the thread(s) pushing data to the network?
+> What about xmit-buffer once it is full? Which thread will block on send or
+> have its sk_buff dropped?
+
+All of this is totally irrelevant to the problem we are seeing.
+
+The e1000x driver itself is not responsible for the delay here. The 
+issue is with PCI where issuing a large number of MMIO writes followed 
+by a read (to force said writes to execute) will stall the CPU. When the 
+CPU is stalled, no interrupts are serviced, including the local apic 
+timer interrupt, which was responsible for waking up cyclictest. This 
+behavior was observed within traces gathered from cyclictest with ftrace 
+enabled.
+
+> I'm not sure if adding random delay and giving an unpredictable impact on
+> completely random threads is the best way to solve this..
+
+Agreed, we know that this is a hack. Do you have any better solutions?
+
+- JD
