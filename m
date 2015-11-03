@@ -1,45 +1,69 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [v4.1.10-rt10][PATCH 1/2] genirq: introduce new
- generic_handle_irq_rt_wa() api
-Date: Tue, 3 Nov 2015 21:18:28 +0100
-Message-ID: <56391694.3030105@linutronix.de>
-References: <1446492626-24396-1-git-send-email-grygorii.strashko@ti.com>
- <1446492626-24396-2-git-send-email-grygorii.strashko@ti.com>
- <alpine.DEB.2.11.1511022036500.4032@nanos> <563906C5.8030801@ti.com>
- <alpine.DEB.2.11.1511032014580.4032@nanos>
+From: Jonathan David <jonathan.david@ni.com>
+Subject: Re: [RFC] e1000e: Add delays after writing to registers
+Date: Tue, 3 Nov 2015 16:10:23 -0600
+Message-ID: <563930CF.9090800@ni.com>
+References: <1445465268-10347-1-git-send-email-jonathan.david@ni.com>
+ <20151022055909.GA7263@icarus.home.austad.us> <5638F239.1030804@ni.com>
+ <20151103194246.GA19824@sisyphus.home.austad.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="windows-1252"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Sekhar Nori <nsekhar@ti.com>
-To: Thomas Gleixner <tglx@linutronix.de>,
-	Grygorii Strashko <grygorii.strashko@ti.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1511032014580.4032@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: <linux-rt-users@vger.kernel.org>, <josh.cartwright@ni.com>
+To: Henrik Austad <henrik@austad.us>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-by2on0110.outbound.protection.outlook.com ([207.46.100.110]:51704
+	"EHLO na01-by2-obe.outbound.protection.outlook.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1755488AbbKCWK1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 3 Nov 2015 17:10:27 -0500
+In-Reply-To: <20151103194246.GA19824@sisyphus.home.austad.us>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 11/03/2015 08:51 PM, Thomas Gleixner wrote:
->> where MAX_MSI_IRQS = 32 now, but potentially can be increased up to 256.
-> 
-> And you really oversimplified the code above. The reality is:
-> 
->     for (i = 0; i < MAX_MSI_CTRLS: i++) {
->     	u32 status = read_msi_ctrl(i);
-> 
-> 	for_each_bit(status)
-> 		handle_irq();
->     }
-> 
-> So sure, the worst case here is MAX_MSI_CTRLS * 32, but if all
-> possible 256 MSI interrupts are pending at the same time, you have
-> other problems than that.
+On 11/03/2015 01:42 PM, Henrik Austad wrote:
+> On Tue, Nov 03, 2015 at 11:43:21AM -0600, Jonathan David wrote:
+>> On 10/22/2015 12:59 AM, Henrik Austad wrote:
 
-With threaded interrupts we would have 256 invocations of
-wake_up_process() so nothing should take ages.
+>>>> Adding a delay after long series of writes gives them time to
+>>>> complete, and for higher priority tasks to run unimpeded.
+>>>
+>>> Aren't we running with threaded interrupts?
+>>>
+>>> What happens to the thread(s) pushing data to the network?
+>>> What about xmit-buffer once it is full? Which thread will block on send or
+>>> have its sk_buff dropped?
+>>
+>> All of this is totally irrelevant to the problem we are seeing.
+>
+> If this is irrelevant, why hack at the network-driver, hmm?
 
-> Thanks,
-> 
-> 	tglx
+It is relevant to the network driver, as this is where the symptoms were 
+discovered; however, it has no relation to the packet delivery path. 
+This is related purely to link configuration.
 
-Sebastian
+>> The e1000x driver itself is not responsible for the delay here.
+>
+> ... then why hack the network-driver?
+
+Lack of better known options.
+
+>> The issue is with PCI where issuing a large number of MMIO writes
+>> followed by a read (to force said writes to execute) will stall the CPU.
+>> When the CPU is stalled, no interrupts are serviced, including the local
+>> apic timer interrupt, which was responsible for waking up cyclictest.
+>> This behavior was observed within traces gathered from cyclictest with
+>> ftrace enabled.
+>
+> So you get bogged down with interrupts disabled;
+
+No, interrupts are entirely enabled while the PCI MMIO writes/read are 
+issued; but the local apic timer still arrives late, presumably because 
+the CPU is waiting to complete whatever writes remain in the buffer.
+
+I think this might be the root of our miscommunication. You are asking 
+good questions about threaded interrupts, etc, but it isn't clear how 
+they are related to the specific problem we are seeing.
+
+Thanks,
+
+- JD
