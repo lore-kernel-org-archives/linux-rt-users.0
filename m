@@ -1,117 +1,87 @@
-From: Henrik Austad <henrik@austad.us>
-Subject: Re: [RFC] e1000e: Add delays after writing to registers
-Date: Tue, 3 Nov 2015 20:42:46 +0100
-Message-ID: <20151103194246.GA19824@sisyphus.home.austad.us>
-References: <1445465268-10347-1-git-send-email-jonathan.david@ni.com>
- <20151022055909.GA7263@icarus.home.austad.us>
- <5638F239.1030804@ni.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [v4.1.10-rt10][PATCH 1/2] genirq: introduce new generic_handle_irq_rt_wa()
+ api
+Date: Tue, 3 Nov 2015 20:51:03 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1511032014580.4032@nanos>
+References: <1446492626-24396-1-git-send-email-grygorii.strashko@ti.com> <1446492626-24396-2-git-send-email-grygorii.strashko@ti.com> <alpine.DEB.2.11.1511022036500.4032@nanos> <563906C5.8030801@ti.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha1;
-	protocol="application/pgp-signature"; boundary="uAKRQypu60I7Lcqm"
-Cc: linux-rt-users@vger.kernel.org, josh.cartwright@ni.com
-To: Jonathan David <jonathan.david@ni.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: bigeasy@linutronix.de, linux-rt-users@vger.kernel.org,
+	linux-kernel@vger.kernel.org, Sekhar Nori <nsekhar@ti.com>
+To: Grygorii Strashko <grygorii.strashko@ti.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f47.google.com ([74.125.82.47]:33641 "EHLO
-	mail-wm0-f47.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932242AbbKCTmv (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:46473 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756008AbbKCTvp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 3 Nov 2015 14:42:51 -0500
-Received: by wmeg8 with SMTP id g8so93490392wme.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 03 Nov 2015 11:42:50 -0800 (PST)
-Content-Disposition: inline
-In-Reply-To: <5638F239.1030804@ni.com>
+	Tue, 3 Nov 2015 14:51:45 -0500
+In-Reply-To: <563906C5.8030801@ti.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+On Tue, 3 Nov 2015, Grygorii Strashko wrote:
+> On 11/02/2015 09:38 PM, Thomas Gleixner wrote:
+> > 
+> > Why aren't you simply marking these demultiplex handlers with IRQ_NO_THREAD?
+> > 
+> In general, it's possible. But, in this case, worst scenario will look like:
 
---uAKRQypu60I7Lcqm
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+> dra7xx_pcie_msi_irq_handler()
+> -> dw_handle_msi_irq()
+>    [code simplified]
+>    -> for (i = 0; i < MAX_MSI_IRQS; i++) {
+> 	...
+> 	generic_handle_irq(Y(i));
+> 	...
+>    }
+> where MAX_MSI_IRQS = 32 now, but potentially can be increased up to 256.
 
-On Tue, Nov 03, 2015 at 11:43:21AM -0600, Jonathan David wrote:
-> On 10/22/2015 12:59 AM, Henrik Austad wrote:
-> >On Wed, Oct 21, 2015 at 05:07:48PM -0500, Jonathan David wrote:
-> >>There is a noticeable impact on determinism when a large number of
-> >>writes are flushed. Writes to the hardware registers are sent across
-> >>the PCI bus and take a significant amount of time to complete after
-> >>a flush, which causes high priority tasks (including interrupts) to
-> >>be delayed.
-> >
-> >Do you see this in the entire system, or on the core where the write was
-> >triggered?
->=20
-> Only on the core where the writes are issued.
+And you really oversimplified the code above. The reality is:
 
-Ok, not a global freeze then :)
+    for (i = 0; i < MAX_MSI_CTRLS: i++) {
+    	u32 status = read_msi_ctrl(i);
 
-> >>Adding a delay after long series of writes gives them time to
-> >>complete, and for higher priority tasks to run unimpeded.
-> >
-> >Aren't we running with threaded interrupts?
-> >
-> >What happens to the thread(s) pushing data to the network?
-> >What about xmit-buffer once it is full? Which thread will block on send =
-or
-> >have its sk_buff dropped?
->=20
-> All of this is totally irrelevant to the problem we are seeing.
+	for_each_bit(status)
+		handle_irq();
+    }
 
-If this is irrelevant, why hack at the network-driver, hmm?
+So sure, the worst case here is MAX_MSI_CTRLS * 32, but if all
+possible 256 MSI interrupts are pending at the same time, you have
+other problems than that.
 
-> The e1000x driver itself is not responsible for the delay here.=20
+In the current configuration (32 interrupts), which cannot change
+because it's hardwired in silicon, this is a single status read and
+assuming that only a few (most of the time it will be exactly ONE) of
+those interrupts are pending at the same time is pretty much a sane
+assumption. If it wouldn't be then all users of chained interrupt
+handlers which usually demultiplex 32 interrupts would suffer from
+that problem already.
 
-=2E.. then why hack the network-driver?
+Aside of that, you would prevent that any of these PCIe interrupts can
+be utilized as a "fast" non threaded interrupt on RT. And that I would
+consider a real bad limitation for no value. 
 
-> The issue is with PCI where issuing a large number of MMIO writes=20
-> followed by a read (to force said writes to execute) will stall the CPU.=
-=20
-> When the CPU is stalled, no interrupts are serviced, including the local=
-=20
-> apic timer interrupt, which was responsible for waking up cyclictest.=20
-> This behavior was observed within traces gathered from cyclictest with=20
-> ftrace enabled.
+MSI has been invented to overcome the issues of wired interrupts
+(demultiplexing and sharing), so I don't know why the involved
+hardware designers came to the conclusion that demultiplexing MSI
+interrupts in software is a sane approach. But then I really gave up
+trying to understand hardware designers long ago.
 
-So you get bogged down with interrupts disabled; so back to my question,=20
-are we not running with threaded interrupts? What exactly are we triggering=
-=20
-here?
+The only sane way to deal with that is to actually mark those handlers
+NOTRHEAD and document the limitations of your hardware, so your
+customers won't trip over it. If they insist on having 32 MSI
+producers on that PCIe bus and make them fire all at the same time,
+then you still can provide them your "solution".
 
-> >I'm not sure if adding random delay and giving an unpredictable impact on
-> >completely random threads is the best way to solve this..
->=20
-> Agreed, we know that this is a hack. Do you have any better solutions?
+Just face it, it's a bad hardware design decision and adding a half
+baken hackery which actually hurts sane use cases is not making it any
+better.
 
-- Send less data over the network ;)
-- affine network interrupts to a non-rt core and place rt-tasks on cores=20
-  shielded from interrupts (why are you not doing this already?)
-- Look at the PCI driver and add breathers there (e.g. after X MMIO=20
-  writes, enable interrupts, disable interrupts and continue)
+Thanks,
 
-I'm sure adding random delay to the network-driver solves your particular=
-=20
-problem, and that is fine, but I fear that you'll just end up opening a=20
-nasty can of worms. Debugging this when (not if) it fails is not going to=
-=20
-be very pretty methinks.
+	tglx
 
-Anyhow, I'm not about to tell you what you can or cannot do, just that I=20
-see some rather nasty bumps in the road ahead of you with the current=20
-solution.
 
---=20
-Henrik Austad
 
---uAKRQypu60I7Lcqm
-Content-Type: application/pgp-signature; name="signature.asc"
-Content-Description: Digital signature
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v1
 
-iEYEARECAAYFAlY5DjYACgkQ6k5VT6v45lncxgCbB/dcwFiR3TsZhfm0jj7quY9T
-rA8AniXMdbfWw+wmq+6H5HVtTReyzPZ1
-=Nz7N
------END PGP SIGNATURE-----
-
---uAKRQypu60I7Lcqm--
