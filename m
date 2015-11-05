@@ -1,86 +1,50 @@
-From: Yimin Deng <yimin11.deng@gmail.com>
-Subject: kernel BUG at kernel/rtmutex_common.h:75
-Date: Wed, 4 Nov 2015 22:35:57 +0800
-Message-ID: <CAAh1qt=DCL9aUXNxanP5BKtiPp3m+qj4yB+gDohhXPVFCxWwzg@mail.gmail.com>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: [v4.1.10-rt10][PATCH 1/2] genirq: introduce new
+ generic_handle_irq_rt_wa() api
+Date: Thu, 5 Nov 2015 18:44:56 +0200
+Message-ID: <563B8788.1090000@ti.com>
+References: <1446492626-24396-1-git-send-email-grygorii.strashko@ti.com>
+ <1446492626-24396-2-git-send-email-grygorii.strashko@ti.com>
+ <alpine.DEB.2.11.1511022036500.4032@nanos> <563906C5.8030801@ti.com>
+ <alpine.DEB.2.11.1511032014580.4032@nanos> <56391694.3030105@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f66.google.com ([209.85.215.66]:33646 "EHLO
-	mail-lf0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932178AbbKDOf7 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 4 Nov 2015 09:35:59 -0500
-Received: by lfgh9 with SMTP id h9so3958737lfg.0
-        for <linux-rt-users@vger.kernel.org>; Wed, 04 Nov 2015 06:35:58 -0800 (PST)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>,
+	Sekhar Nori <nsekhar@ti.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56391694.3030105@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-I encountered =E2=80=9Ckernel BUG=E2=80=9D which was reported in the
-rt_mutex_top_waiter() at kernel/rtmutex_common.h:75.
+Hi Thomas, Sebastian,
 
-Linux version: 3.12.37-rt51; CONFIG_PREEMPT_RT_FULL is disabled.
-Architecture: PowerPC
+On 11/03/2015 10:18 PM, Sebastian Andrzej Siewior wrote:
+> On 11/03/2015 08:51 PM, Thomas Gleixner wrote:
+>>> where MAX_MSI_IRQS = 32 now, but potentially can be increased up to 256.
+>>
+>> And you really oversimplified the code above. The reality is:
+>>
+>>      for (i = 0; i < MAX_MSI_CTRLS: i++) {
+>>      	u32 status = read_msi_ctrl(i);
+>>
+>> 	for_each_bit(status)
+>> 		handle_irq();
+>>      }
+>>
+>> So sure, the worst case here is MAX_MSI_CTRLS * 32, but if all
+>> possible 256 MSI interrupts are pending at the same time, you have
+>> other problems than that.
+>
+> With threaded interrupts we would have 256 invocations of
+> wake_up_process() so nothing should take ages.
+>
 
-We ported an application from pSOS RTOS to Linux using the
-Xenomai-Mercury (=3Dlibrary to map pSOS task to POSIX threads). And We
-have several threads running in the real-time priority domain.
-ThreadA: running at prio -59. pthread_mutex_lock() +
-pthread_cond_timedwait() + pthread_mutex_unlock()
-ThreadB: running at prio -84. pthread_mutex_lock() +
-pthread_cond_signal() + pthread_mutex_unlock()
+Thanks a lot for your time and comments - I'll follow your
+recommendations and use IRQF_NO_THREAD.
 
-ThreadA:
------- ------
-futex_wait_requeue_pi()
-    futex_wait_queue_me()
-    <timed out>
-
-    raw_spin_lock_irq(&current->pi_lock);
-    if (current->pi_blocked_on) {
-        raw_spin_unlock_irq(&current->pi_lock);
-    } else {
-        current->pi_blocked_on =3D PI_WAKEUP_INPROGRESS;
-        raw_spin_unlock_irq(&current->pi_lock);
-            <-- ThreadA was interrupted and preempted!
-        spin_lock(&hb->lock);
-
-
-ThreadB:
------- ------
-rt_mutex_start_proxy_lock();
-    task_blocks_on_rt_mutex();  <-- return "-EAGAIN" due to
-"task->pi_blocked_on =3D=3D PI_WAKEUP_INPROGRESS"
-    ...
-    if (unlikely(ret))
-        remove_waiter(lock, waiter);
-            int first =3D (waiter =3D=3D rt_mutex_top_waiter(lock));  <=
---
-BUG_ON(w->lock !=3D lock);
-
-It seems that the purpose to call the remove_waiter() is to remove the
-waiter added by =E2=80=9Cplist_add(&waiter->list_entry, &lock->wait_lis=
-t);=E2=80=9D in
-the task_blocks_on_rt_mutex(). But in the scenario above there's no
-waiter on the lock yet and
-the waiter has not been added into the wait list of the lock in the
-task_blocks_on_rt_mutex() due to the failure =E2=80=9C-EAGAIN=E2=80=9D.=
- So it reported
-kernel BUG in the rt_mutex_top_waiter().
-
-I modified it as below and the issue seems disappear.
-- if (unlikely(ret))
-+ if (unlikely(ret && (-EAGAIN !=3D ret)))
-       remove_waiter(lock, waiter);
-
-Could the scenario above be possible? If so, how to resolve this issue?
-Thanks!
-
-B.R.
-Yimin Deng
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+regards,
+-grygorii
