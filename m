@@ -1,82 +1,93 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: kernel BUG at kernel/rtmutex_common.h:75
-Date: Fri, 6 Nov 2015 15:41:16 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1511061215400.4032@nanos>
-References: <CAAh1qt=DCL9aUXNxanP5BKtiPp3m+qj4yB+gDohhXPVFCxWwzg@mail.gmail.com>
+From: Armin Steinhoff <armin@steinhoff.de>
+Subject: Re: [RFC] e1000e: Add delays after writing to registers
+Date: Fri, 6 Nov 2015 16:46:23 +0100
+Message-ID: <563CCB4F.90905@steinhoff.de>
+References: <1445465268-10347-1-git-send-email-jonathan.david@ni.com>
+ <20151022055909.GA7263@icarus.home.austad.us> <5638F239.1030804@ni.com>
+ <20151103194246.GA19824@sisyphus.home.austad.us> <563930CF.9090800@ni.com>
+ <20151106055349.GA10665@icarus.home.austad.us>
+ <alpine.DEB.2.11.1511060929430.4032@nanos>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-145069621-1446813427=:4032"
-Cc: linux-rt-users@vger.kernel.org
-To: Yimin Deng <yimin11.deng@gmail.com>
+Content-Type: text/plain; charset=us-ascii; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Jonathan David <jonathan.david@ni.com>,
+	linux-rt-users@vger.kernel.org, josh.cartwright@ni.com
+To: Thomas Gleixner <tglx@linutronix.de>,
+	Henrik Austad <henrik@austad.us>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60214 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161212AbbKFOl7 (ORCPT
+Received: from mout.kundenserver.de ([212.227.126.131]:57870 "EHLO
+	mout.kundenserver.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751499AbbKFPqh (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 Nov 2015 09:41:59 -0500
-In-Reply-To: <CAAh1qt=DCL9aUXNxanP5BKtiPp3m+qj4yB+gDohhXPVFCxWwzg@mail.gmail.com>
-Content-ID: <alpine.DEB.2.11.1511061540380.4032@nanos>
+	Fri, 6 Nov 2015 10:46:37 -0500
+In-Reply-To: <alpine.DEB.2.11.1511060929430.4032@nanos>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+Thomas Gleixner schrieb:
+> On Fri, 6 Nov 2015, Henrik Austad wrote:
+>> On Tue, Nov 03, 2015 at 04:10:23PM -0600, Jonathan David wrote:
+>>> On 11/03/2015 01:42 PM, Henrik Austad wrote:
+>>>> On Tue, Nov 03, 2015 at 11:43:21AM -0600, Jonathan David wrote:
+>>>>> On 10/22/2015 12:59 AM, Henrik Austad wrote:
+>>>>>>> Adding a delay after long series of writes gives them time to
+>>>>>>> complete, and for higher priority tasks to run unimpeded.
+>>>>>> Aren't we running with threaded interrupts?
+>>>>>>
+>>>>>> What happens to the thread(s) pushing data to the network?
+>>>>>> What about xmit-buffer once it is full? Which thread will block on send or
+>>>>>> have its sk_buff dropped?
+>>>>> All of this is totally irrelevant to the problem we are seeing.
+>>>> If this is irrelevant, why hack at the network-driver, hmm?
+>>> It is relevant to the network driver, as this is where the symptoms were
+>>> discovered; however, it has no relation to the packet delivery path. This is
+>>> related purely to link configuration.
+>> I was under the impression that a PCI link configuration/training was down
+>> to speed etc, not how many MMIO read/writes it could do. Then again, a lot
+>> of this stuff is pure (black) magic.
+> This is not about PCI link training. Jonathan is talking about the
+> network link configuration.
+>
+>>>>> The issue is with PCI where issuing a large number of MMIO writes
+>>>>> followed by a read (to force said writes to execute) will stall the CPU.
+>>>>> When the CPU is stalled, no interrupts are serviced, including the local
+>>>>> apic timer interrupt, which was responsible for waking up cyclictest.
+>>>>> This behavior was observed within traces gathered from cyclictest with
+>>>>> ftrace enabled.
+>>>> So you get bogged down with interrupts disabled;
+>>> No, interrupts are entirely enabled while the PCI MMIO writes/read are
+>>> issued; but the local apic timer still arrives late, presumably because the
+>>> CPU is waiting to complete whatever writes remain in the buffer.
+>> Heh, strange, is the interrupt signal itself delivered late as well, or
+>> just the handling of it?
+> The CPU stalls on the IO read, so the interrupt cannot be handled by
+> the CPU until that stall is resolved. The timer fires correctly.
+>
+> The problem here is that even if the I/O memory of the network device
+> is mapped uncached, the PCI bus itself is allowed to buffer and do
+> write combining. That's done to overcome the bottleneck of waiting for
+> each single write transaction to complete.
+>
+> The PCI bus guarantees that the writes are not reordered versus a
+> read. That's why drivers use a read after a series of writes to make
+> sure that the writes have reached the device and are not longer in the
+> PCI buffer queue.
+>
+> Now that read after a sequence of writes has the effect that the CPU
+> has to wait for the writes to be finished before the read can take
+> place. During that time the CPU just sits there and twiddles
+> thumbs. It's a full stall.
 
---8323329-145069621-1446813427=:4032
-Content-Type: TEXT/PLAIN; CHARSET=UTF-8
-Content-Transfer-Encoding: 8BIT
-Content-ID: <alpine.DEB.2.11.1511061540381.4032@nanos>
+What means "the CPU" ? Does it mean ALL CPU cores are stalled ??
 
-B1;2802;0cOn Wed, 4 Nov 2015, Yimin Deng wrote:
-> It seems that the purpose to call the remove_waiter() is to remove the
-> waiter added by “plist_add(&waiter->list_entry, &lock->wait_list);” in
-> the task_blocks_on_rt_mutex(). But in the scenario above there's no
-> waiter on the lock yet and
-> the waiter has not been added into the wait list of the lock in the
-> task_blocks_on_rt_mutex() due to the failure “-EAGAIN”. So it reported
-> kernel BUG in the rt_mutex_top_waiter().
-> 
-> I modified it as below and the issue seems disappear.
-> - if (unlikely(ret))
-> + if (unlikely(ret && (-EAGAIN != ret)))
->        remove_waiter(lock, waiter);
-> 
-> Could the scenario above be possible? If so, how to resolve this issue?
-> Thanks!
+> Now my question is how big is the induced latency.
+>
+> Thanks,
+>
+> 	tglx
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+>
 
-Yes it is possible. Nice detective work!
-
-Your solution is correct, but actually it's not sufficient, because we
-have another possibility to return early without being queued
-(-EDEADLOCK). Find the full solution below.
-
-Thanks for tracking that down!
-
-       tglx
----
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 7601c1332a88..0e6505d5ce4a 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1003,11 +1003,18 @@ static void wakeup_next_waiter(struct rt_mutex *lock)
- static void remove_waiter(struct rt_mutex *lock,
- 			  struct rt_mutex_waiter *waiter)
- {
--	bool is_top_waiter = (waiter == rt_mutex_top_waiter(lock));
- 	struct task_struct *owner = rt_mutex_owner(lock);
- 	struct rt_mutex *next_lock = NULL;
-+	bool is_top_waiter = false;
- 	unsigned long flags;
- 
-+	/*
-+	 * @waiter might be not queued when task_blocks_on_rt_mutex()
-+	 * returned early so @lock might not have any waiters.
-+	 */
-+	if (rt_mutex_has_waiters())
-+		is_top_waiter = (waiter == rt_mutex_top_waiter(lock));
-+
- 	raw_spin_lock_irqsave(&current->pi_lock, flags);
- 	rt_mutex_dequeue(lock, waiter);
- 	current->pi_blocked_on = NULL;
-
-
---8323329-145069621-1446813427=:4032--
