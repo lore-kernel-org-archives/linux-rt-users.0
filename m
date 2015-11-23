@@ -1,34 +1,70 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [RFC] [PATCH] fs/proc: add poll()ing support to
- /proc/interrupts
-Date: Thu, 19 Nov 2015 14:36:54 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1511191436210.3898@nanos>
-References: <1445462328-14142-1-git-send-email-haris.okanovic@ni.com> <564D06D7.4060802@ni.com>
+From: <jianchuan.wang@windriver.com>
+Subject: [PATCH] locking_selftest: Save/restore migrate_disable_atomic in locking selftest
+Date: Mon, 23 Nov 2015 15:19:38 +0800
+Message-ID: <1448263178-28397-1-git-send-email-jianchuan.wang@windriver.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, jcartwri <josh.cartwright@ni.com>
-To: Haris Okanovic <haris.okanovic@ni.com>
+Content-Type: text/plain
+Cc: <linux-rt-users@vger.kernel.org>, <linux-kernel@vger.kernel.org>
+To: <rostedt@goodmis.org>, <bigeasy@linutronix.de>,
+	<tglx@linutronix.de>, <yang.shi@windriver.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:40398 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758473AbbKSNhh (ORCPT
+Received: from mail.windriver.com ([147.11.1.11]:63011 "EHLO
+	mail.windriver.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753155AbbKWHV3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 19 Nov 2015 08:37:37 -0500
-In-Reply-To: <564D06D7.4060802@ni.com>
+	Mon, 23 Nov 2015 02:21:29 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Haris,
+From: Jianchuan Wang <jianchuan.wang@windriver.com>
 
-On Wed, 18 Nov 2015, Haris Okanovic wrote:
+System will hang when enabling the kernel option
+CONFIG_DEBUG_LOCKING_API_SELFTESTS and CONFIG_SCHED_CONFIG
+in the preempt-rt kernel.
 
-> I made this RFC at an awkward time for most regulars on this list, right
-> before RTLWS and the Kernel Summit, which might explain the lack of response.
-> Otherwise it may just be a terrible idea! Regardless, I'm curious if anyone's
-> willing to share an opinion?
+In the preempt-rt kernel, migrate_enable()/migrage_disable() are called
+in the spinlock and read/write lock; The lock()/unlock() aren't used
+in pairs in the selftest processing changes the migrate_disable_atomic
+so that the system will hang in the dotest(), the calltrace is :
+printk() ..-> vprintk_emit() -> migrage_disable()
+-> WARN_ON_ONCE() ..-> warn_slowpath_common() ..-> printk()
 
-It's on my backlog list.
+For fixing it, we need save the migrate_disable_atomic before self-testing
+and restore migrate_disable_atomic after self-testing.
 
-Thanks,
+Signed-off-by: Jianchuan Wang <jianchuan.wang@windriver.com>
+---
+ lib/locking-selftest.c | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
 
-	tglx
+diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
+index b93a610..61798da 100644
+--- a/lib/locking-selftest.c
++++ b/lib/locking-selftest.c
+@@ -997,10 +997,23 @@ static int unexpected_testcase_failures;
+ static void dotest(void (*testcase_fn)(void), int expected, int lockclass_mask)
+ {
+ 	unsigned long saved_preempt_count = preempt_count();
++#ifdef CONFIG_SCHED_DEBUG
++	struct task_struct *p = current;
++	int save_migrate_atomic;
++#endif
+ 
+ 	WARN_ON(irqs_disabled());
+ 
++#ifdef CONFIG_SCHED_DEBUG
++	save_migrate_atomic = p->migrate_disable_atomic;
++#endif
++
+ 	testcase_fn();
++
++#ifdef CONFIG_SCHED_DEBUG
++	p->migrate_disable_atomic = save_migrate_atomic;
++#endif
++
+ 	/*
+ 	 * Filter out expected failures:
+ 	 */
+-- 
+1.9.1
+
