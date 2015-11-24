@@ -1,289 +1,94 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH tip v4 5/5] rcu: use simple wait queues where possible in rcutree
-Date: Tue, 24 Nov 2015 14:03:07 +0100
-Message-ID: <1448370187-10075-6-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH tip v4 2/5] [s]wait: Add compile time type check assertion
+Date: Tue, 24 Nov 2015 14:03:04 +0100
+Message-ID: <1448370187-10075-3-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1448370187-10075-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: Boqun Feng <boqun.feng@gmail.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
 	Daniel Wagner <daniel.wagner@bmw-carit.de>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
 	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1448370187-10075-1-git-send-email-daniel.wagner@bmw-carit.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
+The API provided by wait.h and swait.h is very similiar. Most of the
+time your are only one character away from either of it:
 
-As of commit dae6e64d2bcfd4b06304ab864c7e3a4f6b5fedf4 ("rcu: Introduce
-proper blocking to no-CBs kthreads GP waits") the RCU subsystem started
-making use of wait queues.
+     wake_up() vs swake_up()
 
-Here we convert all additions of RCU wait queues to use simple wait queues,
-since they don't need the extra overhead of the full wait queue features.
+This is on purpose so that we do not have two nearly identical bits of
+infrastructre code with dissimilar names.
 
-Originally this was done for RT kernels[1], since we would get things like...
-
-  BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
-  in_atomic(): 1, irqs_disabled(): 1, pid: 8, name: rcu_preempt
-  Pid: 8, comm: rcu_preempt Not tainted
-  Call Trace:
-   [<ffffffff8106c8d0>] __might_sleep+0xd0/0xf0
-   [<ffffffff817d77b4>] rt_spin_lock+0x24/0x50
-   [<ffffffff8106fcf6>] __wake_up+0x36/0x70
-   [<ffffffff810c4542>] rcu_gp_kthread+0x4d2/0x680
-   [<ffffffff8105f910>] ? __init_waitqueue_head+0x50/0x50
-   [<ffffffff810c4070>] ? rcu_gp_fqs+0x80/0x80
-   [<ffffffff8105eabb>] kthread+0xdb/0xe0
-   [<ffffffff8106b912>] ? finish_task_switch+0x52/0x100
-   [<ffffffff817e0754>] kernel_thread_helper+0x4/0x10
-   [<ffffffff8105e9e0>] ? __init_kthread_worker+0x60/0x60
-   [<ffffffff817e0750>] ? gs_change+0xb/0xb
-
-...and hence simple wait queues were deployed on RT out of necessity
-(as simple wait uses a raw lock), but mainline might as well take
-advantage of the more streamline support as well.
-
-[1] This is a carry forward of work from v3.10-rt; the original conversion
-was by Thomas on an earlier -rt version, and Sebastian extended it to
-additional post-3.10 added RCU waiters; here I've added a commit log and
-unified the RCU changes into one, and uprev'd it to match mainline RCU.
+A compile time type check assertion ensures that obvious wrong usage
+is caught at early stage.
 
 Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
-Cc: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-kernel@vger.kernel.org
 ---
- kernel/rcu/tree.c        | 20 ++++++++++----------
- kernel/rcu/tree.h        |  9 +++++----
- kernel/rcu/tree_plugin.h | 18 +++++++++---------
- 3 files changed, 24 insertions(+), 23 deletions(-)
+ include/linux/compiler.h | 4 ++++
+ include/linux/swait.h    | 2 ++
+ include/linux/wait.h     | 2 ++
+ 3 files changed, 8 insertions(+)
 
-diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 952536d..628ffb5 100644
---- a/kernel/rcu/tree.c
-+++ b/kernel/rcu/tree.c
-@@ -1588,7 +1588,7 @@ static void rcu_gp_kthread_wake(struct rcu_state *rsp)
- 	    !READ_ONCE(rsp->gp_flags) ||
- 	    !rsp->gp_kthread)
- 		return;
--	wake_up(&rsp->gp_wq);
-+	swake_up(&rsp->gp_wq);
- }
+diff --git a/include/linux/compiler.h b/include/linux/compiler.h
+index c836eb2..ac7afcb 100644
+--- a/include/linux/compiler.h
++++ b/include/linux/compiler.h
+@@ -455,6 +455,10 @@ static __always_inline void __write_once_size(volatile void *p, void *res, int s
+ 	compiletime_assert(__native_word(t),				\
+ 		"Need native word sized stores/loads for atomicity.")
  
++#define compiletime_assert_same_type(a, b)				\
++	compiletime_assert(__same_type(a, b),				\
++		"Need same type.");
++
  /*
-@@ -2059,7 +2059,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
- 					       READ_ONCE(rsp->gpnum),
- 					       TPS("reqwait"));
- 			rsp->gp_state = RCU_GP_WAIT_GPS;
--			wait_event_interruptible(rsp->gp_wq,
-+			swait_event_interruptible(rsp->gp_wq,
- 						 READ_ONCE(rsp->gp_flags) &
- 						 RCU_GP_FLAG_INIT);
- 			rsp->gp_state = RCU_GP_DONE_GPS;
-@@ -2089,7 +2089,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
- 					       READ_ONCE(rsp->gpnum),
- 					       TPS("fqswait"));
- 			rsp->gp_state = RCU_GP_WAIT_FQS;
--			ret = wait_event_interruptible_timeout(rsp->gp_wq,
-+			ret = swait_event_interruptible_timeout(rsp->gp_wq,
- 					rcu_gp_fqs_check_wake(rsp, &gf), j);
- 			rsp->gp_state = RCU_GP_DOING_FQS;
- 			/* Locking provides needed memory barriers. */
-@@ -2212,7 +2212,7 @@ static void rcu_report_qs_rsp(struct rcu_state *rsp, unsigned long flags)
- 	WARN_ON_ONCE(!rcu_gp_in_progress(rsp));
- 	WRITE_ONCE(rsp->gp_flags, READ_ONCE(rsp->gp_flags) | RCU_GP_FLAG_FQS);
- 	raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
--	rcu_gp_kthread_wake(rsp);
-+	swake_up(&rsp->gp_wq);  /* Memory barrier implied by swake_up() path. */
- }
+  * Prevent the compiler from merging or refetching accesses.  The compiler
+  * is also forbidden from reordering successive instances of ACCESS_ONCE(),
+diff --git a/include/linux/swait.h b/include/linux/swait.h
+index c1f9c62..80e2eb8 100644
+--- a/include/linux/swait.h
++++ b/include/linux/swait.h
+@@ -66,6 +66,7 @@ extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name
+ #define init_swait_queue_head(q)				\
+ 	do {							\
+ 		static struct lock_class_key __key;		\
++		compiletime_assert_same_type(struct swait_queue_head *, q); \
+ 		__init_swait_queue_head((q), #q, &__key);	\
+ 	} while (0)
  
- /*
-@@ -2873,7 +2873,7 @@ static void force_quiescent_state(struct rcu_state *rsp)
- 	}
- 	WRITE_ONCE(rsp->gp_flags, READ_ONCE(rsp->gp_flags) | RCU_GP_FLAG_FQS);
- 	raw_spin_unlock_irqrestore(&rnp_old->lock, flags);
--	rcu_gp_kthread_wake(rsp);
-+	swake_up(&rsp->gp_wq); /* Memory barrier implied by swake_up() path. */
- }
+@@ -101,6 +102,7 @@ extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
+ 	struct swait_queue __wait;					\
+ 	long __ret = ret;						\
+ 									\
++	compiletime_assert_same_type(struct swait_queue_head, wq);	\
+ 	INIT_LIST_HEAD(&__wait.task_list);				\
+ 	for (;;) {							\
+ 		long __int = prepare_to_swait_event(&wq, &__wait, state);\
+diff --git a/include/linux/wait.h b/include/linux/wait.h
+index 1e1bf9f..bc4f829 100644
+--- a/include/linux/wait.h
++++ b/include/linux/wait.h
+@@ -75,6 +75,7 @@ extern void __init_waitqueue_head(wait_queue_head_t *q, const char *name, struct
+ 	do {						\
+ 		static struct lock_class_key __key;	\
+ 							\
++		compiletime_assert_same_type(wait_queue_head_t *, q); \
+ 		__init_waitqueue_head((q), #q, &__key);	\
+ 	} while (0)
  
- /*
-@@ -3465,7 +3465,7 @@ static int synchronize_sched_expedited_cpu_stop(void *data)
- 	/* We are here: If we are last, do the wakeup. */
- 	rdp->exp_done = true;
- 	if (atomic_dec_and_test(&rsp->expedited_need_qs))
--		wake_up(&rsp->expedited_wq);
-+		swake_up(&rsp->expedited_wq);
- 	return 0;
- }
- 
-@@ -3481,7 +3481,7 @@ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
- 	jiffies_start = jiffies;
- 
- 	for (;;) {
--		ret = wait_event_interruptible_timeout(
-+		ret = swait_event_timeout(
- 				rsp->expedited_wq,
- 				!atomic_read(&rsp->expedited_need_qs),
- 				jiffies_stall);
-@@ -3489,7 +3489,7 @@ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
- 			return;
- 		if (ret < 0) {
- 			/* Hit a signal, disable CPU stall warnings. */
--			wait_event(rsp->expedited_wq,
-+			swait_event(rsp->expedited_wq,
- 				   !atomic_read(&rsp->expedited_need_qs));
- 			return;
- 		}
-@@ -3558,7 +3558,7 @@ void synchronize_sched_expedited(void)
- 	rcu_exp_gp_seq_start(rsp);
- 
- 	/* Stop each CPU that is online, non-idle, and not us. */
--	init_waitqueue_head(&rsp->expedited_wq);
-+	init_swait_queue_head(&rsp->expedited_wq);
- 	atomic_set(&rsp->expedited_need_qs, 1); /* Extra count avoids race. */
- 	for_each_online_cpu(cpu) {
- 		struct rcu_data *rdp = per_cpu_ptr(rsp->rda, cpu);
-@@ -4180,7 +4180,7 @@ static void __init rcu_init_one(struct rcu_state *rsp,
- 		}
- 	}
- 
--	init_waitqueue_head(&rsp->gp_wq);
-+	init_swait_queue_head(&rsp->gp_wq);
- 	rnp = rsp->level[rcu_num_lvls - 1];
- 	for_each_possible_cpu(i) {
- 		while (i > rnp->grphi)
-diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
-index 3dcf6368..02c29d3 100644
---- a/kernel/rcu/tree.h
-+++ b/kernel/rcu/tree.h
-@@ -27,6 +27,7 @@
- #include <linux/threads.h>
- #include <linux/cpumask.h>
- #include <linux/seqlock.h>
-+#include <linux/swait.h>
- #include <linux/stop_machine.h>
- 
- /*
-@@ -244,7 +245,7 @@ struct rcu_node {
- 				/* Refused to boost: not sure why, though. */
- 				/*  This can happen due to race conditions. */
- #ifdef CONFIG_RCU_NOCB_CPU
--	wait_queue_head_t nocb_gp_wq[2];
-+	struct swait_queue_head nocb_gp_wq[2];
- 				/* Place for rcu_nocb_kthread() to wait GP. */
- #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
- 	int need_future_gp[2];
-@@ -388,7 +389,7 @@ struct rcu_data {
- 	atomic_long_t nocb_q_count_lazy; /*  invocation (all stages). */
- 	struct rcu_head *nocb_follower_head; /* CBs ready to invoke. */
- 	struct rcu_head **nocb_follower_tail;
--	wait_queue_head_t nocb_wq;	/* For nocb kthreads to sleep on. */
-+	struct swait_queue_head nocb_wq; /* For nocb kthreads to sleep on. */
- 	struct task_struct *nocb_kthread;
- 	int nocb_defer_wakeup;		/* Defer wakeup of nocb_kthread. */
- 
-@@ -475,7 +476,7 @@ struct rcu_state {
- 	unsigned long gpnum;			/* Current gp number. */
- 	unsigned long completed;		/* # of last completed gp. */
- 	struct task_struct *gp_kthread;		/* Task for grace periods. */
--	wait_queue_head_t gp_wq;		/* Where GP task waits. */
-+	struct swait_queue_head gp_wq;		/* Where GP task waits. */
- 	short gp_flags;				/* Commands for GP task. */
- 	short gp_state;				/* GP kthread sleep state. */
- 
-@@ -507,7 +508,7 @@ struct rcu_state {
- 	atomic_long_t expedited_workdone3;	/* # done by others #3. */
- 	atomic_long_t expedited_normal;		/* # fallbacks to normal. */
- 	atomic_t expedited_need_qs;		/* # CPUs left to check in. */
--	wait_queue_head_t expedited_wq;		/* Wait for check-ins. */
-+	struct swait_queue_head expedited_wq;	/* Wait for check-ins. */
- 
- 	unsigned long jiffies_force_qs;		/* Time at which to invoke */
- 						/*  force_quiescent_state(). */
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index db4f357..0c69868 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -1779,7 +1779,7 @@ early_param("rcu_nocb_poll", parse_rcu_nocb_poll);
-  */
- static void rcu_nocb_gp_cleanup(struct swait_queue_head *sq)
- {
--	wake_up_all(sq);
-+	swake_up_all(sq);
- }
- 
- /*
-@@ -1802,8 +1802,8 @@ static struct swait_queue_head *rcu_nocb_gp_get(struct rcu_node *rnp)
- 
- static void rcu_init_one_nocb(struct rcu_node *rnp)
- {
--	init_waitqueue_head(&rnp->nocb_gp_wq[0]);
--	init_waitqueue_head(&rnp->nocb_gp_wq[1]);
-+	init_swait_queue_head(&rnp->nocb_gp_wq[0]);
-+	init_swait_queue_head(&rnp->nocb_gp_wq[1]);
- }
- 
- #ifndef CONFIG_RCU_NOCB_CPU_ALL
-@@ -1828,7 +1828,7 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
- 	if (READ_ONCE(rdp_leader->nocb_leader_sleep) || force) {
- 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
- 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
--		wake_up(&rdp_leader->nocb_wq);
-+		swake_up(&rdp_leader->nocb_wq);
- 	}
- }
- 
-@@ -2041,7 +2041,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
- 	 */
- 	trace_rcu_future_gp(rnp, rdp, c, TPS("StartWait"));
- 	for (;;) {
--		wait_event_interruptible(
-+		swait_event_interruptible(
- 			rnp->nocb_gp_wq[c & 0x1],
- 			(d = ULONG_CMP_GE(READ_ONCE(rnp->completed), c)));
- 		if (likely(d))
-@@ -2069,7 +2069,7 @@ wait_again:
- 	/* Wait for callbacks to appear. */
- 	if (!rcu_nocb_poll) {
- 		trace_rcu_nocb_wake(my_rdp->rsp->name, my_rdp->cpu, "Sleep");
--		wait_event_interruptible(my_rdp->nocb_wq,
-+		swait_event_interruptible(my_rdp->nocb_wq,
- 				!READ_ONCE(my_rdp->nocb_leader_sleep));
- 		/* Memory barrier handled by smp_mb() calls below and repoll. */
- 	} else if (firsttime) {
-@@ -2144,7 +2144,7 @@ wait_again:
- 			 * List was empty, wake up the follower.
- 			 * Memory barriers supplied by atomic_long_add().
- 			 */
--			wake_up(&rdp->nocb_wq);
-+			swake_up(&rdp->nocb_wq);
- 		}
- 	}
- 
-@@ -2165,7 +2165,7 @@ static void nocb_follower_wait(struct rcu_data *rdp)
- 		if (!rcu_nocb_poll) {
- 			trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu,
- 					    "FollowerSleep");
--			wait_event_interruptible(rdp->nocb_wq,
-+			swait_event_interruptible(rdp->nocb_wq,
- 						 READ_ONCE(rdp->nocb_follower_head));
- 		} else if (firsttime) {
- 			/* Don't drown trace log with "Poll"! */
-@@ -2324,7 +2324,7 @@ void __init rcu_init_nohz(void)
- static void __init rcu_boot_init_nocb_percpu_data(struct rcu_data *rdp)
- {
- 	rdp->nocb_tail = &rdp->nocb_head;
--	init_waitqueue_head(&rdp->nocb_wq);
-+	init_swait_queue_head(&rdp->nocb_wq);
- 	rdp->nocb_follower_tail = &rdp->nocb_follower_head;
- }
- 
+@@ -215,6 +216,7 @@ wait_queue_head_t *bit_waitqueue(void *, int);
+ 	wait_queue_t __wait;						\
+ 	long __ret = ret;	/* explicit shadow */			\
+ 									\
++	compiletime_assert_same_type(wait_queue_head_t, wq);		\
+ 	INIT_LIST_HEAD(&__wait.task_list);				\
+ 	if (exclusive)							\
+ 		__wait.flags = WQ_FLAG_EXCLUSIVE;			\
 -- 
 2.4.3
