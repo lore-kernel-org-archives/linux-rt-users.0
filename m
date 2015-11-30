@@ -1,394 +1,207 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: RCU stall and the system boot hang
-Date: Sat, 28 Nov 2015 22:05:37 -0800
-Message-ID: <20151129060537.GP26643@linux.vnet.ibm.com>
-References: <CADUONQMsaiTyFPRxm8TfB4ec__XjXUCAhjxZHG8Mz=cExvz5Sw@mail.gmail.com>
- <20151127162809.GM26643@linux.vnet.ibm.com>
- <CADUONQN3yFyFQ8pfkS9u7UAYNjQym8f1JAGapeR9YV4E=7_xXg@mail.gmail.com>
- <20151128145342.GO26643@linux.vnet.ibm.com>
- <CADUONQOYtHvwzoWNW33=WXy5r-UBTqs_vKdeRUgg=YEqq1meWg@mail.gmail.com>
-Reply-To: paulmck@linux.vnet.ibm.com
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: fupan li <lifupan@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e31.co.us.ibm.com ([32.97.110.149]:42806 "EHLO
-	e31.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750730AbbK2GFC (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 29 Nov 2015 01:05:02 -0500
-Received: from localhost
-	by e31.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Sat, 28 Nov 2015 23:05:01 -0700
-Content-Disposition: inline
-In-Reply-To: <CADUONQOYtHvwzoWNW33=WXy5r-UBTqs_vKdeRUgg=YEqq1meWg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: [PATCH tip v5 4/5] rcu: Do not call rcu_nocb_gp_cleanup() while holding rnp->lock
+Date: Mon, 30 Nov 2015 14:38:30 +0100
+Message-ID: <1448890711-5812-5-git-send-email-daniel.wagner@bmw-carit.de>
+References: <1448890711-5812-1-git-send-email-daniel.wagner@bmw-carit.de>
+Cc: Daniel Wagner <daniel.wagner@bmw-carit.de>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-kbuild@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Boqun Feng <boqun.feng@gmail.com>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1448890711-5812-1-git-send-email-daniel.wagner@bmw-carit.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sun, Nov 29, 2015 at 12:46:10PM +0800, fupan li wrote:
-> 2015-11-28 22:53 GMT+08:00 Paul E. McKenney <paulmck@linux.vnet.ibm.com>:
-> 
-> > On Sat, Nov 28, 2015 at 01:05:52PM +0800, fupan li wrote:
-> > > 2015-11-28 0:28 GMT+08:00 Paul E. McKenney <paulmck@linux.vnet.ibm.com>:
-> > >
-> > > > On Fri, Nov 27, 2015 at 08:23:24PM +0800, fupan li wrote:
-> > > > > Hi, Paul
-> > > > >
-> > > > > On my Wildcat_Pass (Haswell) board, the system boot will hang as
-> > below.
-> > > > > The kernel is preempt-rt kernel.
-> > > > > But it was not reproduced every time, about 1 time per 5-10 boots.
-> > > >
-> > > > CCing LMKL and linux-rt-users in case anyone else is seeing this.
-> > > >
-> > > > OK, let's take a look at the stall warning...
-> > > >
-> > > > [ . . . ]
-> > > >
-> > > > > Btrfs loaded
-> > > > > console [netcon0] enabled
-> > > > > netconsole: network logging started
-> > > > > rtc_cmos 00:00: setting system clock to 2015-11-11 18:18:03 UTC
-> > > > (1447265883)
-> > > > > usb 1-9: new full-speed USB device number 3 using xhci_hcd
-> > > > > IPv6: ADDRCONF(NETDEV_UP): eth0: link is not ready
-> > > > > IPv6: ADDRCONF(NETDEV_UP): eth1: link is not ready
-> > > > > usb 1-9: ep 0x81 - rounding interval to 64 microframes, ep desc says
-> > 80
-> > > > > microframes
-> > > > > input: American Megatrends Inc. Virtual Keyboard and Mouse as
-> > > > >
-> > > >
-> > /devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.0/0003:046B:FF10.0002/input/input3
-> > > > > hid-generic 0003:046B:FF10.0002: input: USB HID v1.10 Keyboard
-> > [American
-> > > > > Megatrends Inc. Virtual Keyboard and Mouse] on
-> > usb-0000:00:14.0-9/input0
-> > > > > input: American Megatrends Inc. Virtual Keyboard and Mouse as
-> > > > >
-> > > >
-> > /devices/pci0000:00/0000:00:14.0/usb1/1-9/1-9:1.1/0003:046B:FF10.0003/input/input4
-> > > > > hid-generic 0003:046B:FF10.0003: input: USB HID v1.10 Mouse [American
-> > > > > Megatrends Inc. Virtual Keyboard and Mouse] on
-> > usb-0000:00:14.0-9/input1
-> > > > > ixgbe 0000:02:00.0: registered PHC device on eth2
-> > > > > IPv6: ADDRCONF(NETDEV_UP): eth2: link is not ready
-> > > > > ixgbe 0000:02:00.1: registered PHC device on eth3
-> > > > > IPv6: ADDRCONF(NETDEV_UP): eth3: link is not ready
-> > > > > igb 0000:04:00.0 eth0: igb: eth0 NIC Link is Up 100 Mbps Full Duplex,
-> > > > Flow
-> > > > > Control: RX/TX
-> > > > > IPv6: ADDRCONF(NETDEV_CHANGE): eth0: link becomes ready
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > Sending DHCP requests ., OK
-> > > > > random: nonblocking pool is initialized
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=f48/0/0 softirq=0/0 fqs=0
-> > > > > 17: (59 GPs behind) idle=55a/0/0 softirq=0/0 fqs=0
-> > > >
-> > > > So CPUs 12 and 17 are stalling the grace period.
-> > > >
-> > > > > (detected by 5, t=21002 jiffies, g=-237, c=-238, q=136)
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > >
-> > > > But CPU 12 seems to be idle (as is in fact indicated by the
-> > "idle=55a/0/0"
-> > > > above), so the grace-period kthread should have reported a quiescent
-> > > > state on its behalf.
-> > > >
-> > > > > Task dump for CPU 17:
-> > > > > swapper/17      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859063eb8 ffffffff810b7ff5 ffff880859063ea8
-> > > > >  ffffffff810759ef ffffffff82140220 0000000000000011 ffffffff82140220
-> > > > >  ffff880859060000 ffff880859063ea8 ffffffff8140f1f7 ffff880859063ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > >
-> > > > And the same for CPU 17.
-> > > >
-> > > > > rcu_preempt kthread starved for 21002 jiffies!
-> > > >
-> > > > But the grace-period kthread hasn't had a chance to run for more
-> > > > than 21 seconds, which explains why the grace period is not ending.
-> > > >
-> > > > Are you starting up a heavy real-time workload at boot time?
-> > >
-> > > No,  just a normal boot, and these stalls were happened before
-> > > systemd services running.
-> >
-> > Interesting.  My testing show v4.1 being OK, with the first issues showing
-> > up somewhere between v4.1 and v4.2.  Or at least v4.1 is reliable enough
-> > that is passes 42 hours of focused rcutorture testing, where v4.2 tends
-> > to fail in under two hours.  And it seems to happen only on multisocket
-> > systems -- I seem to be able to hammer as hard as I want on my four-core
-> > (eight hardware thread) laptop without an issue.
-> >
-> > So it might be something between v4.1 and v4.1.12-rt8-8.0.0.0_preempt-rt.
-> > Could you please test commits in that range?
-> >
-> Hmmm, that's a narrow scope, I'll try to bisect  between them and find
-> the key commit.
+rcu_nocb_gp_cleanup() is called while holding rnp->lock. Currently,
+this is okay because the wake_up_all() in rcu_nocb_gp_cleanup() will
+not enable the IRQs. lockdep is happy.
 
-Please let me know how it goes!
+By switching over using swait this is not true anymore. swake_up_all()
+enables the IRQs while processing the waiters. __do_softirq() can now
+run and will eventually call rcu_process_callbacks() which wants to
+grap nrp->lock.
 
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Calling CRDA to update world regulatory domain
-> > > > > cfg80211: Exceeded CRDA call max attempts. Not calling CRDA
-> > > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=04c/0/0 softirq=0/0 fqs=1
-> > > >
-> > > > At this point, CPU 17's quiescent state has been recorded.
-> > > >
-> > > > > (detected by 24, t=84007 jiffies, g=-237, c=-238, q=147)
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > >
-> > > > CPU 12 still looks idle.  Though it does appear to have transitioned
-> > > > between idle and non-idle several times.
-> > > >
-> > > > > rcu_preempt kthread starved for 63005 jiffies!
-> > > >
-> > > > And the last time the grace-period kthread ran was about the time of
-> > > > the first stall-warning message.  Strange...
-> > > >
-> > > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=0a8/0/0 softirq=0/0 fqs=0
-> > > > > 17: (60 GPs behind) idle=6b4/0/0 softirq=0/0 fqs=0
-> > > > > (detected by 11, t=21002 jiffies, g=-236, c=-237, q=151)
-> > > >
-> > > > And the old grace period (g=-237, c=-238) finished and a new one has
-> > > > been stalled for 21 seconds.  Again, CPUs 12 and 17 are idle and
-> > > > stalling the grace period.
-> > > >
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > > > Task dump for CPU 17:
-> > > > > swapper/17      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859063eb8 ffffffff810b7ff5 ffff880859063ea8
-> > > > >  ffffffff810759ef ffffffff82140220 0000000000000011 ffffffff82140220
-> > > > >  ffff880859060000 ffff880859063ea8 ffffffff8140f1f7 ffff880859063ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > >
-> > > > The stack traces are consistent with idle CPUs.
-> > > >
-> > > > > rcu_preempt kthread starved for 21002 jiffies!
-> > > >
-> > > > And the grace-period kthread apparently hasn't gotten a chance to run
-> > > > at all during the grace period.  Strange...  It should get awakened by
-> > > > a timeout every three jiffies or so.
-> > > >
-> > > Was it possible that the grace-period kthread was bound to a
-> > > no_hz cpu and it cannot be awakened by timer interrupts?
-> >
-> > Timer interrupts should have no problem awakening tasks bound to no_hz
-> > CPUs.  But how many non-no_hz CPUs do you have?  If there is only the
-> > boot CPU, that boot CPU might be horribly overloaded, which could result
-> > in stalls.
-> >
-> I didn't know how to check the number of non-no_hz CPUs, is there any way
-> to specify the number of none-no_hz cpus when boot?
+Let's move the rcu_nocb_gp_cleanup() call outside the lock before we
+switch over to swait.
 
-If you don't specify anything at boot and if you didn't build with
-CONFIG_NO_HZ_FULL_ALL=y, then all CPUs are non-no_hz CPUs.  But either
-way, they are reported during early boot.  And in your earlier dmesg,
-none were reported.  But please send your .config file.
+If we would hold the rnp->lock and use swait, lockdep reports
+following:
 
-> I don't understand why only some of the cpus stalls, especially the idle
-> cpus stall,
-> the system shouldn't hang, especially there so many cpus should work, but
-> it hang
-> there and didn't continue to boot the system.
+ =================================
+ [ INFO: inconsistent lock state ]
+ 4.2.0-rc5-00025-g9a73ba0 #136 Not tainted
+ ---------------------------------
+ inconsistent {IN-SOFTIRQ-W} -> {SOFTIRQ-ON-W} usage.
+ rcu_preempt/8 [HC0[0]:SC0[0]:HE1:SE1] takes:
+  (rcu_node_1){+.?...}, at: [<ffffffff811387c7>] rcu_gp_kthread+0xb97/0xeb0
+ {IN-SOFTIRQ-W} state was registered at:
+   [<ffffffff81109b9f>] __lock_acquire+0xd5f/0x21e0
+   [<ffffffff8110be0f>] lock_acquire+0xdf/0x2b0
+   [<ffffffff81841cc9>] _raw_spin_lock_irqsave+0x59/0xa0
+   [<ffffffff81136991>] rcu_process_callbacks+0x141/0x3c0
+   [<ffffffff810b1a9d>] __do_softirq+0x14d/0x670
+   [<ffffffff810b2214>] irq_exit+0x104/0x110
+   [<ffffffff81844e96>] smp_apic_timer_interrupt+0x46/0x60
+   [<ffffffff81842e70>] apic_timer_interrupt+0x70/0x80
+   [<ffffffff810dba66>] rq_attach_root+0xa6/0x100
+   [<ffffffff810dbc2d>] cpu_attach_domain+0x16d/0x650
+   [<ffffffff810e4b42>] build_sched_domains+0x942/0xb00
+   [<ffffffff821777c2>] sched_init_smp+0x509/0x5c1
+   [<ffffffff821551e3>] kernel_init_freeable+0x172/0x28f
+   [<ffffffff8182cdce>] kernel_init+0xe/0xe0
+   [<ffffffff8184231f>] ret_from_fork+0x3f/0x70
+ irq event stamp: 76
+ hardirqs last  enabled at (75): [<ffffffff81841330>] _raw_spin_unlock_irq+0x30/0x60
+ hardirqs last disabled at (76): [<ffffffff8184116f>] _raw_spin_lock_irq+0x1f/0x90
+ softirqs last  enabled at (0): [<ffffffff810a8df2>] copy_process.part.26+0x602/0x1cf0
+ softirqs last disabled at (0): [<          (null)>]           (null)
+ other info that might help us debug this:
+  Possible unsafe locking scenario:
+        CPU0
+        ----
+   lock(rcu_node_1);
+   <Interrupt>
+     lock(rcu_node_1);
+  *** DEADLOCK ***
+ 1 lock held by rcu_preempt/8:
+  #0:  (rcu_node_1){+.?...}, at: [<ffffffff811387c7>] rcu_gp_kthread+0xb97/0xeb0
+ stack backtrace:
+ CPU: 0 PID: 8 Comm: rcu_preempt Not tainted 4.2.0-rc5-00025-g9a73ba0 #136
+ Hardware name: Dell Inc. PowerEdge R820/066N7P, BIOS 2.0.20 01/16/2014
+  0000000000000000 000000006d7e67d8 ffff881fb081fbd8 ffffffff818379e0
+  0000000000000000 ffff881fb0812a00 ffff881fb081fc38 ffffffff8110813b
+  0000000000000000 0000000000000001 ffff881f00000001 ffffffff8102fa4f
+ Call Trace:
+  [<ffffffff818379e0>] dump_stack+0x4f/0x7b
+  [<ffffffff8110813b>] print_usage_bug+0x1db/0x1e0
+  [<ffffffff8102fa4f>] ? save_stack_trace+0x2f/0x50
+  [<ffffffff811087ad>] mark_lock+0x66d/0x6e0
+  [<ffffffff81107790>] ? check_usage_forwards+0x150/0x150
+  [<ffffffff81108898>] mark_held_locks+0x78/0xa0
+  [<ffffffff81841330>] ? _raw_spin_unlock_irq+0x30/0x60
+  [<ffffffff81108a28>] trace_hardirqs_on_caller+0x168/0x220
+  [<ffffffff81108aed>] trace_hardirqs_on+0xd/0x10
+  [<ffffffff81841330>] _raw_spin_unlock_irq+0x30/0x60
+  [<ffffffff810fd1c7>] swake_up_all+0xb7/0xe0
+  [<ffffffff811386e1>] rcu_gp_kthread+0xab1/0xeb0
+  [<ffffffff811089bf>] ? trace_hardirqs_on_caller+0xff/0x220
+  [<ffffffff81841341>] ? _raw_spin_unlock_irq+0x41/0x60
+  [<ffffffff81137c30>] ? rcu_barrier+0x20/0x20
+  [<ffffffff810d2014>] kthread+0x104/0x120
+  [<ffffffff81841330>] ? _raw_spin_unlock_irq+0x30/0x60
+  [<ffffffff810d1f10>] ? kthread_create_on_node+0x260/0x260
+  [<ffffffff8184231f>] ret_from_fork+0x3f/0x70
+  [<ffffffff810d1f10>] ? kthread_create_on_node+0x260/0x260
 
-Well, bugs should never happen, should they?  But they do, and they
-need to be tracked down and fixed.
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+---
+ kernel/rcu/tree.c        |  4 +++-
+ kernel/rcu/tree.h        |  3 ++-
+ kernel/rcu/tree_plugin.h | 16 +++++++++++++---
+ 3 files changed, 18 insertions(+), 5 deletions(-)
 
-Is the system responsive to sysrq?  If so, sysrq-T could help get
-useful information.
-
-> > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=1aa/0/0 softirq=0/0 fqs=1
-> > > > > (detected by 0, t=84007 jiffies, g=-236, c=-237, q=159)
-> > > >
-> > > > The same grace period is still stalled after a total of 84 seconds,
-> > > > and again CPU 17's quiescent state has been reported.
-> > > >
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > >
-> > > > And again, the stack is consistent with the CPU being idle.
-> > > >
-> > > > > rcu_preempt kthread starved for 63005 jiffies!
-> > > >
-> > > > And again the grace-period kthread seems to have gotten a chance to
-> > > > run during the first RCU CPU stall warning, but not since then.
-> > > >
-> > > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=20c/0/0 softirq=0/0 fqs=0
-> > > > > 17: (61 GPs behind) idle=810/0/0 softirq=0/0 fqs=0
-> > > > > (detected by 40, t=21002 jiffies, g=-235, c=-236, q=162)
-> > > >
-> > > > And again, it looks like the stall warning gave the grace-period
-> > kthread
-> > > > another chance to run, thus completing the earlier grace period.  We
-> > > > now have another grace period stalled for 21 seconds, again by CPUs 12
-> > > > and 17.
-> > > >
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > > > Task dump for CPU 17:
-> > > > > swapper/17      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859063eb8 ffffffff810b7ff5 ffff880859063ea8
-> > > > >  ffffffff810759ef ffffffff82140220 0000000000000011 ffffffff82140220
-> > > > >  ffff880859060000 ffff880859063ea8 ffffffff8140f1f7 ffff880859063ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > > > rcu_preempt kthread starved for 21002 jiffies!
-> > > >
-> > > > And again idle stacks, and again the RCU grace-period kthread has not
-> > > > been allowed to run at all since the grace period stared.
-> > > >
-> > > > > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> > > > > 12: (0 ticks this GP) idle=30e/0/0 softirq=0/0 fqs=1
-> > > > > (detected by 5, t=84007 jiffies, g=-235, c=-236, q=170)
-> > > > > Task dump for CPU 12:
-> > > > > swapper/12      R  running task        0     0      1 0x00200000
-> > > > >  ffffffff8140f1f7 ffff880859037eb8 ffffffff810b7ff5 ffff880859037ea8
-> > > > >  ffffffff810759ef ffffffff82140220 000000000000000c ffffffff82140220
-> > > > >  ffff880859034000 ffff880859037ea8 ffffffff8140f1f7 ffff880859037ec8
-> > > > > Call Trace:
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff810b7ff5>] ? rcu_eqs_enter_common+0x85/0x240
-> > > > >  [<ffffffff810759ef>] ? __atomic_notifier_call_chain+0x4f/0x70
-> > > > >  [<ffffffff8140f1f7>] ? debug_smp_processor_id+0x17/0x20
-> > > > >  [<ffffffff8100dd52>] ? mwait_idle+0x42/0x1d0
-> > > > >  [<ffffffff8100ea8f>] ? arch_cpu_idle+0xf/0x20
-> > > > >  [<ffffffff8109688e>] ? cpu_startup_entry+0xae/0x300
-> > > > >  [<ffffffff8103aabc>] ? start_secondary+0x12c/0x140
-> > > > > rcu_preempt kthread starved for 63005 jiffies!
-> > > >
-> > > > And again, CPU 17's grace period has been recorded, and the
-> > grace-period
-> > > > kthread hasn't been allowed to run since the last RCU CPU stall
-> > warning.
-> > > >
-> > > > When a stall warning is printed, there is also a resched_cpu() on the
-> > > > holdout CPU.  Perhaps that is also giving the grace-period kthread a
-> > > > chance to run?  Alternatively, perhaps the overhead of all the printing
-> > > > is letting the grace-period kthread run?
-> > > >
-> > > > I do sometimes see similar stalls, but under heavy rcutorture load and
-> > > > when running qemu/kvm.  I am considering this to be a bug (somewhere!)
-> > and
-> > > > am tracking it down, but I suspect that your boot-time stalls are from
-> > > > something different.  Yours is the only report of this that I have seen
-> > > > thus far.
-> > > >
-> > > > So what are you starting up at boot time?
-> > >
-> > > This is just a normal boot, and I didn't run special heavy load tasks.
-> > > BTW, I had try to specified rcu kthread's priority to the 99 from the
-> > boot
-> > > command,
-> > > but the stall still happened sometimes.
-> >
-> > What priority are the softirq kthreads running at?  RCU depends on them
-> > to make forward progress as well.
-> >
-> since the system hang there and I didn't know how to check their priority.
-
-Well, you said that the system only hangs sometimes.  So when it does
-boot successfully, please check their priority.
-
-							Thanx, Paul
-
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 775d36c..ff02ffb 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -1568,7 +1568,6 @@ static int rcu_future_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
+ 	int needmore;
+ 	struct rcu_data *rdp = this_cpu_ptr(rsp->rda);
+ 
+-	rcu_nocb_gp_cleanup(rsp, rnp);
+ 	rnp->need_future_gp[c & 0x1] = 0;
+ 	needmore = rnp->need_future_gp[(c + 1) & 0x1];
+ 	trace_rcu_future_gp(rnp, rdp, c,
+@@ -1972,6 +1971,7 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
+ 	int nocb = 0;
+ 	struct rcu_data *rdp;
+ 	struct rcu_node *rnp = rcu_get_root(rsp);
++	wait_queue_head_t *sq;
+ 
+ 	WRITE_ONCE(rsp->gp_activity, jiffies);
+ 	raw_spin_lock_irq(&rnp->lock);
+@@ -2010,7 +2010,9 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
+ 			needgp = __note_gp_changes(rsp, rnp, rdp) || needgp;
+ 		/* smp_mb() provided by prior unlock-lock pair. */
+ 		nocb += rcu_future_gp_cleanup(rsp, rnp);
++		sq = rcu_nocb_gp_get(rnp);
+ 		raw_spin_unlock_irq(&rnp->lock);
++		rcu_nocb_gp_cleanup(sq);
+ 		cond_resched_rcu_qs();
+ 		WRITE_ONCE(rsp->gp_activity, jiffies);
+ 		rcu_gp_slow(rsp, gp_cleanup_delay);
+diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
+index 2e991f8..00a12b7 100644
+--- a/kernel/rcu/tree.h
++++ b/kernel/rcu/tree.h
+@@ -608,7 +608,8 @@ static void zero_cpu_stall_ticks(struct rcu_data *rdp);
+ static void increment_cpu_stall_ticks(void);
+ static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu);
+ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq);
+-static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp);
++static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp);
++static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq);
+ static void rcu_init_one_nocb(struct rcu_node *rnp);
+ static bool __call_rcu_nocb(struct rcu_data *rdp, struct rcu_head *rhp,
+ 			    bool lazy, unsigned long flags);
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index b2bf396..07019b4 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -1777,9 +1777,9 @@ early_param("rcu_nocb_poll", parse_rcu_nocb_poll);
+  * Wake up any no-CBs CPUs' kthreads that were waiting on the just-ended
+  * grace period.
+  */
+-static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
++static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
+ {
+-	wake_up_all(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
++	wake_up_all(sq);
+ }
+ 
+ /*
+@@ -1795,6 +1795,11 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
+ 	rnp->need_future_gp[(rnp->completed + 1) & 0x1] += nrq;
+ }
+ 
++static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
++{
++	return &rnp->nocb_gp_wq[rnp->completed & 0x1];
++}
++
+ static void rcu_init_one_nocb(struct rcu_node *rnp)
+ {
+ 	init_waitqueue_head(&rnp->nocb_gp_wq[0]);
+@@ -2469,7 +2474,7 @@ static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu)
+ 	return false;
+ }
+ 
+-static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
++static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
+ {
+ }
+ 
+@@ -2477,6 +2482,11 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
+ {
+ }
+ 
++static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
++{
++	return NULL;
++}
++
+ static void rcu_init_one_nocb(struct rcu_node *rnp)
+ {
+ }
+-- 
+2.4.3
