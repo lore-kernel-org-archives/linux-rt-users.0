@@ -1,38 +1,43 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.1.3-rt3] [report][suspend to ram] BUG: sleeping function
- called from invalid context at kernel/locking/rtmutex.c:917
-Date: Fri, 11 Dec 2015 17:20:08 +0100
-Message-ID: <20151211162008.GB6720@linutronix.de>
-References: <55CB8FAE.9020309@ti.com>
- <20150816114241.GC7004@linutronix.de>
- <55D201DC.5070604@ti.com>
- <55E9CAFB.9070002@ti.com>
+Subject: Re: problems with chained IRQ handlers
+Date: Fri, 11 Dec 2015 17:23:46 +0100
+Message-ID: <20151211162346.GC6720@linutronix.de>
+References: <CAGt3f4k=-TW2qVhqMFk7U22NGZToZ5bxi1qVuUqcVRKqjhBbMw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Russell King <rmk+kernel@arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sekhar Nori <nsekhar@ti.com>, Felipe Balbi <balbi@ti.com>,
-	linux-rt-users@vger.kernel.org,
-	linux-arm <linux-arm-kernel@lists.infradead.org>
-To: Grygorii Strashko <grygorii.strashko@ti.com>
+Cc: rt-users <linux-rt-users@vger.kernel.org>
+To: Brian Silverman <brian@peloton-tech.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:46984 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:47049 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751624AbbLKQUL (ORCPT
+	with ESMTP id S1750748AbbLKQXr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 11:20:11 -0500
+	Fri, 11 Dec 2015 11:23:47 -0500
 Content-Disposition: inline
-In-Reply-To: <55E9CAFB.9070002@ti.com>
+In-Reply-To: <CAGt3f4k=-TW2qVhqMFk7U22NGZToZ5bxi1qVuUqcVRKqjhBbMw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Grygorii Strashko | 2015-09-04 19:46:51 [+0300]:
+* Brian Silverman | 2015-08-17 18:41:55 [-0700]:
 
->Hi All,
-Hi,
+>Chained IRQ handlers are always marked IRQ_NOTHREAD, which means
+>forced threading doesn't apply to them. I think this means they can't
+>safely use non-raw spinlocks under CONFIG_PREEMPT_RT_FULL. Is this
+>correct?
+yes,
 
->I'd very appreciated for comments.
+>I have an ARM system with a CONFIG_PREEMPT_RT_FULL kernel which prints
+>lockdep warnings from many places because of this. It also locks up
+>under moderate load, which I think is related to this issue. Any
+>suggestions?
 
-did you run into any problems with this or is it working for you?
+Use raw locks there. The chain handler usually implement a irq chip
+something like gpio controller which can also act as an interrupt
+controller. If this is the case then the lock should be a raw-lock.
+You should not do anything time consuming while holding the lock. It is
+usually just held while masking/unmasking bits in the registers.
 
-Sebastian
+>Thanks,
+>Brian Silverman
+
+Sebastia
