@@ -1,65 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] locking_selftest: Save/restore migrate_disable_atomic in
- locking selftest
-Date: Fri, 11 Dec 2015 18:24:33 +0100
-Message-ID: <20151211172433.GJ6720@linutronix.de>
-References: <1448263178-28397-1-git-send-email-jianchuan.wang@windriver.com>
+Subject: Re: Triggering BUG on SIGSEGV signaling
+Date: Fri, 11 Dec 2015 18:32:54 +0100
+Message-ID: <20151211173254.GK6720@linutronix.de>
+References: <2830783.CAkrTrFBlp@ws-stein>
+ <68989327.QRdbeUK3if@ws-stein>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: rostedt@goodmis.org, tglx@linutronix.de, yang.shi@windriver.com,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: jianchuan.wang@windriver.com
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Alexander Stein <alexander.stein@systec-electronic.com>,
+	rostedt@goodmis.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:49140 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752093AbbLKRc4 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 Dec 2015 12:32:56 -0500
 Content-Disposition: inline
-In-Reply-To: <1448263178-28397-1-git-send-email-jianchuan.wang@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <68989327.QRdbeUK3if@ws-stein>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* jianchuan.wang@windriver.com | 2015-11-23 15:19:38 [+0800]:
+* Alexander Stein | 2015-11-26 13:10:04 [+0100]:
 
->From: Jianchuan Wang <jianchuan.wang@windriver.com>
->
->System will hang when enabling the kernel option
->CONFIG_DEBUG_LOCKING_API_SELFTESTS and CONFIG_SCHED_CONFIG
->in the preempt-rt kernel.
->
->In the preempt-rt kernel, migrate_enable()/migrage_disable() are called
->in the spinlock and read/write lock; The lock()/unlock() aren't used
->in pairs in the selftest processing changes the migrate_disable_atomic
->so that the system will hang in the dotest(), the calltrace is :
->printk() ..-> vprintk_emit() -> migrage_disable()
->-> WARN_ON_ONCE() ..-> warn_slowpath_common() ..-> printk()
->
->For fixing it, we need save the migrate_disable_atomic before self-testing
->and restore migrate_disable_atomic after self-testing.
+>For the records, it's the same bug which is fixed by https://kernel.googlesource.com/pub/scm/linux/kernel/git/rt/linux-rt-devel/+/v4.1.3-rt3-patches/patches/ARM-enable-irq-in-translation-section-permission-fau.patch
+>This also fixes my problem on the old kernel.
 
-So this is similar to saved_preempt_count. This needs to compile with
-!CONFIG_PREEMPT_RT_FULL which I believe is not the case.
+Steven has been a good boy and merged this patch and a few others into
+the latest v3.10 based -RT kernel. However if prefer to use v3.10.47-rt50
+you might run into other bugs as well which are fixed in the meantime.
 
->Signed-off-by: Jianchuan Wang <jianchuan.wang@windriver.com>
->---
-> lib/locking-selftest.c | 13 +++++++++++++
-> 1 file changed, 13 insertions(+)
->
->diff --git a/lib/locking-selftest.c b/lib/locking-selftest.c
->index b93a610..61798da 100644
->--- a/lib/locking-selftest.c
->+++ b/lib/locking-selftest.c
->@@ -997,10 +997,23 @@ static int unexpected_testcase_failures;
-> static void dotest(void (*testcase_fn)(void), int expected, int lockclass_mask)
-> {
-> 	unsigned long saved_preempt_count = preempt_count();
->+#ifdef CONFIG_SCHED_DEBUG
->+	struct task_struct *p = current;
->+	int save_migrate_atomic;
->+#endif
-> 
-> 	WARN_ON(irqs_disabled());
-> 
->+#ifdef CONFIG_SCHED_DEBUG
->+	save_migrate_atomic = p->migrate_disable_atomic;
->+#endif
-
-Shouldn't we save  p->migrate_disable as well?
+>Best regards,
+>Alexander
 
 Sebastian
