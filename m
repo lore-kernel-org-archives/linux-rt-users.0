@@ -1,36 +1,44 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: -rt kernel just can show 8 perf events?
-Date: Fri, 11 Dec 2015 18:36:16 +0100
-Message-ID: <20151211173616.GL6720@linutronix.de>
-References: <565E04D5.4000202@linaro.org>
+Subject: Re: RT patch for 4.2 - expected date
+Date: Fri, 11 Dec 2015 18:48:37 +0100
+Message-ID: <20151211174837.GM6720@linutronix.de>
+References: <CAGXs5wUyf7Ud3NshrhWR9KGVTZaBc6Sgb9b1NcCU42FU8tV-qQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: "Shi, Yang" <yang.shi@linaro.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Kevin Wilson <wkevils@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49168 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:49192 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752093AbbLKRgT (ORCPT
+	with ESMTP id S1750814AbbLKRsi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 12:36:19 -0500
+	Fri, 11 Dec 2015 12:48:38 -0500
 Content-Disposition: inline
-In-Reply-To: <565E04D5.4000202@linaro.org>
+In-Reply-To: <CAGXs5wUyf7Ud3NshrhWR9KGVTZaBc6Sgb9b1NcCU42FU8tV-qQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Shi, Yang | 2015-12-01 12:36:37 [-0800]:
+* Kevin Wilson | 2015-12-10 11:09:22 [+0200]:
 
->Hi folks,
->
->I'm running some perf program on my x86-64 machine with 4.1.12-rt13
->kernel, but I found just 8 perf events can be showed up with "perf
->stat -e" on -rt kernel, but mainline kernel is fine.
+>Hi,
+Hi,
 
-And 4.1.12 (without -rt13) is not having this kind of problem?
+>I saw in the download page (
+>https://www.kernel.org/pub/linux/kernel/projects/rt/)
+>that between the 4.0 patch (patches-4.0.8-rt6.tar.xz, July 2015)
+>and the 4.1 patch (patches-4.1.13-rt15.tar.xz, November) there is a
+>time difference of about 4 months).
+>My question is about a patch against 4.2 ? when is it expected to be
+>released ? are there any chances that
+>it will be available this month ?
+
+Maybe. Depends on your behavior. So in 14 days from now you can check
+what will be there under your Christmas tree and see. Until then be
+patience.
+In case you receive a v4.2-RT patchset on christmas morning please share
+with us because I am not working on it.
 
 >Regards,
->Yang
+>Kevin
 
 Sebastian
