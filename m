@@ -1,43 +1,44 @@
-From: Philipp Schrader <philipp@peloton-tech.com>
-Subject: Re: RCU splat on boot from an idle CPU
-Date: Fri, 11 Dec 2015 08:46:13 -0800
-Message-ID: <CA+0CQ22gEUOzLqwLiLLBD=S-d_bVhEbz4UnbS=7udUttFhExxQ@mail.gmail.com>
-References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
-	<alpine.DEB.2.11.1509011721510.15006@nanos>
-	<20150902153823.749a9f73@gandalf.local.home>
-	<CA+0CQ20mdGqWn6+rsA+Q6LWiDotXW=GUj-xmWBKcCrvHC=Z_vA@mail.gmail.com>
-	<20150902230729.GZ4029@linux.vnet.ibm.com>
-	<20150903165411.GA25462@philipp-debian.peloton-tech.com>
-	<20151211163252.GE6720@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] make HWLAT_DETECTOR kernel config either disabled or a
+ module, never builtin.
+Date: Fri, 11 Dec 2015 17:52:40 +0100
+Message-ID: <20151211165240.GG6720@linutronix.de>
+References: <20150923193340.0881074b@tor.valhalla.alchemy.lu>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	Steven Rostedt <rostedt@goodmis.org>,
+	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+To: Joakim Hernberg <jhernberg@alchemy.lu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f170.google.com ([209.85.217.170]:35149 "EHLO
-	mail-lb0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751597AbbLKQqO (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:48167 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751624AbbLKQwn convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 11:46:14 -0500
-Received: by lbpu9 with SMTP id u9so67087376lbp.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2015 08:46:13 -0800 (PST)
-In-Reply-To: <20151211163252.GE6720@linutronix.de>
+	Fri, 11 Dec 2015 11:52:43 -0500
+Content-Disposition: inline
+In-Reply-To: <20150923193340.0881074b@tor.valhalla.alchemy.lu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Dec 11, 2015 at 8:32 AM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> Did someone in the meantime sent a patch? It does not look so.
-> If this patch gets re-sent witch a changelog and gets acked by Paul/Steven I
-> don't see a problem why I should not include it.
->
-> Sebastian
+* Joakim Hernberg | 2015-09-23 19:33:40 [+0200]:
 
-I sent out a patch here:
-http://lkml.iu.edu/hypermail/linux/kernel/1509.0/02788.html
-Though I never received a response.
-Shall I re-send it?
-Philipp
+>Since the HWLAT_DETECTOR driver supposedly shouldn't be builtin, but a
+>module when used at all, it would make sense to limit the configuratio=
+n
+>choices:
+
+what is wrong with it beeing built-in? The default is m already.
+
+>Signed-off-by: Joakim Hernberg <jhernberg@alchemy.lu>
+>Suggested-by: Uwe Kleine-K=C3=B6nig <u.kleine-koenig@pengutronix.de>
+
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
