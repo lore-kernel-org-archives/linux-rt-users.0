@@ -1,47 +1,43 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [PATCH RFC] rdtscbench: a nohz_full validation and benchmarking
- tool
-Date: Fri, 11 Dec 2015 10:44:22 -0600
-Message-ID: <20151211104422.2fd21bd3@sluggy.hsv.redhat.com>
-References: <1440189958-6959-1-git-send-email-isaac.griswoldsteiner@ni.com>
-	<20151211162607.GD6720@linutronix.de>
+From: Philipp Schrader <philipp@peloton-tech.com>
+Subject: Re: RCU splat on boot from an idle CPU
+Date: Fri, 11 Dec 2015 08:46:13 -0800
+Message-ID: <CA+0CQ22gEUOzLqwLiLLBD=S-d_bVhEbz4UnbS=7udUttFhExxQ@mail.gmail.com>
+References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
+	<alpine.DEB.2.11.1509011721510.15006@nanos>
+	<20150902153823.749a9f73@gandalf.local.home>
+	<CA+0CQ20mdGqWn6+rsA+Q6LWiDotXW=GUj-xmWBKcCrvHC=Z_vA@mail.gmail.com>
+	<20150902230729.GZ4029@linux.vnet.ibm.com>
+	<20150903165411.GA25462@philipp-debian.peloton-tech.com>
+	<20151211163252.GE6720@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com>,
-	jkacur@redhat.com, linux-rt-users@vger.kernel.org, joshc@ni.com,
-	Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
+Content-Type: text/plain; charset=UTF-8
+Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:43447 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752288AbbLKQoY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 11:44:24 -0500
-In-Reply-To: <20151211162607.GD6720@linutronix.de>
+Received: from mail-lb0-f170.google.com ([209.85.217.170]:35149 "EHLO
+	mail-lb0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751597AbbLKQqO (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 Dec 2015 11:46:14 -0500
+Received: by lbpu9 with SMTP id u9so67087376lbp.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2015 08:46:13 -0800 (PST)
+In-Reply-To: <20151211163252.GE6720@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 11 Dec 2015 17:26:07 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
-
-> * Isaac Griswold-Steiner | 2015-08-21 15:45:58 [-0500]:
-> 
-> >From: Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
-> >
-> >rdtscbench is a cyclictest-like tool that spawns a thread per cpu. Each thread
-> >measures the difference in cycle count (using the tsc) during the execution of a
-> >tight loop.
-> >
-> >This is a simple tool intended to be used for the validation of nohz_full CPU
-> >configurations. As the validation of nohz_full CPUs is the objective, the tool
-> >avoids the usage of system calls, timers, or anything that might break nohz_full.
-> >
-> >Signed-off-by: Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
-> 
-> jkacur, williams: did you guys took a look on it?
-> 
+On Fri, Dec 11, 2015 at 8:32 AM, Sebastian Andrzej Siewior
+<bigeasy@linutronix.de> wrote:
+> Did someone in the meantime sent a patch? It does not look so.
+> If this patch gets re-sent witch a changelog and gets acked by Paul/Steven I
+> don't see a problem why I should not include it.
+>
 > Sebastian
 
-I haven't yet. Will look at it this afternoon.
-
-Clark
+I sent out a patch here:
+http://lkml.iu.edu/hypermail/linux/kernel/1509.0/02788.html
+Though I never received a response.
+Shall I re-send it?
+Philipp
