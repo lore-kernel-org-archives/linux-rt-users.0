@@ -1,40 +1,47 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: PREEMPT_RT with Full Tickless
-Date: Fri, 11 Dec 2015 18:50:23 +0100
-Message-ID: <20151211175023.GN6720@linutronix.de>
-References: <CANv7uPSimVG=GfQ5W_HDq0UYUokK-Y2WvSPTXc3MFd7eLXqYVQ@mail.gmail.com>
- <1449844577.4882.5.camel@gmail.com>
+From: "Shi, Yang" <yang.shi@linaro.org>
+Subject: Re: -rt kernel just can show 8 perf events?
+Date: Fri, 11 Dec 2015 09:57:06 -0800
+Message-ID: <566B0E72.50608@linaro.org>
+References: <565E04D5.4000202@linaro.org>
+ <20151211173616.GL6720@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: GeHao Kang <kanghao0928@gmail.com>, tglx@linutronix.de,
-	peterz@infradead.org, jason.low2@hp.com,
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	linux-rt-users@vger.kernel.org
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49200 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751201AbbLKRud (ORCPT
+Received: from mail-pa0-f42.google.com ([209.85.220.42]:35808 "EHLO
+	mail-pa0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750748AbbLKR5J (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 12:50:33 -0500
-Content-Disposition: inline
-In-Reply-To: <1449844577.4882.5.camel@gmail.com>
+	Fri, 11 Dec 2015 12:57:09 -0500
+Received: by padhk6 with SMTP id hk6so28659303pad.2
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2015 09:57:08 -0800 (PST)
+In-Reply-To: <20151211173616.GL6720@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Mike Galbraith | 2015-12-11 15:36:17 [+0100]:
-
->On Fri, 2015-12-11 at 19:29 +0800, GeHao Kang wrote:
->> When I enable CONFIG_PREEMPT_RT_FULL and CONFIG_NO_HZ_FULL
->> in Linux Kernel v4.1.12-rt12, I find the tick on the nohz_full cpu
->> never stops.
+On 12/11/2015 9:36 AM, Sebastian Andrzej Siewior wrote:
+> * Shi, Yang | 2015-12-01 12:36:37 [-0800]:
 >
->Because the workarounds that let it work have been dropped.  I recall
->Thomas mentioning that, but can't find the message in my rubble pile.
+>> Hi folks,
+>>
+>> I'm running some perf program on my x86-64 machine with 4.1.12-rt13
+>> kernel, but I found just 8 perf events can be showed up with "perf
+>> stat -e" on -rt kernel, but mainline kernel is fine.
+>
+> And 4.1.12 (without -rt13) is not having this kind of problem?
 
-Right. This was the case on the first v4.0 or v4.1 release. The longterm
-plan is to bring it back once the timers have been re-done so we don't
-need any hacks.
+No. mainline 4.1.12 works well.
 
->	-Mike 
+Yang
 
-Sebastian
+>
+>> Regards,
+>> Yang
+>
+> Sebastian
+>
+
