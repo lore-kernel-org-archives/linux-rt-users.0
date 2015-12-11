@@ -1,62 +1,61 @@
-From: Philipp Schrader <philipp@peloton-tech.com>
-Subject: Re: RCU splat on boot from an idle CPU
-Date: Fri, 11 Dec 2015 08:59:26 -0800
-Message-ID: <CA+0CQ22ib_63oVvXA-y7GajUhzap5=smBNbcVegSkprgWqP_yQ@mail.gmail.com>
-References: <CA+0CQ216LKjL4-PVeqW3vwZhvFLhRJ2GuTOfVsEvxtoZ=xoVgQ@mail.gmail.com>
-	<alpine.DEB.2.11.1509011721510.15006@nanos>
-	<20150902153823.749a9f73@gandalf.local.home>
-	<CA+0CQ20mdGqWn6+rsA+Q6LWiDotXW=GUj-xmWBKcCrvHC=Z_vA@mail.gmail.com>
-	<20150902230729.GZ4029@linux.vnet.ibm.com>
-	<20150903165411.GA25462@philipp-debian.peloton-tech.com>
-	<20151211163252.GE6720@linutronix.de>
-	<CA+0CQ22gEUOzLqwLiLLBD=S-d_bVhEbz4UnbS=7udUttFhExxQ@mail.gmail.com>
-	<20151211165326.GO28602@linux.vnet.ibm.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: BUG: scheduling while atomic: swapper/0/0/0x00010002
+Date: Fri, 11 Dec 2015 18:10:32 +0100
+Message-ID: <20151211171032.GI6720@linutronix.de>
+References: <CAOLSsAzRBCJN+sWuzm51fAF4XVkbhPvKTMtqXOVkw_nRV28ibg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-To: Paul McKenney <paulmck@linux.vnet.ibm.com>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: RT <linux-rt-users@vger.kernel.org>
+To: Javier Sanz <jsanza@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f181.google.com ([209.85.217.181]:35115 "EHLO
-	mail-lb0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753281AbbLKQ71 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:48982 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752970AbbLKRKd convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 11:59:27 -0500
-Received: by lbpu9 with SMTP id u9so67303980lbp.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 11 Dec 2015 08:59:26 -0800 (PST)
-In-Reply-To: <20151211165326.GO28602@linux.vnet.ibm.com>
+	Fri, 11 Dec 2015 12:10:33 -0500
+Content-Disposition: inline
+In-Reply-To: <CAOLSsAzRBCJN+sWuzm51fAF4XVkbhPvKTMtqXOVkw_nRV28ibg@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, Dec 11, 2015 at 8:53 AM, Paul E. McKenney
-<paulmck@linux.vnet.ibm.com> wrote:
-> On Fri, Dec 11, 2015 at 08:46:13AM -0800, Philipp Schrader wrote:
->> On Fri, Dec 11, 2015 at 8:32 AM, Sebastian Andrzej Siewior
->> <bigeasy@linutronix.de> wrote:
->> > Did someone in the meantime sent a patch? It does not look so.
->> > If this patch gets re-sent witch a changelog and gets acked by Paul/Steven I
->> > don't see a problem why I should not include it.
->> >
->> > Sebastian
->>
->> I sent out a patch here:
->> http://lkml.iu.edu/hypermail/linux/kernel/1509.0/02788.html
->> Though I never received a response.
->
-> I replied with "Looks good to me!"
-My apologies, I was thinking of a response to the e-mail I sent to
-LKML. i did see your response on rt-users, sorry.
+* Javier Sanz | 2015-10-26 11:59:56 [+0100]:
 
->
->> Shall I re-send it?
->
-> If Steven is OK with the patch, you can use:
->
-> Acked-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+>The dmesg shows :
+=E2=80=A6
+>[   15.947514] vboxdrv: Found 4 processor cores
+>[   15.963261] BUG: scheduling while atomic: swapper/0/0/0x00010002
+>[   15.963297]  <IRQ>  [<ffffffff8160f5c2>] dump_stack+0x4a/0x61
+>[   15.963302]  [<ffffffff81095983>] __schedule_bug+0x43/0x60
+>[   15.963305]  [<ffffffff81611005>] __schedule+0x4a5/0x7f0
+>[   15.963309]  [<ffffffff810b20bb>] ? task_blocks_on_rt_mutex+0x19b/0=
+x240
+>[   15.963312]  [<ffffffff8161138a>] schedule+0x3a/0xc0
+>[   15.963315]  [<ffffffff81612db5>] rt_spin_lock_slowlock+0xc5/0x260
+>[   15.963319]  [<ffffffff81614109>] rt_spin_lock+0x29/0x30
+>[   15.963338]  [<ffffffffa0290487>]
+>VBoxHost_RTSpinlockAcquire+0x57/0x70 [vboxdrv]
+>[   15.963349]  [<ffffffffa02822c4>]
+>supdrvGipMpEventOnlineOrInitOnCpu+0x64/0x2e0 [vboxdrv]
+>[   15.963361]  [<ffffffffa028e320>] ?
+>VBoxHost_RTMpGetOnlineSet+0x50/0x50 [vboxdrv]
+>[   15.963371]  [<ffffffffa0282550>] supdrvGipInitOnCpu+0x10/0x20 [vbo=
+xdrv]
+>[   15.963384]  [<ffffffffa028e355>] rtmpLinuxAllWrapper+0x35/0x40 [vb=
+oxdrv]
+>[   15.963387]  [<ffffffff810e2385>] flush_smp_call_function_queue+0x5=
+5/0x160
+>[   15.963390]  [<ffffffff810e2f2e>]
+=E2=80=A6
+>Virtualbox is enable on boot :(
 
-Ah, I will re-send the patch tonight then with the additional Acked-by.
->                                                         Thanx, Paul
->
-Philipp
+This is third party code. Nothing I can do about it.
+
+>Thank you
+
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
