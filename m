@@ -1,45 +1,46 @@
-From: Joakim Hernberg <jhernberg@alchemy.lu>
-Subject: Re: [PATCH] make HWLAT_DETECTOR kernel config either disabled or a
- module, never builtin.
-Date: Fri, 11 Dec 2015 20:47:20 +0100
-Message-ID: <20151211204720.3571ad93@balder.valhalla.alchemy.lu>
-References: <20150923193340.0881074b@tor.valhalla.alchemy.lu>
-	<20151211165240.GG6720@linutronix.de>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RFC] rdtscbench: a nohz_full validation and benchmarking
+ tool
+Date: Fri, 11 Dec 2015 14:40:27 -0600
+Message-ID: <20151211144027.099b2fa0@sluggy.hsv.redhat.com>
+References: <1440189958-6959-1-git-send-email-isaac.griswoldsteiner@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Uwe =?UTF-8?B?S2xlaW5lLUvDtm5pZw==?=
-	<u.kleine-koenig@pengutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: jkacur@redhat.com, linux-rt-users@vger.kernel.org, joshc@ni.com,
+	Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
+To: Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailsafe.webbplatsen.se ([94.247.172.109]:47375 "EHLO
-	mailsafe.webbplatsen.se" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751358AbbLKUDk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 15:03:40 -0500
-In-Reply-To: <20151211165240.GG6720@linutronix.de>
+Received: from mx1.redhat.com ([209.132.183.28]:43386 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751039AbbLKUk3 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 Dec 2015 15:40:29 -0500
+In-Reply-To: <1440189958-6959-1-git-send-email-isaac.griswoldsteiner@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 11 Dec 2015 17:52:40 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Fri, 21 Aug 2015 15:45:58 -0500
+Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com> wrote:
 
-> * Joakim Hernberg | 2015-09-23 19:33:40 [+0200]:
+> From: Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
 > 
-> >Since the HWLAT_DETECTOR driver supposedly shouldn't be builtin, but
-> >a module when used at all, it would make sense to limit the
-> >configuration choices:  
+> rdtscbench is a cyclictest-like tool that spawns a thread per cpu. Each thread
+> measures the difference in cycle count (using the tsc) during the execution of a
+> tight loop.
 > 
-> what is wrong with it beeing built-in? The default is m already.
+> This is a simple tool intended to be used for the validation of nohz_full CPU
+> configurations. As the validation of nohz_full CPUs is the objective, the tool
+> avoids the usage of system calls, timers, or anything that might break nohz_full.
+> 
 
-To be quite honest I'm not quite sure anymore, think it fails when
-built in.  I also faintly remember an irc discussion where it was
-claimed that it shouldn't be built into the kernel, think that was the
-reason for creating the patch.
 
--- 
+Isaac,
 
-   Joakim
+A question and a request.
+
+Was there any particular reason you used sleep() rather than clock_nanosleep() in your cycles_per_second function? I see that you did ten samples but wondered if the slop from a HZ-based wakeup might still introduce some error, as opposed to a more precise programmed wakeup. 
+
+Also, I'd appreciate it if you would expand a bit on the usage section in your README file, specifically how you tune a system prior to running rdtscbench, what output indicates that your tuning is *not* working, versus when to know you're doing the right things. It's probably as simple as saying "if the max latency numbers are spiking you have a problem" but it's good to be explicit about that sort of thing. 
+
+Thanks,
+Clark
