@@ -1,44 +1,40 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT patch for 4.2 - expected date
-Date: Fri, 11 Dec 2015 18:48:37 +0100
-Message-ID: <20151211174837.GM6720@linutronix.de>
-References: <CAGXs5wUyf7Ud3NshrhWR9KGVTZaBc6Sgb9b1NcCU42FU8tV-qQ@mail.gmail.com>
+Subject: Re: PREEMPT_RT with Full Tickless
+Date: Fri, 11 Dec 2015 18:50:23 +0100
+Message-ID: <20151211175023.GN6720@linutronix.de>
+References: <CANv7uPSimVG=GfQ5W_HDq0UYUokK-Y2WvSPTXc3MFd7eLXqYVQ@mail.gmail.com>
+ <1449844577.4882.5.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Kevin Wilson <wkevils@gmail.com>
+Cc: GeHao Kang <kanghao0928@gmail.com>, tglx@linutronix.de,
+	peterz@infradead.org, jason.low2@hp.com,
+	linux-rt-users@vger.kernel.org
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49192 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:49200 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750814AbbLKRsi (ORCPT
+	with ESMTP id S1751201AbbLKRud (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Dec 2015 12:48:38 -0500
+	Fri, 11 Dec 2015 12:50:33 -0500
 Content-Disposition: inline
-In-Reply-To: <CAGXs5wUyf7Ud3NshrhWR9KGVTZaBc6Sgb9b1NcCU42FU8tV-qQ@mail.gmail.com>
+In-Reply-To: <1449844577.4882.5.camel@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Kevin Wilson | 2015-12-10 11:09:22 [+0200]:
+* Mike Galbraith | 2015-12-11 15:36:17 [+0100]:
 
->Hi,
-Hi,
+>On Fri, 2015-12-11 at 19:29 +0800, GeHao Kang wrote:
+>> When I enable CONFIG_PREEMPT_RT_FULL and CONFIG_NO_HZ_FULL
+>> in Linux Kernel v4.1.12-rt12, I find the tick on the nohz_full cpu
+>> never stops.
+>
+>Because the workarounds that let it work have been dropped.  I recall
+>Thomas mentioning that, but can't find the message in my rubble pile.
 
->I saw in the download page (
->https://www.kernel.org/pub/linux/kernel/projects/rt/)
->that between the 4.0 patch (patches-4.0.8-rt6.tar.xz, July 2015)
->and the 4.1 patch (patches-4.1.13-rt15.tar.xz, November) there is a
->time difference of about 4 months).
->My question is about a patch against 4.2 ? when is it expected to be
->released ? are there any chances that
->it will be available this month ?
+Right. This was the case on the first v4.0 or v4.1 release. The longterm
+plan is to bring it back once the timers have been re-done so we don't
+need any hacks.
 
-Maybe. Depends on your behavior. So in 14 days from now you can check
-what will be there under your Christmas tree and see. Until then be
-patience.
-In case you receive a v4.2-RT patchset on christmas morning please share
-with us because I am not working on it.
-
->Regards,
->Kevin
+>	-Mike 
 
 Sebastian
