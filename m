@@ -1,45 +1,46 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [4.1.3-rt3] [report][suspend to ram] BUG: sleeping function
- called from invalid context at kernel/locking/rtmutex.c:917
-Date: Sat, 12 Dec 2015 10:29:55 +0200
-Message-ID: <566BDB03.3040100@ti.com>
-References: <55CB8FAE.9020309@ti.com> <20150816114241.GC7004@linutronix.de>
- <55D201DC.5070604@ti.com> <55E9CAFB.9070002@ti.com>
- <20151211162008.GB6720@linutronix.de>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH] rt: x86: extend signal send delay to 32 bit
+Date: Sat, 12 Dec 2015 15:35:36 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1512121533210.4336@nanos>
+References: <1449773931-7200-1-git-send-email-yang.shi@linaro.org> <20151211180532.GO6720@linutronix.de> <566B275A.5070300@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Russell King <rmk+kernel@arm.linux.org.uk>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sekhar Nori <nsekhar@ti.com>, Felipe Balbi <balbi@ti.com>,
-	<linux-rt-users@vger.kernel.org>,
-	linux-arm <linux-arm-kernel@lists.infradead.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	rostedt@goodmis.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org, linaro-kernel@lists.linaro.org
+To: "Shi, Yang" <yang.shi@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from devils.ext.ti.com ([198.47.26.153]:55373 "EHLO
-	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751498AbbLLIao (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:51880 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751330AbbLLOg0 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 12 Dec 2015 03:30:44 -0500
-In-Reply-To: <20151211162008.GB6720@linutronix.de>
+	Sat, 12 Dec 2015 09:36:26 -0500
+In-Reply-To: <566B275A.5070300@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/11/2015 06:20 PM, Sebastian Andrzej Siewior wrote:
-> * Grygorii Strashko | 2015-09-04 19:46:51 [+0300]:
->
->> Hi All,
-> Hi,
->
->> I'd very appreciated for comments.
->
-> did you run into any problems with this or is it working for you?
->
+On Fri, 11 Dec 2015, Shi, Yang wrote:
+> On 12/11/2015 10:05 AM, Sebastian Andrzej Siewior wrote:
+> > * Yang Shi | 2015-12-10 10:58:51 [-0800]:
+> > > Signal send delay is just available for x86-64, x86-32 needs it too.
+> > 
+> > This is new, this was not the case earlier. New means since v4.0-rc1 which
+> 
+> Yes, it is. We didn't find this problem in earlier version kernel (I'd say
+> 3.x).
+> 
+> > is when 959274753857 ("x86, traps: Track entry into and exit from IST
+> > context") got merged.
+> > Since now ist_enter() disables preemption in any case, our hacks to
+> > conditional_sti_ist() are pointless and could be removed.
+> 
+> I'm supposed you will revert it and not need a revert patch from me.
 
-No. And corresponding patch was merged in v4.1.7-rt8
-9754cf6 ARM: smp: Move clear_tasks_mm_cpumask() call to __cpu_die()
+Why do you think that reverting it is a good idea? Just because we can
+or what?
 
+No, we fix it up on the RT side.
 
--- 
-regards,
--grygorii
+Thanks,
+
+	tglx
