@@ -1,60 +1,43 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [PATCH 2/2] gpio: omap: convert to use generic irq handler
-Date: Sat, 12 Dec 2015 10:30:10 +0200
-Message-ID: <566BDB12.9030107@ti.com>
-References: <1443209283-20781-1-git-send-email-grygorii.strashko@ti.com>
- <1443209283-20781-3-git-send-email-grygorii.strashko@ti.com>
- <CACRpkdYDrcwa+h2Lxd65RBMc-1n9CCyVDz1qjc2U1MEU2GP7hA@mail.gmail.com>
- <560F07CC.9050205@ti.com> <alpine.DEB.2.11.1510120947220.6097@nanos>
- <561D4CAB.1060704@ti.com> <alpine.DEB.2.11.1510132031360.25029@nanos>
- <561FD567.3030803@ti.com> <20151211165712.GH6720@linutronix.de>
+Subject: Re: [4.1.3-rt3] [report][suspend to ram] BUG: sleeping function
+ called from invalid context at kernel/locking/rtmutex.c:917
+Date: Sat, 12 Dec 2015 10:29:55 +0200
+Message-ID: <566BDB03.3040100@ti.com>
+References: <55CB8FAE.9020309@ti.com> <20150816114241.GC7004@linutronix.de>
+ <55D201DC.5070604@ti.com> <55E9CAFB.9070002@ti.com>
+ <20151211162008.GB6720@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>, Dan Murphy <dmurphy@ti.com>,
-	Linus Walleij <linus.walleij@linaro.org>,
-	Alexandre Courbot <gnurou@gmail.com>,
-	Santosh Shilimkar <ssantosh@kernel.org>,
-	Tony Lindgren <tony@atomide.com>,
-	Linux-OMAP <linux-omap@vger.kernel.org>,
-	Austin Schuh <austin@peloton-tech.com>,
-	<philipp@peloton-tech.com>, <linux-rt-users@vger.kernel.org>,
-	"linux-gpio@vger.kernel.org" <linux-gpio@vger.kernel.org>,
-	"linux-kernel@vger.kernel.org" <linux-kernel@vger.kernel.org>
+Cc: Russell King <rmk+kernel@arm.linux.org.uk>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sekhar Nori <nsekhar@ti.com>, Felipe Balbi <balbi@ti.com>,
+	<linux-rt-users@vger.kernel.org>,
+	linux-arm <linux-arm-kernel@lists.infradead.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151211165712.GH6720@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from devils.ext.ti.com ([198.47.26.153]:55373 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751498AbbLLIao (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 12 Dec 2015 03:30:44 -0500
+In-Reply-To: <20151211162008.GB6720@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/11/2015 06:57 PM, Sebastian Andrzej Siewior wrote:
-> * Grygorii Strashko | 2015-10-15 19:33:43 [+0300]:
+On 12/11/2015 06:20 PM, Sebastian Andrzej Siewior wrote:
+> * Grygorii Strashko | 2015-09-04 19:46:51 [+0300]:
 >
->> Hi Thomas,
->>
->> On 10/13/2015 09:33 PM, Thomas Gleixner wrote:
->>> Grygorii,
->>>
->>> On Tue, 13 Oct 2015, Grygorii Strashko wrote:
->>>> I'd very appreciate for any advice of how to better proceed with your request.
->>>>   - I can try to apply and re-send only patches marked by '*'
->>>>   - I can prepare branch with all above patches
->>>
->>> Please provide a branch on top of 4.1.10 which contains the whole
->>> lot. I have a look at it and decide then how to go from there.
->>
->> I've prepared branch linux-4.1.10-ti-gpio:
->> in git@git.ti.com:~gragst/ti-linux-kernel/gragsts-ti-linux-kernel.git
+>> Hi All,
+> Hi,
 >
-> could you please provide a git URL for that?
+>> I'd very appreciated for comments.
+>
+> did you run into any problems with this or is it working for you?
+>
 
-git://git.ti.com/~gragst/ti-linux-kernel/gragsts-ti-linux-kernel.git
-
->> based on top of
->> git://git.kernel.org/pub/scm/linux/kernel/git/stable/linux-stable.git
->> branch : linux-4.1.y
->> commit : 27f1b7f Linux 4.1.10
->
+No. And corresponding patch was merged in v4.1.7-rt8
+9754cf6 ARM: smp: Move clear_tasks_mm_cpumask() call to __cpu_die()
 
 
 -- 
