@@ -1,134 +1,114 @@
-From: "Shi, Yang" <yang.shi@linaro.org>
-Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
-Date: Wed, 16 Dec 2015 12:45:15 -0800
-Message-ID: <5671CD5B.9030907@linaro.org>
-References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
- <20151216111316.GD4308@arm.com>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [PATCH RFC] rdtscbench: a nohz_full validation and benchmarking
+ tool
+Date: Fri, 18 Dec 2015 09:40:05 -0600
+Message-ID: <20151218094005.2cba4d3d@sluggy.hsv.redhat.com>
+References: <1440189958-6959-1-git-send-email-isaac.griswoldsteiner@ni.com>
+	<20151211144027.099b2fa0@sluggy.hsv.redhat.com>
+	<CAGt1KTzAuFcOez1mq9m1Cs7=dEOyS_Q8aBNfjfdx_x_2Mg0ePg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Catalin.Marinas@arm.com, linux-kernel@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151216111316.GD4308@arm.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: jkacur@redhat.com, linux-rt-users@vger.kernel.org, joshc@ni.com,
+	Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
+To: Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:50059 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932901AbbLRPkH (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Dec 2015 10:40:07 -0500
+In-Reply-To: <CAGt1KTzAuFcOez1mq9m1Cs7=dEOyS_Q8aBNfjfdx_x_2Mg0ePg@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 12/16/2015 3:13 AM, Will Deacon wrote:
-> On Tue, Dec 15, 2015 at 04:18:08PM -0800, Yang Shi wrote:
->> The kernel just send out a SIGTRAP signal when handling ptrace breakpoint in
->> debug exception, so it sounds safe to have interrupt enabled if it is not
->> disabled by the parent process.
->
-> Is this actually fixing an issue you're seeing, or did you just spot this?
-> Given that force_sig_info disable interrupts, I don't think this is really
-> worth doing.
+On Fri, 18 Dec 2015 00:36:31 +0000
+Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com> wrote:
 
-I should made more comments at the first place, sorry for the inconvenience.
+> On Fri, Dec 11, 2015 at 2:40 PM Clark Williams <williams@redhat.com> wrote:
+> 
+> > On Fri, 21 Aug 2015 15:45:58 -0500
+> > Isaac Griswold-Steiner <isaac.griswold.steiner@gmail.com> wrote:
+> >
+> > > From: Isaac Griswold-Steiner <isaac.griswoldsteiner@ni.com>
+> > >
+> > > rdtscbench is a cyclictest-like tool that spawns a thread per cpu. Each
+> > thread
+> > > measures the difference in cycle count (using the tsc) during the
+> > execution of a
+> > > tight loop.
+> > >
+> > > This is a simple tool intended to be used for the validation of
+> > nohz_full CPU
+> > > configurations. As the validation of nohz_full CPUs is the objective,
+> > the tool
+> > > avoids the usage of system calls, timers, or anything that might break
+> > nohz_full.
+> > >
+> >
+> >
+> > Isaac,
+> >
+> > A question and a request.
+> >
+> > Was there any particular reason you used sleep() rather than
+> > clock_nanosleep() in your cycles_per_second function? I see that you did
+> > ten samples but wondered if the slop from a HZ-based wakeup might still
+> > introduce some error, as opposed to a more precise programmed wakeup.
+> >
+> 
+> Hi Clark,
+> 
+> I'm sorry about the delayed response. I made that decision based on the
+> idea that if there was jitter (latency) being caused by system calls, I'd
+> want a larger measurement of time. That way if there was jitter, it would
+> make up a smaller percentage of the total time measured and would have less
+> of an impact on the accuracy of the testing tool.
+> 
+> However this could be totally false, in which case that can be changed.
 
-I did run into some problems on -rt kernel with CRIU restore, please see 
-the below kernel bug log:
+I made this change which seems to work fine. Let me know what you think:
 
-BUG: sleeping function called from invalid context at 
-/kernel-source/kernel/locking/rtmutex.c:917
-in_atomic(): 0, irqs_disabled(): 128, pid: 551, name: test.sh
-CPU: 5 PID: 551 Comm: test.sh Not tainted 4.1.13-rt13 #7
-Hardware name: Freescale Layerscape 2085a RDB Board (DT)
-Call trace:
-[<ffff8000000885f0>] dump_backtrace+0x0/0x128
-[<ffff80000008873c>] show_stack+0x24/0x30
-[<ffff800000798e84>] dump_stack+0x80/0xa0
-[<ffff8000000bd858>] ___might_sleep+0x128/0x1a0
-[<ffff8000007a072c>] rt_spin_lock+0x2c/0x40
-[<ffff8000000a477c>] force_sig_info+0xcc/0x210
-[<ffff800000085174>] brk_handler.part.2+0x6c/0x80
-[<ffff800000085260>] brk_handler+0xd8/0xe8
-[<ffff800000082368>] do_debug_exception+0x58/0xb8
-Exception stack(0xffff80834b6e3e30 to 0xffff80834b6e3f50)
-3e20:                                     00000000 00000000 004e6000 
-00000000
-3e40: ffffffff ffffffff 00400004 00000000 0000d280 00000000 00000007 
-00000000
-3e60: 00000021 00000000 ffffffff ffffffff 0000011a 00000000 000000de 
-00000000
-3e80: 4ab9ef50 ffff8083 00086324 ffff8000 e587f780 0000ffff 000839b0 
-ffff8000
-3ea0: 00000000 00000000 004e6000 00000000 ffffffff ffffffff 00400004 
-00000000
-3ec0: 60000000 00000000 00000015 00000000 aa3e6000 0000ffff 0000d280 
-00000000
-3ee0: 00000007 00000000 00000021 00000000 ffffffff ffffffff 00000000 
-00000000
-3f00: 00000000 00000000 00000000 00000000 000000de 00000000 00000008 
-00000000
-3f20: 004eff00 00000000 004e4ff0 00000000 004f0490 00000000 e587f730 
-0000ffff
-3f40: 0046f508 00000000 00000028 00000000
+diff --git a/src/rdtscbench/rdtscbench.c b/src/rdtscbench/rdtscbench.c
+index 9bed3e1292d5..7268e7c99469 100644
+--- a/src/rdtscbench/rdtscbench.c
++++ b/src/rdtscbench/rdtscbench.c
+@@ -113,14 +113,19 @@ static unsigned long long get_cycles_per_second(void)
+ {
+ 	static const int measurements = 10;
+ 	unsigned long long strt, end, total = 0;
+-
++	struct timespec ts;
+ 	int i = 0;
+ 
+ 	printf("# getting cycles per second for %d seconds\n", measurements);
+ 
++	ts.tv_sec = 1;
++	ts.tv_nsec = 0;
+ 	for (i = 0; i < measurements; i++) {
+ 		strt = get_cycles();
+-		sleep(1);
++		if (clock_nanosleep(CLOCK_MONOTONIC, 0, &ts, NULL) < 0) {
++			fprintf(stderr, "get_cycles_per_second: clock_nanosleep() failed: %s\n", strerror(errno));
++			exit(errno);
++		}
+ 		end = get_cycles();
+ 		total += end - strt;
+ 	}
 
-It is because force_sig_info called spin_lock_irqsave which could sleep 
-on -rt kernel with irq disabled.
+> 
+> 
+> >
+> > Also, I'd appreciate it if you would expand a bit on the usage section in
+> > your README file, specifically how you tune a system prior to running
+> > rdtscbench, what output indicates that your tuning is *not* working, versus
+> > when to know you're doing the right things. It's probably as simple as
+> > saying "if the max latency numbers are spiking you have a problem" but it's
+> > good to be explicit about that sort of thing.
+> >
+> >
+> Will do! Thanks for pointing that out.
+> 
 
-However, it just happens at brk_handler in my test. But, I saw 
-single_step has the same code path, so I expanded it to single step too.
+You're welcome, thanks for the code. I haven't talked to John Kacur about your code yet but it looked useful to me so I'm inclined to pull it in.  Once he and I talk and agree, we'll pull it into the v0.97 devel branch. If we don't agree John will probably be asking you for more changes :).
 
-Since this is rt related, cc to rt mailing list too.
-
->
->> Signed-off-by: Yang Shi <yang.shi@linaro.org>
->> ---
->>   arch/arm64/kernel/debug-monitors.c | 10 ++++++++++
->>   1 file changed, 10 insertions(+)
->>
->> diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
->> index 8aee3ae..90d70e4 100644
->> --- a/arch/arm64/kernel/debug-monitors.c
->> +++ b/arch/arm64/kernel/debug-monitors.c
->> @@ -239,6 +239,9 @@ static int single_step_handler(unsigned long addr, unsigned int esr,
->>   		return 0;
->>
->>   	if (user_mode(regs)) {
->> +		if (interrupts_enabled(regs))
->> +			local_irq_enable();
->> +
->
-> My worry here is that we take an interrupt and, on the return path,
-> decide to reschedule due to CONFIG_PREEMPT. If we somehow end up back
-> in the debugger, I'm concerned that it could remove the breakpoint and
-> then later see an unexpected SIGTRAP from the child.
->
-> Having said that, I've failed to construct a non-racy scenario in which
-> that can happen, but I'm just really uncomfortable making this change
-> unless there's a real problem being solved.
-
-The patch is inspired by the similar code in other architectures, e.g. 
-x86 and powerpc which have hardware debug exception to handle breakpoint 
-and single step like arm64. And, they have interrupt enabled in both 
-breakpoint and single step. So, I'm supposed arm64 could do the same thing.
-
-For the preempt case, it might be possible, but it sounds like a 
-exception handling problem to me. The preempt should not be allowed in 
-debug exception (current arm64 kernel does it), and in interrupt return 
-path the code should check if debug is on or not. If debug is on, 
-preempt should be just skipped. Or we could disable preempt in debug 
-exception.
-
-I also checked the handling in x86 and powerpc, they go different way.
-
-1. x86
-Disable preempt in IST exception since it uses per CPU stack.
-
-2. powerpc
-Check if debug is on in interrupt return path. Powerpc has DBCR0_IDM 
-indicate if the processor is in debug mode.
-
-For ARM64, I don't find such bit. So, I may consider to have preempt 
-disabled.
-
-Thanks,
-Yang
-
->
-> Will
->
+Clark
