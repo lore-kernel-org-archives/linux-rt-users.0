@@ -1,35 +1,45 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] rtmutex: Use chainwalking control enum
-Date: Tue, 22 Dec 2015 15:02:59 +0100
-Message-ID: <20151222140259.GC27274@linutronix.de>
-References: <1450220850-31632-1-git-send-email-brad.mouring@ni.com>
+Subject: Re: [PATCH] make HWLAT_DETECTOR kernel config either disabled or a
+ module, never builtin.
+Date: Tue, 22 Dec 2015 16:11:17 +0100
+Message-ID: <20151222151117.GD27274@linutronix.de>
+References: <20150923193340.0881074b@tor.valhalla.alchemy.lu>
+ <20151211165240.GG6720@linutronix.de>
+ <20151213113935.59cfd847@balder.valhalla.alchemy.lu>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+Cc: linux-rt-users@vger.kernel.org,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Brad Mouring <brad.mouring@ni.com>
-To: bmouring@ni.com
+	Steven Rostedt <rostedt@goodmis.org>,
+	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>, John Kacur <jkacur@redhat.com>
+To: Joakim Hernberg <jhernberg@alchemy.lu>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54021 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:54293 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751572AbbLVODC (ORCPT
+	with ESMTP id S1751860AbbLVPLT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Dec 2015 09:03:02 -0500
+	Tue, 22 Dec 2015 10:11:19 -0500
 Content-Disposition: inline
-In-Reply-To: <1450220850-31632-1-git-send-email-brad.mouring@ni.com>
+In-Reply-To: <20151213113935.59cfd847@balder.valhalla.alchemy.lu>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* bmouring@ni.com | 2015-12-15 17:07:30 [-0600]:
+* Joakim Hernberg | 2015-12-13 11:39:35 [+0100]:
 
->In 8930ed80 (rtmutex: Cleanup deadlock detector debug logic),
->chainwalking control enums were introduced to limit the deadlock
->detection logic. One of the calls to task_blocks_on_rt_mutex was
->missed when converting to use the enums.
->
->Signed-off-by: Brad Mouring <brad.mouring@ni.com>
->Cc: Thomas Gleixner <tglx@linutronix.de>
+>I looked at the IRC logs from when this was discussed.  The hwlatdetect
+>script looks for the kernel module and will fail if it's built-in (or
+>compressed).  Also this quote from irc: <jkacur> I need to look
+>at the code, but offhand, I think we said, it cannot be a built-in by design
 
-Applied
+Why can't it work by design in built-in mode? The module parameters
+`enabled` and `threshold` can be set via debugfs (and via command line).
+So I don't see here the difference between module and built-in.
+Is there something I missed?
+
+If the hwlatdetect script is not able to handle that then it deserves to
+be fixed. The same goes for support of compressed modules.
+
+>These were the reasons for the patch.
 
 Sebastian
