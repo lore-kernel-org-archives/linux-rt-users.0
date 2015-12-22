@@ -1,62 +1,55 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.1.7-rt8][report] Very high cyclictest latency during glmark2
- on i915 gpu
-Date: Tue, 22 Dec 2015 16:37:26 +0100
-Message-ID: <20151222153726.GF27274@linutronix.de>
-References: <CALqGcGpLJ+x_Gg7i4W4UCe4+GJEfdFNo-UryyOyQZJ1q5AAWJQ@mail.gmail.com>
- <CALqGcGo_CBrQynU1TeymxQJbL_LJgN9d5ADho_jM-DRB6c312w@mail.gmail.com>
- <CALqGcGobS4WFpMaiZm0PQ1z8cV-aakMs9cbAuO+u3vfmvJWpdA@mail.gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH] make HWLAT_DETECTOR kernel config either disabled or a
+ module, never builtin.
+Date: Tue, 22 Dec 2015 11:25:43 -0500 (EST)
+Message-ID: <591364261.1447150.1450801543631.JavaMail.zimbra@redhat.com>
+References: <20150923193340.0881074b@tor.valhalla.alchemy.lu> <20151211165240.GG6720@linutronix.de> <20151213113935.59cfd847@balder.valhalla.alchemy.lu> <20151222151117.GD27274@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>,
-	Daniel Vetter <daniel.vetter@intel.com>,
-	Jani Nikula <jani.nikula@linux.intel.com>,
-	intel-gfx@lists.freedesktop.org
-To: Christoph Mathys <eraserix@gmail.com>
+Content-Transfer-Encoding: 7bit
+Cc: Joakim Hernberg <jhernberg@alchemy.lu>,
+	linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Uwe =?utf-8?Q?Kleine-K=C3=B6nig?=
+	<u.kleine-koenig@pengutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54405 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752318AbbLVPhb (ORCPT
+Received: from mx6-phx2.redhat.com ([209.132.183.39]:53745 "EHLO
+	mx6-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754265AbbLVQ0E (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Dec 2015 10:37:31 -0500
-Content-Disposition: inline
-In-Reply-To: <CALqGcGobS4WFpMaiZm0PQ1z8cV-aakMs9cbAuO+u3vfmvJWpdA@mail.gmail.com>
+	Tue, 22 Dec 2015 11:26:04 -0500
+In-Reply-To: <20151222151117.GD27274@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Christoph Mathys | 2015-12-21 14:19:10 [+0100]:
 
->While playing with 4.1.13-rt15 I stumbled across the following thread
->where Luis reports the same problem with i915 gpu:
->i915: sleeping function called from invalid context at
->intel_pipe_update_start/end
->http://www.spinics.net/lists/linux-rt-users/msg13543.html
->
->Sebastian suggested to set i915.use_mmio_flip to -1. I tried this, and
->this avoids the callstack that I've posted before
->(intel_mmio_flip_work). The BUG below is now the dominant one:
-perfect.
 
-|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-|in_atomic(): 0, irqs_disabled(): 1, pid: 2109, name: Xorg
-|hardirqs last disabled at (23744596): [<ffffffffa02bca93>] intel_pipe_update_start+0x113/0x640 [i915]
-|Call Trace:
-| [<ffffffff81802c33>] dump_stack+0x4a/0x61
-| [<ffffffff8108713a>] ___might_sleep+0x13a/0x200
-| [<ffffffff8180a5e4>] rt_spin_lock+0x24/0x60
-| [<ffffffff8108b47c>] ? migrate_disable+0x6c/0xe0
-| [<ffffffff810a95fb>] prepare_to_wait+0x2b/0xa0
-| [<ffffffffa02bcb48>] intel_pipe_update_start+0x1c8/0x640 [i915]
-| [<ffffffff810a9ac0>] ? prepare_to_wait_event+0x130/0x130
-| [<ffffffffa02a7fc6>] intel_begin_crtc_commit+0x166/0x1e0 [i915]
-| [<ffffffffa02146f2>] drm_plane_helper_commit+0x112/0x2c0 [drm_kms_helper]
-| [<ffffffffa021493a>] drm_plane_helper_update+0x9a/0xf0
+----- Original Message -----
+> * Joakim Hernberg | 2015-12-13 11:39:35 [+0100]:
+> 
+> >I looked at the IRC logs from when this was discussed.  The hwlatdetect
+> >script looks for the kernel module and will fail if it's built-in (or
+> >compressed).  Also this quote from irc: <jkacur> I need to look
+> >at the code, but offhand, I think we said, it cannot be a built-in by design
+> 
+> Why can't it work by design in built-in mode? The module parameters
+> `enabled` and `threshold` can be set via debugfs (and via command line).
+> So I don't see here the difference between module and built-in.
+> Is there something I missed?
+> 
+> If the hwlatdetect script is not able to handle that then it deserves to
+> be fixed. The same goes for support of compressed modules.
+> 
+> >These were the reasons for the patch.
+> 
 
-I have to admit, the i915 tries very hard to avoid running on -RT. Could
-you try the s/local_irq_disable();/local_irq_disable_nort();/ patch
-mentioned in the thread?
+The script can be made to handle it, that's not a big deal. I think the historical
+reason was worrying that people could be accidentally running a kernel with
+some really heavy weight debugging that would affect performance. However, let people
+hang themselves if they want. Clark was going to send a patch to allow it, but probably
+ran out of time before the holidays. You can beat him to the punch if you want, or wait
+for him.
 
-Anyone of the i915 hackers an idea how could get the i915 working
-without disabling interrupts? Is really required?
-
-Sebastian
+John
