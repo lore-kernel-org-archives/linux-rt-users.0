@@ -1,57 +1,23 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.4-rc6-rt1
-Date: Wed, 23 Dec 2015 23:57:55 +0100
-Message-ID: <20151223225755.GA21121@linutronix.de>
+From: "Baker, Amy" <amy.baker@mgccc.edu>
+Subject: RE: JOB FOR YOU CONTACT US..shoppermystery133@gmail.com
+Date: Sun, 27 Dec 2015 07:41:27 +0000
+Message-ID: <4EE071DCF958E14496F8293068C276054F79931C@MGCCCMAIL2010-5.mgccc.cc.ms.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: "Baker, Amy" <amy.baker@mgccc.edu>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from [216.79.147.133] ([216.79.147.133]:38368 "EHLO mx1.mgccc.edu"
+	rhost-flags-FAIL-FAIL-OK-OK) by vger.kernel.org with ESMTP
+	id S1751913AbbL0HmA convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 27 Dec 2015 02:42:00 -0500
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Please don't continue reading before christmas eve (or morning,
-depending on your schedule). If you don't celebrate christmas,
-well go ahead.
+I am writting to both Unemployee and employed, that if you are interest in working an extra job, non-stressful work online as our mystery shopper, should  not hesitate to contact me at (shoppermystery133@gmail.com)
+Baker
+-----------------------------------------
+The information contained in this e-mail message is intended only for the personal and confidential use of the recipient(s) named above. This message may be an attorney-client communication and/or work product and as such is privileged and confidential. If the reader of this message is not the intended recipient or an agent responsible for delivering it to the intended recipient, you are hereby notified that you have received this document in error and that any review, dissemination, distribution, or copying of this message is strictly prohibited. If you have received this communication in error, please notify us immediately by e-mail, and delete the original message.
 
-Dear RT folks!
-
-I'm pleased to announce the v4.4-rc6-rt1 patch set. I tested it on my
-AMD A10, 64bit. Nothing exploded so far, filesystem is still there.
-I haven't tested it on anything else. Before someone asks: this does not
-mean it does *not* work on ARM I simply did not try it.
-
-If you are brave then download it, install it and have fun. If something
-breaks, please report it. If your machine starts blinking like a
-christmas tree while using the patch then *please* send a photo.
-
-Changes since v4.1.15-rt17:
-  - rebase to v4.4-rc6
-
-Known issues (inherited from v4.1-RT):
-      - bcache stays disabled
-    
-      - CPU hotplug is not better than before
-    
-      - The netlink_release() OOPS, reported by Clark, is still on the
-        list, but unsolved due to lack of information
-    
-      - Christoph Mathys reported a stall in cgroup locking code while using
-        Linux containers.
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.4-rc6-rt1
-
-The RT patch against 4.4-rc6 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4-rc6-rt1.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patches-4.4-rc6-rt1.tar.xz
-
-Sebastian
