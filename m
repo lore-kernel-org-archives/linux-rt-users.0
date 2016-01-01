@@ -1,125 +1,65 @@
-From: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Subject: Re: RCU stall and the system boot hang with nfsroot
-Date: Thu, 31 Dec 2015 11:49:49 -0800
-Message-ID: <20151231194949.GA20877@linux.vnet.ibm.com>
-References: <CALSz7m2KNryL1uo3u1jody3+VYcTga8ZwsHth95Ne1DKy7HzgA@mail.gmail.com>
- <CALSz7m00vj1yVETgwEAei+qXi+i+5=srNdY8oqZOcjAnv8Z4DQ@mail.gmail.com>
- <20151229234229.GJ4054@linux.vnet.ibm.com>
- <CALSz7m3C4vj3Rp2uZvYc--_Zo5z+=8joGfPSbw1wY+Z1HzM_7g@mail.gmail.com>
- <20151230174145.GN4054@linux.vnet.ibm.com>
-Reply-To: paulmck@linux.vnet.ibm.com
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
+Date: Fri, 01 Jan 2016 08:19:41 +0100
+Message-ID: <1451632781.9800.22.camel@gmail.com>
+References: <20151223225755.GA21121@linutronix.de>
+	 <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org
-To: Aaron Ma <mapengyu@gmail.com>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Clark Williams <williams@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from e36.co.us.ibm.com ([32.97.110.154]:36479 "EHLO
-	e36.co.us.ibm.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751207AbbLaTtx (ORCPT
+Received: from mail-wm0-f41.google.com ([74.125.82.41]:36797 "EHLO
+	mail-wm0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751119AbcAAHTp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Dec 2015 14:49:53 -0500
-Received: from localhost
-	by e36.co.us.ibm.com with IBM ESMTP SMTP Gateway: Authorized Use Only! Violators will be prosecuted
-	for <linux-rt-users@vger.kernel.org> from <paulmck@linux.vnet.ibm.com>;
-	Thu, 31 Dec 2015 12:49:52 -0700
-Content-Disposition: inline
-In-Reply-To: <20151230174145.GN4054@linux.vnet.ibm.com>
+	Fri, 1 Jan 2016 02:19:45 -0500
+In-Reply-To: <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, Dec 30, 2015 at 09:41:45AM -0800, Paul E. McKenney wrote:
-> On Wed, Dec 30, 2015 at 03:03:33PM +0800, Aaron Ma wrote:
-> > On Wed, Dec 30, 2015 at 7:42 AM, Paul E. McKenney
-> > <paulmck@linux.vnet.ibm.com> wrote:
+On Thu, 2015-12-31 at 10:24 -0600, Clark Williams wrote:
 
-[ . . . ]
-
-> > cfg80211: Calling CRDA to update world regulatory domain
-> > cfg80211: Calling CRDA to update world regulatory domain
-> > cfg80211: Exceeded CRDA call max attempts. Not calling CRDA
-> > INFO: rcu_preempt detected stalls on CPUs/tasks:
-> >     71: (0 ticks this GP) idle=1ac/0/0 softirq=0/0 fqs=0
-> >     (detected by 62, t=26002 jiffies, g=3735, c=3734, q=366014)
-> > Task dump for CPU 71:
-> > swapper/71      R  running task        0     0      1 0x00200000
-> >  ffffffff81492587 ffff8804633cbe58 ffffffff814f21d7 0000000000000004
-> >  0000000000000004 ffffe8fffb405310 ffffffff820dc5c0 ffff8804633cbea8
-> >  ffffffff8181db85 0000000000000000 0000000000000000 0000000000000046
-> > Call Trace:
-> >  [<ffffffff81492587>] ? debug_smp_processor_id+0x17/0x20
-> >  [<ffffffff814f21d7>] ? intel_idle+0x137/0x140
-> >  [<ffffffff8181db85>] ? cpuidle_enter_state+0x65/0x3e0
-> >  [<ffffffff8181df37>] ? cpuidle_enter+0x17/0x20
-> >  [<ffffffff810a849d>] ? cpu_startup_entry+0x33d/0x630
-> >  [<ffffffff8103ceae>] ? start_secondary+0x12e/0x140
-> > rcu_preempt kthread starved for 26002 jiffies!
-> > rcu_check_gp_kthread_starvation --->show task:
-> > rcu_preempt     S ffff880456413c68     0     8      2 0x00000000
-> >  ffff880456413c68 ffff8804564025d0 000000000000d7a0 ffff880456b18000
-> >  ffff8804564025d0 ffff880456413c38 ffffffff81492587 ffff880456413c58
-> >  ffff880456414000 ffff8804564025d0 ffff880456413cb8 ffff880869dce500
-> > Call Trace:
-> >  [<ffffffff81492587>] ? debug_smp_processor_id+0x17/0x20
-> >  [<ffffffff81b5ce9f>] schedule+0x3f/0xd0
-> >  [<ffffffff81b5ef19>] schedule_timeout+0x189/0x3f0
-> >  [<ffffffff810a7904>] ? swait_prepare+0x24/0x90
-> >  [<ffffffff810e8e60>] ? timer_cpu_notify+0x190/0x190
-> >  [<ffffffff810a793b>] ? swait_prepare+0x5b/0x90
-> >  [<ffffffff810de3f8>] rcu_gp_kthread+0x8a8/0x2190
-> >  [<ffffffff810b275d>] ? trace_hardirqs_on+0xd/0x10
-> >  [<ffffffff81b5c18f>] ? __schedule+0x4af/0x1180
-> >  [<ffffffff810ddb50>] ? call_rcu_sched+0x20/0x20
-> >  [<ffffffff8107f844>] kthread+0xe4/0x100
-> >  [<ffffffff810b275d>] ? trace_hardirqs_on+0xd/0x10
-> >  [<ffffffff8107f760>] ? kthread_create_on_node+0x240/0x240
-> >  [<ffffffff81b61562>] ret_from_fork+0x42/0x70
-> >  [<ffffffff8107f760>] ? kthread_create_on_node+0x240/0x240
-> > rcu_check_gp_kthread_starvation --->end
-> > 
-> > It seems wait in rcu_gp_kthread. it should be no task blocked right?
-> > If so, why the swait_event_interruptible_timeout is not awaken? the
-> > timeout is CONFIG_HZ=1000.
+> I pulled this update and tried it on my laptop (i7 quad-core with HT)
+> and an Atom testbox. I'm seeing a change in the cpu utilization of
+> ksoftirqd between 4.1.15-rt17 and 4.4-rc2-rt1, where the per-cpu
+> ksoftirqd threads are running at between 25-40% utilization:
 > 
-> Given that this happens at boot, perhaps ftrace is a good next step.
-> The thought would be to enable ftrace via the kernel boot parameters
-> for the timers.
+> top - 10:15:57 up 13:46,  2 users,  load average: 9.44, 9.30, 8.93
+> Tasks: 188 total,   2 running, 186 sleeping,   0 stopped,   0 zombie
+> %Cpu(s):  4.7 us, 53.6 sy,  0.0 ni, 37.4 id,  0.1 wa,  0.0 hi,  4.2 si,  0.0 st
+> KiB Mem :  4046064 total,   480548 free,   179528 used,  3385988 buff/cache
+> KiB Swap:  5177340 total,  5169908 free,     7432 used.  3785624 avail Mem 
 > 
-> And how often does this problem occur?
+>   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                      
+>     3 root      -2   0       0      0      0 S  37.3  0.0 307:52.44 ksoftirqd/0                  
+>    32 root      -2   0       0      0      0 S  37.3  0.0 308:08.72 ksoftirqd/2                  
+>    42 root      -2   0       0      0      0 R  37.3  0.0 308:32.84 ksoftirqd/3                  
+>    22 root      -2   0       0      0      0 S  26.9  0.0 222:29.82 ksoftirqd/1                  
+>     1 root      20   0   46628   6980   4976 S   1.3  0.2   0:13.98 systemd                      
+> 22358 williams  20   0  159980   4552   3780 R   1.0  0.1   0:00.39 top       
 
-And does the following diagnostic patch help?  Its expected behavior
-would be to turn a hard hang into something that recovered in a few
-minutes, while giving a few stall-warning splats.
+Heh, I didn't notice immediately because I throttle nohz, am seeing
+only tiny utilization (but nohz idle isn't working).  With throttle
+patch removed, box is screaming, expires=4294990471 pokes eyeball.
 
-							Thanx, Paul
-
-------------------------------------------------------------------------
-
-commit 7798a5efb2acabfa3ca788dd9b5b118eb1bff443
-Author: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Date:   Thu Dec 31 08:48:36 2015 -0800
-
-    rcu: Awaken grace-period kthread when stalled
-    
-    Recent kernels can fail to awaken the grace-period kthread for
-    quiescent-state forcing.  This commit is a crude hack that does
-    a wakeup any time a stall is detected.
-    
-    Signed-off-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-
-diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index 4b3de6718f7c..51da7ef3561f 100644
---- a/kernel/rcu/tree.c
-+++ b/kernel/rcu/tree.c
-@@ -1225,8 +1225,10 @@ static void rcu_check_gp_kthread_starvation(struct rcu_state *rsp)
- 		       rsp->gp_flags,
- 		       gp_state_getname(rsp->gp_state), rsp->gp_state,
- 		       rsp->gp_kthread ? rsp->gp_kthread->state : ~0);
--		if (rsp->gp_kthread)
-+		if (rsp->gp_kthread) {
- 			sched_show_task(rsp->gp_kthread);
-+			wake_up_process(rsp->gp_kthread);
-+		}
- 	}
- }
- 
+         swapper     0 [003]   392.708321: timer:hrtimer_cancel: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708321: timer:hrtimer_start: hrtimer=0xffff88041ecce720 function=tick_sched_timer/0x0 expires=4294990471 softexpires=4294990471
+         swapper     0 [003]   392.708323: timer:hrtimer_cancel: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708324: timer:hrtimer_expire_entry: hrtimer=0xffff88041ecce720 now=392697118535 function=tick_sched_timer/0x0
+         swapper     0 [003]   392.708325: timer:hrtimer_expire_exit: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708326: timer:hrtimer_start: hrtimer=0xffff88041ecce720 function=tick_sched_timer/0x0 expires=392700750000 softexpires=392700750000
+         swapper     0 [003]   392.708328: timer:tick_stop: success=yes msg=
+         swapper     0 [003]   392.708329: timer:hrtimer_cancel: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708329: timer:hrtimer_start: hrtimer=0xffff88041ecce720 function=tick_sched_timer/0x0 expires=4294990471 softexpires=4294990471
+         swapper     0 [003]   392.708331: timer:hrtimer_cancel: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708332: timer:hrtimer_expire_entry: hrtimer=0xffff88041ecce720 now=392697126313 function=tick_sched_timer/0x0
+         swapper     0 [003]   392.708333: timer:hrtimer_expire_exit: hrtimer=0xffff88041ecce720
+         swapper     0 [003]   392.708334: timer:hrtimer_start: hrtimer=0xffff88041ecce720 function=tick_sched_timer/0x0 expires=392700750000 softexpires=392700750000
+         swapper     0 [003]   392.708336: timer:tick_stop: success=yes msg=
 
