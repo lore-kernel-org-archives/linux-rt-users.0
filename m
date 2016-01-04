@@ -1,45 +1,61 @@
-From: Jeff Epler <jepler@unpythonic.net>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [PATCH] Makefile: Set CC/AR variable only if it doesn't have a
  value
-Date: Mon, 4 Jan 2016 07:39:04 -0600
-Message-ID: <20160104133903.GG92593@unpythonic.net>
+Date: Mon, 4 Jan 2016 08:40:16 -0600
+Message-ID: <20160104084016.508a48f2@sluggy.hsv.redhat.com>
 References: <1451847271-31571-1-git-send-email-raj.khem@gmail.com>
+	<20160104133903.GG92593@unpythonic.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: williams@redhat.com, jkacur@redhat.com,
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/otgAE1hafjuOeq09doJpMKs"; protocol="application/pgp-signature"
+Cc: Khem Raj <raj.khem@gmail.com>, jkacur@redhat.com,
 	linux-rt-users@vger.kernel.org
-To: Khem Raj <raj.khem@gmail.com>
+To: Jeff Epler <jepler@unpythonic.net>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from zaphod.unpythonic.net ([76.79.27.186]:14644 "EHLO
-	zaphod.unpythonic.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750889AbcADOXV (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 4 Jan 2016 09:23:21 -0500
-Content-Disposition: inline
-In-Reply-To: <1451847271-31571-1-git-send-email-raj.khem@gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:56333 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751309AbcADOkT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 4 Jan 2016 09:40:19 -0500
+In-Reply-To: <20160104133903.GG92593@unpythonic.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I believe the patch does not have the desired effect, because make(1)
-always sets CC automatically:
+--Sig_/otgAE1hafjuOeq09doJpMKs
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-$ cat raj.mk
-CROSS_COMPILE=x86_64-linux-gnu-
-CC?=$(CROSS_COMPILE)gcc
-.PHONY: default
-default:
-	@echo CC=$(CC)
-$ make -f raj.mk
-CC=cc
+On Mon, 4 Jan 2016 07:39:04 -0600
+Jeff Epler <jepler@unpythonic.net> wrote:
+>=20
+> Also I am not sure why you are submitting this patch on -rt-users, it
+> doesn't seem to be particularly relevant to the RT patchset.
+>=20
+> Jeff
 
-With your patch, those who specify CROSS_COMPILE, or for whom gcc and cc
-are different, will get different (worse) behavior.
+linux-rt-users also is for discussion of RT related user-space code, such a=
+s the rt-tests collection.
 
-I believe this idea has been discussed before, but it is hard to search
-for because few search engines will let you search on "CC ?=" and not
-just ignore the "?=".
+Clark
 
-Also I am not sure why you are submitting this patch on -rt-users, it
-doesn't seem to be particularly relevant to the RT patchset.
+--Sig_/otgAE1hafjuOeq09doJpMKs
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
-Jeff
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJWioRQAAoJEOI5asVwYXLrdEoP/3iK788AqS033tKvqb8RdFYN
+rYIqvhlqtnNCMMRihKWsICRogpURGBBWu0WSsGaxfLDO0+u4smGT++VvUVkhcm9h
+IqJKqdUxLmVQCtcHCqC+B5HlKPSpl8iyaKnTDmiEc10xGEdZqOzGA7/lu7YV/ODD
+wFga+zIvUcp5F4EIiWCVOP7yVY/S2B9VrKNLkSix8NvPP2elUuttL/IS/Q+6NhPI
+ilaFzB3WE+gESW+sCXm2TIzhjlfKvsO+dLJl1dV0w+ZwttmNSluS4x/tzSWBBb+H
+mD+kLcBG+AktAbqsNEdXZIASAHrXSw48DrboyUGcy0u6F52AbyTvWKN8oZHD+l17
+V9SMeuUApBAtIsEus+IBaxmKhUDJdA9pGLoB7mH15SYFimXGVG7LgvRR9aUNxmRo
+Q5bkTXOkalj7yv0NdWu9AhOjyHEhfVyiJBSIuq2hU6et7kmuf+hyseAk8JvyIEEG
+b9txF4SwYXhsRHRZTKjCEBh9MJb069Icu3s6v8FBrBTLEqoBV+a8pqL4ZZTSiMQd
+bgxfINmD0XGo4h3HKeU4+VKLD7n5KP/2ALuL7yStD4oG4M9FnZodGTJYHMHBZQ4Q
+naiO2TMa2g6u43dq5kWUmscmMlEkzOoqedtUOiQHd5ja+1ONVbzaZgqjFXksQygT
+OUT3qp76TQEsBmX+N5zp
+=Jyb/
+-----END PGP SIGNATURE-----
+
+--Sig_/otgAE1hafjuOeq09doJpMKs--
