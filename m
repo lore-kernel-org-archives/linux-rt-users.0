@@ -1,36 +1,78 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.4-rc6-rt1 PATCH 0/2] ARM: am437x: boot test report
-Date: Tue, 12 Jan 2016 18:15:56 +0100
-Message-ID: <20160112171556.GB31009@linutronix.de>
-References: <1451325611-21678-1-git-send-email-grygorii.strashko@ti.com>
+From: "Shi, Yang" <yang.shi@linaro.org>
+Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
+Date: Tue, 12 Jan 2016 11:59:54 -0800
+Message-ID: <56955B3A.5010303@linaro.org>
+References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
+ <20151216111316.GD4308@arm.com> <5671CD5B.9030907@linaro.org>
+ <20151221104818.GF23092@arm.com> <alpine.DEB.2.11.1512211749180.28591@nanos>
+ <20151221170028.GT23092@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Sekhar Nori <nsekhar@ti.com>
-To: Grygorii Strashko <grygorii.strashko@ti.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1451325611-21678-1-git-send-email-grygorii.strashko@ti.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Catalin.Marinas@arm.com, linux-kernel@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-pa0-f53.google.com ([209.85.220.53]:36416 "EHLO
+	mail-pa0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751890AbcALT74 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jan 2016 14:59:56 -0500
+Received: by mail-pa0-f53.google.com with SMTP id yy13so252173179pab.3
+        for <linux-rt-users@vger.kernel.org>; Tue, 12 Jan 2016 11:59:56 -0800 (PST)
+In-Reply-To: <20151221170028.GT23092@arm.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Grygorii Strashko | 2015-12-28 20:00:09 [+0200]:
+On 12/21/2015 9:00 AM, Will Deacon wrote:
+> On Mon, Dec 21, 2015 at 05:51:22PM +0100, Thomas Gleixner wrote:
+>> On Mon, 21 Dec 2015, Will Deacon wrote:
+>>> +static void send_user_sigtrap(int si_code)
+>>> +{
+>>> +	struct pt_regs *regs = current_pt_regs();
+>>> +	siginfo_t info = {
+>>> +		.si_signo	= SIGTRAP,
+>>> +		.si_errno	= 0,
+>>> +		.si_code	= si_code,
+>>> +		.si_addr	= (void __user *)instruction_pointer(regs),
+>>> +	};
+>>> +
+>>> +	if (WARN_ON(!user_mode(regs)))
+>>> +		return;
+>>> +
+>>> +	preempt_disable();
+>>
+>> That doesn't work on RT either. force_sig_info() takes task->sighand->siglock,
+>> which is a 'sleeping' spinlock on RT.
+>
+> Ah, I missed that :/
+>
+>> Why would we need to disable preemption here at all? What's the problem of
+>> being preempted or even migrated?
+>
+> There *might* not be a problem, I'm just really nervous about changing
+> the behaviour on the debug path and subtly changing how ptrace behaves.
+>
+> My worry was that you could somehow get back into the tracer, and it
+> could remove a software breakpoint in the knowledge that it wouldn't
+> see any future (spurious) SIGTRAPs for that location.
+>
+> Without a concrete example, however, I guess I'll bite the bullet and
+> enable irqs across the call to force_sig_info, since there is clearly a
+> real issue here on RT.
 
->Hi All, Sebastian,
-Hi Grygorii,
+Hi Will,
 
->3) Seems there are some problem with HIGHMEM :(. System crashes if I'm trying
->   to run hackbench (see log 1). I can run hackbench only if HIGHMEM is disabled.
->   I've also tried to disable CONFIG_CPU_SW_DOMAIN_PAN, CONFIG_ARM_PATCH_PHYS_VIRT,
->   and CONFIG_CPUSETS, before disabling HIGHMEM.
->   Sorry, I'll not able to investigate it further because of Christmas holidays here.  
+This might be buried in email storm during the holiday. Just want to 
+double check the status. I'm supposed there is no objection for getting 
+it merged in upstream?
 
-I see. It seems not to trigger anything on x86.
+Thanks,
+Yang
 
->4) Could we revert commit 4fa5422 'ARM: OMAP2: Drop the concept of certain power
->   domains not being able to lose context.'? It's not required for 4.4-rt wakeup
->   and introduces build warnings.
+>
+> Will
+>
 
-done.
-
-Sebastian
