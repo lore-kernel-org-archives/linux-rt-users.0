@@ -1,78 +1,49 @@
-From: "Shi, Yang" <yang.shi@linaro.org>
-Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
-Date: Tue, 12 Jan 2016 11:59:54 -0800
-Message-ID: <56955B3A.5010303@linaro.org>
-References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
- <20151216111316.GD4308@arm.com> <5671CD5B.9030907@linaro.org>
- <20151221104818.GF23092@arm.com> <alpine.DEB.2.11.1512211749180.28591@nanos>
- <20151221170028.GT23092@arm.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 3.18.25-rt23
+Date: Tue, 12 Jan 2016 18:36:14 -0500
+Message-ID: <20160112183614.73777efc@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Catalin.Marinas@arm.com, linux-kernel@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
-To: Will Deacon <will.deacon@arm.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pa0-f53.google.com ([209.85.220.53]:36416 "EHLO
-	mail-pa0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751890AbcALT74 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jan 2016 14:59:56 -0500
-Received: by mail-pa0-f53.google.com with SMTP id yy13so252173179pab.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 12 Jan 2016 11:59:56 -0800 (PST)
-In-Reply-To: <20151221170028.GT23092@arm.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 12/21/2015 9:00 AM, Will Deacon wrote:
-> On Mon, Dec 21, 2015 at 05:51:22PM +0100, Thomas Gleixner wrote:
->> On Mon, 21 Dec 2015, Will Deacon wrote:
->>> +static void send_user_sigtrap(int si_code)
->>> +{
->>> +	struct pt_regs *regs = current_pt_regs();
->>> +	siginfo_t info = {
->>> +		.si_signo	= SIGTRAP,
->>> +		.si_errno	= 0,
->>> +		.si_code	= si_code,
->>> +		.si_addr	= (void __user *)instruction_pointer(regs),
->>> +	};
->>> +
->>> +	if (WARN_ON(!user_mode(regs)))
->>> +		return;
->>> +
->>> +	preempt_disable();
->>
->> That doesn't work on RT either. force_sig_info() takes task->sighand->siglock,
->> which is a 'sleeping' spinlock on RT.
->
-> Ah, I missed that :/
->
->> Why would we need to disable preemption here at all? What's the problem of
->> being preempted or even migrated?
->
-> There *might* not be a problem, I'm just really nervous about changing
-> the behaviour on the debug path and subtly changing how ptrace behaves.
->
-> My worry was that you could somehow get back into the tracer, and it
-> could remove a software breakpoint in the knowledge that it wouldn't
-> see any future (spurious) SIGTRAPs for that location.
->
-> Without a concrete example, however, I guess I'll bite the bullet and
-> enable irqs across the call to force_sig_info, since there is clearly a
-> real issue here on RT.
 
-Hi Will,
+Dear RT Folks,
 
-This might be buried in email storm during the holiday. Just want to 
-double check the status. I'm supposed there is no objection for getting 
-it merged in upstream?
+I'm pleased to announce the 3.18.25-rt23 stable release.
 
-Thanks,
-Yang
 
->
-> Will
->
+This release is just an update to the new stable 3.18.25 version
+and no RT specific changes have been made.
 
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v3.18-rt
+  Head SHA1: 90a3d747490fbedbed10fe2c75b1954c5360613c
+
+
+Or to build 3.18.25-rt23 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.25.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.25-rt23.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
