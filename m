@@ -1,178 +1,71 @@
-From: Tim Sander <tim@krieglstein.org>
-Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
-Date: Thu, 07 Jan 2016 13:15:33 +0100
-Message-ID: <7338469.JKJMq5kEqn@dabox>
-References: <20151223225755.GA21121@linutronix.de>
+From: eg Engleder Gerhard <eg@keba.com>
+Subject: AW: [RFC] e1000e: Add delays after writing to registers
+Date: Tue, 12 Jan 2016 16:37:33 +0100
+Message-ID: <12C1B74BDFD05D40B2356A9B12DFA3396C355BE411@KEBMXSPMB01.keba.co.at>
+References: <1445465268-10347-1-git-send-email-jonathan.david@ni.com>
+ <20151022055909.GA7263@icarus.home.austad.us> <5638F239.1030804@ni.com>
+ <20151103194246.GA19824@sisyphus.home.austad.us> <563930CF.9090800@ni.com>
+ <20151106055349.GA10665@icarus.home.austad.us>
+ <alpine.DEB.2.11.1511060929430.4032@nanos> <563CF3B1.2040904@ni.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20151223225755.GA21121@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"josh.cartwright@ni.com" <josh.cartwright@ni.com>,
+	Henrik Austad <henrik@austad.us>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Jonathan David <jonathan.david@ni.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from xlspam03.mdcs.at ([217.13.183.27]:55629 "EHLO xlspam03.mdcs.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752222AbcALPre convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jan 2016 10:47:34 -0500
+In-Reply-To: <563CF3B1.2040904@ni.com>
+Content-Language: de-DE
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Sebastian
+> >
+> > Now my question is how big is the induced latency.
+> >
+> After the wake-up timer is armed, the e1000e driver handles the network link
+> configuration after the NIC was reset. When the function
+> "e1000e_update_mc_addr_list_generic" is called, the MTA table is rewritten (the
+> writing of this table consists of >70 MMIO writes followed by a read).
+> 
+> We see the hrtimer entry expire at the value 73712084997 near the bottom of the
+> trace.
+> 
+> 73712084997ns - 73712055622ns = 29375ns
+> 
+> So, we see a ~29us latency, in comparison to a good case where we see about
+> 1us.
 
-Thanks for your christmas present :-).
+I have a similar problem, but in my case the hardware latency is the problem.
+We are executing DMA transfers over PCIe for fieldbus communication over
+Ethernet (PCIe target is own fieldbus FPGA, not the e1000e).
+Usually the DMA transfers start with a maximum delay of ~25us. But in case of
+link down and up on the e1000e controller the worst case delay is 65us. This
+violates our real-time deadlines. DMA transfer is triggered by the hardware and
+delay is also measured by the hardware, no software is involved. With the following
+patch the problem disappears:
 
-Am Mittwoch, 23. Dezember 2015, 23:57:55 schrieb Sebastian Andrzej Siew=
-ior:
-> Please don't continue reading before christmas eve (or morning,
-> depending on your schedule). If you don't celebrate christmas,
-> well go ahead.
-Ok, i have to admit i am a little late to the party.
-> Dear RT folks!
->=20
-> I'm pleased to announce the v4.4-rc6-rt1 patch set. I tested it on my
-> AMD A10, 64bit. Nothing exploded so far, filesystem is still there.
-> I haven't tested it on anything else. Before someone asks: this does =
-not
-> mean it does *not* work on ARM I simply did not try it.
-With the trivial compile patch below it is working on ARM:
-Specifically two Cortex A9 on a CycloneV from Altera.
+ @@ -376,9 +376,10 @@ void e1000e_update_mc_addr_list_generic(struct e1000_hw *hw,
+        }
 
-The performance without load looks good:
-# Total: 100000000 100000000
-# Min Latencies: 00009 00009
-# Avg Latencies: 00010 00010
-# Max Latencies: 00022 00033
+        /* replace the entire MTA table */
+-       for (i = hw->mac.mta_reg_count - 1; i >= 0; i--)
++       for (i = hw->mac.mta_reg_count - 1; i >= 0; i--) {
+                E1000_WRITE_REG_ARRAY(hw, E1000_MTA, i, hw->mac.mta_shadow[i]);
+-       e1e_flush();
++               e1e_flush();
++       }
+ }
 
-A short run with hackbench load reveals an latency "island" from 54-69=B5=
-s on the first core.
-There are no timer ticks with 34 to 53 =B5s delay.
-# Total: 001000000 000999714
-# Min Latencies: 00010 00009
-# Avg Latencies: 00017 00010
-# Max Latencies: 00069 00029
+ /**
 
-I will test further and report if i find strange occurences.
+What is the state of your patch for the e1000e driver?
 
-> If you are brave then download it, install it and have fun. If someth=
-ing
-> breaks, please report it. If your machine starts blinking like a
-> christmas tree while using the patch then *please* send a photo.
-Sorry no photos, no special blinking.
-Best regards
-Tim
+regards, gerhard
 
-Signed-off-by: Tim Sander <tim@krieglstein.org>
-
---- linux-4.4-rc6/kernel/time/hrtimer.c.orig    2016-01-06 16:56:32.573=
-527206 +0100                                                           =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-+++ linux-4.4-rc6/kernel/time/hrtimer.c 2016-01-06 16:56:48.213215320 +=
-0100                                                                   =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-@@ -1435,6 +1435,7 @@                                                  =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- #endif                                                                =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-+static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer);    =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- static void __hrtimer_run_queues(struct hrtimer_cpu_base *cpu_base, kt=
-ime_t now)                                                             =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- {                                                                     =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-@@ -1490,8 +1491,6 @@                                                  =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                raise_softirq_irqoff(HRTIMER_SOFTIRQ);                 =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- }                                                                     =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
--static enum hrtimer_restart hrtimer_wakeup(struct hrtimer *timer);    =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
--                                                                      =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- #ifdef CONFIG_HIGH_RES_TIMERS                                         =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
- /*                                                                    =
-                                                                       =
-                                                                       =
-                                                                       =
-                                                                       =
-       =20
