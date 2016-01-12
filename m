@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.52-rt70
-Date: Tue, 12 Jan 2016 18:37:10 -0500
-Message-ID: <20160112183710.2deb1c3d@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.94-rt102
+Date: Tue, 12 Jan 2016 18:37:55 -0500
+Message-ID: <20160112183755.7273104e@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.52-rt70 stable release.
+I'm pleased to announce the 3.10.94-rt102 stable release.
 
 
-This release is just an update to the new stable 3.12.52 version
+This release is just an update to the new stable 3.10.94 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: 51398dc7937c2e8190d8e2580006664cd84800dc
+  branch: v3.10-rt
+  Head SHA1: f04fc1ecf76c7635560c0f59af2bc44b994b6bc0
 
 
-Or to build 3.12.52-rt70 directly, the following patches should be applied:
+Or to build 3.10.94-rt102 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.52.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.94.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.52-rt70.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.94-rt102.patch.xz
 
 
 
