@@ -1,27 +1,40 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on
- -RT
-Date: Wed, 13 Jan 2016 18:31:46 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1601131830440.3575@nanos>
-References: <20160113152352.GH29964@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
+Date: Wed, 13 Jan 2016 18:58:45 +0100
+Message-ID: <20160113175845.GK29964@linutronix.de>
+References: <20151223225755.GA21121@linutronix.de>
+ <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
+ <1451632781.9800.22.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Cc: Clark Williams <williams@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160113152352.GH29964@linutronix.de>
+Content-Disposition: inline
+In-Reply-To: <1451632781.9800.22.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 13 Jan 2016, Sebastian Andrzej Siewior wrote:
-> +#ifdef CONFIG_PREEMPT_RT_FULL
-> +static inline int dev_recursion_level(void)
-> +{
-> +	return atomic_read(&current->xmit_recursion);
+* Mike Galbraith | 2016-01-01 08:19:41 [+0100]:
 
-Why would you need an atomic here. current does hardly race against itself.
+>>   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND                      
+>>     3 root      -2   0       0      0      0 S  37.3  0.0 307:52.44 ksoftirqd/0                  
+>>    32 root      -2   0       0      0      0 S  37.3  0.0 308:08.72 ksoftirqd/2                  
+>>    42 root      -2   0       0      0      0 R  37.3  0.0 308:32.84 ksoftirqd/3                  
+>>    22 root      -2   0       0      0      0 S  26.9  0.0 222:29.82 ksoftirqd/1                  
+>>     1 root      20   0   46628   6980   4976 S   1.3  0.2   0:13.98 systemd                      
+>> 22358 williams  20   0  159980   4552   3780 R   1.0  0.1   0:00.39 top       
+>
+>Heh, I didn't notice immediately because I throttle nohz, am seeing
+>only tiny utilization (but nohz idle isn't working).  With throttle
+>patch removed, box is screaming, expires=4294990471 pokes eyeball.
 
-Thanks,
+This is due to NO_HZ as far as I can tell. My AMD A10 in idle mode has
+0.7% utilisation of ksoftirqd/ with CONFIG_HZ_PERIODIC and with
+CONFIG_NO_HZ_FULL it shows about 25% on all CPU threads.
 
-	tglx
+Sebastian
