@@ -1,70 +1,96 @@
-From: Julio Cruz Barroso <julio.cruz@smartmatic.com>
-Subject: cyclictest versus custom SPI based system
-Date: Wed, 13 Jan 2016 17:06:50 +0000
-Message-ID: <AF04265A3FC2B144B9892F621A394E13D5C0B43F@tethys>
+From: "Shi, Yang" <yang.shi@linaro.org>
+Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
+Date: Wed, 13 Jan 2016 09:17:46 -0800
+Message-ID: <569686BA.6050703@linaro.org>
+References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
+ <20151216111316.GD4308@arm.com> <5671CD5B.9030907@linaro.org>
+ <20151221104818.GF23092@arm.com> <alpine.DEB.2.11.1512211749180.28591@nanos>
+ <20151221170028.GT23092@arm.com> <56955B3A.5010303@linaro.org>
+ <20160113102622.GC25458@arm.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=Windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>, Catalin.Marinas@arm.com,
+	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from dispatch1-us1.ppe-hosted.com ([148.163.129.52]:51293 "EHLO
-	dispatch1-us1.ppe-hosted.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1753243AbcAMRGx convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 13 Jan 2016 12:06:53 -0500
-Received: from mx2-us1.ppe-hosted.com (unknown [10.7.64.21])
-	by dispatch1-us1.ppe-hosted.com (Proofpoint Essentials ESMTP Server) with ESMTP id 9FF2620096
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 Jan 2016 17:06:53 +0000 (UTC)
-Received: from hyperion.ve.sbp.com (unknown [186.73.192.71])
-	(using TLSv1 with cipher AES128-SHA (128/128 bits))
-	(No client certificate requested)
-	by mx2-us1.ppe-hosted.com (Proofpoint Essentials ESMTP Server) with ESMTPS id AA596200BC
-	for <linux-rt-users@vger.kernel.org>; Wed, 13 Jan 2016 17:06:51 +0000 (UTC)
-Content-Language: en-US
+Received: from mail-pf0-f170.google.com ([209.85.192.170]:33071 "EHLO
+	mail-pf0-f170.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754278AbcAMRRs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Jan 2016 12:17:48 -0500
+Received: by mail-pf0-f170.google.com with SMTP id e65so84538798pfe.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 13 Jan 2016 09:17:48 -0800 (PST)
+In-Reply-To: <20160113102622.GC25458@arm.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
-=20
-I=92m using a linux-wandboard-rt 3.14.28, with a max latency of 114us [=
-1].
-=20
-I would like include an IIO driver to acquire data from a SPI device @ =
-1Hz.
-=20
-After disable some modules (as suggested two months ago by Mat and tglx=
- [2]) the acquisition is more stable, however it still losing data.
-=20
-Based on a scope and a couple of GPIO, I could find that the SPI handle=
-r is not firing sometimes.
-=20
-I don=92t understand why the max latency (with cyclictest is 114us) and=
- the SPI handler @1ms is failing with delays of 3 to 5ms.
-=20
-There is a way to force the SPI handler over all others kernel process?
-This could be related with the priority of the SPI (spi0)? In this case=
- the thread spi0 has PRI of 20 with a nice of 0 [3].
-Do you suggest to continuing digging to find the cause in other modules=
-?
-=20
-Thanks
-Julio
-=20
------
-[1] cyclictest result
-cyclictest -t1 -p 80 -n -i 1000 -l 100000
-# /dev/cpu_dma_latency set to 0us
-policy: fifo: loadavg: 0.11 0.25 0.14 1/94 549
-T: 0 (  548) P:80 I:1000 C: 100000 Min:     10 Act:   15 Avg:   15 Max:=
-     114
-=20
------
-[2] [2015-09-26 9:38:02] Long max latencies on Wandbaord / Freescale i.=
-MX6
-=20
------
-[3] htop and system modules: http://postimg.org/image/jrvcw5v59/--
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+On 1/13/2016 2:26 AM, Will Deacon wrote:
+> On Tue, Jan 12, 2016 at 11:59:54AM -0800, Shi, Yang wrote:
+>> On 12/21/2015 9:00 AM, Will Deacon wrote:
+>>> On Mon, Dec 21, 2015 at 05:51:22PM +0100, Thomas Gleixner wrote:
+>>>> On Mon, 21 Dec 2015, Will Deacon wrote:
+>>>>> +static void send_user_sigtrap(int si_code)
+>>>>> +{
+>>>>> +	struct pt_regs *regs = current_pt_regs();
+>>>>> +	siginfo_t info = {
+>>>>> +		.si_signo	= SIGTRAP,
+>>>>> +		.si_errno	= 0,
+>>>>> +		.si_code	= si_code,
+>>>>> +		.si_addr	= (void __user *)instruction_pointer(regs),
+>>>>> +	};
+>>>>> +
+>>>>> +	if (WARN_ON(!user_mode(regs)))
+>>>>> +		return;
+>>>>> +
+>>>>> +	preempt_disable();
+>>>>
+>>>> That doesn't work on RT either. force_sig_info() takes task->sighand->siglock,
+>>>> which is a 'sleeping' spinlock on RT.
+>>>
+>>> Ah, I missed that :/
+>>>
+>>>> Why would we need to disable preemption here at all? What's the problem of
+>>>> being preempted or even migrated?
+>>>
+>>> There *might* not be a problem, I'm just really nervous about changing
+>>> the behaviour on the debug path and subtly changing how ptrace behaves.
+>>>
+>>> My worry was that you could somehow get back into the tracer, and it
+>>> could remove a software breakpoint in the knowledge that it wouldn't
+>>> see any future (spurious) SIGTRAPs for that location.
+>>>
+>>> Without a concrete example, however, I guess I'll bite the bullet and
+>>> enable irqs across the call to force_sig_info, since there is clearly a
+>>> real issue here on RT.
+>>
+>> This might be buried in email storm during the holiday. Just want to double
+>> check the status. I'm supposed there is no objection for getting it merged
+>> in upstream?
+>
+> Sorry, when you replied with:
+>
+>> I think we could just extend the "signal delay send" approach from x86-64
+>> to arm64, which is currently used by x86-64 on -rt kernel only.
+>
+> I understood that you were going to fix -rt, so I dropped this pending
+> anything more from you.
+>
+> What's the plan?
+
+Sorry for the confusion. The "signal delay send" approach used by x86-64 
+-rt should be not necessary for arm64 right now. Reenabling interrupt is 
+still the preferred approach.
+
+Since x86-64 has per-CPU IST exception stack, so preemption has to be 
+disabled all the time. However, it is not applicable to other 
+architectures for now, including arm64.
+
+Thanks,
+Yang
+
+>
+> Will
+>
+
