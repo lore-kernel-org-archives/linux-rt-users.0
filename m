@@ -1,55 +1,27 @@
-From: Will Deacon <will.deacon@arm.com>
-Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
-Date: Wed, 13 Jan 2016 17:23:03 +0000
-Message-ID: <20160113172303.GH25458@arm.com>
-References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
- <20151216111316.GD4308@arm.com>
- <5671CD5B.9030907@linaro.org>
- <20151221104818.GF23092@arm.com>
- <alpine.DEB.2.11.1512211749180.28591@nanos>
- <20151221170028.GT23092@arm.com>
- <56955B3A.5010303@linaro.org>
- <20160113102622.GC25458@arm.com>
- <569686BA.6050703@linaro.org>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on
+ -RT
+Date: Wed, 13 Jan 2016 18:31:46 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1601131830440.3575@nanos>
+References: <20160113152352.GH29964@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>, Catalin.Marinas@arm.com,
-	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
-To: "Shi, Yang" <yang.shi@linaro.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <569686BA.6050703@linaro.org>
+In-Reply-To: <20160113152352.GH29964@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, Jan 13, 2016 at 09:17:46AM -0800, Shi, Yang wrote:
-> On 1/13/2016 2:26 AM, Will Deacon wrote:
-> >On Tue, Jan 12, 2016 at 11:59:54AM -0800, Shi, Yang wrote:
-> >>This might be buried in email storm during the holiday. Just want to double
-> >>check the status. I'm supposed there is no objection for getting it merged
-> >>in upstream?
-> >
-> >Sorry, when you replied with:
-> >
-> >>I think we could just extend the "signal delay send" approach from x86-64
-> >>to arm64, which is currently used by x86-64 on -rt kernel only.
-> >
-> >I understood that you were going to fix -rt, so I dropped this pending
-> >anything more from you.
-> >
-> >What's the plan?
-> 
-> Sorry for the confusion. The "signal delay send" approach used by x86-64 -rt
-> should be not necessary for arm64 right now. Reenabling interrupt is still
-> the preferred approach.
-> 
-> Since x86-64 has per-CPU IST exception stack, so preemption has to be
-> disabled all the time. However, it is not applicable to other architectures
-> for now, including arm64.
+On Wed, 13 Jan 2016, Sebastian Andrzej Siewior wrote:
+> +#ifdef CONFIG_PREEMPT_RT_FULL
+> +static inline int dev_recursion_level(void)
+> +{
+> +	return atomic_read(&current->xmit_recursion);
 
-Actually, we grew support for a separate IRQ stack in the recent merge
-window. Does that change things here, or are you referring to something
-else?
+Why would you need an atomic here. current does hardly race against itself.
 
-Will
+Thanks,
+
+	tglx
