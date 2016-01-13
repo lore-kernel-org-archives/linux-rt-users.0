@@ -1,67 +1,46 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
-Date: Wed, 13 Jan 2016 20:36:56 +0200
-Message-ID: <56969948.2060009@ti.com>
-References: <20151223225755.GA21121@linutronix.de>
- <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
- <1451632781.9800.22.camel@gmail.com> <20160113175845.GK29964@linutronix.de>
+From: Daniel Bristot de Oliveira <daniel@bristot.me>
+Subject: Re: cyclictest versus custom SPI based system
+Date: Wed, 13 Jan 2016 16:36:30 -0200
+Message-ID: <5696992E.703@bristot.me>
+References: <AF04265A3FC2B144B9892F621A394E13D5C0B43F@tethys>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
+Content-Type: text/plain; charset=windows-1252
 Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	<paulmck@linux.vnet.ibm.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160113175845.GK29964@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Julio Cruz Barroso <julio.cruz@smartmatic.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtpi-sp-248.kinghost.net ([177.185.201.248]:52735 "EHLO
+	smtpi-sp-248.kinghost.net" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933018AbcAMSxc (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 13 Jan 2016 13:53:32 -0500
+In-Reply-To: <AF04265A3FC2B144B9892F621A394E13D5C0B43F@tethys>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/13/2016 07:58 PM, Sebastian Andrzej Siewior wrote:
-> * Mike Galbraith | 2016-01-01 08:19:41 [+0100]:
->
->>>    PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM     TIME+ COMMAND
->>>      3 root      -2   0       0      0      0 S  37.3  0.0 307:52.44 ksoftirqd/0
->>>     32 root      -2   0       0      0      0 S  37.3  0.0 308:08.72 ksoftirqd/2
->>>     42 root      -2   0       0      0      0 R  37.3  0.0 308:32.84 ksoftirqd/3
->>>     22 root      -2   0       0      0      0 S  26.9  0.0 222:29.82 ksoftirqd/1
->>>      1 root      20   0   46628   6980   4976 S   1.3  0.2   0:13.98 systemd
->>> 22358 williams  20   0  159980   4552   3780 R   1.0  0.1   0:00.39 top
->>
->> Heh, I didn't notice immediately because I throttle nohz, am seeing
->> only tiny utilization (but nohz idle isn't working).  With throttle
->> patch removed, box is screaming, expires=4294990471 pokes eyeball.
->
-> This is due to NO_HZ as far as I can tell. My AMD A10 in idle mode has
-> 0.7% utilisation of ksoftirqd/ with CONFIG_HZ_PERIODIC and with
-> CONFIG_NO_HZ_FULL it shows about 25% on all CPU threads.
->
 
-I might be wrong completely, but could below two patches affect on
-CPU utilization of ksoftirqd?
 
-6047967 ksoftirqd: Use new cond_resched_rcu_qs() function
-28423ad ksoftirqd: Enable IRQs and call cond_resched() before poking RCU
+On 01/13/2016 03:06 PM, Julio Cruz Barroso wrote:
+> This could be related with the priority of the SPI (spi0)?
+In this case the thread spi0 has PRI of 20 with a nice of 0 [3].
 
-above two patches are not applied on -RT part of softirqs processing.
+Hi Julio,
 
-static void run_ksoftirqd(unsigned int cpu)
-{
-	local_irq_disable();
-	current->softirq_nestcnt++;
+You must run SPI's IRQ thread on a real-time policy:priority. For
+instance, chrt -p -f 50 $(pidof spi0).
 
-	do_current_softirqs();
-	current->softirq_nestcnt--;
-	rcu_note_context_switch();
+I used work with an ARM processor running kernel-rt on both master and
+slave side of a SPI bus, and it worked fine when using threaded IRQ.
 
-^^^ IRQs disabled
-	local_irq_enable();
-}
+If you continue facing long latencies, you can use the (big hammer)
+IRQF_NO_THREAD flag on SPI's IRQ handler registry. This will force the
+SPI handler to run as a traditional - non threaded - IRQ handler.
 
--- 
-regards,
--grygorii
+I did it on a very special case of a 200MHz ARM running kernel-rt on the
+slave side of a SPI bus. As it was on the slave side, any additional
+overhead (like the scheduling overhead of the threaded handler) was
+impacting on master's side performance, that was a very busy DSP (ADBF
+@500Mhz). It worked fine! But the SPI's IRQ was the "highest priority"
+task, on a very controlled env.
+
+-- Daniel
