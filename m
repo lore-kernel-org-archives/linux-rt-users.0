@@ -1,53 +1,53 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
-Date: Thu, 14 Jan 2016 10:33:18 +0100
-Message-ID: <1452763998.3460.83.camel@gmail.com>
+From: "Jaggi, Manish" <Manish.Jaggi@caviumnetworks.com>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1 (arm64)
+Date: Thu, 14 Jan 2016 11:50:14 +0000
+Message-ID: <CY1PR0701MB1600F7E957009EB7D990A537E1CC0@CY1PR0701MB1600.namprd07.prod.outlook.com>
 References: <20151223225755.GA21121@linutronix.de>
-	 <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
-	 <1451632781.9800.22.camel@gmail.com> <20160113175845.GK29964@linutronix.de>
+ <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
+ <1451632781.9800.22.camel@gmail.com> <568CF08F.3070001@caviumnetworks.com>
+ <CY1PR0701MB16008257A000E21747214FEBE1CB0@CY1PR0701MB1600.namprd07.prod.outlook.com>,<20160113134500.GF29964@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Clark Williams <williams@redhat.com>,
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Clark Williams <williams@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160113175845.GK29964@linutronix.de>
+In-Reply-To: <20160113134500.GF29964@linutronix.de>
+Content-Language: en-US
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 2016-01-13 at 18:58 +0100, Sebastian Andrzej Siewior wrote:
-> * Mike Galbraith | 2016-01-01 08:19:41 [+0100]:
-> 
-> > >   PID USER      PR  NI    VIRT    RES    SHR S  %CPU %MEM    
-> > >  TIME+ COMMAND                      
-> > >     3 root      -2   0       0      0      0 S  37.3  0.0
-> > > 307:52.44 ksoftirqd/0                  
-> > >    32 root      -2   0       0      0      0 S  37.3  0.0
-> > > 308:08.72 ksoftirqd/2                  
-> > >    42 root      -2   0       0      0      0 R  37.3  0.0
-> > > 308:32.84 ksoftirqd/3                  
-> > >    22 root      -2   0       0      0      0 S  26.9  0.0
-> > > 222:29.82 ksoftirqd/1                  
-> > >     1 root      20   0   46628   6980   4976 S   1.3  0.2  
-> > >  0:13.98 systemd                      
-> > > 22358 williams  20   0  159980   4552   3780 R   1.0  0.1  
-> > >  0:00.39 top       
-> > 
-> > Heh, I didn't notice immediately because I throttle nohz, am seeing
-> > only tiny utilization (but nohz idle isn't working).  With throttle
-> > patch removed, box is screaming, expires=4294990471 pokes eyeball.
-> 
-> This is due to NO_HZ as far as I can tell. My AMD A10 in idle mode
-> has
-> 0.7% utilisation of ksoftirqd/ with CONFIG_HZ_PERIODIC and with
-> CONFIG_NO_HZ_FULL it shows about 25% on all CPU threads.
+Hi Sebastian ,
 
-Thomas said the hrtimer adjustments went a little out of round.  I
-started rummaging, but then the world woke up from the holidays, so I
-didn't get _to_ square one, much lest past it.  Hohum.
+One quick point, I disabled the hr timer from kernel config and I was able to boot kernel. 
 
-	-Mike
+Regards,
+Manish Jaggi
+
+________________________________________
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Sent: Wednesday, January 13, 2016 7:15 PM
+To: Jaggi, Manish
+Cc: Mike Galbraith; Clark Williams; Thomas Gleixner; LKML; linux-rt-users; Steven Rostedt
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1 (arm64)
+
+* Jaggi, Manish | 2016-01-13 11:45:54 [+0000]:
+
+>Hi All,
+>
+>I am trying to boot linux kernel 4.4.rc7 with the 4.4-rc6-rt1 patch on Cavium thunderX arm64 platform
+>Below is the bootlog with errors.
+
+This and your previous email look the same to me.
+Did v4.1-RT work here?
+Can you enable some debuging in order to figure out what triggers "RT
+throttling activated"? lockdep, sleeping while atomic, the usual stuff
+:)
+>
+
+Sebastian
