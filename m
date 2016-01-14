@@ -1,33 +1,50 @@
-From: Eric Dumazet <eric.dumazet@gmail.com>
+From: Hannes Frederic Sowa <hannes@stressinduktion.org>
 Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on -RT
-Date: Thu, 14 Jan 2016 14:20:04 -0800
-Message-ID: <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
+Date: Fri, 15 Jan 2016 00:00:37 +0100
+Message-ID: <56982895.6070901@stressinduktion.org>
 References: <20160113152352.GH29964@linutronix.de>
-	 <alpine.DEB.2.11.1601131830440.3575@nanos>
-	 <20160114145007.GC17776@linutronix.de> <56981AE1.20202@stressinduktion.org>
+ <alpine.DEB.2.11.1601131830440.3575@nanos>
+ <20160114145007.GC17776@linutronix.de> <56981AE1.20202@stressinduktion.org>
+ <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
-To: Hannes Frederic Sowa <hannes@stressinduktion.org>
-Return-path: <netdev-owner@vger.kernel.org>
-In-Reply-To: <56981AE1.20202@stressinduktion.org>
-Sender: netdev-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Eric Dumazet <eric.dumazet@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from out5-smtp.messagingengine.com ([66.111.4.29]:33922 "EHLO
+	out5-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S932128AbcANXAm (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 14 Jan 2016 18:00:42 -0500
+Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
+	by mailout.nyi.internal (Postfix) with ESMTP id 931AF213C0
+	for <linux-rt-users@vger.kernel.org>; Thu, 14 Jan 2016 18:00:41 -0500 (EST)
+In-Reply-To: <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2016-01-14 at 23:02 +0100, Hannes Frederic Sowa wrote:
+On 14.01.2016 23:20, Eric Dumazet wrote:
+> On Thu, 2016-01-14 at 23:02 +0100, Hannes Frederic Sowa wrote:
+>
+>> We are just adding a second recursion limit solely to openvswitch which
+>> has the same problem:
+>>
+>> https://patchwork.ozlabs.org/patch/566769/
+>>
+>> This time also we depend on rcu_read_lock marking the section being
+>> nonpreemptible. Nice would be a more generic solution here which doesn't
+>> need to always add something to *current.
+>
+>
+> Note that rcu_read_lock() does not imply that preemption is disabled.
 
-> We are just adding a second recursion limit solely to openvswitch which 
-> has the same problem:
-> 
-> https://patchwork.ozlabs.org/patch/566769/
-> 
-> This time also we depend on rcu_read_lock marking the section being 
-> nonpreemptible. Nice would be a more generic solution here which doesn't 
-> need to always add something to *current.
+Exactly, it is conditional on CONFIG_PREEMPT_CPU/CONFIG_PREMPT_COUNT but 
+haven't thought about exactly that in this moment.
 
+I will resend this patch with better protection.
 
-Note that rcu_read_lock() does not imply that preemption is disabled.
+Thanks Eric!
