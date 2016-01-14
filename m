@@ -1,138 +1,62 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on -RT
-Date: Thu, 14 Jan 2016 15:50:07 +0100
-Message-ID: <20160114145007.GC17776@linutronix.de>
-References: <20160113152352.GH29964@linutronix.de>
- <alpine.DEB.2.11.1601131830440.3575@nanos>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
+Date: Thu, 14 Jan 2016 15:57:02 +0100
+Message-ID: <1452783422.3611.8.camel@gmail.com>
+References: <20151223225755.GA21121@linutronix.de>
+	 <20151231102441.581ce1e1@sluggy.hsv.redhat.com>
+	 <1451632781.9800.22.camel@gmail.com> <20160113175845.GK29964@linutronix.de>
+	 <20160114141744.GB17776@linutronix.de>
+	 <1452781751.3460.102.camel@gmail.com>
+	 <alpine.DEB.2.11.1601141528550.3575@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 To: Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1601131830440.3575@nanos>
+In-Reply-To: <alpine.DEB.2.11.1601141528550.3575@nanos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Thomas Gleixner | 2016-01-13 18:31:46 [+0100]:
+On Thu, 2016-01-14 at 15:30 +0100, Thomas Gleixner wrote:
+> On Thu, 14 Jan 2016, Mike Galbraith wrote:
+> 
+> > On Thu, 2016-01-14 at 15:17 +0100, Sebastian Andrzej Siewior wrote:
+> > > * Sebastian Andrzej Siewior | 2016-01-13 18:58:45 [+0100]:
+> > > 
+> > > > This is due to NO_HZ as far as I can tell. My AMD A10 in idle
+> mode
+> > > > has
+> > > > 0.7% utilisation of ksoftirqd/ with CONFIG_HZ_PERIODIC and with
+> > > > CONFIG_NO_HZ_FULL it shows about 25% on all CPU threads.
+> > > 
+> > > This should fixed it:
+> > > 
+> > > --- a/kernel/time/timer.c
+> > > +++ b/kernel/time/timer.c
+> > > @@ -1453,7 +1453,7 @@ u64 get_next_timer_interrupt(unsigned long
+> > > basej, u64 basem)
+> > >      * the base lock to check when the next timer is pending and
+> > > so
+> > >      * we assume the next jiffy.
+> > >      */
+> > > -   return basej;
+> > > +   return basem + TICK_NSEC;
+> > >  #endif
+> > >     spin_lock(&base->lock);
+> > >     if (base->active_timers) {
+> > 
+> > That's what I had done to stop the screaming interrupt, but box
+> still
+> > behaved very badly.
+> 
+> If you turn off CONFIG_NO_HZ_FULL and switch to NO_HZ_IDLE is it
+> still bad?
 
->On Wed, 13 Jan 2016, Sebastian Andrzej Siewior wrote:
->> +#ifdef CONFIG_PREEMPT_RT_FULL
->> +static inline int dev_recursion_level(void)
->> +{
->> +	return atomic_read(&current->xmit_recursion);
->
->Why would you need an atomic here. current does hardly race against itself.
+I didn't have CONFIG_NO_HZ_FULL enabled, it was CONFIG_NO_HZ_IDLE.
 
-right.
-
---- a/include/linux/netdevice.h
-+++ b/include/linux/netdevice.h
-@@ -2249,11 +2249,20 @@ void netdev_freemem(struct net_device *d
- void synchronize_net(void);
- int init_dummy_netdev(struct net_device *dev);
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static inline int dev_recursion_level(void)
-+{
-+	return current->xmit_recursion;
-+}
-+
-+#else
-+
- DECLARE_PER_CPU(int, xmit_recursion);
- static inline int dev_recursion_level(void)
- {
- 	return this_cpu_read(xmit_recursion);
- }
-+#endif
- 
- struct net_device *dev_get_by_index(struct net *net, int ifindex);
- struct net_device *__dev_get_by_index(struct net *net, int ifindex);
---- a/include/linux/sched.h
-+++ b/include/linux/sched.h
-@@ -1851,6 +1851,9 @@ struct task_struct {
- #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
- 	unsigned long	task_state_change;
- #endif
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	int xmit_recursion;
-+#endif
- 	int pagefault_disabled;
- /* CPU-specific state of this task */
- 	struct thread_struct thread;
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2940,9 +2940,44 @@ static void skb_update_prio(struct sk_bu
- #define skb_update_prio(skb)
- #endif
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+
-+static inline int xmit_rec_read(void)
-+{
-+       return current->xmit_recursion;
-+}
-+
-+static inline void xmit_rec_inc(void)
-+{
-+       current->xmit_recursion++;
-+}
-+
-+static inline void xmit_rec_dec(void)
-+{
-+       current->xmit_recursion--;
-+}
-+
-+#else
-+
- DEFINE_PER_CPU(int, xmit_recursion);
- EXPORT_SYMBOL(xmit_recursion);
- 
-+static inline int xmit_rec_read(void)
-+{
-+	return __this_cpu_read(xmit_recursion);
-+}
-+
-+static inline void xmit_rec_inc(void)
-+{
-+	__this_cpu_inc(xmit_recursion);
-+}
-+
-+static inline int xmit_rec_dec(void)
-+{
-+	__this_cpu_dec(xmit_recursion);
-+}
-+#endif
-+
- #define RECURSION_LIMIT 10
- 
- /**
-@@ -3135,7 +3170,7 @@ static int __dev_queue_xmit(struct sk_bu
- 
- 		if (txq->xmit_lock_owner != cpu) {
- 
--			if (__this_cpu_read(xmit_recursion) > RECURSION_LIMIT)
-+			if (xmit_rec_read() > RECURSION_LIMIT)
- 				goto recursion_alert;
- 
- 			skb = validate_xmit_skb(skb, dev);
-@@ -3145,9 +3180,9 @@ static int __dev_queue_xmit(struct sk_bu
- 			HARD_TX_LOCK(dev, txq, cpu);
- 
- 			if (!netif_xmit_stopped(txq)) {
--				__this_cpu_inc(xmit_recursion);
-+				xmit_rec_inc();
- 				skb = dev_hard_start_xmit(skb, dev, txq, &rc);
--				__this_cpu_dec(xmit_recursion);
-+				xmit_rec_dec();
- 				if (dev_xmit_complete(rc)) {
- 					HARD_TX_UNLOCK(dev, txq);
- 					goto out;
-
->Thanks,
->
->	tglx
-
-Sebastian
+	-Mike
