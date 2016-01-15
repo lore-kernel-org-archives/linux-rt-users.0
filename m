@@ -1,45 +1,83 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: cyclictest versus custom SPI based system
-Date: Fri, 15 Jan 2016 13:31:43 +0200
-Message-ID: <5698D89F.9020203@ti.com>
-References: <AF04265A3FC2B144B9892F621A394E13D5C0B43F@tethys>
- <5696992E.703@bristot.me> <AF04265A3FC2B144B9892F621A394E13D5C0C98E@tethys>
+Subject: Re: [4.4-rc6-rt1 PATCH 0/2] ARM: am437x: boot test report
+Date: Fri, 15 Jan 2016 13:35:33 +0200
+Message-ID: <5698D985.2050608@ti.com>
+References: <1451325611-21678-1-git-send-email-grygorii.strashko@ti.com>
+ <20160112171556.GB31009@linutronix.de> <569637ED.1030304@ti.com>
+ <5696B025.8020909@ti.com> <569800DD.7090102@ti.com>
+ <20160114213048.GB19062@n2100.arm.linux.org.uk>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-To: Julio Cruz Barroso <julio.cruz@smartmatic.com>,
-	Daniel Bristot de Oliveira <daniel@bristot.me>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Sekhar Nori <nsekhar@ti.com>, <linux-rt-users@vger.kernel.org>,
+	linux-arm <linux-arm-kernel@lists.infradead.org>,
+	<linux-kernel@vger.kernel.org>
+To: Russell King - ARM Linux <linux@arm.linux.org.uk>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from bear.ext.ti.com ([192.94.94.41]:33629 "EHLO bear.ext.ti.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751095AbcAOLbu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Jan 2016 06:31:50 -0500
-In-Reply-To: <AF04265A3FC2B144B9892F621A394E13D5C0C98E@tethys>
+Received: from devils.ext.ti.com ([198.47.26.153]:60374 "EHLO
+	devils.ext.ti.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755281AbcAOLgS (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Jan 2016 06:36:18 -0500
+In-Reply-To: <20160114213048.GB19062@n2100.arm.linux.org.uk>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Julio,
-On 01/14/2016 10:11 AM, Julio Cruz Barroso wrote:
-> 
-> I changed the policy:priority as you suggested and the system is stable now!! I will prepare
- an application to measure the latency with some loads during long periods (but this is another thing).
-> 
-> For reference, in my case (iMX6), the priority adjustment was done at spi.c (master->rt). A patch 
-was suggested to implement this by device tree but other opinion said that this sound like a Linux
- specific feature/implementation [4]. Anyways, this is another issue.
-> 
+Hi Russell,
 
-Just curios, is it possible for you to achieve the same results from User space using chrt/taskset utils?
-(without Kernel modification).
-
-For example, I can see below processes on my system:
-  184 root         0 SW   [spi32766]
-and our QSPI driver don't use IRQs.
- 
-
-> [4] Patch to implement SPI RT in device tree: http://www.spinics.net/lists/arm-kernel/msg348713.html
+On 01/14/2016 11:30 PM, Russell King - ARM Linux wrote:
+> On Thu, Jan 14, 2016 at 10:11:09PM +0200, Grygorii Strashko wrote:
+>> diff --git a/arch/arm/mm/highmem.c b/arch/arm/mm/highmem.c
+>> index deabc36..b9b4f9c 100644
+>> --- a/arch/arm/mm/highmem.c
+>> +++ b/arch/arm/mm/highmem.c
+>> @@ -167,7 +167,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
+>>           * Clear @prev's kmap_atomic mappings
+>>           */
+>>          for (i = 0; i < prev_p->kmap_idx; i++) {
+>> -               int idx = i + KM_TYPE_NR * smp_processor_id();
+>> +               int idx = FIX_KMAP_BEGIN + i + KM_TYPE_NR * smp_processor_id();
+>>   
+>>                  set_fixmap_pte(idx, __pte(0));
+>>          }
+>> @@ -175,7 +175,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
+>>           * Restore @next_p's kmap_atomic mappings
+>>           */
+>>          for (i = 0; i < next_p->kmap_idx; i++) {
+>> -               int idx = i + KM_TYPE_NR * smp_processor_id();
+>> +               int idx = FIX_KMAP_BEGIN + i + KM_TYPE_NR * smp_processor_id();
+>>   
+>>                  if (!pte_none(next_p->kmap_pte[i]))
+>>                          set_fixmap_pte(idx, next_p->kmap_pte[i]);
 > 
+> This looks like it introduces the 4th and 5th copies of the same
+> calcuation, so can I suggest that we do this to prevent this kind
+> of error?
+> 
+> diff --git a/arch/arm/mm/highmem.c b/arch/arm/mm/highmem.c
+> index d02f8187b1cc..61f0d5941116 100644
+> --- a/arch/arm/mm/highmem.c
+> +++ b/arch/arm/mm/highmem.c
+> @@ -34,6 +34,11 @@ static inline pte_t get_fixmap_pte(unsigned long vaddr)
+>   	return *ptep;
+>   }
+>   
+> +static unsigned int fixmap_idx(int type)
+> +{
+> +	return FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
+> +}
+> +
+
+
+This looks very reasonable - I'll updated and re-send.
+Would you agree if I'll add your Signed-off-by: in final patch?
+
+Thanks for review.
+
+
+[...]
+
 
 -- 
 regards,
