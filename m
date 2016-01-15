@@ -1,8 +1,8 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 1/2] net/core: protect users of napi_alloc_cache against
- reentrance
-Date: Fri, 15 Jan 2016 17:18:41 +0100
-Message-ID: <20160115161841.GA3781@linutronix.de>
+Subject: [PATCH RT 2/2] net/core: skbuf use local lock in __netdev_alloc_skb()
+Date: Fri, 15 Jan 2016 17:20:15 +0100
+Message-ID: <20160115162015.GB3781@linutronix.de>
+References: <20160115161841.GA3781@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
@@ -10,81 +10,38 @@ Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
+In-Reply-To: <20160115161841.GA3781@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On -RT the code running in BH can not be moved to another CPU so CPU
-local variable remain local. However the code can be preempted
-and another task may enter BH accessing the same CPU using the same
-napi_alloc_cache variable.
-This patch ensures that each user of napi_alloc_cache uses a local lock.
+local_irq_save() was introduced in v4.2-rc1 via 9451980a6646
+("net: Use cached copy of pfmemalloc to avoid accessing page").
+This is only v4.1-RT..v4.4-RT fallout.
 
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- net/core/skbuff.c | 18 ++++++++++++++----
- 1 file changed, 14 insertions(+), 4 deletions(-)
+ net/core/skbuff.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/net/core/skbuff.c b/net/core/skbuff.c
-index d507656e98ce..7c422e441f1c 100644
+index 7c422e441f1c..53f10c2d7718 100644
 --- a/net/core/skbuff.c
 +++ b/net/core/skbuff.c
-@@ -351,6 +351,7 @@ EXPORT_SYMBOL(build_skb);
- static DEFINE_PER_CPU(struct page_frag_cache, netdev_alloc_cache);
- static DEFINE_PER_CPU(struct page_frag_cache, napi_alloc_cache);
- static DEFINE_LOCAL_IRQ_LOCK(netdev_alloc_lock);
-+static DEFINE_LOCAL_IRQ_LOCK(napi_alloc_cache_lock);
- 
- static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
- {
-@@ -380,9 +381,13 @@ EXPORT_SYMBOL(netdev_alloc_frag);
- 
- static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
- {
--	struct page_frag_cache *nc = this_cpu_ptr(&napi_alloc_cache);
-+	struct page_frag_cache *nc;
-+	void *data;
- 
--	return __alloc_page_frag(nc, fragsz, gfp_mask);
-+	nc = &get_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
-+	data = __alloc_page_frag(nc, fragsz, gfp_mask);
-+	put_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
-+	return data;
- }
- 
- void *napi_alloc_frag(unsigned int fragsz)
-@@ -476,9 +481,10 @@ EXPORT_SYMBOL(__netdev_alloc_skb);
- struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
- 				 gfp_t gfp_mask)
- {
--	struct page_frag_cache *nc = this_cpu_ptr(&napi_alloc_cache);
-+	struct page_frag_cache *nc;
- 	struct sk_buff *skb;
- 	void *data;
-+	bool pfmemalloc;
- 
- 	len += NET_SKB_PAD + NET_IP_ALIGN;
- 
-@@ -496,7 +502,11 @@ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
+@@ -434,13 +434,13 @@ struct sk_buff *__netdev_alloc_skb(struct net_device *dev, unsigned int len,
  	if (sk_memalloc_socks())
  		gfp_mask |= __GFP_MEMALLOC;
  
-+	nc = &get_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
+-	local_irq_save(flags);
++	local_lock_irqsave(netdev_alloc_lock, flags);
+ 
+ 	nc = this_cpu_ptr(&netdev_alloc_cache);
  	data = __alloc_page_frag(nc, len, gfp_mask);
-+	pfmemalloc = nc->pfmemalloc;
-+	put_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
-+
+ 	pfmemalloc = nc->pfmemalloc;
+ 
+-	local_irq_restore(flags);
++	local_unlock_irqrestore(netdev_alloc_lock, flags);
+ 
  	if (unlikely(!data))
  		return NULL;
- 
-@@ -507,7 +517,7 @@ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
- 	}
- 
- 	/* use OR instead of assignment to avoid clearing of bits in mask */
--	if (nc->pfmemalloc)
-+	if (pfmemalloc)
- 		skb->pfmemalloc = 1;
- 	skb->head_frag = 1;
- 
 -- 
 2.7.0.rc3
