@@ -1,61 +1,99 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [4.1.2-rt1 PATCH] include/linux/pid.h: fix build error
-Date: Fri, 15 Jan 2016 16:17:49 +0200
-Message-ID: <5698FF8D.2030708@ti.com>
-References: <1452867255-1121-1-git-send-email-grygorii.strashko@ti.com>
+Subject: [4.4-rt2 PATCH] ARM: highmem: take into account FIX_KMAP_BEGIN in switch_kmaps()
+Date: Fri, 15 Jan 2016 16:20:47 +0200
+Message-ID: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain
 Cc: <linux-kernel@vger.kernel.org>,
 	<linux-arm-kernel@lists.infradead.org>,
 	Sekhar Nori <nsekhar@ti.com>,
-	Grygorii Strashko <Grygorii.Strashko@linaro.org>
+	Grygorii Strashko <grygorii.strashko@ti.com>
 To: <bigeasy@linutronix.de>,
 	Russell King <rmk+kernel@arm.linux.org.uk>,
 	<linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1452867255-1121-1-git-send-email-grygorii.strashko@ti.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Sorry- ignore this e-mail pls
+Now the random crashes are observed on ARM TI am437x-idk-evm used with
+-RT Kernel v4.4-rt2 and with Highmem enabled.
 
-On 01/15/2016 04:14 PM, Grygorii Strashko wrote:
-> From: Grygorii Strashko <Grygorii.Strashko@linaro.org>
->
-> This patch fixes build error:
->    CC      kernel/pid_namespace.o
-> In file included from kernel/pid_namespace.c:11:0:
-> include/linux/pid.h: In function 'get_pid':
-> include/linux/pid.h:78:3: error: implicit declaration of function 'atomic_inc' [-Werror=implicit-function-declaration]
->     atomic_inc(&pid->count);
->     ^
-> which happens when
->   CONFIG_PROVE_LOCKING=n
->   CONFIG_DEBUG_SPINLOCK=n
->   CONFIG_DEBUG_MUTEXES=n
->   CONFIG_DEBUG_LOCK_ALLOC=n
->
-> Signed-off-by: Grygorii Strashko <Grygorii.Strashko@linaro.org>
-> ---
->   include/linux/pid.h | 1 +
->   1 file changed, 1 insertion(+)
->
-> diff --git a/include/linux/pid.h b/include/linux/pid.h
-> index 23705a53..2cc64b7 100644
-> --- a/include/linux/pid.h
-> +++ b/include/linux/pid.h
-> @@ -2,6 +2,7 @@
->   #define _LINUX_PID_H
->
->   #include <linux/rcupdate.h>
-> +#include <linux/atomic.h>
->
->   enum pid_type
->   {
->
+The reason of issue is that, newly introduced switch_kmaps() does not
+take into account FIX_KMAP_BEGIN, which was re-added by
+commit a5f4c561b3b1 ("ARM: 8415/1: early fixmap support for earlycon")
+(K4.3) for ARM and since that the value of FIX_KMAP_BEGIN
+is not 0 any more.
 
+Hence update switch_kmaps() so it will take into FIX_KMAP_BEGIN while
+calculating fixmap idx. This patch also introduces fixmap_idx() to
+make code simpler and remove duplicated code.
 
+Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+---
+ arch/arm/mm/highmem.c | 15 ++++++++++-----
+ 1 file changed, 10 insertions(+), 5 deletions(-)
+
+diff --git a/arch/arm/mm/highmem.c b/arch/arm/mm/highmem.c
+index deabc36..542692d 100644
+--- a/arch/arm/mm/highmem.c
++++ b/arch/arm/mm/highmem.c
+@@ -34,6 +34,11 @@ static inline pte_t get_fixmap_pte(unsigned long vaddr)
+ 	return *ptep;
+ }
+ 
++static unsigned int fixmap_idx(int type)
++{
++	return FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
++}
++
+ void *kmap(struct page *page)
+ {
+ 	might_sleep();
+@@ -80,7 +85,7 @@ void *kmap_atomic(struct page *page)
+ 
+ 	type = kmap_atomic_idx_push();
+ 
+-	idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
++	idx = fixmap_idx(type);
+ 	vaddr = __fix_to_virt(idx);
+ #ifdef CONFIG_DEBUG_HIGHMEM
+ 	/*
+@@ -110,7 +115,7 @@ void __kunmap_atomic(void *kvaddr)
+ 
+ 	if (kvaddr >= (void *)FIXADDR_START) {
+ 		type = kmap_atomic_idx();
+-		idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
++		idx = fixmap_idx(type);
+ 
+ 		if (cache_is_vivt())
+ 			__cpuc_flush_dcache_area((void *)vaddr, PAGE_SIZE);
+@@ -146,7 +151,7 @@ void *kmap_atomic_pfn(unsigned long pfn)
+ 		return page_address(page);
+ 
+ 	type = kmap_atomic_idx_push();
+-	idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
++	idx = fixmap_idx(type);
+ 	vaddr = __fix_to_virt(idx);
+ #ifdef CONFIG_DEBUG_HIGHMEM
+ 	BUG_ON(!pte_none(get_fixmap_pte(vaddr)));
+@@ -167,7 +172,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
+ 	 * Clear @prev's kmap_atomic mappings
+ 	 */
+ 	for (i = 0; i < prev_p->kmap_idx; i++) {
+-		int idx = i + KM_TYPE_NR * smp_processor_id();
++		int idx = fixmap_idx(i);
+ 
+ 		set_fixmap_pte(idx, __pte(0));
+ 	}
+@@ -175,7 +180,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
+ 	 * Restore @next_p's kmap_atomic mappings
+ 	 */
+ 	for (i = 0; i < next_p->kmap_idx; i++) {
+-		int idx = i + KM_TYPE_NR * smp_processor_id();
++		int idx = fixmap_idx(i);
+ 
+ 		if (!pte_none(next_p->kmap_pte[i]))
+ 			set_fixmap_pte(idx, next_p->kmap_pte[i]);
 -- 
-regards,
--grygorii
+2.7.0
