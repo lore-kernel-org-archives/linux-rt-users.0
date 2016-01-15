@@ -1,50 +1,51 @@
-From: Hannes Frederic Sowa <hannes@stressinduktion.org>
-Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on -RT
-Date: Fri, 15 Jan 2016 00:00:37 +0100
-Message-ID: <56982895.6070901@stressinduktion.org>
-References: <20160113152352.GH29964@linutronix.de>
- <alpine.DEB.2.11.1601131830440.3575@nanos>
- <20160114145007.GC17776@linutronix.de> <56981AE1.20202@stressinduktion.org>
- <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
-To: Eric Dumazet <eric.dumazet@gmail.com>
+From: Anders Roxell <anders.roxell@linaro.org>
+Subject: [PATCH] drivers/media: vsp1_video: fix compile error
+Date: Fri, 15 Jan 2016 01:09:43 +0100
+Message-ID: <1452816583-11036-1-git-send-email-anders.roxell@linaro.org>
+Cc: linux-media@vger.kernel.org, linux-sh@vger.kernel.org,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Anders Roxell <anders.roxell@linaro.org>
+To: mchehab@osg.samsung.com, laurent.pinchart@ideasonboard.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from out5-smtp.messagingengine.com ([66.111.4.29]:33922 "EHLO
-	out5-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S932128AbcANXAm (ORCPT
+Received: from mail-lf0-f46.google.com ([209.85.215.46]:33107 "EHLO
+	mail-lf0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755231AbcAOAPf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 14 Jan 2016 18:00:42 -0500
-Received: from compute5.internal (compute5.nyi.internal [10.202.2.45])
-	by mailout.nyi.internal (Postfix) with ESMTP id 931AF213C0
-	for <linux-rt-users@vger.kernel.org>; Thu, 14 Jan 2016 18:00:41 -0500 (EST)
-In-Reply-To: <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
+	Thu, 14 Jan 2016 19:15:35 -0500
+Received: by mail-lf0-f46.google.com with SMTP id m198so125931526lfm.0
+        for <linux-rt-users@vger.kernel.org>; Thu, 14 Jan 2016 16:15:34 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 14.01.2016 23:20, Eric Dumazet wrote:
-> On Thu, 2016-01-14 at 23:02 +0100, Hannes Frederic Sowa wrote:
->
->> We are just adding a second recursion limit solely to openvswitch which
->> has the same problem:
->>
->> https://patchwork.ozlabs.org/patch/566769/
->>
->> This time also we depend on rcu_read_lock marking the section being
->> nonpreemptible. Nice would be a more generic solution here which doesn't
->> need to always add something to *current.
->
->
-> Note that rcu_read_lock() does not imply that preemption is disabled.
+This was found with the -RT patch enabled, but the fix should apply to
+non-RT also.
 
-Exactly, it is conditional on CONFIG_PREEMPT_CPU/CONFIG_PREMPT_COUNT but 
-haven't thought about exactly that in this moment.
+Compilation error without this fix:
+../drivers/media/platform/vsp1/vsp1_video.c: In function
+'vsp1_pipeline_stopped':
+../drivers/media/platform/vsp1/vsp1_video.c:524:2: error: expected
+expression before 'do'
+  spin_unlock_irqrestore(&pipe->irqlock, flags);
+    ^
 
-I will resend this patch with better protection.
+Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ drivers/media/platform/vsp1/vsp1_video.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Thanks Eric!
+diff --git a/drivers/media/platform/vsp1/vsp1_video.c b/drivers/media/platform/vsp1/vsp1_video.c
+index 637d0d6..b4dca57 100644
+--- a/drivers/media/platform/vsp1/vsp1_video.c
++++ b/drivers/media/platform/vsp1/vsp1_video.c
+@@ -515,7 +515,7 @@ static bool vsp1_pipeline_stopped(struct vsp1_pipeline *pipe)
+ 	bool stopped;
+ 
+ 	spin_lock_irqsave(&pipe->irqlock, flags);
+-	stopped = pipe->state == VSP1_PIPELINE_STOPPED,
++	stopped = pipe->state == VSP1_PIPELINE_STOPPED;
+ 	spin_unlock_irqrestore(&pipe->irqlock, flags);
+ 
+ 	return stopped;
+-- 
+2.1.4
+
