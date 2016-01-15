@@ -1,69 +1,46 @@
-From: Carsten Emde <C.Emde@osadl.org>
-Subject: Re: trace/latency-hist: Consider new argument when probing the
- sched_switch tracer
-Date: Fri, 15 Jan 2016 12:30:55 +0100
-Message-ID: <5698D86F.607@osadl.org>
-References: <568B8B37.9070804@osadl.org>
- <20160113154526.GJ29964@linutronix.de>
- <20160113105135.3334856c@gandalf.local.home> <56967681.9070204@linutronix.de>
+From: Grygorii Strashko <grygorii.strashko@ti.com>
+Subject: Re: cyclictest versus custom SPI based system
+Date: Fri, 15 Jan 2016 13:31:43 +0200
+Message-ID: <5698D89F.9020203@ti.com>
+References: <AF04265A3FC2B144B9892F621A394E13D5C0B43F@tethys>
+ <5696992E.703@bristot.me> <AF04265A3FC2B144B9892F621A394E13D5C0C98E@tethys>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>
+To: Julio Cruz Barroso <julio.cruz@smartmatic.com>,
+	Daniel Bristot de Oliveira <daniel@bristot.me>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from toro.web-alm.net ([62.245.132.31]:39420 "EHLO toro.web-alm.net"
+Received: from bear.ext.ti.com ([192.94.94.41]:33629 "EHLO bear.ext.ti.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751095AbcAOLbo (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Jan 2016 06:31:44 -0500
-In-Reply-To: <56967681.9070204@linutronix.de>
+	id S1751095AbcAOLbu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Jan 2016 06:31:50 -0500
+In-Reply-To: <AF04265A3FC2B144B9892F621A394E13D5C0C98E@tethys>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi Sebastian, hi Steven,
-
->>> [..] What is blocking the latency-hist tracer from entering
->>> mainline?
->> 
->> Has it been submitted. Like lots of things in -rt, it just takes
->> the effort of pushing out an RFC for inclusion.
+Hi Julio,
+On 01/14/2016 10:11 AM, Julio Cruz Barroso wrote:
 > 
-> Not that I recall. But this means that there is nothing specific
-> that you are aware of that needs to be changed before RFC.
+> I changed the policy:priority as you suggested and the system is stable now!! I will prepare
+ an application to measure the latency with some loads during long periods (but this is another thing).
 > 
-> So, Carsten do you mind taking the latency-hist patch and submitting
-> it as RFC for upstream inclusion?
-There are two things here:
+> For reference, in my case (iMX6), the priority adjustment was done at spi.c (master->rt). A patch 
+was suggested to implement this by device tree but other opinion said that this sound like a Linux
+ specific feature/implementation [4]. Anyways, this is another issue.
+> 
 
-1. The sum of the timer latency and the wakeup latency does not completely
-cover the total preemption latency as, for example, determined by cyclictest.
-The time of the context switch until the new task resumes execution at the
-next line after the wait instruction is still lacking. I wrote a related
-patch sometime ago that is working since then in numerous farm systems -
-but I never posted the patch of this switchtime histogram, because someone
-said that we first need to re-engineer the histogram code in general.
-Nevertheless, I used the opportunity of your posting to submit the patch in
-a separate thread so you can have a look. As a bonus, the name of the
-delayed system call that caused the highest latency until then is provided
-when the switchtime histogram is enabled - this may or may not be helpful
-when searching for the source of a latency.
+Just curios, is it possible for you to achieve the same results from User space using chrt/taskset utils?
+(without Kernel modification).
 
-2. The idea behind re-engineering the histogram code someone proposed several
-years ago is to create a general framework that can be used throughout the
-kernel (or even from user space through a dedicated tracer interface) for any
-variable the frequency distribution of which is of interest and that would
-best be monitored in form of a frequency histogram - such as a latency
-distribution. The various latency tracers would then serve as a practical
-example of how to use this fancy new framework. I let you guess why this
-re-engineering did not yet happen.
+For example, I can see below processes on my system:
+  184 root         0 SW   [spi32766]
+and our QSPI driver don't use IRQs.
+ 
 
-So the question is whether you still encourage me to write the RFC for
-upstream inclusion of the current code after some polishing - maybe, in the
-hope that someone will come up with the framework during RFC discussion -
-or we better wait, since writing an RFC for hopeless code really doesn't
-make sense.
+> [4] Patch to implement SPI RT in device tree: http://www.spinics.net/lists/arm-kernel/msg348713.html
+> 
 
-Thanks,
-	-Carsten.
+-- 
+regards,
+-grygorii
