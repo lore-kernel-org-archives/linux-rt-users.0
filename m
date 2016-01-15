@@ -1,44 +1,50 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH] sched: migrate_disable() and del_timer_sync() issues
- with !CONFIG_SMP
-Date: Fri, 15 Jan 2016 17:23:10 +0100
-Message-ID: <20160115162310.GC3781@linutronix.de>
-References: <1451954450-29298-1-git-send-email-henrik@austad.us>
+Subject: Re: [4.4-rt2 PATCH] ARM: highmem: take into account FIX_KMAP_BEGIN
+ in switch_kmaps()
+Date: Fri, 15 Jan 2016 17:56:26 +0100
+Message-ID: <20160115165626.GE3781@linutronix.de>
+References: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	uriahheep@gmail.com, Thomas Gleixner <tglx@linutronix.de>,
-	Ingo Molnar <mingo@elte.hu>
-To: Henrik Austad <henrik@austad.us>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38902 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750801AbcAOQXM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Jan 2016 11:23:12 -0500
+Cc: Russell King <rmk+kernel@arm.linux.org.uk>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org, Sekhar Nori <nsekhar@ti.com>
+To: Grygorii Strashko <grygorii.strashko@ti.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <1451954450-29298-1-git-send-email-henrik@austad.us>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Henrik Austad | 2016-01-05 01:40:50 [+0100]:
+* Grygorii Strashko | 2016-01-15 16:20:47 [+0200]:
 
->diff --git a/include/linux/timer.h b/include/linux/timer.h
->index 299d2b78591f..79889be97b3b 100644
->--- a/include/linux/timer.h
->+++ b/include/linux/timer.h
->@@ -225,7 +225,7 @@ extern void add_timer(struct timer_list *timer);
-> 
-> extern int try_to_del_timer_sync(struct timer_list *timer);
-> 
->-#if defined(CONFIG_SMP) || defined(CONFIG_PREEMPT_RT_FULL)
->+#if defined(CONFIG_SMP) && defined(CONFIG_PREEMPT_RT_FULL)
+>Now the random crashes are observed on ARM TI am437x-idk-evm used with
+>-RT Kernel v4.4-rt2 and with Highmem enabled.
+>
+>The reason of issue is that, newly introduced switch_kmaps() does not
+>take into account FIX_KMAP_BEGIN, which was re-added by
+>commit a5f4c561b3b1 ("ARM: 8415/1: early fixmap support for earlycon")
+>(K4.3) for ARM and since that the value of FIX_KMAP_BEGIN
+>is not 0 any more.
+>
+>Hence update switch_kmaps() so it will take into FIX_KMAP_BEGIN while
+>calculating fixmap idx. This patch also introduces fixmap_idx() to
+>make code simpler and remove duplicated code.
 
-I think I fixed this in the meantime (-rt3 once it is out) but this
-needs to be || here.
+Thank you debugging and fixing this. I will fold this into the initial
+patch since it is a v4.1..v4.4 fallout. Regarding your "nobody else be
+me" question in the other mail: once I managed something ARM+highmem I
+I see this:
 
->   extern int del_timer_sync(struct timer_list *timer);
-> #else
-> # define del_timer_sync(t)		del_timer(t)
+|Welcome to Debian GNU/Linux stretch/sid!
+|
+|[   11.738637] systemd[1]: Set hostname to <vexpress>.
+|[   11.909949] ------------[ cut here ]------------
+|[   11.909958] kernel BUG at arch/arm/mm/highmem.c:90!
+
+So I did not get as far as a shell to start anything.
+
+>Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+>Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
 
 Sebastian
