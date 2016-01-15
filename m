@@ -1,50 +1,52 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.4-rt2 PATCH] ARM: highmem: take into account FIX_KMAP_BEGIN
- in switch_kmaps()
-Date: Fri, 15 Jan 2016 17:56:26 +0100
-Message-ID: <20160115165626.GE3781@linutronix.de>
-References: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Russell King <rmk+kernel@arm.linux.org.uk>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	linux-arm-kernel@lists.infradead.org, Sekhar Nori <nsekhar@ti.com>
-To: Grygorii Strashko <grygorii.strashko@ti.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Anders Roxell <anders.roxell@linaro.org>
+Subject: [PATCH 1/9] drivers/clocksource: timer-atmel-pit: fix irq name
+Date: Fri, 15 Jan 2016 20:21:05 +0100
+Message-ID: <1452885673-30891-2-git-send-email-anders.roxell@linaro.org>
+References: <1452885673-30891-1-git-send-email-anders.roxell@linaro.org>
+Cc: linux-rt-users@vger.kernel.org, khilman@kernel.org,
+	Anders Roxell <anders.roxell@linaro.org>
+To: bigeasy@linutronix.de
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lf0-f48.google.com ([209.85.215.48]:34373 "EHLO
+	mail-lf0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751283AbcAOT06 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Jan 2016 14:26:58 -0500
+Received: by mail-lf0-f48.google.com with SMTP id 17so86666481lfz.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 15 Jan 2016 11:26:57 -0800 (PST)
+In-Reply-To: <1452885673-30891-1-git-send-email-anders.roxell@linaro.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Grygorii Strashko | 2016-01-15 16:20:47 [+0200]:
+Use the same irq (data->irq) that we used while registering the timer
+handle, and not atmel_pit_irq.
 
->Now the random crashes are observed on ARM TI am437x-idk-evm used with
->-RT Kernel v4.4-rt2 and with Highmem enabled.
->
->The reason of issue is that, newly introduced switch_kmaps() does not
->take into account FIX_KMAP_BEGIN, which was re-added by
->commit a5f4c561b3b1 ("ARM: 8415/1: early fixmap support for earlycon")
->(K4.3) for ARM and since that the value of FIX_KMAP_BEGIN
->is not 0 any more.
->
->Hence update switch_kmaps() so it will take into FIX_KMAP_BEGIN while
->calculating fixmap idx. This patch also introduces fixmap_idx() to
->make code simpler and remove duplicated code.
+Used multi_v7_defconfig+PREEMPT_RT_FULL=y and this caused a compilation
+error without this fix:
+../drivers/clocksource/timer-atmel-pit.c: In function
+'pit_clkevt_shutdown':
+../drivers/clocksource/timer-atmel-pit.c:99:11: error: 'atmel_pit_irq'
+undeclared (first use in this function)
+  free_irq(atmel_pit_irq, data);
 
-Thank you debugging and fixing this. I will fold this into the initial
-patch since it is a v4.1..v4.4 fallout. Regarding your "nobody else be
-me" question in the other mail: once I managed something ARM+highmem I
-I see this:
+Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ drivers/clocksource/timer-atmel-pit.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-|Welcome to Debian GNU/Linux stretch/sid!
-|
-|[   11.738637] systemd[1]: Set hostname to <vexpress>.
-|[   11.909949] ------------[ cut here ]------------
-|[   11.909958] kernel BUG at arch/arm/mm/highmem.c:90!
+diff --git a/drivers/clocksource/timer-atmel-pit.c b/drivers/clocksource/timer-atmel-pit.c
+index 80d74c4..2e313e6 100644
+--- a/drivers/clocksource/timer-atmel-pit.c
++++ b/drivers/clocksource/timer-atmel-pit.c
+@@ -96,7 +96,7 @@ static int pit_clkevt_shutdown(struct clock_event_device *dev)
+ 
+ 	/* disable irq, leaving the clocksource active */
+ 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
+-	free_irq(atmel_pit_irq, data);
++	free_irq(data->irq, data);
+ 	return 0;
+ }
+ 
+-- 
+2.1.4
 
-So I did not get as far as a shell to start anything.
-
->Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
->Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
-
-Sebastian
