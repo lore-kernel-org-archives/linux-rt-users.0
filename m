@@ -1,59 +1,54 @@
-From: Hannes Frederic Sowa <hannes@stressinduktion.org>
-Subject: Re: [PATCH RT] net: move xmit_recursion to per-task variable on -RT
-Date: Fri, 15 Jan 2016 10:34:33 +0100
-Message-ID: <5698BD29.8090405@stressinduktion.org>
-References: <20160113152352.GH29964@linutronix.de>
- <alpine.DEB.2.11.1601131830440.3575@nanos>
- <20160114145007.GC17776@linutronix.de> <56981AE1.20202@stressinduktion.org>
- <1452810004.1223.154.camel@edumazet-glaptop2.roam.corp.google.com>
- <56982895.6070901@stressinduktion.org>
- <alpine.DEB.2.11.1601150916180.3575@nanos>
+From: "Mathias Koehrer" <mathias.koehrer@etas.com>
+Subject: Kernel thread's CPU affinity with isolcpus kernel boot argument
+Date: Fri, 15 Jan 2016 12:15:28 +0100
+Message-ID: <5698D4D0.3020907@etas.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: Eric Dumazet <eric.dumazet@gmail.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.DEB.2.11.1601150916180.3575@nanos>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8;
+	format=flowed
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtp6-v.fe.bosch.de ([139.15.237.11]:15680 "EHLO
+	smtp6-v.fe.bosch.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753924AbcAOLPd (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 15 Jan 2016 06:15:33 -0500
+Received: from vsmta14.fe.internet.bosch.com (unknown [10.4.98.54])
+	by imta23.fe.bosch.de (Postfix) with ESMTP id 8F8131580002
+	for <linux-rt-users@vger.kernel.org>; Fri, 15 Jan 2016 12:15:30 +0100 (CET)
+Received: from FE-MBX1012.de.bosch.com (vsgw23.fe.internet.bosch.com [10.4.98.23])
+	by vsmta14.fe.internet.bosch.com (Postfix) with ESMTP id 6532AA4047C
+	for <linux-rt-users@vger.kernel.org>; Fri, 15 Jan 2016 12:15:30 +0100 (CET)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 15.01.2016 09:21, Thomas Gleixner wrote:
-> On Fri, 15 Jan 2016, Hannes Frederic Sowa wrote:
->> On 14.01.2016 23:20, Eric Dumazet wrote:
->>> On Thu, 2016-01-14 at 23:02 +0100, Hannes Frederic Sowa wrote:
->>>
->>>> We are just adding a second recursion limit solely to openvswitch which
->>>> has the same problem:
->>>>
->>>> https://patchwork.ozlabs.org/patch/566769/
->>>>
->>>> This time also we depend on rcu_read_lock marking the section being
->>>> nonpreemptible. Nice would be a more generic solution here which doesn't
->>>> need to always add something to *current.
->>>
->>>
->>> Note that rcu_read_lock() does not imply that preemption is disabled.
->>
->> Exactly, it is conditional on CONFIG_PREEMPT_CPU/CONFIG_PREMPT_COUNT but
->> haven't thought about exactly that in this moment.
->
-> Wrong. CONFIG_PREEMPT_RCU makes RCU preemptible.
->
-> If that is not set then it fiddles with preempt_count when
-> CONFIG_PREEMPT_COUNT=y. If CONFIG_PREEMPT_COUNT=n then you have a non
-> preemptible system anyway.
->
-> So you cannot assume that rcu_read_lock() disables preemption.
+Hi all,
 
-Sorry for maybe writing it misleading but that is exactly what I wanted 
-to say here. Yes, I agree, I didn't really check because of _bh and 
-rcu_read_lock. This was a mistake. ;)
+we use an Intel Core i7 machine (64bit) to use the cores > 0 for real=20
+time tasks.
 
-I already send out an updated patch with added preemption guards.
+=46or this the kernel boot parameter =E2=80=9Cisolcpus=3D1-31=E2=80=9D =
+is provided.
+That works fine for all user space tasks.
 
-Thanks,
-Hannes
+However, I noticed that most kernel threads use the affinity mask 0xff.
+I can change this by using =E2=80=9Ctaskset=E2=80=9D. However, I am won=
+dering if there=20
+is mechanism that forces the kernel to consider the value of =E2=80=9Ci=
+solcpus=E2=80=9D=20
+also for kernel threads.
+
+Kernel version in use is: 3.18.20-rt18.
+
+Thanks for any feedback on this.
+
+Best regards
+
+Mathias
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
