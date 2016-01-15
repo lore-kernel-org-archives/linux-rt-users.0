@@ -1,99 +1,90 @@
-From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: [4.4-rt2 PATCH] ARM: highmem: take into account FIX_KMAP_BEGIN in switch_kmaps()
-Date: Fri, 15 Jan 2016 16:20:47 +0200
-Message-ID: <1452867647-1410-1-git-send-email-grygorii.strashko@ti.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT 1/2] net/core: protect users of napi_alloc_cache against
+ reentrance
+Date: Fri, 15 Jan 2016 17:18:41 +0100
+Message-ID: <20160115161841.GA3781@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-kernel@vger.kernel.org>,
-	<linux-arm-kernel@lists.infradead.org>,
-	Sekhar Nori <nsekhar@ti.com>,
-	Grygorii Strashko <grygorii.strashko@ti.com>
-To: <bigeasy@linutronix.de>,
-	Russell King <rmk+kernel@arm.linux.org.uk>,
-	<linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	Steven Rostedt <rostedt@goodmis.org>, netdev@vger.kernel.org
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Now the random crashes are observed on ARM TI am437x-idk-evm used with
--RT Kernel v4.4-rt2 and with Highmem enabled.
+On -RT the code running in BH can not be moved to another CPU so CPU
+local variable remain local. However the code can be preempted
+and another task may enter BH accessing the same CPU using the same
+napi_alloc_cache variable.
+This patch ensures that each user of napi_alloc_cache uses a local lock.
 
-The reason of issue is that, newly introduced switch_kmaps() does not
-take into account FIX_KMAP_BEGIN, which was re-added by
-commit a5f4c561b3b1 ("ARM: 8415/1: early fixmap support for earlycon")
-(K4.3) for ARM and since that the value of FIX_KMAP_BEGIN
-is not 0 any more.
-
-Hence update switch_kmaps() so it will take into FIX_KMAP_BEGIN while
-calculating fixmap idx. This patch also introduces fixmap_idx() to
-make code simpler and remove duplicated code.
-
-Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
-Signed-off-by: Russell King <rmk+kernel@arm.linux.org.uk>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- arch/arm/mm/highmem.c | 15 ++++++++++-----
- 1 file changed, 10 insertions(+), 5 deletions(-)
+ net/core/skbuff.c | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
 
-diff --git a/arch/arm/mm/highmem.c b/arch/arm/mm/highmem.c
-index deabc36..542692d 100644
---- a/arch/arm/mm/highmem.c
-+++ b/arch/arm/mm/highmem.c
-@@ -34,6 +34,11 @@ static inline pte_t get_fixmap_pte(unsigned long vaddr)
- 	return *ptep;
+diff --git a/net/core/skbuff.c b/net/core/skbuff.c
+index d507656e98ce..7c422e441f1c 100644
+--- a/net/core/skbuff.c
++++ b/net/core/skbuff.c
+@@ -351,6 +351,7 @@ EXPORT_SYMBOL(build_skb);
+ static DEFINE_PER_CPU(struct page_frag_cache, netdev_alloc_cache);
+ static DEFINE_PER_CPU(struct page_frag_cache, napi_alloc_cache);
+ static DEFINE_LOCAL_IRQ_LOCK(netdev_alloc_lock);
++static DEFINE_LOCAL_IRQ_LOCK(napi_alloc_cache_lock);
+ 
+ static void *__netdev_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
+ {
+@@ -380,9 +381,13 @@ EXPORT_SYMBOL(netdev_alloc_frag);
+ 
+ static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
+ {
+-	struct page_frag_cache *nc = this_cpu_ptr(&napi_alloc_cache);
++	struct page_frag_cache *nc;
++	void *data;
+ 
+-	return __alloc_page_frag(nc, fragsz, gfp_mask);
++	nc = &get_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
++	data = __alloc_page_frag(nc, fragsz, gfp_mask);
++	put_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
++	return data;
  }
  
-+static unsigned int fixmap_idx(int type)
-+{
-+	return FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
-+}
-+
- void *kmap(struct page *page)
+ void *napi_alloc_frag(unsigned int fragsz)
+@@ -476,9 +481,10 @@ EXPORT_SYMBOL(__netdev_alloc_skb);
+ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
+ 				 gfp_t gfp_mask)
  {
- 	might_sleep();
-@@ -80,7 +85,7 @@ void *kmap_atomic(struct page *page)
+-	struct page_frag_cache *nc = this_cpu_ptr(&napi_alloc_cache);
++	struct page_frag_cache *nc;
+ 	struct sk_buff *skb;
+ 	void *data;
++	bool pfmemalloc;
  
- 	type = kmap_atomic_idx_push();
+ 	len += NET_SKB_PAD + NET_IP_ALIGN;
  
--	idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
-+	idx = fixmap_idx(type);
- 	vaddr = __fix_to_virt(idx);
- #ifdef CONFIG_DEBUG_HIGHMEM
- 	/*
-@@ -110,7 +115,7 @@ void __kunmap_atomic(void *kvaddr)
+@@ -496,7 +502,11 @@ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
+ 	if (sk_memalloc_socks())
+ 		gfp_mask |= __GFP_MEMALLOC;
  
- 	if (kvaddr >= (void *)FIXADDR_START) {
- 		type = kmap_atomic_idx();
--		idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
-+		idx = fixmap_idx(type);
++	nc = &get_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
+ 	data = __alloc_page_frag(nc, len, gfp_mask);
++	pfmemalloc = nc->pfmemalloc;
++	put_locked_var(napi_alloc_cache_lock, napi_alloc_cache);
++
+ 	if (unlikely(!data))
+ 		return NULL;
  
- 		if (cache_is_vivt())
- 			__cpuc_flush_dcache_area((void *)vaddr, PAGE_SIZE);
-@@ -146,7 +151,7 @@ void *kmap_atomic_pfn(unsigned long pfn)
- 		return page_address(page);
- 
- 	type = kmap_atomic_idx_push();
--	idx = FIX_KMAP_BEGIN + type + KM_TYPE_NR * smp_processor_id();
-+	idx = fixmap_idx(type);
- 	vaddr = __fix_to_virt(idx);
- #ifdef CONFIG_DEBUG_HIGHMEM
- 	BUG_ON(!pte_none(get_fixmap_pte(vaddr)));
-@@ -167,7 +172,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
- 	 * Clear @prev's kmap_atomic mappings
- 	 */
- 	for (i = 0; i < prev_p->kmap_idx; i++) {
--		int idx = i + KM_TYPE_NR * smp_processor_id();
-+		int idx = fixmap_idx(i);
- 
- 		set_fixmap_pte(idx, __pte(0));
+@@ -507,7 +517,7 @@ struct sk_buff *__napi_alloc_skb(struct napi_struct *napi, unsigned int len,
  	}
-@@ -175,7 +180,7 @@ void switch_kmaps(struct task_struct *prev_p, struct task_struct *next_p)
- 	 * Restore @next_p's kmap_atomic mappings
- 	 */
- 	for (i = 0; i < next_p->kmap_idx; i++) {
--		int idx = i + KM_TYPE_NR * smp_processor_id();
-+		int idx = fixmap_idx(i);
  
- 		if (!pte_none(next_p->kmap_pte[i]))
- 			set_fixmap_pte(idx, next_p->kmap_pte[i]);
+ 	/* use OR instead of assignment to avoid clearing of bits in mask */
+-	if (nc->pfmemalloc)
++	if (pfmemalloc)
+ 		skb->pfmemalloc = 1;
+ 	skb->head_frag = 1;
+ 
 -- 
-2.7.0
+2.7.0.rc3
