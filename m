@@ -1,155 +1,110 @@
-From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Subject: [PATCH 4.4-rt2] fix arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch
-Date: Sun, 17 Jan 2016 03:23:14 +0100
-Message-ID: <1452997394-8554-2-git-send-email-alexandre.belloni@free-electrons.com>
-References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
-Cc: Boris Brezillon <boris.brezillon@free-electrons.com>,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>,
-	Alexandre Belloni <alexandre.belloni@free-electrons.com>
-To: bigeasy@linutronix.de, Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [rfc patch v4.4-rt2] sched: fix up preempt lazy forward port
+Date: Mon, 18 Jan 2016 10:08:23 +0100
+Message-ID: <1453108103.4123.4.camel@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f42.google.com ([74.125.82.42]:38420 "EHLO
+	mail-wm0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752001AbcARJI3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Jan 2016 04:08:29 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch breaks the
-build, fix that.
 
-Signed-off-by: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+pre:
+preempt lazy enabled
+homer:/root # taskset -c 7 pipe-test 1
+2.618038 usecs/loop -- avg 2.618038 763.9 KHz
+2.620658 usecs/loop -- avg 2.618300 763.9 KHz
+2.618775 usecs/loop -- avg 2.618347 763.8 KHz
+2.618819 usecs/loop -- avg 2.618395 763.8 KHz
+2.619269 usecs/loop -- avg 2.618482 763.8 KHz
+
+tbench
+Throughput 2612.9 MB/sec 8 procs
+
+preempt lazy disabled
+homer:/root # taskset -c 7 pipe-test 1
+1.771921 usecs/loop -- avg 1.771921 1128.7 KHz
+1.782686 usecs/loop -- avg 1.772998 1128.0 KHz
+1.785444 usecs/loop -- avg 1.774242 1127.2 KHz
+1.787388 usecs/loop -- avg 1.775557 1126.4 KHz
+1.770772 usecs/loop -- avg 1.775078 1126.7 KHz
+
+tbench
+Throughput 2626.91 MB/sec 8 procs
+
+post:
+preempt lazy enabled
+homer:/root # taskset -c 7 pipe-test 1
+1.485592 usecs/loop -- avg 1.485592 1346.3 KHz
+1.489640 usecs/loop -- avg 1.485997 1345.9 KHz
+1.488325 usecs/loop -- avg 1.486230 1345.7 KHz
+1.484632 usecs/loop -- avg 1.486070 1345.8 KHz
+1.484889 usecs/loop -- avg 1.485952 1345.9 KHz
+
+tbench
+Throughput 3091.84 MB/sec 8 procs
+
+preempt lazy disabled
+homer:/root # taskset -c 7 pipe-test 1
+1.579723 usecs/loop -- avg 1.579723 1266.0 KHz
+1.562026 usecs/loop -- avg 1.577953 1267.5 KHz
+1.546090 usecs/loop -- avg 1.574767 1270.0 KHz
+1.543852 usecs/loop -- avg 1.571675 1272.5 KHz
+1.546313 usecs/loop -- avg 1.569139 1274.6 KHz
+
+tbench
+Throughput 2649.65 MB/sec 8 procs
+
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- drivers/clocksource/timer-atmel-pit.c | 68 +++++++++++++++++------------------
- drivers/clocksource/timer-atmel-st.c  |  8 ++---
- 2 files changed, 38 insertions(+), 38 deletions(-)
+ arch/x86/entry/common.c |    4 ++--
+ kernel/sched/core.c     |    9 +++++++++
+ 2 files changed, 11 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/clocksource/timer-atmel-pit.c b/drivers/clocksource/timer-atmel-pit.c
-index 80d74c4adcbe..43b50634d640 100644
---- a/drivers/clocksource/timer-atmel-pit.c
-+++ b/drivers/clocksource/timer-atmel-pit.c
-@@ -96,11 +96,44 @@ static int pit_clkevt_shutdown(struct clock_event_device *dev)
+--- a/arch/x86/entry/common.c
++++ b/arch/x86/entry/common.c
+@@ -220,14 +220,14 @@ long syscall_trace_enter(struct pt_regs
  
- 	/* disable irq, leaving the clocksource active */
- 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
--	free_irq(atmel_pit_irq, data);
-+	if (!clockevent_state_detached(dev))
-+		free_irq(data->irq, data);
- 	return 0;
- }
+ #define EXIT_TO_USERMODE_LOOP_FLAGS				\
+ 	(_TIF_SIGPENDING | _TIF_NOTIFY_RESUME | _TIF_UPROBE |	\
+-	 _TIF_NEED_RESCHED | _TIF_USER_RETURN_NOTIFY)
++	 _TIF_NEED_RESCHED_MASK | _TIF_USER_RETURN_NOTIFY)
  
- /*
-+ * IRQ handler for the timer.
-+ */
-+static irqreturn_t at91sam926x_pit_interrupt(int irq, void *dev_id)
-+{
-+	struct pit_data *data = dev_id;
-+
-+	/*
-+	 * irqs should be disabled here, but as the irq is shared they are only
-+	 * guaranteed to be off if the timer irq is registered first.
-+	 */
-+	WARN_ON_ONCE(!irqs_disabled());
-+
-+	/* The PIT interrupt may be disabled, and is shared */
-+	if (clockevent_state_periodic(&data->clkevt) &&
-+	    (pit_read(data->base, AT91_PIT_SR) & AT91_PIT_PITS)) {
-+		unsigned nr_ticks;
-+
-+		/* Get number of ticks performed before irq, and ack it */
-+		nr_ticks = PIT_PICNT(pit_read(data->base, AT91_PIT_PIVR));
-+		do {
-+			data->cnt += data->cycle;
-+			data->clkevt.event_handler(&data->clkevt);
-+			nr_ticks--;
-+		} while (nr_ticks);
-+
-+		return IRQ_HANDLED;
-+	}
-+
-+	return IRQ_NONE;
-+}
-+
-+/*
-  * Clockevent device:  interrupts every 1/HZ (== pit_cycles * MCK/16)
-  */
- static int pit_clkevt_set_periodic(struct clock_event_device *dev)
-@@ -151,45 +184,12 @@ static void at91sam926x_pit_resume(struct clock_event_device *cedev)
- }
- 
- /*
-- * IRQ handler for the timer.
-- */
--static irqreturn_t at91sam926x_pit_interrupt(int irq, void *dev_id)
--{
--	struct pit_data *data = dev_id;
--
--	/*
--	 * irqs should be disabled here, but as the irq is shared they are only
--	 * guaranteed to be off if the timer irq is registered first.
--	 */
--	WARN_ON_ONCE(!irqs_disabled());
--
--	/* The PIT interrupt may be disabled, and is shared */
--	if (clockevent_state_periodic(&data->clkevt) &&
--	    (pit_read(data->base, AT91_PIT_SR) & AT91_PIT_PITS)) {
--		unsigned nr_ticks;
--
--		/* Get number of ticks performed before irq, and ack it */
--		nr_ticks = PIT_PICNT(pit_read(data->base, AT91_PIT_PIVR));
--		do {
--			data->cnt += data->cycle;
--			data->clkevt.event_handler(&data->clkevt);
--			nr_ticks--;
--		} while (nr_ticks);
--
--		return IRQ_HANDLED;
--	}
--
--	return IRQ_NONE;
--}
--
--/*
-  * Set up both clocksource and clockevent support.
-  */
- static void __init at91sam926x_pit_common_init(struct pit_data *data)
+ static void exit_to_usermode_loop(struct pt_regs *regs, u32 cached_flags)
  {
- 	unsigned long	pit_rate;
- 	unsigned	bits;
--	int		ret;
- 
  	/*
- 	 * Use our actual MCK to figure out how many MCK/16 ticks per
-diff --git a/drivers/clocksource/timer-atmel-st.c b/drivers/clocksource/timer-atmel-st.c
-index ea37afc26e1b..11ce404d0791 100644
---- a/drivers/clocksource/timer-atmel-st.c
-+++ b/drivers/clocksource/timer-atmel-st.c
-@@ -150,7 +150,7 @@ static int clkevt32k_set_oneshot(struct clock_event_device *dev)
+ 	 * In order to return to user mode, we need to have IRQs off with
+ 	 * none of _TIF_SIGPENDING, _TIF_NOTIFY_RESUME, _TIF_USER_RETURN_NOTIFY,
+-	 * _TIF_UPROBE, or _TIF_NEED_RESCHED set.  Several of these flags
++	 * _TIF_UPROBE, or _TIF_NEED_RESCHED_MASK set.  Several of these flags
+ 	 * can be set at any time on preemptable kernels if we have IRQs on,
+ 	 * so we need to loop.  Disabling preemption wouldn't help: doing the
+ 	 * work to clear some of the flags can sleep.
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3542,6 +3542,15 @@ asmlinkage __visible void __sched notrac
+ 	if (likely(!preemptible()))
+ 		return;
  
- static int clkevt32k_set_periodic(struct clock_event_device *dev)
- {
--	int irq;
-+	int ret;
- 
- 	clkdev32k_disable_and_flush_irq();
- 
-@@ -229,15 +229,15 @@ static void __init atmel_st_timer_init(struct device_node *node)
- 	regmap_read(regmap_st, AT91_ST_SR, &val);
- 
- 	/* Get the interrupts property */
--	irq  = irq_of_parse_and_map(node, 0);
--	if (!irq)
-+	atmel_st_irq  = irq_of_parse_and_map(node, 0);
-+	if (!atmel_st_irq)
- 		panic(pr_fmt("Unable to get IRQ from DT\n"));
- 
- 	sclk = of_clk_get(node, 0);
- 	if (IS_ERR(sclk))
- 		panic(pr_fmt("Unable to get slow clock\n"));
- 
--	clk_prepare_enable(sclk);
-+	ret = clk_prepare_enable(sclk);
- 	if (ret)
- 		panic(pr_fmt("Could not enable slow clock\n"));
- 
--- 
-2.5.0
++#ifdef CONFIG_PREEMPT_LAZY
++	/*
++	 * Check for lazy preemption
++	 */
++	if (current_thread_info()->preempt_lazy_count &&
++	    !test_thread_flag(TIF_NEED_RESCHED))
++		return;
++#endif
++
+ 	preempt_schedule_common();
+ }
+ NOKPROBE_SYMBOL(preempt_schedule);
