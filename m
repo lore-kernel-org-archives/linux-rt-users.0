@@ -1,64 +1,68 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH 4.4-rt2] fix
- arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch
-Date: Mon, 18 Jan 2016 21:24:28 +0100
-Message-ID: <569D49FC.2050500@linutronix.de>
+Subject: Re: Fix preempt-rt on AT91
+Date: Mon, 18 Jan 2016 21:30:13 +0100
+Message-ID: <569D4B55.10103@linutronix.de>
 References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
- <1452997394-8554-2-git-send-email-alexandre.belloni@free-electrons.com>
- <20160118172522.GB12309@linutronix.de> <20160118184247.GQ3367@piout.net>
+ <20160118174259.GC12309@linutronix.de> <20160118192308.GR3367@piout.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 8bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Boris Brezillon <boris.brezillon@free-electrons.com>,
 	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org,
 	Nicolas Ferre <nicolas.ferre@atmel.com>
 To: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160118184247.GQ3367@piout.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:48348 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756407AbcARUaQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 18 Jan 2016 15:30:16 -0500
+In-Reply-To: <20160118192308.GR3367@piout.net>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/18/2016 07:42 PM, Alexandre Belloni wrote:
-> On 18/01/2016 at 18:25:22 +0100, Sebastian Andrzej Siewior wrote :
->> * Alexandre Belloni | 2016-01-17 03:23:14 [+0100]:
+On 01/18/2016 08:23 PM, Alexandre Belloni wrote:
+> Hi,
+Hi,
+
+>>> I'd say that the proper solution would still be to implement the virtual
+>>> irqchip because this would still hit people not wanting to use the TCB as
+>>> their clock source.
 >>
->>> index 80d74c4adcbe..43b50634d640 100644
->>> --- a/drivers/clocksource/timer-atmel-pit.c
->>> +++ b/drivers/clocksource/timer-atmel-pit.c
->>> @@ -96,11 +96,44 @@ static int pit_clkevt_shutdown(struct clock_eve=
-nt_device *dev)
->>>
->>> 	/* disable irq, leaving the clocksource active */
->>> 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PI=
-TEN);
->>> -	free_irq(atmel_pit_irq, data);
->>> +	if (!clockevent_state_detached(dev))
->>> +		free_irq(data->irq, data);
+>> why wouldn't people not want that?
+> 
+> Because they may be using the TCBs for something else: PWM, frequency
+> measure, quadrature decoder...
+
+Oh okay.
+
+>> For a virtual irqchip you would need a mask/unmask register in order to
+>> individual disable/enable the irq and you need something to figure out
+>> which one of the three is active. You don't have all those things, do
+>> you?
 >>
->> I did it in the meantime without clockevent_state_detached(). From w=
-hat
->> it looks, it first sets the state and then invokes
->> pit_clkevt_shutdown(). Any particular reason for this?
->>
->=20
-> Yeah, I forgot to mention that. Freeing the irq unconditionally
-> results in:
-=E2=80=A6
+> 
+> The proposed solution was software only. It mainly consisted in a simple
+> irq demuxer.
 
->=20
->=20
-> My understanding is that clockevents_exchange_device() changes the st=
-ate
-> from detached to shutdown and so at that point the IRQ has never been
-> requested.
+Well, if it works properly and does not lead to any new bugs or
+anything else then nobody will mind I guess.
 
-I see. So we get shutdown called twice while set_periodic was only
-called once. In that case I would suggest to have internal bookkeeping
-instead of relying on current core's behavior when it is time free the
-irq.
+>> All in all, care to forwarded the working pieces from -RT patch set
+>> upstream? I problem I have here is mostly that I can't the patches on
+>> actual hardware. Disabling the PIT and running on the other clocksource
+>> isn't that -RT specific after all :)
+> 
+> I'd say that the only remaining part is the IRQ freeing/requesting but
+> as I said, this can't land in mainline as is. I still plan to work on
+> that later.
+> I'd say that most people running linux on at91 are already using the tcb
+> as the clocksource, this is already available in the mainline and is the
+> default unless the TCBs are used for something else.
 
->=20
+Wasn't there one of the patches to increase the frequency of the TCB
+clocksource from the default to something higher?
 
 Sebastian
