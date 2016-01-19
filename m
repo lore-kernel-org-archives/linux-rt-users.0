@@ -1,7 +1,7 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [rfc patch v4.4-rt2] sched: fix up preempt lazy forward port
-Date: Tue, 19 Jan 2016 03:29:57 +0100
-Message-ID: <1453170597.3740.7.camel@gmail.com>
+Date: Tue, 19 Jan 2016 05:41:56 +0100
+Message-ID: <1453178516.4217.2.camel@gmail.com>
 References: <1453108103.4123.4.camel@gmail.com>
 	 <20160118201828.GE12309@linutronix.de>
 Mime-Version: 1.0
@@ -12,11 +12,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f50.google.com ([74.125.82.50]:36657 "EHLO
+Received: from mail-wm0-f50.google.com ([74.125.82.50]:38159 "EHLO
 	mail-wm0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756744AbcASCaF (ORCPT
+	with ESMTP id S1756186AbcASEmA (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Jan 2016 21:30:05 -0500
+	Mon, 18 Jan 2016 23:42:00 -0500
 In-Reply-To: <20160118201828.GE12309@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
@@ -44,7 +44,7 @@ On Mon, 2016-01-18 at 21:18 +0100, Sebastian Andrzej Siewior wrote:
 is
 > v4.1 =E2=80=A6 v4.4 or not.
 
-We should probably just add the lazy bits to preemptible().
+That check wants a !rt_task(current) qualifier anyway.
 
 	-Mike
 --
