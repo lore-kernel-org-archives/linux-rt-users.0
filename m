@@ -1,45 +1,57 @@
-From: Ralf Ramsauer <ralf@ramses-pyramidenbau.de>
-Subject: Old split quilt queues
-Date: Mon, 18 Jan 2016 23:44:49 +0100
-Message-ID: <569D6AE1.2090301@ramses-pyramidenbau.de>
+From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+Subject: Re: Fix preempt-rt on AT91
+Date: Tue, 19 Jan 2016 02:02:11 +0100
+Message-ID: <20160119010211.GU3367@piout.net>
+References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
+ <20160118174259.GC12309@linutronix.de>
+ <20160118192308.GR3367@piout.net>
+ <569D4B55.10103@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Boris Brezillon <boris.brezillon@free-electrons.com>,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Nicolas Ferre <nicolas.ferre@atmel.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ramses-pyramidenbau.de ([37.120.178.10]:42298 "EHLO
-	mail.ramses-pyramidenbau.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1754981AbcARWx4 (ORCPT
+Received: from down.free-electrons.com ([37.187.137.238]:35146 "EHLO
+	mail.free-electrons.com" rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org
+	with ESMTP id S932524AbcASBCM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 18 Jan 2016 17:53:56 -0500
-Received: from [IPv6:2a02:810d:25c0:a78::4] (unknown [IPv6:2a02:810d:25c0:a78::4])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES128-GCM-SHA256 (128/128 bits))
-	(No client certificate requested)
-	by mail.ramses-pyramidenbau.de (Postfix) with ESMTPSA id 2EC30121BB2
-	for <linux-rt-users@vger.kernel.org>; Mon, 18 Jan 2016 23:46:07 +0100 (CET)
+	Mon, 18 Jan 2016 20:02:12 -0500
+Content-Disposition: inline
+In-Reply-To: <569D4B55.10103@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi everyone,
+On 18/01/2016 at 21:30:13 +0100, Sebastian Andrzej Siewior wrote :
+> Well, if it works properly and does not lead to any new bugs or
+> anything else then nobody will mind I guess.
+> 
 
-I'm looking for older RT split quilt queues, especially those for kernel
-versions 2.6.31 and 2.6.33.
-Apparently, these are the only two versions without split quilt queues
-available on the FTP server.
+Yeah, the DT guys were not happy about the patch set, I'll try to work
+around using DT ;)
 
-Does someone of you know where to get those patch stacks? Or more
-precisely: are split quilt queues actually existing for those versions?
+> >> All in all, care to forwarded the working pieces from -RT patch set
+> >> upstream? I problem I have here is mostly that I can't the patches on
+> >> actual hardware. Disabling the PIT and running on the other clocksource
+> >> isn't that -RT specific after all :)
+> > 
+> > I'd say that the only remaining part is the IRQ freeing/requesting but
+> > as I said, this can't land in mainline as is. I still plan to work on
+> > that later.
+> > I'd say that most people running linux on at91 are already using the tcb
+> > as the clocksource, this is already available in the mainline and is the
+> > default unless the TCBs are used for something else.
+> 
+> Wasn't there one of the patches to increase the frequency of the TCB
+> clocksource from the default to something higher?
+> 
 
-I'm looking for _all_ available split quilt queues for those versions as
-I'm doing some analysis on the patch stacks.
-And no, I of course don't want to run my box on those old versions :-)
-
-Thanks!
-
-Cheers
-  Ralf
+Indeed, it may be worth mainlining that one.
 
 -- 
-Ralf Ramsauer
-GPG: 0x8F10049B
-
+Alexandre Belloni, Free Electrons
+Embedded Linux, Kernel and Android engineering
+http://free-electrons.com
