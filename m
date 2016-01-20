@@ -1,126 +1,77 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH 4.4-rt2] fix
- arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch
-Date: Wed, 20 Jan 2016 12:07:30 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1601201158280.3575@nanos>
-References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com> <1452997394-8554-2-git-send-email-alexandre.belloni@free-electrons.com> <20160118172522.GB12309@linutronix.de> <20160118184247.GQ3367@piout.net>
+From: "Jaggi, Manish" <Manish.Jaggi@caviumnetworks.com>
+Subject: Issues with 4.4-rt2 with arm64
+Date: Wed, 20 Jan 2016 14:05:14 +0000
+Message-ID: <BY1PR0701MB15949D1B10F90EE124B51176E1C20@BY1PR0701MB1594.namprd07.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>
-To: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160118184247.GQ3367@piout.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-bn1on0072.outbound.protection.outlook.com ([157.56.110.72]:27072
+	"EHLO na01-bn1-obe.outbound.protection.outlook.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1751367AbcATOUg convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 20 Jan 2016 09:20:36 -0500
+Content-Language: en-US
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 18 Jan 2016, Alexandre Belloni wrote:
-> On 18/01/2016 at 18:25:22 +0100, Sebastian Andrzej Siewior wrote :
-> > * Alexandre Belloni | 2016-01-17 03:23:14 [+0100]:
-> > 
-> > >index 80d74c4adcbe..43b50634d640 100644
-> > >--- a/drivers/clocksource/timer-atmel-pit.c
-> > >+++ b/drivers/clocksource/timer-atmel-pit.c
-> > >@@ -96,11 +96,44 @@ static int pit_clkevt_shutdown(struct clock_event_device *dev)
-> > > 
-> > > 	/* disable irq, leaving the clocksource active */
-> > > 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
-> > >-	free_irq(atmel_pit_irq, data);
-> > >+	if (!clockevent_state_detached(dev))
-> > >+		free_irq(data->irq, data);
-> > 
-> > I did it in the meantime without clockevent_state_detached(). From what
-> > it looks, it first sets the state and then invokes
-> > pit_clkevt_shutdown(). Any particular reason for this?
-> > 
-> 
-> Yeah, I forgot to mention that. Freeing the irq unconditionally
-> results in:
+Hi All,
+I have found some issues running with the 4.4 kernel and 4.4rt2 patchset on Cavium ThunderX with 48 cores.
 
-Well freeing the irq from that context in RT only works because its called
-before SYSTEM_STATE=RUNNING. So no, this was wrong forever.
+a) With 4 cores there is no issue, 
 
-The issue we are dealing with is that the timer interrupt is shared with the
-uart. So the timer has IRQ_NO_THREAD set and the uart interrupt gets force
-threaded. So that results in a failure to request the interrupt for the
-UART. That's not RT specific, that already happens in mainline if you add
-'threadirqs' to the command line.
+b) With 48 cores boot hangs, sata doesnt mount and network VFs have issues. Probably the threadded irq are not scheduled
+[   37.354634] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 7 from VF3
+[   40.558635] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 5 from VF3
+[   43.762640] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 14 from VF3
+[   46.966631] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 7 from VF3
+[   50.170671] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 5 from VF3
+[   53.374621] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 14 from VF3
+[   56.578615] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 7 from VF3
+[   59.782632] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 5 from VF3
+[   62.986630] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 14 from VF3
+[   66.190629] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 7 from VF3
+[   69.394626] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 5 from VF3
+[   72.598633] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 14 from VF3
+[   75.802680] thunder-nicvf 0002:01:00.4 eth3: PF didn't ack to mbox msg 7 from VF3
 
-So until the DT folks come to senses and we get that dummy demux chip done, I
-came up with the following - completely untested - solution.
+c) By  disabling NO_HZ_ IDLE and enabling PERIODIC no issues are observed in kernel boot. There are random issues like mount of a partition throws errors (run fsck)
 
-The downside of this is, that the timer will be delayed until the uart thread
-returns, but with the replacement clockevent in place on RT that's a non
-issue. For mainline it's obviously better than what we have now.
+d) Enabling sleep while atomic debug config, got the call traces
+[   19.506039] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:930
+[   19.506043] in_atomic(): 1, irqs_disabled(): 0, pid: 733, name: dhclient
+[   19.506045] 2 locks held by dhclient/733:
+[   19.506065]  #0:  (sk_lock-AF_INET){+.+...}, at: [<ffff800000882c14>] sock_setsockopt+0xbc/0x998
+[   19.506079]  #1:  (jump_label_mutex){+.+...}, at: [<ffff8000001f53a0>] static_key_slow_inc+0xb0/0x110
+[   19.506089] Preemption disabled at:[<ffff80000009aa04>] aarch64_insn_patch_text_nosync+0x1c/0x48
+[   19.506090] 
+[   19.506096] CPU: 0 PID: 733 Comm: dhclient Not tainted 4.4.0-rt2-00116-g02e26fb-dirty #20
+[   19.506098] Hardware name: www.cavium.com ThunderX CRB1S/ThunderX CRB1S, BIOS 0.3 Dec  3 2015
 
-Thanks,
+[   19.506100] Call trace:
+[   19.506104] [<ffff800000097b30>] dump_backtrace+0x0/0x160
+[   19.506107] [<ffff800000097cb4>] show_stack+0x24/0x30
+[   19.506112] [<ffff80000059c538>] dump_stack+0x88/0xa8
+[   19.506120] [<ffff800000103088>] ___might_sleep+0x240/0x258
+[   19.506130] [<ffff8000009c72a8>] rt_spin_lock+0x30/0x68
+[   19.506133] [<ffff80000009a7e4>] __aarch64_insn_write+0x34/0x108
+[   19.506137] [<ffff80000009aa04>] aarch64_insn_patch_text_nosync+0x1c/0x48
+[   19.506140] [<ffff80000009ac2c>] aarch64_insn_patch_text+0xc4/0xd8
+[   19.506146] [<ffff8000000a3400>] arch_jump_label_transform+0x70/0x80
+[   19.506151] [<ffff8000001f4d8c>] __jump_label_update+0x84/0xa0
+[   19.506154] [<ffff8000001f4e50>] jump_label_update+0xa8/0xe0
+[   19.506157] [<ffff8000001f53dc>] static_key_slow_inc+0xec/0x110
+[   19.506162] [<ffff800000896260>] net_enable_timestamp+0x80/0x90
+[   19.506166] [<ffff800000882b4c>] sock_enable_timestamp+0x9c/0xa8
+[   19.506169] [<ffff800000882ec8>] sock_setsockopt+0x370/0x998
+[   19.506176] [<ffff80000087cae8>] SyS_setsockopt+0xd8/0xe8
+[   19.506180] [<ffff800000093a30>] el0_svc_naked+0x24/0x28
+[   20.634687] 
+[   20.940909] ===============================
 
-	tglx
+PS: earlier the 4.1 rt  patch worked without these issue on same hardware.
 
-8<---------------
-
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -61,6 +61,10 @@
-  *                interrupt handler after suspending interrupts. For system
-  *                wakeup devices users need to implement wakeup detection in
-  *                their interrupt handlers.
-+ * IRQF_COND_ONESHOT - If the IRQ is shared between a NO_THREAD user and a
-+ *		regular interrupt, force the ONESHOT flag on the NO_THREAD user
-+ *		when threaded irqs are enforced. Workaround for silly ATMEL
-+ *		SoCs which share the timer and the UART interrupt
-  * IRQF_NO_SOFTIRQ_CALL - Do not process softirqs in the irq thread context (RT)
-  */
- #define IRQF_SHARED		0x00000080
-@@ -75,7 +79,8 @@
- #define IRQF_NO_THREAD		0x00010000
- #define IRQF_EARLY_RESUME	0x00020000
- #define IRQF_COND_SUSPEND	0x00040000
--#define IRQF_NO_SOFTIRQ_CALL	0x00080000
-+#define IRQF_COND_ONESHOT	0x00080000
-+#define IRQF_NO_SOFTIRQ_CALL	0x00100000
- 
- #define IRQF_TIMER		(__IRQF_TIMER | IRQF_NO_SUSPEND | IRQF_NO_THREAD)
- 
---- a/kernel/irq/manage.c
-+++ b/kernel/irq/manage.c
-@@ -1208,6 +1208,14 @@ static int
- 	new->irq = irq;
- 
- 	/*
-+	 * Workaround for silly ATMEL SoCs with shared timer and uart
-+	 * interrupt.
-+	 */
-+	if (force_irqthreads && (new->flags & IRQF_COND_ONESHOT) &&
-+	    (new->flags & IRQF_NO_THREAD))
-+		new->flags |= IRQF_ONESHOT;
-+
-+	/*
- 	 * Check whether the interrupt nests into another interrupt
- 	 * thread.
- 	 */
---- a/drivers/clocksource/timer-atmel-pit.c
-+++ b/drivers/clocksource/timer-atmel-pit.c
-@@ -208,7 +208,7 @@ static void __init at91sam926x_pit_commo
- 
- 	/* Set up irq handler */
- 	ret = request_irq(data->irq, at91sam926x_pit_interrupt,
--			  IRQF_SHARED | IRQF_TIMER | IRQF_IRQPOLL,
-+			  IRQF_SHARED | IRQF_TIMER | IRQF_IRQPOLL| IRQF_COND_ONESHOT,
- 			  "at91_tick", data);
- 	if (ret)
- 		panic(pr_fmt("Unable to setup IRQ\n"));
---- a/drivers/clocksource/timer-atmel-st.c
-+++ b/drivers/clocksource/timer-atmel-st.c
-@@ -216,7 +216,7 @@ static void __init atmel_st_timer_init(s
- 
- 	/* Make IRQs happen for the system timer */
- 	ret = request_irq(irq, at91rm9200_timer_interrupt,
--			  IRQF_SHARED | IRQF_TIMER | IRQF_IRQPOLL,
-+			  IRQF_SHARED | IRQF_TIMER | IRQF_IRQPOLL | IRQF_COND_ONESHOT,
- 			  "at91_tick", regmap_st);
- 	if (ret)
- 		panic(pr_fmt("Unable to setup IRQ\n"));
+ Regards, 
+Manish Jaggi    
