@@ -1,53 +1,75 @@
 From: Grygorii Strashko <grygorii.strashko@ti.com>
-Subject: Re: [rfc patch v4.4-rt2] sched: fix up preempt lazy forward port
-Date: Fri, 22 Jan 2016 17:04:22 +0200
-Message-ID: <56A244F6.5070909@ti.com>
-References: <1453108103.4123.4.camel@gmail.com>
- <20160118201828.GE12309@linutronix.de> <1453170597.3740.7.camel@gmail.com>
- <20160121125405.GA11749@linutronix.de> <56A21F7D.9070101@ti.com>
- <56A22C49.5020401@linutronix.de> <56A22FE7.6070005@ti.com>
- <56A2395D.3090106@linutronix.de>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
+Date: Fri, 22 Jan 2016 17:35:52 +0200
+Message-ID: <56A24C58.8060209@ti.com>
+References: <20151223225755.GA21121@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56A2395D.3090106@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from bear.ext.ti.com ([192.94.94.41]:43694 "EHLO bear.ext.ti.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751033AbcAVPgF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 22 Jan 2016 10:36:05 -0500
+In-Reply-To: <20151223225755.GA21121@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 01/22/2016 04:14 PM, Sebastian Andrzej Siewior wrote:
-> On 01/22/2016 02:34 PM, Grygorii Strashko wrote:
->>> Do you still see it with the missing lazy bits? I don't see where this
->>> could come from.
->>>
->>
->> yep. I've tried it with and without changing _TIF_WORK_MASK
->> Seems It's triggered by Virtual terminal keyboard_tasklet
+On 12/24/2015 12:57 AM, Sebastian Andrzej Siewior wrote:
+> Please don't continue reading before christmas eve (or morning,
+> depending on your schedule). If you don't celebrate christmas,
+> well go ahead.
 >
-> Just bootet my current v4.4 to cross check what you see and I have this:
+> Dear RT folks!
 >
-> [    3.808273] clocksource: Switched to clocksource arch_sys_counter
-> [    3.851193] keyboard: kbd_init(1609)
-> [    3.861903] keyboard: kbd_bh(1201)
-> [    3.868322] keyboard: kbd_init(1612)
-> [    3.868581] NET: Registered protocol family 2
+> I'm pleased to announce the v4.4-rc6-rt1 patch set. I tested it on my
+> AMD A10, 64bit. Nothing exploded so far, filesystem is still there.
+> I haven't tested it on anything else. Before someone asks: this does not
+> mean it does *not* work on ARM I simply did not try it.
 >
-> So. No backtrace here. According to the full dmesg I should have all
-> CPUs up by now. kbd_bh is comming from ksoftirqd as well. No idea why
-> you see this.
-> There is a irq off region which sets and removes RUN bit, I have no
-> idea why you have this backtrace.
+> If you are brave then download it, install it and have fun. If something
+> breaks, please report it. If your machine starts blinking like a
+> christmas tree while using the patch then *please* send a photo.
+>
+> Changes since v4.1.15-rt17:
+>    - rebase to v4.4-rc6
+>
+> Known issues (inherited from v4.1-RT):
+>        - bcache stays disabled
+>
+>        - CPU hotplug is not better than before
+>
+>        - The netlink_release() OOPS, reported by Clark, is still on the
+>          list, but unsolved due to lack of information
+>
+>        - Christoph Mathys reported a stall in cgroup locking code while using
+>          Linux containers.
+>
+> You can get this release via the git tree at:
+>
+>      git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.4-rc6-rt1
+>
+> The RT patch against 4.4-rc6 can be found here:
+>
+>      https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4-rc6-rt1.patch.xz
+>
+> The split quilt queue is available at:
+>
+>      https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patches-4.4-rc6-rt1.tar.xz
 >
 
-As of now, i'm too :(
-- not sure if this could be the case, but my kernel is !SMP
-# CONFIG_SMP is not set
-# CONFIG_CPUSETS is not set
+Additional note: RCU_BOOST now depends on RCU_EXPERT, so commit
+3da4cab "rcu: make RCU_BOOST default on RT" is nop now.
+
+config RCU_BOOST
+	bool "Enable RCU priority boosting"
+	depends on RT_MUTEXES && PREEMPT_RCU && RCU_EXPERT
+	default y if PREEMPT_RT_FULL
 
 -- 
 regards,
