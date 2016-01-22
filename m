@@ -1,99 +1,58 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [rfc patch v4.4-rt2] sched: fix up preempt lazy forward port
-Date: Fri, 22 Jan 2016 21:40:18 +0100
-Message-ID: <20160122204018.GA3883@linutronix.de>
-References: <1453108103.4123.4.camel@gmail.com>
- <20160118201828.GE12309@linutronix.de>
- <56A2196E.1020101@ti.com>
- <56A22693.4020304@linutronix.de>
+Subject: Re: [ANNOUNCE] 4.4-rc6-rt1
+Date: Fri, 22 Jan 2016 21:44:09 +0100
+Message-ID: <20160122204409.GB3883@linutronix.de>
+References: <20151223225755.GA21121@linutronix.de>
+ <56A24C58.8060209@ti.com>
+ <56A24F39.2050606@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 To: Grygorii Strashko <grygorii.strashko@ti.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <56A22693.4020304@linutronix.de>
+In-Reply-To: <56A24F39.2050606@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-* Sebastian Andrzej Siewior | 2016-01-22 13:54:43 [+0100]:
+* Sebastian Andrzej Siewior | 2016-01-22 16:48:09 [+0100]:
 
->> Should _TIF_WORK_MASK also contain _TIF_NEED_RESCHED_LAZY?
+>On 01/22/2016 04:35 PM, Grygorii Strashko wrote:
+>> Additional note: RCU_BOOST now depends on RCU_EXPERT, so commit
+>> 3da4cab "rcu: make RCU_BOOST default on RT" is nop now.
+>> 
+>> config RCU_BOOST
+>>     bool "Enable RCU priority boosting"
+>>     depends on RT_MUTEXES && PREEMPT_RCU && RCU_EXPERT
+>>     default y if PREEMPT_RT_FULL
 >
->Yes, and arm64 lacks the same bits.
+>yeah, I've been thinking about giving the experts menu item an y on RT
+>as well.
 
-That would be this. If a compiler is reading here and knows how to
-improve the following, please let me know :)
+Subject: [PATCH] RCU: make RCU_EXPERT y on RT
 
-diff --git a/arch/arm/include/asm/thread_info.h b/arch/arm/include/asm/thread_info.h
-index 46cc07b5cae6..1f36a4eccc72 100644
---- a/arch/arm/include/asm/thread_info.h
-+++ b/arch/arm/include/asm/thread_info.h
-@@ -143,8 +143,8 @@ extern int vfp_restore_user_hwstate(struct user_vfp __user *,
- #define TIF_SYSCALL_TRACE	4	/* syscall trace active */
- #define TIF_SYSCALL_AUDIT	5	/* syscall auditing active */
- #define TIF_SYSCALL_TRACEPOINT	6	/* syscall tracepoint instrumentation */
--#define TIF_SECCOMP		7	/* seccomp syscall filtering active */
--#define TIF_NEED_RESCHED_LAZY	8
-+#define TIF_SECCOMP		8	/* seccomp syscall filtering active */
-+#define TIF_NEED_RESCHED_LAZY	7
+because we want RCU_BOOST y on RT
+
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ init/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/init/Kconfig b/init/Kconfig
+index 6f4408adf62d..a7c81c0911da 100644
+--- a/init/Kconfig
++++ b/init/Kconfig
+@@ -498,7 +498,7 @@ config TINY_RCU
  
- #define TIF_NOHZ		12	/* in adaptive nohz mode */
- #define TIF_USING_IWMMXT	17
-@@ -170,7 +170,8 @@ extern int vfp_restore_user_hwstate(struct user_vfp __user *,
-  * Change these and you break ASM code in entry-common.S
-  */
- #define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
--				 _TIF_NOTIFY_RESUME | _TIF_UPROBE)
-+				 _TIF_NOTIFY_RESUME | _TIF_UPROBE | \
-+				 _TIF_NEED_RESCHED_LAZY)
- 
- #endif /* __KERNEL__ */
- #endif /* __ASM_ARM_THREAD_INFO_H */
-diff --git a/arch/arm/kernel/entry-common.S b/arch/arm/kernel/entry-common.S
-index 30a7228eaceb..c3bd6cbfce4b 100644
---- a/arch/arm/kernel/entry-common.S
-+++ b/arch/arm/kernel/entry-common.S
-@@ -36,7 +36,9 @@
-  UNWIND(.cantunwind	)
- 	disable_irq_notrace			@ disable interrupts
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
--	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
-+	tst	r1, #((_TIF_SYSCALL_WORK | _TIF_WORK_MASK) & ~_TIF_SECCOMP)
-+	bne	fast_work_pending
-+	tst	r1, #_TIF_SECCOMP
- 	bne	fast_work_pending
- 
- 	/* perform architecture specific actions before user return */
-@@ -62,8 +64,11 @@ ENDPROC(ret_fast_syscall)
- 	str	r0, [sp, #S_R0 + S_OFF]!	@ save returned r0
- 	disable_irq_notrace			@ disable interrupts
- 	ldr	r1, [tsk, #TI_FLAGS]		@ re-check for syscall tracing
--	tst	r1, #_TIF_SYSCALL_WORK | _TIF_WORK_MASK
-+	tst	r1, #((_TIF_SYSCALL_WORK | _TIF_WORK_MASK) & ~_TIF_SECCOMP)
-+	bne 	do_slower_path
-+	tst	r1, #_TIF_SECCOMP
- 	beq	no_work_pending
-+do_slower_path:
-  UNWIND(.fnend		)
- ENDPROC(ret_fast_syscall)
- 
-diff --git a/arch/arm64/include/asm/thread_info.h b/arch/arm64/include/asm/thread_info.h
-index b229ef49a643..5f4e89fbc290 100644
---- a/arch/arm64/include/asm/thread_info.h
-+++ b/arch/arm64/include/asm/thread_info.h
-@@ -129,7 +129,8 @@ static inline struct thread_info *current_thread_info(void)
- #define _TIF_32BIT		(1 << TIF_32BIT)
- 
- #define _TIF_WORK_MASK		(_TIF_NEED_RESCHED | _TIF_SIGPENDING | \
--				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE)
-+				 _TIF_NOTIFY_RESUME | _TIF_FOREIGN_FPSTATE | \
-+				 _TIF_NEED_RESCHED_LAZY)
- 
- #define _TIF_SYSCALL_WORK	(_TIF_SYSCALL_TRACE | _TIF_SYSCALL_AUDIT | \
- 				 _TIF_SYSCALL_TRACEPOINT | _TIF_SECCOMP | \
+ config RCU_EXPERT
+ 	bool "Make expert-level adjustments to RCU configuration"
+-	default n
++	default y if PREEMPT_RT_FULL
+ 	help
+ 	  This option needs to be enabled if you wish to make
+ 	  expert-level adjustments to RCU configuration.  By default,
 -- 
 2.7.0.rc3
