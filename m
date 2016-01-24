@@ -1,68 +1,61 @@
-From: =?UTF-8?B?Sm/Dq2wgS3LDpGhlbWFubg==?= <jkraehemann@gmail.com>
-Subject: Re: deterministic usage of JIFFIES and how to relocate the clock
-Date: Sun, 24 Jan 2016 09:40:33 +0100
-Message-ID: <CA+Owze7+=vMDaqX25OVQ6ZrRgGj9j2BZjEZt_GyG+9+6+6ELWA@mail.gmail.com>
-References: <CA+Owze7GnFYrpVMWSuPd=qXj8auf3fL-mPsZNPVMeP=FQtZsPg@mail.gmail.com>
-Reply-To: jkraehemann-guest@users.alioth.debian.org
+From: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
+Subject: Re: [PATCH] drivers/media: vsp1_video: fix compile error
+Date: Mon, 25 Jan 2016 00:15:28 +0200
+Message-ID: <1991984.ioj231CKOU@avalon>
+References: <1452816583-11036-1-git-send-email-anders.roxell@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: jkraehemann-guest@users.alioth.debian.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yk0-f171.google.com ([209.85.160.171]:34968 "EHLO
-	mail-yk0-f171.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751024AbcAXIke convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 24 Jan 2016 03:40:34 -0500
-Received: by mail-yk0-f171.google.com with SMTP id u68so2622348ykd.2
-        for <linux-rt-users@vger.kernel.org>; Sun, 24 Jan 2016 00:40:34 -0800 (PST)
-In-Reply-To: <CA+Owze7GnFYrpVMWSuPd=qXj8auf3fL-mPsZNPVMeP=FQtZsPg@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 7Bit
+Cc: mchehab@osg.samsung.com, linux-media@vger.kernel.org,
+	linux-sh@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org
+To: Anders Roxell <anders.roxell@linaro.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1452816583-11036-1-git-send-email-anders.roxell@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi
+Hi Anders,
 
-At my opinion I was thinking at a lower level than needed. The
-application runs at least aside the kernel.
-Probably I want to control PC (program counter) and redeclare the
-longjump function as macro. To gain control
-over throughput rate and thus being able to grain loading and unloading=
- thread.
+Thank you for the patch.
 
-int sched_setaffinity(pid_t pid, size_t cpusetsize,
-                             const cpu_set_t *mask);
+On Friday 15 January 2016 01:09:43 Anders Roxell wrote:
+> This was found with the -RT patch enabled, but the fix should apply to
+> non-RT also.
+> 
+> Compilation error without this fix:
+> ../drivers/media/platform/vsp1/vsp1_video.c: In function
+> 'vsp1_pipeline_stopped':
+> ../drivers/media/platform/vsp1/vsp1_video.c:524:2: error: expected
+> expression before 'do'
+>   spin_unlock_irqrestore(&pipe->irqlock, flags);
+>     ^
+> 
+> Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
 
-void longjmp(jmp_buf env, int val);
+Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
 
-cheers,
-Jo=C3=ABl
+and applied to my tree.
 
+> ---
+>  drivers/media/platform/vsp1/vsp1_video.c | 2 +-
+>  1 file changed, 1 insertion(+), 1 deletion(-)
+> 
+> diff --git a/drivers/media/platform/vsp1/vsp1_video.c
+> b/drivers/media/platform/vsp1/vsp1_video.c index 637d0d6..b4dca57 100644
+> --- a/drivers/media/platform/vsp1/vsp1_video.c
+> +++ b/drivers/media/platform/vsp1/vsp1_video.c
+> @@ -515,7 +515,7 @@ static bool vsp1_pipeline_stopped(struct vsp1_pipeline
+> *pipe) bool stopped;
+> 
+>  	spin_lock_irqsave(&pipe->irqlock, flags);
+> -	stopped = pipe->state == VSP1_PIPELINE_STOPPED,
+> +	stopped = pipe->state == VSP1_PIPELINE_STOPPED;
+>  	spin_unlock_irqrestore(&pipe->irqlock, flags);
+> 
+>  	return stopped;
 
-On Fri, Jan 22, 2016 at 10:37 AM, Jo=C3=ABl Kr=C3=A4hemann <jkraehemann=
-@gmail.com> wrote:
-> Hi all
->
-> Since I'm hardware newbie I just ask in my very own words, how to
-> relocate the clock. I want to play around with the clock modulator in
-> GNU/Linux. Is there any interface to relocate it?
->
-> What must do a user-space application do to change underlaying cipher=
-?
-> I don't care about gdb or valgrind issues or trap-points. Might be in
-> further sense interrupts.
->
-> Is possible to have a VM in userspace? Once I have seen different VMs
-> available in the kernel. Does even have the VM control of
-> clock-modulator? Do I need some knowledge about ACPI to do so?
->
-> Are there some good books about that thematics I could start with?
-> Since I like math it would be fun to do so.
->
-> bests,
-> Jo=C3=ABl Kr=C3=A4hemann
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-- 
+Regards,
+
+Laurent Pinchart
