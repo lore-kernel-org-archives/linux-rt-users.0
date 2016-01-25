@@ -1,65 +1,33 @@
-From: Mauro Carvalho Chehab <mchehab@osg.samsung.com>
-Subject: Re: [PATCH] drivers/media: vsp1_video: fix compile error
-Date: Mon, 25 Jan 2016 09:14:23 -0200
-Message-ID: <20160125091423.386ae714@recife.lan>
-References: <1452816583-11036-1-git-send-email-anders.roxell@linaro.org>
-	<1991984.ioj231CKOU@avalon>
+From: "$rik@nth " <srikanth007m@gmail.com>
+Subject: [RT-Tests] pmqtest on ARM
+Date: Mon, 25 Jan 2016 17:31:50 +0530
+Message-ID: <CANKSX+G0tePQNFw8uH+RYrFEKanTsHmiqSzd1y5aGq1gwms17Q@mail.gmail.com>
+Reply-To: srikanth007m@gmail.com
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Anders Roxell <anders.roxell@linaro.org>,
-	linux-media@vger.kernel.org, linux-sh@vger.kernel.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1991984.ioj231CKOU@avalon>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-lb0-f181.google.com ([209.85.217.181]:36720 "EHLO
+	mail-lb0-f181.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932105AbcAYMBw (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 25 Jan 2016 07:01:52 -0500
+Received: by mail-lb0-f181.google.com with SMTP id oh2so72640635lbb.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2016 04:01:51 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Em Mon, 25 Jan 2016 00:15:28 +0200
-Laurent Pinchart <laurent.pinchart@ideasonboard.com> escreveu:
+Hi All,
 
-> Hi Anders,
-> 
-> Thank you for the patch.
-> 
-> On Friday 15 January 2016 01:09:43 Anders Roxell wrote:
-> > This was found with the -RT patch enabled, but the fix should apply to
-> > non-RT also.
-> > 
-> > Compilation error without this fix:
-> > ../drivers/media/platform/vsp1/vsp1_video.c: In function
-> > 'vsp1_pipeline_stopped':
-> > ../drivers/media/platform/vsp1/vsp1_video.c:524:2: error: expected
-> > expression before 'do'
-> >   spin_unlock_irqrestore(&pipe->irqlock, flags);
-> >     ^
-> > 
-> > Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
-> 
-> Reviewed-by: Laurent Pinchart <laurent.pinchart@ideasonboard.com>
-> 
-> and applied to my tree.
+I am having dragonboard 410c with Android kernel. Tried successfully
+cross compile rt-tests for ARM using cross tool-chain.
 
-Better to apply this to the fixes branch and send it together with
-the next set of patches upstream.
+pmqtest is showing error "could not open POSIX message queue #1"
 
-> 
-> > ---
-> >  drivers/media/platform/vsp1/vsp1_video.c | 2 +-
-> >  1 file changed, 1 insertion(+), 1 deletion(-)
-> > 
-> > diff --git a/drivers/media/platform/vsp1/vsp1_video.c
-> > b/drivers/media/platform/vsp1/vsp1_video.c index 637d0d6..b4dca57 100644
-> > --- a/drivers/media/platform/vsp1/vsp1_video.c
-> > +++ b/drivers/media/platform/vsp1/vsp1_video.c
-> > @@ -515,7 +515,7 @@ static bool vsp1_pipeline_stopped(struct vsp1_pipeline
-> > *pipe) bool stopped;
-> > 
-> >  	spin_lock_irqsave(&pipe->irqlock, flags);
-> > -	stopped = pipe->state == VSP1_PIPELINE_STOPPED,
-> > +	stopped = pipe->state == VSP1_PIPELINE_STOPPED;
-> >  	spin_unlock_irqrestore(&pipe->irqlock, flags);
-> > 
-> >  	return stopped;
-> 
+Do i need to compile rt-tests with any additional/specific flags
+inorder to work on ARM platform as well? Request someone to share
+pointers to unblock my debugging.
+
+-- 
+Thanks & Regards,
+M.Srikanth Kumar.
