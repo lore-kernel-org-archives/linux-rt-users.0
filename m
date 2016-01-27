@@ -1,34 +1,35 @@
-From: "$rik@nth " <srikanth007m@gmail.com>
-Subject: Re: [RT-Tests] pmqtest on ARM
-Date: Tue, 26 Jan 2016 08:59:44 +0530
-Message-ID: <CANKSX+GoD+M4ypMtfxfxRtG0Pu4L+FAki-v+OdNG3qpQYUOCPg@mail.gmail.com>
-References: <CANKSX+G0tePQNFw8uH+RYrFEKanTsHmiqSzd1y5aGq1gwms17Q@mail.gmail.com>
-	<20160125151953.GI27463@jcartwri.amer.corp.natinst.com>
-Reply-To: srikanth007m@gmail.com
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: [PATCH tip v5 2/5] kbuild: Add option to turn incompatible
+ pointer check into error
+Date: Wed, 27 Jan 2016 13:03:57 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1601271300490.3886@nanos>
+References: <1448890711-5812-1-git-send-email-daniel.wagner@bmw-carit.de> <1448890711-5812-3-git-send-email-daniel.wagner@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org
-To: Josh Cartwright <joshc@ni.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f173.google.com ([209.85.217.173]:33665 "EHLO
-	mail-lb0-f173.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932562AbcAZD3p (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Jan 2016 22:29:45 -0500
-Received: by mail-lb0-f173.google.com with SMTP id x4so85768128lbm.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Jan 2016 19:29:44 -0800 (PST)
-In-Reply-To: <20160125151953.GI27463@jcartwri.amer.corp.natinst.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Peter Zijlstra <peterz@infradead.org>,
+	linux-kbuild@vger.kernel.org,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Boqun Feng <boqun.feng@gmail.com>
+To: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <1448890711-5812-3-git-send-email-daniel.wagner@bmw-carit.de>
+Sender: linux-kbuild-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, Jan 25, 2016 at 8:49 PM, Josh Cartwright <joshc@ni.com> wrote:
-> CONFIG_POSIX_MQUEUE
+On Mon, 30 Nov 2015, Daniel Wagner wrote:
+>  
+> +ifdef CONFIG_ENABLE_ERR_TYPE_CHECK
+> +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
+> +endif
 
-My kernel is not compiled with below flag. I need to recompile by
-enabling the flag.
-# CONFIG_POSIX_MQUEUE is not set
+I don't see a value for making this configurable. If the compiler supports it,
+we should use it. It already found a bug, so why would we make that optional?
 
-Thanks Josh.
--- 
-Thanks & Regards,
-M.Srikanth Kumar.
+Thanks,
+
+	tglx
