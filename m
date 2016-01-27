@@ -1,27 +1,39 @@
-From: Peter Zijlstra <peterz@infradead.org>
-Subject: Re: [PATCH tip v5 0/5] Simple wait queue support
-Date: Wed, 27 Jan 2016 13:08:56 +0100
-Message-ID: <20160127120856.GP6357@twins.programming.kicks-ass.net>
-References: <1448890711-5812-1-git-send-email-daniel.wagner@bmw-carit.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linux-kbuild@vger.kernel.org,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Boqun Feng <boqun.feng@gmail.com>
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1448890711-5812-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kbuild-owner@vger.kernel.org
+From: Anders Roxell <anders.roxell@linaro.org>
+Subject: [PATCH] drivers/cpuidle: coupled: remove unused define cpuidle_coupled_lock
+Date: Wed, 27 Jan 2016 20:26:54 +0100
+Message-ID: <1453922814-3173-1-git-send-email-anders.roxell@linaro.org>
+Cc: linux-pm@vger.kernel.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Anders Roxell <anders.roxell@linaro.org>
+To: rjw@rjwysocki.net, daniel.lezcano@linaro.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+This was found with the -RT patch enabled, but the fix should apply to
+non-RT also.
 
-Thanks!
+Used multi_v7_defconfig+PREEMPT_RT_FULL=y and this caused a compilation
+warning without this fix:
+../drivers/cpuidle/coupled.c:122:21: warning: 'cpuidle_coupled_lock'
+defined but not used [-Wunused-variable]
 
-Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
+Signed-off-by: Anders Roxell <anders.roxell@linaro.org>
+---
+ drivers/cpuidle/coupled.c | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/drivers/cpuidle/coupled.c b/drivers/cpuidle/coupled.c
+index 344058f..d5657d5 100644
+--- a/drivers/cpuidle/coupled.c
++++ b/drivers/cpuidle/coupled.c
+@@ -119,7 +119,6 @@ struct cpuidle_coupled {
+ 
+ #define CPUIDLE_COUPLED_NOT_IDLE	(-1)
+ 
+-static DEFINE_MUTEX(cpuidle_coupled_lock);
+ static DEFINE_PER_CPU(struct call_single_data, cpuidle_coupled_poke_cb);
+ 
+ /*
+-- 
+2.1.4
