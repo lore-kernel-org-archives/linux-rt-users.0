@@ -1,7 +1,7 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH tip v6 1/5] wait.[ch]: Introduce the simple waitqueue (swait) implementation
-Date: Thu, 28 Jan 2016 15:44:26 +0100
-Message-ID: <1453992270-4688-2-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH tip v6 3/5] KVM: use simple waitqueue for vcpu->wq
+Date: Thu, 28 Jan 2016 15:44:28 +0100
+Message-ID: <1453992270-4688-4-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-kbuild@vger.kernel.org,
 	Marcelo Tosatti <mtosatti@redhat.com>,
@@ -14,368 +14,432 @@ Cc: linux-kbuild@vger.kernel.org,
 	Boqun Feng <boqun.feng@gmail.com>,
 	Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-kbuild-owner@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kbuild-owner@vger.kernel.org
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: "Peter Zijlstra (Intel)" <peterz@infradead.org>
+From: Marcelo Tosatti <mtosatti@redhat.com>
 
-The existing wait queue support has support for custom wake up call
-backs, wake flags, wake key (passed to call back) and exclusive
-flags that allow wakers to be tagged as exclusive, for limiting
-the number of wakers.
+The problem:
 
-In a lot of cases, none of these features are used, and hence we
-can benefit from a slimmed down version that lowers memory overhead
-and reduces runtime overhead.
+On -rt, an emulated LAPIC timer instances has the following path:
 
-The concept originated from -rt, where waitqueues are a constant
-source of trouble, as we can't convert the head lock to a raw
-spinlock due to fancy and long lasting callbacks.
+1) hard interrupt
+2) ksoftirqd is scheduled
+3) ksoftirqd wakes up vcpu thread
+4) vcpu thread is scheduled
 
-With the removal of custom callbacks, we can use a raw lock for
-queue list manipulations, hence allowing the simple wait support
-to be used in -rt.
+This extra context switch introduces unnecessary latency in the
+LAPIC path for a KVM guest.
+
+The solution:
+
+Allow waking up vcpu thread from hardirq context,
+thus avoiding the need for ksoftirqd to be scheduled.
+
+Normal waitqueues make use of spinlocks, which on -RT
+are sleepable locks. Therefore, waking up a waitqueue
+waiter involves locking a sleeping lock, which
+is not allowed from hard interrupt context.
+
+cyclictest command line:
+
+This patch reduces the average latency in my tests from 14us to 11us.
+
+Daniel writes:
+Paolo asked for numbers from kvm-unit-tests/tscdeadline_latency
+benchmark on mainline. The test was run 1000 times on
+tip/sched/core 4.4.0-rc8-01134-g0905f04:
+
+  ./x86-run x86/tscdeadline_latency.flat -cpu host
+
+with idle=poll.
+
+The test seems not to deliver really stable numbers though most of
+them are smaller. Paolo write:
+
+"Anything above ~10000 cycles means that the host went to C1 or
+lower---the number means more or less nothing in that case.
+
+The mean shows an improvement indeed."
+
+Before:
+
+               min             max         mean           std
+count  1000.000000     1000.000000  1000.000000   1000.000000
+mean   5162.596000  2019270.084000  5824.491541  20681.645558
+std      75.431231   622607.723969    89.575700   6492.272062
+min    4466.000000    23928.000000  5537.926500    585.864966
+25%    5163.000000  1613252.750000  5790.132275  16683.745433
+50%    5175.000000  2281919.000000  5834.654000  23151.990026
+75%    5190.000000  2382865.750000  5861.412950  24148.206168
+max    5228.000000  4175158.000000  6254.827300  46481.048691
+
+After
+               min            max         mean           std
+count  1000.000000     1000.00000  1000.000000   1000.000000
+mean   5143.511000  2076886.10300  5813.312474  21207.357565
+std      77.668322   610413.09583    86.541500   6331.915127
+min    4427.000000    25103.00000  5529.756600    559.187707
+25%    5148.000000  1691272.75000  5784.889825  17473.518244
+50%    5160.000000  2308328.50000  5832.025000  23464.837068
+75%    5172.000000  2393037.75000  5853.177675  24223.969976
+max    5222.000000  3922458.00000  6186.720500  42520.379830
+
+[Patch was originaly based on the swait implementation found in the -rt
+ tree. Daniel ported it to mainline's version and gathered the
+ benchmark numbers for tscdeadline_latency test.]
 
 Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Originally-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
-
-[Patch is from PeterZ which is based on Thomas version.
- Commit message is written by Paul G.
- Daniel:
-  -  And some compile issues fixed.
-  -  Added non-lazy implementation of swake_up_locked as suggested by Boqun Feng.]
+Cc: Marcelo Tosatti <mtosatti@redhat.com>
+Cc: Paolo Bonzini <pbonzini@redhat.com>
 ---
- include/linux/swait.h | 172 ++++++++++++++++++++++++++++++++++++++++++++++++++
- kernel/sched/Makefile |   2 +-
- kernel/sched/swait.c  | 123 ++++++++++++++++++++++++++++++++++++
- 3 files changed, 296 insertions(+), 1 deletion(-)
- create mode 100644 include/linux/swait.h
- create mode 100644 kernel/sched/swait.c
+ arch/arm/kvm/arm.c                  |  4 ++--
+ arch/arm/kvm/psci.c                 |  4 ++--
+ arch/mips/kvm/mips.c                |  8 ++++----
+ arch/powerpc/include/asm/kvm_host.h |  4 ++--
+ arch/powerpc/kvm/book3s_hv.c        | 23 +++++++++++------------
+ arch/s390/include/asm/kvm_host.h    |  2 +-
+ arch/s390/kvm/interrupt.c           |  4 ++--
+ arch/x86/kvm/lapic.c                |  6 +++---
+ include/linux/kvm_host.h            |  5 +++--
+ virt/kvm/async_pf.c                 |  4 ++--
+ virt/kvm/kvm_main.c                 | 17 ++++++++---------
+ 11 files changed, 40 insertions(+), 41 deletions(-)
 
-diff --git a/include/linux/swait.h b/include/linux/swait.h
-new file mode 100644
-index 0000000..c1f9c62
---- /dev/null
-+++ b/include/linux/swait.h
-@@ -0,0 +1,172 @@
-+#ifndef _LINUX_SWAIT_H
-+#define _LINUX_SWAIT_H
-+
-+#include <linux/list.h>
-+#include <linux/stddef.h>
-+#include <linux/spinlock.h>
-+#include <asm/current.h>
-+
-+/*
-+ * Simple wait queues
-+ *
-+ * While these are very similar to the other/complex wait queues (wait.h) the
-+ * most important difference is that the simple waitqueue allows for
-+ * deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
-+ * times.
-+ *
-+ * In order to make this so, we had to drop a fair number of features of the
-+ * other waitqueue code; notably:
-+ *
-+ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
-+ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
-+ *    sleeper state.
-+ *
-+ *  - the exclusive mode; because this requires preserving the list order
-+ *    and this is hard.
-+ *
-+ *  - custom wake functions; because you cannot give any guarantees about
-+ *    random code.
-+ *
-+ * As a side effect of this; the data structures are slimmer.
-+ *
-+ * One would recommend using this wait queue where possible.
-+ */
-+
-+struct task_struct;
-+
-+struct swait_queue_head {
-+	raw_spinlock_t		lock;
-+	struct list_head	task_list;
-+};
-+
-+struct swait_queue {
-+	struct task_struct	*task;
-+	struct list_head	task_list;
-+};
-+
-+#define __SWAITQUEUE_INITIALIZER(name) {				\
-+	.task		= current,					\
-+	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-+}
-+
-+#define DECLARE_SWAITQUEUE(name)					\
-+	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
-+
-+#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
-+	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
-+	.task_list	= LIST_HEAD_INIT((name).task_list),		\
-+}
-+
-+#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
-+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
-+
-+extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
-+				    struct lock_class_key *key);
-+
-+#define init_swait_queue_head(q)				\
-+	do {							\
-+		static struct lock_class_key __key;		\
-+		__init_swait_queue_head((q), #q, &__key);	\
-+	} while (0)
-+
-+#ifdef CONFIG_LOCKDEP
-+# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
-+	({ init_swait_queue_head(&name); name; })
-+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
-+	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
-+#else
-+# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
-+	DECLARE_SWAIT_QUEUE_HEAD(name)
-+#endif
-+
-+static inline int swait_active(struct swait_queue_head *q)
-+{
-+	return !list_empty(&q->task_list);
-+}
-+
-+extern void swake_up(struct swait_queue_head *q);
-+extern void swake_up_all(struct swait_queue_head *q);
-+extern void swake_up_locked(struct swait_queue_head *q);
-+
-+extern void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+extern void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state);
-+extern long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state);
-+
-+extern void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
-+
-+/* as per ___wait_event() but for swait, therefore "exclusive == 0" */
-+#define ___swait_event(wq, condition, state, ret, cmd)			\
-+({									\
-+	struct swait_queue __wait;					\
-+	long __ret = ret;						\
-+									\
-+	INIT_LIST_HEAD(&__wait.task_list);				\
-+	for (;;) {							\
-+		long __int = prepare_to_swait_event(&wq, &__wait, state);\
-+									\
-+		if (condition)						\
-+			break;						\
-+									\
-+		if (___wait_is_interruptible(state) && __int) {		\
-+			__ret = __int;					\
-+			break;						\
-+		}							\
-+									\
-+		cmd;							\
-+	}								\
-+	finish_swait(&wq, &__wait);					\
-+	__ret;								\
-+})
-+
-+#define __swait_event(wq, condition)					\
-+	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
-+			    schedule())
-+
-+#define swait_event(wq, condition)					\
-+do {									\
-+	if (condition)							\
-+		break;							\
-+	__swait_event(wq, condition);					\
-+} while (0)
-+
-+#define __swait_event_timeout(wq, condition, timeout)			\
-+	___swait_event(wq, ___wait_cond_timeout(condition),		\
-+		      TASK_UNINTERRUPTIBLE, timeout,			\
-+		      __ret = schedule_timeout(__ret))
-+
-+#define swait_event_timeout(wq, condition, timeout)			\
-+({									\
-+	long __ret = timeout;						\
-+	if (!___wait_cond_timeout(condition))				\
-+		__ret = __swait_event_timeout(wq, condition, timeout);	\
-+	__ret;								\
-+})
-+
-+#define __swait_event_interruptible(wq, condition)			\
-+	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
-+		      schedule())
-+
-+#define swait_event_interruptible(wq, condition)			\
-+({									\
-+	int __ret = 0;							\
-+	if (!(condition))						\
-+		__ret = __swait_event_interruptible(wq, condition);	\
-+	__ret;								\
-+})
-+
-+#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
-+	___swait_event(wq, ___wait_cond_timeout(condition),		\
-+		      TASK_INTERRUPTIBLE, timeout,			\
-+		      __ret = schedule_timeout(__ret))
-+
-+#define swait_event_interruptible_timeout(wq, condition, timeout)	\
-+({									\
-+	long __ret = timeout;						\
-+	if (!___wait_cond_timeout(condition))				\
-+		__ret = __swait_event_interruptible_timeout(wq,		\
-+						condition, timeout);	\
-+	__ret;								\
-+})
-+
-+#endif /* _LINUX_SWAIT_H */
-diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
-index 6768797..7d4cba2 100644
---- a/kernel/sched/Makefile
-+++ b/kernel/sched/Makefile
-@@ -13,7 +13,7 @@ endif
+diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
+index e06fd29..b9ea64b 100644
+--- a/arch/arm/kvm/arm.c
++++ b/arch/arm/kvm/arm.c
+@@ -507,9 +507,9 @@ static void kvm_arm_resume_guest(struct kvm *kvm)
  
- obj-y += core.o loadavg.o clock.o cputime.o
- obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
--obj-y += wait.o completion.o idle.o
-+obj-y += wait.o swait.o completion.o idle.o
- obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
- obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
- obj-$(CONFIG_SCHEDSTATS) += stats.o
-diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
-new file mode 100644
-index 0000000..82f0dff
---- /dev/null
-+++ b/kernel/sched/swait.c
-@@ -0,0 +1,123 @@
-+#include <linux/sched.h>
+ static void vcpu_sleep(struct kvm_vcpu *vcpu)
+ {
+-	wait_queue_head_t *wq = kvm_arch_vcpu_wq(vcpu);
++	struct swait_queue_head *wq = kvm_arch_vcpu_wq(vcpu);
+ 
+-	wait_event_interruptible(*wq, ((!vcpu->arch.power_off) &&
++	swait_event_interruptible(*wq, ((!vcpu->arch.power_off) &&
+ 				       (!vcpu->arch.pause)));
+ }
+ 
+diff --git a/arch/arm/kvm/psci.c b/arch/arm/kvm/psci.c
+index a9b3b90..c2b1315 100644
+--- a/arch/arm/kvm/psci.c
++++ b/arch/arm/kvm/psci.c
+@@ -70,7 +70,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+ {
+ 	struct kvm *kvm = source_vcpu->kvm;
+ 	struct kvm_vcpu *vcpu = NULL;
+-	wait_queue_head_t *wq;
++	struct swait_queue_head *wq;
+ 	unsigned long cpu_id;
+ 	unsigned long context_id;
+ 	phys_addr_t target_pc;
+@@ -119,7 +119,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
+ 	smp_mb();		/* Make sure the above is visible */
+ 
+ 	wq = kvm_arch_vcpu_wq(vcpu);
+-	wake_up_interruptible(wq);
++	swake_up(wq);
+ 
+ 	return PSCI_RET_SUCCESS;
+ }
+diff --git a/arch/mips/kvm/mips.c b/arch/mips/kvm/mips.c
+index b9b803f..28e9acb 100644
+--- a/arch/mips/kvm/mips.c
++++ b/arch/mips/kvm/mips.c
+@@ -445,8 +445,8 @@ int kvm_vcpu_ioctl_interrupt(struct kvm_vcpu *vcpu,
+ 
+ 	dvcpu->arch.wait = 0;
+ 
+-	if (waitqueue_active(&dvcpu->wq))
+-		wake_up_interruptible(&dvcpu->wq);
++	if (swait_active(&dvcpu->wq))
++		swake_up(&dvcpu->wq);
+ 
+ 	return 0;
+ }
+@@ -1174,8 +1174,8 @@ static void kvm_mips_comparecount_func(unsigned long data)
+ 	kvm_mips_callbacks->queue_timer_int(vcpu);
+ 
+ 	vcpu->arch.wait = 0;
+-	if (waitqueue_active(&vcpu->wq))
+-		wake_up_interruptible(&vcpu->wq);
++	if (swait_active(&vcpu->wq))
++		swake_up(&vcpu->wq);
+ }
+ 
+ /* low level hrtimer wake routine */
+diff --git a/arch/powerpc/include/asm/kvm_host.h b/arch/powerpc/include/asm/kvm_host.h
+index cfa758c..f8673ff 100644
+--- a/arch/powerpc/include/asm/kvm_host.h
++++ b/arch/powerpc/include/asm/kvm_host.h
+@@ -286,7 +286,7 @@ struct kvmppc_vcore {
+ 	struct list_head runnable_threads;
+ 	struct list_head preempt_list;
+ 	spinlock_t lock;
+-	wait_queue_head_t wq;
++	struct swait_queue_head wq;
+ 	spinlock_t stoltb_lock;	/* protects stolen_tb and preempt_tb */
+ 	u64 stolen_tb;
+ 	u64 preempt_tb;
+@@ -626,7 +626,7 @@ struct kvm_vcpu_arch {
+ 	u8 prodded;
+ 	u32 last_inst;
+ 
+-	wait_queue_head_t *wqp;
++	struct swait_queue_head *wqp;
+ 	struct kvmppc_vcore *vcore;
+ 	int ret;
+ 	int trap;
+diff --git a/arch/powerpc/kvm/book3s_hv.c b/arch/powerpc/kvm/book3s_hv.c
+index a7352b5..df34a64 100644
+--- a/arch/powerpc/kvm/book3s_hv.c
++++ b/arch/powerpc/kvm/book3s_hv.c
+@@ -114,11 +114,11 @@ static bool kvmppc_ipi_thread(int cpu)
+ static void kvmppc_fast_vcpu_kick_hv(struct kvm_vcpu *vcpu)
+ {
+ 	int cpu;
+-	wait_queue_head_t *wqp;
++	struct swait_queue_head *wqp;
+ 
+ 	wqp = kvm_arch_vcpu_wq(vcpu);
+-	if (waitqueue_active(wqp)) {
+-		wake_up_interruptible(wqp);
++	if (swait_active(wqp)) {
++		swake_up(wqp);
+ 		++vcpu->stat.halt_wakeup;
+ 	}
+ 
+@@ -707,8 +707,8 @@ int kvmppc_pseries_do_hcall(struct kvm_vcpu *vcpu)
+ 		tvcpu->arch.prodded = 1;
+ 		smp_mb();
+ 		if (vcpu->arch.ceded) {
+-			if (waitqueue_active(&vcpu->wq)) {
+-				wake_up_interruptible(&vcpu->wq);
++			if (swait_active(&vcpu->wq)) {
++				swake_up(&vcpu->wq);
+ 				vcpu->stat.halt_wakeup++;
+ 			}
+ 		}
+@@ -1447,7 +1447,7 @@ static struct kvmppc_vcore *kvmppc_vcore_create(struct kvm *kvm, int core)
+ 	INIT_LIST_HEAD(&vcore->runnable_threads);
+ 	spin_lock_init(&vcore->lock);
+ 	spin_lock_init(&vcore->stoltb_lock);
+-	init_waitqueue_head(&vcore->wq);
++	init_swait_queue_head(&vcore->wq);
+ 	vcore->preempt_tb = TB_NIL;
+ 	vcore->lpcr = kvm->arch.lpcr;
+ 	vcore->first_vcpuid = core * threads_per_subcore;
+@@ -2519,10 +2519,9 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
+ {
+ 	struct kvm_vcpu *vcpu;
+ 	int do_sleep = 1;
++	DECLARE_SWAITQUEUE(wait);
+ 
+-	DEFINE_WAIT(wait);
+-
+-	prepare_to_wait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
++	prepare_to_swait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
+ 
+ 	/*
+ 	 * Check one last time for pending exceptions and ceded state after
+@@ -2536,7 +2535,7 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
+ 	}
+ 
+ 	if (!do_sleep) {
+-		finish_wait(&vc->wq, &wait);
++		finish_swait(&vc->wq, &wait);
+ 		return;
+ 	}
+ 
+@@ -2544,7 +2543,7 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
+ 	trace_kvmppc_vcore_blocked(vc, 0);
+ 	spin_unlock(&vc->lock);
+ 	schedule();
+-	finish_wait(&vc->wq, &wait);
++	finish_swait(&vc->wq, &wait);
+ 	spin_lock(&vc->lock);
+ 	vc->vcore_state = VCORE_INACTIVE;
+ 	trace_kvmppc_vcore_blocked(vc, 1);
+@@ -2600,7 +2599,7 @@ static int kvmppc_run_vcpu(struct kvm_run *kvm_run, struct kvm_vcpu *vcpu)
+ 			kvmppc_start_thread(vcpu, vc);
+ 			trace_kvm_guest_enter(vcpu);
+ 		} else if (vc->vcore_state == VCORE_SLEEPING) {
+-			wake_up(&vc->wq);
++			swake_up(&vc->wq);
+ 		}
+ 
+ 	}
+diff --git a/arch/s390/include/asm/kvm_host.h b/arch/s390/include/asm/kvm_host.h
+index efaac2c..c66831f 100644
+--- a/arch/s390/include/asm/kvm_host.h
++++ b/arch/s390/include/asm/kvm_host.h
+@@ -427,7 +427,7 @@ struct kvm_s390_irq_payload {
+ struct kvm_s390_local_interrupt {
+ 	spinlock_t lock;
+ 	struct kvm_s390_float_interrupt *float_int;
+-	wait_queue_head_t *wq;
++	struct swait_queue_head *wq;
+ 	atomic_t *cpuflags;
+ 	DECLARE_BITMAP(sigp_emerg_pending, KVM_MAX_VCPUS);
+ 	struct kvm_s390_irq_payload irq;
+diff --git a/arch/s390/kvm/interrupt.c b/arch/s390/kvm/interrupt.c
+index 6a75352..cc862c4 100644
+--- a/arch/s390/kvm/interrupt.c
++++ b/arch/s390/kvm/interrupt.c
+@@ -868,13 +868,13 @@ no_timer:
+ 
+ void kvm_s390_vcpu_wakeup(struct kvm_vcpu *vcpu)
+ {
+-	if (waitqueue_active(&vcpu->wq)) {
++	if (swait_active(&vcpu->wq)) {
+ 		/*
+ 		 * The vcpu gave up the cpu voluntarily, mark it as a good
+ 		 * yield-candidate.
+ 		 */
+ 		vcpu->preempted = true;
+-		wake_up_interruptible(&vcpu->wq);
++		swake_up(&vcpu->wq);
+ 		vcpu->stat.halt_wakeup++;
+ 	}
+ }
+diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
+index 4d30b86..34dc14f 100644
+--- a/arch/x86/kvm/lapic.c
++++ b/arch/x86/kvm/lapic.c
+@@ -1195,7 +1195,7 @@ static void apic_update_lvtt(struct kvm_lapic *apic)
+ static void apic_timer_expired(struct kvm_lapic *apic)
+ {
+ 	struct kvm_vcpu *vcpu = apic->vcpu;
+-	wait_queue_head_t *q = &vcpu->wq;
++	struct swait_queue_head *q = &vcpu->wq;
+ 	struct kvm_timer *ktimer = &apic->lapic_timer;
+ 
+ 	if (atomic_read(&apic->lapic_timer.pending))
+@@ -1204,8 +1204,8 @@ static void apic_timer_expired(struct kvm_lapic *apic)
+ 	atomic_inc(&apic->lapic_timer.pending);
+ 	kvm_set_pending_timer(vcpu);
+ 
+-	if (waitqueue_active(q))
+-		wake_up_interruptible(q);
++	if (swait_active(q))
++		swake_up(q);
+ 
+ 	if (apic_lvtt_tscdeadline(apic))
+ 		ktimer->expired_tscdeadline = ktimer->tscdeadline;
+diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
+index c923350..c690acc 100644
+--- a/include/linux/kvm_host.h
++++ b/include/linux/kvm_host.h
+@@ -25,6 +25,7 @@
+ #include <linux/irqflags.h>
+ #include <linux/context_tracking.h>
+ #include <linux/irqbypass.h>
 +#include <linux/swait.h>
-+
-+void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
-+			     struct lock_class_key *key)
-+{
-+	raw_spin_lock_init(&q->lock);
-+	lockdep_set_class_and_name(&q->lock, key, name);
-+	INIT_LIST_HEAD(&q->task_list);
-+}
-+EXPORT_SYMBOL(__init_swait_queue_head);
-+
-+/*
-+ * The thing about the wake_up_state() return value; I think we can ignore it.
-+ *
-+ * If for some reason it would return 0, that means the previously waiting
-+ * task is already running, so it will observe condition true (or has already).
-+ */
-+void swake_up_locked(struct swait_queue_head *q)
-+{
-+	struct swait_queue *curr;
-+
-+	if (list_empty(&q->task_list))
-+		return;
-+
-+	curr = list_first_entry(&q->task_list, typeof(*curr), task_list);
-+	wake_up_process(curr->task);
-+	list_del_init(&curr->task_list);
-+}
-+EXPORT_SYMBOL(swake_up_locked);
-+
-+void swake_up(struct swait_queue_head *q)
-+{
-+	unsigned long flags;
-+
-+	if (!swait_active(q))
-+		return;
-+
-+	raw_spin_lock_irqsave(&q->lock, flags);
-+	swake_up_locked(q);
-+	raw_spin_unlock_irqrestore(&q->lock, flags);
-+}
-+EXPORT_SYMBOL(swake_up);
-+
-+/*
-+ * Does not allow usage from IRQ disabled, since we must be able to
-+ * release IRQs to guarantee bounded hold time.
-+ */
-+void swake_up_all(struct swait_queue_head *q)
-+{
-+	struct swait_queue *curr;
-+	LIST_HEAD(tmp);
-+
-+	if (!swait_active(q))
-+		return;
-+
-+	raw_spin_lock_irq(&q->lock);
-+	list_splice_init(&q->task_list, &tmp);
-+	while (!list_empty(&tmp)) {
-+		curr = list_first_entry(&tmp, typeof(*curr), task_list);
-+
-+		wake_up_state(curr->task, TASK_NORMAL);
-+		list_del_init(&curr->task_list);
-+
-+		if (list_empty(&tmp))
-+			break;
-+
-+		raw_spin_unlock_irq(&q->lock);
-+		raw_spin_lock_irq(&q->lock);
-+	}
-+	raw_spin_unlock_irq(&q->lock);
-+}
-+EXPORT_SYMBOL(swake_up_all);
-+
-+void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	wait->task = current;
-+	if (list_empty(&wait->task_list))
-+		list_add(&wait->task_list, &q->task_list);
-+}
-+
-+void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
-+{
-+	unsigned long flags;
-+
-+	raw_spin_lock_irqsave(&q->lock, flags);
-+	__prepare_to_swait(q, wait);
-+	set_current_state(state);
-+	raw_spin_unlock_irqrestore(&q->lock, flags);
-+}
-+EXPORT_SYMBOL(prepare_to_swait);
-+
-+long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state)
-+{
-+	if (signal_pending_state(state, current))
-+		return -ERESTARTSYS;
-+
-+	prepare_to_swait(q, wait, state);
-+
-+	return 0;
-+}
-+EXPORT_SYMBOL(prepare_to_swait_event);
-+
-+void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	__set_current_state(TASK_RUNNING);
-+	if (!list_empty(&wait->task_list))
-+		list_del_init(&wait->task_list);
-+}
-+
-+void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
-+{
-+	unsigned long flags;
-+
-+	__set_current_state(TASK_RUNNING);
-+
-+	if (!list_empty_careful(&wait->task_list)) {
-+		raw_spin_lock_irqsave(&q->lock, flags);
-+		list_del_init(&wait->task_list);
-+		raw_spin_unlock_irqrestore(&q->lock, flags);
-+	}
-+}
-+EXPORT_SYMBOL(finish_swait);
+ #include <asm/signal.h>
+ 
+ #include <linux/kvm.h>
+@@ -243,7 +244,7 @@ struct kvm_vcpu {
+ 	int fpu_active;
+ 	int guest_fpu_loaded, guest_xcr0_loaded;
+ 	unsigned char fpu_counter;
+-	wait_queue_head_t wq;
++	struct swait_queue_head wq;
+ 	struct pid *pid;
+ 	int sigset_active;
+ 	sigset_t sigset;
+@@ -794,7 +795,7 @@ static inline bool kvm_arch_has_assigned_device(struct kvm *kvm)
+ }
+ #endif
+ 
+-static inline wait_queue_head_t *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
++static inline struct swait_queue_head *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
+ {
+ #ifdef __KVM_HAVE_ARCH_WQP
+ 	return vcpu->arch.wqp;
+diff --git a/virt/kvm/async_pf.c b/virt/kvm/async_pf.c
+index 77d42be..cd8477c 100644
+--- a/virt/kvm/async_pf.c
++++ b/virt/kvm/async_pf.c
+@@ -98,8 +98,8 @@ static void async_pf_execute(struct work_struct *work)
+ 	 * This memory barrier pairs with prepare_to_wait's set_current_state()
+ 	 */
+ 	smp_mb();
+-	if (waitqueue_active(&vcpu->wq))
+-		wake_up_interruptible(&vcpu->wq);
++	if (swait_active(&vcpu->wq))
++		swake_up(&vcpu->wq);
+ 
+ 	mmput(mm);
+ 	kvm_put_kvm(vcpu->kvm);
+diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
+index 484079e..43fad2e 100644
+--- a/virt/kvm/kvm_main.c
++++ b/virt/kvm/kvm_main.c
+@@ -226,8 +226,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
+ 	vcpu->kvm = kvm;
+ 	vcpu->vcpu_id = id;
+ 	vcpu->pid = NULL;
+-	vcpu->halt_poll_ns = 0;
+-	init_waitqueue_head(&vcpu->wq);
++	init_swait_queue_head(&vcpu->wq);
+ 	kvm_async_pf_vcpu_init(vcpu);
+ 
+ 	vcpu->pre_pcpu = -1;
+@@ -1999,7 +1998,7 @@ static int kvm_vcpu_check_block(struct kvm_vcpu *vcpu)
+ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+ {
+ 	ktime_t start, cur;
+-	DEFINE_WAIT(wait);
++	DECLARE_SWAITQUEUE(wait);
+ 	bool waited = false;
+ 	u64 block_ns;
+ 
+@@ -2024,7 +2023,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+ 	kvm_arch_vcpu_blocking(vcpu);
+ 
+ 	for (;;) {
+-		prepare_to_wait(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
++		prepare_to_swait(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
+ 
+ 		if (kvm_vcpu_check_block(vcpu) < 0)
+ 			break;
+@@ -2033,7 +2032,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
+ 		schedule();
+ 	}
+ 
+-	finish_wait(&vcpu->wq, &wait);
++	finish_swait(&vcpu->wq, &wait);
+ 	cur = ktime_get();
+ 
+ 	kvm_arch_vcpu_unblocking(vcpu);
+@@ -2065,11 +2064,11 @@ void kvm_vcpu_kick(struct kvm_vcpu *vcpu)
+ {
+ 	int me;
+ 	int cpu = vcpu->cpu;
+-	wait_queue_head_t *wqp;
++	struct swait_queue_head *wqp;
+ 
+ 	wqp = kvm_arch_vcpu_wq(vcpu);
+-	if (waitqueue_active(wqp)) {
+-		wake_up_interruptible(wqp);
++	if (swait_active(wqp)) {
++		swake_up(wqp);
+ 		++vcpu->stat.halt_wakeup;
+ 	}
+ 
+@@ -2170,7 +2169,7 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me)
+ 				continue;
+ 			if (vcpu == me)
+ 				continue;
+-			if (waitqueue_active(&vcpu->wq) && !kvm_arch_vcpu_runnable(vcpu))
++			if (swait_active(&vcpu->wq) && !kvm_arch_vcpu_runnable(vcpu))
+ 				continue;
+ 			if (!kvm_vcpu_eligible_for_directed_yield(vcpu))
+ 				continue;
 -- 
 2.5.0
-
