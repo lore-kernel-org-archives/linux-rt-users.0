@@ -1,209 +1,390 @@
 From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: [PATCH tip v7 6/7] rcu: Do not call rcu_nocb_gp_cleanup() while holding rnp->lock
-Date: Fri, 29 Jan 2016 15:03:27 +0100
-Message-ID: <1454076208-28354-7-git-send-email-daniel.wagner@bmw-carit.de>
+Subject: [PATCH tip v7 3/7] wait.[ch]: Introduce the simple waitqueue (swait) implementation
+Date: Fri, 29 Jan 2016 15:03:24 +0100
+Message-ID: <1454076208-28354-4-git-send-email-daniel.wagner@bmw-carit.de>
 References: <1454076208-28354-1-git-send-email-daniel.wagner@bmw-carit.de>
 Cc: linux-fbdev@vger.kernel.org, linux-mips@linux-mips.org,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Boqun Feng <boqun.feng@gmail.com>,
-	Maik Broemme <mbroemme@plusserver.de>,
-	Ralf Baechle <ralf@linux-mips.org>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
+        Marcelo Tosatti <mtosatti@redhat.com>,
+        Paolo Bonzini <pbonzini@redhat.com>,
+        "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+        Paul Gortmaker <paul.gortmaker@windriver.com>,
+        "Peter Zijlstra (Intel)" <peterz@infradead.org>,
+        Thomas Gleixner <tglx@linutronix.de>,
+        Steven Rostedt <rostedt@goodmis.org>,
+        Boqun Feng <boqun.feng@gmail.com>,
+        Maik Broemme <mbroemme@plusserver.de>,
+        Ralf Baechle <ralf@linux-mips.org>,
+        Daniel Wagner <daniel.wagner@bmw-carit.de>
 To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Return-path: <linux-mips-bounce@linux-mips.org>
 In-Reply-To: <1454076208-28354-1-git-send-email-daniel.wagner@bmw-carit.de>
-Sender: linux-kernel-owner@vger.kernel.org
+Sender: linux-mips-bounce@linux-mips.org
+Errors-to: linux-mips-bounce@linux-mips.org
+List-help: <mailto:ecartis@linux-mips.org?Subject=help>
+List-unsubscribe: <mailto:ecartis@linux-mips.org?subject=unsubscribe%20linux-mips>
+List-software: Ecartis version 1.0.0
+List-subscribe: <mailto:ecartis@linux-mips.org?subject=subscribe%20linux-mips>
+List-owner: <mailto:ralf@linux-mips.org>
+List-post: <mailto:linux-mips@linux-mips.org>
+List-archive: <http://www.linux-mips.org/archives/linux-mips/>
 List-Id: linux-rt-users.vger.kernel.org
 
-rcu_nocb_gp_cleanup() is called while holding rnp->lock. Currently,
-this is okay because the wake_up_all() in rcu_nocb_gp_cleanup() will
-not enable the IRQs. lockdep is happy.
+From: "Peter Zijlstra (Intel)" <peterz@infradead.org>
 
-By switching over using swait this is not true anymore. swake_up_all()
-enables the IRQs while processing the waiters. __do_softirq() can now
-run and will eventually call rcu_process_callbacks() which wants to
-grap nrp->lock.
+The existing wait queue support has support for custom wake up call
+backs, wake flags, wake key (passed to call back) and exclusive
+flags that allow wakers to be tagged as exclusive, for limiting
+the number of wakers.
 
-Let's move the rcu_nocb_gp_cleanup() call outside the lock before we
-switch over to swait.
+In a lot of cases, none of these features are used, and hence we
+can benefit from a slimmed down version that lowers memory overhead
+and reduces runtime overhead.
 
-If we would hold the rnp->lock and use swait, lockdep reports
-following:
+The concept originated from -rt, where waitqueues are a constant
+source of trouble, as we can't convert the head lock to a raw
+spinlock due to fancy and long lasting callbacks.
 
- =================================
- [ INFO: inconsistent lock state ]
- 4.2.0-rc5-00025-g9a73ba0 #136 Not tainted
- ---------------------------------
- inconsistent {IN-SOFTIRQ-W} -> {SOFTIRQ-ON-W} usage.
- rcu_preempt/8 [HC0[0]:SC0[0]:HE1:SE1] takes:
-  (rcu_node_1){+.?...}, at: [<ffffffff811387c7>] rcu_gp_kthread+0xb97/0xeb0
- {IN-SOFTIRQ-W} state was registered at:
-   [<ffffffff81109b9f>] __lock_acquire+0xd5f/0x21e0
-   [<ffffffff8110be0f>] lock_acquire+0xdf/0x2b0
-   [<ffffffff81841cc9>] _raw_spin_lock_irqsave+0x59/0xa0
-   [<ffffffff81136991>] rcu_process_callbacks+0x141/0x3c0
-   [<ffffffff810b1a9d>] __do_softirq+0x14d/0x670
-   [<ffffffff810b2214>] irq_exit+0x104/0x110
-   [<ffffffff81844e96>] smp_apic_timer_interrupt+0x46/0x60
-   [<ffffffff81842e70>] apic_timer_interrupt+0x70/0x80
-   [<ffffffff810dba66>] rq_attach_root+0xa6/0x100
-   [<ffffffff810dbc2d>] cpu_attach_domain+0x16d/0x650
-   [<ffffffff810e4b42>] build_sched_domains+0x942/0xb00
-   [<ffffffff821777c2>] sched_init_smp+0x509/0x5c1
-   [<ffffffff821551e3>] kernel_init_freeable+0x172/0x28f
-   [<ffffffff8182cdce>] kernel_init+0xe/0xe0
-   [<ffffffff8184231f>] ret_from_fork+0x3f/0x70
- irq event stamp: 76
- hardirqs last  enabled at (75): [<ffffffff81841330>] _raw_spin_unlock_irq+0x30/0x60
- hardirqs last disabled at (76): [<ffffffff8184116f>] _raw_spin_lock_irq+0x1f/0x90
- softirqs last  enabled at (0): [<ffffffff810a8df2>] copy_process.part.26+0x602/0x1cf0
- softirqs last disabled at (0): [<          (null)>]           (null)
- other info that might help us debug this:
-  Possible unsafe locking scenario:
-        CPU0
-        ----
-   lock(rcu_node_1);
-   <Interrupt>
-     lock(rcu_node_1);
-  *** DEADLOCK ***
- 1 lock held by rcu_preempt/8:
-  #0:  (rcu_node_1){+.?...}, at: [<ffffffff811387c7>] rcu_gp_kthread+0xb97/0xeb0
- stack backtrace:
- CPU: 0 PID: 8 Comm: rcu_preempt Not tainted 4.2.0-rc5-00025-g9a73ba0 #136
- Hardware name: Dell Inc. PowerEdge R820/066N7P, BIOS 2.0.20 01/16/2014
-  0000000000000000 000000006d7e67d8 ffff881fb081fbd8 ffffffff818379e0
-  0000000000000000 ffff881fb0812a00 ffff881fb081fc38 ffffffff8110813b
-  0000000000000000 0000000000000001 ffff881f00000001 ffffffff8102fa4f
- Call Trace:
-  [<ffffffff818379e0>] dump_stack+0x4f/0x7b
-  [<ffffffff8110813b>] print_usage_bug+0x1db/0x1e0
-  [<ffffffff8102fa4f>] ? save_stack_trace+0x2f/0x50
-  [<ffffffff811087ad>] mark_lock+0x66d/0x6e0
-  [<ffffffff81107790>] ? check_usage_forwards+0x150/0x150
-  [<ffffffff81108898>] mark_held_locks+0x78/0xa0
-  [<ffffffff81841330>] ? _raw_spin_unlock_irq+0x30/0x60
-  [<ffffffff81108a28>] trace_hardirqs_on_caller+0x168/0x220
-  [<ffffffff81108aed>] trace_hardirqs_on+0xd/0x10
-  [<ffffffff81841330>] _raw_spin_unlock_irq+0x30/0x60
-  [<ffffffff810fd1c7>] swake_up_all+0xb7/0xe0
-  [<ffffffff811386e1>] rcu_gp_kthread+0xab1/0xeb0
-  [<ffffffff811089bf>] ? trace_hardirqs_on_caller+0xff/0x220
-  [<ffffffff81841341>] ? _raw_spin_unlock_irq+0x41/0x60
-  [<ffffffff81137c30>] ? rcu_barrier+0x20/0x20
-  [<ffffffff810d2014>] kthread+0x104/0x120
-  [<ffffffff81841330>] ? _raw_spin_unlock_irq+0x30/0x60
-  [<ffffffff810d1f10>] ? kthread_create_on_node+0x260/0x260
-  [<ffffffff8184231f>] ret_from_fork+0x3f/0x70
-  [<ffffffff810d1f10>] ? kthread_create_on_node+0x260/0x260
+With the removal of custom callbacks, we can use a raw lock for
+queue list manipulations, hence allowing the simple wait support
+to be used in -rt.
 
 Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: "Paul E. McKenney" <paulmck@linux.vnet.ibm.com>
-Cc: Thomas Gleixner <tglx@linutronix.de>
----
- kernel/rcu/tree.c        |  4 +++-
- kernel/rcu/tree.h        |  3 ++-
- kernel/rcu/tree_plugin.h | 16 +++++++++++++---
- 3 files changed, 18 insertions(+), 5 deletions(-)
+Originally-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
-index f07343b..baf6d09 100644
---- a/kernel/rcu/tree.c
-+++ b/kernel/rcu/tree.c
-@@ -1590,7 +1590,6 @@ static int rcu_future_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
- 	int needmore;
- 	struct rcu_data *rdp = this_cpu_ptr(rsp->rda);
- 
--	rcu_nocb_gp_cleanup(rsp, rnp);
- 	rnp->need_future_gp[c & 0x1] = 0;
- 	needmore = rnp->need_future_gp[(c + 1) & 0x1];
- 	trace_rcu_future_gp(rnp, rdp, c,
-@@ -1991,6 +1990,7 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
- 	int nocb = 0;
- 	struct rcu_data *rdp;
- 	struct rcu_node *rnp = rcu_get_root(rsp);
-+	wait_queue_head_t *sq;
- 
- 	WRITE_ONCE(rsp->gp_activity, jiffies);
- 	raw_spin_lock_irq(&rnp->lock);
-@@ -2029,7 +2029,9 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
- 			needgp = __note_gp_changes(rsp, rnp, rdp) || needgp;
- 		/* smp_mb() provided by prior unlock-lock pair. */
- 		nocb += rcu_future_gp_cleanup(rsp, rnp);
-+		sq = rcu_nocb_gp_get(rnp);
- 		raw_spin_unlock_irq(&rnp->lock);
-+		rcu_nocb_gp_cleanup(sq);
- 		cond_resched_rcu_qs();
- 		WRITE_ONCE(rsp->gp_activity, jiffies);
- 		rcu_gp_slow(rsp, gp_cleanup_delay);
-diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
-index 9fb4e23..aa47e2c 100644
---- a/kernel/rcu/tree.h
-+++ b/kernel/rcu/tree.h
-@@ -607,7 +607,8 @@ static void zero_cpu_stall_ticks(struct rcu_data *rdp);
- static void increment_cpu_stall_ticks(void);
- static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu);
- static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq);
--static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp);
-+static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp);
-+static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq);
- static void rcu_init_one_nocb(struct rcu_node *rnp);
- static bool __call_rcu_nocb(struct rcu_data *rdp, struct rcu_head *rhp,
- 			    bool lazy, unsigned long flags);
-diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
-index 630c197..99b1ce6 100644
---- a/kernel/rcu/tree_plugin.h
-+++ b/kernel/rcu/tree_plugin.h
-@@ -1822,9 +1822,9 @@ early_param("rcu_nocb_poll", parse_rcu_nocb_poll);
-  * Wake up any no-CBs CPUs' kthreads that were waiting on the just-ended
-  * grace period.
-  */
--static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
-+static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
- {
--	wake_up_all(&rnp->nocb_gp_wq[rnp->completed & 0x1]);
-+	wake_up_all(sq);
- }
- 
- /*
-@@ -1840,6 +1840,11 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
- 	rnp->need_future_gp[(rnp->completed + 1) & 0x1] += nrq;
- }
- 
-+static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
-+{
-+	return &rnp->nocb_gp_wq[rnp->completed & 0x1];
+[Patch is from PeterZ which is based on Thomas version.
+ Commit message is written by Paul G.
+ Daniel:
+  -  And some compile issues fixed.
+  -  Added non-lazy implementation of swake_up_locked as suggested by Boqun Feng.]
+---
+ include/linux/swait.h | 172 ++++++++++++++++++++++++++++++++++++++++++++++++++
+ kernel/sched/Makefile |   2 +-
+ kernel/sched/swait.c  | 123 ++++++++++++++++++++++++++++++++++++
+ 3 files changed, 296 insertions(+), 1 deletion(-)
+ create mode 100644 include/linux/swait.h
+ create mode 100644 kernel/sched/swait.c
+
+diff --git a/include/linux/swait.h b/include/linux/swait.h
+new file mode 100644
+index 0000000..c1f9c62
+--- /dev/null
++++ b/include/linux/swait.h
+@@ -0,0 +1,172 @@
++#ifndef _LINUX_SWAIT_H
++#define _LINUX_SWAIT_H
++
++#include <linux/list.h>
++#include <linux/stddef.h>
++#include <linux/spinlock.h>
++#include <asm/current.h>
++
++/*
++ * Simple wait queues
++ *
++ * While these are very similar to the other/complex wait queues (wait.h) the
++ * most important difference is that the simple waitqueue allows for
++ * deterministic behaviour -- IOW it has strictly bounded IRQ and lock hold
++ * times.
++ *
++ * In order to make this so, we had to drop a fair number of features of the
++ * other waitqueue code; notably:
++ *
++ *  - mixing INTERRUPTIBLE and UNINTERRUPTIBLE sleeps on the same waitqueue;
++ *    all wakeups are TASK_NORMAL in order to avoid O(n) lookups for the right
++ *    sleeper state.
++ *
++ *  - the exclusive mode; because this requires preserving the list order
++ *    and this is hard.
++ *
++ *  - custom wake functions; because you cannot give any guarantees about
++ *    random code.
++ *
++ * As a side effect of this; the data structures are slimmer.
++ *
++ * One would recommend using this wait queue where possible.
++ */
++
++struct task_struct;
++
++struct swait_queue_head {
++	raw_spinlock_t		lock;
++	struct list_head	task_list;
++};
++
++struct swait_queue {
++	struct task_struct	*task;
++	struct list_head	task_list;
++};
++
++#define __SWAITQUEUE_INITIALIZER(name) {				\
++	.task		= current,					\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
 +}
 +
- static void rcu_init_one_nocb(struct rcu_node *rnp)
- {
- 	init_waitqueue_head(&rnp->nocb_gp_wq[0]);
-@@ -2514,7 +2519,7 @@ static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu)
- 	return false;
- }
- 
--static void rcu_nocb_gp_cleanup(struct rcu_state *rsp, struct rcu_node *rnp)
-+static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
- {
- }
- 
-@@ -2522,6 +2527,11 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
- {
- }
- 
-+static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
-+{
-+	return NULL;
++#define DECLARE_SWAITQUEUE(name)					\
++	struct swait_queue name = __SWAITQUEUE_INITIALIZER(name)
++
++#define __SWAIT_QUEUE_HEAD_INITIALIZER(name) {				\
++	.lock		= __RAW_SPIN_LOCK_UNLOCKED(name.lock),		\
++	.task_list	= LIST_HEAD_INIT((name).task_list),		\
 +}
 +
- static void rcu_init_one_nocb(struct rcu_node *rnp)
- {
- }
++#define DECLARE_SWAIT_QUEUE_HEAD(name)					\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INITIALIZER(name)
++
++extern void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
++				    struct lock_class_key *key);
++
++#define init_swait_queue_head(q)				\
++	do {							\
++		static struct lock_class_key __key;		\
++		__init_swait_queue_head((q), #q, &__key);	\
++	} while (0)
++
++#ifdef CONFIG_LOCKDEP
++# define __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)			\
++	({ init_swait_queue_head(&name); name; })
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	struct swait_queue_head name = __SWAIT_QUEUE_HEAD_INIT_ONSTACK(name)
++#else
++# define DECLARE_SWAIT_QUEUE_HEAD_ONSTACK(name)			\
++	DECLARE_SWAIT_QUEUE_HEAD(name)
++#endif
++
++static inline int swait_active(struct swait_queue_head *q)
++{
++	return !list_empty(&q->task_list);
++}
++
++extern void swake_up(struct swait_queue_head *q);
++extern void swake_up_all(struct swait_queue_head *q);
++extern void swake_up_locked(struct swait_queue_head *q);
++
++extern void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait);
++extern void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state);
++extern long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state);
++
++extern void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
++extern void finish_swait(struct swait_queue_head *q, struct swait_queue *wait);
++
++/* as per ___wait_event() but for swait, therefore "exclusive == 0" */
++#define ___swait_event(wq, condition, state, ret, cmd)			\
++({									\
++	struct swait_queue __wait;					\
++	long __ret = ret;						\
++									\
++	INIT_LIST_HEAD(&__wait.task_list);				\
++	for (;;) {							\
++		long __int = prepare_to_swait_event(&wq, &__wait, state);\
++									\
++		if (condition)						\
++			break;						\
++									\
++		if (___wait_is_interruptible(state) && __int) {		\
++			__ret = __int;					\
++			break;						\
++		}							\
++									\
++		cmd;							\
++	}								\
++	finish_swait(&wq, &__wait);					\
++	__ret;								\
++})
++
++#define __swait_event(wq, condition)					\
++	(void)___swait_event(wq, condition, TASK_UNINTERRUPTIBLE, 0,	\
++			    schedule())
++
++#define swait_event(wq, condition)					\
++do {									\
++	if (condition)							\
++		break;							\
++	__swait_event(wq, condition);					\
++} while (0)
++
++#define __swait_event_timeout(wq, condition, timeout)			\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_UNINTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_timeout(wq, condition, timeout)			\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_timeout(wq, condition, timeout);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible(wq, condition)			\
++	___swait_event(wq, condition, TASK_INTERRUPTIBLE, 0,		\
++		      schedule())
++
++#define swait_event_interruptible(wq, condition)			\
++({									\
++	int __ret = 0;							\
++	if (!(condition))						\
++		__ret = __swait_event_interruptible(wq, condition);	\
++	__ret;								\
++})
++
++#define __swait_event_interruptible_timeout(wq, condition, timeout)	\
++	___swait_event(wq, ___wait_cond_timeout(condition),		\
++		      TASK_INTERRUPTIBLE, timeout,			\
++		      __ret = schedule_timeout(__ret))
++
++#define swait_event_interruptible_timeout(wq, condition, timeout)	\
++({									\
++	long __ret = timeout;						\
++	if (!___wait_cond_timeout(condition))				\
++		__ret = __swait_event_interruptible_timeout(wq,		\
++						condition, timeout);	\
++	__ret;								\
++})
++
++#endif /* _LINUX_SWAIT_H */
+diff --git a/kernel/sched/Makefile b/kernel/sched/Makefile
+index 6768797..7d4cba2 100644
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -13,7 +13,7 @@ endif
+ 
+ obj-y += core.o loadavg.o clock.o cputime.o
+ obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y += wait.o completion.o idle.o
++obj-y += wait.o swait.o completion.o idle.o
+ obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
+new file mode 100644
+index 0000000..82f0dff
+--- /dev/null
++++ b/kernel/sched/swait.c
+@@ -0,0 +1,123 @@
++#include <linux/sched.h>
++#include <linux/swait.h>
++
++void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
++			     struct lock_class_key *key)
++{
++	raw_spin_lock_init(&q->lock);
++	lockdep_set_class_and_name(&q->lock, key, name);
++	INIT_LIST_HEAD(&q->task_list);
++}
++EXPORT_SYMBOL(__init_swait_queue_head);
++
++/*
++ * The thing about the wake_up_state() return value; I think we can ignore it.
++ *
++ * If for some reason it would return 0, that means the previously waiting
++ * task is already running, so it will observe condition true (or has already).
++ */
++void swake_up_locked(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++
++	if (list_empty(&q->task_list))
++		return;
++
++	curr = list_first_entry(&q->task_list, typeof(*curr), task_list);
++	wake_up_process(curr->task);
++	list_del_init(&curr->task_list);
++}
++EXPORT_SYMBOL(swake_up_locked);
++
++void swake_up(struct swait_queue_head *q)
++{
++	unsigned long flags;
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	swake_up_locked(q);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(swake_up);
++
++/*
++ * Does not allow usage from IRQ disabled, since we must be able to
++ * release IRQs to guarantee bounded hold time.
++ */
++void swake_up_all(struct swait_queue_head *q)
++{
++	struct swait_queue *curr;
++	LIST_HEAD(tmp);
++
++	if (!swait_active(q))
++		return;
++
++	raw_spin_lock_irq(&q->lock);
++	list_splice_init(&q->task_list, &tmp);
++	while (!list_empty(&tmp)) {
++		curr = list_first_entry(&tmp, typeof(*curr), task_list);
++
++		wake_up_state(curr->task, TASK_NORMAL);
++		list_del_init(&curr->task_list);
++
++		if (list_empty(&tmp))
++			break;
++
++		raw_spin_unlock_irq(&q->lock);
++		raw_spin_lock_irq(&q->lock);
++	}
++	raw_spin_unlock_irq(&q->lock);
++}
++EXPORT_SYMBOL(swake_up_all);
++
++void __prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	wait->task = current;
++	if (list_empty(&wait->task_list))
++		list_add(&wait->task_list, &q->task_list);
++}
++
++void prepare_to_swait(struct swait_queue_head *q, struct swait_queue *wait, int state)
++{
++	unsigned long flags;
++
++	raw_spin_lock_irqsave(&q->lock, flags);
++	__prepare_to_swait(q, wait);
++	set_current_state(state);
++	raw_spin_unlock_irqrestore(&q->lock, flags);
++}
++EXPORT_SYMBOL(prepare_to_swait);
++
++long prepare_to_swait_event(struct swait_queue_head *q, struct swait_queue *wait, int state)
++{
++	if (signal_pending_state(state, current))
++		return -ERESTARTSYS;
++
++	prepare_to_swait(q, wait, state);
++
++	return 0;
++}
++EXPORT_SYMBOL(prepare_to_swait_event);
++
++void __finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	__set_current_state(TASK_RUNNING);
++	if (!list_empty(&wait->task_list))
++		list_del_init(&wait->task_list);
++}
++
++void finish_swait(struct swait_queue_head *q, struct swait_queue *wait)
++{
++	unsigned long flags;
++
++	__set_current_state(TASK_RUNNING);
++
++	if (!list_empty_careful(&wait->task_list)) {
++		raw_spin_lock_irqsave(&q->lock, flags);
++		list_del_init(&wait->task_list);
++		raw_spin_unlock_irqrestore(&q->lock, flags);
++	}
++}
++EXPORT_SYMBOL(finish_swait);
 -- 
 2.5.0
