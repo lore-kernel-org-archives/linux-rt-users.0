@@ -1,83 +1,42 @@
-From: Ralf Ramsauer <ralf@ramses-pyramidenbau.de>
-Subject: Re: Old split quilt queues
-Date: Fri, 29 Jan 2016 19:23:38 +0100
-Message-ID: <56ABAE2A.2030902@ramses-pyramidenbau.de>
-References: <569D6AE1.2090301@ramses-pyramidenbau.de>
- <alpine.DEB.2.11.1601202151200.3575@nanos>
- <56AA25D6.3070701@ramses-pyramidenbau.de>
- <alpine.DEB.2.11.1601291210330.3886@nanos>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
+Subject: Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible
+ pointer check into error
+Date: Fri, 29 Jan 2016 13:55:24 -0500
+Message-ID: <20160129185523.GZ8889@windriver.com>
+References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
+ <1453992270-4688-3-git-send-email-daniel.wagner@bmw-carit.de>
+ <56AB5867.6020405@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 8BIT
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from ramses-pyramidenbau.de ([37.120.178.10]:55444 "EHLO
-	mail.ramses-pyramidenbau.de" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1756755AbcA2SXk convert rfc822-to-8bit
-	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jan 2016 13:23:40 -0500
-In-Reply-To: <alpine.DEB.2.11.1601291210330.3886@nanos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kbuild@vger.kernel.org>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E . McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Boqun Feng <boqun.feng@gmail.com>
+To: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <56AB5867.6020405@bmw-carit.de>
+Sender: linux-kbuild-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi,
+[Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 29/01/2016 (Fri 13:17) Daniel Wagner wrote:
 
-just out of curiosity:
+> On 01/28/2016 03:44 PM, Daniel Wagner wrote:
+> > +# enforce correct pointer usage
+> > +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
+> > +
+> 
+> As it turns out there are a few fallouts by that one. I'll send fixes
+> for it.
 
-As I expected, inside that repo are a lot of tags for the various -rt
-versions.
-First I thought, RT would make use of rebasing, like:
-  - Rebase onto the next kernel version and drop unnecessary commits
-(e.g. patches that went upstream)
-  - Do some additional changes
-  - Export vA.B.C...vA.B.C-rtX as split quilt queue
+Did you try non-x86 builds with this applied?   I'd be really surprised
+if there were just a few, once you did allyesconfig/allmodconfig for
+ARM, MIPS, PPC, etc.
 
-But afaict, (at least on the old rt-history), you made a lot of merges
-from rt/* branches and added tags describing the -rt version. Then you
-went on merging against master in order to keep up with upstream.
-
-Given that, how do you create a split quilt queue, that applies against
-an upstream tag?
-
-For example, let's take the first RT Tag of rt-history: v2.6.31-rc6-rt2
-How would you create a split quilt queue, that applies against v2.6.31-rc6?
-
-(I need to extract all those split quilt queues RT version<->base
-upstream version)
-
-Thank you
-  Ralf
-
-On 01/29/16 12:12, Thomas Gleixner wrote:
-> On Thu, 28 Jan 2016, Ralf Ramsauer wrote:
->> On 01/20/16 21:59, Thomas Gleixner wrote:
->>> from git.kernel.org AFAICT, but I should have an archive somewhere. Poke me
->>> again in a week if I forget to search for it.
->> Poke :-)
-> Ouch :)
->
->> Did you find some old archive?
-> Yes. Just forgot to push it out to k.org. Here you go:
->
->      git://git.kernel.org/pub/scm/linux/kernel/git/tglx/rt-history.git
->
-> It has two branches: linux-2.6.31.y-rt and linux-2.6.33.y-rt
->
-> Have fun!
->
-> Thanks,
->
-> 	tglx
->
->
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
-
--- 
-Ralf Ramsauer
-GPG: 0x8F10049B
-
-
+P.
+--
