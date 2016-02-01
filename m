@@ -1,51 +1,53 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: Old split quilt queues
-Date: Fri, 29 Jan 2016 20:56:29 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1601292053330.3886@nanos>
-References: <569D6AE1.2090301@ramses-pyramidenbau.de> <alpine.DEB.2.11.1601202151200.3575@nanos> <56AA25D6.3070701@ramses-pyramidenbau.de> <alpine.DEB.2.11.1601291210330.3886@nanos> <56ABAE2A.2030902@ramses-pyramidenbau.de>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible
+ pointer check into error
+Date: Mon, 1 Feb 2016 07:49:21 +0100
+Message-ID: <56AEFFF1.1010404@bmw-carit.de>
+References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
+ <1453992270-4688-3-git-send-email-daniel.wagner@bmw-carit.de>
+ <56AB5867.6020405@bmw-carit.de> <20160129185523.GZ8889@windriver.com>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Ralf Ramsauer <ralf@ramses-pyramidenbau.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59012 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753640AbcA2T5f (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 29 Jan 2016 14:57:35 -0500
-In-Reply-To: <56ABAE2A.2030902@ramses-pyramidenbau.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset="windows-1252"
+Content-Transfer-Encoding: 7bit
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kbuild@vger.kernel.org>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E . McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Boqun Feng <boqun.feng@gmail.com>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <20160129185523.GZ8889@windriver.com>
+Sender: linux-kbuild-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Fri, 29 Jan 2016, Ralf Ramsauer wrote:
-> As I expected, inside that repo are a lot of tags for the various -rt
-> versions.
-> First I thought, RT would make use of rebasing, like:
->   - Rebase onto the next kernel version and drop unnecessary commits
-> (e.g. patches that went upstream)
->   - Do some additional changes
->   - Export vA.B.C...vA.B.C-rtX as split quilt queue
+On 01/29/2016 07:55 PM, Paul Gortmaker wrote:
+> [Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 29/01/2016 (Fri 13:17) Daniel Wagner wrote:
 > 
-> But afaict, (at least on the old rt-history), you made a lot of merges
-> from rt/* branches and added tags describing the -rt version. Then you
-> went on merging against master in order to keep up with upstream.
+>> On 01/28/2016 03:44 PM, Daniel Wagner wrote:
+>>> +# enforce correct pointer usage
+>>> +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
+>>> +
+>>
+>> As it turns out there are a few fallouts by that one. I'll send fixes
+>> for it.
 > 
-> Given that, how do you create a split quilt queue, that applies against
-> an upstream tag?
-> 
-> For example, let's take the first RT Tag of rt-history: v2.6.31-rc6-rt2
-> How would you create a split quilt queue, that applies against v2.6.31-rc6?
-> 
-> (I need to extract all those split quilt queues RT version<->base
-> upstream version)
+> Did you try non-x86 builds with this applied?   I'd be really surprised
+> if there were just a few, once you did allyesconfig/allmodconfig for
+> ARM, MIPS, PPC, etc.
 
-As I said before: That was an experiment whether git is usable as a tool to
-manage something complex as rt. It turned out, that it's not. I recreated a
-new quilt queue after I abondoned git for rt.
+I have tried this with non-x86 builds and apart of a few problems all
+looked fine. As it turns out I was using too old cross tools from
+kernel.org [1]. Luckily Fengguang's kbuild robot did catch a bunch of
+them (see the patches in this series).
 
-So creating split queues is going to be a very interesting and tedious
-detective work.
+Since Thomas was also surprised that only a bunch of them showed up,
+I'll better give it another go with more recent compilers.
 
-Thanks,
+cheers,
+daniel
 
-	tglx
+[1] https://www.kernel.org/pub/tools/crosstool
