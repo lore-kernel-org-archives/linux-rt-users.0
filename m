@@ -1,67 +1,77 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [RT] oops in 4.1.3-rt3
-Date: Thu, 4 Feb 2016 14:59:31 -0600
-Message-ID: <20160204145931.47dd616d@sluggy.hsv.redhat.com>
-References: <20150803142700.1de720e4@sluggy>
+From: "Shi, Yang" <yang.shi@linaro.org>
+Subject: Re: -rt kernel just can show 8 perf events?
+Date: Thu, 4 Feb 2016 15:41:32 -0800
+Message-ID: <56B3E1AC.2080209@linaro.org>
+References: <565E04D5.4000202@linaro.org>
+ <20151211173616.GL6720@linutronix.de> <566B0E72.50608@linaro.org>
+ <20160204151623.GB3381@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/t0ITbzCFEuwpSFfwdSagB.V"; protocol="application/pgp-signature"
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Transfer-Encoding: 7bit
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users@vger.kernel.org
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20150803142700.1de720e4@sluggy>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-oi0-f48.google.com ([209.85.218.48]:34342 "EHLO
+	mail-oi0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752971AbcBDXlk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Feb 2016 18:41:40 -0500
+Received: by mail-oi0-f48.google.com with SMTP id w5so30931881oie.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 04 Feb 2016 15:41:40 -0800 (PST)
+In-Reply-To: <20160204151623.GB3381@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
---Sig_/t0ITbzCFEuwpSFfwdSagB.V
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+On 2/4/2016 7:16 AM, Sebastian Andrzej Siewior wrote:
+> * Shi, Yang | 2015-12-11 09:57:06 [-0800]:
+>
+>> On 12/11/2015 9:36 AM, Sebastian Andrzej Siewior wrote:
+>>> And 4.1.12 (without -rt13) is not having this kind of problem?
+>>
+>> No. mainline 4.1.12 works well.
+>
+> The same thing here. But I get this:
+>
+>   Performance counter stats for 'tar tJ':
+>
+>             144,407      cs
+>              16,733      page-faults
+>              16,732      minor-faults
+>                   1      major-faults
+>             805,335      iTLB-load-misses                                              (24.83%)
+>           6,606,698      dTLB-load-misses                                              (24.63%)
+>       3,734,425,072      branches                                                      (37.35%)
+>         228,660,856      L1-dcache-prefetches                                          (37.06%)
+>           4,564,273      L1-icache-prefetches                                          (49.68%)
+>         399,365,890      branch-misses             #   10.69% of all branches          (62.63%)
+>          79,278,129      cache-misses                                                  (62.96%)
+>      30,825,564,763      cycles                                                        (50.79%)
+>
+>         8.705696429 seconds time elapsed
+>
+> once I apply this chunk:
 
-On Mon, 3 Aug 2015 14:27:00 -0500
-Clark Williams <williams@redhat.com> wrote:
+Thanks. I will have a try with the patch soon.
 
-> Sebastian,
->=20
-> Below is a traceback I hit while running 4.1.3-rt3 on my Lenovo T530.
->=20
-> I was doing my normal, play music, copy files over the lan, do compiles,
-> do email, etc., so I I can't really point you at a reproducer. The graphi=
-cs
-> system stayed up somewhat but the actual trace I hit scrolled off. This w=
-as
-> extracted from the syslog with 'journalctl'.=20
->=20
-> If I encounter it again, I'll see if I can force a kdump.=20
->=20
+Yang
 
-I have been unable to reproduce this bug. It happened during normal use and=
- I haven't changed work habits, so I'd say drop this from the -rt open-issu=
-es section until we can get an actual reproducer or at least until the freq=
-uency goes up.
+>
+> diff --git a/kernel/events/core.c b/kernel/events/core.c
+> --- a/kernel/events/core.c
+> +++ b/kernel/events/core.c
+> @@ -802,6 +802,7 @@ static void __perf_mux_hrtimer_init(struct perf_cpu_context *cpuctx, int cpu)
+>   	raw_spin_lock_init(&cpuctx->hrtimer_lock);
+>   	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
+>   	timer->function = perf_mux_hrtimer_handler;
+> +	timer->irqsafe = 1;
+>   }
+>
+>   static int perf_mux_hrtimer_restart(struct perf_cpu_context *cpuctx)
+>
+>> Yang
+>
+> Sebastian
+>
 
-Thanks,
-Clark
-
---Sig_/t0ITbzCFEuwpSFfwdSagB.V
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJWs7u0AAoJEOI5asVwYXLrqwMP/1ejnmpOgS1HcLtmVd9rx6YO
-Bg8DhPxB0VRAV0O3B6cSfVCdG7BTwhrBbcO1kyRD0JQtOd/jt+jZculWV6gORvy4
-/6d+zz+g8i4LTbc+AM9sgPXURQ/3tFP6NaYwTDZ4IMrsIc6SONhIC7rv7Nvy66Yd
-2EF9z03QA6yePywlku+o7lcA5BL1jdZkWvweMRCL6GFYK+0jht2sVFK3Qwda81C4
-I0pGIUiHp7774gP6RySo5hGOblNC3TagmqPM0pyCs9J8N6qqhW7+F9x7NeAh1gMY
-phZLIAVOZs3GHFu4aQrq6p9qdi6LXYfuKCPsGtOXHrrERBnmYxXwOXxlS7vbo0VQ
-RZIvshrmqXJBNJl5/nxACetfWRxpMtl8oeLO6nXsm2zwrv5vjYqhGhJCImsGGsLo
-uVHrYxMnjvc9EkoP/vR3HPA2x9ZwFyIaWWogrqpJL9wrV2UXUKLfC+nup7jdDh9W
-9oQtlJQcHHXIf7otRgfSFLnhM9WYPtYWLd12Al2ms9W8iuzp8lDbDexPTPxDmqZZ
-ilQwe/cmWkhqsB1kyCLBJRAFrErzArvNXSUukzQ8Yz4TZKicBHfrpcraoZjebsN4
-EYfhtMmB6mGpaRiIEuIlecFg5t7MwlpmOXx7uptl6vm1U/Xg9VTzyYdmFF1t+POb
-L3gTOoyxSo+ilAqV94OE
-=NlVH
------END PGP SIGNATURE-----
-
---Sig_/t0ITbzCFEuwpSFfwdSagB.V--
