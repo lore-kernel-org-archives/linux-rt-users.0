@@ -1,47 +1,41 @@
-From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
-Subject: Re: lock/reserve 2nd level cache for rt tasks
-Date: Thu, 4 Feb 2016 12:31:44 +0000
-Message-ID: <1454589104.4399.42.camel@eagleseven.com>
-References: <7c5e452e40b6426eaf16d37927f527cb@DE01EX11.GLOBAL.JHCN.NET>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [ANNOUNCE] 4.1.15-rt17
+Date: Thu, 4 Feb 2016 14:22:29 +0100
+Message-ID: <20160204132229.GA3381@linutronix.de>
+References: <20151222165601.GG27274@linutronix.de>
+ <CALqGcGqpZRwv1RbXwyYxsbGOJg8u7HYM_8VTHbjfi4fUkDmHtQ@mail.gmail.com>
+ <20160201205157.GA25777@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-To: "lampersperger.andreas@heidenhain.de"
-	<lampersperger.andreas@heidenhain.de>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Christoph Mathys <eraserix@gmail.com>, tglx@linutronix.de,
+	rostedt@goodmis.org, C.Emde@osadl.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.eagleseven.com ([76.74.2.20]:5562 "EHLO
-	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756861AbcBDMbp (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:38167 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757703AbcBDNWf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Feb 2016 07:31:45 -0500
-In-Reply-To: <7c5e452e40b6426eaf16d37927f527cb@DE01EX11.GLOBAL.JHCN.NET>
-Content-Language: en-US
-Content-ID: <0E293D8FDBCD4C4A9758E85283DDC172@eagleseven.com>
+	Thu, 4 Feb 2016 08:22:35 -0500
+Content-Disposition: inline
+In-Reply-To: <20160201205157.GA25777@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-DQoNCj4gSGVsbG8sDQo+IA0KPiBvbiBteSBxdWFkIGNvcmUgY3B1IChpbnRlbCBpNykgdGhlIHgx
-MXZuYyAoc2VydmVyKSBzbG93cyBkb3duIA0KPiB0aGUgcnQtdGFzayAoaXQgdG9vayB1cCB0byA1
-IHRpbWVzIGxvbmdlciksIGV2ZW4gaWYgSSBib3VuZCANCj4gdGhlIHgxMXZuYyB0byBhbm90aGVy
-IGNvcmUgdGhhbiB0aGUgcnQtdGFzayB2aWEgdGFza3NldC4gDQo+IA0KPiBJIGd1ZXNzZWQgdGhh
-dCB0aGUgeDExdm5jIGludmFsaWRhdGVzIDJuZCBhbmQvb3IgM3JkIGxldmVsLg0KPiANCj4gSXMg
-dGhlcmUgYW55IHdheSB0byByZXNlcnZlIGNwdSBjYWNoZSB0byBhIHNwZWNpZmllZCB0YXNrIA0K
-PiBvciB0byBhIHNwZWNpZmllZCBjb3JlPw0KSSdtIG5vdCBzdXJlIGlmIGl0IGV2ZXIgbWFkZSBp
-dCBpbnRvIHRoZSBjaGlwc2V0IGk3IGNoaXBzZXRzLCBidXQgbGFzdA0KeWVhciBJbnRlbCB3ZXJl
-IHRhbGtpbmcgYWJvdXQgYWxyZWFkeSBwcm92aWRuZyBjYWNoZSBxdWFsaXR5IG9mIHNlcnZpY2UN
-Cm9uIHNvbWUgWGVvbiBjaGlwc1sxXQ0KDQpUaGVyZSdzIGFsc28gY2hpcCBzdXBwb3J0IGZvciBt
-b25pdG9yaW5nIHRoZSBjYWNoZSBiYW5kd2lkdGggdXNhZ2VbMl0NCj4gDQo+IFRoYW5rcyBmb3Ig
-YW55IGlkZWEuDQo+IA0KPiBBbmRyZWFzDQo+IA0KPiANCj4gLS0tLS0tLS0tLS0tLS0tLS0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tDQo+IC0tLS0t
-LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLQ0KPiBSZWdpc3RlcmdlcmljaHQ6IFRyYXVuc3Rl
-aW4gLyBSZWdpc3RyeSBDb3VydDogSFJCIDI3NSAtIFNpdHogLyBIZWFkDQo+IE9mZmljZTogVHJh
-dW5yZXV0DQo+IEF1ZnNpY2h0c3JhdHN2b3JzaXR6ZW5kZXIgLyBDaGFpcm1hbiBvZiBTdXBlcnZp
-c29yeSBCb2FyZDogUmFpbmVyDQo+IEJ1cmtoYXJkDQo+IEdlc2Now6RmdHNmw7xocnVuZyAvIE1h
-bmFnZW1lbnQgQm9hcmQ6IFRob21hcyBTZXNzZWxtYW5uIChWb3JzaXR6ZW5kZXINCj4gLyBDaGFp
-cm1hbiksDQo+IE1pY2hhZWwgR3JpbW0sIEh1YmVydCBFcm1lciwgTHV0eiBSaXNzaW5nDQo+IA0K
-PiBFLU1haWwgSGFmdHVuZ3NhdXNzY2hsdXNzIC8gRS1NYWlsIERpc2NsYWltZXI6IA0KPiBodHRw
-Oi8vd3d3LmhlaWRlbmhhaW4uZGUvZGlzY2xhaW1lcg0KWzFdIGh0dHA6Ly9ldmVudHMubGludXhm
-b3VuZGF0aW9uLm9yZy9zaXRlcy9ldmVudHMvZmlsZXMvc2xpZGVzL3ByZXNlbnQNCmxpbnV4Y29u
-X3Zpa2FzXzAucGRmDQpbMl0gaHR0cDovL2V2ZW50cy5saW51eGZvdW5kYXRpb24ub3JnL3NpdGVz
-L2V2ZW50cy9maWxlcy9zbGlkZXMvTGludXhDbw0Kbk5BLWthbmFrYS5wZGY=
+* Sebastian Andrzej Siewior | 2016-02-01 21:51:57 [+0100]:
+
+>I don't why int3 is invoked here at all but it seems to happen and it
+>seems to do something with the jump_labels.
+Now I know and go with this:
+
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -53,6 +53,7 @@ config KPROBES
+ config JUMP_LABEL
+        bool "Optimize very unlikely/likely branches"
+        depends on HAVE_ARCH_JUMP_LABEL
++       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
+        help
+          This option enables a transparent branch optimization that
+ 	 makes certain almost-always-true or almost-always-false branch
+
+Sebastian
