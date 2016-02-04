@@ -1,32 +1,33 @@
-From: Staffan Tjernstrom <stjernstrom@eagleseven.com>
-Subject: Re: SMP even/odd cores latency
-Date: Wed, 3 Feb 2016 19:17:29 +0000
-Message-ID: <1454527049.4399.35.camel@eagleseven.com>
-References: <56B24FA5.8020706@gmail.com>
+From: Lampersperger Andreas <lampersperger.andreas@heidenhain.de>
+Subject: lock/reserve 2nd level cache for rt tasks
+Date: Thu, 4 Feb 2016 07:31:09 +0000
+Message-ID: <7c5e452e40b6426eaf16d37927f527cb@DE01EX11.GLOBAL.JHCN.NET>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="utf-8"
 Content-Transfer-Encoding: base64
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"dixlor@gmail.com" <dixlor@gmail.com>
+To: "'linux-rt-users@vger.kernel.org'" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.eagleseven.com ([76.74.2.20]:14136 "EHLO
-	mail.eagleseven.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S965284AbcBCTRa (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 3 Feb 2016 14:17:30 -0500
-In-Reply-To: <56B24FA5.8020706@gmail.com>
-Content-Language: en-US
-Content-ID: <F563A5301CD9DC42ABEF2045E50BC4A0@eagleseven.com>
+Received: from mx02.jhcn.net ([194.25.102.130]:48682 "EHLO mx02.jhcn.net"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750724AbcBDHnh (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 4 Feb 2016 02:43:37 -0500
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-T24gb25zLCAyMDE2LTAyLTAzIGF0IDIyOjA2ICswMzAwLCBESVhMT1Igd3JvdGU6DQo+ID4gTWlu
-aW11bSBsYXRlbmN5IG9uIGV2ZW4gY29yZXMgaXMgYXBwcm94aW1hdGVseSBlcXVhbCB0byAxNSwg
-b24gdGhlDQo+IG9kZCAtIDUgDQo+INCQdmVyYWdlIGxhdGVuY3kgb24gdGhlIGV2ZW4gLSA1MCwg
-b24gdGhlIG9kZCBjb3JlcyAtIDMwIDopDQo+ID4gLSBMaW51eCA0LjQuMS1ydDQrIHg4Nl82NA0K
-PiAtIGdjYyB2ZXJzaW9uIDQuOS4yIChEZWJpYW4gNC45LjItMTApDQo+IC0gMiB4IEFNRCBPcHRl
-cm9uKHRtKSBQcm9jZXNzb3IgNDM4Ng0KPiAtIE1iOiBUWUFOIFM4MjI1DQo+IFlvdSBjb3VsZCBj
-b25maXJtIGJ5IGNoZWNraW5nIC9wcm9jL2NwdWluZm8sIGJ1dCBpdCBsb29rcyBsaWtlIHRoZSBB
-TUQNCmNwdSBlbnVtZXJhdGlvbiBtYXRjaGVzIHRoYXQgb2YgdGhlIGxhc3QgZmV3IEludGVsIGl0
-ZXJhdGlvbnMsIHdoZXJlDQp0aGUgZXZlbiBjb3JlcyBhcmUgb25lIE5VTUEgbm9kZSwgYW5kIHRo
-ZSBvZGQgdGhlIG90aGVyLg0K
+SGVsbG8sCgpvbiBteSBxdWFkIGNvcmUgY3B1IChpbnRlbCBpNykgdGhlIHgxMXZuYyAoc2VydmVy
+KSBzbG93cyBkb3duIAp0aGUgcnQtdGFzayAoaXQgdG9vayB1cCB0byA1IHRpbWVzIGxvbmdlciks
+IGV2ZW4gaWYgSSBib3VuZCAKdGhlIHgxMXZuYyB0byBhbm90aGVyIGNvcmUgdGhhbiB0aGUgcnQt
+dGFzayB2aWEgdGFza3NldC4gCgpJIGd1ZXNzZWQgdGhhdCB0aGUgeDExdm5jIGludmFsaWRhdGVz
+IDJuZCBhbmQvb3IgM3JkIGxldmVsLgoKSXMgdGhlcmUgYW55IHdheSB0byByZXNlcnZlIGNwdSBj
+YWNoZSB0byBhIHNwZWNpZmllZCB0YXNrIApvciB0byBhIHNwZWNpZmllZCBjb3JlPwoKVGhhbmtz
+IGZvciBhbnkgaWRlYS4KCkFuZHJlYXMKCgotLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0tLS0t
+LS0tLS0tLS0tLS0tLS0KUmVnaXN0ZXJnZXJpY2h0OiBUcmF1bnN0ZWluIC8gUmVnaXN0cnkgQ291
+cnQ6IEhSQiAyNzUgLSBTaXR6IC8gSGVhZCBPZmZpY2U6IFRyYXVucmV1dApBdWZzaWNodHNyYXRz
+dm9yc2l0emVuZGVyIC8gQ2hhaXJtYW4gb2YgU3VwZXJ2aXNvcnkgQm9hcmQ6IFJhaW5lciBCdXJr
+aGFyZApHZXNjaMOkZnRzZsO8aHJ1bmcgLyBNYW5hZ2VtZW50IEJvYXJkOiBUaG9tYXMgU2Vzc2Vs
+bWFubiAoVm9yc2l0emVuZGVyIC8gQ2hhaXJtYW4pLApNaWNoYWVsIEdyaW1tLCBIdWJlcnQgRXJt
+ZXIsIEx1dHogUmlzc2luZwoKRS1NYWlsIEhhZnR1bmdzYXVzc2NobHVzcyAvIEUtTWFpbCBEaXNj
+bGFpbWVyOiBodHRwOi8vd3d3LmhlaWRlbmhhaW4uZGUvZGlzY2xhaW1lcgo=
+
