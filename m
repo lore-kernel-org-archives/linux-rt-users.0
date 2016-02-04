@@ -1,59 +1,67 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] 4.4.1-rt5
-Date: Thu, 4 Feb 2016 21:40:07 +0100
-Message-ID: <20160204204007.GE3381@linutronix.de>
+From: Clark Williams <williams@redhat.com>
+Subject: Re: [RT] oops in 4.1.3-rt3
+Date: Thu, 4 Feb 2016 14:59:31 -0600
+Message-ID: <20160204145931.47dd616d@sluggy.hsv.redhat.com>
+References: <20150803142700.1de720e4@sluggy>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/t0ITbzCFEuwpSFfwdSagB.V"; protocol="application/pgp-signature"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
+In-Reply-To: <20150803142700.1de720e4@sluggy>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Dear RT folks!
+--Sig_/t0ITbzCFEuwpSFfwdSagB.V
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-I'm pleased to announce the v4.4.1-rt5 patch set.
-Changes since v4.4.1-rt4:
+On Mon, 3 Aug 2015 14:27:00 -0500
+Clark Williams <williams@redhat.com> wrote:
 
-- various compile fixes found by kbuild test robot.
+> Sebastian,
+>=20
+> Below is a traceback I hit while running 4.1.3-rt3 on my Lenovo T530.
+>=20
+> I was doing my normal, play music, copy files over the lan, do compiles,
+> do email, etc., so I I can't really point you at a reproducer. The graphi=
+cs
+> system stayed up somewhat but the actual trace I hit scrolled off. This w=
+as
+> extracted from the syslog with 'journalctl'.=20
+>=20
+> If I encounter it again, I'll see if I can force a kdump.=20
+>=20
 
-- Mike Galbraith spotted that migrate_disables() sets ->nr_cpus_allowed
-  to one by accident.
+I have been unable to reproduce this bug. It happened during normal use and=
+ I haven't changed work habits, so I'd say drop this from the -rt open-issu=
+es section until we can get an actual reproducer or at least until the freq=
+uency goes up.
 
-- Christoph Mathys reported that the "preemptirqsoff_hist" tracer
-  reboots the system once enabled. The problem has been resolved.
+Thanks,
+Clark
 
-- Thomas Gleixner sent a patch to set a default affinity for mask for
-  interrupts via kernel command line.
+--Sig_/t0ITbzCFEuwpSFfwdSagB.V
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
-- Yang Shi reported that some perf events were reported as "not counted"
-  instead the actual numbers. The problem has been resolved.
+-----BEGIN PGP SIGNATURE-----
 
-Known issues:
-  - bcache stays disabled
+iQIcBAEBCgAGBQJWs7u0AAoJEOI5asVwYXLrqwMP/1ejnmpOgS1HcLtmVd9rx6YO
+Bg8DhPxB0VRAV0O3B6cSfVCdG7BTwhrBbcO1kyRD0JQtOd/jt+jZculWV6gORvy4
+/6d+zz+g8i4LTbc+AM9sgPXURQ/3tFP6NaYwTDZ4IMrsIc6SONhIC7rv7Nvy66Yd
+2EF9z03QA6yePywlku+o7lcA5BL1jdZkWvweMRCL6GFYK+0jht2sVFK3Qwda81C4
+I0pGIUiHp7774gP6RySo5hGOblNC3TagmqPM0pyCs9J8N6qqhW7+F9x7NeAh1gMY
+phZLIAVOZs3GHFu4aQrq6p9qdi6LXYfuKCPsGtOXHrrERBnmYxXwOXxlS7vbo0VQ
+RZIvshrmqXJBNJl5/nxACetfWRxpMtl8oeLO6nXsm2zwrv5vjYqhGhJCImsGGsLo
+uVHrYxMnjvc9EkoP/vR3HPA2x9ZwFyIaWWogrqpJL9wrV2UXUKLfC+nup7jdDh9W
+9oQtlJQcHHXIf7otRgfSFLnhM9WYPtYWLd12Al2ms9W8iuzp8lDbDexPTPxDmqZZ
+ilQwe/cmWkhqsB1kyCLBJRAFrErzArvNXSUukzQ8Yz4TZKicBHfrpcraoZjebsN4
+EYfhtMmB6mGpaRiIEuIlecFg5t7MwlpmOXx7uptl6vm1U/Xg9VTzyYdmFF1t+POb
+L3gTOoyxSo+ilAqV94OE
+=NlVH
+-----END PGP SIGNATURE-----
 
-  - CPU hotplug is not better than before
-
-  - The netlink_release() OOPS, reported by Clark, is still on the
-    list, but unsolved due to lack of information
-
-The delta patch against 4.4.1-rt4 is appended below and can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.1-rt4-rt5.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.4.1-rt5
-
-The RT patch against 4.4.1 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.1-rt5.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patches-4.4.1-rt5.tar.xz
-
-Sebastian
+--Sig_/t0ITbzCFEuwpSFfwdSagB.V--
