@@ -1,61 +1,45 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: deterministic usage of JIFFIES and how to relocate the clock
-Date: Thu, 4 Feb 2016 17:44:11 +0100
-Message-ID: <20160204164411.GC3381@linutronix.de>
-References: <CA+Owze7GnFYrpVMWSuPd=qXj8auf3fL-mPsZNPVMeP=FQtZsPg@mail.gmail.com>
- <CA+Owze7+=vMDaqX25OVQ6ZrRgGj9j2BZjEZt_GyG+9+6+6ELWA@mail.gmail.com>
+Subject: Re: [4.1.15-rt17] BUG: unable to handle kernel NULL pointer
+ dereference at 0000000000000001
+Date: Thu, 4 Feb 2016 18:16:55 +0100
+Message-ID: <20160204171655.GD3381@linutronix.de>
+References: <CALqGcGpG8ShUjPtuwG8BzToLszLHhyf9ELZkaWE2ziq3TL3YrA@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: jkraehemann-guest@users.alioth.debian.org
+Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
+To: Christoph Mathys <eraserix@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:39827 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:39998 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753327AbcBDQoN convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1754551AbcBDRQ4 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Feb 2016 11:44:13 -0500
+	Thu, 4 Feb 2016 12:16:56 -0500
 Content-Disposition: inline
-In-Reply-To: <CA+Owze7+=vMDaqX25OVQ6ZrRgGj9j2BZjEZt_GyG+9+6+6ELWA@mail.gmail.com>
+In-Reply-To: <CALqGcGpG8ShUjPtuwG8BzToLszLHhyf9ELZkaWE2ziq3TL3YrA@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Jo=C3=ABl Kr=C3=A4hemann | 2016-01-24 09:40:33 [+0100]:
+* Christoph Mathys | 2015-12-23 14:55:08 [+0100]:
 
->Hi
-Hi,
-
->At my opinion I was thinking at a lower level than needed. The
-I couldn't parse the question in the previous mail.
-
->application runs at least aside the kernel.
-
-aside the kernel? Like one CPU is for the kernel and the other for the
-application?
-
->Probably I want to control PC (program counter) and redeclare the
->longjump function as macro. To gain control
->over throughput rate and thus being able to grain loading and unloadin=
-g thread.
-
-maybe. But I still fail to understand what you attempt to do.
-
->int sched_setaffinity(pid_t pid, size_t cpusetsize,
->                             const cpu_set_t *mask);
-
-This one says which CPUs the task may run on.
-
->void longjmp(jmp_buf env, int val);
-
-and this is unrelated to the previous one.
-
+>While running my "infamous" tests with containers[0] on 4.1, I get
+>system freezes regularly. I have tried with and without PREEMPT_RT.
+>The lockups did only occur on RT and when the cgroup "memory" was in
+>use. Without rt or this particular cgroup (cgroup_disable kernel
+>parameter), my test ran for ~15h before I stopped it manually.
 >
->cheers,
->Jo=C3=ABl
+>tldr; CONFIG_MEMCG seem to be broken for PREEMPT_RT.
+>
+>I don't know if the errors below are directly responsible for the
+>system freeze, but they are the last thing I see from the system
+>before it freezes.
+>
+>The second dump below might contain some typos because I had to
+>convert it manually from a screenshot to text.
+
+The memcg tests from LTP didn't cause any problems. And after about
+three hours trying to get lxc to work I gave up.
+So I have no idea how to continue here.
+
+>[0] http://www.spinics.net/lists/linux-rt-users/msg14262.html
 
 Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
