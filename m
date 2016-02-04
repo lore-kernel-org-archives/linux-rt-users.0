@@ -1,41 +1,67 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [ANNOUNCE] 4.1.15-rt17
-Date: Thu, 4 Feb 2016 14:22:29 +0100
-Message-ID: <20160204132229.GA3381@linutronix.de>
-References: <20151222165601.GG27274@linutronix.de>
- <CALqGcGqpZRwv1RbXwyYxsbGOJg8u7HYM_8VTHbjfi4fUkDmHtQ@mail.gmail.com>
- <20160201205157.GA25777@linutronix.de>
+Subject: Re: -rt kernel just can show 8 perf events?
+Date: Thu, 4 Feb 2016 16:16:23 +0100
+Message-ID: <20160204151623.GB3381@linutronix.de>
+References: <565E04D5.4000202@linaro.org>
+ <20151211173616.GL6720@linutronix.de>
+ <566B0E72.50608@linaro.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Linux RT Users <linux-rt-users@vger.kernel.org>
-To: Christoph Mathys <eraserix@gmail.com>, tglx@linutronix.de,
-	rostedt@goodmis.org, C.Emde@osadl.org
+Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	linux-rt-users@vger.kernel.org
+To: "Shi, Yang" <yang.shi@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:38167 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:39047 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757703AbcBDNWf (ORCPT
+	with ESMTP id S1757048AbcBDPQ1 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Feb 2016 08:22:35 -0500
+	Thu, 4 Feb 2016 10:16:27 -0500
 Content-Disposition: inline
-In-Reply-To: <20160201205157.GA25777@linutronix.de>
+In-Reply-To: <566B0E72.50608@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Sebastian Andrzej Siewior | 2016-02-01 21:51:57 [+0100]:
+* Shi, Yang | 2015-12-11 09:57:06 [-0800]:
 
->I don't why int3 is invoked here at all but it seems to happen and it
->seems to do something with the jump_labels.
-Now I know and go with this:
+>On 12/11/2015 9:36 AM, Sebastian Andrzej Siewior wrote:
+>>And 4.1.12 (without -rt13) is not having this kind of problem?
+>
+>No. mainline 4.1.12 works well.
 
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -53,6 +53,7 @@ config KPROBES
- config JUMP_LABEL
-        bool "Optimize very unlikely/likely branches"
-        depends on HAVE_ARCH_JUMP_LABEL
-+       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
-        help
-          This option enables a transparent branch optimization that
- 	 makes certain almost-always-true or almost-always-false branch
+The same thing here. But I get this:
+
+ Performance counter stats for 'tar tJ':
+
+           144,407      cs                                                          
+            16,733      page-faults                                                 
+            16,732      minor-faults                                                
+                 1      major-faults                                                
+           805,335      iTLB-load-misses                                              (24.83%)
+         6,606,698      dTLB-load-misses                                              (24.63%)
+     3,734,425,072      branches                                                      (37.35%)
+       228,660,856      L1-dcache-prefetches                                          (37.06%)
+         4,564,273      L1-icache-prefetches                                          (49.68%)
+       399,365,890      branch-misses             #   10.69% of all branches          (62.63%)
+        79,278,129      cache-misses                                                  (62.96%)
+    30,825,564,763      cycles                                                        (50.79%)
+
+       8.705696429 seconds time elapsed
+
+once I apply this chunk:
+
+diff --git a/kernel/events/core.c b/kernel/events/core.c
+--- a/kernel/events/core.c
++++ b/kernel/events/core.c
+@@ -802,6 +802,7 @@ static void __perf_mux_hrtimer_init(struct perf_cpu_context *cpuctx, int cpu)
+ 	raw_spin_lock_init(&cpuctx->hrtimer_lock);
+ 	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
+ 	timer->function = perf_mux_hrtimer_handler;
++	timer->irqsafe = 1;
+ }
+ 
+ static int perf_mux_hrtimer_restart(struct perf_cpu_context *cpuctx)
+
+>Yang
 
 Sebastian
