@@ -1,77 +1,60 @@
-From: "Shi, Yang" <yang.shi@linaro.org>
-Subject: Re: -rt kernel just can show 8 perf events?
-Date: Thu, 4 Feb 2016 15:41:32 -0800
-Message-ID: <56B3E1AC.2080209@linaro.org>
-References: <565E04D5.4000202@linaro.org>
- <20151211173616.GL6720@linutronix.de> <566B0E72.50608@linaro.org>
- <20160204151623.GB3381@linutronix.de>
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
+Subject: Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible
+ pointer check into error
+Date: Fri, 5 Feb 2016 09:16:07 +0100
+Message-ID: <56B45A47.4090400@bmw-carit.de>
+References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
+ <1453992270-4688-3-git-send-email-daniel.wagner@bmw-carit.de>
+ <56AB5867.6020405@bmw-carit.de> <20160129185523.GZ8889@windriver.com>
+ <56AEFFF1.1010404@bmw-carit.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8; format=flowed
+Content-Type: text/plain; charset="windows-1252"
 Content-Transfer-Encoding: 7bit
-Cc: Arnaldo Carvalho de Melo <acme@kernel.org>,
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<linux-kbuild@vger.kernel.org>,
+	Marcelo Tosatti <mtosatti@redhat.com>,
+	Paolo Bonzini <pbonzini@redhat.com>,
+	"Paul E . McKenney" <paulmck@linux.vnet.ibm.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Steven Rostedt <rostedt@goodmis.org>,
-	linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oi0-f48.google.com ([209.85.218.48]:34342 "EHLO
-	mail-oi0-f48.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752971AbcBDXlk (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 4 Feb 2016 18:41:40 -0500
-Received: by mail-oi0-f48.google.com with SMTP id w5so30931881oie.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 04 Feb 2016 15:41:40 -0800 (PST)
-In-Reply-To: <20160204151623.GB3381@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Boqun Feng <boqun.feng@gmail.com>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-kbuild-owner@vger.kernel.org>
+In-Reply-To: <56AEFFF1.1010404@bmw-carit.de>
+Sender: linux-kbuild-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2/4/2016 7:16 AM, Sebastian Andrzej Siewior wrote:
-> * Shi, Yang | 2015-12-11 09:57:06 [-0800]:
->
->> On 12/11/2015 9:36 AM, Sebastian Andrzej Siewior wrote:
->>> And 4.1.12 (without -rt13) is not having this kind of problem?
+On 02/01/2016 07:49 AM, Daniel Wagner wrote:
+> On 01/29/2016 07:55 PM, Paul Gortmaker wrote:
+>> [Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 29/01/2016 (Fri 13:17) Daniel Wagner wrote:
 >>
->> No. mainline 4.1.12 works well.
->
-> The same thing here. But I get this:
->
->   Performance counter stats for 'tar tJ':
->
->             144,407      cs
->              16,733      page-faults
->              16,732      minor-faults
->                   1      major-faults
->             805,335      iTLB-load-misses                                              (24.83%)
->           6,606,698      dTLB-load-misses                                              (24.63%)
->       3,734,425,072      branches                                                      (37.35%)
->         228,660,856      L1-dcache-prefetches                                          (37.06%)
->           4,564,273      L1-icache-prefetches                                          (49.68%)
->         399,365,890      branch-misses             #   10.69% of all branches          (62.63%)
->          79,278,129      cache-misses                                                  (62.96%)
->      30,825,564,763      cycles                                                        (50.79%)
->
->         8.705696429 seconds time elapsed
->
-> once I apply this chunk:
+>>> On 01/28/2016 03:44 PM, Daniel Wagner wrote:
+>>>> +# enforce correct pointer usage
+>>>> +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
+>>>> +
+>>>
+>>> As it turns out there are a few fallouts by that one. I'll send fixes
+>>> for it.
+>>
+>> Did you try non-x86 builds with this applied?   I'd be really surprised
+>> if there were just a few, once you did allyesconfig/allmodconfig for
+>> ARM, MIPS, PPC, etc.
+> 
+> I have tried this with non-x86 builds and apart of a few problems all
+> looked fine. As it turns out I was using too old cross tools from
+> kernel.org [1]. Luckily Fengguang's kbuild robot did catch a bunch of
+> them (see the patches in this series).
 
-Thanks. I will have a try with the patch soon.
+It turns out this week was particular bad for doing anything productive.
+Anyway, I found some time to fire up some cross compilers and it looks
+promising.
 
-Yang
+I used the cross compiler version 5.2.1 shipped by Fedora 23
+and run allyesconfig/allmodconfig for ARM, ARM64, MIPS64, PPC64
+(swait-v7 and 4.5-rc2). No new errors popped up.
 
->
-> diff --git a/kernel/events/core.c b/kernel/events/core.c
-> --- a/kernel/events/core.c
-> +++ b/kernel/events/core.c
-> @@ -802,6 +802,7 @@ static void __perf_mux_hrtimer_init(struct perf_cpu_context *cpuctx, int cpu)
->   	raw_spin_lock_init(&cpuctx->hrtimer_lock);
->   	hrtimer_init(timer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS_PINNED);
->   	timer->function = perf_mux_hrtimer_handler;
-> +	timer->irqsafe = 1;
->   }
->
->   static int perf_mux_hrtimer_restart(struct perf_cpu_context *cpuctx)
->
->> Yang
->
-> Sebastian
->
+With some luck I get some more architectures covered soon.
 
+cheers,
+daniel
