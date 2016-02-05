@@ -1,60 +1,78 @@
-From: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Subject: Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible
- pointer check into error
-Date: Fri, 5 Feb 2016 09:16:07 +0100
-Message-ID: <56B45A47.4090400@bmw-carit.de>
-References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
- <1453992270-4688-3-git-send-email-daniel.wagner@bmw-carit.de>
- <56AB5867.6020405@bmw-carit.de> <20160129185523.GZ8889@windriver.com>
- <56AEFFF1.1010404@bmw-carit.de>
+From: "Shi, Yang" <yang.shi@linaro.org>
+Subject: Re: [PATCH] arm64: reenable interrupt when handling ptrace breakpoint
+Date: Fri, 5 Feb 2016 13:25:47 -0800
+Message-ID: <56B5135B.3050801@linaro.org>
+References: <1450225088-2456-1-git-send-email-yang.shi@linaro.org>
+ <20151216111316.GD4308@arm.com> <5671CD5B.9030907@linaro.org>
+ <20151221104818.GF23092@arm.com> <alpine.DEB.2.11.1512211749180.28591@nanos>
+ <20151221170028.GT23092@arm.com> <56955B3A.5010303@linaro.org>
+ <20160113102622.GC25458@arm.com> <569686BA.6050703@linaro.org>
+ <20160113172303.GH25458@arm.com> <56969312.7070309@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kbuild@vger.kernel.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Paul E . McKenney" <paulmck@linux.vnet.ibm.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Boqun Feng <boqun.feng@gmail.com>
-To: Paul Gortmaker <paul.gortmaker@windriver.com>
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-In-Reply-To: <56AEFFF1.1010404@bmw-carit.de>
-Sender: linux-kbuild-owner@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>, Catalin.Marinas@arm.com,
+	linux-kernel@vger.kernel.org, linux-arm-kernel@lists.infradead.org,
+	linaro-kernel@lists.linaro.org, linux-rt-users@vger.kernel.org
+To: Will Deacon <will.deacon@arm.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <56969312.7070309@linaro.org>
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 02/01/2016 07:49 AM, Daniel Wagner wrote:
-> On 01/29/2016 07:55 PM, Paul Gortmaker wrote:
->> [Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 29/01/2016 (Fri 13:17) Daniel Wagner wrote:
->>
->>> On 01/28/2016 03:44 PM, Daniel Wagner wrote:
->>>> +# enforce correct pointer usage
->>>> +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
->>>> +
+On 1/13/2016 10:10 AM, Shi, Yang wrote:
+> On 1/13/2016 9:23 AM, Will Deacon wrote:
+>> On Wed, Jan 13, 2016 at 09:17:46AM -0800, Shi, Yang wrote:
+>>> On 1/13/2016 2:26 AM, Will Deacon wrote:
+>>>> On Tue, Jan 12, 2016 at 11:59:54AM -0800, Shi, Yang wrote:
+>>>>> This might be buried in email storm during the holiday. Just want
+>>>>> to double
+>>>>> check the status. I'm supposed there is no objection for getting it
+>>>>> merged
+>>>>> in upstream?
+>>>>
+>>>> Sorry, when you replied with:
+>>>>
+>>>>> I think we could just extend the "signal delay send" approach from
+>>>>> x86-64
+>>>>> to arm64, which is currently used by x86-64 on -rt kernel only.
+>>>>
+>>>> I understood that you were going to fix -rt, so I dropped this pending
+>>>> anything more from you.
+>>>>
+>>>> What's the plan?
 >>>
->>> As it turns out there are a few fallouts by that one. I'll send fixes
->>> for it.
+>>> Sorry for the confusion. The "signal delay send" approach used by
+>>> x86-64 -rt
+>>> should be not necessary for arm64 right now. Reenabling interrupt is
+>>> still
+>>> the preferred approach.
+>>>
+>>> Since x86-64 has per-CPU IST exception stack, so preemption has to be
+>>> disabled all the time. However, it is not applicable to other
+>>> architectures
+>>> for now, including arm64.
 >>
->> Did you try non-x86 builds with this applied?   I'd be really surprised
->> if there were just a few, once you did allyesconfig/allmodconfig for
->> ARM, MIPS, PPC, etc.
-> 
-> I have tried this with non-x86 builds and apart of a few problems all
-> looked fine. As it turns out I was using too old cross tools from
-> kernel.org [1]. Luckily Fengguang's kbuild robot did catch a bunch of
-> them (see the patches in this series).
+>> Actually, we grew support for a separate IRQ stack in the recent merge
+>> window. Does that change things here, or are you referring to something
+>> else?
+>
+> Had a quick look at the patches, it looks the irq stack is not nestable
+> and it switches back to the original stack as long as irq handler is
+> done before preempt happens. So, it sounds it won't change things here.
 
-It turns out this week was particular bad for doing anything productive.
-Anyway, I found some time to fire up some cross compilers and it looks
-promising.
 
-I used the cross compiler version 5.2.1 shipped by Fedora 23
-and run allyesconfig/allmodconfig for ARM, ARM64, MIPS64, PPC64
-(swait-v7 and 4.5-rc2). No new errors popped up.
+Just had a quick test on 4.5-rc1. It survives with kgdbts, ptrace and 
+ltp. So, it sounds safe with the "separate IRQ stack" change.
 
-With some luck I get some more architectures covered soon.
+Thanks,
+Yang
 
-cheers,
-daniel
+>
+> Thanks.,
+> Yang
+>
+>>
+>> Will
+>>
+>
