@@ -1,71 +1,101 @@
-From: Paul Gortmaker <paul.gortmaker@windriver.com>
-Subject: Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible
- pointer check into error
-Date: Sat, 6 Feb 2016 23:39:17 -0500
-Message-ID: <20160207043916.GR18489@windriver.com>
-References: <1453992270-4688-1-git-send-email-daniel.wagner@bmw-carit.de>
- <1453992270-4688-3-git-send-email-daniel.wagner@bmw-carit.de>
- <56AB5867.6020405@bmw-carit.de>
- <20160129185523.GZ8889@windriver.com>
- <56AEFFF1.1010404@bmw-carit.de>
- <56B45A47.4090400@bmw-carit.de>
+From: "Simone Pietro Lossani, 3L" <s.lossani@3l-automazione.com>
+Subject: Config file settings
+Date: Sun,  7 Feb 2016 20:26:23 +0100
+Message-ID: <O26ZBZ$D3BDAEDD4DE0D479BE670B7C583E3879@3l-automazione.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kbuild@vger.kernel.org>,
-	Marcelo Tosatti <mtosatti@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>,
-	"Paul E . McKenney" <paulmck@linux.vnet.ibm.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Boqun Feng <boqun.feng@gmail.com>
-To: Daniel Wagner <daniel.wagner@bmw-carit.de>
-Return-path: <linux-kbuild-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <56B45A47.4090400@bmw-carit.de>
-Sender: linux-kbuild-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtpweb153.aruba.it ([62.149.158.153]:37348 "EHLO
+	smtpcmd05153.aruba.it" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754196AbcBGT00 convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 7 Feb 2016 14:26:26 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 05/02/2016 (Fri 09:16) Daniel Wagner wrote:
+Hello,
 
-> On 02/01/2016 07:49 AM, Daniel Wagner wrote:
-> > On 01/29/2016 07:55 PM, Paul Gortmaker wrote:
-> >> [Re: [PATCH tip v6 2/5] kbuild: Add option to turn incompatible pointer check into error] On 29/01/2016 (Fri 13:17) Daniel Wagner wrote:
-> >>
-> >>> On 01/28/2016 03:44 PM, Daniel Wagner wrote:
-> >>>> +# enforce correct pointer usage
-> >>>> +KBUILD_CFLAGS += $(call cc-option,-Werror=incompatible-pointer-types)
-> >>>> +
-> >>>
-> >>> As it turns out there are a few fallouts by that one. I'll send fixes
-> >>> for it.
-> >>
-> >> Did you try non-x86 builds with this applied?   I'd be really surprised
-> >> if there were just a few, once you did allyesconfig/allmodconfig for
-> >> ARM, MIPS, PPC, etc.
-> > 
-> > I have tried this with non-x86 builds and apart of a few problems all
-> > looked fine. As it turns out I was using too old cross tools from
-> > kernel.org [1]. Luckily Fengguang's kbuild robot did catch a bunch of
-> > them (see the patches in this series).
-> 
-> It turns out this week was particular bad for doing anything productive.
-> Anyway, I found some time to fire up some cross compilers and it looks
-> promising.
-> 
-> I used the cross compiler version 5.2.1 shipped by Fedora 23
-> and run allyesconfig/allmodconfig for ARM, ARM64, MIPS64, PPC64
-> (swait-v7 and 4.5-rc2). No new errors popped up.
+I installed OpenSuse 13.2 on IPC277E
+with the native kernel 13.16.6.
 
-SOunds good ; guess my gut feeling about this causing more fallout was
-off the mark.
+After that I downloaded kernel 3.18.25
+and the relative RT PREEMPT PATCH.
 
-P.
+I done the patch.
+
+I copied from boot directory the file
+config-3.16.6-2-desktop to usr/src/linux-3.18.25. I renamed it to .conf=
+ig.
+
+And then I started make menuconfig and
+at this point I got some problems.
+
+I didn=E2=80=99t find setting written In the howto:
+
+The most default configurations here are ok as-they-are. However you
+should make sure that you have
+
+enable
+CONFIG_PREEMPT_RT
+=C2=A0
+activated
+the High-Resolution-Timer Option (Attention, the amount of supported pl=
+atforms
+by the HR timer is still very limited. Right now the option is only sup=
+ported
+on x86 systems, PowerPC and ARM Support are however in queue.)
+
+disabled
+all Power Management Options like ACPI or APM (not all ACPI functions a=
+re
+"bad", but you will have to check very carefully to find out which
+function will affect your real time system. Thus it's better to simply =
+disable
+them all if you don't need them. APM, however, is a no-go.) NOTE: Since=
+ rt
+patch 2.6.18-rt6 you will probably have to activate ACPI option to acti=
+vate
+high resolution timer. Since the TSC timer on PC platforms, as used in =
+the
+previous versions, are now marked as unsuitable for hrt mode due to man=
+y lacks
+of functionalities and reliabilities, you will need i.E. pm_timer as pr=
+ovided
+by ACPI to use as clock source. To activate the pm_timer, you can just =
+activate
+the ACPI_SUPPORT in menuconfig and deactivate all other sub modules lik=
+e
+"fan", "processor" or "button". If you have an
+old pc, which lacks ACPI support, you might have problems using the hig=
+h
+resolution timer.
+
+Also in the website there is another
+tips for patch configuration:
+
+Kernel 3.x:
+
+CONFIG_PREEMPT=3Dy
+
+CONFIG_PREEMPT_RT_BASE=3Dy
+
+CONFIG_PREEMPT_RT_FULL=3Dy
+
+But I didn=E2=80=99t find also them.
+
+
+Do you have a list of changing to do in
+menuconfig for a kernel similar to 3.18.25?
+
+
+Thanks!
+
+Simone Pietro Lossani
+
 --
-
-> 
-> With some luck I get some more architectures covered soon.
-> 
-> cheers,
-> daniel
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
