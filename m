@@ -1,106 +1,55 @@
-From: "Heinz Egger" <heinz.egger@linutronix.de>
-Subject: AW: Linux RT newbie question
-Date: Mon, 8 Feb 2016 16:31:41 +0100
-Message-ID: <013901d16285$cf927770$6eb76650$@linutronix.de>
-References: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM> <56B8A042.5000604@meduna.org> <41302A7145AC054FA7A96CFD03835A0A0BA8AD12@EX10MBX02.EU.NEC.COM>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT] mm: backing-dev: don't disable IRQs in wb_congested_put()
+Date: Mon, 8 Feb 2016 17:33:41 +0100
+Message-ID: <20160208163341.GA15956@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=Windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: "'David Aldrich'" <David.Aldrich@EMEA.NEC.COM>,
-	<linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:60918 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753849AbcBHPbo convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Feb 2016 10:31:44 -0500
-In-Reply-To: <41302A7145AC054FA7A96CFD03835A0A0BA8AD12@EX10MBX02.EU.NEC.COM>
-Content-Language: de
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hello David,
+it triggers:
+|BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:930
+|in_atomic(): 0, irqs_disabled(): 1, pid: 12, name: rcuc/0
+|1 lock held by rcuc/0/12:
+| #0:  (rcu_callback){......}, at: [<ffffffff810ce1a6>] rcu_cpu_kthread+0x376/0xb10
+|irq event stamp: 23636
+|hardirqs last  enabled at (23635): [<ffffffff8173524c>] _raw_spin_unlock_irqrestore+0x6c/0x80
+|hardirqs last disabled at (23636): [<ffffffff81173918>] wb_congested_put+0x18/0x90
+| [<ffffffff81735434>] rt_spin_lock+0x24/0x60
+| [<ffffffff810afed2>] atomic_dec_and_spin_lock+0x52/0x90
+| [<ffffffff81173928>] wb_congested_put+0x28/0x90
+| [<ffffffff813b833e>] __blkg_release_rcu+0x5e/0x1e0
+| [<ffffffff813b8367>] ? __blkg_release_rcu+0x87/0x1e0
+| [<ffffffff813b82e0>] ? blkg_conf_finish+0x90/0x90
+| [<ffffffff810ce1e7>] rcu_cpu_kthread+0x3b7/0xb10
 
-there are a number of well known and reputaded companies in the area of
-digital audio, video or digital simulation (automotive), just to name a=
- few
-areas, which are using a standard PC, Linux and the Preempt-RT patch. W=
-ith
-latencies down to the single-digit microseconds region. =20
+due to cgwb_lock beeing taken with spin_lock_irqsave() usually.
 
-So it is shown that Linux and realtime will work pretty fine here.=20
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ mm/backing-dev.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-br
-Heinz
-
-> -----Urspr=FCngliche Nachricht-----
-> Von: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-
-> owner@vger.kernel.org] Im Auftrag von David Aldrich
-> Gesendet: Montag, 8. Februar 2016 15:28
-> An: Stanislav Meduna; linux-rt-users@vger.kernel.org
-> Betreff: RE: Linux RT newbie question
->=20
-> Hi Stano
->=20
-> Thanks for your reply ...
->=20
-> > > For a new project we need to demonstrate a Linux RT-Kernel runnin=
-g
-> > > a 'standard' x86 desktop PC.
-> >
-> > What is the goal of this presentation?
->=20
-> The goal is to demonstrate that a communication system previously
-> implemented on embedded digital signal processors can be implemented =
-on
-> a high spec PC desktop. Sorry that I can't give more details.
->=20
-> > Are you aware that a standard desktop
-> > PC might spoil your realtime attempts in various ways (SMI interrup=
-ts,
-> power
-> > management, ...)?
->=20
-> Well, I was not aware of this until reading your email and I read ' H=
-OWTO:
-> Build an RT-application' on rt.wiki.kernel.org. The HowTo suggests wa=
-ys of
-> reducing the impact of SMI interrupts. Is this possible?
->=20
-> > > I wonder if a standard Linux distro + RT kernel patch would be a
-better
-> > choice?
-> >
-> > As long as you are using a RT kernel, sane pthreads support such as
-modern
-> > glibc and you know what you are doing (ksoftirqd priority and simil=
-ar
-fun)
-> > the particular distribution does not matter much. We are using stoc=
-k
-> Debian
-> > with custom kernel as our embedded rt platform.
->=20
-> Do you build your kernel yourselves?
->=20
-> Best regards
->=20
-> David
-> --
-> To unsubscribe from this list: send the line "unsubscribe linux-rt-us=
-ers"
-in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
->=20
-> -----
-> E-Mail ist virenfrei.
-> Von AVG =FCberpr=FCft - www.avg.de
-> Version: 2015.0.6176 / Virendatenbank: 4522/11563 - Ausgabedatum:
-> 05.02.2016
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/mm/backing-dev.c b/mm/backing-dev.c
+index 7340353f8aea..b2ca2908b808 100644
+--- a/mm/backing-dev.c
++++ b/mm/backing-dev.c
+@@ -457,9 +457,9 @@ void wb_congested_put(struct bdi_writeback_congested *congested)
+ {
+ 	unsigned long flags;
+ 
+-	local_irq_save(flags);
++	local_irq_save_nort(flags);
+ 	if (!atomic_dec_and_lock(&congested->refcnt, &cgwb_lock)) {
+-		local_irq_restore(flags);
++		local_irq_restore_nort(flags);
+ 		return;
+ 	}
+ 
+-- 
+2.7.0
