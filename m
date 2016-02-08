@@ -1,59 +1,39 @@
-From: David Aldrich <David.Aldrich@EMEA.NEC.COM>
-Subject: Linux RT newbie question
-Date: Mon, 8 Feb 2016 12:16:03 +0000
-Message-ID: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
+Subject: Re: Linux RT newbie question
+Date: Mon, 8 Feb 2016 15:25:32 +0100
+Message-ID: <20160208152532.6e15b0d2@archlinux.localdomain>
+References: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
 To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from cluster-a.mailcontrol.com ([85.115.52.190]:42897 "EHLO
-	cluster-a.mailcontrol.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750814AbcBHNGu convert rfc822-to-8bit (ORCPT
+Received: from mail235c50.megamailservers.eu ([91.136.10.245]:52448 "EHLO
+	mail56c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751348AbcBHOZi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Feb 2016 08:06:50 -0500
-Received: from mail1.neceur.com (mail1.neceur.com [195.47.207.3])
-	by rly31a.srv.mailcontrol.com (MailControl) with ESMTP id u18CG5UD098035
-	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 12:16:05 GMT
-Received: from intmail1.neceur.com (intmail1.neceur.com [172.29.14.11])
-	by mail1.neceur.com (8.14.4/8.14.4) with ESMTP id u18CG58N029765
-	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 12:16:05 GMT
-Received: from av1.neceur.com (av1.neceur.com [172.29.14.21])
-	by intmail1.neceur.com (8.13.8/8.13.8) with ESMTP id u18CG5XX024212
-	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 12:16:05 GMT
-Received: from av1.neceur.com (unknown [127.0.0.1])
-	by IMSVA80 (Postfix) with ESMTP id 15A28296B7A
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Feb 2016 12:16:05 +0000 (GMT)
-Received: from EX10CAS02.EU.NEC.COM (unknown [172.29.155.134])
-	by av1.neceur.com (Postfix) with ESMTP id 08752296B74
-	for <linux-rt-users@vger.kernel.org>; Mon,  8 Feb 2016 12:16:05 +0000 (GMT)
-Content-Language: en-US
+	Mon, 8 Feb 2016 09:25:38 -0500
+Received: from archlinux.localdomain (x5ce0d37f.dyn.telefonica.de [92.224.211.127])
+	(authenticated bits=0)
+	by mail56c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id u18EPWqD017982
+	(version=TLSv1/SSLv3 cipher=AES128-GCM-SHA256 bits=128 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 14:25:34 +0000
+In-Reply-To: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+On Mon, 8 Feb 2016 12:16:03 +0000, David Aldrich wrote:
+>Are there any other distros and patches that I should consider?  
+>
+>Any advice on a way forward would be much appreciated.
 
-=46or a new project we need to demonstrate a Linux RT-Kernel=A0running =
-on a 'standard' x86 desktop PC.
+Hi,
 
-The question is which distro to use?  I am aware of commercially suppor=
-ted embedded distros from Wind River and Monta Vista.  However, as ours=
- is not strictly an embedded target, I wonder if a standard Linux distr=
-o + RT kernel patch would be a better choice?
+yes there are, but this is the wrong place to ask.
 
-I have done some research and found the Planet CCRMA patches for Fedora=
- and the Pengutronix patches for Debian.
+Consider to send this request to
 
-Are there any other distros and patches that I should consider? =20
+http://lists.linuxaudio.org/listinfo/linux-audio-user
 
-Any advice on a way forward would be much appreciated.
-
-Best regards
-
-David
-
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Regards,
+Ralf
