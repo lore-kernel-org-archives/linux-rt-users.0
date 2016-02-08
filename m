@@ -1,39 +1,52 @@
-From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
-Subject: Re: Linux RT newbie question
-Date: Mon, 8 Feb 2016 15:25:32 +0100
-Message-ID: <20160208152532.6e15b0d2@archlinux.localdomain>
+From: David Aldrich <David.Aldrich@EMEA.NEC.COM>
+Subject: RE: Linux RT newbie question
+Date: Mon, 8 Feb 2016 14:28:26 +0000
+Message-ID: <41302A7145AC054FA7A96CFD03835A0A0BA8AD12@EX10MBX02.EU.NEC.COM>
 References: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
+ <56B8A042.5000604@meduna.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+To: Stanislav Meduna <stano@meduna.org>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail235c50.megamailservers.eu ([91.136.10.245]:52448 "EHLO
-	mail56c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751348AbcBHOZi (ORCPT
+Received: from cluster-a.mailcontrol.com ([85.115.52.190]:49358 "EHLO
+	cluster-a.mailcontrol.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751653AbcBHO2g convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Feb 2016 09:25:38 -0500
-Received: from archlinux.localdomain (x5ce0d37f.dyn.telefonica.de [92.224.211.127])
-	(authenticated bits=0)
-	by mail56c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id u18EPWqD017982
-	(version=TLSv1/SSLv3 cipher=AES128-GCM-SHA256 bits=128 verify=NO)
-	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 14:25:34 +0000
-In-Reply-To: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
+	Mon, 8 Feb 2016 09:28:36 -0500
+In-Reply-To: <56B8A042.5000604@meduna.org>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 8 Feb 2016 12:16:03 +0000, David Aldrich wrote:
->Are there any other distros and patches that I should consider?  
->
->Any advice on a way forward would be much appreciated.
+Hi Stano
 
-Hi,
+Thanks for your reply ...
 
-yes there are, but this is the wrong place to ask.
+> > For a new project we need to demonstrate a Linux RT-Kernel running
+> > a 'standard' x86 desktop PC.
+> 
+> What is the goal of this presentation? 
 
-Consider to send this request to
+The goal is to demonstrate that a communication system previously implemented on embedded digital signal processors can be implemented on a high spec PC desktop. Sorry that I can't give more details.
 
-http://lists.linuxaudio.org/listinfo/linux-audio-user
+> Are you aware that a standard desktop
+> PC might spoil your realtime attempts in various ways (SMI interrupts, power
+> management, ...)?
 
-Regards,
-Ralf
+Well, I was not aware of this until reading your email and I read ' HOWTO: Build an RT-application' on rt.wiki.kernel.org. The HowTo suggests ways of reducing the impact of SMI interrupts. Is this possible?
+
+> > I wonder if a standard Linux distro + RT kernel patch would be a better
+> choice?
+> 
+> As long as you are using a RT kernel, sane pthreads support such as modern
+> glibc and you know what you are doing (ksoftirqd priority and similar fun)
+> the particular distribution does not matter much. We are using stock Debian
+> with custom kernel as our embedded rt platform.
+
+Do you build your kernel yourselves?
+
+Best regards
+
+David
