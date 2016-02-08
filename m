@@ -1,42 +1,37 @@
-From: Stanislav Meduna <stano@meduna.org>
+From: Ralf Mardorf <ralf.mardorf@alice-dsl.net>
 Subject: Re: Linux RT newbie question
-Date: Mon, 8 Feb 2016 15:03:46 +0100
-Message-ID: <56B8A042.5000604@meduna.org>
+Date: Mon, 8 Feb 2016 15:42:50 +0100
+Message-ID: <20160208154250.1a3edbd2@archlinux.localdomain>
 References: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
+	<20160208152532.6e15b0d2@archlinux.localdomain>
+	<41302A7145AC054FA7A96CFD03835A0A0BA8AD22@EX10MBX02.EU.NEC.COM>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-To: David Aldrich <David.Aldrich@EMEA.NEC.COM>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.meduna.org ([92.240.244.38]:44029 "EHLO meduna.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753405AbcBHOm2 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 8 Feb 2016 09:42:28 -0500
-In-Reply-To: <41302A7145AC054FA7A96CFD03835A0A0BA89C7D@EX10MBX02.EU.NEC.COM>
+Received: from mail150c50.megamailservers.eu ([91.136.10.160]:32923 "EHLO
+	mail50c50.megamailservers.eu" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1752739AbcBHOmz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 8 Feb 2016 09:42:55 -0500
+Received: from archlinux.localdomain (x5ce0d37f.dyn.telefonica.de [92.224.211.127])
+	(authenticated bits=0)
+	by mail50c50.megamailservers.eu (8.14.9/8.13.1) with ESMTP id u18Egn6b005569
+	(version=TLSv1/SSLv3 cipher=AES128-GCM-SHA256 bits=128 verify=NO)
+	for <linux-rt-users@vger.kernel.org>; Mon, 8 Feb 2016 14:42:52 +0000
+In-Reply-To: <41302A7145AC054FA7A96CFD03835A0A0BA8AD22@EX10MBX02.EU.NEC.COM>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2/8/2016 1:16 PM, David Aldrich wrote:
+On Mon, 8 Feb 2016 14:31:01 +0000, David Aldrich wrote:
+>I'm not sure that the audio community is the most appropriate for my
+>application.
 
-> For a new project we need to demonstrate a Linux RT-Kernel
-> running on a 'standard' x86 desktop PC.
+My apologies David,
 
-What is the goal of this presentation? Are you aware that
-a standard desktop PC might spoil your realtime attempts
-in various ways (SMI interrupts, power management, ...)?
+perhaps I'm mistaken and this list is the appropriated list for your
+request. FWIW Linux CNC does use linux-rtai.
 
-> I wonder if a standard Linux distro + RT kernel patch would be a better choice?
-
-As long as you are using a RT kernel, sane pthreads support
-such as modern glibc and you know what you are doing (ksoftirqd
-priority and similar fun) the particular distribution does
-not matter much. We are using stock Debian with custom kernel
-as our embedded rt platform.
-
-It is the _application_ that has to be coded with several things
-in mind if it needs to be realtime.
-
--- 
-                                 Stano
-
+Regards,
+Ralf
