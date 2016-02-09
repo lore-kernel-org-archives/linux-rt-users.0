@@ -1,58 +1,61 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH 2/2] cyclictest: Add --smi description on cyclictest man
- page
-Date: Tue, 9 Feb 2016 15:16:09 +0100 (CET)
-Message-ID: <alpine.LFD.2.20.1602091515490.7299@riemann>
-References: <cover.1453397401.git.bristot@redhat.com> <febe80773c6c45fca3497bb97094c52d76bbf37b.1453397401.git.bristot@redhat.com>
+From: Will Deacon <will.deacon@arm.com>
+Subject: Re: [PATCH] arm64: replace read_lock to rcu lock in call_step_hook
+Date: Tue, 9 Feb 2016 14:54:26 +0000
+Message-ID: <20160209145426.GR22874@arm.com>
+References: <1454971764-30720-1-git-send-email-yang.shi@linaro.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: Clark Williams <williams@redhat.com>,
-	Len Brown <len.brown@intel.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Content-Type: text/plain; charset=us-ascii
+Cc: rostedt@goodmis.org, catalin.marinas@arm.com,
+	bigeasy@linutronix.de, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	linux-arm-kernel@lists.infradead.org,
+	linaro-kernel@lists.linaro.org
+To: Yang Shi <yang.shi@linaro.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f65.google.com ([74.125.82.65]:36355 "EHLO
-	mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757288AbcBIOQM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Feb 2016 09:16:12 -0500
-Received: by mail-wm0-f65.google.com with SMTP id 128so3672245wmz.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 09 Feb 2016 06:16:11 -0800 (PST)
-In-Reply-To: <febe80773c6c45fca3497bb97094c52d76bbf37b.1453397401.git.bristot@redhat.com>
+Received: from foss.arm.com ([217.140.101.70]:40751 "EHLO foss.arm.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752934AbcBIOyY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 9 Feb 2016 09:54:24 -0500
+Content-Disposition: inline
+In-Reply-To: <1454971764-30720-1-git-send-email-yang.shi@linaro.org>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-
-
-On Thu, 21 Jan 2016, Daniel Bristot de Oliveira wrote:
-
-> Add the description of the --smi comand line option of cyclictest.
+On Mon, Feb 08, 2016 at 02:49:24PM -0800, Yang Shi wrote:
+> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+> in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
+> Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
 > 
-> "--smi  Enable SMI count/detection on processors with SMI count support."
+> CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
+> Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+> Call trace:
+> [<ffff8000000885e8>] dump_backtrace+0x0/0x128
+> [<ffff800000088734>] show_stack+0x24/0x30
+> [<ffff80000079a7c4>] dump_stack+0x80/0xa0
+> [<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
+> [<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
+> [<ffff8000007a2268>] rt_read_lock+0x40/0x58
+> [<ffff800000085328>] single_step_handler+0x38/0xd8
+> [<ffff800000082368>] do_debug_exception+0x58/0xb8
+> Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
+> 7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
+> 7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
+> 7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
+> 7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
+> 7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
+> 7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
+> 7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
+> 7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
+> 7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
+> [<ffff8000000833f4>] el1_dbg+0x18/0x6c
 > 
-> Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-> ---
->  src/cyclictest/cyclictest.8 | 4 ++++
->  1 file changed, 4 insertions(+)
+> This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
+> call_break_hook"), but comes to single_step_handler.
 > 
-> diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-> index 4e169aa..437e7a6 100644
-> --- a/src/cyclictest/cyclictest.8
-> +++ b/src/cyclictest/cyclictest.8
-> @@ -188,6 +188,10 @@ memory allocations using the numa(3) policy library. Thread stacks and
->  data structures are allocated from the NUMA node local to the core to
->  which the thread is bound. Requires the underlying kernel to have NUMA
->  support compiled in.
-> +.TP
-> +.B \\-\-smi
-> +Enable SMI count/detection on processors with SMI count support.
-> +
->  .SH SEE ALSO
->  .BR numactl (8),
->  .\" .br
-> -- 
-> 2.5.0
+> This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
 > 
-> --
+> Signed-off-by: Yang Shi <yang.shi@linaro.org>
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
+Acked-by: Will Deacon <will.deacon@arm.com>
+
+Will
