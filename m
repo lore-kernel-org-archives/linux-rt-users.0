@@ -1,104 +1,33 @@
-From: Yang Shi <yang.shi@linaro.org>
-Subject: [PATCH] arm64: replace read_lock to rcu lock in call_step_hook
-Date: Mon,  8 Feb 2016 14:49:24 -0800
-Message-ID: <1454971764-30720-1-git-send-email-yang.shi@linaro.org>
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] arm64: replace read_lock to rcu lock in call_step_hook
+Date: Tue, 9 Feb 2016 10:02:19 +0100
+Message-ID: <20160209090219.GA13035@linutronix.de>
+References: <1454971764-30720-1-git-send-email-yang.shi@linaro.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: rostedt@goodmis.org, catalin.marinas@arm.com, will.deacon@arm.com,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	linux-arm-kernel@lists.infradead.org,
-	linaro-kernel@lists.linaro.org, yang.shi@linaro.org
-To: rostedt@goodmis.org, catalin.marinas@arm.com, will.deacon@arm.com,
-	bigeasy@linutronix.de
+	linaro-kernel@lists.linaro.org
+To: Yang Shi <yang.shi@linaro.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <1454971764-30720-1-git-send-email-yang.shi@linaro.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
-Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
+* Yang Shi | 2016-02-08 14:49:24 [-0800]:
 
-CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
-Hardware name: Freescale Layerscape 2085a RDB Board (DT)
-Call trace:
-[<ffff8000000885e8>] dump_backtrace+0x0/0x128
-[<ffff800000088734>] show_stack+0x24/0x30
-[<ffff80000079a7c4>] dump_stack+0x80/0xa0
-[<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
-[<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
-[<ffff8000007a2268>] rt_read_lock+0x40/0x58
-[<ffff800000085328>] single_step_handler+0x38/0xd8
-[<ffff800000082368>] do_debug_exception+0x58/0xb8
-Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
-7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
-7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
-7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
-7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
-7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
-7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
-7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
-7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
-7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
-[<ffff8000000833f4>] el1_dbg+0x18/0x6c
+>BUG: sleeping function called from invalid context at kernel/locking/r=
+tmutex.c:917
+=E2=80=A6
+>This issue is similar with 62c6c61("arm64: replace read_lock to rcu lo=
+ck in
+>call_break_hook"), but comes to single_step_handler.
+>
+>This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
 
-This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
-call_break_hook"), but comes to single_step_handler.
+I am going to apply this for -RT.
 
-This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
-
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
----
- arch/arm64/kernel/debug-monitors.c | 21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
-
-diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-index 8aee3ae..c1492ba 100644
---- a/arch/arm64/kernel/debug-monitors.c
-+++ b/arch/arm64/kernel/debug-monitors.c
-@@ -186,20 +186,21 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
- 
- /* EL1 Single Step Handler hooks */
- static LIST_HEAD(step_hook);
--static DEFINE_RWLOCK(step_hook_lock);
-+static DEFINE_SPINLOCK(step_hook_lock);
- 
- void register_step_hook(struct step_hook *hook)
- {
--	write_lock(&step_hook_lock);
--	list_add(&hook->node, &step_hook);
--	write_unlock(&step_hook_lock);
-+	spin_lock(&step_hook_lock);
-+	list_add_rcu(&hook->node, &step_hook);
-+	spin_unlock(&step_hook_lock);
- }
- 
- void unregister_step_hook(struct step_hook *hook)
- {
--	write_lock(&step_hook_lock);
--	list_del(&hook->node);
--	write_unlock(&step_hook_lock);
-+	spin_lock(&step_hook_lock);
-+	list_del_rcu(&hook->node);
-+	spin_unlock(&step_hook_lock);
-+	synchronize_rcu();
- }
- 
- /*
-@@ -213,15 +214,15 @@ static int call_step_hook(struct pt_regs *regs, unsigned int esr)
- 	struct step_hook *hook;
- 	int retval = DBG_HOOK_ERROR;
- 
--	read_lock(&step_hook_lock);
-+	rcu_read_lock();
- 
--	list_for_each_entry(hook, &step_hook, node)	{
-+	list_for_each_entry_rcu(hook, &step_hook, node)	{
- 		retval = hook->fn(regs, esr);
- 		if (retval == DBG_HOOK_HANDLED)
- 			break;
- 	}
- 
--	read_unlock(&step_hook_lock);
-+	rcu_read_unlock();
- 
- 	return retval;
- }
--- 
-2.0.2
+Sebastian
