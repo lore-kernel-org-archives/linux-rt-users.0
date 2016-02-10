@@ -1,104 +1,58 @@
-From: =?UTF-8?B?Sm/Dq2wgS3LDpGhlbWFubg==?= <jkraehemann@gmail.com>
-Subject: Re: deterministic usage of JIFFIES and how to relocate the clock
-Date: Tue, 9 Feb 2016 21:04:43 +0100
-Message-ID: <CA+Owze7TnDU_XDec854-6wbsU8GZCzq0E+FpJombdT3KWrWKRQ@mail.gmail.com>
-References: <CA+Owze7GnFYrpVMWSuPd=qXj8auf3fL-mPsZNPVMeP=FQtZsPg@mail.gmail.com>
-	<CA+Owze7+=vMDaqX25OVQ6ZrRgGj9j2BZjEZt_GyG+9+6+6ELWA@mail.gmail.com>
-	<20160204164411.GC3381@linutronix.de>
-Reply-To: jkraehemann-guest@users.alioth.debian.org
+From: "Jaggi, Manish" <Manish.Jaggi@caviumnetworks.com>
+Subject: [4.4rt3] Preemption disabled at:[<ffff8000000aba44>]
+ kvm_vcpu_ioctl+0x30c/0x750
+Date: Wed, 10 Feb 2016 09:33:28 +0000
+Message-ID: <BY1PR0701MB15941A279E3F363E107E268FE1D70@BY1PR0701MB1594.namprd07.prod.outlook.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7BIT
+Cc: Christoffer Dall <christoffer.dall@linaro.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yk0-f179.google.com ([209.85.160.179]:36584 "EHLO
-	mail-yk0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932360AbcBIUEn convert rfc822-to-8bit (ORCPT
+Received: from mail-by2on0098.outbound.protection.outlook.com ([207.46.100.98]:4689
+	"EHLO na01-by2-obe.outbound.protection.outlook.com"
+	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
+	id S1752717AbcBJLFQ convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 9 Feb 2016 15:04:43 -0500
-Received: by mail-yk0-f179.google.com with SMTP id z7so104589165yka.3
-        for <linux-rt-users@vger.kernel.org>; Tue, 09 Feb 2016 12:04:43 -0800 (PST)
-In-Reply-To: <20160204164411.GC3381@linutronix.de>
+	Wed, 10 Feb 2016 06:05:16 -0500
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi
+I am trying to run a kvm guest on a host with 4.4 rt3 patchset applied. (Cavium thunderX arm64 system)
+Getting the following error: 
 
-At my opinion I could do some optimization by controlling what gets
-into the stack and at what time in program lifetime.
+BUG: scheduling while atomic: qemu-system-aar/41889/0x00000002
+[  341.647463] Modules linked in: ipv6 thunderx_edac_lmc thunderx_edac_ccpi i2c_octeon edac_core shpchp aes_ce_blk ablk_helper cryptd aes_ce_cipher ghash_ce sha2_ce sha1_ce uio_pdrv_genirq rtc_efi uio
+[  341.647477] Preemption disabled at:[<ffff8000000aba44>] kvm_vcpu_ioctl+0x30c/0x750
+[  341.647478] 
+[  341.647484] CPU: 2 PID: 41889 Comm: qemu-system-aar Not tainted 4.4.0-rt3-00120-gbb974fa #64
+[  341.647486] Hardware name: www.cavium.com ThunderX CRB1S/ThunderX CRB1S, BIOS 0.3 Dec  3 2015
+[  341.647488] Call trace:
+[  341.647494] [<ffff800000097878>] dump_backtrace+0x0/0x160
+[  341.647499] [<ffff8000000979fc>] show_stack+0x24/0x30
+[  341.647503] [<ffff800000512608>] dump_stack+0x88/0xa8
+[  341.647509] [<ffff8000000f25c0>] __schedule_bug+0x70/0xc0
+[  341.647514] [<ffff8000008f8f38>] __schedule+0x510/0x580
+[  341.647517] [<ffff8000008f90e8>] schedule+0x50/0xf0
+[  341.647521] [<ffff8000008fa9a4>] rt_spin_lock_slowlock+0x124/0x2e0
+[  341.647525] [<ffff8000008fc5e0>] rt_spin_lock+0x60/0x70
+[  341.647530] [<ffff8000000bffe0>] kvm_vgic_flush_hwstate+0x60/0x278
+[  341.647535] [<ffff8000000b3140>] kvm_arch_vcpu_ioctl_run+0x108/0x618
+[  341.647547] [<ffff8000000aba44>] kvm_vcpu_ioctl+0x30c/0x750
+[  341.647553] [<ffff80000024b4dc>] do_vfs_ioctl+0x364/0x628
+[  341.647556] [<ffff80000024b834>] SyS_ioctl+0x94/0xa8
+[  341.647560] [<ffff800000093b04>] el0_svc_naked+0x38/0x3c
 
-I'm doing a realtime sequencer in C.
 
-http://gsequencer.org
+The below patch enables preemption:
+https://git.kernel.org/cgit/linux/kernel/git/torvalds/linux.git/commit/arch/arm/kvm/arm.c?h=v4.4&id=1b3d546daf85ed2bc9966e12cee3e6435fb65eca
 
-Basically it does a lot of additions to calculate the audio data to
-output to soundcard. I have a thread object that does 1000 cycles per
-second.
-That's why I'm talking about JIFFIES not related to the kernel ones.
+arm/arm64: KVM: Properly account for guest CPU time
 
-Deterministic in this view of doing the job in time say within the
-range of a mili-second. At bigger loads it takes may be 5 to 8 mili
-seconds to do additive mixing.
-What I want to do is to bypass the bottle-neck. Further I believe
-there's much time wasted by loading or unloading a thread into CPU.
+Is there a way to do it without disabling preemption ? 
+Or any other way to workaround
 
-There might be at least 1 audio thread and 2 channel threads with a
-simple setup but generally depends on how many sound sequencers you
-have. For a basic band
-with 5 instruments there are 15 threads, one gui thread, a main loop
-and a thread pool serving non blocking functions. So you get quickly
-more than 20 threads.
-
-The problem is doing additive sound mixing and at my opinion how the
-program gets loaded/unloaded into the stack. It eats much computing
-time. So is there an
-API to solve this issue to control the stack?
-
-So far I have found pthread_yield() but I'm not happy with it.
-
-Bests,
-Jo=C3=ABl
-
-On Thu, Feb 4, 2016 at 5:44 PM, Sebastian Andrzej Siewior
-<bigeasy@linutronix.de> wrote:
-> * Jo=C3=ABl Kr=C3=A4hemann | 2016-01-24 09:40:33 [+0100]:
->
->>Hi
-> Hi,
->
->>At my opinion I was thinking at a lower level than needed. The
-> I couldn't parse the question in the previous mail.
->
->>application runs at least aside the kernel.
->
-> aside the kernel? Like one CPU is for the kernel and the other for th=
-e
-> application?
->
->>Probably I want to control PC (program counter) and redeclare the
->>longjump function as macro. To gain control
->>over throughput rate and thus being able to grain loading and unloadi=
-ng thread.
->
-> maybe. But I still fail to understand what you attempt to do.
->
->>int sched_setaffinity(pid_t pid, size_t cpusetsize,
->>                             const cpu_set_t *mask);
->
-> This one says which CPUs the task may run on.
->
->>void longjmp(jmp_buf env, int val);
->
-> and this is unrelated to the previous one.
->
->>
->>cheers,
->>Jo=C3=ABl
->
-> Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+  
+ Regards, 
+Manish Jaggi    
