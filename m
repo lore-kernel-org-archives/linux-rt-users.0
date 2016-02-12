@@ -1,72 +1,127 @@
-From: Tim Sander <tim@krieglstein.org>
-Subject: Re: [ANNOUNCE] 4.1.5-rt5 meant to reply to 4.4.1-rt5
-Date: Fri, 12 Feb 2016 15:36:16 +0100
-Message-ID: <7138155.u6nNkmxGuH@dabox>
-References: <20150816135630.GE7004@linutronix.de> <1614199.PesBpXyHut@dabox> <56BDA0EF.7090503@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
-	John Kacur <jkacur@redhat.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
+Date: Sat, 13 Feb 2016 00:02:46 +0100
+Message-ID: <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
+References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <56BDA0EF.7090503@linutronix.de>
+In-Reply-To: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Sebastian
+From: Thomas Gleixner <tglx@linutronix.de>
 
-As you got correctly i was talking about 4.4.1-rt5 and not 4.1 i replie=
-d to by=20
-accident.
+We currently disable migration across lock acquisition. That includes the part
+where we block on the lock and schedule out. We cannot disable migration after
+taking the lock as that would cause a possible lock inversion.
 
-Am Freitag, 12. Februar 2016, 10:07:59 schrieb Sebastian Andrzej Siewio=
-r:
-> On 02/12/2016 09:28 AM, Tim Sander wrote:
-> > Hi Sebastian
->=20
-> Hi Tim,
->=20
-> > Am Sonntag, 16. August 2015, 15:56:30 schrieb Sebastian Andrzej Sie=
-wior:
-> >> I'm pleased to announce the v4.1.5-rt5 patch set.
-> >=20
-> > I have just tested it with a Altera SoC ARM v7. The latencies seem =
-to have
-> > gotten a little bit worse with each release. The first core has alw=
-ays
-> > been
-> > worse (presumably due to interrupt load) but now it dropped to 111=B5=
-s (rt5)
-> > from 76=B5s(rt3) and 54=B5s(rt2).
->=20
-> in -rt2 we had bug in migrate disable code which means each task was
-> running on CPU0. This got partly fixed in -rt3. In -rt3 the scheduler
-> could assign a task to CPU1 but the task should stay there for ever.
-> This little detail was fixed in -rt5.
-> This is one thing that comes to mind.
-> Lazy-preempt should have been fixed in -rt3, too. This should not giv=
-e
-> you higher latencies but higher throughput.
->=20
-> What about rt4? It is only the stable update so you should see here t=
-he
-> numbers from rt3. If that is true and your numbers are stable it shou=
-ld
-> be easy to run git bisect between rt4 and rt5. And looking at
->   https://git.kernel.org/rt/linux-rt-devel/h/v4.4.1-rt5
-> the only non-cosmetic change in -rt5 that should affect you is the
-> migrate-disable fixup from Mike.
-Ok, each run takes a couple of hours so bisecting should take quite som=
-e time
-but i will give it a try. I started a test with 4.4.1-rt4, if the numbe=
-rs are=20
-within the 70=B5s ballpark bisecting seems the way to go. If the number=
-s are=20
-higher i suspect that stable update might have a play here. But we will=
- see.
+But we can be smart and enable migration when we block and schedule out. That
+allows the scheduler to place the task freely at least if this is the first
+migrate disable level. For nested locking this does not help at all.
 
-Best regards
-Tim
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/locking/rtmutex.c | 32 ++++++++++++++++++++------------
+ 1 file changed, 20 insertions(+), 12 deletions(-)
+
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index 913aa40f3b5e..66971005cc12 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -924,14 +924,19 @@ static int __try_to_take_rt_mutex(struct rt_mutex *lock,
+  * preemptible spin_lock functions:
+  */
+ static inline void rt_spin_lock_fastlock(struct rt_mutex *lock,
+-					 void  (*slowfn)(struct rt_mutex *lock))
++					 void  (*slowfn)(struct rt_mutex *lock,
++							 bool mg_off),
++					 bool do_mig_dis)
+ {
+ 	might_sleep_no_state_check();
+ 
++	if (do_mig_dis)
++		migrate_disable();
++
+ 	if (likely(rt_mutex_cmpxchg_acquire(lock, NULL, current)))
+ 		rt_mutex_deadlock_account_lock(lock, current);
+ 	else
+-		slowfn(lock);
++		slowfn(lock, do_mig_dis);
+ }
+ 
+ static inline void rt_spin_lock_fastunlock(struct rt_mutex *lock,
+@@ -989,7 +994,8 @@ static int task_blocks_on_rt_mutex(struct rt_mutex *lock,
+  * We store the current state under p->pi_lock in p->saved_state and
+  * the try_to_wake_up() code handles this accordingly.
+  */
+-static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
++static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock,
++						    bool mg_off)
+ {
+ 	struct task_struct *lock_owner, *self = current;
+ 	struct rt_mutex_waiter waiter, *top_waiter;
+@@ -1033,8 +1039,13 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 
+ 		debug_rt_mutex_print_deadlock(&waiter);
+ 
+-		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner))
++		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner)) {
++			if (mg_off)
++				migrate_enable();
+ 			schedule();
++			if (mg_off)
++				migrate_disable();
++		}
+ 
+ 		raw_spin_lock_irqsave(&lock->wait_lock, flags);
+ 
+@@ -1105,38 +1116,35 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ 
+ void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock)
+ {
+-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
++	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, false);
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ }
+ EXPORT_SYMBOL(rt_spin_lock__no_mg);
+ 
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
+-	migrate_disable();
+-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
++	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, true);
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ }
+ EXPORT_SYMBOL(rt_spin_lock);
+ 
+ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
+ {
+-	migrate_disable();
+-	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
++	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock, true);
+ }
+ EXPORT_SYMBOL(__rt_spin_lock);
+ 
+ void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock)
+ {
+-	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
++	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock, false);
+ }
+ EXPORT_SYMBOL(__rt_spin_lock__no_mg);
+ 
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
+ {
+-	migrate_disable();
+-	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+ 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
++	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock, true);
+ }
+ EXPORT_SYMBOL(rt_spin_lock_nested);
+ #endif
+-- 
+2.7.0
