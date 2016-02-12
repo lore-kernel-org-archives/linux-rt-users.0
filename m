@@ -1,298 +1,39 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 3/6] rtmutex: push down migrate_disable() into rt_spin_lock()
-Date: Sat, 13 Feb 2016 00:02:45 +0100
-Message-ID: <1455318168-7125-3-git-send-email-bigeasy@linutronix.de>
-References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH RT 1/6] kernel: softirq: unlock with irqs on
+Date: Sat, 13 Feb 2016 00:02:43 +0100
+Message-ID: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-No point in having the migrate disable/enable invocations in all the
-macro/inlines. That's just more code for no win as we do a function
-call anyway. Move it to the core code and save quite some text size.
-
-    text      data        bss        dec        filename
-11034127   3676912   14901248   29612287  vmlinux.before
-10990437   3676848   14901248   29568533  vmlinux.after
-
-~-40KiB
+We unlock the lock while the interrupts are off. This isn't a problem
+now but will get because the migrate_disable() + enable are not
+symmetrical in regard to the status of interrupts.
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- include/linux/locallock.h   |  6 +++---
- include/linux/spinlock_rt.h | 25 +++++++-----------------
- kernel/cpu.c                |  4 ++--
- kernel/locking/lglock.c     |  2 +-
- kernel/locking/rt.c         |  2 --
- kernel/locking/rtmutex.c    | 46 +++++++++++++++++++++++++++++++++++++++++----
- 6 files changed, 55 insertions(+), 30 deletions(-)
+ kernel/softirq.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 339ba00adb9a..6fe5928fc2ab 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -43,9 +43,9 @@ struct local_irq_lock {
-  * for CONFIG_PREEMPT_BASE map to the normal spin_* calls.
-  */
- #ifdef CONFIG_PREEMPT_RT_FULL
--# define spin_lock_local(lock)			rt_spin_lock(lock)
--# define spin_trylock_local(lock)		rt_spin_trylock(lock)
--# define spin_unlock_local(lock)		rt_spin_unlock(lock)
-+# define spin_lock_local(lock)			rt_spin_lock__no_mg(lock)
-+# define spin_trylock_local(lock)		rt_spin_trylock__no_mg(lock)
-+# define spin_unlock_local(lock)		rt_spin_unlock__no_mg(lock)
- #else
- # define spin_lock_local(lock)			spin_lock(lock)
- # define spin_trylock_local(lock)		spin_trylock(lock)
-diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
-index f757096b230c..3b2825537531 100644
---- a/include/linux/spinlock_rt.h
-+++ b/include/linux/spinlock_rt.h
-@@ -18,6 +18,10 @@ do {							\
- 	__rt_spin_lock_init(slock, #slock, &__key);	\
- } while (0)
- 
-+void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock);
-+void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock);
-+int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock);
-+
- extern void __lockfunc rt_spin_lock(spinlock_t *lock);
- extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
- extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
-@@ -32,20 +36,16 @@ extern int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock);
-  * lockdep-less calls, for derived types like rwlock:
-  * (for trylock they can use rt_mutex_trylock() directly.
-  */
-+extern void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock);
- extern void __lockfunc __rt_spin_lock(struct rt_mutex *lock);
- extern void __lockfunc __rt_spin_unlock(struct rt_mutex *lock);
- extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
- 
--#define spin_lock(lock)				\
--	do {					\
--		migrate_disable();		\
--		rt_spin_lock(lock);		\
--	} while (0)
-+#define spin_lock(lock)			rt_spin_lock(lock)
- 
- #define spin_lock_bh(lock)			\
- 	do {					\
- 		local_bh_disable();		\
--		migrate_disable();		\
- 		rt_spin_lock(lock);		\
- 	} while (0)
- 
-@@ -56,24 +56,19 @@ extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
- #define spin_trylock(lock)			\
- ({						\
- 	int __locked;				\
--	migrate_disable();			\
- 	__locked = spin_do_trylock(lock);	\
--	if (!__locked)				\
--		migrate_enable();		\
- 	__locked;				\
- })
- 
- #ifdef CONFIG_LOCKDEP
- # define spin_lock_nested(lock, subclass)		\
- 	do {						\
--		migrate_disable();			\
- 		rt_spin_lock_nested(lock, subclass);	\
- 	} while (0)
- 
- #define spin_lock_bh_nested(lock, subclass)		\
- 	do {						\
- 		local_bh_disable();			\
--		migrate_disable();			\
- 		rt_spin_lock_nested(lock, subclass);	\
- 	} while (0)
- 
-@@ -81,7 +76,6 @@ extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
- 	do {						 \
- 		typecheck(unsigned long, flags);	 \
- 		flags = 0;				 \
--		migrate_disable();			 \
- 		rt_spin_lock_nested(lock, subclass);	 \
- 	} while (0)
- #else
-@@ -117,16 +111,11 @@ static inline unsigned long spin_lock_trace_flags(spinlock_t *lock)
- /* FIXME: we need rt_spin_lock_nest_lock */
- #define spin_lock_nest_lock(lock, nest_lock) spin_lock_nested(lock, 0)
- 
--#define spin_unlock(lock)				\
--	do {						\
--		rt_spin_unlock(lock);			\
--		migrate_enable();			\
--	} while (0)
-+#define spin_unlock(lock)			rt_spin_unlock(lock)
- 
- #define spin_unlock_bh(lock)				\
- 	do {						\
- 		rt_spin_unlock(lock);			\
--		migrate_enable();			\
- 		local_bh_enable();			\
- 	} while (0)
- 
-diff --git a/kernel/cpu.c b/kernel/cpu.c
-index 51aafc259546..8edd3c716092 100644
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -127,8 +127,8 @@ struct hotplug_pcp {
- };
- 
- #ifdef CONFIG_PREEMPT_RT_FULL
--# define hotplug_lock(hp) rt_spin_lock(&(hp)->lock)
--# define hotplug_unlock(hp) rt_spin_unlock(&(hp)->lock)
-+# define hotplug_lock(hp) rt_spin_lock__no_mg(&(hp)->lock)
-+# define hotplug_unlock(hp) rt_spin_unlock__no_mg(&(hp)->lock)
- #else
- # define hotplug_lock(hp) mutex_lock(&(hp)->mutex)
- # define hotplug_unlock(hp) mutex_unlock(&(hp)->mutex)
-diff --git a/kernel/locking/lglock.c b/kernel/locking/lglock.c
-index d8be4fcc14f8..51bfe64e7d16 100644
---- a/kernel/locking/lglock.c
-+++ b/kernel/locking/lglock.c
-@@ -10,7 +10,7 @@
- # define lg_do_unlock(l)	arch_spin_unlock(l)
- #else
- # define lg_lock_ptr		struct rt_mutex
--# define lg_do_lock(l)		__rt_spin_lock(l)
-+# define lg_do_lock(l)		__rt_spin_lock__no_mg(l)
- # define lg_do_unlock(l)	__rt_spin_unlock(l)
- #endif
- /*
-diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
-index 1bbbcad5e360..d4ab61c1848b 100644
---- a/kernel/locking/rt.c
-+++ b/kernel/locking/rt.c
-@@ -235,7 +235,6 @@ EXPORT_SYMBOL(rt_read_trylock);
- void __lockfunc rt_write_lock(rwlock_t *rwlock)
- {
- 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
--	migrate_disable();
- 	__rt_spin_lock(&rwlock->lock);
- }
- EXPORT_SYMBOL(rt_write_lock);
-@@ -249,7 +248,6 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
- 	 * recursive read locks succeed when current owns the lock
- 	 */
- 	if (rt_mutex_owner(lock) != current) {
--		migrate_disable();
- 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
- 		__rt_spin_lock(lock);
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index d1e999e74d23..2ca63cc1469e 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -563,8 +563,10 @@ static void do_current_softirqs(void)
+ 			do_single_softirq(i);
+ 		}
+ 		softirq_clr_runner(i);
+-		unlock_softirq(i);
+ 		WARN_ON(current->softirq_nestcnt != 1);
++		local_irq_enable();
++		unlock_softirq(i);
++		local_irq_disable();
  	}
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index a6f5326e4056..913aa40f3b5e 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1103,8 +1103,16 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
- 	rt_mutex_adjust_prio(current);
  }
  
-+void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock)
-+{
-+	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
-+	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
-+}
-+EXPORT_SYMBOL(rt_spin_lock__no_mg);
-+
- void __lockfunc rt_spin_lock(spinlock_t *lock)
- {
-+	migrate_disable();
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
- 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
- }
-@@ -1112,24 +1120,41 @@ EXPORT_SYMBOL(rt_spin_lock);
- 
- void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
- {
-+	migrate_disable();
- 	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
- }
- EXPORT_SYMBOL(__rt_spin_lock);
- 
-+void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock)
-+{
-+	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
-+}
-+EXPORT_SYMBOL(__rt_spin_lock__no_mg);
-+
- #ifdef CONFIG_DEBUG_LOCK_ALLOC
- void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
- {
-+	migrate_disable();
- 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
- 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
- }
- EXPORT_SYMBOL(rt_spin_lock_nested);
- #endif
- 
-+void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock)
-+{
-+	/* NOTE: we always pass in '1' for nested, for simplicity */
-+	spin_release(&lock->dep_map, 1, _RET_IP_);
-+	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
-+}
-+EXPORT_SYMBOL(rt_spin_unlock__no_mg);
-+
- void __lockfunc rt_spin_unlock(spinlock_t *lock)
- {
- 	/* NOTE: we always pass in '1' for nested, for simplicity */
- 	spin_release(&lock->dep_map, 1, _RET_IP_);
- 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
-+	migrate_enable();
- }
- EXPORT_SYMBOL(rt_spin_unlock);
- 
-@@ -1156,14 +1181,29 @@ int __lockfunc __rt_spin_trylock(struct rt_mutex *lock)
- 	return rt_mutex_trylock(lock);
- }
- 
--int __lockfunc rt_spin_trylock(spinlock_t *lock)
-+int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock)
- {
--	int ret = rt_mutex_trylock(&lock->lock);
-+	int ret;
- 
-+	ret = rt_mutex_trylock(&lock->lock);
- 	if (ret)
- 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
- 	return ret;
- }
-+EXPORT_SYMBOL(rt_spin_trylock__no_mg);
-+
-+int __lockfunc rt_spin_trylock(spinlock_t *lock)
-+{
-+	int ret;
-+
-+	migrate_disable();
-+	ret = rt_mutex_trylock(&lock->lock);
-+	if (ret)
-+		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
-+	else
-+		migrate_enable();
-+	return ret;
-+}
- EXPORT_SYMBOL(rt_spin_trylock);
- 
- int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
-@@ -1200,12 +1240,10 @@ int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock)
- 	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
- 	if (atomic_add_unless(atomic, -1, 1))
- 		return 0;
--	migrate_disable();
- 	rt_spin_lock(lock);
- 	if (atomic_dec_and_test(atomic))
- 		return 1;
- 	rt_spin_unlock(lock);
--	migrate_enable();
- 	return 0;
- }
- EXPORT_SYMBOL(atomic_dec_and_spin_lock);
 -- 
 2.7.0
