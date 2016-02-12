@@ -1,7 +1,7 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT 5/6] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-Date: Sat, 13 Feb 2016 00:02:47 +0100
-Message-ID: <1455318168-7125-5-git-send-email-bigeasy@linutronix.de>
+Subject: [PATCH RT 3/6] rtmutex: push down migrate_disable() into rt_spin_lock()
+Date: Sat, 13 Feb 2016 00:02:45 +0100
+Message-ID: <1455318168-7125-3-git-send-email-bigeasy@linutronix.de>
 References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
 	Steven Rostedt <rostedt@goodmis.org>,
@@ -12,154 +12,287 @@ In-Reply-To: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-With completion using swait and so rawlocks we don't need this anymore.
-Further, bisect thinks this patch is responsible for:
+No point in having the migrate disable/enable invocations in all the
+macro/inlines. That's just more code for no win as we do a function
+call anyway. Move it to the core code and save quite some text size.
 
-|BUG: unable to handle kernel NULL pointer dereference at           (null)
-|IP: [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|PGD 0
-|Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
-|Dumping ftrace buffer:
-|   (ftrace buffer empty)
-|Modules linked in:
-|CPU: 1 PID: 0 Comm: swapper/1 Not tainted 4.4.1+ #330
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88013ae64b00 ti: ffff88013ae74000 task.ti: ffff88013ae74000
-|RIP: 0010:[<ffffffff81082123>]  [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|RSP: 0000:ffff88013ae77eb8  EFLAGS: 00010082
-|RAX: 0000000000000001 RBX: ffffffff81c2cf20 RCX: 0000001050fb52fb
-|RDX: 0000001050fb52fb RSI: 000000105117ca1e RDI: 00000000001c7723
-|RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
-|R10: 0000000000000000 R11: 0000000000000001 R12: 00000000ffffffff
-|R13: ffffffff81c2cee0 R14: 0000000000000000 R15: 0000000000000001
-|FS:  0000000000000000(0000) GS:ffff88013b200000(0000) knlGS:0000000000000000
-|CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-|CR2: 0000000000000000 CR3: 0000000001c09000 CR4: 00000000000006e0
-|Stack:
-| ffffffff810c446d ffff88013ae77f00 ffffffff8107d8dd 000000000000000a
-| 0000000000000001 0000000000000000 0000000000000000 0000000000000000
-| 0000000000000000 ffff88013ae77f10 ffffffff8107d90e ffff88013ae77f20
-|Call Trace:
-| [<ffffffff810c446d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
-| [<ffffffff8107d8dd>] ? notifier_call_chain+0x5d/0x80
-| [<ffffffff8107d90e>] ? __raw_notifier_call_chain+0xe/0x10
-| [<ffffffff810598a3>] ? cpu_notify+0x23/0x40
-| [<ffffffff8105a7b8>] ? notify_cpu_starting+0x28/0x30
+    text      data        bss        dec        filename
+11034127   3676912   14901248   29612287  vmlinux.before
+10990437   3676848   14901248   29568533  vmlinux.after
 
-during hotplug. The rawlocks need to remain however.
+~-40KiB
 
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 ---
- kernel/stop_machine.c | 40 ++++++++--------------------------------
- 1 file changed, 8 insertions(+), 32 deletions(-)
+ include/linux/locallock.h   |  6 +++---
+ include/linux/spinlock_rt.h | 25 +++++++-----------------
+ kernel/cpu.c                |  4 ++--
+ kernel/locking/lglock.c     |  2 +-
+ kernel/locking/rt.c         |  2 --
+ kernel/locking/rtmutex.c    | 46 +++++++++++++++++++++++++++++++++++++++++----
+ 6 files changed, 55 insertions(+), 30 deletions(-)
 
-diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
-index 2c5acc882bad..f84d3b45cda7 100644
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -30,7 +30,7 @@ struct cpu_stop_done {
- 	atomic_t		nr_todo;	/* nr left to execute */
- 	bool			executed;	/* actually executed? */
- 	int			ret;		/* collected return value */
--	struct task_struct	*waiter;	/* woken when nr_todo reaches 0 */
-+	struct completion	completion;	/* fired if nr_todo reaches 0 */
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 339ba00adb9a..6fe5928fc2ab 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -43,9 +43,9 @@ struct local_irq_lock {
+  * for CONFIG_PREEMPT_BASE map to the normal spin_* calls.
+  */
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-# define spin_lock_local(lock)			rt_spin_lock(lock)
+-# define spin_trylock_local(lock)		rt_spin_trylock(lock)
+-# define spin_unlock_local(lock)		rt_spin_unlock(lock)
++# define spin_lock_local(lock)			rt_spin_lock__no_mg(lock)
++# define spin_trylock_local(lock)		rt_spin_trylock__no_mg(lock)
++# define spin_unlock_local(lock)		rt_spin_unlock__no_mg(lock)
+ #else
+ # define spin_lock_local(lock)			spin_lock(lock)
+ # define spin_trylock_local(lock)		spin_trylock(lock)
+diff --git a/include/linux/spinlock_rt.h b/include/linux/spinlock_rt.h
+index f757096b230c..3b2825537531 100644
+--- a/include/linux/spinlock_rt.h
++++ b/include/linux/spinlock_rt.h
+@@ -18,6 +18,10 @@ do {							\
+ 	__rt_spin_lock_init(slock, #slock, &__key);	\
+ } while (0)
+ 
++void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock);
++void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock);
++int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock);
++
+ extern void __lockfunc rt_spin_lock(spinlock_t *lock);
+ extern unsigned long __lockfunc rt_spin_lock_trace_flags(spinlock_t *lock);
+ extern void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass);
+@@ -32,20 +36,16 @@ extern int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock);
+  * lockdep-less calls, for derived types like rwlock:
+  * (for trylock they can use rt_mutex_trylock() directly.
+  */
++extern void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock);
+ extern void __lockfunc __rt_spin_lock(struct rt_mutex *lock);
+ extern void __lockfunc __rt_spin_unlock(struct rt_mutex *lock);
+ extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
+ 
+-#define spin_lock(lock)				\
+-	do {					\
+-		migrate_disable();		\
+-		rt_spin_lock(lock);		\
+-	} while (0)
++#define spin_lock(lock)			rt_spin_lock(lock)
+ 
+ #define spin_lock_bh(lock)			\
+ 	do {					\
+ 		local_bh_disable();		\
+-		migrate_disable();		\
+ 		rt_spin_lock(lock);		\
+ 	} while (0)
+ 
+@@ -56,24 +56,19 @@ extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
+ #define spin_trylock(lock)			\
+ ({						\
+ 	int __locked;				\
+-	migrate_disable();			\
+ 	__locked = spin_do_trylock(lock);	\
+-	if (!__locked)				\
+-		migrate_enable();		\
+ 	__locked;				\
+ })
+ 
+ #ifdef CONFIG_LOCKDEP
+ # define spin_lock_nested(lock, subclass)		\
+ 	do {						\
+-		migrate_disable();			\
+ 		rt_spin_lock_nested(lock, subclass);	\
+ 	} while (0)
+ 
+ #define spin_lock_bh_nested(lock, subclass)		\
+ 	do {						\
+ 		local_bh_disable();			\
+-		migrate_disable();			\
+ 		rt_spin_lock_nested(lock, subclass);	\
+ 	} while (0)
+ 
+@@ -81,7 +76,6 @@ extern int __lockfunc __rt_spin_trylock(struct rt_mutex *lock);
+ 	do {						 \
+ 		typecheck(unsigned long, flags);	 \
+ 		flags = 0;				 \
+-		migrate_disable();			 \
+ 		rt_spin_lock_nested(lock, subclass);	 \
+ 	} while (0)
+ #else
+@@ -117,16 +111,11 @@ static inline unsigned long spin_lock_trace_flags(spinlock_t *lock)
+ /* FIXME: we need rt_spin_lock_nest_lock */
+ #define spin_lock_nest_lock(lock, nest_lock) spin_lock_nested(lock, 0)
+ 
+-#define spin_unlock(lock)				\
+-	do {						\
+-		rt_spin_unlock(lock);			\
+-		migrate_enable();			\
+-	} while (0)
++#define spin_unlock(lock)			rt_spin_unlock(lock)
+ 
+ #define spin_unlock_bh(lock)				\
+ 	do {						\
+ 		rt_spin_unlock(lock);			\
+-		migrate_enable();			\
+ 		local_bh_enable();			\
+ 	} while (0)
+ 
+diff --git a/kernel/cpu.c b/kernel/cpu.c
+index 51aafc259546..8edd3c716092 100644
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -127,8 +127,8 @@ struct hotplug_pcp {
  };
  
- /* the actual stopper, one per every possible cpu, enabled on online cpus */
-@@ -59,7 +59,7 @@ static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
+ #ifdef CONFIG_PREEMPT_RT_FULL
+-# define hotplug_lock(hp) rt_spin_lock(&(hp)->lock)
+-# define hotplug_unlock(hp) rt_spin_unlock(&(hp)->lock)
++# define hotplug_lock(hp) rt_spin_lock__no_mg(&(hp)->lock)
++# define hotplug_unlock(hp) rt_spin_unlock__no_mg(&(hp)->lock)
+ #else
+ # define hotplug_lock(hp) mutex_lock(&(hp)->mutex)
+ # define hotplug_unlock(hp) mutex_unlock(&(hp)->mutex)
+diff --git a/kernel/locking/lglock.c b/kernel/locking/lglock.c
+index d8be4fcc14f8..51bfe64e7d16 100644
+--- a/kernel/locking/lglock.c
++++ b/kernel/locking/lglock.c
+@@ -10,7 +10,7 @@
+ # define lg_do_unlock(l)	arch_spin_unlock(l)
+ #else
+ # define lg_lock_ptr		struct rt_mutex
+-# define lg_do_lock(l)		__rt_spin_lock(l)
++# define lg_do_lock(l)		__rt_spin_lock__no_mg(l)
+ # define lg_do_unlock(l)	__rt_spin_unlock(l)
+ #endif
+ /*
+diff --git a/kernel/locking/rt.c b/kernel/locking/rt.c
+index 1bbbcad5e360..d4ab61c1848b 100644
+--- a/kernel/locking/rt.c
++++ b/kernel/locking/rt.c
+@@ -235,7 +235,6 @@ EXPORT_SYMBOL(rt_read_trylock);
+ void __lockfunc rt_write_lock(rwlock_t *rwlock)
  {
- 	memset(done, 0, sizeof(*done));
- 	atomic_set(&done->nr_todo, nr_todo);
--	done->waiter = current;
-+	init_completion(&done->completion);
+ 	rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+-	migrate_disable();
+ 	__rt_spin_lock(&rwlock->lock);
  }
- 
- /* signal completion unless @done is NULL */
-@@ -68,10 +68,8 @@ static void cpu_stop_signal_done(struct cpu_stop_done *done, bool executed)
- 	if (done) {
- 		if (executed)
- 			done->executed = true;
--		if (atomic_dec_and_test(&done->nr_todo)) {
--			wake_up_process(done->waiter);
--			done->waiter = NULL;
--		}
-+		if (atomic_dec_and_test(&done->nr_todo))
-+			complete(&done->completion);
+ EXPORT_SYMBOL(rt_write_lock);
+@@ -249,7 +248,6 @@ void __lockfunc rt_read_lock(rwlock_t *rwlock)
+ 	 * recursive read locks succeed when current owns the lock
+ 	 */
+ 	if (rt_mutex_owner(lock) != current) {
+-		migrate_disable();
+ 		rwlock_acquire(&rwlock->dep_map, 0, 0, _RET_IP_);
+ 		__rt_spin_lock(lock);
  	}
+diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
+index a6f5326e4056..913aa40f3b5e 100644
+--- a/kernel/locking/rtmutex.c
++++ b/kernel/locking/rtmutex.c
+@@ -1103,8 +1103,16 @@ static void  noinline __sched rt_spin_lock_slowunlock(struct rt_mutex *lock)
+ 	rt_mutex_adjust_prio(current);
  }
  
-@@ -96,22 +94,6 @@ static void cpu_stop_queue_work(unsigned int cpu, struct cpu_stop_work *work)
- 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
++void __lockfunc rt_spin_lock__no_mg(spinlock_t *lock)
++{
++	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
++	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
++}
++EXPORT_SYMBOL(rt_spin_lock__no_mg);
++
+ void __lockfunc rt_spin_lock(spinlock_t *lock)
+ {
++	migrate_disable();
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+ 	spin_acquire(&lock->dep_map, 0, 0, _RET_IP_);
+ }
+@@ -1112,24 +1120,41 @@ EXPORT_SYMBOL(rt_spin_lock);
+ 
+ void __lockfunc __rt_spin_lock(struct rt_mutex *lock)
+ {
++	migrate_disable();
+ 	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
+ }
+ EXPORT_SYMBOL(__rt_spin_lock);
+ 
++void __lockfunc __rt_spin_lock__no_mg(struct rt_mutex *lock)
++{
++	rt_spin_lock_fastlock(lock, rt_spin_lock_slowlock);
++}
++EXPORT_SYMBOL(__rt_spin_lock__no_mg);
++
+ #ifdef CONFIG_DEBUG_LOCK_ALLOC
+ void __lockfunc rt_spin_lock_nested(spinlock_t *lock, int subclass)
+ {
++	migrate_disable();
+ 	rt_spin_lock_fastlock(&lock->lock, rt_spin_lock_slowlock);
+ 	spin_acquire(&lock->dep_map, subclass, 0, _RET_IP_);
+ }
+ EXPORT_SYMBOL(rt_spin_lock_nested);
+ #endif
+ 
++void __lockfunc rt_spin_unlock__no_mg(spinlock_t *lock)
++{
++	/* NOTE: we always pass in '1' for nested, for simplicity */
++	spin_release(&lock->dep_map, 1, _RET_IP_);
++	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
++}
++EXPORT_SYMBOL(rt_spin_unlock__no_mg);
++
+ void __lockfunc rt_spin_unlock(spinlock_t *lock)
+ {
+ 	/* NOTE: we always pass in '1' for nested, for simplicity */
+ 	spin_release(&lock->dep_map, 1, _RET_IP_);
+ 	rt_spin_lock_fastunlock(&lock->lock, rt_spin_lock_slowunlock);
++	migrate_enable();
+ }
+ EXPORT_SYMBOL(rt_spin_unlock);
+ 
+@@ -1156,14 +1181,29 @@ int __lockfunc __rt_spin_trylock(struct rt_mutex *lock)
+ 	return rt_mutex_trylock(lock);
  }
  
--static void wait_for_stop_done(struct cpu_stop_done *done)
--{
--	set_current_state(TASK_UNINTERRUPTIBLE);
--	while (atomic_read(&done->nr_todo)) {
--		schedule();
--		set_current_state(TASK_UNINTERRUPTIBLE);
--	}
--	/*
--	 * We need to wait until cpu_stop_signal_done() has cleared
--	 * done->waiter.
--	 */
--	while (done->waiter)
--		cpu_relax();
--	set_current_state(TASK_RUNNING);
--}
--
- /**
-  * stop_one_cpu - stop a cpu
-  * @cpu: cpu to stop
-@@ -143,7 +125,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
+-int __lockfunc rt_spin_trylock(spinlock_t *lock)
++int __lockfunc rt_spin_trylock__no_mg(spinlock_t *lock)
+ {
+-	int ret = rt_mutex_trylock(&lock->lock);
++	int ret;
  
- 	cpu_stop_init_done(&done, 1);
- 	cpu_stop_queue_work(cpu, &work);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
++	ret = rt_mutex_trylock(&lock->lock);
+ 	if (ret)
+ 		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
+ 	return ret;
  }
++EXPORT_SYMBOL(rt_spin_trylock__no_mg);
++
++int __lockfunc rt_spin_trylock(spinlock_t *lock)
++{
++	int ret;
++
++	migrate_disable();
++	ret = rt_mutex_trylock(&lock->lock);
++	if (ret)
++		spin_acquire(&lock->dep_map, 0, 1, _RET_IP_);
++	else
++		migrate_enable();
++	return ret;
++}
+ EXPORT_SYMBOL(rt_spin_trylock);
  
-@@ -302,7 +284,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
- 
- 	preempt_enable_nort();
- 
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 
- 	return done.executed ? done.ret : -ENOENT;
+ int __lockfunc rt_spin_trylock_bh(spinlock_t *lock)
+@@ -1200,12 +1240,10 @@ int atomic_dec_and_spin_lock(atomic_t *atomic, spinlock_t *lock)
+ 	/* Subtract 1 from counter unless that drops it to 0 (ie. it was 1) */
+ 	if (atomic_add_unless(atomic, -1, 1))
+ 		return 0;
+-	migrate_disable();
+ 	rt_spin_lock(lock);
+ 	if (atomic_dec_and_test(atomic))
+ 		return 1;
+ 	rt_spin_unlock(lock);
+-	migrate_enable();
+ 	return 0;
  }
-@@ -364,7 +346,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
- 
- 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
- 	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
- }
- 
-@@ -495,13 +477,7 @@ static void cpu_stopper_thread(unsigned int cpu)
- 			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
- 					  ksym_buf), arg);
- 
--		/*
--		 * Make sure that the wakeup and setting done->waiter
--		 * to NULL is atomic.
--		 */
--		local_irq_disable();
- 		cpu_stop_signal_done(done, true);
--		local_irq_enable();
- 		goto repeat;
- 	}
- }
-@@ -663,7 +639,7 @@ int stop_machine_from_inactive_cpu(cpu_stop_fn_t fn, void *data,
- 	ret = multi_cpu_stop(&msdata);
- 
- 	/* Busy wait for completion. */
--	while (atomic_read(&done.nr_todo))
-+	while (!completion_done(&done.completion))
- 		cpu_relax();
- 
- 	mutex_unlock(&stop_cpus_mutex);
+ EXPORT_SYMBOL(atomic_dec_and_spin_lock);
 -- 
 2.7.0
