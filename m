@@ -1,99 +1,67 @@
 From: Clark Williams <williams@redhat.com>
 Subject: Re: [ANNOUNCE] 4.4.1-rt6
-Date: Mon, 15 Feb 2016 22:53:58 -0600
-Message-ID: <20160215225358.135e9227@sluggy.hsv.redhat.com>
+Date: Tue, 16 Feb 2016 13:19:32 -0600
+Message-ID: <20160216131932.7a7c8abd@sluggy.hsv.redhat.com>
 References: <20160212234708.GB7694@linutronix.de>
+	<20160215225358.135e9227@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
 Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/zUc3O0XLEhNcRVrs_dVNe/8"; protocol="application/pgp-signature"
+ boundary="Sig_/0h.eoOC8z/6Z5bHQpKTAi+G"; protocol="application/pgp-signature"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160212234708.GB7694@linutronix.de>
+In-Reply-To: <20160215225358.135e9227@sluggy.hsv.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/zUc3O0XLEhNcRVrs_dVNe/8
+--Sig_/0h.eoOC8z/6Z5bHQpKTAi+G
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: quoted-printable
 
-On Sat, 13 Feb 2016 00:47:08 +0100
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Mon, 15 Feb 2016 22:53:58 -0600
+Clark Williams <williams@redhat.com> wrote:
 
-> - There is a useless rcu_bh thread which has been deactivated.
+> On Sat, 13 Feb 2016 00:47:08 +0100
+> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 >=20
+> > - There is a useless rcu_bh thread which has been deactivated.
+> >  =20
+>=20
+> For some strange reason I had RCU_TORTURE_TEST defined in my config. This=
+ caused my compile to blow up because kernel/rcu/rcutorture.c wanted to tes=
+t the (now ifdef'ed out) rcu_bh routines. This fixes the compile issue but =
+is untested for actually *running* rcutorture. I'll try that on a test box =
+tomorrow.=20
+>=20
+>
 
-For some strange reason I had RCU_TORTURE_TEST defined in my config. This c=
-aused my compile to blow up because kernel/rcu/rcutorture.c wanted to test =
-the (now ifdef'ed out) rcu_bh routines. This fixes the compile issue but is=
- untested for actually *running* rcutorture. I'll try that on a test box to=
-morrow.=20
+Successfully ran rcutorture for 5m on my test system with no errors reporte=
+d and no _bh_ threads started.=20
 
 Clark
 
-=46rom a835ff3aad772520d34548dc336925788a649b17 Mon Sep 17 00:00:00 2001
-From: Clark Williams <williams@redhat.com>
-Date: Mon, 15 Feb 2016 22:48:04 -0600
-Subject: [PATCH] rcutorture: comment out rcu_bh ops on PREEMPT_RT_FULL
-
-RT has dropped support of rcu_bh, comment out in rcutorture.
-
-Signed-off-by: Clark Williams <williams@redhat.com>
----
- kernel/rcu/rcutorture.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index d89328e260df..5bb3364a6284 100644
---- a/kernel/rcu/rcutorture.c
-+++ b/kernel/rcu/rcutorture.c
-@@ -390,6 +390,7 @@ static struct rcu_torture_ops rcu_ops =3D {
- 	.name		=3D "rcu"
- };
-=20
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Definitions for rcu_bh torture testing.
-  */
-@@ -429,6 +430,12 @@ static struct rcu_torture_ops rcu_bh_ops =3D {
- 	.name		=3D "rcu_bh"
- };
-=20
-+#else
-+static struct rcu_torture_ops rcu_bh_ops =3D {
-+	.ttype		=3D INVALID_RCU_FLAVOR,
-+};
-+#endif
-+
- /*
-  * Don't even think about trying any of these in real life!!!
-  * The names includes "busted", and they really means it!
---=20
-2.5.0
-
-
---Sig_/zUc3O0XLEhNcRVrs_dVNe/8
+--Sig_/0h.eoOC8z/6Z5bHQpKTAi+G
 Content-Type: application/pgp-signature
 Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
 
-iQIcBAEBCgAGBQJWwqtmAAoJEOI5asVwYXLrV7YQALahQmyJcEMVDKl1AHBnasp2
-+n+upu9GCK48ZdYtOJ+gSgPPMislXwL5Q0vZ1lrENKhpnD3GxtpZrAuK64dO/YDf
-38aLpfPsQacd4vpbl/KQ4Z0tHX5eqacBcKNaecd2zlF6eLdpCn2PY2G8x73YI60L
-+I1tJ2OmxEMyYKl0vf+ppjcapaUQMtKfANA4IjmtVfOyVk4wuUobt9vYHnxruzUN
-mOgeGLpQ+PeeKWI+MpQ+uNxtrKpfBKH4HACtszl9rs4FKlNQs5qgjcGxTDN1SE0A
-4SKqK1t8wJarVbptsda0gECX/sUzqJiA7b7xmendJFMiOmy2M/+0opgb4w5ECu7/
-JRpLUdrNg5Szaka12CCGLPQ0g07G2G/DW6dctufnYWNj1bNqvXPHtMxJe6sbeEt9
-8ib3j8DJZAgc6GEek9pJgnE5uRhoWa9rn0qtiP1Rsj0Qev3ZD4ZcCNWZIM45tF0m
-1FFtClIHfi4pdLEwLsCnaIlP9fe1i9tmCkhmdBrG/gJ2Tu+nx2nRnb6ffV8UMtmi
-Ji0+p6s+vDXf+VZocPPAsUbOttV90YM/GTAT+3uwm0+JOJt879oekqwO5wh+31m5
-5raTje11twgDwRr9oCvfdpi/LzByuR1/vqsmYCEedFJPfYu04B9HqZxtKzwgCKrv
-b/VY+ZreD7SfoUHgi/ow
-=uFva
+iQIcBAEBCgAGBQJWw3ZEAAoJEOI5asVwYXLrbsAP/1x25WZT84cfIAIoXvyC9lg3
+FznPTI/974g2qXjy6ouqG86qOmTYpsQzwJPMACQFEzKgzbgjhy6HUmh/HL2zIlOM
+x7uarhAQPIMsJ0TejDSLg5Vjn+eh/2IH02Er506h7qEtpp2YWzLIRdCmRoBMiSQ4
+z1lJMW+PTcZ+dyioh0BjMYdzKaaRI+yeYdenCvH7ab2n50oT6lQfvpK/lGXAzYGJ
+XhAAxmsyksUadr/Cuu0OGw7sB9H0iLQDGuP5/o20t+c2rFICXHI8+ieeEOEUxjIg
+gaorAeewA20yA3gcv9fCLFgZmo2lG1tNF2GMp7dRHcF9RLhIqe7DJpe1Iki4nYQx
+UyDoyvlWoyLmxYIE0uctZV2ByHXSMAgleLZ63N0sKfTigcWooPvr3WNvefEbs9HS
+UJDssmZEgfkgU9LFVJEdl0IdA0pIzrz37rw/xHtxZV4Z4k79GqsdeASNm/j7r2zk
+JBOCuAvKBQwyQmLQKQL3wVwMVSMRRpT8kx34qClNQnWLLwTVOVc4oTiOe/0OMPrr
+psYpzTWTuLVG2/LRz/wd8bvFd25l3Q/qUdiaCAMLVYqN57tfI4/UDf6Ph8CxQAlC
+z8FeFlQyR2ioVd5XZPD16SOgMLqIZ3brYC+WPnyRad38a5kb6gTTmsiDJZ/+FfBB
+2Fjtx3kH7pZVQOcmnsAN
+=1rGi
 -----END PGP SIGNATURE-----
 
---Sig_/zUc3O0XLEhNcRVrs_dVNe/8--
+--Sig_/0h.eoOC8z/6Z5bHQpKTAi+G--
