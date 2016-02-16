@@ -1,8 +1,9 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [ANNOUNCE] 4.4.1-rt6
-Date: Mon, 15 Feb 2016 18:25:05 +0100
-Message-ID: <1455557105.7777.11.camel@gmail.com>
+Date: Tue, 16 Feb 2016 02:51:34 +0100
+Message-ID: <1455587494.3519.2.camel@gmail.com>
 References: <20160212234708.GB7694@linutronix.de>
+	 <1455557105.7777.11.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -12,19 +13,21 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160212234708.GB7694@linutronix.de>
+In-Reply-To: <1455557105.7777.11.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2016-02-13 at 00:47 +0100, Sebastian Andrzej Siewior wrote:
-
-> Known issues:
->   - bcache stays disabled
+On Mon, 2016-02-15 at 18:25 +0100, Mike Galbraith wrote:
+> On Sat, 2016-02-13 at 00:47 +0100, Sebastian Andrzej Siewior wrote:
 > 
->   - CPU hotplug got a little better but can deadlock.
+> > Known issues:
+> >   - bcache stays disabled
+> > 
+> >   - CPU hotplug got a little better but can deadlock.
+> 
+> My x86_64 desktop box survived 100 iterations of Steven's script.  If
+> my 64 core box survives, I'll be amazed, but it definitely is better.
 
-My x86_64 desktop box survived 100 iterations of Steven's script.  If
-my 64 core box survives, I'll be amazed, but it definitely is better. 
- I don't cringe _as_ much when I use it ;-)
+64 core box restored my faith in hotplug nearly instantly.  Hohum.
 
-	-Mike
+	-Mike 
