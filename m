@@ -1,67 +1,77 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: [ANNOUNCE] 4.4.1-rt6
-Date: Tue, 16 Feb 2016 13:19:32 -0600
-Message-ID: <20160216131932.7a7c8abd@sluggy.hsv.redhat.com>
-References: <20160212234708.GB7694@linutronix.de>
-	<20160215225358.135e9227@sluggy.hsv.redhat.com>
+From: Tim Sander <tim@krieglstein.org>
+Subject: Bisect results for 4.4.1-rt[4,5]
+Date: Wed, 17 Feb 2016 09:14:27 +0100
+Message-ID: <6333508.b5IKNpgbEX@dabox>
+References: <20150816135630.GE7004@linutronix.de> <1614199.PesBpXyHut@dabox> <56BDA0EF.7090503@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/0h.eoOC8z/6Z5bHQpKTAi+G"; protocol="application/pgp-signature"
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
+	Thomas Gleixner <tglx@linutronix.de>, rostedt@goodmis.org,
+	John Kacur <jkacur@redhat.com>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160215225358.135e9227@sluggy.hsv.redhat.com>
+In-Reply-To: <56BDA0EF.7090503@linutronix.de>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/0h.eoOC8z/6Z5bHQpKTAi+G
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Hi Sebastian
 
-On Mon, 15 Feb 2016 22:53:58 -0600
-Clark Williams <williams@redhat.com> wrote:
+Am Freitag, 12. Februar 2016, 10:07:59 schrieben Sie:
+=2E..
+> What about rt4? It is only the stable update so you should see here t=
+he
+> numbers from rt3. If that is true and your numbers are stable it shou=
+ld
+> be easy to run git bisect between rt4 and rt5. And looking at
+>   https://git.kernel.org/rt/linux-rt-devel/h/v4.4.1-rt5
+> the only non-cosmetic change in -rt5 that should affect you is the
+> migrate-disable fixup from Mike.
+I have done a bisect run, its a rather innocent looking on liner which =
+seems=20
+to cause the problems. The numbers where reasonably stable so i am pret=
+ty=20
+confident that this is the patch giving ~26=B5s additional latency on t=
+he Altera
+SOC plattform:
 
-> On Sat, 13 Feb 2016 00:47:08 +0100
-> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
->=20
-> > - There is a useless rcu_bh thread which has been deactivated.
-> >  =20
->=20
-> For some strange reason I had RCU_TORTURE_TEST defined in my config. This=
- caused my compile to blow up because kernel/rcu/rcutorture.c wanted to tes=
-t the (now ifdef'ed out) rcu_bh routines. This fixes the compile issue but =
-is untested for actually *running* rcutorture. I'll try that on a test box =
-tomorrow.=20
->=20
->
+eec2bf477ac674583a7d73b9d00f47c528b7266d is the first bad commit
+commit eec2bf477ac674583a7d73b9d00f47c528b7266d
+Author: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Date:   Thu Feb 4 16:38:10 2016 +0100
 
-Successfully ran rcutorture for 5m on my test system with no errors reporte=
-d and no _bh_ threads started.=20
+    kernel/perf: mark perf_cpu_context's timer as irqsafe
+   =20
+    Otherwise we get a WARN_ON() backtrace and some events are reported=
+ as
+    "not counted".
+   =20
+    Cc: stable-rt@vger.kernel.org
+    Reported-by: Yang Shi <yang.shi@linaro.org>
+    Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Clark
+Here are the numbers of the bisect run for reference:
+=3D=3D> g0dd3bdd <=3D=3D
+# Total: 100000000 099999829
+# Min Latencies: 00010 00010
+# Avg Latencies: 00020 00021
+# Max Latencies: 00084 00101
+# Histogram Overflows: 00000 00000
 
---Sig_/0h.eoOC8z/6Z5bHQpKTAi+G
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
+=3D=3D> gbbc7819 <=3D=3D
+# Total: 100000000 099999798
+# Min Latencies: 00010 00010
+# Avg Latencies: 00021 00021
+# Max Latencies: 00086 00091
+# Histogram Overflows: 00000 00000
 
------BEGIN PGP SIGNATURE-----
+=3D=3D> geec2bf4 <=3D=3D
+# Total: 099998713 100000000
+# Min Latencies: 00010 00010
+# Avg Latencies: 00020 00021
+# Max Latencies: 00113 00070
+# Histogram Overflows: 00000 00000
 
-iQIcBAEBCgAGBQJWw3ZEAAoJEOI5asVwYXLrbsAP/1x25WZT84cfIAIoXvyC9lg3
-FznPTI/974g2qXjy6ouqG86qOmTYpsQzwJPMACQFEzKgzbgjhy6HUmh/HL2zIlOM
-x7uarhAQPIMsJ0TejDSLg5Vjn+eh/2IH02Er506h7qEtpp2YWzLIRdCmRoBMiSQ4
-z1lJMW+PTcZ+dyioh0BjMYdzKaaRI+yeYdenCvH7ab2n50oT6lQfvpK/lGXAzYGJ
-XhAAxmsyksUadr/Cuu0OGw7sB9H0iLQDGuP5/o20t+c2rFICXHI8+ieeEOEUxjIg
-gaorAeewA20yA3gcv9fCLFgZmo2lG1tNF2GMp7dRHcF9RLhIqe7DJpe1Iki4nYQx
-UyDoyvlWoyLmxYIE0uctZV2ByHXSMAgleLZ63N0sKfTigcWooPvr3WNvefEbs9HS
-UJDssmZEgfkgU9LFVJEdl0IdA0pIzrz37rw/xHtxZV4Z4k79GqsdeASNm/j7r2zk
-JBOCuAvKBQwyQmLQKQL3wVwMVSMRRpT8kx34qClNQnWLLwTVOVc4oTiOe/0OMPrr
-psYpzTWTuLVG2/LRz/wd8bvFd25l3Q/qUdiaCAMLVYqN57tfI4/UDf6Ph8CxQAlC
-z8FeFlQyR2ioVd5XZPD16SOgMLqIZ3brYC+WPnyRad38a5kb6gTTmsiDJZ/+FfBB
-2Fjtx3kH7pZVQOcmnsAN
-=1rGi
------END PGP SIGNATURE-----
-
---Sig_/0h.eoOC8z/6Z5bHQpKTAi+G--
+Best Regards
+Tim
