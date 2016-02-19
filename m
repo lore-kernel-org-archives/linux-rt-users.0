@@ -1,7 +1,7 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: [PATCH v8 3/5] KVM: use simple waitqueue for vcpu->wq
-Date: Fri, 19 Feb 2016 09:46:39 +0100
-Message-ID: <1455871601-27484-4-git-send-email-wagi@monom.org>
+Subject: [PATCH v8 5/5] rcu: use simple wait queues where possible in rcutree
+Date: Fri, 19 Feb 2016 09:46:41 +0100
+Message-ID: <1455871601-27484-6-git-send-email-wagi@monom.org>
 References: <1455871601-27484-1-git-send-email-wagi@monom.org>
 Cc: Marcelo Tosatti <mtosatti@redhat.com>,
 	Paolo Bonzini <pbonzini@redhat.com>,
@@ -18,438 +18,314 @@ In-Reply-To: <1455871601-27484-1-git-send-email-wagi@monom.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Marcelo Tosatti <mtosatti@redhat.com>
+From: Paul Gortmaker <paul.gortmaker@windriver.com>
 
-The problem:
+As of commit dae6e64d2bcfd4b06304ab864c7e3a4f6b5fedf4 ("rcu: Introduce
+proper blocking to no-CBs kthreads GP waits") the RCU subsystem started
+making use of wait queues.
 
-On -rt, an emulated LAPIC timer instances has the following path:
+Here we convert all additions of RCU wait queues to use simple wait queues,
+since they don't need the extra overhead of the full wait queue features.
 
-1) hard interrupt
-2) ksoftirqd is scheduled
-3) ksoftirqd wakes up vcpu thread
-4) vcpu thread is scheduled
+Originally this was done for RT kernels[1], since we would get things like...
 
-This extra context switch introduces unnecessary latency in the
-LAPIC path for a KVM guest.
+  BUG: sleeping function called from invalid context at kernel/rtmutex.c:659
+  in_atomic(): 1, irqs_disabled(): 1, pid: 8, name: rcu_preempt
+  Pid: 8, comm: rcu_preempt Not tainted
+  Call Trace:
+   [<ffffffff8106c8d0>] __might_sleep+0xd0/0xf0
+   [<ffffffff817d77b4>] rt_spin_lock+0x24/0x50
+   [<ffffffff8106fcf6>] __wake_up+0x36/0x70
+   [<ffffffff810c4542>] rcu_gp_kthread+0x4d2/0x680
+   [<ffffffff8105f910>] ? __init_waitqueue_head+0x50/0x50
+   [<ffffffff810c4070>] ? rcu_gp_fqs+0x80/0x80
+   [<ffffffff8105eabb>] kthread+0xdb/0xe0
+   [<ffffffff8106b912>] ? finish_task_switch+0x52/0x100
+   [<ffffffff817e0754>] kernel_thread_helper+0x4/0x10
+   [<ffffffff8105e9e0>] ? __init_kthread_worker+0x60/0x60
+   [<ffffffff817e0750>] ? gs_change+0xb/0xb
 
-The solution:
+...and hence simple wait queues were deployed on RT out of necessity
+(as simple wait uses a raw lock), but mainline might as well take
+advantage of the more streamline support as well.
 
-Allow waking up vcpu thread from hardirq context,
-thus avoiding the need for ksoftirqd to be scheduled.
-
-Normal waitqueues make use of spinlocks, which on -RT
-are sleepable locks. Therefore, waking up a waitqueue
-waiter involves locking a sleeping lock, which
-is not allowed from hard interrupt context.
-
-cyclictest command line:
-
-This patch reduces the average latency in my tests from 14us to 11us.
-
-Daniel writes:
-Paolo asked for numbers from kvm-unit-tests/tscdeadline_latency
-benchmark on mainline. The test was run 1000 times on
-tip/sched/core 4.4.0-rc8-01134-g0905f04:
-
-  ./x86-run x86/tscdeadline_latency.flat -cpu host
-
-with idle=poll.
-
-The test seems not to deliver really stable numbers though most of
-them are smaller. Paolo write:
-
-"Anything above ~10000 cycles means that the host went to C1 or
-lower---the number means more or less nothing in that case.
-
-The mean shows an improvement indeed."
-
-Before:
-
-               min             max         mean           std
-count  1000.000000     1000.000000  1000.000000   1000.000000
-mean   5162.596000  2019270.084000  5824.491541  20681.645558
-std      75.431231   622607.723969    89.575700   6492.272062
-min    4466.000000    23928.000000  5537.926500    585.864966
-25%    5163.000000  1613252.750000  5790.132275  16683.745433
-50%    5175.000000  2281919.000000  5834.654000  23151.990026
-75%    5190.000000  2382865.750000  5861.412950  24148.206168
-max    5228.000000  4175158.000000  6254.827300  46481.048691
-
-After
-               min            max         mean           std
-count  1000.000000     1000.00000  1000.000000   1000.000000
-mean   5143.511000  2076886.10300  5813.312474  21207.357565
-std      77.668322   610413.09583    86.541500   6331.915127
-min    4427.000000    25103.00000  5529.756600    559.187707
-25%    5148.000000  1691272.75000  5784.889825  17473.518244
-50%    5160.000000  2308328.50000  5832.025000  23464.837068
-75%    5172.000000  2393037.75000  5853.177675  24223.969976
-max    5222.000000  3922458.00000  6186.720500  42520.379830
-
-[Patch was originaly based on the swait implementation found in the -rt
- tree. Daniel ported it to mainline's version and gathered the
- benchmark numbers for tscdeadline_latency test.]
+[1] This is a carry forward of work from v3.10-rt; the original conversion
+was by Thomas on an earlier -rt version, and Sebastian extended it to
+additional post-3.10 added RCU waiters; here I've added a commit log and
+unified the RCU changes into one, and uprev'd it to match mainline RCU.
 
 Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
 Acked-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Marcelo Tosatti <mtosatti@redhat.com>
-Cc: Paolo Bonzini <pbonzini@redhat.com>
+Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Cc: Paul Gortmaker <paul.gortmaker@windriver.com>
+Cc: Thomas Gleixner <tglx@linutronix.de>
 ---
- arch/arm/kvm/arm.c                  |  8 ++++----
- arch/arm/kvm/psci.c                 |  4 ++--
- arch/mips/kvm/mips.c                |  8 ++++----
- arch/powerpc/include/asm/kvm_host.h |  4 ++--
- arch/powerpc/kvm/book3s_hv.c        | 23 +++++++++++------------
- arch/s390/include/asm/kvm_host.h    |  2 +-
- arch/s390/kvm/interrupt.c           |  4 ++--
- arch/x86/kvm/lapic.c                |  6 +++---
- include/linux/kvm_host.h            |  5 +++--
- virt/kvm/async_pf.c                 |  4 ++--
- virt/kvm/kvm_main.c                 | 17 ++++++++---------
- 11 files changed, 42 insertions(+), 43 deletions(-)
+ kernel/rcu/tree.c        | 22 +++++++++++-----------
+ kernel/rcu/tree.h        | 13 +++++++------
+ kernel/rcu/tree_plugin.h | 26 +++++++++++++-------------
+ 3 files changed, 31 insertions(+), 30 deletions(-)
 
-diff --git a/arch/arm/kvm/arm.c b/arch/arm/kvm/arm.c
-index dda1959..08e49c4 100644
---- a/arch/arm/kvm/arm.c
-+++ b/arch/arm/kvm/arm.c
-@@ -506,18 +506,18 @@ static void kvm_arm_resume_guest(struct kvm *kvm)
- 	struct kvm_vcpu *vcpu;
- 
- 	kvm_for_each_vcpu(i, vcpu, kvm) {
--		wait_queue_head_t *wq = kvm_arch_vcpu_wq(vcpu);
-+		struct swait_queue_head *wq = kvm_arch_vcpu_wq(vcpu);
- 
- 		vcpu->arch.pause = false;
--		wake_up_interruptible(wq);
-+		swake_up(wq);
- 	}
- }
- 
- static void vcpu_sleep(struct kvm_vcpu *vcpu)
- {
--	wait_queue_head_t *wq = kvm_arch_vcpu_wq(vcpu);
-+	struct swait_queue_head *wq = kvm_arch_vcpu_wq(vcpu);
- 
--	wait_event_interruptible(*wq, ((!vcpu->arch.power_off) &&
-+	swait_event_interruptible(*wq, ((!vcpu->arch.power_off) &&
- 				       (!vcpu->arch.pause)));
- }
- 
-diff --git a/arch/arm/kvm/psci.c b/arch/arm/kvm/psci.c
-index a9b3b90..c2b1315 100644
---- a/arch/arm/kvm/psci.c
-+++ b/arch/arm/kvm/psci.c
-@@ -70,7 +70,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
- {
- 	struct kvm *kvm = source_vcpu->kvm;
- 	struct kvm_vcpu *vcpu = NULL;
--	wait_queue_head_t *wq;
-+	struct swait_queue_head *wq;
- 	unsigned long cpu_id;
- 	unsigned long context_id;
- 	phys_addr_t target_pc;
-@@ -119,7 +119,7 @@ static unsigned long kvm_psci_vcpu_on(struct kvm_vcpu *source_vcpu)
- 	smp_mb();		/* Make sure the above is visible */
- 
- 	wq = kvm_arch_vcpu_wq(vcpu);
--	wake_up_interruptible(wq);
-+	swake_up(wq);
- 
- 	return PSCI_RET_SUCCESS;
- }
-diff --git a/arch/mips/kvm/mips.c b/arch/mips/kvm/mips.c
-index 8bc3977..341f6a1 100644
---- a/arch/mips/kvm/mips.c
-+++ b/arch/mips/kvm/mips.c
-@@ -445,8 +445,8 @@ int kvm_vcpu_ioctl_interrupt(struct kvm_vcpu *vcpu,
- 
- 	dvcpu->arch.wait = 0;
- 
--	if (waitqueue_active(&dvcpu->wq))
--		wake_up_interruptible(&dvcpu->wq);
-+	if (swait_active(&dvcpu->wq))
-+		swake_up(&dvcpu->wq);
- 
- 	return 0;
- }
-@@ -1174,8 +1174,8 @@ static void kvm_mips_comparecount_func(unsigned long data)
- 	kvm_mips_callbacks->queue_timer_int(vcpu);
- 
- 	vcpu->arch.wait = 0;
--	if (waitqueue_active(&vcpu->wq))
--		wake_up_interruptible(&vcpu->wq);
-+	if (swait_active(&vcpu->wq))
-+		swake_up(&vcpu->wq);
- }
- 
- /* low level hrtimer wake routine */
-diff --git a/arch/powerpc/include/asm/kvm_host.h b/arch/powerpc/include/asm/kvm_host.h
-index 9d08d8c..c98afa5 100644
---- a/arch/powerpc/include/asm/kvm_host.h
-+++ b/arch/powerpc/include/asm/kvm_host.h
-@@ -289,7 +289,7 @@ struct kvmppc_vcore {
- 	struct list_head runnable_threads;
- 	struct list_head preempt_list;
- 	spinlock_t lock;
--	wait_queue_head_t wq;
-+	struct swait_queue_head wq;
- 	spinlock_t stoltb_lock;	/* protects stolen_tb and preempt_tb */
- 	u64 stolen_tb;
- 	u64 preempt_tb;
-@@ -629,7 +629,7 @@ struct kvm_vcpu_arch {
- 	u8 prodded;
- 	u32 last_inst;
- 
--	wait_queue_head_t *wqp;
-+	struct swait_queue_head *wqp;
- 	struct kvmppc_vcore *vcore;
- 	int ret;
- 	int trap;
-diff --git a/arch/powerpc/kvm/book3s_hv.c b/arch/powerpc/kvm/book3s_hv.c
-index baeddb0..f1187bb 100644
---- a/arch/powerpc/kvm/book3s_hv.c
-+++ b/arch/powerpc/kvm/book3s_hv.c
-@@ -114,11 +114,11 @@ static bool kvmppc_ipi_thread(int cpu)
- static void kvmppc_fast_vcpu_kick_hv(struct kvm_vcpu *vcpu)
- {
- 	int cpu;
--	wait_queue_head_t *wqp;
-+	struct swait_queue_head *wqp;
- 
- 	wqp = kvm_arch_vcpu_wq(vcpu);
--	if (waitqueue_active(wqp)) {
--		wake_up_interruptible(wqp);
-+	if (swait_active(wqp)) {
-+		swake_up(wqp);
- 		++vcpu->stat.halt_wakeup;
- 	}
- 
-@@ -701,8 +701,8 @@ int kvmppc_pseries_do_hcall(struct kvm_vcpu *vcpu)
- 		tvcpu->arch.prodded = 1;
- 		smp_mb();
- 		if (vcpu->arch.ceded) {
--			if (waitqueue_active(&vcpu->wq)) {
--				wake_up_interruptible(&vcpu->wq);
-+			if (swait_active(&vcpu->wq)) {
-+				swake_up(&vcpu->wq);
- 				vcpu->stat.halt_wakeup++;
- 			}
- 		}
-@@ -1459,7 +1459,7 @@ static struct kvmppc_vcore *kvmppc_vcore_create(struct kvm *kvm, int core)
- 	INIT_LIST_HEAD(&vcore->runnable_threads);
- 	spin_lock_init(&vcore->lock);
- 	spin_lock_init(&vcore->stoltb_lock);
--	init_waitqueue_head(&vcore->wq);
-+	init_swait_queue_head(&vcore->wq);
- 	vcore->preempt_tb = TB_NIL;
- 	vcore->lpcr = kvm->arch.lpcr;
- 	vcore->first_vcpuid = core * threads_per_subcore;
-@@ -2531,10 +2531,9 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
- {
- 	struct kvm_vcpu *vcpu;
- 	int do_sleep = 1;
-+	DECLARE_SWAITQUEUE(wait);
- 
--	DEFINE_WAIT(wait);
--
--	prepare_to_wait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
-+	prepare_to_swait(&vc->wq, &wait, TASK_INTERRUPTIBLE);
- 
- 	/*
- 	 * Check one last time for pending exceptions and ceded state after
-@@ -2548,7 +2547,7 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
- 	}
- 
- 	if (!do_sleep) {
--		finish_wait(&vc->wq, &wait);
-+		finish_swait(&vc->wq, &wait);
+diff --git a/kernel/rcu/tree.c b/kernel/rcu/tree.c
+index 8e8c6ec..9fd5b62 100644
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -1634,7 +1634,7 @@ static void rcu_gp_kthread_wake(struct rcu_state *rsp)
+ 	    !READ_ONCE(rsp->gp_flags) ||
+ 	    !rsp->gp_kthread)
  		return;
- 	}
+-	wake_up(&rsp->gp_wq);
++	swake_up(&rsp->gp_wq);
+ }
  
-@@ -2556,7 +2555,7 @@ static void kvmppc_vcore_blocked(struct kvmppc_vcore *vc)
- 	trace_kvmppc_vcore_blocked(vc, 0);
- 	spin_unlock(&vc->lock);
- 	schedule();
--	finish_wait(&vc->wq, &wait);
-+	finish_swait(&vc->wq, &wait);
- 	spin_lock(&vc->lock);
- 	vc->vcore_state = VCORE_INACTIVE;
- 	trace_kvmppc_vcore_blocked(vc, 1);
-@@ -2612,7 +2611,7 @@ static int kvmppc_run_vcpu(struct kvm_run *kvm_run, struct kvm_vcpu *vcpu)
- 			kvmppc_start_thread(vcpu, vc);
- 			trace_kvm_guest_enter(vcpu);
- 		} else if (vc->vcore_state == VCORE_SLEEPING) {
--			wake_up(&vc->wq);
-+			swake_up(&vc->wq);
+ /*
+@@ -2009,7 +2009,7 @@ static void rcu_gp_cleanup(struct rcu_state *rsp)
+ 	int nocb = 0;
+ 	struct rcu_data *rdp;
+ 	struct rcu_node *rnp = rcu_get_root(rsp);
+-	wait_queue_head_t *sq;
++	struct swait_queue_head *sq;
+ 
+ 	WRITE_ONCE(rsp->gp_activity, jiffies);
+ 	raw_spin_lock_irq_rcu_node(rnp);
+@@ -2094,7 +2094,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 					       READ_ONCE(rsp->gpnum),
+ 					       TPS("reqwait"));
+ 			rsp->gp_state = RCU_GP_WAIT_GPS;
+-			wait_event_interruptible(rsp->gp_wq,
++			swait_event_interruptible(rsp->gp_wq,
+ 						 READ_ONCE(rsp->gp_flags) &
+ 						 RCU_GP_FLAG_INIT);
+ 			rsp->gp_state = RCU_GP_DONE_GPS;
+@@ -2124,7 +2124,7 @@ static int __noreturn rcu_gp_kthread(void *arg)
+ 					       READ_ONCE(rsp->gpnum),
+ 					       TPS("fqswait"));
+ 			rsp->gp_state = RCU_GP_WAIT_FQS;
+-			ret = wait_event_interruptible_timeout(rsp->gp_wq,
++			ret = swait_event_interruptible_timeout(rsp->gp_wq,
+ 					rcu_gp_fqs_check_wake(rsp, &gf), j);
+ 			rsp->gp_state = RCU_GP_DOING_FQS;
+ 			/* Locking provides needed memory barriers. */
+@@ -2248,7 +2248,7 @@ static void rcu_report_qs_rsp(struct rcu_state *rsp, unsigned long flags)
+ 	WARN_ON_ONCE(!rcu_gp_in_progress(rsp));
+ 	WRITE_ONCE(rsp->gp_flags, READ_ONCE(rsp->gp_flags) | RCU_GP_FLAG_FQS);
+ 	raw_spin_unlock_irqrestore(&rcu_get_root(rsp)->lock, flags);
+-	rcu_gp_kthread_wake(rsp);
++	swake_up(&rsp->gp_wq);  /* Memory barrier implied by swake_up() path. */
+ }
+ 
+ /*
+@@ -2902,7 +2902,7 @@ static void force_quiescent_state(struct rcu_state *rsp)
+ 	}
+ 	WRITE_ONCE(rsp->gp_flags, READ_ONCE(rsp->gp_flags) | RCU_GP_FLAG_FQS);
+ 	raw_spin_unlock_irqrestore(&rnp_old->lock, flags);
+-	rcu_gp_kthread_wake(rsp);
++	swake_up(&rsp->gp_wq); /* Memory barrier implied by swake_up() path. */
+ }
+ 
+ /*
+@@ -3531,7 +3531,7 @@ static void __rcu_report_exp_rnp(struct rcu_state *rsp, struct rcu_node *rnp,
+ 			raw_spin_unlock_irqrestore(&rnp->lock, flags);
+ 			if (wake) {
+ 				smp_mb(); /* EGP done before wake_up(). */
+-				wake_up(&rsp->expedited_wq);
++				swake_up(&rsp->expedited_wq);
+ 			}
+ 			break;
  		}
- 
- 	}
-diff --git a/arch/s390/include/asm/kvm_host.h b/arch/s390/include/asm/kvm_host.h
-index 8959ebb..b0c8ad0 100644
---- a/arch/s390/include/asm/kvm_host.h
-+++ b/arch/s390/include/asm/kvm_host.h
-@@ -467,7 +467,7 @@ struct kvm_s390_irq_payload {
- struct kvm_s390_local_interrupt {
- 	spinlock_t lock;
- 	struct kvm_s390_float_interrupt *float_int;
--	wait_queue_head_t *wq;
-+	struct swait_queue_head *wq;
- 	atomic_t *cpuflags;
- 	DECLARE_BITMAP(sigp_emerg_pending, KVM_MAX_VCPUS);
- 	struct kvm_s390_irq_payload irq;
-diff --git a/arch/s390/kvm/interrupt.c b/arch/s390/kvm/interrupt.c
-index f88ca72..9ffc732 100644
---- a/arch/s390/kvm/interrupt.c
-+++ b/arch/s390/kvm/interrupt.c
-@@ -966,13 +966,13 @@ no_timer:
- 
- void kvm_s390_vcpu_wakeup(struct kvm_vcpu *vcpu)
- {
--	if (waitqueue_active(&vcpu->wq)) {
-+	if (swait_active(&vcpu->wq)) {
- 		/*
- 		 * The vcpu gave up the cpu voluntarily, mark it as a good
- 		 * yield-candidate.
- 		 */
- 		vcpu->preempted = true;
--		wake_up_interruptible(&vcpu->wq);
-+		swake_up(&vcpu->wq);
- 		vcpu->stat.halt_wakeup++;
- 	}
- }
-diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 36591fa..3a045f3 100644
---- a/arch/x86/kvm/lapic.c
-+++ b/arch/x86/kvm/lapic.c
-@@ -1195,7 +1195,7 @@ static void apic_update_lvtt(struct kvm_lapic *apic)
- static void apic_timer_expired(struct kvm_lapic *apic)
- {
- 	struct kvm_vcpu *vcpu = apic->vcpu;
--	wait_queue_head_t *q = &vcpu->wq;
-+	struct swait_queue_head *q = &vcpu->wq;
- 	struct kvm_timer *ktimer = &apic->lapic_timer;
- 
- 	if (atomic_read(&apic->lapic_timer.pending))
-@@ -1204,8 +1204,8 @@ static void apic_timer_expired(struct kvm_lapic *apic)
- 	atomic_inc(&apic->lapic_timer.pending);
- 	kvm_set_pending_timer(vcpu);
- 
--	if (waitqueue_active(q))
--		wake_up_interruptible(q);
-+	if (swait_active(q))
-+		swake_up(q);
- 
- 	if (apic_lvtt_tscdeadline(apic))
- 		ktimer->expired_tscdeadline = ktimer->tscdeadline;
-diff --git a/include/linux/kvm_host.h b/include/linux/kvm_host.h
-index 861f690..5276fe0 100644
---- a/include/linux/kvm_host.h
-+++ b/include/linux/kvm_host.h
-@@ -25,6 +25,7 @@
- #include <linux/irqflags.h>
- #include <linux/context_tracking.h>
- #include <linux/irqbypass.h>
-+#include <linux/swait.h>
- #include <asm/signal.h>
- 
- #include <linux/kvm.h>
-@@ -218,7 +219,7 @@ struct kvm_vcpu {
- 	int fpu_active;
- 	int guest_fpu_loaded, guest_xcr0_loaded;
- 	unsigned char fpu_counter;
--	wait_queue_head_t wq;
-+	struct swait_queue_head wq;
- 	struct pid *pid;
- 	int sigset_active;
- 	sigset_t sigset;
-@@ -782,7 +783,7 @@ static inline bool kvm_arch_has_assigned_device(struct kvm *kvm)
- }
- #endif
- 
--static inline wait_queue_head_t *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
-+static inline struct swait_queue_head *kvm_arch_vcpu_wq(struct kvm_vcpu *vcpu)
- {
- #ifdef __KVM_HAVE_ARCH_WQP
- 	return vcpu->arch.wqp;
-diff --git a/virt/kvm/async_pf.c b/virt/kvm/async_pf.c
-index 3531599..73c1a2a 100644
---- a/virt/kvm/async_pf.c
-+++ b/virt/kvm/async_pf.c
-@@ -97,8 +97,8 @@ static void async_pf_execute(struct work_struct *work)
- 	 * This memory barrier pairs with prepare_to_wait's set_current_state()
- 	 */
- 	smp_mb();
--	if (waitqueue_active(&vcpu->wq))
--		wake_up_interruptible(&vcpu->wq);
-+	if (swait_active(&vcpu->wq))
-+		swake_up(&vcpu->wq);
- 
- 	mmput(mm);
- 	kvm_put_kvm(vcpu->kvm);
-diff --git a/virt/kvm/kvm_main.c b/virt/kvm/kvm_main.c
-index a11cfd2..f8417d0 100644
---- a/virt/kvm/kvm_main.c
-+++ b/virt/kvm/kvm_main.c
-@@ -216,8 +216,7 @@ int kvm_vcpu_init(struct kvm_vcpu *vcpu, struct kvm *kvm, unsigned id)
- 	vcpu->kvm = kvm;
- 	vcpu->vcpu_id = id;
- 	vcpu->pid = NULL;
--	vcpu->halt_poll_ns = 0;
--	init_waitqueue_head(&vcpu->wq);
-+	init_swait_queue_head(&vcpu->wq);
- 	kvm_async_pf_vcpu_init(vcpu);
- 
- 	vcpu->pre_pcpu = -1;
-@@ -1990,7 +1989,7 @@ static int kvm_vcpu_check_block(struct kvm_vcpu *vcpu)
- void kvm_vcpu_block(struct kvm_vcpu *vcpu)
- {
- 	ktime_t start, cur;
--	DEFINE_WAIT(wait);
-+	DECLARE_SWAITQUEUE(wait);
- 	bool waited = false;
- 	u64 block_ns;
- 
-@@ -2015,7 +2014,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
- 	kvm_arch_vcpu_blocking(vcpu);
+@@ -3782,7 +3782,7 @@ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
+ 	jiffies_start = jiffies;
  
  	for (;;) {
--		prepare_to_wait(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
-+		prepare_to_swait(&vcpu->wq, &wait, TASK_INTERRUPTIBLE);
- 
- 		if (kvm_vcpu_check_block(vcpu) < 0)
- 			break;
-@@ -2024,7 +2023,7 @@ void kvm_vcpu_block(struct kvm_vcpu *vcpu)
- 		schedule();
+-		ret = wait_event_interruptible_timeout(
++		ret = swait_event_timeout(
+ 				rsp->expedited_wq,
+ 				sync_rcu_preempt_exp_done(rnp_root),
+ 				jiffies_stall);
+@@ -3790,7 +3790,7 @@ static void synchronize_sched_expedited_wait(struct rcu_state *rsp)
+ 			return;
+ 		if (ret < 0) {
+ 			/* Hit a signal, disable CPU stall warnings. */
+-			wait_event(rsp->expedited_wq,
++			swait_event(rsp->expedited_wq,
+ 				   sync_rcu_preempt_exp_done(rnp_root));
+ 			return;
+ 		}
+@@ -4484,8 +4484,8 @@ static void __init rcu_init_one(struct rcu_state *rsp)
+ 		}
  	}
  
--	finish_wait(&vcpu->wq, &wait);
-+	finish_swait(&vcpu->wq, &wait);
- 	cur = ktime_get();
+-	init_waitqueue_head(&rsp->gp_wq);
+-	init_waitqueue_head(&rsp->expedited_wq);
++	init_swait_queue_head(&rsp->gp_wq);
++	init_swait_queue_head(&rsp->expedited_wq);
+ 	rnp = rsp->level[rcu_num_lvls - 1];
+ 	for_each_possible_cpu(i) {
+ 		while (i > rnp->grphi)
+diff --git a/kernel/rcu/tree.h b/kernel/rcu/tree.h
+index 10dedfb..bbd235d 100644
+--- a/kernel/rcu/tree.h
++++ b/kernel/rcu/tree.h
+@@ -27,6 +27,7 @@
+ #include <linux/threads.h>
+ #include <linux/cpumask.h>
+ #include <linux/seqlock.h>
++#include <linux/swait.h>
+ #include <linux/stop_machine.h>
  
- 	kvm_arch_vcpu_unblocking(vcpu);
-@@ -2056,11 +2055,11 @@ void kvm_vcpu_kick(struct kvm_vcpu *vcpu)
+ /*
+@@ -243,7 +244,7 @@ struct rcu_node {
+ 				/* Refused to boost: not sure why, though. */
+ 				/*  This can happen due to race conditions. */
+ #ifdef CONFIG_RCU_NOCB_CPU
+-	wait_queue_head_t nocb_gp_wq[2];
++	struct swait_queue_head nocb_gp_wq[2];
+ 				/* Place for rcu_nocb_kthread() to wait GP. */
+ #endif /* #ifdef CONFIG_RCU_NOCB_CPU */
+ 	int need_future_gp[2];
+@@ -399,7 +400,7 @@ struct rcu_data {
+ 	atomic_long_t nocb_q_count_lazy; /*  invocation (all stages). */
+ 	struct rcu_head *nocb_follower_head; /* CBs ready to invoke. */
+ 	struct rcu_head **nocb_follower_tail;
+-	wait_queue_head_t nocb_wq;	/* For nocb kthreads to sleep on. */
++	struct swait_queue_head nocb_wq; /* For nocb kthreads to sleep on. */
+ 	struct task_struct *nocb_kthread;
+ 	int nocb_defer_wakeup;		/* Defer wakeup of nocb_kthread. */
+ 
+@@ -478,7 +479,7 @@ struct rcu_state {
+ 	unsigned long gpnum;			/* Current gp number. */
+ 	unsigned long completed;		/* # of last completed gp. */
+ 	struct task_struct *gp_kthread;		/* Task for grace periods. */
+-	wait_queue_head_t gp_wq;		/* Where GP task waits. */
++	struct swait_queue_head gp_wq;		/* Where GP task waits. */
+ 	short gp_flags;				/* Commands for GP task. */
+ 	short gp_state;				/* GP kthread sleep state. */
+ 
+@@ -506,7 +507,7 @@ struct rcu_state {
+ 	unsigned long expedited_sequence;	/* Take a ticket. */
+ 	atomic_long_t expedited_normal;		/* # fallbacks to normal. */
+ 	atomic_t expedited_need_qs;		/* # CPUs left to check in. */
+-	wait_queue_head_t expedited_wq;		/* Wait for check-ins. */
++	struct swait_queue_head expedited_wq;	/* Wait for check-ins. */
+ 	int ncpus_snap;				/* # CPUs seen last time. */
+ 
+ 	unsigned long jiffies_force_qs;		/* Time at which to invoke */
+@@ -621,8 +622,8 @@ static void zero_cpu_stall_ticks(struct rcu_data *rdp);
+ static void increment_cpu_stall_ticks(void);
+ static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu);
+ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq);
+-static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp);
+-static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq);
++static struct swait_queue_head *rcu_nocb_gp_get(struct rcu_node *rnp);
++static void rcu_nocb_gp_cleanup(struct swait_queue_head *sq);
+ static void rcu_init_one_nocb(struct rcu_node *rnp);
+ static bool __call_rcu_nocb(struct rcu_data *rdp, struct rcu_head *rhp,
+ 			    bool lazy, unsigned long flags);
+diff --git a/kernel/rcu/tree_plugin.h b/kernel/rcu/tree_plugin.h
+index 631aff6..080bd20 100644
+--- a/kernel/rcu/tree_plugin.h
++++ b/kernel/rcu/tree_plugin.h
+@@ -1811,9 +1811,9 @@ early_param("rcu_nocb_poll", parse_rcu_nocb_poll);
+  * Wake up any no-CBs CPUs' kthreads that were waiting on the just-ended
+  * grace period.
+  */
+-static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
++static void rcu_nocb_gp_cleanup(struct swait_queue_head *sq)
  {
- 	int me;
- 	int cpu = vcpu->cpu;
--	wait_queue_head_t *wqp;
-+	struct swait_queue_head *wqp;
+-	wake_up_all(sq);
++	swake_up_all(sq);
+ }
  
- 	wqp = kvm_arch_vcpu_wq(vcpu);
--	if (waitqueue_active(wqp)) {
--		wake_up_interruptible(wqp);
-+	if (swait_active(wqp)) {
-+		swake_up(wqp);
- 		++vcpu->stat.halt_wakeup;
+ /*
+@@ -1829,15 +1829,15 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
+ 	rnp->need_future_gp[(rnp->completed + 1) & 0x1] += nrq;
+ }
+ 
+-static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
++static struct swait_queue_head *rcu_nocb_gp_get(struct rcu_node *rnp)
+ {
+ 	return &rnp->nocb_gp_wq[rnp->completed & 0x1];
+ }
+ 
+ static void rcu_init_one_nocb(struct rcu_node *rnp)
+ {
+-	init_waitqueue_head(&rnp->nocb_gp_wq[0]);
+-	init_waitqueue_head(&rnp->nocb_gp_wq[1]);
++	init_swait_queue_head(&rnp->nocb_gp_wq[0]);
++	init_swait_queue_head(&rnp->nocb_gp_wq[1]);
+ }
+ 
+ #ifndef CONFIG_RCU_NOCB_CPU_ALL
+@@ -1862,7 +1862,7 @@ static void wake_nocb_leader(struct rcu_data *rdp, bool force)
+ 	if (READ_ONCE(rdp_leader->nocb_leader_sleep) || force) {
+ 		/* Prior smp_mb__after_atomic() orders against prior enqueue. */
+ 		WRITE_ONCE(rdp_leader->nocb_leader_sleep, false);
+-		wake_up(&rdp_leader->nocb_wq);
++		swake_up(&rdp_leader->nocb_wq);
+ 	}
+ }
+ 
+@@ -2074,7 +2074,7 @@ static void rcu_nocb_wait_gp(struct rcu_data *rdp)
+ 	 */
+ 	trace_rcu_future_gp(rnp, rdp, c, TPS("StartWait"));
+ 	for (;;) {
+-		wait_event_interruptible(
++		swait_event_interruptible(
+ 			rnp->nocb_gp_wq[c & 0x1],
+ 			(d = ULONG_CMP_GE(READ_ONCE(rnp->completed), c)));
+ 		if (likely(d))
+@@ -2102,7 +2102,7 @@ wait_again:
+ 	/* Wait for callbacks to appear. */
+ 	if (!rcu_nocb_poll) {
+ 		trace_rcu_nocb_wake(my_rdp->rsp->name, my_rdp->cpu, "Sleep");
+-		wait_event_interruptible(my_rdp->nocb_wq,
++		swait_event_interruptible(my_rdp->nocb_wq,
+ 				!READ_ONCE(my_rdp->nocb_leader_sleep));
+ 		/* Memory barrier handled by smp_mb() calls below and repoll. */
+ 	} else if (firsttime) {
+@@ -2177,7 +2177,7 @@ wait_again:
+ 			 * List was empty, wake up the follower.
+ 			 * Memory barriers supplied by atomic_long_add().
+ 			 */
+-			wake_up(&rdp->nocb_wq);
++			swake_up(&rdp->nocb_wq);
+ 		}
  	}
  
-@@ -2161,7 +2160,7 @@ void kvm_vcpu_on_spin(struct kvm_vcpu *me)
- 				continue;
- 			if (vcpu == me)
- 				continue;
--			if (waitqueue_active(&vcpu->wq) && !kvm_arch_vcpu_runnable(vcpu))
-+			if (swait_active(&vcpu->wq) && !kvm_arch_vcpu_runnable(vcpu))
- 				continue;
- 			if (!kvm_vcpu_eligible_for_directed_yield(vcpu))
- 				continue;
+@@ -2198,7 +2198,7 @@ static void nocb_follower_wait(struct rcu_data *rdp)
+ 		if (!rcu_nocb_poll) {
+ 			trace_rcu_nocb_wake(rdp->rsp->name, rdp->cpu,
+ 					    "FollowerSleep");
+-			wait_event_interruptible(rdp->nocb_wq,
++			swait_event_interruptible(rdp->nocb_wq,
+ 						 READ_ONCE(rdp->nocb_follower_head));
+ 		} else if (firsttime) {
+ 			/* Don't drown trace log with "Poll"! */
+@@ -2357,7 +2357,7 @@ void __init rcu_init_nohz(void)
+ static void __init rcu_boot_init_nocb_percpu_data(struct rcu_data *rdp)
+ {
+ 	rdp->nocb_tail = &rdp->nocb_head;
+-	init_waitqueue_head(&rdp->nocb_wq);
++	init_swait_queue_head(&rdp->nocb_wq);
+ 	rdp->nocb_follower_tail = &rdp->nocb_follower_head;
+ }
+ 
+@@ -2507,7 +2507,7 @@ static bool rcu_nocb_cpu_needs_barrier(struct rcu_state *rsp, int cpu)
+ 	return false;
+ }
+ 
+-static void rcu_nocb_gp_cleanup(wait_queue_head_t *sq)
++static void rcu_nocb_gp_cleanup(struct swait_queue_head *sq)
+ {
+ }
+ 
+@@ -2515,7 +2515,7 @@ static void rcu_nocb_gp_set(struct rcu_node *rnp, int nrq)
+ {
+ }
+ 
+-static wait_queue_head_t *rcu_nocb_gp_get(struct rcu_node *rnp)
++static struct swait_queue_head *rcu_nocb_gp_get(struct rcu_node *rnp)
+ {
+ 	return NULL;
+ }
 -- 
 2.5.0
