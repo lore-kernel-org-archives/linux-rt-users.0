@@ -1,94 +1,84 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [PATCH 1/4] tracing: Add __print_ns_to_secs() and __print_ns_without_secs() helpers
-Date: Mon, 22 Feb 2016 14:08:19 -0300
-Message-ID: <b0b61a3a94c5df04b999b77ed357e269d8aac091.1456157869.git.bristot@redhat.com>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
+Date: Mon, 22 Feb 2016 18:32:59 +0100
+Message-ID: <20160222173259.GM6357@twins.programming.kicks-ass.net>
 References: <cover.1456157869.git.bristot@redhat.com>
-Cc: Arnaldo Carvalho de Melo <acme@redhat.com>,
+ <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Juri Lelli <juri.lelli@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1456157869.git.bristot@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Daniel Bristot de Oliveira <bristot@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from bombadil.infradead.org ([198.137.202.9]:57269 "EHLO
+	bombadil.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751937AbcBVRdG (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Feb 2016 12:33:06 -0500
+Content-Disposition: inline
+In-Reply-To: <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+On Mon, Feb 22, 2016 at 02:08:21PM -0300, Daniel Bristot de Oliveira wrote:
+> Deadline tasks behave differently of other tasks because deadline
+> task's also depend on their period, deadline and runtime.
+> 
+> Hence, the well known sched:sched_wakeup and sched:sched_switch
+> tracepoints are not always enough to precisely explain the behavior of a
+> deadline task with respect to the task's period, deadline, and runtime
+> consumption and replenishment.
+> 
+> In order to provide more precise information about the scheduling of
+> deadline tasks, this patch implements the following tracepoints:
+> 
+> - sched:sched_deadline_replenish: Informs the runtime replenishment of
+> a deadline task. Trace example:
+> 
+>   <idle>-0     [010] d.h.   268.428878: sched_deadline_replenish: \
+> 	comm=y pid=1608 now=268.428876113 deadline=268.458863627  \
+> 	runtime=20000000
+> 
+> The task y-1608 was replenished with 20000000 ns at 268.428876113
+> to be used until the deadline at 268.458863627.
+> 
+> - sched:sched_deadline_yield: Informs that a deadline task called
+> sched_yield(), and will wait for the next period. Trace example:
+> 
+>   y-1608  [010] d...   268.428892: sched_deadline_yield: 	\
+> 	now=268.428891932 deadline=268.458863627		\
+> 	remaining_runtime=19995653
+> 
+> The task y-1608 yielded before its deadline, with 19995653 ns of
+> remaining runtime.
+> 
+> - sched:sched_deadline_throttle: Informs that a task consumed all its
+> available runtime and was throttled. Trace example:
+> 
+>   t-1613  [011] d.h.   280.419823: sched_deadline_throttle:	\
+> 	now=280.419823282 deadline=280.430683206 		\
+> 	remaining_runtime=-13280
+> 
+> The task t-1613 overrun its runtime by 13280 ns and was throttled.
+> 
+> - sched:sched_deadline_block: Informs that a deadline task went to sleep
+> waiting to be awakened by another task. Trace example:
+> 
+>   b-1611  [011] d...   276.228298: sched_deadline_block: 	\
+> 	now=276.228295889 deadline=276.258262555
+> 	remaining_runtime=19966666
+> 
+> The task b-1611 blocked waiting for an external event. Its deadline is at
+> 276.258262555, and it stills have 19966666 ns of remaining runtime on the
+> current period.
 
-To have nanosecond output displayed in a more human readable format, its
-nicer to convert it to a seconds format (XXX.YYYYYYYYY). The problem is that
-to do so, the numbers must be divided by NSEC_PER_SEC, and moded too. But as
-these numbers are 64 bit, this can not be done simply with '/' and '%'
-operators, but must use do_div() instead.
+So I'm a bit allergic to tracepoints and this is very flimsy on reasons
+why I would want to do this.
 
-Instead of performing the expensive do_div() in the hot path of the
-tracepoint, it is more efficient to perform it during the output phase. But
-passing in do_div() can confuse the parser, and do_div() doesn't work
-exactly like a normal C function. It modifies the number in place, and we
-don't want to modify the actual values in the ring buffer.
-
-Two helper functions are now created:
-
-  __print_ns_to_secs() and __print_ns_without_secs()
-
-They both take a value of nanoseconds, and the former will return that
-number divided by NSEC_PER_SEC, and the latter will mod it with NSEC_PER_SEC
-giving a way to print a nice human readable format:
-
- __print_fmt("time=%llu.%09u",
-	__print_ns_to_secs(REC->nsec_val),
-	__print_ns_without_secs(REC->nsec_val))
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- include/trace/trace_events.h | 25 +++++++++++++++++++++++++
- 1 file changed, 25 insertions(+)
-
-diff --git a/include/trace/trace_events.h b/include/trace/trace_events.h
-index 170c93b..23a5822 100644
---- a/include/trace/trace_events.h
-+++ b/include/trace/trace_events.h
-@@ -283,6 +283,21 @@ TRACE_MAKE_SYSTEM_STR();
- 		trace_print_symbols_seq(p, value, symbols);		\
- 	})
- 
-+#undef __print_ns_to_secs
-+#define __print_ns_to_secs(value)			\
-+	({						\
-+		u64 ____val = (u64)value;		\
-+		do_div(____val, NSEC_PER_SEC);		\
-+		____val;				\
-+	})
-+
-+#undef __print_ns_without_secs
-+#define __print_ns_without_secs(value)			\
-+	({						\
-+		u64 ____val = (u64)value;		\
-+		do_div(____val, NSEC_PER_SEC);		\
-+	})
-+
- #undef __print_symbolic_u64
- #if BITS_PER_LONG == 32
- #define __print_symbolic_u64(value, symbol_array...)			\
-@@ -720,6 +735,16 @@ static inline void ftrace_test_probe_##call(void)			\
- #undef __get_bitmask
- #undef __print_array
- 
-+/*
-+ * The below is not executed in the kernel. It is only what is
-+ * displayed in the print format for userspace to parse.
-+ */
-+#undef __print_ns_to_secs
-+#define __print_ns_to_secs(val) val / 1000000000UL
-+
-+#undef __print_ns_without_secs
-+#define __print_ns_without_secs(val) val % 1000000000UL
-+
- #undef TP_printk
- #define TP_printk(fmt, args...) "\"" fmt "\", "  __stringify(args)
- 
--- 
-2.5.0
+As it stands, the existing tracepoint have already been an ABI
+trainwreck, why would I want to add more?
