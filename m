@@ -1,96 +1,76 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH 4/4] tools lib traceevent: Implements '%' operation
-Date: Mon, 22 Feb 2016 15:23:03 -0500
-Message-ID: <20160222152303.02f79376@gandalf.local.home>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
+Date: Mon, 22 Feb 2016 22:30:17 +0100
+Message-ID: <20160222213017.GN6357@twins.programming.kicks-ass.net>
 References: <cover.1456157869.git.bristot@redhat.com>
-	<5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
+ <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
+ <20160222173259.GM6357@twins.programming.kicks-ass.net>
+ <20160222124854.3816fec4@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@redhat.com>,
-	Peter Zijlstra <peterz@infradead.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Ingo Molnar <mingo@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
 	Juri Lelli <juri.lelli@gmail.com>,
 	Arnaldo Carvalho de Melo <acme@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Daniel Bristot de Oliveira <bristot@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0210.hostedemail.com ([216.40.44.210]:49717 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752095AbcBVUXK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Feb 2016 15:23:10 -0500
-In-Reply-To: <5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160222124854.3816fec4@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Mon, 22 Feb 2016 14:08:22 -0300
-Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+On Mon, Feb 22, 2016 at 12:48:54PM -0500, Steven Rostedt wrote:
 
-> The operation '%' is not implemented on event-parse.c, causing
-> an error on the parse of events with '%' operation on its
-> printk format. For example,
+> > As it stands, the existing tracepoint have already been an ABI
+> > trainwreck, why would I want to add more?
 > 
-> # perf record -e sched:sched_deadline_yield ~/y
->   Warning: [sched:sched_deadline_yield] unknown op '%'
-> ....
-> # perf script
->   Warning: [sched:sched_deadline_yield] unknown op '%'
-> 	y  1641 [006]  3364.109319: sched:sched_deadline_yield: \
-> 			[FAILED TO PARSE] now=3364109314595 	\
-> 			deadline=3364139295135 runtime=19975597
-> 
-> This patch implements the '%' operation. With this patch, we see the
-> correct output:
-> 
-> # perf record -e sched:sched_deadline_yield ~/y
->   No Warning
-> 
-> # perf script
-> 	y  4005 [001]  4623.650978: sched:sched_deadline_yield: \
-> 		now=4623.650974050				\
-> 		deadline=4623.680957364 remaining_runtime=19979611
-> 
-> Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+> Yes, this may become a type of ABI, but even the sched switch
+> tracepoints haven't been that bad. Has it really prevented us from
+> changing anything?
 
-Arnaldo,
+The whole wakeup thing where we _still_ have a dummy argument, and have
+been lying about the value for a long time really stinks.
 
-This patch is not dependent on the rest of the series and looks like a
-good general fix.
+> But let me ask, what would you recommend to finding out if the kernel
+> has really given your tasks the recommended runtime within a given
+> period? We can't expect users of SCHED_DEADLINE to be modifying the
+> kernel themselves.
 
-Can you pull this one into your tree, and please add my:
+So why are these deadline specific tracepoint? Why not extend the ones
+we already have?
 
-Reviewed-by: Steven Rostedt <rsotedt@goodmis.org>
+Also, will these tracepoints still work if we implement SCHED_DEADLINE
+using Least-Laxity-First or Pfair or some other exotic algorithm? Or
+will be forever be bound to EDF just because tracepoint ABI shite?
 
-Thanks!
+Worse, the proposed tracepoints are atrocious, look at crap like this:
 
--- Steve
+> +		if (trace_sched_deadline_yield_enabled()) {
+> +			u64 delta_exec = rq_clock_task(rq) - p->se.exec_start;
+> +			/* Subtract the last run till now */
+> +			if (likely((s64)delta_exec > 0))
+> +				p->dl.runtime -= delta_exec;
+> +			trace_sched_deadline_yield(&p->dl);
+> +		}
 
-> ---
->  tools/lib/traceevent/event-parse.c | 4 ++++
->  1 file changed, 4 insertions(+)
-> 
-> diff --git a/tools/lib/traceevent/event-parse.c b/tools/lib/traceevent/event-parse.c
-> index c3bd294..575e751 100644
-> --- a/tools/lib/traceevent/event-parse.c
-> +++ b/tools/lib/traceevent/event-parse.c
-> @@ -1951,6 +1951,7 @@ process_op(struct event_format *event, struct print_arg *arg, char **tok)
->  		   strcmp(token, "*") == 0 ||
->  		   strcmp(token, "^") == 0 ||
->  		   strcmp(token, "/") == 0 ||
-> +		   strcmp(token, "%") == 0 ||
->  		   strcmp(token, "<") == 0 ||
->  		   strcmp(token, ">") == 0 ||
->  		   strcmp(token, "<=") == 0 ||
-> @@ -3689,6 +3690,9 @@ eval_num_arg(void *data, int size, struct event_format *event, struct print_arg
->  		case '/':
->  			val = left / right;
->  			break;
-> +		case '%':
-> +			val = left % right;
-> +			break;
->  		case '*':
->  			val = left * right;
->  			break;
+tracepoints should _NEVER_ change state, ever.
 
+And there's the whole COND tracepoint muck, which also doesn't win any
+prices.
+
+So tell me why these specific tracepoints and why the existing ones
+could not be extended to include this information. For example, why a
+trace_sched_dealine_yield, and not a generic trace_sched_yield() that
+works for all classes.
+
+Tell me that the information presented does not pin the implementation.
+
+And clean up the crap.
+
+Then I might maybe consider this.
+
+But do not present me with a bunch of random arse, hacked together
+tracepoints and tell me they might be useful, maybe.
