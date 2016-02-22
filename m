@@ -1,53 +1,62 @@
-From: "Hillf Danton" <hillf.zj@alibaba-inc.com>
-Subject: Re: [patch]  sched,rt: __always_inline preemptible_lazy()
-Date: Mon, 22 Feb 2016 13:16:42 +0800
-Message-ID: <00b501d16d30$394e0fd0$abea2f70$@alibaba-inc.com>
-References: <00a501d16d22$30045140$900cf3c0$@alibaba-inc.com> <1456113785.3706.5.camel@gmail.com>
-Reply-To: "Hillf Danton" <hillf.zj@alibaba-inc.com>
-Mime-Version: 1.0
-Content-Type: text/plain;
-	charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: "'Sebastian Andrzej Siewior'" <bigeasy@linutronix.de>,
-	"'Thomas Gleixner'" <tglx@linutronix.de>,
-	"'LKML'" <linux-kernel@vger.kernel.org>,
-	"'linux-rt-users'" <linux-rt-users@vger.kernel.org>
-To: "'Mike Galbraith'" <umgwanakikbuti@gmail.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1456113785.3706.5.camel@gmail.com>
-Content-Language: zh-cn
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: [PATCH 0/4] Tracepoints for deadline scheduler
+Date: Mon, 22 Feb 2016 14:08:18 -0300
+Message-ID: <cover.1456157869.git.bristot@redhat.com>
+Cc: Arnaldo Carvalho de Melo <acme@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:49895 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1752596AbcBVRJL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 22 Feb 2016 12:09:11 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-> 
-> sched,rt: __always_inline preemptible_lazy()
-> 
-> Functions called within a notrace function must either also be
-> notrace or be inlined, lest recursion blow the stack.
-> 
-> homer: # nm kernel/sched/core.o|grep preemptible_lazy
-> 00000000000000b5 t preemptible_lazy
-> 
-> echo wakeup_rt > current_tracer ==> Welcome to infinity.
-> 
-> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-> ---
+Deadline tasks behave differently of other tasks because deadline
+task's also depend on their period, deadline and runtime.
 
-Thank you, Mike.
+Hence, the well known sched:sched_wakeup and sched:sched_switch
+tracepoints are not always enough to precisely explain the behavior of a
+deadline task with respect to the task's period, deadline and runtime
+consumption.
 
-Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
+This patch series implements tracepoints for the following deadline
+scheduler points of interest:
 
->  kernel/sched/core.c |    2 +-
->  1 file changed, 1 insertion(+), 1 deletion(-)
-> 
-> --- a/kernel/sched/core.c
-> +++ b/kernel/sched/core.c
-> @@ -3469,7 +3469,7 @@ static void __sched notrace preempt_sche
->   * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
->   * preempt_lazy_count counter >0.
->   */
-> -static int preemptible_lazy(void)
-> +static __always_inline int preemptible_lazy(void)
->  {
->  	if (test_thread_flag(TIF_NEED_RESCHED))
->  		return 1;
+- sched:sched_deadline_replenish: Informs the periodic runtime
+replenishment of a deadline task.
+
+- sched:sched_deadline_yield: Informs that a deadline task called
+sched_yield(), and will wait for the next period.
+
+- sched:sched_deadline_throttle: Informs that a task consumed all its
+available runtime and was throttled.
+
+- sched:sched_deadline_block: Informs that a deadline task went to sleep
+waiting to be awakened by another task.
+
+Daniel Bristot de Oliveira (3):
+  sched: Move deadline container_of() helper functions into sched.h
+  sched/deadline: Tracepoints for deadline scheduler
+  tools lib traceevent: Implements '%' operation
+
+Steven Rostedt (Red Hat) (1):
+  tracing: Add __print_ns_to_secs() and __print_ns_without_secs()
+    helpers
+
+ include/trace/events/sched.h       | 87 ++++++++++++++++++++++++++++++++++++++
+ include/trace/trace_events.h       | 25 +++++++++++
+ kernel/sched/deadline.c            | 34 +++++++--------
+ kernel/sched/sched.h               | 18 ++++++++
+ tools/lib/traceevent/event-parse.c |  4 ++
+ 5 files changed, 149 insertions(+), 19 deletions(-)
+
+-- 
+2.5.0
+
