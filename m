@@ -1,7 +1,7 @@
 From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [PATCH 4/4] tools lib traceevent: Implements '%' operation
-Date: Mon, 22 Feb 2016 14:08:22 -0300
-Message-ID: <5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
+Subject: [PATCH 2/4] sched: Move deadline container_of() helper functions into sched.h
+Date: Mon, 22 Feb 2016 14:08:20 -0300
+Message-ID: <1f3fee7aae5f682627877d5a3f66087ff7e3f327.1456157869.git.bristot@redhat.com>
 References: <cover.1456157869.git.bristot@redhat.com>
 Cc: Arnaldo Carvalho de Melo <acme@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
@@ -16,56 +16,73 @@ In-Reply-To: <cover.1456157869.git.bristot@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-The operation '%' is not implemented on event-parse.c, causing
-an error on the parse of events with '%' operation on its
-printk format. For example,
-
-# perf record -e sched:sched_deadline_yield ~/y
-  Warning: [sched:sched_deadline_yield] unknown op '%'
-....
-# perf script
-  Warning: [sched:sched_deadline_yield] unknown op '%'
-	y  1641 [006]  3364.109319: sched:sched_deadline_yield: \
-			[FAILED TO PARSE] now=3364109314595 	\
-			deadline=3364139295135 runtime=19975597
-
-This patch implements the '%' operation. With this patch, we see the
-correct output:
-
-# perf record -e sched:sched_deadline_yield ~/y
-  No Warning
-
-# perf script
-	y  4005 [001]  4623.650978: sched:sched_deadline_yield: \
-		now=4623.650974050				\
-		deadline=4623.680957364 remaining_runtime=19979611
+Move dl_task_of(), dl_rq_of_se() and rq_of_dl_rq() helper functions
+from kernel/sched/deadline.c to kernel/sched/sched.h, so they
+can be used on other scheduler files.
 
 Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
 ---
- tools/lib/traceevent/event-parse.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ kernel/sched/deadline.c | 18 ------------------
+ kernel/sched/sched.h    | 18 ++++++++++++++++++
+ 2 files changed, 18 insertions(+), 18 deletions(-)
 
-diff --git a/tools/lib/traceevent/event-parse.c b/tools/lib/traceevent/event-parse.c
-index c3bd294..575e751 100644
---- a/tools/lib/traceevent/event-parse.c
-+++ b/tools/lib/traceevent/event-parse.c
-@@ -1951,6 +1951,7 @@ process_op(struct event_format *event, struct print_arg *arg, char **tok)
- 		   strcmp(token, "*") == 0 ||
- 		   strcmp(token, "^") == 0 ||
- 		   strcmp(token, "/") == 0 ||
-+		   strcmp(token, "%") == 0 ||
- 		   strcmp(token, "<") == 0 ||
- 		   strcmp(token, ">") == 0 ||
- 		   strcmp(token, "<=") == 0 ||
-@@ -3689,6 +3690,9 @@ eval_num_arg(void *data, int size, struct event_format *event, struct print_arg
- 		case '/':
- 			val = left / right;
- 			break;
-+		case '%':
-+			val = left % right;
-+			break;
- 		case '*':
- 			val = left * right;
- 			break;
+diff --git a/kernel/sched/deadline.c b/kernel/sched/deadline.c
+index cd64c97..2f6d25a 100644
+--- a/kernel/sched/deadline.c
++++ b/kernel/sched/deadline.c
+@@ -20,24 +20,6 @@
+ 
+ struct dl_bandwidth def_dl_bandwidth;
+ 
+-static inline struct task_struct *dl_task_of(struct sched_dl_entity *dl_se)
+-{
+-	return container_of(dl_se, struct task_struct, dl);
+-}
+-
+-static inline struct rq *rq_of_dl_rq(struct dl_rq *dl_rq)
+-{
+-	return container_of(dl_rq, struct rq, dl);
+-}
+-
+-static inline struct dl_rq *dl_rq_of_se(struct sched_dl_entity *dl_se)
+-{
+-	struct task_struct *p = dl_task_of(dl_se);
+-	struct rq *rq = task_rq(p);
+-
+-	return &rq->dl;
+-}
+-
+ static inline int on_dl_rq(struct sched_dl_entity *dl_se)
+ {
+ 	return !RB_EMPTY_NODE(&dl_se->rb_node);
+diff --git a/kernel/sched/sched.h b/kernel/sched/sched.h
+index 10f1637..b6e55e1 100644
+--- a/kernel/sched/sched.h
++++ b/kernel/sched/sched.h
+@@ -749,6 +749,24 @@ static inline void rq_clock_skip_update(struct rq *rq, bool skip)
+ 		rq->clock_skip_update &= ~RQCF_REQ_SKIP;
+ }
+ 
++static inline struct task_struct *dl_task_of(struct sched_dl_entity *dl_se)
++{
++	return container_of(dl_se, struct task_struct, dl);
++}
++
++static inline struct rq *rq_of_dl_rq(struct dl_rq *dl_rq)
++{
++	return container_of(dl_rq, struct rq, dl);
++}
++
++static inline struct dl_rq *dl_rq_of_se(struct sched_dl_entity *dl_se)
++{
++	struct task_struct *p = dl_task_of(dl_se);
++	struct rq *rq = task_rq(p);
++
++	return &rq->dl;
++}
++
+ #ifdef CONFIG_NUMA
+ enum numa_topology_type {
+ 	NUMA_DIRECT,
 -- 
 2.5.0
