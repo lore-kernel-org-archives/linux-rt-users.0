@@ -1,30 +1,30 @@
 From: DIXLOR <dixlor@gmail.com>
 Subject: WARNING: amd_iommu. linux-4.4.1-rt6
-Date: Tue, 23 Feb 2016 03:25:46 +0300
-Message-ID: <56CBA70A.8090007@gmail.com>
+Date: Tue, 23 Feb 2016 03:34:37 +0300
+Message-ID: <56CBA91D.6080909@gmail.com>
 Reply-To: dixlor@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="------------ms030802030906020303070803"
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="------------ms020802050404080503090706"
 To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f175.google.com ([209.85.217.175]:36593 "EHLO
-	mail-lb0-f175.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752159AbcBWAZx (ORCPT
+Received: from mail-lb0-f177.google.com ([209.85.217.177]:35580 "EHLO
+	mail-lb0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755923AbcBWAen (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 22 Feb 2016 19:25:53 -0500
-Received: by mail-lb0-f175.google.com with SMTP id x1so91844210lbj.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2016 16:25:52 -0800 (PST)
+	Mon, 22 Feb 2016 19:34:43 -0500
+Received: by mail-lb0-f177.google.com with SMTP id bc4so92007638lbc.2
+        for <linux-rt-users@vger.kernel.org>; Mon, 22 Feb 2016 16:34:42 -0800 (PST)
 Received: from [192.168.1.2] (ppp83-237-170-190.pppoe.mtu-net.ru. [83.237.170.190])
-        by smtp.googlemail.com with ESMTPSA id l129sm3624880lfl.18.2016.02.22.16.25.50
+        by smtp.googlemail.com with ESMTPSA id p138sm3823432lfb.22.2016.02.22.16.34.39
         for <linux-rt-users@vger.kernel.org>
         (version=TLSv1/SSLv3 cipher=OTHER);
-        Mon, 22 Feb 2016 16:25:51 -0800 (PST)
+        Mon, 22 Feb 2016 16:34:40 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 This is a cryptographically signed message in MIME format.
 
---------------ms030802030906020303070803
+--------------ms020802050404080503090706
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: quoted-printable
 
@@ -68,9 +68,41 @@ ff81034e17
 [    1.831971]  [<ffffffff81504810>] ? 0xffffffff81504810
 [    1.831976] ---[ end trace 0000000000000010 ]---
 
+---
+
+Called from amd_iommu.c,  __attach_device() from  attach_device()
+
+static int __attach_device(struct iommu_dev_data *dev_data,
+                            struct protection_domain *domain)
+{
+         int ret;
+
+         /*
+          * Must be called with IRQs disabled. Warn here to detect early
+          * when its not.
+          */
+         WARN_ON(!irqs_disabled());
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^  WARNING
+=2E..
+}
 
 
---------------ms030802030906020303070803
+static int attach_device(struct device *dev,
+                          struct protection_domain *domain)
+{
+=2E..
+         }
+
+         write_lock_irqsave(&amd_iommu_devtable_lock, flags);
+         ret =3D __attach_device(dev_data, domain);
+         write_unlock_irqrestore(&amd_iommu_devtable_lock, flags);
+=2E..
+
+
+
+
+
+--------------ms020802050404080503090706
 Content-Type: application/pkcs7-signature; name="smime.p7s"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="smime.p7s"
@@ -129,18 +161,18 @@ q1gUbu36Z4pNQ00BtbouH2j/xPfXdr/qChyZl9nBjT+k4ClFWz/qYo12+5fMchNtBDGCA2gw
 ggNkAgEBMGowVjELMAkGA1UEBhMCQ04xGjAYBgNVBAoTEVdvU2lnbiBDQSBMaW1pdGVkMSsw
 KQYDVQQDDCJDQSDmsoPpgJogRW1haWwg5a6i5oi356uv6K+B5LmmIEcyAhBbLvAL7CpbaYZ7
 xtCHUmdkMA0GCWCGSAFlAwQCAQUAoIIBzzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwG
-CSqGSIb3DQEJBTEPFw0xNjAyMjMwMDI1NDZaMC8GCSqGSIb3DQEJBDEiBCCKQC/Ud8u9bHfl
-c+KEUiipXTYMu03YOQTpXbLvKkwAcjBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
+CSqGSIb3DQEJBTEPFw0xNjAyMjMwMDM0MzdaMC8GCSqGSIb3DQEJBDEiBCBiKwpNVQ5yx4yk
+xPhrKdYd3dCaTT/YYarFbq7JmZGJRTBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
 BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
 MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMHkGCSsGAQQBgjcQBDFsMGowVjELMAkGA1UEBhMC
 Q04xGjAYBgNVBAoTEVdvU2lnbiBDQSBMaW1pdGVkMSswKQYDVQQDDCJDQSDmsoPpgJogRW1h
 aWwg5a6i5oi356uv6K+B5LmmIEcyAhBbLvAL7CpbaYZ7xtCHUmdkMHsGCyqGSIb3DQEJEAIL
 MWygajBWMQswCQYDVQQGEwJDTjEaMBgGA1UEChMRV29TaWduIENBIExpbWl0ZWQxKzApBgNV
 BAMMIkNBIOayg+mAmiBFbWFpbCDlrqLmiLfnq6/or4HkuaYgRzICEFsu8AvsKltphnvG0IdS
-Z2QwDQYJKoZIhvcNAQEBBQAEggEAFlMbjLzdtjJ6qCRwzHlMIzvvup9yWd9sMiSSIkma6zRd
-9+TWGh6x36bcwoR4vS99LFJAKT5Ku7kt2QQ4XV6KehwBO0SYP1Q1mlSrF/Q1yNxSxnGpm9/P
-0mTqkRKbtCSKJLjZELNS8qr/T4C3x0//xuOPbI3yg18oyMErxOozDnVal1cNFfA0a9xtVyzD
-Z+nrKBjNutU5EdMt0GQa9YqYZC5mQJqud5avwOIW/ZrQbNMsI3yMbEeFmFjLTGU3TN4C7xug
-t78d0/Xo8unnBxIn2KDPxHt9xvPyOT8myWePcjd0lErET72zIVwMlpRhLxoxU/1FHMu1fdBh
-2HNmXyRvQAAAAAAAAA==
---------------ms030802030906020303070803--
+Z2QwDQYJKoZIhvcNAQEBBQAEggEAYe02Ak4/EcTpmuR2JIShyO9d36ETlcOD4suttNJFzU3Y
+YsOlhrm+Y2Qm5h0U1ZhyNbR7tXQv4aP+UuVINcyG9Z3eAj38DiFbkOP4BRdrCjda2mADG/is
+wLyQObbRNh5qlGvWOGnCu1Sij8+TLywRQP1xub/Gc7DFxVwETVgUOBxhx/qXHbw9EpRBZlfF
+5ynMott5VCRGptO9jahpZKn4mWz9ShYgP8r2bOCmB7rpLaQ2pYUy8CopbABF7CuVtLd7ZItV
+Y4qZKGfRu2/3vT6WFHPAiEU1/Qtj9gnT+TNe/L+06RFGEBwJczdFTm182E2qytULxolsSVfh
+UxfmChQ0ygAAAAAAAA==
+--------------ms020802050404080503090706--
