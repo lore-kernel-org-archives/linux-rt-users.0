@@ -1,80 +1,99 @@
-From: Arnaldo Carvalho de Melo <acme@kernel.org>
-Subject: [PATCH 01/11] tools lib traceevent: Implement '%' operation
-Date: Tue, 23 Feb 2016 17:00:42 -0300
-Message-ID: <1456257652-20059-2-git-send-email-acme@kernel.org>
-References: <1456257652-20059-1-git-send-email-acme@kernel.org>
-Cc: linux-kernel@vger.kernel.org,
-	Daniel Bristot de Oliveira <bristot@redhat.com>,
-	Juri Lelli <juri.lelli@gmail.com>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>
-To: Ingo Molnar <mingo@kernel.org>
+From: Yang Shi <yang.shi@windriver.com>
+Subject: [4.4-rt PATCH] trace: use rcuidle version for preemptoff_hist trace point
+Date: Tue, 23 Feb 2016 13:23:23 -0800
+Message-ID: <1456262603-10075-1-git-send-email-yang.shi@windriver.com>
+Mime-Version: 1.0
+Content-Type: text/plain
+Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	<yang.shi@windriver.com>
+To: <tglx@linutronix.de>, <bigeasy@linutronix.de>,
+	<rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1456257652-20059-1-git-send-email-acme@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
+When running -rt kernel with both PREEMPT_OFF_HIST and LOCKDEP enabled,
+the below error is reported:
 
-The operation '%' is not implemented on event-parse.c, causing an error
-when parsing events with '%' the operation in its printk format. For
-example,
+ [ INFO: suspicious RCU usage. ]
+ 4.4.1-rt6 #1 Not tainted
+ include/trace/events/hist.h:31 suspicious rcu_dereference_check() usage!
 
-  # perf record -e sched:sched_deadline_yield ~/yield-test
-    Warning: [sched:sched_deadline_yield] unknown op '%'
-  ....
-  # perf script
-    Warning: [sched:sched_deadline_yield] unknown op '%'
-        test  1641 [006]  3364.109319: sched:sched_deadline_yield: \
-                        [FAILED TO PARSE] now=3364109314595        \
-                        deadline=3364139295135 runtime=19975597
+ other info that might help us debug this:
 
-This patch implements the '%' operation. With this patch, we see the
-correct output:
+ RCU used illegally from idle CPU!
+ rcu_scheduler_active = 1, debug_locks = 0
+ RCU used illegally from extended quiescent state!
+ no locks held by swapper/0/0.
 
-  # perf record -e sched:sched_deadline_yield ~/yield-test
-    No Warning
+ stack backtrace:
+ CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.4.1-rt6-WR8.0.0.0_standard #1
+ Stack : 0000000000000006 0000000000000000 ffffffff81ca8c38 ffffffff81c8fc80
+    ffffffff811bdd68 ffffffff81cb0000 0000000000000000 ffffffff81cb0000
+    0000000000000000 0000000000000000 0000000000000004 0000000000000000
+    0000000000000004 ffffffff811bdf50 0000000000000000 ffffffff82b60000
+    0000000000000000 ffffffff812897ac ffffffff819f0000 000000000000000b
+    ffffffff811be460 ffffffff81b7c588 ffffffff81c8fc80 0000000000000000
+    0000000000000000 ffffffff81ec7f88 ffffffff81d70000 ffffffff81b70000
+    ffffffff81c90000 ffffffff81c3fb00 ffffffff81c3fc28 ffffffff815e6f98
+    0000000000000000 ffffffff81c8fa87 ffffffff81b70958 ffffffff811bf2c4
+    0707fe32e8d60ca5 ffffffff81126d60 0000000000000000 0000000000000000
+    ...
+ Call Trace:
+ [<ffffffff81126d60>] show_stack+0xe8/0x108
+ [<ffffffff815e6f98>] dump_stack+0x88/0xb0
+ [<ffffffff8124b88c>] time_hardirqs_off+0x204/0x300
+ [<ffffffff811aa5dc>] trace_hardirqs_off_caller+0x24/0xe8
+ [<ffffffff811a4ec4>] cpu_startup_entry+0x39c/0x508
+ [<ffffffff81d7dc68>] start_kernel+0x584/0x5a0
 
-  # perf script
-        yield-test  4005 [001]  4623.650978: sched:sched_deadline_yield: \
-                now=4623.650974050                                       \
-                deadline=4623.680957364 remaining_runtime=19979611
+Replace regular trace_preemptoff_hist to rcuidle version to avoid the error.
 
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
-Cc: Juri Lelli <juri.lelli@gmail.com>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Link: http://lkml.kernel.org/r/5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com
-Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+Signed-off-by: Yang Shi <yang.shi@windriver.com>
 ---
- tools/lib/traceevent/event-parse.c | 4 ++++
- 1 file changed, 4 insertions(+)
+I recall the rcuidle version is used by 4.1-rt, but not sure why it is dropped
+in 4.4-rt. It looks such fix is still needed. 
 
-diff --git a/tools/lib/traceevent/event-parse.c b/tools/lib/traceevent/event-parse.c
-index c3bd294a63d1..575e75174087 100644
---- a/tools/lib/traceevent/event-parse.c
-+++ b/tools/lib/traceevent/event-parse.c
-@@ -1951,6 +1951,7 @@ process_op(struct event_format *event, struct print_arg *arg, char **tok)
- 		   strcmp(token, "*") == 0 ||
- 		   strcmp(token, "^") == 0 ||
- 		   strcmp(token, "/") == 0 ||
-+		   strcmp(token, "%") == 0 ||
- 		   strcmp(token, "<") == 0 ||
- 		   strcmp(token, ">") == 0 ||
- 		   strcmp(token, "<=") == 0 ||
-@@ -3689,6 +3690,9 @@ eval_num_arg(void *data, int size, struct event_format *event, struct print_arg
- 		case '/':
- 			val = left / right;
- 			break;
-+		case '%':
-+			val = left % right;
-+			break;
- 		case '*':
- 			val = left * right;
- 			break;
+ kernel/trace/trace_irqsoff.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
+index 36e584f..069942c 100644
+--- a/kernel/trace/trace_irqsoff.c
++++ b/kernel/trace/trace_irqsoff.c
+@@ -421,13 +421,13 @@ void start_critical_timings(void)
+ {
+ 	if (preempt_trace() || irq_trace())
+ 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
+-	trace_preemptirqsoff_hist(TRACE_START, 1);
++	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
+ }
+ EXPORT_SYMBOL_GPL(start_critical_timings);
+ 
+ void stop_critical_timings(void)
+ {
+-	trace_preemptirqsoff_hist(TRACE_STOP, 0);
++	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
+ 	if (preempt_trace() || irq_trace())
+ 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
+ }
+@@ -437,7 +437,7 @@ EXPORT_SYMBOL_GPL(stop_critical_timings);
+ #ifdef CONFIG_PROVE_LOCKING
+ void time_hardirqs_on(unsigned long a0, unsigned long a1)
+ {
+-	trace_preemptirqsoff_hist(IRQS_ON, 0);
++	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
+ 	if (!preempt_trace() && irq_trace())
+ 		stop_critical_timing(a0, a1);
+ }
+@@ -446,7 +446,7 @@ void time_hardirqs_off(unsigned long a0, unsigned long a1)
+ {
+ 	if (!preempt_trace() && irq_trace())
+ 		start_critical_timing(a0, a1);
+-	trace_preemptirqsoff_hist(IRQS_OFF, 1);
++	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
+ }
+ 
+ #else /* !CONFIG_PROVE_LOCKING */
 -- 
-2.5.0
+2.0.2
