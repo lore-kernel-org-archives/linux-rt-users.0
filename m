@@ -1,136 +1,64 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
-Date: Tue, 23 Feb 2016 13:19:18 -0300
-Message-ID: <56CC8686.5090404@redhat.com>
-References: <cover.1456157869.git.bristot@redhat.com>
- <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
- <20160222173259.GM6357@twins.programming.kicks-ass.net>
- <20160222124854.3816fec4@gandalf.local.home>
- <20160222213017.GN6357@twins.programming.kicks-ass.net>
- <20160222173043.24873ae8@gandalf.local.home>
- <20160223104408.GO6357@twins.programming.kicks-ass.net>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Juri Lelli <juri.lelli@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160223104408.GO6357@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [RFC 1/4] cyclictest: tracing(): check for notrace
+Date: Tue, 23 Feb 2016 14:43:50 -0500
+Message-ID: <1456256633-17639-2-git-send-email-lcapitulino@redhat.com>
+References: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
+Cc: jkacur@redhat.com, williams@redhat.com
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:50696 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754630AbcBWTn6 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Feb 2016 14:43:58 -0500
+Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
+	by mx1.redhat.com (Postfix) with ESMTPS id 7B8D45F38
+	for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2016 19:43:58 +0000 (UTC)
+In-Reply-To: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+If you pass -b and --notrace to cyclictest today, it will
+write to tracing_on when -b latency is reached.
 
+Fix this by making tracing() check notrace.
 
-On 02/23/2016 07:44 AM, Peter Zijlstra wrote:
->>> Worse, the proposed tracepoints are atrocious, look at crap like this:
->>> > > 
->>>> > > > +		if (trace_sched_deadline_yield_enabled()) {
->>>> > > > +			u64 delta_exec = rq_clock_task(rq) - p->se.exec_start;
->>>> > > > +			/* Subtract the last run till now */
->>>> > > > +			if (likely((s64)delta_exec > 0))
->>>> > > > +				p->dl.runtime -= delta_exec;
->>>> > > > +			trace_sched_deadline_yield(&p->dl);
->>>> > > > +		}  
->>> > > 
->>> > > tracepoints should _NEVER_ change state, ever.
->> > 
->> > Heh, it's not really changing state. The code directly after this is:
->> > 
->> > 	p->dl.runtime = 0;
-> Yes, it more or less 'works', but its still atrocious shite. Its the
-> worst kind of anti pattern possible.
-> 
-> Suppose someone comes and removes that line, and ignores the tracepoint
-> stuff, because, hell its a tracepoint, those don't modify stuff.
-> 
-> Its just really, utterly bad practice.
+Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+---
+ src/cyclictest/cyclictest.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-It is possible to clean up this by removing the "p->dl.runtime = 0;"
-from yield_task_dl(), to carry the dl_runtime until update_curr_dl().
-We end up not proposing this change because we thought it could be
-too much intrusive. But seems that it was the correct approach.
-
-Btw, your patch for "Always calculate end of period on sched_yield()"
-already do the necessary clean up, so in the possible next version of
-these tracepoint the hack will disappear. 
-
->>> > > So tell me why these specific tracepoints and why the existing ones
->>> > > could not be extended to include this information. For example, why a
->>> > > trace_sched_dealine_yield, and not a generic trace_sched_yield() that
->>> > > works for all classes.
->> > 
->> > But what about reporting actual runtime, and when the next period will
->> > come. That only matters for deadline.
-> How is that an answer to the question? Are you implying a generic
-> trace_sched_yield() call could not do this?
-
-I agree that a trace_sched_yield() could partially do this. But each
-scheduler would have its own specific data to be printed, and it is hard
-to define how many and the type of these data.
-
->>> > > But do not present me with a bunch of random arse, hacked together
->>> > > tracepoints and tell me they might be useful, maybe.
->> > 
->> > 
->> > They ARE useful. These are the tracepoints I'm currently using to
->> > debug the deadline scheduler with. They have been indispensable for my
->> > current work.
-> They are, most obviously, a hacked together debug session for sure. This
-> is _NOT_ what you commit.
-> 
-> Now ideally we'd do something like the below, but because trainwreck, we
-> cannot actually do this I think :-(
-
-I do liked this patch, but I agree that bad things can happen on
-applications that already use sched:sched_switch :-(.
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index 34053c5..54fc033 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -444,6 +444,9 @@ static void tracemark(char *fmt, ...)
  
-> I really dislike tracepoints, and I'm >.< close to proposing a patch
-> removing them all from the scheduler.
+ void tracing(int on)
+ {
++	if (notrace)
++		return;
++
+ 	if (on) {
+ 		switch (kernelversion) {
+ 		case KV_26_LT18: gettimeofday(0,(struct timezone *)1); break;
+@@ -1634,7 +1637,7 @@ static void sighand(int sig)
+ 	shutdown = 1;
+ 	if (refresh_on_max)
+ 		pthread_cond_signal(&refresh_on_max_cond);
+-	if (tracelimit && !notrace)
++	if (tracelimit)
+ 		tracing(0);
+ }
+ 
+@@ -2164,7 +2167,7 @@ int main(int argc, char **argv)
+ 	}
+  out:
+ 	/* ensure that the tracer is stopped */
+-	if (tracelimit && !notrace)
++	if (tracelimit)
+ 		tracing(0);
+ 
+ 
+-- 
+2.1.0
 
-Scheduler tracepoints become such a standard not only for debugging the
-kernel, but also for understanding performance issues and finding
-optimizations for user-space tasks, e.g. finding the best way to spread
-task among processors on a large NUMA box. Many people would cry
-if sched tracepoints disappears :'-(.
-
-> @@ -132,33 +177,63 @@ TRACE_EVENT(sched_switch,
->  	TP_STRUCT__entry(
->  		__array(	char,	prev_comm,	TASK_COMM_LEN	)
->  		__field(	pid_t,	prev_pid			)
-> -		__field(	int,	prev_prio			)
-> +		__field(	int,	prev_policy			)
-> +		__field(	s64,	prev_f1				)
-> +		__field(	u64,	prev_f2				)
-> +		__field(	u64,	prev_f3				)
-
-This helps me to explain why did I chose to create deadline specific
-tracepoints.
-
-It is not possible to define in advance a common set of parameters to be
-traced/printed for all future (exotic) scheduler, because each scheduler
-will use its own set of parameters. Hence, the number and type of the
-parameter can vary. How many fields do we need? and which are the types
-of these fields? What if a scheduler needs two s64 fields and no u64?
-
-Moreover, it is not possible to define the changes that will be needed
-on classical schedulers algorithms for them to fit on Linux's
-abstractions and restrictions. Therefore, it is not safe to mention
-that LLF would (theoretically) use the same set of parameters of a EDF
-scheduler, because the theoretical LLF would need to be modified
-to fit on Linux. For example, there is no throttling concept on the
-classical deadline scheduler. So, the proposed tracepoints are only valid
-for Linux's sched deadline scheduler (deadline scheduler + CBS).
-
-That is why I believe that it would be a better approach to have
-scheduler specific tracepoints for the sched_*_entity particularities
-and sched_* specific points interest.
-
-Finally, I was based in the same approach used on the fair scheduler's
-sched:sched_stat* tracepoints: they report sched_entity data on fair.c,
-and my patches report sched_deadline_entity data on deadline.c.
