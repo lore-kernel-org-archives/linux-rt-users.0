@@ -1,104 +1,62 @@
 From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: [RFC 4/4] cyclictest: add --tracemark option
-Date: Tue, 23 Feb 2016 14:43:53 -0500
-Message-ID: <1456256633-17639-5-git-send-email-lcapitulino@redhat.com>
+Subject: [RFC 3/4] cyclictest: move tracemark_fd handling to its own function
+Date: Tue, 23 Feb 2016 14:43:52 -0500
+Message-ID: <1456256633-17639-4-git-send-email-lcapitulino@redhat.com>
 References: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
 Cc: jkacur@redhat.com, williams@redhat.com
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:13607 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:39805 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1754902AbcBWToB (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Feb 2016 14:44:01 -0500
-Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-	by mx1.redhat.com (Postfix) with ESMTPS id E6D3663140
+	id S1754630AbcBWToA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 23 Feb 2016 14:44:00 -0500
+Received: from int-mx11.intmail.prod.int.phx2.redhat.com (int-mx11.intmail.prod.int.phx2.redhat.com [10.5.11.24])
+	by mx1.redhat.com (Postfix) with ESMTPS id 23E7C6540B
 	for <linux-rt-users@vger.kernel.org>; Tue, 23 Feb 2016 19:44:00 +0000 (UTC)
 In-Reply-To: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-cyclictest will only write to /sys/kernel/debug/tracing/trace_maker
-if it's also setup to do tracing. This conflicts with
-running cyclictest under trace-cmd.
-
-The --tracemark option tells cyclictest to write to the
-trace_marker file even when it's not doing tracing.
-
-It's can be used like this:
-
- # trace-cmd record [...] cyclictest [...] -bX --tracemark --notrace
+A function added by the next commit will want to call
+this code too.
 
 Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
 ---
- src/cyclictest/cyclictest.c | 20 +++++++++++++++++++-
- 1 file changed, 19 insertions(+), 1 deletion(-)
+ src/cyclictest/cyclictest.c | 22 ++++++++++++++--------
+ 1 file changed, 14 insertions(+), 8 deletions(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index e35088b..5a261e2 100644
+index f543c34..e35088b 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -167,6 +167,7 @@ struct thread_stat {
- static int shutdown;
- static int tracelimit = 0;
- static int notrace = 0;
-+static int trace_marker = 0;
- static int ftrace = 0;
- static int kernelversion;
- static int verbose = 0;
-@@ -510,6 +511,18 @@ static void open_tracemark_fd(void)
- 		warn("unable to open trace_marker file: %s\n", path);
+@@ -497,6 +497,19 @@ static void debugfs_prepare(void)
+ 		fileprefix = procfileprefix;
  }
  
-+static void enable_trace_mark(void)
++static void open_tracemark_fd(void)
 +{
-+	if (!trace_marker)
++	char path[MAX_PATH];
++
++	if (tracemark_fd >= 0)
 +		return;
 +
-+	if (!tracelimit)
-+		fatal("--tracemark requires -b\n");
-+
-+	debugfs_prepare();
-+	open_tracemark_fd();
++	sprintf(path, "%s/%s", fileprefix, "trace_marker");
++	tracemark_fd = open(path, O_WRONLY);
++	if (tracemark_fd < 0)
++		warn("unable to open trace_marker file: %s\n", path);
 +}
 +
  static void setup_tracer(void)
  {
  	if (!tracelimit || notrace)
-@@ -1234,7 +1247,7 @@ enum option_values {
- 	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM,
- 	OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
- 	OPT_WAKEUP, OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
--	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED,
-+	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED, OPT_TRACEMARK,
- };
- 
- /* Process commandline options */
-@@ -1285,6 +1298,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"system",           no_argument,       NULL, OPT_SYSTEM },
- 			{"smp",              no_argument,       NULL, OPT_SMP },
- 			{"threads",          optional_argument, NULL, OPT_THREADS },
-+			{"tracemark",        no_argument,       NULL, OPT_TRACEMARK },
- 			{"tracer",           required_argument, NULL, OPT_TRACER },
- 			{"unbuffered",       no_argument,       NULL, OPT_UNBUFFERED },
- 			{"numa",             no_argument,       NULL, OPT_NUMA },
-@@ -1509,6 +1523,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			ct_debug = 1; break;
- 		case OPT_LAPTOP:
- 			laptop = 1; break;
-+		case OPT_TRACEMARK:
-+			trace_marker = 1; break;
+@@ -612,14 +625,7 @@ static void setup_tracer(void)
+ 				fatal("unable to open %s for tracing", path);
  		}
- 	}
  
-@@ -1850,6 +1866,8 @@ int main(int argc, char **argv)
- 
- 	setup_tracer();
- 
-+	enable_trace_mark();
-+
- 	if (check_timer())
- 		warn("High resolution timers not available\n");
- 
--- 
-2.1.0
-
+-		/* open the tracemark file descriptor */
+-		if (tracemark_fd == -1) {
+-			char path[MAX_PATH];
+-			strcat(strcpy(path, fileprefix), "trace_marker");
+-			if ((tracemark_fd = open(path, O_WRONLY)) == -1)
+-				warn("unable to open trace_marker file: %s\n", path);
+-		}
