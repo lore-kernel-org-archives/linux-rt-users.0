@@ -1,81 +1,65 @@
-From: Clark Williams <williams@redhat.com>
-Subject: Re: swait question
-Date: Tue, 23 Feb 2016 08:36:08 -0600
-Message-ID: <20160223083608.61f69ad9@sluggy.hsv.redhat.com>
-References: <56CC0355.6010200@monom.org>
+From: Arnaldo Carvalho de Melo <acme@redhat.com>
+Subject: Re: [PATCH 4/4] tools lib traceevent: Implements '%' operation
+Date: Tue, 23 Feb 2016 11:38:19 -0300
+Message-ID: <20160223143819.GA2749@redhat.com>
+References: <cover.1456157869.git.bristot@redhat.com>
+ <5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
+ <20160222152303.02f79376@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha512;
- boundary="Sig_/M+WEUeIq0FpLhPC8emq8282"; protocol="application/pgp-signature"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@gmail.com>,
+	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Daniel Wagner <wagi@monom.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:52396 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752923AbcBWOgO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 23 Feb 2016 09:36:14 -0500
-In-Reply-To: <56CC0355.6010200@monom.org>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160222152303.02f79376@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
---Sig_/M+WEUeIq0FpLhPC8emq8282
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: quoted-printable
+Em Mon, Feb 22, 2016 at 03:23:03PM -0500, Steven Rostedt escreveu:
+> On Mon, 22 Feb 2016 14:08:22 -0300
+> Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+> 
+> > The operation '%' is not implemented on event-parse.c, causing
+> > an error on the parse of events with '%' operation on its
+> > printk format. For example,
+> > 
+> > # perf record -e sched:sched_deadline_yield ~/y
+> >   Warning: [sched:sched_deadline_yield] unknown op '%'
+> > ....
+> > # perf script
+> >   Warning: [sched:sched_deadline_yield] unknown op '%'
+> > 	y  1641 [006]  3364.109319: sched:sched_deadline_yield: \
+> > 			[FAILED TO PARSE] now=3364109314595 	\
+> > 			deadline=3364139295135 runtime=19975597
+> > 
+> > This patch implements the '%' operation. With this patch, we see the
+> > correct output:
+> > 
+> > # perf record -e sched:sched_deadline_yield ~/y
+> >   No Warning
+> > 
+> > # perf script
+> > 	y  4005 [001]  4623.650978: sched:sched_deadline_yield: \
+> > 		now=4623.650974050				\
+> > 		deadline=4623.680957364 remaining_runtime=19979611
+> > 
+> > Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+> 
+> Arnaldo,
+> 
+> This patch is not dependent on the rest of the series and looks like a
+> good general fix.
+> 
+> Can you pull this one into your tree, and please add my:
+> 
+> Reviewed-by: Steven Rostedt <rsotedt@goodmis.org>
 
-On Tue, 23 Feb 2016 07:59:33 +0100
-Daniel Wagner <wagi@monom.org> wrote:
+Done, thanks.
 
-> Hi Clark,
->=20
-> Sorry, I seem to be offline when you are online and vice verse.
-
-No worries, that's what email is for.=20
-
->=20
-> To your question: you need to drop the original swait patches from the
-> -rt tree before applying the new version. Last time I tried it it worked
-> without bigger problems.
->
-
-I actually dropped only a couple of the patches; I kept completions and sim=
-ple work queues, although I had to tweak them a bit.=20
-
-My only problem now is that suspend/resume locked up (was trying it on my l=
-aptop). It's entirely possible that I horked something up in the port, so I=
-'ll poke at it a bit more before yelling for help :).
-
-=20
-> Sebastian would you mind integrating the new version of the swait
-> patches? I guess it doesn't hurt to give them a some testing via the -rt
-> tree.
->=20
->
-
-Btw, when I ported the latest (v8 I think?) to RT, I moved work-simple.[ch]=
- to swork.[ch] to keep things consistent. Sebastian, if you want me to push=
- what I did up to my k.o. git tree, I'll do so.=20
-
-Clark
-
---Sig_/M+WEUeIq0FpLhPC8emq8282
-Content-Type: application/pgp-signature
-Content-Description: OpenPGP digital signature
-
------BEGIN PGP SIGNATURE-----
-
-iQIcBAEBCgAGBQJWzG5YAAoJEOI5asVwYXLrWu0QALD+NRhGY3ATMwl48EhRl/PM
-aHq9569ilmA2gUqi9ro9TmORfvOLwgww5/TDhgPdYetIj8+/9l5+3di9F1QXDnCT
-ntbiYCbIBcMfl8v2lZzscMqLFKNdD9qPxzohmSxpE0CoblRQMcIdKFFSnIw8S87t
-R5AIi7xHglXevCXz6rS9twMWFkNMz26rPxQsYilA9xz8IUQ9G1WS/XQps11VqMN/
-lNhnnxxvXd1MyeUsxixjNksaSWRWlDnUn0VbVTAxn8igXiMZbi8ydti+t02cem9U
-uthb0LWKdVyeQkYrFCzD/AyqJjEFgzu+GlAcuHrlESZvrC2XppcWqvl9WAiS/n0s
-/m0pDV302/W3Z0JE2wCbgPRein3Kn5L/9/BDZTc557PeJ5sq0oiIcFkBg5TbI42/
-GNmR0OGX1tENn7MZz6FdS5EoULUM9dQHzClILjyPpgBMRXYkEDM6FLwdEVspIc4G
-QbHTuqA1qdR3y4QiydrSRCAV9DAgaoIFRY+gqCsHXZ8h5bptR5aqPJGbYc+9A5vZ
-5mvEaouAylKOGGgLUDX9/WqxXeKDLpifEy6PDpByoz1fjXlE8AdLjL+NX1gMaLXQ
-IdrTyLogEmvRLywM9xoUpQlcCDT0jIBuJtDVbxPgqRrWSloaINbJj2/0wpo7kMHk
-AAkQLh1ldRjypVDOTHL8
-=FZhz
------END PGP SIGNATURE-----
-
---Sig_/M+WEUeIq0FpLhPC8emq8282--
+- Arnaldo
