@@ -1,17 +1,16 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Peter Zijlstra <peterz@infradead.org>
 Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
-Date: Tue, 23 Feb 2016 08:10:46 -0500
-Message-ID: <20160223081046.529d615c@gandalf.local.home>
+Date: Tue, 23 Feb 2016 15:27:53 +0100
+Message-ID: <20160223142753.GR6375@twins.programming.kicks-ass.net>
 References: <cover.1456157869.git.bristot@redhat.com>
-	<f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
-	<20160222173259.GM6357@twins.programming.kicks-ass.net>
-	<20160222124854.3816fec4@gandalf.local.home>
-	<20160222213017.GN6357@twins.programming.kicks-ass.net>
-	<20160222173043.24873ae8@gandalf.local.home>
-	<20160223104408.GO6357@twins.programming.kicks-ass.net>
+ <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
+ <20160222173259.GM6357@twins.programming.kicks-ass.net>
+ <20160222124854.3816fec4@gandalf.local.home>
+ <20160222213017.GN6357@twins.programming.kicks-ass.net>
+ <20160222173043.24873ae8@gandalf.local.home>
+ <20160223104408.GO6357@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Type: text/plain; charset=us-ascii
 Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
 	Ingo Molnar <mingo@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -19,78 +18,91 @@ Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
 	Arnaldo Carvalho de Melo <acme@redhat.com>,
 	LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
 In-Reply-To: <20160223104408.GO6357@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 23 Feb 2016 11:44:08 +0100
-Peter Zijlstra <peterz@infradead.org> wrote:
-
-> No it very much illustrates the problem and is a very clear indication
-> that tracepoints are an ABI.
-
-Yes they are. But note, they can change if nobody notices ;-)
-
-
-> > 
-> > Heh, it's not really changing state. The code directly after this is:
-> > 
-> > 	p->dl.runtime = 0;  
+On Tue, Feb 23, 2016 at 11:44:08AM +0100, Peter Zijlstra wrote:
+>  include/trace/events/sched.h | 97 +++++++++++++++++++++++++++++++++++++++-----
+>  1 file changed, 86 insertions(+), 11 deletions(-)
 > 
-> Yes, it more or less 'works', but its still atrocious shite. Its the
-> worst kind of anti pattern possible.
-> 
-> Suppose someone comes and removes that line, and ignores the tracepoint
-> stuff, because, hell its a tracepoint, those don't modify stuff.
-> 
-> Its just really, utterly bad practice.
-> 
-> You've done this tracing code long enough, you really should _KNOW_
-> this.
+> diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+> index 9b90c57517a9..b902eb71830b 100644
+> --- a/include/trace/events/sched.h
+> +++ b/include/trace/events/sched.h
+> @@ -103,9 +103,15 @@ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+>  	     TP_PROTO(struct task_struct *p),
+>  	     TP_ARGS(p));
+>  
+> +#define TASK_STATE_PREEMPT	(TASK_STATE_MAX << 0)
+> +#define TASK_STATE_THROTTLED	(TASK_STATE_MAX << 1)
+> +#define TASK_STATE_YIELDED	(TASK_STATE_MAX << 2)
+> +
+>  #ifdef CREATE_TRACE_POINTS
+>  static inline long __trace_sched_switch_state(bool preempt, struct task_struct *p)
+>  {
+> +	long state = p->state;
+> +
+>  #ifdef CONFIG_SCHED_DEBUG
+>  	BUG_ON(p != current);
+>  #endif /* CONFIG_SCHED_DEBUG */
+> @@ -114,10 +120,49 @@ static inline long __trace_sched_switch_state(bool preempt, struct task_struct *
+>  	 * Preemption ignores task state, therefore preempted tasks are always
+>  	 * RUNNING (we will not have dequeued if state != RUNNING).
+>  	 */
+> -	return preempt ? TASK_RUNNING | TASK_STATE_MAX : p->state;
+> +	if (preempt) {
+> +		state = TASK_RUNNING | TASK_STATE_MAX;
+> +	} else if (dl_task(p)) {
+> +		if (p->dl.dl_throttled)
+> +			state |= TASK_STATE_THROTTLED;
+> +		else if (p->dl.dl_yielded)
+> +			state |= TASK_STATE_YIELDED;
 
-You're right. I got too caught up in the cleverness of the hack to
-acknowledge it is a hack.
+These might want to be inverted, that is, yielded will have throttled
+set, so yield should take precedence.
 
-But Daniel has a patch to clean up the yield code which would also help
-in making this hack unnecessary for this tracepoint.
+> +	}
+> +
+> +	return state;
+>  }
+>  #endif /* CREATE_TRACE_POINTS */
+>  
+> +#define __trace_sched_switch_fields(name)	do {			\
+> +	__entry->name##_policy = name->policy;				\
+> +	switch (name->policy) {						\
 
-> 
-> > > So tell me why these specific tracepoints and why the existing ones
-> > > could not be extended to include this information. For example, why a
-> > > trace_sched_dealine_yield, and not a generic trace_sched_yield() that
-> > > works for all classes.  
-> > 
-> > But what about reporting actual runtime, and when the next period will
-> > come. That only matters for deadline.  
-> 
-> How is that an answer to the question? Are you implying a generic
-> trace_sched_yield() call could not do this?
-> 
-> > > But do not present me with a bunch of random arse, hacked together
-> > > tracepoints and tell me they might be useful, maybe.  
-> > 
-> > 
-> > They ARE useful. These are the tracepoints I'm currently using to
-> > debug the deadline scheduler with. They have been indispensable for my
-> > current work.  
-> 
-> They are, most obviously, a hacked together debug session for sure. This
-> is _NOT_ what you commit.
-> 
-> Now ideally we'd do something like the below, but because trainwreck, we
-> cannot actually do this I think :-(
-> 
-> It gets you about half of what your patch does, but shows how to also
-> do a generic sched_yield(). The replenish might have to remain special,
-> although both CFS and RT also have replenishes, albeit significantly
-> different.
+Sadly we cannot use policy, for that isn't updated on PI. The best we
+can do is dl_task(), rt_task() else ...
 
-OK, I admit. I was very single focused on deadline scheduler. I wasn't
-looking at how this could work with the rest of the scheduler. I'll
-take a look at the patches you posted.
+> +	case SCHED_IDLE:						\
 
-Thanks!
+This doesn't have nice, so should go with default;
 
--- Steve
+> +	case SCHED_BATCH:						\
+> +	case SCHED_NORMAL:						\
+> +		__entry->name##_f1 = PRIO_TO_NICE(name->static_prio);	\
+> +		__entry->name##_f2 = 0;					\
+> +		__entry->name##_f3 = 0;					\
+> +		break;							\
+> +	case SCHED_RR:							\
+> +	case SCHED_FIFO:						\
+> +		__entry->name##_f1 = USER_PRIO(name->normal_prio);	\
+> +		__entry->name##_f2 = 0;					\
+> +		__entry->name##_f3 = 0;					\
+> +		break;							\
+> +	case SCHED_DEADLINE:						\
+> +		__entry->name##_f1 = name->dl.runtime;			\
+> +		__entry->name##_f2 = name->dl.deadline;			\
+> +		__entry->name##_f3 = name->dl.dl_period;		\
+> +		break;							\
+> +	default:							\
+> +		__entry->name##_f1 = 0;					\
+> +		__entry->name##_f2 = 0;					\
+> +		__entry->name##_f3 = 0;					\
+> +		break;							\
+> +	}								\
+> +} while (0)
