@@ -1,51 +1,65 @@
-From: Ingo Molnar <mingo@kernel.org>
-Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
-Date: Wed, 24 Feb 2016 09:48:22 +0100
-Message-ID: <20160224084822.GC22868@gmail.com>
-References: <cover.1456157869.git.bristot@redhat.com>
- <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
- <20160222173259.GM6357@twins.programming.kicks-ass.net>
- <20160222124854.3816fec4@gandalf.local.home>
- <20160222213017.GN6357@twins.programming.kicks-ass.net>
- <20160222173043.24873ae8@gandalf.local.home>
- <20160223104408.GO6357@twins.programming.kicks-ass.net>
- <20160223081046.529d615c@gandalf.local.home>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [RFC 0/4] cyclictest: improve running under trace-cmd
+Date: Wed, 24 Feb 2016 18:08:58 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1602241802300.13215@riemann>
+References: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Daniel Bristot de Oliveira <bristot@redhat.com>,
-	Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Juri Lelli <juri.lelli@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160223081046.529d615c@gandalf.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f45.google.com ([74.125.82.45]:36332 "EHLO
+	mail-wm0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757457AbcBXRJB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 24 Feb 2016 12:09:01 -0500
+Received: by mail-wm0-f45.google.com with SMTP id g62so281970174wme.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 24 Feb 2016 09:09:00 -0800 (PST)
+In-Reply-To: <1456256633-17639-1-git-send-email-lcapitulino@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
-* Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> On Tue, 23 Feb 2016 11:44:08 +0100
-> Peter Zijlstra <peterz@infradead.org> wrote:
+On Tue, 23 Feb 2016, Luiz Capitulino wrote:
+
 > 
-> > No it very much illustrates the problem and is a very clear indication
-> > that tracepoints are an ABI.
+> In short, this series allows you to run cyclictest under
+> trace-cmd and still get trace marks when the latency
+> specified with -b is execeded. More details in patch 4/4.
 > 
-> Yes they are. But note, they can change if nobody notices ;-)
+> This series is RFC because I'm not completely sure this
+> is the right thing to do. I'm wondering if we shouldn't
+> ditch all tracing support from cyclictest...
+> 
+> Luiz Capitulino (4):
+>   cyclictest: tracing(): check for notrace
+>   cyclictest: move debugfs init code to its own function
+>   cyclictest: move tracemark_fd handling to its own function
+>   cyclictest: add --tracemark option
+> 
+>  src/cyclictest/cyclictest.c | 62 ++++++++++++++++++++++++++++++++++-----------
+>  1 file changed, 47 insertions(+), 15 deletions(-)
+> 
+> -- 
 
-Which is rather seldom for something as high profile as core scheduler
-tracepoints ...
+Hi. First of all, although I didn't look closely at the details yet, I 
+like this set of patches. Just to let you and everyone else know where we 
+are, Clark and I are going to put rt-tests into maintainence mode very 
+shortly. We want to create a 1.0 version of it, which we will maintain 
+with fixes, but no new features. This last set of patches would be a nice 
+addition before we go into mainatinence mode so that the old code base 
+would have a way of using trace-cmd.
 
-You can be cavalier about tracepoints in subsystems where the tracepoints are at 
-most used by the maintainers with specialized, closely maintained tooling that is 
-easy to change. Not so much about scheduler tracepoints which are being widely 
-utilized by various projects.
+For the next development line of rt-tests, we would like to rip-out all of 
+the tracing code that we can, and leave the bare minimum in place to 
+interact with trace-cmd. With that in mind, could you go over your RFC 
+patches, and if you are satisfied that they don't break anything, but 
+allow tracing under trace-cmd, then this could be the last new feature we 
+let in. Let me know and I'll review at that point. I'll make and official 
+announcement about maintainence mode and a new development line in a 
+separate mail as well.
 
-Thanks,
+Thank You!
 
-	Ingo
+John Kacur
