@@ -1,103 +1,113 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
-Date: Tue, 23 Feb 2016 23:29:13 -0300
-Message-ID: <56CD1579.2070300@redhat.com>
-References: <cover.1456157869.git.bristot@redhat.com>
- <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
- <20160222173259.GM6357@twins.programming.kicks-ass.net>
- <20160222124854.3816fec4@gandalf.local.home>
- <20160222213017.GN6357@twins.programming.kicks-ass.net>
- <20160222173043.24873ae8@gandalf.local.home>
- <20160223104408.GO6357@twins.programming.kicks-ass.net>
+From: Ingo Molnar <mingo@kernel.org>
+Subject: Re: [GIT PULL 00/11] perf/core improvements and fixes
+Date: Wed, 24 Feb 2016 08:23:07 +0100
+Message-ID: <20160224072307.GB29044@gmail.com>
+References: <1456257652-20059-1-git-send-email-acme@kernel.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-kernel@vger.kernel.org,
+	Adrian Hunter <adrian.hunter@intel.com>,
+	Andi Kleen <ak@linux.intel.com>,
+	Daniel Bristot de Oliveira <bristot@redhat.com>,
+	David Ahern <dsahern@gmail.com>, Jiri Olsa <jolsa@kernel.org>,
 	Juri Lelli <juri.lelli@gmail.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Namhyung Kim <namhyung@kernel.org>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Stephane Eranian <eranian@google.com>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Wang Nan <wangnan0@huawei.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>
+To: Arnaldo Carvalho de Melo <acme@kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160223104408.GO6357@twins.programming.kicks-ass.net>
+Content-Disposition: inline
+In-Reply-To: <1456257652-20059-1-git-send-email-acme@kernel.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
 
+* Arnaldo Carvalho de Melo <acme@kernel.org> wrote:
 
-On 02/23/2016 07:44 AM, Peter Zijlstra wrote:
-> Now ideally we'd do something like the below, but because trainwreck, we
-> cannot actually do this I think :-(
+> Hi Ingo,
+> 
+> 	Please consider pulling, this is on top of the perf-core-for-mingo
+> submitted recently,
+> 
+> - Arnaldo
+> 
+> The following changes since commit 03e0a7df3efd959e40cd7ff40b1fabddc234ec5a:
+> 
+>   perf tools: Introduce bpf-output event (2016-02-22 14:37:21 -0300)
+> 
+> are available in the git repository at:
+> 
+>   git://git.kernel.org/pub/scm/linux/kernel/git/acme/linux.git tags/perf-core-for-mingo-2
+> 
+> for you to fetch changes up to bea2400621836b028d82c3d6a74053921d70dbd7:
+> 
+>   perf tools: Remove strbuf_{remove,splice}() (2016-02-23 16:21:04 -0300)
+> 
+> ----------------------------------------------------------------
+> perf/core improvements and fixes:
+> 
+> User visible:
+> 
+> - Don't stop PMU parsing on alias parse error, allowing the
+>   addition of new sysfs PMU files without breaking old tools (Andi Kleen)
+> 
+> - Implement '%' operation in libtraceevent (Daniel Bristot de Oliveira)
+> 
+> - Allow specifying events via -e in 'perf mem record', also listing what events
+>   can be specified via 'perf mem record -e list' (Jiri Olsa)
+> 
+> - Improve support to 'data_src', 'weight' and 'addr' fields in
+>   'perf script' (Jiri Olsa)
+> 
+> Infrastructure:
+> 
+> - Export cacheline routines (Jiri Olsa)
+> 
+> - Remove strbuf_{remove,splice}(), dead code (Arnaldo Carvalho de Melo)
+> 
+> Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+> 
+> ----------------------------------------------------------------
+> Andi Kleen (1):
+>       perf tools: Dont stop PMU parsing on alias parse error
+> 
+> Arnaldo Carvalho de Melo (2):
+>       perf help: No need to use strbuf_remove()
+>       perf tools: Remove strbuf_{remove,splice}()
+> 
+> Daniel Bristot de Oliveira (1):
+>       tools lib traceevent: Implement '%' operation
+> 
+> Jiri Olsa (7):
+>       perf tools: Make cl_address global
+>       perf tools: Introduce cl_offset function
+>       perf tools: Add monitored events array
+>       perf mem: Add -e record option
+>       perf tools: Use ARRAY_SIZE in mem sort display functions
+>       perf script: Add data_src and weight column definitions
+>       perf script: Display addr/data_src/weight columns for raw events
+> 
+>  tools/lib/traceevent/event-parse.c |  4 +++
+>  tools/perf/builtin-help.c          |  3 +-
+>  tools/perf/builtin-mem.c           | 74 +++++++++++++++++++++++++++++++++-----
+>  tools/perf/builtin-script.c        | 23 +++++++++++-
+>  tools/perf/util/Build              |  1 +
+>  tools/perf/util/mem-events.c       | 51 ++++++++++++++++++++++++++
+>  tools/perf/util/mem-events.h       | 22 ++++++++++++
+>  tools/perf/util/pmu.c              | 15 ++++----
+>  tools/perf/util/sort.c             | 15 ++------
+>  tools/perf/util/sort.h             | 11 ++++++
+>  tools/perf/util/strbuf.c           | 24 -------------
+>  tools/perf/util/strbuf.h           |  2 --
+>  12 files changed, 188 insertions(+), 57 deletions(-)
+>  create mode 100644 tools/perf/util/mem-events.c
+>  create mode 100644 tools/perf/util/mem-events.h
 
-Some other considerations:
+Pulled, thanks a lot Arnaldo!
 
-1) The majority of tasks run on NORMAL scheduler with default nice. So,
-prev=NORMAL:{0,0,0} and next=NORMAL:{0,0,0} does not help too much.
-The tracepoint size increase from 64 to 112, but this difference will not
-be useful for the majority of the user/use-cases.
-
-2) The sched:switch can be wider than this 212 characters output:
-"              m-1604  [004] d...  1940.393070: sched_switch: prev_comm=m prev_pid=1604 prev=DEADLINE:{-967616,1940402119572,30000000} prev_state=Rt ==> next_comm=kworker/4:2H next_pid=1507 next=NORMAL:{-20,0,0}"
-
-3) On the other tracepoints, rostedt suggested me to also include the
-now= field because the clock printed in the trace prefix is
-not the same clock used by the deadline scheduler.
-
-4) Although neither perf record/script nor trace-cmd record/report broke,
-both printed only the old fields. So, both would need to be updated and
-carry both the old and the new version.
-
-Well, I bet there will be many other applications that were not well
-written as perf and trace-cmd :-(
-
-5) A new scheduler will probably require modifications on this
-tracepoint, hence on all other tools that use this tracepoint too.
-
-6) I liked all the code to compose the output string! But it is not
-fair to say that the "format" is intuitive. One may need to put the
-finger in the monitor and use a calculator to see that the filter
-for a yielded tasks is "prev_state == 8192".
-
-Btw, it only works for deadline task yield, and the yield call of all
-other classes will need to be changed to support this. The question
-is, is it worth for other classes?
-
-7) This patch is currently showing the runtime zeroed on yield.
-So, it needs the clean up on yield_task_dl() to properly
-inform the unused runtime of the task's activation.
-
-More than it, to be precise, it must push the zeroing of the
-runtime of an yielded task to the replenishment code. Your
-patch for the sched yield already do it :-) but once there,
-the zeroing can't be moved back without break this
-tracepoint :-(.
-
-8) we still need to define a tracepoint for replenishment, but
-as it takes place on the following points:
-
-a) sched_setattr()
-b) periodic replenishment
-c) on the wakeup after a blocking.
-
-There is no a "single tracepoint" already available to "attach" this
-information. So seems the replenishment tracepoint is still needed.
-
-Moreover, although other scheduler may have this concept, I am
-not sure if they take place under the same conditions.
-
-So, AFAICS, this integrate approach is neither adding more information,
-nor preventing ABI problems now and possibly in the future.
-
-On the other hand, although a per-scheduler approach would increase
-the number of tracepoints, the tracepoints tends to be simpler, confined
-to the scheduler's .c and more coherent to the scheduler's abstractions.
-
-I fear that the mix of the deadline scheduler and other schedulers
-information, and the adaptation on other tracepoints to make the deadline
-scheduler points of interest fit on current tracepoints, would add
-undesired noise/imprecision on the interpretation of the sched deadline
-actions/abstractions :-(.
-
--- Daniel
+	Ingo
