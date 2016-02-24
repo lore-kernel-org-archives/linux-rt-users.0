@@ -1,99 +1,103 @@
-From: Yang Shi <yang.shi@windriver.com>
-Subject: [4.4-rt PATCH] trace: use rcuidle version for preemptoff_hist trace point
-Date: Tue, 23 Feb 2016 13:23:23 -0800
-Message-ID: <1456262603-10075-1-git-send-email-yang.shi@windriver.com>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: Re: [PATCH 3/4] sched/deadline: Tracepoints for deadline scheduler
+Date: Tue, 23 Feb 2016 23:29:13 -0300
+Message-ID: <56CD1579.2070300@redhat.com>
+References: <cover.1456157869.git.bristot@redhat.com>
+ <f3b54958f216d36be59363815a3d75a0636cda8b.1456157869.git.bristot@redhat.com>
+ <20160222173259.GM6357@twins.programming.kicks-ass.net>
+ <20160222124854.3816fec4@gandalf.local.home>
+ <20160222213017.GN6357@twins.programming.kicks-ass.net>
+ <20160222173043.24873ae8@gandalf.local.home>
+ <20160223104408.GO6357@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain
-Cc: <linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	<yang.shi@windriver.com>
-To: <tglx@linutronix.de>, <bigeasy@linutronix.de>,
-	<rostedt@goodmis.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: Ingo Molnar <mingo@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@gmail.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160223104408.GO6357@twins.programming.kicks-ass.net>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-When running -rt kernel with both PREEMPT_OFF_HIST and LOCKDEP enabled,
-the below error is reported:
 
- [ INFO: suspicious RCU usage. ]
- 4.4.1-rt6 #1 Not tainted
- include/trace/events/hist.h:31 suspicious rcu_dereference_check() usage!
 
- other info that might help us debug this:
+On 02/23/2016 07:44 AM, Peter Zijlstra wrote:
+> Now ideally we'd do something like the below, but because trainwreck, we
+> cannot actually do this I think :-(
 
- RCU used illegally from idle CPU!
- rcu_scheduler_active = 1, debug_locks = 0
- RCU used illegally from extended quiescent state!
- no locks held by swapper/0/0.
+Some other considerations:
 
- stack backtrace:
- CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.4.1-rt6-WR8.0.0.0_standard #1
- Stack : 0000000000000006 0000000000000000 ffffffff81ca8c38 ffffffff81c8fc80
-    ffffffff811bdd68 ffffffff81cb0000 0000000000000000 ffffffff81cb0000
-    0000000000000000 0000000000000000 0000000000000004 0000000000000000
-    0000000000000004 ffffffff811bdf50 0000000000000000 ffffffff82b60000
-    0000000000000000 ffffffff812897ac ffffffff819f0000 000000000000000b
-    ffffffff811be460 ffffffff81b7c588 ffffffff81c8fc80 0000000000000000
-    0000000000000000 ffffffff81ec7f88 ffffffff81d70000 ffffffff81b70000
-    ffffffff81c90000 ffffffff81c3fb00 ffffffff81c3fc28 ffffffff815e6f98
-    0000000000000000 ffffffff81c8fa87 ffffffff81b70958 ffffffff811bf2c4
-    0707fe32e8d60ca5 ffffffff81126d60 0000000000000000 0000000000000000
-    ...
- Call Trace:
- [<ffffffff81126d60>] show_stack+0xe8/0x108
- [<ffffffff815e6f98>] dump_stack+0x88/0xb0
- [<ffffffff8124b88c>] time_hardirqs_off+0x204/0x300
- [<ffffffff811aa5dc>] trace_hardirqs_off_caller+0x24/0xe8
- [<ffffffff811a4ec4>] cpu_startup_entry+0x39c/0x508
- [<ffffffff81d7dc68>] start_kernel+0x584/0x5a0
+1) The majority of tasks run on NORMAL scheduler with default nice. So,
+prev=NORMAL:{0,0,0} and next=NORMAL:{0,0,0} does not help too much.
+The tracepoint size increase from 64 to 112, but this difference will not
+be useful for the majority of the user/use-cases.
 
-Replace regular trace_preemptoff_hist to rcuidle version to avoid the error.
+2) The sched:switch can be wider than this 212 characters output:
+"              m-1604  [004] d...  1940.393070: sched_switch: prev_comm=m prev_pid=1604 prev=DEADLINE:{-967616,1940402119572,30000000} prev_state=Rt ==> next_comm=kworker/4:2H next_pid=1507 next=NORMAL:{-20,0,0}"
 
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
----
-I recall the rcuidle version is used by 4.1-rt, but not sure why it is dropped
-in 4.4-rt. It looks such fix is still needed. 
+3) On the other tracepoints, rostedt suggested me to also include the
+now= field because the clock printed in the trace prefix is
+not the same clock used by the deadline scheduler.
 
- kernel/trace/trace_irqsoff.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+4) Although neither perf record/script nor trace-cmd record/report broke,
+both printed only the old fields. So, both would need to be updated and
+carry both the old and the new version.
 
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index 36e584f..069942c 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -421,13 +421,13 @@ void start_critical_timings(void)
- {
- 	if (preempt_trace() || irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(TRACE_START, 1);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
- }
- EXPORT_SYMBOL_GPL(start_critical_timings);
- 
- void stop_critical_timings(void)
- {
--	trace_preemptirqsoff_hist(TRACE_STOP, 0);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
- 	if (preempt_trace() || irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -437,7 +437,7 @@ EXPORT_SYMBOL_GPL(stop_critical_timings);
- #ifdef CONFIG_PROVE_LOCKING
- void time_hardirqs_on(unsigned long a0, unsigned long a1)
- {
--	trace_preemptirqsoff_hist(IRQS_ON, 0);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(a0, a1);
- }
-@@ -446,7 +446,7 @@ void time_hardirqs_off(unsigned long a0, unsigned long a1)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(a0, a1);
--	trace_preemptirqsoff_hist(IRQS_OFF, 1);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
- }
- 
- #else /* !CONFIG_PROVE_LOCKING */
--- 
-2.0.2
+Well, I bet there will be many other applications that were not well
+written as perf and trace-cmd :-(
+
+5) A new scheduler will probably require modifications on this
+tracepoint, hence on all other tools that use this tracepoint too.
+
+6) I liked all the code to compose the output string! But it is not
+fair to say that the "format" is intuitive. One may need to put the
+finger in the monitor and use a calculator to see that the filter
+for a yielded tasks is "prev_state == 8192".
+
+Btw, it only works for deadline task yield, and the yield call of all
+other classes will need to be changed to support this. The question
+is, is it worth for other classes?
+
+7) This patch is currently showing the runtime zeroed on yield.
+So, it needs the clean up on yield_task_dl() to properly
+inform the unused runtime of the task's activation.
+
+More than it, to be precise, it must push the zeroing of the
+runtime of an yielded task to the replenishment code. Your
+patch for the sched yield already do it :-) but once there,
+the zeroing can't be moved back without break this
+tracepoint :-(.
+
+8) we still need to define a tracepoint for replenishment, but
+as it takes place on the following points:
+
+a) sched_setattr()
+b) periodic replenishment
+c) on the wakeup after a blocking.
+
+There is no a "single tracepoint" already available to "attach" this
+information. So seems the replenishment tracepoint is still needed.
+
+Moreover, although other scheduler may have this concept, I am
+not sure if they take place under the same conditions.
+
+So, AFAICS, this integrate approach is neither adding more information,
+nor preventing ABI problems now and possibly in the future.
+
+On the other hand, although a per-scheduler approach would increase
+the number of tracepoints, the tracepoints tends to be simpler, confined
+to the scheduler's .c and more coherent to the scheduler's abstractions.
+
+I fear that the mix of the deadline scheduler and other schedulers
+information, and the adaptation on other tracepoints to make the deadline
+scheduler points of interest fit on current tracepoints, would add
+undesired noise/imprecision on the interpretation of the sched deadline
+actions/abstractions :-(.
+
+-- Daniel
