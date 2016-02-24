@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.54-rt72
-Date: Wed, 24 Feb 2016 15:36:47 -0500
-Message-ID: <20160224153647.32af65dd@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.97-rt105
+Date: Wed, 24 Feb 2016 15:37:27 -0500
+Message-ID: <20160224153727.6c5f76cc@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.54-rt72 stable release.
+I'm pleased to announce the 3.10.97-rt105 stable release.
 
 
-This release is just an update to the new stable 3.12.54 version
+This release is just an update to the new stable 3.10.97 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: 1c85babac617240a2ff5c15cc9d0d6ec2a3552b5
+  branch: v3.10-rt
+  Head SHA1: cafaaef8b8947fd5c38234f7ee9f6594fbcc33ff
 
 
-Or to build 3.12.54-rt72 directly, the following patches should be applied:
+Or to build 3.10.97-rt105 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.54.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.97.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.54-rt72.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.97-rt105.patch.xz
 
 
 
