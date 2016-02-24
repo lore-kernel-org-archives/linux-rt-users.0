@@ -1,72 +1,123 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: sc16is7xx: a lot of time is spend in sc16is7xx_port_irq
-Date: Wed, 24 Feb 2016 16:35:47 -0600
-Message-ID: <20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
-References: <56CDCCE6.5020801@prevas.dk>
- <56CDEAE2.9050102@prevas.dk>
-Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="wtjvnLv0o8UUzur2"
-Cc: linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Sean Nyekj?r <sean.nyekjaer@prevas.dk>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:38473 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1752208AbcBXWfv (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 24 Feb 2016 17:35:51 -0500
-In-Reply-To: <56CDEAE2.9050102@prevas.dk>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Yang Shi <yang.shi@linaro.org>
+Subject: [PATCH] writeback: call writeback tracepoints withoud holding list_lock in wb_writeback()
+Date: Wed, 24 Feb 2016 14:47:23 -0800
+Message-ID: <1456354043-31420-1-git-send-email-yang.shi@linaro.org>
+Cc: linux-kernel@vger.kernel.org,
+	linux-mm@kvack.org,
+	linux-rt-users@vger.kernel.org,
+	linaro-kernel@lists.linaro.org,
+	yang.shi@linaro.org
+To: tj@kernel.org,
+	jack@suse.cz,
+	axboe@fb.com,
+	fengguang.wu@intel.com,
+	tglx@linutronix.de,
+	rostedt@goodmis.org,
+	bigeasy@linutronix.de,
+	akpm@linux-foundation.org
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
+commit 5634cc2aa9aebc77bc862992e7805469dcf83dac ("writeback: update writeback
+tracepoints to report cgroup") made writeback tracepoints report cgroup
+writeback, but it may trigger the below bug on -rt kernel due to the list_lock
+held for the for loop in wb_writeback().
 
---wtjvnLv0o8UUzur2
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:930
+in_atomic(): 1, irqs_disabled(): 0, pid: 625, name: kworker/u16:3
+INFO: lockdep is turned off.
+Preemption disabled at:[<ffffffc000374a5c>] wb_writeback+0xec/0x830
 
-On Wed, Feb 24, 2016 at 06:39:46PM +0100, Sean Nyekj?r wrote:
-> CC'ing RT
+CPU: 7 PID: 625 Comm: kworker/u16:3 Not tainted 4.4.1-rt5 #20
+Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+Workqueue: writeback wb_workfn (flush-7:0)
+Call trace:
+[<ffffffc00008d708>] dump_backtrace+0x0/0x200
+[<ffffffc00008d92c>] show_stack+0x24/0x30
+[<ffffffc0007b0f40>] dump_stack+0x88/0xa8
+[<ffffffc000127d74>] ___might_sleep+0x2ec/0x300
+[<ffffffc000d5d550>] rt_spin_lock+0x38/0xb8
+[<ffffffc0003e0548>] kernfs_path_len+0x30/0x90
+[<ffffffc00036b360>] trace_event_raw_event_writeback_work_class+0xe8/0x2e8
+[<ffffffc000374f90>] wb_writeback+0x620/0x830
+[<ffffffc000376224>] wb_workfn+0x61c/0x950
+[<ffffffc000110adc>] process_one_work+0x3ac/0xb30
+[<ffffffc0001112fc>] worker_thread+0x9c/0x7a8
+[<ffffffc00011a9e8>] kthread+0x190/0x1b0
+[<ffffffc000086ca0>] ret_from_fork+0x10/0x30
 
-I'm assuming this is with the other patch killing off IRQF_ONESHOT?
+The list_lock was moved outside the for loop by commit
+e8dfc30582995ae12454cda517b17d6294175b07 ("writeback: elevate queue_io()
+into wb_writeback())", however, the commit log says "No behavior change", so
+it sounds safe to have the list_lock acquired inside the for loop as it did
+before.
 
-> On 2016-02-24 16:31, Sean Nyekj=E6r wrote:
-> >Hi
-> >
-> >I'm using the sc16is750 on an imx6d platform with RT patches applied.
-> >
-> >I have observed that sometimes the driver locks the whole system as is
-> >loops inside the sc16is7xx_port_irq.
-> >I have applied some debug and seen we are looping upto 130000 times in t=
-he
-> >while(1) loop.
-> >The SC16IS7XX_IIR_REG does signal the SC16IS7XX_IIR_XOFFI_SRC but the
-> >SC16IS7XX_IER_XOFFI_BIT is not set.
+Just acquire list_lock at the necessary points and keep all writeback
+tracepoints outside the critical area protected by list_lock in
+wb_writeback().
 
-Ouch.
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+---
+ fs/fs-writeback.c | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-I don't quite understand how the interrupt handling in this driver is
-supposed to work.  sc16is7xx_irq() is invoked to handle the interrupt,
-but it does absolutely nothing to squelch it...  how does this not cause
-an interrupt storm?  The irq core is free to unmask the interrupt when
-the handler return IRQ_HANDLED, and if you're dealing with
-level-sensitive interrupts...
+diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
+index 1f76d89..9b7b5f6 100644
+--- a/fs/fs-writeback.c
++++ b/fs/fs-writeback.c
+@@ -1623,7 +1623,6 @@ static long wb_writeback(struct bdi_writeback *wb,
+ 	work->older_than_this = &oldest_jif;
+ 
+ 	blk_start_plug(&plug);
+-	spin_lock(&wb->list_lock);
+ 	for (;;) {
+ 		/*
+ 		 * Stop writeback when nr_pages has been consumed
+@@ -1661,15 +1660,19 @@ static long wb_writeback(struct bdi_writeback *wb,
+ 			oldest_jif = jiffies;
+ 
+ 		trace_writeback_start(wb, work);
++
++		spin_lock(&wb->list_lock);
+ 		if (list_empty(&wb->b_io))
+ 			queue_io(wb, work);
+ 		if (work->sb)
+ 			progress = writeback_sb_inodes(work->sb, wb, work);
+ 		else
+ 			progress = __writeback_inodes_wb(wb, work);
+-		trace_writeback_written(wb, work);
+ 
+ 		wb_update_bandwidth(wb, wb_start);
++		spin_unlock(&wb->list_lock);
++
++		trace_writeback_written(wb, work);
+ 
+ 		/*
+ 		 * Did we write something? Try for more
+@@ -1693,15 +1696,14 @@ static long wb_writeback(struct bdi_writeback *wb,
+ 		 */
+ 		if (!list_empty(&wb->b_more_io))  {
+ 			trace_writeback_wait(wb, work);
++			spin_lock(&wb->list_lock);
+ 			inode = wb_inode(wb->b_more_io.prev);
+-			spin_lock(&inode->i_lock);
+ 			spin_unlock(&wb->list_lock);
++			spin_lock(&inode->i_lock);
+ 			/* This function drops i_lock... */
+ 			inode_sleep_on_writeback(inode);
+-			spin_lock(&wb->list_lock);
+ 		}
+ 	}
+-	spin_unlock(&wb->list_lock);
+ 	blk_finish_plug(&plug);
+ 
+ 	return nr_pages - work->nr_pages;
+-- 
+2.0.2
 
-  Josh
-
---wtjvnLv0o8UUzur2
-Content-Type: application/pgp-signature; name="signature.asc"
-
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
-
-iQEcBAABCAAGBQJWzjBAAAoJEKp7ZBKwQFArDB0H+wXHXML+sI1nnkkdT8060tQE
-W6/ckJHge1rpNXkBmwPVc83ypzbg3uEcG4tEKl6NupWTssFrMC8z3ySOVeFen568
-xXqHpiIzs4bjb0ZmB3Gvf/FRaYdzRRJICbBWzWH8TpwpWkVQkOpzS32PAUV2SLrp
-EtadsWnLoWbBBat+AnXVkiRmenH0TJGdyBEd6616R2O9yIaza5+lr0iDt8CsvyGX
-XzxQ+A4s4oKyxsnvKDmmysJ9p3tOhsJbM5jFMXVOnmnTOTyF44xXpdaP5u28xkvb
-td64nBkNgTV6I7XIoBQixvi7YvmxQITO+nH/2j8aUY8rpA/i59umQQUP6ZilHp4=
-=o+KE
------END PGP SIGNATURE-----
-
---wtjvnLv0o8UUzur2--
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
