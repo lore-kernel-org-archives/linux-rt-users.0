@@ -1,31 +1,40 @@
-From: <Martin.Wirth@dlr.de>
-Subject: AW: Large latencies with 4.4.1-rt6
-Date: Thu, 25 Feb 2016 16:08:19 +0000
-Message-ID: <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: AW: Large latencies with 4.4.1-rt6
+Date: Thu, 25 Feb 2016 17:29:01 +0100
+Message-ID: <56CF2BCD.3050109@linutronix.de>
 References: <1A2AF5F768264E479963C4D8C015EB691B692C5C@dlrexmbx03.intra.dlr.de>
  <20160225152930.GC16161@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: <linux-rt-users@vger.kernel.org>
-To: <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users@vger.kernel.org
+To: Martin.Wirth@dlr.de
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailhost.dlr.de ([129.247.252.33]:25406 "EHLO mailhost.dlr.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1759764AbcBYQIY (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Feb 2016 11:08:24 -0500
-In-Reply-To: <20160225152930.GC16161@linutronix.de>
-Content-Language: de-DE
+Received: from www.linutronix.de ([62.245.132.108]:54301 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753461AbcBYQ3D (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Feb 2016 11:29:03 -0500
+In-Reply-To: <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-SGkgU2ViYXN0aWFuDQoNCj4gLS0tLS1VcnNwcsO8bmdsaWNoZSBOYWNocmljaHQtLS0tLQ0KPiBW
-b246IFNlYmFzdGlhbiBBbmRyemVqIFNpZXdpb3IgW21haWx0bzpiaWdlYXN5QGxpbnV0cm9uaXgu
-ZGVdDQo+IEdlc2VuZGV0OiBEb25uZXJzdGFnLCAyNS4gRmVicnVhciAyMDE2IDE2OjMwDQo+IEFu
-OiBXaXJ0aCwgTWFydGluDQo+IENjOiBsaW51eC1ydC11c2Vyc0B2Z2VyLmtlcm5lbC5vcmcNCj4g
-QmV0cmVmZjogUmU6IExhcmdlIGxhdGVuY2llcyB3aXRoIDQuNC4xLXJ0Ng0KPiANCj4gWW91IGNv
-dWxkIHRyeSB0aGUgdjQuNCBsaW5lIGFzIG9mOg0KPiAgdjQuNC1ydDINCj4gIHY0LjQtcnQzDQo+
-ICB2NC40LjEtcnQ1DQo+IA0KDQpJIHdpbGwgaGF2ZSBhY2Nlc3MgdG8gdGhlIG1hY2hpbmUgZm9y
-IGxvbmdlciB0ZXN0aW5nIG5leHQgTW9uZGF5IGFnYWluLiBCdXQgSSByZW1lbWJlciB0aGF0IHY0
-LjQuMS1ydDUgc2hvd2VkIHRoZSBzYW1lIGxvbmcgbGF0ZW5jaWVzLg0KV2lsbCB0cnkgdjQuNC1y
-dDMgYW5kIHY0LjQtcnQyIGJlZ2lubmluZyBvZiBuZXh0IHdlZWsuDQoNCk1hcnRpbg0K
+On 02/25/2016 05:08 PM, Martin.Wirth@dlr.de wrote:
+> Hi Sebastian
+
+Hi Martin,
+
+> I will have access to the machine for longer testing next Monday again. But I remember that v4.4.1-rt5 showed the same long latencies.
+> Will try v4.4-rt3 and v4.4-rt2 beginning of next week.
+
+If this would be your first try I would suggest to run hwlatdetect in
+case BIOS is calling for attention. However since you don't see this in
+v4.1 is looks unlikely. It also might be help to have a log to see what
+the other CPUs are doing around that time. Are they busy doing
+something or do they pause as well. Also do try some fancy PM things
+(but then again why now and not in v4.1 as well).
+
+> Martin
+
+Sebastian
