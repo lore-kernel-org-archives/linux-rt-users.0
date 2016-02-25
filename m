@@ -1,158 +1,90 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] writeback: call writeback tracepoints withoud holding
- list_lock in wb_writeback()
-Date: Wed, 24 Feb 2016 21:40:42 -0500
-Message-ID: <20160224214042.71c3493b@grimm.local.home>
-References: <1456354043-31420-1-git-send-email-yang.shi@linaro.org>
+From: tip-bot for Daniel Bristot de Oliveira <tipbot@zytor.com>
+Subject: [tip:perf/core] tools lib traceevent: Implement '%' operation
+Date: Wed, 24 Feb 2016 21:41:41 -0800
+Message-ID: <tip-0e47b38dcd24c78d0699b42f28d5986154d2aa11@git.kernel.org>
+References: <5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
+Reply-To: tglx@linutronix.de, juri.lelli@gmail.com, acme@redhat.com,
+	  linux-rt-users@vger.kernel.org, mingo@kernel.org,
+	  rostedt@goodmis.org, peterz@infradead.org, bristot@redhat.com,
+	  hpa@zytor.com, linux-kernel@vger.kernel.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: tj@kernel.org, jack@suse.cz, axboe@fb.com, fengguang.wu@intel.com,
- tglx@linutronix.de, bigeasy@linutronix.de, akpm@linux-foundation.org,
- linux-kernel@vger.kernel.org, linux-mm@kvack.org,
- linux-rt-users@vger.kernel.org, linaro-kernel@lists.linaro.org
-To: Yang Shi <yang.shi@linaro.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <1456354043-31420-1-git-send-email-yang.shi@linaro.org>
-Sender: owner-linux-mm@kvack.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+Cc: mingo@kernel.org, rostedt@goodmis.org,
+	linux-rt-users@vger.kernel.org, juri.lelli@gmail.com,
+	acme@redhat.com, tglx@linutronix.de, linux-kernel@vger.kernel.org,
+	bristot@redhat.com, hpa@zytor.com, peterz@infradead.org
+To: linux-tip-commits@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 24 Feb 2016 14:47:23 -0800
-Yang Shi <yang.shi@linaro.org> wrote:
+Commit-ID:  0e47b38dcd24c78d0699b42f28d5986154d2aa11
+Gitweb:     http://git.kernel.org/tip/0e47b38dcd24c78d0699b42f28d5986154d2aa11
+Author:     Daniel Bristot de Oliveira <bristot@redhat.com>
+AuthorDate: Mon, 22 Feb 2016 14:08:22 -0300
+Committer:  Arnaldo Carvalho de Melo <acme@redhat.com>
+CommitDate: Tue, 23 Feb 2016 11:40:51 -0300
 
-> commit 5634cc2aa9aebc77bc862992e7805469dcf83dac ("writeback: update writeback
-> tracepoints to report cgroup") made writeback tracepoints report cgroup
-> writeback, but it may trigger the below bug on -rt kernel due to the list_lock
-> held for the for loop in wb_writeback().
+tools lib traceevent: Implement '%' operation
 
-list_lock is a sleeping mutex, it's not disabling preemption. Moving it
-doesn't make a difference.
+The operation '%' is not implemented on event-parse.c, causing an error
+when parsing events with '%' the operation in its printk format. For
+example,
 
-> 
-> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:930
-> in_atomic(): 1, irqs_disabled(): 0, pid: 625, name: kworker/u16:3
+  # perf record -e sched:sched_deadline_yield ~/yield-test
+    Warning: [sched:sched_deadline_yield] unknown op '%'
+  ....
+  # perf script
+    Warning: [sched:sched_deadline_yield] unknown op '%'
+        test  1641 [006]  3364.109319: sched:sched_deadline_yield: \
+                        [FAILED TO PARSE] now=3364109314595        \
+                        deadline=3364139295135 runtime=19975597
 
-Something else disabled preemption. And note, nothing in the tracepoint
-should have called a sleeping function.
+This patch implements the '%' operation. With this patch, we see the
+correct output:
 
+  # perf record -e sched:sched_deadline_yield ~/yield-test
+    No Warning
 
-> INFO: lockdep is turned off.
-> Preemption disabled at:[<ffffffc000374a5c>] wb_writeback+0xec/0x830
-> 
-> CPU: 7 PID: 625 Comm: kworker/u16:3 Not tainted 4.4.1-rt5 #20
-> Hardware name: Freescale Layerscape 2085a RDB Board (DT)
-> Workqueue: writeback wb_workfn (flush-7:0)
-> Call trace:
-> [<ffffffc00008d708>] dump_backtrace+0x0/0x200
-> [<ffffffc00008d92c>] show_stack+0x24/0x30
-> [<ffffffc0007b0f40>] dump_stack+0x88/0xa8
-> [<ffffffc000127d74>] ___might_sleep+0x2ec/0x300
-> [<ffffffc000d5d550>] rt_spin_lock+0x38/0xb8
-> [<ffffffc0003e0548>] kernfs_path_len+0x30/0x90
-> [<ffffffc00036b360>] trace_event_raw_event_writeback_work_class+0xe8/0x2e8
+  # perf script
+        yield-test  4005 [001]  4623.650978: sched:sched_deadline_yield: \
+                now=4623.650974050                                       \
+                deadline=4623.680957364 remaining_runtime=19979611
 
-How accurate is this trace back? Here's the code that is executed in
-this tracepoint:
+Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
+Reviewed-by: Steven Rostedt <rostedt@goodmis.org>
+Cc: Juri Lelli <juri.lelli@gmail.com>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Link: http://lkml.kernel.org/r/5c96a395c56cea6d3d13d949051bdece86cc26e0.1456157869.git.bristot@redhat.com
+Signed-off-by: Arnaldo Carvalho de Melo <acme@redhat.com>
+---
+ tools/lib/traceevent/event-parse.c | 4 ++++
+ 1 file changed, 4 insertions(+)
 
-	TP_fast_assign(
-		struct device *dev = bdi->dev;
-		if (!dev)
-			dev = default_backing_dev_info.dev;
-		strncpy(__entry->name, dev_name(dev), 32);
-		__entry->nr_pages = work->nr_pages;
-		__entry->sb_dev = work->sb ? work->sb->s_dev : 0;
-		__entry->sync_mode = work->sync_mode;
-		__entry->for_kupdate = work->for_kupdate;
-		__entry->range_cyclic = work->range_cyclic;
-		__entry->for_background	= work->for_background;
-		__entry->reason = work->reason;
-	),
-
-See anything that would sleep?
-
-> [<ffffffc000374f90>] wb_writeback+0x620/0x830
-> [<ffffffc000376224>] wb_workfn+0x61c/0x950
-> [<ffffffc000110adc>] process_one_work+0x3ac/0xb30
-> [<ffffffc0001112fc>] worker_thread+0x9c/0x7a8
-> [<ffffffc00011a9e8>] kthread+0x190/0x1b0
-> [<ffffffc000086ca0>] ret_from_fork+0x10/0x30
-> 
-> The list_lock was moved outside the for loop by commit
-> e8dfc30582995ae12454cda517b17d6294175b07 ("writeback: elevate queue_io()
-> into wb_writeback())", however, the commit log says "No behavior change", so
-> it sounds safe to have the list_lock acquired inside the for loop as it did
-> before.
-> 
-> Just acquire list_lock at the necessary points and keep all writeback
-> tracepoints outside the critical area protected by list_lock in
-> wb_writeback().
-
-But list_lock itself is a sleeping lock. This doesn't make sense.
-
-This is not the bug you are looking for.
-
--- Steve
-
-> 
-> Signed-off-by: Yang Shi <yang.shi@linaro.org>
-> ---
->  fs/fs-writeback.c | 12 +++++++-----
->  1 file changed, 7 insertions(+), 5 deletions(-)
-> 
-> diff --git a/fs/fs-writeback.c b/fs/fs-writeback.c
-> index 1f76d89..9b7b5f6 100644
-> --- a/fs/fs-writeback.c
-> +++ b/fs/fs-writeback.c
-> @@ -1623,7 +1623,6 @@ static long wb_writeback(struct bdi_writeback *wb,
->  	work->older_than_this = &oldest_jif;
->  
->  	blk_start_plug(&plug);
-> -	spin_lock(&wb->list_lock);
->  	for (;;) {
->  		/*
->  		 * Stop writeback when nr_pages has been consumed
-> @@ -1661,15 +1660,19 @@ static long wb_writeback(struct bdi_writeback *wb,
->  			oldest_jif = jiffies;
->  
->  		trace_writeback_start(wb, work);
-> +
-> +		spin_lock(&wb->list_lock);
->  		if (list_empty(&wb->b_io))
->  			queue_io(wb, work);
->  		if (work->sb)
->  			progress = writeback_sb_inodes(work->sb, wb, work);
->  		else
->  			progress = __writeback_inodes_wb(wb, work);
-> -		trace_writeback_written(wb, work);
->  
->  		wb_update_bandwidth(wb, wb_start);
-> +		spin_unlock(&wb->list_lock);
-> +
-> +		trace_writeback_written(wb, work);
->  
->  		/*
->  		 * Did we write something? Try for more
-> @@ -1693,15 +1696,14 @@ static long wb_writeback(struct bdi_writeback *wb,
->  		 */
->  		if (!list_empty(&wb->b_more_io))  {
->  			trace_writeback_wait(wb, work);
-> +			spin_lock(&wb->list_lock);
->  			inode = wb_inode(wb->b_more_io.prev);
-> -			spin_lock(&inode->i_lock);
->  			spin_unlock(&wb->list_lock);
-> +			spin_lock(&inode->i_lock);
->  			/* This function drops i_lock... */
->  			inode_sleep_on_writeback(inode);
-> -			spin_lock(&wb->list_lock);
->  		}
->  	}
-> -	spin_unlock(&wb->list_lock);
->  	blk_finish_plug(&plug);
->  
->  	return nr_pages - work->nr_pages;
-
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+diff --git a/tools/lib/traceevent/event-parse.c b/tools/lib/traceevent/event-parse.c
+index c3bd294..575e751 100644
+--- a/tools/lib/traceevent/event-parse.c
++++ b/tools/lib/traceevent/event-parse.c
+@@ -1951,6 +1951,7 @@ process_op(struct event_format *event, struct print_arg *arg, char **tok)
+ 		   strcmp(token, "*") == 0 ||
+ 		   strcmp(token, "^") == 0 ||
+ 		   strcmp(token, "/") == 0 ||
++		   strcmp(token, "%") == 0 ||
+ 		   strcmp(token, "<") == 0 ||
+ 		   strcmp(token, ">") == 0 ||
+ 		   strcmp(token, "<=") == 0 ||
+@@ -3689,6 +3690,9 @@ eval_num_arg(void *data, int size, struct event_format *event, struct print_arg
+ 		case '/':
+ 			val = left / right;
+ 			break;
++		case '%':
++			val = left % right;
++			break;
+ 		case '*':
+ 			val = left * right;
+ 			break;
