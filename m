@@ -1,40 +1,43 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: AW: Large latencies with 4.4.1-rt6
-Date: Thu, 25 Feb 2016 17:29:01 +0100
-Message-ID: <56CF2BCD.3050109@linutronix.de>
-References: <1A2AF5F768264E479963C4D8C015EB691B692C5C@dlrexmbx03.intra.dlr.de>
- <20160225152930.GC16161@linutronix.de>
- <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org
-To: Martin.Wirth@dlr.de
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [PATCH 0/4] cyclictest: improve running under trace-cmd
+Date: Thu, 25 Feb 2016 11:29:13 -0500
+Message-ID: <1456417757-13444-1-git-send-email-lcapitulino@redhat.com>
+Cc: jkacur@redhat.com, williams@redhat.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:54301 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753461AbcBYQ3D (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Feb 2016 11:29:03 -0500
-In-Reply-To: <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
+Received: from mx1.redhat.com ([209.132.183.28]:56559 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1760900AbcBYQ3V (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Feb 2016 11:29:21 -0500
+Received: from int-mx14.intmail.prod.int.phx2.redhat.com (int-mx14.intmail.prod.int.phx2.redhat.com [10.5.11.27])
+	by mx1.redhat.com (Postfix) with ESMTPS id 2233A5F23
+	for <linux-rt-users@vger.kernel.org>; Thu, 25 Feb 2016 16:29:21 +0000 (UTC)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 02/25/2016 05:08 PM, Martin.Wirth@dlr.de wrote:
-> Hi Sebastian
 
-Hi Martin,
+This is just a repost of my RFC posting with no changes.
+I have tested it a bit more and I think it's good
+for inclusion.
 
-> I will have access to the machine for longer testing next Monday again. But I remember that v4.4.1-rt5 showed the same long latencies.
-> Will try v4.4-rt3 and v4.4-rt2 beginning of next week.
+Original intro:
 
-If this would be your first try I would suggest to run hwlatdetect in
-case BIOS is calling for attention. However since you don't see this in
-v4.1 is looks unlikely. It also might be help to have a log to see what
-the other CPUs are doing around that time. Are they busy doing
-something or do they pause as well. Also do try some fancy PM things
-(but then again why now and not in v4.1 as well).
+In short, this series allows you to run cyclictest under
+trace-cmd and still get trace marks when the latency
+specified with -b is execeded. More details in patch 4/4.
 
-> Martin
+This series is RFC because I'm not completely sure this
+is the right thing to do. I'm wondering if we shouldn't
+ditch all tracing support from cyclictest...
 
-Sebastian
+Luiz Capitulino (4):
+  cyclictest: tracing(): check for notrace
+  cyclictest: move debugfs init code to its own function
+  cyclictest: move tracemark_fd handling to its own function
+  cyclictest: add --tracemark option
+
+ src/cyclictest/cyclictest.c | 62 ++++++++++++++++++++++++++++++++++-----------
+ 1 file changed, 47 insertions(+), 15 deletions(-)
+
+-- 
+2.1.0
