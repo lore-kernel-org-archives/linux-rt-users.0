@@ -1,104 +1,74 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: [PATCH 4/4] cyclictest: add --tracemark option
-Date: Thu, 25 Feb 2016 11:29:17 -0500
-Message-ID: <1456417757-13444-5-git-send-email-lcapitulino@redhat.com>
-References: <1456417757-13444-1-git-send-email-lcapitulino@redhat.com>
-Cc: jkacur@redhat.com, williams@redhat.com
-To: linux-rt-users@vger.kernel.org
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: Kernel thread's CPU affinity with isolcpus kernel boot argument
+Date: Thu, 25 Feb 2016 17:35:43 +0100
+Message-ID: <56CF2D5F.60306@linutronix.de>
+References: <5698D4D0.3020907@etas.com> <20160225141806.GB16161@linutronix.de>
+ <56CF1A2A.1050203@bristot.me>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Daniel Bristot de Oliveira <daniel@bristot.me>,
+	Mathias Koehrer <mathias.koehrer@etas.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:37935 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932712AbcBYQ3a (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 25 Feb 2016 11:29:30 -0500
-Received: from int-mx11.intmail.prod.int.phx2.redhat.com (int-mx11.intmail.prod.int.phx2.redhat.com [10.5.11.24])
-	by mx1.redhat.com (Postfix) with ESMTPS id 30C656DDC0
-	for <linux-rt-users@vger.kernel.org>; Thu, 25 Feb 2016 16:29:30 +0000 (UTC)
-In-Reply-To: <1456417757-13444-1-git-send-email-lcapitulino@redhat.com>
+Received: from www.linutronix.de ([62.245.132.108]:54341 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1757854AbcBYQfr (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 25 Feb 2016 11:35:47 -0500
+In-Reply-To: <56CF1A2A.1050203@bristot.me>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-cyclictest will only write to /sys/kernel/debug/tracing/trace_maker
-if it's also setup to do tracing. This conflicts with
-running cyclictest under trace-cmd.
+On 02/25/2016 04:13 PM, Daniel Bristot de Oliveira wrote:
+> On 02/25/2016 11:18 AM, Sebastian Andrzej Siewior wrote:
+>> not that I am aware of. There are a few per-CPU threads which have t=
+o
+>> stay the way they are. I would have expected that others like kworke=
+r/u*
+>> respect the isol CPUs and stay away.
+>=20
+> Isolcpus is applied only for user-space threads. For instance, you
+> still need to move rcu offload callbacks away from isolated CPUs, and
+> all other kernel threads as well.
 
-The --tracemark option tells cyclictest to write to the
-trace_marker file even when it's not doing tracing.
+RCU is special since this is a per-CPU thread. However Paul did make an
+option where you can move those to another CPU.
 
-It's can be used like this:
+> In the special case of kworker/u* threads, you need to use a special
+> interface to do it. The interface is the following file:
+>=20
+> /sys/devices/virtual/workqueue/cpumask
 
- # trace-cmd record [...] cyclictest [...] -bX --tracemark --notrace
+I see it documented in "Documentation/ABI". Oh wait=E2=80=A6
 
-Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
----
- src/cyclictest/cyclictest.c | 20 +++++++++++++++++++-
- 1 file changed, 19 insertions(+), 1 deletion(-)
+> It was implemented on the following commit:
+>=20
+> 042f7df workqueue: Allow modifying low level unbound workqueue cpumas=
+k
+>=20
+> But the default CPU mask is the "cpu_possible_mask".
+>=20
+> Sometime ago I sent a patch to modify the default mask of the kworker=
+/u*
+> threads, to avoid them on isolated CPUs by default, but it was not
+> acked. It was not explicitly nacked, though.
+>=20
+> http://www.gossamer-threads.com/lists/linux/kernel/2218495
+>=20
+> Should I try it again?
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index e35088b..5a261e2 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -167,6 +167,7 @@ struct thread_stat {
- static int shutdown;
- static int tracelimit = 0;
- static int notrace = 0;
-+static int trace_marker = 0;
- static int ftrace = 0;
- static int kernelversion;
- static int verbose = 0;
-@@ -510,6 +511,18 @@ static void open_tracemark_fd(void)
- 		warn("unable to open trace_marker file: %s\n", path);
- }
- 
-+static void enable_trace_mark(void)
-+{
-+	if (!trace_marker)
-+		return;
-+
-+	if (!tracelimit)
-+		fatal("--tracemark requires -b\n");
-+
-+	debugfs_prepare();
-+	open_tracemark_fd();
-+}
-+
- static void setup_tracer(void)
- {
- 	if (!tracelimit || notrace)
-@@ -1234,7 +1247,7 @@ enum option_values {
- 	OPT_QUIET, OPT_PRIOSPREAD, OPT_RELATIVE, OPT_RESOLUTION, OPT_SYSTEM,
- 	OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE,
- 	OPT_WAKEUP, OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
--	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED,
-+	OPT_ALIGNED, OPT_LAPTOP, OPT_SECALIGNED, OPT_TRACEMARK,
- };
- 
- /* Process commandline options */
-@@ -1285,6 +1298,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"system",           no_argument,       NULL, OPT_SYSTEM },
- 			{"smp",              no_argument,       NULL, OPT_SMP },
- 			{"threads",          optional_argument, NULL, OPT_THREADS },
-+			{"tracemark",        no_argument,       NULL, OPT_TRACEMARK },
- 			{"tracer",           required_argument, NULL, OPT_TRACER },
- 			{"unbuffered",       no_argument,       NULL, OPT_UNBUFFERED },
- 			{"numa",             no_argument,       NULL, OPT_NUMA },
-@@ -1509,6 +1523,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			ct_debug = 1; break;
- 		case OPT_LAPTOP:
- 			laptop = 1; break;
-+		case OPT_TRACEMARK:
-+			trace_marker = 1; break;
- 		}
- 	}
- 
-@@ -1850,6 +1866,8 @@ int main(int argc, char **argv)
- 
- 	setup_tracer();
- 
-+	enable_trace_mark();
-+
- 	if (check_timer())
- 		warn("High resolution timers not available\n");
- 
--- 
-2.1.0
+Atleast they do have a default cpumask which you can modify. I don't
+see why the kworker should be special here and avoid the isolcpu mask.
+I *do* support the default mask being !isolcpus and not cpu_possible.
+If you have the time to try again, please do so.
 
+>=20
+> -- Daniel
+>=20
+Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
