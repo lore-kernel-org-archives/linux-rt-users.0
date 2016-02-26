@@ -1,72 +1,99 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: sc16is7xx: a lot of time is spend in sc16is7xx_port_irq
-Date: Fri, 26 Feb 2016 12:43:40 +0100
-Message-ID: <20160226114340.GC8318@linutronix.de>
+Subject: [PATCH] tty: serial: sc16is7xx: use threaded interrupts instead of
+ homegrow
+Date: Fri, 26 Feb 2016 12:48:09 +0100
+Message-ID: <20160226114809.GD8318@linutronix.de>
 References: <56CDCCE6.5020801@prevas.dk>
  <56CDEAE2.9050102@prevas.dk>
  <20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
+ <20160226114340.GC8318@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: Sean Nyekj?r <sean.nyekjaer@prevas.dk>,
 	linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org,
 	Jon Ringle <jringle@gridpoint.com>,
 	Jakub Kicinski <kubakici@wp.pl>
-To: Josh Cartwright <joshc@ni.com>
+To: Josh Cartwright <joshc@ni.com>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59202 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:59218 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751124AbcBZLnp convert rfc822-to-8bit (ORCPT
+	with ESMTP id S1752296AbcBZLsM (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 06:43:45 -0500
+	Fri, 26 Feb 2016 06:48:12 -0500
 Content-Disposition: inline
-In-Reply-To: <20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
+In-Reply-To: <20160226114340.GC8318@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Josh Cartwright | 2016-02-24 16:35:47 [-0600]:
+This ONESHOT + workqueue combo is something that is not required because
+we have infrastrucure for this kind of things: threaded interrupts.
 
->On Wed, Feb 24, 2016 at 06:39:46PM +0100, Sean Nyekj?r wrote:
->> CC'ing RT
->
->I'm assuming this is with the other patch killing off IRQF_ONESHOT?
->
->> On 2016-02-24 16:31, Sean Nyekj=C3=A6r wrote:
->> >Hi
->> >
->> >I'm using the sc16is750 on an imx6d platform with RT patches applie=
-d.
->> >
->> >I have observed that sometimes the driver locks the whole system as=
- is
->> >loops inside the sc16is7xx_port_irq.
->> >I have applied some debug and seen we are looping upto 130000 times=
- in the
->> >while(1) loop.
->> >The SC16IS7XX_IIR_REG does signal the SC16IS7XX_IIR_XOFFI_SRC but t=
-he
->> >SC16IS7XX_IER_XOFFI_BIT is not set.
->
->Ouch.
->
->I don't quite understand how the interrupt handling in this driver is
->supposed to work.  sc16is7xx_irq() is invoked to handle the interrupt,
->but it does absolutely nothing to squelch it...  how does this not cau=
-se
->an interrupt storm?  The irq core is free to unmask the interrupt when
->the handler return IRQ_HANDLED, and if you're dealing with
->level-sensitive interrupts...
+This is compile tested only due to -ENODEV.
+Now that we that sc16is7xx_irq() is an actual interrupt handler
+sc16is7xx_port_irq() could be improved so the former can return IRQ_NONE
+if nothing has been done.
 
-The irqcore does not shut down the driver because it always returns
-IRQ_HANDLED. The reason why don't end up in a storm is the IRQF_ONESHOT
-part. However it should use proper irq threads and not this homegrow
-stuff. I could be a bug in general and not related to -RT.
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
 
->  Josh
+ drivers/tty/serial/sc16is7xx.c | 17 ++++-------------
+ 1 file changed, 4 insertions(+), 13 deletions(-)
 
-Sebastian
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+diff --git a/drivers/tty/serial/sc16is7xx.c b/drivers/tty/serial/sc16is7xx.c
+index edb5305b9d4d..b53a13be5754 100644
+--- a/drivers/tty/serial/sc16is7xx.c
++++ b/drivers/tty/serial/sc16is7xx.c
+@@ -331,7 +331,6 @@ struct sc16is7xx_port {
+ 	unsigned char			buf[SC16IS7XX_FIFO_SIZE];
+ 	struct kthread_worker		kworker;
+ 	struct task_struct		*kworker_task;
+-	struct kthread_work		irq_work;
+ 	struct sc16is7xx_one		p[0];
+ };
+ 
+@@ -688,20 +687,13 @@ static void sc16is7xx_port_irq(struct sc16is7xx_port *s, int portno)
+ 	} while (1);
+ }
+ 
+-static void sc16is7xx_ist(struct kthread_work *ws)
++static irqreturn_t sc16is7xx_irq(int irq, void *dev_id)
+ {
+-	struct sc16is7xx_port *s = to_sc16is7xx_port(ws, irq_work);
++	struct sc16is7xx_port *s = (struct sc16is7xx_port *)dev_id;
+ 	int i;
+ 
+ 	for (i = 0; i < s->devtype->nr_uart; ++i)
+ 		sc16is7xx_port_irq(s, i);
+-}
+-
+-static irqreturn_t sc16is7xx_irq(int irq, void *dev_id)
+-{
+-	struct sc16is7xx_port *s = (struct sc16is7xx_port *)dev_id;
+-
+-	queue_kthread_work(&s->kworker, &s->irq_work);
+ 
+ 	return IRQ_HANDLED;
+ }
+@@ -1167,7 +1159,6 @@ static int sc16is7xx_probe(struct device *dev,
+ 	dev_set_drvdata(dev, s);
+ 
+ 	init_kthread_worker(&s->kworker);
+-	init_kthread_work(&s->irq_work, sc16is7xx_ist);
+ 	s->kworker_task = kthread_run(kthread_worker_fn, &s->kworker,
+ 				      "sc16is7xx");
+ 	if (IS_ERR(s->kworker_task)) {
+@@ -1229,8 +1220,8 @@ static int sc16is7xx_probe(struct device *dev,
+ 	}
+ 
+ 	/* Setup interrupt */
+-	ret = devm_request_irq(dev, irq, sc16is7xx_irq,
+-			       IRQF_ONESHOT | flags, dev_name(dev), s);
++	ret = devm_request_threaded_irq(dev, irq, NULL, sc16is7xx_irq,
++			       flags, dev_name(dev), s);
+ 	if (!ret)
+ 		return 0;
+ 
+-- 
+2.7.0
+
