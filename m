@@ -1,66 +1,106 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/10] net: Make synchronize_rcu_expedited() conditional on !RT_FULL
-Date: Fri, 26 Feb 2016 16:41:05 -0500
-Message-ID: <20160226214119.770047617@goodmis.org>
-References: <20160226214100.390136141@goodmis.org>
+Subject: [PATCH RT 05/10] dump stack: dont disable preemption during trace
+Date: Fri, 26 Feb 2016 16:39:16 -0500
+Message-ID: <20160226213931.782119153@goodmis.org>
+References: <20160226213911.445523575@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Cartwright <joshc@ni.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-net-Make-synchronize_rcu_expedited-conditional-on-RT.patch
+Content-Disposition: inline; filename=0005-dump-stack-don-t-disable-preemption-during-trace.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.97-rt106-rc1 stable review patch.
+3.12.54-rt73-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <joshc@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-While the use of synchronize_rcu_expedited() might make
-synchronize_net() "faster", it does so at significant cost on RT
-systems, as expediting a grace period forcibly preempts any
-high-priority RT tasks (via the stop_machine() mechanism).
+I see here large latencies during a stack dump on x86. The
+preempt_disable() and get_cpu() should forbid moving the task to another
+CPU during a stack dump and avoiding two stack traces in parallel on the
+same CPU. However a stack trace from a second CPU may still happen in
+parallel. Also nesting is allowed so a stack trace happens in
+process-context and we may have another one from IRQ context. With migrate
+disable we keep this code preemptible and allow a second backtrace on
+the same CPU by another task.
 
-Without this change, we can observe a latency spike up to 30us with
-cyclictest by rapidly unplugging/reestablishing an ethernet link.
-
-Suggested-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
-Cc: bigeasy@linutronix.de
-Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
-Acked-by: David S. Miller <davem@davemloft.net>
-Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Link: http://lkml.kernel.org/r/20151027123153.GG8245@jcartwri.amer.corp.natinst.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/x86/kernel/dumpstack_64.c | 8 ++++----
+ lib/dump_stack.c               | 4 ++--
+ 2 files changed, 6 insertions(+), 6 deletions(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index a478f77e4322..3a531a6fec33 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -5838,7 +5838,7 @@ EXPORT_SYMBOL(free_netdev);
- void synchronize_net(void)
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index 66e274a3d968..37aee503a7ba 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -114,7 +114,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 		unsigned long *stack, unsigned long bp,
+ 		const struct stacktrace_ops *ops, void *data)
  {
- 	might_sleep();
--	if (rtnl_is_locked())
-+	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
- 		synchronize_rcu_expedited();
- 	else
- 		synchronize_rcu();
+-	const unsigned cpu = get_cpu();
++	const unsigned cpu = get_cpu_light();
+ 	unsigned long *irq_stack_end =
+ 		(unsigned long *)per_cpu(irq_stack_ptr, cpu);
+ 	unsigned used = 0;
+@@ -191,7 +191,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 	 * This handles the process stack:
+ 	 */
+ 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
+-	put_cpu();
++	put_cpu_light();
+ }
+ EXPORT_SYMBOL(dump_trace);
+ 
+@@ -205,7 +205,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 	int cpu;
+ 	int i;
+ 
+-	preempt_disable();
++	migrate_disable();
+ 	cpu = smp_processor_id();
+ 
+ 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
+@@ -238,7 +238,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 		pr_cont(" %016lx", *stack++);
+ 		touch_nmi_watchdog();
+ 	}
+-	preempt_enable();
++	migrate_enable();
+ 
+ 	pr_cont("\n");
+ 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
+diff --git a/lib/dump_stack.c b/lib/dump_stack.c
+index f23b63f0a1c3..b39c60b1f12c 100644
+--- a/lib/dump_stack.c
++++ b/lib/dump_stack.c
+@@ -33,7 +33,7 @@ asmlinkage void dump_stack(void)
+ 	 * Permit this cpu to perform nested stack dumps while serialising
+ 	 * against other CPUs
+ 	 */
+-	preempt_disable();
++	migrate_disable();
+ 
+ retry:
+ 	cpu = smp_processor_id();
+@@ -52,7 +52,7 @@ retry:
+ 	if (!was_locked)
+ 		atomic_set(&dump_lock, -1);
+ 
+-	preempt_enable();
++	migrate_enable();
+ }
+ #else
+ asmlinkage void dump_stack(void)
 -- 
 2.7.0
