@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 4/7] net: Make synchronize_rcu_expedited() conditional on !RT_FULL
-Date: Fri, 26 Feb 2016 16:42:11 -0500
-Message-ID: <20160226214222.882011550@goodmis.org>
+Subject: [PATCH RT 2/7] rtmutex: Use chainwalking control enum
+Date: Fri, 26 Feb 2016 16:42:09 -0500
+Message-ID: <20160226214222.565530691@goodmis.org>
 References: <20160226214207.654222592@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,14 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Cartwright <joshc@ni.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>
+	Brad Mouring <brad.mouring@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-net-Make-synchronize_rcu_expedited-conditional-on-RT.patch
+Content-Disposition: inline; filename=0002-rtmutex-Use-chainwalking-control-enum.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,41 +23,33 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <joshc@ni.com>
+From: "bmouring@ni.com" <bmouring@ni.com>
 
-While the use of synchronize_rcu_expedited() might make
-synchronize_net() "faster", it does so at significant cost on RT
-systems, as expediting a grace period forcibly preempts any
-high-priority RT tasks (via the stop_machine() mechanism).
+In 8930ed80 (rtmutex: Cleanup deadlock detector debug logic),
+chainwalking control enums were introduced to limit the deadlock
+detection logic. One of the calls to task_blocks_on_rt_mutex was
+missed when converting to use the enums.
 
-Without this change, we can observe a latency spike up to 30us with
-cyclictest by rapidly unplugging/reestablishing an ethernet link.
-
-Suggested-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
-Cc: bigeasy@linutronix.de
-Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
-Acked-by: David S. Miller <davem@davemloft.net>
-Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Link: http://lkml.kernel.org/r/20151027123153.GG8245@jcartwri.amer.corp.natinst.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Brad Mouring <brad.mouring@ni.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c | 2 +-
+ kernel/rtmutex.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 46f960a4c83b..4dbd27b16d1f 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -6081,7 +6081,7 @@ EXPORT_SYMBOL(free_netdev);
- void synchronize_net(void)
- {
- 	might_sleep();
--	if (rtnl_is_locked())
-+	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
- 		synchronize_rcu_expedited();
- 	else
- 		synchronize_rcu();
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index d353e9191955..fe0cc8f328c8 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1163,7 +1163,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	__set_current_state(TASK_UNINTERRUPTIBLE);
+ 	pi_unlock(&self->pi_lock);
+ 
+-	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
++	ret = task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK);
+ 	BUG_ON(ret);
+ 
+ 	for (;;) {
 -- 
 2.7.0
