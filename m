@@ -1,72 +1,81 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: [PATCH] tty: serial: sc16is7xx: use threaded interrupts instead
- of homegrow
-Date: Fri, 26 Feb 2016 13:00:48 -0600
-Message-ID: <20160226190048.GC12917@jcartwri.amer.corp.natinst.com>
-References: <56CDCCE6.5020801@prevas.dk>
- <56CDEAE2.9050102@prevas.dk>
- <20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
- <20160226114340.GC8318@linutronix.de>
- <20160226114809.GD8318@linutronix.de>
- <C32FB8B0-21F8-4C84-9F77-20F3CD43E3D4@wp.pl>
- <20160226165228.GA17178@jcartwri.amer.corp.natinst.com>
- <835668C1-5DDB-4495-AD00-4EE8DDD0D146@wp.pl>
+From: Clark Williams <williams@redhat.com>
+Subject: [PATCH RT] rcutorture: comment out rcu_bh ops on PREEMPT_RT_FULL
+Date: Fri, 26 Feb 2016 13:19:20 -0600
+Message-ID: <20160226131920.66d9cf52@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="raC6veAxrt5nqIoY"
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	Sean Nyekj?r <sean.nyekjaer@prevas.dk>,
-	linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Jon Ringle <jringle@gridpoint.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Kuba Kicinski <kubakici@wp.pl>
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/xg+PHeEn9DuoFPebPowxmKc"; protocol="application/pgp-signature"
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:36564 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1753495AbcBZTBD (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 14:01:03 -0500
-In-Reply-To: <835668C1-5DDB-4495-AD00-4EE8DDD0D146@wp.pl>
-Content-Disposition: inline
+Received: from mx1.redhat.com ([209.132.183.28]:56817 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751364AbcBZTUK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Feb 2016 14:20:10 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+--Sig_/xg+PHeEn9DuoFPebPowxmKc
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
---raC6veAxrt5nqIoY
-Content-Type: text/plain; charset=us-ascii
-Content-Disposition: inline
 
-On Fri, Feb 26, 2016 at 01:26:27PM -0500, Kuba Kicinski wrote:
-> On 26 February 2016 11:52:28 GMT-05:00, Josh Cartwright <joshc@ni.com> wrote:
-[..]
-> > Instead, the driver needs to implement it's own oneshot-like
-> > handling at the device-level: in the registered irq handler, capture
-> > triggered interrupt state, squelch/mask, and enqueue the
-> > kthread_work.  In the tail-end of the kthread_work, re-enable
-> > interrupts at the device level.
->
-> The problem there being IIRC that i2c doesn't provide async writes so
-> we can't mask from irq callback. The only option would be
-> disable_irq/enable_irq, right?
+RT has dropped support of rcu_bh, comment out in rcutorture.
 
-Ah, yes, that is a problem.  If by disable_irq(), you mean
-disable_irq_nosync(), then yes, I think that'd work.
+Signed-off-by: Clark Williams <williams@redhat.com>
+---
+ kernel/rcu/rcutorture.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-  Josh
+diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+index d89328e260df..5bb3364a6284 100644
+--- a/kernel/rcu/rcutorture.c
++++ b/kernel/rcu/rcutorture.c
+@@ -390,6 +390,7 @@ static struct rcu_torture_ops rcu_ops =3D {
+ 	.name		=3D "rcu"
+ };
+=20
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Definitions for rcu_bh torture testing.
+  */
+@@ -429,6 +430,12 @@ static struct rcu_torture_ops rcu_bh_ops =3D {
+ 	.name		=3D "rcu_bh"
+ };
+=20
++#else
++static struct rcu_torture_ops rcu_bh_ops =3D {
++	.ttype		=3D INVALID_RCU_FLAVOR,
++};
++#endif
++
+ /*
+  * Don't even think about trying any of these in real life!!!
+  * The names includes "busted", and they really means it!
+--=20
+2.5.0
 
---raC6veAxrt5nqIoY
-Content-Type: application/pgp-signature; name="signature.asc"
+
+--Sig_/xg+PHeEn9DuoFPebPowxmKc
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
 -----BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
 
-iQEcBAABCAAGBQJW0KDdAAoJEKp7ZBKwQFArWr4IAK1ANSbAaVJvmDf13bxs5aQf
-M025I3rfb2ZMx5QkJTP8vIX/1rtosDO6K9zWfglutAKw9Bpati3Xkx1Z+a0q9II8
-X2OqIyirGcjVkcAWpIl40b8OmUgnBXCvYGftrDgEzPzmfd+fHdDaVu16OzqNJLRf
-xv97LcBmmWrxL2HljdI2o17CLu/O86LH9SrEeDfsGYj/bbxNBTefl726XuTBVXuI
-1uDInCnZTtaestF/y4oBMgsTbtThGBxgINyyYCtJ8VxKRadAsqz2aJwGA3aiwFvM
-LQ+LAth1eNAu25oRZfEloF/bxL4brDmKAGm6jaoWv2P4naDJaSWkYYKtDi9nlVs=
-=vjE6
+iQIcBAEBCgAGBQJW0KU5AAoJEOI5asVwYXLrnmwQAKy34HJ3/h++jswo2uNeOriw
+zRfk4IbOF1zljh636/vKdT4LrBv0n/M5YIRz8BGcaGhMLuDNAd5Qgoiq1EAOmf5Z
+sS8rYtUQ6bqxUpzdPxgeYxsO/kUrPin6jhdtZ9qggtkaTT72zh/9catJSBMXu1VP
+vglsJNbL1FxmCyWRA5gCDjKOfT7oHQWQ9R93Lf/jiyuX0NSZKGVhd9dKu3r1J2jz
+5IDlUqLUZ1rC8NxJ7xRLktuTtA9fiMueVpiqEiCUbGnn6AmXP/rnGXOKfEX8nho0
+0dzo0vw37la/YHwWMnIe8ZkGurREeQrElByqWrhGx8fX/ge69g1FB1s2e4wJWcSn
+ymjtcjIKiFirYXBPckeImMt3yYRlvvLUM3rj+z6WLn480nYqXAkLQSDgndRk0FXE
+XkrvY68reQH6WX+6DsYDdEF2iLR2Bkv/sbITLQg/Y10rNz56iBBRmeOaMFft9K94
+NUUjnmM6laoecY8LIR+UBZBP8M+45vAOc+ZGblqNyUCnvVD3FcKXqj6jEHXdq96E
+gqYj1Z1Q3h+uWk6e85TIUe6RrmdIyahEPixIHrVt5tnOUrBvDKcNfDsU2pSGkanK
+t1hoP50una6HeQBDq02Nu0X9e3QFWsOByvvwBpGHXE4++V63UanJy8dpWlBEbbMU
+bEGrHcXbwXENM/ZVbymn
+=eG3j
 -----END PGP SIGNATURE-----
 
---raC6veAxrt5nqIoY--
+--Sig_/xg+PHeEn9DuoFPebPowxmKc--
