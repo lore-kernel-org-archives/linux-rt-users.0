@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] rtmutex: Handle non enqueued waiters gracefully
-Date: Fri, 26 Feb 2016 16:35:54 -0500
-Message-ID: <20160226213708.554358143@goodmis.org>
+Subject: [PATCH RT 06/10] net: Make synchronize_rcu_expedited() conditional on !RT_FULL
+Date: Fri, 26 Feb 2016 16:35:57 -0500
+Message-ID: <20160226213709.206162705@goodmis.org>
 References: <20160226213551.557375746@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Josh Cartwright <joshc@ni.com>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	"David S. Miller" <davem@davemloft.net>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0003-rtmutex-Handle-non-enqueued-waiters-gracefully.patch
+Content-Disposition: inline; filename=0006-net-Make-synchronize_rcu_expedited-conditional-on-RT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,37 +26,41 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Josh Cartwright <joshc@ni.com>
 
-Yimin debugged that in case of a PI wakeup in progress when
-rt_mutex_start_proxy_lock() calls task_blocks_on_rt_mutex() the latter
-returns -EAGAIN and in consequence the remove_waiter() call runs into
-a BUG_ON() because there is nothing to remove.
+While the use of synchronize_rcu_expedited() might make
+synchronize_net() "faster", it does so at significant cost on RT
+systems, as expediting a grace period forcibly preempts any
+high-priority RT tasks (via the stop_machine() mechanism).
 
-Guard it with rt_mutex_has_waiters(). This is a quick fix which is
-easy to backport. The proper fix is to have a central check in
-remove_waiter() so we can call it unconditionally.
+Without this change, we can observe a latency spike up to 30us with
+cyclictest by rapidly unplugging/reestablishing an ethernet link.
 
-Reported-and-debugged-by: Yimin Deng <yimin11.deng@gmail.com>
+Suggested-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Signed-off-by: Josh Cartwright <joshc@ni.com>
+Cc: bigeasy@linutronix.de
+Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
+Acked-by: David S. Miller <davem@davemloft.net>
+Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Link: http://lkml.kernel.org/r/20151027123153.GG8245@jcartwri.amer.corp.natinst.com
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/locking/rtmutex.c | 2 +-
+ net/core/dev.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/locking/rtmutex.c b/kernel/locking/rtmutex.c
-index ee4e7e747e06..2f61c66d6f05 100644
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -2138,7 +2138,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 		ret = 0;
- 	}
- 
--	if (unlikely(ret))
-+	if (ret && rt_mutex_has_waiters(lock))
- 		remove_waiter(lock, waiter);
- 
- 	raw_spin_unlock(&lock->wait_lock);
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 6febdc96835f..ddb8578b2f34 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -6638,7 +6638,7 @@ EXPORT_SYMBOL(free_netdev);
+ void synchronize_net(void)
+ {
+ 	might_sleep();
+-	if (rtnl_is_locked())
++	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
+ 		synchronize_rcu_expedited();
+ 	else
+ 		synchronize_rcu();
 -- 
 2.7.0
