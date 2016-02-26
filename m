@@ -1,43 +1,37 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH] writeback: call writeback tracepoints withoud holding
- list_lock in wb_writeback()
-Date: Thu, 25 Feb 2016 19:09:40 -0500
-Message-ID: <20160225190940.35553f4e@grimm.local.home>
-References: <1456354043-31420-1-git-send-email-yang.shi@linaro.org>
-	<20160224214042.71c3493b@grimm.local.home>
-	<56CF5848.7050806@linaro.org>
-	<20160225145432.3749e5ec@gandalf.local.home>
-	<56CF8B66.8070108@linaro.org>
-	<20160225183107.1902d42b@gandalf.local.home>
-	<56CF9288.5010406@linaro.org>
-	<56CF9425.20106@linaro.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: swait question
+Date: Fri, 26 Feb 2016 10:55:47 +0100
+Message-ID: <56D02123.5090908@linutronix.de>
+References: <56CC0355.6010200@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: tj@kernel.org, jack@suse.cz, axboe@fb.com, fengguang.wu@intel.com,
- tglx@linutronix.de, bigeasy@linutronix.de, akpm@linux-foundation.org,
- linux-kernel@vger.kernel.org, linux-mm@kvack.org,
- linux-rt-users@vger.kernel.org, linaro-kernel@lists.linaro.org
-To: "Shi, Yang" <yang.shi@linaro.org>
-Return-path: <owner-linux-mm@kvack.org>
-In-Reply-To: <56CF9425.20106@linaro.org>
-Sender: owner-linux-mm@kvack.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Daniel Wagner <wagi@monom.org>,
+	Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:58493 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751853AbcBZJzt (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Feb 2016 04:55:49 -0500
+In-Reply-To: <56CC0355.6010200@monom.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 25 Feb 2016 15:54:13 -0800
-"Shi, Yang" <yang.shi@linaro.org> wrote:
+On 02/23/2016 07:59 AM, Daniel Wagner wrote:
+> Hi Clark,
 
+Hi Daniel,
 
-> Can we disable irqs in tracepoints since spin_lock_irqsave is used by 
-> kernfs_* functions.
+> Sebastian would you mind integrating the new version of the swait
+> patches? I guess it doesn't hurt to give them a some testing via the -rt
+> tree.
 
-Disabling preemption or irqs is fine a tracepoint. You just can't
-sleep, which spin_lock_irqsave() would do on the -rt kernel.
+I will integrate them in a later release. Not the one I plan for today
+but probably one after that.
 
--- Steve
+> cheers,
+> daniel
 
---
-To unsubscribe, send a message with 'unsubscribe linux-mm' in
-the body to majordomo@kvack.org.  For more info on Linux MM,
-see: http://www.linux-mm.org/ .
-Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
+Sebastian
