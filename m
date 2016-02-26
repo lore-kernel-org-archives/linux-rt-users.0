@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/12] net: Make synchronize_rcu_expedited() conditional on !RT_FULL
-Date: Fri, 26 Feb 2016 16:32:43 -0500
-Message-ID: <20160226213341.278119277@goodmis.org>
+Subject: [PATCH RT 01/12] cpufreq: Remove cpufreq_rwsem
+Date: Fri, 26 Feb 2016 16:32:36 -0500
+Message-ID: <20160226213340.113796881@goodmis.org>
 References: <20160226213235.253312067@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,14 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
-	Josh Cartwright <joshc@ni.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	"David S. Miller" <davem@davemloft.net>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-net-Make-synchronize_rcu_expedited-conditional-on-RT.patch
+Content-Disposition: inline; filename=0001-cpufreq-Remove-cpufreq_rwsem.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,41 +23,201 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Josh Cartwright <joshc@ni.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-While the use of synchronize_rcu_expedited() might make
-synchronize_net() "faster", it does so at significant cost on RT
-systems, as expediting a grace period forcibly preempts any
-high-priority RT tasks (via the stop_machine() mechanism).
+cpufreq_rwsem was introduced in commit 6eed9404ab3c4 ("cpufreq: Use
+rwsem for protecting critical sections) in order to replace
+try_module_get() on the cpu-freq driver. That try_module_get() worked
+well until the refcount was so heavily used that module removal became
+more or less impossible.
 
-Without this change, we can observe a latency spike up to 30us with
-cyclictest by rapidly unplugging/reestablishing an ethernet link.
+Though when looking at the various (undocumented) protection
+mechanisms in that code, the randomly sprinkeled around cpufreq_rwsem
+locking sites are superfluous.
 
-Suggested-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
-Cc: bigeasy@linutronix.de
-Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
-Acked-by: David S. Miller <davem@davemloft.net>
-Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
-Link: http://lkml.kernel.org/r/20151027123153.GG8245@jcartwri.amer.corp.natinst.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+The policy, which is acquired in cpufreq_cpu_get() and released in
+cpufreq_cpu_put() is sufficiently protected already.
+
+  cpufreq_cpu_get(cpu)
+    /* Protects against concurrent driver removal */
+    read_lock_irqsave(&cpufreq_driver_lock, flags);
+    policy = per_cpu(cpufreq_cpu_data, cpu);
+    kobject_get(&policy->kobj);
+    read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+
+The reference on the policy serializes versus module unload already:
+
+  cpufreq_unregister_driver()
+    subsys_interface_unregister()
+      __cpufreq_remove_dev_finish()
+        per_cpu(cpufreq_cpu_data) = NULL;
+	cpufreq_policy_put_kobj()
+
+If there is a reference held on the policy, i.e. obtained prior to the
+unregister call, then cpufreq_policy_put_kobj() will wait until that
+reference is dropped. So once subsys_interface_unregister() returns
+there is no policy pointer in flight and no new reference can be
+obtained. So that rwsem protection is useless.
+
+The other usage of cpufreq_rwsem in show()/store() of the sysfs
+interface is redundant as well because sysfs already does the proper
+kobject_get()/put() pairs.
+
+That leaves CPU hotplug versus module removal. The current
+down_write() around the write_lock() in cpufreq_unregister_driver() is
+silly at best as it protects actually nothing.
+
+The trivial solution to this is to prevent hotplug across
+cpufreq_unregister_driver completely.
+
+[upstream: rafael/linux-pm 454d3a2500a4eb33be85dde3bfba9e5f6b5efadc]
+[fixes: "cpufreq_stat_notifier_trans: No policy found" since v4.0-rt]
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ drivers/cpufreq/cpufreq.c | 34 +++-------------------------------
+ 1 file changed, 3 insertions(+), 31 deletions(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 1cbcf08cc224..48872718d8e2 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -6813,7 +6813,7 @@ EXPORT_SYMBOL(free_netdev);
- void synchronize_net(void)
- {
- 	might_sleep();
--	if (rtnl_is_locked())
-+	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
- 		synchronize_rcu_expedited();
- 	else
- 		synchronize_rcu();
+diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+index 90e8deb6c15e..7a9c1a7ecfe5 100644
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -53,12 +53,6 @@ static inline bool has_target(void)
+ 	return cpufreq_driver->target_index || cpufreq_driver->target;
+ }
+ 
+-/*
+- * rwsem to guarantee that cpufreq driver module doesn't unload during critical
+- * sections
+- */
+-static DECLARE_RWSEM(cpufreq_rwsem);
+-
+ /* internal prototypes */
+ static int __cpufreq_governor(struct cpufreq_policy *policy,
+ 		unsigned int event);
+@@ -205,9 +199,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
+ 	if (cpufreq_disabled() || (cpu >= nr_cpu_ids))
+ 		return NULL;
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return NULL;
+-
+ 	/* get the cpufreq driver */
+ 	read_lock_irqsave(&cpufreq_driver_lock, flags);
+ 
+@@ -220,9 +211,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
+ 
+ 	read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+ 
+-	if (!policy)
+-		up_read(&cpufreq_rwsem);
+-
+ 	return policy;
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_cpu_get);
+@@ -233,7 +221,6 @@ void cpufreq_cpu_put(struct cpufreq_policy *policy)
+ 		return;
+ 
+ 	kobject_put(&policy->kobj);
+-	up_read(&cpufreq_rwsem);
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_cpu_put);
+ 
+@@ -762,9 +749,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
+ 	struct freq_attr *fattr = to_attr(attr);
+ 	ssize_t ret;
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return -EINVAL;
+-
+ 	down_read(&policy->rwsem);
+ 
+ 	if (fattr->show)
+@@ -773,7 +757,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
+ 		ret = -EIO;
+ 
+ 	up_read(&policy->rwsem);
+-	up_read(&cpufreq_rwsem);
+ 
+ 	return ret;
+ }
+@@ -790,9 +773,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
+ 	if (!cpu_online(policy->cpu))
+ 		goto unlock;
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		goto unlock;
+-
+ 	down_write(&policy->rwsem);
+ 
+ 	if (fattr->store)
+@@ -801,8 +781,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
+ 		ret = -EIO;
+ 
+ 	up_write(&policy->rwsem);
+-
+-	up_read(&cpufreq_rwsem);
+ unlock:
+ 	put_online_cpus();
+ 
+@@ -1142,9 +1120,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
+ 	}
+ #endif
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return 0;
+-
+ #ifdef CONFIG_HOTPLUG_CPU
+ 	/* Check if this cpu was hot-unplugged earlier and has siblings */
+ 	read_lock_irqsave(&cpufreq_driver_lock, flags);
+@@ -1152,7 +1127,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
+ 		if (cpumask_test_cpu(cpu, tpolicy->related_cpus)) {
+ 			read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+ 			ret = cpufreq_add_policy_cpu(tpolicy, cpu, dev);
+-			up_read(&cpufreq_rwsem);
+ 			return ret;
+ 		}
+ 	}
+@@ -1288,7 +1262,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
+ 	up_write(&policy->rwsem);
+ 
+ 	kobject_uevent(&policy->kobj, KOBJ_ADD);
+-	up_read(&cpufreq_rwsem);
+ 
+ 	pr_debug("initialization complete\n");
+ 
+@@ -1314,8 +1287,6 @@ err_set_policy_cpu:
+ 	cpufreq_policy_free(policy);
+ 
+ nomem_out:
+-	up_read(&cpufreq_rwsem);
+-
+ 	return ret;
+ }
+ 
+@@ -2528,19 +2499,20 @@ int cpufreq_unregister_driver(struct cpufreq_driver *driver)
+ 
+ 	pr_debug("unregistering driver %s\n", driver->name);
+ 
++	/* Protect against concurrent cpu hotplug */
++	get_online_cpus();
+ 	subsys_interface_unregister(&cpufreq_interface);
+ 	if (cpufreq_boost_supported())
+ 		cpufreq_sysfs_remove_file(&boost.attr);
+ 
+ 	unregister_hotcpu_notifier(&cpufreq_cpu_notifier);
+ 
+-	down_write(&cpufreq_rwsem);
+ 	write_lock_irqsave(&cpufreq_driver_lock, flags);
+ 
+ 	cpufreq_driver = NULL;
+ 
+ 	write_unlock_irqrestore(&cpufreq_driver_lock, flags);
+-	up_write(&cpufreq_rwsem);
++	put_online_cpus();
+ 
+ 	return 0;
+ }
 -- 
 2.7.0
