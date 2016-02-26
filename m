@@ -1,83 +1,61 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/10] dump stack: dont disable preemption during trace
-Date: Fri, 26 Feb 2016 16:41:04 -0500
-Message-ID: <20160226214119.438275944@goodmis.org>
-References: <20160226214100.390136141@goodmis.org>
+Subject: [PATCH RT 04/10] rtmutex: Use chainwalking control enum
+Date: Fri, 26 Feb 2016 16:39:15 -0500
+Message-ID: <20160226213931.629140540@goodmis.org>
+References: <20160226213911.445523575@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Brad Mouring <brad.mouring@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-dump-stack-don-t-disable-preemption-during-trace.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:52248 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1423494AbcBZWUu (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Feb 2016 17:20:50 -0500
+Content-Disposition: inline; filename=0004-rtmutex-Use-chainwalking-control-enum.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-3.10.97-rt106-rc1 stable review patch.
+3.12.54-rt73-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: "bmouring@ni.com" <bmouring@ni.com>
 
-I see here large latencies during a stack dump on x86. The
-preempt_disable() and get_cpu() should forbid moving the task to another
-CPU during a stack dump and avoiding two stack traces in parallel on the
-same CPU. However a stack trace from a second CPU may still happen in
-parallel. Also nesting is allowed so a stack trace happens in
-process-context and we may have another one from IRQ context. With migrate
-disable we keep this code preemptible and allow a second backtrace on
-the same CPU by another task.
+In 8930ed80 (rtmutex: Cleanup deadlock detector debug logic),
+chainwalking control enums were introduced to limit the deadlock
+detection logic. One of the calls to task_blocks_on_rt_mutex was
+missed when converting to use the enums.
 
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Brad Mouring <brad.mouring@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/dumpstack_64.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ kernel/rtmutex.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 66e274a3d968..37aee503a7ba 100644
---- a/arch/x86/kernel/dumpstack_64.c
-+++ b/arch/x86/kernel/dumpstack_64.c
-@@ -114,7 +114,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 		unsigned long *stack, unsigned long bp,
- 		const struct stacktrace_ops *ops, void *data)
- {
--	const unsigned cpu = get_cpu();
-+	const unsigned cpu = get_cpu_light();
- 	unsigned long *irq_stack_end =
- 		(unsigned long *)per_cpu(irq_stack_ptr, cpu);
- 	unsigned used = 0;
-@@ -191,7 +191,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 	 * This handles the process stack:
- 	 */
- 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
--	put_cpu();
-+	put_cpu_light();
- }
- EXPORT_SYMBOL(dump_trace);
+diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
+index 03439f1bc5ea..8061201b3163 100644
+--- a/kernel/rtmutex.c
++++ b/kernel/rtmutex.c
+@@ -1182,7 +1182,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+ 	__set_current_state(TASK_UNINTERRUPTIBLE);
+ 	pi_unlock(&self->pi_lock);
  
-@@ -205,7 +205,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 	int cpu;
- 	int i;
+-	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
++	ret = task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK);
+ 	BUG_ON(ret);
  
--	preempt_disable();
-+	migrate_disable();
- 	cpu = smp_processor_id();
- 
- 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
-@@ -238,7 +238,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 		pr_cont(" %016lx", *stack++);
- 		touch_nmi_watchdog();
- 	}
--	preempt_enable();
-+	migrate_enable();
- 
- 	pr_cont("\n");
- 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
+ 	for (;;) {
 -- 
 2.7.0
+
+
