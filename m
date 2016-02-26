@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/10] ARM: smp: Move clear_tasks_mm_cpumask() call to __cpu_die()
-Date: Fri, 26 Feb 2016 16:41:01 -0500
-Message-ID: <20160226214118.878342331@goodmis.org>
-References: <20160226214100.390136141@goodmis.org>
+Subject: [PATCH RT 09/10] sched: Introduce the trace_sched_waking tracepoint
+Date: Fri, 26 Feb 2016 16:39:20 -0500
+Message-ID: <20160226213932.538777679@goodmis.org>
+References: <20160226213911.445523575@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,110 +10,189 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Grygorii Strashko <grygorii.strashko@ti.com>,
-	<linux-arm-kernel@lists.infradead.org>,
-	Sekhar Nori <nsekhar@ti.com>,
-	Austin Schuh <austin@peloton-tech.com>,
-	<philipp@peloton-tech.com>, Russell King <linux@arm.linux.org.uk>,
-	<stable-rt@vger.kernel.org>
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Julien Desfossez <jdesfossez@efficios.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Francis Giraldeau <francis.giraldeau@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-ARM-smp-Move-clear_tasks_mm_cpumask-call-to-__cpu_di.patch
+Content-Disposition: inline; filename=0009-sched-Introduce-the-trace_sched_waking-tracepoint.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.97-rt106-rc1 stable review patch.
+3.12.54-rt73-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Grygorii Strashko <grygorii.strashko@ti.com>
+From: Peter Zijlstra <peterz@infradead.org>
 
-When running with the RT-kernel (4.1.5-rt5) on TI OMAP dra7-evm and trying
-to do Suspend to RAM, the following backtrace occurs:
+Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
 
- Disabling non-boot CPUs ...
- PM: noirq suspend of devices complete after 7.295 msecs
- Disabling non-boot CPUs ...
- BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
- in_atomic(): 1, irqs_disabled(): 128, pid: 18, name: migration/1
- INFO: lockdep is turned off.
- irq event stamp: 122
- hardirqs last  enabled at (121): [<c06ac0ac>] _raw_spin_unlock_irqrestore+0x88/0x90
- hardirqs last disabled at (122): [<c06abed0>] _raw_spin_lock_irq+0x28/0x5c
- softirqs last  enabled at (0): [<c003d294>] copy_process.part.52+0x410/0x19d8
- softirqs last disabled at (0): [<  (null)>]   (null)
- Preemption disabled at:[<  (null)>]   (null)
-  CPU: 1 PID: 18 Comm: migration/1 Tainted: G        W       4.1.4-rt3-01046-g96ac8da #204
- Hardware name: Generic DRA74X (Flattened Device Tree)
- [<c0019134>] (unwind_backtrace) from [<c0014774>] (show_stack+0x20/0x24)
- [<c0014774>] (show_stack) from [<c06a70f4>] (dump_stack+0x88/0xdc)
- [<c06a70f4>] (dump_stack) from [<c006cab8>] (___might_sleep+0x198/0x2a8)
- [<c006cab8>] (___might_sleep) from [<c06ac4dc>] (rt_spin_lock+0x30/0x70)
- [<c06ac4dc>] (rt_spin_lock) from [<c013f790>] (find_lock_task_mm+0x9c/0x174)
- [<c013f790>] (find_lock_task_mm) from [<c00409ac>] (clear_tasks_mm_cpumask+0xb4/0x1ac)
- [<c00409ac>] (clear_tasks_mm_cpumask) from [<c00166a4>] (__cpu_disable+0x98/0xbc)
- [<c00166a4>] (__cpu_disable) from [<c06a2e8c>] (take_cpu_down+0x1c/0x50)
- [<c06a2e8c>] (take_cpu_down) from [<c00f2600>] (multi_cpu_stop+0x11c/0x158)
- [<c00f2600>] (multi_cpu_stop) from [<c00f2a9c>] (cpu_stopper_thread+0xc4/0x184)
- [<c00f2a9c>] (cpu_stopper_thread) from [<c0069058>] (smpboot_thread_fn+0x18c/0x324)
- [<c0069058>] (smpboot_thread_fn) from [<c00649c4>] (kthread+0xe8/0x104)
- [<c00649c4>] (kthread) from [<c0010058>] (ret_from_fork+0x14/0x3c)
- CPU1: shutdown
- PM: Calling sched_clock_suspend+0x0/0x40
- PM: Calling timekeeping_suspend+0x0/0x2e0
- PM: Calling irq_gc_suspend+0x0/0x68
- PM: Calling fw_suspend+0x0/0x2c
- PM: Calling cpu_pm_suspend+0x0/0x28
+Mathieu reported that since 317f394160e9 ("sched: Move the second half
+of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
+context of the waker.
 
-Also, sometimes system stucks right after displaying "Disabling non-boot
-CPUs ...". The root cause of above backtrace is task_lock() which takes
-a sleeping lock on -RT.
+This is a problem when you want to analyse wakeup paths because it is
+now very hard to correlate the wakeup event to whoever issued the
+wakeup.
 
-To fix the issue, move clear_tasks_mm_cpumask() call from __cpu_disable()
-to __cpu_die() which is called on the thread which is asking for a target
-CPU to be shutdown. In addition, this change restores CPUhotplug functionality
-on TI OMAP dra7-evm and CPU1 can be unplugged/plugged many times.
+OTOH trace_sched_wakeup() is issued at the point where we set
+p->state = TASK_RUNNING, which is right were we hand the task off to
+the scheduler, so this is an important point when looking at
+scheduling behaviour, up to here its been the wakeup path everything
+hereafter is due to scheduler policy.
 
-Signed-off-by: Grygorii Strashko <grygorii.strashko@ti.com>
+To bridge this gap, introduce a second tracepoint: trace_sched_waking.
+It is guaranteed to be called in the waker context.
+
+[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
+  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
+  its instrumentation hunk. ]
+
+Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Julien Desfossez <jdesfossez@efficios.com>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
 Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: <linux-arm-kernel@lists.infradead.org>
-Cc: Sekhar Nori <nsekhar@ti.com>
-Cc: Austin Schuh <austin@peloton-tech.com>
-Cc: <philipp@peloton-tech.com>
-Cc: Russell King <linux@arm.linux.org.uk>
-Cc: <bigeasy@linutronix.de>
-Cc: stable-rt@vger.kernel.org
-Link: http://lkml.kernel.org/r/1441995683-30817-1-git-send-email-grygorii.strashko@ti.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+CC: Ingo Molnar <mingo@kernel.org>
+Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/kernel/smp.c | 5 +++--
- 1 file changed, 3 insertions(+), 2 deletions(-)
+ include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
+ kernel/sched/core.c               |  8 +++++---
+ kernel/trace/trace_sched_switch.c |  2 +-
+ kernel/trace/trace_sched_wakeup.c |  2 +-
+ 4 files changed, 28 insertions(+), 14 deletions(-)
 
-diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
-index 5919eb451bb9..7ad24aa57040 100644
---- a/arch/arm/kernel/smp.c
-+++ b/arch/arm/kernel/smp.c
-@@ -192,8 +192,6 @@ int __cpuinit __cpu_disable(void)
- 	flush_cache_louis();
- 	local_flush_tlb_all();
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index 2e7d9947a10d..004eb037865c 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+  */
+ DECLARE_EVENT_CLASS(sched_wakeup_template,
  
--	clear_tasks_mm_cpumask(cpu);
+-	TP_PROTO(struct task_struct *p, int success),
++	TP_PROTO(struct task_struct *p),
+ 
+-	TP_ARGS(__perf_task(p), success),
++	TP_ARGS(__perf_task(p)),
+ 
+ 	TP_STRUCT__entry(
+ 		__array(	char,	comm,	TASK_COMM_LEN	)
+@@ -71,25 +71,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+ 		__entry->pid		= p->pid;
+ 		__entry->prio		= p->prio;
+-		__entry->success	= success;
++		__entry->success	= 1; /* rudiment, kill when possible */
+ 		__entry->target_cpu	= task_cpu(p);
+ 	),
+ 
+-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
++	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
+ 		  __entry->comm, __entry->pid, __entry->prio,
+-		  __entry->success, __entry->target_cpu)
++		  __entry->target_cpu)
+ );
+ 
++/*
++ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++ * called from the waking context.
++ */
++DEFINE_EVENT(sched_wakeup_template, sched_waking,
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
++
++/*
++ * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
++ * It it not always called from the waking context.
++ */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ /*
+  * Tracepoint for waking up a new task:
+  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ #ifdef CREATE_TRACE_POINTS
+ static inline long __trace_sched_switch_state(struct task_struct *p)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 3e8b790e5c17..14b5ba66fa72 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1394,9 +1394,9 @@ static void
+ ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+ {
+ 	check_preempt_curr(rq, p, wake_flags);
+-	trace_sched_wakeup(p, true);
 -
- 	return 0;
+ 	p->state = TASK_RUNNING;
++	trace_sched_wakeup(p);
++
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+ 		p->sched_class->task_woken(rq, p);
+@@ -1581,6 +1581,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ 	if (!(wake_flags & WF_LOCK_SLEEPER))
+ 		p->saved_state = TASK_RUNNING;
+ 
++	trace_sched_waking(p);
++
+ 	success = 1; /* we're going to change ->state */
+ 	cpu = task_cpu(p);
+ 
+@@ -1826,7 +1828,7 @@ void wake_up_new_task(struct task_struct *p)
+ 	rq = __task_rq_lock(p);
+ 	activate_task(rq, p, 0);
+ 	p->on_rq = 1;
+-	trace_sched_wakeup_new(p, true);
++	trace_sched_wakeup_new(p);
+ 	check_preempt_curr(rq, p, WF_FORK);
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
+index 4e98e3b257a3..82fe794af532 100644
+--- a/kernel/trace/trace_sched_switch.c
++++ b/kernel/trace/trace_sched_switch.c
+@@ -106,7 +106,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
  }
  
-@@ -209,6 +207,9 @@ void __cpuinit __cpu_die(unsigned int cpu)
- 		pr_err("CPU%u: cpu didn't die\n", cpu);
- 		return;
- 	}
-+
-+	clear_tasks_mm_cpumask(cpu);
-+
- 	printk(KERN_NOTICE "CPU%u: shutdown\n", cpu);
+ static void
+-probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
++probe_sched_wakeup(void *ignore, struct task_struct *wakee)
+ {
+ 	struct trace_array_cpu *data;
+ 	unsigned long flags;
+diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+index fee77e15d815..8e967ca56006 100644
+--- a/kernel/trace/trace_sched_wakeup.c
++++ b/kernel/trace/trace_sched_wakeup.c
+@@ -458,7 +458,7 @@ static void wakeup_reset(struct trace_array *tr)
+ }
  
- 	/*
+ static void
+-probe_wakeup(void *ignore, struct task_struct *p, int success)
++probe_wakeup(void *ignore, struct task_struct *p)
+ {
+ 	struct trace_array_cpu *data;
+ 	int cpu = smp_processor_id();
 -- 
 2.7.0
