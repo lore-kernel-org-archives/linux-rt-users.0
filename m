@@ -1,53 +1,30 @@
-From: "Shi, Yang" <yang.shi@linaro.org>
-Subject: Re: [RFC PATCH] kernfs: create raw version kernfs_path_len and
- kernfs_path
-Date: Fri, 26 Feb 2016 12:23:17 -0800
-Message-ID: <56D0B435.4080309@linaro.org>
-References: <1456510505-6620-1-git-send-email-yang.shi@linaro.org>
- <20160226135628.09ce727c@gandalf.local.home> <56D0A97E.90706@linaro.org>
- <56D0AEAC.3070002@linaro.org> <20160226151503.39d39e45@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT] rcutorture: comment out rcu_bh ops on PREEMPT_RT_FULL
+Date: Fri, 26 Feb 2016 21:55:44 +0100
+Message-ID: <20160226205544.GA9708@linutronix.de>
+References: <20160226131920.66d9cf52@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: gregkh@linuxfoundation.org, tj@kernel.org, lizefan@huawei.com,
-	tglx@linutronix.de, bigeasy@linutronix.de,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linaro-kernel@lists.linaro.org
-To: Steven Rostedt <rostedt@goodmis.org>
+Content-Type: text/plain; charset=utf-8
+Cc: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pf0-f179.google.com ([209.85.192.179]:34941 "EHLO
-	mail-pf0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754003AbcBZUXT (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:34153 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1754972AbcBZUzq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 15:23:19 -0500
-Received: by mail-pf0-f179.google.com with SMTP id w128so9723099pfb.2
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 12:23:19 -0800 (PST)
-In-Reply-To: <20160226151503.39d39e45@gandalf.local.home>
+	Fri, 26 Feb 2016 15:55:46 -0500
+Content-Disposition: inline
+In-Reply-To: <20160226131920.66d9cf52@sluggy.hsv.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 2/26/2016 12:15 PM, Steven Rostedt wrote:
-> On Fri, 26 Feb 2016 11:59:40 -0800
-> "Shi, Yang" <yang.shi@linaro.org> wrote:
->
->
->> BTW, it sounds this is not the only point where kernfs_node could be
->> updated, __kernfs_remove should need synchronize_sched too.
->>
->
-> Question is, can the kernfs of a cgroup be removed while the cgroup is
-> still active?
-
-Hmm, it sounds unlikely to me.
-
-Yang
-
+* Clark Williams | 2016-02-26 13:19:20 [-0600]:
 
 >
-> I don't see the kernfs_rename_lock being held anywhere in that
-> remove. If it can be an issue there with this patch, then it's an issue
-> today, because the kernfs_mutex is not held by the tracepoint.
+>RT has dropped support of rcu_bh, comment out in rcutorture.
 >
-> -- Steve
->
+>Signed-off-by: Clark Williams <williams@redhat.com>
+applied.
 
+Sebastian
