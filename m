@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/10] dump stack: dont disable preemption during trace
-Date: Fri, 26 Feb 2016 16:35:56 -0500
-Message-ID: <20160226213709.017707527@goodmis.org>
+Subject: [PATCH RT 01/10] cpufreq: Remove cpufreq_rwsem
+Date: Fri, 26 Feb 2016 16:35:52 -0500
+Message-ID: <20160226213708.216146286@goodmis.org>
 References: <20160226213551.557375746@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,17 +9,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:48920 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S933921AbcBZVhM (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 16:37:12 -0500
-Content-Disposition: inline; filename=0005-dump-stack-don-t-disable-preemption-during-trace.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0001-cpufreq-Remove-cpufreq_rwsem.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.14.61-rt63-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -28,85 +25,199 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-I see here large latencies during a stack dump on x86. The
-preempt_disable() and get_cpu() should forbid moving the task to another
-CPU during a stack dump and avoiding two stack traces in parallel on the
-same CPU. However a stack trace from a second CPU may still happen in
-parallel. Also nesting is allowed so a stack trace happens in
-process-context and we may have another one from IRQ context. With migrate
-disable we keep this code preemptible and allow a second backtrace on
-the same CPU by another task.
+cpufreq_rwsem was introduced in commit 6eed9404ab3c4 ("cpufreq: Use
+rwsem for protecting critical sections) in order to replace
+try_module_get() on the cpu-freq driver. That try_module_get() worked
+well until the refcount was so heavily used that module removal became
+more or less impossible.
 
+Though when looking at the various (undocumented) protection
+mechanisms in that code, the randomly sprinkeled around cpufreq_rwsem
+locking sites are superfluous.
+
+The policy, which is acquired in cpufreq_cpu_get() and released in
+cpufreq_cpu_put() is sufficiently protected already.
+
+  cpufreq_cpu_get(cpu)
+    /* Protects against concurrent driver removal */
+    read_lock_irqsave(&cpufreq_driver_lock, flags);
+    policy = per_cpu(cpufreq_cpu_data, cpu);
+    kobject_get(&policy->kobj);
+    read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+
+The reference on the policy serializes versus module unload already:
+
+  cpufreq_unregister_driver()
+    subsys_interface_unregister()
+      __cpufreq_remove_dev_finish()
+        per_cpu(cpufreq_cpu_data) = NULL;
+	cpufreq_policy_put_kobj()
+
+If there is a reference held on the policy, i.e. obtained prior to the
+unregister call, then cpufreq_policy_put_kobj() will wait until that
+reference is dropped. So once subsys_interface_unregister() returns
+there is no policy pointer in flight and no new reference can be
+obtained. So that rwsem protection is useless.
+
+The other usage of cpufreq_rwsem in show()/store() of the sysfs
+interface is redundant as well because sysfs already does the proper
+kobject_get()/put() pairs.
+
+That leaves CPU hotplug versus module removal. The current
+down_write() around the write_lock() in cpufreq_unregister_driver() is
+silly at best as it protects actually nothing.
+
+The trivial solution to this is to prevent hotplug across
+cpufreq_unregister_driver completely.
+
+[upstream: rafael/linux-pm 454d3a2500a4eb33be85dde3bfba9e5f6b5efadc]
+[fixes: "cpufreq_stat_notifier_trans: No policy found" since v4.0-rt]
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/dumpstack_64.c | 8 ++++----
- lib/dump_stack.c               | 4 ++--
- 2 files changed, 6 insertions(+), 6 deletions(-)
+ drivers/cpufreq/cpufreq.c | 34 +++-------------------------------
+ 1 file changed, 3 insertions(+), 31 deletions(-)
 
-diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index 66e274a3d968..37aee503a7ba 100644
---- a/arch/x86/kernel/dumpstack_64.c
-+++ b/arch/x86/kernel/dumpstack_64.c
-@@ -114,7 +114,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 		unsigned long *stack, unsigned long bp,
- 		const struct stacktrace_ops *ops, void *data)
- {
--	const unsigned cpu = get_cpu();
-+	const unsigned cpu = get_cpu_light();
- 	unsigned long *irq_stack_end =
- 		(unsigned long *)per_cpu(irq_stack_ptr, cpu);
- 	unsigned used = 0;
-@@ -191,7 +191,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
- 	 * This handles the process stack:
- 	 */
- 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
--	put_cpu();
-+	put_cpu_light();
+diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
+index ef3b8adb9d47..885d441c0af3 100644
+--- a/drivers/cpufreq/cpufreq.c
++++ b/drivers/cpufreq/cpufreq.c
+@@ -52,12 +52,6 @@ static inline bool has_target(void)
+ 	return cpufreq_driver->target_index || cpufreq_driver->target;
  }
- EXPORT_SYMBOL(dump_trace);
  
-@@ -205,7 +205,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 	int cpu;
- 	int i;
+-/*
+- * rwsem to guarantee that cpufreq driver module doesn't unload during critical
+- * sections
+- */
+-static DECLARE_RWSEM(cpufreq_rwsem);
+-
+ /* internal prototypes */
+ static int __cpufreq_governor(struct cpufreq_policy *policy,
+ 		unsigned int event);
+@@ -198,9 +192,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
+ 	if (cpufreq_disabled() || (cpu >= nr_cpu_ids))
+ 		return NULL;
  
--	preempt_disable();
-+	migrate_disable();
- 	cpu = smp_processor_id();
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return NULL;
+-
+ 	/* get the cpufreq driver */
+ 	read_lock_irqsave(&cpufreq_driver_lock, flags);
  
- 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
-@@ -238,7 +238,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
- 		pr_cont(" %016lx", *stack++);
- 		touch_nmi_watchdog();
+@@ -213,9 +204,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
+ 
+ 	read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+ 
+-	if (!policy)
+-		up_read(&cpufreq_rwsem);
+-
+ 	return policy;
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_cpu_get);
+@@ -226,7 +214,6 @@ void cpufreq_cpu_put(struct cpufreq_policy *policy)
+ 		return;
+ 
+ 	kobject_put(&policy->kobj);
+-	up_read(&cpufreq_rwsem);
+ }
+ EXPORT_SYMBOL_GPL(cpufreq_cpu_put);
+ 
+@@ -710,9 +697,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
+ 	struct freq_attr *fattr = to_attr(attr);
+ 	ssize_t ret;
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return -EINVAL;
+-
+ 	down_read(&policy->rwsem);
+ 
+ 	if (fattr->show)
+@@ -721,7 +705,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
+ 		ret = -EIO;
+ 
+ 	up_read(&policy->rwsem);
+-	up_read(&cpufreq_rwsem);
+ 
+ 	return ret;
+ }
+@@ -738,9 +721,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
+ 	if (!cpu_online(policy->cpu))
+ 		goto unlock;
+ 
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		goto unlock;
+-
+ 	down_write(&policy->rwsem);
+ 
+ 	if (fattr->store)
+@@ -749,8 +729,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
+ 		ret = -EIO;
+ 
+ 	up_write(&policy->rwsem);
+-
+-	up_read(&cpufreq_rwsem);
+ unlock:
+ 	put_online_cpus();
+ 
+@@ -1065,9 +1043,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
  	}
--	preempt_enable();
-+	migrate_enable();
+ #endif
  
- 	pr_cont("\n");
- 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
-diff --git a/lib/dump_stack.c b/lib/dump_stack.c
-index f23b63f0a1c3..b39c60b1f12c 100644
---- a/lib/dump_stack.c
-+++ b/lib/dump_stack.c
-@@ -33,7 +33,7 @@ asmlinkage void dump_stack(void)
- 	 * Permit this cpu to perform nested stack dumps while serialising
- 	 * against other CPUs
- 	 */
--	preempt_disable();
-+	migrate_disable();
+-	if (!down_read_trylock(&cpufreq_rwsem))
+-		return 0;
+-
+ #ifdef CONFIG_HOTPLUG_CPU
+ 	/* Check if this cpu was hot-unplugged earlier and has siblings */
+ 	read_lock_irqsave(&cpufreq_driver_lock, flags);
+@@ -1075,7 +1050,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
+ 		if (cpumask_test_cpu(cpu, tpolicy->related_cpus)) {
+ 			read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+ 			ret = cpufreq_add_policy_cpu(tpolicy, cpu, dev);
+-			up_read(&cpufreq_rwsem);
+ 			return ret;
+ 		}
+ 	}
+@@ -1223,7 +1197,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
+ 	up_write(&policy->rwsem);
  
- retry:
- 	cpu = smp_processor_id();
-@@ -52,7 +52,7 @@ retry:
- 	if (!was_locked)
- 		atomic_set(&dump_lock, -1);
+ 	kobject_uevent(&policy->kobj, KOBJ_ADD);
+-	up_read(&cpufreq_rwsem);
  
--	preempt_enable();
-+	migrate_enable();
+ 	pr_debug("initialization complete\n");
+ 
+@@ -1249,8 +1222,6 @@ err_set_policy_cpu:
+ 	cpufreq_policy_free(policy);
+ 
+ nomem_out:
+-	up_read(&cpufreq_rwsem);
+-
+ 	return ret;
  }
- #else
- asmlinkage void dump_stack(void)
+ 
+@@ -2399,19 +2370,20 @@ int cpufreq_unregister_driver(struct cpufreq_driver *driver)
+ 
+ 	pr_debug("unregistering driver %s\n", driver->name);
+ 
++	/* Protect against concurrent cpu hotplug */
++	get_online_cpus();
+ 	subsys_interface_unregister(&cpufreq_interface);
+ 	if (cpufreq_boost_supported())
+ 		cpufreq_sysfs_remove_file(&boost.attr);
+ 
+ 	unregister_hotcpu_notifier(&cpufreq_cpu_notifier);
+ 
+-	down_write(&cpufreq_rwsem);
+ 	write_lock_irqsave(&cpufreq_driver_lock, flags);
+ 
+ 	cpufreq_driver = NULL;
+ 
+ 	write_unlock_irqrestore(&cpufreq_driver_lock, flags);
+-	up_write(&cpufreq_rwsem);
++	put_online_cpus();
+ 
+ 	return 0;
+ }
 -- 
 2.7.0
-
-
