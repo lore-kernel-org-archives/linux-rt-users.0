@@ -1,113 +1,37 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [4.4-rt PATCH] trace: use rcuidle version for preemptoff_hist
- trace point
-Date: Fri, 26 Feb 2016 11:25:13 +0100
-Message-ID: <20160226102513.GB8318@linutronix.de>
-References: <1456262603-10075-1-git-send-email-yang.shi@windriver.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: swait question
+Date: Fri, 26 Feb 2016 11:33:25 +0100
+Message-ID: <56D029F5.1080605@monom.org>
+References: <56CC0355.6010200@monom.org> <56D02123.5090908@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: tglx@linutronix.de, rostedt@goodmis.org,
-	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	Yang Shi <yang.shi@windriver.com>
-To: rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <1456262603-10075-1-git-send-email-yang.shi@windriver.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Clark Williams <williams@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hotel311.server4you.de ([85.25.146.15]:38470 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751364AbcBZKd2 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 26 Feb 2016 05:33:28 -0500
+In-Reply-To: <56D02123.5090908@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven, does this change look reasonable to you? I remember we had a
-discussion about this.
+Hi Sebastian,
 
-* Yang Shi | 2016-02-23 13:23:23 [-0800]:
-
->When running -rt kernel with both PREEMPT_OFF_HIST and LOCKDEP enabled,
->the below error is reported:
->
-> [ INFO: suspicious RCU usage. ]
-> 4.4.1-rt6 #1 Not tainted
-> include/trace/events/hist.h:31 suspicious rcu_dereference_check() usage!
->
-> other info that might help us debug this:
->
-> RCU used illegally from idle CPU!
-> rcu_scheduler_active = 1, debug_locks = 0
-> RCU used illegally from extended quiescent state!
-> no locks held by swapper/0/0.
->
-> stack backtrace:
-> CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.4.1-rt6-WR8.0.0.0_standard #1
-> Stack : 0000000000000006 0000000000000000 ffffffff81ca8c38 ffffffff81c8fc80
->    ffffffff811bdd68 ffffffff81cb0000 0000000000000000 ffffffff81cb0000
->    0000000000000000 0000000000000000 0000000000000004 0000000000000000
->    0000000000000004 ffffffff811bdf50 0000000000000000 ffffffff82b60000
->    0000000000000000 ffffffff812897ac ffffffff819f0000 000000000000000b
->    ffffffff811be460 ffffffff81b7c588 ffffffff81c8fc80 0000000000000000
->    0000000000000000 ffffffff81ec7f88 ffffffff81d70000 ffffffff81b70000
->    ffffffff81c90000 ffffffff81c3fb00 ffffffff81c3fc28 ffffffff815e6f98
->    0000000000000000 ffffffff81c8fa87 ffffffff81b70958 ffffffff811bf2c4
->    0707fe32e8d60ca5 ffffffff81126d60 0000000000000000 0000000000000000
->    ...
-> Call Trace:
-> [<ffffffff81126d60>] show_stack+0xe8/0x108
-> [<ffffffff815e6f98>] dump_stack+0x88/0xb0
-> [<ffffffff8124b88c>] time_hardirqs_off+0x204/0x300
-> [<ffffffff811aa5dc>] trace_hardirqs_off_caller+0x24/0xe8
-> [<ffffffff811a4ec4>] cpu_startup_entry+0x39c/0x508
-> [<ffffffff81d7dc68>] start_kernel+0x584/0x5a0
->
->Replace regular trace_preemptoff_hist to rcuidle version to avoid the error.
->
->Signed-off-by: Yang Shi <yang.shi@windriver.com>
->---
->I recall the rcuidle version is used by 4.1-rt, but not sure why it is dropped
->in 4.4-rt. It looks such fix is still needed. 
->
-> kernel/trace/trace_irqsoff.c | 8 ++++----
-> 1 file changed, 4 insertions(+), 4 deletions(-)
->
->diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
->index 36e584f..069942c 100644
->--- a/kernel/trace/trace_irqsoff.c
->+++ b/kernel/trace/trace_irqsoff.c
->@@ -421,13 +421,13 @@ void start_critical_timings(void)
-> {
-> 	if (preempt_trace() || irq_trace())
-> 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
->-	trace_preemptirqsoff_hist(TRACE_START, 1);
->+	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
-> }
-> EXPORT_SYMBOL_GPL(start_critical_timings);
+On 02/26/2016 10:55 AM, Sebastian Andrzej Siewior wrote:
+> On 02/23/2016 07:59 AM, Daniel Wagner wrote:
+>> Sebastian would you mind integrating the new version of the swait
+>> patches? I guess it doesn't hurt to give them a some testing via the -rt
+>> tree.
 > 
-> void stop_critical_timings(void)
-> {
->-	trace_preemptirqsoff_hist(TRACE_STOP, 0);
->+	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
-> 	if (preempt_trace() || irq_trace())
-> 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
-> }
->@@ -437,7 +437,7 @@ EXPORT_SYMBOL_GPL(stop_critical_timings);
-> #ifdef CONFIG_PROVE_LOCKING
-> void time_hardirqs_on(unsigned long a0, unsigned long a1)
-> {
->-	trace_preemptirqsoff_hist(IRQS_ON, 0);
->+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
-> 	if (!preempt_trace() && irq_trace())
-> 		stop_critical_timing(a0, a1);
-> }
->@@ -446,7 +446,7 @@ void time_hardirqs_off(unsigned long a0, unsigned long a1)
-> {
-> 	if (!preempt_trace() && irq_trace())
-> 		start_critical_timing(a0, a1);
->-	trace_preemptirqsoff_hist(IRQS_OFF, 1);
->+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
-> }
-> 
-> #else /* !CONFIG_PROVE_LOCKING */
->-- 
->2.0.2
->
->--
->To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
->the body of a message to majordomo@vger.kernel.org
->More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> I will integrate them in a later release. Not the one I plan for today
+> but probably one after that.
+
+Excellent. Thomas applied the patches to tip/sched/core yesterday. So I
+guess they will show up in 4.6 if things work out.
+
+cheers,
+daniel
