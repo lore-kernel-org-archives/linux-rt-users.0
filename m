@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/12] cpufreq: Remove cpufreq_rwsem
-Date: Fri, 26 Feb 2016 16:32:36 -0500
-Message-ID: <20160226213340.113796881@goodmis.org>
+Subject: [PATCH RT 11/12] sched: Introduce the trace_sched_waking tracepoint
+Date: Fri, 26 Feb 2016 16:32:46 -0500
+Message-ID: <20160226213341.754254635@goodmis.org>
 References: <20160226213235.253312067@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Julien Desfossez <jdesfossez@efficios.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Francis Giraldeau <francis.giraldeau@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-cpufreq-Remove-cpufreq_rwsem.patch
+Content-Disposition: inline; filename=0011-sched-Introduce-the-trace_sched_waking-tracepoint.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,201 +28,171 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
-cpufreq_rwsem was introduced in commit 6eed9404ab3c4 ("cpufreq: Use
-rwsem for protecting critical sections) in order to replace
-try_module_get() on the cpu-freq driver. That try_module_get() worked
-well until the refcount was so heavily used that module removal became
-more or less impossible.
+Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
 
-Though when looking at the various (undocumented) protection
-mechanisms in that code, the randomly sprinkeled around cpufreq_rwsem
-locking sites are superfluous.
+Mathieu reported that since 317f394160e9 ("sched: Move the second half
+of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
+context of the waker.
 
-The policy, which is acquired in cpufreq_cpu_get() and released in
-cpufreq_cpu_put() is sufficiently protected already.
+This is a problem when you want to analyse wakeup paths because it is
+now very hard to correlate the wakeup event to whoever issued the
+wakeup.
 
-  cpufreq_cpu_get(cpu)
-    /* Protects against concurrent driver removal */
-    read_lock_irqsave(&cpufreq_driver_lock, flags);
-    policy = per_cpu(cpufreq_cpu_data, cpu);
-    kobject_get(&policy->kobj);
-    read_unlock_irqrestore(&cpufreq_driver_lock, flags);
+OTOH trace_sched_wakeup() is issued at the point where we set
+p->state = TASK_RUNNING, which is right were we hand the task off to
+the scheduler, so this is an important point when looking at
+scheduling behaviour, up to here its been the wakeup path everything
+hereafter is due to scheduler policy.
 
-The reference on the policy serializes versus module unload already:
+To bridge this gap, introduce a second tracepoint: trace_sched_waking.
+It is guaranteed to be called in the waker context.
 
-  cpufreq_unregister_driver()
-    subsys_interface_unregister()
-      __cpufreq_remove_dev_finish()
-        per_cpu(cpufreq_cpu_data) = NULL;
-	cpufreq_policy_put_kobj()
+[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
+  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
+  its instrumentation hunk. ]
 
-If there is a reference held on the policy, i.e. obtained prior to the
-unregister call, then cpufreq_policy_put_kobj() will wait until that
-reference is dropped. So once subsys_interface_unregister() returns
-there is no policy pointer in flight and no new reference can be
-obtained. So that rwsem protection is useless.
-
-The other usage of cpufreq_rwsem in show()/store() of the sysfs
-interface is redundant as well because sysfs already does the proper
-kobject_get()/put() pairs.
-
-That leaves CPU hotplug versus module removal. The current
-down_write() around the write_lock() in cpufreq_unregister_driver() is
-silly at best as it protects actually nothing.
-
-The trivial solution to this is to prevent hotplug across
-cpufreq_unregister_driver completely.
-
-[upstream: rafael/linux-pm 454d3a2500a4eb33be85dde3bfba9e5f6b5efadc]
-[fixes: "cpufreq_stat_notifier_trans: No policy found" since v4.0-rt]
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Julien Desfossez <jdesfossez@efficios.com>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+CC: Ingo Molnar <mingo@kernel.org>
+Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/cpufreq/cpufreq.c | 34 +++-------------------------------
- 1 file changed, 3 insertions(+), 31 deletions(-)
+ include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
+ kernel/sched/core.c               |  8 +++++---
+ kernel/trace/trace_sched_switch.c |  2 +-
+ kernel/trace/trace_sched_wakeup.c |  2 +-
+ 4 files changed, 28 insertions(+), 14 deletions(-)
 
-diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
-index 90e8deb6c15e..7a9c1a7ecfe5 100644
---- a/drivers/cpufreq/cpufreq.c
-+++ b/drivers/cpufreq/cpufreq.c
-@@ -53,12 +53,6 @@ static inline bool has_target(void)
- 	return cpufreq_driver->target_index || cpufreq_driver->target;
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index a7d67bc14906..09f27eb85ef8 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+  */
+ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 
+-	TP_PROTO(struct task_struct *p, int success),
++	TP_PROTO(struct task_struct *p),
+ 
+-	TP_ARGS(__perf_task(p), success),
++	TP_ARGS(__perf_task(p)),
+ 
+ 	TP_STRUCT__entry(
+ 		__array(	char,	comm,	TASK_COMM_LEN	)
+@@ -71,25 +71,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+ 		__entry->pid		= p->pid;
+ 		__entry->prio		= p->prio;
+-		__entry->success	= success;
++		__entry->success	= 1; /* rudiment, kill when possible */
+ 		__entry->target_cpu	= task_cpu(p);
+ 	),
+ 
+-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
++	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
+ 		  __entry->comm, __entry->pid, __entry->prio,
+-		  __entry->success, __entry->target_cpu)
++		  __entry->target_cpu)
+ );
+ 
++/*
++ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++ * called from the waking context.
++ */
++DEFINE_EVENT(sched_wakeup_template, sched_waking,
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
++
++/*
++ * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
++ * It it not always called from the waking context.
++ */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ /*
+  * Tracepoint for waking up a new task:
+  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ #ifdef CREATE_TRACE_POINTS
+ static inline long __trace_sched_switch_state(struct task_struct *p)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 7e844b4f1701..9e01a8f358f8 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1606,9 +1606,9 @@ static void
+ ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+ {
+ 	check_preempt_curr(rq, p, wake_flags);
+-	trace_sched_wakeup(p, true);
+-
+ 	p->state = TASK_RUNNING;
++	trace_sched_wakeup(p);
++
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+ 		p->sched_class->task_woken(rq, p);
+@@ -1832,6 +1832,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ 	if (!(wake_flags & WF_LOCK_SLEEPER))
+ 		p->saved_state = TASK_RUNNING;
+ 
++	trace_sched_waking(p);
++
+ 	success = 1; /* we're going to change ->state */
+ 	cpu = task_cpu(p);
+ 
+@@ -2247,7 +2249,7 @@ void wake_up_new_task(struct task_struct *p)
+ 	rq = __task_rq_lock(p);
+ 	activate_task(rq, p, 0);
+ 	p->on_rq = TASK_ON_RQ_QUEUED;
+-	trace_sched_wakeup_new(p, true);
++	trace_sched_wakeup_new(p);
+ 	check_preempt_curr(rq, p, WF_FORK);
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
+index 3f34dc9b40f3..9586cde520b0 100644
+--- a/kernel/trace/trace_sched_switch.c
++++ b/kernel/trace/trace_sched_switch.c
+@@ -106,7 +106,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
  }
  
--/*
-- * rwsem to guarantee that cpufreq driver module doesn't unload during critical
-- * sections
-- */
--static DECLARE_RWSEM(cpufreq_rwsem);
--
- /* internal prototypes */
- static int __cpufreq_governor(struct cpufreq_policy *policy,
- 		unsigned int event);
-@@ -205,9 +199,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
- 	if (cpufreq_disabled() || (cpu >= nr_cpu_ids))
- 		return NULL;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return NULL;
--
- 	/* get the cpufreq driver */
- 	read_lock_irqsave(&cpufreq_driver_lock, flags);
- 
-@@ -220,9 +211,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
- 
- 	read_unlock_irqrestore(&cpufreq_driver_lock, flags);
- 
--	if (!policy)
--		up_read(&cpufreq_rwsem);
--
- 	return policy;
- }
- EXPORT_SYMBOL_GPL(cpufreq_cpu_get);
-@@ -233,7 +221,6 @@ void cpufreq_cpu_put(struct cpufreq_policy *policy)
- 		return;
- 
- 	kobject_put(&policy->kobj);
--	up_read(&cpufreq_rwsem);
- }
- EXPORT_SYMBOL_GPL(cpufreq_cpu_put);
- 
-@@ -762,9 +749,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
- 	struct freq_attr *fattr = to_attr(attr);
- 	ssize_t ret;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return -EINVAL;
--
- 	down_read(&policy->rwsem);
- 
- 	if (fattr->show)
-@@ -773,7 +757,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
- 		ret = -EIO;
- 
- 	up_read(&policy->rwsem);
--	up_read(&cpufreq_rwsem);
- 
- 	return ret;
- }
-@@ -790,9 +773,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
- 	if (!cpu_online(policy->cpu))
- 		goto unlock;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		goto unlock;
--
- 	down_write(&policy->rwsem);
- 
- 	if (fattr->store)
-@@ -801,8 +781,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
- 		ret = -EIO;
- 
- 	up_write(&policy->rwsem);
--
--	up_read(&cpufreq_rwsem);
- unlock:
- 	put_online_cpus();
- 
-@@ -1142,9 +1120,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
- 	}
- #endif
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return 0;
--
- #ifdef CONFIG_HOTPLUG_CPU
- 	/* Check if this cpu was hot-unplugged earlier and has siblings */
- 	read_lock_irqsave(&cpufreq_driver_lock, flags);
-@@ -1152,7 +1127,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
- 		if (cpumask_test_cpu(cpu, tpolicy->related_cpus)) {
- 			read_unlock_irqrestore(&cpufreq_driver_lock, flags);
- 			ret = cpufreq_add_policy_cpu(tpolicy, cpu, dev);
--			up_read(&cpufreq_rwsem);
- 			return ret;
- 		}
- 	}
-@@ -1288,7 +1262,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
- 	up_write(&policy->rwsem);
- 
- 	kobject_uevent(&policy->kobj, KOBJ_ADD);
--	up_read(&cpufreq_rwsem);
- 
- 	pr_debug("initialization complete\n");
- 
-@@ -1314,8 +1287,6 @@ err_set_policy_cpu:
- 	cpufreq_policy_free(policy);
- 
- nomem_out:
--	up_read(&cpufreq_rwsem);
--
- 	return ret;
+ static void
+-probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
++probe_sched_wakeup(void *ignore, struct task_struct *wakee)
+ {
+ 	struct trace_array_cpu *data;
+ 	unsigned long flags;
+diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+index 19bd8928ce94..808258ccf6c5 100644
+--- a/kernel/trace/trace_sched_wakeup.c
++++ b/kernel/trace/trace_sched_wakeup.c
+@@ -460,7 +460,7 @@ static void wakeup_reset(struct trace_array *tr)
  }
  
-@@ -2528,19 +2499,20 @@ int cpufreq_unregister_driver(struct cpufreq_driver *driver)
- 
- 	pr_debug("unregistering driver %s\n", driver->name);
- 
-+	/* Protect against concurrent cpu hotplug */
-+	get_online_cpus();
- 	subsys_interface_unregister(&cpufreq_interface);
- 	if (cpufreq_boost_supported())
- 		cpufreq_sysfs_remove_file(&boost.attr);
- 
- 	unregister_hotcpu_notifier(&cpufreq_cpu_notifier);
- 
--	down_write(&cpufreq_rwsem);
- 	write_lock_irqsave(&cpufreq_driver_lock, flags);
- 
- 	cpufreq_driver = NULL;
- 
- 	write_unlock_irqrestore(&cpufreq_driver_lock, flags);
--	up_write(&cpufreq_rwsem);
-+	put_online_cpus();
- 
- 	return 0;
- }
+ static void
+-probe_wakeup(void *ignore, struct task_struct *p, int success)
++probe_wakeup(void *ignore, struct task_struct *p)
+ {
+ 	struct trace_array_cpu *data;
+ 	int cpu = smp_processor_id();
 -- 
 2.7.0
