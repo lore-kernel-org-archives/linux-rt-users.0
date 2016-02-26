@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 03/10] rtmutex: Use chainwalking control enum
-Date: Fri, 26 Feb 2016 16:41:03 -0500
-Message-ID: <20160226214119.271685788@goodmis.org>
-References: <20160226214100.390136141@goodmis.org>
+Subject: [PATCH RT 5/7] sched: Introduce the trace_sched_waking tracepoint
+Date: Fri, 26 Feb 2016 16:42:12 -0500
+Message-ID: <20160226214223.240070756@goodmis.org>
+References: <20160226214207.654222592@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,52 +10,190 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Brad Mouring <brad.mouring@ni.com>
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Julien Desfossez <jdesfossez@efficios.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Francis Giraldeau <francis.giraldeau@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:52293 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1423453AbcBZWUz (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 17:20:55 -0500
-Content-Disposition: inline; filename=0003-rtmutex-Use-chainwalking-control-enum.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0005-sched-Introduce-the-trace_sched_waking-tracepoint.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.10.97-rt106-rc1 stable review patch.
+3.4.110-rt139-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: "bmouring@ni.com" <bmouring@ni.com>
+From: Peter Zijlstra <peterz@infradead.org>
 
-In 8930ed80 (rtmutex: Cleanup deadlock detector debug logic),
-chainwalking control enums were introduced to limit the deadlock
-detection logic. One of the calls to task_blocks_on_rt_mutex was
-missed when converting to use the enums.
+Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
 
+Mathieu reported that since 317f394160e9 ("sched: Move the second half
+of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
+context of the waker.
+
+This is a problem when you want to analyse wakeup paths because it is
+now very hard to correlate the wakeup event to whoever issued the
+wakeup.
+
+OTOH trace_sched_wakeup() is issued at the point where we set
+p->state = TASK_RUNNING, which is right were we hand the task off to
+the scheduler, so this is an important point when looking at
+scheduling behaviour, up to here its been the wakeup path everything
+hereafter is due to scheduler policy.
+
+To bridge this gap, introduce a second tracepoint: trace_sched_waking.
+It is guaranteed to be called in the waker context.
+
+[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
+  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
+  its instrumentation hunk. ]
+
+Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Julien Desfossez <jdesfossez@efficios.com>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Brad Mouring <brad.mouring@ni.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+CC: Ingo Molnar <mingo@kernel.org>
+Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
+ kernel/sched/core.c               |  7 +++++--
+ kernel/trace/trace_sched_switch.c |  2 +-
+ kernel/trace/trace_sched_wakeup.c |  2 +-
+ 4 files changed, 28 insertions(+), 13 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 3f169f882775..8c29e48afa3a 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1166,7 +1166,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
- 	__set_current_state(TASK_UNINTERRUPTIBLE);
- 	pi_unlock(&self->pi_lock);
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index ea7a2035456d..0a91a095e3c9 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+  */
+ DECLARE_EVENT_CLASS(sched_wakeup_template,
  
--	ret = task_blocks_on_rt_mutex(lock, &waiter, self, 0);
-+	ret = task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK);
- 	BUG_ON(ret);
+-	TP_PROTO(struct task_struct *p, int success),
++	TP_PROTO(struct task_struct *p),
  
- 	for (;;) {
+-	TP_ARGS(p, success),
++	TP_ARGS(p),
+ 
+ 	TP_STRUCT__entry(
+ 		__array(	char,	comm,	TASK_COMM_LEN	)
+@@ -71,25 +71,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+ 		__entry->pid		= p->pid;
+ 		__entry->prio		= p->prio;
+-		__entry->success	= success;
++		__entry->success	= 1; /* rudiment, kill when possible */
+ 		__entry->target_cpu	= task_cpu(p);
+ 	),
+ 
+-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
++	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
+ 		  __entry->comm, __entry->pid, __entry->prio,
+-		  __entry->success, __entry->target_cpu)
++		  __entry->target_cpu)
+ );
+ 
++ /*
++  * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++  * called from the waking context.
++  */
++DEFINE_EVENT(sched_wakeup_template, sched_waking,
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
++
++ /*
++  * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
++  * It it not always called from the waking context.
++  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ /*
+  * Tracepoint for waking up a new task:
+  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ #ifdef CREATE_TRACE_POINTS
+ static inline long __trace_sched_switch_state(struct task_struct *p)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 0916d418dabd..cc4df0131023 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1412,10 +1412,11 @@ static void ttwu_activate(struct rq *rq, struct task_struct *p, int en_flags)
+ static void
+ ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+ {
+-	trace_sched_wakeup(p, true);
+ 	check_preempt_curr(rq, p, wake_flags);
+ 
+ 	p->state = TASK_RUNNING;
++	trace_sched_wakeup(p);
++
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+ 		p->sched_class->task_woken(rq, p);
+@@ -1608,6 +1609,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ 	if (!(wake_flags & WF_LOCK_SLEEPER))
+ 		p->saved_state = TASK_RUNNING;
+ 
++	trace_sched_waking(p);
++
+ 	success = 1; /* we're going to change ->state */
+ 	cpu = task_cpu(p);
+ 
+@@ -1827,7 +1830,7 @@ void wake_up_new_task(struct task_struct *p)
+ 	rq = __task_rq_lock(p);
+ 	activate_task(rq, p, 0);
+ 	p->on_rq = 1;
+-	trace_sched_wakeup_new(p, true);
++	trace_sched_wakeup_new(p);
+ 	check_preempt_curr(rq, p, WF_FORK);
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
+index 7e62c0a18456..5982146ee863 100644
+--- a/kernel/trace/trace_sched_switch.c
++++ b/kernel/trace/trace_sched_switch.c
+@@ -108,7 +108,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
+ }
+ 
+ static void
+-probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
++probe_sched_wakeup(void *ignore, struct task_struct *wakee)
+ {
+ 	struct trace_array_cpu *data;
+ 	unsigned long flags;
+diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+index 9eadedc9b4a8..60160801b8e8 100644
+--- a/kernel/trace/trace_sched_wakeup.c
++++ b/kernel/trace/trace_sched_wakeup.c
+@@ -414,7 +414,7 @@ static void wakeup_reset(struct trace_array *tr)
+ }
+ 
+ static void
+-probe_wakeup(void *ignore, struct task_struct *p, int success)
++probe_wakeup(void *ignore, struct task_struct *p)
+ {
+ 	struct trace_array_cpu *data;
+ 	int cpu = smp_processor_id();
 -- 
 2.7.0
-
-
