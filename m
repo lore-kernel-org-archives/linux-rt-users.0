@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/7] rtmutex: Handle non enqueued waiters gracefully
-Date: Fri, 26 Feb 2016 16:44:09 -0500
-Message-ID: <20160226214428.043960999@goodmis.org>
-References: <20160226214408.590103414@goodmis.org>
+Subject: [PATCH RT 08/10] irqwork: Move irq safe work to irq context
+Date: Fri, 26 Feb 2016 16:35:59 -0500
+Message-ID: <20160226213709.512727830@goodmis.org>
+References: <20160226213551.557375746@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -13,53 +13,97 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:51712 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1423282AbcBZWUK (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 26 Feb 2016 17:20:10 -0500
-Content-Disposition: inline; filename=0001-rtmutex-Handle-non-enqueued-waiters-gracefully.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0008-irqwork-Move-irq-safe-work-to-irq-context.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.2.77-rt111-rc1 stable review patch.
+3.14.61-rt63-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
 From: Thomas Gleixner <tglx@linutronix.de>
 
-Yimin debugged that in case of a PI wakeup in progress when
-rt_mutex_start_proxy_lock() calls task_blocks_on_rt_mutex() the latter
-returns -EAGAIN and in consequence the remove_waiter() call runs into
-a BUG_ON() because there is nothing to remove.
+On architectures where arch_irq_work_has_interrupt() returns false, we
+end up running the irq safe work from the softirq context. That
+results in a potential deadlock in the scheduler irq work which
+expects that function to be called with interrupts disabled.
 
-Guard it with rt_mutex_has_waiters(). This is a quick fix which is
-easy to backport. The proper fix is to have a central check in
-remove_waiter() so we can call it unconditionally.
+Split the irq_work_tick() function into a hard and soft variant. Call
+the hard variant from the tick interrupt and add the soft variant to
+the timer softirq.
 
-Reported-and-debugged-by: Yimin Deng <yimin11.deng@gmail.com>
+Reported-and-tested-by: Yanjiang Jin <yanjiang.jin@windriver.com>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/linux/irq_work.h | 6 ++++++
+ kernel/irq_work.c        | 9 +++++++++
+ kernel/timer.c           | 6 ++----
+ 3 files changed, 17 insertions(+), 4 deletions(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 52cab2720a06..f074834c1ad6 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1935,7 +1935,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
- 		ret = 0;
- 	}
+diff --git a/include/linux/irq_work.h b/include/linux/irq_work.h
+index 4a8c7a2df480..ccd736ebee9e 100644
+--- a/include/linux/irq_work.h
++++ b/include/linux/irq_work.h
+@@ -44,4 +44,10 @@ bool irq_work_needs_cpu(void);
+ static inline bool irq_work_needs_cpu(void) { return false; }
+ #endif
  
--	if (unlikely(ret))
-+	if (ret && rt_mutex_has_waiters(lock))
- 		remove_waiter(lock, waiter);
++#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
++void irq_work_tick_soft(void);
++#else
++static inline void irq_work_tick_soft(void) { }
++#endif
++
+ #endif /* _LINUX_IRQ_WORK_H */
+diff --git a/kernel/irq_work.c b/kernel/irq_work.c
+index af8ceafc94e4..883bb73698b9 100644
+--- a/kernel/irq_work.c
++++ b/kernel/irq_work.c
+@@ -163,8 +163,17 @@ void irq_work_tick(void)
  
- 	raw_spin_unlock(&lock->wait_lock);
+ 	if (!llist_empty(raised) && !arch_irq_work_has_interrupt())
+ 		irq_work_run_list(raised);
++
++	if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
++		irq_work_run_list(this_cpu_ptr(&lazy_list));
++}
++
++#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
++void irq_work_tick_soft(void)
++{
+ 	irq_work_run_list(this_cpu_ptr(&lazy_list));
+ }
++#endif
+ 
+ /*
+  * Synchronize against the irq_work @entry, ensures the entry is not
+diff --git a/kernel/timer.c b/kernel/timer.c
+index 300870358b4f..3796af212c95 100644
+--- a/kernel/timer.c
++++ b/kernel/timer.c
+@@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
+ 	scheduler_tick();
+ 	run_local_timers();
+ 	rcu_check_callbacks(cpu, user_tick);
+-#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
++#if defined(CONFIG_IRQ_WORK)
+ 	if (in_irq())
+ 		irq_work_run();
+ #endif
+@@ -1466,9 +1466,7 @@ static void run_timer_softirq(struct softirq_action *h)
+ 
+ 	hrtimer_run_pending();
+ 
+-#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
+-	irq_work_tick();
+-#endif
++	irq_work_tick_soft();
+ 
+ 	if (time_after_eq(jiffies, base->timer_jiffies))
+ 		__run_timers(base);
 -- 
 2.7.0
-
-
