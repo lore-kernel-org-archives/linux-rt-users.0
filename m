@@ -1,201 +1,83 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/10] sched: Introduce the trace_sched_waking tracepoint
-Date: Fri, 26 Feb 2016 16:41:08 -0500
-Message-ID: <20160226214120.310658723@goodmis.org>
-References: <20160226214100.390136141@goodmis.org>
+Subject: [PATCH RT 3/7] dump stack: dont disable preemption during trace
+Date: Fri, 26 Feb 2016 16:44:11 -0500
+Message-ID: <20160226214428.374498283@goodmis.org>
+References: <20160226214408.590103414@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
-	Julien Desfossez <jdesfossez@efficios.com>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Francis Giraldeau <francis.giraldeau@gmail.com>,
-	Linus Torvalds <torvalds@linux-foundation.org>,
-	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-sched-Introduce-the-trace_sched_waking-tracepoint.patch
+Content-Disposition: inline; filename=0003-dump-stack-don-t-disable-preemption-during-trace.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.97-rt106-rc1 stable review patch.
+3.2.77-rt111-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Peter Zijlstra <peterz@infradead.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
+I see here large latencies during a stack dump on x86. The
+preempt_disable() and get_cpu() should forbid moving the task to another
+CPU during a stack dump and avoiding two stack traces in parallel on the
+same CPU. However a stack trace from a second CPU may still happen in
+parallel. Also nesting is allowed so a stack trace happens in
+process-context and we may have another one from IRQ context. With migrate
+disable we keep this code preemptible and allow a second backtrace on
+the same CPU by another task.
 
-Mathieu reported that since 317f394160e9 ("sched: Move the second half
-of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
-context of the waker.
-
-This is a problem when you want to analyse wakeup paths because it is
-now very hard to correlate the wakeup event to whoever issued the
-wakeup.
-
-OTOH trace_sched_wakeup() is issued at the point where we set
-p->state = TASK_RUNNING, which is right were we hand the task off to
-the scheduler, so this is an important point when looking at
-scheduling behaviour, up to here its been the wakeup path everything
-hereafter is due to scheduler policy.
-
-To bridge this gap, introduce a second tracepoint: trace_sched_waking.
-It is guaranteed to be called in the waker context.
-
-[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
-  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
-  its instrumentation hunk. ]
-
-Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
-CC: Julien Desfossez <jdesfossez@efficios.com>
-CC: Peter Zijlstra (Intel) <peterz@infradead.org>
-Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
-Cc: Linus Torvalds <torvalds@linux-foundation.org>
-Cc: Mike Galbraith <efault@gmx.de>
-Cc: Peter Zijlstra <peterz@infradead.org>
-Cc: Steven Rostedt <rostedt@goodmis.org>
-Cc: Thomas Gleixner <tglx@linutronix.de>
-CC: Ingo Molnar <mingo@kernel.org>
-Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
-Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
- kernel/sched/core.c               |  8 +++++---
- kernel/trace/trace_sched_switch.c |  2 +-
- kernel/trace/trace_sched_wakeup.c |  2 +-
- 4 files changed, 28 insertions(+), 14 deletions(-)
+ arch/x86/kernel/dumpstack_64.c | 8 ++++----
+ 1 file changed, 4 insertions(+), 4 deletions(-)
 
-diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
-index e5586caff67a..1ff7042e572d 100644
---- a/include/trace/events/sched.h
-+++ b/include/trace/events/sched.h
-@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
-  */
- DECLARE_EVENT_CLASS(sched_wakeup_template,
- 
--	TP_PROTO(struct task_struct *p, int success),
-+	TP_PROTO(struct task_struct *p),
- 
--	TP_ARGS(p, success),
-+	TP_ARGS(p),
- 
- 	TP_STRUCT__entry(
- 		__array(	char,	comm,	TASK_COMM_LEN	)
-@@ -71,28 +71,40 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
- 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
- 		__entry->pid		= p->pid;
- 		__entry->prio		= p->prio;
--		__entry->success	= success;
-+		__entry->success	= 1; /* rudiment, kill when possible */
- 		__entry->target_cpu	= task_cpu(p);
- 	)
- 	TP_perf_assign(
- 		__perf_task(p);
- 	),
- 
--	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
-+	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
- 		  __entry->comm, __entry->pid, __entry->prio,
--		  __entry->success, __entry->target_cpu)
-+		  __entry->target_cpu)
- );
- 
-+/*
-+ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
-+ * called from the waking context.
-+ */
-+DEFINE_EVENT(sched_wakeup_template, sched_waking,
-+	     TP_PROTO(struct task_struct *p),
-+	     TP_ARGS(p));
-+
-+/*
-+ * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
-+ * It it not always called from the waking context.
-+ */
- DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
--	     TP_PROTO(struct task_struct *p, int success),
--	     TP_ARGS(p, success));
-+	     TP_PROTO(struct task_struct *p),
-+	     TP_ARGS(p));
- 
- /*
-  * Tracepoint for waking up a new task:
-  */
- DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
--	     TP_PROTO(struct task_struct *p, int success),
--	     TP_ARGS(p, success));
-+	     TP_PROTO(struct task_struct *p),
-+	     TP_ARGS(p));
- 
- #ifdef CREATE_TRACE_POINTS
- static inline long __trace_sched_switch_state(struct task_struct *p)
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 23e289ae4270..6c21a28689b9 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1394,9 +1394,9 @@ static void
- ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
+index 5e890ccd5429..530fdb80d250 100644
+--- a/arch/x86/kernel/dumpstack_64.c
++++ b/arch/x86/kernel/dumpstack_64.c
+@@ -114,7 +114,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 		unsigned long *stack, unsigned long bp,
+ 		const struct stacktrace_ops *ops, void *data)
  {
- 	check_preempt_curr(rq, p, wake_flags);
--	trace_sched_wakeup(p, true);
--
- 	p->state = TASK_RUNNING;
-+	trace_sched_wakeup(p);
-+
- #ifdef CONFIG_SMP
- 	if (p->sched_class->task_woken)
- 		p->sched_class->task_woken(rq, p);
-@@ -1579,6 +1579,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
- 	if (!(wake_flags & WF_LOCK_SLEEPER))
- 		p->saved_state = TASK_RUNNING;
- 
-+	trace_sched_waking(p);
-+
- 	success = 1; /* we're going to change ->state */
- 	cpu = task_cpu(p);
- 
-@@ -1830,7 +1832,7 @@ void wake_up_new_task(struct task_struct *p)
- 	rq = __task_rq_lock(p);
- 	activate_task(rq, p, 0);
- 	p->on_rq = 1;
--	trace_sched_wakeup_new(p, true);
-+	trace_sched_wakeup_new(p);
- 	check_preempt_curr(rq, p, WF_FORK);
- #ifdef CONFIG_SMP
- 	if (p->sched_class->task_woken)
-diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
-index 4e98e3b257a3..82fe794af532 100644
---- a/kernel/trace/trace_sched_switch.c
-+++ b/kernel/trace/trace_sched_switch.c
-@@ -106,7 +106,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
+-	const unsigned cpu = get_cpu();
++	const unsigned cpu = get_cpu_light();
+ 	unsigned long *irq_stack_end =
+ 		(unsigned long *)per_cpu(irq_stack_ptr, cpu);
+ 	unsigned used = 0;
+@@ -191,7 +191,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
+ 	 * This handles the process stack:
+ 	 */
+ 	bp = ops->walk_stack(tinfo, stack, bp, ops, data, NULL, &graph);
+-	put_cpu();
++	put_cpu_light();
  }
+ EXPORT_SYMBOL(dump_trace);
  
- static void
--probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
-+probe_sched_wakeup(void *ignore, struct task_struct *wakee)
- {
- 	struct trace_array_cpu *data;
- 	unsigned long flags;
-diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
-index fee77e15d815..8e967ca56006 100644
---- a/kernel/trace/trace_sched_wakeup.c
-+++ b/kernel/trace/trace_sched_wakeup.c
-@@ -458,7 +458,7 @@ static void wakeup_reset(struct trace_array *tr)
- }
+@@ -205,7 +205,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 	int cpu;
+ 	int i;
  
- static void
--probe_wakeup(void *ignore, struct task_struct *p, int success)
-+probe_wakeup(void *ignore, struct task_struct *p)
- {
- 	struct trace_array_cpu *data;
- 	int cpu = smp_processor_id();
+-	preempt_disable();
++	migrate_disable();
+ 	cpu = smp_processor_id();
+ 
+ 	irq_stack_end	= (unsigned long *)(per_cpu(irq_stack_ptr, cpu));
+@@ -238,7 +238,7 @@ show_stack_log_lvl(struct task_struct *task, struct pt_regs *regs,
+ 		printk(KERN_CONT " %016lx", *stack++);
+ 		touch_nmi_watchdog();
+ 	}
+-	preempt_enable();
++	migrate_enable();
+ 
+ 	printk(KERN_CONT "\n");
+ 	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
 -- 
 2.7.0
