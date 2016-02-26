@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/10] irqwork: Move irq safe work to irq context
-Date: Fri, 26 Feb 2016 16:35:59 -0500
-Message-ID: <20160226213709.512727830@goodmis.org>
-References: <20160226213551.557375746@goodmis.org>
+Subject: [PATCH RT 07/10] irqwork: Move irq safe work to irq context
+Date: Fri, 26 Feb 2016 16:41:07 -0500
+Message-ID: <20160226214120.131314296@goodmis.org>
+References: <20160226214100.390136141@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -14,11 +14,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-irqwork-Move-irq-safe-work-to-irq-context.patch
+Content-Disposition: inline; filename=0007-irqwork-Move-irq-safe-work-to-irq-context.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.14.61-rt63-rc1 stable review patch.
+3.10.97-rt106-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -82,7 +82,7 @@ index af8ceafc94e4..883bb73698b9 100644
  /*
   * Synchronize against the irq_work @entry, ensures the entry is not
 diff --git a/kernel/timer.c b/kernel/timer.c
-index 300870358b4f..3796af212c95 100644
+index ff272e20ee0c..2fd6ea5c6519 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
