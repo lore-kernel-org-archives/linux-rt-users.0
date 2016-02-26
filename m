@@ -1,51 +1,66 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 6/7] rtmutex: Have slowfn of rt_mutex_timed_fastlock() use enum
-Date: Fri, 26 Feb 2016 16:44:14 -0500
-Message-ID: <20160226214428.898614153@goodmis.org>
-References: <20160226214408.590103414@goodmis.org>
+Subject: [PATCH RT 4/7] net: Make synchronize_rcu_expedited() conditional on !RT_FULL
+Date: Fri, 26 Feb 2016 16:42:11 -0500
+Message-ID: <20160226214222.882011550@goodmis.org>
+References: <20160226214207.654222592@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	"Paul E. McKenney" <paulmck@linux.vnet.ibm.com>,
+	Josh Cartwright <joshc@ni.com>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	"David S. Miller" <davem@davemloft.net>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-rtmutex-Have-slowfn-of-rt_mutex_timed_fastlock-use-e.patch
+Content-Disposition: inline; filename=0004-net-Make-synchronize_rcu_expedited-conditional-on-RT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.2.77-rt111-rc1 stable review patch.
+3.4.110-rt139-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Josh Cartwright <joshc@ni.com>
 
-The backport of commit 8930ed80f970 "rtmutex: Cleanup deadlock detector
-debug logic" had conflicts, and the conflict resolution changed
-rt_mutex_timed_fastlock()'s parameter to an enum, but missed changing its
-slowfn's prototype.
+While the use of synchronize_rcu_expedited() might make
+synchronize_net() "faster", it does so at significant cost on RT
+systems, as expediting a grace period forcibly preempts any
+high-priority RT tasks (via the stop_machine() mechanism).
 
+Without this change, we can observe a latency spike up to 30us with
+cyclictest by rapidly unplugging/reestablishing an ethernet link.
+
+Suggested-by: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Signed-off-by: Josh Cartwright <joshc@ni.com>
+Cc: bigeasy@linutronix.de
+Acked-by: Eric Dumazet <eric.dumazet@gmail.com>
+Acked-by: David S. Miller <davem@davemloft.net>
+Cc: Paul E. McKenney <paulmck@linux.vnet.ibm.com>
+Link: http://lkml.kernel.org/r/20151027123153.GG8245@jcartwri.amer.corp.natinst.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rtmutex.c | 2 +-
+ net/core/dev.c | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 2a4c34bb586f..e836b05093a1 100644
---- a/kernel/rtmutex.c
-+++ b/kernel/rtmutex.c
-@@ -1657,7 +1657,7 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
- 			enum rtmutex_chainwalk chwalk,
- 			int (*slowfn)(struct rt_mutex *lock, int state,
- 				      struct hrtimer_sleeper *timeout,
--				      int detect_deadlock))
-+				      enum rtmutex_chainwalk chwalk))
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 46f960a4c83b..4dbd27b16d1f 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -6081,7 +6081,7 @@ EXPORT_SYMBOL(free_netdev);
+ void synchronize_net(void)
  {
- 	if (chwalk == RT_MUTEX_MIN_CHAINWALK &&
- 	    likely(rt_mutex_cmpxchg(lock, NULL, current))) {
+ 	might_sleep();
+-	if (rtnl_is_locked())
++	if (rtnl_is_locked() && !IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
+ 		synchronize_rcu_expedited();
+ 	else
+ 		synchronize_rcu();
 -- 
 2.7.0
