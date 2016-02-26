@@ -1,87 +1,201 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/7] Linux 3.2.77-rt111-rc1
-Date: Fri, 26 Feb 2016 16:44:08 -0500
-Message-ID: <20160226214408.590103414@goodmis.org>
+Subject: [PATCH RT 08/10] sched: Introduce the trace_sched_waking tracepoint
+Date: Fri, 26 Feb 2016 16:41:08 -0500
+Message-ID: <20160226214120.310658723@goodmis.org>
+References: <20160226214100.390136141@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Julien Desfossez <jdesfossez@efficios.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Francis Giraldeau <francis.giraldeau@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0008-sched-Introduce-the-trace_sched_waking-tracepoint.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.97-rt106-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.2.77-rt111-rc1.
+From: Peter Zijlstra <peterz@infradead.org>
 
-Please scream at me if I messed something up. Please test the patches too.
+Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
 
-Note, I'm bringing this tree up to stable patches in 4.1.7-rt8.
-Then I'll be pulling 4.1-rt into stable, as development is now on 4.4-rt.
-After that, I'll be pulling the 4.1-rt stable changes into the stable trees.
+Mathieu reported that since 317f394160e9 ("sched: Move the second half
+of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
+context of the waker.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+This is a problem when you want to analyse wakeup paths because it is
+now very hard to correlate the wakeup event to whoever issued the
+wakeup.
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+OTOH trace_sched_wakeup() is issued at the point where we set
+p->state = TASK_RUNNING, which is right were we hand the task off to
+the scheduler, so this is an important point when looking at
+scheduling behaviour, up to here its been the wakeup path everything
+hereafter is due to scheduler policy.
 
-If all goes well, this patch will be converted to the next main release
-on 2/29/2016.
+To bridge this gap, introduce a second tracepoint: trace_sched_waking.
+It is guaranteed to be called in the waker context.
 
-Enjoy,
+[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
+  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
+  its instrumentation hunk. ]
 
--- Steve
-
-
-To build 3.2.77-rt111-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.77.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.77-rt111-rc1.patch.xz
-
-You can also build from 3.2.77-rt110 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.77-rt110-rt111-rc1.patch.xz
-
-
-Changes from 3.2.77-rt110:
-
+Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Julien Desfossez <jdesfossez@efficios.com>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+CC: Ingo Molnar <mingo@kernel.org>
+Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
-
-
-Josh Cartwright (1):
-      net: Make synchronize_rcu_expedited() conditional on !RT_FULL
-
-Peter Zijlstra (1):
-      sched: Introduce the trace_sched_waking tracepoint
-
-Sebastian Andrzej Siewior (1):
-      dump stack: don't disable preemption during trace
-
-Steven Rostedt (Red Hat) (2):
-      rtmutex: Have slowfn of rt_mutex_timed_fastlock() use enum
-      Linux 3.2.77-rt111-rc1
-
-Thomas Gleixner (1):
-      rtmutex: Handle non enqueued waiters gracefully
-
-bmouring@ni.com (1):
-      rtmutex: Use chainwalking control enum
-
-----
- arch/x86/kernel/dumpstack_64.c    |  8 ++++----
  include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
- kernel/rtmutex.c                  |  6 +++---
- kernel/sched.c                    |  7 +++++--
+ kernel/sched/core.c               |  8 +++++---
  kernel/trace/trace_sched_switch.c |  2 +-
  kernel/trace/trace_sched_wakeup.c |  2 +-
- localversion-rt                   |  2 +-
- net/core/dev.c                    |  2 +-
- 8 files changed, 37 insertions(+), 22 deletions(-)
+ 4 files changed, 28 insertions(+), 14 deletions(-)
+
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index e5586caff67a..1ff7042e572d 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+  */
+ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 
+-	TP_PROTO(struct task_struct *p, int success),
++	TP_PROTO(struct task_struct *p),
+ 
+-	TP_ARGS(p, success),
++	TP_ARGS(p),
+ 
+ 	TP_STRUCT__entry(
+ 		__array(	char,	comm,	TASK_COMM_LEN	)
+@@ -71,28 +71,40 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+ 		__entry->pid		= p->pid;
+ 		__entry->prio		= p->prio;
+-		__entry->success	= success;
++		__entry->success	= 1; /* rudiment, kill when possible */
+ 		__entry->target_cpu	= task_cpu(p);
+ 	)
+ 	TP_perf_assign(
+ 		__perf_task(p);
+ 	),
+ 
+-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
++	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
+ 		  __entry->comm, __entry->pid, __entry->prio,
+-		  __entry->success, __entry->target_cpu)
++		  __entry->target_cpu)
+ );
+ 
++/*
++ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++ * called from the waking context.
++ */
++DEFINE_EVENT(sched_wakeup_template, sched_waking,
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
++
++/*
++ * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
++ * It it not always called from the waking context.
++ */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ /*
+  * Tracepoint for waking up a new task:
+  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
+ 
+ #ifdef CREATE_TRACE_POINTS
+ static inline long __trace_sched_switch_state(struct task_struct *p)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 23e289ae4270..6c21a28689b9 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -1394,9 +1394,9 @@ static void
+ ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+ {
+ 	check_preempt_curr(rq, p, wake_flags);
+-	trace_sched_wakeup(p, true);
+-
+ 	p->state = TASK_RUNNING;
++	trace_sched_wakeup(p);
++
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+ 		p->sched_class->task_woken(rq, p);
+@@ -1579,6 +1579,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ 	if (!(wake_flags & WF_LOCK_SLEEPER))
+ 		p->saved_state = TASK_RUNNING;
+ 
++	trace_sched_waking(p);
++
+ 	success = 1; /* we're going to change ->state */
+ 	cpu = task_cpu(p);
+ 
+@@ -1830,7 +1832,7 @@ void wake_up_new_task(struct task_struct *p)
+ 	rq = __task_rq_lock(p);
+ 	activate_task(rq, p, 0);
+ 	p->on_rq = 1;
+-	trace_sched_wakeup_new(p, true);
++	trace_sched_wakeup_new(p);
+ 	check_preempt_curr(rq, p, WF_FORK);
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
+index 4e98e3b257a3..82fe794af532 100644
+--- a/kernel/trace/trace_sched_switch.c
++++ b/kernel/trace/trace_sched_switch.c
+@@ -106,7 +106,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
+ }
+ 
+ static void
+-probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
++probe_sched_wakeup(void *ignore, struct task_struct *wakee)
+ {
+ 	struct trace_array_cpu *data;
+ 	unsigned long flags;
+diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+index fee77e15d815..8e967ca56006 100644
+--- a/kernel/trace/trace_sched_wakeup.c
++++ b/kernel/trace/trace_sched_wakeup.c
+@@ -458,7 +458,7 @@ static void wakeup_reset(struct trace_array *tr)
+ }
+ 
+ static void
+-probe_wakeup(void *ignore, struct task_struct *p, int success)
++probe_wakeup(void *ignore, struct task_struct *p)
+ {
+ 	struct trace_array_cpu *data;
+ 	int cpu = smp_processor_id();
+-- 
+2.7.0
