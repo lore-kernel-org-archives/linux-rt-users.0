@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/10] irqwork: Move irq safe work to irq context
-Date: Fri, 26 Feb 2016 16:39:19 -0500
-Message-ID: <20160226213932.385524021@goodmis.org>
-References: <20160226213911.445523575@goodmis.org>
+Subject: [PATCH RT 5/7] sched: Introduce the trace_sched_waking tracepoint
+Date: Fri, 26 Feb 2016 16:44:13 -0500
+Message-ID: <20160226214428.734930024@goodmis.org>
+References: <20160226214408.590103414@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,100 +10,190 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Mathieu Desnoyers <mathieu.desnoyers@efficios.com>,
+	Julien Desfossez <jdesfossez@efficios.com>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Francis Giraldeau <francis.giraldeau@gmail.com>,
+	Linus Torvalds <torvalds@linux-foundation.org>,
+	Mike Galbraith <efault@gmx.de>, Ingo Molnar <mingo@kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-irqwork-Move-irq-safe-work-to-irq-context.patch
+Content-Disposition: inline; filename=0005-sched-Introduce-the-trace_sched_waking-tracepoint.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.54-rt73-rc1 stable review patch.
+3.2.77-rt111-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
-On architectures where arch_irq_work_has_interrupt() returns false, we
-end up running the irq safe work from the softirq context. That
-results in a potential deadlock in the scheduler irq work which
-expects that function to be called with interrupts disabled.
+Upstream commit fbd705a0c6184580d0e2fbcbd47a37b6e5822511
 
-Split the irq_work_tick() function into a hard and soft variant. Call
-the hard variant from the tick interrupt and add the soft variant to
-the timer softirq.
+Mathieu reported that since 317f394160e9 ("sched: Move the second half
+of ttwu() to the remote cpu") trace_sched_wakeup() can happen out of
+context of the waker.
 
-Reported-and-tested-by: Yanjiang Jin <yanjiang.jin@windriver.com>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Cc: stable-rt@vger.kernel.org
+This is a problem when you want to analyse wakeup paths because it is
+now very hard to correlate the wakeup event to whoever issued the
+wakeup.
+
+OTOH trace_sched_wakeup() is issued at the point where we set
+p->state = TASK_RUNNING, which is right were we hand the task off to
+the scheduler, so this is an important point when looking at
+scheduling behaviour, up to here its been the wakeup path everything
+hereafter is due to scheduler policy.
+
+To bridge this gap, introduce a second tracepoint: trace_sched_waking.
+It is guaranteed to be called in the waker context.
+
+[ Ported to linux-4.1.y-rt kernel by Mathieu Desnoyers. Resolved
+  conflict: try_to_wake_up_local() does not exist in -rt kernel. Removed
+  its instrumentation hunk. ]
+
+Reported-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
+CC: Julien Desfossez <jdesfossez@efficios.com>
+CC: Peter Zijlstra (Intel) <peterz@infradead.org>
+Cc: Francis Giraldeau <francis.giraldeau@gmail.com>
+Cc: Linus Torvalds <torvalds@linux-foundation.org>
+Cc: Mike Galbraith <efault@gmx.de>
+Cc: Peter Zijlstra <peterz@infradead.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+Cc: Thomas Gleixner <tglx@linutronix.de>
+CC: Ingo Molnar <mingo@kernel.org>
+Link: http://lkml.kernel.org/r/20150609091336.GQ3644@twins.programming.kicks-ass.net
+Signed-off-by: Mathieu Desnoyers <mathieu.desnoyers@efficios.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/irq_work.h | 6 ++++++
- kernel/irq_work.c        | 9 +++++++++
- kernel/timer.c           | 6 ++----
- 3 files changed, 17 insertions(+), 4 deletions(-)
+ include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
+ kernel/sched.c                    |  7 +++++--
+ kernel/trace/trace_sched_switch.c |  2 +-
+ kernel/trace/trace_sched_wakeup.c |  2 +-
+ 4 files changed, 28 insertions(+), 13 deletions(-)
 
-diff --git a/include/linux/irq_work.h b/include/linux/irq_work.h
-index 4a8c7a2df480..ccd736ebee9e 100644
---- a/include/linux/irq_work.h
-+++ b/include/linux/irq_work.h
-@@ -44,4 +44,10 @@ bool irq_work_needs_cpu(void);
- static inline bool irq_work_needs_cpu(void) { return false; }
- #endif
+diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
+index 959ff18b63b6..29cfc3fe68ad 100644
+--- a/include/trace/events/sched.h
++++ b/include/trace/events/sched.h
+@@ -54,9 +54,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+  */
+ DECLARE_EVENT_CLASS(sched_wakeup_template,
  
-+#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
-+void irq_work_tick_soft(void);
-+#else
-+static inline void irq_work_tick_soft(void) { }
-+#endif
-+
- #endif /* _LINUX_IRQ_WORK_H */
-diff --git a/kernel/irq_work.c b/kernel/irq_work.c
-index af8ceafc94e4..883bb73698b9 100644
---- a/kernel/irq_work.c
-+++ b/kernel/irq_work.c
-@@ -163,8 +163,17 @@ void irq_work_tick(void)
+-	TP_PROTO(struct task_struct *p, int success),
++	TP_PROTO(struct task_struct *p),
  
- 	if (!llist_empty(raised) && !arch_irq_work_has_interrupt())
- 		irq_work_run_list(raised);
+-	TP_ARGS(p, success),
++	TP_ARGS(p),
+ 
+ 	TP_STRUCT__entry(
+ 		__array(	char,	comm,	TASK_COMM_LEN	)
+@@ -70,25 +70,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+ 		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
+ 		__entry->pid		= p->pid;
+ 		__entry->prio		= p->prio;
+-		__entry->success	= success;
++		__entry->success	= 1; /* rudiment, kill when possible */
+ 		__entry->target_cpu	= task_cpu(p);
+ 	),
+ 
+-	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
++	TP_printk("comm=%s pid=%d prio=%d target_cpu=%03d",
+ 		  __entry->comm, __entry->pid, __entry->prio,
+-		  __entry->success, __entry->target_cpu)
++		  __entry->target_cpu)
+ );
+ 
++/*
++ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++ * called from the waking context.
++ */
++DEFINE_EVENT(sched_wakeup_template, sched_waking,
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
 +
-+	if (!IS_ENABLED(CONFIG_PREEMPT_RT_FULL))
-+		irq_work_run_list(this_cpu_ptr(&lazy_list));
-+}
-+
-+#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
-+void irq_work_tick_soft(void)
-+{
- 	irq_work_run_list(this_cpu_ptr(&lazy_list));
- }
-+#endif
++ /*
++  * Tracepoint called when the task is actually woken; p->state == TASK_RUNNNG.
++  * It it not always called from the waking context.
++  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
  
  /*
-  * Synchronize against the irq_work @entry, ensures the entry is not
-diff --git a/kernel/timer.c b/kernel/timer.c
-index bf1277c2203b..400ef0bde253 100644
---- a/kernel/timer.c
-+++ b/kernel/timer.c
-@@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
- 	scheduler_tick();
- 	run_local_timers();
- 	rcu_check_callbacks(cpu, user_tick);
--#if defined(CONFIG_IRQ_WORK) && !defined(CONFIG_PREEMPT_RT_FULL)
-+#if defined(CONFIG_IRQ_WORK)
- 	if (in_irq())
- 		irq_work_run();
- #endif
-@@ -1466,9 +1466,7 @@ static void run_timer_softirq(struct softirq_action *h)
+  * Tracepoint for waking up a new task:
+  */
+ DEFINE_EVENT(sched_wakeup_template, sched_wakeup_new,
+-	     TP_PROTO(struct task_struct *p, int success),
+-	     TP_ARGS(p, success));
++	     TP_PROTO(struct task_struct *p),
++	     TP_ARGS(p));
  
- 	hrtimer_run_pending();
+ #ifdef CREATE_TRACE_POINTS
+ static inline long __trace_sched_switch_state(struct task_struct *p)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 1615ca209afd..a9f6d6c0ab93 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -2661,10 +2661,11 @@ static void ttwu_activate(struct rq *rq, struct task_struct *p, int en_flags)
+ static void
+ ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
+ {
+-	trace_sched_wakeup(p, true);
+ 	check_preempt_curr(rq, p, wake_flags);
  
--#if defined(CONFIG_IRQ_WORK) && defined(CONFIG_PREEMPT_RT_FULL)
--	irq_work_tick();
--#endif
-+	irq_work_tick_soft();
+ 	p->state = TASK_RUNNING;
++	trace_sched_wakeup(p);
++
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+ 		p->sched_class->task_woken(rq, p);
+@@ -2852,6 +2853,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+ 	if (!(wake_flags & WF_LOCK_SLEEPER))
+ 		p->saved_state = TASK_RUNNING;
  
- 	if (time_after_eq(jiffies, base->timer_jiffies))
- 		__run_timers(base);
++	trace_sched_waking(p);
++
+ 	success = 1; /* we're going to change ->state */
+ 	cpu = task_cpu(p);
+ 
+@@ -3070,7 +3073,7 @@ void wake_up_new_task(struct task_struct *p)
+ 	rq = __task_rq_lock(p);
+ 	activate_task(rq, p, 0);
+ 	p->on_rq = 1;
+-	trace_sched_wakeup_new(p, true);
++	trace_sched_wakeup_new(p);
+ 	check_preempt_curr(rq, p, WF_FORK);
+ #ifdef CONFIG_SMP
+ 	if (p->sched_class->task_woken)
+diff --git a/kernel/trace/trace_sched_switch.c b/kernel/trace/trace_sched_switch.c
+index 7e62c0a18456..5982146ee863 100644
+--- a/kernel/trace/trace_sched_switch.c
++++ b/kernel/trace/trace_sched_switch.c
+@@ -108,7 +108,7 @@ tracing_sched_wakeup_trace(struct trace_array *tr,
+ }
+ 
+ static void
+-probe_sched_wakeup(void *ignore, struct task_struct *wakee, int success)
++probe_sched_wakeup(void *ignore, struct task_struct *wakee)
+ {
+ 	struct trace_array_cpu *data;
+ 	unsigned long flags;
+diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
+index 6857e0c99656..a3f6ef0642f1 100644
+--- a/kernel/trace/trace_sched_wakeup.c
++++ b/kernel/trace/trace_sched_wakeup.c
+@@ -403,7 +403,7 @@ static void wakeup_reset(struct trace_array *tr)
+ }
+ 
+ static void
+-probe_wakeup(void *ignore, struct task_struct *p, int success)
++probe_wakeup(void *ignore, struct task_struct *p)
+ {
+ 	struct trace_array_cpu *data;
+ 	int cpu = smp_processor_id();
 -- 
 2.7.0
