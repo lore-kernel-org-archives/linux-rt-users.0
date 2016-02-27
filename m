@@ -1,41 +1,48 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [patch] rt,workqueue: Fix blocking call when !TASK_RUNNING
- splat in rescuer_thread()
-Date: Sat, 27 Feb 2016 14:48:06 +0100
-Message-ID: <1456580886.3577.6.camel@gmail.com>
-References: <1456556755.3759.4.camel@gmail.com>
-	 <alpine.DEB.2.11.1602271015550.3638@nanos>
-	 <1456575080.3577.3.camel@gmail.com>
+From: Julio Cruz Barroso <julio.cruz@smartmatic.com>
+Subject: RE: Kernel versus patch version
+Date: Sat, 27 Feb 2016 13:48:41 +0000
+Message-ID: <AF04265A3FC2B144B9892F621A394E13EA3C43F3@tethys>
+References: <AF04265A3FC2B144B9892F621A394E13EA3C436A@tethys>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="us-ascii"
+Content-Transfer-Encoding: 8BIT
+Cc: "otavio.salvador@ossystems.com.br" <otavio.salvador@ossystems.com.br>
+To: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f45.google.com ([74.125.82.45]:35517 "EHLO
-	mail-wm0-f45.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756241AbcB0NsK (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 08:48:10 -0500
-Received: by mail-wm0-f45.google.com with SMTP id l68so6684515wml.0
-        for <linux-rt-users@vger.kernel.org>; Sat, 27 Feb 2016 05:48:09 -0800 (PST)
-In-Reply-To: <1456575080.3577.3.camel@gmail.com>
+Received: from dispatch1-us1.ppe-hosted.com ([148.163.129.52]:45350 "EHLO
+	dispatch1-us1.ppe-hosted.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1756332AbcB0NtU convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Feb 2016 08:49:20 -0500
+In-Reply-To: <AF04265A3FC2B144B9892F621A394E13EA3C436A@tethys>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2016-02-27 at 13:11 +0100, Mike Galbraith wrote:
-> On Sat, 2016-02-27 at 10:16 +0100, Thomas Gleixner wrote:
-> > On Sat, 27 Feb 2016, Mike Galbraith wrote:
-> > > [    0.221272] CPU: 1 PID: 69 Comm: khelper Not tainted 4.0.0-rt4
-> > -lockdep #71
-> > 
-> > Can to verify that against some less random rt version?
-> 
-> Yeah, I'll remove the patch from 4.4-rt and see if it still happens. 
->  Patch has been moldering for quite a while.
+Hi friends,
 
-Hohum, elves and gremlins at play I suppose.  I think it's safe to say
-oh, never mind to that one.
+I'm trying to understand how to fit a kernel version with a RT patch. 
 
-	-Mike
+In summary, I'm working with a kernel version of 3.14.52 (released by Freescale for the iMX6 family) and I'm not sure about the criteria to choose the RT patch version. 
+
+The WIKI [1] mention that we need to make sure that the RT-Preempt version fits the kernel version we intend to use. For example, if we have a kernel version 3.x.y (without z or security or bug fixes), the RT path must be "patches-3.x.y-rtxx", where xx is the RT patch release. 
+
+The RT patch repository [2] doesn't contain a release that fit the 3.14.52 kernel.
+
+Considering this context, I have a some questions:
+
+- Which revision could be more convenient for the 3.14.52 kernel?
+- Can I use a different RT patch release that differ on the .y number (3.x.y)? 
+- Must I need to patch the kernel to 3.14.61 and use the latest RT patch release by Steve [3] some days ago? 
+
+Thanks for your help and appreciated your feedback,
+
+Julio 
+
+[1] RT PREEMPT HOWTO: https://rt.wiki.kernel.org/index.php/RT_PREEMPT_HOWTO 
+[2] RT Patch repository: https://www.kernel.org/pub/linux/kernel/projects/rt/3.14/
+[3] [ANNOUNCE] 3.14.61-rt62 http://www.spinics.net/lists/linux-rt-users/msg14623.html
+
+
+
+
