@@ -1,71 +1,63 @@
-From: Yang Shi <yang.shi@linaro.org>
-Subject: [PATCH] f2fs: mutex can't be used by down_write_nest_lock()
-Date: Fri, 26 Feb 2016 16:25:25 -0800
-Message-ID: <1456532725-4126-1-git-send-email-yang.shi@linaro.org>
-Cc: linux-kernel@vger.kernel.org,
-	linux-f2fs-devel@lists.sourceforge.net,
-	linux-fsdevel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	linaro-kernel@lists.linaro.org, yang.shi@linaro.org
-To: jaegeuk@kernel.org, cm224.lee@samsung.com, chao2.yu@samsung.com,
-	tglx@linutronix.de, rostedt@goodmis.org, bigeasy@linutronix.de
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch] rt,workqueue: Fix blocking call when !TASK_RUNNING splat in
+ rescuer_thread()
+Date: Sat, 27 Feb 2016 08:05:55 +0100
+Message-ID: <1456556755.3759.4.camel@gmail.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f49.google.com ([74.125.82.49]:33555 "EHLO
+	mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751408AbcB0HF6 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sat, 27 Feb 2016 02:05:58 -0500
+Received: by mail-wm0-f49.google.com with SMTP id g62so96991411wme.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 23:05:57 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-fsf2_lock_all() calls down_write_nest_lock() to acquire a rw_sem and check
-a mutex, but down_write_nest_lock() is designed for two rw_sem accoring to the
-comment in include/linux/rwsem.h. And, other than f2fs, it is just called in
-mm/mmap.c with two rwsem.
+[    0.221225] ------------[ cut here ]------------
+[    0.221241] WARNING: CPU: 1 PID: 69 at kernel/sched/core.c:7733 __might_sleep+0x7f/0x90()
+[    0.221253] do not call blocking ops when !TASK_RUNNING; state=1 set at [<ffffffff8106edc4>] rescuer_thread+0x64/0x340
+[    0.221263] Modules linked in:
+[    0.221272] CPU: 1 PID: 69 Comm: khelper Not tainted 4.0.0-rt4-lockdep #71
+[    0.221273] Hardware name: IBM System x3550 M3 -[7944K3G]-/69Y5698     , BIOS -[D6E150AUS-1.10]- 12/15/2010
+[    0.221280]  ffffffff81a2269f ffff8801789a7cc8 ffffffff81605182 0000000000000002
+[    0.221282]  ffff8801789a7d18 ffff8801789a7d08 ffffffff81053cda ffff8801789a7d48
+[    0.221284]  ffffffff81a23b44 0000000000000394 0000000000000000 0000000000000000
+[    0.221284] Call Trace:
+[    0.221288]  [<ffffffff81605182>] dump_stack+0x4f/0x9d
+[    0.221291]  [<ffffffff81053cda>] warn_slowpath_common+0x8a/0xe0
+[    0.221293]  [<ffffffff81053d76>] warn_slowpath_fmt+0x46/0x50
+[    0.221295]  [<ffffffff8106edc4>] ? rescuer_thread+0x64/0x340 
+[    0.221296]  [<ffffffff8106edc4>] ? rescuer_thread+0x64/0x340
+[    0.221298]  [<ffffffff810794ef>] __might_sleep+0x7f/0x90
+[    0.221299]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
+[    0.221301]  [<ffffffff8160b4d4>] rt_spin_lock+0x24/0x70
+[    0.221304]  [<ffffffff8107fddd>] ? migrate_disable+0x7d/0xe0
+[    0.221305]  [<ffffffff8106ee09>] rescuer_thread+0xa9/0x340
+[    0.221307]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
+[    0.221308]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
+[    0.221311]  [<ffffffff81073721>] kthread+0xe1/0x100
+[    0.221312]  [<ffffffff8160b1e0>] ? _raw_spin_unlock_irq+0x30/0x70 
+[    0.221315]  [<ffffffff81073640>] ? __kthread_parkme+0xa0/0xa0
+[    0.221317]  [<ffffffff8160be88>] ret_from_fork+0x58/0x90
+[    0.221319]  [<ffffffff81073640>] ? __kthread_parkme+0xa0/0xa0
+[    0.221320] ---[ end trace 0000000000000001 ]---
 
-So, it looks it is used wrongly by f2fs. And, it causes the below compile
-warning on -rt kernel too.
-
-In file included from fs/f2fs/xattr.c:25:0:
-fs/f2fs/f2fs.h: In function 'f2fs_lock_all':
-fs/f2fs/f2fs.h:962:34: warning: passing argument 2 of 'down_write_nest_lock' from incompatible pointer type [-Wincompatible-pointer-types]
-  f2fs_down_write(&sbi->cp_rwsem, &sbi->cp_mutex);
-                                  ^
-fs/f2fs/f2fs.h:27:55: note: in definition of macro 'f2fs_down_write'
- #define f2fs_down_write(x, y) down_write_nest_lock(x, y)
-                                                       ^
-In file included from include/linux/rwsem.h:22:0,
-                 from fs/f2fs/xattr.c:21:
-include/linux/rwsem_rt.h:138:20: note: expected 'struct rw_semaphore *' but argument is of type 'struct mutex *'
- static inline void down_write_nest_lock(struct rw_semaphore *sem,
-
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- fs/f2fs/f2fs.h | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ kernel/workqueue.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index ff79054..af77c1a 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -25,7 +25,6 @@
- 
- #ifdef CONFIG_F2FS_CHECK_FS
- #define f2fs_bug_on(sbi, condition)	BUG_ON(condition)
--#define f2fs_down_write(x, y)	down_write_nest_lock(x, y)
- #else
- #define f2fs_bug_on(sbi, condition)					\
- 	do {								\
-@@ -34,7 +33,6 @@
- 			set_sbi_flag(sbi, SBI_NEED_FSCK);		\
- 		}							\
- 	} while (0)
--#define f2fs_down_write(x, y)	down_write(x)
- #endif
- 
- /*
-@@ -1006,7 +1004,7 @@ static inline void f2fs_unlock_op(struct f2fs_sb_info *sbi)
- 
- static inline void f2fs_lock_all(struct f2fs_sb_info *sbi)
- {
--	f2fs_down_write(&sbi->cp_rwsem, &sbi->cp_mutex);
-+	down_write(&sbi->cp_rwsem);
- }
- 
- static inline void f2fs_unlock_all(struct f2fs_sb_info *sbi)
--- 
-2.0.2
+--- a/kernel/workqueue.c
++++ b/kernel/workqueue.c
+@@ -2255,8 +2255,6 @@ static int rescuer_thread(void *__rescue
+ 	 */
+ 	rescuer->task->flags |= PF_WQ_WORKER;
+ repeat:
+-	set_current_state(TASK_INTERRUPTIBLE);
