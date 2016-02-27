@@ -1,8 +1,9 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch] rt,workqueue: Fix blocking call when !TASK_RUNNING splat in
- rescuer_thread()
-Date: Sat, 27 Feb 2016 08:05:55 +0100
-Message-ID: <1456556755.3759.4.camel@gmail.com>
+Subject: [patch] drm,radeon,i915: use preempt_disable/enable_rt() where
+ recommended.
+Date: Sat, 27 Feb 2016 08:09:11 +0100
+Message-ID: <1456556951.3759.6.camel@gmail.com>
+References: <1456556755.3759.4.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
@@ -10,54 +11,59 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f49.google.com ([74.125.82.49]:33555 "EHLO
-	mail-wm0-f49.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751408AbcB0HF6 (ORCPT
+Received: from mail-wm0-f53.google.com ([74.125.82.53]:36630 "EHLO
+	mail-wm0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752013AbcB0HJO (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 02:05:58 -0500
-Received: by mail-wm0-f49.google.com with SMTP id g62so96991411wme.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 23:05:57 -0800 (PST)
+	Sat, 27 Feb 2016 02:09:14 -0500
+Received: by mail-wm0-f53.google.com with SMTP id g62so98956016wme.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 23:09:13 -0800 (PST)
+In-Reply-To: <1456556755.3759.4.camel@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-[    0.221225] ------------[ cut here ]------------
-[    0.221241] WARNING: CPU: 1 PID: 69 at kernel/sched/core.c:7733 __might_sleep+0x7f/0x90()
-[    0.221253] do not call blocking ops when !TASK_RUNNING; state=1 set at [<ffffffff8106edc4>] rescuer_thread+0x64/0x340
-[    0.221263] Modules linked in:
-[    0.221272] CPU: 1 PID: 69 Comm: khelper Not tainted 4.0.0-rt4-lockdep #71
-[    0.221273] Hardware name: IBM System x3550 M3 -[7944K3G]-/69Y5698     , BIOS -[D6E150AUS-1.10]- 12/15/2010
-[    0.221280]  ffffffff81a2269f ffff8801789a7cc8 ffffffff81605182 0000000000000002
-[    0.221282]  ffff8801789a7d18 ffff8801789a7d08 ffffffff81053cda ffff8801789a7d48
-[    0.221284]  ffffffff81a23b44 0000000000000394 0000000000000000 0000000000000000
-[    0.221284] Call Trace:
-[    0.221288]  [<ffffffff81605182>] dump_stack+0x4f/0x9d
-[    0.221291]  [<ffffffff81053cda>] warn_slowpath_common+0x8a/0xe0
-[    0.221293]  [<ffffffff81053d76>] warn_slowpath_fmt+0x46/0x50
-[    0.221295]  [<ffffffff8106edc4>] ? rescuer_thread+0x64/0x340 
-[    0.221296]  [<ffffffff8106edc4>] ? rescuer_thread+0x64/0x340
-[    0.221298]  [<ffffffff810794ef>] __might_sleep+0x7f/0x90
-[    0.221299]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
-[    0.221301]  [<ffffffff8160b4d4>] rt_spin_lock+0x24/0x70
-[    0.221304]  [<ffffffff8107fddd>] ? migrate_disable+0x7d/0xe0
-[    0.221305]  [<ffffffff8106ee09>] rescuer_thread+0xa9/0x340
-[    0.221307]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
-[    0.221308]  [<ffffffff8106ed60>] ? worker_thread+0x4d0/0x4d0
-[    0.221311]  [<ffffffff81073721>] kthread+0xe1/0x100
-[    0.221312]  [<ffffffff8160b1e0>] ? _raw_spin_unlock_irq+0x30/0x70 
-[    0.221315]  [<ffffffff81073640>] ? __kthread_parkme+0xa0/0xa0
-[    0.221317]  [<ffffffff8160be88>] ret_from_fork+0x58/0x90
-[    0.221319]  [<ffffffff81073640>] ? __kthread_parkme+0xa0/0xa0
-[    0.221320] ---[ end trace 0000000000000001 ]---
+
+DRM folks identified the spots, so use them.
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- kernel/workqueue.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/gpu/drm/i915/i915_irq.c         |    2 ++
+ drivers/gpu/drm/radeon/radeon_display.c |    2 ++
+ 2 files changed, 4 insertions(+)
 
---- a/kernel/workqueue.c
-+++ b/kernel/workqueue.c
-@@ -2255,8 +2255,6 @@ static int rescuer_thread(void *__rescue
- 	 */
- 	rescuer->task->flags |= PF_WQ_WORKER;
- repeat:
--	set_current_state(TASK_INTERRUPTIBLE);
+--- a/drivers/gpu/drm/i915/i915_irq.c
++++ b/drivers/gpu/drm/i915/i915_irq.c
+@@ -812,6 +812,7 @@ static int i915_get_crtc_scanoutpos(stru
+ 	spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
+ 
+ 	/* preempt_disable_rt() should go right here in PREEMPT_RT patchset. */
++	preempt_disable_rt();
+ 
+ 	/* Get optional system timestamp before query. */
+ 	if (stime)
+@@ -863,6 +864,7 @@ static int i915_get_crtc_scanoutpos(stru
+ 		*etime = ktime_get();
+ 
+ 	/* preempt_enable_rt() should go right here in PREEMPT_RT patchset. */
++	preempt_enable_rt();
+ 
+ 	spin_unlock_irqrestore(&dev_priv->uncore.lock, irqflags);
+ 
+--- a/drivers/gpu/drm/radeon/radeon_display.c
++++ b/drivers/gpu/drm/radeon/radeon_display.c
+@@ -1849,6 +1849,7 @@ int radeon_get_crtc_scanoutpos(struct dr
+ 	struct radeon_device *rdev = dev->dev_private;
+ 
+ 	/* preempt_disable_rt() should go right here in PREEMPT_RT patchset. */
++	preempt_disable_rt();
+ 
+ 	/* Get optional system timestamp before query. */
+ 	if (stime)
+@@ -1941,6 +1942,7 @@ int radeon_get_crtc_scanoutpos(struct dr
+ 		*etime = ktime_get();
+ 
+ 	/* preempt_enable_rt() should go right here in PREEMPT_RT patchset. */
++	preempt_enable_rt();
+ 
+ 	/* Decode into vertical and horizontal scanout position. */
+ 	*vpos = position & 0x1fff;
