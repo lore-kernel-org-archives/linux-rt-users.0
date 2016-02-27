@@ -1,41 +1,31 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: WARNING: amd_iommu. linux-4.4.1-rt6
-Date: Sat, 27 Feb 2016 10:58:12 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1602271057270.3638@nanos>
-References: <56CBA91D.6080909@gmail.com> <alpine.DEB.2.11.1602271024130.3638@nanos>
+From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Subject: Re: [PATCH RT 07/12] dump stack: dont disable preemption during trace
+Date: Sat, 27 Feb 2016 11:32:06 +0100
+Message-ID: <20160227103206.GA2337@breakpoint.cc>
+References: <20160226213235.253312067@goodmis.org>
+ <20160226213341.100625803@goodmis.org>
 Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: DIXLOR <dixlor@gmail.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35561 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1753316AbcB0J7c (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 04:59:32 -0500
-In-Reply-To: <alpine.DEB.2.11.1602271024130.3638@nanos>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160226213341.100625803@goodmis.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 27 Feb 2016, Thomas Gleixner wrote:
-> --- a/drivers/iommu/amd_iommu.c
-> +++ b/drivers/iommu/amd_iommu.c
-> @@ -1952,10 +1952,10 @@ static int __attach_device(struct iommu_
->  	int ret;
->  
->  	/*
-> -	 * Must be called with IRQs disabled. Warn here to detect early
-> -	 * when its not.
-> +	 * Must be called with IRQs disabled on a non RT kernel. Warn here to
-> +	 * detect early when its not.
->  	 */
-> -	WARN_ON(!irqs_disabled());
-> +	WARN_ON_NORT(!irqs_disabled());
+On 2016-02-26 16:32:42 [-0500], Steven Rostedt wrote:
+> 3.18.27-rt26-rc1 stable review patch.
+> If anyone has any objections, please let me know.
 
-That wants to be
+Please merge this one along with "kernel: migrate_disable() do fastpath
+in atomic & irqs-off". Otherwise we might get recursive with lockdep and
+CPU-hotplug (if we go after hp->lock in pin_current_cpu()).
 
-+	WARN_ON_NONRT(!irqs_disabled());
-
-of course.
-
--ENOTAWAKEYET
+Sebastian
