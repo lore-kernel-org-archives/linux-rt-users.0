@@ -1,8 +1,8 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch] drm,radeon,i915: use preempt_disable/enable_rt() where
- recommended.
-Date: Sat, 27 Feb 2016 08:09:11 +0100
-Message-ID: <1456556951.3759.6.camel@gmail.com>
+Subject: [patch] locking/lglocks: use preempt_enable/disable_nort() in
+ lg_double_lock/lg_double_unlock
+Date: Sat, 27 Feb 2016 08:34:43 +0100
+Message-ID: <1456558483.3759.18.camel@gmail.com>
 References: <1456556755.3759.4.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -11,59 +11,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f53.google.com ([74.125.82.53]:36630 "EHLO
-	mail-wm0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752013AbcB0HJO (ORCPT
+Received: from mail-wm0-f42.google.com ([74.125.82.42]:32958 "EHLO
+	mail-wm0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751378AbcB0Her (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 02:09:14 -0500
-Received: by mail-wm0-f53.google.com with SMTP id g62so98956016wme.1
-        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 23:09:13 -0800 (PST)
+	Sat, 27 Feb 2016 02:34:47 -0500
+Received: by mail-wm0-f42.google.com with SMTP id g62so97453534wme.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 26 Feb 2016 23:34:47 -0800 (PST)
 In-Reply-To: <1456556755.3759.4.camel@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Let's not do that when snagging an rtmutex.
 
-DRM folks identified the spots, so use them.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Mike Galbraith <umgwanakilbuti@gmail.com>
 ---
- drivers/gpu/drm/i915/i915_irq.c         |    2 ++
- drivers/gpu/drm/radeon/radeon_display.c |    2 ++
- 2 files changed, 4 insertions(+)
+ kernel/locking/lglock.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
---- a/drivers/gpu/drm/i915/i915_irq.c
-+++ b/drivers/gpu/drm/i915/i915_irq.c
-@@ -812,6 +812,7 @@ static int i915_get_crtc_scanoutpos(stru
- 	spin_lock_irqsave(&dev_priv->uncore.lock, irqflags);
+--- a/kernel/locking/lglock.c
++++ b/kernel/locking/lglock.c
+@@ -86,7 +86,7 @@ void lg_double_lock(struct lglock *lg, i
+ 	if (cpu2 < cpu1)
+ 		swap(cpu1, cpu2);
  
- 	/* preempt_disable_rt() should go right here in PREEMPT_RT patchset. */
-+	preempt_disable_rt();
+-	preempt_disable();
++	preempt_disable_nort();
+ 	lock_acquire_shared(&lg->lock_dep_map, 0, 0, NULL, _RET_IP_);
+ 	lg_do_lock(per_cpu_ptr(lg->lock, cpu1));
+ 	lg_do_lock(per_cpu_ptr(lg->lock, cpu2));
+@@ -97,7 +97,7 @@ void lg_double_unlock(struct lglock *lg,
+ 	lock_release(&lg->lock_dep_map, 1, _RET_IP_);
+ 	lg_do_unlock(per_cpu_ptr(lg->lock, cpu1));
+ 	lg_do_unlock(per_cpu_ptr(lg->lock, cpu2));
+-	preempt_enable();
++	preempt_enable_nort();
+ }
  
- 	/* Get optional system timestamp before query. */
- 	if (stime)
-@@ -863,6 +864,7 @@ static int i915_get_crtc_scanoutpos(stru
- 		*etime = ktime_get();
- 
- 	/* preempt_enable_rt() should go right here in PREEMPT_RT patchset. */
-+	preempt_enable_rt();
- 
- 	spin_unlock_irqrestore(&dev_priv->uncore.lock, irqflags);
- 
---- a/drivers/gpu/drm/radeon/radeon_display.c
-+++ b/drivers/gpu/drm/radeon/radeon_display.c
-@@ -1849,6 +1849,7 @@ int radeon_get_crtc_scanoutpos(struct dr
- 	struct radeon_device *rdev = dev->dev_private;
- 
- 	/* preempt_disable_rt() should go right here in PREEMPT_RT patchset. */
-+	preempt_disable_rt();
- 
- 	/* Get optional system timestamp before query. */
- 	if (stime)
-@@ -1941,6 +1942,7 @@ int radeon_get_crtc_scanoutpos(struct dr
- 		*etime = ktime_get();
- 
- 	/* preempt_enable_rt() should go right here in PREEMPT_RT patchset. */
-+	preempt_enable_rt();
- 
- 	/* Decode into vertical and horizontal scanout position. */
- 	*vpos = position & 0x1fff;
+ void lg_global_lock(struct lglock *lg)
