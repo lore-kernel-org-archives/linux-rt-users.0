@@ -1,106 +1,71 @@
 From: DIXLOR <dixlor@gmail.com>
-Subject: Re: WARNING: amd_iommu. linux-4.4.1-rt6
-Date: Sat, 27 Feb 2016 14:38:47 +0300
-Message-ID: <56D18AC7.4090409@gmail.com>
-References: <56CBA91D.6080909@gmail.com>
- <alpine.DEB.2.11.1602271024130.3638@nanos>
- <alpine.DEB.2.11.1602271057270.3638@nanos>
+Subject: [PATCH] AMD IOMMU WARN NONRT
+Date: Sat, 27 Feb 2016 14:39:43 +0300
+Message-ID: <56D18AFF.40308@gmail.com>
 Reply-To: dixlor@gmail.com
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="------------ms090005040601090701030501"
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="------------ms020802010509080401030503"
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f172.google.com ([209.85.217.172]:34243 "EHLO
-	mail-lb0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756252AbcB0Li5 (ORCPT
+Received: from mail-lb0-f179.google.com ([209.85.217.179]:34423 "EHLO
+	mail-lb0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756185AbcB0Ljw (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 06:38:57 -0500
-Received: by mail-lb0-f172.google.com with SMTP id of3so58799748lbc.1
-        for <linux-rt-users@vger.kernel.org>; Sat, 27 Feb 2016 03:38:56 -0800 (PST)
-In-Reply-To: <alpine.DEB.2.11.1602271057270.3638@nanos>
+	Sat, 27 Feb 2016 06:39:52 -0500
+Received: by mail-lb0-f179.google.com with SMTP id of3so58805109lbc.1
+        for <linux-rt-users@vger.kernel.org>; Sat, 27 Feb 2016 03:39:51 -0800 (PST)
+Received: from [192.168.1.2] (ppp85-140-247-96.pppoe.mtu-net.ru. [85.140.247.96])
+        by smtp.googlemail.com with ESMTPSA id l5sm1709946lfd.22.2016.02.27.03.39.50
+        for <linux-rt-users@vger.kernel.org>
+        (version=TLSv1/SSLv3 cipher=OTHER);
+        Sat, 27 Feb 2016 03:39:50 -0800 (PST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 This is a cryptographically signed message in MIME format.
 
---------------ms090005040601090701030501
+--------------ms020802010509080401030503
 Content-Type: text/plain; charset=utf-8; format=flowed
 Content-Transfer-Encoding: quoted-printable
 
-Yet another WARN
+diff -ur a/drivers/iommu/amd_iommu.c b/drivers/iommu/amd_iommu.c
+--- a/drivers/iommu/amd_iommu.c    2016-02-17 23:31:25.000000000 +0300
++++ b/drivers/iommu/amd_iommu.c    2016-02-27 14:36:34.928583707 +0300
+@@ -1952,10 +1952,10 @@
+      int ret;
 
-[    2.667483] WARNING: CPU: 6 PID: 1 at drivers/iommu/amd_iommu.c:2124=20
-0xffffffff812cd85a()
-[    2.667484] Modules linked in:
-[    2.667488] CPU: 6 PID: 1 Comm: swapper/0 Tainted: G U          4.4.2-=
-plx+ #6
-[    2.667489] Hardware name: empty empty/S8225, BIOS 'V3.03   ' 11/01/20=
-12
-[    2.667490]  ffffffff815efa4c ffffffff8121e0d6 0000000000000000 ffffff=
-ff81033fef
-[    2.667492]  ffff880422992180 ffff8804230e0098 ffff8804229c0800 ffff88=
-0423934000
-[    2.667493]  ffff880422a0c000 ffffffff812cd85a ffff880422992180 ffff88=
-04230e0098
-[    2.667495] Call Trace:
-[    2.667497]  [<ffffffff8121e0d6>] ? 0xffffffff8121e0d6
-[    2.667498]  [<ffffffff81033fef>] ? 0xffffffff81033fef
-[    2.667499]  [<ffffffff812cd85a>] ? 0xffffffff812cd85a
-[    2.667500]  [<ffffffff812cd886>] ? 0xffffffff812cd886
-[    2.667500]  [<ffffffff812cd9a7>] ? 0xffffffff812cd9a7
-[    2.667501]  [<ffffffff814fa559>] ? 0xffffffff814fa559
-[    2.667502]  [<ffffffff812cb3aa>] ? 0xffffffff812cb3aa
-[    2.667502]  [<ffffffff812cb9da>] ? 0xffffffff812cb9da
-[    2.667503]  [<ffffffff812ceaa3>] ? 0xffffffff812ceaa3
-[    2.667504]  [<ffffffff812ca7e8>] ? 0xffffffff812ca7e8
-[    2.667504]  [<ffffffff812ca808>] ? 0xffffffff812ca808
-[    2.667505]  [<ffffffff81306adf>] ? 0xffffffff81306adf
-[    2.667506]  [<ffffffff812cb33a>] ? 0xffffffff812cb33a
-[    2.667507]  [<ffffffff8172b08a>] ? 0xffffffff8172b08a
-[    2.667507]  [<ffffffff8170c281>] ? 0xffffffff8170c281
-[    2.667508]  [<ffffffff8172b1d5>] ? 0xffffffff8172b1d5
-[    2.667509]  [<ffffffff8172b250>] ? 0xffffffff8172b250
-[    2.667509]  [<ffffffff8170c28f>] ? 0xffffffff8170c28f
-[    2.667510]  [<ffffffff810003df>] ? 0xffffffff810003df
-[    2.667511]  [<ffffffff81708e04>] ? 0xffffffff81708e04
-[    2.667511]  [<ffffffff814f62c8>] ? 0xffffffff814f62c8
-[    2.667512]  [<ffffffff814f62cd>] ? 0xffffffff814f62cd
-[    2.667513]  [<ffffffff814facef>] ? 0xffffffff814facef
-[    2.667513]  [<ffffffff814f62c8>] ? 0xffffffff814f62c8
-[    2.667514] ---[ end trace 0000000000000001 ]---
-
-
-
-
-27.02.2016 12:58, Thomas Gleixner =D0=BF=D0=B8=D1=88=D0=B5=D1=82:
-> On Sat, 27 Feb 2016, Thomas Gleixner wrote:
->> --- a/drivers/iommu/amd_iommu.c
->> +++ b/drivers/iommu/amd_iommu.c
->> @@ -1952,10 +1952,10 @@ static int __attach_device(struct iommu_
->>   	int ret;
->>  =20
->>   	/*
->> -	 * Must be called with IRQs disabled. Warn here to detect early
->> -	 * when its not.
->> +	 * Must be called with IRQs disabled on a non RT kernel. Warn here t=
+      /*
+-     * Must be called with IRQs disabled. Warn here to detect early
+-     * when its not.
++     * Must be called with IRQs disabled on a non RT kernel. Warn here t=
 o
->> +	 * detect early when its not.
->>   	 */
->> -	WARN_ON(!irqs_disabled());
->> +	WARN_ON_NORT(!irqs_disabled());
-> That wants to be
->
-> +	WARN_ON_NONRT(!irqs_disabled());
->
-> of course.
->
-> -ENOTAWAKEYET
->
++     * detect early when its not.
+       */
+-    WARN_ON(!irqs_disabled());
++    WARN_ON_NONRT(!irqs_disabled());
+
+      /* lock domain */
+      spin_lock(&domain->lock);
+@@ -2118,10 +2118,10 @@
+      struct protection_domain *domain;
+
+      /*
+-     * Must be called with IRQs disabled. Warn here to detect early
+-     * when its not.
++     * Must be called with IRQs disabled on a non RT kernel. Warn here t=
+o
++     * detect early when its not.
+       */
+-    WARN_ON(!irqs_disabled());
++    WARN_ON_NONRT(!irqs_disabled());
+
+      if (WARN_ON(!dev_data->domain))
+          return;
 
 
 
---------------ms090005040601090701030501
+
+--------------ms020802010509080401030503
 Content-Type: application/pkcs7-signature; name="smime.p7s"
 Content-Transfer-Encoding: base64
 Content-Disposition: attachment; filename="smime.p7s"
@@ -159,18 +124,18 @@ q1gUbu36Z4pNQ00BtbouH2j/xPfXdr/qChyZl9nBjT+k4ClFWz/qYo12+5fMchNtBDGCA2gw
 ggNkAgEBMGowVjELMAkGA1UEBhMCQ04xGjAYBgNVBAoTEVdvU2lnbiBDQSBMaW1pdGVkMSsw
 KQYDVQQDDCJDQSDmsoPpgJogRW1haWwg5a6i5oi356uv6K+B5LmmIEcyAhBbLvAL7CpbaYZ7
 xtCHUmdkMA0GCWCGSAFlAwQCAQUAoIIBzzAYBgkqhkiG9w0BCQMxCwYJKoZIhvcNAQcBMBwG
-CSqGSIb3DQEJBTEPFw0xNjAyMjcxMTM4NDdaMC8GCSqGSIb3DQEJBDEiBCA3P8SK3Pm1NbPY
-Yx2afwxH/ahGAPYXvdLqT02ate65HDBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
+CSqGSIb3DQEJBTEPFw0xNjAyMjcxMTM5NDNaMC8GCSqGSIb3DQEJBDEiBCBG0QcO14D/Igqy
+Fh31ssUZ1jkcIHdq9jUDLPliIfBGCzBsBgkqhkiG9w0BCQ8xXzBdMAsGCWCGSAFlAwQBKjAL
 BglghkgBZQMEAQIwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqGSIb3DQMCAgFA
 MAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMHkGCSsGAQQBgjcQBDFsMGowVjELMAkGA1UEBhMC
 Q04xGjAYBgNVBAoTEVdvU2lnbiBDQSBMaW1pdGVkMSswKQYDVQQDDCJDQSDmsoPpgJogRW1h
 aWwg5a6i5oi356uv6K+B5LmmIEcyAhBbLvAL7CpbaYZ7xtCHUmdkMHsGCyqGSIb3DQEJEAIL
 MWygajBWMQswCQYDVQQGEwJDTjEaMBgGA1UEChMRV29TaWduIENBIExpbWl0ZWQxKzApBgNV
 BAMMIkNBIOayg+mAmiBFbWFpbCDlrqLmiLfnq6/or4HkuaYgRzICEFsu8AvsKltphnvG0IdS
-Z2QwDQYJKoZIhvcNAQEBBQAEggEAlY/txGXToQGk7XA82iUyieAzwHczJdiCufwY6PJQJJvJ
-mgjgwe9Nzpa0vl2BCUDGjKEvZiHoNMQxAZaN34zYngwrOhQihLAc+Z126Jc2zXJ+ELTYjtiu
-Y2WXAoWAg1GCfE+hHPNPhNIbsIqh4IYYUodhjZBa3pMA6BJsZ/20852p6Q6YStDWS+63cvYp
-xJirPGpPZyYl8IMrygyhyqgm3jPPZqcT8IJofTwksQTYAeXC1SENdm7PBlb+syXhqI/+a1rI
-JPN1G6ADukaAApyw/TPTuetiVI45XiB52zwugSi/L0Bn6TSIT5aSru7W3jbjoECz4nJjzOso
-+NTNvsiOFQAAAAAAAA==
---------------ms090005040601090701030501--
+Z2QwDQYJKoZIhvcNAQEBBQAEggEAx5qfboL/emRXjl3EZwwl+ZmT88q7nrx3FddnyfKna/uX
+2pfh3dorbxvf4E2e/RF7pLvsgB7m5K3gd8V+9i40fVnDg81IUIOZqrtl8RHakp+NeKjrS3kU
+fhWaoYb0QsU66ePdbCcwvBcZ4UNXXJpmfjMUXm2So9POy1h71vCFEsVZFg8Oimsguj5zN2bI
+lJd5h8IM/TeU6y40qvia5gKUm+rGCKwoh+QVbrKyfzlJwSCYHvC1It01vam1f8JpR0Yd4FRm
+M7UGzVHPDTY+0nRlts1Y2FLd13XBddwVvx6mNAHG+mTHlchQQKBfsjP3Ukky9V4ZNHm9WDuS
+PRR7te6r6wAAAAAAAA==
+--------------ms020802010509080401030503--
