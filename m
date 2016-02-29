@@ -1,49 +1,49 @@
-From: "Mr. DOUGLAS" <douglascontact6048@live.com>
-Subject: =?utf-8?q?INFORMA=C3=87=C3=83O_IMPORTANTE__RE=3A_Consultoria_de_Investime?=
- =?utf-8?q?nto_em_sua_Localidade=2E?=
-Date: Sun, 28 Feb 2016 04:42:35 -0800
-Message-ID: <20160228134132.69C418FAFCE@webmail.cefet-rj.br>
-Reply-To: johnsondouglas8738@gmail.com
+From: <Martin.Wirth@dlr.de>
+Subject: AW: AW: Large latencies with 4.4.1-rt6
+Date: Mon, 29 Feb 2016 17:02:06 +0000
+Message-ID: <1A2AF5F768264E479963C4D8C015EB691B69F0A3@DLREXMBX01.intra.dlr.de>
+References: <1A2AF5F768264E479963C4D8C015EB691B692C5C@dlrexmbx03.intra.dlr.de>
+ <20160225152930.GC16161@linutronix.de>
+ <1A2AF5F768264E479963C4D8C015EB691B6974A2@dlrexmbx03.intra.dlr.de>
+ <56CF2BCD.3050109@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=iso-8859-1
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-To: Recipients <douglascontact6048@live.com>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: <linux-rt-users@vger.kernel.org>
+To: <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from webmail.cefet-rj.br ([200.9.149.52]:49053 "EHLO
-	webmail.cefet-rj.br" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751194AbcB2Q60 convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Feb 2016 11:58:26 -0500
-Content-Description: Mail message body
+Received: from mailhost.dlr.de ([129.247.252.33]:44249 "EHLO mailhost.dlr.de"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751350AbcB2RCL (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Feb 2016 12:02:11 -0500
+In-Reply-To: <56CF2BCD.3050109@linutronix.de>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Oi,
-
-Temos planejado investir alguns fundos no seu pa=EDs.
-
-Responder se voc=EA estiver interessado.
-
-Sauda=E7=F5es,
-Sir Henry Neville Lindley Keswick
-Presidente da Jardine Matheson Holdings Ltd
-https://en.wikipedia.org/wiki/Keswick_family
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=3D=
-=3D=3D
-
-Hi friend,
-
-Our family is interested in investing funds in your locality.
-
-More information for you interest .
-
-Greetings,
-Sir Henry Neville Lindley Keswick
-Chairman of Jardine Matheson Holdings Ltd
-https://en.wikipedia.org/wiki/Keswick_family
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+SGkgU2ViYXN0aWFuLA0KDQo+IFZvbjogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciBbbWFpbHRv
+OmJpZ2Vhc3lAbGludXRyb25peC5kZV0NCj4gR2VzZW5kZXQ6IERvbm5lcnN0YWcsIDI1LiBGZWJy
+dWFyIDIwMTYgMTc6MjkNCj4gQW46IFdpcnRoLCBNYXJ0aW4NCj4gQ2M6IGxpbnV4LXJ0LXVzZXJz
+QHZnZXIua2VybmVsLm9yZw0KPiBCZXRyZWZmOiBSZTogQVc6IExhcmdlIGxhdGVuY2llcyB3aXRo
+IDQuNC4xLXJ0Ng0KPiANCj4gT24gMDIvMjUvMjAxNiAwNTowOCBQTSwgTWFydGluLldpcnRoQGRs
+ci5kZSB3cm90ZToNCj4gPiBIaSBTZWJhc3RpYW4NCj4gDQo+IEhpIE1hcnRpbiwNCj4gDQo+ID4g
+SSB3aWxsIGhhdmUgYWNjZXNzIHRvIHRoZSBtYWNoaW5lIGZvciBsb25nZXIgdGVzdGluZyBuZXh0
+IE1vbmRheSBhZ2Fpbi4gQnV0DQo+IEkgcmVtZW1iZXIgdGhhdCB2NC40LjEtcnQ1IHNob3dlZCB0
+aGUgc2FtZSBsb25nIGxhdGVuY2llcy4NCj4gPiBXaWxsIHRyeSB2NC40LXJ0MyBhbmQgdjQuNC1y
+dDIgYmVnaW5uaW5nIG9mIG5leHQgd2Vlay4NCj4gDQo+IElmIHRoaXMgd291bGQgYmUgeW91ciBm
+aXJzdCB0cnkgSSB3b3VsZCBzdWdnZXN0IHRvIHJ1biBod2xhdGRldGVjdCBpbiBjYXNlIEJJT1MN
+Cj4gaXMgY2FsbGluZyBmb3IgYXR0ZW50aW9uLiBIb3dldmVyIHNpbmNlIHlvdSBkb24ndCBzZWUg
+dGhpcyBpbg0KPiB2NC4xIGlzIGxvb2tzIHVubGlrZWx5LiBJdCBhbHNvIG1pZ2h0IGJlIGhlbHAg
+dG8gaGF2ZSBhIGxvZyB0byBzZWUgd2hhdCB0aGUgb3RoZXINCj4gQ1BVcyBhcmUgZG9pbmcgYXJv
+dW5kIHRoYXQgdGltZS4gQXJlIHRoZXkgYnVzeSBkb2luZyBzb21ldGhpbmcgb3IgZG8gdGhleQ0K
+PiBwYXVzZSBhcyB3ZWxsLiBBbHNvIGRvIHRyeSBzb21lIGZhbmN5IFBNIHRoaW5ncyAoYnV0IHRo
+ZW4gYWdhaW4gd2h5IG5vdw0KPiBhbmQgbm90IGluIHY0LjEgYXMgd2VsbCkuDQo+IA0KDQpJIHRl
+c3RlZCBhIGJ1bmNoIG9mIGtlcm5lbHMgdG9kYXkgYW5kIHRoZSBvdXRjb21lIGlzOg0KDQo0LjQu
+MC1ydDI6ICAgZ29vZA0KNC40LjAtcnQzOiAgIGdvb2QNCjQuNC4xLXJ0NDogICBnb29kDQo0LjQu
+MS1ydDU6ICAgYmFkDQo0LjQuMS1ydDY6ICAgYmFkDQo0LjQuMi1ydDc6ICAgYmFkDQo0LjQuMy1y
+dDk6ICAgYmFkDQo0LjQuMy1ydDkgd2l0aCBjb21taXQgYjNiMzZlZTYxYzc4MDQwNzczN2EzMjEw
+MDdhMjRjZmU5YzM2NjhhNyByZXZlcnRlZDogICBnb29kDQoNCihnb29kIG1lYW5zIG1heCBjeWNs
+aWN0ZXN0IGxhdGVuY2llcyA8IDI1IMK1cywgIGJhZCBtZWFucyBsYXRlbmNpZXMgPiA1MDAgwrVz
+KQ0KDQpJJ20gbm90IGEga2VybmVsIGRldmVsb3Blciwgc28gSSBoYXZlIG5vdCB0aGUgc2xpZ2h0
+ZXN0IGNsdWUgaWYgdGhlIHJldmVydCBtYWtlcyBzZW5zZSBvciBvbmx5IGlzIHBsYXN0ZXJpbmcg
+b3ZlciB0aGUgcmVhbCBwcm9ibGVtLg0KDQpCZXN0IHdpc2hlcywNCg0KTWFydGluDQo=
