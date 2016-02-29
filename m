@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.110-rt139
-Date: Mon, 29 Feb 2016 12:07:05 -0500
-Message-ID: <20160229120705.3d81b96d@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.77-rt111
+Date: Mon, 29 Feb 2016 12:07:35 -0500
+Message-ID: <20160229120735.3937f143@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,37 +11,42 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0149.hostedemail.com ([216.40.44.149]:52987 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751979AbcB2RHk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 29 Feb 2016 12:07:40 -0500
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.110-rt139 stable release.
+I'm pleased to announce the 3.2.77-rt111 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 86684e777ddf6ec1c9e8c775fa8360c414d57232
+  branch: v3.2-rt
+  Head SHA1: 3719e6c3f6c968343cf153a67429ba62fe2be2e2
 
 
-Or to build 3.4.110-rt139 directly, the following patches should be applied:
+Or to build 3.2.77-rt111 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.110.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.77.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.110-rt139.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.77-rt111.patch.xz
 
 
 
-You can also build from 3.4.110-rt138 by applying the incremental patch:
+You can also build from 3.2.77-rt110 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.110-rt138-rt139.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.77-rt110-rt111.patch.xz
 
 
 
@@ -50,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.110-rt138:
+Changes from v3.2.77-rt110:
 
 ---
 
@@ -65,7 +70,7 @@ Sebastian Andrzej Siewior (1):
 
 Steven Rostedt (Red Hat) (2):
       rtmutex: Have slowfn of rt_mutex_timed_fastlock() use enum
-      Linux 3.4.110-rt139
+      Linux 3.2.77-rt111
 
 Thomas Gleixner (1):
       rtmutex: Handle non enqueued waiters gracefully
@@ -77,7 +82,7 @@ bmouring@ni.com (1):
  arch/x86/kernel/dumpstack_64.c    |  8 ++++----
  include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
  kernel/rtmutex.c                  |  6 +++---
- kernel/sched/core.c               |  7 +++++--
+ kernel/sched.c                    |  7 +++++--
  kernel/trace/trace_sched_switch.c |  2 +-
  kernel/trace/trace_sched_wakeup.c |  2 +-
  localversion-rt                   |  2 +-
@@ -85,7 +90,7 @@ bmouring@ni.com (1):
  8 files changed, 37 insertions(+), 22 deletions(-)
 ---------------------------
 diff --git a/arch/x86/kernel/dumpstack_64.c b/arch/x86/kernel/dumpstack_64.c
-index e8206060a0a8..bebc49d03531 100644
+index 5e890ccd5429..530fdb80d250 100644
 --- a/arch/x86/kernel/dumpstack_64.c
 +++ b/arch/x86/kernel/dumpstack_64.c
 @@ -114,7 +114,7 @@ void dump_trace(struct task_struct *task, struct pt_regs *regs,
@@ -125,10 +130,10 @@ index e8206060a0a8..bebc49d03531 100644
  	printk(KERN_CONT "\n");
  	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
 diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
-index ea7a2035456d..0a91a095e3c9 100644
+index 959ff18b63b6..29cfc3fe68ad 100644
 --- a/include/trace/events/sched.h
 +++ b/include/trace/events/sched.h
-@@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
+@@ -54,9 +54,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
   */
  DECLARE_EVENT_CLASS(sched_wakeup_template,
  
@@ -140,7 +145,7 @@ index ea7a2035456d..0a91a095e3c9 100644
  
  	TP_STRUCT__entry(
  		__array(	char,	comm,	TASK_COMM_LEN	)
-@@ -71,25 +71,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+@@ -70,25 +70,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
  		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
  		__entry->pid		= p->pid;
  		__entry->prio		= p->prio;
@@ -156,10 +161,10 @@ index ea7a2035456d..0a91a095e3c9 100644
 +		  __entry->target_cpu)
  );
  
-+ /*
-+  * Tracepoint called when waking a task; this tracepoint is guaranteed to be
-+  * called from the waking context.
-+  */
++/*
++ * Tracepoint called when waking a task; this tracepoint is guaranteed to be
++ * called from the waking context.
++ */
 +DEFINE_EVENT(sched_wakeup_template, sched_waking,
 +	     TP_PROTO(struct task_struct *p),
 +	     TP_ARGS(p));
@@ -186,10 +191,10 @@ index ea7a2035456d..0a91a095e3c9 100644
  #ifdef CREATE_TRACE_POINTS
  static inline long __trace_sched_switch_state(struct task_struct *p)
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 4cc273b85beb..c2d0f9c8039f 100644
+index 52cab2720a06..e836b05093a1 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -1163,7 +1163,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+@@ -1179,7 +1179,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
  	__set_current_state(TASK_UNINTERRUPTIBLE);
  	pi_unlock(&self->pi_lock);
  
@@ -198,7 +203,7 @@ index 4cc273b85beb..c2d0f9c8039f 100644
  	BUG_ON(ret);
  
  	for (;;) {
-@@ -1633,7 +1633,7 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
+@@ -1657,7 +1657,7 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
  			enum rtmutex_chainwalk chwalk,
  			int (*slowfn)(struct rt_mutex *lock, int state,
  				      struct hrtimer_sleeper *timeout,
@@ -207,7 +212,7 @@ index 4cc273b85beb..c2d0f9c8039f 100644
  {
  	if (chwalk == RT_MUTEX_MIN_CHAINWALK &&
  	    likely(rt_mutex_cmpxchg(lock, NULL, current))) {
-@@ -1911,7 +1911,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+@@ -1935,7 +1935,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
  		ret = 0;
  	}
  
@@ -216,11 +221,11 @@ index 4cc273b85beb..c2d0f9c8039f 100644
  		remove_waiter(lock, waiter);
  
  	raw_spin_unlock(&lock->wait_lock);
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 0916d418dabd..cc4df0131023 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -1412,10 +1412,11 @@ static void ttwu_activate(struct rq *rq, struct task_struct *p, int en_flags)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index 1615ca209afd..a9f6d6c0ab93 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -2661,10 +2661,11 @@ static void ttwu_activate(struct rq *rq, struct task_struct *p, int en_flags)
  static void
  ttwu_do_wakeup(struct rq *rq, struct task_struct *p, int wake_flags)
  {
@@ -233,7 +238,7 @@ index 0916d418dabd..cc4df0131023 100644
  #ifdef CONFIG_SMP
  	if (p->sched_class->task_woken)
  		p->sched_class->task_woken(rq, p);
-@@ -1608,6 +1609,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+@@ -2852,6 +2853,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
  	if (!(wake_flags & WF_LOCK_SLEEPER))
  		p->saved_state = TASK_RUNNING;
  
@@ -242,7 +247,7 @@ index 0916d418dabd..cc4df0131023 100644
  	success = 1; /* we're going to change ->state */
  	cpu = task_cpu(p);
  
-@@ -1827,7 +1830,7 @@ void wake_up_new_task(struct task_struct *p)
+@@ -3070,7 +3073,7 @@ void wake_up_new_task(struct task_struct *p)
  	rq = __task_rq_lock(p);
  	activate_task(rq, p, 0);
  	p->on_rq = 1;
@@ -265,10 +270,10 @@ index 7e62c0a18456..5982146ee863 100644
  	struct trace_array_cpu *data;
  	unsigned long flags;
 diff --git a/kernel/trace/trace_sched_wakeup.c b/kernel/trace/trace_sched_wakeup.c
-index 9eadedc9b4a8..60160801b8e8 100644
+index 6857e0c99656..a3f6ef0642f1 100644
 --- a/kernel/trace/trace_sched_wakeup.c
 +++ b/kernel/trace/trace_sched_wakeup.c
-@@ -414,7 +414,7 @@ static void wakeup_reset(struct trace_array *tr)
+@@ -403,7 +403,7 @@ static void wakeup_reset(struct trace_array *tr)
  }
  
  static void
@@ -278,17 +283,17 @@ index 9eadedc9b4a8..60160801b8e8 100644
  	struct trace_array_cpu *data;
  	int cpu = smp_processor_id();
 diff --git a/localversion-rt b/localversion-rt
-index 9f63718d5731..e0b93414dc30 100644
+index b3e668a8fb94..9969a4b69fad 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt138
-+-rt139
+--rt110
++-rt111
 diff --git a/net/core/dev.c b/net/core/dev.c
-index 46f960a4c83b..4dbd27b16d1f 100644
+index f7f91c97933b..b6fa0b2fd713 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -6081,7 +6081,7 @@ EXPORT_SYMBOL(free_netdev);
+@@ -6169,7 +6169,7 @@ EXPORT_SYMBOL(free_netdev);
  void synchronize_net(void)
  {
  	might_sleep();
