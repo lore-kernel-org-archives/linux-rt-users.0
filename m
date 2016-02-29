@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.54-rt73
-Date: Mon, 29 Feb 2016 12:06:09 -0500
-Message-ID: <20160229120609.549e80be@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.97-rt106
+Date: Mon, 29 Feb 2016 12:06:38 -0500
+Message-ID: <20160229120638.10e39e5a@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -11,42 +11,37 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0158.hostedemail.com ([216.40.44.158]:45542 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751930AbcB2RGP (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 29 Feb 2016 12:06:15 -0500
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.54-rt73 stable release.
+I'm pleased to announce the 3.10.97-rt106 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: ca4a3e96670bf4ad6a49a9020513f7bb99ded08b
+  branch: v3.10-rt
+  Head SHA1: 141a4ed5a87365316b29491b6b982d102d79d754
 
 
-Or to build 3.12.54-rt73 directly, the following patches should be applied:
+Or to build 3.10.97-rt106 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.54.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.97.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.54-rt73.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.97-rt106.patch.xz
 
 
 
-You can also build from 3.12.54-rt72 by applying the incremental patch:
+You can also build from 3.10.97-rt105 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.54-rt72-rt73.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.97-rt105-rt106.patch.xz
 
 
 
@@ -55,7 +50,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.12.54-rt72:
+Changes from v3.10.97-rt105:
 
 ---
 
@@ -69,12 +64,12 @@ Josh Cartwright (1):
 Peter Zijlstra (1):
       sched: Introduce the trace_sched_waking tracepoint
 
-Sebastian Andrzej Siewior (2):
-      cpufreq: Remove cpufreq_rwsem
+Sebastian Andrzej Siewior (1):
       dump stack: don't disable preemption during trace
 
-Steven Rostedt (Red Hat) (1):
-      Linux 3.12.54-rt73
+Steven Rostedt (Red Hat) (2):
+      rtmutex: Have slowfn of rt_mutex_timed_fastlock() use enum
+      Linux 3.10.97-rt106
 
 Thomas Gleixner (2):
       rtmutex: Handle non enqueued waiters gracefully
@@ -84,27 +79,25 @@ bmouring@ni.com (1):
       rtmutex: Use chainwalking control enum
 
 ----
- arch/arm/kernel/smp.c             |  5 ++--
- arch/x86/kernel/dumpstack_64.c    |  8 +++----
- drivers/cpufreq/cpufreq.c         | 49 ++++++---------------------------------
- include/linux/irq_work.h          |  6 +++++
- include/trace/events/sched.h      | 30 +++++++++++++++++-------
- kernel/irq_work.c                 |  9 +++++++
- kernel/rtmutex.c                  |  4 ++--
- kernel/sched/core.c               |  8 ++++---
- kernel/timer.c                    |  6 ++---
+ arch/arm/kernel/smp.c             |  5 +++--
+ arch/x86/kernel/dumpstack_64.c    |  8 ++++----
+ include/linux/irq_work.h          |  6 ++++++
+ include/trace/events/sched.h      | 30 +++++++++++++++++++++---------
+ kernel/irq_work.c                 |  9 +++++++++
+ kernel/rtmutex.c                  |  6 +++---
+ kernel/sched/core.c               |  8 +++++---
+ kernel/timer.c                    |  6 ++----
  kernel/trace/trace_sched_switch.c |  2 +-
  kernel/trace/trace_sched_wakeup.c |  2 +-
- lib/dump_stack.c                  |  4 ++--
  localversion-rt                   |  2 +-
  net/core/dev.c                    |  4 ++--
- 14 files changed, 66 insertions(+), 73 deletions(-)
+ 12 files changed, 58 insertions(+), 30 deletions(-)
 ---------------------------
 diff --git a/arch/arm/kernel/smp.c b/arch/arm/kernel/smp.c
-index bd1b9e633356..2f7325963bf5 100644
+index 5919eb451bb9..7ad24aa57040 100644
 --- a/arch/arm/kernel/smp.c
 +++ b/arch/arm/kernel/smp.c
-@@ -207,8 +207,6 @@ int __cpu_disable(void)
+@@ -192,8 +192,6 @@ int __cpuinit __cpu_disable(void)
  	flush_cache_louis();
  	local_flush_tlb_all();
  
@@ -113,7 +106,7 @@ index bd1b9e633356..2f7325963bf5 100644
  	return 0;
  }
  
-@@ -224,6 +222,9 @@ void __cpu_die(unsigned int cpu)
+@@ -209,6 +207,9 @@ void __cpuinit __cpu_die(unsigned int cpu)
  		pr_err("CPU%u: cpu didn't die\n", cpu);
  		return;
  	}
@@ -163,182 +156,6 @@ index 66e274a3d968..37aee503a7ba 100644
  
  	pr_cont("\n");
  	show_trace_log_lvl(task, regs, sp, bp, log_lvl);
-diff --git a/drivers/cpufreq/cpufreq.c b/drivers/cpufreq/cpufreq.c
-index 8356b481e339..012d5169eee2 100644
---- a/drivers/cpufreq/cpufreq.c
-+++ b/drivers/cpufreq/cpufreq.c
-@@ -90,12 +90,6 @@ static void unlock_policy_rwsem_##mode(int cpu)				\
- unlock_policy_rwsem(read, cpu);
- unlock_policy_rwsem(write, cpu);
- 
--/*
-- * rwsem to guarantee that cpufreq driver module doesn't unload during critical
-- * sections
-- */
--static DECLARE_RWSEM(cpufreq_rwsem);
--
- /* internal prototypes */
- static int __cpufreq_governor(struct cpufreq_policy *policy,
- 		unsigned int event);
-@@ -191,9 +185,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
- 	if (cpufreq_disabled() || (cpu >= nr_cpu_ids))
- 		return NULL;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return NULL;
--
- 	/* get the cpufreq driver */
- 	read_lock_irqsave(&cpufreq_driver_lock, flags);
- 
-@@ -206,9 +197,6 @@ struct cpufreq_policy *cpufreq_cpu_get(unsigned int cpu)
- 
- 	read_unlock_irqrestore(&cpufreq_driver_lock, flags);
- 
--	if (!policy)
--		up_read(&cpufreq_rwsem);
--
- 	return policy;
- }
- EXPORT_SYMBOL_GPL(cpufreq_cpu_get);
-@@ -219,7 +207,6 @@ void cpufreq_cpu_put(struct cpufreq_policy *policy)
- 		return;
- 
- 	kobject_put(&policy->kobj);
--	up_read(&cpufreq_rwsem);
- }
- EXPORT_SYMBOL_GPL(cpufreq_cpu_put);
- 
-@@ -664,13 +651,10 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
- {
- 	struct cpufreq_policy *policy = to_policy(kobj);
- 	struct freq_attr *fattr = to_attr(attr);
--	ssize_t ret = -EINVAL;
--
--	if (!down_read_trylock(&cpufreq_rwsem))
--		goto exit;
-+	ssize_t ret;
- 
- 	if (lock_policy_rwsem_read(policy->cpu) < 0)
--		goto up_read;
-+		return -EINVAL;
- 
- 	if (fattr->show)
- 		ret = fattr->show(policy, buf);
-@@ -679,9 +663,6 @@ static ssize_t show(struct kobject *kobj, struct attribute *attr, char *buf)
- 
- 	unlock_policy_rwsem_read(policy->cpu);
- 
--up_read:
--	up_read(&cpufreq_rwsem);
--exit:
- 	return ret;
- }
- 
-@@ -697,11 +678,8 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
- 	if (!cpu_online(policy->cpu))
- 		goto unlock;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		goto unlock;
--
- 	if (lock_policy_rwsem_write(policy->cpu) < 0)
--		goto up_read;
-+		goto unlock;
- 
- 	if (fattr->store)
- 		ret = fattr->store(policy, buf, count);
-@@ -710,8 +688,6 @@ static ssize_t store(struct kobject *kobj, struct attribute *attr,
- 
- 	unlock_policy_rwsem_write(policy->cpu);
- 
--up_read:
--	up_read(&cpufreq_rwsem);
- unlock:
- 	put_online_cpus();
- 
-@@ -1011,9 +987,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
- 	}
- #endif
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return 0;
--
- #ifdef CONFIG_HOTPLUG_CPU
- 	/* Check if this cpu was hot-unplugged earlier and has siblings */
- 	read_lock_irqsave(&cpufreq_driver_lock, flags);
-@@ -1021,7 +994,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
- 		if (cpumask_test_cpu(cpu, tpolicy->related_cpus)) {
- 			read_unlock_irqrestore(&cpufreq_driver_lock, flags);
- 			ret = cpufreq_add_policy_cpu(tpolicy, cpu, dev, frozen);
--			up_read(&cpufreq_rwsem);
- 			return ret;
- 		}
- 	}
-@@ -1035,7 +1007,7 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
- 		policy = cpufreq_policy_alloc();
- 
- 	if (!policy)
--		goto nomem_out;
-+		return ret;
- 
- 
- 	/*
-@@ -1106,7 +1078,6 @@ static int __cpufreq_add_dev(struct device *dev, struct subsys_interface *sif,
- 	cpufreq_init_policy(policy);
- 
- 	kobject_uevent(&policy->kobj, KOBJ_ADD);
--	up_read(&cpufreq_rwsem);
- 
- 	pr_debug("initialization complete\n");
- 
-@@ -1120,8 +1091,6 @@ err_out_unregister:
- 
- err_set_policy_cpu:
- 	cpufreq_policy_free(policy);
--nomem_out:
--	up_read(&cpufreq_rwsem);
- 
- 	return ret;
- }
-@@ -1474,9 +1443,6 @@ unsigned int cpufreq_get(unsigned int cpu)
- 	if (cpufreq_disabled() || !cpufreq_driver)
- 		return -ENOENT;
- 
--	if (!down_read_trylock(&cpufreq_rwsem))
--		return 0;
--
- 	if (unlikely(lock_policy_rwsem_read(cpu)))
- 		goto out_policy;
- 
-@@ -1485,8 +1451,6 @@ unsigned int cpufreq_get(unsigned int cpu)
- 	unlock_policy_rwsem_read(cpu);
- 
- out_policy:
--	up_read(&cpufreq_rwsem);
--
- 	return ret_freq;
- }
- EXPORT_SYMBOL(cpufreq_get);
-@@ -2184,16 +2148,17 @@ int cpufreq_unregister_driver(struct cpufreq_driver *driver)
- 
- 	pr_debug("unregistering driver %s\n", driver->name);
- 
-+	/* Protect against concurrent cpu hotplug */
-+	get_online_cpus();
- 	subsys_interface_unregister(&cpufreq_interface);
- 	unregister_hotcpu_notifier(&cpufreq_cpu_notifier);
- 
--	down_write(&cpufreq_rwsem);
- 	write_lock_irqsave(&cpufreq_driver_lock, flags);
- 
- 	cpufreq_driver = NULL;
- 
- 	write_unlock_irqrestore(&cpufreq_driver_lock, flags);
--	up_write(&cpufreq_rwsem);
-+	put_online_cpus();
- 
- 	return 0;
- }
 diff --git a/include/linux/irq_work.h b/include/linux/irq_work.h
 index 4a8c7a2df480..ccd736ebee9e 100644
 --- a/include/linux/irq_work.h
@@ -355,7 +172,7 @@ index 4a8c7a2df480..ccd736ebee9e 100644
 +
  #endif /* _LINUX_IRQ_WORK_H */
 diff --git a/include/trace/events/sched.h b/include/trace/events/sched.h
-index 2e7d9947a10d..004eb037865c 100644
+index e5586caff67a..1ff7042e572d 100644
 --- a/include/trace/events/sched.h
 +++ b/include/trace/events/sched.h
 @@ -55,9 +55,9 @@ TRACE_EVENT(sched_kthread_stop_ret,
@@ -365,18 +182,21 @@ index 2e7d9947a10d..004eb037865c 100644
 -	TP_PROTO(struct task_struct *p, int success),
 +	TP_PROTO(struct task_struct *p),
  
--	TP_ARGS(__perf_task(p), success),
-+	TP_ARGS(__perf_task(p)),
+-	TP_ARGS(p, success),
++	TP_ARGS(p),
  
  	TP_STRUCT__entry(
  		__array(	char,	comm,	TASK_COMM_LEN	)
-@@ -71,25 +71,37 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
+@@ -71,28 +71,40 @@ DECLARE_EVENT_CLASS(sched_wakeup_template,
  		memcpy(__entry->comm, p->comm, TASK_COMM_LEN);
  		__entry->pid		= p->pid;
  		__entry->prio		= p->prio;
 -		__entry->success	= success;
 +		__entry->success	= 1; /* rudiment, kill when possible */
  		__entry->target_cpu	= task_cpu(p);
+ 	)
+ 	TP_perf_assign(
+ 		__perf_task(p);
  	),
  
 -	TP_printk("comm=%s pid=%d prio=%d success=%d target_cpu=%03d",
@@ -438,10 +258,10 @@ index af8ceafc94e4..883bb73698b9 100644
  /*
   * Synchronize against the irq_work @entry, ensures the entry is not
 diff --git a/kernel/rtmutex.c b/kernel/rtmutex.c
-index 7601c1332a88..8061201b3163 100644
+index 5388ba98acaf..a809539f443c 100644
 --- a/kernel/rtmutex.c
 +++ b/kernel/rtmutex.c
-@@ -1182,7 +1182,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
+@@ -1166,7 +1166,7 @@ static void  noinline __sched rt_spin_lock_slowlock(struct rt_mutex *lock)
  	__set_current_state(TASK_UNINTERRUPTIBLE);
  	pi_unlock(&self->pi_lock);
  
@@ -450,7 +270,16 @@ index 7601c1332a88..8061201b3163 100644
  	BUG_ON(ret);
  
  	for (;;) {
-@@ -2065,7 +2065,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
+@@ -1636,7 +1636,7 @@ rt_mutex_timed_fastlock(struct rt_mutex *lock, int state,
+ 			enum rtmutex_chainwalk chwalk,
+ 			int (*slowfn)(struct rt_mutex *lock, int state,
+ 				      struct hrtimer_sleeper *timeout,
+-				      int detect_deadlock))
++				      enum rtmutex_chainwalk chwalk))
+ {
+ 	if (chwalk == RT_MUTEX_MIN_CHAINWALK &&
+ 	    likely(rt_mutex_cmpxchg(lock, NULL, current))) {
+@@ -1914,7 +1914,7 @@ int rt_mutex_start_proxy_lock(struct rt_mutex *lock,
  		ret = 0;
  	}
  
@@ -460,7 +289,7 @@ index 7601c1332a88..8061201b3163 100644
  
  	raw_spin_unlock(&lock->wait_lock);
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 3e8b790e5c17..14b5ba66fa72 100644
+index 23e289ae4270..6c21a28689b9 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
 @@ -1394,9 +1394,9 @@ static void
@@ -475,7 +304,7 @@ index 3e8b790e5c17..14b5ba66fa72 100644
  #ifdef CONFIG_SMP
  	if (p->sched_class->task_woken)
  		p->sched_class->task_woken(rq, p);
-@@ -1581,6 +1581,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
+@@ -1579,6 +1579,8 @@ try_to_wake_up(struct task_struct *p, unsigned int state, int wake_flags)
  	if (!(wake_flags & WF_LOCK_SLEEPER))
  		p->saved_state = TASK_RUNNING;
  
@@ -484,7 +313,7 @@ index 3e8b790e5c17..14b5ba66fa72 100644
  	success = 1; /* we're going to change ->state */
  	cpu = task_cpu(p);
  
-@@ -1826,7 +1828,7 @@ void wake_up_new_task(struct task_struct *p)
+@@ -1830,7 +1832,7 @@ void wake_up_new_task(struct task_struct *p)
  	rq = __task_rq_lock(p);
  	activate_task(rq, p, 0);
  	p->on_rq = 1;
@@ -494,7 +323,7 @@ index 3e8b790e5c17..14b5ba66fa72 100644
  #ifdef CONFIG_SMP
  	if (p->sched_class->task_woken)
 diff --git a/kernel/timer.c b/kernel/timer.c
-index bf1277c2203b..400ef0bde253 100644
+index ff272e20ee0c..2fd6ea5c6519 100644
 --- a/kernel/timer.c
 +++ b/kernel/timer.c
 @@ -1450,7 +1450,7 @@ void update_process_times(int user_tick)
@@ -543,40 +372,18 @@ index fee77e15d815..8e967ca56006 100644
  {
  	struct trace_array_cpu *data;
  	int cpu = smp_processor_id();
-diff --git a/lib/dump_stack.c b/lib/dump_stack.c
-index f23b63f0a1c3..b39c60b1f12c 100644
---- a/lib/dump_stack.c
-+++ b/lib/dump_stack.c
-@@ -33,7 +33,7 @@ asmlinkage void dump_stack(void)
- 	 * Permit this cpu to perform nested stack dumps while serialising
- 	 * against other CPUs
- 	 */
--	preempt_disable();
-+	migrate_disable();
- 
- retry:
- 	cpu = smp_processor_id();
-@@ -52,7 +52,7 @@ retry:
- 	if (!was_locked)
- 		atomic_set(&dump_lock, -1);
- 
--	preempt_enable();
-+	migrate_enable();
- }
- #else
- asmlinkage void dump_stack(void)
 diff --git a/localversion-rt b/localversion-rt
-index 2c95a3cdbcb8..e8ada8cdb471 100644
+index b4e5b00e24e1..8111d0b4d38d 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt72
-+-rt73
+--rt105
++-rt106
 diff --git a/net/core/dev.c b/net/core/dev.c
-index 30fd8898bcfb..cfec8a542d35 100644
+index a478f77e4322..864f7ae42c08 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -6231,7 +6231,7 @@ EXPORT_SYMBOL(free_netdev);
+@@ -5838,7 +5838,7 @@ EXPORT_SYMBOL(free_netdev);
  void synchronize_net(void)
  {
  	might_sleep();
@@ -585,7 +392,7 @@ index 30fd8898bcfb..cfec8a542d35 100644
  		synchronize_rcu_expedited();
  	else
  		synchronize_rcu();
-@@ -6481,7 +6481,7 @@ static int dev_cpu_callback(struct notifier_block *nfb,
+@@ -6088,7 +6088,7 @@ static int dev_cpu_callback(struct notifier_block *nfb,
  		netif_rx(skb);
  		input_queue_head_incr(oldsd);
  	}
