@@ -1,112 +1,105 @@
-From: DIXLOR <dixlor@gmail.com>
-Subject: dump_stack: avoid potential deadlocks
-Date: Sun, 28 Feb 2016 04:28:48 +0300
-Message-ID: <56D24D50.6010500@gmail.com>
-Reply-To: dixlor@gmail.com
+From: Julio Cruz Barroso <julio.cruz@smartmatic.com>
+Subject: RE: Kernel versus patch version
+Date: Mon, 29 Feb 2016 02:13:42 +0000
+Message-ID: <AF04265A3FC2B144B9892F621A394E13EA3C6010@tethys>
+References: <AF04265A3FC2B144B9892F621A394E13EA3C436A@tethys>
+ <AF04265A3FC2B144B9892F621A394E13EA3C43F3@tethys>
+ <20160227194800.GA2613@pengutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; protocol="application/pkcs7-signature"; micalg=sha-256; boundary="------------ms090400050900080106080603"
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=iso-8859-1
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
+	"otavio.salvador@ossystems.com.br" <otavio.salvador@ossystems.com.br>
+To: =?iso-8859-1?Q?Uwe_Kleine-K=F6nig?=
+	<u.kleine-koenig@pengutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lb0-f177.google.com ([209.85.217.177]:33941 "EHLO
-	mail-lb0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S2992640AbcB1B2z (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 27 Feb 2016 20:28:55 -0500
-Received: by mail-lb0-f177.google.com with SMTP id of3so63605641lbc.1
-        for <linux-rt-users@vger.kernel.org>; Sat, 27 Feb 2016 17:28:54 -0800 (PST)
-Received: from [192.168.1.2] (ppp85-140-247-96.pppoe.mtu-net.ru. [85.140.247.96])
-        by smtp.googlemail.com with ESMTPSA id l129sm2817705lfl.18.2016.02.27.17.28.52
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLSv1/SSLv3 cipher=OTHER);
-        Sat, 27 Feb 2016 17:28:52 -0800 (PST)
+Received: from dispatch1-us1.ppe-hosted.com ([148.163.129.52]:40022 "EHLO
+	dispatch1-us1.ppe-hosted.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751202AbcB2COa convert rfc822-to-8bit
+	(ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 28 Feb 2016 21:14:30 -0500
+In-Reply-To: <20160227194800.GA2613@pengutronix.de>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-This is a cryptographically signed message in MIME format.
+Hi Uwe,
 
---------------ms090400050900080106080603
-Content-Type: text/plain; charset=utf-8; format=flowed
-Content-Transfer-Encoding: quoted-printable
+Thanks for your suggestion and feedback. Appreciated.
 
-What do you think about commit e31e4672559674b0950885465a42968a86865d42
+I will use the latest rt-patch with the 3.14.61 kernel.=20
 
-https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/diff=
-/lib/dump_stack.c?id=3Dv4.4.3&id2=3Dv4.4.2
+You made a good question regarding the use of the latest 4.4. I would l=
+ike to use the latest stable version (as many other I guess), but I'm n=
+ot sure about the support. I will re-check about it and perform some te=
+sts.
 
-In RT instead preempt_disable() use migrate_disable()
+Thanks
 
+Julio
 
---------------ms090400050900080106080603
-Content-Type: application/pkcs7-signature; name="smime.p7s"
-Content-Transfer-Encoding: base64
-Content-Disposition: attachment; filename="smime.p7s"
-Content-Description: Криптографическая подпись S/MIME
+-----Original Message-----
+=46rom: linux-rt-users-owner@vger.kernel.org [mailto:linux-rt-users-own=
+er@vger.kernel.org] On Behalf Of Uwe Kleine-K=F6nig
+Sent: Sunday, February 28, 2016 3:48 AM
+To: Julio Cruz Barroso
+Cc: linux-rt-users@vger.kernel.org; otavio.salvador@ossystems.com.br
+Subject: Re: Kernel versus patch version
 
-MIAGCSqGSIb3DQEHAqCAMIACAQExDzANBglghkgBZQMEAgEFADCABgkqhkiG9w0BBwEAAKCC
-Ck8wggSxMIIDmaADAgECAhBbLvAL7CpbaYZ7xtCHUmdkMA0GCSqGSIb3DQEBCwUAMFYxCzAJ
-BgNVBAYTAkNOMRowGAYDVQQKExFXb1NpZ24gQ0EgTGltaXRlZDErMCkGA1UEAwwiQ0Eg5rKD
-6YCaIEVtYWlsIOWuouaIt+err+ivgeS5piBHMjAeFw0xNTA4MTMxMDEzMDRaFw0xODA4MTMx
-MDEzMDRaMDwxGTAXBgNVBAMMEGRpeGxvckBnbWFpbC5jb20xHzAdBgkqhkiG9w0BCQEWEGRp
-eGxvckBnbWFpbC5jb20wggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDJoN4sNreJ
-MuGn56VM4fPCJsuHZx+ZXjbr4O325Zq0fTfZ0/SubgjzytYRdgbvCKE+cYX/rrQWYvCD++Xu
-2ZAGLnOLyp0wiwX3jRi4zxH1k1V8H6g87GmuinA+Izid6EVsv96iTvGsXLXNsqfItM7YHA6p
-l5apjHNQj0jY8ofWatyGa/CHN/0mED/P7vPoA4Mvi5U/1++xEQHRir7GtRlAi/Iu+KXT8bpL
-gvnuAdMQbIp7XZB5AYfHDEo/1j0JI70jVcjxoRMELVKXIMxH+SLZR/b1poWv8iJPTLhsdOzx
-F7fw4y9QQLc7+2O8mn46YgpN6QXVvTT+FjgiSluNMAcJAgMBAAGjggGTMIIBjzALBgNVHQ8E
-BAMCBLAwHQYDVR0lBBYwFAYIKwYBBQUHAwIGCCsGAQUFBwMEMAkGA1UdEwQCMAAwHQYDVR0O
-BBYEFFMSojiy9brHblax+Yry/i2jCuf0MB8GA1UdIwQYMBaAFAi9toUMvYZZjUTFCjFrO2r4
-1wh+MHUGCCsGAQUFBwEBBGkwZzAwBggrBgEFBQcwAYYkaHR0cDovL29jc3AyLndvc2lnbi5j
-bi9jYTJnMi9jbGllbnQxMDMGCCsGAQUFBzAChidodHRwOi8vYWlhMi53b3NpZ24uY24vY2Ey
-ZzIuY2xpZW50MS5jZXIwOQYDVR0fBDIwMDAuoCygKoYoaHR0cDovL2NybHMyLndvc2lnbi5j
-bi9jYTJnMi1jbGllbnQxLmNybDAbBgNVHREEFDASgRBkaXhsb3JAZ21haWwuY29tMEcGA1Ud
-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
-CAWcICB53gAAAAAAAA==
---------------ms090400050900080106080603--
+Hello,
+
+On Sat, Feb 27, 2016 at 01:48:41PM +0000, Julio Cruz Barroso wrote:
+> I'm trying to understand how to fit a kernel version with a RT patch.=
+=20
+>=20
+> In summary, I'm working with a kernel version of 3.14.52 (released by=
+=20
+> Freescale for the iMX6 family) and I'm not sure about the criteria to=
+=20
+> choose the RT patch version.
+
+Is there a good reason to stick to 3.14? If not, better use 4.4. If how=
+ever there is a good reason, double check it is really good. Usually yo=
+u don't want to use the Freescale vendor kernel but a vanilla kernel.
+Usually the latter has much better quality and the i.MX6 support is als=
+o good.
+
+> The WIKI [1] mention that we need to make sure that the RT-Preempt=20
+> version fits the kernel version we intend to use. For example, if we=20
+> have a kernel version 3.x.y (without z or security or bug fixes), the=
+=20
+> RT path must be "patches-3.x.y-rtxx", where xx is the RT patch=20
+> release.
+>=20
+> The RT patch repository [2] doesn't contain a release that fit the
+> 3.14.52 kernel.
+>=20
+> Considering this context, I have a some questions:
+>=20
+> - Which revision could be more convenient for the 3.14.52 kernel?
+> - Can I use a different RT patch release that differ on the .y number
+>   (3.x.y)?=20
+
+It might work, but you probably have to resolve some conflicts. And giv=
+en there is a 3.14.62 you shouldn't use 3.14.52 any more.
+
+> - Must I need to patch the kernel to 3.14.61 and use the latest RT
+>   patch release by Steve [3] some days ago?=20
+
+Best regards
+Uwe
+
+--=20
+Pengutronix e.K.                           | Uwe Kleine-K=F6nig        =
+    |
+Industrial Linux Solutions                 | http://www.pengutronix.de/=
+  |
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in the body of a message to majordomo@vger.kernel.org More majordomo=
+ info at  http://vger.kernel.org/majordomo-info.html
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
