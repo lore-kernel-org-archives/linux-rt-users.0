@@ -1,32 +1,39 @@
-From: <Martin.Wirth@dlr.de>
-Subject: AW: Large latencies with 4.4.1-rt6
-Date: Tue, 1 Mar 2016 10:21:34 +0000
-Message-ID: <1A2AF5F768264E479963C4D8C015EB691B6A22AE@DLREXMBX01.intra.dlr.de>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH RT 07/12] dump stack: dont disable preemption during
+ trace
+Date: Tue, 1 Mar 2016 09:45:05 -0500
+Message-ID: <20160301094505.31726f5e@gandalf.local.home>
+References: <20160226213235.253312067@goodmis.org>
+	<20160226213341.100625803@goodmis.org>
+	<20160227103206.GA2337@breakpoint.cc>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: <bigeasy@linutronix.de>, <linux-rt-users@vger.kernel.org>
-To: <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mailhost.dlr.de ([129.247.252.33]:5924 "EHLO mailhost.dlr.de"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752051AbcCAKVi (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Mar 2016 05:21:38 -0500
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	John Kacur <jkacur@redhat.com>,
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160227103206.GA2337@breakpoint.cc>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-DQo+IC0tLS0tVXJzcHLDvG5nbGljaGUgTmFjaHJpY2h0LS0tLS0NCj4gVm9uOiBUaG9tYXMgR2xl
-aXhuZXIgW21haWx0bzp0Z2x4QGxpbnV0cm9uaXguZGVdDQo+IEdlc2VuZGV0OiBEaWVuc3RhZywg
-MS4gTcOkcnogMjAxNiAxMTowOA0KPiBBbjogV2lydGgsIE1hcnRpbg0KPiBDYzogYmlnZWFzeUBs
-aW51dHJvbml4LmRlDQo+IEJldHJlZmY6IFJlOiBBVzogQVc6IEFXOiBMYXJnZSBsYXRlbmNpZXMg
-d2l0aCA0LjQuMS1ydDYNCj4gDQo+IA0KPiBDYW4geW91IHRyeSB0byBnYXRoZXIgYSB0cmFjZToN
-Cj4gDQo+IGN5Y2xpY3Rlc3QgLVNwOTkgLW0gLWkyMDAgLWYgLWI1MDANCj4gDQo+IFlvdSBtaWdo
-dCBuZWVkIHRvIHVwIHRoZSBpbnRlcnZhbCBhIGJpdCwgYnV0IHRoYXQgc2hvdWxkIGdpdmUgdXMg
-dGhlIHJlYXNvbiBmb3INCj4gdGhpcyBoaWNrdXAuDQo+DQoNCkV4YWN0bHkgdGhpcyBpcyBydW5u
-aW5nIG5vdyBzaW5jZSBhYm91dCAxLDUgaCBhbmQgbm8gdHJpZ2dlciBzbyBmYXIgLSBzZWVtcyB0
-byBiZSANCnNvbWUgc29ydCBvZiBIZWlzZW5idWcuDQoNClRoaXMgaXMgd2l0aCA0LjQuMy1ydDkg
-d2hpY2ggYWxzbyB5ZXN0ZXJkYXkgbmVlZGVkIGFib3V0IDQwIE1pbnV0ZXMgdG8gdHJpZ2dlciAN
-CndpdGhvdXQgdHJhY2luZyBlbmFibGVkLiBJZiB0aGlzIGdpdmVzIG5vIG91dHB1dCB3aXRoaW4g
-dGhlIG5leHQgMiBob3VycyBJIHdpbGwgdHJ5DQphbiBvbGRlciB2ZXJzaW9uICg0LjQuMS1ydDUp
-DQoNCk1hcnRpbg0K
+On Sat, 27 Feb 2016 11:32:06 +0100
+Sebastian Andrzej Siewior <sebastian@breakpoint.cc> wrote:
+
+> On 2016-02-26 16:32:42 [-0500], Steven Rostedt wrote:
+> > 3.18.27-rt26-rc1 stable review patch.
+> > If anyone has any objections, please let me know.  
+> 
+> Please merge this one along with "kernel: migrate_disable() do fastpath
+> in atomic & irqs-off". Otherwise we might get recursive with lockdep and
+> CPU-hotplug (if we go after hp->lock in pin_current_cpu()).
+
+Interesting. When I pulled this patch into 4.1-rt, it caused the system
+to lock up. I'm looking into it now.
+
+-- Steve
