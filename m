@@ -1,39 +1,53 @@
 From: Jean-Denis Girard <jd.girard@sysnux.pf>
 Subject: Re: acmesystems Arietta (AT91SAM9G25)
-Date: Mon, 29 Feb 2016 19:42:54 -1000
-Message-ID: <56D52BDE.7080104@sysnux.pf>
+Date: Mon, 29 Feb 2016 19:46:35 -1000
+Message-ID: <56D52CBB.2020003@sysnux.pf>
 References: <nat4ql$41m$1@ger.gmane.org>
  <20160229081039.GC2613@pengutronix.de> <nb1qeg$9mm$1@ger.gmane.org>
  <20160229161826.GD12917@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: Josh Cartwright <joshc@ni.com>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+ protocol="application/pgp-signature";
+ boundary="U7AV93cqxGIcVhWjMvr2Nj58ElkmTMw6g"
+To: linux-rt-users@vger.kernel.org, Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-pro1.mana.pf ([202.3.225.198]:55565 "EHLO
+Received: from smtp-pro1.mana.pf ([202.3.225.198]:55613 "EHLO
 	smtp-pro1.mana.pf" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751259AbcCAFty (ORCPT
+	with ESMTP id S1750816AbcCAFyy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Mar 2016 00:49:54 -0500
+	Tue, 1 Mar 2016 00:54:54 -0500
 In-Reply-To: <20160229161826.GD12917@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--U7AV93cqxGIcVhWjMvr2Nj58ElkmTMw6g
+Content-Type: multipart/mixed; boundary="3kk4RvqokKabABcvjNO4jk3WaeimiHLG9"
+From: Jean-Denis Girard <jd.girard@sysnux.pf>
+To: linux-rt-users@vger.kernel.org, Josh Cartwright <joshc@ni.com>
+Message-ID: <56D52CBB.2020003@sysnux.pf>
+Subject: Re: acmesystems Arietta (AT91SAM9G25)
+References: <nat4ql$41m$1@ger.gmane.org>
+ <20160229081039.GC2613@pengutronix.de> <nb1qeg$9mm$1@ger.gmane.org>
+ <20160229161826.GD12917@jcartwri.amer.corp.natinst.com>
+In-Reply-To: <20160229161826.GD12917@jcartwri.amer.corp.natinst.com>
+
+--3kk4RvqokKabABcvjNO4jk3WaeimiHLG9
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: quoted-printable
+
 Hello Josh,
 
 Le 29/02/2016 06:18, Josh Cartwright a =E9crit :
-> I think your best bet will be to try to get early console output, wit=
-h
-> the hope that you can get visibility into what is going wrong.  I'm s=
-ure
+> I think your best bet will be to try to get early console output, with
+> the hope that you can get visibility into what is going wrong.  I'm sur=
+e
 > there are many tutorials out there on how to build a kernel with this
 > serial debugging information.  Do a search for DEBUG_LL, earlyprintk,
 > and perhaps earlycon; these are not -rt specific.
 
-Thanks for your advice. I managed to configure earlyprintk, this is wha=
-t
-I got:
+Thanks for your advice. I managed to obtain earlyprintk, this is what I g=
+ot:
 
 Uncompressing Linux... done, booting the kernel.
 Booting Linux on physical CPU 0x0
@@ -52,16 +66,15 @@ Normal zone: 0 pages reserved
 Normal zone: 32768 pages, LIFO batch:7
 pcpu-alloc: s0 r0 d32768 u32768 alloc=3D1*32768
 pcpu-alloc: [0] 0
-Built 1 zonelists in Zone order, mobility grouping on. Total pages: 325=
-12
-Kernel command line: mem=3D128M console=3DttyS0,115200 root=3D/dev/mmcb=
-lk0p2
+Built 1 zonelists in Zone order, mobility grouping on. Total pages: 32512=
+
+Kernel command line: mem=3D128M console=3DttyS0,115200 root=3D/dev/mmcblk=
+0p2
 rootdelay=3D1 earlyprintk=3DttyS0,115200
 PID hash table entries: 512 (order: -1, 2048 bytes)
 Dentry cache hash table entries: 16384 (order: 4, 65536 bytes)
 Inode-cache hash table entries: 8192 (order: 3, 32768 bytes)
-Memory: 124180K/131072K available (3870K kernel code, 139K rwdata, 1256=
-K
+Memory: 124180K/131072K available (3870K kernel code, 139K rwdata, 1256K
 rodata, 168K init, 137K bss, 6892K reserved, 0K cma-reserved)
 Virtual kernel memory layout:
 vector : 0xffff0000 - 0xffff1000 ( 4 kB)
@@ -77,8 +90,8 @@ SLUB: HWalign=3D32, Order=3D0-3, MinObjects=3D0, CPUs=3D1, Nodes=3D1
 Preemptible hierarchical RCU implementation.
 Build-time adjustment of leaf fanout to 32.
 NR_IRQS:16 nr_irqs:16 16
-Unable to handle kernel NULL pointer dereference at virtual address 000=
-00000
+Unable to handle kernel NULL pointer dereference at virtual address 00000=
+000
 pgd =3D c0004000
 [00000000] *pgd=3D00000000
 Internal error: Oops: 5 [#1] PREEMPT ARM
@@ -93,7 +106,7 @@ sp : c0535ea0 ip : c7802264 fp : c0535ebc
 r10: 00000010 r9 : c0040f80 r8 : 00000000
 r7 : 00000000 r6 : 600000d3 r5 : 00000000 r4 : c7805060
 r3 : c0534000 r2 : 00000002 r1 : 00000003 r0 : 00000000
-=46lags: nZCv IRQs off FIQs off Mode SVC_32 ISA ARM Segment none
+Flags: nZCv IRQs off FIQs off Mode SVC_32 ISA ARM Segment none
 Control: 0005317f Table: 20004000 DAC: 00000053
 Process swapper (pid: 0, stack limit =3D 0xc0534190)
 Stack: (0xc0535ea0 to 0xc0536000)
@@ -123,22 +136,20 @@ c0556f54
 (kthread_create_on_node+0x94/0x134)
 [<c002d084>] (kthread_create_on_node) from [<c0040668>]
 (setup_irq_thread+0x38/0xd4)
-[<c0040668>] (setup_irq_thread) from [<c0041634>] (__setup_irq+0x1a8/0x=
-648)
+[<c0040668>] (setup_irq_thread) from [<c0041634>] (__setup_irq+0x1a8/0x64=
+8)
 [<c0041634>] (__setup_irq) from [<c0041c3c>]
 (request_threaded_irq+0xe4/0x144)
 [<c0041c3c>] (request_threaded_irq) from [<c0520640>]
 (of_at91_pmc_setup+0xe0/0x16c)
-[<c0520640>] (of_at91_pmc_setup) from [<c05202bc>] (of_clk_init+0xf4/0x=
-1b8)
+[<c0520640>] (of_at91_pmc_setup) from [<c05202bc>] (of_clk_init+0xf4/0x1b=
+8)
 [<c05202bc>] (of_clk_init) from [<c050c108>] (time_init+0x20/0x2c)
 [<c050c108>] (time_init) from [<c050aafc>] (start_kernel+0x248/0x35c)
 [<c050aafc>] (start_kernel) from [<20008048>] (0x20008048)
 Code: e3c3303f e5932004 e2822001 e5832004 (e5902000)
 ---[ end trace 0000000000000001 ]---
 Kernel panic - not syncing: Attempted to kill the idle task!
-
-Attached is my .config.
 
 I have no clue at what is wrong, and hope it makes sense to someone.
 Should I send this trace under another subject?
@@ -152,10 +163,18 @@ SysNux Syst=E8mes Linux en Polyn=E9sie fran=E7aise
 http://www.sysnux.pf/ T=E9l: +689 40.50.10.40 / GSM: +689 87.79.75.27
 
 
+--3kk4RvqokKabABcvjNO4jk3WaeimiHLG9--
 
+--U7AV93cqxGIcVhWjMvr2Nj58ElkmTMw6g
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+-----BEGIN PGP SIGNATURE-----
+
+iEYEARECAAYFAlbVLLsACgkQuu7Rv+oOo/g9igCgmuJjYVsQZpeDZiR30G0pVcPv
+eLIAn2jTN7wIZYakCIr5Y2fbNwWlBrt4
+=Up/i
+-----END PGP SIGNATURE-----
+
+--U7AV93cqxGIcVhWjMvr2Nj58ElkmTMw6g--
