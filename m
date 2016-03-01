@@ -1,57 +1,47 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 07/12] dump stack: dont disable preemption during
- trace
-Date: Tue, 1 Mar 2016 13:25:46 -0500
-Message-ID: <20160301132546.4aef9949@gandalf.local.home>
-References: <20160226213235.253312067@goodmis.org>
-	<20160226213341.100625803@goodmis.org>
-	<20160227103206.GA2337@breakpoint.cc>
-	<20160301094505.31726f5e@gandalf.local.home>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Numbering system
+Date: Tue, 1 Mar 2016 21:06:23 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1603012102150.3638@nanos>
+References: <56D5C521.2050700@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: DIXLOR <dixlor@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0121.hostedemail.com ([216.40.44.121]:53669 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1750846AbcCASZu (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:47482 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752103AbcCAUHq (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 1 Mar 2016 13:25:50 -0500
-In-Reply-To: <20160301094505.31726f5e@gandalf.local.home>
+	Tue, 1 Mar 2016 15:07:46 -0500
+In-Reply-To: <56D5C521.2050700@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 1 Mar 2016 09:45:05 -0500
-Steven Rostedt <rostedt@goodmis.org> wrote:
-
-> On Sat, 27 Feb 2016 11:32:06 +0100
-> Sebastian Andrzej Siewior <sebastian@breakpoint.cc> wrote:
+On Tue, 1 Mar 2016, DIXLOR wrote:
+> Make numbering system with reference to the version of the kernel.
 > 
-> > On 2016-02-26 16:32:42 [-0500], Steven Rostedt wrote:  
-> > > 3.18.27-rt26-rc1 stable review patch.
-> > > If anyone has any objections, please let me know.    
-> > 
-> > Please merge this one along with "kernel: migrate_disable() do fastpath
-> > in atomic & irqs-off". Otherwise we might get recursive with lockdep and
-> > CPU-hotplug (if we go after hp->lock in pin_current_cpu()).  
-> 
-> Interesting. When I pulled this patch into 4.1-rt, it caused the system
-> to lock up. I'm looking into it now.
+> linux-4.4.2-rt1 First -RT in 4.4.2
+> ....
+> linux-4.4.2-rt6 Last -RT in 4.4.2
+> linux-4.4.3-rt1 First -RT in 4.4.3
+> linux-4.4.3-rt2
+> ....
+> linux-4.4.4-rt1 First -RT in 4.4.4
+> ...
 
-And that's because this commit also needs:
+We've done the consecutive numbering scheme since rt started, so why should we
+change that?
 
-"kernel: softirq: unlock with irqs on"
+> Where is diff beetween 4.4.3-rt6, 4.4.3-rt7, 4.4.3-rt8?
 
-And due to the WARN_ON_ONCE() issue (that I just posted a patch to fix
-mainline), it caused my system to reboot.
+You mean 4.4.1-rt6 4.4.2-rt7 and 4.4.3-rt8, right?
 
-http://lkml.kernel.org/r/20160301110939.1b786f49@gandalf.local.home
+git diff v4.4.1-rt6..4.4.2-rt7
+git diff v4.4.2-rt7..4.4.3-rt8
 
--- Steve
+We simply don't upload diffs for the stable kernel updates which are not
+changing the RT code.
+
+Thanks,
+
+	tglx
