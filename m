@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 14/22] tick/broadcast: Make broadcast hrtimer irqsafe
-Date: Wed, 02 Mar 2016 10:09:13 -0500
-Message-ID: <20160302151112.485609722@goodmis.org>
+Subject: [PATCH RT 06/22] preempt-lazy: Add the lazy-preemption check to preempt_schedule()
+Date: Wed, 02 Mar 2016 10:09:05 -0500
+Message-ID: <20160302151111.214477863@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0014-tick-broadcast-Make-broadcast-hrtimer-irqsafe.patch
+Content-Disposition: inline; filename=0006-preempt-lazy-Add-the-lazy-preemption-check-to-preemp.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,63 +23,79 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Thomas Gleixner <tglx@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Otherwise we end up with the following:
+Probably in the rebase onto v4.1 this check got moved into less commonly used
+preempt_schedule_notrace(). This patch ensures that both functions use it.
 
-|=================================
-|[ INFO: inconsistent lock state ]
-|4.4.2-rt7+ #5 Not tainted
-|---------------------------------
-|inconsistent {IN-HARDIRQ-W} -> {HARDIRQ-ON-W} usage.
-|ktimersoftd/0/4 [HC0[0]:SC0[0]:HE1:SE1] takes:
-| (tick_broadcast_lock){?.....}, at: [<ffffffc000150db4>] tick_handle_oneshot_broadcast+0x58/0x27c
-|{IN-HARDIRQ-W} state was registered at:
-|  [<ffffffc000118198>] mark_lock+0x19c/0x6a0
-|  [<ffffffc000119728>] __lock_acquire+0xb1c/0x2100
-|  [<ffffffc00011b560>] lock_acquire+0xf8/0x230
-|  [<ffffffc00061bf08>] _raw_spin_lock_irqsave+0x50/0x68
-|  [<ffffffc000152188>] tick_broadcast_switch_to_oneshot+0x20/0x60
-|  [<ffffffc0001529f4>] tick_switch_to_oneshot+0x64/0xd8
-|  [<ffffffc000152b00>] tick_init_highres+0x1c/0x24
-|  [<ffffffc000141e58>] hrtimer_run_queues+0x78/0x100
-|  [<ffffffc00013f804>] update_process_times+0x38/0x74
-|  [<ffffffc00014fc5c>] tick_periodic+0x60/0x140
-|  [<ffffffc00014fd68>] tick_handle_periodic+0x2c/0x94
-|  [<ffffffc00052b878>] arch_timer_handler_phys+0x3c/0x48
-|  [<ffffffc00012d078>] handle_percpu_devid_irq+0x100/0x390
-|  [<ffffffc000127f34>] generic_handle_irq+0x34/0x4c
-|  [<ffffffc000128300>] __handle_domain_irq+0x90/0xf8
-|  [<ffffffc000082554>] gic_handle_irq+0x5c/0xa4
-|  [<ffffffc0000855ac>] el1_irq+0x6c/0xec
-|  [<ffffffc000112bec>] default_idle_call+0x2c/0x44
-|  [<ffffffc000113058>] cpu_startup_entry+0x3cc/0x410
-|  [<ffffffc0006169f8>] rest_init+0x158/0x168
-|  [<ffffffc000888954>] start_kernel+0x3a0/0x3b4
-|  [<0000000080621000>] 0x80621000
-|irq event stamp: 18723
-|hardirqs last  enabled at (18723): [<ffffffc00061c188>] _raw_spin_unlock_irq+0x38/0x80
-|hardirqs last disabled at (18722): [<ffffffc000140a4c>] run_hrtimer_softirq+0x2c/0x2f4
-|softirqs last  enabled at (0): [<ffffffc0000c4744>] copy_process.isra.50+0x300/0x16d4
-|softirqs last disabled at (0): [<          (null)>]           (null)
-
-Reported-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Reported-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/time/tick-broadcast-hrtimer.c | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/sched/core.c | 36 ++++++++++++++++++++++++++++--------
+ 1 file changed, 28 insertions(+), 8 deletions(-)
 
-diff --git a/kernel/time/tick-broadcast-hrtimer.c b/kernel/time/tick-broadcast-hrtimer.c
-index 6aac4beedbbe..943c03395e46 100644
---- a/kernel/time/tick-broadcast-hrtimer.c
-+++ b/kernel/time/tick-broadcast-hrtimer.c
-@@ -109,5 +109,6 @@ void tick_setup_hrtimer_broadcast(void)
- {
- 	hrtimer_init(&bctimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
- 	bctimer.function = bc_handler;
-+	bctimer.irqsafe = true;
- 	clockevents_register_device(&ce_broadcast_hrtimer);
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index d21091f2fd1f..5cbfb0548574 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3116,6 +3116,30 @@ static void __sched notrace preempt_schedule_common(void)
+ 	} while (need_resched());
  }
+ 
++#ifdef CONFIG_PREEMPT_LAZY
++/*
++ * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
++ * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
++ * preempt_lazy_count counter >0.
++ */
++static int preemptible_lazy(void)
++{
++	if (test_thread_flag(TIF_NEED_RESCHED))
++		return 1;
++	if (current_thread_info()->preempt_lazy_count)
++		return 0;
++	return 1;
++}
++
++#else
++
++static int preemptible_lazy(void)
++{
++	return 1;
++}
++
++#endif
++
+ #ifdef CONFIG_PREEMPT
+ /*
+  * this is the entry point to schedule() from in-kernel preemption
+@@ -3130,6 +3154,8 @@ asmlinkage __visible void __sched notrace preempt_schedule(void)
+ 	 */
+ 	if (likely(!preemptible()))
+ 		return;
++	if (!preemptible_lazy())
++		return;
+ 
+ 	preempt_schedule_common();
+ }
+@@ -3157,15 +3183,9 @@ asmlinkage __visible void __sched notrace preempt_schedule_context(void)
+ 
+ 	if (likely(!preemptible()))
+ 		return;
+-
+-#ifdef CONFIG_PREEMPT_LAZY
+-	/*
+-	 * Check for lazy preemption
+-	 */
+-	if (current_thread_info()->preempt_lazy_count &&
+-			!test_thread_flag(TIF_NEED_RESCHED))
++	if (!preemptible_lazy())
+ 		return;
+-#endif
++
+ 	do {
+ 		__preempt_count_add(PREEMPT_ACTIVE);
+ 		/*
 -- 
 2.7.0
