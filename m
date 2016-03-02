@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 15/22] sched,rt: __always_inline preemptible_lazy()
-Date: Wed, 02 Mar 2016 10:09:14 -0500
-Message-ID: <20160302151112.777847509@goodmis.org>
+Subject: [PATCH RT 20/22] rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
+Date: Wed, 02 Mar 2016 10:09:19 -0500
+Message-ID: <20160302151113.729685611@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Hillf Danton <hillf.zj@alibaba-inc.com>
+	Clark Williams <williams@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0015-sched-rt-__always_inline-preemptible_lazy.patch
+Content-Disposition: inline; filename=0020-rcu-torture-Comment-out-rcu_bh-ops-on-PREEMPT_RT_FUL.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,36 +23,42 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Clark Williams <williams@redhat.com>
 
-homer: # nm kernel/sched/core.o|grep preemptible_lazy
-00000000000000b5 t preemptible_lazy
+RT has dropped support of rcu_bh, comment out in rcutorture.
 
-echo wakeup_rt > current_tracer ==> Welcome to infinity.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
+Signed-off-by: Clark Williams <williams@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Link: http://lkml.kernel.org/r/1456067490.3771.2.camel@gmail.com
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ kernel/rcu/rcutorture.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 56b6d73f9154..62f1a6e26a25 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3122,7 +3122,7 @@ static void __sched notrace preempt_schedule_common(void)
-  * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
-  * preempt_lazy_count counter >0.
+diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
+index 8dbe27611ec3..7b6170a46409 100644
+--- a/kernel/rcu/rcutorture.c
++++ b/kernel/rcu/rcutorture.c
+@@ -389,6 +389,7 @@ static struct rcu_torture_ops rcu_ops = {
+ 	.name		= "rcu"
+ };
+ 
++#ifndef CONFIG_PREEMPT_RT_FULL
+ /*
+  * Definitions for rcu_bh torture testing.
   */
--static int preemptible_lazy(void)
-+static __always_inline int preemptible_lazy(void)
- {
- 	if (test_thread_flag(TIF_NEED_RESCHED))
- 		return 1;
+@@ -428,6 +429,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
+ 	.name		= "rcu_bh"
+ };
+ 
++#else
++static struct rcu_torture_ops rcu_bh_ops = {
++	.ttype		= INVALID_RCU_FLAVOR,
++};
++#endif
++
+ /*
+  * Don't even think about trying any of these in real life!!!
+  * The names includes "busted", and they really means it!
 -- 
 2.7.0
