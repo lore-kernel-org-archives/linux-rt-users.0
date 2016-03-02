@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 13/22] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-Date: Wed, 02 Mar 2016 10:09:12 -0500
-Message-ID: <20160302151112.322143722@goodmis.org>
+Subject: [PATCH RT 04/22] kernel/softirq: use cond_resched_rcu_qs() on -RT as well
+ (run_ksoftirqd())
+Date: Wed, 02 Mar 2016 10:09:03 -0500
+Message-ID: <20160302151110.893912638@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Grygorii Strashko <grygorii.strashko@ti.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0013-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
+Content-Disposition: inline; filename=0004-kernel-softirq-use-cond_resched_rcu_qs-on-RT-as-well.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,155 +26,30 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-With completion using swait and so rawlocks we don't need this anymore.
-Further, bisect thinks this patch is responsible for:
+The upstream changes were:
+6047967 ksoftirqd: Use new cond_resched_rcu_qs() function
+28423ad ksoftirqd: Enable IRQs and call cond_resched() before poking RCU
 
-|BUG: unable to handle kernel NULL pointer dereference at           (null)
-|IP: [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|PGD 0
-|Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
-|Dumping ftrace buffer:
-|   (ftrace buffer empty)
-|Modules linked in:
-|CPU: 1 PID: 0 Comm: swapper/1 Not tainted 4.4.1+ #330
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88013ae64b00 ti: ffff88013ae74000 task.ti: ffff88013ae74000
-|RIP: 0010:[<ffffffff81082123>]  [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|RSP: 0000:ffff88013ae77eb8  EFLAGS: 00010082
-|RAX: 0000000000000001 RBX: ffffffff81c2cf20 RCX: 0000001050fb52fb
-|RDX: 0000001050fb52fb RSI: 000000105117ca1e RDI: 00000000001c7723
-|RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
-|R10: 0000000000000000 R11: 0000000000000001 R12: 00000000ffffffff
-|R13: ffffffff81c2cee0 R14: 0000000000000000 R15: 0000000000000001
-|FS:  0000000000000000(0000) GS:ffff88013b200000(0000) knlGS:0000000000000000
-|CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-|CR2: 0000000000000000 CR3: 0000000001c09000 CR4: 00000000000006e0
-|Stack:
-| ffffffff810c446d ffff88013ae77f00 ffffffff8107d8dd 000000000000000a
-| 0000000000000001 0000000000000000 0000000000000000 0000000000000000
-| 0000000000000000 ffff88013ae77f10 ffffffff8107d90e ffff88013ae77f20
-|Call Trace:
-| [<ffffffff810c446d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
-| [<ffffffff8107d8dd>] ? notifier_call_chain+0x5d/0x80
-| [<ffffffff8107d90e>] ? __raw_notifier_call_chain+0xe/0x10
-| [<ffffffff810598a3>] ? cpu_notify+0x23/0x40
-| [<ffffffff8105a7b8>] ? notify_cpu_starting+0x28/0x30
-
-during hotplug. The rawlocks need to remain however.
-
+Reported-by: Grygorii Strashko <grygorii.strashko@ti.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/stop_machine.c | 40 ++++++++--------------------------------
- 1 file changed, 8 insertions(+), 32 deletions(-)
+ kernel/softirq.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
-index 1af29ad20970..d3ea2452e291 100644
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -30,7 +30,7 @@ struct cpu_stop_done {
- 	atomic_t		nr_todo;	/* nr left to execute */
- 	bool			executed;	/* actually executed? */
- 	int			ret;		/* collected return value */
--	struct task_struct	*waiter;	/* woken when nr_todo reaches 0 */
-+	struct completion	completion;	/* fired if nr_todo reaches 0 */
- };
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 0fd93311536f..f4c2e679a7d7 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -599,8 +599,8 @@ static void run_ksoftirqd(unsigned int cpu)
  
- /* the actual stopper, one per every possible cpu, enabled on online cpus */
-@@ -56,7 +56,7 @@ static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
- {
- 	memset(done, 0, sizeof(*done));
- 	atomic_set(&done->nr_todo, nr_todo);
--	done->waiter = current;
-+	init_completion(&done->completion);
+ 	do_current_softirqs();
+ 	current->softirq_nestcnt--;
+-	rcu_note_context_switch();
+ 	local_irq_enable();
++	cond_resched_rcu_qs();
  }
  
- /* signal completion unless @done is NULL */
-@@ -65,10 +65,8 @@ static void cpu_stop_signal_done(struct cpu_stop_done *done, bool executed)
- 	if (done) {
- 		if (executed)
- 			done->executed = true;
--		if (atomic_dec_and_test(&done->nr_todo)) {
--			wake_up_process(done->waiter);
--			done->waiter = NULL;
--		}
-+		if (atomic_dec_and_test(&done->nr_todo))
-+			complete(&done->completion);
- 	}
- }
- 
-@@ -91,22 +89,6 @@ static void cpu_stop_queue_work(unsigned int cpu, struct cpu_stop_work *work)
- 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
- }
- 
--static void wait_for_stop_done(struct cpu_stop_done *done)
--{
--	set_current_state(TASK_UNINTERRUPTIBLE);
--	while (atomic_read(&done->nr_todo)) {
--		schedule();
--		set_current_state(TASK_UNINTERRUPTIBLE);
--	}
--	/*
--	 * We need to wait until cpu_stop_signal_done() has cleared
--	 * done->waiter.
--	 */
--	while (done->waiter)
--		cpu_relax();
--	set_current_state(TASK_RUNNING);
--}
--
- /**
-  * stop_one_cpu - stop a cpu
-  * @cpu: cpu to stop
-@@ -138,7 +120,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
- 
- 	cpu_stop_init_done(&done, 1);
- 	cpu_stop_queue_work(cpu, &work);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
- }
- 
-@@ -315,7 +297,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
- 	lg_local_unlock(&stop_cpus_lock);
- 	preempt_enable_nort();
- 
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 
- 	return done.executed ? done.ret : -ENOENT;
- }
-@@ -380,7 +362,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
- 
- 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
- 	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
- }
- 
-@@ -511,13 +493,7 @@ repeat:
- 			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
- 					  ksym_buf), arg);
- 
--		/*
--		 * Make sure that the wakeup and setting done->waiter
--		 * to NULL is atomic.
--		 */
--		local_irq_disable();
- 		cpu_stop_signal_done(done, true);
--		local_irq_enable();
- 		goto repeat;
- 	}
- }
-@@ -676,7 +652,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
- 	ret = multi_cpu_stop(&msdata);
- 
- 	/* Busy wait for completion. */
--	while (atomic_read(&done.nr_todo))
-+	while (!completion_done(&done.completion))
- 		cpu_relax();
- 
- 	mutex_unlock(&stop_cpus_mutex);
+ /*
 -- 
 2.7.0
