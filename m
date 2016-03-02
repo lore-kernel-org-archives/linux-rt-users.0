@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 17/22] drm,i915: Use local_lock/unlock_irq() in
- intel_pipe_update_start/end()
-Date: Wed, 02 Mar 2016 10:09:16 -0500
-Message-ID: <20160302151113.069303046@goodmis.org>
+Subject: [PATCH RT 03/22] net: move xmit_recursion to per-task variable on -RT
+Date: Wed, 02 Mar 2016 10:09:02 -0500
+Message-ID: <20160302151110.746804820@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -11,11 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0017-drm-i915-Use-local_lock-unlock_irq-in-intel_pipe_upd.patch
+Content-Disposition: inline; filename=0003-net-move-xmit_recursion-to-per-task-variable-on-RT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,117 +23,135 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-[    8.014039] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:918
-[    8.014041] in_atomic(): 0, irqs_disabled(): 1, pid: 78, name: kworker/u4:4
-[    8.014045] CPU: 1 PID: 78 Comm: kworker/u4:4 Not tainted 4.1.7-rt7 #5
-[    8.014055] Workqueue: events_unbound async_run_entry_fn
-[    8.014059]  0000000000000000 ffff880037153748 ffffffff815f32c9 0000000000000002
-[    8.014063]  ffff88013a50e380 ffff880037153768 ffffffff815ef075 ffff8800372c06c8
-[    8.014066]  ffff8800372c06c8 ffff880037153778 ffffffff8107c0b3 ffff880037153798
-[    8.014067] Call Trace:
-[    8.014074]  [<ffffffff815f32c9>] dump_stack+0x4a/0x61
-[    8.014078]  [<ffffffff815ef075>] ___might_sleep.part.93+0xe9/0xee
-[    8.014082]  [<ffffffff8107c0b3>] ___might_sleep+0x53/0x80
-[    8.014086]  [<ffffffff815f9064>] rt_spin_lock+0x24/0x50
-[    8.014090]  [<ffffffff8109368b>] prepare_to_wait+0x2b/0xa0
-[    8.014152]  [<ffffffffa016c04c>] intel_pipe_update_start+0x17c/0x300 [i915]
-[    8.014156]  [<ffffffff81093b40>] ? prepare_to_wait_event+0x120/0x120
-[    8.014201]  [<ffffffffa0158f36>] intel_begin_crtc_commit+0x166/0x1e0 [i915]
-[    8.014215]  [<ffffffffa00c806d>] drm_atomic_helper_commit_planes+0x5d/0x1a0 [drm_kms_helper]
-[    8.014260]  [<ffffffffa0171e9b>] intel_atomic_commit+0xab/0xf0 [i915]
-[    8.014288]  [<ffffffffa00654c7>] drm_atomic_commit+0x37/0x60 [drm]
-[    8.014298]  [<ffffffffa00c6fcd>] drm_atomic_helper_plane_set_property+0x8d/0xd0 [drm_kms_helper]
-[    8.014301]  [<ffffffff815f77d9>] ? __ww_mutex_lock+0x39/0x40
-[    8.014319]  [<ffffffffa0053b3d>] drm_mode_plane_set_obj_prop+0x2d/0x90 [drm]
-[    8.014328]  [<ffffffffa00c8edb>] restore_fbdev_mode+0x6b/0xf0 [drm_kms_helper]
-[    8.014337]  [<ffffffffa00cae49>] drm_fb_helper_restore_fbdev_mode_unlocked+0x29/0x80 [drm_kms_helper]
-[    8.014346]  [<ffffffffa00caec2>] drm_fb_helper_set_par+0x22/0x50 [drm_kms_helper]
-[    8.014390]  [<ffffffffa016dfba>] intel_fbdev_set_par+0x1a/0x60 [i915]
-[    8.014394]  [<ffffffff81327dc4>] fbcon_init+0x4f4/0x580
-[    8.014398]  [<ffffffff8139ef4c>] visual_init+0xbc/0x120
-[    8.014401]  [<ffffffff813a1623>] do_bind_con_driver+0x163/0x330
-[    8.014405]  [<ffffffff813a1b2c>] do_take_over_console+0x11c/0x1c0
-[    8.014408]  [<ffffffff813236e3>] do_fbcon_takeover+0x63/0xd0
-[    8.014410]  [<ffffffff81328965>] fbcon_event_notify+0x785/0x8d0
-[    8.014413]  [<ffffffff8107c12d>] ? __might_sleep+0x4d/0x90
-[    8.014416]  [<ffffffff810775fe>] notifier_call_chain+0x4e/0x80
-[    8.014419]  [<ffffffff810779cd>] __blocking_notifier_call_chain+0x4d/0x70
-[    8.014422]  [<ffffffff81077a06>] blocking_notifier_call_chain+0x16/0x20
-[    8.014425]  [<ffffffff8132b48b>] fb_notifier_call_chain+0x1b/0x20
-[    8.014428]  [<ffffffff8132d8fa>] register_framebuffer+0x21a/0x350
-[    8.014439]  [<ffffffffa00cb164>] drm_fb_helper_initial_config+0x274/0x3e0 [drm_kms_helper]
-[    8.014483]  [<ffffffffa016f1cb>] intel_fbdev_initial_config+0x1b/0x20 [i915]
-[    8.014486]  [<ffffffff8107912c>] async_run_entry_fn+0x4c/0x160
-[    8.014490]  [<ffffffff81070ffa>] process_one_work+0x14a/0x470
-[    8.014493]  [<ffffffff81071489>] worker_thread+0x169/0x4c0
-[    8.014496]  [<ffffffff81071320>] ? process_one_work+0x470/0x470
-[    8.014499]  [<ffffffff81076606>] kthread+0xc6/0xe0
-[    8.014502]  [<ffffffff81070000>] ? queue_work_on+0x80/0x110
-[    8.014506]  [<ffffffff81076540>] ? kthread_worker_fn+0x1c0/0x1c0
+A softirq on -RT can be preempted. That means one task is in
+__dev_queue_xmit(), gets preempted and another task may enter
+__dev_queue_xmit() aw well. netperf together with a bridge device
+will then trigger the `recursion alert` because each task increments
+the xmit_recursion variable which is per-CPU.
+A virtual device like br0 is required to trigger this warning.
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+This patch moves the counter to per task instead per-CPU so it counts
+the recursion properly on -RT.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/gpu/drm/i915/intel_sprite.c | 11 +++++++----
- 1 file changed, 7 insertions(+), 4 deletions(-)
+ include/linux/netdevice.h |  9 +++++++++
+ include/linux/sched.h     |  3 +++
+ net/core/dev.c            | 41 ++++++++++++++++++++++++++++++++++++++---
+ 3 files changed, 50 insertions(+), 3 deletions(-)
 
-diff --git a/drivers/gpu/drm/i915/intel_sprite.c b/drivers/gpu/drm/i915/intel_sprite.c
-index a4c0a04b5044..6da459fe20b2 100644
---- a/drivers/gpu/drm/i915/intel_sprite.c
-+++ b/drivers/gpu/drm/i915/intel_sprite.c
-@@ -37,6 +37,7 @@
- #include "intel_drv.h"
- #include <drm/i915_drm.h>
- #include "i915_drv.h"
-+#include <linux/locallock.h>
+diff --git a/include/linux/netdevice.h b/include/linux/netdevice.h
+index 7a289e802a23..d24fe5d9980d 100644
+--- a/include/linux/netdevice.h
++++ b/include/linux/netdevice.h
+@@ -2192,11 +2192,20 @@ void netdev_freemem(struct net_device *dev);
+ void synchronize_net(void);
+ int init_dummy_netdev(struct net_device *dev);
  
- static bool
- format_is_yuv(uint32_t format)
-@@ -61,6 +62,8 @@ static int usecs_to_scanlines(const struct drm_display_mode *mode, int usecs)
- 	return DIV_ROUND_UP(usecs * mode->crtc_clock, 1000 * mode->crtc_htotal);
- }
- 
-+static DEFINE_LOCAL_IRQ_LOCK(pipe_update_lock);
++#ifdef CONFIG_PREEMPT_RT_FULL
++static inline int dev_recursion_level(void)
++{
++	return current->xmit_recursion;
++}
 +
++#else
++
+ DECLARE_PER_CPU(int, xmit_recursion);
+ static inline int dev_recursion_level(void)
+ {
+ 	return this_cpu_read(xmit_recursion);
+ }
++#endif
+ 
+ struct net_device *dev_get_by_index(struct net *net, int ifindex);
+ struct net_device *__dev_get_by_index(struct net *net, int ifindex);
+diff --git a/include/linux/sched.h b/include/linux/sched.h
+index 1a56c0512491..4d995add9497 100644
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1806,6 +1806,9 @@ struct task_struct {
+ #ifdef CONFIG_DEBUG_ATOMIC_SLEEP
+ 	unsigned long	task_state_change;
+ #endif
++#ifdef CONFIG_PREEMPT_RT_FULL
++	int xmit_recursion;
++#endif
+ 	int pagefault_disabled;
+ };
+ 
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 16fbef81024d..7d8ad99de55f 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -2883,9 +2883,44 @@ static void skb_update_prio(struct sk_buff *skb)
+ #define skb_update_prio(skb)
+ #endif
+ 
++#ifdef CONFIG_PREEMPT_RT_FULL
++
++static inline int xmit_rec_read(void)
++{
++       return current->xmit_recursion;
++}
++
++static inline void xmit_rec_inc(void)
++{
++       current->xmit_recursion++;
++}
++
++static inline void xmit_rec_dec(void)
++{
++       current->xmit_recursion--;
++}
++
++#else
++
+ DEFINE_PER_CPU(int, xmit_recursion);
+ EXPORT_SYMBOL(xmit_recursion);
+ 
++static inline int xmit_rec_read(void)
++{
++	return __this_cpu_read(xmit_recursion);
++}
++
++static inline void xmit_rec_inc(void)
++{
++	__this_cpu_inc(xmit_recursion);
++}
++
++static inline int xmit_rec_dec(void)
++{
++	__this_cpu_dec(xmit_recursion);
++}
++#endif
++
+ #define RECURSION_LIMIT 10
+ 
  /**
-  * intel_pipe_update_start() - start update of a set of display registers
-  * @crtc: the crtc of which the registers are going to be updated
-@@ -101,7 +104,7 @@ bool intel_pipe_update_start(struct intel_crtc *crtc, uint32_t *start_vbl_count)
- 	if (WARN_ON(drm_crtc_vblank_get(&crtc->base)))
- 		return false;
+@@ -2987,7 +3022,7 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
  
--	local_irq_disable();
-+	local_lock_irq(pipe_update_lock);
+ 		if (txq->xmit_lock_owner != cpu) {
  
- 	trace_i915_pipe_update_start(crtc, min, max);
+-			if (__this_cpu_read(xmit_recursion) > RECURSION_LIMIT)
++			if (xmit_rec_read() > RECURSION_LIMIT)
+ 				goto recursion_alert;
  
-@@ -123,11 +126,11 @@ bool intel_pipe_update_start(struct intel_crtc *crtc, uint32_t *start_vbl_count)
- 			break;
- 		}
+ 			skb = validate_xmit_skb(skb, dev);
+@@ -2997,9 +3032,9 @@ static int __dev_queue_xmit(struct sk_buff *skb, void *accel_priv)
+ 			HARD_TX_LOCK(dev, txq, cpu);
  
--		local_irq_enable();
-+		local_unlock_irq(pipe_update_lock);
- 
- 		timeout = schedule_timeout(timeout);
- 
--		local_irq_disable();
-+		local_lock_irq(pipe_update_lock);
- 	}
- 
- 	finish_wait(wq, &wait);
-@@ -158,7 +161,7 @@ void intel_pipe_update_end(struct intel_crtc *crtc, u32 start_vbl_count)
- 
- 	trace_i915_pipe_update_end(crtc, end_vbl_count);
- 
--	local_irq_enable();
-+	local_unlock_irq(pipe_update_lock);
- 
- 	if (start_vbl_count != end_vbl_count)
- 		DRM_ERROR("Atomic update failure on pipe %c (start=%u end=%u)\n",
+ 			if (!netif_xmit_stopped(txq)) {
+-				__this_cpu_inc(xmit_recursion);
++				xmit_rec_inc();
+ 				skb = dev_hard_start_xmit(skb, dev, txq, &rc);
+-				__this_cpu_dec(xmit_recursion);
++				xmit_rec_dec();
+ 				if (dev_xmit_complete(rc)) {
+ 					HARD_TX_UNLOCK(dev, txq);
+ 					goto out;
 -- 
 2.7.0
