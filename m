@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/22] arm64: replace read_lock to rcu lock in call_step_hook
-Date: Wed, 02 Mar 2016 10:09:09 -0500
-Message-ID: <20160302151111.865769336@goodmis.org>
+Subject: [PATCH RT 13/22] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
+Date: Wed, 02 Mar 2016 10:09:12 -0500
+Message-ID: <20160302151112.322143722@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>, Yang Shi <yang.shi@linaro.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0010-arm64-replace-read_lock-to-rcu-lock-in-call_step_hoo.patch
+Content-Disposition: inline; filename=0013-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,99 +22,157 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@linaro.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
-Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
+With completion using swait and so rawlocks we don't need this anymore.
+Further, bisect thinks this patch is responsible for:
 
-CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
-Hardware name: Freescale Layerscape 2085a RDB Board (DT)
-Call trace:
-[<ffff8000000885e8>] dump_backtrace+0x0/0x128
-[<ffff800000088734>] show_stack+0x24/0x30
-[<ffff80000079a7c4>] dump_stack+0x80/0xa0
-[<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
-[<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
-[<ffff8000007a2268>] rt_read_lock+0x40/0x58
-[<ffff800000085328>] single_step_handler+0x38/0xd8
-[<ffff800000082368>] do_debug_exception+0x58/0xb8
-Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
-7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
-7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
-7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
-7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
-7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
-7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
-7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
-7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
-7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
-[<ffff8000000833f4>] el1_dbg+0x18/0x6c
+|BUG: unable to handle kernel NULL pointer dereference at           (null)
+|IP: [<ffffffff81082123>] sched_cpu_active+0x53/0x70
+|PGD 0
+|Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
+|Dumping ftrace buffer:
+|   (ftrace buffer empty)
+|Modules linked in:
+|CPU: 1 PID: 0 Comm: swapper/1 Not tainted 4.4.1+ #330
+|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
+|task: ffff88013ae64b00 ti: ffff88013ae74000 task.ti: ffff88013ae74000
+|RIP: 0010:[<ffffffff81082123>]  [<ffffffff81082123>] sched_cpu_active+0x53/0x70
+|RSP: 0000:ffff88013ae77eb8  EFLAGS: 00010082
+|RAX: 0000000000000001 RBX: ffffffff81c2cf20 RCX: 0000001050fb52fb
+|RDX: 0000001050fb52fb RSI: 000000105117ca1e RDI: 00000000001c7723
+|RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
+|R10: 0000000000000000 R11: 0000000000000001 R12: 00000000ffffffff
+|R13: ffffffff81c2cee0 R14: 0000000000000000 R15: 0000000000000001
+|FS:  0000000000000000(0000) GS:ffff88013b200000(0000) knlGS:0000000000000000
+|CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+|CR2: 0000000000000000 CR3: 0000000001c09000 CR4: 00000000000006e0
+|Stack:
+| ffffffff810c446d ffff88013ae77f00 ffffffff8107d8dd 000000000000000a
+| 0000000000000001 0000000000000000 0000000000000000 0000000000000000
+| 0000000000000000 ffff88013ae77f10 ffffffff8107d90e ffff88013ae77f20
+|Call Trace:
+| [<ffffffff810c446d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
+| [<ffffffff8107d8dd>] ? notifier_call_chain+0x5d/0x80
+| [<ffffffff8107d90e>] ? __raw_notifier_call_chain+0xe/0x10
+| [<ffffffff810598a3>] ? cpu_notify+0x23/0x40
+| [<ffffffff8105a7b8>] ? notify_cpu_starting+0x28/0x30
 
-This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
-call_break_hook"), but comes to single_step_handler.
+during hotplug. The rawlocks need to remain however.
 
-This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
-
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm64/kernel/debug-monitors.c | 21 +++++++++++----------
- 1 file changed, 11 insertions(+), 10 deletions(-)
+ kernel/stop_machine.c | 40 ++++++++--------------------------------
+ 1 file changed, 8 insertions(+), 32 deletions(-)
 
-diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-index 70654d843d9b..0d1d675f2cce 100644
---- a/arch/arm64/kernel/debug-monitors.c
-+++ b/arch/arm64/kernel/debug-monitors.c
-@@ -184,20 +184,21 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
+diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
+index 1af29ad20970..d3ea2452e291 100644
+--- a/kernel/stop_machine.c
++++ b/kernel/stop_machine.c
+@@ -30,7 +30,7 @@ struct cpu_stop_done {
+ 	atomic_t		nr_todo;	/* nr left to execute */
+ 	bool			executed;	/* actually executed? */
+ 	int			ret;		/* collected return value */
+-	struct task_struct	*waiter;	/* woken when nr_todo reaches 0 */
++	struct completion	completion;	/* fired if nr_todo reaches 0 */
+ };
  
- /* EL1 Single Step Handler hooks */
- static LIST_HEAD(step_hook);
--static DEFINE_RWLOCK(step_hook_lock);
-+static DEFINE_SPINLOCK(step_hook_lock);
- 
- void register_step_hook(struct step_hook *hook)
+ /* the actual stopper, one per every possible cpu, enabled on online cpus */
+@@ -56,7 +56,7 @@ static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
  {
--	write_lock(&step_hook_lock);
--	list_add(&hook->node, &step_hook);
--	write_unlock(&step_hook_lock);
-+	spin_lock(&step_hook_lock);
-+	list_add_rcu(&hook->node, &step_hook);
-+	spin_unlock(&step_hook_lock);
+ 	memset(done, 0, sizeof(*done));
+ 	atomic_set(&done->nr_todo, nr_todo);
+-	done->waiter = current;
++	init_completion(&done->completion);
  }
  
- void unregister_step_hook(struct step_hook *hook)
- {
--	write_lock(&step_hook_lock);
--	list_del(&hook->node);
--	write_unlock(&step_hook_lock);
-+	spin_lock(&step_hook_lock);
-+	list_del_rcu(&hook->node);
-+	spin_unlock(&step_hook_lock);
-+	synchronize_rcu();
- }
- 
- /*
-@@ -211,15 +212,15 @@ static int call_step_hook(struct pt_regs *regs, unsigned int esr)
- 	struct step_hook *hook;
- 	int retval = DBG_HOOK_ERROR;
- 
--	read_lock(&step_hook_lock);
-+	rcu_read_lock();
- 
--	list_for_each_entry(hook, &step_hook, node)	{
-+	list_for_each_entry_rcu(hook, &step_hook, node)	{
- 		retval = hook->fn(regs, esr);
- 		if (retval == DBG_HOOK_HANDLED)
- 			break;
+ /* signal completion unless @done is NULL */
+@@ -65,10 +65,8 @@ static void cpu_stop_signal_done(struct cpu_stop_done *done, bool executed)
+ 	if (done) {
+ 		if (executed)
+ 			done->executed = true;
+-		if (atomic_dec_and_test(&done->nr_todo)) {
+-			wake_up_process(done->waiter);
+-			done->waiter = NULL;
+-		}
++		if (atomic_dec_and_test(&done->nr_todo))
++			complete(&done->completion);
  	}
- 
--	read_unlock(&step_hook_lock);
-+	rcu_read_unlock();
- 
- 	return retval;
  }
+ 
+@@ -91,22 +89,6 @@ static void cpu_stop_queue_work(unsigned int cpu, struct cpu_stop_work *work)
+ 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
+ }
+ 
+-static void wait_for_stop_done(struct cpu_stop_done *done)
+-{
+-	set_current_state(TASK_UNINTERRUPTIBLE);
+-	while (atomic_read(&done->nr_todo)) {
+-		schedule();
+-		set_current_state(TASK_UNINTERRUPTIBLE);
+-	}
+-	/*
+-	 * We need to wait until cpu_stop_signal_done() has cleared
+-	 * done->waiter.
+-	 */
+-	while (done->waiter)
+-		cpu_relax();
+-	set_current_state(TASK_RUNNING);
+-}
+-
+ /**
+  * stop_one_cpu - stop a cpu
+  * @cpu: cpu to stop
+@@ -138,7 +120,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
+ 
+ 	cpu_stop_init_done(&done, 1);
+ 	cpu_stop_queue_work(cpu, &work);
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+ 
+@@ -315,7 +297,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
+ 	lg_local_unlock(&stop_cpus_lock);
+ 	preempt_enable_nort();
+ 
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+@@ -380,7 +362,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
+ 
+ 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
+ 	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+ 
+@@ -511,13 +493,7 @@ repeat:
+ 			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
+ 					  ksym_buf), arg);
+ 
+-		/*
+-		 * Make sure that the wakeup and setting done->waiter
+-		 * to NULL is atomic.
+-		 */
+-		local_irq_disable();
+ 		cpu_stop_signal_done(done, true);
+-		local_irq_enable();
+ 		goto repeat;
+ 	}
+ }
+@@ -676,7 +652,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
+ 	ret = multi_cpu_stop(&msdata);
+ 
+ 	/* Busy wait for completion. */
+-	while (atomic_read(&done.nr_todo))
++	while (!completion_done(&done.completion))
+ 		cpu_relax();
+ 
+ 	mutex_unlock(&stop_cpus_mutex);
 -- 
 2.7.0
