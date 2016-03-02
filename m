@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 07/20] latencyhist: disable jump-labels
-Date: Wed, 02 Mar 2016 10:37:05 -0500
-Message-ID: <20160302153715.455944074@goodmis.org>
+Subject: [PATCH RT 15/20] drm,i915: Use local_lock/unlock_irq() in
+ intel_pipe_update_start/end()
+Date: Wed, 02 Mar 2016 10:37:13 -0500
+Message-ID: <20160302153717.036206135@goodmis.org>
 References: <20160302153658.995489487@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +11,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Mathys <eraserix@gmail.com>,
-	<stable-rt@vger.kernel.org>
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-latencyhist-disable-jump-labels.patch
+Content-Disposition: inline; filename=0015-drm-i915-Use-local_lock-unlock_irq-in-intel_pipe_upd.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,67 +24,117 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Atleast on X86 we die a recursive death
+[    8.014039] BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:918
+[    8.014041] in_atomic(): 0, irqs_disabled(): 1, pid: 78, name: kworker/u4:4
+[    8.014045] CPU: 1 PID: 78 Comm: kworker/u4:4 Not tainted 4.1.7-rt7 #5
+[    8.014055] Workqueue: events_unbound async_run_entry_fn
+[    8.014059]  0000000000000000 ffff880037153748 ffffffff815f32c9 0000000000000002
+[    8.014063]  ffff88013a50e380 ffff880037153768 ffffffff815ef075 ffff8800372c06c8
+[    8.014066]  ffff8800372c06c8 ffff880037153778 ffffffff8107c0b3 ffff880037153798
+[    8.014067] Call Trace:
+[    8.014074]  [<ffffffff815f32c9>] dump_stack+0x4a/0x61
+[    8.014078]  [<ffffffff815ef075>] ___might_sleep.part.93+0xe9/0xee
+[    8.014082]  [<ffffffff8107c0b3>] ___might_sleep+0x53/0x80
+[    8.014086]  [<ffffffff815f9064>] rt_spin_lock+0x24/0x50
+[    8.014090]  [<ffffffff8109368b>] prepare_to_wait+0x2b/0xa0
+[    8.014152]  [<ffffffffa016c04c>] intel_pipe_update_start+0x17c/0x300 [i915]
+[    8.014156]  [<ffffffff81093b40>] ? prepare_to_wait_event+0x120/0x120
+[    8.014201]  [<ffffffffa0158f36>] intel_begin_crtc_commit+0x166/0x1e0 [i915]
+[    8.014215]  [<ffffffffa00c806d>] drm_atomic_helper_commit_planes+0x5d/0x1a0 [drm_kms_helper]
+[    8.014260]  [<ffffffffa0171e9b>] intel_atomic_commit+0xab/0xf0 [i915]
+[    8.014288]  [<ffffffffa00654c7>] drm_atomic_commit+0x37/0x60 [drm]
+[    8.014298]  [<ffffffffa00c6fcd>] drm_atomic_helper_plane_set_property+0x8d/0xd0 [drm_kms_helper]
+[    8.014301]  [<ffffffff815f77d9>] ? __ww_mutex_lock+0x39/0x40
+[    8.014319]  [<ffffffffa0053b3d>] drm_mode_plane_set_obj_prop+0x2d/0x90 [drm]
+[    8.014328]  [<ffffffffa00c8edb>] restore_fbdev_mode+0x6b/0xf0 [drm_kms_helper]
+[    8.014337]  [<ffffffffa00cae49>] drm_fb_helper_restore_fbdev_mode_unlocked+0x29/0x80 [drm_kms_helper]
+[    8.014346]  [<ffffffffa00caec2>] drm_fb_helper_set_par+0x22/0x50 [drm_kms_helper]
+[    8.014390]  [<ffffffffa016dfba>] intel_fbdev_set_par+0x1a/0x60 [i915]
+[    8.014394]  [<ffffffff81327dc4>] fbcon_init+0x4f4/0x580
+[    8.014398]  [<ffffffff8139ef4c>] visual_init+0xbc/0x120
+[    8.014401]  [<ffffffff813a1623>] do_bind_con_driver+0x163/0x330
+[    8.014405]  [<ffffffff813a1b2c>] do_take_over_console+0x11c/0x1c0
+[    8.014408]  [<ffffffff813236e3>] do_fbcon_takeover+0x63/0xd0
+[    8.014410]  [<ffffffff81328965>] fbcon_event_notify+0x785/0x8d0
+[    8.014413]  [<ffffffff8107c12d>] ? __might_sleep+0x4d/0x90
+[    8.014416]  [<ffffffff810775fe>] notifier_call_chain+0x4e/0x80
+[    8.014419]  [<ffffffff810779cd>] __blocking_notifier_call_chain+0x4d/0x70
+[    8.014422]  [<ffffffff81077a06>] blocking_notifier_call_chain+0x16/0x20
+[    8.014425]  [<ffffffff8132b48b>] fb_notifier_call_chain+0x1b/0x20
+[    8.014428]  [<ffffffff8132d8fa>] register_framebuffer+0x21a/0x350
+[    8.014439]  [<ffffffffa00cb164>] drm_fb_helper_initial_config+0x274/0x3e0 [drm_kms_helper]
+[    8.014483]  [<ffffffffa016f1cb>] intel_fbdev_initial_config+0x1b/0x20 [i915]
+[    8.014486]  [<ffffffff8107912c>] async_run_entry_fn+0x4c/0x160
+[    8.014490]  [<ffffffff81070ffa>] process_one_work+0x14a/0x470
+[    8.014493]  [<ffffffff81071489>] worker_thread+0x169/0x4c0
+[    8.014496]  [<ffffffff81071320>] ? process_one_work+0x470/0x470
+[    8.014499]  [<ffffffff81076606>] kthread+0xc6/0xe0
+[    8.014502]  [<ffffffff81070000>] ? queue_work_on+0x80/0x110
+[    8.014506]  [<ffffffff81076540>] ? kthread_worker_fn+0x1c0/0x1c0
 
-|CPU: 3 PID: 585 Comm: bash Not tainted 4.4.1-rt4+ #198
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88007ab4cd00 ti: ffff88007ab94000 task.ti: ffff88007ab94000
-|RIP: 0010:[<ffffffff81684870>]  [<ffffffff81684870>] int3+0x0/0x10
-|RSP: 0018:ffff88013c107fd8  EFLAGS: 00010082
-|RAX: ffff88007ab4cd00 RBX: ffffffff8100ceab RCX: 0000000080202001
-|RDX: 0000000000000000 RSI: ffffffff8100ceab RDI: ffffffff810c78b2
-|RBP: ffff88007ab97c10 R08: ffffffffff57b000 R09: 0000000000000000
-|R10: ffff88013bb64790 R11: ffff88007ab4cd68 R12: ffffffff8100ceab
-|R13: ffffffff810c78b2 R14: ffffffff810f8158 R15: ffffffff810f9120
-|FS:  0000000000000000(0000) GS:ffff88013c100000(0063) knlGS:00000000f74e3940
-|CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
-|CR2: 0000000008cf6008 CR3: 000000013b169000 CR4: 00000000000006e0
-|Call Trace:
-| <#DB>
-| [<ffffffff810f8158>] ? trace_preempt_off+0x18/0x170
-| <<EOE>>
-| [<ffffffff81077745>] preempt_count_add+0xa5/0xc0
-| [<ffffffff810c78b2>] on_each_cpu+0x22/0x90
-| [<ffffffff8100ceab>] text_poke_bp+0x5b/0xc0
-| [<ffffffff8100a29c>] arch_jump_label_transform+0x8c/0xf0
-| [<ffffffff8111c77c>] __jump_label_update+0x6c/0x80
-| [<ffffffff8111c83a>] jump_label_update+0xaa/0xc0
-| [<ffffffff8111ca54>] static_key_slow_inc+0x94/0xa0
-| [<ffffffff810e0d8d>] tracepoint_probe_register_prio+0x26d/0x2c0
-| [<ffffffff810e0df3>] tracepoint_probe_register+0x13/0x20
-| [<ffffffff810fca78>] trace_event_reg+0x98/0xd0
-| [<ffffffff810fcc8b>] __ftrace_event_enable_disable+0x6b/0x180
-| [<ffffffff810fd5b8>] event_enable_write+0x78/0xc0
-| [<ffffffff8117a768>] __vfs_write+0x28/0xe0
-| [<ffffffff8117b025>] vfs_write+0xa5/0x180
-| [<ffffffff8117bb76>] SyS_write+0x46/0xa0
-| [<ffffffff81002c91>] do_fast_syscall_32+0xa1/0x1d0
-| [<ffffffff81684d57>] sysenter_flags_fixed+0xd/0x17
-
-during
- echo 1 > /sys/kernel/debug/tracing/events/hist/preemptirqsoff_hist/enable
-
-Reported-By: Christoph Mathys <eraserix@gmail.com>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ drivers/gpu/drm/i915/intel_sprite.c | 11 +++++++----
+ 1 file changed, 7 insertions(+), 4 deletions(-)
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 84d340b061a9..efb75aee313a 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -50,6 +50,7 @@ config KPROBES
- config JUMP_LABEL
-        bool "Optimize very unlikely/likely branches"
-        depends on HAVE_ARCH_JUMP_LABEL
-+       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
-        help
-          This option enables a transparent branch optimization that
- 	 makes certain almost-always-true or almost-always-false branch
+diff --git a/drivers/gpu/drm/i915/intel_sprite.c b/drivers/gpu/drm/i915/intel_sprite.c
+index 4edebce7f213..c7c118476758 100644
+--- a/drivers/gpu/drm/i915/intel_sprite.c
++++ b/drivers/gpu/drm/i915/intel_sprite.c
+@@ -36,6 +36,7 @@
+ #include "intel_drv.h"
+ #include <drm/i915_drm.h>
+ #include "i915_drv.h"
++#include <linux/locallock.h>
+ 
+ static int usecs_to_scanlines(const struct drm_display_mode *mode, int usecs)
+ {
+@@ -46,6 +47,8 @@ static int usecs_to_scanlines(const struct drm_display_mode *mode, int usecs)
+ 	return DIV_ROUND_UP(usecs * mode->crtc_clock, 1000 * mode->crtc_htotal);
+ }
+ 
++static DEFINE_LOCAL_IRQ_LOCK(pipe_update_lock);
++
+ static bool intel_pipe_update_start(struct intel_crtc *crtc, uint32_t *start_vbl_count)
+ {
+ 	struct drm_device *dev = crtc->base.dev;
+@@ -72,7 +75,7 @@ static bool intel_pipe_update_start(struct intel_crtc *crtc, uint32_t *start_vbl
+ 	if (WARN_ON(drm_vblank_get(dev, pipe)))
+ 		return false;
+ 
+-	local_irq_disable();
++	local_lock_irq(pipe_update_lock);
+ 
+ 	trace_i915_pipe_update_start(crtc, min, max);
+ 
+@@ -94,11 +97,11 @@ static bool intel_pipe_update_start(struct intel_crtc *crtc, uint32_t *start_vbl
+ 			break;
+ 		}
+ 
+-		local_irq_enable();
++		local_unlock_irq(pipe_update_lock);
+ 
+ 		timeout = schedule_timeout(timeout);
+ 
+-		local_irq_disable();
++		local_lock_irq(pipe_update_lock);
+ 	}
+ 
+ 	finish_wait(wq, &wait);
+@@ -120,7 +123,7 @@ static void intel_pipe_update_end(struct intel_crtc *crtc, u32 start_vbl_count)
+ 
+ 	trace_i915_pipe_update_end(crtc, end_vbl_count);
+ 
+-	local_irq_enable();
++	local_unlock_irq(pipe_update_lock);
+ 
+ 	if (start_vbl_count != end_vbl_count)
+ 		DRM_ERROR("Atomic update failure on pipe %c (start=%u end=%u)\n",
 -- 
 2.7.0
