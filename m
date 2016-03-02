@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/22] kernel: migrate_disable() do fastpath in atomic & irqs-off
-Date: Wed, 02 Mar 2016 10:09:10 -0500
-Message-ID: <20160302151112.005641091@goodmis.org>
+Subject: [PATCH RT 02/22] ptrace: dont open IRQs in ptrace_freeze_traced() too early
+Date: Wed, 02 Mar 2016 10:09:01 -0500
+Message-ID: <20160302151110.577241300@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	kernel test robot <ying.huang@linux.intel.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-kernel-migrate_disable-do-fastpath-in-atomic-irqs-of.patch
+Content-Disposition: inline; filename=0002-ptrace-don-t-open-IRQs-in-ptrace_freeze_traced-too-e.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,36 +26,38 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-With interrupts off it makes no sense to do the long path since we can't
-leave the CPU anyway. Also we might end up in a recursion with lockdep.
+In the non-RT case the spin_lock_irq() here disables interrupts as well
+as raw_spin_lock_irq(). So in the unlock case the interrupts are enabled
+too early.
 
+Reported-by: kernel test robot <ying.huang@linux.intel.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ kernel/ptrace.c | 6 ++++--
+ 1 file changed, 4 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 5cbfb0548574..56b6d73f9154 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -2798,7 +2798,7 @@ void migrate_disable(void)
- {
- 	struct task_struct *p = current;
+diff --git a/kernel/ptrace.c b/kernel/ptrace.c
+index b8d001b89047..b90be3ae3a10 100644
+--- a/kernel/ptrace.c
++++ b/kernel/ptrace.c
+@@ -129,12 +129,14 @@ static bool ptrace_freeze_traced(struct task_struct *task)
  
--	if (in_atomic()) {
-+	if (in_atomic() || irqs_disabled()) {
- #ifdef CONFIG_SCHED_DEBUG
- 		p->migrate_disable_atomic++;
- #endif
-@@ -2832,7 +2832,7 @@ void migrate_enable(void)
- 	unsigned long flags;
- 	struct rq *rq;
- 
--	if (in_atomic()) {
-+	if (in_atomic() || irqs_disabled()) {
- #ifdef CONFIG_SCHED_DEBUG
- 		p->migrate_disable_atomic--;
- #endif
+ 	spin_lock_irq(&task->sighand->siglock);
+ 	if (task_is_traced(task) && !__fatal_signal_pending(task)) {
+-		raw_spin_lock_irq(&task->pi_lock);
++		unsigned long flags;
++
++		raw_spin_lock_irqsave(&task->pi_lock, flags);
+ 		if (task->state & __TASK_TRACED)
+ 			task->state = __TASK_TRACED;
+ 		else
+ 			task->saved_state = __TASK_TRACED;
+-		raw_spin_unlock_irq(&task->pi_lock);
++		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
+ 		ret = true;
+ 	}
+ 	spin_unlock_irq(&task->sighand->siglock);
 -- 
 2.7.0
