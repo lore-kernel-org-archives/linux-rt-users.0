@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/22] net: provide a way to delegate processing a softirq to ksoftirqd
-Date: Wed, 02 Mar 2016 10:09:07 -0500
-Message-ID: <20160302151111.531504201@goodmis.org>
+Subject: [PATCH RT 11/22] kernel: migrate_disable() do fastpath in atomic & irqs-off
+Date: Wed, 02 Mar 2016 10:09:10 -0500
+Message-ID: <20160302151112.005641091@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-net-provide-a-way-to-delegate-processing-a-softirq-t.patch
+Content-Disposition: inline; filename=0011-kernel-migrate_disable-do-fastpath-in-atomic-irqs-of.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,85 +24,36 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-If the NET_RX uses up all of his budget it moves the following NAPI
-invocations into the `ksoftirqd`. On -RT it does not do so. Instead it
-rises the NET_RX softirq in its current context again.
+With interrupts off it makes no sense to do the long path since we can't
+leave the CPU anyway. Also we might end up in a recursion with lockdep.
 
-In order to get closer to mainline's behaviour this patch provides
-__raise_softirq_irqoff_ksoft() which raises the softirq in the ksoftird.
-
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/interrupt.h |  8 ++++++++
- kernel/softirq.c          | 21 +++++++++++++++++++++
- net/core/dev.c            |  2 +-
- 3 files changed, 30 insertions(+), 1 deletion(-)
+ kernel/sched/core.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index fe254555cf95..d11fd0a440ff 100644
---- a/include/linux/interrupt.h
-+++ b/include/linux/interrupt.h
-@@ -463,6 +463,14 @@ extern void thread_do_softirq(void);
- extern void open_softirq(int nr, void (*action)(struct softirq_action *));
- extern void softirq_init(void);
- extern void __raise_softirq_irqoff(unsigned int nr);
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+extern void __raise_softirq_irqoff_ksoft(unsigned int nr);
-+#else
-+static inline void __raise_softirq_irqoff_ksoft(unsigned int nr)
-+{
-+	__raise_softirq_irqoff(nr);
-+}
-+#endif
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 5cbfb0548574..56b6d73f9154 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2798,7 +2798,7 @@ void migrate_disable(void)
+ {
+ 	struct task_struct *p = current;
  
- extern void raise_softirq_irqoff(unsigned int nr);
- extern void raise_softirq(unsigned int nr);
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index aff764fad236..d1e999e74d23 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -673,6 +673,27 @@ void __raise_softirq_irqoff(unsigned int nr)
- }
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+ #endif
+@@ -2832,7 +2832,7 @@ void migrate_enable(void)
+ 	unsigned long flags;
+ 	struct rq *rq;
  
- /*
-+ * Same as __raise_softirq_irqoff() but will process them in ksoftirqd
-+ */
-+void __raise_softirq_irqoff_ksoft(unsigned int nr)
-+{
-+	unsigned int mask;
-+
-+	if (WARN_ON_ONCE(!__this_cpu_read(ksoftirqd) ||
-+			 !__this_cpu_read(ktimer_softirqd)))
-+		return;
-+	mask = 1UL << nr;
-+
-+	trace_softirq_raise(nr);
-+	or_softirq_pending(mask);
-+	if (mask & TIMER_SOFTIRQS)
-+		__this_cpu_read(ktimer_softirqd)->softirqs_raised |= mask;
-+	else
-+		__this_cpu_read(ksoftirqd)->softirqs_raised |= mask;
-+	wakeup_proper_softirq(nr);
-+}
-+
-+/*
-  * This function must run with irqs disabled!
-  */
- void raise_softirq_irqoff(unsigned int nr)
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 7d8ad99de55f..90c4c45b206c 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -4790,7 +4790,7 @@ static void net_rx_action(struct softirq_action *h)
- 	list_splice_tail(&repoll, &list);
- 	list_splice(&list, &sd->poll_list);
- 	if (!list_empty(&sd->poll_list))
--		__raise_softirq_irqoff(NET_RX_SOFTIRQ);
-+		__raise_softirq_irqoff_ksoft(NET_RX_SOFTIRQ);
- 
- 	net_rps_action_and_irq_enable(sd);
- }
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+ #endif
 -- 
 2.7.0
