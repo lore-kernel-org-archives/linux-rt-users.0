@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 10/17] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-Date: Wed, 02 Mar 2016 10:44:43 -0500
-Message-ID: <20160302154501.424679508@goodmis.org>
+Subject: [PATCH RT 05/17] net: provide a way to delegate processing a softirq to ksoftirqd
+Date: Wed, 02 Mar 2016 10:44:38 -0500
+Message-ID: <20160302154500.561583147@goodmis.org>
 References: <20160302154433.638594715@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,15 +9,16 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:59721 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:59688 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755565AbcCBPpF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2016 10:45:05 -0500
-Content-Disposition: inline; filename=0010-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
+	id S1755512AbcCBPpE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 10:45:04 -0500
+Content-Disposition: inline; filename=0005-net-provide-a-way-to-delegate-processing-a-softirq-t.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
@@ -28,156 +29,86 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-With completion using swait and so rawlocks we don't need this anymore.
-Further, bisect thinks this patch is responsible for:
+If the NET_RX uses up all of his budget it moves the following NAPI
+invocations into the `ksoftirqd`. On -RT it does not do so. Instead it
+rises the NET_RX softirq in its current context again.
 
-|BUG: unable to handle kernel NULL pointer dereference at           (null)
-|IP: [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|PGD 0
-|Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
-|Dumping ftrace buffer:
-|   (ftrace buffer empty)
-|Modules linked in:
-|CPU: 1 PID: 0 Comm: swapper/1 Not tainted 4.4.1+ #330
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88013ae64b00 ti: ffff88013ae74000 task.ti: ffff88013ae74000
-|RIP: 0010:[<ffffffff81082123>]  [<ffffffff81082123>] sched_cpu_active+0x53/0x70
-|RSP: 0000:ffff88013ae77eb8  EFLAGS: 00010082
-|RAX: 0000000000000001 RBX: ffffffff81c2cf20 RCX: 0000001050fb52fb
-|RDX: 0000001050fb52fb RSI: 000000105117ca1e RDI: 00000000001c7723
-|RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
-|R10: 0000000000000000 R11: 0000000000000001 R12: 00000000ffffffff
-|R13: ffffffff81c2cee0 R14: 0000000000000000 R15: 0000000000000001
-|FS:  0000000000000000(0000) GS:ffff88013b200000(0000) knlGS:0000000000000000
-|CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
-|CR2: 0000000000000000 CR3: 0000000001c09000 CR4: 00000000000006e0
-|Stack:
-| ffffffff810c446d ffff88013ae77f00 ffffffff8107d8dd 000000000000000a
-| 0000000000000001 0000000000000000 0000000000000000 0000000000000000
-| 0000000000000000 ffff88013ae77f10 ffffffff8107d90e ffff88013ae77f20
-|Call Trace:
-| [<ffffffff810c446d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
-| [<ffffffff8107d8dd>] ? notifier_call_chain+0x5d/0x80
-| [<ffffffff8107d90e>] ? __raw_notifier_call_chain+0xe/0x10
-| [<ffffffff810598a3>] ? cpu_notify+0x23/0x40
-| [<ffffffff8105a7b8>] ? notify_cpu_starting+0x28/0x30
+In order to get closer to mainline's behaviour this patch provides
+__raise_softirq_irqoff_ksoft() which raises the softirq in the ksoftird.
 
-during hotplug. The rawlocks need to remain however.
-
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/stop_machine.c | 40 ++++++++--------------------------------
- 1 file changed, 8 insertions(+), 32 deletions(-)
+ include/linux/interrupt.h |  8 ++++++++
+ kernel/softirq.c          | 21 +++++++++++++++++++++
+ net/core/dev.c            |  2 +-
+ 3 files changed, 30 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
-index bcbae9c962a9..f2731ce8308e 100644
---- a/kernel/stop_machine.c
-+++ b/kernel/stop_machine.c
-@@ -30,7 +30,7 @@ struct cpu_stop_done {
- 	atomic_t		nr_todo;	/* nr left to execute */
- 	bool			executed;	/* actually executed? */
- 	int			ret;		/* collected return value */
--	struct task_struct	*waiter;	/* woken when nr_todo reaches 0 */
-+	struct completion	completion;	/* fired if nr_todo reaches 0 */
- };
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 2d231b330f49..6116748bf43f 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -440,6 +440,14 @@ extern void thread_do_softirq(void);
+ extern void open_softirq(int nr, void (*action)(struct softirq_action *));
+ extern void softirq_init(void);
+ extern void __raise_softirq_irqoff(unsigned int nr);
++#ifdef CONFIG_PREEMPT_RT_FULL
++extern void __raise_softirq_irqoff_ksoft(unsigned int nr);
++#else
++static inline void __raise_softirq_irqoff_ksoft(unsigned int nr)
++{
++	__raise_softirq_irqoff(nr);
++}
++#endif
  
- /* the actual stopper, one per every possible cpu, enabled on online cpus */
-@@ -56,7 +56,7 @@ static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
- {
- 	memset(done, 0, sizeof(*done));
- 	atomic_set(&done->nr_todo, nr_todo);
--	done->waiter = current;
-+	init_completion(&done->completion);
+ extern void raise_softirq_irqoff(unsigned int nr);
+ extern void raise_softirq(unsigned int nr);
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index e88582a86803..8821db3f07e6 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -703,6 +703,27 @@ void __raise_softirq_irqoff(unsigned int nr)
  }
  
- /* signal completion unless @done is NULL */
-@@ -65,10 +65,8 @@ static void cpu_stop_signal_done(struct cpu_stop_done *done, bool executed)
- 	if (done) {
- 		if (executed)
- 			done->executed = true;
--		if (atomic_dec_and_test(&done->nr_todo)) {
--			wake_up_process(done->waiter);
--			done->waiter = NULL;
--		}
-+		if (atomic_dec_and_test(&done->nr_todo))
-+			complete(&done->completion);
- 	}
+ /*
++ * Same as __raise_softirq_irqoff() but will process them in ksoftirqd
++ */
++void __raise_softirq_irqoff_ksoft(unsigned int nr)
++{
++	unsigned int mask;
++
++	if (WARN_ON_ONCE(!__this_cpu_read(ksoftirqd) ||
++			 !__this_cpu_read(ktimer_softirqd)))
++		return;
++	mask = 1UL << nr;
++
++	trace_softirq_raise(nr);
++	or_softirq_pending(mask);
++	if (mask & TIMER_SOFTIRQS)
++		__this_cpu_read(ktimer_softirqd)->softirqs_raised |= mask;
++	else
++		__this_cpu_read(ksoftirqd)->softirqs_raised |= mask;
++	wakeup_proper_softirq(nr);
++}
++
++/*
+  * This function must run with irqs disabled!
+  */
+ void raise_softirq_irqoff(unsigned int nr)
+diff --git a/net/core/dev.c b/net/core/dev.c
+index 7bbcef273c74..4259edb6d29b 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4525,7 +4525,7 @@ out:
+ 
+ softnet_break:
+ 	sd->time_squeeze++;
+-	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
++	__raise_softirq_irqoff_ksoft(NET_RX_SOFTIRQ);
+ 	goto out;
  }
  
-@@ -91,22 +89,6 @@ static void cpu_stop_queue_work(unsigned int cpu, struct cpu_stop_work *work)
- 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
- }
- 
--static void wait_for_stop_done(struct cpu_stop_done *done)
--{
--	set_current_state(TASK_UNINTERRUPTIBLE);
--	while (atomic_read(&done->nr_todo)) {
--		schedule();
--		set_current_state(TASK_UNINTERRUPTIBLE);
--	}
--	/*
--	 * We need to wait until cpu_stop_signal_done() has cleared
--	 * done->waiter.
--	 */
--	while (done->waiter)
--		cpu_relax();
--	set_current_state(TASK_RUNNING);
--}
--
- /**
-  * stop_one_cpu - stop a cpu
-  * @cpu: cpu to stop
-@@ -138,7 +120,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
- 
- 	cpu_stop_init_done(&done, 1);
- 	cpu_stop_queue_work(cpu, &work);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
- }
- 
-@@ -315,7 +297,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
- 	lg_local_unlock(&stop_cpus_lock);
- 	preempt_enable_nort();
- 
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 
- 	return done.executed ? done.ret : -ENOENT;
- }
-@@ -379,7 +361,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
- 
- 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
- 	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
--	wait_for_stop_done(&done);
-+	wait_for_completion(&done.completion);
- 	return done.executed ? done.ret : -ENOENT;
- }
- 
-@@ -510,13 +492,7 @@ repeat:
- 			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
- 					  ksym_buf), arg);
- 
--		/*
--		 * Make sure that the wakeup and setting done->waiter
--		 * to NULL is atomic.
--		 */
--		local_irq_disable();
- 		cpu_stop_signal_done(done, true);
--		local_irq_enable();
- 		goto repeat;
- 	}
- }
-@@ -675,7 +651,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
- 	ret = multi_cpu_stop(&msdata);
- 
- 	/* Busy wait for completion. */
--	while (atomic_read(&done.nr_todo))
-+	while (!completion_done(&done.completion))
- 		cpu_relax();
- 
- 	mutex_unlock(&stop_cpus_mutex);
 -- 
 2.7.0
 
