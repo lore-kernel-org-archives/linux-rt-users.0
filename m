@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 19/22] f2fs: Mutex cant be used by down_write_nest_lock()
-Date: Wed, 02 Mar 2016 10:09:18 -0500
-Message-ID: <20160302151113.554132593@goodmis.org>
+Subject: [PATCH RT 05/22] net/core: protect users of napi_alloc_cache against reentrance
+Date: Wed, 02 Mar 2016 10:09:04 -0500
+Message-ID: <20160302151111.049865653@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,88 +10,65 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Yang Shi <yang.shi@linaro.org>, <cm224.lee@samsung.com>,
-	<chao2.yu@samsung.com>, <linaro-kernel@lists.linaro.org>,
-	<linux-f2fs-devel@lists.sourceforge.net>,
-	<linux-fsdevel@vger.kernel.org>, <jaegeuk@kernel.org>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0019-f2fs-Mutex-can-t-be-used-by-down_write_nest_lock.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:55209 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754708AbcCBPLT (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 10:11:19 -0500
+Content-Disposition: inline; filename=0005-net-core-protect-users-of-napi_alloc_cache-against-r.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.1.15-rt18-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@linaro.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-fsf2_lock_all() calls down_write_nest_lock() to acquire a rw_sem and check
-a mutex, but down_write_nest_lock() is designed for two rw_sem accoring to the
-comment in include/linux/rwsem.h. And, other than f2fs, it is just called in
-mm/mmap.c with two rwsem.
+On -RT the code running in BH can not be moved to another CPU so CPU
+local variable remain local. However the code can be preempted
+and another task may enter BH accessing the same CPU using the same
+napi_alloc_cache variable.
+This patch ensures that each user of napi_alloc_cache uses a local lock.
 
-So, it looks it is used wrongly by f2fs. And, it causes the below compile
-warning on -rt kernel too.
-
-In file included from fs/f2fs/xattr.c:25:0:
-fs/f2fs/f2fs.h: In function 'f2fs_lock_all':
-fs/f2fs/f2fs.h:962:34: warning: passing argument 2 of 'down_write_nest_lock' from
-		       incompatible pointer type [-Wincompatible-pointer-types]
-  f2fs_down_write(&sbi->cp_rwsem, &sbi->cp_mutex);
-                                  ^
-
-The nest annotation was anyway bogus as nested annotations for lockdep are
-only required if one nests two locks of the same lock class, which is not the
-case here.
-
-Signed-off-by: Yang Shi <yang.shi@linaro.org>
-Cc: cm224.lee@samsung.com
-Cc: chao2.yu@samsung.com
-Cc: linaro-kernel@lists.linaro.org
-Cc: linux-rt-users@vger.kernel.org
-Cc: bigeasy@linutronix.de
-Cc: rostedt@goodmis.org
-Cc: linux-f2fs-devel@lists.sourceforge.net
-Cc: linux-fsdevel@vger.kernel.org
-Cc: jaegeuk@kernel.org
-Link: http://lkml.kernel.org/r/1456532725-4126-1-git-send-email-yang.shi@linaro.org
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- fs/f2fs/f2fs.h | 4 +---
- 1 file changed, 1 insertion(+), 3 deletions(-)
+ net/core/skbuff.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
 
-diff --git a/fs/f2fs/f2fs.h b/fs/f2fs/f2fs.h
-index 8de34ab6d5b1..4e80270703a4 100644
---- a/fs/f2fs/f2fs.h
-+++ b/fs/f2fs/f2fs.h
-@@ -22,7 +22,6 @@
+diff --git a/net/core/skbuff.c b/net/core/skbuff.c
+index 36c138197f37..df293d45e0cd 100644
+--- a/net/core/skbuff.c
++++ b/net/core/skbuff.c
+@@ -358,6 +358,7 @@ struct netdev_alloc_cache {
+ static DEFINE_PER_CPU(struct netdev_alloc_cache, netdev_alloc_cache);
+ static DEFINE_PER_CPU(struct netdev_alloc_cache, napi_alloc_cache);
+ static DEFINE_LOCAL_IRQ_LOCK(netdev_alloc_lock);
++static DEFINE_LOCAL_IRQ_LOCK(napi_alloc_cache_lock);
  
- #ifdef CONFIG_F2FS_CHECK_FS
- #define f2fs_bug_on(sbi, condition)	BUG_ON(condition)
--#define f2fs_down_write(x, y)	down_write_nest_lock(x, y)
- #else
- #define f2fs_bug_on(sbi, condition)					\
- 	do {								\
-@@ -31,7 +30,6 @@
- 			set_sbi_flag(sbi, SBI_NEED_FSCK);		\
- 		}							\
- 	} while (0)
--#define f2fs_down_write(x, y)	down_write(x)
- #endif
+ static struct page *__page_frag_refill(struct netdev_alloc_cache *nc,
+ 				       gfp_t gfp_mask)
+@@ -456,7 +457,12 @@ EXPORT_SYMBOL(netdev_alloc_frag);
  
- /*
-@@ -838,7 +836,7 @@ static inline void f2fs_unlock_op(struct f2fs_sb_info *sbi)
- 
- static inline void f2fs_lock_all(struct f2fs_sb_info *sbi)
+ static void *__napi_alloc_frag(unsigned int fragsz, gfp_t gfp_mask)
  {
--	f2fs_down_write(&sbi->cp_rwsem, &sbi->cp_mutex);
-+	down_write(&sbi->cp_rwsem);
+-	return __alloc_page_frag(&napi_alloc_cache, fragsz, gfp_mask);
++	void *data;
++
++	local_lock(napi_alloc_cache_lock);
++	data = __alloc_page_frag(&napi_alloc_cache, fragsz, gfp_mask);
++	local_unlock(napi_alloc_cache_lock);
++	return data;
  }
  
- static inline void f2fs_unlock_all(struct f2fs_sb_info *sbi)
+ void *napi_alloc_frag(unsigned int fragsz)
 -- 
 2.7.0
+
+
