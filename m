@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/20] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-Date: Wed, 02 Mar 2016 10:37:09 -0500
-Message-ID: <20160302153716.182290641@goodmis.org>
-References: <20160302153658.995489487@goodmis.org>
+Subject: [PATCH RT 10/17] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
+Date: Wed, 02 Mar 2016 10:44:43 -0500
+Message-ID: <20160302154501.424679508@goodmis.org>
+References: <20160302154433.638594715@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -13,15 +13,15 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:58342 "EHLO mail.kernel.org"
+Received: from mail.kernel.org ([198.145.29.136]:59721 "EHLO mail.kernel.org"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1755073AbcCBPhU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2016 10:37:20 -0500
-Content-Disposition: inline; filename=0011-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
+	id S1755565AbcCBPpF (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 10:45:05 -0500
+Content-Disposition: inline; filename=0010-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-3.18.27-rt27-rc1 stable review patch.
+3.14.61-rt64-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
@@ -71,7 +71,7 @@ Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
  1 file changed, 8 insertions(+), 32 deletions(-)
 
 diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
-index 1af29ad20970..d3ea2452e291 100644
+index bcbae9c962a9..f2731ce8308e 100644
 --- a/kernel/stop_machine.c
 +++ b/kernel/stop_machine.c
 @@ -30,7 +30,7 @@ struct cpu_stop_done {
@@ -146,7 +146,7 @@ index 1af29ad20970..d3ea2452e291 100644
  
  	return done.executed ? done.ret : -ENOENT;
  }
-@@ -380,7 +362,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
+@@ -379,7 +361,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
  
  	cpu_stop_init_done(&done, cpumask_weight(cpumask));
  	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
@@ -155,7 +155,7 @@ index 1af29ad20970..d3ea2452e291 100644
  	return done.executed ? done.ret : -ENOENT;
  }
  
-@@ -511,13 +493,7 @@ repeat:
+@@ -510,13 +492,7 @@ repeat:
  			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
  					  ksym_buf), arg);
  
@@ -169,7 +169,7 @@ index 1af29ad20970..d3ea2452e291 100644
  		goto repeat;
  	}
  }
-@@ -676,7 +652,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
+@@ -675,7 +651,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
  	ret = multi_cpu_stop(&msdata);
  
  	/* Busy wait for completion. */
