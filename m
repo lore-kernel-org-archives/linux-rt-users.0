@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 13/17] trace: Use rcuidle version for preemptoff_hist trace point
-Date: Wed, 02 Mar 2016 10:44:46 -0500
-Message-ID: <20160302154501.880144769@goodmis.org>
+Subject: [PATCH RT 07/17] arm64: replace read_lock to rcu lock in call_step_hook
+Date: Wed, 02 Mar 2016 10:44:40 -0500
+Message-ID: <20160302154500.885242090@goodmis.org>
 References: <20160302154433.638594715@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Yang Shi <yang.shi@windriver.com>
+	<stable-rt@vger.kernel.org>, Yang Shi <yang.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0013-trace-Use-rcuidle-version-for-preemptoff_hist-trace-.patch
+Content-Disposition: inline; filename=0007-arm64-replace-read_lock-to-rcu-lock-in-call_step_hoo.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,106 +23,99 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@windriver.com>
+From: Yang Shi <yang.shi@linaro.org>
 
-When running -rt kernel with both PREEMPT_OFF_HIST and LOCKDEP enabled,
-the below error is reported:
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
+Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
 
- [ INFO: suspicious RCU usage. ]
- 4.4.1-rt6 #1 Not tainted
- include/trace/events/hist.h:31 suspicious rcu_dereference_check() usage!
+CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
+Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+Call trace:
+[<ffff8000000885e8>] dump_backtrace+0x0/0x128
+[<ffff800000088734>] show_stack+0x24/0x30
+[<ffff80000079a7c4>] dump_stack+0x80/0xa0
+[<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
+[<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
+[<ffff8000007a2268>] rt_read_lock+0x40/0x58
+[<ffff800000085328>] single_step_handler+0x38/0xd8
+[<ffff800000082368>] do_debug_exception+0x58/0xb8
+Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
+7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
+7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
+7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
+7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
+7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
+7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
+7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
+7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
+7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
+[<ffff8000000833f4>] el1_dbg+0x18/0x6c
 
- other info that might help us debug this:
+This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
+call_break_hook"), but comes to single_step_handler.
 
- RCU used illegally from idle CPU!
- rcu_scheduler_active = 1, debug_locks = 0
- RCU used illegally from extended quiescent state!
- no locks held by swapper/0/0.
+This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
 
- stack backtrace:
- CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.4.1-rt6-WR8.0.0.0_standard #1
- Stack : 0000000000000006 0000000000000000 ffffffff81ca8c38 ffffffff81c8fc80
-    ffffffff811bdd68 ffffffff81cb0000 0000000000000000 ffffffff81cb0000
-    0000000000000000 0000000000000000 0000000000000004 0000000000000000
-    0000000000000004 ffffffff811bdf50 0000000000000000 ffffffff82b60000
-    0000000000000000 ffffffff812897ac ffffffff819f0000 000000000000000b
-    ffffffff811be460 ffffffff81b7c588 ffffffff81c8fc80 0000000000000000
-    0000000000000000 ffffffff81ec7f88 ffffffff81d70000 ffffffff81b70000
-    ffffffff81c90000 ffffffff81c3fb00 ffffffff81c3fc28 ffffffff815e6f98
-    0000000000000000 ffffffff81c8fa87 ffffffff81b70958 ffffffff811bf2c4
-    0707fe32e8d60ca5 ffffffff81126d60 0000000000000000 0000000000000000
-    ...
- Call Trace:
- [<ffffffff81126d60>] show_stack+0xe8/0x108
- [<ffffffff815e6f98>] dump_stack+0x88/0xb0
- [<ffffffff8124b88c>] time_hardirqs_off+0x204/0x300
- [<ffffffff811aa5dc>] trace_hardirqs_off_caller+0x24/0xe8
- [<ffffffff811a4ec4>] cpu_startup_entry+0x39c/0x508
- [<ffffffff81d7dc68>] start_kernel+0x584/0x5a0
-
-Replace regular trace_preemptoff_hist to rcuidle version to avoid the error.
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
-Cc: bigeasy@linutronix.de
-Cc: rostedt@goodmis.org
-Cc: linux-rt-users@vger.kernel.org
-Link: http://lkml.kernel.org/r/1456262603-10075-1-git-send-email-yang.shi@windriver.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/trace/events/hist.h  | 1 +
- kernel/trace/trace_irqsoff.c | 8 ++++----
- 2 files changed, 5 insertions(+), 4 deletions(-)
+ arch/arm64/kernel/debug-monitors.c | 21 ++++++++++++---------
+ 1 file changed, 12 insertions(+), 9 deletions(-)
 
-diff --git a/include/trace/events/hist.h b/include/trace/events/hist.h
-index 6122e4286177..f7710de1b1f3 100644
---- a/include/trace/events/hist.h
-+++ b/include/trace/events/hist.h
-@@ -9,6 +9,7 @@
+diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
+index 636ba8b6240b..f66d668ffce9 100644
+--- a/arch/arm64/kernel/debug-monitors.c
++++ b/arch/arm64/kernel/debug-monitors.c
+@@ -190,19 +190,22 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
+ /* EL1 Single Step Handler hooks */
+ static LIST_HEAD(step_hook);
+ DEFINE_RWLOCK(step_hook_lock);
++static DEFINE_RWLOCK(step_hook_lock);
++static DEFINE_SPINLOCK(step_hook_lock);
  
- #if !defined(CONFIG_PREEMPT_OFF_HIST) && !defined(CONFIG_INTERRUPT_OFF_HIST)
- #define trace_preemptirqsoff_hist(a, b)
-+#define trace_preemptirqsoff_hist_rcuidle(a, b)
- #else
- TRACE_EVENT(preemptirqsoff_hist,
+ void register_step_hook(struct step_hook *hook)
+ {
+-	write_lock(&step_hook_lock);
+-	list_add(&hook->node, &step_hook);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_add_rcu(&hook->node, &step_hook);
++	spin_unlock(&step_hook_lock);
+ }
  
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index 2f4eb37815d8..77bdfa55ce90 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -440,13 +440,13 @@ void start_critical_timings(void)
+ void unregister_step_hook(struct step_hook *hook)
  {
- 	if (preempt_trace() || irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(TRACE_START, 1);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
+-	write_lock(&step_hook_lock);
+-	list_del(&hook->node);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_del_rcu(&hook->node);
++	spin_unlock(&step_hook_lock);
++	synchronize_rcu();
  }
- EXPORT_SYMBOL_GPL(start_critical_timings);
  
- void stop_critical_timings(void)
- {
--	trace_preemptirqsoff_hist(TRACE_STOP, 0);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
- 	if (preempt_trace() || irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -491,7 +491,7 @@ inline void print_irqtrace_events(struct task_struct *curr)
-  */
- void trace_hardirqs_on(void)
- {
--	trace_preemptirqsoff_hist(IRQS_ON, 0);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -501,7 +501,7 @@ void trace_hardirqs_off(void)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(IRQS_OFF, 1);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
- }
- EXPORT_SYMBOL(trace_hardirqs_off);
+ /*
+@@ -216,15 +219,15 @@ static int call_step_hook(struct pt_regs *regs, unsigned int esr)
+ 	struct step_hook *hook;
+ 	int retval = DBG_HOOK_ERROR;
  
+-	read_lock(&step_hook_lock);
++	rcu_read_lock();
+ 
+-	list_for_each_entry(hook, &step_hook, node)	{
++	list_for_each_entry_rcu(hook, &step_hook, node)	{
+ 		retval = hook->fn(regs, esr);
+ 		if (retval == DBG_HOOK_HANDLED)
+ 			break;
+ 	}
+ 
+-	read_unlock(&step_hook_lock);
++	rcu_read_unlock();
+ 
+ 	return retval;
+ }
 -- 
 2.7.0
