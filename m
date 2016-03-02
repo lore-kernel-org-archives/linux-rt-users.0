@@ -1,62 +1,36 @@
-From: Joel Fernandes <joelaf@lab126.com>
-Subject: why does this irqsoff tracer output show interrupts disabled between
- irq to softirq transition?
-Date: Tue, 1 Mar 2016 21:37:59 -0800
-Message-ID: <56D67C37.10207@lab126.com>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: Numbering system
+Date: Wed, 2 Mar 2016 09:18:37 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1603020916390.3638@nanos>
+References: <56D5C521.2050700@gmail.com> <alpine.DEB.2.11.1603012102150.3638@nanos> <56D61ECA.2010609@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"; format=flowed
-Content-Transfer-Encoding: 7bit
-To: <linux-rt-users@vger.kernel.org>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: DIXLOR <dixlor@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtp-fw-9102.amazon.com ([207.171.184.29]:48833 "EHLO
-	smtp-fw-9102.amazon.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750745AbcCBFiQ (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:49824 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751988AbcCBIT7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2016 00:38:16 -0500
-Received: from ex10-hub-7002.ant.amazon.com (pdx1-ws-svc-lb16-vlan3.amazon.com [10.239.138.214])
-	by email-inbound-relay-64011.pdx4.amazon.com (8.14.7/8.14.7) with ESMTP id u225c8qE018575
-	(version=TLSv1/SSLv3 cipher=AES256-SHA bits=256 verify=FAIL)
-	for <linux-rt-users@vger.kernel.org>; Wed, 2 Mar 2016 05:38:15 GMT
+	Wed, 2 Mar 2016 03:19:59 -0500
+In-Reply-To: <56D61ECA.2010609@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, 2 Mar 2016, DIXLOR wrote:
+> # cat Makefile
+> 
+> VERSION = 4
+> PATCHLEVEL = 4
+> SUBLEVEL = 3
+> EXTRAVERSION = here must be non mainline numbering: -rt1, -rt2, etc.
+> ...
+> 
+> If SUBLEVEL changed, then EXTRAVERSION must be set to zero or one.
 
-I am using the irqsoff tracer on a (slightly old) kernel and I am seeing something like this. 
-As you can see, after servicing the hrtimer_interrupt, and calling irq_exit(), a softirq runs.
+RT is not using EXTRAVERSION. It's using localversion and it's not going to
+change its numbering scheme after 12 years just because.
 
-But the softirq (which happens to be run_timer_softirq) is being called with interrupts 
-disabled, - but from my understanding, interrupts are to remain enabled during softirq 
-operation (unless ofcourse a spinlock is shared between a softirq and an irq handler and 
-someone calls spinlock_irq_save).
+Thanks,
 
-So considering this, does the below makes sense?  Thanks for any insight!
-
-
-  mmcqd/0-1435    0d.h1  182us : preempt_count_add <-_raw_spin_lock
-  mmcqd/0-1435    0d.h2  182us : enqueue_hrtimer <-__run_hrtimer
-  mmcqd/0-1435    0d.h2  183us : _raw_spin_unlock <-hrtimer_interrupt
-  mmcqd/0-1435    0d.h2  183us : preempt_count_sub <-_raw_spin_unlock
-  mmcqd/0-1435    0d.h1  184us : tick_program_event <-hrtimer_interrupt
-  mmcqd/0-1435    0d.h1  184us : clockevents_program_event <-tick_program_event
-  mmcqd/0-1435    0d.h1  184us : ktime_get <-clockevents_program_event
-  mmcqd/0-1435    0d.h1  185us : lapic_next_deadline <-clockevents_program_event
-  mmcqd/0-1435    0d.h1  186us : irq_exit <-smp_apic_timer_interrupt
-  mmcqd/0-1435    0d.h1  186us : irqtime_account_irq <-irq_exit
-  mmcqd/0-1435    0d.h1  187us : preempt_count_sub <-irq_exit
-  mmcqd/0-1435    0d..1  187us : __do_softirq <-irq_exit
-  mmcqd/0-1435    0d..1  188us : msecs_to_jiffies <-__do_softirq
-  mmcqd/0-1435    0d..1  188us : irqtime_account_irq <-__do_softirq
-  mmcqd/0-1435    0d..1  188us : __local_bh_disable_ip <-__do_softirq
-  mmcqd/0-1435    0d.s1  190us : preempt_count_add <-_raw_spin_lock_irq
-  mmcqd/0-1435    0d.s2  191us+: _raw_spin_unlock_irq <-run_timer_softirq
-  mmcqd/0-1435    0d.s1  194us : preempt_count_add <-_raw_read_lock_irqsave
-  mmcqd/0-1435    0d.s2  195us+: _raw_read_unlock_irqrestore <-cpufreq_cpu_get
-  mmcqd/0-1435    0d.s1  201us : preempt_count_add <-_raw_spin_lock_irqsave
-  mmcqd/0-1435    0d.s2  202us : _raw_spin_unlock_irqrestore <-cpufreq_stats_update
-  mmcqd/0-1435    0d.s1  203us : preempt_count_add <-_raw_spin_lock_irqsave
-  mmcqd/0-1435    0d.s2  203us+: _raw_spin_unlock_irqrestore <-cpufreq_stat_notifier_trans
-  mmcqd/0-1435    0d.s1  205us : preempt_count_add <-_raw_spin_lock_irqsave
-  mmcqd/0-1435    0d.s2  205us : detach_if_pending <-mod_timer_pinned
-  mmcqd/0-1435    0d.s2  206us : internal_add_timer <-mod_timer_pinned
-  mmcqd/0-1435    0d.s2  207us : __internal_add_timer <-internal_add_timer
+	tglx
