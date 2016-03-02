@@ -1,70 +1,80 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 5/7] rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-Date: Wed, 02 Mar 2016 15:14:11 -0500
-Message-ID: <20160302201414.968414120@goodmis.org>
-References: <20160302201406.143206126@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/7] Linux 3.4.110-rt140-rc1
+Date: Wed, 02 Mar 2016 15:14:06 -0500
+Message-ID: <20160302201406.143206126@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Clark Williams <williams@redhat.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:55162 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753236AbcCBUOS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2016 15:14:18 -0500
-Content-Disposition: inline; filename=0005-rcu-torture-Comment-out-rcu_bh-ops-on-PREEMPT_RT_FUL.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.4.110-rt140-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Clark Williams <williams@redhat.com>
+This is the RT stable review cycle of patch 3.4.110-rt140-rc1.
 
-RT has dropped support of rcu_bh, comment out in rcutorture.
+Please scream at me if I messed something up. Please test the patches too.
 
-Signed-off-by: Clark Williams <williams@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 3/7/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.4.110-rt140-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.110.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.110-rt140-rc1.patch.xz
+
+You can also build from 3.4.110-rt139 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.110-rt139-rt140-rc1.patch.xz
+
+
+Changes from 3.4.110-rt139:
+
 ---
- kernel/rcutorture.c | 7 +++++++
- 1 file changed, 7 insertions(+)
-
-diff --git a/kernel/rcutorture.c b/kernel/rcutorture.c
-index a89b381a8c6e..8de00304751b 100644
---- a/kernel/rcutorture.c
-+++ b/kernel/rcutorture.c
-@@ -485,6 +485,7 @@ static struct rcu_torture_ops rcu_expedited_ops = {
- 	.name		= "rcu_expedited"
- };
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Definitions for rcu_bh torture testing.
-  */
-@@ -558,6 +559,12 @@ static struct rcu_torture_ops rcu_bh_expedited_ops = {
- 	.name		= "rcu_bh_expedited"
- };
- 
-+#else
-+static struct rcu_torture_ops rcu_bh_ops = {
-+	.ttype		= INVALID_RCU_FLAVOR,
-+};
-+#endif
-+
- /*
-  * Definitions for srcu torture testing.
-  */
--- 
-2.7.0
 
 
+Clark Williams (1):
+      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
+
+Sebastian Andrzej Siewior (4):
+      latencyhist: disable jump-labels
+      kernel: migrate_disable() do fastpath in atomic & irqs-off
+      kernel: softirq: unlock with irqs on
+      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.4.110-rt140-rc1
+
+Yang Shi (1):
+      trace: Use rcuidle version for preemptoff_hist trace point
+
+----
+ arch/Kconfig                 |  1 +
+ include/linux/ftrace.h       | 12 ++++++++++++
+ include/linux/sched.h        |  2 --
+ include/trace/events/hist.h  |  1 +
+ kernel/rcutorture.c          |  7 +++++++
+ kernel/sched/core.c          | 18 ++++--------------
+ kernel/softirq.c             |  6 +++---
+ kernel/trace/trace_irqsoff.c |  8 ++++----
+ localversion-rt              |  2 +-
+ 9 files changed, 33 insertions(+), 24 deletions(-)
