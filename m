@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 18/22] trace: Use rcuidle version for preemptoff_hist trace point
-Date: Wed, 02 Mar 2016 10:09:17 -0500
-Message-ID: <20160302151113.365574556@goodmis.org>
+Subject: [PATCH RT 12/22] kernel: softirq: unlock with irqs on
+Date: Wed, 02 Mar 2016 10:09:11 -0500
+Message-ID: <20160302151112.167131599@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,107 +9,52 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Yang Shi <yang.shi@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0018-trace-Use-rcuidle-version-for-preemptoff_hist-trace-.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:55160 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1754605AbcCBPLR (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 10:11:17 -0500
+Content-Disposition: inline; filename=0012-kernel-softirq-unlock-with-irqs-on.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.1.15-rt18-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Yang Shi <yang.shi@windriver.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-When running -rt kernel with both PREEMPT_OFF_HIST and LOCKDEP enabled,
-the below error is reported:
+We unlock the lock while the interrupts are off. This isn't a problem
+now but will get because the migrate_disable() + enable are not
+symmetrical in regard to the status of interrupts.
 
- [ INFO: suspicious RCU usage. ]
- 4.4.1-rt6 #1 Not tainted
- include/trace/events/hist.h:31 suspicious rcu_dereference_check() usage!
-
- other info that might help us debug this:
-
- RCU used illegally from idle CPU!
- rcu_scheduler_active = 1, debug_locks = 0
- RCU used illegally from extended quiescent state!
- no locks held by swapper/0/0.
-
- stack backtrace:
- CPU: 0 PID: 0 Comm: swapper/0 Not tainted 4.4.1-rt6-WR8.0.0.0_standard #1
- Stack : 0000000000000006 0000000000000000 ffffffff81ca8c38 ffffffff81c8fc80
-    ffffffff811bdd68 ffffffff81cb0000 0000000000000000 ffffffff81cb0000
-    0000000000000000 0000000000000000 0000000000000004 0000000000000000
-    0000000000000004 ffffffff811bdf50 0000000000000000 ffffffff82b60000
-    0000000000000000 ffffffff812897ac ffffffff819f0000 000000000000000b
-    ffffffff811be460 ffffffff81b7c588 ffffffff81c8fc80 0000000000000000
-    0000000000000000 ffffffff81ec7f88 ffffffff81d70000 ffffffff81b70000
-    ffffffff81c90000 ffffffff81c3fb00 ffffffff81c3fc28 ffffffff815e6f98
-    0000000000000000 ffffffff81c8fa87 ffffffff81b70958 ffffffff811bf2c4
-    0707fe32e8d60ca5 ffffffff81126d60 0000000000000000 0000000000000000
-    ...
- Call Trace:
- [<ffffffff81126d60>] show_stack+0xe8/0x108
- [<ffffffff815e6f98>] dump_stack+0x88/0xb0
- [<ffffffff8124b88c>] time_hardirqs_off+0x204/0x300
- [<ffffffff811aa5dc>] trace_hardirqs_off_caller+0x24/0xe8
- [<ffffffff811a4ec4>] cpu_startup_entry+0x39c/0x508
- [<ffffffff81d7dc68>] start_kernel+0x584/0x5a0
-
-Replace regular trace_preemptoff_hist to rcuidle version to avoid the error.
-
-Signed-off-by: Yang Shi <yang.shi@windriver.com>
-Cc: bigeasy@linutronix.de
-Cc: rostedt@goodmis.org
-Cc: linux-rt-users@vger.kernel.org
-Link: http://lkml.kernel.org/r/1456262603-10075-1-git-send-email-yang.shi@windriver.com
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/trace/trace_irqsoff.c | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+ kernel/softirq.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index d0e1d0e48640..0f2d3e3545e8 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -434,13 +434,13 @@ void start_critical_timings(void)
- {
- 	if (preempt_trace() || irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(TRACE_START, 1);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index d1e999e74d23..2ca63cc1469e 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -563,8 +563,10 @@ static void do_current_softirqs(void)
+ 			do_single_softirq(i);
+ 		}
+ 		softirq_clr_runner(i);
+-		unlock_softirq(i);
+ 		WARN_ON(current->softirq_nestcnt != 1);
++		local_irq_enable();
++		unlock_softirq(i);
++		local_irq_disable();
+ 	}
  }
- EXPORT_SYMBOL_GPL(start_critical_timings);
- 
- void stop_critical_timings(void)
- {
--	trace_preemptirqsoff_hist(TRACE_STOP, 0);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
- 	if (preempt_trace() || irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -485,7 +485,7 @@ inline void print_irqtrace_events(struct task_struct *curr)
-  */
- void trace_hardirqs_on(void)
- {
--	trace_preemptirqsoff_hist(IRQS_ON, 0);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -495,7 +495,7 @@ void trace_hardirqs_off(void)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(IRQS_OFF, 1);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
- }
- EXPORT_SYMBOL(trace_hardirqs_off);
  
 -- 
 2.7.0
+
+
