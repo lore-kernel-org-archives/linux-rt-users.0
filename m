@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 15/17] rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-Date: Wed, 02 Mar 2016 10:44:48 -0500
-Message-ID: <20160302154502.198479523@goodmis.org>
+Subject: [PATCH RT 09/17] kernel: softirq: unlock with irqs on
+Date: Wed, 02 Mar 2016 10:44:42 -0500
+Message-ID: <20160302154501.251792723@goodmis.org>
 References: <20160302154433.638594715@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Clark Williams <williams@redhat.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0015-rcu-torture-Comment-out-rcu_bh-ops-on-PREEMPT_RT_FUL.patch
+Content-Disposition: inline; filename=0009-kernel-softirq-unlock-with-irqs-on.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,42 +22,33 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Clark Williams <williams@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-RT has dropped support of rcu_bh, comment out in rcutorture.
+We unlock the lock while the interrupts are off. This isn't a problem
+now but will get because the migrate_disable() + enable are not
+symmetrical in regard to the status of interrupts.
 
-Signed-off-by: Clark Williams <williams@redhat.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rcu/torture.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ kernel/softirq.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/rcu/torture.c b/kernel/rcu/torture.c
-index 732f8ae3086a..042c8f1f0d30 100644
---- a/kernel/rcu/torture.c
-+++ b/kernel/rcu/torture.c
-@@ -477,6 +477,7 @@ static struct rcu_torture_ops rcu_ops = {
- 	.name		= "rcu"
- };
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 8821db3f07e6..250669395a5f 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -563,8 +563,10 @@ static void do_current_softirqs(int need_rcu_bh_qs)
+ 			do_single_softirq(i, need_rcu_bh_qs);
+ 		}
+ 		softirq_clr_runner(i);
+-		unlock_softirq(i);
+ 		WARN_ON(current->softirq_nestcnt != 1);
++		local_irq_enable();
++		unlock_softirq(i);
++		local_irq_disable();
+ 	}
+ }
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Definitions for rcu_bh torture testing.
-  */
-@@ -519,6 +520,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
- 	.name		= "rcu_bh"
- };
- 
-+#else
-+static struct rcu_torture_ops rcu_bh_ops = {
-+	.ttype		= INVALID_RCU_FLAVOR,
-+};
-+#endif
-+
- /*
-  * Definitions for srcu torture testing.
-  */
 -- 
 2.7.0
