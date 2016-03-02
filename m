@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/7] Linux 3.4.110-rt140-rc1
-Date: Wed, 02 Mar 2016 15:14:06 -0500
-Message-ID: <20160302201406.143206126@goodmis.org>
+Subject: [PATCH RT 2/7] kernel: migrate_disable() do fastpath in atomic & irqs-off
+Date: Wed, 02 Mar 2016 15:14:08 -0500
+Message-ID: <20160302201414.505621742@goodmis.org>
+References: <20160302201406.143206126@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,71 +13,47 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-kernel-migrate_disable-do-fastpath-in-atomic-irqs-of.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.4.110-rt140-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.4.110-rt140-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+With interrupts off it makes no sense to do the long path since we can't
+leave the CPU anyway. Also we might end up in a recursion with lockdep.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 3/7/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.4.110-rt140-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.110.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.110-rt140-rc1.patch.xz
-
-You can also build from 3.4.110-rt139 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.110-rt139-rt140-rc1.patch.xz
-
-
-Changes from 3.4.110-rt139:
-
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/sched/core.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-
-Clark Williams (1):
-      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-
-Sebastian Andrzej Siewior (4):
-      latencyhist: disable jump-labels
-      kernel: migrate_disable() do fastpath in atomic & irqs-off
-      kernel: softirq: unlock with irqs on
-      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.4.110-rt140-rc1
-
-Yang Shi (1):
-      trace: Use rcuidle version for preemptoff_hist trace point
-
-----
- arch/Kconfig                 |  1 +
- include/linux/ftrace.h       | 12 ++++++++++++
- include/linux/sched.h        |  2 --
- include/trace/events/hist.h  |  1 +
- kernel/rcutorture.c          |  7 +++++++
- kernel/sched/core.c          | 18 ++++--------------
- kernel/softirq.c             |  6 +++---
- kernel/trace/trace_irqsoff.c |  8 ++++----
- localversion-rt              |  2 +-
- 9 files changed, 33 insertions(+), 24 deletions(-)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index cc4df0131023..7d9a53d80d22 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3389,7 +3389,7 @@ void migrate_disable(void)
+ {
+ 	struct task_struct *p = current;
+ 
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+ #endif
+@@ -3420,7 +3420,7 @@ void migrate_enable(void)
+ 	unsigned long flags;
+ 	struct rq *rq;
+ 
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+ #endif
+-- 
+2.7.0
