@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 04/20] preempt-lazy: Add the lazy-preemption check to preempt_schedule()
-Date: Wed, 02 Mar 2016 10:37:02 -0500
-Message-ID: <20160302153714.736188881@goodmis.org>
+Subject: [PATCH RT 11/20] kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
+Date: Wed, 02 Mar 2016 10:37:09 -0500
+Message-ID: <20160302153716.182290641@goodmis.org>
 References: <20160302153658.995489487@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,14 +9,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0004-preempt-lazy-Add-the-lazy-preemption-check-to-preemp.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:58342 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755073AbcCBPhU (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 10:37:20 -0500
+Content-Disposition: inline; filename=0011-kernel-stop_machine-partly-revert-stop_machine-Use-r.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.18.27-rt27-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -25,68 +28,157 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Probably in the rebase onto v4.1 this check got moved into less commonly used
-preempt_schedule_notrace(). This patch ensures that both functions use it.
+With completion using swait and so rawlocks we don't need this anymore.
+Further, bisect thinks this patch is responsible for:
 
-Reported-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+|BUG: unable to handle kernel NULL pointer dereference at           (null)
+|IP: [<ffffffff81082123>] sched_cpu_active+0x53/0x70
+|PGD 0
+|Oops: 0000 [#1] PREEMPT SMP DEBUG_PAGEALLOC
+|Dumping ftrace buffer:
+|   (ftrace buffer empty)
+|Modules linked in:
+|CPU: 1 PID: 0 Comm: swapper/1 Not tainted 4.4.1+ #330
+|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
+|task: ffff88013ae64b00 ti: ffff88013ae74000 task.ti: ffff88013ae74000
+|RIP: 0010:[<ffffffff81082123>]  [<ffffffff81082123>] sched_cpu_active+0x53/0x70
+|RSP: 0000:ffff88013ae77eb8  EFLAGS: 00010082
+|RAX: 0000000000000001 RBX: ffffffff81c2cf20 RCX: 0000001050fb52fb
+|RDX: 0000001050fb52fb RSI: 000000105117ca1e RDI: 00000000001c7723
+|RBP: 0000000000000000 R08: 0000000000000000 R09: 0000000000000001
+|R10: 0000000000000000 R11: 0000000000000001 R12: 00000000ffffffff
+|R13: ffffffff81c2cee0 R14: 0000000000000000 R15: 0000000000000001
+|FS:  0000000000000000(0000) GS:ffff88013b200000(0000) knlGS:0000000000000000
+|CS:  0010 DS: 0000 ES: 0000 CR0: 000000008005003b
+|CR2: 0000000000000000 CR3: 0000000001c09000 CR4: 00000000000006e0
+|Stack:
+| ffffffff810c446d ffff88013ae77f00 ffffffff8107d8dd 000000000000000a
+| 0000000000000001 0000000000000000 0000000000000000 0000000000000000
+| 0000000000000000 ffff88013ae77f10 ffffffff8107d90e ffff88013ae77f20
+|Call Trace:
+| [<ffffffff810c446d>] ? debug_lockdep_rcu_enabled+0x1d/0x20
+| [<ffffffff8107d8dd>] ? notifier_call_chain+0x5d/0x80
+| [<ffffffff8107d90e>] ? __raw_notifier_call_chain+0xe/0x10
+| [<ffffffff810598a3>] ? cpu_notify+0x23/0x40
+| [<ffffffff8105a7b8>] ? notify_cpu_starting+0x28/0x30
+
+during hotplug. The rawlocks need to remain however.
+
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/sched/core.c | 34 ++++++++++++++++++++++++++--------
- 1 file changed, 26 insertions(+), 8 deletions(-)
+ kernel/stop_machine.c | 40 ++++++++--------------------------------
+ 1 file changed, 8 insertions(+), 32 deletions(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 9e01a8f358f8..8214206817f2 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3164,6 +3164,30 @@ void __sched schedule_preempt_disabled(void)
- 	preempt_disable();
+diff --git a/kernel/stop_machine.c b/kernel/stop_machine.c
+index 1af29ad20970..d3ea2452e291 100644
+--- a/kernel/stop_machine.c
++++ b/kernel/stop_machine.c
+@@ -30,7 +30,7 @@ struct cpu_stop_done {
+ 	atomic_t		nr_todo;	/* nr left to execute */
+ 	bool			executed;	/* actually executed? */
+ 	int			ret;		/* collected return value */
+-	struct task_struct	*waiter;	/* woken when nr_todo reaches 0 */
++	struct completion	completion;	/* fired if nr_todo reaches 0 */
+ };
+ 
+ /* the actual stopper, one per every possible cpu, enabled on online cpus */
+@@ -56,7 +56,7 @@ static void cpu_stop_init_done(struct cpu_stop_done *done, unsigned int nr_todo)
+ {
+ 	memset(done, 0, sizeof(*done));
+ 	atomic_set(&done->nr_todo, nr_todo);
+-	done->waiter = current;
++	init_completion(&done->completion);
  }
  
-+#ifdef CONFIG_PREEMPT_LAZY
-+/*
-+ * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
-+ * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
-+ * preempt_lazy_count counter >0.
-+ */
-+static int preemptible_lazy(void)
-+{
-+	if (test_thread_flag(TIF_NEED_RESCHED))
-+		return 1;
-+	if (current_thread_info()->preempt_lazy_count)
-+		return 0;
-+	return 1;
-+}
-+
-+#else
-+
-+static int preemptible_lazy(void)
-+{
-+	return 1;
-+}
-+
-+#endif
-+
- #ifdef CONFIG_PREEMPT
- /*
-  * this is the entry point to schedule() from in-kernel preemption
-@@ -3178,15 +3202,9 @@ asmlinkage __visible void __sched notrace preempt_schedule(void)
- 	 */
- 	if (likely(!preemptible()))
- 		return;
--
--#ifdef CONFIG_PREEMPT_LAZY
+ /* signal completion unless @done is NULL */
+@@ -65,10 +65,8 @@ static void cpu_stop_signal_done(struct cpu_stop_done *done, bool executed)
+ 	if (done) {
+ 		if (executed)
+ 			done->executed = true;
+-		if (atomic_dec_and_test(&done->nr_todo)) {
+-			wake_up_process(done->waiter);
+-			done->waiter = NULL;
+-		}
++		if (atomic_dec_and_test(&done->nr_todo))
++			complete(&done->completion);
+ 	}
+ }
+ 
+@@ -91,22 +89,6 @@ static void cpu_stop_queue_work(unsigned int cpu, struct cpu_stop_work *work)
+ 	raw_spin_unlock_irqrestore(&stopper->lock, flags);
+ }
+ 
+-static void wait_for_stop_done(struct cpu_stop_done *done)
+-{
+-	set_current_state(TASK_UNINTERRUPTIBLE);
+-	while (atomic_read(&done->nr_todo)) {
+-		schedule();
+-		set_current_state(TASK_UNINTERRUPTIBLE);
+-	}
 -	/*
--	 * Check for lazy preemption
+-	 * We need to wait until cpu_stop_signal_done() has cleared
+-	 * done->waiter.
 -	 */
--	if (current_thread_info()->preempt_lazy_count &&
--			!test_thread_flag(TIF_NEED_RESCHED))
-+	if (!preemptible_lazy())
- 		return;
--#endif
-+
- 	do {
- 		__preempt_count_add(PREEMPT_ACTIVE);
- 		/*
+-	while (done->waiter)
+-		cpu_relax();
+-	set_current_state(TASK_RUNNING);
+-}
+-
+ /**
+  * stop_one_cpu - stop a cpu
+  * @cpu: cpu to stop
+@@ -138,7 +120,7 @@ int stop_one_cpu(unsigned int cpu, cpu_stop_fn_t fn, void *arg)
+ 
+ 	cpu_stop_init_done(&done, 1);
+ 	cpu_stop_queue_work(cpu, &work);
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+ 
+@@ -315,7 +297,7 @@ int stop_two_cpus(unsigned int cpu1, unsigned int cpu2, cpu_stop_fn_t fn, void *
+ 	lg_local_unlock(&stop_cpus_lock);
+ 	preempt_enable_nort();
+ 
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+@@ -380,7 +362,7 @@ static int __stop_cpus(const struct cpumask *cpumask,
+ 
+ 	cpu_stop_init_done(&done, cpumask_weight(cpumask));
+ 	queue_stop_cpus_work(cpumask, fn, arg, &done, false);
+-	wait_for_stop_done(&done);
++	wait_for_completion(&done.completion);
+ 	return done.executed ? done.ret : -ENOENT;
+ }
+ 
+@@ -511,13 +493,7 @@ repeat:
+ 			  kallsyms_lookup((unsigned long)fn, NULL, NULL, NULL,
+ 					  ksym_buf), arg);
+ 
+-		/*
+-		 * Make sure that the wakeup and setting done->waiter
+-		 * to NULL is atomic.
+-		 */
+-		local_irq_disable();
+ 		cpu_stop_signal_done(done, true);
+-		local_irq_enable();
+ 		goto repeat;
+ 	}
+ }
+@@ -676,7 +652,7 @@ int stop_machine_from_inactive_cpu(int (*fn)(void *), void *data,
+ 	ret = multi_cpu_stop(&msdata);
+ 
+ 	/* Busy wait for completion. */
+-	while (atomic_read(&done.nr_todo))
++	while (!completion_done(&done.completion))
+ 		cpu_relax();
+ 
+ 	mutex_unlock(&stop_cpus_mutex);
 -- 
 2.7.0
+
+
