@@ -1,86 +1,90 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/10] Linux 3.10.97-rt107-rc1
-Date: Wed, 02 Mar 2016 10:51:00 -0500
-Message-ID: <20160302155100.873557484@goodmis.org>
+Subject: [PATCH RT 03/10] latencyhist: disable jump-labels
+Date: Wed, 02 Mar 2016 10:51:03 -0500
+Message-ID: <20160302155110.882714067@goodmis.org>
+References: <20160302155100.873557484@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Christoph Mathys <eraserix@gmail.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0003-latencyhist-disable-jump-labels.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.97-rt107-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.97-rt107-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+Atleast on X86 we die a recursive death
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+|CPU: 3 PID: 585 Comm: bash Not tainted 4.4.1-rt4+ #198
+|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
+|task: ffff88007ab4cd00 ti: ffff88007ab94000 task.ti: ffff88007ab94000
+|RIP: 0010:[<ffffffff81684870>]  [<ffffffff81684870>] int3+0x0/0x10
+|RSP: 0018:ffff88013c107fd8  EFLAGS: 00010082
+|RAX: ffff88007ab4cd00 RBX: ffffffff8100ceab RCX: 0000000080202001
+|RDX: 0000000000000000 RSI: ffffffff8100ceab RDI: ffffffff810c78b2
+|RBP: ffff88007ab97c10 R08: ffffffffff57b000 R09: 0000000000000000
+|R10: ffff88013bb64790 R11: ffff88007ab4cd68 R12: ffffffff8100ceab
+|R13: ffffffff810c78b2 R14: ffffffff810f8158 R15: ffffffff810f9120
+|FS:  0000000000000000(0000) GS:ffff88013c100000(0063) knlGS:00000000f74e3940
+|CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
+|CR2: 0000000008cf6008 CR3: 000000013b169000 CR4: 00000000000006e0
+|Call Trace:
+| <#DB>
+| [<ffffffff810f8158>] ? trace_preempt_off+0x18/0x170
+| <<EOE>>
+| [<ffffffff81077745>] preempt_count_add+0xa5/0xc0
+| [<ffffffff810c78b2>] on_each_cpu+0x22/0x90
+| [<ffffffff8100ceab>] text_poke_bp+0x5b/0xc0
+| [<ffffffff8100a29c>] arch_jump_label_transform+0x8c/0xf0
+| [<ffffffff8111c77c>] __jump_label_update+0x6c/0x80
+| [<ffffffff8111c83a>] jump_label_update+0xaa/0xc0
+| [<ffffffff8111ca54>] static_key_slow_inc+0x94/0xa0
+| [<ffffffff810e0d8d>] tracepoint_probe_register_prio+0x26d/0x2c0
+| [<ffffffff810e0df3>] tracepoint_probe_register+0x13/0x20
+| [<ffffffff810fca78>] trace_event_reg+0x98/0xd0
+| [<ffffffff810fcc8b>] __ftrace_event_enable_disable+0x6b/0x180
+| [<ffffffff810fd5b8>] event_enable_write+0x78/0xc0
+| [<ffffffff8117a768>] __vfs_write+0x28/0xe0
+| [<ffffffff8117b025>] vfs_write+0xa5/0x180
+| [<ffffffff8117bb76>] SyS_write+0x46/0xa0
+| [<ffffffff81002c91>] do_fast_syscall_32+0xa1/0x1d0
+| [<ffffffff81684d57>] sysenter_flags_fixed+0xd/0x17
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+during
+ echo 1 > /sys/kernel/debug/tracing/events/hist/preemptirqsoff_hist/enable
 
-If all goes well, this patch will be converted to the next main release
-on 3/7/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.10.97-rt107-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.97.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.97-rt107-rc1.patch.xz
-
-You can also build from 3.10.97-rt106 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.97-rt106-rt107-rc1.patch.xz
-
-
-Changes from 3.10.97-rt106:
-
+Reported-By: Christoph Mathys <eraserix@gmail.com>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ arch/Kconfig | 1 +
+ 1 file changed, 1 insertion(+)
 
-
-Clark Williams (1):
-      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-
-Sebastian Andrzej Siewior (7):
-      softirq: split timer softirqs out of ksoftirqd
-      net: provide a way to delegate processing a softirq to ksoftirqd
-      latencyhist: disable jump-labels
-      kernel: migrate_disable() do fastpath in atomic & irqs-off
-      kernel: softirq: unlock with irqs on
-      kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.97-rt107-rc1
-
-Yang Shi (1):
-      trace: Use rcuidle version for preemptoff_hist trace point
-
-----
- arch/Kconfig                 |   1 +
- include/linux/ftrace.h       |  12 +++++
- include/linux/interrupt.h    |   8 ++++
- include/linux/sched.h        |   2 -
- include/trace/events/hist.h  |   1 +
- kernel/rcutorture.c          |   7 +++
- kernel/sched/core.c          |  18 ++-----
- kernel/softirq.c             | 110 ++++++++++++++++++++++++++++++++++++++-----
- kernel/stop_machine.c        |  38 +++------------
- kernel/trace/trace_irqsoff.c |   8 ++--
- localversion-rt              |   2 +-
- net/core/dev.c               |   2 +-
- 12 files changed, 143 insertions(+), 66 deletions(-)
+diff --git a/arch/Kconfig b/arch/Kconfig
+index 8b1a614cb58a..9a053ceae899 100644
+--- a/arch/Kconfig
++++ b/arch/Kconfig
+@@ -50,6 +50,7 @@ config KPROBES
+ config JUMP_LABEL
+        bool "Optimize very unlikely/likely branches"
+        depends on HAVE_ARCH_JUMP_LABEL
++       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
+        help
+          This option enables a transparent branch optimization that
+ 	 makes certain almost-always-true or almost-always-false branch
+-- 
+2.7.0
