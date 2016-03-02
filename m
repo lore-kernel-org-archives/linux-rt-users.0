@@ -1,10 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/20] sched: reset tasks lockless wake-queues on fork()
-Date: Wed, 02 Mar 2016 10:36:59 -0500
-Message-ID: <20160302153714.251074185@goodmis.org>
-References: <20160302153658.995489487@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/20] Linux 3.18.27-rt27-rc1
+Date: Wed, 02 Mar 2016 10:36:58 -0500
+Message-ID: <20160302153658.995489487@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -13,48 +10,100 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-sched-reset-task-s-lockless-wake-queues-on-fork.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.18.27-rt27-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.18.27-rt27-rc1.
 
-In 7675104990ed ("sched: Implement lockless wake-queues") we gained
-lockless wake-queues. -RT managed to lockup itself with those. There
-could be multiple attempts for task X to enqueue it for a wakeup
-_even_ if task X is already running.
-The reason is that task X could be runnable but not yet on CPU. The the
-task performing the wakeup did not leave the CPU it could performe
-multiple wakeups.
-With the proper timming task X could be running and enqueued for a
-wakeup. If this happens while X is performing a fork() then its its
-child will have a !NULL `wake_q` member copied.
-This is not a problem as long as the child task does not participate in
-lockless wakeups :)
+Please scream at me if I messed something up. Please test the patches too.
 
-Fixes: 7675104990ed ("sched: Implement lockless wake-queues")
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
+
+The pre-releases will not be pushed to the git repository, only the
+final release is.
+
+If all goes well, this patch will be converted to the next main release
+on 3/7/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.18.27-rt27-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.18.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.18.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/patch-3.18.27-rt27-rc1.patch.xz
+
+You can also build from 3.18.27-rt26 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.18/incr/patch-3.18.27-rt26-rt27-rc1.patch.xz
+
+
+Changes from 3.18.27-rt26:
+
 ---
- kernel/fork.c | 1 +
- 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/fork.c b/kernel/fork.c
-index 3a8ecfb38831..1c4edaf4ec36 100644
---- a/kernel/fork.c
-+++ b/kernel/fork.c
-@@ -364,6 +364,7 @@ static struct task_struct *dup_task_struct(struct task_struct *orig)
- #endif
- 	tsk->splice_pipe = NULL;
- 	tsk->task_frag.page = NULL;
-+	tsk->wake_q.next = NULL;
- 
- 	account_kernel_stack(ti, 1);
- 
--- 
-2.7.0
+
+Clark Williams (1):
+      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
+
+Mike Galbraith (3):
+      sched,rt: __always_inline preemptible_lazy()
+      drm,radeon,i915: Use preempt_disable/enable_rt() where recommended
+      drm,i915: Use local_lock/unlock_irq() in intel_pipe_update_start/end()
+
+Sebastian Andrzej Siewior (11):
+      sched: reset task's lockless wake-queues on fork()
+      ptrace: don't open IRQs in ptrace_freeze_traced() too early
+      net: move xmit_recursion to per-task variable on -RT
+      preempt-lazy: Add the lazy-preemption check to preempt_schedule()
+      softirq: split timer softirqs out of ksoftirqd
+      net: provide a way to delegate processing a softirq to ksoftirqd
+      latencyhist: disable jump-labels
+      kernel: migrate_disable() do fastpath in atomic & irqs-off
+      kernel: softirq: unlock with irqs on
+      kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
+      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.18.27-rt27-rc1
+
+Thomas Gleixner (1):
+      tick/broadcast: Make broadcast hrtimer irqsafe
+
+Yang Shi (3):
+      arm64: replace read_lock to rcu lock in call_step_hook
+      trace: Use rcuidle version for preemptoff_hist trace point
+      f2fs: Mutex can't be used by down_write_nest_lock()
+
+----
+ arch/Kconfig                            |   1 +
+ arch/arm64/kernel/debug-monitors.c      |  21 +++---
+ drivers/gpu/drm/i915/i915_irq.c         |   2 +
+ drivers/gpu/drm/i915/intel_sprite.c     |  11 ++--
+ drivers/gpu/drm/radeon/radeon_display.c |   2 +
+ fs/f2fs/f2fs.h                          |   4 +-
+ include/linux/ftrace.h                  |  12 ++++
+ include/linux/interrupt.h               |   8 +++
+ include/linux/netdevice.h               |   9 +++
+ include/linux/sched.h                   |   3 +-
+ include/trace/events/hist.h             |   1 +
+ kernel/fork.c                           |   1 +
+ kernel/ptrace.c                         |   6 +-
+ kernel/rcu/rcutorture.c                 |   7 ++
+ kernel/sched/core.c                     |  52 ++++++++-------
+ kernel/softirq.c                        | 112 ++++++++++++++++++++++++++++----
+ kernel/stop_machine.c                   |  40 +++---------
+ kernel/time/tick-broadcast-hrtimer.c    |   1 +
+ kernel/trace/trace_irqsoff.c            |   8 +--
+ localversion-rt                         |   2 +-
+ net/core/dev.c                          |  43 ++++++++++--
+ 21 files changed, 249 insertions(+), 97 deletions(-)
