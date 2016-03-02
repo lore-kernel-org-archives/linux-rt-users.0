@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 20/22] rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-Date: Wed, 02 Mar 2016 10:09:19 -0500
-Message-ID: <20160302151113.729685611@goodmis.org>
+Subject: [PATCH RT 14/22] tick/broadcast: Make broadcast hrtimer irqsafe
+Date: Wed, 02 Mar 2016 10:09:13 -0500
+Message-ID: <20160302151112.485609722@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Clark Williams <williams@redhat.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0020-rcu-torture-Comment-out-rcu_bh-ops-on-PREEMPT_RT_FUL.patch
+Content-Disposition: inline; filename=0014-tick-broadcast-Make-broadcast-hrtimer-irqsafe.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,42 +22,63 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Clark Williams <williams@redhat.com>
+From: Thomas Gleixner <tglx@linutronix.de>
 
-RT has dropped support of rcu_bh, comment out in rcutorture.
+Otherwise we end up with the following:
 
-Signed-off-by: Clark Williams <williams@redhat.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+|=================================
+|[ INFO: inconsistent lock state ]
+|4.4.2-rt7+ #5 Not tainted
+|---------------------------------
+|inconsistent {IN-HARDIRQ-W} -> {HARDIRQ-ON-W} usage.
+|ktimersoftd/0/4 [HC0[0]:SC0[0]:HE1:SE1] takes:
+| (tick_broadcast_lock){?.....}, at: [<ffffffc000150db4>] tick_handle_oneshot_broadcast+0x58/0x27c
+|{IN-HARDIRQ-W} state was registered at:
+|  [<ffffffc000118198>] mark_lock+0x19c/0x6a0
+|  [<ffffffc000119728>] __lock_acquire+0xb1c/0x2100
+|  [<ffffffc00011b560>] lock_acquire+0xf8/0x230
+|  [<ffffffc00061bf08>] _raw_spin_lock_irqsave+0x50/0x68
+|  [<ffffffc000152188>] tick_broadcast_switch_to_oneshot+0x20/0x60
+|  [<ffffffc0001529f4>] tick_switch_to_oneshot+0x64/0xd8
+|  [<ffffffc000152b00>] tick_init_highres+0x1c/0x24
+|  [<ffffffc000141e58>] hrtimer_run_queues+0x78/0x100
+|  [<ffffffc00013f804>] update_process_times+0x38/0x74
+|  [<ffffffc00014fc5c>] tick_periodic+0x60/0x140
+|  [<ffffffc00014fd68>] tick_handle_periodic+0x2c/0x94
+|  [<ffffffc00052b878>] arch_timer_handler_phys+0x3c/0x48
+|  [<ffffffc00012d078>] handle_percpu_devid_irq+0x100/0x390
+|  [<ffffffc000127f34>] generic_handle_irq+0x34/0x4c
+|  [<ffffffc000128300>] __handle_domain_irq+0x90/0xf8
+|  [<ffffffc000082554>] gic_handle_irq+0x5c/0xa4
+|  [<ffffffc0000855ac>] el1_irq+0x6c/0xec
+|  [<ffffffc000112bec>] default_idle_call+0x2c/0x44
+|  [<ffffffc000113058>] cpu_startup_entry+0x3cc/0x410
+|  [<ffffffc0006169f8>] rest_init+0x158/0x168
+|  [<ffffffc000888954>] start_kernel+0x3a0/0x3b4
+|  [<0000000080621000>] 0x80621000
+|irq event stamp: 18723
+|hardirqs last  enabled at (18723): [<ffffffc00061c188>] _raw_spin_unlock_irq+0x38/0x80
+|hardirqs last disabled at (18722): [<ffffffc000140a4c>] run_hrtimer_softirq+0x2c/0x2f4
+|softirqs last  enabled at (0): [<ffffffc0000c4744>] copy_process.isra.50+0x300/0x16d4
+|softirqs last disabled at (0): [<          (null)>]           (null)
+
+Reported-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rcu/rcutorture.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ kernel/time/tick-broadcast-hrtimer.c | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/kernel/rcu/rcutorture.c b/kernel/rcu/rcutorture.c
-index 8dbe27611ec3..7b6170a46409 100644
---- a/kernel/rcu/rcutorture.c
-+++ b/kernel/rcu/rcutorture.c
-@@ -389,6 +389,7 @@ static struct rcu_torture_ops rcu_ops = {
- 	.name		= "rcu"
- };
- 
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Definitions for rcu_bh torture testing.
-  */
-@@ -428,6 +429,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
- 	.name		= "rcu_bh"
- };
- 
-+#else
-+static struct rcu_torture_ops rcu_bh_ops = {
-+	.ttype		= INVALID_RCU_FLAVOR,
-+};
-+#endif
-+
- /*
-  * Don't even think about trying any of these in real life!!!
-  * The names includes "busted", and they really means it!
+diff --git a/kernel/time/tick-broadcast-hrtimer.c b/kernel/time/tick-broadcast-hrtimer.c
+index 6aac4beedbbe..943c03395e46 100644
+--- a/kernel/time/tick-broadcast-hrtimer.c
++++ b/kernel/time/tick-broadcast-hrtimer.c
+@@ -109,5 +109,6 @@ void tick_setup_hrtimer_broadcast(void)
+ {
+ 	hrtimer_init(&bctimer, CLOCK_MONOTONIC, HRTIMER_MODE_ABS);
+ 	bctimer.function = bc_handler;
++	bctimer.irqsafe = true;
+ 	clockevents_register_device(&ce_broadcast_hrtimer);
+ }
 -- 
 2.7.0
