@@ -1,111 +1,121 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/22] Linux 4.1.15-rt18-rc1
-Date: Wed, 02 Mar 2016 10:08:59 -0500
-Message-ID: <20160302150859.204542604@goodmis.org>
+Subject: [PATCH RT 10/22] arm64: replace read_lock to rcu lock in call_step_hook
+Date: Wed, 02 Mar 2016 10:09:09 -0500
+Message-ID: <20160302151111.865769336@goodmis.org>
+References: <20160302150859.204542604@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>, Yang Shi <yang.shi@linaro.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0010-arm64-replace-read_lock-to-rcu-lock-in-call_step_hoo.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.1.15-rt18-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.1.15-rt18-rc1.
+From: Yang Shi <yang.shi@linaro.org>
 
-Please scream at me if I messed something up. Please test the patches too.
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
+Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
+Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+Call trace:
+[<ffff8000000885e8>] dump_backtrace+0x0/0x128
+[<ffff800000088734>] show_stack+0x24/0x30
+[<ffff80000079a7c4>] dump_stack+0x80/0xa0
+[<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
+[<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
+[<ffff8000007a2268>] rt_read_lock+0x40/0x58
+[<ffff800000085328>] single_step_handler+0x38/0xd8
+[<ffff800000082368>] do_debug_exception+0x58/0xb8
+Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
+7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
+7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
+7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
+7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
+7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
+7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
+7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
+7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
+7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
+[<ffff8000000833f4>] el1_dbg+0x18/0x6c
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
+call_break_hook"), but comes to single_step_handler.
 
-If all goes well, this patch will be converted to the next main release
-on 3/7/2016.
+This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
 
-Enjoy,
-
--- Steve
-
-
-To build 4.1.15-rt18-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-4.1.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-4.1.15.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.15-rt18-rc1.patch.xz
-
-You can also build from 4.1.15-rt17 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.15-rt17-rt18-rc1.patch.xz
-
-
-Changes from 4.1.15-rt17:
-
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ arch/arm64/kernel/debug-monitors.c | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
 
-
-Clark Williams (1):
-      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-
-Mike Galbraith (3):
-      sched,rt: __always_inline preemptible_lazy()
-      drm,radeon,i915: Use preempt_disable/enable_rt() where recommended
-      drm,i915: Use local_lock/unlock_irq() in intel_pipe_update_start/end()
-
-Sebastian Andrzej Siewior (13):
-      sched: reset task's lockless wake-queues on fork()
-      ptrace: don't open IRQs in ptrace_freeze_traced() too early
-      net: move xmit_recursion to per-task variable on -RT
-      kernel/softirq: use cond_resched_rcu_qs() on -RT as well (run_ksoftirqd())
-      net/core: protect users of napi_alloc_cache against reentrance
-      preempt-lazy: Add the lazy-preemption check to preempt_schedule()
-      softirq: split timer softirqs out of ksoftirqd
-      net: provide a way to delegate processing a softirq to ksoftirqd
-      latencyhist: disable jump-labels
-      kernel: migrate_disable() do fastpath in atomic & irqs-off
-      kernel: softirq: unlock with irqs on
-      kernel/stop_machine: partly revert "stop_machine: Use raw spinlocks"
-      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
-
-Steven Rostedt (Red Hat) (1):
-      Linux 4.1.15-rt18-rc1
-
-Thomas Gleixner (1):
-      tick/broadcast: Make broadcast hrtimer irqsafe
-
-Yang Shi (3):
-      arm64: replace read_lock to rcu lock in call_step_hook
-      trace: Use rcuidle version for preemptoff_hist trace point
-      f2fs: Mutex can't be used by down_write_nest_lock()
-
-----
- arch/Kconfig                            |   1 +
- arch/arm64/kernel/debug-monitors.c      |  21 +++---
- drivers/gpu/drm/i915/i915_irq.c         |   2 +
- drivers/gpu/drm/i915/intel_sprite.c     |  11 +--
- drivers/gpu/drm/radeon/radeon_display.c |   2 +
- fs/f2fs/f2fs.h                          |   4 +-
- include/linux/ftrace.h                  |  12 ++++
- include/linux/interrupt.h               |   8 +++
- include/linux/netdevice.h               |   9 +++
- include/linux/sched.h                   |   5 +-
- kernel/fork.c                           |   1 +
- kernel/ptrace.c                         |   6 +-
- kernel/rcu/rcutorture.c                 |   7 ++
- kernel/sched/core.c                     |  54 +++++++++------
- kernel/softirq.c                        | 116 +++++++++++++++++++++++++++-----
- kernel/stop_machine.c                   |  40 +++--------
- kernel/time/tick-broadcast-hrtimer.c    |   1 +
- kernel/trace/trace_irqsoff.c            |   8 +--
- localversion-rt                         |   2 +-
- net/core/dev.c                          |  43 ++++++++++--
- net/core/skbuff.c                       |   8 ++-
- 21 files changed, 261 insertions(+), 100 deletions(-)
+diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
+index 70654d843d9b..0d1d675f2cce 100644
+--- a/arch/arm64/kernel/debug-monitors.c
++++ b/arch/arm64/kernel/debug-monitors.c
+@@ -184,20 +184,21 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
+ 
+ /* EL1 Single Step Handler hooks */
+ static LIST_HEAD(step_hook);
+-static DEFINE_RWLOCK(step_hook_lock);
++static DEFINE_SPINLOCK(step_hook_lock);
+ 
+ void register_step_hook(struct step_hook *hook)
+ {
+-	write_lock(&step_hook_lock);
+-	list_add(&hook->node, &step_hook);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_add_rcu(&hook->node, &step_hook);
++	spin_unlock(&step_hook_lock);
+ }
+ 
+ void unregister_step_hook(struct step_hook *hook)
+ {
+-	write_lock(&step_hook_lock);
+-	list_del(&hook->node);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_del_rcu(&hook->node);
++	spin_unlock(&step_hook_lock);
++	synchronize_rcu();
+ }
+ 
+ /*
+@@ -211,15 +212,15 @@ static int call_step_hook(struct pt_regs *regs, unsigned int esr)
+ 	struct step_hook *hook;
+ 	int retval = DBG_HOOK_ERROR;
+ 
+-	read_lock(&step_hook_lock);
++	rcu_read_lock();
+ 
+-	list_for_each_entry(hook, &step_hook, node)	{
++	list_for_each_entry_rcu(hook, &step_hook, node)	{
+ 		retval = hook->fn(regs, esr);
+ 		if (retval == DBG_HOOK_HANDLED)
+ 			break;
+ 	}
+ 
+-	read_unlock(&step_hook_lock);
++	rcu_read_unlock();
+ 
+ 	return retval;
+ }
+-- 
+2.7.0
