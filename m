@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/13] ptrace: dont open IRQs in ptrace_freeze_traced() too early
-Date: Wed, 02 Mar 2016 10:48:48 -0500
-Message-ID: <20160302154903.022676259@goodmis.org>
+Subject: [PATCH RT 02/13] preempt-lazy: Add the lazy-preemption check to preempt_schedule()
+Date: Wed, 02 Mar 2016 10:48:49 -0500
+Message-ID: <20160302154903.401555798@goodmis.org>
 References: <20160302154847.937325532@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	kernel test robot <ying.huang@linux.intel.com>,
-	<stable-rt@vger.kernel.org>
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-ptrace-don-t-open-IRQs-in-ptrace_freeze_traced-too-e.patch
+Content-Disposition: inline; filename=0002-preempt-lazy-Add-the-lazy-preemption-check-to-preemp.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -26,38 +25,68 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-In the non-RT case the spin_lock_irq() here disables interrupts as well
-as raw_spin_lock_irq(). So in the unlock case the interrupts are enabled
-too early.
+Probably in the rebase onto v4.1 this check got moved into less commonly used
+preempt_schedule_notrace(). This patch ensures that both functions use it.
 
-Reported-by: kernel test robot <ying.huang@linux.intel.com>
-Cc: stable-rt@vger.kernel.org
+Reported-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/ptrace.c | 6 ++++--
- 1 file changed, 4 insertions(+), 2 deletions(-)
+ kernel/sched/core.c | 34 ++++++++++++++++++++++++++--------
+ 1 file changed, 26 insertions(+), 8 deletions(-)
 
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index c8cd8ffab511..fe11653fb005 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -135,12 +135,14 @@ static bool ptrace_freeze_traced(struct task_struct *task)
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 14b5ba66fa72..a936937c3535 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2728,6 +2728,30 @@ void __sched schedule_preempt_disabled(void)
+ 	preempt_disable();
+ }
  
- 	spin_lock_irq(&task->sighand->siglock);
- 	if (task_is_traced(task) && !__fatal_signal_pending(task)) {
--		raw_spin_lock_irq(&task->pi_lock);
-+		unsigned long flags;
++#ifdef CONFIG_PREEMPT_LAZY
++/*
++ * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
++ * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
++ * preempt_lazy_count counter >0.
++ */
++static int preemptible_lazy(void)
++{
++	if (test_thread_flag(TIF_NEED_RESCHED))
++		return 1;
++	if (current_thread_info()->preempt_lazy_count)
++		return 0;
++	return 1;
++}
 +
-+		raw_spin_lock_irqsave(&task->pi_lock, flags);
- 		if (task->state & __TASK_TRACED)
- 			task->state = __TASK_TRACED;
- 		else
- 			task->saved_state = __TASK_TRACED;
--		raw_spin_unlock_irq(&task->pi_lock);
-+		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 		ret = true;
- 	}
- 	spin_unlock_irq(&task->sighand->siglock);
++#else
++
++static int preemptible_lazy(void)
++{
++	return 1;
++}
++
++#endif
++
+ #ifdef CONFIG_PREEMPT
+ /*
+  * this is the entry point to schedule() from in-kernel preemption
+@@ -2742,15 +2766,9 @@ asmlinkage void __sched notrace preempt_schedule(void)
+ 	 */
+ 	if (likely(!preemptible()))
+ 		return;
+-
+-#ifdef CONFIG_PREEMPT_LAZY
+-	/*
+-	 * Check for lazy preemption
+-	 */
+-	if (current_thread_info()->preempt_lazy_count &&
+-			!test_thread_flag(TIF_NEED_RESCHED))
++	if (!preemptible_lazy())
+ 		return;
+-#endif
++
+ 	do {
+ 		add_preempt_count_notrace(PREEMPT_ACTIVE);
+ 		/*
 -- 
 2.7.0
