@@ -1,8 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 11/13] rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
-Date: Wed, 02 Mar 2016 10:48:58 -0500
-Message-ID: <20160302154906.903114457@goodmis.org>
-References: <20160302154847.937325532@goodmis.org>
+Subject: [PATCH RT 03/17] preempt-lazy: Add the lazy-preemption check to preempt_schedule()
+Date: Wed, 02 Mar 2016 10:44:36 -0500
+Message-ID: <20160302154500.249845384@goodmis.org>
+References: <20160302154433.638594715@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
@@ -10,55 +10,83 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Clark Williams <williams@redhat.com>
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0011-rcu-torture-Comment-out-rcu_bh-ops-on-PREEMPT_RT_FUL.patch
+Content-Disposition: inline; filename=0003-preempt-lazy-Add-the-lazy-preemption-check-to-preemp.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.12.54-rt74-rc1 stable review patch.
+3.14.61-rt64-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Clark Williams <williams@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-RT has dropped support of rcu_bh, comment out in rcutorture.
+Probably in the rebase onto v4.1 this check got moved into less commonly used
+preempt_schedule_notrace(). This patch ensures that both functions use it.
 
-Signed-off-by: Clark Williams <williams@redhat.com>
+Reported-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/rcutorture.c | 7 +++++++
- 1 file changed, 7 insertions(+)
+ kernel/sched/core.c | 34 ++++++++++++++++++++++++++--------
+ 1 file changed, 26 insertions(+), 8 deletions(-)
 
-diff --git a/kernel/rcutorture.c b/kernel/rcutorture.c
-index be63101c6175..a31bab6c70ad 100644
---- a/kernel/rcutorture.c
-+++ b/kernel/rcutorture.c
-@@ -473,6 +473,7 @@ static struct rcu_torture_ops rcu_ops = {
- 	.name		= "rcu"
- };
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index edacb6d1d2bf..157ef7f121fb 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -2998,6 +2998,30 @@ void __sched schedule_preempt_disabled(void)
+ 	preempt_disable();
+ }
  
-+#ifndef CONFIG_PREEMPT_RT_FULL
- /*
-  * Definitions for rcu_bh torture testing.
-  */
-@@ -515,6 +516,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
- 	.name		= "rcu_bh"
- };
- 
++#ifdef CONFIG_PREEMPT_LAZY
++/*
++ * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
++ * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
++ * preempt_lazy_count counter >0.
++ */
++static int preemptible_lazy(void)
++{
++	if (test_thread_flag(TIF_NEED_RESCHED))
++		return 1;
++	if (current_thread_info()->preempt_lazy_count)
++		return 0;
++	return 1;
++}
++
 +#else
-+static struct rcu_torture_ops rcu_bh_ops = {
-+	.ttype		= INVALID_RCU_FLAVOR,
-+};
++
++static int preemptible_lazy(void)
++{
++	return 1;
++}
++
 +#endif
 +
+ #ifdef CONFIG_PREEMPT
  /*
-  * Definitions for srcu torture testing.
-  */
+  * this is the entry point to schedule() from in-kernel preemption
+@@ -3012,15 +3036,9 @@ asmlinkage void __sched notrace preempt_schedule(void)
+ 	 */
+ 	if (likely(!preemptible()))
+ 		return;
+-
+-#ifdef CONFIG_PREEMPT_LAZY
+-	/*
+-	 * Check for lazy preemption
+-	 */
+-	if (current_thread_info()->preempt_lazy_count &&
+-			!test_thread_flag(TIF_NEED_RESCHED))
++	if (!preemptible_lazy())
+ 		return;
+-#endif
++
+ 	do {
+ 		__preempt_count_add(PREEMPT_ACTIVE);
+ 		/*
 -- 
 2.7.0
