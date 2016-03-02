@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 05/20] softirq: split timer softirqs out of ksoftirqd
-Date: Wed, 02 Mar 2016 10:37:03 -0500
-Message-ID: <20160302153714.892344173@goodmis.org>
+Subject: [PATCH RT 06/20] net: provide a way to delegate processing a softirq to ksoftirqd
+Date: Wed, 02 Mar 2016 10:37:04 -0500
+Message-ID: <20160302153715.035216568@goodmis.org>
 References: <20160302153658.995489487@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -14,7 +14,7 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0005-softirq-split-timer-softirqs-out-of-ksoftirqd.patch
+Content-Disposition: inline; filename=0006-net-provide-a-way-to-delegate-processing-a-softirq-t.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -25,211 +25,85 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The softirqd runs in -RT with SCHED_FIFO (prio 1) and deals mostly with
-timer wakeup which can not happen in hardirq context. The prio has been
-risen from the normal SCHED_OTHER so the timer wakeup does not happen
-too late.
-With enough networking load it is possible that the system never goes
-idle and schedules ksoftirqd and everything else with a higher priority.
-One of the tasks left behind is one of RCU's threads and so we see stalls
-and eventually run out of memory.
-This patch moves the TIMER and HRTIMER softirqs out of the `ksoftirqd`
-thread into its own `ktimersoftd`. The former can now run SCHED_OTHER
-(same as mainline) and the latter at SCHED_FIFO due to the wakeups.
+If the NET_RX uses up all of his budget it moves the following NAPI
+invocations into the `ksoftirqd`. On -RT it does not do so. Instead it
+rises the NET_RX softirq in its current context again.
 
->From networking point of view: The NAPI callback runs after the network
-interrupt thread completes. If its run time takes too long the NAPI code
-itself schedules the `ksoftirqd`. Here in the thread it can run at
-SCHED_OTHER priority and it won't defer RCU anymore.
+In order to get closer to mainline's behaviour this patch provides
+__raise_softirq_irqoff_ksoft() which raises the softirq in the ksoftird.
 
 Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/softirq.c | 85 ++++++++++++++++++++++++++++++++++++++++++++++++--------
- 1 file changed, 74 insertions(+), 11 deletions(-)
+ include/linux/interrupt.h |  8 ++++++++
+ kernel/softirq.c          | 21 +++++++++++++++++++++
+ net/core/dev.c            |  2 +-
+ 3 files changed, 30 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 3242af874438..40dbf5fcc869 100644
---- a/kernel/softirq.c
-+++ b/kernel/softirq.c
-@@ -58,6 +58,10 @@ EXPORT_SYMBOL(irq_stat);
- static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
- 
- DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
+diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
+index 86628c733be7..ce50b6ebd65d 100644
+--- a/include/linux/interrupt.h
++++ b/include/linux/interrupt.h
+@@ -444,6 +444,14 @@ extern void thread_do_softirq(void);
+ extern void open_softirq(int nr, void (*action)(struct softirq_action *));
+ extern void softirq_init(void);
+ extern void __raise_softirq_irqoff(unsigned int nr);
 +#ifdef CONFIG_PREEMPT_RT_FULL
-+#define TIMER_SOFTIRQS	((1 << TIMER_SOFTIRQ) | (1 << HRTIMER_SOFTIRQ))
-+DEFINE_PER_CPU(struct task_struct *, ktimer_softirqd);
-+#endif
- 
- const char * const softirq_to_name[NR_SOFTIRQS] = {
- 	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
-@@ -171,6 +175,17 @@ static void wakeup_softirqd(void)
- 		wake_up_process(tsk);
- }
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static void wakeup_timer_softirqd(void)
++extern void __raise_softirq_irqoff_ksoft(unsigned int nr);
++#else
++static inline void __raise_softirq_irqoff_ksoft(unsigned int nr)
 +{
-+	/* Interrupts are disabled: no need to stop preemption */
-+	struct task_struct *tsk = __this_cpu_read(ktimer_softirqd);
-+
-+	if (tsk && tsk->state != TASK_RUNNING)
-+		wake_up_process(tsk);
++	__raise_softirq_irqoff(nr);
 +}
 +#endif
-+
- static void handle_softirq(unsigned int vec_nr)
- {
- 	struct softirq_action *h = softirq_vec + vec_nr;
-@@ -474,7 +489,6 @@ void __raise_softirq_irqoff(unsigned int nr)
- static inline void local_bh_disable_nort(void) { local_bh_disable(); }
- static inline void _local_bh_enable_nort(void) { _local_bh_enable(); }
- static void ksoftirqd_set_sched_params(unsigned int cpu) { }
--static void ksoftirqd_clr_sched_params(unsigned int cpu, bool online) { }
  
- #else /* !PREEMPT_RT_FULL */
+ extern void raise_softirq_irqoff(unsigned int nr);
+ extern void raise_softirq(unsigned int nr);
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 40dbf5fcc869..a55e80dca611 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -704,6 +704,27 @@ void __raise_softirq_irqoff(unsigned int nr)
+ }
  
-@@ -649,8 +663,12 @@ void thread_do_softirq(void)
- 
- static void do_raise_softirq_irqoff(unsigned int nr)
- {
+ /*
++ * Same as __raise_softirq_irqoff() but will process them in ksoftirqd
++ */
++void __raise_softirq_irqoff_ksoft(unsigned int nr)
++{
 +	unsigned int mask;
 +
++	if (WARN_ON_ONCE(!__this_cpu_read(ksoftirqd) ||
++			 !__this_cpu_read(ktimer_softirqd)))
++		return;
 +	mask = 1UL << nr;
 +
- 	trace_softirq_raise(nr);
--	or_softirq_pending(1UL << nr);
++	trace_softirq_raise(nr);
 +	or_softirq_pending(mask);
- 
- 	/*
- 	 * If we are not in a hard interrupt and inside a bh disabled
-@@ -659,16 +677,30 @@ static void do_raise_softirq_irqoff(unsigned int nr)
- 	 * delegate it to ksoftirqd.
- 	 */
- 	if (!in_irq() && current->softirq_nestcnt)
--		current->softirqs_raised |= (1U << nr);
--	else if (__this_cpu_read(ksoftirqd))
--		__this_cpu_read(ksoftirqd)->softirqs_raised |= (1U << nr);
-+		current->softirqs_raised |= mask;
-+	else if (!__this_cpu_read(ksoftirqd) || !__this_cpu_read(ktimer_softirqd))
-+		return;
-+
 +	if (mask & TIMER_SOFTIRQS)
 +		__this_cpu_read(ktimer_softirqd)->softirqs_raised |= mask;
 +	else
 +		__this_cpu_read(ksoftirqd)->softirqs_raised |= mask;
++	wakeup_proper_softirq(nr);
 +}
 +
-+static void wakeup_proper_softirq(unsigned int nr)
-+{
-+	if ((1UL << nr) & TIMER_SOFTIRQS)
-+		wakeup_timer_softirqd();
-+	else
-+		wakeup_softirqd();
++/*
+  * This function must run with irqs disabled!
+  */
+ void raise_softirq_irqoff(unsigned int nr)
+diff --git a/net/core/dev.c b/net/core/dev.c
+index b89a1dd9f4d8..da674bb38606 100644
+--- a/net/core/dev.c
++++ b/net/core/dev.c
+@@ -4679,7 +4679,7 @@ out:
+ 
+ softnet_break:
+ 	sd->time_squeeze++;
+-	__raise_softirq_irqoff(NET_RX_SOFTIRQ);
++	__raise_softirq_irqoff_ksoft(NET_RX_SOFTIRQ);
+ 	goto out;
  }
  
-+
- void __raise_softirq_irqoff(unsigned int nr)
- {
- 	do_raise_softirq_irqoff(nr);
- 	if (!in_irq() && !current->softirq_nestcnt)
--		wakeup_softirqd();
-+		wakeup_proper_softirq(nr);
- }
- 
- /*
-@@ -694,7 +726,7 @@ void raise_softirq_irqoff(unsigned int nr)
- 	 * raise a WARN() if the condition is met.
- 	 */
- 	if (!current->softirq_nestcnt)
--		wakeup_softirqd();
-+		wakeup_proper_softirq(nr);
- }
- 
- static inline int ksoftirqd_softirq_pending(void)
-@@ -707,22 +739,37 @@ static inline void _local_bh_enable_nort(void) { }
- 
- static inline void ksoftirqd_set_sched_params(unsigned int cpu)
- {
-+	/* Take over all but timer pending softirqs when starting */
-+	local_irq_disable();
-+	current->softirqs_raised = local_softirq_pending() & ~TIMER_SOFTIRQS;
-+	local_irq_enable();
-+}
-+
-+static inline void ktimer_softirqd_set_sched_params(unsigned int cpu)
-+{
- 	struct sched_param param = { .sched_priority = 1 };
- 
- 	sched_setscheduler(current, SCHED_FIFO, &param);
--	/* Take over all pending softirqs when starting */
-+
-+	/* Take over timer pending softirqs when starting */
- 	local_irq_disable();
--	current->softirqs_raised = local_softirq_pending();
-+	current->softirqs_raised = local_softirq_pending() & TIMER_SOFTIRQS;
- 	local_irq_enable();
- }
- 
--static inline void ksoftirqd_clr_sched_params(unsigned int cpu, bool online)
-+static inline void ktimer_softirqd_clr_sched_params(unsigned int cpu,
-+						    bool online)
- {
- 	struct sched_param param = { .sched_priority = 0 };
- 
- 	sched_setscheduler(current, SCHED_NORMAL, &param);
- }
- 
-+static int ktimer_softirqd_should_run(unsigned int cpu)
-+{
-+	return current->softirqs_raised;
-+}
-+
- #endif /* PREEMPT_RT_FULL */
- /*
-  * Enter an interrupt context.
-@@ -772,6 +819,9 @@ static inline void invoke_softirq(void)
- 	if (__this_cpu_read(ksoftirqd) &&
- 			__this_cpu_read(ksoftirqd)->softirqs_raised)
- 		wakeup_softirqd();
-+	if (__this_cpu_read(ktimer_softirqd) &&
-+			__this_cpu_read(ktimer_softirqd)->softirqs_raised)
-+		wakeup_timer_softirqd();
- 	local_irq_restore(flags);
- #endif
- }
-@@ -1209,17 +1259,30 @@ static struct notifier_block cpu_nfb = {
- static struct smp_hotplug_thread softirq_threads = {
- 	.store			= &ksoftirqd,
- 	.setup			= ksoftirqd_set_sched_params,
--	.cleanup		= ksoftirqd_clr_sched_params,
- 	.thread_should_run	= ksoftirqd_should_run,
- 	.thread_fn		= run_ksoftirqd,
- 	.thread_comm		= "ksoftirqd/%u",
- };
- 
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+static struct smp_hotplug_thread softirq_timer_threads = {
-+	.store			= &ktimer_softirqd,
-+	.setup			= ktimer_softirqd_set_sched_params,
-+	.cleanup		= ktimer_softirqd_clr_sched_params,
-+	.thread_should_run	= ktimer_softirqd_should_run,
-+	.thread_fn		= run_ksoftirqd,
-+	.thread_comm		= "ktimersoftd/%u",
-+};
-+#endif
-+
- static __init int spawn_ksoftirqd(void)
- {
- 	register_cpu_notifier(&cpu_nfb);
- 
- 	BUG_ON(smpboot_register_percpu_thread(&softirq_threads));
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	BUG_ON(smpboot_register_percpu_thread(&softirq_timer_threads));
-+#endif
- 
- 	return 0;
- }
 -- 
 2.7.0
