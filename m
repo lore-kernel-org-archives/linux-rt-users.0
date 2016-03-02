@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/22] latencyhist: disable jump-labels
-Date: Wed, 02 Mar 2016 10:09:08 -0500
-Message-ID: <20160302151111.706850333@goodmis.org>
+Subject: [PATCH RT 15/22] sched,rt: __always_inline preemptible_lazy()
+Date: Wed, 02 Mar 2016 10:09:14 -0500
+Message-ID: <20160302151112.777847509@goodmis.org>
 References: <20160302150859.204542604@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Mathys <eraserix@gmail.com>,
-	<stable-rt@vger.kernel.org>
+	Mike Galbraith <umgwanakikbuti@gmail.com>,
+	Hillf Danton <hillf.zj@alibaba-inc.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-latencyhist-disable-jump-labels.patch
+Content-Disposition: inline; filename=0015-sched-rt-__always_inline-preemptible_lazy.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,67 +24,36 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-Atleast on X86 we die a recursive death
+homer: # nm kernel/sched/core.o|grep preemptible_lazy
+00000000000000b5 t preemptible_lazy
 
-|CPU: 3 PID: 585 Comm: bash Not tainted 4.4.1-rt4+ #198
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88007ab4cd00 ti: ffff88007ab94000 task.ti: ffff88007ab94000
-|RIP: 0010:[<ffffffff81684870>]  [<ffffffff81684870>] int3+0x0/0x10
-|RSP: 0018:ffff88013c107fd8  EFLAGS: 00010082
-|RAX: ffff88007ab4cd00 RBX: ffffffff8100ceab RCX: 0000000080202001
-|RDX: 0000000000000000 RSI: ffffffff8100ceab RDI: ffffffff810c78b2
-|RBP: ffff88007ab97c10 R08: ffffffffff57b000 R09: 0000000000000000
-|R10: ffff88013bb64790 R11: ffff88007ab4cd68 R12: ffffffff8100ceab
-|R13: ffffffff810c78b2 R14: ffffffff810f8158 R15: ffffffff810f9120
-|FS:  0000000000000000(0000) GS:ffff88013c100000(0063) knlGS:00000000f74e3940
-|CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
-|CR2: 0000000008cf6008 CR3: 000000013b169000 CR4: 00000000000006e0
-|Call Trace:
-| <#DB>
-| [<ffffffff810f8158>] ? trace_preempt_off+0x18/0x170
-| <<EOE>>
-| [<ffffffff81077745>] preempt_count_add+0xa5/0xc0
-| [<ffffffff810c78b2>] on_each_cpu+0x22/0x90
-| [<ffffffff8100ceab>] text_poke_bp+0x5b/0xc0
-| [<ffffffff8100a29c>] arch_jump_label_transform+0x8c/0xf0
-| [<ffffffff8111c77c>] __jump_label_update+0x6c/0x80
-| [<ffffffff8111c83a>] jump_label_update+0xaa/0xc0
-| [<ffffffff8111ca54>] static_key_slow_inc+0x94/0xa0
-| [<ffffffff810e0d8d>] tracepoint_probe_register_prio+0x26d/0x2c0
-| [<ffffffff810e0df3>] tracepoint_probe_register+0x13/0x20
-| [<ffffffff810fca78>] trace_event_reg+0x98/0xd0
-| [<ffffffff810fcc8b>] __ftrace_event_enable_disable+0x6b/0x180
-| [<ffffffff810fd5b8>] event_enable_write+0x78/0xc0
-| [<ffffffff8117a768>] __vfs_write+0x28/0xe0
-| [<ffffffff8117b025>] vfs_write+0xa5/0x180
-| [<ffffffff8117bb76>] SyS_write+0x46/0xa0
-| [<ffffffff81002c91>] do_fast_syscall_32+0xa1/0x1d0
-| [<ffffffff81684d57>] sysenter_flags_fixed+0xd/0x17
+echo wakeup_rt > current_tracer ==> Welcome to infinity.
 
-during
- echo 1 > /sys/kernel/debug/tracing/events/hist/preemptirqsoff_hist/enable
-
-Reported-By: Christoph Mathys <eraserix@gmail.com>
-Cc: stable-rt@vger.kernel.org
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+Acked-by: Hillf Danton <hillf.zj@alibaba-inc.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+Link: http://lkml.kernel.org/r/1456067490.3771.2.camel@gmail.com
+Signed-off-by: Thomas Gleixner <tglx@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index cb27d367b24a..78d3ed24484a 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -50,6 +50,7 @@ config KPROBES
- config JUMP_LABEL
-        bool "Optimize very unlikely/likely branches"
-        depends on HAVE_ARCH_JUMP_LABEL
-+       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
-        help
-          This option enables a transparent branch optimization that
- 	 makes certain almost-always-true or almost-always-false branch
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index 56b6d73f9154..62f1a6e26a25 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3122,7 +3122,7 @@ static void __sched notrace preempt_schedule_common(void)
+  * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
+  * preempt_lazy_count counter >0.
+  */
+-static int preemptible_lazy(void)
++static __always_inline int preemptible_lazy(void)
+ {
+ 	if (test_thread_flag(TIF_NEED_RESCHED))
+ 		return 1;
 -- 
 2.7.0
