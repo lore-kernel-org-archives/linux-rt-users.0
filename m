@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/7] latencyhist: disable jump-labels
-Date: Wed, 02 Mar 2016 21:21:34 -0500
-Message-ID: <20160303022155.397225095@goodmis.org>
+Subject: [PATCH RT 2/7] kernel: migrate_disable() do fastpath in atomic & irqs-off
+Date: Wed, 02 Mar 2016 21:21:35 -0500
+Message-ID: <20160303022155.549883442@goodmis.org>
 References: <20160303022133.583693153@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
@@ -9,15 +9,17 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Mathys <eraserix@gmail.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-latencyhist-disable-jump-labels.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:46878 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1755833AbcCCCWA (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 2 Mar 2016 21:22:00 -0500
+Content-Disposition: inline; filename=0002-kernel-migrate_disable-do-fastpath-in-atomic-irqs-of.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 3.2.77-rt112-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -26,65 +28,38 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Atleast on X86 we die a recursive death
+With interrupts off it makes no sense to do the long path since we can't
+leave the CPU anyway. Also we might end up in a recursion with lockdep.
 
-|CPU: 3 PID: 585 Comm: bash Not tainted 4.4.1-rt4+ #198
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88007ab4cd00 ti: ffff88007ab94000 task.ti: ffff88007ab94000
-|RIP: 0010:[<ffffffff81684870>]  [<ffffffff81684870>] int3+0x0/0x10
-|RSP: 0018:ffff88013c107fd8  EFLAGS: 00010082
-|RAX: ffff88007ab4cd00 RBX: ffffffff8100ceab RCX: 0000000080202001
-|RDX: 0000000000000000 RSI: ffffffff8100ceab RDI: ffffffff810c78b2
-|RBP: ffff88007ab97c10 R08: ffffffffff57b000 R09: 0000000000000000
-|R10: ffff88013bb64790 R11: ffff88007ab4cd68 R12: ffffffff8100ceab
-|R13: ffffffff810c78b2 R14: ffffffff810f8158 R15: ffffffff810f9120
-|FS:  0000000000000000(0000) GS:ffff88013c100000(0063) knlGS:00000000f74e3940
-|CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
-|CR2: 0000000008cf6008 CR3: 000000013b169000 CR4: 00000000000006e0
-|Call Trace:
-| <#DB>
-| [<ffffffff810f8158>] ? trace_preempt_off+0x18/0x170
-| <<EOE>>
-| [<ffffffff81077745>] preempt_count_add+0xa5/0xc0
-| [<ffffffff810c78b2>] on_each_cpu+0x22/0x90
-| [<ffffffff8100ceab>] text_poke_bp+0x5b/0xc0
-| [<ffffffff8100a29c>] arch_jump_label_transform+0x8c/0xf0
-| [<ffffffff8111c77c>] __jump_label_update+0x6c/0x80
-| [<ffffffff8111c83a>] jump_label_update+0xaa/0xc0
-| [<ffffffff8111ca54>] static_key_slow_inc+0x94/0xa0
-| [<ffffffff810e0d8d>] tracepoint_probe_register_prio+0x26d/0x2c0
-| [<ffffffff810e0df3>] tracepoint_probe_register+0x13/0x20
-| [<ffffffff810fca78>] trace_event_reg+0x98/0xd0
-| [<ffffffff810fcc8b>] __ftrace_event_enable_disable+0x6b/0x180
-| [<ffffffff810fd5b8>] event_enable_write+0x78/0xc0
-| [<ffffffff8117a768>] __vfs_write+0x28/0xe0
-| [<ffffffff8117b025>] vfs_write+0xa5/0x180
-| [<ffffffff8117bb76>] SyS_write+0x46/0xa0
-| [<ffffffff81002c91>] do_fast_syscall_32+0xa1/0x1d0
-| [<ffffffff81684d57>] sysenter_flags_fixed+0xd/0x17
-
-during
- echo 1 > /sys/kernel/debug/tracing/events/hist/preemptirqsoff_hist/enable
-
-Reported-By: Christoph Mathys <eraserix@gmail.com>
-Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
+ kernel/sched.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 73fc7cd51582..5e921bd9a57b 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -46,6 +46,7 @@ config KPROBES
- config JUMP_LABEL
-        bool "Optimize trace point call sites"
-        depends on HAVE_ARCH_JUMP_LABEL
-+       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
-        help
-          If it is detected that the compiler has support for "asm goto",
- 	 the kernel will compile trace point locations with just a
+diff --git a/kernel/sched.c b/kernel/sched.c
+index a9f6d6c0ab93..24d7256ce0b2 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -4611,7 +4611,7 @@ void migrate_disable(void)
+ {
+ 	struct task_struct *p = current;
+ 
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic++;
+ #endif
+@@ -4642,7 +4642,7 @@ void migrate_enable(void)
+ 	unsigned long flags;
+ 	struct rq *rq;
+ 
+-	if (in_atomic()) {
++	if (in_atomic() || irqs_disabled()) {
+ #ifdef CONFIG_SCHED_DEBUG
+ 		p->migrate_disable_atomic--;
+ #endif
 -- 
 2.7.0
+
+
