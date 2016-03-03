@@ -1,96 +1,80 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/7] latencyhist: disable jump-labels
-Date: Wed, 02 Mar 2016 15:14:07 -0500
-Message-ID: <20160302201414.329397351@goodmis.org>
-References: <20160302201406.143206126@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 0/7] Linux 3.2.77-rt112-rc1
+Date: Wed, 02 Mar 2016 21:21:33 -0500
+Message-ID: <20160303022133.583693153@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Christoph Mathys <eraserix@gmail.com>,
-	<stable-rt@vger.kernel.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:59775 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1750745AbcCBUtt (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 2 Mar 2016 15:49:49 -0500
-Content-Disposition: inline; filename=0001-latencyhist-disable-jump-labels.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-3.4.110-rt140-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+This is the RT stable review cycle of patch 3.2.77-rt112-rc1.
 
-Atleast on X86 we die a recursive death
+Please scream at me if I messed something up. Please test the patches too.
 
-|CPU: 3 PID: 585 Comm: bash Not tainted 4.4.1-rt4+ #198
-|Hardware name: QEMU Standard PC (Q35 + ICH9, 2009), BIOS Debian-1.8.2-1 04/01/2014
-|task: ffff88007ab4cd00 ti: ffff88007ab94000 task.ti: ffff88007ab94000
-|RIP: 0010:[<ffffffff81684870>]  [<ffffffff81684870>] int3+0x0/0x10
-|RSP: 0018:ffff88013c107fd8  EFLAGS: 00010082
-|RAX: ffff88007ab4cd00 RBX: ffffffff8100ceab RCX: 0000000080202001
-|RDX: 0000000000000000 RSI: ffffffff8100ceab RDI: ffffffff810c78b2
-|RBP: ffff88007ab97c10 R08: ffffffffff57b000 R09: 0000000000000000
-|R10: ffff88013bb64790 R11: ffff88007ab4cd68 R12: ffffffff8100ceab
-|R13: ffffffff810c78b2 R14: ffffffff810f8158 R15: ffffffff810f9120
-|FS:  0000000000000000(0000) GS:ffff88013c100000(0063) knlGS:00000000f74e3940
-|CS:  0010 DS: 002b ES: 002b CR0: 000000008005003b
-|CR2: 0000000008cf6008 CR3: 000000013b169000 CR4: 00000000000006e0
-|Call Trace:
-| <#DB>
-| [<ffffffff810f8158>] ? trace_preempt_off+0x18/0x170
-| <<EOE>>
-| [<ffffffff81077745>] preempt_count_add+0xa5/0xc0
-| [<ffffffff810c78b2>] on_each_cpu+0x22/0x90
-| [<ffffffff8100ceab>] text_poke_bp+0x5b/0xc0
-| [<ffffffff8100a29c>] arch_jump_label_transform+0x8c/0xf0
-| [<ffffffff8111c77c>] __jump_label_update+0x6c/0x80
-| [<ffffffff8111c83a>] jump_label_update+0xaa/0xc0
-| [<ffffffff8111ca54>] static_key_slow_inc+0x94/0xa0
-| [<ffffffff810e0d8d>] tracepoint_probe_register_prio+0x26d/0x2c0
-| [<ffffffff810e0df3>] tracepoint_probe_register+0x13/0x20
-| [<ffffffff810fca78>] trace_event_reg+0x98/0xd0
-| [<ffffffff810fcc8b>] __ftrace_event_enable_disable+0x6b/0x180
-| [<ffffffff810fd5b8>] event_enable_write+0x78/0xc0
-| [<ffffffff8117a768>] __vfs_write+0x28/0xe0
-| [<ffffffff8117b025>] vfs_write+0xa5/0x180
-| [<ffffffff8117bb76>] SyS_write+0x46/0xa0
-| [<ffffffff81002c91>] do_fast_syscall_32+0xa1/0x1d0
-| [<ffffffff81684d57>] sysenter_flags_fixed+0xd/0x17
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-during
- echo 1 > /sys/kernel/debug/tracing/events/hist/preemptirqsoff_hist/enable
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Reported-By: Christoph Mathys <eraserix@gmail.com>
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+If all goes well, this patch will be converted to the next main release
+on 3/7/2016.
+
+Enjoy,
+
+-- Steve
+
+
+To build 3.2.77-rt112-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.77.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.77-rt112-rc1.patch.xz
+
+You can also build from 3.2.77-rt111 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.77-rt111-rt112-rc1.patch.xz
+
+
+Changes from 3.2.77-rt111:
+
 ---
- arch/Kconfig | 1 +
- 1 file changed, 1 insertion(+)
-
-diff --git a/arch/Kconfig b/arch/Kconfig
-index 417ff4c6fc14..7b57cdc7b9b3 100644
---- a/arch/Kconfig
-+++ b/arch/Kconfig
-@@ -50,6 +50,7 @@ config KPROBES
- config JUMP_LABEL
-        bool "Optimize very unlikely/likely branches"
-        depends on HAVE_ARCH_JUMP_LABEL
-+       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
-        help
-          This option enables a transparent branch optimization that
- 	 makes certain almost-always-true or almost-always-false branch
--- 
-2.7.0
 
 
+Clark Williams (1):
+      rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
+
+Sebastian Andrzej Siewior (4):
+      latencyhist: disable jump-labels
+      kernel: migrate_disable() do fastpath in atomic & irqs-off
+      kernel: softirq: unlock with irqs on
+      kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
+
+Steven Rostedt (Red Hat) (1):
+      Linux 3.2.77-rt112-rc1
+
+Yang Shi (1):
+      trace: Use rcuidle version for preemptoff_hist trace point
+
+----
+ arch/Kconfig                 |  1 +
+ include/linux/ftrace.h       | 12 ++++++++++++
+ include/linux/sched.h        |  2 --
+ include/trace/events/hist.h  |  1 +
+ kernel/rcutorture.c          |  7 +++++++
+ kernel/sched.c               | 18 ++++--------------
+ kernel/softirq.c             |  6 +++---
+ kernel/trace/trace_irqsoff.c |  8 ++++----
+ localversion-rt              |  2 +-
+ 9 files changed, 33 insertions(+), 24 deletions(-)
