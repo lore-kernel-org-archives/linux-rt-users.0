@@ -1,14 +1,15 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: [PATCH RT 07/17] arm64: replace read_lock to rcu lock in
  call_step_hook
-Date: Thu, 3 Mar 2016 09:12:50 -0500
-Message-ID: <20160303091250.09034e47@gandalf.local.home>
+Date: Thu, 3 Mar 2016 09:21:24 -0500
+Message-ID: <20160303092124.7721ea80@gandalf.local.home>
 References: <20160302154433.638594715@goodmis.org>
 	<20160302154500.885242090@goodmis.org>
 	<20160303042300.GA32034@dhcppc3>
+	<20160303091250.09034e47@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
+Content-Transfer-Encoding: 8BIT
 Cc: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
@@ -19,35 +20,135 @@ Cc: linux-kernel@vger.kernel.org,
 	stable-rt@vger.kernel.org, Yang Shi <yang.shi@linaro.org>
 To: Pratyush Anand <panand@redhat.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160303042300.GA32034@dhcppc3>
+In-Reply-To: <20160303091250.09034e47@gandalf.local.home>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 3 Mar 2016 09:53:00 +0530
-Pratyush Anand <panand@redhat.com> wrote:
+On Thu, 3 Mar 2016 09:12:50 -0500
+Steven Rostedt <rostedt@goodmis.org> wrote:
 
-> > diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-> > index 636ba8b6240b..f66d668ffce9 100644
-> > --- a/arch/arm64/kernel/debug-monitors.c
-> > +++ b/arch/arm64/kernel/debug-monitors.c
-> > @@ -190,19 +190,22 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
-> >  /* EL1 Single Step Handler hooks */
-> >  static LIST_HEAD(step_hook);
-> >  DEFINE_RWLOCK(step_hook_lock);
-> > +static DEFINE_RWLOCK(step_hook_lock);  
-> 
-> I think, this got wrong during backporting, no?
-> Should have been
-> -DEFINE_RWLOCK(step_hook_lock);
+
+> > I think, this got wrong during backporting, no?
+> > Should have been
+> > -DEFINE_RWLOCK(step_hook_lock);
+> >   
 > 
 
-Crap! Yep you are right. I screwed this up. I'll go fix it. Luckily,
-that patch ended there. It didn't affect 3.12 or earlier.
+Below is the new patch.
 
-Thanks for catching that.
+Total -rc2 patch:
+
+ https://www.kernel.org/pub/linux/kernel/projects/rt/3.14/patch-3.14.61-rt64-rc2.patch.xz
+
+Incremental patch:
+
+ https://www.kernel.org/pub/linux/kernel/projects/rt/3.14/incr/patch-3.14.61-rt63-rt64-rc2.patch.xz
 
 -- Steve
 
-> > +static DEFINE_SPINLOCK(step_hook_lock);  
-> 
-> ~Pratyush
+
+>From e6b4b1b36de0e1dd5c47b9856938f7247208ff0f Mon Sep 17 00:00:00 2001
+Date: Mon, 8 Feb 2016 14:49:24 -0800
+Subject: arm64: replace read_lock to rcu lock in call_step_hook
+
+3.14.61-rt64-rc2 stable review patch.
+If anyone has any objections, please let me know.
+
+------------------
+
+From: Yang Shi <yang.shi@linaro.org>
+
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
+in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
+Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
+
+CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
+Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+Call trace:
+[<ffff8000000885e8>] dump_backtrace+0x0/0x128
+[<ffff800000088734>] show_stack+0x24/0x30
+[<ffff80000079a7c4>] dump_stack+0x80/0xa0
+[<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
+[<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
+[<ffff8000007a2268>] rt_read_lock+0x40/0x58
+[<ffff800000085328>] single_step_handler+0x38/0xd8
+[<ffff800000082368>] do_debug_exception+0x58/0xb8
+Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
+7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
+7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
+7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
+7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
+7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
+7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
+7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
+7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
+7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
+[<ffff8000000833f4>] el1_dbg+0x18/0x6c
+
+This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
+call_break_hook"), but comes to single_step_handler.
+
+This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ arch/arm64/kernel/debug-monitors.c | 21 +++++++++++----------
+ 1 file changed, 11 insertions(+), 10 deletions(-)
+
+diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
+index 636ba8b6240b..89e72b3696fa 100644
+--- a/arch/arm64/kernel/debug-monitors.c
++++ b/arch/arm64/kernel/debug-monitors.c
+@@ -189,20 +189,21 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
+ 
+ /* EL1 Single Step Handler hooks */
+ static LIST_HEAD(step_hook);
+-DEFINE_RWLOCK(step_hook_lock);
++static DEFINE_SPINLOCK(step_hook_lock);
+ 
+ void register_step_hook(struct step_hook *hook)
+ {
+-	write_lock(&step_hook_lock);
+-	list_add(&hook->node, &step_hook);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_add_rcu(&hook->node, &step_hook);
++	spin_unlock(&step_hook_lock);
+ }
+ 
+ void unregister_step_hook(struct step_hook *hook)
+ {
+-	write_lock(&step_hook_lock);
+-	list_del(&hook->node);
+-	write_unlock(&step_hook_lock);
++	spin_lock(&step_hook_lock);
++	list_del_rcu(&hook->node);
++	spin_unlock(&step_hook_lock);
++	synchronize_rcu();
+ }
+ 
+ /*
+@@ -216,15 +217,15 @@ static int call_step_hook(struct pt_regs *regs, unsigned int esr)
+ 	struct step_hook *hook;
+ 	int retval = DBG_HOOK_ERROR;
+ 
+-	read_lock(&step_hook_lock);
++	rcu_read_lock();
+ 
+-	list_for_each_entry(hook, &step_hook, node)	{
++	list_for_each_entry_rcu(hook, &step_hook, node)	{
+ 		retval = hook->fn(regs, esr);
+ 		if (retval == DBG_HOOK_HANDLED)
+ 			break;
+ 	}
+ 
+-	read_unlock(&step_hook_lock);
++	rcu_read_unlock();
+ 
+ 	return retval;
+ }
+-- 
+2.7.0
