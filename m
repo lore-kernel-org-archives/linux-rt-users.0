@@ -1,91 +1,414 @@
-From: Pratyush Anand <panand@redhat.com>
-Subject: Re: [PATCH RT 07/17] arm64: replace read_lock to rcu lock in
- call_step_hook
-Date: Thu, 3 Mar 2016 09:53:00 +0530
-Message-ID: <20160303042300.GA32034@dhcppc3>
-References: <20160302154433.638594715@goodmis.org>
- <20160302154500.885242090@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	stable-rt@vger.kernel.org, Yang Shi <yang.shi@linaro.org>
-To: Steven Rostedt <rostedt@goodmis.org>
+From: Yang Shi <yang.shi@linaro.org>
+Subject: [RFC V4 PATCH] trace: writeback: replace cgroup path to cgroup ino
+Date: Thu,  3 Mar 2016 01:08:57 -0800
+Message-ID: <1456996137-8354-1-git-send-email-yang.shi@linaro.org>
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linaro-kernel@lists.linaro.org, yang.shi@linaro.org
+To: gregkh@linuxfoundation.org, tj@kernel.org, lizefan@huawei.com,
+	tglx@linutronix.de, rostedt@goodmis.org, bigeasy@linutronix.de
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160302154500.885242090@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Steven,
+commit 5634cc2aa9aebc77bc862992e7805469dcf83dac ("writeback: update writeback
+tracepoints to report cgroup") made writeback tracepoints print out cgroup
+path when CGROUP_WRITEBACK is enabled, but it may trigger the below bug on -rt
+kernel since kernfs_path and kernfs_path_len are called by tracepoints, which
+acquire spin lock that is sleepable on -rt kernel.
 
-On 02/03/2016:10:44:40 AM, Steven Rostedt wrote:
-> 3.14.61-rt64-rc1 stable review patch.
-> If anyone has any objections, please let me know.
-> 
-> ------------------
-> 
-> From: Yang Shi <yang.shi@linaro.org>
-> 
-> BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:917
-> in_atomic(): 1, irqs_disabled(): 128, pid: 383, name: sh
-> Preemption disabled at:[<ffff800000124c18>] kgdb_cpu_enter+0x158/0x6b8
-> 
-> CPU: 3 PID: 383 Comm: sh Tainted: G        W       4.1.13-rt13 #2
-> Hardware name: Freescale Layerscape 2085a RDB Board (DT)
-> Call trace:
-> [<ffff8000000885e8>] dump_backtrace+0x0/0x128
-> [<ffff800000088734>] show_stack+0x24/0x30
-> [<ffff80000079a7c4>] dump_stack+0x80/0xa0
-> [<ffff8000000bd324>] ___might_sleep+0x18c/0x1a0
-> [<ffff8000007a20ac>] __rt_spin_lock+0x2c/0x40
-> [<ffff8000007a2268>] rt_read_lock+0x40/0x58
-> [<ffff800000085328>] single_step_handler+0x38/0xd8
-> [<ffff800000082368>] do_debug_exception+0x58/0xb8
-> Exception stack(0xffff80834a1e7c80 to 0xffff80834a1e7da0)
-> 7c80: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7e40 ffff8083 001bfcc4 ffff8000
-> 7ca0: f2000400 00000000 00000000 00000000 4a1e7d80 ffff8083 0049501c ffff8000
-> 7cc0: 00005402 00000000 00aaa210 ffff8000 4a1e7ea0 ffff8083 000833f4 ffff8000
-> 7ce0: ffffff9c ffffffff 92c23ba0 0000ffff 4a1e7ea0 ffff8083 001bfcc0 ffff8000
-> 7d00: 4a0fc400 ffff8083 00005402 00000000 4a1e7d40 ffff8083 00490324 ffff8000
-> 7d20: ffffff9c 00000000 92c23ba0 0000ffff 000a0000 00000000 00000000 00000000
-> 7d40: 00000008 00000000 00080000 00000000 92c23b8b 0000ffff 92c23b8e 0000ffff
-> 7d60: 00000038 00000000 00001cb2 00000000 00000005 00000000 92d7b498 0000ffff
-> 7d80: 01010101 01010101 92be9000 0000ffff 00000000 00000000 00000030 00000000
-> [<ffff8000000833f4>] el1_dbg+0x18/0x6c
-> 
-> This issue is similar with 62c6c61("arm64: replace read_lock to rcu lock in
-> call_break_hook"), but comes to single_step_handler.
-> 
-> This also solves kgdbts boot test silent hang issue on 4.4 -rt kernel.
-> 
-> Cc: stable-rt@vger.kernel.org
-> Signed-off-by: Yang Shi <yang.shi@linaro.org>
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-> Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-> ---
->  arch/arm64/kernel/debug-monitors.c | 21 ++++++++++++---------
->  1 file changed, 12 insertions(+), 9 deletions(-)
-> 
-> diff --git a/arch/arm64/kernel/debug-monitors.c b/arch/arm64/kernel/debug-monitors.c
-> index 636ba8b6240b..f66d668ffce9 100644
-> --- a/arch/arm64/kernel/debug-monitors.c
-> +++ b/arch/arm64/kernel/debug-monitors.c
-> @@ -190,19 +190,22 @@ static void clear_regs_spsr_ss(struct pt_regs *regs)
->  /* EL1 Single Step Handler hooks */
->  static LIST_HEAD(step_hook);
->  DEFINE_RWLOCK(step_hook_lock);
-> +static DEFINE_RWLOCK(step_hook_lock);
+BUG: sleeping function called from invalid context at kernel/locking/rtmutex.c:930
+in_atomic(): 1, irqs_disabled(): 0, pid: 625, name: kworker/u16:3
+INFO: lockdep is turned off.
+Preemption disabled at:[<ffffffc000374a5c>] wb_writeback+0xec/0x830
 
-I think, this got wrong during backporting, no?
-Should have been
--DEFINE_RWLOCK(step_hook_lock);
+CPU: 7 PID: 625 Comm: kworker/u16:3 Not tainted 4.4.1-rt5 #20
+Hardware name: Freescale Layerscape 2085a RDB Board (DT)
+Workqueue: writeback wb_workfn (flush-7:0)
+Call trace:
+[<ffffffc00008d708>] dump_backtrace+0x0/0x200
+[<ffffffc00008d92c>] show_stack+0x24/0x30
+[<ffffffc0007b0f40>] dump_stack+0x88/0xa8
+[<ffffffc000127d74>] ___might_sleep+0x2ec/0x300
+[<ffffffc000d5d550>] rt_spin_lock+0x38/0xb8
+[<ffffffc0003e0548>] kernfs_path_len+0x30/0x90
+[<ffffffc00036b360>] trace_event_raw_event_writeback_work_class+0xe8/0x2e8
+[<ffffffc000374f90>] wb_writeback+0x620/0x830
+[<ffffffc000376224>] wb_workfn+0x61c/0x950
+[<ffffffc000110adc>] process_one_work+0x3ac/0xb30
+[<ffffffc0001112fc>] worker_thread+0x9c/0x7a8
+[<ffffffc00011a9e8>] kthread+0x190/0x1b0
+[<ffffffc000086ca0>] ret_from_fork+0x10/0x30
 
-> +static DEFINE_SPINLOCK(step_hook_lock);
+With unlocked kernfs_* functions, synchronize_sched() has to be called in
+kernfs_rename which could be called in syscall path, but it is problematic.
+So, print out cgroup ino instead of path name, which could be converted to
+path name by userland.
 
-~Pratyush
+Withouth CGROUP_WRITEBACK enabled, it just prints out root dir. But, root
+dir ino vary from different filesystems, so printing out -1U to indicate
+an invalid cgroup ino.
+
+Signed-off-by: Yang Shi <yang.shi@linaro.org>
+---
+It should be applicable to both mainline and -rt kernel.
+The change survives ftrace stress test in ltp.
+
+v4: Acording to the discussion in v3 review, print out cgroup ino instead of
+    cgroup path name since it is problematic to call synchronize_sched() in
+    syscall.
+
+v3:
+  * Took Greg's comment to rename _kernfs_* and _cgroup_path to
+    kernfs_*_unlocked and cgroup_path_unlocked.
+
+v2:
+  * Adopted Steven's suggestion to call synchronize_sched in kernfs_rename_ns.
+
+ include/trace/events/writeback.h | 121 +++++++++++++++------------------------
+ 1 file changed, 45 insertions(+), 76 deletions(-)
+
+diff --git a/include/trace/events/writeback.h b/include/trace/events/writeback.h
+index fff846b..73614ce 100644
+--- a/include/trace/events/writeback.h
++++ b/include/trace/events/writeback.h
+@@ -134,58 +134,28 @@ DEFINE_EVENT(writeback_dirty_inode_template, writeback_dirty_inode,
+ #ifdef CREATE_TRACE_POINTS
+ #ifdef CONFIG_CGROUP_WRITEBACK
+ 
+-static inline size_t __trace_wb_cgroup_size(struct bdi_writeback *wb)
++static inline unsigned int __trace_wb_assign_cgroup(struct bdi_writeback *wb)
+ {
+-	return kernfs_path_len(wb->memcg_css->cgroup->kn) + 1;
++	return wb->memcg_css->cgroup->kn->ino;
+ }
+ 
+-static inline void __trace_wb_assign_cgroup(char *buf, struct bdi_writeback *wb)
+-{
+-	struct cgroup *cgrp = wb->memcg_css->cgroup;
+-	char *path;
+-
+-	path = cgroup_path(cgrp, buf, kernfs_path_len(cgrp->kn) + 1);
+-	WARN_ON_ONCE(path != buf);
+-}
+-
+-static inline size_t __trace_wbc_cgroup_size(struct writeback_control *wbc)
+-{
+-	if (wbc->wb)
+-		return __trace_wb_cgroup_size(wbc->wb);
+-	else
+-		return 2;
+-}
+-
+-static inline void __trace_wbc_assign_cgroup(char *buf,
+-					     struct writeback_control *wbc)
++static inline unsigned int __trace_wbc_assign_cgroup(struct writeback_control *wbc)
+ {
+ 	if (wbc->wb)
+-		__trace_wb_assign_cgroup(buf, wbc->wb);
++		return __trace_wb_assign_cgroup(wbc->wb);
+ 	else
+-		strcpy(buf, "/");
++		return -1U;
+ }
+-
+ #else	/* CONFIG_CGROUP_WRITEBACK */
+ 
+-static inline size_t __trace_wb_cgroup_size(struct bdi_writeback *wb)
+-{
+-	return 2;
+-}
+-
+-static inline void __trace_wb_assign_cgroup(char *buf, struct bdi_writeback *wb)
+-{
+-	strcpy(buf, "/");
+-}
+-
+-static inline size_t __trace_wbc_cgroup_size(struct writeback_control *wbc)
++static inline unsigned int __trace_wb_assign_cgroup(struct bdi_writeback *wb)
+ {
+-	return 2;
++	return -1U;
+ }
+ 
+-static inline void __trace_wbc_assign_cgroup(char *buf,
+-					     struct writeback_control *wbc)
++static inline unsigned int __trace_wbc_assign_cgroup(struct writeback_control *wbc)
+ {
+-	strcpy(buf, "/");
++	return -1U;
+ }
+ 
+ #endif	/* CONFIG_CGROUP_WRITEBACK */
+@@ -201,7 +171,7 @@ DECLARE_EVENT_CLASS(writeback_write_inode_template,
+ 		__array(char, name, 32)
+ 		__field(unsigned long, ino)
+ 		__field(int, sync_mode)
+-		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -209,14 +179,14 @@ DECLARE_EVENT_CLASS(writeback_write_inode_template,
+ 			dev_name(inode_to_bdi(inode)->dev), 32);
+ 		__entry->ino		= inode->i_ino;
+ 		__entry->sync_mode	= wbc->sync_mode;
+-		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
++		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
+ 	),
+ 
+-	TP_printk("bdi %s: ino=%lu sync_mode=%d cgroup=%s",
++	TP_printk("bdi %s: ino=%lu sync_mode=%d cgroup_ino=%u",
+ 		__entry->name,
+ 		__entry->ino,
+ 		__entry->sync_mode,
+-		__get_str(cgroup)
++		__entry->cgroup_ino
+ 	)
+ );
+ 
+@@ -246,7 +216,7 @@ DECLARE_EVENT_CLASS(writeback_work_class,
+ 		__field(int, range_cyclic)
+ 		__field(int, for_background)
+ 		__field(int, reason)
+-		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 	TP_fast_assign(
+ 		strncpy(__entry->name,
+@@ -258,10 +228,10 @@ DECLARE_EVENT_CLASS(writeback_work_class,
+ 		__entry->range_cyclic = work->range_cyclic;
+ 		__entry->for_background	= work->for_background;
+ 		__entry->reason = work->reason;
+-		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
++		__entry->cgroup_ino = __trace_wb_assign_cgroup(wb);
+ 	),
+ 	TP_printk("bdi %s: sb_dev %d:%d nr_pages=%ld sync_mode=%d "
+-		  "kupdate=%d range_cyclic=%d background=%d reason=%s cgroup=%s",
++		  "kupdate=%d range_cyclic=%d background=%d reason=%s cgroup_ino=%u",
+ 		  __entry->name,
+ 		  MAJOR(__entry->sb_dev), MINOR(__entry->sb_dev),
+ 		  __entry->nr_pages,
+@@ -270,7 +240,7 @@ DECLARE_EVENT_CLASS(writeback_work_class,
+ 		  __entry->range_cyclic,
+ 		  __entry->for_background,
+ 		  __print_symbolic(__entry->reason, WB_WORK_REASON),
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	)
+ );
+ #define DEFINE_WRITEBACK_WORK_EVENT(name) \
+@@ -300,15 +270,15 @@ DECLARE_EVENT_CLASS(writeback_class,
+ 	TP_ARGS(wb),
+ 	TP_STRUCT__entry(
+ 		__array(char, name, 32)
+-		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 	TP_fast_assign(
+ 		strncpy(__entry->name, dev_name(wb->bdi->dev), 32);
+-		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
++		__entry->cgroup_ino = __trace_wb_assign_cgroup(wb);
+ 	),
+-	TP_printk("bdi %s: cgroup=%s",
++	TP_printk("bdi %s: cgroup_ino=%u",
+ 		  __entry->name,
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	)
+ );
+ #define DEFINE_WRITEBACK_EVENT(name) \
+@@ -347,7 +317,7 @@ DECLARE_EVENT_CLASS(wbc_class,
+ 		__field(int, range_cyclic)
+ 		__field(long, range_start)
+ 		__field(long, range_end)
+-		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -361,12 +331,12 @@ DECLARE_EVENT_CLASS(wbc_class,
+ 		__entry->range_cyclic	= wbc->range_cyclic;
+ 		__entry->range_start	= (long)wbc->range_start;
+ 		__entry->range_end	= (long)wbc->range_end;
+-		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
++		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
+ 	),
+ 
+ 	TP_printk("bdi %s: towrt=%ld skip=%ld mode=%d kupd=%d "
+ 		"bgrd=%d reclm=%d cyclic=%d "
+-		"start=0x%lx end=0x%lx cgroup=%s",
++		"start=0x%lx end=0x%lx cgroup_ino=%u",
+ 		__entry->name,
+ 		__entry->nr_to_write,
+ 		__entry->pages_skipped,
+@@ -377,7 +347,7 @@ DECLARE_EVENT_CLASS(wbc_class,
+ 		__entry->range_cyclic,
+ 		__entry->range_start,
+ 		__entry->range_end,
+-		__get_str(cgroup)
++		__entry->cgroup_ino
+ 	)
+ )
+ 
+@@ -398,7 +368,7 @@ TRACE_EVENT(writeback_queue_io,
+ 		__field(long,		age)
+ 		__field(int,		moved)
+ 		__field(int,		reason)
+-		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
++		__field(unsigned int,	cgroup_ino)
+ 	),
+ 	TP_fast_assign(
+ 		unsigned long *older_than_this = work->older_than_this;
+@@ -408,15 +378,15 @@ TRACE_EVENT(writeback_queue_io,
+ 				  (jiffies - *older_than_this) * 1000 / HZ : -1;
+ 		__entry->moved	= moved;
+ 		__entry->reason	= work->reason;
+-		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
++		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
+ 	),
+-	TP_printk("bdi %s: older=%lu age=%ld enqueue=%d reason=%s cgroup=%s",
++	TP_printk("bdi %s: older=%lu age=%ld enqueue=%d reason=%s cgroup_ino=%u",
+ 		__entry->name,
+ 		__entry->older,	/* older_than_this in jiffies */
+ 		__entry->age,	/* older_than_this in relative milliseconds */
+ 		__entry->moved,
+ 		__print_symbolic(__entry->reason, WB_WORK_REASON),
+-		__get_str(cgroup)
++		__entry->cgroup_ino
+ 	)
+ );
+ 
+@@ -484,7 +454,7 @@ TRACE_EVENT(bdi_dirty_ratelimit,
+ 		__field(unsigned long,	dirty_ratelimit)
+ 		__field(unsigned long,	task_ratelimit)
+ 		__field(unsigned long,	balanced_dirty_ratelimit)
+-		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
++		__field(unsigned int,	cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -496,13 +466,13 @@ TRACE_EVENT(bdi_dirty_ratelimit,
+ 		__entry->task_ratelimit	= KBps(task_ratelimit);
+ 		__entry->balanced_dirty_ratelimit =
+ 					KBps(wb->balanced_dirty_ratelimit);
+-		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
++		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
+ 	),
+ 
+ 	TP_printk("bdi %s: "
+ 		  "write_bw=%lu awrite_bw=%lu dirty_rate=%lu "
+ 		  "dirty_ratelimit=%lu task_ratelimit=%lu "
+-		  "balanced_dirty_ratelimit=%lu cgroup=%s",
++		  "balanced_dirty_ratelimit=%lu cgroup_ino=%u",
+ 		  __entry->bdi,
+ 		  __entry->write_bw,		/* write bandwidth */
+ 		  __entry->avg_write_bw,	/* avg write bandwidth */
+@@ -510,7 +480,7 @@ TRACE_EVENT(bdi_dirty_ratelimit,
+ 		  __entry->dirty_ratelimit,	/* base ratelimit */
+ 		  __entry->task_ratelimit, /* ratelimit with position control */
+ 		  __entry->balanced_dirty_ratelimit, /* the balanced ratelimit */
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	)
+ );
+ 
+@@ -548,7 +518,7 @@ TRACE_EVENT(balance_dirty_pages,
+ 		__field(	 long,	pause)
+ 		__field(unsigned long,	period)
+ 		__field(	 long,	think)
+-		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
++		__field(unsigned int,	cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -571,7 +541,7 @@ TRACE_EVENT(balance_dirty_pages,
+ 		__entry->period		= period * 1000 / HZ;
+ 		__entry->pause		= pause * 1000 / HZ;
+ 		__entry->paused		= (jiffies - start_time) * 1000 / HZ;
+-		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
++		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
+ 	),
+ 
+ 
+@@ -580,7 +550,7 @@ TRACE_EVENT(balance_dirty_pages,
+ 		  "bdi_setpoint=%lu bdi_dirty=%lu "
+ 		  "dirty_ratelimit=%lu task_ratelimit=%lu "
+ 		  "dirtied=%u dirtied_pause=%u "
+-		  "paused=%lu pause=%ld period=%lu think=%ld cgroup=%s",
++		  "paused=%lu pause=%ld period=%lu think=%ld cgroup_ino=%u",
+ 		  __entry->bdi,
+ 		  __entry->limit,
+ 		  __entry->setpoint,
+@@ -595,7 +565,7 @@ TRACE_EVENT(balance_dirty_pages,
+ 		  __entry->pause,	/* ms */
+ 		  __entry->period,	/* ms */
+ 		  __entry->think,	/* ms */
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	  )
+ );
+ 
+@@ -609,8 +579,7 @@ TRACE_EVENT(writeback_sb_inodes_requeue,
+ 		__field(unsigned long, ino)
+ 		__field(unsigned long, state)
+ 		__field(unsigned long, dirtied_when)
+-		__dynamic_array(char, cgroup,
+-				__trace_wb_cgroup_size(inode_to_wb(inode)))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -619,16 +588,16 @@ TRACE_EVENT(writeback_sb_inodes_requeue,
+ 		__entry->ino		= inode->i_ino;
+ 		__entry->state		= inode->i_state;
+ 		__entry->dirtied_when	= inode->dirtied_when;
+-		__trace_wb_assign_cgroup(__get_str(cgroup), inode_to_wb(inode));
++		__entry->cgroup_ino	= __trace_wb_assign_cgroup(inode_to_wb(inode));
+ 	),
+ 
+-	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu cgroup=%s",
++	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu cgroup_ino=%u",
+ 		  __entry->name,
+ 		  __entry->ino,
+ 		  show_inode_state(__entry->state),
+ 		  __entry->dirtied_when,
+ 		  (jiffies - __entry->dirtied_when) / HZ,
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	)
+ );
+ 
+@@ -684,7 +653,7 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
+ 		__field(unsigned long, writeback_index)
+ 		__field(long, nr_to_write)
+ 		__field(unsigned long, wrote)
+-		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
++		__field(unsigned int, cgroup_ino)
+ 	),
+ 
+ 	TP_fast_assign(
+@@ -696,11 +665,11 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
+ 		__entry->writeback_index = inode->i_mapping->writeback_index;
+ 		__entry->nr_to_write	= nr_to_write;
+ 		__entry->wrote		= nr_to_write - wbc->nr_to_write;
+-		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
++		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
+ 	),
+ 
+ 	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu "
+-		  "index=%lu to_write=%ld wrote=%lu cgroup=%s",
++		  "index=%lu to_write=%ld wrote=%lu cgroup_ino=%u",
+ 		  __entry->name,
+ 		  __entry->ino,
+ 		  show_inode_state(__entry->state),
+@@ -709,7 +678,7 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
+ 		  __entry->writeback_index,
+ 		  __entry->nr_to_write,
+ 		  __entry->wrote,
+-		  __get_str(cgroup)
++		  __entry->cgroup_ino
+ 	)
+ );
+ 
+-- 
+2.0.2
