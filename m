@@ -1,179 +1,144 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: AW: AW: Large latencies with 4.4.1-rt6
-Date: Thu, 3 Mar 2016 09:42:27 -0600
-Message-ID: <20160303154227.GA28102@jcartwri.amer.corp.natinst.com>
-References: <1A2AF5F768264E479963C4D8C015EB691B6A461B@DLREXMBX01.intra.dlr.de>
+From: Jean-Denis Girard <jd.girard@sysnux.pf>
+Subject: Re: acmesystems Arietta (AT91SAM9G25)
+Date: Thu, 3 Mar 2016 16:00:17 -1000
+Message-ID: <nbaq7h$tme$1@ger.gmane.org>
+References: <nat4ql$41m$1@ger.gmane.org>
+ <20160229081039.GC2613@pengutronix.de> <nb1qeg$9mm$1@ger.gmane.org>
+ <20160229161826.GD12917@jcartwri.amer.corp.natinst.com>
+ <56D52CBB.2020003@sysnux.pf>
+ <20160301153833.GA1607@jcartwri.amer.corp.natinst.com>
+ <20160301160005.GB23985@piout.net>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="tKW2IUtsqtDRztdT"
-Cc: tglx@linutronix.de, bigeasy@linutronix.de,
-	linux-rt-users@vger.kernel.org
-To: Martin.Wirth@dlr.de
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:47558 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1756367AbcCCPml (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 3 Mar 2016 10:42:41 -0500
-In-Reply-To: <1A2AF5F768264E479963C4D8C015EB691B6A461B@DLREXMBX01.intra.dlr.de>
-Content-Disposition: inline
+Received: from plane.gmane.org ([80.91.229.3]:49633 "EHLO plane.gmane.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757734AbcCDCAd (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 3 Mar 2016 21:00:33 -0500
+Received: from list by plane.gmane.org with local (Exim 4.69)
+	(envelope-from <glru-linux-rt-users@m.gmane.org>)
+	id 1abf2a-0002WT-DM
+	for linux-rt-users@vger.kernel.org; Fri, 04 Mar 2016 03:00:28 +0100
+Received: from 141.84.50.123.dsl.dyn.mana.pf ([123.50.84.141])
+        by main.gmane.org with esmtp (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 04 Mar 2016 03:00:28 +0100
+Received: from jd.girard by 141.84.50.123.dsl.dyn.mana.pf with local (Gmexim 0.1 (Debian))
+        id 1AlnuQ-0007hv-00
+        for <linux-rt-users@vger.kernel.org>; Fri, 04 Mar 2016 03:00:28 +0100
+In-Reply-To: <20160301160005.GB23985@piout.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
---tKW2IUtsqtDRztdT
-Content-Type: text/plain; charset=iso-8859-1
-Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
-
-Hey Martin-
-
-On Thu, Mar 03, 2016 at 09:44:25AM +0000, Martin.Wirth@dlr.de wrote:
+Le 01/03/2016 06:00, Alexandre Belloni a =E9crit :
+> I also have that branch for preempt-rt on at91:
 >=20
-> > -----Urspr=FCngliche Nachricht-----
-> > Von: Thomas Gleixner [mailto:tglx@linutronix.de]
-> > Gesendet: Dienstag, 1. M=E4rz 2016 11:08
-> > An: Wirth, Martin
-> > Cc: bigeasy@linutronix.de
-> > Betreff: Re: AW: AW: AW: Large latencies with 4.4.1-rt6
-> >=20
-> > Can you try to gather a trace:
-> >=20
-> > cyclictest -Sp99 -m -i200 -f -b500
+> https://github.com/alexandrebelloni/linux/tree/at91-rt
 
-Cyclictest should have mentioned which CPU was triggering the break, the
-most valuable traces are from that CPU.
+I've not been able to apply the 13 patches on 4.4.3-rt9 due to
+conflicts, and then kernel would not compile.
 
-> > You might need to up the interval a bit, but that should give us the re=
-ason for
-> > this hickup.
-> >
->
-> I finally found the reason for the ms range latencies.
->
-> When we bought the cpu -card about 2 years ago we had problems with
-> the built-in DP to VGA bridge in combination with a KVM switch.  To
-> solve this I added, as suggested on a linux forum, the kernel
-> parameter  i915.disable_power_well=3D0. With former kernels this did no
-> harm, but with 4.4 it causes the large latencies. The i915 driver even
-> warns that  disable_power_well is deprecated and dangerous now but I
-> overlooked this in the kernel log.
->
-> So now that this is gone, I still see a lot of 100 =B5s range latencies
-> with 4.4.3-rt9. Interestingly I get even larger ones of up to 200 =B5s
-> when tracing is not enabled (over 12 h runs).
->
-> The traces around such a 100 =B5s hickup look like this:
->
-[..]
->      cc1-17437   0d..h... 195934553us : irq_exit <-do_IRQ
->      cc1-17437   0d..h... 195934553us : irqtime_account_irq <-irq_exit
->      cc1-17437   0d..h... 195934553us : preempt_count_sub <-irq_exit
->      cc1-17437   0d...... 195934553us!: rcu_irq_exit <-irq_exit
->      cc1-17437   0d...... 195934680us : do_IRQ <-ret_from_intr
->      cc1-17437   0d...... 195934681us : irq_enter <-do_IRQ
->      cc1-17437   0d...... 195934681us : rcu_irq_enter <-irq_enter
->      cc1-17437   0d...... 195934681us : irqtime_account_irq <-irq_enter
->      cc1-17437   0d...... 195934681us : in_serving_softirq <-irqtime_acco=
-unt_irq
->      cc1-17437   0d...... 195934681us : preempt_count_add <-irq_enter
->      cc1-17437   0d..h... 195934681us : exit_idle <-do_IRQ
->      cc1-17437   0d..h... 195934682us : handle_irq <-do_IRQ
->      cc1-17437   0d..h... 195934682us : handle_edge_irq <-handle_irq
->      cc1-17437   0d..h... 195934682us : _raw_spin_lock <-handle_edge_irq
->      cc1-17437   0d..h... 195934682us : preempt_count_add <-_raw_spin_lock
->      cc1-17437   0d..h1.. 195934682us : irq_chip_ack_parent <-handle_edge=
-_irq
->      cc1-17437   0d..h1.. 195934682us : apic_ack_edge <-irq_chip_ack_pare=
-nt
->      cc1-17437   0d..h1.. 195934682us : irq_complete_move <-apic_ack_edge
->      cc1-17437   0d..h1.. 195934682us : irq_move_irq <-apic_ack_edge
->      cc1-17437   0d..h1.. 195934682us : handle_irq_event <-handle_edge_irq
->      cc1-17437   0d..h1.. 195934683us : preempt_count_sub <-handle_irq_ev=
-ent
->      cc1-17437   0d..h... 195934683us : handle_irq_event_percpu <-handle_=
-irq_event
->      cc1-17437   0d..h... 195934683us : irq_default_primary_handler <-han=
-dle_irq_event_percpu
->      cc1-17437   0d..h... 195934683us : __irq_wake_thread <-handle_irq_ev=
-ent_percpu
->      cc1-17437   0d..h... 195934683us : wake_up_process <-__irq_wake_thre=
-ad
->      cc1-17437   0d..h... 195934683us : try_to_wake_up <-wake_up_process
->      cc1-17437   0d..h... 195934683us : _raw_spin_lock_irqsave <-try_to_w=
-ake_up
->      cc1-17437   0d..h... 195934683us : preempt_count_add <-_raw_spin_loc=
-k_irqsave
->      cc1-17437   0d..h1.. 195934683us : select_task_rq_rt <-try_to_wake_up
->      cc1-17437   0d..h1.. 195934684us : __rcu_read_lock <-select_task_rq_=
-rt
->      cc1-17437   0d..h1.. 195934684us : __rcu_read_unlock <-select_task_r=
-q_rt
->      cc1-17437   0d..h1.. 195934684us : _raw_spin_lock <-try_to_wake_up
->      cc1-17437   0d..h1.. 195934684us : preempt_count_add <-_raw_spin_lock
->      cc1-17437   0d..h2.. 195934684us : ttwu_do_activate.constprop.100 <-=
-try_to_wake_up
->      cc1-17437   0d..h2.. 195934684us : activate_task <-ttwu_do_activate.=
-constprop.100
->      cc1-17437   0d..h2.. 195934684us : update_rq_clock.part.89 <-activat=
-e_task
->      cc1-17437   0d..h2.. 195934684us : enqueue_task_rt <-activate_task
->      cc1-17437   0d..h2.. 195934684us : dequeue_rt_stack <-enqueue_task_rt
->      cc1-17437   0d..h2.. 195934684us : dequeue_top_rt_rq <-dequeue_rt_st=
-ack
->      cc1-17437   0d..h2.. 195934685us : cpupri_set <-enqueue_task_rt
->      cc1-17437   0d..h2.. 195934685us : update_rt_migration <-enqueue_tas=
-k_rt
->      cc1-17437   0d..h2.. 195934685us : _raw_spin_lock <-enqueue_task_rt
->      cc1-17437   0d..h2.. 195934685us : preempt_count_add <-_raw_spin_lock
->      cc1-17437   0d..h3.. 195934685us : preempt_count_sub <-enqueue_task_=
-rt
->      cc1-17437   0d..h2.. 195934685us : enqueue_top_rt_rq <-enqueue_task_=
-rt
->      cc1-17437   0d..h2.. 195934685us : ttwu_do_wakeup <-ttwu_do_activate=
-=2Econstprop.100
->      cc1-17437   0d..h2.. 195934686us : check_preempt_curr <-ttwu_do_wake=
-up
->      cc1-17437   0d..h2.. 195934686us : resched_curr <-check_preempt_curr
->      cc1-17437   0d..h2.. 195934686us : native_smp_send_reschedule <-resc=
-hed_curr
->      cc1-17437   0d..h2.. 195934686us : flat_send_IPI_mask <-native_smp_s=
-end_reschedule
->      cc1-17437   0d..h2.. 195934687us : task_woken_rt <-ttwu_do_wakeup
->      cc1-17437   0d..h2.. 195934687us : preempt_count_sub <-try_to_wake_up
->      cc1-17437   0d..h1.. 195934687us : __rcu_read_lock <-try_to_wake_up
->      cc1-17437   0d..h1.. 195934687us : __rcu_read_unlock <-try_to_wake_up
->      cc1-17437   0d..h1.. 195934687us : _raw_spin_unlock_irqrestore <-try=
-_to_wake_up
->      cc1-17437   0d..h1.. 195934687us : preempt_count_sub <-_raw_spin_unl=
-ock_irqrestore
->      cc1-17437   0d..h... 195934687us : note_interrupt <-handle_irq_event=
-_percpu
->      cc1-17437   0d..h... 195934687us : _raw_spin_lock <-handle_irq_event
->      cc1-17437   0d..h... 195934688us : preempt_count_add <-_raw_spin_lock
->      cc1-17437   0d..h1.. 195934688us : preempt_count_sub <-handle_edge_i=
-rq
->      cc1-17437   0d..h... 195934688us : irq_exit <-do_IRQ =20
+So I tried your at91-rt branch, Alexandre, and I'm pleased to report
+that it works!
 
-Do you have more complete traces of what's going on on the other CPUs as
-well?  As far as I can see here, CPU0 is handling a couple interrupts,
-which trigger remote wakeups of irqthreads running on the other
-CPUs..nothing unusual?
+I'm just getting this warning:
 
-  Josh
+at91_i2c f8014000.i2c: using dma1chan0 (tx) and dma1chan1 (rx) for DMA
+transfers
+at91_i2c f8014000.i2c: AT91 i2c bus driver (hw version: 0x402).
+clocksource: Switched to clocksource tcb_clksrc
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 1 at kernel/locking/rtmutex.c:2008
+rt_mutex_trylock+0x28/0xec()
+Modules linked in:
+CPU: 0 PID: 1 Comm: swapper Not tainted 4.4.1-rt5 #1
+Hardware name: Atmel AT91SAM9
+[<c000ecf4>] (unwind_backtrace) from [<c000cf18>] (show_stack+0x10/0x14=
+)
+[<c000cf18>] (show_stack) from [<c0016720>] (warn_slowpath_common+0x80/=
+0xa8)
+[<c0016720>] (warn_slowpath_common) from [<c00167d8>]
+(warn_slowpath_null+0x18/0x20)
+[<c00167d8>] (warn_slowpath_null) from [<c03b0574>]
+(rt_mutex_trylock+0x28/0xec)
+[<c03b0574>] (rt_mutex_trylock) from [<c03b1a08>]
+(rt_spin_trylock_irqsave+0x10/0x1)
+[<c03b1a08>] (rt_spin_trylock_irqsave) from [<c0317524>]
+(clk_enable_lock+0x10/0xe4)
+[<c0317524>] (clk_enable_lock) from [<c03188e8>] (clk_disable+0x1c/0x34=
+)
+[<c03188e8>] (clk_disable) from [<c0304d74>] (tc_shutdown+0x2c/0x3c)
+[<c0304d74>] (tc_shutdown) from [<c0304da4>] (tc_set_oneshot+0x20/0x50)
+[<c0304da4>] (tc_set_oneshot) from [<c0058d98>]
+(clockevents_switch_state+0x8c/0x12)
+[<c0058d98>] (clockevents_switch_state) from [<c0059cbc>]
+(tick_switch_to_oneshot+0)
+[<c0059cbc>] (tick_switch_to_oneshot) from [<c004e220>]
+(hrtimer_run_queues+0x34/0x)
+[<c004e220>] (hrtimer_run_queues) from [<c004cde8>]
+(run_local_timers+0x8/0x14)
+[<c004cde8>] (run_local_timers) from [<c004ce20>]
+(update_process_times+0x2c/0x5c)
+[<c004ce20>] (update_process_times) from [<c0059480>]
+(tick_handle_periodic+0x10/0x)
+[<c0059480>] (tick_handle_periodic) from [<c0304e60>] (ch2_irq+0x20/0x2=
+8)
+[<c0304e60>] (ch2_irq) from [<c003ff78>]
+(handle_irq_event_percpu+0x40/0x138)
+[<c003ff78>] (handle_irq_event_percpu) from [<c00400d8>]
+(handle_irq_event+0x68/0x9)
+[<c00400d8>] (handle_irq_event) from [<c0042ff4>]
+(handle_fasteoi_irq+0xa8/0x1a4)
+[<c0042ff4>] (handle_fasteoi_irq) from [<c003f820>]
+(generic_handle_irq+0x18/0x28)
+[<c003f820>] (generic_handle_irq) from [<c003fa68>]
+(__handle_domain_irq+0x7c/0xa0)
+[<c003fa68>] (__handle_domain_irq) from [<c000d8f0>] (__irq_svc+0x50/0x=
+98)
+[<c000d8f0>] (__irq_svc) from [<c000f0dc>] (printascii+0x2c/0x58)
+[<c000f0dc>] (printascii) from [<c000f178>] (early_console_write+0x30/0=
+x214)
+[<c000f178>] (early_console_write) from [<c003ca2c>]
+(call_console_drivers.constpro)
+[<c003ca2c>] (call_console_drivers.constprop.13) from [<c003e608>]
+(console_unlock+)
+[<c003e608>] (console_unlock) from [<c003ec64>] (vprintk_emit+0x448/0x4=
+84)
+[<c003ec64>] (vprintk_emit) from [<c003edb4>] (vprintk_default+0x1c/0x2=
+4)
+[<c003edb4>] (vprintk_default) from [<c006987c>] (printk+0x6c/0x80)
+[<c006987c>] (printk) from [<c0055b88>] (__clocksource_select+0x12c/0x1=
+4c)
+[<c0055b88>] (__clocksource_select) from [<c051038c>]
+(clocksource_done_booting+0x2)
+[<c051038c>] (clocksource_done_booting) from [<c00097a0>]
+(do_one_initcall+0x104/0x)
+[<c00097a0>] (do_one_initcall) from [<c0509d0c>]
+(kernel_init_freeable+0xfc/0x1c0)
+[<c0509d0c>] (kernel_init_freeable) from [<c03ae1c4>] (kernel_init+0x8/=
+0xe4)
+[<c03ae1c4>] (kernel_init) from [<c000a378>] (ret_from_fork+0x14/0x3c)
+---[ end trace 0000000000000001 ]---
 
---tKW2IUtsqtDRztdT
-Content-Type: application/pgp-signature; name="signature.asc"
+But the arietta seems to run fine. I'm getting about 100 - 250 =B5s
+latencies on a simple GPIO test.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
 
-iQEcBAABCAAGBQJW2FtgAAoJEKp7ZBKwQFAr1VkH/0UOmz59ZiKv0cKe+GSesb3V
-PzrMiDmDEFQFnxfekDLYwPKMVHZbSTx0OzwUBthJAzPiySSzbuGF5jqAopHiobHA
-A96fiiluAZs1DRM6Fa2G4CyiDvcKDMtTQTSzRAWnG/p17TARSoJyvQzazOojgcVQ
-nJ9i3wjkh4jWNGM/sGwYlpucj1f9f9ER+WrVPYwdnAe72D7Xt9s067oVftXfuUQC
-dwrzEJ3zEAPhNf0Fv2gQ6KrX9+Z6x1GWIjr28lV3sDt3q4KvHXlFcnF6AIQjaoMA
-nBMuqsC9eXFRfGrFYODJ1DK1jij6V0qn8Kr7pWXyXfGkyKTzGorbL70CAKc82/4=
-=I4UB
------END PGP SIGNATURE-----
+Thanks,
+--=20
+Jean-Denis Girard
 
---tKW2IUtsqtDRztdT--
+SysNux                Syst=E8mes   Linux   en   Polyn=E9sie   fran=E7ai=
+se
+http://www.sysnux.pf/ T=E9l: +689 40.50.10.40 / GSM: +689 87.79.75.27
+
+
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
