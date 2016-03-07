@@ -1,62 +1,54 @@
-From: Jonah Petri <jpetri@izotope.com>
-Subject: Re: diagnosing unexpected sched_stat_wait
-Date: Mon, 7 Mar 2016 09:53:17 -0500
-Message-ID: <CAJOrw7waTrhPBAyfxL-8NiV4cBCr=9eqoLZnfYsjKyBeAqCDPA@mail.gmail.com>
-References: <CAJOrw7was05Absp0UiCVO5mZEoZqXHD-ZNOoDwoG7t1S1DED_A@mail.gmail.com>
-	<20160304220531.GB3604@kernel.org>
-	<CAJOrw7wUwZmdkMNjB3gHptUR1AFDLXMqt9dAEOFsRcofrbtx6A@mail.gmail.com>
-	<20160307142829.GC3604@kernel.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] tty: serial: sc16is7xx: use threaded interrupts instead
+ of homegrow
+Date: Mon, 7 Mar 2016 17:41:14 +0100
+Message-ID: <56DDAF2A.2000009@linutronix.de>
+References: <56CDCCE6.5020801@prevas.dk> <56CDEAE2.9050102@prevas.dk>
+ <20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
+ <20160226114340.GC8318@linutronix.de> <20160226114809.GD8318@linutronix.de>
+ <C32FB8B0-21F8-4C84-9F77-20F3CD43E3D4@wp.pl>
+ <20160226165228.GA17178@jcartwri.amer.corp.natinst.com>
+ <835668C1-5DDB-4495-AD00-4EE8DDD0D146@wp.pl>
+ <20160226190048.GC12917@jcartwri.amer.corp.natinst.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: linux-rt-users@vger.kernel.org
-To: Arnaldo Carvalho de Melo <acme@kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	Sean Nyekj?r <sean.nyekjaer@prevas.dk>,
+	linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	Jon Ringle <jringle@gridpoint.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Josh Cartwright <joshc@ni.com>, Kuba Kicinski <kubakici@wp.pl>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-oi0-f43.google.com ([209.85.218.43]:33768 "EHLO
-	mail-oi0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752865AbcCGOxU (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:45898 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753319AbcCGQlS (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Mar 2016 09:53:20 -0500
-Received: by mail-oi0-f43.google.com with SMTP id d205so80786285oia.0
-        for <linux-rt-users@vger.kernel.org>; Mon, 07 Mar 2016 06:53:18 -0800 (PST)
-In-Reply-To: <20160307142829.GC3604@kernel.org>
+	Mon, 7 Mar 2016 11:41:18 -0500
+In-Reply-To: <20160226190048.GC12917@jcartwri.amer.corp.natinst.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, Mar 7, 2016 at 9:28 AM, Arnaldo Carvalho de Melo
-<acme@kernel.org> wrote:
->> I have gone down that route, but I don't get user stack traces at all.
->>   I suspect this is because I'm on ARM 3.14.52, which does not support
->> CONFIG_USER_STACKTRACE_SUPPORT.  Nor does it support
->> CONFIG_ARCH_SUPPORTS_UPROBES.
->> All that said, I DO get stack traces when using straight perf record
->> with "--call-graph dwarf".  (Does that imply "-e cpu-clock"?).  So, I
->
-> Ok, good data point, as what 'perf record --callgraph dwarf' does is to
-> take register and userland stack samples so that later it can use it
-> together with CFI information from the binaries involved to do the stack
-> unwinding.
->
+On 02/26/2016 08:00 PM, Josh Cartwright wrote:
+> On Fri, Feb 26, 2016 at 01:26:27PM -0500, Kuba Kicinski wrote:
+>> On 26 February 2016 11:52:28 GMT-05:00, Josh Cartwright <joshc@ni.com> wrote:
+> [..]
+>>> Instead, the driver needs to implement it's own oneshot-like
+>>> handling at the device-level: in the registered irq handler, capture
+>>> triggered interrupt state, squelch/mask, and enqueue the
+>>> kthread_work.  In the tail-end of the kthread_work, re-enable
+>>> interrupts at the device level.
+>>
+>> The problem there being IIRC that i2c doesn't provide async writes so
+>> we can't mask from irq callback. The only option would be
+>> disable_irq/enable_irq, right?
+> 
+> Ah, yes, that is a problem.  If by disable_irq(), you mean
+> disable_irq_nosync(), then yes, I think that'd work.
 
-Right, that's my understanding as well.  Given that I do get stack
-traces in some cases, this makes me wonder what the difference between
-the events which yield user stack traces (seemingly "Software event"
-in perf list) and events which do not yield user stack traces
-(seemingly "Tracepoint" in perf list).  My next steps are to work
-through these mechanisms and try to understand the difference.
+I got lost here. Where do we stand here now?
 
->> was hoping that whatever is enabling that event to get stack traces
->> might be available to me.
->
-> So what you are not managing to do is to collect userland stacktraces
-> from tracepoints, right?
-
-Correct.
-
->
-> Any ARM person here to try to help diagnose why this does work on x86_64
-> but not on ARM?
->
-
-Any pointers appreciated!  Thanks!
-
-Jonah
+> 
+>   Josh
+> 
+Sebastian
