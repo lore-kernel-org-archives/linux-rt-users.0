@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.4.110-rt140
-Date: Mon, 7 Mar 2016 15:54:13 -0500
-Message-ID: <20160307155413.2b19b97c@gandalf.local.home>
+Subject: [ANNOUNCE] 3.2.77-rt112
+Date: Mon, 7 Mar 2016 15:55:18 -0500
+Message-ID: <20160307155518.1783717f@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0198.hostedemail.com ([216.40.44.198]:51297 "EHLO
+Received: from smtprelay0105.hostedemail.com ([216.40.44.105]:43319 "EHLO
 	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753812AbcCGUyR (ORCPT
+	by vger.kernel.org with ESMTP id S1753021AbcCGUzV (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Mar 2016 15:54:17 -0500
+	Mon, 7 Mar 2016 15:55:21 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.4.110-rt140 stable release.
+I'm pleased to announce the 3.2.77-rt112 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.4-rt
-  Head SHA1: 644c33135750aabfc5af32719fe700aa3ed015c8
+  branch: v3.2-rt
+  Head SHA1: 5f0ad001127d6f44a362d494c6b515a74cf27cfc
 
 
-Or to build 3.4.110-rt140 directly, the following patches should be applied:
+Or to build 3.2.77-rt112 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.110.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.77.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.110-rt140.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.77-rt112.patch.xz
 
 
 
-You can also build from 3.4.110-rt139 by applying the incremental patch:
+You can also build from 3.2.77-rt111 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/incr/patch-3.4.110-rt139-rt140.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/incr/patch-3.2.77-rt111-rt112.patch.xz
 
 
 
@@ -55,7 +55,7 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.4.110-rt139:
+Changes from v3.2.77-rt111:
 
 ---
 
@@ -72,41 +72,36 @@ Sebastian Andrzej Siewior (4):
       kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.4.110-rt140
-
-Yang Shi (1):
-      trace: Use rcuidle version for preemptoff_hist trace point
+      Linux 3.2.77-rt112
 
 ----
- arch/Kconfig                 |  1 +
- include/linux/ftrace.h       | 12 ++++++++++++
- include/linux/sched.h        |  2 --
- include/trace/events/hist.h  |  1 +
- kernel/rcutorture.c          |  7 +++++++
- kernel/sched/core.c          | 18 ++++--------------
- kernel/softirq.c             |  6 +++---
- kernel/trace/latency_hist.c  |  4 ++--
- kernel/trace/trace_irqsoff.c |  8 ++++----
- localversion-rt              |  2 +-
- 10 files changed, 35 insertions(+), 26 deletions(-)
+ arch/Kconfig                |  1 +
+ include/linux/ftrace.h      | 12 ++++++++++++
+ include/linux/sched.h       |  2 --
+ kernel/rcutorture.c         |  7 +++++++
+ kernel/sched.c              | 18 ++++--------------
+ kernel/softirq.c            |  6 +++---
+ kernel/trace/latency_hist.c |  4 ++--
+ localversion-rt             |  2 +-
+ 8 files changed, 30 insertions(+), 22 deletions(-)
 ---------------------------
 diff --git a/arch/Kconfig b/arch/Kconfig
-index 417ff4c6fc14..7b57cdc7b9b3 100644
+index 73fc7cd51582..5e921bd9a57b 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
-@@ -50,6 +50,7 @@ config KPROBES
+@@ -46,6 +46,7 @@ config KPROBES
  config JUMP_LABEL
-        bool "Optimize very unlikely/likely branches"
+        bool "Optimize trace point call sites"
         depends on HAVE_ARCH_JUMP_LABEL
 +       depends on (!INTERRUPT_OFF_HIST && !PREEMPT_OFF_HIST && !WAKEUP_LATENCY_HIST && !MISSED_TIMER_OFFSETS_HIST)
         help
-          This option enables a transparent branch optimization that
- 	 makes certain almost-always-true or almost-always-false branch
+          If it is detected that the compiler has support for "asm goto",
+ 	 the kernel will compile trace point locations with just a
 diff --git a/include/linux/ftrace.h b/include/linux/ftrace.h
-index bfbcd439e2c6..93bce698fb86 100644
+index a3ebb09d4283..3c87797e371e 100644
 --- a/include/linux/ftrace.h
 +++ b/include/linux/ftrace.h
-@@ -476,6 +476,18 @@ static inline void __ftrace_enabled_restore(int enabled)
+@@ -341,6 +341,18 @@ static inline void __ftrace_enabled_restore(int enabled)
  # endif
  #endif /* ifndef HAVE_ARCH_CALLER_ADDR */
  
@@ -126,10 +121,10 @@ index bfbcd439e2c6..93bce698fb86 100644
    extern void time_hardirqs_on(unsigned long a0, unsigned long a1);
    extern void time_hardirqs_off(unsigned long a0, unsigned long a1);
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index daf469059630..029575fb9bc8 100644
+index a15cfd1bac9f..3cb870f1ffc1 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -148,8 +148,6 @@ extern unsigned long this_cpu_load(void);
+@@ -149,8 +149,6 @@ extern unsigned long this_cpu_load(void);
  extern void calc_global_load(unsigned long ticks);
  extern void update_cpu_load_nohz(void);
  
@@ -138,23 +133,11 @@ index daf469059630..029575fb9bc8 100644
  struct seq_file;
  struct cfs_rq;
  struct task_group;
-diff --git a/include/trace/events/hist.h b/include/trace/events/hist.h
-index 28646db2c775..47332b93e03d 100644
---- a/include/trace/events/hist.h
-+++ b/include/trace/events/hist.h
-@@ -9,6 +9,7 @@
- 
- #if !defined(CONFIG_PREEMPT_OFF_HIST) && !defined(CONFIG_INTERRUPT_OFF_HIST)
- #define trace_preemptirqsoff_hist(a,b)
-+#define trace_preemptirqsoff_hist_rcuidle(a, b)
- #else
- TRACE_EVENT(preemptirqsoff_hist,
- 
 diff --git a/kernel/rcutorture.c b/kernel/rcutorture.c
-index a89b381a8c6e..8de00304751b 100644
+index 764825c2685c..3cd7834c7da6 100644
 --- a/kernel/rcutorture.c
 +++ b/kernel/rcutorture.c
-@@ -485,6 +485,7 @@ static struct rcu_torture_ops rcu_expedited_ops = {
+@@ -455,6 +455,7 @@ static struct rcu_torture_ops rcu_expedited_ops = {
  	.name		= "rcu_expedited"
  };
  
@@ -162,7 +145,7 @@ index a89b381a8c6e..8de00304751b 100644
  /*
   * Definitions for rcu_bh torture testing.
   */
-@@ -558,6 +559,12 @@ static struct rcu_torture_ops rcu_bh_expedited_ops = {
+@@ -528,6 +529,12 @@ static struct rcu_torture_ops rcu_bh_expedited_ops = {
  	.name		= "rcu_bh_expedited"
  };
  
@@ -175,11 +158,11 @@ index a89b381a8c6e..8de00304751b 100644
  /*
   * Definitions for srcu torture testing.
   */
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index cc4df0131023..ec9bfbef9873 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3241,16 +3241,6 @@ void scheduler_tick(void)
+diff --git a/kernel/sched.c b/kernel/sched.c
+index a9f6d6c0ab93..abc27a937c1b 100644
+--- a/kernel/sched.c
++++ b/kernel/sched.c
+@@ -4460,16 +4460,6 @@ void scheduler_tick(void)
  #endif
  }
  
@@ -196,7 +179,7 @@ index cc4df0131023..ec9bfbef9873 100644
  #if defined(CONFIG_PREEMPT) && (defined(CONFIG_DEBUG_PREEMPT) || \
  				defined(CONFIG_PREEMPT_TRACER))
  
-@@ -3272,7 +3262,7 @@ void __kprobes add_preempt_count(int val)
+@@ -4491,7 +4481,7 @@ void __kprobes add_preempt_count(int val)
  				PREEMPT_MASK - 10);
  #endif
  	if (preempt_count() == val) {
@@ -205,7 +188,7 @@ index cc4df0131023..ec9bfbef9873 100644
  #ifdef CONFIG_DEBUG_PREEMPT
  		current->preempt_disable_ip = ip;
  #endif
-@@ -3298,7 +3288,7 @@ void __kprobes sub_preempt_count(int val)
+@@ -4517,7 +4507,7 @@ void __kprobes sub_preempt_count(int val)
  #endif
  
  	if (preempt_count() == val)
@@ -214,7 +197,7 @@ index cc4df0131023..ec9bfbef9873 100644
  	preempt_count() -= val;
  }
  EXPORT_SYMBOL(sub_preempt_count);
-@@ -3389,7 +3379,7 @@ void migrate_disable(void)
+@@ -4611,7 +4601,7 @@ void migrate_disable(void)
  {
  	struct task_struct *p = current;
  
@@ -223,7 +206,7 @@ index cc4df0131023..ec9bfbef9873 100644
  #ifdef CONFIG_SCHED_DEBUG
  		p->migrate_disable_atomic++;
  #endif
-@@ -3420,7 +3410,7 @@ void migrate_enable(void)
+@@ -4642,7 +4632,7 @@ void migrate_enable(void)
  	unsigned long flags;
  	struct rq *rq;
  
@@ -233,7 +216,7 @@ index cc4df0131023..ec9bfbef9873 100644
  		p->migrate_disable_atomic--;
  #endif
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index ecf0ab0f7b4d..2cdd5102331b 100644
+index b7d68392e833..b03c01c77d92 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
 @@ -207,7 +207,7 @@ static void __local_bh_disable(unsigned long ip, unsigned int cnt)
@@ -280,48 +263,10 @@ index 6a4c8694c55a..900046843068 100644
  {
  	unsigned long flags;
  	struct task_struct *curr = current;
-diff --git a/kernel/trace/trace_irqsoff.c b/kernel/trace/trace_irqsoff.c
-index bafa41220311..98ed28cf31cc 100644
---- a/kernel/trace/trace_irqsoff.c
-+++ b/kernel/trace/trace_irqsoff.c
-@@ -438,13 +438,13 @@ void start_critical_timings(void)
- {
- 	if (preempt_trace() || irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(TRACE_START, 1);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_START, 1);
- }
- EXPORT_SYMBOL_GPL(start_critical_timings);
- 
- void stop_critical_timings(void)
- {
--	trace_preemptirqsoff_hist(TRACE_STOP, 0);
-+	trace_preemptirqsoff_hist_rcuidle(TRACE_STOP, 0);
- 	if (preempt_trace() || irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -489,7 +489,7 @@ inline void print_irqtrace_events(struct task_struct *curr)
-  */
- void trace_hardirqs_on(void)
- {
--	trace_preemptirqsoff_hist(IRQS_ON, 0);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_ON, 0);
- 	if (!preempt_trace() && irq_trace())
- 		stop_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
- }
-@@ -499,7 +499,7 @@ void trace_hardirqs_off(void)
- {
- 	if (!preempt_trace() && irq_trace())
- 		start_critical_timing(CALLER_ADDR0, CALLER_ADDR1);
--	trace_preemptirqsoff_hist(IRQS_OFF, 1);
-+	trace_preemptirqsoff_hist_rcuidle(IRQS_OFF, 1);
- }
- EXPORT_SYMBOL(trace_hardirqs_off);
- 
 diff --git a/localversion-rt b/localversion-rt
-index e0b93414dc30..e27678f73d17 100644
+index 9969a4b69fad..0c40e2660574 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt139
-+-rt140
+--rt111
++-rt112
