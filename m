@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.12.54-rt74
-Date: Mon, 7 Mar 2016 15:53:23 -0500
-Message-ID: <20160307155323.629ec3ae@gandalf.local.home>
+Subject: [ANNOUNCE] 3.10.97-rt107
+Date: Mon, 7 Mar 2016 15:53:50 -0500
+Message-ID: <20160307155350.45941a17@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -12,41 +12,41 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: LKML <linux-kernel@vger.kernel.org>,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0094.hostedemail.com ([216.40.44.94]:44003 "EHLO
+Received: from smtprelay0196.hostedemail.com ([216.40.44.196]:51263 "EHLO
 	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1753455AbcCGUx3 (ORCPT
+	by vger.kernel.org with ESMTP id S1753013AbcCGUxy (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 7 Mar 2016 15:53:29 -0500
+	Mon, 7 Mar 2016 15:53:54 -0500
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.12.54-rt74 stable release.
+I'm pleased to announce the 3.10.97-rt107 stable release.
 
 
 You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.12-rt
-  Head SHA1: 0efaf4ef1aa98dc06ff6deaf1d4dbcfd6e8cb5c0
+  branch: v3.10-rt
+  Head SHA1: c443dcfea9e25bfbf12b6648d7b8fb77d9546be2
 
 
-Or to build 3.12.54-rt74 directly, the following patches should be applied:
+Or to build 3.10.97-rt107 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.54.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.97.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.54-rt74.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.97-rt107.patch.xz
 
 
 
-You can also build from 3.12.54-rt73 by applying the incremental patch:
+You can also build from 3.10.97-rt106 by applying the incremental patch:
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.54-rt73-rt74.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.97-rt106-rt107.patch.xz
 
 
 
@@ -55,20 +55,17 @@ Enjoy,
 -- Steve
 
 
-Changes from v3.12.54-rt73:
+Changes from v3.10.97-rt106:
 
 ---
 
 Clark Williams (1):
       rcu/torture: Comment out rcu_bh ops on PREEMPT_RT_FULL
 
-Mike Galbraith (2):
-      sched,rt: __always_inline preemptible_lazy()
+Mike Galbraith (1):
       tracing: Fix probe_wakeup_latency_hist_start() prototype
 
-Sebastian Andrzej Siewior (9):
-      ptrace: don't open IRQs in ptrace_freeze_traced() too early
-      preempt-lazy: Add the lazy-preemption check to preempt_schedule()
+Sebastian Andrzej Siewior (7):
       softirq: split timer softirqs out of ksoftirqd
       net: provide a way to delegate processing a softirq to ksoftirqd
       latencyhist: disable jump-labels
@@ -78,7 +75,7 @@ Sebastian Andrzej Siewior (9):
       kernel: sched: Fix preempt_disable_ip recodring for preempt_disable()
 
 Steven Rostedt (Red Hat) (1):
-      Linux 3.12.54-rt74
+      Linux 3.10.97-rt107
 
 Yang Shi (1):
       trace: Use rcuidle version for preemptoff_hist trace point
@@ -89,19 +86,18 @@ Yang Shi (1):
  include/linux/interrupt.h    |   8 ++++
  include/linux/sched.h        |   2 -
  include/trace/events/hist.h  |   1 +
- kernel/ptrace.c              |   6 ++-
  kernel/rcutorture.c          |   7 +++
- kernel/sched/core.c          |  52 ++++++++++++---------
- kernel/softirq.c             | 109 ++++++++++++++++++++++++++++++++++++++-----
+ kernel/sched/core.c          |  18 ++-----
+ kernel/softirq.c             | 110 ++++++++++++++++++++++++++++++++++++++-----
  kernel/stop_machine.c        |  38 +++------------
  kernel/trace/latency_hist.c  |   4 +-
  kernel/trace/trace_irqsoff.c |   8 ++--
  localversion-rt              |   2 +-
  net/core/dev.c               |   2 +-
- 14 files changed, 175 insertions(+), 77 deletions(-)
+ 13 files changed, 145 insertions(+), 68 deletions(-)
 ---------------------------
 diff --git a/arch/Kconfig b/arch/Kconfig
-index 77e7e80963d5..b1a399585d52 100644
+index 8b1a614cb58a..9a053ceae899 100644
 --- a/arch/Kconfig
 +++ b/arch/Kconfig
 @@ -50,6 +50,7 @@ config KPROBES
@@ -113,10 +109,10 @@ index 77e7e80963d5..b1a399585d52 100644
           This option enables a transparent branch optimization that
  	 makes certain almost-always-true or almost-always-false branch
 diff --git a/include/linux/ftrace.h b/include/linux/ftrace.h
-index e68db4d534cb..9b7b9341f886 100644
+index 7a13848d635c..c47f15afecdc 100644
 --- a/include/linux/ftrace.h
 +++ b/include/linux/ftrace.h
-@@ -627,6 +627,18 @@ static inline void __ftrace_enabled_restore(int enabled)
+@@ -631,6 +631,18 @@ static inline void __ftrace_enabled_restore(int enabled)
  # endif
  #endif /* ifndef HAVE_ARCH_CALLER_ADDR */
  
@@ -136,10 +132,10 @@ index e68db4d534cb..9b7b9341f886 100644
    extern void time_hardirqs_on(unsigned long a0, unsigned long a1);
    extern void time_hardirqs_off(unsigned long a0, unsigned long a1);
 diff --git a/include/linux/interrupt.h b/include/linux/interrupt.h
-index 750d1e6cbe36..5cd89e325324 100644
+index d6c00bcb7f97..3539dd67eee6 100644
 --- a/include/linux/interrupt.h
 +++ b/include/linux/interrupt.h
-@@ -428,6 +428,14 @@ extern void thread_do_softirq(void);
+@@ -495,6 +495,14 @@ extern void thread_do_softirq(void);
  extern void open_softirq(int nr, void (*action)(struct softirq_action *));
  extern void softirq_init(void);
  extern void __raise_softirq_irqoff(unsigned int nr);
@@ -155,12 +151,12 @@ index 750d1e6cbe36..5cd89e325324 100644
  extern void raise_softirq_irqoff(unsigned int nr);
  extern void raise_softirq(unsigned int nr);
 diff --git a/include/linux/sched.h b/include/linux/sched.h
-index 3ce814c4ef42..4006703785b2 100644
+index 61326229b234..866028bbd8ab 100644
 --- a/include/linux/sched.h
 +++ b/include/linux/sched.h
-@@ -113,8 +113,6 @@ extern unsigned long this_cpu_load(void);
- extern void calc_global_load(unsigned long ticks);
- extern void update_cpu_load_nohz(void);
+@@ -117,8 +117,6 @@ struct task_migration_notifier {
+ };
+ extern void register_task_migration_notifier(struct notifier_block *n);
  
 -extern unsigned long get_parent_ip(unsigned long addr);
 -
@@ -168,52 +164,31 @@ index 3ce814c4ef42..4006703785b2 100644
  
  struct seq_file;
 diff --git a/include/trace/events/hist.h b/include/trace/events/hist.h
-index 6122e4286177..f7710de1b1f3 100644
+index 28646db2c775..47332b93e03d 100644
 --- a/include/trace/events/hist.h
 +++ b/include/trace/events/hist.h
 @@ -9,6 +9,7 @@
  
  #if !defined(CONFIG_PREEMPT_OFF_HIST) && !defined(CONFIG_INTERRUPT_OFF_HIST)
- #define trace_preemptirqsoff_hist(a, b)
+ #define trace_preemptirqsoff_hist(a,b)
 +#define trace_preemptirqsoff_hist_rcuidle(a, b)
  #else
  TRACE_EVENT(preemptirqsoff_hist,
  
-diff --git a/kernel/ptrace.c b/kernel/ptrace.c
-index c8cd8ffab511..fe11653fb005 100644
---- a/kernel/ptrace.c
-+++ b/kernel/ptrace.c
-@@ -135,12 +135,14 @@ static bool ptrace_freeze_traced(struct task_struct *task)
- 
- 	spin_lock_irq(&task->sighand->siglock);
- 	if (task_is_traced(task) && !__fatal_signal_pending(task)) {
--		raw_spin_lock_irq(&task->pi_lock);
-+		unsigned long flags;
-+
-+		raw_spin_lock_irqsave(&task->pi_lock, flags);
- 		if (task->state & __TASK_TRACED)
- 			task->state = __TASK_TRACED;
- 		else
- 			task->saved_state = __TASK_TRACED;
--		raw_spin_unlock_irq(&task->pi_lock);
-+		raw_spin_unlock_irqrestore(&task->pi_lock, flags);
- 		ret = true;
- 	}
- 	spin_unlock_irq(&task->sighand->siglock);
 diff --git a/kernel/rcutorture.c b/kernel/rcutorture.c
-index be63101c6175..a31bab6c70ad 100644
+index e1f3a8c96724..00dbf08794ba 100644
 --- a/kernel/rcutorture.c
 +++ b/kernel/rcutorture.c
-@@ -473,6 +473,7 @@ static struct rcu_torture_ops rcu_ops = {
- 	.name		= "rcu"
+@@ -520,6 +520,7 @@ static struct rcu_torture_ops rcu_expedited_ops = {
+ 	.name		= "rcu_expedited"
  };
  
 +#ifndef CONFIG_PREEMPT_RT_FULL
  /*
   * Definitions for rcu_bh torture testing.
   */
-@@ -515,6 +516,12 @@ static struct rcu_torture_ops rcu_bh_ops = {
- 	.name		= "rcu_bh"
+@@ -593,6 +594,12 @@ static struct rcu_torture_ops rcu_bh_expedited_ops = {
+ 	.name		= "rcu_bh_expedited"
  };
  
 +#else
@@ -226,10 +201,10 @@ index be63101c6175..a31bab6c70ad 100644
   * Definitions for srcu torture testing.
   */
 diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index 14b5ba66fa72..c66db09aaf12 100644
+index 6c21a28689b9..756953bdc800 100644
 --- a/kernel/sched/core.c
 +++ b/kernel/sched/core.c
-@@ -2279,16 +2279,6 @@ u64 scheduler_tick_max_deferment(void)
+@@ -2850,16 +2850,6 @@ u64 scheduler_tick_max_deferment(void)
  }
  #endif
  
@@ -246,7 +221,7 @@ index 14b5ba66fa72..c66db09aaf12 100644
  #if defined(CONFIG_PREEMPT) && (defined(CONFIG_DEBUG_PREEMPT) || \
  				defined(CONFIG_PREEMPT_TRACER))
  
-@@ -2310,7 +2300,7 @@ void __kprobes add_preempt_count(int val)
+@@ -2881,7 +2871,7 @@ void __kprobes add_preempt_count(int val)
  				PREEMPT_MASK - 10);
  #endif
  	if (preempt_count() == val) {
@@ -255,7 +230,7 @@ index 14b5ba66fa72..c66db09aaf12 100644
  #ifdef CONFIG_DEBUG_PREEMPT
  		current->preempt_disable_ip = ip;
  #endif
-@@ -2336,7 +2326,7 @@ void __kprobes sub_preempt_count(int val)
+@@ -2907,7 +2897,7 @@ void __kprobes sub_preempt_count(int val)
  #endif
  
  	if (preempt_count() == val)
@@ -264,7 +239,7 @@ index 14b5ba66fa72..c66db09aaf12 100644
  	preempt_count() -= val;
  }
  EXPORT_SYMBOL(sub_preempt_count);
-@@ -2429,7 +2419,7 @@ void migrate_disable(void)
+@@ -2999,7 +2989,7 @@ void migrate_disable(void)
  {
  	struct task_struct *p = current;
  
@@ -273,7 +248,7 @@ index 14b5ba66fa72..c66db09aaf12 100644
  #ifdef CONFIG_SCHED_DEBUG
  		p->migrate_disable_atomic++;
  #endif
-@@ -2463,7 +2453,7 @@ void migrate_enable(void)
+@@ -3034,7 +3024,7 @@ void migrate_enable(void)
  	unsigned long flags;
  	struct rq *rq;
  
@@ -282,60 +257,11 @@ index 14b5ba66fa72..c66db09aaf12 100644
  #ifdef CONFIG_SCHED_DEBUG
  		p->migrate_disable_atomic--;
  #endif
-@@ -2728,6 +2718,30 @@ void __sched schedule_preempt_disabled(void)
- 	preempt_disable();
- }
- 
-+#ifdef CONFIG_PREEMPT_LAZY
-+/*
-+ * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
-+ * set by a RT task. Oterwise we try to avoid beeing scheduled out as long as
-+ * preempt_lazy_count counter >0.
-+ */
-+static __always_inline int preemptible_lazy(void)
-+{
-+	if (test_thread_flag(TIF_NEED_RESCHED))
-+		return 1;
-+	if (current_thread_info()->preempt_lazy_count)
-+		return 0;
-+	return 1;
-+}
-+
-+#else
-+
-+static int preemptible_lazy(void)
-+{
-+	return 1;
-+}
-+
-+#endif
-+
- #ifdef CONFIG_PREEMPT
- /*
-  * this is the entry point to schedule() from in-kernel preemption
-@@ -2742,15 +2756,9 @@ asmlinkage void __sched notrace preempt_schedule(void)
- 	 */
- 	if (likely(!preemptible()))
- 		return;
--
--#ifdef CONFIG_PREEMPT_LAZY
--	/*
--	 * Check for lazy preemption
--	 */
--	if (current_thread_info()->preempt_lazy_count &&
--			!test_thread_flag(TIF_NEED_RESCHED))
-+	if (!preemptible_lazy())
- 		return;
--#endif
-+
- 	do {
- 		add_preempt_count_notrace(PREEMPT_ACTIVE);
- 		/*
 diff --git a/kernel/softirq.c b/kernel/softirq.c
-index 1c8ad53d1353..315b048423af 100644
+index d296cff5a0ee..2c71e6529c2c 100644
 --- a/kernel/softirq.c
 +++ b/kernel/softirq.c
-@@ -58,6 +58,10 @@ EXPORT_SYMBOL(irq_stat);
+@@ -56,6 +56,10 @@ EXPORT_SYMBOL(irq_stat);
  static struct softirq_action softirq_vec[NR_SOFTIRQS] __cacheline_aligned_in_smp;
  
  DEFINE_PER_CPU(struct task_struct *, ksoftirqd);
@@ -346,7 +272,7 @@ index 1c8ad53d1353..315b048423af 100644
  
  char *softirq_to_name[NR_SOFTIRQS] = {
  	"HI", "TIMER", "NET_TX", "NET_RX", "BLOCK", "BLOCK_IOPOLL",
-@@ -171,6 +175,17 @@ static void wakeup_softirqd(void)
+@@ -169,6 +173,17 @@ static void wakeup_softirqd(void)
  		wake_up_process(tsk);
  }
  
@@ -373,7 +299,7 @@ index 1c8ad53d1353..315b048423af 100644
  }
  #else /* !CONFIG_TRACE_IRQFLAGS */
  static inline void __local_bh_disable(unsigned long ip, unsigned int cnt)
-@@ -488,7 +503,6 @@ void __raise_softirq_irqoff(unsigned int nr)
+@@ -490,7 +505,6 @@ void __raise_softirq_irqoff(unsigned int nr)
  static inline void local_bh_disable_nort(void) { local_bh_disable(); }
  static inline void _local_bh_enable_nort(void) { _local_bh_enable(); }
  static void ksoftirqd_set_sched_params(unsigned int cpu) { }
@@ -381,7 +307,7 @@ index 1c8ad53d1353..315b048423af 100644
  
  #else /* !PREEMPT_RT_FULL */
  
-@@ -564,8 +578,10 @@ static void do_current_softirqs(int need_rcu_bh_qs)
+@@ -566,8 +580,10 @@ static void do_current_softirqs(int need_rcu_bh_qs)
  			do_single_softirq(i, need_rcu_bh_qs);
  		}
  		softirq_clr_runner(i);
@@ -503,9 +429,11 @@ index 1c8ad53d1353..315b048423af 100644
  #endif /* PREEMPT_RT_FULL */
  /*
   * Enter an interrupt context.
-@@ -759,6 +828,9 @@ static inline void invoke_softirq(void)
+@@ -758,8 +827,10 @@ static inline void invoke_softirq(void)
+ 	local_irq_save(flags);
  	if (__this_cpu_read(ksoftirqd) &&
  			__this_cpu_read(ksoftirqd)->softirqs_raised)
+-
  		wakeup_softirqd();
 +	if (__this_cpu_read(ktimer_softirqd) &&
 +			__this_cpu_read(ktimer_softirqd)->softirqs_raised)
@@ -513,7 +441,7 @@ index 1c8ad53d1353..315b048423af 100644
  	local_irq_restore(flags);
  #endif
  }
-@@ -1333,17 +1405,30 @@ static struct notifier_block cpu_nfb = {
+@@ -1205,17 +1276,30 @@ static struct notifier_block __cpuinitdata cpu_nfb = {
  static struct smp_hotplug_thread softirq_threads = {
  	.store			= &ksoftirqd,
  	.setup			= ksoftirqd_set_sched_params,
@@ -645,24 +573,24 @@ index 5f02a3fe729f..652fea4b0c83 100644
  
  	mutex_unlock(&stop_cpus_mutex);
 diff --git a/kernel/trace/latency_hist.c b/kernel/trace/latency_hist.c
-index 66a69eb5329c..b6c1d14b71c4 100644
+index 011c2328d7b5..ff6ce3fcc001 100644
 --- a/kernel/trace/latency_hist.c
 +++ b/kernel/trace/latency_hist.c
 @@ -115,7 +115,7 @@ static DEFINE_PER_CPU(struct hist_data, wakeup_latency_hist_sharedprio);
  static char *wakeup_latency_hist_dir = "wakeup";
  static char *wakeup_latency_hist_dir_sharedprio = "sharedprio";
  static notrace void probe_wakeup_latency_hist_start(void *v,
--	struct task_struct *p, int success);
-+	struct task_struct *p);
+-    struct task_struct *p, int success);
++    struct task_struct *p);
  static notrace void probe_wakeup_latency_hist_stop(void *v,
- 	struct task_struct *prev, struct task_struct *next);
+     struct task_struct *prev, struct task_struct *next);
  static notrace void probe_sched_migrate_task(void *,
 @@ -869,7 +869,7 @@ static notrace void probe_sched_migrate_task(void *v, struct task_struct *task,
  }
  
  static notrace void probe_wakeup_latency_hist_start(void *v,
--	struct task_struct *p, int success)
-+	struct task_struct *p)
+-    struct task_struct *p, int success)
++    struct task_struct *p)
  {
  	unsigned long flags;
  	struct task_struct *curr = current;
@@ -705,17 +633,17 @@ index 2f4eb37815d8..77bdfa55ce90 100644
  EXPORT_SYMBOL(trace_hardirqs_off);
  
 diff --git a/localversion-rt b/localversion-rt
-index e8ada8cdb471..7d028f4a9e56 100644
+index 8111d0b4d38d..2e0a3c960575 100644
 --- a/localversion-rt
 +++ b/localversion-rt
 @@ -1 +1 @@
---rt73
-+-rt74
+--rt106
++-rt107
 diff --git a/net/core/dev.c b/net/core/dev.c
-index cfec8a542d35..ee08da0fe0d7 100644
+index 864f7ae42c08..1857dde698ca 100644
 --- a/net/core/dev.c
 +++ b/net/core/dev.c
-@@ -4428,7 +4428,7 @@ out:
+@@ -4298,7 +4298,7 @@ out:
  
  softnet_break:
  	sd->time_squeeze++;
