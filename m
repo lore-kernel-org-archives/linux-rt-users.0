@@ -1,99 +1,93 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: [RFC v0] Use swait in completion
-Date: Tue, 8 Mar 2016 12:26:56 -0600
-Message-ID: <20160308182656.GA27081@jcartwri.amer.corp.natinst.com>
-References: <1457452754-24029-1-git-send-email-wagi@monom.org>
- <20160308175206.GD21842@linutronix.de>
+From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+Subject: Re: Fix preempt-rt on AT91
+Date: Tue, 8 Mar 2016 19:39:10 +0100
+Message-ID: <20160308183910.GD5845@piout.net>
+References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
+ <20160118174259.GC12309@linutronix.de>
+ <20160305113553.GB21216@piout.net>
+ <20160308110639.GC21842@linutronix.de>
 Mime-Version: 1.0
-Content-Type: multipart/signed; micalg=pgp-sha256;
-	protocol="application/pgp-signature"; boundary="oyUTqETQ0mS9luUI"
-Cc: Daniel Wagner <wagi@monom.org>, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:48807 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1750819AbcCHS1k (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Mar 2016 13:27:40 -0500
-In-Reply-To: <20160308175206.GD21842@linutronix.de>
-Content-Disposition: inline
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
-
-
---oyUTqETQ0mS9luUI
 Content-Type: text/plain; charset=us-ascii
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Boris Brezillon <boris.brezillon@free-electrons.com>,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Nicolas Ferre <nicolas.ferre@atmel.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-Content-Transfer-Encoding: quoted-printable
+In-Reply-To: <20160308110639.GC21842@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, Mar 08, 2016 at 06:52:06PM +0100, Sebastian Andrzej Siewior wrote:
-> * Daniel Wagner | 2016-03-08 16:59:13 [+0100]:
->=20
-> >Hi,
-> Hi,
->=20
-> >As Peter correctly pointed out in [1] a simple conversion from
-> >wait to swait in completion.c wont work. I played a bit around and
-> >came up with this rather ugly idea.
->=20
-> besides all the things I mentioned privatly, here is what I have
-> currently in -RT:
->=20
-> +void swake_up_all_locked(struct swait_queue_head *q)
-> +{
-> +       struct swait_queue *curr;
-> +       int wakes =3D 0;
-> +
-> +       while (!list_empty(&q->task_list)) {
-> +
-> +               curr =3D list_first_entry(&q->task_list, typeof(*curr),
-> +                                       task_list);
-> +               wake_up_process(curr->task);
-> +               list_del_init(&curr->task_list);
-> +               wakes++;
-> +       }
-> +       WARN_ON(wakes > 2);
-> +}
-> +EXPORT_SYMBOL(swake_up_all_locked);
->=20
-> the remaining part is what you have. The only user so far is complete()
-> and currently I see ony complete_all() with zero or one waiter.
-> If none of my boxes die over the night, I intend to release this
-> tomorrow in -RT and see if someone else triggers the limit.
->=20
-> However I don't think if your DEFER flag solution is all that bad.  I
-> have also the block-mq in -RT using swait and they perform wakes with
-> irqs-off. Not in -RT but mainline. So me might need something to make
-> it work properly. But if we defer the wakeup they might come at us and
-> complain about the latency???
+Hi,
 
-Is it really just about latency?  Does this deferral not lead to an
-inversion in the case where the single woken task isn't the highest
-priority waiter on the completion (and doesn't run due to a
-middle-priority thing spinning)?
+On 08/03/2016 at 12:06:39 +0100, Sebastian Andrzej Siewior wrote :
+> I sucked this in. It seems to work. What remains that free_irq() thingy:
+> |WARNING: CPU: 0 PID: 0 at kernel/irq/manage.c:1541 __free_irq+0xb4/0x2e0()
+> |Trying to free already-free IRQ 16
+> |CPU: 0 PID: 0 Comm: swapper Not tainted 4.4.4-rt10+ #219
+> |Hardware name: Atmel SAMA5
+> |[<c0015bd0>] (unwind_backtrace) from [<c0013604>] (show_stack+0x10/0x14)
+> |[<c0013604>] (show_stack) from [<c002b850>] (warn_slowpath_common+0x80/0xac)
+> |[<c002b850>] (warn_slowpath_common) from [<c002b8ac>] (warn_slowpath_fmt+0x30/0x40)
+> |[<c002b8ac>] (warn_slowpath_fmt) from [<c005adfc>] (__free_irq+0xb4/0x2e0)
+> |[<c005adfc>] (__free_irq) from [<c005b0a0>] (free_irq+0x30/0x4c)
+> |[<c005b0a0>] (free_irq) from [<c0429034>] (pit_clkevt_shutdown+0x24/0x2c)
+> |[<c0429034>] (pit_clkevt_shutdown) from [<c0076430>] (clockevents_switch_state+0x60/0x130)
+> |---[ end trace 0000000000000001 ]---
+> 
+> which is a different problem and was there. The new thing is this:
+> 
+> |WARNING: CPU: 0 PID: 1 at kernel/locking/rtmutex.c:2062 rt_mutex_trylock+0x30/0x108)
+> |Modules linked in:
+> |CPU: 0 PID: 1 Comm: swapper Tainted: G        W       4.4.4-rt10+ #219
+> |Hardware name: Atmel SAMA5
+> |[<c0015bd0>] (unwind_backtrace) from [<c0013604>] (show_stack+0x10/0x14)
+> |[<c0013604>] (show_stack) from [<c002b850>] (warn_slowpath_common+0x80/0xac)
+> |[<c002b850>] (warn_slowpath_common) from [<c002b918>] (warn_slowpath_null+0x1c/0x24)
+> |[<c002b918>] (warn_slowpath_null) from [<c054a54c>] (rt_mutex_trylock+0x30/0x108)
+> |[<c054a54c>] (rt_mutex_trylock) from [<c054bd0c>] (rt_spin_trylock_irqsave+0x10/0x1c)
+> |[<c054bd0c>] (rt_spin_trylock_irqsave) from [<c043e030>] (clk_enable_lock+0x18/0x114)
+> |[<c043e030>] (clk_enable_lock) from [<c043f600>] (clk_disable+0x1c/0x34)
+> |[<c043f600>] (clk_disable) from [<c0429188>] (tc_shutdown+0x34/0x3c)
+> |[<c0429188>] (tc_shutdown) from [<c04291b0>] (tc_set_oneshot+0x20/0x50)
+> |[<c04291b0>] (tc_set_oneshot) from [<c00764a4>] (clockevents_switch_state+0xd4/0x130)
+> |[<c00764a4>] (clockevents_switch_state) from [<c00773e8>] (tick_switch_to_oneshot+0x48/0xb8)
+> |[<c00773e8>] (tick_switch_to_oneshot) from [<c006a480>] (hrtimer_run_queues+0x48/0x108)
+> |[<c006a480>] (hrtimer_run_queues) from [<c0068dd8>] (update_process_times+0x2c/0x64)
+> |[<c0068dd8>] (update_process_times) from [<c0076ad0>] (tick_handle_periodic+0x1c/0x90)
+> |[<c0076ad0>] (tick_handle_periodic) from [<c0429274>] (ch2_irq+0x20/0x28)
+> |[<c0429274>] (ch2_irq) from [<c005a39c>] (handle_irq_event_percpu+0x74/0x16c)
+> 
+> Is it possible to drop this disable/enable clock on the switch from pit
+> to one shot mode?
+> 
 
-In order for this to work, it seems like the chosen waiter would need to
-inherit the highest priority of all waiters (which AFAICT isn't
-happening).
+Both are things to work on. In the mean time, I'm using the following
+patch:
+https://github.com/alexandrebelloni/linux/commit/3a2eae463fce18ae815b887a5c9ca1a657b180ac
 
-  Josh
+I understood from
+http://lkml.iu.edu/hypermail/linux/kernel/1601.2/00941.html that this
+was not your preferred course of action.
 
---oyUTqETQ0mS9luUI
-Content-Type: application/pgp-signature; name="signature.asc"
+Even if that is something that is only seen when using preempt-rt, that
+is probably something I should push mainline.
 
------BEGIN PGP SIGNATURE-----
-Version: GnuPG v2
+> >You may also stop at 99a81706526fb167029a940ef1f7bfbe882abd3e which
+> >should solve the crash but it has not been tested as thoroughly.
+> 
+> Did you confuse the sha1 with something? This patch is called ("clk:
+> at91: remove IRQ handling and use polling") and is part of the series
+> you gave (patch #3).
+> 
 
-iQEcBAABCAAGBQJW3xltAAoJEKp7ZBKwQFArZsMIAJXlXHCf5HNRlx7pFxpUj7ft
-9/U2QZSOlNL/2FH1hx+STYaDAO8pDbuNxT+qgdjTo2d08LouX4dqzNPRHIHOtQ1Y
-+D9Y5pWC/y7KCN9r7d8hjJTuBWmVVU9WsruFVZ6bT5G9Oum8IF4PH8+YPU5ZGoD0
-vCV0l8lEZG+WbF8Y5+9Y60pyHopsahXixy2lcHbGUMuZapwg/DfAC1bwUVGr5OBb
-e4hHSzUcEmQu96ivjLdndxTuUpqOLB3W4hTvODsW7wAfqAouZ7Ejvc6RJg//Aebh
-MyWp5EE1/5AbQ++y8hKwQmBR3ZlNjbVw90eCYq2a7vUE2HxexSm9rU1XqbCOX1k=
-=SWpj
------END PGP SIGNATURE-----
+Yeah, what I meant is that you could stop merging after that patch as
+this is the one solving the crash.
 
---oyUTqETQ0mS9luUI--
+
+-- 
+Alexandre Belloni, Free Electrons
+Embedded Linux, Kernel and Android engineering
+http://free-electrons.com
