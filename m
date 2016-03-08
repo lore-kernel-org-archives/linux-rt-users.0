@@ -1,71 +1,195 @@
-From: =?UTF-8?Q?Sean_Nyekj=c3=a6r?= <sean.nyekjaer@prevas.dk>
-Subject: Re: [PATCH] sc16is7xx: drop bogus use of IRQF_ONESHOT
-Date: Tue, 8 Mar 2016 13:43:27 +0100
-Message-ID: <56DEC8EF.2060904@prevas.dk>
-References: <20160218084634.017c3ab4@laptop>
- <1455816372-13989-1-git-send-email-joshc@ni.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="windows-1252"; format=flowed
-Content-Transfer-Encoding: 7bit
-Cc: <linux-serial@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
-	<linux-kernel@vger.kernel.org>, <stable@vger.kernel.org>
-To: Josh Cartwright <joshc@ni.com>, Jakub Kicinski <moorray3@wp.pl>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455816372-13989-1-git-send-email-joshc@ni.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Daniel Wagner <wagi@monom.org>
+Subject: [RFC v0] sched/completion: convert completions to use simple wait queues
+Date: Tue,  8 Mar 2016 16:59:14 +0100
+Message-ID: <1457452754-24029-2-git-send-email-wagi@monom.org>
+References: <1457452754-24029-1-git-send-email-wagi@monom.org>
+Cc: "Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
+To: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hotel311.server4you.de ([85.25.146.15]:56006 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932755AbcCHP7a (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 8 Mar 2016 10:59:30 -0500
+In-Reply-To: <1457452754-24029-1-git-send-email-wagi@monom.org>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+From: Daniel Wagner <daniel.wagner@bmw-carit.de>
 
+Completions have no long lasting callbacks and therefore do not need
+the complex waitqueue variant.  Use simple waitqueues which reduces
+the contention on the waitqueue lock.
 
-On 2016-02-18 18:26, Josh Cartwright wrote:
-> The use of IRQF_ONESHOT when registering an interrupt handler with
-> request_irq() is non-sensical.
->
-> Not only that, it also prevents the handler from being threaded when it
-> otherwise should be w/ IRQ_FORCED_THREADING is enabled.  This causes the
-> following deadlock observed by Sean Nyekjaer on -rt:
->
-> Internal error: Oops - BUG: 0 [#1] PREEMPT SMP ARM
-> [..]
->     rt_spin_lock_slowlock from (queue_kthread_work+0x18/0x74)
->     queue_kthread_work) from (sc16is7xx_irq+0x10/0x18 [sc16is7xx])
->     sc16is7xx_irq [sc16is7xx]) from (handle_irq_event_percpu+0x70/0x158)
->     handle_irq_event_percpu) from (handle_irq_event+0x68/0xa8)
->     handle_irq_event) from (handle_level_irq+0x10c/0x184)
->     handle_level_irq) from (generic_handle_irq+0x2c/0x3c)
->     generic_handle_irq) from (mxc_gpio_irq_handler+0x3c/0x108)
->     mxc_gpio_irq_handler) from (mx3_gpio_irq_handler+0x80/0xcc)
->     mx3_gpio_irq_handler) from (generic_handle_irq+0x2c/0x3c)
->     generic_handle_irq) from (__handle_domain_irq+0x7c/0xe8)
->     __handle_domain_irq) from (gic_handle_irq+0x24/0x5c)
->     gic_handle_irq) from (__irq_svc+0x40/0x88)
->     (__irq_svc) from (rt_spin_unlock+0x1c/0x68)
->     (rt_spin_unlock) from (kthread_worker_fn+0x104/0x17c)
->     (kthread_worker_fn) from (kthread+0xd0/0xe8)
->     (kthread) from (ret_from_fork+0x14/0x2c)
->
-> Reported-by: Sean Nyekjaer <sean.nyekjaer@prevas.dk>
-> Fixes: 9e6f4ca3e567 ("sc16is7xx: use kthread_worker for tx_work and irq")
-> Cc: stable@vger.kernel.org # v4.1+
-> Signed-off-by: Josh Cartwright <joshc@ni.com>
-> ---
->   drivers/tty/serial/sc16is7xx.c | 2 +-
->   1 file changed, 1 insertion(+), 1 deletion(-)
->
-> diff --git a/drivers/tty/serial/sc16is7xx.c b/drivers/tty/serial/sc16is7xx.c
-> index e78fa99..1bb5c0e 100644
-> --- a/drivers/tty/serial/sc16is7xx.c
-> +++ b/drivers/tty/serial/sc16is7xx.c
-> @@ -1257,7 +1257,7 @@ static int sc16is7xx_probe(struct device *dev,
->   
->   	/* Setup interrupt */
->   	ret = devm_request_irq(dev, irq, sc16is7xx_irq,
-> -			       IRQF_ONESHOT | flags, dev_name(dev), s);
-> +			       flags, dev_name(dev), s);
->   	if (!ret)
->   		return 0;
->   
-Is PATCH this dropped?
-It clearly fixes the irq when running with RT patches :-)
+This was a carry forward from v3.10-rt, with some RT specific chunks,
+dropped, and updated to align with names that were chosen to match the
+simple waitqueue support.
 
-/Sean
+[wagi: Added flag to defer swake_up_all() from irq context]
+
+Signed-off-by: Daniel Wagner <daniel.wagner@bmw-carit.de>
+---
+ include/linux/completion.h | 14 ++++++++++----
+ kernel/sched/completion.c  | 41 +++++++++++++++++++++++++----------------
+ 2 files changed, 35 insertions(+), 20 deletions(-)
+
+diff --git a/include/linux/completion.h b/include/linux/completion.h
+index 5d5aaae..a6b2e07 100644
+--- a/include/linux/completion.h
++++ b/include/linux/completion.h
+@@ -8,7 +8,7 @@
+  * See kernel/sched/completion.c for details.
+  */
+ 
+-#include <linux/wait.h>
++#include <linux/swait.h>
+ 
+ /*
+  * struct completion - structure used to maintain state for a "completion"
+@@ -22,13 +22,17 @@
+  * reinit_completion(), and macros DECLARE_COMPLETION(),
+  * DECLARE_COMPLETION_ONSTACK().
+  */
++
++#define COMPLETION_DEFER (1 << 0)
++
+ struct completion {
++	unsigned int flags;
+ 	unsigned int done;
+-	wait_queue_head_t wait;
++	struct swait_queue_head wait;
+ };
+ 
+ #define COMPLETION_INITIALIZER(work) \
+-	{ 0, __WAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
++	{ 0, 0, __SWAIT_QUEUE_HEAD_INITIALIZER((work).wait) }
+ 
+ #define COMPLETION_INITIALIZER_ONSTACK(work) \
+ 	({ init_completion(&work); work; })
+@@ -72,8 +76,9 @@ struct completion {
+  */
+ static inline void init_completion(struct completion *x)
+ {
++	x->flags = 0;
+ 	x->done = 0;
+-	init_waitqueue_head(&x->wait);
++	init_swait_queue_head(&x->wait);
+ }
+ 
+ /**
+@@ -85,6 +90,7 @@ static inline void init_completion(struct completion *x)
+  */
+ static inline void reinit_completion(struct completion *x)
+ {
++	x->flags = 0;
+ 	x->done = 0;
+ }
+ 
+diff --git a/kernel/sched/completion.c b/kernel/sched/completion.c
+index 8d0f35d..95b08a9 100644
+--- a/kernel/sched/completion.c
++++ b/kernel/sched/completion.c
+@@ -30,10 +30,10 @@ void complete(struct completion *x)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	x->done++;
+-	__wake_up_locked(&x->wait, TASK_NORMAL, 1);
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	swake_up_locked(&x->wait);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ }
+ EXPORT_SYMBOL(complete);
+ 
+@@ -50,10 +50,15 @@ void complete_all(struct completion *x)
+ {
+ 	unsigned long flags;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	x->done += UINT_MAX/2;
+-	__wake_up_locked(&x->wait, TASK_NORMAL, 0);
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
++	if (in_irq()) {
++		x->flags = COMPLETION_DEFER;
++		swake_up(&x->wait);
++	} else {
++		swake_up_all(&x->wait);
++	}
+ }
+ EXPORT_SYMBOL(complete_all);
+ 
+@@ -62,20 +67,20 @@ do_wait_for_common(struct completion *x,
+ 		   long (*action)(long), long timeout, int state)
+ {
+ 	if (!x->done) {
+-		DECLARE_WAITQUEUE(wait, current);
++		DECLARE_SWAITQUEUE(wait);
+ 
+-		__add_wait_queue_tail_exclusive(&x->wait, &wait);
++		__prepare_to_swait(&x->wait, &wait);
+ 		do {
+ 			if (signal_pending_state(state, current)) {
+ 				timeout = -ERESTARTSYS;
+ 				break;
+ 			}
+ 			__set_current_state(state);
+-			spin_unlock_irq(&x->wait.lock);
++			raw_spin_unlock_irq(&x->wait.lock);
+ 			timeout = action(timeout);
+-			spin_lock_irq(&x->wait.lock);
++			raw_spin_lock_irq(&x->wait.lock);
+ 		} while (!x->done && timeout);
+-		__remove_wait_queue(&x->wait, &wait);
++		__finish_swait(&x->wait, &wait);
+ 		if (!x->done)
+ 			return timeout;
+ 	}
+@@ -89,9 +94,13 @@ __wait_for_common(struct completion *x,
+ {
+ 	might_sleep();
+ 
+-	spin_lock_irq(&x->wait.lock);
++	raw_spin_lock_irq(&x->wait.lock);
+ 	timeout = do_wait_for_common(x, action, timeout, state);
+-	spin_unlock_irq(&x->wait.lock);
++	raw_spin_unlock_irq(&x->wait.lock);
++	if (x->flags & COMPLETION_DEFER) {
++		x->flags = 0;
++		swake_up_all(&x->wait);
++	}
+ 	return timeout;
+ }
+ 
+@@ -277,12 +286,12 @@ bool try_wait_for_completion(struct completion *x)
+ 	if (!READ_ONCE(x->done))
+ 		return 0;
+ 
+-	spin_lock_irqsave(&x->wait.lock, flags);
++	raw_spin_lock_irqsave(&x->wait.lock, flags);
+ 	if (!x->done)
+ 		ret = 0;
+ 	else
+ 		x->done--;
+-	spin_unlock_irqrestore(&x->wait.lock, flags);
++	raw_spin_unlock_irqrestore(&x->wait.lock, flags);
+ 	return ret;
+ }
+ EXPORT_SYMBOL(try_wait_for_completion);
+@@ -311,7 +320,7 @@ bool completion_done(struct completion *x)
+ 	 * after it's acquired the lock.
+ 	 */
+ 	smp_rmb();
+-	spin_unlock_wait(&x->wait.lock);
++	raw_spin_unlock_wait(&x->wait.lock);
+ 	return true;
+ }
+ EXPORT_SYMBOL(completion_done);
+-- 
+2.5.0
