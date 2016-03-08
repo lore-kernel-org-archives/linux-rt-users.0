@@ -1,51 +1,31 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [v4.4-rt PATCH] rt: trace: add rcuidle version macro for
- preemptirqsoff_hist and hrtimer_interrupt
-Date: Tue, 8 Mar 2016 09:10:36 +0100
-Message-ID: <56DE88FC.5080500@linutronix.de>
-References: <1457394338-11865-1-git-send-email-yang.shi@windriver.com>
+Subject: Re: dump_stack: avoid potential deadlocks
+Date: Tue, 8 Mar 2016 10:34:04 +0100
+Message-ID: <20160308093404.GB21842@linutronix.de>
+References: <56D24D50.6010500@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Yang Shi <yang.shi@windriver.com>, tglx@linutronix.de,
-	rostedt@goodmis.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
+To: DIXLOR <dixlor@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:49346 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:49770 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932151AbcCHIKj (ORCPT
+	with ESMTP id S1753755AbcCHJeH (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 8 Mar 2016 03:10:39 -0500
-In-Reply-To: <1457394338-11865-1-git-send-email-yang.shi@windriver.com>
+	Tue, 8 Mar 2016 04:34:07 -0500
+Content-Disposition: inline
+In-Reply-To: <56D24D50.6010500@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 03/08/2016 12:45 AM, Yang Shi wrote:
-> diff --git a/include/trace/events/hist.h b/include/trace/events/hist.h
-> index 6122e42..37f6eb8 100644
-> --- a/include/trace/events/hist.h
-> +++ b/include/trace/events/hist.h
-> @@ -9,6 +9,7 @@
->  
->  #if !defined(CONFIG_PREEMPT_OFF_HIST) && !defined(CONFIG_INTERRUPT_OFF_HIST)
->  #define trace_preemptirqsoff_hist(a, b)
-> +#define trace_preemptirqsoff_hist_rcuidle(a, b)
->  #else
->  TRACE_EVENT(preemptirqsoff_hist,
+* DIXLOR | 2016-02-28 04:28:48 [+0300]:
 
-I have this piece already in my tree.
+>What do you think about commit e31e4672559674b0950885465a42968a86865d42
+>
+>https://git.kernel.org/cgit/linux/kernel/git/stable/linux-stable.git/diff/lib/dump_stack.c?id=v4.4.3&id2=v4.4.2
+>
+>In RT instead preempt_disable() use migrate_disable()
 
->  
-> @@ -33,6 +34,7 @@ TRACE_EVENT(preemptirqsoff_hist,
->  
->  #ifndef CONFIG_MISSED_TIMER_OFFSETS_HIST
->  #define trace_hrtimer_interrupt(a, b, c, d)
-> +#define trace_hrtimer_interrupt_rcuidle(a, b, c, d)
->  #else
->  TRACE_EVENT(hrtimer_interrupt,
-
-I was thinking about this but then I saw no users of it. Do we have
-any? (haven't seen them in v4.1 either).
+What are you trying to say? What is the problem?
 
 Sebastian
-
