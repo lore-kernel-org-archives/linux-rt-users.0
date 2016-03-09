@@ -1,63 +1,43 @@
-From: "Maarten Brock" <m.brock@vanmierlo.com>
-Subject: Re: [PATCH] tty: serial: sc16is7xx: use threaded interrupts instead
- of homegrow
-Date: Wed, 09 Mar 2016 15:06:44 +0100
-Message-ID: <20160309150644.bd910362@kerio.vanmierlo.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [v4.4-rt PATCH] rt: trace: add rcuidle version macro for
+ preemptirqsoff_hist and hrtimer_interrupt
+Date: Wed, 9 Mar 2016 15:46:23 +0100
+Message-ID: <20160309144623.GA25186@linutronix.de>
+References: <1457394338-11865-1-git-send-email-yang.shi@windriver.com>
+ <56DE88FC.5080500@linutronix.de>
+ <20160308141713.30814feb@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: "Josh Cartwright" <joshc@ni.com>,
-	"Sebastian Andrzej Siewior" <bigeasy@linutronix.de>,
-	"Greg Kroah-Hartman" <gregkh@linuxfoundation.org>,
-	linux-serial@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	"Jon Ringle" <jringle@gridpoint.com>,
-	"Thomas Gleixner" <tglx@linutronix.de>
-To: "Jakub Kicinski" <kubakici@wp.pl>,
-	=?iso-8859-1?Q?Sean_Nyekj=E6r?= <sean.nyekjaer@prevas.dk>
+Content-Type: text/plain; charset=utf-8
+Cc: Yang Shi <yang.shi@windriver.com>, tglx@linutronix.de,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from web1.dommelhosting.nl ([88.159.17.71]:50825 "EHLO
-	web1.dommelhosting.nl" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932401AbcCIO3E convert rfc822-to-8bit (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:56741 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1753679AbcCIOq3 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Mar 2016 09:29:04 -0500
+	Wed, 9 Mar 2016 09:46:29 -0500
+Content-Disposition: inline
+In-Reply-To: <20160308141713.30814feb@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-> On Wed, 9 Mar 2016 08:03:06 +0100, Sean Nyekj=C3=A6r wrote:
-> > On 2016-03-08 22:18, Jakub Kicinski wrote:
-> > > On Mon, 7 Mar 2016 10:58:09 -0600, Josh Cartwright wrote:
-> > >>> I got lost here. Where do we stand here now?
-> > >> I understood the comment from Kuba to mean that he would be
-> > >> implementing the disable_irq()/enable_irq() idea above to
-> > >> fix all the problems with this driver.
-> > >>
-> > >> Kuba- did I read that right?
-> > > I was hoping Sean or someone else would take up this task ;)
-> > Yes i could try :-) At least i have a working setup with the hardwa=
-re.
-> > >
-> > > It should be a pretty simple patch.
-> > >
-> > > Kuba
-> > I not entirely sure what i have to do...
-> > - Reenable the ONE_SHOT
-> > - Disable irq when running in the loop, and enable when returning?
-> > - Implement threaded irq?
-> >=20
-> > /Sean
->=20
-> Do not reenable ONE_SHOT.  Disable interrupt (disable_irq_nosync())
-> in sc16is7xx_irq() and reenable at the end of sc16is7xx_ist().
-> I think reenabling at the end of sc16is7xx_ist() is fine since it's a
-> level triggered IRQ.
+* Steven Rostedt | 2016-03-08 14:17:13 [-0500]:
 
-What do you mean, it's level triggered? How do you know? The irq is
-requested with either 0 or IRQF_TRIGGER_FALLING for irqflags. I don't
-see anywhere where it would be configured IRQF_TRIGGER_LOW.
+>> > index 6122e42..37f6eb8 100644
+>> > --- a/include/trace/events/hist.h
+>> > +++ b/include/trace/events/hist.h
+>> > @@ -9,6 +9,7 @@
+>> >  
+>> >  #if !defined(CONFIG_PREEMPT_OFF_HIST) && !defined(CONFIG_INTERRUPT_OFF_HIST)
+>> >  #define trace_preemptirqsoff_hist(a, b)
+>> > +#define trace_preemptirqsoff_hist_rcuidle(a, b)
+>> >  #else
+>> >  TRACE_EVENT(preemptirqsoff_hist,  
+>> 
+>> I have this piece already in my tree.
+>
+>I don't see it in your git repo.
+https://git.kernel.org/cgit/linux/kernel/git/rt/linux-rt-devel.git/commit/?h=linux-4.4.y-rt&id=bb2d8f27070df470619f216b02261b10dcc5161d
 
-Maarten
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Sebastian
