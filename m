@@ -1,129 +1,72 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: arm: at91: do not disable/enable clocks in a row
-Date: Wed, 9 Mar 2016 10:58:24 +0100
-Message-ID: <20160309095824.GC10517@linutronix.de>
-References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
- <20160118174259.GC12309@linutronix.de>
- <20160305113553.GB21216@piout.net>
- <20160308110639.GC21842@linutronix.de>
- <20160308183910.GD5845@piout.net>
+From: Jakub Kicinski <kubakici@wp.pl>
+Subject: Re: [PATCH] tty: serial: sc16is7xx: use threaded interrupts instead
+ of homegrow
+Date: Wed, 9 Mar 2016 11:13:53 +0000
+Message-ID: <20160309111353.3530f35b@laptop>
+References: <56CDCCE6.5020801@prevas.dk>
+	<56CDEAE2.9050102@prevas.dk>
+	<20160224223547.GF9598@jcartwri.amer.corp.natinst.com>
+	<20160226114340.GC8318@linutronix.de>
+	<20160226114809.GD8318@linutronix.de>
+	<C32FB8B0-21F8-4C84-9F77-20F3CD43E3D4@wp.pl>
+	<20160226165228.GA17178@jcartwri.amer.corp.natinst.com>
+	<835668C1-5DDB-4495-AD00-4EE8DDD0D146@wp.pl>
+	<20160226190048.GC12917@jcartwri.amer.corp.natinst.com>
+	<56DDAF2A.2000009@linutronix.de>
+	<20160307165809.GC28102@jcartwri.amer.corp.natinst.com>
+	<20160308211845.57e9796a@laptop>
+	<56DFCAAA.3090807@prevas.dk>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>
-To: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160308183910.GD5845@piout.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: Josh Cartwright <joshc@ni.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
+	<linux-serial@vger.kernel.org>, <linux-rt-users@vger.kernel.org>,
+	Jon Ringle <jringle@gridpoint.com>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Sean =?UTF-8?B?Tnlla2rDpnI=?= <sean.nyekjaer@prevas.dk>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx3.wp.pl ([212.77.101.10]:42942 "EHLO mx3.wp.pl"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753357AbcCILOG convert rfc822-to-8bit (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Wed, 9 Mar 2016 06:14:06 -0500
+In-Reply-To: <56DFCAAA.3090807@prevas.dk>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-* Alexandre Belloni | 2016-03-08 19:39:10 [+0100]:
+On Wed, 9 Mar 2016 08:03:06 +0100, Sean Nyekj=C3=A6r wrote:
+> On 2016-03-08 22:18, Jakub Kicinski wrote:
+> > On Mon, 7 Mar 2016 10:58:09 -0600, Josh Cartwright wrote:
+> >>> I got lost here. Where do we stand here now?
+> >> I understood the comment from Kuba to mean that he would be implem=
+enting
+> >> the disable_irq()/enable_irq() idea above to fix all the problems =
+with
+> >> this driver.
+> >>
+> >> Kuba- did I read that right?
+> > I was hoping Sean or someone else would take up this task ;)
+> Yes i could try :-) At least i have a working setup with the hardware=
+=2E
+> >
+> > It should be a pretty simple patch.
+> >
+> > Kuba
+> I not entirely sure what i have to do...
+> - Reenable the ONE_SHOT
+> - Disable irq when running in the loop, and enable when returning?
+> - Implement threaded irq?
+>=20
+> /Sean
 
->Hi,
-Hi,
-
->Both are things to work on. In the mean time, I'm using the following
->patch:
->https://github.com/alexandrebelloni/linux/commit/3a2eae463fce18ae815b887a5c9ca1a657b180ac
->
->I understood from
->http://lkml.iu.edu/hypermail/linux/kernel/1601.2/00941.html that this
->was not your preferred course of action.
-
-That was one thing.  What about this:
-
----
-
-Currently the driver will disable the clock and enable it one line later
-if it is switching from periodic mode into one shot.
-This can be avoided and causes a needless warning on -RT.
-
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/clocksource/tcb_clksrc.c |   33 +++++++++++++++++++++++++++++----
- 1 file changed, 29 insertions(+), 4 deletions(-)
-
---- a/drivers/clocksource/tcb_clksrc.c
-+++ b/drivers/clocksource/tcb_clksrc.c
-@@ -74,6 +74,7 @@ static struct clocksource clksrc = {
- struct tc_clkevt_device {
- 	struct clock_event_device	clkevt;
- 	struct clk			*clk;
-+	bool				clk_enabled;
- 	void __iomem			*regs;
- };
- 
-@@ -91,6 +92,24 @@ static struct tc_clkevt_device *to_tc_cl
-  */
- static u32 timer_clock;
- 
-+static void tc_clk_disable(struct clock_event_device *d)
-+{
-+	struct tc_clkevt_device *tcd = to_tc_clkevt(d);
-+
-+	clk_disable(tcd->clk);
-+	tcd->clk_enabled = false;
-+}
-+
-+static void tc_clk_enable(struct clock_event_device *d)
-+{
-+	struct tc_clkevt_device *tcd = to_tc_clkevt(d);
-+
-+	if (tcd->clk_enabled)
-+		return;
-+	clk_enable(tcd->clk);
-+	tcd->clk_enabled = true;
-+}
-+
- static int tc_shutdown(struct clock_event_device *d)
- {
- 	struct tc_clkevt_device *tcd = to_tc_clkevt(d);
-@@ -98,8 +117,14 @@ static int tc_shutdown(struct clock_even
- 
- 	__raw_writel(0xff, regs + ATMEL_TC_REG(2, IDR));
- 	__raw_writel(ATMEL_TC_CLKDIS, regs + ATMEL_TC_REG(2, CCR));
-+	return 0;
-+}
-+
-+static int tc_shutdown_clk_off(struct clock_event_device *d)
-+{
-+	tc_shutdown(d);
- 	if (!clockevent_state_detached(d))
--		clk_disable(tcd->clk);
-+		tc_clk_disable(d);
- 
- 	return 0;
- }
-@@ -112,7 +137,7 @@ static int tc_set_oneshot(struct clock_e
- 	if (clockevent_state_oneshot(d) || clockevent_state_periodic(d))
- 		tc_shutdown(d);
- 
--	clk_enable(tcd->clk);
-+	tc_clk_enable(d);
- 
- 	/* slow clock, count up to RC, then irq and stop */
- 	__raw_writel(timer_clock | ATMEL_TC_CPCSTOP | ATMEL_TC_WAVE |
-@@ -134,7 +159,7 @@ static int tc_set_periodic(struct clock_
- 	/* By not making the gentime core emulate periodic mode on top
- 	 * of oneshot, we get lower overhead and improved accuracy.
- 	 */
--	clk_enable(tcd->clk);
-+	tc_clk_enable(d);
- 
- 	/* slow clock, count up to RC, then irq and restart */
- 	__raw_writel(timer_clock | ATMEL_TC_WAVE | ATMEL_TC_WAVESEL_UP_AUTO,
-@@ -168,7 +193,7 @@ static struct tc_clkevt_device clkevt =
- 		/* Should be lower than at91rm9200's system timer */
- 		.rating			= 125,
- 		.set_next_event		= tc_next_event,
--		.set_state_shutdown	= tc_shutdown,
-+		.set_state_shutdown	= tc_shutdown_clk_off,
- 		.set_state_periodic	= tc_set_periodic,
- 		.set_state_oneshot	= tc_set_oneshot,
- 	},
-
-Sebastian
+Do not reenable ONE_SHOT.  Disable interrupt (disable_irq_nosync())
+in sc16is7xx_irq() and reenable at the end of sc16is7xx_ist().
+I think reenabling at the end of sc16is7xx_ist() is fine since it's a
+level triggered IRQ.
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
