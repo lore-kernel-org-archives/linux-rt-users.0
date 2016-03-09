@@ -1,80 +1,77 @@
-From: Jonah Petri <jpetri@izotope.com>
-Subject: Re: diagnosing unexpected sched_stat_wait
-Date: Wed, 9 Mar 2016 13:30:24 -0500
-Message-ID: <CAJOrw7zv-2TfkOAHX+NfXDZ71898zSDKsN4As1dkq5F7+3yYDQ@mail.gmail.com>
-References: <CAJOrw7was05Absp0UiCVO5mZEoZqXHD-ZNOoDwoG7t1S1DED_A@mail.gmail.com>
-	<20160304220531.GB3604@kernel.org>
-	<CAJOrw7wUwZmdkMNjB3gHptUR1AFDLXMqt9dAEOFsRcofrbtx6A@mail.gmail.com>
-	<20160307142829.GC3604@kernel.org>
-	<CAJOrw7waTrhPBAyfxL-8NiV4cBCr=9eqoLZnfYsjKyBeAqCDPA@mail.gmail.com>
+From: Jean-Denis Girard <jd.girard@sysnux.pf>
+Subject: Re: [ANNOUNCE] v4.4.4-rt11
+Date: Wed, 9 Mar 2016 10:31:06 -1000
+Message-ID: <nbq16a$7li$1@ger.gmane.org>
+References: <20160309135142.GF10517@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
 Cc: linux-rt-users@vger.kernel.org
-To: Arnaldo Carvalho de Melo <acme@kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f179.google.com ([209.85.214.179]:36794 "EHLO
-	mail-ob0-f179.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932950AbcCISaZ (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 9 Mar 2016 13:30:25 -0500
-Received: by mail-ob0-f179.google.com with SMTP id m7so55692749obh.3
-        for <linux-rt-users@vger.kernel.org>; Wed, 09 Mar 2016 10:30:25 -0800 (PST)
-In-Reply-To: <CAJOrw7waTrhPBAyfxL-8NiV4cBCr=9eqoLZnfYsjKyBeAqCDPA@mail.gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160309135142.GF10517@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-To close the loop on this, the support in the kernel for this is
-missing for ARM in 3.14.52.  I backported the following into
-arch/arm/include/asm/perf_event.h:
+Hi,
 
-#define perf_arch_fetch_caller_regs(regs, __ip) { \
-        register unsigned long sp asm ("sp"); \
-        (regs)->ARM_pc = (__ip); \
-        (regs)->ARM_fp = (unsigned long) __builtin_frame_address(0); \
-        (regs)->ARM_sp = sp; \
-        (regs)->ARM_cpsr = SVC_MODE; \
-}
+Le 09/03/2016 03:51, Sebastian Andrzej Siewior a =C3=A9crit :
+> - AT91 got a little better. A larger patch series by Boris Brezillon =
+has
+>   been merged. That means SAMA5 boots now. There is one warning left
+>   about invoking free_irq() twice. I would be glad about some feedbac=
+k
+>   from pre-SAMA5 SoC. Those which share UART and timer interrupt. It
+>   seems that that one I have here does not do this anymore.
+>=20
+> - A patch on top the AT91 series to avoid two warning while switching
+>   from period to oneshow mode.
 
-And now, I get stacks as expected!
+I got this warning when booting my arietta G25:
 
-Jonah
+clocksource: pit: mask: 0xfffffff max_cycles: 0xfffffff, max_idle_ns:
+14334453866 ns
+------------[ cut here ]------------
+WARNING: CPU: 0 PID: 0 at kernel/irq/manage.c:1541 __free_irq+0xb0/0x2b=
+0()
+Trying to free already-free IRQ 16
+Modules linked in:
+CPU: 0 PID: 0 Comm: swapper Not tainted 4.4.4-rt11 #1
+Hardware name: Atmel AT91SAM9
+[<c000ecb8>] (unwind_backtrace) from [<c000cefc>] (show_stack+0x10/0x14=
+)
+[<c000cefc>] (show_stack) from [<c00165ac>] (warn_slowpath_common+0x80/=
+0xa8)
+[<c00165ac>] (warn_slowpath_common) from [<c0016600>]
+(warn_slowpath_fmt+0x2c/0x3c)
+[<c0016600>] (warn_slowpath_fmt) from [<c00409d4>] (__free_irq+0xb0/0x2=
+b0)
+[<c00409d4>] (__free_irq) from [<c0040c60>] (free_irq+0x40/0x50)
+[<c0040c60>] (free_irq) from [<c03056fc>] (pit_clkevt_shutdown+0x24/0x2=
+c)
+[<c03056fc>] (pit_clkevt_shutdown) from [<c0058e94>]
+(clockevents_switch_state+0xe8)
+[<c0058e94>] (clockevents_switch_state) from [<c0058ee4>]
+(clockevents_shutdown+0x1)
+[<c0058ee4>] (clockevents_shutdown) from [<c00597dc>]
+(tick_check_new_device+0x54/0)
+[<c00597dc>] (tick_check_new_device) from [<c0058950>]
+(clockevents_register_device)
+[<c0058950>] (clockevents_register_device) from [<c051e22c>]
+(clocksource_probe+0x4)
+[<c051e22c>] (clocksource_probe) from [<c050aafc>]
+(start_kernel+0x248/0x35c)
+[<c050aafc>] (start_kernel) from [<20008048>] (0x20008048)
+---[ end trace 0000000000000001 ]---
 
-On Mon, Mar 7, 2016 at 9:53 AM, Jonah Petri <jpetri@izotope.com> wrote:
-> On Mon, Mar 7, 2016 at 9:28 AM, Arnaldo Carvalho de Melo
-> <acme@kernel.org> wrote:
->>> I have gone down that route, but I don't get user stack traces at all.
->>>   I suspect this is because I'm on ARM 3.14.52, which does not support
->>> CONFIG_USER_STACKTRACE_SUPPORT.  Nor does it support
->>> CONFIG_ARCH_SUPPORTS_UPROBES.
->>> All that said, I DO get stack traces when using straight perf record
->>> with "--call-graph dwarf".  (Does that imply "-e cpu-clock"?).  So, I
->>
->> Ok, good data point, as what 'perf record --callgraph dwarf' does is to
->> take register and userland stack samples so that later it can use it
->> together with CFI information from the binaries involved to do the stack
->> unwinding.
->>
->
-> Right, that's my understanding as well.  Given that I do get stack
-> traces in some cases, this makes me wonder what the difference between
-> the events which yield user stack traces (seemingly "Software event"
-> in perf list) and events which do not yield user stack traces
-> (seemingly "Tracepoint" in perf list).  My next steps are to work
-> through these mechanisms and try to understand the difference.
->
->>> was hoping that whatever is enabling that event to get stack traces
->>> might be available to me.
->>
->> So what you are not managing to do is to collect userland stacktraces
->> from tracepoints, right?
->
-> Correct.
->
->>
->> Any ARM person here to try to help diagnose why this does work on x86_64
->> but not on ARM?
->>
->
-> Any pointers appreciated!  Thanks!
->
-> Jonah
+Nevertheless it does boot, and seems to work fine.
+
+
+Thanks,
+--=20
+Jean-Denis Girard
+
+SysNux                Syst=C3=A8mes   Linux   en   Polyn=C3=A9sie   fra=
+n=C3=A7aise
+http://www.sysnux.pf/ T=C3=A9l: +689 40.50.10.40 / GSM: +689 87.79.75.2=
+7
