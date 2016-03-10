@@ -1,77 +1,62 @@
-From: Jean-Denis Girard <jd.girard@sysnux.pf>
-Subject: Re: [ANNOUNCE] v4.4.4-rt11
-Date: Wed, 9 Mar 2016 10:31:06 -1000
-Message-ID: <nbq16a$7li$1@ger.gmane.org>
-References: <20160309135142.GF10517@linutronix.de>
+From: Eric Jensen <ericcj@gmail.com>
+Subject: rt-tests Android.mk for cyclictest and hackbench
+Date: Thu, 10 Mar 2016 10:33:30 -0500
+Message-ID: <CAB+ZbRWHb8PB4OW=EtN4v1JvPa+eWyp=Li-8Y1ROk3e0zbGm8Q@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: linux-rt-users@vger.kernel.org
-To: linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160309135142.GF10517@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-yk0-f172.google.com ([209.85.160.172]:36838 "EHLO
+	mail-yk0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752343AbcCJPdu (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 10 Mar 2016 10:33:50 -0500
+Received: by mail-yk0-f172.google.com with SMTP id r203so31332580ykd.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 10 Mar 2016 07:33:49 -0800 (PST)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+I couldn't find one of these on the web, but I think it would be nice
+to include in the git repo to make it easy for people to add to their
+manifest when building AOSP.  This Android.mk is working for me on
+lollipop and I think would work for others:
 
-Le 09/03/2016 03:51, Sebastian Andrzej Siewior a =C3=A9crit :
-> - AT91 got a little better. A larger patch series by Boris Brezillon =
-has
->   been merged. That means SAMA5 boots now. There is one warning left
->   about invoking free_irq() twice. I would be glad about some feedbac=
-k
->   from pre-SAMA5 SoC. Those which share UART and timer interrupt. It
->   seems that that one I have here does not do this anymore.
->=20
-> - A patch on top the AT91 series to avoid two warning while switching
->   from period to oneshow mode.
+LOCAL_PATH:= $(call my-dir)
 
-I got this warning when booting my arietta G25:
+commonFlags := -Wall -Wno-nonnull -O2 -DPTHREAD_BIONIC -DVERSION=0.96
+-D_GNU_SOURCE
 
-clocksource: pit: mask: 0xfffffff max_cycles: 0xfffffff, max_idle_ns:
-14334453866 ns
-------------[ cut here ]------------
-WARNING: CPU: 0 PID: 0 at kernel/irq/manage.c:1541 __free_irq+0xb0/0x2b=
-0()
-Trying to free already-free IRQ 16
-Modules linked in:
-CPU: 0 PID: 0 Comm: swapper Not tainted 4.4.4-rt11 #1
-Hardware name: Atmel AT91SAM9
-[<c000ecb8>] (unwind_backtrace) from [<c000cefc>] (show_stack+0x10/0x14=
-)
-[<c000cefc>] (show_stack) from [<c00165ac>] (warn_slowpath_common+0x80/=
-0xa8)
-[<c00165ac>] (warn_slowpath_common) from [<c0016600>]
-(warn_slowpath_fmt+0x2c/0x3c)
-[<c0016600>] (warn_slowpath_fmt) from [<c00409d4>] (__free_irq+0xb0/0x2=
-b0)
-[<c00409d4>] (__free_irq) from [<c0040c60>] (free_irq+0x40/0x50)
-[<c0040c60>] (free_irq) from [<c03056fc>] (pit_clkevt_shutdown+0x24/0x2=
-c)
-[<c03056fc>] (pit_clkevt_shutdown) from [<c0058e94>]
-(clockevents_switch_state+0xe8)
-[<c0058e94>] (clockevents_switch_state) from [<c0058ee4>]
-(clockevents_shutdown+0x1)
-[<c0058ee4>] (clockevents_shutdown) from [<c00597dc>]
-(tick_check_new_device+0x54/0)
-[<c00597dc>] (tick_check_new_device) from [<c0058950>]
-(clockevents_register_device)
-[<c0058950>] (clockevents_register_device) from [<c051e22c>]
-(clocksource_probe+0x4)
-[<c051e22c>] (clocksource_probe) from [<c050aafc>]
-(start_kernel+0x248/0x35c)
-[<c050aafc>] (start_kernel) from [<20008048>] (0x20008048)
----[ end trace 0000000000000001 ]---
+include $(CLEAR_VARS)
+LOCAL_MODULE := librttest
+LOCAL_MODULE_TAGS := eng
+FILE_LIST := $(wildcard $(LOCAL_PATH)/src/lib/*.c)
+LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+LOCAL_CFLAGS += $(commonFlags)
+LOCAL_LDLIBS += -ldl
+LOCAL_LDFLAGS += -pie
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+include $(BUILD_STATIC_LIBRARY)
 
-Nevertheless it does boot, and seems to work fine.
+include $(CLEAR_VARS)
+LOCAL_MODULE := cyclictest
+LOCAL_MODULE_TAGS := eng
+LOCAL_STATIC_LIBRARIES := librttest
+FILE_LIST := $(wildcard $(LOCAL_PATH)/src/cyclictest/*.c)
+LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+LOCAL_CFLAGS += $(commonFlags)
+LOCAL_LDLIBS += -ldl
+LOCAL_LDFLAGS += -pie
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+include $(BUILD_EXECUTABLE)
 
-
-Thanks,
---=20
-Jean-Denis Girard
-
-SysNux                Syst=C3=A8mes   Linux   en   Polyn=C3=A9sie   fra=
-n=C3=A7aise
-http://www.sysnux.pf/ T=C3=A9l: +689 40.50.10.40 / GSM: +689 87.79.75.2=
-7
+include $(CLEAR_VARS)
+LOCAL_MODULE := hackbench
+LOCAL_MODULE_TAGS := eng
+LOCAL_STATIC_LIBRARIES := librttest
+FILE_LIST := $(wildcard $(LOCAL_PATH)/src/hackbench/*.c)
+LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+LOCAL_CFLAGS += $(commonFlags)
+LOCAL_LDLIBS += -ldl
+LOCAL_LDFLAGS += -pie
+LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+include $(BUILD_EXECUTABLE)
