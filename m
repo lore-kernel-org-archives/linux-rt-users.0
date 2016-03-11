@@ -1,91 +1,118 @@
-From: =?UTF-8?Q?Sean_Nyekj=c3=a6r?= <sean.nyekjaer@prevas.dk>
-Subject: Re: [PATCH] tty: serial: sc16is7xx: implemented our own oneshot-like
- handling
-Date: Fri, 11 Mar 2016 12:33:57 +0100
-Message-ID: <56E2AD25.3060706@prevas.dk>
-References: <1457692476-19082-1-git-send-email-sean.nyekjaer@prevas.dk>
- <56E29FBA.1060306@prevas.dk>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: rt-tests Android.mk for cyclictest and hackbench
+Date: Fri, 11 Mar 2016 12:38:21 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1603111221240.8679@riemann>
+References: <CAB+ZbRV_5c_+e2YrcCSPFg6+7pxHfxZVvLGeWoGcH1Mf7_czLw@mail.gmail.com> <20160310101841.2bf5ee3b@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252;
-	format=flowed
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Josh Cartwright <joshc@ni.com>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	<linux-rt-users@vger.kernel.org>,
-	Jon Ringle <jringle@gridpoint.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: <linux-serial@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Eric Jensen <ericcj@gmail.com>, Henrik Austad <haustad@cisco.com>,
+	linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail01.prevas.se ([62.95.78.3]:14428 "EHLO mail01.prevas.se"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1752086AbcCKLd7 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 11 Mar 2016 06:33:59 -0500
-In-Reply-To: <56E29FBA.1060306@prevas.dk>
+Received: from mail-wm0-f46.google.com ([74.125.82.46]:33136 "EHLO
+	mail-wm0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751495AbcCKLib (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 Mar 2016 06:38:31 -0500
+Received: by mail-wm0-f46.google.com with SMTP id l68so14489099wml.0
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Mar 2016 03:38:30 -0800 (PST)
+In-Reply-To: <20160310101841.2bf5ee3b@sluggy.hsv.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
 
-On 2016-03-11 11:36, Sean Nyekj=E6r wrote:
->
->
-> On 2016-03-11 11:34, Sean Nyekjaer wrote:
-Could this work as a description?
+On Thu, 10 Mar 2016, Clark Williams wrote:
 
-The problem here is still the use of IRQF_ONESHOT.  The semantics
-of IRQF_ONESHOT are only defined w.r.t. the irq core's threaded
-interrupt handling.
+> On Thu, 10 Mar 2016 09:59:05 -0500
+> Eric Jensen <ericcj@gmail.com> wrote:
+> 
+> > I couldn't find one of these on the web, but I think it would be nice to
+> > include in the git repo to make it easy for people to add to their manifest
+> > when building AOSP.  This Android.mk is working for me on lollipop and I
+> > think would work for others:
+> > 
+> 
+> I'm ok with including this file. 
+> 
+> For future reference the correct way to submit this sort of thing is in patch format. I grabbed your file and stuck it in the top level directory, added it to my git tree then ran 'git format-patch' with the SHA1 of the commit following your commit. This generated the patch below, which gives us attribution information, the files location and contents, and the appropriate mode for the newly created file. Please let me know if I put it in the right place with the right permissions. 
+> 
+> Clark
+> 
+> 
+> From 6fa0bf068fdbff809a4a903bcb28aa499b1f88c7 Mon Sep 17 00:00:00 2001
+> From: Eric Jensen <ericcj@gmail.com>
+> Date: Thu, 10 Mar 2016 10:11:25 -0600
+> Subject: [PATCH] Android Makefile for rt-tests
+> 
+> Signed-off-by: Clark Williams <williams@redhat.com>
+> ---
+>  Android.mk | 39 +++++++++++++++++++++++++++++++++++++++
+>  1 file changed, 39 insertions(+)
+>  create mode 100644 Android.mk
+> 
+> diff --git a/Android.mk b/Android.mk
+> new file mode 100644
+> index 000000000000..0df3aac9db1f
+> --- /dev/null
+> +++ b/Android.mk
+> @@ -0,0 +1,39 @@
+> +LOCAL_PATH:= $(call my-dir)
+> +
+> +commonFlags := -Wall -Wno-nonnull -O2 -DPTHREAD_BIONIC -DVERSION=0.96
+> +-D_GNU_SOURCE
+> +
+> +include $(CLEAR_VARS)
+> +LOCAL_MODULE := librttest
+> +LOCAL_MODULE_TAGS := eng
+> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/lib/*.c)
+> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> +LOCAL_CFLAGS += $(commonFlags)
+> +LOCAL_LDLIBS += -ldl
+> +LOCAL_LDFLAGS += -pie
+> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> +include $(BUILD_STATIC_LIBRARY)
+> +
+> +include $(CLEAR_VARS)
+> +LOCAL_MODULE := cyclictest
+> +LOCAL_MODULE_TAGS := eng
+> +LOCAL_STATIC_LIBRARIES := librttest
+> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/cyclictest/*.c)
+> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> +LOCAL_CFLAGS += $(commonFlags)
+> +LOCAL_LDLIBS += -ldl
+> +LOCAL_LDFLAGS += -pie
+> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> +include $(BUILD_EXECUTABLE)
+> +
+> +include $(CLEAR_VARS)
+> +LOCAL_MODULE := hackbench
+> +LOCAL_MODULE_TAGS := eng
+> +LOCAL_STATIC_LIBRARIES := librttest
+> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/hackbench/*.c)
+> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> +LOCAL_CFLAGS += $(commonFlags)
+> +LOCAL_LDLIBS += -ldl
+> +LOCAL_LDFLAGS += -pie
+> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> +include $(BUILD_EXECUTABLE)
+> -- 
+> 2.5.0
 
-This implements it's own oneshot-like handling
-at the device-level: in the registered irq handler, capture triggered
-interrupt state, squelch/mask, and enqueue the kthread_work.  In the
-tail-end of the kthread_work, re-enable interrupts at the device level.
+Nice job getting Clark to do your work for you!
+Okay, just kidding.
 
->> Signed-off-by: Sean Nyekjaer <sean.nyekjaer@prevas.dk>
->> ---
->> This patch depends on patch "sc16is7xx: drop bogus use of IRQF_ONESH=
-OT"
->>
->>   drivers/tty/serial/sc16is7xx.c | 9 ++++++++-
->>   1 file changed, 8 insertions(+), 1 deletion(-)
->>
->> diff --git a/drivers/tty/serial/sc16is7xx.c=20
->> b/drivers/tty/serial/sc16is7xx.c
->> index 73d46e2..96d1f3e 100644
->> --- a/drivers/tty/serial/sc16is7xx.c
->> +++ b/drivers/tty/serial/sc16is7xx.c
->> @@ -706,13 +706,20 @@ static void sc16is7xx_ist(struct kthread_work =
-*ws)
->>       struct sc16is7xx_port *s =3D to_sc16is7xx_port(ws, irq_work);
->>       int i;
->>   -    for (i =3D 0; i < s->devtype->nr_uart; ++i)
->> +    for (i =3D 0; i < s->devtype->nr_uart; ++i) {
->>           sc16is7xx_port_irq(s, i);
->> +        enable_irq(s->p[i].port.irq);
->> +    }
->> +
-> Ops one-line break to much :-(
-> Waiting for other comments before fixing :-)
->
-> /Sean
->>   }
->>     static irqreturn_t sc16is7xx_irq(int irq, void *dev_id)
->>   {
->>       struct sc16is7xx_port *s =3D (struct sc16is7xx_port *)dev_id;
->> +    int i;
->> +
->> +    for (i =3D 0; i < s->devtype->nr_uart; ++i)
->> +        disable_irq_nosync(s->p[i].port.irq);
->>         queue_kthread_work(&s->kworker, &s->irq_work);
->
-> --=20
-> To unsubscribe from this list: send the line "unsubscribe=20
-> linux-serial" in
-> the body of a message to majordomo@vger.kernel.org
-> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+Currently we have a src/arch/android/Makefile
+that is included by the root Makefile that contains the differences
+required for building on android.
 
---
-To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
-s" in
-the body of a message to majordomo@vger.kernel.org
-More majordomo info at  http://vger.kernel.org/majordomo-info.html
+You have something a little different I believe, although I have no way of
+testing on Android. It would be nice if you could come up with a similar 
+scheme. Maybe create a src/arch/AOSP/Makefile
+
+If this isn't feasible, then please educate me as to why your scheme is 
+preferable.
+
+Thanks
+
+John
