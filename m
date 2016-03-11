@@ -1,42 +1,140 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [RFC RT] tty: serial: 8250: don't take the lock on OOPs
-Date: Fri, 11 Mar 2016 19:05:04 +0100
-Message-ID: <20160311180504.GB29850@linutronix.de>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: rt-tests Android.mk for cyclictest and hackbench
+Date: Fri, 11 Mar 2016 19:06:29 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1603111905380.6821@riemann>
+References: <CAB+ZbRV_5c_+e2YrcCSPFg6+7pxHfxZVvLGeWoGcH1Mf7_czLw@mail.gmail.com> <20160310101841.2bf5ee3b@sluggy.hsv.redhat.com> <alpine.LFD.2.20.1603111221240.8679@riemann> <CAB+ZbRUH2G6obZPkeiH51UnvupbJ-tMkTGhDh80==5v5CAOoYg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: tglx@linutronix.de, rostedt@goodmis.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Cc: Clark Williams <williams@redhat.com>,
+	Henrik Austad <haustad@cisco.com>,
+	linux-rt-users@vger.kernel.org
+To: Eric Jensen <ericcj@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f50.google.com ([74.125.82.50]:36131 "EHLO
+	mail-wm0-f50.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750734AbcCKSGj (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 11 Mar 2016 13:06:39 -0500
+Received: by mail-wm0-f50.google.com with SMTP id n186so29414259wmn.1
+        for <linux-rt-users@vger.kernel.org>; Fri, 11 Mar 2016 10:06:38 -0800 (PST)
+In-Reply-To: <CAB+ZbRUH2G6obZPkeiH51UnvupbJ-tMkTGhDh80==5v5CAOoYg@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On panic() from IRQ (for instance from the lockup detector) we will
-end up in an endless loop on -RT. Each time we invoke
-spin_trylock_irqsave() we will trigger the WARN_ON() in rt_mutex_trylock().
-The WARN_ON() will stuff more data into the printk buffer than we can
-print on one iteration and so we never end the printing loop.
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- drivers/tty/serial/8250/8250_port.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/drivers/tty/serial/8250/8250_port.c b/drivers/tty/serial/8250/8250_port.c
-index 5568d70eee0c..138b1b985063 100644
---- a/drivers/tty/serial/8250/8250_port.c
-+++ b/drivers/tty/serial/8250/8250_port.c
-@@ -2850,9 +2850,9 @@ void serial8250_console_write(struct uart_8250_port *up, const char *s,
- 
- 	serial8250_rpm_get(up);
- 
--	if (port->sysrq)
-+	if (port->sysrq || oops_in_progress)
- 		locked = 0;
--	else if (oops_in_progress || in_kdb_printk())
-+	else if (in_kdb_printk())
- 		locked = spin_trylock_irqsave(&port->lock, flags);
- 	else
- 		spin_lock_irqsave(&port->lock, flags);
--- 
-2.7.0
+On Fri, 11 Mar 2016, Eric Jensen wrote:
+
+> To build as part of AOSP by just putting this repo into the repo
+> manifest.xml I believe Android.mk has to be at the root of the cloned
+> repo, e.g. http://elinux.org/Android_Build_System#Adding_a_new_program_to_build
+> 
+> I don't believe you can use the normal Makefile in AOSP, so I'm not
+> sure what that previous one was for...maybe for the NDK?
+
+Ok, I'm fine with this too then, just answer Clark's questions, and send 
+your SOB, and we'll add it.
+
+> 
+> On Fri, Mar 11, 2016 at 6:38 AM, John Kacur <jkacur@redhat.com> wrote:
+> >
+> >
+> > On Thu, 10 Mar 2016, Clark Williams wrote:
+> >
+> >> On Thu, 10 Mar 2016 09:59:05 -0500
+> >> Eric Jensen <ericcj@gmail.com> wrote:
+> >>
+> >> > I couldn't find one of these on the web, but I think it would be nice to
+> >> > include in the git repo to make it easy for people to add to their manifest
+> >> > when building AOSP.  This Android.mk is working for me on lollipop and I
+> >> > think would work for others:
+> >> >
+> >>
+> >> I'm ok with including this file.
+> >>
+> >> For future reference the correct way to submit this sort of thing is in patch format. I grabbed your file and stuck it in the top level directory, added it to my git tree then ran 'git format-patch' with the SHA1 of the commit following your commit. This generated the patch below, which gives us attribution information, the files location and contents, and the appropriate mode for the newly created file. Please let me know if I put it in the right place with the right permissions.
+> >>
+> >> Clark
+> >>
+> >>
+> >> From 6fa0bf068fdbff809a4a903bcb28aa499b1f88c7 Mon Sep 17 00:00:00 2001
+> >> From: Eric Jensen <ericcj@gmail.com>
+> >> Date: Thu, 10 Mar 2016 10:11:25 -0600
+> >> Subject: [PATCH] Android Makefile for rt-tests
+> >>
+> >> Signed-off-by: Clark Williams <williams@redhat.com>
+> >> ---
+> >>  Android.mk | 39 +++++++++++++++++++++++++++++++++++++++
+> >>  1 file changed, 39 insertions(+)
+> >>  create mode 100644 Android.mk
+> >>
+> >> diff --git a/Android.mk b/Android.mk
+> >> new file mode 100644
+> >> index 000000000000..0df3aac9db1f
+> >> --- /dev/null
+> >> +++ b/Android.mk
+> >> @@ -0,0 +1,39 @@
+> >> +LOCAL_PATH:= $(call my-dir)
+> >> +
+> >> +commonFlags := -Wall -Wno-nonnull -O2 -DPTHREAD_BIONIC -DVERSION=0.96
+> >> +-D_GNU_SOURCE
+> >> +
+> >> +include $(CLEAR_VARS)
+> >> +LOCAL_MODULE := librttest
+> >> +LOCAL_MODULE_TAGS := eng
+> >> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/lib/*.c)
+> >> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> >> +LOCAL_CFLAGS += $(commonFlags)
+> >> +LOCAL_LDLIBS += -ldl
+> >> +LOCAL_LDFLAGS += -pie
+> >> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> >> +include $(BUILD_STATIC_LIBRARY)
+> >> +
+> >> +include $(CLEAR_VARS)
+> >> +LOCAL_MODULE := cyclictest
+> >> +LOCAL_MODULE_TAGS := eng
+> >> +LOCAL_STATIC_LIBRARIES := librttest
+> >> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/cyclictest/*.c)
+> >> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> >> +LOCAL_CFLAGS += $(commonFlags)
+> >> +LOCAL_LDLIBS += -ldl
+> >> +LOCAL_LDFLAGS += -pie
+> >> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> >> +include $(BUILD_EXECUTABLE)
+> >> +
+> >> +include $(CLEAR_VARS)
+> >> +LOCAL_MODULE := hackbench
+> >> +LOCAL_MODULE_TAGS := eng
+> >> +LOCAL_STATIC_LIBRARIES := librttest
+> >> +FILE_LIST := $(wildcard $(LOCAL_PATH)/src/hackbench/*.c)
+> >> +LOCAL_SRC_FILES := $(FILE_LIST:$(LOCAL_PATH)/%=%)
+> >> +LOCAL_CFLAGS += $(commonFlags)
+> >> +LOCAL_LDLIBS += -ldl
+> >> +LOCAL_LDFLAGS += -pie
+> >> +LOCAL_C_INCLUDES += $(LOCAL_PATH)/src/include
+> >> +include $(BUILD_EXECUTABLE)
+> >> --
+> >> 2.5.0
+> >
+> > Nice job getting Clark to do your work for you!
+> > Okay, just kidding.
+> >
+> > Currently we have a src/arch/android/Makefile
+> > that is included by the root Makefile that contains the differences
+> > required for building on android.
+> >
+> > You have something a little different I believe, although I have no way of
+> > testing on Android. It would be nice if you could come up with a similar
+> > scheme. Maybe create a src/arch/AOSP/Makefile
+> >
+> > If this isn't feasible, then please educate me as to why your scheme is
+> > preferable.
+> >
+> > Thanks
+> >
+> > John
+> --
+> To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+> the body of a message to majordomo@vger.kernel.org
+> More majordomo info at  http://vger.kernel.org/majordomo-info.html
+> 
