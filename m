@@ -1,32 +1,78 @@
-From: Michael Hewitt <mhewitt@aha.com>
-Subject: Eliminating Packet Latency
-Date: Mon, 14 Mar 2016 14:02:27 -0700
-Message-ID: <262920A1-2716-4D46-9A0F-7E7DC93EE24D@aha.com>
-Mime-Version: 1.0 (Mac OS X Mail 9.2 \(3112\))
-Content-Type: text/plain; charset=us-ascii
-Content-Transfer-Encoding: 8BIT
-To: linux-rt-users@vger.kernel.org
+From: Dave Rolenc <drolenc@rtlogic.com>
+Subject: RE: Eliminating Packet Latency
+Date: Mon, 14 Mar 2016 21:29:42 +0000
+Message-ID: <DF8A1D73F1EFD14E8EC020CD95DD8F64995522DD@sd-mb01.wfinet.com>
+References: <262920A1-2716-4D46-9A0F-7E7DC93EE24D@aha.com>
+Mime-Version: 1.0
+Content-Type: multipart/signed; protocol="application/x-pkcs7-signature";
+	micalg=SHA1; boundary="----=_NextPart_000_0724_01D17E06.53FB80B0"
+Cc: Dave Rolenc <drolenc@rtlogic.com>
+To: Michael Hewitt <mhewitt@aha.com>,
+	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.comtechefdata.org ([206.223.8.40]:50373 "EHLO
-	mail.comtechefdata.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
-	with ESMTP id S933687AbcCNVKD convert rfc822-to-8bit (ORCPT
+Received: from mx0b-001f5801.pphosted.com ([148.163.159.244]:13040 "EHLO
+	mx0b-001f5801.pphosted.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1751391AbcCNV62 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Mar 2016 17:10:03 -0400
-Received: from gwia.comtechefdata.com ([10.6.2.47]:58302)
-	by mail.comtechefdata.com with esmtp (Exim 4.82_1-5b7a7c0-XX)
-	(envelope-from <mhewitt@aha.com>)
-	id 1afZdM-00086d-0d
-	for linux-rt-users@vger.kernel.org; Mon, 14 Mar 2016 14:02:36 -0700
+	Mon, 14 Mar 2016 17:58:28 -0400
+In-Reply-To: <262920A1-2716-4D46-9A0F-7E7DC93EE24D@aha.com>
+Content-Language: en-US
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
+
+------=_NextPart_000_0724_01D17E06.53FB80B0
+Content-Type: text/plain;
+	charset="us-ascii"
+Content-Transfer-Encoding: 7bit
+
+Michael,
+
+First, I don't know if my personal findings are applicable to your
+situation. I am using much older kernels, so the issue I ran into may be
+obsolete or at least things may be different.
+
+I found that sometimes when sending network packets, the kernel would hijack
+the thread of the sender when the queue was empty. This would cause issues,
+since I had no control over the priority of that thread, since it could be
+anything. My fix was to never allow the kernel to send in the context of the
+sending userspace thread. I suspect that most uses of the real time  kernel
+don't expect the real time nature of things to extend across the network,
+but I could be wrong.
+
+Best Regards,
+
+Dave  
+
+
+
+-----Original Message-----
+From: linux-rt-users-owner@vger.kernel.org
+[mailto:linux-rt-users-owner@vger.kernel.org] On Behalf Of Michael Hewitt
+Sent: Monday, March 14, 2016 3:02 PM
+To: linux-rt-users@vger.kernel.org
+Subject: Eliminating Packet Latency
 
 Folks,
 
 Please forgive me if this is an inappropriate forum for my question. 
 
-We are using a real time Linux kernel (3.10.0) in a network appliance in order to achieve extremely consistent packet delivery times.  Generally, we see packet delivery variations of less than 100 microseconds, which is fabulous.  Occasionally, we see a packet delivery delay in excess of 1000 microseconds.  We are hoping to eliminate these spikes, which occur perhaps 1-2 times in a 24 hour period.
+We are using a real time Linux kernel (3.10.0) in a network appliance in
+order to achieve extremely consistent packet delivery times.  Generally, we
+see packet delivery variations of less than 100 microseconds, which is
+fabulous.  Occasionally, we see a packet delivery delay in excess of 1000
+microseconds.  We are hoping to eliminate these spikes, which occur perhaps
+1-2 times in a 24 hour period.
 
-The machine configuration is as follows.  Thread IRQs are enabled, and we have elevated the priority of both the irq threads that service the specific network interface to 55.  We have also elevated the priority of the relevant user space thread to 49.  We are running on a 4 core Intel Xeon E3-1220v3 with an Intel NIC and the igb version 5.3.2 driver.  We disabled interrupt throttling in the Intel driver (rx-usecs = 0, tx-usecs = 0).  SE Linux is disabled, eliminating a huge packet latency spike during login.  We are running CentOS 7.1 tuned for network latency ("tuned-adm profile network-latency").  IRQ balancing is disabled.  BIOS CPU power management is set to maximum performance.
+The machine configuration is as follows.  Thread IRQs are enabled, and we
+have elevated the priority of both the irq threads that service the specific
+network interface to 55.  We have also elevated the priority of the relevant
+user space thread to 49.  We are running on a 4 core Intel Xeon E3-1220v3
+with an Intel NIC and the igb version 5.3.2 driver.  We disabled interrupt
+throttling in the Intel driver (rx-usecs = 0, tx-usecs = 0).  SE Linux is
+disabled, eliminating a huge packet latency spike during login.  We are
+running CentOS 7.1 tuned for network latency ("tuned-adm profile
+network-latency").  IRQ balancing is disabled.  BIOS CPU power management is
+set to maximum performance.
 
 Any help you can provide would be greatly appreciated.
 
@@ -34,3 +80,115 @@ Thanks,
 Mike
 
 
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-users" in
+the body of a message to majordomo@vger.kernel.org More majordomo info at
+http://vger.kernel.org/majordomo-info.html
+
+------=_NextPart_000_0724_01D17E06.53FB80B0
+Content-Type: application/pkcs7-signature; name="smime.p7s"
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="smime.p7s"
+
+MIAGCSqGSIb3DQEHAqCAMIACAQExCzAJBgUrDgMCGgUAMIAGCSqGSIb3DQEHAQAAoIIRmzCCBdEw
+ggS5oAMCAQICEDY3A2GiKK2QlGjtkqwuGpMwDQYJKoZIhvcNAQELBQAwgZcxCzAJBgNVBAYTAkdC
+MRswGQYDVQQIExJHcmVhdGVyIE1hbmNoZXN0ZXIxEDAOBgNVBAcTB1NhbGZvcmQxGjAYBgNVBAoT
+EUNPTU9ETyBDQSBMaW1pdGVkMT0wOwYDVQQDEzRDT01PRE8gUlNBIENsaWVudCBBdXRoZW50aWNh
+dGlvbiBhbmQgU2VjdXJlIEVtYWlsIENBMB4XDTE0MTAwMjAwMDAwMFoXDTE2MTAwMTIzNTk1OVow
+gdkxFTATBgNVBBQTDDcxOS01OTgtMjgwMTEOMAwGA1UEERMFODA5MjExHjAcBgNVBAoTFVJlYWwg
+VGltZSBMb2dpYywgSW5jLjEhMB8GA1UECRMYMTI1MTUgQWNhZGVteSBSaWRnZSBWaWV3MQswCQYD
+VQQIEwJDTzEZMBcGA1UEBxMQQ29sb3JhZG8gU3ByaW5nczELMAkGA1UEBhMCVVMxFDASBgNVBAMT
+C0RhdmUgUm9sZW5jMSIwIAYJKoZIhvcNAQkBFhNkcm9sZW5jQHJ0bG9naWMuY29tMIIBIjANBgkq
+hkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA6I4Is9m4J+9GPyiaKw2y2nE0T1qgxUIULzL8Ed5OFsy7
+pZnhyTfF8dPBCTK1p/KkFYjfKvvl+x5dDBcAyv+Jafjt3EDtz5bs8tkSLTts/57X5GYMTLqqqVCi
+UpsyFnpNK/PUStTH2EIgUEfalMbC2fagTBe7/zxGXTJ2s40bhHv7vOi1KAGfJpgWbkmuQqSUBdRm
+4Fb0l0TIswuDKFGg6IMTLLDfidj2NITy7VSw2xe7GaX8Is6x0dHVrWFaJxbsdGEn7Do0Y1WEtO8G
+aktRAPXzcEZ83mtbStjYs6Hl4Q70uF/SGHn8O4L9nKJnsWl1L+xVHPEdxjcklB6sCVQtfQIDAQAB
+o4IB0zCCAc8wHwYDVR0jBBgwFoAUgq9sjPjF/pZhfOgfPStxSF7Ei8AwHQYDVR0OBBYEFCk69XFp
+o8zgOW2bfaucL6NSplF0MA4GA1UdDwEB/wQEAwIFoDAMBgNVHRMBAf8EAjAAMB0GA1UdJQQWMBQG
+CCsGAQUFBwMEBggrBgEFBQcDAjBGBgNVHSAEPzA9MDsGDCsGAQQBsjEBAgEDBTArMCkGCCsGAQUF
+BwIBFh1odHRwczovL3NlY3VyZS5jb21vZG8ubmV0L0NQUzBaBgNVHR8EUzBRME+gTaBLhklodHRw
+Oi8vY3JsLmNvbW9kb2NhLmNvbS9DT01PRE9SU0FDbGllbnRBdXRoZW50aWNhdGlvbmFuZFNlY3Vy
+ZUVtYWlsQ0EuY3JsMIGLBggrBgEFBQcBAQR/MH0wVQYIKwYBBQUHMAKGSWh0dHA6Ly9jcnQuY29t
+b2RvY2EuY29tL0NPTU9ET1JTQUNsaWVudEF1dGhlbnRpY2F0aW9uYW5kU2VjdXJlRW1haWxDQS5j
+cnQwJAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTAeBgNVHREEFzAVgRNkcm9s
+ZW5jQHJ0bG9naWMuY29tMA0GCSqGSIb3DQEBCwUAA4IBAQAhEgGZviiTqI0Mb44ZU0Ttg02zh2ot
+ptldz5IYvxByg9ckG3SB35mlpwo+NVW7t6hRRZ0+CaGvSOiERbqx3fsApG67d1BBkczuQQ4VE0aI
+V2z6vT/pCs19IpRjFtLUqx2kzv2kIhXbXhXzJTos5qN6F6pwCKazc9j5zdvTrf5hEBXHyZxgWgOb
+RwVPpiIXu1bAPPxPpHtRwIiT/w53WMc7W9kDd8KLUuYXNt8/rb47zFCmpbBKM+Xo8ycMe9oWBveW
+71+gpfa9fg/mDUDj666hmEvkAEdNDPFmStqIdlejmC/xDK/ueOQh8g3WL1rfNFqPmAQpwIOyK+jT
+UWFFn5fuMIIF2DCCA8CgAwIBAgIQTKr5yttjb+Af907YWwOGnTANBgkqhkiG9w0BAQwFADCBhTEL
+MAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9y
+ZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlm
+aWNhdGlvbiBBdXRob3JpdHkwHhcNMTAwMTE5MDAwMDAwWhcNMzgwMTE4MjM1OTU5WjCBhTELMAkG
+A1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEa
+MBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMTIkNPTU9ETyBSU0EgQ2VydGlmaWNh
+dGlvbiBBdXRob3JpdHkwggIiMA0GCSqGSIb3DQEBAQUAA4ICDwAwggIKAoICAQCR6FSS0gpWsawN
+JN3Fz0RndJkrN6N9I3AAcbxT38T6KhKPS38QVr2fcHK3YX/JSw8Xpz3jsARh7v8Rl8f0hj4K+j5c
++ZPmNHrZFGvnnLOFoIJ6dq9xkNfs/Q36nGz637CC9BR++b7Epi9Pf5l/tfxnQ3K9DADWietrLNPt
+j5gcFKt+5eNu/Nio5JIk2kNrYrhV/erBvGy2i/MOjZrkm2xpmfh4SDBF1a3hDTxFYPwyllEnvGfD
+yi62a+pGx8cgoLEfZd5ICLqkTqnyg0Y3hOvozIFIQ2dOciqbXL1MGyiKXCJ7tKuY2e7gUYPDCUZO
+bT6Z+pUX2nwzV0E8jVHtC7ZcryxjGt9XyD+86V3Em69FmeKjWiS0uqlWPc9vqv9JWL7wqP/0uK3p
+N/u6uPQLOvnoQ0IeidiEyxPx2bvhiWC4jChWrBQdnArncevPDt09qZahSL0896+1DSJMwBGB7FY7
+9tOi4lu3sgQiUpWAk2nojkxl8ZEDLXB0AuqLZxUpaVICu9ffUGpVRr+goyhhf3DQw6KqLCGqR84o
+nAZFdr+CGCe01a60y1Dma/RMhnEw6abfFobg2P9A3fvQQoh/ozM6LlweQRGBY84YcWsr7KaKtzFc
+OmpH4MN5WdYgGq/yapiqcrxXStJLnbsQ/LBMQeXtHT1eKJ2czL+zUdqnR+WEUwIDAQABo0IwQDAd
+BgNVHQ4EFgQUu69+Aj36pvE8hI6t7jiY7NkyMtQwDgYDVR0PAQH/BAQDAgEGMA8GA1UdEwEB/wQF
+MAMBAf8wDQYJKoZIhvcNAQEMBQADggIBAArx1UaEt65Ru2yyTUEUAJNMnMvlwFTPoCWOAvn9sKIN
+9SCYPBMtrFaisNZ+EZLpLrqeLppysb0ZRGxhNaKatBYSaVqM4dc+pBroLwP0rmEdEBsqpIt6xf4F
+puHA1sj+nq6PK7o9mfjYcwlYRm6mnPTXJ9OV2jeDchzTc+CiR5kDOF3VSXkAKRzH7JsgHAckaVd4
+sjn8OoSgtZx8jb8uk2IntznaFxiuvTwJaP+EmzzV1gsD41eeFPfR60/IvYcjt7ZJQ3mFXLrrkguh
+xuhoqEwWsRqZCuhTLJK7oQkYdQxlqHvLI7cawiiFwxv/0Cti76R7CZGYZ4wUAc1oBmpjIXUDgIiK
+boHGhfKppC3n9KUkEEeDys30jXlYsQab5xoq2Z0B15R97QNKyvDb6KkBPvVWmckejkk9u+UJueBP
+SZI9FoJAzMxZxuY67RIuaTxslbH9qh17f4a+Hg4yRvv7E491f0yLS0Zj/gA0QHDBw7mh3aZw4gSz
+QbzpgJHqZJx64SIDqZxubw5lT2yHh17zbqD5daWbQOhTsiedSrnAdyGN/4fy3ryM7xfft0kL0fJu
+MAsaDk527RH89elWsn2/x20Kk4yl0MC2Hb46TpSi125sC8KKfPog88Tk5c0NqMuRkrF8hey1FGlm
+DoLnzc7ILaZRfyHBNVOFBkpdn627G190MIIF5jCCA86gAwIBAgIQapvhODv/K2ufAdXZuKdSVjAN
+BgkqhkiG9w0BAQwFADCBhTELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3Rl
+cjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxKzApBgNVBAMT
+IkNPTU9ETyBSU0EgQ2VydGlmaWNhdGlvbiBBdXRob3JpdHkwHhcNMTMwMTEwMDAwMDAwWhcNMjgw
+MTA5MjM1OTU5WjCBlzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3RlcjEQ
+MA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMTNENP
+TU9ETyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0EwggEiMA0G
+CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC+s55XrCh2dUAWxzgDmNPGGHYhUPMleQtMtaDRfTpY
+PpynMS6n9jR22YRq2tA9NEjk6vW7rN/5sYFLIP1of3l0NKZ6fLWfF2VgJ5cijKYy/qlAckY1wgOk
+UMgzKlWlVJGyK+UlNEQ1/5ErCsHq9x9aU/x1KwTdF/LCrT03Rl/FwFrf1XTCwa2QZYL55AqLPikF
+lgqOtzk06kb2qvGlnHJvijjI03BOrNpo+kZGpcHsgyO1/u1OZTaOo8wvEU17VVeP1cHWse9tGKTD
+yUGg2hJZjrqck39UIm/nKbpDSZ0JsMoIw/JtOOg0JC56VzQgBo7ictReTQE5LFLG3yQK+xS1AgMB
+AAGjggE8MIIBODAfBgNVHSMEGDAWgBS7r34CPfqm8TyEjq3uOJjs2TIy1DAdBgNVHQ4EFgQUgq9s
+jPjF/pZhfOgfPStxSF7Ei8AwDgYDVR0PAQH/BAQDAgGGMBIGA1UdEwEB/wQIMAYBAf8CAQAwEQYD
+VR0gBAowCDAGBgRVHSAAMEwGA1UdHwRFMEMwQaA/oD2GO2h0dHA6Ly9jcmwuY29tb2RvY2EuY29t
+L0NPTU9ET1JTQUNlcnRpZmljYXRpb25BdXRob3JpdHkuY3JsMHEGCCsGAQUFBwEBBGUwYzA7Bggr
+BgEFBQcwAoYvaHR0cDovL2NydC5jb21vZG9jYS5jb20vQ09NT0RPUlNBQWRkVHJ1c3RDQS5jcnQw
+JAYIKwYBBQUHMAGGGGh0dHA6Ly9vY3NwLmNvbW9kb2NhLmNvbTANBgkqhkiG9w0BAQwFAAOCAgEA
+eFyygSg0TzzuX1bOn5dW7I+iaxf28/ZJCAbU2C81zd9A/tNx4+jsQgwRGiHjZrAYayZrrm78hOx7
+aEpkfNPQIHGG6Fvq3EzWf/Lvx7/hk6zSPwIal9v5IkDcZoFD7f3iT7PdkHJY9B51csvU50rxpEg1
+OyOT8fk2zvvPBuM4qQNqbGWlnhMpIMwpWZT89RY0wpJO+2V6eXEGGHsROs3njeP9DqqqAJaBa4wB
+eKOdGCWn1/Jp2oY6dyNmNppI4ZNMUH4Tam85S1j6E95u4+1Nuru84OrMIzqvISE2HN/56ebTOWlc
+rurffade2022O/tUU1gb4jfWCcyvB8czm12FgX/y/lRjmDbEA08QJNB2729Y+io1IYO3ztveBdvU
+CIYZojTq/OCR6MvnzS6X72HP0PRLRTiOSEmIDsS5N5w/8IW1Hva5hEFy6fDAfd9yI+O+IMMAj1Kc
+L/Zo9jzJ16HO5m60ttl1Enk8MQkz/W3JlHaeI5iKFn4UJu1/cP2YHXYPiWf2JyBzsLBrGk1II+3y
+L8aorYew6CQvdVifC3HtwlSam9V1niiCfOBe2C12TdKGu05LWIA3ZkFcWJGaNXOZ6Ggyh/TqvXG5
+v7zmEVDNXFnHn9tFpMpOUvxhcsjycBtH0dZ0WrNw6gH+HF8TIhCnH3+zzWuDN0Rk6h9KVkfKehIx
+ggRlMIIEYQIBATCBrDCBlzELMAkGA1UEBhMCR0IxGzAZBgNVBAgTEkdyZWF0ZXIgTWFuY2hlc3Rl
+cjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENBIExpbWl0ZWQxPTA7BgNVBAMT
+NENPTU9ETyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBTZWN1cmUgRW1haWwgQ0ECEDY3
+A2GiKK2QlGjtkqwuGpMwCQYFKw4DAhoFAKCCAo0wGAYJKoZIhvcNAQkDMQsGCSqGSIb3DQEHATAc
+BgkqhkiG9w0BCQUxDxcNMTYwMzE0MjEyOTQxWjAjBgkqhkiG9w0BCQQxFgQUnyAgYs4P04JVnw0f
+Me/cubxgkK4wgasGCSqGSIb3DQEJDzGBnTCBmjALBglghkgBZQMEASowCwYJYIZIAWUDBAEWMAoG
+CCqGSIb3DQMHMAsGCWCGSAFlAwQBAjAOBggqhkiG9w0DAgICAIAwBwYFKw4DAgcwDQYIKoZIhvcN
+AwICAUAwDQYIKoZIhvcNAwICASgwBwYFKw4DAhowCwYJYIZIAWUDBAIDMAsGCWCGSAFlAwQCAjAL
+BglghkgBZQMEAgEwgb0GCSsGAQQBgjcQBDGBrzCBrDCBlzELMAkGA1UEBhMCR0IxGzAZBgNVBAgT
+EkdyZWF0ZXIgTWFuY2hlc3RlcjEQMA4GA1UEBxMHU2FsZm9yZDEaMBgGA1UEChMRQ09NT0RPIENB
+IExpbWl0ZWQxPTA7BgNVBAMTNENPTU9ETyBSU0EgQ2xpZW50IEF1dGhlbnRpY2F0aW9uIGFuZCBT
+ZWN1cmUgRW1haWwgQ0ECEDY3A2GiKK2QlGjtkqwuGpMwgb8GCyqGSIb3DQEJEAILMYGvoIGsMIGX
+MQswCQYDVQQGEwJHQjEbMBkGA1UECBMSR3JlYXRlciBNYW5jaGVzdGVyMRAwDgYDVQQHEwdTYWxm
+b3JkMRowGAYDVQQKExFDT01PRE8gQ0EgTGltaXRlZDE9MDsGA1UEAxM0Q09NT0RPIFJTQSBDbGll
+bnQgQXV0aGVudGljYXRpb24gYW5kIFNlY3VyZSBFbWFpbCBDQQIQNjcDYaIorZCUaO2SrC4akzAN
+BgkqhkiG9w0BAQEFAASCAQAQFe8UTMPFbIPu7ICkq8+fJMHvZoc+Xp71M3UjxAqarehfquBs8ZY7
+9+QkcOGy/rUc5cwBjNtgDjE17JWVL4W1jglgxAPT6MR6iugDLDngKmkstbbCq+KUqnATZN/Pam8v
+Oi38ca6kEPNZGsn6PLJ6xCRm+Ds7e8tDUu5c6fI0IuPntevPw6q8yTkQl0KvNpoqES15OMROG5bm
+IBgBrFIWJfv0erwcayuxZvrgvdck0Hz897Anj/oW12WeA2dZJ1DeyV5CwetABy2LdLzQV1bbVKyL
+8/Kko8d9lyWOcZ0y8s77kzyPGbVavp+WZ7Rfm8lZy3QDT/g3LQoYIGtzaKatAAAAAAAA
+
+------=_NextPart_000_0724_01D17E06.53FB80B0--
