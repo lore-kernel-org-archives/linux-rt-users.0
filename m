@@ -1,56 +1,55 @@
 From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Re: [PATCH] tty: serial: sc16is7xx: implemented our own oneshot-like
- handling
-Date: Mon, 14 Mar 2016 09:48:32 +0100 (CET)
-Message-ID: <alpine.DEB.2.11.1603140946450.3657@nanos>
-References: <1457692476-19082-1-git-send-email-sean.nyekjaer@prevas.dk> <alpine.DEB.2.11.1603131103020.3657@nanos> <56E6585A.3060203@prevas.dk>
+Subject: Re: [RT] Warning from swake_up_all_locked in rt-4.4.4-rt11
+Date: Mon, 14 Mar 2016 09:49:52 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1603140948560.3657@nanos>
+References: <20160313225358.4eb9316a@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: MULTIPART/MIXED; BOUNDARY="8323329-492379229-1457945313=:3657"
-Cc: linux-serial@vger.kernel.org, Josh Cartwright <joshc@ni.com>,
-	Greg Kroah-Hartman <gregkh@linuxfoundation.org>,
-	linux-rt-users@vger.kernel.org, Jon Ringle <jringle@gridpoint.com>
-To: =?ISO-8859-15?Q?Sean_Nyekj=E6r?= <sean.nyekjaer@prevas.dk>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Daniel Wagner <wagi@monom.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+To: Clark Williams <williams@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:45553 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:45562 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755228AbcCNIuB (ORCPT
+	with ESMTP id S1755228AbcCNIvT (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Mar 2016 04:50:01 -0400
-In-Reply-To: <56E6585A.3060203@prevas.dk>
+	Mon, 14 Mar 2016 04:51:19 -0400
+In-Reply-To: <20160313225358.4eb9316a@sluggy.hsv.redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-  This message is in MIME format.  The first part should be readable text,
-  while the remaining parts are likely unreadable without MIME-aware tools.
+On Sun, 13 Mar 2016, Clark Williams wrote:
 
---8323329-492379229-1457945313=:3657
-Content-Type: TEXT/PLAIN; charset=windows-1252
-Content-Transfer-Encoding: 8BIT
+> I'm hitting the WARN_ON(wakes > 2) in $SUBJECT when resuming from suspend on my laptop (quad-core i7 with HT on). Looks like the warning gets hit 36 times on resume. E.g.:
+> 
+> Call Trace:
+>  [<ffffffff813c13c0>] dump_stack+0x65/0x85
+>  [<ffffffff810a7572>] warn_slowpath_common+0x82/0xd0
+>  [<ffffffff810a76ca>] warn_slowpath_null+0x1a/0x20
+>  [<ffffffff810ec8d8>] swake_up_all_locked+0x68/0x80
+>  [<ffffffff810ecd40>] complete_all+0x30/0x50
+>  [<ffffffff81506328>] device_resume_noirq+0x48/0x190
+>  [<ffffffff8150648d>] async_resume_noirq+0x1d/0x50
+>  [<ffffffff810ca188>] async_run_entry_fn+0x48/0x130
+>  [<ffffffff810c14a9>] process_one_work+0x139/0x480
+>  [<ffffffff810c1847>] worker_thread+0x57/0x490
+>  [<ffffffff810c17f0>] ? process_one_work+0x480/0x480
+>  [<ffffffff810c779d>] kthread+0xed/0x110
+>  [<ffffffff810c76b0>] ? kthread_worker_fn+0x150/0x150
+> ehci-pci 0000:00:1a.0: System wakeup disabled by ACPI
+>  [<ffffffff817b0d0f>] ret_from_fork+0x3f/0x70
+>  [<ffffffff810c76b0>] ? kthread_worker_fn+0x150/0x150
+> ---[ end trace 0000000000000002 ]---
+> 
+> This trace (and a similar one with device_resume) happens on all cpus so the
+> trace info is kinda jumbled up. I'll try it with WARN_ON_ONCE instead
+> tomorrow.
 
-On Mon, 14 Mar 2016, Sean Nyekjær wrote:
-> On 2016-03-13 11:25, Thomas Gleixner wrote:
-> > On Fri, 11 Mar 2016, Sean Nyekjaer wrote:
-> > 
-> > >   static irqreturn_t sc16is7xx_irq(int irq, void *dev_id)
-> > >   {
-> > >   	struct sc16is7xx_port *s = (struct sc16is7xx_port *)dev_id;
-> > > +	int i;
-> > > +
-> > > +	for (i = 0; i < s->devtype->nr_uart; ++i)
-> > > +		disable_irq_nosync(s->p[i].port.irq);
-> > Aside of the lack of a changelog. This is completely bogus. You disable the
-> > same interrupt a gazillion of times.
-> I can't see why the interrupt is disabled a gazillion times.
-> When the irq is disabled the function will not be called before it's enabled
-> again... Or have i missed something?
-
-> > > +	for (i = 0; i < s->devtype->nr_uart; ++i)
-> > > +		disable_irq_nosync(s->p[i].port.irq);
-
-port.irq is the same for all ports at least according to the init function. It
-is actually @irq, the handler function argument.
+If resume is the only case, then we can filter that out and not worry about it
+at all :)
 
 Thanks,
 
 	tglx
---8323329-492379229-1457945313=:3657--
