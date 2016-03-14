@@ -1,84 +1,36 @@
-From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-Subject: [4.4.4-rt11] Possiblie recursive locking detected in kswapd /
- mb_cache_shrink_scan()
-Date: Mon, 14 Mar 2016 18:00:58 -0300
-Message-ID: <20160314210058.GE29798@uudg.org>
-Mime-Version: 1.0
+From: Michael Hewitt <mhewitt@aha.com>
+Subject: Eliminating Packet Latency
+Date: Mon, 14 Mar 2016 14:02:27 -0700
+Message-ID: <262920A1-2716-4D46-9A0F-7E7DC93EE24D@aha.com>
+Mime-Version: 1.0 (Mac OS X Mail 9.2 \(3112\))
 Content-Type: text/plain; charset=us-ascii
+Content-Transfer-Encoding: 8BIT
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-qg0-f43.google.com ([209.85.192.43]:36312 "EHLO
-	mail-qg0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933307AbcCNVBD (ORCPT
+Received: from mail.comtechefdata.org ([206.223.8.40]:50373 "EHLO
+	mail.comtechefdata.com" rhost-flags-OK-FAIL-OK-OK) by vger.kernel.org
+	with ESMTP id S933687AbcCNVKD convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 14 Mar 2016 17:01:03 -0400
-Received: by mail-qg0-f43.google.com with SMTP id u110so165326799qge.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 14 Mar 2016 14:01:02 -0700 (PDT)
-Received: from lclaudio.dyndns.org (179.176.232.10.dynamic.adsl.gvt.net.br. [179.176.232.10])
-        by smtp.gmail.com with ESMTPSA id 139sm11112644qho.2.2016.03.14.14.01.01
-        for <linux-rt-users@vger.kernel.org>
-        (version=TLS1_2 cipher=ECDHE-RSA-AES128-GCM-SHA256 bits=128/128);
-        Mon, 14 Mar 2016 14:01:01 -0700 (PDT)
-Content-Disposition: inline
+	Mon, 14 Mar 2016 17:10:03 -0400
+Received: from gwia.comtechefdata.com ([10.6.2.47]:58302)
+	by mail.comtechefdata.com with esmtp (Exim 4.82_1-5b7a7c0-XX)
+	(envelope-from <mhewitt@aha.com>)
+	id 1afZdM-00086d-0d
+	for linux-rt-users@vger.kernel.org; Mon, 14 Mar 2016 14:02:36 -0700
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+Folks,
 
-I just started using 4.4.4-rt11 this afternoon and saw the lockdep splat below.
-Is this something new or did I miss a patch floating on the list?
+Please forgive me if this is an inappropriate forum for my question. 
 
-[67547.917898] =============================================
-[67547.917898] [ INFO: possible recursive locking detected ]
-[67547.917900] 4.4.4-rt11 #4 Not tainted
-[67547.917900] ---------------------------------------------
-[67547.917901] kswapd0/59 is trying to acquire lock:
-[67547.917908]  (&h->lock#2){+.+.-.}, at: [<ffffffff812934dc>] mb_cache_shrink_scan+0xac/0x220
-[67547.917908] 
-               but task is already holding lock:
-[67547.917910]  (&h->lock#2){+.+.-.}, at: [<ffffffff812934ca>] mb_cache_shrink_scan+0x9a/0x220
-[67547.917911] 
-               other info that might help us debug this:
-[67547.917911]  Possible unsafe locking scenario:
+We are using a real time Linux kernel (3.10.0) in a network appliance in order to achieve extremely consistent packet delivery times.  Generally, we see packet delivery variations of less than 100 microseconds, which is fabulous.  Occasionally, we see a packet delivery delay in excess of 1000 microseconds.  We are hoping to eliminate these spikes, which occur perhaps 1-2 times in a 24 hour period.
 
-[67547.917911]        CPU0
-[67547.917911]        ----
-[67547.917912]   lock(&h->lock#2);
-[67547.917913]   lock(&h->lock#2);
-[67547.917913] 
-                *** DEADLOCK ***
+The machine configuration is as follows.  Thread IRQs are enabled, and we have elevated the priority of both the irq threads that service the specific network interface to 55.  We have also elevated the priority of the relevant user space thread to 49.  We are running on a 4 core Intel Xeon E3-1220v3 with an Intel NIC and the igb version 5.3.2 driver.  We disabled interrupt throttling in the Intel driver (rx-usecs = 0, tx-usecs = 0).  SE Linux is disabled, eliminating a huge packet latency spike during login.  We are running CentOS 7.1 tuned for network latency ("tuned-adm profile network-latency").  IRQ balancing is disabled.  BIOS CPU power management is set to maximum performance.
 
-[67547.917913]  May be due to missing lock nesting notation
+Any help you can provide would be greatly appreciated.
 
-[67547.917914] 2 locks held by kswapd0/59:
-[67547.917917]  #0:  (shrinker_rwsem){+.+...}, at: [<ffffffff810e77d2>] rt_down_read_trylock+0x22/0x30
-[67547.917919]  #1:  (&h->lock#2){+.+.-.}, at: [<ffffffff812934ca>] mb_cache_shrink_scan+0x9a/0x220
-[67547.917920] 
-               stack backtrace:
-[67547.917921] CPU: 0 PID: 59 Comm: kswapd0 Not tainted 4.4.4-rt11 #4
-[67547.917922] Hardware name: Hewlett-Packard p7-1512/2ADA, BIOS 8.15 02/05/2013
-[67547.917923]  0000000000000086 000000005fca2e71 ffff88018a9fba10 ffffffff813d5412
-[67547.917925]  ffffffff828ede50 ffff88018a9f4000 ffff88018a9fbb00 ffffffff810e0d66
-[67547.917926]  ffff88018a9fbb08 000000000000008a ffffffff828e58a0 ffffffff81c0bf18
-[67547.917926] Call Trace:
-[67547.917929]  [<ffffffff813d5412>] dump_stack+0x67/0x95
-[67547.917931]  [<ffffffff810e0d66>] __lock_acquire+0x1cf6/0x1d30
-[67547.917934]  [<ffffffff813f55d7>] ? debug_smp_processor_id+0x17/0x20
-[67547.917936]  [<ffffffff810deb49>] ? mark_held_locks+0x79/0xa0
-[67547.917940]  [<ffffffff817dc0cc>] ? _raw_spin_unlock_irqrestore+0x6c/0x80
-[67547.917941]  [<ffffffff810e1907>] lock_acquire+0xf7/0x240
-[67547.917942]  [<ffffffff812934dc>] ? mb_cache_shrink_scan+0xac/0x220
-[67547.917944]  [<ffffffff817dbb11>] _raw_spin_lock+0x41/0x80
-[67547.917945]  [<ffffffff812934dc>] ? mb_cache_shrink_scan+0xac/0x220
-[67547.917946]  [<ffffffff812934dc>] mb_cache_shrink_scan+0xac/0x220
-[67547.917949]  [<ffffffff811bfaaa>] shrink_slab.part.41+0x24a/0x600
-[67547.917951]  [<ffffffff811c479a>] shrink_zone+0x2ca/0x2e0
-[67547.917953]  [<ffffffff811c5ee1>] kswapd+0x581/0xbc0
-[67547.917955]  [<ffffffff811c5960>] ? mem_cgroup_shrink_node_zone+0x3c0/0x3c0
-[67547.917957]  [<ffffffff810a9b71>] kthread+0x101/0x120
-[67547.917959]  [<ffffffff810a9a70>] ? kthread_create_on_node+0x250/0x250
-[67547.917960]  [<ffffffff817dcfff>] ret_from_fork+0x3f/0x70
-[67547.917962]  [<ffffffff810a9a70>] ? kthread_create_on_node+0x250/0x250
- 
-Best regards,
-Luis
+Thanks,
+Mike
+
+
