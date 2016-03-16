@@ -1,100 +1,94 @@
-From: eg Engleder Gerhard <eg@keba.com>
-Subject: RE: Eliminating Packet Latency [ NOT ENCRYPTED ] [ SIGNATURE_OK ]
-Date: Wed, 16 Mar 2016 08:34:10 +0100
-Message-ID: <12C1B74BDFD05D40B2356A9B12DFA3396C365B9764@KEBMXSPMB01.keba.co.at>
+From: Josh Cartwright <joshc@ni.com>
+Subject: Re: [ANNOUNCE] 3.14.64-rt67
+Date: Wed, 16 Mar 2016 11:21:29 -0500
+Message-ID: <20160316162129.GH28102@jcartwri.amer.corp.natinst.com>
+References: <20160314114957.45d956d7@gandalf.local.home>
+ <CAP=VYLrokYVacxid7Cdytk+CmB4bu=vKuufeMLYtQr6PrvYe3g@mail.gmail.com>
+ <CAP=VYLrX5RPQ1_VTYZWC1JDq82=w8HDOjer3Jc4_kXmsLB-W8g@mail.gmail.com>
+ <CAP=VYLq=vdBn2sDX57kUGqUAuLNSxh=fM3zEjQa_GgegAtGoOg@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="us-ascii"
-Content-Transfer-Encoding: 8BIT
-To: Dave Rolenc <drolenc@rtlogic.com>,
-	Michael Hewitt <mhewitt@aha.com>,
-	"linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from xlspam01.mdcs.at ([217.13.183.26]:6205 "EHLO xlspam01.mdcs.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751347AbcCPHoj convert rfc822-to-8bit (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Mar 2016 03:44:39 -0400
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: Paul Gortmaker <paul.gortmaker@windriver.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <CAP=VYLq=vdBn2sDX57kUGqUAuLNSxh=fM3zEjQa_GgegAtGoOg@mail.gmail.com>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-> I found that sometimes when sending network packets, the kernel would hijack the
-> thread of the sender when the queue was empty. This would cause issues, since I
-> had no control over the priority of that thread, since it could be anything. My fix
-> was to never allow the kernel to send in the context of the sending userspace
+On Tue, Mar 15, 2016 at 10:50:31PM -0400, Paul Gortmaker wrote:
+> On Tue, Mar 15, 2016 at 7:25 PM, Paul Gortmaker
+> <paul.gortmaker@windriver.com> wrote:
+> > On Tue, Mar 15, 2016 at 5:45 PM, Paul Gortmaker
+> > <paul.gortmaker@windriver.com> wrote:
+> >> On Mon, Mar 14, 2016 at 11:49 AM, Steven Rostedt <rostedt@goodmis.org> wrote:
+> >>>
+> >>> Dear RT Folks,
+> >>>
+> >>> 3.14 release on PI(E) Day!
+> >>>
+> >>> I'm pleased to announce the 3.14.64-rt67 stable release.
+> >>
+> >> Testing this with what is largely a x86-64 defconfig but with RT_FULL,
+> >> I now see:
+> >>
+> >> root@dell760-paul:~# dmesg|grep NOH
+> >> [    8.605854] NOHZ: local_softirq_pending 100
+> >> [    8.732677] NOHZ: local_softirq_pending 100
+> >> [    8.852729] NOHZ: local_softirq_pending 100
+> >> [    8.963964] NOHZ: local_softirq_pending 100
+> >> [    9.061892] NOHZ: local_softirq_pending 100
+> >> [    9.184921] NOHZ: local_softirq_pending 100
+> >> [    9.370958] NOHZ: local_softirq_pending 100
+> >> [    9.657811] NOHZ: local_softirq_pending 100
+> >> [    9.942631] NOHZ: local_softirq_pending 100
+> >> [   10.783710] NOHZ: local_softirq_pending 100
+> >> root@dell760-paul:~#
+> >>
+> >> ...early in boot (we cap them after ~10 msgs).
+> >>
+> >> I think 100 is RCU if I did my bit counting properly; remind
+> >> me to submit a patch that uses the human readable names.
 
-We had a similar problem and solved it with changed locking:
+As mentioned on IRC, 100 is HRTIMER_SOFTIRQ, which I think makes more
+sense...at least it meshes better with the commit you identified as
+being problematic.
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index 16fbef8..8f32ac7 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2812,20 +2812,24 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, st
-ruct Qdisc *q,
-                                 struct netdev_queue *txq)
- {
-        spinlock_t *root_lock = qdisc_lock(q);
--       bool contended;
-        int rc;
+> >>
+> >> I had a good hunch which commit was responsible but I did
+> >> a check of it and the one directly underneath it to be sure,
+> >> and the latter boots w/o any pending messages.
+> >>
+> >> git log --oneline  v3.14-rt ^v3.14.64
+> >> [...]
+> >> 0a80a6849f19 latencyhist: disable jump-labels
+> >> a884ef48e1ca net: provide a way to delegate processing a softirq to ksoftirqd
+> >> 780d7ca2fdb0 softirq: split timer softirqs out of ksoftirqd    <------
+> >> *** fail ***
 
-        qdisc_pkt_len_init(skb);
-        qdisc_calculate_pkt_len(skb, q);
-        /*
-+        * Always take busylock to enable priority boosting with PREEMPT_RT.
-+        * Otherwise the __QDISC_STATE_RUNNING owner can block the transmission
-+        * of network packets indefinitly. Without PREEMPT_RT this is not
-+        * possible, because the soft IRQ lock done in dev_queue_xmit() is not
-+        * interruptible.
-+        *
-+        * This use of busylock is different to its actual intention:
-         * Heuristic to force contended enqueues to serialize on a
-         * separate lock before trying to get qdisc main lock.
-         * This permits __QDISC___STATE_RUNNING owner to get the lock more
-         * often and dequeue packets faster.
-         */
--       contended = qdisc_is_running(q);
--       if (unlikely(contended))
--               spin_lock(&q->busylock);
-+       spin_lock(&q->busylock);
+Looking at the places where HRTIMER_SOFTIRQ is raised, it did look like
+there is at least one case where a hrtimer started from process context
+would cause HRTIMER_SOFTIRQ to be set pending, but the associated
+ktimersoftirq/N not woken, which seems problematic.
 
-        spin_lock(root_lock);
-        if (unlikely(test_bit(__QDISC_STATE_DEACTIVATED, &q->state))) {
-@@ -2841,29 +2845,20 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
+  Josh
 
-                qdisc_bstats_update(q, skb);
-
--               if (sch_direct_xmit(skb, q, dev, txq, root_lock, true)) {
--                       if (unlikely(contended)) {
--                               spin_unlock(&q->busylock);
--                               contended = false;
--                       }
-+               if (sch_direct_xmit(skb, q, dev, txq, root_lock, true))
-                        __qdisc_run(q);
--               } else
-+               else
-                        qdisc_run_end(q);
-
-                rc = NET_XMIT_SUCCESS;
-        } else {
-                rc = q->enqueue(skb, q) & NET_XMIT_MASK;
-                if (qdisc_run_begin(q)) {
--                       if (unlikely(contended)) {
--                               spin_unlock(&q->busylock);
--                               contended = false;
--                       }
-                        __qdisc_run(q);
-                }
-        }
-        spin_unlock(root_lock);
--       if (unlikely(contended))
--               spin_unlock(&q->busylock);
-+       spin_unlock(&q->busylock);
-        return rc;
+diff --git a/kernel/softirq.c b/kernel/softirq.c
+index 7abfdab..d91f378 100644
+--- a/kernel/softirq.c
++++ b/kernel/softirq.c
+@@ -749,7 +749,7 @@ void raise_softirq_irqoff(unsigned int nr)
+ 	 *
+ 	 */
+ 	if (!current->softirq_nestcnt)
+-		wakeup_softirqd();
++		wakeup_proper_softirq(nr);
  }
-
-> thread. I suspect that most uses of the real time  kernel don't expect the real time
-> nature of things to extend across the network, but I could be wrong.
-I also would not expect real-time properties from the network stack. With the patch
-a transmission deadline of 10ms was met.
-
-gerhard
+ 
+ static inline int ksoftirqd_softirq_pending(void)
