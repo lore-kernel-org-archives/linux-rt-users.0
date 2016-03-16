@@ -1,54 +1,43 @@
-From: Joel Fernandes <agnel.joel@gmail.com>
-Subject: RFC on fixing mutex spinning on owner
-Date: Wed, 16 Mar 2016 16:22:17 -0700
-Message-ID: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com>
+From: Greg Kroah-Hartman <greg@kroah.com>
+Subject: Re: RFC on fixing mutex spinning on owner
+Date: Wed, 16 Mar 2016 16:35:30 -0700
+Message-ID: <20160316233530.GA8731@kroah.com>
+References: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	kernelnewbies <kernelnewbies@nl.linux.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	Ingo Molnar <mingo@redhat.com>,
-	Greg Kroah-Hartman <greg@kroah.com>,
 	Peter Zijlstra <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>
-To: linux-rt-users@vger.kernel.org,
-	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
-	kernelnewbies <kernelnewbies@nl.linux.org>
+To: Joel Fernandes <agnel.joel@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-lf0-f43.google.com ([209.85.215.43]:36541 "EHLO
-	mail-lf0-f43.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933264AbcCPXWT (ORCPT
+Received: from out2-smtp.messagingengine.com ([66.111.4.26]:43896 "EHLO
+	out2-smtp.messagingengine.com" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S934515AbcCPXff (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 16 Mar 2016 19:22:19 -0400
+	Wed, 16 Mar 2016 19:35:35 -0400
+Received: from compute1.internal (compute1.nyi.internal [10.202.2.41])
+	by mailout.nyi.internal (Postfix) with ESMTP id A39E820F0F
+	for <linux-rt-users@vger.kernel.org>; Wed, 16 Mar 2016 19:35:34 -0400 (EDT)
+Content-Disposition: inline
+In-Reply-To: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+On Wed, Mar 16, 2016 at 04:22:17PM -0700, Joel Fernandes wrote:
+> Hi,
+> 
+> On a fairly recent kernel and android userspace, I am seeing that with
+> i915 driver is in a spin loop waiting for mutex owner to release it
+> (mutex_spin_on_owner).
 
-On a fairly recent kernel and android userspace, I am seeing that with
-i915 driver is in a spin loop waiting for mutex owner to release it
-(mutex_spin_on_owner). I believe this because the owner of the mutex
-is running on another CPU and the expectation is the mutex owner
-releases the mutex or goes to sleep soon, so we avoid sleeping if we
-fail to acquire mutex and continue to spin and try to acquire it much
-like a spinlock (while disabling preemption through out the spinning).
+Why not provide a backtrace to the drm and i915 developers so that they
+can work on this?  The mailing lists you sent this to can't do much
+about this, sorry...
 
-My question is, what if the owner cannot or doesn't want to sleep and
-holds the mutex runs for a while while holding it. (Lets also assume
-that all other tasks are sleeping on the mutex owner's CPU so its not
-preempted).
+thanks,
 
-In this case, does it make sense to time out the spinning after a
-while? Because preemption is disabled during the spinning so this
-spinning business seems a very very bad thing.
-
-Should the code holding the mutex and running (the owner) be fixed to
-not hold mutex for a while? Or would a patch introducing a timeout of
-a certain threshold on the spinning be welcomed?
-
-To give numbers, I am seeing spinning of as long as 20 ms in the worst
-case, while the mutex owner holds the mutex for 22 ms. The ftrace
-preemptoff tracer goes off.
-
-Thanks for any advice on what the right fix of the problem should be.
-
-Best,
-Joel
+greg k-h
