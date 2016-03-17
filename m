@@ -1,79 +1,40 @@
-From: Peter Zijlstra <peterz@infradead.org>
+From: Thomas Gleixner <tglx@linutronix.de>
 Subject: Re: RFC on fixing mutex spinning on owner
-Date: Thu, 17 Mar 2016 11:18:23 +0100
-Message-ID: <20160317101823.GQ6344@twins.programming.kicks-ass.net>
-References: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com>
- <20160316233530.GA8731@kroah.com>
- <CAD=GYpZVGwfk8Y8WTQpdgdm5qgxjsi_gVrnOswuWitEbhaWPbw@mail.gmail.com>
- <20160316221751.71816309@grimm.local.home>
- <20160317073605.GM6344@twins.programming.kicks-ass.net>
- <20160317080526.GB6679@osadl.at>
+Date: Thu, 17 Mar 2016 12:16:11 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1603171214530.3978@nanos>
+References: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com> <20160316233530.GA8731@kroah.com> <CAD=GYpZVGwfk8Y8WTQpdgdm5qgxjsi_gVrnOswuWitEbhaWPbw@mail.gmail.com> <20160316221751.71816309@grimm.local.home> <20160317073605.GM6344@twins.programming.kicks-ass.net>
+ <20160317080526.GB6679@osadl.at> <20160317101823.GQ6344@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Steven Rostedt <rostedt@goodmis.org>,
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Nicholas Mc Guire <der.herr@hofr.at>,
+	Steven Rostedt <rostedt@goodmis.org>,
 	Joel Fernandes <agnel.joel@gmail.com>,
 	Greg Kroah-Hartman <greg@kroah.com>,
 	linux-rt-users@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
 	kernelnewbies <kernelnewbies@nl.linux.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Nicholas Mc Guire <der.herr@hofr.at>
+	Ingo Molnar <mingo@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from casper.infradead.org ([85.118.1.10]:55888 "EHLO
-	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S935471AbcCQKS1 (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:59631 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S935760AbcCQLRp (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 06:18:27 -0400
-Content-Disposition: inline
-In-Reply-To: <20160317080526.GB6679@osadl.at>
+	Thu, 17 Mar 2016 07:17:45 -0400
+In-Reply-To: <20160317101823.GQ6344@twins.programming.kicks-ass.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, Mar 17, 2016 at 08:05:26AM +0000, Nicholas Mc Guire wrote:
-> scanning for that patter with a quite relaxed spatch did not
-> turn up more than a hand full:
-> 
-> @resched_spin exists@
-> position p;
-> @@
-> 
-> (
-> * while@p (...) {
->           ...
->           if (need_resched() || ...)
->                   break;
->           ...
->           \(cpu_relax\|cpu_relax_lowlatency\)();
->   }
-> |
-> * while@p (!need_resched()) {
->           ...
->           \(cpu_relax\|cpu_relax_lowlatency\)();
->   }
-> )
-> 
-> @script:python@
-> p << resched_spin.p;
-> @@
-> print "%s:%s " % (p[0].file,p[0].line)                                          
-> 
-> 
-> is this making some wrong assumptions here or is this
-> really so infrequent ? 
+On Thu, 17 Mar 2016, Peter Zijlstra wrote:
+> Also, maybe the tracer should measure the time from need_resched()
+> getting true until the next preemption point, instead of the entire time
+> preemption was disabled. Which would avoid the entire issue altogether.
 
-Ah, a tool, nice! :-)
+Well, that only gives you the information on a actual preemption, but not
+information about long preempt disabled regions which can cause a problem
+eventually.
 
-There should be one in the osq_lock, one in mutex, one in rwsem-xadd,
-davidlohr was adding one to rt_mutex; and these are the one I can
-remember from the top of my head.
+Thanks,
 
-But I would not be surprised if there are a fair few more. Also for (;;)
-is a frequent loop pattern.
+	tglx
 
-My biggest worry is how to not forget adding this annotation if we
-create yet another instance of this. The tool could help I suppose.
-
-Also, maybe the tracer should measure the time from need_resched()
-getting true until the next preemption point, instead of the entire time
-preemption was disabled. Which would avoid the entire issue altogether.
