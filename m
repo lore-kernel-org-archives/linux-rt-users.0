@@ -1,64 +1,60 @@
 From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: [PATCH 1/4] cyclictest: tracing(): check for notrace
-Date: Thu, 17 Mar 2016 14:30:14 -0400
-Message-ID: <1458239417-31089-2-git-send-email-lcapitulino@redhat.com>
-References: <1458239417-31089-1-git-send-email-lcapitulino@redhat.com>
-Cc: jkacur@redhat.com, williams@redhat.com
+Subject: [PATCH 3/3] cyclictest: initialize 'stop' early
+Date: Thu, 17 Mar 2016 14:29:05 -0400
+Message-ID: <1458239345-30892-4-git-send-email-lcapitulino@redhat.com>
+References: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
+Cc: williams@redhat.com, jkacur@redhat.com
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:48864 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:34483 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S966562AbcCQSa1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 14:30:27 -0400
-Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
-	by mx1.redhat.com (Postfix) with ESMTPS id 23CC18F316
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 18:30:27 +0000 (UTC)
-In-Reply-To: <1458239417-31089-1-git-send-email-lcapitulino@redhat.com>
+	id S966473AbcCQS3Q (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Mar 2016 14:29:16 -0400
+Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+	by mx1.redhat.com (Postfix) with ESMTPS id 75B5E804E5
+	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 18:29:16 +0000 (UTC)
+In-Reply-To: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-If you pass -b and --notrace to cyclictest today, it will
-write to tracing_on when -b latency is reached.
-
-Fix this by making tracing() check notrace.
+For some modes like MODE_CLOCK_NANOSLEEP, the clock
+is already ticking when 'stop' is initialized. This
+shouldn't matter, as this memset() should very fast
+(I'd guess a few dozens or hundrends nanoseconds at
+most?), but I also think there's no reason to do it
+this late. So, initialize it along with everything
+else.
 
 Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
 ---
- src/cyclictest/cyclictest.c | 7 +++++--
- 1 file changed, 5 insertions(+), 2 deletions(-)
+ src/cyclictest/cyclictest.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
 
 diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index f5a67dc..6070457 100644
+index f5a67dc..202939f 100644
 --- a/src/cyclictest/cyclictest.c
 +++ b/src/cyclictest/cyclictest.c
-@@ -479,6 +479,9 @@ static void tracemark(char *fmt, ...)
- 
- static void tracing(int on)
- {
-+	if (notrace)
-+		return;
-+
- 	if (on) {
- 		switch (kernelversion) {
- 		case KV_26_LT18: gettimeofday(0,(struct timezone *)1); break;
-@@ -1698,7 +1701,7 @@ static void sighand(int sig)
- 	shutdown = 1;
- 	if (refresh_on_max)
- 		pthread_cond_signal(&refresh_on_max_cond);
--	if (tracelimit && !notrace)
-+	if (tracelimit)
- 		tracing(0);
- }
- 
-@@ -2303,7 +2306,7 @@ int main(int argc, char **argv)
+@@ -829,6 +829,8 @@ static void *timerthread(void *param)
+ 		tspec.it_interval = interval;
  	}
-  out:
- 	/* ensure that the tracer is stopped */
--	if (tracelimit && !notrace)
-+	if (tracelimit)
- 		tracing(0);
  
++	memset(&stop, 0, sizeof(stop));
++
+ 	memset(&schedp, 0, sizeof(schedp));
+ 	schedp.sched_priority = par->prio;
+ 	if (setscheduler(0, par->policy, &schedp))
+@@ -868,10 +870,10 @@ static void *timerthread(void *param)
+ 	tsnorm(&next);
  
+ 	if (duration) {
+-		memset(&stop, 0, sizeof(stop)); /* grrr */
+ 		stop = now;
+ 		stop.tv_sec += duration;
+ 	}
++
+ 	if (par->mode == MODE_CYCLIC) {
+ 		if (par->timermode == TIMER_ABSTIME)
+ 			tspec.it_value = next;
 -- 
 2.1.0
 
