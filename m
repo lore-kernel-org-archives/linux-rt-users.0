@@ -1,54 +1,64 @@
 From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: [PATCH 1/3] rt-migrate-test: fix return code
-Date: Thu, 17 Mar 2016 14:29:03 -0400
-Message-ID: <1458239345-30892-2-git-send-email-lcapitulino@redhat.com>
-References: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
-Cc: williams@redhat.com, jkacur@redhat.com
+Subject: [PATCH 1/4] cyclictest: tracing(): check for notrace
+Date: Thu, 17 Mar 2016 14:30:14 -0400
+Message-ID: <1458239417-31089-2-git-send-email-lcapitulino@redhat.com>
+References: <1458239417-31089-1-git-send-email-lcapitulino@redhat.com>
+Cc: jkacur@redhat.com, williams@redhat.com
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:40800 "EHLO mx1.redhat.com"
+Received: from mx1.redhat.com ([209.132.183.28]:48864 "EHLO mx1.redhat.com"
 	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S964832AbcCQS3M (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 14:29:12 -0400
-Received: from int-mx11.intmail.prod.int.phx2.redhat.com (int-mx11.intmail.prod.int.phx2.redhat.com [10.5.11.24])
-	by mx1.redhat.com (Postfix) with ESMTPS id 079068E3D4
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 18:29:12 +0000 (UTC)
-In-Reply-To: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
+	id S966562AbcCQSa1 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Mar 2016 14:30:27 -0400
+Received: from int-mx13.intmail.prod.int.phx2.redhat.com (int-mx13.intmail.prod.int.phx2.redhat.com [10.5.11.26])
+	by mx1.redhat.com (Postfix) with ESMTPS id 23CC18F316
+	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 18:30:27 +0000 (UTC)
+In-Reply-To: <1458239417-31089-1-git-send-email-lcapitulino@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Change both return codes for the stop == true case:
+If you pass -b and --notrace to cyclictest today, it will
+write to tracing_on when -b latency is reached.
 
- * For failures, use exit(1) as exit(-1) is wrong
-   (it actually becomes 255 in the shell)
-
- * For success, use exit(2) instead of exit(1) as
-   exit(1) is usually used for errors
-
-This should preserve the requirement of allowing
-shell script while loops to break when Ctrl-C is hit.
+Fix this by making tracing() check notrace.
 
 Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
 ---
- src/rt-migrate-test/rt-migrate-test.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ src/cyclictest/cyclictest.c | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
 
-diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-index d7b68dd..1362404 100644
---- a/src/rt-migrate-test/rt-migrate-test.c
-+++ b/src/rt-migrate-test/rt-migrate-test.c
-@@ -599,9 +599,9 @@ int main (int argc, char **argv)
- 		 * loop know to break.
- 		 */
- 		if (check < 0)
--			exit(-1);
--		else
- 			exit(1);
-+		else
-+			exit(2);
+diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+index f5a67dc..6070457 100644
+--- a/src/cyclictest/cyclictest.c
++++ b/src/cyclictest/cyclictest.c
+@@ -479,6 +479,9 @@ static void tracemark(char *fmt, ...)
+ 
+ static void tracing(int on)
+ {
++	if (notrace)
++		return;
++
+ 	if (on) {
+ 		switch (kernelversion) {
+ 		case KV_26_LT18: gettimeofday(0,(struct timezone *)1); break;
+@@ -1698,7 +1701,7 @@ static void sighand(int sig)
+ 	shutdown = 1;
+ 	if (refresh_on_max)
+ 		pthread_cond_signal(&refresh_on_max_cond);
+-	if (tracelimit && !notrace)
++	if (tracelimit)
+ 		tracing(0);
+ }
+ 
+@@ -2303,7 +2306,7 @@ int main(int argc, char **argv)
  	}
- 	if (check < 0)
- 		exit(-1);
+  out:
+ 	/* ensure that the tracer is stopped */
+-	if (tracelimit && !notrace)
++	if (tracelimit)
+ 		tracing(0);
+ 
+ 
 -- 
 2.1.0
 
