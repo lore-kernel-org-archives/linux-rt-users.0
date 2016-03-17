@@ -1,56 +1,47 @@
 From: Steven Rostedt <rostedt@goodmis.org>
 Subject: Re: RFC on fixing mutex spinning on owner
-Date: Thu, 17 Mar 2016 08:06:29 -0400
-Message-ID: <20160317080629.1af8f733@grimm.local.home>
+Date: Thu, 17 Mar 2016 08:08:30 -0400
+Message-ID: <20160317080830.0855148d@grimm.local.home>
 References: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com>
 	<20160316233530.GA8731@kroah.com>
 	<CAD=GYpZVGwfk8Y8WTQpdgdm5qgxjsi_gVrnOswuWitEbhaWPbw@mail.gmail.com>
 	<20160316221751.71816309@grimm.local.home>
-	<20160317073605.GM6344@twins.programming.kicks-ass.net>
-	<20160317080526.GB6679@osadl.at>
-	<20160317101823.GQ6344@twins.programming.kicks-ass.net>
-	<alpine.DEB.2.11.1603171214530.3978@nanos>
+	<CAD=GYpbFRP5W2aNLpUoDtuK8Ebn+ki9JDGkBMS45nKVkc2wdSQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
-Cc: Peter Zijlstra <peterz@infradead.org>,
-	Nicholas Mc Guire <der.herr@hofr.at>,
-	Joel Fernandes <agnel.joel@gmail.com>,
-	Greg Kroah-Hartman <greg@kroah.com>,
+Cc: Greg Kroah-Hartman <greg@kroah.com>,
 	linux-rt-users@vger.kernel.org,
 	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
 	kernelnewbies <kernelnewbies@nl.linux.org>,
-	Ingo Molnar <mingo@redhat.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Ingo Molnar <mingo@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Joel Fernandes <agnel.joel@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0221.hostedemail.com ([216.40.44.221]:37545 "EHLO
+Received: from smtprelay0253.hostedemail.com ([216.40.44.253]:34089 "EHLO
 	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1755969AbcCQMGe (ORCPT
+	by vger.kernel.org with ESMTP id S932879AbcCQMIe (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 08:06:34 -0400
-In-Reply-To: <alpine.DEB.2.11.1603171214530.3978@nanos>
+	Thu, 17 Mar 2016 08:08:34 -0400
+In-Reply-To: <CAD=GYpbFRP5W2aNLpUoDtuK8Ebn+ki9JDGkBMS45nKVkc2wdSQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 17 Mar 2016 12:16:11 +0100 (CET)
-Thomas Gleixner <tglx@linutronix.de> wrote:
+On Wed, 16 Mar 2016 22:35:21 -0700
+Joel Fernandes <agnel.joel@gmail.com> wrote:
 
-> On Thu, 17 Mar 2016, Peter Zijlstra wrote:
-> > Also, maybe the tracer should measure the time from need_resched()
-> > getting true until the next preemption point, instead of the entire time
-> > preemption was disabled. Which would avoid the entire issue altogether.  
+
+> Also, since we are on the topic of preemptoff tracer, I posted a patch
+> [1] few days ago fixing another issue, if it looks Ok to you could you
+> pick it up? I had CC'd you on it.
 > 
-> Well, that only gives you the information on a actual preemption, but not
-> information about long preempt disabled regions which can cause a problem
-> eventually.
-> 
+> [1] http://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1099561.html
 
-Actually, I was thinking the reverse. If need_resched() is called and
-is false, then do a reset of the preemption time. But if need_resched()
-is true, then do nothing, as that would measure the total time preempt
-disable was set and a task could not schedule.
+Yeah I saw that. I've been busy debugging work code. In other words,
+doing my day job ;-)  I'm hoping to spend today working on mainline
+again.
 
-Question is, should this be a hook and each location audited, or add
-this to need_resched() itself?
+Thanks,
 
 -- Steve
