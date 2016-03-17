@@ -1,53 +1,65 @@
 From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Subject: Re: [PATCH 4.4-rt2] fix
- arm-at91-pit-remove-irq-handler-when-clock-is-unused.patch
-Date: Thu, 17 Mar 2016 20:55:09 +0100
-Message-ID: <20160317195509.GF2831@piout.net>
-References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
- <1452997394-8554-2-git-send-email-alexandre.belloni@free-electrons.com>
- <20160118172522.GB12309@linutronix.de>
- <20160118184247.GQ3367@piout.net>
- <alpine.DEB.2.11.1601201158280.3575@nanos>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>,
+Subject: [PATCH] clockevents/drivers/timer-atmel-pit: fix double free_irq
+Date: Thu, 17 Mar 2016 21:09:43 +0100
+Message-ID: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
+Cc: Boris Brezillon <boris.brezillon@free-electrons.com>,
 	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
 	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>
-To: Thomas Gleixner <tglx@linutronix.de>
+	Nicolas Ferre <nicolas.ferre@atmel.com>,
+	Alexandre Belloni <alexandre.belloni@free-electrons.com>
+To: bigeasy@linutronix.de, Thomas Gleixner <tglx@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <alpine.DEB.2.11.1601201158280.3575@nanos>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-Hi Thomas,
+clockevents_exchange_device() changes the state from detached to shutdown
+and so at that point the IRQ has not yet been requested.
 
-On 20/01/2016 at 12:07:30 +0100, Thomas Gleixner wrote :
-> Well freeing the irq from that context in RT only works because its called
-> before SYSTEM_STATE=RUNNING. So no, this was wrong forever.
-> 
-> The issue we are dealing with is that the timer interrupt is shared with the
-> uart. So the timer has IRQ_NO_THREAD set and the uart interrupt gets force
-> threaded. So that results in a failure to request the interrupt for the
-> UART. That's not RT specific, that already happens in mainline if you add
-> 'threadirqs' to the command line.
-> 
-> So until the DT folks come to senses and we get that dummy demux chip done, I
-> came up with the following - completely untested - solution.
-> 
-> The downside of this is, that the timer will be delayed until the uart thread
-> returns, but with the replacement clockevent in place on RT that's a non
-> issue. For mainline it's obviously better than what we have now.
-> 
+Signed-off-by: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+---
 
-I've tested it and it seems to work properly on the few platform where I
-can reproduce the issue. What is your plan regarding upstreaming? I
-guess you can split and take the resulting patches through your tree.
+Hi Sebastian,
 
+This patch fixes the last warning for preempt-rt on at91. It applies on
+v4.4.4-rt11. Note that the whome PIT/TCB mess will be fixed in another way in
+the mainline as we are reworking the tcb driver to avoid using the pit when
+booting.
 
+ drivers/clocksource/timer-atmel-pit.c | 8 +++++++-
+ 1 file changed, 7 insertions(+), 1 deletion(-)
+
+diff --git a/drivers/clocksource/timer-atmel-pit.c b/drivers/clocksource/timer-atmel-pit.c
+index a7abdb6638cd..7a40f7e88468 100644
+--- a/drivers/clocksource/timer-atmel-pit.c
++++ b/drivers/clocksource/timer-atmel-pit.c
+@@ -46,6 +46,7 @@ struct pit_data {
+ 	u32		cycle;
+ 	u32		cnt;
+ 	unsigned int	irq;
++	bool		irq_requested;
+ 	struct clk	*mck;
+ };
+ 
+@@ -96,7 +97,10 @@ static int pit_clkevt_shutdown(struct clock_event_device *dev)
+ 
+ 	/* disable irq, leaving the clocksource active */
+ 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
+-	free_irq(data->irq, data);
++	if (data->irq_requested) {
++		free_irq(data->irq, data);
++		data->irq_requested = false;
++	}
+ 	return 0;
+ }
+ 
+@@ -115,6 +119,8 @@ static int pit_clkevt_set_periodic(struct clock_event_device *dev)
+ 	if (ret)
+ 		panic(pr_fmt("Unable to setup IRQ\n"));
+ 
++	data->irq_requested = true;
++
+ 	/* update clocksource counter */
+ 	data->cnt += data->cycle * PIT_PICNT(pit_read(data->base, AT91_PIT_PIVR));
+ 	pit_write(data->base, AT91_PIT_MR,
 -- 
-Alexandre Belloni, Free Electrons
-Embedded Linux, Kernel and Android engineering
-http://free-electrons.com
+2.7.0
