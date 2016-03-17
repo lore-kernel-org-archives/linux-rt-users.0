@@ -1,81 +1,59 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH 2/4] rt-migrate-test: fix return code
-Date: Thu, 17 Mar 2016 09:25:36 -0400
-Message-ID: <20160317092536.4d0d7e09@redhat.com>
-References: <1456346981-24032-1-git-send-email-lcapitulino@redhat.com>
-	<1456346981-24032-3-git-send-email-lcapitulino@redhat.com>
-	<alpine.LFD.2.20.1603162312320.16977@riemann>
+From: Thomas Gleixner <tglx@linutronix.de>
+Subject: Re: RFC on fixing mutex spinning on owner
+Date: Thu, 17 Mar 2016 14:32:54 +0100 (CET)
+Message-ID: <alpine.DEB.2.11.1603171431490.3978@nanos>
+References: <CAD=GYpbHjcsuQSnNPL4SCv-r=Me6oiH7dJ98a64udbakWLaUjQ@mail.gmail.com> <20160316233530.GA8731@kroah.com> <CAD=GYpZVGwfk8Y8WTQpdgdm5qgxjsi_gVrnOswuWitEbhaWPbw@mail.gmail.com> <20160316221751.71816309@grimm.local.home> <20160317073605.GM6344@twins.programming.kicks-ass.net>
+ <20160317080526.GB6679@osadl.at> <20160317101823.GQ6344@twins.programming.kicks-ass.net> <alpine.DEB.2.11.1603171214530.3978@nanos> <20160317080629.1af8f733@grimm.local.home> <20160317121333.GU6344@twins.programming.kicks-ass.net>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
-To: John Kacur <jkacur@redhat.com>
+Content-Type: TEXT/PLAIN; charset=US-ASCII
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	Nicholas Mc Guire <der.herr@hofr.at>,
+	Joel Fernandes <agnel.joel@gmail.com>,
+	Greg Kroah-Hartman <greg@kroah.com>,
+	linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	kernelnewbies <kernelnewbies@nl.linux.org>,
+	Ingo Molnar <mingo@redhat.com>
+To: Peter Zijlstra <peterz@infradead.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:60236 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932614AbcCQNZj (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 09:25:39 -0400
-Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
-	by mx1.redhat.com (Postfix) with ESMTPS id 60D7E8050D
-	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 13:25:39 +0000 (UTC)
-In-Reply-To: <alpine.LFD.2.20.1603162312320.16977@riemann>
+Received: from www.linutronix.de ([62.245.132.108]:60156 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1030751AbcCQNe3 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Mar 2016 09:34:29 -0400
+In-Reply-To: <20160317121333.GU6344@twins.programming.kicks-ass.net>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Wed, 16 Mar 2016 23:14:10 +0100 (CET)
-John Kacur <jkacur@redhat.com> wrote:
+On Thu, 17 Mar 2016, Peter Zijlstra wrote:
+> On Thu, Mar 17, 2016 at 08:06:29AM -0400, Steven Rostedt wrote:
+> > On Thu, 17 Mar 2016 12:16:11 +0100 (CET)
+> > Thomas Gleixner <tglx@linutronix.de> wrote:
+> > 
+> > > On Thu, 17 Mar 2016, Peter Zijlstra wrote:
+> > > > Also, maybe the tracer should measure the time from need_resched()
+> > > > getting true until the next preemption point, instead of the entire time
+> > > > preemption was disabled. Which would avoid the entire issue altogether.  
+> > > 
+> > > Well, that only gives you the information on a actual preemption, but not
+> > > information about long preempt disabled regions which can cause a problem
+> > > eventually.
+> > > 
+> > 
+> > Actually, I was thinking the reverse. If need_resched() is called and
+> > is false, then do a reset of the preemption time. But if need_resched()
+> > is true, then do nothing, as that would measure the total time preempt
+> > disable was set and a task could not schedule.
+> > 
+> > Question is, should this be a hook and each location audited, or add
+> > this to need_resched() itself?
+> 
+> Is anybody calling need_resched() and then not doing anything with the
+> value?
 
-> 
-> 
-> On Wed, 24 Feb 2016, Luiz Capitulino wrote:
-> 
-> > Change both return codes for the stop == true case:
-> > 
-> >  * For failures, use exit(1) as exit(-1) is wrong
-> >    (it actually becomes 255 in the shell)
-> > 
-> >  * For success, use exit(2) instead of exit(1) as
-> >    exit(1) is usually used for errors
-> > 
-> > This should preserve the requirement of allowing
-> > shell script while loops to break when Ctrl-C is hit.
-> > 
-> > Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
-> > ---
-> >  src/rt-migrate-test/rt-migrate-test.c | 4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-> > index fc6fd81..6e8acc2 100644
-> > --- a/src/rt-migrate-test/rt-migrate-test.c
-> > +++ b/src/rt-migrate-test/rt-migrate-test.c
-> > @@ -594,9 +594,9 @@ int main (int argc, char **argv)
-> >  		 * loop know to break.
-> >  		 */
-> >  		if (check < 0)
-> > -			exit(-1);
-> > -		else
-> >  			exit(1);
-> > +		else
-> > +			exit(2);
-> >  	}
-> >  	if (check < 0)
-> >  		exit(-1);
-> > -- 
-> > 2.1.0
-> > 
-> > --
-> 
-> You can change the failure status from -1 to 1 if you wish, this is the 
-> normal value for EXIT_FAILURE
-> 
-> However the normal value for EXIT_SUCCESS is 0, so please do not change 
-> that.
+Probably not. So Stevens idea makes a lot of sense.
 
-I'm not changing it. I'm maintaining the protocol used by rt-migrate-test:
+Thanks,
 
-        /*
-         * We use this test in bash while loops
-         * So if we hit Ctrl-C then let the while
-         * loop know to break.
-         */
+	tglx
+ 
