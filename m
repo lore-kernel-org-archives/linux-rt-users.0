@@ -1,71 +1,112 @@
-From: Matt Campbell <mcampbell@izotope.com>
-Subject: struct wait_queue_Head_t to struct swait_head warning
-Date: Thu, 17 Mar 2016 11:26:04 -0400
-Message-ID: <CAMDowVWB-ZBQ6ZEcGWohuZbVwzkSJALGKHf1-bP6OxenkAcROQ@mail.gmail.com>
+From: Nicholas Mc Guire <der.herr@hofr.at>
+Subject: Re: RFC on fixing mutex spinning on owner
+Date: Thu, 17 Mar 2016 15:36:20 +0000
+Message-ID: <20160317153620.GA8933@osadl.at>
+References: <20160316233530.GA8731@kroah.com>
+ <CAD=GYpZVGwfk8Y8WTQpdgdm5qgxjsi_gVrnOswuWitEbhaWPbw@mail.gmail.com>
+ <20160316221751.71816309@grimm.local.home>
+ <20160317073605.GM6344@twins.programming.kicks-ass.net>
+ <20160317080526.GB6679@osadl.at>
+ <20160317101823.GQ6344@twins.programming.kicks-ass.net>
+ <alpine.DEB.2.11.1603171214530.3978@nanos>
+ <20160317080629.1af8f733@grimm.local.home>
+ <20160317121333.GU6344@twins.programming.kicks-ass.net>
+ <alpine.DEB.2.11.1603171431490.3978@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-yw0-f177.google.com ([209.85.161.177]:34544 "EHLO
-	mail-yw0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1031417AbcCQP0F (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 17 Mar 2016 11:26:05 -0400
-Received: by mail-yw0-f177.google.com with SMTP id h129so104166498ywb.1
-        for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 08:26:04 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=us-ascii
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Joel Fernandes <agnel.joel@gmail.com>,
+	Greg Kroah-Hartman <greg@kroah.com>,
+	linux-rt-users@vger.kernel.org,
+	Linux Kernel Mailing List <linux-kernel@vger.kernel.org>,
+	kernelnewbies <kernelnewbies@nl.linux.org>,
+	Ingo Molnar <mingo@redhat.com>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1603171431490.3978@nanos>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi all,
+On Thu, Mar 17, 2016 at 02:32:54PM +0100, Thomas Gleixner wrote:
+> On Thu, 17 Mar 2016, Peter Zijlstra wrote:
+> > On Thu, Mar 17, 2016 at 08:06:29AM -0400, Steven Rostedt wrote:
+> > > On Thu, 17 Mar 2016 12:16:11 +0100 (CET)
+> > > Thomas Gleixner <tglx@linutronix.de> wrote:
+> > > 
+> > > > On Thu, 17 Mar 2016, Peter Zijlstra wrote:
+> > > > > Also, maybe the tracer should measure the time from need_resched()
+> > > > > getting true until the next preemption point, instead of the entire time
+> > > > > preemption was disabled. Which would avoid the entire issue altogether.  
+> > > > 
+> > > > Well, that only gives you the information on a actual preemption, but not
+> > > > information about long preempt disabled regions which can cause a problem
+> > > > eventually.
+> > > > 
+> > > 
+> > > Actually, I was thinking the reverse. If need_resched() is called and
+> > > is false, then do a reset of the preemption time. But if need_resched()
+> > > is true, then do nothing, as that would measure the total time preempt
+> > > disable was set and a task could not schedule.
+> > > 
+> > > Question is, should this be a hook and each location audited, or add
+> > > this to need_resched() itself?
+> > 
+> > Is anybody calling need_resched() and then not doing anything with the
+> > value?
+> 
+> Probably not. So Stevens idea makes a lot of sense.
+>
 
-I'm using the RT patch on an IMX6 using the Freescale kernel
-(3.14.52). I'm using a Broadcom wireless chip using the BCMDHD driver.
-I get the following warning when compiling:
+Provably not (provided I did not screw up the spec). So all need_resched
+are ither in a if|while condition, an argument to a function or part of a 
+return value.
 
-drivers/net/wireless/bcmdhd/dhd_pno.c: In function '_dhd_pno_get_for_batch':
-drivers/net/wireless/bcmdhd/dhd_pno.c:1377:23: warning: passing
-argument 1 of 'waitqueue_active' from incompatible pointer type
-  if (waitqueue_active(&_pno_state->get_batch_done.wait))
-                       ^
-In file included from include/linux/mmzone.h:9:0,
-                 from include/linux/gfp.h:5,
-                 from include/linux/kmod.h:22,
-                 from include/linux/module.h:13,
-                 from drivers/net/wireless/bcmdhd/include/linuxver.h:42,
-                 from drivers/net/wireless/bcmdhd/include/linux_osl.h:212,
-                 from drivers/net/wireless/bcmdhd/include/osl.h:44,
-                 from drivers/net/wireless/bcmdhd/dhd_pno.c:29:
-include/linux/wait.h:102:19: note: expected 'struct wait_queue_head_t
-*' but argument is of type 'struct swait_head *'
- static inline int waitqueue_active(wait_queue_head_t *q)
-                   ^
-drivers/net/wireless/bcmdhd/dhd_pno.c: In function 'dhd_pno_event_handler':
-drivers/net/wireless/bcmdhd/dhd_pno.c:1827:25: warning: passing
-argument 1 of 'waitqueue_active' from incompatible pointer type
-   if (!waitqueue_active(&_pno_state->get_batch_done.wait)) {
-                         ^
-In file included from include/linux/mmzone.h:9:0,
-                 from include/linux/gfp.h:5,
-                 from include/linux/kmod.h:22,
-                 from include/linux/module.h:13,
-                 from drivers/net/wireless/bcmdhd/include/linuxver.h:42,
-                 from drivers/net/wireless/bcmdhd/include/linux_osl.h:212,
-                 from drivers/net/wireless/bcmdhd/include/osl.h:44,
-                 from drivers/net/wireless/bcmdhd/dhd_pno.c:29:
-include/linux/wait.h:102:19: note: expected 'struct wait_queue_head_t
-*' but argument is of type 'struct swait_head *'
- static inline int waitqueue_active(wait_queue_head_t *q)
-                   ^
+<snip>
+@need_resched exists@
+identifier func,val;
+statement S1,S2;
+expression E1,E2;
+position p;
+@@
 
-It looks like this is due 'struct completion' changing to using the
-simple waitqueue in the RT patch. When looking at the rest of the RT
-patch it looks like cases like this are handled by changing the API to
-use the simple wait calls for these (for example usb/gadget/f_fs.c). I
-was able to get rid of the warning by switching from
-'waitqueue_active' to 'swaitqueue_active'. I'm not fully knowledge
-about the possible effects, so I was hoping someone could let me know
-if this is or isn't a good solution. I know this isn't mainline, but I
-would appreciate any help to point me in the right direction.
+(
+  if(<+... need_resched()@p ...+>) S1 else S2
+|
+  while (<+... need_resched()@p ...+>) S1
+//|
+//  Do while not supported in coccinelle :(
+//  do { ... } while (<+... need_resched()@p ...+>);
+|
+  val = need_resched()@p ? E1 : E2;
+|
+  func(..., need_resched()@p, ...);
+|
+  return <+... need_resched()@p ...+>;
+)
 
-Thanks,
-~Matt
+@need_resched_unused exists@
+position p != need_resched.p;
+@@
+
+* need_resched()@p
+
+@script:python@
+p << need_resched_unused.p;
+@@
+print "need_resched() in %s line %s not used" % (p[0].file,p[0].line)
+<snip> 
+
+ except for the unhandled do{...} while(need_resched()); cases as cocci
+ currently does not support do{}while(); constructs this does not report
+ any unused need_resched() cases and the 5 reported findings:
+need_resched() in ./include/net/busy_poll.h line 112 not used
+need_resched() in ./kernel/sched/core.c line 3453 not used
+need_resched() in ./kernel/sched/core.c line 3573 not used
+need_resched() in ./kernel/sched/core.c line 3546 not used
+need_resched() in ./kernel/sched/core.c line 3406 not used
+ where manually checked and are all do{}while(need_resched()); cases.
+
+thx!
+hofrat
