@@ -1,60 +1,40 @@
-From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Subject: Re: arm: at91: do not disable/enable clocks in a row
-Date: Thu, 17 Mar 2016 19:09:49 +0100
-Message-ID: <20160317180949.GE2831@piout.net>
-References: <1452997394-8554-1-git-send-email-alexandre.belloni@free-electrons.com>
- <20160118174259.GC12309@linutronix.de>
- <20160305113553.GB21216@piout.net>
- <20160308110639.GC21842@linutronix.de>
- <20160308183910.GD5845@piout.net>
- <20160309095824.GC10517@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline
-In-Reply-To: <20160309095824.GC10517@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [PATCH v2 0/3] rt-tests: minor fixes
+Date: Thu, 17 Mar 2016 14:29:02 -0400
+Message-ID: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
+Cc: williams@redhat.com, jkacur@redhat.com
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:40625 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S964832AbcCQS3K (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 17 Mar 2016 14:29:10 -0400
+Received: from int-mx14.intmail.prod.int.phx2.redhat.com (int-mx14.intmail.prod.int.phx2.redhat.com [10.5.11.27])
+	by mx1.redhat.com (Postfix) with ESMTPS id CF3FC7F0B5
+	for <linux-rt-users@vger.kernel.org>; Thu, 17 Mar 2016 18:29:09 +0000 (UTC)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 09/03/2016 at 10:58:24 +0100, Sebastian Andrzej Siewior wrote :
-> * Alexandre Belloni | 2016-03-08 19:39:10 [+0100]:
-> 
-> >Hi,
-> Hi,
-> 
-> >Both are things to work on. In the mean time, I'm using the following
-> >patch:
-> >https://github.com/alexandrebelloni/linux/commit/3a2eae463fce18ae815b887a5c9ca1a657b180ac
-> >
-> >I understood from
-> >http://lkml.iu.edu/hypermail/linux/kernel/1601.2/00941.html that this
-> >was not your preferred course of action.
-> 
-> That was one thing.  What about this:
-> 
-> ---
-> 
-> Currently the driver will disable the clock and enable it one line later
-> if it is switching from periodic mode into one shot.
-> This can be avoided and causes a needless warning on -RT.
-> 
-> Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+I've found these little things while reading the code and
+building rt-tests. They are all minor, but I'm sending
+them anyways.
 
-I'm fine with that if you don't want to rely on the clock event state
-machine.
+o v2
 
-Can you submit it to the mainline with:
-Tested-by: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Acked-by: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+ - rebase on top of current master
+ - drop already merged patch
 
+Luiz Capitulino (3):
+  rt-migrate-test: fix return code
+  don't use exit(-1) for failures
+  cyclictest: initialize 'stop' early
+
+ src/cyclictest/cyclictest.c           | 4 +++-
+ src/pi_tests/pi_stress.c              | 2 +-
+ src/pi_tests/pip_stress.c             | 6 +++---
+ src/rt-migrate-test/rt-migrate-test.c | 9 ++++-----
+ src/signaltest/signaltest.c           | 2 +-
+ 5 files changed, 12 insertions(+), 11 deletions(-)
 
 -- 
-Alexandre Belloni, Free Electrons
-Embedded Linux, Kernel and Android engineering
-http://free-electrons.com
+2.1.0
