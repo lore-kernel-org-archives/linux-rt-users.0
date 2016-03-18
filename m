@@ -1,91 +1,174 @@
-From: Nicolas Ferre <nicolas.ferre@atmel.com>
-Subject: Re: [PATCH] clockevents/drivers/timer-atmel-pit: fix double free_irq
-Date: Fri, 18 Mar 2016 09:20:03 +0100
-Message-ID: <56EBBA33.9080809@atmel.com>
-References: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
+From: Rik van Riel <riel@redhat.com>
+Subject: [PATCH -rt] kvm,rt: change async pagefault code locking for
+ rt-preempt
+Date: Fri, 18 Mar 2016 14:20:52 -0400
+Message-ID: <20160318142052.0605524d@annuminas.surriel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: QUOTED-PRINTABLE
-Cc: Boris Brezillon <boris.brezillon@free-electrons.com>,
-	<linux-arm-kernel@lists.infradead.org>,
-	<linux-kernel@vger.kernel.org>, <linux-rt-users@vger.kernel.org>
-To: Alexandre Belloni <alexandre.belloni@free-electrons.com>,
-	<bigeasy@linutronix.de>, Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: williams@redhat.com, srostedt@redhat.com
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mx1.redhat.com ([209.132.183.28]:34919 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751260AbcCRSV0 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 18 Mar 2016 14:21:26 -0400
+Received: from int-mx09.intmail.prod.int.phx2.redhat.com (int-mx09.intmail.prod.int.phx2.redhat.com [10.5.11.22])
+	by mx1.redhat.com (Postfix) with ESMTPS id E122E804E0
+	for <linux-rt-users@vger.kernel.org>; Fri, 18 Mar 2016 18:21:25 +0000 (UTC)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Le 17/03/2016 21:09, Alexandre Belloni a =E9crit :
-> clockevents_exchange_device() changes the state from detached to shut=
-down
-> and so at that point the IRQ has not yet been requested.
->=20
-> Signed-off-by: Alexandre Belloni <alexandre.belloni@free-electrons.co=
-m>
+The async pagefault wake code can run from the idle task in exception
+context, so everything here needs to be made non-preemptible.
 
-Acked-by: Nicolas Ferre <nicolas.ferre@atmel.com>
+Conversion to a simple wait queue and raw spinlock does the trick.
 
-> ---
->=20
-> Hi Sebastian,
->=20
-> This patch fixes the last warning for preempt-rt on at91. It applies =
-on
-> v4.4.4-rt11. Note that the whome PIT/TCB mess will be fixed in anothe=
-r way in
-> the mainline as we are reworking the tcb driver to avoid using the pi=
-t when
-> booting.
+Signed-off-by: Rik van Riel <riel@redhat.com>
+---
+ arch/x86/kernel/kvm.c | 37 +++++++++++++++++++------------------
+ 1 file changed, 19 insertions(+), 18 deletions(-)
 
-Yes, it's the plan!
-
-Thanks Alexandre. Bye.
-
->=20
->  drivers/clocksource/timer-atmel-pit.c | 8 +++++++-
->  1 file changed, 7 insertions(+), 1 deletion(-)
->=20
-> diff --git a/drivers/clocksource/timer-atmel-pit.c b/drivers/clocksou=
-rce/timer-atmel-pit.c
-> index a7abdb6638cd..7a40f7e88468 100644
-> --- a/drivers/clocksource/timer-atmel-pit.c
-> +++ b/drivers/clocksource/timer-atmel-pit.c
-> @@ -46,6 +46,7 @@ struct pit_data {
->  	u32		cycle;
->  	u32		cnt;
->  	unsigned int	irq;
-> +	bool		irq_requested;
->  	struct clk	*mck;
->  };
-> =20
-> @@ -96,7 +97,10 @@ static int pit_clkevt_shutdown(struct clock_event_=
-device *dev)
-> =20
->  	/* disable irq, leaving the clocksource active */
->  	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PIT=
-EN);
-> -	free_irq(data->irq, data);
-> +	if (data->irq_requested) {
-> +		free_irq(data->irq, data);
-> +		data->irq_requested =3D false;
-> +	}
->  	return 0;
->  }
-> =20
-> @@ -115,6 +119,8 @@ static int pit_clkevt_set_periodic(struct clock_e=
-vent_device *dev)
->  	if (ret)
->  		panic(pr_fmt("Unable to setup IRQ\n"));
-> =20
-> +	data->irq_requested =3D true;
-> +
->  	/* update clocksource counter */
->  	data->cnt +=3D data->cycle * PIT_PICNT(pit_read(data->base, AT91_PI=
-T_PIVR));
->  	pit_write(data->base, AT91_PIT_MR,
->=20
-
-
---=20
-Nicolas Ferre
+diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
+index 47190bd399e7..185404175acb 100644
+--- a/arch/x86/kernel/kvm.c
++++ b/arch/x86/kernel/kvm.c
+@@ -36,6 +36,7 @@
+ #include <linux/kprobes.h>
+ #include <linux/debugfs.h>
+ #include <linux/nmi.h>
++#include <linux/wait-simple.h>
+ #include <asm/timer.h>
+ #include <asm/cpu.h>
+ #include <asm/traps.h>
+@@ -91,14 +92,14 @@ static void kvm_io_delay(void)
+ 
+ struct kvm_task_sleep_node {
+ 	struct hlist_node link;
+-	wait_queue_head_t wq;
++	struct swait_head wq;
+ 	u32 token;
+ 	int cpu;
+ 	bool halted;
+ };
+ 
+ static struct kvm_task_sleep_head {
+-	spinlock_t lock;
++	raw_spinlock_t lock;
+ 	struct hlist_head list;
+ } async_pf_sleepers[KVM_TASK_SLEEP_HASHSIZE];
+ 
+@@ -122,17 +123,17 @@ void kvm_async_pf_task_wait(u32 token)
+ 	u32 key = hash_32(token, KVM_TASK_SLEEP_HASHBITS);
+ 	struct kvm_task_sleep_head *b = &async_pf_sleepers[key];
+ 	struct kvm_task_sleep_node n, *e;
+-	DEFINE_WAIT(wait);
++	DEFINE_SWAITER(wait);
+ 
+ 	rcu_irq_enter();
+ 
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	e = _find_apf_task(b, token);
+ 	if (e) {
+ 		/* dummy entry exist -> wake up was delivered ahead of PF */
+ 		hlist_del(&e->link);
+ 		kfree(e);
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 
+ 		rcu_irq_exit();
+ 		return;
+@@ -141,13 +142,13 @@ void kvm_async_pf_task_wait(u32 token)
+ 	n.token = token;
+ 	n.cpu = smp_processor_id();
+ 	n.halted = is_idle_task(current) || preempt_count() > 1;
+-	init_waitqueue_head(&n.wq);
++	init_swait_head(&n.wq);
+ 	hlist_add_head(&n.link, &b->list);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 
+ 	for (;;) {
+ 		if (!n.halted)
+-			prepare_to_wait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
++			swait_prepare(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
+ 		if (hlist_unhashed(&n.link))
+ 			break;
+ 
+@@ -166,7 +167,7 @@ void kvm_async_pf_task_wait(u32 token)
+ 		}
+ 	}
+ 	if (!n.halted)
+-		finish_wait(&n.wq, &wait);
++		swait_finish(&n.wq, &wait);
+ 
+ 	rcu_irq_exit();
+ 	return;
+@@ -178,8 +179,8 @@ static void apf_task_wake_one(struct kvm_task_sleep_node *n)
+ 	hlist_del_init(&n->link);
+ 	if (n->halted)
+ 		smp_send_reschedule(n->cpu);
+-	else if (waitqueue_active(&n->wq))
+-		wake_up(&n->wq);
++	else if (swaitqueue_active(&n->wq))
++		swait_wake(&n->wq);
+ }
+ 
+ static void apf_task_wake_all(void)
+@@ -189,14 +190,14 @@ static void apf_task_wake_all(void)
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++) {
+ 		struct hlist_node *p, *next;
+ 		struct kvm_task_sleep_head *b = &async_pf_sleepers[i];
+-		spin_lock(&b->lock);
++		raw_spin_lock(&b->lock);
+ 		hlist_for_each_safe(p, next, &b->list) {
+ 			struct kvm_task_sleep_node *n =
+ 				hlist_entry(p, typeof(*n), link);
+ 			if (n->cpu == smp_processor_id())
+ 				apf_task_wake_one(n);
+ 		}
+-		spin_unlock(&b->lock);
++		raw_spin_unlock(&b->lock);
+ 	}
+ }
+ 
+@@ -212,7 +213,7 @@ void kvm_async_pf_task_wake(u32 token)
+ 	}
+ 
+ again:
+-	spin_lock(&b->lock);
++	raw_spin_lock(&b->lock);
+ 	n = _find_apf_task(b, token);
+ 	if (!n) {
+ 		/*
+@@ -225,17 +226,17 @@ void kvm_async_pf_task_wake(u32 token)
+ 			 * Allocation failed! Busy wait while other cpu
+ 			 * handles async PF.
+ 			 */
+-			spin_unlock(&b->lock);
++			raw_spin_unlock(&b->lock);
+ 			cpu_relax();
+ 			goto again;
+ 		}
+ 		n->token = token;
+ 		n->cpu = smp_processor_id();
+-		init_waitqueue_head(&n->wq);
++		init_swait_head(&n->wq);
+ 		hlist_add_head(&n->link, &b->list);
+ 	} else
+ 		apf_task_wake_one(n);
+-	spin_unlock(&b->lock);
++	raw_spin_unlock(&b->lock);
+ 	return;
+ }
+ EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
+@@ -486,7 +487,7 @@ void __init kvm_guest_init(void)
+ 	paravirt_ops_setup();
+ 	register_reboot_notifier(&kvm_pv_reboot_nb);
+ 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++)
+-		spin_lock_init(&async_pf_sleepers[i].lock);
++		raw_spin_lock_init(&async_pf_sleepers[i].lock);
+ 	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
+ 		x86_init.irqs.trap_init = kvm_apf_trap_init;
+ 
