@@ -1,90 +1,40 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
-Date: Sun, 20 Mar 2016 09:43:45 +0100
-Message-ID: <1458463425.3908.5.camel@gmail.com>
-References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
-	 <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
+From: "Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+Subject: Re: [4.4.4-rt11] Possiblie recursive locking detected in kswapd /
+ mb_cache_shrink_scan()
+Date: Mon, 21 Mar 2016 10:34:11 -0300
+Message-ID: <20160321133411.GA29388@uudg.org>
+References: <20160314210058.GE29798@uudg.org>
+ <alpine.DEB.2.11.1603190933150.3978@nanos>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=us-ascii
+Cc: linux-rt-users@vger.kernel.org
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-qk0-f172.google.com ([209.85.220.172]:32812 "EHLO
+	mail-qk0-f172.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755468AbcCUNeQ (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 21 Mar 2016 09:34:16 -0400
+Received: by mail-qk0-f172.google.com with SMTP id s5so79024501qkd.0
+        for <linux-rt-users@vger.kernel.org>; Mon, 21 Mar 2016 06:34:15 -0700 (PDT)
+Content-Disposition: inline
+In-Reply-To: <alpine.DEB.2.11.1603190933150.3978@nanos>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Sat, 2016-02-13 at 00:02 +0100, Sebastian Andrzej Siewior wrote:
-> From: Thomas Gleixner <tglx@linutronix.de>
-> 
-> We currently disable migration across lock acquisition. That includes the part
-> where we block on the lock and schedule out. We cannot disable migration after
-> taking the lock as that would cause a possible lock inversion.
-> 
-> But we can be smart and enable migration when we block and schedule out. That
-> allows the scheduler to place the task freely at least if this is the first
-> migrate disable level. For nested locking this does not help at all.
+On Sat, Mar 19, 2016 at 09:33:34AM +0100, Thomas Gleixner wrote:
+| On Mon, 14 Mar 2016, Luis Claudio R. Goncalves wrote:
+| 
+| > Hello,
+| > 
+| > I just started using 4.4.4-rt11 this afternoon and saw the lockdep splat below.
+| > Is this something new or did I miss a patch floating on the list?
+| 
+| That's new. Looking into it.
 
-I met a problem while testing shiny new hotplug machinery.
+Thanks!
 
-rt/locking: Fix rt_spin_lock_slowlock() vs hotplug migrate_disable() bug
+Please let me know if you want me to run any test or trace. I will be more
+than glad on helping.
 
-migrate_disable() -> pin_current_cpu() -> hotplug_lock() leads to..
-	BUG_ON(rt_mutex_real_waiter(task->pi_blocked_on));
-..so let's call migrate_disable() after we acquire the lock instead.
-
-Fixes: e24b142cfb4a rt/locking: Reenable migration accross schedule
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmailo.com>
----
- kernel/locking/rtmutex.c |   15 +++++++++------
- 1 file changed, 9 insertions(+), 6 deletions(-)
-
---- a/kernel/locking/rtmutex.c
-+++ b/kernel/locking/rtmutex.c
-@@ -1011,7 +1011,7 @@ static void  noinline __sched rt_spin_lo
- 	struct task_struct *lock_owner, *self = current;
- 	struct rt_mutex_waiter waiter, *top_waiter;
- 	unsigned long flags;
--	int ret;
-+	bool mg_disable = false;
- 
- 	rt_mutex_init_waiter(&waiter, true);
- 
-@@ -1035,8 +1035,7 @@ static void  noinline __sched rt_spin_lo
- 	__set_current_state_no_track(TASK_UNINTERRUPTIBLE);
- 	raw_spin_unlock(&self->pi_lock);
- 
--	ret = task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK);
--	BUG_ON(ret);
-+	BUG_ON(task_blocks_on_rt_mutex(lock, &waiter, self, RT_MUTEX_MIN_CHAINWALK));
- 
- 	for (;;) {
- 		/* Try to acquire the lock again. */
-@@ -1051,11 +1050,12 @@ static void  noinline __sched rt_spin_lo
- 		debug_rt_mutex_print_deadlock(&waiter);
- 
- 		if (top_waiter != &waiter || adaptive_wait(lock, lock_owner)) {
--			if (mg_off)
-+			if (mg_off && self->migrate_disable == 1) {
-+				mg_off = false;
-+				mg_disable = true;
- 				migrate_enable();
-+			}
- 			schedule();
--			if (mg_off)
--				migrate_disable();
- 		}
- 
- 		raw_spin_lock_irqsave(&lock->wait_lock, flags);
-@@ -1088,6 +1088,9 @@ static void  noinline __sched rt_spin_lo
- 
- 	raw_spin_unlock_irqrestore(&lock->wait_lock, flags);
- 
-+	if (mg_disable)
-+		migrate_disable();
-+
- 	debug_rt_mutex_free_waiter(&waiter);
- }
- 
+Luis
