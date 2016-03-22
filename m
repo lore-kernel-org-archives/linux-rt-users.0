@@ -1,192 +1,70 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [rfc patch] drivers/block/zram: Replace bit spinlocks with rtmutex
- for -rt
-Date: Tue, 22 Mar 2016 11:19:39 +0100
-Message-ID: <1458641979.15742.6.camel@gmail.com>
+Subject: Re: [rfc patch] drivers/block/zram: Replace bit spinlocks with
+ rtmutex for -rt
+Date: Tue, 22 Mar 2016 11:34:51 +0100
+Message-ID: <1458642891.15742.11.camel@gmail.com>
+References: <1458641979.15742.6.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f53.google.com ([74.125.82.53]:38826 "EHLO
-	mail-wm0-f53.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1757023AbcCVKTn (ORCPT
+Received: from mail-wm0-f44.google.com ([74.125.82.44]:34940 "EHLO
+	mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1756959AbcCVKez (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Mar 2016 06:19:43 -0400
-Received: by mail-wm0-f53.google.com with SMTP id l68so156188746wml.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 03:19:42 -0700 (PDT)
+	Tue, 22 Mar 2016 06:34:55 -0400
+Received: by mail-wm0-f44.google.com with SMTP id l68so145660290wml.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 03:34:54 -0700 (PDT)
+In-Reply-To: <1458641979.15742.6.camel@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I should probably just turn it off in distro config, but...
+ltp says it works fine.. though I personally can't imagine ever wanting
+to use the thing.
 
-They're nondeterministic, and lead to ___might_sleep() splats in -rt.
-OTOH, they're a lot less wasteful than adding an rtmutex per page.
+[ 1119.471828] zram: Added device: zram0
+[ 1119.474630] zram0: detected capacity change from 0 to 536870912
+[ 1120.027155] zram: 16356 (zram01) Attribute compr_data_size (and others) will be removed. See zram documentation.
+[ 1120.808081] zram0: detected capacity change from 536870912 to 0
+[ 1120.809625] zram: Removed device: zram0
+[ 1120.833365] zram: Added device: zram0
+[ 1120.833903] zram: Added device: zram1
+[ 1120.834365] zram: Added device: zram2
+[ 1120.835769] zram: Added device: zram3
+[ 1120.846528] zram0: detected capacity change from 0 to 26214400
+[ 1120.846898] zram1: detected capacity change from 0 to 26214400
+[ 1120.847165] zram2: detected capacity change from 0 to 26214400
+[ 1120.847352] zram3: detected capacity change from 0 to 26214400
+[ 1120.872719] BTRFS: device fsid 65d42bcc-8185-47d2-984f-64e097dd3356 devid 1 transid 3 /dev/zram3
+[ 1120.875637] EXT4-fs (zram0): mounting ext3 file system using the ext4 subsystem
+[ 1120.875825] EXT4-fs (zram0): mounted filesystem with ordered data mode. Opts: (null)
+[ 1120.878829] EXT4-fs (zram1): mounted filesystem with ordered data mode. Opts: (null)
+[ 1120.881819] XFS (zram2): Mounting V4 Filesystem
+[ 1120.883469] XFS (zram2): Ending clean mount
+[ 1120.886281] BTRFS info (device zram3): disk space caching is enabled
+[ 1120.886285] BTRFS: has skinny extents
+[ 1120.886985] BTRFS: detected SSD devices, enabling SSD mode
+[ 1120.887022] BTRFS: creating UUID tree
+[ 1159.016910] XFS (zram2): Unmounting Filesystem
+[ 1159.060865] zram0: detected capacity change from 26214400 to 0
+[ 1159.060976] zram1: detected capacity change from 26214400 to 0
+[ 1159.061155] zram2: detected capacity change from 26214400 to 0
+[ 1159.061263] zram3: detected capacity change from 26214400 to 0
+[ 1159.061776] zram: Removed device: zram0
+[ 1159.079823] zram: Removed device: zram1
+[ 1159.094944] zram: Removed device: zram2
+[ 1159.110827] zram: Removed device: zram3
+[ 1159.143375] zram: Added device: zram0
+[ 1159.543950] zram0: detected capacity change from 0 to 107374182400
+[ 1159.551720] Adding 104857596k swap on /dev/zram0.  Priority:-1 extents:1 across:104857596k SSFS
+[ 1159.742644] zram0: detected capacity change from 107374182400 to 0
+[ 1159.743304] zram: Removed device: zram0
+[ 1159.771532] zram: Added device: zram0
+[ 1159.773866] zram0: detected capacity change from 0 to 536870912
+[ 1160.334486] zram: 28112 (zram03) Attribute compr_data_size (and others) will be removed. See zram documentation.
+[ 1161.129510] zram0: detected capacity change from 536870912 to 0
+[ 1161.131034] zram: Removed device: zram0
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- drivers/block/zram/zram_drv.c |   29 ++++++++++++++++-------------
- drivers/block/zram/zram_drv.h |   41 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 57 insertions(+), 13 deletions(-)
 
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -520,6 +520,8 @@ static struct zram_meta *zram_meta_alloc
- 		goto out_error;
- 	}
- 
-+	zram_meta_init_table_locks(meta, disksize);
-+
- 	return meta;
- 
- out_error:
-@@ -568,12 +570,13 @@ static int zram_decompress_page(struct z
- 	unsigned long handle;
- 	size_t size;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	handle = meta->table[index].handle;
- 	size = zram_get_obj_size(meta, index);
- 
- 	if (!handle || zram_test_flag(meta, index, ZRAM_ZERO)) {
- 		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		clear_page(mem);
- 		return 0;
- 	}
-@@ -584,7 +587,7 @@ static int zram_decompress_page(struct z
- 	else
- 		ret = zcomp_decompress(zram->comp, cmem, size, mem);
- 	zs_unmap_object(meta->mem_pool, handle);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Should NEVER happen. Return bio error if it does. */
- 	if (unlikely(ret)) {
-@@ -604,14 +607,14 @@ static int zram_bvec_read(struct zram *z
- 	struct zram_meta *meta = zram->meta;
- 	page = bvec->bv_page;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	if (unlikely(!meta->table[index].handle) ||
- 			zram_test_flag(meta, index, ZRAM_ZERO)) {
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		handle_zero_page(bvec);
- 		return 0;
- 	}
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	if (is_partial_io(bvec))
- 		/* Use  a temporary buffer to decompress the page */
-@@ -689,10 +692,10 @@ static int zram_bvec_write(struct zram *
- 		if (user_mem)
- 			kunmap_atomic(user_mem);
- 		/* Free memory associated with this sector now. */
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
- 		zram_set_flag(meta, index, ZRAM_ZERO);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 
- 		atomic64_inc(&zram->stats.zero_pages);
- 		ret = 0;
-@@ -752,12 +755,12 @@ static int zram_bvec_write(struct zram *
- 	 * Free memory associated with this sector
- 	 * before overwriting unused sectors.
- 	 */
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
- 
- 	meta->table[index].handle = handle;
- 	zram_set_obj_size(meta, index, clen);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Update stats */
- 	atomic64_add(clen, &zram->stats.compr_data_size);
-@@ -800,9 +803,9 @@ static void zram_bio_discard(struct zram
- 	}
- 
- 	while (n >= PAGE_SIZE) {
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		atomic64_inc(&zram->stats.notify_free);
- 		index++;
- 		n -= PAGE_SIZE;
-@@ -928,9 +931,9 @@ static void zram_slot_free_notify(struct
- 	zram = bdev->bd_disk->private_data;
- 	meta = zram->meta;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 	atomic64_inc(&zram->stats.notify_free);
- }
- 
---- a/drivers/block/zram/zram_drv.h
-+++ b/drivers/block/zram/zram_drv.h
-@@ -72,6 +72,9 @@ enum zram_pageflags {
- struct zram_table_entry {
- 	unsigned long handle;
- 	unsigned long value;
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	spinlock_t lock;
-+#endif
- };
- 
- struct zram_stats {
-@@ -119,4 +122,42 @@ struct zram {
- 	 */
- 	bool claim; /* Protected by bdev->bd_mutex */
- };
-+
-+#ifndef CONFIG_PREEMPT_RT_BASE
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_lock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_unlock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_meta_init_locks(struct zram_meta *meta, u64 disksize) { }
-+#else /* CONFIG_PREEMPT_RT_BASE */
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	spin_lock(&table->lock);
-+	__set_bit(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	__clear_bit(ZRAM_ACCESS, &table->value);
-+	spin_unlock(&table->lock);
-+}
-+
-+static inline void zram_meta_init_table_locks(struct zram_meta *meta, u64 disksize)
-+{
-+        size_t num_pages = disksize >> PAGE_SHIFT;
-+        size_t index;
-+
-+        for (index = 0; index < num_pages; index++) {
-+		spinlock_t *lock = &meta->table[index].lock;
-+		spin_lock_init(lock);
-+        }
-+}
-+#endif /* CONFIG_PREEMPT_RT_BASE */
-+
- #endif
