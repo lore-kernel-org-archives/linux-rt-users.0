@@ -1,70 +1,136 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [rfc patch] drivers/block/zram: Replace bit spinlocks with
- rtmutex for -rt
-Date: Tue, 22 Mar 2016 11:34:51 +0100
-Message-ID: <1458642891.15742.11.camel@gmail.com>
-References: <1458641979.15742.6.camel@gmail.com>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 2/3] don't use exit(-1) for failures
+Date: Tue, 22 Mar 2016 15:21:18 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1603221519370.10687@riemann>
+References: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com> <1458239345-30892-3-git-send-email-lcapitulino@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f44.google.com ([74.125.82.44]:34940 "EHLO
-	mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1756959AbcCVKez (ORCPT
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:33309 "EHLO
+	mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750701AbcCVOVc (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Mar 2016 06:34:55 -0400
-Received: by mail-wm0-f44.google.com with SMTP id l68so145660290wml.0
-        for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 03:34:54 -0700 (PDT)
-In-Reply-To: <1458641979.15742.6.camel@gmail.com>
+	Tue, 22 Mar 2016 10:21:32 -0400
+Received: by mail-wm0-f65.google.com with SMTP id u125so4057042wmg.0
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 07:21:31 -0700 (PDT)
+In-Reply-To: <1458239345-30892-3-git-send-email-lcapitulino@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-ltp says it works fine.. though I personally can't imagine ever wanting
-to use the thing.
-
-[ 1119.471828] zram: Added device: zram0
-[ 1119.474630] zram0: detected capacity change from 0 to 536870912
-[ 1120.027155] zram: 16356 (zram01) Attribute compr_data_size (and others) will be removed. See zram documentation.
-[ 1120.808081] zram0: detected capacity change from 536870912 to 0
-[ 1120.809625] zram: Removed device: zram0
-[ 1120.833365] zram: Added device: zram0
-[ 1120.833903] zram: Added device: zram1
-[ 1120.834365] zram: Added device: zram2
-[ 1120.835769] zram: Added device: zram3
-[ 1120.846528] zram0: detected capacity change from 0 to 26214400
-[ 1120.846898] zram1: detected capacity change from 0 to 26214400
-[ 1120.847165] zram2: detected capacity change from 0 to 26214400
-[ 1120.847352] zram3: detected capacity change from 0 to 26214400
-[ 1120.872719] BTRFS: device fsid 65d42bcc-8185-47d2-984f-64e097dd3356 devid 1 transid 3 /dev/zram3
-[ 1120.875637] EXT4-fs (zram0): mounting ext3 file system using the ext4 subsystem
-[ 1120.875825] EXT4-fs (zram0): mounted filesystem with ordered data mode. Opts: (null)
-[ 1120.878829] EXT4-fs (zram1): mounted filesystem with ordered data mode. Opts: (null)
-[ 1120.881819] XFS (zram2): Mounting V4 Filesystem
-[ 1120.883469] XFS (zram2): Ending clean mount
-[ 1120.886281] BTRFS info (device zram3): disk space caching is enabled
-[ 1120.886285] BTRFS: has skinny extents
-[ 1120.886985] BTRFS: detected SSD devices, enabling SSD mode
-[ 1120.887022] BTRFS: creating UUID tree
-[ 1159.016910] XFS (zram2): Unmounting Filesystem
-[ 1159.060865] zram0: detected capacity change from 26214400 to 0
-[ 1159.060976] zram1: detected capacity change from 26214400 to 0
-[ 1159.061155] zram2: detected capacity change from 26214400 to 0
-[ 1159.061263] zram3: detected capacity change from 26214400 to 0
-[ 1159.061776] zram: Removed device: zram0
-[ 1159.079823] zram: Removed device: zram1
-[ 1159.094944] zram: Removed device: zram2
-[ 1159.110827] zram: Removed device: zram3
-[ 1159.143375] zram: Added device: zram0
-[ 1159.543950] zram0: detected capacity change from 0 to 107374182400
-[ 1159.551720] Adding 104857596k swap on /dev/zram0.  Priority:-1 extents:1 across:104857596k SSFS
-[ 1159.742644] zram0: detected capacity change from 107374182400 to 0
-[ 1159.743304] zram: Removed device: zram0
-[ 1159.771532] zram: Added device: zram0
-[ 1159.773866] zram0: detected capacity change from 0 to 536870912
-[ 1160.334486] zram: 28112 (zram03) Attribute compr_data_size (and others) will be removed. See zram documentation.
-[ 1161.129510] zram0: detected capacity change from 536870912 to 0
-[ 1161.131034] zram: Removed device: zram0
 
 
+On Thu, 17 Mar 2016, Luiz Capitulino wrote:
+
+> The kernel uses only 8 bits of the status as a return
+> code, so this actually becomes 255 in the shell.
+> 
+> In any case, the most widely convension is exit(1)
+> for failures, so let's be consistent.
+> 
+> Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+> ---
+>  src/pi_tests/pi_stress.c              | 2 +-
+>  src/pi_tests/pip_stress.c             | 6 +++---
+>  src/rt-migrate-test/rt-migrate-test.c | 5 ++---
+>  src/signaltest/signaltest.c           | 2 +-
+>  4 files changed, 7 insertions(+), 8 deletions(-)
+> 
+> diff --git a/src/pi_tests/pi_stress.c b/src/pi_tests/pi_stress.c
+> index a02f706..36b64ca 100644
+> --- a/src/pi_tests/pi_stress.c
+> +++ b/src/pi_tests/pi_stress.c
+> @@ -634,7 +634,7 @@ int verify_cpu(int cpu)
+>  	if (status == -1) {
+>  		err = errno;
+>  		fprintf(stderr, "sched_getaffinity %s\n", strerror(err));
+> -		exit(-1);
+> +		exit(1);
+>  	}
+>  
+>  	if (CPU_ISSET(cpu, &mask))
+> diff --git a/src/pi_tests/pip_stress.c b/src/pi_tests/pip_stress.c
+> index a0477cc..e6cf0ce 100644
+> --- a/src/pi_tests/pip_stress.c
+> +++ b/src/pi_tests/pip_stress.c
+> @@ -95,7 +95,7 @@ int main(void)
+>  	*minimum_priority = sched_get_priority_min(policy);
+>  
+>  	if (check_privs())
+> -		exit(-1);
+> +		exit(1);
+>  
+>  	mptr = mmap_page();	/* Get a page of shared memory */
+>  	resource = (pthread_mutex_t*)mptr;	/* point our lock to it */
+> @@ -138,7 +138,7 @@ int main(void)
+>  		pid2 = fork();		/* parent code */
+>  		if (pid2 == -1) {
+>  			perror("fork: ");
+> -			exit(-1);
+> +			exit(1);
+>  		} else if (pid2 != 0) {		/* parent code */
+>  			high(pid2);
+>  		} else {			/* child code */
+> @@ -231,7 +231,7 @@ void *mmap_page(void)
+>  	mptr = mmap(NULL, pgsize, PROTRW, MMAP_FLAGS, 0, 0);
+>  	if (mptr == MAP_FAILED) {
+>  		perror("In function mmap_page - mmap");
+> -		exit(-1);
+> +		exit(1);
+>  	}
+>  
+>  	return mptr;
+> diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
+> index 1362404..a00e86f 100644
+> --- a/src/rt-migrate-test/rt-migrate-test.c
+> +++ b/src/rt-migrate-test/rt-migrate-test.c
+> @@ -138,7 +138,7 @@ static void perr(char *fmt, ...)
+>  
+>  	perror(buffer);
+>  	fflush(stderr);
+> -	exit(-1);
+> +	exit(1);
+>  }
+>  
+>  static void print_progress_bar(int percent)
+> @@ -226,7 +226,6 @@ static void parse_options (int argc, char *argv[])
+>  			break;
+>  		}
+>  	}
+> -
+>  }
+>  
+>  static unsigned long long get_time(void)
+> @@ -604,7 +603,7 @@ int main (int argc, char **argv)
+>  			exit(2);
+>  	}
+>  	if (check < 0)
+> -		exit(-1);
+> +		exit(1);
+>  	else
+>  		exit(0);
+>  
+> diff --git a/src/signaltest/signaltest.c b/src/signaltest/signaltest.c
+> index b80969b..59f979e 100644
+> --- a/src/signaltest/signaltest.c
+> +++ b/src/signaltest/signaltest.c
+> @@ -323,7 +323,7 @@ int main(int argc, char **argv)
+>  	process_options(argc, argv);
+>  
+>  	if (check_privs())
+> -		exit(-1);
+> +		exit(1);
+>  
+>  	/* lock all memory (prevent paging) */
+>  	if (lockall)
+> -- 
+> 2.1.0
+> 
+
+
+Signed-off-by: John Kacur <jkacur@gmail.com>
+
+However it didn't apply cleanly, once again, please work with
+Repo: git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+Branch: devel/v0.97
