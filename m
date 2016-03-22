@@ -1,82 +1,78 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH 1/3] rt-migrate-test: fix return code
-Date: Tue, 22 Mar 2016 10:47:37 -0400
-Message-ID: <20160322104737.1f09c4d8@redhat.com>
-References: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com>
-	<1458239345-30892-2-git-send-email-lcapitulino@redhat.com>
-	<alpine.LFD.2.20.1603221522050.10687@riemann>
+From: John Kacur <jkacur@redhat.com>
+Subject: Re: [PATCH 3/3] cyclictest: initialize 'stop' early
+Date: Tue, 22 Mar 2016 15:55:10 +0100 (CET)
+Message-ID: <alpine.LFD.2.20.1603221553550.10687@riemann>
+References: <1458239345-30892-1-git-send-email-lcapitulino@redhat.com> <1458239345-30892-4-git-send-email-lcapitulino@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org, williams@redhat.com
-To: John Kacur <jkacur@redhat.com>
+To: Luiz Capitulino <lcapitulino@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:37830 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S932644AbcCVOrq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Mar 2016 10:47:46 -0400
-Received: from int-mx11.intmail.prod.int.phx2.redhat.com (int-mx11.intmail.prod.int.phx2.redhat.com [10.5.11.24])
-	by mx1.redhat.com (Postfix) with ESMTPS id 9412D3B71D
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 14:47:40 +0000 (UTC)
-In-Reply-To: <alpine.LFD.2.20.1603221522050.10687@riemann>
+Received: from mail-wm0-f68.google.com ([74.125.82.68]:34502 "EHLO
+	mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1759462AbcCVOzN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 22 Mar 2016 10:55:13 -0400
+Received: by mail-wm0-f68.google.com with SMTP id p65so30734518wmp.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 07:55:12 -0700 (PDT)
+In-Reply-To: <1458239345-30892-4-git-send-email-lcapitulino@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 22 Mar 2016 15:22:57 +0100 (CET)
-John Kacur <jkacur@redhat.com> wrote:
 
+
+On Thu, 17 Mar 2016, Luiz Capitulino wrote:
+
+> For some modes like MODE_CLOCK_NANOSLEEP, the clock
+> is already ticking when 'stop' is initialized. This
+> shouldn't matter, as this memset() should very fast
+> (I'd guess a few dozens or hundrends nanoseconds at
+> most?), but I also think there's no reason to do it
+> this late. So, initialize it along with everything
+> else.
 > 
+> Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+> ---
+>  src/cyclictest/cyclictest.c | 4 +++-
+>  1 file changed, 3 insertions(+), 1 deletion(-)
 > 
-> On Thu, 17 Mar 2016, Luiz Capitulino wrote:
+> diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
+> index f5a67dc..202939f 100644
+> --- a/src/cyclictest/cyclictest.c
+> +++ b/src/cyclictest/cyclictest.c
+> @@ -829,6 +829,8 @@ static void *timerthread(void *param)
+>  		tspec.it_interval = interval;
+>  	}
+>  
+> +	memset(&stop, 0, sizeof(stop));
+> +
+>  	memset(&schedp, 0, sizeof(schedp));
+>  	schedp.sched_priority = par->prio;
+>  	if (setscheduler(0, par->policy, &schedp))
+> @@ -868,10 +870,10 @@ static void *timerthread(void *param)
+>  	tsnorm(&next);
+>  
+>  	if (duration) {
+> -		memset(&stop, 0, sizeof(stop)); /* grrr */
+>  		stop = now;
+>  		stop.tv_sec += duration;
+>  	}
+> +
+>  	if (par->mode == MODE_CYCLIC) {
+>  		if (par->timermode == TIMER_ABSTIME)
+>  			tspec.it_value = next;
+> -- 
+> 2.1.0
 > 
-> > Change both return codes for the stop == true case:
-> > 
-> >  * For failures, use exit(1) as exit(-1) is wrong
-> >    (it actually becomes 255 in the shell)
-> > 
-> >  * For success, use exit(2) instead of exit(1) as
-> >    exit(1) is usually used for errors
-> > 
-> > This should preserve the requirement of allowing
-> > shell script while loops to break when Ctrl-C is hit.
-> > 
-> > Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
-> > ---
-> >  src/rt-migrate-test/rt-migrate-test.c | 4 ++--
-> >  1 file changed, 2 insertions(+), 2 deletions(-)
-> > 
-> > diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-> > index d7b68dd..1362404 100644
-> > --- a/src/rt-migrate-test/rt-migrate-test.c
-> > +++ b/src/rt-migrate-test/rt-migrate-test.c
-> > @@ -599,9 +599,9 @@ int main (int argc, char **argv)
-> >  		 * loop know to break.
-> >  		 */
-> >  		if (check < 0)
-> > -			exit(-1);
-> > -		else
-> >  			exit(1);
-> > +		else
-> > +			exit(2);
-> >  	}
-> >  	if (check < 0)
-> >  		exit(-1);
-> > -- 
-> > 2.1.0
-> > 
-> > --
-> 
-> NAK - I've already told you this is wrong
+> --
 
-Right and wrong can be subjective concepts :)
+Not sure about this one. It might be okay, but it certainly
+makes the code messier. Is this just a theorectical possibility
+or do you have some evidence that this is a problem?
 
-> 0 is the normal value for exit_success, not 2
-> you can change the failure from -1 to 1 if you wish
+I think I'll skip it for now unless you can show that it's a
+real problem.
 
-rt-migrate-test uses a different protocol as documented
-in the code. If we change success to 0, we'll break this
-protocol. Does it matter? I don't know, but I chose to
-keep it.
+Thanks
 
-Now, if this is a complicated matter, we can just skip this
-patch.
+John
