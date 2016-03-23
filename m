@@ -1,121 +1,115 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: [PATCH v3] cyclictest: add --tracemark option
-Date: Tue, 22 Mar 2016 13:27:08 -0400
-Message-ID: <20160322132708.20a79023@redhat.com>
+From: Joel Fernandes <joelaf@lab126.com>
+Subject: [RFC] high preempt off latency in vfree path
+Date: Tue, 22 Mar 2016 18:43:02 -0700
+Message-ID: <56F1F4A6.2060400@lab126.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset="utf-8"; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: jkacur@redhat.com, williams@redhat.com
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:59316 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751735AbcCVR1L (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 22 Mar 2016 13:27:11 -0400
-Received: from int-mx11.intmail.prod.int.phx2.redhat.com (int-mx11.intmail.prod.int.phx2.redhat.com [10.5.11.24])
-	by mx1.redhat.com (Postfix) with ESMTPS id 58828C00B8DE
-	for <linux-rt-users@vger.kernel.org>; Tue, 22 Mar 2016 17:27:11 +0000 (UTC)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: <linux-mm@kvack.org>, <linux-kernel@vger.kernel.org>, <tj@kernel.org>,
+        <linux-rt-users@vger.kernel.org>, Nick Piggin <npiggin@suse.de>,
+        Andi Kleen
+	<ak@linux.intel.com>
+Return-path: <owner-linux-mm@kvack.org>
+Sender: owner-linux-mm@kvack.org
+List-Id: linux-rt-users.vger.kernel.org
 
-cyclictest will only write to /sys/kernel/debug/tracing/trace_maker
-if it's also setup to do tracing. This conflicts with
-running cyclictest under trace-cmd.
+Hi,
 
-The --tracemark option tells cyclictest to write to the
-trace_marker file even when it's not doing tracing.
+I'm seeing on my system with some real time audio requirements, I'm seeing the preemptirqsoff 
+tracer complaining that preempt was off for 17ms in the vfree path. Since we have requirements 
+of 8ms scheduling this seems awfully bad.
 
-It can be used like this:
+The tracer output showed __free_vmap_area was about 7300 times. Can we do better here? I have 
+proposed 2 potential fixes here, any thoughts on which one's better?
 
- # trace-cmd record [...] cyclictest [...] -bX --tracemark --notrace
+Here's the path that blocks preempt (full latency ftrace output uploaded to 
+http://raw.codepile.net/pile/OWNpvKkB.js)
 
-Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
----
+  => preempt_count_sub
+  => _raw_spin_unlock
+  => __purge_vmap_area_lazy
+  => free_vmap_area_noflush
+  => remove_vm_area
+  => __vunmap
+  => vfree
+  => n_tty_close
+  => tty_ldisc_close.isra.1
+  => tty_ldisc_kill
+  => tty_ldisc_release
+  => tty_release
 
-John, I hope this is what you asked me to do.
+Here are the approaches:
+(1)
+One is we reduce the number of lazy_max_pages (right now its around 32MB per core worth of pages).
 
-o v3
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index aa3891e..2720f4f 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -564,7 +564,7 @@ static unsigned long lazy_max_pages(void)
 
- - Rebased on top of latest devel/v0.97 (HEAD a638701)
- - Add missing help text
+         log = fls(num_online_cpus());
 
- src/cyclictest/cyclictest.c | 21 ++++++++++++++++++++-
- 1 file changed, 20 insertions(+), 1 deletion(-)
+-       return log * (32UL * 1024 * 1024 / PAGE_SIZE);
++       return log * (8UL * 1024 * 1024 / PAGE_SIZE);
+  }
 
-diff --git a/src/cyclictest/cyclictest.c b/src/cyclictest/cyclictest.c
-index b9571f5..4844dfa 100644
---- a/src/cyclictest/cyclictest.c
-+++ b/src/cyclictest/cyclictest.c
-@@ -202,6 +202,7 @@ static void trigger_update(struct thread_param *par, int diff, int64_t ts);
- static int shutdown;
- static int tracelimit = 0;
- static int notrace = 0;
-+static int trace_marker = 0;
- static int ftrace = 0;
- static int kernelversion;
- static int verbose = 0;
-@@ -561,6 +562,18 @@ static void debugfs_prepare(void)
- 		fileprefix = procfileprefix;
- }
- 
-+static void enable_trace_mark(void)
-+{
-+	if (!trace_marker)
-+		return;
-+
-+	if (!tracelimit)
-+		fatal("--tracemark requires -b\n");
-+
-+	debugfs_prepare();
-+	open_tracemark_fd();
-+}
-+
- static void setup_tracer(void)
- {
- 	if (!tracelimit || notrace)
-@@ -1312,6 +1325,7 @@ static void display_help(int error)
- 	       "-t [NUM] --threads=NUM     number of threads:\n"
- 	       "                           without NUM, threads = max_cpus\n"
- 	       "                           without -t default = 1\n"
-+	       "         --tracemark       write a trace mark when -b latency is exceeded\n"
- 	       "-T TRACE --tracer=TRACER   set tracing function\n"
- 	       "    configured tracers: %s\n"
- 	       "-u       --unbuffered      force unbuffered output for live processing\n"
-@@ -1453,7 +1467,7 @@ enum option_values {
- 	OPT_SYSTEM, OPT_SMP, OPT_THREADS, OPT_TRACER, OPT_TRIGGER,
- 	OPT_TRIGGER_NODES, OPT_UNBUFFERED, OPT_NUMA, OPT_VERBOSE, OPT_WAKEUP,
- 	OPT_WAKEUPRT, OPT_DBGCYCLIC, OPT_POLICY, OPT_HELP, OPT_NUMOPTS,
--	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI,
-+	OPT_ALIGNED, OPT_SECALIGNED, OPT_LAPTOP, OPT_SMI, OPT_TRACEMARK,
- };
- 
- /* Process commandline options */
-@@ -1508,6 +1522,7 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			{"spike",	     required_argument, NULL, OPT_TRIGGER },
- 			{"spike-nodes",	     required_argument, NULL, OPT_TRIGGER_NODES },
- 			{"threads",          optional_argument, NULL, OPT_THREADS },
-+			{"tracemark",        no_argument,       NULL, OPT_TRACEMARK },
- 			{"tracer",           required_argument, NULL, OPT_TRACER },
- 			{"unbuffered",       no_argument,       NULL, OPT_UNBUFFERED },
- 			{"numa",             no_argument,       NULL, OPT_NUMA },
-@@ -1749,6 +1764,8 @@ static void process_options (int argc, char *argv[], int max_cpus)
- 			fatal("--smi is not available on your arch\n");
- #endif
- 			break;
-+		case OPT_TRACEMARK:
-+			trace_marker = 1; break;
- 		}
- 	}
- 
-@@ -2184,6 +2201,8 @@ int main(int argc, char **argv)
- 
- 	setup_tracer();
- 
-+	enable_trace_mark();
-+
- 	if (check_timer())
- 		warn("High resolution timers not available\n");
- 
--- 
-2.1.0
 
+(2) Second alternative approach I am thinking is to change purge_lock into a mutex and then 
+move the vmap_area spinlock around the free_vmap_area call. Thus giving the scheduler a chance 
+to put something else on the CPU in between free_vmap_area calls. That would look like:
+
+diff --git a/mm/vmalloc.c b/mm/vmalloc.c
+index aa3891e..9565d72 100644
+--- a/mm/vmalloc.c
++++ b/mm/vmalloc.c
+@@ -594,7 +594,7 @@ void set_iounmap_nonlazy(void)
+  static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+                                         int sync, int force_flush)
+  {
+-       static DEFINE_SPINLOCK(purge_lock);
++       static DEFINE_MUTEX(purge_lock);
+         LIST_HEAD(valist);
+         struct vmap_area *va;
+         struct vmap_area *n_va;
+@@ -606,10 +606,10 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+          * the case that isn't actually used at the moment anyway.
+          */
+         if (!sync && !force_flush) {
+-               if (!spin_trylock(&purge_lock))
++               if (!mutex_trylock(&purge_lock))
+                         return;
+         } else
+-               spin_lock(&purge_lock);
++               mutex_lock(&purge_lock);
+
+         if (sync)
+                 purge_fragmented_blocks_allcpus();
+@@ -636,12 +636,13 @@ static void __purge_vmap_area_lazy(unsigned long *start, unsigned long *end,
+                 flush_tlb_kernel_range(*start, *end);
+
+         if (nr) {
+-               spin_lock(&vmap_area_lock);
+-               list_for_each_entry_safe(va, n_va, &valist, purge_list)
++               list_for_each_entry_safe(va, n_va, &valist, purge_list) {
++                       spin_lock(&vmap_area_lock);
+                         __free_vmap_area(va);
++                       spin_unlock(&vmap_area_lock);
++               }
+-               spin_unlock(&vmap_area_lock);
+
+         }
+-       spin_unlock(&purge_lock);
++       mutex_unlock(&purge_lock);
+  }
+
+  /*
+
+Thanks!
+Joel
+
+--
+To unsubscribe, send a message with 'unsubscribe linux-mm' in
+the body to majordomo@kvack.org.  For more info on Linux MM,
+see: http://www.linux-mm.org/ .
+Don't email: <a href=mailto:"dont@kvack.org"> email@kvack.org </a>
