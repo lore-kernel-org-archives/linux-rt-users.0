@@ -1,7 +1,7 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
 Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
-Date: Fri, 25 Mar 2016 10:14:08 +0100
-Message-ID: <1458897248.3870.9.camel@gmail.com>
+Date: Fri, 25 Mar 2016 17:24:33 +0100
+Message-ID: <1458923073.3849.26.camel@gmail.com>
 References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
 	 <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
 	 <1458463425.3908.5.camel@gmail.com> <1458814024.23732.35.camel@gmail.com>
@@ -16,122 +16,109 @@ Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>
 To: Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f41.google.com ([74.125.82.41]:34622 "EHLO
-	mail-wm0-f41.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751545AbcCYJOM (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 25 Mar 2016 05:14:12 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <1458897196.3870.8.camel@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Rock #1..
+On Fri, 2016-03-25 at 10:13 +0100, Mike Galbraith wrote:
+> On Fri, 2016-03-25 at 09:52 +0100, Thomas Gleixner wrote:
+> > On Fri, 25 Mar 2016, Mike Galbraith wrote:
+> > > On Thu, 2016-03-24 at 12:06 +0100, Mike Galbraith wrote:
+> > > > On Thu, 2016-03-24 at 11:44 +0100, Thomas Gleixner wrote:
+> > > > >  
+> > > > > > On the bright side, with the busted migrate enable business reverted,
+> > > > > > plus one dinky change from me [1], master-rt.today has completed 100
+> > > > > > iterations of Steven's hotplug stress script along side endless
+> > > > > > futexstress, and is happily doing another 900 as I write this, so the
+> > > > > > next -rt should finally be hotplug deadlock free.
+> > > > > > 
+> > > > > > Thomas's state machinery seems to work wonders.  'course this being
+> > > > > > hotplug, the other shoe will likely apply itself to my backside soon.
+> > > > > 
+> > > > > That's a given :)
+> > > > 
+> > > > blk-mq applied it shortly after I was satisfied enough to poke xmit.
+> > > 
+> > > The other shoe is that notifiers can depend upon RCU grace periods, so
+> > > when pin_current_cpu() snags rcu_sched, the hotplug game is over.
+> > > 
+> > > blk_mq_queue_reinit_notify:
+> > >         /*
+> > >          * We need to freeze and reinit all existing queues.  Freezing
+> > >          * involves synchronous wait for an RCU grace period and doing it
+> > >          * one by one may take a long time.  Start freezing all queues in
+> > >          * one swoop and then wait for the completions so that freezing can
+> > >          * take place in parallel.
+> > >          */
+> > >         list_for_each_entry(q, &all_q_list, all_q_node)
+> > >                 blk_mq_freeze_queue_start(q);
+> > >         list_for_each_entry(q, &all_q_list, all_q_node) {
+> > >                 blk_mq_freeze_queue_wait(q);
+> > 
+> > Yeah, I stumbled over that already when analysing all the hotplug notifier
+> > sites. That's definitely a horrible one.
+> >  
+> > > Hohum (sharpens rock), next.
+> > 
+> > /me recommends frozen sharks
+> 
+> With the sharp rock below and the one I'll follow up with, master-rt on
+> my DL980 just passed 3 hours of endless hotplug stress concurrent with
+> endless tbench 8, stockfish and futextest.  It has never survived this
+> long with this load by a long shot.
 
-hotplug/rt: Nest module_mutex inside cpu_hotplug.lock
+I knew it was unlikely to surrender that quickly.  Oh well, on the
+bright side it seems to be running low on deadlocks.
 
-PID: 11107  TASK: ffff8803b12b9900  CPU: 4   COMMAND: "stress-cpu-hotp"                                                                                                                                                                      
- #0 [ffff88038b34f9b8] __schedule at ffffffff816b7132
- #1 [ffff88038b34fa08] schedule at ffffffff816b796b
- #2 [ffff88038b34fa28] rt_mutex_slowlock at ffffffff816b93ee
- #3 [ffff88038b34fac8] rt_mutex_fastlock at ffffffff811b0e9d
- #4 [ffff88038b34faf0] rt_mutex_lock at ffffffff816b95c8
- #5 [ffff88038b34fb08] _mutex_lock at ffffffff816baf59
- #6 [ffff88038b34fb28] kernfs_find_and_get_ns at ffffffff812cd573
- #7 [ffff88038b34fb50] sysfs_remove_group at ffffffff812d100a
- #8 [ffff88038b34fb78] thermal_throttle_cpu_callback at ffffffff81036ab9
- #9 [ffff88038b34fb98] notifier_call_chain at ffffffff8109b8dd
-#10 [ffff88038b34fbd8] __raw_notifier_call_chain at ffffffff8109b90e
-#11 [ffff88038b34fbe8] __cpu_notify at ffffffff81072825
-#12 [ffff88038b34fbf8] cpu_notify_nofail at ffffffff81072b15
-#13 [ffff88038b34fc08] notify_dead at ffffffff81072d06
-#14 [ffff88038b34fc38] cpuhp_invoke_callback at ffffffff81073718
-#15 [ffff88038b34fc78] cpuhp_down_callbacks at ffffffff81073a70
-#16 [ffff88038b34fcb8] _cpu_down at ffffffff816afc61
-#17 [ffff88038b34fd38] do_cpu_down at ffffffff8107434c
-#18 [ffff88038b34fd60] cpu_down at ffffffff81074380
-#19 [ffff88038b34fd70] cpu_subsys_offline at ffffffff814cd844
-#20 [ffff88038b34fd80] device_offline at ffffffff814c7cca
-#21 [ffff88038b34fda8] online_store at ffffffff814c7dc0
-#22 [ffff88038b34fdd0] dev_attr_store at ffffffff814c4fb8
-#23 [ffff88038b34fde0] sysfs_kf_write at ffffffff812cfbd4
-#24 [ffff88038b34fe08] kernfs_fop_write at ffffffff812cf162
-#25 [ffff88038b34fe50] __vfs_write at ffffffff81241418
-#26 [ffff88038b34fed0] vfs_write at ffffffff81242525
-#27 [ffff88038b34ff10] sys_write at ffffffff812438e9
-#28 [ffff88038b34ff50] entry_SYSCALL_64_fastpath at ffffffff816bb4fc
-    RIP: 00007f05f3d69cd0  RSP: 00007ffdfc934468  RFLAGS: 00000246
-    RAX: ffffffffffffffda  RBX: 0000000001908770  RCX: 00007f05f3d69cd0
-    RDX: 0000000000000002  RSI: 00007f05f4898000  RDI: 0000000000000001
-    RBP: 00007ffdfc934480   R8: 000000000000000a   R9: 00007f05f4892700
-    R10: 00000000ffffffff  R11: 0000000000000246  R12: 0000000000000007
-    R13: 0000000000000001  R14: 0000000000000009  R15: 000000000000000a
-    ORIG_RAX: 0000000000000001  CS: 0033  SS: 002b
+	Happy Easter,
 
-stress-cpu-hotp blocks on kernfs_mutex, held by systemd-udevd..
+	-Mike
 
-crash> bt ffff8803b12bcb00
-PID: 11130  TASK: ffff8803b12bcb00  CPU: 6   COMMAND: "systemd-udevd"
- #0 [ffff88038b327a18] __schedule at ffffffff816b7132
- #1 [ffff88038b327a68] schedule at ffffffff816b796b
- #2 [ffff88038b327a88] rt_spin_lock_slowlock at ffffffff816b9750
- #3 [ffff88038b327b30] rt_spin_lock_fastlock at ffffffff811b0f2c
- #4 [ffff88038b327b50] rt_spin_lock__no_mg at ffffffff816bac7b
- #5 [ffff88038b327b70] pin_current_cpu at ffffffff8107406a
- #6 [ffff88038b327bb8] migrate_disable at ffffffff810a0e8e
- #7 [ffff88038b327bd8] rt_spin_lock at ffffffff816badc9
- #8 [ffff88038b327bf8] ida_simple_remove at ffffffff8138765c
- #9 [ffff88038b327c18] kernfs_put at ffffffff812ccc58
-#10 [ffff88038b327c60] __kernfs_remove at ffffffff812cd15c
-#11 [ffff88038b327cc0] kernfs_remove_by_name_ns at ffffffff812ce2f3
-#12 [ffff88038b327ce8] sysfs_remove_link at ffffffff812d05e9
-#13 [ffff88038b327cf8] free_module at ffffffff8111c8f2
-#14 [ffff88038b327d30] do_init_module at ffffffff811b157f
-#15 [ffff88038b327d58] load_module at ffffffff8111f11b
-#16 [ffff88038b327e98] SYSC_finit_module at ffffffff8111faf9
-#17 [ffff88038b327f40] sys_finit_module at ffffffff8111fb3e
-#18 [ffff88038b327f50] entry_SYSCALL_64_fastpath at ffffffff816bb4fc
-    RIP: 00007f75d9925f79  RSP: 00007ffd1c040ed8  RFLAGS: 00000246
-    RAX: ffffffffffffffda  RBX: 0000000001d368e0  RCX: 00007f75d9925f79
-    RDX: 0000000000000000  RSI: 00007f75da0233c1  RDI: 0000000000000008
-    RBP: 0000000000000008   R8: 0000000000000000   R9: 0000000001d39c82
-    R10: 0000000000000008  R11: 0000000000000246  R12: 00007ffd1c03ff00
-    R13: 00007ffd1c03fee0  R14: 0000000000000005  R15: 000000000aba9500
-    ORIG_RAX: 0000000000000139  CS: 0033  SS: 002b
+(bite me beast, 666 indeed)
 
-..which stress-cpu-hotp has blocked via pin_current_cpu().  Game Over.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- kernel/cpu.c |    9 +++++++++
- 1 file changed, 9 insertions(+)
-
---- a/kernel/cpu.c
-+++ b/kernel/cpu.c
-@@ -23,6 +23,9 @@
- #include <linux/tick.h>
- #include <linux/irq.h>
- #include <trace/events/power.h>
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+#include <linux/module.h>
-+#endif
- 
- #include "smpboot.h"
- 
-@@ -442,10 +445,16 @@ void cpu_hotplug_begin(void)
- 		schedule();
- 	}
- 	finish_wait(&cpu_hotplug.wq, &wait);
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	mutex_lock(&module_mutex);
-+#endif
- }
- 
- void cpu_hotplug_done(void)
- {
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	mutex_unlock(&module_mutex);
-+#endif
- 	cpu_hotplug.active_writer = NULL;
- 	mutex_unlock(&cpu_hotplug.lock);
- 	cpuhp_lock_release();
+[26666.886077] ------------[ cut here ]------------
+[26666.886078] kernel BUG at kernel/sched/core.c:1717!
+[26666.886081] invalid opcode: 0000 [#1] PREEMPT SMP
+[26666.886094] Dumping ftrace buffer:
+[26666.886112]    (ftrace buffer empty)
+[26666.886137] Modules linked in: autofs4 edd af_packet cpufreq_conservative cpufreq_ondemand cpufreq_userspace cpufreq_powersave fuse loop md_mod dm_mod vhost_net macvtap macvlan vhost tun ipmi_ssif kvm_intel kvm joydev hid_generic sr_m
+od cdrom sg shpchp netxen_nic hpwdt hpilo ipmi_si ipmi_msghandler irqbypass bnx2 iTCO_wdt iTCO_vendor_support gpio_ich pcc_cpufreq fjes i7core_edac edac_core lpc_ich pcspkr 8250_fintek ehci_pci acpi_cpufreq acpi_power_meter button ext4 m
+bcache jbd2 crc16 usbhid uhci_hcd ehci_hcd sd_mod usbcore usb_common thermal processor scsi_dh_hp_sw scsi_dh_emc scsi_dh_rdac scsi_dh_alua ata_generic ata_piix libata hpsa scsi_transport_sas cciss scsi_mod
+[26666.886140] CPU: 2 PID: 41 Comm: migration/2 Not tainted 4.6.0-rt11 #69
+[26666.886140] Hardware name: Hewlett-Packard ProLiant DL980 G7, BIOS P66 07/07/2010
+[26666.886142] task: ffff88017e34e580 ti: ffff88017e394000 task.ti: ffff88017e394000
+[26666.886149] RIP: 0010:[<ffffffff810a6f5c>]  [<ffffffff810a6f5c>] select_fallback_rq+0x19c/0x1d0
+[26666.886149] RSP: 0018:ffff88017e397d28  EFLAGS: 00010046
+[26666.886150] RAX: 0000000000000100 RBX: ffff88017e668348 RCX: 0000000000000003
+[26666.886151] RDX: 0000000000000100 RSI: 0000000000000100 RDI: ffffffff81811420
+[26666.886152] RBP: ffff88017e668000 R08: 0000000000000003 R09: 0000000000000000
+[26666.886153] R10: ffff8802772b3ec0 R11: 0000000000000001 R12: 0000000000000002
+[26666.886153] R13: 0000000000000002 R14: ffff88017e398000 R15: ffff88017e668000
+[26666.886155] FS:  0000000000000000(0000) GS:ffff880276680000(0000) knlGS:0000000000000000
+[26666.886156] CS:  0010 DS: 0000 ES: 0000 CR0: 0000000080050033
+[26666.886156] CR2: 0000000000695c5c CR3: 0000000271419000 CR4: 00000000000006e0
+[26666.886157] Stack:
+[26666.886159]  ffff880276696900 ffff880276696900 ffff88017e668808 0000000000016900
+[26666.886160]  ffffffff810a88f9 ffff88017e398000 ffff88017e398000 0000000000000046
+[26666.886161]  ffff88017e34e580 00000000fffffff7 ffffffff81c5be90 0000000000000000
+[26666.886162] Call Trace:
+[26666.886166]  [<ffffffff810a88f9>] ? migration_call+0x1b9/0x3b0
+[26666.886168]  [<ffffffff8109d724>] ? notifier_call_chain+0x44/0x70
+[26666.886171]  [<ffffffff8107d430>] ? notify_online+0x20/0x20
+[26666.886172]  [<ffffffff8107d381>] ? __cpu_notify+0x31/0x50
+[26666.886173]  [<ffffffff8107d448>] ? notify_dying+0x18/0x20
+[26666.886175]  [<ffffffff8107dfbf>] ? cpuhp_invoke_callback+0x3f/0x150
+[26666.886178]  [<ffffffff8111ed01>] ? cpu_stop_should_run+0x11/0x50
+[26666.886180]  [<ffffffff8107e6a2>] ? take_cpu_down+0x52/0x80
+[26666.886181]  [<ffffffff8111ee7a>] ? multi_cpu_stop+0x9a/0xc0
+[26666.886182]  [<ffffffff8111ede0>] ? cpu_stop_queue_work+0x80/0x80
+[26666.886184]  [<ffffffff8111f078>] ? cpu_stopper_thread+0x88/0x120
+[26666.886186]  [<ffffffff8109fede>] ? smpboot_thread_fn+0x14e/0x270
+[26666.886188]  [<ffffffff8109fd90>] ? smpboot_update_cpumask_percpu_thread+0x130/0x130
+[26666.886192]  [<ffffffff8109c68d>] ? kthread+0xbd/0xe0
+[26666.886196]  [<ffffffff816097c2>] ? ret_from_fork+0x22/0x40
+[26666.886198]  [<ffffffff8109c5d0>] ? kthread_worker_fn+0x160/0x160
+[26666.886211] Code: 06 00 00 44 89 e9 48 c7 c7 f8 72 9f 81 31 c0 e8 fd 0a 0e 00 e9 32 ff ff ff 41 83 fc 01 74 21 72 0c 41 83 fc 02 0f 85 33 ff ff ff <0f> 0b 48 89 ef 41 bc 01 00 00 00 e8 54 5c 07 00 e9 1e ff ff ff
+[26666.886212] RIP  [<ffffffff810a6f5c>] select_fallback_rq+0x19c/0x1d0
+[26666.886213]  RSP <ffff88017e397d28>
