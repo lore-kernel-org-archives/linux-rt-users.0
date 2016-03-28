@@ -1,92 +1,57 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: [PATCH V2 1/3] tracing: Add __print_ns_to_secs() and __print_ns_without_secs() helpers
-Date: Mon, 28 Mar 2016 13:50:49 -0300
-Message-ID: <eddee2bb38bc03d9f3b323282b6105051faa7188.1459182044.git.bristot@redhat.com>
-References: <cover.1459182044.git.bristot@redhat.com>
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@redhat.com>,
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [RFC v0] Use swait in completion
+Date: Mon, 28 Mar 2016 14:57:02 -0400
+Message-ID: <20160328145702.589da4bd@gandalf.local.home>
+References: <1457452754-24029-1-git-send-email-wagi@monom.org>
+	<20160308175206.GD21842@linutronix.de>
+	<20160308182656.GA27081@jcartwri.amer.corp.natinst.com>
+	<20160309122423.GD10517@linutronix.de>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Josh Cartwright <joshc@ni.com>, Daniel Wagner <wagi@monom.org>,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	Juri Lelli <juri.lelli@arm.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <cover.1459182044.git.bristot@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0139.hostedemail.com ([216.40.44.139]:47634 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751639AbcC1S5H (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 28 Mar 2016 14:57:07 -0400
+In-Reply-To: <20160309122423.GD10517@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+On Wed, 9 Mar 2016 13:24:23 +0100
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
 
-To have nanosecond output displayed in a more human readable format, its
-nicer to convert it to a seconds format (XXX.YYYYYYYYY). The problem is that
-to do so, the numbers must be divided by NSEC_PER_SEC, and moded too. But as
-these numbers are 64 bit, this can not be done simply with '/' and '%'
-operators, but must use do_div() instead.
+> * Josh Cartwright | 2016-03-08 12:26:56 [-0600]:
+> 
+> >Is it really just about latency?  Does this deferral not lead to an
+> >inversion in the case where the single woken task isn't the highest
+> >priority waiter on the completion (and doesn't run due to a
+> >middle-priority thing spinning)?  
+> 
+> This would be case, yes. Not only with deferral. Say you have two
+> waters: 1st one is MID-prio and the second is HI-prio. Currently after
+> the wakeup of the MID-prio waiter you get preempted. Waking all of them
+> at once would put the second waiter first on the CPU.
+> Samething without the deferral flag.
+> 
+> >In order for this to work, it seems like the chosen waiter would need to
+> >inherit the highest priority of all waiters (which AFAICT isn't
+> >happening).  
+> 
+> sorting the waiters by priority? This will be fun. This is only done for
+> the rtmutex waiters.
+> 
 
-Instead of performing the expensive do_div() in the hot path of the
-tracepoint, it is more efficient to perform it during the output phase. But
-passing in do_div() can confuse the parser, and do_div() doesn't work
-exactly like a normal C function. It modifies the number in place, and we
-don't want to modify the actual values in the ring buffer.
+Hmm, perhaps we should use an rbtree to sort simple waiters by
+priority :-)
 
-Two helper functions are now created:
+Probably wont make them simple anymore.
 
-  __print_ns_to_secs() and __print_ns_without_secs()
-
-They both take a value of nanoseconds, and the former will return that
-number divided by NSEC_PER_SEC, and the latter will mod it with NSEC_PER_SEC
-giving a way to print a nice human readable format:
-
- __print_fmt("time=%llu.%09u",
-	__print_ns_to_secs(REC->nsec_val),
-	__print_ns_without_secs(REC->nsec_val))
-
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
-Signed-off-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-
-diff --git a/include/trace/trace_events.h b/include/trace/trace_events.h
-index 170c93b..e9c3f93 100644
---- a/include/trace/trace_events.h
-+++ b/include/trace/trace_events.h
-@@ -283,6 +283,21 @@ TRACE_MAKE_SYSTEM_STR();
- 		trace_print_symbols_seq(p, value, symbols);		\
- 	})
- 
-+#undef __print_ns_to_secs
-+#define __print_ns_to_secs(value)			\
-+	({						\
-+		u64 ____val = (u64)value;		\
-+		do_div(____val, NSEC_PER_SEC);		\
-+		____val;				\
-+	})
-+
-+#undef __print_ns_without_secs
-+#define __print_ns_without_secs(value)			\
-+	({						\
-+		u64 ____val = (u64)value;		\
-+		(u32) do_div(____val, NSEC_PER_SEC);	\
-+	})
-+
- #undef __print_symbolic_u64
- #if BITS_PER_LONG == 32
- #define __print_symbolic_u64(value, symbol_array...)			\
-@@ -720,6 +735,16 @@ static inline void ftrace_test_probe_##call(void)			\
- #undef __get_bitmask
- #undef __print_array
- 
-+/*
-+ * The below is not executed in the kernel. It is only what is
-+ * displayed in the print format for userspace to parse.
-+ */
-+#undef __print_ns_to_secs
-+#define __print_ns_to_secs(val) val / 1000000000UL
-+
-+#undef __print_ns_without_secs
-+#define __print_ns_without_secs(val) val % 1000000000UL
-+
- #undef TP_printk
- #define TP_printk(fmt, args...) "\"" fmt "\", "  __stringify(args)
- 
--- 
-2.5.0
+-- Steve
