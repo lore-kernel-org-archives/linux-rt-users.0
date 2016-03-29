@@ -1,54 +1,45 @@
-From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Subject: Re: [PATCH] clockevents/drivers/timer-atmel-pit: fix double free_irq
-Date: Tue, 29 Mar 2016 15:52:04 +0200
-Message-ID: <20160329135204.GG2346@piout.net>
-References: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
- <20160329133206.GA13334@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [RFC V4 PATCH] trace: writeback: replace cgroup path to cgroup
+ ino
+Date: Tue, 29 Mar 2016 16:30:52 +0200
+Message-ID: <20160329143052.GC13334@linutronix.de>
+References: <1456996137-8354-1-git-send-email-yang.shi@linaro.org>
+ <20160304125224.GG13868@htj.duckdns.org>
+ <56DCF64A.3070409@linaro.org>
+ <20160307090347.12405fe4@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>,
-	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
-	linux-rt-users@vger.kernel.org,
-	Nicolas Ferre <nicolas.ferre@atmel.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: "Shi, Yang" <yang.shi@linaro.org>, Tejun Heo <tj@kernel.org>,
+	gregkh@linuxfoundation.org, lizefan@huawei.com, tglx@linutronix.de,
+	linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	linaro-kernel@lists.linaro.org
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:57411 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751928AbcC2Oa7 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Mar 2016 10:30:59 -0400
 Content-Disposition: inline
-In-Reply-To: <20160329133206.GA13334@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <20160307090347.12405fe4@gandalf.local.home>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 29/03/2016 at 15:32:06 +0200, Sebastian Andrzej Siewior wrote :
-> * Alexandre Belloni | 2016-03-17 21:09:43 [+0100]:
-> 
-> >Hi Sebastian,
-> Hi Alexandre,
-> 
-> >This patch fixes the last warning for preempt-rt on at91. It applies on
-> >v4.4.4-rt11. Note that the whome PIT/TCB mess will be fixed in another way in
-> >the mainline as we are reworking the tcb driver to avoid using the pit when
-> >booting.
-> 
-> oh, okay. I just sent the "arm: at91: do not disable/enable clocks in a
-> row" patch as you asked me a while ago. It applied cleanly against the
-> next tree of today.
+* Steven Rostedt | 2016-03-07 09:03:47 [-0500]:
 
-Yeah, actually, it was not needed anymore. I forgot about it at the time
-but f02b4b72d12c (clockevents/tcb_clksrc: Prevent disabling an already
-disabled clock) was sufficient to remove the warning. Your patch is
-still Ok but maybe it can get rid of the
-"if (!clockevent_state_detached(d))" in tc_shutdown_clk_off()
+>On Sun, 6 Mar 2016 19:32:26 -0800
+>"Shi, Yang" <yang.shi@linaro.org> wrote:
+>
+>> Hi Steven,
+>> 
+>> Any comment on this one? I'm supposed it will be taken by your tracing tree?
+>> 
+>
+>Usually trace events go in through their subsystem, but since this one
+>only touches the include/trace/events/ directory, I could pull it in
+>too.
 
-I'll test and take care of that.
+I took this for the next -RT release and dropped the
+"!defined(CONFIG_PREEMPT_RT_FULL)" workaround we had in the meantime.
 
-> So I will apply this to get rid of the warning. And if you manage not to
-> use the PIT during boot then we won't have the free_irq() mess which is
-> good.
-> 
-
-Yeah, this will definitively happen (hopefully sooner than later ;) )
-
--- 
-Alexandre Belloni, Free Electrons
-Embedded Linux, Kernel and Android engineering
-http://free-electrons.com
+Sebastian
