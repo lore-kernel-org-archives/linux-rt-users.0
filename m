@@ -1,74 +1,57 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH -rt] kernel/time: unbreak nohz in -rt
-Date: Tue, 29 Mar 2016 16:10:14 -0400
-Message-ID: <20160329161014.15d568be@redhat.com>
-References: <20160321151238.43fdfc1d@redhat.com>
-	<20160329162556.GF13334@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
+Subject: Re: [PATCH V2 3/3] sched/deadline: Tracepoints for deadline scheduler
+Date: Tue, 29 Mar 2016 22:11:45 +0200
+Message-ID: <20160329201145.GC3430@twins.programming.kicks-ass.net>
+References: <cover.1459182044.git.bristot@redhat.com>
+ <14f6caa05f73ceba69eff035ac542cad671552b3.1459182044.git.bristot@redhat.com>
+ <20160329151649.GA12845@twins.programming.kicks-ass.net>
+ <20160329115700.40acb336@gandalf.local.home>
+ <20160329160401.GB3430@twins.programming.kicks-ass.net>
+ <20160329131056.5b01780b@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, riel@redhat.com,
-	tglx@linutronix.de, fweisbec@gmail.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Ingo Molnar <mingo@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@arm.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:40151 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1758049AbcC2UKS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Mar 2016 16:10:18 -0400
-In-Reply-To: <20160329162556.GF13334@linutronix.de>
+Received: from casper.infradead.org ([85.118.1.10]:58734 "EHLO
+	casper.infradead.org" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1758053AbcC2ULs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Mar 2016 16:11:48 -0400
+Content-Disposition: inline
+In-Reply-To: <20160329131056.5b01780b@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 29 Mar 2016 18:25:56 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+On Tue, Mar 29, 2016 at 01:10:56PM -0400, Steven Rostedt wrote:
+> On Tue, 29 Mar 2016 18:04:01 +0200
+> Peter Zijlstra <peterz@infradead.org> wrote:
 
-> * Luiz Capitulino | 2016-03-21 15:12:38 [-0400]:
+> > Urgh; maybe. But I would would not want the new thing to be called
+> > _deadline, maybe _v{n} id anything and have a KERN_WARNING emitted when
+> > people enable the old one.
 > 
-> >nohz support (nohz-full and nohz-idle) is currently
-> >broken in the RT kernel. Meaning that, the tick is
-> >never de-activated even when a core is idle or when
-> >nohz_full= is passed.
-> >
-> >The reason for this is that get_next_timer_interrupt()
-> >in the RT kernel *always* returns "basem + TICK_NSEC"
-> >which translates to "there's a timer firing in the
-> >next tick". This causes tick_nohz_stop_sched_tick()
-> >to never deactivate the tick.
-> >
-> >This patch is like tylenol, it doesn't fix the problem, it
-> >just reliefs the symptons by making tick_nohz_stop_sched_tick()
-> >succeed if: 1. a core doesn't have any legacy timers
-> >pending and 2. there's no hrtimer firing in the next tick.
-> >
-> >Also, note that this issue has another side effect: it
-> >causes the ktimersoftd thread to always take 1%-2% of CPU
-> >time on all cores, even if they are idle. As it turns out,
-> >the tick handling code path unconditionally raises the
-> >TIMER_SOFTIRQ line. This is an upstream kernel behavior.
-> >I believe people are not noticing the CPU usage because
-> >nohz-idle papers over this problem.
+> I wasn't thinking of having a new sched switch, I was thinking of
+> having multiple ones. And not versions, as the one for a deadline task
+> wouldn't be applicable for a non deadline task. But regardless, I'm
+> also thinking of something else.
+
+No, it should really stay one tracepoint, useful for all scheduling.
+
+> > Ideally we'd rename the old one, but I suspect even that would break
+> > stuff :/
 > 
-> Unless this gets an ack-by tglx I will not consider it.
+> Yes, we don't want to get rid of the old one. But it shouldn't break
+> anything if we extend it. I'm thinking of extending it with a dynamic
+> array to store the deadline task values (runtime, period). And for non
+> deadline tasks, the array would be empty (size zero). I think that
+> could be doable and maintain backward compatibility.
 
-Thomas?
-
-> Last time it was
-> decided that we first rework the timer wheel before getting full-nohz
-> fixed for -RT.
-
-Is there anyone working on it? What needs to be done?
-
-> This patch disables interrupts to read an integer which should be safe
-> without interrupts disabled.
-
-I think you're right, it shouldn't be necessary to disable
-interrupts.
-
-> What are the implications if the value
-> changes after read (say after the interrupt enable)?
-> 
-> >Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
-> 
-> Sebastian
-> 
-
+Why the complexity? Why not just tack those 32 bytes on and get on with
+life?
