@@ -1,36 +1,37 @@
-From: Sebastian Andrzej Siewior <sebastian@breakpoint.cc>
-Subject: Re: [ANNOUNCE] v4.4.4-rt11
-Date: Tue, 29 Mar 2016 13:12:50 +0200
-Message-ID: <20160329111250.GA26103@breakpoint.cc>
-References: <20160309135142.GF10517@linutronix.de>
- <nbq16a$7li$1@ger.gmane.org>
- <20160311171446.GB3815@breakpoint.cc>
- <56E3776B.9030200@sysnux.pf>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH] clockevents/drivers/timer-atmel-pit: fix double free_irq
+Date: Tue, 29 Mar 2016 15:32:06 +0200
+Message-ID: <20160329133206.GA13334@linutronix.de>
+References: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org
-To: Jean-Denis Girard <jd.girard@sysnux.pf>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from Chamillionaire.breakpoint.cc ([80.244.247.6]:42331 "EHLO
-	Chamillionaire.breakpoint.cc" rhost-flags-OK-OK-OK-OK)
-	by vger.kernel.org with ESMTP id S1751805AbcC2LMy (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Mar 2016 07:12:54 -0400
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Boris Brezillon <boris.brezillon@free-electrons.com>,
+	linux-arm-kernel@lists.infradead.org, linux-kernel@vger.kernel.org,
+	linux-rt-users@vger.kernel.org,
+	Nicolas Ferre <nicolas.ferre@atmel.com>
+To: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <56E3776B.9030200@sysnux.pf>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+In-Reply-To: <1458245383-9859-1-git-send-email-alexandre.belloni@free-electrons.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 2016-03-11 15:56:59 [-1000], Jean-Denis Girard wrote:
-> Hi,
-Hi,
+* Alexandre Belloni | 2016-03-17 21:09:43 [+0100]:
 
-> Here are the interrupts, I hope this is what you want:
-> jdg@arietta:~$ cat /proc/interrupts
->            CPU0
->  16:     145825  atmel-aic   1 Level     at91_rtc, ttyS0
+>Hi Sebastian,
+Hi Alexandre,
 
-Yes, thank you. This means that the IRQ can be re-used. Now we need to
-rid of the warning :)
+>This patch fixes the last warning for preempt-rt on at91. It applies on
+>v4.4.4-rt11. Note that the whome PIT/TCB mess will be fixed in another way in
+>the mainline as we are reworking the tcb driver to avoid using the pit when
+>booting.
+
+oh, okay. I just sent the "arm: at91: do not disable/enable clocks in a
+row" patch as you asked me a while ago. It applied cleanly against the
+next tree of today.
+So I will apply this to get rid of the warning. And if you manage not to
+use the PIT during boot then we won't have the free_irq() mess which is
+good.
 
 Sebastian
