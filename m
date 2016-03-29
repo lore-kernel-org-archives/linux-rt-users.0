@@ -1,54 +1,42 @@
-From: Daniel Bristot de Oliveira <bristot@redhat.com>
-Subject: Re: [PATCH V2 3/3] sched/deadline: Tracepoints for deadline scheduler
-Date: Tue, 29 Mar 2016 13:10:34 -0300
-Message-ID: <56FAA8FA.5060407@redhat.com>
-References: <cover.1459182044.git.bristot@redhat.com>
- <14f6caa05f73ceba69eff035ac542cad671552b3.1459182044.git.bristot@redhat.com>
- <20160329151649.GA12845@twins.programming.kicks-ass.net>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH -rt] kvm,rt: change async pagefault code locking for
+ rt-preempt
+Date: Tue, 29 Mar 2016 18:13:46 +0200
+Message-ID: <20160329161346.GE13334@linutronix.de>
+References: <20160318142052.0605524d@annuminas.surriel.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Ingo Molnar <mingo@redhat.com>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Juri Lelli <juri.lelli@arm.com>,
-	Arnaldo Carvalho de Melo <acme@redhat.com>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Peter Zijlstra <peterz@infradead.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160329151649.GA12845@twins.programming.kicks-ass.net>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com,
+	srostedt@redhat.com
+To: Rik van Riel <riel@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:60952 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752082AbcC2QNs (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Mar 2016 12:13:48 -0400
+Content-Disposition: inline
+In-Reply-To: <20160318142052.0605524d@annuminas.surriel.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
+* Rik van Riel | 2016-03-18 14:20:52 [-0400]:
 
+>--- a/arch/x86/kernel/kvm.c
+>+++ b/arch/x86/kernel/kvm.c
+>@@ -36,6 +36,7 @@
+> #include <linux/kprobes.h>
+> #include <linux/debugfs.h>
+> #include <linux/nmi.h>
+>+#include <linux/wait-simple.h>
 
-On 03/29/2016 12:16 PM, Peter Zijlstra wrote:
->> +		trace_sched_deadline_yield(&rq->curr->dl);
+This does not work since v4.4.4-rt11:
 
-ouch, it should be trace_sched_deadline_yield(dl_se). It works
-as is, but it is really very sad, my bad, sorry.
+|arch/x86/kernel/kvm.c:39:31: fatal error: linux/wait-simple.h: No such file or directory
 
->> >  		dl_se->dl_throttled = 1;
->> > +		trace_sched_deadline_throttle(dl_se);
-> This is just really very sad.
+In -rt11 I pulled in the swait queue which was in the -tip tree and is
+now part of v4.6-rc1. So if you could please refresh the patch and
+resend it then I will be able pick it up for the next -RT release and
+the KVM maintainer will be able to pick it up, too. 
 
-Am I missing any other really very sad thing here?
-
->> >  		__dequeue_task_dl(rq, curr, 0);
->> >  		if (unlikely(dl_se->dl_boosted || !start_dl_timer(curr)))
->> >  			enqueue_task_dl(rq, curr, ENQUEUE_REPLENISH);
->> > @@ -910,6 +917,7 @@ enqueue_dl_entity(struct sched_dl_entity *dl_se,
->> >  static void dequeue_dl_entity(struct sched_dl_entity *dl_se)
->> >  {
->> >  	__dequeue_dl_entity(dl_se);
->> > +	trace_sched_deadline_block(dl_se);
->> >  }
-> And that's just not going to happen.
-
-It will, if a task goes to sleep during the activation,
-e.g., when blocking on a system call. For example:
-
-          <idle>-0     [007] d..3 78377.688969: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=18973 next_prio=-1
-               b-18973 [007] d..3 78377.688979: sched_deadline_block: now=78377.688976271 deadline=78377.718945137 remaining_runtime=9968866
-               b-18973 [007] d..3 78377.688981: sched_switch: prev_comm=b prev_pid=18973 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+Sebastian
