@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.10.101-rt111
-Date: Tue, 29 Mar 2016 19:13:08 -0400
-Message-ID: <20160329191308.4bde73eb@gandalf.local.home>
+Subject: [ANNOUNCE] 3.4.111-rt141
+Date: Tue, 29 Mar 2016 19:13:36 -0400
+Message-ID: <20160329191336.414dea75@gandalf.local.home>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
 Content-Transfer-Encoding: 7bit
@@ -18,10 +18,10 @@ List-Id: linux-rt-users.vger.kernel.org
 
 Dear RT Folks,
 
-I'm pleased to announce the 3.10.101-rt111 stable release.
+I'm pleased to announce the 3.4.111-rt141 stable release.
 
 
-This release is just an update to the new stable 3.10.101 version
+This release is just an update to the new stable 3.4.111 version
 and no RT specific changes have been made.
 
 
@@ -29,17 +29,17 @@ You can get this release via the git tree at:
 
   git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
 
-  branch: v3.10-rt
-  Head SHA1: 0b5a9056e6b482592c02b6253da383a41cf7e255
+  branch: v3.4-rt
+  Head SHA1: 588e04089a1afd30416b43c0091922162d86dcab
 
 
-Or to build 3.10.101-rt111 directly, the following patches should be applied:
+Or to build 3.4.111-rt141 directly, the following patches should be applied:
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.4.tar.xz
 
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.101.xz
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.4.111.xz
 
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.101-rt111.patch.xz
+  http://www.kernel.org/pub/linux/kernel/projects/rt/3.4/patch-3.4.111-rt141.patch.xz
 
 
 
