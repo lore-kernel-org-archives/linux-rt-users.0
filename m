@@ -1,57 +1,80 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH -rt] kernel/time: unbreak nohz in -rt
-Date: Tue, 29 Mar 2016 18:25:56 +0200
-Message-ID: <20160329162556.GF13334@linutronix.de>
-References: <20160321151238.43fdfc1d@redhat.com>
+From: Paolo Bonzini <pbonzini@redhat.com>
+Subject: Re: [PATCH -rt] kvm,rt: change async pagefault code locking for
+ rt-preempt
+Date: Tue, 29 Mar 2016 18:28:43 +0200
+Message-ID: <56FAAD3B.2050606@redhat.com>
+References: <20160318142052.0605524d@annuminas.surriel.com>
+ <20160329161346.GE13334@linutronix.de> <1459268329.6219.8.camel@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, riel@redhat.com,
-	tglx@linutronix.de, fweisbec@gmail.com
-To: Luiz Capitulino <lcapitulino@redhat.com>
+Content-Type: multipart/signed; micalg=pgp-sha256;
+ protocol="application/pgp-signature";
+ boundary="4D2StTe4P33Hawd8uEDppTQQRMnElB7ak"
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com,
+	srostedt@redhat.com
+To: Rik van Riel <riel@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:33039 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752691AbcC2QZ7 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Mar 2016 12:25:59 -0400
-Content-Disposition: inline
-In-Reply-To: <20160321151238.43fdfc1d@redhat.com>
+Received: from mx1.redhat.com ([209.132.183.28]:60998 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1757394AbcC2Q2w (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Mar 2016 12:28:52 -0400
+In-Reply-To: <1459268329.6219.8.camel@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Luiz Capitulino | 2016-03-21 15:12:38 [-0400]:
+This is an OpenPGP/MIME signed message (RFC 4880 and 3156)
+--4D2StTe4P33Hawd8uEDppTQQRMnElB7ak
+Content-Type: multipart/mixed; boundary="I57rT1JJ2v8UnQ5WmQjtV8iFp4Oapvndf"
+From: Paolo Bonzini <pbonzini@redhat.com>
+To: Rik van Riel <riel@redhat.com>,
+ Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Cc: linux-rt-users@vger.kernel.org, williams@redhat.com, srostedt@redhat.com
+Message-ID: <56FAAD3B.2050606@redhat.com>
+Subject: Re: [PATCH -rt] kvm,rt: change async pagefault code locking for
+ rt-preempt
+References: <20160318142052.0605524d@annuminas.surriel.com>
+ <20160329161346.GE13334@linutronix.de> <1459268329.6219.8.camel@redhat.com>
+In-Reply-To: <1459268329.6219.8.camel@redhat.com>
 
->nohz support (nohz-full and nohz-idle) is currently
->broken in the RT kernel. Meaning that, the tick is
->never de-activated even when a core is idle or when
->nohz_full= is passed.
+--I57rT1JJ2v8UnQ5WmQjtV8iFp4Oapvndf
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: quoted-printable
+
+
+
+On 29/03/2016 18:18, Rik van Riel wrote:
+> > In -rt11 I pulled in the swait queue which was in the -tip tree and i=
+s
+> > now part of v4.6-rc1. So if you could please refresh the patch and
+> > resend it then I will be able pick it up for the next -RT release and=
+
+> > the KVM maintainer will be able to pick it up, too.=20
 >
->The reason for this is that get_next_timer_interrupt()
->in the RT kernel *always* returns "basem + TICK_NSEC"
->which translates to "there's a timer firing in the
->next tick". This causes tick_nohz_stop_sched_tick()
->to never deactivate the tick.
->
->This patch is like tylenol, it doesn't fix the problem, it
->just reliefs the symptons by making tick_nohz_stop_sched_tick()
->succeed if: 1. a core doesn't have any legacy timers
->pending and 2. there's no hrtimer firing in the next tick.
->
->Also, note that this issue has another side effect: it
->causes the ktimersoftd thread to always take 1%-2% of CPU
->time on all cores, even if they are idle. As it turns out,
->the tick handling code path unconditionally raises the
->TIMER_SOFTIRQ line. This is an upstream kernel behavior.
->I believe people are not noticing the CPU usage because
->nohz-idle papers over this problem.
+> I missed that swait went upstream, but I believe Paulo fixed
+> up the patch and has it in the KVM tree already.
 
-Unless this gets an ack-by tglx I will not consider it. Last time it was
-decided that we first rework the timer wheel before getting full-nohz
-fixed for -RT.
-This patch disables interrupts to read an integer which should be safe
-without interrupts disabled. What are the implications if the value
-changes after read (say after the interrupt enable)?
+Yes, I did.  You'll get Rik's patch for free from Linus's tree. :)
 
->Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+Paolo
 
-Sebastian
+
+--I57rT1JJ2v8UnQ5WmQjtV8iFp4Oapvndf--
+
+--4D2StTe4P33Hawd8uEDppTQQRMnElB7ak
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: OpenPGP digital signature
+Content-Disposition: attachment; filename="signature.asc"
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v2
+
+iQEcBAEBCAAGBQJW+q07AAoJEL/70l94x66D2vwH/0orah6K5DC6jvBsxvhDDtTW
+LAW5AGq4kNhnbS3gQHvifAyOi84Ju6pOUJzY1bYsMXIVBERQKxo8X1IqBLZulOJ2
+RvGBOurWLG+uJHlkWpij0z26JSPpPGRJwOm2BHQSUPH+nD87JM2tfr6ZjrkRhIxi
+svEKF+lbWFYIDqzulsBGIESM+IYhzl6cGK446Sw5YBdt8NixAwntMY6EfIDDkhDj
+0ebBZSAw+hiRq8KdpT6T0x2t71Cw3msLIU4OfHVpH7SPq/NTApsoOsZrSuCIwsLA
+/KzYLK0R1mqGH5B32Z5EuwdPeiNOJ6HuLadPIJqLAh05peNjtELCYOyG+AIDVyc=
+=ipqa
+-----END PGP SIGNATURE-----
+
+--4D2StTe4P33Hawd8uEDppTQQRMnElB7ak--
