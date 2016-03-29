@@ -1,166 +1,77 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: Re: [4.4.4-rt11] Possiblie recursive locking detected in kswapd /
- mb_cache_shrink_scan()
-Date: Tue, 29 Mar 2016 13:20:02 -0500
-Message-ID: <20160329182002.GN28102@jcartwri.amer.corp.natinst.com>
-References: <20160314210058.GE29798@uudg.org>
- <alpine.DEB.2.11.1603190933150.3978@nanos>
- <20160321144016.GA31276@jcartwri.amer.corp.natinst.com>
- <20160329150444.GD13334@linutronix.de>
+From: Daniel Bristot de Oliveira <bristot@redhat.com>
+Subject: Re: [PATCH V2 3/3] sched/deadline: Tracepoints for deadline scheduler
+Date: Tue, 29 Mar 2016 16:12:38 -0300
+Message-ID: <56FAD3A6.20205@redhat.com>
+References: <cover.1459182044.git.bristot@redhat.com>
+ <14f6caa05f73ceba69eff035ac542cad671552b3.1459182044.git.bristot@redhat.com>
+ <20160329151649.GA12845@twins.programming.kicks-ass.net>
+ <56FAA8FA.5060407@redhat.com> <20160329131343.3b2bcf76@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
-	linux-rt-users@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@redhat.com>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Juri Lelli <juri.lelli@arm.com>,
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod2.natinst.com ([130.164.80.23]:34370 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1751595AbcC2SUO (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 29 Mar 2016 14:20:14 -0400
-In-Reply-To: <20160329150444.GD13334@linutronix.de>
-Content-Disposition: inline
+Received: from mx1.redhat.com ([209.132.183.28]:54207 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753513AbcC2TMm (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 29 Mar 2016 15:12:42 -0400
+In-Reply-To: <20160329131343.3b2bcf76@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, Mar 29, 2016 at 05:04:44PM +0200, Sebastian Andrzej Siewior wrote:
-> * Josh Cartwright | 2016-03-21 09:40:16 [-0500]:
-> 
-> >diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-> >index 44f0b55..d13428a 100644
-> >--- a/include/linux/list_bl.h
-> >+++ b/include/linux/list_bl.h
-> >@@ -42,13 +42,18 @@ struct hlist_bl_node {
-> > 	struct hlist_bl_node *next, **pprev;
-> > };
-> > 
-> >-static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
-> >-{
-> >-	h->first = NULL;
-> > #ifdef CONFIG_PREEMPT_RT_BASE
-> >-	raw_spin_lock_init(&h->lock);
-> >+#define INIT_HLIST_BL_HEAD(h)		\
-> >+do {					\
-> >+	(h)->first = NULL;		\
-> >+	raw_spin_lock_init(&(h)->lock);	\
-> >+} while (0)
-> >+#else
-> >+#define INIT_HLIST_BL_HEAD(h)		\
-> >+do {					\
-> >+	(h)->first = NULL;		\
-> >+} while (0)
-> > #endif
-> >-}
-> 
-> So we use a macro instead a "static inline" to ensure we end up with
-> another lockdep class?
 
-Yes, that was the idea.
 
-> This surprises me because it would mean that the function wasn't
-> inlined / key classed was re-used.
+On 03/29/2016 02:13 PM, Steven Rostedt wrote:
+>>           <idle>-0     [007] d..3 78377.688969: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=18973 next_prio=-1
+>> >                b-18973 [007] d..3 78377.688979: sched_deadline_block: now=78377.688976271 deadline=78377.718945137 remaining_runtime=9968866
+>> >                b-18973 [007] d..3 78377.688981: sched_switch: prev_comm=b prev_pid=18973 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+> Why did it go to sleep? The above is still not very useful. What do you
+> mean "blocking on a system call"?
 
-Hmm.  I'm not sure that's what this means.  I think it's possible that
-the function _code_ is inlined, but any function static data is shared
-between inlined instances.
+A task can go can to sleep in a blocking system call, like waiting
+a network packet, or any other external event.
 
-This simple experiment seems to also confirm this:
+The "block state" is a possible state of a task running in the deadline
+scheduler. It means that a task voluntarily left the processor, not
+by calling sched_yield(), but by blocking (or sleeping) waiting another
+event.
 
-	extern void do_something(int *x);
-	
-	static inline void experiment_static(void)
-	{
-		static int x;
-		do_something(&x);
-	}
-	
-	#define experiment_macro()		\
-		do {				\
-			static int x;		\
-			do_something(&x);	\
-		} while (0)
-	
-	void f(void)
-	{
-		asm("# static1");
-		experiment_static();
-		asm("# static2");
-		experiment_static();
-		asm("# macro1");
-		experiment_macro();
-		asm("# macro2");
-		experiment_macro();
-	}
+This state is described in the Figure 2 of the article "Deadline
+scheduling in the Linux kernel", available at:
+http://onlinelibrary.wiley.com/doi/10.1002/spe.2335/abstract
 
-Generated listing (cleaned up):
+The block state affects the replenishment of the task, and that is why
+it is different of both yeild and throttle. If the task blocks and is
+awakened prior to the deadline, the task's runtime will not be
+replenished. On the other hand it will. For example:
 
-	f:
-		subq	$8, %rsp
-		# static1
-		movl	$x.1835, %edi
-		call	do_something
+Blocking, and then waking up after the deadline:
+               b-5152  [007] d..3  3983.376428: sched_deadline_replenish: comm=b pid=5152 now=3983.376425148 deadline=3983.406425148 runtime=10000000
+               b-5152  [007] d..3  3983.376515: sched_deadline_block: now=3983.376511101 deadline=3983.406425148 remaining_runtime=9909566
+               b-5152  [007] d..3  3983.376529: sched_switch: prev_comm=b prev_pid=5152 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
 
-		# static2
-		movl	$x.1835, %edi
-		call	do_something
+          <idle>-0     [007] d.h4  3983.476592: sched_deadline_replenish: comm=b pid=5152 now=3983.476589573 deadline=3983.506589573 runtime=10000000
+          <idle>-0     [007] dNh4  3983.476596: sched_wakeup: comm=b pid=5152 prio=-1 target_cpu=007
+          <idle>-0     [007] d..3  3983.476648: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=5152 next_prio=-1
+               b-5152  [007] d..3  3983.476660: sched_deadline_block: now=3983.476656613 deadline=3983.506589573 remaining_runtime=9932960
+               b-5152  [007] d..3  3983.476663: sched_switch: prev_comm=b prev_pid=5152 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
 
-		# macro1
-		movl	$x.1839, %edi
-		call	do_something
 
-		# macro2
-		movl	$x.1840, %edi
-		addq	$8, %rsp
-		jmp	do_something
-	[..]
-		.local	x.1835
-		.comm	x.1835,4,4
-		.local	x.1840
-		.comm	x.1840,4,4
-		.local	x.1839
-		.comm	x.1839,4,4
-		.ident	"GCC: (GNU) 5.3.0"
+Blocking, and then waking up before the deadline:
+               b-5139  [007] d..3  3964.148290: sched_deadline_replenish: comm=b pid=5139 now=3964.148285227 deadline=3964.178285227 runtime=10000000
+               b-5139  [007] d..3  3964.148396: sched_deadline_block: now=3964.148385308 deadline=3964.178285227 remaining_runtime=9895243
+               b-5139  [007] d..3  3964.148400: sched_switch: prev_comm=b prev_pid=5139 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
 
-You can see here that both of the static inlined instances shared the
-same 'x.1835' data (and the code is inlined), whereas the macro
-instances do not share data.
+          <idle>-0     [007] dNh5  3964.148411: sched_wakeup: comm=b pid=5139 prio=-1 target_cpu=007
+          <idle>-0     [007] d..3  3964.148419: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=5139 next_prio=-1
+               b-5139  [007] d..3  3964.148427: sched_deadline_block: now=3964.148426022 deadline=3964.178285227 remaining_runtime=9878164
+               b-5139  [007] d..3  3964.148429: sched_switch: prev_comm=b prev_pid=5139 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
 
-> Looking at the assembly I see:
-> 
-> |ffffffff8121fb41:       48 c7 c2 e0 bb d6 82    mov    $0xffffffff82d6bbe0,%rdx
-> |ffffffff8121fb48:       48 89 df                mov    %rbx,%rdi
-> |ffffffff8121fb4b:       48 c7 c6 30 2b a2 81    mov    $0xffffffff81a22b30,%rsi
-> |ffffffff8121fb52:       e8 a9 0e e9 ff          callq  ffffffff810b0a00 <__raw_spin_lock_init>
-> ???
-> |ffffffff8121fc12:       48 c7 c2 d0 bb d6 82    mov    $0xffffffff82d6bbd0,%rdx
-> |ffffffff8121fc19:       48 c7 c6 7b 2e a3 81    mov    $0xffffffff81a32e7b,%rsi
-> |ffffffff8121fc20:       48 c7 07 00 00 00 00    movq   $0x0,(%rdi)
-> |ffffffff8121fc27:       48 83 c7 08             add    $0x8,%rdi
-> |ffffffff8121fc2b:       e8 d0 0d e9 ff          callq  ffffffff810b0a00 <__raw_spin_lock_init>
-> 
-> rdx holds the third parameter and it is different. What do I miss?
-
-Hmm.  I'm not sure what's going on here for your build.
-
-Here's the relevant listing I get for fs/mbcache.c w/ DEBUG_SPINLOCKS &
-PREEMPT_RT_FULL, which shows the same thing as the experiment above (the
-class object being shared amongst inline instances):
-
-	mb_cache_create:
-	[..]
-		movq	$__key.15124, %rdx	#,
-		movq	$.LC5, %rsi	#,
-		movq	$0, (%rdi)	#, _28->first
-		addq	$8, %rdi	#, D.27485
-		call	__raw_spin_lock_init	#
-	[..]
-		movq	$__key.15124, %rdx	#,
-		movq	$.LC5, %rsi	#,
-		movq	$0, (%rdi)	#, _35->first
-		addq	$8, %rdi	#, D.27485
-		call	__raw_spin_lock_init	#
-	[..]
-		.local	__key.15124
-		.comm	__key.15124,8,8
-
-  Josh
+-- Daniel
