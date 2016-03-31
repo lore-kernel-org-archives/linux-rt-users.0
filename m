@@ -1,116 +1,117 @@
-From: Josh Cartwright <joshc@ni.com>
-Subject: [PATCH] list_bl: fixup bogus lockdep warning
-Date: Thu, 31 Mar 2016 00:04:25 -0500
-Message-ID: <1459400665-12546-1-git-send-email-joshc@ni.com>
-References: <56FB8B5A.8@linutronix.de>
-Cc: linux-rt-users@vger.kernel.org,
+From: Juri Lelli <juri.lelli@arm.com>
+Subject: Re: [PATCH V2 3/3] sched/deadline: Tracepoints for deadline scheduler
+Date: Thu, 31 Mar 2016 06:19:40 +0100
+Message-ID: <20160331051940.GC7049@pablo>
+References: <cover.1459182044.git.bristot@redhat.com>
+ <14f6caa05f73ceba69eff035ac542cad671552b3.1459182044.git.bristot@redhat.com>
+ <20160329151649.GA12845@twins.programming.kicks-ass.net>
+ <56FAA8FA.5060407@redhat.com>
+ <20160329131343.3b2bcf76@gandalf.local.home>
+ <56FAD3A6.20205@redhat.com>
+ <20160329152510.3e0f0010@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=us-ascii
+Cc: Daniel Bristot de Oliveira <bristot@redhat.com>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@redhat.com>,
 	Thomas Gleixner <tglx@linutronix.de>,
-	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from skprod3.natinst.com ([130.164.80.24]:55825 "EHLO ni.com"
-	rhost-flags-OK-OK-OK-FAIL) by vger.kernel.org with ESMTP
-	id S1750941AbcCaFEg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Mar 2016 01:04:36 -0400
-In-Reply-To: <56FB8B5A.8@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Arnaldo Carvalho de Melo <acme@redhat.com>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: Steven Rostedt <rostedt@goodmis.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+In-Reply-To: <20160329152510.3e0f0010@gandalf.local.home>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-At first glance, the use of 'static inline' seems appropriate for
-INIT_HLIST_BL_HEAD().
+Hi,
 
-However, when a 'static inline' function invocation is inlined by gcc,
-all callers share any static local data declared within that inline
-function.
+On 29/03/16 15:25, Steven Rostedt wrote:
+> On Tue, 29 Mar 2016 16:12:38 -0300
+> Daniel Bristot de Oliveira <bristot@redhat.com> wrote:
+> 
+> > On 03/29/2016 02:13 PM, Steven Rostedt wrote:
+> > >>           <idle>-0     [007] d..3 78377.688969: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=18973 next_prio=-1  
+> > >> >                b-18973 [007] d..3 78377.688979: sched_deadline_block: now=78377.688976271 deadline=78377.718945137 remaining_runtime=9968866
+> > >> >                b-18973 [007] d..3 78377.688981: sched_switch: prev_comm=b prev_pid=18973 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120  
+> > > Why did it go to sleep? The above is still not very useful. What do you
+> > > mean "blocking on a system call"?  
+> > 
+> > A task can go can to sleep in a blocking system call, like waiting
+> > a network packet, or any other external event.
+> 
+> Note, waiting for a network packet or some other external event is a
+> userspace call. A schedule out in 'S' state means exactly that. But
+> I hate the term "blocked" because that is more like waiting for
+> something else to finish (like blocked on a lock). In which case, if
+> that did happen, the state would be "D" not "S".
+> 
+> "S" is basically "sleeping" and it gets woken up by some other event. A
+> slight difference to the term "blocked".
+> 
+> > 
+> > The "block state" is a possible state of a task running in the deadline
+> > scheduler. It means that a task voluntarily left the processor, not
+> > by calling sched_yield(), but by blocking (or sleeping) waiting another
+> > event.
+> > 
+> > This state is described in the Figure 2 of the article "Deadline
+> > scheduling in the Linux kernel", available at:
+> > http://onlinelibrary.wiley.com/doi/10.1002/spe.2335/abstract
+> 
+> Bah, confusing terminology.
+> 
 
-This presents a problem for how lockdep classes are setup.  raw_spinlocks, for
-example, when CONFIG_DEBUG_SPINLOCK,
+Mmm, a bit of overloading yes. Should be consistent with RT literature
+terminology, though (I hope :-/).
 
-	# define raw_spin_lock_init(lock)				\
-	do {								\
-		static struct lock_class_key __key;			\
-									\
-		__raw_spin_lock_init((lock), #lock, &__key);		\
-	} while (0)
+> > 
+> > The block state affects the replenishment of the task, and that is why
+> > it is different of both yeild and throttle. If the task blocks and is
+> > awakened prior to the deadline, the task's runtime will not be
+> > replenished. On the other hand it will. For example:
+> > 
 
-When this macro is expanded into a 'static inline' caller, like
-INIT_HLIST_BL_HEAD():
+Not entirely true. We can have a replenishment even if the task wakes up
+before the deadline, if it happens to wake up after the 0-lag point
+(after which its runtime can't be recycled if we don't want to affect
+others' guarantees). Anyway, this doesn't affect the discussion, I only
+wanted to point out that the fact that a replenishment happened might be
+useful information to get.
 
-	static inline INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
-	{
-		h->first = NULL;
-		raw_spin_lock_init(&h->lock);
-	}
+> > Blocking, and then waking up after the deadline:
+> >                b-5152  [007] d..3  3983.376428: sched_deadline_replenish: comm=b pid=5152 now=3983.376425148 deadline=3983.406425148 runtime=10000000
+> >                b-5152  [007] d..3  3983.376515: sched_deadline_block: now=3983.376511101 deadline=3983.406425148 remaining_runtime=9909566
+> >                b-5152  [007] d..3  3983.376529: sched_switch: prev_comm=b prev_pid=5152 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+> > 
+> >           <idle>-0     [007] d.h4  3983.476592: sched_deadline_replenish: comm=b pid=5152 now=3983.476589573 deadline=3983.506589573 runtime=10000000
+> >           <idle>-0     [007] dNh4  3983.476596: sched_wakeup: comm=b pid=5152 prio=-1 target_cpu=007
+> >           <idle>-0     [007] d..3  3983.476648: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=5152 next_prio=-1
+> >                b-5152  [007] d..3  3983.476660: sched_deadline_block: now=3983.476656613 deadline=3983.506589573 remaining_runtime=9932960
+> >                b-5152  [007] d..3  3983.476663: sched_switch: prev_comm=b prev_pid=5152 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+> > 
+> > 
+> > Blocking, and then waking up before the deadline:
+> >                b-5139  [007] d..3  3964.148290: sched_deadline_replenish: comm=b pid=5139 now=3964.148285227 deadline=3964.178285227 runtime=10000000
+> >                b-5139  [007] d..3  3964.148396: sched_deadline_block: now=3964.148385308 deadline=3964.178285227 remaining_runtime=9895243
+> >                b-5139  [007] d..3  3964.148400: sched_switch: prev_comm=b prev_pid=5139 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+> > 
+> >           <idle>-0     [007] dNh5  3964.148411: sched_wakeup: comm=b pid=5139 prio=-1 target_cpu=007
+> >           <idle>-0     [007] d..3  3964.148419: sched_switch: prev_comm=swapper/7 prev_pid=0 prev_prio=120 prev_state=R ==> next_comm=b next_pid=5139 next_prio=-1
+> >                b-5139  [007] d..3  3964.148427: sched_deadline_block: now=3964.148426022 deadline=3964.178285227 remaining_runtime=9878164
+> >                b-5139  [007] d..3  3964.148429: sched_switch: prev_comm=b prev_pid=5139 prev_prio=-1 prev_state=S ==> next_comm=swapper/7 next_pid=0 next_prio=120
+> > 
+> 
+> I still fail to see the usefulness of the block tracepoint. I could
+> imagine that if we add the dynamic part of the sched_switch tracepoint
+> to include deadline and runtime, we would get the same information.
+> 
 
-...the static local lock_class_key object is made a function static.
+Right. It seems to me that knowing when a task switched-off should be
+enough information (given that we have the dynamic part), complemented
+by having or not having a replenishment at wakeup.
 
-For compilation units which initialize invoke INIT_HLIST_BL_HEAD() more
-than once, then, all of the invocations share this same static local
-object.
+Thanks,
 
-This can lead to some very confusing lockdep splats (example below).
-Solve this problem by forcing the INIT_HLIST_BL_HEAD() to be a macro,
-which prevents the lockdep class object sharing.
-
- =============================================
- [ INFO: possible recursive locking detected ]
- 4.4.4-rt11 #4 Not tainted
- ---------------------------------------------
- kswapd0/59 is trying to acquire lock:
-  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
-
- but task is already holding lock:
-  (&h->lock#2){+.+.-.}, at:  mb_cache_shrink_scan
-
- other info that might help us debug this:
-  Possible unsafe locking scenario:
-
-        CPU0
-        ----
-   lock(&h->lock#2);
-   lock(&h->lock#2);
-
-  *** DEADLOCK ***
-
-  May be due to missing lock nesting notation
-
- 2 locks held by kswapd0/59:
-  #0:  (shrinker_rwsem){+.+...}, at: rt_down_read_trylock
-  #1:  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
-
-Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Tested-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
-Signed-off-by: Josh Cartwright <joshc@ni.com>
----
- include/linux/list_bl.h | 13 ++++++++-----
- 1 file changed, 8 insertions(+), 5 deletions(-)
-
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index 44f0b55..a1bfb3b 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -42,13 +42,16 @@ struct hlist_bl_node {
- 	struct hlist_bl_node *next, **pprev;
- };
- 
--static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
--{
--	h->first = NULL;
- #ifdef CONFIG_PREEMPT_RT_BASE
--	raw_spin_lock_init(&h->lock);
-+#define INIT_HLIST_BL_HEAD(h)		\
-+do {					\
-+	(h)->first = NULL;		\
-+	raw_spin_lock_init(&(h)->lock);	\
-+} while (0)
-+#else
-+#define INIT_HLIST_BL_HEAD(h)		\
-+	(h)->first = NULL;		\
- #endif
--}
- 
- static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
- {
--- 
-2.7.4
-
+- Juri
