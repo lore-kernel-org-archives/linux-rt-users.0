@@ -1,60 +1,112 @@
-From: eg Engleder Gerhard <eg@keba.com>
-Subject: AW: Eliminating Packet Latency
-Date: Thu, 31 Mar 2016 13:13:09 +0200
-Message-ID: <12C1B74BDFD05D40B2356A9B12DFA3396C3673FF89@KEBMXSPMB01.keba.co.at>
-References: <20160330130810.GC21849@linutronix.de>
+From: John Kacur <jkacur@redhat.com>
+Subject: [ANNOUNCE] rt-tests-v0.97
+Date: Thu, 31 Mar 2016 21:24:06 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1603312115400.25679@riemann>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from xlspam03.mdcs.at ([217.13.183.27]:63348 "EHLO xlspam03.mdcs.at"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751036AbcCaLNP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Mar 2016 07:13:15 -0400
-In-Reply-To: <20160330130810.GC21849@linutronix.de>
-Content-Language: de-DE
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=US-ASCII
+Cc: Clark Williams <williams@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>,
+	LKML <linux-kernel@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-DQpGcm9tOiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIFttYWlsdG86YmlnZWFzeUBsaW51dHJv
-bml4LmRlXQ0KDQo+ID4+IEkgZm91bmQgdGhhdCBzb21ldGltZXMgd2hlbiBzZW5kaW5nIG5ldHdv
-cmsgcGFja2V0cywgdGhlIGtlcm5lbCB3b3VsZA0KPiA+PiBoaWphY2sgdGhlIHRocmVhZCBvZiB0
-aGUgc2VuZGVyIHdoZW4gdGhlIHF1ZXVlIHdhcyBlbXB0eS4gVGhpcyB3b3VsZA0KPiA+PiBjYXVz
-ZSBpc3N1ZXMsIHNpbmNlIEkgaGFkIG5vIGNvbnRyb2wgb3ZlciB0aGUgcHJpb3JpdHkgb2YgdGhh
-dA0KPiA+PiB0aHJlYWQsIHNpbmNlIGl0IGNvdWxkIGJlIGFueXRoaW5nLiBNeSBmaXggd2FzIHRv
-IG5ldmVyIGFsbG93IHRoZQ0KPiA+PiBrZXJuZWwgdG8gc2VuZCBpbiB0aGUgY29udGV4dCBvZiB0
-aGUgc2VuZGluZyB1c2Vyc3BhY2UNCj4gPg0KPiA+V2UgaGFkIGEgc2ltaWxhciBwcm9ibGVtIGFu
-ZCBzb2x2ZWQgaXQgd2l0aCBjaGFuZ2VkIGxvY2tpbmc6DQo+IA0KPiBTbyB0aGUgZm9sbG93aW5n
-IHBhdGNoIHNob3VsZCBkbyB0aGUgam9iLiBDYW4gc29tZW9uZSBjb25maXJtPw0KPiANCj4gRnJv
-bTogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciA8YmlnZWFzeUBsaW51dHJvbml4LmRlPg0KPiBE
-YXRlOiBXZWQsIDMwIE1hciAyMDE2IDEzOjM2OjI5ICswMjAwDQo+IFN1YmplY3Q6IFtQQVRDSF0g
-bmV0OiBkZXY6IGFsd2F5cyB0YWtlIHFkaXNjJ3MgYnVzeWxvY2sgaW4gX19kZXZfeG1pdF9za2Io
-KQ0KPiANCj4gVGhlIHJvb3QtbG9jayBpcyBkcm9wcGVkIGJlZm9yZSBkZXZfaGFyZF9zdGFydF94
-bWl0KCkgaXMgaW52b2tlZCBhbmQgYWZ0ZXIgc2V0dGluZw0KPiB0aGUgX19RRElTQ19fX1NUQVRF
-X1JVTk5JTkcgYml0LiBJZiB0aGlzIHRhc2sgaXMgbm93IHB1c2hlZCBhd2F5IGJ5IGEgdGFzaw0K
-PiB3aXRoIGEgaGlnaGVyIHByaW9yaXR5IHRoZW4gdGhlIHRhc2sgd2l0aCB0aGUgaGlnaGVyIHBy
-aW9yaXR5IHdvbid0IGJlIGFibGUgdG8gc3VibWl0DQo+IHBhY2tldHMgdG8gdGhlIE5JQyBkaXJl
-Y3RseSBpbnN0ZWFkIHRoZXkgd2lsbCBiZSBlbnF1ZXVlZCBpbnRvIHRoZSBRZGlzYy4gVGhlIE5J
-Qw0KPiB3aWxsIHJlbWFpbiBpZGxlIHVudGlsIHRoZSB0YXNrKHMpIHdpdGggaGlnaGVyIHByaW9y
-aXR5IGxlYXZlIHRoZSBDUFUgYW5kIHRoZSB0YXNrIHdpdGgNCj4gbG93ZXIgcHJpb3JpdHkgZ2V0
-cyBiYWNrIGFuZCBmaW5pc2hlcyB0aGUgam9iLg0KPiANCj4gSWYgd2UgdGFrZSBhbHdheXMgdGhl
-IGJ1c3lsb2NrIHdlIGVuc3VyZSB0aGF0IHRoZSBSVCB0YXNrIGNhbiBib29zdCB0aGUgbG93LXBy
-aW8NCj4gdGFzayBhbmQgc3VibWl0IHRoZSBwYWNrZXQuDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiBT
-ZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIDxiaWdlYXN5QGxpbnV0cm9uaXguZGU+DQo+IC0tLQ0K
-PiAgbmV0L2NvcmUvZGV2LmMgfCA0ICsrKysNCj4gIDEgZmlsZSBjaGFuZ2VkLCA0IGluc2VydGlv
-bnMoKykNCj4gDQo+IGRpZmYgLS1naXQgYS9uZXQvY29yZS9kZXYuYyBiL25ldC9jb3JlL2Rldi5j
-IGluZGV4IGNjMzY0YmUzNTg3Yi4uMGUxNzU5MmFkYmZmDQo+IDEwMDY0NA0KPiAtLS0gYS9uZXQv
-Y29yZS9kZXYuYw0KPiArKysgYi9uZXQvY29yZS9kZXYuYw0KPiBAQCAtMjg5MSw3ICsyODkxLDEx
-IEBAIHN0YXRpYyBpbmxpbmUgaW50IF9fZGV2X3htaXRfc2tiKHN0cnVjdCBza19idWZmICpza2Is
-DQo+IHN0cnVjdCBRZGlzYyAqcSwNCj4gIAkgKiBUaGlzIHBlcm1pdHMgX19RRElTQ19fX1NUQVRF
-X1JVTk5JTkcgb3duZXIgdG8gZ2V0IHRoZSBsb2NrIG1vcmUNCj4gIAkgKiBvZnRlbiBhbmQgZGVx
-dWV1ZSBwYWNrZXRzIGZhc3Rlci4NCj4gIAkgKi8NCj4gKyNpZmRlZiBDT05GSUdfUFJFRU1QVF9S
-VF9GVUxMDQo+ICsJY29udGVuZGVkID0gdHJ1ZTsNCj4gKyNlbHNlDQo+ICAJY29udGVuZGVkID0g
-cWRpc2NfaXNfcnVubmluZyhxKTsNCj4gKyNlbmRpZg0KPiAgCWlmICh1bmxpa2VseShjb250ZW5k
-ZWQpKQ0KPiAgCQlzcGluX2xvY2soJnEtPmJ1c3lsb2NrKTsNCj4gDQo+IC0tDQo+IDIuOC4wLnJj
-Mw0KDQpJbiBjb3VsZCBub3QgcmVwcm9kdWNlIHRoZSBwcm9ibGVtYXRpYyBzaXR1YXRpb24gd2l0
-aCB2NC40LjQtcnQxMSAod2l0aG91dCBwYXRjaCkgaW4gb3VyDQp0ZXN0IGVudmlyb25tZW50LiBU
-aGUgcGF0Y2ggbWF5IHdvcmssIGJ1dCBJIGFtIGFibGUgdG8gY29uZmlybSB0aGF0IHdpdGggYSB0
-ZXN0Lg0K
+
+Dear RT Folks
+
+We are pleased to announce the latest version of rt-tests
+
+We have a number of interesting enhancements.
+
+Firstly Clark has formally removed the requirement to compile hwlatdetect as a module.
+
+Daniel Bristot de Oliveira has added a hardware SMI count detection using 
+the MSR/SMI counter if available. Using the --smi option adds the count to 
+the end of the output, it looks like this (per thread)
+
+ T: 0 ( 2285) P:80 I:1000 C:   9975 Min:      2 Act:    3 Avg:    4 Max:   20831 SMI:       2
+
+Finally Luis Capitulino has added an option to bypass cyclictest's built-in tracing so that this functionality can be handed off to another program - in particular trace-cmd. cyclictest continues to write to the /sys/kernel/debug/tracing/trace_maker file, but trace-cmd handles the tracing.
+
+trace-cmd record [...] cyclictest [...] -bX --tracemark
+
+We are nearing a 1.0 version of rt-tests.
+I'd like to have a round of bugfix/clean-up  patches, and patches to add anything 
+missing and then create a 1.0 version of rt-tests that we will continue to maintain,
+ but that won't accept any new enhancements. We will also spin-off a development version (v2.x?) that will allow api changes.
+
+In the development version we are planning on ripping out the built-in tracing support for tighter integration with trace-cmd.
+The options in cyclictest have also become quite crufty and complicated and 
+need to be radically reworked / simplified. The tests could also share code much better than they currently do.
+
+To fetch the latest version
+
+Clone one of the following if needed.
+
+git://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://git.kernel.org/pub/scm/utils/rt-tests/rt-tests.git
+https://kernel.googlesource.com/pub/scm/utils/rt-tests/rt-tests.git
+
+tag: v0.97
+
+You can also fetch the tarball here
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.97.tar.xz
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests-0.97.tar.gz
+
+older versions are in
+https://www.kernel.org/pub/linux/utils/rt-tests/rt-tests/older
+
+I have created a new devel branch which will beome 1.0 (unless we need a v0.99)
+
+devel/v0.98
+
+I'll create the development line for 2.0 once we freeze 1.0
+
+Thanks for all your hardwork
+
+Cheers!
+
+John Kacur
+
+Clark Williams (4):
+  Makefile: fixed dropped quote in help target text
+  hwlatdetect: handle hwlat_detector being builtin rather than module
+  hwlatdetect: modify to handle python3 prints
+  hwlatdetect: make reading sample date work with python2 and python3
+
+Daniel Bristot de Oliveira (2):
+  cyclictest: SMI count/detection via MSR/SMI counter
+  cyclictest: Add --smi description on cyclictest man page
+
+John Kacur (6):
+  Remove rt-tests.spec-in
+  gitattributes: add doc, remove rt.spec-in
+  Makefile: Remove anything to do with rpms, specs etc
+  Revert changes to rt-migrate-test for exit(1)
+  cyclictest: Make the tracemark option imply notrace
+  rt-tests: Makefile: Bump version number to 0.97
+
+Khem Raj (1):
+  Makefile: Set CC/AR variable only if it doesn't have a value
+
+Luiz Capitulino (5):
+  don't use exit(-1) for failures
+  cyclictest: move tracemark_fd handling to its own function
+  cyclictest: tracing(): check for notrace
+  cyclictest: move debugfs init code to its own function
+  cyclictest: add --tracemark option
+
+ .gitattributes                 |   2 +-
+ Makefile                       |  62 +----
+ rt-tests.spec-in               | 524 -----------------------------------------
+ src/cyclictest/cyclictest.8    |   4 +
+ src/cyclictest/cyclictest.c    | 287 ++++++++++++++++++++--
+ src/hwlatdetect/hwlatdetect.py |  42 +++-
+ src/pi_tests/pi_stress.c       |   2 +-
+ src/pi_tests/pip_stress.c      |   6 +-
+ src/signaltest/signaltest.c    |   2 +-
+ 9 files changed, 316 insertions(+), 615 deletions(-)
+ delete mode 100644 rt-tests.spec-in
+
+-- 
+2.4.3
