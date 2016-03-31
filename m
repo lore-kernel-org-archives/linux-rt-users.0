@@ -1,62 +1,60 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
-Date: Thu, 31 Mar 2016 08:31:43 +0200
-Message-ID: <1459405903.14336.64.camel@gmail.com>
-References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
-	 <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
-	 <1458463425.3908.5.camel@gmail.com> <1458814024.23732.35.camel@gmail.com>
-	 <alpine.DEB.2.11.1603241140510.3978@nanos>
+From: eg Engleder Gerhard <eg@keba.com>
+Subject: AW: Eliminating Packet Latency
+Date: Thu, 31 Mar 2016 13:13:09 +0200
+Message-ID: <12C1B74BDFD05D40B2356A9B12DFA3396C3673FF89@KEBMXSPMB01.keba.co.at>
+References: <20160330130810.GC21849@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: "bigeasy@linutronix.de" <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f51.google.com ([74.125.82.51]:38265 "EHLO
-	mail-wm0-f51.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751522AbcCaGbq (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 31 Mar 2016 02:31:46 -0400
-In-Reply-To: <alpine.DEB.2.11.1603241140510.3978@nanos>
+Received: from xlspam03.mdcs.at ([217.13.183.27]:63348 "EHLO xlspam03.mdcs.at"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1751036AbcCaLNP (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 31 Mar 2016 07:13:15 -0400
+In-Reply-To: <20160330130810.GC21849@linutronix.de>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 2016-03-24 at 11:44 +0100, Thomas Gleixner wrote:
-
-> I really wonder what makes the change. The only thing which comes to my mind
-> is the enforcement of running the online and down_prepare callbacks on the
-> plugged cpu instead of doing it wherever the scheduler decides to run it.
-
-It seems it's not the state machinery making a difference after all,
-the only two deadlocks encountered in oodles of beating seem to boil
-down to the grab_lock business being a pistol aimed at our own toes.
-
-1. kernfs_mutex taken during hotplug: We don't pin across mutex
-acquisition, so anyone grabbing it and then calling migrate_disable()
-while grab_lock is set renders us dead.  Pin across acquisition of that
-specific mutex fixes that specific grab_lock instigated deadlock.
-
-2. notifier dependency upon RCU GP threads:  Telling same to always do
-migrate_me() or hotplug can bloody well wait fixes that specific
-grab_lock instigated deadlock.
-
-With those two little hacks, all of my boxen including DL980 just keep
-on chugging away in 4.[456]-rt, showing zero inclination to identify
-any more hotplug bandits.
-
-What I like much better than 1 + 2 is their sum, which would generate
-minus signs, my favorite thing in patches, and fix the two above and
-anything that resembles them in any way...
-
-3. nuke irksome grab_lock: make everybody always try to get the hell
-outta Dodge or hotplug can bloody well wait.
-
-I haven't yet flogged my 64 core box doing that, but my local boxen
-seem to be saying we don't really really need the grab_lock business.
-
-Are my boxen fibbing, is that very attractive looking door #3 a trap?
-
-	-Mike
-
+DQpGcm9tOiBTZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIFttYWlsdG86YmlnZWFzeUBsaW51dHJv
+bml4LmRlXQ0KDQo+ID4+IEkgZm91bmQgdGhhdCBzb21ldGltZXMgd2hlbiBzZW5kaW5nIG5ldHdv
+cmsgcGFja2V0cywgdGhlIGtlcm5lbCB3b3VsZA0KPiA+PiBoaWphY2sgdGhlIHRocmVhZCBvZiB0
+aGUgc2VuZGVyIHdoZW4gdGhlIHF1ZXVlIHdhcyBlbXB0eS4gVGhpcyB3b3VsZA0KPiA+PiBjYXVz
+ZSBpc3N1ZXMsIHNpbmNlIEkgaGFkIG5vIGNvbnRyb2wgb3ZlciB0aGUgcHJpb3JpdHkgb2YgdGhh
+dA0KPiA+PiB0aHJlYWQsIHNpbmNlIGl0IGNvdWxkIGJlIGFueXRoaW5nLiBNeSBmaXggd2FzIHRv
+IG5ldmVyIGFsbG93IHRoZQ0KPiA+PiBrZXJuZWwgdG8gc2VuZCBpbiB0aGUgY29udGV4dCBvZiB0
+aGUgc2VuZGluZyB1c2Vyc3BhY2UNCj4gPg0KPiA+V2UgaGFkIGEgc2ltaWxhciBwcm9ibGVtIGFu
+ZCBzb2x2ZWQgaXQgd2l0aCBjaGFuZ2VkIGxvY2tpbmc6DQo+IA0KPiBTbyB0aGUgZm9sbG93aW5n
+IHBhdGNoIHNob3VsZCBkbyB0aGUgam9iLiBDYW4gc29tZW9uZSBjb25maXJtPw0KPiANCj4gRnJv
+bTogU2ViYXN0aWFuIEFuZHJ6ZWogU2lld2lvciA8YmlnZWFzeUBsaW51dHJvbml4LmRlPg0KPiBE
+YXRlOiBXZWQsIDMwIE1hciAyMDE2IDEzOjM2OjI5ICswMjAwDQo+IFN1YmplY3Q6IFtQQVRDSF0g
+bmV0OiBkZXY6IGFsd2F5cyB0YWtlIHFkaXNjJ3MgYnVzeWxvY2sgaW4gX19kZXZfeG1pdF9za2Io
+KQ0KPiANCj4gVGhlIHJvb3QtbG9jayBpcyBkcm9wcGVkIGJlZm9yZSBkZXZfaGFyZF9zdGFydF94
+bWl0KCkgaXMgaW52b2tlZCBhbmQgYWZ0ZXIgc2V0dGluZw0KPiB0aGUgX19RRElTQ19fX1NUQVRF
+X1JVTk5JTkcgYml0LiBJZiB0aGlzIHRhc2sgaXMgbm93IHB1c2hlZCBhd2F5IGJ5IGEgdGFzaw0K
+PiB3aXRoIGEgaGlnaGVyIHByaW9yaXR5IHRoZW4gdGhlIHRhc2sgd2l0aCB0aGUgaGlnaGVyIHBy
+aW9yaXR5IHdvbid0IGJlIGFibGUgdG8gc3VibWl0DQo+IHBhY2tldHMgdG8gdGhlIE5JQyBkaXJl
+Y3RseSBpbnN0ZWFkIHRoZXkgd2lsbCBiZSBlbnF1ZXVlZCBpbnRvIHRoZSBRZGlzYy4gVGhlIE5J
+Qw0KPiB3aWxsIHJlbWFpbiBpZGxlIHVudGlsIHRoZSB0YXNrKHMpIHdpdGggaGlnaGVyIHByaW9y
+aXR5IGxlYXZlIHRoZSBDUFUgYW5kIHRoZSB0YXNrIHdpdGgNCj4gbG93ZXIgcHJpb3JpdHkgZ2V0
+cyBiYWNrIGFuZCBmaW5pc2hlcyB0aGUgam9iLg0KPiANCj4gSWYgd2UgdGFrZSBhbHdheXMgdGhl
+IGJ1c3lsb2NrIHdlIGVuc3VyZSB0aGF0IHRoZSBSVCB0YXNrIGNhbiBib29zdCB0aGUgbG93LXBy
+aW8NCj4gdGFzayBhbmQgc3VibWl0IHRoZSBwYWNrZXQuDQo+IA0KPiBTaWduZWQtb2ZmLWJ5OiBT
+ZWJhc3RpYW4gQW5kcnplaiBTaWV3aW9yIDxiaWdlYXN5QGxpbnV0cm9uaXguZGU+DQo+IC0tLQ0K
+PiAgbmV0L2NvcmUvZGV2LmMgfCA0ICsrKysNCj4gIDEgZmlsZSBjaGFuZ2VkLCA0IGluc2VydGlv
+bnMoKykNCj4gDQo+IGRpZmYgLS1naXQgYS9uZXQvY29yZS9kZXYuYyBiL25ldC9jb3JlL2Rldi5j
+IGluZGV4IGNjMzY0YmUzNTg3Yi4uMGUxNzU5MmFkYmZmDQo+IDEwMDY0NA0KPiAtLS0gYS9uZXQv
+Y29yZS9kZXYuYw0KPiArKysgYi9uZXQvY29yZS9kZXYuYw0KPiBAQCAtMjg5MSw3ICsyODkxLDEx
+IEBAIHN0YXRpYyBpbmxpbmUgaW50IF9fZGV2X3htaXRfc2tiKHN0cnVjdCBza19idWZmICpza2Is
+DQo+IHN0cnVjdCBRZGlzYyAqcSwNCj4gIAkgKiBUaGlzIHBlcm1pdHMgX19RRElTQ19fX1NUQVRF
+X1JVTk5JTkcgb3duZXIgdG8gZ2V0IHRoZSBsb2NrIG1vcmUNCj4gIAkgKiBvZnRlbiBhbmQgZGVx
+dWV1ZSBwYWNrZXRzIGZhc3Rlci4NCj4gIAkgKi8NCj4gKyNpZmRlZiBDT05GSUdfUFJFRU1QVF9S
+VF9GVUxMDQo+ICsJY29udGVuZGVkID0gdHJ1ZTsNCj4gKyNlbHNlDQo+ICAJY29udGVuZGVkID0g
+cWRpc2NfaXNfcnVubmluZyhxKTsNCj4gKyNlbmRpZg0KPiAgCWlmICh1bmxpa2VseShjb250ZW5k
+ZWQpKQ0KPiAgCQlzcGluX2xvY2soJnEtPmJ1c3lsb2NrKTsNCj4gDQo+IC0tDQo+IDIuOC4wLnJj
+Mw0KDQpJbiBjb3VsZCBub3QgcmVwcm9kdWNlIHRoZSBwcm9ibGVtYXRpYyBzaXR1YXRpb24gd2l0
+aCB2NC40LjQtcnQxMSAod2l0aG91dCBwYXRjaCkgaW4gb3VyDQp0ZXN0IGVudmlyb25tZW50LiBU
+aGUgcGF0Y2ggbWF5IHdvcmssIGJ1dCBJIGFtIGFibGUgdG8gY29uZmlybSB0aGF0IHdpdGggYSB0
+ZXN0Lg0K
