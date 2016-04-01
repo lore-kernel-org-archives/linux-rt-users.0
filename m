@@ -1,42 +1,42 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [rfc patch] drivers/block/zram: Replace bit spinlocks with
- rtmutex for -rt
-Date: Fri, 1 Apr 2016 12:42:21 +0200
-Message-ID: <20160401104221.GB29603@linutronix.de>
-References: <1458641979.15742.6.camel@gmail.com>
- <20160330085622.GA21849@linutronix.de>
- <1459329836.4175.16.camel@gmail.com>
- <1459390108.4030.5.camel@gmail.com>
+Subject: Re: [PATCH] list_bl: fixup bogus lockdep warning
+Date: Fri, 1 Apr 2016 12:46:33 +0200
+Message-ID: <20160401104632.GC29603@linutronix.de>
+References: <56FB8B5A.8@linutronix.de>
+ <1459400665-12546-1-git-send-email-joshc@ni.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Minchan Kim <minchan@kernel.org>, Nitin Gupta <ngupta@vflare.org>,
-	Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>
-To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-rt-users@vger.kernel.org,
+	Thomas Gleixner <tglx@linutronix.de>,
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>
+To: Josh Cartwright <joshc@ni.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52999 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:53016 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754403AbcDAKmY (ORCPT
+	with ESMTP id S1752322AbcDAKqg convert rfc822-to-8bit (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Apr 2016 06:42:24 -0400
+	Fri, 1 Apr 2016 06:46:36 -0400
 Content-Disposition: inline
-In-Reply-To: <1459390108.4030.5.camel@gmail.com>
+In-Reply-To: <1459400665-12546-1-git-send-email-joshc@ni.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Mike Galbraith | 2016-03-31 04:08:28 [+0200]:
+* Josh Cartwright | 2016-03-31 00:04:25 [-0500]:
 
->(fixed the missed bit spinlock whackage you pointed out)
-thanks.
-
->drivers/block/zram: Replace bit spinlocks with rtmutex for -rt
+>At first glance, the use of 'static inline' seems appropriate for
+>INIT_HLIST_BL_HEAD().
+=E2=80=A6
 >
->They're nondeterministic, and lead to ___might_sleep() splats in -rt.
->OTOH, they're a lot less wasteful than an rtmutex per page.
-Applied.
-Although I'm disapointed about Sergey's argument against the spinlock in
-general due to a few bytes used by lockdep which can be disabled. Not to
-mention the usefull debug facility lockdep provides if one decides to
-use.
+>Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+>Tested-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+>Signed-off-by: Josh Cartwright <joshc@ni.com>
+
+Applied, thanks.
 
 Sebastian
+--
+To unsubscribe from this list: send the line "unsubscribe linux-rt-user=
+s" in
+the body of a message to majordomo@vger.kernel.org
+More majordomo info at  http://vger.kernel.org/majordomo-info.html
