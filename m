@@ -1,924 +1,676 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [ANNOUNCE] v4.4.6-rt13
-Date: Fri, 1 Apr 2016 23:33:17 +0200
-Message-ID: <20160401213317.GF29603@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
+Date: Sat, 02 Apr 2016 05:12:15 +0200
+Message-ID: <1459566735.3779.36.camel@gmail.com>
+References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
+	 <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
+	 <1458463425.3908.5.camel@gmail.com> <1458814024.23732.35.camel@gmail.com>
+	 <alpine.DEB.2.11.1603241140510.3978@nanos>
+	 <1459405903.14336.64.camel@gmail.com>
+	 <20160401211105.GE29603@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>
-To: Thomas Gleixner <tglx@linutronix.de>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:55832 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1754237AbcDAVdT (ORCPT
+Received: from mail-lb0-f177.google.com ([209.85.217.177]:36610 "EHLO
+	mail-lb0-f177.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751183AbcDBDMU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 1 Apr 2016 17:33:19 -0400
-Content-Disposition: inline
+	Fri, 1 Apr 2016 23:12:20 -0400
+In-Reply-To: <20160401211105.GE29603@linutronix.de>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Dear RT folks!
+On Fri, 2016-04-01 at 23:11 +0200, Sebastian Andrzej Siewior wrote:
+> * Mike Galbraith | 2016-03-31 08:31:43 [+0200]:
+> 
+> > 3. nuke irksome grab_lock: make everybody always try to get the hell
+> > outta Dodge or hotplug can bloody well wait.
+> > 
+> > I haven't yet flogged my 64 core box doing that, but my local boxen
+> > seem to be saying we don't really really need the grab_lock business.
+> > 
+> > Are my boxen fibbing, is that very attractive looking door #3 a trap?
+> 
+> By the time I improved hotplug I played with this. I had a few ideas but
+> it didn't fly in the end. Today however I ended up with this:
 
-I'm pleased to announce the v4.4.6-rt13 patch set.
-Changes since v4.4.6-rt12:
+Yeah, but that fails the duct tape test too.  Mine is below, and is the
+extra sticky variety ;-)  With busted 0299 patch reverted and those two
+applied, my DL980 took a beating for ~36 hours before I aborted it.. ie
+hotplug road seemingly has no more -rt specific potholes.
 
-- Alexandre Belloni sent patch for the AT91 to get rid of the free_irq()
-  warning.
+If that lock dies, we can unpin when entering lock slow path and pin
+again post acquisition with no ABBA worries as well, and not only does
+existing hotplug work heaping truckloads better, -rt can perhaps help
+spot trouble as the rewrite proceeds.
 
-- Yang Shi sent a patch to address a "sleeping while atomic" warning in
-  a writeback tracepoint. Until now it was disabled to avoid it, now it
-  can be used again.
+Current state is more broken than ever.. if that's possible.
 
-- Rik van Riel sent a patch to make the kvm async pagefault code use a
-  simple wait queue.
+	-Mike
 
-- Mike Galbraith set a patch to address a "sleeping while atomic"
-  warning in zsmalloc
+hotplug/rt: Do not let pin_current_cpu() block RCU grace periods
 
-- Network packets sent by a RT task could be delayed (but won't block the
-  RT task) if a task with lower priority was interrupted while sending a
-  packet. This is addressed by taking a qdisc lock so the high-prio task
-  can boost a task with lower priority (and send the packet directy).
+Notifiers may depend upon grace periods continuing to advance
+as blk_mq_queue_reinit_notify() below.
 
-- Clark Williams reported a swait related complate_all() warning while
-  coming out of suspend. Suspend to RAM (and hibernate) are now
-  filtered out from the warning.
+crash> bt ffff8803aee76400
+PID: 1113   TASK: ffff8803aee76400  CPU: 0   COMMAND: "stress-cpu-hotp"
+ #0 [ffff880396fe7ad8] __schedule at ffffffff816b7142
+ #1 [ffff880396fe7b28] schedule at ffffffff816b797b
+ #2 [ffff880396fe7b48] blk_mq_freeze_queue_wait at ffffffff8135c5ac
+ #3 [ffff880396fe7b80] blk_mq_queue_reinit_notify at ffffffff8135f819
+ #4 [ffff880396fe7b98] notifier_call_chain at ffffffff8109b8ed
+ #5 [ffff880396fe7bd8] __raw_notifier_call_chain at ffffffff8109b91e
+ #6 [ffff880396fe7be8] __cpu_notify at ffffffff81072825
+ #7 [ffff880396fe7bf8] cpu_notify_nofail at ffffffff81072b15
+ #8 [ffff880396fe7c08] notify_dead at ffffffff81072d06
+ #9 [ffff880396fe7c38] cpuhp_invoke_callback at ffffffff81073718
+#10 [ffff880396fe7c78] cpuhp_down_callbacks at ffffffff81073a70
+#11 [ffff880396fe7cb8] _cpu_down at ffffffff816afc71
+#12 [ffff880396fe7d38] do_cpu_down at ffffffff8107435c
+#13 [ffff880396fe7d60] cpu_down at ffffffff81074390
+#14 [ffff880396fe7d70] cpu_subsys_offline at ffffffff814cd854
+#15 [ffff880396fe7d80] device_offline at ffffffff814c7cda
+#16 [ffff880396fe7da8] online_store at ffffffff814c7dd0
+#17 [ffff880396fe7dd0] dev_attr_store at ffffffff814c4fc8
+#18 [ffff880396fe7de0] sysfs_kf_write at ffffffff812cfbe4
+#19 [ffff880396fe7e08] kernfs_fop_write at ffffffff812cf172
+#20 [ffff880396fe7e50] __vfs_write at ffffffff81241428
+#21 [ffff880396fe7ed0] vfs_write at ffffffff81242535
+#22 [ffff880396fe7f10] sys_write at ffffffff812438f9
+#23 [ffff880396fe7f50] entry_SYSCALL_64_fastpath at ffffffff816bb4bc
+    RIP: 00007fafd918acd0  RSP: 00007ffd2ca956e8  RFLAGS: 00000246
+    RAX: ffffffffffffffda  RBX: 000000000226a770  RCX: 00007fafd918acd0
+    RDX: 0000000000000002  RSI: 00007fafd9cb9000  RDI: 0000000000000001
+    RBP: 00007ffd2ca95700   R8: 000000000000000a   R9: 00007fafd9cb3700
+    R10: 00000000ffffffff  R11: 0000000000000246  R12: 0000000000000007
+    R13: 0000000000000001  R14: 0000000000000009  R15: 000000000000000a
+    ORIG_RAX: 0000000000000001  CS: 0033  SS: 002b
 
-- Mike Galbraith sent a patch to address a "sleeping while atomic"
-  warning in the zram driver.
+blk_mq_queue_reinit_notify:
+        /*
+         * We need to freeze and reinit all existing queues.  Freezing
+         * involves synchronous wait for an RCU grace period and doing it
+         * one by one may take a long time.  Start freezing all queues in
+         * one swoop and then wait for the completions so that freezing can
+         * take place in parallel.
+         */
+        list_for_each_entry(q, &all_q_list, all_q_node)
+                blk_mq_freeze_queue_start(q);
+        list_for_each_entry(q, &all_q_list, all_q_node) {
+                blk_mq_freeze_queue_wait(q);
 
-- Josh Cartwright sent a patch to fix a lockdep splat in list_bl which
-  was reported by Luis Claudio R. Goncalves.
+crash> bt ffff880176cc9900
+PID: 17     TASK: ffff880176cc9900  CPU: 0   COMMAND: "rcu_sched"
+ #0 [ffff880176cd7ab8] __schedule at ffffffff816b7142
+ #1 [ffff880176cd7b08] schedule at ffffffff816b797b
+ #2 [ffff880176cd7b28] rt_spin_lock_slowlock at ffffffff816b974d
+ #3 [ffff880176cd7bc8] rt_spin_lock_fastlock at ffffffff811b0f3c
+ #4 [ffff880176cd7be8] rt_spin_lock__no_mg at ffffffff816bac1b
+ #5 [ffff880176cd7c08] pin_current_cpu at ffffffff8107406a
+ #6 [ffff880176cd7c50] migrate_disable at ffffffff810a0e9e
+ #7 [ffff880176cd7c70] rt_spin_lock at ffffffff816bad69
+ #8 [ffff880176cd7c90] lock_timer_base at ffffffff810fc5e8
+ #9 [ffff880176cd7cc8] try_to_del_timer_sync at ffffffff810fe290
+#10 [ffff880176cd7cf0] del_timer_sync at ffffffff810fe381
+#11 [ffff880176cd7d58] schedule_timeout at ffffffff816b9e4b
+#12 [ffff880176cd7df0] rcu_gp_kthread at ffffffff810f52b4
+#13 [ffff880176cd7e70] kthread at ffffffff8109a02f
+#14 [ffff880176cd7f50] ret_from_fork at ffffffff816bb6f2
 
-Known issues:
-  - CPU hotplug got a little better but can deadlock.
+Game Over.
 
-The delta patch against 4.4.6-rt12 is appended below and can be found here:
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ include/linux/sched.h |    1 +
+ kernel/cpu.c          |    7 ++++---
+ kernel/rcu/tree.c     |    3 +++
+ 3 files changed, 8 insertions(+), 3 deletions(-)
 
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/incr/patch-4.4.6-rt12-rt13.patch.xz
-
-You can get this release via the git tree at:
-
-    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.4.6-rt13
-
-The RT patch against 4.4.6 can be found here:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patch-4.4.6-rt13.patch.xz
-
-The split quilt queue is available at:
-
-    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.4/patches-4.4.6-rt13.tar.xz
-
-Sebastian
-
-diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
-index 47190bd399e7..807950860fb7 100644
---- a/arch/x86/kernel/kvm.c
-+++ b/arch/x86/kernel/kvm.c
-@@ -36,6 +36,7 @@
- #include <linux/kprobes.h>
- #include <linux/debugfs.h>
- #include <linux/nmi.h>
-+#include <linux/swait.h>
- #include <asm/timer.h>
- #include <asm/cpu.h>
- #include <asm/traps.h>
-@@ -91,14 +92,14 @@ static void kvm_io_delay(void)
- 
- struct kvm_task_sleep_node {
- 	struct hlist_node link;
--	wait_queue_head_t wq;
-+	struct swait_queue_head wq;
- 	u32 token;
- 	int cpu;
- 	bool halted;
- };
- 
- static struct kvm_task_sleep_head {
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct hlist_head list;
- } async_pf_sleepers[KVM_TASK_SLEEP_HASHSIZE];
- 
-@@ -122,17 +123,17 @@ void kvm_async_pf_task_wait(u32 token)
- 	u32 key = hash_32(token, KVM_TASK_SLEEP_HASHBITS);
- 	struct kvm_task_sleep_head *b = &async_pf_sleepers[key];
- 	struct kvm_task_sleep_node n, *e;
--	DEFINE_WAIT(wait);
-+	DECLARE_SWAITQUEUE(wait);
- 
- 	rcu_irq_enter();
- 
--	spin_lock(&b->lock);
-+	raw_spin_lock(&b->lock);
- 	e = _find_apf_task(b, token);
- 	if (e) {
- 		/* dummy entry exist -> wake up was delivered ahead of PF */
- 		hlist_del(&e->link);
- 		kfree(e);
--		spin_unlock(&b->lock);
-+		raw_spin_unlock(&b->lock);
- 
- 		rcu_irq_exit();
- 		return;
-@@ -141,13 +142,13 @@ void kvm_async_pf_task_wait(u32 token)
- 	n.token = token;
- 	n.cpu = smp_processor_id();
- 	n.halted = is_idle_task(current) || preempt_count() > 1;
--	init_waitqueue_head(&n.wq);
-+	init_swait_queue_head(&n.wq);
- 	hlist_add_head(&n.link, &b->list);
--	spin_unlock(&b->lock);
-+	raw_spin_unlock(&b->lock);
- 
- 	for (;;) {
- 		if (!n.halted)
--			prepare_to_wait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
-+			prepare_to_swait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
- 		if (hlist_unhashed(&n.link))
- 			break;
- 
-@@ -166,7 +167,7 @@ void kvm_async_pf_task_wait(u32 token)
- 		}
- 	}
- 	if (!n.halted)
--		finish_wait(&n.wq, &wait);
-+		finish_swait(&n.wq, &wait);
- 
- 	rcu_irq_exit();
- 	return;
-@@ -178,8 +179,8 @@ static void apf_task_wake_one(struct kvm_task_sleep_node *n)
- 	hlist_del_init(&n->link);
- 	if (n->halted)
- 		smp_send_reschedule(n->cpu);
--	else if (waitqueue_active(&n->wq))
--		wake_up(&n->wq);
-+	else if (swait_active(&n->wq))
-+		swake_up(&n->wq);
- }
- 
- static void apf_task_wake_all(void)
-@@ -189,14 +190,14 @@ static void apf_task_wake_all(void)
- 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++) {
- 		struct hlist_node *p, *next;
- 		struct kvm_task_sleep_head *b = &async_pf_sleepers[i];
--		spin_lock(&b->lock);
-+		raw_spin_lock(&b->lock);
- 		hlist_for_each_safe(p, next, &b->list) {
- 			struct kvm_task_sleep_node *n =
- 				hlist_entry(p, typeof(*n), link);
- 			if (n->cpu == smp_processor_id())
- 				apf_task_wake_one(n);
- 		}
--		spin_unlock(&b->lock);
-+		raw_spin_unlock(&b->lock);
- 	}
- }
- 
-@@ -212,7 +213,7 @@ void kvm_async_pf_task_wake(u32 token)
- 	}
- 
- again:
--	spin_lock(&b->lock);
-+	raw_spin_lock(&b->lock);
- 	n = _find_apf_task(b, token);
- 	if (!n) {
- 		/*
-@@ -225,17 +226,17 @@ void kvm_async_pf_task_wake(u32 token)
- 			 * Allocation failed! Busy wait while other cpu
- 			 * handles async PF.
- 			 */
--			spin_unlock(&b->lock);
-+			raw_spin_unlock(&b->lock);
- 			cpu_relax();
- 			goto again;
- 		}
- 		n->token = token;
- 		n->cpu = smp_processor_id();
--		init_waitqueue_head(&n->wq);
-+		init_swait_queue_head(&n->wq);
- 		hlist_add_head(&n->link, &b->list);
- 	} else
- 		apf_task_wake_one(n);
--	spin_unlock(&b->lock);
-+	raw_spin_unlock(&b->lock);
- 	return;
- }
- EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
-@@ -486,7 +487,7 @@ void __init kvm_guest_init(void)
- 	paravirt_ops_setup();
- 	register_reboot_notifier(&kvm_pv_reboot_nb);
- 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++)
--		spin_lock_init(&async_pf_sleepers[i].lock);
-+		raw_spin_lock_init(&async_pf_sleepers[i].lock);
- 	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
- 		x86_init.irqs.trap_init = kvm_apf_trap_init;
- 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 370c2f76016d..65e0b375a291 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -520,6 +520,8 @@ static struct zram_meta *zram_meta_alloc(char *pool_name, u64 disksize)
- 		goto out_error;
- 	}
- 
-+	zram_meta_init_table_locks(meta, disksize);
-+
- 	return meta;
- 
- out_error:
-@@ -568,12 +570,12 @@ static int zram_decompress_page(struct zram *zram, char *mem, u32 index)
- 	unsigned long handle;
- 	size_t size;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	handle = meta->table[index].handle;
- 	size = zram_get_obj_size(meta, index);
- 
- 	if (!handle || zram_test_flag(meta, index, ZRAM_ZERO)) {
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		clear_page(mem);
- 		return 0;
- 	}
-@@ -584,7 +586,7 @@ static int zram_decompress_page(struct zram *zram, char *mem, u32 index)
- 	else
- 		ret = zcomp_decompress(zram->comp, cmem, size, mem);
- 	zs_unmap_object(meta->mem_pool, handle);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Should NEVER happen. Return bio error if it does. */
- 	if (unlikely(ret)) {
-@@ -604,14 +606,14 @@ static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
- 	struct zram_meta *meta = zram->meta;
- 	page = bvec->bv_page;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	if (unlikely(!meta->table[index].handle) ||
- 			zram_test_flag(meta, index, ZRAM_ZERO)) {
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		handle_zero_page(bvec);
- 		return 0;
- 	}
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	if (is_partial_io(bvec))
- 		/* Use  a temporary buffer to decompress the page */
-@@ -689,10 +691,10 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
- 		if (user_mem)
- 			kunmap_atomic(user_mem);
- 		/* Free memory associated with this sector now. */
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
- 		zram_set_flag(meta, index, ZRAM_ZERO);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 
- 		atomic64_inc(&zram->stats.zero_pages);
- 		ret = 0;
-@@ -752,12 +754,12 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
- 	 * Free memory associated with this sector
- 	 * before overwriting unused sectors.
- 	 */
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
- 
- 	meta->table[index].handle = handle;
- 	zram_set_obj_size(meta, index, clen);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Update stats */
- 	atomic64_add(clen, &zram->stats.compr_data_size);
-@@ -800,9 +802,9 @@ static void zram_bio_discard(struct zram *zram, u32 index,
- 	}
- 
- 	while (n >= PAGE_SIZE) {
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		atomic64_inc(&zram->stats.notify_free);
- 		index++;
- 		n -= PAGE_SIZE;
-@@ -928,9 +930,9 @@ static void zram_slot_free_notify(struct block_device *bdev,
- 	zram = bdev->bd_disk->private_data;
- 	meta = zram->meta;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 	atomic64_inc(&zram->stats.notify_free);
- }
- 
-diff --git a/drivers/block/zram/zram_drv.h b/drivers/block/zram/zram_drv.h
-index 8e92339686d7..1e4a3c685ec7 100644
---- a/drivers/block/zram/zram_drv.h
-+++ b/drivers/block/zram/zram_drv.h
-@@ -72,6 +72,9 @@ enum zram_pageflags {
- struct zram_table_entry {
- 	unsigned long handle;
- 	unsigned long value;
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	spinlock_t lock;
-+#endif
- };
- 
- struct zram_stats {
-@@ -119,4 +122,42 @@ struct zram {
- 	 */
- 	bool claim; /* Protected by bdev->bd_mutex */
- };
-+
-+#ifndef CONFIG_PREEMPT_RT_BASE
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_lock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_unlock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_meta_init_locks(struct zram_meta *meta, u64 disksize) { }
-+#else /* CONFIG_PREEMPT_RT_BASE */
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	spin_lock(&table->lock);
-+	__set_bit(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	__clear_bit(ZRAM_ACCESS, &table->value);
-+	spin_unlock(&table->lock);
-+}
-+
-+static inline void zram_meta_init_table_locks(struct zram_meta *meta, u64 disksize)
-+{
-+        size_t num_pages = disksize >> PAGE_SHIFT;
-+        size_t index;
-+
-+        for (index = 0; index < num_pages; index++) {
-+		spinlock_t *lock = &meta->table[index].lock;
-+		spin_lock_init(lock);
-+        }
-+}
-+#endif /* CONFIG_PREEMPT_RT_BASE */
-+
+--- a/include/linux/sched.h
++++ b/include/linux/sched.h
+@@ -1492,6 +1492,7 @@ struct task_struct {
+ #ifdef CONFIG_COMPAT_BRK
+ 	unsigned brk_randomized:1;
  #endif
-diff --git a/drivers/clocksource/timer-atmel-pit.c b/drivers/clocksource/timer-atmel-pit.c
-index a7abdb6638cd..7a40f7e88468 100644
---- a/drivers/clocksource/timer-atmel-pit.c
-+++ b/drivers/clocksource/timer-atmel-pit.c
-@@ -46,6 +46,7 @@ struct pit_data {
- 	u32		cycle;
- 	u32		cnt;
- 	unsigned int	irq;
-+	bool		irq_requested;
- 	struct clk	*mck;
- };
++	unsigned sched_is_rcu:1; /* RT: is a critical RCU thread */
  
-@@ -96,7 +97,10 @@ static int pit_clkevt_shutdown(struct clock_event_device *dev)
+ 	unsigned long atomic_flags; /* Flags needing atomic access. */
  
- 	/* disable irq, leaving the clocksource active */
- 	pit_write(data->base, AT91_PIT_MR, (data->cycle - 1) | AT91_PIT_PITEN);
--	free_irq(data->irq, data);
-+	if (data->irq_requested) {
-+		free_irq(data->irq, data);
-+		data->irq_requested = false;
-+	}
+--- a/kernel/cpu.c
++++ b/kernel/cpu.c
+@@ -147,17 +147,18 @@ static DEFINE_PER_CPU(struct hotplug_pcp
+ void pin_current_cpu(void)
+ {
+ 	struct hotplug_pcp *hp;
++	struct task_struct *p = current;
+ 	int force = 0;
+ 
+ retry:
+ 	hp = this_cpu_ptr(&hotplug_pcp);
+ 
+ 	if (!hp->unplug || hp->refcount || force || preempt_count() > 1 ||
+-	    hp->unplug == current) {
++	    hp->unplug == p) {
+ 		hp->refcount++;
+ 		return;
+ 	}
+-	if (hp->grab_lock) {
++	if (hp->grab_lock && !p->sched_is_rcu) {
+ 		preempt_enable();
+ 		hotplug_lock(hp);
+ 		hotplug_unlock(hp);
+@@ -169,7 +170,7 @@ void pin_current_cpu(void)
+ 		if (!migrate_me()) {
+ 			preempt_disable();
+ 			hp = this_cpu_ptr(&hotplug_pcp);
+-			if (!hp->grab_lock) {
++			if (!hp->grab_lock || (p->sched_is_rcu && p->state)) {
+ 				/*
+ 				 * Just let it continue it's already pinned
+ 				 * or about to sleep.
+--- a/kernel/rcu/tree.c
++++ b/kernel/rcu/tree.c
+@@ -2100,6 +2100,9 @@ static int __noreturn rcu_gp_kthread(voi
+ 	struct rcu_state *rsp = arg;
+ 	struct rcu_node *rnp = rcu_get_root(rsp);
+ 
++	/* RT: pin_current_cpu() MUST NOT block RCU grace periods. */
++	current->sched_is_rcu = 1;
++
+ 	rcu_bind_gp_kthread();
+ 	for (;;) {
+ 
+
+hotplug/rt/kernfs: Put kernfs_mutex under migrate_disable()/migrate_enable()
+
+Hotplug path takes kernfs_mutex, so let pin_current_cpu() snag callers
+before they can deadlock us.  Below, systemd-udevd was snagged while
+acquiring a spinlock, but already holding kernfs_mutex.
+
+PID: 11107  TASK: ffff8803b12b9900  CPU: 4   COMMAND: "stress-cpu-hotp"                                                                                                                                                                      
+ #0 [ffff88038b34f9b8] __schedule at ffffffff816b7132
+ #1 [ffff88038b34fa08] schedule at ffffffff816b796b
+ #2 [ffff88038b34fa28] rt_mutex_slowlock at ffffffff816b93ee
+ #3 [ffff88038b34fac8] rt_mutex_fastlock at ffffffff811b0e9d
+ #4 [ffff88038b34faf0] rt_mutex_lock at ffffffff816b95c8
+ #5 [ffff88038b34fb08] _mutex_lock at ffffffff816baf59
+ #6 [ffff88038b34fb28] kernfs_find_and_get_ns at ffffffff812cd573
+ #7 [ffff88038b34fb50] sysfs_remove_group at ffffffff812d100a
+ #8 [ffff88038b34fb78] thermal_throttle_cpu_callback at ffffffff81036ab9
+ #9 [ffff88038b34fb98] notifier_call_chain at ffffffff8109b8dd
+#10 [ffff88038b34fbd8] __raw_notifier_call_chain at ffffffff8109b90e
+#11 [ffff88038b34fbe8] __cpu_notify at ffffffff81072825
+#12 [ffff88038b34fbf8] cpu_notify_nofail at ffffffff81072b15
+#13 [ffff88038b34fc08] notify_dead at ffffffff81072d06
+#14 [ffff88038b34fc38] cpuhp_invoke_callback at ffffffff81073718
+#15 [ffff88038b34fc78] cpuhp_down_callbacks at ffffffff81073a70
+#16 [ffff88038b34fcb8] _cpu_down at ffffffff816afc61
+#17 [ffff88038b34fd38] do_cpu_down at ffffffff8107434c
+#18 [ffff88038b34fd60] cpu_down at ffffffff81074380
+#19 [ffff88038b34fd70] cpu_subsys_offline at ffffffff814cd844
+#20 [ffff88038b34fd80] device_offline at ffffffff814c7cca
+#21 [ffff88038b34fda8] online_store at ffffffff814c7dc0
+#22 [ffff88038b34fdd0] dev_attr_store at ffffffff814c4fb8
+#23 [ffff88038b34fde0] sysfs_kf_write at ffffffff812cfbd4
+#24 [ffff88038b34fe08] kernfs_fop_write at ffffffff812cf162
+#25 [ffff88038b34fe50] __vfs_write at ffffffff81241418
+#26 [ffff88038b34fed0] vfs_write at ffffffff81242525
+#27 [ffff88038b34ff10] sys_write at ffffffff812438e9
+#28 [ffff88038b34ff50] entry_SYSCALL_64_fastpath at ffffffff816bb4fc
+    RIP: 00007f05f3d69cd0  RSP: 00007ffdfc934468  RFLAGS: 00000246
+    RAX: ffffffffffffffda  RBX: 0000000001908770  RCX: 00007f05f3d69cd0
+    RDX: 0000000000000002  RSI: 00007f05f4898000  RDI: 0000000000000001
+    RBP: 00007ffdfc934480   R8: 000000000000000a   R9: 00007f05f4892700
+    R10: 00000000ffffffff  R11: 0000000000000246  R12: 0000000000000007
+    R13: 0000000000000001  R14: 0000000000000009  R15: 000000000000000a
+    ORIG_RAX: 0000000000000001  CS: 0033  SS: 002b
+
+stress-cpu-hotp blocks on kernfs_mutex, held by systemd-udevd..
+
+crash> bt ffff8803b12bcb00
+PID: 11130  TASK: ffff8803b12bcb00  CPU: 6   COMMAND: "systemd-udevd"
+ #0 [ffff88038b327a18] __schedule at ffffffff816b7132
+ #1 [ffff88038b327a68] schedule at ffffffff816b796b
+ #2 [ffff88038b327a88] rt_spin_lock_slowlock at ffffffff816b9750
+ #3 [ffff88038b327b30] rt_spin_lock_fastlock at ffffffff811b0f2c
+ #4 [ffff88038b327b50] rt_spin_lock__no_mg at ffffffff816bac7b
+ #5 [ffff88038b327b70] pin_current_cpu at ffffffff8107406a
+ #6 [ffff88038b327bb8] migrate_disable at ffffffff810a0e8e
+ #7 [ffff88038b327bd8] rt_spin_lock at ffffffff816badc9
+ #8 [ffff88038b327bf8] ida_simple_remove at ffffffff8138765c
+ #9 [ffff88038b327c18] kernfs_put at ffffffff812ccc58
+#10 [ffff88038b327c60] __kernfs_remove at ffffffff812cd15c
+#11 [ffff88038b327cc0] kernfs_remove_by_name_ns at ffffffff812ce2f3
+#12 [ffff88038b327ce8] sysfs_remove_link at ffffffff812d05e9
+#13 [ffff88038b327cf8] free_module at ffffffff8111c8f2
+#14 [ffff88038b327d30] do_init_module at ffffffff811b157f
+#15 [ffff88038b327d58] load_module at ffffffff8111f11b
+#16 [ffff88038b327e98] SYSC_finit_module at ffffffff8111faf9
+#17 [ffff88038b327f40] sys_finit_module at ffffffff8111fb3e
+#18 [ffff88038b327f50] entry_SYSCALL_64_fastpath at ffffffff816bb4fc
+    RIP: 00007f75d9925f79  RSP: 00007ffd1c040ed8  RFLAGS: 00000246
+    RAX: ffffffffffffffda  RBX: 0000000001d368e0  RCX: 00007f75d9925f79
+    RDX: 0000000000000000  RSI: 00007f75da0233c1  RDI: 0000000000000008
+    RBP: 0000000000000008   R8: 0000000000000000   R9: 0000000001d39c82
+    R10: 0000000000000008  R11: 0000000000000246  R12: 00007ffd1c03ff00
+    R13: 00007ffd1c03fee0  R14: 0000000000000005  R15: 000000000aba9500
+    ORIG_RAX: 0000000000000139  CS: 0033  SS: 002b
+
+..which stress-cpu-hotp has blocked via pin_current_cpu().  Game Over.
+
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ fs/kernfs/dir.c             |   56 ++++++++++++++++++++++----------------------
+ fs/kernfs/file.c            |    4 +--
+ fs/kernfs/inode.c           |   20 +++++++--------
+ fs/kernfs/kernfs-internal.h |   15 +++++++++++
+ fs/kernfs/mount.c           |   16 ++++++------
+ fs/kernfs/symlink.c         |    4 +--
+ 6 files changed, 65 insertions(+), 50 deletions(-)
+
+--- a/fs/kernfs/dir.c
++++ b/fs/kernfs/dir.c
+@@ -372,7 +372,7 @@ static void kernfs_drain(struct kernfs_n
+ 	lockdep_assert_held(&kernfs_mutex);
+ 	WARN_ON_ONCE(kernfs_active(kn));
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	if (kernfs_lockdep(kn)) {
+ 		rwsem_acquire(&kn->dep_map, 0, 0, _RET_IP_);
+@@ -391,7 +391,7 @@ static void kernfs_drain(struct kernfs_n
+ 
+ 	kernfs_unmap_bin_file(kn);
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ }
+ 
+ /**
+@@ -471,7 +471,7 @@ static int kernfs_dop_revalidate(struct
+ 		goto out_bad_unlocked;
+ 
+ 	kn = dentry->d_fsdata;
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	/* The kernfs node has been deactivated */
+ 	if (!kernfs_active(kn))
+@@ -490,10 +490,10 @@ static int kernfs_dop_revalidate(struct
+ 	    kernfs_info(dentry->d_sb)->ns != kn->ns)
+ 		goto out_bad;
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return 1;
+ out_bad:
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ out_bad_unlocked:
  	return 0;
  }
+@@ -603,7 +603,7 @@ int kernfs_add_one(struct kernfs_node *k
+ 	bool has_ns;
+ 	int ret;
  
-@@ -115,6 +119,8 @@ static int pit_clkevt_set_periodic(struct clock_event_device *dev)
- 	if (ret)
- 		panic(pr_fmt("Unable to setup IRQ\n"));
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
  
-+	data->irq_requested = true;
-+
- 	/* update clocksource counter */
- 	data->cnt += data->cycle * PIT_PICNT(pit_read(data->base, AT91_PIT_PIVR));
- 	pit_write(data->base, AT91_PIT_MR,
-diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
-index 44f0b5560473..89ffaa7bd342 100644
---- a/include/linux/list_bl.h
-+++ b/include/linux/list_bl.h
-@@ -42,13 +42,15 @@ struct hlist_bl_node {
- 	struct hlist_bl_node *next, **pprev;
- };
- 
--static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
--{
--	h->first = NULL;
- #ifdef CONFIG_PREEMPT_RT_BASE
--	raw_spin_lock_init(&h->lock);
-+#define INIT_HLIST_BL_HEAD(h)		\
-+do {					\
-+	(h)->first = NULL;		\
-+	raw_spin_lock_init(&(h)->lock);	\
-+} while (0)
-+#else
-+#define INIT_HLIST_BL_HEAD(h) (h)->first = NULL
- #endif
--}
- 
- static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
- {
-diff --git a/include/linux/suspend.h b/include/linux/suspend.h
-index 8b6ec7ef0854..9b77d4cc929f 100644
---- a/include/linux/suspend.h
-+++ b/include/linux/suspend.h
-@@ -194,6 +194,12 @@ struct platform_freeze_ops {
- 	void (*end)(void);
- };
- 
-+#if defined(CONFIG_SUSPEND) || defined(CONFIG_HIBERNATION)
-+extern bool pm_in_action;
-+#else
-+# define pm_in_action false
-+#endif
-+
- #ifdef CONFIG_SUSPEND
- /**
-  * suspend_set_ops - set platform dependent suspend operations
-diff --git a/include/trace/events/writeback.h b/include/trace/events/writeback.h
-index 253ef2833c46..73614ce1d204 100644
---- a/include/trace/events/writeback.h
-+++ b/include/trace/events/writeback.h
-@@ -132,60 +132,30 @@ DEFINE_EVENT(writeback_dirty_inode_template, writeback_dirty_inode,
- );
- 
- #ifdef CREATE_TRACE_POINTS
--#if defined(CONFIG_CGROUP_WRITEBACK) && !defined(CONFIG_PREEMPT_RT_FULL)
-+#ifdef CONFIG_CGROUP_WRITEBACK
- 
--static inline size_t __trace_wb_cgroup_size(struct bdi_writeback *wb)
-+static inline unsigned int __trace_wb_assign_cgroup(struct bdi_writeback *wb)
- {
--	return kernfs_path_len(wb->memcg_css->cgroup->kn) + 1;
-+	return wb->memcg_css->cgroup->kn->ino;
- }
- 
--static inline void __trace_wb_assign_cgroup(char *buf, struct bdi_writeback *wb)
--{
--	struct cgroup *cgrp = wb->memcg_css->cgroup;
--	char *path;
--
--	path = cgroup_path(cgrp, buf, kernfs_path_len(cgrp->kn) + 1);
--	WARN_ON_ONCE(path != buf);
--}
--
--static inline size_t __trace_wbc_cgroup_size(struct writeback_control *wbc)
-+static inline unsigned int __trace_wbc_assign_cgroup(struct writeback_control *wbc)
- {
- 	if (wbc->wb)
--		return __trace_wb_cgroup_size(wbc->wb);
-+		return __trace_wb_assign_cgroup(wbc->wb);
- 	else
--		return 2;
-+		return -1U;
- }
--
--static inline void __trace_wbc_assign_cgroup(char *buf,
--					     struct writeback_control *wbc)
--{
--	if (wbc->wb)
--		__trace_wb_assign_cgroup(buf, wbc->wb);
--	else
--		strcpy(buf, "/");
--}
--
- #else	/* CONFIG_CGROUP_WRITEBACK */
- 
--static inline size_t __trace_wb_cgroup_size(struct bdi_writeback *wb)
-+static inline unsigned int __trace_wb_assign_cgroup(struct bdi_writeback *wb)
- {
--	return 2;
-+	return -1U;
- }
- 
--static inline void __trace_wb_assign_cgroup(char *buf, struct bdi_writeback *wb)
-+static inline unsigned int __trace_wbc_assign_cgroup(struct writeback_control *wbc)
- {
--	strcpy(buf, "/");
--}
--
--static inline size_t __trace_wbc_cgroup_size(struct writeback_control *wbc)
--{
--	return 2;
--}
--
--static inline void __trace_wbc_assign_cgroup(char *buf,
--					     struct writeback_control *wbc)
--{
--	strcpy(buf, "/");
-+	return -1U;
- }
- 
- #endif	/* CONFIG_CGROUP_WRITEBACK */
-@@ -201,7 +171,7 @@ DECLARE_EVENT_CLASS(writeback_write_inode_template,
- 		__array(char, name, 32)
- 		__field(unsigned long, ino)
- 		__field(int, sync_mode)
--		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -209,14 +179,14 @@ DECLARE_EVENT_CLASS(writeback_write_inode_template,
- 			dev_name(inode_to_bdi(inode)->dev), 32);
- 		__entry->ino		= inode->i_ino;
- 		__entry->sync_mode	= wbc->sync_mode;
--		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
-+		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
- 	),
- 
--	TP_printk("bdi %s: ino=%lu sync_mode=%d cgroup=%s",
-+	TP_printk("bdi %s: ino=%lu sync_mode=%d cgroup_ino=%u",
- 		__entry->name,
- 		__entry->ino,
- 		__entry->sync_mode,
--		__get_str(cgroup)
-+		__entry->cgroup_ino
- 	)
- );
- 
-@@ -246,7 +216,7 @@ DECLARE_EVENT_CLASS(writeback_work_class,
- 		__field(int, range_cyclic)
- 		__field(int, for_background)
- 		__field(int, reason)
--		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 	TP_fast_assign(
- 		strncpy(__entry->name,
-@@ -258,10 +228,10 @@ DECLARE_EVENT_CLASS(writeback_work_class,
- 		__entry->range_cyclic = work->range_cyclic;
- 		__entry->for_background	= work->for_background;
- 		__entry->reason = work->reason;
--		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
-+		__entry->cgroup_ino = __trace_wb_assign_cgroup(wb);
- 	),
- 	TP_printk("bdi %s: sb_dev %d:%d nr_pages=%ld sync_mode=%d "
--		  "kupdate=%d range_cyclic=%d background=%d reason=%s cgroup=%s",
-+		  "kupdate=%d range_cyclic=%d background=%d reason=%s cgroup_ino=%u",
- 		  __entry->name,
- 		  MAJOR(__entry->sb_dev), MINOR(__entry->sb_dev),
- 		  __entry->nr_pages,
-@@ -270,7 +240,7 @@ DECLARE_EVENT_CLASS(writeback_work_class,
- 		  __entry->range_cyclic,
- 		  __entry->for_background,
- 		  __print_symbolic(__entry->reason, WB_WORK_REASON),
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	)
- );
- #define DEFINE_WRITEBACK_WORK_EVENT(name) \
-@@ -300,15 +270,15 @@ DECLARE_EVENT_CLASS(writeback_class,
- 	TP_ARGS(wb),
- 	TP_STRUCT__entry(
- 		__array(char, name, 32)
--		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 	TP_fast_assign(
- 		strncpy(__entry->name, dev_name(wb->bdi->dev), 32);
--		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
-+		__entry->cgroup_ino = __trace_wb_assign_cgroup(wb);
- 	),
--	TP_printk("bdi %s: cgroup=%s",
-+	TP_printk("bdi %s: cgroup_ino=%u",
- 		  __entry->name,
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	)
- );
- #define DEFINE_WRITEBACK_EVENT(name) \
-@@ -347,7 +317,7 @@ DECLARE_EVENT_CLASS(wbc_class,
- 		__field(int, range_cyclic)
- 		__field(long, range_start)
- 		__field(long, range_end)
--		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -361,12 +331,12 @@ DECLARE_EVENT_CLASS(wbc_class,
- 		__entry->range_cyclic	= wbc->range_cyclic;
- 		__entry->range_start	= (long)wbc->range_start;
- 		__entry->range_end	= (long)wbc->range_end;
--		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
-+		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
- 	),
- 
- 	TP_printk("bdi %s: towrt=%ld skip=%ld mode=%d kupd=%d "
- 		"bgrd=%d reclm=%d cyclic=%d "
--		"start=0x%lx end=0x%lx cgroup=%s",
-+		"start=0x%lx end=0x%lx cgroup_ino=%u",
- 		__entry->name,
- 		__entry->nr_to_write,
- 		__entry->pages_skipped,
-@@ -377,7 +347,7 @@ DECLARE_EVENT_CLASS(wbc_class,
- 		__entry->range_cyclic,
- 		__entry->range_start,
- 		__entry->range_end,
--		__get_str(cgroup)
-+		__entry->cgroup_ino
- 	)
- )
- 
-@@ -398,7 +368,7 @@ TRACE_EVENT(writeback_queue_io,
- 		__field(long,		age)
- 		__field(int,		moved)
- 		__field(int,		reason)
--		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
-+		__field(unsigned int,	cgroup_ino)
- 	),
- 	TP_fast_assign(
- 		unsigned long *older_than_this = work->older_than_this;
-@@ -408,15 +378,15 @@ TRACE_EVENT(writeback_queue_io,
- 				  (jiffies - *older_than_this) * 1000 / HZ : -1;
- 		__entry->moved	= moved;
- 		__entry->reason	= work->reason;
--		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
-+		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
- 	),
--	TP_printk("bdi %s: older=%lu age=%ld enqueue=%d reason=%s cgroup=%s",
-+	TP_printk("bdi %s: older=%lu age=%ld enqueue=%d reason=%s cgroup_ino=%u",
- 		__entry->name,
- 		__entry->older,	/* older_than_this in jiffies */
- 		__entry->age,	/* older_than_this in relative milliseconds */
- 		__entry->moved,
- 		__print_symbolic(__entry->reason, WB_WORK_REASON),
--		__get_str(cgroup)
-+		__entry->cgroup_ino
- 	)
- );
- 
-@@ -484,7 +454,7 @@ TRACE_EVENT(bdi_dirty_ratelimit,
- 		__field(unsigned long,	dirty_ratelimit)
- 		__field(unsigned long,	task_ratelimit)
- 		__field(unsigned long,	balanced_dirty_ratelimit)
--		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
-+		__field(unsigned int,	cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -496,13 +466,13 @@ TRACE_EVENT(bdi_dirty_ratelimit,
- 		__entry->task_ratelimit	= KBps(task_ratelimit);
- 		__entry->balanced_dirty_ratelimit =
- 					KBps(wb->balanced_dirty_ratelimit);
--		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
-+		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
- 	),
- 
- 	TP_printk("bdi %s: "
- 		  "write_bw=%lu awrite_bw=%lu dirty_rate=%lu "
- 		  "dirty_ratelimit=%lu task_ratelimit=%lu "
--		  "balanced_dirty_ratelimit=%lu cgroup=%s",
-+		  "balanced_dirty_ratelimit=%lu cgroup_ino=%u",
- 		  __entry->bdi,
- 		  __entry->write_bw,		/* write bandwidth */
- 		  __entry->avg_write_bw,	/* avg write bandwidth */
-@@ -510,7 +480,7 @@ TRACE_EVENT(bdi_dirty_ratelimit,
- 		  __entry->dirty_ratelimit,	/* base ratelimit */
- 		  __entry->task_ratelimit, /* ratelimit with position control */
- 		  __entry->balanced_dirty_ratelimit, /* the balanced ratelimit */
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	)
- );
- 
-@@ -548,7 +518,7 @@ TRACE_EVENT(balance_dirty_pages,
- 		__field(	 long,	pause)
- 		__field(unsigned long,	period)
- 		__field(	 long,	think)
--		__dynamic_array(char, cgroup, __trace_wb_cgroup_size(wb))
-+		__field(unsigned int,	cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -571,7 +541,7 @@ TRACE_EVENT(balance_dirty_pages,
- 		__entry->period		= period * 1000 / HZ;
- 		__entry->pause		= pause * 1000 / HZ;
- 		__entry->paused		= (jiffies - start_time) * 1000 / HZ;
--		__trace_wb_assign_cgroup(__get_str(cgroup), wb);
-+		__entry->cgroup_ino	= __trace_wb_assign_cgroup(wb);
- 	),
- 
- 
-@@ -580,7 +550,7 @@ TRACE_EVENT(balance_dirty_pages,
- 		  "bdi_setpoint=%lu bdi_dirty=%lu "
- 		  "dirty_ratelimit=%lu task_ratelimit=%lu "
- 		  "dirtied=%u dirtied_pause=%u "
--		  "paused=%lu pause=%ld period=%lu think=%ld cgroup=%s",
-+		  "paused=%lu pause=%ld period=%lu think=%ld cgroup_ino=%u",
- 		  __entry->bdi,
- 		  __entry->limit,
- 		  __entry->setpoint,
-@@ -595,7 +565,7 @@ TRACE_EVENT(balance_dirty_pages,
- 		  __entry->pause,	/* ms */
- 		  __entry->period,	/* ms */
- 		  __entry->think,	/* ms */
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	  )
- );
- 
-@@ -609,8 +579,7 @@ TRACE_EVENT(writeback_sb_inodes_requeue,
- 		__field(unsigned long, ino)
- 		__field(unsigned long, state)
- 		__field(unsigned long, dirtied_when)
--		__dynamic_array(char, cgroup,
--				__trace_wb_cgroup_size(inode_to_wb(inode)))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -619,16 +588,16 @@ TRACE_EVENT(writeback_sb_inodes_requeue,
- 		__entry->ino		= inode->i_ino;
- 		__entry->state		= inode->i_state;
- 		__entry->dirtied_when	= inode->dirtied_when;
--		__trace_wb_assign_cgroup(__get_str(cgroup), inode_to_wb(inode));
-+		__entry->cgroup_ino	= __trace_wb_assign_cgroup(inode_to_wb(inode));
- 	),
- 
--	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu cgroup=%s",
-+	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu cgroup_ino=%u",
- 		  __entry->name,
- 		  __entry->ino,
- 		  show_inode_state(__entry->state),
- 		  __entry->dirtied_when,
- 		  (jiffies - __entry->dirtied_when) / HZ,
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	)
- );
- 
-@@ -684,7 +653,7 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
- 		__field(unsigned long, writeback_index)
- 		__field(long, nr_to_write)
- 		__field(unsigned long, wrote)
--		__dynamic_array(char, cgroup, __trace_wbc_cgroup_size(wbc))
-+		__field(unsigned int, cgroup_ino)
- 	),
- 
- 	TP_fast_assign(
-@@ -696,11 +665,11 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
- 		__entry->writeback_index = inode->i_mapping->writeback_index;
- 		__entry->nr_to_write	= nr_to_write;
- 		__entry->wrote		= nr_to_write - wbc->nr_to_write;
--		__trace_wbc_assign_cgroup(__get_str(cgroup), wbc);
-+		__entry->cgroup_ino	= __trace_wbc_assign_cgroup(wbc);
- 	),
- 
- 	TP_printk("bdi %s: ino=%lu state=%s dirtied_when=%lu age=%lu "
--		  "index=%lu to_write=%ld wrote=%lu cgroup=%s",
-+		  "index=%lu to_write=%ld wrote=%lu cgroup_ino=%u",
- 		  __entry->name,
- 		  __entry->ino,
- 		  show_inode_state(__entry->state),
-@@ -709,7 +678,7 @@ DECLARE_EVENT_CLASS(writeback_single_inode_template,
- 		  __entry->writeback_index,
- 		  __entry->nr_to_write,
- 		  __entry->wrote,
--		  __get_str(cgroup)
-+		  __entry->cgroup_ino
- 	)
- );
- 
-diff --git a/kernel/power/hibernate.c b/kernel/power/hibernate.c
-index bfd9e0982f15..fbb23f93e8d6 100644
---- a/kernel/power/hibernate.c
-+++ b/kernel/power/hibernate.c
-@@ -648,6 +648,10 @@ static void power_down(void)
- 		cpu_relax();
- }
- 
-+#ifndef CONFIG_SUSPEND
-+bool pm_in_action;
-+#endif
-+
- /**
-  * hibernate - Carry out system hibernation, including saving the image.
-  */
-@@ -660,6 +664,8 @@ int hibernate(void)
- 		return -EPERM;
+ 	ret = -EINVAL;
+ 	has_ns = kernfs_ns_enabled(parent);
+@@ -634,7 +634,7 @@ int kernfs_add_one(struct kernfs_node *k
+ 		ps_iattrs->ia_ctime = ps_iattrs->ia_mtime = CURRENT_TIME;
  	}
  
-+	pm_in_action = true;
-+
- 	lock_system_sleep();
- 	/* The snapshot device should not be opened while we're running */
- 	if (!atomic_add_unless(&snapshot_device_available, -1, 0)) {
-@@ -725,6 +731,7 @@ int hibernate(void)
- 	atomic_inc(&snapshot_device_available);
-  Unlock:
- 	unlock_system_sleep();
-+	pm_in_action = false;
- 	return error;
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	/*
+ 	 * Activate the new node unless CREATE_DEACTIVATED is requested.
+@@ -648,7 +648,7 @@ int kernfs_add_one(struct kernfs_node *k
+ 	return 0;
+ 
+ out_unlock:
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return ret;
  }
  
-diff --git a/kernel/power/suspend.c b/kernel/power/suspend.c
-index 80ebc0726290..393bc342c586 100644
---- a/kernel/power/suspend.c
-+++ b/kernel/power/suspend.c
-@@ -522,6 +522,8 @@ static int enter_state(suspend_state_t state)
- 	return error;
+@@ -709,10 +709,10 @@ struct kernfs_node *kernfs_find_and_get_
+ {
+ 	struct kernfs_node *kn;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	kn = kernfs_find_ns(parent, name, ns);
+ 	kernfs_get(kn);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	return kn;
+ }
+@@ -851,7 +851,7 @@ static struct dentry *kernfs_iop_lookup(
+ 	struct inode *inode;
+ 	const void *ns = NULL;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	if (kernfs_ns_enabled(parent))
+ 		ns = kernfs_info(dir->i_sb)->ns;
+@@ -876,7 +876,7 @@ static struct dentry *kernfs_iop_lookup(
+ 	/* instantiate and hash dentry */
+ 	ret = d_splice_alias(inode, dentry);
+  out_unlock:
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return ret;
  }
  
-+bool pm_in_action;
-+
+@@ -1030,7 +1030,7 @@ void kernfs_activate(struct kernfs_node
+ {
+ 	struct kernfs_node *pos;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	pos = NULL;
+ 	while ((pos = kernfs_next_descendant_post(pos, kn))) {
+@@ -1044,7 +1044,7 @@ void kernfs_activate(struct kernfs_node
+ 		pos->flags |= KERNFS_ACTIVATED;
+ 	}
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ }
+ 
+ static void __kernfs_remove(struct kernfs_node *kn)
+@@ -1121,9 +1121,9 @@ static void __kernfs_remove(struct kernf
+  */
+ void kernfs_remove(struct kernfs_node *kn)
+ {
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	__kernfs_remove(kn);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ }
+ 
  /**
-  * pm_suspend - Externally visible function for suspending the system.
-  * @state: System sleep state to enter.
-@@ -536,6 +538,8 @@ int pm_suspend(suspend_state_t state)
- 	if (state <= PM_SUSPEND_ON || state >= PM_SUSPEND_MAX)
+@@ -1210,7 +1210,7 @@ bool kernfs_remove_self(struct kernfs_no
+ {
+ 	bool ret;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	kernfs_break_active_protection(kn);
+ 
+ 	/*
+@@ -1238,9 +1238,9 @@ bool kernfs_remove_self(struct kernfs_no
+ 			    atomic_read(&kn->active) == KN_DEACTIVATED_BIAS)
+ 				break;
+ 
+-			mutex_unlock(&kernfs_mutex);
++			kernfs_mutex_unlock(&kernfs_mutex);
+ 			schedule();
+-			mutex_lock(&kernfs_mutex);
++			kernfs_mutex_lock(&kernfs_mutex);
+ 		}
+ 		finish_wait(waitq, &wait);
+ 		WARN_ON_ONCE(!RB_EMPTY_NODE(&kn->rb));
+@@ -1253,7 +1253,7 @@ bool kernfs_remove_self(struct kernfs_no
+ 	 */
+ 	kernfs_unbreak_active_protection(kn);
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return ret;
+ }
+ 
+@@ -1277,13 +1277,13 @@ int kernfs_remove_by_name_ns(struct kern
+ 		return -ENOENT;
+ 	}
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	kn = kernfs_find_ns(parent, name, ns);
+ 	if (kn)
+ 		__kernfs_remove(kn);
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	if (kn)
+ 		return 0;
+@@ -1309,7 +1309,7 @@ int kernfs_rename_ns(struct kernfs_node
+ 	if (!kn->parent)
  		return -EINVAL;
  
-+	pm_in_action = true;
-+
- 	error = enter_state(state);
- 	if (error) {
- 		suspend_stats.fail++;
-@@ -543,6 +547,7 @@ int pm_suspend(suspend_state_t state)
- 	} else {
- 		suspend_stats.success++;
- 	}
-+	pm_in_action = false;
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	error = -ENOENT;
+ 	if (!kernfs_active(kn) || !kernfs_active(new_parent) ||
+@@ -1363,7 +1363,7 @@ int kernfs_rename_ns(struct kernfs_node
+ 
+ 	error = 0;
+  out:
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
  	return error;
  }
- EXPORT_SYMBOL(pm_suspend);
-diff --git a/kernel/sched/swait.c b/kernel/sched/swait.c
-index 8459561f0379..205fe36868f9 100644
---- a/kernel/sched/swait.c
-+++ b/kernel/sched/swait.c
-@@ -1,5 +1,6 @@
- #include <linux/sched.h>
- #include <linux/swait.h>
-+#include <linux/suspend.h>
  
- void __init_swait_queue_head(struct swait_queue_head *q, const char *name,
- 			     struct lock_class_key *key)
-@@ -42,7 +43,9 @@ void swake_up_all_locked(struct swait_queue_head *q)
- 		list_del_init(&curr->task_list);
- 		wakes++;
+@@ -1438,7 +1438,7 @@ static int kernfs_fop_readdir(struct fil
+ 
+ 	if (!dir_emit_dots(file, ctx))
+ 		return 0;
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 
+ 	if (kernfs_ns_enabled(parent))
+ 		ns = kernfs_info(dentry->d_sb)->ns;
+@@ -1455,12 +1455,12 @@ static int kernfs_fop_readdir(struct fil
+ 		file->private_data = pos;
+ 		kernfs_get(pos);
+ 
+-		mutex_unlock(&kernfs_mutex);
++		kernfs_mutex_unlock(&kernfs_mutex);
+ 		if (!dir_emit(ctx, name, len, ino, type))
+ 			return 0;
+-		mutex_lock(&kernfs_mutex);
++		kernfs_mutex_lock(&kernfs_mutex);
  	}
--	WARN_ON(wakes > 2);
-+	if (pm_in_action)
-+		return;
-+	WARN(wakes > 2, "complate_all() with %d waiters\n", wakes);
- }
- EXPORT_SYMBOL(swake_up_all_locked);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	file->private_data = NULL;
+ 	ctx->pos = INT_MAX;
+ 	return 0;
+--- a/fs/kernfs/file.c
++++ b/fs/kernfs/file.c
+@@ -830,7 +830,7 @@ static void kernfs_notify_workfn(struct
+ 	spin_unlock_irq(&kernfs_open_node_lock);
  
-diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
-index fc083996e40a..18cc59fb1bc6 100644
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -1289,7 +1289,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
- 	class = pool->size_class[class_idx];
- 	off = obj_idx_to_offset(page, obj_idx, class->size);
+ 	/* kick fsnotify */
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
  
--	area = &get_cpu_var(zs_map_area);
-+	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
- 	area->vm_mm = mm;
- 	if (off + class->size <= PAGE_SIZE) {
- 		/* this object is contained entirely within a page */
-@@ -1342,7 +1342,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
- 
- 		__zs_unmap_object(area, pages, off, class->size);
+ 	list_for_each_entry(info, &kernfs_root(kn)->supers, node) {
+ 		struct inode *inode;
+@@ -851,7 +851,7 @@ static void kernfs_notify_workfn(struct
+ 		iput(inode);
  	}
--	put_cpu_var(zs_map_area);
-+	put_cpu_light();
- 	unpin_tag(handle);
+ 
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	kernfs_put(kn);
+ 	goto repeat;
  }
- EXPORT_SYMBOL_GPL(zs_unmap_object);
-diff --git a/net/core/dev.c b/net/core/dev.c
-index cc364be3587b..0e17592adbff 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2891,7 +2891,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
- 	 * This permits __QDISC___STATE_RUNNING owner to get the lock more
- 	 * often and dequeue packets faster.
- 	 */
+--- a/fs/kernfs/inode.c
++++ b/fs/kernfs/inode.c
+@@ -103,9 +103,9 @@ int kernfs_setattr(struct kernfs_node *k
+ {
+ 	int ret;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	ret = __kernfs_setattr(kn, iattr);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return ret;
+ }
+ 
+@@ -118,7 +118,7 @@ int kernfs_iop_setattr(struct dentry *de
+ 	if (!kn)
+ 		return -EINVAL;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	error = inode_change_ok(inode, iattr);
+ 	if (error)
+ 		goto out;
+@@ -131,7 +131,7 @@ int kernfs_iop_setattr(struct dentry *de
+ 	setattr_copy(inode, iattr);
+ 
+ out:
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return error;
+ }
+ 
+@@ -181,9 +181,9 @@ int kernfs_iop_setxattr(struct dentry *d
+ 		if (error)
+ 			return error;
+ 
+-		mutex_lock(&kernfs_mutex);
++		kernfs_mutex_lock(&kernfs_mutex);
+ 		error = kernfs_node_setsecdata(kn, &secdata, &secdata_len);
+-		mutex_unlock(&kernfs_mutex);
++		kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 		if (secdata)
+ 			security_release_secctx(secdata, secdata_len);
+@@ -273,9 +273,9 @@ int kernfs_iop_getattr(struct vfsmount *
+ 	struct kernfs_node *kn = dentry->d_fsdata;
+ 	struct inode *inode = d_inode(dentry);
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	kernfs_refresh_inode(kn, inode);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	generic_fillattr(inode, stat);
+ 	return 0;
+@@ -364,9 +364,9 @@ int kernfs_iop_permission(struct inode *
+ 
+ 	kn = inode->i_private;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	kernfs_refresh_inode(kn, inode);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	return generic_permission(inode, mask);
+ }
+--- a/fs/kernfs/kernfs-internal.h
++++ b/fs/kernfs/kernfs-internal.h
+@@ -115,4 +115,19 @@ void kernfs_unmap_bin_file(struct kernfs
+  */
+ extern const struct inode_operations kernfs_symlink_iops;
+ 
++static inline void kernfs_mutex_lock(struct mutex *lock)
++{
 +#ifdef CONFIG_PREEMPT_RT_FULL
-+	contended = true;
-+#else
- 	contended = qdisc_is_running(q);
++	migrate_disable();
 +#endif
- 	if (unlikely(contended))
- 		spin_lock(&q->busylock);
++	mutex_lock(lock);
++}
++
++static inline void kernfs_mutex_unlock(struct mutex *lock)
++{
++	mutex_unlock(lock);
++#ifdef CONFIG_PREEMPT_RT_FULL
++	migrate_enable();
++#endif
++}
+ #endif	/* __KERNFS_INTERNAL_H */
+--- a/fs/kernfs/mount.c
++++ b/fs/kernfs/mount.c
+@@ -76,9 +76,9 @@ static int kernfs_fill_super(struct supe
+ 	sb->s_time_gran = 1;
  
+ 	/* get root inode, initialize and unlock it */
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	inode = kernfs_get_inode(sb, info->root->kn);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	if (!inode) {
+ 		pr_debug("kernfs: could not get root inode\n");
+ 		return -ENOMEM;
+@@ -177,9 +177,9 @@ struct dentry *kernfs_mount_ns(struct fi
+ 		}
+ 		sb->s_flags |= MS_ACTIVE;
+ 
+-		mutex_lock(&kernfs_mutex);
++		kernfs_mutex_lock(&kernfs_mutex);
+ 		list_add(&info->node, &root->supers);
+-		mutex_unlock(&kernfs_mutex);
++		kernfs_mutex_unlock(&kernfs_mutex);
+ 	}
+ 
+ 	return dget(sb->s_root);
+@@ -198,9 +198,9 @@ void kernfs_kill_sb(struct super_block *
+ 	struct kernfs_super_info *info = kernfs_info(sb);
+ 	struct kernfs_node *root_kn = sb->s_root->d_fsdata;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	list_del(&info->node);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	/*
+ 	 * Remove the superblock from fs_supers/s_instances
+@@ -228,7 +228,7 @@ struct super_block *kernfs_pin_sb(struct
+ 	struct kernfs_super_info *info;
+ 	struct super_block *sb = NULL;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	list_for_each_entry(info, &root->supers, node) {
+ 		if (info->ns == ns) {
+ 			sb = info->sb;
+@@ -237,7 +237,7 @@ struct super_block *kernfs_pin_sb(struct
+ 			break;
+ 		}
+ 	}
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 	return sb;
+ }
+ 
+--- a/fs/kernfs/symlink.c
++++ b/fs/kernfs/symlink.c
+@@ -105,9 +105,9 @@ static int kernfs_getlink(struct dentry
+ 	struct kernfs_node *target = kn->symlink.target_kn;
+ 	int error;
+ 
+-	mutex_lock(&kernfs_mutex);
++	kernfs_mutex_lock(&kernfs_mutex);
+ 	error = kernfs_get_target_path(parent, target, path);
+-	mutex_unlock(&kernfs_mutex);
++	kernfs_mutex_unlock(&kernfs_mutex);
+ 
+ 	return error;
+ }
