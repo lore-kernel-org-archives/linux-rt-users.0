@@ -1,43 +1,40 @@
-From: Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>
-Subject: Re: [rfc patch] drivers/block/zram: Replace bit spinlocks with
- rtmutex for -rt
-Date: Mon, 4 Apr 2016 09:27:57 +0900
-Message-ID: <20160404002756.GA6164@swordfish>
-References: <1458641979.15742.6.camel@gmail.com>
- <20160330085622.GA21849@linutronix.de>
- <1459329836.4175.16.camel@gmail.com>
- <1459390108.4030.5.camel@gmail.com>
- <20160401104221.GB29603@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [rfc patch 0/2]  Kill hotplug_lock()/hotplug_unlock()
+Date: Tue, 05 Apr 2016 14:49:38 +0200
+Message-ID: <1459860578.7776.0.camel@gmail.com>
+References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
+	 <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
+	 <1458463425.3908.5.camel@gmail.com> <1458814024.23732.35.camel@gmail.com>
+	 <alpine.DEB.2.11.1603241140510.3978@nanos>
+	 <1459405903.14336.64.camel@gmail.com>
+	 <20160401211105.GE29603@linutronix.de> <1459566735.3779.36.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=us-ascii
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	Minchan Kim <minchan@kernel.org>,
-	Nitin Gupta <ngupta@vflare.org>,
-	Sergey Senozhatsky <sergey.senozhatsky.work@gmail.com>,
-	RT <linux-rt-users@vger.kernel.org>
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-pa0-f46.google.com ([209.85.220.46]:33466 "EHLO
-	mail-pa0-f46.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752276AbcDDA1h (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 3 Apr 2016 20:27:37 -0400
-Received: by mail-pa0-f46.google.com with SMTP id zm5so131888069pac.0
-        for <linux-rt-users@vger.kernel.org>; Sun, 03 Apr 2016 17:27:37 -0700 (PDT)
-Content-Disposition: inline
-In-Reply-To: <20160401104221.GB29603@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1459566735.3779.36.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On (04/01/16 12:42), Sebastian Andrzej Siewior wrote:
-> >They're nondeterministic, and lead to ___might_sleep() splats in -rt.
-> >OTOH, they're a lot less wasteful than an rtmutex per page.
-> Applied.
-> Although I'm disapointed about Sergey's argument against the spinlock in
-> general due to a few bytes used by lockdep which can be disabled. Not to
-> mention the usefull debug facility lockdep provides if one decides to
-> use.
+This is my stab at whacking $subject without adding any duct tape.  My
+desktop box has run a thousand iterations of Steven's hotplug stress
+script accompanied with stockfish, futextest, hackbench and tbench to
+give hotplug lots of opportunity to prove this broken.  So far, it has
+failed.  64 core DL980 is nowhere near as quick at iteration increment,
+but has been happily chugging along all the while.
 
-I'll take a look.
+Patches are against 4.6-rc2-rt13.  Barring any frozen projectiles
+lobbed by either humans or hotplug, I'll see what a backport to 4.4-rt
+would look like.  This one has lots of minus signs.
 
-	-ss
+patch1:
+ kernel/cpu.c |  267 ++++++++++-------------------------------------------------
+ 1 file changed, 47 insertions(+), 220 deletions(-)
+patch2:
+ kernel/locking/rtmutex.c |   37 +++++++++++++++++--------------------
+ 1 file changed, 17 insertions(+), 20 deletions(-)
