@@ -1,13 +1,16 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
-Date: Thu, 7 Apr 2016 18:47:36 +0200
-Message-ID: <57068F28.8010409@linutronix.de>
+Subject: Re: [rfc patch 2/2] rt/locking/hotplug: Fix rt_spin_lock_slowlock()
+ migrate_disable() bug
+Date: Thu, 7 Apr 2016 18:48:56 +0200
+Message-ID: <57068F78.2070607@linutronix.de>
 References: <1455318168-7125-1-git-send-email-bigeasy@linutronix.de>
  <1455318168-7125-4-git-send-email-bigeasy@linutronix.de>
  <1458463425.3908.5.camel@gmail.com> <1458814024.23732.35.camel@gmail.com>
  <alpine.DEB.2.11.1603241140510.3978@nanos>
  <1459405903.14336.64.camel@gmail.com> <20160401211105.GE29603@linutronix.de>
- <1459566735.3779.36.camel@gmail.com>
+ <1459566735.3779.36.camel@gmail.com> <1459837988.26938.16.camel@gmail.com>
+ <1459860597.7776.2.camel@gmail.com> <1459944021.3990.14.camel@gmail.com>
+ <1460003831.3882.106.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
@@ -17,31 +20,24 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
 To: Mike Galbraith <umgwanakikbuti@gmail.com>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1459566735.3779.36.camel@gmail.com>
+In-Reply-To: <1460003831.3882.106.camel@gmail.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On 04/02/2016 05:12 AM, Mike Galbraith wrote:
->> By the time I improved hotplug I played with this. I had a few ideas but
->> it didn't fly in the end. Today however I ended up with this:
+On 04/07/2016 06:37 AM, Mike Galbraith wrote:
+> On Wed, 2016-04-06 at 14:00 +0200, Mike Galbraith wrote:
+>> It'll take a hotplug beating seemingly as well as any non-rt kernel,
+>> but big box NAKed it due to jitter, which can mean 1.0 things.. duh.
 > 
-> Yeah, but that fails the duct tape test too.  Mine is below, and is the
-> extra sticky variety ;-)  With busted 0299 patch reverted and those two
-> applied, my DL980 took a beating for ~36 hours before I aborted it.. ie
-> hotplug road seemingly has no more -rt specific potholes.
+> FWIW, the below turned big box NAK into ACK.  Stressing hotplug over
+> night, iteration completion time went from about 2 1/2 hours with
+> bandaids on the two identified rt sore spots, to an hour and 10 minutes
+> as well for some reason, but whatever..
 
-just to be clear: The patch I attached did _not_ work for you.
+Just to be clear. I need #1, #2 from this thread and this below to make
+it work?
 
-> If that lock dies, we can unpin when entering lock slow path and pin
-> again post acquisition with no ABBA worries as well, and not only does
-> existing hotplug work heaping truckloads better, -rt can perhaps help
-> spot trouble as the rewrite proceeds.
-> 
-> Current state is more broken than ever.. if that's possible.
-
-And the two patches you attached here did?
-
-> 
 > 	-Mike
+> 
 
 Sebastian
