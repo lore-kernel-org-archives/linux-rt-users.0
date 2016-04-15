@@ -1,54 +1,66 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Clark Williams <williams@redhat.com>
 Subject: Re: [RT PATCH] cputime: remove raw locks introduced by RT patchset
-Date: Fri, 15 Apr 2016 09:13:34 +0200
-Message-ID: <5710949E.1020407@linutronix.de>
+Date: Fri, 15 Apr 2016 08:43:52 -0500
+Message-ID: <20160415084352.3dae9145@sluggy.hsv.redhat.com>
 References: <20160414220943.3d4d7dd2@sluggy.hsv.redhat.com>
+	<5710949E.1020407@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
-Content-Transfer-Encoding: 7bit
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/wEkyG2FdFVyFAt3eZIDYDu6"; protocol="application/pgp-signature"
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:51964 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751127AbcDOHNh (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 15 Apr 2016 03:13:37 -0400
-In-Reply-To: <20160414220943.3d4d7dd2@sluggy.hsv.redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <5710949E.1020407@linutronix.de>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 04/15/2016 05:09 AM, Clark Williams wrote:
-> Sebastian,
+--Sig_/wEkyG2FdFVyFAt3eZIDYDu6
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-Hi Clark,
+On Fri, 15 Apr 2016 09:13:34 +0200
+Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+> Frederic's patch made it into 4.5-rc1. What I did yesterday was:
+>=20
+> * sched/cputime: Convert vtime_seqlock to seqcount
+> * sched/cputime: Clarify vtime symbols and document them
+> * Revert "vtime: Split lock and seqcount"
+>=20
+> which is what you want, correct?
+> >=20
+> > Signed-off-by: Rik van Riel <riel@redhat.com>
+> > Signed-off-by: Clark Williams <williams@redhat.com> =20
+>=20
+> Sebastian
+>=20
 
-> This patch removes the raw spinlock operations when updating cputtime
-> in the vtime_* functions in kernel/sched/cputime.c.
-> 
-> Based on Frederic's commit b7ce2277f087fd052, there is no need for
-> the raw spinlocks in vtime_* functions to guard against writer
-> concurrency and the RT versions of write_seqcount_begin() and
-> write_seqcount_end() make calls to preempt_disable_rt() and
-> preempt_enable_rt(), so we'll be in atomic context while updating
-> cputime.
-> 
-> I've run this patch on x86_64 4.4.6-rt14 and the RHEL-RT kernel, 
-> with 12h rteval runs on systems with both no tuning and systems
-> with isolcpus/rcu_nocbs/nohz_full cpus. No ill effects seen. 
+Yes, that's it. I just wanted to get rid of the redundant locking operation=
+s and reduce the accounting overhead by a bit.=20
 
-Frederic's patch made it into 4.5-rc1. What I did yesterday was:
+Thanks!
+Clark
 
-* sched/cputime: Convert vtime_seqlock to seqcount
-* sched/cputime: Clarify vtime symbols and document them
-* Revert "vtime: Split lock and seqcount"
+--Sig_/wEkyG2FdFVyFAt3eZIDYDu6
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
 
-which is what you want, correct?
-> 
-> Signed-off-by: Rik van Riel <riel@redhat.com>
-> Signed-off-by: Clark Williams <williams@redhat.com>
+-----BEGIN PGP SIGNATURE-----
 
-Sebastian
+iQIcBAEBCgAGBQJXEPAYAAoJEOI5asVwYXLr8UUP/jHT73EzKnqQlXo88vkDeWBJ
+I7Xc/IunRIOETTz6gzogAizYIFpfOdRYm0TWsYS21B6805vOhws4HadDevWZ9JRH
+unubMFwoeNqC78jpIr9v7o+hfy0NaR7Y80Z8XurXp18mtq6q+uPYYbkpQKtv1WR3
+R0+BfiwbZmbsEi8ZdNxeh249rxXoCnh1+sQUfbJVpIbKHKsG39BV3QYXIADa1zdd
+bsUT87ekQuqZBz298cldhUiy2+MvKSxx5CZVi9UUbr/ivO0cUMcMz1nQ4Ya+DgJ1
+A81mTVNSbJaP4JVQ9+ftt+8wijqmDjuysxnpjKQeTrwIOkLUcQ9hth4/QQcci6FA
+emroYzfaQvOd+BddALwtBLIkcow1T+3msknY16E56LaoYuj0AAdpcC/a1xiWW5DO
+hcW+QBBjboCLgGRW3FjEYPZGV4OJFiz8XpDATyHftLzxuzuV4EW+u5JshtJh1EpO
+4CaM6YwMtYtt0+rQ7TzuhOr87f26OsAQCHQWUmwqoRJYxXEUVuL9+Ne0/ozuQ9kq
+0atyNc4Br+bMHBUXTCZsUdgHw7fWSpyF7yuqxPyZhE4QVK6/uXGdR1mWNQf8E0mo
+XeSi0UViy7F6+svNTPnFqGZqm7OjIPx+ChhG4g9OOxbyUWPIO9TmH/logGPT42e3
+p1/+eam0sbyBs4yaOMnS
+=2Gjm
+-----END PGP SIGNATURE-----
 
+--Sig_/wEkyG2FdFVyFAt3eZIDYDu6--
