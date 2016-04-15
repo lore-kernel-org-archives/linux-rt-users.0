@@ -1,248 +1,173 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH] cyclictest: avoid using libnuma cpumask parsing
- functions
-Date: Thu, 14 Apr 2016 10:30:18 -0400
-Message-ID: <20160414103018.3a07cf27@redhat.com>
-References: <20160413153700.7a930369@sluggy.hsv.redhat.com>
+From: Clark Williams <williams@redhat.com>
+Subject: [RT PATCH] cputime: remove raw locks introduced by RT patchset
+Date: Thu, 14 Apr 2016 22:09:43 -0500
+Message-ID: <20160414220943.3d4d7dd2@sluggy.hsv.redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 8BIT
-Cc: John Kacur <jkacur@redhat.com>,
+Content-Type: multipart/signed; micalg=pgp-sha512;
+ boundary="Sig_/4ZJqrQuJIg1BynSl+hxDUQV"; protocol="application/pgp-signature"
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	RT <linux-rt-users@vger.kernel.org>,
 	LKML <linux-kernel@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160413153700.7a930369@sluggy.hsv.redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Wed, 13 Apr 2016 15:37:00 -0500
-Clark Williams <williams@redhat.com> wrote:
+--Sig_/4ZJqrQuJIg1BynSl+hxDUQV
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: quoted-printable
 
-> John,
-> 
-> I ran into issues with parsing cpu masks when trying to run this command:
-> 
-> sudo ./cyclictest -i100 -qmu -h 2000 -p95 -t1 -a3
-> 
-> I had previously booted a 4-core system with these boot options:
-> 
-> 	isolcpus=3 nohz_full=3 rcu_nocbs=3
-> 
-> The intent was to run loads on cpus 0-2 while running cyclictest on the isolated cpu 3. 
-> 
-> Unfortunately, the libnuma function numa_parse_cpumask() (which we use when it's available) seems to check the current affinity mask and fails the parse if any of the cpus in the input string are not in the current affinity mask. I find this "unhelpful" when trying to place a measurement thread on an isolated cpu. 
-> 
-> This patch removes the wrapper function which uses libnuma cpumask parsing functions and instead uses the parser function we wrote for when libnuma is not available. 
+Sebastian,
 
-There's an alternative solution that I was working on some time ago,
-which is having a simple configure script. This is usually done
-by simple projects that don't need a full blown autoconf machinery.
+This patch removes the raw spinlock operations when updating cputtime
+in the vtime_* functions in kernel/sched/cputime.c.
 
-The patch below adds such a script. It detects librt, libpthread and
-libnuma. It solves the problem you mention and it removes hardcoded
-lib details from the Makefile.
+Based on Frederic's commit b7ce2277f087fd052, there is no need for
+the raw spinlocks in vtime_* functions to guard against writer
+concurrency and the RT versions of write_seqcount_begin() and
+write_seqcount_end() make calls to preempt_disable_rt() and
+preempt_enable_rt(), so we'll be in atomic context while updating
+cputime.
 
-If there's interest for this solution I can finish it and post for
-inclusion.
+I've run this patch on x86_64 4.4.6-rt14 and the RHEL-RT kernel,=20
+with 12h rteval runs on systems with both no tuning and systems
+with isolcpus/rcu_nocbs/nohz_full cpus. No ill effects seen.=20
 
->From 4228140e9dbb7fbb1bb495663ae3d896fc447f8f Mon Sep 17 00:00:00 2001
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Date: Tue, 23 Feb 2016 15:53:43 -0500
-Subject: [PATCH] add configure script
-
-Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Clark Williams <williams@redhat.com>
 ---
- .gitignore |   1 +
- Makefile   |  22 ++----------
- configure  | 116 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
- 3 files changed, 120 insertions(+), 19 deletions(-)
- create mode 100755 configure
+ kernel/sched/cputime.c | 18 ------------------
+ 1 file changed, 18 deletions(-)
 
-diff --git a/.gitignore b/.gitignore
-index ceee8bf..5b3e4cc 100644
---- a/.gitignore
-+++ b/.gitignore
-@@ -34,3 +34,4 @@ SRPMS
- rt-tests.spec
- tags
- TAGS
-+config.mk
-diff --git a/Makefile b/Makefile
-index 280fd3b..dad0175 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,3 +1,5 @@
-+include config.mk
-+
- VERSION = 0.97
- CC?=$(CROSS_COMPILE)gcc
- AR?=$(CROSS_COMPILE)ar
-@@ -17,7 +19,6 @@ sources = cyclictest.c \
- 	  svsematest.c
- 
- TARGETS = $(sources:.c=)
--LIBS	= -lrt -lpthread
- RTTESTLIB = -lrttest -L$(OBJDIR)
- EXTRA_LIBS ?= -ldl	# for get_cpu
- DESTDIR	?=
-@@ -48,26 +49,9 @@ ostype := $(lastword $(subst -, ,$(dumpmachine)))
- machinetype := $(shell echo $(dumpmachine)| \
-     sed -e 's/-.*//' -e 's/i.86/i386/' -e 's/mips.*/mips/' -e 's/ppc.*/powerpc/')
- 
--# The default is to assume you have libnuma installed, which is fine to do
--# even on non-numa machines. If you don't want to install the numa libs, for
--# example, they might not be available in an embedded environment, then
--# compile with
--# make NUMA=0
--ifneq ($(filter x86_64 i386 ia64 mips powerpc,$(machinetype)),)
--NUMA 	:= 1
--endif
--
--# The default is to assume that you only have numa_parse_cpustring
--# If you are sure you have a version of libnuma with numa_parse_cpustring_all
--# then compile with
--# make HAVE_PARSE_CPUSTRING_ALL=1
--ifeq ($(NUMA),1)
--	CFLAGS += -DNUMA
--	NUMA_LIBS = -lnuma
- ifdef HAVE_PARSE_CPUSTRING_ALL
- 	CFLAGS += -DHAVE_PARSE_CPUSTRING_ALL
- endif
--endif
- 
- include src/arch/android/Makefile
- 
-@@ -100,7 +84,7 @@ $(OBJDIR):
- -include $(addprefix $(OBJDIR)/,$(sources:.c=.d))
- 
- cyclictest: $(OBJDIR)/cyclictest.o $(OBJDIR)/librttest.a
--	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(NUMA_LIBS)
-+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
- 
- signaltest: $(OBJDIR)/signaltest.o $(OBJDIR)/librttest.a
- 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
-diff --git a/configure b/configure
-new file mode 100755
-index 0000000..1d17ef9
---- /dev/null
-+++ b/configure
-@@ -0,0 +1,116 @@
-+#!/bin/sh
-+
-+build_config=config.mk
-+temp_dir=$(mktemp -d)
-+temp_file=$temp_dir/file.c
-+
-+LIBS=
-+NUMA_LIBS=
-+EXTRA_CFLAGS=
-+has_numa=n
-+has_numa_cpustring_all=n
-+
-+build_test()
-+{
-+	local libs=$*
-+	local ret=
-+
-+	cd $temp_dir
-+	cc -o prog $temp_file $libs 2> /dev/null
-+	ret=$?
-+	cd - > /dev/null
-+	return $ret
-+}
-+
-+#
-+# -lpthread
-+#
-+pthread_lib=-lpthread
-+
-+cat > $temp_file << EOF
-+#include <pthread.h>
-+static void *func(void *p) { return NULL; }
-+int main(void) {
-+	pthread_t thread;
-+	pthread_create(&thread, 0, func, 0);
-+	return 0;
-+}
-+EOF
-+
-+if ! build_test $pthread_lib; then
-+	echo ERROR: missing pthread library
-+	exit 1
-+else
-+	LIBS="$LIBS $pthread_lib"
-+fi
-+
-+#
-+# -lrt
-+#
-+rt_lib=-lrt
-+
-+cat > $temp_file << EOF
-+#include <sys/mman.h>
-+#include <sys/stat.h>
-+#include <fcntl.h>
-+int main(void) {
-+	shm_open("", 0, 0);
-+	return 0;
-+}
-+EOF
-+
-+if ! build_test $rt_lib; then
-+	echo ERROR: missing rt library
-+	exit 1
-+else
-+	LIBS="$LIBS $rt_lib"
-+fi
-+
-+#
-+# -lnuma
-+#
-+numa_lib=-lnuma
-+
-+cat > $temp_file << EOF
-+#include <numa.h>
-+int main(void) {
-+	numa_available();
-+	return 0;
-+}
-+EOF
-+
-+if build_test $numa_lib; then
-+	LIBS="$LIBS $numa_lib"
-+	EXTRA_CFLAGS="$EXTRA_CFLAGS -DNUMA"
-+	has_numa=y
-+fi
-+
-+#
-+# numa_parse_cpustring_all
-+#
-+if [ $has_numa = "y" ]; then
-+
-+	cat > $temp_file << EOF
-+#include <numa.h>
-+int main(void) {
-+	numa_parse_cpustring_all("");
-+	return 0;
-+}
-+EOF
-+
-+	if build_test $numa_lib; then
-+		has_numa_cpustring_all=y;
-+	fi
-+fi
-+
-+#
-+# Write $build_config
-+#
-+echo "LIBS = $LIBS" > $build_config
-+echo "EXTRA_CFLAGS = $EXTRA_CFLAGS" >> $build_config
-+
-+if [ "$has_numa_cpustring_all" = "y" ]; then
-+	echo "HAVE_PARSE_CPUSTRING_ALL := 1" >> $build_config
-+fi
-+
-+rm -rf $temp_dir
--- 
+diff --git a/kernel/sched/cputime.c b/kernel/sched/cputime.c
+index 0f75a38cff96..9a823ced7e4a 100644
+--- a/kernel/sched/cputime.c
++++ b/kernel/sched/cputime.c
+@@ -696,45 +696,37 @@ static void __vtime_account_system(struct task_struct=
+ *tsk)
+=20
+ void vtime_account_system(struct task_struct *tsk)
+ {
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+=20
+ void vtime_gen_account_irq_exit(struct task_struct *tsk)
+ {
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	if (context_tracking_in_user())
+ 		tsk->vtime_snap_whence =3D VTIME_USER;
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+=20
+ void vtime_account_user(struct task_struct *tsk)
+ {
+ 	cputime_t delta_cpu;
+=20
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	delta_cpu =3D get_vtime_delta(tsk);
+ 	tsk->vtime_snap_whence =3D VTIME_SYS;
+ 	account_user_time(tsk, delta_cpu, cputime_to_scaled(delta_cpu));
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+=20
+ void vtime_user_enter(struct task_struct *tsk)
+ {
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	tsk->vtime_snap_whence =3D VTIME_USER;
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+=20
+ void vtime_guest_enter(struct task_struct *tsk)
+@@ -746,23 +738,19 @@ void vtime_guest_enter(struct task_struct *tsk)
+ 	 * synchronization against the reader (task_gtime())
+ 	 * that can thus safely catch up with a tickless delta.
+ 	 */
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	current->flags |=3D PF_VCPU;
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ EXPORT_SYMBOL_GPL(vtime_guest_enter);
+=20
+ void vtime_guest_exit(struct task_struct *tsk)
+ {
+-	raw_spin_lock(&tsk->vtime_lock);
+ 	write_seqcount_begin(&tsk->vtime_seq);
+ 	__vtime_account_system(tsk);
+ 	current->flags &=3D ~PF_VCPU;
+ 	write_seqcount_end(&tsk->vtime_seq);
+-	raw_spin_unlock(&tsk->vtime_lock);
+ }
+ EXPORT_SYMBOL_GPL(vtime_guest_exit);
+=20
+@@ -775,30 +763,24 @@ void vtime_account_idle(struct task_struct *tsk)
+=20
+ void arch_vtime_task_switch(struct task_struct *prev)
+ {
+-	raw_spin_lock(&prev->vtime_lock);
+ 	write_seqcount_begin(&prev->vtime_seq);
+ 	prev->vtime_snap_whence =3D VTIME_SLEEPING;
+ 	write_seqcount_end(&prev->vtime_seq);
+-	raw_spin_unlock(&prev->vtime_lock);
+=20
+-	raw_spin_lock(&current->vtime_lock);
+ 	write_seqcount_begin(&current->vtime_seq);
+ 	current->vtime_snap_whence =3D VTIME_SYS;
+ 	current->vtime_snap =3D sched_clock_cpu(smp_processor_id());
+ 	write_seqcount_end(&current->vtime_seq);
+-	raw_spin_unlock(&current->vtime_lock);
+ }
+=20
+ void vtime_init_idle(struct task_struct *t, int cpu)
+ {
+ 	unsigned long flags;
+=20
+-	raw_spin_lock_irqsave(&t->vtime_lock, flags);
+ 	write_seqcount_begin(&t->vtime_seq);
+ 	t->vtime_snap_whence =3D VTIME_SYS;
+ 	t->vtime_snap =3D sched_clock_cpu(cpu);
+ 	write_seqcount_end(&t->vtime_seq);
+-	raw_spin_unlock_irqrestore(&t->vtime_lock, flags);
+ }
+=20
+ cputime_t task_gtime(struct task_struct *t)
+--=20
 2.5.5
+
+
+--Sig_/4ZJqrQuJIg1BynSl+hxDUQV
+Content-Type: application/pgp-signature
+Content-Description: OpenPGP digital signature
+
+-----BEGIN PGP SIGNATURE-----
+
+iQIcBAEBCgAGBQJXEFt3AAoJEOI5asVwYXLrnbsQAL5uXGWZnvVVhTwZy3MnviZx
+lBC9YtWBiIxHBxYQDG5RhnETHwVcB0ZDcbV1hQURxruxZWkUCQPcQ72OoCW1jl7x
+5aPPaC8mB3SQ+DiPArkmuZtaIzcIBaCKXHY6kLC3PMXs7x8J1rFTStQeBX8CqYTW
+ZJ7Wh07Z/BbFpuR/KBswQhDYRZl2ZZPJ3Snq2mRLit89JlBB3mxiXihpEsihAMTL
+L49HaLRlwcujtWeR+InSPeqyAIJg+AZ4IIGL91a6NccDdEij0TjeSaFsC9OygB5Z
+OPte2TfmxzB5s39NeSPCi216t8Z5lQD+e9BNgzjCzA6LS5yx6w4bjzp5JtEGV/8c
+gPoOWF4qxNaxQHqsp2XkfO1wOkcsMzU9IaGNQFKIaOXEOo5aikb2EwhctKIHoZC6
+HL2Sy2XeLRvg3q4R44nevMvWmIJnnQiKku2fMyG6xIASGJ9TBaLzqJdR8wcNMRJt
+EW7vJGTGVlR+y+TyFymhU88r3g8+ersSWY1ho5CTeZnl6DuclJ0o7/10pt1n6ng6
+LV7ai9n0kDzQrSOigukETi43e6pPuLeBCopbqvkRxnCRmT35FlXLczc3Mxvj7oH7
+vMIH/x9uEr7Yt1JDlGnePeYl/o9xXYi7Lqoc4CqRQp1EG6s79QaxjsKTQzhilt3/
+LjeGbVFwHEAMbXr6BXNz
+=MRxk
+-----END PGP SIGNATURE-----
+
+--Sig_/4ZJqrQuJIg1BynSl+hxDUQV--
