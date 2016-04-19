@@ -1,40 +1,43 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Subject: Re: [PATCH RT 4/6] rt/locking: Reenable migration accross schedule
-Date: Mon, 18 Apr 2016 19:55:32 +0200
-Message-ID: <1461002132.3895.59.camel@gmail.com>
+Date: Tue, 19 Apr 2016 09:07:05 +0200
+Message-ID: <5715D919.2030500@linutronix.de>
 References: <alpine.DEB.2.11.1603241140510.3978@nanos>
-	 <1459405903.14336.64.camel@gmail.com>
-	 <20160401211105.GE29603@linutronix.de> <1459566735.3779.36.camel@gmail.com>
-	 <57068F28.8010409@linutronix.de> <1460123044.16946.11.camel@gmail.com>
-	 <5707B911.6090404@linutronix.de> <1460125010.16946.27.camel@gmail.com>
-	 <5707C563.2050801@linutronix.de> <1460134168.3860.6.camel@gmail.com>
-	 <20160418171550.GA21734@linutronix.de>
+ <1459405903.14336.64.camel@gmail.com> <20160401211105.GE29603@linutronix.de>
+ <1459566735.3779.36.camel@gmail.com> <57068F28.8010409@linutronix.de>
+ <1460123044.16946.11.camel@gmail.com> <5707B911.6090404@linutronix.de>
+ <1460125010.16946.27.camel@gmail.com> <5707C563.2050801@linutronix.de>
+ <1460134168.3860.6.camel@gmail.com> <20160418171550.GA21734@linutronix.de>
+ <1461002132.3895.59.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	linux-rt-users@vger.kernel.org, linux-kernel@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>,
 	Peter Zijlstra <a.p.zijlstra@chello.nl>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160418171550.GA21734@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+To: Mike Galbraith <umgwanakikbuti@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:37329 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751930AbcDSHHN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 19 Apr 2016 03:07:13 -0400
+In-Reply-To: <1461002132.3895.59.camel@gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Mon, 2016-04-18 at 19:15 +0200, Sebastian Andrzej Siewior wrote:
-
-> take 2. There is this else case in pin_current_cpu() where I take
-> hp_lock. I didn't manage to get in there. So I *think* we can get rid of
-> the lock now. Since there is no lock (or will be) we can drop the whole
-> `do_mig_dis' checking and do the migrate_disable() _after_ we obtained
-> the lock. We were not able to do so due to the lock hp_lock.
+On 04/18/2016 07:55 PM, Mike Galbraith wrote:
 > 
-> And with this, I didn't manage to triger the lockup you had with
-> futextest.
+> I'll have to feed it to DL980, hotplug and jitter test it.  It seemed
+> to think that pinning post acquisition was a bad idea jitter wise, but
+> I was bending things up while juggling multiple boxen, so..
 
-I'll have to feed it to DL980, hotplug and jitter test it.  It seemed
-to think that pinning post acquisition was a bad idea jitter wise, but
-I was bending things up while juggling multiple boxen, so..
+pinning pre acquisition could get you in a situation where you get the
+lock and you are stuck on CPU A where is also a task running right now
+with a higher priority while CPU B and CPU C are idle.
 
-	-Mike
+> 
+> 	-Mike
+> 
+Sebastian
