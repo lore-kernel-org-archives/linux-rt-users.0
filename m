@@ -1,66 +1,72 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH] cyclictest: avoid using libnuma cpumask parsing
- functions
-Date: Tue, 19 Apr 2016 09:30:21 -0400
-Message-ID: <20160419093021.0a61742e@redhat.com>
-References: <20160413153700.7a930369@sluggy.hsv.redhat.com>
-	<20160414103018.3a07cf27@redhat.com>
-	<alpine.LFD.2.20.1604191514540.9751@riemann>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: Makefile: Assume numa_parse_cpustring_all
+ available
+Date: Thu, 21 Apr 2016 17:38:43 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1604211736070.11619@riemann>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
 Cc: Clark Williams <williams@redhat.com>,
-	RT <linux-rt-users@vger.kernel.org>,
-	LKML <linux-kernel@vger.kernel.org>
-To: John Kacur <jkacur@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <alpine.LFD.2.20.1604191514540.9751@riemann>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	Luiz Capitulino <lcapitulino@redhat.com>
+To: RT <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f65.google.com ([74.125.82.65]:35765 "EHLO
+	mail-wm0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751829AbcDUPiz (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Apr 2016 11:38:55 -0400
+Received: by mail-wm0-f65.google.com with SMTP id e201so18243777wme.2
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Apr 2016 08:38:55 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Tue, 19 Apr 2016 15:17:33 +0200 (CEST)
-John Kacur <jkacur@redhat.com> wrote:
+>From 5e5a1cb500a26b63aff8a19a2669e224c5d6e87a Mon Sep 17 00:00:00 2001
+From: John Kacur <jkacur@redhat.com>
+Date: Thu, 21 Apr 2016 17:29:51 +0200
+Subject: [PATCH] rt-tests: Makefile: Assume numa_parse_cpustring_all available
 
-> On Thu, 14 Apr 2016, Luiz Capitulino wrote:
-> 
-> > On Wed, 13 Apr 2016 15:37:00 -0500
-> > Clark Williams <williams@redhat.com> wrote:
-> >   
-> > > John,
-> > > 
-> > > I ran into issues with parsing cpu masks when trying to run this command:
-> > > 
-> > > sudo ./cyclictest -i100 -qmu -h 2000 -p95 -t1 -a3
-> > > 
-> > > I had previously booted a 4-core system with these boot options:
-> > > 
-> > > 	isolcpus=3 nohz_full=3 rcu_nocbs=3
-> > > 
-> > > The intent was to run loads on cpus 0-2 while running cyclictest on the isolated cpu 3. 
-> > > 
-> > > Unfortunately, the libnuma function numa_parse_cpumask() (which we use when it's available) seems to check the current affinity mask and fails the parse if any of the cpus in the input string are not in the current affinity mask. I find this "unhelpful" when trying to place a measurement thread on an isolated cpu. 
-> > > 
-> > > This patch removes the wrapper function which uses libnuma cpumask parsing functions and instead uses the parser function we wrote for when libnuma is not available.   
-> > 
-> > There's an alternative solution that I was working on some time ago,
-> > which is having a simple configure script. This is usually done
-> > by simple projects that don't need a full blown autoconf machinery.
-> > 
-> > The patch below adds such a script. It detects librt, libpthread and
-> > libnuma. It solves the problem you mention and it removes hardcoded
-> > lib details from the Makefile.
-> > 
-> > If there's interest for this solution I can finish it and post for
-> > inclusion.  
-> 
-> I find this interesting, maybe for the coming new devel system, I wouldn't 
-> want to stick it in now right before a stable release though.
+NUMA users should have long ago stepped up to libs that have
+numa_parse_cpustring_all(). Make this the default so that we can include
+isolated cpus in the affinity string.
 
-Makes sense.
+If there are any NUMA users or distros left that have old libraries that
+don't have numa_parse_cpu_string_all(), and only numa_parse_cpu_string()
+they can compile like this
 
-> Also, I 
-> like this much better than full blown auto-tools, but I don't want to lose control over 
-> the compiling process either. In otherwords, there should be some way to 
-> override what the script detects.
+make HAVE_PARSE_CPUSTRING_ALL=0
 
-We could implement command-line options.
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ Makefile | 13 +++++++------
+ 1 file changed, 7 insertions(+), 6 deletions(-)
+
+diff --git a/Makefile b/Makefile
+index 280fd3bec979..ff1d1b0554a3 100644
+--- a/Makefile
++++ b/Makefile
+@@ -57,16 +57,17 @@ ifneq ($(filter x86_64 i386 ia64 mips powerpc,$(machinetype)),)
+ NUMA 	:= 1
+ endif
+ 
+-# The default is to assume that you only have numa_parse_cpustring
+-# If you are sure you have a version of libnuma with numa_parse_cpustring_all
++# The default is to assume that you have numa_parse_cpustring_all
++# If you have an older version of libnuma that only has numa_parse_cpustring
+ # then compile with
+-# make HAVE_PARSE_CPUSTRING_ALL=1
++# make HAVE_PARSE_CPUSTRING_ALL=0
++HAVE_PARSE_CPUSTRING_ALL?=1
+ ifeq ($(NUMA),1)
+ 	CFLAGS += -DNUMA
+ 	NUMA_LIBS = -lnuma
+-ifdef HAVE_PARSE_CPUSTRING_ALL
+-	CFLAGS += -DHAVE_PARSE_CPUSTRING_ALL
+-endif
++	ifeq ($(HAVE_PARSE_CPUSTRING_ALL),1)
++		CFLAGS += -DHAVE_PARSE_CPUSTRING_ALL
++	endif
+ endif
+ 
+ include src/arch/android/Makefile
+-- 
+2.4.11
+
