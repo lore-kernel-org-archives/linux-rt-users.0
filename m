@@ -1,81 +1,98 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH] rt-tests: Makefile: Assume numa_parse_cpustring_all
- available
-Date: Thu, 21 Apr 2016 12:08:54 -0400
-Message-ID: <20160421120854.490ce681@redhat.com>
-References: <alpine.LFD.2.20.1604211736070.11619@riemann>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH] rt-tests: Add man page for rt-migrate-test
+Date: Thu, 21 Apr 2016 23:13:37 +0200 (CEST)
+Message-ID: <alpine.LFD.2.20.1604212311530.11619@riemann>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: RT <linux-rt-users@vger.kernel.org>,
-	Clark Williams <williams@redhat.com>
-To: John Kacur <jkacur@redhat.com>
+Cc: Steven Rostedt <rostedt@goodmis.org>
+To: RT <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:38983 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751884AbcDUQJC (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 21 Apr 2016 12:09:02 -0400
-Received: from int-mx14.intmail.prod.int.phx2.redhat.com (int-mx14.intmail.prod.int.phx2.redhat.com [10.5.11.27])
-	(using TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits))
-	(No client certificate requested)
-	by mx1.redhat.com (Postfix) with ESMTPS id EA681C049D52
-	for <linux-rt-users@vger.kernel.org>; Thu, 21 Apr 2016 16:08:56 +0000 (UTC)
-In-Reply-To: <alpine.LFD.2.20.1604211736070.11619@riemann>
+Received: from mail-wm0-f68.google.com ([74.125.82.68]:36355 "EHLO
+	mail-wm0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751931AbcDUVNk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 21 Apr 2016 17:13:40 -0400
+Received: by mail-wm0-f68.google.com with SMTP id l6so24617284wml.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 21 Apr 2016 14:13:39 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 21 Apr 2016 17:38:43 +0200 (CEST)
-John Kacur <jkacur@redhat.com> wrote:
+>From 02d556361267f8335b2417bbb62ef6a498da112c Mon Sep 17 00:00:00 2001
+From: John Kacur <jkacur@redhat.com>
+Date: Thu, 21 Apr 2016 23:10:26 +0200
+Subject: [PATCH] rt-tests: Add man page for rt-migrate-test
 
-> From 5e5a1cb500a26b63aff8a19a2669e224c5d6e87a Mon Sep 17 00:00:00 2001
-> From: John Kacur <jkacur@redhat.com>
-> Date: Thu, 21 Apr 2016 17:29:51 +0200
-> Subject: [PATCH] rt-tests: Makefile: Assume numa_parse_cpustring_all available
-> 
-> NUMA users should have long ago stepped up to libs that have
-> numa_parse_cpustring_all(). Make this the default so that we can include
-> isolated cpus in the affinity string.
-> 
-> If there are any NUMA users or distros left that have old libraries that
-> don't have numa_parse_cpu_string_all(), and only numa_parse_cpu_string()
-> they can compile like this
-> 
-> make HAVE_PARSE_CPUSTRING_ALL=0
-> 
-> Signed-off-by: John Kacur <jkacur@redhat.com>
+Added a man page for rt-migrate-test
+Fairly minimal, based on the output from the --help option
 
-Reviewed-and-Tested-by: Luiz Capitulino <lcapitulino@redhat.com>
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ src/rt-migrate-test/rt-migrate-test.8 | 56 +++++++++++++++++++++++++++++++++++
+ 1 file changed, 56 insertions(+)
+ create mode 100644 src/rt-migrate-test/rt-migrate-test.8
 
-> ---
->  Makefile | 13 +++++++------
->  1 file changed, 7 insertions(+), 6 deletions(-)
-> 
-> diff --git a/Makefile b/Makefile
-> index 280fd3bec979..ff1d1b0554a3 100644
-> --- a/Makefile
-> +++ b/Makefile
-> @@ -57,16 +57,17 @@ ifneq ($(filter x86_64 i386 ia64 mips powerpc,$(machinetype)),)
->  NUMA 	:= 1
->  endif
->  
-> -# The default is to assume that you only have numa_parse_cpustring
-> -# If you are sure you have a version of libnuma with numa_parse_cpustring_all
-> +# The default is to assume that you have numa_parse_cpustring_all
-> +# If you have an older version of libnuma that only has numa_parse_cpustring
->  # then compile with
-> -# make HAVE_PARSE_CPUSTRING_ALL=1
-> +# make HAVE_PARSE_CPUSTRING_ALL=0
-> +HAVE_PARSE_CPUSTRING_ALL?=1
->  ifeq ($(NUMA),1)
->  	CFLAGS += -DNUMA
->  	NUMA_LIBS = -lnuma
-> -ifdef HAVE_PARSE_CPUSTRING_ALL
-> -	CFLAGS += -DHAVE_PARSE_CPUSTRING_ALL
-> -endif
-> +	ifeq ($(HAVE_PARSE_CPUSTRING_ALL),1)
-> +		CFLAGS += -DHAVE_PARSE_CPUSTRING_ALL
-> +	endif
->  endif
->  
->  include src/arch/android/Makefile
+diff --git a/src/rt-migrate-test/rt-migrate-test.8 b/src/rt-migrate-test/rt-migrate-test.8
+new file mode 100644
+index 000000000000..8af50e54291d
+--- /dev/null
++++ b/src/rt-migrate-test/rt-migrate-test.8
+@@ -0,0 +1,56 @@
++.\"
++.TH RT-MIGRATE-TEST 8 "April 21, 2016"
++.\" Please adjust this date whenever editing this manpage
++.SH NAME
++rt-migrate-test \- real-time task migration program
++.SH SYNOPSIS
++.B rt-migrate-test 
++.RI "[\-ceh] [\-p prio] [\-r time] [\-s time] [\-m time] [\-l loops] [nr_tasks]
++.SH DESCRIPTION
++Test real-time multiprocessor scheduling of tasks to ensure the highest priority tasks are running on all available CPUs
++.SH OPTIONS
++This program follows the usual GNU command line syntax, with long options starting with two dashes ('\-\-').
++.br
++.TP
++In the summary of options, a value in brackets (), indicates a default value
++.br
++.TP
++.B \-p, \-\-prio=prio
++base priority to start RT tasks with (2)
++.br
++.TP
++.B \-r, \-\-run\-time=time
++Run time (ms) to busy loop the threads (20)
++.br
++.TP
++.B \-s, \-\-sleep\-time=time
++Sleep time (ms) between intervals (100)
++.br
++.TP
++.B \-m, \-\-maxerr=time
++Max allowed error (microsecs)
++.br
++.TP
++.B \-l \-\-loops=loops
++Number of iterations to run (50)
++.br
++.TP
++.B \-e
++Use equal prio for #CPU-1 tasks (requires > 2 CPUS)
++.br
++.TP
++.B \-c, \-\-check
++Stop if lower prio task is quicker than higher (off)
++.br
++.TP
++.B \-h, \-\-help
++Display usage
++.br
++.TP
++.B [nr\-tasks]
++number of tasks to run (number of cpus + 1)
++.br
++.SH AUTHOR
++rt-migrate-test was written by Steven Rostedt <srostedt@redhat.com>
++.TP
++This manual page was written by John Kacur <jkacur@redhat.com>
+-- 
+2.4.11
 
