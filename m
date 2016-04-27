@@ -1,119 +1,133 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: Re: [PATCH] rt-tests: Update the cyclictest man page
-Date: Mon, 25 Apr 2016 18:36:29 +0200 (CEST)
-Message-ID: <alpine.LFD.2.20.1604251834030.6896@riemann>
-References: <alpine.LFD.2.20.1604251614270.6896@riemann> <20160425111913.14c5573c@sluggy.hsv.redhat.com>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Cc: RT <linux-rt-users@vger.kernel.org>
-To: Clark Williams <williams@redhat.com>
+From: =?UTF-8?q?Uwe=20Kleine-K=C3=B6nig?= <ukleinek@debian.org>
+Subject: [PATCH rt-tests] manpages: fix typos found by lintian
+Date: Wed, 27 Apr 2016 08:51:35 +0200
+Message-ID: <1461739895-4147-1-git-send-email-ukleinek@debian.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f67.google.com ([74.125.82.67]:34100 "EHLO
-	mail-wm0-f67.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932882AbcDYQgj (ORCPT
+Received: from arcturus.kleine-koenig.org ([78.47.169.190]:33954 "EHLO
+	arcturus.kleine-koenig.org" rhost-flags-OK-OK-OK-OK)
+	by vger.kernel.org with ESMTP id S1752641AbcD0HA7 (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 25 Apr 2016 12:36:39 -0400
-Received: by mail-wm0-f67.google.com with SMTP id n3so26379917wmn.1
-        for <linux-rt-users@vger.kernel.org>; Mon, 25 Apr 2016 09:36:39 -0700 (PDT)
-In-Reply-To: <20160425111913.14c5573c@sluggy.hsv.redhat.com>
+	Wed, 27 Apr 2016 03:00:59 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+This fixes these spelling errors:
 
+	mutiple -> multiple
+	occuring -> occurring
+	specifed -> specified
+	synchonized -> synchronized
 
-On Mon, 25 Apr 2016, Clark Williams wrote:
-
-> On Mon, 25 Apr 2016 16:17:11 +0200 (CEST)
-> John Kacur <jkacur@redhat.com> wrote:
-> 
-> > From 7e007ac70a83f62583d25b10ad2df0430306bf32 Mon Sep 17 00:00:00 2001
-> > From: John Kacur <jkacur@redhat.com>
-> > Date: Mon, 25 Apr 2016 16:08:28 +0200
-> > Subject: [PATCH] rt-tests: Update the cyclictest man page
-> > 
-> > We have done a good job keeping cyclictest help up-to-date, but we have
-> > not been actively updating the man page.
-> > 
-> > There were many missing options, as well as options that don't exist
-> > anymore. To be more precise, some short form options had been removed,
-> > but there are still corresponding long-version options.
-> > 
-> > This patch contains a considerable amount of updates to the man-page to
-> > keep it in sync, and in some cases it also updates the cyclictest help
-> > where needed. For example, the cyclictest help options were not always
-> > in the proper order. In some cases I changed the wording to make it more
-> > closely correspond to the man page
-> > 
-> > Signed-off-by: John Kacur <jkacur@redhat.com>
-> > ---
-> >  src/cyclictest/cyclictest.8 | 169 ++++++++++++++++++++++++--------------------
-> >  src/cyclictest/cyclictest.c |  35 ++++-----
-> >  2 files changed, 110 insertions(+), 94 deletions(-)
-> 
-> Looks good to me John. I did see one spelling issue:
-> 
-> > +Sned break trace command when latency > USEC
-> 
-> Thanks for cleaning the man page up. I'm afraid I neglected it.
-> 
-> Clark
-> 
-
-I ran spell on the cyclictest.8 and caught a few more spelling errors, 
-I'll fold the following patch into the previous one and add your ack
-
-Thanks
-
->From 6ce4dbc6e530835af8725977207af052522fb9eb Mon Sep 17 00:00:00 2001
-From: John Kacur <jkacur@redhat.com>
-Date: Mon, 25 Apr 2016 18:35:14 +0200
-Subject: [PATCH] Fix some spelling error in the cyclictest manpage
-
-Signed-off-by: John Kacur <jkacur@redhat.com>
 ---
- src/cyclictest/cyclictest.8 | 8 ++++----
- 1 file changed, 4 insertions(+), 4 deletions(-)
+BTW, I wonder if the manpages are using dos line endings on purpose.
 
-diff --git a/src/cyclictest/cyclictest.8 b/src/cyclictest/cyclictest.8
-index 120dae23860e..1d26ecefd010 100644
---- a/src/cyclictest/cyclictest.8
-+++ b/src/cyclictest/cyclictest.8
-@@ -34,7 +34,7 @@ A summary of options is included below.
- .\" For a complete description, see the Info files.
+ src/hwlatdetect/hwlatdetect.8 | 4 ++--
+ src/pi_tests/README           | 2 +-
+ src/pmqtest/pmqtest.8         | 2 +-
+ src/ptsematest/ptsematest.8   | 2 +-
+ src/sigwaittest/sigwaittest.8 | 4 ++--
+ src/svsematest/svsematest.8   | 2 +-
+ 6 files changed, 8 insertions(+), 8 deletions(-)
+
+diff --git a/src/hwlatdetect/hwlatdetect.8 b/src/hwlatdetect/hwlatdetect.8
+index 2904e5fd8fde..6f5501445ce1 100644
+--- a/src/hwlatdetect/hwlatdetect.8
++++ b/src/hwlatdetect/hwlatdetect.8
+@@ -38,7 +38,7 @@ written for use by the "RT" patch since the Real Time kernel is highly
+ latency sensitive. 
+ 
+ SMIs are usually not serviced by the Linux kernel, which typically does not
+-even know that they are occuring. SMIs are instead are set up by BIOS code
++even know that they are occurring. SMIs are instead are set up by BIOS code
+ and are serviced by BIOS code, usually for "critical" events such as
+ management of thermal sensors and fans. Sometimes though, SMIs are used for
+ other tasks and those tasks can spend an inordinate amount of time in the
+@@ -68,7 +68,7 @@ optional suffix may be specified to indicate minutes, hours or days.
  .TP
- .B \-a, \-\-affinity[=PROC-SET]
--Run threads on the set of procesors given by PROC-SET.  If PROC-SET is not
-+Run threads on the set of processors given by PROC-SET.  If PROC-SET is not
- specified, all processors will be used.  Threads will be assigned to processors
- in the set in numeric order, in a round\-robin fashion.
+ .B \-\-threshold=<microsecond value>
+ Specify the TSC gap used to detect an SMI. Any gap value greater than
+-<theshold> is considered to be the result of an SMI occuring. 
++<theshold> is considered to be the result of an SMI occurring.
+ 
+ .TP
+ .B \-\-window=<time value>{us,ms,s,m,d}
+diff --git a/src/pi_tests/README b/src/pi_tests/README
+index 6b2850d6b970..f40b972db716 100644
+--- a/src/pi_tests/README
++++ b/src/pi_tests/README
+@@ -74,7 +74,7 @@ that have been performed. To stop the test, press any key and a
+ summary will be printed to show how many inversions were performed and
+ how long the test ran.
+ 
+-To run the test for a specifed time, use the --duraton=<seconds>
++To run the test for a specified time, use the --duraton=<seconds>
+ option.
+ 
+ 
+diff --git a/src/pmqtest/pmqtest.8 b/src/pmqtest/pmqtest.8
+index 6e9719815165..5e00ff8596e7 100644
+--- a/src/pmqtest/pmqtest.8
++++ b/src/pmqtest/pmqtest.8
+@@ -37,7 +37,7 @@ Set the priority of the process.
+ Test mode for symmetric multi-processing, implies -a and -t and uses the same priority on all threads.
+ .TP
+ .B \-t, \-\-threads[=NUM]
+-Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specifed, NUM is set to the number of available CPUs.
++Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
+ .TP
+ .B \-T, \-\-timeout=TO
+ Use mq_timedreceive() instead of mq_receive() and specify timeout TO in seconds.
+diff --git a/src/ptsematest/ptsematest.8 b/src/ptsematest/ptsematest.8
+index 001e80936349..f4af37c1a7b5 100644
+--- a/src/ptsematest/ptsematest.8
++++ b/src/ptsematest/ptsematest.8
+@@ -31,7 +31,7 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
+ Set the priority of the process.
+ .TP
+ .B \-t, \-\-threads[=NUM]
+-Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specifed, NUM is set to the number of available CPUs.
++Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
+ .SH "EXAMPLES"
+ The following example was running on a 4-way processor:
+ .LP
+diff --git a/src/sigwaittest/sigwaittest.8 b/src/sigwaittest/sigwaittest.8
+index 89a97f1e7557..078f33a7c81c 100644
+--- a/src/sigwaittest/sigwaittest.8
++++ b/src/sigwaittest/sigwaittest.8
+@@ -8,7 +8,7 @@ sigwaittest [-a|-a PROC] [-b USEC] [-d DIST] [-f] [-i INTV] [-l loops] [-p PRIO]
  .br
-@@ -50,7 +50,7 @@ if specified, must be a single CPU number.
- Align thread wakeups to a specific offset in microseconds
+ .SH "DESCRIPTION"
+ .LP
+-The program \fBsigwaittest\fR starts two threads or, optionally, forks two processes that are synchonized via signals and measures the latency between sending a signal and returning from sigwait().
++The program \fBsigwaittest\fR starts two threads or, optionally, forks two processes that are synchronized via signals and measures the latency between sending a signal and returning from sigwait().
+ .SH "OPTIONS"
  .TP
- .B \-b, \-\-breaktrace=USEC
--Sned break trace command when latency > USEC
-+Send break trace command when latency > USEC
+ .B \-a, \-\-affinity[=PROC]
+@@ -34,7 +34,7 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
+ Set the priority of the process.
  .TP
- .B \-B, \-\-preemptirqs
- Both preempt and irqsoff tracing (used with -b)
-@@ -89,7 +89,7 @@ Dump latency histogram to stdout after the run. US is the max latency time to be
- Same as -h except that an additional histogram column is displayed at the right that contains summary data of all thread histograms. If cyclictest runs a single thread only, the -H option is equivalent to -h.
+ .B \-t, \-\-threads[=NUM]
+-Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specifed, NUM is set to the number of available CPUs.
++Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
+ .SH "EXAMPLES"
+ The following example was running on a 4-way CPU:
+ .LP
+diff --git a/src/svsematest/svsematest.8 b/src/svsematest/svsematest.8
+index 93b163ea4dc0..14af8d431ece 100644
+--- a/src/svsematest/svsematest.8
++++ b/src/svsematest/svsematest.8
+@@ -34,7 +34,7 @@ Set the number of loops. The default is 0 (endless). This option is useful for a
+ Set the priority of the process.
  .TP
- .B \-\-histfile=<path>
--Dump the latecny histogram to <path> instead of stdout.
-+Dump the latency histogram to <path> instead of stdout.
- .TP
- .B \-i, \-\-interval=INTV
- Set the base interval of the thread(s) in microseconds (default is 1000us). This sets the interval of the first thread. See also \-d.
-@@ -123,7 +123,7 @@ Show results in nanoseconds instead of microseconds, which is the default unit.
- Oscilloscope mode, reduce verbose output by RED.
- .TP
- .B \-O, \-\-traceopt=TRACING_OPTION
--Used to pass tracing options to ftrace tracers. May be invoked mutiple
-+Used to pass tracing options to ftrace tracers. May be invoked multiple
- times for multiple trace options. For example trace options look at /sys/kernel/debug/tracing/trace_options
- .TP
- .B \-p, \-\-prio=PRIO
+ .B \-t, \-\-threads[=NUM]
+-Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specifed, NUM is set to the number of available CPUs.
++Set the number of test threads (default is 1, if this option is not given). If NUM is specified, create NUM test threads. If NUM is not specified, NUM is set to the number of available CPUs.
+ .SH "EXAMPLES"
+ The following example was running on a 4-way CPU:
+ .LP
 -- 
-2.4.11
+2.8.0.rc3
 
