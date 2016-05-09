@@ -1,74 +1,149 @@
-From: Roosen Henri <Henri.Roosen@ginzinger.com>
-Subject: AW: WARNING: complate_all() with 7 waiters at system boot
-Date: Mon, 9 May 2016 07:06:13 +0000
-Message-ID: <FC629F1A536C6F42B960B5E32E20BD358C240264@exc2.buero.ginzinger.com>
-References: <FC629F1A536C6F42B960B5E32E20BD358C23F21A@exc2.buero.ginzinger.com>
- <20160506142307.GA12705@linutronix.de>
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [PATCH RESEND -rt] mm: perform lru_add_drain_all() remotely
+Date: Mon, 9 May 2016 10:50:37 -0400
+Message-ID: <20160509105037.1555d0e0@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	"Daniel Wagner" <wagi@monom.org>
-To: 'Sebastian Andrzej Siewior' <bigeasy@linutronix.de>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: riel@redhat.com, bigeasy@linutronix.de, tglx@linutronix.de,
+	srostedt@redhat.com, williams@redhat.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.ginzinger.com ([31.193.165.229]:32997 "EHLO
-	mail.ginzinger.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750901AbcEIHGR (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 9 May 2016 03:06:17 -0400
-In-Reply-To: <20160506142307.GA12705@linutronix.de>
-Content-Language: de-DE
+Received: from mx1.redhat.com ([209.132.183.28]:50214 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750919AbcEIOum (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 9 May 2016 10:50:42 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-PiAtLS0tLVVyc3Byw7xuZ2xpY2hlIE5hY2hyaWNodC0tLS0tDQo+IFZvbjogU2ViYXN0aWFuIEFu
-ZHJ6ZWogU2lld2lvciBbbWFpbHRvOmJpZ2Vhc3lAbGludXRyb25peC5kZV0NCj4gR2VzZW5kZXQ6
-IEZyZWl0YWcsIDYuIE1haSAyMDE2IDE2OjIzDQo+IEFuOiBSb29zZW4gSGVucmkNCj4gQ2M6IGxp
-bnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZzsgRGFuaWVsIFdhZ25lcg0KPiBCZXRyZWZmOiBS
-ZTogV0FSTklORzogY29tcGxhdGVfYWxsKCkgd2l0aCA3IHdhaXRlcnMgYXQgc3lzdGVtIGJvb3QN
-Cj4NCj4gKiBSb29zZW4gSGVucmkgfCAyMDE2LTA1LTA2IDA5OjIzOjAyIFsrMDAwMF06DQo+DQo+
-ID5IaSBhbGwsDQo+IEhpLA0KPg0KPiA+TXkgeDg2XzY0IGRldmVsb3BtZW50IFBDIHdpdGgga2Vy
-bmVsIDQuNC43LXJ0MTYgdGhyb3dzIHRoZSBmb2xsb3dpbmcNCj4gd2FybmluZyBkdXJpbmcgc3lz
-dGVtIGJvb3Q6DQo+DQo+IFRoYW5rIHlvdSBmb3IgdGhlIHJlcG9ydC4gVGhlIHdhcm5pbmcgaXMg
-aGFybWxlc3MgSSBhbSBqdXN0IGludGVycmVzdGVkIHdoYXQNCj4ga2luZCBvZiB3b3JrbG9hZCAv
-IHVzYWdlIHRyaWdnZXJzIHRoaXMgd2FybmluZy4NCj4NCj4gPlsgICAxMi42MDYyMTddIC0tLS0t
-LS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQ0KPiA+WyAgIDEyLjYwNjIyMF0gV0FSTklO
-RzogQ1BVOiA1IFBJRDogODcyIGF0IGtlcm5lbC9zY2hlZC9zd2FpdC5jOjQ4DQo+IGNvbXBsZXRl
-X2FsbCsweDJhLzB4NDAoKQ0KPiA+WyAgIDEyLjYwNjIyMF0gY29tcGxhdGVfYWxsKCkgd2l0aCA3
-IHdhaXRlcnMNCj4NCj4gRG8gSSBhc3N1bWUgY3VycmVjdGx5IHRoYXQgYXQgdGhpcyBwb2ludCB5
-b3UgaGF2ZSB5b3VyIGZpbGVzeXN0ZW0gYWxyZWFkeQ0KPiBtb3VudGVkPyBEbyB5b3UgdXNlIExV
-S1Mgb24geW91ciBoYXJkZGlzayBvciB3aGF0IGlzIGl0IHRoYXQgdHJpZ2dlciB0aGUNCj4gdXNh
-Z2Ugb2YgY3J5cHRvIGNvZGUgaGVyZT8NCg0KUm9vdC1maWxlc3lzdGVtIGlzIGFscmVhZHkgbG9h
-ZGVkLCBidXQgSSdtIG5vdCB1c2luZyBMVUtTLg0KSG93ZXZlciwgdGhlIG1vdW50aW5nIG9mIHRo
-ZSAoQ0lGUykgbmV0d29yay1kcml2ZXMgc2VlbXMgdG8gdHJpZ2dlciB0aGlzLg0KDQpJZiBJIHJl
-bW92ZSB0aGUgbmV0d29yayBkcml2ZXMgZnJvbSBmc3RhYiBhbmQgbW91bnQgdGhlbSBsYXRlciwg
-bm8gY29tcGxldGVfYWxsKCkgd2FybmluZyBpcyB0cmlnZ2VyZWQuIFNvIHRoaXMgb250bHkgdHJp
-Z2dlcnMgZHVyaW5nIHN5c3RlbSBzdGFydHVwLg0KDQo+DQo+ID5bICAgMTIuNjA2MjUzXSBDUFU6
-IDUgUElEOiA4NzIgQ29tbTogY3J5cHRvbWdyX3Byb2JlIE5vdCB0YWludGVkIDQuNC43LQ0KPiBy
-dDE2ICMyDQo+ID5bICAgMTIuNjA2MjU0XSBIYXJkd2FyZSBuYW1lOiBGVUpJVFNVIENFTFNJVVMg
-VzUzMC9EMzIyNy1BMSwgQklPUw0KPiBWNC42LjUuNCBSMS4zNC4wIGZvciBEMzIyNy1BMXggMDEv
-MDgvMjAxNQ0KPiA+WyAgIDEyLjYwNjI1Nl0gIDAwMDAwMDAwMDAwMDAwMDAgZmZmZmZmZmY4MTJl
-MGUwZSBmZmZmODgwMjExNDJiZTMwDQo+IGZmZmZmZmZmODE3MzFlMDINCj4gPlsgICAxMi42MDYy
-NTddICBmZmZmZmZmZjgxMDczZjgxIGZmZmY4ODAwMzYxNGZkMzAgZmZmZjg4MDIxMTQyYmU4MA0K
-PiAwMDAwMDAwMDAwMDAwMjQ2DQo+ID5bICAgMTIuNjA2MjU4XSAgZmZmZjg4MDIxMjIwNjQwMCAw
-MDAwMDAwMDAwMDAwMDAwIGZmZmZmZmZmODEwNzQwMWMNCj4gZmZmZmZmZmY4MTcyNmZiMA0KPiA+
-WyAgIDEyLjYwNjI1OF0gQ2FsbCBUcmFjZToNCj4gPlsgICAxMi42MDYyNjJdICBbPGZmZmZmZmZm
-ODEyZTBlMGU+XSA/IGR1bXBfc3RhY2srMHg1Yy8weDdlDQo+ID5bICAgMTIuNjA2MjY1XSAgWzxm
-ZmZmZmZmZjgxMDczZjgxPl0gPyB3YXJuX3Nsb3dwYXRoX2NvbW1vbisweDgxLzB4ZDANCj4gPlsg
-ICAxMi42MDYyNjZdICBbPGZmZmZmZmZmODEwNzQwMWM+XSA/IHdhcm5fc2xvd3BhdGhfZm10KzB4
-NGMvMHg1MA0KPiA+WyAgIDEyLjYwNjI2N10gIFs8ZmZmZmZmZmY4MTBiNTg0OT5dID8gc3dha2Vf
-dXBfYWxsX2xvY2tlZCsweDI5LzB4ODANCj4gPlsgICAxMi42MDYyNjhdICBbPGZmZmZmZmZmODEw
-YjVlY2E+XSA/IGNvbXBsZXRlX2FsbCsweDJhLzB4NDANCj4gPlsgICAxMi42MDYyNzldICBbPGZm
-ZmZmZmZmODEyYTMyNDE+XSA/IGNyeXB0b21ncl9wcm9iZSsweDkxLzB4ZDANCj4gPlsgICAxMi42
-MDYyODBdICBbPGZmZmZmZmZmODEyYTMxYjA+XSA/IGNyeXB0b19hbGdfcHV0KzB4MjAvMHgyMA0K
-PiA+WyAgIDEyLjYwNjI4Ml0gIFs8ZmZmZmZmZmY4MTA5MmNiZj5dID8ga3RocmVhZCsweGNmLzB4
-ZjANCj4gPlsgICAxMi42MDYyODNdICBbPGZmZmZmZmZmODEwOTJiZjA+XSA/IGt0aHJlYWRfd29y
-a2VyX2ZuKzB4MTkwLzB4MTkwDQo+ID5bICAgMTIuNjA2Mjg2XSAgWzxmZmZmZmZmZjgxNTZlMzhm
-Pl0gPyByZXRfZnJvbV9mb3JrKzB4M2YvMHg3MA0KPiA+WyAgIDEyLjYwNjI4N10gIFs8ZmZmZmZm
-ZmY4MTA5MmJmMD5dID8ga3RocmVhZF93b3JrZXJfZm4rMHgxOTAvMHgxOTANCj4gPlsgICAxMi42
-MDYyODhdIC0tLVsgZW5kIHRyYWNlIDAwMDAwMDAwMDAwMDAwMDIgXS0tLQ0KPiA+DQo+ID5UaGFu
-a3MsDQo+ID5IZW5yaQ0KPg0KPiBTZWJhc3RpYW4NCg0KX19fX19fX19fX19fX19fX19fX19fX19f
-X19fX19fX18NCg0KR2luemluZ2VyIGVsZWN0cm9uaWMgc3lzdGVtcyBHbWJIDQpHZXdlcmJlZ2Vi
-aWV0IFBpcmF0aCAxNg0KNDk1MiBXZW5nIGltIElubmtyZWlzDQp3d3cuZ2luemluZ2VyLmNvbQ0K
-DQpGaXJtZW5idWNobnVtbWVyOiBGTiAzNjQ5NThkDQpGaXJtZW5idWNoZ2VyaWNodDogUmllZCBp
-bSBJbm5rcmVpcw0KVUlELU5yLjogQVRVNjY1MjEwODkNCg0K
+lru_add_drain_all() works by scheduling lru_add_drain_cpu() to run
+on all CPUs that have non-empty LRU pagevecs and then waiting for
+the scheduled work to complete. However, workqueue threads may never
+have the chance to run on a CPU that's running a SCHED_FIFO task.
+This causes lru_add_drain_all() to block forever.
+
+This commit solves this problem by changing lru_add_drain_all()
+to drain the LRU pagevecs of remote CPUs. This is done by grabbing
+swapvec_lock and calling lru_add_drain_cpu().
+
+PS: This is based on an idea and initial implementation by
+    Rik van Riel.
+
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+---
+ include/linux/locallock.h | 31 +++++++++++++++++++++++++++++++
+ mm/swap.c                 | 35 +++++++++++++++++++++++++----------
+ 2 files changed, 56 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 6fe5928..f4cd691 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -104,6 +104,17 @@ static inline void __local_unlock(struct local_irq_lock *lv)
+ 		put_local_var(lvar);				\
+ 	} while (0)
+ 
++#define local_lock_other_cpu(lvar, cpu)                         \
++	do {                                                    \
++		__local_lock(&per_cpu(lvar, cpu));              \
++	} while (0)
++
++#define local_unlock_other_cpu(lvar, cpu)                       \
++	do {                                                    \
++		__local_unlock(&per_cpu(lvar, cpu));            \
++	} while (0)
++
++
+ static inline void __local_lock_irq(struct local_irq_lock *lv)
+ {
+ 	spin_lock_irqsave(&lv->lock, lv->flags);
+@@ -163,6 +174,22 @@ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
+ 		_flags = per_cpu(lvar, cpu).flags;			\
+ 	} while (0)
+ 
++#define local_lock_irqsave_other_cpu(lvar, _flags, cpu)			\
++	do {								\
++		if (cpu == smp_processor_id())				\
++			local_lock_irqsave(lvar, _flags);		\
++		else							\
++			local_lock_other_cpu(lvar, cpu);		\
++	} while (0)
++
++#define local_unlock_irqrestore_other_cpu(lvar, _flags, cpu)	        \
++	do {								\
++		if (cpu == smp_processor_id())				\
++			local_unlock_irqrestore(lvar, _flags);		\
++		else							\
++			local_unlock_other_cpu(lvar, cpu);		\
++	} while (0)
++
+ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 					    unsigned long flags)
+ {
+@@ -250,6 +277,10 @@ static inline void local_irq_lock_init(int lvar) { }
+ #define local_unlock_irq(lvar)			local_irq_enable()
+ #define local_lock_irqsave(lvar, flags)		local_irq_save(flags)
+ #define local_unlock_irqrestore(lvar, flags)	local_irq_restore(flags)
++#define local_lock_irqsave_other_cpu(lvar, flags, cpu) \
++	local_irq_save(flags)
++#define local_unlock_irqrestore_other_cpu(lvar, flags, cpu) \
++	local_irq_restore(flags)
+ 
+ #define local_spin_trylock_irq(lvar, lock)	spin_trylock_irq(lock)
+ #define local_spin_lock_irq(lvar, lock)		spin_lock_irq(lock)
+diff --git a/mm/swap.c b/mm/swap.c
+index ca194ae..84c3c21 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -821,9 +821,9 @@ void lru_add_drain_cpu(int cpu)
+ 		unsigned long flags;
+ 
+ 		/* No harm done if a racing interrupt already did this */
+-		local_lock_irqsave(rotate_lock, flags);
++		local_lock_irqsave_other_cpu(rotate_lock, flags, cpu);
+ 		pagevec_move_tail(pvec);
+-		local_unlock_irqrestore(rotate_lock, flags);
++		local_unlock_irqrestore_other_cpu(rotate_lock, flags, cpu);
+ 	}
+ 
+ 	pvec = &per_cpu(lru_deactivate_file_pvecs, cpu);
+@@ -866,12 +866,32 @@ void lru_add_drain(void)
+ 	local_unlock_cpu(swapvec_lock);
+ }
+ 
++static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++
++#ifdef CONFIG_PREEMPT_RT_BASE
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	local_lock_other_cpu(swapvec_lock, cpu);
++	lru_add_drain_cpu(cpu);
++	local_unlock_other_cpu(swapvec_lock, cpu);
++}
++#else
+ static void lru_add_drain_per_cpu(struct work_struct *dummy)
+ {
+ 	lru_add_drain();
+ }
+ 
+-static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
++
++		INIT_WORK(work, lru_add_drain_per_cpu);
++		schedule_work_on(cpu, work);
++		cpumask_set_cpu(cpu, has_work);
++
++}
++#endif
++
+ 
+ void lru_add_drain_all(void)
+ {
+@@ -884,16 +904,11 @@ void lru_add_drain_all(void)
+ 	cpumask_clear(&has_work);
+ 
+ 	for_each_online_cpu(cpu) {
+-		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
