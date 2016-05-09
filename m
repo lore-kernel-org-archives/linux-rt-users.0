@@ -1,62 +1,74 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: WARNING: complate_all() with 7 waiters at system boot
-Date: Fri, 6 May 2016 16:23:07 +0200
-Message-ID: <20160506142307.GA12705@linutronix.de>
+From: Roosen Henri <Henri.Roosen@ginzinger.com>
+Subject: AW: WARNING: complate_all() with 7 waiters at system boot
+Date: Mon, 9 May 2016 07:06:13 +0000
+Message-ID: <FC629F1A536C6F42B960B5E32E20BD358C240264@exc2.buero.ginzinger.com>
 References: <FC629F1A536C6F42B960B5E32E20BD358C23F21A@exc2.buero.ginzinger.com>
+ <20160506142307.GA12705@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: base64
 Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>,
-	Daniel Wagner <wagi@monom.org>
-To: Roosen Henri <Henri.Roosen@ginzinger.com>
+	"Daniel Wagner" <wagi@monom.org>
+To: 'Sebastian Andrzej Siewior' <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59550 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1758270AbcEFOXJ (ORCPT
+Received: from mail.ginzinger.com ([31.193.165.229]:32997 "EHLO
+	mail.ginzinger.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1750901AbcEIHGR (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 6 May 2016 10:23:09 -0400
-Content-Disposition: inline
-In-Reply-To: <FC629F1A536C6F42B960B5E32E20BD358C23F21A@exc2.buero.ginzinger.com>
+	Mon, 9 May 2016 03:06:17 -0400
+In-Reply-To: <20160506142307.GA12705@linutronix.de>
+Content-Language: de-DE
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Roosen Henri | 2016-05-06 09:23:02 [+0000]:
-
->Hi all,
-Hi,
-
->My x86_64 development PC with kernel 4.4.7-rt16 throws the following warning during system boot:
-
-Thank you for the report. The warning is harmless I am just interrested
-what kind of workload / usage triggers this warning.
-
->[   12.606217] ------------[ cut here ]------------
->[   12.606220] WARNING: CPU: 5 PID: 872 at kernel/sched/swait.c:48 complete_all+0x2a/0x40()
->[   12.606220] complate_all() with 7 waiters
-
-Do I assume currectly that at this point you have your filesystem already
-mounted? Do you use LUKS on your harddisk or what is it that trigger
-the usage of crypto code here?
-
->[   12.606253] CPU: 5 PID: 872 Comm: cryptomgr_probe Not tainted 4.4.7-rt16 #2
->[   12.606254] Hardware name: FUJITSU CELSIUS W530/D3227-A1, BIOS V4.6.5.4 R1.34.0 for D3227-A1x 01/08/2015
->[   12.606256]  0000000000000000 ffffffff812e0e0e ffff88021142be30 ffffffff81731e02
->[   12.606257]  ffffffff81073f81 ffff88003614fd30 ffff88021142be80 0000000000000246
->[   12.606258]  ffff880212206400 0000000000000000 ffffffff8107401c ffffffff81726fb0
->[   12.606258] Call Trace:
->[   12.606262]  [<ffffffff812e0e0e>] ? dump_stack+0x5c/0x7e
->[   12.606265]  [<ffffffff81073f81>] ? warn_slowpath_common+0x81/0xd0
->[   12.606266]  [<ffffffff8107401c>] ? warn_slowpath_fmt+0x4c/0x50
->[   12.606267]  [<ffffffff810b5849>] ? swake_up_all_locked+0x29/0x80
->[   12.606268]  [<ffffffff810b5eca>] ? complete_all+0x2a/0x40
->[   12.606279]  [<ffffffff812a3241>] ? cryptomgr_probe+0x91/0xd0
->[   12.606280]  [<ffffffff812a31b0>] ? crypto_alg_put+0x20/0x20
->[   12.606282]  [<ffffffff81092cbf>] ? kthread+0xcf/0xf0
->[   12.606283]  [<ffffffff81092bf0>] ? kthread_worker_fn+0x190/0x190
->[   12.606286]  [<ffffffff8156e38f>] ? ret_from_fork+0x3f/0x70
->[   12.606287]  [<ffffffff81092bf0>] ? kthread_worker_fn+0x190/0x190
->[   12.606288] ---[ end trace 0000000000000002 ]---
->
->Thanks,
->Henri
-
-Sebastian
+PiAtLS0tLVVyc3Byw7xuZ2xpY2hlIE5hY2hyaWNodC0tLS0tDQo+IFZvbjogU2ViYXN0aWFuIEFu
+ZHJ6ZWogU2lld2lvciBbbWFpbHRvOmJpZ2Vhc3lAbGludXRyb25peC5kZV0NCj4gR2VzZW5kZXQ6
+IEZyZWl0YWcsIDYuIE1haSAyMDE2IDE2OjIzDQo+IEFuOiBSb29zZW4gSGVucmkNCj4gQ2M6IGxp
+bnV4LXJ0LXVzZXJzQHZnZXIua2VybmVsLm9yZzsgRGFuaWVsIFdhZ25lcg0KPiBCZXRyZWZmOiBS
+ZTogV0FSTklORzogY29tcGxhdGVfYWxsKCkgd2l0aCA3IHdhaXRlcnMgYXQgc3lzdGVtIGJvb3QN
+Cj4NCj4gKiBSb29zZW4gSGVucmkgfCAyMDE2LTA1LTA2IDA5OjIzOjAyIFsrMDAwMF06DQo+DQo+
+ID5IaSBhbGwsDQo+IEhpLA0KPg0KPiA+TXkgeDg2XzY0IGRldmVsb3BtZW50IFBDIHdpdGgga2Vy
+bmVsIDQuNC43LXJ0MTYgdGhyb3dzIHRoZSBmb2xsb3dpbmcNCj4gd2FybmluZyBkdXJpbmcgc3lz
+dGVtIGJvb3Q6DQo+DQo+IFRoYW5rIHlvdSBmb3IgdGhlIHJlcG9ydC4gVGhlIHdhcm5pbmcgaXMg
+aGFybWxlc3MgSSBhbSBqdXN0IGludGVycmVzdGVkIHdoYXQNCj4ga2luZCBvZiB3b3JrbG9hZCAv
+IHVzYWdlIHRyaWdnZXJzIHRoaXMgd2FybmluZy4NCj4NCj4gPlsgICAxMi42MDYyMTddIC0tLS0t
+LS0tLS0tLVsgY3V0IGhlcmUgXS0tLS0tLS0tLS0tLQ0KPiA+WyAgIDEyLjYwNjIyMF0gV0FSTklO
+RzogQ1BVOiA1IFBJRDogODcyIGF0IGtlcm5lbC9zY2hlZC9zd2FpdC5jOjQ4DQo+IGNvbXBsZXRl
+X2FsbCsweDJhLzB4NDAoKQ0KPiA+WyAgIDEyLjYwNjIyMF0gY29tcGxhdGVfYWxsKCkgd2l0aCA3
+IHdhaXRlcnMNCj4NCj4gRG8gSSBhc3N1bWUgY3VycmVjdGx5IHRoYXQgYXQgdGhpcyBwb2ludCB5
+b3UgaGF2ZSB5b3VyIGZpbGVzeXN0ZW0gYWxyZWFkeQ0KPiBtb3VudGVkPyBEbyB5b3UgdXNlIExV
+S1Mgb24geW91ciBoYXJkZGlzayBvciB3aGF0IGlzIGl0IHRoYXQgdHJpZ2dlciB0aGUNCj4gdXNh
+Z2Ugb2YgY3J5cHRvIGNvZGUgaGVyZT8NCg0KUm9vdC1maWxlc3lzdGVtIGlzIGFscmVhZHkgbG9h
+ZGVkLCBidXQgSSdtIG5vdCB1c2luZyBMVUtTLg0KSG93ZXZlciwgdGhlIG1vdW50aW5nIG9mIHRo
+ZSAoQ0lGUykgbmV0d29yay1kcml2ZXMgc2VlbXMgdG8gdHJpZ2dlciB0aGlzLg0KDQpJZiBJIHJl
+bW92ZSB0aGUgbmV0d29yayBkcml2ZXMgZnJvbSBmc3RhYiBhbmQgbW91bnQgdGhlbSBsYXRlciwg
+bm8gY29tcGxldGVfYWxsKCkgd2FybmluZyBpcyB0cmlnZ2VyZWQuIFNvIHRoaXMgb250bHkgdHJp
+Z2dlcnMgZHVyaW5nIHN5c3RlbSBzdGFydHVwLg0KDQo+DQo+ID5bICAgMTIuNjA2MjUzXSBDUFU6
+IDUgUElEOiA4NzIgQ29tbTogY3J5cHRvbWdyX3Byb2JlIE5vdCB0YWludGVkIDQuNC43LQ0KPiBy
+dDE2ICMyDQo+ID5bICAgMTIuNjA2MjU0XSBIYXJkd2FyZSBuYW1lOiBGVUpJVFNVIENFTFNJVVMg
+VzUzMC9EMzIyNy1BMSwgQklPUw0KPiBWNC42LjUuNCBSMS4zNC4wIGZvciBEMzIyNy1BMXggMDEv
+MDgvMjAxNQ0KPiA+WyAgIDEyLjYwNjI1Nl0gIDAwMDAwMDAwMDAwMDAwMDAgZmZmZmZmZmY4MTJl
+MGUwZSBmZmZmODgwMjExNDJiZTMwDQo+IGZmZmZmZmZmODE3MzFlMDINCj4gPlsgICAxMi42MDYy
+NTddICBmZmZmZmZmZjgxMDczZjgxIGZmZmY4ODAwMzYxNGZkMzAgZmZmZjg4MDIxMTQyYmU4MA0K
+PiAwMDAwMDAwMDAwMDAwMjQ2DQo+ID5bICAgMTIuNjA2MjU4XSAgZmZmZjg4MDIxMjIwNjQwMCAw
+MDAwMDAwMDAwMDAwMDAwIGZmZmZmZmZmODEwNzQwMWMNCj4gZmZmZmZmZmY4MTcyNmZiMA0KPiA+
+WyAgIDEyLjYwNjI1OF0gQ2FsbCBUcmFjZToNCj4gPlsgICAxMi42MDYyNjJdICBbPGZmZmZmZmZm
+ODEyZTBlMGU+XSA/IGR1bXBfc3RhY2srMHg1Yy8weDdlDQo+ID5bICAgMTIuNjA2MjY1XSAgWzxm
+ZmZmZmZmZjgxMDczZjgxPl0gPyB3YXJuX3Nsb3dwYXRoX2NvbW1vbisweDgxLzB4ZDANCj4gPlsg
+ICAxMi42MDYyNjZdICBbPGZmZmZmZmZmODEwNzQwMWM+XSA/IHdhcm5fc2xvd3BhdGhfZm10KzB4
+NGMvMHg1MA0KPiA+WyAgIDEyLjYwNjI2N10gIFs8ZmZmZmZmZmY4MTBiNTg0OT5dID8gc3dha2Vf
+dXBfYWxsX2xvY2tlZCsweDI5LzB4ODANCj4gPlsgICAxMi42MDYyNjhdICBbPGZmZmZmZmZmODEw
+YjVlY2E+XSA/IGNvbXBsZXRlX2FsbCsweDJhLzB4NDANCj4gPlsgICAxMi42MDYyNzldICBbPGZm
+ZmZmZmZmODEyYTMyNDE+XSA/IGNyeXB0b21ncl9wcm9iZSsweDkxLzB4ZDANCj4gPlsgICAxMi42
+MDYyODBdICBbPGZmZmZmZmZmODEyYTMxYjA+XSA/IGNyeXB0b19hbGdfcHV0KzB4MjAvMHgyMA0K
+PiA+WyAgIDEyLjYwNjI4Ml0gIFs8ZmZmZmZmZmY4MTA5MmNiZj5dID8ga3RocmVhZCsweGNmLzB4
+ZjANCj4gPlsgICAxMi42MDYyODNdICBbPGZmZmZmZmZmODEwOTJiZjA+XSA/IGt0aHJlYWRfd29y
+a2VyX2ZuKzB4MTkwLzB4MTkwDQo+ID5bICAgMTIuNjA2Mjg2XSAgWzxmZmZmZmZmZjgxNTZlMzhm
+Pl0gPyByZXRfZnJvbV9mb3JrKzB4M2YvMHg3MA0KPiA+WyAgIDEyLjYwNjI4N10gIFs8ZmZmZmZm
+ZmY4MTA5MmJmMD5dID8ga3RocmVhZF93b3JrZXJfZm4rMHgxOTAvMHgxOTANCj4gPlsgICAxMi42
+MDYyODhdIC0tLVsgZW5kIHRyYWNlIDAwMDAwMDAwMDAwMDAwMDIgXS0tLQ0KPiA+DQo+ID5UaGFu
+a3MsDQo+ID5IZW5yaQ0KPg0KPiBTZWJhc3RpYW4NCg0KX19fX19fX19fX19fX19fX19fX19fX19f
+X19fX19fX18NCg0KR2luemluZ2VyIGVsZWN0cm9uaWMgc3lzdGVtcyBHbWJIDQpHZXdlcmJlZ2Vi
+aWV0IFBpcmF0aCAxNg0KNDk1MiBXZW5nIGltIElubmtyZWlzDQp3d3cuZ2luemluZ2VyLmNvbQ0K
+DQpGaXJtZW5idWNobnVtbWVyOiBGTiAzNjQ5NThkDQpGaXJtZW5idWNoZ2VyaWNodDogUmllZCBp
+bSBJbm5rcmVpcw0KVUlELU5yLjogQVRVNjY1MjEwODkNCg0K
