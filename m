@@ -1,46 +1,41 @@
-From: Luiz Capitulino <lcapitulino@redhat.com>
-Subject: Re: [PATCH RESEND -rt] mm: perform lru_add_drain_all() remotely
-Date: Thu, 12 May 2016 15:52:02 -0400
-Message-ID: <20160512155202.46666531@redhat.com>
-References: <20160509105037.1555d0e0@redhat.com>
-	<20160512084230.GA19035@linutronix.de>
-	<20160512095149.2a6f7357@redhat.com>
-	<20160512144943.GD19035@linutronix.de>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: [ANNOUNCE] 4.6-rc7-rt1
+Date: Fri, 13 May 2016 13:23:18 +0200
+Message-ID: <20160513112318.GA10154@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, riel@redhat.com,
-	tglx@linutronix.de, srostedt@redhat.com, williams@redhat.com
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mx1.redhat.com ([209.132.183.28]:47034 "EHLO mx1.redhat.com"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1753156AbcELTwE (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 12 May 2016 15:52:04 -0400
-In-Reply-To: <20160512144943.GD19035@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Thu, 12 May 2016 16:49:43 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+Dear RT folks!
 
-> * Luiz Capitulino | 2016-05-12 09:51:49 [-0400]:
-> 
-> >That's correct. This is an -RT patch for two reasons:
-> >
-> > 1. This solution builds on top of the per-cpu locks API implemented
-> >    by -RT and already in place in the pagevecs drain code
-> >
-> > 2. As SCHED_FIFO is the norm in -RT, the problem is more common there  
-> 
-> more common so not RT-only. Would you people prefer this for mainline or
-> would you rather something else in case this needs to be fixed
-> mainline, too?
+I'm pleased to announce the v4.6-rc7-rt1 patch set. I tested it on my
+AMD A10, 64bit. Had a few runs on ARM, nothing exploded so far.
 
-To have this for mainline we'd have to forward-port local_locks.
-It's doable, but I think it's a bit too much only to solve this
-problem.
+Changes since v4.4.9-rt17:
+  - rebase to v4.6-rc7
+  - RWLOCKS and SPINLOCKS used to be cacheline aligned on RT. Now there
+    are no more which is the same behaviour as in upstream.
 
-The alternative, which is what I had in mind, was to forward-port
-this change to mainline when local_locks gets merged upstream. But
-I guess this will only happen when sleeping spinlocks are merged?
+Known issues (inherited from v4.4-RT):
+	- CPU hotplug got a little better but can deadlock.
+
+You can get this release via the git tree at:
+
+    git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git v4.6-rc7-rt1
+
+The RT patch against 4.6-rc7 can be found here:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patch-4.6-rc7-rt1.patch.xz
+
+The split quilt queue is available at:
+
+    https://cdn.kernel.org/pub/linux/kernel/projects/rt/4.6/patches-4.6-rc7-rt1.tar.xz
+
+Sebastian
