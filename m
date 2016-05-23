@@ -1,42 +1,46 @@
-From: Brad Hughes <brad28b@gmail.com>
-Subject: Wrong time displayed on date/time selector custom field
-Date: Thu, 19 May 2016 10:30:13 +1000
-Message-ID: <CA+swKTg17fh71oAZEZWcrmZKU+o35ZjAQRj5WsXH=WUUSGe+CQ@mail.gmail.com>
+From: Daniel Wagner <wagi@monom.org>
+Subject: Re: [PATCH v2] sched/completion: convert completions to use simple
+ wait queues
+Date: Mon, 23 May 2016 16:09:52 +0200
+Message-ID: <d9a8a48b-70af-3e51-639f-f0ffb3526a11@monom.org>
+References: <1461848244-16469-1-git-send-email-wagi@monom.org>
+ <fa94c34f-31ea-84fd-ac9f-52ed59c31d12@monom.org>
+ <20160516163809.7bac1d54@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-io0-f180.google.com ([209.85.223.180]:34259 "EHLO
-	mail-io0-f180.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752175AbcESAaO (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 18 May 2016 20:30:14 -0400
-Received: by mail-io0-f180.google.com with SMTP id 190so87201886iow.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 18 May 2016 17:30:13 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Content-Type: text/plain; charset=windows-1252
+Content-Transfer-Encoding: 7bit
+Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Daniel Wagner <daniel.wagner@bmw-carit.de>
+To: Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <20160516163809.7bac1d54@redhat.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Hi All,
+[Sorry for the late response. I was a few days on holiday]
 
-We are using RT 4.2.8 and we have recently started using custom fields
-that are date time selectors (ie. they pop up a calendar where you can
-select a date and time).
+On 05/16/2016 10:38 PM, Luiz Capitulino wrote:
+> On Thu, 12 May 2016 16:08:34 +0200
+> Daniel Wagner <wagi@monom.org> wrote:
+> 
+>> In short, I haven't figured out yet why the kernel builds get slightly slower. 
+> 
+> You're doing make -j 200, right? How many cores do you have? Couldn't it
+> be that you're saturating your CPUs?
 
-We have encountered a problem where the value in the custom field is
-being displayed wrong.
+For the above numbers I used mmtest as test framework with 2x<NR CPUs>,
+that is 128.
 
-What I believe is happening is that when the date time custom field is
-populated with a date/time, that is being stored in RT's mysql
-database in local time format. Where as every other time in RTs mysql
-database seems to be stored in UTC or GMT time format.
+> You could try make -j<NR CPUs>, or some process creation benchmark. Although
+> I don't know what's the best way to measure this.
 
-When the RT GUI displays the time stored in custom field of the
-date/time selector, it is assuming that it is a UTC or GMT format, and
-it's attempting to convert it to local time - which makes it display
-incorrect in the RT GUI.
+Yeah, I consider the kernel benchmark not as a good workload to figure
+out what's going on. It's more like to see something is hiding. The
+micro benchmarks I used so far couldn't highlight the problem(s). I
+guess more testing is needed.
 
-Has anyone encountered this problem and if so what did you do to get around it?
-
-Thank you,
-
-Brad Hughes
+cheers,
+daniel
