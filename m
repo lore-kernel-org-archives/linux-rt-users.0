@@ -1,44 +1,35 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: [PATCH RT] arm: lazy preempt: correct resched condition
-Date: Tue, 24 May 2016 13:30:36 +0200
-Message-ID: <20160524113036.GA27094@linutronix.de>
+Subject: Re: Wrong time displayed on date/time selector custom field
+Date: Tue, 24 May 2016 13:42:29 +0200
+Message-ID: <20160524114229.GB27094@linutronix.de>
+References: <CA+swKTg17fh71oAZEZWcrmZKU+o35ZjAQRj5WsXH=WUUSGe+CQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
-	Steven Rostedt <rostedt@goodmis.org>
-To: linux-rt-users@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org
+To: Brad Hughes <brad28b@gmail.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:35726 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1755465AbcEXLmb (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 May 2016 07:42:31 -0400
 Content-Disposition: inline
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+In-Reply-To: <CA+swKTg17fh71oAZEZWcrmZKU+o35ZjAQRj5WsXH=WUUSGe+CQ@mail.gmail.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-If we get out of preempt_schedule_irq() then we check for NEED_RESCHED
-and call the former function again if set because the preemption counter
-has be zero at this point.
-However the counter for lazy-preempt might not be zero therefore we have
-to check the counter before looking at the need_resched_lazy flag.
+* Brad Hughes | 2016-05-19 10:30:13 [+1000]:
 
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
----
- arch/arm/kernel/entry-armv.S | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+>Hi All,
+Hi,
 
-diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
-index d66b1aef2083..d044cea59f54 100644
---- a/arch/arm/kernel/entry-armv.S
-+++ b/arch/arm/kernel/entry-armv.S
-@@ -244,7 +244,11 @@ ENDPROC(__irq_svc)
- 	bne	1b
- 	tst	r0, #_TIF_NEED_RESCHED_LAZY
- 	reteq	r8				@ go again
--	b	1b
-+	ldr	r0, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
-+	teq	r0, #0				@ if preempt lazy count != 0
-+	beq	1b
-+	ret	r8				@ go again
-+
- #endif
- 
- __und_fault:
--- 
-2.8.1
+>We are using RT 4.2.8 and we have recently started using custom fields
+
+The RT here does not stand for Request Tracker. If you problems with
+that please go to
+
+  http://lists.bestpractical.com/cgi-bin/mailman/listinfo/rt-users
+
+>Brad Hughes
+
+Sebastian
