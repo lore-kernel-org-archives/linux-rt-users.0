@@ -1,35 +1,165 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Wrong time displayed on date/time selector custom field
-Date: Tue, 24 May 2016 13:42:29 +0200
-Message-ID: <20160524114229.GB27094@linutronix.de>
-References: <CA+swKTg17fh71oAZEZWcrmZKU+o35ZjAQRj5WsXH=WUUSGe+CQ@mail.gmail.com>
+From: Luiz Capitulino <lcapitulino@redhat.com>
+Subject: [PATCH RT v2] mm: perform lru_add_drain_all() remotely
+Date: Tue, 24 May 2016 15:15:51 -0400
+Message-ID: <20160524151551.08ad534e@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Brad Hughes <brad28b@gmail.com>
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: riel@redhat.com, bigeasy@linutronix.de, tglx@linutronix.de,
+	srostedt@redhat.com, williams@redhat.com
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:35726 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1755465AbcEXLmb (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 24 May 2016 07:42:31 -0400
-Content-Disposition: inline
-In-Reply-To: <CA+swKTg17fh71oAZEZWcrmZKU+o35ZjAQRj5WsXH=WUUSGe+CQ@mail.gmail.com>
+Received: from mx1.redhat.com ([209.132.183.28]:47353 "EHLO mx1.redhat.com"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1753714AbcEXUQW (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 May 2016 16:16:22 -0400
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Brad Hughes | 2016-05-19 10:30:13 [+1000]:
+lru_add_drain_all() works by scheduling lru_add_drain_cpu() to run
+on all CPUs that have non-empty LRU pagevecs and then waiting for
+the scheduled work to complete. However, workqueue threads may never
+have the chance to run on a CPU that's running a SCHED_FIFO task.
+This causes lru_add_drain_all() to block forever.
 
->Hi All,
-Hi,
+This commit solves this problem by changing lru_add_drain_all()
+to drain the LRU pagevecs of remote CPUs. This is done by grabbing
+swapvec_lock and calling lru_add_drain_cpu().
 
->We are using RT 4.2.8 and we have recently started using custom fields
+PS: This is based on an idea and initial implementation by
+    Rik van Riel.
 
-The RT here does not stand for Request Tracker. If you problems with
-that please go to
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+---
 
-  http://lists.bestpractical.com/cgi-bin/mailman/listinfo/rt-users
+Sebastian,
 
->Brad Hughes
+It's not clear to me from our last discussion what's the
+best plan for this patch. I'm sending v2 with the changes
+you suggested.
 
-Sebastian
+Changelog
+
+v2
+
+ - Simple renames
+   local_lock_other_cpu() -> local_lock_on()
+   local_lock_irqsave_other_cpu() -> local_lock_irq_on()
+   (unlock follows same renaiming)
+
+ include/linux/locallock.h | 31 +++++++++++++++++++++++++++++++
+ mm/swap.c                 | 35 +++++++++++++++++++++++++----------
+ 2 files changed, 56 insertions(+), 10 deletions(-)
+
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 6fe5928..f7f94cc 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -104,6 +104,17 @@ static inline void __local_unlock(struct local_irq_lock *lv)
+ 		put_local_var(lvar);				\
+ 	} while (0)
+ 
++#define local_lock_on(lvar, cpu)                         \
++	do {                                                    \
++		__local_lock(&per_cpu(lvar, cpu));              \
++	} while (0)
++
++#define local_unlock_on(lvar, cpu)                       \
++	do {                                                    \
++		__local_unlock(&per_cpu(lvar, cpu));            \
++	} while (0)
++
++
+ static inline void __local_lock_irq(struct local_irq_lock *lv)
+ {
+ 	spin_lock_irqsave(&lv->lock, lv->flags);
+@@ -163,6 +174,22 @@ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
+ 		_flags = per_cpu(lvar, cpu).flags;			\
+ 	} while (0)
+ 
++#define local_lock_irq_on(lvar, _flags, cpu)			\
++	do {								\
++		if (cpu == smp_processor_id())				\
++			local_lock_irqsave(lvar, _flags);		\
++		else							\
++			local_lock_on(lvar, cpu);		\
++	} while (0)
++
++#define local_unlock_irq_on(lvar, _flags, cpu)	        \
++	do {								\
++		if (cpu == smp_processor_id())				\
++			local_unlock_irqrestore(lvar, _flags);		\
++		else							\
++			local_unlock_on(lvar, cpu);		\
++	} while (0)
++
+ static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+ 					    unsigned long flags)
+ {
+@@ -250,6 +277,10 @@ static inline void local_irq_lock_init(int lvar) { }
+ #define local_unlock_irq(lvar)			local_irq_enable()
+ #define local_lock_irqsave(lvar, flags)		local_irq_save(flags)
+ #define local_unlock_irqrestore(lvar, flags)	local_irq_restore(flags)
++#define local_lock_irq_on(lvar, flags, cpu) \
++	local_irq_save(flags)
++#define local_unlock_irq_on(lvar, flags, cpu) \
++	local_irq_restore(flags)
+ 
+ #define local_spin_trylock_irq(lvar, lock)	spin_trylock_irq(lock)
+ #define local_spin_lock_irq(lvar, lock)		spin_lock_irq(lock)
+diff --git a/mm/swap.c b/mm/swap.c
+index ca194ae..b953718 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -821,9 +821,9 @@ void lru_add_drain_cpu(int cpu)
+ 		unsigned long flags;
+ 
+ 		/* No harm done if a racing interrupt already did this */
+-		local_lock_irqsave(rotate_lock, flags);
++		local_lock_irq_on(rotate_lock, flags, cpu);
+ 		pagevec_move_tail(pvec);
+-		local_unlock_irqrestore(rotate_lock, flags);
++		local_unlock_irq_on(rotate_lock, flags, cpu);
+ 	}
+ 
+ 	pvec = &per_cpu(lru_deactivate_file_pvecs, cpu);
+@@ -866,12 +866,32 @@ void lru_add_drain(void)
+ 	local_unlock_cpu(swapvec_lock);
+ }
+ 
++static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++
++#ifdef CONFIG_PREEMPT_RT_BASE
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	local_lock_on(swapvec_lock, cpu);
++	lru_add_drain_cpu(cpu);
++	local_unlock_on(swapvec_lock, cpu);
++}
++#else
+ static void lru_add_drain_per_cpu(struct work_struct *dummy)
+ {
+ 	lru_add_drain();
+ }
+ 
+-static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
++
++		INIT_WORK(work, lru_add_drain_per_cpu);
++		schedule_work_on(cpu, work);
++		cpumask_set_cpu(cpu, has_work);
++
++}
++#endif
++
+ 
+ void lru_add_drain_all(void)
+ {
+@@ -884,16 +904,11 @@ void lru_add_drain_all(void)
+ 	cpumask_clear(&has_work);
+ 
+ 	for_each_online_cpu(cpu) {
+-		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
