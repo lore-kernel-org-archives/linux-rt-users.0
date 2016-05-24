@@ -1,46 +1,30 @@
 From: Daniel Wagner <wagi@monom.org>
-Subject: Re: [PATCH v2] sched/completion: convert completions to use simple
- wait queues
-Date: Mon, 23 May 2016 16:09:52 +0200
-Message-ID: <d9a8a48b-70af-3e51-639f-f0ffb3526a11@monom.org>
-References: <1461848244-16469-1-git-send-email-wagi@monom.org>
- <fa94c34f-31ea-84fd-ac9f-52ed59c31d12@monom.org>
- <20160516163809.7bac1d54@redhat.com>
+Subject: Realtime Community Event
+Date: Tue, 24 May 2016 11:41:54 +0200
+Message-ID: <107349a3-78f2-2e77-0998-4109095618f1@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252
+Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org, linux-rt-users@vger.kernel.org,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Daniel Wagner <daniel.wagner@bmw-carit.de>
-To: Luiz Capitulino <lcapitulino@redhat.com>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160516163809.7bac1d54@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: Christoph Hellwig <hch@infradead.org>
+To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from hotel311.server4you.de ([85.25.146.15]:47891 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1752500AbcEXJmB (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 24 May 2016 05:42:01 -0400
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[Sorry for the late response. I was a few days on holiday]
+Hi,
 
-On 05/16/2016 10:38 PM, Luiz Capitulino wrote:
-> On Thu, 12 May 2016 16:08:34 +0200
-> Daniel Wagner <wagi@monom.org> wrote:
-> 
->> In short, I haven't figured out yet why the kernel builds get slightly slower. 
-> 
-> You're doing make -j 200, right? How many cores do you have? Couldn't it
-> be that you're saturating your CPUs?
+Christoph and I are organizing a small event (mini conf) at a Austrian
+mountain lodge beginning of June. We have some places left. So in case
+you are interested to join, please let us know (soon).
 
-For the above numbers I used mmtest as test framework with 2x<NR CPUs>,
-that is 128.
+I collected all information here (gets updated now and then):
 
-> You could try make -j<NR CPUs>, or some process creation benchmark. Although
-> I don't know what's the best way to measure this.
-
-Yeah, I consider the kernel benchmark not as a good workload to figure
-out what's going on. It's more like to see something is hiding. The
-micro benchmarks I used so far couldn't highlight the problem(s). I
-guess more testing is needed.
+https://www.monom.org/rtce/
 
 cheers,
 daniel
