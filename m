@@ -1,112 +1,51 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH RT v2] mm: perform lru_add_drain_all() remotely
-Date: Fri, 27 May 2016 15:10:24 +0200
-Message-ID: <20160527131024.GA24120@linutronix.de>
-References: <20160524151551.08ad534e@redhat.com>
+Subject: [PATCH RT] kernel/printk: Don't try to print from IRQ/NMI region
+Date: Fri, 27 May 2016 15:58:12 +0200
+Message-ID: <20160527135812.GB24120@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org, riel@redhat.com,
-	tglx@linutronix.de, srostedt@redhat.com, williams@redhat.com
-To: Luiz Capitulino <lcapitulino@redhat.com>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47121 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751428AbcE0NK1 (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 27 May 2016 09:10:27 -0400
+Cc: linux-kernel@vger.kernel.org, tglx@linutronix.de,
+	Steven Rostedt <rostedt@goodmis.org>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
 Content-Disposition: inline
-In-Reply-To: <20160524151551.08ad534e@redhat.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-* Luiz Capitulino | 2016-05-24 15:15:51 [-0400]:
+On -RT we try to acquire sleeping locks which might lead to warnings
+from lockdep or a warn_on() from spin_try_lock() (which is a rtmutex on
+RT).
+We don't print in general from a IRQ off region so we should not try
+this via console_unblank() / bust_spinlocks() as well.
 
->Sebastian,
->
->It's not clear to me from our last discussion what's the
->best plan for this patch. I'm sending v2 with the changes
->you suggested.
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+---
+ kernel/printk/printk.c |   10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-The patch at the bottom is what I intend to take into the next v4.6-RT.
-local_lock_irqsave_on() was already part of the first v4.6 release. I
-don't like the part where local_lock_irqsave_on() is a simple
-local_irq_safe() on !RT but that is another story.
-
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 493e801e0c9b..845c77f1a5ca 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -66,6 +66,9 @@ static inline void __local_lock(struct local_irq_lock *lv)
- #define local_lock(lvar)					\
- 	do { __local_lock(&get_local_var(lvar)); } while (0)
+--- a/kernel/printk/printk.c
++++ b/kernel/printk/printk.c
+@@ -1502,6 +1502,11 @@ static void call_console_drivers(int lev
+ 	if (!console_drivers)
+ 		return;
  
-+#define local_lock_on(lvar, cpu)				\
-+	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
++	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
++		if (in_irq() || in_nmi())
++			return;
++	}
 +
- static inline int __local_trylock(struct local_irq_lock *lv)
+ 	migrate_disable();
+ 	for_each_console(con) {
+ 		if (exclusive_console && con != exclusive_console)
+@@ -2434,6 +2439,11 @@ void console_unblank(void)
  {
- 	if (lv->owner != current && spin_trylock_local(&lv->lock)) {
-@@ -104,6 +107,9 @@ static inline void __local_unlock(struct local_irq_lock *lv)
- 		put_local_var(lvar);				\
- 	} while (0)
+ 	struct console *c;
  
-+#define local_unlock_on(lvar, cpu)                       \
-+	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
++	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
++		if (in_irq() || in_nmi())
++			return;
++	}
 +
- static inline void __local_lock_irq(struct local_irq_lock *lv)
- {
- 	spin_lock_irqsave(&lv->lock, lv->flags);
-diff --git a/mm/swap.c b/mm/swap.c
-index 892747266c7e..35fab668a782 100644
---- a/mm/swap.c
-+++ b/mm/swap.c
-@@ -596,9 +596,9 @@ void lru_add_drain_cpu(int cpu)
- 		unsigned long flags;
- 
- 		/* No harm done if a racing interrupt already did this */
--		local_lock_irqsave(rotate_lock, flags);
-+		local_lock_irqsave_on(rotate_lock, flags, cpu);
- 		pagevec_move_tail(pvec);
--		local_unlock_irqrestore(rotate_lock, flags);
-+		local_unlock_irqrestore_on(rotate_lock, flags, cpu);
- 	}
- 
- 	pvec = &per_cpu(lru_deactivate_file_pvecs, cpu);
-@@ -666,12 +666,32 @@ void lru_add_drain(void)
- 	local_unlock_cpu(swapvec_lock);
- }
- 
-+
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
-+{
-+	local_lock_on(swapvec_lock, cpu);
-+	lru_add_drain_cpu(cpu);
-+	local_unlock_on(swapvec_lock, cpu);
-+}
-+
-+#else
-+
- static void lru_add_drain_per_cpu(struct work_struct *dummy)
- {
- 	lru_add_drain();
- }
- 
- static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
-+static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
-+{
-+	struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
-+
-+	INIT_WORK(work, lru_add_drain_per_cpu);
-+	schedule_work_on(cpu, work);
-+	cpumask_set_cpu(cpu, has_work);
-+}
-+#endif
- 
- void lru_add_drain_all(void)
- {
-@@ -684,21 +704,18 @@ void lru_add_drain_all(void)
- 	cpumask_clear(&has_work);
- 
- 	for_each_online_cpu(cpu) {
--		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
+ 	/*
+ 	 * console_unblank can no longer be called in interrupt context unless
+ 	 * oops_in_progress is set to 1..
