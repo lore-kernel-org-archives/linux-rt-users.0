@@ -1,111 +1,112 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH][RT] netpoll: Always take poll_lock when doing polling
-Date: Thu, 26 May 2016 19:56:41 -0400
-Message-ID: <20160526195641.6c26e979@gandalf.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT v2] mm: perform lru_add_drain_all() remotely
+Date: Fri, 27 May 2016 15:10:24 +0200
+Message-ID: <20160527131024.GA24120@linutronix.de>
+References: <20160524151551.08ad534e@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	David Miller <davem@davemloft.net>, alison@peloton-tech.com
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: linux-rt-users@vger.kernel.org, riel@redhat.com,
+	tglx@linutronix.de, srostedt@redhat.com, williams@redhat.com
+To: Luiz Capitulino <lcapitulino@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:47121 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751428AbcE0NK1 (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Fri, 27 May 2016 09:10:27 -0400
+Content-Disposition: inline
+In-Reply-To: <20160524151551.08ad534e@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-[ Alison, can you try this patch ]
+* Luiz Capitulino | 2016-05-24 15:15:51 [-0400]:
 
-This uses netpoll_poll_lock()/unlock() to synchronize netpoll and napi
-poll operations. Without this method, the synchronization is done by
-looping on NAPI_STATE_SCHED 'bitset'. This method works fine on a non-rt
-kernel because a softirq can not be preempted, and the thread poll is
-called with local_bh_disable() which prevents softirqs from running and
-preempting it. But on rt, this code can be preempted.  Thus, the code may
-be preempted out while holding the NAPI_STATE_SCHED 'bitset', opening a
-window for a livelock.
+>Sebastian,
+>
+>It's not clear to me from our last discussion what's the
+>best plan for this patch. I'm sending v2 with the changes
+>you suggested.
 
-For example:
+The patch at the bottom is what I intend to take into the next v4.6-RT.
+local_lock_irqsave_on() was already part of the first v4.6 release. I
+don't like the part where local_lock_irqsave_on() is a simple
+local_irq_safe() on !RT but that is another story.
 
-   <interrupt thread (as all interrupts on RT are threaded>
-
-   napi_schedule_prep()
-        test_and_set_bit(NAPI_STATE_SCHED, &n->state)
-
-   <preempted by higher prio task that runs softirqs in its context>
-
-   sk_busy_loop()
-
-      do {
-           rc = busy_poll()
-               ret = napi_schedule_prep()
-                    return !test_and_set_bit(NAPI_STATE_SCHED, &n->state)
-                     <returns zero because NAPI_STATE_SCHED is set>
-               if (!ret) return 0
-           <rc is zero>
-      } while (...) /* for ever */
-
-This isn't a problem in non PREEMPT_RT because the napi_schedule_prep()
-can not be preempted. But because it can in PREEMPT_RT, we need to add
-some extra locking. The netpoll_poll_lock() works well here, but they need
-to be added around any call to busy_poll().
-
-Using IS_ENABLED(CONFIG_PREEMPT_RT_FULL) will allow gcc to optimize out
-the extra calls to poll_lock.
-
-Tested-by: "Luis Claudio R. Goncalves" <lgoncalv@redhat.com>
-Reviewed-by: Daniel Bristot de Oliveira <bristot@redhat.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- include/linux/netpoll.h |    2 +-
- include/net/busy_poll.h |   14 +++++++++++++-
- 2 files changed, 14 insertions(+), 2 deletions(-)
-
-Index: linux-rt.git/include/linux/netpoll.h
-===================================================================
---- linux-rt.git.orig/include/linux/netpoll.h	2016-05-26 18:31:09.183150389 -0400
-+++ linux-rt.git/include/linux/netpoll.h	2016-05-26 18:52:02.657014280 -0400
-@@ -77,7 +77,7 @@ static inline void *netpoll_poll_lock(st
+diff --git a/include/linux/locallock.h b/include/linux/locallock.h
+index 493e801e0c9b..845c77f1a5ca 100644
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -66,6 +66,9 @@ static inline void __local_lock(struct local_irq_lock *lv)
+ #define local_lock(lvar)					\
+ 	do { __local_lock(&get_local_var(lvar)); } while (0)
+ 
++#define local_lock_on(lvar, cpu)				\
++	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
++
+ static inline int __local_trylock(struct local_irq_lock *lv)
  {
- 	struct net_device *dev = napi->dev;
+ 	if (lv->owner != current && spin_trylock_local(&lv->lock)) {
+@@ -104,6 +107,9 @@ static inline void __local_unlock(struct local_irq_lock *lv)
+ 		put_local_var(lvar);				\
+ 	} while (0)
  
--	if (dev && dev->npinfo) {
-+	if (dev && (IS_ENABLED(CONFIG_PREEMPT_RT_FULL) || dev->npinfo)) {
- 		spin_lock(&napi->poll_lock);
- 		napi->poll_owner = smp_processor_id();
- 		return napi;
-Index: linux-rt.git/include/net/busy_poll.h
-===================================================================
---- linux-rt.git.orig/include/net/busy_poll.h	2016-05-26 18:31:09.183150389 -0400
-+++ linux-rt.git/include/net/busy_poll.h	2016-05-26 19:10:12.134266713 -0400
-@@ -25,6 +25,7 @@
- #define _LINUX_NET_BUSY_POLL_H
++#define local_unlock_on(lvar, cpu)                       \
++	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
++
+ static inline void __local_lock_irq(struct local_irq_lock *lv)
+ {
+ 	spin_lock_irqsave(&lv->lock, lv->flags);
+diff --git a/mm/swap.c b/mm/swap.c
+index 892747266c7e..35fab668a782 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -596,9 +596,9 @@ void lru_add_drain_cpu(int cpu)
+ 		unsigned long flags;
  
- #include <linux/netdevice.h>
-+#include <linux/netpoll.h>
- #include <net/ip.h>
+ 		/* No harm done if a racing interrupt already did this */
+-		local_lock_irqsave(rotate_lock, flags);
++		local_lock_irqsave_on(rotate_lock, flags, cpu);
+ 		pagevec_move_tail(pvec);
+-		local_unlock_irqrestore(rotate_lock, flags);
++		local_unlock_irqrestore_on(rotate_lock, flags, cpu);
+ 	}
  
- #ifdef CONFIG_NET_RX_BUSY_POLL
-@@ -97,7 +98,18 @@ static inline bool sk_busy_loop(struct s
- 		goto out;
+ 	pvec = &per_cpu(lru_deactivate_file_pvecs, cpu);
+@@ -666,12 +666,32 @@ void lru_add_drain(void)
+ 	local_unlock_cpu(swapvec_lock);
+ }
  
- 	do {
--		rc = ops->ndo_busy_poll(napi);
-+		/* When RT is enabled, napi_schedule_prep() can be preempted
-+		 * with NAPI_STATE_SCHED set, causing the busy_poll() function
-+		 * to always return zero, and this loop may never exit.
-+		 * In that case, we must always take the netpoll_poll_lock.
-+		 */
-+		if (IS_ENABLED(CONFIG_PREEMPT_RT_FULL)) {
-+			void *have = netpoll_poll_lock(napi);
-+			rc = ops->ndo_busy_poll(napi);
-+			netpoll_poll_unlock(have);
-+		} else {
-+			rc = ops->ndo_busy_poll(napi);
-+		}
++
++#ifdef CONFIG_PREEMPT_RT_BASE
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	local_lock_on(swapvec_lock, cpu);
++	lru_add_drain_cpu(cpu);
++	local_unlock_on(swapvec_lock, cpu);
++}
++
++#else
++
+ static void lru_add_drain_per_cpu(struct work_struct *dummy)
+ {
+ 	lru_add_drain();
+ }
  
- 		if (rc == LL_FLUSH_FAILED)
- 			break; /* permanent failure */
+ static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
++
++	INIT_WORK(work, lru_add_drain_per_cpu);
++	schedule_work_on(cpu, work);
++	cpumask_set_cpu(cpu, has_work);
++}
++#endif
+ 
+ void lru_add_drain_all(void)
+ {
+@@ -684,21 +704,18 @@ void lru_add_drain_all(void)
+ 	cpumask_clear(&has_work);
+ 
+ 	for_each_online_cpu(cpu) {
+-		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
