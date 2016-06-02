@@ -1,35 +1,34 @@
-From: Pratyush Patel <pratyushpatel.1995@gmail.com>
-Subject: PREEMPT_RT git tree
-Date: Thu, 2 Jun 2016 18:05:18 +0200
-Message-ID: <CAAnMKKY+FsZQSK9-qF7f2wL6pjAnywj89wmFGOR7gkNeyMaFGw@mail.gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH][RT] netpoll: Always take poll_lock when doing polling
+Date: Thu, 2 Jun 2016 18:12:35 +0200
+Message-ID: <20160602161235.GA12971@linutronix.de>
+References: <20160526195641.6c26e979@gandalf.local.home>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	netdev <netdev@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <williams@redhat.com>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	David Miller <davem@davemloft.net>
+To: Steven Rostedt <rostedt@goodmis.org>, alison@peloton-tech.com
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f66.google.com ([74.125.82.66]:35391 "EHLO
-	mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S932169AbcFBQFU (ORCPT
+Received: from www.linutronix.de ([62.245.132.108]:47040 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1161105AbcFBQMl (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Jun 2016 12:05:20 -0400
-Received: by mail-wm0-f66.google.com with SMTP id e3so16978863wme.2
-        for <linux-rt-users@vger.kernel.org>; Thu, 02 Jun 2016 09:05:18 -0700 (PDT)
+	Thu, 2 Jun 2016 12:12:41 -0400
+Content-Disposition: inline
+In-Reply-To: <20160526195641.6c26e979@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hello,
+* Steven Rostedt | 2016-05-26 19:56:41 [-0400]:
 
-I want to use the CONFIG_PREEMPT_RT git tree for development and
-testing instead of patching a Linux kernel. Could anyone please let me
-know where I can find the current stable/development trees?
+>[ Alison, can you try this patch ]
 
-Note that I already tried cloning linux-stable-rt:
+Alison, did you try it?
 
-$ git clone http://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/
-
-However, I noticed that this is based on the 3.x kernel version and
-the latest commit as per 'git log' was in 2011, whereas the current rt
-patch is for Linux 4.4. I have been unable to find any newer git tree
-version.
-
-Thanks,
-Pratyush
+Sebastian
