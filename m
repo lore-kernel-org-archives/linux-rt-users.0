@@ -1,34 +1,34 @@
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: [PATCH][RT] netpoll: Always take poll_lock when doing polling
-Date: Thu, 2 Jun 2016 18:12:35 +0200
-Message-ID: <20160602161235.GA12971@linutronix.de>
-References: <20160526195641.6c26e979@gandalf.local.home>
+From: Stanislav Meduna <stano@meduna.org>
+Subject: Re: PREEMPT_RT git tree
+Date: Thu, 2 Jun 2016 18:25:12 +0200
+Message-ID: <5694246d-25d2-97dd-df1d-d09a06048cb8@meduna.org>
+References: <CAAnMKKY+FsZQSK9-qF7f2wL6pjAnywj89wmFGOR7gkNeyMaFGw@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	David Miller <davem@davemloft.net>
-To: Steven Rostedt <rostedt@goodmis.org>, alison@peloton-tech.com
+Content-Transfer-Encoding: 7bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: Pratyush Patel <pratyushpatel.1995@gmail.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:47040 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1161105AbcFBQMl (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 2 Jun 2016 12:12:41 -0400
-Content-Disposition: inline
-In-Reply-To: <20160526195641.6c26e979@gandalf.local.home>
+Received: from www.meduna.org ([92.240.244.38]:38152 "EHLO meduna.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S932588AbcFBQmq (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 2 Jun 2016 12:42:46 -0400
+In-Reply-To: <CAAnMKKY+FsZQSK9-qF7f2wL6pjAnywj89wmFGOR7gkNeyMaFGw@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Steven Rostedt | 2016-05-26 19:56:41 [-0400]:
+On 6/2/2016 6:05 PM, Pratyush Patel wrote:
 
->[ Alison, can you try this patch ]
+Hi,
 
-Alison, did you try it?
+> Note that I already tried cloning linux-stable-rt:
+> 
+> $ git clone http://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git/
 
-Sebastian
+I am using git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-rt-devel.git
+for 4.4-based work.
+
+Regards
+-- 
+                                             Stano
+
