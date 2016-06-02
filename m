@@ -1,27 +1,36 @@
-From: Jens Koehler <jenskxxx@googlemail.com>
-Subject: hrtimer: interrupt took 10252 ns - meaning?
-Date: Wed, 1 Jun 2016 09:46:56 +0200
-Message-ID: <CAL7_A_Vs5F5nJM68-TJVUZpOu7pE7=9MkSLggA2c6TML9UM-Mw@mail.gmail.com>
+From: Pankaj Gupta <pagupta@redhat.com>
+Subject: Query - state of memory hotplug with RT kernel
+Date: Thu, 2 Jun 2016 06:10:41 -0400 (EDT)
+Message-ID: <420969271.56780563.1464862241604.JavaMail.zimbra@redhat.com>
+References: <1997236940.56779393.1464861408686.JavaMail.zimbra@redhat.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 7bit
 To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vk0-f66.google.com ([209.85.213.66]:34153 "EHLO
-	mail-vk0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751037AbcFAHq5 (ORCPT
+Received: from mx3-phx2.redhat.com ([209.132.183.24]:37864 "EHLO
+	mx3-phx2.redhat.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932418AbcFBKKm (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 1 Jun 2016 03:46:57 -0400
-Received: by mail-vk0-f66.google.com with SMTP id a6so1850134vkg.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 01 Jun 2016 00:46:57 -0700 (PDT)
+	Thu, 2 Jun 2016 06:10:42 -0400
+Received: from zmail21.collab.prod.int.phx2.redhat.com (zmail21.collab.prod.int.phx2.redhat.com [10.5.83.24])
+	by mx3-phx2.redhat.com (8.13.8/8.13.8) with ESMTP id u52AAfkq013944
+	for <linux-rt-users@vger.kernel.org>; Thu, 2 Jun 2016 06:10:41 -0400
+In-Reply-To: <1997236940.56779393.1464861408686.JavaMail.zimbra@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+Hello,
 
-I am running a linux kernel with rt preempt patch and made also a  rt
-application. Application works good but sometimes I a get a message
-like "hrtimer: interrupt took 10252 ns" or "NOHZ:
-local_softirq_pending 102". What does it mean and is it a problem?
+Recently, I have been debugging some of the issues with memory 
+hotplug with RT kernel. I want to know state of memory hotplug 
+with RT kernel and if there are any known issues or work going
+on upstream?
 
-Thanks and regards,
-Jens
+I came to know that there is rework of 'cpu hotplug' going on.
+Not sure about 'memory hotplug'.
+
+Any inputs or pointers on this?
+
+Best regards,
+Pankaj
