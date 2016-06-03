@@ -1,47 +1,37 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: Query - state of memory hotplug with RT kernel
-Date: Fri, 3 Jun 2016 18:04:33 +0200
-Message-ID: <20160603160433.GC4496@linutronix.de>
-References: <1997236940.56779393.1464861408686.JavaMail.zimbra@redhat.com>
- <420969271.56780563.1464862241604.JavaMail.zimbra@redhat.com>
+Subject: Re: v3.18-RT
+Date: Fri, 3 Jun 2016 18:37:32 +0200
+Message-ID: <20160603163732.GD4496@linutronix.de>
+References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: linux-rt-users@vger.kernel.org
-To: Pankaj Gupta <pagupta@redhat.com>
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: David Hauck <davidh@netacquire.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52690 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:52848 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1752693AbcFCQEf (ORCPT
+	with ESMTP id S1752469AbcFCQhf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Jun 2016 12:04:35 -0400
+	Fri, 3 Jun 2016 12:37:35 -0400
 Content-Disposition: inline
-In-Reply-To: <420969271.56780563.1464862241604.JavaMail.zimbra@redhat.com>
+In-Reply-To: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Pankaj Gupta | 2016-06-02 06:10:41 [-0400]:
+* David Hauck | 2016-05-31 18:42:08 [+0000]:
 
->Hello,
+>Hi,
 Hi,
 
->Recently, I have been debugging some of the issues with memory 
->hotplug with RT kernel. I want to know state of memory hotplug 
->with RT kernel and if there are any known issues or work going
->on upstream?
-
-I never tried memory hotplug. You are the first one that complains or
-mentions it.
-
->I came to know that there is rework of 'cpu hotplug' going on.
->Not sure about 'memory hotplug'.
+>We've been working to integrate/support a new system board and have noticed boot-up stalls running 3.18.29-rt30 (in particular when the kernel is configured with PREEMPT_RT_FULL - as diagnostics markers, PREEMPT_RT_RTB and non-RT appear to be fine). The boot-up stalls appear fairly frequently - approximately once every 8-10 cold boots - and occur very early in the boot process. The SHB board houses dual Xeon E5-2680 v3 parts (i.e., 2x12 cores for a combined 24 cores).
 >
->Any inputs or pointers on this?
+>My question is regarding the v3.18 tip (currently v3.18.34) and whether an RT release for this version might be worthwhile to try. We'd consider moving to a v4 test branch, but ultimately we'd like to test a new v3.18 in order to determine impact in the field. I hesitate to ask this but am wondering if anyone might have some feedback on the time frame for an RT refresh on the v3.18 tip?
 
-I have been looking into CPU hotplug but got interrupted by v4.6 and a
-few other things. Regarding memory hotplug, as I said I don't know what
-is broken. Is this something that can be tested in kvm?
+I am not aware of any lockup on v3.18-RT tree. I just tried a few boot
+up on two of machines and it looks good. Don't have currently any
+control on anything >4 cores.
 
->Best regards,
->Pankaj
+>Thanks in advance,
+>-David
 
 Sebastian
