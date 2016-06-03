@@ -1,49 +1,40 @@
-From: David Hauck <davidh@netacquire.com>
-Subject: RE: v3.18-RT
-Date: Fri, 3 Jun 2016 17:15:29 +0000
-Message-ID: <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
-References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
- <20160603163732.GD4496@linutronix.de>
-Mime-Version: 1.0
-Content-Type: text/plain; charset="utf-8"
-Content-Transfer-Encoding: base64
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from gwo2.mbox.net ([165.212.64.22]:46913 "EHLO gwo2.mbox.net"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751963AbcFCRPg (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Jun 2016 13:15:36 -0400
-In-Reply-To: <20160603163732.GD4496@linutronix.de>
-Content-Language: en-US
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Brian Silverman <brian@peloton-tech.com>
+Subject: [PATCH] Force processes to non-realtime before mm_exit
+Date: Fri,  3 Jun 2016 16:18:44 -0700
+Message-ID: <1464995924-16367-1-git-send-email-brian@peloton-tech.com>
+Cc: linux-rt-users@vger.kernel.org, bigeasy@linutronix.de,
+	Brian Silverman <brian@peloton-tech.com>
+To: linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-SGkgU2ViYXN0aWFuLA0KIA0KT24gRnJpLCAzIEp1biAyMDE2IGF0IDA5OjM4OjAwLCBTZWJhc3Rp
-YW4gQW5kcnplaiBTaWV3aW9yIHdyb3RlOg0KPj4gV2UndmUgYmVlbiB3b3JraW5nIHRvIGludGVn
-cmF0ZS9zdXBwb3J0IGEgbmV3IHN5c3RlbSBib2FyZCBhbmQgaGF2ZQ0KPj4gbm90aWNlZCBib290
-LXVwIHN0YWxscyBydW5uaW5nIDMuMTguMjktcnQzMCAoaW4NCj4gcGFydGljdWxhciB3aGVuIHRo
-ZSBrZXJuZWwgaXMgY29uZmlndXJlZCB3aXRoIFBSRUVNUFRfUlRfRlVMTCAtIGFzDQo+IGRpYWdu
-b3N0aWNzIG1hcmtlcnMsIFBSRUVNUFRfUlRfUlRCIGFuZCBub24tUlQgYXBwZWFyIHRvIGJlIGZp
-bmUpLiBUaGUNCj4gYm9vdC11cCBzdGFsbHMgYXBwZWFyIGZhaXJseSBmcmVxdWVudGx5IC0gYXBw
-cm94aW1hdGVseSBvbmNlIGV2ZXJ5DQo+IDgtMTAgY29sZCBib290cyAtIGFuZCBvY2N1ciB2ZXJ5
-IGVhcmx5IGluIHRoZSBib290IHByb2Nlc3MuIFRoZSBTSEIgYm9hcmQgaG91c2VzIGR1YWwgWGVv
-biBFNS0yNjgwIHYzIHBhcnRzIChpLmUuLCAyeDEyIGNvcmVzIGZvciBhIGNvbWJpbmVkIDI0IGNv
-cmVzKS4NCj4+IA0KPj4gTXkgcXVlc3Rpb24gaXMgcmVnYXJkaW5nIHRoZSB2My4xOCB0aXAgKGN1
-cnJlbnRseSB2My4xOC4zNCkgYW5kDQo+PiB3aGV0aGVyIGFuIFJUIHJlbGVhc2UgZm9yIHRoaXMg
-dmVyc2lvbiBtaWdodCBiZQ0KPiB3b3J0aHdoaWxlIHRvIHRyeS4gV2UnZCBjb25zaWRlciBtb3Zp
-bmcgdG8gYSB2NCB0ZXN0IGJyYW5jaCwgYnV0DQo+IHVsdGltYXRlbHkgd2UnZCBsaWtlIHRvIHRl
-c3QgYSBuZXcgdjMuMTggaW4gb3JkZXIgdG8gZGV0ZXJtaW5lIGltcGFjdA0KPiBpbiB0aGUgZmll
-bGQuIEkgaGVzaXRhdGUgdG8gYXNrIHRoaXMgYnV0IGFtIHdvbmRlcmluZyBpZiBhbnlvbmUgbWln
-aHQgaGF2ZSBzb21lIGZlZWRiYWNrIG9uIHRoZSB0aW1lIGZyYW1lIGZvciBhbiBSVCByZWZyZXNo
-IG9uIHRoZSB2My4xOCB0aXA/DQo+IA0KPiBJIGFtIG5vdCBhd2FyZSBvZiBhbnkgbG9ja3VwIG9u
-IHYzLjE4LVJUIHRyZWUuIEkganVzdCB0cmllZCBhIGZldyBib290IHVwIG9uIHR3byBvZiBtYWNo
-aW5lcyBhbmQgaXQgbG9va3MgZ29vZC4NCj4gRG9uJ3QgaGF2ZSBjdXJyZW50bHkgYW55IGNvbnRy
-b2wgb24gYW55dGhpbmcgPjQgY29yZXMuDQoNClRoeC4gV2UndmUgZG9uZSBmdXJ0aGVyIHRlc3Rp
-bmcgYW5kIHNlZSB0aGF0IHYzLjE4LjkgZG9lcyBub3Qgc3VmZmVyIHRoZSBzYW1lIHByb2JsZW0u
-DQoNCkkgYWxzbyBoYXZlIHNvbWUgZHVtcCBpbmZvcm1hdGlvbiAoYWxsICJ1bmFibGUgdG8gaGFu
-ZGxlIGtlcm5lbCBwYWdpbmcgcmVxdWVzdCIpIGFuZCB3YXMgd29uZGVyaW5nIHdoYXQgdGhlIGJl
-c3Qgd2F5IHRvIHBhc3MgdGhpcyBhbG9uZyB0byB0aGUgbGlzdCBtaWdodCBiZT8gV291bGQgYSBj
-b21wcmVzc2VkIGFyY2hpdmUgb2YgdGhlICg0KSBsb2cgZmlsZXMgYmUgT0sgdG8gc2VuZCBhbG9u
-Zz8NCg0KLURhdmlkDQogDQo+PiBUaGFua3MgaW4gYWR2YW5jZSwNCj4+IC1EYXZpZA0KPiANCj4g
-U2ViYXN0aWFuDQo=
+Without this, a realtime process which has called mlockall exiting
+causes large latencies for other realtime processes at the same or
+lower priorities. This seems like a fairly common use case too, because
+realtime processes generally want their memory locked into RAM.
+
+Signed-off-by: Brian Silverman <brian@peloton-tech.com>
+---
+ kernel/exit.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/kernel/exit.c b/kernel/exit.c
+index a0cf72b..68a97df 100644
+--- a/kernel/exit.c
++++ b/kernel/exit.c
+@@ -730,6 +730,12 @@ void do_exit(long code)
+ 	tsk->exit_code = code;
+ 	taskstats_exit(tsk, group_dead);
+ 
++	if (tsk->policy == SCHED_FIFO || tsk->policy == SCHED_RR) {
++		struct sched_param param = { .sched_priority = 0 };
++
++		sched_setscheduler_nocheck(current, SCHED_NORMAL, &param);
++	}
++
+ 	exit_mm(tsk);
+ 
+ 	if (group_dead)
+-- 
+2.1.4
