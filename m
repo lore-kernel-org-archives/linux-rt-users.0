@@ -1,48 +1,47 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: hrtimer: interrupt took 10252 ns - meaning?
-Date: Fri, 3 Jun 2016 17:59:21 +0200
-Message-ID: <20160603155921.GB4496@linutronix.de>
-References: <CAL7_A_Vs5F5nJM68-TJVUZpOu7pE7=9MkSLggA2c6TML9UM-Mw@mail.gmail.com>
+Subject: Re: Query - state of memory hotplug with RT kernel
+Date: Fri, 3 Jun 2016 18:04:33 +0200
+Message-ID: <20160603160433.GC4496@linutronix.de>
+References: <1997236940.56779393.1464861408686.JavaMail.zimbra@redhat.com>
+ <420969271.56780563.1464862241604.JavaMail.zimbra@redhat.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Cc: linux-rt-users@vger.kernel.org
-To: Jens Koehler <jenskxxx@googlemail.com>
+To: Pankaj Gupta <pagupta@redhat.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:52668 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:52690 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751126AbcFCP7X (ORCPT
+	with ESMTP id S1752693AbcFCQEf (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 3 Jun 2016 11:59:23 -0400
+	Fri, 3 Jun 2016 12:04:35 -0400
 Content-Disposition: inline
-In-Reply-To: <CAL7_A_Vs5F5nJM68-TJVUZpOu7pE7=9MkSLggA2c6TML9UM-Mw@mail.gmail.com>
+In-Reply-To: <420969271.56780563.1464862241604.JavaMail.zimbra@redhat.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-* Jens Koehler | 2016-06-01 09:46:56 [+0200]:
+* Pankaj Gupta | 2016-06-02 06:10:41 [-0400]:
 
->Hi,
+>Hello,
 Hi,
 
->I am running a linux kernel with rt preempt patch and made also a  rt
->application. Application works good but sometimes I a get a message
->like "hrtimer: interrupt took 10252 ns" or "NOHZ:
->local_softirq_pending 102". What does it mean and is it a problem?
+>Recently, I have been debugging some of the issues with memory 
+>hotplug with RT kernel. I want to know state of memory hotplug 
+>with RT kernel and if there are any known issues or work going
+>on upstream?
 
-The hrtimer message tries to inform you that for some reasons you had
-one or more hrtimers which expired and processing them to around 10us.
-At a single point. This means either you had a lot of them or one in
-particular took a very long time to finish. This might be problem
-because you had a window of 10us in which you were not able to react to
-external interrupts.
+I never tried memory hotplug. You are the first one that complains or
+mentions it.
 
-The NOHZ message means that you had a TIMER_SOFTIRQ and HRTIMER_SOFTIRQ
-event pending but you rather went idle than process them. I've seen that
-with network on an (almost) idle machine that the softirq was blocked
-due to CPU pinning and so there was nothing else to do then to go idle.
-There was one report around v3.8-RT I think and back the the debug code
-didn't cover the scenario.
+>I came to know that there is rework of 'cpu hotplug' going on.
+>Not sure about 'memory hotplug'.
+>
+>Any inputs or pointers on this?
 
->Thanks and regards,
->Jens
+I have been looking into CPU hotplug but got interrupted by v4.6 and a
+few other things. Regarding memory hotplug, as I said I don't know what
+is broken. Is this something that can be tested in kvm?
+
+>Best regards,
+>Pankaj
 
 Sebastian
