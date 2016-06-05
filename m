@@ -1,33 +1,56 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: Re: RT trees fail ltp futex_wait04  - culprit=65d8fc777f6d (futex:
- Remove requirement for lock_page() in get_futex_key())
-Date: Sat, 04 Jun 2016 18:16:59 +0200
-Message-ID: <1465057019.4178.0.camel@gmail.com>
-References: <1465052027.4104.19.camel@gmail.com>
-	 <1465056478.4212.3.camel@gmail.com>
+From: Corey Minyard <cminyard@mvista.com>
+Subject: Re: [PATCH] Force processes to non-realtime before mm_exit
+Date: Sat, 4 Jun 2016 19:28:09 -0500
+Message-ID: <57537219.8020904@mvista.com>
+References: <1464995924-16367-1-git-send-email-brian@peloton-tech.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-To: Mel Gorman <mgorman@suse.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f54.google.com ([74.125.82.54]:38558 "EHLO
-	mail-wm0-f54.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1750889AbcFDQRE (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sat, 4 Jun 2016 12:17:04 -0400
-Received: by mail-wm0-f54.google.com with SMTP id m124so23381915wme.1
-        for <linux-rt-users@vger.kernel.org>; Sat, 04 Jun 2016 09:17:02 -0700 (PDT)
-In-Reply-To: <1465056478.4212.3.camel@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Cc: linux-rt-users@vger.kernel.org, bigeasy@linutronix.de
+To: Brian Silverman <brian@peloton-tech.com>,
+	linux-kernel@vger.kernel.org
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1464995924-16367-1-git-send-email-brian@peloton-tech.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On Sat, 2016-06-04 at 18:07 +0200, Mike Galbraith wrote:
-> Oho, actually, it's not only RT kernels, master with an enterprise like
-> NOPREEMPT config fails as well, so it's a garden variety regression.
-> 
-> futex_wake04    1  TFAIL  :  futex_wake04.c:126: Bug: wait_thread2 did not wake after 30 secs.
+On 06/03/2016 06:18 PM, Brian Silverman wrote:
+> Without this, a realtime process which has called mlockall exiting
+> causes large latencies for other realtime processes at the same or
+> lower priorities. This seems like a fairly common use case too, because
+> realtime processes generally want their memory locked into RAM.
 
-And again, swiped bits fixed it.
+Could this cause a subtle priority inversion for a process waiting
+on this process to die?  I'm thinking that if this is a critical process,
+it crashes, and the system is very busy with other RT processes,
+it could take a long time before the process gets restarted when
+it is expected to happen quickly.
+
+I don't have another solution for you, and beyond speeding up the
+memory reclamation process (which may not be possible or easy)
+I'm not sure there is.  I'm just pointing out a possible side effect.
+
+-corey
+
+> Signed-off-by: Brian Silverman <brian@peloton-tech.com>
+> ---
+>   kernel/exit.c | 6 ++++++
+>   1 file changed, 6 insertions(+)
+>
+> diff --git a/kernel/exit.c b/kernel/exit.c
+> index a0cf72b..68a97df 100644
+> --- a/kernel/exit.c
+> +++ b/kernel/exit.c
+> @@ -730,6 +730,12 @@ void do_exit(long code)
+>   	tsk->exit_code = code;
+>   	taskstats_exit(tsk, group_dead);
+>   
+> +	if (tsk->policy == SCHED_FIFO || tsk->policy == SCHED_RR) {
+> +		struct sched_param param = { .sched_priority = 0 };
+> +
+> +		sched_setscheduler_nocheck(current, SCHED_NORMAL, &param);
+> +	}
+> +
+>   	exit_mm(tsk);
+>   
+>   	if (group_dead)
