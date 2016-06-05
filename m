@@ -1,56 +1,47 @@
-From: Corey Minyard <cminyard@mvista.com>
-Subject: Re: [PATCH] Force processes to non-realtime before mm_exit
-Date: Sat, 4 Jun 2016 19:28:09 -0500
-Message-ID: <57537219.8020904@mvista.com>
-References: <1464995924-16367-1-git-send-email-brian@peloton-tech.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [patch] mm/memcontrol.c::mem_cgroup_migrate() - replace another
+ local_irq_disable() w. local_lock_irq()
+Date: Sun, 05 Jun 2016 08:11:13 +0200
+Message-ID: <1465107073.4263.3.camel@gmail.com>
+References: <20160603104424.GA18975@linutronix.de>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=windows-1252; format=flowed
+Content-Type: text/plain; charset="UTF-8"
 Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users@vger.kernel.org, bigeasy@linutronix.de
-To: Brian Silverman <brian@peloton-tech.com>,
-	linux-kernel@vger.kernel.org
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1464995924-16367-1-git-send-email-brian@peloton-tech.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-wm0-f44.google.com ([74.125.82.44]:37546 "EHLO
+	mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751364AbcFEGLT (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Sun, 5 Jun 2016 02:11:19 -0400
+In-Reply-To: <20160603104424.GA18975@linutronix.de>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/03/2016 06:18 PM, Brian Silverman wrote:
-> Without this, a realtime process which has called mlockall exiting
-> causes large latencies for other realtime processes at the same or
-> lower priorities. This seems like a fairly common use case too, because
-> realtime processes generally want their memory locked into RAM.
+v4.6 grew a local_irq_disable() in mm/memcontrol.c::mem_cgroup_migrate().
+Convert it to use the existing local lock (event_lock) like the others.
 
-Could this cause a subtle priority inversion for a process waiting
-on this process to die?  I'm thinking that if this is a critical process,
-it crashes, and the system is very busy with other RT processes,
-it could take a long time before the process gets restarted when
-it is expected to happen quickly.
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ mm/memcontrol.c |    4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-I don't have another solution for you, and beyond speeding up the
-memory reclamation process (which may not be possible or easy)
-I'm not sure there is.  I'm just pointing out a possible side effect.
-
--corey
-
-> Signed-off-by: Brian Silverman <brian@peloton-tech.com>
-> ---
->   kernel/exit.c | 6 ++++++
->   1 file changed, 6 insertions(+)
->
-> diff --git a/kernel/exit.c b/kernel/exit.c
-> index a0cf72b..68a97df 100644
-> --- a/kernel/exit.c
-> +++ b/kernel/exit.c
-> @@ -730,6 +730,12 @@ void do_exit(long code)
->   	tsk->exit_code = code;
->   	taskstats_exit(tsk, group_dead);
->   
-> +	if (tsk->policy == SCHED_FIFO || tsk->policy == SCHED_RR) {
-> +		struct sched_param param = { .sched_priority = 0 };
-> +
-> +		sched_setscheduler_nocheck(current, SCHED_NORMAL, &param);
-> +	}
-> +
->   	exit_mm(tsk);
->   
->   	if (group_dead)
+--- a/mm/memcontrol.c
++++ b/mm/memcontrol.c
+@@ -5557,10 +5557,10 @@ void mem_cgroup_migrate(struct page *old
+ 
+ 	commit_charge(newpage, memcg, false);
+ 
+-	local_irq_disable();
++	local_lock_irq(event_lock);
+ 	mem_cgroup_charge_statistics(memcg, newpage, compound, nr_pages);
+ 	memcg_check_events(memcg, newpage);
+-	local_irq_enable();
++	local_unlock_irq(event_lock);
+ }
+ 
+ DEFINE_STATIC_KEY_FALSE(memcg_sockets_enabled_key);
