@@ -1,8 +1,8 @@
 From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [patch] mm/memcontrol.c::mem_cgroup_migrate() - replace another
- local_irq_disable() w. local_lock_irq()
-Date: Sun, 05 Jun 2016 08:11:13 +0200
-Message-ID: <1465107073.4263.3.camel@gmail.com>
+Subject: [patch rfc] work-simple: Rename work-simple.[ch] to swork.[ch] for
+ consistency
+Date: Sun, 05 Jun 2016 08:16:10 +0200
+Message-ID: <1465107370.4263.7.camel@gmail.com>
 References: <20160603104424.GA18975@linutronix.de>
 Mime-Version: 1.0
 Content-Type: text/plain; charset="UTF-8"
@@ -12,36 +12,485 @@ Cc: LKML <linux-kernel@vger.kernel.org>,
 	Steven Rostedt <rostedt@goodmis.org>
 To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	Thomas Gleixner <tglx@linutronix.de>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f44.google.com ([74.125.82.44]:37546 "EHLO
-	mail-wm0-f44.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751364AbcFEGLT (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Sun, 5 Jun 2016 02:11:19 -0400
+Return-path: <linux-kernel-owner@vger.kernel.org>
 In-Reply-To: <20160603104424.GA18975@linutronix.de>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-v4.6 grew a local_irq_disable() in mm/memcontrol.c::mem_cgroup_migrate().
-Convert it to use the existing local lock (event_lock) like the others.
+
+The internal bits are already swork_blah, rename source to match. 
 
 Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 ---
- mm/memcontrol.c |    4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ arch/x86/kernel/cpu/mcheck/mce.c       |    2 
+ drivers/thermal/x86_pkg_temp_thermal.c |    2 
+ fs/aio.c                               |    2 
+ include/linux/cgroup-defs.h            |    2 
+ include/linux/swork.h                  |   24 ++++
+ include/linux/work-simple.h            |   24 ----
+ kernel/sched/Makefile                  |    2 
+ kernel/sched/swork.c                   |  173 +++++++++++++++++++++++++++++++++
+ kernel/sched/work-simple.c             |  173 ---------------------------------
+ 9 files changed, 202 insertions(+), 202 deletions(-)
 
---- a/mm/memcontrol.c
-+++ b/mm/memcontrol.c
-@@ -5557,10 +5557,10 @@ void mem_cgroup_migrate(struct page *old
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -42,7 +42,7 @@
+ #include <linux/irq_work.h>
+ #include <linux/export.h>
+ #include <linux/jiffies.h>
+-#include <linux/work-simple.h>
++#include <linux/swork.h>
  
- 	commit_charge(newpage, memcg, false);
+ #include <asm/processor.h>
+ #include <asm/traps.h>
+--- a/drivers/thermal/x86_pkg_temp_thermal.c
++++ b/drivers/thermal/x86_pkg_temp_thermal.c
+@@ -29,7 +29,7 @@
+ #include <linux/pm.h>
+ #include <linux/thermal.h>
+ #include <linux/debugfs.h>
+-#include <linux/work-simple.h>
++#include <linux/swork.h>
+ #include <asm/cpu_device_id.h>
+ #include <asm/mce.h>
  
--	local_irq_disable();
-+	local_lock_irq(event_lock);
- 	mem_cgroup_charge_statistics(memcg, newpage, compound, nr_pages);
- 	memcg_check_events(memcg, newpage);
--	local_irq_enable();
-+	local_unlock_irq(event_lock);
- }
+--- a/fs/aio.c
++++ b/fs/aio.c
+@@ -40,7 +40,7 @@
+ #include <linux/ramfs.h>
+ #include <linux/percpu-refcount.h>
+ #include <linux/mount.h>
+-#include <linux/work-simple.h>
++#include <linux/swork.h>
  
- DEFINE_STATIC_KEY_FALSE(memcg_sockets_enabled_key);
+ #include <asm/kmap_types.h>
+ #include <asm/uaccess.h>
+--- a/include/linux/cgroup-defs.h
++++ b/include/linux/cgroup-defs.h
+@@ -16,7 +16,7 @@
+ #include <linux/percpu-refcount.h>
+ #include <linux/percpu-rwsem.h>
+ #include <linux/workqueue.h>
+-#include <linux/work-simple.h>
++#include <linux/swork.h>
+ 
+ #ifdef CONFIG_CGROUPS
+ 
+--- /dev/null
++++ b/include/linux/swork.h
+@@ -0,0 +1,24 @@
++#ifndef _LINUX_SWORK_H
++#define _LINUX_SWORK_H
++
++#include <linux/list.h>
++
++struct swork_event {
++	struct list_head item;
++	unsigned long flags;
++	void (*func)(struct swork_event *);
++};
++
++static inline void INIT_SWORK(struct swork_event *event,
++			      void (*func)(struct swork_event *))
++{
++	event->flags = 0;
++	event->func = func;
++}
++
++bool swork_queue(struct swork_event *sev);
++
++int swork_get(void);
++void swork_put(void);
++
++#endif /* _LINUX_SWORK_H */
+--- a/include/linux/work-simple.h
++++ /dev/null
+@@ -1,24 +0,0 @@
+-#ifndef _LINUX_SWORK_H
+-#define _LINUX_SWORK_H
+-
+-#include <linux/list.h>
+-
+-struct swork_event {
+-	struct list_head item;
+-	unsigned long flags;
+-	void (*func)(struct swork_event *);
+-};
+-
+-static inline void INIT_SWORK(struct swork_event *event,
+-			      void (*func)(struct swork_event *))
+-{
+-	event->flags = 0;
+-	event->func = func;
+-}
+-
+-bool swork_queue(struct swork_event *sev);
+-
+-int swork_get(void);
+-void swork_put(void);
+-
+-#endif /* _LINUX_SWORK_H */
+--- a/kernel/sched/Makefile
++++ b/kernel/sched/Makefile
+@@ -17,7 +17,7 @@ endif
+ 
+ obj-y += core.o loadavg.o clock.o cputime.o
+ obj-y += idle_task.o fair.o rt.o deadline.o stop_task.o
+-obj-y += wait.o swait.o work-simple.o completion.o idle.o
++obj-y += wait.o swait.o swork.o completion.o idle.o
+ obj-$(CONFIG_SMP) += cpupri.o cpudeadline.o
+ obj-$(CONFIG_SCHED_AUTOGROUP) += auto_group.o
+ obj-$(CONFIG_SCHEDSTATS) += stats.o
+--- /dev/null
++++ b/kernel/sched/swork.c
+@@ -0,0 +1,173 @@
++/*
++ * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
++ *
++ * Provides a framework for enqueuing callbacks from irq context
++ * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
++ */
++
++#include <linux/swait.h>
++#include <linux/swork.h>
++#include <linux/kthread.h>
++#include <linux/slab.h>
++#include <linux/spinlock.h>
++#include <linux/export.h>
++
++#define SWORK_EVENT_PENDING     (1 << 0)
++
++static DEFINE_MUTEX(worker_mutex);
++static struct sworker *glob_worker;
++
++struct sworker {
++	struct list_head events;
++	struct swait_queue_head wq;
++
++	raw_spinlock_t lock;
++
++	struct task_struct *task;
++	int refs;
++};
++
++static bool swork_readable(struct sworker *worker)
++{
++	bool r;
++
++	if (kthread_should_stop())
++		return true;
++
++	raw_spin_lock_irq(&worker->lock);
++	r = !list_empty(&worker->events);
++	raw_spin_unlock_irq(&worker->lock);
++
++	return r;
++}
++
++static int swork_kthread(void *arg)
++{
++	struct sworker *worker = arg;
++
++	for (;;) {
++		swait_event_interruptible(worker->wq,
++					swork_readable(worker));
++		if (kthread_should_stop())
++			break;
++
++		raw_spin_lock_irq(&worker->lock);
++		while (!list_empty(&worker->events)) {
++			struct swork_event *sev;
++
++			sev = list_first_entry(&worker->events,
++					struct swork_event, item);
++			list_del(&sev->item);
++			raw_spin_unlock_irq(&worker->lock);
++
++			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
++							 &sev->flags));
++			sev->func(sev);
++			raw_spin_lock_irq(&worker->lock);
++		}
++		raw_spin_unlock_irq(&worker->lock);
++	}
++	return 0;
++}
++
++static struct sworker *swork_create(void)
++{
++	struct sworker *worker;
++
++	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
++	if (!worker)
++		return ERR_PTR(-ENOMEM);
++
++	INIT_LIST_HEAD(&worker->events);
++	raw_spin_lock_init(&worker->lock);
++	init_swait_queue_head(&worker->wq);
++
++	worker->task = kthread_run(swork_kthread, worker, "kswork");
++	if (IS_ERR(worker->task)) {
++		kfree(worker);
++		return ERR_PTR(-ENOMEM);
++	}
++
++	return worker;
++}
++
++static void swork_destroy(struct sworker *worker)
++{
++	kthread_stop(worker->task);
++
++	WARN_ON(!list_empty(&worker->events));
++	kfree(worker);
++}
++
++/**
++ * swork_queue - queue swork
++ *
++ * Returns %false if @work was already on a queue, %true otherwise.
++ *
++ * The work is queued and processed on a random CPU
++ */
++bool swork_queue(struct swork_event *sev)
++{
++	unsigned long flags;
++
++	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
++		return false;
++
++	raw_spin_lock_irqsave(&glob_worker->lock, flags);
++	list_add_tail(&sev->item, &glob_worker->events);
++	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
++
++	swake_up(&glob_worker->wq);
++	return true;
++}
++EXPORT_SYMBOL_GPL(swork_queue);
++
++/**
++ * swork_get - get an instance of the sworker
++ *
++ * Returns an negative error code if the initialization if the worker did not
++ * work, %0 otherwise.
++ *
++ */
++int swork_get(void)
++{
++	struct sworker *worker;
++
++	mutex_lock(&worker_mutex);
++	if (!glob_worker) {
++		worker = swork_create();
++		if (IS_ERR(worker)) {
++			mutex_unlock(&worker_mutex);
++			return -ENOMEM;
++		}
++
++		glob_worker = worker;
++	}
++
++	glob_worker->refs++;
++	mutex_unlock(&worker_mutex);
++
++	return 0;
++}
++EXPORT_SYMBOL_GPL(swork_get);
++
++/**
++ * swork_put - puts an instance of the sworker
++ *
++ * Will destroy the sworker thread. This function must not be called until all
++ * queued events have been completed.
++ */
++void swork_put(void)
++{
++	mutex_lock(&worker_mutex);
++
++	glob_worker->refs--;
++	if (glob_worker->refs > 0)
++		goto out;
++
++	swork_destroy(glob_worker);
++	glob_worker = NULL;
++out:
++	mutex_unlock(&worker_mutex);
++}
++EXPORT_SYMBOL_GPL(swork_put);
+--- a/kernel/sched/work-simple.c
++++ /dev/null
+@@ -1,173 +0,0 @@
+-/*
+- * Copyright (C) 2014 BMW Car IT GmbH, Daniel Wagner daniel.wagner@bmw-carit.de
+- *
+- * Provides a framework for enqueuing callbacks from irq context
+- * PREEMPT_RT_FULL safe. The callbacks are executed in kthread context.
+- */
+-
+-#include <linux/swait.h>
+-#include <linux/work-simple.h>
+-#include <linux/kthread.h>
+-#include <linux/slab.h>
+-#include <linux/spinlock.h>
+-#include <linux/export.h>
+-
+-#define SWORK_EVENT_PENDING     (1 << 0)
+-
+-static DEFINE_MUTEX(worker_mutex);
+-static struct sworker *glob_worker;
+-
+-struct sworker {
+-	struct list_head events;
+-	struct swait_queue_head wq;
+-
+-	raw_spinlock_t lock;
+-
+-	struct task_struct *task;
+-	int refs;
+-};
+-
+-static bool swork_readable(struct sworker *worker)
+-{
+-	bool r;
+-
+-	if (kthread_should_stop())
+-		return true;
+-
+-	raw_spin_lock_irq(&worker->lock);
+-	r = !list_empty(&worker->events);
+-	raw_spin_unlock_irq(&worker->lock);
+-
+-	return r;
+-}
+-
+-static int swork_kthread(void *arg)
+-{
+-	struct sworker *worker = arg;
+-
+-	for (;;) {
+-		swait_event_interruptible(worker->wq,
+-					swork_readable(worker));
+-		if (kthread_should_stop())
+-			break;
+-
+-		raw_spin_lock_irq(&worker->lock);
+-		while (!list_empty(&worker->events)) {
+-			struct swork_event *sev;
+-
+-			sev = list_first_entry(&worker->events,
+-					struct swork_event, item);
+-			list_del(&sev->item);
+-			raw_spin_unlock_irq(&worker->lock);
+-
+-			WARN_ON_ONCE(!test_and_clear_bit(SWORK_EVENT_PENDING,
+-							 &sev->flags));
+-			sev->func(sev);
+-			raw_spin_lock_irq(&worker->lock);
+-		}
+-		raw_spin_unlock_irq(&worker->lock);
+-	}
+-	return 0;
+-}
+-
+-static struct sworker *swork_create(void)
+-{
+-	struct sworker *worker;
+-
+-	worker = kzalloc(sizeof(*worker), GFP_KERNEL);
+-	if (!worker)
+-		return ERR_PTR(-ENOMEM);
+-
+-	INIT_LIST_HEAD(&worker->events);
+-	raw_spin_lock_init(&worker->lock);
+-	init_swait_queue_head(&worker->wq);
+-
+-	worker->task = kthread_run(swork_kthread, worker, "kswork");
+-	if (IS_ERR(worker->task)) {
+-		kfree(worker);
+-		return ERR_PTR(-ENOMEM);
+-	}
+-
+-	return worker;
+-}
+-
+-static void swork_destroy(struct sworker *worker)
+-{
+-	kthread_stop(worker->task);
+-
+-	WARN_ON(!list_empty(&worker->events));
+-	kfree(worker);
+-}
+-
+-/**
+- * swork_queue - queue swork
+- *
+- * Returns %false if @work was already on a queue, %true otherwise.
+- *
+- * The work is queued and processed on a random CPU
+- */
+-bool swork_queue(struct swork_event *sev)
+-{
+-	unsigned long flags;
+-
+-	if (test_and_set_bit(SWORK_EVENT_PENDING, &sev->flags))
+-		return false;
+-
+-	raw_spin_lock_irqsave(&glob_worker->lock, flags);
+-	list_add_tail(&sev->item, &glob_worker->events);
+-	raw_spin_unlock_irqrestore(&glob_worker->lock, flags);
+-
+-	swake_up(&glob_worker->wq);
+-	return true;
+-}
+-EXPORT_SYMBOL_GPL(swork_queue);
+-
+-/**
+- * swork_get - get an instance of the sworker
+- *
+- * Returns an negative error code if the initialization if the worker did not
+- * work, %0 otherwise.
+- *
+- */
+-int swork_get(void)
+-{
+-	struct sworker *worker;
+-
+-	mutex_lock(&worker_mutex);
+-	if (!glob_worker) {
+-		worker = swork_create();
+-		if (IS_ERR(worker)) {
+-			mutex_unlock(&worker_mutex);
+-			return -ENOMEM;
+-		}
+-
+-		glob_worker = worker;
+-	}
+-
+-	glob_worker->refs++;
+-	mutex_unlock(&worker_mutex);
+-
+-	return 0;
+-}
+-EXPORT_SYMBOL_GPL(swork_get);
+-
+-/**
+- * swork_put - puts an instance of the sworker
+- *
+- * Will destroy the sworker thread. This function must not be called until all
+- * queued events have been completed.
+- */
+-void swork_put(void)
+-{
+-	mutex_lock(&worker_mutex);
+-
+-	glob_worker->refs--;
+-	if (glob_worker->refs > 0)
+-		goto out;
+-
+-	swork_destroy(glob_worker);
+-	glob_worker = NULL;
+-out:
+-	mutex_unlock(&worker_mutex);
+-}
+-EXPORT_SYMBOL_GPL(swork_put);
