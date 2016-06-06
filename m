@@ -1,113 +1,52 @@
-From: Alison Chaiken <alison@peloton-tech.com>
-Subject: Re: [PATCH][RT] netpoll: Always take poll_lock when doing polling
-Date: Sun, 5 Jun 2016 08:16:58 -0700
-Message-ID: <CAOuSAjfXsLQWkrcE7Y3t-k0Bv5qieqgziu8Zf-au4SK-rLvRHQ@mail.gmail.com>
-References: <20160526195641.6c26e979@gandalf.local.home> <20160602161235.GA12971@linutronix.de>
- <20160604071131.08d449db@grimm.local.home>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: v3.18-RT
+Date: Mon, 6 Jun 2016 09:01:36 +0200
+Message-ID: <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
+References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
+ <20160603163732.GD4496@linutronix.de>
+ <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
-	LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	David Miller <davem@davemloft.net>
-To: Steven Rostedt <rostedt@goodmis.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160604071131.08d449db@grimm.local.home>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: 8bit
+Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
+To: David Hauck <davidh@netacquire.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from www.linutronix.de ([62.245.132.108]:59022 "EHLO
+	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751039AbcFFHBk (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 6 Jun 2016 03:01:40 -0400
+In-Reply-To: <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Steven Rostedt suggests in reference to "[PATCH][RT] netpoll: Always
-take poll_lock when doing polling"
->> [ Alison, can you try this patch ]
+On 06/03/2016 07:15 PM, David Hauck wrote:
+> Hi Sebastian,
 
-Sebastian follows up:
->Alison, did you try it?
+Hi David,
 
-Sorry for not responding sooner.   I was hoping to come to a complete
-understanding of the system before replying . . .
+>  
+> On Fri, 3 Jun 2016 at 09:38:00, Sebastian Andrzej Siewior wrote:
+>> I am not aware of any lockup on v3.18-RT tree. I just tried a few boot up on two of machines and it looks good.
+>> Don't have currently any control on anything >4 cores.
+> 
+> Thx. We've done further testing and see that v3.18.9 does not suffer the same problem.
+> 
+> I also have some dump information (all "unable to handle kernel paging request") and was wondering what the best way to pass this along to the list might be? Would a compressed archive of the (4) log files be OK to send along?
 
-I did try that patch, but it hasn't made much difference.   Let me
-back up and restate the problem I'm trying to solve, which is that a
-DRA7X OMAP5 SOC system running a patched 4.1.18-ti-rt kernel has a
-main event loop in user space that misses latency deadlines under the
-test condition where I ping-flood it from another box.   While in
-production, the system would not be expected to support high rates of
-network traffic, but the instability with the ping-flood makes me
-wonder if there aren't underlying configuration problems.
+That "unable to handle kernel paging request" shouldn't be much. Please
+send it to the list. The first BUG backtrace is the important one.
+Also if you say that the v3.18.9 based RT tree worked could please try
+v3.18.13-rt10? If so then you could the git tree
 
-We've applied Sebastian's commit "softirq: split timer softirqs out of
-ksoftirqd," which improved event loop stability substantially when we
-left ksoftirqd running at userspace default but elevated ktimersoftd.
- That made me think that focusing on the softirqs was pertinent.
+  https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/
 
-Subsequently, I've tried "[PATCH][RT] netpoll: Always take poll_lock
-when doing polling" (which seems like a good idea in any event).
-After reading the "net: threadable napi poll loop discussion"
-(https://lkml.org/lkml/2016/5/10/472), and
-https://lkml.org/lkml/2016/2/27/152, I tried reverting
+and start a bisect between v3.18.13-rt10 and v3.18.29-rt30?
 
-commit c10d73671ad30f54692f7f69f0e09e75d3a8926a
-   Author: Eric Dumazet <edumazet@google.com>
-   Date:   Thu Jan 10 15:26:34 2013 -0800
-       softirq: reduce latencies
+> -David
+>  
+>>> Thanks in advance,
+>>> -David
 
-but that didn't help.   When the userspace application (running at -3
-priority) starts having problems, I see that the hard IRQ associated
-with the ethernet device uses about 35% of one core, which seems
-awfully high if the NAPI has triggered a switch to polling.  I vaguely
-recall David Miller saying in the "threadable napi poll loop"
-discussion that accounting was broken for net IRQs, so perhaps that
-number is misleading.   mpstat shows that the NET_RX softirqs run on
-the same core where we've pinned the ethernet IRQ, so you might hope
-that userspace might be able to run happily on the other one.
+Sebastian
 
-What I see in ftrace while watching scheduler and IRQ events is that
-the userspace application is yielding to ethernet or CAN IRQs, which
-also raise NET_RX.    In the following,  ping-flood is running, and
-irq/343 is the ethernet one:
-
- userspace_application-4767  [000] dn.h1..  4196.422318:
-irq_handler_entry: irq=347 name=can1
- userspace_application-4767  [000] dn.h1..  4196.422319:
-irq_handler_exit: irq=347 ret=handled
- userspace_application-4767  [000] dn.h2..  4196.422321: sched_waking:
-comm=irq/347-can1 pid=2053 prio=28 target_cpu=000
- irq/343-4848400-874   [001] ....112  4196.422323: softirq_entry:
-vec=3 [action=NET_RX]
- userspace_application-4767  [000] dn.h3..  4196.422325: sched_wakeup:
-comm=irq/347-can1 pid=2053 prio=28 target_cpu=000
- irq/343-4848400-874   [001] ....112  4196.422328: napi_poll: napi
-poll on napi struct edd5f560 for device eth0
- irq/343-4848400-874   [001] ....112  4196.422329: softirq_exit: vec=3
-[action=NET_RX]
- userspace_application-4767  [000] dn..3..  4196.422332:
-sched_stat_runtime: comm=userspace_application pid=4767 runtime=22448
-[ns] vruntime=338486919642 [ns]
- userspace_application-4767  [000] d...3..  4196.422336: sched_switch:
-prev_comm=userspace_application prev_pid=4767 prev_prio=120
-prev_state=R ==> next_comm=irq/347-can1 next_pid=2053 next_prio=28
- irq/343-4848400-874   [001] d...3..  4196.422339: sched_switch:
-prev_comm=irq/343-4848400 prev_pid=874 prev_prio=47 prev_state=S ==>
-next_comm=irq/344-4848400 next_pid=875 next_prio=47
-
-You can see why the application is having problems: it is constantly
-interrupted by eth and CAN IRQs.   Given that CAN traffic is critical
-for our application, perhaps we will simply have to reduce the eth
-hard IRQ priority in order to make the system more robust?     It
-would be great to offload the network traffic-handling to the Cortex-M
-processor on the DRA7, but I fear that the development schedule will
-not allow for that option.
-
-I still am not sure how to tell if the NAPI switch from
-interrupt-driven to polling is properly taking place.      Any
-suggestion on how best to monitor that behavior with overly loading
-the system would be appreciated.
-
-Thanks again for the patches,
-Alison Chaiken
-Peloton Technology
