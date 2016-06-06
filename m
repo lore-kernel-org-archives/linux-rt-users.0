@@ -1,41 +1,29 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT, what to do about up/down_read_non_owner()
-Date: Mon, 6 Jun 2016 09:49:41 +0200
-Message-ID: <c3b6168e-dde1-fb3b-36e6-5ff4c75e7355@linutronix.de>
-References: <1465109869.4263.23.camel@gmail.com>
+Subject: Re: [patch] mm/memcontrol.c::mem_cgroup_migrate() - replace another
+ local_irq_disable() w. local_lock_irq()
+Date: Mon, 6 Jun 2016 10:52:07 +0200
+Message-ID: <60e058cb-db66-3303-f5c3-d6e872ef3d30@linutronix.de>
+References: <20160603104424.GA18975@linutronix.de>
+ <1465107073.4263.3.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Ingo Molnar <mingo@redhat.com>
+Cc: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>
 To: Mike Galbraith <umgwanakikbuti@gmail.com>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59314 "EHLO
-	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751164AbcFFHtr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Jun 2016 03:49:47 -0400
-In-Reply-To: <1465109869.4263.23.camel@gmail.com>
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+	Thomas Gleixner <tglx@linutronix.de>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1465107073.4263.3.camel@gmail.com>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-On 06/05/2016 08:57 AM, Mike Galbraith wrote:
-> Greetings,
+On 06/05/2016 08:11 AM, Mike Galbraith wrote:
+> v4.6 grew a local_irq_disable() in mm/memcontrol.c::mem_cgroup_migrate().
+> Convert it to use the existing local lock (event_lock) like the others.
 > 
-> In v4.7, Al added those buggers to NFS.  BCACHE is disabled in RT
-> because of same.. but that's a somewhat suboptimal solution for
-> something as widely used as NFS.
-> 
-> Suggestions?  I reverted the offending commit to get 4.7-rt up and
-> running, but that's not gonna fly long term.
+> Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-This API should be avoided according to the comment and completions
-should be used. I am for removal of those. Were the locking people okay
-with this change in the first place or did this just sneak in?
+Applied.
 
-> 
-> 	-Mike
-> 
 Sebastian
