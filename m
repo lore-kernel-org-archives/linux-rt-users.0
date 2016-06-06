@@ -1,52 +1,41 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: v3.18-RT
-Date: Mon, 6 Jun 2016 09:01:36 +0200
-Message-ID: <16d5e3f2-dd20-c802-37aa-86eab553fcfc@linutronix.de>
-References: <FCC5AC80E299464B82E1345E2C10FC9D8098CE51@S1P5DAG4C.EXCHPROD.USA.NET>
- <20160603163732.GD4496@linutronix.de>
- <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
+Subject: Re: RT, what to do about up/down_read_non_owner()
+Date: Mon, 6 Jun 2016 09:49:41 +0200
+Message-ID: <c3b6168e-dde1-fb3b-36e6-5ff4c75e7355@linutronix.de>
+References: <1465109869.4263.23.camel@gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Content-Transfer-Encoding: 8bit
-Cc: "linux-rt-users@vger.kernel.org" <linux-rt-users@vger.kernel.org>
-To: David Hauck <davidh@netacquire.com>
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Ingo Molnar <mingo@redhat.com>
+To: Mike Galbraith <umgwanakikbuti@gmail.com>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:59022 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:59314 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751039AbcFFHBk (ORCPT
+	with ESMTP id S1751164AbcFFHtr (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 6 Jun 2016 03:01:40 -0400
-In-Reply-To: <FCC5AC80E299464B82E1345E2C10FC9D8099ACF6@S1P5DAG4C.EXCHPROD.USA.NET>
+	Mon, 6 Jun 2016 03:49:47 -0400
+In-Reply-To: <1465109869.4263.23.camel@gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On 06/03/2016 07:15 PM, David Hauck wrote:
-> Hi Sebastian,
-
-Hi David,
-
->  
-> On Fri, 3 Jun 2016 at 09:38:00, Sebastian Andrzej Siewior wrote:
->> I am not aware of any lockup on v3.18-RT tree. I just tried a few boot up on two of machines and it looks good.
->> Don't have currently any control on anything >4 cores.
+On 06/05/2016 08:57 AM, Mike Galbraith wrote:
+> Greetings,
 > 
-> Thx. We've done further testing and see that v3.18.9 does not suffer the same problem.
+> In v4.7, Al added those buggers to NFS.  BCACHE is disabled in RT
+> because of same.. but that's a somewhat suboptimal solution for
+> something as widely used as NFS.
 > 
-> I also have some dump information (all "unable to handle kernel paging request") and was wondering what the best way to pass this along to the list might be? Would a compressed archive of the (4) log files be OK to send along?
+> Suggestions?  I reverted the offending commit to get 4.7-rt up and
+> running, but that's not gonna fly long term.
 
-That "unable to handle kernel paging request" shouldn't be much. Please
-send it to the list. The first BUG backtrace is the important one.
-Also if you say that the v3.18.9 based RT tree worked could please try
-v3.18.13-rt10? If so then you could the git tree
+This API should be avoided according to the comment and completions
+should be used. I am for removal of those. Were the locking people okay
+with this change in the first place or did this just sneak in?
 
-  https://git.kernel.org/cgit/linux/kernel/git/rt/linux-stable-rt.git/
-
-and start a bisect between v3.18.13-rt10 and v3.18.29-rt30?
-
-> -David
->  
->>> Thanks in advance,
->>> -David
-
+> 
+> 	-Mike
+> 
 Sebastian
-
