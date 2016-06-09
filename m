@@ -1,38 +1,82 @@
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Subject: Re: RT trees fail ltp futex_wait04  - culprit=65d8fc777f6d (futex:
- Remove requirement for lock_page() in get_futex_key())
-Date: Thu, 9 Jun 2016 14:04:00 +0200
-Message-ID: <20160609120400.GA6305@linutronix.de>
-References: <1465052027.4104.19.camel@gmail.com>
- <1465056478.4212.3.camel@gmail.com>
- <1465057019.4178.0.camel@gmail.com>
+Subject: Re: [PATCH][RT] netpoll: Always take poll_lock when doing polling
+Date: Thu, 9 Jun 2016 14:37:33 +0200
+Message-ID: <20160609123733.GB6305@linutronix.de>
+References: <20160526195641.6c26e979@gandalf.local.home>
+ <20160602161235.GA12971@linutronix.de>
+ <20160604071131.08d449db@grimm.local.home>
+ <CAOuSAjfXsLQWkrcE7Y3t-k0Bv5qieqgziu8Zf-au4SK-rLvRHQ@mail.gmail.com>
+ <20160607094642.GA4089@linutronix.de>
+ <CAOuSAjeUX_tvzr9K8B4T-TdXUDcYqFxbtYTa=ke-ePhMJo5NVQ@mail.gmail.com>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=utf-8
-Cc: Mike Galbraith <umgwanakikbuti@gmail.com>
-To: linux-rt-users <linux-rt-users@vger.kernel.org>
+Cc: Steven Rostedt <rostedt@goodmis.org>,
+	LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	netdev <netdev@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
+	Peter Zijlstra <peterz@infradead.org>,
+	Clark Williams <williams@redhat.com>,
+	Eric Dumazet <eric.dumazet@gmail.com>,
+	David Miller <davem@davemloft.net>
+To: Alison Chaiken <alison@peloton-tech.com>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from www.linutronix.de ([62.245.132.108]:51523 "EHLO
+Received: from www.linutronix.de ([62.245.132.108]:52163 "EHLO
 	Galois.linutronix.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751240AbcFIMED (ORCPT
+	with ESMTP id S1750796AbcFIMhi (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 9 Jun 2016 08:04:03 -0400
+	Thu, 9 Jun 2016 08:37:38 -0400
 Content-Disposition: inline
-In-Reply-To: <1465057019.4178.0.camel@gmail.com>
+In-Reply-To: <CAOuSAjeUX_tvzr9K8B4T-TdXUDcYqFxbtYTa=ke-ePhMJo5NVQ@mail.gmail.com>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-- Mel, tglx
-* Mike Galbraith | 2016-06-04 18:16:59 [+0200]:
+* Alison Chaiken | 2016-06-07 17:19:43 [-0700]:
 
->On Sat, 2016-06-04 at 18:07 +0200, Mike Galbraith wrote:
->> Oho, actually, it's not only RT kernels, master with an enterprise like
->> NOPREEMPT config fails as well, so it's a garden variety regression.
->> 
->> futex_wake04    1  TFAIL  :  futex_wake04.c:126: Bug: wait_thread2 did not wake after 30 secs.
+>Sorry to be obscure; I had applied that patch to v4.1.6-rt5.
+
+Using the latest is often not a bad choice compared to the random tree
+you have here.
+
+>> What I remember from testing the two patches on am335x was that before a
+>> ping flood on gbit froze the serial console but with them it the ping
+>> flood was not noticed.
 >
->And again, swiped bits fixed it.
+>I compiled a kernel from upstream d060a36 "Merge branch
+>'ti-linux-4.1.y' of git.ti.com:ti-linux-kernel/ti-linux-kernel into
+>ti-rt-linux-4.1.y" which is unpatched except for using a
+>board-appropriate device-tree.    The serial console is responsive
+>with all our RT userspace applications running alongside a rapid
+>external ping.   However, our main event loop misses frequently as
+>soon as ping faster than 'ping -i 0.0002' is run.    mpstat shows that
+>the sum of the hard IRQ rates in a second is equal precisely to the
+>NET_RX rate, which is ~3400/s.   Does the fact that 3400 < (1/0.0002)
+>already mean that some packets are dropped?   ftrace shows that
 
-for reference, this thread ends here:
-  http://git.kernel.org/tip/077fa7aed17de5022e44bf07dbaf732078b7b5b2
+Not necessarily. The ping command reports how many packets were
+received. It is possible that the sender was not able to send that many
+packates _or_ the received was able to process more packets during a
+single interrupt.
+
+>cpsw_rx_poll() is called even when there is essentially no network
+>traffic, so I'm not sure how to tell if NAPI is working as intended.
+
+You should see an invocation of __raise_softirq_irqoff_ksoft() and then
+cpsw's poll function should run in "ksoftirqd/" context instead in the
+context of the task it runs now.
+
+>I tried running the wakeup_rt tracer, but it loads the system too
+>much.     With ftrace capturing IRQ, scheduler and net events, we're
+>writing out markers into the trace buffer when the event loop makes
+>its deadline and then when it misses so that we can compare the normal
+>and long-latency intervals, but there doesn't appear to be a smoking
+>gun in the difference between the two.
+
+You would need to figure out what adds the latency. My understanding is
+that your RT application is doing CAN traffic and is not meeting the
+deadline. So you drop CAN packets in the end?
+
+>Thanks for all your help,
+>Alison
 
 Sebastian
