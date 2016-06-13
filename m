@@ -1,41 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH][RT] netpoll: Always take poll_lock when doing polling
-Date: Fri, 10 Jun 2016 12:45:25 -0400
-Message-ID: <20160610124525.32cac2e0@gandalf.local.home>
-References: <20160526195641.6c26e979@gandalf.local.home>
-	<20160602161235.GA12971@linutronix.de>
-	<20160604071131.08d449db@grimm.local.home>
-	<20160610155717.GB10775@linutronix.de>
-	<20160610121118.03f281e8@gandalf.local.home>
-	<8582eb37-3b5b-ee7e-3a67-8f4609b0ac3f@linutronix.de>
+From: Jens Koehler <jenskxxx@googlemail.com>
+Subject: Re: hrtimer: interrupt took 10252 ns - meaning?
+Date: Mon, 13 Jun 2016 11:16:11 +0200
+Message-ID: <CAL7_A_VUiLH9JBkL8HBrUaAn6_yF+3jefXHMwGFS8Sr4g29q0A@mail.gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: alison@peloton-tech.com, LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	netdev <netdev@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
-	Peter Zijlstra <peterz@infradead.org>,
-	Clark Williams <williams@redhat.com>,
-	Eric Dumazet <eric.dumazet@gmail.com>,
-	David Miller <davem@davemloft.net>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <8582eb37-3b5b-ee7e-3a67-8f4609b0ac3f@linutronix.de>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Content-Type: text/plain; charset=UTF-8
+Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-rt-users@vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail-vk0-f42.google.com ([209.85.213.42]:36352 "EHLO
+	mail-vk0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S933446AbcFMJQN (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Mon, 13 Jun 2016 05:16:13 -0400
+Received: by mail-vk0-f42.google.com with SMTP id u64so59444375vkf.3
+        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jun 2016 02:16:13 -0700 (PDT)
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-On Fri, 10 Jun 2016 18:20:22 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+I found now out that the problem with RT throttling could happen when
+my application sends UDP broadcasts (and receive its own broadcast).
 
-> > We actually triggered a starvation due to this. I was just seeing if
-> > Alison hit the same issue we did in our tests.  
-> 
-> Okay. Didn't get this information from him. But this is only because
-> the softirqs not running in ksoftirqd, right?
+Is this an already known problem?
 
-Right, I think we supplied this patch before we added the one that
-would push repeated softirqs to ksoftirqd. We probably should see if
-that patch alone fixes our issue.
+[137482.258011] hrtimer: interrupt took 9434 ns
+[178458.961966] NOHZ: local_softirq_pending 102
+[178458.967583] NOHZ: local_softirq_pending 102
+[178458.973295] NOHZ: local_softirq_pending 102
+[178458.980249] NOHZ: local_softirq_pending 102
+[178458.984994] NOHZ: local_softirq_pending 102
+[178458.990582] NOHZ: local_softirq_pending 102
+[178458.996292] NOHZ: local_softirq_pending 102
+[178459.000348] [sched_delayed] sched: RT throttling activated
 
--- Steve
+Jens
