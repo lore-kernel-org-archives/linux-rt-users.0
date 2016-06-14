@@ -1,35 +1,166 @@
-From: Jens Koehler <jenskxxx@googlemail.com>
-Subject: Re: hrtimer: interrupt took 10252 ns - meaning?
-Date: Mon, 13 Jun 2016 11:16:11 +0200
-Message-ID: <CAL7_A_VUiLH9JBkL8HBrUaAn6_yF+3jefXHMwGFS8Sr4g29q0A@mail.gmail.com>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
+Subject: [rfc patch] locking: Cleanup local locks
+Date: Tue, 14 Jun 2016 10:56:02 +0200
+Message-ID: <1465894562.2882.8.camel@gmail.com>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Cc: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: linux-rt-users@vger.kernel.org
+Content-Type: text/plain; charset="UTF-8"
+Content-Transfer-Encoding: 7bit
+Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>
+To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-vk0-f42.google.com ([209.85.213.42]:36352 "EHLO
-	mail-vk0-f42.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S933446AbcFMJQN (ORCPT
+Received: from mail-wm0-f66.google.com ([74.125.82.66]:33933 "EHLO
+	mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751370AbcFNI4G (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 13 Jun 2016 05:16:13 -0400
-Received: by mail-vk0-f42.google.com with SMTP id u64so59444375vkf.3
-        for <linux-rt-users@vger.kernel.org>; Mon, 13 Jun 2016 02:16:13 -0700 (PDT)
+	Tue, 14 Jun 2016 04:56:06 -0400
+Received: by mail-wm0-f66.google.com with SMTP id n184so20670268wmn.1
+        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jun 2016 01:56:05 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-I found now out that the problem with RT throttling could happen when
-my application sends UDP broadcasts (and receive its own broadcast).
 
-Is this an already known problem?
+1. Remove unneeded local_irq_lock.flags.
+2. Make local_lock_irq() use spin_lock/unlock_irq() for PREEMPT_RTB
+3. Make local_lock_irqsave/on() disable irqs for PREEMPT_RTB without
+   mucking about with remote cpu ->flags for local_lock_irqsave_on().
+4. Line up backslashes for no particular reason.
 
-[137482.258011] hrtimer: interrupt took 9434 ns
-[178458.961966] NOHZ: local_softirq_pending 102
-[178458.967583] NOHZ: local_softirq_pending 102
-[178458.973295] NOHZ: local_softirq_pending 102
-[178458.980249] NOHZ: local_softirq_pending 102
-[178458.984994] NOHZ: local_softirq_pending 102
-[178458.990582] NOHZ: local_softirq_pending 102
-[178458.996292] NOHZ: local_softirq_pending 102
-[178459.000348] [sched_delayed] sched: RT throttling activated
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+---
+ include/linux/locallock.h |   44 ++++++++++++++++++++++++--------------------
+ 1 file changed, 24 insertions(+), 20 deletions(-)
 
-Jens
+--- a/include/linux/locallock.h
++++ b/include/linux/locallock.h
+@@ -19,7 +19,6 @@ struct local_irq_lock {
+ 	spinlock_t		lock;
+ 	struct task_struct	*owner;
+ 	int			nestcnt;
+-	unsigned long		flags;
+ };
+ 
+ #define DEFINE_LOCAL_IRQ_LOCK(lvar)					\
+@@ -46,10 +45,14 @@ struct local_irq_lock {
+ # define spin_lock_local(lock)			rt_spin_lock__no_mg(lock)
+ # define spin_trylock_local(lock)		rt_spin_trylock__no_mg(lock)
+ # define spin_unlock_local(lock)		rt_spin_unlock__no_mg(lock)
++# define spin_lock_irq_local(lock)		rt_spin_lock__no_mg(lock)
++# define spin_unlock_irq_local(lock)		rt_spin_unlock__no_mg(lock)
+ #else
+ # define spin_lock_local(lock)			spin_lock(lock)
+ # define spin_trylock_local(lock)		spin_trylock(lock)
+ # define spin_unlock_local(lock)		spin_unlock(lock)
++# define spin_lock_irq_local(lock)		spin_lock_irq(lock)
++# define spin_unlock_irq_local(lock)		spin_unlock_irq(lock)
+ #endif
+ 
+ static inline void __local_lock(struct local_irq_lock *lv)
+@@ -63,10 +66,10 @@ static inline void __local_lock(struct l
+ 	lv->nestcnt++;
+ }
+ 
+-#define local_lock(lvar)					\
++#define local_lock(lvar)						\
+ 	do { __local_lock(&get_local_var(lvar)); } while (0)
+ 
+-#define local_lock_on(lvar, cpu)				\
++#define local_lock_on(lvar, cpu)					\
+ 	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
+ 
+ static inline int __local_trylock(struct local_irq_lock *lv)
+@@ -101,18 +104,18 @@ static inline void __local_unlock(struct
+ 	spin_unlock_local(&lv->lock);
+ }
+ 
+-#define local_unlock(lvar)					\
+-	do {							\
+-		__local_unlock(this_cpu_ptr(&lvar));		\
+-		put_local_var(lvar);				\
++#define local_unlock(lvar)						\
++	do {								\
++		__local_unlock(this_cpu_ptr(&lvar));			\
++		put_local_var(lvar);					\
+ 	} while (0)
+ 
+-#define local_unlock_on(lvar, cpu)                       \
++#define local_unlock_on(lvar, cpu)					\
+ 	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
+ 
+ static inline void __local_lock_irq(struct local_irq_lock *lv)
+ {
+-	spin_lock_irqsave(&lv->lock, lv->flags);
++	spin_lock_irq_local(&lv->lock);
+ 	LL_WARN(lv->owner);
+ 	LL_WARN(lv->nestcnt);
+ 	lv->owner = current;
+@@ -131,7 +134,7 @@ static inline void __local_unlock_irq(st
+ 	LL_WARN(lv->owner != current);
+ 	lv->owner = NULL;
+ 	lv->nestcnt = 0;
+-	spin_unlock_irq(&lv->lock);
++	spin_unlock_irq_local(&lv->lock);
+ }
+ 
+ #define local_unlock_irq(lvar)						\
+@@ -148,7 +151,7 @@ static inline void __local_unlock_irq(st
+ static inline int __local_lock_irqsave(struct local_irq_lock *lv)
+ {
+ 	if (lv->owner != current) {
+-		__local_lock_irq(lv);
++		__local_lock(lv);
+ 		return 0;
+ 	} else {
+ 		lv->nestcnt++;
+@@ -156,21 +159,20 @@ static inline int __local_lock_irqsave(s
+ 	}
+ }
+ 
+-#define local_lock_irqsave(lvar, _flags)				\
++#define local_lock_irqsave(lvar, flags)					\
+ 	do {								\
++		local_irq_save_nort(flags);				\
+ 		if (__local_lock_irqsave(&get_local_var(lvar)))		\
+ 			put_local_var(lvar);				\
+-		_flags = __this_cpu_read(lvar.flags);			\
+ 	} while (0)
+ 
+-#define local_lock_irqsave_on(lvar, _flags, cpu)			\
++#define local_lock_irqsave_on(lvar, flags, cpu)				\
+ 	do {								\
++		local_irq_save_nort(flags);				\
+ 		__local_lock_irqsave(&per_cpu(lvar, cpu));		\
+-		_flags = per_cpu(lvar, cpu).flags;			\
+ 	} while (0)
+ 
+-static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
+-					    unsigned long flags)
++static inline int __local_unlock_irqrestore(struct local_irq_lock *lv)
+ {
+ 	LL_WARN(!lv->nestcnt);
+ 	LL_WARN(lv->owner != current);
+@@ -178,19 +180,21 @@ static inline int __local_unlock_irqrest
+ 		return 0;
+ 
+ 	lv->owner = NULL;
+-	spin_unlock_irqrestore(&lv->lock, lv->flags);
++	spin_unlock_local(&lv->lock);
+ 	return 1;
+ }
+ 
+ #define local_unlock_irqrestore(lvar, flags)				\
+ 	do {								\
+-		if (__local_unlock_irqrestore(this_cpu_ptr(&lvar), flags)) \
++		if (__local_unlock_irqrestore(this_cpu_ptr(&lvar)))	\
+ 			put_local_var(lvar);				\
++		local_irq_restore_nort(flags);				\
+ 	} while (0)
+ 
+ #define local_unlock_irqrestore_on(lvar, flags, cpu)			\
+ 	do {								\
+-		__local_unlock_irqrestore(&per_cpu(lvar, cpu), flags);	\
++		__local_unlock_irqrestore(&per_cpu(lvar, cpu));		\
++		local_irq_restore_nort(flags);				\
+ 	} while (0)
+ 
+ #define local_spin_trylock_irq(lvar, lock)				\
