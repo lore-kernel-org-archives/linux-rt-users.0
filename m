@@ -1,166 +1,53 @@
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
-Subject: [rfc patch] locking: Cleanup local locks
-Date: Tue, 14 Jun 2016 10:56:02 +0200
-Message-ID: <1465894562.2882.8.camel@gmail.com>
+From: Henrik Austad <henrik@austad.us>
+Subject: Linux RT workshop colocated with ELCE'16
+Date: Wed, 15 Jun 2016 13:39:14 +0200
+Message-ID: <20160615113914.GA5950@sisyphus.home.austad.us>
 Mime-Version: 1.0
-Content-Type: text/plain; charset="UTF-8"
-Content-Transfer-Encoding: 7bit
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Content-Type: multipart/signed; micalg=pgp-sha1;
+	protocol="application/pgp-signature"; boundary="SLDf9lqlvOQaIe6s"
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f66.google.com ([74.125.82.66]:33933 "EHLO
-	mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751370AbcFNI4G (ORCPT
+Received: from mail-lf0-f68.google.com ([209.85.215.68]:33294 "EHLO
+	mail-lf0-f68.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751903AbcFOLjU (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 14 Jun 2016 04:56:06 -0400
-Received: by mail-wm0-f66.google.com with SMTP id n184so20670268wmn.1
-        for <linux-rt-users@vger.kernel.org>; Tue, 14 Jun 2016 01:56:05 -0700 (PDT)
+	Wed, 15 Jun 2016 07:39:20 -0400
+Received: by mail-lf0-f68.google.com with SMTP id l188so1154464lfe.0
+        for <linux-rt-users@vger.kernel.org>; Wed, 15 Jun 2016 04:39:18 -0700 (PDT)
+Content-Disposition: inline
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 
-1. Remove unneeded local_irq_lock.flags.
-2. Make local_lock_irq() use spin_lock/unlock_irq() for PREEMPT_RTB
-3. Make local_lock_irqsave/on() disable irqs for PREEMPT_RTB without
-   mucking about with remote cpu ->flags for local_lock_irqsave_on().
-4. Line up backslashes for no particular reason.
+--SLDf9lqlvOQaIe6s
+Content-Type: text/plain; charset=us-ascii
+Content-Disposition: inline
+Content-Transfer-Encoding: quoted-printable
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
----
- include/linux/locallock.h |   44 ++++++++++++++++++++++++--------------------
- 1 file changed, 24 insertions(+), 20 deletions(-)
+Hi all!
 
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -19,7 +19,6 @@ struct local_irq_lock {
- 	spinlock_t		lock;
- 	struct task_struct	*owner;
- 	int			nestcnt;
--	unsigned long		flags;
- };
- 
- #define DEFINE_LOCAL_IRQ_LOCK(lvar)					\
-@@ -46,10 +45,14 @@ struct local_irq_lock {
- # define spin_lock_local(lock)			rt_spin_lock__no_mg(lock)
- # define spin_trylock_local(lock)		rt_spin_trylock__no_mg(lock)
- # define spin_unlock_local(lock)		rt_spin_unlock__no_mg(lock)
-+# define spin_lock_irq_local(lock)		rt_spin_lock__no_mg(lock)
-+# define spin_unlock_irq_local(lock)		rt_spin_unlock__no_mg(lock)
- #else
- # define spin_lock_local(lock)			spin_lock(lock)
- # define spin_trylock_local(lock)		spin_trylock(lock)
- # define spin_unlock_local(lock)		spin_unlock(lock)
-+# define spin_lock_irq_local(lock)		spin_lock_irq(lock)
-+# define spin_unlock_irq_local(lock)		spin_unlock_irq(lock)
- #endif
- 
- static inline void __local_lock(struct local_irq_lock *lv)
-@@ -63,10 +66,10 @@ static inline void __local_lock(struct l
- 	lv->nestcnt++;
- }
- 
--#define local_lock(lvar)					\
-+#define local_lock(lvar)						\
- 	do { __local_lock(&get_local_var(lvar)); } while (0)
- 
--#define local_lock_on(lvar, cpu)				\
-+#define local_lock_on(lvar, cpu)					\
- 	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
- 
- static inline int __local_trylock(struct local_irq_lock *lv)
-@@ -101,18 +104,18 @@ static inline void __local_unlock(struct
- 	spin_unlock_local(&lv->lock);
- }
- 
--#define local_unlock(lvar)					\
--	do {							\
--		__local_unlock(this_cpu_ptr(&lvar));		\
--		put_local_var(lvar);				\
-+#define local_unlock(lvar)						\
-+	do {								\
-+		__local_unlock(this_cpu_ptr(&lvar));			\
-+		put_local_var(lvar);					\
- 	} while (0)
- 
--#define local_unlock_on(lvar, cpu)                       \
-+#define local_unlock_on(lvar, cpu)					\
- 	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
- 
- static inline void __local_lock_irq(struct local_irq_lock *lv)
- {
--	spin_lock_irqsave(&lv->lock, lv->flags);
-+	spin_lock_irq_local(&lv->lock);
- 	LL_WARN(lv->owner);
- 	LL_WARN(lv->nestcnt);
- 	lv->owner = current;
-@@ -131,7 +134,7 @@ static inline void __local_unlock_irq(st
- 	LL_WARN(lv->owner != current);
- 	lv->owner = NULL;
- 	lv->nestcnt = 0;
--	spin_unlock_irq(&lv->lock);
-+	spin_unlock_irq_local(&lv->lock);
- }
- 
- #define local_unlock_irq(lvar)						\
-@@ -148,7 +151,7 @@ static inline void __local_unlock_irq(st
- static inline int __local_lock_irqsave(struct local_irq_lock *lv)
- {
- 	if (lv->owner != current) {
--		__local_lock_irq(lv);
-+		__local_lock(lv);
- 		return 0;
- 	} else {
- 		lv->nestcnt++;
-@@ -156,21 +159,20 @@ static inline int __local_lock_irqsave(s
- 	}
- }
- 
--#define local_lock_irqsave(lvar, _flags)				\
-+#define local_lock_irqsave(lvar, flags)					\
- 	do {								\
-+		local_irq_save_nort(flags);				\
- 		if (__local_lock_irqsave(&get_local_var(lvar)))		\
- 			put_local_var(lvar);				\
--		_flags = __this_cpu_read(lvar.flags);			\
- 	} while (0)
- 
--#define local_lock_irqsave_on(lvar, _flags, cpu)			\
-+#define local_lock_irqsave_on(lvar, flags, cpu)				\
- 	do {								\
-+		local_irq_save_nort(flags);				\
- 		__local_lock_irqsave(&per_cpu(lvar, cpu));		\
--		_flags = per_cpu(lvar, cpu).flags;			\
- 	} while (0)
- 
--static inline int __local_unlock_irqrestore(struct local_irq_lock *lv,
--					    unsigned long flags)
-+static inline int __local_unlock_irqrestore(struct local_irq_lock *lv)
- {
- 	LL_WARN(!lv->nestcnt);
- 	LL_WARN(lv->owner != current);
-@@ -178,19 +180,21 @@ static inline int __local_unlock_irqrest
- 		return 0;
- 
- 	lv->owner = NULL;
--	spin_unlock_irqrestore(&lv->lock, lv->flags);
-+	spin_unlock_local(&lv->lock);
- 	return 1;
- }
- 
- #define local_unlock_irqrestore(lvar, flags)				\
- 	do {								\
--		if (__local_unlock_irqrestore(this_cpu_ptr(&lvar), flags)) \
-+		if (__local_unlock_irqrestore(this_cpu_ptr(&lvar)))	\
- 			put_local_var(lvar);				\
-+		local_irq_restore_nort(flags);				\
- 	} while (0)
- 
- #define local_unlock_irqrestore_on(lvar, flags, cpu)			\
- 	do {								\
--		__local_unlock_irqrestore(&per_cpu(lvar, cpu), flags);	\
-+		__local_unlock_irqrestore(&per_cpu(lvar, cpu));		\
-+		local_irq_restore_nort(flags);				\
- 	} while (0)
- 
- #define local_spin_trylock_irq(lvar, lock)				\
+So a brief discussion on #linux-rt today spurred me into action
+
+Are people going to ELCE in Berlin this year, and if so, would it make=20
+sense to organize a linux-rt workshop/miniconf around the same time?
+
+ELCE is Tuesday 11. Oct - Thursday 13. Oct, so either Monday or Friday with=
+=20
+perhaps some overlap with ELCE.
+
+--=20
+Henrik Austad
+
+--SLDf9lqlvOQaIe6s
+Content-Type: application/pgp-signature; name="signature.asc"
+Content-Description: Digital signature
+
+-----BEGIN PGP SIGNATURE-----
+Version: GnuPG v1
+
+iEYEARECAAYFAldhPmIACgkQ6k5VT6v45lmTsgCeIrSW+PndhxZX8elGc2Mer0YV
+TMgAoJ5Kc+RK5K3K9GwrR2iAoRRfwvIr
+=h3Bb
+-----END PGP SIGNATURE-----
+
+--SLDf9lqlvOQaIe6s--
