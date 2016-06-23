@@ -1,64 +1,103 @@
-From: Thomas Gleixner <tglx@linutronix.de>
-Subject: Real-time summit 2016 - Call for presentations
-Date: Thu, 23 Jun 2016 08:58:38 +0200 (CEST)
-Message-ID: <alpine.DEB.2.11.1606230842330.5839@nanos>
-Mime-Version: 1.0
-Content-Type: TEXT/PLAIN; charset=US-ASCII
-Cc: linux-rt-users <linux-rt-users@vger.kernel.org>
-To: LKML <linux-kernel@vger.kernel.org>
+From: John Kacur <jkacur@redhat.com>
+Subject: [PATCH 3/3] rt-tests: Add cyclicdeadline and deadline_test to the Make system
+Date: Thu, 23 Jun 2016 14:11:51 +0200
+Message-ID: <1466683911-10994-4-git-send-email-jkacur@redhat.com>
+References: <1466683911-10994-1-git-send-email-jkacur@redhat.com>
+Cc: lkml <linux-kernel@vger.kernel.org>,
+	Steven Rostedt <rostedt@goodmis.org>,
+	Clark Williams <williams@redhat.com>,
+	John Kacur <jkacur@redhat.com>
+To: rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+In-Reply-To: <1466683911-10994-1-git-send-email-jkacur@redhat.com>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-This is a call for presentations for the Real-Time Summit which will
-be held in Berlin, Germany, on October 11th, 2016, at the Maritim
-Hotel Berlin. This event is co-located with Embedded Linux Conference
-Europe 2016.
+- Add cyclicdeadline and deadline_test to the Makefile
+- Conditionally define _GNU_SOURCE in the new programs
+- Add the new programs to the .gitignore file
 
-The Real-Time Summit is organized by the Linux Foundation Real-Time
-Linux (RTL) collaborative project
-(http://www.linuxfoundation.org/collaborate/workgroups/real-time).
+Signed-off-by: John Kacur <jkacur@redhat.com>
+---
+ .gitignore                          |  2 ++
+ Makefile                            | 11 ++++++++++-
+ src/sched_deadline/cyclicdeadline.c |  2 ++
+ src/sched_deadline/deadline_test.c  |  2 ++
+ 4 files changed, 16 insertions(+), 1 deletion(-)
 
-The event is intended to gather developers and users of the PREEMPT_RT
-patch. The main intent is to provide room for discussion between developers,
-tooling experts and users.
-
-If you are interested to present, please submit a proposal to
-rt-cfp@linutronix.de before July 15th, 2016, at 23:59 EST. Please provide a
-title, abstract describing the proposed talk (900 characters maximum), short
-biography (900 characters maximum), and describe the targeted audience (900
-characters maximum). Please indicate the slot length you are aiming for: The
-format is a single track with presentation slots of 30 or 45 minutes
-length. The maximum presentation time is 15 resp. 20 minutes and the remaining
-time is reserved for discussion. The focus of this event is discussion.
-
-We are welcoming presentations from both end users and developers, on topics
-covering, but not limited to:
-
- * Real-time Linux development
- * Real-time Linux evaluation
- * Real-time Linux use cases (Success and failures)
- * Real-time Linux tooling (tracing, configuration, ...)
-
-Those can cover recently available technologies, ongoing work and new
-ideas. Please understand that this is not a place for presenting sales and
-marketing pitches or to advertise technology which is not related or not
-usable in the context of real-time Linux technology.
-
-This year, attending the Real-Time Summit is free of charge, and
-attendees are not required to register to other events. If you intend
-to attend, we recommend you don't wait too much before registering, as
-we need to consider room size limits.
-
-Further information about the event will be available at
-https://wiki.linuxfoundation.org/realtime/rt-summit2016.
-
-The Real-Time Summit is currently sponsored by the RTL collaborative
-project. Please let us know if your company is interested in
-sponsoring this event.
-
-Thank you,
-
-On behalf of the RTL collaborative project
-
-   Thomas Gleixner
+diff --git a/.gitignore b/.gitignore
+index ceee8bfb6e9a..b8884d547940 100644
+--- a/.gitignore
++++ b/.gitignore
+@@ -30,6 +30,8 @@ SRPMS
+ /pip_stress
+ /hackbench
+ /pmqtest
++/cyclicdeadline
++/deadline_test
+ 
+ rt-tests.spec
+ tags
+diff --git a/Makefile b/Makefile
+index d60282e05931..8c0294d197e4 100644
+--- a/Makefile
++++ b/Makefile
+@@ -14,7 +14,9 @@ sources = cyclictest.c \
+ 	  sendme.c \
+ 	  signaltest.c \
+ 	  sigwaittest.c \
+-	  svsematest.c
++	  svsematest.c  \
++	  cyclicdeadline.c \
++	  deadline_test.c
+ 
+ TARGETS = $(sources:.c=)
+ LIBS	= -lrt -lpthread
+@@ -83,6 +85,7 @@ VPATH	+= src/pmqtest:
+ VPATH	+= src/backfire:
+ VPATH	+= src/lib:
+ VPATH	+= src/hackbench:
++VPATH	+= src/sched_deadline:
+ 
+ $(OBJDIR)/%.o: %.c | $(OBJDIR)
+ 	$(CC) -D VERSION=$(VERSION) -c $< $(CFLAGS) $(CPPFLAGS) -o $@
+@@ -103,6 +106,12 @@ $(OBJDIR):
+ cyclictest: $(OBJDIR)/cyclictest.o $(OBJDIR)/librttest.a
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB) $(NUMA_LIBS)
+ 
++cyclicdeadline: $(OBJDIR)/cyclicdeadline.o $(OBJDIR)/librttest.a
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
++
++deadline_test: $(OBJDIR)/deadline_test.o $(OBJDIR)/librttest.a
++	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
++
+ signaltest: $(OBJDIR)/signaltest.o $(OBJDIR)/librttest.a
+ 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $< $(LIBS) $(RTTESTLIB)
+ 
+diff --git a/src/sched_deadline/cyclicdeadline.c b/src/sched_deadline/cyclicdeadline.c
+index 9c50456f7419..f530488545e0 100644
+--- a/src/sched_deadline/cyclicdeadline.c
++++ b/src/sched_deadline/cyclicdeadline.c
+@@ -1,4 +1,6 @@
++#ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
++#endif
+ #include <pthread.h>
+ #include <stdarg.h>
+ #include <stdlib.h>
+diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+index 8a813c494520..2794730febc4 100644
+--- a/src/sched_deadline/deadline_test.c
++++ b/src/sched_deadline/deadline_test.c
+@@ -29,7 +29,9 @@
+  *    Look for "simple_test"
+  *
+  */
++#ifndef _GNU_SOURCE
+ #define _GNU_SOURCE
++#endif
+ #include <pthread.h>
+ #include <stdarg.h>
+ #include <stdlib.h>
+-- 
+2.4.11
