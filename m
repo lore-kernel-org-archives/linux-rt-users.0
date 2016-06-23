@@ -1,35 +1,59 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH 1/3] rt-tests: Makefile, change version to 1.1
-Date: Thu, 23 Jun 2016 14:11:49 +0200
-Message-ID: <1466683911-10994-2-git-send-email-jkacur@redhat.com>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: Re: [PATCH 3/3] rt-tests: Add cyclicdeadline and deadline_test to
+ the Make system
+Date: Thu, 23 Jun 2016 17:47:46 -0400
+Message-ID: <20160623174746.36d3657d@gandalf.local.home>
 References: <1466683911-10994-1-git-send-email-jkacur@redhat.com>
-Cc: lkml <linux-kernel@vger.kernel.org>,
-	Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <1466683911-10994-1-git-send-email-jkacur@redhat.com>
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+	<1466683911-10994-4-git-send-email-jkacur@redhat.com>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: rt-users <linux-rt-users@vger.kernel.org>,
+	lkml <linux-kernel@vger.kernel.org>,
+	Clark Williams <williams@redhat.com>
+To: John Kacur <jkacur@redhat.com>
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from smtprelay0100.hostedemail.com ([216.40.44.100]:50258 "EHLO
+	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
+	by vger.kernel.org with ESMTP id S1751255AbcFWVrv (ORCPT
+	<rfc822;linux-rt-users@vger.kernel.org>);
+	Thu, 23 Jun 2016 17:47:51 -0400
+In-Reply-To: <1466683911-10994-4-git-send-email-jkacur@redhat.com>
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
-Rethinking the naming scheme, so changing the development line from 2.0
-to 1.1
+On Thu, 23 Jun 2016 14:11:51 +0200
+John Kacur <jkacur@redhat.com> wrote:
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- Makefile | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/Makefile b/Makefile
-index a54d82bd8964..d60282e05931 100644
---- a/Makefile
-+++ b/Makefile
-@@ -1,4 +1,4 @@
--VERSION = 2.0
-+VERSION = 1.1
- CC?=$(CROSS_COMPILE)gcc
- AR?=$(CROSS_COMPILE)ar
- 
--- 
-2.4.11
+> index 9c50456f7419..f530488545e0 100644
+> --- a/src/sched_deadline/cyclicdeadline.c
+> +++ b/src/sched_deadline/cyclicdeadline.c
+> @@ -1,4 +1,6 @@
+> +#ifndef _GNU_SOURCE
+>  #define _GNU_SOURCE
+> +#endif
+>  #include <pthread.h>
+>  #include <stdarg.h>
+>  #include <stdlib.h>
+> diff --git a/src/sched_deadline/deadline_test.c b/src/sched_deadline/deadline_test.c
+> index 8a813c494520..2794730febc4 100644
+> --- a/src/sched_deadline/deadline_test.c
+> +++ b/src/sched_deadline/deadline_test.c
+> @@ -29,7 +29,9 @@
+>   *    Look for "simple_test"
+>   *
+>   */
+> +#ifndef _GNU_SOURCE
+>  #define _GNU_SOURCE
+> +#endif
+
+I'd say nuke these if they are already defined via the Makefile or
+something. I can move the define to the Makefile in my github too.
+
+-- Steve
+
+>  #include <pthread.h>
+>  #include <stdarg.h>
+>  #include <stdlib.h>
+
