@@ -1,44 +1,49 @@
-From: John Kacur <jkacur@redhat.com>
-Subject: [PATCH] rt-tests-1.0.1: Remove _GNU_SOURCE from source files
-Date: Fri, 24 Jun 2016 13:46:28 +0200
-Message-ID: <1466768788-6961-1-git-send-email-jkacur@redhat.com>
-Cc: Steven Rostedt <rostedt@goodmis.org>,
-	Clark Williams <williams@redhat.com>,
-	John Kacur <jkacur@redhat.com>
-To: rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-wm0-f66.google.com ([74.125.82.66]:33484 "EHLO
-	mail-wm0-f66.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751372AbcFXLqr (ORCPT
-	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jun 2016 07:46:47 -0400
-Received: by mail-wm0-f66.google.com with SMTP id r201so4329493wme.0
-        for <linux-rt-users@vger.kernel.org>; Fri, 24 Jun 2016 04:46:46 -0700 (PDT)
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+From: Steven Rostedt <rostedt@goodmis.org>
+Subject: [ANNOUNCE] 4.1.27-rt30
+Date: Fri, 24 Jun 2016 16:48:31 -0400
+Message-ID: <20160624164831.105d753c@gandalf.local.home>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 7bit
+Cc: Thomas Gleixner <tglx@linutronix.de>,
+	Carsten Emde <C.Emde@osadl.org>,
+	John Kacur <jkacur@redhat.com>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: LKML <linux-kernel@vger.kernel.org>,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
-Remove _GNU_SOURCE from source files since it is already defined in via
-the Makefile
 
-Signed-off-by: John Kacur <jkacur@redhat.com>
----
- src/rt-migrate-test/rt-migrate-test.c | 3 ---
- 1 file changed, 3 deletions(-)
+Dear RT Folks,
 
-diff --git a/src/rt-migrate-test/rt-migrate-test.c b/src/rt-migrate-test/rt-migrate-test.c
-index d7b68ddac3e5..0a0bb77ab661 100644
---- a/src/rt-migrate-test/rt-migrate-test.c
-+++ b/src/rt-migrate-test/rt-migrate-test.c
-@@ -20,9 +20,6 @@
-  *
-  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  */
--#ifndef _GNU_SOURCE
--#define _GNU_SOURCE
--#endif
- #include <stdio.h>
- #ifndef __USE_XOPEN2K
- # define __USE_XOPEN2K
--- 
-2.4.11
+I'm pleased to announce the 4.1.27-rt30 stable release.
 
+
+This release is just an update to the new stable 4.1.27 version
+and no RT specific changes have been made.
+
+
+You can get this release via the git tree at:
+
+  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
+
+  branch: v4.1-rt
+  Head SHA1: 8e2fdcbbc040d053e4c850bfd36ec894ebb74cca
+
+
+Or to build 4.1.27-rt30 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-4.1.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.27-rt30.patch.xz
+
+
+
+
+Enjoy,
+
+-- Steve
