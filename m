@@ -1,55 +1,35 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [ANNOUNCE] 3.2.81-rt116
-Date: Fri, 24 Jun 2016 16:51:29 -0400
-Message-ID: <20160624165129.20b7fb19@gandalf.local.home>
+From: Daniel Wagner <wagi@monom.org>
+Subject: A summit on the Summit
+Date: Mon, 27 Jun 2016 09:44:27 +0200
+Message-ID: <5770D95B.40304@monom.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=ISO-8859-1; format=flowed
 Content-Transfer-Encoding: 7bit
-Cc: Thomas Gleixner <tglx@linutronix.de>,
-	Carsten Emde <C.Emde@osadl.org>,
-	John Kacur <jkacur@redhat.com>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-To: LKML <linux-kernel@vger.kernel.org>,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+To: linux-rt-users@vger.kernel.org
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0250.hostedemail.com ([216.40.44.250]:37905 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1751349AbcFXUvm (ORCPT
+Received: from hotel311.server4you.de ([85.25.146.15]:33380 "EHLO
+	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751385AbcF0Hoa (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Fri, 24 Jun 2016 16:51:42 -0400
+	Mon, 27 Jun 2016 03:44:30 -0400
+Received: from hotel311.server4you.de (localhost [127.0.0.1])
+	by filter.mynetwork.local (Postfix) with ESMTP id 6C64419406B3
+	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2016 09:44:28 +0200 (CEST)
+Received: from Daniels-MacBook-Pro.local (unknown [212.118.206.70])
+	by hotel311.server4you.de (Postfix) with ESMTPSA id 454A219400FF
+	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2016 09:44:28 +0200 (CEST)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
+Hi,
 
-Dear RT Folks,
+I tried to write up what happened in the Austrian Alps beginning of 
+June. It took a bit longer because I had to do it via corporate 
+processes. Finally, here it is:
 
-I'm pleased to announce the 3.2.81-rt116 stable release.
+http://www.bmw-carit.com/blog/a-summit-on-the-summit/
 
+Please let me know if there is anything not correct in the text.
 
-This release is just an update to the new stable 3.2.81 version
-and no RT specific changes have been made.
-
-
-You can get this release via the git tree at:
-
-  git://git.kernel.org/pub/scm/linux/kernel/git/rt/linux-stable-rt.git
-
-  branch: v3.2-rt
-  Head SHA1: 3c32278dfdc27c86ddd1d9b4e10f1559882a091c
-
-
-Or to build 3.2.81-rt116 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.2.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.2.81.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.2/patch-3.2.81-rt116.patch.xz
-
-
-
-
-Enjoy,
-
--- Steve
-
+cheers,
+daniel
