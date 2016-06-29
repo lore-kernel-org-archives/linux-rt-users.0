@@ -1,35 +1,51 @@
-From: Daniel Wagner <wagi@monom.org>
-Subject: A summit on the Summit
-Date: Mon, 27 Jun 2016 09:44:27 +0200
-Message-ID: <5770D95B.40304@monom.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-1; format=flowed
-Content-Transfer-Encoding: 7bit
-To: linux-rt-users@vger.kernel.org
+From: minyard@acm.org
+Subject: [PATCH] sched: Fix compile warning when using CONFIG_PREEMPT_NONE
+Date: Wed, 29 Jun 2016 11:55:11 -0500
+Message-ID: <1467219311-19424-1-git-send-email-minyard@acm.org>
+Cc: Corey Minyard <cminyard@mvista.com>
+To: linux-rt-users@vger.kernel.org,
+	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from hotel311.server4you.de ([85.25.146.15]:33380 "EHLO
-	hotel311.server4you.de" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751385AbcF0Hoa (ORCPT
+Received: from mail-ob0-f193.google.com ([209.85.214.193]:34049 "EHLO
+	mail-ob0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751460AbcF2Q4p (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Mon, 27 Jun 2016 03:44:30 -0400
-Received: from hotel311.server4you.de (localhost [127.0.0.1])
-	by filter.mynetwork.local (Postfix) with ESMTP id 6C64419406B3
-	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2016 09:44:28 +0200 (CEST)
-Received: from Daniels-MacBook-Pro.local (unknown [212.118.206.70])
-	by hotel311.server4you.de (Postfix) with ESMTPSA id 454A219400FF
-	for <linux-rt-users@vger.kernel.org>; Mon, 27 Jun 2016 09:44:28 +0200 (CEST)
+	Wed, 29 Jun 2016 12:56:45 -0400
+Received: by mail-ob0-f193.google.com with SMTP id s7so4032438obo.1
+        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2016 09:55:20 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-Hi,
+From: Corey Minyard <cminyard@mvista.com>
 
-I tried to write up what happened in the Austrian Alps beginning of 
-June. It took a bit longer because I had to do it via corporate 
-processes. Finally, here it is:
+preemptible_lazy() is only used under CONFIG_PREEMPT, but it was
+always defined.  Move it into a CONFIG_PREEMPT ifdef.
 
-http://www.bmw-carit.com/blog/a-summit-on-the-summit/
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
+---
+ kernel/sched/core.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-Please let me know if there is anything not correct in the text.
+diff --git a/kernel/sched/core.c b/kernel/sched/core.c
+index f3130a8..57af106 100644
+--- a/kernel/sched/core.c
++++ b/kernel/sched/core.c
+@@ -3454,6 +3454,7 @@ static void __sched notrace preempt_schedule_common(void)
+ 	} while (need_resched());
+ }
+ 
++#ifdef CONFIG_PREEMPT
+ #ifdef CONFIG_PREEMPT_LAZY
+ /*
+  * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
+@@ -3478,7 +3479,6 @@ static int preemptible_lazy(void)
+ 
+ #endif
+ 
+-#ifdef CONFIG_PREEMPT
+ /*
+  * this is the entry point to schedule() from in-kernel preemption
+  * off of preempt_enable. Kernel preemptions off return from interrupt
+-- 
+2.7.4
 
-cheers,
-daniel
