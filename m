@@ -1,51 +1,65 @@
 From: minyard@acm.org
-Subject: [PATCH] sched: Fix compile warning when using CONFIG_PREEMPT_NONE
-Date: Wed, 29 Jun 2016 11:55:11 -0500
-Message-ID: <1467219311-19424-1-git-send-email-minyard@acm.org>
+Subject: [PATCH][RT] x86: Fix an RT MCE crash
+Date: Thu, 30 Jun 2016 08:24:49 -0500
+Message-ID: <1467293089-27656-1-git-send-email-minyard@acm.org>
 Cc: Corey Minyard <cminyard@mvista.com>
 To: linux-rt-users@vger.kernel.org,
 	Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail-ob0-f193.google.com ([209.85.214.193]:34049 "EHLO
-	mail-ob0-f193.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
-	with ESMTP id S1751460AbcF2Q4p (ORCPT
+Received: from mail-pf0-f194.google.com ([209.85.192.194]:33837 "EHLO
+	mail-pf0-f194.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S1751922AbcF3NYz (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Wed, 29 Jun 2016 12:56:45 -0400
-Received: by mail-ob0-f193.google.com with SMTP id s7so4032438obo.1
-        for <linux-rt-users@vger.kernel.org>; Wed, 29 Jun 2016 09:55:20 -0700 (PDT)
+	Thu, 30 Jun 2016 09:24:55 -0400
+Received: by mail-pf0-f194.google.com with SMTP id 66so7415158pfy.1
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2016 06:24:55 -0700 (PDT)
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
 From: Corey Minyard <cminyard@mvista.com>
 
-preemptible_lazy() is only used under CONFIG_PREEMPT, but it was
-always defined.  Move it into a CONFIG_PREEMPT ifdef.
+On some x86 systems an MCE interrupt would come in before the kernel
+was ready for it.  Looking at the latest RT code, it has similar
+(but not quite the same) code, except it adds a bool that tells if
+MCE handling is initialized.  Add the same bool for older versions.
 
 Signed-off-by: Corey Minyard <cminyard@mvista.com>
 ---
- kernel/sched/core.c | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ arch/x86/kernel/cpu/mcheck/mce.c | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
 
-diff --git a/kernel/sched/core.c b/kernel/sched/core.c
-index f3130a8..57af106 100644
---- a/kernel/sched/core.c
-+++ b/kernel/sched/core.c
-@@ -3454,6 +3454,7 @@ static void __sched notrace preempt_schedule_common(void)
- 	} while (need_resched());
+We noticed this issue on a new Broadwell system when we booted RT
+on it.  This patch is for 3.10, I'm not sure if it applies to
+other kernel versions.
+
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index aaf4b9b..7125584 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1365,6 +1365,7 @@ static void __mce_notify_work(void)
  }
  
-+#ifdef CONFIG_PREEMPT
- #ifdef CONFIG_PREEMPT_LAZY
- /*
-  * If TIF_NEED_RESCHED is then we allow to be scheduled away since this is
-@@ -3478,7 +3479,6 @@ static int preemptible_lazy(void)
+ #ifdef CONFIG_PREEMPT_RT_FULL
++static bool notify_work_ready __read_mostly;
+ struct task_struct *mce_notify_helper;
  
- #endif
+ static int mce_notify_helper_thread(void *unused)
+@@ -1386,12 +1387,14 @@ static int mce_notify_work_init(void)
+ 	if (!mce_notify_helper)
+ 		return -ENOMEM;
  
--#ifdef CONFIG_PREEMPT
- /*
-  * this is the entry point to schedule() from in-kernel preemption
-  * off of preempt_enable. Kernel preemptions off return from interrupt
++	notify_work_ready = true;
+ 	return 0;
+ }
+ 
+ static void mce_notify_work(void)
+ {
+-	wake_up_process(mce_notify_helper);
++	if (notify_work_ready)
++		wake_up_process(mce_notify_helper);
+ }
+ #else
+ static void mce_notify_work(void)
 -- 
 2.7.4
 
