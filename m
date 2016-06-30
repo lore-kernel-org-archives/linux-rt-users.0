@@ -1,98 +1,115 @@
-From: Steven Rostedt <rostedt@goodmis.org>
+From: Corey Minyard <minyard@acm.org>
 Subject: Re: [PATCH][RT] x86: Fix an RT MCE crash
-Date: Thu, 30 Jun 2016 11:51:01 -0400
-Message-ID: <20160630115101.6337c395@gandalf.local.home>
+Date: Thu, 30 Jun 2016 10:58:57 -0500
+Message-ID: <577541C1.20302@acm.org>
 References: <1467293089-27656-1-git-send-email-minyard@acm.org>
-	<20160630094301.22d32ec1@gandalf.local.home>
-	<5775316F.2020102@acm.org>
+ <20160630094301.22d32ec1@gandalf.local.home> <5775316F.2020102@acm.org>
+ <20160630115101.6337c395@gandalf.local.home>
+Reply-To: minyard@acm.org
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
+Content-Type: text/plain; charset=windows-1252; format=flowed
 Content-Transfer-Encoding: 7bit
 Cc: linux-rt-users@vger.kernel.org,
 	Corey Minyard <cminyard@mvista.com>,
 	Borislav Petkov <bp@alien8.de>
-To: Corey Minyard <minyard@acm.org>
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from smtprelay0047.hostedemail.com ([216.40.44.47]:52140 "EHLO
-	smtprelay.hostedemail.com" rhost-flags-OK-OK-OK-FAIL)
-	by vger.kernel.org with ESMTP id S1752224AbcF3PwF (ORCPT
+Received: from mail-oi0-f65.google.com ([209.85.218.65]:36691 "EHLO
+	mail-oi0-f65.google.com" rhost-flags-OK-OK-OK-OK) by vger.kernel.org
+	with ESMTP id S932683AbcF3P7A (ORCPT
 	<rfc822;linux-rt-users@vger.kernel.org>);
-	Thu, 30 Jun 2016 11:52:05 -0400
-In-Reply-To: <5775316F.2020102@acm.org>
+	Thu, 30 Jun 2016 11:59:00 -0400
+Received: by mail-oi0-f65.google.com with SMTP id x6so8162212oif.3
+        for <linux-rt-users@vger.kernel.org>; Thu, 30 Jun 2016 08:59:00 -0700 (PDT)
+In-Reply-To: <20160630115101.6337c395@gandalf.local.home>
 Sender: linux-rt-users-owner@vger.kernel.org
 List-ID: <linux-rt-users.vger.kernel.org>
 
-On Thu, 30 Jun 2016 09:49:19 -0500
-Corey Minyard <minyard@acm.org> wrote:
+On 06/30/2016 10:51 AM, Steven Rostedt wrote:
+> On Thu, 30 Jun 2016 09:49:19 -0500
+> Corey Minyard <minyard@acm.org> wrote:
+>
+>> On 06/30/2016 08:43 AM, Steven Rostedt wrote:
+>>> On Thu, 30 Jun 2016 08:24:49 -0500
+>>> minyard@acm.org wrote:
+>>>   
+>>>> From: Corey Minyard <cminyard@mvista.com>
+>>>>
+>>>> On some x86 systems an MCE interrupt would come in before the kernel
+>>>> was ready for it.  Looking at the latest RT code, it has similar
+>>>> (but not quite the same) code, except it adds a bool that tells if
+>>>> MCE handling is initialized.  Add the same bool for older versions.
+>>>>
+>>>> Signed-off-by: Corey Minyard <cminyard@mvista.com>
+>>>> ---
+>>>>    arch/x86/kernel/cpu/mcheck/mce.c | 5 ++++-
+>>>>    1 file changed, 4 insertions(+), 1 deletion(-)
+>>>>
+>>>> We noticed this issue on a new Broadwell system when we booted RT
+>>>> on it.  This patch is for 3.10, I'm not sure if it applies to
+>>>> other kernel versions.
+>>> Do you mean other 'older' versions? and that this works with the
+>>> versions after 3.10 without this patch?
+>> I haven't look at supported kernel versions besides 3.10 and 4.4.
+>> The fix was from the 4.4 version of this code.  This patch fixes
+>> v3.10-rt; I can look at finding which other versions need this.  I
+>> was planning to do this, but I wanted to get the patch out for
+>> comments first.
+> I'm not an MCE expert (I just Cc'd one though ;-)
 
-> On 06/30/2016 08:43 AM, Steven Rostedt wrote:
-> > On Thu, 30 Jun 2016 08:24:49 -0500
-> > minyard@acm.org wrote:
-> >  
-> >> From: Corey Minyard <cminyard@mvista.com>
-> >>
-> >> On some x86 systems an MCE interrupt would come in before the kernel
-> >> was ready for it.  Looking at the latest RT code, it has similar
-> >> (but not quite the same) code, except it adds a bool that tells if
-> >> MCE handling is initialized.  Add the same bool for older versions.
-> >>
-> >> Signed-off-by: Corey Minyard <cminyard@mvista.com>
-> >> ---
-> >>   arch/x86/kernel/cpu/mcheck/mce.c | 5 ++++-
-> >>   1 file changed, 4 insertions(+), 1 deletion(-)
-> >>
-> >> We noticed this issue on a new Broadwell system when we booted RT
-> >> on it.  This patch is for 3.10, I'm not sure if it applies to
-> >> other kernel versions.  
-> > Do you mean other 'older' versions? and that this works with the
-> > versions after 3.10 without this patch?  
-> 
-> I haven't look at supported kernel versions besides 3.10 and 4.4.
-> The fix was from the 4.4 version of this code.  This patch fixes
-> v3.10-rt; I can look at finding which other versions need this.  I
-> was planning to do this, but I wanted to get the patch out for
-> comments first.
+Ok.  It's not really an MCE bug per say, just an initialization
+order bug.
 
-I'm not an MCE expert (I just Cc'd one though ;-)
+>
+> OK, so you are saying that the fix was from 4.4-rt? I can go and look
+> for it, and if so, I can add it to the "backport" patches I need to do.
+> Which I need to go and do that soon (backport patches from previous
+> versions). It may already be in that list.
 
-OK, so you are saying that the fix was from 4.4-rt? I can go and look
-for it, and if so, I can add it to the "backport" patches I need to do.
-Which I need to go and do that soon (backport patches from previous
-versions). It may already be in that list.
+The fix was from 4.4-rt, but it's not a separate fix.  The 4.4 change is
+d21959b8ad98 (x86/mce: use swait queue for mce wakeups)
+and it's doing the same thing as the 3.10-rt change
+49fe500d2abd (x86/mce: Defer mce wakeups to threads for
+PREEMPT_RT).
 
--- Steve
+The 3.10-rt change just doesn't have the bool that fixes the
+initialization order issue.
 
-> 
-> -corey
-> 
-> > -- Steve
-> >  
-> >> diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-> >> index aaf4b9b..7125584 100644
-> >> --- a/arch/x86/kernel/cpu/mcheck/mce.c
-> >> +++ b/arch/x86/kernel/cpu/mcheck/mce.c
-> >> @@ -1365,6 +1365,7 @@ static void __mce_notify_work(void)
-> >>   }
-> >>   
-> >>   #ifdef CONFIG_PREEMPT_RT_FULL
-> >> +static bool notify_work_ready __read_mostly;
-> >>   struct task_struct *mce_notify_helper;
-> >>   
-> >>   static int mce_notify_helper_thread(void *unused)
-> >> @@ -1386,12 +1387,14 @@ static int mce_notify_work_init(void)
-> >>   	if (!mce_notify_helper)
-> >>   		return -ENOMEM;
-> >>   
-> >> +	notify_work_ready = true;
-> >>   	return 0;
-> >>   }
-> >>   
-> >>   static void mce_notify_work(void)
-> >>   {
-> >> -	wake_up_process(mce_notify_helper);
-> >> +	if (notify_work_ready)
-> >> +		wake_up_process(mce_notify_helper);
-> >>   }
-> >>   #else
-> >>   static void mce_notify_work(void)  
+-corey
+
+>
+> -- Steve
+>
+>> -corey
+>>
+>>> -- Steve
+>>>   
+>>>> diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+>>>> index aaf4b9b..7125584 100644
+>>>> --- a/arch/x86/kernel/cpu/mcheck/mce.c
+>>>> +++ b/arch/x86/kernel/cpu/mcheck/mce.c
+>>>> @@ -1365,6 +1365,7 @@ static void __mce_notify_work(void)
+>>>>    }
+>>>>    
+>>>>    #ifdef CONFIG_PREEMPT_RT_FULL
+>>>> +static bool notify_work_ready __read_mostly;
+>>>>    struct task_struct *mce_notify_helper;
+>>>>    
+>>>>    static int mce_notify_helper_thread(void *unused)
+>>>> @@ -1386,12 +1387,14 @@ static int mce_notify_work_init(void)
+>>>>    	if (!mce_notify_helper)
+>>>>    		return -ENOMEM;
+>>>>    
+>>>> +	notify_work_ready = true;
+>>>>    	return 0;
+>>>>    }
+>>>>    
+>>>>    static void mce_notify_work(void)
+>>>>    {
+>>>> -	wake_up_process(mce_notify_helper);
+>>>> +	if (notify_work_ready)
+>>>> +		wake_up_process(mce_notify_helper);
+>>>>    }
+>>>>    #else
+>>>>    static void mce_notify_work(void)
 
