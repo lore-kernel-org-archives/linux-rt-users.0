@@ -1,70 +1,43 @@
-From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/20] ARM: at91: pm: simply call at91_pm_init
-Date: Tue, 12 Jul 2016 10:24:06 -0400
-Message-ID: <20160712142417.221251950@goodmis.org>
-References: <20160712142405.634544943@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Subject: Re: [PATCH RT 3/5] trace: correct off by one while recording the
+ trace-event
+Date: Tue, 12 Jul 2016 16:40:50 +0200
+Message-ID: <20160712144050.GA22814@linutronix.de>
+References: <20160712142153.609204728@goodmis.org>
+ <20160712142214.920054617@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
-Cc: Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=utf-8
+Content-Transfer-Encoding: QUOTED-PRINTABLE
+Cc: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>,
+	Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
-	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Alexandre Belloni <alexandre.belloni@free-electrons.com>,
-	Boris Brezillon <boris.brezillon@free-electrons.com>
-To: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>
+	stable-rt@vger.kernel.org
+To: Steven Rostedt <rostedt@goodmis.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-ARM-at91-pm-simply-call-at91_pm_init.patch
+Content-Disposition: inline
+In-Reply-To: <20160712142214.920054617@goodmis.org>
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.1.27-rt31-rc1 stable review patch.
-If anyone has any objections, please let me know.
+* Steven Rostedt | 2016-07-12 10:21:56 [-0400]:
 
-------------------
+>From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+=E2=80=A6
+>Cc: stable-rt@vger.kernel.org
+>Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+>[ Changed this to upstream version. See commit e947841c0dce ]
+>Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 
-From: Alexandre Belloni <alexandre.belloni@free-electrons.com>
+I am not the Author of this commit (and it is not yet in TIP). I haven'=
+t
+had the chance (yet) to test this and check if it breaks / works so I
+did not yet respond to your patch.
 
-at91_pm_init() doesn't return a value, as is the case for its callers,
-simply call it instead of returning its non-existent return value.
+Assuming this behaves equally I don't mind a diffent patch in stable vs
+the devel tree (and I hope to test this & get into the devel tree
+within this week).
 
-Signed-off-by: Alexandre Belloni <alexandre.belloni@free-electrons.com>
-Acked-by: Boris Brezillon <boris.brezillon@free-electrons.com>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
----
- arch/arm/mach-at91/pm.c | 6 +++---
- 1 file changed, 3 insertions(+), 3 deletions(-)
-
-diff --git a/arch/arm/mach-at91/pm.c b/arch/arm/mach-at91/pm.c
-index 5062699cbb12..460181caf51e 100644
---- a/arch/arm/mach-at91/pm.c
-+++ b/arch/arm/mach-at91/pm.c
-@@ -427,7 +427,7 @@ void __init at91sam9260_pm_init(void)
- 	at91_dt_ramc();
- 	at91_pm_data.memctrl = AT91_MEMCTRL_SDRAMC;
- 	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
--	return at91_pm_init();
-+	at91_pm_init();
- }
- 
- void __init at91sam9g45_pm_init(void)
-@@ -435,7 +435,7 @@ void __init at91sam9g45_pm_init(void)
- 	at91_dt_ramc();
- 	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP;
- 	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
--	return at91_pm_init();
-+	at91_pm_init();
- }
- 
- void __init at91sam9x5_pm_init(void)
-@@ -443,5 +443,5 @@ void __init at91sam9x5_pm_init(void)
- 	at91_dt_ramc();
- 	at91_pm_data.uhp_udp_mask = AT91SAM926x_PMC_UHP | AT91SAM926x_PMC_UDP;
- 	at91_pm_data.memctrl = AT91_MEMCTRL_DDRSDR;
--	return at91_pm_init();
-+	at91_pm_init();
- }
--- 
-2.8.1
+Sebastian
