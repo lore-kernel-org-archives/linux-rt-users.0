@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 3/4] x86: Fix an RT MCE crash
-Date: Tue, 12 Jul 2016 15:08:31 -0400
-Message-ID: <20160712190842.545233886@goodmis.org>
+Subject: [PATCH RT 2/4] trace: correct off by one while recording the trace-event
+Date: Tue, 12 Jul 2016 15:08:30 -0400
+Message-ID: <20160712190842.386699928@goodmis.org>
 References: <20160712190828.355044001@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,56 +10,47 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Corey Minyard <cminyard@mvista.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-rt-users-owner@vger.kernel.org>
-Received: from mail.kernel.org ([198.145.29.136]:60790 "EHLO mail.kernel.org"
-	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
-	id S1751058AbcGLTI4 (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
-	Tue, 12 Jul 2016 15:08:56 -0400
-Content-Disposition: inline; filename=0003-x86-Fix-an-RT-MCE-crash.patch
-Sender: linux-rt-users-owner@vger.kernel.org
-List-ID: <linux-rt-users.vger.kernel.org>
+Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0002-trace-correct-off-by-one-while-recording-the-trace-e.patch
+Sender: linux-kernel-owner@vger.kernel.org
+List-Id: linux-rt-users.vger.kernel.org
 
 3.4.112-rt143-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Corey Minyard <cminyard@mvista.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-On some x86 systems an MCE interrupt would come in before the kernel
-was ready for it.  Looking at the latest RT code, it has similar
-(but not quite the same) code, except it adds a bool that tells if
-MCE handling is initialized.  That was required because they had
-switched to use swork instead of a kernel thread.  Here, just
-checking to see if the thread is NULL is good enough to see if
-MCE handling is initialized.
+Trace events like raw_syscalls show always a preempt code of one. The
+reason is that on PREEMPT kernels rcu_read_lock_sched_notrace()
+increases the preemption counter and the function recording the counter
+is caller within the RCU section.
 
-Suggested-by: Borislav Petkov <bp@alien8.de>
-Signed-off-by: Corey Minyard <cminyard@mvista.com>
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[ Changed this to upstream version. See commit e947841c0dce ]
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/cpu/mcheck/mce.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ include/trace/ftrace.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index 27068f690ede..674872b08ea4 100644
---- a/arch/x86/kernel/cpu/mcheck/mce.c
-+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1344,7 +1344,8 @@ static int mce_notify_work_init(void)
- 
- static void mce_notify_work(void)
- {
--	wake_up_process(mce_notify_helper);
-+	if (mce_notify_helper)
-+		wake_up_process(mce_notify_helper);
- }
- #else
- static void mce_notify_work(void)
+diff --git a/include/trace/ftrace.h b/include/trace/ftrace.h
+index 763bf05ccb27..73aab555b42d 100644
+--- a/include/trace/ftrace.h
++++ b/include/trace/ftrace.h
+@@ -530,6 +530,9 @@ ftrace_raw_event_##call(void *__data, proto)				\
+ 									\
+ 	local_save_flags(irq_flags);					\
+ 	pc = preempt_count();						\
++	/* Account for tracepoint preempt disable */			\
++	if (IS_ENABLED(CONFIG_PREEMPT))					\
++		pc--;							\
+ 									\
+ 	__data_size = ftrace_get_offsets_##call(&__data_offsets, args); \
+ 									\
 -- 
 2.8.1
-
-
