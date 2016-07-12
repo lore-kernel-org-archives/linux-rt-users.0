@@ -1,59 +1,39 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 7/8] x86: Fix an RT MCE crash
-Date: Tue, 12 Jul 2016 12:57:56 -0400
-Message-ID: <20160712165802.938737832@goodmis.org>
-References: <20160712165749.741663758@goodmis.org>
+Subject: [PATCH RT 4/4] Linux 3.4.112-rt143-rc1
+Date: Tue, 12 Jul 2016 15:08:32 -0400
+Message-ID: <20160712190842.709637776@goodmis.org>
+References: <20160712190828.355044001@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Borislav Petkov <bp@alien8.de>,
-	Corey Minyard <cminyard@mvista.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0007-x86-Fix-an-RT-MCE-crash.patch
+Content-Disposition: inline; filename=0004-Linux-3.4.112-rt143-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-3.10.102-rt113-rc1 stable review patch.
+3.4.112-rt143-rc1 stable review patch.
 If anyone has any objections, please let me know.
 
 ------------------
 
-From: Corey Minyard <cminyard@mvista.com>
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-On some x86 systems an MCE interrupt would come in before the kernel
-was ready for it.  Looking at the latest RT code, it has similar
-(but not quite the same) code, except it adds a bool that tells if
-MCE handling is initialized.  That was required because they had
-switched to use swork instead of a kernel thread.  Here, just
-checking to see if the thread is NULL is good enough to see if
-MCE handling is initialized.
-
-Suggested-by: Borislav Petkov <bp@alien8.de>
-Signed-off-by: Corey Minyard <cminyard@mvista.com>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/cpu/mcheck/mce.c | 3 ++-
- 1 file changed, 2 insertions(+), 1 deletion(-)
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
-index aaf4b9b94f38..cc70d98a30f6 100644
---- a/arch/x86/kernel/cpu/mcheck/mce.c
-+++ b/arch/x86/kernel/cpu/mcheck/mce.c
-@@ -1391,7 +1391,8 @@ static int mce_notify_work_init(void)
- 
- static void mce_notify_work(void)
- {
--	wake_up_process(mce_notify_helper);
-+	if (mce_notify_helper)
-+		wake_up_process(mce_notify_helper);
- }
- #else
- static void mce_notify_work(void)
+diff --git a/localversion-rt b/localversion-rt
+index 234720dc343d..aec9f67adeee 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt142
++-rt143-rc1
 -- 
 2.8.1
