@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/4] Revert: KVM: lapic: mark LAPIC timer handler as irqsafe
-Date: Tue, 12 Jul 2016 16:54:45 -0400
-Message-ID: <20160712205458.320076864@goodmis.org>
+Subject: [PATCH RT 3/4] x86: Fix an RT MCE crash
+Date: Tue, 12 Jul 2016 16:54:47 -0400
+Message-ID: <20160712205458.695041038@goodmis.org>
 References: <20160712205444.115211356@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,13 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Borislav Petkov <bp@alien8.de>,
+	Corey Minyard <cminyard@mvista.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-Revert-KVM-lapic-mark-LAPIC-timer-handler-as-irqsafe.patch
+Content-Disposition: inline; filename=0003-x86-Fix-an-RT-MCE-crash.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,101 +24,36 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Corey Minyard <cminyard@mvista.com>
 
-The whole patch was not backported correctly and causes allmodconfig to
-fail.
+On some x86 systems an MCE interrupt would come in before the kernel
+was ready for it.  Looking at the latest RT code, it has similar
+(but not quite the same) code, except it adds a bool that tells if
+MCE handling is initialized.  That was required because they had
+switched to use swork instead of a kernel thread.  Here, just
+checking to see if the thread is NULL is good enough to see if
+MCE handling is initialized.
 
+Suggested-by: Borislav Petkov <bp@alien8.de>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kvm/lapic.c | 42 +++---------------------------------------
- 1 file changed, 3 insertions(+), 39 deletions(-)
+ arch/x86/kernel/cpu/mcheck/mce.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/kvm/lapic.c b/arch/x86/kvm/lapic.c
-index 7198be07b406..055cc49ffb10 100644
---- a/arch/x86/kvm/lapic.c
-+++ b/arch/x86/kvm/lapic.c
-@@ -679,38 +679,8 @@ static void update_divide_count(struct kvm_lapic *apic)
- 				   apic->divide_count);
- }
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index b08a373f66fb..fc02fe279ddc 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1206,7 +1206,8 @@ static int mce_notify_work_init(void)
  
--
--static enum hrtimer_restart apic_timer_fn(struct hrtimer *data);
--
--static void apic_timer_expired(struct hrtimer *data)
--{
--	int ret, i = 0;
--	enum hrtimer_restart r;
--	struct kvm_timer *ktimer = container_of(data, struct kvm_timer, timer);
--
--	r = apic_timer_fn(data);
--
--	if (r == HRTIMER_RESTART) {
--		do {
--			ret = hrtimer_start_expires(data, HRTIMER_MODE_ABS);
--			if (ret == -ETIME)
--				hrtimer_add_expires_ns(&ktimer->timer,
--							ktimer->period);
--			i++;
--		} while (ret == -ETIME && i < 10);
--
--		if (ret == -ETIME) {
--			printk_once(KERN_ERR "%s: failed to reprogram timer\n",
--			       __func__);
--			WARN_ON_ONCE(1);
--		}
--	}
--}
--
--
- static void start_apic_timer(struct kvm_lapic *apic)
+ static void mce_notify_work(void)
  {
--	int ret;
- 	ktime_t now;
- 	atomic_set(&apic->lapic_timer.pending, 0);
- 
-@@ -740,11 +710,9 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			}
- 		}
- 
--		ret = hrtimer_start(&apic->lapic_timer.timer,
-+		hrtimer_start(&apic->lapic_timer.timer,
- 			      ktime_add_ns(now, apic->lapic_timer.period),
- 			      HRTIMER_MODE_ABS);
--		if (ret == -ETIME)
--			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		apic_debug("%s: bus cycle is %" PRId64 "ns, now 0x%016"
- 			   PRIx64 ", "
-@@ -774,10 +742,8 @@ static void start_apic_timer(struct kvm_lapic *apic)
- 			ns = (tscdeadline - guest_tsc) * 1000000ULL;
- 			do_div(ns, this_tsc_khz);
- 		}
--		ret = hrtimer_start(&apic->lapic_timer.timer,
-+		hrtimer_start(&apic->lapic_timer.timer,
- 			ktime_add_ns(now, ns), HRTIMER_MODE_ABS);
--		if (ret == -ETIME)
--			apic_timer_expired(&apic->lapic_timer.timer);
- 
- 		local_irq_restore(flags);
- 	}
-@@ -1207,7 +1173,6 @@ int kvm_create_lapic(struct kvm_vcpu *vcpu)
- 	hrtimer_init(&apic->lapic_timer.timer, CLOCK_MONOTONIC,
- 		     HRTIMER_MODE_ABS);
- 	apic->lapic_timer.timer.function = kvm_timer_fn;
--	apic->lapic_timer.timer.irqsafe = 1;
- 	apic->lapic_timer.t_ops = &lapic_timer_ops;
- 	apic->lapic_timer.kvm = vcpu->kvm;
- 	apic->lapic_timer.vcpu = vcpu;
-@@ -1305,8 +1270,7 @@ void __kvm_migrate_apic_timer(struct kvm_vcpu *vcpu)
- 
- 	timer = &apic->lapic_timer.timer;
- 	if (hrtimer_cancel(timer))
--		if (hrtimer_start_expires(timer, HRTIMER_MODE_ABS) == -ETIME)
--			apic_timer_expired(timer);
-+		hrtimer_start_expires(timer, HRTIMER_MODE_ABS);
+-	wake_up_process(mce_notify_helper);
++	if (mce_notify_helper)
++		wake_up_process(mce_notify_helper);
  }
- 
- void kvm_lapic_sync_from_vapic(struct kvm_vcpu *vcpu)
+ #else
+ static void mce_notify_work(void)
 -- 
 2.8.1
