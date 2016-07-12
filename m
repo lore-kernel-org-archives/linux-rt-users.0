@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 0/8] Linux 3.10.102-rt113-rc1
-Date: Tue, 12 Jul 2016 12:57:49 -0400
-Message-ID: <20160712165749.741663758@goodmis.org>
+Subject: [PATCH RT 4/8] kernel/printk: Dont try to print from IRQ/NMI region
+Date: Tue, 12 Jul 2016 12:57:53 -0400
+Message-ID: <20160712165802.448524477@goodmis.org>
+References: <20160712165749.741663758@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,73 +13,56 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-kernel-printk-Don-t-try-to-print-from-IRQ-NMI-region.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.10.102-rt113-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.10.102-rt113-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+On -RT we try to acquire sleeping locks which might lead to warnings
+from lockdep or a warn_on() from spin_try_lock() (which is a rtmutex on
+RT).
+We don't print in general from a IRQ off region so we should not try
+this via console_unblank() / bust_spinlocks() as well.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 7/14/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.10.102-rt113-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.10.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.10.102.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/patch-3.10.102-rt113-rc1.patch.xz
-
-You can also build from 3.10.102-rt112 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.10/incr/patch-3.10.102-rt112-rt113-rc1.patch.xz
-
-
-Changes from 3.10.102-rt112:
-
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ kernel/printk.c | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
 
-
-Corey Minyard (1):
-      x86: Fix an RT MCE crash
-
-Josh Cartwright (1):
-      list_bl: fixup bogus lockdep warning
-
-Rik van Riel (1):
-      kvm, rt: change async pagefault code locking for PREEMPT_RT
-
-Sebastian Andrzej Siewior (4):
-      net: dev: always take qdisc's busylock in __dev_xmit_skb()
-      kernel/printk: Don't try to print from IRQ/NMI region
-      arm: lazy preempt: correct resched condition
-      trace: correct off by one while recording the trace-event
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.10.102-rt113-rc1
-
-----
- arch/arm/kernel/entry-armv.S     |  6 +++++-
- arch/x86/kernel/cpu/mcheck/mce.c |  3 ++-
- arch/x86/kernel/kvm.c            | 37 +++++++++++++++++++------------------
- include/linux/list_bl.h          | 12 +++++++-----
- include/trace/ftrace.h           |  3 +++
- kernel/printk.c                  | 10 ++++++++++
- localversion-rt                  |  2 +-
- net/core/dev.c                   |  4 ++++
- 8 files changed, 51 insertions(+), 26 deletions(-)
+diff --git a/kernel/printk.c b/kernel/printk.c
+index 1b7fbc73c125..55b6871f21e2 100644
+--- a/kernel/printk.c
++++ b/kernel/printk.c
+@@ -1302,6 +1302,11 @@ static void call_console_drivers(int level, const char *text, size_t len)
+ 	if (!console_drivers)
+ 		return;
+ 
++	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
++		if (in_irq() || in_nmi())
++			return;
++	}
++
+ 	migrate_disable();
+ 	for_each_console(con) {
+ 		if (exclusive_console && con != exclusive_console)
+@@ -2236,6 +2241,11 @@ void console_unblank(void)
+ {
+ 	struct console *c;
+ 
++	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
++		if (in_irq() || in_nmi())
++			return;
++	}
++
+ 	/*
+ 	 * console_unblank can no longer be called in interrupt context unless
+ 	 * oops_in_progress is set to 1..
+-- 
+2.8.1
