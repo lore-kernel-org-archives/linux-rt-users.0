@@ -1,7 +1,8 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/20] net: dev: always take qdiscs busylock in __dev_xmit_skb()
-Date: Tue, 12 Jul 2016 10:24:13 -0400
-Message-ID: <20160712142418.711946976@goodmis.org>
+Subject: [PATCH RT 07/20] mm/zsmalloc: Use get/put_cpu_light in
+ zs_map_object()/zs_unmap_object()
+Date: Tue, 12 Jul 2016 10:24:12 -0400
+Message-ID: <20160712142418.554914309@goodmis.org>
 References: <20160712142405.634544943@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Mike Galbraith <umgwanakikbuti@gmail.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-net-dev-always-take-qdisc-s-busylock-in-__dev_xmit_s.patch
+Content-Disposition: inline; filename=0007-mm-zsmalloc-Use-get-put_cpu_light-in-zs_map_object-z.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,40 +24,38 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Mike Galbraith <umgwanakikbuti@gmail.com>
 
-The root-lock is dropped before dev_hard_start_xmit() is invoked and after
-setting the __QDISC___STATE_RUNNING bit. If this task is now pushed away
-by a task with a higher priority then the task with the higher priority
-won't be able to submit packets to the NIC directly instead they will be
-enqueued into the Qdisc. The NIC will remain idle until the task(s) with
-higher priority leave the CPU and the task with lower priority gets back
-and finishes the job.
+Otherwise, we get a ___might_sleep() splat.
 
-If we take always the busylock we ensure that the RT task can boost the
-low-prio task and submit the packet.
-
+Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- net/core/dev.c | 4 ++++
- 1 file changed, 4 insertions(+)
+ mm/zsmalloc.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/net/core/dev.c b/net/core/dev.c
-index a824c9998283..78912da59fc1 100644
---- a/net/core/dev.c
-+++ b/net/core/dev.c
-@@ -2828,7 +2828,11 @@ static inline int __dev_xmit_skb(struct sk_buff *skb, struct Qdisc *q,
- 	 * This permits __QDISC___STATE_RUNNING owner to get the lock more
- 	 * often and dequeue packets faster.
- 	 */
-+#ifdef CONFIG_PREEMPT_RT_FULL
-+	contended = true;
-+#else
- 	contended = qdisc_is_running(q);
-+#endif
- 	if (unlikely(contended))
- 		spin_lock(&q->busylock);
+diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
+index fb1ec10ce449..e819dffd142c 100644
+--- a/mm/zsmalloc.c
++++ b/mm/zsmalloc.c
+@@ -1289,7 +1289,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
+ 	class = pool->size_class[class_idx];
+ 	off = obj_idx_to_offset(page, obj_idx, class->size);
  
+-	area = &get_cpu_var(zs_map_area);
++	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
+ 	area->vm_mm = mm;
+ 	if (off + class->size <= PAGE_SIZE) {
+ 		/* this object is contained entirely within a page */
+@@ -1342,7 +1342,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
+ 
+ 		__zs_unmap_object(area, pages, off, class->size);
+ 	}
+-	put_cpu_var(zs_map_area);
++	put_cpu_light();
+ 	unpin_tag(handle);
+ }
+ EXPORT_SYMBOL_GPL(zs_unmap_object);
 -- 
 2.8.1
