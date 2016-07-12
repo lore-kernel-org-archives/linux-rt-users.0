@@ -1,117 +1,129 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/20] Linux 4.1.27-rt31-rc1
-Date: Tue, 12 Jul 2016 10:24:05 -0400
-Message-ID: <20160712142405.634544943@goodmis.org>
+Subject: [PATCH RT 18/20] mm: perform lru_add_drain_all() remotely
+Date: Tue, 12 Jul 2016 10:24:23 -0400
+Message-ID: <20160712142420.483276825@goodmis.org>
+References: <20160712142405.634544943@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	Rik van Riel <riel@redhat.com>,
+	Luiz Capitulino <lcapitulino@redhat.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0018-mm-perform-lru_add_drain_all-remotely.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+4.1.27-rt31-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 4.1.27-rt31-rc1.
+From: Luiz Capitulino <lcapitulino@redhat.com>
 
-Please scream at me if I messed something up. Please test the patches too.
+lru_add_drain_all() works by scheduling lru_add_drain_cpu() to run
+on all CPUs that have non-empty LRU pagevecs and then waiting for
+the scheduled work to complete. However, workqueue threads may never
+have the chance to run on a CPU that's running a SCHED_FIFO task.
+This causes lru_add_drain_all() to block forever.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
+This commit solves this problem by changing lru_add_drain_all()
+to drain the LRU pagevecs of remote CPUs. This is done by grabbing
+swapvec_lock and calling lru_add_drain_cpu().
 
-The pre-releases will not be pushed to the git repository, only the
-final release is.
+PS: This is based on an idea and initial implementation by
+    Rik van Riel.
 
-If all goes well, this patch will be converted to the next main release
-on 7/14/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 4.1.27-rt31-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-4.1.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-4.1.27.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.27-rt31-rc1.patch.xz
-
-You can also build from 4.1.27-rt30 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.27-rt30-rt31-rc1.patch.xz
-
-
-Changes from 4.1.27-rt30:
-
+Signed-off-by: Rik van Riel <riel@redhat.com>
+Signed-off-by: Luiz Capitulino <lcapitulino@redhat.com>
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ mm/swap.c | 37 ++++++++++++++++++++++++++++++-------
+ 1 file changed, 30 insertions(+), 7 deletions(-)
 
-
-Alexandre Belloni (5):
-      ARM: at91: pm: simply call at91_pm_init
-      ARM: at91: pm: find and remap the pmc
-      ARM: at91: pm: move idle functions to pm.c
-      ARM: at91: remove useless includes and function prototypes
-      usb: gadget: atmel: access the PMC using regmap
-
-Josh Cartwright (1):
-      list_bl: fixup bogus lockdep warning
-
-Luiz Capitulino (1):
-      mm: perform lru_add_drain_all() remotely
-
-Mike Galbraith (2):
-      mm/zsmalloc: Use get/put_cpu_light in zs_map_object()/zs_unmap_object()
-      drivers/block/zram: Replace bit spinlocks with rtmutex for -rt
-
-Peter Zijlstra (1):
-      sched,preempt: Fix preempt_count manipulations
-
-Rik van Riel (1):
-      kvm, rt: change async pagefault code locking for PREEMPT_RT
-
-Sebastian Andrzej Siewior (7):
-      net: dev: always take qdisc's busylock in __dev_xmit_skb()
-      ARM: imx: always use TWD on IMX6Q
-      drivers/block/zram: fixup compile for !RT
-      kernel/printk: Don't try to print from IRQ/NMI region
-      arm: lazy preempt: correct resched condition
-      locallock: add local_lock_on()
-      trace: correct off by one while recording the trace-event
-
-Steven Rostedt (Red Hat) (1):
-      Linux 4.1.27-rt31-rc1
-
-Thomas Gleixner (1):
-      perf/x86/intel/rapl: Make PMU lock raw
-
-----
- arch/arm/kernel/entry-armv.S                |  6 ++-
- arch/arm/mach-at91/at91rm9200.c             |  2 -
- arch/arm/mach-at91/at91sam9.c               |  2 -
- arch/arm/mach-at91/generic.h                | 13 +-----
- arch/arm/mach-at91/pm.c                     | 70 ++++++++++++++++++++++++-----
- arch/arm/mach-at91/sama5.c                  |  2 +-
- arch/arm/mach-imx/Kconfig                   |  2 +-
- arch/x86/kernel/cpu/perf_event_intel_rapl.c | 20 ++++-----
- arch/x86/kernel/kvm.c                       | 37 +++++++--------
- drivers/block/zram/zram_drv.c               | 30 +++++++------
- drivers/block/zram/zram_drv.h               | 41 +++++++++++++++++
- drivers/clk/at91/pmc.c                      | 15 -------
- drivers/usb/gadget/udc/atmel_usba_udc.c     | 20 ++++-----
- drivers/usb/gadget/udc/atmel_usba_udc.h     |  2 +
- include/asm-generic/preempt.h               |  4 +-
- include/linux/list_bl.h                     | 12 ++---
- include/linux/locallock.h                   |  6 +++
- kernel/printk/printk.c                      | 10 +++++
- kernel/trace/trace_events.c                 |  8 ++++
- localversion-rt                             |  2 +-
- mm/swap.c                                   | 37 ++++++++++++---
- mm/zsmalloc.c                               |  4 +-
- net/core/dev.c                              |  4 ++
- 23 files changed, 236 insertions(+), 113 deletions(-)
+diff --git a/mm/swap.c b/mm/swap.c
+index 1785ac603fb0..20432b7721ed 100644
+--- a/mm/swap.c
++++ b/mm/swap.c
+@@ -819,9 +819,15 @@ void lru_add_drain_cpu(int cpu)
+ 		unsigned long flags;
+ 
+ 		/* No harm done if a racing interrupt already did this */
++#ifdef CONFIG_PREEMPT_RT_BASE
++		local_lock_irqsave_on(rotate_lock, flags, cpu);
++		pagevec_move_tail(pvec);
++		local_unlock_irqrestore_on(rotate_lock, flags, cpu);
++#else
+ 		local_lock_irqsave(rotate_lock, flags);
+ 		pagevec_move_tail(pvec);
+ 		local_unlock_irqrestore(rotate_lock, flags);
++#endif
+ 	}
+ 
+ 	pvec = &per_cpu(lru_deactivate_file_pvecs, cpu);
+@@ -864,12 +870,32 @@ void lru_add_drain(void)
+ 	local_unlock_cpu(swapvec_lock);
+ }
+ 
++
++#ifdef CONFIG_PREEMPT_RT_BASE
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	local_lock_on(swapvec_lock, cpu);
++	lru_add_drain_cpu(cpu);
++	local_unlock_on(swapvec_lock, cpu);
++}
++
++#else
++
+ static void lru_add_drain_per_cpu(struct work_struct *dummy)
+ {
+ 	lru_add_drain();
+ }
+ 
+ static DEFINE_PER_CPU(struct work_struct, lru_add_drain_work);
++static inline void remote_lru_add_drain(int cpu, struct cpumask *has_work)
++{
++	struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
++
++	INIT_WORK(work, lru_add_drain_per_cpu);
++	schedule_work_on(cpu, work);
++	cpumask_set_cpu(cpu, has_work);
++}
++#endif
+ 
+ void lru_add_drain_all(void)
+ {
+@@ -882,20 +908,17 @@ void lru_add_drain_all(void)
+ 	cpumask_clear(&has_work);
+ 
+ 	for_each_online_cpu(cpu) {
+-		struct work_struct *work = &per_cpu(lru_add_drain_work, cpu);
+-
+ 		if (pagevec_count(&per_cpu(lru_add_pvec, cpu)) ||
+ 		    pagevec_count(&per_cpu(lru_rotate_pvecs, cpu)) ||
+ 		    pagevec_count(&per_cpu(lru_deactivate_file_pvecs, cpu)) ||
+-		    need_activate_page_drain(cpu)) {
+-			INIT_WORK(work, lru_add_drain_per_cpu);
+-			schedule_work_on(cpu, work);
+-			cpumask_set_cpu(cpu, &has_work);
+-		}
++		    need_activate_page_drain(cpu))
++			remote_lru_add_drain(cpu, &has_work);
+ 	}
+ 
++#ifndef CONFIG_PREEMPT_RT_BASE
+ 	for_each_cpu(cpu, &has_work)
+ 		flush_work(&per_cpu(lru_add_drain_work, cpu));
++#endif
+ 
+ 	put_online_cpus();
+ 	mutex_unlock(&lock);
+-- 
+2.8.1
