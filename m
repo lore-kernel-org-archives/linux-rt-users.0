@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 1/5] locallock: add local_lock_on()
-Date: Tue, 12 Jul 2016 10:21:54 -0400
-Message-ID: <20160712142214.503512985@goodmis.org>
+Subject: [PATCH RT 3/5] trace: correct off by one while recording the trace-event
+Date: Tue, 12 Jul 2016 10:21:56 -0400
+Message-ID: <20160712142214.920054617@goodmis.org>
 References: <20160712142153.609204728@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,13 +9,18 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
-Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-locallock-add-local_lock_on.patch
-Sender: linux-kernel-owner@vger.kernel.org
-List-Id: linux-rt-users.vger.kernel.org
+Return-path: <linux-rt-users-owner@vger.kernel.org>
+Received: from mail.kernel.org ([198.145.29.136]:50040 "EHLO mail.kernel.org"
+	rhost-flags-OK-OK-OK-OK) by vger.kernel.org with ESMTP
+	id S1750978AbcGLOWS (ORCPT <rfc822;linux-rt-users@vger.kernel.org>);
+	Tue, 12 Jul 2016 10:22:18 -0400
+Content-Disposition: inline; filename=0003-trace-correct-off-by-one-while-recording-the-trace-e.patch
+Sender: linux-rt-users-owner@vger.kernel.org
+List-ID: <linux-rt-users.vger.kernel.org>
 
 4.4.12-rt20-rc1 stable review patch.
 If anyone has any objections, please let me know.
@@ -24,35 +29,39 @@ If anyone has any objections, please let me know.
 
 From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+Trace events like raw_syscalls show always a preempt code of one. The
+reason is that on PREEMPT kernels rcu_read_lock_sched_notrace()
+increases the preemption counter and the function recording the counter
+is caller within the RCU section.
+
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[ Changed this to upstream version. See commit e947841c0dce ]
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- include/linux/locallock.h | 6 ++++++
- 1 file changed, 6 insertions(+)
+ kernel/trace/trace_events.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
 
-diff --git a/include/linux/locallock.h b/include/linux/locallock.h
-index 6fe5928fc2ab..e572a3971631 100644
---- a/include/linux/locallock.h
-+++ b/include/linux/locallock.h
-@@ -66,6 +66,9 @@ static inline void __local_lock(struct local_irq_lock *lv)
- #define local_lock(lvar)					\
- 	do { __local_lock(&get_local_var(lvar)); } while (0)
+diff --git a/kernel/trace/trace_events.c b/kernel/trace/trace_events.c
+index 4a48f97a2256..5bd79b347398 100644
+--- a/kernel/trace/trace_events.c
++++ b/kernel/trace/trace_events.c
+@@ -246,6 +246,14 @@ void *trace_event_buffer_reserve(struct trace_event_buffer *fbuffer,
  
-+#define local_lock_on(lvar, cpu)				\
-+	do { __local_lock(&per_cpu(lvar, cpu)); } while (0)
-+
- static inline int __local_trylock(struct local_irq_lock *lv)
- {
- 	if (lv->owner != current && spin_trylock_local(&lv->lock)) {
-@@ -104,6 +107,9 @@ static inline void __local_unlock(struct local_irq_lock *lv)
- 		put_local_var(lvar);				\
- 	} while (0)
+ 	local_save_flags(fbuffer->flags);
+ 	fbuffer->pc = preempt_count();
++	/*
++	 * If CONFIG_PREEMPT is enabled, then the tracepoint itself disables
++	 * preemption (adding one to the preempt_count). Since we are
++	 * interested in the preempt_count at the time the tracepoint was
++	 * hit, we need to subtract one to offset the increment.
++	 */
++	if (IS_ENABLED(CONFIG_PREEMPT))
++		fbuffer->pc--;
+ 	fbuffer->trace_file = trace_file;
  
-+#define local_unlock_on(lvar, cpu)                       \
-+	do { __local_unlock(&per_cpu(lvar, cpu)); } while (0)
-+
- static inline void __local_lock_irq(struct local_irq_lock *lv)
- {
- 	spin_lock_irqsave(&lv->lock, lv->flags);
+ 	fbuffer->event =
 -- 
 2.8.1
+
+
