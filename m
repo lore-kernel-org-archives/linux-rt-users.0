@@ -1,7 +1,10 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 00/11] Linux 3.12.61-rt82-rc1
-Date: Tue, 12 Jul 2016 12:49:50 -0400
-Message-ID: <20160712164950.490572026@goodmis.org>
+Subject: [PATCH RT 04/11] ARM: imx: always use TWD on IMX6Q
+Date: Tue, 12 Jul 2016 12:49:54 -0400
+Message-ID: <20160712165020.420235092@goodmis.org>
+References: <20160712164950.490572026@goodmis.org>
+Mime-Version: 1.0
+Content-Type: text/plain; charset=ISO-8859-15
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
@@ -10,81 +13,45 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
+Content-Disposition: inline; filename=0004-ARM-imx-always-use-TWD-on-IMX6Q.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
+3.12.61-rt82-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-Dear RT Folks,
+------------------
 
-This is the RT stable review cycle of patch 3.12.61-rt82-rc1.
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Please scream at me if I messed something up. Please test the patches too.
+There is no reason to limit the TWD to be used on SMP kernels only if the
+hardware has it available.
+On Wandboard i.MX6SOLO, running PREEMPT-RT and cyclictest I see as max
+immediately after start in idle:
+UP : ~90us
+SMP: ~50us
+UP + TWD: ~20us.
+Based on this numbers I prefer the TWD over the slightly slower MXC
+timer.
 
-The -rc release will be uploaded to kernel.org and will be deleted when
-the final release is out. This is just a review release (or release candidate).
-
-The pre-releases will not be pushed to the git repository, only the
-final release is.
-
-If all goes well, this patch will be converted to the next main release
-on 7/14/2016.
-
-Enjoy,
-
--- Steve
-
-
-To build 3.12.61-rt82-rc1 directly, the following patches should be applied:
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/linux-3.12.tar.xz
-
-  http://www.kernel.org/pub/linux/kernel/v3.x/patch-3.12.61.xz
-
-  http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/patch-3.12.61-rt82-rc1.patch.xz
-
-You can also build from 3.12.61-rt81 by applying the incremental patch:
-
-http://www.kernel.org/pub/linux/kernel/projects/rt/3.12/incr/patch-3.12.61-rt81-rt82-rc1.patch.xz
-
-
-Changes from 3.12.61-rt81:
-
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
+ arch/arm/mach-imx/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-
-Corey Minyard (1):
-      x86: Fix an RT MCE crash
-
-Josh Cartwright (1):
-      list_bl: fixup bogus lockdep warning
-
-Luiz Capitulino (1):
-      mm: perform lru_add_drain_all() remotely
-
-Rik van Riel (1):
-      kvm, rt: change async pagefault code locking for PREEMPT_RT
-
-Sebastian Andrzej Siewior (6):
-      net: dev: always take qdisc's busylock in __dev_xmit_skb()
-      ARM: imx: always use TWD on IMX6Q
-      kernel/printk: Don't try to print from IRQ/NMI region
-      arm: lazy preempt: correct resched condition
-      locallock: add local_lock_on()
-      trace: correct off by one while recording the trace-event
-
-Steven Rostedt (Red Hat) (1):
-      Linux 3.12.61-rt82-rc1
-
-----
- arch/arm/kernel/entry-armv.S     |  6 +++++-
- arch/arm/mach-imx/Kconfig        |  2 +-
- arch/x86/kernel/cpu/mcheck/mce.c |  3 ++-
- arch/x86/kernel/kvm.c            | 37 +++++++++++++++++++------------------
- include/linux/list_bl.h          | 12 +++++++-----
- include/linux/locallock.h        |  6 ++++++
- include/trace/ftrace.h           |  3 +++
- kernel/printk/printk.c           | 10 ++++++++++
- localversion-rt                  |  2 +-
- mm/swap.c                        | 37 ++++++++++++++++++++++++++++++-------
- net/core/dev.c                   |  4 ++++
- 11 files changed, 88 insertions(+), 34 deletions(-)
+diff --git a/arch/arm/mach-imx/Kconfig b/arch/arm/mach-imx/Kconfig
+index 29a8af6922a8..79671485618a 100644
+--- a/arch/arm/mach-imx/Kconfig
++++ b/arch/arm/mach-imx/Kconfig
+@@ -794,7 +794,7 @@ config SOC_IMX6Q
+ 	select COMMON_CLK
+ 	select CPU_V7
+ 	select HAVE_ARM_SCU if SMP
+-	select HAVE_ARM_TWD if SMP
++	select HAVE_ARM_TWD
+ 	select HAVE_IMX_ANATOP
+ 	select HAVE_IMX_GPC
+ 	select HAVE_IMX_MMDC
+-- 
+2.8.1
