@@ -1,81 +1,117 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 14/20] sched,preempt: Fix preempt_count manipulations
-Date: Tue, 12 Jul 2016 10:24:19 -0400
-Message-ID: <20160712142419.864176083@goodmis.org>
-References: <20160712142405.634544943@goodmis.org>
-Mime-Version: 1.0
-Content-Type: text/plain; charset=ISO-8859-15
+Subject: [PATCH RT 00/20] Linux 4.1.27-rt31-rc1
+Date: Tue, 12 Jul 2016 10:24:05 -0400
+Message-ID: <20160712142405.634544943@goodmis.org>
 Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable@vger.kernel.org>, <stable-rt@vger.kernel.org>,
-	Vikram Mulukutla <markivx@codeaurora.org>,
-	"Peter Zijlstra (Intel)" <peterz@infradead.org>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0014-sched-preempt-Fix-preempt_count-manipulations.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-4.1.27-rt31-rc1 stable review patch.
-If anyone has any objections, please let me know.
 
-------------------
+Dear RT Folks,
 
-From: Peter Zijlstra <peterz@infradead.org>
+This is the RT stable review cycle of patch 4.1.27-rt31-rc1.
 
-Vikram reported that his ARM64 compiler managed to 'optimize' away the
-preempt_count manipulations in code like:
+Please scream at me if I messed something up. Please test the patches too.
 
-	preempt_enable_no_resched();
-	put_user();
-	preempt_disable();
+The -rc release will be uploaded to kernel.org and will be deleted when
+the final release is out. This is just a review release (or release candidate).
 
-Irrespective of that fact that that is horrible code that should be
-fixed for many reasons, it does highlight a deficiency in the generic
-preempt_count manipulators. As it is never right to combine/elide
-preempt_count manipulations like this.
+The pre-releases will not be pushed to the git repository, only the
+final release is.
 
-Therefore sprinkle some volatile in the two generic accessors to
-ensure the compiler is aware of the fact that the preempt_count is
-observed outside of the regular program-order view and thus cannot be
-optimized away like this.
+If all goes well, this patch will be converted to the next main release
+on 7/14/2016.
 
-x86; the only arch not using the generic code is not affected as we
-do all this in asm in order to use the segment base per-cpu stuff.
+Enjoy,
 
-Cc: stable@vger.kernel.org
-Cc: stable-rt@vger.kernel.org
-Cc: Thomas Gleixner <tglx@linutronix.de>
-Fixes: a787870924db ("sched, arch: Create asm/preempt.h")
-Reported-by: Vikram Mulukutla <markivx@codeaurora.org>
-Tested-by: Vikram Mulukutla <markivx@codeaurora.org>
-Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
-Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+-- Steve
+
+
+To build 4.1.27-rt31-rc1 directly, the following patches should be applied:
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/linux-4.1.tar.xz
+
+  http://www.kernel.org/pub/linux/kernel/v3.x/patch-4.1.27.xz
+
+  http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/patch-4.1.27-rt31-rc1.patch.xz
+
+You can also build from 4.1.27-rt30 by applying the incremental patch:
+
+http://www.kernel.org/pub/linux/kernel/projects/rt/4.1/incr/patch-4.1.27-rt30-rt31-rc1.patch.xz
+
+
+Changes from 4.1.27-rt30:
+
 ---
- include/asm-generic/preempt.h | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
-index b6a53e8e526a..c91d3d764c36 100644
---- a/include/asm-generic/preempt.h
-+++ b/include/asm-generic/preempt.h
-@@ -7,10 +7,10 @@
- 
- static __always_inline int preempt_count(void)
- {
--	return current_thread_info()->preempt_count;
-+	return READ_ONCE(current_thread_info()->preempt_count);
- }
- 
--static __always_inline int *preempt_count_ptr(void)
-+static __always_inline volatile int *preempt_count_ptr(void)
- {
- 	return &current_thread_info()->preempt_count;
- }
--- 
-2.8.1
+
+Alexandre Belloni (5):
+      ARM: at91: pm: simply call at91_pm_init
+      ARM: at91: pm: find and remap the pmc
+      ARM: at91: pm: move idle functions to pm.c
+      ARM: at91: remove useless includes and function prototypes
+      usb: gadget: atmel: access the PMC using regmap
+
+Josh Cartwright (1):
+      list_bl: fixup bogus lockdep warning
+
+Luiz Capitulino (1):
+      mm: perform lru_add_drain_all() remotely
+
+Mike Galbraith (2):
+      mm/zsmalloc: Use get/put_cpu_light in zs_map_object()/zs_unmap_object()
+      drivers/block/zram: Replace bit spinlocks with rtmutex for -rt
+
+Peter Zijlstra (1):
+      sched,preempt: Fix preempt_count manipulations
+
+Rik van Riel (1):
+      kvm, rt: change async pagefault code locking for PREEMPT_RT
+
+Sebastian Andrzej Siewior (7):
+      net: dev: always take qdisc's busylock in __dev_xmit_skb()
+      ARM: imx: always use TWD on IMX6Q
+      drivers/block/zram: fixup compile for !RT
+      kernel/printk: Don't try to print from IRQ/NMI region
+      arm: lazy preempt: correct resched condition
+      locallock: add local_lock_on()
+      trace: correct off by one while recording the trace-event
+
+Steven Rostedt (Red Hat) (1):
+      Linux 4.1.27-rt31-rc1
+
+Thomas Gleixner (1):
+      perf/x86/intel/rapl: Make PMU lock raw
+
+----
+ arch/arm/kernel/entry-armv.S                |  6 ++-
+ arch/arm/mach-at91/at91rm9200.c             |  2 -
+ arch/arm/mach-at91/at91sam9.c               |  2 -
+ arch/arm/mach-at91/generic.h                | 13 +-----
+ arch/arm/mach-at91/pm.c                     | 70 ++++++++++++++++++++++++-----
+ arch/arm/mach-at91/sama5.c                  |  2 +-
+ arch/arm/mach-imx/Kconfig                   |  2 +-
+ arch/x86/kernel/cpu/perf_event_intel_rapl.c | 20 ++++-----
+ arch/x86/kernel/kvm.c                       | 37 +++++++--------
+ drivers/block/zram/zram_drv.c               | 30 +++++++------
+ drivers/block/zram/zram_drv.h               | 41 +++++++++++++++++
+ drivers/clk/at91/pmc.c                      | 15 -------
+ drivers/usb/gadget/udc/atmel_usba_udc.c     | 20 ++++-----
+ drivers/usb/gadget/udc/atmel_usba_udc.h     |  2 +
+ include/asm-generic/preempt.h               |  4 +-
+ include/linux/list_bl.h                     | 12 ++---
+ include/linux/locallock.h                   |  6 +++
+ kernel/printk/printk.c                      | 10 +++++
+ kernel/trace/trace_events.c                 |  8 ++++
+ localversion-rt                             |  2 +-
+ mm/swap.c                                   | 37 ++++++++++++---
+ mm/zsmalloc.c                               |  4 +-
+ net/core/dev.c                              |  4 ++
+ 23 files changed, 236 insertions(+), 113 deletions(-)
