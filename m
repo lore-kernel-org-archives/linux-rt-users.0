@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 8/8] Linux 3.10.102-rt113-rc1
-Date: Tue, 12 Jul 2016 12:57:57 -0400
-Message-ID: <20160712165803.130444896@goodmis.org>
+Subject: [PATCH RT 6/8] trace: correct off by one while recording the trace-event
+Date: Tue, 12 Jul 2016 12:57:55 -0400
+Message-ID: <20160712165802.763646959@goodmis.org>
 References: <20160712165749.741663758@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-Linux-3.10.102-rt113-rc1.patch
+Content-Disposition: inline; filename=0006-trace-correct-off-by-one-while-recording-the-trace-e.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,18 +23,34 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
+Trace events like raw_syscalls show always a preempt code of one. The
+reason is that on PREEMPT kernels rcu_read_lock_sched_notrace()
+increases the preemption counter and the function recording the counter
+is caller within the RCU section.
+
+Cc: stable-rt@vger.kernel.org
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+[ Changed this to upstream version. See commit e947841c0dce ]
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- localversion-rt | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ include/trace/ftrace.h | 3 +++
+ 1 file changed, 3 insertions(+)
 
-diff --git a/localversion-rt b/localversion-rt
-index 0c40e2660574..81697d288b36 100644
---- a/localversion-rt
-+++ b/localversion-rt
-@@ -1 +1 @@
---rt112
-+-rt113-rc1
+diff --git a/include/trace/ftrace.h b/include/trace/ftrace.h
+index dbb47418df81..f30e85b675e8 100644
+--- a/include/trace/ftrace.h
++++ b/include/trace/ftrace.h
+@@ -526,6 +526,9 @@ ftrace_raw_event_##call(void *__data, proto)				\
+ 									\
+ 	local_save_flags(irq_flags);					\
+ 	pc = preempt_count();						\
++	/* Account for tracepoint preempt disable */			\
++	if (IS_ENABLED(CONFIG_PREEMPT))					\
++		pc--;							\
+ 									\
+ 	__data_size = ftrace_get_offsets_##call(&__data_offsets, args); \
+ 									\
 -- 
 2.8.1
