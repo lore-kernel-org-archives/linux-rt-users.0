@@ -1,8 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 02/15] mm/zsmalloc: Use get/put_cpu_light in
- zs_map_object()/zs_unmap_object()
-Date: Tue, 12 Jul 2016 10:29:09 -0400
-Message-ID: <20160712142918.954436441@goodmis.org>
+Subject: [PATCH RT 07/15] drivers/block/zram: fixup compile for !RT
+Date: Tue, 12 Jul 2016 10:29:14 -0400
+Message-ID: <20160712142919.807420568@goodmis.org>
 References: <20160712142907.636678217@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +9,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0002-mm-zsmalloc-Use-get-put_cpu_light-in-zs_map_object-z.patch
+Content-Disposition: inline; filename=0007-drivers-block-zram-fixup-compile-for-RT.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,38 +22,26 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Otherwise, we get a ___might_sleep() splat.
-
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- mm/zsmalloc.c | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ drivers/block/zram/zram_drv.h | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
-diff --git a/mm/zsmalloc.c b/mm/zsmalloc.c
-index 839a48c3ca27..1db2077e38f7 100644
---- a/mm/zsmalloc.c
-+++ b/mm/zsmalloc.c
-@@ -1127,7 +1127,7 @@ void *zs_map_object(struct zs_pool *pool, unsigned long handle,
- 	class = &pool->size_class[class_idx];
- 	off = obj_idx_to_offset(page, obj_idx, class->size);
- 
--	area = &get_cpu_var(zs_map_area);
-+	area = per_cpu_ptr(&zs_map_area, get_cpu_light());
- 	area->vm_mm = mm;
- 	if (off + class->size <= PAGE_SIZE) {
- 		/* this object is contained entirely within a page */
-@@ -1173,7 +1173,7 @@ void zs_unmap_object(struct zs_pool *pool, unsigned long handle)
- 
- 		__zs_unmap_object(area, pages, off, class->size);
- 	}
--	put_cpu_var(zs_map_area);
-+	put_cpu_light();
+diff --git a/drivers/block/zram/zram_drv.h b/drivers/block/zram/zram_drv.h
+index 1251d718f4bd..73e7e70d9a8d 100644
+--- a/drivers/block/zram/zram_drv.h
++++ b/drivers/block/zram/zram_drv.h
+@@ -135,7 +135,7 @@ static inline void zram_unlock_table(struct zram_table_entry *table)
+ 	bit_spin_unlock(ZRAM_ACCESS, &table->value);
  }
- EXPORT_SYMBOL_GPL(zs_unmap_object);
  
+-static inline void zram_meta_init_locks(struct zram_meta *meta, u64 disksize) { }
++static inline void zram_meta_init_table_locks(struct zram_meta *meta, u64 disksize) { }
+ #else /* CONFIG_PREEMPT_RT_BASE */
+ static inline void zram_lock_table(struct zram_table_entry *table)
+ {
 -- 
 2.8.1
