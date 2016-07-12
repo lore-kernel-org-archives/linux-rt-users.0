@@ -1,36 +1,57 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 3/5] trace: correct off by one while recording the
- trace-event
-Date: Tue, 12 Jul 2016 10:47:43 -0400
-Message-ID: <20160712104743.31004504@gandalf.local.home>
-References: <20160712142153.609204728@goodmis.org>
-	<20160712142214.920054617@goodmis.org>
-	<20160712144050.GA22814@linutronix.de>
-	<20160712104555.317c1781@gandalf.local.home>
+Subject: [PATCH RT 05/14] ARM: imx: always use TWD on IMX6Q
+Date: Tue, 12 Jul 2016 12:48:04 -0400
+Message-ID: <20160712164818.347448582@goodmis.org>
+References: <20160712164759.154249453@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	stable-rt@vger.kernel.org
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+	Paul Gortmaker <paul.gortmaker@windriver.com>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160712104555.317c1781@gandalf.local.home>
+Content-Disposition: inline; filename=0005-ARM-imx-always-use-TWD-on-IMX6Q.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 12 Jul 2016 10:45:55 -0400
-Steven Rostedt <rostedt@goodmis.org> wrote:
+3.14.72-rt76-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> On Tue, 12 Jul 2016 16:40:50 +0200
-> Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+------------------
 
-> > I am not the Author of this commit (and it is not yet in TIP). I haven't
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-Oh, I forgot to add, I don't go through the tip tree.
+There is no reason to limit the TWD to be used on SMP kernels only if the
+hardware has it available.
+On Wandboard i.MX6SOLO, running PREEMPT-RT and cyclictest I see as max
+immediately after start in idle:
+UP : ~90us
+SMP: ~50us
+UP + TWD: ~20us.
+Based on this numbers I prefer the TWD over the slightly slower MXC
+timer.
 
--- Steve
+Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
+---
+ arch/arm/mach-imx/Kconfig | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/mach-imx/Kconfig b/arch/arm/mach-imx/Kconfig
+index 33567aa5880f..fd42876e4c91 100644
+--- a/arch/arm/mach-imx/Kconfig
++++ b/arch/arm/mach-imx/Kconfig
+@@ -794,7 +794,7 @@ config SOC_IMX6Q
+ 	select ARM_GIC
+ 	select CPU_V7
+ 	select HAVE_ARM_SCU if SMP
+-	select HAVE_ARM_TWD if SMP
++	select HAVE_ARM_TWD
+ 	select HAVE_IMX_ANATOP
+ 	select HAVE_IMX_GPC
+ 	select HAVE_IMX_MMDC
+-- 
+2.8.1
