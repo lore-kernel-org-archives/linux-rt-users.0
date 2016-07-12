@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 06/11] arm: lazy preempt: correct resched condition
-Date: Tue, 12 Jul 2016 12:49:56 -0400
-Message-ID: <20160712165021.413609982@goodmis.org>
+Subject: [PATCH RT 10/11] x86: Fix an RT MCE crash
+Date: Tue, 12 Jul 2016 12:50:00 -0400
+Message-ID: <20160712165022.150502206@goodmis.org>
 References: <20160712164950.490572026@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	<stable-rt@vger.kernel.org>
+	Borislav Petkov <bp@alien8.de>,
+	Corey Minyard <cminyard@mvista.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0006-arm-lazy-preempt-correct-resched-condition.patch
+Content-Disposition: inline; filename=0010-x86-Fix-an-RT-MCE-crash.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,37 +24,36 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Corey Minyard <cminyard@mvista.com>
 
-If we get out of preempt_schedule_irq() then we check for NEED_RESCHED
-and call the former function again if set because the preemption counter
-has be zero at this point.
-However the counter for lazy-preempt might not be zero therefore we have
-to check the counter before looking at the need_resched_lazy flag.
+On some x86 systems an MCE interrupt would come in before the kernel
+was ready for it.  Looking at the latest RT code, it has similar
+(but not quite the same) code, except it adds a bool that tells if
+MCE handling is initialized.  That was required because they had
+switched to use swork instead of a kernel thread.  Here, just
+checking to see if the thread is NULL is good enough to see if
+MCE handling is initialized.
 
-Cc: stable-rt@vger.kernel.org
-Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+Suggested-by: Borislav Petkov <bp@alien8.de>
+Signed-off-by: Corey Minyard <cminyard@mvista.com>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/arm/kernel/entry-armv.S | 6 +++++-
- 1 file changed, 5 insertions(+), 1 deletion(-)
+ arch/x86/kernel/cpu/mcheck/mce.c | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
 
-diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
-index 8c5e809c1f07..96eb4d26a5c1 100644
---- a/arch/arm/kernel/entry-armv.S
-+++ b/arch/arm/kernel/entry-armv.S
-@@ -234,7 +234,11 @@ svc_preempt:
- 	bne	1b
- 	tst	r0, #_TIF_NEED_RESCHED_LAZY
- 	moveq	pc, r8				@ go again
--	b	1b
-+	ldr	r0, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
-+	teq	r0, #0				@ if preempt lazy count != 0
-+	beq	1b
-+	mov	pc, r8				@ go again
-+
- #endif
+diff --git a/arch/x86/kernel/cpu/mcheck/mce.c b/arch/x86/kernel/cpu/mcheck/mce.c
+index 3a7ab0b08cdf..9901b77ed819 100644
+--- a/arch/x86/kernel/cpu/mcheck/mce.c
++++ b/arch/x86/kernel/cpu/mcheck/mce.c
+@@ -1403,7 +1403,8 @@ static int mce_notify_work_init(void)
  
- __und_fault:
+ static void mce_notify_work(void)
+ {
+-	wake_up_process(mce_notify_helper);
++	if (mce_notify_helper)
++		wake_up_process(mce_notify_helper);
+ }
+ #else
+ static void mce_notify_work(void)
 -- 
 2.8.1
