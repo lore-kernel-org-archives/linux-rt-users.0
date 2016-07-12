@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 08/14] kernel/printk: Dont try to print from IRQ/NMI region
-Date: Tue, 12 Jul 2016 12:48:07 -0400
-Message-ID: <20160712164818.823747688@goodmis.org>
+Subject: [PATCH RT 07/14] sched,preempt: Fix preempt_count manipulations
+Date: Tue, 12 Jul 2016 12:48:06 -0400
+Message-ID: <20160712164818.663083732@goodmis.org>
 References: <20160712164759.154249453@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -9,11 +9,14 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
-	Paul Gortmaker <paul.gortmaker@windriver.com>
+	Paul Gortmaker <paul.gortmaker@windriver.com>,
+	<stable@vger.kernel.org>, <stable-rt@vger.kernel.org>,
+	Vikram Mulukutla <markivx@codeaurora.org>,
+	"Peter Zijlstra (Intel)" <peterz@infradead.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0008-kernel-printk-Don-t-try-to-print-from-IRQ-NMI-region.patch
+Content-Disposition: inline; filename=0007-sched-preempt-Fix-preempt_count-manipulations.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -22,47 +25,57 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+From: Peter Zijlstra <peterz@infradead.org>
 
-On -RT we try to acquire sleeping locks which might lead to warnings
-from lockdep or a warn_on() from spin_try_lock() (which is a rtmutex on
-RT).
-We don't print in general from a IRQ off region so we should not try
-this via console_unblank() / bust_spinlocks() as well.
+Vikram reported that his ARM64 compiler managed to 'optimize' away the
+preempt_count manipulations in code like:
 
+	preempt_enable_no_resched();
+	put_user();
+	preempt_disable();
+
+Irrespective of that fact that that is horrible code that should be
+fixed for many reasons, it does highlight a deficiency in the generic
+preempt_count manipulators. As it is never right to combine/elide
+preempt_count manipulations like this.
+
+Therefore sprinkle some volatile in the two generic accessors to
+ensure the compiler is aware of the fact that the preempt_count is
+observed outside of the regular program-order view and thus cannot be
+optimized away like this.
+
+x86; the only arch not using the generic code is not affected as we
+do all this in asm in order to use the segment base per-cpu stuff.
+
+Cc: stable@vger.kernel.org
+Cc: stable-rt@vger.kernel.org
+Cc: Thomas Gleixner <tglx@linutronix.de>
+Fixes: a787870924db ("sched, arch: Create asm/preempt.h")
+Reported-by: Vikram Mulukutla <markivx@codeaurora.org>
+Tested-by: Vikram Mulukutla <markivx@codeaurora.org>
+Signed-off-by: Peter Zijlstra (Intel) <peterz@infradead.org>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- kernel/printk/printk.c | 10 ++++++++++
- 1 file changed, 10 insertions(+)
+ include/asm-generic/preempt.h | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
-diff --git a/kernel/printk/printk.c b/kernel/printk/printk.c
-index 0b47939efd62..4472339e2156 100644
---- a/kernel/printk/printk.c
-+++ b/kernel/printk/printk.c
-@@ -1289,6 +1289,11 @@ static void call_console_drivers(int level, const char *text, size_t len)
- 	if (!console_drivers)
- 		return;
+diff --git a/include/asm-generic/preempt.h b/include/asm-generic/preempt.h
+index 54352f4dde1a..65759d8b0b46 100644
+--- a/include/asm-generic/preempt.h
++++ b/include/asm-generic/preempt.h
+@@ -7,10 +7,10 @@
  
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
-+		if (in_irq() || in_nmi())
-+			return;
-+	}
-+
- 	migrate_disable();
- 	for_each_console(con) {
- 		if (exclusive_console && con != exclusive_console)
-@@ -2214,6 +2219,11 @@ void console_unblank(void)
+ static __always_inline int preempt_count(void)
  {
- 	struct console *c;
+-	return current_thread_info()->preempt_count;
++	return READ_ONCE(current_thread_info()->preempt_count);
+ }
  
-+	if (IS_ENABLED(CONFIG_PREEMPT_RT_BASE)) {
-+		if (in_irq() || in_nmi())
-+			return;
-+	}
-+
- 	/*
- 	 * console_unblank can no longer be called in interrupt context unless
- 	 * oops_in_progress is set to 1..
+-static __always_inline int *preempt_count_ptr(void)
++static __always_inline volatile int *preempt_count_ptr(void)
+ {
+ 	return &current_thread_info()->preempt_count;
+ }
 -- 
 2.8.1
