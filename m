@@ -1,39 +1,39 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: Re: [PATCH RT 11/20] ARM: imx: always use TWD on IMX6Q
-Date: Tue, 12 Jul 2016 16:25:01 -0400
-Message-ID: <20160712162501.18ed1ca1@gandalf.local.home>
-References: <20160712142405.634544943@goodmis.org>
-	<20160712142419.367116752@goodmis.org>
-	<20160712200429.GA4302@linutronix.de>
+Subject: [PATCH RT 4/4] Linux 3.2.81-rt117-rc1
+Date: Tue, 12 Jul 2016 16:54:48 -0400
+Message-ID: <20160712205458.870364694@goodmis.org>
+References: <20160712205444.115211356@goodmis.org>
 Mime-Version: 1.0
-Content-Type: text/plain; charset=US-ASCII
-Content-Transfer-Encoding: 7bit
-Cc: linux-kernel@vger.kernel.org,
-	linux-rt-users <linux-rt-users@vger.kernel.org>,
-	Thomas Gleixner <tglx@linutronix.de>,
+Content-Type: text/plain; charset=ISO-8859-15
+Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Carsten Emde <C.Emde@osadl.org>,
+	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>
-To: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
+To: linux-kernel@vger.kernel.org,
+	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-In-Reply-To: <20160712200429.GA4302@linutronix.de>
+Content-Disposition: inline; filename=0004-Linux-3.2.81-rt117-rc1.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
-On Tue, 12 Jul 2016 22:04:29 +0200
-Sebastian Andrzej Siewior <bigeasy@linutronix.de> wrote:
+3.2.81-rt117-rc1 stable review patch.
+If anyone has any objections, please let me know.
 
-> * Steven Rostedt | 2016-07-12 10:24:16 [-0400]:
-> 
-> >4.1.27-rt31-rc1 stable review patch.
-> >If anyone has any objections, please let me know.  
-> 
-> I don't recommend to cherry-pick this. The symbol it selects
-> (HAVE_ARM_TWD) has "depends on SMP" in v4.1. In v4.4 there should be
-> AM43xx which is UP and also uses the TWD so the change is simple here.
+------------------
 
-So remove it from 4.1 and older?
+From: "Steven Rostedt (Red Hat)" <rostedt@goodmis.org>
 
-I can do that.
+---
+ localversion-rt | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
 
--- Steve
+diff --git a/localversion-rt b/localversion-rt
+index 34eca4e89203..d5f654342ac4 100644
+--- a/localversion-rt
++++ b/localversion-rt
+@@ -1 +1 @@
+--rt116
++-rt117-rc1
+-- 
+2.8.1
