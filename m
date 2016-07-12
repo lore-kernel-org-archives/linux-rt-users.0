@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 01/11] kvm, rt: change async pagefault code locking for PREEMPT_RT
-Date: Tue, 12 Jul 2016 12:49:51 -0400
-Message-ID: <20160712165019.506477655@goodmis.org>
+Subject: [PATCH RT 06/11] arm: lazy preempt: correct resched condition
+Date: Tue, 12 Jul 2016 12:49:56 -0400
+Message-ID: <20160712165021.413609982@goodmis.org>
 References: <20160712164950.490572026@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,12 +10,11 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Rik van Riel <riel@redhat.com>,
-	Paolo Bonzini <pbonzini@redhat.com>
+	<stable-rt@vger.kernel.org>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0001-kvm-rt-change-async-pagefault-code-locking-for-PREEM.patch
+Content-Disposition: inline; filename=0006-arm-lazy-preempt-correct-resched-condition.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -24,163 +23,37 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Rik van Riel <riel@redhat.com>
+From: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 
-The async pagefault wake code can run from the idle task in exception
-context, so everything here needs to be made non-preemptible.
+If we get out of preempt_schedule_irq() then we check for NEED_RESCHED
+and call the former function again if set because the preemption counter
+has be zero at this point.
+However the counter for lazy-preempt might not be zero therefore we have
+to check the counter before looking at the need_resched_lazy flag.
 
-Conversion to a simple wait queue and raw spinlock does the trick.
-
-Signed-off-by: Rik van Riel <riel@redhat.com>
-Signed-off-by: Paolo Bonzini <pbonzini@redhat.com>
+Cc: stable-rt@vger.kernel.org
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- arch/x86/kernel/kvm.c | 37 +++++++++++++++++++------------------
- 1 file changed, 19 insertions(+), 18 deletions(-)
+ arch/arm/kernel/entry-armv.S | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
 
-diff --git a/arch/x86/kernel/kvm.c b/arch/x86/kernel/kvm.c
-index e72593338df6..7e640682699d 100644
---- a/arch/x86/kernel/kvm.c
-+++ b/arch/x86/kernel/kvm.c
-@@ -35,6 +35,7 @@
- #include <linux/slab.h>
- #include <linux/kprobes.h>
- #include <linux/debugfs.h>
-+#include <linux/wait-simple.h>
- #include <asm/timer.h>
- #include <asm/cpu.h>
- #include <asm/traps.h>
-@@ -90,14 +91,14 @@ static void kvm_io_delay(void)
+diff --git a/arch/arm/kernel/entry-armv.S b/arch/arm/kernel/entry-armv.S
+index 8c5e809c1f07..96eb4d26a5c1 100644
+--- a/arch/arm/kernel/entry-armv.S
++++ b/arch/arm/kernel/entry-armv.S
+@@ -234,7 +234,11 @@ svc_preempt:
+ 	bne	1b
+ 	tst	r0, #_TIF_NEED_RESCHED_LAZY
+ 	moveq	pc, r8				@ go again
+-	b	1b
++	ldr	r0, [tsk, #TI_PREEMPT_LAZY]	@ get preempt lazy count
++	teq	r0, #0				@ if preempt lazy count != 0
++	beq	1b
++	mov	pc, r8				@ go again
++
+ #endif
  
- struct kvm_task_sleep_node {
- 	struct hlist_node link;
--	wait_queue_head_t wq;
-+	struct swait_head wq;
- 	u32 token;
- 	int cpu;
- 	bool halted;
- };
- 
- static struct kvm_task_sleep_head {
--	spinlock_t lock;
-+	raw_spinlock_t lock;
- 	struct hlist_head list;
- } async_pf_sleepers[KVM_TASK_SLEEP_HASHSIZE];
- 
-@@ -121,17 +122,17 @@ void kvm_async_pf_task_wait(u32 token)
- 	u32 key = hash_32(token, KVM_TASK_SLEEP_HASHBITS);
- 	struct kvm_task_sleep_head *b = &async_pf_sleepers[key];
- 	struct kvm_task_sleep_node n, *e;
--	DEFINE_WAIT(wait);
-+	DEFINE_SWAITER(wait);
- 
- 	rcu_irq_enter();
- 
--	spin_lock(&b->lock);
-+	raw_spin_lock(&b->lock);
- 	e = _find_apf_task(b, token);
- 	if (e) {
- 		/* dummy entry exist -> wake up was delivered ahead of PF */
- 		hlist_del(&e->link);
- 		kfree(e);
--		spin_unlock(&b->lock);
-+		raw_spin_unlock(&b->lock);
- 
- 		rcu_irq_exit();
- 		return;
-@@ -140,13 +141,13 @@ void kvm_async_pf_task_wait(u32 token)
- 	n.token = token;
- 	n.cpu = smp_processor_id();
- 	n.halted = is_idle_task(current) || preempt_count() > 1;
--	init_waitqueue_head(&n.wq);
-+	init_swait_head(&n.wq);
- 	hlist_add_head(&n.link, &b->list);
--	spin_unlock(&b->lock);
-+	raw_spin_unlock(&b->lock);
- 
- 	for (;;) {
- 		if (!n.halted)
--			prepare_to_wait(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
-+			swait_prepare(&n.wq, &wait, TASK_UNINTERRUPTIBLE);
- 		if (hlist_unhashed(&n.link))
- 			break;
- 
-@@ -165,7 +166,7 @@ void kvm_async_pf_task_wait(u32 token)
- 		}
- 	}
- 	if (!n.halted)
--		finish_wait(&n.wq, &wait);
-+		swait_finish(&n.wq, &wait);
- 
- 	rcu_irq_exit();
- 	return;
-@@ -177,8 +178,8 @@ static void apf_task_wake_one(struct kvm_task_sleep_node *n)
- 	hlist_del_init(&n->link);
- 	if (n->halted)
- 		smp_send_reschedule(n->cpu);
--	else if (waitqueue_active(&n->wq))
--		wake_up(&n->wq);
-+	else if (swaitqueue_active(&n->wq))
-+		swait_wake(&n->wq);
- }
- 
- static void apf_task_wake_all(void)
-@@ -188,14 +189,14 @@ static void apf_task_wake_all(void)
- 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++) {
- 		struct hlist_node *p, *next;
- 		struct kvm_task_sleep_head *b = &async_pf_sleepers[i];
--		spin_lock(&b->lock);
-+		raw_spin_lock(&b->lock);
- 		hlist_for_each_safe(p, next, &b->list) {
- 			struct kvm_task_sleep_node *n =
- 				hlist_entry(p, typeof(*n), link);
- 			if (n->cpu == smp_processor_id())
- 				apf_task_wake_one(n);
- 		}
--		spin_unlock(&b->lock);
-+		raw_spin_unlock(&b->lock);
- 	}
- }
- 
-@@ -211,7 +212,7 @@ void kvm_async_pf_task_wake(u32 token)
- 	}
- 
- again:
--	spin_lock(&b->lock);
-+	raw_spin_lock(&b->lock);
- 	n = _find_apf_task(b, token);
- 	if (!n) {
- 		/*
-@@ -224,17 +225,17 @@ again:
- 			 * Allocation failed! Busy wait while other cpu
- 			 * handles async PF.
- 			 */
--			spin_unlock(&b->lock);
-+			raw_spin_unlock(&b->lock);
- 			cpu_relax();
- 			goto again;
- 		}
- 		n->token = token;
- 		n->cpu = smp_processor_id();
--		init_waitqueue_head(&n->wq);
-+		init_swait_head(&n->wq);
- 		hlist_add_head(&n->link, &b->list);
- 	} else
- 		apf_task_wake_one(n);
--	spin_unlock(&b->lock);
-+	raw_spin_unlock(&b->lock);
- 	return;
- }
- EXPORT_SYMBOL_GPL(kvm_async_pf_task_wake);
-@@ -484,7 +485,7 @@ void __init kvm_guest_init(void)
- 	paravirt_ops_setup();
- 	register_reboot_notifier(&kvm_pv_reboot_nb);
- 	for (i = 0; i < KVM_TASK_SLEEP_HASHSIZE; i++)
--		spin_lock_init(&async_pf_sleepers[i].lock);
-+		raw_spin_lock_init(&async_pf_sleepers[i].lock);
- 	if (kvm_para_has_feature(KVM_FEATURE_ASYNC_PF))
- 		x86_init.irqs.trap_init = kvm_apf_trap_init;
- 
+ __und_fault:
 -- 
 2.8.1
