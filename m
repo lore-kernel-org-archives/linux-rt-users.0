@@ -1,7 +1,7 @@
 From: Steven Rostedt <rostedt@goodmis.org>
-Subject: [PATCH RT 09/20] drivers/block/zram: Replace bit spinlocks with rtmutex for -rt
-Date: Tue, 12 Jul 2016 10:24:14 -0400
-Message-ID: <20160712142419.010265084@goodmis.org>
+Subject: [PATCH RT 10/20] list_bl: fixup bogus lockdep warning
+Date: Tue, 12 Jul 2016 10:24:15 -0400
+Message-ID: <20160712142419.186780457@goodmis.org>
 References: <20160712142405.634544943@goodmis.org>
 Mime-Version: 1.0
 Content-Type: text/plain; charset=ISO-8859-15
@@ -10,11 +10,12 @@ Cc: Thomas Gleixner <tglx@linutronix.de>,
 	Sebastian Andrzej Siewior <bigeasy@linutronix.de>,
 	John Kacur <jkacur@redhat.com>,
 	Paul Gortmaker <paul.gortmaker@windriver.com>,
-	Mike Galbraith <umgwanakikbuti@gmail.com>
+	"Luis Claudio R. Goncalves" <lclaudio@uudg.org>,
+	Josh Cartwright <joshc@ni.com>
 To: linux-kernel@vger.kernel.org,
 	linux-rt-users <linux-rt-users@vger.kernel.org>
 Return-path: <linux-kernel-owner@vger.kernel.org>
-Content-Disposition: inline; filename=0009-drivers-block-zram-Replace-bit-spinlocks-with-rtmute.patch
+Content-Disposition: inline; filename=0010-list_bl-fixup-bogus-lockdep-warning.patch
 Sender: linux-kernel-owner@vger.kernel.org
 List-Id: linux-rt-users.vger.kernel.org
 
@@ -23,182 +24,103 @@ If anyone has any objections, please let me know.
 
 ------------------
 
-From: Mike Galbraith <umgwanakikbuti@gmail.com>
+From: Josh Cartwright <joshc@ni.com>
 
-They're nondeterministic, and lead to ___might_sleep() splats in -rt.
-OTOH, they're a lot less wasteful than an rtmutex per page.
+At first glance, the use of 'static inline' seems appropriate for
+INIT_HLIST_BL_HEAD().
 
-Signed-off-by: Mike Galbraith <umgwanakikbuti@gmail.com>
+However, when a 'static inline' function invocation is inlined by gcc,
+all callers share any static local data declared within that inline
+function.
+
+This presents a problem for how lockdep classes are setup.  raw_spinlocks, for
+example, when CONFIG_DEBUG_SPINLOCK,
+
+	# define raw_spin_lock_init(lock)				\
+	do {								\
+		static struct lock_class_key __key;			\
+									\
+		__raw_spin_lock_init((lock), #lock, &__key);		\
+	} while (0)
+
+When this macro is expanded into a 'static inline' caller, like
+INIT_HLIST_BL_HEAD():
+
+	static inline INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
+	{
+		h->first = NULL;
+		raw_spin_lock_init(&h->lock);
+	}
+
+...the static local lock_class_key object is made a function static.
+
+For compilation units which initialize invoke INIT_HLIST_BL_HEAD() more
+than once, then, all of the invocations share this same static local
+object.
+
+This can lead to some very confusing lockdep splats (example below).
+Solve this problem by forcing the INIT_HLIST_BL_HEAD() to be a macro,
+which prevents the lockdep class object sharing.
+
+ =============================================
+ [ INFO: possible recursive locking detected ]
+ 4.4.4-rt11 #4 Not tainted
+ ---------------------------------------------
+ kswapd0/59 is trying to acquire lock:
+  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
+
+ but task is already holding lock:
+  (&h->lock#2){+.+.-.}, at:  mb_cache_shrink_scan
+
+ other info that might help us debug this:
+  Possible unsafe locking scenario:
+
+        CPU0
+        ----
+   lock(&h->lock#2);
+   lock(&h->lock#2);
+
+  *** DEADLOCK ***
+
+  May be due to missing lock nesting notation
+
+ 2 locks held by kswapd0/59:
+  #0:  (shrinker_rwsem){+.+...}, at: rt_down_read_trylock
+  #1:  (&h->lock#2){+.+.-.}, at: mb_cache_shrink_scan
+
+Reported-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Tested-by: Luis Claudio R. Goncalves <lclaudio@uudg.org>
+Signed-off-by: Josh Cartwright <joshc@ni.com>
 Signed-off-by: Sebastian Andrzej Siewior <bigeasy@linutronix.de>
 Signed-off-by: Steven Rostedt <rostedt@goodmis.org>
 ---
- drivers/block/zram/zram_drv.c | 30 ++++++++++++++++--------------
- drivers/block/zram/zram_drv.h | 41 +++++++++++++++++++++++++++++++++++++++++
- 2 files changed, 57 insertions(+), 14 deletions(-)
+ include/linux/list_bl.h | 12 +++++++-----
+ 1 file changed, 7 insertions(+), 5 deletions(-)
 
-diff --git a/drivers/block/zram/zram_drv.c b/drivers/block/zram/zram_drv.c
-index 6e134f4759c0..d2782d492630 100644
---- a/drivers/block/zram/zram_drv.c
-+++ b/drivers/block/zram/zram_drv.c
-@@ -386,6 +386,8 @@ static struct zram_meta *zram_meta_alloc(int device_id, u64 disksize)
- 		goto out_error;
- 	}
- 
-+	zram_meta_init_table_locks(meta, disksize);
-+
- 	return meta;
- 
- out_error:
-@@ -484,12 +486,12 @@ static int zram_decompress_page(struct zram *zram, char *mem, u32 index)
- 	unsigned long handle;
- 	size_t size;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	handle = meta->table[index].handle;
- 	size = zram_get_obj_size(meta, index);
- 
- 	if (!handle || zram_test_flag(meta, index, ZRAM_ZERO)) {
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		clear_page(mem);
- 		return 0;
- 	}
-@@ -500,7 +502,7 @@ static int zram_decompress_page(struct zram *zram, char *mem, u32 index)
- 	else
- 		ret = zcomp_decompress(zram->comp, cmem, size, mem);
- 	zs_unmap_object(meta->mem_pool, handle);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Should NEVER happen. Return bio error if it does. */
- 	if (unlikely(ret)) {
-@@ -520,14 +522,14 @@ static int zram_bvec_read(struct zram *zram, struct bio_vec *bvec,
- 	struct zram_meta *meta = zram->meta;
- 	page = bvec->bv_page;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	if (unlikely(!meta->table[index].handle) ||
- 			zram_test_flag(meta, index, ZRAM_ZERO)) {
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		handle_zero_page(bvec);
- 		return 0;
- 	}
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	if (is_partial_io(bvec))
- 		/* Use  a temporary buffer to decompress the page */
-@@ -622,10 +624,10 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
- 		if (user_mem)
- 			kunmap_atomic(user_mem);
- 		/* Free memory associated with this sector now. */
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
- 		zram_set_flag(meta, index, ZRAM_ZERO);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 
- 		atomic64_inc(&zram->stats.zero_pages);
- 		ret = 0;
-@@ -685,12 +687,12 @@ static int zram_bvec_write(struct zram *zram, struct bio_vec *bvec, u32 index,
- 	 * Free memory associated with this sector
- 	 * before overwriting unused sectors.
- 	 */
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
- 
- 	meta->table[index].handle = handle;
- 	zram_set_obj_size(meta, index, clen);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 
- 	/* Update stats */
- 	atomic64_add(clen, &zram->stats.compr_data_size);
-@@ -762,9 +764,9 @@ static void zram_bio_discard(struct zram *zram, u32 index,
- 	}
- 
- 	while (n >= PAGE_SIZE) {
--		bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_lock_table(&meta->table[index]);
- 		zram_free_page(zram, index);
--		bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+		zram_unlock_table(&meta->table[index]);
- 		atomic64_inc(&zram->stats.notify_free);
- 		index++;
- 		n -= PAGE_SIZE;
-@@ -1007,9 +1009,9 @@ static void zram_slot_free_notify(struct block_device *bdev,
- 	zram = bdev->bd_disk->private_data;
- 	meta = zram->meta;
- 
--	bit_spin_lock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_lock_table(&meta->table[index]);
- 	zram_free_page(zram, index);
--	bit_spin_unlock(ZRAM_ACCESS, &meta->table[index].value);
-+	zram_unlock_table(&meta->table[index]);
- 	atomic64_inc(&zram->stats.notify_free);
- }
- 
-diff --git a/drivers/block/zram/zram_drv.h b/drivers/block/zram/zram_drv.h
-index 570c598f4ce9..5f1eb86a307b 100644
---- a/drivers/block/zram/zram_drv.h
-+++ b/drivers/block/zram/zram_drv.h
-@@ -78,6 +78,9 @@ enum zram_pageflags {
- struct zram_table_entry {
- 	unsigned long handle;
- 	unsigned long value;
-+#ifdef CONFIG_PREEMPT_RT_BASE
-+	spinlock_t lock;
-+#endif
+diff --git a/include/linux/list_bl.h b/include/linux/list_bl.h
+index d8876a0cf036..017d0f1c1eb4 100644
+--- a/include/linux/list_bl.h
++++ b/include/linux/list_bl.h
+@@ -42,13 +42,15 @@ struct hlist_bl_node {
+ 	struct hlist_bl_node *next, **pprev;
  };
  
- struct zram_stats {
-@@ -122,4 +125,42 @@ struct zram {
- 	u64 disksize;	/* bytes */
- 	char compressor[10];
- };
-+
-+#ifndef CONFIG_PREEMPT_RT_BASE
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_lock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	bit_spin_unlock(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_meta_init_locks(struct zram_meta *meta, u64 disksize) { }
-+#else /* CONFIG_PREEMPT_RT_BASE */
-+static inline void zram_lock_table(struct zram_table_entry *table)
-+{
-+	spin_lock(&table->lock);
-+	__set_bit(ZRAM_ACCESS, &table->value);
-+}
-+
-+static inline void zram_unlock_table(struct zram_table_entry *table)
-+{
-+	__clear_bit(ZRAM_ACCESS, &table->value);
-+	spin_unlock(&table->lock);
-+}
-+
-+static inline void zram_meta_init_table_locks(struct zram_meta *meta, u64 disksize)
-+{
-+        size_t num_pages = disksize >> PAGE_SHIFT;
-+        size_t index;
-+
-+        for (index = 0; index < num_pages; index++) {
-+		spinlock_t *lock = &meta->table[index].lock;
-+		spin_lock_init(lock);
-+        }
-+}
-+#endif /* CONFIG_PREEMPT_RT_BASE */
-+
+-static inline void INIT_HLIST_BL_HEAD(struct hlist_bl_head *h)
+-{
+-	h->first = NULL;
+ #ifdef CONFIG_PREEMPT_RT_BASE
+-	raw_spin_lock_init(&h->lock);
++#define INIT_HLIST_BL_HEAD(h)		\
++do {					\
++	(h)->first = NULL;		\
++	raw_spin_lock_init(&(h)->lock);	\
++} while (0)
++#else
++#define INIT_HLIST_BL_HEAD(h) (h)->first = NULL
  #endif
+-}
+ 
+ static inline void INIT_HLIST_BL_NODE(struct hlist_bl_node *h)
+ {
 -- 
 2.8.1
